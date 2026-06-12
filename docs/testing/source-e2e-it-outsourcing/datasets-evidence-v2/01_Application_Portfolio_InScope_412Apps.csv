@@ -1,0 +1,413 @@
+app_id,app_name,business_domain,criticality,tech_stack,hosting,named_users,incidents_per_month,changes_per_month,interface_count,support_fte_baseline,annual_run_cost_usd,modernization_disposition,current_support_vendor
+APP-0001,Reservations Core PSS-01,Reservations & PSS,Tier-1,Mosaic/Kafka,AWS,5006,228,41,6,6.8,873075,Retain-Modernize,Internal
+APP-0002,Reservations Hub PSS-02,Reservations & PSS,Tier-1,Python/Spark,IBM zOS LPAR,3115,79,14,10,9.4,1377048,Retire-2027,Apex Digital
+APP-0003,Reservations Engine PSS-03,Reservations & PSS,Tier-2,C++/proprietary,SaaS,847,37,18,7,1.2,155435,Retire-2028,Meridian Systems
+APP-0004,Reservations Suite PSS-04,Reservations & PSS,Tier-1,C++/proprietary,Private cloud (OpenShift),9251,137,31,7,5.9,730196,Retain-Modernize,Internal
+APP-0005,Reservations Gateway PSS-05,Reservations & PSS,Tier-1,Java/Postgres,SaaS,2840,230,55,29,3.7,518820,Retain-Modernize,Internal
+APP-0006,Reservations Manager PSS-06,Reservations & PSS,Tier-1,C++/proprietary,Private cloud (OpenShift),6752,181,70,21,5.0,662185,Retire-2027,Northwind IT
+APP-0007,Reservations Portal PSS-07,Reservations & PSS,Tier-1,SAP ECC-adjacent,On-prem VMware,10744,195,54,38,7.6,853684,Retain,Northwind IT
+APP-0008,Reservations Platform PSS-08,Reservations & PSS,Tier-2,Node/React/Postgres,AWS,2050,68,14,4,3.0,388843,Retire-2027,Internal
+APP-0009,Reservations Console PSS-09,Reservations & PSS,Tier-0,Java/Postgres,SaaS,16725,355,62,19,19.8,2059145,Retire-2027,Internal
+APP-0010,Reservations Optimizer PSS-10,Reservations & PSS,Tier-0,.NET/SQL Server,On-prem VMware,32996,219,65,71,21.7,3043504,Retain-Modernize,Internal
+APP-0011,Reservations Core PSS-11,Reservations & PSS,Tier-0,Python/Spark,IBM zOS LPAR,14025,197,33,81,8.7,828967,Re-host,Apex Digital
+APP-0012,Reservations Hub PSS-12,Reservations & PSS,Tier-2,COBOL/CICS (zOS),Azure,1792,32,7,1,2.2,267834,Retain,Northwind IT
+APP-0013,Reservations Engine PSS-13,Reservations & PSS,Tier-0,SaaS-configured,SaaS,6453,242,88,65,21.0,2397444,Re-platform,Internal
+APP-0014,Reservations Suite PSS-14,Reservations & PSS,Tier-1,Salesforce ext,Hybrid (DC+AWS),652,58,18,26,5.6,735830,Retire-2028,Meridian Systems
+APP-0015,Reservations Gateway PSS-15,Reservations & PSS,Tier-1,COBOL/CICS (zOS),IBM zOS LPAR,11368,69,14,17,7.9,1127320,Retire-2028,Internal
+APP-0016,Reservations Manager PSS-16,Reservations & PSS,Tier-2,Mosaic/Kafka,On-prem VMware,1426,64,25,2,1.1,123943,Re-host,Northwind IT
+APP-0017,Reservations Portal PSS-17,Reservations & PSS,Tier-0,C++/proprietary,Private cloud (OpenShift),25897,375,158,64,19.8,1849083,Re-host,Northwind IT
+APP-0018,Reservations Platform PSS-18,Reservations & PSS,Tier-1,SaaS-configured,Azure,6767,91,23,18,5.3,570444,Re-host,Apex Digital
+APP-0019,Reservations Console PSS-19,Reservations & PSS,Tier-2,Mosaic/Kafka,Hybrid (DC+AWS),791,21,5,10,1.2,139703,Retire-2027,Northwind IT
+APP-0020,Reservations Optimizer PSS-20,Reservations & PSS,Tier-1,Java/Postgres,Azure,11382,209,68,24,3.6,467747,Retire-2027,Apex Digital
+APP-0021,Reservations Core PSS-21,Reservations & PSS,Tier-1,SaaS-configured,SaaS,5478,241,75,17,10.7,1154444,Retire-2027,Apex Digital
+APP-0022,Reservations Hub PSS-22,Reservations & PSS,Tier-0,Java/Postgres,SaaS,17392,323,76,72,20.2,2310487,Retire-2028,Meridian Systems
+APP-0023,Reservations Engine PSS-23,Reservations & PSS,Tier-2,Salesforce ext,Hybrid (DC+AWS),956,79,37,3,2.6,368991,Retire-2028,Internal
+APP-0024,Reservations Suite PSS-24,Reservations & PSS,Tier-2,Mosaic/Kafka,IBM zOS LPAR,711,41,18,8,3.0,332422,Retain-Modernize,Northwind IT
+APP-0025,Reservations Gateway PSS-25,Reservations & PSS,Tier-0,Node/React/Postgres,Private cloud (OpenShift),12014,537,158,38,21.1,2504799,Re-host,Internal
+APP-0026,Reservations Manager PSS-26,Reservations & PSS,Tier-1,Salesforce ext,Azure,10383,109,17,29,10.3,1470716,Retire-2028,Meridian Systems
+APP-0027,Reservations Portal PSS-27,Reservations & PSS,Tier-0,C++/proprietary,Azure,30089,171,38,53,10.5,1242540,Retain,Apex Digital
+APP-0028,Reservations Platform PSS-28,Reservations & PSS,Tier-0,Salesforce ext,Azure,6496,151,55,42,7.8,878733,Retire-2028,Meridian Systems
+APP-0029,Loyalty Core LOY-01,Loyalty & CRM,Tier-2,Java/Oracle,Hybrid (DC+AWS),502,81,23,10,3.0,390955,Retire-2027,Meridian Systems
+APP-0030,Loyalty Hub LOY-02,Loyalty & CRM,Tier-1,SaaS-configured,Private cloud (OpenShift),11338,205,91,10,9.5,1264379,Retire-2027,Internal
+APP-0031,Loyalty Engine LOY-03,Loyalty & CRM,Tier-2,Salesforce ext,SaaS,1065,39,13,1,1.3,144376,Re-platform,Meridian Systems
+APP-0032,Loyalty Suite LOY-04,Loyalty & CRM,Tier-2,TPF/Assembler,Azure,1048,79,30,13,3.0,373701,Retire-2027,Apex Digital
+APP-0033,Loyalty Gateway LOY-05,Loyalty & CRM,Tier-2,Salesforce ext,Hybrid (DC+AWS),1918,37,14,12,1.3,139729,Retire-2027,Apex Digital
+APP-0034,Loyalty Manager LOY-06,Loyalty & CRM,Tier-3,Salesforce ext,Private cloud (OpenShift),194,18,3,2,0.6,84523,Re-host,Internal
+APP-0035,Loyalty Portal LOY-07,Loyalty & CRM,Tier-2,Python/Spark,Azure,1094,16,5,3,0.9,110926,Retire-2027,Northwind IT
+APP-0036,Loyalty Platform LOY-08,Loyalty & CRM,Tier-2,Python/Spark,AWS,1873,80,29,11,1.4,141072,Retire-2028,Internal
+APP-0037,Loyalty Console LOY-09,Loyalty & CRM,Tier-1,SAP ECC-adjacent,Azure,5220,58,24,31,3.8,362290,Retire-2028,Apex Digital
+APP-0038,Loyalty Optimizer LOY-10,Loyalty & CRM,Tier-2,Salesforce ext,Azure,1305,72,23,15,0.7,90832,Retain,Apex Digital
+APP-0039,Loyalty Core LOY-11,Loyalty & CRM,Tier-2,TPF/Assembler,Private cloud (OpenShift),2185,31,11,8,1.0,115052,Retire-2028,Internal
+APP-0040,Loyalty Hub LOY-12,Loyalty & CRM,Tier-3,COBOL/CICS (zOS),On-prem VMware,171,13,5,3,0.6,70052,Re-platform,Northwind IT
+APP-0041,Loyalty Engine LOY-13,Loyalty & CRM,Tier-3,SaaS-configured,Hybrid (DC+AWS),72,8,3,4,0.2,29007,Retain-Modernize,Internal
+APP-0042,Loyalty Suite LOY-14,Loyalty & CRM,Tier-3,Python/Spark,Private cloud (OpenShift),222,15,5,4,0.4,54496,Retire-2027,Apex Digital
+APP-0043,Loyalty Gateway LOY-15,Loyalty & CRM,Tier-3,Python/Spark,On-prem VMware,306,18,5,4,1.2,126447,Re-host,Meridian Systems
+APP-0044,Loyalty Manager LOY-16,Loyalty & CRM,Tier-1,Java/Postgres,IBM zOS LPAR,6746,166,54,10,10.2,1435876,Re-host,Apex Digital
+APP-0045,Loyalty Portal LOY-17,Loyalty & CRM,Tier-1,SaaS-configured,SaaS,11146,121,55,8,4.9,719255,Retain,Internal
+APP-0046,Loyalty Platform LOY-18,Loyalty & CRM,Tier-1,SaaS-configured,On-prem VMware,974,115,34,37,4.0,453689,Re-host,Northwind IT
+APP-0047,Loyalty Console LOY-19,Loyalty & CRM,Tier-1,SAP ECC-adjacent,On-prem VMware,8029,245,94,8,5.0,587914,Re-host,Internal
+APP-0048,Loyalty Optimizer LOY-20,Loyalty & CRM,Tier-1,SAP ECC-adjacent,Hybrid (DC+AWS),9870,219,107,21,9.1,1216939,Retain-Modernize,Apex Digital
+APP-0049,Loyalty Core LOY-21,Loyalty & CRM,Tier-1,Java/Postgres,Hybrid (DC+AWS),10672,200,51,6,3.3,336058,Retire-2027,Apex Digital
+APP-0050,Loyalty Hub LOY-22,Loyalty & CRM,Tier-2,Node/React/Postgres,IBM zOS LPAR,1112,51,16,13,3.9,534521,Re-host,Meridian Systems
+APP-0051,Loyalty Engine LOY-23,Loyalty & CRM,Tier-1,TPF/Assembler,SaaS,7951,189,35,34,7.3,697443,Re-platform,Internal
+APP-0052,Loyalty Suite LOY-24,Loyalty & CRM,Tier-1,SaaS-configured,IBM zOS LPAR,1109,64,12,27,7.1,1005240,Re-host,Internal
+APP-0053,Cargo Core CGO-01,Cargo & Logistics,Tier-3,TPF/Assembler,IBM zOS LPAR,121,12,2,5,0.2,27897,Retire-2028,Northwind IT
+APP-0054,Cargo Hub CGO-02,Cargo & Logistics,Tier-2,SAP ECC-adjacent,Hybrid (DC+AWS),1426,80,13,10,3.2,401199,Retain-Modernize,Northwind IT
+APP-0055,Cargo Engine CGO-03,Cargo & Logistics,Tier-2,Salesforce ext,IBM zOS LPAR,165,38,5,3,0.8,89819,Re-host,Northwind IT
+APP-0056,Cargo Suite CGO-04,Cargo & Logistics,Tier-3,Java/Oracle,On-prem VMware,164,2,1,0,0.2,25212,Re-platform,Apex Digital
+APP-0057,Cargo Gateway CGO-05,Cargo & Logistics,Tier-2,Node/React/Postgres,SaaS,1918,22,8,8,2.0,219005,Re-platform,Apex Digital
+APP-0058,Cargo Manager CGO-06,Cargo & Logistics,Tier-3,Python/Spark,Hybrid (DC+AWS),53,12,5,4,1.1,159173,Retire-2028,Meridian Systems
+APP-0059,Cargo Portal CGO-07,Cargo & Logistics,Tier-3,Salesforce ext,Azure,305,16,3,4,1.0,139328,Retire-2028,Meridian Systems
+APP-0060,Cargo Platform CGO-08,Cargo & Logistics,Tier-2,Python/Spark,AWS,798,52,11,11,3.9,474657,Re-host,Apex Digital
+APP-0061,Cargo Console CGO-09,Cargo & Logistics,Tier-1,Java/Oracle,Private cloud (OpenShift),5814,53,21,9,6.6,886226,Re-host,Meridian Systems
+APP-0062,Cargo Optimizer CGO-10,Cargo & Logistics,Tier-1,Java/Postgres,AWS,9133,141,21,17,5.0,580583,Retire-2027,Northwind IT
+APP-0063,Cargo Core CGO-11,Cargo & Logistics,Tier-2,Java/Postgres,Hybrid (DC+AWS),1686,10,4,7,1.6,233771,Retire-2027,Internal
+APP-0064,Cargo Hub CGO-12,Cargo & Logistics,Tier-3,.NET/SQL Server,Hybrid (DC+AWS),64,13,4,2,0.8,97371,Re-platform,Apex Digital
+APP-0065,Cargo Engine CGO-13,Cargo & Logistics,Tier-2,Salesforce ext,SaaS,481,30,12,13,3.2,460008,Retire-2028,Apex Digital
+APP-0066,Cargo Suite CGO-14,Cargo & Logistics,Tier-3,Java/Oracle,Azure,44,10,4,0,1.0,96296,Retire-2027,Internal
+APP-0067,Cargo Gateway CGO-15,Cargo & Logistics,Tier-2,TPF/Assembler,Azure,2401,85,27,2,2.8,368555,Retire-2027,Northwind IT
+APP-0068,Cargo Manager CGO-16,Cargo & Logistics,Tier-1,Node/React/Postgres,IBM zOS LPAR,6847,242,41,39,8.7,1225861,Retire-2027,Northwind IT
+APP-0069,Cargo Portal CGO-17,Cargo & Logistics,Tier-3,Python/Spark,Azure,76,13,4,5,0.7,89724,Re-platform,Meridian Systems
+APP-0070,Cargo Platform CGO-18,Cargo & Logistics,Tier-1,Java/Postgres,Azure,4009,97,17,36,10.0,1349132,Re-host,Northwind IT
+APP-0071,Cargo Console CGO-19,Cargo & Logistics,Tier-1,Salesforce ext,AWS,7670,213,77,18,9.4,1058431,Re-host,Apex Digital
+APP-0072,Cargo Optimizer CGO-20,Cargo & Logistics,Tier-2,Java/Postgres,Private cloud (OpenShift),1774,85,38,14,3.5,377872,Re-host,Northwind IT
+APP-0073,Cargo Core CGO-21,Cargo & Logistics,Tier-3,Java/Postgres,On-prem VMware,188,13,4,2,0.9,99698,Retain,Apex Digital
+APP-0074,Cargo Hub CGO-22,Cargo & Logistics,Tier-3,SAP ECC-adjacent,IBM zOS LPAR,398,1,1,1,0.2,21626,Retain,Northwind IT
+APP-0075,Cargo Engine CGO-23,Cargo & Logistics,Tier-2,Node/React/Postgres,IBM zOS LPAR,514,73,29,1,1.2,145578,Retire-2027,Meridian Systems
+APP-0076,Cargo Suite CGO-24,Cargo & Logistics,Tier-2,Mosaic/Kafka,Private cloud (OpenShift),1644,10,4,12,3.1,292896,Retire-2028,Northwind IT
+APP-0077,Cargo Gateway CGO-25,Cargo & Logistics,Tier-3,Mosaic/Kafka,AWS,333,3,1,1,1.1,132947,Re-platform,Meridian Systems
+APP-0078,Cargo Manager CGO-26,Cargo & Logistics,Tier-2,SAP ECC-adjacent,Hybrid (DC+AWS),1522,23,6,15,3.0,409944,Retain,Internal
+APP-0079,Cargo Portal CGO-27,Cargo & Logistics,Tier-0,SAP ECC-adjacent,SaaS,13826,225,57,66,11.6,1715598,Retain,Meridian Systems
+APP-0080,Cargo Platform CGO-28,Cargo & Logistics,Tier-2,Node/React/Postgres,Private cloud (OpenShift),2161,26,4,13,2.5,325068,Re-host,Meridian Systems
+APP-0081,Cargo Console CGO-29,Cargo & Logistics,Tier-2,C++/proprietary,AWS,1690,22,8,7,3.0,378795,Retain-Modernize,Meridian Systems
+APP-0082,Cargo Optimizer CGO-30,Cargo & Logistics,Tier-1,Mosaic/Kafka,On-prem VMware,7906,62,24,38,8.6,1173444,Retain,Northwind IT
+APP-0083,Cargo Core CGO-31,Cargo & Logistics,Tier-2,Java/Oracle,On-prem VMware,167,78,28,5,2.4,331456,Re-platform,Meridian Systems
+APP-0084,Crew Ops Core CRW-01,Crew Ops & Rostering,Tier-1,Mosaic/Kafka,Private cloud (OpenShift),6144,236,76,11,3.9,565730,Retain,Apex Digital
+APP-0085,Crew Ops Hub CRW-02,Crew Ops & Rostering,Tier-0,COBOL/CICS (zOS),IBM zOS LPAR,19986,215,76,31,17.5,2418731,Retain,Apex Digital
+APP-0086,Crew Ops Engine CRW-03,Crew Ops & Rostering,Tier-1,Java/Postgres,Private cloud (OpenShift),10627,204,48,23,3.8,421992,Retire-2028,Apex Digital
+APP-0087,Crew Ops Suite CRW-04,Crew Ops & Rostering,Tier-2,.NET/SQL Server,Hybrid (DC+AWS),595,79,20,5,1.6,202337,Retain-Modernize,Apex Digital
+APP-0088,Crew Ops Gateway CRW-05,Crew Ops & Rostering,Tier-2,SaaS-configured,SaaS,712,47,7,8,0.8,113128,Re-host,Apex Digital
+APP-0089,Crew Ops Manager CRW-06,Crew Ops & Rostering,Tier-1,Salesforce ext,SaaS,7560,235,38,40,5.0,613959,Retire-2027,Meridian Systems
+APP-0090,Crew Ops Portal CRW-07,Crew Ops & Rostering,Tier-0,Mosaic/Kafka,On-prem VMware,8336,494,178,63,6.6,662248,Re-platform,Apex Digital
+APP-0091,Crew Ops Platform CRW-08,Crew Ops & Rostering,Tier-0,SaaS-configured,IBM zOS LPAR,21610,621,196,14,7.8,1098532,Retire-2027,Internal
+APP-0092,Crew Ops Console CRW-09,Crew Ops & Rostering,Tier-1,Python/Spark,Azure,1341,174,35,6,2.7,352803,Retire-2027,Internal
+APP-0093,Crew Ops Optimizer CRW-10,Crew Ops & Rostering,Tier-2,C++/proprietary,Private cloud (OpenShift),2184,69,19,15,3.2,409680,Retire-2027,Internal
+APP-0094,Crew Ops Core CRW-11,Crew Ops & Rostering,Tier-0,Mosaic/Kafka,AWS,18155,350,137,74,15.0,1861720,Re-host,Apex Digital
+APP-0095,Crew Ops Hub CRW-12,Crew Ops & Rostering,Tier-2,.NET/SQL Server,On-prem VMware,232,64,26,14,1.5,200234,Retain,Northwind IT
+APP-0096,Crew Ops Engine CRW-13,Crew Ops & Rostering,Tier-1,Java/Oracle,SaaS,2141,65,31,30,4.2,538315,Retire-2027,Northwind IT
+APP-0097,Crew Ops Suite CRW-14,Crew Ops & Rostering,Tier-1,Mosaic/Kafka,Azure,3368,254,54,6,3.4,501124,Re-host,Northwind IT
+APP-0098,Crew Ops Gateway CRW-15,Crew Ops & Rostering,Tier-2,Python/Spark,Azure,849,66,26,13,1.2,170681,Re-platform,Meridian Systems
+APP-0099,Crew Ops Manager CRW-16,Crew Ops & Rostering,Tier-1,SaaS-configured,IBM zOS LPAR,3527,103,29,21,7.4,778723,Re-host,Apex Digital
+APP-0100,Crew Ops Portal CRW-17,Crew Ops & Rostering,Tier-0,Mosaic/Kafka,Hybrid (DC+AWS),34933,422,95,29,18.0,2130594,Retire-2028,Northwind IT
+APP-0101,Crew Ops Platform CRW-18,Crew Ops & Rostering,Tier-2,C++/proprietary,Azure,1889,80,13,4,3.5,455337,Re-host,Meridian Systems
+APP-0102,Crew Ops Console CRW-19,Crew Ops & Rostering,Tier-2,Java/Oracle,Azure,1917,80,27,7,2.6,289363,Retain,Meridian Systems
+APP-0103,Crew Ops Optimizer CRW-20,Crew Ops & Rostering,Tier-2,Node/React/Postgres,IBM zOS LPAR,1235,25,7,14,2.9,372933,Retain-Modernize,Internal
+APP-0104,Crew Ops Core CRW-21,Crew Ops & Rostering,Tier-1,SaaS-configured,AWS,556,212,71,19,4.1,384597,Retire-2027,Meridian Systems
+APP-0105,Crew Ops Hub CRW-22,Crew Ops & Rostering,Tier-0,C++/proprietary,Azure,6409,577,236,63,9.5,1027888,Re-platform,Apex Digital
+APP-0106,Crew Ops Engine CRW-23,Crew Ops & Rostering,Tier-0,C++/proprietary,AWS,11388,543,187,34,6.8,825315,Re-host,Northwind IT
+APP-0107,Crew Ops Suite CRW-24,Crew Ops & Rostering,Tier-1,TPF/Assembler,Hybrid (DC+AWS),9313,116,54,30,5.8,559282,Re-platform,Meridian Systems
+APP-0108,Crew Ops Gateway CRW-25,Crew Ops & Rostering,Tier-1,.NET/SQL Server,SaaS,1344,58,13,25,4.1,550394,Retire-2027,Northwind IT
+APP-0109,Crew Ops Manager CRW-26,Crew Ops & Rostering,Tier-1,.NET/SQL Server,Private cloud (OpenShift),9545,159,41,36,9.3,1022377,Re-platform,Internal
+APP-0110,Flight Ops Core FOPS-01,Flight Ops & Dispatch,Tier-0,C++/proprietary,SaaS,16501,547,145,60,14.0,1932128,Retire-2028,Internal
+APP-0111,Flight Ops Hub FOPS-02,Flight Ops & Dispatch,Tier-1,Mosaic/Kafka,AWS,3273,87,29,7,9.7,897365,Re-platform,Meridian Systems
+APP-0112,Flight Ops Engine FOPS-03,Flight Ops & Dispatch,Tier-1,Java/Oracle,IBM zOS LPAR,11301,176,27,21,9.4,1343704,Retire-2027,Northwind IT
+APP-0113,Flight Ops Suite FOPS-04,Flight Ops & Dispatch,Tier-0,Python/Spark,AWS,36501,526,163,43,19.2,1800467,Re-host,Internal
+APP-0114,Flight Ops Gateway FOPS-05,Flight Ops & Dispatch,Tier-0,Mosaic/Kafka,Azure,2619,564,261,17,20.2,2905421,Retire-2028,Meridian Systems
+APP-0115,Flight Ops Manager FOPS-06,Flight Ops & Dispatch,Tier-0,C++/proprietary,SaaS,22610,267,68,84,16.8,2289300,Retain,Apex Digital
+APP-0116,Flight Ops Portal FOPS-07,Flight Ops & Dispatch,Tier-0,Salesforce ext,Private cloud (OpenShift),30645,526,195,69,14.8,1676604,Retain-Modernize,Meridian Systems
+APP-0117,Flight Ops Platform FOPS-08,Flight Ops & Dispatch,Tier-0,Java/Oracle,IBM zOS LPAR,12107,518,94,51,7.6,917294,Retain,Apex Digital
+APP-0118,Flight Ops Console FOPS-09,Flight Ops & Dispatch,Tier-1,Java/Postgres,AWS,6811,139,64,40,3.9,390672,Re-platform,Internal
+APP-0119,Flight Ops Optimizer FOPS-10,Flight Ops & Dispatch,Tier-1,SaaS-configured,Azure,6416,192,59,23,7.8,863812,Retain-Modernize,Apex Digital
+APP-0120,Flight Ops Core FOPS-11,Flight Ops & Dispatch,Tier-1,Mosaic/Kafka,On-prem VMware,8348,121,59,24,5.8,725955,Retire-2028,Meridian Systems
+APP-0121,Flight Ops Hub FOPS-12,Flight Ops & Dispatch,Tier-2,Salesforce ext,AWS,1855,60,11,5,1.9,238420,Retire-2027,Internal
+APP-0122,Flight Ops Engine FOPS-13,Flight Ops & Dispatch,Tier-1,Java/Oracle,Private cloud (OpenShift),11995,67,13,40,10.7,1047881,Retain-Modernize,Northwind IT
+APP-0123,Flight Ops Suite FOPS-14,Flight Ops & Dispatch,Tier-1,.NET/SQL Server,Azure,8086,78,24,30,10.5,1233735,Re-host,Apex Digital
+APP-0124,Flight Ops Gateway FOPS-15,Flight Ops & Dispatch,Tier-1,Python/Spark,AWS,11915,116,18,10,8.8,972711,Retain-Modernize,Internal
+APP-0125,Flight Ops Manager FOPS-16,Flight Ops & Dispatch,Tier-1,Mosaic/Kafka,On-prem VMware,10993,228,70,28,4.9,609224,Re-platform,Apex Digital
+APP-0126,Flight Ops Portal FOPS-17,Flight Ops & Dispatch,Tier-0,Java/Oracle,SaaS,9468,440,156,56,15.9,2009937,Retain-Modernize,Apex Digital
+APP-0127,Flight Ops Platform FOPS-18,Flight Ops & Dispatch,Tier-0,Java/Postgres,AWS,22013,264,94,85,13.8,1403475,Re-platform,Northwind IT
+APP-0128,Flight Ops Console FOPS-19,Flight Ops & Dispatch,Tier-0,Salesforce ext,IBM zOS LPAR,31556,129,56,83,12.5,1267077,Retain-Modernize,Apex Digital
+APP-0129,Flight Ops Optimizer FOPS-20,Flight Ops & Dispatch,Tier-0,Mosaic/Kafka,On-prem VMware,16735,588,193,85,19.2,2539447,Re-host,Meridian Systems
+APP-0130,Flight Ops Core FOPS-21,Flight Ops & Dispatch,Tier-2,Java/Postgres,Hybrid (DC+AWS),192,19,8,4,3.0,303884,Retain-Modernize,Northwind IT
+APP-0131,Flight Ops Hub FOPS-22,Flight Ops & Dispatch,Tier-2,.NET/SQL Server,On-prem VMware,1211,45,15,3,3.5,491751,Retire-2028,Apex Digital
+APP-0132,Flight Ops Engine FOPS-23,Flight Ops & Dispatch,Tier-2,COBOL/CICS (zOS),Hybrid (DC+AWS),642,61,18,9,1.9,209623,Retire-2028,Meridian Systems
+APP-0133,Flight Ops Suite FOPS-24,Flight Ops & Dispatch,Tier-2,COBOL/CICS (zOS),IBM zOS LPAR,1527,62,20,6,2.3,299512,Retain,Internal
+APP-0134,Flight Ops Gateway FOPS-25,Flight Ops & Dispatch,Tier-0,SAP ECC-adjacent,SaaS,12353,558,114,47,10.0,1141951,Retire-2028,Northwind IT
+APP-0135,Flight Ops Manager FOPS-26,Flight Ops & Dispatch,Tier-1,.NET/SQL Server,AWS,2059,59,19,4,3.5,415629,Retain,Meridian Systems
+APP-0136,Flight Ops Portal FOPS-27,Flight Ops & Dispatch,Tier-0,.NET/SQL Server,IBM zOS LPAR,26088,256,85,13,17.6,2295879,Retain,Northwind IT
+APP-0137,Flight Ops Platform FOPS-28,Flight Ops & Dispatch,Tier-2,SaaS-configured,IBM zOS LPAR,1818,43,10,14,2.7,307632,Retain-Modernize,Internal
+APP-0138,Flight Ops Console FOPS-29,Flight Ops & Dispatch,Tier-1,Java/Oracle,IBM zOS LPAR,8685,132,37,30,9.0,836411,Re-platform,Northwind IT
+APP-0139,Flight Ops Optimizer FOPS-30,Flight Ops & Dispatch,Tier-0,Java/Postgres,Azure,5962,633,250,22,8.4,1231117,Re-platform,Internal
+APP-0140,Flight Ops Core FOPS-31,Flight Ops & Dispatch,Tier-1,Java/Postgres,SaaS,5581,54,25,33,8.2,760215,Retain,Northwind IT
+APP-0141,Flight Ops Hub FOPS-32,Flight Ops & Dispatch,Tier-1,SaaS-configured,IBM zOS LPAR,9068,82,33,11,6.1,894277,Re-host,Internal
+APP-0142,Flight Ops Engine FOPS-33,Flight Ops & Dispatch,Tier-1,Java/Postgres,On-prem VMware,8685,80,37,18,9.8,1101350,Retain,Internal
+APP-0143,Maintenance Core MRO-01,Maintenance & Engineering,Tier-1,SAP ECC-adjacent,Private cloud (OpenShift),7319,186,60,15,10.6,1142777,Retain,Internal
+APP-0144,Maintenance Hub MRO-02,Maintenance & Engineering,Tier-0,C++/proprietary,IBM zOS LPAR,15151,368,183,37,8.4,1071947,Re-platform,Meridian Systems
+APP-0145,Maintenance Engine MRO-03,Maintenance & Engineering,Tier-2,C++/proprietary,IBM zOS LPAR,485,70,34,2,2.4,270862,Retire-2027,Meridian Systems
+APP-0146,Maintenance Suite MRO-04,Maintenance & Engineering,Tier-2,Salesforce ext,IBM zOS LPAR,2484,24,6,12,1.4,139471,Retain-Modernize,Meridian Systems
+APP-0147,Maintenance Gateway MRO-05,Maintenance & Engineering,Tier-1,Node/React/Postgres,On-prem VMware,5645,237,61,11,5.1,530609,Retain,Northwind IT
+APP-0148,Maintenance Manager MRO-06,Maintenance & Engineering,Tier-3,.NET/SQL Server,On-prem VMware,356,1,1,4,0.3,27800,Retain-Modernize,Internal
+APP-0149,Maintenance Portal MRO-07,Maintenance & Engineering,Tier-1,C++/proprietary,AWS,10040,45,20,12,10.5,1220695,Re-host,Meridian Systems
+APP-0150,Maintenance Platform MRO-08,Maintenance & Engineering,Tier-2,Python/Spark,On-prem VMware,1509,43,19,11,2.2,249587,Retire-2028,Northwind IT
+APP-0151,Maintenance Console MRO-09,Maintenance & Engineering,Tier-2,SAP ECC-adjacent,IBM zOS LPAR,1626,77,20,6,2.6,357236,Re-host,Apex Digital
+APP-0152,Maintenance Optimizer MRO-10,Maintenance & Engineering,Tier-2,C++/proprietary,SaaS,470,76,31,14,3.5,438133,Re-platform,Meridian Systems
+APP-0153,Maintenance Core MRO-11,Maintenance & Engineering,Tier-2,.NET/SQL Server,Hybrid (DC+AWS),2368,71,18,2,2.4,344165,Retain-Modernize,Apex Digital
+APP-0154,Maintenance Hub MRO-12,Maintenance & Engineering,Tier-2,Python/Spark,Hybrid (DC+AWS),149,22,9,12,1.6,161312,Retire-2028,Internal
+APP-0155,Maintenance Engine MRO-13,Maintenance & Engineering,Tier-2,Salesforce ext,IBM zOS LPAR,1521,47,9,7,3.7,386169,Re-host,Northwind IT
+APP-0156,Maintenance Suite MRO-14,Maintenance & Engineering,Tier-1,C++/proprietary,AWS,4399,202,61,17,4.7,533978,Retain-Modernize,Internal
+APP-0157,Maintenance Gateway MRO-15,Maintenance & Engineering,Tier-2,C++/proprietary,IBM zOS LPAR,2296,69,14,5,0.9,101723,Retire-2027,Meridian Systems
+APP-0158,Maintenance Manager MRO-16,Maintenance & Engineering,Tier-1,.NET/SQL Server,IBM zOS LPAR,1007,195,32,17,8.6,926781,Retain,Internal
+APP-0159,Maintenance Portal MRO-17,Maintenance & Engineering,Tier-2,Python/Spark,AWS,283,19,8,2,3.9,384027,Re-host,Apex Digital
+APP-0160,Maintenance Platform MRO-18,Maintenance & Engineering,Tier-1,SaaS-configured,Private cloud (OpenShift),6849,134,22,33,7.3,711132,Retire-2027,Internal
+APP-0161,Maintenance Console MRO-19,Maintenance & Engineering,Tier-3,Java/Postgres,IBM zOS LPAR,208,8,2,5,0.7,102923,Re-host,Northwind IT
+APP-0162,Maintenance Optimizer MRO-20,Maintenance & Engineering,Tier-3,SAP ECC-adjacent,Azure,74,14,3,5,0.5,55131,Re-host,Meridian Systems
+APP-0163,Maintenance Core MRO-21,Maintenance & Engineering,Tier-2,Salesforce ext,Azure,520,80,37,13,3.6,463205,Re-host,Meridian Systems
+APP-0164,Maintenance Hub MRO-22,Maintenance & Engineering,Tier-1,Java/Oracle,Hybrid (DC+AWS),2856,124,50,27,5.1,668029,Retain-Modernize,Northwind IT
+APP-0165,Maintenance Engine MRO-23,Maintenance & Engineering,Tier-1,SAP ECC-adjacent,SaaS,5757,194,41,30,9.9,998934,Retire-2027,Internal
+APP-0166,Maintenance Suite MRO-24,Maintenance & Engineering,Tier-1,Java/Oracle,SaaS,9817,253,60,7,4.8,612398,Retain,Northwind IT
+APP-0167,Maintenance Gateway MRO-25,Maintenance & Engineering,Tier-1,.NET/SQL Server,SaaS,3409,128,52,22,9.8,1023077,Retain-Modernize,Apex Digital
+APP-0168,Maintenance Manager MRO-26,Maintenance & Engineering,Tier-2,Salesforce ext,AWS,96,30,6,7,1.3,157502,Retire-2027,Meridian Systems
+APP-0169,Maintenance Portal MRO-27,Maintenance & Engineering,Tier-0,.NET/SQL Server,IBM zOS LPAR,26525,409,70,47,10.2,1024039,Retire-2027,Internal
+APP-0170,Maintenance Platform MRO-28,Maintenance & Engineering,Tier-2,Node/React/Postgres,Azure,2097,59,24,6,2.8,405096,Re-platform,Northwind IT
+APP-0171,Maintenance Console MRO-29,Maintenance & Engineering,Tier-3,Node/React/Postgres,Private cloud (OpenShift),251,18,7,0,0.6,84997,Retire-2027,Apex Digital
+APP-0172,Maintenance Optimizer MRO-30,Maintenance & Engineering,Tier-2,Salesforce ext,AWS,279,32,6,5,1.1,126406,Retain-Modernize,Apex Digital
+APP-0173,Maintenance Core MRO-31,Maintenance & Engineering,Tier-3,Python/Spark,SaaS,180,2,1,1,1.0,99246,Re-host,Internal
+APP-0174,Maintenance Hub MRO-32,Maintenance & Engineering,Tier-2,Java/Oracle,AWS,79,55,25,1,1.4,153268,Retire-2027,Apex Digital
+APP-0175,Maintenance Engine MRO-33,Maintenance & Engineering,Tier-1,Java/Postgres,On-prem VMware,5385,151,75,26,10.2,1066532,Retire-2028,Meridian Systems
+APP-0176,Maintenance Suite MRO-34,Maintenance & Engineering,Tier-2,Mosaic/Kafka,Private cloud (OpenShift),1561,89,37,11,2.9,328553,Re-host,Northwind IT
+APP-0177,Maintenance Gateway MRO-35,Maintenance & Engineering,Tier-1,Salesforce ext,On-prem VMware,5433,209,76,30,7.8,935012,Re-platform,Northwind IT
+APP-0178,Maintenance Manager MRO-36,Maintenance & Engineering,Tier-1,C++/proprietary,SaaS,5339,93,21,9,8.2,989375,Retain,Apex Digital
+APP-0179,Maintenance Portal MRO-37,Maintenance & Engineering,Tier-2,SaaS-configured,On-prem VMware,1141,30,13,7,3.6,359100,Re-platform,Apex Digital
+APP-0180,Maintenance Platform MRO-38,Maintenance & Engineering,Tier-3,COBOL/CICS (zOS),Hybrid (DC+AWS),185,13,6,3,0.2,26197,Retain-Modernize,Meridian Systems
+APP-0181,Airport Core APO-01,Airport & Ground Ops,Tier-2,C++/proprietary,Hybrid (DC+AWS),1854,53,23,15,0.8,87677,Retire-2028,Northwind IT
+APP-0182,Airport Hub APO-02,Airport & Ground Ops,Tier-3,TPF/Assembler,Hybrid (DC+AWS),362,16,4,4,1.1,132342,Re-host,Northwind IT
+APP-0183,Airport Engine APO-03,Airport & Ground Ops,Tier-0,Node/React/Postgres,IBM zOS LPAR,34220,404,138,60,7.3,875368,Re-host,Meridian Systems
+APP-0184,Airport Suite APO-04,Airport & Ground Ops,Tier-1,Node/React/Postgres,Azure,1087,251,115,17,5.4,752121,Retire-2027,Internal
+APP-0185,Airport Gateway APO-05,Airport & Ground Ops,Tier-2,C++/proprietary,AWS,527,51,22,9,1.2,158572,Retain,Apex Digital
+APP-0186,Airport Manager APO-06,Airport & Ground Ops,Tier-2,Mosaic/Kafka,On-prem VMware,1669,32,6,15,3.2,412395,Re-host,Meridian Systems
+APP-0187,Airport Portal APO-07,Airport & Ground Ops,Tier-2,C++/proprietary,Hybrid (DC+AWS),1832,30,12,7,2.3,337759,Retain-Modernize,Apex Digital
+APP-0188,Airport Platform APO-08,Airport & Ground Ops,Tier-2,Node/React/Postgres,SaaS,1914,85,21,12,1.3,140754,Retain-Modernize,Northwind IT
+APP-0189,Airport Console APO-09,Airport & Ground Ops,Tier-2,.NET/SQL Server,Private cloud (OpenShift),1502,81,31,15,0.7,90673,Retain-Modernize,Apex Digital
+APP-0190,Airport Optimizer APO-10,Airport & Ground Ops,Tier-2,SaaS-configured,IBM zOS LPAR,1268,65,23,12,3.3,356755,Re-host,Internal
+APP-0191,Airport Core APO-11,Airport & Ground Ops,Tier-2,Java/Oracle,On-prem VMware,280,87,38,12,1.3,191195,Retain-Modernize,Meridian Systems
+APP-0192,Airport Hub APO-12,Airport & Ground Ops,Tier-1,SAP ECC-adjacent,AWS,5072,81,12,13,7.6,1058040,Retire-2027,Apex Digital
+APP-0193,Airport Engine APO-13,Airport & Ground Ops,Tier-0,Salesforce ext,Azure,22831,189,55,80,9.5,990212,Re-host,Meridian Systems
+APP-0194,Airport Suite APO-14,Airport & Ground Ops,Tier-1,Mosaic/Kafka,AWS,7801,50,23,28,2.7,326163,Re-host,Meridian Systems
+APP-0195,Airport Gateway APO-15,Airport & Ground Ops,Tier-1,C++/proprietary,SaaS,5748,82,12,17,9.9,1208930,Re-host,Meridian Systems
+APP-0196,Airport Manager APO-16,Airport & Ground Ops,Tier-2,Node/React/Postgres,IBM zOS LPAR,1940,19,3,2,2.0,229298,Re-host,Meridian Systems
+APP-0197,Airport Portal APO-17,Airport & Ground Ops,Tier-2,C++/proprietary,AWS,246,72,18,5,0.7,73018,Retire-2027,Apex Digital
+APP-0198,Airport Platform APO-18,Airport & Ground Ops,Tier-3,SaaS-configured,Hybrid (DC+AWS),15,1,1,0,0.5,57554,Retire-2027,Northwind IT
+APP-0199,Airport Console APO-19,Airport & Ground Ops,Tier-1,Node/React/Postgres,Private cloud (OpenShift),10607,86,38,33,8.2,1021009,Retain-Modernize,Northwind IT
+APP-0200,Airport Optimizer APO-20,Airport & Ground Ops,Tier-1,C++/proprietary,SaaS,3670,124,48,40,10.6,1441567,Retire-2028,Internal
+APP-0201,Airport Core APO-21,Airport & Ground Ops,Tier-1,C++/proprietary,SaaS,2700,154,49,15,4.9,504700,Retain,Meridian Systems
+APP-0202,Airport Hub APO-22,Airport & Ground Ops,Tier-3,C++/proprietary,Hybrid (DC+AWS),307,7,3,4,0.3,40572,Re-platform,Northwind IT
+APP-0203,Airport Engine APO-23,Airport & Ground Ops,Tier-2,Node/React/Postgres,IBM zOS LPAR,1685,38,15,3,3.6,478772,Retain-Modernize,Internal
+APP-0204,Airport Suite APO-24,Airport & Ground Ops,Tier-1,SAP ECC-adjacent,Azure,6552,172,54,6,8.5,1179399,Retire-2027,Northwind IT
+APP-0205,Airport Gateway APO-25,Airport & Ground Ops,Tier-1,Java/Postgres,AWS,6485,172,84,37,5.4,498795,Retain-Modernize,Northwind IT
+APP-0206,Airport Manager APO-26,Airport & Ground Ops,Tier-0,COBOL/CICS (zOS),On-prem VMware,20403,281,107,65,13.7,1899757,Retain,Northwind IT
+APP-0207,Airport Portal APO-27,Airport & Ground Ops,Tier-2,.NET/SQL Server,AWS,2159,29,13,10,3.1,449643,Retire-2027,Internal
+APP-0208,Airport Platform APO-28,Airport & Ground Ops,Tier-3,Java/Postgres,IBM zOS LPAR,317,6,2,5,0.2,22635,Retain,Northwind IT
+APP-0209,Airport Console APO-29,Airport & Ground Ops,Tier-2,SaaS-configured,SaaS,1779,68,31,13,3.7,340648,Re-host,Internal
+APP-0210,Airport Optimizer APO-30,Airport & Ground Ops,Tier-1,Mosaic/Kafka,AWS,11930,245,66,10,9.0,1129539,Re-platform,Northwind IT
+APP-0211,Airport Core APO-31,Airport & Ground Ops,Tier-0,SaaS-configured,AWS,2466,127,37,25,15.4,1944485,Retain-Modernize,Internal
+APP-0212,Airport Hub APO-32,Airport & Ground Ops,Tier-2,Mosaic/Kafka,AWS,1576,47,19,14,3.3,322131,Re-platform,Meridian Systems
+APP-0213,Airport Engine APO-33,Airport & Ground Ops,Tier-1,COBOL/CICS (zOS),Hybrid (DC+AWS),1992,62,14,6,5.9,861150,Retain-Modernize,Internal
+APP-0214,Airport Suite APO-34,Airport & Ground Ops,Tier-2,Python/Spark,Private cloud (OpenShift),2182,84,27,11,3.9,419064,Retire-2028,Internal
+APP-0215,Airport Gateway APO-35,Airport & Ground Ops,Tier-2,Java/Postgres,AWS,122,78,31,6,2.1,193747,Retire-2027,Meridian Systems
+APP-0216,Airport Manager APO-36,Airport & Ground Ops,Tier-2,COBOL/CICS (zOS),AWS,1452,81,31,8,2.2,274697,Retain,Apex Digital
+APP-0217,Airport Portal APO-37,Airport & Ground Ops,Tier-0,Node/React/Postgres,Private cloud (OpenShift),16442,542,83,45,12.4,1264740,Retain-Modernize,Apex Digital
+APP-0218,Airport Platform APO-38,Airport & Ground Ops,Tier-1,Mosaic/Kafka,IBM zOS LPAR,8675,107,23,26,3.2,295586,Re-host,Apex Digital
+APP-0219,Airport Console APO-39,Airport & Ground Ops,Tier-2,SaaS-configured,Hybrid (DC+AWS),1185,73,21,1,2.4,273715,Retain-Modernize,Internal
+APP-0220,Airport Optimizer APO-40,Airport & Ground Ops,Tier-3,Java/Postgres,AWS,362,13,4,2,1.2,133456,Re-host,Northwind IT
+APP-0221,Airport Core APO-41,Airport & Ground Ops,Tier-2,C++/proprietary,On-prem VMware,1700,81,39,12,3.5,478807,Re-host,Meridian Systems
+APP-0222,Airport Hub APO-42,Airport & Ground Ops,Tier-1,TPF/Assembler,SaaS,2703,241,57,7,3.0,381816,Re-platform,Apex Digital
+APP-0223,Revenue Mgmt Core RM-01,Revenue Mgmt & Pricing,Tier-1,Python/Spark,Azure,6138,129,45,15,8.2,1162919,Re-platform,Internal
+APP-0224,Revenue Mgmt Hub RM-02,Revenue Mgmt & Pricing,Tier-2,Node/React/Postgres,SaaS,1441,17,3,6,2.8,327360,Retire-2027,Internal
+APP-0225,Revenue Mgmt Engine RM-03,Revenue Mgmt & Pricing,Tier-2,Java/Oracle,IBM zOS LPAR,572,40,8,2,0.8,97074,Re-platform,Northwind IT
+APP-0226,Revenue Mgmt Suite RM-04,Revenue Mgmt & Pricing,Tier-1,SAP ECC-adjacent,Azure,5568,153,29,5,10.3,1449934,Re-host,Northwind IT
+APP-0227,Revenue Mgmt Gateway RM-05,Revenue Mgmt & Pricing,Tier-3,Java/Postgres,Private cloud (OpenShift),315,14,4,2,0.4,46033,Retain,Meridian Systems
+APP-0228,Revenue Mgmt Manager RM-06,Revenue Mgmt & Pricing,Tier-2,.NET/SQL Server,On-prem VMware,1234,70,17,10,1.2,139773,Retire-2028,Internal
+APP-0229,Revenue Mgmt Portal RM-07,Revenue Mgmt & Pricing,Tier-3,SAP ECC-adjacent,SaaS,226,9,2,1,0.8,101274,Retire-2027,Internal
+APP-0230,Revenue Mgmt Platform RM-08,Revenue Mgmt & Pricing,Tier-1,Node/React/Postgres,AWS,2992,87,21,4,6.7,916358,Retire-2028,Meridian Systems
+APP-0231,Revenue Mgmt Console RM-09,Revenue Mgmt & Pricing,Tier-1,C++/proprietary,IBM zOS LPAR,1418,179,38,28,9.0,1051252,Retain-Modernize,Internal
+APP-0232,Revenue Mgmt Optimizer RM-10,Revenue Mgmt & Pricing,Tier-2,.NET/SQL Server,IBM zOS LPAR,913,47,9,9,1.3,182474,Retain-Modernize,Internal
+APP-0233,Revenue Mgmt Core RM-11,Revenue Mgmt & Pricing,Tier-1,SaaS-configured,IBM zOS LPAR,5023,242,118,13,6.7,980213,Retain,Apex Digital
+APP-0234,Revenue Mgmt Hub RM-12,Revenue Mgmt & Pricing,Tier-2,Mosaic/Kafka,Private cloud (OpenShift),575,79,34,1,1.5,197356,Retire-2027,Internal
+APP-0235,Revenue Mgmt Engine RM-13,Revenue Mgmt & Pricing,Tier-1,C++/proprietary,On-prem VMware,9406,110,22,13,7.1,854368,Retain,Apex Digital
+APP-0236,Revenue Mgmt Suite RM-14,Revenue Mgmt & Pricing,Tier-2,Java/Postgres,On-prem VMware,319,75,31,6,2.4,333049,Retain,Northwind IT
+APP-0237,Revenue Mgmt Gateway RM-15,Revenue Mgmt & Pricing,Tier-1,Java/Oracle,AWS,2117,208,76,7,3.1,370507,Retire-2028,Meridian Systems
+APP-0238,Revenue Mgmt Manager RM-16,Revenue Mgmt & Pricing,Tier-1,Salesforce ext,SaaS,6546,175,77,17,4.5,579532,Retain-Modernize,Internal
+APP-0239,Revenue Mgmt Portal RM-17,Revenue Mgmt & Pricing,Tier-2,Node/React/Postgres,Hybrid (DC+AWS),1938,29,9,11,3.8,466657,Re-platform,Internal
+APP-0240,Revenue Mgmt Platform RM-18,Revenue Mgmt & Pricing,Tier-2,SAP ECC-adjacent,IBM zOS LPAR,1045,78,21,7,2.6,383840,Re-platform,Northwind IT
+APP-0241,Revenue Mgmt Console RM-19,Revenue Mgmt & Pricing,Tier-1,.NET/SQL Server,SaaS,855,64,17,20,4.7,582177,Retain,Apex Digital
+APP-0242,Revenue Mgmt Optimizer RM-20,Revenue Mgmt & Pricing,Tier-2,Salesforce ext,IBM zOS LPAR,2420,81,14,6,3.6,462800,Retire-2028,Internal
+APP-0243,Revenue Mgmt Core RM-21,Revenue Mgmt & Pricing,Tier-0,Node/React/Postgres,IBM zOS LPAR,36365,273,55,62,15.2,1524388,Re-host,Meridian Systems
+APP-0244,Revenue Mgmt Hub RM-22,Revenue Mgmt & Pricing,Tier-2,SAP ECC-adjacent,Hybrid (DC+AWS),1692,24,7,7,4.0,422278,Re-host,Apex Digital
+APP-0245,Finance Core FIN-01,Finance & Revenue Acctg,Tier-2,.NET/SQL Server,On-prem VMware,1754,32,8,3,2.1,198477,Retire-2028,Apex Digital
+APP-0246,Finance Hub FIN-02,Finance & Revenue Acctg,Tier-1,SAP ECC-adjacent,Azure,2341,253,68,23,4.3,521602,Re-host,Northwind IT
+APP-0247,Finance Engine FIN-03,Finance & Revenue Acctg,Tier-2,Node/React/Postgres,Hybrid (DC+AWS),2447,29,7,8,2.8,400737,Retain,Meridian Systems
+APP-0248,Finance Suite FIN-04,Finance & Revenue Acctg,Tier-1,Python/Spark,SaaS,4287,120,21,36,2.7,298835,Retain-Modernize,Meridian Systems
+APP-0249,Finance Gateway FIN-05,Finance & Revenue Acctg,Tier-1,SaaS-configured,Azure,6322,110,50,39,10.1,1145376,Retire-2028,Northwind IT
+APP-0250,Finance Manager FIN-06,Finance & Revenue Acctg,Tier-2,Java/Postgres,SaaS,1339,77,17,11,3.0,298722,Retire-2027,Northwind IT
+APP-0251,Finance Portal FIN-07,Finance & Revenue Acctg,Tier-1,.NET/SQL Server,IBM zOS LPAR,2439,226,103,30,9.5,954841,Retain-Modernize,Northwind IT
+APP-0252,Finance Platform FIN-08,Finance & Revenue Acctg,Tier-0,Python/Spark,AWS,19489,356,139,57,8.1,828651,Re-host,Northwind IT
+APP-0253,Finance Console FIN-09,Finance & Revenue Acctg,Tier-1,Python/Spark,Hybrid (DC+AWS),1028,145,60,15,6.7,708993,Retain,Internal
+APP-0254,Finance Optimizer FIN-10,Finance & Revenue Acctg,Tier-2,COBOL/CICS (zOS),On-prem VMware,2402,21,6,9,2.5,318290,Re-platform,Internal
+APP-0255,Finance Core FIN-11,Finance & Revenue Acctg,Tier-2,C++/proprietary,Azure,1949,86,33,14,1.0,144519,Retain-Modernize,Internal
+APP-0256,Finance Hub FIN-12,Finance & Revenue Acctg,Tier-2,Mosaic/Kafka,Azure,792,19,5,2,0.9,119434,Retain-Modernize,Internal
+APP-0257,Finance Engine FIN-13,Finance & Revenue Acctg,Tier-2,.NET/SQL Server,IBM zOS LPAR,1432,26,10,5,1.6,227709,Retire-2027,Apex Digital
+APP-0258,Finance Suite FIN-14,Finance & Revenue Acctg,Tier-0,.NET/SQL Server,IBM zOS LPAR,34612,625,193,68,6.1,841353,Retain-Modernize,Northwind IT
+APP-0259,Finance Gateway FIN-15,Finance & Revenue Acctg,Tier-0,TPF/Assembler,SaaS,24873,425,79,34,15.8,1610580,Retire-2027,Apex Digital
+APP-0260,Finance Manager FIN-16,Finance & Revenue Acctg,Tier-3,.NET/SQL Server,Azure,198,14,6,1,0.6,62250,Retain,Meridian Systems
+APP-0261,Finance Portal FIN-17,Finance & Revenue Acctg,Tier-2,Salesforce ext,On-prem VMware,2041,85,20,15,3.1,425465,Retire-2028,Apex Digital
+APP-0262,Finance Platform FIN-18,Finance & Revenue Acctg,Tier-3,SAP ECC-adjacent,Azure,248,14,4,5,0.4,38319,Retire-2027,Apex Digital
+APP-0263,Finance Console FIN-19,Finance & Revenue Acctg,Tier-2,Java/Postgres,SaaS,1425,80,35,14,2.2,219124,Re-host,Apex Digital
+APP-0264,Finance Optimizer FIN-20,Finance & Revenue Acctg,Tier-2,Salesforce ext,Azure,2194,76,16,2,3.9,542781,Re-host,Northwind IT
+APP-0265,Finance Core FIN-21,Finance & Revenue Acctg,Tier-2,Mosaic/Kafka,IBM zOS LPAR,189,71,19,9,0.7,68030,Re-host,Northwind IT
+APP-0266,Finance Hub FIN-22,Finance & Revenue Acctg,Tier-1,SaaS-configured,Hybrid (DC+AWS),9079,236,91,17,8.6,1240213,Retire-2027,Meridian Systems
+APP-0267,Finance Engine FIN-23,Finance & Revenue Acctg,Tier-1,Java/Postgres,Private cloud (OpenShift),2189,45,16,24,7.0,750880,Retain,Meridian Systems
+APP-0268,Finance Suite FIN-24,Finance & Revenue Acctg,Tier-3,TPF/Assembler,SaaS,287,9,1,1,0.6,59570,Retain,Meridian Systems
+APP-0269,Finance Gateway FIN-25,Finance & Revenue Acctg,Tier-2,SAP ECC-adjacent,SaaS,1665,53,14,2,3.3,321574,Retire-2028,Internal
+APP-0270,Finance Manager FIN-26,Finance & Revenue Acctg,Tier-2,Java/Postgres,Azure,1116,50,15,8,1.2,151018,Retain,Internal
+APP-0271,Finance Portal FIN-27,Finance & Revenue Acctg,Tier-3,Salesforce ext,AWS,342,18,5,1,0.5,68789,Re-host,Apex Digital
+APP-0272,Finance Platform FIN-28,Finance & Revenue Acctg,Tier-2,Python/Spark,Private cloud (OpenShift),379,83,21,3,1.0,135195,Re-host,Meridian Systems
+APP-0273,Finance Console FIN-29,Finance & Revenue Acctg,Tier-1,Python/Spark,SaaS,10015,209,70,40,10.0,1300552,Re-platform,Meridian Systems
+APP-0274,Finance Optimizer FIN-30,Finance & Revenue Acctg,Tier-2,Python/Spark,AWS,582,78,11,2,3.0,329445,Re-host,Internal
+APP-0275,Finance Core FIN-31,Finance & Revenue Acctg,Tier-2,Java/Postgres,IBM zOS LPAR,629,54,11,1,3.6,527754,Retain-Modernize,Internal
+APP-0276,Finance Hub FIN-32,Finance & Revenue Acctg,Tier-3,Mosaic/Kafka,Azure,242,13,3,0,0.7,80504,Re-platform,Meridian Systems
+APP-0277,Finance Engine FIN-33,Finance & Revenue Acctg,Tier-3,SaaS-configured,IBM zOS LPAR,307,5,2,4,0.6,80120,Retire-2028,Apex Digital
+APP-0278,Finance Suite FIN-34,Finance & Revenue Acctg,Tier-2,SaaS-configured,AWS,104,68,20,3,1.6,170535,Retire-2027,Northwind IT
+APP-0279,Finance Gateway FIN-35,Finance & Revenue Acctg,Tier-2,Salesforce ext,SaaS,171,24,4,3,0.6,61067,Retain-Modernize,Internal
+APP-0280,HR Core HR-01,HR & Crew Pay,Tier-1,C++/proprietary,SaaS,4780,244,65,13,8.9,1148076,Retain-Modernize,Northwind IT
+APP-0281,HR Hub HR-02,HR & Crew Pay,Tier-2,Python/Spark,IBM zOS LPAR,1142,29,8,12,1.9,231239,Re-platform,Internal
+APP-0282,HR Engine HR-03,HR & Crew Pay,Tier-2,.NET/SQL Server,Azure,228,63,16,5,2.9,375914,Re-platform,Northwind IT
+APP-0283,HR Suite HR-04,HR & Crew Pay,Tier-1,SaaS-configured,Hybrid (DC+AWS),11523,145,27,26,4.1,592680,Retain-Modernize,Meridian Systems
+APP-0284,HR Gateway HR-05,HR & Crew Pay,Tier-2,Java/Oracle,Private cloud (OpenShift),592,31,7,15,2.9,308591,Retain,Internal
+APP-0285,HR Manager HR-06,HR & Crew Pay,Tier-2,SAP ECC-adjacent,IBM zOS LPAR,1144,70,25,2,2.7,315167,Retain,Meridian Systems
+APP-0286,HR Portal HR-07,HR & Crew Pay,Tier-0,TPF/Assembler,AWS,18423,272,129,61,11.3,1527482,Re-host,Meridian Systems
+APP-0287,HR Platform HR-08,HR & Crew Pay,Tier-2,COBOL/CICS (zOS),AWS,2034,46,7,9,3.2,326050,Retire-2028,Northwind IT
+APP-0288,HR Console HR-09,HR & Crew Pay,Tier-1,TPF/Assembler,IBM zOS LPAR,2249,201,39,5,5.8,695897,Retain,Apex Digital
+APP-0289,HR Optimizer HR-10,HR & Crew Pay,Tier-0,C++/proprietary,SaaS,4805,589,241,41,8.3,784888,Retain-Modernize,Meridian Systems
+APP-0290,HR Core HR-11,HR & Crew Pay,Tier-1,C++/proprietary,SaaS,5535,253,110,11,4.4,604758,Re-host,Apex Digital
+APP-0291,HR Hub HR-12,HR & Crew Pay,Tier-1,Java/Postgres,IBM zOS LPAR,2750,191,32,13,5.6,697710,Retire-2028,Internal
+APP-0292,HR Engine HR-13,HR & Crew Pay,Tier-2,COBOL/CICS (zOS),Azure,390,19,5,4,2.0,252380,Retain-Modernize,Internal
+APP-0293,HR Suite HR-14,HR & Crew Pay,Tier-2,.NET/SQL Server,Private cloud (OpenShift),1293,79,17,10,2.3,292288,Retain,Northwind IT
+APP-0294,HR Gateway HR-15,HR & Crew Pay,Tier-1,Mosaic/Kafka,On-prem VMware,11727,80,30,17,9.3,1241209,Retain-Modernize,Meridian Systems
+APP-0295,HR Manager HR-16,HR & Crew Pay,Tier-2,.NET/SQL Server,IBM zOS LPAR,1023,82,24,13,3.1,350392,Re-host,Internal
+APP-0296,HR Portal HR-17,HR & Crew Pay,Tier-0,TPF/Assembler,AWS,30564,585,115,36,11.4,1119732,Re-host,Northwind IT
+APP-0297,HR Platform HR-18,HR & Crew Pay,Tier-2,.NET/SQL Server,On-prem VMware,702,78,14,14,1.5,199839,Re-platform,Internal
+APP-0298,HR Console HR-19,HR & Crew Pay,Tier-2,C++/proprietary,AWS,80,68,11,8,1.4,129773,Retain-Modernize,Northwind IT
+APP-0299,HR Optimizer HR-20,HR & Crew Pay,Tier-1,TPF/Assembler,SaaS,11110,211,83,5,9.9,1116161,Retire-2028,Meridian Systems
+APP-0300,HR Core HR-21,HR & Crew Pay,Tier-3,SaaS-configured,Private cloud (OpenShift),281,9,3,1,0.9,85562,Retain,Meridian Systems
+APP-0301,HR Hub HR-22,HR & Crew Pay,Tier-2,C++/proprietary,On-prem VMware,227,90,35,3,2.2,273870,Retire-2028,Northwind IT
+APP-0302,HR Engine HR-23,HR & Crew Pay,Tier-1,Node/React/Postgres,Hybrid (DC+AWS),8750,56,17,37,7.0,821175,Retire-2028,Meridian Systems
+APP-0303,HR Suite HR-24,HR & Crew Pay,Tier-1,Mosaic/Kafka,On-prem VMware,1930,113,23,13,6.9,1009443,Re-host,Apex Digital
+APP-0304,HR Gateway HR-25,HR & Crew Pay,Tier-2,TPF/Assembler,Private cloud (OpenShift),834,37,13,11,2.9,355871,Retire-2027,Northwind IT
+APP-0305,HR Manager HR-26,HR & Crew Pay,Tier-3,C++/proprietary,SaaS,126,2,1,4,1.2,166803,Retain-Modernize,Northwind IT
+APP-0306,HR Portal HR-27,HR & Crew Pay,Tier-1,Python/Spark,AWS,5687,106,23,24,7.1,1019164,Retain-Modernize,Internal
+APP-0307,Data Core DATA-01,Data & Analytics Platforms,Tier-3,COBOL/CICS (zOS),On-prem VMware,269,16,7,4,0.2,23764,Retire-2028,Meridian Systems
+APP-0308,Data Hub DATA-02,Data & Analytics Platforms,Tier-1,Mosaic/Kafka,AWS,10617,63,22,37,3.2,466006,Retain-Modernize,Internal
+APP-0309,Data Engine DATA-03,Data & Analytics Platforms,Tier-1,C++/proprietary,AWS,1418,223,63,22,6.3,892817,Re-host,Apex Digital
+APP-0310,Data Suite DATA-04,Data & Analytics Platforms,Tier-1,Mosaic/Kafka,AWS,7286,76,24,25,3.3,380202,Retire-2028,Northwind IT
+APP-0311,Data Gateway DATA-05,Data & Analytics Platforms,Tier-1,SaaS-configured,Private cloud (OpenShift),5242,250,80,18,5.1,504664,Re-host,Northwind IT
+APP-0312,Data Manager DATA-06,Data & Analytics Platforms,Tier-2,Salesforce ext,IBM zOS LPAR,548,84,29,14,3.0,362104,Re-platform,Northwind IT
+APP-0313,Data Portal DATA-07,Data & Analytics Platforms,Tier-2,Java/Oracle,Azure,1948,28,6,1,0.9,114452,Retain-Modernize,Apex Digital
+APP-0314,Data Platform DATA-08,Data & Analytics Platforms,Tier-3,.NET/SQL Server,Hybrid (DC+AWS),59,1,1,3,0.3,36056,Retire-2027,Meridian Systems
+APP-0315,Data Console DATA-09,Data & Analytics Platforms,Tier-2,C++/proprietary,On-prem VMware,597,47,9,13,3.1,307544,Retire-2028,Northwind IT
+APP-0316,Data Optimizer DATA-10,Data & Analytics Platforms,Tier-1,Java/Oracle,Private cloud (OpenShift),2633,59,24,16,6.9,732564,Retire-2028,Meridian Systems
+APP-0317,Data Core DATA-11,Data & Analytics Platforms,Tier-2,Salesforce ext,Hybrid (DC+AWS),901,52,9,6,2.7,258732,Retain,Northwind IT
+APP-0318,Data Hub DATA-12,Data & Analytics Platforms,Tier-2,Java/Oracle,Hybrid (DC+AWS),2260,72,20,11,1.9,199011,Re-platform,Meridian Systems
+APP-0319,Data Engine DATA-13,Data & Analytics Platforms,Tier-2,.NET/SQL Server,Azure,2090,44,17,8,3.1,431213,Re-host,Apex Digital
+APP-0320,Data Suite DATA-14,Data & Analytics Platforms,Tier-3,C++/proprietary,On-prem VMware,253,16,6,5,0.9,132069,Retain,Apex Digital
+APP-0321,Data Gateway DATA-15,Data & Analytics Platforms,Tier-3,TPF/Assembler,IBM zOS LPAR,216,16,3,3,0.7,70177,Retain,Apex Digital
+APP-0322,Data Manager DATA-16,Data & Analytics Platforms,Tier-2,Mosaic/Kafka,Hybrid (DC+AWS),611,14,4,7,2.7,259969,Re-host,Internal
+APP-0323,Data Portal DATA-17,Data & Analytics Platforms,Tier-1,Mosaic/Kafka,SaaS,8532,247,38,31,5.2,487968,Re-platform,Northwind IT
+APP-0324,Data Platform DATA-18,Data & Analytics Platforms,Tier-2,Salesforce ext,SaaS,1653,70,27,8,1.9,278100,Re-platform,Apex Digital
+APP-0325,Data Console DATA-19,Data & Analytics Platforms,Tier-1,SaaS-configured,Private cloud (OpenShift),10174,129,53,28,5.5,582265,Retire-2027,Meridian Systems
+APP-0326,Data Optimizer DATA-20,Data & Analytics Platforms,Tier-3,Python/Spark,Private cloud (OpenShift),182,11,1,3,1.2,135783,Retire-2027,Meridian Systems
+APP-0327,Data Core DATA-21,Data & Analytics Platforms,Tier-3,SAP ECC-adjacent,IBM zOS LPAR,182,6,2,3,1.0,103988,Re-platform,Internal
+APP-0328,Data Hub DATA-22,Data & Analytics Platforms,Tier-3,.NET/SQL Server,AWS,313,17,5,0,0.6,73342,Re-host,Apex Digital
+APP-0329,Data Engine DATA-23,Data & Analytics Platforms,Tier-2,SaaS-configured,IBM zOS LPAR,2302,74,26,5,3.2,395848,Retire-2027,Northwind IT
+APP-0330,Data Suite DATA-24,Data & Analytics Platforms,Tier-1,.NET/SQL Server,IBM zOS LPAR,4438,256,66,17,4.9,515594,Retain-Modernize,Northwind IT
+APP-0331,Data Gateway DATA-25,Data & Analytics Platforms,Tier-0,C++/proprietary,AWS,22351,566,124,46,18.6,1755189,Retain,Meridian Systems
+APP-0332,Data Manager DATA-26,Data & Analytics Platforms,Tier-3,Mosaic/Kafka,Private cloud (OpenShift),42,13,6,4,1.0,145181,Re-host,Meridian Systems
+APP-0333,Data Portal DATA-27,Data & Analytics Platforms,Tier-1,Java/Oracle,Private cloud (OpenShift),5634,246,55,15,4.7,531022,Retire-2027,Internal
+APP-0334,Data Platform DATA-28,Data & Analytics Platforms,Tier-2,SaaS-configured,IBM zOS LPAR,653,55,8,12,1.7,190943,Retire-2027,Northwind IT
+APP-0335,Data Console DATA-29,Data & Analytics Platforms,Tier-3,TPF/Assembler,AWS,140,10,2,2,0.1,14052,Retire-2028,Internal
+APP-0336,Data Optimizer DATA-30,Data & Analytics Platforms,Tier-3,Java/Postgres,IBM zOS LPAR,92,12,3,5,0.8,109037,Re-host,Northwind IT
+APP-0337,Data Core DATA-31,Data & Analytics Platforms,Tier-2,SAP ECC-adjacent,On-prem VMware,396,74,33,8,1.2,132413,Retain,Internal
+APP-0338,Data Hub DATA-32,Data & Analytics Platforms,Tier-1,Node/React/Postgres,On-prem VMware,6682,45,21,16,2.9,291038,Retire-2027,Meridian Systems
+APP-0339,Data Engine DATA-33,Data & Analytics Platforms,Tier-0,C++/proprietary,SaaS,36461,626,135,46,12.1,1671602,Retain-Modernize,Internal
+APP-0340,Data Suite DATA-34,Data & Analytics Platforms,Tier-1,C++/proprietary,AWS,971,198,55,9,5.2,686123,Retire-2028,Apex Digital
+APP-0341,Data Gateway DATA-35,Data & Analytics Platforms,Tier-0,Java/Postgres,Azure,5850,602,91,76,16.7,1704148,Re-host,Apex Digital
+APP-0342,Data Manager DATA-36,Data & Analytics Platforms,Tier-3,SAP ECC-adjacent,Azure,373,4,1,2,1.1,138956,Re-platform,Internal
+APP-0343,Digital Channels (web/mobile) Core DIG-01,Digital Channels (web/mobile),Tier-2,TPF/Assembler,Private cloud (OpenShift),679,32,5,8,1.0,119715,Retire-2028,Internal
+APP-0344,Digital Channels (web/mobile) Hub DIG-02,Digital Channels (web/mobile),Tier-1,Python/Spark,IBM zOS LPAR,2925,92,40,21,7.5,929730,Retain-Modernize,Internal
+APP-0345,Digital Channels (web/mobile) Engine DIG-03,Digital Channels (web/mobile),Tier-1,COBOL/CICS (zOS),Private cloud (OpenShift),925,140,62,5,8.1,1014731,Retain,Internal
+APP-0346,Digital Channels (web/mobile) Suite DIG-04,Digital Channels (web/mobile),Tier-1,Java/Postgres,AWS,3963,122,41,9,10.7,1495125,Re-host,Apex Digital
+APP-0347,Digital Channels (web/mobile) Gateway DIG-05,Digital Channels (web/mobile),Tier-1,Python/Spark,Hybrid (DC+AWS),2475,228,62,27,10.0,1156919,Re-platform,Northwind IT
+APP-0348,Digital Channels (web/mobile) Manager DIG-06,Digital Channels (web/mobile),Tier-1,SaaS-configured,Private cloud (OpenShift),2022,158,75,37,3.2,470766,Retain-Modernize,Internal
+APP-0349,Digital Channels (web/mobile) Portal DIG-07,Digital Channels (web/mobile),Tier-1,Java/Postgres,Hybrid (DC+AWS),9527,170,31,20,9.0,1061290,Re-host,Meridian Systems
+APP-0350,Digital Channels (web/mobile) Platform DIG-08,Digital Channels (web/mobile),Tier-0,COBOL/CICS (zOS),AWS,21506,585,157,35,18.0,2194651,Retain,Meridian Systems
+APP-0351,Digital Channels (web/mobile) Console DIG-09,Digital Channels (web/mobile),Tier-0,COBOL/CICS (zOS),On-prem VMware,33268,618,242,62,8.2,840831,Re-host,Northwind IT
+APP-0352,Digital Channels (web/mobile) Optimizer DIG-10,Digital Channels (web/mobile),Tier-1,.NET/SQL Server,On-prem VMware,10757,117,36,11,6.3,738189,Re-platform,Internal
+APP-0353,Digital Channels (web/mobile) Core DIG-11,Digital Channels (web/mobile),Tier-0,.NET/SQL Server,SaaS,2516,627,313,16,14.2,1996342,Retain,Meridian Systems
+APP-0354,Digital Channels (web/mobile) Hub DIG-12,Digital Channels (web/mobile),Tier-1,.NET/SQL Server,Azure,9564,161,59,32,4.9,514489,Retire-2028,Apex Digital
+APP-0355,Digital Channels (web/mobile) Engine DIG-13,Digital Channels (web/mobile),Tier-2,Java/Oracle,Hybrid (DC+AWS),1261,54,23,5,1.0,125921,Re-host,Internal
+APP-0356,Digital Channels (web/mobile) Suite DIG-14,Digital Channels (web/mobile),Tier-1,Node/React/Postgres,Hybrid (DC+AWS),9623,106,22,6,3.5,417327,Re-platform,Meridian Systems
+APP-0357,Digital Channels (web/mobile) Gateway DIG-15,Digital Channels (web/mobile),Tier-2,Java/Postgres,SaaS,2171,14,6,13,0.9,108368,Retain,Northwind IT
+APP-0358,Digital Channels (web/mobile) Manager DIG-16,Digital Channels (web/mobile),Tier-2,Node/React/Postgres,Private cloud (OpenShift),1868,20,7,2,3.2,439398,Retire-2027,Northwind IT
+APP-0359,Digital Channels (web/mobile) Portal DIG-17,Digital Channels (web/mobile),Tier-0,TPF/Assembler,On-prem VMware,26407,371,157,29,20.4,2954928,Retain,Meridian Systems
+APP-0360,Digital Channels (web/mobile) Platform DIG-18,Digital Channels (web/mobile),Tier-0,Node/React/Postgres,IBM zOS LPAR,22631,182,84,19,12.4,1656529,Re-platform,Northwind IT
+APP-0361,Digital Channels (web/mobile) Console DIG-19,Digital Channels (web/mobile),Tier-2,SAP ECC-adjacent,On-prem VMware,900,52,21,1,3.1,457398,Retain,Apex Digital
+APP-0362,Digital Channels (web/mobile) Optimizer DIG-20,Digital Channels (web/mobile),Tier-1,TPF/Assembler,Private cloud (OpenShift),883,101,50,7,6.8,984063,Retire-2027,Meridian Systems
+APP-0363,Digital Channels (web/mobile) Core DIG-21,Digital Channels (web/mobile),Tier-1,Node/React/Postgres,AWS,10028,129,49,12,4.6,635164,Retain,Northwind IT
+APP-0364,Digital Channels (web/mobile) Hub DIG-22,Digital Channels (web/mobile),Tier-2,TPF/Assembler,SaaS,437,68,20,7,3.6,459510,Re-host,Internal
+APP-0365,Digital Channels (web/mobile) Engine DIG-23,Digital Channels (web/mobile),Tier-2,Python/Spark,IBM zOS LPAR,580,73,13,8,1.9,238810,Retain,Apex Digital
+APP-0366,Digital Channels (web/mobile) Suite DIG-24,Digital Channels (web/mobile),Tier-1,C++/proprietary,AWS,9065,118,29,13,10.5,1073649,Retain,Meridian Systems
+APP-0367,Digital Channels (web/mobile) Gateway DIG-25,Digital Channels (web/mobile),Tier-1,Node/React/Postgres,IBM zOS LPAR,1232,184,77,12,6.4,899298,Retire-2027,Internal
+APP-0368,Digital Channels (web/mobile) Manager DIG-26,Digital Channels (web/mobile),Tier-1,Mosaic/Kafka,Azure,6054,228,103,40,8.0,1163915,Retain,Northwind IT
+APP-0369,Digital Channels (web/mobile) Portal DIG-27,Digital Channels (web/mobile),Tier-2,Python/Spark,On-prem VMware,552,43,10,13,0.8,74642,Re-host,Meridian Systems
+APP-0370,Digital Channels (web/mobile) Platform DIG-28,Digital Channels (web/mobile),Tier-2,Java/Postgres,IBM zOS LPAR,1113,77,19,13,2.9,422886,Retire-2028,Meridian Systems
+APP-0371,Digital Channels (web/mobile) Console DIG-29,Digital Channels (web/mobile),Tier-1,Python/Spark,IBM zOS LPAR,5743,106,17,19,5.8,684574,Re-host,Meridian Systems
+APP-0372,Digital Channels (web/mobile) Optimizer DIG-30,Digital Channels (web/mobile),Tier-1,.NET/SQL Server,Azure,805,103,26,32,9.2,933050,Re-host,Internal
+APP-0373,Integration Core INT-01,Integration & Middleware,Tier-0,Java/Oracle,Private cloud (OpenShift),32451,291,71,44,9.4,1145944,Retain,Internal
+APP-0374,Integration Hub INT-02,Integration & Middleware,Tier-1,Salesforce ext,Private cloud (OpenShift),9617,196,90,20,4.6,541644,Retain,Northwind IT
+APP-0375,Integration Engine INT-03,Integration & Middleware,Tier-1,SaaS-configured,AWS,10474,212,73,29,8.0,1108773,Retire-2028,Meridian Systems
+APP-0376,Integration Suite INT-04,Integration & Middleware,Tier-1,Salesforce ext,SaaS,10351,254,79,32,8.9,914249,Re-platform,Northwind IT
+APP-0377,Integration Gateway INT-05,Integration & Middleware,Tier-0,SaaS-configured,Azure,34362,624,95,62,15.1,1867561,Retire-2027,Northwind IT
+APP-0378,Integration Manager INT-06,Integration & Middleware,Tier-0,SaaS-configured,IBM zOS LPAR,10404,353,157,14,16.9,2191821,Re-platform,Internal
+APP-0379,Integration Portal INT-07,Integration & Middleware,Tier-2,COBOL/CICS (zOS),SaaS,558,54,22,5,1.9,268442,Retain-Modernize,Internal
+APP-0380,Integration Platform INT-08,Integration & Middleware,Tier-2,COBOL/CICS (zOS),Hybrid (DC+AWS),733,88,14,10,1.4,203970,Re-platform,Northwind IT
+APP-0381,Integration Console INT-09,Integration & Middleware,Tier-2,COBOL/CICS (zOS),Private cloud (OpenShift),1888,15,4,1,2.1,199760,Re-host,Internal
+APP-0382,Integration Optimizer INT-10,Integration & Middleware,Tier-0,.NET/SQL Server,Azure,28942,513,137,15,15.4,1928105,Retain-Modernize,Apex Digital
+APP-0383,Integration Core INT-11,Integration & Middleware,Tier-1,Node/React/Postgres,Private cloud (OpenShift),10672,75,14,36,10.0,1092857,Re-platform,Meridian Systems
+APP-0384,Integration Hub INT-12,Integration & Middleware,Tier-1,Salesforce ext,Azure,1439,148,72,8,8.4,928570,Re-platform,Apex Digital
+APP-0385,Integration Engine INT-13,Integration & Middleware,Tier-1,Java/Postgres,Hybrid (DC+AWS),2217,96,37,17,10.6,1097075,Retain,Apex Digital
+APP-0386,Integration Suite INT-14,Integration & Middleware,Tier-0,Mosaic/Kafka,On-prem VMware,25454,265,98,58,9.2,1021473,Retain-Modernize,Northwind IT
+APP-0387,Integration Gateway INT-15,Integration & Middleware,Tier-0,Python/Spark,SaaS,19156,260,124,51,19.0,2809547,Retain,Meridian Systems
+APP-0388,Integration Manager INT-16,Integration & Middleware,Tier-0,SaaS-configured,Hybrid (DC+AWS),10571,507,182,43,15.4,1629960,Re-platform,Northwind IT
+APP-0389,Integration Portal INT-17,Integration & Middleware,Tier-2,TPF/Assembler,AWS,393,73,30,8,1.9,250945,Re-platform,Internal
+APP-0390,Integration Platform INT-18,Integration & Middleware,Tier-1,TPF/Assembler,Azure,3894,260,58,28,5.7,551221,Re-platform,Northwind IT
+APP-0391,Integration Console INT-19,Integration & Middleware,Tier-1,SAP ECC-adjacent,Hybrid (DC+AWS),8892,159,44,24,6.3,897640,Retire-2027,Meridian Systems
+APP-0392,Integration Optimizer INT-20,Integration & Middleware,Tier-2,C++/proprietary,SaaS,545,77,20,5,1.5,221831,Retire-2027,Apex Digital
+APP-0393,Integration Core INT-21,Integration & Middleware,Tier-0,Mosaic/Kafka,Hybrid (DC+AWS),21626,535,168,77,9.6,1198773,Re-host,Internal
+APP-0394,Corporate Core CORP-01,Corporate & Workplace,Tier-1,Node/React/Postgres,Private cloud (OpenShift),5629,93,41,27,5.1,657367,Retain-Modernize,Internal
+APP-0395,Corporate Hub CORP-02,Corporate & Workplace,Tier-2,Python/Spark,IBM zOS LPAR,2262,10,4,10,2.6,294719,Retire-2027,Internal
+APP-0396,Corporate Engine CORP-03,Corporate & Workplace,Tier-1,.NET/SQL Server,On-prem VMware,5887,63,24,6,2.7,306747,Re-platform,Meridian Systems
+APP-0397,Corporate Suite CORP-04,Corporate & Workplace,Tier-2,.NET/SQL Server,Private cloud (OpenShift),105,60,12,9,3.8,377249,Re-host,Internal
+APP-0398,Corporate Gateway CORP-05,Corporate & Workplace,Tier-1,TPF/Assembler,Azure,10125,110,54,8,4.6,549670,Retain,Meridian Systems
+APP-0399,Corporate Manager CORP-06,Corporate & Workplace,Tier-1,Java/Postgres,Private cloud (OpenShift),6181,146,67,33,7.3,769587,Retire-2028,Apex Digital
+APP-0400,Corporate Portal CORP-07,Corporate & Workplace,Tier-2,SaaS-configured,SaaS,949,78,38,9,1.3,121545,Retire-2028,Internal
+APP-0401,Corporate Platform CORP-08,Corporate & Workplace,Tier-2,SAP ECC-adjacent,Hybrid (DC+AWS),1684,22,5,8,3.0,355092,Retain-Modernize,Northwind IT
+APP-0402,Corporate Console CORP-09,Corporate & Workplace,Tier-3,SaaS-configured,Hybrid (DC+AWS),73,1,1,1,0.3,39305,Retire-2027,Meridian Systems
+APP-0403,Corporate Optimizer CORP-10,Corporate & Workplace,Tier-2,Java/Oracle,On-prem VMware,274,56,26,4,0.6,78046,Retain,Northwind IT
+APP-0404,Corporate Core CORP-11,Corporate & Workplace,Tier-2,COBOL/CICS (zOS),AWS,2159,79,29,7,1.7,218660,Retain-Modernize,Internal
+APP-0405,Corporate Hub CORP-12,Corporate & Workplace,Tier-1,Node/React/Postgres,SaaS,11148,95,39,10,10.3,1002248,Retire-2028,Internal
+APP-0406,Corporate Engine CORP-13,Corporate & Workplace,Tier-2,Java/Oracle,Private cloud (OpenShift),778,69,18,9,3.0,279563,Retain-Modernize,Internal
+APP-0407,Corporate Suite CORP-14,Corporate & Workplace,Tier-2,SaaS-configured,Hybrid (DC+AWS),623,33,9,15,3.1,333482,Retain,Internal
+APP-0408,Corporate Gateway CORP-15,Corporate & Workplace,Tier-2,.NET/SQL Server,IBM zOS LPAR,998,39,13,10,2.7,322736,Retire-2028,Northwind IT
+APP-0409,Corporate Manager CORP-16,Corporate & Workplace,Tier-3,SaaS-configured,On-prem VMware,313,3,1,5,0.4,49711,Re-platform,Internal
+APP-0410,Corporate Portal CORP-17,Corporate & Workplace,Tier-1,Salesforce ext,Azure,7024,152,55,13,5.7,818553,Retain-Modernize,Northwind IT
+APP-0411,Corporate Platform CORP-18,Corporate & Workplace,Tier-1,Python/Spark,AWS,5511,183,32,34,2.5,282396,Re-host,Apex Digital
+APP-0412,Corporate Console CORP-19,Corporate & Workplace,Tier-2,SaaS-configured,SaaS,2469,23,10,13,3.2,421475,Re-platform,Meridian Systems

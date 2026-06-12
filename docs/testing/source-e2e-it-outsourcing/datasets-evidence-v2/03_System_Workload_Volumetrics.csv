@@ -1,0 +1,18 @@
+domain,metric,value,notes
+Mainframe zOS,Installed MIPS,"38,450","2 sysplexes, 14 LPARs; TPF res complex separate"
+Mainframe zOS,Peak-day MIPS (IRROPS),"52,900",Weather event surge factor 1.38x
+Mainframe batch,Nightly batch jobs,"41,200",Critical-path window 22:40-04:10 CT
+Mainframe batch,Late-batch incidents TTM,37,9 caused downstream revenue-acctg delay
+Compute,VMware VMs,"14,180",61% prod; vSphere 8; 3 DCs
+Compute,OpenShift pods (avg),"3,140","Crew, digital, integration workloads"
+Compute,AWS EC2/RDS instances,"2,260",Digital + data platforms
+Database,DB instances (Oracle/SQL/PG),612,118 Tier-0/1 with sub-5min RPO
+Storage,Provisioned storage PB,9.4,31% annual growth (data platforms)
+Integration,Active interfaces,"9,840","MQ 4,100 · API 3,900 · file 1,840"
+Integration,API calls/day (avg),412M,Peak 690M (holiday); res-shopping dominated
+Network,Sites (airports+offices),214,41 countries; 96 with on-site ops dependency
+EUC,Managed endpoints,"96,200",58k laptops/desktops · 31k mobile/EFB · 7.2k kiosks/counters
+EUC,OS currency,Win11 71% / Win10-IoT 22% / other 7%,Win10-IoT EOL exposure at airports
+Patching,Critical patch SLA attainment,88.5% in 14d vs 95% target,Chronic miss; security finding open
+DR,Tier-0 RTO/RPO,RTO 1h / RPO 5min,"Annual full-failover test, last passed 2025-11"
+IRROPS,Surge factor on desk contacts,2.7x daily normal,"2026-01 storm: 11,400 contacts in 24h vs 4,200 normal"
