@@ -1,6 +1,8 @@
 import {
   CONSULTING_GRADE_MIN_SCORE,
   CONSULTING_GRADE_STANDARD_ID,
+  buildConsultingGradeCompactRetryPrompt,
+  buildMalformedConsultingGradeReview,
   buildConsultingGradeReviewPrompt,
   buildConsultingGradeRewritePrompt,
   parseConsultingGradeReviewJson,
@@ -104,6 +106,16 @@ export function buildSourceConsultingGradeReviewPrompt(args: {
   return buildConsultingGradeReviewPrompt(args);
 }
 
+export function buildSourceConsultingGradeCompactRetryPrompt(args: {
+  artifactCode: string;
+  artifactName: string;
+  bodyMarkdown: string;
+  sourceContext: string;
+  previousError: string;
+}): string {
+  return buildConsultingGradeCompactRetryPrompt(args);
+}
+
 export function buildSourceConsultingGradeRewritePrompt(args: {
   artifactCode: string;
   artifactName: string;
@@ -120,6 +132,14 @@ export function parseSourceConsultingGradeReview(args: {
   raw: string;
 }): ConsultingGradeReview {
   return parseConsultingGradeReviewJson(args);
+}
+
+export function buildMalformedSourceConsultingGradeReview(args: {
+  artifactCode: string;
+  artifactName: string;
+  reason: string;
+}): ConsultingGradeReview {
+  return buildMalformedConsultingGradeReview(args);
 }
 
 export function buildSourceQualityGateMetadata(args: {

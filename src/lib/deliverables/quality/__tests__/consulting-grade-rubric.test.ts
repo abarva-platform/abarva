@@ -1,6 +1,8 @@
 import {
   CONSULTING_GRADE_DIMENSIONS,
   CONSULTING_GRADE_MIN_SCORE,
+  buildConsultingGradeCompactRetryPrompt,
+  buildMalformedConsultingGradeReview,
   buildConsultingGradeReviewPrompt,
   parseConsultingGradeReviewJson,
   summarizeConsultingGradeReview,
@@ -251,5 +253,42 @@ Done.`,
     expect(prompt).toContain("Minimum passing score: 8/10");
     expect(prompt).toContain("technical_operational_depth");
     expect(prompt).toContain("Evidence: 300M baseline");
+  });
+
+  it("builds a compact retry prompt with every required rubric dimension", () => {
+    const prompt = buildConsultingGradeCompactRetryPrompt({
+      artifactCode: "d09_rfp_pack",
+      artifactName: "RFP Package",
+      bodyMarkdown: "# RFP\n\n" + "Detailed body. ".repeat(2_000),
+      sourceContext: "Evidence: $300M baseline. ".repeat(400),
+      previousError: "missing dimensionScores",
+    });
+
+    expect(prompt).toContain("Parser error: missing dimensionScores");
+    expect(prompt).toContain("Do not omit dimensionScores");
+    for (const dimension of CONSULTING_GRADE_DIMENSIONS) {
+      expect(prompt).toContain(dimension.id);
+    }
+    expect(prompt.length).toBeLessThan(25_000);
+  });
+
+  it("creates an explicit failed review when the model review is malformed", () => {
+    const review = buildMalformedConsultingGradeReview({
+      artifactCode: "d09_rfp_pack",
+      artifactName: "RFP Package",
+      reason: "missing dimensionScores",
+    });
+
+    expect(review.pass).toBe(false);
+    expect(review.overallScore).toBe(0);
+    expect(review.dimensionScores).toHaveLength(
+      CONSULTING_GRADE_DIMENSIONS.length,
+    );
+    expect(review.dimensionScores.every((score) => score.score === 0)).toBe(
+      true,
+    );
+    expect(summarizeConsultingGradeReview(review)).toContain(
+      "Failed partner-grade-consulting-deliverable-v1",
+    );
   });
 });

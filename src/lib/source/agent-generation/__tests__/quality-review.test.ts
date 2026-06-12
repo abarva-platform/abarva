@@ -1,4 +1,6 @@
 import {
+  buildMalformedSourceConsultingGradeReview,
+  buildSourceConsultingGradeCompactRetryPrompt,
   buildSourceQualityGateMetadata,
   buildSourceQualitySourceContext,
   requiresSourceConsultingGradeGate,
@@ -120,5 +122,46 @@ describe("Source consulting-grade quality gate helpers", () => {
 
     expect(gate.passed).toBe(false);
     expect(gate.finalSummary).toContain("evidence_grounding");
+  });
+
+  it("keeps compact reviewer retries source-aware and dimension-complete", () => {
+    const context = buildSourceQualitySourceContext({
+      ctx: makeContext(),
+      upstreamBound: {
+        d01_strategy_memo: "Strategy memo with $300M baseline.",
+      },
+    });
+    const prompt = buildSourceConsultingGradeCompactRetryPrompt({
+      artifactCode: "d09_rfp_pack",
+      artifactName: "RFP Package",
+      bodyMarkdown: "# RFP Package\n\n## Source register\n\nEvidence-backed body.",
+      sourceContext: context,
+      previousError: "Quality review is missing dimensionScores array.",
+    });
+
+    expect(prompt).toContain("SkyHarbor Air");
+    expect(prompt).toContain("d09_rfp_pack");
+    for (const dimension of CONSULTING_GRADE_DIMENSIONS) {
+      expect(prompt).toContain(dimension.id);
+    }
+  });
+
+  it("records malformed reviewer output as a failed Gate B review", () => {
+    const gate = buildSourceQualityGateMetadata({
+      rewriteAttempted: false,
+      reviews: [
+        buildMalformedSourceConsultingGradeReview({
+          artifactCode: "d09_rfp_pack",
+          artifactName: "RFP Package",
+          reason: "missing dimensionScores",
+        }),
+      ],
+    });
+
+    expect(gate.passed).toBe(false);
+    expect(gate.finalSummary).toContain("Failed");
+    expect(gate.reviews[0]?.dimensionScores).toHaveLength(
+      CONSULTING_GRADE_DIMENSIONS.length,
+    );
   });
 });
