@@ -380,17 +380,17 @@ function normalizeDimensionScoreCollection(
     return value.filter(isObjectRecord);
   }
   if (!isObjectRecord(value)) return [];
-  return Object.entries(value)
-    .filter(([, entry]) => isObjectRecord(entry))
-    .map(([key, entry]) => {
-      const entryId = typeof entry.id === "string" ? entry.id : key;
-      return {
-        ...entry,
-        id: entryId as ConsultingGradeDimensionId,
-        dimension:
-          typeof entry.dimension === "string" ? entry.dimension : key,
-      };
+  const entries: ReturnType<typeof normalizeDimensionScoreCollection> = [];
+  for (const [key, entry] of Object.entries(value)) {
+    if (!isObjectRecord(entry)) continue;
+    const entryId = typeof entry.id === "string" ? entry.id : key;
+    entries.push({
+      ...entry,
+      id: entryId as ConsultingGradeDimensionId,
+      dimension: typeof entry.dimension === "string" ? entry.dimension : key,
     });
+  }
+  return entries;
 }
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
