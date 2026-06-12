@@ -138,7 +138,7 @@ Tone: precise, list-heavy. The "in scope" section names systems, services, hours
     artifactCode: "d09_rfp_pack",
     version: 8,
     model: DEFAULT_MODEL,
-    maxTokens: 5600,
+    maxTokens: 6200,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
     upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth"],
     systemPrompt: `${SENTINEL_VOICE}
@@ -185,9 +185,16 @@ Section budget:
 - §6: 300 words max plus one transition/blackout table, 6 rows max.
 - §7: must include commercial terms and pricing instructions table.
 - §8: must include vendor response/submission requirements table.
-- §9: must include evaluation methodology table with weights/scoring bands/disqualification controls. If Exhibit 09 is uploaded, treat it as the governed basis for the weights; do not call EVID-SRC-EVAL-WEIGHT-RATIONALE Not Requested.
-- §10: must include consolidated risk register table with owner, mitigation, and explicit transition/security/commercial failure modes. Use Exhibits 07, 13, and 14 when uploaded.
-- §11: must include source register and gap closure/client-to-complete register with owner, due date placeholder, blocking gate, and downstream impact. Every [CLIENT TO SET], [CLIENT TO COMPLETE], [ASSUMPTION TO VALIDATE], and unresolved gate blocker must appear in that table.
+- §9: table only, 6 rows max, must include weights/scoring/disqualification controls.
+- §10: table only, 8 rows max, must include risk owners/mitigations from Exhibits 07, 13, and 14.
+- §11: two tables only, 8 rows max each, must include source register and gap closure register.
+
+Compact required appendix block:
+After §8, use compact tables instead of long prose for the remaining governance material:
+- §9 table: Evaluation area | Weight | Scoring basis | Disqualification / red flag | Evidence source.
+- §10 table: Risk ID | Failure mode | Evidence source | Owner placeholder | Mitigation | Blocking gate.
+- §11A table: Source | Status | Used in sections | Remaining action.
+- §11B table: Gap ID | Item | Owner placeholder | Due date placeholder | Blocking gate | Downstream impact.
 
 Required compact section skeleton:
 ## §1 · Executive summary and decision context
@@ -221,7 +228,7 @@ Quality requirement: produce a draft that can pass the partner-grade quality rev
         upstream.d05_scope_memo ??
           "(NOT YET AUTHORED — DO NOT FABRICATE; surface the gap in the draft)",
         "",
-        "— GOVERNED EVIDENCE STATE SUMMARY —",
+        "— GOVERNED EVIDENCE STATE SUMMARY (NORMALIZED FOR D09) —",
         formatEvidenceStates(ctx),
         "",
         "— PARSED UPLOADED EVIDENCE EXCERPTS —",
@@ -269,18 +276,24 @@ export function getPromptTemplate(
 
 function formatEvidenceStates(ctx: SourceGenerationContext): string {
   if (ctx.evidence.length === 0) return "(no evidence states recorded)";
+  const d09SatisfiedIds = getD09RfpSatisfiedRequirementIds(ctx);
   return ctx.evidence
-    .map((item) =>
-      [
+    .map((item) => {
+      const state =
+        item.currentState === "Not Requested" &&
+        d09SatisfiedIds.has(item.requirementId)
+          ? "Available parsed evidence — citation review pending (normalized from uploaded D09 coverage map)"
+          : item.currentState;
+      return [
         `- ${item.requirementId}`,
         `stage=${item.stage}`,
-        `state=${item.currentState}`,
+        `state=${state}`,
         item.sourceArtifactId ? `artifact=${item.sourceArtifactId}` : null,
         item.notes ? `notes=${item.notes}` : null,
       ]
         .filter(Boolean)
-        .join("; "),
-    )
+        .join("; ");
+    })
     .join("\n");
 }
 
@@ -485,6 +498,25 @@ export function formatD09RfpEvidenceCoverage(
     "Risk/action rule: §10 must include a risk register derived from Exhibits 07, 13, and 14; §11 must include a gap closure register with owner placeholders, due-date placeholders, blocking gate, and downstream impact.",
   );
   return lines.join("\n");
+}
+
+export function getD09RfpSatisfiedRequirementIds(
+  ctx: SourceGenerationContext,
+): Set<string> {
+  const satisfied = new Set<string>();
+  const uploaded = ctx.uploadedEvidence ?? [];
+  for (const rule of D09_RFP_EVIDENCE_COVERAGE_RULES) {
+    const match = uploaded.find((artifact) =>
+      rule.keywords.every((keyword) =>
+        artifact.originalName.toLowerCase().includes(keyword),
+      ),
+    );
+    if (!match) continue;
+    for (const requirementId of rule.satisfies) {
+      satisfied.add(requirementId);
+    }
+  }
+  return satisfied;
 }
 
 export function listSupportedGenerationCodes(): string[] {
