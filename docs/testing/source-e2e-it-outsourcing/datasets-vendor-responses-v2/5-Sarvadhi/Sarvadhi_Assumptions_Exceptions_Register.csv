@@ -1,0 +1,6 @@
+id,topic,type,text,commercial_impact_if_removed
+AE-01,Volumetrics,assumption,Locked Exhibit-08 bands accepted; outside-collar volumes re-banded,
+AE-02,Indexation,exception,CPI + 1% uncapped all years (EXCEPTION to A-14),+1.8% Y3-5 price if A-14 cap enforced
+AE-03,Transition risk,exception,15% at risk (below 25% floor — EXCEPTION),+$1.4M transition if 25% at-risk enforced
+AE-04,Credits,exception,"5% pool, quarterly auto earn-back (EXCEPTION to A-13)",
+AE-05,Special,Offshore SI industrialized,"DELIBERATE TRAPS: travel/per-diem billed as incurred UNCAPPED (violates A-15); heavy legal redlines (liability 6mo, benchmarking from Y3 own-nominee only, audit",

@@ -1,0 +1,6 @@
+id,topic,type,text,commercial_impact_if_removed
+AE-01,Volumetrics,assumption,Locked Exhibit-08 bands accepted; outside-collar volumes re-banded,
+AE-02,Indexation,exception,4.0% annual uncapped from Y2 (EXCEPTION to A-14),+1.8% Y3-5 price if A-14 cap enforced
+AE-03,Transition risk,exception,invoiced as incurred (EXCEPTION to A-11),+$1.4M transition if 25% at-risk enforced
+AE-04,Credits,exception,"5% pool, quarterly earn-back (EXCEPTION to A-13)",
+AE-05,Special,Big-4 premium transformation,Mandatory ExperienceIQ platform fee $4.2M/yr (challenges A-10),

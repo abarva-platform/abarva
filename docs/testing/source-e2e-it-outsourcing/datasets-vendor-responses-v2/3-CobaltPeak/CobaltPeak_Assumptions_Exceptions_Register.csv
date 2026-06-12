@@ -1,0 +1,6 @@
+id,topic,type,text,commercial_impact_if_removed
+AE-01,Volumetrics,assumption,Locked Exhibit-08 bands accepted; outside-collar volumes re-banded,
+AE-02,Indexation,assumption,"None Y1-3; min(CPI,2%) Y4-5 (better than A-14)",
+AE-03,Transition risk,assumption,35% at risk (exceeds),
+AE-04,Credits,assumption,"8% pool, no earn-back Y1, crew-line misses 2x (exceeds)",
+AE-05,Special,Boutique ops specialist,"Honest gap: NOC for 3 secondary regions subcontracted to RegionNet until M18 (named, rates disclosed); TPF bench = 6 named engineers (thin but real)",

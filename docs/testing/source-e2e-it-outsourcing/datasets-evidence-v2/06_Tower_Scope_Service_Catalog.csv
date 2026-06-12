@@ -1,0 +1,7 @@
+tower_id,tower,included_services,volumetric_basis,explicit_exclusions
+T1,Application Support (AD/AM),"L2/L3 incident & problem, minor enhancements <=40h, batch ops, interface support, release/deploy support, 24x7 for Tier-0/1",412 apps per Exhibit 01,"Major projects >40h, product roadmap, PSS/TPF core development (retained+separate contract)"
+T2,Infrastructure Operations,"zOS ops, VMware/private cloud, AWS/Azure ops, DB platform ops, storage/backup, monitoring/event mgmt, capacity & patch ops",Volumetrics per Exhibit 03,"Public-cloud cost ownership (FinOps retained), DC facilities/colo contracts"
+T3,Service Desk,"L1/L1.5 omnichannel (voice/chat/portal), crew emergency line 24x7, VIP support, IRROPS surge protocol",~1.15M contacts/yr per Exhibit 02,HR/payroll policy questions (HR shared services)
+T4,EUC & Field Services,"Hub desk-side (14 hubs), depot/IMACD, SOE/Intune/Jamf engineering, patch ops, device lifecycle","96,200 endpoints per Exhibit 03","Managed print (separate MPS), telecom carrier contracts"
+T5,Network Operations,"NOC 24x7, LAN/WLAN ops at 214 sites, WAN coordination, voice/CC platform ops",Sites per Exhibit 03,"Carrier circuits ownership, OT/airfield systems"
+T6,Cross-tower,"SRE & automation factory, ServiceNow platform ops, observability, shift-left programs, reporting",Applies across T1-T5,ITSM license ownership (retained)
