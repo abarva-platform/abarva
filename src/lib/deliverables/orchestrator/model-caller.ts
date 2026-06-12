@@ -5,13 +5,16 @@
 // audited call with its own (generous) token budget and a workflow tag that records
 // the module / deliverable / pass. Board-grade work runs on claude-opus-4-8.
 
-import { getAuditedAnthropicClient } from '@/lib/agent/stream';
-import type { AiDataClass } from '@/lib/integrations/ai-egress';
-import { runDeliverableOrchestration } from './orchestrator';
-import type { ModelCaller, OrchestrationOptions, OrchestrationResult } from './orchestrator';
-import type { DeliverableIntelligenceRequest, PassPrompt } from './types';
-
-const DEFAULT_BOARD_MODEL = 'claude-opus-4-8';
+import { getAuditedAnthropicClient } from "@/lib/agent/stream";
+import type { AiDataClass } from "@/lib/integrations/ai-egress";
+import { resolveDocumentPolicy } from "@/lib/ai/document-generation-policy";
+import { runDeliverableOrchestration } from "./orchestrator";
+import type {
+  ModelCaller,
+  OrchestrationOptions,
+  OrchestrationResult,
+} from "./orchestrator";
+import type { DeliverableIntelligenceRequest, PassPrompt } from "./types";
 
 export interface AuditedModelCallerOptions {
   tenantId: string;
@@ -25,16 +28,25 @@ export interface AuditedModelCallerOptions {
 }
 
 function extractText(content: Array<{ type: string; text?: string }>): string {
-  return content.map((b) => (b.type === 'text' ? (b.text ?? '') : '')).join('').trim();
+  return content
+    .map((b) => (b.type === "text" ? (b.text ?? "") : ""))
+    .join("")
+    .trim();
 }
 
 /**
  * Build a ModelCaller bound to one tenant/user. The orchestrator calls it once per
  * pass; this wraps each call in the audited egress with a pass-specific workflow tag.
  */
-export function createAuditedModelCaller(opts: AuditedModelCallerOptions): ModelCaller {
-  const model = opts.model ?? DEFAULT_BOARD_MODEL;
+export function createAuditedModelCaller(
+  opts: AuditedModelCallerOptions,
+): ModelCaller {
   return async (prompt: PassPrompt, req: DeliverableIntelligenceRequest) => {
+    // Resolve the model from the central policy by the deliverable's tier
+    // (tier-4 packages → large-package model), unless the caller pinned one.
+    const model =
+      opts.model ??
+      resolveDocumentPolicy({ deliverableType: req.deliverableType }).model;
     const fullPrompt = `${prompt.system}\n\n${prompt.user}`;
     const { client } = await getAuditedAnthropicClient({
       tenantId: opts.tenantId,
@@ -42,7 +54,7 @@ export function createAuditedModelCaller(opts: AuditedModelCallerOptions): Model
       workflow: `deliverable:${req.module}:${req.deliverableType}:${prompt.pass}`,
       prompt: fullPrompt,
       model,
-      dataClass: opts.dataClass ?? 'confidential',
+      dataClass: opts.dataClass ?? "confidential",
       ...(opts.artifactId !== undefined ? { artifactId: opts.artifactId } : {}),
       artifactType: `deliverable_${req.deliverableType}`,
       metadata: {
@@ -63,7 +75,7 @@ export function createAuditedModelCaller(opts: AuditedModelCallerOptions): Model
         model,
         max_tokens: prompt.maxTokens,
         system: prompt.system,
-        messages: [{ role: 'user', content: prompt.user }],
+        messages: [{ role: "user", content: prompt.user }],
       })
       .finalMessage();
 
@@ -81,5 +93,9 @@ export async function generateDeliverable(
   opts: AuditedModelCallerOptions,
   orchestrationOpts?: OrchestrationOptions,
 ): Promise<OrchestrationResult> {
-  return runDeliverableOrchestration(req, createAuditedModelCaller(opts), orchestrationOpts);
+  return runDeliverableOrchestration(
+    req,
+    createAuditedModelCaller(opts),
+    orchestrationOpts,
+  );
 }
