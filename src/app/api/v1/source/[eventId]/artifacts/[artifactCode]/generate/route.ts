@@ -16,7 +16,10 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
-import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
+import {
+  preflightAnthropicDirectClient,
+  type AnthropicTool,
+} from "@/lib/integrations/ai-egress";
 import type { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { getActiveClientRow } from "@/lib/active-client";
@@ -43,6 +46,11 @@ import {
   type SourceArtifactQualityGateMetadata,
 } from "@/lib/source/agent-generation/quality-review";
 import {
+  CONSULTING_GRADE_DIMENSIONS,
+  CONSULTING_GRADE_MIN_SCORE,
+  CONSULTING_GRADE_STANDARD_ID,
+} from "@/lib/deliverables/quality/consulting-grade-rubric";
+import {
   artifactStateRowToView,
   type SourceEventArtifactState,
   type SourceEventArtifactStateRow,
@@ -59,6 +67,76 @@ import {
 
 const REGISTRY_GENERATED_MIME = "text/markdown";
 const INLINE_REGISTRY_URI_PREFIX = "inline://source-event-artifact-state";
+const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
+const SOURCE_QUALITY_REVIEW_TOOL: AnthropicTool = {
+  name: SOURCE_QUALITY_REVIEW_TOOL_NAME,
+  description:
+    "Record the strict partner-grade quality review as compact structured data.",
+  input_schema: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      standardId: { type: "string", const: CONSULTING_GRADE_STANDARD_ID },
+      minRequiredScore: { type: "number", const: CONSULTING_GRADE_MIN_SCORE },
+      artifactCode: { type: "string" },
+      artifactName: { type: "string" },
+      pass: { type: "boolean" },
+      overallScore: { type: "number", minimum: 0, maximum: 10 },
+      dimensionScores: {
+        type: "array",
+        minItems: CONSULTING_GRADE_DIMENSIONS.length,
+        maxItems: CONSULTING_GRADE_DIMENSIONS.length,
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            id: {
+              type: "string",
+              enum: CONSULTING_GRADE_DIMENSIONS.map(
+                (dimension) => dimension.id,
+              ),
+            },
+            score: { type: "number", minimum: 0, maximum: 10 },
+            rationale: { type: "string", maxLength: 280 },
+            requiredFixes: {
+              type: "array",
+              maxItems: 3,
+              items: { type: "string", maxLength: 180 },
+            },
+          },
+          required: ["id", "score", "rationale", "requiredFixes"],
+        },
+      },
+      unsupportedClaims: {
+        type: "array",
+        maxItems: 8,
+        items: { type: "string", maxLength: 220 },
+      },
+      missingEvidence: {
+        type: "array",
+        maxItems: 8,
+        items: { type: "string", maxLength: 220 },
+      },
+      rewriteGuidance: {
+        type: "array",
+        maxItems: 8,
+        items: { type: "string", maxLength: 220 },
+      },
+    },
+    required: [
+      "standardId",
+      "minRequiredScore",
+      "artifactCode",
+      "artifactName",
+      "pass",
+      "overallScore",
+      "dimensionScores",
+      "unsupportedClaims",
+      "missingEvidence",
+      "rewriteGuidance",
+    ],
+  },
+};
 
 function safeRegistryFilename(
   artifactCode: string,
@@ -692,15 +770,17 @@ async function runConsultingGradeReview(args: {
   }
   const response = await preflight.client.messages.create({
     model: args.model,
-    max_tokens: 2200,
+    max_tokens: 2500,
     system:
-      "You are a strict consulting-deliverable quality evaluator. Return valid JSON only.",
+      "You are a strict consulting-deliverable quality evaluator. Use the record_source_quality_review tool exactly once.",
+    tools: [SOURCE_QUALITY_REVIEW_TOOL],
+    tool_choice: {
+      type: "tool",
+      name: SOURCE_QUALITY_REVIEW_TOOL_NAME,
+    },
     messages: [{ role: "user", content: reviewPrompt }],
   });
-  const raw = response.content
-    .map((block) => (block.type === "text" ? block.text : ""))
-    .join("")
-    .trim();
+  const raw = extractSourceQualityReviewPayload(response.content);
   try {
     return {
       ok: true,
@@ -717,19 +797,21 @@ async function runConsultingGradeReview(args: {
         : "Claude returned invalid quality-review JSON.";
     const retryResponse = await preflight.client.messages.create({
       model: args.model,
-      max_tokens: 2200,
+      max_tokens: 2500,
       system: [
         "You are a strict consulting-deliverable quality evaluator.",
-        "Your previous response was invalid JSON.",
-        "Return one compact, valid JSON object only.",
-        "Do not use markdown fences, comments, trailing commas, or prose.",
+        "Your previous response was not parseable as the required structured review.",
+        "Use the record_source_quality_review tool exactly once.",
+        "Keep rationales and fixes concise.",
       ].join(" "),
+      tools: [SOURCE_QUALITY_REVIEW_TOOL],
+      tool_choice: {
+        type: "tool",
+        name: SOURCE_QUALITY_REVIEW_TOOL_NAME,
+      },
       messages: [{ role: "user", content: reviewPrompt }],
     });
-    const retryRaw = retryResponse.content
-      .map((block) => (block.type === "text" ? block.text : ""))
-      .join("")
-      .trim();
+    const retryRaw = extractSourceQualityReviewPayload(retryResponse.content);
     try {
       return {
         ok: true,
@@ -757,6 +839,21 @@ async function runConsultingGradeReview(args: {
       };
     }
   }
+}
+
+function extractSourceQualityReviewPayload(
+  content: Array<{ type: string; name?: string; input?: unknown; text?: string }>,
+): string {
+  const toolUse = content.find(
+    (block) =>
+      block.type === "tool_use" &&
+      block.name === SOURCE_QUALITY_REVIEW_TOOL_NAME,
+  );
+  if (toolUse) return JSON.stringify(toolUse.input ?? {});
+  return content
+    .map((block) => (block.type === "text" ? block.text ?? "" : ""))
+    .join("")
+    .trim();
 }
 
 function buildDeterministicFallbackBody(args: {
