@@ -207,6 +207,81 @@ describe('buildSourceGenerationContext', () => {
     ]);
   });
 
+  it('binds the latest uploaded artifact per filename when live crawls re-upload evidence', async () => {
+    getSourcingEvent.mockResolvedValue({
+      ...makeSeedEvent(),
+      id: '522eedf2-ff6b-4307-b312-3e0903c6fd42',
+    });
+    isUuid.mockImplementation(
+      (value: string) => value === '522eedf2-ff6b-4307-b312-3e0903c6fd42',
+    );
+    mockUploadedEvidenceQueries({
+      artifacts: [
+        {
+          id: 'new-risk',
+          original_name: '13_Security_Compliance_Control_Posture.csv',
+          artifact_family: 'other',
+          source_format: 'csv',
+          parse_status: 'parsed',
+          evidence_state: 'parsed_uncited',
+          stage_key: 'scope',
+          source_origin: 'uploaded',
+          created_at: '2026-06-12T08:00:00.000Z',
+        },
+        {
+          id: 'generated-d09',
+          original_name: 'd09_rfp_pack-aa559505.md',
+          artifact_family: 'rfp',
+          source_format: 'markdown',
+          parse_status: 'pending',
+          evidence_state: 'unparsed',
+          stage_key: 'rfp',
+          source_origin: 'generated',
+          created_at: '2026-06-12T07:59:00.000Z',
+        },
+        {
+          id: 'old-risk',
+          original_name: '13_Security_Compliance_Control_Posture.csv',
+          artifact_family: 'other',
+          source_format: 'csv',
+          parse_status: 'pending',
+          evidence_state: 'unparsed',
+          stage_key: 'scope',
+          source_origin: 'uploaded',
+          created_at: '2026-06-12T07:00:00.000Z',
+        },
+      ],
+      chunks: [
+        {
+          artifact_id: 'new-risk',
+          chunk_text:
+            'CSPM backlog includes 27 critical findings and patch compliance at 88.5%.',
+          confidence: 0.91,
+        },
+        {
+          artifact_id: 'old-risk',
+          chunk_text: 'stale risk row',
+          confidence: 0.91,
+        },
+      ],
+    });
+
+    const ctx = await buildSourceGenerationContext(
+      '522eedf2-ff6b-4307-b312-3e0903c6fd42',
+    );
+
+    expect(ctx?.uploadedEvidence).toEqual([
+      expect.objectContaining({
+        id: 'new-risk',
+        originalName: '13_Security_Compliance_Control_Posture.csv',
+        parseStatus: 'parsed',
+        chunkExcerpts: [
+          'CSPM backlog includes 27 critical findings and patch compliance at 88.5%.',
+        ],
+      }),
+    ]);
+  });
+
   it('re-binds seeded golden slugs to the persisted event UUID before substrate reads', async () => {
     getSourcingEvent.mockResolvedValue(makeSeedEvent());
     isUuid.mockImplementation((value: string) =>
