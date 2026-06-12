@@ -144,6 +144,61 @@ Done.`,
     );
   });
 
+  it("accepts snake_case top-level dimension score arrays", () => {
+    const review = parseConsultingGradeReviewJson({
+      artifactCode: "d09_rfp_pack",
+      artifactName: "RFP Package",
+      raw: JSON.stringify({
+        pass: true,
+        overallScore: 9,
+        dimension_scores: CONSULTING_GRADE_DIMENSIONS.map((dimension) => ({
+          dimension_id: dimension.id,
+          score: 8,
+          rationale: `Meets ${dimension.label}.`,
+          required_fixes: [],
+        })),
+        unsupportedClaims: [],
+        missingEvidence: [],
+        rewriteGuidance: [],
+      }),
+    });
+
+    expect(review.pass).toBe(true);
+    expect(review.dimensionScores.every((score) => score.score === 8)).toBe(
+      true,
+    );
+  });
+
+  it("accepts keyed rubric score maps", () => {
+    const scores = Object.fromEntries(
+      CONSULTING_GRADE_DIMENSIONS.map((dimension) => [
+        dimension.id,
+        {
+          score: 9,
+          rationale: `Strong ${dimension.label}.`,
+          requiredFixes: [],
+        },
+      ]),
+    );
+    const review = parseConsultingGradeReviewJson({
+      artifactCode: "d09_rfp_pack",
+      artifactName: "RFP Package",
+      raw: JSON.stringify({
+        pass: true,
+        overallScore: 9,
+        scores,
+        unsupportedClaims: [],
+        missingEvidence: [],
+        rewriteGuidance: [],
+      }),
+    });
+
+    expect(review.pass).toBe(true);
+    expect(review.dimensionScores.map((score) => score.id)).toEqual(
+      CONSULTING_GRADE_DIMENSIONS.map((dimension) => dimension.id),
+    );
+  });
+
   it("rejects missing dimension scores instead of silently manufacturing zeroes", () => {
     expect(() =>
       parseConsultingGradeReviewJson({
@@ -157,7 +212,7 @@ Done.`,
           rewriteGuidance: [],
         }),
       }),
-    ).toThrow("missing dimensionScores array");
+    ).toThrow("missing dimensionScores array or equivalent");
   });
 
   it("rejects unrecognized dimension entries instead of silently manufacturing zeroes", () => {
