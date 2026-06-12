@@ -1438,7 +1438,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         <nav className="fb-nav">
           <div className="wrap">
             <img
-              src="/brand/abarva-logo-inverse.svg"
+              src="/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg"
               alt="AbarVa"
               style={{ height: 24, width: 'auto', display: 'block' }}
             />
@@ -2117,7 +2117,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           }}
         >
           <img
-            src="/brand/abarva-logo.svg"
+            src="/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg"
             alt="AbarVa"
             style={{ height: 26, width: 'auto', display: 'block' }}
           />
