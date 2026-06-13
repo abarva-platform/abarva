@@ -1,0 +1,235 @@
+{
+  "version": "2026-06",
+  "purpose": "AbarVa product and client environment identity/RBAC baseline before Azure subscription vending.",
+  "principles": [
+    "least_privilege",
+    "managed_identity_first",
+    "no_persistent_agent_owner_access",
+    "breakglass_documented_and_alerted",
+    "human_approval_for_broad_rbac",
+    "client_private_planes_isolated",
+    "no_phi_pii",
+    "auditable_operator_jobs"
+  ],
+  "roleDefinitions": [
+    {
+      "key": "breakglass-owner",
+      "displayName": "Breakglass Owner",
+      "assignmentScope": "subscription",
+      "persistence": "persistent_but_alerted",
+      "allowedActions": ["emergency_recovery", "subscription_repair"],
+      "requiresApproval": true,
+      "notes": "Used only when normal least-privilege paths fail; all use must be recorded in the execution ledger."
+    },
+    {
+      "key": "platform-maintainer",
+      "displayName": "Platform Maintainer",
+      "assignmentScope": "resource_group_or_subscription_limited",
+      "persistence": "persistent",
+      "allowedActions": [
+        "manage_aca",
+        "manage_acr",
+        "manage_observability",
+        "read_keyvault_metadata"
+      ],
+      "requiresApproval": false,
+      "notes": "Default engineering operations role for product environments; does not grant broad Owner."
+    },
+    {
+      "key": "release-operator",
+      "displayName": "Release Operator",
+      "assignmentScope": "product_preview_or_product_prod",
+      "persistence": "timeboxed",
+      "allowedActions": [
+        "run_deploy_job",
+        "shift_product_preview_traffic",
+        "prepare_product_prod_release"
+      ],
+      "requiresApproval": true,
+      "notes": "Product Prod deploys and traffic shifts remain explicit approval gates."
+    },
+    {
+      "key": "data-plane-operator",
+      "displayName": "Data Plane Operator",
+      "assignmentScope": "client_preprod_or_client_prod_resource_group",
+      "persistence": "timeboxed",
+      "allowedActions": [
+        "run_migration_job",
+        "run_connectivity_smoke",
+        "run_readonly_healthcheck"
+      ],
+      "requiresApproval": true,
+      "notes": "Client Prod data actions require separate approval; no laptop direct DB writes."
+    },
+    {
+      "key": "ingestion-operator",
+      "displayName": "Ingestion Operator",
+      "assignmentScope": "client_preprod_first",
+      "persistence": "timeboxed",
+      "allowedActions": [
+        "run_governed_ingestion",
+        "stage_blob_files",
+        "run_index_refresh",
+        "produce_ingestion_receipt"
+      ],
+      "requiresApproval": true,
+      "notes": "No PHI/PII. Uploads must produce lineage, parser, commit, index, retrieval, and citation evidence."
+    },
+    {
+      "key": "read-only-auditor",
+      "displayName": "Read-only Auditor",
+      "assignmentScope": "subscription_or_resource_group",
+      "persistence": "persistent_or_timeboxed",
+      "allowedActions": ["read_configuration", "read_logs", "read_evidence"],
+      "requiresApproval": false,
+      "notes": "Default role for health checks and external review; no mutation permissions."
+    },
+    {
+      "key": "agent-operator",
+      "displayName": "Agent Operator",
+      "assignmentScope": "job_or_resource_group_limited",
+      "persistence": "timeboxed",
+      "allowedActions": [
+        "run_preapproved_readonly_jobs",
+        "prepare_reports",
+        "prepare_commands"
+      ],
+      "requiresApproval": true,
+      "notes": "Agents may not receive persistent Owner/User Access Administrator and must stop at human approval gates."
+    }
+  ],
+  "environmentRoleMatrix": {
+    "product-dev": {
+      "persistent": ["platform-maintainer", "read-only-auditor"],
+      "timeboxed": ["agent-operator", "release-operator"],
+      "approvalRequiredFor": [
+        "breakglass-owner",
+        "broad_rbac",
+        "subscription_move"
+      ]
+    },
+    "product-preview": {
+      "persistent": ["platform-maintainer", "read-only-auditor"],
+      "timeboxed": ["agent-operator", "release-operator", "ingestion-operator"],
+      "approvalRequiredFor": [
+        "release-operator",
+        "breakglass-owner",
+        "traffic_shift",
+        "client_approved_redacted_data"
+      ]
+    },
+    "product-prod": {
+      "persistent": ["platform-maintainer", "read-only-auditor"],
+      "timeboxed": ["release-operator"],
+      "approvalRequiredFor": [
+        "release-operator",
+        "breakglass-owner",
+        "traffic_shift",
+        "dns_change",
+        "production_deploy"
+      ]
+    },
+    "client-preprod": {
+      "persistent": ["read-only-auditor"],
+      "timeboxed": [
+        "data-plane-operator",
+        "ingestion-operator",
+        "agent-operator"
+      ],
+      "approvalRequiredFor": [
+        "client_data_load",
+        "migration_job",
+        "index_refresh"
+      ]
+    },
+    "client-prod": {
+      "persistent": ["read-only-auditor"],
+      "timeboxed": ["data-plane-operator"],
+      "approvalRequiredFor": [
+        "any_client_prod_data_action",
+        "migration_job",
+        "index_refresh",
+        "breakglass-owner"
+      ]
+    }
+  },
+  "managedIdentities": [
+    {
+      "key": "aca-web-runtime",
+      "allowedScopes": ["product-dev", "product-preview", "product-prod"],
+      "permissions": [
+        "pull_acr_image",
+        "read_runtime_secrets",
+        "write_app_logs"
+      ],
+      "disallowedPermissions": [
+        "owner",
+        "user_access_administrator",
+        "direct_database_admin"
+      ]
+    },
+    {
+      "key": "aca-operator-job",
+      "allowedScopes": [
+        "product-dev",
+        "product-preview",
+        "client-preprod",
+        "client-prod"
+      ],
+      "permissions": [
+        "read_keyvault_secret_by_name",
+        "connect_private_data_plane",
+        "write_job_logs"
+      ],
+      "disallowedPermissions": ["owner", "user_access_administrator"]
+    },
+    {
+      "key": "ingestion-worker",
+      "allowedScopes": ["client-preprod", "client-prod"],
+      "permissions": [
+        "read_staged_blobs",
+        "write_context_rows",
+        "refresh_search_index",
+        "write_ingestion_receipts"
+      ],
+      "disallowedPermissions": [
+        "owner",
+        "user_access_administrator",
+        "bypass_governed_loader",
+        "accept_phi",
+        "accept_pii"
+      ]
+    }
+  ],
+  "approvalGates": [
+    "subscription_creation",
+    "subscription_management_group_move",
+    "owner_or_user_access_administrator_assignment",
+    "product_prod_deploy",
+    "product_prod_traffic_shift",
+    "dns_change",
+    "client_prod_data_action",
+    "client_prod_migration",
+    "client_prod_index_refresh",
+    "breakglass_use",
+    "phi_pii_exception"
+  ],
+  "forbidden": [
+    "persistent_agent_owner_access",
+    "agent_user_access_administrator",
+    "direct_laptop_private_db_write",
+    "real_client_data_in_product_dev",
+    "phi_upload",
+    "pii_upload",
+    "unguarded_client_prod_mutation"
+  ],
+  "evidenceRequired": [
+    "role_assignment_export",
+    "managed_identity_assignment_export",
+    "key_vault_access_policy_or_rbac_export",
+    "approval_record",
+    "execution_ledger_entry",
+    "activity_log_entry",
+    "rollback_or_access_removal_step"
+  ]
+}
