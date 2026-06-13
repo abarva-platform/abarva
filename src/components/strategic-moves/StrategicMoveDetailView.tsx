@@ -36,6 +36,8 @@ interface Props {
   /** Discovery Intake (Tier B): gates the current-state assessment template
    *  download link. Computed server-side from `discovery_intake_v2`. */
   discoveryIntakeEnabled?: boolean;
+  /** Workspace Explorer surfacing for Moves, flag-gated server-side. */
+  workspaceExplorerEnabled?: boolean;
 }
 
 function formatRole(role: string): string {
@@ -427,6 +429,7 @@ function RightPane({
   linkedSourceEvent,
   decisionThreadId,
   discoveryIntakeEnabled = false,
+  workspaceExplorerEnabled = false,
 }: {
   move: StrategicMove;
   activeTab: Tab;
@@ -434,6 +437,7 @@ function RightPane({
   linkedSourceEvent?: LinkedSourceEvent | null;
   decisionThreadId?: string | null;
   discoveryIntakeEnabled?: boolean;
+  workspaceExplorerEnabled?: boolean;
 }) {
   const primary = primaryAction(move);
   const secondary = secondaryAction(move);
@@ -465,6 +469,15 @@ function RightPane({
                 href={`/dossier/${decisionThreadId}`}
               >
                 View in Dossier
+              </Link>
+            )}
+            {workspaceExplorerEnabled && (
+              <Link
+                data-testid="moves-workspace-chip"
+                className={styles.btnGhost}
+                href={`/strategic-moves/${move.id}/workspace`}
+              >
+                Workspace ↗
               </Link>
             )}
             {secondary && (
@@ -519,6 +532,7 @@ export function StrategicMoveDetailView({
   decisionThreadId = null,
   originatingIntelligenceSessionId = null,
   discoveryIntakeEnabled = false,
+  workspaceExplorerEnabled = false,
 }: Props) {
   return (
     <div className={styles.page}>
@@ -543,6 +557,7 @@ export function StrategicMoveDetailView({
               linkedSourceEvent={linkedSourceEvent}
               decisionThreadId={decisionThreadId}
               discoveryIntakeEnabled={discoveryIntakeEnabled}
+              workspaceExplorerEnabled={workspaceExplorerEnabled}
             />
           }
         />
