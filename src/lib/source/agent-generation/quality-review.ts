@@ -15,14 +15,14 @@ import {
 } from "./prompt-registry";
 import type { SourceGenerationContext } from "./types";
 
-const SOURCE_CONSULTING_GRADE_CODES = new Set([
-  "d09_rfp_pack",
-  // Strategy-stage narrative deliverables — authored through the same
-  // consulting-grade gate (author → review → rewrite, min 8/10) so the
-  // Strategy stage is fully board-grade generatable.
-  "d02_value_target",
-  "d03_archetype_decision",
-]);
+// The consulting-grade gate's review rubric is RFP-specific (it grades against
+// D09 exhibits, the coverage map, and RFP §-structure). It only fits d09. Short
+// strategy docs (d02/d03) were forced through it and always blocked on RFP
+// criteria they should not have — they now generate single-pass on the
+// board-grade model (like d01, which is board-grade with no gate) + the bound
+// uploaded evidence. Making the gate artifact-aware (per-artifact rubric) is the
+// follow-up that would let d02/d03 be rigorously gated against their own rubric.
+const SOURCE_CONSULTING_GRADE_CODES = new Set(["d09_rfp_pack"]);
 
 export interface SourceArtifactQualityGateMetadata {
   required: boolean;

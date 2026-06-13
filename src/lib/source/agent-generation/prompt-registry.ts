@@ -14,7 +14,18 @@ import type {
   SourceGenerationContext,
 } from "./types";
 
-const DEFAULT_MODEL = "claude-sonnet-4-6";
+// Environment-tiered model selection. Each environment (dev / preprod / prod,
+// and per-client preprod / prod) sets these via env so the highest-quality
+// (most expensive) model is reserved for the highest environments — no code
+// change per environment.
+//   - DEFAULT_MODEL: non-gated drafts (fast, lower cost).
+//   - BOARD_GRADE_MODEL: gated/board-grade deliverables (d02/d03/d09); defaults
+//     to the most capable model so prod gets top quality unless a lower env
+//     dials it down via ABARVA_SOURCE_BOARD_GRADE_MODEL.
+const DEFAULT_MODEL =
+  process.env.ABARVA_SOURCE_DEFAULT_MODEL?.trim() || "claude-sonnet-4-6";
+const BOARD_GRADE_MODEL =
+  process.env.ABARVA_SOURCE_BOARD_GRADE_MODEL?.trim() || "claude-opus-4-8";
 // Practical ceiling — 4000 output tokens produces ~10–12 pages
 // of polished markdown in ~30–45s wall-clock. Above 4000 the marginal
 // quality is small and the wall-clock blows past Vercel function
@@ -109,8 +120,8 @@ Tone: tight. 600-1200 words total. No filler. Cite the trigger from the event in
 
   d02_value_target: {
     artifactCode: "d02_value_target",
-    version: 2,
-    model: DEFAULT_MODEL,
+    version: 3,
+    model: BOARD_GRADE_MODEL,
     // Short doc (600-1000 words). Cap output so the draft + consulting-grade
     // review + rewrite all complete inside the synchronous request budget on
     // the ACA runtime (the 4000-token default overran and 504'd mid-rewrite).
@@ -162,8 +173,8 @@ Requirements:
 
   d03_archetype_decision: {
     artifactCode: "d03_archetype_decision",
-    version: 2,
-    model: DEFAULT_MODEL,
+    version: 3,
+    model: BOARD_GRADE_MODEL,
     // Short doc (500-900 words). Cap output so the gated draft + review +
     // rewrite fit the synchronous request budget on ACA (see d02 note).
     maxTokens: 2_000,
@@ -266,8 +277,8 @@ Tone: precise, list-heavy. The "in scope" section names systems, services, hours
 
   d09_rfp_pack: {
     artifactCode: "d09_rfp_pack",
-    version: 8,
-    model: DEFAULT_MODEL,
+    version: 9,
+    model: BOARD_GRADE_MODEL,
     maxTokens: 6200,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
     upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth"],
