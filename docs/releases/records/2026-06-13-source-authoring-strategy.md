@@ -51,15 +51,21 @@ this automatically flips d02/d03 from **"Prepare" (blocked)** to **"Generate" (o
   required sections; user message binds d01 when present, flags the gap when absent).
 - PASS: `npx eslint` on changed files · `npx tsc --noEmit` no errors in changed files.
 
-## Rollout
+## Rollout Plan
 
 Merge through PR + CI. No deploy step changes behaviour beyond making the two codes generatable. Live
 generation proof (do d02/d03 actually clear 8/10 on a real event) runs when the SkyHarbor source event is
 originated and walked at the state level.
 
-## Rollback
+## Rollback Plan
 
 Revert the PR — removes the two registry entries and the two gate-set codes. No data/schema to unwind.
+
+## Audit Evidence
+
+PR diff (two prompt-registry entries + two gate-set codes + unit tests + this record), the PR CI checks,
+and the jest/eslint/tsc output in QA / Validation. Generation egress itself is audited at runtime by the
+existing `preflightAnthropicDirectClient` path (ai_egress_audit) when d02/d03 are generated on a live event.
 
 ## Known Gaps
 
