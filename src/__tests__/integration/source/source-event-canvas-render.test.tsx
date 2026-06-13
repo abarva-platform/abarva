@@ -250,8 +250,7 @@ function makeVendorResponseReadiness(): SourceVendorResponseCompleteness {
         nexusGuidance: "Complete required sections before comparison.",
         sentinelEvidenceNotes: [],
         stewardGateNotes: ["Do not advance until complete."],
-        atlasExecutiveImplication:
-          "Comparability confidence is reduced.",
+        atlasExecutiveImplication: "Comparability confidence is reduced.",
       },
     ],
   };
@@ -268,6 +267,7 @@ function render(
     vendorResponseReadiness?: SourceVendorResponseCompleteness;
     activityEntries?: ActivityEntry[];
     event?: Partial<SourcingEventSummary>;
+    workspaceExplorerEnabled?: boolean;
   } = {},
 ): string {
   return renderToStaticMarkup(
@@ -284,6 +284,7 @@ function render(
       activityEntries: options.activityEntries ?? [],
       tenantName: "Apex Retail Group",
       vendorResponseReadiness: options.vendorResponseReadiness,
+      workspaceExplorerEnabled: options.workspaceExplorerEnabled,
     }),
   );
 }
@@ -562,7 +563,8 @@ describe("UniversalCanvasShell · SSR render", () => {
         }),
       ],
       templateByCode: {
-        d13_vendor_responses: "# Vendor Response Pack\n\nReceived responses ...",
+        d13_vendor_responses:
+          "# Vendor Response Pack\n\nReceived responses ...",
       },
       vendorResponseReadiness: makeVendorResponseReadiness(),
     });
@@ -728,6 +730,21 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("source-canvas-tab-gate");
     expect(html).toContain("source-canvas-tab-evidence");
     expect(html).toContain("source-canvas-tab-log");
+    expect(html).not.toContain("source-workspace-explorer-chips");
+  });
+
+  it("declutters the canvas behind the Workspace Explorer flag", () => {
+    const html = render({ workspaceExplorerEnabled: true });
+    expect(html).toContain('data-workspace-explorer="source"');
+    expect(html).toContain("source-workspace-explorer-chips");
+    expect(html).toContain("source-workspace-chip");
+    expect(html).toContain("source-generate-chip");
+    expect(html).toContain('data-active-tab="workspace-explorer"');
+    expect(html).not.toContain("source-canvas-tab-document");
+    expect(html).not.toContain("source-canvas-tab-evidence");
+    expect(html).toContain(
+      "This canvas stays focused on the next move and the gate",
+    );
   });
 
   it("document tab is active by default and hides starter templates until authored", () => {
@@ -916,7 +933,9 @@ describe("UniversalCanvasShell · SSR render", () => {
       "source-canvas-document-body-download-xlsx-comparison-d19_pricing_workbook",
     );
     expect(html).toContain("Download workbook");
-    expect(html).toContain("Workbook templates stay available for governed intake.");
+    expect(html).toContain(
+      "Workbook templates stay available for governed intake.",
+    );
   });
 
   it("renders workbook download anchor on authored d19 pricing workbook", () => {
