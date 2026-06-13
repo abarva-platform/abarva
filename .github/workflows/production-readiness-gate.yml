@@ -185,6 +185,9 @@ jobs:
       - name: Verify Azure environment identity/RBAC model
         run: npm run azure:environment-rbac:verify
 
+      - name: Verify Azure environment naming, tags, and budgets
+        run: npm run azure:environment-cost-controls:verify
+
       # ── Step 5: TypeScript build check ────────────────────────────────────
       # Note: production-readiness-tracker.test.ts has a pre-existing failure
       # (AdminCanonShellV2 wiring check) that predates PROD3. That test is
