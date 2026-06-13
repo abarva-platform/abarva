@@ -241,3 +241,20 @@ export function applyCitationsToBody(
   });
   return out;
 }
+
+// Matches any raw internal source id that must never reach a client surface:
+// the `tower_*` / `enterprise_context_*` table namespaces and the
+// `document_extract:` / `method:` / `archetype:` prefixed ids.
+const INTERNAL_ID_RE =
+  /\b(?:tower_[a-z0-9_]+|enterprise_context_[a-z0-9_]+)\b|\b(?:document_extract|method|archetype):[a-z0-9_]+/gi;
+
+/**
+ * Final rendering pass: replace any raw internal source id left in a body with
+ * its human-readable label. Defense-in-depth for paths that inject `[source: id]`
+ * inline (the narrative generator, the deterministic markdown renderers) rather
+ * than numbered `[n]` citations — so a leaked `tower_*` / `document_extract:*` /
+ * `method:*` tag can never reach a client document. Idempotent on clean text.
+ */
+export function scrubInternalSourceTags(text: string): string {
+  return text.replace(INTERNAL_ID_RE, (m) => resolveSourceLabel(m).title);
+}

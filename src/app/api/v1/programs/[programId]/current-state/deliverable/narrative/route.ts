@@ -13,6 +13,10 @@ import { buildCurrentStateRecommendation } from "@/lib/programs/current-state-ma
 import { buildCurrentStatePlan } from "@/lib/programs/current-state-plan";
 import { generateDeliverable } from "@/lib/programs/deliverable-refinement";
 import { generateNarrativeDeliverable } from "@/lib/programs/deliverable-narrative";
+import {
+  resolveSourceLabel,
+  scrubInternalSourceTags,
+} from "@/lib/programs/deliverables/source-labels";
 import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
 import { getStrategicMoveById } from "@/lib/programs/queries";
 
@@ -30,12 +34,12 @@ function renderBaseMarkdown(
       lines.push(
         c.missingEvidence
           ? `- **[MISSING EVIDENCE]** ${c.text.replace(/^\[MISSING EVIDENCE\]\s*/, "")}`
-          : `- ${c.text} _(source: ${c.citation})_`,
+          : `- ${c.text} _(source: ${resolveSourceLabel(c.citation ?? "").title})_`,
       );
     }
     lines.push("");
   }
-  return lines.join("\n");
+  return scrubInternalSourceTags(lines.join("\n"));
 }
 
 async function handle(req: NextRequest, programId: string) {

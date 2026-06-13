@@ -4,6 +4,7 @@ import {
   buildSourceRegister,
   findForbiddenTags,
   applyCitationsToBody,
+  scrubInternalSourceTags,
 } from "../source-labels";
 import { validateDeliverableQuality } from "../quality-validator";
 
@@ -58,6 +59,30 @@ describe("forbidden-tag detection", () => {
     expect(
       findForbiddenTags("The delivery baseline shows 9 deploys/month [2]."),
     ).toEqual([]);
+  });
+});
+
+describe("scrubInternalSourceTags — final rendering pass (no [n] map)", () => {
+  it("replaces an inline [source: tower_*] tag with its human label", () => {
+    const out = scrubInternalSourceTags(
+      "IT systems in scope [source: tower_cmdb_cis] are committed.",
+    );
+    expect(findForbiddenTags(out)).toEqual([]);
+    expect(out).toMatch(/Application|Systems/);
+    expect(out).not.toContain("tower_cmdb_cis");
+  });
+
+  it("scrubs every internal id class an LLM might echo", () => {
+    const out = scrubInternalSourceTags(
+      "From tower_workforce and tower_dora_metrics, plus document_extract:stakeholder_map and method:maturity_scoring.",
+    );
+    expect(findForbiddenTags(out)).toEqual([]);
+    expect(out).not.toMatch(/tower_|document_extract:|method:/);
+  });
+
+  it("is idempotent on already-clean prose", () => {
+    const clean = "The delivery baseline shows 9 deploys/month [2].";
+    expect(scrubInternalSourceTags(clean)).toBe(clean);
   });
 });
 

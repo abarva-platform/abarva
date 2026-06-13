@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from "react";
 import type { GeneratedDeliverable } from "@/lib/programs/deliverable-refinement";
+import { resolveSourceLabel } from "@/lib/programs/deliverables/source-labels";
 
 const INTENTS = ["quality", "structure", "depth", "audience", "tone"] as const;
 
@@ -168,7 +169,7 @@ export function DeliverableArtifactCard({
                       fontWeight: 600,
                     }}
                   >
-                    [MISSING EVIDENCE: {c.missingEvidence}]{" "}
+                    [MISSING EVIDENCE: {resolveSourceLabel(c.missingEvidence).title}]{" "}
                     <span
                       style={{ fontWeight: 400, color: "var(--abarva-stone)" }}
                     >
@@ -178,16 +179,18 @@ export function DeliverableArtifactCard({
                 ) : (
                   <span>
                     {c.text}
-                    <span
-                      style={{
-                        marginLeft: 6,
-                        fontFamily: "var(--abarva-mono)",
-                        fontSize: 10,
-                        color: "#3a6a4f",
-                      }}
-                    >
-                      · {c.citation}
-                    </span>
+                    {c.citation ? (
+                      <span
+                        style={{
+                          marginLeft: 6,
+                          fontFamily: "var(--abarva-mono)",
+                          fontSize: 10,
+                          color: "#3a6a4f",
+                        }}
+                      >
+                        · {resolveSourceLabel(c.citation).title}
+                      </span>
+                    ) : null}
                   </span>
                 )}
               </li>
