@@ -1,0 +1,39 @@
+{
+  "ledgerVersion": "2026-06",
+  "entries": [
+    {
+      "environmentKey": "product-dev",
+      "subscriptionDisplayName": "AbarVa Product Dev",
+      "subscriptionId": null,
+      "status": "planned",
+      "approval": {
+        "required": true,
+        "approvedBy": null,
+        "approvedAt": null,
+        "approvalEvidence": null
+      },
+      "scope": {
+        "subscriptionRole": "product-development",
+        "managementGroup": null,
+        "regions": ["eastus", "eastus2"],
+        "dataBoundary": "synthetic-fixture-engineering-test-only"
+      },
+      "controls": {
+        "azurePolicyAssigned": false,
+        "budgetCreated": false,
+        "tagsApplied": false,
+        "diagnosticsConfigured": false,
+        "privateNetworkingConfigured": false,
+        "managedIdentityConfigured": false
+      },
+      "evidence": {
+        "resourceParityReport": null,
+        "policyComplianceReport": null,
+        "budgetReport": null,
+        "connectivitySmokeReport": null,
+        "rollbackPlan": null
+      },
+      "exceptions": []
+    }
+  ]
+}
