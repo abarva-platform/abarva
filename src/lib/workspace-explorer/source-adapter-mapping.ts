@@ -29,6 +29,13 @@ function humanizeToken(value: string): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function sortableAuditTimestamp(value: unknown): string {
+  if (!value) return "";
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "string") return value;
+  return String(value);
+}
+
 function originToWorkspaceOrigin(
   origin: SourceArtifactOrigin,
 ): WorkspaceItemOrigin {
@@ -326,8 +333,12 @@ export function buildSourceWorkspaceItems(args: {
     ...args.evidenceStates.map(sourceEvidenceStateToWorkspaceItem),
     ...args.gateCriterionStates.map(sourceGateCriterionToWorkspaceItem),
   ].sort((a, b) => {
-    const aUpdated = a.audit.updatedAt ?? a.audit.createdAt ?? "";
-    const bUpdated = b.audit.updatedAt ?? b.audit.createdAt ?? "";
+    const aUpdated = sortableAuditTimestamp(
+      a.audit.updatedAt ?? a.audit.createdAt,
+    );
+    const bUpdated = sortableAuditTimestamp(
+      b.audit.updatedAt ?? b.audit.createdAt,
+    );
     return bUpdated.localeCompare(aUpdated);
   });
 }
