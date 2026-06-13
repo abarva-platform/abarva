@@ -40,7 +40,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
@@ -169,6 +169,12 @@ jobs:
 
       - name: Enforce deprecated pattern table write guard
         run: npm run audit:deprecated-pattern-table-writes
+
+      - name: Enforce control-plane tenant purity
+        run: npm run audit:control-plane-purity:check
+
+      - name: Enforce Vercel production runtime guard
+        run: npm run audit:vercel-production-runtime:check
 
       # ── Step 5: TypeScript build check ────────────────────────────────────
       # Note: production-readiness-tracker.test.ts has a pre-existing failure
