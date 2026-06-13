@@ -110,6 +110,7 @@ function evidenceStateToWorkspaceState(
 export function sourceRegistryArtifactToWorkspaceItem(
   record: SourceArtifactRegistryRecord,
 ): WorkspaceItem {
+  const citedSourceArtifactIds = record.citedSourceArtifactIds ?? [];
   return {
     id: record.id,
     name: record.originalName,
@@ -131,7 +132,14 @@ export function sourceRegistryArtifactToWorkspaceItem(
     )}`,
     href: `/api/v1/source/artifacts/${record.id}/download`,
     classification: record.dataClassification,
-    lineage: { cites: [], usedBy: [], status: "not_recorded" },
+    lineage:
+      citedSourceArtifactIds.length > 0
+        ? {
+            cites: citedSourceArtifactIds,
+            usedBy: [],
+            status: "recorded",
+          }
+        : { cites: [], usedBy: [], status: "not_recorded" },
     audit: {
       createdBy: record.createdBy,
       createdAt: record.createdAt,
