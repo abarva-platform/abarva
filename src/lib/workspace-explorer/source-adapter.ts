@@ -6,8 +6,11 @@ import {
   listEvidenceStatesForEvent,
   listGateCriterionStatesForEvent,
 } from "@/lib/source/canvas-substrate";
-import type { WorkspaceItem } from "./types";
-import { buildSourceWorkspaceItems } from "./source-adapter-mapping";
+import type { WorkspaceGenerateCandidate, WorkspaceItem } from "./types";
+import {
+  buildSourceGenerateCandidates,
+  buildSourceWorkspaceItems,
+} from "./source-adapter-mapping";
 
 export async function listSourceWorkspaceItems(
   sourceEventId: string,
@@ -35,5 +38,17 @@ export async function listSourceWorkspaceItems(
     artifactStates,
     evidenceStates,
     gateCriterionStates,
+  });
+}
+
+export async function listSourceWorkspaceGenerateCandidates(args: {
+  sourceEventId: string;
+  stageKey: string | null;
+}): Promise<WorkspaceGenerateCandidate[]> {
+  const artifactStates = await listArtifactStatesForEvent(args.sourceEventId);
+  return buildSourceGenerateCandidates({
+    sourceEventId: args.sourceEventId,
+    stageKey: args.stageKey,
+    artifactStates,
   });
 }

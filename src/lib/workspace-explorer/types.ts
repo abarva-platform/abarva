@@ -39,6 +39,25 @@ export interface WorkspaceItemAudit {
   readonly approvedAt?: string | null;
 }
 
+export interface WorkspaceGenerateCandidate {
+  readonly id: string;
+  readonly module: WorkspaceItemModule;
+  readonly artifactCode: string;
+  readonly label: string;
+  readonly description?: string | null;
+  readonly stageKey?: SourceStageKey | string | null;
+  readonly state: WorkspaceItemState;
+  readonly generateHref: string;
+  readonly reviewHref: string;
+}
+
+export interface WorkspaceGenerateIntent {
+  readonly module: WorkspaceItemModule;
+  readonly eventId: string;
+  readonly stageKey?: SourceStageKey | string | null;
+  readonly candidates: ReadonlyArray<WorkspaceGenerateCandidate>;
+}
+
 export interface WorkspaceItem {
   readonly id: string;
   readonly name: string;
@@ -49,6 +68,7 @@ export interface WorkspaceItem {
   readonly state: WorkspaceItemState;
   readonly version?: string | number | null;
   readonly stageKey?: SourceStageKey | string | null;
+  readonly artifactCode?: string | null;
   readonly sourceLabel?: string | null;
   readonly description?: string | null;
   readonly href?: string | null;

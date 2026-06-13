@@ -2,7 +2,10 @@
 
 import { useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type {
+  WorkspaceGenerateCandidate,
+  WorkspaceGenerateIntent,
   WorkspaceItem,
   WorkspaceItemKind,
 } from "@/lib/workspace-explorer/types";
@@ -13,6 +16,29 @@ interface WorkspaceExplorerProps {
   backHref: string;
   items: WorkspaceItem[];
   mode?: "page" | "drawer";
+  generateIntent?: WorkspaceGenerateIntent;
+}
+
+type GenerateResult =
+  | {
+      state: "idle";
+    }
+  | {
+      state: "success";
+      artifactName: string;
+      review: QualityGateSummary | null;
+      reviewHref: string;
+    }
+  | {
+      state: "error";
+      detail: string;
+      missingUpstream?: string[];
+    };
+
+interface QualityGateSummary {
+  passed: boolean;
+  attempts: number;
+  finalSummary: string;
 }
 
 const KIND_LABELS: Record<WorkspaceItemKind, string> = {
@@ -63,11 +89,20 @@ export function WorkspaceExplorer({
   backHref,
   items,
   mode = "page",
+  generateIntent,
 }: WorkspaceExplorerProps) {
+  const router = useRouter();
   const [activeKind, setActiveKind] = useState<WorkspaceItemKind | "all">(
     "all",
   );
   const [activeId, setActiveId] = useState(items[0]?.id ?? null);
+  const [selectedGenerateId, setSelectedGenerateId] = useState(
+    generateIntent?.candidates[0]?.id ?? "",
+  );
+  const [generatePending, setGeneratePending] = useState(false);
+  const [generateResult, setGenerateResult] = useState<GenerateResult>({
+    state: "idle",
+  });
   const counts = useMemo(() => {
     const next = new Map<WorkspaceItemKind, number>();
     for (const kind of KIND_ORDER) next.set(kind, 0);
@@ -84,6 +119,60 @@ export function WorkspaceExplorer({
     filtered[0] ??
     items[0] ??
     null;
+  const selectedGenerateCandidate =
+    generateIntent?.candidates.find(
+      (candidate) => candidate.id === selectedGenerateId,
+    ) ??
+    generateIntent?.candidates[0] ??
+    null;
+
+  const handleGenerate = async () => {
+    if (!selectedGenerateCandidate) return;
+    setGeneratePending(true);
+    setGenerateResult({ state: "idle" });
+    try {
+      const response = await fetch(selectedGenerateCandidate.generateHref, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+        detail?: string;
+        missingUpstream?: string[];
+        generation?: {
+          qualityGate?: QualityGateSummary | null;
+        };
+      } | null;
+      if (!response.ok || !payload) {
+        setGenerateResult({
+          state: "error",
+          detail:
+            payload?.detail ??
+            `Generation failed with HTTP ${response.status}.`,
+          missingUpstream: payload?.missingUpstream,
+        });
+        return;
+      }
+      setGenerateResult({
+        state: "success",
+        artifactName: selectedGenerateCandidate.label,
+        review: payload.generation?.qualityGate ?? null,
+        reviewHref: selectedGenerateCandidate.reviewHref,
+      });
+      router.refresh();
+    } catch (error) {
+      setGenerateResult({
+        state: "error",
+        detail:
+          error instanceof Error
+            ? error.message
+            : "Generation request failed before reaching the Source route.",
+      });
+    } finally {
+      setGeneratePending(false);
+    }
+  };
 
   return (
     <section
@@ -100,6 +189,18 @@ export function WorkspaceExplorer({
           Back to event
         </Link>
       </header>
+
+      {generateIntent ? (
+        <GeneratePanel
+          intent={generateIntent}
+          selected={selectedGenerateCandidate}
+          selectedId={selectedGenerateId}
+          pending={generatePending}
+          result={generateResult}
+          onSelect={setSelectedGenerateId}
+          onGenerate={handleGenerate}
+        />
+      ) : null}
 
       <div style={SHELL_STYLE}>
         <nav aria-label="Workspace groups" style={NAV_STYLE}>
@@ -211,6 +312,117 @@ export function WorkspaceExplorer({
   );
 }
 
+function GeneratePanel({
+  intent,
+  selected,
+  selectedId,
+  pending,
+  result,
+  onSelect,
+  onGenerate,
+}: {
+  intent: WorkspaceGenerateIntent;
+  selected: WorkspaceGenerateCandidate | null;
+  selectedId: string;
+  pending: boolean;
+  result: GenerateResult;
+  onSelect: (id: string) => void;
+  onGenerate: () => void;
+}) {
+  return (
+    <section
+      data-testid="workspace-generate-panel"
+      aria-label="Generate workspace artifact"
+      style={GENERATE_PANEL_STYLE}
+    >
+      <div>
+        <div style={EYEBROW_STYLE}>Generate</div>
+        <h2 style={GENERATE_TITLE_STYLE}>Draft into the workspace</h2>
+        <p style={PREVIEW_COPY_STYLE}>
+          Uses the existing {intent.module} generate route. Output stays draft
+          until a named human reviews it in the existing approval flow.
+        </p>
+      </div>
+      {intent.candidates.length > 0 ? (
+        <div style={GENERATE_CONTROLS_STYLE}>
+          <label style={GENERATE_LABEL_STYLE}>
+            Artifact
+            <select
+              value={selected?.id ?? selectedId}
+              onChange={(event) => onSelect(event.target.value)}
+              style={GENERATE_SELECT_STYLE}
+            >
+              {intent.candidates.map((candidate) => (
+                <option key={candidate.id} value={candidate.id}>
+                  {candidate.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {selected?.description ? (
+            <p style={GENERATE_DESCRIPTION_STYLE}>{selected.description}</p>
+          ) : null}
+          <button
+            type="button"
+            data-testid="workspace-generate-submit"
+            disabled={pending || !selected}
+            onClick={onGenerate}
+            style={{
+              ...ACTION_BUTTON_STYLE,
+              opacity: pending || !selected ? 0.55 : 1,
+            }}
+          >
+            {pending ? "Generating…" : "Generate draft"}
+          </button>
+          <GenerateResultView result={result} />
+        </div>
+      ) : (
+        <div style={GENERATE_EMPTY_STYLE}>
+          No supported generator is available for this stage yet. Use the
+          existing canvas authoring path for now.
+        </div>
+      )}
+    </section>
+  );
+}
+
+function GenerateResultView({ result }: { result: GenerateResult }) {
+  if (result.state === "idle") return null;
+  if (result.state === "error") {
+    return (
+      <div data-testid="workspace-generate-error" style={GENERATE_ERROR_STYLE}>
+        <strong>Generation blocked</strong>
+        <span>{result.detail}</span>
+        {result.missingUpstream && result.missingUpstream.length > 0 ? (
+          <span>Missing upstream: {result.missingUpstream.join(", ")}</span>
+        ) : null}
+      </div>
+    );
+  }
+  return (
+    <div
+      data-testid="workspace-generate-success"
+      style={GENERATE_SUCCESS_STYLE}
+    >
+      <strong>{result.artifactName} draft generated</strong>
+      {result.review ? (
+        <span>
+          Quality review: {result.review.passed ? "passed" : "blocked"} ·{" "}
+          {result.review.attempts} attempt(s). {result.review.finalSummary}
+        </span>
+      ) : (
+        <span>
+          This artifact did not require the consulting-grade quality gate on the
+          active generator path.
+        </span>
+      )}
+      <Link href={result.reviewHref} style={INLINE_REVIEW_LINK_STYLE}>
+        Review draft on canvas
+      </Link>
+    </div>
+  );
+}
+
 function navButtonStyle(active: boolean): CSSProperties {
   return {
     border: "none",
@@ -284,6 +496,102 @@ const BACK_LINK_STYLE: CSSProperties = {
   textDecoration: "none",
   font: "700 12px DM Sans, Arial, sans-serif",
   background: "#ffffff",
+};
+
+const GENERATE_PANEL_STYLE: CSSProperties = {
+  border: "1px solid #d8d5ce",
+  borderRadius: 8,
+  background: "#ffffff",
+  padding: 18,
+  marginBottom: 14,
+  display: "grid",
+  gridTemplateColumns: "minmax(260px, 0.8fr) minmax(320px, 1fr)",
+  gap: 18,
+  alignItems: "start",
+};
+
+const GENERATE_TITLE_STYLE: CSSProperties = {
+  margin: "6px 0 8px",
+  font: "700 22px/1.15 Georgia, serif",
+  letterSpacing: 0,
+  color: "#10172f",
+};
+
+const GENERATE_CONTROLS_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 10,
+};
+
+const GENERATE_LABEL_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 6,
+  font: "700 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace",
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  color: "#64748b",
+};
+
+const GENERATE_SELECT_STYLE: CSSProperties = {
+  border: "1px solid #d8d5ce",
+  borderRadius: 6,
+  padding: "10px 12px",
+  background: "#fbfaf7",
+  color: "#111827",
+  font: "600 13px/1.35 DM Sans, Arial, sans-serif",
+};
+
+const GENERATE_DESCRIPTION_STYLE: CSSProperties = {
+  margin: 0,
+  font: "500 13px/1.45 DM Sans, Arial, sans-serif",
+  color: "#475569",
+};
+
+const ACTION_BUTTON_STYLE: CSSProperties = {
+  justifySelf: "start",
+  border: "none",
+  borderRadius: 6,
+  background: "#10172f",
+  color: "#ffffff",
+  padding: "10px 13px",
+  font: "700 12px DM Sans, Arial, sans-serif",
+  cursor: "pointer",
+};
+
+const GENERATE_EMPTY_STYLE: CSSProperties = {
+  border: "1px solid #e5e1da",
+  borderRadius: 8,
+  padding: 14,
+  background: "#fbfaf7",
+  color: "#64748b",
+  font: "600 13px/1.45 DM Sans, Arial, sans-serif",
+};
+
+const GENERATE_SUCCESS_STYLE: CSSProperties = {
+  border: "1px solid #bbf7d0",
+  borderRadius: 8,
+  background: "#ecfdf3",
+  color: "#166534",
+  padding: 12,
+  display: "grid",
+  gap: 6,
+  font: "600 13px/1.45 DM Sans, Arial, sans-serif",
+};
+
+const GENERATE_ERROR_STYLE: CSSProperties = {
+  border: "1px solid #fed7aa",
+  borderRadius: 8,
+  background: "#fff7ed",
+  color: "#9a3412",
+  padding: 12,
+  display: "grid",
+  gap: 6,
+  font: "600 13px/1.45 DM Sans, Arial, sans-serif",
+};
+
+const INLINE_REVIEW_LINK_STYLE: CSSProperties = {
+  justifySelf: "start",
+  color: "#14532d",
+  font: "700 12px/1.35 DM Sans, Arial, sans-serif",
 };
 
 const SHELL_STYLE: CSSProperties = {

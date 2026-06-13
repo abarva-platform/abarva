@@ -1,5 +1,6 @@
 import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
 import { specByCode } from "@/lib/source/canonical-specs";
+import { listSupportedGenerationCodes } from "@/lib/source/agent-generation";
 import type {
   SourceArtifactApprovalState,
   SourceArtifactEvidenceState,
@@ -17,6 +18,7 @@ import type {
   WorkspaceItemKind,
   WorkspaceItemOrigin,
   WorkspaceItemState,
+  WorkspaceGenerateCandidate,
 } from "./types";
 
 function humanizeToken(value: string): string {
@@ -126,6 +128,7 @@ export function sourceRegistryArtifactToWorkspaceItem(
     }),
     version: record.version,
     stageKey: record.stageKey,
+    artifactCode: record.artifactKind,
     sourceLabel: "source_artifacts registry",
     description: `${humanizeToken(record.artifactFamily)} · ${humanizeToken(
       record.artifactKind,
@@ -169,6 +172,7 @@ export function sourceArtifactStateToWorkspaceItem(
     state: artifactStateToWorkspaceState(artifact.status),
     version: null,
     stageKey: artifact.stage,
+    artifactCode: artifact.artifactCode,
     sourceLabel: "Source canvas substrate",
     description:
       spec?.description ??
@@ -202,6 +206,7 @@ export function sourceEvidenceStateToWorkspaceItem(
     state: evidenceStateToWorkspaceState(evidence.currentState),
     version: null,
     stageKey: evidence.stage,
+    artifactCode: null,
     sourceLabel: "Source evidence readiness",
     description: evidence.notes ?? `${stageLabel} evidence requirement`,
     href: evidence.sourceArtifactId
@@ -237,6 +242,7 @@ export function sourceGateCriterionToWorkspaceItem(
           : "review",
     version: null,
     stageKey: criterion.fromStage,
+    artifactCode: null,
     sourceLabel: "Source gate criterion",
     description:
       criterion.notes ?? `Required before ${humanizeToken(criterion.toStage)}`,
@@ -259,6 +265,44 @@ export function sourceGateCriterionToWorkspaceItem(
     },
     blobPath: null,
   };
+}
+
+export function buildSourceGenerateCandidates(args: {
+  sourceEventId: string;
+  stageKey: string | null;
+  artifactStates: SourceEventArtifactState[];
+}): WorkspaceGenerateCandidate[] {
+  const supportedCodes = new Set(listSupportedGenerationCodes());
+  return args.artifactStates
+    .filter((artifact) => {
+      if (!supportedCodes.has(artifact.artifactCode)) return false;
+      if (args.stageKey && artifact.stage !== args.stageKey) return false;
+      return artifact.status !== "locked" && artifact.status !== "superseded";
+    })
+    .map((artifact) => {
+      const spec = specByCode(artifact.artifactCode);
+      return {
+        id: `source-generate:${artifact.artifactCode}`,
+        module: "source" as const,
+        artifactCode: artifact.artifactCode,
+        label: spec?.name ?? humanizeToken(artifact.artifactCode),
+        description: spec?.description ?? null,
+        stageKey: artifact.stage,
+        state: artifactStateToWorkspaceState(artifact.status),
+        generateHref: `/api/v1/source/${encodeURIComponent(
+          args.sourceEventId,
+        )}/artifacts/${encodeURIComponent(artifact.artifactCode)}/generate`,
+        reviewHref: `/source/events/${encodeURIComponent(
+          args.sourceEventId,
+        )}?stage=${encodeURIComponent(artifact.stage)}`,
+      };
+    })
+    .sort((a, b) => {
+      const aMissing = a.state === "missing" ? 0 : 1;
+      const bMissing = b.state === "missing" ? 0 : 1;
+      if (aMissing !== bMissing) return aMissing - bMissing;
+      return a.label.localeCompare(b.label);
+    });
 }
 
 export function buildSourceWorkspaceItems(args: {
