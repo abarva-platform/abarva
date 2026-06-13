@@ -145,6 +145,32 @@ describe("SourceWorkspaceAdapter mapping", () => {
     });
   });
 
+  it("sorts workspace items when the live DB adapter returns Date timestamps", () => {
+    const items = buildSourceWorkspaceItems({
+      registryArtifacts: [
+        {
+          ...baseRegistryArtifact,
+          id: "artifact-date",
+          updatedAt: new Date("2026-06-05T00:00:00.000Z") as unknown as string,
+        },
+      ],
+      artifactStates: [
+        {
+          ...artifactState,
+          id: "state-string",
+          updatedAt: "2026-06-03T00:00:00.000Z",
+        },
+      ],
+      evidenceStates: [],
+      gateCriterionStates: [],
+    });
+
+    expect(items.map((item) => item.id)).toEqual([
+      "artifact-date",
+      "source-artifact-state:state-string",
+    ]);
+  });
+
   it("surfaces recorded lineage from Source registry rows without inventing edges", () => {
     const item = sourceRegistryArtifactToWorkspaceItem({
       ...baseRegistryArtifact,
