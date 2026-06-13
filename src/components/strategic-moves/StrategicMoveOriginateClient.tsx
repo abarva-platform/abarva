@@ -60,38 +60,20 @@ const INITIAL_FIELDS: Record<ScaffoldFieldId, string> = {
   "foundation-readiness": "",
 };
 
-// Steps 1–4 are required to promote. Steps 5–7 are optional enrichment
-// that Nexus can fill during P1 if not captured at origination.
-const REQUIRED_FIELD_COUNT = 4;
+const REQUIRED_FIELD_COUNT = Object.keys(INITIAL_FIELDS).length;
 
 const SCAFFOLD_DEFS: Array<{
   id: ScaffoldFieldId;
   label: string;
   step: number;
-  optional?: boolean;
 }> = [
   { id: "problem-statement", label: "What's the bet / hypothesis", step: 1 },
   { id: "archetype", label: "Archetype classification", step: 2 },
   { id: "sponsor-candidate", label: "Sponsor candidate", step: 3 },
   { id: "scope-boundary", label: "Scope / boundary", step: 4 },
-  {
-    id: "evidence-family",
-    label: "Evidence family selection",
-    step: 5,
-    optional: true,
-  },
-  {
-    id: "value-hypothesis",
-    label: "Value hypothesis seed",
-    step: 6,
-    optional: true,
-  },
-  {
-    id: "foundation-readiness",
-    label: "Foundation readiness",
-    step: 7,
-    optional: true,
-  },
+  { id: "evidence-family", label: "Evidence family selection", step: 5 },
+  { id: "value-hypothesis", label: "Value hypothesis seed", step: 6 },
+  { id: "foundation-readiness", label: "Foundation readiness", step: 7 },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -138,7 +120,7 @@ export function StrategicMoveOriginateClient({
         id: "nexus-open-2a",
         role: "assistant",
         agentName: "Nexus",
-        text: `To start a new Strategic Move, I need four things from you: the outcome you're targeting, who cares about it, what evidence you have, and a rough sense of what value is at stake. Where do you want to start?`,
+        text: `To start a new Strategic Move, I need the seven-section P0 scaffold: the hypothesis, archetype, sponsor candidate, scope boundary, evidence family, value hypothesis, and foundation readiness. Where do you want to start?`,
       },
     ],
   );
@@ -363,7 +345,7 @@ export function StrategicMoveOriginateClient({
     (v) => v.trim().length > 0,
   ).length;
   const requiredFilled = SCAFFOLD_DEFS.filter(
-    ({ id, optional }) => !optional && brief.fields[id].trim().length > 0,
+    ({ id }) => brief.fields[id].trim().length > 0,
   ).length;
   const canPromote =
     requiredFilled >= REQUIRED_FIELD_COUNT && !isPending && !streaming;
@@ -558,7 +540,7 @@ export function StrategicMoveOriginateClient({
                 id="orig-chat-scaffold-grid"
                 className={styles.startChipGrid}
               >
-                {SCAFFOLD_DEFS.map(({ id, label, step, optional }) => {
+                {SCAFFOLD_DEFS.map(({ id, label, step }) => {
                   const filled = brief.fields[id].trim().length > 0;
                   return (
                     <button
@@ -570,18 +552,13 @@ export function StrategicMoveOriginateClient({
                       }
                       type="button"
                       disabled={streaming}
-                      aria-label={`${label}${optional ? " (optional)" : ""}${filled ? " — captured" : ""}`}
+                      aria-label={`${label}${filled ? " — captured" : ""}`}
                       title={label}
                     >
                       <span className={styles.chipStepNum} aria-hidden>
                         {step}
                       </span>
-                      <span className={styles.chipLabel}>
-                        {label}
-                        {optional ? (
-                          <span className={styles.chipOptional}> opt</span>
-                        ) : null}
-                      </span>
+                      <span className={styles.chipLabel}>{label}</span>
                       {filled ? (
                         <span className={styles.startChipArrow} aria-hidden>
                           &#10003;
@@ -707,7 +684,7 @@ export function StrategicMoveOriginateClient({
           {/* orig-canvas-brief */}
           {(!discoveryIntakeEnabled || canvasTab === "brief") && (
             <div id="orig-canvas-brief" className={styles.scaffoldList}>
-              {SCAFFOLD_DEFS.map(({ id, label, step, optional }) => {
+              {SCAFFOLD_DEFS.map(({ id, label, step }) => {
                 const value = brief.fields[id];
                 const filled = value.trim().length > 0;
                 const num = String(step).padStart(2, "0");
@@ -719,15 +696,7 @@ export function StrategicMoveOriginateClient({
                   >
                     <div className={styles.scaffoldNum}>{num}</div>
                     <div className={styles.scaffoldBody}>
-                      <div className={styles.scaffoldLabel}>
-                        {label}
-                        {optional ? (
-                          <span className={styles.scaffoldOptionalTag}>
-                            {" "}
-                            optional
-                          </span>
-                        ) : null}
-                      </div>
+                      <div className={styles.scaffoldLabel}>{label}</div>
                       {filled ? (
                         <div
                           id={`orig-canvas-brief-section-${step}-content`}
@@ -801,7 +770,7 @@ export function StrategicMoveOriginateClient({
                 id="orig-promote-bar-status-text"
                 className={styles.promoteHelper}
               >
-                Complete steps 1–4 to promote. Steps 5–7 are optional.
+                Complete all 7 scaffold sections to promote.
               </div>
             ) : null}
             {submitError ? (
