@@ -13,7 +13,7 @@
 </head>
 <body><main><pre># Client Context Health Check - June 2026
 
-Generated: 2026-06-11T13:55:01.328Z
+Generated: 2026-06-13T23:15:49.656Z
 
 Mode: read-only. This report did not mutate source rows, facts, chunks, search documents, artifacts, or promotion status.
 
@@ -31,10 +31,10 @@ Mode: read-only. This report did not mutate source rows, facts, chunks, search d
 | Field | Value |
 | --- | --- |
 | subscriptionId | 701a8554-a166-46e9-bf13-743bc50e3b20 |
-| jobName | job-abarva-db-migrate-lab-eastus |
-| executionName | job-abarva-db-migrate-lab-eastus-ym3r0bo |
-| imageTag | context-lineage-2750a8147 |
-| imageDigest | sha256:786da4a0d9a6d07cd3ca978708399892c55ec9b5b1bf0df2f06319c0d2063727 |
+| jobName | job-abarva-private-operator-eus |
+| executionName | job-abarva-private-operator-eus-e0cem32 |
+| imageTag | moves-p0-gate-20260613-4b993b914 |
+| imageDigest | sha256:fa963ce6b6c919cd42e762d713a1ebf09ea15db803757422e7af49d839b167b3 |
 | searchService | srch-abarva-context-lab-eastus |
 | searchIndex | tenant-context-v1 |
 | blobAccount | stabarvaprivatedplab001 |
@@ -60,7 +60,7 @@ Mode: read-only. This report did not mutate source rows, facts, chunks, search d
 | Stage | Count / proof | Evidence |
 | --- | --- | --- |
 | Source files | 15 | present |
-| Azure Blob staged | 21 | listed |
+| Azure Blob staged | 80 | listed |
 | Sources | 3 | present |
 | Records | 3106 | configuration_item: 680; cmdb_application: 660; integration: 500; incidents_ops_telemetry: 400; org_role: 272; kpi_metric: 168; contract: 122; business_capability: 80 |
 | Facts | 23911 | active: 23911 |
@@ -80,7 +80,7 @@ Mode: read-only. This report did not mutate source rows, facts, chunks, search d
 | enterprise_context_facts | pass | 23911 | active: 23911 |
 | enterprise_context_chunks | pass | 6341 | active: 6341 |
 | governed_object_readiness | pass | 9497 | agent_ready: 6202; not_reviewed: 3294; committed_not_indexed: 1 |
-| agent_context_traces | pass | 288 |  |
+| agent_context_traces | pass | 1008 |  |
 | data_inventory_records | pass | 0 |  |
 
 Facts by lifecycle:
@@ -101,20 +101,20 @@ Promotion/readiness:
 
 | Container | Listed | Matching source blobs | Staged-not-processed | Error |
 | --- | --- | --- | --- | --- |
-| stabarvaprivatedplab001/context-drops | 558 | 21 | 21 |  |
+| stabarvaprivatedplab001/context-drops | 295 | 80 | 80 |  |
 
 | Blob sample | Size | Last modified |
 | --- | --- | --- |
+| context-drops/moves/skyharbor/2e1b0258-971f-4472-ba61-802672a6bab6/approvals/p1/Phase_Gate_Decision_P0_to_P1.html | 2667 | 2026-06-11T15:04:06.000Z |
+| context-drops/moves/skyharbor/2e1b0258-971f-4472-ba61-802672a6bab6/generated/p1/program_charter/v1/SkyHarbor_Air_Program_Charter.docx | 21936 | 2026-06-11T17:11:18.000Z |
 | context-drops/moves/skyharbor/358233e6-723d-492d-9e6b-6d8541b91207/generated/p1/program_charter/v1/SkyHarbor_Air_Program_Charter.docx | 21607 | 2026-06-10T21:24:12.000Z |
 | context-drops/moves/skyharbor/358233e6-723d-492d-9e6b-6d8541b91207/generated/p2/discovery_report/v1/SkyHarbor_Air_Discovery_Report.docx | 21937 | 2026-06-11T02:18:25.000Z |
 | context-drops/moves/skyharbor/358233e6-723d-492d-9e6b-6d8541b91207/generated/p2/discovery_report/v2/SkyHarbor_Air_Discovery_Report.docx | 22241 | 2026-06-11T02:26:19.000Z |
+| context-drops/moves/skyharbor/7416481a-9b31-4b16-b7ce-4ec6ae4a82db/approvals/p1/Phase_Gate_Decision_P0_to_P1.html | 2476 | 2026-06-13T11:46:34.000Z |
+| context-drops/moves/skyharbor/7416481a-9b31-4b16-b7ce-4ec6ae4a82db/generated/p1/program_charter/v1/SkyHarbor_Air_Program_Charter.docx | 22308 | 2026-06-13T11:52:45.000Z |
+| context-drops/moves/skyharbor/7416481a-9b31-4b16-b7ce-4ec6ae4a82db/uploads/uploaded_evidence/image.png | 67937 | 2026-06-13T11:52:09.000Z |
 | context-drops/moves/skyharbor/a62af2d4-eaba-4512-b344-2cc4fbb415a7/uploads/uploaded_evidence/03_Baseline_Workshop_Notes.md | 220 | 2026-06-11T02:05:01.000Z |
 | context-drops/moves/skyharbor/b7be7ad4-f666-4ebc-82e5-b8b0f94c575c/approvals/p1/Phase_Gate_Decision_P0_to_P1.html | 2469 | 2026-06-11T13:17:11.000Z |
-| skyharbor-air/skyharbor-air-synthetic-v2/0d7b57d60b27/org-roles.csv | 17906 | 2026-06-10T13:52:40.000Z |
-| skyharbor-air/skyharbor-air-synthetic-v2/1f652c6ef721/dora-baseline.csv | 1573 | 2026-06-10T13:57:16.000Z |
-| skyharbor-air/skyharbor-air-synthetic-v2/3de3aa443069/integration-topology.csv | 25883 | 2026-06-10T13:55:58.000Z |
-| skyharbor-air/skyharbor-air-synthetic-v2/40aed2bdb177/it-financials.csv | 17211 | 2026-06-10T13:52:21.000Z |
-| skyharbor-air/skyharbor-air-synthetic-v2/618c6882e262/enterprise-profile.csv | 259 | 2026-06-10T13:52:20.000Z |
 
 ### Idempotency And Duplication
 
@@ -182,8 +182,8 @@ Promotion/readiness:
 
 | Table | Exists | Count | Grouping |
 | --- | --- | --- | --- |
-| move_artifacts | pass | 5 | current: 4; superseded: 1 |
-| source_artifacts | pass | 2 | current: 2 |
+| move_artifacts | pass | 14 | current: 11; superseded: 3 |
+| source_artifacts | pass | 345 | current: 345 |
 | deliverables_v2 | pass | 0 |  |
 | program_evidence_items | pass | 12 |  |
 | program_attachments | pass | 0 |  |
@@ -259,7 +259,7 @@ Promotion/readiness:
 
 | Container | Listed | Matching source blobs | Staged-not-processed | Error |
 | --- | --- | --- | --- | --- |
-| stabarvaprivatedplab001/context-drops | 87 | 80 | 80 |  |
+| stabarvaprivatedplab001/context-drops | 113 | 80 | 80 |  |
 
 | Blob sample | Size | Last modified |
 | --- | --- | --- |
@@ -396,7 +396,7 @@ Prioritized remediation backlog:
 | enterprise_context_facts | pass | 11410 | active: 11410 |
 | enterprise_context_chunks | pass | 7526 | active: 7526 |
 | governed_object_readiness | pass | 6498 | agent_ready: 6497; not_reviewed: 1 |
-| agent_context_traces | pass | 295 |  |
+| agent_context_traces | pass | 1043 |  |
 | data_inventory_records | pass | 0 |  |
 
 Facts by lifecycle:
@@ -417,7 +417,7 @@ Promotion/readiness:
 
 | Container | Listed | Matching source blobs | Staged-not-processed | Error |
 | --- | --- | --- | --- | --- |
-| stabarvaprivatedplab001/context-drops | 558 | 0 | not calculated |  |
+| stabarvaprivatedplab001/context-drops | 888 | 0 | not calculated |  |
 
 ### Idempotency And Duplication
 
@@ -542,7 +542,7 @@ Prioritized remediation backlog:
 | enterprise_context_facts | pass | 38640 | active: 38640 |
 | enterprise_context_chunks | pass | 3506 | active: 3506 |
 | governed_object_readiness | pass | 3548 | agent_ready: 3506; not_reviewed: 42 |
-| agent_context_traces | pass | 311 |  |
+| agent_context_traces | pass | 1193 |  |
 | data_inventory_records | pass | 0 |  |
 
 Facts by lifecycle:
@@ -563,7 +563,7 @@ Promotion/readiness:
 
 | Container | Listed | Matching source blobs | Staged-not-processed | Error |
 | --- | --- | --- | --- | --- |
-| stabarvaprivatedplab001/context-drops | 558 | 0 | not calculated |  |
+| stabarvaprivatedplab001/context-drops | 888 | 0 | not calculated |  |
 
 ### Idempotency And Duplication
 
