@@ -33,10 +33,14 @@ this automatically flips d02/d03 from **"Prepare" (blocked)** to **"Generate" (o
 
 ## Client Applicability
 
-- Any tenant whose user has `canGenerateSourcingArtifacts` can generate d02/d03 (the Workspace surface that
-  triggers it is behind `workspace_explorer_source` — SkyHarbor today).
-- Like the RFP package, d02/d03 require `ANTHROPIC_API_KEY` (consulting-grade gate); without it the route
-  returns 503 (no deterministic fallback for gated artifacts). Live runtime (ACA) has the key.
+- All clients: no behaviour change unless a user has `canGenerateSourcingArtifacts` and reaches the Workspace
+  generate surface; the two codes simply become generatable.
+- Specific clients: SkyHarbor — the only tenant with `workspace_explorer_source` enabled, so the only place
+  d02/d03 generation is reachable in the UI today.
+- Internal only: None.
+- Public/demo only: None.
+- Feature flag: `workspace_explorer_source` gates the Workspace surface that triggers generation. Like the
+  RFP package, d02/d03 require `ANTHROPIC_API_KEY` (503 without it — live ACA has the key).
 
 ## Changes Included
 
