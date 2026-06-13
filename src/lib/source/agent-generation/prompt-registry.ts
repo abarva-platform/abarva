@@ -84,9 +84,12 @@ Tone: tight. 600-1200 words total. No filler. Cite the trigger from the event in
 
   d02_value_target: {
     artifactCode: "d02_value_target",
-    version: 1,
+    version: 2,
     model: DEFAULT_MODEL,
-    maxTokens: DEFAULT_MAX_TOKENS,
+    // Short doc (600-1000 words). Cap output so the draft + consulting-grade
+    // review + rewrite all complete inside the synchronous request budget on
+    // the ACA runtime (the 4000-token default overran and 504'd mid-rewrite).
+    maxTokens: 2_000,
     upstreamRequired: [],
     upstreamOptional: ["d01_strategy_memo"],
     systemPrompt: `${SENTINEL_VOICE}
@@ -132,9 +135,11 @@ Requirements:
 
   d03_archetype_decision: {
     artifactCode: "d03_archetype_decision",
-    version: 1,
+    version: 2,
     model: DEFAULT_MODEL,
-    maxTokens: DEFAULT_MAX_TOKENS,
+    // Short doc (500-900 words). Cap output so the gated draft + review +
+    // rewrite fit the synchronous request budget on ACA (see d02 note).
+    maxTokens: 2_000,
     upstreamRequired: [],
     upstreamOptional: ["d01_strategy_memo"],
     systemPrompt: `${SENTINEL_VOICE}
