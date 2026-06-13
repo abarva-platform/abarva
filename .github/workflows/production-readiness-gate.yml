@@ -218,6 +218,9 @@ jobs:
       - name: Verify client data onboarding process
         run: npm run azure:client-data-onboarding:verify
 
+      - name: Verify client preprod rehearsal packet
+        run: npm run azure:client-preprod-rehearsal:verify
+
       # ── Step 5: TypeScript build check ────────────────────────────────────
       # Note: production-readiness-tracker.test.ts has a pre-existing failure
       # (AdminCanonShellV2 wiring check) that predates PROD3. That test is
