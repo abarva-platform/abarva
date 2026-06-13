@@ -1,9 +1,11 @@
 import "server-only";
 
 import { listGeneratedArtifactsForMove } from "@/lib/artifacts/repository";
+import { boardArtifactsForMove } from "@/lib/programs/board-artifacts/board-artifacts-registry";
 import { listMoveArtifacts } from "@/lib/programs/deliverables/move-artifacts";
 import type { TenancyCtx } from "@/lib/programs/types.db";
-import type { WorkspaceItem } from "./types";
+import type { StrategicMove } from "@/lib/programs/types.ui";
+import type { WorkspaceGenerateCandidate, WorkspaceItem } from "./types";
 import { buildMovesWorkspaceItems } from "./moves-adapter-mapping";
 
 export async function listMovesWorkspaceItems(
@@ -47,4 +49,22 @@ export async function listMovesWorkspaceItems(
     moveArtifacts,
     generatedArtifacts,
   });
+}
+
+export function listMovesWorkspaceGenerateCandidates(
+  move: StrategicMove,
+): WorkspaceGenerateCandidate[] {
+  return boardArtifactsForMove(move).map((artifact) => ({
+    id: `moves-generate:${artifact.id}`,
+    module: "moves" as const,
+    artifactCode: artifact.id,
+    label: artifact.label,
+    description: artifact.blurb,
+    stageKey: artifact.phase,
+    state: "available" as const,
+    generateHref: artifact.htmlHref,
+    reviewHref: `/strategic-moves/${encodeURIComponent(move.id)}/workspace`,
+    method: "GET" as const,
+    responseKind: "html" as const,
+  }));
 }
