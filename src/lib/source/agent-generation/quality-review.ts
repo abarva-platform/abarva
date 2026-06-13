@@ -15,7 +15,14 @@ import {
 } from "./prompt-registry";
 import type { SourceGenerationContext } from "./types";
 
-const SOURCE_CONSULTING_GRADE_CODES = new Set(["d09_rfp_pack"]);
+const SOURCE_CONSULTING_GRADE_CODES = new Set([
+  "d09_rfp_pack",
+  // Strategy-stage narrative deliverables — authored through the same
+  // consulting-grade gate (author → review → rewrite, min 8/10) so the
+  // Strategy stage is fully board-grade generatable.
+  "d02_value_target",
+  "d03_archetype_decision",
+]);
 
 export interface SourceArtifactQualityGateMetadata {
   required: boolean;

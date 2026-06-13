@@ -82,6 +82,102 @@ Tone: tight. 600-1200 words total. No filler. Cite the trigger from the event in
     },
   },
 
+  d02_value_target: {
+    artifactCode: "d02_value_target",
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: [],
+    upstreamOptional: ["d01_strategy_memo"],
+    systemPrompt: `${SENTINEL_VOICE}
+
+You are drafting the Value Target Brief (artifact d02_value_target). It quantifies the value this sourcing event is expected to create — the range, the levers, the assumptions, and how it will be measured — so the funding decision rests on an evidence-disciplined number, not optimism.
+
+Required structural sections:
+## §1 · Value thesis
+## §2 · Value levers
+## §3 · Sizing, range, and confidence band
+## §4 · Assumptions and sensitivities
+## §5 · Realization and measurement
+
+Requirements:
+- State the value target as a RANGE (low / base / high) with an explicit confidence band (low / medium / high) and the basis for each bound.
+- Decompose value by lever: labor arbitrage, automation / productivity, consolidation / rationalization, rate / commercial, demand / volume. Quantify each lever's contribution where the bound context supports it; mark unsupported levers as "indicative — requires baseline".
+- Tie every number to a source: incumbent baseline, ticket / volume evidence, or a stated assumption. Never fabricate a baseline. If the baseline is missing, size the lever as a range against a clearly labeled assumption and flag it as a client-to-complete gap.
+- Name the realization owner and the first measurement window. Separate projected → committed → measured value.
+- 600-1000 words. Use a table for the lever decomposition and a table for the sizing range. No generic savings boilerplate.`,
+    buildUserMessage: (ctx, upstream) => {
+      return [
+        `Tenant: ${ctx.tenantName} (key: ${ctx.tenantKey})`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.estimatedValueUsd
+          ? `Intake value estimate: $${ctx.event.estimatedValueUsd.toLocaleString()}`
+          : `Intake value estimate: (not provided)`,
+        ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
+        `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
+        "",
+        upstream.d01_strategy_memo
+          ? `Approved Sourcing Strategy Memo (d01_strategy_memo) — anchor the value thesis to it:\n${upstream.d01_strategy_memo}`
+          : `(Strategy memo d01 not yet authored — derive the thesis from the intake and flag the dependency as a gap.)`,
+        "",
+        `Draft the Value Target Brief per the system prompt requirements.`,
+      ]
+        .filter((line): line is string => line !== null)
+        .join("\n");
+    },
+  },
+
+  d03_archetype_decision: {
+    artifactCode: "d03_archetype_decision",
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: [],
+    upstreamOptional: ["d01_strategy_memo"],
+    systemPrompt: `${SENTINEL_VOICE}
+
+You are drafting the Archetype Decision Record (artifact d03_archetype_decision). It documents which sourcing archetype and rigor level the event will run, the criteria behind the choice, and what the choice implies for scope, evaluation, and timeline — so the decision is explicit, defensible, and auditable.
+
+Required structural sections:
+## §1 · Candidate archetypes considered
+## §2 · Decision criteria
+## §3 · Selected archetype and rationale
+## §4 · Rigor level and rationale
+## §5 · Implications for the sourcing approach
+
+Requirements:
+- Enumerate the realistic candidate archetypes (e.g. AMS / managed service, cloud / infrastructure, data & AI platform, enterprise software, custom build / integration) and why each is or is not a fit for THIS event.
+- Score the candidates against explicit criteria (value mechanism, market maturity, switching cost, transition risk, internal capability) in a comparison table.
+- State the selected archetype with a rationale grounded in the intake and the strategy memo. Pick the rigor level — standard (run-rate continuity), enhanced (material savings claim), or strategic (transformation) — and justify it.
+- Spell out the implications: how the archetype shapes the RFP structure, the evaluation weights, the vendor pool, and the timeline. No fabrication; flag unknowns as client-to-complete gaps.
+- 500-900 words. Include the archetype scoring comparison table.`,
+    buildUserMessage: (ctx, upstream) => {
+      return [
+        `Tenant: ${ctx.tenantName} (key: ${ctx.tenantKey})`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype
+          ? `Intake archetype signal: ${ctx.event.archetype}`
+          : `Intake archetype signal: (not provided)`,
+        ctx.event.rigor ? `Intake rigor signal: ${ctx.event.rigor}` : null,
+        ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
+        `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
+        "",
+        upstream.d01_strategy_memo
+          ? `Approved Sourcing Strategy Memo (d01_strategy_memo) — align the archetype + rigor to it:\n${upstream.d01_strategy_memo}`
+          : `(Strategy memo d01 not yet authored — derive the decision from the intake and flag the dependency as a gap.)`,
+        "",
+        `Draft the Archetype Decision Record per the system prompt requirements.`,
+      ]
+        .filter((line): line is string => line !== null)
+        .join("\n");
+    },
+  },
+
   d05_scope_memo: {
     artifactCode: "d05_scope_memo",
     version: 1,
