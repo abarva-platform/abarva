@@ -27,6 +27,9 @@ export async function persistBoardGradeMoveArtifact(input: {
   renderedBy: string;
   routePath: string;
   generatedOn: string;
+  citedInputIds?: string[];
+  qualityScore?: number | null;
+  generationEgressAudit?: string | null;
 }): Promise<GeneratedArtifactRecord | null> {
   let clientId = input.clientId?.trim() || null;
   if (!clientId) {

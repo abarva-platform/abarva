@@ -6,8 +6,12 @@
 // HTML, and a thin/ungrounded document is BLOCKED (honest fallback) rather
 // than emitted.
 
-import { buildBusinessCaseRequest } from "../build-request";
+import {
+  buildBusinessCaseRequest,
+  buildMoveDeliverableRequest,
+} from "../build-request";
 import { runOrchestratedBusinessCase } from "../run-orchestrated-business-case";
+import { runOrchestratedMoveDeliverable } from "../run-orchestrated-move-deliverable";
 import { markdownToHtml } from "../render-html";
 import { getArtifactBrief } from "@/lib/deliverables/orchestrator/artifact-brief-registry";
 import type { ModelCaller } from "@/lib/deliverables/orchestrator/orchestrator";
@@ -193,6 +197,42 @@ describe("buildBusinessCaseRequest — binds only recorded facts", () => {
       ]),
     );
   });
+
+  it("records UUID-backed committed evidence as lineage and ignores non-UUID provenance", () => {
+    const evidenceId = "00000000-0000-4000-8000-000000000201";
+    const { request, citedInputIds } = buildBusinessCaseRequest({
+      ...FULL_MOVE,
+      governed_evidence_items: [
+        {
+          id: evidenceId,
+          title: "IROPS baseline workbook",
+          summary: "Average recovery time and exception backlog were approved.",
+          evidence_type: "baseline_workbook",
+          confidence: 0.91,
+          created_at: "2026-06-11T12:00:00Z",
+        },
+        {
+          id: "not-a-uuid",
+          title: "Charter JSON field",
+          summary: "This is real provenance but not a UUID row id.",
+          evidence_type: "charter_scope",
+          confidence: 0.9,
+        },
+      ],
+    });
+
+    expect(citedInputIds).toEqual([evidenceId]);
+    expect(
+      request.governedEvidenceBundle.some(
+        (e) => e.provenanceRef === evidenceId,
+      ),
+    ).toBe(true);
+    expect(
+      request.governedEvidenceBundle.some(
+        (e) => e.provenanceRef === "not-a-uuid",
+      ),
+    ).toBe(false);
+  });
 });
 
 describe("runOrchestratedBusinessCase — multi-pass flow + quality gate", () => {
@@ -300,6 +340,35 @@ describe("runOrchestratedBusinessCase — multi-pass flow + quality gate", () =>
     expect(res.html).toBeUndefined();
     expect(res.blockedReason).toMatch(
       /quality gate|too short|sections|recommendation/i,
+    );
+  });
+
+  it("runs a non-business-case Moves deliverable through the same orchestrator path", async () => {
+    const res = await runOrchestratedMoveDeliverable({
+      moveInput: FULL_MOVE,
+      moveId: "move-arch-1",
+      tenantId: "skyharbor-air",
+      generatedOn: "2026-06-11",
+      deliverableType: "target_architecture",
+      phaseOrStage: "P3_design",
+      artifactStandard: "moves.board_grade.target_architecture",
+      decisionContext:
+        "Approve the target architecture and implementation implications.",
+      modelCaller: passingStub(),
+    });
+
+    expect(res.ok).toBe(true);
+    expect(res.passTrace).toHaveLength(6);
+    expect(res.html).toContain("Source Register");
+
+    const { request } = buildMoveDeliverableRequest(FULL_MOVE, {
+      deliverableType: "target_architecture",
+      phaseOrStage: "P3_design",
+      artifactStandard: "moves.board_grade.target_architecture",
+      decisionContext: "Approve the target architecture.",
+    });
+    expect(getArtifactBrief(request).deliverableType).toBe(
+      "target_architecture",
     );
   });
 });
