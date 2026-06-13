@@ -20,6 +20,10 @@ import {
 import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
 import { getStrategicMoveById } from "@/lib/programs/queries";
 import { draftModuleDeliverable } from "@/lib/programs/nexus";
+import {
+  resolveSourceLabel,
+  scrubInternalSourceTags,
+} from "@/lib/programs/deliverables/source-labels";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,13 +52,13 @@ function renderMarkdown(doc: GeneratedDeliverable): string {
     for (const c of s.claims) {
       lines.push(
         c.missingEvidence
-          ? `- **[MISSING EVIDENCE: ${c.missingEvidence}]** ${c.text}`
-          : `- ${c.text} _(source: ${c.citation})_`,
+          ? `- **[MISSING EVIDENCE: ${resolveSourceLabel(c.missingEvidence).title}]** ${c.text}`
+          : `- ${c.text} _(source: ${resolveSourceLabel(c.citation ?? "").title})_`,
       );
     }
     lines.push("");
   }
-  return lines.join("\n");
+  return scrubInternalSourceTags(lines.join("\n"));
 }
 
 export async function POST(
