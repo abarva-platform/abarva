@@ -97,3 +97,32 @@ export interface WorkspaceItem {
   readonly audit: WorkspaceItemAudit;
   readonly blobPath?: string | null;
 }
+
+// ── Progression ("what's needed to advance") — surfaces the stage progression
+// engine (`computeStageProgression`) as an ordered, one-click action list. ──
+export type WorkspaceProgressionKind =
+  | "upload"
+  | "generate"
+  | "prepare"
+  | "send"
+  | "approve"
+  | "advance";
+
+export interface WorkspaceProgressionNeed {
+  readonly id: string;
+  readonly kind: WorkspaceProgressionKind;
+  readonly label: string;
+  readonly detail?: string;
+  /** One-click target when the action is wired; absent when blocked. */
+  readonly href?: string;
+  readonly blocked?: boolean;
+  readonly blockedReason?: string;
+  /** Soft need (e.g. recommended evidence) — surfaced but non-blocking. */
+  readonly optional?: boolean;
+}
+
+export interface WorkspaceProgression {
+  readonly gateSummary: string;
+  readonly allClear: boolean;
+  readonly needs: WorkspaceProgressionNeed[];
+}
