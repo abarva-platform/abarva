@@ -38,6 +38,29 @@ Format requirements:
 - Tables when comparing. Bullet lists when enumerating.
 - Numbered §-prefixed sections (## §1 · …) match the AbarVa house style.`;
 
+// Render the tenant's uploaded, parsed evidence (incumbent contracts, ticket
+// extracts, etc.) so the draft can CITE it by filename. The consulting-grade
+// quality gate already sees this evidence and penalises drafts that ignore it;
+// without this block the draft is blind to evidence it is graded on.
+function formatDraftEvidenceContext(ctx: SourceGenerationContext): string | null {
+  const items = ctx.uploadedEvidence ?? [];
+  if (items.length === 0) return null;
+  const lines = items.slice(0, 8).map((a) => {
+    const facts = a.factSummaries?.length
+      ? `\n    Facts: ${a.factSummaries.slice(0, 6).join("; ")}`
+      : "";
+    const excerpt = a.chunkExcerpts?.length
+      ? `\n    Excerpt: ${a.chunkExcerpts[0].slice(0, 500)}`
+      : "";
+    return `  - ${a.originalName} (${a.artifactFamily} · ${a.evidenceState})${facts}${excerpt}`;
+  });
+  return [
+    "Uploaded evidence for this event — CITE these by filename where they support a claim,",
+    "and do not invent figures beyond what they state:",
+    ...lines,
+  ].join("\n");
+}
+
 const REGISTRY: Record<string, SourceArtifactPromptTemplate> = {
   d01_strategy_memo: {
     artifactCode: "d01_strategy_memo",
@@ -74,6 +97,8 @@ Tone: tight. 600-1200 words total. No filler. Cite the trigger from the event in
         "",
         `Scope description from intake:`,
         ctx.event.scopeDescription || "(not provided)",
+        "",
+        formatDraftEvidenceContext(ctx),
         "",
         `Draft the Sourcing Strategy Memo per the system prompt requirements.`,
       ]
@@ -126,6 +151,8 @@ Requirements:
           ? `Approved Sourcing Strategy Memo (d01_strategy_memo) — anchor the value thesis to it:\n${upstream.d01_strategy_memo}`
           : `(Strategy memo d01 not yet authored — derive the thesis from the intake and flag the dependency as a gap.)`,
         "",
+        formatDraftEvidenceContext(ctx),
+        "",
         `Draft the Value Target Brief per the system prompt requirements.`,
       ]
         .filter((line): line is string => line !== null)
@@ -175,6 +202,8 @@ Requirements:
         upstream.d01_strategy_memo
           ? `Approved Sourcing Strategy Memo (d01_strategy_memo) — align the archetype + rigor to it:\n${upstream.d01_strategy_memo}`
           : `(Strategy memo d01 not yet authored — derive the decision from the intake and flag the dependency as a gap.)`,
+        "",
+        formatDraftEvidenceContext(ctx),
         "",
         `Draft the Archetype Decision Record per the system prompt requirements.`,
       ]
