@@ -71,7 +71,12 @@ import {
 const REGISTRY_GENERATED_MIME = "text/markdown";
 const INLINE_REGISTRY_URI_PREFIX = "inline://source-event-artifact-state";
 const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
-const SOURCE_SYNC_GENERATION_BUDGET_MS = 285_000;
+// The ACA ingress cuts long synchronous requests well before the 300s
+// maxDuration (observed ~150s gateway 504 on the live runtime). Budget below
+// that so the gate returns its draft + verdict gracefully (422) instead of
+// being killed mid-rewrite with a 504. Pair with capped artifact maxTokens so
+// the full draft→review→rewrite still fits.
+const SOURCE_SYNC_GENERATION_BUDGET_MS = 110_000;
 const SOURCE_JSON_HEARTBEAT_INTERVAL_MS = 12_000;
 const SOURCE_QUALITY_REVIEW_MAX_TOKENS = 3_200;
 const SOURCE_QUALITY_REWRITE_MIN_REMAINING_MS = 45_000;
