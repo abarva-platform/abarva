@@ -183,6 +183,7 @@
     "azure:cutover:runtime-smoke": "npx tsx src/scripts/azure-cutover-runtime-smoke.ts",
     "azure:postgres:set-url-secrets": "node scripts/azure/set-postgres-database-url-secrets.mjs",
     "azure:postgres:set-source-url-secret": "node scripts/azure/set-source-database-url-secret.mjs",
+    "azure:env-secret-injection:verify": "node scripts/azure/verify-env-secret-injection-proof.mjs",
     "audit:planes": "npx tsx src/scripts/audit/audit-tenant-data-planes.ts",
     "audit:loaded-datasets": "npx tsx src/scripts/audit/report-loaded-datasets.ts",
     "audit:architecture-rules": "node scripts/audit/architecture-rules.mjs --mode=changed --base=origin/main --head=HEAD",
