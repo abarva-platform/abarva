@@ -32,6 +32,7 @@ const baseRegistryArtifact: SourceArtifactRegistryRecord = {
   dataClassification: "Confidential",
   evidenceState: "cited",
   approvalState: "not_required",
+  citedSourceArtifactIds: [],
   version: 2,
   supersedesArtifactVersionId: null,
   createdBy: "user-1",
@@ -139,6 +140,22 @@ describe("SourceWorkspaceAdapter mapping", () => {
       items.find((item) => item.id === "source-gate:gate-1")?.lineage,
     ).toMatchObject({
       cites: ["artifact-1"],
+      status: "recorded",
+    });
+  });
+
+  it("surfaces recorded lineage from Source registry rows without inventing edges", () => {
+    const item = sourceRegistryArtifactToWorkspaceItem({
+      ...baseRegistryArtifact,
+      id: "generated-1",
+      sourceOrigin: "generated",
+      approvalState: "draft",
+      citedSourceArtifactIds: ["artifact-input-1", "artifact-input-2"],
+    });
+
+    expect(item.lineage).toEqual({
+      cites: ["artifact-input-1", "artifact-input-2"],
+      usedBy: [],
       status: "recorded",
     });
   });
