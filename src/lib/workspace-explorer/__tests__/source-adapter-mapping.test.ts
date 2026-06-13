@@ -1,4 +1,5 @@
 import {
+  buildSourceGenerateCandidates,
   buildSourceWorkspaceItems,
   sourceRegistryArtifactToWorkspaceItem,
 } from "../source-adapter-mapping";
@@ -157,6 +158,36 @@ describe("SourceWorkspaceAdapter mapping", () => {
       cites: ["artifact-input-1", "artifact-input-2"],
       usedBy: [],
       status: "recorded",
+    });
+  });
+
+  it("builds stage-scoped generate candidates against the existing Source route", () => {
+    const candidates = buildSourceGenerateCandidates({
+      sourceEventId: "event-1",
+      stageKey: "strategy",
+      artifactStates: [
+        artifactState,
+        {
+          ...artifactState,
+          id: "state-scope",
+          artifactCode: "d05_scope_memo",
+          stage: "scope",
+        },
+        {
+          ...artifactState,
+          id: "state-unsupported",
+          artifactCode: "d99_not_supported",
+        },
+      ],
+    });
+
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]).toMatchObject({
+      artifactCode: "d01_strategy_memo",
+      generateHref:
+        "/api/v1/source/event-1/artifacts/d01_strategy_memo/generate",
+      reviewHref: "/source/events/event-1?stage=strategy",
+      state: "draft",
     });
   });
 });

@@ -5,17 +5,25 @@ import { WorkspaceExplorer } from "@/components/workspace-explorer/WorkspaceExpl
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { normalizeSourceStageKey } from "@/lib/source/constants";
 import { getSourcingEvent } from "@/lib/source/queries";
-import { listSourceWorkspaceItems } from "@/lib/workspace-explorer/source-adapter";
+import {
+  listSourceWorkspaceGenerateCandidates,
+  listSourceWorkspaceItems,
+} from "@/lib/workspace-explorer/source-adapter";
 
 export const dynamic = "force-dynamic";
 
 export default async function SourceEventWorkspacePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ eventId: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { eventId } = await params;
+  const sp: Record<string, string | string[] | undefined> =
+    (await (searchParams ?? Promise.resolve({}))) ?? {};
   const [event, activeClient] = await Promise.all([
     getSourcingEvent(eventId),
     getActiveClientRow().catch(() => null),
@@ -31,7 +39,18 @@ export default async function SourceEventWorkspacePage({
   );
   if (!enabled) notFound();
 
-  const items = await listSourceWorkspaceItems(event.id);
+  const stageParam = typeof sp.stage === "string" ? sp.stage : null;
+  const stageKey = stageParam ? normalizeSourceStageKey(stageParam) : null;
+  const showGenerateIntent = sp.intent === "generate";
+  const [items, generateCandidates] = await Promise.all([
+    listSourceWorkspaceItems(event.id),
+    showGenerateIntent
+      ? listSourceWorkspaceGenerateCandidates({
+          sourceEventId: event.id,
+          stageKey,
+        })
+      : Promise.resolve([]),
+  ]);
   const tenantName =
     canonicalClientDisplayName({
       key: activeClient?.key,
@@ -53,6 +72,16 @@ export default async function SourceEventWorkspacePage({
         title={event.name}
         backHref={`/source/events/${eventId}`}
         items={items}
+        generateIntent={
+          showGenerateIntent
+            ? {
+                module: "source",
+                eventId: event.id,
+                stageKey,
+                candidates: generateCandidates,
+              }
+            : undefined
+        }
       />
     </AppShell>
   );
