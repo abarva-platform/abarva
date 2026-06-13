@@ -165,6 +165,7 @@
     "azure:product-preview-provisioning:verify": "node scripts/azure/verify-product-preview-provisioning-packet.mjs",
     "azure:product-preview-rc-gates:verify": "node scripts/azure/verify-product-preview-rc-gates.mjs",
     "azure:product-preview-e2e-rehearsal:verify": "node scripts/azure/verify-product-preview-e2e-rehearsal.mjs",
+    "azure:product-prod-provisioning:verify": "node scripts/azure/verify-product-prod-provisioning-packet.mjs",
     "azure:client-tenant-iac:verify": "node scripts/azure/verify-client-tenant-iac.mjs",
     "azure:immutable-audit-log:verify": "node scripts/azure/verify-immutable-audit-log.mjs",
     "azure:defender-storage-malware:verify": "node scripts/azure/verify-defender-storage-malware.mjs",
