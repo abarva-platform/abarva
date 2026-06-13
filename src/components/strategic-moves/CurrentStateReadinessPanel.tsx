@@ -13,6 +13,7 @@ import type {
 } from "@/lib/programs/current-state-readiness";
 import type { CurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
 import type { CurrentStatePlan } from "@/lib/programs/current-state-plan";
+import { resolveSourceLabel } from "@/lib/programs/deliverables/source-labels";
 
 const usd = (n: number) =>
   n >= 1_000_000
@@ -632,7 +633,9 @@ export function CurrentStateReadinessPanel({
                     color: "var(--abarva-stone)",
                   }}
                 >
-                  {g.i.backingTable ?? "charter"}
+                  {g.i.backingTable
+                    ? resolveSourceLabel(g.i.backingTable).title
+                    : "charter"}
                 </span>
                 {g.wired ? (
                   <label
@@ -755,7 +758,9 @@ export function CurrentStateReadinessPanel({
                 }}
               >
                 {i.rationale}
-                {i.backingTable ? ` · committed to ${i.backingTable}` : ""}
+                {i.backingTable
+                  ? ` · committed to ${resolveSourceLabel(i.backingTable).title}`
+                  : ""}
               </div>
               {/* Pending document reviews — the governed promotion control. */}
               {i.documentFamily && i.pendingReviews.length > 0 && (
