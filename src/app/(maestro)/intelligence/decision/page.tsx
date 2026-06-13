@@ -26,33 +26,33 @@
 // Pure server-rendered read — the Function Pack is the frame, audited tenant
 // substrate fills it, and seed gaps render honestly. No kernel logic changes.
 
-import type { Metadata } from 'next';
-import { AppShell } from '@/components/shell/AppShell';
-import { BetSelectionView } from '@/components/intelligence/decision/BetSelectionView';
-import { IntelligenceEmptyState } from '@/components/intelligence/decision/IntelligenceEmptyState';
+import type { Metadata } from "next";
+import { AppShell } from "@/components/shell/AppShell";
+import { BetSelectionView } from "@/components/intelligence/decision/BetSelectionView";
+import { IntelligenceEmptyState } from "@/components/intelligence/decision/IntelligenceEmptyState";
 import {
   buildVbcBetSelection,
   MERIDIAN_FUNCTION_KEY,
   MERIDIAN_INDUSTRY_KEY,
-} from '@/lib/programs/expert-kernel/domain/meridian-vbc-bet-selection';
+} from "@/lib/programs/expert-kernel/domain/meridian-vbc-bet-selection";
 // Side-effect import — registers every catalogued tenant binding (Meridian ×
 // VBC, Apex × customer care, First Capital × fraud) with the generic builder
 // before this route reads from it. Without this import the generic builder
 // would only see the Meridian binding it ships inline.
-import '@/lib/programs/expert-kernel/domain/tenant-bindings-bootstrap';
-import { industryKeyForCode } from '@/lib/programs/function-identity';
-import type { FunctionPackIndustryKey } from '@/lib/programs/expert-kernel/domain/function-pack-types';
-import { getActiveClientRow } from '@/lib/active-client';
+import "@/lib/programs/expert-kernel/domain/tenant-bindings-bootstrap";
+import { industryKeyForCode } from "@/lib/programs/function-identity";
+import type { FunctionPackIndustryKey } from "@/lib/programs/expert-kernel/domain/function-pack-types";
+import { getActiveClientRow } from "@/lib/active-client";
 import {
   firstClientSearchParam,
   resolveIntelligenceDecisionRouteMode,
-} from '@/lib/intelligence/decision-route-mode';
-import { resolveBetSelectionBinding } from '@/lib/programs/expert-kernel/domain/tenant-binding-registry';
+} from "@/lib/intelligence/decision-route-mode";
+import { resolveBetSelectionBinding } from "@/lib/programs/expert-kernel/domain/tenant-binding-registry";
 
 export const metadata: Metadata = {
-  title: 'Which bet first · Intelligence · AbarVa',
+  title: "Which bet first · Intelligence · AbarVa",
 };
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * The documented per-industry "spine" default function key. The bet-selection
@@ -74,10 +74,16 @@ export const dynamic = 'force-dynamic';
  * registered tenant binding (`tenant-bindings-bootstrap.ts`); the spine map
  * and the substrate map agree by construction.
  */
-const INDUSTRY_SPINE_FUNCTION_KEY: Record<FunctionPackIndustryKey, string> = {
-  'healthcare-provider': MERIDIAN_FUNCTION_KEY,
-  retail: 'customer_care',
-  'financial-services': 'fraud_financial_crime',
+// Intentionally the grounded production spine only — each entry has a seeded,
+// audited decision-home binding. A catalogued industry without a seeded
+// decision home (e.g. airline) is deliberately absent; the route then renders
+// the honest empty state for it. Hence Partial, not a total Record.
+const INDUSTRY_SPINE_FUNCTION_KEY: Partial<
+  Record<FunctionPackIndustryKey, string>
+> = {
+  "healthcare-provider": MERIDIAN_FUNCTION_KEY,
+  retail: "customer_care",
+  "financial-services": "fraud_financial_crime",
 };
 
 /**
@@ -94,7 +100,9 @@ export default async function IntelligenceDecisionPage({
   searchParams?: Promise<{ client?: string | string[] }>;
 }) {
   const requestedClient = firstClientSearchParam((await searchParams)?.client);
-  const activeClient = await getActiveClientRow(requestedClient).catch(() => null);
+  const activeClient = await getActiveClientRow(requestedClient).catch(
+    () => null,
+  );
 
   // Resolve the active tenant's industry from its `industry_code`. This is the
   // audit fix: a retail or financial-services tenant must bind its OWN
@@ -120,7 +128,9 @@ export default async function IntelligenceDecisionPage({
   let bindingExpectedClientKey: string | null = null;
   if (industryKey) {
     const candidateFunctionKey = INDUSTRY_SPINE_FUNCTION_KEY[industryKey];
-    const binding = resolveBetSelectionBinding(industryKey, candidateFunctionKey);
+    const binding = candidateFunctionKey
+      ? resolveBetSelectionBinding(industryKey, candidateFunctionKey)
+      : null;
     bindingExpectedClientKey = binding?.expectedClientKey ?? null;
   }
 
@@ -129,21 +139,23 @@ export default async function IntelligenceDecisionPage({
     industryKey,
     bindingExpectedClientKey,
   });
-  const intelligenceEmptyForTenant = routeMode === 'tenant-empty';
+  const intelligenceEmptyForTenant = routeMode === "tenant-empty";
 
   let selection: ReturnType<typeof buildVbcBetSelection> = null;
 
-  if (industryKey && routeMode === 'tenant-selection') {
+  if (industryKey && routeMode === "tenant-selection") {
     // The active tenant's industry resolved AND the binding's
     // `expectedClientKey` matches — bind the tenant's own spine Function Pack
     // and render that industry's bet selection. No cross-tenant leak.
     const functionKey = INDUSTRY_SPINE_FUNCTION_KEY[industryKey];
-    selection = buildVbcBetSelection(
-      industryKey,
-      functionKey,
-      activeTenantName ?? 'Your organisation',
-    );
-  } else if (routeMode === 'reference-example') {
+    selection = functionKey
+      ? buildVbcBetSelection(
+          industryKey,
+          functionKey,
+          activeTenantName ?? "Your organisation",
+        )
+      : null;
+  } else if (routeMode === "reference-example") {
     // No active tenant row resolved. Fall back to the Meridian reference
     // binding, but mark it honestly as a reference EXAMPLE. A real active
     // tenant with an unknown/unsupported industry renders the empty state
@@ -151,7 +163,7 @@ export default async function IntelligenceDecisionPage({
     const reference = buildVbcBetSelection(
       MERIDIAN_INDUSTRY_KEY,
       MERIDIAN_FUNCTION_KEY,
-      'Meridian Health',
+      "Meridian Health",
     );
     selection = reference
       ? { ...reference, isReferenceExample: true }
@@ -163,7 +175,7 @@ export default async function IntelligenceDecisionPage({
   // The chrome's tenant label is the active tenant where one resolved; the
   // reference fallback shows the Meridian reference name honestly.
   const tenantName =
-    selection?.tenantName ?? activeTenantName ?? 'Your organisation';
+    selection?.tenantName ?? activeTenantName ?? "Your organisation";
 
   return (
     <AppShell
@@ -174,8 +186,8 @@ export default async function IntelligenceDecisionPage({
         context: intelligenceEmptyForTenant
           ? `Intelligence · ${tenantName} substrate not yet populated`
           : selection?.isReferenceExample
-            ? 'Intelligence · Which AI bet to make first (reference example)'
-            : 'Intelligence · Which AI bet to make first',
+            ? "Intelligence · Which AI bet to make first (reference example)"
+            : "Intelligence · Which AI bet to make first",
       }}
       hasTenantKey={Boolean(activeClient?.key)}
     >
@@ -184,15 +196,15 @@ export default async function IntelligenceDecisionPage({
           flex: 1,
           minHeight: 0,
           minWidth: 0,
-          height: '100%',
-          overflowY: 'auto',
-          background: '#ffffff',
-          padding: '32px 40px',
+          height: "100%",
+          overflowY: "auto",
+          background: "#ffffff",
+          padding: "32px 40px",
         }}
       >
         {intelligenceEmptyForTenant ? (
           <IntelligenceEmptyState
-            tenantName={activeTenantName ?? 'this tenant'}
+            tenantName={activeTenantName ?? "this tenant"}
             industryLabel={industryKey}
           />
         ) : (

@@ -25,11 +25,11 @@
 import {
   listFunctionPackCoverage,
   resolveFunctionPack,
-} from './expert-kernel/domain/function-pack-registry';
+} from "./expert-kernel/domain/function-pack-registry";
 import type {
   FunctionPack,
   FunctionPackIndustryKey,
-} from './expert-kernel/domain/function-pack-types';
+} from "./expert-kernel/domain/function-pack-types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Part 1 — industry-code → industryKey
@@ -41,22 +41,30 @@ import type {
  * and after stripping surrounding whitespace, so `retail`, ` RETAIL `, and
  * `Retail` all resolve. Anything not listed resolves to `null` — never guessed.
  */
-const INDUSTRY_CODE_TO_KEY: ReadonlyArray<readonly [string, FunctionPackIndustryKey]> = [
+const INDUSTRY_CODE_TO_KEY: ReadonlyArray<
+  readonly [string, FunctionPackIndustryKey]
+> = [
   // Retail — canonical + aliases.
-  ['retail', 'retail'],
-  ['retail_cpg', 'retail'],
+  ["retail", "retail"],
+  ["retail_cpg", "retail"],
   // Healthcare provider — canonical + aliases. The provider taxonomy backs the
   // healthcare-provider packs; `healthcare_idn` is the production code.
-  ['healthcare_idn', 'healthcare-provider'],
-  ['healthcare', 'healthcare-provider'],
-  ['healthcare_provider', 'healthcare-provider'],
-  ['healthcare-provider', 'healthcare-provider'],
-  ['provider', 'healthcare-provider'],
+  ["healthcare_idn", "healthcare-provider"],
+  ["healthcare", "healthcare-provider"],
+  ["healthcare_provider", "healthcare-provider"],
+  ["healthcare-provider", "healthcare-provider"],
+  ["provider", "healthcare-provider"],
   // Financial services — canonical + aliases.
-  ['finserv', 'financial-services'],
-  ['financial_services', 'financial-services'],
-  ['financial-services', 'financial-services'],
-  ['fsi', 'financial-services'],
+  ["finserv", "financial-services"],
+  ["financial_services", "financial-services"],
+  ["financial-services", "financial-services"],
+  ["fsi", "financial-services"],
+  // Airline / global network carrier — canonical + aliases. The
+  // `global_network_airline` production code backs the airline IROPS pack.
+  ["global_network_airline", "airline"],
+  ["airline", "airline"],
+  ["air_transport", "airline"],
+  ["aviation", "airline"],
 ];
 
 /**
@@ -113,16 +121,102 @@ const FUNCTION_CLASSIFY_MARGIN_FLOOR = 0.05;
 
 /** English stop words — stripped before tokenising so they never score. */
 const STOP_WORDS: ReadonlySet<string> = new Set([
-  'the', 'a', 'an', 'and', 'or', 'of', 'to', 'in', 'on', 'for', 'with', 'by',
-  'at', 'as', 'is', 'are', 'be', 'it', 'its', 'this', 'that', 'these', 'those',
-  'we', 'our', 'us', 'their', 'they', 'will', 'can', 'how', 'what', 'when',
-  'from', 'into', 'over', 'across', 'about', 'than', 'then', 'so', 'but', 'not',
-  'no', 'all', 'any', 'each', 'more', 'most', 'such', 'per', 'via', 'up', 'out',
-  'new', 'use', 'using', 'used', 'make', 'made', 'get', 'got', 'has', 'have',
-  'do', 'does', 'should', 'would', 'could', 'may', 'might', 'must', 'one',
-  'two', 'also', 'into', 'plan', 'help', 'need', 'want', 'work', 'team',
-  'program', 'move', 'project', 'initiative', 'business', 'process', 'data',
-  'system', 'systems', 'improve', 'reduce', 'increase', 'better', 'across',
+  "the",
+  "a",
+  "an",
+  "and",
+  "or",
+  "of",
+  "to",
+  "in",
+  "on",
+  "for",
+  "with",
+  "by",
+  "at",
+  "as",
+  "is",
+  "are",
+  "be",
+  "it",
+  "its",
+  "this",
+  "that",
+  "these",
+  "those",
+  "we",
+  "our",
+  "us",
+  "their",
+  "they",
+  "will",
+  "can",
+  "how",
+  "what",
+  "when",
+  "from",
+  "into",
+  "over",
+  "across",
+  "about",
+  "than",
+  "then",
+  "so",
+  "but",
+  "not",
+  "no",
+  "all",
+  "any",
+  "each",
+  "more",
+  "most",
+  "such",
+  "per",
+  "via",
+  "up",
+  "out",
+  "new",
+  "use",
+  "using",
+  "used",
+  "make",
+  "made",
+  "get",
+  "got",
+  "has",
+  "have",
+  "do",
+  "does",
+  "should",
+  "would",
+  "could",
+  "may",
+  "might",
+  "must",
+  "one",
+  "two",
+  "also",
+  "into",
+  "plan",
+  "help",
+  "need",
+  "want",
+  "work",
+  "team",
+  "program",
+  "move",
+  "project",
+  "initiative",
+  "business",
+  "process",
+  "data",
+  "system",
+  "systems",
+  "improve",
+  "reduce",
+  "increase",
+  "better",
+  "across",
 ]);
 
 /**
@@ -135,7 +229,7 @@ function tokenize(text: string): Map<string, number> {
   const counts = new Map<string, number>();
   const words = text
     .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]+/gu, ' ')
+    .replace(/[^\p{L}\p{N}\s]+/gu, " ")
     .split(/\s+/);
   for (const word of words) {
     if (word.length < 3) continue;
@@ -165,8 +259,8 @@ function packSignalText(pack: FunctionPack): string {
   const labelSignal = `${pack.functionLabel} ${pack.functionLabel} ${pack.functionLabel} ${pack.functionLabel}`;
   const termSignal = pack.vocabulary.canonicalTerms
     .map((t) => `${t.term} ${t.term}`)
-    .join(' ');
-  const painSignal = pack.painThemes.map((p) => p.name).join(' ');
+    .join(" ");
+  const painSignal = pack.painThemes.map((p) => p.name).join(" ");
   return `${labelSignal} ${pack.summary} ${termSignal} ${painSignal}`;
 }
 
@@ -218,7 +312,7 @@ export function classifyFunctionKey(
   industryKey: FunctionPackIndustryKey,
   briefText: string | null | undefined,
 ): FunctionClassification | null {
-  const briefTokens = tokenize(briefText ?? '');
+  const briefTokens = tokenize(briefText ?? "");
   if (briefTokens.size === 0) return null;
 
   const coverage = listFunctionPackCoverage().filter(
@@ -281,25 +375,25 @@ export interface MoveFunctionIdentity {
  * charter key is still dual-written by origination so a rollback to the
  * pre-column code is harmless; retiring it is a separate future cleanup.
  */
-export const CHARTER_FUNCTION_PACK_KEY = 'functionPackKey';
+export const CHARTER_FUNCTION_PACK_KEY = "functionPackKey";
 
 /**
  * The key the classifier confidence is stored under inside `engagements.charter`.
  * Like `CHARTER_FUNCTION_PACK_KEY`, this is the fallback source — the
  * first-class `engagements.function_pack_confidence` column is preferred.
  */
-export const CHARTER_FUNCTION_PACK_CONFIDENCE_KEY = 'functionPackConfidence';
+export const CHARTER_FUNCTION_PACK_CONFIDENCE_KEY = "functionPackConfidence";
 
 /** Narrow an unknown value to a non-empty trimmed string, or `null`. */
 function readNonEmptyString(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
+  if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
 }
 
 /** Narrow an unknown charter value to a plain object with a string field. */
 function readCharterString(charter: unknown, field: string): string | null {
-  if (!charter || typeof charter !== 'object') return null;
+  if (!charter || typeof charter !== "object") return null;
   return readNonEmptyString((charter as Record<string, unknown>)[field]);
 }
 
