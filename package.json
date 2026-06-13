@@ -160,6 +160,7 @@
     "azure:environment-rbac:verify": "node scripts/azure/verify-environment-rbac-model.mjs",
     "azure:environment-cost-controls:verify": "node scripts/azure/verify-environment-cost-controls.mjs",
     "azure:product-dev-provisioning:verify": "node scripts/azure/verify-product-dev-provisioning-packet.mjs",
+    "azure:product-dev-cicd:verify": "node scripts/azure/verify-product-dev-cicd-packet.mjs",
     "azure:client-tenant-iac:verify": "node scripts/azure/verify-client-tenant-iac.mjs",
     "azure:immutable-audit-log:verify": "node scripts/azure/verify-immutable-audit-log.mjs",
     "azure:defender-storage-malware:verify": "node scripts/azure/verify-defender-storage-malware.mjs",
