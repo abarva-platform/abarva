@@ -169,6 +169,55 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
     });
   });
 
+  describe("Workspace Explorer flags", () => {
+    const SOURCE_ENV = "ABARVA_FEATURE_WORKSPACE_EXPLORER_SOURCE_TENANTS";
+    const MOVES_ENV = "ABARVA_FEATURE_WORKSPACE_EXPLORER_MOVES_TENANTS";
+
+    afterEach(() => {
+      delete process.env[SOURCE_ENV];
+      delete process.env[MOVES_ENV];
+    });
+
+    it("keeps Source and Moves explorer flags off by default", () => {
+      expect(
+        isFeatureEnabled(
+          { clientKey: "apexretail" },
+          "workspace_explorer_source",
+        ),
+      ).toBe(false);
+      expect(
+        isFeatureEnabled(
+          { clientKey: "apexretail" },
+          "workspace_explorer_moves",
+        ),
+      ).toBe(false);
+    });
+
+    it("enables each explorer flag independently through tenant env overrides", () => {
+      process.env[SOURCE_ENV] = "apexretail";
+      process.env[MOVES_ENV] = "skyharbor-air";
+
+      expect(
+        isFeatureEnabled(
+          { clientKey: "apexretail" },
+          "workspace_explorer_source",
+        ),
+      ).toBe(true);
+      expect(
+        isFeatureEnabled(
+          { clientKey: "apexretail" },
+          "workspace_explorer_moves",
+        ),
+      ).toBe(false);
+      expect(
+        isFeatureEnabled(
+          { clientKey: "skyharbor-air" },
+          "workspace_explorer_moves",
+        ),
+      ).toBe(true);
+    });
+  });
+
   describe("unknown keys", () => {
     it("returns false rather than throwing", () => {
       // Casting to bypass the literal-union check — simulates a typo at a
