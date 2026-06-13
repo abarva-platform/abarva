@@ -1,5 +1,5 @@
 // Central document-generation policy — the single source of truth for which
-// Claude model and token budget a given piece of work may use.
+// OpenAI model and token budget a given piece of work may use.
 //
 // THE RULE: serious deliverables must not run on chat-answer settings. Final,
 // client-facing artifacts get an Opus-class model, a generous token budget,
@@ -38,7 +38,7 @@ export interface ResolvedDocPolicy {
 }
 
 // ── Env-configurable model ids (latest, most-capable defaults) ──────────────
-// Defaults track the current Claude family; override per environment to upgrade.
+// Defaults track the current OpenAI family; override per environment to upgrade.
 function envModel(key: string, fallback: string): string {
   const v = process.env[key]?.trim();
   return v && v.length > 0 ? v : fallback;
@@ -54,13 +54,13 @@ function envTokens(key: string, fallback: number): number {
 function modelFor(tier: DocGenTier): string {
   switch (tier) {
     case "tier1_chat":
-      return envModel("ABARVA_CLAUDE_CHAT_MODEL", "claude-haiku-4-5-20251001");
+      return envModel("ABARVA_OPENAI_CHAT_MODEL", "gpt-5.5");
     case "tier2_working_draft":
-      return envModel("ABARVA_CLAUDE_WORKING_DRAFT_MODEL", "claude-sonnet-4-6");
+      return envModel("ABARVA_OPENAI_WORKING_DRAFT_MODEL", "gpt-5.5");
     case "tier3_board_grade":
-      return envModel("ABARVA_CLAUDE_BOARD_GRADE_MODEL", "claude-opus-4-8");
+      return envModel("ABARVA_OPENAI_BOARD_GRADE_MODEL", "gpt-5.5");
     case "tier4_large_package":
-      return envModel("ABARVA_CLAUDE_LARGE_PACKAGE_MODEL", "claude-opus-4-8");
+      return envModel("ABARVA_OPENAI_LARGE_PACKAGE_MODEL", "gpt-5.5");
   }
 }
 

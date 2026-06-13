@@ -41,16 +41,16 @@ describe("AI egress control plane Layer 1", () => {
     expect(classifyAiPayload()).toBe("confidential");
   });
 
-  it("allows Claude under the default first-party policy (Anthropic is sanctioned, not external)", async () => {
+  it("allows OpenAI under the default audited reasoning policy", async () => {
     const auditSink = createMemoryAiEgressAuditSink();
-    const adapter = jest.fn(async () => ({ response: "first-party answer" }));
+    const adapter = jest.fn(async () => ({ response: "audited answer" }));
 
     const result = await callModel({
       tenantId: "00000000-0000-0000-0000-000000000001",
       workflow: "unit-test",
-      provider: "anthropic",
-      route: "anthropic-direct",
-      model: "claude-sonnet-4-6",
+      provider: "openai",
+      route: "openai-direct",
+      model: "gpt-5.5",
       prompt: "confidential prompt",
       policy: CONSERVATIVE_TENANT_AI_POLICY,
       adapter,
@@ -61,8 +61,8 @@ describe("AI egress control plane Layer 1", () => {
     expect(adapter).toHaveBeenCalledTimes(1);
     expect(auditSink.records[0]).toMatchObject({
       policyDecision: "allow",
-      provider: "anthropic",
-      route: "anthropic-direct",
+      provider: "openai",
+      route: "openai-direct",
     });
   });
 
@@ -132,7 +132,7 @@ describe("AI egress control plane Layer 1", () => {
     expect(auditSink.records).toHaveLength(2);
     expect(auditSink.records[0]).toMatchObject({
       policyDecision: "allow",
-      decisionReason: "Anthropic is the sanctioned first-party reasoning provider",
+      decisionReason: "Anthropic is enabled by tenant policy",
     });
     expect(auditSink.records[1].responseHash).toHaveLength(64);
     expect(auditSink.records[1].requestMetadata).toMatchObject({
