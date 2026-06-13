@@ -164,6 +164,24 @@ export async function getLatestGeneratedArtifact(args: {
   return data ? rowToRecord(data as Record<string, unknown>) : null;
 }
 
+export async function listGeneratedArtifactsForMove(args: {
+  clientId: string;
+  moveId: string;
+  limit?: number;
+}): Promise<GeneratedArtifactRecord[]> {
+  const sourceRefPrefix = `move:${args.moveId}:%`;
+  const { data, error } = await getAzureWriteFluentClient()
+    .from("generated_artifacts")
+    .select("*")
+    .eq("client_id", args.clientId)
+    .like("source_artifact_ref", sourceRefPrefix)
+    .order("rendered_at", { ascending: false })
+    .limit(args.limit ?? 50);
+  if (error)
+    throw new Error(`generated_artifacts move lookup failed: ${error.message}`);
+  return ((data as Record<string, unknown>[] | null) ?? []).map(rowToRecord);
+}
+
 export async function saveRenderedBoardGradeMoveArtifact(input: {
   clientId: string;
   moveId: string;
