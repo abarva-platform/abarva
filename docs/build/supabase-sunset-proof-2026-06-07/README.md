@@ -1,11 +1,13 @@
 # Supabase Sunset Proof — 2026-06-07
 
-Evidence for the Supabase → Azure cutover (b1). **NOT sunset-ready** — Supabase is
-live and unfrozen; this records the data/index parity + final backup gates that
-have passed, and the gates still pending.
+Evidence for the Supabase → Azure cutover (b1 plus production follow-up).
+**NOT sunset-ready** — Supabase is live and unfrozen; this records the
+data/index parity, final backup, Azure DNS cutover, and production browser QA
+gates that have passed, plus the gates still pending.
 
-> Guardrails held throughout: no Supabase pause/delete, no DNS change, no Vercel
-> removal, no sunset-ready claim until signed-in QA + soak gates pass.
+> Guardrails held throughout: no Supabase pause/delete/freeze and no
+> sunset-ready claim. DNS is now cut over to Azure, but Supabase remains active
+> until explicit sunset approval.
 
 ## Image under test
 
@@ -16,15 +18,16 @@ digest onto all 4 cutover jobs.
 
 ## Gate results (2026-06-07 ~03:50Z, via Azure Container Apps operator jobs)
 
-| Gate                                   | Status      | Evidence                                                                |
-| -------------------------------------- | ----------- | ----------------------------------------------------------------------- |
-| Private DB connectivity                | ✅          | operator proof `10.43.1.4` / `abarva_control`                           |
-| **Data drain parity** (Supabase→Azure) | ✅          | drain-apply `ok:true`; all tables `skipped-parity-or-ahead`             |
-| **Search index parity**                | ✅          | search-verify `azure_search_backfill_verified`, all tenants match       |
-| **Supabase final backup**              | ✅          | all tables → blob `supabase-final-backups/supabase-final-20260607-001/` |
-| Supabase freeze (read-only)            | ⏸️ DEFERRED | guardrail: a pause-equivalent; not run until QA/soak pass               |
-| Signed-in Claude QA (PR #3243)         | ⛔ PENDING  | needs Clerk session; `ai_egress_audit.provider=anthropic`               |
-| Azure-only soak                        | ⛔ PENDING  | not started                                                             |
+| Gate                                   | Status      | Evidence                                                                 |
+| -------------------------------------- | ----------- | ------------------------------------------------------------------------ |
+| Private DB connectivity                | ✅          | operator proof `10.43.1.4` / `abarva_control`                            |
+| **Data drain parity** (Supabase→Azure) | ✅          | drain-apply `ok:true`; all tables `skipped-parity-or-ahead`              |
+| **Search index parity**                | ✅          | search-verify `azure_search_backfill_verified`, all tenants match        |
+| **Supabase final backup**              | ✅          | all tables → blob `supabase-final-backups/supabase-final-20260607-001/`  |
+| Supabase freeze (read-only)            | ⏸️ DEFERRED | guardrail: a pause-equivalent; not run until explicit sunset approval    |
+| Azure DNS cutover                      | ✅          | `app.abarva.ai` serves Azure Container Apps with managed certificate     |
+| Signed-in production route QA          | ✅          | Home, Intelligence, Moves, Source, Tower, and Admin render for Lakeshore |
+| Signed-in Claude QA (provider path)    | ⛔ PENDING  | needs provider-migration proof; `ai_egress_audit.provider=anthropic`     |
 
 ## Parity snapshot (Azure `abarva_control`, drain-confirmed)
 
@@ -47,13 +50,13 @@ The live Azure Container App `ca-abarva-web-lab-eastus` (active revision
 `acrabarvalab001.azurecr.io/abarva/web:cutover-provider-anthropic-20260607-683eb933`)
 has **no Supabase in its runtime path**, verified directly against Azure:
 
-| Check | Result |
-| --- | --- |
-| `grep -i supabase` over container env var names | **NONE** |
-| `supabase*` secret on the container app | **NONE** |
-| `DATABASE_URL` binding | secret ref `azure-postgres-control-database-url` (Azure Postgres) |
-| `ABARVA_DATA_PLANE` | `azure-postgres` |
-| `/api/health` (Azure FQDN) | `postgres: true`, `direct_postgres: true`, `azure_graph: "postgres"` |
+| Check                                           | Result                                                               |
+| ----------------------------------------------- | -------------------------------------------------------------------- |
+| `grep -i supabase` over container env var names | **NONE**                                                             |
+| `supabase*` secret on the container app         | **NONE**                                                             |
+| `DATABASE_URL` binding                          | secret ref `azure-postgres-control-database-url` (Azure Postgres)    |
+| `ABARVA_DATA_PLANE`                             | `azure-postgres`                                                     |
+| `/api/health` (Azure FQDN)                      | `postgres: true`, `direct_postgres: true`, `azure_graph: "postgres"` |
 
 Supabase is **not** in any runtime env/secret/host reference and `DATABASE_URL`
 is **not** pointed at Supabase. Legacy `neo4j-*` / `pinecone-api-key` secret
