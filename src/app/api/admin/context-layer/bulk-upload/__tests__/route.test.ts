@@ -145,7 +145,8 @@ describe("/api/admin/context-layer/bulk-upload", () => {
         status: "validation_only",
       },
       workflow: {
-        summary: "Validation passed. Nothing was written to Azure Blob or tenant context.",
+        summary:
+          "Validation passed. Nothing was written to Azure Blob or tenant context.",
         steps: [
           { id: "package_received", status: "complete" },
           { id: "attestation_verified", status: "complete" },
@@ -329,7 +330,9 @@ describe("/api/admin/context-layer/bulk-upload", () => {
   });
 
   it("does not fail a successful load when notification fanout fails", async () => {
-    mockEmitNotification.mockRejectedValueOnce(new Error("notification offline"));
+    mockEmitNotification.mockRejectedValueOnce(
+      new Error("notification offline"),
+    );
     const zip = new JSZip();
     zip.file(
       "manifest.json",
@@ -379,6 +382,53 @@ describe("/api/admin/context-layer/bulk-upload", () => {
       persistence: {
         status: "staged_and_enqueued",
       },
+    });
+  });
+
+  it("matches nested ZIP files by full manifest path when basenames repeat", async () => {
+    const zip = new JSZip();
+    zip.file(
+      "manifest.json",
+      JSON.stringify({
+        loadName: "meridian-phase-0",
+        files: [
+          {
+            path: "reports/context.yaml",
+            templateId: "enterprise-profile",
+          },
+          {
+            path: "contracts/context.yaml",
+            templateId: "enterprise-profile",
+          },
+        ],
+      }),
+    );
+    zip.file("reports/context.yaml", "items:\n  - metric: report\n");
+    zip.file("contracts/context.yaml", "items:\n  - metric: contract\n");
+    const buffer = await zip.generateAsync({ type: "nodebuffer" });
+
+    const formData = new FormData();
+    formData.set("clientId", "client-meridian");
+    formData.set("mode", "validate_only");
+    addUploadAttestation(formData);
+    formData.append(
+      "files",
+      new File([bufferBlobPart(buffer)], "meridian-phase-0.zip", {
+        type: "application/zip",
+      }),
+    );
+
+    const response = await POST(bulkRequest(formData));
+    const body = await response.json();
+
+    expect(response.status).toBe(202);
+    expect(body).toMatchObject({
+      ok: true,
+      filesProcessed: 2,
+      results: [
+        { fileName: "reports/context.yaml" },
+        { fileName: "contracts/context.yaml" },
+      ],
     });
   });
 

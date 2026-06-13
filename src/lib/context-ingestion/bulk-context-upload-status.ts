@@ -32,6 +32,14 @@ export interface BulkContextUploadJobStatus {
     processingStatus: BulkContextUploadFileResult["processing"]["status"];
     nextAction: string;
   }>;
+  reviewArtifacts?: Array<{
+    fileName: string;
+    templateId: string;
+    bucket: string;
+    path: string;
+    candidateCount: number;
+    status: "needs_operator_review" | "committed";
+  }>;
   counts: {
     filesProcessed: number;
     rowsParsed: number;
@@ -139,6 +147,31 @@ export async function persistBulkContextUploadJobStatus(args: {
   return location;
 }
 
+export async function persistBulkContextUploadJobStatusSnapshot(
+  status: BulkContextUploadJobStatus,
+): Promise<{ bucket: string; path: string }> {
+  const location = bulkContextUploadJobStatusLocation({
+    tenantKey: status.tenantKey,
+    jobId: status.jobId,
+  });
+  await getObjectStorageAdapter().upload(
+    location.bucket,
+    location.path,
+    JSON.stringify(status, null, 2),
+    {
+      contentType: "application/json",
+      upsert: true,
+      metadata: {
+        tenantKey: status.tenantKey,
+        clientId: status.clientId,
+        jobId: status.jobId,
+        sourceSystem: "admin_bulk_context_upload_status",
+      },
+    },
+  );
+  return location;
+}
+
 export async function readBulkContextUploadJobStatus(args: {
   clientId: string;
   tenantKey: string;
@@ -161,4 +194,147 @@ export async function readBulkContextUploadJobStatus(args: {
     throw new Error("bulk_upload_status_tenant_mismatch");
   }
   return parsed;
+}
+
+function updateWorkflowStep(
+  workflow: BulkContextUploadResult["workflow"],
+  stepId: BulkContextUploadResult["workflow"]["steps"][number]["id"],
+  status: BulkContextUploadResult["workflow"]["steps"][number]["status"],
+  detail: string,
+): BulkContextUploadResult["workflow"] {
+  return {
+    ...workflow,
+    steps: workflow.steps.map((step) =>
+      step.id === stepId ? { ...step, status, detail } : step,
+    ),
+  };
+}
+
+export async function markBulkContextUploadJobNeedsOperatorReview(args: {
+  clientId: string;
+  tenantKey: string;
+  jobId: string;
+  fileName: string;
+  templateId: string;
+  reviewArtifact: {
+    bucket: string;
+    path: string;
+    candidateCount: number;
+  };
+  updatedAt?: string;
+}): Promise<BulkContextUploadJobStatus> {
+  const current = await readBulkContextUploadJobStatus({
+    clientId: args.clientId,
+    tenantKey: args.tenantKey,
+    jobId: args.jobId,
+  });
+  const updatedAt = args.updatedAt ?? new Date().toISOString();
+  let workflow = {
+    ...current.workflow,
+    summary:
+      "Document extraction completed. Operator review is required before tenant-context commit.",
+  };
+  workflow = updateWorkflowStep(
+    workflow,
+    "private_worker",
+    "complete",
+    "The Azure worker parsed the document and wrote a review-required extraction artifact.",
+  );
+  workflow = updateWorkflowStep(
+    workflow,
+    "operator_review",
+    "active",
+    `${args.reviewArtifact.candidateCount} extracted candidate chunks require operator approval.`,
+  );
+  workflow = updateWorkflowStep(
+    workflow,
+    "tenant_context_commit",
+    "pending",
+    "No document-derived facts are committed until review approval is recorded.",
+  );
+
+  const reviewArtifacts = [
+    ...(current.reviewArtifacts ?? []).filter(
+      (artifact) => artifact.path !== args.reviewArtifact.path,
+    ),
+    {
+      fileName: args.fileName,
+      templateId: args.templateId,
+      bucket: args.reviewArtifact.bucket,
+      path: args.reviewArtifact.path,
+      candidateCount: args.reviewArtifact.candidateCount,
+      status: "needs_operator_review" as const,
+    },
+  ];
+  const next: BulkContextUploadJobStatus = {
+    ...current,
+    status: "needs_operator_review",
+    summary: workflow.summary,
+    updatedAt,
+    workflow,
+    files: current.files.map((file) =>
+      file.fileName === args.fileName
+        ? {
+            ...file,
+            nextAction:
+              "Review extracted document chunks before tenant-context commit.",
+          }
+        : file,
+    ),
+    reviewArtifacts,
+  };
+  await persistBulkContextUploadJobStatusSnapshot(next);
+  return next;
+}
+
+export async function markBulkContextUploadJobCommittedAfterReview(args: {
+  clientId: string;
+  tenantKey: string;
+  jobId: string;
+  committedArtifactPaths: string[];
+  chunksQueued: number;
+  updatedAt?: string;
+}): Promise<BulkContextUploadJobStatus> {
+  const current = await readBulkContextUploadJobStatus({
+    clientId: args.clientId,
+    tenantKey: args.tenantKey,
+    jobId: args.jobId,
+  });
+  const updatedAt = args.updatedAt ?? new Date().toISOString();
+  let workflow = {
+    ...current.workflow,
+    summary:
+      "Operator-approved document chunks were committed and are waiting for embedding refresh.",
+  };
+  workflow = updateWorkflowStep(
+    workflow,
+    "operator_review",
+    "complete",
+    "Operator approval was recorded for the selected document chunks.",
+  );
+  workflow = updateWorkflowStep(
+    workflow,
+    "tenant_context_commit",
+    "complete",
+    "Approved document chunks were written with embedding_status=pending.",
+  );
+  const committedPaths = new Set(args.committedArtifactPaths);
+  const next: BulkContextUploadJobStatus = {
+    ...current,
+    status: "committed",
+    summary: workflow.summary,
+    updatedAt,
+    workflow,
+    reviewArtifacts: (current.reviewArtifacts ?? []).map((artifact) =>
+      committedPaths.has(artifact.path)
+        ? { ...artifact, status: "committed" as const }
+        : artifact,
+    ),
+    counts: {
+      ...current.counts,
+      chunksQueued: current.counts.chunksQueued + args.chunksQueued,
+    },
+  };
+  await persistBulkContextUploadJobStatusSnapshot(next);
+  return next;
 }
