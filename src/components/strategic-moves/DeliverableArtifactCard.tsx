@@ -7,7 +7,10 @@
 
 import { useEffect, useState } from "react";
 import type { GeneratedDeliverable } from "@/lib/programs/deliverable-refinement";
-import { resolveSourceLabel } from "@/lib/programs/deliverables/source-labels";
+import {
+  resolveSourceLabel,
+  scrubInternalSourceTags,
+} from "@/lib/programs/deliverables/source-labels";
 
 const INTENTS = ["quality", "structure", "depth", "audience", "tone"] as const;
 
@@ -173,12 +176,12 @@ export function DeliverableArtifactCard({
                     <span
                       style={{ fontWeight: 400, color: "var(--abarva-stone)" }}
                     >
-                      {c.text}
+                      {scrubInternalSourceTags(c.text)}
                     </span>
                   </span>
                 ) : (
                   <span>
-                    {c.text}
+                    {scrubInternalSourceTags(c.text)}
                     {c.citation ? (
                       <span
                         style={{
