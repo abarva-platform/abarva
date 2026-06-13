@@ -80,6 +80,17 @@ describe("scrubInternalSourceTags — final rendering pass (no [n] map)", () => 
     expect(out).not.toMatch(/tower_|document_extract:|method:/);
   });
 
+  it("scrubs a raw table id embedded in claim/digest TEXT (not just the citation)", () => {
+    // Regression: the readiness digest used to read "N records committed to
+    // tower_cmdb_cis", leaking the raw table into the deterministic card body.
+    const out = scrubInternalSourceTags(
+      "IT systems & application landscape: 4 records committed to tower_cmdb_cis.",
+    );
+    expect(findForbiddenTags(out)).toEqual([]);
+    expect(out).not.toContain("tower_cmdb_cis");
+    expect(out).toMatch(/Application & Systems Inventory/);
+  });
+
   it("is idempotent on already-clean prose", () => {
     const clean = "The delivery baseline shows 9 deploys/month [2].";
     expect(scrubInternalSourceTags(clean)).toBe(clean);

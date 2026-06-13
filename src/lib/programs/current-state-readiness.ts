@@ -262,10 +262,13 @@ export async function resolveCurrentStateReadiness(
       );
       status = committedRows > 0 ? "committed" : "missing";
       if (status === "committed") {
+        // NEVER embed the raw backing-table id in the human-facing digest — it
+        // surfaces verbatim in client deliverables/cards. The source is carried
+        // separately as the (humanized) citation; the digest stays clean prose.
         evidenceDigest = [
           `${family.label}: ${committedRows} record${
             committedRows === 1 ? "" : "s"
-          } committed to ${family.backing.table}.`,
+          } committed.`,
         ];
       }
     } else if (moveId) {
