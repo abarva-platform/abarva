@@ -20,9 +20,9 @@ on:
   workflow_dispatch:
     inputs:
       fail_on_warning:
-        description: 'Fail the gate if the validator emits warnings (default: false)'
+        description: "Fail the gate if the validator emits warnings (default: false)"
         required: false
-        default: 'false'
+        default: "false"
         type: boolean
 
 jobs:
@@ -40,8 +40,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
-          cache: 'npm'
+          node-version: "24"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -175,6 +175,9 @@ jobs:
 
       - name: Enforce Vercel production runtime guard
         run: npm run audit:vercel-production-runtime:check
+
+      - name: Verify Azure environment factory baseline
+        run: npm run azure:environment-factory:verify
 
       # ── Step 5: TypeScript build check ────────────────────────────────────
       # Note: production-readiness-tracker.test.ts has a pre-existing failure
