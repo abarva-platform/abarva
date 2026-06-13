@@ -1017,6 +1017,13 @@ function WorkspaceExplorerChips({
       >
         Generate
       </Link>
+      <Link
+        data-testid="source-upload-chip"
+        href={`${workspaceHref}?intent=upload&stage=${viewStage}`}
+        style={WORKSPACE_CHIP_SECONDARY_STYLE}
+      >
+        Upload
+      </Link>
     </div>
   );
 }
