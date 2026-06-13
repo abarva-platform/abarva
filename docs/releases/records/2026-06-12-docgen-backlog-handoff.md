@@ -45,4 +45,7 @@ Delete the doc. No effect.
 
 ## Known Gaps
 
-- None.
+- This is a point-in-time handoff: the backlog and dependency list reflect `main`
+  at `d59c9bddb` and will drift as the layout-redesign session and the autonomous
+  Source-D09 agent land further changes. Treat it as guidance, not a live tracker —
+  re-confirm PR/commit references against `main` before acting on them.
