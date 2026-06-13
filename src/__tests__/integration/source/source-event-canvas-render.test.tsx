@@ -739,6 +739,7 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("source-workspace-explorer-chips");
     expect(html).toContain("source-workspace-chip");
     expect(html).toContain("source-generate-chip");
+    expect(html).toContain("source-upload-chip");
     expect(html).toContain('data-active-tab="workspace-explorer"');
     expect(html).not.toContain("source-canvas-tab-document");
     expect(html).not.toContain("source-canvas-tab-evidence");

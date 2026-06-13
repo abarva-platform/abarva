@@ -58,6 +58,23 @@ export interface WorkspaceGenerateIntent {
   readonly candidates: ReadonlyArray<WorkspaceGenerateCandidate>;
 }
 
+export interface WorkspaceUploadFamilyOption {
+  readonly value: string;
+  readonly label: string;
+}
+
+export interface WorkspaceUploadIntent {
+  readonly module: WorkspaceItemModule;
+  readonly eventId: string;
+  readonly stageKey?: SourceStageKey | string | null;
+  readonly uploadHref: string;
+  readonly acceptedFormats: string;
+  readonly defaultClassification: string;
+  readonly classificationOptions: ReadonlyArray<string>;
+  readonly familyOptions: ReadonlyArray<WorkspaceUploadFamilyOption>;
+  readonly defaultFamily?: string | null;
+}
+
 export interface WorkspaceItem {
   readonly id: string;
   readonly name: string;

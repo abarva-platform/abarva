@@ -134,4 +134,66 @@ describe("WorkspaceExplorer", () => {
     ).toContain("Missing upstream: d01_strategy_memo");
     expect(refresh).not.toHaveBeenCalled();
   });
+
+  it("uploads files through the governed Source upload route and shows version state", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        artifact: {
+          originalName: "vendor-response.pdf",
+          version: 2,
+          parseStatus: "parsed",
+        },
+      }),
+    });
+
+    render(
+      <WorkspaceExplorer
+        title="AMS Outsourcing 2026"
+        eyebrow="SRC-004 · Source workspace"
+        backHref="/source/events/event-1"
+        items={[item]}
+        uploadIntent={{
+          module: "source",
+          eventId: "event-1",
+          stageKey: "responses",
+          uploadHref: "/api/v1/source/event-1/artifacts/upload",
+          acceptedFormats: ".pdf",
+          defaultClassification: "Confidential",
+          classificationOptions: ["Internal", "Confidential"],
+          defaultFamily: "proposal",
+          familyOptions: [{ value: "proposal", label: "Vendor response" }],
+        }}
+      />,
+    );
+
+    const file = new File(["vendor answer"], "vendor-response.pdf", {
+      type: "application/pdf",
+    });
+    fireEvent.change(screen.getByTestId("workspace-upload-file"), {
+      target: { files: [file] },
+    });
+    fireEvent.click(screen.getByTestId("workspace-upload-submit"));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/source/event-1/artifacts/upload",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.any(FormData),
+        }),
+      );
+    });
+
+    const body = (global.fetch as jest.Mock).mock.calls[0][1].body as FormData;
+    expect(body.get("stageKey")).toBe("responses");
+    expect(body.get("dataClassification")).toBe("Confidential");
+    expect(body.get("artifactFamily")).toBe("proposal");
+
+    expect(
+      (await screen.findByTestId("workspace-upload-success")).textContent,
+    ).toContain("Registry version: v2 · Parse status: parsed");
+    expect(refresh).toHaveBeenCalled();
+  });
 });

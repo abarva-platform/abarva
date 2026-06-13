@@ -42,6 +42,7 @@ export default async function SourceEventWorkspacePage({
   const stageParam = typeof sp.stage === "string" ? sp.stage : null;
   const stageKey = stageParam ? normalizeSourceStageKey(stageParam) : null;
   const showGenerateIntent = sp.intent === "generate";
+  const showUploadIntent = sp.intent === "upload";
   const [items, generateCandidates] = await Promise.all([
     listSourceWorkspaceItems(event.id),
     showGenerateIntent
@@ -79,6 +80,40 @@ export default async function SourceEventWorkspacePage({
                 eventId: event.id,
                 stageKey,
                 candidates: generateCandidates,
+              }
+            : undefined
+        }
+        uploadIntent={
+          showUploadIntent
+            ? {
+                module: "source",
+                eventId: event.id,
+                stageKey: stageKey ?? event.currentStageKey,
+                uploadHref: `/api/v1/source/${encodeURIComponent(
+                  event.id,
+                )}/artifacts/upload`,
+                acceptedFormats:
+                  ".pdf,.docx,.xlsx,.pptx,.md,.markdown,.csv,.txt,.html,image/png,image/jpeg,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/markdown,text/csv,text/plain,text/html",
+                defaultClassification: "Confidential",
+                classificationOptions: [
+                  "Public",
+                  "Internal",
+                  "Confidential",
+                  "Restricted",
+                ],
+                defaultFamily: "other",
+                familyOptions: [
+                  { value: "other", label: "Evidence or context" },
+                  { value: "sourcing_strategy", label: "Strategy evidence" },
+                  { value: "scope_document", label: "Scope evidence" },
+                  { value: "rfp", label: "RFP or addendum" },
+                  { value: "proposal", label: "Vendor response" },
+                  { value: "scorecard", label: "Evaluation scorecard" },
+                  { value: "pricing_workbook", label: "Pricing workbook" },
+                  { value: "bafo", label: "BAFO evidence" },
+                  { value: "decision_brief", label: "Decision evidence" },
+                  { value: "value_ledger", label: "Value evidence" },
+                ],
               }
             : undefined
         }

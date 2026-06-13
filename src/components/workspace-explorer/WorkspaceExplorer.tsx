@@ -8,6 +8,7 @@ import type {
   WorkspaceGenerateIntent,
   WorkspaceItem,
   WorkspaceItemKind,
+  WorkspaceUploadIntent,
 } from "@/lib/workspace-explorer/types";
 
 interface WorkspaceExplorerProps {
@@ -17,6 +18,7 @@ interface WorkspaceExplorerProps {
   items: WorkspaceItem[];
   mode?: "page" | "drawer";
   generateIntent?: WorkspaceGenerateIntent;
+  uploadIntent?: WorkspaceUploadIntent;
 }
 
 type GenerateResult =
@@ -33,6 +35,21 @@ type GenerateResult =
       state: "error";
       detail: string;
       missingUpstream?: string[];
+    };
+
+type UploadResult =
+  | {
+      state: "idle";
+    }
+  | {
+      state: "success";
+      artifactName: string;
+      version: number | string | null;
+      parseStatus: string | null;
+    }
+  | {
+      state: "error";
+      detail: string;
     };
 
 interface QualityGateSummary {
@@ -90,6 +107,7 @@ export function WorkspaceExplorer({
   items,
   mode = "page",
   generateIntent,
+  uploadIntent,
 }: WorkspaceExplorerProps) {
   const router = useRouter();
   const [activeKind, setActiveKind] = useState<WorkspaceItemKind | "all">(
@@ -101,6 +119,10 @@ export function WorkspaceExplorer({
   );
   const [generatePending, setGeneratePending] = useState(false);
   const [generateResult, setGenerateResult] = useState<GenerateResult>({
+    state: "idle",
+  });
+  const [uploadPending, setUploadPending] = useState(false);
+  const [uploadResult, setUploadResult] = useState<UploadResult>({
     state: "idle",
   });
   const counts = useMemo(() => {
@@ -174,6 +196,67 @@ export function WorkspaceExplorer({
     }
   };
 
+  const handleUpload = async (input: {
+    file: File;
+    classification: string;
+    family: string;
+  }) => {
+    if (!uploadIntent) return;
+    setUploadPending(true);
+    setUploadResult({ state: "idle" });
+    try {
+      const formData = new FormData();
+      formData.append("file", input.file, input.file.name);
+      if (uploadIntent.stageKey) {
+        formData.append("stageKey", String(uploadIntent.stageKey));
+      }
+      formData.append("dataClassification", input.classification);
+      formData.append("dataProtectionClassification", input.classification);
+      if (input.family) formData.append("artifactFamily", input.family);
+
+      const response = await fetch(uploadIntent.uploadHref, {
+        method: "POST",
+        body: formData,
+      });
+      const payload = (await response.json().catch(() => null)) as {
+        detail?: string;
+        error?: string;
+        artifact?: {
+          originalName?: string;
+          version?: number | string | null;
+          parseStatus?: string | null;
+        };
+      } | null;
+      if (!response.ok || !payload?.artifact) {
+        setUploadResult({
+          state: "error",
+          detail:
+            payload?.detail ??
+            payload?.error ??
+            `Upload failed with HTTP ${response.status}.`,
+        });
+        return;
+      }
+      setUploadResult({
+        state: "success",
+        artifactName: payload.artifact.originalName ?? input.file.name,
+        version: payload.artifact.version ?? null,
+        parseStatus: payload.artifact.parseStatus ?? null,
+      });
+      router.refresh();
+    } catch (error) {
+      setUploadResult({
+        state: "error",
+        detail:
+          error instanceof Error
+            ? error.message
+            : "Upload request failed before reaching the governed route.",
+      });
+    } finally {
+      setUploadPending(false);
+    }
+  };
+
   return (
     <section
       data-testid="workspace-explorer"
@@ -199,6 +282,15 @@ export function WorkspaceExplorer({
           result={generateResult}
           onSelect={setSelectedGenerateId}
           onGenerate={handleGenerate}
+        />
+      ) : null}
+
+      {uploadIntent ? (
+        <UploadPanel
+          intent={uploadIntent}
+          pending={uploadPending}
+          result={uploadResult}
+          onUpload={handleUpload}
         />
       ) : null}
 
@@ -309,6 +401,124 @@ export function WorkspaceExplorer({
         </aside>
       </div>
     </section>
+  );
+}
+
+function UploadPanel({
+  intent,
+  pending,
+  result,
+  onUpload,
+}: {
+  intent: WorkspaceUploadIntent;
+  pending: boolean;
+  result: UploadResult;
+  onUpload: (input: {
+    file: File;
+    classification: string;
+    family: string;
+  }) => void;
+}) {
+  const [file, setFile] = useState<File | null>(null);
+  const [classification, setClassification] = useState(
+    intent.defaultClassification,
+  );
+  const [family, setFamily] = useState(
+    intent.defaultFamily ?? intent.familyOptions[0]?.value ?? "",
+  );
+
+  return (
+    <section
+      data-testid="workspace-upload-panel"
+      aria-label="Governed workspace upload"
+      style={UPLOAD_PANEL_STYLE}
+    >
+      <div>
+        <div style={EYEBROW_STYLE}>Upload</div>
+        <h2 style={GENERATE_TITLE_STYLE}>Add governed evidence</h2>
+        <p style={PREVIEW_COPY_STYLE}>
+          Uploads use the {intent.module} governed route, not the chat
+          paperclip. Files are checked before storage; accepted uploads create a
+          new registry version and never overwrite an existing artifact.
+        </p>
+      </div>
+      <div style={GENERATE_CONTROLS_STYLE}>
+        <label style={GENERATE_LABEL_STYLE}>
+          File
+          <input
+            data-testid="workspace-upload-file"
+            type="file"
+            accept={intent.acceptedFormats}
+            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+            style={FILE_INPUT_STYLE}
+          />
+        </label>
+        <label style={GENERATE_LABEL_STYLE}>
+          Classification
+          <select
+            value={classification}
+            onChange={(event) => setClassification(event.target.value)}
+            style={GENERATE_SELECT_STYLE}
+          >
+            {intent.classificationOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label style={GENERATE_LABEL_STYLE}>
+          Evidence family
+          <select
+            value={family}
+            onChange={(event) => setFamily(event.target.value)}
+            style={GENERATE_SELECT_STYLE}
+          >
+            {intent.familyOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          data-testid="workspace-upload-submit"
+          disabled={pending || !file}
+          onClick={() => {
+            if (file) onUpload({ file, classification, family });
+          }}
+          style={{
+            ...ACTION_BUTTON_STYLE,
+            opacity: pending || !file ? 0.55 : 1,
+          }}
+        >
+          {pending ? "Uploading…" : "Upload to workspace"}
+        </button>
+        <UploadResultView result={result} />
+      </div>
+    </section>
+  );
+}
+
+function UploadResultView({ result }: { result: UploadResult }) {
+  if (result.state === "idle") return null;
+  if (result.state === "error") {
+    return (
+      <div data-testid="workspace-upload-error" style={GENERATE_ERROR_STYLE}>
+        <strong>Upload blocked</strong>
+        <span>{result.detail}</span>
+      </div>
+    );
+  }
+  return (
+    <div data-testid="workspace-upload-success" style={GENERATE_SUCCESS_STYLE}>
+      <strong>{result.artifactName} uploaded</strong>
+      <span>
+        Registry version: v{result.version ?? "recorded"} · Parse status:{" "}
+        {result.parseStatus ?? "pending"}
+      </span>
+    </div>
   );
 }
 
@@ -510,6 +720,12 @@ const GENERATE_PANEL_STYLE: CSSProperties = {
   alignItems: "start",
 };
 
+const UPLOAD_PANEL_STYLE: CSSProperties = {
+  ...GENERATE_PANEL_STYLE,
+  borderColor: "#c7d2fe",
+  background: "#f8fbff",
+};
+
 const GENERATE_TITLE_STYLE: CSSProperties = {
   margin: "6px 0 8px",
   font: "700 22px/1.15 Georgia, serif",
@@ -536,6 +752,15 @@ const GENERATE_SELECT_STYLE: CSSProperties = {
   borderRadius: 6,
   padding: "10px 12px",
   background: "#fbfaf7",
+  color: "#111827",
+  font: "600 13px/1.35 DM Sans, Arial, sans-serif",
+};
+
+const FILE_INPUT_STYLE: CSSProperties = {
+  border: "1px solid #d8d5ce",
+  borderRadius: 6,
+  padding: "9px 10px",
+  background: "#ffffff",
   color: "#111827",
   font: "600 13px/1.35 DM Sans, Arial, sans-serif",
 };
