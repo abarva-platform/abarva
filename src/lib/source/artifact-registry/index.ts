@@ -309,6 +309,26 @@ export async function listSourceArtifactsForEvent(
   );
 }
 
+export async function listSourceArtifactsForTenant(
+  tenantKey: string,
+  limit = 300,
+): Promise<SourceArtifactRegistryRecord[]> {
+  if (!tenantKey) throw new Error("[source-artifacts] tenantKey is required");
+  const supabase = getAzureWriteFluentClient();
+  const { data, error } = await supabase
+    .from("source_artifacts")
+    .select(SELECT_COLUMNS)
+    .eq("tenant_key", tenantKey)
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return ((data as unknown as SourceArtifactRow[] | null) ?? []).map(
+    rowToRecord,
+  );
+}
+
 export async function listSourceArtifactsForSourceEventId(
   sourceEventId: string,
 ): Promise<SourceArtifactRegistryRecord[]> {

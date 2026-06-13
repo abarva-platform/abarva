@@ -15,6 +15,7 @@ interface WorkspaceExplorerProps {
   title: string;
   eyebrow: string;
   backHref: string;
+  backLabel?: string;
   items: WorkspaceItem[];
   mode?: "page" | "drawer";
   generateIntent?: WorkspaceGenerateIntent;
@@ -104,6 +105,7 @@ export function WorkspaceExplorer({
   title,
   eyebrow,
   backHref,
+  backLabel = "Back to event",
   items,
   mode = "page",
   generateIntent,
@@ -269,7 +271,7 @@ export function WorkspaceExplorer({
           <h1 style={TITLE_STYLE}>{title}</h1>
         </div>
         <Link href={backHref} style={BACK_LINK_STYLE}>
-          Back to event
+          {backLabel}
         </Link>
       </header>
 
