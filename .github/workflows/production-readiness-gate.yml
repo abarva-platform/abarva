@@ -197,6 +197,9 @@ jobs:
       - name: Verify Product Dev synthetic data baseline
         run: npm run azure:product-dev-synthetic-data:verify
 
+      - name: Verify Product Preview provisioning packet
+        run: npm run azure:product-preview-provisioning:verify
+
       # ── Step 5: TypeScript build check ────────────────────────────────────
       # Note: production-readiness-tracker.test.ts has a pre-existing failure
       # (AdminCanonShellV2 wiring check) that predates PROD3. That test is
