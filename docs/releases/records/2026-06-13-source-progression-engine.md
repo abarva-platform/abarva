@@ -55,14 +55,20 @@ component, or the existing `resolveStageNextMove` single-action card. No surface
 - PASS: `npx eslint src/lib/source/stage-progression.ts src/lib/source/__tests__/stage-progression.test.ts`.
 - PASS: `npx tsc --noEmit` — no type errors referencing the new module.
 
-## Rollout
+## Rollout Plan
 
 Merge through PR + CI. No deploy step required for behaviour (nothing renders it). Ships ahead of the
 surfacing slice so the engine can be reviewed/tested in isolation.
 
-## Rollback
+## Rollback Plan
 
 Revert the PR. Pure addition — no data, schema, or contract to unwind.
+
+## Audit Evidence
+
+PR diff (one pure module + unit tests + this record), the PR CI checks, and the jest/eslint/tsc output
+in QA / Validation above. No data-plane writes, no migration, no external egress — nothing to audit
+beyond the source diff and test results.
 
 ## Known Gaps
 
