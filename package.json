@@ -168,6 +168,7 @@
     "azure:product-prod-provisioning:verify": "node scripts/azure/verify-product-prod-provisioning-packet.mjs",
     "azure:product-prod-cutover:verify": "node scripts/azure/verify-product-prod-cutover-packet.mjs",
     "azure:client-private-plane-factory:verify": "node scripts/azure/verify-client-private-plane-factory.mjs",
+    "azure:client-data-onboarding:verify": "node scripts/azure/verify-client-data-onboarding-process.mjs",
     "azure:client-tenant-iac:verify": "node scripts/azure/verify-client-tenant-iac.mjs",
     "azure:immutable-audit-log:verify": "node scripts/azure/verify-immutable-audit-log.mjs",
     "azure:defender-storage-malware:verify": "node scripts/azure/verify-defender-storage-malware.mjs",

@@ -215,6 +215,9 @@ jobs:
       - name: Verify client private-plane factory
         run: npm run azure:client-private-plane-factory:verify
 
+      - name: Verify client data onboarding process
+        run: npm run azure:client-data-onboarding:verify
+
       # ── Step 5: TypeScript build check ────────────────────────────────────
       # Note: production-readiness-tracker.test.ts has a pre-existing failure
       # (AdminCanonShellV2 wiring check) that predates PROD3. That test is
