@@ -34,8 +34,11 @@ until slices C and D. This makes "what do I do next?" answerable at a glance.
 
 ## Client Applicability
 
-- Only tenants with `workspace_explorer_source` enabled (SkyHarbor today) see the panel.
-- All other clients: no change. Flag off → route is `notFound` as before.
+- All clients: no change while `workspace_explorer_source` is off — the workspace route is `notFound` as before.
+- Specific clients: SkyHarbor — the only tenant with the flag on, so the only place the panel renders today.
+- Internal only: None.
+- Public/demo only: None.
+- Feature flag: `workspace_explorer_source`.
 
 ## Changes Included
 
