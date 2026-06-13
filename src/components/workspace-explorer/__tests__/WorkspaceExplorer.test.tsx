@@ -135,6 +135,52 @@ describe("WorkspaceExplorer", () => {
     expect(refresh).not.toHaveBeenCalled();
   });
 
+  it("can generate through an existing Moves HTML route without changing that contract", async () => {
+    const movesCandidate: WorkspaceGenerateCandidate = {
+      id: "moves-generate:costed-business-case",
+      module: "moves",
+      artifactCode: "costed-business-case",
+      label: "Costed Business-Case Pack",
+      description: "Board-grade business case.",
+      stageKey: "Design & Plan",
+      state: "available",
+      generateHref: "/api/v1/moves/board-grade-business-case?moveId=move-1",
+      reviewHref: "/strategic-moves/move-1/workspace",
+      method: "GET",
+      responseKind: "html",
+    };
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      text: async () => "<!doctype html><title>Costed Business Case</title>",
+    });
+
+    render(
+      <WorkspaceExplorer
+        title="Irregular Operations Recovery AI"
+        eyebrow="MOV-001 · Moves workspace"
+        backHref="/strategic-moves/move-1"
+        items={[{ ...item, module: "moves" }]}
+        generateIntent={{
+          module: "moves",
+          eventId: "move-1",
+          candidates: [movesCandidate],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("workspace-generate-submit"));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(movesCandidate.generateHref, {
+        method: "GET",
+      });
+    });
+    expect(
+      (await screen.findByTestId("workspace-generate-success")).textContent,
+    ).toContain("Costed Business-Case Pack draft generated");
+    expect(refresh).toHaveBeenCalled();
+  });
+
   it("uploads files through the governed Source upload route and shows version state", async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,

@@ -49,6 +49,8 @@ export interface WorkspaceGenerateCandidate {
   readonly state: WorkspaceItemState;
   readonly generateHref: string;
   readonly reviewHref: string;
+  readonly method?: "GET" | "POST";
+  readonly responseKind?: "html" | "json";
 }
 
 export interface WorkspaceGenerateIntent {

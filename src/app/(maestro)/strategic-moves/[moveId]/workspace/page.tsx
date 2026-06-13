@@ -7,20 +7,29 @@ import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { getStrategicMoveById } from "@/lib/programs/queries";
 import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
 import { isStrategicMoveRouteId } from "@/lib/programs/strategic-move-route-params";
-import { listMovesWorkspaceItems } from "@/lib/workspace-explorer/moves-adapter";
+import {
+  listMovesWorkspaceGenerateCandidates,
+  listMovesWorkspaceItems,
+} from "@/lib/workspace-explorer/moves-adapter";
 
 export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ moveId: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
-export default async function StrategicMoveWorkspacePage({ params }: Props) {
+export default async function StrategicMoveWorkspacePage({
+  params,
+  searchParams,
+}: Props) {
   await requireProductModule("programs");
   const ctx = await getStrategicMovesTenancy();
   if (!ctx) redirect("/sign-in");
 
   const { moveId } = await params;
+  const sp: Record<string, string | string[] | undefined> =
+    (await (searchParams ?? Promise.resolve({}))) ?? {};
   if (!isStrategicMoveRouteId(moveId)) notFound();
 
   const activeClient = await getActiveClientRow().catch(() => null);
@@ -36,7 +45,13 @@ export default async function StrategicMoveWorkspacePage({ params }: Props) {
   const move = await getStrategicMoveById(ctx, moveId);
   if (!move) notFound();
 
-  const items = await listMovesWorkspaceItems(ctx, move.id);
+  const showGenerateIntent = sp.intent === "generate";
+  const [items, generateCandidates] = await Promise.all([
+    listMovesWorkspaceItems(ctx, move.id),
+    Promise.resolve(
+      showGenerateIntent ? listMovesWorkspaceGenerateCandidates(move) : [],
+    ),
+  ]);
 
   return (
     <AppShell
@@ -52,6 +67,15 @@ export default async function StrategicMoveWorkspacePage({ params }: Props) {
         title={move.name}
         backHref={`/strategic-moves/${move.id}`}
         items={items}
+        generateIntent={
+          showGenerateIntent
+            ? {
+                module: "moves",
+                eventId: move.id,
+                candidates: generateCandidates,
+              }
+            : undefined
+        }
       />
     </AppShell>
   );

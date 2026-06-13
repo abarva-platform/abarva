@@ -155,11 +155,37 @@ export function WorkspaceExplorer({
     setGeneratePending(true);
     setGenerateResult({ state: "idle" });
     try {
+      const method = selectedGenerateCandidate.method ?? "POST";
+      const responseKind = selectedGenerateCandidate.responseKind ?? "json";
       const response = await fetch(selectedGenerateCandidate.generateHref, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({}),
+        method,
+        ...(method === "POST"
+          ? {
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({}),
+            }
+          : {}),
       });
+      if (responseKind === "html") {
+        const body = await response.text().catch(() => "");
+        if (!response.ok) {
+          setGenerateResult({
+            state: "error",
+            detail:
+              body.trim().slice(0, 240) ||
+              `Generation failed with HTTP ${response.status}.`,
+          });
+          return;
+        }
+        setGenerateResult({
+          state: "success",
+          artifactName: selectedGenerateCandidate.label,
+          review: null,
+          reviewHref: selectedGenerateCandidate.reviewHref,
+        });
+        router.refresh();
+        return;
+      }
       const payload = (await response.json().catch(() => null)) as {
         error?: string;
         detail?: string;
