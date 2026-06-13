@@ -209,6 +209,9 @@ jobs:
       - name: Verify Product Prod provisioning packet
         run: npm run azure:product-prod-provisioning:verify
 
+      - name: Verify Product Prod cutover packet
+        run: npm run azure:product-prod-cutover:verify
+
       # ── Step 5: TypeScript build check ────────────────────────────────────
       # Note: production-readiness-tracker.test.ts has a pre-existing failure
       # (AdminCanonShellV2 wiring check) that predates PROD3. That test is

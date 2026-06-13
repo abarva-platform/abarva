@@ -1,0 +1,98 @@
+{
+  "version": "2026-06",
+  "environmentKey": "product-prod",
+  "purpose": "Non-mutating approval and evidence packet for Product Prod public runtime cutover.",
+  "status": "approval_required_before_cutover",
+  "dependsOn": [
+    "PRODUCT_PROD_PROVISIONING_PACKET_2026-06",
+    "PRODUCT_PREVIEW_RELEASE_CANDIDATE_GATES_2026-06",
+    "PRODUCT_PREVIEW_E2E_REHEARSAL_2026-06"
+  ],
+  "cutoverScope": {
+    "publicHost": "app.abarva.ai",
+    "runtime": "azure-container-apps",
+    "sourceRuntimeMustNotBe": ["vercel"],
+    "dataBoundary": {
+      "allowed": [
+        "synthetic",
+        "approved-product-telemetry",
+        "approved-reference-data"
+      ],
+      "disallowed": [
+        "client-private-production-data",
+        "client-confidential-unapproved",
+        "phi",
+        "pii",
+        "raw-client-private-documents"
+      ]
+    }
+  },
+  "approvalGates": [
+    "approve_product_prod_subscription_ready",
+    "approve_pinned_digest",
+    "approve_database_migrations_applied",
+    "approve_product_prod_smoke",
+    "approve_signed_in_browser_qa",
+    "approve_context_healthcheck",
+    "approve_monitoring_and_alerts",
+    "approve_rollback_rehearsal",
+    "approve_dns_or_frontdoor_change",
+    "approve_public_cutover"
+  ],
+  "preCutoverEvidenceRequired": [
+    "product_prod_subscription_id",
+    "aca_environment_export",
+    "container_app_export",
+    "active_revision_before_cutover",
+    "pinned_image_digest",
+    "migration_replay_green",
+    "health_endpoint_200",
+    "api_health_azure_postgres_direct_postgres_true",
+    "no_vercel_headers",
+    "no_x_vercel_id",
+    "no_supabase_runtime_dependency",
+    "signed_in_browser_qa_report",
+    "context_healthcheck_report",
+    "retrieval_citation_bundle_proof",
+    "artifact_download_proof",
+    "responsible_ai_acknowledgement_proof",
+    "monitoring_dashboard_links",
+    "alert_rule_export",
+    "rollback_command",
+    "explicit_approval_record"
+  ],
+  "postCutoverEvidenceRequired": [
+    "public_curl_headers",
+    "public_health_json",
+    "dns_or_frontdoor_export",
+    "active_revision_after_cutover",
+    "traffic_split_export",
+    "signed_in_smoke_after_cutover",
+    "context_bundle_trace_after_cutover",
+    "artifact_download_after_cutover",
+    "log_analytics_error_check",
+    "rollback_still_available"
+  ],
+  "runtimeSmokeCommands": [
+    "npm run azure:cutover:runtime-smoke",
+    "curl -I https://app.abarva.ai/",
+    "curl https://app.abarva.ai/api/health"
+  ],
+  "hardStops": [
+    "missing_explicit_cutover_approval",
+    "vercel_header_present",
+    "x_vercel_id_present",
+    "supabase_runtime_dependency_present",
+    "health_endpoint_not_200",
+    "direct_postgres_false",
+    "context_bundle_not_proven",
+    "signed_in_qa_missing",
+    "rollback_command_missing",
+    "monitoring_missing",
+    "phi_or_pii_present"
+  ],
+  "commandsAreTemplatesOnly": true,
+  "doNotRunWithoutApproval": true,
+  "doNotChangeDnsWithoutApproval": true,
+  "doNotShiftTrafficWithoutApproval": true
+}
