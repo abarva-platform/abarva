@@ -50,6 +50,8 @@ export interface WorkspaceItem {
   readonly version?: string | number | null;
   readonly stageKey?: SourceStageKey | string | null;
   readonly sourceLabel?: string | null;
+  readonly description?: string | null;
+  readonly href?: string | null;
   readonly classification?: string | null;
   readonly vendor?: string | null;
   readonly lineage: WorkspaceItemLineage;
