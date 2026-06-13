@@ -27,7 +27,11 @@ describe('loadMoveBusinessCaseInput', () => {
     mockRequireTenancy.mockReset();
     mockGetProgramById.mockReset();
     mockAzureSelect.mockResolvedValue([]);
-    mockRequireTenancy.mockResolvedValue({ clientId: 'client-1', userId: 'user-1' });
+    mockRequireTenancy.mockResolvedValue({
+      clientId: 'client-1',
+      clientKey: 'apexretail',
+      userId: 'user-1',
+    });
     mockGetProgramById.mockResolvedValue({
       id: 'move-1',
       clientId: 'client-1',
@@ -74,6 +78,27 @@ describe('loadMoveBusinessCaseInput', () => {
 
     await expect(loadMoveBusinessCaseInput('move-1')).resolves.toMatchObject({
       industry_code: 'retail',
+    });
+  });
+
+  it('uses the tenancy client key for deck labels when the client row lookup misses', async () => {
+    mockRequireTenancy.mockResolvedValue({
+      clientId: 'client-1',
+      clientKey: 'skyharbor-air',
+      userId: 'user-1',
+    });
+    mockAzureMaybeSingle
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        baseline_metrics: [{ metric: 'misconnect_rate', value: 0.18 }],
+        industry_code: 'GLOBAL_NETWORK_AIRLINE',
+      });
+
+    await expect(loadMoveBusinessCaseInput('move-1')).resolves.toMatchObject({
+      industry_code: 'GLOBAL_NETWORK_AIRLINE',
+      tenant_key: 'skyharbor-air',
+      tenant_name: 'SkyHarbor Air',
+      baseline_metrics: [{ metric: 'misconnect_rate', value: 0.18 }],
     });
   });
 

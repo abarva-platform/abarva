@@ -19,6 +19,7 @@
 
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { requireTenancy } from "@/lib/auth/tenancy";
+import { canonicalClientDisplayName } from "@/lib/client-config";
 import { getProgramById } from "../queries";
 import type {
   MoveBusinessCaseInput,
@@ -64,14 +65,18 @@ export async function loadMoveBusinessCaseInput(
     "string"
       ? (clientRow as { industry_code: string }).industry_code
       : null;
+  const ctxClientKey =
+    typeof ctx.clientKey === "string" && ctx.clientKey.trim()
+      ? ctx.clientKey.trim()
+      : null;
   const tenantKey =
     typeof (clientRow as { key?: unknown } | null)?.key === "string"
       ? (clientRow as { key: string }).key
-      : null;
+      : ctxClientKey;
   const tenantName =
     typeof (clientRow as { name?: unknown } | null)?.name === "string"
       ? (clientRow as { name: string }).name
-      : null;
+      : canonicalClientDisplayName({ key: ctxClientKey, name: null });
 
   // Recorded Move substrate — `engagements.industry_code` plus the
   // `engagements.baseline_metrics` JSONB array. The client row supplies tenant
