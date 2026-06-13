@@ -1,0 +1,116 @@
+{
+  "version": "2026-06",
+  "environmentKey": "product-dev",
+  "purpose": "Non-mutating governed synthetic data baseline packet for AbarVa Product Dev.",
+  "status": "scaffold_ready_before_load",
+  "dependsOn": [
+    "docs/azure/PRODUCT_DEV_PROVISIONING_PACKET_2026-06.json",
+    "docs/azure/PRODUCT_DEV_CICD_PACKET_2026-06.json",
+    "docs/governance/CONTEXT_CORPUS_POLICY.md",
+    "docs/governance/NEW_DATASET_ONBOARDING_POLICY.md"
+  ],
+  "sourceOfTruth": {
+    "syntheticDataIsReferenceShowcase": true,
+    "seedShortcutAllowedForPilotReadiness": false,
+    "adminBulkPathRequired": true,
+    "manifestRequired": true,
+    "ingestionReceiptRequired": true
+  },
+  "allowedInputFormats": {
+    "commitEligibleWhenSchemaValid": ["csv", "json", "jsonl", "yaml"],
+    "reviewRequiredUnlessDeterministicParserExists": [
+      "xlsx",
+      "pdf",
+      "docx",
+      "pptx"
+    ],
+    "zipSupportMayNotBeClaimedUnlessImplemented": true
+  },
+  "requiredPipelineStates": [
+    "local_artifact_generated",
+    "local_parse_preflight_passed",
+    "product_loader_api_accepted_upload",
+    "azure_blob_staged_original_files",
+    "queue_or_private_worker_handoff",
+    "parser_extracted_text_tables_facts_with_citations",
+    "review_queue_received_low_confidence_evidence",
+    "records_facts_chunks_committed",
+    "embeddings_search_index_refreshed",
+    "live_signed_in_retrieval_or_answer_qa_proved_usable"
+  ],
+  "requiredReceiptFields": [
+    "client_id",
+    "tenant_key",
+    "environment_key",
+    "dataset_manifest_id",
+    "source_file_name",
+    "source_file_hash",
+    "blob_uri",
+    "parser_name",
+    "parser_version",
+    "record_count",
+    "fact_count",
+    "chunk_count",
+    "citation_count",
+    "low_confidence_count",
+    "review_required_count",
+    "search_index_refresh_id",
+    "retrieval_probe_id",
+    "created_at"
+  ],
+  "idempotencyControls": {
+    "deterministicFactKeyRequired": true,
+    "sameLogicalFactUpdatesCurrentView": true,
+    "reuploadSameFileNoOp": true,
+    "changedFactSupersedesPreviousFact": true,
+    "duplicateActiveFactsBlocked": true,
+    "duplicateActiveChunksBlocked": true
+  },
+  "readinessControls": {
+    "autoPromoteAgentReady": false,
+    "initialReadinessStatus": "not_reviewed",
+    "promotionCandidateRequiresRetrievalAndCitationProof": true,
+    "agentReadyRequiresValidatedContextBundle": true,
+    "notReviewedExcludedFromModelInput": true,
+    "blockedExcludedFromModelInput": true,
+    "quarantinedExcludedFromModelInput": true
+  },
+  "dimensionsRequiredForSyntheticReference": [
+    "enterprise_profile",
+    "leadership_org",
+    "applications_systems",
+    "infrastructure_cloud",
+    "integrations",
+    "vendor_contracts",
+    "it_financials",
+    "kpis_value",
+    "dora_engineering_metrics",
+    "incidents_itsm",
+    "slas",
+    "initiatives_moves",
+    "risks_controls",
+    "artifacts_evidence",
+    "ai_data_use_cases"
+  ],
+  "approvalGates": [
+    "run_product_dev_bulk_load",
+    "write_to_product_dev_data_plane",
+    "refresh_product_dev_search_index",
+    "promote_any_row_to_agent_ready",
+    "load_any_client_private_data",
+    "accept_any_phi_or_pii"
+  ],
+  "forbidden": [
+    "phi",
+    "pii",
+    "client_confidential_data",
+    "raw_client_private_documents",
+    "seed_shortcut_as_pilot_ready",
+    "chunks_only_claimed_ready",
+    "facts_only_claimed_ready",
+    "indexed_only_claimed_ready",
+    "auto_agent_ready"
+  ],
+  "commandsAreTemplatesOnly": true,
+  "doNotRunWithoutApproval": true
+}
