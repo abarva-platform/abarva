@@ -8,14 +8,11 @@
 // falls back to the deterministic deck. We never emit fabricated board content.
 
 import type { MoveBusinessCaseInput } from "../../move-business-case";
-import { runDeliverableOrchestration } from "@/lib/deliverables/orchestrator/orchestrator";
 import type {
   ModelCaller,
   OrchestrationResult,
 } from "@/lib/deliverables/orchestrator/orchestrator";
-import { createAuditedModelCaller } from "@/lib/deliverables/orchestrator/model-caller";
-import { buildBusinessCaseRequest } from "./build-request";
-import { renderDeliverableHtml } from "./render-html";
+import { runOrchestratedMoveDeliverable } from "./run-orchestrated-move-deliverable";
 
 export interface RunOrchestratedBusinessCaseInput {
   moveInput: MoveBusinessCaseInput;
@@ -34,6 +31,7 @@ export interface RunOrchestratedBusinessCaseResult {
   html?: string;
   blockedReason?: string;
   evidenceCount: number;
+  citedInputIds: string[];
   quality?: OrchestrationResult["quality"];
   passTrace?: OrchestrationResult["passTrace"];
 }
@@ -41,60 +39,13 @@ export interface RunOrchestratedBusinessCaseResult {
 export async function runOrchestratedBusinessCase(
   input: RunOrchestratedBusinessCaseInput,
 ): Promise<RunOrchestratedBusinessCaseResult> {
-  const { request, evidenceCount } = buildBusinessCaseRequest(input.moveInput);
-
-  // Pre-flight: no recorded facts → don't burn LLM passes; fall back honestly.
-  const minEvidence = input.minEvidence ?? 1;
-  if (evidenceCount < minEvidence) {
-    return {
-      ok: false,
-      evidenceCount,
-      blockedReason: `move has ${evidenceCount} recorded evidence item(s); minimum ${minEvidence} required to author a grounded business case`,
-    };
-  }
-
-  const modelCaller =
-    input.modelCaller ??
-    createAuditedModelCaller({
-      tenantId: input.tenantId,
-      ...(input.userId !== undefined ? { userId: input.userId } : {}),
-      metadata: { moveId: input.moveId },
-    });
-
-  let result: OrchestrationResult;
-  try {
-    result = await runDeliverableOrchestration(request, modelCaller, {
-      enforcePlanGate: true,
-      enforceQualityGate: true,
-    });
-  } catch (err) {
-    return {
-      ok: false,
-      evidenceCount,
-      blockedReason:
-        err instanceof Error
-          ? `orchestration error: ${err.message}`
-          : "orchestration error",
-    };
-  }
-
-  if (!result.ok || !result.document) {
-    return {
-      ok: false,
-      evidenceCount,
-      blockedReason:
-        result.blockedReason ?? "orchestration produced no document",
-      quality: result.quality,
-      passTrace: result.passTrace,
-    };
-  }
-
-  const html = renderDeliverableHtml(result.document, input.generatedOn);
-  return {
-    ok: true,
-    html,
-    evidenceCount,
-    quality: result.quality,
-    passTrace: result.passTrace,
-  };
+  return runOrchestratedMoveDeliverable({
+    ...input,
+    deliverableType: "business_case",
+    phaseOrStage: "P4_business_case",
+    artifactStandard: "moves.board_grade.costed_business_case",
+    audience: ["board", "cfo", "cio", "steering_committee"],
+    decisionContext: `Fund / shape / kill decision for "${input.moveInput.name ?? "Strategic Move"}". The board must see the value case, the cost and timeline, the risks, and an explicit recommendation grounded in the recorded evidence.`,
+    outputFormats: ["html"],
+  });
 }

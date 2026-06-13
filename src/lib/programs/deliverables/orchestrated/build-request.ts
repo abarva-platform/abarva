@@ -9,7 +9,10 @@
 // rather than fabricating). This is what lets the quality gate stay honest:
 // a thin Move produces a thin (or blocked) deck, never a fabricated one.
 
-import type { MoveBusinessCaseInput } from "../../move-business-case";
+import type {
+  MoveBusinessCaseInput,
+  MoveGovernedEvidenceItem,
+} from "../../move-business-case";
 import type {
   DeliverableIntelligenceRequest,
   FormattingProfile,
@@ -109,7 +112,21 @@ export interface BuildBusinessCaseRequestResult {
   request: DeliverableIntelligenceRequest;
   /** how many real evidence items were bound — 0 means the Move has no recorded facts. */
   evidenceCount: number;
+  /** UUID-backed governed inputs actually assembled for this generation. */
+  citedInputIds: string[];
 }
+
+export interface BuildMoveDeliverableRequestInput {
+  deliverableType: string;
+  phaseOrStage: string;
+  artifactStandard: string;
+  decisionContext: string;
+  audience?: DeliverableIntelligenceRequest["audience"];
+  outputFormats?: DeliverableIntelligenceRequest["outputFormats"];
+}
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /**
  * Build the DeliverableIntelligenceRequest for a Move's Costed Business-Case.
@@ -123,11 +140,55 @@ export interface BuildBusinessCaseRequestResult {
 export function buildBusinessCaseRequest(
   input: MoveBusinessCaseInput,
 ): BuildBusinessCaseRequestResult {
+  return buildMoveDeliverableRequest(input, {
+    deliverableType: "business_case",
+    phaseOrStage: "P4_business_case",
+    artifactStandard: "moves.board_grade.costed_business_case",
+    audience: ["board", "cfo", "cio", "steering_committee"],
+    decisionContext: `Fund / shape / kill decision for "${asString(input.name) ?? "Strategic Move"}". The board must see the value case, the cost and timeline, the risks, and an explicit recommendation grounded in the recorded evidence.`,
+    outputFormats: ["html"],
+  });
+}
+
+function confidenceLabel(
+  value: MoveGovernedEvidenceItem["confidence"],
+): GovernedEvidenceItem["confidence"] {
+  if (typeof value === "string") {
+    const v = value.toLowerCase();
+    if (v === "high" || v === "medium" || v === "low") return v;
+  }
+  if (typeof value === "number") {
+    if (value >= 0.8) return "high";
+    if (value >= 0.55) return "medium";
+  }
+  return "low";
+}
+
+function evidenceStatement(row: MoveGovernedEvidenceItem): string | null {
+  const title = asString(row.title);
+  const summary = asString(row.summary);
+  if (title && summary) return `${title}: ${summary}`;
+  return summary ?? title;
+}
+
+/**
+ * Build the DeliverableIntelligenceRequest for any board-grade Move artifact.
+ *
+ * It uses the same grounded evidence assembler as the business case, but lets
+ * callers select the deliverable type/phase/decision context. UUID-backed
+ * `program_evidence_items` become Workspace Explorer lineage. JSON charter and
+ * baseline facts remain cited evidence in the document but not UUID lineage.
+ */
+export function buildMoveDeliverableRequest(
+  input: MoveBusinessCaseInput,
+  options: BuildMoveDeliverableRequestInput,
+): BuildBusinessCaseRequestResult {
   const charter = (input.charter ?? {}) as Record<string, unknown>;
 
   const governedEvidenceBundle: GovernedEvidenceItem[] = [];
   const sourceRegister: SourceRegisterEntry[] = [];
   const missingEvidence: MissingEvidenceItem[] = [];
+  const citedInputIds: string[] = [];
   let n = 0;
 
   // 1 · Charter fields — user-attested intake, high confidence when present.
@@ -186,6 +247,38 @@ export function buildBusinessCaseRequest(
     });
   }
 
+  const committedEvidence =
+    input.governed_evidence_items ?? input.governedEvidenceItems ?? [];
+  for (const row of committedEvidence) {
+    const id = asString(row.id);
+    const statement = evidenceStatement(row);
+    if (!id || !UUID_RE.test(id) || !statement) continue;
+    n += 1;
+    citedInputIds.push(id);
+    const label = asString(row.title) ?? `Committed evidence ${n}`;
+    const evidenceFamily =
+      asString(row.evidence_type) ??
+      `program_evidence_phase_${row.phase ?? "unknown"}`;
+    const confidence = confidenceLabel(row.confidence);
+    governedEvidenceBundle.push({
+      citationNumber: n,
+      label,
+      statement,
+      evidenceFamily,
+      confidence,
+      asOf: asString(row.created_at) ?? undefined,
+      disclosureTier: "internal_only",
+      provenanceRef: id,
+    });
+    sourceRegister.push({
+      citationNumber: n,
+      label,
+      evidenceFamily,
+      confidence,
+      asOf: asString(row.created_at) ?? undefined,
+    });
+  }
+
   const useCaseArchetype =
     asString(input.function_pack_key) ??
     asString(
@@ -201,22 +294,26 @@ export function buildBusinessCaseRequest(
   const request: DeliverableIntelligenceRequest = {
     module: "moves",
     useCaseArchetype,
-    phaseOrStage: "P4_business_case",
-    deliverableType: "business_case",
-    audience: ["board", "cfo", "cio", "steering_committee"],
-    decisionContext: `Fund / shape / kill decision for "${initiativeDisplayName}". The board must see the value case, the cost and timeline, the risks, and an explicit recommendation grounded in the recorded evidence.`,
+    phaseOrStage: options.phaseOrStage,
+    deliverableType: options.deliverableType,
+    audience: options.audience ?? ["board", "cfo", "cio", "steering_committee"],
+    decisionContext: options.decisionContext,
     governedEvidenceBundle,
     sourceRegister,
     missingEvidence,
     clientCompleteItems: [],
     approvedAssumptions: [],
-    artifactStandard: "moves.board_grade.costed_business_case",
-    outputFormats: ["html"],
+    artifactStandard: options.artifactStandard,
+    outputFormats: options.outputFormats ?? ["html"],
     formattingProfile: FORMATTING_PROFILE,
     qualityBar: QUALITY_BAR,
     clientDisplayName,
     initiativeDisplayName,
   };
 
-  return { request, evidenceCount: governedEvidenceBundle.length };
+  return {
+    request,
+    evidenceCount: governedEvidenceBundle.length,
+    citedInputIds,
+  };
 }

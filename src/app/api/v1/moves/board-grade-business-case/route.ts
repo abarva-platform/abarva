@@ -135,6 +135,7 @@ export async function GET(req: NextRequest): Promise<Response> {
             renderedBy: user.personId ?? user.clerkUserId,
             routePath: "/api/v1/moves/board-grade-business-case",
             generatedOn,
+            citedInputIds: run.citedInputIds,
           });
           return new Response(run.html, {
             status: 200,
@@ -143,6 +144,9 @@ export async function GET(req: NextRequest): Promise<Response> {
               "cache-control": "no-store",
               "x-kernel-move": `move:${moveId}`,
               "x-deliverable-engine": "orchestrated",
+              "x-deliverable-cited-input-count": String(
+                run.citedInputIds.length,
+              ),
               ...generatedArtifactResponseHeaders(artifactRecord),
               ...(download
                 ? {
