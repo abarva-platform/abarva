@@ -12,6 +12,8 @@
 
 This release hardens the repo gates needed before AbarVa creates clean Azure Product Dev, Product Preview, and Product Prod environments. It makes existing tenant-purity and legacy-runtime checks part of the production-readiness gate, adds a Vercel production-runtime guard, and aligns remaining GitHub workflows to Node.js 24.
 
+It also fixes one existing Source proof scenario so its `agent_ready` evidence is asserted through the canonical context/corpus policy contract instead of being stamped directly.
+
 ## Layer Impact
 
 - `global-control-lane`: strengthens shared CI/release governance for all clients and environments.
@@ -33,6 +35,7 @@ This release hardens the repo gates needed before AbarVa creates clean Azure Pro
 - Wires `audit:control-plane-purity:check` and `audit:vercel-production-runtime:check` into `.github/workflows/production-readiness-gate.yml`.
 - Refreshes `scripts/audit/control-plane-tenant-purity.baseline.json` to current `origin/main` debt so the gate blocks new tenant-name drift from this point forward.
 - Aligns remaining Node 20 workflow setup steps to Node 24.
+- Routes the SkyHarbor AMS Source scenario fixture through `evaluateGovernedObject` before it can use promoted evidence in the proof.
 
 ## QA / Validation
 
@@ -40,6 +43,9 @@ This release hardens the repo gates needed before AbarVa creates clean Azure Pro
 - `npm run audit:control-plane-purity:check` passed after baseline refresh to current main debt.
 - `npm run audit:runtime-supabase-imports:guard` passed.
 - `npm run audit:deprecated-pattern-table-writes` passed.
+- `npm run validate:context-corpus` passed after routing the SkyHarbor AMS scenario through the policy contract.
+- `npm test -- src/lib/source/archetypes/__tests__/skyharbor-ams.scenario.test.ts --runInBand` passed (8/8).
+- `npx eslint scripts/audit/vercel-production-runtime-guard.mjs src/lib/source/archetypes/scenarios/skyharbor-ams.ts` passed.
 - `rg -n "node-version: ['\"]?20" .github/workflows` returned no matches.
 
 ## Rollout Plan
