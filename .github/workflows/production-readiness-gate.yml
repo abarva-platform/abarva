@@ -203,6 +203,9 @@ jobs:
       - name: Verify Product Preview release candidate gates
         run: npm run azure:product-preview-rc-gates:verify
 
+      - name: Verify Product Preview end-to-end rehearsal
+        run: npm run azure:product-preview-e2e-rehearsal:verify
+
       # ── Step 5: TypeScript build check ────────────────────────────────────
       # Note: production-readiness-tracker.test.ts has a pre-existing failure
       # (AdminCanonShellV2 wiring check) that predates PROD3. That test is
