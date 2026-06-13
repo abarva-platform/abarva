@@ -77,6 +77,7 @@ export function AgentColumn({
 }: AgentColumnProps) {
   const placeholder = inputPlaceholder ?? `Ask ${agent.name}…`;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const threadScrollRef = useRef<HTMLDivElement>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
 
   // Prefer shared AtlasPageState (§6); fall back to local stream for components
@@ -99,10 +100,14 @@ export function AgentColumn({
 
   const hasThread = conversation.length > 0 || isStreaming || !!response || !!error;
 
-  // Auto-scroll to bottom whenever a new turn arrives or streaming updates.
+  // Auto-scroll only the thread container once there is an active thread.
+  // Calling scrollIntoView on mount can pull the whole page to the bottom.
   useEffect(() => {
-    threadEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [conversation.length, response]);
+    if (!hasThread) return;
+    const threadScroll = threadScrollRef.current;
+    if (!threadScroll) return;
+    threadScroll.scrollTop = threadScroll.scrollHeight;
+  }, [conversation.length, hasThread, response]);
 
   function handleSubmit() {
     const el = textareaRef.current;
@@ -317,6 +322,7 @@ export function AgentColumn({
 
       {/* ── Conversation thread (scrollable, fills remaining height) ── */}
       <div
+        ref={threadScrollRef}
         style={{
           flex: 1,
           minHeight: 0,
