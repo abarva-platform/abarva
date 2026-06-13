@@ -10,6 +10,9 @@ export async function listMovesWorkspaceItems(
   ctx: TenancyCtx,
   moveId: string,
 ): Promise<WorkspaceItem[]> {
+  const generatedArtifactClientIds = Array.from(
+    new Set([ctx.clientKey, ctx.clientId].filter(Boolean)),
+  ) as string[];
   const [moveArtifacts, generatedArtifacts] = await Promise.all([
     listMoveArtifacts(ctx, moveId).catch((error) => {
       console.error(
@@ -18,15 +21,25 @@ export async function listMovesWorkspaceItems(
       );
       return [];
     }),
-    listGeneratedArtifactsForMove({
-      clientId: ctx.clientId,
-      moveId,
-    }).catch((error) => {
-      console.error(
-        "[MovesWorkspaceAdapter] generated_artifacts read failed",
-        error instanceof Error ? error.message : String(error),
-      );
-      return [];
+    Promise.all(
+      generatedArtifactClientIds.map((clientId) =>
+        listGeneratedArtifactsForMove({
+          clientId,
+          moveId,
+        }).catch((error) => {
+          console.error(
+            "[MovesWorkspaceAdapter] generated_artifacts read failed",
+            {
+              clientId,
+              message: error instanceof Error ? error.message : String(error),
+            },
+          );
+          return [];
+        }),
+      ),
+    ).then((lists) => {
+      const byId = new Map(lists.flat().map((record) => [record.id, record]));
+      return Array.from(byId.values());
     }),
   ]);
 
