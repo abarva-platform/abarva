@@ -1,12 +1,14 @@
 // Audited-egress ModelCaller for the Deliverable Intelligence Orchestrator.
 //
-// Backs the orchestrator's injected ModelCaller with the audited Anthropic egress
-// path (getAuditedAnthropicClient → client.messages.create). Each pass is its own
-// audited call with its own (generous) token budget and a workflow tag that records
-// the module / deliverable / pass. Board-grade work runs on claude-opus-4-8.
+// Backs the orchestrator's injected ModelCaller with the audited OpenAI egress
+// path (preflightOpenAIDirectClient → client.responses.create). Each pass is its
+// own audited call with its own generous token budget and a workflow tag that
+// records the module / deliverable / pass.
 
-import { getAuditedAnthropicClient } from "@/lib/agent/stream";
-import type { AiDataClass } from "@/lib/integrations/ai-egress";
+import {
+  preflightOpenAIDirectClient,
+  type AiDataClass,
+} from "@/lib/integrations/ai-egress";
 import { resolveDocumentPolicy } from "@/lib/ai/document-generation-policy";
 import { runDeliverableOrchestration } from "./orchestrator";
 import type {
@@ -19,7 +21,7 @@ import type { DeliverableIntelligenceRequest, PassPrompt } from "./types";
 export interface AuditedModelCallerOptions {
   tenantId: string;
   userId?: string;
-  /** override the model; defaults to claude-opus-4-8 for board-grade work. */
+  /** override the model; defaults to the document policy's OpenAI model. */
   model?: string;
   /** persisted artifact id, when generation is tied to a saved artifact. */
   artifactId?: string;
@@ -27,11 +29,30 @@ export interface AuditedModelCallerOptions {
   metadata?: Record<string, unknown>;
 }
 
-function extractText(content: Array<{ type: string; text?: string }>): string {
-  return content
-    .map((b) => (b.type === "text" ? (b.text ?? "") : ""))
-    .join("")
-    .trim();
+function extractResponseText(response: unknown): string {
+  if (
+    response &&
+    typeof response === "object" &&
+    "output_text" in response &&
+    typeof (response as { output_text?: unknown }).output_text === "string"
+  ) {
+    return (response as { output_text: string }).output_text.trim();
+  }
+
+  const output = (response as { output?: unknown } | null)?.output;
+  if (!Array.isArray(output)) return "";
+  const chunks: string[] = [];
+  for (const item of output) {
+    const content = (item as { content?: unknown } | null)?.content;
+    if (!Array.isArray(content)) continue;
+    for (const block of content) {
+      const text =
+        (block as { text?: unknown } | null)?.text ??
+        (block as { output_text?: unknown } | null)?.output_text;
+      if (typeof text === "string") chunks.push(text);
+    }
+  }
+  return chunks.join("").trim();
 }
 
 /**
@@ -48,7 +69,7 @@ export function createAuditedModelCaller(
       opts.model ??
       resolveDocumentPolicy({ deliverableType: req.deliverableType }).model;
     const fullPrompt = `${prompt.system}\n\n${prompt.user}`;
-    const { client } = await getAuditedAnthropicClient({
+    const preflight = await preflightOpenAIDirectClient({
       tenantId: opts.tenantId,
       ...(opts.userId !== undefined ? { userId: opts.userId } : {}),
       workflow: `deliverable:${req.module}:${req.deliverableType}:${prompt.pass}`,
@@ -67,25 +88,28 @@ export function createAuditedModelCaller(
         maxTokens: prompt.maxTokens,
       },
     });
+    if (!preflight.ok) {
+      throw new Error(`OpenAI egress denied: ${preflight.reason}`);
+    }
 
-    // Stream and resolve the final message. Board-grade passes can exceed the SDK's
-    // 10-minute non-streaming ceiling; streaming removes that limit.
-    const message = await client.messages
-      .stream({
+    const response = await preflight.client.responses.create({
         model,
-        max_tokens: prompt.maxTokens,
-        system: prompt.system,
-        messages: [{ role: "user", content: prompt.user }],
-      })
-      .finalMessage();
+        instructions: prompt.system,
+        input: prompt.user,
+        max_output_tokens: prompt.maxTokens,
+      });
 
-    return { text: extractText(message.content), responseId: message.id };
+    return {
+      text: extractResponseText(response),
+      responseId:
+        typeof response.id === "string" ? response.id : preflight.auditId,
+    };
   };
 }
 
 /**
  * One-call entry point: run the full multi-pass orchestration for a deliverable using
- * the audited Anthropic egress. The orchestrator enforces the plan gate and quality
+ * the audited OpenAI egress. The orchestrator enforces the plan gate and quality
  * gate; the returned result carries the document only when both pass.
  */
 export async function generateDeliverable(
