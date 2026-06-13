@@ -13,42 +13,46 @@
 // }
 // Returns: { deliverableId, versionId, content, phase }
 
-import { NextRequest } from 'next/server';
-import { streamAgentTurn } from '@/lib/agent/stream';
-import { assembleContext, draftModuleDeliverable } from '@/lib/programs/nexus';
-import { runQualityGates } from '@/lib/programs/quality-gates';
-import { raiseMaestroFlag } from '@/lib/programs/governance';
-import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/programs/_auth';
-import { getProgramById } from '@/lib/programs/queries';
-import { PHASE_LABEL_MAP } from '@/lib/programs/programs-fixture';
+import { NextRequest } from "next/server";
+import { streamAgentTurn } from "@/lib/agent/stream";
+import { assembleContext, draftModuleDeliverable } from "@/lib/programs/nexus";
+import { runQualityGates } from "@/lib/programs/quality-gates";
+import { raiseMaestroFlag } from "@/lib/programs/governance";
+import {
+  requireTenancy,
+  tenancyErrorResponse,
+} from "@/app/api/v1/programs/_auth";
+import { getProgramById } from "@/lib/programs/queries";
+import { PHASE_LABEL_MAP } from "@/lib/programs/programs-fixture";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const PHASE_TO_MODULE_KEY: Record<number, string> = {
-  1: 'charter',
-  2: 'diagnose',
-  3: 'design',
-  4: 'roadmap',
-  5: 'mobilize',
+  1: "charter",
+  2: "diagnose",
+  3: "design",
+  4: "roadmap",
+  5: "mobilize",
 };
 
 const PHASE_LABEL: Record<number, string> = {
-  1: PHASE_LABEL_MAP[1] ?? 'Discovery',
-  2: PHASE_LABEL_MAP[2] ?? 'Synthesis',
-  3: PHASE_LABEL_MAP[3] ?? 'Design',
-  4: PHASE_LABEL_MAP[4] ?? 'Execution Roadmap',
-  5: PHASE_LABEL_MAP[5] ?? 'Approval & Mobilization',
+  1: PHASE_LABEL_MAP[1] ?? "Discovery",
+  2: PHASE_LABEL_MAP[2] ?? "Synthesis",
+  3: PHASE_LABEL_MAP[3] ?? "Design",
+  4: PHASE_LABEL_MAP[4] ?? "Execution Roadmap",
+  5: PHASE_LABEL_MAP[5] ?? "Approval & Mobilization",
 };
 
 function deliverableKeyToExpectedShape(
   deliverableKey: string,
-): 'charter' | 'outcome' | 'design' | 'free' {
-  if (deliverableKey === 'charter') return 'charter';
-  if (deliverableKey === 'outcome_report' || deliverableKey === 'mobilize_plan') return 'outcome';
-  if (deliverableKey === 'design_spec') return 'design';
-  return 'free';
+): "charter" | "outcome" | "design" | "free" {
+  if (deliverableKey === "charter") return "charter";
+  if (deliverableKey === "outcome_report" || deliverableKey === "mobilize_plan")
+    return "outcome";
+  if (deliverableKey === "design_spec") return "design";
+  return "free";
 }
 
 export async function POST(
@@ -63,9 +67,9 @@ export async function POST(
 
     // 2. Tenant gate — confirm the move/program belongs to this tenant
     const program = await getProgramById(ctx, moveId);
-    if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
+    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
     if (program.archivedAt || program.deletedAt) {
-      return Response.json({ error: 'archived_or_deleted' }, { status: 410 });
+      return Response.json({ error: "archived_or_deleted" }, { status: 410 });
     }
 
     // 3. Validate body
@@ -83,13 +87,16 @@ export async function POST(
       body.phase > 5
     ) {
       return Response.json(
-        { error: 'bad_request', detail: 'phase must be an integer in [1,5]' },
+        { error: "bad_request", detail: "phase must be an integer in [1,5]" },
         { status: 400 },
       );
     }
     if (!body?.deliverableKey || !body?.title || !body?.prompt) {
       return Response.json(
-        { error: 'bad_request', detail: 'deliverableKey + title + prompt required' },
+        {
+          error: "bad_request",
+          detail: "deliverableKey + title + prompt required",
+        },
         { status: 400 },
       );
     }
@@ -106,30 +113,32 @@ export async function POST(
       `You are Nexus, workspace delivery agent for ${phaseLabel}.`,
       `Draft the ${body.deliverableKey} for ${context.program.name}.`,
       `Move code: ${program.name}. Phase: P${phase} ${phaseLabel}.`,
-      `Archetype: ${context.program.archetype ?? 'strategic_transformation'}.`,
+      `Archetype: ${context.program.archetype ?? "strategic_transformation"}.`,
       context.patternPreload
-        ? 'Use attached pattern pre-load as the canonical shape.'
-        : '',
-      'Draft should be self-contained, cite provenance inline when possible, commit to claims.',
-      'Output should be a structured deliverable — not a chat reply. Use headings, bullets, and evidence anchors.',
+        ? "Use attached pattern pre-load as the canonical shape."
+        : "",
+      "Draft should be self-contained, cite provenance inline when possible, commit to claims.",
+      "Output should be a structured deliverable — not a chat reply. Use headings, bullets, and evidence anchors.",
     ]
       .filter(Boolean)
-      .join('\n\n');
+      .join("\n\n");
 
     // 6. Generate content via streamAgentTurn
-    let content = '';
+    let content = "";
     for await (const chunk of streamAgentTurn({
       system: systemPrompt,
-      messages: [{ role: 'user', content: body.prompt }],
-      model: process.env.NEXUS_COMPOSER_MODEL ?? 'claude-opus-4-7',
+      messages: [{ role: "user", content: body.prompt }],
+      model: process.env.NEXUS_COMPOSER_MODEL ?? "claude-opus-4-7",
       maxTokens: 4096,
       aiEgress: {
-        tenantId: ctx.clientKey ?? ctx.clientId,
-        userId: ctx.userId,
-        workflow: 'programs-workspace-artifact-stream',
-        dataClass: 'confidential',
+        tenantId: ctx.clientId, // audit column is UUID — clientKey ('skyharbor') breaks the egress write
+        userId: /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(ctx.userId ?? "")
+          ? ctx.userId
+          : undefined,
+        workflow: "programs-workspace-artifact-stream",
+        dataClass: "confidential",
         artifactId: moveId,
-        artifactType: 'program',
+        artifactType: "program",
         metadata: { phase, deliverableKey: body.deliverableKey },
       },
     })) {
@@ -141,12 +150,14 @@ export async function POST(
     const gates = runQualityGates(content, { expectedShape });
 
     if (!gates.pass) {
-      const hardCount = gates.issues.filter((i) => i.severity === 'hard').length;
+      const hardCount = gates.issues.filter(
+        (i) => i.severity === "hard",
+      ).length;
       await raiseMaestroFlag(ctx, moveId, {
-        flagType: 'quality_concern',
-        severity: 'warning',
-        raisedBy: 'nexus',
-        headline: `Nexus workspace draft for ${body.deliverableKey} (phase ${phase}) blocked at quality gate (${hardCount} hard issue${hardCount === 1 ? '' : 's'})`,
+        flagType: "quality_concern",
+        severity: "warning",
+        raisedBy: "nexus",
+        headline: `Nexus workspace draft for ${body.deliverableKey} (phase ${phase}) blocked at quality gate (${hardCount} hard issue${hardCount === 1 ? "" : "s"})`,
         context: {
           phase,
           module_key: moduleKey,
@@ -158,12 +169,12 @@ export async function POST(
       });
       return Response.json(
         {
-          error: 'quality_gate_failed',
+          error: "quality_gate_failed",
           issues: gates.issues,
           metadata: gates.metadata,
           rawContent: content,
           detail:
-            'Draft did not pass Nexus quality gates. Maestro flag raised for review.',
+            "Draft did not pass Nexus quality gates. Maestro flag raised for review.",
         },
         { status: 422 },
       );
@@ -179,7 +190,7 @@ export async function POST(
       structuredData: {
         prompt: body.prompt,
         phase,
-        mode: 'workspace_artifact',
+        mode: "workspace_artifact",
         gate_metadata: gates.metadata,
       },
       provenanceMap: {
@@ -203,9 +214,9 @@ export async function POST(
     try {
       return tenancyErrorResponse(err);
     } catch {}
-    console.error('[POST /programs/workspace/:moveId/artifact]', err);
+    console.error("[POST /programs/workspace/:moveId/artifact]", err);
     return Response.json(
-      { error: 'internal_error', message: (err as Error).message },
+      { error: "internal_error", message: (err as Error).message },
       { status: 500 },
     );
   }

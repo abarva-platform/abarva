@@ -16,7 +16,10 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
-import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
+import {
+  preflightAnthropicDirectClient,
+  type AnthropicTool,
+} from "@/lib/integrations/ai-egress";
 import type { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { getActiveClientRow } from "@/lib/active-client";
@@ -33,6 +36,23 @@ import {
   type SourceGenerationContext,
   type SourceArtifactBodyGenerationMetadata,
 } from "@/lib/source/agent-generation/server";
+import { completeD09RfpGovernanceSections } from "@/lib/source/agent-generation/d09-completion";
+import {
+  buildSourceConsultingGradeReviewPrompt,
+  buildSourceConsultingGradeCompactRetryPrompt,
+  buildSourceConsultingGradeRewritePrompt,
+  buildMalformedSourceConsultingGradeReview,
+  buildSourceQualityGateMetadata,
+  buildSourceQualitySourceContext,
+  parseSourceConsultingGradeReview,
+  requiresSourceConsultingGradeGate,
+  type SourceArtifactQualityGateMetadata,
+} from "@/lib/source/agent-generation/quality-review";
+import {
+  CONSULTING_GRADE_DIMENSIONS,
+  CONSULTING_GRADE_MIN_SCORE,
+  CONSULTING_GRADE_STANDARD_ID,
+} from "@/lib/deliverables/quality/consulting-grade-rubric";
 import {
   artifactStateRowToView,
   type SourceEventArtifactState,
@@ -50,6 +70,85 @@ import {
 
 const REGISTRY_GENERATED_MIME = "text/markdown";
 const INLINE_REGISTRY_URI_PREFIX = "inline://source-event-artifact-state";
+const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
+// The ACA ingress cuts long synchronous requests well before the 300s
+// maxDuration (observed ~150s gateway 504 on the live runtime). Budget below
+// that so the gate returns its draft + verdict gracefully (422) instead of
+// being killed mid-rewrite with a 504. Pair with capped artifact maxTokens so
+// the full draft→review→rewrite still fits.
+const SOURCE_SYNC_GENERATION_BUDGET_MS = 110_000;
+const SOURCE_JSON_HEARTBEAT_INTERVAL_MS = 12_000;
+const SOURCE_QUALITY_REVIEW_MAX_TOKENS = 3_200;
+const SOURCE_QUALITY_REWRITE_MIN_REMAINING_MS = 45_000;
+const SOURCE_QUALITY_REVIEW_TOOL: AnthropicTool = {
+  name: SOURCE_QUALITY_REVIEW_TOOL_NAME,
+  description:
+    "Record the strict partner-grade quality review as compact structured data.",
+  input_schema: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      standardId: { type: "string", const: CONSULTING_GRADE_STANDARD_ID },
+      minRequiredScore: { type: "number", const: CONSULTING_GRADE_MIN_SCORE },
+      artifactCode: { type: "string" },
+      artifactName: { type: "string" },
+      pass: { type: "boolean" },
+      overallScore: { type: "number", minimum: 0, maximum: 10 },
+      dimensionScores: {
+        type: "array",
+        minItems: CONSULTING_GRADE_DIMENSIONS.length,
+        maxItems: CONSULTING_GRADE_DIMENSIONS.length,
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            id: {
+              type: "string",
+              enum: CONSULTING_GRADE_DIMENSIONS.map(
+                (dimension) => dimension.id,
+              ),
+            },
+            score: { type: "number", minimum: 0, maximum: 10 },
+            rationale: { type: "string", maxLength: 280 },
+            requiredFixes: {
+              type: "array",
+              maxItems: 3,
+              items: { type: "string", maxLength: 180 },
+            },
+          },
+          required: ["id", "score", "rationale", "requiredFixes"],
+        },
+      },
+      unsupportedClaims: {
+        type: "array",
+        maxItems: 8,
+        items: { type: "string", maxLength: 220 },
+      },
+      missingEvidence: {
+        type: "array",
+        maxItems: 8,
+        items: { type: "string", maxLength: 220 },
+      },
+      rewriteGuidance: {
+        type: "array",
+        maxItems: 8,
+        items: { type: "string", maxLength: 220 },
+      },
+    },
+    required: [
+      "standardId",
+      "minRequiredScore",
+      "artifactCode",
+      "artifactName",
+      "pass",
+      "overallScore",
+      "dimensionScores",
+      "unsupportedClaims",
+      "missingEvidence",
+      "rewriteGuidance",
+    ],
+  },
+};
 
 function safeRegistryFilename(
   artifactCode: string,
@@ -77,7 +176,73 @@ function isCanonicalClientAdminEmail(
   );
 }
 
-export async function POST(_req: NextRequest, { params }: RouteCtx) {
+export async function POST(req: NextRequest, { params }: RouteCtx) {
+  const resolvedParams = await params;
+  const invoke = () =>
+    generateArtifact(req, { params: Promise.resolve(resolvedParams) });
+  if (resolvedParams.artifactCode === "d09_rfp_pack") {
+    return streamJsonHeartbeat(invoke);
+  }
+  return invoke();
+}
+
+function streamJsonHeartbeat(run: () => Promise<Response>): Response {
+  const encoder = new TextEncoder();
+  let heartbeat: ReturnType<typeof setInterval> | null = null;
+  const clearHeartbeat = () => {
+    if (heartbeat) clearInterval(heartbeat);
+    heartbeat = null;
+  };
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(encoder.encode("\n"));
+      heartbeat = setInterval(() => {
+        controller.enqueue(encoder.encode(" \n"));
+      }, SOURCE_JSON_HEARTBEAT_INTERVAL_MS);
+
+      run()
+        .then(async (response) => {
+          const body = await response.text();
+          clearHeartbeat();
+          controller.enqueue(encoder.encode(body || "null"));
+          controller.close();
+        })
+        .catch((error) => {
+          clearHeartbeat();
+          console.error(
+            "[source artifact generation heartbeat] generation failed",
+            error,
+          );
+          controller.enqueue(
+            encoder.encode(
+              JSON.stringify({
+                error: "generation_failed",
+                detail:
+                  error instanceof Error
+                    ? error.message
+                    : "Source artifact generation failed.",
+              }),
+            ),
+          );
+          controller.close();
+        });
+    },
+    cancel() {
+      clearHeartbeat();
+    },
+  });
+
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "Cache-Control": "no-store",
+      "Content-Type": "application/json; charset=utf-8",
+      "X-Abarva-Json-Heartbeat": "source-d09",
+    },
+  });
+}
+
+async function generateArtifact(_req: NextRequest, { params }: RouteCtx) {
   let tenancy;
   let tenancyError: unknown = null;
   try {
@@ -232,6 +397,17 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
     ...template.upstreamOptional,
   ]);
   const userMessage = template.buildUserMessage(ctx, upstreamBound);
+  const requiresQualityGate = requiresSourceConsultingGradeGate(artifactCode);
+  if (requiresQualityGate && !process.env.ANTHROPIC_API_KEY) {
+    return Response.json(
+      {
+        error: "quality_gate_requires_anthropic",
+        detail:
+          "Flagship Source artifacts require Claude generation plus consulting-grade review; deterministic fallback is disabled for this artifact.",
+      },
+      { status: 503 },
+    );
+  }
 
   // Call Anthropic when configured. If ANTHROPIC_API_KEY is absent, write a
   // deterministic Source draft so the canvas remains useful in local/dev
@@ -319,6 +495,36 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
       { status: 502 },
     );
   }
+  body = completeD09RfpGovernanceSections({ artifactCode, body, ctx });
+
+  let qualityGate: SourceArtifactQualityGateMetadata | undefined;
+  if (requiresQualityGate) {
+      const qualityResult = await runConsultingGradeQualityGate({
+        artifactCode,
+        artifactName: specByCode(artifactCode)?.name ?? artifactCode,
+        body,
+        ctx,
+      upstreamBound,
+      tenantId: tenancy.clientId,
+        userId: tenancy.userId,
+        artifactId: artifactRow.id,
+        model: template.model,
+        maxTokens: template.maxTokens,
+        requestStartedAtMs: startedAt,
+      });
+    if (!qualityResult.ok) {
+      return Response.json(
+        {
+          error: qualityResult.error,
+          detail: qualityResult.detail,
+          qualityGate: qualityResult.qualityGate ?? null,
+        },
+        { status: qualityResult.status },
+      );
+    }
+    body = qualityResult.body;
+    qualityGate = qualityResult.qualityGate;
+  }
 
   // Persist body + provenance.
   const nowIso = new Date().toISOString();
@@ -332,6 +538,7 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
     tokensIn,
     tokensOut,
     stopReason,
+    qualityGate: qualityGate as unknown as Record<string, unknown> | undefined,
   };
 
   const update: Partial<SourceEventArtifactStateRow> = {
@@ -426,6 +633,14 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
       tokensIn,
       tokensOut,
       latencyMs: Date.now() - startedAt,
+      qualityGate: qualityGate
+        ? {
+            standardId: qualityGate.standardId,
+            passed: qualityGate.passed,
+            attempts: qualityGate.attempts,
+            rewriteAttempted: qualityGate.rewriteAttempted,
+          }
+        : null,
     },
     occurredAtIso: nowIso,
   });
@@ -444,6 +659,311 @@ export async function POST(_req: NextRequest, { params }: RouteCtx) {
       latencyMs: Date.now() - startedAt,
     },
   });
+}
+
+type QualityGateResult =
+  | {
+      ok: true;
+      body: string;
+      qualityGate: SourceArtifactQualityGateMetadata;
+    }
+  | {
+      ok: false;
+      error: string;
+      detail: string;
+      status: number;
+      qualityGate?: SourceArtifactQualityGateMetadata;
+    };
+
+async function runConsultingGradeQualityGate(args: {
+  artifactCode: string;
+  artifactName: string;
+  body: string;
+  ctx: SourceGenerationContext;
+  upstreamBound: Record<string, string>;
+  tenantId: string;
+  userId: string;
+  artifactId: string;
+  model: string;
+  maxTokens: number;
+  requestStartedAtMs: number;
+}): Promise<QualityGateResult> {
+  const sourceContext = buildSourceQualitySourceContext({
+    ctx: args.ctx,
+    upstreamBound: args.upstreamBound,
+  });
+  const reviews = [];
+  const firstReview = await runConsultingGradeReview({
+    artifactCode: args.artifactCode,
+    artifactName: args.artifactName,
+    body: args.body,
+    sourceContext,
+    tenantId: args.tenantId,
+    userId: args.userId,
+    artifactId: args.artifactId,
+    model: args.model,
+  });
+  if (!firstReview.ok) return firstReview;
+  reviews.push(firstReview.review);
+  if (firstReview.review.pass) {
+    return {
+      ok: true,
+      body: args.body,
+      qualityGate: buildSourceQualityGateMetadata({
+        reviews,
+        rewriteAttempted: false,
+      }),
+    };
+  }
+
+  const remainingBudgetMs =
+    SOURCE_SYNC_GENERATION_BUDGET_MS - (Date.now() - args.requestStartedAtMs);
+  if (remainingBudgetMs < SOURCE_QUALITY_REWRITE_MIN_REMAINING_MS) {
+    const qualityGate = buildSourceQualityGateMetadata({
+      reviews,
+      rewriteAttempted: false,
+    });
+    return {
+      ok: false,
+      error: "quality_gate_failed",
+      detail: [
+        qualityGate.finalSummary,
+        "Skipped automatic rewrite because the synchronous request budget was nearly exhausted; regenerate after strengthening the upstream evidence or artifact prompt.",
+      ].join(" "),
+      status: 422,
+      qualityGate,
+    };
+  }
+
+  const rewritePrompt = buildSourceConsultingGradeRewritePrompt({
+    artifactCode: args.artifactCode,
+    artifactName: args.artifactName,
+    bodyMarkdown: args.body,
+    sourceContext,
+    review: firstReview.review,
+  });
+  const rewritePreflight = await preflightAnthropicDirectClient({
+    tenantId: args.tenantId,
+    userId: args.userId,
+    workflow: "source-artifact-quality-rewrite",
+    artifactId: args.artifactId,
+    artifactType: args.artifactCode,
+    model: args.model,
+    prompt: rewritePrompt,
+    dataClass: "confidential",
+    metadata: {
+      eventId: args.ctx.event.id,
+      sourceEventId: args.ctx.event.id,
+      artifactCode: args.artifactCode,
+      qualityStandard: "partner-grade-consulting-deliverable-v1",
+    },
+  });
+  if (!rewritePreflight.ok) {
+    return {
+      ok: false,
+      error: "ai_egress_denied",
+      detail: rewritePreflight.reason,
+      status: 403,
+      qualityGate: buildSourceQualityGateMetadata({
+        reviews,
+        rewriteAttempted: true,
+      }),
+    };
+  }
+  const rewriteResponse = await rewritePreflight.client.messages.create({
+    model: args.model,
+    max_tokens: args.maxTokens,
+    system:
+      "You are Sentinel writing a client-ready, evidence-disciplined Source deliverable. Return markdown only.",
+    messages: [{ role: "user", content: rewritePrompt }],
+  });
+  const rewrittenBody = rewriteResponse.content
+    .map((block) => (block.type === "text" ? block.text : ""))
+    .join("")
+    .trim();
+  if (!rewrittenBody) {
+    return {
+      ok: false,
+      error: "quality_rewrite_empty",
+      detail: "Claude returned an empty quality-rewrite body.",
+      status: 502,
+      qualityGate: buildSourceQualityGateMetadata({
+        reviews,
+        rewriteAttempted: true,
+      }),
+    };
+  }
+
+  const secondReview = await runConsultingGradeReview({
+    artifactCode: args.artifactCode,
+    artifactName: args.artifactName,
+    body: rewrittenBody,
+    sourceContext,
+    tenantId: args.tenantId,
+    userId: args.userId,
+    artifactId: args.artifactId,
+    model: args.model,
+  });
+  if (!secondReview.ok) return secondReview;
+  reviews.push(secondReview.review);
+  const qualityGate = buildSourceQualityGateMetadata({
+    reviews,
+    rewriteAttempted: true,
+  });
+  if (!qualityGate.passed) {
+    return {
+      ok: false,
+      error: "quality_gate_failed",
+      detail: qualityGate.finalSummary,
+      status: 422,
+      qualityGate,
+    };
+  }
+  return { ok: true, body: rewrittenBody, qualityGate };
+}
+
+async function runConsultingGradeReview(args: {
+  artifactCode: string;
+  artifactName: string;
+  body: string;
+  sourceContext: string;
+  tenantId: string;
+  userId: string;
+  artifactId: string;
+  model: string;
+}): Promise<
+  | { ok: true; review: ReturnType<typeof parseSourceConsultingGradeReview> }
+  | {
+      ok: false;
+      error: string;
+      detail: string;
+      status: number;
+    }
+> {
+  const reviewPrompt = buildSourceConsultingGradeReviewPrompt({
+    artifactCode: args.artifactCode,
+    artifactName: args.artifactName,
+    bodyMarkdown: args.body,
+    sourceContext: args.sourceContext,
+  });
+  const preflight = await preflightAnthropicDirectClient({
+    tenantId: args.tenantId,
+    userId: args.userId,
+    workflow: "source-artifact-quality-review",
+    artifactId: args.artifactId,
+    artifactType: args.artifactCode,
+    model: args.model,
+    prompt: reviewPrompt,
+    dataClass: "confidential",
+    metadata: {
+      artifactCode: args.artifactCode,
+      qualityStandard: "partner-grade-consulting-deliverable-v1",
+    },
+  });
+  if (!preflight.ok) {
+    return {
+      ok: false,
+      error: "ai_egress_denied",
+      detail: preflight.reason,
+      status: 403,
+    };
+  }
+  const response = await preflight.client.messages.create({
+    model: args.model,
+    max_tokens: SOURCE_QUALITY_REVIEW_MAX_TOKENS,
+    system:
+      "You are a strict consulting-deliverable quality evaluator. Use the record_source_quality_review tool exactly once.",
+    tools: [SOURCE_QUALITY_REVIEW_TOOL],
+    tool_choice: {
+      type: "tool",
+      name: SOURCE_QUALITY_REVIEW_TOOL_NAME,
+    },
+    messages: [{ role: "user", content: reviewPrompt }],
+  });
+  const raw = extractSourceQualityReviewPayload(response.content);
+  try {
+    return {
+      ok: true,
+      review: parseSourceConsultingGradeReview({
+        artifactCode: args.artifactCode,
+        artifactName: args.artifactName,
+        raw,
+      }),
+    };
+  } catch (error) {
+    const firstError =
+      error instanceof Error
+        ? error.message
+        : "Claude returned invalid quality-review JSON.";
+    const retryPrompt = buildSourceConsultingGradeCompactRetryPrompt({
+      artifactCode: args.artifactCode,
+      artifactName: args.artifactName,
+      bodyMarkdown: args.body,
+      sourceContext: args.sourceContext,
+      previousError: firstError,
+    });
+    const retryResponse = await preflight.client.messages.create({
+      model: args.model,
+      max_tokens: SOURCE_QUALITY_REVIEW_MAX_TOKENS,
+      system: [
+        "You are a strict consulting-deliverable quality evaluator.",
+        "Your previous response was not parseable as the required structured review.",
+        "Use the record_source_quality_review tool exactly once.",
+        "The tool input must include all 10 dimensionScores entries.",
+        "Keep rationales and fixes concise.",
+      ].join(" "),
+      tools: [SOURCE_QUALITY_REVIEW_TOOL],
+      tool_choice: {
+        type: "tool",
+        name: SOURCE_QUALITY_REVIEW_TOOL_NAME,
+      },
+      messages: [{ role: "user", content: retryPrompt }],
+    });
+    const retryRaw = extractSourceQualityReviewPayload(retryResponse.content);
+    try {
+      return {
+        ok: true,
+        review: parseSourceConsultingGradeReview({
+          artifactCode: args.artifactCode,
+          artifactName: args.artifactName,
+          raw: retryRaw,
+        }),
+      };
+    } catch (retryError) {
+      const retryMessage =
+        retryError instanceof Error
+          ? retryError.message
+          : "Claude returned invalid quality-review JSON on retry.";
+      console.warn("[source quality review] invalid JSON after retry", {
+        artifactCode: args.artifactCode,
+        firstError,
+        retryError: retryMessage,
+      });
+      return {
+        ok: true,
+        review: buildMalformedSourceConsultingGradeReview({
+          artifactCode: args.artifactCode,
+          artifactName: args.artifactName,
+          reason: `${firstError}; retry failed: ${retryMessage}`,
+        }),
+      };
+    }
+  }
+}
+
+function extractSourceQualityReviewPayload(
+  content: Array<{ type: string; name?: string; input?: unknown; text?: string }>,
+): string {
+  const toolUse = content.find(
+    (block) =>
+      block.type === "tool_use" &&
+      block.name === SOURCE_QUALITY_REVIEW_TOOL_NAME,
+  );
+  if (toolUse) return JSON.stringify(toolUse.input ?? {});
+  return content
+    .map((block) => (block.type === "text" ? block.text ?? "" : ""))
+    .join("")
+    .trim();
 }
 
 function buildDeterministicFallbackBody(args: {

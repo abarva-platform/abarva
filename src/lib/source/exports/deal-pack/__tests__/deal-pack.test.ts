@@ -25,6 +25,19 @@ import type {
 
 const GENERATED_AT = '2026-05-19T12:00:00.000Z';
 
+const PASSED_RFP_QUALITY_METADATA = {
+  qualityGate: {
+    required: true,
+    standardId: 'partner-grade-consulting-deliverable-v1',
+    minRequiredScore: 8,
+    passed: true,
+    rewriteAttempted: false,
+    attempts: 1,
+    finalSummary: 'Passed partner-grade gate.',
+    reviews: [],
+  },
+};
+
 // ── Fixture builders ──────────────────────────────────────────────────────
 
 function makeArtifactState(
@@ -179,7 +192,9 @@ function meridianHealthFixture(): TenantFixture {
       },
       artifactStates: [
         makeArtifactState('d05_scope_memo', scopeBody),
-        makeArtifactState('d09_rfp_pack', '# RFP package\n\nIssued 2026-05-01.'),
+        makeArtifactState('d09_rfp_pack', '# RFP package\n\nIssued 2026-05-01.', {
+          bodyGenerationMetadata: PASSED_RFP_QUALITY_METADATA,
+        }),
       ],
       gateCriteria: [makeGateCriterion('rfp-issued', 'met')],
       evidence: [makeEvidence('rfp-001', 'Available')],

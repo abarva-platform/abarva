@@ -12,10 +12,7 @@ import { requireTenancy, tenancyErrorResponse } from "../../_auth";
 import { getProgramById } from "@/lib/programs/queries";
 import { draftModuleDeliverable } from "@/lib/programs/nexus";
 import { publishDeliverable } from "@/lib/programs/mutations";
-import {
-  getArchetype,
-  DEFAULT_ARCHETYPE_ID,
-} from "@/lib/programs/archetypes/registry";
+import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,9 +29,15 @@ export async function POST(
       return Response.json({ error: "not_found" }, { status: 404 });
     }
 
-    const archetype =
-      getArchetype(DEFAULT_ARCHETYPE_ID) ?? getArchetype(DEFAULT_ARCHETYPE_ID)!;
     const charter = (program.charter ?? {}) as Record<string, unknown>;
+    const archetype = resolveProgramArchetype({
+      archetype: program.archetype,
+      classification:
+        typeof charter.classification === "string"
+          ? charter.classification
+          : null,
+      name: program.name,
+    });
     const scope =
       (charter.scope_boundary as string) ??
       (charter.scopeBoundary as string) ??

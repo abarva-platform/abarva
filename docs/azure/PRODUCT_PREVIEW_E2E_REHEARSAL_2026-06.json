@@ -1,0 +1,101 @@
+{
+  "version": "2026-06",
+  "environmentKey": "product-preview",
+  "purpose": "Non-mutating end-to-end product rehearsal packet for AbarVa Product Preview.",
+  "status": "scaffold_ready_before_runtime",
+  "dependsOn": [
+    "docs/azure/PRODUCT_PREVIEW_PROVISIONING_PACKET_2026-06.json",
+    "docs/azure/PRODUCT_PREVIEW_RELEASE_CANDIDATE_GATES_2026-06.json",
+    "docs/azure/PRODUCT_DEV_SYNTHETIC_DATA_BASELINE_2026-06.json",
+    "docs/azure/ENVIRONMENT_EXECUTION_LEDGER_TEMPLATE_2026-06.json"
+  ],
+  "testSurfaces": [
+    "browser_signed_in",
+    "api_health",
+    "api_programs",
+    "context_healthcheck",
+    "tenant_scoped_retrieval",
+    "citation_rendering",
+    "artifact_file_cabinet",
+    "responsible_ai_acknowledgement",
+    "audit_trace"
+  ],
+  "moduleMatrix": {
+    "intelligence": [
+      "brief_loads",
+      "enterprise_context_tab_loads",
+      "vendor_tab_loads",
+      "sentinel_answer_uses_validated_bundle",
+      "citations_visible",
+      "unsupported_claims_flagged"
+    ],
+    "moves": [
+      "portfolio_loads",
+      "move_detail_loads",
+      "origination_p0_create",
+      "phase_workspace_loads",
+      "approval_gate_audit_visible",
+      "generated_artifact_downloadable"
+    ],
+    "source": [
+      "source_home_loads",
+      "source_event_list_loads",
+      "source_event_detail_loads",
+      "uploaded_artifact_metadata_visible",
+      "retrieval_sources_tenant_scoped"
+    ],
+    "tower": [
+      "tower_home_loads",
+      "module_readiness_matches_context_health",
+      "audit_or_ledger_links_visible",
+      "no_cross_tenant_counts"
+    ]
+  },
+  "dataReadinessAssertions": [
+    "source_files_staged",
+    "source_metadata_registered",
+    "records_present",
+    "facts_current_active",
+    "chunks_current_active",
+    "no_orphan_facts",
+    "no_duplicate_active_facts",
+    "search_index_refreshed",
+    "tenant_scoped_retrieval_passed",
+    "citation_metadata_present",
+    "promotion_status_calculated",
+    "agent_ready_only_where_eligible",
+    "context_bundle_trace_emitted"
+  ],
+  "securityAssertions": [
+    "no_phi",
+    "no_pii",
+    "no_vercel_headers",
+    "no_supabase_runtime",
+    "wrong_tenant_context_excluded",
+    "not_reviewed_blocked_quarantined_excluded",
+    "restricted_context_requires_policy_allow"
+  ],
+  "requiredEvidence": [
+    "release_candidate_identity",
+    "signed_in_browser_screenshots",
+    "api_response_archive",
+    "context_healthcheck_report",
+    "retrieval_trace_report",
+    "context_bundle_trace_hashes",
+    "citation_evidence_register",
+    "artifact_download_receipts",
+    "module_readiness_summary",
+    "defect_backlog",
+    "go_no_go_decision",
+    "rollback_command"
+  ],
+  "approvalGates": [
+    "start_preview_e2e_rehearsal",
+    "use_client_approved_redacted_data",
+    "accept_known_defects",
+    "declare_preview_go",
+    "promote_release_candidate_to_product_prod"
+  ],
+  "commandsAreTemplatesOnly": true,
+  "doNotRunWithoutApproval": true
+}

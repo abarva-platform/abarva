@@ -14,9 +14,10 @@ import { buildCurrentStatePlan } from "@/lib/programs/current-state-plan";
 import { generateDeliverable } from "@/lib/programs/deliverable-refinement";
 import { generateNarrativeDeliverable } from "@/lib/programs/deliverable-narrative";
 import {
-  getArchetype,
-  DEFAULT_ARCHETYPE_ID,
-} from "@/lib/programs/archetypes/registry";
+  resolveSourceLabel,
+  scrubInternalSourceTags,
+} from "@/lib/programs/deliverables/source-labels";
+import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
 import { getStrategicMoveById } from "@/lib/programs/queries";
 
 export const runtime = "nodejs";
@@ -33,12 +34,12 @@ function renderBaseMarkdown(
       lines.push(
         c.missingEvidence
           ? `- **[MISSING EVIDENCE]** ${c.text.replace(/^\[MISSING EVIDENCE\]\s*/, "")}`
-          : `- ${c.text} _(source: ${c.citation})_`,
+          : `- ${c.text} _(source: ${resolveSourceLabel(c.citation ?? "").title})_`,
       );
     }
     lines.push("");
   }
-  return lines.join("\n");
+  return scrubInternalSourceTags(lines.join("\n"));
 }
 
 async function handle(req: NextRequest, programId: string) {
@@ -48,7 +49,25 @@ async function handle(req: NextRequest, programId: string) {
     ((await req.json().catch(() => ({}))) as { key?: string }).key ??
     "program_charter";
 
-  const archetype = getArchetype(DEFAULT_ARCHETYPE_ID)!;
+  // Resolve the Move row first (best-effort) so the archetype comes from the
+  // Move's own data, not a hardcoded default.
+  let moveName = key;
+  let archetype = resolveProgramArchetype({});
+  try {
+    const move = await getStrategicMoveById(ctx, programId);
+    if (move?.name) moveName = move.name;
+    if (move) {
+      archetype = resolveProgramArchetype({
+        archetype: move.archetype,
+        classification: (move.charter as { classification?: string } | null)
+          ?.classification,
+        name: move.name,
+      });
+    }
+  } catch {
+    /* name/archetype are best-effort */
+  }
+
   const spec = archetype.deliverablePack.find((d) => d.key === key);
   if (!spec) {
     return Response.json({ error: "unknown_deliverable" }, { status: 404 });
@@ -63,14 +82,6 @@ async function handle(req: NextRequest, programId: string) {
     programId,
   );
   const recommendation = await buildCurrentStateRecommendation(ctx, profile);
-
-  let moveName = key;
-  try {
-    const move = await getStrategicMoveById(ctx, programId);
-    if (move?.name) moveName = move.name;
-  } catch {
-    /* name is best-effort */
-  }
   const plan = buildCurrentStatePlan(recommendation, { moveName });
 
   const base = generateDeliverable(spec, {

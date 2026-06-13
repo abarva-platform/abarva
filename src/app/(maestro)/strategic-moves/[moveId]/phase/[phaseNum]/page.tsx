@@ -22,10 +22,7 @@ import {
   buildCurrentStatePlan,
   type CurrentStatePlan,
 } from "@/lib/programs/current-state-plan";
-import {
-  getArchetype,
-  DEFAULT_ARCHETYPE_ID,
-} from "@/lib/programs/archetypes/registry";
+import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
 
 export const dynamic = "force-dynamic";
 
@@ -62,8 +59,13 @@ export default async function StrategicMovePhaseWorkspacePage({
   let plan: CurrentStatePlan | null = null;
   try {
     const tctx = await requireTenancy();
-    // Archetype selection per-move is wired in PR-2/PR-5; default for now.
-    const archetype = getArchetype(DEFAULT_ARCHETYPE_ID)!;
+    // Archetype resolved from the Move's own row — never a hardcoded default.
+    const archetype = resolveProgramArchetype({
+      archetype: move.archetype,
+      classification: (move.charter as { classification?: string } | null)
+        ?.classification,
+      name: move.name,
+    });
     const profile = await inferMoveProfile(tctx);
     readiness = await resolveCurrentStateReadiness(
       tctx,

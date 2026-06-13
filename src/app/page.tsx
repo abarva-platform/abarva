@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { currentUser } from '@clerk/nextjs/server'
+import { LoggedOutLandingPage } from '@/components/marketing/LoggedOutLandingPage'
 import { resolvePostSignInPath, resolveSessionRole, resolveSessionClientKey } from '@/lib/auth/access-routing'
 import { getActiveClientRow } from '@/lib/active-client'
 import { selectTowerPageReadAdapter } from '@/lib/data-plane/read-adapters/towerPageReadAdapter'
@@ -56,8 +57,5 @@ export default async function HomePage() {
     }))
   }
 
-  // app.abarva.ai is the application domain: signed-out visitors go straight to
-  // the Clerk sign-in flow rather than a marketing landing. (The post-sign-out
-  // marketing page still lives at /signed-out.)
-  redirect('/sign-in')
+  return <LoggedOutLandingPage />
 }

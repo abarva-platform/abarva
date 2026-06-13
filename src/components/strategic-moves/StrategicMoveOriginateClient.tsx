@@ -393,10 +393,22 @@ export function StrategicMoveOriginateClient({
 
   async function promote() {
     setSubmitError(null);
-    const finalName =
-      brief.programName.trim() ||
-      brief.fields["problem-statement"].slice(0, 100) ||
-      "Untitled Strategic Move";
+    // Prefer an explicit Move name; otherwise derive a clean, short title from
+    // the hypothesis (first clause, capped at a word boundary) rather than
+    // dumping the full sentence as the Move name.
+    const deriveName = (typed: string, problem: string): string => {
+      const n = typed.trim();
+      if (n) return n.slice(0, 120);
+      const p = (problem || "").trim();
+      if (!p) return "Untitled Strategic Move";
+      let s = p.split(/[.!?\n]/)[0].trim();
+      if (s.length > 72) s = s.slice(0, 72).replace(/\s+\S*$/, "") + "…";
+      return s || "Untitled Strategic Move";
+    };
+    const finalName = deriveName(
+      brief.programName,
+      brief.fields["problem-statement"],
+    );
     startTransition(() => {
       void (async () => {
         // Snapshot origination turns before submit (filter empty turns, cap at 40)

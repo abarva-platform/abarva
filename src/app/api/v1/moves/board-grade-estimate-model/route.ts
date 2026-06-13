@@ -50,10 +50,11 @@ import {
   persistBoardGradeMoveArtifact,
 } from "@/lib/programs/board-artifacts/board-grade-persistence";
 import { loadMoveBusinessCaseInput } from "@/lib/programs/board-artifacts/load-move-business-case-input";
+import { maybeRenderOrchestratedMoveArtifact } from "@/lib/programs/board-artifacts/orchestrated-move-route";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function GET(req: NextRequest): Promise<Response> {
   // --- Auth — a valid session. -------------------------------------------
@@ -88,6 +89,28 @@ export async function GET(req: NextRequest): Promise<Response> {
     }
 
     if (moveInput) {
+      const download = params.get("download") === "1";
+      const filename = `estimate-model-${moveId}-${generatedOn}.html`;
+      const orchestrated = await maybeRenderOrchestratedMoveArtifact({
+        req,
+        routePath: "/api/v1/moves/board-grade-estimate-model",
+        moveId,
+        moveInput,
+        generatedOn,
+        renderedBy: user.personId ?? user.clerkUserId,
+        userClientKey: user.metadataClientKey,
+        artifactId: "estimate-model",
+        title: "Estimate & Financial Model",
+        filename,
+        deliverableType: "estimate_model",
+        phaseOrStage: "P4_estimate",
+        artifactStandard: "moves.board_grade.estimate_model",
+        decisionContext:
+          "Approve the investment estimate, run-cost posture, cost drivers, and estimation confidence for the Move.",
+        audience: ["cfo", "cio", "steering_committee"],
+      });
+      if (orchestrated) return orchestrated;
+
       // The generic renderer is pure; a throw here would be a renderer bug.
       // Memoised per day, keyed by the move id so two Moves never collide.
       let html: string;
@@ -113,8 +136,6 @@ export async function GET(req: NextRequest): Promise<Response> {
         );
       }
 
-      const download = params.get("download") === "1";
-      const filename = `estimate-model-${moveId}-${generatedOn}.html`;
       const artifactRecord = await persistBoardGradeMoveArtifact({
         clientId: moveInput.tenant_key ?? user.metadataClientKey,
         moveId,

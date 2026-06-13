@@ -27,7 +27,7 @@
  * the retriever never queries the index with a non-canonical key.
  */
 
-import { DefaultAzureCredential } from '@azure/identity';
+import { DefaultAzureCredential } from "@azure/identity";
 
 /**
  * Drop-in shape for `TenantContextChunk` from
@@ -46,9 +46,9 @@ export interface TenantContextChunk {
   sourceDoc?: string;
   recordId?: string;
   text: string;
-  embeddingStatus: 'pending' | 'embedding' | 'embedded' | 'error';
+  embeddingStatus: "pending" | "embedding" | "embedded" | "error";
   sourceBasis?: string;
-  classification?: 'public' | 'internal' | 'confidential' | 'restricted';
+  classification?: "public" | "internal" | "confidential" | "restricted";
   vectorScore?: number;
 }
 
@@ -66,9 +66,9 @@ export interface TenantContextChunk {
  * `apexretail` (no dash); broker/data-room is `apex-retail` (with dash).
  */
 const TENANT_KEY_ALIASES: Readonly<Record<string, string>> = {
-  apexretail: 'apex-retail',
-  arcturus: 'first-capital',
-  meridian: 'meridian-health',
+  apexretail: "apex-retail",
+  arcturus: "first-capital",
+  meridian: "meridian-health",
 };
 
 /**
@@ -83,7 +83,7 @@ export function canonicalizeTenantKey(key: string): string {
 }
 
 /** Azure AI Search index this retriever queries. */
-export const TENANT_CONTEXT_INDEX_NAME = 'tenant-context-v1';
+export const TENANT_CONTEXT_INDEX_NAME = "tenant-context-v1";
 
 const DEFAULT_TOP_K = 8;
 const MAX_TOP_K = 50;
@@ -120,44 +120,53 @@ export interface TenantContextQueryInput {
 
 /** Raw row shape we expect back from the search index. */
 interface TenantContextSearchHit {
-  '@search.score'?: number;
+  "@search.score"?: number;
   id?: string;
   tenant_key?: string;
+  client_id?: string;
+  client_key?: string;
   source_segment?: string;
   record_id?: string;
   chunk_id?: string;
   title?: string;
   body?: string;
   source_uri?: string;
+  source_basis?: string;
+  source_citation?: string;
   confidence?: number;
+  confidence_level?: string;
   sensitivity?: string;
+  classification?: string;
+  lifecycle_state?: string;
+  agent_readiness_status?: string;
   last_seen_at?: string;
 }
 
 function endpointBase(): string {
   const explicit = process.env.AZURE_SEARCH_ENDPOINT?.trim();
-  if (explicit) return explicit.replace(/\/$/, '');
-  const serviceName = process.env.AZURE_SEARCH_SERVICE_NAME?.trim()
-    ?? 'srch-abarva-context-lab-eastus';
+  if (explicit) return explicit.replace(/\/$/, "");
+  const serviceName =
+    process.env.AZURE_SEARCH_SERVICE_NAME?.trim() ??
+    "srch-abarva-context-lab-eastus";
   return `https://${serviceName}.search.windows.net`;
 }
 
 function apiVersion(): string {
-  return process.env.AZURE_SEARCH_API_VERSION?.trim() || '2024-07-01';
+  return process.env.AZURE_SEARCH_API_VERSION?.trim() || "2024-07-01";
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
   const apiKey = process.env.AZURE_SEARCH_ADMIN_KEY?.trim();
-  if (apiKey) return { 'api-key': apiKey };
+  if (apiKey) return { "api-key": apiKey };
 
   const credential = new DefaultAzureCredential(
     process.env.AZURE_CLIENT_ID?.trim()
       ? { managedIdentityClientId: process.env.AZURE_CLIENT_ID.trim() }
       : undefined,
   );
-  const token = await credential.getToken('https://search.azure.com/.default');
+  const token = await credential.getToken("https://search.azure.com/.default");
   if (!token?.token) {
-    throw new Error('azure_search_aad_token_unavailable');
+    throw new Error("azure_search_aad_token_unavailable");
   }
   return { Authorization: `Bearer ${token.token}` };
 }
@@ -166,11 +175,20 @@ function escapeOdataLiteral(value: string): string {
   return value.replace(/'/g, "''");
 }
 
-function buildFilter(canonicalTenantKey: string, filters?: TenantContextFilters): string {
+function buildFilter(
+  canonicalTenantKey: string,
+  filters?: TenantContextFilters,
+): string {
   // tenant_key is always pinned — broker boundary invariant.
-  const parts: string[] = [`tenant_key eq '${escapeOdataLiteral(canonicalTenantKey)}'`];
+  const parts: string[] = [
+    `tenant_key eq '${escapeOdataLiteral(canonicalTenantKey)}'`,
+    "lifecycle_state eq 'active'",
+  ];
 
-  if (filters?.minConfidence !== undefined && Number.isFinite(filters.minConfidence)) {
+  if (
+    filters?.minConfidence !== undefined &&
+    Number.isFinite(filters.minConfidence)
+  ) {
     parts.push(`confidence ge ${filters.minConfidence}`);
   }
   if (filters?.sensitivity && filters.sensitivity.length > 0) {
@@ -178,7 +196,9 @@ function buildFilter(canonicalTenantKey: string, filters?: TenantContextFilters)
     // $filter (it returns "unsupported OData language feature"). Use the supported
     // search.in() function. Classification tokens carry no commas, so a comma delimiter
     // is safe; quotes are escaped defensively.
-    const list = filters.sensitivity.map((s) => escapeOdataLiteral(s)).join(',');
+    const list = filters.sensitivity
+      .map((s) => escapeOdataLiteral(s))
+      .join(",");
     parts.push(`search.in(sensitivity, '${list}', ',')`);
   }
   if (filters?.extra) {
@@ -187,7 +207,7 @@ function buildFilter(canonicalTenantKey: string, filters?: TenantContextFilters)
       if (trimmed) parts.push(`(${trimmed})`);
     }
   }
-  return parts.join(' and ');
+  return parts.join(" and ");
 }
 
 function clampTopK(topK: number | undefined): number {
@@ -201,7 +221,7 @@ function mapHitToTenantContextChunk(
 ): TenantContextChunk | null {
   const chunkId = hit.chunk_id ?? hit.id;
   const body = hit.body;
-  if (!chunkId || typeof body !== 'string') return null;
+  if (!chunkId || typeof body !== "string") return null;
 
   return {
     tenantKey: canonicalTenantKey,
@@ -213,34 +233,43 @@ function mapHitToTenantContextChunk(
     // Azure-side rows are always 'embedded' by construction (the backfill
     // only writes embedded chunks). Keep the field present so downstream
     // type-checks behave identically to pgvector.
-    embeddingStatus: 'embedded',
-    sourceBasis: hit.source_uri ? normalizeLegacyClientAliases(hit.source_uri) : undefined,
+    embeddingStatus: "embedded",
+    sourceBasis: hit.source_basis
+      ? normalizeLegacyClientAliases(hit.source_basis)
+      : hit.source_uri
+        ? normalizeLegacyClientAliases(hit.source_uri)
+        : undefined,
     // `sensitivity` field in the index is the chunk's classification.
-    classification: normalizeClassification(hit.sensitivity),
-    vectorScore: typeof hit['@search.score'] === 'number' ? hit['@search.score'] : undefined,
+    classification: normalizeClassification(
+      hit.classification ?? hit.sensitivity,
+    ),
+    vectorScore:
+      typeof hit["@search.score"] === "number"
+        ? hit["@search.score"]
+        : undefined,
   };
 }
 
 function normalizeLegacyClientAliases(text: string): string {
   return text
-    .replace(/\bAsterline Retail Group\b/g, 'Apex Retail Group')
-    .replace(/\bAsterline Retail\b/g, 'Apex Retail')
-    .replace(/\bHeliara Health Alliance\b/g, 'Meridian Health')
-    .replace(/\bHeliara Health\b/g, 'Meridian Health')
-    .replace(/\bHeliara\b/g, 'Meridian')
-    .replace(/\bBrindlemark Financial Group\b/g, 'First Capital Financial')
-    .replace(/\bBrindlemark Financial\b/g, 'First Capital Financial')
-    .replace(/\bBrindlemark\b/g, 'First Capital');
+    .replace(/\bAsterline Retail Group\b/g, "Apex Retail Group")
+    .replace(/\bAsterline Retail\b/g, "Apex Retail")
+    .replace(/\bHeliara Health Alliance\b/g, "Meridian Health")
+    .replace(/\bHeliara Health\b/g, "Meridian Health")
+    .replace(/\bHeliara\b/g, "Meridian")
+    .replace(/\bBrindlemark Financial Group\b/g, "First Capital Financial")
+    .replace(/\bBrindlemark Financial\b/g, "First Capital Financial")
+    .replace(/\bBrindlemark\b/g, "First Capital");
 }
 
 function normalizeClassification(
   value: string | undefined,
-): TenantContextChunk['classification'] {
+): TenantContextChunk["classification"] {
   switch (value) {
-    case 'public':
-    case 'internal':
-    case 'confidential':
-    case 'restricted':
+    case "public":
+    case "internal":
+    case "confidential":
+    case "restricted":
       return value;
     default:
       return undefined;
@@ -261,14 +290,14 @@ export async function queryTenantContext(
 ): Promise<TenantContextChunk[]> {
   const canonical = canonicalizeTenantKey(input.tenantClientKey);
   if (!canonical) {
-    throw new Error('queryTenantContext: tenantClientKey is required.');
+    throw new Error("queryTenantContext: tenantClientKey is required.");
   }
 
   const topK = clampTopK(input.topK);
   const filter = buildFilter(canonical, input.filters);
   const body = {
-    search: input.query?.trim() || '*',
-    queryType: 'simple',
+    search: input.query?.trim() || "*",
+    queryType: "simple",
     top: topK,
     filter,
     count: false,
@@ -279,13 +308,13 @@ export async function queryTenantContext(
   )}/docs/search?api-version=${encodeURIComponent(apiVersion())}`;
 
   const headers = {
-    'content-type': 'application/json',
+    "content-type": "application/json",
     ...(await authHeaders()),
   };
 
   const doFetch = input.fetchImpl ?? fetch;
   const res = await doFetch(url, {
-    method: 'POST',
+    method: "POST",
     headers,
     body: JSON.stringify(body),
   });

@@ -45,10 +45,11 @@ import {
   persistBoardGradeMoveArtifact,
 } from "@/lib/programs/board-artifacts/board-grade-persistence";
 import { loadMoveBusinessCaseInput } from "@/lib/programs/board-artifacts/load-move-business-case-input";
+import { maybeRenderOrchestratedMoveArtifact } from "@/lib/programs/board-artifacts/orchestrated-move-route";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function GET(req: NextRequest): Promise<Response> {
   // --- Auth — a valid session. -------------------------------------------
@@ -83,6 +84,28 @@ export async function GET(req: NextRequest): Promise<Response> {
     }
 
     if (moveInput) {
+      const download = params.get("download") === "1";
+      const filename = `charter-skeleton-${moveId}-${generatedOn}.html`;
+      const orchestrated = await maybeRenderOrchestratedMoveArtifact({
+        req,
+        routePath: "/api/v1/moves/board-grade-charter-skeleton",
+        moveId,
+        moveInput,
+        generatedOn,
+        renderedBy: user.personId ?? user.clerkUserId,
+        userClientKey: user.metadataClientKey,
+        artifactId: "charter-skeleton",
+        title: "Charter Business-Case Skeleton",
+        filename,
+        deliverableType: "charter",
+        phaseOrStage: "P1_charter",
+        artifactStandard: "moves.board_grade.charter",
+        decisionContext:
+          "Approve chartering of the Move, including scope, sponsor accountability, value hypothesis, operating model, and phase gates.",
+        audience: ["board", "cio", "cfo", "steering_committee"],
+      });
+      if (orchestrated) return orchestrated;
+
       // The generic renderer is pure; a throw here would be a renderer bug.
       // Memoised per day, keyed by the move id so two Moves never collide.
       let html: string;
@@ -108,8 +131,6 @@ export async function GET(req: NextRequest): Promise<Response> {
         );
       }
 
-      const download = params.get("download") === "1";
-      const filename = `charter-skeleton-${moveId}-${generatedOn}.html`;
       const artifactRecord = await persistBoardGradeMoveArtifact({
         clientId: moveInput.tenant_key ?? user.metadataClientKey,
         moveId,

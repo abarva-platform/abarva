@@ -51,10 +51,14 @@ import {
   persistBoardGradeMoveArtifact,
 } from "@/lib/programs/board-artifacts/board-grade-persistence";
 import { loadMoveBusinessCaseInput } from "@/lib/programs/board-artifacts/load-move-business-case-input";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { runOrchestratedBusinessCase } from "@/lib/programs/deliverables/orchestrated/run-orchestrated-business-case";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+// The orchestrated path runs up to six sequential board-grade LLM passes, so the
+// route needs the platform-max budget. The deterministic path returns instantly.
+export const maxDuration = 300;
 
 export async function GET(req: NextRequest): Promise<Response> {
   // --- Auth — a valid session. -------------------------------------------
@@ -89,6 +93,77 @@ export async function GET(req: NextRequest): Promise<Response> {
     }
 
     if (moveInput) {
+      // ── Orchestrated authoring path (flag-gated) ──────────────────────────
+      // When the tenant has `moves_orchestrated_deliverables` on, author the
+      // deck through the governed multi-pass orchestrator (uses the Move's
+      // recorded evidence, cites it, enforces the quality gate). The
+      // deterministic deck below is the fallback when the gate blocks or the
+      // Move has no recorded evidence. `?engine=deterministic` forces the old
+      // path even for a flagged tenant.
+      const flagCtx = {
+        clientKey: moveInput.tenant_key,
+        clientId: moveInput.tenant_key,
+      };
+      const orchestrate =
+        params.get("engine") !== "deterministic" &&
+        isFeatureEnabled(flagCtx, "moves_orchestrated_deliverables");
+
+      if (orchestrate) {
+        const run = await runOrchestratedBusinessCase({
+          moveInput,
+          moveId,
+          tenantId: moveInput.tenant_key ?? user.metadataClientKey ?? moveId,
+          userId: user.personId ?? user.clerkUserId,
+          generatedOn,
+        }).catch((err) => {
+          console.error(
+            "[GET /api/v1/moves/board-grade-business-case] orchestration error",
+            { err, moveId },
+          );
+          return null;
+        });
+
+        if (run?.ok && run.html) {
+          const download = params.get("download") === "1";
+          const filename = `costed-business-case-pack-${moveId}-${generatedOn}.html`;
+          const artifactRecord = await persistBoardGradeMoveArtifact({
+            clientId: moveInput.tenant_key ?? user.metadataClientKey,
+            moveId,
+            artifactId: "costed-business-case",
+            title: "Costed Business-Case Pack",
+            html: run.html,
+            renderedBy: user.personId ?? user.clerkUserId,
+            routePath: "/api/v1/moves/board-grade-business-case",
+            generatedOn,
+            citedInputIds: run.citedInputIds,
+          });
+          return new Response(run.html, {
+            status: 200,
+            headers: {
+              "content-type": "text/html; charset=utf-8",
+              "cache-control": "no-store",
+              "x-kernel-move": `move:${moveId}`,
+              "x-deliverable-engine": "orchestrated",
+              "x-deliverable-cited-input-count": String(
+                run.citedInputIds.length,
+              ),
+              ...generatedArtifactResponseHeaders(artifactRecord),
+              ...(download
+                ? {
+                    "content-disposition": `attachment; filename="${filename}"`,
+                  }
+                : {}),
+            },
+          });
+        }
+        // Orchestration blocked or errored — fall through to the deterministic
+        // deck. The block reason is logged; the response is marked as a fallback.
+        console.warn(
+          "[GET /api/v1/moves/board-grade-business-case] orchestration not used; falling back to deterministic deck",
+          { moveId, reason: run?.blockedReason },
+        );
+      }
+
       // The generic renderer is pure; a throw here would be a renderer bug.
       // Memoised per day, keyed by the move id so two Moves never collide.
       let html: string;

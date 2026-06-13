@@ -104,6 +104,13 @@ export default async function StrategicMoveDetailPage({
     { clientKey: activeClient?.key ?? null },
     "discovery_intake_v2",
   );
+  const workspaceExplorerEnabled = isFeatureEnabled(
+    {
+      clientKey: activeClient?.key ?? ctx.clientKey ?? null,
+      clientId: activeClient?.id ?? ctx.clientId ?? null,
+    },
+    "workspace_explorer_moves",
+  );
   const originatingAskSession = await getAskSessionForMove({
     tenantId: ctx.clientId,
     moveId: move.id,
@@ -140,6 +147,7 @@ export default async function StrategicMoveDetailPage({
           originatingAskSession?.sessionId ?? null
         }
         discoveryIntakeEnabled={discoveryIntakeEnabled}
+        workspaceExplorerEnabled={workspaceExplorerEnabled}
       />
     </AppShell>
   );

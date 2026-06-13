@@ -1,0 +1,84 @@
+{
+  "version": "2026-06",
+  "environmentKey": "product-dev",
+  "purpose": "Non-mutating approval and execution packet for creating AbarVa Product Dev.",
+  "status": "approval_required_before_mutation",
+  "subscription": {
+    "displayName": "sub-abarva-product-dev-eus-001",
+    "environmentKey": "product-dev",
+    "managementGroupTarget": "abarva-product",
+    "regionSet": ["eastus"],
+    "budgetUsdMonthly": 500,
+    "budgetAlertThresholdsPercent": [50, 80, 100],
+    "dataBoundary": {
+      "allowed": ["synthetic", "fixture", "engineering-test"],
+      "disallowed": [
+        "client-confidential",
+        "phi",
+        "pii",
+        "raw-client-private-documents"
+      ]
+    }
+  },
+  "approvalGates": [
+    "create_subscription",
+    "move_subscription_to_management_group",
+    "assign_breakglass_owner",
+    "assign_platform_maintainer",
+    "create_budget",
+    "apply_policy_assignments",
+    "create_baseline_resources"
+  ],
+  "baselineControls": [
+    "deny_public_blob_access",
+    "deny_public_postgres",
+    "deny_public_keyvault",
+    "require_private_endpoints_for_data_services",
+    "require_tags",
+    "require_budget",
+    "require_diagnostic_settings",
+    "require_purge_protection",
+    "no_phi_pii"
+  ],
+  "requiredTags": {
+    "Environment": "Product Dev",
+    "EnvironmentKey": "product-dev",
+    "Plane": "control-plane",
+    "Owner": "AbarVa Platform",
+    "CostCenter": "product-development",
+    "DataClassification": "synthetic",
+    "ClientCode": "abarva",
+    "ManagedBy": "manual-approved",
+    "Repository": "abarva-platform/abarva",
+    "ReleaseLane": "global-control-lane",
+    "Criticality": "medium",
+    "NoPhiPii": "true"
+  },
+  "plannedResources": [
+    "resource_group_controlplane",
+    "log_analytics_workspace",
+    "key_vault",
+    "container_apps_environment",
+    "container_app_web",
+    "container_app_operator_jobs",
+    "azure_container_registry_or_pull_scope",
+    "storage_account_for_synthetic_artifacts",
+    "postgres_for_synthetic_dev_if_needed",
+    "azure_ai_search_for_synthetic_dev_if_needed"
+  ],
+  "evidenceRequired": [
+    "explicit_approval_record",
+    "subscription_id",
+    "management_group_path",
+    "role_assignment_export",
+    "policy_assignment_export",
+    "budget_id",
+    "budget_alert_recipients",
+    "tag_export",
+    "diagnostic_settings_export",
+    "connectivity_smoke_if_private_data_services_exist",
+    "execution_ledger_entry"
+  ],
+  "commandsAreTemplatesOnly": true,
+  "doNotRunWithoutApproval": true
+}

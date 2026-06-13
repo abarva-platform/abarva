@@ -1,6 +1,13 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
@@ -113,6 +120,7 @@ import { SentinelChatProportional } from "./SentinelChatProportional";
 import { EventIdStrip } from "./EventIdStrip";
 import { EventStepRail } from "./EventStepRail";
 import { EventWorkspace, type WorkspaceTabKey } from "./EventWorkspace";
+import { StageNextMoveCard } from "./StageNextMoveCard";
 import { CANVAS } from "./canvas-tokens";
 import { DocumentTab } from "./workspace-tabs/DocumentTab";
 import { GateTab } from "./workspace-tabs/GateTab";
@@ -160,6 +168,7 @@ interface UniversalCanvasShellProps {
   tenantName: string;
   decisionThreadId?: string | null;
   vendorResponseReadiness?: SourceVendorResponseCompleteness;
+  workspaceExplorerEnabled?: boolean;
 }
 
 function renderStageDocumentContent({
@@ -287,6 +296,7 @@ export function UniversalCanvasShell({
   tenantName,
   decisionThreadId = null,
   vendorResponseReadiness,
+  workspaceExplorerEnabled = false,
 }: UniversalCanvasShellProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -330,6 +340,12 @@ export function UniversalCanvasShell({
   // without a full page revalidate.
   const [registryArtifactsState, setRegistryArtifactsState] =
     useState<SourceArtifactRegistryRecord[]>(registryArtifacts);
+  // Server re-renders (e.g. router.refresh() after an Upload-document POST) pass a
+  // fresh registryArtifacts prop, but useState ignores prop updates — the shelf
+  // looked frozen after a successful upload (pre-flight finding, 2026-06-11).
+  useEffect(() => {
+    setRegistryArtifactsState(registryArtifacts);
+  }, [registryArtifacts]);
   const generatableCodes = useMemo(
     () => new Set(listSupportedGenerationCodes()),
     [],
@@ -397,6 +413,28 @@ export function UniversalCanvasShell({
       totalCriteria: stageCriteria.length,
     };
   }, [stageArtifacts, stageCriteria, stageEvidence]);
+  const workspaceItemCount = useMemo(() => {
+    const registryIds = new Set(
+      registryArtifactsState.map((artifact) => artifact.id),
+    );
+    const unlinkedArtifactCount = liveArtifactStates.filter(
+      (artifact) =>
+        !artifact.linkedArtifactId ||
+        !registryIds.has(artifact.linkedArtifactId),
+    ).length;
+    return (
+      registryArtifactsState.length +
+      unlinkedArtifactCount +
+      evidenceStates.length +
+      liveGateCriterionStates.length
+    );
+  }, [
+    evidenceStates.length,
+    liveArtifactStates,
+    liveGateCriterionStates.length,
+    registryArtifactsState,
+  ]);
+  const workspaceHref = `/source/events/${event.id}/workspace`;
 
   const handlePromoteStage = async (
     toStage: SourceStageKey,
@@ -868,7 +906,13 @@ export function UniversalCanvasShell({
       }}
       subNav={<SourceSubNav />}
     >
-      <main data-testid="source-event-canvas" style={MAIN_STYLE}>
+      <main
+        data-testid="source-event-canvas"
+        data-workspace-explorer={
+          workspaceExplorerEnabled ? "source" : undefined
+        }
+        style={MAIN_STYLE}
+      >
         <div style={CONTAINER_STYLE}>
           <EventIdStrip event={event} exportItems={exportItems} />
           <EventStepRail
@@ -876,6 +920,13 @@ export function UniversalCanvasShell({
             currentStage={event.currentStageKey}
             viewStage={viewStage}
           />
+          {workspaceExplorerEnabled ? (
+            <WorkspaceExplorerChips
+              workspaceHref={workspaceHref}
+              count={workspaceItemCount}
+              viewStage={viewStage}
+            />
+          ) : null}
         </div>
         <div style={SPLITTER_WRAPPER_STYLE}>
           <SentinelChatProportional
@@ -905,12 +956,26 @@ export function UniversalCanvasShell({
                 style={WORKSPACE_WRAPPER_STYLE}
               >
                 <div style={WORKSPACE_INNER_STYLE}>
-                  <EventWorkspace
-                    tabs={tabs}
-                    defaultTab={initialTab}
-                    nextMove={nextMove}
-                    onNextMoveAdvance={handleNextMoveAdvance}
-                  />
+                  {workspaceExplorerEnabled ? (
+                    <SourceDeclutteredWorkspace
+                      nextMove={nextMove}
+                      onNextMoveAdvance={handleNextMoveAdvance}
+                      fromStage={viewStage}
+                      criteria={stageCriteria}
+                      onChangeCriterionState={handleCriterionStateChange}
+                      pendingByCriterionId={pendingCriterionByCriterionId}
+                      onPromoteStage={handlePromoteStage}
+                      promotePending={promotePending}
+                      workspaceHref={workspaceHref}
+                    />
+                  ) : (
+                    <EventWorkspace
+                      tabs={tabs}
+                      defaultTab={initialTab}
+                      nextMove={nextMove}
+                      onNextMoveAdvance={handleNextMoveAdvance}
+                    />
+                  )}
                 </div>
               </div>
             }
@@ -920,6 +985,111 @@ export function UniversalCanvasShell({
         <CanvasTour />
       </main>
     </AppShell>
+  );
+}
+
+function WorkspaceExplorerChips({
+  workspaceHref,
+  count,
+  viewStage,
+}: {
+  workspaceHref: string;
+  count: number;
+  viewStage: SourceStageKey;
+}) {
+  return (
+    <div
+      data-testid="source-workspace-explorer-chips"
+      aria-label="Source workspace shortcuts"
+      style={WORKSPACE_CHIPS_ROW_STYLE}
+    >
+      <Link
+        data-testid="source-workspace-chip"
+        href={workspaceHref}
+        style={WORKSPACE_CHIP_PRIMARY_STYLE}
+      >
+        Workspace · {count} ↗
+      </Link>
+      <Link
+        data-testid="source-generate-chip"
+        href={`${workspaceHref}?intent=generate&stage=${viewStage}`}
+        style={WORKSPACE_CHIP_SECONDARY_STYLE}
+      >
+        Generate
+      </Link>
+      <Link
+        data-testid="source-upload-chip"
+        href={`${workspaceHref}?intent=upload&stage=${viewStage}`}
+        style={WORKSPACE_CHIP_SECONDARY_STYLE}
+      >
+        Upload
+      </Link>
+    </div>
+  );
+}
+
+function SourceDeclutteredWorkspace({
+  nextMove,
+  onNextMoveAdvance,
+  fromStage,
+  criteria,
+  onChangeCriterionState,
+  pendingByCriterionId,
+  onPromoteStage,
+  promotePending,
+  workspaceHref,
+}: {
+  nextMove: ReturnType<typeof resolveStageNextMove>;
+  onNextMoveAdvance: () => void;
+  fromStage: SourceStageKey;
+  criteria: SourceEventGateCriterion[];
+  onChangeCriterionState: (
+    criterionId: string,
+    next: SourceEventGateCriterionState,
+    reason: string,
+  ) => Promise<void>;
+  pendingByCriterionId: Record<string, boolean>;
+  onPromoteStage: (toStage: SourceStageKey, reason: string) => Promise<void>;
+  promotePending: boolean;
+  workspaceHref: string;
+}) {
+  return (
+    <section
+      data-testid="source-canvas-workspace"
+      data-active-tab="workspace-explorer"
+      aria-label="Source decision workspace"
+      style={DECLUTTERED_WORKSPACE_STYLE}
+    >
+      <div style={NEXT_MOVE_WRAP_STYLE}>
+        <StageNextMoveCard
+          nextMove={nextMove}
+          onPrimary={onNextMoveAdvance}
+          onSecondary={
+            nextMove.secondaryTarget
+              ? () => {
+                  const target = nextMove.secondaryTarget;
+                  if (target === "gate" || target === "evidence") {
+                    window.location.assign(workspaceHref);
+                  }
+                }
+              : undefined
+          }
+        />
+      </div>
+      <div style={DECLUTTERED_HELP_STYLE}>
+        Documents, evidence, log history, vendor responses, and generated drafts
+        now live in the Workspace. This canvas stays focused on the next move
+        and the gate.
+      </div>
+      <GateTab
+        fromStage={fromStage}
+        states={criteria}
+        onChangeCriterionState={onChangeCriterionState}
+        pendingByCriterionId={pendingByCriterionId}
+        onPromoteStage={onPromoteStage}
+        promotePending={promotePending}
+      />
+    </section>
   );
 }
 
@@ -1023,4 +1193,67 @@ const WORKSPACE_INNER_STYLE: CSSProperties = {
   flexDirection: "column",
   minHeight: 0,
   overflow: "hidden",
+};
+
+const WORKSPACE_CHIPS_ROW_STYLE: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  padding: "0 0 18px",
+};
+
+const WORKSPACE_CHIP_BASE_STYLE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: 34,
+  borderRadius: 6,
+  padding: "0 12px",
+  textDecoration: "none",
+  fontFamily: CANVAS.MONO,
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+};
+
+const WORKSPACE_CHIP_PRIMARY_STYLE: CSSProperties = {
+  ...WORKSPACE_CHIP_BASE_STYLE,
+  color: "#ffffff",
+  background: CANVAS.INK,
+  border: `1px solid ${CANVAS.INK}`,
+};
+
+const WORKSPACE_CHIP_SECONDARY_STYLE: CSSProperties = {
+  ...WORKSPACE_CHIP_BASE_STYLE,
+  color: CANVAS.INK,
+  background: "#ffffff",
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+};
+
+const DECLUTTERED_WORKSPACE_STYLE: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  height: "100%",
+  minHeight: 0,
+  overflowY: "auto",
+  background: CANVAS.PAGE_BG,
+  padding: "0 24px 32px",
+};
+
+const NEXT_MOVE_WRAP_STYLE: CSSProperties = {
+  padding: "20px 0 16px",
+  background: CANVAS.PAGE_BG,
+};
+
+const DECLUTTERED_HELP_STYLE: CSSProperties = {
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 8,
+  background: "#ffffff",
+  padding: "12px 14px",
+  marginBottom: 18,
+  color: CANVAS.TAB_INACTIVE_INK,
+  fontFamily: CANVAS.SANS,
+  fontSize: 13,
+  lineHeight: 1.5,
 };

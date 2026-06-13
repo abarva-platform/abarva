@@ -408,7 +408,7 @@ export function createAzureSourceWriteAdapter(
                 can_upload_source_artifacts, can_generate_sourcing_artifacts,
                 can_publish_sourcing_artifacts, can_approve_source_stages,
                 can_approve_award, notify_on)
-             VALUES ($1,$2,$2,$3,'source creator','contributor','source_member',
+             VALUES ($1,$2::text,$2::uuid,$3,'source creator','contributor','source_member',
                      false,true,true,false,false,false,$4)`,
             [
               input.clientKey,

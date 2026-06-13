@@ -4,16 +4,22 @@
 // generation → quality gate → persistence. The route is a thin wrapper over this.
 // Heavy collaborators are injectable so the service is testable without Azure/Claude/DB.
 
-import 'server-only';
+import "server-only";
 
-import { loadTenantAiPolicyRecord as defaultLoadPolicy } from '@/lib/integrations/ai-egress/tenant-policy';
-import { assembleGovernedEvidence } from './evidence-assembler';
-import { buildDeliverableRequest, type BuildRequestParams } from './build-request';
-import { generateDeliverable as defaultGenerate } from './model-caller';
-import { persistDeliverable as defaultPersist } from './persistence';
-import type { OutputFormat } from './types';
+import { loadTenantAiPolicyRecord as defaultLoadPolicy } from "@/lib/integrations/ai-egress/tenant-policy";
+import { assembleGovernedEvidence } from "./evidence-assembler";
+import {
+  buildDeliverableRequest,
+  type BuildRequestParams,
+} from "./build-request";
+import { generateDeliverable as defaultGenerate } from "./model-caller";
+import { persistDeliverable as defaultPersist } from "./persistence";
+import type { OutputFormat } from "./types";
 
-export interface GenerateDeliverableServiceInput extends Omit<BuildRequestParams, 'outputFormats'> {
+export interface GenerateDeliverableServiceInput extends Omit<
+  BuildRequestParams,
+  "outputFormats"
+> {
   tenantClientKey: string;
   clientId: string;
   userId: string;
@@ -53,12 +59,15 @@ export async function runDeliverableForTenant(
   const generate = deps.generate ?? defaultGenerate;
   const persist = deps.persist ?? defaultPersist;
 
-  const audienceIsVendorFacing = input.audience?.includes('vendor_facing') ?? false;
+  const audienceIsVendorFacing =
+    input.audience?.includes("vendor_facing") ?? false;
 
   // 1 · governed evidence (clean, citation-numbered, vendor-facing exclusion applied)
   const { evidence, sourceRegister, retrievedCount } = await assemble({
     tenantClientKey: input.tenantClientKey,
-    query: input.evidenceQuery ?? `${input.deliverableType} ${input.useCaseArchetype} current state baseline`,
+    query:
+      input.evidenceQuery ??
+      `${input.deliverableType} ${input.useCaseArchetype} current state baseline`,
     audienceIsVendorFacing,
   });
 
@@ -80,7 +89,12 @@ export async function runDeliverableForTenant(
 
   // 3 · multi-pass generation through the audited egress (plan gate + quality gate inside)
   const result = await generate(req, {
-    tenantId: input.tenantClientKey,
+    // Egress identity must be the client UUID: the audit sink writes tenant_id (uuid),
+    // and policy resolution falls back to the raw string when a non-canonical client
+    // key (e.g. 'skyharbor' vs tenant_key 'skyharbor-air') doesn't match — which then
+    // fails the uuid insert ("invalid input syntax for type uuid"). Class bug, found
+    // live by clicking the Generate button (2026-06-11).
+    tenantId: input.clientId,
     userId: input.userId,
     ...(input.model ? { model: input.model } : {}),
   });
@@ -100,8 +114,8 @@ export async function runDeliverableForTenant(
   // format is the document format (docx); 'xlsx' is a companion exhibit, not the
   // artifact's primary format, so it never becomes the persisted outputFormat.
   const first = input.outputFormats?.[0];
-  const persistFormat: 'docx' | 'pptx' | 'pdf' | 'html' =
-    first === 'pptx' || first === 'pdf' || first === 'html' ? first : 'docx';
+  const persistFormat: "docx" | "pptx" | "pdf" | "html" =
+    first === "pptx" || first === "pdf" || first === "html" ? first : "docx";
   const { policy } = await loadPolicy(input.clientId);
   const record = await persist(result, {
     clientId: input.clientId,

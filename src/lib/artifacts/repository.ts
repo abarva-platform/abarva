@@ -17,6 +17,7 @@ export interface GeneratedArtifactRecord {
   blobSha256: string;
   qualityScore: number | null;
   evidenceLedgerIds: string[];
+  citedInputIds: string[];
   generationEgressAudit: string | null;
   renderedAt: string;
   renderedBy: string;
@@ -37,6 +38,9 @@ function rowToRecord(row: Record<string, unknown>): GeneratedArtifactRecord {
     qualityScore: row.quality_score === null ? null : Number(row.quality_score),
     evidenceLedgerIds: Array.isArray(row.evidence_ledger_ids)
       ? row.evidence_ledger_ids.map(String)
+      : [],
+    citedInputIds: Array.isArray(row.cited_input_ids)
+      ? row.cited_input_ids.map(String)
       : [],
     generationEgressAudit:
       typeof row.generation_egress_audit === "string"
@@ -88,6 +92,7 @@ export async function saveGeneratedArtifact(
       blob_sha256: rendered.blobSha256,
       quality_score: rendered.qualityScore,
       evidence_ledger_ids: rendered.evidenceLedgerIds,
+      cited_input_ids: rendered.evidenceLedgerIds,
       generation_egress_audit: rendered.generationEgressAudit,
       rendered_by: input.renderedBy,
       quarantine_reason: rendered.quarantineReason,
@@ -159,6 +164,41 @@ export async function getLatestGeneratedArtifact(args: {
   return data ? rowToRecord(data as Record<string, unknown>) : null;
 }
 
+export async function listGeneratedArtifactsForMove(args: {
+  clientId: string;
+  moveId: string;
+  limit?: number;
+}): Promise<GeneratedArtifactRecord[]> {
+  const sourceRefPrefix = `move:${args.moveId}:%`;
+  const { data, error } = await getAzureWriteFluentClient()
+    .from("generated_artifacts")
+    .select("*")
+    .eq("client_id", args.clientId)
+    .like("source_artifact_ref", sourceRefPrefix)
+    .order("rendered_at", { ascending: false })
+    .limit(args.limit ?? 50);
+  if (error)
+    throw new Error(`generated_artifacts move lookup failed: ${error.message}`);
+  return ((data as Record<string, unknown>[] | null) ?? []).map(rowToRecord);
+}
+
+export async function listGeneratedArtifactsForClient(args: {
+  clientId: string;
+  limit?: number;
+}): Promise<GeneratedArtifactRecord[]> {
+  const { data, error } = await getAzureWriteFluentClient()
+    .from("generated_artifacts")
+    .select("*")
+    .eq("client_id", args.clientId)
+    .order("rendered_at", { ascending: false })
+    .limit(args.limit ?? 300);
+  if (error)
+    throw new Error(
+      `generated_artifacts client lookup failed: ${error.message}`,
+    );
+  return ((data as Record<string, unknown>[] | null) ?? []).map(rowToRecord);
+}
+
 export async function saveRenderedBoardGradeMoveArtifact(input: {
   clientId: string;
   moveId: string;
@@ -168,6 +208,9 @@ export async function saveRenderedBoardGradeMoveArtifact(input: {
   renderedBy: string;
   routePath: string;
   generatedOn: string;
+  citedInputIds?: string[];
+  qualityScore?: number | null;
+  generationEgressAudit?: string | null;
 }): Promise<GeneratedArtifactRecord> {
   const id = randomUUID();
   const sourceArtifactRef = `move:${input.moveId}:${input.artifactId}`;
@@ -182,9 +225,10 @@ export async function saveRenderedBoardGradeMoveArtifact(input: {
       output_format: "html",
       blob_url: generatedArtifactUrl(id),
       blob_sha256: sha256(input.html),
-      quality_score: null,
+      quality_score: input.qualityScore ?? null,
       evidence_ledger_ids: [],
-      generation_egress_audit: null,
+      cited_input_ids: input.citedInputIds ?? [],
+      generation_egress_audit: input.generationEgressAudit ?? null,
       rendered_by: input.renderedBy,
       quarantine_reason: null,
       metadata: {

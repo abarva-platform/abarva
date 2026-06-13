@@ -1,0 +1,11 @@
+req_id,topic,requirement
+R-01,Response structure,Exec summary (<=4pp) · Technical solution per tower · Transition plan w/ Gantt · Staffing & pyramid workbook · SLA commitment matrix · Pricing workbook (our template) · Assumptions/exceptions register · Compliance matrix (per-requirement Y/N/Partial+evidence) · Security pack · References
+R-02,Pricing workbook format,Quote by tower x year x volume band in the issued template; rate card all 28 roles x 4 locations; one-time vs recurring split; NO bundled single-line pricing — non-compliant submissions held from commercial scoring until tower-level breakout provided
+R-03,Staffing detail,FTE by tower x role x grade x location for transition end-state and steady state Y1/Y3; named key personnel for 12 leadership roles with CVs; attrition assumptions
+R-04,SLA commitments,Respond to all 72 SLAs in Exhibit 05: commit / commit-with-ramp (max 6mo) / exception-with-rationale; propose XLA set for crew experience
+R-05,Compliance matrix,"Every numbered requirement: Comply / Partial / Exception, with section reference; unanswered = non-compliant"
+R-06,Assumptions & exceptions,"Register format: id, topic, assumption/exception text, commercial impact if removed; exceptions to A-12/A-13/A-14/A-15 floors must be priced as alternates, not silent redlines"
+R-07,Security evidence,SOC 2 Type II + ISO 27001 certs for EVERY delivery center named; subprocessor list; TSA badging readiness statement; 'available on request' = non-compliant
+R-08,Submission logistics,Single PDF + native workbooks; max 250MB; submitted via procurement portal by 2026-09-15 17:00 CT; late = flagged to evaluation committee with timestamps
+R-09,Q&A,Written Q&A only via procurement; answers published to all bidders; no off-channel contact (disqualification risk)
+R-10,Down-select,Shortlist of 2-3 to orals + BAFO; site visits and reference calls before award recommendation

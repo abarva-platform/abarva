@@ -75,6 +75,21 @@ function createContextPromotionDbMock(
             },
           };
         },
+        update(payload: unknown) {
+          calls.push({ table, operation: "update", payload });
+          const chain = {
+            eq() {
+              return chain;
+            },
+            in() {
+              return chain;
+            },
+            select() {
+              return Promise.resolve({ data: [], error: null, count: 0 });
+            },
+          };
+          return chain;
+        },
         select() {
           return {
             eq() {
@@ -446,10 +461,11 @@ describe("csv upload connector", () => {
     );
     expect(calls.map((call) => call.operation)).toEqual([
       "insert",
-      "insert",
       "upsert",
       "upsert",
       "upsert",
+      "upsert",
+      "update",
       "upsert",
     ]);
     expect(calls.some((call) => call.operation === "delete")).toBe(false);
@@ -558,6 +574,7 @@ describe("csv upload connector", () => {
       "enterprise_context_sources",
       "enterprise_context_source_files",
       "enterprise_context_records",
+      "enterprise_context_facts",
       "enterprise_context_facts",
     ]);
     expect(evidenceInputs).toEqual([

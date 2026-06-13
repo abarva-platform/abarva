@@ -7,7 +7,7 @@
 // listed here — organized by family, filterable, with open/download + version
 // lineage. Reads /api/v1/programs/:id/artifacts (no browser-only files).
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface Artifact {
   artifactId: string;
@@ -214,12 +214,23 @@ function ArtifactRow({ a }: { a: Artifact }) {
   );
 }
 
-export function FileCabinetPanel({ moveId }: { moveId: string }) {
+export function FileCabinetPanel({
+  moveId,
+  phase = 0,
+}: {
+  moveId: string;
+  phase?: number;
+}) {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [family, setFamily] = useState<string>("all");
   const [showSuperseded, setShowSuperseded] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [uploadState, setUploadState] = useState<
+    "idle" | "uploading" | "error"
+  >("idle");
+  const [uploadMsg, setUploadMsg] = useState<string>("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -237,6 +248,36 @@ export function FileCabinetPanel({ moveId }: { moveId: string }) {
       setLoading(false);
     }
   }, [moveId]);
+
+  const onUpload = useCallback(
+    async (file: File) => {
+      setUploadState("uploading");
+      setUploadMsg(`Uploading ${file.name}…`);
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("phase", String(phase));
+        fd.append("family", "uploaded_evidence");
+        const r = await fetch(`/api/v1/programs/${moveId}/artifacts/upload`, {
+          method: "POST",
+          credentials: "include",
+          body: fd,
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.ok)
+          throw new Error(j.error || j.detail || `HTTP ${r.status}`);
+        setUploadState("idle");
+        setUploadMsg(
+          `Uploaded ${file.name}${j.blobStored ? " → Azure Blob" : ""}.`,
+        );
+        await load();
+      } catch (e) {
+        setUploadState("error");
+        setUploadMsg(e instanceof Error ? e.message : "upload failed");
+      }
+    },
+    [moveId, phase, load],
+  );
 
   useEffect(() => {
     void load();
@@ -300,22 +341,61 @@ export function FileCabinetPanel({ moveId }: { moveId: string }) {
             versioned, governed. {totalCurrent} current.
           </p>
         </div>
-        <button
-          onClick={() => void load()}
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <input
+            ref={fileRef}
+            type="file"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void onUpload(f);
+              e.target.value = "";
+            }}
+          />
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={uploadState === "uploading"}
+            style={{
+              fontSize: 11.5,
+              fontWeight: 600,
+              color: "#fff",
+              background: uploadState === "uploading" ? "#9AA3B2" : "#1B2B5C",
+              border: "none",
+              borderRadius: 5,
+              padding: "6px 12px",
+              cursor: uploadState === "uploading" ? "default" : "pointer",
+            }}
+          >
+            {uploadState === "uploading" ? "Uploading…" : "Upload evidence"}
+          </button>
+          <button
+            onClick={() => void load()}
+            style={{
+              fontSize: 11.5,
+              fontWeight: 600,
+              color: "#5A6472",
+              background: "transparent",
+              border: "1px solid #D5DAE2",
+              borderRadius: 5,
+              padding: "5px 11px",
+              cursor: "pointer",
+            }}
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+      {uploadMsg && (
+        <div
           style={{
-            fontSize: 11.5,
-            fontWeight: 600,
-            color: "#5A6472",
-            background: "transparent",
-            border: "1px solid #D5DAE2",
-            borderRadius: 5,
-            padding: "5px 11px",
-            cursor: "pointer",
+            margin: "2px 0 8px",
+            fontSize: 12,
+            color: uploadState === "error" ? "#B71C1C" : "#1E7E34",
           }}
         >
-          Refresh
-        </button>
-      </div>
+          {uploadMsg}
+        </div>
+      )}
 
       {/* Family filters */}
       <div
@@ -388,8 +468,9 @@ export function FileCabinetPanel({ moveId }: { moveId: string }) {
             marginTop: 8,
           }}
         >
-          No artifacts yet. Generated deliverables, uploads, session outputs and
-          approval packets will appear here automatically once produced.
+          No artifacts yet. Generated deliverables appear here automatically;
+          use “Upload evidence” to add meeting notes, session outputs, data
+          exports, or filled templates that ground deliverables and close gates.
         </div>
       )}
 

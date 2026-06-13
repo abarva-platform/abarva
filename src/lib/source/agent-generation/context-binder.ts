@@ -20,7 +20,11 @@ import {
 } from '@/lib/source/queries';
 import { canonicalClientDisplayName } from '@/lib/client-config';
 import { getActiveClientRow } from '@/lib/active-client';
-import type { SourceGenerationContext } from './types';
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
+import type {
+  SourceGenerationContext,
+  SourceGenerationUploadedArtifact,
+} from './types';
 
 /**
  * Build the read-only context snapshot for a generation call.
@@ -79,11 +83,13 @@ export async function buildSourceGenerationContext(
 
   // The substrate queries take a UUID. event.id is always a UUID
   // even when the URL slug is a code.
-  const [artifactStates, gateCriteria, evidence] = await Promise.all([
+  const [artifactStates, gateCriteria, evidence, uploadedEvidence] =
+    await Promise.all([
     listArtifactStatesForEvent(substrateEventId),
     listGateCriterionStatesForEvent(substrateEventId),
     listEvidenceStatesForEvent(substrateEventId),
-  ]);
+      listUploadedEvidenceForGeneration(substrateEventId),
+    ]);
 
   return {
     tenantKey: activeClient?.key ?? 'unknown',
@@ -106,6 +112,7 @@ export async function buildSourceGenerationContext(
     artifactStates,
     gateCriteria,
     evidence,
+    uploadedEvidence,
   };
 }
 
@@ -142,4 +149,122 @@ function extractTrigger(scope: string | null | undefined): string | null {
     .split('\n')
     .find((line) => /trigger|why\s*now/i.test(line));
   return triggerLine?.replace(/^[^:]*:\s*/, '').trim() || null;
+}
+
+async function listUploadedEvidenceForGeneration(
+  sourceEventId: string,
+): Promise<SourceGenerationUploadedArtifact[]> {
+  const supabase = getAzureReadFluentClient();
+  const { data: artifactRows, error: artifactError } = await supabase
+    .from('source_artifacts')
+    .select(
+      'id, original_name, artifact_family, source_format, parse_status, evidence_state, stage_key, created_at, source_origin',
+    )
+    .eq('source_event_id', sourceEventId)
+    .eq('source_origin', 'uploaded')
+    .order('created_at', { ascending: false })
+    .limit(200);
+  if (artifactError || !artifactRows?.length) return [];
+
+  const latestRowsByName = new Map<string, unknown>();
+  for (const row of artifactRows) {
+    const typed = row as {
+      id?: unknown;
+      original_name?: unknown;
+      source_origin?: unknown;
+    };
+    if (String(typed.source_origin ?? 'uploaded') !== 'uploaded') continue;
+    const key = String(typed.original_name ?? typed.id ?? '')
+      .toLowerCase()
+      .trim();
+    if (!key || latestRowsByName.has(key)) continue;
+    latestRowsByName.set(key, row);
+  }
+  const latestArtifactRows = Array.from(latestRowsByName.values()).sort(
+    (a, b) => {
+      const left = String((a as { created_at?: unknown }).created_at ?? '');
+      const right = String((b as { created_at?: unknown }).created_at ?? '');
+      return left.localeCompare(right);
+    },
+  );
+
+  const artifactIds = latestArtifactRows
+    .map((row) => String((row as { id?: unknown }).id ?? ''))
+    .filter(Boolean);
+  if (artifactIds.length === 0) return [];
+
+  const [chunksResult, factsResult] = await Promise.all([
+    supabase
+      .from('source_artifact_chunks')
+      .select('artifact_id, chunk_text, chunk_kind, confidence')
+      .in('artifact_id', artifactIds)
+      .order('confidence', { ascending: false })
+      .limit(160),
+    supabase
+      .from('source_artifact_facts')
+      .select('artifact_id, fact_type, fact_key, fact_value, confidence')
+      .in('artifact_id', artifactIds)
+      .order('confidence', { ascending: false })
+      .limit(160),
+  ]);
+
+  const chunksByArtifact = new Map<string, string[]>();
+  for (const row of chunksResult.data ?? []) {
+    const artifactId = String((row as { artifact_id?: unknown }).artifact_id ?? '');
+    const chunkText = String((row as { chunk_text?: unknown }).chunk_text ?? '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!artifactId || !chunkText) continue;
+    const list = chunksByArtifact.get(artifactId) ?? [];
+    if (list.length < 5) {
+      list.push(chunkText.slice(0, 900));
+      chunksByArtifact.set(artifactId, list);
+    }
+  }
+
+  const factsByArtifact = new Map<string, string[]>();
+  for (const row of factsResult.data ?? []) {
+    const typed = row as {
+      artifact_id?: unknown;
+      fact_type?: unknown;
+      fact_key?: unknown;
+      fact_value?: unknown;
+    };
+    const artifactId = String(typed.artifact_id ?? '');
+    if (!artifactId) continue;
+    const factType = String(typed.fact_type ?? 'fact');
+    const factKey = String(typed.fact_key ?? 'unknown');
+    const factValue =
+      typeof typed.fact_value === 'string'
+        ? typed.fact_value
+        : JSON.stringify(typed.fact_value ?? {});
+    const list = factsByArtifact.get(artifactId) ?? [];
+    if (list.length < 5) {
+      list.push(`${factType}/${factKey}: ${factValue.slice(0, 700)}`);
+      factsByArtifact.set(artifactId, list);
+    }
+  }
+
+  return latestArtifactRows.map((row) => {
+    const typed = row as {
+      id: string;
+      original_name: string | null;
+      artifact_family: string | null;
+      source_format: string | null;
+      parse_status: string | null;
+      evidence_state: string | null;
+      stage_key: SourceGenerationUploadedArtifact['stageKey'];
+    };
+    return {
+      id: typed.id,
+      originalName: typed.original_name ?? typed.id,
+      artifactFamily: typed.artifact_family ?? 'other',
+      sourceFormat: typed.source_format ?? 'unknown',
+      parseStatus: typed.parse_status ?? 'pending',
+      evidenceState: typed.evidence_state ?? 'unparsed',
+      stageKey: typed.stage_key ?? 'strategy',
+      chunkExcerpts: chunksByArtifact.get(typed.id) ?? [],
+      factSummaries: factsByArtifact.get(typed.id) ?? [],
+    };
+  });
 }

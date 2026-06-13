@@ -16,6 +16,10 @@ import "server-only";
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import type { GeneratedDeliverable } from "@/lib/programs/deliverable-refinement";
 import type { DeliverableSpec } from "@/lib/programs/archetypes/types";
+import {
+  resolveSourceLabel,
+  scrubInternalSourceTags,
+} from "@/lib/programs/deliverables/source-labels";
 
 export interface NarrativeDeliverable {
   label: string;
@@ -39,10 +43,14 @@ export function buildEvidenceBundle(base: GeneratedDeliverable): {
     for (const c of s.claims) {
       if (c.missingEvidence) {
         gaps.push(
-          `${c.text.replace(/^\[MISSING EVIDENCE\]\s*/, "").trim()} (${c.missingEvidence})`,
+          `${c.text.replace(/^\[MISSING EVIDENCE\]\s*/, "").trim()} (needs: ${resolveSourceLabel(c.missingEvidence).title})`,
         );
       } else if (c.citation) {
-        facts.push(`${c.text} [source: ${c.citation}]`);
+        // The citation is shown to Claude (and kept inline in the body) — it
+        // MUST be the human-readable source name, never the raw internal id.
+        facts.push(
+          `${c.text} [source: ${resolveSourceLabel(c.citation).title}]`,
+        );
       }
     }
   }
@@ -168,7 +176,9 @@ export async function generateNarrativeDeliverable(args: {
 
   return {
     label: args.spec.label,
-    markdown: markdown.trim(),
+    // Defense-in-depth: scrub any internal id the model may have echoed before
+    // the markdown reaches a client surface.
+    markdown: scrubInternalSourceTags(markdown.trim()),
     envelope: args.base.envelope,
     model,
     generatedByClaude: true,

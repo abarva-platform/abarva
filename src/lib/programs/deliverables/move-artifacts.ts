@@ -229,6 +229,48 @@ export async function listMoveArtifacts(
   }
 }
 
+/** Tenant File Cabinet data across all Moves, newest first. */
+export async function listMoveArtifactsForTenant(
+  ctx: TenancyCtx,
+  opts: { currentOnly?: boolean; limit?: number } = {},
+): Promise<MoveArtifactRow[]> {
+  const tenantKey = ctx.clientKey ?? "";
+  if (!tenantKey) return [];
+  try {
+    const sb = getAzureWriteFluentClient();
+    let q = sb.from("move_artifacts").select("*").eq("tenant_key", tenantKey);
+    if (opts.currentOnly) q = q.eq("lifecycle_state", "current");
+    const { data, error } = await q
+      .order("created_at", { ascending: false })
+      .limit(opts.limit ?? 300);
+    if (error || !Array.isArray(data)) return [];
+    return data as MoveArtifactRow[];
+  } catch {
+    return [];
+  }
+}
+
+export async function getMoveArtifactForTenant(
+  ctx: TenancyCtx,
+  artifactId: string,
+): Promise<MoveArtifactRow | null> {
+  const tenantKey = ctx.clientKey ?? "";
+  if (!tenantKey || !artifactId) return null;
+  try {
+    const sb = getAzureWriteFluentClient();
+    const { data, error } = await sb
+      .from("move_artifacts")
+      .select("*")
+      .eq("tenant_key", tenantKey)
+      .eq("artifact_id", artifactId)
+      .maybeSingle();
+    if (error || !data) return null;
+    return data as MoveArtifactRow;
+  } catch {
+    return null;
+  }
+}
+
 /** Stream an artifact's bytes from Blob (tenant-scoped). Robust download path
  *  that doesn't depend on SAS generation under managed identity. */
 export async function downloadArtifactBytes(

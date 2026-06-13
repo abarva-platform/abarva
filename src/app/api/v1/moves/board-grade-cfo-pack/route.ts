@@ -47,10 +47,11 @@ import {
   persistBoardGradeMoveArtifact,
 } from "@/lib/programs/board-artifacts/board-grade-persistence";
 import { loadMoveBusinessCaseInput } from "@/lib/programs/board-artifacts/load-move-business-case-input";
+import { maybeRenderOrchestratedMoveArtifact } from "@/lib/programs/board-artifacts/orchestrated-move-route";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function GET(req: NextRequest): Promise<Response> {
   // --- Auth — a valid session. -------------------------------------------
@@ -85,6 +86,28 @@ export async function GET(req: NextRequest): Promise<Response> {
     }
 
     if (moveInput) {
+      const download = params.get("download") === "1";
+      const filename = `cfo-pack-${moveId}-${generatedOn}.html`;
+      const orchestrated = await maybeRenderOrchestratedMoveArtifact({
+        req,
+        routePath: "/api/v1/moves/board-grade-cfo-pack",
+        moveId,
+        moveInput,
+        generatedOn,
+        renderedBy: user.personId ?? user.clerkUserId,
+        userClientKey: user.metadataClientKey,
+        artifactId: "cfo-pack",
+        title: "CFO Pack",
+        filename,
+        deliverableType: "value_model",
+        phaseOrStage: "P4_value",
+        artifactStandard: "moves.board_grade.value_model",
+        decisionContext:
+          "Approve the value model, CFO-facing assumptions, realized-value measurement approach, and funding posture for the Move.",
+        audience: ["cfo", "board", "steering_committee"],
+      });
+      if (orchestrated) return orchestrated;
+
       // The generic renderer is pure; a throw here would be a renderer bug.
       // Memoised per day, keyed by the move id so two Moves never collide.
       let html: string;
@@ -109,8 +132,6 @@ export async function GET(req: NextRequest): Promise<Response> {
         );
       }
 
-      const download = params.get("download") === "1";
-      const filename = `cfo-pack-${moveId}-${generatedOn}.html`;
       const artifactRecord = await persistBoardGradeMoveArtifact({
         clientId: moveInput.tenant_key ?? user.metadataClientKey,
         moveId,

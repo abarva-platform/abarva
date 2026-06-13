@@ -56,42 +56,42 @@ import {
   buildBaselineModel,
   type BaselineMetricInput,
   type BaselineModel,
-} from './expert-kernel/baseline-model';
+} from "./expert-kernel/baseline-model";
 import {
   buildAssumptionLedger,
   type AssumptionInput,
   type AssumptionLedger,
-} from './expert-kernel/assumption-ledger';
+} from "./expert-kernel/assumption-ledger";
 import {
   buildEffortEstimate,
   DEFAULT_PLANNING_RATE_CARD,
   type EffortEstimate,
   type WorkstreamInput,
-} from './expert-kernel/effort-estimator';
-import type { AiOperatingCostInput } from './expert-kernel/ai-ops-cost';
+} from "./expert-kernel/effort-estimator";
+import type { AiOperatingCostInput } from "./expert-kernel/ai-ops-cost";
 import {
   buildValueForecast,
   type HaircutScores,
   type ValueForecast,
-} from './expert-kernel/value-forecast';
+} from "./expert-kernel/value-forecast";
 import {
   compileBusinessCase,
   type BusinessCaseSkeleton,
   type TowerMeasurementHandoff,
-} from './expert-kernel/business-case-compiler';
-import { rangeOf } from './expert-kernel/types';
+} from "./expert-kernel/business-case-compiler";
+import { rangeOf } from "./expert-kernel/types";
 import type {
   FunctionPack,
   OperatingMetric,
-} from './expert-kernel/domain/function-pack-types';
-import { resolveFunctionPack } from './expert-kernel/domain/function-pack-registry';
-import type { FunctionPackBinding } from './expert-kernel/domain/function-pack-context-binding';
-import { resolveMoveFunctionIdentity } from './function-identity';
-import { bindMoveFunctionPack } from './move-function-binding';
+} from "./expert-kernel/domain/function-pack-types";
+import { resolveFunctionPack } from "./expert-kernel/domain/function-pack-registry";
+import type { FunctionPackBinding } from "./expert-kernel/domain/function-pack-context-binding";
+import { resolveMoveFunctionIdentity } from "./function-identity";
+import { bindMoveFunctionPack } from "./move-function-binding";
 import {
   normalizeMetricLabel,
   type BaselineMetricEntry,
-} from './tenant-metric-inventory';
+} from "./tenant-metric-inventory";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Inputs
@@ -165,6 +165,16 @@ export interface MoveBusinessCaseInput {
   /** The `tenantName` alias (camelCase view-model form). */
   tenantName?: string | null;
   /**
+   * Governed evidence rows already committed to the Move. These are the only
+   * UUID-backed inputs that may populate Workspace Explorer lineage
+   * (`generated_artifacts.cited_input_ids`). Charter JSON and baseline JSON are
+   * real recorded facts, but they are not row ids, so they remain provenance
+   * notes rather than UUID lineage edges.
+   */
+  governed_evidence_items?: readonly MoveGovernedEvidenceItem[] | null;
+  /** CamelCase alias for callers holding view-model shaped data. */
+  governedEvidenceItems?: readonly MoveGovernedEvidenceItem[] | null;
+  /**
    * The Move's id — the `engagements.id` column or the `StrategicMove.id`.
    * Used by renderers that emit cross-deck `?moveId=` links (e.g. the
    * Master Move Dossier assembled-book). Both snake_case `id` and the
@@ -178,6 +188,16 @@ export interface MoveBusinessCaseInput {
   ai_operating_cost?: AiOperatingCostInput | null;
   /** Camel-case alias for view-model callers. */
   aiOperatingCost?: AiOperatingCostInput | null;
+}
+
+export interface MoveGovernedEvidenceItem {
+  id: string;
+  title?: string | null;
+  summary?: string | null;
+  evidence_type?: string | null;
+  confidence?: number | string | null;
+  phase?: number | null;
+  created_at?: string | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -226,7 +246,7 @@ export interface MoveBusinessCaseResult {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** The phase artifact this module derives — the costed business case. */
-const BUSINESS_CASE_ARTIFACT = 'business_case' as const;
+const BUSINESS_CASE_ARTIFACT = "business_case" as const;
 
 /**
  * Run the expert kernel for a real, originated Move.
@@ -267,8 +287,8 @@ export function buildMoveBusinessCase(
       binding,
       unboundReason:
         binding.fallbackNote ||
-        'No curated Domain Function Pack covers this Move. The expert kernel ' +
-          'cannot run with curated depth — surfaced honestly, not fabricated.',
+        "No curated Domain Function Pack covers this Move. The expert kernel " +
+          "cannot run with curated depth — surfaced honestly, not fabricated.",
       derivationNotes: [],
     };
   }
@@ -281,22 +301,21 @@ export function buildMoveBusinessCase(
     charter: move.charter,
   });
   const pack =
-    identity &&
-    resolveFunctionPack(identity.industryKey, identity.functionKey);
+    identity && resolveFunctionPack(identity.industryKey, identity.functionKey);
   if (!pack) {
     return {
       bound: false,
       skeleton: null,
       binding,
       unboundReason:
-        'The Move bound a deliverable outline but its curated Function Pack ' +
-        'could not be resolved — the kernel cannot run with curated depth.',
+        "The Move bound a deliverable outline but its curated Function Pack " +
+        "could not be resolved — the kernel cannot run with curated depth.",
       derivationNotes: [],
     };
   }
 
   const moveName = readMoveName(move, pack);
-  const tenantKey = identity?.industryKey ?? 'unknown-tenant';
+  const tenantKey = identity?.industryKey ?? "unknown-tenant";
   const derivationNotes: string[] = [];
 
   // (3) Derive each kernel input bundle honestly.
@@ -327,7 +346,7 @@ export function buildMoveBusinessCase(
     bound: true,
     skeleton,
     binding,
-    unboundReason: '',
+    unboundReason: "",
     derivationNotes,
   };
 }
@@ -342,7 +361,7 @@ export function buildMoveBusinessCase(
  * specific Move title.
  */
 function readMoveName(move: MoveBusinessCaseInput, pack: FunctionPack): string {
-  const name = typeof move.name === 'string' ? move.name.trim() : '';
+  const name = typeof move.name === "string" ? move.name.trim() : "";
   if (name) return name;
   return `${pack.functionLabel} Move`;
 }
@@ -371,22 +390,22 @@ function indexRecordedMetrics(
   if (!Array.isArray(baselineMetrics)) return index;
   for (const entry of baselineMetrics) {
     const name = entry?.metric_name;
-    if (typeof name !== 'string' || !name.trim()) continue;
+    if (typeof name !== "string" || !name.trim()) continue;
     const value = entry?.value;
-    if (typeof value !== 'number' || !Number.isFinite(value)) continue;
+    if (typeof value !== "number" || !Number.isFinite(value)) continue;
     const form = normalizeMetricLabel(name);
     if (!form || index.has(form)) continue;
     index.set(form, {
       value,
-      unit: typeof entry?.unit === 'string' ? entry.unit : 'unit',
+      unit: typeof entry?.unit === "string" ? entry.unit : "unit",
       source:
-        typeof entry?.source === 'string' && entry.source.trim()
+        typeof entry?.source === "string" && entry.source.trim()
           ? entry.source
-          : 'Tenant-recorded baseline metric',
+          : "Tenant-recorded baseline metric",
       asOf:
-        typeof entry?.as_of === 'string' && entry.as_of.trim()
+        typeof entry?.as_of === "string" && entry.as_of.trim()
           ? entry.as_of
-          : 'as-recorded',
+          : "as-recorded",
     });
   }
   return index;
@@ -429,11 +448,11 @@ function deriveBaseline(
           value: hit.value,
           unit: hit.unit,
           source: hit.source,
-          sourceQuality: 'measured',
+          sourceQuality: "measured",
           asOf: hit.asOf,
           // Tenant data is grounded, but a self-recorded metric without an
           // audited source is not high confidence — medium is the honest rung.
-          confidence: 'medium',
+          confidence: "medium",
         };
       }
       // Not recorded — a precise seed gap. The binding's gap statement names
@@ -444,15 +463,15 @@ function deriveBaseline(
         label: metric.name,
         value: null,
         unit: metric.unit,
-        source: 'seed gap',
-        sourceQuality: 'absent',
-        asOf: 'not-recorded',
-        confidence: 'low',
+        source: "seed gap",
+        sourceQuality: "absent",
+        asOf: "not-recorded",
+        confidence: "low",
         seedGapReason:
           gap?.gapStatement ??
           `"${metric.name}" is not recorded by the tenant — this function ` +
             `expects it (sourced from ${metric.dataSource}); its absence ` +
-            'blocks the baseline and the value forecast.',
+            "blocks the baseline and the value forecast.",
       };
     },
   );
@@ -465,7 +484,7 @@ function deriveBaseline(
         `Function-Pack operating metrics are recorded by this Move ` +
         `(coverage ${Math.round(model.coverage * 100)}%). The remaining ` +
         `${model.seedGaps.length} are precise, named seed gaps — not ` +
-        'fabricated values.',
+        "fabricated values.",
     );
   }
   return model;
@@ -587,17 +606,17 @@ function deriveValue(
   const grossValueIsProxy = true;
 
   notes.push(
-    'Value: the gross value range is built from the Function Pack\'s ' +
-      'curated value benchmarks — labelled planning ranges, NOT this ' +
-      'tenant\'s own measured unit economics. It is carried as a proxy, so ' +
-      'the kernel honestly blocks a claimable dollar payback until the ' +
-      'tenant\'s spend base and the seed-gapped metrics are supplied.',
+    "Value: the gross value range is built from the Function Pack's " +
+      "curated value benchmarks — labelled planning ranges, NOT this " +
+      "tenant's own measured unit economics. It is carried as a proxy, so " +
+      "the kernel honestly blocks a claimable dollar payback until the " +
+      "tenant's spend base and the seed-gapped metrics are supplied.",
   );
   if (baseline.seedGaps.length > 0) {
     notes.push(
       `Value: ${baseline.seedGaps.length} operating metric(s) needed to ` +
-        'ground the forecast are seed-gapped — the value range is a ' +
-        'planning proxy, not a forecast, until they are closed.',
+        "ground the forecast are seed-gapped — the value range is a " +
+        "planning proxy, not a forecast, until they are closed.",
     );
   }
 
@@ -643,7 +662,7 @@ function deriveAssumptions(
   // The honest owner placeholder — origination has not yet assigned named
   // human owners for a freshly-derived Move, so the ledger says so plainly
   // rather than inventing accountable people.
-  const tenantOwner = 'To be confirmed with the tenant (Move sponsor)';
+  const tenantOwner = "To be confirmed with the tenant (Move sponsor)";
 
   // (a) Dominant haircut factors → high-impact value assumptions.
   pack.valueModel.dominantHaircutFactors.forEach((factor, i) => {
@@ -655,38 +674,38 @@ function deriveAssumptions(
         `${formatPct(factor.typicalHaircut.high)} of unhaircut value ` +
         `(${factor.typicalHaircut.label}).`,
       owner: tenantOwner,
-      confidence: 'low',
+      confidence: "low",
       source: `Function Pack value model — dominant haircut factor (${factor.typicalHaircut.basis})`,
       // The first two haircut factors bite hardest (the pack orders them
       // hardest-first), so they are the high movers of the case.
-      sensitivityImpact: i < 2 ? 'high' : 'medium',
+      sensitivityImpact: i < 2 ? "high" : "medium",
       isSeedGapProxy: true,
     });
   });
 
   // (b) The value-realisation narrative → the central economic assumption.
   add({
-    key: 'value_realization_engine',
+    key: "value_realization_engine",
     statement:
-      'Value realisation follows the Function Pack model: ' +
+      "Value realisation follows the Function Pack model: " +
       truncate(pack.valueModel.valueRealizationNarrative, 320),
     owner: tenantOwner,
-    confidence: 'low',
-    source: 'Function Pack value model — value realisation narrative',
-    sensitivityImpact: 'high',
+    confidence: "low",
+    source: "Function Pack value model — value realisation narrative",
+    sensitivityImpact: "high",
     isSeedGapProxy: true,
   });
 
   // (c) Time-to-value band → a scheduling assumption.
   add({
-    key: 'time_to_value_band',
+    key: "time_to_value_band",
     statement:
-      'Time to value is assumed to track the Function Pack band: ' +
+      "Time to value is assumed to track the Function Pack band: " +
       truncate(pack.valueModel.timeToValueBand, 240),
     owner: tenantOwner,
-    confidence: 'low',
-    source: 'Function Pack value model — time-to-value band',
-    sensitivityImpact: 'medium',
+    confidence: "low",
+    source: "Function Pack value model — time-to-value band",
+    sensitivityImpact: "medium",
     isSeedGapProxy: true,
   });
 
@@ -701,9 +720,9 @@ function deriveAssumptions(
         `${truncate(anchor.whatGoodEvidenceLooksLike, 200)} ` +
         `Weak evidence to reject: ${truncate(anchor.weakEvidenceToReject, 160)}`,
       owner: tenantOwner,
-      confidence: 'low',
-      source: 'Function Pack — evidence anchor',
-      sensitivityImpact: 'medium',
+      confidence: "low",
+      source: "Function Pack — evidence anchor",
+      sensitivityImpact: "medium",
       isSeedGapProxy: true,
     });
   });
@@ -718,9 +737,9 @@ function deriveAssumptions(
         `mode — ${truncate(theme.description, 200)} Detection signal: ` +
         `${truncate(theme.detectionSignal, 140)}`,
       owner: tenantOwner,
-      confidence: 'low',
-      source: 'Function Pack — pain theme / failure mode',
-      sensitivityImpact: 'medium',
+      confidence: "low",
+      source: "Function Pack — pain theme / failure mode",
+      sensitivityImpact: "medium",
       isSeedGapProxy: true,
     });
   });
@@ -729,16 +748,16 @@ function deriveAssumptions(
   // the honest "the case rests on planning proxies" statement.
   if (baseline.seedGaps.length > 0) {
     add({
-      key: 'baseline_coverage_gap',
+      key: "baseline_coverage_gap",
       statement:
         `The case rests on ${baseline.seedGaps.length} seed-gapped operating ` +
         `metric(s); their values are assumed to be obtainable from the ` +
-        'named data sources before the funding gate. Until then the ' +
-        'baseline is incomplete and the forecast is a planning proxy.',
+        "named data sources before the funding gate. Until then the " +
+        "baseline is incomplete and the forecast is a planning proxy.",
       owner: tenantOwner,
-      confidence: 'low',
-      source: 'Derived from the Move baseline — seed-gap coverage',
-      sensitivityImpact: 'high',
+      confidence: "low",
+      source: "Derived from the Move baseline — seed-gap coverage",
+      sensitivityImpact: "high",
       isSeedGapProxy: true,
     });
   }
@@ -746,16 +765,16 @@ function deriveAssumptions(
   // (g) The effort estimate is a planning range, not a quote — an explicit,
   // owned assumption rather than silent fine print.
   add({
-    key: 'effort_is_planning_estimate',
+    key: "effort_is_planning_estimate",
     statement:
-      'The effort and cost figures are a planning range derived from the ' +
-      'Function Pack archetypes and the researched benchmark rate card — ' +
-      'NOT a quote. They must be replaced with a client-specific estimate ' +
-      'before any funding commitment.',
+      "The effort and cost figures are a planning range derived from the " +
+      "Function Pack archetypes and the researched benchmark rate card — " +
+      "NOT a quote. They must be replaced with a client-specific estimate " +
+      "before any funding commitment.",
     owner: tenantOwner,
-    confidence: 'medium',
-    source: 'Researched benchmark rate card — planning range',
-    sensitivityImpact: 'medium',
+    confidence: "medium",
+    source: "Researched benchmark rate card — planning range",
+    sensitivityImpact: "medium",
     isSeedGapProxy: false,
   });
 
@@ -765,7 +784,7 @@ function deriveAssumptions(
       `the Function Pack (haircut factors, value narrative, evidence anchors, ` +
       `pain themes); ${ledger.seedGapProxies.length} are seed-gap proxies ` +
       'owned by a "to be confirmed with the tenant" placeholder — no human ' +
-      'owner is fabricated.',
+      "owner is fabricated.",
   );
   return ledger;
 }
@@ -815,8 +834,8 @@ function deriveEffort(
       dataDeps.add(dep.toLowerCase().trim());
     }
     if (
-      archetype.controlPosture === 'human-in-the-loop' ||
-      archetype.controlPosture === 'human-approval-required'
+      archetype.controlPosture === "human-in-the-loop" ||
+      archetype.controlPosture === "human-approval-required"
     ) {
       approvalHeavyArchetypes += 1;
     }
@@ -843,73 +862,73 @@ function deriveEffort(
 
   const workstreams: WorkstreamInput[] = [
     {
-      id: 'ai_build',
+      id: "ai_build",
       durationMonths: 9,
       agentSplit: 0.35,
       roleMix: [
-        { role: 'solution_architect', headcount: 1 },
-        { role: 'senior_engineer', headcount: hc(2, patternWeight) },
-        { role: 'engineer', headcount: hc(2, patternWeight) },
+        { role: "solution_architect", headcount: 1 },
+        { role: "senior_engineer", headcount: hc(2, patternWeight) },
+        { role: "engineer", headcount: hc(2, patternWeight) },
       ],
     },
     {
-      id: 'integration',
+      id: "integration",
       durationMonths: 6,
       agentSplit: 0.2,
       roleMix: [
-        { role: 'senior_engineer', headcount: 1 },
-        { role: 'engineer', headcount: hc(2, dataWeight) },
+        { role: "senior_engineer", headcount: 1 },
+        { role: "engineer", headcount: hc(2, dataWeight) },
       ],
     },
     {
-      id: 'data',
+      id: "data",
       durationMonths: 5,
       agentSplit: 0.3,
       roleMix: [
-        { role: 'engineer', headcount: hc(1, dataWeight) },
-        { role: 'analyst', headcount: hc(2, dataWeight) },
+        { role: "engineer", headcount: hc(1, dataWeight) },
+        { role: "analyst", headcount: hc(2, dataWeight) },
       ],
     },
     {
-      id: 'foundational',
+      id: "foundational",
       durationMonths: 4,
       agentSplit: 0.15,
-      roleMix: [{ role: 'solution_architect', headcount: 1 }],
+      roleMix: [{ role: "solution_architect", headcount: 1 }],
     },
     {
-      id: 'data_governance',
+      id: "data_governance",
       durationMonths: 6,
       agentSplit: 0.1,
       roleMix: [
-        { role: 'analyst', headcount: hc(1, controlWeight) },
-        { role: 'project_manager', headcount: 0.5 },
+        { role: "analyst", headcount: hc(1, controlWeight) },
+        { role: "project_manager", headcount: 0.5 },
       ],
     },
     {
-      id: 'process_redesign',
+      id: "process_redesign",
       durationMonths: 5,
       agentSplit: 0.1,
       roleMix: [
-        { role: 'analyst', headcount: hc(1.5, controlWeight) },
-        { role: 'project_manager', headcount: 0.5 },
+        { role: "analyst", headcount: hc(1.5, controlWeight) },
+        { role: "project_manager", headcount: 0.5 },
       ],
     },
     {
-      id: 'change_adoption',
+      id: "change_adoption",
       durationMonths: 9,
       agentSplit: 0.05,
       roleMix: [
-        { role: 'project_manager', headcount: 1 },
-        { role: 'analyst', headcount: 1 },
+        { role: "project_manager", headcount: 1 },
+        { role: "analyst", headcount: 1 },
       ],
     },
     {
-      id: 'run',
+      id: "run",
       durationMonths: 12,
       agentSplit: 0.4,
       roleMix: [
-        { role: 'engineer', headcount: 1 },
-        { role: 'analyst', headcount: 1 },
+        { role: "engineer", headcount: 1 },
+        { role: "analyst", headcount: 1 },
       ],
     },
   ];
@@ -963,7 +982,7 @@ function deriveTowerHandoff(
           `The improvement target is set with the tenant — the Function ` +
           `Pack benchmark (${metric.benchmarkRange.low}–` +
           `${metric.benchmarkRange.high} ${metric.unit}, planning-range) ` +
-          'frames the range, it is not a committed target.',
+          "frames the range, it is not a committed target.",
       };
     }
     return {
@@ -975,7 +994,7 @@ function deriveTowerHandoff(
       readinessNote:
         `SEED GAP — not measurable until the baseline for "${metric.name}" ` +
         `is captured (expected source: ${metric.dataSource}). Tower cannot ` +
-        'verify movement on this metric before the gap is closed.',
+        "verify movement on this metric before the gap is closed.",
     };
   });
 }
@@ -989,11 +1008,11 @@ function slug(label: string): string {
   return (
     label
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '_')
-      .replace(/^_+|_+$/g, '')
-      .split('_')
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .split("_")
       .slice(0, 4)
-      .join('_') || 'item'
+      .join("_") || "item"
   );
 }
 

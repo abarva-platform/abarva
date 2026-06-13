@@ -5,6 +5,10 @@
 
 import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
+import { getActiveClientRow } from '@/lib/active-client';
+import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
+import { getObjectStorageAdapter } from '@/lib/data-plane/objectStorage';
+import { getSourceArtifactRegistryRecord } from '@/lib/source/artifact-registry';
 import { getSourceArtifact } from '@/lib/source/file-cabinet/repository';
 import { downloadArtifactBytes } from '@/lib/source/file-cabinet/blob-store';
 import { contentTypeFor } from '@/lib/source/file-cabinet/types';
@@ -21,9 +25,7 @@ export async function GET(_req: NextRequest, ctxParam: { params: Promise<{ artif
     }
 
     const record = await getSourceArtifact(artifactId, ctx.clientId);
-    if (!record) {
-      return Response.json({ error: 'not_found', detail: 'Artifact not found for this tenant.' }, { status: 404 });
-    }
+    if (!record) return streamRegistryArtifact(artifactId);
 
     const bytes = await downloadArtifactBytes({ bucket: record.blobContainer, path: record.blobPath });
     return new Response(new Uint8Array(bytes), {
@@ -46,4 +48,34 @@ export async function GET(_req: NextRequest, ctxParam: { params: Promise<{ artif
     console.error('[GET /api/v1/source/artifacts/[artifactId]/download]', err);
     return Response.json({ error: 'internal_error' }, { status: 500 });
   }
+}
+
+async function streamRegistryArtifact(artifactId: string): Promise<Response> {
+  const [record, activeClient] = await Promise.all([
+    getSourceArtifactRegistryRecord(artifactId),
+    getActiveClientRow().catch(() => null),
+  ]);
+  if (!record || record.deletedAt) {
+    return Response.json({ error: 'not_found', detail: 'Artifact not found for this tenant.' }, { status: 404 });
+  }
+  const activeTenantKey = activeClient?.key
+    ? clientKeyToInventorySubstrateKey(activeClient.key)
+    : null;
+  if (!activeTenantKey || record.tenantKey !== activeTenantKey) {
+    return Response.json({ error: 'not_found', detail: 'Artifact not found for this tenant.' }, { status: 404 });
+  }
+
+  const bytes = await getObjectStorageAdapter().download('source-artifacts', record.blobUri);
+  return new Response(new Uint8Array(bytes), {
+    status: 200,
+    headers: {
+      'content-type': record.mimeType || 'application/octet-stream',
+      'content-disposition': `attachment; filename="${record.originalName.replace(/"/g, '')}"`,
+      'content-length': String(bytes.length),
+      'cache-control': 'private, no-store',
+      'x-source-artifact-id': record.id,
+      'x-source-artifact-version': String(record.version),
+      'x-source-artifact-registry': 'source_artifacts',
+    },
+  });
 }

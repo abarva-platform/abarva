@@ -6,11 +6,13 @@ import { POST } from "../route";
 
 const mockRequireTenancy = jest.fn();
 const mockSensitiveUploadResponse = jest.fn();
+const mockBlobUpload = jest.fn();
 const mockDbCalls: Array<{
   table: string;
   operation: string;
   payload: unknown;
 }> = [];
+const mockRecordIds = new Map<string, string>();
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: (...args: unknown[]) => mockRequireTenancy(...args),
@@ -47,8 +49,78 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
             },
           };
         },
+        upsert(payload: unknown) {
+          mockDbCalls.push({ table, operation: "upsert", payload });
+          const rows = Array.isArray(payload) ? payload : [payload];
+          if (table === "enterprise_context_records") {
+            rows.forEach((row, index) => {
+              const record = row as { canonical_record_id?: string };
+              if (record.canonical_record_id) {
+                mockRecordIds.set(
+                  record.canonical_record_id,
+                  `record-${index}`,
+                );
+              }
+            });
+          }
+          return {
+            select() {
+              const idPrefix =
+                table === "enterprise_context_sources"
+                  ? "source"
+                  : table === "enterprise_context_source_files"
+                    ? "source-file"
+                    : "upsert";
+              return Promise.resolve({
+                data: rows.map((_, index) => ({ id: `${idPrefix}-${index}` })),
+                error: null,
+                count: rows.length,
+              });
+            },
+          };
+        },
+        update(payload: unknown) {
+          mockDbCalls.push({ table, operation: "update", payload });
+          const chain = {
+            eq() {
+              return chain;
+            },
+            in() {
+              return chain;
+            },
+            select() {
+              return Promise.resolve({ data: [], error: null, count: 0 });
+            },
+          };
+          return chain;
+        },
+        select() {
+          return {
+            eq() {
+              return {
+                in() {
+                  return Promise.resolve({
+                    data: [...mockRecordIds.entries()].map(
+                      ([canonical_record_id, id]) => ({
+                        canonical_record_id,
+                        id,
+                      }),
+                    ),
+                    error: null,
+                  });
+                },
+              };
+            },
+          };
+        },
       };
     },
+  }),
+}));
+
+jest.mock("@/lib/data-plane/objectStorage", () => ({
+  getObjectStorageAdapter: () => ({
+    upload: (...args: unknown[]) => mockBlobUpload(...args),
   }),
 }));
 
@@ -75,6 +147,9 @@ describe("/api/admin/context-layer/csv-upload", () => {
 
   beforeEach(() => {
     mockDbCalls.length = 0;
+    mockRecordIds.clear();
+    mockBlobUpload.mockReset();
+    mockBlobUpload.mockResolvedValue(undefined);
     process.env.DATABASE_URL = "postgres://unit-test";
     mockRequireTenancy.mockResolvedValue({
       clientId: "client-apex",
@@ -105,6 +180,7 @@ describe("/api/admin/context-layer/csv-upload", () => {
     expect(response.status).toBe(403);
     expect(body).toEqual({ error: "forbidden_cross_tenant" });
     expect(mockDbCalls).toHaveLength(0);
+    expect(mockBlobUpload).not.toHaveBeenCalled();
   });
 
   it("rejects uploads before processing when operator attestation is missing", async () => {
@@ -135,6 +211,7 @@ describe("/api/admin/context-layer/csv-upload", () => {
       ],
     });
     expect(mockDbCalls).toHaveLength(0);
+    expect(mockBlobUpload).not.toHaveBeenCalled();
   });
 
   it("loads CSV rows as tenant-scoped pending context chunks", async () => {
@@ -192,7 +269,25 @@ describe("/api/admin/context-layer/csv-upload", () => {
       embeddingHandoff: {
         command: "npm run embed:pending-chunks -- --tenant apex-retail",
       },
+      sourceBlob: {
+        bucket: "context-uploads",
+        sha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      },
     });
+    expect(mockBlobUpload).toHaveBeenCalledWith(
+      "context-uploads",
+      expect.stringContaining("apex-retail/_direct-csv/"),
+      expect.any(Buffer),
+      expect.objectContaining({
+        contentType: "text/csv",
+        upsert: false,
+        metadata: expect.objectContaining({
+          tenantKey: "apex-retail",
+          clientId: "client-apex",
+          sourceSystem: "admin_direct_csv_upload",
+        }),
+      }),
+    );
     const chunkInsert = mockDbCalls.find(
       (call) => call.table === "enterprise_context_chunks",
     );
@@ -202,7 +297,14 @@ describe("/api/admin/context-layer/csv-upload", () => {
         tenant_key: "apex-retail",
         source_record_id: "app-1",
         embedding_status: "pending",
+        lifecycle_state: "active",
+        load_batch_id: expect.stringMatching(/^csv:/),
+        source_path: expect.stringContaining("azure-blob://context-uploads/"),
         provenance: expect.objectContaining({
+          source_basis: "azure_blob_admin_upload",
+          source_blob: expect.objectContaining({
+            bucket: "context-uploads",
+          }),
           upload_attestation: expect.objectContaining({
             version: PILOT_UPLOAD_ATTESTATION_VERSION,
             accepted: true,
@@ -269,7 +371,21 @@ describe("/api/admin/context-layer/csv-upload", () => {
       embeddingHandoff: {
         command: "npm run embed:pending-chunks -- --tenant meridian-health",
       },
+      sourceBlob: {
+        bucket: "context-uploads",
+      },
     });
+    expect(mockBlobUpload).toHaveBeenCalledWith(
+      "context-uploads",
+      expect.stringContaining("meridian-health/_direct-csv/"),
+      expect.any(Buffer),
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          tenantKey: "meridian-health",
+          clientId: "client-meridian",
+        }),
+      }),
+    );
     const chunkInsert = mockDbCalls.find(
       (call) => call.table === "enterprise_context_chunks",
     );
@@ -279,6 +395,7 @@ describe("/api/admin/context-layer/csv-upload", () => {
         source_doc: "hl7-fhir-integration-topology.json",
         source_record_id: "MR-INT-001",
         embedding_status: "pending",
+        source_path: expect.stringContaining("azure-blob://context-uploads/"),
       }),
     ]);
   });
@@ -324,6 +441,7 @@ describe("/api/admin/context-layer/csv-upload", () => {
       },
     });
     expect(mockDbCalls).toHaveLength(0);
+    expect(mockBlobUpload).not.toHaveBeenCalled();
   });
 
   it("keeps rate-card validation CSV-only", async () => {
@@ -347,6 +465,7 @@ describe("/api/admin/context-layer/csv-upload", () => {
       detail: "Rate-card validation currently requires a .csv file.",
     });
     expect(mockDbCalls).toHaveLength(0);
+    expect(mockBlobUpload).not.toHaveBeenCalled();
   });
 
   it("returns rate-card validation errors before commit", async () => {
@@ -383,5 +502,6 @@ describe("/api/admin/context-layer/csv-upload", () => {
       body.validation.errors.map((error: { field: string }) => error.field),
     ).toEqual(expect.arrayContaining(["vendorTier", "hourlyHighUsd"]));
     expect(mockDbCalls).toHaveLength(0);
+    expect(mockBlobUpload).not.toHaveBeenCalled();
   });
 });

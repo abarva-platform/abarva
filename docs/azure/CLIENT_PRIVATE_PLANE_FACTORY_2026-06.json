@@ -1,0 +1,120 @@
+{
+  "version": "2026-06",
+  "environmentKey": "client-private-plane-factory",
+  "purpose": "Non-mutating factory packet for vending repeatable client preprod and client prod private data planes.",
+  "status": "approval_required_before_mutation",
+  "clientPlanePattern": {
+    "subscriptionsPerClient": 2,
+    "requiredEnvironments": ["client-preprod", "client-prod"],
+    "subscriptionNameTemplates": {
+      "client-preprod": "sub-abarva-<client-code>-client-preprod-eus-001",
+      "client-prod": "sub-abarva-<client-code>-client-prod-eus-001"
+    },
+    "managementGroupTarget": "abarva-clients",
+    "regionSet": ["eastus"],
+    "isolation": "single-client-per-subscription",
+    "controlPlaneBoundary": "AbarVa product subscriptions do not store client private production data."
+  },
+  "dataBoundary": {
+    "client-preprod": {
+      "allowed": [
+        "client-approved-test",
+        "client-approved-redacted",
+        "client-approved-preprod"
+      ],
+      "disallowed": [
+        "unapproved-client-confidential",
+        "phi",
+        "pii",
+        "raw-client-prod-documents"
+      ]
+    },
+    "client-prod": {
+      "allowed": ["client-approved-production"],
+      "disallowed": [
+        "phi",
+        "pii-unless-future-contract-explicitly-allows",
+        "unapproved-client-confidential"
+      ]
+    }
+  },
+  "approvalGates": [
+    "approve_client_code",
+    "approve_client_preprod_subscription",
+    "approve_client_prod_subscription",
+    "approve_management_group_move",
+    "approve_budget",
+    "approve_rbac_assignments",
+    "approve_policy_assignments",
+    "approve_private_network",
+    "approve_data_services",
+    "approve_operator_jobs",
+    "approve_ingestion_rehearsal",
+    "approve_retrieval_and_context_bundle_proof",
+    "approve_client_prod_data_action"
+  ],
+  "baselineResourceFamilies": [
+    "resource_group",
+    "vnet",
+    "private_endpoint_subnets",
+    "postgres_flexible_server",
+    "blob_storage",
+    "key_vault",
+    "azure_ai_search",
+    "container_apps_jobs",
+    "immutable_audit_log",
+    "defender_storage_malware",
+    "log_analytics",
+    "application_insights_or_managed_prometheus",
+    "private_dns_zones"
+  ],
+  "requiredEvidence": [
+    "explicit_approval_record",
+    "client_code",
+    "client_legal_name",
+    "preprod_subscription_id",
+    "prod_subscription_id",
+    "management_group_paths",
+    "role_assignment_exports",
+    "policy_assignment_exports",
+    "budget_ids",
+    "tag_exports",
+    "private_endpoint_exports",
+    "diagnostic_settings_exports",
+    "bicep_or_terraform_plan",
+    "what_if_output",
+    "deployment_output_if_approved",
+    "ingestion_receipt",
+    "context_healthcheck_report",
+    "retrieval_citation_proof",
+    "context_bundle_trace_proof",
+    "artifact_file_cabinet_proof",
+    "rollback_or_abandon_plan"
+  ],
+  "dependencyChecks": [
+    "environment_factory_manifest",
+    "environment_vending_ledger",
+    "environment_identity_rbac_model",
+    "environment_naming_tagging_budgets",
+    "client_tenant_iac_scaffold",
+    "immutable_audit_log",
+    "defender_storage_malware"
+  ],
+  "hardStops": [
+    "missing_client_code",
+    "missing_explicit_approval",
+    "product_subscription_used_for_client_private_data",
+    "client_prod_mutation_without_approval",
+    "public_postgres",
+    "public_blob_access",
+    "public_keyvault",
+    "missing_budget",
+    "missing_rbac_export",
+    "missing_context_bundle_proof",
+    "phi_or_pii_policy_exception_unapproved"
+  ],
+  "commandsAreTemplatesOnly": true,
+  "doNotRunWithoutApproval": true,
+  "doNotCreateSubscriptionsWithoutApproval": true,
+  "doNotLoadClientDataWithoutApproval": true
+}

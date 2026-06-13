@@ -31,10 +31,12 @@ import {
 } from "@/lib/programs/current-state-plan";
 import {
   getArchetype,
-  DEFAULT_ARCHETYPE_ID,
+  resolveProgramArchetype,
 } from "@/lib/programs/archetypes/registry";
+import { getStrategicMoveById } from "@/lib/programs/queries";
 import { resolveArchetypeRequirements } from "@/lib/programs/archetypes/resolver";
 import type { GroundedAnswerEnvelope } from "@/lib/programs/archetypes/types";
+import { resolveSourceLabel } from "@/lib/programs/deliverables/source-labels";
 
 export interface ArchetypeContextBundle {
   tenant: string;
@@ -53,7 +55,24 @@ export async function buildArchetypeContextBundle(
   moveId: string,
   phase: number,
 ): Promise<ArchetypeContextBundle> {
-  const archetype = getArchetype(DEFAULT_ARCHETYPE_ID)!;
+  // Archetype resolved from the Move's own row (best-effort) — never a
+  // hardcoded default for a Move we can read.
+  let moveName = moveId;
+  let archetype = resolveProgramArchetype({});
+  try {
+    const move = await getStrategicMoveById(ctx, moveId);
+    if (move?.name) moveName = move.name;
+    if (move) {
+      archetype = resolveProgramArchetype({
+        archetype: move.archetype,
+        classification: (move.charter as { classification?: string } | null)
+          ?.classification,
+        name: move.name,
+      });
+    }
+  } catch {
+    /* best-effort */
+  }
   const profile = await inferMoveProfile(ctx);
   const readiness = await resolveCurrentStateReadiness(
     ctx,
@@ -63,7 +82,7 @@ export async function buildArchetypeContextBundle(
     moveId,
   );
   const recommendation = await buildCurrentStateRecommendation(ctx, profile);
-  const plan = buildCurrentStatePlan(recommendation, { moveName: moveId });
+  const plan = buildCurrentStatePlan(recommendation, { moveName });
   const missingEvidence = readiness.instruments
     .filter((i) => i.status !== "committed")
     .map((i) => i.key);
@@ -171,7 +190,7 @@ export function answerGrounded(
     );
     return {
       question,
-      answer: `DORA baseline committed (cited ${dora.backingTable}). Platform & Infrastructure maturity ${plat?.score ?? "n/a"}/5, Operating Model & Process ${ops?.score ?? "n/a"}/5 — implies AI-leverage is highest where delivery is already automated; ${b.recommendation.whereToStart}`,
+      answer: `DORA baseline committed (cited ${resolveSourceLabel(dora.backingTable!).title}). Platform & Infrastructure maturity ${plat?.score ?? "n/a"}/5, Operating Model & Process ${ops?.score ?? "n/a"}/5 — implies AI-leverage is highest where delivery is already automated; ${b.recommendation.whereToStart}`,
       envelope: envelope(b, {
         citations: [dora.backingTable!, "method:maturity_scoring"],
         missing: [],
@@ -187,7 +206,7 @@ export function answerGrounded(
       return {
         question,
         answer:
-          "The IT systems & application landscape is not yet committed [MISSING EVIDENCE: it_systems_landscape] — scope cannot be enumerated until the CMDB export is provided + committed (tower_cmdb_cis).",
+          `The IT systems & application landscape is not yet committed [MISSING EVIDENCE: it_systems_landscape] — scope cannot be enumerated until the CMDB export is provided + committed (${resolveSourceLabel("tower_cmdb_cis").title}).`,
         envelope: envelope(b, {
           citations: [],
           missing: ["it_systems_landscape"],
@@ -197,7 +216,7 @@ export function answerGrounded(
     }
     return {
       question,
-      answer: `IT systems in scope are committed (cited ${sys.backingTable}, ${sys.committedRows} CIs).`,
+      answer: `IT systems in scope are committed (cited ${resolveSourceLabel(sys.backingTable!).title}, ${sys.committedRows} CIs).`,
       envelope: envelope(b, {
         citations: [sys.backingTable!],
         missing: [],
