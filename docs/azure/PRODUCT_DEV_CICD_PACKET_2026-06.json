@@ -1,0 +1,98 @@
+{
+  "version": "2026-06",
+  "environmentKey": "product-dev",
+  "purpose": "Non-mutating CI/CD and release-evidence packet for AbarVa Product Dev.",
+  "status": "scaffold_ready_before_runtime",
+  "dependsOn": [
+    "docs/azure/PRODUCT_DEV_PROVISIONING_PACKET_2026-06.json",
+    "docs/azure/ENVIRONMENT_SUBSCRIPTION_VENDING_RUNBOOK_2026-06.md",
+    "docs/azure/ENVIRONMENT_EXECUTION_LEDGER_TEMPLATE_2026-06.json"
+  ],
+  "sourceControl": {
+    "repository": "abarva-platform/abarva",
+    "protectedBranches": ["main"],
+    "branchPrefix": "codex/",
+    "nodeVersion": "24",
+    "requiredReleaseRecord": true,
+    "requiredImpactNote": true
+  },
+  "deploymentModel": {
+    "runtime": "Azure Container Apps",
+    "registry": "Azure Container Registry",
+    "imageTagPattern": "azure-main-<yyyymmdd>-<git_sha>",
+    "promotionUnit": "pinned_image_digest",
+    "defaultTrafficShift": "manual_after_health_proof",
+    "vercelProductionRuntimeAllowed": false,
+    "supabaseRuntimeAllowed": false
+  },
+  "requiredPrChecks": [
+    "release_check",
+    "typecheck",
+    "eslint",
+    "gitleaks",
+    "fresh_postgres_migration_replay",
+    "production_readiness_gate",
+    "context_corpus_governance_gate",
+    "canonical_tenant_allowlist",
+    "runtime_supabase_import_guard",
+    "vercel_production_runtime_guard",
+    "control_plane_purity",
+    "browser_matrix_smoke"
+  ],
+  "preDeployEvidence": [
+    "pr_number",
+    "merge_commit_sha",
+    "release_record_path",
+    "ci_check_rollup",
+    "migration_replay_result",
+    "image_tag",
+    "image_digest",
+    "target_subscription",
+    "target_resource_group",
+    "target_container_app",
+    "feature_flags",
+    "rollback_target_revision"
+  ],
+  "postDeployEvidence": [
+    "aca_revision",
+    "aca_revision_image_digest",
+    "traffic_state_before",
+    "traffic_state_after",
+    "curl_root_headers",
+    "curl_health_json",
+    "no_vercel_headers",
+    "azure_postgres_health",
+    "direct_postgres_true",
+    "signed_in_smoke_if_auth_available",
+    "rollback_command"
+  ],
+  "dataControls": {
+    "allowedData": ["synthetic", "fixture", "engineering-test"],
+    "disallowedData": [
+      "client-confidential",
+      "phi",
+      "pii",
+      "raw-client-private-documents"
+    ],
+    "requiresIngestionReceiptForContextLoads": true,
+    "autoPromoteAgentReady": false
+  },
+  "approvalGates": [
+    "create_or_change_github_environment_secret",
+    "create_or_change_azure_federated_credential",
+    "deploy_runtime_to_product_dev",
+    "run_database_migration_against_product_dev",
+    "shift_product_dev_traffic",
+    "increase_budget_or_runtime_capacity",
+    "load_any_client_private_data"
+  ],
+  "rollbackRequirements": [
+    "previous_aca_revision_known",
+    "previous_image_digest_known",
+    "traffic_restore_command_recorded",
+    "migration_rollback_or_forward_fix_documented",
+    "release_evidence_bundle_saved"
+  ],
+  "commandsAreTemplatesOnly": true,
+  "doNotRunWithoutApproval": true
+}

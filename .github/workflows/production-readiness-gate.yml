@@ -191,6 +191,9 @@ jobs:
       - name: Verify Product Dev provisioning packet
         run: npm run azure:product-dev-provisioning:verify
 
+      - name: Verify Product Dev CI/CD packet
+        run: npm run azure:product-dev-cicd:verify
+
       # ── Step 5: TypeScript build check ────────────────────────────────────
       # Note: production-readiness-tracker.test.ts has a pre-existing failure
       # (AdminCanonShellV2 wiring check) that predates PROD3. That test is
