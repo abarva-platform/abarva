@@ -166,6 +166,7 @@ interface UniversalCanvasShellProps {
   tenantName: string;
   decisionThreadId?: string | null;
   vendorResponseReadiness?: SourceVendorResponseCompleteness;
+  workspaceExplorerEnabled?: boolean;
 }
 
 function renderStageDocumentContent({
@@ -293,6 +294,7 @@ export function UniversalCanvasShell({
   tenantName,
   decisionThreadId = null,
   vendorResponseReadiness,
+  workspaceExplorerEnabled = false,
 }: UniversalCanvasShellProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -880,7 +882,13 @@ export function UniversalCanvasShell({
       }}
       subNav={<SourceSubNav />}
     >
-      <main data-testid="source-event-canvas" style={MAIN_STYLE}>
+      <main
+        data-testid="source-event-canvas"
+        data-workspace-explorer={
+          workspaceExplorerEnabled ? "source" : undefined
+        }
+        style={MAIN_STYLE}
+      >
         <div style={CONTAINER_STYLE}>
           <EventIdStrip event={event} exportItems={exportItems} />
           <EventStepRail

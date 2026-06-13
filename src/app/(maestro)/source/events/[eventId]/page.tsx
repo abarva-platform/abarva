@@ -21,6 +21,7 @@ import type { SourceStageKey } from "@/lib/source/types";
 import { ensureThreadForSourceEvent } from "@/lib/decisions/auto-linker";
 import { listSourceEventActivityEntries } from "@/lib/source/activity-log";
 import { buildSourceVendorResponseCompleteness } from "@/lib/source/vendor-response-completeness";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 
 export const dynamic = "force-dynamic";
 
@@ -130,6 +131,13 @@ export default async function SourceEventDetailPage({
   const vendorResponseReadiness = buildSourceVendorResponseCompleteness({
     event,
   });
+  const workspaceExplorerEnabled = isFeatureEnabled(
+    {
+      clientKey: activeClient?.key ?? null,
+      clientId: activeClient?.id ?? null,
+    },
+    "workspace_explorer_source",
+  );
 
   return (
     <UniversalCanvasShell
@@ -144,6 +152,7 @@ export default async function SourceEventDetailPage({
       tenantName={tenantName}
       decisionThreadId={decisionThread?.id ?? null}
       vendorResponseReadiness={vendorResponseReadiness}
+      workspaceExplorerEnabled={workspaceExplorerEnabled}
     />
   );
 }

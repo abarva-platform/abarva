@@ -66,9 +66,25 @@ export type FeatureFlagKey =
   | "graph_neo4j_enabled"
   | "tower_synthesis_apex_demo_fixture"
   | "discovery_intake_v2"
-  | "moves_orchestrated_deliverables";
+  | "moves_orchestrated_deliverables"
+  | "workspace_explorer_source"
+  | "workspace_explorer_moves";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
+  {
+    key: "workspace_explorer_source",
+    summary:
+      "Enables the Source Workspace Explorer surfacing layer: a read-only file/deliverable explorer over existing Source artifact and canvas substrate rows. Tenant opt-in; default off so the current Source canvas remains unchanged.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "workspace_explorer_moves",
+    summary:
+      "Enables the Moves Workspace Explorer surfacing layer over program attachments, generated artifacts, and deliverables. Tenant opt-in; default off so the current Moves detail surface remains unchanged.",
+    policy: "tenant",
+    includeTenants: [],
+  },
   {
     key: "moves_orchestrated_deliverables",
     summary:
