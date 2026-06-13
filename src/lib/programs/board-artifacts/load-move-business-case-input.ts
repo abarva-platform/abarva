@@ -73,21 +73,38 @@ export async function loadMoveBusinessCaseInput(
       ? (clientRow as { name: string }).name
       : null;
 
-  // Recorded baseline metrics — the `engagements.baseline_metrics` JSONB
-  // array. Defensively narrowed: the column is untyped JSONB, so a non-array
-  // value is treated as absent rather than trusted.
+  // Recorded Move substrate — `engagements.industry_code` plus the
+  // `engagements.baseline_metrics` JSONB array. The client row supplies tenant
+  // display labels, but the Move's function identity is recorded on the
+  // engagement itself; prefer that industry code when present.
   const engagementRow = await azureRead
-    .maybeSingle<{ baseline_metrics?: unknown }>({
+    .maybeSingle<{ baseline_metrics?: unknown; industry_code?: unknown }>({
       table: "engagements",
-      columns: ["baseline_metrics"],
+      columns: ["baseline_metrics", "industry_code"],
       where: { id: moveId },
     })
     .catch(() => null);
-  const rawBaseline = (engagementRow as { baseline_metrics?: unknown } | null)
-    ?.baseline_metrics;
+  const rawBaseline = (
+    engagementRow as {
+      baseline_metrics?: unknown;
+      industry_code?: unknown;
+    } | null
+  )?.baseline_metrics;
   const baselineMetrics = Array.isArray(rawBaseline)
     ? (rawBaseline as MoveBusinessCaseInput["baseline_metrics"])
     : null;
+  const moveIndustryCode =
+    typeof (
+      engagementRow as {
+        industry_code?: unknown;
+      } | null
+    )?.industry_code === "string"
+      ? (
+          engagementRow as {
+            industry_code: string;
+          }
+        ).industry_code
+      : null;
 
   const governedEvidenceItems = await azureRead
     .select<MoveGovernedEvidenceItem>({
@@ -109,7 +126,7 @@ export async function loadMoveBusinessCaseInput(
     .catch(() => []);
 
   return {
-    industry_code: industryCode,
+    industry_code: moveIndustryCode ?? industryCode,
     name: program.name,
     // The first-class `engagements.function_pack_key` column (via
     // `getProgramById` → `rowToProgram`). The resolver prefers it; `charter`
