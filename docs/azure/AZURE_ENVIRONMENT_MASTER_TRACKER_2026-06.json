@@ -2,6 +2,8 @@
   "version": "2026-06",
   "statusDate": "2026-06-14",
   "mutationApprovalFile": "docs/approvals/AZURE_MUTATION_APPROVED.md",
+  "approvalTemplate": "docs/approvals/AZURE_MUTATION_APPROVAL_TEMPLATE.md",
+  "nextApprovalRequestPacket": "docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.md",
   "models": {
     "productControlPlane": ["product-dev", "product-preview", "product-prod"],
     "clientPrivateDataPlane": ["client-preprod", "client-prod"]
@@ -243,6 +245,8 @@
       "percentComplete": 0,
       "artifactPath": "docs/approvals/AZURE_MUTATION_APPROVED.md",
       "validationCommand": "approval-file review plus Azure exports",
+      "approvalRequestPacket": "docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.md",
+      "approvalTemplate": "docs/approvals/AZURE_MUTATION_APPROVAL_TEMPLATE.md",
       "humanGated": true
     }
   ]

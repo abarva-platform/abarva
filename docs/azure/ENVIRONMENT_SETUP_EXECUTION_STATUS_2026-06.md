@@ -16,6 +16,10 @@ to Downloads for review snapshots. The repo distinguishes between:
   creates spend, changes RBAC, mutates production/client data, changes DNS, or
   shifts production traffic.
 
+The Product Dev approval request packet is now ready for human review at
+`docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.md`. It is intentionally
+non-mutating and does not authorize execution by itself.
+
 ## Progress Snapshot
 
 | Area                                                          | Status                                           | Percent |
@@ -88,5 +92,13 @@ Proceed with the first narrow human-gated approval only when Anand is ready:
   DNS, Product Prod traffic shifts, or client-prod data actions in the first
   approval.
 
-After that packet is merged, ask Anand for the narrow approval to create
-`product-dev` only.
+Review packet:
+
+- `docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.md`
+- `docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.json`
+- `docs/approvals/AZURE_MUTATION_APPROVAL_TEMPLATE.md`
+- Verifier: `npm run azure:product-dev-approval:verify`
+
+After Anand approves the narrow Product Dev request, create a dedicated approval
+PR that copies the template to `docs/approvals/AZURE_MUTATION_APPROVED.md` with
+real values and a named time window.

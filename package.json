@@ -161,6 +161,7 @@
     "azure:environment-cost-controls:verify": "node scripts/azure/verify-environment-cost-controls.mjs",
     "azure:product-baseline-whatif:verify": "node scripts/azure/verify-product-baseline-whatif-packet.mjs",
     "azure:environment-backlog:verify": "node scripts/azure/verify-environment-backlog-artifacts.mjs",
+    "azure:product-dev-approval:verify": "node scripts/azure/verify-product-dev-approval-request.mjs",
     "azure:product-dev-provisioning:verify": "node scripts/azure/verify-product-dev-provisioning-packet.mjs",
     "azure:product-dev-cicd:verify": "node scripts/azure/verify-product-dev-cicd-packet.mjs",
     "azure:product-dev-synthetic-data:verify": "node scripts/azure/verify-product-dev-synthetic-data-baseline.mjs",
