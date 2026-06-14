@@ -36,6 +36,7 @@ The change creates review-ready corpus pattern inputs and verification/load scri
   - `verify:phs-health-plan-corpus`
   - `corpus:phs-health-plan:dry-run`
   - `corpus:phs-health-plan:load`
+- Follow-up loader hardening: casts the source starter id parameter in the version snapshot query so Postgres can infer the JSON object value during ACA apply runs.
 
 ## QA / Validation
 
@@ -48,6 +49,9 @@ Validation status before PR:
 - Pass: `npx eslint src/lib/corpus/seeds/phs-health-plan-patterns.ts src/scripts/corpus/verify-phs-health-plan-corpus.ts src/scripts/corpus/load-phs-health-plan-corpus.ts`
 - Pending at authoring time: `npx tsc --noEmit --pretty false`
 - Pending at authoring time: `npm run release:check -- --base origin/main --head HEAD`
+- Pass after merge in CI: Typecheck + reasoning-layer tests.
+- Pass after merge in CI: ESLint, context corpus governance gate, release control gate, and hygiene gate.
+- Blocked then fixed in live ACA apply: initial apply found a Postgres parameter inference error in the loader version snapshot query; follow-up patch adds the explicit `$2::text` cast.
 
 ## Rollout Plan
 
