@@ -129,7 +129,7 @@ async function main() {
                    'vertical_overlays', p.vertical_overlays,
                    'region_overlays', p.region_overlays,
                    'applicable_horizons', p.applicable_horizons,
-                   'source_starter_id', $2
+                   'source_starter_id', $2::text
                  ) AS snapshot_jsonb
           FROM public.corpus_patterns p
           WHERE p.id = $1
