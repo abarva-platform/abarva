@@ -29,4 +29,35 @@ describe("citation-gap", () => {
       ),
     ).toBe(false);
   });
+
+  it("recognizes grounded-engine citation forms (no false 'no citations' banner)", () => {
+    // answerGrounded form: "(cited <Source Name> …)"
+    expect(
+      hasAgentCitationMarkup(
+        "IT systems in scope are committed (cited Application & Systems Inventory, 4 CIs).",
+      ),
+    ).toBe(true);
+    // grounded-deliverable body form: "[source: <Source Name>]"
+    expect(
+      hasAgentCitationMarkup(
+        "Data Architecture maturity sits at 2/5 [source: Engineering Delivery Baseline (DORA Metrics)].",
+      ),
+    ).toBe(true);
+    // a substantive grounded answer must NOT get the citation-gap banner
+    expect(
+      shouldShowPlainTextCitationGap(
+        "DORA baseline committed (cited Engineering Delivery Baseline (DORA Metrics)). Platform maturity is 3/5, implying AI leverage is highest where delivery is already automated.",
+      ),
+    ).toBe(false);
+  });
+
+  it("still shows the banner on a genuinely uncited gap response", () => {
+    // A real evidence gap (no citation attached) keeps the governance banner.
+    expect(hasAgentCitationMarkup("[MISSING EVIDENCE: it_systems_landscape]")).toBe(false);
+    expect(
+      shouldShowPlainTextCitationGap(
+        "The IT systems landscape is not yet committed. Scope cannot be enumerated until the CMDB export is provided and committed.",
+      ),
+    ).toBe(true);
+  });
 });

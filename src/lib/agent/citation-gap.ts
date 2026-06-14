@@ -6,9 +6,18 @@ const CITATION_MARKERS = [
   "[tenant-specific:",
   "<abv-source",
   "Source basis:",
+  // Grounded-deliverable engine form: a humanized source is attached inline
+  // (e.g. "[source: Application & Systems Inventory]"). Presence means the
+  // answer IS cited — the "no citations" banner must not fire.
+  "[source:",
 ] as const;
 
 const PATTERN_CITATION_REGEX = /\[PAT(?:-[A-Z]+)+-\d+:\s*[^\]]+\]/;
+
+// The grounded-answer engine (answerGrounded) attaches sources as
+// "(cited <Source Name> …)". A deterministic product form, not arbitrary prose,
+// so it is a reliable positive signal that the answer carries a citation.
+const GROUNDED_CITE_REGEX = /\(cited\s+\S/i;
 
 export function hasSubstantiveClaimText(text: string): boolean {
   const normalized = text.replace(/\s+/g, " ").trim();
@@ -18,7 +27,8 @@ export function hasSubstantiveClaimText(text: string): boolean {
 
 export function hasAgentCitationMarkup(text: string): boolean {
   if (CITATION_MARKERS.some((marker) => text.includes(marker))) return true;
-  return PATTERN_CITATION_REGEX.test(text);
+  if (PATTERN_CITATION_REGEX.test(text)) return true;
+  return GROUNDED_CITE_REGEX.test(text);
 }
 
 export function hasEvidenceBackedSurfaceContext(surfaceContext: unknown): boolean {
