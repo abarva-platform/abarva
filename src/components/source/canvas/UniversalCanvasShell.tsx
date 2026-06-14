@@ -13,7 +13,10 @@ import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { SourceOnboardingTour } from "@/components/source/onboarding/SourceOnboardingTour";
 import { listSupportedGenerationCodes } from "@/lib/source/agent-generation";
-import { resolveStageNextMove } from "@/lib/source/stage-next-move";
+import {
+  resolveStageNextMove,
+  type StageNextMoveActionTarget,
+} from "@/lib/source/stage-next-move";
 
 // xlsx-generatable codes — surfaced to the canvas so the artifact card
 // shows a "Download xlsx template" anchor on the right rows. Hardcoded
@@ -1053,6 +1056,26 @@ function SourceDeclutteredWorkspace({
   promotePending: boolean;
   workspaceHref: string;
 }) {
+  // Route a next-move action by its target. Previously the primary button was
+  // hardwired to advance (so "Open gate checklist" wrongly fired the advance
+  // confirm) and the secondary only handled gate/evidence (so "Open document
+  // workspace" was a no-op). Now: advance → advance; gate → scroll to the
+  // gate checklist that lives inline on this canvas; everything else → the
+  // full Document Explorer.
+  const runNextMoveTarget = (target: StageNextMoveActionTarget) => {
+    if (target === "advance") {
+      onNextMoveAdvance();
+      return;
+    }
+    if (target === "gate") {
+      document
+        .getElementById("stage-gate-checklist")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    // "document" / "evidence" → the Document Explorer (Workspace)
+    window.location.assign(workspaceHref);
+  };
   return (
     <section
       data-testid="source-canvas-workspace"
@@ -1063,15 +1086,10 @@ function SourceDeclutteredWorkspace({
       <div style={NEXT_MOVE_WRAP_STYLE}>
         <StageNextMoveCard
           nextMove={nextMove}
-          onPrimary={onNextMoveAdvance}
+          onPrimary={() => runNextMoveTarget(nextMove.primaryTarget)}
           onSecondary={
             nextMove.secondaryTarget
-              ? () => {
-                  const target = nextMove.secondaryTarget;
-                  if (target === "gate" || target === "evidence") {
-                    window.location.assign(workspaceHref);
-                  }
-                }
+              ? () => runNextMoveTarget(nextMove.secondaryTarget!)
               : undefined
           }
         />
@@ -1081,14 +1099,16 @@ function SourceDeclutteredWorkspace({
         now live in the Workspace. This canvas stays focused on the next move
         and the gate.
       </div>
-      <GateTab
-        fromStage={fromStage}
-        states={criteria}
-        onChangeCriterionState={onChangeCriterionState}
-        pendingByCriterionId={pendingByCriterionId}
-        onPromoteStage={onPromoteStage}
-        promotePending={promotePending}
-      />
+      <div id="stage-gate-checklist">
+        <GateTab
+          fromStage={fromStage}
+          states={criteria}
+          onChangeCriterionState={onChangeCriterionState}
+          pendingByCriterionId={pendingByCriterionId}
+          onPromoteStage={onPromoteStage}
+          promotePending={promotePending}
+        />
+      </div>
     </section>
   );
 }

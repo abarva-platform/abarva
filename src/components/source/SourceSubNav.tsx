@@ -46,7 +46,10 @@ export const SOURCE_SUBNAV_TABS_V2: readonly SourceSubNavTab[] = [
   { key: "queue", label: "Decisions", href: "/source/queue" },
   { key: "approvals", label: "Approvals", href: "/source/approvals" },
   { key: "portfolio", label: "Portfolio", href: "/source/portfolio" },
-  { key: "deliverables", label: "Deliverables", href: "/source/deliverables" },
+  // "Deliverables" removed as a top-nav destination: generating a deliverable
+  // detached from any event is the context-free anti-pattern the Workspace
+  // reset replaces. Deliverables are now generated in-event-context via the
+  // event's Generate chip + the per-event Workspace/Document Explorer.
   { key: "setup", label: "Setup", href: "/source/setup" },
 ] as const;
 
