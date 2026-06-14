@@ -743,9 +743,8 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain('data-active-tab="workspace-explorer"');
     expect(html).not.toContain("source-canvas-tab-document");
     expect(html).not.toContain("source-canvas-tab-evidence");
-    // The default rail is the calm "what we still need to gather" panel …
-    expect(html).toContain("source-canvas-needs-to-gather");
-    expect(html).toContain("What we still need");
+    // The Next-move card stays the calm focal point …
+    expect(html).toContain("Next move");
     // … and the full gate machinery (blockers, mark-met, promote) is collapsed
     // behind a toggle, not expanded inline, by default.
     expect(html).toContain("source-canvas-gate-toggle");
