@@ -180,10 +180,13 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
   const resolvedParams = await params;
   const invoke = () =>
     generateArtifact(req, { params: Promise.resolve(resolvedParams) });
-  if (resolvedParams.artifactCode === "d09_rfp_pack") {
-    return streamJsonHeartbeat(invoke);
-  }
-  return invoke();
+  // Wrap EVERY generation in the JSON heartbeat stream (previously d09-only).
+  // A synchronous Anthropic generate sends no bytes to the client for 60-240s;
+  // without a heartbeat the ACA ingress idle-times-out and 504s before the
+  // artifact persists (observed live on d02/d03). The heartbeat keeps the
+  // connection alive (whitespace every 12s) until the final JSON payload —
+  // JSON.parse ignores the leading whitespace, so no client change is needed.
+  return streamJsonHeartbeat(invoke);
 }
 
 function streamJsonHeartbeat(run: () => Promise<Response>): Response {
