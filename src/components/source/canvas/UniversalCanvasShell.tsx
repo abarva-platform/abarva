@@ -14,10 +14,6 @@ import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { SourceOnboardingTour } from "@/components/source/onboarding/SourceOnboardingTour";
 import { listSupportedGenerationCodes } from "@/lib/source/agent-generation";
 import {
-  criterionById,
-  type SourceGateCriterion,
-} from "@/lib/source/canonical-specs";
-import {
   resolveStageNextMove,
   type StageNextMoveActionTarget,
 } from "@/lib/source/stage-next-move";
@@ -1089,15 +1085,14 @@ function SourceDeclutteredWorkspace({
     window.location.assign(workspaceHref);
   };
 
-  // "What we still need" — the calm, Screen-1 framing the operator asked for.
-  // Derived from the gate criteria that are not yet met/waived and shown in
-  // plain language. The full gate machinery (mark-met, promote, approve-with-
-  // gaps) stays collapsed below until the operator chooses to open it, so the
-  // default right rail reads as "here is what to gather", not a control panel.
-  const outstanding = criteria
-    .filter((s) => s.state !== "met" && s.state !== "waived")
-    .map((s) => ({ state: s, def: criterionById(s.criterionId) }));
-  const metCount = criteria.length - outstanding.length;
+  // The Next-move card already names the outstanding items in plain language
+  // (e.g. "clear sponsor sign-off, value target, archetype") with its own
+  // "N of M cleared" line — that IS the calm "what to gather" view the operator
+  // asked for. The right rail's remaining job is to keep the full gate
+  // machinery (mark-met, promote, approve-with-gaps) collapsed until asked.
+  const metCount = criteria.filter(
+    (s) => s.state === "met" || s.state === "waived",
+  ).length;
 
   return (
     <section
@@ -1117,15 +1112,6 @@ function SourceDeclutteredWorkspace({
           }
         />
       </div>
-
-      <NeedsToGatherPanel
-        outstanding={outstanding}
-        onUpload={() =>
-          window.location.assign(
-            `${workspaceHref}?intent=upload&stage=${fromStage}`,
-          )
-        }
-      />
 
       <div id="stage-gate-checklist">
         <button
@@ -1157,66 +1143,6 @@ function SourceDeclutteredWorkspace({
         drafts — lives in the Workspace.
       </p>
     </section>
-  );
-}
-
-/**
- * Calm "what we still need to gather" panel — the default right-rail view.
- * Lists the stage's outstanding gate criteria in plain language (title +
- * one-line description) with a single affordance to add evidence. No
- * mark-met / promote machinery here; that lives in the collapsed gate.
- */
-function NeedsToGatherPanel({
-  outstanding,
-  onUpload,
-}: {
-  outstanding: {
-    state: SourceEventGateCriterion;
-    def: SourceGateCriterion | undefined;
-  }[];
-  onUpload: () => void;
-}) {
-  const allDone = outstanding.length === 0;
-  return (
-    <div style={GATHER_PANEL_STYLE} data-testid="source-canvas-needs-to-gather">
-      <div style={GATHER_HEADER_STYLE}>
-        <span style={GATHER_KICKER_STYLE}>What we still need</span>
-        <span style={GATHER_COUNT_STYLE}>
-          {allDone ? "All gathered" : `${outstanding.length} open`}
-        </span>
-      </div>
-      {allDone ? (
-        <p style={GATHER_DONE_STYLE}>
-          Everything this stage needs is in. You&rsquo;re clear to advance.
-        </p>
-      ) : (
-        <ul style={GATHER_LIST_STYLE}>
-          {outstanding.map(({ state, def }) => (
-            <li key={state.criterionId} style={GATHER_ITEM_STYLE}>
-              <span style={GATHER_DOT_STYLE} aria-hidden />
-              <span>
-                <span style={GATHER_ITEM_TITLE_STYLE}>
-                  {def?.title ?? state.criterionId}
-                </span>
-                {def?.description ? (
-                  <span style={GATHER_ITEM_DESC_STYLE}>{def.description}</span>
-                ) : null}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {!allDone ? (
-        <button
-          type="button"
-          data-testid="source-canvas-gather-upload"
-          onClick={onUpload}
-          style={GATHER_UPLOAD_STYLE}
-        >
-          Add evidence in the Workspace ↗
-        </button>
-      ) : null}
-    </div>
   );
 }
 
@@ -1371,101 +1297,6 @@ const DECLUTTERED_WORKSPACE_STYLE: CSSProperties = {
 const NEXT_MOVE_WRAP_STYLE: CSSProperties = {
   padding: "20px 0 16px",
   background: CANVAS.PAGE_BG,
-};
-
-const GATHER_PANEL_STYLE: CSSProperties = {
-  border: `1px solid ${CANVAS.HAIRLINE}`,
-  borderRadius: 10,
-  background: CANVAS.CARD,
-  padding: "16px 18px",
-  marginBottom: 16,
-};
-
-const GATHER_HEADER_STYLE: CSSProperties = {
-  display: "flex",
-  alignItems: "baseline",
-  justifyContent: "space-between",
-  marginBottom: 12,
-};
-
-const GATHER_KICKER_STYLE: CSSProperties = {
-  fontFamily: CANVAS.MONO,
-  fontSize: 10,
-  letterSpacing: "0.14em",
-  textTransform: "uppercase",
-  color: CANVAS.INK_MUTED,
-};
-
-const GATHER_COUNT_STYLE: CSSProperties = {
-  fontFamily: CANVAS.MONO,
-  fontSize: 11,
-  color: CANVAS.INK_SOFT,
-};
-
-const GATHER_LIST_STYLE: CSSProperties = {
-  listStyle: "none",
-  margin: 0,
-  padding: 0,
-  display: "flex",
-  flexDirection: "column",
-  gap: 12,
-};
-
-const GATHER_ITEM_STYLE: CSSProperties = {
-  display: "flex",
-  gap: 10,
-  alignItems: "flex-start",
-};
-
-const GATHER_DOT_STYLE: CSSProperties = {
-  width: 6,
-  height: 6,
-  borderRadius: "50%",
-  background: CANVAS.WAITING,
-  marginTop: 6,
-  flexShrink: 0,
-};
-
-const GATHER_ITEM_TITLE_STYLE: CSSProperties = {
-  display: "block",
-  fontFamily: CANVAS.SANS,
-  fontSize: 14,
-  fontWeight: 600,
-  color: CANVAS.INK,
-  lineHeight: 1.35,
-};
-
-const GATHER_ITEM_DESC_STYLE: CSSProperties = {
-  display: "block",
-  fontFamily: CANVAS.SANS,
-  fontSize: 12.5,
-  color: CANVAS.INK_SOFT,
-  lineHeight: 1.45,
-  marginTop: 2,
-};
-
-const GATHER_DONE_STYLE: CSSProperties = {
-  margin: 0,
-  fontFamily: CANVAS.SANS,
-  fontSize: 13.5,
-  color: CANVAS.ACTIVE,
-  lineHeight: 1.45,
-};
-
-const GATHER_UPLOAD_STYLE: CSSProperties = {
-  marginTop: 14,
-  appearance: "none",
-  cursor: "pointer",
-  fontFamily: CANVAS.MONO,
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: "0.1em",
-  textTransform: "uppercase",
-  color: CANVAS.INK,
-  background: "#ffffff",
-  border: `1px solid ${CANVAS.HAIRLINE}`,
-  borderRadius: 6,
-  padding: "8px 12px",
 };
 
 const GATE_TOGGLE_STYLE: CSSProperties = {
