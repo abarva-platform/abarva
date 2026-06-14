@@ -680,6 +680,7 @@ export async function loadCsvUploadToTenantContext(
         status: "skipped_no_rows",
         recordsPromoted: 0,
         factsPromoted: 0,
+        factsSuperseded: 0,
         sourceFileId: null,
         detail:
           "No database is configured; structured enterprise context promotion was not attempted.",

@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AbarVa Admin Data Cabinet Wireframe</title>
+    <style>
+      :root {
+        --ink: #111827;
+        --muted: #667085;
+        --line: #d8d2c4;
+        --paper: #f8f7f4;
+        --white: #ffffff;
+        --blue: #1d4ed8;
+        --blue-soft: #eef4ff;
+        --amber: #8a5b12;
+        --amber-soft: #fff7e6;
+        --green: #20623a;
+        --green-soft: #edf7ee;
+        --red: #a13f32;
+        --red-soft: #fff1ef;
+        --radius: 8px;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        --serif: Georgia, "Times New Roman", serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #ece8df;
+        color: var(--ink);
+        font-family: var(--sans);
+      }
+
+      .topbar {
+        height: 64px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 0 24px;
+        background: #020204;
+        color: var(--white);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 900;
+        font-size: 22px;
+      }
+
+      .mark {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #f8f7f4 0 32%, #00a3ff 33% 58%, #111827 59%);
+      }
+
+      .tenant {
+        border-left: 1px solid rgba(255, 255, 255, 0.18);
+        padding-left: 18px;
+        font-family: var(--serif);
+        font-style: italic;
+        font-size: 17px;
+        color: #eee7dc;
+      }
+
+      .nav {
+        margin-left: auto;
+        display: flex;
+        gap: 24px;
+        color: rgba(255, 255, 255, 0.72);
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .nav span.active {
+        color: var(--white);
+      }
+
+      .shell {
+        min-height: calc(100vh - 64px);
+        display: grid;
+        grid-template-columns: 248px minmax(0, 1fr);
+      }
+
+      .admin-rail {
+        border-right: 1px solid var(--line);
+        background: #fbfaf7;
+        padding: 24px 18px;
+      }
+
+      .rail-title {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+
+      .rail-heading {
+        margin: 8px 0 2px;
+        font-family: var(--serif);
+        font-size: 24px;
+      }
+
+      .rail-sub {
+        margin: 0 0 22px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .rail-item {
+        margin: 2px -10px;
+        padding: 10px;
+        border-radius: 7px;
+        color: var(--ink);
+      }
+
+      .rail-item.active {
+        background: #edf2ff;
+        color: var(--blue);
+        font-weight: 800;
+      }
+
+      .rail-item small {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      main {
+        min-width: 0;
+        padding: 22px 28px 32px;
+      }
+
+      .page-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 18px;
+        align-items: start;
+        margin-bottom: 16px;
+      }
+
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 6px 0 4px;
+        font-family: var(--serif);
+        font-size: 34px;
+        line-height: 1.05;
+        font-weight: 500;
+      }
+
+      .lead {
+        margin: 0;
+        max-width: 900px;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.45;
+      }
+
+      button,
+      .button {
+        border: 1px solid var(--ink);
+        border-radius: 7px;
+        background: var(--ink);
+        color: var(--white);
+        padding: 11px 16px;
+        font: 800 13px var(--sans);
+      }
+
+      .button.secondary {
+        background: var(--white);
+        color: var(--ink);
+        border-color: rgba(17, 24, 39, 0.18);
+      }
+
+      .truth-strip {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--white);
+        padding: 9px 12px;
+        margin-bottom: 14px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 6px;
+        border: 1px solid rgba(17, 24, 39, 0.12);
+        border-radius: 999px;
+        padding: 5px 10px;
+        color: var(--muted);
+        font-size: 12px;
+        background: var(--white);
+      }
+
+      .pill strong {
+        color: var(--ink);
+        font-size: 13px;
+      }
+
+      .cabinet {
+        display: grid;
+        grid-template-columns: 264px minmax(420px, 1fr) 332px;
+        min-height: 640px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--white);
+        overflow: hidden;
+        box-shadow: 0 18px 45px rgba(17, 24, 39, 0.08);
+      }
+
+      .folder-pane,
+      .detail-pane {
+        background: #fbfaf7;
+      }
+
+      .folder-pane {
+        border-right: 1px solid var(--line);
+        padding: 16px 12px;
+      }
+
+      .detail-pane {
+        border-left: 1px solid var(--line);
+        padding: 16px;
+      }
+
+      .pane-title {
+        margin: 0 0 10px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+
+      .tree-section {
+        margin-bottom: 14px;
+      }
+
+      .tree-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 9px;
+        border-radius: 7px;
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      .tree-label.open {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .tree-child {
+        margin: 2px 0 0 18px;
+        padding: 7px 8px;
+        border-radius: 7px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .tree-child.active {
+        background: var(--ink);
+        color: var(--white);
+        font-weight: 800;
+      }
+
+      .count {
+        color: inherit;
+        opacity: 0.65;
+        font: 700 11px var(--mono);
+      }
+
+      .workspace {
+        min-width: 0;
+        padding: 18px;
+        display: grid;
+        gap: 14px;
+        align-content: start;
+      }
+
+      .workspace-top {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .workspace h2 {
+        margin: 0;
+        font-family: var(--serif);
+        font-size: 27px;
+        font-weight: 500;
+      }
+
+      .workspace p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .dropzone {
+        border: 1px dashed #b8b0a2;
+        border-radius: 10px;
+        background: var(--paper);
+        padding: 18px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .dropzone strong {
+        display: block;
+        font-family: var(--serif);
+        font-size: 20px;
+        font-weight: 500;
+      }
+
+      .file-group {
+        display: grid;
+        gap: 8px;
+      }
+
+      .group-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 4px;
+      }
+
+      .group-heading h3 {
+        margin: 0;
+        font-size: 13px;
+      }
+
+      .group-heading span {
+        color: var(--muted);
+        font: 700 11px var(--mono);
+      }
+
+      .file-row {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        border: 1px solid rgba(17, 24, 39, 0.1);
+        border-radius: 8px;
+        background: #fff;
+        padding: 10px 12px;
+      }
+
+      .file-row.selected {
+        border-color: rgba(29, 78, 216, 0.45);
+        background: #f7faff;
+      }
+
+      .file-icon {
+        width: 34px;
+        height: 38px;
+        border-radius: 5px;
+        display: grid;
+        place-items: center;
+        background: #eef2f7;
+        color: #344054;
+        font: 900 10px var(--mono);
+      }
+
+      .file-row.selected .file-icon {
+        background: var(--blue);
+        color: var(--white);
+      }
+
+      .file-name {
+        font-size: 13px;
+        font-weight: 850;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .file-meta {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .status {
+        border-radius: 999px;
+        padding: 4px 8px;
+        font: 800 10px var(--mono);
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .status.green {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .status.amber {
+        background: var(--amber-soft);
+        color: var(--amber);
+      }
+
+      .status.red {
+        background: var(--red-soft);
+        color: var(--red);
+      }
+
+      .detail-card {
+        border: 1px solid rgba(17, 24, 39, 0.1);
+        border-radius: 8px;
+        background: var(--white);
+        padding: 13px;
+        margin-bottom: 12px;
+      }
+
+      .detail-card h3 {
+        margin: 0;
+        font-size: 14px;
+      }
+
+      .detail-card p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.42;
+      }
+
+      .kv {
+        display: grid;
+        grid-template-columns: 118px minmax(0, 1fr);
+        gap: 8px;
+        padding: 7px 0;
+        border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+        font-size: 12px;
+      }
+
+      .kv:last-child {
+        border-bottom: 0;
+      }
+
+      .kv span:first-child {
+        color: var(--muted);
+      }
+
+      .lifecycle {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .step {
+        border: 1px solid rgba(17, 24, 39, 0.1);
+        border-radius: 7px;
+        padding: 8px;
+        min-height: 58px;
+        background: #fff;
+      }
+
+      .step.done {
+        background: var(--green-soft);
+        border-color: rgba(32, 98, 58, 0.18);
+      }
+
+      .step.now {
+        background: var(--amber-soft);
+        border-color: rgba(138, 91, 18, 0.25);
+      }
+
+      .step strong {
+        display: block;
+        font-size: 11px;
+      }
+
+      .step span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 10px;
+      }
+
+      .trace-list {
+        margin: 8px 0 0;
+        padding-left: 18px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .notes {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .note {
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: var(--white);
+        padding: 14px;
+      }
+
+      .note h3 {
+        margin: 0 0 6px;
+        font-size: 14px;
+      }
+
+      .note p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      @media (max-width: 1180px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+
+        .admin-rail {
+          display: none;
+        }
+
+        .cabinet {
+          grid-template-columns: 226px minmax(0, 1fr);
+        }
+
+        .detail-pane {
+          grid-column: 1 / -1;
+          border-left: 0;
+          border-top: 1px solid var(--line);
+        }
+      }
+
+      @media (max-width: 760px) {
+        main {
+          padding: 16px;
+        }
+
+        .page-head,
+        .workspace-top,
+        .dropzone {
+          grid-template-columns: 1fr;
+        }
+
+        .cabinet {
+          grid-template-columns: 1fr;
+        }
+
+        .folder-pane {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .lifecycle,
+        .notes {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand"><span class="mark"></span>AbarVa</div>
+      <div class="tenant">Lakeshore Holdings</div>
+      <nav class="nav" aria-label="Product navigation">
+        <span>Home</span>
+        <span>Intelligence</span>
+        <span>Moves</span>
+        <span>Source</span>
+        <span>Tower</span>
+        <span class="active">Admin</span>
+      </nav>
+    </header>
+
+    <div class="shell">
+      <aside class="admin-rail">
+        <div class="rail-title">Admin Workspace</div>
+        <h2 class="rail-heading">Steward</h2>
+        <p class="rail-sub">Control plane - tenant readiness</p>
+        <div class="rail-item">Overview<small>Setup status</small></div>
+        <div class="rail-item active">Data Cabinet<small>Files, masks, approvals</small></div>
+        <div class="rail-item">Templates<small>Formats and owners</small></div>
+        <div class="rail-item">Data Trust<small>Evidence and gaps</small></div>
+        <div class="rail-item">Outputs<small>Moves and Source deliverables</small></div>
+        <div class="rail-item">Users & Access<small>Roles and SSO</small></div>
+        <div class="rail-item">Ops Console<small>Runbooks and audit</small></div>
+      </aside>
+
+      <main>
+        <section class="page-head">
+          <div>
+            <div class="eyebrow">Admin / Data Cabinet / Lakeshore Holdings</div>
+            <h1>Load and inspect client evidence</h1>
+            <p class="lead">
+              One place to see what exists, what is safe to use, what needs
+              approval, and what AbarVa generated from the evidence. The first
+              screen behaves like a file explorer, not a policy manual.
+            </p>
+          </div>
+          <div style="display: flex; gap: 10px">
+            <button class="button secondary">View templates</button>
+            <button>Upload files</button>
+          </div>
+        </section>
+
+        <section class="truth-strip" aria-label="Compact readiness summary">
+          <span class="eyebrow" style="margin-right: 3px">Readiness</span>
+          <span class="pill"><strong>16</strong> files in pack</span>
+          <span class="pill"><strong>6</strong> workbooks</span>
+          <span class="pill"><strong>5</strong> masked field families</span>
+          <span class="pill"><strong>4</strong> patterns</span>
+          <span class="pill"><strong>0</strong> live commits yet</span>
+        </section>
+
+        <section class="cabinet" aria-label="Data cabinet wireframe">
+          <aside class="folder-pane">
+            <h2 class="pane-title">Evidence folders</h2>
+
+            <div class="tree-section">
+              <div class="tree-label open">Current-State Context <span class="count">10</span></div>
+              <div class="tree-child active">Treasury volumes <span class="count">1</span></div>
+              <div class="tree-child">Bank connectivity <span class="count">1</span></div>
+              <div class="tree-child">ERP and feeds <span class="count">1</span></div>
+              <div class="tree-child">CMDB applications <span class="count">1</span></div>
+              <div class="tree-child">API/file transfers <span class="count">1</span></div>
+              <div class="tree-child">Run cost and rates <span class="count">2</span></div>
+              <div class="tree-child">Vendor contracts <span class="count">1</span></div>
+            </div>
+
+            <div class="tree-section">
+              <div class="tree-label">Source Event Evidence <span class="count">3</span></div>
+              <div class="tree-child">Architecture exhibits</div>
+              <div class="tree-child">Roadmap constraints</div>
+              <div class="tree-child">Security topology</div>
+            </div>
+
+            <div class="tree-section">
+              <div class="tree-label">Pattern Layer <span class="count">2</span></div>
+              <div class="tree-child">Decision patterns</div>
+              <div class="tree-child">Evidence-output trace</div>
+            </div>
+
+            <div class="tree-section">
+              <div class="tree-label">Review Queue <span class="count">4</span></div>
+              <div class="tree-child">Needs masking review</div>
+              <div class="tree-child">Needs approval</div>
+              <div class="tree-child">Parser failed</div>
+              <div class="tree-child">Superseded facts</div>
+            </div>
+          </aside>
+
+          <section class="workspace">
+            <div class="workspace-top">
+              <div>
+                <h2>Treasury volumes</h2>
+                <p>
+                  Use this folder for entity, bank, account, payment, and
+                  reconciliation volumetrics. Safe masked fields preserve
+                  complexity without exposing bank secrets.
+                </p>
+              </div>
+              <button>Upload to this folder</button>
+            </div>
+
+            <div class="dropzone">
+              <div>
+                <strong>Drop treasury volume files here</strong>
+                <p>
+                  CSV loads directly today. XLSX enters controlled intake until
+                  workbook parser commit is approved.
+                </p>
+              </div>
+              <button class="button secondary">Choose files</button>
+            </div>
+
+            <div class="file-group">
+              <div class="group-heading">
+                <h3>Loaded or ready to load</h3>
+                <span>selected folder</span>
+              </div>
+
+              <article class="file-row selected">
+                <div class="file-icon">XLSX</div>
+                <div>
+                  <div class="file-name">01_treasury_volume_baseline.xlsx</div>
+                  <div class="file-meta">
+                    Treasurer - enterprise context - masked account/routing references - 5 sheets
+                  </div>
+                </div>
+                <span class="status amber">Review</span>
+              </article>
+
+              <article class="file-row">
+                <div class="file-icon">XLSX</div>
+                <div>
+                  <div class="file-name">02_bank_connectivity_inventory.xlsx</div>
+                  <div class="file-meta">
+                    Treasury Ops - bank formats - certificate refs masked
+                  </div>
+                </div>
+                <span class="status amber">Review</span>
+              </article>
+
+              <article class="file-row">
+                <div class="file-icon">CSV</div>
+                <div>
+                  <div class="file-name">06_api_file_transfer_landscape.csv</div>
+                  <div class="file-meta">
+                    Integration Lead - endpoints and credentials masked - CSV live path
+                  </div>
+                </div>
+                <span class="status green">Loadable</span>
+              </article>
+            </div>
+
+            <div class="file-group">
+              <div class="group-heading">
+                <h3>What this folder can change downstream</h3>
+                <span>evidence to output</span>
+              </div>
+              <article class="file-row">
+                <div class="file-icon">TRC</div>
+                <div>
+                  <div class="file-name">KYR-PAT-001 bank/entity volume complexity</div>
+                  <div class="file-meta">
+                    Adds bank connectivity RFP matrix, raises integration/testing weight,
+                    increases SIT/UAT/cutover/hypercare effort.
+                  </div>
+                </div>
+                <span class="status green">Mapped</span>
+              </article>
+            </div>
+          </section>
+
+          <aside class="detail-pane">
+            <h2 class="pane-title">Selected file</h2>
+
+            <section class="detail-card">
+              <h3>01_treasury_volume_baseline.xlsx</h3>
+              <p>
+                Synthetic planning workbook. Shows how masked volumetrics can
+                still drive real sourcing logic.
+              </p>
+            </section>
+
+            <section class="detail-card">
+              <div class="kv"><span>Plane</span><strong>Enterprise context</strong></div>
+              <div class="kv"><span>Owner</span><strong>Treasurer</strong></div>
+              <div class="kv"><span>Safe fields</span><strong>counts, volumes, roles, masked refs</strong></div>
+              <div class="kv"><span>Excluded</span><strong>real account numbers, routing, transactions</strong></div>
+              <div class="kv"><span>Decision use</span><strong>RFP, scoring, cost, risk</strong></div>
+            </section>
+
+            <section class="detail-card">
+              <h3>Load lifecycle</h3>
+              <div class="lifecycle" style="margin-top: 10px">
+                <div class="step done"><strong>Upload</strong><span>file preserved</span></div>
+                <div class="step done"><strong>Scan</strong><span>masked safe</span></div>
+                <div class="step now"><strong>Parse</strong><span>XLSX review</span></div>
+                <div class="step"><strong>Approve</strong><span>human owner</span></div>
+                <div class="step"><strong>Commit</strong><span>facts active</span></div>
+                <div class="step"><strong>Retrieve</strong><span>agents cite</span></div>
+              </div>
+            </section>
+
+            <section class="detail-card">
+              <h3>Evidence trace preview</h3>
+              <ul class="trace-list">
+                <li>92 bank accounts activates bank/entity complexity.</li>
+                <li>Masked account refs preserve count and wave planning.</li>
+                <li>RFP adds bank connectivity matrix and test evidence.</li>
+                <li>Cost model increases SIT, UAT, cutover, and hypercare.</li>
+              </ul>
+            </section>
+
+            <section class="detail-card">
+              <h3>Primary next action</h3>
+              <p>
+                Review workbook parsing, approve safe extracted facts, then
+                commit to Lakeshore current-state context.
+              </p>
+              <div style="margin-top: 12px"><button>Review parsed facts</button></div>
+            </section>
+          </aside>
+        </section>
+
+        <section class="notes">
+          <article class="note">
+            <h3>Design rule 1: file cabinet first</h3>
+            <p>
+              The default page should show existing files and the upload zone.
+              Template catalog, policy, and controls are secondary context.
+            </p>
+          </article>
+          <article class="note">
+            <h3>Design rule 2: plane is visible</h3>
+            <p>
+              Every file shows whether it updates enterprise context, attaches
+              to a Source event, or extends the pattern layer.
+            </p>
+          </article>
+          <article class="note">
+            <h3>Design rule 3: safe evidence still works</h3>
+            <p>
+              Masked values keep useful structure. Scrambled values are allowed
+              when structure is unnecessary.
+            </p>
+          </article>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

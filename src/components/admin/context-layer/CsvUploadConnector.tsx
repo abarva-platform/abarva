@@ -40,6 +40,7 @@ type UploadResult = {
     status: string;
     recordsPromoted: number;
     factsPromoted: number;
+    factsSuperseded: number;
     sourceFileId: string | null;
     detail: string;
   };
@@ -70,21 +71,35 @@ const inputStyle = {
 
 const workflowSteps = [
   {
-    label: "Add data",
-    detail: "Choose the file and confirm tenant authority.",
+    label: "Choose lane",
+    detail: "Confirm this file updates enterprise context, not event evidence.",
   },
   {
-    label: "Understand",
-    detail: "AbarVa reads the shape and checks the mapping.",
+    label: "Parse",
+    detail: "AbarVa reads the shape, template, source rows, and citations.",
   },
   {
-    label: "Review",
-    detail: "Warnings and missing fields are shown before use.",
+    label: "Promote",
+    detail: "Approved rows update active facts; old facts are superseded.",
   },
   {
-    label: "Loaded",
-    detail: "Approved rows become cited tenant context.",
+    label: "Retrieve",
+    detail: "Embeddings make the latest approved context usable by agents.",
   },
+];
+
+const contextReceiptSteps = [
+  "Source file preserved with tenant, hash, attestation, and sensitivity metadata.",
+  "Template and required fields checked before context promotion.",
+  "Rows promoted into enterprise context records and facts.",
+  "Matching active facts superseded; previous values stay auditable.",
+  "Embedding handoff queued so Sentinel, Source, Moves, and Tower can retrieve the latest approved facts.",
+];
+
+const sourceEventReceiptSteps = [
+  "Attach vendor responses, architecture docs, and event evidence inside the relevant Source event workspace.",
+  "Event uploads create immutable artifact versions; they do not rewrite enterprise current-state facts.",
+  "Generated RFPs, scorecards, and cost models cite event evidence plus approved enterprise context separately.",
 ];
 
 function splitHeaderLine(line: string): string[] {
@@ -305,6 +320,67 @@ export function CsvUploadConnector({
           validate the mapping, and only write context after the gates pass.
         </p>
       </div>
+
+      <section
+        aria-label="Upload destination"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+          gap: 10,
+        }}
+      >
+        <div
+          style={{
+            border: "2px solid #171717",
+            borderRadius: 8,
+            background: "#F8F7F4",
+            padding: 12,
+            display: "grid",
+            gap: 6,
+          }}
+        >
+          <strong>Update enterprise context</strong>
+          <span style={{ color: "#514c43", lineHeight: 1.45 }}>
+            Use this lane for CMDB, org roles, ERP, integration topology,
+            financial baselines, and other current-state facts. New approved
+            values supersede older active facts by key.
+          </span>
+          <span
+            style={{
+              width: "fit-content",
+              border: "1px solid #171717",
+              borderRadius: 999,
+              padding: "4px 8px",
+              fontSize: 11,
+              fontWeight: 900,
+              letterSpacing: 0.4,
+              textTransform: "uppercase",
+            }}
+          >
+            Selected
+          </span>
+        </div>
+        <div
+          style={{
+            border: "1px solid #d8d2c4",
+            borderRadius: 8,
+            background: "#fff",
+            padding: 12,
+            display: "grid",
+            gap: 6,
+          }}
+        >
+          <strong>Attach to Source event</strong>
+          <span style={{ color: "#514c43", lineHeight: 1.45 }}>
+            Use the Source event workspace for vendor responses, RFP exhibits,
+            BAFO letters, and event-specific evidence. Those uploads preserve
+            versions and do not change tenant current state.
+          </span>
+          <span style={{ color: "#6b665c", fontSize: 12 }}>
+            Open the event workspace to attach event evidence.
+          </span>
+        </div>
+      </section>
 
       <ol
         aria-label="Upload workflow"
@@ -779,7 +855,10 @@ export function CsvUploadConnector({
                   {result.enterpriseContextPromotion.recordsPromoted.toLocaleString()}{" "}
                   records and{" "}
                   {result.enterpriseContextPromotion.factsPromoted.toLocaleString()}{" "}
-                  facts promoted.
+                  facts promoted.{" "}
+                  {result.enterpriseContextPromotion.factsSuperseded > 0
+                    ? `${result.enterpriseContextPromotion.factsSuperseded.toLocaleString()} active fact${result.enterpriseContextPromotion.factsSuperseded === 1 ? "" : "s"} superseded.`
+                    : "No prior active facts were superseded."}
                 </span>
               ) : null}
               <span>{result.persistence?.detail}</span>
@@ -794,6 +873,59 @@ export function CsvUploadConnector({
               <code style={{ whiteSpace: "normal" }}>
                 {result.embeddingHandoff?.command}
               </code>
+              <section
+                aria-label="Load receipt"
+                style={{
+                  border: "1px solid #d8d2c4",
+                  borderRadius: 6,
+                  background: "#fff",
+                  padding: 10,
+                  display: "grid",
+                  gap: 8,
+                }}
+              >
+                <strong>Load receipt</strong>
+                <ol style={{ margin: 0, paddingLeft: 18, lineHeight: 1.5 }}>
+                  {contextReceiptSteps.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ol>
+              </section>
+              <section
+                aria-label="Used in output trace"
+                style={{
+                  border: "1px solid #d8d2c4",
+                  borderRadius: 6,
+                  background: "#fbfaf7",
+                  padding: 10,
+                  lineHeight: 1.5,
+                }}
+              >
+                <strong>Used in outputs</strong>
+                <p style={{ margin: "6px 0 0", color: "#514c43" }}>
+                  Generated artifacts should show evidence to pattern to output
+                  change traces. Example: high bank-count complexity increases
+                  integration scoring, testing effort, hypercare cost, and RFP
+                  bank-connectivity questions.
+                </p>
+              </section>
+              <section
+                aria-label="Source event upload guidance"
+                style={{
+                  border: "1px solid #d8d2c4",
+                  borderRadius: 6,
+                  background: "#fff",
+                  padding: 10,
+                  lineHeight: 1.5,
+                }}
+              >
+                <strong>Event evidence is separate</strong>
+                <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                  {sourceEventReceiptSteps.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ul>
+              </section>
             </div>
           ) : result.mode === "rate_card_validation_preview" ? (
             <div style={{ display: "grid", gap: 8 }}>
