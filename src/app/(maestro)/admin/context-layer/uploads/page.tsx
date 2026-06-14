@@ -132,7 +132,14 @@ function SourceFilesPanel({
   );
 }
 
-export default async function ContextUploadsPage() {
+export default async function ContextUploadsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ template?: string }>;
+}) {
+  const params = searchParams ? await searchParams : {};
+  const initialTemplateId =
+    typeof params.template === "string" ? params.template : undefined;
   const activeClient = await getActiveClientRow(null);
   const sourceFiles = activeClient
     ? await getTenantSourceFiles(activeClient.id, { limit: 50 })
@@ -186,6 +193,7 @@ export default async function ContextUploadsPage() {
                 clientId={activeClient.id}
                 tenantKey={activeClient.key}
                 tenantName={activeClient.name}
+                initialTemplateId={initialTemplateId}
               />
             }
             loadedFiles={<SourceFilesPanel sourceFiles={sourceFiles} />}

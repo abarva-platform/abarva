@@ -130,6 +130,7 @@ export interface AdminStructuredContextPromotionResult {
   status: "inserted" | "skipped_no_rows";
   recordsPromoted: number;
   factsPromoted: number;
+  factsSuperseded: number;
   sourceFileId: string | null;
   detail: string;
 }
@@ -585,6 +586,7 @@ export async function promoteAdminStructuredRowsToEnterpriseContext(
       status: "skipped_no_rows",
       recordsPromoted: 0,
       factsPromoted: 0,
+      factsSuperseded: 0,
       sourceFileId: null,
       detail:
         "No structured rows were available for enterprise context promotion.",
@@ -667,8 +669,9 @@ export async function promoteAdminStructuredRowsToEnterpriseContext(
       factRows.map((row) => String((row as { fact_key: string }).fact_key)),
     ),
   );
+  let factsSuperseded = 0;
   for (let index = 0; index < incomingFactKeys.length; index += 200) {
-    await throwOnError(
+    const supersededRows = await throwOnError<Array<{ id: string }>>(
       "enterprise_context_facts supersede",
       await db
         .from("enterprise_context_facts")
@@ -678,6 +681,7 @@ export async function promoteAdminStructuredRowsToEnterpriseContext(
         .in("fact_key", incomingFactKeys.slice(index, index + 200))
         .select("id"),
     );
+    factsSuperseded += supersededRows?.length ?? 0;
   }
 
   for (let index = 0; index < factRows.length; index += 250) {
@@ -696,6 +700,7 @@ export async function promoteAdminStructuredRowsToEnterpriseContext(
     status: "inserted",
     recordsPromoted: plan.records.length,
     factsPromoted: factRows.length,
+    factsSuperseded,
     sourceFileId: plan.sourceFile.source_file_id,
     detail:
       "Structured Admin upload rows were promoted into enterprise_context_records and enterprise_context_facts with source-row provenance.",

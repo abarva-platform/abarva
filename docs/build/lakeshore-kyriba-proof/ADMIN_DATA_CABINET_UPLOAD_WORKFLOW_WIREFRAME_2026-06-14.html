@@ -1,0 +1,1024 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AbarVa Data Cabinet Upload Workflow Wireframe</title>
+    <style>
+      :root {
+        --ink: #111827;
+        --muted: #667085;
+        --line: #d8d2c4;
+        --paper: #f8f7f4;
+        --white: #ffffff;
+        --blue: #1d4ed8;
+        --blue-soft: #eef4ff;
+        --green: #20623a;
+        --green-soft: #edf7ee;
+        --amber: #8a5b12;
+        --amber-soft: #fff7e6;
+        --red: #a13f32;
+        --red-soft: #fff1ef;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        --sans: Inter, ui-sans-serif, system-ui, -apple-system,
+          BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --serif: Georgia, "Times New Roman", serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #ece8df;
+        color: var(--ink);
+        font-family: var(--sans);
+      }
+
+      .topbar {
+        height: 64px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 0 24px;
+        background: #030303;
+        color: #fff;
+      }
+
+      .mark {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        background: linear-gradient(
+          135deg,
+          #f8f7f4 0 34%,
+          #009de8 35% 58%,
+          #111827 59%
+        );
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 22px;
+        font-weight: 900;
+      }
+
+      .tenant {
+        padding-left: 18px;
+        border-left: 1px solid rgba(255, 255, 255, 0.18);
+        font-family: var(--serif);
+        font-style: italic;
+        color: #eee7dc;
+      }
+
+      .nav {
+        margin-left: auto;
+        display: flex;
+        gap: 24px;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 14px;
+        font-weight: 750;
+      }
+
+      .nav .active {
+        color: #fff;
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: 232px minmax(0, 1fr);
+        min-height: calc(100vh - 64px);
+      }
+
+      .admin-nav {
+        border-right: 1px solid var(--line);
+        background: #fbfaf7;
+        padding: 24px 18px;
+      }
+
+      .eyebrow {
+        font: 800 11px var(--mono);
+        letter-spacing: 0.13em;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+
+      .admin-nav h2,
+      h1,
+      h2 {
+        font-family: var(--serif);
+        font-weight: 500;
+      }
+
+      .admin-nav h2 {
+        margin: 8px 0 2px;
+        font-size: 24px;
+      }
+
+      .admin-nav p {
+        margin: 0 0 22px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .nav-row {
+        margin: 2px -10px;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+
+      .nav-row.active {
+        background: var(--blue-soft);
+        color: var(--blue);
+        font-weight: 850;
+      }
+
+      .nav-row small {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      main {
+        min-width: 0;
+        padding: 22px 28px 32px;
+      }
+
+      .page-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 20px;
+        align-items: start;
+        margin-bottom: 14px;
+      }
+
+      h1 {
+        margin: 6px 0 4px;
+        font-size: 34px;
+        line-height: 1.06;
+      }
+
+      .lead {
+        margin: 0;
+        max-width: 840px;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.45;
+      }
+
+      button,
+      .button {
+        border: 1px solid var(--ink);
+        border-radius: 7px;
+        background: var(--ink);
+        color: #fff;
+        padding: 11px 16px;
+        font: 800 13px var(--sans);
+      }
+
+      .button.secondary {
+        background: #fff;
+        color: var(--ink);
+        border-color: rgba(17, 24, 39, 0.18);
+      }
+
+      .summary {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 14px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #fff;
+        padding: 9px 12px;
+      }
+
+      .pill {
+        display: inline-flex;
+        gap: 6px;
+        align-items: baseline;
+        border: 1px solid rgba(17, 24, 39, 0.12);
+        border-radius: 999px;
+        background: #fff;
+        padding: 5px 10px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .pill strong {
+        color: var(--ink);
+        font-size: 13px;
+      }
+
+      .cabinet {
+        position: relative;
+        display: grid;
+        grid-template-columns: 286px minmax(0, 1fr) 360px;
+        min-height: 690px;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: #fff;
+        overflow: hidden;
+        box-shadow: 0 18px 45px rgba(17, 24, 39, 0.08);
+      }
+
+      .folder-pane,
+      .inspector {
+        background: #fbfaf7;
+      }
+
+      .folder-pane {
+        border-right: 1px solid var(--line);
+        padding: 16px 12px;
+      }
+
+      .inspector {
+        border-left: 1px solid var(--line);
+        padding: 16px;
+      }
+
+      .pane-title {
+        margin: 0 0 12px;
+        font: 800 11px var(--mono);
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+
+      .folder-group {
+        margin-bottom: 14px;
+      }
+
+      .folder-heading {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+        border-radius: 8px;
+        padding: 9px 10px;
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .folder-heading.active {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .folder-count {
+        font: 800 11px var(--mono);
+        color: inherit;
+        opacity: 0.7;
+      }
+
+      .folder-child {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        margin: 2px 0 0 18px;
+        border-radius: 8px;
+        padding: 8px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .folder-child.active {
+        background: var(--ink);
+        color: #fff;
+        font-weight: 850;
+      }
+
+      .folder-child.warn {
+        background: var(--amber-soft);
+        color: var(--amber);
+      }
+
+      .workspace {
+        min-width: 0;
+        padding: 18px;
+        display: grid;
+        gap: 14px;
+        align-content: start;
+      }
+
+      .workspace-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .workspace h2 {
+        margin: 0;
+        font-size: 28px;
+      }
+
+      .workspace p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .dropzone {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        border: 1px dashed #b8b0a2;
+        border-radius: 11px;
+        background: var(--paper);
+        padding: 18px;
+      }
+
+      .dropzone strong {
+        display: block;
+        font-family: var(--serif);
+        font-size: 21px;
+        font-weight: 500;
+      }
+
+      .file-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-top: 2px;
+      }
+
+      .section-head h3 {
+        margin: 0;
+        font-size: 13px;
+      }
+
+      .section-head span {
+        color: var(--muted);
+        font: 800 11px var(--mono);
+      }
+
+      .file-row {
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        border: 1px solid rgba(17, 24, 39, 0.1);
+        border-radius: 9px;
+        background: #fff;
+        padding: 10px 12px;
+      }
+
+      .file-row.selected {
+        border-color: rgba(29, 78, 216, 0.45);
+        background: #f7faff;
+      }
+
+      .file-icon {
+        width: 36px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border-radius: 6px;
+        background: #eef2f7;
+        color: #344054;
+        font: 900 10px var(--mono);
+      }
+
+      .file-row.selected .file-icon {
+        background: var(--blue);
+        color: #fff;
+      }
+
+      .file-name {
+        font-size: 13px;
+        font-weight: 850;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .file-meta {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .status {
+        border-radius: 999px;
+        padding: 4px 8px;
+        font: 850 10px var(--mono);
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .green {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .amber {
+        background: var(--amber-soft);
+        color: var(--amber);
+      }
+
+      .red {
+        background: var(--red-soft);
+        color: var(--red);
+      }
+
+      .card {
+        border: 1px solid rgba(17, 24, 39, 0.1);
+        border-radius: 9px;
+        background: #fff;
+        padding: 13px;
+        margin-bottom: 12px;
+      }
+
+      .card h3 {
+        margin: 0 0 6px;
+        font-size: 14px;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.42;
+      }
+
+      .kv {
+        display: grid;
+        grid-template-columns: 116px minmax(0, 1fr);
+        gap: 8px;
+        border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+        padding: 7px 0;
+        font-size: 12px;
+      }
+
+      .kv:last-child {
+        border-bottom: 0;
+      }
+
+      .kv span:first-child {
+        color: var(--muted);
+      }
+
+      .upload-drawer {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: min(560px, 100%);
+        height: 100%;
+        border-left: 1px solid var(--line);
+        background: #fff;
+        box-shadow: -24px 0 46px rgba(17, 24, 39, 0.17);
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+      }
+
+      .drawer-head {
+        padding: 18px 20px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .drawer-head h2 {
+        margin: 5px 0 4px;
+        font-size: 27px;
+      }
+
+      .drawer-body {
+        overflow: auto;
+        padding: 16px 20px 20px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .drawer-foot {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 14px 20px;
+        border-top: 1px solid var(--line);
+        background: #fbfaf7;
+      }
+
+      .workflow-step {
+        border: 1px solid rgba(17, 24, 39, 0.12);
+        border-radius: 10px;
+        background: #fff;
+        padding: 14px;
+      }
+
+      .workflow-step.active {
+        border-color: rgba(29, 78, 216, 0.38);
+        background: #f7faff;
+      }
+
+      .workflow-step h3 {
+        margin: 0 0 8px;
+        font-size: 14px;
+      }
+
+      .choice-row {
+        display: grid;
+        grid-template-columns: 18px minmax(0, 1fr) auto;
+        gap: 9px;
+        align-items: start;
+        border: 1px solid rgba(17, 24, 39, 0.1);
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 7px;
+      }
+
+      .choice-row.selected {
+        border-color: rgba(29, 78, 216, 0.35);
+        background: var(--blue-soft);
+      }
+
+      .radio {
+        width: 14px;
+        height: 14px;
+        margin-top: 2px;
+        border: 1px solid var(--blue);
+        border-radius: 999px;
+        background: radial-gradient(circle, var(--blue) 0 42%, transparent 45%);
+      }
+
+      .choice-title {
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      .choice-sub {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .field-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .field {
+        border: 1px solid rgba(17, 24, 39, 0.1);
+        border-radius: 8px;
+        padding: 9px;
+      }
+
+      .field strong {
+        display: block;
+        font-size: 12px;
+      }
+
+      .field span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .preview {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+      }
+
+      .preview th,
+      .preview td {
+        border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+        padding: 7px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .preview th {
+        font-family: var(--mono);
+        color: var(--muted);
+        font-size: 10px;
+        text-transform: uppercase;
+      }
+
+      .risk-line {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      @media (max-width: 1180px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+
+        .admin-nav {
+          display: none;
+        }
+
+        .cabinet {
+          grid-template-columns: 240px minmax(0, 1fr);
+        }
+
+        .inspector {
+          display: none;
+        }
+      }
+
+      @media (max-width: 760px) {
+        main {
+          padding: 16px;
+        }
+
+        .page-head,
+        .workspace-head,
+        .dropzone,
+        .field-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .cabinet {
+          grid-template-columns: 1fr;
+        }
+
+        .folder-pane {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .upload-drawer {
+          position: fixed;
+          inset: 0;
+          width: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand"><span class="mark"></span>AbarVa</div>
+      <div class="tenant">Lakeshore Holdings</div>
+      <nav class="nav" aria-label="Product navigation">
+        <span>Home</span>
+        <span>Intelligence</span>
+        <span>Moves</span>
+        <span>Source</span>
+        <span>Tower</span>
+        <span class="active">Admin</span>
+      </nav>
+    </header>
+
+    <div class="shell">
+      <aside class="admin-nav">
+        <div class="eyebrow">Admin Workspace</div>
+        <h2>Steward</h2>
+        <p>Control plane - tenant readiness</p>
+        <div class="nav-row">Overview<small>Setup status</small></div>
+        <div class="nav-row active">Data Cabinet<small>Files, masks, approvals</small></div>
+        <div class="nav-row">Templates<small>Formats and owners</small></div>
+        <div class="nav-row">Data Trust<small>Evidence and gaps</small></div>
+        <div class="nav-row">Outputs<small>Moves and Source deliverables</small></div>
+        <div class="nav-row">Agent Readiness<small>What assistants can use</small></div>
+      </aside>
+
+      <main>
+        <section class="page-head">
+          <div>
+            <div class="eyebrow">Admin / Data Cabinet / Lakeshore Holdings</div>
+            <h1>Load files, review evidence, commit context</h1>
+            <p class="lead">
+              Dynamic folders reflect what this client and use case need. Drop a
+              file into a folder and AbarVa detects the template, checks masking,
+              previews records, and asks for human approval before commit.
+            </p>
+          </div>
+          <div style="display: flex; gap: 10px">
+            <button class="button secondary">View templates</button>
+            <button>Upload files</button>
+          </div>
+        </section>
+
+        <section class="summary" aria-label="Readiness summary">
+          <span class="eyebrow">Lakeshore proof</span>
+          <span class="pill"><strong>4</strong> recommended CSV uploads</span>
+          <span class="pill"><strong>6</strong> workbooks in review path</span>
+          <span class="pill"><strong>5</strong> masked field families</span>
+          <span class="pill"><strong>0</strong> restricted holds</span>
+          <span class="pill"><strong>0</strong> committed live facts</span>
+        </section>
+
+        <section class="cabinet" aria-label="Data cabinet with upload drawer">
+          <aside class="folder-pane">
+            <h2 class="pane-title">Dynamic evidence map</h2>
+
+            <div class="folder-group">
+              <div class="folder-heading active">
+                Current-State Context <span class="folder-count">4 / 10</span>
+              </div>
+              <div class="folder-child active">
+                Treasury volumes <span class="folder-count">1 / 1</span>
+              </div>
+              <div class="folder-child warn">
+                Bank connectivity <span class="folder-count">0 / 1</span>
+              </div>
+              <div class="folder-child warn">
+                ERP and feeds <span class="folder-count">0 / 1</span>
+              </div>
+              <div class="folder-child">
+                CMDB applications <span class="folder-count">1 / 1</span>
+              </div>
+              <div class="folder-child">
+                API/file transfers <span class="folder-count">1 / 1</span>
+              </div>
+              <div class="folder-child warn">
+                Run cost and rates <span class="folder-count">0 / 2</span>
+              </div>
+              <div class="folder-child">
+                Vendor contracts <span class="folder-count">1 / 1</span>
+              </div>
+            </div>
+
+            <div class="folder-group">
+              <div class="folder-heading">
+                Source Event Evidence <span class="folder-count">0 / 3</span>
+              </div>
+              <div class="folder-child">Architecture exhibits</div>
+              <div class="folder-child">Roadmap constraints</div>
+              <div class="folder-child">Security topology</div>
+            </div>
+
+            <div class="folder-group">
+              <div class="folder-heading">
+                Pattern Layer <span class="folder-count">2 / 2</span>
+              </div>
+              <div class="folder-child">Kyriba decision patterns</div>
+              <div class="folder-child">Evidence-output trace</div>
+            </div>
+
+            <div class="folder-group">
+              <div class="folder-heading">
+                Review Queue <span class="folder-count">3</span>
+              </div>
+              <div class="folder-child warn">Needs approval <span>3</span></div>
+              <div class="folder-child">Needs masking review <span>0</span></div>
+              <div class="folder-child">Parser failed <span>0</span></div>
+              <div class="folder-child">Superseded facts <span>0</span></div>
+            </div>
+          </aside>
+
+          <section class="workspace">
+            <div class="workspace-head">
+              <div>
+                <h2>API/file transfers</h2>
+                <p>
+                  This folder is selected because the dropped file looks like
+                  integration topology. The user should not have to manually
+                  discover this template.
+                </p>
+              </div>
+              <button>Drop files here</button>
+            </div>
+
+            <div class="dropzone">
+              <div>
+                <strong>Drop Integration topology files here</strong>
+                <p>
+                  CSV commits through the live structured path. XLSX, markdown,
+                  PDF, and ZIP enter controlled review.
+                </p>
+              </div>
+              <button class="button secondary">Choose files</button>
+            </div>
+
+            <div class="file-list">
+              <div class="section-head">
+                <h3>Files in this folder</h3>
+                <span>current-state context</span>
+              </div>
+              <article class="file-row selected">
+                <div class="file-icon">CSV</div>
+                <div>
+                  <div class="file-name">06_api_file_transfer_landscape.csv</div>
+                  <div class="file-meta">
+                    Integration Lead - endpoints and credential references masked
+                  </div>
+                </div>
+                <span class="status amber">Preview</span>
+              </article>
+              <article class="file-row">
+                <div class="file-icon">CSV</div>
+                <div>
+                  <div class="file-name">04_cmdb_application_portfolio.csv</div>
+                  <div class="file-meta">
+                    Enterprise Architecture - host and IP fields masked
+                  </div>
+                </div>
+                <span class="status green">Loaded</span>
+              </article>
+            </div>
+
+            <div class="file-list">
+              <div class="section-head">
+                <h3>Recommended next files</h3>
+                <span>for Kyriba proof</span>
+              </div>
+              <article class="file-row">
+                <div class="file-icon">CSV</div>
+                <div>
+                  <div class="file-name">10_vendor_contract_inventory.csv</div>
+                  <div class="file-meta">
+                    Procurement - contract references masked, metadata only
+                  </div>
+                </div>
+                <span class="status green">Loadable</span>
+              </article>
+              <article class="file-row">
+                <div class="file-icon">CSV</div>
+                <div>
+                  <div class="file-name">14_evidence_pattern_output_trace.csv</div>
+                  <div class="file-meta">
+                    Steward - links evidence to activated patterns and outputs
+                  </div>
+                </div>
+                <span class="status green">Loadable</span>
+              </article>
+            </div>
+          </section>
+
+          <aside class="inspector">
+            <h2 class="pane-title">Selected file</h2>
+            <section class="card">
+              <h3>06_api_file_transfer_landscape.csv</h3>
+              <p>
+                AbarVa detected Integration topology from headers and the active
+                folder. The user reviews the mapping instead of configuring it.
+              </p>
+            </section>
+            <section class="card">
+              <div class="kv"><span>Template</span><strong>Integration topology</strong></div>
+              <div class="kv"><span>Record ID</span><strong>edge_id</strong></div>
+              <div class="kv"><span>Display title</span><strong>business_purpose</strong></div>
+              <div class="kv"><span>Destination</span><strong>Enterprise context</strong></div>
+              <div class="kv"><span>Safety</span><strong>masked refs only</strong></div>
+            </section>
+            <section class="card">
+              <h3>Downstream use</h3>
+              <p>
+                Source RFP, integration scoring weight, cutover risk, and cost
+                model assumptions.
+              </p>
+            </section>
+          </aside>
+
+          <aside class="upload-drawer" aria-label="Upload workflow drawer">
+            <header class="drawer-head">
+              <div class="eyebrow">Upload workflow</div>
+              <h2>Review detected file mapping</h2>
+              <p class="lead" style="font-size: 13px">
+                File selected: <strong>06_api_file_transfer_landscape.csv</strong>
+              </p>
+            </header>
+
+            <div class="drawer-body">
+              <section class="workflow-step active">
+                <h3>1. Confirm destination</h3>
+                <div class="choice-row selected">
+                  <span class="radio"></span>
+                  <div>
+                    <div class="choice-title">Current-state context</div>
+                    <div class="choice-sub">
+                      Updates Lakeshore integration topology facts after approval.
+                    </div>
+                  </div>
+                  <span class="status green">Suggested</span>
+                </div>
+                <div class="choice-row">
+                  <span></span>
+                  <div>
+                    <div class="choice-title">Source event evidence</div>
+                    <div class="choice-sub">
+                      Attach only to one sourcing event; does not update current state.
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="workflow-step">
+                <h3>2. Confirm template</h3>
+                <div class="field-grid">
+                  <div class="field">
+                    <strong>Detected template</strong>
+                    <span>Integration topology</span>
+                  </div>
+                  <div class="field">
+                    <strong>Confidence</strong>
+                    <span>High - 4/4 required fields present</span>
+                  </div>
+                  <div class="field">
+                    <strong>Record ID</strong>
+                    <span>edge_id</span>
+                  </div>
+                  <div class="field">
+                    <strong>Display title</strong>
+                    <span>business_purpose</span>
+                  </div>
+                </div>
+              </section>
+
+              <section class="workflow-step">
+                <h3>3. Safety and masking scan</h3>
+                <div class="risk-line">
+                  <span class="status green">Pass</span>
+                  No PHI, PII, payment-card, or raw credential patterns found.
+                </div>
+                <div class="risk-line">
+                  <span class="status green">Masked</span>
+                  endpoint_or_path_masked uses safe path structure.
+                </div>
+                <div class="risk-line">
+                  <span class="status amber">Review</span>
+                  credential_reference_masked is treated as a reference, not a secret.
+                </div>
+              </section>
+
+              <section class="workflow-step">
+                <h3>4. Preview records</h3>
+                <table class="preview">
+                  <thead>
+                    <tr>
+                      <th>edge</th>
+                      <th>source</th>
+                      <th>target</th>
+                      <th>type</th>
+                      <th>masked path</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>INT-001</td>
+                      <td>APP-SAP-ECC</td>
+                      <td>APP-KYRIBA</td>
+                      <td>SFTP</td>
+                      <td>sftp://host-****/masked/path</td>
+                    </tr>
+                    <tr>
+                      <td>INT-003</td>
+                      <td>APP-NETSUITE</td>
+                      <td>APP-KYRIBA</td>
+                      <td>REST API</td>
+                      <td>api://system/***/resource</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </section>
+
+              <section class="workflow-step">
+                <h3>5. Commit plan</h3>
+                <div class="field-grid">
+                  <div class="field">
+                    <strong>Records</strong>
+                    <span>8 integration edges</span>
+                  </div>
+                  <div class="field">
+                    <strong>Supersedes</strong>
+                    <span>0 active facts</span>
+                  </div>
+                  <div class="field">
+                    <strong>Evidence use</strong>
+                    <span>RFP, scoring, cost, risk</span>
+                  </div>
+                  <div class="field">
+                    <strong>Next state</strong>
+                    <span>Queued for retrieval refresh</span>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <footer class="drawer-foot">
+              <button class="button secondary">Cancel</button>
+              <div style="display: flex; gap: 10px">
+                <button class="button secondary">Save for review</button>
+                <button>Approve and commit</button>
+              </div>
+            </footer>
+          </aside>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

@@ -254,7 +254,19 @@ describe("buildLoadStudioView", () => {
           id: "org-roles",
           label: "Org, roles, and teams",
           formats: expect.arrayContaining(["CSV", "XLSX", "JSON"]),
-          action: { label: "Load CSV", href: "/admin/context-layer/uploads" },
+          action: {
+            label: "Upload",
+            href: "/admin/context-layer/uploads?template=org-roles",
+          },
+        }),
+        expect.objectContaining({
+          id: "integration-topology",
+          label: "Integration topology",
+          formats: expect.arrayContaining(["CSV", "JSON", "JSONL"]),
+          action: {
+            label: "Upload",
+            href: "/admin/context-layer/uploads?template=integration-topology",
+          },
         }),
         expect.objectContaining({
           id: "annual-quarterly-reports",
