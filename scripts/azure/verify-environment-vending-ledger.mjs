@@ -65,6 +65,20 @@ if (runbook) {
 if (ledger) {
   record('ledger.version', ledger.ledgerVersion === '2026-06', 'expected 2026-06');
   record('ledger.entriesArray', Array.isArray(ledger.entries), 'entries must be an array');
+  record(
+    'ledger.hardApprovalGates',
+    Array.isArray(ledger.hardApprovalGates) &&
+      [
+        'subscription_creation',
+        'management_group_assignment',
+        'broad_rbac_assignment',
+        'budget_creation_or_increase',
+        'product_prod_deploy',
+        'client_prod_data_action',
+        'dns_change',
+      ].every((gate) => ledger.hardApprovalGates.includes(gate)),
+    'ledger must preserve hard approval gates',
+  );
   const first = Array.isArray(ledger.entries) ? ledger.entries[0] : null;
   record('ledger.templateEntryPresent', Boolean(first), 'template must include at least one example entry');
   if (first) {
@@ -76,18 +90,58 @@ if (ledger) {
     record('ledger.entry.evidencePresent', Boolean(first.evidence));
     record('ledger.entry.exceptionsArray', Array.isArray(first.exceptions));
   }
+  for (const entry of ledger.entries ?? []) {
+    record(
+      `ledger.${entry.environmentKey}.statusPlanned`,
+      entry.status === 'planned',
+      'ledger template entries must remain planned until explicit approval',
+    );
+    record(
+      `ledger.${entry.environmentKey}.approvalRequired`,
+      entry.approval?.required === true,
+      'all environment creation requires explicit approval',
+    );
+    record(
+      `ledger.${entry.environmentKey}.subscriptionIdNull`,
+      entry.subscriptionId === null,
+      'template must not contain real subscription ids',
+    );
+    record(
+      `ledger.${entry.environmentKey}.creationOrder`,
+      Number.isInteger(entry.scope?.creationOrder) && entry.scope.creationOrder > 0,
+      'each entry must have a positive creationOrder',
+    );
+  }
 }
 
 if (manifest && ledger) {
   const productKeys = new Set((manifest.productEnvironments ?? []).map((env) => env.key));
   const clientKeys = new Set((manifest.clientEnvironmentPattern?.environments ?? []).map((env) => env.key));
   const ledgerKeys = new Set((ledger.entries ?? []).map((entry) => entry.environmentKey));
+  const expectedKeys = [...productKeys, ...clientKeys];
   record('manifest.includes.product-dev', productKeys.has('product-dev'));
   record('manifest.includes.product-preview', productKeys.has('product-preview'));
   record('manifest.includes.product-prod', productKeys.has('product-prod'));
   record('manifest.includes.client-preprod', clientKeys.has('client-preprod'));
   record('manifest.includes.client-prod', clientKeys.has('client-prod'));
-  record('ledger.templateKeyKnown', productKeys.has([...ledgerKeys][0]) || clientKeys.has([...ledgerKeys][0]));
+  for (const key of expectedKeys) {
+    record(`ledger.includes.${key}`, ledgerKeys.has(key), 'ledger must include every factory environment key');
+  }
+  record(
+    'ledger.onlyKnownKeys',
+    [...ledgerKeys].every((key) => productKeys.has(key) || clientKeys.has(key)),
+    'ledger contains an unknown environment key',
+  );
+  const ordered = [...(ledger.entries ?? [])]
+    .map((entry) => [entry.environmentKey, entry.scope?.creationOrder])
+    .sort((a, b) => a[1] - b[1])
+    .map(([key]) => key);
+  record(
+    'ledger.creationOrder',
+    JSON.stringify(ordered) ===
+      JSON.stringify(['product-dev', 'product-preview', 'product-prod', 'client-preprod', 'client-prod']),
+    `unexpected order: ${ordered.join(', ')}`,
+  );
 }
 
 const summary = checks.reduce(
