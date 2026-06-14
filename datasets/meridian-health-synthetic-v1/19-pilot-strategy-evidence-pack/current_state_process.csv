@@ -1,0 +1,9 @@
+process_name,step,owner_role,system,pain_point,cycle_time_range,control_gap,evidence_source,move_phase
+Prior auth and denials automation,Intake request by payer and service line,Prior Auth Director,Prior auth platform,Manual triage varies by payer,1-3 days,Decision criteria not consistently structured,prior-auth-workqueue.csv,P2
+Prior auth and denials automation,Denial root cause review,Revenue Integrity Director,Claims clearinghouse,Root causes are categorized after denial not before appeal,weekly batch,Prevention loop not formalized,rcm-denials.csv,P2
+Payment integrity and leakage reduction,Leakage opportunity triage,VP Payment Integrity,Analytics mart,Recoverable dollars not ranked by confidence and effort,monthly,No standard prioritization rubric,rcm-denials.csv,P2
+Call center and member experience optimization,Call reason intake,VP Member Experience,Contact center platform,Queue metrics exist but transcript and intent taxonomy are not strategy-ready,real time to weekly,No approved transcript minimization rule,patient-access-contact-center.csv,P2
+Cost transparency by product provider population,Service-line cost review,CFO FP&A,Finance workbook,Avoidable cost pools not tied to operational levers,monthly,Cost model lineage not explicit,service-line-pnl.csv,P2
+Provider quality and performance,Quality gap review,Chief Quality Officer,Quality dashboard,Attribution and intervention owner are not consistently shown,monthly,Provider-level detail not loaded,value-based-care-panel.csv,P2
+Unified clinical and claims data foundation,Data product review,Chief Data Officer,Lakehouse / semantic layer,Data domains have variable quality and PHI classification,daily to monthly,Minimum necessary data policy must be explicit,data-platform-lineage.csv,P2
+Automated close and reporting,Close package review,Controller,Finance reporting,Close steps and manual reconciliations not yet captured,monthly,Close control evidence missing,finance close intake needed,P2

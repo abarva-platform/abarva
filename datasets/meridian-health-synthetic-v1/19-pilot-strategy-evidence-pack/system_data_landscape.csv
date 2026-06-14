@@ -1,0 +1,8 @@
+system_name,category,owner_role,data_domain,integration_role,known_gap,criticality,source,sensitivity,move_phase
+Epic Clarity,Clinical data,VP Clinical Applications,clinical risk panels,source system,Use summary-level extracts only for strategy,high,data-platform-lineage.csv,restricted-summary,P2
+Claims clearinghouse,Claims / RCM,Revenue Integrity Director,denials mart,source system,No raw claim lines in strategy pilot,high,data-platform-lineage.csv,restricted-summary,P2
+Prior auth platform,Plan operations,Prior Auth Director,prior authorization,workflow system,Payer-specific criteria drift not fully modeled,high,prior-auth-workqueue.csv,internal,P2
+Contact center platform,Member experience,VP Member Experience,patient access,workflow system,No raw transcripts; use queue metrics and intent taxonomy,medium,patient-access-contact-center.csv,internal,P2
+Finance workbook,Finance,CFO FP&A,service-line P&L,management reporting,GL detail not loaded for strategy pilot,medium,service-line-pnl.csv,internal,P2
+Lakehouse semantic layer,Data platform,Chief Data Officer,cross-domain data products,semantic layer,Ownership and quality thresholds need approval,high,data-platform-lineage.csv,internal,P3
+Vendor contract repository,Procurement,VP Procurement,vendor and BAA terms,evidence source,AI clause posture varies by vendor,medium,vendor-baa-contracts.csv,confidential-summary,P2

@@ -23,9 +23,13 @@
   "context_chunks": 320,
   "upload_templates": 26,
   "upload_scenarios": 8,
+  "pilot_strategy_templates": 10,
+  "pilot_strategy_use_cases": 7,
+  "pilot_strategy_corpus_backlog": 7,
+  "pilot_strategy_corpus_starters": 7,
   "contract_pdfs": 32,
   "charter_pdfs": 12,
   "expected_sentinel_questions": 14,
-  "min_pack_files": 125,
+  "min_pack_files": 139,
   "app_run_cost_total_usd": 172000000
 }
