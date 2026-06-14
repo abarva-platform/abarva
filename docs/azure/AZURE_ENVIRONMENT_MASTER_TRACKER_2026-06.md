@@ -11,6 +11,11 @@ keeps the two environment models separate:
 No Azure subscriptions or resources are created by this tracker. Azure mutation
 requires `docs/approvals/AZURE_MUTATION_APPROVED.md`.
 
+Human approval request packet:
+`docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.md`. Approval template:
+`docs/approvals/AZURE_MUTATION_APPROVAL_TEMPLATE.md`. Neither file authorizes
+Azure mutation by itself.
+
 ## Progress Math
 
 | Metric                                       | Value |
@@ -63,3 +68,10 @@ The next human approval request, when Anand is ready, should be narrow:
 
 Do not request Product Preview, Product Prod, Client Preprod, Client Prod, DNS,
 traffic shifts, or client-prod data actions in the first approval.
+
+Review packet ready:
+
+- `docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.md`
+- `docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.json`
+- `docs/approvals/AZURE_MUTATION_APPROVAL_TEMPLATE.md`
+- Verifier: `npm run azure:product-dev-approval:verify`
