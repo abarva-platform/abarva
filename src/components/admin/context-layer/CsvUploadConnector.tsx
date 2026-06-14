@@ -59,15 +59,17 @@ interface CsvUploadConnectorProps {
   tenantKey: string;
   tenantName: string;
   initialTemplateId?: string;
+  mode?: "package" | "single";
 }
 
 const inputStyle = {
   border: "1px solid #d8d2c4",
   borderRadius: 6,
-  padding: "9px 10px",
+  padding: "7px 9px",
   background: "#fff",
   color: "#171717",
   fontFamily: "DM Sans, sans-serif",
+  fontSize: 13,
 };
 
 const workflowSteps = [
@@ -137,7 +139,13 @@ const TEMPLATE_HEADER_SIGNATURES = [
   },
   {
     templateId: "financial-kpi-workbook",
-    requiredHeaders: ["period", "metric", "value", "currency_or_unit", "segment"],
+    requiredHeaders: [
+      "period",
+      "metric",
+      "value",
+      "currency_or_unit",
+      "segment",
+    ],
     titleColumns: ["metric", "segment", "period"],
   },
   {
@@ -204,6 +212,7 @@ export function CsvUploadConnector({
   tenantKey,
   tenantName,
   initialTemplateId,
+  mode = "single",
 }: CsvUploadConnectorProps) {
   const [headers, setHeaders] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
@@ -394,19 +403,25 @@ export function CsvUploadConnector({
         background: "#fff",
         border: "1px solid #d8d2c4",
         borderRadius: 8,
-        padding: 18,
+        padding: 14,
         fontFamily: "DM Sans, sans-serif",
         display: "grid",
-        gap: 14,
+        gap: 12,
       }}
     >
       <div>
-        <h2 style={{ fontFamily: "Georgia, serif", fontSize: 24, margin: 0 }}>
-          Add {tenantName}&apos;s data
-        </h2>
-        <p style={{ color: "#514c43", margin: "6px 0 0", lineHeight: 1.5 }}>
-          Drop or choose a file. AbarVa will preserve it, check the tenant,
-          validate the mapping, and only write context after the gates pass.
+        <h2 style={{ fontSize: 16, lineHeight: 1.25, margin: 0 }}>Add data</h2>
+        <p
+          style={{
+            color: "#514c43",
+            fontSize: 13,
+            margin: "4px 0 0",
+            lineHeight: 1.45,
+          }}
+        >
+          {mode === "package"
+            ? `Start with a manifest and related files for ${tenantName}. Structured files can be mapped here; rich documents stay in review.`
+            : `Files for ${tenantName} stay in review until the mapping and attestation are approved.`}
         </p>
       </div>
 
@@ -448,11 +463,11 @@ export function CsvUploadConnector({
           style={{
             display: "grid",
             gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
-            gap: 12,
+            gap: 10,
           }}
         >
-          <label style={{ display: "grid", gap: 6 }}>
-            <span>What kind of data is this?</span>
+          <label style={{ display: "grid", gap: 5 }}>
+            <span style={{ fontSize: 12, fontWeight: 700 }}>Data area</span>
             <select
               style={inputStyle}
               value={templateId}
@@ -496,18 +511,18 @@ export function CsvUploadConnector({
             style={{
               border: "1px solid #e3decf",
               borderRadius: 6,
-              padding: 10,
+              padding: "8px 10px",
               background: "#F8F7F4",
               color: "#514c43",
-              lineHeight: 1.45,
+              fontSize: 12,
+              lineHeight: 1.4,
             }}
           >
-            <strong style={{ color: "#171717" }}>
+            <strong style={{ color: "#171717", display: "block" }}>
               Enterprise context update
             </strong>
-            <br />
-            Approved values become the latest active facts. Older matching
-            facts are superseded and kept in history.
+            Approved values become the latest active facts. Older matching facts
+            are superseded and kept in history.
           </div>
         </section>
 
@@ -515,38 +530,39 @@ export function CsvUploadConnector({
           style={{
             position: "relative",
             display: "grid",
-            placeItems: "center",
-            gap: 10,
-            minHeight: 168,
+            gridTemplateColumns: "minmax(0, 1fr) auto",
+            alignItems: "center",
+            gap: 14,
+            minHeight: 88,
             border: "1px dashed #b8b0a2",
-            borderRadius: 12,
+            borderRadius: 8,
             background: "#fbfaf7",
-            padding: 22,
-            textAlign: "center",
+            padding: "14px 16px",
+            textAlign: "left",
             cursor: "pointer",
           }}
         >
-          <span
-            style={{
-              fontFamily: "Georgia, serif",
-              fontSize: 22,
-              color: "#171717",
-            }}
-          >
-            Drop files or choose one structured file
-          </span>
-          <span style={{ color: "#6b665c", lineHeight: 1.45 }}>
-            CSV, JSON, JSONL, or YAML today. Excel, PDF, Word, PowerPoint, and
-            ZIP packages use the Advanced path until parser review is enabled.
+          <span style={{ display: "grid", gap: 4 }}>
+            <strong style={{ color: "#171717", fontSize: 14 }}>
+              {mode === "package"
+                ? "Choose the first setup package file"
+                : "Drop or choose a structured file"}
+            </strong>
+            <span style={{ color: "#6b665c", fontSize: 12.5, lineHeight: 1.4 }}>
+              {mode === "package"
+                ? "Upload the manifest first, then add the referenced files. ZIP packages use Advanced review until server-side unpack is proven."
+                : "CSV, JSON, JSONL, or YAML can commit here. Excel, PDF, Word, PowerPoint, and ZIP use the Advanced review path."}
+            </span>
           </span>
           <span
             style={{
               border: "1px solid #171717",
-              borderRadius: 999,
-              padding: "8px 14px",
+              borderRadius: 6,
+              padding: "7px 11px",
               background: "#171717",
               color: "#fff",
-              fontWeight: 800,
+              fontSize: 13,
+              fontWeight: 700,
             }}
           >
             Choose file
@@ -720,9 +736,10 @@ export function CsvUploadConnector({
               border: "1px solid #e3decf",
               borderRadius: 6,
               padding: 12,
-              background: schemaPreflight.missingRequiredFields.length > 0
-                ? "#FFF9EC"
-                : "#F4F8F1",
+              background:
+                schemaPreflight.missingRequiredFields.length > 0
+                  ? "#FFF9EC"
+                  : "#F4F8F1",
               display: "grid",
               gap: 8,
             }}
