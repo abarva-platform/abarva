@@ -267,12 +267,12 @@ const clerkProtectedProxy = clerkMiddleware(
     // was demoted to a tab inside /admin Overview — see AdminTenantTab).
     const homeToAdminMap: Record<string, string> = {
       "/home/admin": "/admin",
-      "/home/data-loads": "/admin/setup",
-      "/home/data-trust": "/admin/data-trust",
-      "/home/agent-readiness": "/admin/agent-readiness",
-      "/home/connectors": "/admin/connectors",
+      "/home/data-loads": "/admin",
+      "/home/data-trust": "/admin",
+      "/home/agent-readiness": "/admin",
+      "/home/connectors": "/admin",
       "/home/configuration": "/admin",
-      "/home/tenant-profile": "/admin?tab=tenant",
+      "/home/tenant-profile": "/admin",
     };
     const exactHomeMatch = homeToAdminMap[request.nextUrl.pathname];
     if (exactHomeMatch) {
@@ -295,11 +295,7 @@ const clerkProtectedProxy = clerkMiddleware(
     }
     // /home/admin/<path> → /admin/<path> (preserve stale admin bookmarks).
     if (request.nextUrl.pathname.startsWith("/home/admin/")) {
-      const sub = request.nextUrl.pathname.slice("/home/admin/".length);
-      const url = new URL(
-        "/admin/" + sub + request.nextUrl.search,
-        request.url,
-      );
+      const url = new URL("/admin" + request.nextUrl.search, request.url);
       return withProductionReadinessNoStoreHeaders(
         request,
         NextResponse.redirect(url, 301),
@@ -307,34 +303,26 @@ const clerkProtectedProxy = clerkMiddleware(
     }
     // /home/connectors/<id> → /admin/connectors/<id> (preserve detail-page links).
     if (request.nextUrl.pathname.startsWith("/home/connectors/")) {
-      const sub = request.nextUrl.pathname.slice("/home/connectors/".length);
-      const url = new URL(
-        "/admin/connectors/" + sub + request.nextUrl.search,
-        request.url,
-      );
+      const url = new URL("/admin" + request.nextUrl.search, request.url);
       return withProductionReadinessNoStoreHeaders(
         request,
         NextResponse.redirect(url, 301),
       );
     }
 
-    // PR-2 (2026-05-30) · Setup/Admin route consolidation — see
-    // docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md §5.5. Redundant
-    // `/admin/users` route deleted in favor of the richer
-    // `/admin/users-access`. Invite flow demoted from top-level
-    // route to modal launched from Users & Access. Atlas-named
-    // routes either deprecated or relocated.
+    // 2026-06-14 · Admin/Setup sunset.
+    // The canonical Setup experience is now one Stripe-like surface at
+    // /admin. Legacy /admin/* UI pages remain in the repo only as retired
+    // implementation detail while the route tree is drained. Keep APIs
+    // under /api/admin/* untouched; this branch handles browser pages only.
     const adminRouteConsolidationMap: Record<string, string> = {
-      "/admin/data-load": "/admin/setup",
-      "/admin/data-loads": "/admin/setup",
-      "/admin/users": "/admin/users-access",
-      "/admin/invite": "/admin/users-access?invite=open",
-      "/admin/agents/atlas": "/admin/cross-program-signals",
-      "/admin/atlas/traces": "/engineering/traces",
-      // Wave 1 PR-3 (2026-05-30) · Tenant configuration is demoted from a
-      // standalone route to a tab inside /admin Overview. See
-      // SETUP_AUDIT_2026-05-30_VERDICT §5.5 and AdminOverviewTabs.
-      "/admin/tenant": "/admin?tab=tenant",
+      "/admin/data-load": "/admin",
+      "/admin/data-loads": "/admin",
+      "/admin/users": "/admin",
+      "/admin/invite": "/admin",
+      "/admin/agents/atlas": "/admin",
+      "/admin/atlas/traces": "/admin",
+      "/admin/tenant": "/admin",
     };
     const consolidationMatch =
       adminRouteConsolidationMap[request.nextUrl.pathname];
@@ -348,6 +336,16 @@ const clerkProtectedProxy = clerkMiddleware(
         incoming.forEach((value, key) => {
           if (!url.searchParams.has(key)) url.searchParams.set(key, value);
         });
+      }
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(url, 301),
+      );
+    }
+    if (request.nextUrl.pathname.startsWith("/admin/")) {
+      const url = new URL("/admin", request.url);
+      if (request.nextUrl.pathname !== "/admin/setup") {
+        url.searchParams.set("from", request.nextUrl.pathname);
       }
       return withProductionReadinessNoStoreHeaders(
         request,
@@ -379,15 +377,9 @@ const clerkProtectedProxy = clerkMiddleware(
       );
     }
     if (request.nextUrl.pathname.startsWith("/setup/")) {
-      const sub = request.nextUrl.pathname.slice("/setup/".length);
-      const homeCandidate = "/home/" + sub;
-      const target = homeToAdminMap[homeCandidate] ?? homeCandidate;
       return withProductionReadinessNoStoreHeaders(
         request,
-        NextResponse.redirect(
-          new URL(target + request.nextUrl.search, request.url),
-          301,
-        ),
+        NextResponse.redirect(new URL("/admin", request.url), 301),
       );
     }
 
