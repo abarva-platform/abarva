@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds a synthetic Kyriba evidence pack and tightens the Admin context upload UI so operators can distinguish enterprise current-state updates from Source event evidence. The upload receipt now reports fact supersession counts and explains the evidence-to-output trace expected for generated artifacts.
+Adds a synthetic Kyriba evidence pack and tightens the Admin data-load experience so operators can distinguish enterprise current-state updates from Source event evidence. The setup page now behaves like a clean data cabinet instead of mixing format education, template selection, and upload controls in one busy viewport. The focused upload workspace asks for the data area up front, supports template-prefilled links, auto-detects common structured templates from CSV headers, and reports fact supersession counts in the load receipt.
 
 The synthetic workbooks include an `Instructions + Masking` tab so buyers can see how the demo data was generated, what fields a real client can safely provide, and what sensitive fields should be masked or excluded.
 
@@ -31,6 +31,9 @@ The synthetic workbooks include an `Instructions + Masking` tab so buyers can se
 ## Changes Included
 
 - `src/components/admin/context-layer/CsvUploadConnector.tsx`
+- `src/components/admin/SetupDataLoadCenter.tsx`
+- `src/app/(maestro)/admin/context-layer/uploads/page.tsx`
+- `src/lib/admin/setup-load-studio-view.ts`
 - `src/lib/context-ingestion/admin-structured-context-promotion.ts`
 - `src/lib/context-ingestion/csv-upload-connector.ts`
 - `datasets/lakeshore-kyriba-synthetic-v1/source_uploads/*`
@@ -43,20 +46,27 @@ The synthetic workbooks include an `Instructions + Masking` tab so buyers can se
 - PASS: Generated all Kyriba synthetic source-upload files.
 - PASS: Added workbook-level `Instructions + Masking` tabs and a non-workbook upload sensitivity guide.
 - PASS: Added a reviewable Admin Data Cabinet HTML wireframe before changing runtime UI.
+- PASS: Redesigned the Admin Data Loads page into a file-cabinet/table overview with a single Upload action.
+- PASS: Moved the embedded upload widget out of the setup overview and kept the actual load flow in the focused upload workspace.
+- PASS: Added template-prefilled upload links such as `/admin/context-layer/uploads?template=integration-topology`.
+- PASS: Added upload-workspace template auto-detection for integration topology, CMDB/application portfolio, vendor contracts, financial KPI, and org-role CSV headers.
 - PASS: Imported each generated `.xlsx` workbook and verified expected sheet names.
 - PASS: Ran `npx eslint` on changed TypeScript and generator files.
+- PASS: Ran focused Jest tests for setup page source contract and setup load-studio view model.
 - PASS: Ran focused Jest tests for context upload connector and CSV upload route.
 - PASS: Ran `git diff --check`.
 - PASS: Ran `npm run release:check -- --base origin/main --head HEAD`.
+- BLOCKED: Local browser render could not run from this linked worktree because Turbopack rejected the `node_modules` symlink (`Symlink [project]/node_modules is invalid, it points out of the filesystem root`).
+- NOT RUN: Full `tsc --noEmit` did not complete in this linked worktree during the interactive check; previous full-repo typecheck attempts in this slice were already blocked by known missing dev dependencies (`@azure-rest/ai-document-intelligence`, `@axe-core/playwright`).
 - NOT RUN: Live tenant load, embedding refresh, Source RFP generation, and end-to-end evidence-to-output verification are intentionally deferred to the next slice.
 
 ## Rollout Plan
 
-Merge to main. The UI copy and receipt changes become active with the next app deploy. The dataset is available in-repo for governed loading or demo review.
+Merge to main. The data-cabinet overview, focused upload workspace, prefilled template links, and receipt changes become active with the next app deploy. The dataset is available in-repo for governed loading or demo review.
 
 ## Rollback Plan
 
-Revert this release commit. Dataset removal is non-runtime. UI rollback restores the previous upload receipt language.
+Revert this release commit. Dataset removal is non-runtime. UI rollback restores the previous setup overview, upload mapping flow, and receipt language.
 
 ## Audit Evidence
 

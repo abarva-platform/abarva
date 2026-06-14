@@ -47,23 +47,24 @@ describe("/admin/setup data loads page source", () => {
     expect(source).not.toContain("buildSetupDataLoadCenterModel");
   });
 
-  it("renders the v2 operator workflow: identity, status strip, workflow rail, readiness table, controls, audit trail", () => {
-    expect(componentSource).toContain("CsvUploadConnector");
+  it("renders the v3 file-cabinet workflow: identity, status strip, cabinet table, controls, audit trail", () => {
+    expect(componentSource).not.toContain("CsvUploadConnector");
     expect(componentSource).toContain("Load data for {tenant.name}");
-    expect(componentSource).toContain("Load data here");
-    expect(componentSource).toContain("view.templateGuide.formatSupport.map");
+    expect(componentSource).toContain("Data cabinet");
+    expect(componentSource).toContain("Client data cabinet");
+    expect(componentSource).toContain("Upload workflow preview");
     expect(componentSource).toContain(
       "view.templateGuide.starterTemplates.map",
     );
-    expect(componentSource).toContain("Governed load workflow");
-    expect(componentSource).toContain("view.workflow.map");
-    expect(componentSource).toContain("Loaded data by dimension");
+    expect(componentSource).not.toContain("Formats by governed path");
+    expect(componentSource).not.toContain("view.templateGuide.formatSupport.map");
+    expect(componentSource).not.toContain("view.workflow.map");
     expect(componentSource).toContain("view.readiness.map");
     expect(componentSource).toContain("view.metrics.map");
-    expect(componentSource).toContain("view.controls.map");
+    expect(componentSource).toContain("view.controls.slice(0, 4).map");
     expect(componentSource).toContain("Audit trail");
     expect(componentSource).toContain("view.ledger");
-    expect(componentSource).toContain("Start a governed load");
+    expect(componentSource).toContain("Upload file");
   });
 
   it("removes the implementation-doc sections the audit flagged (off-page now)", () => {
@@ -109,10 +110,10 @@ describe("/admin/setup data loads page source", () => {
     expect(viewSource).not.toContain('"#template-library"');
   });
 
-  it("keeps the live upload control tenant-scoped from the server page", () => {
+  it("keeps the focused upload route tenant-scoped from the server page", () => {
     expect(source).toContain("clientId={tenant.clientId}");
-    expect(componentSource).toContain("clientId={clientId}");
-    expect(componentSource).toContain("tenantName={tenant.name}");
+    expect(componentSource).toContain("view.templateGuide.uploadAction.href");
+    expect(componentSource).not.toContain("clientId={clientId}");
   });
 
   it("states that data loading is scoped to the active client only", () => {

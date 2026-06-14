@@ -58,6 +58,7 @@ interface CsvUploadConnectorProps {
   clientId: string;
   tenantKey: string;
   tenantName: string;
+  initialTemplateId?: string;
 }
 
 const inputStyle = {
@@ -102,6 +103,81 @@ const sourceEventReceiptSteps = [
   "Generated RFPs, scorecards, and cost models cite event evidence plus approved enterprise context separately.",
 ];
 
+const TEMPLATE_HEADER_SIGNATURES = [
+  {
+    templateId: "integration-topology",
+    requiredHeaders: [
+      "edge_id",
+      "source_app_id",
+      "target_app_id",
+      "integration_type",
+    ],
+    titleColumns: ["business_purpose", "integration_type", "edge_id"],
+  },
+  {
+    templateId: "application-portfolio",
+    requiredHeaders: [
+      "app_id",
+      "name",
+      "criticality",
+      "owner_role",
+      "system_of_record",
+    ],
+    titleColumns: ["name", "app_id"],
+  },
+  {
+    templateId: "vendor-contracts",
+    requiredHeaders: [
+      "vendor_id",
+      "vendor_name",
+      "annual_value_usd",
+      "renewal_date",
+    ],
+    titleColumns: ["vendor_name", "vendor_id"],
+  },
+  {
+    templateId: "financial-kpi-workbook",
+    requiredHeaders: ["period", "metric", "value", "currency_or_unit", "segment"],
+    titleColumns: ["metric", "segment", "period"],
+  },
+  {
+    templateId: "org-roles",
+    requiredHeaders: ["person_id", "name", "level", "role", "manager_id"],
+    titleColumns: ["name", "role", "person_id"],
+  },
+] as const;
+
+function normalizeHeader(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function detectTemplateFromHeaders(headers: string[]): {
+  templateId: string;
+  titleColumn: string;
+} | null {
+  const normalizedToRaw = new Map(
+    headers.map((header) => [normalizeHeader(header), header]),
+  );
+  for (const signature of TEMPLATE_HEADER_SIGNATURES) {
+    if (
+      signature.requiredHeaders.every((header) =>
+        normalizedToRaw.has(normalizeHeader(header)),
+      )
+    ) {
+      const titleColumn =
+        signature.titleColumns
+          .map((header) => normalizedToRaw.get(normalizeHeader(header)))
+          .find((header): header is string => Boolean(header)) ?? "";
+      return { templateId: signature.templateId, titleColumn };
+    }
+  }
+  return null;
+}
+
 function splitHeaderLine(line: string): string[] {
   const headers: string[] = [];
   let current = "";
@@ -127,14 +203,16 @@ export function CsvUploadConnector({
   clientId,
   tenantKey,
   tenantName,
+  initialTemplateId,
 }: CsvUploadConnectorProps) {
   const [headers, setHeaders] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [fileFormat, setFileFormat] = useState<
     "csv" | "json" | "jsonl" | "yaml" | "unknown"
   >("unknown");
-  const [templateId, setTemplateId] = useState("application-portfolio");
-  const [showSpecificArea, setShowSpecificArea] = useState(false);
+  const [templateId, setTemplateId] = useState(
+    initialTemplateId ?? "application-portfolio",
+  );
   const [sourceRecordIdColumn, setSourceRecordIdColumn] = useState("");
   const [titleColumn, setTitleColumn] = useState("");
   const [selectedTextColumns, setSelectedTextColumns] = useState<string[]>([]);
@@ -225,14 +303,25 @@ export function CsvUploadConnector({
       text.split(/\r?\n/).find((line) => line.trim() !== "") ?? "";
     const parsedHeaders = splitHeaderLine(firstLine);
     setHeaders(parsedHeaders);
+    const detectedTemplate = detectTemplateFromHeaders(parsedHeaders);
+    if (
+      detectedTemplate &&
+      templates.some((item) => item.id === detectedTemplate.templateId)
+    ) {
+      setTemplateId(detectedTemplate.templateId);
+    }
     const idColumn =
       parsedHeaders.find((header) =>
         /(^|_)id$/i.test(header.replace(/[^a-z0-9]+/gi, "_")),
       ) ?? "";
     const nameColumn =
+      detectedTemplate?.titleColumn ??
       parsedHeaders.find((header) =>
-        /^(name|title|vendor_name|tool_name)$/i.test(header),
-      ) ?? "";
+        /^(name|title|vendor_name|tool_name|business_purpose|metric)$/i.test(
+          header,
+        ),
+      ) ??
+      "";
     setSourceRecordIdColumn(idColumn);
     setTitleColumn(nameColumn);
     setSelectedTextColumns(parsedHeaders.slice(0, 8));
@@ -322,100 +411,106 @@ export function CsvUploadConnector({
       </div>
 
       <section
-        aria-label="Upload destination"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
-          gap: 10,
-        }}
-      >
-        <div
-          style={{
-            border: "2px solid #171717",
-            borderRadius: 8,
-            background: "#F8F7F4",
-            padding: 12,
-            display: "grid",
-            gap: 6,
-          }}
-        >
-          <strong>Update enterprise context</strong>
-          <span style={{ color: "#514c43", lineHeight: 1.45 }}>
-            Use this lane for CMDB, org roles, ERP, integration topology,
-            financial baselines, and other current-state facts. New approved
-            values supersede older active facts by key.
-          </span>
-          <span
-            style={{
-              width: "fit-content",
-              border: "1px solid #171717",
-              borderRadius: 999,
-              padding: "4px 8px",
-              fontSize: 11,
-              fontWeight: 900,
-              letterSpacing: 0.4,
-              textTransform: "uppercase",
-            }}
-          >
-            Selected
-          </span>
-        </div>
-        <div
-          style={{
-            border: "1px solid #d8d2c4",
-            borderRadius: 8,
-            background: "#fff",
-            padding: 12,
-            display: "grid",
-            gap: 6,
-          }}
-        >
-          <strong>Attach to Source event</strong>
-          <span style={{ color: "#514c43", lineHeight: 1.45 }}>
-            Use the Source event workspace for vendor responses, RFP exhibits,
-            BAFO letters, and event-specific evidence. Those uploads preserve
-            versions and do not change tenant current state.
-          </span>
-          <span style={{ color: "#6b665c", fontSize: 12 }}>
-            Open the event workspace to attach event evidence.
-          </span>
-        </div>
-      </section>
-
-      <ol
         aria-label="Upload workflow"
         style={{
+          border: "1px solid #e3decf",
+          borderRadius: 8,
+          background: "#fbfaf7",
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-          gap: 8,
-          listStyle: "none",
-          margin: 0,
-          padding: 0,
+          gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+          overflow: "hidden",
         }}
       >
         {workflowSteps.map((step, index) => (
-          <li
+          <div
             key={step.label}
             style={{
-              border: "1px solid #e3decf",
-              borderRadius: 8,
-              background: index === 0 ? "#171717" : "#fbfaf7",
-              color: index === 0 ? "#fff" : "#514c43",
-              minHeight: 82,
-              padding: 10,
+              padding: 12,
+              borderRight:
+                index === workflowSteps.length - 1
+                  ? "none"
+                  : "1px solid #e3decf",
             }}
           >
-            <div style={{ fontSize: 12, fontWeight: 900 }}>
+            <strong style={{ display: "block", fontSize: 12 }}>
               {index + 1}. {step.label}
-            </div>
-            <div style={{ fontSize: 12, lineHeight: 1.4, marginTop: 6 }}>
+            </strong>
+            <span style={{ color: "#514c43", fontSize: 12, lineHeight: 1.4 }}>
               {step.detail}
-            </div>
-          </li>
+            </span>
+          </div>
         ))}
-      </ol>
+      </section>
 
       <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
+        <section
+          aria-label="File type and data area"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+            gap: 12,
+          }}
+        >
+          <label style={{ display: "grid", gap: 6 }}>
+            <span>What kind of data is this?</span>
+            <select
+              style={inputStyle}
+              value={templateId}
+              onChange={(event) => setTemplateId(event.target.value)}
+            >
+              <optgroup label="Context templates">
+                {generalTemplates.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.label}
+                  </option>
+                ))}
+              </optgroup>
+              {healthcareTemplates.length > 0 && (
+                <optgroup label="Meridian/PHS healthcare context">
+                  {healthcareTemplates.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {phsTemplates.length > 0 && (
+                <optgroup label="PHS command center phase 0">
+                  {phsTemplates.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              <optgroup label="Moves rate cards">
+                {RATE_CARD_TEMPLATE_DEFINITIONS.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.label}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+          </label>
+          <div
+            style={{
+              border: "1px solid #e3decf",
+              borderRadius: 6,
+              padding: 10,
+              background: "#F8F7F4",
+              color: "#514c43",
+              lineHeight: 1.45,
+            }}
+          >
+            <strong style={{ color: "#171717" }}>
+              Enterprise context update
+            </strong>
+            <br />
+            Approved values become the latest active facts. Older matching
+            facts are superseded and kept in history.
+          </div>
+        </section>
+
         <label
           style={{
             position: "relative",
@@ -485,71 +580,6 @@ export function CsvUploadConnector({
             </span>
           ) : null}
         </label>
-
-        <button
-          type="button"
-          onClick={() => setShowSpecificArea((current) => !current)}
-          style={{
-            border: 0,
-            background: "transparent",
-            color: "#171717",
-            cursor: "pointer",
-            fontFamily: "DM Sans, sans-serif",
-            fontSize: 14,
-            fontWeight: 800,
-            padding: 0,
-            textAlign: "left",
-            width: "fit-content",
-          }}
-        >
-          {showSpecificArea
-            ? "Hide specific-area mapping"
-            : "Load into a specific area"}
-        </button>
-
-        {showSpecificArea ? (
-          <label style={{ display: "grid", gap: 6 }}>
-            <span>Template</span>
-            <select
-              style={inputStyle}
-              value={templateId}
-              onChange={(event) => setTemplateId(event.target.value)}
-            >
-              <optgroup label="Context templates">
-                {generalTemplates.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                  </option>
-                ))}
-              </optgroup>
-              {healthcareTemplates.length > 0 && (
-                <optgroup label="Meridian/PHS healthcare context">
-                  {healthcareTemplates.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.label}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-              {phsTemplates.length > 0 && (
-                <optgroup label="PHS command center phase 0">
-                  {phsTemplates.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.label}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-              <optgroup label="Moves rate cards">
-                {RATE_CARD_TEMPLATE_DEFINITIONS.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
-          </label>
-        ) : null}
 
         {headers.length > 0 && !rateCardTemplate && (
           <div
@@ -690,7 +720,7 @@ export function CsvUploadConnector({
               border: "1px solid #e3decf",
               borderRadius: 6,
               padding: 12,
-              background: schemaPreflight.clarificationRequired
+              background: schemaPreflight.missingRequiredFields.length > 0
                 ? "#FFF9EC"
                 : "#F4F8F1",
               display: "grid",
@@ -706,7 +736,7 @@ export function CsvUploadConnector({
               }}
             >
               <strong>
-                {schemaPreflight.clarificationRequired
+                {schemaPreflight.missingRequiredFields.length > 0
                   ? "Schema clarification required"
                   : "Template fit confirmed"}
               </strong>
@@ -726,14 +756,25 @@ export function CsvUploadConnector({
             {schemaPreflight.unknownColumns.length > 0 && (
               <div>
                 <span style={{ fontWeight: 700 }}>
-                  Columns needing context:{" "}
+                  Extra evidence columns captured:{" "}
                 </span>
                 <span>{schemaPreflight.unknownColumns.join(", ")}</span>
               </div>
             )}
-            {schemaPreflight.clarificationRequests.length > 0 && (
+            {schemaPreflight.missingRequiredFields.length === 0 &&
+              schemaPreflight.unknownColumns.length > 0 && (
+                <p style={{ margin: 0, color: "#514c43", lineHeight: 1.45 }}>
+                  These columns are kept in the cited chunk text. They do not
+                  block commit unless a required template field is missing.
+                </p>
+              )}
+            {schemaPreflight.missingRequiredFields.length > 0 && (
               <ul style={{ margin: 0, paddingLeft: 18, color: "#514c43" }}>
                 {schemaPreflight.clarificationRequests
+                  .filter(
+                    (request) =>
+                      request.action === "supply_missing_required_field",
+                  )
                   .slice(0, 4)
                   .map((request) => (
                     <li key={`${request.action}:${request.field}`}>

@@ -44,6 +44,10 @@ const HREF = {
   verifier: "/admin/production-readiness",
 } as const;
 
+function uploadHrefForTemplate(templateId: string): string {
+  return `${HREF.upload}?template=${encodeURIComponent(templateId)}`;
+}
+
 export type StatusTone = "ready" | "attention" | "blocked" | "empty";
 export type MetricTone = "default" | "good" | "risk";
 export type StepState = "done" | "active" | "blocked" | "waiting";
@@ -215,7 +219,7 @@ function formatIsoDate(iso: string): string {
 function actionForStatus(tone: StatusTone): LoadStudioLink {
   switch (tone) {
     case "blocked":
-      return { label: "Start load", href: HREF.upload };
+      return { label: "Upload", href: HREF.upload };
     case "attention":
       return { label: "Resolve", href: HREF.ledger };
     case "ready":
@@ -295,7 +299,7 @@ function buildTemplateGuide(): LoadStudioTemplateGuide {
           ? "CSV upload is live now"
           : "Template-supported; controlled intake",
         action: canLoadCsvNow
-          ? { label: "Load CSV", href: HREF.upload }
+          ? { label: "Upload", href: uploadHrefForTemplate(template.id) }
           : { label: "View intake details", href: HREF.templates },
       };
     });
@@ -313,7 +317,7 @@ function buildTemplateGuide(): LoadStudioTemplateGuide {
       href: HREF.templates,
     },
     uploadAction: {
-      label: "Open upload workspace",
+      label: "Upload file",
       href: HREF.upload,
     },
   };
@@ -425,7 +429,7 @@ export function buildLoadStudioView(
     nextAction = {
       headline: `${firstBlocked.dimension} is blocked and needs a load.`,
       detail: `Load this dimension to ground ${tenantName}'s assistants. Then validate, approve, and commit.`,
-      action: { label: "Start load", href: HREF.upload },
+      action: { label: "Upload file", href: HREF.upload },
     };
   } else if (firstAttention) {
     nextAction = {

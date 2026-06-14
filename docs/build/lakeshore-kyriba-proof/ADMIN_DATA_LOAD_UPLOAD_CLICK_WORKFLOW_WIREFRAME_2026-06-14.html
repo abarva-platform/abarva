@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AbarVa Data Load Upload Click Workflow Wireframe</title>
+    <style>
+      :root {
+        --ink: #111827;
+        --muted: #667085;
+        --line: #d8d2c4;
+        --paper: #f8f7f4;
+        --white: #fff;
+        --blue: #1d4ed8;
+        --blue-soft: #eef4ff;
+        --green: #20623a;
+        --green-soft: #edf7ee;
+        --amber: #8a5b12;
+        --amber-soft: #fff7e6;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        --sans: Inter, ui-sans-serif, system-ui, -apple-system,
+          BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --serif: Georgia, "Times New Roman", serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #eeeae2;
+        color: var(--ink);
+        font-family: var(--sans);
+      }
+
+      .topbar {
+        height: 64px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 0 24px;
+        background: #030303;
+        color: var(--white);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 22px;
+        font-weight: 900;
+      }
+
+      .mark {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        background: linear-gradient(
+          135deg,
+          #f8f7f4 0 34%,
+          #009de8 35% 58%,
+          #111827 59%
+        );
+      }
+
+      .tenant {
+        padding-left: 18px;
+        border-left: 1px solid rgba(255, 255, 255, 0.2);
+        color: #eee7dc;
+        font-family: var(--serif);
+        font-style: italic;
+      }
+
+      .topnav {
+        margin-left: auto;
+        display: flex;
+        gap: 24px;
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 14px;
+        font-weight: 750;
+      }
+
+      .topnav .active {
+        color: var(--white);
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: 268px minmax(0, 1fr);
+        min-height: calc(100vh - 64px);
+      }
+
+      .admin-nav {
+        border-right: 1px solid var(--line);
+        background: #fbfaf7;
+        padding: 22px 18px;
+      }
+
+      .eyebrow {
+        color: var(--muted);
+        font: 800 11px var(--mono);
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      .admin-title {
+        margin: 8px 0 2px;
+        font-family: var(--serif);
+        font-size: 24px;
+        font-weight: 500;
+      }
+
+      .admin-sub {
+        margin: 0 0 22px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .admin-item {
+        margin: 2px -10px;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+
+      .admin-item.active {
+        background: var(--blue-soft);
+        color: var(--blue);
+        font-weight: 850;
+      }
+
+      .admin-item small {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      main {
+        min-width: 0;
+        padding: 24px 28px 32px;
+      }
+
+      h1,
+      h2 {
+        font-family: var(--serif);
+        font-weight: 500;
+      }
+
+      h1 {
+        margin: 6px 0 5px;
+        font-size: 34px;
+        line-height: 1.05;
+      }
+
+      .lead {
+        margin: 0;
+        max-width: 880px;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.45;
+      }
+
+      button {
+        border: 1px solid var(--ink);
+        border-radius: 7px;
+        background: var(--ink);
+        color: var(--white);
+        padding: 10px 15px;
+        font: 800 13px var(--sans);
+      }
+
+      .secondary {
+        background: var(--white);
+        color: var(--ink);
+        border-color: rgba(17, 24, 39, 0.18);
+      }
+
+      .canvas {
+        position: relative;
+        margin-top: 16px;
+        min-height: 730px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--white);
+        overflow: hidden;
+        box-shadow: 0 18px 45px rgba(17, 24, 39, 0.07);
+      }
+
+      .explorer {
+        display: grid;
+        grid-template-columns: 240px minmax(0, 1fr);
+        min-height: 730px;
+        opacity: 0.48;
+      }
+
+      .folders {
+        border-right: 1px solid var(--line);
+        background: #fbfaf7;
+        padding: 16px 12px;
+      }
+
+      .panel-title {
+        margin: 0 0 12px;
+        color: var(--muted);
+        font: 800 11px var(--mono);
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+
+      .folder-head,
+      .folder-child {
+        display: flex;
+        justify-content: space-between;
+        border-radius: 8px;
+      }
+
+      .folder-head {
+        margin-bottom: 4px;
+        padding: 8px 9px;
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .folder-head.active {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .folder-child {
+        margin: 2px 0 0 18px;
+        padding: 7px 8px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .folder-child.active {
+        background: var(--ink);
+        color: var(--white);
+        font-weight: 850;
+      }
+
+      .files {
+        padding: 18px;
+      }
+
+      .file-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border: 1px solid rgba(17, 24, 39, 0.12);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .file-table th,
+      .file-table td {
+        border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+        padding: 11px 12px;
+        text-align: left;
+        font-size: 12px;
+      }
+
+      .file-table th {
+        background: #fbfaf7;
+        color: var(--muted);
+        font: 800 10px var(--mono);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .status {
+        display: inline-flex;
+        border-radius: 999px;
+        padding: 4px 8px;
+        font: 850 10px var(--mono);
+        text-transform: uppercase;
+      }
+
+      .green {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .amber {
+        background: var(--amber-soft);
+        color: var(--amber);
+      }
+
+      .drawer {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: min(680px, 100%);
+        height: 100%;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        border-left: 1px solid var(--line);
+        background: #fff;
+        box-shadow: -28px 0 50px rgba(17, 24, 39, 0.22);
+      }
+
+      .drawer-head {
+        padding: 18px 22px 15px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .drawer-head h2 {
+        margin: 5px 0 5px;
+        font-size: 28px;
+      }
+
+      .drawer-body {
+        overflow: auto;
+        padding: 16px 22px 20px;
+        display: grid;
+        gap: 13px;
+      }
+
+      .drawer-foot {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        border-top: 1px solid var(--line);
+        background: #fbfaf7;
+        padding: 14px 22px;
+      }
+
+      .stepper {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 6px;
+        margin-top: 12px;
+      }
+
+      .step-pill {
+        border: 1px solid rgba(17, 24, 39, 0.1);
+        border-radius: 8px;
+        background: #fff;
+        padding: 8px;
+        min-height: 58px;
+      }
+
+      .step-pill.active {
+        border-color: rgba(29, 78, 216, 0.35);
+        background: var(--blue-soft);
+      }
+
+      .step-pill.done {
+        background: var(--green-soft);
+        border-color: rgba(32, 98, 58, 0.2);
+      }
+
+      .step-pill strong {
+        display: block;
+        font-size: 11px;
+      }
+
+      .step-pill span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 10px;
+      }
+
+      .card {
+        border: 1px solid rgba(17, 24, 39, 0.1);
+        border-radius: 10px;
+        background: #fff;
+        padding: 14px;
+      }
+
+      .card.active {
+        border-color: rgba(29, 78, 216, 0.3);
+        background: #f7faff;
+      }
+
+      .card h3 {
+        margin: 0 0 8px;
+        font-size: 14px;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.43;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .field {
+        border: 1px solid rgba(17, 24, 39, 0.1);
+        border-radius: 8px;
+        padding: 9px;
+        font-size: 12px;
+      }
+
+      .field span {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        margin-bottom: 3px;
+      }
+
+      .choice {
+        display: grid;
+        grid-template-columns: 18px minmax(0, 1fr) auto;
+        gap: 9px;
+        align-items: start;
+        border: 1px solid rgba(17, 24, 39, 0.1);
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 7px;
+      }
+
+      .choice.selected {
+        border-color: rgba(29, 78, 216, 0.35);
+        background: var(--blue-soft);
+      }
+
+      .radio {
+        width: 14px;
+        height: 14px;
+        margin-top: 2px;
+        border: 1px solid var(--blue);
+        border-radius: 999px;
+        background: radial-gradient(circle, var(--blue) 0 42%, transparent 45%);
+      }
+
+      .choice-title {
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      .choice-sub {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .preview {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+      }
+
+      .preview th,
+      .preview td {
+        border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+        padding: 7px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .preview th {
+        color: var(--muted);
+        font: 800 10px var(--mono);
+        text-transform: uppercase;
+      }
+
+      .receipt {
+        background: var(--green-soft);
+        border-color: rgba(32, 98, 58, 0.22);
+      }
+
+      @media (max-width: 1120px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+
+        .admin-nav {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand"><span class="mark"></span>AbarVa</div>
+      <div class="tenant">Lakeshore Holdings</div>
+      <nav class="topnav">
+        <span>Home</span>
+        <span>Intelligence</span>
+        <span>Moves</span>
+        <span>Source</span>
+        <span>Tower</span>
+        <span class="active">Admin</span>
+      </nav>
+    </header>
+
+    <div class="shell">
+      <aside class="admin-nav">
+        <div class="eyebrow">Admin Workspace</div>
+        <h2 class="admin-title">Steward</h2>
+        <p class="admin-sub">Control plane - tenant readiness</p>
+        <div class="admin-item">Overview<small>Setup status</small></div>
+        <div class="admin-item active">Data Loads<small>Files and approvals</small></div>
+        <div class="admin-item">Templates<small>Formats and owners</small></div>
+        <div class="admin-item">Data Trust<small>Evidence and gaps</small></div>
+        <div class="admin-item">Outputs<small>Moves and Source deliverables</small></div>
+      </aside>
+
+      <main>
+        <div class="eyebrow">Admin / Data Loads / Upload Click Flow</div>
+        <h1>What happens after clicking Upload</h1>
+        <p class="lead">
+          The file explorer stays in the background. A focused drawer opens and
+          walks the user through detection, safety, preview, approval, commit,
+          and receipt.
+        </p>
+
+        <section class="canvas">
+          <div class="explorer">
+            <aside class="folders">
+              <h2 class="panel-title">Folders</h2>
+              <div class="folder-head active">Current-state context <span>4/10</span></div>
+              <div class="folder-child">CMDB applications <span>1</span></div>
+              <div class="folder-child active">API/file transfers <span>1</span></div>
+              <div class="folder-child">Vendor contracts <span>1</span></div>
+              <div class="folder-head">Source event evidence <span>0/3</span></div>
+              <div class="folder-head">Pattern layer <span>2/2</span></div>
+            </aside>
+            <section class="files">
+              <h2>API/file transfers</h2>
+              <p class="lead" style="font-size: 13px; margin-bottom: 14px">
+                The user clicks Upload to this folder or drops a file into this
+                area.
+              </p>
+              <table class="file-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Template</th>
+                    <th>Status</th>
+                    <th>Masking</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>04_cmdb_application_portfolio.csv</td>
+                    <td>Application portfolio</td>
+                    <td><span class="status green">Loaded</span></td>
+                    <td><span class="status green">Masked</span></td>
+                  </tr>
+                  <tr>
+                    <td>06_api_file_transfer_landscape.csv</td>
+                    <td>Integration topology</td>
+                    <td><span class="status amber">Preview</span></td>
+                    <td><span class="status green">Masked</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+          </div>
+
+          <aside class="drawer" aria-label="Upload workflow drawer">
+            <header class="drawer-head">
+              <div class="eyebrow">Upload drawer</div>
+              <h2>Review and commit file</h2>
+              <p class="lead" style="font-size: 13px">
+                Selected file: <strong>06_api_file_transfer_landscape.csv</strong>
+              </p>
+              <div class="stepper">
+                <div class="step-pill done"><strong>1. Choose</strong><span>file accepted</span></div>
+                <div class="step-pill done"><strong>2. Detect</strong><span>template found</span></div>
+                <div class="step-pill done"><strong>3. Scan</strong><span>masked safe</span></div>
+                <div class="step-pill active"><strong>4. Preview</strong><span>review rows</span></div>
+                <div class="step-pill"><strong>5. Approve</strong><span>human signoff</span></div>
+                <div class="step-pill"><strong>6. Receipt</strong><span>committed</span></div>
+              </div>
+            </header>
+
+            <div class="drawer-body">
+              <section class="card">
+                <h3>1. Choose destination</h3>
+                <div class="choice selected">
+                  <span class="radio"></span>
+                  <div>
+                    <div class="choice-title">Current-state context</div>
+                    <div class="choice-sub">
+                      Updates Lakeshore integration facts after approval.
+                    </div>
+                  </div>
+                  <span class="status green">Suggested</span>
+                </div>
+                <div class="choice">
+                  <span></span>
+                  <div>
+                    <div class="choice-title">Source event evidence</div>
+                    <div class="choice-sub">
+                      Attach only to one sourcing event; does not update current state.
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="card">
+                <h3>2. Auto-detect template and fields</h3>
+                <div class="grid">
+                  <div class="field"><span>Detected template</span><strong>Integration topology</strong></div>
+                  <div class="field"><span>Confidence</span><strong>High - 4/4 required fields</strong></div>
+                  <div class="field"><span>Record ID</span><strong>edge_id</strong></div>
+                  <div class="field"><span>Display title</span><strong>business_purpose</strong></div>
+                </div>
+              </section>
+
+              <section class="card">
+                <h3>3. Safety and masking scan</h3>
+                <div class="grid">
+                  <div class="field"><span>Restricted data</span><strong>No PHI, PII, PCI found</strong></div>
+                  <div class="field"><span>Endpoint fields</span><strong>Masked path values only</strong></div>
+                  <div class="field"><span>Credential fields</span><strong>Masked references only</strong></div>
+                  <div class="field"><span>Action</span><strong>Safe to preview</strong></div>
+                </div>
+              </section>
+
+              <section class="card active">
+                <h3>4. Preview records before commit</h3>
+                <table class="preview">
+                  <thead>
+                    <tr>
+                      <th>edge</th>
+                      <th>source</th>
+                      <th>target</th>
+                      <th>type</th>
+                      <th>masked path</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>INT-001</td>
+                      <td>APP-SAP-ECC</td>
+                      <td>APP-KYRIBA</td>
+                      <td>SFTP</td>
+                      <td>sftp://host-****/masked/path</td>
+                    </tr>
+                    <tr>
+                      <td>INT-003</td>
+                      <td>APP-NETSUITE</td>
+                      <td>APP-KYRIBA</td>
+                      <td>REST API</td>
+                      <td>api://system/***/resource</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </section>
+
+              <section class="card">
+                <h3>5. Approve commit plan</h3>
+                <div class="grid">
+                  <div class="field"><span>Will preserve</span><strong>Original file and hash</strong></div>
+                  <div class="field"><span>Will commit</span><strong>8 integration records</strong></div>
+                  <div class="field"><span>Will supersede</span><strong>0 prior active facts</strong></div>
+                  <div class="field"><span>Will enable</span><strong>RFP, scoring, cost, risk</strong></div>
+                </div>
+              </section>
+
+              <section class="card receipt">
+                <h3>6. Completion receipt after commit</h3>
+                <div class="grid">
+                  <div class="field"><span>Status</span><strong>Committed</strong></div>
+                  <div class="field"><span>Retrieval</span><strong>Queued for refresh</strong></div>
+                  <div class="field"><span>Audit</span><strong>Human approval captured</strong></div>
+                  <div class="field"><span>Next</span><strong>Generate Kyriba RFP</strong></div>
+                </div>
+              </section>
+            </div>
+
+            <footer class="drawer-foot">
+              <button class="secondary">Cancel</button>
+              <div style="display: flex; gap: 10px">
+                <button class="secondary">Save for review</button>
+                <button>Approve and commit</button>
+              </div>
+            </footer>
+          </aside>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
