@@ -37,6 +37,8 @@ import {
   shapeStreamingAgentTextForSurface,
 } from "@/lib/agent/response-shape";
 import type { StrategicMove } from "@/lib/programs/types.ui";
+import { deliverableBelongsToPhase } from "@/lib/programs/phase-deliverables";
+import { PHASE_CANONICAL_KEYS } from "@/lib/programs/deliverable-registry";
 import styles from "./StrategicMoves.module.css";
 import { PhaseRail } from "./PhaseRail";
 import { GeneratePhasePackage } from "./GeneratePhasePackage";
@@ -1302,12 +1304,13 @@ export function StrategicMovePhaseClient({
     [phaseNum, setPanelOpen],
   );
 
-  const phaseArtifactCount = move.deliverables.filter((d) => {
-    const phasePrefix = `p${phaseNum}_`;
-    return (
-      d.typeKey.startsWith(phasePrefix) || d.typeKey.includes(`_p${phaseNum}`)
-    );
-  }).length;
+  const phaseArtifactCount = move.deliverables.filter((d) =>
+    deliverableBelongsToPhase(
+      d.typeKey,
+      phaseNum,
+      PHASE_CANONICAL_KEYS[phaseNum],
+    ),
+  ).length;
 
   return (
     <div id={`ws-phase-p${phaseNum}-page`} className={styles.page}>
@@ -1852,14 +1855,13 @@ export function StrategicMovePhaseClient({
                 <div className={styles.detailSectionTitle}>
                   {config.label} &middot; Artifacts
                 </div>
-                {move.deliverables.filter((d) => {
-                  // Show deliverables relevant to this phase by checking naming conventions
-                  const phasePrefix = `p${phaseNum}_`;
-                  return (
-                    d.typeKey.startsWith(phasePrefix) ||
-                    d.typeKey.includes(`_p${phaseNum}`)
-                  );
-                }).length === 0 ? (
+                {move.deliverables.filter((d) =>
+                  deliverableBelongsToPhase(
+                    d.typeKey,
+                    phaseNum,
+                    PHASE_CANONICAL_KEYS[phaseNum],
+                  ),
+                ).length === 0 ? (
                   <div
                     id={`ws-canvas-p${phaseNum}-artifact-empty-state`}
                     style={{
@@ -1875,13 +1877,13 @@ export function StrategicMovePhaseClient({
                 ) : (
                   <div className={styles.evidenceList}>
                     {move.deliverables
-                      .filter((d) => {
-                        const phasePrefix = `p${phaseNum}_`;
-                        return (
-                          d.typeKey.startsWith(phasePrefix) ||
-                          d.typeKey.includes(`_p${phaseNum}`)
-                        );
-                      })
+                      .filter((d) =>
+                        deliverableBelongsToPhase(
+                          d.typeKey,
+                          phaseNum,
+                          PHASE_CANONICAL_KEYS[phaseNum],
+                        ),
+                      )
                       .map((deliverable) => (
                         <a
                           key={deliverable.id}
