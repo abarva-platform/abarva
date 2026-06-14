@@ -743,9 +743,15 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain('data-active-tab="workspace-explorer"');
     expect(html).not.toContain("source-canvas-tab-document");
     expect(html).not.toContain("source-canvas-tab-evidence");
-    expect(html).toContain(
-      "This canvas stays focused on the next move and the gate",
-    );
+    // The default rail is the calm "what we still need to gather" panel …
+    expect(html).toContain("source-canvas-needs-to-gather");
+    expect(html).toContain("What we still need");
+    // … and the full gate machinery (blockers, mark-met, promote) is collapsed
+    // behind a toggle, not expanded inline, by default.
+    expect(html).toContain("source-canvas-gate-toggle");
+    expect(html).toContain("approve the gate");
+    expect(html).not.toContain("source-canvas-gate-blockers");
+    expect(html).toContain("lives in the Workspace");
   });
 
   it("document tab is active by default and hides starter templates until authored", () => {
