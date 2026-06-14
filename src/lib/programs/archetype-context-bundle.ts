@@ -136,6 +136,16 @@ const committed = (b: ArchetypeContextBundle, key: string) =>
     (i) => i.key === key && i.status === "committed",
   );
 
+// Render an evidence-family key as its HUMAN label in answer text — never the
+// raw snake_case key (e.g. "it_systems_landscape" → "IT systems & application
+// landscape"). The bundle's readiness instruments carry the curated label;
+// fall back to the deterministic source-label humanizer. Envelope fields keep
+// the raw key for machine traceability — only the human-facing answer text is
+// humanized.
+const familyLabel = (b: ArchetypeContextBundle, key: string): string =>
+  b.readiness.instruments.find((i) => i.key === key)?.label ??
+  resolveSourceLabel(key).title;
+
 /**
  * Answer a canonical CXO question grounded in the bundle. Deterministic — the
  * proof that the engine cites or refuses, never fabricates. (An LLM agent answer
@@ -158,7 +168,7 @@ export function answerGrounded(
       answer:
         families.length === 0
           ? "No hard current-state gaps remain — the charter's claims are all sourced."
-          : `Missing before charter approval (${families.length} hard gaps): ${families.join(", ")}. Charter claims resting on these stay flagged [MISSING EVIDENCE] until provided + committed.`,
+          : `Missing before charter approval (${families.length} hard gaps): ${families.map((k) => familyLabel(b, k)).join(", ")}. Charter claims resting on these stay flagged [MISSING EVIDENCE] until provided + committed.`,
       envelope: envelope(b, {
         citations: [],
         missing: families,
@@ -173,8 +183,7 @@ export function answerGrounded(
     if (!dora) {
       return {
         question,
-        answer:
-          "Insufficient context: the engineering delivery baseline is not committed [MISSING EVIDENCE: eng_performance_dora] — I cannot assert DORA implications without it.",
+        answer: `Insufficient context: the engineering delivery baseline is not committed [MISSING EVIDENCE: ${familyLabel(b, "eng_performance_dora")}] — I cannot assert DORA implications without it.`,
         envelope: envelope(b, {
           citations: [],
           missing: ["eng_performance_dora"],
@@ -206,7 +215,7 @@ export function answerGrounded(
       return {
         question,
         answer:
-          `The IT systems & application landscape is not yet committed [MISSING EVIDENCE: it_systems_landscape] — scope cannot be enumerated until the CMDB export is provided + committed (${resolveSourceLabel("tower_cmdb_cis").title}).`,
+          `The IT systems & application landscape is not yet committed [MISSING EVIDENCE: ${familyLabel(b, "it_systems_landscape")}] — scope cannot be enumerated until the CMDB export is provided + committed (${resolveSourceLabel("tower_cmdb_cis").title}).`,
         envelope: envelope(b, {
           citations: [],
           missing: ["it_systems_landscape"],
@@ -233,7 +242,7 @@ export function answerGrounded(
     const risks = getArchetype(b.archetype.id)?.riskModel.dimensions ?? [];
     return {
       question,
-      answer: `Org/stakeholder evidence: ${missing.length ? `${missing.join(", ")} not yet committed [MISSING EVIDENCE]` : "committed"}. Archetype risk dimensions to assess: ${risks.join("; ")}.`,
+      answer: `Org/stakeholder evidence: ${missing.length ? `${missing.map((k) => familyLabel(b, k)).join(", ")} not yet committed [MISSING EVIDENCE]` : "committed"}. Archetype risk dimensions to assess: ${risks.join("; ")}.`,
       envelope: envelope(b, {
         citations: missing.length ? [] : [cite("it_org_structure")],
         missing,
@@ -251,7 +260,7 @@ export function answerGrounded(
     ).map((r) => r.family.key);
     return {
       question,
-      answer: `P2 Diagnose (archetype-driven) requires: ${reqs.join(", ")}. These are computed from the ${b.archetype.name} archetype × this estate — not a fixed list.`,
+      answer: `P2 Diagnose (archetype-driven) requires: ${reqs.map((k) => familyLabel(b, k)).join(", ")}. These are computed from the ${b.archetype.name} archetype × this estate — not a fixed list.`,
       envelope: envelope(b, {
         citations: ["archetype:" + b.archetype.id],
         missing: [],

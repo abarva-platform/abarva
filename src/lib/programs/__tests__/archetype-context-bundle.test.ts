@@ -15,6 +15,7 @@ import {
   type ReadinessReport,
   type InstrumentReadiness,
 } from "../current-state-readiness";
+import { findForbiddenTags } from "../deliverables/source-labels";
 
 function inst(over: Partial<InstrumentReadiness>): InstrumentReadiness {
   return {
@@ -183,5 +184,46 @@ describe("answerGrounded — grounded contract on every answer", () => {
     const a = answerGrounded(bundle, "What is the meaning of life?");
     expect(a.envelope.specific).toBe(false);
     expect(a.answer).toMatch(/Insufficient context/i);
+  });
+});
+
+// GUARDRAIL — the durable gate so the raw-id-in-answer-text leak class cannot
+// regress. Any internal id (tower_* / document_extract: / method: / archetype:)
+// or bare snake_case evidence-family key (it_systems_landscape, …) in a grounded
+// ANSWER TEXT fails CI here. Envelope fields stay machine-raw (asserted above).
+describe("answerGrounded — GUARDRAIL: no internal id/key in answer text", () => {
+  const SNAKE_KEY = /\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\b/;
+
+  it("no canonical answer leaks a raw snake_case key or internal tag", () => {
+    for (const q of CANONICAL_QUESTIONS) {
+      const a = answerGrounded(bundle, q);
+      expect({ q, tags: findForbiddenTags(a.answer) }).toEqual({ q, tags: [] });
+      expect(a.answer).not.toMatch(SNAKE_KEY);
+    }
+  });
+
+  it("the uncommitted refusal branches name the family by LABEL, not raw key", () => {
+    // Force every family uncommitted so the [MISSING EVIDENCE: …] branches fire.
+    const allMissing: ArchetypeContextBundle = {
+      ...bundle,
+      readiness: {
+        ...readiness,
+        instruments: readiness.instruments.map((i) => ({
+          ...i,
+          status: "missing" as const,
+          committedRows: 0,
+        })),
+      },
+    };
+    for (const q of CANONICAL_QUESTIONS) {
+      const a = answerGrounded(allMissing, q);
+      expect(a.answer).not.toMatch(SNAKE_KEY);
+      expect(findForbiddenTags(a.answer)).toEqual([]);
+    }
+    // marker preserved, raw key gone, machine envelope intact
+    const sys = answerGrounded(allMissing, "What IT systems are in scope?");
+    expect(sys.answer).toMatch(/MISSING EVIDENCE/);
+    expect(sys.answer).not.toContain("it_systems_landscape");
+    expect(sys.envelope.missingEvidence).toContain("it_systems_landscape");
   });
 });
