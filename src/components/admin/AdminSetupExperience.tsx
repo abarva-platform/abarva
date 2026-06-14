@@ -13,6 +13,7 @@ type AdminSetupTab =
   | "operations"
   | "readiness";
 type DataPane = "load" | "confirm" | "connections";
+type LoadMode = "package" | "single";
 
 interface LoadedSourceFile {
   sourceDoc: string;
@@ -143,14 +144,22 @@ function SectionHeader({
   title,
   subtitle,
   action,
+  compact = false,
 }: {
   eyebrow?: string;
   title: string;
   subtitle?: string;
   action?: ReactNode;
+  compact?: boolean;
 }) {
   return (
-    <div className="setup-section-head">
+    <div
+      className={
+        compact
+          ? "setup-section-head setup-section-head-compact"
+          : "setup-section-head"
+      }
+    >
       <div>
         {eyebrow ? <div className="setup-label">{eyebrow}</div> : null}
         <h2>{title}</h2>
@@ -238,6 +247,7 @@ function LoadedFilesTable({ files }: { files: LoadedSourceFile[] }) {
 
 function DataArea(props: AdminSetupExperienceProps) {
   const [pane, setPane] = useState<DataPane>("load");
+  const [loadMode, setLoadMode] = useState<LoadMode>("package");
   const { clientId, tenantKey, tenantName, sourceFiles, view } = props;
 
   return (
@@ -245,8 +255,8 @@ function DataArea(props: AdminSetupExperienceProps) {
       <SectionHeader
         eyebrow="Data"
         title="Load files, then confirm what AbarVa understood"
-        subtitle="Start with real files. The loader detects the data type, keeps source lineage, and asks for only the fields it cannot infer."
-        action={<PrimaryButton>Upload file</PrimaryButton>}
+        subtitle="Choose the data area, add the file, then review what AbarVa understood before it becomes usable context."
+        compact
       />
 
       <div className="setup-tabs" role="tablist" aria-label="Data setup tabs">
@@ -273,17 +283,57 @@ function DataArea(props: AdminSetupExperienceProps) {
 
       {pane === "load" ? (
         <div className="setup-load-pane">
-          <div className="setup-callout">
-            <strong>Enterprise context update</strong>
-            <p>
-              Approved values become the latest active facts. Older matching
-              facts are superseded and kept in history.
-            </p>
+          <div
+            className="setup-load-mode"
+            role="radiogroup"
+            aria-label="Choose load mode"
+          >
+            <button
+              type="button"
+              className={loadMode === "package" ? "is-active" : ""}
+              onClick={() => setLoadMode("package")}
+              role="radio"
+              aria-checked={loadMode === "package"}
+            >
+              <strong>Setup package</strong>
+              <span>First load: manifest plus related client files.</span>
+            </button>
+            <button
+              type="button"
+              className={loadMode === "single" ? "is-active" : ""}
+              onClick={() => setLoadMode("single")}
+              role="radio"
+              aria-checked={loadMode === "single"}
+            >
+              <strong>Single file update</strong>
+              <span>
+                Ongoing update: one CMDB, contract, rate card, or policy.
+              </span>
+            </button>
           </div>
+          {loadMode === "package" ? (
+            <div className="setup-callout">
+              <strong>Package intake is review-first</strong>
+              <p>
+                Use this for a first client setup package. AbarVa should
+                classify the manifest and route files for review; only proven
+                structured mappings commit automatically.
+              </p>
+            </div>
+          ) : (
+            <div className="setup-callout">
+              <strong>Single file update</strong>
+              <p>
+                Approved values become the latest active facts. Older matching
+                facts are superseded and kept in history.
+              </p>
+            </div>
+          )}
           <CsvUploadConnector
             clientId={clientId}
             tenantKey={tenantKey}
             tenantName={tenantName}
+            mode={loadMode}
           />
         </div>
       ) : null}
@@ -590,12 +640,22 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
           line-height: 1.15;
           margin: 0;
         }
+        .setup-section-head.setup-section-head-compact h2 {
+          font-size: 22px;
+          letter-spacing: 0;
+          line-height: 1.22;
+        }
         .setup-section-head p {
           color: var(--setup-muted);
           font-size: 14px;
           line-height: 1.5;
           margin: 7px 0 0;
           max-width: 760px;
+        }
+        .setup-section-head.setup-section-head-compact p {
+          font-size: 13px;
+          line-height: 1.45;
+          max-width: 640px;
         }
         .setup-section-action { flex-shrink: 0; }
         .setup-label {
@@ -738,12 +798,46 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
         .setup-tabs span { margin-left: 5px; color: var(--setup-muted); }
         .setup-load-pane {
           display: grid;
-          gap: 16px;
+          gap: 12px;
+        }
+        .setup-load-mode {
+          border: 1px solid var(--setup-line);
+          border-radius: 8px;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          overflow: hidden;
+        }
+        .setup-load-mode button {
+          background: #fff;
+          border: 0;
+          border-right: 1px solid var(--setup-line);
+          color: var(--setup-ink);
+          cursor: pointer;
+          padding: 11px 12px;
+          text-align: left;
+        }
+        .setup-load-mode button:last-child { border-right: 0; }
+        .setup-load-mode button.is-active {
+          background: #f7f7ff;
+          box-shadow: inset 0 0 0 1px #c9c5ff;
+        }
+        .setup-load-mode strong {
+          display: block;
+          font-size: 13px;
+          line-height: 1.25;
+        }
+        .setup-load-mode span {
+          color: var(--setup-muted);
+          display: block;
+          font-size: 12px;
+          line-height: 1.35;
+          margin-top: 3px;
         }
         .setup-load-pane > section {
           border-color: var(--setup-line) !important;
           border-radius: 8px !important;
           box-shadow: none !important;
+          padding: 14px !important;
         }
         .setup-load-pane > section > div:first-child,
         .setup-load-pane section[aria-label="Upload workflow"] {
@@ -755,7 +849,7 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
           border-radius: 8px;
           display: grid;
           grid-template-columns: minmax(0, 1fr);
-          padding: 13px 14px;
+          padding: 10px 12px;
         }
         .setup-callout strong { font-size: 13px; }
         .setup-callout p { color: var(--setup-muted); font-size: 12.5px; line-height: 1.45; margin: 4px 0 0; }
@@ -878,9 +972,11 @@ export function AdminSetupExperience(props: AdminSetupExperienceProps) {
             <div className="setup-search">Search setup, files, approvals…</div>
             <div className="setup-top-actions">
               <GhostButton>Help</GhostButton>
-              <PrimaryButton onClick={() => setTab("data")}>
-                Add data
-              </PrimaryButton>
+              {tab !== "data" ? (
+                <PrimaryButton onClick={() => setTab("data")}>
+                  Add data
+                </PrimaryButton>
+              ) : null}
             </div>
           </div>
 
