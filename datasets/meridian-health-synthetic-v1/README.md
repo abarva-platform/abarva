@@ -28,6 +28,10 @@ The pack now includes a healthcare-specific context-layer showcase:
 - `18-upload-scenarios/`: 8 guided scenarios that show how those files become
   classified, validated, approved, embedded, and consumed by Sentinel, Source,
   Moves, Tower, audit, and data-trust workflows.
+- `19-pilot-strategy-evidence-pack/`: 10 PHI-free, phase-oriented strategy
+  templates plus use-case mapping and corpus backlog for the PHA health-plan
+  pilot use cases. This pack supports Moves P0-P5 strategy work without raw
+  claims, EMR rows, pharmacy records, member identifiers, or call transcripts.
 - `docs/build/meridian/MERIDIAN_CONTEXT_LAYER_SHOWCASE.md`: buyer-facing
   walkthrough of the context-layer build path and remaining healthcare corpus
   gap.

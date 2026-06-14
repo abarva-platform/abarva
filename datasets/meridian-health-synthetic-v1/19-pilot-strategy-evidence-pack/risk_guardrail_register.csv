@@ -1,0 +1,8 @@
+use_case,risk_type,guardrail,human_review_required,blocked_action,approval_owner,move_phase
+All use cases,PHI/PII exposure,Use synthetic de-identified aggregated or metadata-only evidence by default,yes,Upload raw PHI PII member identifiers raw claims raw EMR notes or call transcripts,Privacy Officer,P1
+Payment integrity and leakage reduction,Fairness and provider impact,Use provider-pattern summaries and human review before any provider action,yes,Recommend punitive provider action from strategy evidence,Chief Quality Officer,P3
+Prior auth and denials automation,Clinical safety,Use criteria governance and human approval for clinical workflow changes,yes,Automate clinical determinations without approved governance,CMO / Compliance,P3
+Call center and member experience optimization,Member privacy,Use intent taxonomy and synthetic/redacted examples only,yes,Upload raw member call transcripts or unredacted CRM notes,Privacy Officer,P2
+Provider quality and performance,Attribution risk,Show attribution assumptions and confidence before ranking providers,yes,Publish provider ranking without attribution review,Chief Quality Officer,P3
+Unified clinical and claims data foundation,Data minimization,Use metadata and quality summaries for strategy phases,yes,Request raw patient-level data for P0-P4 strategy work,Chief Data Officer,P2
+Automated close and reporting,Financial control integrity,Use controller-approved reconciliations and reporting controls,yes,Present unaudited close numbers as final financials,Controller,P3

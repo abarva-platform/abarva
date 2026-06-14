@@ -1,0 +1,9 @@
+use_case_name,kpi_name,baseline_value,target_value,period,source,confidence,sensitivity,move_phase
+Payment integrity and leakage reduction,recoverable_denials_usd_range,7M-14M,prioritized recovery roadmap,FY26 planning,RCM denials summary,medium,internal,P1
+Payment integrity and leakage reduction,monthly_denial_cases_range,1800-3200,top categories triaged,FY26 planning,RCM denials summary,medium,internal,P2
+Prior auth and denials automation,prior_auth_denial_rate_pct_range,11.8-14.2,reduce by 3-5 points,FY26 planning,prior auth workqueue,medium,internal,P1
+Cost transparency by product provider population,avoidable_cost_usd_range,21M-28M,validated opportunity bands,FY26 planning,service-line P&L,medium,internal,P2
+Call center and member experience optimization,abandon_rate_pct_range,12.4-18.7,reduce by 3-6 points,FY26 planning,contact center summary,medium,internal,P2
+Provider quality and performance,quality_gap_count,not quantified,measure-family baseline defined,FY26 planning,value-based care panel,low,internal,P2
+Unified clinical and claims data foundation,data_quality_score_range,82-86,90+ for pilot domains,FY26 planning,data platform lineage,medium,internal,P2
+Automated close and reporting,close_cycle_days,not quantified,baseline captured,FY26 planning,finance close intake needed,low,internal,P2
