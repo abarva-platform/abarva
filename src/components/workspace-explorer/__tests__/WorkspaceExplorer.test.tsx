@@ -101,6 +101,22 @@ describe("WorkspaceExplorer", () => {
     expect(refresh).toHaveBeenCalled();
   });
 
+  it("organizes items by step and surfaces what the step still needs", () => {
+    render(
+      <WorkspaceExplorer
+        title="AMS Outsourcing 2026"
+        eyebrow="SRC-004 · Source workspace"
+        backHref="/source/events/event-1"
+        items={[item]}
+      />,
+    );
+    // the left nav is the lifecycle step as a folder
+    expect(screen.getByTestId("workspace-step-strategy")).toBeTruthy();
+    // the selected step surfaces its canonical evidence needs (templates / gaps)
+    expect(screen.getByTestId("workspace-step-needs")).toBeTruthy();
+    expect(screen.getByText("Needed for this step")).toBeTruthy();
+  });
+
   it("surfaces missing upstream errors without fabricating a draft", async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,

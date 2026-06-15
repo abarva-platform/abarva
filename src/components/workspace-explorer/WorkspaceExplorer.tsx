@@ -12,6 +12,13 @@ import type {
   WorkspaceProgressionNeed,
   WorkspaceUploadIntent,
 } from "@/lib/workspace-explorer/types";
+import {
+  SOURCE_STAGE_ORDER,
+  SOURCE_STAGE_LABELS,
+  isSourceStageKey,
+} from "@/lib/source/constants";
+import { evidenceForStage } from "@/lib/source/canonical-specs";
+import type { SourceStageKey } from "@/lib/source/types";
 
 interface WorkspaceExplorerProps {
   title: string;
@@ -71,14 +78,20 @@ const KIND_LABELS: Record<WorkspaceItemKind, string> = {
   attachment: "Attachments",
 };
 
-const KIND_ORDER: WorkspaceItemKind[] = [
-  "input",
-  "deliverable",
-  "vendor_response",
-  "evidence",
-  "approval",
-  "attachment",
-];
+/** The lifecycle step an item belongs to (its folder in the by-step explorer). */
+function stageOf(item: WorkspaceItem): string {
+  return typeof item.stageKey === "string" && item.stageKey.length > 0
+    ? item.stageKey
+    : "event";
+}
+
+/** Human folder label for a stage key. */
+function stageLabel(stage: string): string {
+  if (isSourceStageKey(stage)) {
+    return SOURCE_STAGE_LABELS[stage as SourceStageKey];
+  }
+  return stage === "event" ? "Event" : stage;
+}
 
 function formatDate(value: string | null | undefined): string {
   if (!value) return "Not recorded";
@@ -116,8 +129,23 @@ export function WorkspaceExplorer({
   uploadIntent,
 }: WorkspaceExplorerProps) {
   const router = useRouter();
-  const [activeKind, setActiveKind] = useState<WorkspaceItemKind | "all">(
-    "all",
+  // By-step explorer: the left nav is the lifecycle stages as folders, ordered
+  // by the canonical source lifecycle. Items carry stageKey; stage-less items
+  // fall under "Event".
+  const stageFolders = useMemo(() => {
+    const present = new Set(items.map(stageOf));
+    const ordered: string[] = [];
+    for (const stage of SOURCE_STAGE_ORDER) {
+      if (present.has(stage)) ordered.push(stage);
+    }
+    if (present.has("event")) ordered.push("event");
+    for (const stage of present) {
+      if (!ordered.includes(stage)) ordered.push(stage);
+    }
+    return ordered;
+  }, [items]);
+  const [activeStage, setActiveStage] = useState<string>(
+    () => stageFolders[0] ?? "all",
   );
   const [activeId, setActiveId] = useState(items[0]?.id ?? null);
   const [selectedGenerateId, setSelectedGenerateId] = useState(
@@ -132,16 +160,21 @@ export function WorkspaceExplorer({
     state: "idle",
   });
   const counts = useMemo(() => {
-    const next = new Map<WorkspaceItemKind, number>();
-    for (const kind of KIND_ORDER) next.set(kind, 0);
+    const next = new Map<string, number>();
     for (const item of items)
-      next.set(item.kind, (next.get(item.kind) ?? 0) + 1);
+      next.set(stageOf(item), (next.get(stageOf(item)) ?? 0) + 1);
     return next;
   }, [items]);
   const filtered =
-    activeKind === "all"
+    activeStage === "all"
       ? items
-      : items.filter((item) => item.kind === activeKind);
+      : items.filter((item) => stageOf(item) === activeStage);
+  // What this step still needs — the canonical evidence requirements for the
+  // selected source stage, surfaced as "needed" rows (templates/uploads/gaps).
+  const stageNeeds =
+    activeStage !== "all" && isSourceStageKey(activeStage)
+      ? evidenceForStage(activeStage as SourceStageKey)
+      : [];
   const activeItem =
     filtered.find((item) => item.id === activeId) ??
     filtered[0] ??
@@ -329,35 +362,55 @@ export function WorkspaceExplorer({
       ) : null}
 
       <div style={SHELL_STYLE}>
-        <nav aria-label="Workspace groups" style={NAV_STYLE}>
+        <nav aria-label="Steps" style={NAV_STYLE}>
           <button
             type="button"
-            onClick={() => setActiveKind("all")}
-            style={navButtonStyle(activeKind === "all")}
+            onClick={() => setActiveStage("all")}
+            style={navButtonStyle(activeStage === "all")}
           >
             <span>All items</span>
             <strong>{items.length}</strong>
           </button>
-          {KIND_ORDER.map((kind) => {
-            const count = counts.get(kind) ?? 0;
-            if (count === 0) return null;
-            return (
-              <button
-                key={kind}
-                type="button"
-                onClick={() => setActiveKind(kind)}
-                style={navButtonStyle(activeKind === kind)}
-              >
-                <span>{KIND_LABELS[kind]}</span>
-                <strong>{count}</strong>
-              </button>
-            );
-          })}
+          {stageFolders.map((stage) => (
+            <button
+              key={stage}
+              type="button"
+              data-testid={`workspace-step-${stage}`}
+              onClick={() => setActiveStage(stage)}
+              style={navButtonStyle(activeStage === stage)}
+            >
+              <span>{stageLabel(stage)}</span>
+              <strong>{counts.get(stage) ?? 0}</strong>
+            </button>
+          ))}
         </nav>
 
         <div style={LIST_STYLE} aria-label="Workspace item list">
+          {stageNeeds.length > 0 ? (
+            <div data-testid="workspace-step-needs">
+              <div style={NEEDS_HEADING_STYLE}>Needed for this step</div>
+              {stageNeeds.map((req) => (
+                <div key={req.requirementId} style={NEED_ROW_STYLE}>
+                  <span style={needDotStyle(req.level)} aria-hidden />
+                  <span style={NEED_BODY_STYLE}>
+                    <span style={NEED_NAME_STYLE}>{req.label}</span>
+                    <span style={NEED_META_STYLE}>
+                      {req.sourceLabel} · needs {req.minimumState}
+                    </span>
+                  </span>
+                  <Link
+                    href={`?intent=upload&stage=${activeStage}`}
+                    style={NEED_UPLOAD_STYLE}
+                  >
+                    Upload
+                  </Link>
+                </div>
+              ))}
+              <div style={NEEDS_SUBHEAD_STYLE}>In this step</div>
+            </div>
+          ) : null}
           {filtered.length === 0 ? (
-            <div style={EMPTY_STYLE}>No workspace items in this group yet.</div>
+            <div style={EMPTY_STYLE}>Nothing loaded in this step yet.</div>
           ) : (
             filtered.map((item) => {
               const active = item.id === activeItem?.id;
@@ -1032,6 +1085,70 @@ const ITEM_META_STYLE: CSSProperties = {
   font: "500 12px/1.35 DM Sans, Arial, sans-serif",
   color: "#64748b",
 };
+
+const NEEDS_HEADING_STYLE: CSSProperties = {
+  font: "700 10px/1 DM Sans, Arial, sans-serif",
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  color: "#94a3b8",
+  padding: "2px 2px 10px",
+};
+
+const NEEDS_SUBHEAD_STYLE: CSSProperties = {
+  ...NEEDS_HEADING_STYLE,
+  padding: "16px 2px 8px",
+  borderTop: "1px solid #ece8e1",
+  marginTop: 12,
+};
+
+const NEED_ROW_STYLE: CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  gap: 10,
+  padding: "9px 2px",
+  borderBottom: "1px solid #f0ece4",
+};
+
+const NEED_BODY_STYLE: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 2,
+  flex: 1,
+  minWidth: 0,
+};
+
+const NEED_NAME_STYLE: CSSProperties = {
+  font: "600 13px/1.3 DM Sans, Arial, sans-serif",
+  color: "#111827",
+};
+
+const NEED_META_STYLE: CSSProperties = {
+  font: "500 11.5px/1.35 DM Sans, Arial, sans-serif",
+  color: "#64748b",
+};
+
+const NEED_UPLOAD_STYLE: CSSProperties = {
+  font: "700 11px/1 DM Sans, Arial, sans-serif",
+  color: "#1d4ed8",
+  background: "#eef4ff",
+  border: "1px solid #cfdcfa",
+  borderRadius: 6,
+  padding: "6px 11px",
+  textDecoration: "none",
+  whiteSpace: "nowrap",
+  flexShrink: 0,
+};
+
+function needDotStyle(level: "required" | "recommended"): CSSProperties {
+  return {
+    width: 7,
+    height: 7,
+    borderRadius: "50%",
+    background: level === "required" ? "#d08700" : "#cbd5e1",
+    marginTop: 5,
+    flexShrink: 0,
+  };
+}
 
 const PREVIEW_TITLE_STYLE: CSSProperties = {
   margin: "8px 0 8px",
