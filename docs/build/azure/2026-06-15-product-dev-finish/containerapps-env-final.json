@@ -1,0 +1,91 @@
+{
+  "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001/providers/Microsoft.App/managedEnvironments/cae-abv-pdev-eus1",
+  "location": "East US",
+  "name": "cae-abv-pdev-eus1",
+  "properties": {
+    "appInsightsConfiguration": null,
+    "appLogsConfiguration": {
+      "destination": "log-analytics",
+      "logAnalyticsConfiguration": {
+        "customerId": "7337c695-817c-4f4d-8346-d0cce76a74dd",
+        "dynamicJsonColumns": false,
+        "sharedKey": null
+      }
+    },
+    "availabilityZones": null,
+    "customDomainConfiguration": {
+      "certificateKeyVaultProperties": null,
+      "certificatePassword": null,
+      "certificateValue": null,
+      "customDomainVerificationId": "6C0B0E5DEAC8C768A934F87E9F2A35CF603939D9054108AB2AAA399655212676",
+      "dnsSuffix": null,
+      "expirationDate": null,
+      "subjectName": null,
+      "thumbprint": null
+    },
+    "daprAIConnectionString": null,
+    "daprAIInstrumentationKey": null,
+    "daprConfiguration": {
+      "version": "1.16.4-msft.7"
+    },
+    "defaultDomain": "redwave-653318c8.eastus.azurecontainerapps.io",
+    "diskEncryptionConfiguration": null,
+    "environmentMode": "WorkloadProfiles",
+    "eventStreamEndpoint": "https://eastus.azurecontainerapps.dev/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001/managedEnvironments/cae-abv-pdev-eus1/eventstream",
+    "infrastructureResourceGroup": null,
+    "ingressConfiguration": null,
+    "kedaConfiguration": {
+      "version": "2.18.1"
+    },
+    "openTelemetryConfiguration": null,
+    "peerAuthentication": {
+      "mtls": {
+        "enabled": false
+      }
+    },
+    "peerTrafficConfiguration": {
+      "encryption": {
+        "enabled": false
+      }
+    },
+    "provisioningState": "Succeeded",
+    "publicNetworkAccess": "Enabled",
+    "staticIp": "20.62.178.95",
+    "vnetConfiguration": null,
+    "workloadProfiles": [
+      {
+        "enableFips": false,
+        "name": "Consumption",
+        "workloadProfileType": "Consumption"
+      }
+    ],
+    "zoneRedundant": false
+  },
+  "resourceGroup": "rg-abarva-controlplane-product-dev-eus-001",
+  "systemData": {
+    "createdAt": "2026-06-15T03:09:40.148709",
+    "createdBy": "anand.sundaram@thesundaram.com",
+    "createdByType": "User",
+    "lastModifiedAt": "2026-06-15T03:09:40.148709",
+    "lastModifiedBy": "anand.sundaram@thesundaram.com",
+    "lastModifiedByType": "User"
+  },
+  "tags": {
+    "ClientCode": "abarva",
+    "CostCenter": "product-development",
+    "CreatedAt": "2026-06-15T01:59:22Z",
+    "CreatedBy": "codex",
+    "Criticality": "medium",
+    "DataClassification": "synthetic",
+    "Environment": "Product Dev",
+    "EnvironmentKey": "product-dev",
+    "Expiry": "2026-09-30",
+    "ManagedBy": "manual-approved",
+    "NoPhiPii": "true",
+    "Owner": "AbarVa Platform",
+    "Plane": "control-plane",
+    "ReleaseLane": "global-control-lane",
+    "Repository": "abarva-platform/abarva"
+  },
+  "type": "Microsoft.App/managedEnvironments"
+}

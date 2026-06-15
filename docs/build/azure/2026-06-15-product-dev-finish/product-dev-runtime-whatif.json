@@ -1,0 +1,302 @@
+Note: The result may contain false positive predictions (noise).
+You can help us improve the accuracy of the result by opening an issue here: https://aka.ms/WhatIfIssues
+
+Resource and property changes are indicated with these symbols:
+  + Create
+  = Nochange
+  * Ignore
+
+The deployment will update the following scopes:
+
+Scope: /subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401
+
+  + resourceGroups/rg-abarva-observability-product-dev-eus-001 [2022-09-01]
+
+      apiVersion:              "2022-09-01"
+      id:                      "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001"
+      location:                "eastus"
+      name:                    "rg-abarva-observability-product-dev-eus-001"
+      tags.ClientCode:         "abarva"
+      tags.CostCenter:         "product-development"
+      tags.CreatedAt:          "2026-06-15T01:59:22Z"
+      tags.CreatedBy:          "codex"
+      tags.Criticality:        "medium"
+      tags.DataClassification: "synthetic"
+      tags.Environment:        "Product Dev"
+      tags.EnvironmentKey:     "product-dev"
+      tags.Expiry:             "2026-09-30"
+      tags.ManagedBy:          "manual-approved"
+      tags.NoPhiPii:           "true"
+      tags.Owner:              "AbarVa Platform"
+      tags.Plane:              "control-plane"
+      tags.ReleaseLane:        "global-control-lane"
+      tags.Repository:         "abarva-platform/abarva"
+      type:                    "Microsoft.Resources/resourceGroups"
+
+  = resourceGroups/rg-abarva-controlplane-product-dev-eus-001 [2022-09-01]
+
+Scope: /subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001
+
+  + Microsoft.App/containerApps/ca-abv-pdev-smoke-eus1 [2024-03-01]
+
+      apiVersion:                                                                                                                                                                                                                        "2024-03-01"
+      id:                                                                                                                                                                                                                                "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001/providers/Microsoft.App/containerApps/ca-abv-pdev-smoke-eus1"
+      identity.type:                                                                                                                                                                                                                     "UserAssigned"
+      identity.userAssignedIdentities./subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-abv-pdev-runtime-eus1: {}
+      location:                                                                                                                                                                                                                          "eastus"
+      name:                                                                                                                                                                                                                              "ca-abv-pdev-smoke-eus1"
+      properties.configuration.activeRevisionsMode:                                                                                                                                                                                      "Single"
+      properties.configuration.ingress.allowInsecure:                                                                                                                                                                                    false
+      properties.configuration.ingress.external:                                                                                                                                                                                         true
+      properties.configuration.ingress.targetPort:                                                                                                                                                                                       80
+      properties.configuration.ingress.transport:                                                                                                                                                                                        "auto"
+      properties.managedEnvironmentId:                                                                                                                                                                                                   "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001/providers/Microsoft.App/managedEnvironments/cae-abv-pdev-eus1"
+      properties.template.containers: [
+        0:
+
+          env: [
+            0:
+
+              name:  "ABARVA_ENVIRONMENT_KEY"
+              value: "product-dev"
+
+            1:
+
+              name:  "ABARVA_DATA_BOUNDARY"
+              value: "synthetic-no-client-data"
+
+          ]
+          image:            "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+          name:             "smoke"
+          resources.cpu:    0.25
+          resources.memory: "0.5Gi"
+
+      ]
+      properties.template.scale.maxReplicas:                                                                                                                                                                                             1
+      properties.template.scale.minReplicas:                                                                                                                                                                                             0
+      properties.template.scale.rules: [
+        0:
+
+          http.metadata.concurrentRequests: "25"
+          name:                             "http-concurrency"
+
+      ]
+      tags.ClientCode:                                                                                                                                                                                                                   "abarva"
+      tags.CostCenter:                                                                                                                                                                                                                   "product-development"
+      tags.CreatedAt:                                                                                                                                                                                                                    "2026-06-15T01:59:22Z"
+      tags.CreatedBy:                                                                                                                                                                                                                    "codex"
+      tags.Criticality:                                                                                                                                                                                                                  "medium"
+      tags.DataClassification:                                                                                                                                                                                                           "synthetic"
+      tags.Environment:                                                                                                                                                                                                                  "Product Dev"
+      tags.EnvironmentKey:                                                                                                                                                                                                               "product-dev"
+      tags.Expiry:                                                                                                                                                                                                                       "2026-09-30"
+      tags.ManagedBy:                                                                                                                                                                                                                    "manual-approved"
+      tags.NoPhiPii:                                                                                                                                                                                                                     "true"
+      tags.Owner:                                                                                                                                                                                                                        "AbarVa Platform"
+      tags.Plane:                                                                                                                                                                                                                        "control-plane"
+      tags.Purpose:                                                                                                                                                                                                                      "product-dev-runtime-smoke"
+      tags.ReleaseLane:                                                                                                                                                                                                                  "global-control-lane"
+      tags.Repository:                                                                                                                                                                                                                   "abarva-platform/abarva"
+      tags.RuntimeDataBoundary:                                                                                                                                                                                                          "synthetic-no-client-data"
+      type:                                                                                                                                                                                                                              "Microsoft.App/containerApps"
+
+  + Microsoft.App/managedEnvironments/cae-abv-pdev-eus1 [2024-03-01]
+
+      apiVersion:                                                           "2024-03-01"
+      id:                                                                   "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001/providers/Microsoft.App/managedEnvironments/cae-abv-pdev-eus1"
+      location:                                                             "eastus"
+      name:                                                                 "cae-abv-pdev-eus1"
+      properties.appLogsConfiguration.destination:                          "log-analytics"
+      properties.appLogsConfiguration.logAnalyticsConfiguration.customerId: "[reference('/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001/providers/Microsoft.OperationalInsights/workspaces/log-abarva-product-dev-eus-001', '2022-10-01').customerId]"
+      properties.appLogsConfiguration.logAnalyticsConfiguration.sharedKey:  "*******"
+      properties.workloadProfiles: [
+        0:
+
+          name:                "Consumption"
+          workloadProfileType: "Consumption"
+
+      ]
+      properties.zoneRedundant:                                             false
+      tags.ClientCode:                                                      "abarva"
+      tags.CostCenter:                                                      "product-development"
+      tags.CreatedAt:                                                       "2026-06-15T01:59:22Z"
+      tags.CreatedBy:                                                       "codex"
+      tags.Criticality:                                                     "medium"
+      tags.DataClassification:                                              "synthetic"
+      tags.Environment:                                                     "Product Dev"
+      tags.EnvironmentKey:                                                  "product-dev"
+      tags.Expiry:                                                          "2026-09-30"
+      tags.ManagedBy:                                                       "manual-approved"
+      tags.NoPhiPii:                                                        "true"
+      tags.Owner:                                                           "AbarVa Platform"
+      tags.Plane:                                                           "control-plane"
+      tags.ReleaseLane:                                                     "global-control-lane"
+      tags.Repository:                                                      "abarva-platform/abarva"
+      type:                                                                 "Microsoft.App/managedEnvironments"
+
+  + Microsoft.ManagedIdentity/userAssignedIdentities/id-abv-pdev-runtime-eus1 [2023-01-31]
+
+      apiVersion:              "2023-01-31"
+      id:                      "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-abv-pdev-runtime-eus1"
+      location:                "eastus"
+      name:                    "id-abv-pdev-runtime-eus1"
+      tags.ClientCode:         "abarva"
+      tags.CostCenter:         "product-development"
+      tags.CreatedAt:          "2026-06-15T01:59:22Z"
+      tags.CreatedBy:          "codex"
+      tags.Criticality:        "medium"
+      tags.DataClassification: "synthetic"
+      tags.Environment:        "Product Dev"
+      tags.EnvironmentKey:     "product-dev"
+      tags.Expiry:             "2026-09-30"
+      tags.ManagedBy:          "manual-approved"
+      tags.NoPhiPii:           "true"
+      tags.Owner:              "AbarVa Platform"
+      tags.Plane:              "control-plane"
+      tags.ReleaseLane:        "global-control-lane"
+      tags.Repository:         "abarva-platform/abarva"
+      type:                    "Microsoft.ManagedIdentity/userAssignedIdentities"
+
+  * Microsoft.KeyVault/vaults/kv-abarva-pdev-eus-001
+
+Scope: /subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001
+
+  + Microsoft.Insights/actionGroups/ag-abarva-product-dev-eus-001 [2023-01-01]
+
+      apiVersion:                "2023-01-01"
+      id:                        "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001/providers/Microsoft.Insights/actionGroups/ag-abarva-product-dev-eus-001"
+      location:                  "global"
+      name:                      "ag-abarva-product-dev-eus-001"
+      properties.emailReceivers: [
+        0:
+
+          emailAddress:         "alerts@abarva.ai"
+          name:                 "platform-email"
+          useCommonAlertSchema: true
+
+      ]
+      properties.enabled:        true
+      properties.groupShortName: "pddevops"
+      tags.ClientCode:           "abarva"
+      tags.CostCenter:           "product-development"
+      tags.CreatedAt:            "2026-06-15T01:59:22Z"
+      tags.CreatedBy:            "codex"
+      tags.Criticality:          "medium"
+      tags.DataClassification:   "synthetic"
+      tags.Environment:          "Product Dev"
+      tags.EnvironmentKey:       "product-dev"
+      tags.Expiry:               "2026-09-30"
+      tags.ManagedBy:            "manual-approved"
+      tags.NoPhiPii:             "true"
+      tags.Owner:                "AbarVa Platform"
+      tags.Plane:                "control-plane"
+      tags.ReleaseLane:          "global-control-lane"
+      tags.Repository:           "abarva-platform/abarva"
+      type:                      "Microsoft.Insights/actionGroups"
+
+  + Microsoft.Insights/activityLogAlerts/ala-subscription-deployment-failures [2020-10-01]
+
+      apiVersion:              "2020-10-01"
+      id:                      "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001/providers/Microsoft.Insights/activityLogAlerts/ala-subscription-deployment-failures"
+      location:                "global"
+      name:                    "ala-subscription-deployment-failures"
+      properties.actions.actionGroups: [
+        0:
+
+          actionGroupId: "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001/providers/Microsoft.Insights/actionGroups/ag-abarva-product-dev-eus-001"
+
+      ]
+      properties.condition.allOf: [
+        0:
+
+          equals: "Administrative"
+          field:  "category"
+
+        1:
+
+          equals: "Microsoft.Resources/deployments/write"
+          field:  "operationName"
+
+        2:
+
+          equals: "Failed"
+          field:  "status"
+
+      ]
+      properties.description:  "Alerts on failed ARM/Bicep deployments in the subscription."
+      properties.enabled:      true
+      properties.scopes: [
+        0: "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401"
+      ]
+      tags.ClientCode:         "abarva"
+      tags.CostCenter:         "product-development"
+      tags.CreatedAt:          "2026-06-15T01:59:22Z"
+      tags.CreatedBy:          "codex"
+      tags.Criticality:        "medium"
+      tags.DataClassification: "synthetic"
+      tags.Environment:        "Product Dev"
+      tags.EnvironmentKey:     "product-dev"
+      tags.Expiry:             "2026-09-30"
+      tags.ManagedBy:          "manual-approved"
+      tags.NoPhiPii:           "true"
+      tags.Owner:              "AbarVa Platform"
+      tags.Plane:              "control-plane"
+      tags.ReleaseLane:        "global-control-lane"
+      tags.Repository:         "abarva-platform/abarva"
+      type:                    "Microsoft.Insights/activityLogAlerts"
+
+  + Microsoft.Insights/components/appi-abarva-product-dev-eus-001 [2020-02-02]
+
+      apiVersion:                     "2020-02-02"
+      id:                             "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001/providers/Microsoft.Insights/components/appi-abarva-product-dev-eus-001"
+      kind:                           "web"
+      location:                       "eastus"
+      name:                           "appi-abarva-product-dev-eus-001"
+      properties.Application_Type:    "web"
+      properties.IngestionMode:       "LogAnalytics"
+      properties.RetentionInDays:     30
+      properties.WorkspaceResourceId: "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001/providers/Microsoft.OperationalInsights/workspaces/log-abarva-product-dev-eus-001"
+      tags.ClientCode:                "abarva"
+      tags.CostCenter:                "product-development"
+      tags.CreatedAt:                 "2026-06-15T01:59:22Z"
+      tags.CreatedBy:                 "codex"
+      tags.Criticality:               "medium"
+      tags.DataClassification:        "synthetic"
+      tags.Environment:               "Product Dev"
+      tags.EnvironmentKey:            "product-dev"
+      tags.Expiry:                    "2026-09-30"
+      tags.ManagedBy:                 "manual-approved"
+      tags.NoPhiPii:                  "true"
+      tags.Owner:                     "AbarVa Platform"
+      tags.Plane:                     "control-plane"
+      tags.ReleaseLane:               "global-control-lane"
+      tags.Repository:                "abarva-platform/abarva"
+      type:                           "Microsoft.Insights/components"
+
+  + Microsoft.OperationalInsights/workspaces/log-abarva-product-dev-eus-001 [2022-10-01]
+
+      apiVersion:                               "2022-10-01"
+      id:                                       "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001/providers/Microsoft.OperationalInsights/workspaces/log-abarva-product-dev-eus-001"
+      location:                                 "eastus"
+      name:                                     "log-abarva-product-dev-eus-001"
+      properties.retentionInDays:               30
+      properties.sku.name:                      "PerGB2018"
+      properties.workspaceCapping.dailyQuotaGb: 1
+      tags.ClientCode:                          "abarva"
+      tags.CostCenter:                          "product-development"
+      tags.CreatedAt:                           "2026-06-15T01:59:22Z"
+      tags.CreatedBy:                           "codex"
+      tags.Criticality:                         "medium"
+      tags.DataClassification:                  "synthetic"
+      tags.Environment:                         "Product Dev"
+      tags.EnvironmentKey:                      "product-dev"
+      tags.Expiry:                              "2026-09-30"
+      tags.ManagedBy:                           "manual-approved"
+      tags.NoPhiPii:                            "true"
+      tags.Owner:                               "AbarVa Platform"
+      tags.Plane:                               "control-plane"
+      tags.ReleaseLane:                         "global-control-lane"
+      tags.Repository:                          "abarva-platform/abarva"
+      type:                                     "Microsoft.OperationalInsights/workspaces"
+
+Resource changes: 8 to create, 1 no change, 1 to ignore.

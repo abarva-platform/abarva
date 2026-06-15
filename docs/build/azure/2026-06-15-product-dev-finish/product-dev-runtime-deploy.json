@@ -1,0 +1,296 @@
+{
+  "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/providers/Microsoft.Resources/deployments/product-dev-runtime-20260615",
+  "location": "eastus",
+  "name": "product-dev-runtime-20260615",
+  "properties": {
+    "correlationId": "8e8c060a-3193-4e88-9c1d-92fab5bca25c",
+    "debugSetting": null,
+    "dependencies": [
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001",
+            "resourceName": "rg-abarva-observability-product-dev-eus-001",
+            "resourceType": "Microsoft.Resources/resourceGroups"
+          }
+        ],
+        "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001/providers/Microsoft.Resources/deployments/product-dev-observability",
+        "resourceGroup": "rg-abarva-observability-product-dev-eus-001",
+        "resourceName": "product-dev-observability",
+        "resourceType": "Microsoft.Resources/deployments"
+      },
+      {
+        "dependsOn": [
+          {
+            "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001",
+            "resourceName": "rg-abarva-controlplane-product-dev-eus-001",
+            "resourceType": "Microsoft.Resources/resourceGroups"
+          },
+          {
+            "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001/providers/Microsoft.Resources/deployments/product-dev-observability",
+            "resourceGroup": "rg-abarva-observability-product-dev-eus-001",
+            "resourceName": "product-dev-observability",
+            "resourceType": "Microsoft.Resources/deployments"
+          },
+          {
+            "apiVersion": "2025-04-01",
+            "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001/providers/Microsoft.Resources/deployments/product-dev-observability",
+            "resourceGroup": "rg-abarva-observability-product-dev-eus-001",
+            "resourceName": "product-dev-observability",
+            "resourceType": "Microsoft.Resources/deployments"
+          }
+        ],
+        "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001/providers/Microsoft.Resources/deployments/product-dev-containerapps-smoke",
+        "resourceGroup": "rg-abarva-controlplane-product-dev-eus-001",
+        "resourceName": "product-dev-containerapps-smoke",
+        "resourceType": "Microsoft.Resources/deployments"
+      }
+    ],
+    "diagnostics": null,
+    "duration": "PT2M57.0675674S",
+    "error": null,
+    "extensions": [],
+    "mode": "Incremental",
+    "onErrorDeployment": null,
+    "outputResources": [
+      {
+        "apiVersion": null,
+        "extension": null,
+        "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001",
+        "identifiers": null,
+        "resourceType": "Microsoft.Resources/resourceGroups"
+      },
+      {
+        "apiVersion": null,
+        "extension": null,
+        "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001/providers/Microsoft.App/containerApps/ca-abv-pdev-smoke-eus1",
+        "identifiers": null,
+        "resourceGroup": "rg-abarva-controlplane-product-dev-eus-001",
+        "resourceType": "Microsoft.App/containerApps"
+      },
+      {
+        "apiVersion": null,
+        "extension": null,
+        "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001/providers/Microsoft.App/managedEnvironments/cae-abv-pdev-eus1",
+        "identifiers": null,
+        "resourceGroup": "rg-abarva-controlplane-product-dev-eus-001",
+        "resourceType": "Microsoft.App/managedEnvironments"
+      },
+      {
+        "apiVersion": null,
+        "extension": null,
+        "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-abv-pdev-runtime-eus1",
+        "identifiers": null,
+        "resourceGroup": "rg-abarva-controlplane-product-dev-eus-001",
+        "resourceType": "Microsoft.ManagedIdentity/userAssignedIdentities"
+      },
+      {
+        "apiVersion": null,
+        "extension": null,
+        "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001",
+        "identifiers": null,
+        "resourceType": "Microsoft.Resources/resourceGroups"
+      },
+      {
+        "apiVersion": null,
+        "extension": null,
+        "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001/providers/Microsoft.Insights/actionGroups/ag-abarva-product-dev-eus-001",
+        "identifiers": null,
+        "resourceGroup": "rg-abarva-observability-product-dev-eus-001",
+        "resourceType": "Microsoft.Insights/actionGroups"
+      },
+      {
+        "apiVersion": null,
+        "extension": null,
+        "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001/providers/Microsoft.Insights/activityLogAlerts/ala-subscription-deployment-failures",
+        "identifiers": null,
+        "resourceGroup": "rg-abarva-observability-product-dev-eus-001",
+        "resourceType": "Microsoft.Insights/activityLogAlerts"
+      },
+      {
+        "apiVersion": null,
+        "extension": null,
+        "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001/providers/Microsoft.Insights/components/appi-abarva-product-dev-eus-001",
+        "identifiers": null,
+        "resourceGroup": "rg-abarva-observability-product-dev-eus-001",
+        "resourceType": "Microsoft.Insights/components"
+      },
+      {
+        "apiVersion": null,
+        "extension": null,
+        "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001/providers/Microsoft.OperationalInsights/workspaces/log-abarva-product-dev-eus-001",
+        "identifiers": null,
+        "resourceGroup": "rg-abarva-observability-product-dev-eus-001",
+        "resourceType": "Microsoft.OperationalInsights/workspaces"
+      }
+    ],
+    "outputs": {
+      "applicationInsightsConnectionString": {
+        "type": "String",
+        "value": "[REDACTED: application insights connection string omitted from repo evidence]"
+      },
+      "containerAppsEnvironmentName": {
+        "type": "String",
+        "value": "cae-abv-pdev-eus1"
+      },
+      "controlPlaneResourceGroupName": {
+        "type": "String",
+        "value": "rg-abarva-controlplane-product-dev-eus-001"
+      },
+      "logAnalyticsWorkspaceResourceId": {
+        "type": "String",
+        "value": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001/providers/Microsoft.OperationalInsights/workspaces/log-abarva-product-dev-eus-001"
+      },
+      "observabilityResourceGroupName": {
+        "type": "String",
+        "value": "rg-abarva-observability-product-dev-eus-001"
+      },
+      "runtimeManagedIdentityPrincipalId": {
+        "type": "String",
+        "value": "69ffca12-0524-4fb6-a36b-93da0e8bb442"
+      },
+      "smokeContainerAppFqdn": {
+        "type": "String",
+        "value": "ca-abv-pdev-smoke-eus1.redwave-653318c8.eastus.azurecontainerapps.io"
+      },
+      "smokeContainerAppName": {
+        "type": "String",
+        "value": "ca-abv-pdev-smoke-eus1"
+      }
+    },
+    "parameters": {
+      "actionGroupEmailAddress": {
+        "type": "String",
+        "value": "alerts@abarva.ai"
+      },
+      "actionGroupName": {
+        "type": "String",
+        "value": "ag-abarva-product-dev-eus-001"
+      },
+      "actionGroupShortName": {
+        "type": "String",
+        "value": "pddevops"
+      },
+      "applicationInsightsName": {
+        "type": "String",
+        "value": "appi-abarva-product-dev-eus-001"
+      },
+      "containerAppsEnvironmentName": {
+        "type": "String",
+        "value": "cae-abv-pdev-eus1"
+      },
+      "controlPlaneResourceGroupName": {
+        "type": "String",
+        "value": "rg-abarva-controlplane-product-dev-eus-001"
+      },
+      "deploySmokeApp": {
+        "type": "Bool",
+        "value": true
+      },
+      "location": {
+        "type": "String",
+        "value": "eastus"
+      },
+      "logAnalyticsDailyQuotaGb": {
+        "type": "Int",
+        "value": 1
+      },
+      "logAnalyticsRetentionInDays": {
+        "type": "Int",
+        "value": 30
+      },
+      "logAnalyticsWorkspaceName": {
+        "type": "String",
+        "value": "log-abarva-product-dev-eus-001"
+      },
+      "observabilityResourceGroupName": {
+        "type": "String",
+        "value": "rg-abarva-observability-product-dev-eus-001"
+      },
+      "runtimeManagedIdentityName": {
+        "type": "String",
+        "value": "id-abv-pdev-runtime-eus1"
+      },
+      "smokeContainerAppName": {
+        "type": "String",
+        "value": "ca-abv-pdev-smoke-eus1"
+      },
+      "smokeMaxReplicas": {
+        "type": "Int",
+        "value": 1
+      },
+      "smokeMinReplicas": {
+        "type": "Int",
+        "value": 0
+      },
+      "tags": {
+        "type": "Object",
+        "value": {
+          "ClientCode": "abarva",
+          "CostCenter": "product-development",
+          "CreatedAt": "2026-06-15T01:59:22Z",
+          "CreatedBy": "codex",
+          "Criticality": "medium",
+          "DataClassification": "synthetic",
+          "Environment": "Product Dev",
+          "EnvironmentKey": "product-dev",
+          "Expiry": "2026-09-30",
+          "ManagedBy": "manual-approved",
+          "NoPhiPii": "true",
+          "Owner": "AbarVa Platform",
+          "Plane": "control-plane",
+          "ReleaseLane": "global-control-lane",
+          "Repository": "abarva-platform/abarva"
+        }
+      }
+    },
+    "parametersLink": null,
+    "providers": [
+      {
+        "id": null,
+        "namespace": "Microsoft.Resources",
+        "providerAuthorizationConsentState": null,
+        "registrationPolicy": null,
+        "registrationState": null,
+        "resourceTypes": [
+          {
+            "aliases": null,
+            "apiProfiles": null,
+            "apiVersions": null,
+            "capabilities": null,
+            "defaultApiVersion": null,
+            "locationMappings": null,
+            "locations": [
+              "eastus"
+            ],
+            "properties": null,
+            "resourceType": "resourceGroups",
+            "zoneMappings": null
+          },
+          {
+            "aliases": null,
+            "apiProfiles": null,
+            "apiVersions": null,
+            "capabilities": null,
+            "defaultApiVersion": null,
+            "locationMappings": null,
+            "locations": [
+              null
+            ],
+            "properties": null,
+            "resourceType": "deployments",
+            "zoneMappings": null
+          }
+        ]
+      }
+    ],
+    "provisioningState": "Succeeded",
+    "templateHash": "16550489293094147938",
+    "templateLink": null,
+    "timestamp": "2026-06-15T03:12:04.502728+00:00",
+    "validatedResources": null,
+    "validationLevel": null
+  },
+  "tags": null,
+  "type": "Microsoft.Resources/deployments"
+}

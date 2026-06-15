@@ -1,6 +1,6 @@
 # AbarVa Azure Environment Setup Execution Status
 
-Status date: 2026-06-14
+Status date: 2026-06-15
 
 ## Current Position
 
@@ -16,9 +16,11 @@ to Downloads for review snapshots. The repo distinguishes between:
   creates spend, changes RBAC, mutates production/client data, changes DNS, or
   shifts production traffic.
 
-The Product Dev approval request packet is now ready for human review at
-`docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.md`. It is intentionally
-non-mutating and does not authorize execution by itself.
+The Product Dev approval request was executed in a narrow approved scope.
+Product Dev now has a real subscription, cost guardrails, a secured placeholder
+Key Vault, and a minimal Container Apps runtime smoke baseline. The latest
+evidence lives at
+`docs/build/azure/2026-06-15-product-dev-finish/summary.md`.
 
 ## Progress Snapshot
 
@@ -37,8 +39,8 @@ non-mutating and does not authorize execution by itself.
 | First client preprod rehearsal packet                         | Scaffold-ready, not executed                     |     50% |
 | Client prod go/no-go packet                                   | Scaffold-ready, not executed                     |     50% |
 | Operating cadence packet                                      | Scaffold-ready                                   |     50% |
-| Actual Azure subscription creation                            | Execution-gated, not started                     |      0% |
-| Policy/budget/RBAC/resource provisioning in new subscriptions | Execution-gated, not started                     |      0% |
+| Actual Azure subscription creation                            | Product Dev created; Preview/Prod/client planes not created |     25% |
+| Policy/budget/RBAC/resource provisioning in new subscriptions | Product Dev budget/KV/runtime smoke done; MG/policy/GitHub/app pending |     45% |
 
 Tracker math:
 
@@ -47,7 +49,8 @@ Tracker math:
 - Scaffold-ready / not executed items: 5
 - Human-gated Azure execution items: 2
 - Strict completion: 68.2%
-- Effective progress with scaffold half-credit: 79.5%
+- Effective progress with scaffold half-credit: 81.6%
+- Product Dev Azure execution: 75.0%
 
 ## Autonomous Work Queue
 
@@ -83,14 +86,16 @@ These must stop for Anand's explicit approval:
 
 ## Recommended Next Execution Step
 
-Proceed with the first narrow human-gated approval only when Anand is ready:
+Finish Product Dev before broadening the environment footprint:
 
-- Approve creation of **Product Dev only**.
-- Include subscription vending, management group placement, budget, baseline
-  policy assignments, least-privilege RBAC, and validation exports.
-- Do not include Product Preview, Product Prod, Client Preprod, Client Prod,
-  DNS, Product Prod traffic shifts, or client-prod data actions in the first
-  approval.
+- Resolve management-group access or decide on a narrower subscription-level
+  Product Dev policy packet.
+- Keep GitHub environment secret wiring separate because it requires real secret
+  values.
+- Keep real AbarVa app deployment and Product Dev synthetic data rehearsal as a
+  controlled application-release slice.
+- After those Product Dev blockers are resolved or explicitly deferred, replicate
+  the same pattern for Product Preview.
 
 Review packet:
 
@@ -99,6 +104,5 @@ Review packet:
 - `docs/approvals/AZURE_MUTATION_APPROVAL_TEMPLATE.md`
 - Verifier: `npm run azure:product-dev-approval:verify`
 
-After Anand approves the narrow Product Dev request, create a dedicated approval
-PR that copies the template to `docs/approvals/AZURE_MUTATION_APPROVED.md` with
-real values and a named time window.
+The current approval file remains Product Dev only. Do not use it for Product
+Preview, Product Prod, Client Preprod, or Client Prod.
