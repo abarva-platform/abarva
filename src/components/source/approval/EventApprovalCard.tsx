@@ -42,6 +42,8 @@ interface ActionResult {
   redirectTo?: string;
   eventId?: string;
   newLifecycleState?: string;
+  /** Stage the event advanced to on approval (Strategy-at-P0 → "scope"). */
+  advancedToStage?: string;
   detail?: string;
   error?: string;
 }
@@ -124,7 +126,14 @@ export function EventApprovalCard({
         return;
       }
       if (action === "approve") {
-        router.push(currentStageHref);
+        // Land on the stage the event actually advanced to. With Strategy-at-P0
+        // the approve route advances to Scope and returns `advancedToStage`;
+        // `currentStageHref` was built from the pre-approve stage, so using it
+        // would drop the user back on the now-completed Strategy view.
+        const target = payload.advancedToStage
+          ? `/source/events/${eventId}?stage=${payload.advancedToStage}`
+          : currentStageHref;
+        router.push(target);
         router.refresh();
         return;
       }
