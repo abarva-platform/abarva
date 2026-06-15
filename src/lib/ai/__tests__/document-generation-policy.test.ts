@@ -1,8 +1,11 @@
 import {
   assertDeliverablePolicy,
+  estimateMaxPassOutputTokens,
   normalizeDeliverableKey,
   policyForTier,
+  resolveDocGenQualityProfile,
   resolveDocumentPolicy,
+  resolvePassTokenBudget,
   tierForDeliverable,
 } from "../document-generation-policy";
 
@@ -10,6 +13,9 @@ describe("document-generation-policy", () => {
   const ENV_KEYS = [
     "ABARVA_CLAUDE_BOARD_GRADE_MODEL",
     "ABARVA_CLAUDE_CHAT_MODEL",
+    "ABARVA_DOCGEN_QUALITY_PROFILE",
+    "ABARVA_DOCGEN_MAX_PASS_TOKENS",
+    "ABARVA_DOCGEN_PASS_FULL_DRAFT_MAX_TOKENS",
     "ABARVA_DOCGEN_BOARD_MAX_TOKENS",
     "ABARVA_DOCGEN_CHAT_MAX_TOKENS",
   ];
@@ -70,6 +76,65 @@ describe("document-generation-policy", () => {
     const p = resolveDocumentPolicy({ deliverableType: "business_case" });
     expect(p.model).toMatch(/^claude-opus-/);
     expect(p.maxTokens).toBeGreaterThanOrEqual(8000);
+    expect(p.qualityProfile).toBe("standard");
+  });
+
+  it("keeps the standard six-pass output ceiling at the current safe budget", () => {
+    expect(resolveDocGenQualityProfile()).toBe("standard");
+    expect(
+      resolvePassTokenBudget({
+        pass: "full_draft",
+        deliverableType: "business_case",
+      }),
+    ).toBe(16000);
+    expect(estimateMaxPassOutputTokens()).toBe(66000);
+  });
+
+  it("boosts six-pass budgets with the real engagement profile", () => {
+    process.env.ABARVA_DOCGEN_QUALITY_PROFILE = "real_engagement";
+
+    expect(resolveDocGenQualityProfile()).toBe("real_engagement");
+    expect(resolveDocumentPolicy({ deliverableType: "business_case" })).toMatchObject({
+      qualityProfile: "real_engagement",
+      maxTokens: 48000,
+    });
+    expect(
+      resolvePassTokenBudget({
+        pass: "full_draft",
+        deliverableType: "business_case",
+      }),
+    ).toBe(32000);
+    expect(estimateMaxPassOutputTokens()).toBe(132000);
+  });
+
+  it("supports a premium final profile for high-value engagement deliverables", () => {
+    process.env.ABARVA_DOCGEN_QUALITY_PROFILE = "premium_final";
+
+    expect(resolveDocGenQualityProfile()).toBe("premium_final");
+    expect(resolveDocumentPolicy({ deliverableType: "business_case" })).toMatchObject({
+      qualityProfile: "premium_final",
+      maxTokens: 128000,
+    });
+    expect(
+      resolvePassTokenBudget({
+        pass: "board_grade_rewrite",
+        deliverableType: "business_case",
+      }),
+    ).toBe(128000);
+    expect(estimateMaxPassOutputTokens()).toBe(456000);
+  });
+
+  it("lets operators override a single pass while respecting the max-pass cap", () => {
+    process.env.ABARVA_DOCGEN_QUALITY_PROFILE = "premium_final";
+    process.env.ABARVA_DOCGEN_MAX_PASS_TOKENS = "64000";
+    process.env.ABARVA_DOCGEN_PASS_FULL_DRAFT_MAX_TOKENS = "96000";
+
+    expect(
+      resolvePassTokenBudget({
+        pass: "full_draft",
+        deliverableType: "business_case",
+      }),
+    ).toBe(64000);
   });
 
   // ── THE KEYSTONE GUARD ──
