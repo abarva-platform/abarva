@@ -8,8 +8,6 @@ import type {
   WorkspaceGenerateIntent,
   WorkspaceItem,
   WorkspaceItemKind,
-  WorkspaceProgression,
-  WorkspaceProgressionNeed,
   WorkspaceUploadIntent,
 } from "@/lib/workspace-explorer/types";
 import {
@@ -27,7 +25,6 @@ interface WorkspaceExplorerProps {
   backLabel?: string;
   items: WorkspaceItem[];
   mode?: "page" | "drawer";
-  progression?: WorkspaceProgression;
   generateIntent?: WorkspaceGenerateIntent;
   uploadIntent?: WorkspaceUploadIntent;
 }
@@ -516,117 +513,6 @@ export function WorkspaceExplorer({
         </aside>
       </div>
     </section>
-  );
-}
-
-const NEED_KIND_META: Record<
-  WorkspaceProgressionNeed["kind"],
-  { label: string; cta: string; tone: CSSProperties }
-> = {
-  upload: {
-    label: "Upload",
-    cta: "Upload",
-    tone: { color: "#1d4ed8", background: "#eff6ff", borderColor: "#bfdbfe" },
-  },
-  generate: {
-    label: "Generate",
-    cta: "Generate",
-    tone: { color: "#1d4ed8", background: "#eff6ff", borderColor: "#bfdbfe" },
-  },
-  prepare: {
-    label: "Prepare",
-    cta: "Prepare",
-    tone: { color: "#854d0e", background: "#fffbeb", borderColor: "#fde68a" },
-  },
-  send: {
-    label: "Send",
-    cta: "Send",
-    tone: { color: "#854d0e", background: "#fffbeb", borderColor: "#fde68a" },
-  },
-  approve: {
-    label: "Approve",
-    cta: "Approve",
-    tone: { color: "#166534", background: "#ecfdf3", borderColor: "#bbf7d0" },
-  },
-  advance: {
-    label: "Advance",
-    cta: "Advance",
-    tone: { color: "#166534", background: "#ecfdf3", borderColor: "#bbf7d0" },
-  },
-};
-
-function ProgressionPanel({
-  progression,
-}: {
-  progression: WorkspaceProgression;
-}) {
-  if (progression.needs.length === 0) return null;
-  return (
-    <section
-      data-testid="workspace-progression"
-      aria-label="What is needed to advance"
-      style={PROGRESSION_PANEL_STYLE}
-    >
-      <div style={PROGRESSION_HEAD_STYLE}>
-        <div>
-          <div style={EYEBROW_STYLE}>Next move</div>
-          <h2 style={GENERATE_TITLE_STYLE}>
-            {progression.allClear
-              ? "Ready to advance"
-              : "What's needed to advance"}
-          </h2>
-        </div>
-        <span style={PROGRESSION_SUMMARY_STYLE}>{progression.gateSummary}</span>
-      </div>
-      <ol style={PROGRESSION_LIST_STYLE}>
-        {progression.needs.map((need, index) => (
-          <ProgressionRow
-            key={need.id}
-            need={need}
-            primary={index === 0 && !progression.allClear}
-          />
-        ))}
-      </ol>
-    </section>
-  );
-}
-
-function ProgressionRow({
-  need,
-  primary,
-}: {
-  need: WorkspaceProgressionNeed;
-  primary: boolean;
-}) {
-  const meta = NEED_KIND_META[need.kind];
-  return (
-    <li
-      data-testid={`progression-need-${need.kind}`}
-      style={primary ? PROGRESSION_ROW_PRIMARY_STYLE : PROGRESSION_ROW_STYLE}
-    >
-      <span style={{ ...PROGRESSION_CHIP_STYLE, ...meta.tone }}>
-        {meta.label}
-      </span>
-      <div style={PROGRESSION_BODY_STYLE}>
-        <span style={PROGRESSION_LABEL_STYLE}>
-          {need.label}
-          {need.optional ? " (recommended)" : ""}
-        </span>
-        {need.detail ? (
-          <span style={PROGRESSION_DETAIL_STYLE}>{need.detail}</span>
-        ) : null}
-        {need.blocked && need.blockedReason ? (
-          <span style={PROGRESSION_BLOCKED_STYLE}>{need.blockedReason}</span>
-        ) : null}
-      </div>
-      {need.href ? (
-        <Link href={need.href} style={PROGRESSION_ACTION_STYLE}>
-          {meta.cta}
-        </Link>
-      ) : (
-        <span style={PROGRESSION_DISABLED_STYLE}>{meta.cta}</span>
-      )}
-    </li>
   );
 }
 
@@ -1248,107 +1134,3 @@ const DISABLED_ACTION_STYLE: CSSProperties = {
   font: "700 12px DM Sans, Arial, sans-serif",
 };
 
-const PROGRESSION_PANEL_STYLE: CSSProperties = {
-  border: "1px solid #e5e1da",
-  borderRadius: 12,
-  background: "#ffffff",
-  padding: 20,
-  marginBottom: 16,
-  display: "grid",
-  gap: 14,
-};
-
-const PROGRESSION_HEAD_STYLE: CSSProperties = {
-  display: "flex",
-  alignItems: "flex-end",
-  justifyContent: "space-between",
-  gap: 16,
-};
-
-const PROGRESSION_SUMMARY_STYLE: CSSProperties = {
-  font: "700 12px DM Sans, Arial, sans-serif",
-  color: "#475569",
-  background: "#f1f5f9",
-  borderRadius: 999,
-  padding: "6px 12px",
-  whiteSpace: "nowrap",
-};
-
-const PROGRESSION_LIST_STYLE: CSSProperties = {
-  listStyle: "none",
-  margin: 0,
-  padding: 0,
-  display: "grid",
-  gap: 10,
-};
-
-const PROGRESSION_ROW_STYLE: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 14,
-  border: "1px solid #ece8e1",
-  borderRadius: 10,
-  background: "#fbfaf7",
-  padding: "12px 14px",
-};
-
-const PROGRESSION_ROW_PRIMARY_STYLE: CSSProperties = {
-  ...PROGRESSION_ROW_STYLE,
-  background: "#f5f9ff",
-  borderColor: "#bfdbfe",
-  boxShadow: "0 0 0 3px rgba(37,99,235,0.10)",
-};
-
-const PROGRESSION_CHIP_STYLE: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  borderRadius: 999,
-  border: "1px solid",
-  padding: "5px 11px",
-  font: "700 11px DM Sans, Arial, sans-serif",
-  letterSpacing: "0.02em",
-  whiteSpace: "nowrap",
-};
-
-const PROGRESSION_BODY_STYLE: CSSProperties = {
-  display: "grid",
-  gap: 3,
-  flex: 1,
-  minWidth: 0,
-};
-
-const PROGRESSION_LABEL_STYLE: CSSProperties = {
-  font: "600 14px DM Sans, Arial, sans-serif",
-  color: "#0f172a",
-};
-
-const PROGRESSION_DETAIL_STYLE: CSSProperties = {
-  font: "400 12.5px DM Sans, Arial, sans-serif",
-  color: "#64748b",
-};
-
-const PROGRESSION_BLOCKED_STYLE: CSSProperties = {
-  font: "500 12px DM Sans, Arial, sans-serif",
-  color: "#9a3412",
-};
-
-const PROGRESSION_ACTION_STYLE: CSSProperties = {
-  display: "inline-flex",
-  borderRadius: 6,
-  background: "#10172f",
-  color: "#ffffff",
-  padding: "9px 14px",
-  textDecoration: "none",
-  font: "700 12px DM Sans, Arial, sans-serif",
-  whiteSpace: "nowrap",
-};
-
-const PROGRESSION_DISABLED_STYLE: CSSProperties = {
-  display: "inline-flex",
-  borderRadius: 6,
-  border: "1px solid #d8d5ce",
-  color: "#94a3b8",
-  padding: "9px 14px",
-  font: "700 12px DM Sans, Arial, sans-serif",
-  whiteSpace: "nowrap",
-};

@@ -8,15 +8,9 @@ import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { normalizeSourceStageKey } from "@/lib/source/constants";
 import { getSourcingEvent } from "@/lib/source/queries";
 import {
-  listArtifactStatesForEvent,
-  listEvidenceStatesForEvent,
-  listGateCriterionStatesForEvent,
-} from "@/lib/source/canvas-substrate/queries";
-import {
   listSourceWorkspaceGenerateCandidates,
   listSourceWorkspaceItems,
 } from "@/lib/workspace-explorer/source-adapter";
-import { buildSourceWorkspaceProgression } from "@/lib/workspace-explorer/source-progression";
 
 export const dynamic = "force-dynamic";
 
@@ -49,30 +43,16 @@ export default async function SourceEventWorkspacePage({
   const stageKey = stageParam ? normalizeSourceStageKey(stageParam) : null;
   const showGenerateIntent = sp.intent === "generate";
   const showUploadIntent = sp.intent === "upload";
-  const [items, generateCandidates, criteria, evidence, artifacts] =
-    await Promise.all([
-      listSourceWorkspaceItems(event.id),
-      showGenerateIntent
-        ? listSourceWorkspaceGenerateCandidates({
-            sourceEventId: event.id,
-            stageKey,
-          })
-        : Promise.resolve([]),
-      listGateCriterionStatesForEvent(event.id),
-      listEvidenceStatesForEvent(event.id),
-      listArtifactStatesForEvent(event.id),
-    ]);
+  const [items, generateCandidates] = await Promise.all([
+    listSourceWorkspaceItems(event.id),
+    showGenerateIntent
+      ? listSourceWorkspaceGenerateCandidates({
+          sourceEventId: event.id,
+          stageKey,
+        })
+      : Promise.resolve([]),
+  ]);
 
-  // "What's needed to advance" — the progression engine surfaced as one-click
-  // actions for the current (or query-selected) stage.
-  const progressionStage = stageKey ?? event.currentStageKey;
-  const progression = buildSourceWorkspaceProgression({
-    stage: progressionStage,
-    criteria: criteria.filter((c) => c.fromStage === progressionStage),
-    evidence,
-    artifacts,
-    eventHref: `/source/events/${eventId}`,
-  });
   const tenantName =
     canonicalClientDisplayName({
       key: activeClient?.key,
@@ -94,7 +74,6 @@ export default async function SourceEventWorkspacePage({
         title={event.name}
         backHref={`/source/events/${eventId}`}
         items={items}
-        progression={progression}
         generateIntent={
           showGenerateIntent
             ? {
