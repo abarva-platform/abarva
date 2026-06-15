@@ -753,12 +753,12 @@ function navButtonStyle(active: boolean): CSSProperties {
     borderRadius: 6,
     padding: "10px 12px",
     background: active ? "#ffffff" : "transparent",
-    color: active ? "#0f172a" : "#64748b",
+    color: active ? "#0c1a3a" : "#5b6c8a",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
-    font: "600 13px DM Sans, Arial, sans-serif",
+    font: "600 13px var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
     cursor: "pointer",
     boxShadow: active ? "0 0 0 1px rgba(15,23,42,0.08)" : "none",
   };
@@ -801,7 +801,7 @@ const PAGE_WRAP_STYLE: CSSProperties = {
   background: "#f8f7f4",
   minHeight: "100%",
   padding: "24px",
-  color: "#111827",
+  color: "#0c1a3a",
 };
 
 const DRAWER_WRAP_STYLE: CSSProperties = {
@@ -818,15 +818,15 @@ const HEADER_STYLE: CSSProperties = {
 };
 
 const EYEBROW_STYLE: CSSProperties = {
-  font: "700 10px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace",
+  font: "700 10px/1.2 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
   letterSpacing: "0.18em",
   textTransform: "uppercase",
-  color: "#64748b",
+  color: "#5b6c8a",
 };
 
 const TITLE_STYLE: CSSProperties = {
   margin: "6px 0 0",
-  font: "700 30px/1.1 Georgia, serif",
+  font: "700 30px/1.1 var(--font-fraunces), 'Fraunces', Georgia, serif",
   letterSpacing: 0,
   color: "#10172f",
 };
@@ -835,9 +835,9 @@ const BACK_LINK_STYLE: CSSProperties = {
   border: "1px solid #d8d5ce",
   borderRadius: 6,
   padding: "9px 12px",
-  color: "#111827",
+  color: "#0c1a3a",
   textDecoration: "none",
-  font: "700 12px DM Sans, Arial, sans-serif",
+  font: "700 12px var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   background: "#ffffff",
 };
 
@@ -861,7 +861,7 @@ const UPLOAD_PANEL_STYLE: CSSProperties = {
 
 const GENERATE_TITLE_STYLE: CSSProperties = {
   margin: "6px 0 8px",
-  font: "700 22px/1.15 Georgia, serif",
+  font: "700 22px/1.15 var(--font-fraunces), 'Fraunces', Georgia, serif",
   letterSpacing: 0,
   color: "#10172f",
 };
@@ -874,10 +874,10 @@ const GENERATE_CONTROLS_STYLE: CSSProperties = {
 const GENERATE_LABEL_STYLE: CSSProperties = {
   display: "grid",
   gap: 6,
-  font: "700 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace",
+  font: "700 11px/1.2 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
   letterSpacing: "0.12em",
   textTransform: "uppercase",
-  color: "#64748b",
+  color: "#5b6c8a",
 };
 
 const GENERATE_SELECT_STYLE: CSSProperties = {
@@ -885,8 +885,8 @@ const GENERATE_SELECT_STYLE: CSSProperties = {
   borderRadius: 6,
   padding: "10px 12px",
   background: "#fbfaf7",
-  color: "#111827",
-  font: "600 13px/1.35 DM Sans, Arial, sans-serif",
+  color: "#0c1a3a",
+  font: "600 13px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 const FILE_INPUT_STYLE: CSSProperties = {
@@ -894,13 +894,13 @@ const FILE_INPUT_STYLE: CSSProperties = {
   borderRadius: 6,
   padding: "9px 10px",
   background: "#ffffff",
-  color: "#111827",
-  font: "600 13px/1.35 DM Sans, Arial, sans-serif",
+  color: "#0c1a3a",
+  font: "600 13px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 const GENERATE_DESCRIPTION_STYLE: CSSProperties = {
   margin: 0,
-  font: "500 13px/1.45 DM Sans, Arial, sans-serif",
+  font: "500 13px/1.45 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   color: "#475569",
 };
 
@@ -911,7 +911,7 @@ const ACTION_BUTTON_STYLE: CSSProperties = {
   background: "#10172f",
   color: "#ffffff",
   padding: "10px 13px",
-  font: "700 12px DM Sans, Arial, sans-serif",
+  font: "700 12px var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   cursor: "pointer",
 };
 
@@ -920,8 +920,8 @@ const GENERATE_EMPTY_STYLE: CSSProperties = {
   borderRadius: 8,
   padding: 14,
   background: "#fbfaf7",
-  color: "#64748b",
-  font: "600 13px/1.45 DM Sans, Arial, sans-serif",
+  color: "#5b6c8a",
+  font: "600 13px/1.45 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 const GENERATE_SUCCESS_STYLE: CSSProperties = {
@@ -932,7 +932,7 @@ const GENERATE_SUCCESS_STYLE: CSSProperties = {
   padding: 12,
   display: "grid",
   gap: 6,
-  font: "600 13px/1.45 DM Sans, Arial, sans-serif",
+  font: "600 13px/1.45 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 const GENERATE_ERROR_STYLE: CSSProperties = {
@@ -943,13 +943,13 @@ const GENERATE_ERROR_STYLE: CSSProperties = {
   padding: 12,
   display: "grid",
   gap: 6,
-  font: "600 13px/1.45 DM Sans, Arial, sans-serif",
+  font: "600 13px/1.45 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 const INLINE_REVIEW_LINK_STYLE: CSSProperties = {
   justifySelf: "start",
   color: "#14532d",
-  font: "700 12px/1.35 DM Sans, Arial, sans-serif",
+  font: "700 12px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 const SHELL_STYLE: CSSProperties = {
@@ -989,24 +989,24 @@ const PREVIEW_STYLE: CSSProperties = {
 };
 
 const EMPTY_STYLE: CSSProperties = {
-  color: "#64748b",
-  font: "500 13px/1.5 DM Sans, Arial, sans-serif",
+  color: "#5b6c8a",
+  font: "500 13px/1.5 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 
 
 const ITEM_NAME_STYLE: CSSProperties = {
-  font: "700 14px/1.25 DM Sans, Arial, sans-serif",
-  color: "#111827",
+  font: "700 14px/1.25 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
+  color: "#0c1a3a",
 };
 
 const ITEM_META_STYLE: CSSProperties = {
-  font: "500 12px/1.35 DM Sans, Arial, sans-serif",
-  color: "#64748b",
+  font: "500 12px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
+  color: "#5b6c8a",
 };
 
 const NEEDS_HEADING_STYLE: CSSProperties = {
-  font: "700 10px/1 DM Sans, Arial, sans-serif",
+  font: "700 10px/1 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   letterSpacing: "0.1em",
   textTransform: "uppercase",
   color: "#94a3b8",
@@ -1030,17 +1030,17 @@ const NEED_BODY_STYLE: CSSProperties = {
 };
 
 const NEED_NAME_STYLE: CSSProperties = {
-  font: "600 13px/1.3 DM Sans, Arial, sans-serif",
-  color: "#111827",
+  font: "600 13px/1.3 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
+  color: "#0c1a3a",
 };
 
 const NEED_META_STYLE: CSSProperties = {
-  font: "500 11.5px/1.35 DM Sans, Arial, sans-serif",
-  color: "#64748b",
+  font: "500 11.5px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
+  color: "#5b6c8a",
 };
 
 const NEED_UPLOAD_STYLE: CSSProperties = {
-  font: "700 11px/1 DM Sans, Arial, sans-serif",
+  font: "700 11px/1 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   color: "#1d4ed8",
   background: "#eef4ff",
   border: "1px solid #cfdcfa",
@@ -1052,7 +1052,7 @@ const NEED_UPLOAD_STYLE: CSSProperties = {
 };
 
 const UPLOADED_BADGE_STYLE: CSSProperties = {
-  font: "700 11px/1 DM Sans, Arial, sans-serif",
+  font: "700 11px/1 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   color: "#197a4b",
   background: "#e6f5ec",
   border: "1px solid #bfe6cf",
@@ -1084,14 +1084,14 @@ function needDotStyle(level: "required" | "recommended"): CSSProperties {
 
 const PREVIEW_TITLE_STYLE: CSSProperties = {
   margin: "8px 0 8px",
-  font: "700 28px/1.15 Georgia, serif",
+  font: "700 28px/1.15 var(--font-fraunces), 'Fraunces', Georgia, serif",
   letterSpacing: 0,
   color: "#10172f",
 };
 
 const PREVIEW_COPY_STYLE: CSSProperties = {
   margin: "0 0 18px",
-  font: "500 14px/1.55 DM Sans, Arial, sans-serif",
+  font: "500 14px/1.55 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   color: "#475569",
 };
 
@@ -1109,7 +1109,7 @@ const LINEAGE_STYLE: CSSProperties = {
   marginBottom: 18,
   display: "grid",
   gap: 4,
-  font: "500 13px/1.45 DM Sans, Arial, sans-serif",
+  font: "500 13px/1.45 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   color: "#475569",
 };
 
@@ -1120,15 +1120,15 @@ const ACTION_LINK_STYLE: CSSProperties = {
   color: "#ffffff",
   padding: "10px 13px",
   textDecoration: "none",
-  font: "700 12px DM Sans, Arial, sans-serif",
+  font: "700 12px var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 const DISABLED_ACTION_STYLE: CSSProperties = {
   display: "inline-flex",
   borderRadius: 6,
   border: "1px solid #d8d5ce",
-  color: "#64748b",
+  color: "#5b6c8a",
   padding: "10px 13px",
-  font: "700 12px DM Sans, Arial, sans-serif",
+  font: "700 12px var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
