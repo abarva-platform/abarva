@@ -3,6 +3,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
   type ReactNode,
@@ -173,6 +174,7 @@ interface UniversalCanvasShellProps {
   decisionThreadId?: string | null;
   vendorResponseReadiness?: SourceVendorResponseCompleteness;
   workspaceExplorerEnabled?: boolean;
+  strategyAutoDraftEnabled?: boolean;
 }
 
 function renderStageDocumentContent({
@@ -301,6 +303,7 @@ export function UniversalCanvasShell({
   decisionThreadId = null,
   vendorResponseReadiness,
   workspaceExplorerEnabled = false,
+  strategyAutoDraftEnabled = false,
 }: UniversalCanvasShellProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -631,6 +634,35 @@ export function UniversalCanvasShell({
           },
     ]);
   };
+
+  // Auto-draft the strategy memo on entry (flag: source_strategy_auto_draft).
+  // When you land on Strategy with no memo yet, run the governed Draft-with-
+  // Sentinel ONCE — so the memo appears from the validated P0 facts without a
+  // manual click. `nextMove.draftArtifactCode` is set only while the draft is
+  // still needed, so this self-disables the moment the memo exists; the ref
+  // guards a double-fire; an existing authored body is never overwritten.
+  const autoDraftFiredRef = useRef(false);
+  useEffect(() => {
+    if (!strategyAutoDraftEnabled || !workspaceExplorerEnabled) return;
+    if (viewStage !== "strategy") return;
+    if (autoDraftFiredRef.current) return;
+    const code = nextMove.draftArtifactCode;
+    if (!code) return;
+    if (pendingGenerationByCode[code]) return;
+    if (artifactStateMap[code]?.body) return;
+    autoDraftFiredRef.current = true;
+    void handleDraftWithSentinel(code);
+    // handleDraftWithSentinel is recreated each render; the ref guard makes this
+    // fire exactly once, so it is intentionally omitted from the deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    strategyAutoDraftEnabled,
+    workspaceExplorerEnabled,
+    viewStage,
+    nextMove,
+    pendingGenerationByCode,
+    artifactStateMap,
+  ]);
 
   const handleArtifactBodySave = async (
     code: string,

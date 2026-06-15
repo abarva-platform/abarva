@@ -68,7 +68,8 @@ export type FeatureFlagKey =
   | "discovery_intake_v2"
   | "moves_orchestrated_deliverables"
   | "workspace_explorer_source"
-  | "workspace_explorer_moves";
+  | "workspace_explorer_moves"
+  | "source_strategy_auto_draft";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -82,6 +83,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "workspace_explorer_moves",
     summary:
       "Enables the Moves Workspace Explorer surfacing layer over program attachments, generated artifacts, and deliverables. Tenant opt-in; default off so the current Moves detail surface remains unchanged.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "source_strategy_auto_draft",
+    summary:
+      "On entering the Strategy stage with no strategy memo yet, auto-runs the governed Draft-with-Sentinel generation once (so the memo appears from the validated P0 facts without a manual click). Reuses the proven, persisted, gap-flagged generation path; the human still confirms archetype/value and the sponsor still endorses. Tenant opt-in; default off so the manual draft stays the norm until proven per tenant.",
     policy: "tenant",
     includeTenants: [],
   },

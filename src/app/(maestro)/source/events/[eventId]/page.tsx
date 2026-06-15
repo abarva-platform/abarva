@@ -131,12 +131,17 @@ export default async function SourceEventDetailPage({
   const vendorResponseReadiness = buildSourceVendorResponseCompleteness({
     event,
   });
+  const flagScope = {
+    clientKey: activeClient?.key ?? null,
+    clientId: activeClient?.id ?? null,
+  };
   const workspaceExplorerEnabled = isFeatureEnabled(
-    {
-      clientKey: activeClient?.key ?? null,
-      clientId: activeClient?.id ?? null,
-    },
+    flagScope,
     "workspace_explorer_source",
+  );
+  const strategyAutoDraftEnabled = isFeatureEnabled(
+    flagScope,
+    "source_strategy_auto_draft",
   );
 
   return (
@@ -153,6 +158,7 @@ export default async function SourceEventDetailPage({
       decisionThreadId={decisionThread?.id ?? null}
       vendorResponseReadiness={vendorResponseReadiness}
       workspaceExplorerEnabled={workspaceExplorerEnabled}
+      strategyAutoDraftEnabled={strategyAutoDraftEnabled}
     />
   );
 }
