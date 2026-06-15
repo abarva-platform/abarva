@@ -41,6 +41,12 @@ circuit breaker, and a minimal Container Apps runtime smoke baseline with HTTPS
 proof. Evidence lives at
 `docs/build/azure/2026-06-15-product-dev-finish/summary.md`.
 
+Product Preview execution has started but is blocked by Azure subscription API
+throttling. Azure returned `TooManyRequests` twice while creating subscription
+alias `sub-abarva-product-preview-eus-001`; no Product Preview subscription or
+resources were created. Evidence lives at
+`docs/build/azure/2026-06-15-product-preview-execution/summary.md`.
+
 ## Tracker
 
 | ID     | Area                                                         | Model   | Status         |   % | Owner                 | Artifact path                                                              | Dependencies           | Validation                                           | Blocker                                 | Human-gated |
@@ -70,8 +76,16 @@ proof. Evidence lives at
 
 ## Human Approval Queue
 
-The next human approval/action request is not a broad new environment request.
-It is a targeted Product Dev follow-up:
+The next action is not a broad new environment request. It is a targeted Product
+Preview retry after Azure subscription API throttling clears, followed by Product
+Dev management-group/policy resolution:
+
+> Retry Product Preview subscription alias creation for
+> `sub-abarva-product-preview-eus-001`. If it succeeds, apply Product Preview
+> USD 500 budget, tags, provider registration, secured placeholder Key Vault,
+> runtime smoke baseline, and evidence exports.
+
+Then:
 
 > Grant or perform management-group placement for subscription
 > `58eef48c-3ed6-48e6-9af4-de1848ad3401`, then approve either the management

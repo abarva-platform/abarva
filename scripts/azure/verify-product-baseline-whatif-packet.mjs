@@ -163,8 +163,8 @@ if (ledger) {
 
 if (cost) {
   record('cost.productDevBudget', cost.budgetRules?.defaultMonthlyBudgetUsd?.['product-dev'] === 500);
-  record('cost.productPreviewBudget', cost.budgetRules?.defaultMonthlyBudgetUsd?.['product-preview'] === 1000);
-  record('cost.productProdBudget', cost.budgetRules?.defaultMonthlyBudgetUsd?.['product-prod'] === 1500);
+  record('cost.productPreviewBudget', cost.budgetRules?.defaultMonthlyBudgetUsd?.['product-preview'] === 500);
+  record('cost.productProdBudget', cost.budgetRules?.defaultMonthlyBudgetUsd?.['product-prod'] === 500);
 }
 
 if (rbac) {

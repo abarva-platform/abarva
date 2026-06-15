@@ -58,7 +58,7 @@
       "environmentKey": "product-preview",
       "subscriptionDisplayName": "sub-abarva-product-preview-eus-001",
       "managementGroupTarget": "abarva-product",
-      "monthlyBudgetUsd": 1000,
+      "monthlyBudgetUsd": 500,
       "whatIfOnly": true,
       "requiredBeforeWhatIf": [
         "product_dev_verified_or_explicit_waiver",
@@ -93,7 +93,7 @@
       "environmentKey": "product-prod",
       "subscriptionDisplayName": "sub-abarva-product-prod-eus-001",
       "managementGroupTarget": "abarva-product",
-      "monthlyBudgetUsd": 1500,
+      "monthlyBudgetUsd": 500,
       "whatIfOnly": true,
       "requiredBeforeWhatIf": [
         "product_preview_verified_or_explicit_waiver",

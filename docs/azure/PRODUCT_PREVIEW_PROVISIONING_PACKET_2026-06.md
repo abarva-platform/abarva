@@ -16,7 +16,7 @@ Verifier: `npm run azure:product-preview-provisioning:verify`.
 - Subscription display name: `sub-abarva-product-preview-eus-001`
 - Management group target: `abarva-product`
 - Primary region: East US
-- Monthly planning budget: `$1,000`
+- Monthly planning budget: `$500`
 - Data allowed: synthetic, pilot-reference, client-approved-redacted
 - Data disallowed: unapproved client-confidential data, PHI, PII, raw client private documents
 
@@ -91,7 +91,7 @@ Minimum tags:
 
 Product Preview requires a monthly budget before runtime workloads are created.
 
-- Monthly budget: `$1,000`
+- Monthly budget: `$500`
 - Alert thresholds: `50%`, `80%`, `100%`
 - Budget increases require explicit approval.
 
@@ -131,7 +131,7 @@ az account management-group subscription add \
 az consumption budget create \
   --subscription "<PRODUCT_PREVIEW_SUBSCRIPTION_ID>" \
   --budget-name budget-product-preview-monthly \
-  --amount 1000 \
+  --amount 500 \
   --time-grain Monthly
 ```
 

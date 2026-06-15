@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.43.8.12551",
-      "templateHash": "12294264369407801166"
+      "templateHash": "6476096820275258689"
     }
   },
   "parameters": {
@@ -119,6 +119,20 @@
       "defaultValue": 1,
       "metadata": {
         "description": "Maximum smoke app replicas. Keep low for Product Dev cost control."
+      }
+    },
+    "smokeEnvironmentKey": {
+      "type": "string",
+      "defaultValue": "product-dev",
+      "metadata": {
+        "description": "Environment key exposed by the smoke app."
+      }
+    },
+    "smokeDataBoundary": {
+      "type": "string",
+      "defaultValue": "synthetic-no-client-data",
+      "metadata": {
+        "description": "Data boundary label exposed by the smoke app."
       }
     }
   },
@@ -372,6 +386,12 @@
           },
           "smokeMaxReplicas": {
             "value": "[parameters('smokeMaxReplicas')]"
+          },
+          "smokeEnvironmentKey": {
+            "value": "[parameters('smokeEnvironmentKey')]"
+          },
+          "smokeDataBoundary": {
+            "value": "[parameters('smokeDataBoundary')]"
           }
         },
         "template": {
@@ -381,7 +401,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.43.8.12551",
-              "templateHash": "17892950346906785781"
+              "templateHash": "7371477953319462358"
             }
           },
           "parameters": {
@@ -415,6 +435,14 @@
             "smokeMaxReplicas": {
               "type": "int",
               "defaultValue": 1
+            },
+            "smokeEnvironmentKey": {
+              "type": "string",
+              "defaultValue": "product-dev"
+            },
+            "smokeDataBoundary": {
+              "type": "string",
+              "defaultValue": "synthetic-no-client-data"
             }
           },
           "resources": [
@@ -454,7 +482,7 @@
               "apiVersion": "2024-03-01",
               "name": "[parameters('smokeContainerAppName')]",
               "location": "[parameters('location')]",
-              "tags": "[union(parameters('tags'), createObject('Purpose', 'product-dev-runtime-smoke', 'RuntimeDataBoundary', 'synthetic-no-client-data'))]",
+              "tags": "[union(parameters('tags'), createObject('Purpose', format('{0}-runtime-smoke', parameters('smokeEnvironmentKey')), 'RuntimeDataBoundary', parameters('smokeDataBoundary')))]",
               "identity": {
                 "type": "UserAssigned",
                 "userAssignedIdentities": {
@@ -480,11 +508,11 @@
                       "env": [
                         {
                           "name": "ABARVA_ENVIRONMENT_KEY",
-                          "value": "product-dev"
+                          "value": "[parameters('smokeEnvironmentKey')]"
                         },
                         {
                           "name": "ABARVA_DATA_BOUNDARY",
-                          "value": "synthetic-no-client-data"
+                          "value": "[parameters('smokeDataBoundary')]"
                         }
                       ],
                       "resources": {

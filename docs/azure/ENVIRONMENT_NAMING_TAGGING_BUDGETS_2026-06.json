@@ -90,10 +90,10 @@
     "alertRecipientsRequired": true,
     "defaultMonthlyBudgetUsd": {
       "product-dev": 500,
-      "product-preview": 1000,
-      "product-prod": 1500,
-      "client-preprod": 1000,
-      "client-prod": 2500
+      "product-preview": 500,
+      "product-prod": 500,
+      "client-preprod": 500,
+      "client-prod": 500
     },
     "budgetChangeRequiresApproval": true,
     "overBudgetAction": "report_and_pause_nonessential_creation"
