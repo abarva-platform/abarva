@@ -101,19 +101,6 @@ function formatDate(value: string | null | undefined): string {
   }).format(date);
 }
 
-function stateTone(state: WorkspaceItem["state"]): CSSProperties {
-  if (state === "approved" || state === "usable") {
-    return { color: "#166534", background: "#ecfdf3", borderColor: "#bbf7d0" };
-  }
-  if (state === "blocked" || state === "missing") {
-    return { color: "#9a3412", background: "#fff7ed", borderColor: "#fed7aa" };
-  }
-  if (state === "review" || state === "draft") {
-    return { color: "#854d0e", background: "#fffbeb", borderColor: "#fde68a" };
-  }
-  return { color: "#1d4ed8", background: "#eff6ff", borderColor: "#bfdbfe" };
-}
-
 export function WorkspaceExplorer({
   title,
   eyebrow,
@@ -171,23 +158,36 @@ export function WorkspaceExplorer({
     activeStage !== "all" && isSourceStageKey(activeStage)
       ? evidenceForStage(activeStage as SourceStageKey)
       : [];
-  // A step document is "Uploaded" if a real evidence/input item for this step
-  // matches it (best-effort by a distinctive word in the requirement label);
-  // otherwise it's "Pending". Keeps the right pane to a simple uploaded/pending.
-  const isRequirementUploaded = (req: {
-    label: string;
-  }): boolean => {
+  // Real documents in this step — actual uploaded files / generated drafts only.
+  // Excludes the scaffold noise the substrate carries (missing-state requirement
+  // placeholders and gate-criterion/approval rows), so the right pane shows
+  // documents, never internal EVID/GATE codes.
+  const realDocs = filtered.filter(
+    (item) => item.kind !== "approval" && item.state !== "missing",
+  );
+  // The real file (if any) that satisfies a required document — best-effort by a
+  // distinctive word in the requirement label.
+  const matchedDoc = (req: { label: string }): WorkspaceItem | null => {
     const tokens = req.label
       .toLowerCase()
       .split(/\s+/)
       .filter((word) => word.length > 4);
-    if (tokens.length === 0) return false;
-    return filtered.some((item) => {
-      if (item.kind === "approval" || item.kind === "deliverable") return false;
-      const name = item.name.toLowerCase();
-      return tokens.some((token) => name.includes(token));
-    });
+    if (tokens.length === 0) return null;
+    return (
+      realDocs.find((item) =>
+        tokens.some((token) => item.name.toLowerCase().includes(token)),
+      ) ?? null
+    );
   };
+  // Pair each required document with its uploaded file (if any); the rest of the
+  // real files (uploads/drafts not tied to a requirement) show under "Other".
+  const coveredDocIds = new Set<string>();
+  const docRows = stageNeeds.map((req) => {
+    const doc = matchedDoc(req);
+    if (doc) coveredDocIds.add(doc.id);
+    return { req, doc };
+  });
+  const extraDocs = realDocs.filter((doc) => !coveredDocIds.has(doc.id));
   const activeItem =
     filtered.find((item) => item.id === activeId) ??
     filtered[0] ??
@@ -391,78 +391,80 @@ export function WorkspaceExplorer({
               style={navButtonStyle(activeStage === stage)}
             >
               <span>{stageLabel(stage)}</span>
-              <strong>{counts.get(stage) ?? 0}</strong>
+              <strong>
+                {isSourceStageKey(stage)
+                  ? evidenceForStage(stage as SourceStageKey).length
+                  : (counts.get(stage) ?? 0)}
+              </strong>
             </button>
           ))}
         </nav>
 
         <div style={LIST_STYLE} aria-label="Documents for this step">
-          {stageNeeds.length > 0 ? (
+          {docRows.length > 0 ? (
             <div data-testid="workspace-step-needs">
               <div style={NEEDS_HEADING_STYLE}>Documents for this step</div>
-              {stageNeeds.map((req) => {
-                const uploaded = isRequirementUploaded(req);
-                return (
-                  <div key={req.requirementId} style={NEED_ROW_STYLE}>
-                    <span
-                      style={
-                        uploaded ? UPLOADED_DOT_STYLE : needDotStyle(req.level)
-                      }
-                      aria-hidden
-                    />
-                    <span style={NEED_BODY_STYLE}>
-                      <span style={NEED_NAME_STYLE}>{req.label}</span>
-                      <span style={NEED_META_STYLE}>
-                        {req.sourceLabel} · needs {req.minimumState}
-                      </span>
-                    </span>
-                    {uploaded ? (
-                      <span style={UPLOADED_BADGE_STYLE}>Uploaded ✓</span>
-                    ) : (
-                      <Link
-                        href={`?intent=upload&stage=${activeStage}`}
-                        style={NEED_UPLOAD_STYLE}
-                      >
-                        Upload
-                      </Link>
-                    )}
-                  </div>
-                );
-              })}
-              {filtered.length > 0 ? (
-                <div style={NEEDS_SUBHEAD_STYLE}>Also in this step</div>
-              ) : null}
+              {docRows.map(({ req, doc }) => (
+                <button
+                  key={req.requirementId}
+                  type="button"
+                  onClick={() => doc && setActiveId(doc.id)}
+                  style={docRowStyle(
+                    Boolean(doc),
+                    doc != null && doc.id === activeItem?.id,
+                  )}
+                >
+                  <span
+                    style={doc ? UPLOADED_DOT_STYLE : needDotStyle(req.level)}
+                    aria-hidden
+                  />
+                  <span style={NEED_BODY_STYLE}>
+                    <span style={NEED_NAME_STYLE}>{req.label}</span>
+                    <span style={NEED_META_STYLE}>{req.sourceLabel}</span>
+                  </span>
+                  {doc ? (
+                    <span style={UPLOADED_BADGE_STYLE}>Uploaded ✓</span>
+                  ) : (
+                    <Link
+                      href={`?intent=upload&stage=${activeStage}`}
+                      style={NEED_UPLOAD_STYLE}
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      Upload
+                    </Link>
+                  )}
+                </button>
+              ))}
             </div>
           ) : null}
-          {filtered.length === 0 && stageNeeds.length === 0 ? (
-            <div style={EMPTY_STYLE}>Nothing in this step yet.</div>
-          ) : (
-            filtered.map((item) => {
-              const active = item.id === activeItem?.id;
-              return (
+
+          {extraDocs.length > 0 ? (
+            <div>
+              {docRows.length > 0 ? (
+                <div style={NEEDS_SUBHEAD_STYLE}>Other documents</div>
+              ) : null}
+              {extraDocs.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   data-testid="workspace-explorer-item"
-                  aria-current={active ? "true" : undefined}
+                  aria-current={item.id === activeItem?.id ? "true" : undefined}
                   onClick={() => setActiveId(item.id)}
-                  style={itemButtonStyle(active)}
+                  style={itemButtonStyle(item.id === activeItem?.id)}
                 >
-                  <span style={ITEM_TOPLINE_STYLE}>
-                    <span>{item.type}</span>
-                    <span style={{ ...STATE_STYLE, ...stateTone(item.state) }}>
-                      {item.state.replaceAll("_", " ")}
-                    </span>
-                  </span>
                   <strong style={ITEM_NAME_STYLE}>{item.name}</strong>
                   <span style={ITEM_META_STYLE}>
-                    {item.stageKey ?? "event"} · v{item.version ?? "n/a"} ·{" "}
+                    {item.origin} ·{" "}
                     {formatDate(item.audit.updatedAt ?? item.audit.createdAt)}
                   </span>
                 </button>
-              );
-            })
-          )}
+              ))}
+            </div>
+          ) : null}
+
+          {docRows.length === 0 && extraDocs.length === 0 ? (
+            <div style={EMPTY_STYLE}>No documents in this step yet.</div>
+          ) : null}
         </div>
 
         <aside style={PREVIEW_STYLE} aria-label="Workspace item preview">
@@ -751,12 +753,12 @@ function navButtonStyle(active: boolean): CSSProperties {
     borderRadius: 6,
     padding: "10px 12px",
     background: active ? "#ffffff" : "transparent",
-    color: active ? "#0f172a" : "#64748b",
+    color: active ? "#0c1a3a" : "#5b6c8a",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
-    font: "600 13px DM Sans, Arial, sans-serif",
+    font: "600 13px var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
     cursor: "pointer",
     boxShadow: active ? "0 0 0 1px rgba(15,23,42,0.08)" : "none",
   };
@@ -776,11 +778,30 @@ function itemButtonStyle(active: boolean): CSSProperties {
   };
 }
 
+function docRowStyle(uploaded: boolean, active: boolean): CSSProperties {
+  return {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 10,
+    padding: "9px 6px",
+    borderRadius: 6,
+    borderTop: "none",
+    borderRight: "none",
+    borderLeft: "none",
+    borderBottom: "1px solid #f0ece4",
+    width: "100%",
+    textAlign: "left",
+    background: active ? "#eef4ff" : "transparent",
+    cursor: uploaded ? "pointer" : "default",
+    font: "inherit",
+  };
+}
+
 const PAGE_WRAP_STYLE: CSSProperties = {
   background: "#f8f7f4",
   minHeight: "100%",
   padding: "24px",
-  color: "#111827",
+  color: "#0c1a3a",
 };
 
 const DRAWER_WRAP_STYLE: CSSProperties = {
@@ -797,15 +818,15 @@ const HEADER_STYLE: CSSProperties = {
 };
 
 const EYEBROW_STYLE: CSSProperties = {
-  font: "700 10px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace",
+  font: "700 10px/1.2 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
   letterSpacing: "0.18em",
   textTransform: "uppercase",
-  color: "#64748b",
+  color: "#5b6c8a",
 };
 
 const TITLE_STYLE: CSSProperties = {
   margin: "6px 0 0",
-  font: "700 30px/1.1 Georgia, serif",
+  font: "700 30px/1.1 var(--font-fraunces), 'Fraunces', Georgia, serif",
   letterSpacing: 0,
   color: "#10172f",
 };
@@ -814,9 +835,9 @@ const BACK_LINK_STYLE: CSSProperties = {
   border: "1px solid #d8d5ce",
   borderRadius: 6,
   padding: "9px 12px",
-  color: "#111827",
+  color: "#0c1a3a",
   textDecoration: "none",
-  font: "700 12px DM Sans, Arial, sans-serif",
+  font: "700 12px var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   background: "#ffffff",
 };
 
@@ -840,7 +861,7 @@ const UPLOAD_PANEL_STYLE: CSSProperties = {
 
 const GENERATE_TITLE_STYLE: CSSProperties = {
   margin: "6px 0 8px",
-  font: "700 22px/1.15 Georgia, serif",
+  font: "700 22px/1.15 var(--font-fraunces), 'Fraunces', Georgia, serif",
   letterSpacing: 0,
   color: "#10172f",
 };
@@ -853,10 +874,10 @@ const GENERATE_CONTROLS_STYLE: CSSProperties = {
 const GENERATE_LABEL_STYLE: CSSProperties = {
   display: "grid",
   gap: 6,
-  font: "700 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace",
+  font: "700 11px/1.2 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
   letterSpacing: "0.12em",
   textTransform: "uppercase",
-  color: "#64748b",
+  color: "#5b6c8a",
 };
 
 const GENERATE_SELECT_STYLE: CSSProperties = {
@@ -864,8 +885,8 @@ const GENERATE_SELECT_STYLE: CSSProperties = {
   borderRadius: 6,
   padding: "10px 12px",
   background: "#fbfaf7",
-  color: "#111827",
-  font: "600 13px/1.35 DM Sans, Arial, sans-serif",
+  color: "#0c1a3a",
+  font: "600 13px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 const FILE_INPUT_STYLE: CSSProperties = {
@@ -873,13 +894,13 @@ const FILE_INPUT_STYLE: CSSProperties = {
   borderRadius: 6,
   padding: "9px 10px",
   background: "#ffffff",
-  color: "#111827",
-  font: "600 13px/1.35 DM Sans, Arial, sans-serif",
+  color: "#0c1a3a",
+  font: "600 13px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 const GENERATE_DESCRIPTION_STYLE: CSSProperties = {
   margin: 0,
-  font: "500 13px/1.45 DM Sans, Arial, sans-serif",
+  font: "500 13px/1.45 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   color: "#475569",
 };
 
@@ -890,7 +911,7 @@ const ACTION_BUTTON_STYLE: CSSProperties = {
   background: "#10172f",
   color: "#ffffff",
   padding: "10px 13px",
-  font: "700 12px DM Sans, Arial, sans-serif",
+  font: "700 12px var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   cursor: "pointer",
 };
 
@@ -899,8 +920,8 @@ const GENERATE_EMPTY_STYLE: CSSProperties = {
   borderRadius: 8,
   padding: 14,
   background: "#fbfaf7",
-  color: "#64748b",
-  font: "600 13px/1.45 DM Sans, Arial, sans-serif",
+  color: "#5b6c8a",
+  font: "600 13px/1.45 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 const GENERATE_SUCCESS_STYLE: CSSProperties = {
@@ -911,7 +932,7 @@ const GENERATE_SUCCESS_STYLE: CSSProperties = {
   padding: 12,
   display: "grid",
   gap: 6,
-  font: "600 13px/1.45 DM Sans, Arial, sans-serif",
+  font: "600 13px/1.45 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 const GENERATE_ERROR_STYLE: CSSProperties = {
@@ -922,13 +943,13 @@ const GENERATE_ERROR_STYLE: CSSProperties = {
   padding: 12,
   display: "grid",
   gap: 6,
-  font: "600 13px/1.45 DM Sans, Arial, sans-serif",
+  font: "600 13px/1.45 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 const INLINE_REVIEW_LINK_STYLE: CSSProperties = {
   justifySelf: "start",
   color: "#14532d",
-  font: "700 12px/1.35 DM Sans, Arial, sans-serif",
+  font: "700 12px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 const SHELL_STYLE: CSSProperties = {
@@ -968,40 +989,24 @@ const PREVIEW_STYLE: CSSProperties = {
 };
 
 const EMPTY_STYLE: CSSProperties = {
-  color: "#64748b",
-  font: "500 13px/1.5 DM Sans, Arial, sans-serif",
+  color: "#5b6c8a",
+  font: "500 13px/1.5 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
-const ITEM_TOPLINE_STYLE: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: 10,
-  font: "700 10px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace",
-  letterSpacing: "0.12em",
-  textTransform: "uppercase",
-  color: "#64748b",
-};
 
-const STATE_STYLE: CSSProperties = {
-  border: "1px solid",
-  borderRadius: 999,
-  padding: "3px 7px",
-  letterSpacing: "0.08em",
-};
 
 const ITEM_NAME_STYLE: CSSProperties = {
-  font: "700 14px/1.25 DM Sans, Arial, sans-serif",
-  color: "#111827",
+  font: "700 14px/1.25 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
+  color: "#0c1a3a",
 };
 
 const ITEM_META_STYLE: CSSProperties = {
-  font: "500 12px/1.35 DM Sans, Arial, sans-serif",
-  color: "#64748b",
+  font: "500 12px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
+  color: "#5b6c8a",
 };
 
 const NEEDS_HEADING_STYLE: CSSProperties = {
-  font: "700 10px/1 DM Sans, Arial, sans-serif",
+  font: "700 10px/1 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   letterSpacing: "0.1em",
   textTransform: "uppercase",
   color: "#94a3b8",
@@ -1015,13 +1020,6 @@ const NEEDS_SUBHEAD_STYLE: CSSProperties = {
   marginTop: 12,
 };
 
-const NEED_ROW_STYLE: CSSProperties = {
-  display: "flex",
-  alignItems: "flex-start",
-  gap: 10,
-  padding: "9px 2px",
-  borderBottom: "1px solid #f0ece4",
-};
 
 const NEED_BODY_STYLE: CSSProperties = {
   display: "flex",
@@ -1032,17 +1030,17 @@ const NEED_BODY_STYLE: CSSProperties = {
 };
 
 const NEED_NAME_STYLE: CSSProperties = {
-  font: "600 13px/1.3 DM Sans, Arial, sans-serif",
-  color: "#111827",
+  font: "600 13px/1.3 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
+  color: "#0c1a3a",
 };
 
 const NEED_META_STYLE: CSSProperties = {
-  font: "500 11.5px/1.35 DM Sans, Arial, sans-serif",
-  color: "#64748b",
+  font: "500 11.5px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
+  color: "#5b6c8a",
 };
 
 const NEED_UPLOAD_STYLE: CSSProperties = {
-  font: "700 11px/1 DM Sans, Arial, sans-serif",
+  font: "700 11px/1 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   color: "#1d4ed8",
   background: "#eef4ff",
   border: "1px solid #cfdcfa",
@@ -1054,7 +1052,7 @@ const NEED_UPLOAD_STYLE: CSSProperties = {
 };
 
 const UPLOADED_BADGE_STYLE: CSSProperties = {
-  font: "700 11px/1 DM Sans, Arial, sans-serif",
+  font: "700 11px/1 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   color: "#197a4b",
   background: "#e6f5ec",
   border: "1px solid #bfe6cf",
@@ -1086,14 +1084,14 @@ function needDotStyle(level: "required" | "recommended"): CSSProperties {
 
 const PREVIEW_TITLE_STYLE: CSSProperties = {
   margin: "8px 0 8px",
-  font: "700 28px/1.15 Georgia, serif",
+  font: "700 28px/1.15 var(--font-fraunces), 'Fraunces', Georgia, serif",
   letterSpacing: 0,
   color: "#10172f",
 };
 
 const PREVIEW_COPY_STYLE: CSSProperties = {
   margin: "0 0 18px",
-  font: "500 14px/1.55 DM Sans, Arial, sans-serif",
+  font: "500 14px/1.55 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   color: "#475569",
 };
 
@@ -1111,7 +1109,7 @@ const LINEAGE_STYLE: CSSProperties = {
   marginBottom: 18,
   display: "grid",
   gap: 4,
-  font: "500 13px/1.45 DM Sans, Arial, sans-serif",
+  font: "500 13px/1.45 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   color: "#475569",
 };
 
@@ -1122,15 +1120,15 @@ const ACTION_LINK_STYLE: CSSProperties = {
   color: "#ffffff",
   padding: "10px 13px",
   textDecoration: "none",
-  font: "700 12px DM Sans, Arial, sans-serif",
+  font: "700 12px var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 const DISABLED_ACTION_STYLE: CSSProperties = {
   display: "inline-flex",
   borderRadius: 6,
   border: "1px solid #d8d5ce",
-  color: "#64748b",
+  color: "#5b6c8a",
   padding: "10px 13px",
-  font: "700 12px DM Sans, Arial, sans-serif",
+  font: "700 12px var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
