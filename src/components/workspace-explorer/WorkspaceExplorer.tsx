@@ -7,7 +7,6 @@ import type {
   WorkspaceGenerateCandidate,
   WorkspaceGenerateIntent,
   WorkspaceItem,
-  WorkspaceItemKind,
   WorkspaceUploadIntent,
 } from "@/lib/workspace-explorer/types";
 import {
@@ -66,15 +65,6 @@ interface QualityGateSummary {
   finalSummary: string;
 }
 
-const KIND_LABELS: Record<WorkspaceItemKind, string> = {
-  input: "Inputs",
-  deliverable: "Deliverables",
-  approval: "Approvals",
-  evidence: "Evidence",
-  vendor_response: "Vendor responses",
-  attachment: "Attachments",
-};
-
 /** The lifecycle step an item belongs to (its folder in the by-step explorer). */
 function stageOf(item: WorkspaceItem): string {
   return typeof item.stageKey === "string" && item.stageKey.length > 0
@@ -130,7 +120,6 @@ export function WorkspaceExplorer({
   const [activeStage, setActiveStage] = useState<string>(
     () => stageFolders[0] ?? "all",
   );
-  const [activeId, setActiveId] = useState(items[0]?.id ?? null);
   const [selectedGenerateId, setSelectedGenerateId] = useState(
     generateIntent?.candidates[0]?.id ?? "",
   );
@@ -188,11 +177,6 @@ export function WorkspaceExplorer({
     return { req, doc };
   });
   const extraDocs = realDocs.filter((doc) => !coveredDocIds.has(doc.id));
-  const activeItem =
-    filtered.find((item) => item.id === activeId) ??
-    filtered[0] ??
-    items[0] ??
-    null;
   const selectedGenerateCandidate =
     generateIntent?.candidates.find(
       (candidate) => candidate.id === selectedGenerateId,
@@ -405,15 +389,7 @@ export function WorkspaceExplorer({
             <div data-testid="workspace-step-needs">
               <div style={NEEDS_HEADING_STYLE}>Documents for this step</div>
               {docRows.map(({ req, doc }) => (
-                <button
-                  key={req.requirementId}
-                  type="button"
-                  onClick={() => doc && setActiveId(doc.id)}
-                  style={docRowStyle(
-                    Boolean(doc),
-                    doc != null && doc.id === activeItem?.id,
-                  )}
-                >
+                <div key={req.requirementId} style={docRowStyle(Boolean(doc))}>
                   <span
                     style={doc ? UPLOADED_DOT_STYLE : needDotStyle(req.level)}
                     aria-hidden
@@ -433,7 +409,7 @@ export function WorkspaceExplorer({
                       Upload
                     </Link>
                   )}
-                </button>
+                </div>
               ))}
             </div>
           ) : null}
@@ -444,20 +420,17 @@ export function WorkspaceExplorer({
                 <div style={NEEDS_SUBHEAD_STYLE}>Other documents</div>
               ) : null}
               {extraDocs.map((item) => (
-                <button
+                <div
                   key={item.id}
-                  type="button"
                   data-testid="workspace-explorer-item"
-                  aria-current={item.id === activeItem?.id ? "true" : undefined}
-                  onClick={() => setActiveId(item.id)}
-                  style={itemButtonStyle(item.id === activeItem?.id)}
+                  style={itemButtonStyle()}
                 >
                   <strong style={ITEM_NAME_STYLE}>{item.name}</strong>
                   <span style={ITEM_META_STYLE}>
                     {item.origin} ·{" "}
                     {formatDate(item.audit.updatedAt ?? item.audit.createdAt)}
                   </span>
-                </button>
+                </div>
               ))}
             </div>
           ) : null}
@@ -466,53 +439,6 @@ export function WorkspaceExplorer({
             <div style={EMPTY_STYLE}>No documents in this step yet.</div>
           ) : null}
         </div>
-
-        <aside style={PREVIEW_STYLE} aria-label="Workspace item preview">
-          {activeItem ? (
-            <>
-              <div style={EYEBROW_STYLE}>Preview</div>
-              <h2 style={PREVIEW_TITLE_STYLE}>{activeItem.name}</h2>
-              <p style={PREVIEW_COPY_STYLE}>
-                {activeItem.description ?? "No description recorded yet."}
-              </p>
-              <dl style={DETAIL_GRID_STYLE}>
-                <div>
-                  <dt>Kind</dt>
-                  <dd>{KIND_LABELS[activeItem.kind]}</dd>
-                </div>
-                <div>
-                  <dt>Origin</dt>
-                  <dd>{activeItem.origin}</dd>
-                </div>
-                <div>
-                  <dt>Classification</dt>
-                  <dd>{activeItem.classification ?? "Not classified"}</dd>
-                </div>
-                <div>
-                  <dt>Source</dt>
-                  <dd>{activeItem.sourceLabel ?? "Not recorded"}</dd>
-                </div>
-              </dl>
-              <div style={LINEAGE_STYLE}>
-                <strong>Lineage</strong>
-                <span>
-                  {activeItem.lineage.status === "recorded"
-                    ? `${activeItem.lineage.cites.length} cited input(s) · ${activeItem.lineage.usedBy.length} used-by edge(s)`
-                    : "Lineage not yet recorded"}
-                </span>
-              </div>
-              {activeItem.href ? (
-                <a href={activeItem.href} style={ACTION_LINK_STYLE}>
-                  Open item
-                </a>
-              ) : (
-                <span style={DISABLED_ACTION_STYLE}>No file preview yet</span>
-              )}
-            </>
-          ) : (
-            <div style={EMPTY_STYLE}>No workspace items recorded yet.</div>
-          )}
-        </aside>
       </div>
     </section>
   );
@@ -764,21 +690,20 @@ function navButtonStyle(active: boolean): CSSProperties {
   };
 }
 
-function itemButtonStyle(active: boolean): CSSProperties {
+function itemButtonStyle(): CSSProperties {
   return {
     width: "100%",
     textAlign: "left",
-    border: `1px solid ${active ? "#1d4ed8" : "#e5e7eb"}`,
+    border: "1px solid #e5e7eb",
     borderRadius: 8,
-    background: active ? "#f8fbff" : "#ffffff",
+    background: "#ffffff",
     padding: 14,
-    cursor: "pointer",
     display: "grid",
     gap: 8,
   };
 }
 
-function docRowStyle(uploaded: boolean, active: boolean): CSSProperties {
+function docRowStyle(uploaded: boolean): CSSProperties {
   return {
     display: "flex",
     alignItems: "flex-start",
@@ -791,7 +716,7 @@ function docRowStyle(uploaded: boolean, active: boolean): CSSProperties {
     borderBottom: "1px solid #f0ece4",
     width: "100%",
     textAlign: "left",
-    background: active ? "#eef4ff" : "transparent",
+    background: "transparent",
     cursor: uploaded ? "pointer" : "default",
     font: "inherit",
   };
@@ -952,9 +877,15 @@ const INLINE_REVIEW_LINK_STYLE: CSSProperties = {
   font: "700 12px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
+const PREVIEW_COPY_STYLE: CSSProperties = {
+  margin: "0 0 18px",
+  font: "500 14px/1.55 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
+  color: "#475569",
+};
+
 const SHELL_STYLE: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "220px minmax(360px, 0.95fr) minmax(360px, 1.05fr)",
+  gridTemplateColumns: "220px 1fr",
   gap: 14,
   minHeight: 620,
 };
@@ -980,20 +911,10 @@ const LIST_STYLE: CSSProperties = {
   overflow: "auto",
 };
 
-const PREVIEW_STYLE: CSSProperties = {
-  border: "1px solid #e5e1da",
-  borderRadius: 8,
-  background: "#ffffff",
-  padding: 22,
-  overflow: "auto",
-};
-
 const EMPTY_STYLE: CSSProperties = {
   color: "#5b6c8a",
   font: "500 13px/1.5 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
-
-
 
 const ITEM_NAME_STYLE: CSSProperties = {
   font: "700 14px/1.25 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
@@ -1019,7 +940,6 @@ const NEEDS_SUBHEAD_STYLE: CSSProperties = {
   borderTop: "1px solid #ece8e1",
   marginTop: 12,
 };
-
 
 const NEED_BODY_STYLE: CSSProperties = {
   display: "flex",
@@ -1081,54 +1001,3 @@ function needDotStyle(level: "required" | "recommended"): CSSProperties {
     flexShrink: 0,
   };
 }
-
-const PREVIEW_TITLE_STYLE: CSSProperties = {
-  margin: "8px 0 8px",
-  font: "700 28px/1.15 var(--font-fraunces), 'Fraunces', Georgia, serif",
-  letterSpacing: 0,
-  color: "#10172f",
-};
-
-const PREVIEW_COPY_STYLE: CSSProperties = {
-  margin: "0 0 18px",
-  font: "500 14px/1.55 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
-  color: "#475569",
-};
-
-const DETAIL_GRID_STYLE: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: 12,
-  margin: "0 0 18px",
-};
-
-const LINEAGE_STYLE: CSSProperties = {
-  borderTop: "1px solid #e5e7eb",
-  borderBottom: "1px solid #e5e7eb",
-  padding: "14px 0",
-  marginBottom: 18,
-  display: "grid",
-  gap: 4,
-  font: "500 13px/1.45 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
-  color: "#475569",
-};
-
-const ACTION_LINK_STYLE: CSSProperties = {
-  display: "inline-flex",
-  borderRadius: 6,
-  background: "#10172f",
-  color: "#ffffff",
-  padding: "10px 13px",
-  textDecoration: "none",
-  font: "700 12px var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
-};
-
-const DISABLED_ACTION_STYLE: CSSProperties = {
-  display: "inline-flex",
-  borderRadius: 6,
-  border: "1px solid #d8d5ce",
-  color: "#5b6c8a",
-  padding: "10px 13px",
-  font: "700 12px var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
-};
-
