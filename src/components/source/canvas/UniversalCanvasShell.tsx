@@ -13,6 +13,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { SourceOnboardingTour } from "@/components/source/onboarding/SourceOnboardingTour";
 import { listSupportedGenerationCodes } from "@/lib/source/agent-generation";
+import { specByCode } from "@/lib/source/canonical-specs";
 import {
   resolveStageNextMove,
   type StageNextMoveActionTarget,
@@ -591,6 +592,46 @@ export function UniversalCanvasShell({
     }
   };
 
+  // "Draft with Sentinel" — run the SAME governed generation as the Workspace
+  // (persists the artifact + runs the quality gate), but IN PLACE and narrated
+  // in the left dock, so the one Sentinel the user already sees does the work.
+  // No navigation. When it lands, the gate criterion linked to the artifact
+  // clears. Gaps are flagged, never invented.
+  const handleDraftWithSentinel = async (code: string): Promise<void> => {
+    if (pendingGenerationByCode[code]) return; // guard against double-fire
+    const name = specByCode(code)?.name ?? code;
+    const t0 = Date.now();
+    setThread((t) => [
+      ...t,
+      { id: `u-${t0}`, role: "user", body: `Draft the ${name} from the event facts.` },
+      {
+        id: `a-${t0 + 1}`,
+        role: "agent",
+        body: `Drafting the ${name} from the event facts — governed and persisted to the Workspace, with gap flags wherever the evidence is thin. One moment…`,
+      },
+    ]);
+    const result = await handleArtifactGenerate(code);
+    const t1 = Date.now();
+    setThread((t) => [
+      ...t,
+      result.ok
+        ? {
+            id: `a-${t1}`,
+            role: "agent",
+            body: `Drafted and persisted the ${name} to the Workspace. Open it there to review, then clear the gate. Anything I couldn't evidence is flagged as a gap — not invented.`,
+          }
+        : {
+            id: `a-${t1}`,
+            role: "agent",
+            body: `I couldn't complete the ${name}: ${result.detail}${
+              result.missingUpstream?.length
+                ? ` (missing upstream: ${result.missingUpstream.join(", ")})`
+                : ""
+            }`,
+          },
+    ]);
+  };
+
   const handleArtifactBodySave = async (
     code: string,
     body: string,
@@ -963,6 +1004,7 @@ export function UniversalCanvasShell({
                     <SourceDeclutteredWorkspace
                       nextMove={nextMove}
                       onNextMoveAdvance={handleNextMoveAdvance}
+                      onDraftWithSentinel={handleDraftWithSentinel}
                       fromStage={viewStage}
                       criteria={stageCriteria}
                       onChangeCriterionState={handleCriterionStateChange}
@@ -1034,6 +1076,7 @@ function WorkspaceExplorerChips({
 function SourceDeclutteredWorkspace({
   nextMove,
   onNextMoveAdvance,
+  onDraftWithSentinel,
   fromStage,
   criteria,
   onChangeCriterionState,
@@ -1044,6 +1087,7 @@ function SourceDeclutteredWorkspace({
 }: {
   nextMove: ReturnType<typeof resolveStageNextMove>;
   onNextMoveAdvance: () => void;
+  onDraftWithSentinel: (code: string) => void;
   fromStage: SourceStageKey;
   criteria: SourceEventGateCriterion[];
   onChangeCriterionState: (
@@ -1059,12 +1103,10 @@ function SourceDeclutteredWorkspace({
   // The full gate checklist starts collapsed — the default rail is the calm
   // "what we still need" view. "Open gate checklist" / the toggle expand it.
   const [gateOpen, setGateOpen] = useState(false);
-  // Route a next-move action by its target. Previously the primary button was
-  // hardwired to advance (so "Open gate checklist" wrongly fired the advance
-  // confirm) and the secondary only handled gate/evidence (so "Open document
-  // workspace" was a no-op). Now: advance → advance; gate → scroll to the
-  // gate checklist that lives inline on this canvas; everything else → the
-  // full Document Explorer.
+  // Route a next-move action by its target. advance → advance; gate → expand +
+  // scroll to the inline gate; document/evidence → the Document Explorer. The
+  // draft move ("Draft with Sentinel") is handled separately at the call site —
+  // it runs governed generation IN PLACE via onDraftWithSentinel, not here.
   const runNextMoveTarget = (target: StageNextMoveActionTarget) => {
     if (target === "advance") {
       onNextMoveAdvance();
@@ -1081,7 +1123,7 @@ function SourceDeclutteredWorkspace({
       });
       return;
     }
-    // "document" / "evidence" → the Document Explorer (Workspace)
+    // "document" (author / open) / "evidence" → the Document Explorer (Workspace)
     window.location.assign(workspaceHref);
   };
 
@@ -1104,7 +1146,11 @@ function SourceDeclutteredWorkspace({
       <div style={NEXT_MOVE_WRAP_STYLE}>
         <StageNextMoveCard
           nextMove={nextMove}
-          onPrimary={() => runNextMoveTarget(nextMove.primaryTarget)}
+          onPrimary={() =>
+            nextMove.draftArtifactCode
+              ? onDraftWithSentinel(nextMove.draftArtifactCode)
+              : runNextMoveTarget(nextMove.primaryTarget)
+          }
           onSecondary={
             nextMove.secondaryTarget
               ? () => runNextMoveTarget(nextMove.secondaryTarget!)
