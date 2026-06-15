@@ -6,6 +6,7 @@ import { EventApprovalCard } from "@/components/source/approval/EventApprovalCar
 import type { IntakeFact } from "@/components/source/approval/IntakeFactsReview";
 import type { IntakeChatTurn } from "@/components/source/approval/IntakeChatTrail";
 import { getActiveClientRow } from "@/lib/active-client";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { requireTenancy } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
@@ -94,6 +95,13 @@ export default async function SourceEventApprovalPage({
           currentUserId={tenancy.userId}
           currentUserCanApprove={currentUserCanApprove}
           currentStageHref={`/source/events/${event.id}?stage=${event.currentStageKey}`}
+          generateMemoOnApprove={isFeatureEnabled(
+            {
+              clientKey: activeClient.key,
+              clientId: activeClient.id ?? null,
+            },
+            "source_strategy_at_p0",
+          )}
         />
       </SourceWorkingPane>
     </AppShell>

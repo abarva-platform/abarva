@@ -27,6 +27,8 @@ interface EventApprovalCardProps {
   currentUserId: string | null;
   currentUserCanApprove: boolean;
   currentStageHref: string;
+  /** When true, approving also generates the strategy memo (Strategy-at-P0). */
+  generateMemoOnApprove?: boolean;
 }
 
 type ApprovalAction =
@@ -59,6 +61,7 @@ export function EventApprovalCard({
   currentUserId,
   currentUserCanApprove,
   currentStageHref,
+  generateMemoOnApprove = false,
 }: EventApprovalCardProps) {
   const router = useRouter();
   const [reason, setReason] = useState("");
@@ -94,6 +97,26 @@ export function EventApprovalCard({
       if (!response.ok || payload.error) {
         setError(payload.detail ?? payload.error ?? "Approval action failed.");
         return;
+      }
+      // Strategy-at-P0: approving also produces the strategy memo, as part of
+      // the same click. We chain the existing governed generate route (which is
+      // heartbeat-protected for the ~30-60s Anthropic call). Best-effort: if the
+      // memo can't be produced, the approval still stands and we navigate on —
+      // the strategy substance lives in the captured intake facts regardless.
+      if (action === "approve" && generateMemoOnApprove) {
+        setNotice("Approved — generating your strategy memo…");
+        try {
+          await fetch(
+            `/api/v1/source/${eventId}/artifacts/d01_strategy_memo/generate`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({}),
+            },
+          );
+        } catch {
+          // non-fatal — the memo can be drafted later from the Workspace
+        }
       }
       if (payload.redirectTo) {
         router.push(payload.redirectTo);
