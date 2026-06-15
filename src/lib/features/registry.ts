@@ -69,7 +69,8 @@ export type FeatureFlagKey =
   | "moves_orchestrated_deliverables"
   | "workspace_explorer_source"
   | "workspace_explorer_moves"
-  | "source_strategy_auto_draft";
+  | "source_strategy_auto_draft"
+  | "source_strategy_at_p0";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -90,6 +91,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "source_strategy_auto_draft",
     summary:
       "On entering the Strategy stage with no strategy memo yet, auto-runs the governed Draft-with-Sentinel generation once (so the memo appears from the validated P0 facts without a manual click). Reuses the proven, persisted, gap-flagged generation path; the human still confirms archetype/value and the sponsor still endorses. Tenant opt-in; default off so the manual draft stays the norm until proven per tenant.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "source_strategy_at_p0",
+    summary:
+      "Folds Strategy into P0 origination: on intake approval the event advances straight to Scope and the three GATE-STRATEGY criteria are waived with an audit reason (the strategy is set and endorsed at the P0 approval, which the sponsor co-signs). The Strategy stage is shown done on the rail rather than presented as a separate to-do page. Tenant opt-in; default off so the standard Strategy stage remains the norm until proven per tenant.",
     policy: "tenant",
     includeTenants: [],
   },

@@ -10,6 +10,7 @@ import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { getActiveClientRow } from "@/lib/active-client";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import {
   firstGovernanceBlocker,
   normalizeApprovalReason,
@@ -172,11 +173,70 @@ export async function POST(
     occurredAtIso: new Date().toISOString(),
   });
 
+  // Strategy-at-P0 (flag: source_strategy_at_p0): fold Strategy into the
+  // origination gate. On approval the event advances straight to Scope and the
+  // three GATE-STRATEGY criteria are waived with an audit reason — the strategy
+  // is set and endorsed at this approval (which the sponsor co-signs), so there
+  // is no separate Strategy to-do page; the rail shows Strategy done. Best-
+  // effort: a failure here leaves the standard Strategy stage intact (a safe
+  // fallback) and never fails the approval itself.
+  let advancedToStage: string | null = null;
+  if (
+    body.action === "approve" &&
+    isFeatureEnabled(
+      { clientKey: activeClient.key, clientId: activeClient.id ?? null },
+      "source_strategy_at_p0",
+    )
+  ) {
+    const nowIso = new Date().toISOString();
+    try {
+      const stageWrite = await sourceWrite.updateStage({
+        eventId,
+        clientKey: activeClient.key,
+        stageKey: "scope",
+        lifecycleState: toState,
+        updatedAtIso: nowIso,
+      });
+      if (stageWrite.ok) advancedToStage = "scope";
+
+      const { data: strategyRows } = await supabase
+        .from("source_event_gate_criterion_states")
+        .select("id, criterion_id")
+        .eq("source_event_id", eventId)
+        .in("criterion_id", [
+          "GATE-STRATEGY-01",
+          "GATE-STRATEGY-02",
+          "GATE-STRATEGY-03",
+        ]);
+
+      for (const row of strategyRows ?? []) {
+        await sourceWrite.updateGateCriterion({
+          criterionRowId: String((row as { id: string }).id),
+          state: "waived",
+          reviewerUserId: tenancy.userId,
+          reviewedAtIso: nowIso,
+          notes:
+            "Strategy set and endorsed at P0 origination (intake approval, sponsor co-signed); folded into the approval gate — no separate Strategy stage.",
+          updatedAtIso: nowIso,
+        });
+      }
+    } catch (err) {
+      console.error(
+        "[POST /api/v1/source/:eventId/approve] strategy_at_p0_failed",
+        {
+          eventId,
+          message: err instanceof Error ? err.message : String(err),
+        },
+      );
+    }
+  }
+
   return Response.json({
     ok: true,
     eventId,
     action: body.action,
     newLifecycleState: toState,
     selfApproval: isSelfApproval,
+    advancedToStage,
   });
 }
