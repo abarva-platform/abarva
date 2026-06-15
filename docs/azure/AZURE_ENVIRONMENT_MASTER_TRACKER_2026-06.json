@@ -5,8 +5,15 @@
   "approvalTemplate": "docs/approvals/AZURE_MUTATION_APPROVAL_TEMPLATE.md",
   "nextApprovalRequestPacket": "docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.md",
   "models": {
-    "productControlPlane": ["product-dev", "product-preview", "product-prod"],
-    "clientPrivateDataPlane": ["client-preprod", "client-prod"]
+    "productControlPlane": [
+      "product-dev",
+      "product-preview",
+      "product-prod"
+    ],
+    "clientPrivateDataPlane": [
+      "client-preprod",
+      "client-prod"
+    ]
   },
   "progress": {
     "totalItems": 22,
@@ -14,7 +21,11 @@
     "scaffoldReadyItems": 5,
     "humanGatedExecutionItems": 2,
     "strictCompletionPercent": 68.2,
-    "effectiveProgressPercent": 79.5
+    "effectiveProgressPercent": 80.9,
+    "productDevAzureExecutionPercent": 50,
+    "productDevSubscriptionId": "58eef48c-3ed6-48e6-9af4-de1848ad3401",
+    "productDevExecutionSummary": "docs/build/azure/2026-06-14-product-dev-execution/summary.md",
+    "costCircuitBreakerEvidence": "docs/build/azure/2026-06-14-cost-circuit-breaker/cost-circuit-breaker-report.md"
   },
   "hardRules": [
     "no_subscription_creation_without_approval_file",
@@ -241,13 +252,14 @@
       "id": "ENV-22",
       "area": "Actual Azure subscription creation and baseline provisioning",
       "model": "both",
-      "status": "Human-gated",
-      "percentComplete": 0,
-      "artifactPath": "docs/approvals/AZURE_MUTATION_APPROVED.md",
+      "status": "In progress",
+      "percentComplete": 30,
+      "artifactPath": "docs/build/azure/2026-06-14-product-dev-execution/summary.md",
       "validationCommand": "approval-file review plus Azure exports",
       "approvalRequestPacket": "docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.md",
       "approvalTemplate": "docs/approvals/AZURE_MUTATION_APPROVAL_TEMPLATE.md",
-      "humanGated": true
+      "humanGated": true,
+      "blocker": "Product Dev subscription/RG/KV/budget/cost guard done; management group, policy baseline, runtime deploy pending"
     }
   ]
 }

@@ -25,11 +25,24 @@ Azure mutation by itself.
 | Scaffold-ready / not executed items          |     5 |
 | Human-gated Azure execution items            |     2 |
 | Strict completion                            | 68.2% |
-| Effective progress with scaffold half-credit | 79.5% |
+| Effective progress with scaffold half-credit | 80.9% |
+| Product Dev Azure execution                  | 50.0% |
 
 Strict completion counts only `Complete` items. Effective progress counts
-`Scaffold-ready` items as half credit. Human-gated Azure execution remains 0
-until approved and executed.
+`Scaffold-ready` items as half credit and Product Dev Azure execution as a
+partial ENV-22 credit. Human-gated Azure execution remains incomplete until all
+approved baseline controls are executed and verified.
+
+Product Dev Azure execution is now partially complete. Subscription
+`58eef48c-3ed6-48e6-9af4-de1848ad3401` / `sub-abarva-product-dev-eus-001` was
+created with baseline tags, a tagged control-plane resource group, a secured
+placeholder Key Vault, and a USD 500 monthly budget. A read-only cost circuit
+breaker is now scaffolded and live-run against Lab plus Product Dev; Lab is in
+budget breach from existing runtime spend, while Product Dev is at USD 0 current
+spend. Evidence lives at
+`docs/build/azure/2026-06-14-product-dev-execution/summary.md`.
+Cost evidence lives at
+`docs/build/azure/2026-06-14-cost-circuit-breaker/cost-circuit-breaker-report.md`.
 
 ## Tracker
 
@@ -56,22 +69,16 @@ until approved and executed.
 | ENV-19 | First client preprod rehearsal packet                        | Client  | Scaffold-ready |  50 | QA/Client owner       | `docs/environments/client-private-plane/first-client-preprod-rehearsal.md` | ENV-17, ENV-18         | `npm run azure:client-preprod-rehearsal:verify`      | rehearsal not executed                  | No          |
 | ENV-20 | Client prod go/no-go packet                                  | Client  | Scaffold-ready |  50 | Client owner/Security | `docs/environments/client-private-plane/client-prod-go-no-go.md`           | ENV-19                 | `npm run azure:client-prod-go-no-go:verify`          | client prod not executed                | Yes         |
 | ENV-21 | Operating cadence packet                                     | Both    | Scaffold-ready |  50 | Founder/Platform      | `docs/operating-model/azure-environment-cadence.md`                        | ENV-01                 | `npm run azure:operating-cadence:verify`             | cadence not yet run as operating ritual | No          |
-| ENV-22 | Actual Azure subscription creation and baseline provisioning | Both    | Human-gated    |   0 | Founder/Platform      | `docs/approvals/AZURE_MUTATION_APPROVED.md`                                | ENV-01 through ENV-21  | approval-file review plus Azure exports              | no approval file; no mutation allowed   | Yes         |
+| ENV-22 | Actual Azure subscription creation and baseline provisioning | Both    | In progress    |  30 | Founder/Platform      | `docs/build/azure/2026-06-14-product-dev-execution/summary.md`             | ENV-01 through ENV-21  | approval-file review plus Azure exports              | Product Dev subscription/RG/KV/budget/cost guard done; management group, policy baseline, runtime deploy pending | Yes         |
 
 ## Human Approval Queue
 
-The next human approval request, when Anand is ready, should be narrow:
+The next human approval/action request is not a broad new environment request.
+It is a targeted Product Dev follow-up:
 
-> Approve creation of Product Dev only, including subscription vending,
-> management group placement, budget, baseline policy assignments, least
-> privilege RBAC, and validation exports during a named time window.
+> Grant or perform management-group placement for subscription
+> `58eef48c-3ed6-48e6-9af4-de1848ad3401`, then approve the Product Dev policy
+> baseline and runtime-specific IaC parameter packet after review.
 
 Do not request Product Preview, Product Prod, Client Preprod, Client Prod, DNS,
-traffic shifts, or client-prod data actions in the first approval.
-
-Review packet ready:
-
-- `docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.md`
-- `docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.json`
-- `docs/approvals/AZURE_MUTATION_APPROVAL_TEMPLATE.md`
-- Verifier: `npm run azure:product-dev-approval:verify`
+traffic shifts, or client-prod data actions yet.
