@@ -104,9 +104,9 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_orchestrated_deliverables",
     summary:
-      "Author Move board-grade deliverables through the Deliverable Intelligence Orchestrator (governed multi-pass Claude authoring) instead of the deterministic template renderer. Quality/plan gates enforced; falls back to the deterministic deck when the gate blocks. Tenant opt-in; default off so the deterministic path stays the norm until proven per tenant.",
+      "Author Move board-grade deliverables through the Deliverable Intelligence Orchestrator (governed multi-pass Claude authoring) instead of the deterministic template renderer. Quality/plan gates enforced; falls back to the deterministic deck when the gate blocks. SkyHarbor is enrolled for live board-grade validation; other tenants remain opt-in.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["skyharbor"],
   },
   {
     key: "discovery_intake_v2",

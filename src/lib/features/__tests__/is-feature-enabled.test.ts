@@ -123,16 +123,22 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
       delete process.env[ENV];
     });
 
-    it("is off for SkyHarbor by default (tenant flag, empty includeTenants)", () => {
+    it("is on for SkyHarbor by default so board-grade Move validation hits the orchestrator", () => {
       expect(
         isFeatureEnabled(
           { clientKey: "skyharbor" },
           "moves_orchestrated_deliverables",
         ),
-      ).toBe(false);
+      ).toBe(true);
       expect(
         isFeatureEnabled(
           { clientKey: "skyharbor-air" },
+          "moves_orchestrated_deliverables",
+        ),
+      ).toBe(true);
+      expect(
+        isFeatureEnabled(
+          { clientKey: "apexretail" },
           "moves_orchestrated_deliverables",
         ),
       ).toBe(false);
