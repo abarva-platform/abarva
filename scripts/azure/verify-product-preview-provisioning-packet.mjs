@@ -65,7 +65,7 @@ if (packet) {
   record('packet.commandsAreTemplatesOnly', packet.commandsAreTemplatesOnly === true);
   record('packet.doNotRunWithoutApproval', packet.doNotRunWithoutApproval === true);
   record('packet.subscriptionName', packet.subscription?.displayName === 'sub-abarva-product-preview-eus-001');
-  record('packet.budget', packet.subscription?.budgetUsdMonthly === 1000);
+  record('packet.budget', packet.subscription?.budgetUsdMonthly === 500);
   requireIncludes('packet.budgetThresholds', packet.subscription?.budgetAlertThresholdsPercent ?? [], [50, 80, 100]);
   requireIncludes('packet.allowedData', packet.subscription?.dataBoundary?.allowed ?? [], [
     'synthetic',
@@ -139,7 +139,7 @@ if (rbac && packet) {
 
 if (cost && packet) {
   record('cost.hasProductPreview', cost.environmentKeys?.includes('product-preview') === true);
-  record('cost.productPreviewBudgetMatches', cost.budgetRules?.defaultMonthlyBudgetUsd?.['product-preview'] === 1000);
+  record('cost.productPreviewBudgetMatches', cost.budgetRules?.defaultMonthlyBudgetUsd?.['product-preview'] === 500);
 }
 
 if (docBody) {

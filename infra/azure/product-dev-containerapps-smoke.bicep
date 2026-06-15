@@ -9,6 +9,8 @@ param smokeContainerAppName string
 param deploySmokeApp bool = true
 param smokeMinReplicas int = 0
 param smokeMaxReplicas int = 1
+param smokeEnvironmentKey string = 'product-dev'
+param smokeDataBoundary string = 'synthetic-no-client-data'
 
 resource runtimeIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: runtimeManagedIdentityName
@@ -42,8 +44,8 @@ resource smokeApp 'Microsoft.App/containerApps@2024-03-01' = if (deploySmokeApp)
   name: smokeContainerAppName
   location: location
   tags: union(tags, {
-    Purpose: 'product-dev-runtime-smoke'
-    RuntimeDataBoundary: 'synthetic-no-client-data'
+    Purpose: '${smokeEnvironmentKey}-runtime-smoke'
+    RuntimeDataBoundary: smokeDataBoundary
   })
   identity: {
     type: 'UserAssigned'
@@ -70,11 +72,11 @@ resource smokeApp 'Microsoft.App/containerApps@2024-03-01' = if (deploySmokeApp)
           env: [
             {
               name: 'ABARVA_ENVIRONMENT_KEY'
-              value: 'product-dev'
+              value: smokeEnvironmentKey
             }
             {
               name: 'ABARVA_DATA_BOUNDARY'
-              value: 'synthetic-no-client-data'
+              value: smokeDataBoundary
             }
           ]
           resources: {

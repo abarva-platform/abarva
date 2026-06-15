@@ -24,7 +24,7 @@
     "NoPhiPii": "true"
   },
   "budget": {
-    "monthlyUsd": 1000,
+    "monthlyUsd": 500,
     "alertThresholdsPercent": [50, 80, 100],
     "alertRecipients": ["admin@abarva.ai"]
   },

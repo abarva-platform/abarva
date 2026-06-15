@@ -25,7 +25,9 @@
     "productDevAzureExecutionPercent": 75,
     "productDevSubscriptionId": "58eef48c-3ed6-48e6-9af4-de1848ad3401",
     "productDevExecutionSummary": "docs/build/azure/2026-06-15-product-dev-finish/summary.md",
-    "costCircuitBreakerEvidence": "docs/build/azure/2026-06-15-product-dev-finish/cost-circuit-breaker/cost-circuit-breaker-report.md"
+    "costCircuitBreakerEvidence": "docs/build/azure/2026-06-15-product-dev-finish/cost-circuit-breaker/cost-circuit-breaker-report.md",
+    "productPreviewExecutionSummary": "docs/build/azure/2026-06-15-product-preview-execution/summary.md",
+    "productPreviewAzureExecutionPercent": 5
   },
   "hardRules": [
     "no_subscription_creation_without_approval_file",
@@ -259,7 +261,7 @@
       "approvalRequestPacket": "docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.md",
       "approvalTemplate": "docs/approvals/AZURE_MUTATION_APPROVAL_TEMPLATE.md",
       "humanGated": true,
-      "blocker": "Product Dev subscription/RG/KV/budget/cost guard/runtime smoke done; management group, policy baseline, GitHub secrets, real app deploy, and synthetic rehearsal pending"
+      "blocker": "Product Dev subscription/RG/KV/budget/cost guard/runtime smoke done; Product Preview subscription creation blocked by Azure TooManyRequests; management group, policy baseline, GitHub secrets, real app deploy, and synthetic rehearsal pending"
     }
   ]
 }

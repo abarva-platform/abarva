@@ -86,23 +86,30 @@ These must stop for Anand's explicit approval:
 
 ## Recommended Next Execution Step
 
-Finish Product Dev before broadening the environment footprint:
+Continue in this order:
 
-- Resolve management-group access or decide on a narrower subscription-level
-  Product Dev policy packet.
-- Keep GitHub environment secret wiring separate because it requires real secret
-  values.
-- Keep real AbarVa app deployment and Product Dev synthetic data rehearsal as a
-  controlled application-release slice.
-- After those Product Dev blockers are resolved or explicitly deferred, replicate
-  the same pattern for Product Preview.
+1. Retry Product Preview subscription creation after Azure subscription API
+   throttling clears.
+2. Resolve Product Dev management-group access or decide on a narrower
+   subscription-level Product Dev policy packet.
+3. Keep GitHub environment secret wiring separate because it requires real
+   secret values.
+4. Keep real AbarVa app deployment and Product Dev synthetic data rehearsal as a
+   controlled application-release slice.
 
-Review packet:
+The current approval file covers Product Dev and Product Preview only. Do not
+use it for Product Prod, Client Preprod, or Client Prod.
 
-- `docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.md`
-- `docs/azure/PRODUCT_DEV_APPROVAL_REQUEST_2026-06.json`
-- `docs/approvals/AZURE_MUTATION_APPROVAL_TEMPLATE.md`
-- Verifier: `npm run azure:product-dev-approval:verify`
+## Product Preview Attempt
 
-The current approval file remains Product Dev only. Do not use it for Product
-Preview, Product Prod, Client Preprod, or Client Prod.
+Product Preview execution was started after Product Dev runtime proof. The
+approval file now includes a narrow Product Preview addendum and the Product
+Preview budget model was corrected to USD 500/month.
+
+Azure returned `TooManyRequests` twice when creating subscription alias
+`sub-abarva-product-preview-eus-001`. No Product Preview subscription or
+resources were created. Evidence lives at
+`docs/build/azure/2026-06-15-product-preview-execution/summary.md`.
+
+Next safe step: retry Product Preview subscription creation after Azure
+subscription API throttling clears.

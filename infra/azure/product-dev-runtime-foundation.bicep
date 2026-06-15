@@ -48,6 +48,12 @@ param smokeMinReplicas int = 0
 @description('Maximum smoke app replicas. Keep low for Product Dev cost control.')
 param smokeMaxReplicas int = 1
 
+@description('Environment key exposed by the smoke app.')
+param smokeEnvironmentKey string = 'product-dev'
+
+@description('Data boundary label exposed by the smoke app.')
+param smokeDataBoundary string = 'synthetic-no-client-data'
+
 resource controlPlaneRg 'Microsoft.Resources/resourceGroups@2022-09-01' = {
   name: controlPlaneResourceGroupName
   location: location
@@ -90,6 +96,8 @@ module runtime './product-dev-containerapps-smoke.bicep' = {
     deploySmokeApp: deploySmokeApp
     smokeMinReplicas: smokeMinReplicas
     smokeMaxReplicas: smokeMaxReplicas
+    smokeEnvironmentKey: smokeEnvironmentKey
+    smokeDataBoundary: smokeDataBoundary
   }
 }
 

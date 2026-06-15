@@ -90,10 +90,10 @@ Default monthly budget planning values:
 | Environment     | Default monthly budget |
 | --------------- | ---------------------: |
 | Product Dev     |                   $500 |
-| Product Preview |                 $1,000 |
-| Product Prod    |                 $1,500 |
-| Client Preprod  |                 $1,000 |
-| Client Prod     |                 $2,500 |
+| Product Preview |                 $500 |
+| Product Prod    |                 $500 |
+| Client Preprod  |                 $500 |
+| Client Prod     |                 $500 |
 
 Any budget increase requires explicit approval.
 

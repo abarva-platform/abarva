@@ -16,7 +16,7 @@ Verifier: `npm run azure:product-prod-provisioning:verify`.
 - Subscription display name: `sub-abarva-product-prod-eus-001`
 - Management group target: `abarva-product`
 - Primary region: East US
-- Monthly planning budget: `$1,500`
+- Monthly planning budget: `$500`
 - Data allowed: synthetic, approved product telemetry, approved reference data
 - Data disallowed: unapproved client-confidential data, client private production data, PHI, PII, raw client private documents
 
@@ -95,7 +95,7 @@ Minimum tags:
 
 Product Prod requires a monthly budget before runtime workloads are created.
 
-- Monthly budget: `$1,500`
+- Monthly budget: `$500`
 - Alert thresholds: `50%`, `80%`, `100%`
 - Budget increases require explicit approval.
 
@@ -149,7 +149,7 @@ az account management-group subscription add \
 az consumption budget create \
   --subscription "<PRODUCT_PROD_SUBSCRIPTION_ID>" \
   --budget-name budget-product-prod-monthly \
-  --amount 1500 \
+  --amount 500 \
   --time-grain Monthly
 ```
 
