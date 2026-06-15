@@ -19,6 +19,7 @@ import {
   resolveStageNextMove,
   type StageNextMoveActionTarget,
 } from "@/lib/source/stage-next-move";
+import { nextStepNeeds } from "@/lib/source/next-step-needs";
 
 // xlsx-generatable codes — surfaced to the canvas so the artifact card
 // shows a "Download xlsx template" anchor on the right rows. Hardcoded
@@ -1216,11 +1217,53 @@ function SourceDeclutteredWorkspace({
         ) : null}
       </div>
 
+      <NextStepLookahead fromStage={fromStage} workspaceHref={workspaceHref} />
+
       <p style={DECLUTTERED_FOOTER_STYLE}>
         Everything else — documents, evidence, vendor responses and generated
         drafts — lives in the Workspace.
       </p>
     </section>
+  );
+}
+
+/**
+ * Calm look-ahead: what the *next* stage will need, so you can start gathering
+ * before you advance. Spec-driven (the next stage's required evidence) and
+ * therefore identical on every stage — the universal step previews the next.
+ */
+function NextStepLookahead({
+  fromStage,
+  workspaceHref,
+}: {
+  fromStage: SourceStageKey;
+  workspaceHref: string;
+}) {
+  const { nextStage, nextStageLabel, needs } = nextStepNeeds(fromStage);
+  if (!nextStage || needs.length === 0) return null;
+  return (
+    <div
+      data-testid="source-canvas-next-step-lookahead"
+      style={LOOKAHEAD_STYLE}
+    >
+      <div style={LOOKAHEAD_HEAD_STYLE}>
+        Next: {nextStageLabel} will need — start gathering
+      </div>
+      <ul style={LOOKAHEAD_LIST_STYLE}>
+        {needs.slice(0, 5).map((requirement) => (
+          <li key={requirement.requirementId} style={LOOKAHEAD_ITEM_STYLE}>
+            <span style={LOOKAHEAD_DOT_STYLE} aria-hidden />
+            <span>{requirement.label}</span>
+          </li>
+        ))}
+      </ul>
+      <Link
+        href={`${workspaceHref}?intent=upload&stage=${nextStage}`}
+        style={LOOKAHEAD_LINK_STYLE}
+      >
+        Open {nextStageLabel} in the Workspace ↗
+      </Link>
+    </div>
   );
 }
 
@@ -1409,4 +1452,57 @@ const DECLUTTERED_FOOTER_STYLE: CSSProperties = {
   fontSize: 12,
   color: CANVAS.INK_MUTED,
   lineHeight: 1.45,
+};
+
+const LOOKAHEAD_STYLE: CSSProperties = {
+  marginTop: 16,
+  padding: "14px 16px",
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 10,
+  background: CANVAS.CARD,
+};
+
+const LOOKAHEAD_HEAD_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 12.5,
+  fontWeight: 600,
+  color: CANVAS.INK,
+  marginBottom: 10,
+};
+
+const LOOKAHEAD_LIST_STYLE: CSSProperties = {
+  listStyle: "none",
+  margin: 0,
+  padding: 0,
+  display: "flex",
+  flexDirection: "column",
+  gap: 7,
+};
+
+const LOOKAHEAD_ITEM_STYLE: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 9,
+  fontFamily: CANVAS.SANS,
+  fontSize: 13,
+  color: CANVAS.INK_SOFT,
+};
+
+const LOOKAHEAD_DOT_STYLE: CSSProperties = {
+  width: 6,
+  height: 6,
+  borderRadius: "50%",
+  background: CANVAS.INK_MUTED,
+  flexShrink: 0,
+};
+
+const LOOKAHEAD_LINK_STYLE: CSSProperties = {
+  display: "inline-block",
+  marginTop: 12,
+  fontFamily: CANVAS.MONO,
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: "0.06em",
+  color: CANVAS.INK,
+  textDecoration: "none",
 };
