@@ -10,7 +10,7 @@ multi-pass generation, quality validation, citations, and durable storage.
 
 ## Tiers
 
-| Tier                       | Use for                                                          | Default model (env-overridable)                           | Default max tokens                         | Multi-pass                   | Validation / citations / File Cabinet |
+| Tier                       | Use for                                                          | Default model (env-overridable)                           | Standard max tokens                        | Multi-pass                   | Validation / citations / File Cabinet |
 | -------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------ | ---------------------------- | ------------------------------------- |
 | **Tier 1 — Chat**          | Short Nexus/Sentinel answers                                     | `claude-haiku-4-5-20251001` (`ABARVA_CLAUDE_CHAT_MODEL`)  | 1024 (`ABARVA_DOCGEN_CHAT_MAX_TOKENS`)     | no                           | no — **never a final deliverable**    |
 | **Tier 2 — Working draft** | Preliminary drafts, internal analysis                            | `claude-sonnet-4-6` (`ABARVA_CLAUDE_WORKING_DRAFT_MODEL`) | 4000 (`ABARVA_DOCGEN_DRAFT_MAX_TOKENS`)    | no                           | no                                    |
@@ -20,6 +20,37 @@ multi-pass generation, quality validation, citations, and durable storage.
 Model ids and token budgets are **environment-configurable** so models can be
 upgraded without code changes. Defaults deliberately do not starve final
 deliverables.
+
+## Quality profiles and pass budgets
+
+Set `ABARVA_DOCGEN_QUALITY_PROFILE` to choose how much generation budget the
+six-pass orchestrator may use:
+
+| Profile | Intended use | Architect | Evidence | Full draft | Red-team | Rewrite | Render package | Max output ceiling |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `standard` | Everyday board-grade drafts and validation | 6k | 6k | 16k | 6k | 16k | 16k | 66k |
+| `real_engagement` | Paid engagement artifacts where quality matters more than small token savings | 12k | 12k | 32k | 12k | 32k | 32k | 132k |
+| `premium_final` | Final board/executive packs, major RFPs, and 50-slide style deliverables | 24k | 24k | 128k | 24k | 128k | 128k | 456k |
+
+Use `standard` by default. Flip to `real_engagement` or `premium_final` only
+for named, high-value deliverables where spend is approved. Opus 4.8 supports
+large synchronous output budgets; if an environment routes to a smaller model,
+lower `ABARVA_DOCGEN_MAX_PASS_TOKENS` accordingly.
+
+Operators can override individual passes:
+
+- `ABARVA_DOCGEN_PASS_ARCHITECT_MAX_TOKENS`
+- `ABARVA_DOCGEN_PASS_EVIDENCE_GROUNDING_MAX_TOKENS`
+- `ABARVA_DOCGEN_PASS_FULL_DRAFT_MAX_TOKENS`
+- `ABARVA_DOCGEN_PASS_RED_TEAM_MAX_TOKENS`
+- `ABARVA_DOCGEN_PASS_BOARD_GRADE_REWRITE_MAX_TOKENS`
+- `ABARVA_DOCGEN_PASS_RENDER_PACKAGE_MAX_TOKENS`
+- `ABARVA_DOCGEN_MAX_PASS_TOKENS` caps every pass as a safety rail.
+
+For a polished 50-slide executive deliverable, the right pattern is still
+section-by-section or slide-batch generation. The `premium_final` profile gives
+enough budget for high-quality sections and rewrites, but does not remove the
+need to batch very large decks and Excel/PPT companions.
 
 ## Deliverable → tier map (excerpt)
 
@@ -38,9 +69,13 @@ never silently starved to a chat budget because its key was unmapped.
 
 ## API
 
-- `resolveDocumentPolicy({ deliverableType } | { tier })` → `{ tier, model,
-maxTokens, multiPass, requiresValidation, requiresCitations,
-requiresFileCabinet, isChatTier }`.
+- `resolveDocumentPolicy({ deliverableType } | { tier })` → `{ tier,
+qualityProfile, model, maxTokens, multiPass, requiresValidation,
+requiresCitations, requiresFileCabinet, isChatTier }`.
+- `resolvePassTokenBudget({ pass, deliverableType, highStakes })` → per-pass
+  `max_tokens` for the six-pass orchestrator.
+- `estimateMaxPassOutputTokens()` → current six-pass output ceiling for the
+  active quality profile.
 - `tierForDeliverable(type)` / `policyForTier(tier)`.
 - `assertDeliverablePolicy(type)` — **the guard**: throws if a deliverable
   resolves to a chat tier or a budget at/below the chat ceiling. Call at

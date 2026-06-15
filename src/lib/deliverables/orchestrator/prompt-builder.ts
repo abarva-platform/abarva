@@ -17,6 +17,7 @@ import type {
 } from './types';
 import { renderEvidenceForPrompt } from './source-register';
 import type { GovernedEvidenceItem } from './types';
+import { resolvePassTokenBudget } from '@/lib/ai/document-generation-policy';
 
 const USE_CASE_TITLE: Record<string, string> = {
   AMS_IT_OUTSOURCING: 'application management services and IT outsourcing',
@@ -132,19 +133,6 @@ export interface PassInputs {
   revisedDraftMarkdown?: string;
 }
 
-/** High-stakes deliverables get generous token budgets so they are never cramped. */
-function tokensFor(pass: GenerationPass, highStakes: boolean): number {
-  const base: Record<GenerationPass, number> = {
-    architect: 6000,
-    evidence_grounding: 6000,
-    full_draft: 16000,
-    red_team: 6000,
-    board_grade_rewrite: 16000,
-    render_package: 16000,
-  };
-  return highStakes ? base[pass] : Math.round(base[pass] * 0.6);
-}
-
 export function buildPassPrompt(pass: GenerationPass, inputs: PassInputs): PassPrompt {
   const { req, brief, evidence } = inputs;
   const highStakes = req.qualityBar.tone === 'board_grade_consulting';
@@ -214,7 +202,17 @@ export function buildPassPrompt(pass: GenerationPass, inputs: PassInputs): PassP
       break;
   }
 
-  return { pass, system, user, maxTokens: tokensFor(pass, highStakes), highStakes };
+  return {
+    pass,
+    system,
+    user,
+    maxTokens: resolvePassTokenBudget({
+      pass,
+      deliverableType: req.deliverableType,
+      highStakes,
+    }),
+    highStakes,
+  };
 }
 
 /** The ordered six-pass sequence. */

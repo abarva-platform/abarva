@@ -19,8 +19,23 @@ export type DocGenTier =
   | "tier3_board_grade" // final / near-final client-facing artifacts
   | "tier4_large_package"; // RFPs, proposal packs, strategy memos, business cases, exec packs
 
+export type DocGenQualityProfile =
+  | "standard"
+  | "real_engagement"
+  | "premium_final";
+
+export type DocumentGenerationPass =
+  | "architect"
+  | "evidence_grounding"
+  | "full_draft"
+  | "red_team"
+  | "board_grade_rewrite"
+  | "render_package";
+
 export interface ResolvedDocPolicy {
   tier: DocGenTier;
+  /** Resolved quality/cost profile for serious deliverables. */
+  qualityProfile: DocGenQualityProfile;
   /** Resolved Claude model id (env-overridable). */
   model: string;
   /** Resolved max output tokens (env-overridable). */
@@ -51,6 +66,24 @@ function envTokens(key: string, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
+function qualityProfile(): DocGenQualityProfile {
+  const raw = process.env.ABARVA_DOCGEN_QUALITY_PROFILE?.trim().toLowerCase();
+  switch (raw) {
+    case "engagement":
+    case "real":
+    case "real_engagement":
+    case "real-engagement":
+      return "real_engagement";
+    case "premium":
+    case "final":
+    case "premium_final":
+    case "premium-final":
+      return "premium_final";
+    default:
+      return "standard";
+  }
+}
+
 function modelFor(tier: DocGenTier): string {
   switch (tier) {
     case "tier1_chat":
@@ -64,17 +97,143 @@ function modelFor(tier: DocGenTier): string {
   }
 }
 
+const TIER_TOKEN_DEFAULTS: Readonly<
+  Record<DocGenQualityProfile, Record<DocGenTier, number>>
+> = {
+  standard: {
+    tier1_chat: 1024,
+    tier2_working_draft: 4000,
+    tier3_board_grade: 16000,
+    tier4_large_package: 16000,
+  },
+  real_engagement: {
+    tier1_chat: 1024,
+    tier2_working_draft: 8000,
+    tier3_board_grade: 32000,
+    tier4_large_package: 48000,
+  },
+  premium_final: {
+    tier1_chat: 1024,
+    tier2_working_draft: 12000,
+    tier3_board_grade: 64000,
+    tier4_large_package: 128000,
+  },
+};
+
 function tokensForTier(tier: DocGenTier): number {
+  const profile = qualityProfile();
   switch (tier) {
     case "tier1_chat":
-      return envTokens("ABARVA_DOCGEN_CHAT_MAX_TOKENS", 1024);
+      return envTokens(
+        "ABARVA_DOCGEN_CHAT_MAX_TOKENS",
+        TIER_TOKEN_DEFAULTS[profile][tier],
+      );
     case "tier2_working_draft":
-      return envTokens("ABARVA_DOCGEN_DRAFT_MAX_TOKENS", 4000);
+      return envTokens(
+        "ABARVA_DOCGEN_DRAFT_MAX_TOKENS",
+        TIER_TOKEN_DEFAULTS[profile][tier],
+      );
     case "tier3_board_grade":
-      return envTokens("ABARVA_DOCGEN_BOARD_MAX_TOKENS", 16000);
+      return envTokens(
+        "ABARVA_DOCGEN_BOARD_MAX_TOKENS",
+        TIER_TOKEN_DEFAULTS[profile][tier],
+      );
     case "tier4_large_package":
-      return envTokens("ABARVA_DOCGEN_PACKAGE_MAX_TOKENS", 16000);
+      return envTokens(
+        "ABARVA_DOCGEN_PACKAGE_MAX_TOKENS",
+        TIER_TOKEN_DEFAULTS[profile][tier],
+      );
   }
+}
+
+const PASS_ENV_KEY: Readonly<Record<DocumentGenerationPass, string>> = {
+  architect: "ARCHITECT",
+  evidence_grounding: "EVIDENCE_GROUNDING",
+  full_draft: "FULL_DRAFT",
+  red_team: "RED_TEAM",
+  board_grade_rewrite: "BOARD_GRADE_REWRITE",
+  render_package: "RENDER_PACKAGE",
+};
+
+const PASS_TOKEN_DEFAULTS: Readonly<
+  Record<DocGenQualityProfile, Record<DocumentGenerationPass, number>>
+> = {
+  // Current production-safe profile. Total high-stakes ceiling: 66k output.
+  standard: {
+    architect: 6000,
+    evidence_grounding: 6000,
+    full_draft: 16000,
+    red_team: 6000,
+    board_grade_rewrite: 16000,
+    render_package: 16000,
+  },
+  // Real paid engagement profile. Total high-stakes ceiling: 132k output.
+  real_engagement: {
+    architect: 12000,
+    evidence_grounding: 12000,
+    full_draft: 32000,
+    red_team: 12000,
+    board_grade_rewrite: 32000,
+    render_package: 32000,
+  },
+  // Final board/executive pack profile. Total high-stakes ceiling: 456k output.
+  premium_final: {
+    architect: 24000,
+    evidence_grounding: 24000,
+    full_draft: 128000,
+    red_team: 24000,
+    board_grade_rewrite: 128000,
+    render_package: 128000,
+  },
+};
+
+function defaultMaxPassTokens(profile: DocGenQualityProfile): number {
+  return profile === "premium_final" ? 128000 : 64000;
+}
+
+export interface ResolvePassTokenBudgetInput {
+  pass: DocumentGenerationPass;
+  deliverableType?: string;
+  tier?: DocGenTier;
+  highStakes?: boolean;
+}
+
+export function resolveDocGenQualityProfile(): DocGenQualityProfile {
+  return qualityProfile();
+}
+
+export function resolvePassTokenBudget(
+  input: ResolvePassTokenBudgetInput,
+): number {
+  const profile = qualityProfile();
+  const envKey = `ABARVA_DOCGEN_PASS_${PASS_ENV_KEY[input.pass]}_MAX_TOKENS`;
+  const fallback = PASS_TOKEN_DEFAULTS[profile][input.pass];
+  const highStakes = input.highStakes ?? true;
+  const requested = envTokens(envKey, fallback);
+  const adjusted = highStakes ? requested : Math.round(requested * 0.6);
+  const capped = Math.min(
+    adjusted,
+    envTokens("ABARVA_DOCGEN_MAX_PASS_TOKENS", defaultMaxPassTokens(profile)),
+  );
+  return Math.max(1, capped);
+}
+
+export function estimateMaxPassOutputTokens(input?: {
+  highStakes?: boolean;
+}): number {
+  const passes: DocumentGenerationPass[] = [
+    "architect",
+    "evidence_grounding",
+    "full_draft",
+    "red_team",
+    "board_grade_rewrite",
+    "render_package",
+  ];
+  return passes.reduce(
+    (sum, pass) =>
+      sum + resolvePassTokenBudget({ pass, highStakes: input?.highStakes }),
+    0,
+  );
 }
 
 // ── Deliverable → tier registry ─────────────────────────────────────────────
@@ -154,6 +313,7 @@ export function policyForTier(tier: DocGenTier): ResolvedDocPolicy {
   const high = tier === "tier3_board_grade" || tier === "tier4_large_package";
   return {
     tier,
+    qualityProfile: qualityProfile(),
     model: modelFor(tier),
     maxTokens: tokensForTier(tier),
     multiPass: high,
