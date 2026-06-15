@@ -114,7 +114,7 @@ describe("WorkspaceExplorer", () => {
     expect(screen.getByTestId("workspace-step-strategy")).toBeTruthy();
     // the selected step surfaces its canonical evidence needs (templates / gaps)
     expect(screen.getByTestId("workspace-step-needs")).toBeTruthy();
-    expect(screen.getByText("Needed for this step")).toBeTruthy();
+    expect(screen.getByText("Documents for this step")).toBeTruthy();
   });
 
   it("surfaces missing upstream errors without fabricating a draft", async () => {

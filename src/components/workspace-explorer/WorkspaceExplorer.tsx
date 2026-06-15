@@ -121,7 +121,6 @@ export function WorkspaceExplorer({
   title,
   eyebrow,
   backHref,
-  progression,
   backLabel = "Back to event",
   items,
   mode = "page",
@@ -175,6 +174,23 @@ export function WorkspaceExplorer({
     activeStage !== "all" && isSourceStageKey(activeStage)
       ? evidenceForStage(activeStage as SourceStageKey)
       : [];
+  // A step document is "Uploaded" if a real evidence/input item for this step
+  // matches it (best-effort by a distinctive word in the requirement label);
+  // otherwise it's "Pending". Keeps the right pane to a simple uploaded/pending.
+  const isRequirementUploaded = (req: {
+    label: string;
+  }): boolean => {
+    const tokens = req.label
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((word) => word.length > 4);
+    if (tokens.length === 0) return false;
+    return filtered.some((item) => {
+      if (item.kind === "approval" || item.kind === "deliverable") return false;
+      const name = item.name.toLowerCase();
+      return tokens.some((token) => name.includes(token));
+    });
+  };
   const activeItem =
     filtered.find((item) => item.id === activeId) ??
     filtered[0] ??
@@ -338,8 +354,6 @@ export function WorkspaceExplorer({
         </Link>
       </header>
 
-      {progression ? <ProgressionPanel progression={progression} /> : null}
-
       {generateIntent ? (
         <GeneratePanel
           intent={generateIntent}
@@ -385,32 +399,46 @@ export function WorkspaceExplorer({
           ))}
         </nav>
 
-        <div style={LIST_STYLE} aria-label="Workspace item list">
+        <div style={LIST_STYLE} aria-label="Documents for this step">
           {stageNeeds.length > 0 ? (
             <div data-testid="workspace-step-needs">
-              <div style={NEEDS_HEADING_STYLE}>Needed for this step</div>
-              {stageNeeds.map((req) => (
-                <div key={req.requirementId} style={NEED_ROW_STYLE}>
-                  <span style={needDotStyle(req.level)} aria-hidden />
-                  <span style={NEED_BODY_STYLE}>
-                    <span style={NEED_NAME_STYLE}>{req.label}</span>
-                    <span style={NEED_META_STYLE}>
-                      {req.sourceLabel} · needs {req.minimumState}
+              <div style={NEEDS_HEADING_STYLE}>Documents for this step</div>
+              {stageNeeds.map((req) => {
+                const uploaded = isRequirementUploaded(req);
+                return (
+                  <div key={req.requirementId} style={NEED_ROW_STYLE}>
+                    <span
+                      style={
+                        uploaded ? UPLOADED_DOT_STYLE : needDotStyle(req.level)
+                      }
+                      aria-hidden
+                    />
+                    <span style={NEED_BODY_STYLE}>
+                      <span style={NEED_NAME_STYLE}>{req.label}</span>
+                      <span style={NEED_META_STYLE}>
+                        {req.sourceLabel} · needs {req.minimumState}
+                      </span>
                     </span>
-                  </span>
-                  <Link
-                    href={`?intent=upload&stage=${activeStage}`}
-                    style={NEED_UPLOAD_STYLE}
-                  >
-                    Upload
-                  </Link>
-                </div>
-              ))}
-              <div style={NEEDS_SUBHEAD_STYLE}>In this step</div>
+                    {uploaded ? (
+                      <span style={UPLOADED_BADGE_STYLE}>Uploaded ✓</span>
+                    ) : (
+                      <Link
+                        href={`?intent=upload&stage=${activeStage}`}
+                        style={NEED_UPLOAD_STYLE}
+                      >
+                        Upload
+                      </Link>
+                    )}
+                  </div>
+                );
+              })}
+              {filtered.length > 0 ? (
+                <div style={NEEDS_SUBHEAD_STYLE}>Also in this step</div>
+              ) : null}
             </div>
           ) : null}
-          {filtered.length === 0 ? (
-            <div style={EMPTY_STYLE}>Nothing loaded in this step yet.</div>
+          {filtered.length === 0 && stageNeeds.length === 0 ? (
+            <div style={EMPTY_STYLE}>Nothing in this step yet.</div>
           ) : (
             filtered.map((item) => {
               const active = item.id === activeItem?.id;
@@ -1136,6 +1164,26 @@ const NEED_UPLOAD_STYLE: CSSProperties = {
   padding: "6px 11px",
   textDecoration: "none",
   whiteSpace: "nowrap",
+  flexShrink: 0,
+};
+
+const UPLOADED_BADGE_STYLE: CSSProperties = {
+  font: "700 11px/1 DM Sans, Arial, sans-serif",
+  color: "#197a4b",
+  background: "#e6f5ec",
+  border: "1px solid #bfe6cf",
+  borderRadius: 20,
+  padding: "5px 11px",
+  whiteSpace: "nowrap",
+  flexShrink: 0,
+};
+
+const UPLOADED_DOT_STYLE: CSSProperties = {
+  width: 7,
+  height: 7,
+  borderRadius: "50%",
+  background: "#1e9e62",
+  marginTop: 5,
   flexShrink: 0,
 };
 
