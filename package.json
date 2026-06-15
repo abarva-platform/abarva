@@ -160,6 +160,8 @@
     "azure:environment-vending:verify": "node scripts/azure/verify-environment-vending-ledger.mjs",
     "azure:environment-rbac:verify": "node scripts/azure/verify-environment-rbac-model.mjs",
     "azure:environment-cost-controls:verify": "node scripts/azure/verify-environment-cost-controls.mjs",
+    "azure:cost-circuit-breaker:check": "node scripts/azure/cost-circuit-breaker.mjs",
+    "azure:cost-circuit-breaker:verify": "node scripts/azure/verify-cost-circuit-breaker.mjs",
     "azure:product-baseline-whatif:verify": "node scripts/azure/verify-product-baseline-whatif-packet.mjs",
     "azure:environment-backlog:verify": "node scripts/azure/verify-environment-backlog-artifacts.mjs",
     "azure:product-dev-approval:verify": "node scripts/azure/verify-product-dev-approval-request.mjs",

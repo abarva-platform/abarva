@@ -1,0 +1,44 @@
+[
+  {
+    "changedTime": "2026-06-15T02:09:19.499273+00:00",
+    "createdTime": "2026-06-15T02:09:17.889932+00:00",
+    "extendedLocation": null,
+    "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-controlplane-product-dev-eus-001/providers/Microsoft.KeyVault/vaults/kv-abarva-pdev-eus-001",
+    "identity": null,
+    "kind": null,
+    "location": "eastus",
+    "managedBy": null,
+    "name": "kv-abarva-pdev-eus-001",
+    "plan": null,
+    "properties": null,
+    "provisioningState": "Succeeded",
+    "resourceGroup": "rg-abarva-controlplane-product-dev-eus-001",
+    "sku": null,
+    "systemData": {
+      "createdAt": "2026-06-15T02:09:17.921Z",
+      "createdBy": "anand.sundaram@thesundaram.com",
+      "createdByType": "User",
+      "lastModifiedAt": "2026-06-15T02:09:17.921Z",
+      "lastModifiedBy": "anand.sundaram@thesundaram.com",
+      "lastModifiedByType": "User"
+    },
+    "tags": {
+      "ClientCode": "abarva",
+      "CostCenter": "product-development",
+      "CreatedAt": "2026-06-15T01:59:22Z",
+      "CreatedBy": "codex",
+      "Criticality": "medium",
+      "DataClassification": "synthetic",
+      "Environment": "Product Dev",
+      "EnvironmentKey": "product-dev",
+      "Expiry": "2026-09-30",
+      "ManagedBy": "manual-approved",
+      "NoPhiPii": "true",
+      "Owner": "AbarVa Platform",
+      "Plane": "control-plane",
+      "ReleaseLane": "global-control-lane",
+      "Repository": "abarva-platform/abarva"
+    },
+    "type": "Microsoft.KeyVault/vaults"
+  }
+]

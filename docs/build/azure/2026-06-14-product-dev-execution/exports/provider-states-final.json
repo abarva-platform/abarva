@@ -1,0 +1,18 @@
+[
+  {
+    "namespace": "Microsoft.KeyVault",
+    "registrationState": "Registered"
+  },
+  {
+    "namespace": "Microsoft.Consumption",
+    "registrationState": "Registered"
+  },
+  {
+    "namespace": "Microsoft.Management",
+    "registrationState": "NotRegistered"
+  },
+  {
+    "namespace": "Microsoft.Resources",
+    "registrationState": "Registered"
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "properties": {
+    "category": "Cost",
+    "amount": 250,
+    "timeGrain": "Monthly",
+    "timePeriod": {
+      "startDate": "2026-04-01T00:00:00Z",
+      "endDate": "2028-03-31T00:00:00Z"
+    },
+    "notifications": {
+      "Actual_GreaterThan_80_Percent": {
+        "enabled": true,
+        "operator": "GreaterThan",
+        "threshold": 80,
+        "contactEmails": ["alerts@abarva.ai", "admin@abarva.ai"]
+      }
+    }
+  }
+}
