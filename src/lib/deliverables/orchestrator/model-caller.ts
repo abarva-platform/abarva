@@ -1,12 +1,12 @@
 // Audited-egress ModelCaller for the Deliverable Intelligence Orchestrator.
 //
-// Backs the orchestrator's injected ModelCaller with the audited OpenAI egress
-// path (preflightOpenAIDirectClient → client.responses.create). Each pass is its
+// Backs the orchestrator's injected ModelCaller with the audited Anthropic egress
+// path (preflightAnthropicDirectClient → client.messages.create). Each pass is its
 // own audited call with its own generous token budget and a workflow tag that
 // records the module / deliverable / pass.
 
 import {
-  preflightOpenAIDirectClient,
+  preflightAnthropicDirectClient,
   type AiDataClass,
 } from "@/lib/integrations/ai-egress";
 import { resolveDocumentPolicy } from "@/lib/ai/document-generation-policy";
@@ -21,7 +21,7 @@ import type { DeliverableIntelligenceRequest, PassPrompt } from "./types";
 export interface AuditedModelCallerOptions {
   tenantId: string;
   userId?: string;
-  /** override the model; defaults to the document policy's OpenAI model. */
+  /** override the model; defaults to the document policy's Claude model. */
   model?: string;
   /** persisted artifact id, when generation is tied to a saved artifact. */
   artifactId?: string;
@@ -30,6 +30,19 @@ export interface AuditedModelCallerOptions {
 }
 
 function extractResponseText(response: unknown): string {
+  const content = (response as { content?: unknown } | null)?.content;
+  if (Array.isArray(content)) {
+    const chunks: string[] = [];
+    for (const block of content) {
+      const type = (block as { type?: unknown } | null)?.type;
+      const text = (block as { text?: unknown } | null)?.text;
+      if ((type === undefined || type === "text") && typeof text === "string") {
+        chunks.push(text);
+      }
+    }
+    return chunks.join("").trim();
+  }
+
   if (
     response &&
     typeof response === "object" &&
@@ -69,7 +82,7 @@ export function createAuditedModelCaller(
       opts.model ??
       resolveDocumentPolicy({ deliverableType: req.deliverableType }).model;
     const fullPrompt = `${prompt.system}\n\n${prompt.user}`;
-    const preflight = await preflightOpenAIDirectClient({
+    const preflight = await preflightAnthropicDirectClient({
       tenantId: opts.tenantId,
       ...(opts.userId !== undefined ? { userId: opts.userId } : {}),
       workflow: `deliverable:${req.module}:${req.deliverableType}:${prompt.pass}`,
@@ -89,15 +102,15 @@ export function createAuditedModelCaller(
       },
     });
     if (!preflight.ok) {
-      throw new Error(`OpenAI egress denied: ${preflight.reason}`);
+      throw new Error(`Anthropic egress denied: ${preflight.reason}`);
     }
 
-    const response = await preflight.client.responses.create({
-        model,
-        instructions: prompt.system,
-        input: prompt.user,
-        max_output_tokens: prompt.maxTokens,
-      });
+    const response = await preflight.client.messages.create({
+      model,
+      system: prompt.system,
+      messages: [{ role: "user", content: prompt.user }],
+      max_tokens: prompt.maxTokens,
+    });
 
     return {
       text: extractResponseText(response),
@@ -109,7 +122,7 @@ export function createAuditedModelCaller(
 
 /**
  * One-call entry point: run the full multi-pass orchestration for a deliverable using
- * the audited OpenAI egress. The orchestrator enforces the plan gate and quality
+ * the audited Anthropic egress. The orchestrator enforces the plan gate and quality
  * gate; the returned result carries the document only when both pass.
  */
 export async function generateDeliverable(

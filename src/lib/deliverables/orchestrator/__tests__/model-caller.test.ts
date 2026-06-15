@@ -1,14 +1,14 @@
-// PR-3 proof: the orchestrator's ModelCaller is backed by audited OpenAI egress.
+// PR-3 proof: the orchestrator's ModelCaller is backed by audited Anthropic egress.
 // We mock the egress so no live key is needed and assert the wiring: every pass goes
-// through preflightOpenAIDirectClient with a pass-specific workflow tag, the pass
-// token budget is passed to the Responses call, instructions+input are sent, and
+// through preflightAnthropicDirectClient with a pass-specific workflow tag, the pass
+// token budget is passed to the Messages call, system+user messages are sent, and
 // text is extracted.
 
 const auditedCalls: Array<Record<string, unknown>> = [];
 const createCalls: Array<Record<string, unknown>> = [];
 
 jest.mock('@/lib/integrations/ai-egress', () => ({
-  preflightOpenAIDirectClient: jest.fn(async (args: Record<string, unknown>) => {
+  preflightAnthropicDirectClient: jest.fn(async (args: Record<string, unknown>) => {
     auditedCalls.push(args);
     const pass = String((args.workflow as string).split(':').pop());
     const text = pass === 'architect'
@@ -21,10 +21,10 @@ jest.mock('@/lib/integrations/ai-egress', () => ({
       auditId: 'audit-1',
       dataClass: 'confidential',
       client: {
-        responses: {
+        messages: {
           create: jest.fn(async (req: Record<string, unknown>) => {
             createCalls.push(req);
-            return { id: `r-${pass}`, output_text: text };
+            return { id: `msg-${pass}`, content: [{ type: 'text', text }] };
           }),
         },
       },
@@ -52,14 +52,16 @@ describe('createAuditedModelCaller', () => {
     const res = await caller(prompt, req);
 
     expect(res.text.length).toBeGreaterThan(0);
-    expect(res.responseId).toBe('r-full_draft');
+    expect(res.responseId).toBe('msg-full_draft');
     expect(auditedCalls[0].workflow).toBe('deliverable:source:rfp_package:full_draft');
-    expect(auditedCalls[0].model).toBe('gpt-5.5');
+    expect(auditedCalls[0].model).toBe('claude-opus-4-8');
     expect(auditedCalls[0].tenantId).toBe('skyharbor-air');
     // token budget + system instructions are passed to the model call
-    expect(createCalls[0].max_output_tokens).toBe(prompt.maxTokens);
-    expect(typeof createCalls[0].instructions).toBe('string');
-    expect(typeof createCalls[0].input).toBe('string');
+    expect(createCalls[0].max_tokens).toBe(prompt.maxTokens);
+    expect(typeof createCalls[0].system).toBe('string');
+    expect(createCalls[0].messages).toEqual([
+      { role: 'user', content: prompt.user },
+    ]);
   });
 });
 

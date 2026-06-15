@@ -8,8 +8,8 @@ import {
 
 describe("document-generation-policy", () => {
   const ENV_KEYS = [
-    "ABARVA_OPENAI_BOARD_GRADE_MODEL",
-    "ABARVA_OPENAI_CHAT_MODEL",
+    "ABARVA_CLAUDE_BOARD_GRADE_MODEL",
+    "ABARVA_CLAUDE_CHAT_MODEL",
     "ABARVA_DOCGEN_BOARD_MAX_TOKENS",
     "ABARVA_DOCGEN_CHAT_MAX_TOKENS",
   ];
@@ -59,16 +59,16 @@ describe("document-generation-policy", () => {
   });
 
   it("uses env-configurable model ids and token budgets", () => {
-    process.env.ABARVA_OPENAI_BOARD_GRADE_MODEL = "gpt-future-9";
+    process.env.ABARVA_CLAUDE_BOARD_GRADE_MODEL = "claude-future-9";
     process.env.ABARVA_DOCGEN_BOARD_MAX_TOKENS = "32000";
     const p = resolveDocumentPolicy({ deliverableType: "program_charter" });
-    expect(p.model).toBe("gpt-future-9");
+    expect(p.model).toBe("claude-future-9");
     expect(p.maxTokens).toBe(32000);
   });
 
-  it("defaults board grade to a GPT-class model with a generous budget", () => {
+  it("defaults board grade to an Opus-class Claude model with a generous budget", () => {
     const p = resolveDocumentPolicy({ deliverableType: "business_case" });
-    expect(p.model).toMatch(/^gpt-/);
+    expect(p.model).toMatch(/^claude-opus-/);
     expect(p.maxTokens).toBeGreaterThanOrEqual(8000);
   });
 
