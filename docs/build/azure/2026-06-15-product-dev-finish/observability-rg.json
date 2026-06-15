@@ -1,0 +1,27 @@
+{
+  "id": "/subscriptions/58eef48c-3ed6-48e6-9af4-de1848ad3401/resourceGroups/rg-abarva-observability-product-dev-eus-001",
+  "location": "eastus",
+  "managedBy": null,
+  "name": "rg-abarva-observability-product-dev-eus-001",
+  "properties": {
+    "provisioningState": "Succeeded"
+  },
+  "tags": {
+    "ClientCode": "abarva",
+    "CostCenter": "product-development",
+    "CreatedAt": "2026-06-15T01:59:22Z",
+    "CreatedBy": "codex",
+    "Criticality": "medium",
+    "DataClassification": "synthetic",
+    "Environment": "Product Dev",
+    "EnvironmentKey": "product-dev",
+    "Expiry": "2026-09-30",
+    "ManagedBy": "manual-approved",
+    "NoPhiPii": "true",
+    "Owner": "AbarVa Platform",
+    "Plane": "control-plane",
+    "ReleaseLane": "global-control-lane",
+    "Repository": "abarva-platform/abarva"
+  },
+  "type": "Microsoft.Resources/resourceGroups"
+}
