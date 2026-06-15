@@ -30,6 +30,12 @@ export interface StageNextMoveView {
   gates: StageNextMoveGate[];
   gateSummary: string;
   nextStage?: SourceStageKey;
+  /**
+   * The artifact this stage's draft move produces (e.g. `d01_strategy_memo`).
+   * Set only on the draft move so the canvas can run governed generation in
+   * place ("Draft with Sentinel") instead of navigating away.
+   */
+  draftArtifactCode?: string;
 }
 
 export interface ResolveStageNextMoveInput {
@@ -214,6 +220,7 @@ export function resolveStageNextMove({
       gates,
       gateSummary: buildGateSummary(gates),
       nextStage,
+      draftArtifactCode: config.artifactCodes[0],
     };
   }
 
