@@ -167,7 +167,7 @@ async function defaultGenerateArtifact(input: {
     "@/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route"
   );
   return generateSourceArtifactDraft(
-    input.request ?? new Request("http://localhost/source-autodraft"),
+    input.request ?? new Request("https://app.abarva.ai/source-autodraft"),
     {
       params: Promise.resolve({
         eventId: input.eventId,
