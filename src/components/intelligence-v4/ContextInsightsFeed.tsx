@@ -664,8 +664,8 @@ export function ContextInsightsFeed({ tenantKey, onSeeTheFacts }: Props) {
           maxWidth: 720,
         }}
       >
-        Derived significance — each insight is computed from facts by a named
-        rule and traces to evidence. Nothing is authored or guessed.
+        Derived significance from named rules. When evidence is missing, the
+        explorer shows the gap instead of filling it.
       </p>
 
       {/* Domain filter chips */}

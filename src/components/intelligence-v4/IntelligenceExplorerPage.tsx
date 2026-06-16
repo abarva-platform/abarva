@@ -179,7 +179,7 @@ export function IntelligenceExplorerPage({
               padding: "2px 9px",
             }}
           >
-            Illustrative · synthetic tenant
+            Feature-gated explorer
           </span>
           <span>
             <strong style={{ color: C.ink }}>{liveInsightCount}</strong> live
@@ -199,7 +199,7 @@ export function IntelligenceExplorerPage({
       {/* Main shell: rail + dashboard */}
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         {/* Left: Sentinel rail */}
-        <SentinelExplorerRail />
+        <SentinelExplorerRail tenantKey={tenantKey} />
 
         {/* Right: tab strip + content */}
         <section
