@@ -45,6 +45,7 @@ import {
   resolveSourceEventUuidForClient,
   scaffoldNewEventSubstrate,
 } from "@/lib/source/queries";
+import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -346,6 +347,20 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           activityWrite.error,
         );
       }
+
+      void autoDraftOnStageEntry(
+        {
+          eventId: persistedEvent.id,
+          clientKey: effectiveClientKey,
+          enteredStage: stageKey,
+        },
+        { request: req },
+      ).catch((error) => {
+        console.error(
+          "[source stage] auto-draft failed:",
+          error instanceof Error ? error.message : String(error),
+        );
+      });
 
       return Response.json({
         ok: true,

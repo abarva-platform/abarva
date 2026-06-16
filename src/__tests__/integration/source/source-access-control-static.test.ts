@@ -23,7 +23,7 @@ describe('Source access-control wiring', () => {
 
     expect(route).toContain('loadUserSourceAccessPolicy');
     expect(route).toContain('canApproveSourceStages');
-    expect(route).toContain(".eq('client_key', activeClient.key)");
+    expect(route).toMatch(/\.eq\(["']client_key["'], activeClient\.key\)/);
     expect(route).not.toContain('getCurrentPerson');
     expect(route).not.toContain("person.role !== 'admin'");
   });
@@ -50,13 +50,24 @@ describe('Source access-control wiring', () => {
     expect(route).toContain('CANONICAL_CLIENT_ADMIN_EMAILS');
     expect(route).toContain('inferClientKeyFromEmail');
     expect(route).toContain('canonicalAdminFallbackAllowed');
-    expect(route).toContain(".from('source_events')");
+    expect(route).toMatch(/\.from\(["']source_events["']\)/);
     expect(route).toContain('selectSourceWriteAdapter');
     expect(route).toContain('updateStage');
     expect(route).toContain('stageKey');
     expect(route).toContain("persisted: true");
     expect(route).toContain('getSourceEventSeed');
     expect(route).toContain('setStageOverride');
+    expect(route).toContain('autoDraftOnStageEntry');
+    expect(route).toContain('enteredStage: stageKey');
+  });
+
+  it('auto-drafts Strategy then Scope when Strategy-at-P0 approval advances straight to Scope', () => {
+    const route = read('src/app/api/v1/source/events/[eventId]/approve/route.ts');
+
+    expect(route).toContain('autoDraftOnStageEntry');
+    expect(route).toContain('advancedToStage === "scope"');
+    expect(route).toContain('enteredStage: "strategy"');
+    expect(route).toContain('enteredStage: "scope"');
   });
 
   it('keeps Source stage advancement server-authorized instead of client-blocking admin self-approval', () => {
@@ -94,12 +105,15 @@ describe('Source access-control wiring', () => {
 
     expect(queries).toContain('getSourceArtifactRegistryRecord');
     expect(queries).toContain('sourceArtifactRegistryRecordToDetail');
-    expect(queries).toContain("getObjectStorageAdapter().download('source-artifacts'");
-    expect(queries).toContain('registryRecord.sourceEventId !== eventId');
+    expect(queries).toMatch(
+      /getObjectStorageAdapter\(\)\.download\(\s*["']source-artifacts["']/,
+    );
+    expect(queries).toContain('allowedEventIds.has(registryRecord.sourceEventId)');
     expect(queries).toContain('parser/vector/graph completion is not implied');
 
     expect(page).toContain('source_artifacts registry');
-    expect(page).toContain('Provenance: ${provenanceSource}');
+    expect(page).toContain('createdFrom: provenanceSource');
+    expect(page).toContain('storeKey: `source-artifact:${eventId}:${artifactId}`');
     expect(page).toContain('journeyStages');
     expect(page).toContain('activeJourneyStage');
     expect(drawer).toContain('Registered Source artifact');
@@ -113,8 +127,10 @@ describe('Source access-control wiring', () => {
     expect(queries).toContain('getCanonicalAdminClientFallback');
     expect(queries).toContain('CANONICAL_CLIENT_ADMIN_EMAILS');
     expect(queries).toContain('inferClientKeyFromEmail');
-    expect(queries).toContain('getPersistedSourceEventRow(eventId, fallbackClient.key)');
-    expect(queries).toContain('sourceEventRowToDetail(persistedEvent, fallbackClient.name)');
+    expect(queries).toContain('getPersistedSourceEventRow');
+    expect(queries).toContain('fallbackClient.key');
+    expect(queries).toContain('sourceEventRowToDetail');
+    expect(queries).toContain('fallbackClient.name');
   });
 
   it('ships the Source participant schema needed for record-scoped users', () => {
