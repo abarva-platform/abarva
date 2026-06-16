@@ -20,6 +20,11 @@ import {
   type StageNextMoveActionTarget,
 } from "@/lib/source/stage-next-move";
 import { nextStepNeeds } from "@/lib/source/next-step-needs";
+import {
+  assessStageGate,
+  buildStageRecommendation,
+  isAssessmentMet,
+} from "@/lib/source/gate-auto-assessment";
 
 // xlsx-generatable codes — surfaced to the canvas so the artifact card
 // shows a "Download xlsx template" anchor on the right rows. Hardcoded
@@ -388,6 +393,19 @@ export function UniversalCanvasShell({
     () => evidenceStates.filter((e) => e.stage === viewStage),
     [evidenceStates, viewStage],
   );
+  const stageGateAssessment = useMemo(
+    () =>
+      assessStageGate({
+        fromStage: viewStage,
+        criteria: stageCriteria,
+        evidence: stageEvidence,
+      }),
+    [stageCriteria, stageEvidence, viewStage],
+  );
+  const stageRecommendation = useMemo(
+    () => buildStageRecommendation(stageGateAssessment),
+    [stageGateAssessment],
+  );
   const nextMove = useMemo(
     () =>
       resolveStageNextMove({
@@ -409,9 +427,18 @@ export function UniversalCanvasShell({
       (a) => a.tier !== "stub",
     ).length;
     const totalArtifacts = stageArtifacts.length;
-    const metCriteria = stageCriteria.filter(
-      (c) => c.state === "met" || c.state === "waived",
-    ).length;
+    const assessmentById = new Map(
+      stageGateAssessment.criteria.map((criterion) => [
+        criterion.criterionId,
+        criterion,
+      ]),
+    );
+    const metCriteria = stageCriteria.filter((c) => {
+      const assessed = assessmentById.get(c.criterionId);
+      return assessed
+        ? isAssessmentMet(assessed)
+        : c.state === "met" || c.state === "waived";
+    }).length;
     return {
       readiness: `${usable} / ${totalEvidence}`,
       artifacts: `${liveArtifacts} / ${totalArtifacts}`,
@@ -420,7 +447,7 @@ export function UniversalCanvasShell({
       metCriteria,
       totalCriteria: stageCriteria.length,
     };
-  }, [stageArtifacts, stageCriteria, stageEvidence]);
+  }, [stageArtifacts, stageCriteria, stageEvidence, stageGateAssessment]);
   const workspaceItemCount = useMemo(() => {
     const registryIds = new Set(
       registryArtifactsState.map((artifact) => artifact.id),
@@ -901,6 +928,8 @@ export function UniversalCanvasShell({
         <GateTab
           fromStage={viewStage}
           states={stageCriteria}
+          assessment={stageGateAssessment}
+          recommendation={stageRecommendation}
           onChangeCriterionState={handleCriterionStateChange}
           pendingByCriterionId={pendingCriterionByCriterionId}
           onPromoteStage={handlePromoteStage}
@@ -1040,6 +1069,8 @@ export function UniversalCanvasShell({
                       onDraftWithSentinel={handleDraftWithSentinel}
                       fromStage={viewStage}
                       criteria={stageCriteria}
+                      assessment={stageGateAssessment}
+                      recommendation={stageRecommendation}
                       onChangeCriterionState={handleCriterionStateChange}
                       pendingByCriterionId={pendingCriterionByCriterionId}
                       onPromoteStage={handlePromoteStage}
@@ -1112,6 +1143,8 @@ function SourceDeclutteredWorkspace({
   onDraftWithSentinel,
   fromStage,
   criteria,
+  assessment,
+  recommendation,
   onChangeCriterionState,
   pendingByCriterionId,
   onPromoteStage,
@@ -1123,6 +1156,8 @@ function SourceDeclutteredWorkspace({
   onDraftWithSentinel: (code: string) => void;
   fromStage: SourceStageKey;
   criteria: SourceEventGateCriterion[];
+  assessment: ReturnType<typeof assessStageGate>;
+  recommendation: ReturnType<typeof buildStageRecommendation>;
   onChangeCriterionState: (
     criterionId: string,
     next: SourceEventGateCriterionState,
@@ -1165,9 +1200,15 @@ function SourceDeclutteredWorkspace({
   // "N of M cleared" line — that IS the calm "what to gather" view the operator
   // asked for. The right rail's remaining job is to keep the full gate
   // machinery (mark-met, promote, approve-with-gaps) collapsed until asked.
-  const metCount = criteria.filter(
-    (s) => s.state === "met" || s.state === "waived",
-  ).length;
+  const assessmentById = new Map(
+    assessment.criteria.map((criterion) => [criterion.criterionId, criterion]),
+  );
+  const metCount = criteria.filter((criterion) => {
+    const assessed = assessmentById.get(criterion.criterionId);
+    return assessed
+      ? isAssessmentMet(assessed)
+      : criterion.state === "met" || criterion.state === "waived";
+  }).length;
 
   return (
     <section
@@ -1209,6 +1250,8 @@ function SourceDeclutteredWorkspace({
           <GateTab
             fromStage={fromStage}
             states={criteria}
+            assessment={assessment}
+            recommendation={recommendation}
             onChangeCriterionState={onChangeCriterionState}
             pendingByCriterionId={pendingByCriterionId}
             onPromoteStage={onPromoteStage}

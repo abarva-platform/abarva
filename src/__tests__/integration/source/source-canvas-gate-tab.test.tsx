@@ -7,6 +7,10 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { SourceEventGateCriterion } from "@/lib/source/canvas-substrate";
 import { GateTab } from "@/components/source/canvas/workspace-tabs/GateTab";
+import {
+  assessStageGate,
+  buildStageRecommendation,
+} from "@/lib/source/gate-auto-assessment";
 
 function makeCriterion(
   overrides: Partial<SourceEventGateCriterion> = {},
@@ -31,6 +35,59 @@ function makeCriterion(
 }
 
 describe("GateTab · B3 blocker diagnostics", () => {
+  it("renders the evidence-derived stage decision status and criterion provenance", () => {
+    const states = [
+      makeCriterion({ criterionId: "GATE-SCOPE-01", state: "pending" }),
+      makeCriterion({ criterionId: "EVID-SCOPE-01", state: "pending" }),
+    ];
+    const assessment = assessStageGate({
+      fromStage: "scope",
+      criteria: states,
+      evidence: [
+        {
+          id: "e1",
+          sourceEventId: "evt-canvas-1",
+          tenantKey: "skyharbor-air",
+          requirementId: "EVID-SRC-SCOPE-APP-INV",
+          stage: "scope",
+          currentState: "Usable Evidence",
+          sourceArtifactId: "artifact-1",
+          notes: null,
+          lastSyncedAt: null,
+          createdAt: "2026-06-15T00:00:00Z",
+          updatedAt: "2026-06-15T00:00:00Z",
+        },
+        {
+          id: "e2",
+          sourceEventId: "evt-canvas-1",
+          tenantKey: "skyharbor-air",
+          requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
+          stage: "scope",
+          currentState: "Parsed",
+          sourceArtifactId: "artifact-2",
+          notes: null,
+          lastSyncedAt: null,
+          createdAt: "2026-06-15T00:00:00Z",
+          updatedAt: "2026-06-15T00:00:00Z",
+        },
+      ],
+    });
+    const html = renderToStaticMarkup(
+      createElement(GateTab, {
+        fromStage: "scope",
+        states,
+        assessment,
+        recommendation: buildStageRecommendation(assessment),
+      }),
+    );
+
+    expect(html).toContain("source-stage-decision-status");
+    expect(html).toContain("Auto-assessed from evidence");
+    expect(html).toContain("Blocked by missing evidence");
+    expect(html).toContain("Application inventory: Usable Evidence");
+    expect(html).toContain("L2/L3 ticket history: Parsed");
+  });
+
   it("surfaces explicit blocker rows when criteria are not met", () => {
     const html = renderToStaticMarkup(
       createElement(GateTab, {
