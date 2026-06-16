@@ -85,18 +85,14 @@ function ensureCompanyLabel(markdown: string, companyName?: string | null) {
 function dedupeCompanyLabel(markdown: string, companyName?: string | null) {
   const company = companyName?.trim();
   if (!company) return markdown;
-  const companyLine = new RegExp(
-    `^\\s*Company\\s*:\\s*${escapeRegExp(company)}\\s*$`,
-    "i",
+  const companyLabel = new RegExp(
+    `\\bCompany\\s*:\\s*${escapeRegExp(company)}\\b`,
+    "gi",
   );
   let seen = false;
-  return markdown
-    .split(/\r?\n/)
-    .filter((line) => {
-      if (!companyLine.test(line)) return true;
-      if (seen) return false;
-      seen = true;
-      return true;
-    })
-    .join("\n");
+  return markdown.replace(companyLabel, (match) => {
+    if (seen) return "";
+    seen = true;
+    return match;
+  });
 }
