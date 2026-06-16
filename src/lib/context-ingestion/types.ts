@@ -141,3 +141,83 @@ export interface ContextEvidenceRow {
   freshness: string;
   ownerRole: string;
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Classification types (added with migration 20260616180000)
+// ──────────────────────────────────────────────────────────────────────────────
+
+export type DomainSegment =
+  | 'DATA_ANALYTICS'
+  | 'ERP'
+  | 'DIGITAL_CX'
+  | 'OPERATIONS'
+  | 'INFRASTRUCTURE'
+  | 'SECURITY_IDENTITY'
+  | 'HR_WORKFORCE'
+  | 'COLLABORATION';
+
+export type BusinessFunction =
+  | 'FINANCE'
+  | 'SUPPLY_CHAIN'
+  | 'HUMAN_RESOURCES'
+  | 'OPERATIONS'
+  | 'COMMERCIAL_SALES'
+  | 'IT'
+  | 'COMPLIANCE_LEGAL'
+  | 'CORPORATE'
+  | 'INDUSTRY_OPS';
+
+export type Criticality = 'TIER_1' | 'TIER_2' | 'TIER_3';
+
+export type ClassificationSource =
+  | 'AUTO_INFERRED'
+  | 'NEEDS_CLASSIFICATION'
+  | 'OPERATOR_CONFIRMED'
+  | 'CMDB_FEED';
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Insight engine types (context_insights + significance_rules tables)
+// ──────────────────────────────────────────────────────────────────────────────
+
+export type InsightLifecycleState =
+  | 'active'
+  | 'review_required'
+  | 'blocked_by_gap'
+  | 'superseded';
+
+export type InsightMateriality = 'high' | 'medium' | 'low';
+
+export interface ContextInsight {
+  id: string;
+  clientId: string;
+  tenantKey: string;
+  headline: string;
+  soWhat: string;
+  domain: string;
+  materiality: InsightMateriality;
+  derivedFromRecordIds: string[];
+  derivedFromFactIds: string[];
+  ruleId: string;
+  evidence: string | null;
+  confidence: 'high' | 'medium' | 'low' | 'none';
+  freshnessStatus: string;
+  lifecycleState: InsightLifecycleState;
+  action: string | null;
+  entityName: string | null;
+  entityType: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SignificanceRule {
+  id: string;
+  ruleKey: string;
+  name: string;
+  description: string;
+  requiredDimensionNumbers: number[];
+  requiredFactKeys: string[];
+  requiredRecordTypes: string[];
+  defaultMateriality: InsightMateriality;
+  defaultConfidence: string;
+  enabled: boolean;
+}
