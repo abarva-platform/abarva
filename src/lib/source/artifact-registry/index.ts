@@ -34,6 +34,11 @@ import type {
   SourceGraphStatus,
   SourceParseStatus,
 } from "./types";
+import type {
+  ArtifactFileFormat,
+  ArtifactGroup,
+  ArtifactStatus,
+} from "../file-cabinet/types";
 
 export type {
   SourceArtifactApprovalState,
@@ -82,6 +87,33 @@ export interface RegisterSourceArtifactInput {
   disclosureFlag?: ArtifactDisclosureFlag;
   createdBy?: string;
   supersedesArtifactVersionId?: string;
+  fileCabinet?: {
+    clientId: string;
+    sourcingStage?: string | null;
+    artifactGroup: ArtifactGroup;
+    artifactType: string;
+    title: string;
+    description?: string | null;
+    fileName: string;
+    fileFormat: ArtifactFileFormat;
+    blobContainer: string;
+    blobPath: string;
+    fileSize: number;
+    version: number;
+    status: ArtifactStatus;
+    generatedBy?: string | null;
+    sourceBasis?: string | null;
+    confidence?: string | null;
+    citationReady?: boolean;
+    evidenceFamiliesUsed?: string[];
+    sourceRegisterId?: string | null;
+    contextBundleTraceId?: string | null;
+    missingInputs?: string[];
+    clientCompleteItems?: string[];
+    assumptions?: string[];
+    supersedesArtifactId?: string | null;
+    blobSha256?: string | null;
+  };
 }
 
 export interface UpdateSourceArtifactProcessingStateInput {
@@ -276,6 +308,39 @@ export async function registerSourceArtifactUpload(
       disclosure_classification: serializeDisclosureFlag(input.disclosureFlag),
       created_by: input.createdBy ?? input.uploaderUserId,
       supersedes_artifact_version_id: input.supersedesArtifactVersionId ?? null,
+      ...(input.fileCabinet
+        ? {
+            client_id: input.fileCabinet.clientId,
+            sourcing_stage: input.fileCabinet.sourcingStage ?? null,
+            artifact_group: input.fileCabinet.artifactGroup,
+            artifact_type: input.fileCabinet.artifactType,
+            title: input.fileCabinet.title,
+            description: input.fileCabinet.description ?? null,
+            file_name: input.fileCabinet.fileName,
+            file_format: input.fileCabinet.fileFormat,
+            blob_container: input.fileCabinet.blobContainer,
+            blob_path: input.fileCabinet.blobPath,
+            file_size: input.fileCabinet.fileSize,
+            version: input.fileCabinet.version,
+            status: input.fileCabinet.status,
+            generated_by: input.fileCabinet.generatedBy ?? null,
+            source_basis: input.fileCabinet.sourceBasis ?? null,
+            confidence: input.fileCabinet.confidence ?? null,
+            citation_ready: input.fileCabinet.citationReady ?? false,
+            evidence_families_used:
+              input.fileCabinet.evidenceFamiliesUsed ?? [],
+            source_register_id: input.fileCabinet.sourceRegisterId ?? null,
+            context_bundle_trace_id:
+              input.fileCabinet.contextBundleTraceId ?? null,
+            missing_inputs: input.fileCabinet.missingInputs ?? [],
+            client_complete_items: input.fileCabinet.clientCompleteItems ?? [],
+            assumptions: input.fileCabinet.assumptions ?? [],
+            supersedes_artifact_id:
+              input.fileCabinet.supersedesArtifactId ?? null,
+            lifecycle_state: "current",
+            blob_sha256: input.fileCabinet.blobSha256 ?? input.sha256,
+          }
+        : {}),
     },
     SELECT_COLUMNS,
   );

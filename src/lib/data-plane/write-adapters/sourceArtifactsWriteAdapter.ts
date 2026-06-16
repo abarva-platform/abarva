@@ -55,6 +55,36 @@ export interface SourceArtifactInsertColumns {
   readonly disclosure_classification: Record<string, unknown> | null;
   readonly created_by: string;
   readonly supersedes_artifact_version_id: string | null;
+  // Optional File Cabinet columns. Existing upload/registry callers omit these;
+  // generated deliverables can populate them so one `source_artifacts` row is
+  // both registry-readable (`blob_uri`) and File-Cabinet-readable
+  // (`blob_container` / `blob_path`).
+  readonly client_id?: string;
+  readonly sourcing_stage?: string | null;
+  readonly artifact_group?: string;
+  readonly artifact_type?: string;
+  readonly title?: string;
+  readonly description?: string | null;
+  readonly file_name?: string;
+  readonly file_format?: string;
+  readonly blob_container?: string;
+  readonly blob_path?: string;
+  readonly file_size?: number | null;
+  readonly version?: number;
+  readonly status?: string;
+  readonly generated_by?: string | null;
+  readonly source_basis?: string | null;
+  readonly confidence?: string | null;
+  readonly citation_ready?: boolean;
+  readonly evidence_families_used?: string[];
+  readonly source_register_id?: string | null;
+  readonly context_bundle_trace_id?: string | null;
+  readonly missing_inputs?: string[];
+  readonly client_complete_items?: string[];
+  readonly assumptions?: string[];
+  readonly supersedes_artifact_id?: string | null;
+  readonly lifecycle_state?: string;
+  readonly blob_sha256?: string | null;
 }
 
 /** A write outcome — `ok:false` carries an error the helper turns into a throw. */
