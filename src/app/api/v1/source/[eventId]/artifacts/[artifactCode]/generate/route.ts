@@ -37,6 +37,7 @@ import {
   type SourceGenerationContext,
   type SourceArtifactBodyGenerationMetadata,
 } from "@/lib/source/agent-generation/server";
+import { sanitizeClientFacingSourceDraft } from "@/lib/source/agent-generation/client-facing-hygiene";
 import { completeD09RfpGovernanceSections } from "@/lib/source/agent-generation/d09-completion";
 import {
   verifyArtifactSections,
@@ -536,6 +537,7 @@ export async function generateSourceArtifactDraft(
     );
   }
   body = completeD09RfpGovernanceSections({ artifactCode, body, ctx });
+  body = sanitizeClientFacingSourceDraft(body);
 
   let qualityGate: SourceArtifactQualityGateMetadata | undefined;
   if (requiresQualityGate) {
