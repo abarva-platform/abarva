@@ -19,6 +19,7 @@ import type { TowerSubstrateCounts } from "@/components/tower/TowerIndexPage";
 import type { AiControlTowerLens } from "@/lib/ai-control-tower/contracts";
 
 type LensKey = AiControlTowerLens;
+type PillTone = "green" | "amber" | "red" | "blue" | "neutral";
 
 interface AiControlTowerPageProps {
   tenantName: string;
@@ -141,6 +142,19 @@ function initiativeMeasured(initiative: AIInitiative): number {
   return Number(initiative.measuredValueUsd ?? 0);
 }
 
+function captureRate(initiative: AIInitiative): number {
+  const committed = initiativeCommitment(initiative);
+  return committed > 0 ? (initiativeMeasured(initiative) / committed) * 100 : 0;
+}
+
+function renewalDays(vendor: AIInitiativeVendorRow): number | null {
+  if (!vendor.renewalDate) return null;
+  const days = Math.ceil(
+    (new Date(vendor.renewalDate).getTime() - Date.now()) / 86_400_000,
+  );
+  return Number.isFinite(days) ? days : null;
+}
+
 function summarize(
   initiatives: ReadonlyArray<AIInitiative>,
   vendors: ReadonlyArray<AIInitiativeVendorRow>,
@@ -195,6 +209,21 @@ function topInitiatives(initiatives: ReadonlyArray<AIInitiative>) {
     .slice(0, 5);
 }
 
+function atRiskInitiatives(initiatives: ReadonlyArray<AIInitiative>) {
+  return [...initiatives]
+    .filter((initiative) =>
+      /risk|blocked|gap|watch|lag|review/i.test(
+        `${initiative.statusFlag} ${initiative.statusSummary} ${initiative.confidenceLevel}`,
+      ),
+    )
+    .sort(
+      (a, b) =>
+        initiativeCommitment(b) - initiativeMeasured(b) -
+        (initiativeCommitment(a) - initiativeMeasured(a)),
+    )
+    .slice(0, 5);
+}
+
 function buildInitialMessages(tenantName: string): AtlasMessage[] {
   return [
     {
@@ -234,7 +263,7 @@ function StatusPill({
   tone = "neutral",
 }: {
   children: string;
-  tone?: "green" | "amber" | "red" | "blue" | "neutral";
+  tone?: PillTone;
 }) {
   const color =
     tone === "green"
@@ -263,6 +292,396 @@ function StatusPill({
     >
       {children}
     </span>
+  );
+}
+
+type LensRow = {
+  subject: string;
+  owner: string;
+  metric: string;
+  basis: string;
+  state: string;
+  tone: PillTone;
+};
+
+type LensCallout = {
+  label: string;
+  value: string;
+  detail: string;
+  tone: PillTone;
+};
+
+function lensRowsFor(
+  lens: LensKey,
+  initiatives: ReadonlyArray<AIInitiative>,
+  vendors: ReadonlyArray<AIInitiativeVendorRow>,
+  summary: ReturnType<typeof summarize>,
+  substrateCounts: TowerSubstrateCounts,
+): LensRow[] {
+  const priority = topInitiatives(initiatives);
+  const riskRows = atRiskInitiatives(initiatives);
+  const vendorRows = [...vendors]
+    .sort(
+      (a, b) =>
+        Number(b.contractValueUsd ?? 0) - Number(a.contractValueUsd ?? 0),
+    )
+    .slice(0, 5);
+
+  if (lens === "value_adoption") {
+    return priority.map((initiative) => {
+      const rate = captureRate(initiative);
+      return {
+        subject: initiative.name,
+        owner: initiative.ownerName || "Named owner required",
+        metric: `${percent(rate)} captured`,
+        basis: `${money(initiativeMeasured(initiative))} of ${money(initiativeCommitment(initiative))}`,
+        state: normalizeStatus(initiative.statusFlag),
+        tone: rate >= 70 ? "green" : rate >= 35 ? "amber" : "red",
+      };
+    });
+  }
+
+  if (lens === "productivity") {
+    return priority.map((initiative) => ({
+      subject: initiative.name,
+      owner: initiative.ownerFunction || initiative.ownerTitle || "Team owner",
+      metric: initiative.primaryGoalName,
+      basis:
+        initiative.confidenceLevel === "HIGH"
+          ? "before/after evidence ready"
+          : "needs DORA or persona baseline",
+      state: normalizeStatus(initiative.stage),
+      tone: initiative.confidenceLevel === "HIGH" ? "green" : "amber",
+    }));
+  }
+
+  if (lens === "agents") {
+    return priority.map((initiative) => ({
+      subject: initiative.name,
+      owner: initiative.ownerName || "Process owner",
+      metric: initiative.primaryCategoryName,
+      basis:
+        /agent|copilot|automation|workflow/i.test(
+          `${initiative.name} ${initiative.primaryCategoryName}`,
+        )
+          ? "resolution and exception rate required"
+          : "usage alone is insufficient",
+      state: normalizeStatus(initiative.statusFlag),
+      tone: /healthy|aligned|green/i.test(String(initiative.statusFlag))
+        ? "green"
+        : "amber",
+    }));
+  }
+
+  if (lens === "spend") {
+    return vendorRows.map((vendor) => {
+      const days = renewalDays(vendor);
+      return {
+        subject: vendor.vendorName,
+        owner: vendor.initiativeName,
+        metric: money(Number(vendor.contractValueUsd ?? 0)),
+        basis:
+          days === null
+            ? "renewal date missing"
+            : days >= 0
+              ? `${days} days to renewal`
+              : `${Math.abs(days)} days past renewal`,
+        state: normalizeStatus(vendor.financialHealth),
+        tone:
+          vendor.financialHealth === "strong"
+            ? "green"
+            : vendor.financialHealth === "at_risk"
+              ? "red"
+              : "amber",
+      };
+    });
+  }
+
+  if (lens === "risk") {
+    const rows = riskRows.length > 0 ? riskRows : priority;
+    return rows.map((initiative) => ({
+      subject: initiative.name,
+      owner: initiative.ownerName || "Risk owner",
+      metric: normalizeStatus(initiative.statusFlag),
+      basis: initiative.statusSummary || "risk basis not stated",
+      state: normalizeStatus(initiative.confidenceLevel),
+      tone: /high/.test(String(initiative.confidenceLevel)) ? "amber" : "red",
+    }));
+  }
+
+  if (lens === "evidence") {
+    return [
+      {
+        subject: "KPI evidence",
+        owner: "Finance / PMO",
+        metric: `${substrateCounts.kpis} KPI rows`,
+        basis: "benefit claims need metric lineage",
+        state: substrateCounts.kpis > 0 ? "available" : "missing",
+        tone: substrateCounts.kpis > 0 ? "green" : "red",
+      },
+      {
+        subject: "Decision log",
+        owner: "AI governance",
+        metric: `${substrateCounts.decisions} decisions`,
+        basis: "scale, hold, and exception decisions need approval trail",
+        state: substrateCounts.decisions > 0 ? "available" : "missing",
+        tone: substrateCounts.decisions > 0 ? "green" : "amber",
+      },
+      {
+        subject: "Stakeholder notes",
+        owner: "Business owners",
+        metric: `${substrateCounts.stakeholderNotes} notes`,
+        basis: "persona uplift requires named source context",
+        state: substrateCounts.stakeholderNotes > 0 ? "available" : "missing",
+        tone: substrateCounts.stakeholderNotes > 0 ? "green" : "amber",
+      },
+      {
+        subject: "Initiative registry",
+        owner: "AI portfolio office",
+        metric: `${substrateCounts.initiatives || initiatives.length} initiatives`,
+        basis: "portfolio questions route through the initiative grain",
+        state: summary.active > 0 ? "loaded" : "empty",
+        tone: summary.active > 0 ? "green" : "red",
+      },
+    ];
+  }
+
+  const actionRows: LensRow[] = priority.slice(0, 4).map((initiative) => {
+    const gap = initiativeCommitment(initiative) - initiativeMeasured(initiative);
+    return {
+      subject: initiative.name,
+      owner: initiative.ownerName || "Named owner required",
+      metric: gap > 0 ? "prove or reduce" : "prepare scale decision",
+      basis: `${money(Math.abs(gap))} value delta`,
+      state: "proposed",
+      tone: gap > 0 ? "amber" : "green",
+    } satisfies LensRow;
+  });
+  const renewal = vendors.find((vendor) => vendor.renewalDate);
+  if (renewal) {
+    actionRows.unshift({
+      subject: renewal.vendorName,
+      owner: "Vendor owner",
+      metric: "review renewal",
+      basis: `${money(Number(renewal.contractValueUsd ?? 0))} exposure`,
+      state: "proposed",
+      tone: "blue",
+    });
+  }
+  return actionRows.slice(0, 5);
+}
+
+function lensCalloutsFor(
+  lens: LensKey,
+  summary: ReturnType<typeof summarize>,
+  substrateCounts: TowerSubstrateCounts,
+): LensCallout[] {
+  const evidenceRows =
+    substrateCounts.kpis +
+    substrateCounts.decisions +
+    substrateCounts.stakeholderNotes;
+  const callouts: Record<LensKey, LensCallout[]> = {
+    value_adoption: [
+      {
+        label: "Value capture",
+        value: percent(summary.valueCapture),
+        detail: `${money(summary.measured)} realized`,
+        tone: summary.valueCapture >= 60 ? "green" : "amber",
+      },
+      {
+        label: "Adoption gaps",
+        value: String(summary.adoptionGaps),
+        detail: "initiatives flagged by usage/adoption",
+        tone: summary.adoptionGaps > 0 ? "amber" : "green",
+      },
+    ],
+    productivity: [
+      {
+        label: "Tracked initiatives",
+        value: String(summary.active),
+        detail: "need before/after baselines by persona or team",
+        tone: "blue",
+      },
+      {
+        label: "Quality guardrail",
+        value: String(substrateCounts.kpis),
+        detail: "KPI rows available for counter-metrics",
+        tone: substrateCounts.kpis > 0 ? "green" : "amber",
+      },
+    ],
+    agents: [
+      {
+        label: "Agent lens",
+        value: String(summary.active),
+        detail: "rank by resolution, exception rate, and avoided work",
+        tone: "blue",
+      },
+      {
+        label: "Evidence need",
+        value: String(evidenceRows),
+        detail: "facts, decisions, notes available",
+        tone: evidenceRows > 0 ? "green" : "amber",
+      },
+    ],
+    spend: [
+      {
+        label: "Spend exposure",
+        value: money(summary.spend),
+        detail: "vendor contracts in the AI portfolio",
+        tone: "amber",
+      },
+      {
+        label: "Renewals",
+        value: String(summary.renewal90),
+        detail: "inside 90 days",
+        tone: summary.renewal90 > 0 ? "red" : "green",
+      },
+    ],
+    risk: [
+      {
+        label: "Watch items",
+        value: String(summary.atRisk),
+        detail: "risk, blocked, gap, or watch status",
+        tone: summary.atRisk > 0 ? "red" : "green",
+      },
+      {
+        label: "Governance trail",
+        value: String(substrateCounts.decisions),
+        detail: "approval decisions captured",
+        tone: substrateCounts.decisions > 0 ? "green" : "amber",
+      },
+    ],
+    evidence: [
+      {
+        label: "Evidence rows",
+        value: String(evidenceRows),
+        detail: "facts, decisions, notes",
+        tone: evidenceRows > 0 ? "green" : "red",
+      },
+      {
+        label: "Answerability",
+        value: substrateCounts.initiatives > 0 ? "On" : "Thin",
+        detail: "depends on loaded initiative substrate",
+        tone: substrateCounts.initiatives > 0 ? "green" : "amber",
+      },
+    ],
+    actions: [
+      {
+        label: "Proposals",
+        value: String(Math.min(5, Math.max(1, summary.active))),
+        detail: "derived from value, spend, risk, and evidence",
+        tone: "blue",
+      },
+      {
+        label: "Human gate",
+        value: "Required",
+        detail: "Atlas does not approve writes or decisions",
+        tone: "amber",
+      },
+    ],
+  };
+  return callouts[lens];
+}
+
+function LensCanvas({
+  activeLens,
+  lensMeta,
+  initiatives,
+  vendors,
+  summary,
+  substrateCounts,
+  towerToday,
+}: {
+  activeLens: LensKey;
+  lensMeta: (typeof LENSES)[number];
+  initiatives: ReadonlyArray<AIInitiative>;
+  vendors: ReadonlyArray<AIInitiativeVendorRow>;
+  summary: ReturnType<typeof summarize>;
+  substrateCounts: TowerSubstrateCounts;
+  towerToday: string;
+}) {
+  const rows = useMemo(
+    () => lensRowsFor(activeLens, initiatives, vendors, summary, substrateCounts),
+    [activeLens, initiatives, vendors, summary, substrateCounts],
+  );
+  const callouts = useMemo(
+    () => lensCalloutsFor(activeLens, summary, substrateCounts),
+    [activeLens, summary, substrateCounts],
+  );
+  const title: Record<LensKey, string> = {
+    value_adoption: "Which AI investments are converting into value?",
+    productivity: "Where did work get faster without quality drift?",
+    agents: "Which agents are resolving work, not just creating usage?",
+    spend: "Which spend should be scaled, challenged, or stopped?",
+    risk: "Which claims are blocked by governance or weak evidence?",
+    evidence: "What can Atlas answer from loaded context?",
+    actions: "What should go to the next steering meeting?",
+  };
+
+  return (
+    <section style={lensCanvasStyle} key={activeLens}>
+      <section style={sectionStyle}>
+        <div style={sectionHeaderStyle}>
+          <div>
+            <div style={eyebrowStyle}>{lensMeta.kicker} · Active canvas</div>
+            <h2 style={sectionTitleStyle}>{title[activeLens]}</h2>
+            <p style={sectionDeckStyle}>{lensMeta.question}</p>
+          </div>
+          <StatusPill tone="blue">{towerToday}</StatusPill>
+        </div>
+        <div style={{ overflowX: "auto" }}>
+          <table style={tableStyle}>
+            <thead>
+              <tr>
+                {["Subject", "Owner", "Metric", "Basis", "State"].map(
+                  (head) => (
+                    <th key={head} style={tableHeadStyle}>
+                      {head}
+                    </th>
+                  ),
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, index) => (
+                <tr key={`${activeLens}-${row.subject}-${index}`}>
+                  <td style={tableCellStrongStyle}>{row.subject}</td>
+                  <td style={tableCellStyle}>{row.owner}</td>
+                  <td style={tableCellStyle}>{row.metric}</td>
+                  <td style={tableCellStyle}>{row.basis}</td>
+                  <td style={tableCellStyle}>
+                    <StatusPill tone={row.tone}>{row.state}</StatusPill>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside style={sectionStyle}>
+        <div style={eyebrowStyle}>Decision read</div>
+        <h2 style={sectionTitleStyle}>{lensMeta.shortLabel}</h2>
+        <p style={sectionDeckStyle}>
+          Atlas should answer this lens from loaded metrics, evidence status, and
+          owner-linked portfolio records.
+        </p>
+        <div style={calloutGridStyle}>
+          {callouts.map((callout) => (
+            <div key={callout.label} style={calloutStyle}>
+              <div style={eyebrowStyle}>{callout.label}</div>
+              <div style={calloutValueStyle}>{callout.value}</div>
+              <div style={calloutDetailStyle}>{callout.detail}</div>
+              <div style={{ marginTop: 8 }}>
+                <StatusPill tone={callout.tone}>
+                  {callout.tone === "neutral" ? "read" : callout.tone}
+                </StatusPill>
+              </div>
+            </div>
+          ))}
+        </div>
+      </aside>
+    </section>
   );
 }
 
@@ -365,88 +784,6 @@ function BarRow({
   );
 }
 
-function ActionsTable({
-  activeLens,
-  initiatives,
-  vendors,
-}: {
-  activeLens: LensKey;
-  initiatives: ReadonlyArray<AIInitiative>;
-  vendors: ReadonlyArray<AIInitiativeVendorRow>;
-}) {
-  const rows = useMemo(() => {
-    const items = topInitiatives(initiatives)
-      .slice(0, 4)
-      .map((initiative) => {
-        const gap =
-          initiativeCommitment(initiative) - initiativeMeasured(initiative);
-        return {
-          owner: initiative.ownerName || "Named owner",
-          item: initiative.name,
-          action: gap > 0 ? "Prove or reduce claim" : "Prepare scale decision",
-          basis: `${money(Math.abs(gap))} value delta`,
-          tone: gap > 0 ? "amber" : "green",
-        };
-      });
-    const renewal = vendors.find((vendor) => vendor.renewalDate);
-    if (renewal) {
-      items.unshift({
-        owner: "Vendor owner",
-        item: renewal.vendorName,
-        action: "Review renewal before scale",
-        basis: `${money(Number(renewal.contractValueUsd ?? 0))} contract exposure`,
-        tone: "blue",
-      });
-    }
-    return items.slice(0, 5);
-  }, [initiatives, vendors]);
-
-  if (activeLens !== "actions") return null;
-  return (
-    <section style={sectionStyle}>
-      <div style={sectionHeaderStyle}>
-        <div>
-          <div style={eyebrowStyle}>Derived actions</div>
-          <h2 style={sectionTitleStyle}>
-            System-synthesized recommendations for human approval.
-          </h2>
-        </div>
-        <StatusPill tone="blue">derived</StatusPill>
-      </div>
-      <div style={{ overflowX: "auto" }}>
-        <table
-          style={{ width: "100%", borderCollapse: "collapse", minWidth: 680 }}
-        >
-          <thead>
-            <tr>
-              {["Action", "Subject", "Owner", "Basis", "State"].map((head) => (
-                <th key={head} style={tableHeadStyle}>
-                  {head}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={`${row.item}-${row.action}`}>
-                <td style={tableCellStyle}>{row.action}</td>
-                <td style={tableCellStyle}>{row.item}</td>
-                <td style={tableCellStyle}>{row.owner}</td>
-                <td style={tableCellStyle}>{row.basis}</td>
-                <td style={tableCellStyle}>
-                  <StatusPill tone={row.tone as "green" | "amber" | "blue"}>
-                    proposed
-                  </StatusPill>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
 export function AiControlTowerPage({
   tenantName,
   clientId,
@@ -537,29 +874,6 @@ export function AiControlTowerPage({
           </Link>
         </div>
       </section>
-
-      <nav aria-label="AI Control Tower lenses" style={tabBarStyle}>
-        {LENSES.map((lens) => {
-          const selected = lens.key === activeLens;
-          return (
-            <button
-              key={lens.key}
-              type="button"
-              onClick={() => selectLens(lens.key)}
-              style={{
-                ...tabStyle,
-                color: TOKENS.ink,
-                background: selected ? "#fbfcff" : TOKENS.surface,
-                borderColor: selected ? "#0b63ff" : TOKENS.rule,
-                boxShadow: selected ? "inset 0 0 0 1px #0b63ff" : "none",
-              }}
-            >
-              <span style={tabKickerStyle}>{lens.kicker}</span>
-              <span style={tabLabelStyle}>{lens.label}</span>
-            </button>
-          );
-        })}
-      </nav>
 
       <section style={metricGridStyle}>
         <MetricTile
@@ -688,66 +1002,39 @@ export function AiControlTowerPage({
         </section>
       </section>
 
-      <ActionsTable
+      <nav aria-label="AI Control Tower lenses" style={tabBarStyle}>
+        {LENSES.map((lens) => {
+          const selected = lens.key === activeLens;
+          return (
+            <button
+              key={lens.key}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => selectLens(lens.key)}
+              style={{
+                ...tabStyle,
+                color: TOKENS.ink,
+                background: selected ? "#fbfcff" : TOKENS.surface,
+                borderColor: selected ? "#0b63ff" : TOKENS.rule,
+                boxShadow: selected ? "inset 0 0 0 1px #0b63ff" : "none",
+              }}
+            >
+              <span style={tabKickerStyle}>{lens.kicker}</span>
+              <span style={tabLabelStyle}>{lens.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      <LensCanvas
         activeLens={activeLens}
+        lensMeta={lensMeta}
         initiatives={initiatives}
         vendors={vendors}
+        summary={summary}
+        substrateCounts={substrateCounts}
+        towerToday={towerToday}
       />
-
-      {activeLens !== "actions" ? (
-        <section style={sectionStyle}>
-          <div style={sectionHeaderStyle}>
-            <div>
-              <div style={eyebrowStyle}>Monthly refresh model</div>
-              <h2 style={sectionTitleStyle}>Templates now, APIs later.</h2>
-            </div>
-            <StatusPill tone="blue">{towerToday}</StatusPill>
-          </div>
-          <div style={sourceGridStyle}>
-            {[
-              [
-                "M365 Copilot",
-                "Usage, active users, licenses, persona adoption",
-              ],
-              [
-                "SDLC tools",
-                "DORA before/after, PR cycle time, defects, incidents",
-              ],
-              [
-                "ServiceNow agents",
-                "Tickets deflected, exception rate, human override",
-              ],
-              ["ERP agents", "HR, finance, and supply-chain process uplift"],
-              [
-                "Finance and PMO",
-                "Business case, realized value, approval evidence",
-              ],
-              [
-                "Risk and governance",
-                "Policy gates, model risk, privacy, audit posture",
-              ],
-            ].map(([label, detail]) => (
-              <div key={label} style={sourceTileStyle}>
-                <div
-                  style={{ fontSize: 12, fontWeight: 800, color: TOKENS.ink }}
-                >
-                  {label}
-                </div>
-                <div
-                  style={{
-                    marginTop: 5,
-                    fontSize: 11,
-                    color: TOKENS.muted,
-                    lineHeight: 1.35,
-                  }}
-                >
-                  {detail}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
 
       <div style={{ display: "none" }} aria-hidden="true">
         {bandMetrics.metrics.map((metric) => metric.key).join(",")}
@@ -883,6 +1170,12 @@ const dashboardGridStyle: CSSProperties = {
   marginTop: 12,
 };
 
+const lensCanvasStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1.45fr) minmax(280px, 0.55fr)",
+  gap: 12,
+};
+
 const sectionStyle: CSSProperties = {
   background: TOKENS.surface,
   border: `1px solid ${TOKENS.rule}`,
@@ -917,6 +1210,14 @@ const sectionTitleStyle: CSSProperties = {
   letterSpacing: 0,
 };
 
+const sectionDeckStyle: CSSProperties = {
+  margin: "6px 0 0",
+  color: TOKENS.muted,
+  fontSize: 12,
+  lineHeight: 1.35,
+  maxWidth: 780,
+};
+
 const rowStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
@@ -925,17 +1226,39 @@ const rowStyle: CSSProperties = {
   borderTop: `1px solid ${TOKENS.faint}`,
 };
 
-const sourceGridStyle: CSSProperties = {
+const calloutGridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
   gap: 8,
+  marginTop: 14,
 };
 
-const sourceTileStyle: CSSProperties = {
+const calloutStyle: CSSProperties = {
   border: `1px solid ${TOKENS.faint}`,
   borderRadius: 6,
   padding: 10,
   background: "#fbfcfa",
+};
+
+const calloutValueStyle: CSSProperties = {
+  marginTop: 6,
+  fontFamily: TOKENS.serif,
+  fontSize: 24,
+  lineHeight: 1,
+  fontWeight: 780,
+  color: TOKENS.ink,
+};
+
+const calloutDetailStyle: CSSProperties = {
+  marginTop: 5,
+  color: TOKENS.muted,
+  fontSize: 11,
+  lineHeight: 1.35,
+};
+
+const tableStyle: CSSProperties = {
+  width: "100%",
+  borderCollapse: "collapse",
+  minWidth: 760,
 };
 
 const tableHeadStyle: CSSProperties = {
@@ -954,4 +1277,9 @@ const tableCellStyle: CSSProperties = {
   borderBottom: `1px solid ${TOKENS.faint}`,
   fontSize: 12,
   color: TOKENS.ink,
+};
+
+const tableCellStrongStyle: CSSProperties = {
+  ...tableCellStyle,
+  fontWeight: 800,
 };
