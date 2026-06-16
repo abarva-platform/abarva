@@ -40,7 +40,9 @@ export type ContextDimension =
   | "incidents_ops_telemetry"
   | "infrastructure_estate"
   | "business_capability"
-  | "service_levels";
+  | "service_levels"
+  | "it_landscape"
+  | "infrastructure_dc";
 
 export type UploadedFileFormat =
   | "csv"
