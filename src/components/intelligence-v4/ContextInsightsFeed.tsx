@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // ContextInsightsFeed · Insights tab content (default tab, L2)
 //
@@ -6,31 +6,39 @@
 // expand/collapse derivation chain (facts → rule → significance).
 // Stub data from spec; no-fabrication: clearly marked illustrative.
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
+
+import type { ContextInsight } from "@/lib/intelligence/insight-engine/types";
 
 const C = {
-  bg: '#F8F7F4',
-  panel: '#FFFFFF',
-  ink: '#1B1A17',
-  muted: '#6F6A61',
-  line: '#E6E2DA',
-  line2: '#EFECE5',
-  chip: '#F1EEE7',
-  fresh: '#3F7A5B',
-  freshBg: '#3F7A5B14',
-  attention: '#B5852A',
-  attentionBg: '#B5852A18',
-  stale: '#B4513C',
-  staleBg: '#B4513C16',
-  review: '#7A5BA8',
-  reviewBg: '#7A5BA814',
-  unknown: '#A39C90',
-  unknownBg: '#A39C9016',
+  bg: "#F8F7F4",
+  panel: "#FFFFFF",
+  ink: "#1B1A17",
+  muted: "#6F6A61",
+  line: "#E6E2DA",
+  line2: "#EFECE5",
+  chip: "#F1EEE7",
+  fresh: "#3F7A5B",
+  freshBg: "#3F7A5B14",
+  attention: "#B5852A",
+  attentionBg: "#B5852A18",
+  stale: "#B4513C",
+  staleBg: "#B4513C16",
+  review: "#7A5BA8",
+  reviewBg: "#7A5BA814",
+  unknown: "#A39C90",
+  unknownBg: "#A39C9016",
 };
 
-type MaterialityLevel = 'high' | 'medium' | 'low';
-type FreshnessStatus = 'loaded' | 'attention' | 'stale' | 'review' | 'missing' | 'unknown';
-type ConfidenceLevel = 'high' | 'medium' | 'low' | 'none';
+type MaterialityLevel = "high" | "medium" | "low";
+type FreshnessStatus =
+  | "loaded"
+  | "attention"
+  | "stale"
+  | "review"
+  | "missing"
+  | "unknown";
+type ConfidenceLevel = "high" | "medium" | "low" | "none";
 
 interface InsightData {
   id: string;
@@ -47,91 +55,125 @@ interface InsightData {
   hero?: boolean;
 }
 
+interface InsightsResponse {
+  insights: ContextInsight[];
+  errors: string[];
+}
+
 const STUB_INSIGHTS: InsightData[] = [
   {
-    id: 'ams',
-    headline: "You're about to auto-renew a $4.2M AMS contract with no benchmark",
-    soWhat: "Kyndryl AMS auto-renews Sep 18 (94 days). Industry-context dimension isn't loaded — you'd negotiate blind.",
-    materiality: 'high',
-    domain: 'Vendor',
-    freshnessStatus: 'attention',
-    confidence: 'high',
-    ruleId: 'renewal-window-no-benchmark',
-    evidence: 'Vendor Contracts · row 41',
-    entityName: 'Kyndryl',
+    id: "ams",
+    headline:
+      "You're about to auto-renew a $4.2M AMS contract with no benchmark",
+    soWhat:
+      "Kyndryl AMS auto-renews Sep 18 (94 days). Industry-context dimension isn't loaded — you'd negotiate blind.",
+    materiality: "high",
+    domain: "Vendor",
+    freshnessStatus: "attention",
+    confidence: "high",
+    ruleId: "renewal-window-no-benchmark",
+    evidence: "Vendor Contracts · row 41",
+    entityName: "Kyndryl",
     hero: true,
-    facts: [['renewal_date', 'Sep 18, 2026'], ['annual_value', '$4.2M'], ['benchmark_present', 'false']],
+    facts: [
+      ["renewal_date", "Sep 18, 2026"],
+      ["annual_value", "$4.2M"],
+      ["benchmark_present", "false"],
+    ],
   },
   {
-    id: 'copilot',
-    headline: "Your Copilot value case is at risk — 31% adoption vs 70% assumed",
-    soWhat: "$0.31M/yr committed; the case assumed 70% seat adoption. Gap concentrated in backend teams.",
-    materiality: 'high',
-    domain: 'AI Value',
-    freshnessStatus: 'attention',
-    confidence: 'high',
-    ruleId: 'adoption-below-value-case',
-    evidence: 'Operating telemetry + AI initiative charter',
-    entityName: 'GitHub Copilot',
+    id: "copilot",
+    headline:
+      "Your Copilot value case is at risk — 31% adoption vs 70% assumed",
+    soWhat:
+      "$0.31M/yr committed; the case assumed 70% seat adoption. Gap concentrated in backend teams.",
+    materiality: "high",
+    domain: "AI Value",
+    freshnessStatus: "attention",
+    confidence: "high",
+    ruleId: "adoption-below-value-case",
+    evidence: "Operating telemetry + AI initiative charter",
+    entityName: "GitHub Copilot",
     hero: true,
-    facts: [['active_users_pct', '31%'], ['value_case_assumption', '70%'], ['annual_spend', '$0.31M']],
+    facts: [
+      ["active_users_pct", "31%"],
+      ["value_case_assumption", "70%"],
+      ["annual_spend", "$0.31M"],
+    ],
   },
   {
-    id: 'mttr',
-    headline: "Service quality is sliding — MTTR up 22% QoQ, 3 services out of SLA",
-    soWhat: "Three P2 services breach SLA and the trend is worsening. Candidate for AI-assisted triage.",
-    materiality: 'medium',
-    domain: 'Service',
-    freshnessStatus: 'stale',
-    confidence: 'medium',
-    ruleId: 'sla-breach-worsening',
-    evidence: 'Operating telemetry · Apr 30 (stale)',
-    entityName: 'ServiceNow',
+    id: "mttr",
+    headline:
+      "Service quality is sliding — MTTR up 22% QoQ, 3 services out of SLA",
+    soWhat:
+      "Three P2 services breach SLA and the trend is worsening. Candidate for AI-assisted triage.",
+    materiality: "medium",
+    domain: "Service",
+    freshnessStatus: "stale",
+    confidence: "medium",
+    ruleId: "sla-breach-worsening",
+    evidence: "Operating telemetry · Apr 30 (stale)",
+    entityName: "ServiceNow",
     hero: true,
-    facts: [['mttr_change_qoq', '+22%'], ['services_breaching', '3'], ['trend', 'worsening']],
+    facts: [
+      ["mttr_change_qoq", "+22%"],
+      ["services_breaching", "3"],
+      ["trend", "worsening"],
+    ],
   },
   {
-    id: 'claim',
+    id: "claim",
     headline: "A material strategy shift is claimed but not yet trusted",
-    soWhat: "CIO memo names AMS consolidation a top-3 FY27 priority — parsed but review-required, not committed.",
-    materiality: 'high',
-    domain: 'Strategy',
-    freshnessStatus: 'review',
-    confidence: 'none',
-    ruleId: 'material-claim-unapproved',
-    evidence: 'AMS Board Memo (PDF)',
-    entityName: 'CIO Office',
-    facts: [['claim', 'AMS = top-3 FY27 priority'], ['lifecycle_state', 'review-required']],
+    soWhat:
+      "CIO memo names AMS consolidation a top-3 FY27 priority — parsed but review-required, not committed.",
+    materiality: "high",
+    domain: "Strategy",
+    freshnessStatus: "review",
+    confidence: "none",
+    ruleId: "material-claim-unapproved",
+    evidence: "AMS Board Memo (PDF)",
+    entityName: "CIO Office",
+    facts: [
+      ["claim", "AMS = top-3 FY27 priority"],
+      ["lifecycle_state", "review-required"],
+    ],
   },
   {
-    id: 'conflict',
+    id: "conflict",
     headline: "Two systems disagree on who owns CrewSched",
-    soWhat: "App inventory and org export name different owners (Ops vs IT) for a Tier-1 app.",
-    materiality: 'medium',
-    domain: 'Data quality',
-    freshnessStatus: 'attention',
-    confidence: 'high',
-    ruleId: 'conflicting-fact',
-    evidence: 'App Inventory row 88 ⨯ Org Structure',
-    entityName: 'CrewSched',
-    facts: [['owner (App Inv)', 'Ops · M. Reyes'], ['owner (Org)', 'IT · D. Kahn']],
+    soWhat:
+      "App inventory and org export name different owners (Ops vs IT) for a Tier-1 app.",
+    materiality: "medium",
+    domain: "Data quality",
+    freshnessStatus: "attention",
+    confidence: "high",
+    ruleId: "conflicting-fact",
+    evidence: "App Inventory row 88 ⨯ Org Structure",
+    entityName: "CrewSched",
+    facts: [
+      ["owner (App Inv)", "Ops · M. Reyes"],
+      ["owner (Org)", "IT · D. Kahn"],
+    ],
   },
   {
-    id: 'gap',
+    id: "gap",
     headline: "You can't yet judge AI spend vs realised value",
-    soWhat: "6 initiatives report spend, but IT-financials is stale and most lack a value fact.",
-    materiality: 'medium',
-    domain: 'Cost',
-    freshnessStatus: 'stale',
-    confidence: 'low',
-    ruleId: 'value-coverage-gap',
-    evidence: 'AI Initiative Register + (stale) IT financials',
-    entityName: 'Contact-Centre AI',
-    facts: [['initiatives_with_spend', '6'], ['with_value_fact', '1'], ['it_financials', 'stale']],
+    soWhat:
+      "6 initiatives report spend, but IT-financials is stale and most lack a value fact.",
+    materiality: "medium",
+    domain: "Cost",
+    freshnessStatus: "stale",
+    confidence: "low",
+    ruleId: "value-coverage-gap",
+    evidence: "AI Initiative Register + (stale) IT financials",
+    entityName: "Contact-Centre AI",
+    facts: [
+      ["initiatives_with_spend", "6"],
+      ["with_value_fact", "1"],
+      ["it_financials", "stale"],
+    ],
   },
 ];
-
-const ALL_DOMAINS = ['All', ...Array.from(new Set(STUB_INSIGHTS.map((i) => i.domain)))];
 
 function freshnessColor(status: FreshnessStatus): string {
   const map: Record<FreshnessStatus, string> = {
@@ -154,9 +196,9 @@ function materialityPillStyle(level: MaterialityLevel): React.CSSProperties {
   const s = map[level];
   return {
     fontSize: 10.5,
-    padding: '2.5px 8px',
+    padding: "2.5px 8px",
     borderRadius: 20,
-    whiteSpace: 'nowrap' as const,
+    whiteSpace: "nowrap" as const,
     fontWeight: 500,
     background: s.bg,
     color: s.color,
@@ -164,10 +206,33 @@ function materialityPillStyle(level: MaterialityLevel): React.CSSProperties {
 }
 
 function getPrimaryAction(insight: InsightData): string {
-  if (insight.freshnessStatus === 'review') return 'Review & approve';
-  if (insight.domain === 'Data quality') return 'Open stewardship task';
-  if (insight.id === 'gap') return 'Load missing source';
-  return 'Shape into Move';
+  if (insight.freshnessStatus === "missing") return "Load missing source";
+  if (insight.freshnessStatus === "review") return "Review & approve";
+  if (insight.domain === "Data quality") return "Open stewardship task";
+  if (insight.id === "gap") return "Load missing source";
+  return "Shape into Move";
+}
+
+function mapLiveInsight(insight: ContextInsight, index: number): InsightData {
+  return {
+    id: insight.id ?? `${insight.ruleId}-${insight.entityName ?? index}`,
+    headline: insight.headline,
+    soWhat: insight.soWhat,
+    materiality: insight.materiality,
+    domain: insight.domain,
+    freshnessStatus:
+      insight.freshnessStatus === "fresh" ? "loaded" : insight.freshnessStatus,
+    confidence: insight.confidence,
+    ruleId: insight.ruleId,
+    evidence: insight.evidence ?? "Evidence not attached yet",
+    entityName: insight.entityName ?? insight.domain,
+    hero: index < 3 && insight.materiality !== "low",
+    facts: [
+      ["rule", insight.ruleId],
+      ["records", String(insight.derivedFromRecordIds.length)],
+      ["evidence", insight.evidence ?? "not cited yet"],
+    ],
+  };
 }
 
 interface InsightCardProps {
@@ -183,13 +248,13 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
     <div
       style={{
         background: insight.hero
-          ? 'linear-gradient(0deg, #fff, #fffdf8)'
+          ? "linear-gradient(0deg, #fff, #fffdf8)"
           : C.panel,
-        border: `1px solid ${insight.hero ? '#dcd5c7' : C.line}`,
+        border: `1px solid ${insight.hero ? "#dcd5c7" : C.line}`,
         borderRadius: 8,
         marginBottom: 11,
-        overflow: 'hidden',
-        transition: 'box-shadow 0.12s',
+        overflow: "hidden",
+        transition: "box-shadow 0.12s",
       }}
     >
       {/* Clickable head */}
@@ -197,22 +262,31 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
         role="button"
         tabIndex={0}
         onClick={() => setOpen((v) => !v)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setOpen((v) => !v); }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") setOpen((v) => !v);
+        }}
         aria-expanded={open}
         style={{
-          padding: '14px 16px',
-          cursor: 'pointer',
-          outline: 'none',
+          padding: "14px 16px",
+          cursor: "pointer",
+          outline: "none",
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 13 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: 13,
+          }}
+        >
           <div>
             <h4
               style={{
                 fontFamily: "Georgia, 'Times New Roman', serif",
                 fontSize: 16,
                 fontWeight: 400,
-                margin: '0 0 5px',
+                margin: "0 0 5px",
                 lineHeight: 1.3,
                 color: C.ink,
               }}
@@ -228,11 +302,19 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' as const, marginTop: 10 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            flexWrap: "wrap" as const,
+            marginTop: 10,
+          }}
+        >
           <span
             style={{
               fontSize: 10.5,
-              padding: '2.5px 8px',
+              padding: "2.5px 8px",
               borderRadius: 5,
               background: C.chip,
               color: C.muted,
@@ -244,10 +326,10 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
             style={{
               fontSize: 10.5,
               borderRadius: 20,
-              padding: '2px 8px',
+              padding: "2px 8px",
               border: `1px solid ${freshColor}44`,
               color: freshColor,
-              background: '#fff',
+              background: "#fff",
             }}
           >
             {insight.freshnessStatus}
@@ -256,9 +338,9 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
             style={{
               fontSize: 10.5,
               borderRadius: 20,
-              padding: '2px 8px',
+              padding: "2px 8px",
               border: `1px solid ${C.line}`,
-              background: '#fff',
+              background: "#fff",
               color: C.muted,
             }}
           >
@@ -268,9 +350,9 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
             style={{
               fontSize: 10.5,
               borderRadius: 20,
-              padding: '2px 8px',
+              padding: "2px 8px",
               border: `1px solid ${C.line}`,
-              background: '#fff',
+              background: "#fff",
               color: C.muted,
             }}
           >
@@ -278,12 +360,12 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
           </span>
           <span
             style={{
-              color: '#bdb6a8',
+              color: "#bdb6a8",
               fontSize: 12,
-              marginLeft: 'auto',
-              transition: 'transform 0.15s',
-              display: 'inline-block',
-              transform: open ? 'rotate(90deg)' : 'none',
+              marginLeft: "auto",
+              transition: "transform 0.15s",
+              display: "inline-block",
+              transform: open ? "rotate(90deg)" : "none",
             }}
           >
             › how derived
@@ -296,27 +378,27 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
         <div
           style={{
             borderTop: `1px solid ${C.line2}`,
-            background: '#FCFBF7',
-            padding: '13px 16px',
+            background: "#FCFBF7",
+            padding: "13px 16px",
           }}
         >
           <p
             style={{
               fontSize: 10,
-              textTransform: 'uppercase' as const,
-              letterSpacing: '0.5px',
+              textTransform: "uppercase" as const,
+              letterSpacing: "0.5px",
               color: C.muted,
-              margin: '0 0 8px',
+              margin: "0 0 8px",
             }}
           >
             Derivation — facts → rule → significance
           </p>
           <div
             style={{
-              display: 'flex',
-              alignItems: 'stretch',
+              display: "flex",
+              alignItems: "stretch",
               gap: 0,
-              overflowX: 'auto',
+              overflowX: "auto",
               paddingBottom: 3,
             }}
           >
@@ -327,16 +409,16 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
                     minWidth: 120,
                     border: `1px solid ${C.line}`,
                     borderRadius: 7,
-                    background: '#fff',
-                    padding: '8px 10px',
+                    background: "#fff",
+                    padding: "8px 10px",
                     fontSize: 11.5,
                   }}
                 >
                   <div
                     style={{
                       fontSize: 8.5,
-                      textTransform: 'uppercase' as const,
-                      letterSpacing: '0.5px',
+                      textTransform: "uppercase" as const,
+                      letterSpacing: "0.5px",
                       color: C.muted,
                       marginBottom: 3,
                     }}
@@ -349,10 +431,10 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
                 </div>
                 <div
                   style={{
-                    display: 'grid',
-                    placeItems: 'center',
+                    display: "grid",
+                    placeItems: "center",
                     minWidth: 24,
-                    color: '#c8c1b3',
+                    color: "#c8c1b3",
                     fontSize: 14,
                   }}
                 >
@@ -367,17 +449,17 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
                 border: `1px solid ${C.ink}`,
                 borderRadius: 7,
                 background: C.ink,
-                color: '#fff',
-                padding: '8px 10px',
+                color: "#fff",
+                padding: "8px 10px",
                 fontSize: 11.5,
               }}
             >
               <div
                 style={{
                   fontSize: 8.5,
-                  textTransform: 'uppercase' as const,
-                  letterSpacing: '0.5px',
-                  color: '#ffffff99',
+                  textTransform: "uppercase" as const,
+                  letterSpacing: "0.5px",
+                  color: "#ffffff99",
                   marginBottom: 3,
                 }}
               >
@@ -387,10 +469,10 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
             </div>
             <div
               style={{
-                display: 'grid',
-                placeItems: 'center',
+                display: "grid",
+                placeItems: "center",
                 minWidth: 24,
-                color: '#c8c1b3',
+                color: "#c8c1b3",
                 fontSize: 14,
               }}
             >
@@ -400,18 +482,18 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
             <div
               style={{
                 minWidth: 120,
-                border: `1px solid ${insight.materiality === 'high' ? C.stale : C.attention}`,
+                border: `1px solid ${insight.materiality === "high" ? C.stale : C.attention}`,
                 borderRadius: 7,
-                background: '#fff',
-                padding: '8px 10px',
+                background: "#fff",
+                padding: "8px 10px",
                 fontSize: 11.5,
               }}
             >
               <div
                 style={{
                   fontSize: 8.5,
-                  textTransform: 'uppercase' as const,
-                  letterSpacing: '0.5px',
+                  textTransform: "uppercase" as const,
+                  letterSpacing: "0.5px",
                   color: C.muted,
                   marginBottom: 3,
                 }}
@@ -427,19 +509,19 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
             style={{
               marginTop: 10,
               fontSize: 11.5,
-              display: 'flex',
-              flexWrap: 'wrap' as const,
+              display: "flex",
+              flexWrap: "wrap" as const,
               gap: 5,
-              alignItems: 'center',
+              alignItems: "center",
             }}
           >
             <span
               style={{
                 fontSize: 10.5,
                 borderRadius: 20,
-                padding: '2px 8px',
+                padding: "2px 8px",
                 border: `1px solid ${C.line}`,
-                background: '#fff',
+                background: "#fff",
                 color: C.muted,
               }}
             >
@@ -450,11 +532,11 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
               style={{
                 fontSize: 10.5,
                 borderRadius: 20,
-                padding: '2px 8px',
+                padding: "2px 8px",
                 border: `1px solid ${C.line}`,
-                background: '#fff',
+                background: "#fff",
                 color: C.muted,
-                marginLeft: 'auto',
+                marginLeft: "auto",
               }}
             >
               entity: {insight.entityName}
@@ -466,10 +548,10 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
       {/* Action row */}
       <div
         style={{
-          display: 'flex',
+          display: "flex",
           gap: 7,
-          flexWrap: 'wrap' as const,
-          padding: '11px 16px',
+          flexWrap: "wrap" as const,
+          padding: "11px 16px",
           borderTop: `1px solid ${C.line2}`,
         }}
       >
@@ -479,13 +561,13 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
           style={{
             border: `1px solid ${C.ink}`,
             background: C.ink,
-            color: '#fff',
+            color: "#fff",
             borderRadius: 7,
-            padding: '6px 12px',
+            padding: "6px 12px",
             fontSize: 12,
             fontWeight: 500,
-            cursor: 'pointer',
-            fontFamily: 'inherit',
+            cursor: "pointer",
+            fontFamily: "inherit",
           }}
         >
           {getPrimaryAction(insight)}
@@ -498,14 +580,14 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
           }}
           style={{
             border: `1px solid ${C.ink}`,
-            background: 'none',
+            background: "none",
             color: C.ink,
             borderRadius: 7,
-            padding: '6px 12px',
+            padding: "6px 12px",
             fontSize: 12,
             fontWeight: 500,
-            cursor: 'pointer',
-            fontFamily: 'inherit',
+            cursor: "pointer",
+            fontFamily: "inherit",
           }}
         >
           See the facts
@@ -516,18 +598,50 @@ function InsightCard({ insight, onSeeTheFacts }: InsightCardProps) {
 }
 
 // Need React import for JSX fragments inside map
-import React from 'react';
+import React from "react";
 
 interface Props {
+  tenantKey: string;
   onSeeTheFacts?: (entityName: string) => void;
 }
 
-export function ContextInsightsFeed({ onSeeTheFacts }: Props) {
-  const [domainFilter, setDomainFilter] = useState('All');
+export function ContextInsightsFeed({ tenantKey, onSeeTheFacts }: Props) {
+  const [domainFilter, setDomainFilter] = useState("All");
+  const [liveInsights, setLiveInsights] = useState<InsightData[] | null>(null);
 
-  const filtered = domainFilter === 'All'
-    ? STUB_INSIGHTS
-    : STUB_INSIGHTS.filter((i) => i.domain === domainFilter);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(
+      `/api/intelligence/insights?tenantKey=${encodeURIComponent(tenantKey)}`,
+      {
+        signal: controller.signal,
+        cache: "no-store",
+      },
+    )
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`insights ${response.status}`);
+        return response.json() as Promise<InsightsResponse>;
+      })
+      .then((payload) => {
+        setLiveInsights(payload.insights.map(mapLiveInsight));
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        console.warn("[ContextInsightsFeed] insights fetch failed", error);
+        setLiveInsights(null);
+      });
+    return () => controller.abort();
+  }, [tenantKey]);
+
+  const insights = liveInsights ?? STUB_INSIGHTS;
+  const domains = useMemo(
+    () => ["All", ...Array.from(new Set(insights.map((i) => i.domain)))],
+    [insights],
+  );
+  const filtered =
+    domainFilter === "All"
+      ? insights
+      : insights.filter((i) => i.domain === domainFilter);
 
   return (
     <div>
@@ -536,22 +650,47 @@ export function ContextInsightsFeed({ onSeeTheFacts }: Props) {
           fontFamily: "Georgia, 'Times New Roman', serif",
           fontSize: 21,
           fontWeight: 400,
-          margin: '0 0 2px',
+          margin: "0 0 2px",
           color: C.ink,
         }}
       >
         What the context is telling you
       </h2>
-      <p style={{ color: C.muted, fontSize: 12.5, margin: '0 0 14px', maxWidth: 720 }}>
-        Derived significance — each insight is computed from facts by a named rule and traces to evidence. Nothing is authored or guessed.
+      <p
+        style={{
+          color: C.muted,
+          fontSize: 12.5,
+          margin: "0 0 14px",
+          maxWidth: 720,
+        }}
+      >
+        Derived significance — each insight is computed from facts by a named
+        rule and traces to evidence. Nothing is authored or guessed.
       </p>
 
       {/* Domain filter chips */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const, marginBottom: 16, alignItems: 'center' }}>
-        <span style={{ fontSize: 10.5, color: C.muted, alignSelf: 'center', marginRight: 2, textTransform: 'uppercase' as const, letterSpacing: '0.4px' }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 6,
+          flexWrap: "wrap" as const,
+          marginBottom: 16,
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontSize: 10.5,
+            color: C.muted,
+            alignSelf: "center",
+            marginRight: 2,
+            textTransform: "uppercase" as const,
+            letterSpacing: "0.4px",
+          }}
+        >
           Domain
         </span>
-        {ALL_DOMAINS.map((d) => (
+        {domains.map((d) => (
           <button
             key={d}
             type="button"
@@ -559,12 +698,12 @@ export function ContextInsightsFeed({ onSeeTheFacts }: Props) {
             style={{
               fontSize: 11.5,
               border: `1px solid ${C.line}`,
-              background: domainFilter === d ? C.ink : '#fff',
+              background: domainFilter === d ? C.ink : "#fff",
               borderRadius: 20,
-              padding: '4px 10px',
-              color: domainFilter === d ? '#fff' : C.muted,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
+              padding: "4px 10px",
+              color: domainFilter === d ? "#fff" : C.muted,
+              cursor: "pointer",
+              fontFamily: "inherit",
               ...(domainFilter === d ? { borderColor: C.ink } : {}),
             }}
           >
@@ -576,12 +715,32 @@ export function ContextInsightsFeed({ onSeeTheFacts }: Props) {
       {/* Insight feed */}
       <div>
         {filtered.map((insight) => (
-          <InsightCard key={insight.id} insight={insight} onSeeTheFacts={onSeeTheFacts} />
+          <InsightCard
+            key={insight.id}
+            insight={insight}
+            onSeeTheFacts={onSeeTheFacts}
+          />
         ))}
         {filtered.length === 0 && (
-          <p style={{ color: C.muted, fontSize: 13, padding: '24px 0' }}>
-            No insights in this domain yet.
-          </p>
+          <div
+            style={{
+              border: `1px solid ${C.line}`,
+              borderRadius: 8,
+              background: C.panel,
+              padding: "18px 16px",
+              color: C.muted,
+              fontSize: 13,
+              lineHeight: 1.5,
+            }}
+          >
+            <strong style={{ color: C.ink, fontWeight: 500 }}>
+              Dimensions not yet loaded.
+            </strong>
+            <br />
+            Context can&apos;t derive significance yet. Load the next context
+            dimensions from Setup, then ask Sentinel which dimensions to load
+            first.
+          </div>
         )}
       </div>
     </div>
