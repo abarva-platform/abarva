@@ -3,27 +3,23 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Intelligence · Context & Corpus Explorer — clickable prototype</title>
+<title>Intelligence · Context & Corpus Explorer — clickable prototype v2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
 <style>
   :root{
-    --bg:#F8F7F4; --panel:#FFFFFF; --ink:#1B1A17; --muted:#6F6A61; --faint:#9A938733;
-    --line:#E6E2DA; --line2:#EFECE5;
+    --bg:#F8F7F4; --panel:#FFFFFF; --ink:#1B1A17; --muted:#6F6A61;
+    --line:#E6E2DA; --line2:#EFECE5; --chip:#F1EEE7;
     --black:#16150F; --serif:Georgia,'Times New Roman',serif; --sans:'DM Sans',-apple-system,sans-serif;
-    --fresh:#3F7A5B; --attention:#B5852A; --stale:#B4513C; --unknown:#A39C90; --review:#7A5BA8;
-    --freshbg:#3F7A5B14; --attentionbg:#B5852A16; --stalebg:#B4513C14; --unknownbg:#A39C9016; --reviewbg:#7A5BA814;
-    --chip:#F1EEE7;
+    --fresh:#3F7A5B; --attention:#B5852A; --stale:#B4513C; --unknown:#A39C90; --review:#7A5BA8; --blue:#39627F;
+    --freshbg:#3F7A5B14; --attentionbg:#B5852A16; --stalebg:#B4513C14; --unknownbg:#A39C9016; --reviewbg:#7A5BA814; --bluebg:#39627F14;
   }
-  *{box-sizing:border-box}
-  html,body{margin:0;height:100%}
+  *{box-sizing:border-box} html,body{margin:0;height:100%}
   body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
-  .serif{font-family:var(--serif)}
-  button{font-family:var(--sans);cursor:pointer}
+  .serif{font-family:var(--serif)} button{font-family:var(--sans);cursor:pointer}
   ::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#d9d4ca;border-radius:6px}
 
-  /* ---- header ---- */
   header{height:54px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:var(--bg);position:sticky;top:0;z-index:20}
   .brand{display:flex;align-items:center;gap:11px}
   .glyph{width:24px;height:24px;border:1.5px solid var(--ink);border-radius:5px;display:grid;place-items:center;font-family:var(--serif);font-size:13px;font-weight:700}
@@ -33,9 +29,7 @@
   .hmeta b{color:var(--ink);font-weight:600}
   .tag{font-size:10.5px;letter-spacing:.4px;text-transform:uppercase;color:var(--attention);border:1px solid var(--attention)55;border-radius:20px;padding:2px 9px}
 
-  /* ---- shell ---- */
   .shell{display:flex;height:calc(100vh - 54px)}
-  /* left rail */
   .rail{width:404px;min-width:404px;border-right:1px solid var(--line);display:flex;flex-direction:column;background:#FCFBF8}
   .rail-head{padding:14px 18px 12px;border-bottom:1px solid var(--line2)}
   .rail-head .who{display:flex;align-items:center;gap:9px}
@@ -44,33 +38,29 @@
   .rail-head .role{color:var(--muted);font-size:12px;margin-top:3px}
   .convo{flex:1;overflow-y:auto;padding:16px 18px 8px}
   .msg{margin-bottom:16px}
-  .msg.user .bub{background:var(--ink);color:#fff;border-radius:13px 13px 4px 13px;padding:9px 13px;display:inline-block;max-width:90%;font-size:13.5px}
   .msg.user{text-align:right}
+  .msg.user .bub{background:var(--ink);color:#fff;border-radius:13px 13px 4px 13px;padding:9px 13px;display:inline-block;max-width:90%;font-size:13.5px;text-align:left}
   .answer{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:13px 14px}
-  .answer p{margin:0 0 9px}
-  .answer .lead{font-size:14px}
+  .answer .lead{font-size:14px;margin:0 0 9px}
   .route{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 8px}
   .pill{font-size:11px;border-radius:20px;padding:2.5px 9px;border:1px solid var(--line);background:#fff;color:var(--muted);white-space:nowrap}
   .pill.route-chip{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:500}
   .pill.conf{border-color:var(--fresh)66;color:var(--fresh)}
   .cites{border-top:1px dashed var(--line);margin-top:10px;padding-top:9px;display:flex;flex-direction:column;gap:5px}
   .cites .ct{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:1px}
-  .cite{font-size:12px;color:var(--ink);display:flex;gap:7px;align-items:flex-start}
+  .cite{font-size:12px;display:flex;gap:7px;align-items:flex-start}
   .cite .cdot{color:var(--muted)}
   .miss{margin-top:9px;font-size:12px;color:var(--stale);background:var(--stalebg);border-radius:4px;padding:7px 9px}
-  . minif{font-size:11px}
   .minitbl{width:100%;border-collapse:collapse;margin-top:6px;font-size:12px}
   .minitbl td{border-top:1px solid var(--line2);padding:5px 4px}
   .minitbl td:last-child{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
-  .ansact{margin-top:11px;display:flex;gap:7px;flex-wrap:wrap}
+  .ansact{margin-top:11px;display:flex;gap:10px;flex-wrap:wrap}
   .lnk{font-size:12px;color:var(--ink);background:none;border:none;padding:0;text-decoration:underline;text-underline-offset:2px}
-  /* suggestions */
   .suggest{padding:2px 18px 12px}
   .suggest .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:6px 0 8px}
   .chip{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:6px;padding:9px 11px;margin-bottom:7px;font-size:13px;color:var(--ink);transition:.12s}
   .chip:hover{border-color:#cfc8bb;background:#fffdf9;transform:translateY(-1px)}
   .chip .q{color:var(--muted);margin-right:6px}
-  /* ask bar */
   .askwrap{border-top:1px solid var(--line);padding:11px 14px 13px;background:#FCFBF8}
   .askbox{display:flex;align-items:flex-end;gap:8px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
   .askbox:focus-within{border-color:#b9b1a2}
@@ -79,7 +69,6 @@
   .send:disabled{opacity:.4}
   .askhint{font-size:10.5px;color:var(--muted);text-align:center;margin-top:7px}
 
-  /* ---- right dashboard ---- */
   .dash{flex:1;display:flex;flex-direction:column;min-width:0}
   .tabs{display:flex;gap:2px;padding:0 18px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:10}
   .tab{appearance:none;background:none;border:none;padding:13px 14px 11px;font-size:13.5px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
@@ -87,243 +76,313 @@
   .tab:hover{color:var(--ink)}
   .tab.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:600}
   .dashbody{flex:1;overflow-y:auto;padding:22px 26px 60px}
-  .pane{display:none;max-width:980px}
+  .pane{display:none;max-width:1000px}
   .pane.on{display:block;animation:fade .22s ease}
   @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-  .panehd{font-family:var(--serif);font-size:21px;font-weight:400;margin:0 0 3px}
-  .panesub{color:var(--muted);font-size:13px;margin:0 0 18px}
+  .panehd{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 3px}
+  .panesub{color:var(--muted);font-size:13px;margin:0 0 18px;max-width:680px}
 
-  /* kpi strip */
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
-  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:13px 14px;text-align:left;transition:.12s}
-  .kpi:hover{border-color:#cfc8bb;transform:translateY(-2px);box-shadow:0 6px 18px #0000000a}
-  .kpi .v{font-family:var(--serif);font-size:26px;line-height:1}
-  .kpi .k{font-size:11.5px;color:var(--muted);margin-top:7px}
-  .kpi .d{font-size:11px;margin-top:4px;color:var(--muted)}
-  .kpi .ask{font-size:10.5px;color:var(--ink);opacity:0;margin-top:8px;transition:.12s}
-  .kpi:hover .ask{opacity:.55}
-  .bar{height:4px;border-radius:3px;background:var(--line2);margin-top:9px;overflow:hidden}
-  .bar i{display:block;height:100%}
+  /* insight feed (L2) */
+  .ifeed{display:flex;flex-direction:column;gap:12px}
+  .insight{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:0;overflow:hidden;transition:.12s}
+  .insight:hover{border-color:#cfc8bb;box-shadow:0 5px 18px #0000000a}
+  .insight .ihead{padding:15px 17px;cursor:pointer}
+  .insight .toprow{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+  .insight h4{font-family:var(--serif);font-size:17px;font-weight:400;margin:0 0 6px;line-height:1.3}
+  .insight .sowhat{color:var(--muted);font-size:13px;margin:0}
+  .imeta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:11px}
+  .matpill{font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap;font-weight:500}
+  .domtag{font-size:11px;padding:3px 9px;border-radius:5px;background:var(--chip);color:var(--muted)}
+  .b-fresh{background:var(--freshbg);color:var(--fresh)} .b-attention{background:var(--attentionbg);color:var(--attention)}
+  .b-stale{background:var(--stalebg);color:var(--stale)} .b-unknown{background:var(--unknownbg);color:var(--unknown)}
+  .b-review{background:var(--reviewbg);color:var(--review)} .b-blue{background:var(--bluebg);color:var(--blue)}
+  .derive{display:none;border-top:1px solid var(--line2);background:#FCFBF7;padding:14px 17px}
+  .derive.show{display:block;animation:fade .18s}
+  .derive .dl{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:0 0 9px}
+  .flow{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:4px}
+  .fcell{min-width:128px;border:1px solid var(--line);border-radius:7px;background:#fff;padding:9px 11px;font-size:12px}
+  .fcell .ft{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px}
+  .fcell.rule{background:var(--ink);color:#fff;border-color:var(--ink)} .fcell.rule .ft{color:#ffffff99}
+  .fcell b{font-weight:600}
+  .farrow{display:grid;place-items:center;min-width:26px;color:#c8c1b3;font-size:15px}
+  .evrow{margin-top:11px;font-size:12px;color:var(--ink);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .iact{display:flex;gap:8px;flex-wrap:wrap;padding:12px 17px;border-top:1px solid var(--line2)}
+  .btn{border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:7px;padding:7px 13px;font-size:12.5px;font-weight:500}
+  .btn.ghost{background:none;color:var(--ink)} .btn:hover{opacity:.88}
+  .chevmini{color:#bdb6a8;font-size:13px;transition:.15s;display:inline-block}
+  .insight.open .chevmini{transform:rotate(90deg)}
 
-  /* section + rows (density contract) */
+  /* derived-view pinned panel */
+  .derived{border:1px solid var(--review)44;background:linear-gradient(0deg,#fff,#fdfbff);border-radius:9px;padding:0;margin-bottom:18px;overflow:hidden;box-shadow:0 6px 22px #0000000d}
+  .derived .dhd{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line2)}
+  .derived .dl{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--review);display:flex;align-items:center;gap:7px}
+  .derived .dl::before{content:'✦';font-size:12px}
+  .derived h3{font-family:var(--serif);font-size:17px;font-weight:400;margin:3px 0 0}
+  .derived .px{border:none;background:none;color:var(--muted);font-size:17px}
+  .dstrip{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:1px solid var(--line2)}
+  .dstrip .ds{padding:13px 16px;border-left:1px solid var(--line2)}
+  .dstrip .ds:first-child{border-left:none}
+  .dstrip .v{font-family:var(--serif);font-size:22px} .dstrip .k{font-size:11.5px;color:var(--muted);margin-top:3px}
+  .dbody{padding:6px 16px 14px}
+  .dmini{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-top:1px solid var(--line2);font-size:13px}
+  .dmini:first-child{border-top:none}
+
+  /* explore (L1 entity browse) */
+  .entgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:8px}
+  .ent{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:13px 14px;cursor:pointer;transition:.12s;text-align:left}
+  .ent:hover{border-color:#cfc8bb;transform:translateY(-2px)}
+  .ent .v{font-family:var(--serif);font-size:22px} .ent .k{color:var(--muted);font-size:12.5px;margin-top:3px} .ent .x{font-size:11px;color:var(--muted);margin-top:6px}
+  .ent.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+  .edetail{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 18px;display:none}
+  .edetail.show{display:block;animation:fade .2s}
+  .edetail h3{font-family:var(--serif);font-weight:400;font-size:18px;margin:0 0 2px}
+  .factline{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-top:1px solid var(--line2);font-size:13px}
+  .factline:first-of-type{border-top:none}
+  .factline .fk{color:var(--muted)} .factline .fv{font-weight:600;font-variant-numeric:tabular-nums}
+  .factline .fc{font-size:11px;color:var(--muted)}
+  .relband{margin-top:14px;font-size:12.5px;color:var(--muted);background:#FCFBF7;border:1px solid var(--line2);border-radius:6px;padding:10px 12px}
+
+  /* rows (change log + coverage) */
   .sec{margin-bottom:26px}
   .sechd{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px}
   .sechd h3{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:600;margin:0}
   .sechd .meta{font-size:12px;color:var(--muted)}
   .rows{background:var(--panel);border:1px solid var(--line);border-radius:7px;overflow:hidden}
-  .row{display:grid;grid-template-columns:14px 1.7fr 1fr .9fr .9fr 1fr 18px;gap:12px;align-items:center;padding:11px 14px;border-top:1px solid var(--line2);font-size:13px;cursor:pointer;transition:.1s}
-  .row:first-child{border-top:none}
-  .row:hover{background:#fbfaf6}
-  .row .nm{font-weight:500}
-  .row .sб{color:var(--muted);font-size:12px}
+  .row{display:grid;align-items:center;gap:12px;padding:11px 14px;border-top:1px solid var(--line2);font-size:13px;cursor:pointer;transition:.1s}
+  .row:first-child{border-top:none} .row:hover{background:#fbfaf6}
+  .row .nm{font-weight:500} .row .sb2{color:var(--muted);font-size:12px}
   .sdot{width:9px;height:9px;border-radius:50%}
   .num{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12.5px}
   .badge{font-size:11px;padding:2px 8px;border-radius:20px;display:inline-block}
-  .b-fresh{background:var(--freshbg);color:var(--fresh)}
-  .b-attention{background:var(--attentionbg);color:var(--attention)}
-  .b-stale{background:var(--stalebg);color:var(--stale)}
-  .b-unknown{background:var(--unknownbg);color:var(--unknown)}
-  .b-review{background:var(--reviewbg);color:var(--review)}
-  .chev{color:#bdb6a8;transition:.15s;text-align:center}
-  .row.open .chev{transform:rotate(90deg)}
+  .chev{color:#bdb6a8;text-align:center;transition:.15s} .row.open .chev{transform:rotate(90deg)}
   .detail{display:none;padding:2px 16px 16px 40px;background:#FCFBF7;border-top:1px solid var(--line2);font-size:12.5px}
   .detail.show{display:block;animation:fade .18s}
-  /* truth states ribbon */
-  .truth{display:flex;flex-wrap:wrap;gap:0;margin:12px 0 6px}
-  .ts{position:relative;flex:1;min-width:88px;text-align:center;padding:8px 4px;font-size:11px;border:1px solid var(--line);border-left:none;color:var(--muted);background:#fff}
-  .ts:first-child{border-left:1px solid var(--line);border-radius:5px 0 0 5px}
-  .ts:last-child{border-radius:0 5px 5px 0}
+  .truth{display:flex;flex-wrap:wrap;margin:12px 0 6px}
+  .ts{flex:1;min-width:84px;text-align:center;padding:8px 4px;font-size:10.5px;border:1px solid var(--line);border-left:none;color:var(--muted);background:#fff}
+  .ts:first-child{border-left:1px solid var(--line);border-radius:5px 0 0 5px} .ts:last-child{border-radius:0 5px 5px 0}
   .ts.hit{background:var(--freshbg);color:var(--fresh);border-color:var(--fresh)44;font-weight:600}
   .ts.cur{background:var(--attentionbg);color:var(--attention);border-color:var(--attention)55}
   .ts .n{display:block;font-size:9px;color:#bbb;margin-bottom:2px}
-  .dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 22px;margin-top:8px}
-  .dgrid div span{color:var(--muted)}
-
-  /* gaps band */
-  .gaps{background:var(--stalebg);border:1px solid var(--stale)33;border-radius:7px;padding:14px 16px}
+  .dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 22px;margin-top:8px} .dgrid div span{color:var(--muted)}
+  .gaps{background:var(--stalebg);border:1px solid var(--stale)33;border-radius:7px;padding:14px 16px;margin-top:18px}
   .gaps h4{margin:0 0 8px;font-size:13px;color:var(--stale)}
   .gaps .grow{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-top:1px solid var(--stale)22;font-size:13px}
   .gaps .grow:first-of-type{border-top:none}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:13px 14px;text-align:left;transition:.12s}
+  .kpi:hover{border-color:#cfc8bb;transform:translateY(-2px)} .kpi .v{font-family:var(--serif);font-size:24px;line-height:1}
+  .kpi .k{font-size:11.5px;color:var(--muted);margin-top:7px} .kpi .d{font-size:11px;margin-top:4px;color:var(--muted)}
+  .bar{height:4px;border-radius:3px;background:var(--line2);margin-top:9px;overflow:hidden} .bar i{display:block;height:100%}
 
-  /* knowledge map */
-  .entgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-  .ent{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:13px 14px;cursor:pointer;transition:.12s}
-  .ent:hover{border-color:#cfc8bb;transform:translateY(-2px)}
-  .ent .v{font-family:var(--serif);font-size:23px}
-  .ent .k{color:var(--muted);font-size:12.5px;margin-top:3px}
-  .ent .x{font-size:11px;color:var(--muted);margin-top:6px}
-  .chain{display:flex;align-items:stretch;gap:0;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:18px;overflow-x:auto}
-  .node{min-width:120px;text-align:center;padding:11px 12px;border:1px solid var(--line);border-radius:7px;background:#fff;font-size:12.5px;position:relative}
-  .node .t{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px}
-  .node b{font-weight:600}
-  .arrow{display:grid;place-items:center;min-width:34px;color:#c8c1b3;font-size:17px}
-
-  /* significance + corpus */
   .scard{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:14px 16px;margin-bottom:11px;transition:.12s}
-  .scard:hover{border-color:#cfc8bb}
-  .scard .top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
-  .scard h4{font-family:var(--serif);font-size:16px;font-weight:400;margin:0 0 5px}
-  .scard .imp{color:var(--muted);font-size:13px;margin:0}
-  .matpill{font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap}
+  .scard:hover{border-color:#cfc8bb} .scard .top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+  .scard h4{font-family:var(--serif);font-size:16px;font-weight:400;margin:0 0 5px} .scard .imp{color:var(--muted);font-size:13px;margin:0}
   .scard .ft{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
-  .btn{border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:7px;padding:7px 13px;font-size:12.5px;font-weight:500}
-  .btn.ghost{background:none;color:var(--ink)}
-  .btn:hover{opacity:.88}
   .searchbar{display:flex;gap:8px;margin-bottom:16px}
   .searchbar input{flex:1;border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-family:var(--sans);font-size:13.5px;outline:none;background:#fff}
-  .searchbar input:focus{border-color:#b9b1a2}
   .cfilters{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap}
   .filt{font-size:12px;border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 11px;color:var(--muted)}
   .filt.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 
-  /* pinned answer-view */
-  .pinned{border:1px solid var(--ink)33;background:linear-gradient(0deg,#fff,#fffdf8);border-radius:7px;padding:13px 15px;margin-bottom:18px;position:relative;box-shadow:0 4px 16px #0000000a}
-  .pinned .pl{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink);opacity:.6;margin-bottom:7px;display:flex;align-items:center;gap:7px}
-  .pinned .pl::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--review)}
-  .pinned .px{position:absolute;top:10px;right:12px;border:none;background:none;color:var(--muted);font-size:16px}
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:.3s;z-index:50;pointer-events:none}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .flash{animation:flashbg 1.4s ease}
-  @keyframes flashbg{0%,100%{background:transparent}30%{background:#B5852A22}}
+  @keyframes flashbg{0%,100%{background:transparent}30%{background:#7A5BA818}}
 </style>
 </head>
 <body>
 <header>
-  <div class="brand">
-    <div class="glyph">A</div>
-    <h1>Intelligence</h1><span class="sub">· SkyHarbor Air</span>
-  </div>
+  <div class="brand"><div class="glyph">A</div><h1>Intelligence</h1><span class="sub">· SkyHarbor Air</span></div>
   <div class="hmeta">
     <span class="tag">Illustrative · synthetic tenant</span>
+    <span><b id="ins-count">6</b> live insights</span>
     <span>context as of <b>Jun 16, 2026</b></span>
-    <span><b id="ans-pct">78%</b> answerable</span>
   </div>
 </header>
 
 <div class="shell">
-  <!-- ============ LEFT: SENTINEL EXPLORER ============ -->
+  <!-- ============ LEFT: SENTINEL ============ -->
   <aside class="rail">
     <div class="rail-head">
       <div class="who"><span class="dot-agent"></span><span class="name serif">Sentinel</span></div>
-      <div class="role">Ask anything about what we know — answers are evidence-cited and say which source they used.</div>
+      <div class="role">Ask what the context is telling you — or ask me to <b>derive a view</b>. Every answer is evidence-cited and says where it came from.</div>
     </div>
     <div class="convo" id="convo">
-      <div class="msg">
-        <div class="answer">
-          <p class="lead">I can see <b>14 sources</b>, <b>1,284 active facts</b>, and the global corpus for SkyHarbor Air. Ask me about your context, what changed, or what the corpus knows — or tap a starter below.</p>
-        </div>
-      </div>
+      <div class="msg"><div class="answer"><p class="lead">Your context is telling me <b>6 significant things</b> right now — the loudest: an AMS contract auto-renews in 94 days with no benchmark on file. Browse the Insights tab, or ask me anything.</p></div></div>
     </div>
     <div class="suggest" id="suggest">
       <div class="lbl">Try asking</div>
-      <button class="chip" data-ask="copilot"><span class="q">›</span>What do we know about our Copilot rollout?</button>
-      <button class="chip" data-ask="vendor"><span class="q">›</span>What changed in the vendor portfolio this quarter?</button>
-      <button class="chip" data-ask="board"><span class="q">›</span>Is our control-tower data fresh enough to brief the board?</button>
-      <button class="chip" data-ask="corpus"><span class="q">›</span>What does the corpus know about AMS renewals?</button>
+      <button class="chip" data-ask="telling"><span class="q">›</span>What is my context telling me right now?</button>
+      <button class="chip" data-ask="derive"><span class="q">›</span>Derive a view of our vendor risk</button>
+      <button class="chip" data-ask="copilot"><span class="q">›</span>Is our Copilot investment paying off?</button>
+      <button class="chip" data-ask="board"><span class="q">›</span>What can't you answer yet, and why?</button>
     </div>
     <div class="askwrap">
-      <div class="askbox">
-        <textarea id="ask" rows="1" placeholder="Ask anything…" spellcheck="true"></textarea>
-        <button class="send" id="send" disabled>↑</button>
-      </div>
-      <div class="askhint">Prototype · deterministic router demo · Enter to send</div>
+      <div class="askbox"><textarea id="ask" rows="1" placeholder="Ask anything · or 'derive a view of…'" spellcheck="true"></textarea><button class="send" id="send" disabled>↑</button></div>
+      <div class="askhint">Prototype · deterministic insight rules + derived views</div>
     </div>
   </aside>
 
-  <!-- ============ RIGHT: TABBED DASHBOARD ============ -->
+  <!-- ============ RIGHT: DASHBOARD ============ -->
   <section class="dash">
     <nav class="tabs" id="tabs">
-      <button class="tab on" data-pane="health"><span class="g">Context</span>Context Health</button>
-      <button class="tab" data-pane="map"><span class="g">Context</span>Knowledge Map</button>
+      <button class="tab on" data-pane="insights"><span class="g">Meaning · L2</span>Insights</button>
+      <button class="tab" data-pane="explore"><span class="g">Facts · L1</span>Explore</button>
       <button class="tab" data-pane="change"><span class="g">Context</span>Change Log</button>
-      <button class="tab" data-pane="signif"><span class="g">Context</span>Significance</button>
-      <button class="tab" data-pane="corpus"><span class="g">Corpus</span>Corpus</button>
+      <button class="tab" data-pane="trust"><span class="g">Plumbing · L0</span>Coverage &amp; Trust</button>
+      <button class="tab" data-pane="corpus"><span class="g">Global</span>Corpus</button>
     </nav>
     <div class="dashbody">
 
-      <!-- ---- CONTEXT HEALTH ---- -->
-      <div class="pane on" id="pane-health">
-        <h2 class="panehd">Context Health</h2>
-        <p class="panesub">Is what we know about SkyHarbor Air usable and trustworthy? Click a metric to ask Sentinel about it.</p>
-        <div id="health-pin"></div>
-        <div class="kpis">
-          <button class="kpi" data-ask="sources"><div class="v">14</div><div class="k">Sources</div><div class="d">9 fresh · 3 attention · 2 stale</div><div class="ask">› ask about source freshness</div></button>
-          <button class="kpi" data-ask="facts"><div class="v">1,284</div><div class="k">Active facts</div><div class="d">96 superseded · 71% cited</div><div class="ask">› ask what changed</div></button>
-          <button class="kpi" data-ask="evidence"><div class="v">71%</div><div class="k">Evidence coverage</div><div class="bar"><i style="width:71%;background:var(--attention)"></i></div><div class="ask">› ask about uncited facts</div></button>
-          <button class="kpi" data-ask="board"><div class="v">78%</div><div class="k">Answerability</div><div class="bar"><i style="width:78%;background:var(--fresh)"></i></div><div class="ask">› ask if we're board-ready</div></button>
-        </div>
-
-        <div class="sec">
-          <div class="sechd"><h3>Source health</h3><span class="meta">one row per source · colour = freshness · click to open the 8 truth states</span></div>
-          <div class="rows" id="srchealth"></div>
-        </div>
-
-        <div class="sec">
-          <div class="gaps">
-            <h4>What we can't yet see</h4>
-            <div class="grow"><span><b>Finance actuals</b> — ERP GL export not loaded · blocks spend-vs-value answers</span><button class="btn ghost" style="padding:5px 11px">Load via Setup ›</button></div>
-            <div class="grow"><span><b>DORA metrics</b> — engineering telemetry not connected · blocks productivity before/after</span><button class="btn ghost" style="padding:5px 11px">Load via Setup ›</button></div>
-          </div>
-        </div>
+      <!-- INSIGHTS (L2 derived) -->
+      <div class="pane on" id="pane-insights">
+        <h2 class="panehd">What the context is telling you</h2>
+        <p class="panesub">Derived significance — each insight is computed from facts by a named rule and traces back to evidence. Click any insight to see how it was derived. Nothing here is authored or guessed.</p>
+        <div id="derived-host"></div>
+        <div class="ifeed" id="ifeed"></div>
       </div>
 
-      <!-- ---- KNOWLEDGE MAP ---- -->
-      <div class="pane" id="pane-map">
-        <h2 class="panehd">Knowledge Map</h2>
-        <p class="panesub">What entities and facts do we hold, and how are they connected?</p>
+      <!-- EXPLORE (L1 entity browse) -->
+      <div class="pane" id="pane-explore">
+        <h2 class="panehd">Explore the facts</h2>
+        <p class="panesub">Browse what's actually true, entity by entity — not file by file. Pick an entity type, then an entity, to see its facts, evidence, relationships, and the insights it drives.</p>
         <div class="entgrid" id="entindex"></div>
-        <div class="sec">
-          <div class="sechd"><h3>A connected chain — "Copilot value"</h3><span class="meta">initiative → tool → persona → metric → vendor</span></div>
-          <div class="chain">
-            <div class="node"><div class="t">Initiative</div><b>Dev Productivity AI</b></div>
-            <div class="arrow">→</div>
-            <div class="node"><div class="t">Tool</div><b>GitHub Copilot</b></div>
-            <div class="arrow">→</div>
-            <div class="node"><div class="t">Persona</div><b>Backend engineers</b></div>
-            <div class="arrow">→</div>
-            <div class="node"><div class="t">Metric</div><b>PR cycle time</b><br><span style="color:var(--attention)">−9% (weak)</span></div>
-            <div class="arrow">→</div>
-            <div class="node"><div class="t">Vendor</div><b>Microsoft</b><br><span style="color:var(--muted)">$0.31M/yr</span></div>
-          </div>
-        </div>
+        <div class="edetail" id="edetail"></div>
       </div>
 
-      <!-- ---- CHANGE LOG ---- -->
+      <!-- CHANGE LOG -->
       <div class="pane" id="pane-change">
         <h2 class="panehd">Change Log</h2>
-        <p class="panesub">What changed this period — and what needs review before it's trusted. <span id="change-filter"></span></p>
-        <div id="change-pin"></div>
+        <p class="panesub">What changed this period and what needs review before it's trusted. <span id="change-filter"></span></p>
         <div class="rows" id="changerows"></div>
       </div>
 
-      <!-- ---- SIGNIFICANCE ---- -->
-      <div class="pane" id="pane-signif">
-        <h2 class="panehd">Significance</h2>
-        <p class="panesub">Material patterns ranked by what they mean for decisions — each can become a Strategic Move.</p>
-        <div id="signifrows"></div>
+      <!-- COVERAGE & TRUST (L0) -->
+      <div class="pane" id="pane-trust">
+        <h2 class="panehd">Coverage &amp; Trust</h2>
+        <p class="panesub">The plumbing lens: which sources fed the context, how fresh they are, and how far each got through the 8 truth states. This is <i>support</i> for the insights above — not the headline.</p>
+        <div class="kpis">
+          <button class="kpi" data-ask="sources"><div class="v">14</div><div class="k">Sources</div><div class="d">9 fresh · 3 attention · 2 stale</div></button>
+          <button class="kpi" data-ask="facts"><div class="v">1,284</div><div class="k">Active facts</div><div class="d">96 superseded · 71% cited</div></button>
+          <button class="kpi"><div class="v">71%</div><div class="k">Evidence coverage</div><div class="bar"><i style="width:71%;background:var(--attention)"></i></div></button>
+          <button class="kpi" data-ask="board"><div class="v">78%</div><div class="k">Answerability</div><div class="bar"><i style="width:78%;background:var(--fresh)"></i></div></button>
+        </div>
+        <div class="sec">
+          <div class="sechd"><h3>Source health</h3><span class="meta">one row per source · colour = freshness · click for the 8 truth states</span></div>
+          <div class="rows" id="srchealth"></div>
+        </div>
+        <div class="gaps">
+          <h4>What we can't yet see — and the insights it blocks</h4>
+          <div class="grow"><span><b>Finance actuals</b> (ERP GL) not loaded · blocks the <i>spend-vs-realised-value</i> insight</span><button class="btn ghost" style="padding:5px 11px">Load via Setup ›</button></div>
+          <div class="grow"><span><b>DORA metrics</b> not connected · blocks <i>engineering productivity before/after</i></span><button class="btn ghost" style="padding:5px 11px">Load via Setup ›</button></div>
+        </div>
       </div>
 
-      <!-- ---- CORPUS ---- -->
+      <!-- CORPUS -->
       <div class="pane" id="pane-corpus">
         <h2 class="panehd">Corpus</h2>
-        <p class="panesub">What the platform knows in general — the global knowledge library, independent of any one client.</p>
-        <div class="searchbar"><input id="corpussearch" placeholder="Search the corpus…  e.g. AMS renewal, Copilot value, ERP negotiation" /></div>
+        <p class="panesub">What the platform knows in general — the global knowledge library, independent of any one client. Relevant corpus patterns can be applied to the insights on the left.</p>
+        <div class="searchbar"><input id="corpussearch" placeholder="Search the corpus…  e.g. AMS renewal, Copilot value" /></div>
         <div class="cfilters" id="cfilters">
-          <button class="filt on" data-c="all">All</button>
-          <button class="filt" data-c="Sourcing">Sourcing</button>
-          <button class="filt" data-c="AI Value">AI Value</button>
-          <button class="filt" data-c="Operating Model">Operating Model</button>
+          <button class="filt on" data-c="all">All</button><button class="filt" data-c="Sourcing">Sourcing</button>
+          <button class="filt" data-c="AI Value">AI Value</button><button class="filt" data-c="Operating Model">Operating Model</button>
         </div>
         <div id="corpusrows"></div>
       </div>
-
     </div>
   </section>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-/* ---------------- DATA (synthetic / illustrative) ---------------- */
+const $=s=>document.querySelector(s), el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
+
+/* ---------- L2 INSIGHTS (derived, with traces) ---------- */
+const insights=[
+ {id:"ams",h:"You're about to auto-renew a $4.2M AMS contract with no benchmark",sowhat:"Kyndryl AMS auto-renews Sep 18 (94 days). No peer pricing on file — you'd negotiate blind. Starting a sourcing event now preserves leverage.",mat:"high",dom:"Vendor",fresh:"fresh",conf:"high",
+   facts:[["renewal_date","Sep 18, 2026"],["annual_value","$4.2M"],["benchmark_present","false"]],rule:"renewal-window < 120d AND benchmark absent",ev:"Vendor Contracts · row 41 (Kyndryl MSA)",ent:"Kyndryl"},
+ {id:"copilot",h:"Your Copilot value case is at risk — 31% adoption vs 70% assumed",sowhat:"$0.31M/yr committed; the business case assumed 70% seat adoption. The gap is concentrated in backend teams. Expand, coach, or right-size the license count.",mat:"high",dom:"AI Value",fresh:"attention",conf:"high",
+   facts:[["active_users_pct","31%"],["value_case_assumption","70%"],["annual_spend","$0.31M"]],rule:"adoption < 0.6 × value-case assumption",ev:"Copilot Usage (May) + Dev Productivity AI charter",ent:"GitHub Copilot"},
+ {id:"mttr",h:"Service quality is sliding — MTTR up 22% QoQ, 3 services out of SLA",sowhat:"Three P2 services now breach their SLA and the trend is worsening. Candidate for an AI-assisted triage Move, or a vendor service-credit conversation.",mat:"medium",dom:"Service",fresh:"stale",conf:"medium",
+   facts:[["mttr_change_qoq","+22%"],["services_breaching","3"],["trend","worsening"]],rule:"SLA breach AND negative trend",ev:"ServiceNow ITSM export · Apr 30 (stale)",ent:"ServiceNow"},
+ {id:"claim",h:"A material strategy shift is claimed but not yet trusted",sowhat:"The CIO board memo names AMS consolidation a top-3 FY27 priority. It's parsed but review-required — so it is surfaced, not yet committed. Approve it to let it supersede the prior posture.",mat:"high",dom:"Strategy",fresh:"review",conf:"—",
+   facts:[["claim","AMS = top-3 FY27 priority"],["lifecycle_state","review-required"],["supersedes","prior IT-sourcing posture"]],rule:"material-strategy-claim AND unapproved",ev:"AMS Board Strategy Memo (PDF) · parsed, not committed",ent:"CIO Office"},
+ {id:"conflict",h:"Two systems disagree on who owns CrewSched",sowhat:"The app inventory and the org export name different owners (Ops vs IT) for a Tier-1 application. Conflicting facts aren't auto-resolved — this opens a stewardship task.",mat:"medium",dom:"Data quality",fresh:"attention",conf:"high",
+   facts:[["owner (App Inventory)","Ops · M. Reyes"],["owner (Org Export)","IT · D. Kahn"],["criticality","Tier-1"]],rule:"conflicting-fact on same record",ev:"Application Inventory · row 88  ⨯  Org Structure",ent:"CrewSched"},
+ {id:"gap",h:"You can't yet judge AI spend vs realised value",sowhat:"Six initiatives report spend, but Finance actuals aren't loaded and most lack a realised-value fact. The most expensive un-evidenced initiative is the Contact-Centre AI pilot.",mat:"medium",dom:"AI Value",fresh:"unknown",conf:"low",
+   facts:[["initiatives_with_spend","6"],["initiatives_with_value_fact","1"],["finance_actuals","not loaded"]],rule:"value-claim coverage < 50% OR finance source missing",ev:"AI Initiative Register + (missing) ERP GL",ent:"Contact-Centre AI"},
+];
+const MATB={high:"b-stale",medium:"b-attention",low:"b-unknown"};
+const FRC={fresh:"var(--fresh)",attention:"var(--attention)",stale:"var(--stale)",unknown:"var(--unknown)",review:"var(--review)"};
+const FRB={fresh:"b-fresh",attention:"b-attention",stale:"b-stale",unknown:"b-unknown",review:"b-review"};
+
+function renderInsights(){
+  const f=$("#ifeed");f.innerHTML="";
+  insights.forEach(i=>{
+    const c=el("div","insight");
+    c.innerHTML=`<div class="ihead">
+        <div class="toprow"><div><h4>${i.h}</h4><p class="sowhat">${i.sowhat}</p></div>
+          <span class="matpill ${MATB[i.mat]}">${i.mat}</span></div>
+        <div class="imeta"><span class="domtag">${i.dom}</span>
+          <span class="pill" style="border-color:${FRC[i.fresh]}44;color:${FRC[i.fresh]}">${i.fresh}</span>
+          <span class="pill">confidence ${i.conf}</span>
+          <span class="chevmini">›&nbsp;how this was derived</span></div></div>
+      <div class="derive">
+        <p class="dl">Derivation — facts → rule → significance (this is the model coming alive)</p>
+        <div class="flow">
+          ${i.facts.map(ff=>`<div class="fcell"><div class="ft">fact</div><b>${ff[0]}</b><br>${ff[1]}</div><div class="farrow">→</div>`).join("")}
+          <div class="fcell rule"><div class="ft">rule fired</div><b>${i.rule}</b></div>
+          <div class="farrow">→</div>
+          <div class="fcell" style="border-color:${FRC[i.mat==='high'?'stale':'attention']}"><div class="ft">significance</div><b>${i.mat} materiality</b></div>
+        </div>
+        <div class="evrow"><span class="pill">evidence</span> ${i.ev} <span class="pill" style="margin-left:auto">entity: ${i.ent}</span></div>
+      </div>
+      <div class="iact">
+        ${i.fresh==='review'?`<button class="btn">Review &amp; approve ›</button>`:i.dom==='Data quality'?`<button class="btn">Open stewardship task ›</button>`:i.id==='gap'?`<button class="btn">Load missing source ›</button>`:`<button class="btn">Shape into Move ›</button>`}
+        <button class="btn ghost" data-explain="${i.id}">Ask Sentinel about this</button>
+        <button class="btn ghost" data-entity="${i.ent}">See the facts</button>
+      </div>`;
+    const head=c.querySelector(".ihead"),der=c.querySelector(".derive");
+    head.onclick=()=>{c.classList.toggle("open");der.classList.toggle("show")};
+    c.querySelector(".btn").onclick=()=>toast("Would open the matching workflow (Move · review · stewardship · Setup)");
+    c.querySelector("[data-explain]").onclick=()=>askFlow(`Tell me more about: ${i.h}`,{lead:i.sowhat+" This was derived deterministically — the rule <b>"+i.rule+"</b> fired on "+i.facts.length+" facts.",route:"insight lookup · L2",conf:"Confidence: "+i.conf,cites:i.facts.map(ff=>["fact",ff[0]+" = "+ff[1]]).concat([["evidence",i.ev]])});
+    c.querySelector("[data-entity]").onclick=()=>{switchTab("explore");openEntity(i.ent)};
+    f.appendChild(c);
+  });
+}
+
+/* ---------- L1 ENTITY BROWSE ---------- */
+const entityTypes=[
+  {v:142,k:"Applications",x:"118 active · 24 retiring",sample:"CrewSched"},
+  {v:38,k:"AI Initiatives",x:"9 in-flight · 4 stalled",sample:"GitHub Copilot"},
+  {v:67,k:"Vendors / Contracts",x:"6 renew < 120 days",sample:"Kyndryl"},
+  {v:24,k:"KPIs",x:"18 with targets",sample:"ServiceNow"},
+  {v:19,k:"Org Units",x:"4 CXO functions",sample:"CIO Office"},
+  {v:12,k:"Personas",x:"linked to 31 facts",sample:"GitHub Copilot"},
+];
+const entityDetail={
+  "Kyndryl":{type:"Vendor",facts:[["Annual contract value","$4.2M","Vendor Contracts · row 41"],["Renewal date","Sep 18, 2026","row 41"],["Auto-renew","Yes","row 41"],["Benchmark on file","No","—"],["Services provided","AMS for 12 apps","Org Structure"],["Renewal risk","High (derived)","insight: ams"]],rel:"Provides AMS for 12 applications · 1 active insight (AMS renewal) · linked to CIO Office strategy claim."},
+  "GitHub Copilot":{type:"AI Initiative / Tool",facts:[["Initiative","Dev Productivity AI","AI Initiative Register · row 12"],["Stage","Scaling","row 12"],["Active users","31% of licensed seats","Copilot Usage · May"],["Value-case assumption","70%","charter chunk 4/11"],["Annual spend","$0.31M → Microsoft","Vendor Contracts"],["Realised value fact","none on file","—"]],rel:"Used by Backend Engineers persona · drives PR cycle-time KPI (−9%, weak) · 1 active insight (value at risk)."},
+  "ServiceNow":{type:"Vendor / KPI source",facts:[["MTTR change QoQ","+22%","ITSM export · Apr 30"],["Services breaching SLA","3 (P2)","derived"],["Source freshness","Stale (Apr 30)","source_health"],["Incidents parsed","500","template run"]],rel:"Feeds 4 service KPIs · 1 active insight (SLA slide) · source is stale → answers flagged."},
+  "CrewSched":{type:"Application",facts:[["Criticality","Tier-1","App Inventory · row 88"],["Owner (App Inventory)","Ops · M. Reyes","row 88"],["Owner (Org Export)","IT · D. Kahn","Org Structure"],["Status","Active","row 88"]],rel:"⚠ Conflicting ownership across two sources → stewardship task open · 1 data-quality insight."},
+  "CIO Office":{type:"Org Unit",facts:[["Claimed priority","AMS consolidation = top-3 FY27","Board Memo (review)"],["Lifecycle","review-required","not committed"],["Linked vendor","Kyndryl","relationship"]],rel:"Source of 1 pending strategy claim (review-required) · linked to Kyndryl renewal insight."},
+  "Contact-Centre AI":{type:"AI Initiative",facts:[["Stage","Pilot","AI Initiative Register"],["Annual spend","$0.74M","register"],["Realised value fact","none","—"],["Finance actuals","not loaded","missing source"]],rel:"Most expensive initiative without a realised-value fact · blocked by missing Finance source."},
+};
+function renderEntIndex(){
+  const g=$("#entindex");g.innerHTML="";
+  entityTypes.forEach(e=>{const c=el("button","ent");c.innerHTML=`<div class="v">${e.v}</div><div class="k">${e.k}</div><div class="x">${e.x}</div>`;
+    c.onclick=()=>openEntity(e.sample,c);g.appendChild(c)});
+}
+function openEntity(name,node){
+  document.querySelectorAll(".ent").forEach(x=>x.classList.remove("on")); if(node)node.classList.add("on");
+  const d=entityDetail[name]; const box=$("#edetail"); if(!d){box.classList.remove("show");return}
+  box.innerHTML=`<h3>${name}</h3><div style="color:var(--muted);font-size:12.5px;margin-bottom:12px">${d.type} · L1 canonical record</div>
+    ${d.facts.map(f=>`<div class="factline"><span class="fk">${f[0]}</span><span style="text-align:right"><span class="fv">${f[1]}</span><br><span class="fc">${f[2]}</span></span></div>`).join("")}
+    <div class="relband"><b>Relationships &amp; derived:</b> ${d.rel}</div>`;
+  box.classList.add("show");box.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+/* ---------- change log + coverage ---------- */
 const STATES=["received","classified","parsed","validated","committed","evidence-linked","embedded","answer-proven"];
 const sources=[
   {nm:"Application Inventory",ty:"CSV",fr:"fresh",rec:142,ch:142,emb:true,ev:"full",upd:"Jun 14",reached:8,own:"IT Asset Mgmt"},
@@ -331,220 +390,128 @@ const sources=[
   {nm:"Vendor Contracts",ty:"XLSX template",fr:"attention",rec:67,ch:67,emb:true,ev:"partial",upd:"May 28",reached:7,own:"Procurement"},
   {nm:"ServiceNow ITSM Export",ty:"CSV",fr:"stale",rec:500,ch:500,emb:true,ev:"full",upd:"Apr 30",reached:8,own:"Service Mgmt"},
   {nm:"Org Structure",ty:"Source artifact",fr:"fresh",rec:19,ch:19,emb:true,ev:"full",upd:"Jun 11",reached:8,own:"AbarVa · Sentinel"},
-  {nm:"Copilot Usage (May)",ty:"CSV",fr:"attention",rec:1,ch:4,emb:true,ev:"full",upd:"Jun 03",reached:8,own:"Dev Platform"},
   {nm:"AMS Board Strategy Memo",ty:"PDF",fr:"review",rec:0,ch:11,emb:true,ev:"none",upd:"Jun 15",reached:4,own:"CIO Office"},
 ];
-const entities=[
-  {v:142,k:"Applications",x:"118 active · 24 retiring"},
-  {v:38,k:"AI Initiatives",x:"9 in-flight · 4 stalled"},
-  {v:67,k:"Vendors / Contracts",x:"6 renew < 120 days"},
-  {v:24,k:"KPIs",x:"18 with targets · 11 trending"},
-  {v:19,k:"Org Units",x:"4 CXO functions"},
-  {v:12,k:"Personas",x:"linked to 31 facts"},
-];
-const changes=[
-  {t:"Jun 15",src:"AMS Board Strategy Memo",ty:"new claim",mat:"high",sf:"Significance",rev:"review",tag:"strategy",txt:"CIO names AMS consolidation a top-3 FY27 priority — review required before it supersedes prior posture."},
-  {t:"Jun 12",src:"AI Initiative Register",ty:"updated",mat:"medium",sf:"Significance",rev:"auto",tag:"strategy",txt:"Dev Productivity AI moved Pilot → Scaling; owner unchanged."},
-  {t:"Jun 03",src:"Copilot Usage",ty:"updated",mat:"medium",sf:"Tower",rev:"auto",tag:"vendor",txt:"Copilot active users 31% of licensed seats (was 27%) — monthly snapshot, no period erased."},
-  {t:"May 28",src:"Vendor Contracts",ty:"changed",mat:"high",sf:"Significance",rev:"review",tag:"vendor",txt:"Kyndryl AMS renewal risk raised to High — window opens in 94 days, no benchmark on file."},
-  {t:"Apr 30",src:"ServiceNow ITSM",ty:"updated",mat:"medium",sf:"Significance",rev:"auto",tag:"ops",txt:"MTTR worsened 22% QoQ, breaching the P2 SLA on 3 services."},
-];
-const signif=[
-  {h:"AMS renewal window opens in 94 days with no benchmark",mat:"high",imp:"Kyndryl ($4.2M/yr) auto-renews Sep 18 unless a sourcing event starts now. No peer pricing on file — we'd negotiate blind.",cite:"Vendor Contracts · row 41"},
-  {h:"Copilot adoption stalled at 31% of licensed seats",mat:"high",imp:"$0.31M committed; value case assumed 70% adoption. Gap is concentrated in backend teams. Expand, coach, or right-size the license count.",cite:"Copilot Usage · May"},
-  {h:"ServiceNow MTTR up 22% QoQ, breaching SLA",mat:"medium",imp:"Three P2 services now out of SLA. Candidate for an AI-assisted triage Move, or a vendor service-credit conversation.",cite:"ServiceNow ITSM"},
-];
-const corpus=[
-  {h:"AMS Vendor Consolidation Playbook",c:"Sourcing",conf:.86,depth:9,x:"When and how to consolidate fragmented application-management contracts; leverage windows, TUPE, and price benchmarks."},
-  {h:"AMS Renewal Negotiation Canon",c:"Sourcing",conf:.82,depth:8,x:"Negotiation levers for incumbent AMS renewals — benchmark anchoring, scope re-baselining, exit credibility."},
-  {h:"Copilot Value Realization Curve",c:"AI Value",conf:.78,depth:7,x:"Typical adoption→productivity lag for code-assist tools; why seat-licensing outpaces realized value in year one."},
-  {h:"AI Initiative Stage-Gate Model",c:"Operating Model",conf:.8,depth:8,x:"Pilot→Scale→Embed gates with the evidence each stage must produce before funding continues."},
-  {h:"ITSM AI Triage Pattern",c:"AI Value",conf:.74,depth:6,x:"Where ML-assisted incident routing reduces MTTR, and the data prerequisites that make it safe."},
-];
-
-/* ---------------- ANSWERS (canned, evidence-cited) ---------------- */
-const answers={
-  copilot:{q:"What do we know about our Copilot rollout?",
-    lead:"GitHub Copilot is live for backend engineers under the <b>Dev Productivity AI</b> initiative. Adoption is <b>31% of licensed seats</b> as of May (up from 27%), against a value case that assumed 70%. PR cycle time shows a weak −9% signal. Spend is $0.31M/yr to Microsoft.",
-    route:"Hybrid · SQL facts + retrieval", conf:"Confidence: high",
-    table:[["Active users (of licensed)","31%"],["Value-case assumption","70%"],["PR cycle-time change","−9% (weak)"],["Annual spend","$0.31M"]],
-    cites:[["fact","copilot_active_users → Copilot Usage (May) · committed Jun 3"],["fact","initiative_stage → AI Initiative Register · row 12"],["doc","Dev Productivity AI charter · chunk 4/11"]],
-    miss:"DORA metrics not connected — can't yet prove engineering throughput before/after.",
-    go:{tab:"map"}},
-  vendor:{q:"What changed in the vendor portfolio this quarter?",
-    lead:"Two material vendor changes this quarter. <b>Kyndryl AMS renewal risk</b> rose to High (window opens in 94 days, no benchmark on file). <b>Microsoft Copilot</b> spend held flat while adoption rose to 31%. Both route to the Significance tab.",
-    route:"SQL · change-log route", conf:"Confidence: high",
-    cites:[["event","vendor_renewal_risk_changed · Vendor Contracts · May 28"],["event","copilot_adoption_updated · Jun 3"]],
-    go:{tab:"change",filter:"vendor",label:"Vendor changes this quarter"}},
-  board:{q:"Is our control-tower data fresh enough to brief the board?",
-    lead:"<b>Mostly — with two caveats.</b> 9 of 14 sources are fresh and 78% of board-relevant question types are answerable. But <b>ServiceNow ITSM is stale</b> (last refresh Apr 30) and <b>Finance actuals aren't loaded</b>, so any spend-vs-value claim would be unsupported. I'd refresh those two before the board.",
-    route:"SQL · answerability + freshness", conf:"Confidence: high",
-    cites:[["view","context_explorer_answerability → 78%"],["view","source_health → ServiceNow stale, Finance missing"]],
-    miss:"Finance actuals (ERP GL) not loaded — spend-vs-value answers blocked.",
-    go:{tab:"health"}},
-  corpus:{q:"What does the corpus know about AMS renewals?",
-    lead:"The global corpus has two directly relevant patterns: the <b>AMS Renewal Negotiation Canon</b> (confidence 0.82, depth 8) and the <b>AMS Vendor Consolidation Playbook</b> (0.86, depth 9). Both speak to leverage windows and benchmark anchoring — and they map onto your live Kyndryl renewal in 94 days.",
-    route:"Corpus search · global library", conf:"Confidence: high",
-    cites:[["pattern","AMS Renewal Negotiation Canon · corpus"],["pattern","AMS Vendor Consolidation Playbook · corpus"]],
-    go:{tab:"corpus"}},
-  sources:{q:"How fresh are our sources?",
-    lead:"14 sources: <b>9 fresh, 3 attention, 2 stale</b>. The two stale ones are ServiceNow ITSM (Apr 30) and the AMS Board Strategy Memo is parsed but <b>review-required</b> — not yet committed.",
-    route:"SQL · source_health view", conf:"Confidence: high",
-    cites:[["view","context_explorer_source_health"]], go:{tab:"health"}},
-  facts:{q:"What changed in our facts recently?",
-    lead:"96 facts are superseded (history preserved, not erased). The most material recent change: the CIO strategy memo introduces a top-3 AMS priority claim that's <b>awaiting review</b> before it supersedes the prior posture.",
-    route:"SQL · fact history", conf:"Confidence: medium",
-    cites:[["event","cio_priority_changed · Jun 15 · review"]], go:{tab:"change"}},
-  evidence:{q:"Which facts aren't cited?",
-    lead:"71% of facts carry a citation. The largest uncited cluster is in <b>Vendor Contracts</b> (partial evidence) — 14 contract facts lack a source-row locator and should enter the Context Inbox.",
-    route:"SQL · evidence coverage", conf:"Confidence: high",
-    cites:[["view","source_health → Vendor Contracts: partial"]], go:{tab:"health"}},
-};
-
-/* ---------------- RENDER ---------------- */
-const $=s=>document.querySelector(s), el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
-const FRB={fresh:"b-fresh",attention:"b-attention",stale:"b-stale",unknown:"b-unknown",review:"b-review"};
-const FRC={fresh:"var(--fresh)",attention:"var(--attention)",stale:"var(--stale)",unknown:"var(--unknown)",review:"var(--review)"};
-
-function renderHealth(){
+function renderTrust(){
   const box=$("#srchealth");box.innerHTML="";
-  sources.forEach((s,i)=>{
-    const r=el("div","row");
+  sources.forEach(s=>{
+    const r=el("div","row");r.style.gridTemplateColumns="14px 1.7fr .9fr 1fr .9fr 1fr 18px";
     r.innerHTML=`<span class="sdot" style="background:${FRC[s.fr]}"></span>
-      <span><span class="nm">${s.nm}</span><br><span class="sб">${s.ty} · ${s.own}</span></span>
+      <span><span class="nm">${s.nm}</span><br><span class="sb2">${s.ty} · ${s.own}</span></span>
       <span><span class="badge ${FRB[s.fr]}">${s.fr}</span></span>
-      <span class="num">${s.rec} rec · ${s.ch} ch</span>
-      <span class="num">${s.emb?"embedded":"—"}</span>
-      <span class="num">evidence: ${s.ev}</span>
-      <span class="chev">›</span>`;
+      <span class="num">${s.rec} rec · ${s.ch} ch</span><span class="num">${s.emb?"embedded":"—"}</span>
+      <span class="num">evidence: ${s.ev}</span><span class="chev">›</span>`;
     const d=el("div","detail");
     d.innerHTML=`<div class="truth">${STATES.map((st,k)=>`<div class="ts ${k<s.reached?'hit':''} ${k===s.reached?'cur':''}"><span class="n">${k+1}</span>${st}</div>`).join("")}</div>
-      <div class="dgrid">
-        <div><span>Last refresh:</span> ${s.upd}</div>
-        <div><span>Owner:</span> ${s.own}</div>
-        <div><span>Furthest state:</span> ${STATES[Math.min(s.reached,7)]}</div>
-      </div>
-      ${s.reached<8?`<div class="miss" style="margin-top:12px">First unmet state: <b>${STATES[s.reached]||'—'}</b>${s.fr==='review'?' — material claim is parsed but review-required, so it is not yet committed or answerable.':s.fr==='stale'?' — source is past its refresh cadence; answers citing it will be flagged stale.':''}</div>`:`<div style="margin-top:12px;color:var(--fresh);font-size:12.5px">✓ Answer-proven — fully usable in signed-in Q&A.</div>`}`;
-    r.onclick=()=>{r.classList.toggle("open");d.classList.toggle("show")};
-    box.appendChild(r);box.appendChild(d);
+      ${s.reached<8?`<div class="miss" style="margin-top:12px">First unmet state: <b>${STATES[s.reached]||'—'}</b>${s.fr==='review'?' — material claim parsed but review-required → not committed, not answerable.':s.fr==='stale'?' — past refresh cadence; insights citing it are flagged stale.':''}</div>`:`<div style="margin-top:12px;color:var(--fresh);font-size:12.5px">✓ Answer-proven — fully usable.</div>`}`;
+    r.onclick=()=>{r.classList.toggle("open");d.classList.toggle("show")};box.appendChild(r);box.appendChild(d);
   });
 }
-function renderMap(){
-  const g=$("#entindex");g.innerHTML="";
-  entities.forEach(e=>{const c=el("div","ent");c.innerHTML=`<div class="v">${e.v}</div><div class="k">${e.k}</div><div class="x">${e.x}</div>`;
-    c.onclick=()=>toast(`Would open the ${e.k} list → record → facts + evidence`);g.appendChild(c)});
-}
+const changes=[
+  {t:"Jun 15",src:"AMS Board Strategy Memo",ty:"new claim",mat:"high",sf:"Insights",rev:"review",tag:"strategy",txt:"CIO names AMS consolidation a top-3 FY27 priority — review required before it supersedes prior posture."},
+  {t:"Jun 12",src:"AI Initiative Register",ty:"updated",mat:"medium",sf:"Insights",rev:"auto",tag:"strategy",txt:"Dev Productivity AI moved Pilot → Scaling."},
+  {t:"Jun 03",src:"Copilot Usage",ty:"updated",mat:"medium",sf:"Insights",rev:"auto",tag:"vendor",txt:"Copilot active users 31% (was 27%) — monthly snapshot, prior period preserved."},
+  {t:"May 28",src:"Vendor Contracts",ty:"changed",mat:"high",sf:"Insights",rev:"review",tag:"vendor",txt:"Kyndryl AMS renewal risk raised to High — window opens in 94 days, no benchmark."},
+  {t:"Apr 30",src:"ServiceNow ITSM",ty:"updated",mat:"medium",sf:"Insights",rev:"auto",tag:"ops",txt:"MTTR worsened 22% QoQ, breaching the P2 SLA on 3 services."},
+];
 function renderChange(filter){
   const box=$("#changerows");box.innerHTML="";
-  const fc=$("#change-filter");fc.innerHTML=filter?`· filtered to <b>${filter}</b> <button class="lnk" onclick="renderChange()">clear</button>`:"";
+  $("#change-filter").innerHTML=filter?`· filtered to <b>${filter}</b> <button class="lnk" onclick="renderChange()">clear</button>`:"";
   changes.filter(c=>!filter||c.tag===filter).forEach(c=>{
     const r=el("div","row");r.style.gridTemplateColumns="14px 2.4fr .8fr .9fr 18px";
     r.innerHTML=`<span class="sdot" style="background:${c.mat==='high'?'var(--stale)':'var(--attention)'}"></span>
-      <span><span class="nm">${c.txt}</span><br><span class="sб">${c.t} · ${c.src} · ${c.ty}</span></span>
+      <span><span class="nm">${c.txt}</span><br><span class="sb2">${c.t} · ${c.src} · ${c.ty}</span></span>
       <span><span class="badge ${c.rev==='review'?'b-review':'b-fresh'}">${c.rev==='review'?'review':'auto'}</span></span>
       <span class="num">→ ${c.sf}</span><span class="chev">›</span>`;
-    const d=el("div","detail");d.innerHTML=`<div class="dgrid"><div><span>Materiality:</span> ${c.mat}</div><div><span>Affected surface:</span> ${c.sf}</div><div><span>Handling:</span> ${c.rev==='review'?'review-required':'auto-committed after validation'}</div></div>${c.rev==='review'?'<div class="miss" style="margin-top:10px">Routed to the Context Inbox — a material claim must be approved before it supersedes the prior fact.</div>':''}`;
-    r.onclick=()=>{r.classList.toggle("open");d.classList.toggle("show")};
-    box.appendChild(r);box.appendChild(d);
+    box.appendChild(r);
   });
 }
-function renderSignif(){
-  const box=$("#signifrows");box.innerHTML="";
-  signif.forEach(s=>{const c=el("div","scard");
-    c.innerHTML=`<div class="top"><div><h4>${s.h}</h4><p class="imp">${s.imp}</p></div>
-      <span class="matpill ${s.mat==='high'?'b-stale':'b-attention'}">${s.mat} materiality</span></div>
-      <div class="ft"><button class="btn">Shape into Move ›</button><button class="btn ghost">Explain</button>
-      <span class="pill">cite: ${s.cite}</span></div>`;
-    c.querySelector(".btn").onclick=()=>toast("Would open Strategic Moves · originate — context pre-populated");
-    c.querySelector(".btn.ghost").onclick=()=>askFlow(`Explain: ${s.h}`,{lead:s.imp,route:"SQL facts + corpus",conf:"Confidence: high",cites:[["fact",s.cite]]});
-    box.appendChild(c)});
-}
+const corpus=[
+  {h:"AMS Vendor Consolidation Playbook",c:"Sourcing",conf:.86,depth:9,x:"When and how to consolidate fragmented application-management contracts; leverage windows and price benchmarks."},
+  {h:"AMS Renewal Negotiation Canon",c:"Sourcing",conf:.82,depth:8,x:"Negotiation levers for incumbent AMS renewals — benchmark anchoring, scope re-baselining, exit credibility."},
+  {h:"Copilot Value Realization Curve",c:"AI Value",conf:.78,depth:7,x:"Typical adoption→productivity lag for code-assist tools; why seat-licensing outpaces realised value in year one."},
+  {h:"AI Initiative Stage-Gate Model",c:"Operating Model",conf:.8,depth:8,x:"Pilot→Scale→Embed gates with the evidence each stage must produce before funding continues."},
+  {h:"ITSM AI Triage Pattern",c:"AI Value",conf:.74,depth:6,x:"Where ML-assisted incident routing reduces MTTR, and the data prerequisites that make it safe."},
+];
+let curCat="all";
 function renderCorpus(q,cat){
   const box=$("#corpusrows");box.innerHTML="";
   let list=corpus.filter(p=>(!cat||cat==="all"||p.c===cat)&&(!q||(p.h+p.x).toLowerCase().includes(q.toLowerCase())));
   if(!list.length){box.innerHTML=`<p style="color:var(--muted)">No corpus patterns match.</p>`;return}
   list.forEach(p=>{const c=el("div","scard");
-    c.innerHTML=`<div class="top"><div><h4>${p.h}</h4><p class="imp">${p.x}</p></div>
-      <span class="pill">${p.c}</span></div>
-      <div class="ft"><span class="pill conf">confidence ${p.conf.toFixed(2)}</span><span class="pill">depth ${p.depth}/10</span>
-      <button class="btn ghost">Open pattern ›</button></div>`;
-    c.querySelector(".btn.ghost").onclick=()=>toast("Would open corpus pattern detail (claims · evidence · counterarguments · synthesis)");
+    c.innerHTML=`<div class="top"><div><h4>${p.h}</h4><p class="imp">${p.x}</p></div><span class="pill">${p.c}</span></div>
+      <div class="ft"><span class="pill conf">confidence ${p.conf.toFixed(2)}</span><span class="pill">depth ${p.depth}/10</span><button class="btn ghost">Apply to my insights ›</button></div>`;
+    c.querySelector(".btn.ghost").onclick=()=>toast("Would map this corpus pattern onto matching client facts/insights");
     box.appendChild(c)});
 }
 
-/* ---------------- INTERACTION ---------------- */
-function switchTab(p){
-  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.pane===p));
-  document.querySelectorAll(".pane").forEach(x=>x.classList.toggle("on",x.id==="pane-"+p));
-  $(".dashbody").scrollTop=0;
-}
-$("#tabs").onclick=e=>{const t=e.target.closest(".tab");if(t)switchTab(t.dataset.pane)};
-
-function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._);t._=setTimeout(()=>t.classList.remove("show"),2400)}
-
-function addMsg(role,html){const m=el("div","msg "+role);m.innerHTML=role==="user"?`<span class="bub">${html}</span>`:html;$("#convo").appendChild(m);$("#convo").scrollTop=1e6;return m}
-
+/* ---------- Sentinel ---------- */
+const answers={
+  telling:{q:"What is my context telling me right now?",
+    lead:"Six significant things, ranked by materiality. The three loudest: <b>(1)</b> a $4.2M AMS contract auto-renews in 94 days with no benchmark; <b>(2)</b> Copilot adoption (31%) is far below the value-case (70%); <b>(3)</b> service MTTR is up 22% and breaching SLA. One more is <i>pending review</i> (a CIO strategy claim), and one is <i>blocked</i> by a missing Finance source.",
+    route:"L2 insight feed · rule-derived", conf:"Confidence: high",
+    cites:[["rule","6 significance rules fired over 1,284 facts"],["evidence","each insight traces to a source row"]],
+    go:{tab:"insights"}},
+  derive:{q:"Derive a view of our vendor risk",
+    lead:"Composed a vendor-risk view from your facts: <b>2 vendor insights</b>, <b>6 contracts renewing in &lt;120 days</b>, and <b>$8.9M</b> of spend under those renewals. Pinned it to the Insights tab.",
+    route:"derive-view · composed from L1 facts", conf:"Confidence: high",
+    cites:[["fact","vendor renewal dates · Vendor Contracts"],["insight","ams, (copilot spend)"]],
+    derive:{title:"Vendor risk — derived view",strip:[["6","renewals < 120d"],["$8.9M","spend under renewal"],["1","no benchmark on file"]],
+      rows:[["Kyndryl AMS — renews in 94d, no benchmark","high"],["Microsoft Copilot — adoption 31% vs 70% case","high"],["Salesforce — renews in 118d, benchmark on file","medium"]]},
+    go:{tab:"insights"}},
+  copilot:{q:"Is our Copilot investment paying off?",
+    lead:"<b>Not yet — and the context can prove the gap but not the upside.</b> Adoption is 31% of licensed seats against a 70% assumption; $0.31M is committed; PR cycle-time shows only a weak −9%. I can't confirm realised value because DORA metrics aren't connected.",
+    route:"Hybrid · SQL facts + retrieval", conf:"Confidence: high",
+    table:[["Active users (of licensed)","31%"],["Value-case assumption","70%"],["PR cycle-time change","−9% (weak)"],["Annual spend","$0.31M"]],
+    cites:[["fact","copilot_active_users → Copilot Usage (May)"],["fact","initiative_stage → AI Initiative Register · row 12"],["doc","Dev Productivity AI charter · chunk 4/11"]],
+    miss:"DORA metrics not connected — can't prove throughput before/after.", go:{tab:"explore"}},
+  board:{q:"What can't you answer yet, and why?",
+    lead:"Three blind spots, each traced to a missing or stale source. <b>(1)</b> Spend-vs-realised-value — Finance actuals not loaded. <b>(2)</b> Engineering productivity before/after — DORA not connected. <b>(3)</b> Anything citing ServiceNow is <i>stale</i> (Apr 30). Overall answerability is 78%.",
+    route:"SQL · answerability + coverage", conf:"Confidence: high",
+    cites:[["view","answerability → 78%"],["view","source_health → Finance missing, ServiceNow stale"]],
+    miss:"Finance actuals + DORA not loaded; ServiceNow past refresh cadence.", go:{tab:"trust"}},
+  sources:{q:"How fresh are our sources?",lead:"14 sources: <b>9 fresh, 3 attention, 2 stale</b>. ServiceNow ITSM is stale (Apr 30); the AMS Board Memo is parsed but review-required (not committed).",route:"SQL · source_health",conf:"Confidence: high",cites:[["view","source_health"]],go:{tab:"trust"}},
+  facts:{q:"What changed in our facts recently?",lead:"96 facts are superseded (history preserved). Most material recent change: the CIO memo's top-3 AMS priority claim, awaiting review before it supersedes the prior posture.",route:"SQL · fact history",conf:"Confidence: medium",cites:[["event","cio_priority_changed · Jun 15 · review"]],go:{tab:"change"}},
+};
 function answerCard(a){
   const tbl=a.table?`<table class="minitbl">${a.table.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</table>`:"";
   const miss=a.miss?`<div class="miss"><b>What's missing:</b> ${a.miss}</div>`:"";
   const cites=a.cites?`<div class="cites"><div class="ct">Evidence</div>${a.cites.map(c=>`<div class="cite"><span class="cdot">${c[0]} ·</span><span>${c[1]}</span></div>`).join("")}</div>`:"";
   return `<div class="answer"><p class="lead">${a.lead}</p>${tbl}
     <div class="route"><span class="pill route-chip">route · ${a.route}</span><span class="pill conf">${a.conf}</span><span class="pill">freshness checked</span></div>
-    ${cites}${miss}
-    ${a.go?`<div class="ansact"><button class="lnk" data-jump='${JSON.stringify(a.go)}'>↳ this updated the dashboard →</button></div>`:""}</div>`;
+    ${cites}${miss}${a.go||a.derive?`<div class="ansact"><button class="lnk" data-jump>↳ ${a.derive?'derived a view on the right':'this updated the dashboard'} →</button></div>`:""}</div>`;
 }
-
-function applyDirective(go){
-  if(!go)return;
-  switchTab(go.tab);
-  if(go.tab==="change") renderChange(go.filter);
-  if(go.label){ // pin a generated answer-view
-    const host = go.tab==="change" ? "#change-pin" : go.tab==="health" ? "#health-pin" : null;
-    if(host){ $(host).innerHTML=`<div class="pinned"><button class="px" onclick="this.parentNode.remove()">×</button>
-      <div class="pl">pinned from your question</div><b class="serif" style="font-size:15px">${go.label}</b>
-      <div style="color:var(--muted);font-size:12.5px;margin-top:5px">2 material vendor changes this quarter · see rows below.</div></div>`; }
-  }
-  // flash the destination
-  const pane=$("#pane-"+go.tab); if(pane){pane.classList.add("flash");setTimeout(()=>pane.classList.remove("flash"),1400);}
+function applyDirective(a){
+  if(a.derive){const d=a.derive;$("#derived-host").innerHTML=`<div class="derived"><div class="dhd"><div><div class="dl">derived from your question</div><h3>${d.title}</h3></div><button class="px" onclick="this.closest('.derived').remove()">×</button></div>
+    <div class="dstrip">${d.strip.map(s=>`<div class="ds"><div class="v">${s[0]}</div><div class="k">${s[1]}</div></div>`).join("")}</div>
+    <div class="dbody">${d.rows.map(r=>`<div class="dmini"><span>${r[0]}</span><span class="matpill ${MATB[r[1]]}">${r[1]}</span></div>`).join("")}</div></div>`;}
+  if(a.go){switchTab(a.go.tab);const p=$("#pane-"+a.go.tab);if(p){p.classList.add("flash");setTimeout(()=>p.classList.remove("flash"),1400);}}
 }
-
+function addMsg(role,html){const m=el("div","msg "+role);m.innerHTML=role==="user"?`<span class="bub">${html}</span>`:html;$("#convo").appendChild(m);$("#convo").scrollTop=1e6;return m}
 function askFlow(qText,a){
-  addMsg("user",qText);
-  $("#suggest").style.display="none";
-  const thinking=addMsg("agent",`<div class="answer"><p class="lead" style="color:var(--muted)">Routing your question…</p></div>`);
-  setTimeout(()=>{
-    thinking.innerHTML=answerCard(a);
-    thinking.querySelectorAll("[data-jump]").forEach(b=>b.onclick=()=>applyDirective(JSON.parse(b.dataset.jump)));
-    if(a.go) applyDirective(a.go);
-    $("#convo").scrollTop=1e6;
-  },520);
+  addMsg("user",qText);$("#suggest").style.display="none";
+  const t=addMsg("agent",`<div class="answer"><p class="lead" style="color:var(--muted)">Routing your question…</p></div>`);
+  setTimeout(()=>{t.innerHTML=answerCard(a);const b=t.querySelector("[data-jump]");if(b)b.onclick=()=>applyDirective(a);applyDirective(a);$("#convo").scrollTop=1e6;},520);
 }
+function switchTab(p){document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.pane===p));
+  document.querySelectorAll(".pane").forEach(x=>x.classList.toggle("on",x.id==="pane-"+p));$(".dashbody").scrollTop=0;}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._);t._=setTimeout(()=>t.classList.remove("show"),2400)}
 
-document.querySelectorAll("[data-ask]").forEach(b=>b.addEventListener("click",()=>{
-  const a=answers[b.dataset.ask]; if(a) askFlow(a.q,a);
-}));
-
-// free-text ask
-const ask=$("#ask"), send=$("#send");
+$("#tabs").onclick=e=>{const t=e.target.closest(".tab");if(t)switchTab(t.dataset.pane)};
+document.querySelectorAll("[data-ask]").forEach(b=>b.addEventListener("click",()=>{const a=answers[b.dataset.ask];if(a)askFlow(a.q,a)}));
+const ask=$("#ask"),send=$("#send");
 ask.addEventListener("input",()=>{ask.style.height="auto";ask.style.height=Math.min(ask.scrollHeight,120)+"px";send.disabled=!ask.value.trim()});
-function submit(){
-  const v=ask.value.trim(); if(!v)return;
-  const key=Object.keys(answers).find(k=>{const a=answers[k];const t=(v).toLowerCase();
-    return (k==="copilot"&&/copilot/.test(t))||(k==="vendor"&&/vendor|renew|contract/.test(t))||(k==="board"&&/board|fresh|brief/.test(t))||(k==="corpus"&&/corpus|pattern|playbook|amS/i.test(t));});
+function submit(){const v=ask.value.trim();if(!v)return;const t=v.toLowerCase();
+  const key=Object.keys(answers).find(k=>(k==="telling"&&/telling|significan|insight|what.*know/.test(t))||(k==="derive"&&/derive|view of|dashboard|compose/.test(t))||(k==="copilot"&&/copilot|paying|invest/.test(t))||(k==="board"&&/can.?t.*answer|blind|missing|gap/.test(t))||(k==="sources"&&/fresh|source/.test(t))||(k==="facts"&&/chang/.test(t)));
   ask.value="";ask.style.height="auto";send.disabled=true;
-  if(key) askFlow(v,answers[key]);
-  else askFlow(v,{lead:"In the live build I'd route this deterministically (SQL for counts/facts/trends, retrieval for documents, graph for connected questions, corpus search for general knowledge), answer with citations, and say what's missing rather than invent. This prototype has four worked examples wired — try the starters.",route:"router · demo",conf:"Confidence: —",cites:[["note","prototype · canned routes only"]]});
+  if(key)askFlow(v,answers[key]);
+  else askFlow(v,{lead:"In the live build I'd route this deterministically — rules over facts for significance, SQL for counts/trends, retrieval for documents, graph for connected questions — and answer with citations, never invention. Try the starters to see worked routes.",route:"router · demo",conf:"Confidence: —",cites:[["note","prototype · canned routes"]]});
 }
-send.onclick=submit;
-ask.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();submit()}});
-
+send.onclick=submit;ask.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();submit()}});
 $("#corpussearch").addEventListener("input",e=>renderCorpus(e.target.value,curCat));
-let curCat="all";
-$("#cfilters").onclick=e=>{const f=e.target.closest(".filt");if(!f)return;curCat=f.dataset.c;
-  document.querySelectorAll(".filt").forEach(x=>x.classList.toggle("on",x===f));renderCorpus($("#corpussearch").value,curCat)};
+$("#cfilters").onclick=e=>{const f=e.target.closest(".filt");if(!f)return;curCat=f.dataset.c;document.querySelectorAll(".filt").forEach(x=>x.classList.toggle("on",x===f));renderCorpus($("#corpussearch").value,curCat)};
 
-/* init */
-renderHealth();renderMap();renderChange();renderSignif();renderCorpus();
+renderInsights();renderEntIndex();renderChange();renderTrust();renderCorpus();
 </script>
 </body>
 </html>
