@@ -19,6 +19,7 @@ import type {
   RenderableDeliverable,
 } from './types';
 import { getArtifactBrief } from './artifact-brief-registry';
+import { buildGenerationProgress, type GenerationProgress } from './progress';
 import { buildPassPrompt } from './prompt-builder';
 import { validateGenerationPlan } from './generation-plan';
 import { validateDeliverableQuality } from './quality-validator';
@@ -95,6 +96,7 @@ async function call(
   prompt: PassPrompt,
   req: DeliverableIntelligenceRequest,
   trace: PassTraceEntry[],
+  onProgress?: (p: GenerationProgress) => void,
 ): Promise<ModelCallResult> {
   const res = await modelCall(prompt, req);
   trace.push({
@@ -104,6 +106,10 @@ async function call(
     outputChars: res.text.length,
     responseId: res.responseId,
   });
+  // Emit a progress event for the pass that just completed (trace.length is the
+  // 1-based count of completed passes). The callback persists it to the run
+  // ledger so the UI can show a live percent band during generation.
+  onProgress?.(buildGenerationProgress(prompt.pass, trace.length));
   return res;
 }
 
@@ -112,6 +118,8 @@ export interface OrchestrationOptions {
   enforcePlanGate?: boolean;
   /** if true (default), quality blockers mark the result not-ok (export should be refused). */
   enforceQualityGate?: boolean;
+  /** invoked after each pass completes, with a human-facing {pct,label} for the run ledger / UI band. */
+  onProgress?: (p: GenerationProgress) => void;
 }
 
 export async function runDeliverableOrchestration(
@@ -127,7 +135,7 @@ export async function runDeliverableOrchestration(
   const trace: PassTraceEntry[] = [];
 
   // Pass 1 — architect
-  const architectRes = await call(modelCall, buildPassPrompt('architect', { req, brief, evidence }), req, trace);
+  const architectRes = await call(modelCall, buildPassPrompt('architect', { req, brief, evidence }), req, trace, opts.onProgress);
   const plan = extractJson<DeliverableGenerationPlan>(architectRes.text);
   trace[trace.length - 1].parsedOk = !!plan;
   if (!plan) {
@@ -140,22 +148,22 @@ export async function runDeliverableOrchestration(
   const approvedPlanJson = JSON.stringify(plan);
 
   // Pass 2 — evidence grounding (refines mapping; output threaded as context only)
-  await call(modelCall, buildPassPrompt('evidence_grounding', { req, brief, evidence, approvedPlanJson }), req, trace);
+  await call(modelCall, buildPassPrompt('evidence_grounding', { req, brief, evidence, approvedPlanJson }), req, trace, opts.onProgress);
 
   // Pass 3 — full draft
-  const draftRes = await call(modelCall, buildPassPrompt('full_draft', { req, brief, evidence, approvedPlanJson }), req, trace);
+  const draftRes = await call(modelCall, buildPassPrompt('full_draft', { req, brief, evidence, approvedPlanJson }), req, trace, opts.onProgress);
   const draftMarkdown = draftRes.text;
 
   // Pass 4 — red-team
-  const critiqueRes = await call(modelCall, buildPassPrompt('red_team', { req, brief, evidence, draftMarkdown }), req, trace);
+  const critiqueRes = await call(modelCall, buildPassPrompt('red_team', { req, brief, evidence, draftMarkdown }), req, trace, opts.onProgress);
   const critique = critiqueRes.text;
 
   // Pass 5 — board-grade rewrite
-  const rewriteRes = await call(modelCall, buildPassPrompt('board_grade_rewrite', { req, brief, evidence, draftMarkdown, critiqueText: critique }), req, trace);
+  const rewriteRes = await call(modelCall, buildPassPrompt('board_grade_rewrite', { req, brief, evidence, draftMarkdown, critiqueText: critique }), req, trace, opts.onProgress);
   const revisedMarkdown = rewriteRes.text;
 
   // Pass 6 — render package
-  const renderRes = await call(modelCall, buildPassPrompt('render_package', { req, brief, evidence, revisedDraftMarkdown: revisedMarkdown }), req, trace);
+  const renderRes = await call(modelCall, buildPassPrompt('render_package', { req, brief, evidence, revisedDraftMarkdown: revisedMarkdown }), req, trace, opts.onProgress);
   const document = extractJson<RenderableDeliverable>(renderRes.text);
   trace[trace.length - 1].parsedOk = !!document;
   if (!document) {
