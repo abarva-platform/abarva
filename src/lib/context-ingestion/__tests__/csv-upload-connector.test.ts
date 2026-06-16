@@ -236,6 +236,38 @@ describe("csv upload connector", () => {
     });
   });
 
+  it("infers DORA required fields from pilot-friendly source headers", () => {
+    const mapping = inferCsvSchemaMapping({
+      fileName: "dora_productivity_baseline.csv",
+      templateId: "dora-baseline",
+      headers: [
+        "scorecard_id",
+        "domain",
+        "lead_time_for_change_hours",
+        "deploy_frequency_per_week",
+        "MTTR_hours",
+        "change_failure_rate_pct",
+        "last_updated",
+        "metric",
+      ],
+    });
+
+    expect(mapping).toMatchObject({
+      templateId: "dora-baseline",
+      dimension: "delivery_dora_devex",
+      sourceRecordIdColumn: "scorecard_id",
+      titleColumn: "metric",
+      fieldMappings: {
+        team_id: "scorecard_id",
+        measured_at: "last_updated",
+        deploy_freq_per_week: "deploy_frequency_per_week",
+        lead_time_hours: "lead_time_for_change_hours",
+        mttr_hours: "MTTR_hours",
+        change_failure_rate_pct: "change_failure_rate_pct",
+      },
+    });
+  });
+
   it("represents Meridian healthcare template catalog entries in the tenant runtime registry", () => {
     const catalogTemplates = readMeridianTemplateCatalog();
     const runtimeTemplates = getTemplatesForTenant("meridian-health");

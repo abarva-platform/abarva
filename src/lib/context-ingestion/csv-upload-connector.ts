@@ -17,10 +17,10 @@ import {
   promoteAdminStructuredRowsToEnterpriseContext,
   type AdminStructuredContextPromotionResult,
 } from "./admin-structured-context-promotion";
+import { proposeCsvColumnMapping } from "./csv-column-mapping";
 import { classifyUploadedFile } from "./file-classifier";
 import { computeStableChunkId } from "./fact-identity";
 import { buildPHSEvidenceLedgerInputs } from "./phs-evidence-ledger-binding";
-import { buildTemplateSchemaPreflight } from "./schema-preflight";
 import {
   getTemplateById,
   getTemplateForDimension,
@@ -246,18 +246,16 @@ function resolveTemplate(
   );
 }
 
-function assertPHSRequiredFieldsMapped(
+function assertRequiredFieldsMapped(
   template: ContextTemplateDefinition,
-  headers: readonly string[],
+  mapping: CsvMappingSuggestion,
 ): void {
-  if (!template.id.startsWith("phs-")) return;
-  const preflight = buildTemplateSchemaPreflight({
-    templateId: template.id,
-    headers,
-  });
-  if (preflight.missingRequiredFields.length === 0) return;
+  const missingRequiredFields = template.requiredFields.filter(
+    (field) => !mapping.fieldMappings[field],
+  );
+  if (missingRequiredFields.length === 0) return;
   throw new Error(
-    `csv_missing_required_fields:${preflight.missingRequiredFields.join(",")}`,
+    `csv_missing_required_fields:${missingRequiredFields.join(",")}`,
   );
 }
 
@@ -440,6 +438,7 @@ export function inferCsvSchemaMapping(args: {
   );
   const fieldMappings: Record<string, string> = {};
   const providedFieldMappings = args.mapping?.fieldMappings ?? {};
+  const proposed = proposeCsvColumnMapping({ headers: args.headers, template });
 
   for (const field of [
     ...template.requiredFields,
@@ -452,13 +451,16 @@ export function inferCsvSchemaMapping(args: {
     }
     const exact = findHeader(args.headers, [field]);
     if (exact) fieldMappings[field] = exact;
+    const inferred = proposed.fieldMappings[field];
+    if (inferred) fieldMappings[field] = inferred;
   }
 
   const sourceRecordIdColumn =
     args.mapping?.sourceRecordIdColumn &&
     args.headers.includes(args.mapping.sourceRecordIdColumn)
       ? args.mapping.sourceRecordIdColumn
-      : findHeader(args.headers, [
+      : (proposed.sourceRecordIdColumn ??
+        findHeader(args.headers, [
           ...template.requiredFields.filter((field) => /(^|_)id$/.test(field)),
           "id",
           "record_id",
@@ -467,19 +469,20 @@ export function inferCsvSchemaMapping(args: {
           "vendor_id",
           "initiative_id",
           "tool_id",
-        ]);
+        ]));
 
   const titleColumn =
     args.mapping?.titleColumn && args.headers.includes(args.mapping.titleColumn)
       ? args.mapping.titleColumn
-      : findHeader(args.headers, [
+      : (proposed.titleColumn ??
+        findHeader(args.headers, [
           "title",
           "name",
           "vendor_name",
           "tool_name",
           "metric",
           "priority",
-        ]);
+        ]));
 
   const providedTextColumns =
     args.mapping?.textColumns?.filter((header) =>
@@ -489,10 +492,12 @@ export function inferCsvSchemaMapping(args: {
   const textColumns = (
     providedTextColumns.length > 0
       ? providedTextColumns
-      : [
-          ...mappedColumns,
-          ...args.headers.filter((header) => !mappedColumns.includes(header)),
-        ]
+      : proposed.textColumns.length > 0
+        ? proposed.textColumns
+        : [
+            ...mappedColumns,
+            ...args.headers.filter((header) => !mappedColumns.includes(header)),
+          ]
   ).slice(0, MAX_TEXT_COLUMNS);
 
   return {
@@ -544,7 +549,7 @@ export function prepareCsvUploadForTenantContext(
     tenantKey: input.tenantKey,
     mapping: input.mapping,
   });
-  assertPHSRequiredFieldsMapped(template, parsed.headers);
+  assertRequiredFieldsMapped(template, mapping);
   const uploadedAt = input.uploadedAt ?? new Date().toISOString();
   const fileHash = crypto
     .createHash("sha256")

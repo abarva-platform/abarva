@@ -355,8 +355,22 @@ function evidencePointer(sourcePathBase: string, row: number): string {
   return `${sourcePathBase}#row=${row}`;
 }
 
-function factColumns(row: CsvRow): string[] {
-  return Object.keys(row).filter((column) => nonEmpty(row[column]));
+function canonicalizedRow(row: CsvRow, mapping: CsvMappingSuggestion): CsvRow {
+  const canonical = { ...row };
+  for (const [field, sourceColumn] of Object.entries(mapping.fieldMappings)) {
+    const value = row[sourceColumn];
+    if (nonEmpty(value)) canonical[field] = value;
+  }
+  return canonical;
+}
+
+function factColumns(row: CsvRow, mapping: CsvMappingSuggestion): string[] {
+  const mappedSourceColumns = new Set(Object.values(mapping.fieldMappings));
+  return Object.keys(row).filter((column) => {
+    if (!nonEmpty(row[column])) return false;
+    if (mapping.fieldMappings[column]) return true;
+    return !mappedSourceColumns.has(column);
+  });
 }
 
 export function buildAdminStructuredContextPromotionPlan(
@@ -387,6 +401,7 @@ export function buildAdminStructuredContextPromotionPlan(
   const factDrafts: EnterpriseContextFactPromotionDraft[] = [];
 
   input.rows.forEach((row, index) => {
+    const promotedRow = canonicalizedRow(row, input.mapping);
     const sourceRow = rowNumber(index);
     const rowSourceRecordId = sourceRecordIdFor({
       row,
@@ -412,7 +427,7 @@ export function buildAdminStructuredContextPromotionPlan(
     });
     const sourceRecordId = `${sourceFileId}:${rowSourceRecordId}`;
     const payload = {
-      ...row,
+      ...promotedRow,
       _abarva: {
         loader: "admin_structured_context_promotion",
         source_state: "synthetic_admin_loader_backed",
@@ -422,6 +437,7 @@ export function buildAdminStructuredContextPromotionPlan(
         promoted_dimension: dimension,
         source_file_id: sourceFileId,
         source_row_number: sourceRow,
+        field_mappings: input.mapping.fieldMappings,
       },
     };
 
@@ -450,8 +466,8 @@ export function buildAdminStructuredContextPromotionPlan(
       payload,
     });
 
-    for (const column of factColumns(row)) {
-      const rawValue = row[column]!.trim();
+    for (const column of factColumns(promotedRow, input.mapping)) {
+      const rawValue = promotedRow[column]!.trim();
       const normalizedValue = normalizeScalar(rawValue);
       const factType = BUSINESS_METADATA_COLUMNS.has(column)
         ? `provenance.${column}`

@@ -28,6 +28,7 @@ export const dynamic = "force-dynamic";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const DIRECT_CONTEXT_BUCKET = "context-uploads";
+const REVIEW_ONLY_EXTENSIONS = [".xlsx", ".pdf", ".docx", ".pptx", ".zip"];
 
 function formString(formData: FormData, key: string): string | null {
   const value = formData.get(key);
@@ -57,6 +58,15 @@ function metadataValue(value: unknown): string {
   return String(value ?? "")
     .replace(/[^a-zA-Z0-9 _.-]/g, "_")
     .slice(0, 256);
+}
+
+function detectReviewOnlyUploadFormat(fileName: string): string | null {
+  const lower = fileName.toLowerCase();
+  return (
+    REVIEW_ONLY_EXTENSIONS.find((extension) =>
+      lower.endsWith(extension),
+    )?.slice(1) ?? null
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -93,12 +103,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "file required" }, { status: 400 });
   }
   const uploadFormat = detectStructuredUploadFormat(file.name);
-  if (!uploadFormat) {
+  const reviewOnlyFormat = detectReviewOnlyUploadFormat(file.name);
+  if (!uploadFormat && !reviewOnlyFormat) {
     return NextResponse.json(
       {
         error: "unsupported_file_type",
         detail:
-          "Structured context uploads require .csv, .json, .jsonl, .yaml, or .yml.",
+          "Use CSV, JSON, JSONL, or YAML for direct commit. Excel, PDF, Word, PowerPoint, and ZIP files can be preserved for review.",
       },
       { status: 400 },
     );
@@ -136,6 +147,71 @@ export async function POST(request: NextRequest) {
   const csvText = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
   try {
     const templateId = formString(formData, "templateId");
+    const tenantKey = canonicalTenantKey(tenancy.clientKey);
+    const fileHash = crypto
+      .createHash("sha256")
+      .update(Buffer.from(bytes))
+      .digest("hex");
+    const blobPath = [
+      safePathPart(tenantKey),
+      uploadFormat ? "_direct-csv" : "_review-required",
+      fileHash.slice(0, 12),
+      compactTimestamp(),
+      safePathPart(file.name),
+    ].join("/");
+    if (!uploadFormat) {
+      await getObjectStorageAdapter().upload(
+        DIRECT_CONTEXT_BUCKET,
+        blobPath,
+        Buffer.from(bytes),
+        {
+          contentType: file.type || "application/octet-stream",
+          upsert: false,
+          metadata: {
+            tenantClientKey: metadataValue(tenantKey),
+            tenantKey: metadataValue(tenantKey),
+            clientId: metadataValue(tenancy.clientId),
+            sourceSystem: "admin_review_required_upload",
+            templateId: metadataValue(templateId ?? "auto"),
+            attestationVersion: metadataValue(attestation.version),
+            declaredClassification: metadataValue(
+              formString(formData, "dataClassification") ?? "confidential",
+            ),
+            sha256: fileHash,
+            uploadedBy: metadataValue(tenancy.userId),
+            initiatedByUserId: metadataValue(tenancy.userId),
+            reviewRequired: "true",
+            uploadFormat: metadataValue(reviewOnlyFormat ?? "binary"),
+          },
+        },
+      );
+
+      return NextResponse.json(
+        {
+          ok: false,
+          reviewRequired: true,
+          readyForCommit: false,
+          rowsParsed: 0,
+          factsPromoted: 0,
+          detail:
+            "This file was preserved for review. Document and workbook facts are not committed until reviewed with source-location evidence.",
+          attestation,
+          dataProtection,
+          persistence: {
+            status: "needs_operator_review",
+            detail:
+              "The original file was staged for review; no tenant context rows or facts were committed.",
+          },
+          sourceBlob: {
+            bucket: DIRECT_CONTEXT_BUCKET,
+            path: blobPath,
+            sha256: fileHash,
+          },
+        },
+        { status: 202 },
+      );
+    }
+
     const rateCardTemplate = templateId
       ? getRateCardTemplateById(templateId)
       : null;
@@ -178,18 +254,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tenantKey = canonicalTenantKey(tenancy.clientKey);
-    const fileHash = crypto
-      .createHash("sha256")
-      .update(Buffer.from(bytes))
-      .digest("hex");
-    const blobPath = [
-      safePathPart(tenantKey),
-      "_direct-csv",
-      fileHash.slice(0, 12),
-      compactTimestamp(),
-      safePathPart(file.name),
-    ].join("/");
     await getObjectStorageAdapter().upload(
       DIRECT_CONTEXT_BUCKET,
       blobPath,

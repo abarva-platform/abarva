@@ -40,15 +40,17 @@ describe("canonical admin setup source contract", () => {
   it("uses one primary data action and compact workflow copy", () => {
     expect(componentSource).toContain('tab !== "data"');
     expect(componentSource).not.toContain("Upload file</PrimaryButton>");
-    expect(componentSource).toContain("Setup package");
-    expect(componentSource).toContain("Single file update");
-    expect(componentSource).toContain("Package intake is review-first");
+    expect(componentSource).toContain("First-time load");
+    expect(componentSource).toContain("Update one file");
+    expect(componentSource).not.toContain("Package intake is review-first");
   });
 
   it("states the package-vs-single-file truth without claiming zip auto-load", () => {
-    expect(connectorSource).toContain("Upload the manifest first");
     expect(connectorSource).toContain(
-      "ZIP packages use Advanced review until server-side unpack is proven",
+      "AbarVa will ask before committing structured rows",
+    );
+    expect(connectorSource).toContain(
+      "Documents and workbooks go to review before facts commit",
     );
     expect(connectorSource).not.toContain("ZIP packages commit automatically");
   });
