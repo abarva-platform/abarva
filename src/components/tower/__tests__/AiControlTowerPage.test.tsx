@@ -13,8 +13,16 @@ import type {
 } from "@/lib/admin/ai-initiatives/queries";
 
 jest.mock("@/components/atlas/AtlasChatPanel", () => ({
-  AtlasChatPanel: ({ workspace }: { workspace: ReactNode }) => (
-    <div data-testid="atlas-shell">{workspace}</div>
+  AtlasChatPanel: ({
+    messages,
+    workspace,
+  }: {
+    messages: Array<{ id: string }>;
+    workspace: ReactNode;
+  }) => (
+    <div data-testid="atlas-shell" data-message-count={messages.length}>
+      {workspace}
+    </div>
   ),
 }));
 
@@ -121,15 +129,18 @@ function renderTower() {
 }
 
 describe("AiControlTowerPage", () => {
-  it("places lens tabs below the dashboard and refreshes the active canvas on click", () => {
-    renderTower();
+  it("places lens tabs below KPI dashboard and refreshes the active canvas without chat noise", () => {
+    const { container } = renderTower();
 
-    const focusListTitle = screen.getByText("Where Atlas will look first.");
+    const evidenceTile = screen.getByText("Evidence posture");
     const agentsTab = screen.getByRole("button", { name: /agents/i });
     expect(
-      focusListTitle.compareDocumentPosition(agentsTab) &
+      evidenceTile.compareDocumentPosition(agentsTab) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    expect(
+      screen.queryByText("Where Atlas will look first."),
+    ).not.toBeInTheDocument();
 
     expect(
       screen.getByText("Which AI investments are converting into value?"),
@@ -144,11 +155,13 @@ describe("AiControlTowerPage", () => {
     expect(
       screen.getAllByText("resolution and exception rate required").length,
     ).toBeGreaterThan(0);
+    expect(container.querySelector("[data-message-count='0']")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: /spend/i }));
     expect(
       screen.getByText("Which spend should be scaled, challenged, or stopped?"),
     ).toBeInTheDocument();
     expect(screen.getByText("ServiceNow")).toBeInTheDocument();
+    expect(container.querySelector("[data-message-count='0']")).toBeTruthy();
   });
 });

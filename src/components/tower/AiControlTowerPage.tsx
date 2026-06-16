@@ -3,10 +3,7 @@
 import { useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import {
-  AtlasChatPanel,
-  type AtlasMessage,
-} from "@/components/atlas/AtlasChatPanel";
+import { AtlasChatPanel } from "@/components/atlas/AtlasChatPanel";
 import type { AtlasSuggestion } from "@/lib/atlas/types";
 import type { AttachmentRef } from "@/components/agent/AgentDock";
 import type {
@@ -41,7 +38,6 @@ const TOKENS = {
   rule: "#d9ded6",
   navy: "#10254f",
   green: "#1f7a5a",
-  teal: "#1c6f78",
   amber: "#a26113",
   red: "#9e2f2f",
   blue: "#2c5f9e",
@@ -222,40 +218,6 @@ function atRiskInitiatives(initiatives: ReadonlyArray<AIInitiative>) {
         (initiativeCommitment(a) - initiativeMeasured(a)),
     )
     .slice(0, 5);
-}
-
-function buildInitialMessages(tenantName: string): AtlasMessage[] {
-  return [
-    {
-      id: "atlas-welcome",
-      role: "atlas",
-      content: `I am watching ${tenantName}'s AI portfolio by value, adoption, productivity, agents, spend, risk, evidence, and derived actions. Pick a question or ask in plain English.`,
-    },
-  ];
-}
-
-function atlasResponseFor(lens: LensKey, tenantName: string): AtlasMessage {
-  const lensMeta = LENSES.find((item) => item.key === lens) ?? LENSES[0];
-  const rows: Record<LensKey, string> = {
-    value_adoption:
-      "Recommended read: separate licensed adoption from active value. Start with initiatives that have measured value, usage proof, and a named owner.",
-    productivity:
-      "Recommended read: show before/after by persona or team, then pair speed gains with quality counterweights such as defects, incidents, and rework.",
-    agents:
-      "Recommended read: rank agents by resolved work, avoided touches, and exception rate, not only interactions or vendor-reported usage.",
-    spend:
-      "Recommended read: challenge spend where licenses or agent transactions are growing faster than realized benefit and adoption evidence.",
-    risk: "Recommended read: do not scale claims with unresolved model risk, privacy gaps, missing evidence, or unsupported benefit attribution.",
-    evidence:
-      "Recommended read: promote only retrieval-proven, source-linked facts into the executive brief; send weak document-derived claims to review.",
-    actions:
-      "Recommended read: actions are derived. The system proposes them from spend, value, usage, evidence, risk, and renewal pressure; humans approve the move.",
-  };
-  return {
-    id: `atlas-${lens}-${Date.now()}`,
-    role: "atlas",
-    content: `${tenantName} - ${lensMeta.shortLabel}: ${rows[lens]}`,
-  };
 }
 
 function StatusPill({
@@ -736,54 +698,6 @@ function MetricTile({
   );
 }
 
-function BarRow({
-  label,
-  value,
-  color,
-  detail,
-}: {
-  label: string;
-  value: number;
-  color: string;
-  detail: string;
-}) {
-  return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 12,
-          fontSize: 10,
-          color: TOKENS.ink,
-          fontWeight: 700,
-        }}
-      >
-        <span>{label}</span>
-        <span style={{ color: TOKENS.muted, fontWeight: 600 }}>{detail}</span>
-      </div>
-      <div
-        style={{
-          height: 6,
-          background: TOKENS.faint,
-          borderRadius: 999,
-          overflow: "hidden",
-          marginTop: 4,
-        }}
-      >
-        <div
-          style={{
-            width: `${Math.max(4, Math.min(100, value))}%`,
-            height: "100%",
-            background: color,
-            borderRadius: 999,
-          }}
-        />
-      </div>
-    </div>
-  );
-}
-
 export function AiControlTowerPage({
   tenantName,
   clientId,
@@ -791,20 +705,12 @@ export function AiControlTowerPage({
   initiatives,
   vendors,
   bandMetrics,
-  pressuresView,
   substrateCounts,
 }: AiControlTowerPageProps) {
   const [activeLens, setActiveLens] = useState<LensKey>("value_adoption");
-  const [messages, setMessages] = useState<AtlasMessage[]>(() =>
-    buildInitialMessages(tenantName),
-  );
   const summary = useMemo(
     () => summarize(initiatives, vendors),
     [initiatives, vendors],
-  );
-  const priorityInitiatives = useMemo(
-    () => topInitiatives(initiatives),
-    [initiatives],
   );
   const lensMeta = LENSES.find((item) => item.key === activeLens) ?? LENSES[0];
 
@@ -828,7 +734,6 @@ export function AiControlTowerPage({
 
   const selectLens = (lens: LensKey) => {
     setActiveLens(lens);
-    setMessages((current) => [...current, atlasResponseFor(lens, tenantName)]);
   };
 
   const onAtlasSubmit = async (text: string, attachments: AttachmentRef[]) => {
@@ -848,11 +753,6 @@ export function AiControlTowerPage({
                 ? "actions"
                 : "value_adoption";
     setActiveLens(nextLens);
-    setMessages((current) => [
-      ...current,
-      { id: `user-${Date.now()}`, role: "user", content: text },
-      atlasResponseFor(nextLens, tenantName),
-    ]);
   };
 
   const workspace = (
@@ -904,102 +804,6 @@ export function AiControlTowerPage({
         />
       </section>
 
-      <section style={dashboardGridStyle}>
-        <section style={sectionStyle}>
-          <div style={sectionHeaderStyle}>
-            <div>
-              <div style={eyebrowStyle}>Executive portfolio</div>
-              <h2 style={sectionTitleStyle}>
-                Spend-to-value view, with adoption and evidence pressure.
-              </h2>
-            </div>
-            <StatusPill tone="green">live read</StatusPill>
-          </div>
-          <div style={{ display: "grid", gap: 8 }}>
-            <BarRow
-              label="Value captured"
-              value={summary.valueCapture}
-              color={TOKENS.green}
-              detail={`${money(summary.measured)} realized`}
-            />
-            <BarRow
-              label="Adoption confidence"
-              value={Math.max(18, 100 - summary.adoptionGaps * 8)}
-              color={TOKENS.teal}
-              detail={`${summary.adoptionGaps} gaps`}
-            />
-            <BarRow
-              label="Evidence completeness"
-              value={Math.min(
-                100,
-                ((substrateCounts.kpis +
-                  substrateCounts.decisions +
-                  substrateCounts.stakeholderNotes) /
-                  Math.max(1, initiatives.length * 3)) *
-                  100,
-              )}
-              color={TOKENS.blue}
-              detail={`${substrateCounts.kpis} KPI rows`}
-            />
-            <BarRow
-              label="Risk pressure"
-              value={Math.min(100, summary.atRisk * 12)}
-              color={TOKENS.red}
-              detail={`${summary.atRisk} watch items`}
-            />
-          </div>
-        </section>
-
-        <section style={sectionStyle}>
-          <div style={sectionHeaderStyle}>
-            <div>
-              <div style={eyebrowStyle}>Focus list</div>
-              <h2 style={sectionTitleStyle}>Where Atlas will look first.</h2>
-            </div>
-            <StatusPill tone="amber">{`${pressuresView.cards.length} pressures`}</StatusPill>
-          </div>
-          <div style={{ display: "grid", gap: 4 }}>
-            {priorityInitiatives.slice(0, 3).map((initiative) => (
-              <div key={initiative.initiativeId} style={rowStyle}>
-                <div>
-                  <div
-                    style={{ fontSize: 12, fontWeight: 800, color: TOKENS.ink }}
-                  >
-                    {initiative.name}
-                  </div>
-                  <div
-                    style={{ marginTop: 3, fontSize: 10, color: TOKENS.muted }}
-                  >
-                    {initiative.ownerName || "Unassigned owner"} ·{" "}
-                    {normalizeStatus(initiative.stage)}
-                  </div>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div
-                    style={{ fontSize: 11, fontWeight: 800, color: TOKENS.ink }}
-                  >
-                    {money(initiativeMeasured(initiative))}
-                  </div>
-                  <div style={{ marginTop: 4 }}>
-                    <StatusPill
-                      tone={
-                        /risk|gap|blocked|watch/i.test(
-                          String(initiative.statusFlag ?? ""),
-                        )
-                          ? "red"
-                          : "green"
-                      }
-                    >
-                      {normalizeStatus(initiative.statusFlag)}
-                    </StatusPill>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      </section>
-
       <nav aria-label="AI Control Tower lenses" style={tabBarStyle}>
         {LENSES.map((lens) => {
           const selected = lens.key === activeLens;
@@ -1042,7 +846,7 @@ export function AiControlTowerPage({
 
   return (
     <AtlasChatPanel
-      messages={messages}
+      messages={[]}
       pending={false}
       suggestions={suggestions}
       onSuggestion={(suggestion) => onAtlasSubmit(suggestion.value, [])}
@@ -1050,9 +854,9 @@ export function AiControlTowerPage({
       workspace={workspace}
       surface="ai-control-tower"
       surfaceContext={{ surface: "ai-control-tower", activeLens, clientId }}
-      initialQuote="Ask about value, adoption, productivity, agents, spend, risk, evidence, or actions."
-      defaultLeftPercent={24}
-      minLeftPx={280}
+      initialQuote="Ask Atlas about value, adoption, productivity, agents, spend, risk, evidence, or actions."
+      defaultLeftPercent={22}
+      minLeftPx={260}
     />
   );
 }
@@ -1162,13 +966,6 @@ const metricTileStyle: CSSProperties = {
   minHeight: 70,
 };
 
-const dashboardGridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "minmax(0, 1.05fr) minmax(320px, 0.95fr)",
-  gap: 10,
-  marginTop: 10,
-};
-
 const lensCanvasStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "minmax(0, 1.55fr) minmax(250px, 0.45fr)",
@@ -1215,14 +1012,6 @@ const sectionDeckStyle: CSSProperties = {
   fontSize: 11,
   lineHeight: 1.25,
   maxWidth: 780,
-};
-
-const rowStyle: CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 12,
-  padding: "7px 0",
-  borderTop: `1px solid ${TOKENS.faint}`,
 };
 
 const calloutGridStyle: CSSProperties = {
