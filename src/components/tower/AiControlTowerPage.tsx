@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import { AtlasChatPanel } from "@/components/atlas/AtlasChatPanel";
-import type { AtlasSuggestion } from "@/lib/atlas/types";
+import { AtlasChatPanel, type AtlasMessage } from "@/components/atlas/AtlasChatPanel";
+import type { AtlasSuggestion, AtlasChatResponse } from "@/lib/atlas/types";
 import type { AttachmentRef } from "@/components/agent/AgentDock";
 import type {
   AIInitiative,
@@ -708,13 +708,10 @@ export function AiControlTowerPage({
   substrateCounts,
 }: AiControlTowerPageProps) {
   const [activeLens, setActiveLens] = useState<LensKey>("value_adoption");
-  const summary = useMemo(
-    () => summarize(initiatives, vendors),
-    [initiatives, vendors],
-  );
-  const lensMeta = LENSES.find((item) => item.key === activeLens) ?? LENSES[0];
-
-  const suggestions: AtlasSuggestion[] = [
+  const [atlasMessages, setAtlasMessages] = useState<AtlasMessage[]>([]);
+  const [atlasPending, setAtlasPending] = useState(false);
+  const [atlasThreadId, setAtlasThreadId] = useState<string | null>(null);
+  const [atlasSuggestions, setAtlasSuggestions] = useState<AtlasSuggestion[]>([
     {
       kind: "message",
       label: "Where should we scale or hold?",
@@ -730,30 +727,100 @@ export function AiControlTowerPage({
       label: "What actions go to steering?",
       value: "What actions should go to the next steering meeting?",
     },
-  ];
+  ]);
+  const summary = useMemo(
+    () => summarize(initiatives, vendors),
+    [initiatives, vendors],
+  );
+  const lensMeta = LENSES.find((item) => item.key === activeLens) ?? LENSES[0];
 
   const selectLens = (lens: LensKey) => {
     setActiveLens(lens);
   };
 
-  const onAtlasSubmit = async (text: string, attachments: AttachmentRef[]) => {
-    void attachments;
-    const lower = text.toLowerCase();
-    const nextLens = lower.includes("agent")
-      ? "agents"
-      : lower.includes("spend") || lower.includes("cost")
-        ? "spend"
-        : lower.includes("risk") || lower.includes("govern")
-          ? "risk"
-          : lower.includes("evidence") || lower.includes("proof")
-            ? "evidence"
-            : lower.includes("productiv") || lower.includes("dora")
-              ? "productivity"
-              : lower.includes("action") || lower.includes("steering")
-                ? "actions"
-                : "value_adoption";
-    setActiveLens(nextLens);
-  };
+  const sendToAtlas = useCallback(
+    async (text: string, attachments: AttachmentRef[]) => {
+      const trimmed = text.trim();
+      if (!trimmed && attachments.length === 0) return;
+      const userTurn: AtlasMessage = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        content: trimmed || `Attached ${attachments.length} file${attachments.length === 1 ? "" : "s"}.`,
+      };
+      setAtlasMessages((prev) => [...prev, userTurn]);
+
+      if (!clientId) {
+        setAtlasMessages((prev) => [
+          ...prev,
+          {
+            id: `atlas-no-tenant-${Date.now()}`,
+            role: "atlas",
+            content: "Atlas needs an active tenant to answer. Sign in to wake up the live response path.",
+          },
+        ]);
+        return;
+      }
+
+      setAtlasPending(true);
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 18_000);
+      try {
+        const res = await fetch("/api/v1/atlas/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: trimmed,
+            threadId: atlasThreadId,
+            clientId,
+            attachments: attachments.map((a) => ({ id: a.id, file_name: a.file_name, mime: a.mime })),
+            surfaceContext: {
+              surface: "ai-control-tower",
+              clientId,
+              tenantName,
+              activeLens,
+            },
+          }),
+          signal: controller.signal,
+        });
+        const json = (await res.json().catch(() => ({}))) as Partial<AtlasChatResponse>;
+        if (!res.ok || !json.response || !json.threadId) {
+          setAtlasMessages((prev) => [
+            ...prev,
+            {
+              id: `atlas-error-${Date.now()}`,
+              role: "atlas",
+              content: "Atlas could not answer that right now. The Tower summary is still valid — retry or ask a different question.",
+            },
+          ]);
+          return;
+        }
+        setAtlasThreadId(json.threadId);
+        setAtlasMessages((prev) => [
+          ...prev,
+          { id: `atlas-${Date.now()}`, role: "atlas", content: json.response! },
+        ]);
+        if (json.suggestions) setAtlasSuggestions(json.suggestions);
+      } catch (err) {
+        setAtlasMessages((prev) => [
+          ...prev,
+          {
+            id: `atlas-error-${Date.now()}`,
+            role: "atlas",
+            content:
+              err instanceof DOMException && err.name === "AbortError"
+                ? "Atlas timed out. Retry the prompt or check back in a moment."
+                : "Atlas could not reach the response path just now. Retry when ready.",
+          },
+        ]);
+      } finally {
+        window.clearTimeout(timeout);
+        setAtlasPending(false);
+      }
+    },
+    [activeLens, atlasThreadId, clientId, tenantName],
+  );
+
+  const onAtlasSubmit = sendToAtlas;
 
   const workspace = (
     <main style={pageStyle}>
@@ -846,10 +913,10 @@ export function AiControlTowerPage({
 
   return (
     <AtlasChatPanel
-      messages={[]}
-      pending={false}
-      suggestions={suggestions}
-      onSuggestion={(suggestion) => onAtlasSubmit(suggestion.value, [])}
+      messages={atlasMessages}
+      pending={atlasPending}
+      suggestions={atlasSuggestions}
+      onSuggestion={(suggestion) => void sendToAtlas(suggestion.value, [])}
       onSubmit={onAtlasSubmit}
       workspace={workspace}
       surface="ai-control-tower"
