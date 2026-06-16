@@ -40,6 +40,30 @@ describe("Source artifact prompt registry provider config", () => {
     );
   });
 
+  it("uses client-facing company language for strategy and scope drafts", () => {
+    const ctx = makeD09Context([]);
+    const d01 = getPromptTemplate("d01_strategy_memo");
+    const d05 = getPromptTemplate("d05_scope_memo");
+
+    const d01Message = d01?.buildUserMessage(ctx, {});
+    const d05Message = d05?.buildUserMessage(ctx, {
+      d01_strategy_memo: "# Strategy\n\nApproved strategy memo.",
+    });
+
+    expect(d01?.systemPrompt).toContain("## Executive summary");
+    expect(d05?.systemPrompt).toContain("## Executive summary");
+    expect(d05?.systemPrompt).toContain("bulleted or tabular list");
+    expect(d01?.systemPrompt).toContain("never say \"tenant\"");
+    expect(d01Message).toContain("Company: SkyHarbor Air");
+    expect(d05Message).toContain("Company: SkyHarbor Air");
+    expect(d01Message).not.toContain("Tenant:");
+    expect(d05Message).not.toContain("Tenant:");
+    expect(d01Message).not.toContain("tenantKey");
+    expect(d05Message).not.toContain("tenantKey");
+    expect(d01Message).not.toContain("key: skyharbor");
+    expect(d05Message).not.toContain("key: skyharbor");
+  });
+
   it("binds uploaded evidence-room files into the D09 RFP coverage map", () => {
     const template = getPromptTemplate("d09_rfp_pack");
     const ctx = makeD09Context([

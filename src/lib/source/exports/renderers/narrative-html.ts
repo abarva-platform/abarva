@@ -194,7 +194,7 @@ export function buildNarrativeHtml(
     <header class="source-doc__header">
       <div class="source-doc__eyebrow">${eyebrow}</div>
       <h1 class="source-doc__title">${title}</h1>
-      <p class="source-doc__meta">Tenant: ${escapeHtml(payload.tenantName)}</p>
+      <p class="source-doc__meta">Company: ${escapeHtml(payload.tenantName)}</p>
       <p class="source-doc__meta">Event code: ${eventCode}</p>
       ${issuedByLine}
       <p class="source-doc__meta">Generated: ${generatedAt}</p>

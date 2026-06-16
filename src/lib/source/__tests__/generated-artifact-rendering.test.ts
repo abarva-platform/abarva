@@ -54,6 +54,8 @@ describe('renderGeneratedSourceArtifactFormats', () => {
     expect(result.preview?.filename).toMatch(/_preview\.html$/);
     expect(result.preview?.bytes.toString('utf8')).toContain('<article class="source-doc">');
     expect(result.preview?.bytes.toString('utf8')).toContain('AQ1b DOCX Rendering Proof');
+    expect(result.preview?.bytes.toString('utf8')).toContain('Company: SkyHarbor Air');
+    expect(result.preview?.bytes.toString('utf8')).not.toContain('Tenant:');
 
     expect(result.source?.format).toBe('md');
     expect(result.source?.filename).toMatch(/_source\.md$/);
