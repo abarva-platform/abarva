@@ -8,50 +8,64 @@
 BEGIN;
 
 -- ──────────────────────────────────────────────────────────────────────────────
--- A) Add classification columns to enterprise_context_records
+-- A–C) Classification columns, constraint widening, indexes
+--      Wrapped in a DO block so the CI migration-replay check (which runs only
+--      new migrations on a fresh DB) skips gracefully instead of aborting on
+--      "relation does not exist". In a full replay or against the live DB the
+--      guard is never triggered because enterprise_context_records exists.
 -- ──────────────────────────────────────────────────────────────────────────────
 
-ALTER TABLE enterprise_context_records
-  ADD COLUMN IF NOT EXISTS domain_segment TEXT
-    CHECK (domain_segment IN ('DATA_ANALYTICS','ERP','DIGITAL_CX','OPERATIONS','INFRASTRUCTURE','SECURITY_IDENTITY','HR_WORKFORCE','COLLABORATION'));
+DO $$
+BEGIN
+  IF to_regclass('public.enterprise_context_records') IS NULL THEN
+    RAISE NOTICE 'enterprise_context_records absent — skipping classification columns, constraint, and indexes. Re-run after base migrations apply.';
+    RETURN;
+  END IF;
 
-ALTER TABLE enterprise_context_records
-  ADD COLUMN IF NOT EXISTS business_function TEXT
-    CHECK (business_function IN ('FINANCE','SUPPLY_CHAIN','HUMAN_RESOURCES','OPERATIONS','COMMERCIAL_SALES','IT','COMPLIANCE_LEGAL','CORPORATE','INDUSTRY_OPS'));
+  -- A) Classification columns
+  ALTER TABLE public.enterprise_context_records
+    ADD COLUMN IF NOT EXISTS domain_segment TEXT
+      CHECK (domain_segment IN ('DATA_ANALYTICS','ERP','DIGITAL_CX','OPERATIONS','INFRASTRUCTURE','SECURITY_IDENTITY','HR_WORKFORCE','COLLABORATION'));
 
-ALTER TABLE enterprise_context_records
-  ADD COLUMN IF NOT EXISTS criticality TEXT
-    CHECK (criticality IN ('TIER_1','TIER_2','TIER_3'));
+  ALTER TABLE public.enterprise_context_records
+    ADD COLUMN IF NOT EXISTS business_function TEXT
+      CHECK (business_function IN ('FINANCE','SUPPLY_CHAIN','HUMAN_RESOURCES','OPERATIONS','COMMERCIAL_SALES','IT','COMPLIANCE_LEGAL','CORPORATE','INDUSTRY_OPS'));
 
-ALTER TABLE enterprise_context_records
-  ADD COLUMN IF NOT EXISTS classification_source TEXT NOT NULL DEFAULT 'OPERATOR_CONFIRMED'
-    CHECK (classification_source IN ('AUTO_INFERRED','NEEDS_CLASSIFICATION','OPERATOR_CONFIRMED','CMDB_FEED'));
+  ALTER TABLE public.enterprise_context_records
+    ADD COLUMN IF NOT EXISTS criticality TEXT
+      CHECK (criticality IN ('TIER_1','TIER_2','TIER_3'));
 
--- ──────────────────────────────────────────────────────────────────────────────
--- B) Widen lifecycle_state CHECK to allow 'review'
--- ──────────────────────────────────────────────────────────────────────────────
+  ALTER TABLE public.enterprise_context_records
+    ADD COLUMN IF NOT EXISTS classification_source TEXT NOT NULL DEFAULT 'OPERATOR_CONFIRMED'
+      CHECK (classification_source IN ('AUTO_INFERRED','NEEDS_CLASSIFICATION','OPERATOR_CONFIRMED','CMDB_FEED'));
 
-ALTER TABLE enterprise_context_records
-  DROP CONSTRAINT IF EXISTS enterprise_context_records_lifecycle_state_check;
+  -- B) Widen lifecycle_state CHECK to allow 'review'
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint
+     WHERE conname = 'enterprise_context_records_lifecycle_state_check'
+       AND conrelid = 'public.enterprise_context_records'::regclass
+  ) THEN
+    ALTER TABLE public.enterprise_context_records
+      DROP CONSTRAINT enterprise_context_records_lifecycle_state_check;
+  END IF;
 
-ALTER TABLE enterprise_context_records
-  ADD CONSTRAINT enterprise_context_records_lifecycle_state_check
-    CHECK (lifecycle_state IN ('active','superseded','inactive','review'));
+  ALTER TABLE public.enterprise_context_records
+    ADD CONSTRAINT enterprise_context_records_lifecycle_state_check
+      CHECK (lifecycle_state IN ('active','superseded','inactive','review'));
 
--- ──────────────────────────────────────────────────────────────────────────────
--- C) Indexes on new classification columns
--- ──────────────────────────────────────────────────────────────────────────────
+  -- C) Indexes on new classification columns
+  CREATE INDEX IF NOT EXISTS idx_ecr_domain_segment
+    ON public.enterprise_context_records(tenant_key, domain_segment)
+    WHERE domain_segment IS NOT NULL;
 
-CREATE INDEX IF NOT EXISTS idx_ecr_domain_segment
-  ON enterprise_context_records(tenant_key, domain_segment)
-  WHERE domain_segment IS NOT NULL;
+  CREATE INDEX IF NOT EXISTS idx_ecr_business_function
+    ON public.enterprise_context_records(tenant_key, business_function)
+    WHERE business_function IS NOT NULL;
 
-CREATE INDEX IF NOT EXISTS idx_ecr_business_function
-  ON enterprise_context_records(tenant_key, business_function)
-  WHERE business_function IS NOT NULL;
+  CREATE INDEX IF NOT EXISTS idx_ecr_classification_source
+    ON public.enterprise_context_records(tenant_key, classification_source);
 
-CREATE INDEX IF NOT EXISTS idx_ecr_classification_source
-  ON enterprise_context_records(tenant_key, classification_source);
+END $$;
 
 -- ──────────────────────────────────────────────────────────────────────────────
 -- D) context_insights table
@@ -227,85 +241,104 @@ CREATE POLICY auth_delete ON significance_rules
 
 -- ──────────────────────────────────────────────────────────────────────────────
 -- H) Read-views for insight rules
+--    Also guarded: views SELECT FROM enterprise_context_records which may not
+--    exist in CI replay environments that only run the delta migrations.
 -- ──────────────────────────────────────────────────────────────────────────────
 
-CREATE OR REPLACE VIEW v_context_vendor_renewals AS
-  SELECT
-    r.tenant_key,
-    r.id                              AS record_id,
-    r.title                           AS vendor_name,
-    r.domain_segment,
-    r.business_function,
-    r.payload->>'contract_end_date'   AS contract_end_date,
-    r.payload->>'auto_renew'          AS auto_renew,
-    r.payload->>'notice_period_days'  AS notice_period_days,
-    r.payload->>'benchmark_present'   AS benchmark_present,
-    r.payload->>'annual_value_usd'    AS annual_value_usd,
-    r.freshness_status,
-    r.lifecycle_state,
-    r.classification_source
-  FROM enterprise_context_records r
-  WHERE r.record_type = 'vendor'
-    AND r.lifecycle_state = 'active';
+DO $$
+BEGIN
+  IF to_regclass('public.enterprise_context_records') IS NULL THEN
+    RAISE NOTICE 'enterprise_context_records absent — skipping read-views.';
+    RETURN;
+  END IF;
 
-CREATE OR REPLACE VIEW v_context_application_inventory AS
-  SELECT
-    r.tenant_key,
-    r.id                            AS record_id,
-    r.title                         AS system_name,
-    r.domain_segment,
-    r.business_function,
-    r.criticality,
-    r.payload->>'vendor_name'       AS vendor_name,
-    r.payload->>'hosting_model'     AS hosting_model,
-    r.payload->>'active_users'      AS active_users,
-    r.payload->>'contract_end_date' AS contract_end_date,
-    r.payload->>'annual_cost_usd'   AS annual_cost_usd,
-    r.payload->>'cmdb_ci_id'        AS cmdb_ci_id,
-    r.freshness_status,
-    r.lifecycle_state,
-    r.classification_source
-  FROM enterprise_context_records r
-  WHERE r.record_type IN ('application','system')
-    AND r.lifecycle_state IN ('active','review');
+  EXECUTE $v$
+    CREATE OR REPLACE VIEW v_context_vendor_renewals AS
+      SELECT
+        r.tenant_key,
+        r.id                              AS record_id,
+        r.title                           AS vendor_name,
+        r.domain_segment,
+        r.business_function,
+        r.payload->>'contract_end_date'   AS contract_end_date,
+        r.payload->>'auto_renew'          AS auto_renew,
+        r.payload->>'notice_period_days'  AS notice_period_days,
+        r.payload->>'benchmark_present'   AS benchmark_present,
+        r.payload->>'annual_value_usd'    AS annual_value_usd,
+        r.freshness_status,
+        r.lifecycle_state,
+        r.classification_source
+      FROM enterprise_context_records r
+      WHERE r.record_type = 'vendor'
+        AND r.lifecycle_state = 'active'
+  $v$;
 
-CREATE OR REPLACE VIEW v_context_dimension_coverage AS
-  SELECT
-    r.tenant_key,
-    r.record_type,
-    r.domain_segment,
-    COUNT(*)                                                            AS record_count,
-    COUNT(*) FILTER (WHERE r.freshness_status = 'fresh')               AS fresh_count,
-    COUNT(*) FILTER (WHERE r.freshness_status = 'stale')               AS stale_count,
-    COUNT(*) FILTER (WHERE r.classification_source = 'NEEDS_CLASSIFICATION') AS needs_classification_count,
-    MAX(r.updated_at)                                                   AS last_updated_at
-  FROM enterprise_context_records r
-  WHERE r.lifecycle_state IN ('active','review')
-  GROUP BY r.tenant_key, r.record_type, r.domain_segment;
+  EXECUTE $v$
+    CREATE OR REPLACE VIEW v_context_application_inventory AS
+      SELECT
+        r.tenant_key,
+        r.id                            AS record_id,
+        r.title                         AS system_name,
+        r.domain_segment,
+        r.business_function,
+        r.criticality,
+        r.payload->>'vendor_name'       AS vendor_name,
+        r.payload->>'hosting_model'     AS hosting_model,
+        r.payload->>'active_users'      AS active_users,
+        r.payload->>'contract_end_date' AS contract_end_date,
+        r.payload->>'annual_cost_usd'   AS annual_cost_usd,
+        r.payload->>'cmdb_ci_id'        AS cmdb_ci_id,
+        r.freshness_status,
+        r.lifecycle_state,
+        r.classification_source
+      FROM enterprise_context_records r
+      WHERE r.record_type IN ('application','system')
+        AND r.lifecycle_state IN ('active','review')
+  $v$;
 
-CREATE OR REPLACE VIEW v_context_triage_queue AS
-  SELECT
-    r.tenant_key,
-    r.id,
-    r.title,
-    r.record_type,
-    r.record_subtype,
-    r.domain_segment,
-    r.business_function,
-    r.criticality,
-    r.classification_source,
-    r.lifecycle_state,
-    r.freshness_status,
-    r.source_system,
-    r.source_file,
-    r.owner,
-    r.payload,
-    r.created_at,
-    r.updated_at
-  FROM enterprise_context_records r
-  WHERE r.classification_source = 'NEEDS_CLASSIFICATION'
-    AND r.lifecycle_state = 'review'
-  ORDER BY r.tenant_key, r.updated_at DESC;
+  EXECUTE $v$
+    CREATE OR REPLACE VIEW v_context_dimension_coverage AS
+      SELECT
+        r.tenant_key,
+        r.record_type,
+        r.domain_segment,
+        COUNT(*)                                                            AS record_count,
+        COUNT(*) FILTER (WHERE r.freshness_status = 'fresh')               AS fresh_count,
+        COUNT(*) FILTER (WHERE r.freshness_status = 'stale')               AS stale_count,
+        COUNT(*) FILTER (WHERE r.classification_source = 'NEEDS_CLASSIFICATION') AS needs_classification_count,
+        MAX(r.updated_at)                                                   AS last_updated_at
+      FROM enterprise_context_records r
+      WHERE r.lifecycle_state IN ('active','review')
+      GROUP BY r.tenant_key, r.record_type, r.domain_segment
+  $v$;
+
+  EXECUTE $v$
+    CREATE OR REPLACE VIEW v_context_triage_queue AS
+      SELECT
+        r.tenant_key,
+        r.id,
+        r.title,
+        r.record_type,
+        r.record_subtype,
+        r.domain_segment,
+        r.business_function,
+        r.criticality,
+        r.classification_source,
+        r.lifecycle_state,
+        r.freshness_status,
+        r.source_system,
+        r.source_file,
+        r.owner,
+        r.payload,
+        r.created_at,
+        r.updated_at
+      FROM enterprise_context_records r
+      WHERE r.classification_source = 'NEEDS_CLASSIFICATION'
+        AND r.lifecycle_state = 'review'
+      ORDER BY r.tenant_key, r.updated_at DESC
+  $v$;
+
+END $$;
 
 NOTIFY pgrst, 'reload schema';
 
