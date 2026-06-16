@@ -331,7 +331,6 @@ export function buildSourceWorkspaceItems(args: {
       )
       .map(sourceArtifactStateToWorkspaceItem),
     ...args.evidenceStates.map(sourceEvidenceStateToWorkspaceItem),
-    ...args.gateCriterionStates.map(sourceGateCriterionToWorkspaceItem),
   ].sort((a, b) => {
     const aUpdated = sortableAuditTimestamp(
       a.audit.updatedAt ?? a.audit.createdAt,

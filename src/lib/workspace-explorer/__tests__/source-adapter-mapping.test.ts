@@ -114,7 +114,7 @@ describe("SourceWorkspaceAdapter mapping", () => {
     expect(item.lineage.status).toBe("not_recorded");
   });
 
-  it("combines registry, canvas artifacts, evidence, and approval records without duplicating linked artifacts", () => {
+  it("combines registry, canvas artifacts, and evidence without surfacing gate approvals as files", () => {
     const linkedArtifactState = {
       ...artifactState,
       id: "state-linked",
@@ -129,20 +129,14 @@ describe("SourceWorkspaceAdapter mapping", () => {
     });
 
     expect(items.map((item) => item.kind).sort()).toEqual([
-      "approval",
       "deliverable",
       "evidence",
       "vendor_response",
     ]);
+    expect(items.some((item) => item.kind === "approval")).toBe(false);
     expect(
       items.some((item) => item.id === "source-artifact-state:state-linked"),
     ).toBe(false);
-    expect(
-      items.find((item) => item.id === "source-gate:gate-1")?.lineage,
-    ).toMatchObject({
-      cites: ["artifact-1"],
-      status: "recorded",
-    });
   });
 
   it("sorts workspace items when the live DB adapter returns Date timestamps", () => {

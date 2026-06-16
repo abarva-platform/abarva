@@ -8,6 +8,7 @@ import type {
   WorkspaceGenerateIntent,
   WorkspaceItem,
   WorkspaceItemKind,
+  WorkspaceItemState,
   WorkspaceUploadIntent,
 } from "@/lib/workspace-explorer/types";
 import {
@@ -15,7 +16,10 @@ import {
   SOURCE_STAGE_LABELS,
   isSourceStageKey,
 } from "@/lib/source/constants";
-import { evidenceForStage } from "@/lib/source/canonical-specs";
+import {
+  evidenceForStage,
+  type SourceEvidenceRequirement,
+} from "@/lib/source/canonical-specs";
 import type { SourceStageKey } from "@/lib/source/types";
 
 interface WorkspaceExplorerProps {
@@ -66,6 +70,19 @@ interface QualityGateSummary {
   finalSummary: string;
 }
 
+type WorkspaceTableRow =
+  | {
+      kind: "requirement";
+      id: string;
+      requirement: SourceEvidenceRequirement;
+      doc: WorkspaceItem | null;
+    }
+  | {
+      kind: "document";
+      id: string;
+      doc: WorkspaceItem;
+    };
+
 const KIND_LABELS: Record<WorkspaceItemKind, string> = {
   input: "Inputs",
   deliverable: "Deliverables",
@@ -112,11 +129,15 @@ export function WorkspaceExplorer({
   uploadIntent,
 }: WorkspaceExplorerProps) {
   const router = useRouter();
+  const documentItems = useMemo(
+    () => items.filter((item) => item.kind !== "approval"),
+    [items],
+  );
   // By-step explorer: the left nav is the lifecycle stages as folders, ordered
   // by the canonical source lifecycle. Items carry stageKey; stage-less items
   // fall under "Event".
   const stageFolders = useMemo(() => {
-    const present = new Set(items.map(stageOf));
+    const present = new Set(documentItems.map(stageOf));
     const ordered: string[] = [];
     for (const stage of SOURCE_STAGE_ORDER) {
       if (present.has(stage)) ordered.push(stage);
@@ -126,11 +147,11 @@ export function WorkspaceExplorer({
       if (!ordered.includes(stage)) ordered.push(stage);
     }
     return ordered;
-  }, [items]);
+  }, [documentItems]);
   const [activeStage, setActiveStage] = useState<string>(
     () => stageFolders[0] ?? "all",
   );
-  const [activeId, setActiveId] = useState(items[0]?.id ?? null);
+  const [activeId, setActiveId] = useState(documentItems[0]?.id ?? null);
   const [selectedGenerateId, setSelectedGenerateId] = useState(
     generateIntent?.candidates[0]?.id ?? "",
   );
@@ -144,14 +165,14 @@ export function WorkspaceExplorer({
   });
   const counts = useMemo(() => {
     const next = new Map<string, number>();
-    for (const item of items)
+    for (const item of documentItems)
       next.set(stageOf(item), (next.get(stageOf(item)) ?? 0) + 1);
     return next;
-  }, [items]);
+  }, [documentItems]);
   const filtered =
     activeStage === "all"
-      ? items
-      : items.filter((item) => stageOf(item) === activeStage);
+      ? documentItems
+      : documentItems.filter((item) => stageOf(item) === activeStage);
   // What this step still needs — the canonical evidence requirements for the
   // selected source stage, surfaced as "needed" rows (templates/uploads/gaps).
   const stageNeeds =
@@ -163,7 +184,7 @@ export function WorkspaceExplorer({
   // placeholders and gate-criterion/approval rows), so the right pane shows
   // documents, never internal EVID/GATE codes.
   const realDocs = filtered.filter(
-    (item) => item.kind !== "approval" && item.state !== "missing",
+    (item) => item.state !== "missing",
   );
   // The real file (if any) that satisfies a required document — best-effort by a
   // distinctive word in the requirement label.
@@ -188,10 +209,24 @@ export function WorkspaceExplorer({
     return { req, doc };
   });
   const extraDocs = realDocs.filter((doc) => !coveredDocIds.has(doc.id));
+  const tableRows: WorkspaceTableRow[] = [
+    ...docRows.map(({ req, doc }) => ({
+      kind: "requirement" as const,
+      id: req.requirementId,
+      requirement: req,
+      doc,
+    })),
+    ...extraDocs.map((doc) => ({
+      kind: "document" as const,
+      id: doc.id,
+      doc,
+    })),
+  ];
   const activeItem =
-    filtered.find((item) => item.id === activeId) ??
-    filtered[0] ??
-    items[0] ??
+    realDocs.find((item) => item.id === activeId) ??
+    tableRows.find((row) => row.kind === "requirement" && row.doc)?.doc ??
+    extraDocs[0] ??
+    documentItems[0] ??
     null;
   const selectedGenerateCandidate =
     generateIntent?.candidates.find(
@@ -380,7 +415,7 @@ export function WorkspaceExplorer({
             style={navButtonStyle(activeStage === "all")}
           >
             <span>All items</span>
-            <strong>{items.length}</strong>
+            <strong>{documentItems.length}</strong>
           </button>
           {stageFolders.map((stage) => (
             <button
@@ -401,70 +436,88 @@ export function WorkspaceExplorer({
         </nav>
 
         <div style={LIST_STYLE} aria-label="Documents for this step">
-          {docRows.length > 0 ? (
-            <div data-testid="workspace-step-needs">
-              <div style={NEEDS_HEADING_STYLE}>Documents for this step</div>
-              {docRows.map(({ req, doc }) => (
-                <button
-                  key={req.requirementId}
-                  type="button"
-                  onClick={() => doc && setActiveId(doc.id)}
-                  style={docRowStyle(
-                    Boolean(doc),
-                    doc != null && doc.id === activeItem?.id,
-                  )}
-                >
-                  <span
-                    style={doc ? UPLOADED_DOT_STYLE : needDotStyle(req.level)}
-                    aria-hidden
-                  />
-                  <span style={NEED_BODY_STYLE}>
-                    <span style={NEED_NAME_STYLE}>{req.label}</span>
-                    <span style={NEED_META_STYLE}>{req.sourceLabel}</span>
-                  </span>
-                  {doc ? (
-                    <span style={UPLOADED_BADGE_STYLE}>Uploaded ✓</span>
-                  ) : (
-                    <Link
-                      href={`?intent=upload&stage=${activeStage}`}
-                      style={NEED_UPLOAD_STYLE}
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      Upload
-                    </Link>
-                  )}
-                </button>
-              ))}
+          {tableRows.length > 0 ? (
+            <div data-testid="workspace-table-wrap" style={TABLE_WRAP_STYLE}>
+              <table data-testid="workspace-files-table" style={TABLE_STYLE}>
+                <thead>
+                  <tr>
+                    <th style={{ ...TH_STYLE, width: "34%" }}>File</th>
+                    <th style={{ ...TH_STYLE, width: "11%" }}>Stage</th>
+                    <th style={{ ...TH_STYLE, width: "20%" }}>Needed for</th>
+                    <th style={{ ...TH_STYLE, width: "12%" }}>Status</th>
+                    <th style={{ ...TH_STYLE, width: "11%" }}>Owner</th>
+                    <th style={{ ...TH_STYLE, width: "12%" }}>Used by</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tableRows.map((row) => {
+                    const doc = row.doc;
+                    const requirement =
+                      row.kind === "requirement" ? row.requirement : null;
+                    const active = Boolean(doc && doc.id === activeItem?.id);
+                    return (
+                      <tr
+                        key={row.id}
+                        data-testid="workspace-explorer-row"
+                        data-row-kind={row.kind}
+                        aria-current={active ? "true" : undefined}
+                        onClick={() => doc && setActiveId(doc.id)}
+                        style={tableRowStyle(active, Boolean(doc))}
+                      >
+                        <td style={TD_STYLE}>
+                          <span style={FILE_CELL_STYLE}>
+                            <span
+                              style={
+                                doc
+                                  ? FILE_GLYPH_STYLE
+                                  : needDotStyle(requirement?.level ?? "recommended")
+                              }
+                              aria-hidden
+                            >
+                              {doc ? fileGlyph(doc) : ""}
+                            </span>
+                            <span style={FILE_TEXT_STYLE}>
+                              <strong style={FILE_NAME_STYLE}>
+                                {doc?.name ?? requirement?.label}
+                              </strong>
+                              <span style={ITEM_META_STYLE}>
+                                {doc
+                                  ? `${doc.origin} · ${formatDate(
+                                      doc.audit.updatedAt ?? doc.audit.createdAt,
+                                    )}`
+                                  : requirement?.sourceLabel}
+                              </span>
+                            </span>
+                          </span>
+                        </td>
+                        <td style={TD_STYLE}>{stageLabel(tableStage(row))}</td>
+                        <td style={TD_STYLE}>{tableNeededFor(row)}</td>
+                        <td style={TD_STYLE}>
+                          <span style={stateBadgeStyle(doc?.state ?? "missing")}>
+                            {doc ? stateLabel(doc.state) : "Needed"}
+                          </span>
+                        </td>
+                        <td style={TD_STYLE}>{tableOwner(row)}</td>
+                        <td style={TD_STYLE}>
+                          {doc ? tableUsedBy(doc) : (
+                            <Link
+                              href={`?intent=upload&stage=${activeStage}`}
+                              style={NEED_UPLOAD_STYLE}
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              Upload
+                            </Link>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          ) : null}
-
-          {extraDocs.length > 0 ? (
-            <div>
-              {docRows.length > 0 ? (
-                <div style={NEEDS_SUBHEAD_STYLE}>Other documents</div>
-              ) : null}
-              {extraDocs.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  data-testid="workspace-explorer-item"
-                  aria-current={item.id === activeItem?.id ? "true" : undefined}
-                  onClick={() => setActiveId(item.id)}
-                  style={itemButtonStyle(item.id === activeItem?.id)}
-                >
-                  <strong style={ITEM_NAME_STYLE}>{item.name}</strong>
-                  <span style={ITEM_META_STYLE}>
-                    {item.origin} ·{" "}
-                    {formatDate(item.audit.updatedAt ?? item.audit.createdAt)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          ) : null}
-
-          {docRows.length === 0 && extraDocs.length === 0 ? (
+          ) : (
             <div style={EMPTY_STYLE}>No documents in this step yet.</div>
-          ) : null}
+          )}
         </div>
 
         <aside style={PREVIEW_STYLE} aria-label="Workspace item preview">
@@ -747,6 +800,73 @@ function GenerateResultView({ result }: { result: GenerateResult }) {
   );
 }
 
+function tableStage(row: WorkspaceTableRow): string {
+  return row.kind === "document"
+    ? stageOf(row.doc)
+    : row.doc
+      ? stageOf(row.doc)
+      : row.requirement.stage;
+}
+
+function tableNeededFor(row: WorkspaceTableRow): string {
+  if (row.kind === "document") {
+    return row.doc.artifactCode
+      ? row.doc.artifactCode.replace(/[_-]+/g, " ")
+      : KIND_LABELS[row.doc.kind];
+  }
+  return row.requirement.unlocks;
+}
+
+function tableOwner(row: WorkspaceTableRow): string {
+  const doc = row.kind === "document" ? row.doc : row.doc;
+  if (doc?.audit.createdBy) return doc.audit.createdBy;
+  if (doc?.audit.updatedBy) return doc.audit.updatedBy;
+  if (row.kind === "requirement") return row.requirement.level;
+  return "Not recorded";
+}
+
+function tableUsedBy(doc: WorkspaceItem): string {
+  if (doc.lineage.usedBy.length > 0) return doc.lineage.usedBy.join(", ");
+  if (doc.kind === "vendor_response") return "Scorecard";
+  if (doc.kind === "deliverable") return "Review";
+  if (doc.kind === "evidence" || doc.kind === "input") return "Source";
+  return "Workspace";
+}
+
+function fileGlyph(item: WorkspaceItem): string {
+  const type = item.type.toUpperCase();
+  if (type.length > 0 && type.length <= 4) return type;
+  if (item.kind === "vendor_response") return "VDR";
+  if (item.kind === "deliverable") return "DOC";
+  return "FILE";
+}
+
+function stateLabel(state: WorkspaceItemState): string {
+  switch (state) {
+    case "loaded":
+      return "Loaded";
+    case "parsed":
+      return "Parsed";
+    case "available":
+      return "Available";
+    case "usable":
+      return "Usable";
+    case "draft":
+      return "Draft";
+    case "review":
+      return "Review";
+    case "approved":
+      return "Approved";
+    case "superseded":
+      return "Superseded";
+    case "blocked":
+      return "Blocked";
+    case "missing":
+    default:
+      return "Needed";
+  }
+}
+
 function navButtonStyle(active: boolean): CSSProperties {
   return {
     border: "none",
@@ -764,36 +884,50 @@ function navButtonStyle(active: boolean): CSSProperties {
   };
 }
 
-function itemButtonStyle(active: boolean): CSSProperties {
+function tableRowStyle(active: boolean, selectable: boolean): CSSProperties {
   return {
-    width: "100%",
-    textAlign: "left",
-    border: `1px solid ${active ? "#1d4ed8" : "#e5e7eb"}`,
-    borderRadius: 8,
-    background: active ? "#f8fbff" : "#ffffff",
-    padding: 14,
-    cursor: "pointer",
-    display: "grid",
-    gap: 8,
+    background: active ? "#f4f8ff" : "#ffffff",
+    boxShadow: active ? "inset 3px 0 0 #2563eb" : "none",
+    cursor: selectable ? "pointer" : "default",
   };
 }
 
-function docRowStyle(uploaded: boolean, active: boolean): CSSProperties {
+function stateBadgeStyle(state: WorkspaceItemState): CSSProperties {
+  const palette =
+    state === "usable" || state === "approved" || state === "parsed"
+      ? {
+          color: "#047857",
+          background: "#ecfdf3",
+          borderColor: "#bbf7d0",
+        }
+      : state === "missing" || state === "review" || state === "draft"
+        ? {
+            color: "#9a3412",
+            background: "#fff7ed",
+            borderColor: "#fed7aa",
+          }
+        : state === "blocked"
+          ? {
+              color: "#991b1b",
+              background: "#fef2f2",
+              borderColor: "#fecaca",
+            }
+          : {
+              color: "#475569",
+              background: "#f8fafc",
+              borderColor: "#e2e8f0",
+            };
   return {
-    display: "flex",
-    alignItems: "flex-start",
-    gap: 10,
-    padding: "9px 6px",
-    borderRadius: 6,
-    borderTop: "none",
-    borderRight: "none",
-    borderLeft: "none",
-    borderBottom: "1px solid #f0ece4",
-    width: "100%",
-    textAlign: "left",
-    background: active ? "#eef4ff" : "transparent",
-    cursor: uploaded ? "pointer" : "default",
-    font: "inherit",
+    display: "inline-flex",
+    alignItems: "center",
+    width: "max-content",
+    border: `1px solid ${palette.borderColor}`,
+    borderRadius: 999,
+    padding: "3px 7px",
+    font: "700 11px/1.1 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
+    color: palette.color,
+    background: palette.background,
+    whiteSpace: "nowrap",
   };
 }
 
@@ -980,6 +1114,72 @@ const LIST_STYLE: CSSProperties = {
   overflow: "auto",
 };
 
+const TABLE_WRAP_STYLE: CSSProperties = {
+  border: "1px solid #e5e1da",
+  borderRadius: 8,
+  background: "#ffffff",
+  overflow: "auto",
+};
+
+const TABLE_STYLE: CSSProperties = {
+  width: "100%",
+  minWidth: 760,
+  borderCollapse: "collapse",
+  tableLayout: "fixed",
+};
+
+const TH_STYLE: CSSProperties = {
+  height: 34,
+  padding: "0 10px",
+  textAlign: "left",
+  background: "#fbfaf7",
+  borderBottom: "1px solid #e5e1da",
+  color: "#7a8495",
+  font: "800 10px/1.2 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+};
+
+const TD_STYLE: CSSProperties = {
+  padding: "10px",
+  borderBottom: "1px solid #f0ece4",
+  color: "#344054",
+  verticalAlign: "middle",
+  font: "600 12px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
+};
+
+const FILE_CELL_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "32px minmax(0, 1fr)",
+  alignItems: "center",
+  gap: 10,
+  minWidth: 0,
+};
+
+const FILE_TEXT_STYLE: CSSProperties = {
+  minWidth: 0,
+  display: "grid",
+  gap: 3,
+};
+
+const FILE_NAME_STYLE: CSSProperties = {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  color: "#10172f",
+};
+
+const FILE_GLYPH_STYLE: CSSProperties = {
+  width: 30,
+  height: 30,
+  borderRadius: 7,
+  display: "grid",
+  placeItems: "center",
+  background: "#f1f5f9",
+  color: "#475569",
+  font: "800 9px/1 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+};
+
 const PREVIEW_STYLE: CSSProperties = {
   border: "1px solid #e5e1da",
   borderRadius: 8,
@@ -993,49 +1193,8 @@ const EMPTY_STYLE: CSSProperties = {
   font: "500 13px/1.5 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
-
-
-const ITEM_NAME_STYLE: CSSProperties = {
-  font: "700 14px/1.25 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
-  color: "#0c1a3a",
-};
-
 const ITEM_META_STYLE: CSSProperties = {
   font: "500 12px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
-  color: "#5b6c8a",
-};
-
-const NEEDS_HEADING_STYLE: CSSProperties = {
-  font: "700 10px/1 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
-  letterSpacing: "0.1em",
-  textTransform: "uppercase",
-  color: "#94a3b8",
-  padding: "2px 2px 10px",
-};
-
-const NEEDS_SUBHEAD_STYLE: CSSProperties = {
-  ...NEEDS_HEADING_STYLE,
-  padding: "16px 2px 8px",
-  borderTop: "1px solid #ece8e1",
-  marginTop: 12,
-};
-
-
-const NEED_BODY_STYLE: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 2,
-  flex: 1,
-  minWidth: 0,
-};
-
-const NEED_NAME_STYLE: CSSProperties = {
-  font: "600 13px/1.3 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
-  color: "#0c1a3a",
-};
-
-const NEED_META_STYLE: CSSProperties = {
-  font: "500 11.5px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   color: "#5b6c8a",
 };
 
@@ -1048,26 +1207,6 @@ const NEED_UPLOAD_STYLE: CSSProperties = {
   padding: "6px 11px",
   textDecoration: "none",
   whiteSpace: "nowrap",
-  flexShrink: 0,
-};
-
-const UPLOADED_BADGE_STYLE: CSSProperties = {
-  font: "700 11px/1 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
-  color: "#197a4b",
-  background: "#e6f5ec",
-  border: "1px solid #bfe6cf",
-  borderRadius: 20,
-  padding: "5px 11px",
-  whiteSpace: "nowrap",
-  flexShrink: 0,
-};
-
-const UPLOADED_DOT_STYLE: CSSProperties = {
-  width: 7,
-  height: 7,
-  borderRadius: "50%",
-  background: "#1e9e62",
-  marginTop: 5,
   flexShrink: 0,
 };
 
@@ -1131,4 +1270,3 @@ const DISABLED_ACTION_STYLE: CSSProperties = {
   padding: "10px 13px",
   font: "700 12px var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
-
