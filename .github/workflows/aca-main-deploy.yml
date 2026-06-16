@@ -1,0 +1,212 @@
+name: ACA main deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to deploy. Defaults to the selected workflow ref."
+        required: false
+        type: string
+
+concurrency:
+  group: aca-main-deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  ACR_NAME: ${{ vars.AZURE_ACR_NAME || 'acrabarvalab001' }}
+  IMAGE_REPOSITORY: ${{ vars.AZURE_WEB_IMAGE_REPOSITORY || 'abarva/web' }}
+  CONTAINER_APP_NAME: ${{ vars.AZURE_WEB_CONTAINER_APP_NAME || 'ca-abarva-web-lab-eastus' }}
+  RESOURCE_GROUP: ${{ vars.AZURE_WEB_RESOURCE_GROUP || 'rg-abarva-controlplane-lab-eastus' }}
+  PRODUCTION_BASE_URL: ${{ vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
+
+jobs:
+  deploy:
+    name: Build and deploy Azure Container Apps revision
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Resolve release identity
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          short_sha="${sha:0:8}"
+          tag="main-${short_sha}"
+          revision_suffix="m${short_sha}"
+
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$short_sha" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "revision_suffix=$revision_suffix" >> "$GITHUB_OUTPUT"
+          echo "revision_name=${CONTAINER_APP_NAME}--${revision_suffix}" >> "$GITHUB_OUTPUT"
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare evidence directory
+        run: mkdir -p audit-artifacts/aca-main-deploy
+
+      - name: Capture current traffic before deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          az containerapp ingress traffic show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --output json | tee audit-artifacts/aca-main-deploy/traffic-before.json
+
+      - name: Build image in Azure Container Registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          az acr build \
+            --registry "$ACR_NAME" \
+            --image "${IMAGE_REPOSITORY}:${{ steps.release.outputs.tag }}" \
+            --file Dockerfile \
+            .
+
+      - name: Resolve image digest
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          digest="$(az acr manifest show-metadata \
+            --registry "$ACR_NAME" \
+            --name "${IMAGE_REPOSITORY}:${{ steps.release.outputs.tag }}" \
+            --query digest \
+            --output tsv)"
+
+          if [[ -z "$digest" ]]; then
+            echo "Failed to resolve image digest for ${IMAGE_REPOSITORY}:${{ steps.release.outputs.tag }}" >&2
+            exit 1
+          fi
+
+          image="${ACR_NAME}.azurecr.io/${IMAGE_REPOSITORY}@${digest}"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          {
+            echo "sha=${{ steps.release.outputs.sha }}"
+            echo "tag=${{ steps.release.outputs.tag }}"
+            echo "digest=$digest"
+            echo "image=$image"
+          } | tee audit-artifacts/aca-main-deploy/image.txt
+
+      - name: Deploy new revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          az containerapp update \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --image "${{ steps.image.outputs.image }}" \
+            --revision-suffix "${{ steps.release.outputs.revision_suffix }}" \
+            --output json | tee audit-artifacts/aca-main-deploy/containerapp-update.json
+
+      - name: Wait for revision to become healthy
+        shell: bash
+        run: |
+          set -euo pipefail
+          revision="${{ steps.release.outputs.revision_name }}"
+          for attempt in {1..60}; do
+            if ! az containerapp revision show \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --revision "$revision" \
+              --output json > audit-artifacts/aca-main-deploy/revision.json; then
+              echo "attempt=$attempt revision=$revision not queryable yet"
+              sleep 10
+              continue
+            fi
+
+            provisioning_state="$(jq -r '.properties.provisioningState // ""' audit-artifacts/aca-main-deploy/revision.json)"
+            running_state="$(jq -r '.properties.runningState // ""' audit-artifacts/aca-main-deploy/revision.json)"
+            health_state="$(jq -r '.properties.healthState // ""' audit-artifacts/aca-main-deploy/revision.json)"
+
+            echo "attempt=$attempt revision=$revision provisioning=$provisioning_state running=$running_state health=$health_state"
+            if [[ "$provisioning_state" == "Provisioned" && "$running_state" == "Running" && "$health_state" == "Healthy" ]]; then
+              exit 0
+            fi
+            sleep 10
+          done
+
+          echo "Revision $revision did not become Healthy/Running in time." >&2
+          cat audit-artifacts/aca-main-deploy/revision.json >&2
+          exit 1
+
+      - name: Shift traffic to new revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          az containerapp ingress traffic set \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --revision-weight "${{ steps.release.outputs.revision_name }}=100"
+
+          az containerapp ingress traffic show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --output json | tee audit-artifacts/aca-main-deploy/traffic-after.json
+
+      - name: Verify production health endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          health_url="${PRODUCTION_BASE_URL%/}/api/health"
+          for attempt in {1..20}; do
+            if curl -fsS "$health_url" | tee audit-artifacts/aca-main-deploy/health.json; then
+              exit 0
+            fi
+            echo "Health check attempt $attempt failed for $health_url; retrying."
+            sleep 10
+          done
+          echo "Production health endpoint did not pass after traffic shift." >&2
+          exit 1
+
+      - name: Write deployment summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## ACA main deploy"
+            echo
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Commit | \`${{ steps.release.outputs.sha }}\` |"
+            echo "| Image | \`${{ steps.image.outputs.image }}\` |"
+            echo "| Revision | \`${{ steps.release.outputs.revision_name }}\` |"
+            echo "| Base URL | \`${PRODUCTION_BASE_URL}\` |"
+            echo
+            echo "Rollback command:"
+            echo
+            echo '```bash'
+            echo "az containerapp ingress traffic show -n $CONTAINER_APP_NAME -g $RESOURCE_GROUP"
+            echo "# Then shift 100% traffic back to the previous healthy revision from traffic-before.json."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload deployment evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: aca-main-deploy
+          path: audit-artifacts/aca-main-deploy
+          if-no-files-found: warn
