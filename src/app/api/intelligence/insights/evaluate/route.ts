@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import {
+  contextCorpusExplorerDisabledResponse,
+  isContextCorpusExplorerEnabled,
+} from "@/lib/intelligence/context-explorer-access";
 import { runInsightEvaluation } from "@/lib/intelligence/insight-engine";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 
@@ -33,6 +37,9 @@ export async function POST(request: NextRequest) {
 
   if (!tenancy.clientKey) {
     return NextResponse.json({ error: "tenant_key_required" }, { status: 403 });
+  }
+  if (!isContextCorpusExplorerEnabled(tenancy)) {
+    return contextCorpusExplorerDisabledResponse();
   }
   if (!canEvaluate(tenancy.role, tenancy.tenantRole)) {
     return NextResponse.json(

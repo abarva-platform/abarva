@@ -15,9 +15,9 @@ Adds the first durable significance engine behind the feature-flagged Context & 
 ## Layer Impact
 
 - **Lane:** `client-data-lane`
-- **Schema layer:** Adds the uniqueness/index contract the evaluator needs to update one insight per tenant, rule, and entity.
+- **Schema layer:** Adds the uniqueness/index contract the evaluator needs to update one insight per tenant, rule, and entity, matching the runtime upsert target exactly.
 - **Library layer:** Adds `src/lib/intelligence/insight-engine/` with the evaluator, typed insight mapping, one implemented rule, and no-op stubs for the remaining seeded rules.
-- **API layer:** Adds signed-in `GET /api/intelligence/insights` and operator-only `POST /api/intelligence/insights/evaluate`.
+- **API layer:** Adds signed-in `GET /api/intelligence/insights` and operator-only `POST /api/intelligence/insights/evaluate`; both fail closed when `context_corpus_explorer_enabled` is disabled.
 - **UI layer:** Updates the feature-flagged Insights tab to prefer live insights and show an honest empty state when no derived significance exists.
 
 ## Client Applicability
@@ -41,6 +41,7 @@ Adds the first durable significance engine behind the feature-flagged Context & 
 
 - `npx tsc --noEmit --pretty false` — passed clean.
 - `npx eslint src/lib/intelligence/insight-engine src/app/api/intelligence/insights src/components/intelligence-v4/ContextInsightsFeed.tsx src/components/intelligence-v4/IntelligenceExplorerPage.tsx` — passed clean.
+- `npx eslint src/app/api/intelligence/insights/route.ts src/app/api/intelligence/insights/evaluate/route.ts src/lib/intelligence/insight-engine/index.ts` — passed clean after review hardening.
 - `npm run release:check -- --base origin/main --head HEAD` — passed.
 - `npm run test:behaviors -- --runInBand` — passed: 15 suites, 195 tests.
 - Disposable Postgres replay: `DATABASE_URL='postgres://postgres:postgres@localhost:55433/abarva_l5?sslmode=disable' npm run db:azure:bootstrap` — passed.
