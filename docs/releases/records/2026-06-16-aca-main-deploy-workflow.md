@@ -41,11 +41,11 @@ Merging code to `main` now has an explicit Azure Container Apps deployment path 
 
 Merge to `main`. The next `main` push triggers `ACA main deploy`, subject to the GitHub `production` environment and required Azure OIDC variables. After the deploy workflow succeeds, `Post-deploy crawl` runs against `https://app.abarva.ai`.
 
-Required GitHub variables:
+Required GitHub variables or secrets:
 
-- `AZURE_CLIENT_ID`
-- `AZURE_TENANT_ID`
-- `AZURE_SUBSCRIPTION_ID`
+- `AZURE_CLIENT_ID` or existing secret `AZURE_LAB_CLIENT_ID`
+- `AZURE_TENANT_ID` or existing secret `AZURE_LAB_TENANT_ID`
+- `AZURE_SUBSCRIPTION_ID` or existing secret `AZURE_LAB_SUBSCRIPTION_ID`; defaults to the existing lab subscription id used by the other Azure workflows.
 
 Optional override variables:
 
@@ -61,10 +61,10 @@ Use the uploaded `traffic-before.json` artifact from the deploy run to identify 
 
 ## Audit Evidence
 
-- PR URL: https://github.com/abarva-platform/abarva/pull/3536
+- PR URLs: https://github.com/abarva-platform/abarva/pull/3536 and https://github.com/abarva-platform/abarva/pull/3537
 - CI run: pending.
 - Deploy artifact after first run: `aca-main-deploy`, containing `image.txt`, `traffic-before.json`, `containerapp-update.json`, `revision.json`, `traffic-after.json`, and `health.json`.
 
 ## Known Gaps
 
-This PR wires the deployment path. It does not itself execute an Azure production rollout until it merges to `main` and the GitHub production environment/Azure OIDC configuration permits the workflow to run.
+This PR wires the deployment path. The first run on `main` showed that the deploy workflow must use the repository's existing `AZURE_LAB_CLIENT_ID` / `AZURE_LAB_TENANT_ID` OIDC secrets rather than unset generic variables; the workflow now supports both names and fails early with an explicit preflight message if neither is present.
