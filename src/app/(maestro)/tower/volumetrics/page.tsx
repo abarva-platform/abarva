@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function TowerVolumetricsIndexPage() {
+export default function RetiredTowerVolumetricsPage() {
   redirect("/tower");
 }

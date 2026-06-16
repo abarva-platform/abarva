@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function TowerOutcomesIndexPage() {
+export default function RetiredTowerOutcomesPage() {
   redirect("/tower");
 }
