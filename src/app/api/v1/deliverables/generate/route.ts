@@ -8,7 +8,7 @@
 import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { runDeliverableForTenant } from '@/lib/deliverables/orchestrator/generate-service';
-import { createDeliverableRun, completeDeliverableRun } from '@/lib/deliverables/orchestrator/runs-repository';
+import { createDeliverableRun, completeDeliverableRun, updateDeliverableRunProgress } from '@/lib/deliverables/orchestrator/runs-repository';
 import type { AudienceRole, DeliverableModule, OutputFormat } from '@/lib/deliverables/orchestrator/types';
 
 export const runtime = 'nodejs';
@@ -87,6 +87,16 @@ export async function POST(req: NextRequest) {
           tenantClientKey: clientKey,
           clientId: ctx.clientId,
           userId: ctx.userId,
+          // Live progress band — persist {pct,label} after each pass. The label is the
+          // pass now in flight (nextLabel), or the final pass once generation completes.
+          // Best-effort: a failed progress write must never abort the generation.
+          onProgress: (p) => {
+            void updateDeliverableRunProgress(run.id, {
+              pct: p.pct,
+              label: p.nextLabel ?? p.label,
+              pass: p.pass,
+            }).catch(() => {});
+          },
         });
         await completeDeliverableRun(run.id, result.ok
           ? { status: 'succeeded', artifactId: result.artifactId ?? null, sectionCount: result.sectionCount ?? null, retrievedEvidence: result.retrievedEvidence ?? null, warnings: result.warnings ?? [] }

@@ -34,6 +34,9 @@ export async function GET(_req: NextRequest, ctxParam: { params: Promise<{ runId
       blockers: run.blockers,
       warnings: run.warnings,
       error: run.error,
+      // Live progress band: 0..100 + the pass now in flight.
+      progressPct: run.status === 'running' ? (run.progressPct ?? 0) : 100,
+      progressLabel: run.progressLabel,
       updatedAt: run.updatedAt,
     });
   } catch (err) {

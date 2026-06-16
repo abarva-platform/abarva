@@ -14,6 +14,7 @@ import {
 } from "./build-request";
 import { generateDeliverable as defaultGenerate } from "./model-caller";
 import { persistDeliverable as defaultPersist } from "./persistence";
+import type { GenerationProgress } from "./progress";
 import type { OutputFormat } from "./types";
 
 export interface GenerateDeliverableServiceInput extends Omit<
@@ -29,6 +30,8 @@ export interface GenerateDeliverableServiceInput extends Omit<
   evidenceQuery?: string;
   outputFormats?: OutputFormat[];
   model?: string;
+  /** invoked after each orchestrator pass with a {pct,label} for the live progress band. */
+  onProgress?: (p: GenerationProgress) => void;
 }
 
 export interface GenerateDeliverableServiceResult {
@@ -88,16 +91,20 @@ export async function runDeliverableForTenant(
   );
 
   // 3 · multi-pass generation through the audited egress (plan gate + quality gate inside)
-  const result = await generate(req, {
-    // Egress identity must be the client UUID: the audit sink writes tenant_id (uuid),
-    // and policy resolution falls back to the raw string when a non-canonical client
-    // key (e.g. 'skyharbor' vs tenant_key 'skyharbor-air') doesn't match — which then
-    // fails the uuid insert ("invalid input syntax for type uuid"). Class bug, found
-    // live by clicking the Generate button (2026-06-11).
-    tenantId: input.clientId,
-    userId: input.userId,
-    ...(input.model ? { model: input.model } : {}),
-  });
+  const result = await generate(
+    req,
+    {
+      // Egress identity must be the client UUID: the audit sink writes tenant_id (uuid),
+      // and policy resolution falls back to the raw string when a non-canonical client
+      // key (e.g. 'skyharbor' vs tenant_key 'skyharbor-air') doesn't match — which then
+      // fails the uuid insert ("invalid input syntax for type uuid"). Class bug, found
+      // live by clicking the Generate button (2026-06-11).
+      tenantId: input.clientId,
+      userId: input.userId,
+      ...(input.model ? { model: input.model } : {}),
+    },
+    input.onProgress ? { onProgress: input.onProgress } : undefined,
+  );
 
   if (!result.ok || !result.document) {
     return {
