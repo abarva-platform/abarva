@@ -217,6 +217,7 @@ export async function routeQuestion(args: {
 }
 
 export async function recordQaAudit(args: {
+  clientId: string;
   tenantKey: string;
   question: string;
   answer: RoutedAnswer;
@@ -224,6 +225,7 @@ export async function recordQaAudit(args: {
   const result = await getAzureWriteFluentClient()
     .from("context_explorer_answer_audit")
     .insert({
+      client_id: args.clientId,
       tenant_key: canonicalTenantKey(args.tenantKey),
       question: args.question,
       route_used: args.answer.routeUsed,

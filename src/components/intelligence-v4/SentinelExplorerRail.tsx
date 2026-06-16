@@ -44,7 +44,7 @@ const STARTER_QUESTIONS = [
 
 const OPENER_MSG: ConvoMessage = {
   role: "agent",
-  html: "Your context is telling me <b>6 significant things</b>. The loudest: an AMS contract auto-renews in 94 days with <b>no benchmark</b> — because the <i>Industry context</i> dimension isn't loaded. Explore the tabs or ask me anything.",
+  html: "Ask me what the current context is telling you. I will use the live explorer routes where they are wired, and I will call out missing context instead of filling gaps.",
 };
 
 interface QaRouteEvent {
@@ -295,7 +295,7 @@ export function SentinelExplorerRail({ tenantKey }: SentinelExplorerRailProps) {
           }}
         >
           Ask what the context is telling you, or &ldquo;derive a view&rdquo;.
-          Every answer is evidence-cited.
+          Answers show citations when evidence is available.
         </p>
       </div>
 

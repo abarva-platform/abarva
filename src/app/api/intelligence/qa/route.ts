@@ -1,6 +1,10 @@
 import { NextRequest } from "next/server";
 
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import {
+  contextCorpusExplorerDisabledResponse,
+  isContextCorpusExplorerEnabled,
+} from "@/lib/intelligence/context-explorer-access";
 import { recordQaAudit, routeQuestion } from "@/lib/intelligence/qa-router";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 
@@ -22,6 +26,9 @@ export async function POST(request: NextRequest) {
 
   if (!tenancy.clientKey) {
     return Response.json({ error: "tenant_key_required" }, { status: 403 });
+  }
+  if (!isContextCorpusExplorerEnabled(tenancy)) {
+    return contextCorpusExplorerDisabledResponse();
   }
 
   const body = await request.json().catch(() => ({}));
@@ -58,7 +65,12 @@ export async function POST(request: NextRequest) {
             answer,
           }),
         );
-        await recordQaAudit({ tenantKey, question: query, answer });
+        await recordQaAudit({
+          clientId: tenancy.clientId,
+          tenantKey,
+          question: query,
+          answer,
+        });
       } catch (error) {
         controller.enqueue(
           ndjson({

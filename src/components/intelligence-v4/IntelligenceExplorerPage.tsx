@@ -179,7 +179,7 @@ export function IntelligenceExplorerPage({
               padding: "2px 9px",
             }}
           >
-            Illustrative · synthetic tenant
+            Feature-gated explorer
           </span>
           <span>
             <strong style={{ color: C.ink }}>{liveInsightCount}</strong> live

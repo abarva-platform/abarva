@@ -2,6 +2,7 @@
 
 CREATE TABLE IF NOT EXISTS context_explorer_answer_audit (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL,
   tenant_key TEXT NOT NULL,
   question TEXT NOT NULL,
   route_used TEXT NOT NULL,
@@ -18,6 +19,9 @@ CREATE TABLE IF NOT EXISTS context_explorer_answer_audit (
 
 CREATE INDEX IF NOT EXISTS idx_context_answer_audit_tenant
   ON context_explorer_answer_audit(tenant_key, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_context_answer_audit_client
+  ON context_explorer_answer_audit(client_id, created_at DESC);
 
 ALTER TABLE context_explorer_answer_audit ENABLE ROW LEVEL SECURITY;
 

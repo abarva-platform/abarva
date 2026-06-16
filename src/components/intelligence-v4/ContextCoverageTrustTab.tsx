@@ -205,7 +205,7 @@ const TRUTH_FUNNEL = [
   { label: "committed", n: 5, phase: 1 },
   { label: "evidence", n: 5, phase: 1 },
   { label: "embedded", n: 5, phase: 1 },
-  { label: "answer-proven", n: 4, phase: 2 },
+  { label: "answer-ready", n: 4, phase: 2 },
 ];
 
 import React from "react";
