@@ -6,7 +6,10 @@ import {
 } from "@/lib/data-plane/postgresCompat";
 
 import type { ContextTemplateDefinition } from "./template-registry";
-import type { CsvMappingSuggestion } from "./csv-upload-connector";
+import type {
+  CsvMappingSuggestion,
+  RowClassificationResult,
+} from "./csv-upload-connector";
 import type { ContextDimension } from "./types";
 
 type CsvRow = Record<string, string>;
@@ -23,6 +26,7 @@ export interface AdminStructuredContextPromotionInput {
   template: ContextTemplateDefinition;
   mapping: CsvMappingSuggestion;
   rows: CsvRow[];
+  rowClassifications?: RowClassificationResult[];
 }
 
 export interface EnterpriseContextRecordPromotionRow {
@@ -45,7 +49,14 @@ export interface EnterpriseContextRecordPromotionRow {
   confidence: number | null;
   freshness_status: "fresh" | "attention" | "stale" | "unknown";
   evidence_pointer: string;
-  lifecycle_state: "active";
+  lifecycle_state: "active" | "review";
+  domain_segment: string | null;
+  business_function: string | null;
+  criticality: string | null;
+  classification_source:
+    | "AUTO_INFERRED"
+    | "NEEDS_CLASSIFICATION"
+    | "OPERATOR_CONFIRMED";
   payload_hash: string;
   payload: Record<string, unknown>;
 }
@@ -69,6 +80,13 @@ export interface EnterpriseContextFactPromotionDraft {
   lifecycle_state: "active";
   value_hash: string;
 }
+
+const DEFAULT_ROW_CLASSIFICATION: RowClassificationResult = {
+  domainSegment: null,
+  businessFunction: null,
+  criticality: null,
+  classificationSource: "OPERATOR_CONFIRMED",
+};
 
 export interface EnterpriseContextFactPromotionRow extends Omit<
   EnterpriseContextFactPromotionDraft,
@@ -449,6 +467,12 @@ export function buildAdminStructuredContextPromotionPlan(
       row,
       fileName: input.fileName,
     });
+    const classification =
+      input.rowClassifications?.[index] ?? DEFAULT_ROW_CLASSIFICATION;
+    const lifecycleState =
+      classification.classificationSource === "NEEDS_CLASSIFICATION"
+        ? "review"
+        : "active";
     const sourceRecordId = `${sourceFileId}:${rowSourceRecordId}`;
     const payload = {
       ...promotedRow,
@@ -462,6 +486,7 @@ export function buildAdminStructuredContextPromotionPlan(
         source_file_id: sourceFileId,
         source_row_number: sourceRow,
         field_mappings: input.mapping.fieldMappings,
+        classification_source: classification.classificationSource,
       },
     };
 
@@ -485,10 +510,16 @@ export function buildAdminStructuredContextPromotionPlan(
       confidence,
       freshness_status: "fresh",
       evidence_pointer: pointer,
-      lifecycle_state: "active",
+      lifecycle_state: lifecycleState,
+      domain_segment: classification.domainSegment,
+      business_function: classification.businessFunction,
+      criticality: classification.criticality,
+      classification_source: classification.classificationSource,
       payload_hash: hashJson(payload),
       payload,
     });
+
+    if (lifecycleState !== "active") return;
 
     for (const column of factColumns(promotedRow, input.mapping)) {
       const rawValue = promotedRow[column]!.trim();

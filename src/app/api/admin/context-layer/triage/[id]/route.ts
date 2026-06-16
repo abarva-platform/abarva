@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { canonicalTenantKey } from "@/lib/tenant/aliases";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,6 +54,21 @@ function parsePatchBody(raw: unknown): PatchBody | { error: string } {
   };
 }
 
+function canManageContextTriage(
+  role: string | null | undefined,
+  tenantRole: string | null | undefined,
+): boolean {
+  return [role, tenantRole].some((value) =>
+    [
+      "admin",
+      "maestro",
+      "client_admin",
+      "tenant_admin",
+      "abarva_super_admin",
+    ].includes(String(value ?? "")),
+  );
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -67,6 +83,13 @@ export async function PATCH(
   if (!tenancy.clientKey) {
     return NextResponse.json({ error: "tenant_key_required" }, { status: 403 });
   }
+  if (!canManageContextTriage(tenancy.role, tenancy.tenantRole)) {
+    return NextResponse.json(
+      { error: "forbidden_operator_only" },
+      { status: 403 },
+    );
+  }
+  const tenantKey = canonicalTenantKey(tenancy.clientKey);
 
   const { id } = await params;
   if (!id || !/^[0-9a-f-]{36}$/i.test(id)) {
@@ -104,7 +127,7 @@ export async function PATCH(
     .from("enterprise_context_records")
     .update(updatePayload)
     .eq("id", id)
-    .eq("tenant_key", tenancy.clientKey)
+    .eq("tenant_key", tenantKey)
     .eq("classification_source", "NEEDS_CLASSIFICATION")
     .select("id");
 
@@ -116,5 +139,9 @@ export async function PATCH(
     );
   }
 
-  return NextResponse.json({ ok: true, id, domainSegment: parsed.domainSegment });
+  return NextResponse.json({
+    ok: true,
+    id,
+    domainSegment: parsed.domainSegment,
+  });
 }

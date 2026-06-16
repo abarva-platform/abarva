@@ -18,52 +18,96 @@ BEGIN;
 DO $$
 BEGIN
   IF to_regclass('public.enterprise_context_records') IS NULL THEN
-    RAISE NOTICE 'enterprise_context_records absent — skipping classification columns, constraint, and indexes. Re-run after base migrations apply.';
+    RAISE NOTICE 'enterprise_context_records absent — skipping record classification columns, constraint, and indexes. Re-run after base migrations apply.';
+  ELSE
+    -- A) Classification columns
+    ALTER TABLE public.enterprise_context_records
+      ADD COLUMN IF NOT EXISTS domain_segment TEXT
+        CHECK (domain_segment IN ('DATA_ANALYTICS','ERP','DIGITAL_CX','OPERATIONS','INFRASTRUCTURE','SECURITY_IDENTITY','HR_WORKFORCE','COLLABORATION'));
+
+    ALTER TABLE public.enterprise_context_records
+      ADD COLUMN IF NOT EXISTS business_function TEXT
+        CHECK (business_function IN ('FINANCE','SUPPLY_CHAIN','HUMAN_RESOURCES','OPERATIONS','COMMERCIAL_SALES','IT','COMPLIANCE_LEGAL','CORPORATE','INDUSTRY_OPS'));
+
+    ALTER TABLE public.enterprise_context_records
+      ADD COLUMN IF NOT EXISTS criticality TEXT
+        CHECK (criticality IN ('TIER_1','TIER_2','TIER_3'));
+
+    ALTER TABLE public.enterprise_context_records
+      ADD COLUMN IF NOT EXISTS classification_source TEXT NOT NULL DEFAULT 'OPERATOR_CONFIRMED'
+        CHECK (classification_source IN ('AUTO_INFERRED','NEEDS_CLASSIFICATION','OPERATOR_CONFIRMED','CMDB_FEED'));
+
+    -- B) Widen lifecycle_state CHECK to allow 'review'
+    IF EXISTS (
+      SELECT 1 FROM pg_constraint
+       WHERE conname = 'enterprise_context_records_lifecycle_state_check'
+         AND conrelid = 'public.enterprise_context_records'::regclass
+    ) THEN
+      ALTER TABLE public.enterprise_context_records
+        DROP CONSTRAINT enterprise_context_records_lifecycle_state_check;
+    END IF;
+
+    ALTER TABLE public.enterprise_context_records
+      ADD CONSTRAINT enterprise_context_records_lifecycle_state_check
+        CHECK (lifecycle_state IN ('active','superseded','inactive','review'));
+
+    -- C) Indexes on new classification columns
+    CREATE INDEX IF NOT EXISTS idx_ecr_domain_segment
+      ON public.enterprise_context_records(tenant_key, domain_segment)
+      WHERE domain_segment IS NOT NULL;
+
+    CREATE INDEX IF NOT EXISTS idx_ecr_business_function
+      ON public.enterprise_context_records(tenant_key, business_function)
+      WHERE business_function IS NOT NULL;
+
+    CREATE INDEX IF NOT EXISTS idx_ecr_classification_source
+      ON public.enterprise_context_records(tenant_key, classification_source);
+  END IF;
+
+  IF to_regclass('public.enterprise_context_chunks') IS NULL THEN
+    RAISE NOTICE 'enterprise_context_chunks absent — skipping chunk classification columns, constraint, and indexes. Re-run after base migrations apply.';
     RETURN;
   END IF;
 
-  -- A) Classification columns
-  ALTER TABLE public.enterprise_context_records
+  ALTER TABLE public.enterprise_context_chunks
     ADD COLUMN IF NOT EXISTS domain_segment TEXT
       CHECK (domain_segment IN ('DATA_ANALYTICS','ERP','DIGITAL_CX','OPERATIONS','INFRASTRUCTURE','SECURITY_IDENTITY','HR_WORKFORCE','COLLABORATION'));
 
-  ALTER TABLE public.enterprise_context_records
+  ALTER TABLE public.enterprise_context_chunks
     ADD COLUMN IF NOT EXISTS business_function TEXT
       CHECK (business_function IN ('FINANCE','SUPPLY_CHAIN','HUMAN_RESOURCES','OPERATIONS','COMMERCIAL_SALES','IT','COMPLIANCE_LEGAL','CORPORATE','INDUSTRY_OPS'));
 
-  ALTER TABLE public.enterprise_context_records
+  ALTER TABLE public.enterprise_context_chunks
     ADD COLUMN IF NOT EXISTS criticality TEXT
       CHECK (criticality IN ('TIER_1','TIER_2','TIER_3'));
 
-  ALTER TABLE public.enterprise_context_records
+  ALTER TABLE public.enterprise_context_chunks
     ADD COLUMN IF NOT EXISTS classification_source TEXT NOT NULL DEFAULT 'OPERATOR_CONFIRMED'
       CHECK (classification_source IN ('AUTO_INFERRED','NEEDS_CLASSIFICATION','OPERATOR_CONFIRMED','CMDB_FEED'));
 
-  -- B) Widen lifecycle_state CHECK to allow 'review'
   IF EXISTS (
     SELECT 1 FROM pg_constraint
-     WHERE conname = 'enterprise_context_records_lifecycle_state_check'
-       AND conrelid = 'public.enterprise_context_records'::regclass
+     WHERE conname = 'enterprise_context_chunks_lifecycle_state_check'
+       AND conrelid = 'public.enterprise_context_chunks'::regclass
   ) THEN
-    ALTER TABLE public.enterprise_context_records
-      DROP CONSTRAINT enterprise_context_records_lifecycle_state_check;
+    ALTER TABLE public.enterprise_context_chunks
+      DROP CONSTRAINT enterprise_context_chunks_lifecycle_state_check;
   END IF;
 
-  ALTER TABLE public.enterprise_context_records
-    ADD CONSTRAINT enterprise_context_records_lifecycle_state_check
-      CHECK (lifecycle_state IN ('active','superseded','inactive','review'));
+  ALTER TABLE public.enterprise_context_chunks
+    ADD CONSTRAINT enterprise_context_chunks_lifecycle_state_check
+      CHECK (lifecycle_state IN ('active','superseded','inactive','retired','review'));
 
-  -- C) Indexes on new classification columns
-  CREATE INDEX IF NOT EXISTS idx_ecr_domain_segment
-    ON public.enterprise_context_records(tenant_key, domain_segment)
+  CREATE INDEX IF NOT EXISTS idx_ecc_domain_segment
+    ON public.enterprise_context_chunks(tenant_key, domain_segment)
     WHERE domain_segment IS NOT NULL;
 
-  CREATE INDEX IF NOT EXISTS idx_ecr_business_function
-    ON public.enterprise_context_records(tenant_key, business_function)
+  CREATE INDEX IF NOT EXISTS idx_ecc_business_function
+    ON public.enterprise_context_chunks(tenant_key, business_function)
     WHERE business_function IS NOT NULL;
 
-  CREATE INDEX IF NOT EXISTS idx_ecr_classification_source
-    ON public.enterprise_context_records(tenant_key, classification_source);
+  CREATE INDEX IF NOT EXISTS idx_ecc_classification_source
+    ON public.enterprise_context_chunks(tenant_key, classification_source);
 
 END $$;
 
