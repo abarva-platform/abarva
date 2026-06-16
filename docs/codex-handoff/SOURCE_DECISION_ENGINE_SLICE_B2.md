@@ -25,34 +25,56 @@ This is a **deliberate human click**, never an auto-fire (the board path is slow
 
 ## 1 · Build tasks
 
-### 1.1 — Study the existing orchestrator call
-Read `src/lib/programs/deliverables/orchestrated/run-orchestrated-move-deliverable.ts` and
-`src/lib/programs/board-artifacts/orchestrated-move-route.ts` to learn the exact input contract
-(deliverable type/code, bound context, tenant, persistence of the result). **Reuse this
-machinery — do not fork a second orchestrator.**
+### 1.0 — VERIFIED wiring (read first — saves a wrong turn)
+A pre-flight trace pinned the contract. The key finding:
 
-### 1.2 — Source board-pack runner
+> **Do NOT reuse `runOrchestratedMoveDeliverable` / `buildMoveDeliverableRequest`.** They
+> **hard-code `module: 'moves'`** (`build-request.ts:~295`) and assemble Move-shaped evidence from
+> a `MoveBusinessCaseInput`. `DeliverableModule` already accepts `'source'`
+> (`orchestrator/types.ts:~20`). So build your **own** `DeliverableIntelligenceRequest` with
+> `module: 'source'` and a Source-shaped `governedEvidenceBundle`, then call the **module-agnostic
+> core directly**: `runDeliverableOrchestration(request, modelCaller, { enforcePlanGate: true,
+> enforceQualityGate: true })` (`src/lib/deliverables/orchestrator/orchestrator.ts:~117`).
+
+The Move runner is your **reference for shape only** (how it calls `assertDeliverablePolicy`,
+builds the request, then `runDeliverableOrchestration`, then renders) — not code to import.
+
+### 1.1 — Source board-pack runner
 New `src/lib/source/board-pack/run-source-board-pack.ts`:
 - Input: `{ eventId, clientKey, artifactCode }` (e.g. `d09_rfp_pack`).
+- `assertDeliverablePolicy(artifactCode)` at entry (`document-generation-policy.ts:~345`) — Source
+  codes are in `DELIVERABLE_TIER` (`d09_rfp_pack` → `tier4_large_package`, `d05_scope_memo` →
+  tier3, `d01_strategy_memo` → tier4), so this resolves cleanly and rejects chat-tier misuse.
 - Build the Source generation context (`buildSourceGenerationContext` + `collectUpstreamBodies`)
-  and adapt it into the orchestrator's input shape (the same upstream artifact bodies + event
-  facts the fast path uses, but handed to the 6-pass flow).
-- Resolve tier from the policy (`DELIVERABLE_TIER` already maps the Source codes) and let the
-  orchestrator resolve model + per-pass token budgets from `ABARVA_DOCGEN_QUALITY_PROFILE`.
-- Persist the result through the **same path Source artifacts already use**
-  (`updateArtifactBody`/`updateArtifactStatus`) so the board pack lands on the existing artifact
-  row and renders in the workspace. If the orchestrator emits DOCX/XLSX/HTML + File-Cabinet
-  persistence (tier3/4 `requiresFileCabinet`), wire that through the existing renderer/persist
-  path; do not reinvent it.
+  and assemble it into a `DeliverableIntelligenceRequest` with **`module: 'source'`** and a
+  Source-shaped `governedEvidenceBundle` (the upstream artifact bodies + event facts the fast path
+  already binds). Let `runDeliverableOrchestration` resolve model + per-pass budgets from
+  `ABARVA_DOCGEN_QUALITY_PROFILE`.
+- **Persistence — reuse, pick the right stack:**
+  - HTML-only board pack → `renderDeliverableHtml`
+    (`programs/deliverables/orchestrated/render-html.ts`) + persist like the Move route does
+    (`persistBoardGradeMoveArtifact` → `generated_artifacts`).
+  - DOCX/XLSX board pack (e.g. RFP pack, evaluation workbook) → the **native multi-format stack**:
+    `renderDeliverableDocx` / `renderDeliverableExcelCompanion` / `renderDeliverableHtml`
+    (`src/lib/deliverables/orchestrator/renderers.ts`) + `persistDeliverable`
+    (`orchestrator/persistence.ts`). Source already has `.../artifacts/[code]/render-docx` and
+    `render-xlsx` routes — reuse, do not fork either renderer.
+  - Land the result on the **existing per-event artifact row** (`updateArtifactBody`) so it renders
+    in the workspace like any other artifact.
 
-### 1.3 — "Produce board pack" action (route + UI)
-- New route, e.g. `src/app/api/v1/source/events/[eventId]/artifacts/[artifactCode]/board-pack/route.ts`
-  (POST) → calls the runner. Same auth as other Source generation routes. Long-running: follow
-  the existing async/long-call pattern the orchestrator route uses (do not block past the
-  function budget — reuse whatever durable/async mechanism the Moves orchestrated route uses).
-- `DocumentTab.tsx`: add a **"Produce board pack"** button on tier3/tier4 artifacts, distinct
-  from the fast "Generate" button. Show the run state (`Producing board pack…` / passes
-  progress if surfaced / `Board pack ready`). Make clear this is the deliberate, heavier action.
+### 1.2 — "Produce board pack" action (route + UI)
+- New route `src/app/api/v1/source/events/[eventId]/artifacts/[artifactCode]/board-pack/route.ts`
+  (POST) → calls the runner. Same auth as other Source generation routes. **Mirror the Move board
+  route's shape** (`board-artifacts/orchestrated-move-route.ts` `maybeRenderOrchestratedMoveArtifact`):
+  own tenant flag, fall back to the deterministic/fast renderer when the flag is off or
+  orchestration blocks, emit `x-deliverable-engine: orchestrated` + persistence headers.
+- **Long-running gotcha:** the Move route is fully synchronous and just relies on the request
+  surviving — but Source generation already wraps long Anthropic calls in `streamJsonHeartbeat`.
+  Either wrap the board-pack call in a heartbeat stream (preferred, matches the Source generate
+  route) or move it to a job. Do **not** block a plain JSON response for the multi-pass duration.
+- `DocumentTab.tsx`: add a **"Produce board pack"** button on tier3/tier4 artifacts, distinct from
+  the fast "Generate" button. Show run state (`Producing board pack…` / `Board pack ready`). Make
+  clear this is the deliberate, heavier action.
 
 ---
 
