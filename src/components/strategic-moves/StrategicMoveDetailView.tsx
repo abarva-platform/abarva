@@ -414,6 +414,9 @@ function DocumentsContent({ move }: { move: StrategicMove }) {
           moveId={move.id}
           currentPhase={move.currentPhase ?? 1}
           compact
+          archetype={move.archetype}
+          moveName={move.name}
+          clientDisplayName={move.tenant.name}
         />
       </Suspense>
     </div>

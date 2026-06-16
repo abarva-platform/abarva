@@ -1836,6 +1836,9 @@ export function StrategicMovePhaseClient({
                   programId={move.id}
                   phaseNum={phaseNum}
                   phaseLabel={config.label}
+                  archetype={move.archetype}
+                  moveName={move.name}
+                  clientDisplayName={move.tenant.name}
                 />
               </section>
             </CollapsePanel>

@@ -151,6 +151,9 @@ export default async function PhaseEvidenceHubPage({ params }: Props) {
             moveId={moveId}
             currentPhase={move.currentPhase ?? 1}
             compact={false}
+            archetype={move.archetype}
+            moveName={move.name}
+            clientDisplayName={move.tenant.name}
           />
         </Suspense>
       </div>
