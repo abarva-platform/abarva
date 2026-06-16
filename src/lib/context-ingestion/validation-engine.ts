@@ -7,32 +7,77 @@ import type {
 
 const VALID_TIME_CLASSIFICATIONS = new Set(['invest', 'migrate', 'tolerate', 'retire']);
 
-const VALID_DOMAIN_SEGMENTS = new Set(['DATA_ANALYTICS','ERP','DIGITAL_CX','OPERATIONS','INFRASTRUCTURE','SECURITY_IDENTITY','HR_WORKFORCE','COLLABORATION']);
+export const VALID_DOMAIN_SEGMENTS = new Set(['DATA_ANALYTICS','ERP','DIGITAL_CX','OPERATIONS','INFRASTRUCTURE','SECURITY_IDENTITY','HR_WORKFORCE','COLLABORATION']);
 const VALID_BUSINESS_FUNCTIONS = new Set(['FINANCE','SUPPLY_CHAIN','HUMAN_RESOURCES','OPERATIONS','COMMERCIAL_SALES','IT','COMPLIANCE_LEGAL','CORPORATE','INDUSTRY_OPS']);
 const VALID_CRITICALITIES = new Set(['TIER_1','TIER_2','TIER_3']);
 const VALID_VENDOR_CATEGORIES = new Set(['SOFTWARE_SAAS','PROFESSIONAL_SERVICES','HARDWARE','CLOUD_SERVICES','MANAGED_SERVICES','TELCO','DATA_SERVICES']);
 const VALID_AUTO_RENEW = new Set(['YES','NO','UNKNOWN']);
 
-// Vendor-name → domain_segment auto-infer map (for AUTO_INFERRED classification)
-const DOMAIN_SEGMENT_VENDOR_HINTS: Record<string, string> = {
-  sap: 'ERP', oracle: 'ERP', netsuite: 'ERP', workday: 'HR_WORKFORCE',
-  successfactors: 'HR_WORKFORCE', cornerstone: 'HR_WORKFORCE',
-  snowflake: 'DATA_ANALYTICS', databricks: 'DATA_ANALYTICS', tableau: 'DATA_ANALYTICS',
-  'power bi': 'DATA_ANALYTICS', looker: 'DATA_ANALYTICS', dbt: 'DATA_ANALYTICS',
-  salesforce: 'DIGITAL_CX', adobe: 'DIGITAL_CX', twilio: 'DIGITAL_CX', zendesk: 'DIGITAL_CX',
-  servicenow: 'COLLABORATION', microsoft: 'COLLABORATION', slack: 'COLLABORATION',
-  aws: 'INFRASTRUCTURE', amazon: 'INFRASTRUCTURE', azure: 'INFRASTRUCTURE',
-  gcp: 'INFRASTRUCTURE', google: 'INFRASTRUCTURE', vmware: 'INFRASTRUCTURE',
-  crowdstrike: 'SECURITY_IDENTITY', okta: 'SECURITY_IDENTITY', palo: 'SECURITY_IDENTITY',
-  qualys: 'SECURITY_IDENTITY', 'cyberark': 'SECURITY_IDENTITY', sailpoint: 'SECURITY_IDENTITY',
-};
+export interface DomainSegmentInferenceResult {
+  segment: string | null;
+  confidence: 'high' | 'low';
+}
 
-export function inferDomainSegment(vendorName: string): { segment: string; confidence: 'high' | 'low' } | null {
-  const lower = vendorName.toLowerCase();
-  for (const [hint, segment] of Object.entries(DOMAIN_SEGMENT_VENDOR_HINTS)) {
-    if (lower.includes(hint)) return { segment, confidence: 'high' };
+const DOMAIN_SEGMENT_KEYWORDS: Array<{ keywords: string[]; segment: string }> = [
+  {
+    keywords: ['sap', 'oracle', 'erp', 'workday', 'peoplesoft', 'netsuite', 'dynamics', 'epicor', 'infor'],
+    segment: 'ERP',
+  },
+  {
+    keywords: ['epic', 'cerner', 'meditech', 'allscripts', 'ehr', 'emr', 'fhir', 'hl7', 'pacs', 'ris'],
+    segment: 'OPERATIONS',
+  },
+  {
+    keywords: ['aws', 'azure', 'gcp', 'vmware', 'server', 'network', 'storage', 'datacenter', 'infra', 'cloud'],
+    segment: 'INFRASTRUCTURE',
+  },
+  {
+    keywords: ['salesforce', 'crm', 'adobe', 'twilio', 'zendesk'],
+    segment: 'DIGITAL_CX',
+  },
+  {
+    keywords: ['servicenow', 'itsm', 'jira', 'confluence', 'sharepoint', 'teams', 'slack', 'microsoft'],
+    segment: 'COLLABORATION',
+  },
+  {
+    keywords: ['hr', 'payroll', 'talent', 'recruit', 'hris', 'workforce', 'headcount', 'org', 'people'],
+    segment: 'HR_WORKFORCE',
+  },
+  {
+    keywords: ['finance', 'accounting', 'billing', 'invoice', 'ap', 'ar', 'gl', 'ledger', 'treasury', 'budget'],
+    segment: 'ERP',
+  },
+  {
+    keywords: ['data', 'analytics', 'warehouse', 'lake', 'etl', 'bi', 'tableau', 'powerbi', 'snowflake', 'databricks'],
+    segment: 'DATA_ANALYTICS',
+  },
+  {
+    keywords: ['crowdstrike', 'okta', 'palo', 'qualys', 'cyberark', 'sailpoint', 'identity', 'security'],
+    segment: 'SECURITY_IDENTITY',
+  },
+];
+
+/**
+ * Infers a domain segment from a vendor or system name using keyword matching.
+ * Returns high confidence only when a unique keyword match is found.
+ */
+export function inferDomainSegment(nameHint: string): DomainSegmentInferenceResult {
+  if (!nameHint || nameHint.trim() === '') {
+    return { segment: null, confidence: 'low' };
   }
-  return null;
+  const lower = nameHint.toLowerCase();
+  const matches: string[] = [];
+  for (const entry of DOMAIN_SEGMENT_KEYWORDS) {
+    if (entry.keywords.some((kw) => lower.includes(kw))) {
+      if (!matches.includes(entry.segment)) {
+        matches.push(entry.segment);
+      }
+    }
+  }
+  if (matches.length === 1) {
+    return { segment: matches[0]!, confidence: 'high' };
+  }
+  return { segment: null, confidence: 'low' };
 }
 
 export function validateExtractedFacts(args: {

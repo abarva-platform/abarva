@@ -26,6 +26,7 @@ import {
   getTemplateForDimension,
   type ContextTemplateDefinition,
 } from "./template-registry";
+import { inferDomainSegment, VALID_DOMAIN_SEGMENTS } from "./validation-engine";
 import type { ContextDimension } from "./types";
 import type { PilotUploadAttestation } from "./upload-attestation";
 import type { SegmentKey } from "@/lib/ingestion/azure-landing-zone-types";
@@ -57,11 +58,28 @@ export interface CsvUploadInput {
   uploadedAt?: string;
   db?: PostgresCompatClient;
   recordEvidenceFn?: (input: RecordEvidenceInput) => Promise<string>;
+  classificationOverrides?: {
+    domainSegment?: string;
+    businessFunction?: string;
+    criticality?: string;
+  };
 }
 
 export interface CsvParseResult {
   headers: string[];
   rows: CsvRow[];
+}
+
+export type ClassificationSource =
+  | 'OPERATOR_CONFIRMED'
+  | 'AUTO_INFERRED'
+  | 'NEEDS_CLASSIFICATION';
+
+export interface RowClassificationResult {
+  domainSegment: string | null;
+  businessFunction: string | null;
+  criticality: string | null;
+  classificationSource: ClassificationSource;
 }
 
 export type StructuredUploadFormat = "csv" | "json" | "jsonl" | "yaml";
@@ -115,6 +133,8 @@ export interface CsvUploadLoadResult extends Omit<
   "chunks"
 > {
   chunksQueued: number;
+  needsClassificationCount: number;
+  autoInferredCount: number;
   evidenceLedger: {
     status: "not_applicable" | "inserted";
     rowsRecorded: number;
@@ -667,15 +687,118 @@ function databaseConfigured(): boolean {
   );
 }
 
+/**
+ * Resolves classification fields for a single CSV row.
+ * Priority order:
+ *  1. classificationOverrides from the caller (OPERATOR_CONFIRMED)
+ *  2. Explicit columns in the row data if valid (OPERATOR_CONFIRMED)
+ *  3. Auto-inference from vendor/system name (AUTO_INFERRED when high confidence)
+ *  4. NEEDS_CLASSIFICATION otherwise
+ */
+function resolveRowClassification(
+  row: CsvRow,
+  classificationOverrides?: CsvUploadInput['classificationOverrides'],
+): RowClassificationResult {
+  // If the caller provides overrides, they win unconditionally.
+  if (
+    classificationOverrides?.domainSegment ||
+    classificationOverrides?.businessFunction ||
+    classificationOverrides?.criticality
+  ) {
+    return {
+      domainSegment: classificationOverrides.domainSegment ?? null,
+      businessFunction: classificationOverrides.businessFunction ?? null,
+      criticality: classificationOverrides.criticality ?? null,
+      classificationSource: 'OPERATOR_CONFIRMED',
+    };
+  }
+
+  // Check for explicit columns in the row.
+  const rowDomainSegment = (row['domain_segment'] ?? '').trim();
+  const rowBusinessFunction = (row['business_function'] ?? '').trim();
+  const rowCriticality = (row['criticality'] ?? '').trim();
+
+  if (rowDomainSegment && VALID_DOMAIN_SEGMENTS.has(rowDomainSegment)) {
+    return {
+      domainSegment: rowDomainSegment,
+      businessFunction: rowBusinessFunction || null,
+      criticality: rowCriticality || null,
+      classificationSource: 'OPERATOR_CONFIRMED',
+    };
+  }
+
+  // Try auto-inference from vendor_name or system_name columns.
+  const nameHint =
+    (row['vendor_name'] ?? row['system_name'] ?? row['name'] ?? '').trim();
+  const inferred = inferDomainSegment(nameHint);
+  if (inferred.confidence === 'high' && inferred.segment) {
+    return {
+      domainSegment: inferred.segment,
+      businessFunction: rowBusinessFunction || null,
+      criticality: rowCriticality || null,
+      classificationSource: 'AUTO_INFERRED',
+    };
+  }
+
+  // Could not classify — route to review.
+  return {
+    domainSegment: rowDomainSegment || null,
+    businessFunction: rowBusinessFunction || null,
+    criticality: rowCriticality || null,
+    classificationSource: 'NEEDS_CLASSIFICATION',
+  };
+}
+
 export async function loadCsvUploadToTenantContext(
   input: CsvUploadInput,
 ): Promise<CsvUploadLoadResult> {
   const prepared = prepareCsvUploadForTenantContext(input);
   const { chunks, ...publicPrepared } = prepared;
+
+  // Compute per-row classification before any DB writes so we can annotate
+  // chunks and tally the classification outcome counts.
+  const parsedForClassification = parseStructuredUpload(
+    input.csvText,
+    input.fileName,
+  );
+  const rowClassifications = parsedForClassification.rows.map((row) =>
+    resolveRowClassification(row, input.classificationOverrides),
+  );
+  let needsClassificationCount = 0;
+  let autoInferredCount = 0;
+  for (const cls of rowClassifications) {
+    if (cls.classificationSource === 'NEEDS_CLASSIFICATION') needsClassificationCount++;
+    else if (cls.classificationSource === 'AUTO_INFERRED') autoInferredCount++;
+  }
+
+  // Annotate chunks with classification fields. Chunks are ordered the same as
+  // parsedForClassification.rows (both derived from the same CSV parse).
+  const annotatedChunks = chunks.map((chunk, index) => {
+    const cls = rowClassifications[index] ?? {
+      domainSegment: null,
+      businessFunction: null,
+      criticality: null,
+      classificationSource: 'NEEDS_CLASSIFICATION' as ClassificationSource,
+    };
+    return {
+      ...chunk,
+      domain_segment: cls.domainSegment,
+      business_function: cls.businessFunction,
+      criticality: cls.criticality,
+      classification_source: cls.classificationSource,
+      // Route unclassified rows to 'review' lifecycle state.
+      lifecycle_state: cls.classificationSource === 'NEEDS_CLASSIFICATION'
+        ? ('review' as const)
+        : chunk.lifecycle_state,
+    };
+  });
+
   if (!databaseConfigured() && !input.db) {
     return {
       ...publicPrepared,
       chunksQueued: chunks.length,
+      needsClassificationCount,
+      autoInferredCount,
       evidenceLedger: {
         status: "not_applicable",
         rowsRecorded: 0,
@@ -728,8 +851,8 @@ export async function loadCsvUploadToTenantContext(
   const ingestionRunRecorded = !runInsert.error;
 
   let inserted = 0;
-  for (let index = 0; index < chunks.length; index += 100) {
-    const batch = chunks.slice(index, index + 100);
+  for (let index = 0; index < annotatedChunks.length; index += 100) {
+    const batch = annotatedChunks.slice(index, index + 100);
     // WS-B: upsert on the stable chunk id so re-uploading the same logical
     // content updates the chunk in place instead of failing on a duplicate key
     // or accumulating orphaned duplicate chunks across uploads.
@@ -780,6 +903,8 @@ export async function loadCsvUploadToTenantContext(
   return {
     ...publicPrepared,
     chunksQueued: chunks.length,
+    needsClassificationCount,
+    autoInferredCount,
     evidenceLedger:
       evidenceIds.length > 0
         ? {
