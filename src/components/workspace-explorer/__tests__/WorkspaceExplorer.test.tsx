@@ -35,6 +35,53 @@ const item: WorkspaceItem = {
   blobPath: null,
 };
 
+const uploadedEvidence: WorkspaceItem = {
+  id: "artifact-application-inventory",
+  name: "Application Inventory.xlsx",
+  module: "source",
+  type: "xlsx",
+  kind: "input",
+  origin: "uploaded",
+  state: "parsed",
+  version: 1,
+  stageKey: "scope",
+  artifactCode: "application_inventory",
+  sourceLabel: "source_artifacts registry",
+  description: "Authoritative application inventory.",
+  href: "/api/v1/source/artifacts/artifact-application-inventory/download",
+  classification: "Confidential",
+  lineage: { cites: [], usedBy: ["d05_scope_memo"], status: "recorded" },
+  audit: {
+    createdBy: "user_123",
+    createdAt: "2026-06-01T00:00:00.000Z",
+    updatedAt: "2026-06-02T00:00:00.000Z",
+  },
+  blobPath: "source-artifacts/sky/event/artifact-application-inventory.xlsx",
+};
+
+const gateApproval: WorkspaceItem = {
+  id: "source-gate:gate-1",
+  name: "Scope Signed",
+  module: "source",
+  type: "approval",
+  kind: "approval",
+  origin: "generated",
+  state: "approved",
+  stageKey: "scope",
+  sourceLabel: "Source gate criterion",
+  description: "Sponsor signed scope.",
+  href: null,
+  classification: null,
+  lineage: { cites: ["artifact-application-inventory"], usedBy: [], status: "recorded" },
+  audit: {
+    createdBy: "sponsor",
+    createdAt: "2026-06-03T00:00:00.000Z",
+    approvedBy: "sponsor",
+    approvedAt: "2026-06-03T00:00:00.000Z",
+  },
+  blobPath: null,
+};
+
 const candidate: WorkspaceGenerateCandidate = {
   id: "source-generate:d01_strategy_memo",
   module: "source",
@@ -101,20 +148,45 @@ describe("WorkspaceExplorer", () => {
     expect(refresh).toHaveBeenCalled();
   });
 
-  it("organizes items by step and surfaces what the step still needs", () => {
+  it("organizes items by step in a compact file table and surfaces stage-specific needs", () => {
     render(
       <WorkspaceExplorer
         title="AMS Outsourcing 2026"
         eyebrow="SRC-004 · Source workspace"
         backHref="/source/events/event-1"
-        items={[item]}
+        items={[item, uploadedEvidence]}
       />,
     );
     // the left nav is the lifecycle step as a folder
     expect(screen.getByTestId("workspace-step-strategy")).toBeTruthy();
-    // the selected step surfaces its canonical evidence needs (templates / gaps)
-    expect(screen.getByTestId("workspace-step-needs")).toBeTruthy();
-    expect(screen.getByText("Documents for this step")).toBeTruthy();
+    // the center pane is a table, not stacked cards.
+    expect(screen.getByTestId("workspace-files-table")).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "File" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Stage" })).toBeTruthy();
+    expect(
+      screen.getByRole("columnheader", { name: "Needed for" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Status" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Owner" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Used by" })).toBeTruthy();
+    // the selected step still surfaces canonical, stage-specific requirements.
+    expect(screen.getByText("Incumbent contract")).toBeTruthy();
+    expect(screen.getByText("Sponsor commitment")).toBeTruthy();
+  });
+
+  it("does not render gate approvals as workspace file rows", () => {
+    render(
+      <WorkspaceExplorer
+        title="AMS Outsourcing 2026"
+        eyebrow="SRC-004 · Source workspace"
+        backHref="/source/events/event-1"
+        items={[uploadedEvidence, gateApproval]}
+      />,
+    );
+
+    expect(screen.queryByText("Scope Signed")).toBeNull();
+    expect(screen.queryByText("Approvals")).toBeNull();
+    expect(screen.getAllByText("Application Inventory.xlsx").length).toBeGreaterThan(0);
   });
 
   it("surfaces missing upstream errors without fabricating a draft", async () => {
