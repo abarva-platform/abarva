@@ -70,18 +70,32 @@ This is **good-quality-async-default vs premium-on-demand**, NOT stub-vs-board-g
 
 ## 3 · Phased delivery (three PRs, each shippable + browser-verified)
 
-### AQ1 — Blob persistence + retrieval for generated artifacts (do first; smallest, highest-value)
-Make every generated Source artifact land in the **File Cabinet as a real Blob**, retrievable through
-the existing download route + panel — replacing the `inline://` reference.
-- In `[eventId]/artifacts/[artifactCode]/generate/route.ts`, after `updateArtifactBody`, push the
-  persisted body through the File Cabinet via `file-cabinet/deliverable-bridge.ts` /
-  `blob-store.ts` (the same path the sibling route + File Cabinet already use): `storage.upload` the
-  markdown (and any rendered format) to the `source-artifacts` bucket using
-  `buildSourceArtifactBlobPath(...)`, then register the **real** `blobUri` (not `inline://`).
-- Confirm it appears in the File Cabinet panel and the download route returns it.
-- No async, no orchestrator yet — this just fixes persistence + retrieval for the CURRENT drafts.
-- **Verify:** generate (or auto-draft on stage entry) → the artifact appears in the File Cabinet →
-  Download returns the real file → the registry row's `blob_uri` is a real bucket path, not `inline://`.
+### AQ1 — Blob persistence + retrieval for generated artifacts — ✅ DONE (PR #3551, merged + live)
+Generated Source artifacts now land in the **File Cabinet as a real Blob** (real `source-artifacts`
+path, not `inline://`), retrievable via the live download route. Live-proven on `app.abarva.ai`
+(served by `ca-abarva-web-lab-eastus`, revision `m43580c8c`): downloaded d01 (4.8 KB) + d05 (7.9 KB)
+to `~/Downloads`, both real Claude `claude-sonnet-4-6` output (not fallback stubs).
+- **Known limitation that AQ1b fixes:** the persisted/downloaded body is the **raw Markdown source**
+  (escaped `**`, `## §`, raw pipe tables) — fine as internal source, NOT acceptable as a CXO download.
+
+### AQ1b — render DOCX (primary) + HTML (preview); keep Markdown internal (DO NEXT — most visible)
+The deliverable a CXO downloads must be a **formatted DOCX**, with an **HTML preview** inline; the
+Markdown stays as internal *source* to re-render from. This is **wiring existing renderers**, not
+building one: the `render-docx` route already renders these same markdown bodies via
+`renderArtifactDocx` + `buildNarrativeDocxPayloadFromContext` (`src/lib/source/exports/...`), there's
+a shared `src/lib/exports-shared/markdown-to-docx.ts`, and an HTML renderer
+(`src/lib/programs/deliverables/orchestrated/render-html.ts`).
+- At the AQ1 persist seam in `[eventId]/artifacts/[artifactCode]/generate/route.ts`, after the
+  markdown body is produced, also render **DOCX** (via `renderArtifactDocx` / `markdown-to-docx`) and
+  **HTML preview**, upload BOTH to the `source-artifacts` bucket via the AQ1 File Cabinet path, and
+  register File Cabinet metadata so **DOCX is the primary download**, HTML is the preview, Markdown is
+  internal source only (not the default user-facing download).
+- The download route returns DOCX by default (`DOCX_CONTENT_TYPE`, `.docx` filename). Best-effort:
+  a render failure logs and falls back to markdown; generation never fails. Applies to both manual
+  generate and stage-entry auto-draft (shared `generateSourceArtifactDraft`).
+- **Verify (download-to-disk):** download d01/d05 from the live File Cabinet to `~/Downloads` — the
+  file is `.docx` (not `.md`), opens as a formatted Word doc (headings/tables rendered, no raw `## §`),
+  HTML preview renders in the workspace, markdown is no longer the default download.
 
 ### AQ2 — section-conformance verification + "unverified" badge (cheap, no LLM)
 Before persist, assert the required `## §N` headers from the artifact's prompt template are present +
@@ -108,11 +122,17 @@ Route auto-draft through the orchestrator as a **durable async job** at the defa
 
 ---
 
+**Sequence:** AQ1 (✅ done) → **AQ1b (next — DOCX/HTML, most visible)** → AQ2 (section-verify) →
+AQ3 (async quality). AQ1b is reordered ahead of AQ2/AQ3 because the founder judges the product by the
+file they open, and it's the smallest (wiring existing renderers).
+
 ## 4 · Boundaries
-- AQ1/AQ2 are migration-light and reuse the existing File Cabinet + status enum. AQ3 adds the
-  generation-queue seam — its own PR, do not fold it into AQ1/AQ2.
-- Obey the OVERVIEW content truth standard: report `generated / quality-gated / committed-to-Postgres
-  / staged-to-Blob / at-tier / content-verified` as separate states with evidence; never collapse.
+- AQ1b/AQ2 are migration-light and reuse existing renderers + the File Cabinet + status enum. AQ3
+  adds the generation-queue seam — its own PR, do not fold it into the others.
+- Markdown is internal *source*; the CXO deliverable is **DOCX** (AQ1b). HTML is preview only.
+- Obey the OVERVIEW content truth standard: report `generated / rendered-to-DOCX / quality-gated /
+  committed-to-Postgres / staged-to-Blob / retrievable-as-DOCX / content-verified` as separate states
+  with evidence; never collapse.
 - Cost: default async auto-draft to `real_engagement`; premium only on the explicit finalize action.
-- Branches: `codex/source-aq1-blob-retrieval`, `codex/source-aq2-section-verify`,
-  `codex/source-aq3-async-quality`.
+- Branches: `codex/source-aq1-blob-retrieval` (done), `codex/source-aq1b-docx-render`,
+  `codex/source-aq2-section-verify`, `codex/source-aq3-async-quality`.
