@@ -11,10 +11,21 @@
 
 import 'server-only';
 
-import { Document, Footer, Paragraph, TextRun } from 'docx';
+import {
+  BorderStyle,
+  Document,
+  Footer,
+  Paragraph,
+  Table,
+  TableCell,
+  TableRow,
+  TextRun,
+  WidthType,
+} from 'docx';
 import ExcelJS from 'exceljs';
 
 import {
+  ORDERED_NUMBERING_CONFIG,
   SOURCE_DOCX,
   bodyParagraph,
   bodyRun,
@@ -26,44 +37,117 @@ import {
   heading2,
   pageBreak,
 } from '@/lib/exports-shared/docx-base';
-import { buildMultiColumnTable } from '@/lib/exports-shared/structured-docx-base';
+import { markdownToDocxBlocks } from '@/lib/exports-shared/markdown-to-docx';
+import { markdownToHtml } from '@/lib/programs/deliverables/orchestrated/render-html';
 import type { RenderableDeliverable, RenderableTable } from './types';
 
 // ── helpers ──
 
-/** Split a section's markdown body into paragraph/bullet runs (lightweight). */
-function bodyToParagraphs(markdown: string): Paragraph[] {
-  const lines = markdown.split('\n').map((l) => l.trim()).filter(Boolean);
-  return lines.map((line) => {
-    if (/^[-*]\s+/.test(line)) {
-      return bodyParagraph([bodyRun(`• ${line.replace(/^[-*]\s+/, '')}`)], { spacing: { before: 40, after: 40, line: 300 } });
-    }
-    if (/^#{1,6}\s+/.test(line)) {
-      return heading2(line.replace(/^#{1,6}\s+/, ''));
-    }
-    return bodyParagraph([bodyRun(line)]);
+// Canonical data-display tokens (docs/design/DATA_DISPLAY_TOKENS.md) as docx
+// hex (no leading #). The deliverable owns these light-table builders so the
+// rendered DOCX uses muted uppercase headers + hairline row dividers + NO navy
+// fill — without mutating the shared Source house-style helpers.
+const TOKENS = {
+  MUTED: '6F6A61', // --muted
+  INK: '1B1A17', // --ink
+  LINE: 'E6E2DA', // --line  (header bottom border)
+  LINE2: 'EFECE5', // --line2 (row divider)
+} as const;
+
+/** A light, board-grade table: muted uppercase header (bottom border only),
+ *  hairline row dividers, no per-cell boxes, no navy fill. */
+function lightTable(columns: string[], rows: string[][]): Table {
+  const widthEach = Math.max(8, Math.floor(100 / columns.length));
+  const width = (i: number): number =>
+    i === columns.length - 1 ? 100 - widthEach * (columns.length - 1) : widthEach;
+
+  const headerRow = new TableRow({
+    tableHeader: true,
+    children: columns.map((c, i) =>
+      new TableCell({
+        width: { size: width(i), type: WidthType.PERCENTAGE },
+        borders: {
+          top: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+          left: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+          right: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+          bottom: { style: BorderStyle.SINGLE, size: 4, color: TOKENS.LINE },
+        },
+        children: [
+          new Paragraph({
+            spacing: { before: 40, after: 40 },
+            children: [
+              new TextRun({
+                text: c.toUpperCase(),
+                font: SOURCE_DOCX.BODY_FONT,
+                size: 16, // ~8pt — the header recedes
+                color: TOKENS.MUTED,
+                characterSpacing: 6,
+              }),
+            ],
+          }),
+        ],
+      }),
+    ),
+  });
+
+  const dataRows = rows.map((row, ri) =>
+    new TableRow({
+      children: columns.map((_, i) =>
+        new TableCell({
+          width: { size: width(i), type: WidthType.PERCENTAGE },
+          borders: {
+            top: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+            left: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+            right: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+            // hairline divider on every row except the last (last row no border)
+            bottom:
+              ri === rows.length - 1
+                ? { style: BorderStyle.NONE, size: 0, color: 'auto' }
+                : { style: BorderStyle.SINGLE, size: 2, color: TOKENS.LINE2 },
+          },
+          children: [
+            new Paragraph({
+              spacing: { before: 40, after: 40 },
+              children: [
+                new TextRun({
+                  text: row[i] ?? '',
+                  font: SOURCE_DOCX.BODY_FONT,
+                  size: 20,
+                  color: TOKENS.INK,
+                }),
+              ],
+            }),
+          ],
+        }),
+      ),
+    }),
+  );
+
+  return new Table({
+    rows: [headerRow, ...dataRows],
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: {
+      top: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+      bottom: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+      left: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+      right: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+      insideHorizontal: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+      insideVertical: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+    },
   });
 }
 
-function tableToDocx(table: RenderableTable): Paragraph | ReturnType<typeof buildMultiColumnTable> {
+function tableToDocx(table: RenderableTable): Paragraph | Table {
   if (table.rows.length === 0) {
     return bodyParagraph([bodyRun(`(${table.title}: see Excel companion exhibit)`, { italics: true, color: SOURCE_DOCX.MUTED_COLOR })]);
   }
-  const widthEach = Math.max(8, Math.floor(100 / table.columns.length));
-  return buildMultiColumnTable<string[]>({
-    columns: table.columns.map((c, i) => ({
-      header: c,
-      widthPercent: i === table.columns.length - 1 ? 100 - widthEach * (table.columns.length - 1) : widthEach,
-      extract: (row) => row[i] ?? '',
-    })),
-    rows: table.rows,
-  });
+  return lightTable(table.columns, table.rows);
 }
 
 // ── DOCX ──
 
 export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
-  const children: (Paragraph | ReturnType<typeof buildMultiColumnTable>)[] = [];
+  const children: (Paragraph | Table)[] = [];
 
   // Cover
   children.push(eyebrowParagraph('AbarVa · Board-grade deliverable'));
@@ -72,10 +156,12 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
   children.push(coverSubtitleParagraph(`${doc.clientDisplayName} — ${doc.initiativeDisplayName}`));
   children.push(pageBreak());
 
-  // Sections
+  // Sections — render the authored markdown body PROPERLY (headings, bold,
+  // ordered/unordered + nested lists, inline GFM tables) via the shared
+  // mdast walker, instead of flattening every line to a paragraph.
   for (const section of doc.generatedSections) {
     children.push(heading1(section.title));
-    children.push(...bodyToParagraphs(section.bodyMarkdown));
+    children.push(...markdownToDocxBlocks(section.bodyMarkdown));
   }
 
   // In-document tables (those NOT routed to the Excel companion)
@@ -118,15 +204,15 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
   if (doc.sourceRegister.length) {
     children.push(heading1('Source Register'));
     children.push(
-      buildMultiColumnTable({
-        columns: [
-          { header: '[n]', widthPercent: 8, extract: (r) => String(r.citationNumber) },
-          { header: 'Source', widthPercent: 52, extract: (r) => r.label },
-          { header: 'Family', widthPercent: 22, extract: (r) => r.evidenceFamily },
-          { header: 'Confidence', widthPercent: 18, extract: (r) => `${r.confidence}${r.asOf ? ` · ${r.asOf}` : ''}` },
-        ],
-        rows: doc.sourceRegister,
-      }),
+      lightTable(
+        ['[n]', 'Source', 'Family', 'Confidence'],
+        doc.sourceRegister.map((r) => [
+          String(r.citationNumber),
+          r.label,
+          r.evidenceFamily,
+          `${r.confidence}${r.asOf ? ` · ${r.asOf}` : ''}`,
+        ]),
+      ),
     );
   }
 
@@ -134,6 +220,8 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
     creator: 'AbarVa',
     title: doc.title,
     description: `${doc.clientDisplayName} — ${doc.initiativeDisplayName}`,
+    // Required so ordered lists emitted by markdownToDocxBlocks render as 1./2./a.
+    numbering: ORDERED_NUMBERING_CONFIG,
     sections: [
       {
         properties: { page: { margin: { top: 1080, right: 1080, bottom: 1080, left: 1080 } } },
@@ -163,10 +251,12 @@ export function renderDeliverableExcelCompanion(doc: RenderableDeliverable): Exc
   wb.created = new Date(0); // deterministic
   for (const t of xlsxTables) {
     const sheet = wb.addWorksheet(t.title.slice(0, 31).replace(/[\\/?*[\]:]/g, ' '));
-    const header = sheet.addRow(t.columns);
-    header.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    const header = sheet.addRow(t.columns.map((c) => c.toUpperCase()));
+    // Canonical light header: muted uppercase text on a hairline bottom rule —
+    // no navy fill (DATA_DISPLAY_TOKENS.md table recipe).
+    header.font = { color: { argb: `FF${TOKENS.MUTED}` } };
     header.eachCell((cell) => {
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: `FF${SOURCE_DOCX.HEADER_COLOR}` } };
+      cell.border = { bottom: { style: 'thin', color: { argb: `FF${TOKENS.LINE}` } } };
     });
     for (const row of t.rows) sheet.addRow(row);
     sheet.columns.forEach((col) => {
@@ -180,47 +270,90 @@ export function renderDeliverableExcelCompanion(doc: RenderableDeliverable): Exc
   return wb;
 }
 
-// ── HTML preview (AbarVa design system) ──
+// ── HTML preview (AbarVa data-display tokens) ──
+//
+// Styled per docs/design/DATA_DISPLAY_TOKENS.md: Georgia 400 headings, DM Sans
+// 13.5px body, the clean table recipe (10px uppercase muted header, bottom
+// border only, hairline row dividers, tabular-nums on numbers), status pills for
+// confidence, and a fresh-green recommendation rule. Section bodies are rendered
+// through markdownToHtml so authored markdown structure survives.
 
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+/** Confidence → soft-bg status pill (fresh / attention / unknown). */
+function confidencePill(confidence: string): string {
+  const c = confidence.toLowerCase();
+  const status = c === 'high' ? 'fresh' : c === 'medium' ? 'attention' : c === 'low' ? 'stale' : 'unknown';
+  return `<span class="pill pill-${status}"><span class="dot"></span>${esc(confidence)}</span>`;
+}
+
 function tableHtml(t: RenderableTable): string {
   const head = t.columns.map((c) => `<th>${esc(c)}</th>`).join('');
-  const body = t.rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('');
-  return `<h3>${esc(t.title)}</h3><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+  const body = t.rows.map((r) => `<tr>${r.map((c) => `<td>${esc(String(c))}</td>`).join('')}</tr>`).join('');
+  return `<h3>${esc(t.title)}</h3><table class="md"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
 export function renderDeliverableHtml(doc: RenderableDeliverable): string {
+  // Render each section's authored markdown PROPERLY (headings, bold,
+  // ordered/unordered + nested lists, inline GFM tables) via the shared,
+  // escape-first markdown subset renderer — never split('\n') → <p>.
   const sections = doc.generatedSections
-    .map((s) => `<section><h2>${esc(s.title)}</h2>${s.bodyMarkdown.split('\n').filter(Boolean).map((l) => `<p>${esc(l.replace(/^#{1,6}\s+/, ''))}</p>`).join('')}</section>`)
+    .map((s) => `<section><h2>${esc(s.title)}</h2>${markdownToHtml(s.bodyMarkdown)}</section>`)
     .join('');
   const tables = doc.tables.map(tableHtml).join('');
   const register = doc.sourceRegister
-    .map((r) => `<tr><td>[${r.citationNumber}]</td><td>${esc(r.label)}</td><td>${esc(r.evidenceFamily)}</td><td>${esc(r.confidence)}${r.asOf ? ` · ${esc(r.asOf)}` : ''}</td></tr>`)
+    .map(
+      (r) =>
+        `<tr><td class="num">[${r.citationNumber}]</td><td>${esc(r.label)}</td><td>${esc(r.evidenceFamily)}</td><td>${confidencePill(r.confidence)}</td><td class="muted">${r.asOf ? esc(r.asOf) : '—'}</td></tr>`,
+    )
     .join('');
-  const checklist = doc.clientCompleteChecklist.map((c) => `<li>☐ <b>${esc(c.label)}</b> — owner: ${esc(String(c.owner))} (${esc(c.reason)})</li>`).join('');
+  const checklist = doc.clientCompleteChecklist.map((c) => `<li>☐ <strong>${esc(c.label)}</strong> — owner: ${esc(String(c.owner))} (${esc(c.reason)})</li>`).join('');
   const nextActions = doc.nextActions.map((a) => `<li>${esc(a)}</li>`).join('');
 
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(doc.title)}</title><style>
-  body{background:#F8F7F4;color:#1a1a1a;font-family:'DM Sans',Inter,Segoe UI,sans-serif;line-height:1.55}
-  .wrap{max-width:960px;margin:0 auto;padding:40px 28px 80px}
-  h1,h2,h3{font-family:Georgia,'Fraunces',serif;font-weight:400;color:#0C1A3A}
-  h1{font-size:30px}h2{font-size:21px;border-bottom:1px solid #e4e1da;padding-bottom:6px;margin-top:34px}
-  .eyebrow{letter-spacing:.12em;text-transform:uppercase;font-size:11px;color:#706D66}
-  table{border-collapse:collapse;width:100%;margin:12px 0;background:#fff;border:1px solid #e4e1da;font-size:13px}
-  th,td{border:1px solid #e4e1da;padding:7px 10px;text-align:left}th{background:#0C1A3A;color:#fff}
-  .rec{background:#fff;border:1px solid #e4e1da;border-left:3px solid #2DD4C8;border-radius:8px;padding:14px 18px;margin:14px 0}
-  ul{padding-left:18px}</style></head><body><div class="wrap">
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(doc.title)}</title><style>
+  :root{--bg:#F8F7F4;--panel:#FFFFFF;--ink:#1B1A17;--muted:#6F6A61;--line:#E6E2DA;--line2:#EFECE5;--chip:#F1EEE7;--fresh:#3F7A5B}
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:'DM Sans',-apple-system,Segoe UI,sans-serif;font-size:13.5px;line-height:1.45;margin:0}
+  .wrap{max-width:860px;margin:0 auto;padding:40px 28px 80px}
+  h1,h2,h3,h4{font-family:Georgia,'Times New Roman',serif;font-weight:400;color:var(--ink);margin:0}
+  h1{font-size:26px;margin:8px 0 4px;line-height:1.2}
+  h2{font-size:21px;margin:34px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px}
+  h4{font-size:14px;margin:16px 0 6px;color:var(--muted)}
+  p,li{font-size:13.5px;line-height:1.45}
+  ul,ol{margin:8px 0 8px 20px;padding:0}
+  li{margin:3px 0}
+  strong{font-weight:600}
+  code{font-family:'DM Mono',ui-monospace,Menlo,monospace;background:var(--chip);padding:1px 5px;border-radius:3px;font-size:12.5px}
+  .eyebrow{letter-spacing:.12em;text-transform:uppercase;font-size:10px;color:var(--muted)}
+  table.md{border-collapse:collapse;width:100%;margin:12px 0;font-size:12.5px}
+  table.md th{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);text-align:left;font-weight:600;padding:9px 10px;border-bottom:1px solid var(--line)}
+  table.md td{padding:9px 10px;border-bottom:1px solid var(--line2);vertical-align:top;color:var(--ink)}
+  table.md tbody tr:last-child td{border-bottom:none}
+  table.md tbody tr:hover td{background:#fbfaf6}
+  td.num,td .num,td.muted{font-variant-numeric:tabular-nums}
+  td.num{font-variant-numeric:tabular-nums;color:var(--muted)}
+  td.muted{color:var(--muted)}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;padding:2px 8px;border-radius:999px;line-height:1.5}
+  .pill .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+  .pill-fresh{color:#3F7A5B;background:#3F7A5B16}.pill-fresh .dot{background:#3F7A5B}
+  .pill-attention{color:#B5852A;background:#B5852A18}.pill-attention .dot{background:#B5852A}
+  .pill-stale{color:#B4513C;background:#B4513C16}.pill-stale .dot{background:#B4513C}
+  .pill-unknown{color:#A39C90;background:#A39C9018}.pill-unknown .dot{background:#A39C90}
+  .rec{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--fresh);border-radius:8px;padding:14px 18px;margin:14px 0;font-size:13.5px}
+  .checklist li{color:var(--ink)}
+  </style></head><body><div class="wrap">
   <div class="eyebrow">AbarVa · Board-grade deliverable</div>
   <h1>${esc(doc.title)}</h1>
+  ${doc.subtitle ? `<div class="muted" style="color:var(--muted);font-size:13.5px;margin:2px 0">${esc(doc.subtitle)}</div>` : ''}
   <p class="eyebrow">${esc(doc.clientDisplayName)} — ${esc(doc.initiativeDisplayName)}</p>
+  <h2>Recommendation</h2><div class="rec"><strong>Recommendation.</strong> ${esc(doc.recommendation)}</div>
   ${sections}
   ${tables ? `<h2>Tables &amp; Exhibits</h2>${tables}` : ''}
-  <h2>Recommendation</h2><div class="rec">${esc(doc.recommendation)}</div>
-  ${nextActions ? `<h3>Next Actions</h3><ul>${nextActions}</ul>` : ''}
-  ${checklist ? `<h2>Client-to-Complete Checklist</h2><ul>${checklist}</ul>` : ''}
-  ${register ? `<h2>Source Register</h2><table><thead><tr><th>[n]</th><th>Source</th><th>Family</th><th>Confidence</th></tr></thead><tbody>${register}</tbody></table>` : ''}
+  ${nextActions ? `<h3>Next Actions</h3><ol>${nextActions}</ol>` : ''}
+  ${checklist ? `<h2>Client-to-Complete Checklist</h2><ul class="checklist">${checklist}</ul>` : ''}
+  ${register ? `<h2>Source Register</h2><table class="md"><thead><tr><th>[n]</th><th>Source</th><th>Family</th><th>Confidence</th><th>As of</th></tr></thead><tbody>${register}</tbody></table>` : ''}
   </div></body></html>`;
 }

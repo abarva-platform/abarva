@@ -52,4 +52,38 @@ describe('HTML preview', () => {
   it('leaks no internal ids/tags into the rendered HTML body', () => {
     expect(scanForInternalLeaks(html)).toHaveLength(0);
   });
+
+  it('renders authored markdown structure (lists, sub-headings, bold) — not flat <p>-per-line', () => {
+    const doc = goodDocument();
+    doc.generatedSections = [
+      {
+        key: 'structured',
+        title: '1. Structured Section',
+        bodyMarkdown:
+          '### Sub-heading\n\nAn intro line with **bold emphasis**.\n\n- First bullet\n- Second bullet\n\n1. Step one\n2. Step two',
+        groundingMode: 'mixed',
+        citationsUsed: [],
+      },
+    ];
+    const out = renderDeliverableHtml(doc);
+    // Real structural markup survives.
+    expect(out).toMatch(/<h4>Sub-heading<\/h4>/);
+    expect(out).toMatch(/<strong>bold emphasis<\/strong>/);
+    expect(out).toMatch(/<ul>\s*<li>First bullet<\/li>/);
+    expect(out).toMatch(/<ol>\s*<li>Step one<\/li>/);
+    // The old flattening would have wrapped every line in <p> with the markers stripped.
+    expect(out).not.toMatch(/<p>- First bullet<\/p>/);
+    expect(out).not.toMatch(/<p>### Sub-heading<\/p>/);
+  });
+
+  it('uses the canonical clean table recipe — no navy header fill, status-pill confidence', () => {
+    // No anti-pattern navy/teal in the deliverable styling.
+    expect(html).not.toMatch(/#0C1A3A/i);
+    expect(html).not.toMatch(/#2DD4C8/i);
+    // Muted uppercase table header + fresh-green recommendation rule.
+    expect(html).toMatch(/text-transform:uppercase/);
+    expect(html).toMatch(/border-left:3px solid var\(--fresh\)/);
+    // Confidence rendered as a status pill, not raw text in a bare cell.
+    expect(html).toMatch(/class="pill pill-fresh"/);
+  });
 });
