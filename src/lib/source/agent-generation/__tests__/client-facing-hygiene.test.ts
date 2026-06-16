@@ -38,4 +38,30 @@ describe("Source client-facing draft hygiene", () => {
       /tenant key|chunk_id|fact_key|source_artifacts|artifact id|substrate/i,
     );
   });
+
+  it("adds a company label after the document line when missing", () => {
+    const result = sanitizeClientFacingSourceDraft(
+      ["Document: Sourcing Strategy Memo", "Decision owner: Tomas Singh"].join(
+        "\n",
+      ),
+      { companyName: "SkyHarbor Air" },
+    );
+
+    expect(result).toContain(
+      ["Document: Sourcing Strategy Memo", "Company: SkyHarbor Air"].join("\n"),
+    );
+  });
+
+  it("does not duplicate an existing company label", () => {
+    const result = sanitizeClientFacingSourceDraft(
+      [
+        "Document: Scope Memo",
+        "Company: SkyHarbor Air",
+        "Decision owner: Tomas Singh",
+      ].join("\n"),
+      { companyName: "SkyHarbor Air" },
+    );
+
+    expect(result.match(/Company: SkyHarbor Air/g)).toHaveLength(1);
+  });
 });

@@ -537,23 +537,25 @@ export async function generateSourceArtifactDraft(
     );
   }
   body = completeD09RfpGovernanceSections({ artifactCode, body, ctx });
-  body = sanitizeClientFacingSourceDraft(body);
+  body = sanitizeClientFacingSourceDraft(body, {
+    companyName: ctx.tenantName,
+  });
 
   let qualityGate: SourceArtifactQualityGateMetadata | undefined;
   if (requiresQualityGate) {
-      const qualityResult = await runConsultingGradeQualityGate({
-        artifactCode,
-        artifactName: specByCode(artifactCode)?.name ?? artifactCode,
-        body,
-        ctx,
+    const qualityResult = await runConsultingGradeQualityGate({
+      artifactCode,
+      artifactName: specByCode(artifactCode)?.name ?? artifactCode,
+      body,
+      ctx,
       upstreamBound,
       tenantId: tenancy.clientId,
-        userId: tenancy.userId,
-        artifactId: artifactRow.id,
-        model: template.model,
-        maxTokens: template.maxTokens,
-        requestStartedAtMs: startedAt,
-      });
+      userId: tenancy.userId,
+      artifactId: artifactRow.id,
+      model: template.model,
+      maxTokens: template.maxTokens,
+      requestStartedAtMs: startedAt,
+    });
     if (!qualityResult.ok) {
       return Response.json(
         {
@@ -586,7 +588,9 @@ export async function generateSourceArtifactDraft(
       tokensIn,
       tokensOut,
       stopReason,
-      qualityGate: qualityGate as unknown as Record<string, unknown> | undefined,
+      qualityGate: qualityGate as unknown as
+        | Record<string, unknown>
+        | undefined,
     },
     sectionVerification,
   ) satisfies SourceArtifactBodyGenerationMetadata;
@@ -730,11 +734,11 @@ export async function generateSourceArtifactDraft(
                 title:
                   renderedArtifact.role === "preview"
                     ? `${spec?.name ?? artifactCode} — Preview`
-                    : spec?.name ?? artifactCode,
+                    : (spec?.name ?? artifactCode),
                 description:
                   renderedArtifact.role === "preview"
                     ? "HTML preview of the generated Source deliverable."
-                    : spec?.description ?? null,
+                    : (spec?.description ?? null),
                 fileName: renderedArtifact.filename,
                 fileFormat: renderedArtifact.format,
                 blobContainer: REGISTRY_STORAGE_BUCKET,
@@ -1127,7 +1131,12 @@ async function runConsultingGradeReview(args: {
 }
 
 function extractSourceQualityReviewPayload(
-  content: Array<{ type: string; name?: string; input?: unknown; text?: string }>,
+  content: Array<{
+    type: string;
+    name?: string;
+    input?: unknown;
+    text?: string;
+  }>,
 ): string {
   const toolUse = content.find(
     (block) =>
@@ -1136,7 +1145,7 @@ function extractSourceQualityReviewPayload(
   );
   if (toolUse) return JSON.stringify(toolUse.input ?? {});
   return content
-    .map((block) => (block.type === "text" ? block.text ?? "" : ""))
+    .map((block) => (block.type === "text" ? (block.text ?? "") : ""))
     .join("")
     .trim();
 }
