@@ -11,6 +11,7 @@ import {
   renderArtifactHtml,
 } from "@/lib/source/exports";
 import type { SourceGenerationContext } from "@/lib/source/agent-generation/types";
+import { sourceArtifactClientLabel } from "@/lib/source/agent-generation/client-facing-hygiene";
 import type { NarrativeDocxPayload } from "@/lib/source/exports/renderers/narrative-docx";
 
 export const GENERATED_MARKDOWN_CONTENT_TYPE = "text/markdown; charset=utf-8";
@@ -66,7 +67,7 @@ export async function renderGeneratedSourceArtifactFormats(args: {
   ctx: SourceGenerationContext;
   generatedAt: string;
 }): Promise<RenderGeneratedArtifactResult> {
-  const stem = `${sanitizeStem(args.artifactCode)}-${args.artifactId.slice(0, 8)}`;
+  const stem = `${sanitizeStem(sourceArtifactClientLabel(args.artifactCode))}-${args.artifactId.slice(0, 8)}`;
   const source: RenderedGeneratedArtifact = {
     format: "md",
     role: "source",

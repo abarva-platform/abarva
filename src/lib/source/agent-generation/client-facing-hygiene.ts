@@ -8,6 +8,10 @@ const CLIENT_FACING_ARTIFACT_LABELS: Record<string, string> = {
   d09_rfp_pack: "RFP Package",
 };
 
+export function sourceArtifactClientLabel(artifactCode: string): string {
+  return CLIENT_FACING_ARTIFACT_LABELS[artifactCode] ?? artifactCode;
+}
+
 const RAW_INTERNAL_TERMS = [
   "tenant key",
   "tenant_key",

@@ -46,19 +46,19 @@ describe('renderGeneratedSourceArtifactFormats', () => {
 
     expect(result.errors).toEqual([]);
     expect(result.primary.format).toBe('docx');
-    expect(result.primary.filename).toMatch(/\.docx$/);
+    expect(result.primary.filename).toBe('Scope_Memo-artifact.docx');
     expect(result.primary.contentType).toMatch(/wordprocessingml/);
     expect(result.primary.bytes.subarray(0, 2).toString('latin1')).toBe('PK');
 
     expect(result.preview?.format).toBe('html');
-    expect(result.preview?.filename).toMatch(/_preview\.html$/);
+    expect(result.preview?.filename).toBe('Scope_Memo-artifact_preview.html');
     expect(result.preview?.bytes.toString('utf8')).toContain('<article class="source-doc">');
     expect(result.preview?.bytes.toString('utf8')).toContain('AQ1b DOCX Rendering Proof');
     expect(result.preview?.bytes.toString('utf8')).toContain('Company: SkyHarbor Air');
     expect(result.preview?.bytes.toString('utf8')).not.toContain('Tenant:');
 
     expect(result.source?.format).toBe('md');
-    expect(result.source?.filename).toMatch(/_source\.md$/);
+    expect(result.source?.filename).toBe('Scope_Memo-artifact_source.md');
     expect(result.source?.bytes.toString('utf8')).toContain('## In scope');
   });
 
