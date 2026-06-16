@@ -16,6 +16,7 @@ import {
   normalizeApprovalReason,
   validateApprovalReason,
 } from "@/lib/source/source-governance-enforcement";
+import { autoDraftOnStageEntry } from "@/lib/source/stage-entry-autodraft";
 
 interface ApproveBody {
   action: "approve" | "reject";
@@ -228,6 +229,35 @@ export async function POST(
           message: err instanceof Error ? err.message : String(err),
         },
       );
+    }
+
+    if (advancedToStage === "scope") {
+      void (async () => {
+        await autoDraftOnStageEntry(
+          {
+            eventId,
+            clientKey: activeClient.key,
+            enteredStage: "strategy",
+          },
+          { request },
+        );
+        await autoDraftOnStageEntry(
+          {
+            eventId,
+            clientKey: activeClient.key,
+            enteredStage: "scope",
+          },
+          { request },
+        );
+      })().catch((error) => {
+        console.error(
+          "[POST /api/v1/source/:eventId/approve] strategy_at_p0_autodraft_failed",
+          {
+            eventId,
+            message: error instanceof Error ? error.message : String(error),
+          },
+        );
+      });
     }
   }
 

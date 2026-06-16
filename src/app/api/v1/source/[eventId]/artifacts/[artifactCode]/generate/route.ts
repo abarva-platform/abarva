@@ -179,7 +179,9 @@ function isCanonicalClientAdminEmail(
 export async function POST(req: NextRequest, { params }: RouteCtx) {
   const resolvedParams = await params;
   const invoke = () =>
-    generateArtifact(req, { params: Promise.resolve(resolvedParams) });
+    generateSourceArtifactDraft(req, {
+      params: Promise.resolve(resolvedParams),
+    });
   // Wrap EVERY generation in the JSON heartbeat stream (previously d09-only).
   // A synchronous Anthropic generate sends no bytes to the client for 60-240s;
   // without a heartbeat the ACA ingress idle-times-out and 504s before the
@@ -245,7 +247,10 @@ function streamJsonHeartbeat(run: () => Promise<Response>): Response {
   });
 }
 
-async function generateArtifact(_req: NextRequest, { params }: RouteCtx) {
+export async function generateSourceArtifactDraft(
+  _req: Request,
+  { params }: RouteCtx,
+) {
   let tenancy;
   let tenancyError: unknown = null;
   try {
