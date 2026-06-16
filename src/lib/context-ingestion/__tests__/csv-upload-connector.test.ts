@@ -473,6 +473,7 @@ describe("csv upload connector", () => {
         "ven-1,Finzly,1200000,2026-10-01",
       ].join("\n"),
       mapping: { templateId: "vendor-contracts" },
+      classificationOverrides: { domainSegment: "DATA_ANALYTICS" },
       db: db as never,
     });
 
@@ -499,6 +500,7 @@ describe("csv upload connector", () => {
       "upsert",
       "update",
       "upsert",
+      "update",
     ]);
     expect(calls.some((call) => call.operation === "delete")).toBe(false);
     const sourceFileUpsert = calls.find(
@@ -585,6 +587,7 @@ describe("csv upload connector", () => {
         'PHS-STARS-2026,Stars baseline,public,Data steward,2026-06-05,public,high,Public Stars measure baseline,"moves,admin",https://example.test/stars,"3.0 Stars baseline"',
       ].join("\n"),
       mapping: { templateId: "phs-evidence-register" },
+      classificationOverrides: { domainSegment: "DATA_ANALYTICS" },
       db: db as never,
       recordEvidenceFn: async (input) => {
         evidenceInputs.push(input);
@@ -608,6 +611,7 @@ describe("csv upload connector", () => {
       "enterprise_context_records",
       "enterprise_context_facts",
       "enterprise_context_facts",
+      "data_ingestion_runs",
     ]);
     expect(evidenceInputs).toEqual([
       expect.objectContaining({

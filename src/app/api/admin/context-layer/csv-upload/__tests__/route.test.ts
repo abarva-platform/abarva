@@ -297,7 +297,9 @@ describe("/api/admin/context-layer/csv-upload", () => {
         tenant_key: "apex-retail",
         source_record_id: "app-1",
         embedding_status: "pending",
-        lifecycle_state: "active",
+        lifecycle_state: "review",
+        classification_source: "NEEDS_CLASSIFICATION",
+        domain_segment: null,
         load_batch_id: expect.stringMatching(/^csv:/),
         source_path: expect.stringContaining("azure-blob://context-uploads/"),
         provenance: expect.objectContaining({

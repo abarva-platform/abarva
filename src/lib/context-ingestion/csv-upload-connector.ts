@@ -26,6 +26,7 @@ import {
   getTemplateForDimension,
   type ContextTemplateDefinition,
 } from "./template-registry";
+import { inferDomainSegment, VALID_DOMAIN_SEGMENTS } from "./validation-engine";
 import type { ContextDimension } from "./types";
 import type { PilotUploadAttestation } from "./upload-attestation";
 import type { SegmentKey } from "@/lib/ingestion/azure-landing-zone-types";
@@ -57,11 +58,28 @@ export interface CsvUploadInput {
   uploadedAt?: string;
   db?: PostgresCompatClient;
   recordEvidenceFn?: (input: RecordEvidenceInput) => Promise<string>;
+  classificationOverrides?: {
+    domainSegment?: string;
+    businessFunction?: string;
+    criticality?: string;
+  };
 }
 
 export interface CsvParseResult {
   headers: string[];
   rows: CsvRow[];
+}
+
+export type ClassificationSource =
+  | "OPERATOR_CONFIRMED"
+  | "AUTO_INFERRED"
+  | "NEEDS_CLASSIFICATION";
+
+export interface RowClassificationResult {
+  domainSegment: string | null;
+  businessFunction: string | null;
+  criticality: string | null;
+  classificationSource: ClassificationSource;
 }
 
 export type StructuredUploadFormat = "csv" | "json" | "jsonl" | "yaml";
@@ -115,6 +133,8 @@ export interface CsvUploadLoadResult extends Omit<
   "chunks"
 > {
   chunksQueued: number;
+  needsClassificationCount: number;
+  autoInferredCount: number;
   evidenceLedger: {
     status: "not_applicable" | "inserted";
     rowsRecorded: number;
@@ -176,6 +196,8 @@ const SEGMENT_BY_DIMENSION: Record<ContextDimension, SegmentKey> = {
   infrastructure_estate: "infrastructure",
   business_capability: "enterprise_profile",
   service_levels: "it_landscape",
+  it_landscape: "it_landscape",
+  infrastructure_dc: "infrastructure",
 };
 
 export function segmentKeyForContextDimension(
@@ -665,15 +687,124 @@ function databaseConfigured(): boolean {
   );
 }
 
+/**
+ * Resolves classification fields for a single CSV row.
+ * Priority order:
+ *  1. classificationOverrides from the caller (OPERATOR_CONFIRMED)
+ *  2. Explicit columns in the row data if valid (OPERATOR_CONFIRMED)
+ *  3. Auto-inference from vendor/system name (AUTO_INFERRED when high confidence)
+ *  4. NEEDS_CLASSIFICATION otherwise
+ */
+function resolveRowClassification(
+  row: CsvRow,
+  classificationOverrides?: CsvUploadInput["classificationOverrides"],
+): RowClassificationResult {
+  // If the caller provides overrides, they win unconditionally.
+  if (
+    classificationOverrides?.domainSegment ||
+    classificationOverrides?.businessFunction ||
+    classificationOverrides?.criticality
+  ) {
+    return {
+      domainSegment: classificationOverrides.domainSegment ?? null,
+      businessFunction: classificationOverrides.businessFunction ?? null,
+      criticality: classificationOverrides.criticality ?? null,
+      classificationSource: "OPERATOR_CONFIRMED",
+    };
+  }
+
+  // Check for explicit columns in the row.
+  const rowDomainSegment = (row["domain_segment"] ?? "").trim();
+  const rowBusinessFunction = (row["business_function"] ?? "").trim();
+  const rowCriticality = (row["criticality"] ?? "").trim();
+
+  if (rowDomainSegment && VALID_DOMAIN_SEGMENTS.has(rowDomainSegment)) {
+    return {
+      domainSegment: rowDomainSegment,
+      businessFunction: rowBusinessFunction || null,
+      criticality: rowCriticality || null,
+      classificationSource: "OPERATOR_CONFIRMED",
+    };
+  }
+
+  // Try auto-inference from vendor_name or system_name columns.
+  const nameHint = (
+    row["vendor_name"] ??
+    row["system_name"] ??
+    row["name"] ??
+    ""
+  ).trim();
+  const inferred = inferDomainSegment(nameHint);
+  if (inferred.confidence === "high" && inferred.segment) {
+    return {
+      domainSegment: inferred.segment,
+      businessFunction: rowBusinessFunction || null,
+      criticality: rowCriticality || null,
+      classificationSource: "AUTO_INFERRED",
+    };
+  }
+
+  // Could not classify — route to review.
+  return {
+    domainSegment: rowDomainSegment || null,
+    businessFunction: rowBusinessFunction || null,
+    criticality: rowCriticality || null,
+    classificationSource: "NEEDS_CLASSIFICATION",
+  };
+}
+
 export async function loadCsvUploadToTenantContext(
   input: CsvUploadInput,
 ): Promise<CsvUploadLoadResult> {
   const prepared = prepareCsvUploadForTenantContext(input);
   const { chunks, ...publicPrepared } = prepared;
+
+  // Compute per-row classification before any DB writes so we can annotate
+  // chunks and tally the classification outcome counts.
+  const parsedForClassification = parseStructuredUpload(
+    input.csvText,
+    input.fileName,
+  );
+  const rowClassifications = parsedForClassification.rows.map((row) =>
+    resolveRowClassification(row, input.classificationOverrides),
+  );
+  let needsClassificationCount = 0;
+  let autoInferredCount = 0;
+  for (const cls of rowClassifications) {
+    if (cls.classificationSource === "NEEDS_CLASSIFICATION")
+      needsClassificationCount++;
+    else if (cls.classificationSource === "AUTO_INFERRED") autoInferredCount++;
+  }
+
+  // Annotate chunks with classification fields. Chunks are ordered the same as
+  // parsedForClassification.rows (both derived from the same CSV parse).
+  const annotatedChunks = chunks.map((chunk, index) => {
+    const cls = rowClassifications[index] ?? {
+      domainSegment: null,
+      businessFunction: null,
+      criticality: null,
+      classificationSource: "NEEDS_CLASSIFICATION" as ClassificationSource,
+    };
+    return {
+      ...chunk,
+      domain_segment: cls.domainSegment,
+      business_function: cls.businessFunction,
+      criticality: cls.criticality,
+      classification_source: cls.classificationSource,
+      // Route unclassified rows to 'review' lifecycle state.
+      lifecycle_state:
+        cls.classificationSource === "NEEDS_CLASSIFICATION"
+          ? ("review" as const)
+          : chunk.lifecycle_state,
+    };
+  });
+
   if (!databaseConfigured() && !input.db) {
     return {
       ...publicPrepared,
       chunksQueued: chunks.length,
+      needsClassificationCount,
+      autoInferredCount,
       evidenceLedger: {
         status: "not_applicable",
         rowsRecorded: 0,
@@ -708,9 +839,9 @@ export async function loadCsvUploadToTenantContext(
       tenant_key: input.tenantKey,
       source_label: `CSV upload: ${input.fileName}`,
       source_root: "admin/context-layer/csv-upload",
-      status: "completed",
-      records_loaded: prepared.rowsParsed,
-      chunks_loaded: prepared.chunks.length,
+      status: "started",
+      records_loaded: 0,
+      chunks_loaded: 0,
       nodes_loaded: 0,
       edges_loaded: 0,
       summary: {
@@ -724,60 +855,86 @@ export async function loadCsvUploadToTenantContext(
     })
     .select("id");
   const ingestionRunRecorded = !runInsert.error;
+  const ingestionRunId = Array.isArray(runInsert.data)
+    ? (runInsert.data[0] as { id?: string } | undefined)?.id
+    : null;
+
+  async function updateIngestionRun(status: "completed" | "failed") {
+    if (!ingestionRunId) return;
+    await db
+      .from("data_ingestion_runs")
+      .update({
+        status,
+        records_loaded: status === "completed" ? prepared.rowsParsed : 0,
+        chunks_loaded: status === "completed" ? prepared.chunks.length : 0,
+        completed_at: new Date().toISOString(),
+      })
+      .eq("id", ingestionRunId);
+  }
 
   let inserted = 0;
-  for (let index = 0; index < chunks.length; index += 100) {
-    const batch = chunks.slice(index, index + 100);
-    // WS-B: upsert on the stable chunk id so re-uploading the same logical
-    // content updates the chunk in place instead of failing on a duplicate key
-    // or accumulating orphaned duplicate chunks across uploads.
-    const { data, error, count } = await db
-      .from("enterprise_context_chunks")
-      .upsert(batch, { onConflict: "tenant_key,chunk_id" })
-      .select("chunk_id");
-    if (error) throw new Error(`csv_chunk_upsert_failed: ${error.message}`);
-    inserted += Array.isArray(data) ? data.length : (count ?? batch.length);
-  }
-
+  let enterpriseContextPromotion: AdminStructuredContextPromotionResult;
   const evidenceIds: string[] = [];
-  if (prepared.template.id === "phs-evidence-register") {
-    const parsed = parseCsvUpload(input.csvText);
-    const evidenceInputs = buildPHSEvidenceLedgerInputs({
-      clientId: input.clientId,
-      uploadedBy: input.uploadedBy,
-      uploadId: prepared.uploadId,
-      fileName: input.fileName,
-      rows: parsed.rows,
-    });
-    const writeEvidence = input.recordEvidenceFn ?? recordEvidence;
-    for (const evidenceInput of evidenceInputs) {
-      evidenceIds.push(await writeEvidence(evidenceInput));
+  try {
+    for (let index = 0; index < annotatedChunks.length; index += 100) {
+      const batch = annotatedChunks.slice(index, index + 100);
+      // WS-B: upsert on the stable chunk id so re-uploading the same logical
+      // content updates the chunk in place instead of failing on a duplicate key
+      // or accumulating orphaned duplicate chunks across uploads.
+      const { data, error, count } = await db
+        .from("enterprise_context_chunks")
+        .upsert(batch, { onConflict: "tenant_key,chunk_id" })
+        .select("chunk_id");
+      if (error) throw new Error(`csv_chunk_upsert_failed: ${error.message}`);
+      inserted += Array.isArray(data) ? data.length : (count ?? batch.length);
     }
-  }
 
-  const parsedForPromotion = parseStructuredUpload(
-    input.csvText,
-    input.fileName,
-  );
-  const enterpriseContextPromotion =
-    await promoteAdminStructuredRowsToEnterpriseContext({
-      clientId: input.clientId,
-      tenantKey: input.tenantKey,
-      fileName: input.fileName,
-      sourceFileHash: prepared.fileHash,
-      uploadedBy: input.uploadedBy,
-      uploadedAt: input.uploadedAt ?? new Date().toISOString(),
-      uploadId: prepared.uploadId,
-      sourcePathBase: sourcePathBase(input),
-      template: prepared.template,
-      mapping: prepared.mapping,
-      rows: parsedForPromotion.rows,
-      db,
-    });
+    if (prepared.template.id === "phs-evidence-register") {
+      const parsed = parseCsvUpload(input.csvText);
+      const evidenceInputs = buildPHSEvidenceLedgerInputs({
+        clientId: input.clientId,
+        uploadedBy: input.uploadedBy,
+        uploadId: prepared.uploadId,
+        fileName: input.fileName,
+        rows: parsed.rows,
+      });
+      const writeEvidence = input.recordEvidenceFn ?? recordEvidence;
+      for (const evidenceInput of evidenceInputs) {
+        evidenceIds.push(await writeEvidence(evidenceInput));
+      }
+    }
+
+    const parsedForPromotion = parseStructuredUpload(
+      input.csvText,
+      input.fileName,
+    );
+    enterpriseContextPromotion =
+      await promoteAdminStructuredRowsToEnterpriseContext({
+        clientId: input.clientId,
+        tenantKey: input.tenantKey,
+        fileName: input.fileName,
+        sourceFileHash: prepared.fileHash,
+        uploadedBy: input.uploadedBy,
+        uploadedAt: input.uploadedAt ?? new Date().toISOString(),
+        uploadId: prepared.uploadId,
+        sourcePathBase: sourcePathBase(input),
+        template: prepared.template,
+        mapping: prepared.mapping,
+        rows: parsedForPromotion.rows,
+        rowClassifications,
+        db,
+      });
+    await updateIngestionRun("completed");
+  } catch (error) {
+    await updateIngestionRun("failed");
+    throw error;
+  }
 
   return {
     ...publicPrepared,
     chunksQueued: chunks.length,
+    needsClassificationCount,
+    autoInferredCount,
     evidenceLedger:
       evidenceIds.length > 0
         ? {

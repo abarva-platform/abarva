@@ -3,14 +3,13 @@
 // v3 (2026-05-07) reframe: pattern-to-Move funnel surface with
 // Sentinel chat as a first-class three-mode layout.
 //
-// 2026-05-07 (live data wave): page reads the active tenant via
-// getActiveClientRow → loads initiatives + goals + per-stage data
-// in parallel → composes the v3 canvas data from real substrate.
+// v4 (2026-06-16) gate: when tenant has 'context_corpus_explorer_enabled'
+// flag, renders the Context & Corpus Explorer S1 shell instead.
 //
-// Spec: docs/build/intelligence/INTELLIGENCE_DESIGN_INTENT_2026-05-07.md
-// Wireframe: docs/design-canon/wireframe-intelligence-v3-2026-05-07.html
+// Spec: docs/build/intelligence/INTELLIGENCE_CONTEXT_CORPUS_EXPLORER_DESIGN_2026-06-16.md
 
 import { IntelligenceV3Page } from '@/components/intelligence-v3/IntelligenceV3Page';
+import { IntelligenceExplorerPage } from '@/components/intelligence-v4/IntelligenceExplorerPage';
 import { buildIntelligenceV3PageData } from '@/lib/intelligence-v3/page-data';
 import { getVendorsForClient } from '@/lib/intelligence-v3/vendors-data';
 import {
@@ -22,6 +21,7 @@ import { getActiveClientRow, hasLockedTenantSession } from '@/lib/active-client'
 import { getEnterpriseContextOverviewForTenant } from '@/lib/enterprise-context/intelligence-read-model';
 import { listInitiativesForClient } from '@/lib/admin/ai-initiatives/queries';
 import { loadTenantIntelligenceCorpusData } from '@/lib/intelligence-v3/tenant-corpus-loader';
+import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
 
 export const metadata = {
   title: 'Intelligence · Explore layer for AI bets | AbarVa',
@@ -55,6 +55,21 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
   const requestedClient = (await hasLockedTenantSession()) ? rawRequestedClient : null;
   const client = await getActiveClientRow(requestedClient).catch(() => null);
   const resolvedClientKey = client?.key ?? requestedClient;
+
+  // Feature flag: context_corpus_explorer_enabled
+  // When the active tenant has this flag, render the S1 Explorer shell.
+  // Falls back to V3 for all other tenants.
+  const featureFlagCtx = { clientKey: client?.key ?? null };
+  if (isFeatureEnabled(featureFlagCtx, 'context_corpus_explorer_enabled')) {
+    return (
+      <IntelligenceExplorerPage
+        tenantKey={client?.key ?? 'unknown'}
+        tenantName={client?.name ?? 'SkyHarbor Air'}
+        dimensionsLoaded={9}
+        insightCount={6}
+      />
+    );
+  }
 
   const [
     { data, isLiveBound },
