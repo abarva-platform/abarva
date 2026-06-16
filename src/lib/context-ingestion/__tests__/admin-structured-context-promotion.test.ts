@@ -198,4 +198,69 @@ describe("admin structured context promotion", () => {
       ]),
     );
   });
+
+  it("disambiguates repeated record-id column values within one structured upload", () => {
+    const template = getTemplateById("dora-baseline", {
+      tenantKey: "skyharbor-air",
+    });
+    expect(template).toBeTruthy();
+
+    const input: AdminStructuredContextPromotionInput = {
+      ...baseInput,
+      clientId: "client-skyharbor",
+      tenantKey: "skyharbor-air",
+      fileName: "dora_productivity_baseline.csv",
+      template: template!,
+      mapping: {
+        templateId: "dora-baseline",
+        dimension: "delivery_dora_devex",
+        sourceRecordIdColumn: "scorecard_id",
+        titleColumn: "metric",
+        textColumns: ["domain", "metric", "lead_time_for_change_hours"],
+        fieldMappings: {
+          team_id: "scorecard_id",
+          measured_at: "last_updated",
+          deploy_freq_per_week: "deploy_frequency_per_week",
+          lead_time_hours: "lead_time_for_change_hours",
+        },
+      },
+      rows: [
+        {
+          scorecard_id: "SKYH-DORA-PRODUCT",
+          domain: "Product engineering",
+          metric: "Lead time",
+          lead_time_for_change_hours: "36",
+          deploy_frequency_per_week: "7",
+          last_updated: "2026-06-01",
+        },
+        {
+          scorecard_id: "SKYH-DORA-PRODUCT",
+          domain: "Product engineering",
+          metric: "Deployment frequency",
+          lead_time_for_change_hours: "36",
+          deploy_frequency_per_week: "7",
+          last_updated: "2026-06-01",
+        },
+      ],
+    };
+
+    const first = buildAdminStructuredContextPromotionPlan(input);
+    const second = buildAdminStructuredContextPromotionPlan(input);
+    const canonicalRecordIds = first.records.map(
+      (record) => record.canonical_record_id,
+    );
+
+    expect(new Set(canonicalRecordIds).size).toBe(first.records.length);
+    expect(canonicalRecordIds).toEqual([
+      "admin-upload:skyharbor-air:dora-productivity-baseline-csv:skyh-dora-product-row-2",
+      "admin-upload:skyharbor-air:dora-productivity-baseline-csv:skyh-dora-product-row-3",
+    ]);
+    expect(second.records.map((record) => record.canonical_record_id)).toEqual(
+      canonicalRecordIds,
+    );
+    expect(first.records.map((record) => record.source_record_id)).toEqual([
+      "admin-upload:skyharbor-air:dora-productivity-baseline-csv:SKYH-DORA-PRODUCT-row-2",
+      "admin-upload:skyharbor-air:dora-productivity-baseline-csv:SKYH-DORA-PRODUCT-row-3",
+    ]);
+  });
 });

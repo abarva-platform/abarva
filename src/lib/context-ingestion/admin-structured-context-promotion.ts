@@ -234,6 +234,17 @@ function sourceRecordIdFor(args: {
         `${safeSlug(args.fileName)}-row-${rowNumber(args.rowIndex)}`);
 }
 
+function disambiguateDuplicateSourceRecordId(args: {
+  sourceRecordId: string;
+  duplicateSourceRecordIds: Set<string>;
+  rowIndex: number;
+}): string {
+  if (!args.duplicateSourceRecordIds.has(args.sourceRecordId)) {
+    return args.sourceRecordId;
+  }
+  return `${args.sourceRecordId}-row-${rowNumber(args.rowIndex)}`;
+}
+
 function titleFor(args: {
   row: CsvRow;
   mapping: CsvMappingSuggestion;
@@ -397,16 +408,29 @@ export function buildAdminStructuredContextPromotionPlan(
     input.tenantKey,
     sourceFileId,
   ]);
+  const sourceRecordIds = input.rows.map((row, index) =>
+    sourceRecordIdFor({
+      row,
+      mapping: input.mapping,
+      fileName: input.fileName,
+      rowIndex: index,
+    }),
+  );
+  const duplicateSourceRecordIds = new Set(
+    sourceRecordIds.filter(
+      (sourceRecordId, index) =>
+        sourceRecordIds.indexOf(sourceRecordId) !== index,
+    ),
+  );
   const records: EnterpriseContextRecordPromotionRow[] = [];
   const factDrafts: EnterpriseContextFactPromotionDraft[] = [];
 
   input.rows.forEach((row, index) => {
     const promotedRow = canonicalizedRow(row, input.mapping);
     const sourceRow = rowNumber(index);
-    const rowSourceRecordId = sourceRecordIdFor({
-      row,
-      mapping: input.mapping,
-      fileName: input.fileName,
+    const rowSourceRecordId = disambiguateDuplicateSourceRecordId({
+      sourceRecordId: sourceRecordIds[index]!,
+      duplicateSourceRecordIds,
       rowIndex: index,
     });
     const canonicalRecordId = `${sourceFileId}:${safeSlug(rowSourceRecordId)}`;
