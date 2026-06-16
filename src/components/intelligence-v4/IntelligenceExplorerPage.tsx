@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // IntelligenceExplorerPage · Context & Corpus Explorer main page component
 //
@@ -8,31 +8,32 @@
 //
 // Tenant header strip: tenant name, live insight count, dimensions loaded, context date.
 
-import { useState } from 'react';
-import { SentinelExplorerRail } from './SentinelExplorerRail';
-import { ContextInsightsFeed } from './ContextInsightsFeed';
-import { ContextExploreTab } from './ContextExploreTab';
-import { ContextChangeLogTab } from './ContextChangeLogTab';
-import { ContextCoverageTrustTab } from './ContextCoverageTrustTab';
-import { ContextCorpusTab } from './ContextCorpusTab';
+import { useEffect, useState } from "react";
+import { SentinelExplorerRail } from "./SentinelExplorerRail";
+import { ContextInsightsFeed } from "./ContextInsightsFeed";
+import { ContextExploreTab } from "./ContextExploreTab";
+import { ContextChangeLogTab } from "./ContextChangeLogTab";
+import { ContextCoverageTrustTab } from "./ContextCoverageTrustTab";
+import { ContextCorpusTab } from "./ContextCorpusTab";
+import type { ContextReadModelResult } from "@/lib/intelligence/context-read-model";
 
 const C = {
-  bg: '#F8F7F4',
-  panel: '#FFFFFF',
-  ink: '#1B1A17',
-  muted: '#6F6A61',
-  line: '#E6E2DA',
-  attention: '#B5852A',
+  bg: "#F8F7F4",
+  panel: "#FFFFFF",
+  ink: "#1B1A17",
+  muted: "#6F6A61",
+  line: "#E6E2DA",
+  attention: "#B5852A",
 };
 
-type TabKey = 'insights' | 'explore' | 'change' | 'trust' | 'corpus';
+type TabKey = "insights" | "explore" | "change" | "trust" | "corpus";
 
 const TABS: { key: TabKey; label: string; group: string }[] = [
-  { key: 'insights', label: 'Insights', group: 'Meaning · L2' },
-  { key: 'explore', label: 'Explore', group: 'Facts · L1' },
-  { key: 'change', label: 'Change Log', group: 'Context' },
-  { key: 'trust', label: 'Coverage & Trust', group: 'Plumbing · L0' },
-  { key: 'corpus', label: 'Corpus', group: 'Global' },
+  { key: "insights", label: "Insights", group: "Meaning · L2" },
+  { key: "explore", label: "Explore", group: "Facts · L1" },
+  { key: "change", label: "Change Log", group: "Context" },
+  { key: "trust", label: "Coverage & Trust", group: "Plumbing · L0" },
+  { key: "corpus", label: "Corpus", group: "Global" },
 ];
 
 export interface IntelligenceExplorerPageProps {
@@ -43,35 +44,75 @@ export interface IntelligenceExplorerPageProps {
 }
 
 export function IntelligenceExplorerPage({
+  tenantKey,
   tenantName,
   dimensionsLoaded = 9,
   insightCount = 6,
 }: IntelligenceExplorerPageProps) {
-  const [activeTab, setActiveTab] = useState<TabKey>('insights');
+  const [activeTab, setActiveTab] = useState<TabKey>("insights");
+  const [contextSummary, setContextSummary] =
+    useState<ContextReadModelResult | null>(null);
   // When "See the facts" is clicked from an insight, switch to Explore
   // and pass the entity name so the row auto-expands.
   const [exploreEntity, setExploreEntity] = useState<string | null>(null);
 
   const handleSeeTheFacts = (entityName: string) => {
     setExploreEntity(entityName);
-    setActiveTab('explore');
+    setActiveTab("explore");
   };
 
   const handleTabChange = (key: TabKey) => {
     setActiveTab(key);
-    if (key !== 'explore') {
+    if (key !== "explore") {
       setExploreEntity(null);
     }
   };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(
+      `/api/intelligence/context-summary?tenantKey=${encodeURIComponent(tenantKey)}`,
+      {
+        signal: controller.signal,
+        cache: "no-store",
+      },
+    )
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`context-summary ${response.status}`);
+        return response.json() as Promise<ContextReadModelResult>;
+      })
+      .then((summary) => {
+        setContextSummary(summary);
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        console.warn(
+          "[IntelligenceExplorerPage] context-summary failed",
+          error,
+        );
+      });
+    return () => controller.abort();
+  }, [tenantKey]);
+
+  const liveInsightCount = contextSummary?.insightCount ?? insightCount;
+  const liveDimensionsLoaded =
+    contextSummary?.dimensionsLoaded ?? dimensionsLoaded;
+  const contextDate = contextSummary?.latestUpdatedAt
+    ? new Date(contextSummary.latestUpdatedAt).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "Jun 16, 2026";
 
   return (
     <div
       data-testid="intelligence-explorer-page"
       style={{
         background: C.bg,
-        display: 'flex',
-        flexDirection: 'column',
-        height: 'calc(100vh - 54px)',
+        display: "flex",
+        flexDirection: "column",
+        height: "calc(100vh - 54px)",
         minHeight: 0,
       }}
     >
@@ -80,23 +121,23 @@ export function IntelligenceExplorerPage({
         style={{
           height: 54,
           borderBottom: `1px solid ${C.line}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 22px',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 22px",
           background: C.bg,
           flexShrink: 0,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
           <div
             style={{
               width: 24,
               height: 24,
               border: `1.5px solid ${C.ink}`,
               borderRadius: 5,
-              display: 'grid',
-              placeItems: 'center',
+              display: "grid",
+              placeItems: "center",
               fontFamily: "Georgia, 'Times New Roman', serif",
               fontSize: 13,
               fontWeight: 700,
@@ -118,34 +159,45 @@ export function IntelligenceExplorerPage({
             · {tenantName}
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 15, fontSize: 12.5, color: C.muted }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 15,
+            fontSize: 12.5,
+            color: C.muted,
+          }}
+        >
           <span
             style={{
               fontSize: 10,
-              letterSpacing: '0.4px',
-              textTransform: 'uppercase' as const,
+              letterSpacing: "0.4px",
+              textTransform: "uppercase" as const,
               color: C.attention,
               border: `1px solid ${C.attention}55`,
               borderRadius: 20,
-              padding: '2px 9px',
+              padding: "2px 9px",
             }}
           >
             Illustrative · synthetic tenant
           </span>
           <span>
-            <strong style={{ color: C.ink }}>{insightCount}</strong> live insights
+            <strong style={{ color: C.ink }}>{liveInsightCount}</strong> live
+            insights
           </span>
           <span>
-            <strong style={{ color: C.ink }}>{dimensionsLoaded}/14</strong> dimensions loaded
+            <strong style={{ color: C.ink }}>{liveDimensionsLoaded}/14</strong>{" "}
+            dimensions loaded
           </span>
           <span>
-            context as of <strong style={{ color: C.ink }}>Jun 16, 2026</strong>
+            context as of{" "}
+            <strong style={{ color: C.ink }}>{contextDate}</strong>
           </span>
         </div>
       </div>
 
       {/* Main shell: rail + dashboard */}
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         {/* Left: Sentinel rail */}
         <SentinelExplorerRail />
 
@@ -153,21 +205,21 @@ export function IntelligenceExplorerPage({
         <section
           style={{
             flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
+            display: "flex",
+            flexDirection: "column",
             minWidth: 0,
           }}
         >
           {/* Tab strip */}
           <nav
             style={{
-              display: 'flex',
+              display: "flex",
               gap: 1,
-              padding: '0 20px',
+              padding: "0 20px",
               borderBottom: `1px solid ${C.line}`,
               background: C.bg,
               flexShrink: 0,
-              position: 'sticky',
+              position: "sticky",
               top: 0,
               zIndex: 10,
             }}
@@ -178,25 +230,28 @@ export function IntelligenceExplorerPage({
                 type="button"
                 onClick={() => handleTabChange(tab.key)}
                 style={{
-                  appearance: 'none' as const,
-                  background: 'none',
-                  border: 'none',
-                  padding: '12px 13px 10px',
+                  appearance: "none" as const,
+                  background: "none",
+                  border: "none",
+                  padding: "12px 13px 10px",
                   fontSize: 13,
                   color: activeTab === tab.key ? C.ink : C.muted,
-                  borderBottom: activeTab === tab.key ? `2px solid ${C.ink}` : '2px solid transparent',
+                  borderBottom:
+                    activeTab === tab.key
+                      ? `2px solid ${C.ink}`
+                      : "2px solid transparent",
                   marginBottom: -1,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
+                  cursor: "pointer",
+                  fontFamily: "inherit",
                   fontWeight: activeTab === tab.key ? 600 : 400,
                 }}
               >
                 <span
                   style={{
                     fontSize: 9,
-                    textTransform: 'uppercase' as const,
-                    letterSpacing: '0.6px',
-                    display: 'block',
+                    textTransform: "uppercase" as const,
+                    letterSpacing: "0.6px",
+                    display: "block",
                     marginBottom: 2,
                     opacity: 0.7,
                   }}
@@ -212,26 +267,25 @@ export function IntelligenceExplorerPage({
           <div
             style={{
               flex: 1,
-              overflowY: 'auto',
-              padding: '20px 28px 70px',
+              overflowY: "auto",
+              padding: "20px 28px 70px",
             }}
           >
             <div style={{ maxWidth: 1080 }}>
-              {activeTab === 'insights' && (
+              {activeTab === "insights" && (
                 <ContextInsightsFeed onSeeTheFacts={handleSeeTheFacts} />
               )}
-              {activeTab === 'explore' && (
-                <ContextExploreTab initialEntityName={exploreEntity} />
+              {activeTab === "explore" && (
+                <ContextExploreTab
+                  initialEntityName={exploreEntity}
+                  contextSummary={contextSummary}
+                />
               )}
-              {activeTab === 'change' && (
-                <ContextChangeLogTab />
+              {activeTab === "change" && <ContextChangeLogTab />}
+              {activeTab === "trust" && (
+                <ContextCoverageTrustTab contextSummary={contextSummary} />
               )}
-              {activeTab === 'trust' && (
-                <ContextCoverageTrustTab />
-              )}
-              {activeTab === 'corpus' && (
-                <ContextCorpusTab />
-              )}
+              {activeTab === "corpus" && <ContextCorpusTab />}
             </div>
           </div>
         </section>
