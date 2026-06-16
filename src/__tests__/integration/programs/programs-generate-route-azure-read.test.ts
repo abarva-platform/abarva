@@ -1,22 +1,20 @@
+// POST /api/v1/programs/[programId]/generate — orchestrated-delegation contract.
+//
+// The single-pass path (streamAgentTurn → draftModuleDeliverable → 200 inline doc)
+// is RETIRED. This route now delegates to the governed multi-pass orchestrator:
+// create a deliverable_runs row, kick runDeliverableForTenant in the background,
+// and return 202 { runId, status:'running' }. These tests assert that contract and
+// that the retired single-pass collaborators are never imported/invoked.
+
 const requireTenancy = jest.fn();
 const tenancyErrorResponse = jest.fn();
 const getProgramById = jest.fn();
-const getModuleState = jest.fn();
-const mockAzureRead = {
-  query: jest.fn(),
-  select: jest.fn(),
-  maybeSingle: jest.fn(),
-  count: jest.fn(),
-  withSession: jest.fn(),
-};
 const getActiveClientRow = jest.fn();
-const buildTenantContextBlock = jest.fn();
-const clientKeyToInventorySubstrateKey = jest.fn();
-const streamAgentTurn = jest.fn();
-const draftModuleDeliverable = jest.fn();
 const getDeliverableSpec = jest.fn();
-const getPhasePackV2 = jest.fn();
-const formatPhasePackV2ForPrompt = jest.fn();
+const runDeliverableForTenant = jest.fn();
+const createDeliverableRun = jest.fn();
+const completeDeliverableRun = jest.fn();
+const updateDeliverableRunProgress = jest.fn();
 
 jest.mock('@/app/api/v1/programs/_auth', () => ({
   requireTenancy,
@@ -25,43 +23,24 @@ jest.mock('@/app/api/v1/programs/_auth', () => ({
 
 jest.mock('@/lib/programs/queries', () => ({
   getProgramById,
-  getModuleState,
-}));
-
-jest.mock('@/lib/data-plane/azureRead', () => ({
-  azureRead: mockAzureRead,
 }));
 
 jest.mock('@/lib/active-client', () => ({
   getActiveClientRow,
 }));
 
-jest.mock('@/lib/intelligence/persistence', () => ({
-  buildTenantContextBlock,
-}));
-
-jest.mock('@/lib/agent/tools/intelligence/_shared', () => ({
-  clientKeyToInventorySubstrateKey,
-}));
-
-jest.mock('@/lib/agent/stream', () => ({
-  streamAgentTurn,
-}));
-
-jest.mock('@/lib/programs/nexus', () => ({
-  draftModuleDeliverable,
-}));
-
 jest.mock('@/lib/programs/deliverable-registry', () => ({
   getDeliverableSpec,
 }));
 
-jest.mock('@/lib/programs/phase-packs', () => ({
-  getPhasePackV2,
+jest.mock('@/lib/deliverables/orchestrator/generate-service', () => ({
+  runDeliverableForTenant,
 }));
 
-jest.mock('@/lib/programs/phase-packs/format-v2', () => ({
-  formatPhasePackV2ForPrompt,
+jest.mock('@/lib/deliverables/orchestrator/runs-repository', () => ({
+  createDeliverableRun,
+  completeDeliverableRun,
+  updateDeliverableRunProgress,
 }));
 
 function makeRequest(body: unknown): Request {
@@ -72,7 +51,12 @@ function makeRequest(body: unknown): Request {
   });
 }
 
-describe('POST /api/v1/programs/[programId]/generate read plane', () => {
+/** Let the fire-and-forget background generation settle. */
+async function flushMicrotasks(): Promise<void> {
+  await new Promise((r) => setTimeout(r, 0));
+}
+
+describe('POST /api/v1/programs/[programId]/generate delegates to the orchestrator', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     requireTenancy.mockResolvedValue({ clientId: 'client_1', clientKey: 'apex-retail', userId: 'user_1' });
@@ -85,118 +69,109 @@ describe('POST /api/v1/programs/[programId]/generate read plane', () => {
       currentPhase: 2,
       archetype: 'operational_optimization',
     });
-    getModuleState.mockResolvedValue([{ moduleKey: 'diagnose', status: 'in_progress' }]);
     getActiveClientRow.mockResolvedValue({
       id: 'client_1',
       key: 'apex-retail',
       name: 'Apex Retail',
       industry_code: 'retail',
     });
-    clientKeyToInventorySubstrateKey.mockReturnValue('apex-retail');
-    buildTenantContextBlock.mockResolvedValue('--- TENANT CONTEXT ---\nMargin pressure context');
-    getDeliverableSpec.mockReturnValue(null);
-    getPhasePackV2.mockReturnValue(null);
-    formatPhasePackV2ForPrompt.mockReturnValue('');
-    streamAgentTurn.mockImplementation(async function* () {
-      yield '# Generated Deliverable\n';
-      yield 'Specific content.';
+    // Resolve the P2 gate document so the title/purpose are real.
+    getDeliverableSpec.mockImplementation((key: string) =>
+      key === 'discovery_report'
+        ? {
+            deliverableTypeKey: 'discovery_report',
+            documentTitle: 'Discovery & Diagnosis Report',
+            documentPurpose: 'Establishes the evidence base.',
+            phase: 2,
+          }
+        : undefined,
+    );
+    createDeliverableRun.mockResolvedValue({ id: 'run_1' });
+    runDeliverableForTenant.mockResolvedValue({
+      ok: true,
+      artifactId: 'art_1',
+      sectionCount: 7,
+      retrievedEvidence: 3,
+      warnings: [],
     });
-    draftModuleDeliverable.mockResolvedValue({ deliverableId: 'deliv_1', versionId: 'ver_1' });
-    mockAzureRead.query.mockResolvedValue([
-      {
-        deliverable_type_key: 'p1_package',
-        title: 'Program Charter',
-        status: 'published',
-        content: 'Prior charter content',
-        version: 3,
-      },
-    ]);
-    mockAzureRead.select.mockImplementation(async (request) => {
-      if (request.table === 'program_milestones') {
-        return [{ id: 'ms_1', name: 'Gate 2', status: 'open', target_date: '2026-06-30' }];
-      }
-      if (request.table === 'program_risks') {
-        return [{ id: 'risk_1', title: 'Data quality', likelihood: 'medium', impact: 'high', status: 'open' }];
-      }
-      if (request.table === 'persons') {
-        return [
-          { id: 'person_sponsor', name: 'Maya Patel', role: 'CFO' },
-          { id: 'person_lead', name: 'Leo Chen', role: 'Program Lead' },
-        ];
-      }
-      return [];
-    });
-    mockAzureRead.maybeSingle.mockImplementation(async (request) => {
-      if (request.table === 'engagements') {
-        return {
-          id: 'program_1',
-          name: 'Owned Brand Margin Recovery',
-          status: 'active',
-          lifecycle_state: 'approved',
-          current_phase: 2,
-          program_archetype: 'operational_optimization',
-          maestro_oversight_level: 'standard',
-          sponsor_person_id: 'person_sponsor',
-          maestro_person_id: 'person_lead',
-          charter: { objective: 'Recover owned-brand margin' },
-        };
-      }
-      if (request.table === 'pattern_match_logs') return { pattern_key: 'owned-brand-margin-recovery' };
-      if (request.table === 'engagement_topics') {
-        return {
-          topic_key: 'owned-brand-margin-recovery',
-          title: 'Owned Brand Margin Recovery',
-          phase_playbook: { diagnose: ['margin waterfall'] },
-          failure_modes: { risks: ['supplier leakage'] },
-          success_signals: { signals: ['basis point recovery'] },
-        };
-      }
-      return null;
-    });
+    completeDeliverableRun.mockResolvedValue(undefined);
+    updateDeliverableRunProgress.mockResolvedValue(undefined);
   });
 
-  it('assembles generation context through azureRead and preserves save response', async () => {
+  it('creates a run, returns 202 { runId, status:"running" }, and never calls the single-pass save path', async () => {
+    const { POST } = await import('@/app/api/v1/programs/[programId]/generate/route');
+    const res = await POST(makeRequest({ phase: 2, deliverableTypeKey: 'discovery_report' }), {
+      params: Promise.resolve({ programId: 'program_1' }),
+    });
+
+    expect(res.status).toBe(202);
+    await expect(res.json()).resolves.toMatchObject({
+      runId: 'run_1',
+      status: 'running',
+      deliverableType: 'discovery_report',
+      phase: 2,
+    });
+
+    // The run row is created with the moves module + the move's archetype.
+    expect(createDeliverableRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: 'client_1',
+        tenantKey: 'apex-retail',
+        userId: 'user_1',
+        module: 'moves',
+        archetype: 'operational_optimization',
+        deliverableType: 'discovery_report',
+      }),
+    );
+
+    // The background generation runs through the governed orchestrator service.
+    await flushMicrotasks();
+    expect(runDeliverableForTenant).toHaveBeenCalledWith(
+      expect.objectContaining({
+        module: 'moves',
+        useCaseArchetype: 'operational_optimization',
+        deliverableType: 'discovery_report',
+        sourceArtifactRef: 'program_1',
+        clientDisplayName: 'Apex Retail',
+        initiativeDisplayName: 'Owned Brand Margin Recovery',
+        tenantClientKey: 'apex-retail',
+        clientId: 'client_1',
+        userId: 'user_1',
+      }),
+    );
+    expect(completeDeliverableRun).toHaveBeenCalledWith(
+      'run_1',
+      expect.objectContaining({ status: 'succeeded', artifactId: 'art_1' }),
+    );
+  });
+
+  it('maps an unknown / legacy registry key onto a valid orchestrator deliverable type', async () => {
     const { POST } = await import('@/app/api/v1/programs/[programId]/generate/route');
     const res = await POST(makeRequest({ phase: 2, deliverableTypeKey: 'p2_package' }), {
       params: Promise.resolve({ programId: 'program_1' }),
     });
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(202);
+    // Unmapped key falls through to its normalized self — still a valid run.
     await expect(res.json()).resolves.toMatchObject({
-      deliverableId: 'deliv_1',
-      versionId: 'ver_1',
-      deliverableTypeKey: 'p2_package',
-      saved: true,
-      phase: 2,
+      runId: 'run_1',
+      deliverableType: 'p2_package',
     });
-    expect(getProgramById).toHaveBeenCalledWith(
-      expect.objectContaining({ clientId: 'client_1' }),
-      'program_1',
+    await flushMicrotasks();
+    expect(runDeliverableForTenant).toHaveBeenCalledWith(
+      expect.objectContaining({ deliverableType: 'p2_package', module: 'moves' }),
     );
-    expect(getModuleState).toHaveBeenCalledWith(
-      expect.objectContaining({ clientId: 'client_1' }),
-      'program_1',
-    );
-    expect(mockAzureRead.query).toHaveBeenCalledWith(
-      expect.stringContaining('FROM deliverables_v2 d'),
-      ['program_1'],
-    );
-    expect(mockAzureRead.maybeSingle).toHaveBeenCalledWith(expect.objectContaining({
-      table: 'engagements',
-      where: { id: 'program_1' },
-    }));
-    expect(mockAzureRead.maybeSingle).toHaveBeenCalledWith(expect.objectContaining({
-      table: 'pattern_match_logs',
-      where: { engagement_id: 'program_1', acted_upon: true },
-    }));
-    expect(draftModuleDeliverable).toHaveBeenCalledWith(
-      expect.objectContaining({ clientId: 'client_1' }),
-      expect.objectContaining({
-        programId: 'program_1',
-        deliverableTypeKey: 'p2_package',
-        draftContent: expect.stringContaining('Generated Deliverable'),
-      }),
-    );
+  });
+
+  it('returns 404 when the program is not found', async () => {
+    getProgramById.mockResolvedValueOnce(null);
+    const { POST } = await import('@/app/api/v1/programs/[programId]/generate/route');
+    const res = await POST(makeRequest({ phase: 2 }), {
+      params: Promise.resolve({ programId: 'missing' }),
+    });
+    expect(res.status).toBe(404);
+    expect(createDeliverableRun).not.toHaveBeenCalled();
+    expect(runDeliverableForTenant).not.toHaveBeenCalled();
   });
 });
 

@@ -25,11 +25,19 @@ import {
   MOVES_AI_DRAFT_LABEL,
   MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT,
 } from "@/lib/programs/deliverable-canvas-polish-view";
+import { GenerateDeliverableButton } from "@/components/deliverables/GenerateDeliverableButton";
+import { orchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
 
 interface Props {
   moveId: string;
   currentPhase?: number;
   compact?: boolean;
+  /** Move archetype — routes the orchestrator's archetype-specific brief. */
+  archetype?: string;
+  /** Move name — used in the orchestrator decision context + initiative label. */
+  moveName?: string;
+  /** Tenant cover name — clientDisplayName for the orchestrated artifact. */
+  clientDisplayName?: string;
 }
 
 interface DbDeliverable {
@@ -264,10 +272,18 @@ function DocumentRow({
   spec,
   dbRow,
   moveId,
+  archetype,
+  moveName,
+  clientDisplayName,
+  phaseLabel,
 }: {
   spec: DeliverableSpec;
   dbRow: DbDeliverable | undefined;
   moveId: string;
+  archetype: string;
+  moveName: string;
+  clientDisplayName: string;
+  phaseLabel: string;
 }) {
   const hasContent = Boolean(dbRow?.latest_content?.trim());
   const dot = dbRow ? statusDot(dbRow.status) : null;
@@ -399,12 +415,25 @@ function DocumentRow({
             </span>
           </>
         ) : (
-          <a
-            href={`/strategic-moves/${moveId}/phase/${spec.phase}`}
-            style={linkStyle("muted")}
-          >
-            Generate →
-          </a>
+          // Orchestrated async path — governed multi-pass authoring with a live
+          // % progress band, plan + quality gates, and a blocked-state surface.
+          // This REPLACES the retired single-pass /api/v1/programs/:id/generate
+          // route (which had no gates and could fabricate). The button POSTs to
+          // /api/v1/deliverables/generate and polls the run to completion.
+          <div style={{ flexBasis: "100%", marginTop: 4 }}>
+            <GenerateDeliverableButton
+              module="moves"
+              deliverableType={orchestratorDeliverableType(
+                spec.deliverableTypeKey,
+              )}
+              useCaseArchetype={archetype}
+              sourceArtifactRef={moveId}
+              decisionContext={`${moveName} — ${phaseLabel}: ${spec.documentPurpose}`}
+              clientDisplayName={clientDisplayName}
+              initiativeDisplayName={moveName}
+              label={`Generate ${spec.documentTitle} →`}
+            />
+          </div>
         )}
       </div>
     </div>
@@ -483,7 +512,17 @@ export async function PhaseDocumentsPanel({
   moveId,
   currentPhase,
   compact,
+  archetype,
+  moveName,
+  clientDisplayName,
 }: Props) {
+  // Orchestrated-generation context. Defaults keep the panel renderable even
+  // when a caller has not threaded the move's fields through yet; the
+  // orchestrator treats archetype as the brief selector and falls back to a
+  // generic board-grade brief, so a default never produces a broken run.
+  const resolvedArchetype = archetype?.trim() || "strategic_transformation";
+  const resolvedMoveName = moveName?.trim() || "Strategic Move";
+  const resolvedClientName = clientDisplayName?.trim() || "Client";
   const [deliverablesByKey, attachments] = await Promise.all([
     fetchDeliverablesByKey(moveId),
     listAttachmentsForProgram(moveId).catch(() => [] as AttachmentRecord[]),
@@ -692,6 +731,10 @@ export async function PhaseDocumentsPanel({
                   spec={spec}
                   dbRow={deliverablesByKey.get(spec.deliverableTypeKey)}
                   moveId={moveId}
+                  archetype={resolvedArchetype}
+                  moveName={resolvedMoveName}
+                  clientDisplayName={resolvedClientName}
+                  phaseLabel={PHASE_LABELS[phase] ?? `P${phase}`}
                 />
               ))}
 

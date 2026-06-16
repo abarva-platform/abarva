@@ -25,6 +25,10 @@ export interface DeliverableRunRecord {
   blockers: string[];
   warnings: string[];
   error: string | null;
+  /** 0..100 progress of the multi-pass generation; null until the first pass completes. */
+  progressPct: number | null;
+  /** human-facing label for the pass now in flight (e.g. "Pressure-testing for gaps"). */
+  progressLabel: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -67,6 +71,8 @@ function rowToRecord(row: Record<string, unknown>): DeliverableRunRecord {
     blockers: arr(row.blockers),
     warnings: arr(row.warnings),
     error: typeof row.error === 'string' ? row.error : null,
+    progressPct: row.progress_pct === null || row.progress_pct === undefined ? null : Number(row.progress_pct),
+    progressLabel: typeof row.progress_label === 'string' ? row.progress_label : null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   };
@@ -112,6 +118,29 @@ export async function completeDeliverableRun(
     })
     .eq('id', id);
   if (error) throw new Error(`deliverable_runs update failed: ${error.message}`);
+}
+
+/**
+ * Update live progress for a running generation. Called from the background worker
+ * after each orchestrator pass; best-effort (a failed progress write must never abort
+ * the generation), so callers should swallow errors.
+ */
+export async function updateDeliverableRunProgress(
+  id: string,
+  progress: { pct: number; label: string; pass?: string | null },
+  db: DbClient = getAzureWriteFluentClient(),
+): Promise<void> {
+  const pct = Math.min(Math.max(Math.round(progress.pct), 0), 100);
+  const { error } = await db
+    .from('deliverable_runs')
+    .update({
+      progress_pct: pct,
+      progress_label: progress.label,
+      progress_pass: progress.pass ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id);
+  if (error) throw new Error(`deliverable_runs progress update failed: ${error.message}`);
 }
 
 /** Read a run, scoped to the owning client (tenant-isolation defense-in-depth). */

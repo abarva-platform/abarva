@@ -74,9 +74,32 @@ export function renderedHtmlFromGeneratedArtifact(
   return typeof html === "string" && html.length > 0 ? html : null;
 }
 
+/**
+ * The structured `RenderableDeliverable` persisted with the artifact (under
+ * `metadata.renderableDoc`), if present. Returned untyped here to keep the
+ * repository free of an orchestrator import; the download route narrows it.
+ * Older artifacts predating structured persistence return null (the route falls
+ * back to the stored HTML).
+ */
+export function renderableDocFromGeneratedArtifact(
+  record: GeneratedArtifactRecord,
+): Record<string, unknown> | null {
+  const doc = record.metadata.renderableDoc;
+  return doc && typeof doc === "object" && !Array.isArray(doc)
+    ? (doc as Record<string, unknown>)
+    : null;
+}
+
 export async function saveGeneratedArtifact(
   input: BoardPackRenderInput,
   rendered: BoardPackRenderResult,
+  /**
+   * Extra metadata merged into the artifact's `metadata` JSON column. Used to
+   * carry the structured `renderableDoc` so any prescribed format (docx/xlsx/html)
+   * can be re-rendered on demand at download time. Backward-compatible: omitting
+   * it preserves the prior metadata shape exactly.
+   */
+  extraMetadata: Record<string, unknown> = {},
 ): Promise<GeneratedArtifactRecord> {
   const id = randomUUID();
   const { data, error } = await getAzureWriteFluentClient()
@@ -102,6 +125,7 @@ export async function saveGeneratedArtifact(
         sectionCount: input.sections.length,
         renderedHtml: rendered.html,
         originalBlobUrl: rendered.blobUrl,
+        ...extraMetadata,
       },
     })
     .select("*")

@@ -29,10 +29,17 @@ interface RunStatus {
   blockers?: string[];
   warnings?: string[];
   error?: string | null;
+  progressPct?: number | null;
+  progressLabel?: string | null;
 }
 
-const NAVY = '#0C1A3A';
-const TEAL = '#2DD4C8';
+// Canonical data-display tokens (docs/design/DATA_DISPLAY_TOKENS.md).
+const INK = '#1B1A17'; // --ink (button / band)
+const MUTED = '#6F6A61'; // --muted (labels)
+const LINE = '#E6E2DA'; // --line (progress track)
+const FRESH = '#3F7A5B'; // status:fresh (progress fill, succeeded)
+const ATTENTION = '#B5852A'; // status:attention (blocked / quality gate)
+const STALE = '#B4513C'; // status:stale (errors)
 const POLL_MS = 4000;
 const MAX_MS = 15 * 60 * 1000; // stop polling after 15 min
 
@@ -59,6 +66,7 @@ export function GenerateDeliverableButton(props: GenerateDeliverableButtonProps)
           throw new Error(data.error ?? `HTTP ${res.status}`);
         }
         if (data.status === 'running') {
+          setRun(data); // surface live progress (pct/label) while still running
           if (Date.now() - (timers.current.start ?? 0) > MAX_MS) {
             clearTimers();
             setPhase('failed');
@@ -122,29 +130,48 @@ export function GenerateDeliverableButton(props: GenerateDeliverableButtonProps)
         onClick={handleGenerate}
         disabled={running}
         style={{
-          padding: '10px 18px', background: NAVY, color: '#fff', border: 'none', borderRadius: 8,
-          fontWeight: 600, fontSize: 14, cursor: running ? 'not-allowed' : 'pointer', opacity: running ? 0.6 : 1, alignSelf: 'flex-start',
+          padding: '10px 18px', background: INK, color: '#fff', border: 'none', borderRadius: 8,
+          fontWeight: 600, fontSize: 13.5, cursor: running ? 'not-allowed' : 'pointer', opacity: running ? 0.6 : 1, alignSelf: 'flex-start',
         }}
       >
         {running ? `Authoring board-grade deliverable… ${mins}:${String(secs).padStart(2, '0')}` : (props.label ?? 'Generate board-grade deliverable')}
       </button>
 
-      {running && (
-        <div style={{ fontSize: 12, color: '#706D66' }}>
-          Multi-pass authoring (architect → draft → red-team → board-grade rewrite). This runs in the background and typically takes a few minutes; you can leave this page open.
-        </div>
-      )}
+      {running && (() => {
+        const pct = Math.max(0, Math.min(100, run?.progressPct ?? 0));
+        const label = run?.progressLabel ?? 'Starting the authoring engine';
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 12.5 }}>
+              <span style={{ color: MUTED }}>{label}</span>
+              <span style={{ color: MUTED, fontVariantNumeric: 'tabular-nums' }}>{pct}%</span>
+            </div>
+            <div style={{ height: 8, borderRadius: 999, background: LINE, overflow: 'hidden' }}>
+              <div
+                style={{
+                  height: '100%', width: `${pct}%`, borderRadius: 999,
+                  background: FRESH,
+                  transition: 'width 600ms cubic-bezier(0.4,0,0.2,1)',
+                }}
+              />
+            </div>
+            <div style={{ fontSize: 11.5, color: MUTED }}>
+              Six governed passes — planning, grounding, drafting, red-teaming, polishing, formatting. Runs in the background; you can leave this open.
+            </div>
+          </div>
+        );
+      })()}
 
       {error && phase !== 'blocked' && (
-        <div style={{ padding: '10px 12px', background: 'rgba(179,38,30,0.06)', border: '1px solid rgba(179,38,30,0.3)', borderRadius: 6, color: '#B3261E', fontSize: 13 }}>
+        <div style={{ padding: '10px 12px', background: `${STALE}10`, border: `1px solid ${STALE}33`, borderRadius: 6, color: STALE, fontSize: 13 }}>
           {error}
         </div>
       )}
 
       {phase === 'blocked' && (
-        <div style={{ padding: '12px 14px', background: 'rgba(244,180,0,0.08)', border: '1px solid rgba(244,180,0,0.4)', borderRadius: 8, fontSize: 13 }}>
-          <div style={{ fontWeight: 600, marginBottom: 6 }}>Held back by the quality gate</div>
-          <div style={{ color: '#706D66', marginBottom: 8 }}>The draft did not meet the board-grade bar, so it was not shipped. Reasons:</div>
+        <div style={{ padding: '12px 14px', background: `${ATTENTION}14`, border: `1px solid ${ATTENTION}40`, borderRadius: 8, fontSize: 13 }}>
+          <div style={{ fontWeight: 600, marginBottom: 6, color: ATTENTION }}>Held back by the quality gate</div>
+          <div style={{ color: MUTED, marginBottom: 8 }}>The draft did not meet the board-grade bar, so it was not shipped. Reasons:</div>
           <ul style={{ margin: 0, paddingLeft: 18 }}>
             {(run?.blockers ?? []).map((b, i) => <li key={i}>{b}</li>)}
             {run?.error && !(run?.blockers?.length) ? <li>{run.error}</li> : null}
@@ -153,15 +180,15 @@ export function GenerateDeliverableButton(props: GenerateDeliverableButtonProps)
       )}
 
       {phase === 'succeeded' && run && (
-        <div style={{ padding: 16, background: 'rgba(45,212,200,0.06)', border: `1px solid ${TEAL}55`, borderRadius: 10 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6, fontFamily: 'Georgia, serif' }}>Board-grade deliverable ready</div>
-          <div style={{ fontSize: 12, color: '#706D66', marginBottom: 10 }}>
+        <div style={{ padding: 16, background: `${FRESH}12`, border: `1px solid ${FRESH}40`, borderRadius: 10 }}>
+          <div style={{ fontSize: 16, marginBottom: 6, fontFamily: 'Georgia, serif', fontWeight: 400, color: INK }}>Board-grade deliverable ready</div>
+          <div style={{ fontSize: 12.5, color: MUTED, marginBottom: 10 }}>
             {run.sectionCount ?? 0} sections · {run.retrievedEvidence ?? 0} governed evidence items{run.warnings?.length ? ` · ${run.warnings.length} advisory note(s)` : ''}
           </div>
           <a
             href={run.artifactId ? `/api/v1/artifacts/${run.artifactId}` : '#'}
             target="_blank" rel="noopener noreferrer"
-            style={{ display: 'inline-flex', gap: 6, padding: '7px 14px', background: NAVY, color: '#fff', borderRadius: 6, textDecoration: 'none', fontSize: 13, fontWeight: 600 }}
+            style={{ display: 'inline-flex', gap: 6, padding: '7px 14px', background: INK, color: '#fff', borderRadius: 6, textDecoration: 'none', fontSize: 13, fontWeight: 600 }}
           >
             Open deliverable →
           </a>
