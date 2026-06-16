@@ -8,6 +8,7 @@ import type {
   SourceEventGateCriterionState,
 } from "@/lib/source/canvas-substrate";
 import {
+  AUTO_EVIDENCE_REVIEWER_ID,
   isAssessmentMet,
   type GateAssessment,
   type GateCriterionAssessment,
@@ -104,7 +105,6 @@ export function GateTab({
       def: criterionById(s.criterionId),
       assessment: assessmentById.get(s.criterionId),
     }));
-  const hardBlockers = blockers.filter((b) => b.def?.severity === "hard");
   const promoteHelpId = "source-canvas-gate-promote-help";
   const promotionReasonReady =
     promotionReason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH;
@@ -169,11 +169,8 @@ export function GateTab({
           </h2>
           {!allMet && total > 0 ? (
             <p style={SUBLINE_STYLE}>
-              You&apos;re approving: advance to {targetLabel}. {total - met}{" "}
-              item
-              {total - met === 1 ? " is" : "s are"} still open — mark them met
-              below, or approve with gaps (your rationale is recorded and the
-              open items are deferred and carried forward, never hidden).
+              Complete the required inputs for {SOURCE_STAGE_LABELS[fromStage]},
+              then record the approval reason to advance to {targetLabel}.
             </p>
           ) : null}
           {allMet ? (
@@ -258,9 +255,8 @@ export function GateTab({
         <StageDecisionStatusPanel recommendation={recommendation} />
       ) : null}
 
-      {/* B3 — blocker summary surfaces the specific reasons promotion
-          is disabled. Hard blockers come first, then the rest. */}
-      {!allMet && blockers.length > 0 ? (
+      {/* Compact fallback summary only when the stage-status panel is unavailable. */}
+      {!recommendation && !allMet && blockers.length > 0 ? (
         <div
           id={promoteHelpId}
           data-testid="source-canvas-gate-blockers"
@@ -268,16 +264,11 @@ export function GateTab({
           role="status"
         >
           <div style={BLOCKERS_TITLE_STYLE}>
-            {hardBlockers.length > 0
-              ? `${hardBlockers.length} hard ${hardBlockers.length === 1 ? "blocker" : "blockers"}`
-              : `${blockers.length} ${blockers.length === 1 ? "criterion pending" : "criteria pending"}`}{" "}
-            before you can promote
+            {blockers.length} {blockers.length === 1 ? "input" : "inputs"}{" "}
+            still needed
           </div>
           <ul style={BLOCKERS_LIST_STYLE}>
-            {[
-              ...hardBlockers,
-              ...blockers.filter((b) => b.def?.severity !== "hard"),
-            ].map(({ state, def, assessment: criterionAssessment }) => (
+            {blockers.map(({ state, def, assessment: criterionAssessment }) => (
               <li
                 key={state.criterionId}
                 style={BLOCKERS_LIST_ITEM_STYLE}
@@ -288,9 +279,6 @@ export function GateTab({
                   <span style={BLOCKERS_ITEM_TITLE_STYLE}>
                     {def?.title ?? state.criterionId}
                   </span>
-                  {def?.severity === "hard" ? (
-                    <span style={INLINE_HARD_TAG_STYLE}>hard</span>
-                  ) : null}
                   <span style={BLOCKERS_STATE_STYLE}>
                     {" — "}
                     {criterionAssessment?.reason ?? STATE_LABEL[state.state]}
@@ -351,6 +339,8 @@ function CriterionRow({
   pending,
 }: CriterionRowProps) {
   const [reason, setReason] = useState("");
+  const autoEvidenceReviewed =
+    state.reviewerUserId === AUTO_EVIDENCE_REVIEWER_ID;
   const isMet = assessment
     ? isAssessmentMet(assessment)
     : state.state === "met" || state.state === "waived";
@@ -375,9 +365,6 @@ function CriterionRow({
           <span style={ROW_TITLE_TEXT}>{def?.title ?? state.criterionId}</span>
           <StatePill state={state.state} />
           {assessment ? <AssessmentBadge assessment={assessment} /> : null}
-          {def?.severity === "hard" ? (
-            <span style={HARD_TAG_STYLE}>hard</span>
-          ) : null}
           {onChangeState && state.state !== "waived" ? (
             isMetOrWaived ? (
               <button
@@ -393,6 +380,27 @@ function CriterionRow({
                 {pending ? "Reopening…" : "Reopen"}
               </button>
             ) : (
+              null
+            )
+          ) : null}
+        </div>
+        {!isMetOrWaived && onChangeState ? (
+          <details style={ROW_DISCLOSURE_STYLE}>
+            <summary style={ROW_DISCLOSURE_SUMMARY_STYLE}>
+              Confirm manually
+            </summary>
+            <div style={ROW_REASON_WRAP_STYLE}>
+              <label style={REASON_LABEL_STYLE}>
+                Approval reason
+                <textarea
+                  value={reason}
+                  onChange={(event) => setReason(event.target.value)}
+                  rows={2}
+                  placeholder="Explain what evidence you reviewed and why this input is ready."
+                  data-testid={`source-canvas-gate-criterion-reason-${state.criterionId}`}
+                  style={{ ...REASON_TEXTAREA_STYLE, marginTop: 5 }}
+                />
+              </label>
               <button
                 type="button"
                 disabled={pending || !reasonReady}
@@ -402,33 +410,24 @@ function CriterionRow({
                 data-testid={`source-canvas-gate-criterion-mark-met-${state.criterionId}`}
                 style={{
                   ...ROW_PRIMARY_BUTTON_STYLE,
+                  marginLeft: 0,
                   opacity: pending || !reasonReady ? 0.55 : 1,
                 }}
               >
-                {pending ? "Saving…" : "Mark met"}
+                {pending ? "Saving…" : "Confirm input"}
               </button>
-            )
-          ) : null}
-        </div>
-        {!isMetOrWaived && onChangeState ? (
-          <label style={ROW_REASON_WRAP_STYLE}>
-            <span style={REASON_LABEL_STYLE}>Human approval reason</span>
-            <textarea
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              rows={2}
-              placeholder="Explain what evidence you reviewed and why this gate is ready."
-              data-testid={`source-canvas-gate-criterion-reason-${state.criterionId}`}
-              style={REASON_TEXTAREA_STYLE}
-            />
-          </label>
+            </div>
+          </details>
         ) : null}
         {isMetOrWaived && state.reviewedAt ? (
           <div
             style={ROW_AUDIT_STYLE}
             data-testid={`source-canvas-gate-criterion-audit-${state.criterionId}`}
           >
-            Approved by {state.reviewerUserId ?? "recorded user"} ·{" "}
+            {autoEvidenceReviewed
+              ? "Auto-assessed by AbarVa evidence"
+              : `Approved by ${state.reviewerUserId ?? "recorded user"}`}{" "}
+            ·{" "}
             {formatAuditTimestamp(state.reviewedAt)}
             {state.notes ? ` · Reason: ${state.notes}` : ""}
           </div>
@@ -443,27 +442,36 @@ function CriterionRow({
           >
             {assessment.evidence.map((match) => (
               <span key={match.requirementId}>
-                {match.label}: {match.currentState}
-                {match.satisfied ? " · ok" : ` · needs ${match.minimumState}`}
+                {match.label} is {match.currentState}
+                {match.satisfied ? " · ready" : ` · needs ${match.minimumState}`}
               </span>
             ))}
           </div>
         ) : null}
-        <div style={ROW_META_STYLE}>
-          <span style={CRITERION_CODE}>{state.criterionId}</span>
-          {def?.ownerRole ? (
-            <>
-              <span style={DOT_INLINE_STYLE}>·</span>
-              <span>Owner: {def.ownerRole.replace(/-/g, " ")}</span>
-            </>
-          ) : null}
-          {def?.linkedArtifactCodes && def.linkedArtifactCodes.length > 0 ? (
-            <>
-              <span style={DOT_INLINE_STYLE}>·</span>
-              <span>Evidence: {def.linkedArtifactCodes.join(", ")}</span>
-            </>
-          ) : null}
-        </div>
+        <details style={AUDIT_DISCLOSURE_STYLE}>
+          <summary style={AUDIT_DISCLOSURE_SUMMARY_STYLE}>Audit details</summary>
+          <div style={ROW_META_STYLE}>
+            <span style={CRITERION_CODE}>{state.criterionId}</span>
+            {def?.severity ? (
+              <>
+                <span style={DOT_INLINE_STYLE}>·</span>
+                <span>{def.severity} criterion</span>
+              </>
+            ) : null}
+            {def?.ownerRole ? (
+              <>
+                <span style={DOT_INLINE_STYLE}>·</span>
+                <span>Owner: {def.ownerRole.replace(/-/g, " ")}</span>
+              </>
+            ) : null}
+            {def?.linkedArtifactCodes && def.linkedArtifactCodes.length > 0 ? (
+              <>
+                <span style={DOT_INLINE_STYLE}>·</span>
+                <span>Evidence: {def.linkedArtifactCodes.join(", ")}</span>
+              </>
+            ) : null}
+          </div>
+        </details>
       </div>
     </li>
   );
@@ -483,29 +491,24 @@ function StageDecisionStatusPanel({
         borderColor: tone.border,
         background: tone.bg,
       }}
-      aria-label="Stage Decision Status"
+      aria-label="Stage inputs"
     >
       <div style={DECISION_STATUS_HEADER_STYLE}>
-        <span style={EYEBROW_STYLE}>Stage Decision Status</span>
+        <span style={EYEBROW_STYLE}>Stage inputs</span>
         <span style={{ ...DECISION_STATUS_PILL_STYLE, color: tone.fg }}>
           {stageStatusLabel(recommendation.status)}
         </span>
       </div>
       <div style={DECISION_STATUS_METRIC_STYLE}>
-        {recommendation.requiredMet} / {recommendation.requiredTotal} required
-        cleared · {recommendation.autoMetCount} auto-assessed ·{" "}
-        {recommendation.manualMetCount} manual
+        {recommendation.requiredMet} ready ·{" "}
+        {recommendation.requiredTotal - recommendation.requiredMet} still needed
       </div>
-      {recommendation.reasonCodes.length > 0 ? (
-        <div style={DECISION_REASON_STYLE}>
-          {recommendation.reasonCodes.join(" · ")}
-        </div>
-      ) : null}
+      <div style={DECISION_REASON_STYLE}>{stageStatusIntro(recommendation)}</div>
       {recommendation.blockers.length > 0 ? (
         <ul style={DECISION_BLOCKER_LIST_STYLE}>
           {recommendation.blockers.map((blocker) => (
             <li key={blocker.criterionId}>
-              <strong>{blocker.title}</strong> — {blocker.reason}
+              <strong>{blocker.title}</strong>
             </li>
           ))}
         </ul>
@@ -524,6 +527,7 @@ function AssessmentBadge({
   return (
     <span
       data-testid={`source-canvas-gate-criterion-assessment-${assessment.criterionId}`}
+      title={assessment.reason}
       style={{
         ...ASSESSMENT_BADGE_STYLE,
         background: tone.bg,
@@ -550,16 +554,19 @@ function formatAuditTimestamp(iso: string): string {
 function assessmentBadgeLabel(assessment: GateCriterionAssessment): string {
   switch (assessment.displayState) {
     case "met_auto_evidence":
-      return "Auto-assessed from evidence";
+      return "Ready";
     case "blocked_evidence":
-      return "Blocked by missing evidence";
+      return "Missing input";
     case "pending_review":
-      return "Needs human review";
+      return "Review needed";
     case "met_manual":
+      return "Confirmed";
     case "not_met_manual":
+      return "Needs work";
     case "waived":
+      return "Waived";
     case "deferred_manual":
-      return "Manual override";
+      return "Deferred";
   }
 }
 
@@ -599,14 +606,28 @@ function assessmentBadgeTone(assessment: GateCriterionAssessment): {
 function stageStatusLabel(status: StageRecommendation["status"]): string {
   switch (status) {
     case "ready":
-      return "Ready to advance";
+      return "Ready";
     case "ready_with_warnings":
       return "Ready with warnings";
     case "needs_review":
-      return "Needs human review";
+      return "Review needed";
     case "blocked":
     default:
-      return "Blocked by missing evidence";
+      return "Inputs needed";
+  }
+}
+
+function stageStatusIntro(recommendation: StageRecommendation): string {
+  switch (recommendation.status) {
+    case "ready":
+      return "All required inputs are ready for this stage.";
+    case "ready_with_warnings":
+      return "Required inputs are ready; review the open advisory items before advancing.";
+    case "needs_review":
+      return "Some inputs are ready from evidence and need a quick human review.";
+    case "blocked":
+    default:
+      return "Load or confirm the missing inputs before moving to the next stage.";
   }
 }
 
@@ -656,7 +677,7 @@ function StatePill({ state }: { state: SourceEventGateCriterionState }) {
         borderColor: tone.border,
       }}
     >
-      {STATE_LABEL[state]}
+      {state === "pending" ? "Needed" : STATE_LABEL[state]}
     </span>
   );
 }
@@ -828,6 +849,18 @@ const ROW_REASON_WRAP_STYLE: CSSProperties = {
   marginTop: 4,
 };
 
+const ROW_DISCLOSURE_STYLE: CSSProperties = {
+  marginTop: 6,
+};
+
+const ROW_DISCLOSURE_SUMMARY_STYLE: CSSProperties = {
+  cursor: "pointer",
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  color: CANVAS.INK_SOFT,
+  width: "fit-content",
+};
+
 const ROW_AUDIT_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 10,
@@ -840,15 +873,6 @@ const ROW_TITLE_TEXT: CSSProperties = {
   fontSize: 14,
   fontWeight: 600,
   color: CANVAS.INK,
-};
-
-const HARD_TAG_STYLE: CSSProperties = {
-  fontFamily: CANVAS.MONO,
-  fontSize: 9,
-  letterSpacing: "0.10em",
-  textTransform: "uppercase",
-  color: CANVAS.BLOCKED,
-  fontWeight: 600,
 };
 
 const ROW_DESC_STYLE: CSSProperties = {
@@ -867,6 +891,18 @@ const ROW_META_STYLE: CSSProperties = {
   letterSpacing: "0.04em",
   color: CANVAS.GRAY_DK,
   flexWrap: "wrap",
+};
+
+const AUDIT_DISCLOSURE_STYLE: CSSProperties = {
+  marginTop: 4,
+};
+
+const AUDIT_DISCLOSURE_SUMMARY_STYLE: CSSProperties = {
+  cursor: "pointer",
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  color: CANVAS.GRAY_DK,
+  width: "fit-content",
 };
 
 const CRITERION_CODE: CSSProperties = {
@@ -976,16 +1012,6 @@ const BLOCKERS_ITEM_TITLE_STYLE: CSSProperties = {
 const BLOCKERS_STATE_STYLE: CSSProperties = {
   color: CANVAS.INK_SOFT,
   fontSize: 12.5,
-};
-
-const INLINE_HARD_TAG_STYLE: CSSProperties = {
-  marginLeft: 6,
-  fontFamily: CANVAS.MONO,
-  fontSize: 9,
-  fontWeight: 700,
-  letterSpacing: "0.10em",
-  textTransform: "uppercase",
-  color: CANVAS.BLOCKED,
 };
 
 const ASSESSMENT_BADGE_STYLE: CSSProperties = {

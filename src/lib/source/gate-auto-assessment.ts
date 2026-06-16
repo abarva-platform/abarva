@@ -11,6 +11,8 @@ import type {
 import type { GateCriterionSeverity } from './canonical-specs';
 import type { SourceStageKey } from './types';
 
+export const AUTO_EVIDENCE_REVIEWER_ID = 'system:auto-evidence';
+
 export type GateAssessmentDisplayState =
   | 'met_manual'
   | 'not_met_manual'
@@ -200,13 +202,21 @@ function assessCriterion(
     'criterionId' | 'title' | 'severity' | 'required' | 'persistedState'
   >;
 
+  const mappedEvidence = mappedRequirementIds.map((requirementId) =>
+    buildEvidenceMatch(requirementId, evidenceByRequirement),
+  );
+
   if (criterion.state === 'met') {
+    const systemAssessed =
+      criterion.reviewerUserId === AUTO_EVIDENCE_REVIEWER_ID;
     return {
       ...base,
-      displayState: 'met_manual',
-      provenance: 'manual',
-      reason: 'Manual override',
-      evidence: [],
+      displayState: systemAssessed ? 'met_auto_evidence' : 'met_manual',
+      provenance: systemAssessed ? 'auto-evidence' : 'manual',
+      reason: systemAssessed
+        ? (criterion.notes ?? 'Auto-assessed from evidence')
+        : 'Manual override',
+      evidence: systemAssessed ? mappedEvidence : [],
     };
   }
   if (criterion.state === 'not_met') {
@@ -247,27 +257,7 @@ function assessCriterion(
     };
   }
 
-  const evidence = mappedRequirementIds.map((requirementId) => {
-    const requirement = evidenceById(requirementId);
-    const state = evidenceByRequirement.get(requirementId);
-    const minimumState = requirement?.minimumState ?? 'Usable Evidence';
-    const currentState = state?.currentState ?? 'missing';
-    const satisfied =
-      Boolean(requirement) &&
-      Boolean(state) &&
-      currentState !== 'missing' &&
-      !FAILURE_STATES.has(currentState) &&
-      READINESS_RANK[currentState] >= READINESS_RANK[minimumState];
-    return {
-      requirementId,
-      label: requirement?.label ?? requirementId,
-      minimumState,
-      currentState,
-      level: requirement?.level ?? 'required',
-      satisfied,
-      sourceArtifactId: state?.sourceArtifactId ?? null,
-    } satisfies GateAssessmentEvidenceMatch;
-  });
+  const evidence = mappedEvidence;
 
   const requiredEvidence = evidence.filter((match) => match.level === 'required');
   const missingOrWeak = requiredEvidence.filter((match) => !match.satisfied);
@@ -295,5 +285,30 @@ function assessCriterion(
     provenance: 'auto-evidence',
     reason,
     evidence,
+  };
+}
+
+function buildEvidenceMatch(
+  requirementId: string,
+  evidenceByRequirement: Map<string, SourceEventEvidence>,
+): GateAssessmentEvidenceMatch {
+  const requirement = evidenceById(requirementId);
+  const state = evidenceByRequirement.get(requirementId);
+  const minimumState = requirement?.minimumState ?? 'Usable Evidence';
+  const currentState = state?.currentState ?? 'missing';
+  const satisfied =
+    Boolean(requirement) &&
+    Boolean(state) &&
+    currentState !== 'missing' &&
+    !FAILURE_STATES.has(currentState) &&
+    READINESS_RANK[currentState] >= READINESS_RANK[minimumState];
+  return {
+    requirementId,
+    label: requirement?.label ?? requirementId,
+    minimumState,
+    currentState,
+    level: requirement?.level ?? 'required',
+    satisfied,
+    sourceArtifactId: state?.sourceArtifactId ?? null,
   };
 }
