@@ -91,6 +91,7 @@ export interface WorkspaceItem {
   readonly sourceLabel?: string | null;
   readonly description?: string | null;
   readonly href?: string | null;
+  readonly downloadHref?: string | null;
   readonly classification?: string | null;
   readonly vendor?: string | null;
   readonly lineage: WorkspaceItemLineage;

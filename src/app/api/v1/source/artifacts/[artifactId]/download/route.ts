@@ -8,6 +8,7 @@ import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { getActiveClientRow } from '@/lib/active-client';
 import { clientKeyToInventorySubstrateKey } from '@/lib/agent/tools/intelligence/_shared';
 import { getObjectStorageAdapter } from '@/lib/data-plane/objectStorage';
+import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { getSourceArtifactRegistryRecord } from '@/lib/source/artifact-registry';
 import { getSourceArtifact } from '@/lib/source/file-cabinet/repository';
 import { downloadArtifactBytes } from '@/lib/source/file-cabinet/blob-store';
@@ -15,6 +16,8 @@ import { contentTypeFor } from '@/lib/source/file-cabinet/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const INLINE_REGISTRY_URI_PREFIX = 'inline://source-event-artifact-state/';
 
 export async function GET(_req: NextRequest, ctxParam: { params: Promise<{ artifactId: string }> }) {
   try {
@@ -63,6 +66,46 @@ async function streamRegistryArtifact(artifactId: string): Promise<Response> {
     : null;
   if (!activeTenantKey || record.tenantKey !== activeTenantKey) {
     return Response.json({ error: 'not_found', detail: 'Artifact not found for this tenant.' }, { status: 404 });
+  }
+
+  if (record.blobUri.startsWith(INLINE_REGISTRY_URI_PREFIX)) {
+    const { data, error } = await getAzureWriteFluentClient()
+      .from('source_event_artifact_states')
+      .select('body, body_format')
+      .eq('source_event_id', record.sourceEventId)
+      .eq('artifact_code', record.artifactKind)
+      .maybeSingle<{ body: string | null; body_format: string | null }>();
+    if (error) throw new Error(error.message);
+
+    const body = data?.body?.trim();
+    if (!body) {
+      return Response.json(
+        {
+          error: 'not_available',
+          detail: 'This generated artifact is registered but has no authored body yet.',
+        },
+        { status: 409 },
+      );
+    }
+
+    const bytes = Buffer.from(body, 'utf8');
+    const contentType =
+      data?.body_format === 'html'
+        ? 'text/html; charset=utf-8'
+        : record.mimeType || 'text/markdown; charset=utf-8';
+    return new Response(new Uint8Array(bytes), {
+      status: 200,
+      headers: {
+        'content-type': contentType,
+        'content-disposition': `inline; filename="${record.originalName.replace(/"/g, '')}"`,
+        'content-length': String(bytes.length),
+        'cache-control': 'private, no-store',
+        'x-source-artifact-id': record.id,
+        'x-source-artifact-version': String(record.version),
+        'x-source-artifact-registry': 'source_artifacts',
+        'x-source-artifact-inline': 'true',
+      },
+    });
   }
 
   const bytes = await getObjectStorageAdapter().download('source-artifacts', record.blobUri);

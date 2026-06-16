@@ -3,6 +3,7 @@
 const tenancy = { clientId: 'c1', clientKey: 'skyharbor-air', userId: 'u1' };
 let artifact: Record<string, unknown> | null = null;
 let registryArtifact: Record<string, unknown> | null = null;
+let artifactStateBody: string | null = null;
 
 jest.mock('@/lib/auth/tenancy', () => ({
   requireTenancy: jest.fn(async () => tenancy),
@@ -30,6 +31,22 @@ jest.mock('@/lib/data-plane/objectStorage', () => ({
     download: jest.fn(async () => Buffer.from('app_id,app_name\nAPP-001,Reservations Core\n')),
   })),
 }));
+jest.mock('@/lib/data-plane/postgresCompat', () => ({
+  getAzureWriteFluentClient: jest.fn(() => ({
+    from: jest.fn(() => ({
+      select: jest.fn(() => ({
+        eq: jest.fn(() => ({
+          eq: jest.fn(() => ({
+            maybeSingle: jest.fn(async () => ({
+              data: { body: artifactStateBody, body_format: 'markdown' },
+              error: null,
+            })),
+          })),
+        })),
+      })),
+    })),
+  })),
+}));
 
 import { GET } from '../route';
 
@@ -38,6 +55,7 @@ function params(artifactId: string) { return { params: Promise.resolve({ artifac
 beforeEach(() => {
   artifact = null;
   registryArtifact = null;
+  artifactStateBody = null;
 });
 
 describe('GET /api/v1/source/artifacts/[artifactId]/download', () => {
@@ -72,5 +90,26 @@ describe('GET /api/v1/source/artifacts/[artifactId]/download', () => {
     expect(res.headers.get('content-disposition')).toContain('attachment; filename="01_Application_Portfolio.csv"');
     expect(res.headers.get('x-source-artifact-registry')).toBe('source_artifacts');
     await expect(res.text()).resolves.toContain('Reservations Core');
+  });
+
+  it('streams inline generated registry artifacts from the artifact-state body instead of Blob', async () => {
+    artifactStateBody = '# Sourcing Strategy Memo\n\nGenerated draft body.';
+    registryArtifact = {
+      tenantKey: 'skyharbor-air',
+      sourceEventId: 'event-1',
+      artifactKind: 'd01_strategy_memo',
+      deletedAt: null,
+      blobUri: 'inline://source-event-artifact-state/event-1/d01_strategy_memo/a1/d01_strategy_memo.md',
+      mimeType: 'text/markdown; charset=utf-8',
+      originalName: 'd01_strategy_memo-a1.md',
+      version: 1,
+    };
+
+    const res = await GET({} as never, params('a1'));
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('text/markdown');
+    expect(res.headers.get('content-disposition')).toContain('inline; filename="d01_strategy_memo-a1.md"');
+    expect(res.headers.get('x-source-artifact-inline')).toBe('true');
+    await expect(res.text()).resolves.toContain('Generated draft body');
   });
 });
