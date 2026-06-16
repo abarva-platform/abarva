@@ -17,7 +17,7 @@ Adds a tenant-scoped refresh-event ledger for the Context & Corpus Explorer. CSV
 - **Lane:** `client-data-lane`
 - **Schema layer:** Adds `context_refresh_events` with tenant-key RLS and indexes.
 - **Library layer:** Adds `src/lib/intelligence/refresh-events.ts` as the shared append/read helper.
-- **API layer:** Adds signed-in `GET /api/intelligence/refresh-events`.
+- **API layer:** Adds signed-in `GET /api/intelligence/refresh-events`, fail-closed behind `context_corpus_explorer_enabled`.
 - **Write hooks:** Records refresh events from Admin CSV upload, Source artifact registry writes, and generated artifact writes.
 - **UI layer:** Updates the feature-flagged Change Log tab to prefer live refresh events and show an honest empty state.
 
@@ -27,7 +27,7 @@ Adds a tenant-scoped refresh-event ledger for the Context & Corpus Explorer. CSV
 - **Specific clients:** Any enrolled tenant with the S4 migration applied.
 - **Internal only:** Write hooks are attached to existing authenticated/admin/operator flows.
 - **Public/demo only:** No.
-- **Feature flag:** `context_corpus_explorer_enabled` controls the explorer UI; the ledger rows are written by the underlying context/artifact flows.
+- **Feature flag:** `context_corpus_explorer_enabled` controls the explorer UI and read API; the ledger rows are written by the underlying context/artifact flows.
 
 ## Changes Included
 
@@ -44,6 +44,7 @@ Adds a tenant-scoped refresh-event ledger for the Context & Corpus Explorer. CSV
 
 - `npx tsc --noEmit --pretty false` — passed clean.
 - `npx eslint src/lib/intelligence/refresh-events.ts src/app/api/intelligence/refresh-events/route.ts src/app/api/admin/context-layer/csv-upload/route.ts src/lib/source/artifact-registry/index.ts src/lib/artifacts/repository.ts src/components/intelligence-v4/ContextChangeLogTab.tsx src/components/intelligence-v4/IntelligenceExplorerPage.tsx` — passed clean.
+- `npx eslint src/app/api/intelligence/refresh-events/route.ts src/lib/intelligence/refresh-events.ts src/lib/source/artifact-registry/index.ts src/lib/artifacts/repository.ts` — passed clean after review hardening.
 - `npm run release:check -- --base origin/main --head HEAD` — passed.
 - `npm run test:behaviors -- --runInBand` — passed: 15 suites, 195 tests.
 - Disposable Postgres replay: `DATABASE_URL='postgres://postgres:postgres@localhost:55434/abarva_l5?sslmode=disable' npm run db:azure:bootstrap` — passed.
@@ -67,5 +68,6 @@ Turn off `context_corpus_explorer_enabled` for affected tenants to hide the expl
 ## Known Gaps
 
 - This does not prove a live CSV upload in a signed-in browser session.
-- Source and Move artifact hooks record artifact acceptance/generation only; they do not claim parser extraction, fact commitment, embedding refresh, or retrieval proof.
+- Source artifact hooks record staged review-required artifact registration with `rowsAccepted: 0`; they do not claim parser extraction, fact commitment, embedding refresh, or retrieval proof.
+- Move artifact hooks record generated artifact persistence only; they do not claim parser extraction, fact commitment, embedding refresh, or retrieval proof.
 - Insight re-evaluation is triggered best-effort after event insert and logs failures rather than blocking the primary write.

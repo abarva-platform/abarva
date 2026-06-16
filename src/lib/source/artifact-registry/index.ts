@@ -357,7 +357,7 @@ export async function registerSourceArtifactUpload(
     triggeredBy: "source_artifact",
     sourceLabel: input.originalName,
     rowsSeen: 1,
-    rowsAccepted: 1,
+    rowsAccepted: 0,
     approvalRequired: true,
     affectedSurfaces: ["source", "change-log"],
     receiptUrl: input.blobUri,

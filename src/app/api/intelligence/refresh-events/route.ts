@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import {
+  contextCorpusExplorerDisabledResponse,
+  isContextCorpusExplorerEnabled,
+} from "@/lib/intelligence/context-explorer-access";
 import { listContextRefreshEventsForTenant } from "@/lib/intelligence/refresh-events";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 
@@ -18,6 +22,9 @@ export async function GET(request: NextRequest) {
 
   if (!tenancy.clientKey) {
     return NextResponse.json({ error: "tenant_key_required" }, { status: 403 });
+  }
+  if (!isContextCorpusExplorerEnabled(tenancy)) {
+    return contextCorpusExplorerDisabledResponse();
   }
 
   const activeTenantKey = canonicalTenantKey(tenancy.clientKey);
