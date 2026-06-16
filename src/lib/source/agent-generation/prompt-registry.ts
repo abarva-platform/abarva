@@ -42,6 +42,7 @@ Voice register:
 - Lead with the most decision-relevant signal, not background.
 - Precise. No hedging language. No generic procurement boilerplate.
 - No fabrication. If an upstream input is missing, say so explicitly and surface it as a gap rather than inventing content.
+- Client-facing language. Say "company", "business", "event", "evidence", or "source file"; never say "tenant", "tenant key", "substrate", raw table name, internal id, or internal routing key.
 
 Format requirements:
 - Markdown only. Use ATX headings (#, ##, ###).
@@ -85,16 +86,17 @@ const REGISTRY: Record<string, SourceArtifactPromptTemplate> = {
 You are drafting the Sourcing Strategy Memo (artifact d01_strategy_memo). This is the foundational document for a sourcing event — it answers Why Now, What we're sourcing, the Value Target, the Archetype, and the Rigor level.
 
 Required structural sections:
+## Executive summary
 ## §1 · Why now
 ## §2 · What we are sourcing
 ## §3 · Value target
 ## §4 · Archetype + rigor
 ## §5 · Decision-gate posture
 
-Tone: tight. 600-1200 words total. No filler. Cite the trigger from the event intake. Name the decision owner explicitly. State the value target as a range with confidence band when the intake provided one. Pick the archetype + rigor based on archetype + rigor heuristics: standard rigor for run-rate continuity, enhanced for material savings claims, strategic for transformation programs.`,
+Tone: tight, business-facing, executive-readable. 700-1300 words total. No filler. The executive summary comes first and must explain the business context, why this matters now, the value at stake, and the decision needed in 4-6 crisp bullets or a compact table. Cite the trigger from the event intake. Name the decision owner explicitly. State the value target as a range with confidence band when the intake provided one. Pick the archetype + rigor based on archetype + rigor heuristics: standard rigor for run-rate continuity, enhanced for material savings claims, strategic for transformation programs. Do not expose internal product terms such as tenant, tenant key, substrate, table names, artifact ids, or chunk ids.`,
     buildUserMessage: (ctx) => {
       return [
-        `Tenant: ${ctx.tenantName} (key: ${ctx.tenantKey})`,
+        `Company: ${ctx.tenantName}`,
         `Event: ${ctx.event.name}`,
         `Code: ${ctx.event.code}`,
         ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
@@ -147,7 +149,7 @@ Requirements:
 - 600-1000 words. Use a table for the lever decomposition and a table for the sizing range. No generic savings boilerplate.`,
     buildUserMessage: (ctx, upstream) => {
       return [
-        `Tenant: ${ctx.tenantName} (key: ${ctx.tenantKey})`,
+        `Company: ${ctx.tenantName}`,
         `Event: ${ctx.event.name} (${ctx.event.code})`,
         ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
         ctx.event.estimatedValueUsd
@@ -199,7 +201,7 @@ Requirements:
 - 500-900 words. Include the archetype scoring comparison table.`,
     buildUserMessage: (ctx, upstream) => {
       return [
-        `Tenant: ${ctx.tenantName} (key: ${ctx.tenantKey})`,
+        `Company: ${ctx.tenantName}`,
         `Event: ${ctx.event.name} (${ctx.event.code})`,
         ctx.event.archetype
           ? `Intake archetype signal: ${ctx.event.archetype}`
@@ -235,15 +237,16 @@ Requirements:
 You are drafting the Scope Memo with Boundaries (artifact d05_scope_memo). This document is vendor-facing once locked — it must be precise about what's in and out of scope so vendors price + propose against the same definition.
 
 Required structural sections:
+## Executive summary
 ## §1 · In scope
 ## §2 · Out of scope
 ## §3 · Boundary clarifications
 ## §4 · Scope owner + approval
 
-Tone: precise, list-heavy. The "in scope" section names systems, services, hours-of-coverage, and SLA expectations. The "out of scope" section is exhaustive — anything not listed in §1 is implicitly out, but explicit listings prevent later vendor disputes. Boundary clarifications cover edge cases the strategy memo didn't pin down. End with the named scope owner who locks the document.`,
+Tone: precise, business-facing, list-heavy. Start with an executive summary that explains the sourcing context, value/urgency, decision owner, and the boundary decision in a simple scan-friendly way. The "in scope" section must be a bulleted or tabular list grouped by tower/service area; do not run multiple scope items together in one paragraph. The "out of scope" section is exhaustive and also list-heavy — anything not listed in §1 is implicitly out, but explicit listings prevent later vendor disputes. Boundary clarifications cover edge cases the strategy memo didn't pin down. Use compact tables for service towers, coverage assumptions, and approval/lock conditions where helpful. End with the named scope owner who locks the document. Do not expose internal product terms such as tenant, tenant key, substrate, table names, artifact ids, or chunk ids.`,
     buildUserMessage: (ctx, upstream) => {
       const lines: string[] = [
-        `Tenant: ${ctx.tenantName}`,
+        `Company: ${ctx.tenantName}`,
         `Event: ${ctx.event.name} (${ctx.event.code})`,
         ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
         "",
@@ -353,7 +356,7 @@ Required compact section skeleton:
 Quality requirement: produce a draft that can pass the partner-grade quality review without a follow-up rewrite. Every major claim must either cite/derive from bound evidence, be framed as an assumption to validate, or be listed as a client-to-complete gap with owner/action. Include practical mitigations for risks; do not merely flag them. Do not leave process dates as bare [CLIENT TO SET]; either provide the governed date from evidence or put the item in the §11 closure table with owner placeholder, due-date placeholder, blocking gate, and downstream impact.`,
     buildUserMessage: (ctx, upstream) => {
       const lines: string[] = [
-        `Tenant: ${ctx.tenantName}`,
+        `Company: ${ctx.tenantName}`,
         `Event: ${ctx.event.name} (${ctx.event.code})`,
         ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
         ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,

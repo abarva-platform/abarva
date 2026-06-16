@@ -97,7 +97,7 @@ export function buildNarrativePdf(
           {config.eyebrowFor(payload.tenantName)}
         </Text>
         <Text style={PDF_STYLES.title}>{payload.eventName}</Text>
-        <Text style={PDF_STYLES.meta}>Tenant: {payload.tenantName}</Text>
+        <Text style={PDF_STYLES.meta}>Company: {payload.tenantName}</Text>
         <Text style={PDF_STYLES.meta}>Event code: {payload.eventCode}</Text>
         {payload.issuedBy ? (
           <Text style={PDF_STYLES.meta}>Issued by: {payload.issuedBy}</Text>
