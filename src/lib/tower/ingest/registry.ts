@@ -12,6 +12,7 @@
  * a CLI, and a target table.
  */
 
+import { aiControlTowerSource } from './ai-control-tower';
 import { azureCostSource } from './azure-cost';
 import { claudeCodeSource } from './claude-code';
 import { copilotSource } from './copilot';
@@ -53,6 +54,7 @@ export interface TowerIngestSource {
 }
 
 export const TOWER_INGEST_SOURCES: TowerIngestSource[] = [
+  aiControlTowerSource,
   azureCostSource,
   claudeCodeSource,
   copilotSource,
