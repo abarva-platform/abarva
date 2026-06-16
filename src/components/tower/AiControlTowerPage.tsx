@@ -32,7 +32,7 @@ interface AiControlTowerPageProps {
 }
 
 const TOKENS = {
-  bg: "#f7f6f2",
+  bg: "#f8f7f4",
   surface: "#ffffff",
   ink: "#151816",
   muted: "#59645e",
@@ -51,12 +51,14 @@ const TOKENS = {
 
 const LENSES: Array<{
   key: LensKey;
+  kicker: string;
   label: string;
   shortLabel: string;
   question: string;
 }> = [
   {
     key: "value_adoption",
+    kicker: "VALUE · L2",
     label: "Value and adoption",
     shortLabel: "Value",
     question:
@@ -64,6 +66,7 @@ const LENSES: Array<{
   },
   {
     key: "productivity",
+    kicker: "FLOW · L2",
     label: "Productivity",
     shortLabel: "Productivity",
     question:
@@ -71,6 +74,7 @@ const LENSES: Array<{
   },
   {
     key: "agents",
+    kicker: "AGENTS · L1",
     label: "Agents",
     shortLabel: "Agents",
     question:
@@ -78,6 +82,7 @@ const LENSES: Array<{
   },
   {
     key: "spend",
+    kicker: "COST · L1",
     label: "Spend",
     shortLabel: "Spend",
     question:
@@ -85,6 +90,7 @@ const LENSES: Array<{
   },
   {
     key: "risk",
+    kicker: "GATES · L1",
     label: "Risk",
     shortLabel: "Risk",
     question:
@@ -92,6 +98,7 @@ const LENSES: Array<{
   },
   {
     key: "evidence",
+    kicker: "TRUST · L0",
     label: "Evidence",
     shortLabel: "Evidence",
     question:
@@ -99,6 +106,7 @@ const LENSES: Array<{
   },
   {
     key: "actions",
+    kicker: "MOVES · L3",
     label: "Actions",
     shortLabel: "Actions",
     question:
@@ -277,13 +285,13 @@ function MetricTile({
           display: "flex",
           alignItems: "baseline",
           gap: 8,
-          marginTop: 8,
+          marginTop: 7,
         }}
       >
         <div
           style={{
             fontFamily: TOKENS.serif,
-            fontSize: 31,
+            fontSize: 27,
             fontWeight: 760,
             lineHeight: 1,
             color: TOKENS.ink,
@@ -297,9 +305,9 @@ function MetricTile({
       </div>
       <div
         style={{
-          marginTop: 8,
+          marginTop: 7,
           color: TOKENS.muted,
-          fontSize: 12,
+          fontSize: 11,
           lineHeight: 1.35,
         }}
       >
@@ -327,7 +335,7 @@ function BarRow({
           display: "flex",
           justifyContent: "space-between",
           gap: 12,
-          fontSize: 12,
+          fontSize: 11,
           color: TOKENS.ink,
           fontWeight: 700,
         }}
@@ -337,11 +345,11 @@ function BarRow({
       </div>
       <div
         style={{
-          height: 8,
+          height: 6,
           background: TOKENS.faint,
           borderRadius: 999,
           overflow: "hidden",
-          marginTop: 7,
+          marginTop: 6,
         }}
       >
         <div
@@ -516,7 +524,7 @@ export function AiControlTowerPage({
         <div>
           <div style={eyebrowStyle}>AI Control Tower · {tenantName}</div>
           <h1 style={heroTitleStyle}>
-            AI value, productivity, spend, and risk in one executive read.
+            AI value, productivity, spend, and risk.
           </h1>
           <p style={heroQuestionStyle}>{lensMeta.question}</p>
         </div>
@@ -540,12 +548,14 @@ export function AiControlTowerPage({
               onClick={() => selectLens(lens.key)}
               style={{
                 ...tabStyle,
-                color: selected ? TOKENS.surface : TOKENS.ink,
-                background: selected ? TOKENS.navy : TOKENS.surface,
-                borderColor: selected ? TOKENS.navy : TOKENS.rule,
+                color: TOKENS.ink,
+                background: selected ? "#fbfcff" : TOKENS.surface,
+                borderColor: selected ? "#0b63ff" : TOKENS.rule,
+                boxShadow: selected ? "inset 0 0 0 1px #0b63ff" : "none",
               }}
             >
-              {lens.label}
+              <span style={tabKickerStyle}>{lens.kicker}</span>
+              <span style={tabLabelStyle}>{lens.label}</span>
             </button>
           );
         })}
@@ -641,12 +651,12 @@ export function AiControlTowerPage({
               <div key={initiative.initiativeId} style={rowStyle}>
                 <div>
                   <div
-                    style={{ fontSize: 14, fontWeight: 800, color: TOKENS.ink }}
+                    style={{ fontSize: 13, fontWeight: 800, color: TOKENS.ink }}
                   >
                     {initiative.name}
                   </div>
                   <div
-                    style={{ marginTop: 4, fontSize: 12, color: TOKENS.muted }}
+                    style={{ marginTop: 4, fontSize: 11, color: TOKENS.muted }}
                   >
                     {initiative.ownerName || "Unassigned owner"} ·{" "}
                     {normalizeStatus(initiative.stage)}
@@ -654,7 +664,7 @@ export function AiControlTowerPage({
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div
-                    style={{ fontSize: 13, fontWeight: 800, color: TOKENS.ink }}
+                    style={{ fontSize: 12, fontWeight: 800, color: TOKENS.ink }}
                   >
                     {money(initiativeMeasured(initiative))}
                   </div>
@@ -719,14 +729,14 @@ export function AiControlTowerPage({
             ].map(([label, detail]) => (
               <div key={label} style={sourceTileStyle}>
                 <div
-                  style={{ fontSize: 13, fontWeight: 800, color: TOKENS.ink }}
+                  style={{ fontSize: 12, fontWeight: 800, color: TOKENS.ink }}
                 >
                   {label}
                 </div>
                 <div
                   style={{
                     marginTop: 5,
-                    fontSize: 12,
+                    fontSize: 11,
                     color: TOKENS.muted,
                     lineHeight: 1.35,
                   }}
@@ -765,7 +775,7 @@ export function AiControlTowerPage({
 const pageStyle: CSSProperties = {
   minHeight: "calc(100vh - 64px)",
   background: TOKENS.bg,
-  padding: "24px clamp(18px, 3vw, 38px) 38px",
+  padding: "20px clamp(18px, 3vw, 36px) 34px",
   fontFamily: TOKENS.sans,
   color: TOKENS.ink,
 };
@@ -775,26 +785,26 @@ const heroStyle: CSSProperties = {
   justifyContent: "space-between",
   alignItems: "flex-start",
   gap: 24,
-  paddingBottom: 18,
+  paddingBottom: 16,
   borderBottom: `1px solid ${TOKENS.rule}`,
 };
 
 const heroTitleStyle: CSSProperties = {
   margin: "6px 0 0",
   fontFamily: TOKENS.serif,
-  fontSize: "clamp(30px, 3vw, 46px)",
+  fontSize: "clamp(25px, 2.4vw, 36px)",
   lineHeight: 1,
   fontWeight: 820,
   letterSpacing: 0,
-  maxWidth: 820,
+  maxWidth: 760,
 };
 
 const heroQuestionStyle: CSSProperties = {
-  margin: "10px 0 0",
+  margin: "8px 0 0",
   color: TOKENS.muted,
-  fontSize: 15,
-  lineHeight: 1.4,
-  maxWidth: 780,
+  fontSize: 13,
+  lineHeight: 1.35,
+  maxWidth: 1040,
 };
 
 const heroActionsStyle: CSSProperties = {
@@ -806,11 +816,11 @@ const heroActionsStyle: CSSProperties = {
 
 const primaryButtonStyle: CSSProperties = {
   border: `1px solid ${TOKENS.navy}`,
-  borderRadius: 7,
+  borderRadius: 6,
   background: TOKENS.navy,
   color: TOKENS.surface,
-  padding: "9px 12px",
-  fontSize: 12,
+  padding: "8px 11px",
+  fontSize: 11,
   fontWeight: 800,
   textDecoration: "none",
   whiteSpace: "nowrap",
@@ -818,48 +828,67 @@ const primaryButtonStyle: CSSProperties = {
 
 const tabBarStyle: CSSProperties = {
   display: "flex",
-  gap: 8,
+  gap: 6,
   overflowX: "auto",
-  padding: "16px 0",
+  padding: "12px 0",
 };
 
 const tabStyle: CSSProperties = {
   border: `1px solid ${TOKENS.rule}`,
-  borderRadius: 999,
-  padding: "8px 11px",
+  borderRadius: 4,
+  padding: "8px 12px 9px",
+  display: "grid",
+  gap: 2,
+  minWidth: 92,
+  textAlign: "center",
   fontSize: 12,
   fontWeight: 800,
   whiteSpace: "nowrap",
   cursor: "pointer",
 };
 
+const tabKickerStyle: CSSProperties = {
+  fontFamily: TOKENS.mono,
+  fontSize: 9,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  color: TOKENS.muted,
+  fontWeight: 800,
+};
+
+const tabLabelStyle: CSSProperties = {
+  fontSize: 12,
+  lineHeight: 1.15,
+  fontWeight: 850,
+};
+
 const metricGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(4, minmax(150px, 1fr))",
-  gap: 12,
+  gap: 10,
 };
 
 const metricTileStyle: CSSProperties = {
   background: TOKENS.surface,
   border: `1px solid ${TOKENS.rule}`,
-  borderRadius: 8,
-  padding: 15,
-  minHeight: 118,
+  borderRadius: 6,
+  padding: 13,
+  minHeight: 96,
 };
 
 const dashboardGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "minmax(0, 1.05fr) minmax(320px, 0.95fr)",
-  gap: 14,
-  marginTop: 14,
+  gap: 12,
+  marginTop: 12,
 };
 
 const sectionStyle: CSSProperties = {
   background: TOKENS.surface,
   border: `1px solid ${TOKENS.rule}`,
-  borderRadius: 8,
-  padding: 16,
-  marginTop: 14,
+  borderRadius: 6,
+  padding: 14,
+  marginTop: 12,
 };
 
 const sectionHeaderStyle: CSSProperties = {
@@ -867,12 +896,12 @@ const sectionHeaderStyle: CSSProperties = {
   justifyContent: "space-between",
   alignItems: "flex-start",
   gap: 14,
-  marginBottom: 16,
+  marginBottom: 14,
 };
 
 const eyebrowStyle: CSSProperties = {
   fontFamily: TOKENS.mono,
-  fontSize: 10,
+  fontSize: 9,
   letterSpacing: "0.14em",
   textTransform: "uppercase",
   color: TOKENS.muted,
@@ -882,7 +911,7 @@ const eyebrowStyle: CSSProperties = {
 const sectionTitleStyle: CSSProperties = {
   margin: "5px 0 0",
   fontFamily: TOKENS.serif,
-  fontSize: 23,
+  fontSize: 20,
   lineHeight: 1.05,
   fontWeight: 760,
   letterSpacing: 0,
@@ -892,37 +921,37 @@ const rowStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   gap: 12,
-  padding: "11px 0",
+  padding: "9px 0",
   borderTop: `1px solid ${TOKENS.faint}`,
 };
 
 const sourceGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-  gap: 10,
+  gap: 8,
 };
 
 const sourceTileStyle: CSSProperties = {
   border: `1px solid ${TOKENS.faint}`,
-  borderRadius: 8,
-  padding: 12,
+  borderRadius: 6,
+  padding: 10,
   background: "#fbfcfa",
 };
 
 const tableHeadStyle: CSSProperties = {
   textAlign: "left",
-  padding: "9px 8px",
+  padding: "8px 7px",
   borderBottom: `1px solid ${TOKENS.rule}`,
   fontFamily: TOKENS.mono,
-  fontSize: 10,
+  fontSize: 9,
   letterSpacing: "0.12em",
   textTransform: "uppercase",
   color: TOKENS.muted,
 };
 
 const tableCellStyle: CSSProperties = {
-  padding: "11px 8px",
+  padding: "9px 7px",
   borderBottom: `1px solid ${TOKENS.faint}`,
-  fontSize: 13,
+  fontSize: 12,
   color: TOKENS.ink,
 };
