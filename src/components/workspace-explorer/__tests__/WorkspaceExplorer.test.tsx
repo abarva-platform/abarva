@@ -187,6 +187,10 @@ describe("WorkspaceExplorer", () => {
     expect(screen.queryByText("Scope Signed")).toBeNull();
     expect(screen.queryByText("Approvals")).toBeNull();
     expect(screen.getAllByText("Application Inventory.xlsx").length).toBeGreaterThan(0);
+    expect(screen.queryByText("user_123")).toBeNull();
+    expect(screen.getByText("User")).toBeTruthy();
+    expect(screen.queryByText("source_artifacts registry")).toBeNull();
+    expect(screen.getByText("Artifact registry")).toBeTruthy();
   });
 
   it("surfaces missing upstream errors without fabricating a draft", async () => {

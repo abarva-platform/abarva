@@ -529,21 +529,25 @@ export function WorkspaceExplorer({
                 {activeItem.description ?? "No description recorded yet."}
               </p>
               <dl style={DETAIL_GRID_STYLE}>
-                <div>
-                  <dt>Kind</dt>
-                  <dd>{KIND_LABELS[activeItem.kind]}</dd>
+                <div style={DETAIL_ITEM_STYLE}>
+                  <dt style={DETAIL_TERM_STYLE}>Kind</dt>
+                  <dd style={DETAIL_VALUE_STYLE}>{KIND_LABELS[activeItem.kind]}</dd>
                 </div>
-                <div>
-                  <dt>Origin</dt>
-                  <dd>{activeItem.origin}</dd>
+                <div style={DETAIL_ITEM_STYLE}>
+                  <dt style={DETAIL_TERM_STYLE}>Origin</dt>
+                  <dd style={DETAIL_VALUE_STYLE}>{activeItem.origin}</dd>
                 </div>
-                <div>
-                  <dt>Classification</dt>
-                  <dd>{activeItem.classification ?? "Not classified"}</dd>
+                <div style={DETAIL_ITEM_STYLE}>
+                  <dt style={DETAIL_TERM_STYLE}>Classification</dt>
+                  <dd style={DETAIL_VALUE_STYLE}>
+                    {activeItem.classification ?? "Not classified"}
+                  </dd>
                 </div>
-                <div>
-                  <dt>Source</dt>
-                  <dd>{activeItem.sourceLabel ?? "Not recorded"}</dd>
+                <div style={DETAIL_ITEM_STYLE}>
+                  <dt style={DETAIL_TERM_STYLE}>Source</dt>
+                  <dd style={DETAIL_VALUE_STYLE}>
+                    {displaySourceLabel(activeItem.sourceLabel)}
+                  </dd>
                 </div>
               </dl>
               <div style={LINEAGE_STYLE}>
@@ -819,9 +823,9 @@ function tableNeededFor(row: WorkspaceTableRow): string {
 
 function tableOwner(row: WorkspaceTableRow): string {
   const doc = row.kind === "document" ? row.doc : row.doc;
-  if (doc?.audit.createdBy) return doc.audit.createdBy;
-  if (doc?.audit.updatedBy) return doc.audit.updatedBy;
-  if (row.kind === "requirement") return row.requirement.level;
+  if (doc?.audit.createdBy) return displayActor(doc.audit.createdBy);
+  if (doc?.audit.updatedBy) return displayActor(doc.audit.updatedBy);
+  if (row.kind === "requirement") return humanizeToken(row.requirement.level);
   return "Not recorded";
 }
 
@@ -839,6 +843,30 @@ function fileGlyph(item: WorkspaceItem): string {
   if (item.kind === "vendor_response") return "VDR";
   if (item.kind === "deliverable") return "DOC";
   return "FILE";
+}
+
+function displayActor(value: string | null | undefined): string {
+  if (!value) return "Not recorded";
+  if (/^user_[a-z0-9]+/i.test(value)) return "User";
+  return value;
+}
+
+function humanizeToken(value: string): string {
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function displaySourceLabel(value: string | null | undefined): string {
+  if (!value) return "Not recorded";
+  const normalized = value.toLowerCase();
+  if (normalized === "source_artifacts registry") return "Artifact registry";
+  if (normalized === "source canvas substrate") return "Source canvas";
+  if (normalized === "source evidence readiness") return "Evidence readiness";
+  if (normalized === "source gate criterion") return "Gate record";
+  return value;
 }
 
 function stateLabel(state: WorkspaceItemState): string {
@@ -1088,8 +1116,8 @@ const INLINE_REVIEW_LINK_STYLE: CSSProperties = {
 
 const SHELL_STYLE: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "220px minmax(360px, 0.95fr) minmax(360px, 1.05fr)",
-  gap: 14,
+  gridTemplateColumns: "196px minmax(640px, 1.5fr) minmax(300px, 0.72fr)",
+  gap: 12,
   minHeight: 620,
 };
 
@@ -1106,11 +1134,11 @@ const NAV_STYLE: CSSProperties = {
 const LIST_STYLE: CSSProperties = {
   border: "1px solid #e5e1da",
   borderRadius: 8,
-  background: "#fbfaf7",
-  padding: 12,
+  background: "#ffffff",
+  padding: 10,
   display: "grid",
   alignContent: "start",
-  gap: 10,
+  gap: 8,
   overflow: "auto",
 };
 
@@ -1123,14 +1151,14 @@ const TABLE_WRAP_STYLE: CSSProperties = {
 
 const TABLE_STYLE: CSSProperties = {
   width: "100%",
-  minWidth: 760,
+  minWidth: 700,
   borderCollapse: "collapse",
   tableLayout: "fixed",
 };
 
 const TH_STYLE: CSSProperties = {
-  height: 34,
-  padding: "0 10px",
+  height: 32,
+  padding: "0 9px",
   textAlign: "left",
   background: "#fbfaf7",
   borderBottom: "1px solid #e5e1da",
@@ -1141,18 +1169,18 @@ const TH_STYLE: CSSProperties = {
 };
 
 const TD_STYLE: CSSProperties = {
-  padding: "10px",
+  padding: "9px",
   borderBottom: "1px solid #f0ece4",
   color: "#344054",
   verticalAlign: "middle",
-  font: "600 12px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
+  font: "600 11.5px/1.32 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
 };
 
 const FILE_CELL_STYLE: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "32px minmax(0, 1fr)",
+  gridTemplateColumns: "28px minmax(0, 1fr)",
   alignItems: "center",
-  gap: 10,
+  gap: 8,
   minWidth: 0,
 };
 
@@ -1170,9 +1198,9 @@ const FILE_NAME_STYLE: CSSProperties = {
 };
 
 const FILE_GLYPH_STYLE: CSSProperties = {
-  width: 30,
-  height: 30,
-  borderRadius: 7,
+  width: 26,
+  height: 26,
+  borderRadius: 6,
   display: "grid",
   placeItems: "center",
   background: "#f1f5f9",
@@ -1184,7 +1212,7 @@ const PREVIEW_STYLE: CSSProperties = {
   border: "1px solid #e5e1da",
   borderRadius: 8,
   background: "#ffffff",
-  padding: 22,
+  padding: 18,
   overflow: "auto",
 };
 
@@ -1222,33 +1250,56 @@ function needDotStyle(level: "required" | "recommended"): CSSProperties {
 }
 
 const PREVIEW_TITLE_STYLE: CSSProperties = {
-  margin: "8px 0 8px",
-  font: "700 28px/1.15 var(--font-fraunces), 'Fraunces', Georgia, serif",
+  margin: "8px 0 6px",
+  font: "700 20px/1.16 var(--font-fraunces), 'Fraunces', Georgia, serif",
   letterSpacing: 0,
   color: "#10172f",
+  overflowWrap: "anywhere",
 };
 
 const PREVIEW_COPY_STYLE: CSSProperties = {
-  margin: "0 0 18px",
-  font: "500 14px/1.55 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
+  margin: "0 0 14px",
+  font: "500 12.5px/1.45 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   color: "#475569",
 };
 
 const DETAIL_GRID_STYLE: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "1fr 1fr",
-  gap: 12,
-  margin: "0 0 18px",
+  gap: 8,
+  margin: "0 0 14px",
+};
+
+const DETAIL_ITEM_STYLE: CSSProperties = {
+  borderTop: "1px solid #ece8df",
+  paddingTop: 9,
+  display: "grid",
+  gap: 3,
+};
+
+const DETAIL_TERM_STYLE: CSSProperties = {
+  margin: 0,
+  font: "700 9.5px/1.2 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  color: "#7a8495",
+};
+
+const DETAIL_VALUE_STYLE: CSSProperties = {
+  margin: 0,
+  color: "#10172f",
+  font: "600 12.5px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
+  overflowWrap: "anywhere",
 };
 
 const LINEAGE_STYLE: CSSProperties = {
   borderTop: "1px solid #e5e7eb",
   borderBottom: "1px solid #e5e7eb",
-  padding: "14px 0",
-  marginBottom: 18,
+  padding: "12px 0",
+  marginBottom: 14,
   display: "grid",
   gap: 4,
-  font: "500 13px/1.45 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
+  font: "500 12px/1.4 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   color: "#475569",
 };
 
