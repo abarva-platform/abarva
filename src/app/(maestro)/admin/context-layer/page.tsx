@@ -20,6 +20,7 @@ const links = [
   ["/admin/context-layer/approval-queue", "Approval queue"],
   ["/admin/context-layer/syncs", "Syncs"],
   ["/admin/context-layer/evidence-map", "Evidence map"],
+  ["/admin/context-layer/triage", "Classification Triage"],
 ];
 
 const shellStyle = {
