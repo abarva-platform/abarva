@@ -3,6 +3,7 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { recordContextRefreshEvent } from "@/lib/intelligence/refresh-events";
 import type { BoardPackRenderInput, BoardPackRenderResult } from "./types";
 import { renderBoardPack } from "./render-engine";
 
@@ -133,7 +134,27 @@ export async function saveGeneratedArtifact(
 
   if (error)
     throw new Error(`generated_artifacts insert failed: ${error.message}`);
-  return rowToRecord(data as Record<string, unknown>);
+  const record = rowToRecord(data as Record<string, unknown>);
+  await recordContextRefreshEvent({
+    clientId: input.clientId,
+    triggeredBy: "move_artifact",
+    sourceLabel: input.title,
+    rowsSeen: 1,
+    rowsAccepted: 1,
+    approvalRequired: false,
+    affectedSurfaces: ["moves", "change-log"],
+    receiptUrl: record.blobUrl,
+  }).catch((refreshError) => {
+    console.warn("[generated-artifacts] refresh event failed", {
+      clientId: input.clientId,
+      artifactType: rendered.artifactType,
+      error:
+        refreshError instanceof Error
+          ? refreshError.message
+          : String(refreshError),
+    });
+  });
+  return record;
 }
 
 export async function generateAndSaveBoardPack(
@@ -269,5 +290,25 @@ export async function saveRenderedBoardGradeMoveArtifact(input: {
 
   if (error)
     throw new Error(`generated_artifacts insert failed: ${error.message}`);
-  return rowToRecord(data as Record<string, unknown>);
+  const record = rowToRecord(data as Record<string, unknown>);
+  await recordContextRefreshEvent({
+    clientId: input.clientId,
+    triggeredBy: "move_artifact",
+    sourceLabel: input.title,
+    rowsSeen: 1,
+    rowsAccepted: 1,
+    approvalRequired: false,
+    affectedSurfaces: ["moves", "change-log"],
+    receiptUrl: record.blobUrl,
+  }).catch((refreshError) => {
+    console.warn("[generated-artifacts] refresh event failed", {
+      clientId: input.clientId,
+      artifactId: input.artifactId,
+      error:
+        refreshError instanceof Error
+          ? refreshError.message
+          : String(refreshError),
+    });
+  });
+  return record;
 }

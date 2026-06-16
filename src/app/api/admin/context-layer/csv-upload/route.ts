@@ -22,6 +22,7 @@ import {
 import { getRateCardTemplateById } from "@/lib/programs/expert-kernel/rate-card/rate-card-templates";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
+import { recordContextRefreshEvent } from "@/lib/intelligence/refresh-events";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -302,8 +303,28 @@ export async function POST(request: NextRequest) {
 
     const classificationMessage =
       result.needsClassificationCount > 0
-        ? `${result.needsClassificationCount} record${result.needsClassificationCount === 1 ? '' : 's'} need classification — visit Setup > Triage Queue to confirm.`
+        ? `${result.needsClassificationCount} record${result.needsClassificationCount === 1 ? "" : "s"} need classification — visit Setup > Triage Queue to confirm.`
         : undefined;
+    const refreshEvent = await recordContextRefreshEvent({
+      clientId: tenancy.clientId,
+      tenantKey,
+      triggeredBy: "csv_upload",
+      sourceLabel: file.name,
+      rowsSeen: result.rowsParsed,
+      rowsAccepted: result.enterpriseContextPromotion.recordsPromoted,
+      rowsRejected: result.needsClassificationCount,
+      factsCreated: result.enterpriseContextPromotion.factsPromoted,
+      factsSuperseded: result.enterpriseContextPromotion.factsSuperseded,
+      approvalRequired: result.needsClassificationCount > 0,
+      affectedSurfaces: ["explore", "coverage", "insights", "change-log"],
+      receiptUrl: `${DIRECT_CONTEXT_BUCKET}/${blobPath}`,
+    }).catch((error) => {
+      console.warn("[csv-upload] refresh event failed", {
+        tenantKey,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return null;
+    });
 
     return NextResponse.json(
       {
@@ -319,6 +340,7 @@ export async function POST(request: NextRequest) {
           path: blobPath,
           sha256: fileHash,
         },
+        refreshEventId: refreshEvent?.id ?? null,
       },
       { status: result.persistence.status === "inserted" ? 200 : 202 },
     );

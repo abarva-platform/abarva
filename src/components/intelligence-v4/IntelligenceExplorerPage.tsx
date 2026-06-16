@@ -284,7 +284,9 @@ export function IntelligenceExplorerPage({
                   contextSummary={contextSummary}
                 />
               )}
-              {activeTab === "change" && <ContextChangeLogTab />}
+              {activeTab === "change" && (
+                <ContextChangeLogTab tenantKey={tenantKey} />
+              )}
               {activeTab === "trust" && (
                 <ContextCoverageTrustTab contextSummary={contextSummary} />
               )}

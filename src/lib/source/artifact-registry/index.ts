@@ -8,6 +8,7 @@ import "server-only";
 
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { selectSourceArtifactsWriteAdapter } from "@/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter";
+import { recordContextRefreshEvent } from "@/lib/intelligence/refresh-events";
 import {
   parseDisclosureFlag,
   serializeDisclosureFlag,
@@ -349,7 +350,25 @@ export async function registerSourceArtifactUpload(
       written.error ?? "[source-artifacts] registry insert failed",
     );
   }
-  return rowToRecord(written.data as unknown as SourceArtifactRow);
+  const record = rowToRecord(written.data as unknown as SourceArtifactRow);
+  await recordContextRefreshEvent({
+    clientId: input.fileCabinet?.clientId ?? input.tenantKey,
+    tenantKey: input.tenantKey,
+    triggeredBy: "source_artifact",
+    sourceLabel: input.originalName,
+    rowsSeen: 1,
+    rowsAccepted: 0,
+    approvalRequired: true,
+    affectedSurfaces: ["source", "change-log"],
+    receiptUrl: input.blobUri,
+  }).catch((error) => {
+    console.warn("[source-artifacts] refresh event failed", {
+      tenantKey: input.tenantKey,
+      artifactKind: input.artifactKind,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  });
+  return record;
 }
 
 export async function listSourceArtifactsForEvent(
