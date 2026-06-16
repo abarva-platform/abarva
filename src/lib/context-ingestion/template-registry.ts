@@ -36,6 +36,7 @@ export interface ContextTemplateDefinition {
   refreshCadence: string;
   exceptionMetadataRequirements: TemplateExceptionMetadataRequirement[];
   unlocks: string[];
+  enumValues?: Record<string, string[]>;
 }
 
 type ContextTemplateSeed = Omit<
@@ -510,6 +511,200 @@ export const NORTHSTAR_CONTEXT_TEMPLATES: ContextTemplateDefinition[] = [
     ],
   }),
 );
+
+const IT_SYSTEM_LANDSCAPE_ENUM_VALUES: Record<string, string[]> = {
+  domain_segment: [
+    "DATA_ANALYTICS",
+    "ERP",
+    "DIGITAL_CX",
+    "OPERATIONS",
+    "INFRASTRUCTURE",
+    "SECURITY_IDENTITY",
+    "HR_WORKFORCE",
+    "COLLABORATION",
+  ],
+  business_function: [
+    "FINANCE",
+    "SUPPLY_CHAIN",
+    "HUMAN_RESOURCES",
+    "OPERATIONS",
+    "COMMERCIAL_SALES",
+    "IT",
+    "COMPLIANCE_LEGAL",
+    "CORPORATE",
+    "INDUSTRY_OPS",
+  ],
+  criticality: ["TIER_1", "TIER_2", "TIER_3"],
+};
+
+const VENDOR_CONTRACTS_ENUM_VALUES: Record<string, string[]> = {
+  vendor_category: [
+    "SOFTWARE_SAAS",
+    "PROFESSIONAL_SERVICES",
+    "HARDWARE",
+    "CLOUD_SERVICES",
+    "MANAGED_SERVICES",
+    "TELCO",
+    "DATA_SERVICES",
+  ],
+  auto_renew: ["YES", "NO", "UNKNOWN"],
+  business_function: [
+    "FINANCE",
+    "SUPPLY_CHAIN",
+    "HUMAN_RESOURCES",
+    "OPERATIONS",
+    "COMMERCIAL_SALES",
+    "IT",
+    "COMPLIANCE_LEGAL",
+    "CORPORATE",
+    "INDUSTRY_OPS",
+  ],
+};
+
+const INFRASTRUCTURE_DC_ENUM_VALUES: Record<string, string[]> = {
+  environment: ["PRODUCTION", "DR", "DEV", "STAGING", "SANDBOX"],
+  provider: ["AWS", "AZURE", "GCP", "ON_PREM", "COLOCATION", "PRIVATE_CLOUD"],
+  tier: ["TIER_1", "TIER_2", "TIER_3"],
+};
+
+const NORTHSTAR_CANONICAL_TEMPLATES: ContextTemplateDefinition[] = [
+  {
+    id: "it-system-landscape-canonical",
+    dimension: "it_landscape",
+    label: "IT system landscape (canonical)",
+    acceptedFormats: ["csv", "xlsx"],
+    exceptionFormats: SUPPORTED_CONTEXT_UPLOAD_FORMATS.filter(
+      (format) => !(["csv", "xlsx"] as UploadedFileFormat[]).includes(format),
+    ),
+    formatProfiles: SUPPORTED_CONTEXT_UPLOAD_FORMATS.map(
+      (format) => FORMAT_SUPPORT_PROFILES[format],
+    ),
+    requiredFields: [
+      "system_id",
+      "system_name",
+      "vendor_name",
+      "domain_segment",
+      "business_function",
+      "it_owner_name",
+      "criticality",
+      "status",
+      "hosting_model",
+      "active_users",
+      "contract_end_date",
+      "annual_cost_usd",
+    ],
+    optionalFields: [
+      "version_release",
+      "cmdb_ci_id",
+      "integration_dependencies",
+      "data_classification",
+      "ai_enabled",
+      "decommission_target_date",
+      "sla_tier",
+    ],
+    ownerRole: "VP Enterprise Architecture",
+    refreshCadence: "monthly",
+    exceptionMetadataRequirements: buildExceptionMetadataRequirements([
+      "csv",
+      "xlsx",
+    ]),
+    unlocks: [
+      "Evidence chips cite uploaded source locators",
+      "Sentinel can answer tenant-grounded questions",
+      "Source and Tower can reason from approved context",
+    ],
+    enumValues: IT_SYSTEM_LANDSCAPE_ENUM_VALUES,
+  },
+  {
+    id: "vendor-contracts-canonical",
+    dimension: "vendor_contracts",
+    label: "Vendor contracts (canonical)",
+    acceptedFormats: ["csv", "xlsx"],
+    exceptionFormats: SUPPORTED_CONTEXT_UPLOAD_FORMATS.filter(
+      (format) => !(["csv", "xlsx"] as UploadedFileFormat[]).includes(format),
+    ),
+    formatProfiles: SUPPORTED_CONTEXT_UPLOAD_FORMATS.map(
+      (format) => FORMAT_SUPPORT_PROFILES[format],
+    ),
+    requiredFields: [
+      "vendor_id",
+      "vendor_name",
+      "vendor_category",
+      "contract_type",
+      "annual_value_usd",
+      "contract_start_date",
+      "contract_end_date",
+      "auto_renew",
+      "notice_period_days",
+      "business_function",
+      "it_owner_name",
+      "systems_covered",
+    ],
+    optionalFields: [
+      "benchmark_present",
+      "benchmark_source",
+      "single_source_risk",
+      "exit_plan",
+      "sla_reference",
+      "last_renegotiation_date",
+    ],
+    ownerRole: "VP Procurement",
+    refreshCadence: "monthly",
+    exceptionMetadataRequirements: buildExceptionMetadataRequirements([
+      "csv",
+      "xlsx",
+    ]),
+    unlocks: [
+      "Evidence chips cite uploaded source locators",
+      "Sentinel can answer tenant-grounded questions",
+      "Source and Tower can reason from approved context",
+    ],
+    enumValues: VENDOR_CONTRACTS_ENUM_VALUES,
+  },
+  {
+    id: "infrastructure-dc",
+    dimension: "infrastructure_dc",
+    label: "Infrastructure and data centre",
+    acceptedFormats: ["csv", "xlsx"],
+    exceptionFormats: SUPPORTED_CONTEXT_UPLOAD_FORMATS.filter(
+      (format) => !(["csv", "xlsx"] as UploadedFileFormat[]).includes(format),
+    ),
+    formatProfiles: SUPPORTED_CONTEXT_UPLOAD_FORMATS.map(
+      (format) => FORMAT_SUPPORT_PROFILES[format],
+    ),
+    requiredFields: [
+      "infra_id",
+      "environment",
+      "location",
+      "provider",
+      "tier",
+      "monthly_cost_usd",
+      "systems_hosted",
+      "dr_rto_hours",
+      "dr_rpo_hours",
+    ],
+    optionalFields: [
+      "power_capacity_kw",
+      "connectivity",
+      "compliance_certifications",
+    ],
+    ownerRole: "VP Infrastructure & Cloud",
+    refreshCadence: "quarterly",
+    exceptionMetadataRequirements: buildExceptionMetadataRequirements([
+      "csv",
+      "xlsx",
+    ]),
+    unlocks: [
+      "Evidence chips cite uploaded source locators",
+      "Sentinel can answer tenant-grounded questions",
+      "Source and Tower can reason from approved context",
+    ],
+    enumValues: INFRASTRUCTURE_DC_ENUM_VALUES,
+  },
+];
+
+// Append canonical templates into the northstar array
+NORTHSTAR_CONTEXT_TEMPLATES.push(...NORTHSTAR_CANONICAL_TEMPLATES);
 
 const PHS_OBJECT_DIMENSION_MAP = {
   evidence_item: "c_suite_strategy",
