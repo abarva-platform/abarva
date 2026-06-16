@@ -186,7 +186,7 @@ export function buildNarrativeHtml(
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${docTitle}</title>
   <meta name="generator" content="AbarVa · Sentinel" />
-  <meta name="x-source-artifact-code" content="${escapeHtml(config.artifactCode)}" />
+  <meta name="x-source-document" content="${escapeHtml(config.documentTitle)}" />
   <style>${STYLE_BLOCK}</style>
 </head>
 <body>
