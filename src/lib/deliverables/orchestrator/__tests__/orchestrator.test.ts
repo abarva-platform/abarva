@@ -123,14 +123,28 @@ describe('plan validation (gate before drafting)', () => {
     expect(res.errors.join(' ')).toMatch(/would fabricate client facts/);
   });
 
-  it('blocks a plan that omits a required section or drops a client-to-complete item', () => {
+  it('warns (does not hard-block) on a missing required-section KEY, but still blocks a dropped client-to-complete item', () => {
     const bad = goodPlan();
     bad.sectionPlan = bad.sectionPlan.filter((s) => s.key !== 'sla_kpi');
     bad.clientCompletePlan = bad.clientCompletePlan.filter((c) => c.key !== 'legal_positions');
     const res = validateGenerationPlan(bad, req, brief);
-    expect(res.ok).toBe(false);
-    expect(res.errors.join(' ')).toMatch(/sla_kpi/);
+    expect(res.ok).toBe(false); // still blocked — by the dropped client-to-complete item
+    expect(res.warnings.join(' ')).toMatch(/sla_kpi/); // missing section key is advisory, not a hard error
+    expect(res.errors.join(' ')).not.toMatch(/omits required section/);
     expect(res.errors.join(' ')).toMatch(/legal_positions/);
+  });
+
+  it('does NOT block a plan that covers enough sections but keys one differently than the brief', () => {
+    // The live failure: the architect produced a complete plan but named a section
+    // semantically (not with the brief's exact key). That must generate, not block.
+    const plan = goodPlan();
+    const original = plan.sectionPlan.find((s) => s.key === 'sla_kpi')!;
+    plan.sectionPlan = plan.sectionPlan.map((s) =>
+      s.key === 'sla_kpi' ? { ...original, key: 'service_levels_and_kpis' } : s,
+    );
+    const res = validateGenerationPlan(plan, req, brief);
+    expect(res.ok).toBe(true);
+    expect(res.warnings.join(' ')).toMatch(/sla_kpi/);
   });
 });
 
