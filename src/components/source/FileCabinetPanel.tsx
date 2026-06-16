@@ -110,7 +110,14 @@ export function FileCabinetPanel({ eventId, eventName }: { eventId: string; even
                     <td style={{ padding: '9px 8px', whiteSpace: 'nowrap' }}><Chip text={a.status.replace(/_/g, ' ')} color={STATUS_COLOR[a.status]} /></td>
                     <td style={{ padding: '9px 8px', whiteSpace: 'nowrap', color: '#9a9a9a', fontSize: 11 }}>{a.generatedAt?.slice(0, 10)}</td>
                     <td style={{ padding: '9px 14px', whiteSpace: 'nowrap', textAlign: 'right' }}>
-                      <a href={`/api/v1/source/artifacts/${a.id}/download`} style={{ color: '#fff', background: NAVY, padding: '5px 12px', borderRadius: 5, textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>Download</a>
+                      <a
+                        href={`/api/v1/source/artifacts/${a.id}/download${a.fileFormat === 'html' ? '?format=html' : ''}`}
+                        target={a.fileFormat === 'html' ? '_blank' : undefined}
+                        rel={a.fileFormat === 'html' ? 'noopener noreferrer' : undefined}
+                        style={{ color: '#fff', background: NAVY, padding: '5px 12px', borderRadius: 5, textDecoration: 'none', fontSize: 12, fontWeight: 600 }}
+                      >
+                        {a.fileFormat === 'html' ? 'Preview' : 'Download'}
+                      </a>
                     </td>
                   </tr>
                 ))}

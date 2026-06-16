@@ -2,6 +2,7 @@
 // download disposition + correct content-type when found.
 const tenancy = { clientId: 'c1', clientKey: 'skyharbor-air', userId: 'u1' };
 let artifact: Record<string, unknown> | null = null;
+let artifactSiblings: Record<string, unknown>[] = [];
 let registryArtifact: Record<string, unknown> | null = null;
 let artifactStateBody: string | null = null;
 
@@ -11,6 +12,7 @@ jest.mock('@/lib/auth/tenancy', () => ({
 }));
 jest.mock('@/lib/source/file-cabinet/repository', () => ({
   getSourceArtifact: jest.fn(async (id: string, clientId: string) => (artifact && clientId === 'c1' ? { ...artifact, id } : null)),
+  listSourceArtifacts: jest.fn(async () => artifactSiblings),
 }));
 jest.mock('@/lib/source/file-cabinet/blob-store', () => ({
   downloadArtifactBytes: jest.fn(async () => Buffer.from('PK docx bytes')),
@@ -49,29 +51,62 @@ jest.mock('@/lib/data-plane/postgresCompat', () => ({
 }));
 
 import { GET } from '../route';
+import { NextRequest } from 'next/server';
 
 function params(artifactId: string) { return { params: Promise.resolve({ artifactId }) }; }
+function req(url = 'https://app.abarva.ai/api/v1/source/artifacts/a1/download') {
+  return new NextRequest(url);
+}
 
 beforeEach(() => {
   artifact = null;
+  artifactSiblings = [];
   registryArtifact = null;
   artifactStateBody = null;
 });
 
 describe('GET /api/v1/source/artifacts/[artifactId]/download', () => {
   it('404 when the artifact is not owned by this tenant', async () => {
-    const res = await GET({} as never, params('missing'));
+    const res = await GET(req(), params('missing'));
     expect(res.status).toBe(404);
   });
   it('streams bytes with download disposition + docx content-type', async () => {
-    artifact = { blobContainer: 'source-events', blobPath: 'p', fileName: 'AMS RFP.docx', fileFormat: 'docx', version: 2 };
-    const res = await GET({} as never, params('a1'));
+    artifact = { blobContainer: 'source-artifacts', blobPath: 'p', fileName: 'AMS RFP.docx', fileFormat: 'docx', version: 2, sourceEventId: 'event-1', artifactType: 'd09_rfp_pack', artifactGroup: 'generated' };
+    const res = await GET(req(), params('a1'));
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toMatch(/wordprocessingml/);
     expect(res.headers.get('content-disposition')).toContain('attachment; filename="AMS RFP.docx"');
     expect(res.headers.get('x-source-artifact-version')).toBe('2');
+    expect(res.headers.get('x-source-artifact-format')).toBe('docx');
     const buf = Buffer.from(await res.arrayBuffer());
     expect(buf.subarray(0, 2).toString('latin1')).toBe('PK');
+  });
+
+  it('honors ?format=html by streaming the preview sibling inline', async () => {
+    artifact = { blobContainer: 'source-artifacts', blobPath: 'primary', fileName: 'Scope Memo.docx', fileFormat: 'docx', version: 3, sourceEventId: 'event-1', artifactType: 'd05_scope_memo', artifactGroup: 'generated' };
+    artifactSiblings = [
+      { id: 'html-1', blobContainer: 'source-artifacts', blobPath: 'preview', fileName: 'Scope Memo_preview.html', fileFormat: 'html', version: 3, sourceEventId: 'event-1', artifactType: 'd05_scope_memo__preview', artifactGroup: 'generated' },
+    ];
+
+    const res = await GET(req('https://app.abarva.ai/api/v1/source/artifacts/a1/download?format=html'), params('a1'));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('text/html');
+    expect(res.headers.get('content-disposition')).toContain('inline; filename="Scope Memo_preview.html"');
+    expect(res.headers.get('x-source-artifact-format')).toBe('html');
+  });
+
+  it('honors ?format=md by returning the internal markdown source body', async () => {
+    artifact = { blobContainer: 'source-artifacts', blobPath: 'primary', fileName: 'Scope Memo.docx', fileFormat: 'docx', version: 3, sourceEventId: 'event-1', artifactType: 'd05_scope_memo', artifactGroup: 'generated' };
+    artifactStateBody = '# Scope Memo\n\nInternal markdown source.';
+
+    const res = await GET(req('https://app.abarva.ai/api/v1/source/artifacts/a1/download?format=md'), params('a1'));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('text/markdown');
+    expect(res.headers.get('content-disposition')).toContain('attachment; filename="d05_scope_memo_source_v3.md"');
+    expect(res.headers.get('x-source-artifact-internal-source')).toBe('true');
+    await expect(res.text()).resolves.toContain('Internal markdown source');
   });
 
   it('falls back to source_artifacts registry uploads and streams original bytes', async () => {
@@ -84,7 +119,7 @@ describe('GET /api/v1/source/artifacts/[artifactId]/download', () => {
       version: 1,
     };
 
-    const res = await GET({} as never, params('a1'));
+    const res = await GET(req(), params('a1'));
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('text/csv');
     expect(res.headers.get('content-disposition')).toContain('attachment; filename="01_Application_Portfolio.csv"');
@@ -105,7 +140,7 @@ describe('GET /api/v1/source/artifacts/[artifactId]/download', () => {
       version: 1,
     };
 
-    const res = await GET({} as never, params('a1'));
+    const res = await GET(req(), params('a1'));
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/markdown');
     expect(res.headers.get('content-disposition')).toContain('inline; filename="d01_strategy_memo-a1.md"');
