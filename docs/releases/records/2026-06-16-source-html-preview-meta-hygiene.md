@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Source generated HTML previews no longer expose raw internal artifact codes in document metadata. The preview still carries a business-readable document label for tooling and inspection, but client-facing HTML source now says things like `RFP Package` instead of `d09_rfp_pack`.
+Source generated HTML previews no longer expose raw internal artifact codes in document metadata. The preview still carries a business-readable document label for tooling and inspection, but client-facing HTML source now says things like `RFP Package` instead of `d09_rfp_pack`. Generated Source drafts also deterministically insert a `Company: <client>` line when Claude omits it from the body preamble.
 
 ## Layer Impact
 
@@ -27,6 +27,7 @@ Source generated HTML previews no longer expose raw internal artifact codes in d
 ## Changes Included
 
 - Updates `src/lib/source/exports/renderers/narrative-html.ts` to emit business-readable document metadata.
+- Updates Source draft hygiene to insert a business-facing company label when missing.
 - Updates `src/lib/source/exports/__tests__/narrative-html.test.ts` to prevent raw artifact-code metadata from returning.
 
 ## QA / Validation
