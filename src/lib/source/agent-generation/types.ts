@@ -56,6 +56,13 @@ export interface SourceArtifactBodyGenerationMetadata {
   stopReason: string | null;
   /** Optional consulting-grade quality gate for flagship artifacts. */
   qualityGate?: Record<string, unknown>;
+  /** Deterministic required-section check for generated drafts. */
+  sectionVerification?: {
+    status: "verified" | "incomplete";
+    checkedAt: string;
+    requiredSections: string[];
+    missingSections: string[];
+  };
   /** ISO timestamp set when a human edits/saves the AI draft. */
   humanEditedAt?: string;
   /** Clerk user id of the human who edited/saved the AI draft. */

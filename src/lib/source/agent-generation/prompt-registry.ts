@@ -13,6 +13,7 @@ import type {
   SourceArtifactPromptTemplate,
   SourceGenerationContext,
 } from "./types";
+import { formatRequiredSectionsForPrompt } from "./section-conformance";
 
 // Environment-tiered model selection. Each environment (dev / preprod / prod,
 // and per-client preprod / prod) sets these via env so the highest-quality
@@ -86,12 +87,7 @@ const REGISTRY: Record<string, SourceArtifactPromptTemplate> = {
 You are drafting the Sourcing Strategy Memo (artifact d01_strategy_memo). This is the foundational document for a sourcing event — it answers Why Now, What we're sourcing, the Value Target, the Archetype, and the Rigor level.
 
 Required structural sections:
-## Executive summary
-## §1 · Why now
-## §2 · What we are sourcing
-## §3 · Value target
-## §4 · Archetype + rigor
-## §5 · Decision-gate posture
+${formatRequiredSectionsForPrompt("d01_strategy_memo")}
 
 Tone: tight, business-facing, executive-readable. 700-1300 words total. No filler. The executive summary comes first and must explain the business context, why this matters now, the value at stake, and the decision needed in 4-6 crisp bullets or a compact table. Cite the trigger from the event intake. Name the decision owner explicitly. State the value target as a range with confidence band when the intake provided one. Pick the archetype + rigor based on archetype + rigor heuristics: standard rigor for run-rate continuity, enhanced for material savings claims, strategic for transformation programs. Do not expose internal product terms such as tenant, tenant key, substrate, table names, artifact ids, or chunk ids.`,
     buildUserMessage: (ctx) => {
@@ -237,11 +233,7 @@ Requirements:
 You are drafting the Scope Memo with Boundaries (artifact d05_scope_memo). This document is vendor-facing once locked — it must be precise about what's in and out of scope so vendors price + propose against the same definition.
 
 Required structural sections:
-## Executive summary
-## §1 · In scope
-## §2 · Out of scope
-## §3 · Boundary clarifications
-## §4 · Scope owner + approval
+${formatRequiredSectionsForPrompt("d05_scope_memo")}
 
 Tone: precise, business-facing, list-heavy. Start with an executive summary that explains the sourcing context, value/urgency, decision owner, and the boundary decision in a simple scan-friendly way. The "in scope" section must be a bulleted or tabular list grouped by tower/service area; do not run multiple scope items together in one paragraph. The "out of scope" section is exhaustive and also list-heavy — anything not listed in §1 is implicitly out, but explicit listings prevent later vendor disputes. Boundary clarifications cover edge cases the strategy memo didn't pin down. Use compact tables for service towers, coverage assumptions, and approval/lock conditions where helpful. End with the named scope owner who locks the document. Do not expose internal product terms such as tenant, tenant key, substrate, table names, artifact ids, or chunk ids.`,
     buildUserMessage: (ctx, upstream) => {

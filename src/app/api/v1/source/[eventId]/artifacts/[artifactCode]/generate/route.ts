@@ -39,6 +39,10 @@ import {
 } from "@/lib/source/agent-generation/server";
 import { completeD09RfpGovernanceSections } from "@/lib/source/agent-generation/d09-completion";
 import {
+  verifyArtifactSections,
+  withSectionVerificationMetadata,
+} from "@/lib/source/agent-generation/section-conformance";
+import {
   buildSourceConsultingGradeReviewPrompt,
   buildSourceConsultingGradeCompactRetryPrompt,
   buildSourceConsultingGradeRewritePrompt,
@@ -564,18 +568,26 @@ export async function generateSourceArtifactDraft(
 
   // Persist body + provenance.
   const nowIso = new Date().toISOString();
-  const generationMetadata: SourceArtifactBodyGenerationMetadata = {
-    model,
-    promptTemplateId: template.artifactCode,
-    promptTemplateVersion: template.version,
-    upstreamBoundCodes: Object.keys(upstreamBound),
-    generatedAt: nowIso,
-    generatedByUserId: currentUser?.clerkUserId ?? null,
-    tokensIn,
-    tokensOut,
-    stopReason,
-    qualityGate: qualityGate as unknown as Record<string, unknown> | undefined,
-  };
+  const sectionVerification = verifyArtifactSections(
+    artifactCode,
+    body,
+    nowIso,
+  );
+  const generationMetadata = withSectionVerificationMetadata(
+    {
+      model,
+      promptTemplateId: template.artifactCode,
+      promptTemplateVersion: template.version,
+      upstreamBoundCodes: Object.keys(upstreamBound),
+      generatedAt: nowIso,
+      generatedByUserId: currentUser?.clerkUserId ?? null,
+      tokensIn,
+      tokensOut,
+      stopReason,
+      qualityGate: qualityGate as unknown as Record<string, unknown> | undefined,
+    },
+    sectionVerification,
+  ) satisfies SourceArtifactBodyGenerationMetadata;
 
   const update: Partial<SourceEventArtifactStateRow> = {
     body,
@@ -799,6 +811,7 @@ export async function generateSourceArtifactDraft(
             rewriteAttempted: qualityGate.rewriteAttempted,
           }
         : null,
+      sectionVerification: generationMetadata.sectionVerification ?? null,
     },
     occurredAtIso: nowIso,
   });
