@@ -300,10 +300,18 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const classificationMessage =
+      result.needsClassificationCount > 0
+        ? `${result.needsClassificationCount} record${result.needsClassificationCount === 1 ? '' : 's'} need classification — visit Setup > Triage Queue to confirm.`
+        : undefined;
+
     return NextResponse.json(
       {
         ok: result.persistence.status === "inserted",
         ...result,
+        needsClassification: result.needsClassificationCount,
+        autoInferred: result.autoInferredCount,
+        ...(classificationMessage ? { classificationMessage } : {}),
         attestation,
         dataProtection,
         sourceBlob: {

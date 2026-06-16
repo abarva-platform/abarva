@@ -7,6 +7,80 @@ import type {
 
 const VALID_TIME_CLASSIFICATIONS = new Set(['invest', 'migrate', 'tolerate', 'retire']);
 
+export const VALID_DOMAIN_SEGMENTS = new Set([
+  'enterprise_profile',
+  'it_financials',
+  'program_inventory',
+  'it_landscape',
+  'org_structure',
+  'data_estate',
+  'infrastructure',
+]);
+
+// Keyword-to-segment mapping for auto-inference from vendor/system names.
+const DOMAIN_SEGMENT_KEYWORDS: Array<{ keywords: string[]; segment: string }> = [
+  {
+    keywords: ['sap', 'oracle', 'erp', 'workday', 'peoplesoft', 'netsuite', 'dynamics', 'epicor', 'infor'],
+    segment: 'it_landscape',
+  },
+  {
+    keywords: ['epic', 'cerner', 'meditech', 'allscripts', 'ehr', 'emr', 'fhir', 'hl7', 'pacs', 'ris'],
+    segment: 'it_landscape',
+  },
+  {
+    keywords: ['aws', 'azure', 'gcp', 'vmware', 'server', 'network', 'storage', 'datacenter', 'infra', 'cloud'],
+    segment: 'infrastructure',
+  },
+  {
+    keywords: ['salesforce', 'crm', 'servicenow', 'itsm', 'jira', 'confluence', 'sharepoint', 'teams', 'slack'],
+    segment: 'it_landscape',
+  },
+  {
+    keywords: ['hr', 'payroll', 'talent', 'recruit', 'hris', 'workforce', 'headcount', 'org', 'people'],
+    segment: 'org_structure',
+  },
+  {
+    keywords: ['finance', 'accounting', 'billing', 'invoice', 'ap', 'ar', 'gl', 'ledger', 'treasury', 'budget'],
+    segment: 'it_financials',
+  },
+  {
+    keywords: ['data', 'analytics', 'warehouse', 'lake', 'etl', 'bi', 'tableau', 'powerbi', 'snowflake', 'databricks'],
+    segment: 'data_estate',
+  },
+  {
+    keywords: ['initiative', 'program', 'project', 'pmo', 'portfolio', 'roadmap', 'transformation', 'vendor'],
+    segment: 'program_inventory',
+  },
+];
+
+export interface DomainSegmentInferenceResult {
+  segment: string | null;
+  confidence: 'high' | 'low';
+}
+
+/**
+ * Infers a domain segment from a vendor or system name using keyword matching.
+ * Returns high confidence only when a unique keyword match is found.
+ */
+export function inferDomainSegment(nameHint: string): DomainSegmentInferenceResult {
+  if (!nameHint || nameHint.trim() === '') {
+    return { segment: null, confidence: 'low' };
+  }
+  const lower = nameHint.toLowerCase();
+  const matches: string[] = [];
+  for (const entry of DOMAIN_SEGMENT_KEYWORDS) {
+    if (entry.keywords.some((kw) => lower.includes(kw))) {
+      if (!matches.includes(entry.segment)) {
+        matches.push(entry.segment);
+      }
+    }
+  }
+  if (matches.length === 1) {
+    return { segment: matches[0]!, confidence: 'high' };
+  }
+  return { segment: null, confidence: 'low' };
+}
+
 export function validateExtractedFacts(args: {
   classification: FileClassification;
   facts: ExtractedContextFact[];
