@@ -81,13 +81,16 @@ describe("GateTab · required input checklist", () => {
     );
 
     expect(html).toContain("source-stage-decision-status");
+    expect(html).toContain("source-gate-required-inputs");
+    expect(html).toContain("Advanced gate details");
     expect(html).toContain("Ready");
-    expect(html).toContain("Missing input");
-    expect(html).toContain("Application inventory is Usable Evidence");
-    expect(html).toContain("L2/L3 ticket history is Parsed");
+    expect(html).toContain("Missing");
+    expect(html).toContain("Evidence ready: Application inventory");
+    expect(html).toContain("Add or parse: L2/L3 ticket history");
+    expect(html).not.toContain("hard criterion");
   });
 
-  it("surfaces explicit blocker rows when criteria are not met", () => {
+  it("surfaces a compact required-input table when criteria are not met", () => {
     const html = renderToStaticMarkup(
       createElement(GateTab, {
         fromStage: "scope",
@@ -108,6 +111,9 @@ describe("GateTab · required input checklist", () => {
     expect(html).toContain("2 inputs");
     // Promote button is aria-described by the callout for screen readers.
     expect(html).toMatch(/aria-describedby="source-canvas-gate-promote-help"/);
+    expect(html).toContain("source-gate-required-inputs");
+    expect(html).toContain("Scope needs 2 inputs");
+    expect(html).toContain("Advance anyway");
     // State pills render alongside row titles.
     expect(html).toContain("source-canvas-gate-criterion-state-pending");
     expect(html).toContain("source-canvas-gate-criterion-state-not_met");
@@ -125,7 +131,7 @@ describe("GateTab · required input checklist", () => {
       }),
     );
     expect(html).not.toContain("source-canvas-gate-blockers");
-    expect(html).toContain("All items met. Write the reason and approve");
+    expect(html).toContain("All inputs are ready. Write the reason and approve");
     // Promote button has no aria-describedby when nothing is blocking.
     expect(html).not.toContain(
       'aria-describedby="source-canvas-gate-promote-help"',

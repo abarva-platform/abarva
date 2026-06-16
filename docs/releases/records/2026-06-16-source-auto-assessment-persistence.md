@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Source gate readiness now has a durable audit path. When evidence satisfies a pending gate input, Source can persist that input as met with system provenance, evidence links, and an activity log record. The gate checklist was also simplified so operators see the client job first: which inputs are ready, which are missing, and where manual confirmation or audit details live.
+Source gate readiness now has a durable audit path. When evidence satisfies a pending gate input, Source can persist that input as met with system provenance, evidence links, and an activity log record. The gate checklist was also simplified so operators see the client job first: a compact input/status table showing which files or confirmations are ready, missing, or awaiting review. Manual override, advance-with-gaps, and audit details remain available but are no longer the default clutter.
 
 ## Layer Impact
 
@@ -31,7 +31,7 @@ Source gate readiness now has a durable audit path. When evidence satisfies a pe
 - Extended `sourceWriteAdapter.updateGateCriterion` to optionally write `notes` and `evidence_artifact_ids`.
 - Persisted auto-assessment best-effort after a successful Source stage entry.
 - Rendered persisted `system:auto-evidence` rows as auto-assessed after reload.
-- Simplified the Gate tab from internal blocker labels to a required-input checklist with advanced audit details collapsed.
+- Simplified the Gate tab from internal blocker labels to a compact required-input table with advanced audit details and advance-with-gaps controls collapsed.
 
 ## QA / Validation
 
