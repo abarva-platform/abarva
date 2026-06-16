@@ -391,6 +391,8 @@ export function sourceEventRowToSummary(
     currentStageLabel: SOURCE_STAGE_LABELS[stageKey],
     openAlerts: waitingForApproval ? 1 : 0,
     owner: row.decision_owner || "Decision owner pending",
+    decisionOwner: row.decision_owner,
+    createdByUserId: row.created_by_user_id,
     agingDays: daysSince(row.created_at),
     blocker: waitingForApproval ? approvalCopy : null,
     nextAction: waitingForApproval

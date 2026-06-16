@@ -237,6 +237,39 @@ describe("GateTab · required input checklist", () => {
     ).toBe(1);
   });
 
+  it("shows compact approval status inline without adding a second list", () => {
+    const html = renderToStaticMarkup(
+      createElement(GateTab, {
+        fromStage: "scope",
+        states: [
+          makeCriterion({ criterionId: "GATE-SCOPE-01", state: "pending" }),
+          makeCriterion({ criterionId: "GATE-SCOPE-02", state: "met" }),
+        ],
+        approvalViewByCriterionId: {
+          "GATE-SCOPE-01": {
+            ownerRole: "ea-council",
+            status: "unresolved",
+            label: "Approval unresolved",
+            detail: "EA council approval has no resolved person field in C1.",
+          },
+          "GATE-SCOPE-02": {
+            ownerRole: "sponsor",
+            status: "approved",
+            label: "Tomas Singh",
+            detail: "approval recorded",
+          },
+        },
+      }),
+    );
+    expect(html).toContain(
+      "source-canvas-gate-criterion-approval-GATE-SCOPE-01",
+    );
+    expect(html).toContain("Approval unresolved");
+    expect(html).toContain("Tomas Singh");
+    expect(html).toContain("source-gate-required-inputs");
+    expect(html).not.toContain("source-canvas-gate-approval-list");
+  });
+
   it("Promote button stays disabled when onPromoteStage is omitted (SSR / no handler)", () => {
     const html = renderToStaticMarkup(
       createElement(GateTab, {

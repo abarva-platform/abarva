@@ -25,6 +25,12 @@ import {
 } from "@/lib/auth/gate-approval-strict-mode";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { inferClientKeyFromEmail, isClientKey } from "@/lib/client-config";
+import { criterionById } from "@/lib/source/canonical-specs";
+import {
+  formatCriterionApprovalNotes,
+  resolveApprover,
+} from "@/lib/source/approval-routing";
+import { emitSourceApprovalNotificationBestEffort } from "@/lib/source/approval-notifications";
 import {
   artifactStateRowToView,
   evidenceStateRowToView,
@@ -104,19 +110,6 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         { status: 400 },
       );
     }
-    if (state === "waived") {
-      // Waivers require an attached approval record; reject for now and
-      // route the sourcing lead through the dedicated waiver flow once
-      // it ships. (Mark met / Reopen are the canvas-level controls.)
-      return Response.json(
-        {
-          error: "waiver_required",
-          detail:
-            "Waiver state requires an approval record. Use the waiver flow once available.",
-        },
-        { status: 409 },
-      );
-    }
     if (state !== "pending") {
       const reasonVerdict = validateApprovalReason(reason);
       if (!reasonVerdict.ok) {
@@ -135,7 +128,9 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const supabase = getAzureReadFluentClient();
     const { data: persistedEvent, error: fetchError } = await supabase
       .from("source_events")
-      .select("id, client_key")
+      .select(
+        "id, client_key, event_name, event_code, decision_owner, created_by_user_id",
+      )
       .eq("id", eventId)
       .maybeSingle();
     if (fetchError) {
@@ -300,20 +295,96 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       }
     }
 
-    const reviewerUserId = currentUser?.personId ?? null;
+    const actorUserId =
+      currentUser?.personId ??
+      currentUser?.clerkUserId ??
+      tenancy?.userId ??
+      null;
+    const reviewerUserId = actorUserId;
     const reviewedAt =
-      state === "met" || state === "not_met" ? new Date().toISOString() : null;
+      state === "met" || state === "not_met" || state === "waived"
+        ? new Date().toISOString()
+        : null;
     const notes = state === "pending" ? null : reason;
 
     // DB write routed through the data-plane write seam (Slice 3b).
     const sourceWrite = selectSourceWriteAdapter(undefined, effectiveClientKey);
     const nowIso = new Date().toISOString();
+    const definition = criterionById(criterionId);
+    const ownerRole = definition?.ownerRole ?? "sourcing-lead";
+    const approverResolution = resolveApprover(
+      {
+        id: persistedEvent.id,
+        decisionOwner:
+          typeof persistedEvent.decision_owner === "string"
+            ? persistedEvent.decision_owner
+            : null,
+        createdByUserId:
+          typeof persistedEvent.created_by_user_id === "string"
+            ? persistedEvent.created_by_user_id
+            : null,
+      },
+      ownerRole,
+    );
+    let approvalId: string | null = null;
+    if ((state === "met" || state === "waived") && !actorUserId) {
+      return Response.json(
+        {
+          error: "forbidden",
+          detail: "A signed-in user is required to record this approval.",
+        },
+        { status: 403 },
+      );
+    }
+    if ((state === "met" || state === "waived") && actorUserId) {
+      const approvalWrite = await sourceWrite.insertCriterionApproval({
+        eventId: persistedEvent.id,
+        approvalAction: "stage_advance",
+        approvedByUserId: actorUserId,
+        fromState: criterionRow.state,
+        toState: state,
+        notes: formatCriterionApprovalNotes({
+          ownerRole,
+          requirementId: criterionId,
+          humanReason: reason,
+          resolution: approverResolution,
+        }),
+      });
+      if (!approvalWrite.ok || !approvalWrite.data?.id) {
+        return Response.json(
+          { error: "approval_record_failed", detail: approvalWrite.error },
+          { status: 500 },
+        );
+      }
+      approvalId = approvalWrite.data.id;
+      emitSourceApprovalNotificationBestEffort({
+        tenantKey: effectiveClientKey,
+        eventType: "source.approval_needed",
+        actorUserId,
+        targetResourceId: persistedEvent.id,
+        payload: {
+          sourcingEventId: persistedEvent.id,
+          eventCode: persistedEvent.event_code ?? null,
+          criterionId,
+          fromState: criterionRow.state,
+          toState: state,
+          approverFunction: ownerRole,
+          requestedBy: actorUserId,
+          resolutionStatus: approverResolution.status,
+        },
+      });
+    }
     const criterionWrite = await sourceWrite.updateGateCriterion({
       criterionRowId: criterionRow.id,
       state,
       reviewerUserId: state === "pending" ? null : reviewerUserId,
       reviewedAtIso: reviewedAt,
       notes,
+      ...(state === "pending"
+        ? { waiverApprovalId: null }
+        : state === "met" || state === "waived"
+          ? { waiverApprovalId: approvalId }
+          : {}),
       updatedAtIso: nowIso,
     });
     if (!criterionWrite.ok || !criterionWrite.data) {
@@ -329,7 +400,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     const activityWrite = await sourceWrite.insertActivityLog({
       eventId: persistedEvent.id,
       clientKey: effectiveClientKey,
-      actorUserId: currentUser?.personId ?? currentUser?.clerkUserId ?? null,
+      actorUserId,
       actorDisplayName: currentUser?.name ?? currentUser?.email ?? null,
       actorRole: currentUser?.primaryRole ?? null,
       actionType:
@@ -343,7 +414,12 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
       stageKey: criterionRow.from_stage,
       criterionId,
       reason: notes,
-      metadata: { toStage: criterionRow.to_stage },
+      metadata: {
+        toStage: criterionRow.to_stage,
+        approvalId,
+        approvalOwnerRole: ownerRole,
+        approvalResolutionStatus: approverResolution.status,
+      },
       occurredAtIso: nowIso,
     });
     if (!activityWrite.ok) {
