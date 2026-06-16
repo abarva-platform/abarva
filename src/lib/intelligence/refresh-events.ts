@@ -36,7 +36,7 @@ export interface ContextRefreshEvent {
 
 export interface RecordContextRefreshEventInput {
   clientId: string;
-  tenantKey: string;
+  tenantKey?: string | null;
   triggeredBy: ContextRefreshTrigger;
   sourceId?: string | null;
   sourceLabel?: string | null;
@@ -104,6 +104,25 @@ function mapRow(row: ContextRefreshEventRow): ContextRefreshEvent {
   };
 }
 
+async function resolveTenantKeyForEvent(input: {
+  clientId: string;
+  tenantKey?: string | null;
+}): Promise<string> {
+  if (input.tenantKey) return canonicalTenantKey(input.tenantKey);
+
+  const result = await getAzureReadFluentClient()
+    .from<Array<{ key: string | null; slug: string | null }>>("clients")
+    .select("key,slug")
+    .eq("id", input.clientId)
+    .limit(1)
+    .maybeSingle();
+  if (!result.error) {
+    const key = result.data?.key ?? result.data?.slug;
+    if (key) return canonicalTenantKey(key);
+  }
+  return canonicalTenantKey(input.clientId);
+}
+
 export async function listContextRefreshEventsForTenant(
   tenantKeyInput: string,
 ): Promise<{ events: ContextRefreshEvent[]; errors: string[] }> {
@@ -126,7 +145,7 @@ export async function listContextRefreshEventsForTenant(
 export async function recordContextRefreshEvent(
   input: RecordContextRefreshEventInput,
 ): Promise<ContextRefreshEvent | null> {
-  const tenantKey = canonicalTenantKey(input.tenantKey);
+  const tenantKey = await resolveTenantKeyForEvent(input);
   const result = await getAzureWriteFluentClient()
     .from("context_refresh_events")
     .insert({

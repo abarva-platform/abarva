@@ -137,7 +137,6 @@ export async function saveGeneratedArtifact(
   const record = rowToRecord(data as Record<string, unknown>);
   await recordContextRefreshEvent({
     clientId: input.clientId,
-    tenantKey: input.clientId,
     triggeredBy: "move_artifact",
     sourceLabel: input.title,
     rowsSeen: 1,
@@ -294,7 +293,6 @@ export async function saveRenderedBoardGradeMoveArtifact(input: {
   const record = rowToRecord(data as Record<string, unknown>);
   await recordContextRefreshEvent({
     clientId: input.clientId,
-    tenantKey: input.clientId,
     triggeredBy: "move_artifact",
     sourceLabel: input.title,
     rowsSeen: 1,
