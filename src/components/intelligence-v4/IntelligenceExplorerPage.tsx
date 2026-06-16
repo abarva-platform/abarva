@@ -273,7 +273,10 @@ export function IntelligenceExplorerPage({
           >
             <div style={{ maxWidth: 1080 }}>
               {activeTab === "insights" && (
-                <ContextInsightsFeed onSeeTheFacts={handleSeeTheFacts} />
+                <ContextInsightsFeed
+                  tenantKey={tenantKey}
+                  onSeeTheFacts={handleSeeTheFacts}
+                />
               )}
               {activeTab === "explore" && (
                 <ContextExploreTab
