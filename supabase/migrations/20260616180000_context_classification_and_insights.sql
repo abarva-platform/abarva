@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS significance_rules (
   default_materiality       TEXT        NOT NULL DEFAULT 'medium'
                               CHECK (default_materiality IN ('high','medium','low')),
   default_confidence        TEXT        NOT NULL DEFAULT 'medium'
-                              CHECK (default_confidence IN ('high','medium','low')),
+                              CHECK (default_confidence IN ('high','medium','low','none')),
   enabled                   BOOLEAN     NOT NULL DEFAULT TRUE,
   created_at                TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -200,8 +200,7 @@ DECLARE
   tbl TEXT;
 BEGIN
   FOREACH tbl IN ARRAY ARRAY[
-    'context_insights',
-    'significance_rules'
+    'context_insights'
   ]
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
