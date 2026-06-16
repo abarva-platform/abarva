@@ -251,6 +251,8 @@ export interface SourcingEventSummary {
   currentStageLabel: string;
   openAlerts: number;
   owner: string;
+  decisionOwner?: string | null;
+  createdByUserId?: string | null;
   agingDays: number;
   blocker: string | null;
   nextAction: string;

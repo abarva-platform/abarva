@@ -54,10 +54,21 @@ export interface SourceApprovalWrite {
   readonly fromState: string;
   readonly toState: string;
   readonly approvalAction:
+    | "stage_advance"
     | "admin_review"
     | "co_approval_requested"
     | "changes_requested"
     | "rejected";
+  readonly approvedByUserId: string;
+  readonly notes: string | null;
+}
+
+/** Append a gate-criterion approval/waiver record and return its id. */
+export interface SourceCriterionApprovalWrite {
+  readonly eventId: string;
+  readonly fromState: string;
+  readonly toState: string;
+  readonly approvalAction: "stage_advance" | "admin_review";
   readonly approvedByUserId: string;
   readonly notes: string | null;
 }
@@ -104,6 +115,7 @@ export interface GateCriterionUpdate {
   readonly reviewedAtIso: string | null;
   readonly notes?: string | null;
   readonly evidenceArtifactIds?: readonly string[];
+  readonly waiverApprovalId?: string | null;
   readonly updatedAtIso: string;
 }
 
@@ -156,6 +168,10 @@ export interface SourceWriteAdapter {
    *  approval insert is best-effort: a failure there does not fail the call
    *  (the route logs it), matching the pre-seam behavior. */
   applyApproval(input: SourceApprovalWrite): Promise<SourceWriteOutcome<void>>;
+  /** Append an approval record for a criterion-level mark-met/waive decision. */
+  insertCriterionApproval(
+    input: SourceCriterionApprovalWrite,
+  ): Promise<SourceWriteOutcome<{ id: string }>>;
   /** Update the persisted event's stage + lifecycle. */
   updateStage(input: SourceStageUpdate): Promise<SourceWriteOutcome<void>>;
   /** Update only the persisted event lifecycle. */
@@ -260,6 +276,27 @@ export function createSupabaseSourceWriteAdapter(
       return ok();
     },
 
+    async insertCriterionApproval(input) {
+      const { data, error } = await getClient()
+        .from("source_event_approvals")
+        .insert({
+          event_id: input.eventId,
+          action: input.approvalAction,
+          approved_by_user_id: input.approvedByUserId,
+          from_state: input.fromState,
+          to_state: input.toState,
+          notes: input.notes,
+        })
+        .select("id")
+        .single();
+      if (error) return fail(error.message);
+      const id = (data as { id?: unknown } | null)?.id;
+      if (typeof id !== "string" || id.length === 0) {
+        return fail("approval record insert did not return an id");
+      }
+      return ok({ id });
+    },
+
     async updateStage(input) {
       const { error } = await getClient()
         .from("source_events")
@@ -297,6 +334,9 @@ export function createSupabaseSourceWriteAdapter(
       if ("notes" in input) updates.notes = input.notes ?? null;
       if (input.evidenceArtifactIds) {
         updates.evidence_artifact_ids = [...input.evidenceArtifactIds];
+      }
+      if ("waiverApprovalId" in input) {
+        updates.waiver_approval_id = input.waiverApprovalId ?? null;
       }
       const { data, error } = await getClient()
         .from("source_event_gate_criterion_states")
@@ -460,6 +500,31 @@ export function createAzureSourceWriteAdapter(
       }
     },
 
+    async insertCriterionApproval(input) {
+      try {
+        const rows = await session((run) =>
+          run<{ id: string }>(
+            `INSERT INTO source_event_approvals
+               (event_id, action, approved_by_user_id, from_state, to_state, notes)
+             VALUES ($1,$2,$3,$4,$5,$6)
+             RETURNING id`,
+            [
+              input.eventId,
+              input.approvalAction,
+              input.approvedByUserId,
+              input.fromState,
+              input.toState,
+              input.notes,
+            ],
+          ),
+        );
+        if (!rows[0]?.id) return fail("approval record insert did not return an id");
+        return ok({ id: rows[0].id });
+      } catch (err) {
+        return fail(errMessage(err));
+      }
+    },
+
     async updateStage(input) {
       try {
         await session((run) =>
@@ -524,6 +589,10 @@ export function createAzureSourceWriteAdapter(
         if (input.evidenceArtifactIds) {
           values.push(JSON.stringify([...input.evidenceArtifactIds]));
           assignments.push(`evidence_artifact_ids = $${values.length}::jsonb`);
+        }
+        if ("waiverApprovalId" in input) {
+          values.push(input.waiverApprovalId ?? null);
+          assignments.push(`waiver_approval_id = $${values.length}`);
         }
         values.push(input.criterionRowId);
         const rows = await session((run) =>

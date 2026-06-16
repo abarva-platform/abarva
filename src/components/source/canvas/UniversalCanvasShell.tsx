@@ -14,7 +14,10 @@ import { AppShell } from "@/components/shell/AppShell";
 import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { SourceOnboardingTour } from "@/components/source/onboarding/SourceOnboardingTour";
 import { listSupportedGenerationCodes } from "@/lib/source/agent-generation";
-import { specByCode } from "@/lib/source/canonical-specs";
+import {
+  criterionById as specCriterionById,
+  specByCode,
+} from "@/lib/source/canonical-specs";
 import {
   resolveStageNextMove,
   type StageNextMoveActionTarget,
@@ -25,6 +28,7 @@ import {
   buildStageRecommendation,
   isAssessmentMet,
 } from "@/lib/source/gate-auto-assessment";
+import { approvalViewForCriterion } from "@/lib/source/approval-routing";
 
 // xlsx-generatable codes — surfaced to the canvas so the artifact card
 // shows a "Download xlsx template" anchor on the right rows. Hardcoded
@@ -163,6 +167,8 @@ interface UniversalCanvasShellProps {
     | "archetype"
     | "rigor"
     | "owner"
+    | "decisionOwner"
+    | "createdByUserId"
     | "currentStageKey"
     | "valueAtStakeUsd"
   >;
@@ -406,6 +412,30 @@ export function UniversalCanvasShell({
     () => buildStageRecommendation(stageGateAssessment),
     [stageGateAssessment],
   );
+  const approvalEvent = useMemo(
+    () => ({
+      id: event.id,
+      decisionOwner: event.decisionOwner ?? null,
+      createdByUserId: event.createdByUserId ?? null,
+    }),
+    [event.id, event.decisionOwner, event.createdByUserId],
+  );
+  const approvalViewByCriterionId = useMemo(() => {
+    const result: Record<
+      string,
+      ReturnType<typeof approvalViewForCriterion>
+    > = {};
+    for (const criterion of stageCriteria) {
+      const def = specCriterionById(criterion.criterionId);
+      if (!def?.ownerRole) continue;
+      result[criterion.criterionId] = approvalViewForCriterion({
+        event: approvalEvent,
+        ownerRole: def.ownerRole,
+        criterionState: criterion.state,
+      });
+    }
+    return result;
+  }, [approvalEvent, stageCriteria]);
   const nextMove = useMemo(
     () =>
       resolveStageNextMove({
@@ -930,6 +960,7 @@ export function UniversalCanvasShell({
           states={stageCriteria}
           assessment={stageGateAssessment}
           recommendation={stageRecommendation}
+          approvalViewByCriterionId={approvalViewByCriterionId}
           onChangeCriterionState={handleCriterionStateChange}
           pendingByCriterionId={pendingCriterionByCriterionId}
           onPromoteStage={handlePromoteStage}
@@ -1071,6 +1102,7 @@ export function UniversalCanvasShell({
                       criteria={stageCriteria}
                       assessment={stageGateAssessment}
                       recommendation={stageRecommendation}
+                      approvalViewByCriterionId={approvalViewByCriterionId}
                       onChangeCriterionState={handleCriterionStateChange}
                       pendingByCriterionId={pendingCriterionByCriterionId}
                       onPromoteStage={handlePromoteStage}
@@ -1145,6 +1177,7 @@ function SourceDeclutteredWorkspace({
   criteria,
   assessment,
   recommendation,
+  approvalViewByCriterionId,
   onChangeCriterionState,
   pendingByCriterionId,
   onPromoteStage,
@@ -1158,6 +1191,10 @@ function SourceDeclutteredWorkspace({
   criteria: SourceEventGateCriterion[];
   assessment: ReturnType<typeof assessStageGate>;
   recommendation: ReturnType<typeof buildStageRecommendation>;
+  approvalViewByCriterionId: Record<
+    string,
+    ReturnType<typeof approvalViewForCriterion>
+  >;
   onChangeCriterionState: (
     criterionId: string,
     next: SourceEventGateCriterionState,
@@ -1252,6 +1289,7 @@ function SourceDeclutteredWorkspace({
             states={criteria}
             assessment={assessment}
             recommendation={recommendation}
+            approvalViewByCriterionId={approvalViewByCriterionId}
             onChangeCriterionState={onChangeCriterionState}
             pendingByCriterionId={pendingByCriterionId}
             onPromoteStage={onPromoteStage}

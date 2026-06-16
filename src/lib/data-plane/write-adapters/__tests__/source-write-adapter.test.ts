@@ -166,6 +166,29 @@ describe("supabase source write adapter", () => {
     });
   });
 
+  it("insertCriterionApproval inserts a source_event_approvals row and returns its id", async () => {
+    const { client, calls } = fakeSupabase({ id: "approval-1" });
+    const adapter = createSupabaseSourceWriteAdapter(() => client);
+    const result = await adapter.insertCriterionApproval({
+      eventId: "evt-1",
+      fromState: "pending",
+      toState: "waived",
+      approvalAction: "stage_advance",
+      approvedByUserId: "admin-1",
+      notes: "ownerRole=sponsor | requirementId=GATE-1 | reason=ok",
+    });
+    expect(result.ok).toBe(true);
+    expect(result.data).toEqual({ id: "approval-1" });
+    expect(calls[0].table).toBe("source_event_approvals");
+    expect(calls[0].payload).toMatchObject({
+      event_id: "evt-1",
+      action: "stage_advance",
+      approved_by_user_id: "admin-1",
+      from_state: "pending",
+      to_state: "waived",
+    });
+  });
+
   it("updateStage updates source_events with the new stage + lifecycle", async () => {
     const { client, calls } = fakeSupabase(null);
     const adapter = createSupabaseSourceWriteAdapter(() => client);
@@ -212,6 +235,7 @@ describe("supabase source write adapter", () => {
       reviewedAtIso: "2026-05-15T00:00:00.000Z",
       notes: "reviewed artifacts",
       evidenceArtifactIds: ["art-1"],
+      waiverApprovalId: "approval-1",
       updatedAtIso: "2026-05-15T00:00:00.000Z",
     });
     expect(result.ok).toBe(true);
@@ -220,6 +244,7 @@ describe("supabase source write adapter", () => {
     expect(calls[0].payload).toMatchObject({
       notes: "reviewed artifacts",
       evidence_artifact_ids: ["art-1"],
+      waiver_approval_id: "approval-1",
     });
   });
 
@@ -360,6 +385,25 @@ describe("azure source write adapter", () => {
     expect(statements[1]).toContain("INSERT INTO source_event_approvals");
   });
 
+  it("insertCriterionApproval returns the Azure approval id", async () => {
+    const { session, statements } = fakeTxSession((sql) =>
+      sql.includes("RETURNING id") ? [{ id: "approval-1" }] : [],
+    );
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.insertCriterionApproval({
+      eventId: "evt-1",
+      fromState: "pending",
+      toState: "met",
+      approvalAction: "stage_advance",
+      approvedByUserId: "admin-1",
+      notes: "ownerRole=sponsor | requirementId=GATE-1 | reason=ok",
+    });
+    expect(result.ok).toBe(true);
+    expect(result.data).toEqual({ id: "approval-1" });
+    expect(statements[0]).toContain("INSERT INTO source_event_approvals");
+    expect(statements[0]).toContain("RETURNING id");
+  });
+
   it("transitionLifecycle updates lifecycle state inside the Azure session", async () => {
     const { session, statements } = fakeTxSession(() => []);
     const adapter = createAzureSourceWriteAdapter(session);
@@ -386,6 +430,7 @@ describe("azure source write adapter", () => {
       reviewedAtIso: null,
       notes: "reviewed artifacts",
       evidenceArtifactIds: ["art-1", "art-2"],
+      waiverApprovalId: "approval-1",
       updatedAtIso: "2026-05-15T00:00:00.000Z",
     });
     expect(result.ok).toBe(true);
@@ -394,6 +439,7 @@ describe("azure source write adapter", () => {
     expect(statements[0]).toContain("RETURNING *");
     expect(statements[0]).toContain("notes = $");
     expect(statements[0]).toContain("evidence_artifact_ids = $");
+    expect(statements[0]).toContain("waiver_approval_id = $");
   });
 
   it("updateGateCriterion omits optional provenance columns on Azure when not provided", async () => {
@@ -411,6 +457,7 @@ describe("azure source write adapter", () => {
     expect(result.ok).toBe(true);
     expect(statements[0]).not.toContain("notes =");
     expect(statements[0]).not.toContain("evidence_artifact_ids =");
+    expect(statements[0]).not.toContain("waiver_approval_id =");
   });
 
   it("insertActivityLog inserts a source_event_activity row", async () => {

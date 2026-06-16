@@ -62,6 +62,7 @@ function fakeAdapter(
     name: 'azure-postgres',
     insertParticipant: jest.fn(),
     applyApproval: jest.fn(),
+    insertCriterionApproval: jest.fn(),
     updateStage: jest.fn(),
     transitionLifecycle: jest.fn(),
     updateGateCriterion: jest.fn(async (input) => {

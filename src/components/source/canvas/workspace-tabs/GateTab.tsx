@@ -16,6 +16,7 @@ import {
 } from "@/lib/source/gate-auto-assessment";
 import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
 import { SOURCE_APPROVAL_REASON_MIN_LENGTH } from "@/lib/source/source-governance-enforcement";
+import type { SourceCriterionApprovalView } from "@/lib/source/approval-routing";
 import type { SourceStageKey } from "@/lib/source/types";
 import { CANVAS } from "../canvas-tokens";
 
@@ -45,6 +46,7 @@ interface GateTabProps {
   states: SourceEventGateCriterion[];
   assessment?: GateAssessment;
   recommendation?: StageRecommendation;
+  approvalViewByCriterionId?: Record<string, SourceCriterionApprovalView>;
   /** Mutator — when omitted (SSR / read-only previews) the per-row
    * Mark met / Reopen buttons hide. */
   onChangeCriterionState?: (
@@ -72,6 +74,7 @@ export function GateTab({
   states,
   assessment,
   recommendation,
+  approvalViewByCriterionId,
   onChangeCriterionState,
   pendingByCriterionId,
   onPromoteStage,
@@ -315,6 +318,7 @@ export function GateTab({
                 state={s}
                 def={def}
                 assessment={assessmentById.get(s.criterionId)}
+                approvalView={approvalViewByCriterionId?.[s.criterionId]}
                 onChangeState={onChangeCriterionState}
                 pending={pendingByCriterionId?.[s.criterionId] ?? false}
                 activeCriterionId={activeCriterionId}
@@ -332,6 +336,7 @@ interface CriterionRowProps {
   state: SourceEventGateCriterion;
   def: SourceGateCriterion | undefined;
   assessment?: GateCriterionAssessment;
+  approvalView?: SourceCriterionApprovalView;
   onChangeState?: (
     criterionId: string,
     next: SourceEventGateCriterionState,
@@ -444,6 +449,7 @@ function CriterionRow({
   state,
   def,
   assessment,
+  approvalView,
   onChangeState,
   pending,
   activeCriterionId,
@@ -491,6 +497,20 @@ function CriterionRow({
           {view.ownerLabel ? (
             <span title={def?.ownerRole} style={OWNER_CHIP_STYLE}>
               {view.ownerLabel}
+            </span>
+          ) : null}
+          {approvalView ? (
+            <span
+              title={approvalView.detail}
+              data-testid={`source-canvas-gate-criterion-approval-${state.criterionId}`}
+              style={{
+                ...APPROVAL_STATUS_STYLE,
+                color: approvalTone(approvalView.status),
+              }}
+            >
+              {approvalView.status === "unresolved"
+                ? "Approval unresolved"
+                : `${approvalView.label} · ${approvalView.status}`}
             </span>
           ) : null}
           {onChangeState && state.state !== "waived" ? (
@@ -676,6 +696,12 @@ function assessmentBadgeLabel(assessment: GateCriterionAssessment): string {
     case "deferred_manual":
       return "Deferred";
   }
+}
+
+function approvalTone(status: SourceCriterionApprovalView["status"]): string {
+  if (status === "approved") return "#2E7D32";
+  if (status === "unresolved") return "#A65300";
+  return CANVAS.INK_MUTED;
 }
 
 const CONTAINER_STYLE: CSSProperties = {
@@ -924,6 +950,13 @@ const OWNER_CHIP_STYLE: CSSProperties = {
   textTransform: "uppercase",
   color: CANVAS.GRAY_DK,
   background: "rgba(10,10,11,0.02)",
+};
+
+const APPROVAL_STATUS_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  fontWeight: 500,
+  whiteSpace: "nowrap",
 };
 
 const ROW_DESC_STYLE: CSSProperties = {
