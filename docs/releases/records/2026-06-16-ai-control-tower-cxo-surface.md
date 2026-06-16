@@ -23,7 +23,7 @@ The top-level Tower route now opens the simplified AI Control Tower executive su
 - Specific clients: None.
 - Internal only: None.
 - Public/demo only: None.
-- Feature flag: `TOWER_LEGACY_VIEW_ENABLED=1` can temporarily expose the legacy server-rendered Tower index for emergency comparison, but it is off by default.
+- Feature flag: None. A follow-up hard-retirement slice removes the temporary legacy fallback.
 
 ## Changes Included
 
@@ -45,7 +45,7 @@ Merge to `main`; the normal ACA main deploy builds and promotes the new web imag
 
 ## Rollback Plan
 
-Revert the PR or temporarily set `TOWER_LEGACY_VIEW_ENABLED=1` while a revert is prepared. No data rollback is required.
+Revert the PR while a replacement fix is prepared. No data rollback is required.
 
 ## Audit Evidence
 

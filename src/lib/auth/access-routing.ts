@@ -1,6 +1,19 @@
-import { DEFAULT_CLIENT_KEY, inferClientKeyFromEmail, isClientKey, type ClientKey } from '@/lib/client-config';
+import {
+  DEFAULT_CLIENT_KEY,
+  inferClientKeyFromEmail,
+  isClientKey,
+  type ClientKey,
+} from "@/lib/client-config";
 
-export type AppSessionRole = 'admin' | 'investor' | 'maestro' | 'client' | 'external' | string | null | undefined;
+export type AppSessionRole =
+  | "admin"
+  | "investor"
+  | "maestro"
+  | "client"
+  | "external"
+  | string
+  | null
+  | undefined;
 
 interface ResolveClientInput {
   clientId?: string | null;
@@ -19,88 +32,104 @@ interface ResolveClientInput {
 }
 
 function normalizeEmail(email: string | null | undefined): string {
-  return email?.trim().toLowerCase() ?? '';
+  return email?.trim().toLowerCase() ?? "";
 }
 
 function isAnandOperatorAlias(normalizedEmail: string): boolean {
   return (
-    normalizedEmail === 'anand.sundaram+apex@thesundaram.com' ||
-    normalizedEmail === 'anand.sundaram+meridian@thesundaram.com' ||
-    normalizedEmail === 'anand.sundaram+skyharbor@thesundaram.com' ||
-    normalizedEmail === 'anand.sundaram+lakeshore@thesundaram.com' ||
-    normalizedEmail === 'anand.sundaram+firstcapital@thesundaram.com' ||
-    normalizedEmail === 'anand.sundaram+northstar@thesundaram.com'
+    normalizedEmail === "anand.sundaram+apex@thesundaram.com" ||
+    normalizedEmail === "anand.sundaram+meridian@thesundaram.com" ||
+    normalizedEmail === "anand.sundaram+skyharbor@thesundaram.com" ||
+    normalizedEmail === "anand.sundaram+lakeshore@thesundaram.com" ||
+    normalizedEmail === "anand.sundaram+firstcapital@thesundaram.com" ||
+    normalizedEmail === "anand.sundaram+northstar@thesundaram.com"
   );
 }
 
-export function hasExplicitTenantAlias(email: string | null | undefined): boolean {
+export function hasExplicitTenantAlias(
+  email: string | null | undefined,
+): boolean {
   const normalized = normalizeEmail(email);
   if (!normalized) return false;
   return (
-    normalized.endsWith('@meridian-health.example.com') ||
-    normalized.endsWith('@apex-retail.example.com') ||
-    normalized.endsWith('@firstcapital.example.com') ||
-    normalized.endsWith('@northstar-clinical.example.com') ||
-    normalized.endsWith('@skyharbor-air.example.com') ||
-    normalized.endsWith('@lakeshore-holdings.example.com') ||
-    normalized.includes('+apex@abarva.com') ||
-    normalized.includes('+meridian@abarva.com') ||
-    normalized.includes('+firstcapital@abarva.com') ||
-    normalized.includes('+northstar@abarva.com') ||
-    normalized.includes('+skyharbor@abarva.com') ||
-    normalized.includes('+lakeshore@abarva.com') ||
+    normalized.endsWith("@meridian-health.example.com") ||
+    normalized.endsWith("@apex-retail.example.com") ||
+    normalized.endsWith("@firstcapital.example.com") ||
+    normalized.endsWith("@northstar-clinical.example.com") ||
+    normalized.endsWith("@skyharbor-air.example.com") ||
+    normalized.endsWith("@lakeshore-holdings.example.com") ||
+    normalized.includes("+apex@abarva.com") ||
+    normalized.includes("+meridian@abarva.com") ||
+    normalized.includes("+firstcapital@abarva.com") ||
+    normalized.includes("+northstar@abarva.com") ||
+    normalized.includes("+skyharbor@abarva.com") ||
+    normalized.includes("+lakeshore@abarva.com") ||
     isAnandOperatorAlias(normalized)
   );
 }
 
-export function isNewClientSetupEmail(email: string | null | undefined): boolean {
+export function isNewClientSetupEmail(
+  email: string | null | undefined,
+): boolean {
   void email;
   return false;
 }
 
-export function inferSessionRoleFromEmail(email: string | null | undefined): AppSessionRole {
+export function inferSessionRoleFromEmail(
+  email: string | null | undefined,
+): AppSessionRole {
   const normalized = normalizeEmail(email);
   if (!normalized) return null;
 
   if (
-    normalized.endsWith('@meridian-health.example.com') ||
-    normalized.endsWith('@apex-retail.example.com') ||
-    normalized.endsWith('@firstcapital.example.com') ||
-    normalized.endsWith('@northstar-clinical.example.com') ||
-    normalized.endsWith('@skyharbor-air.example.com') ||
-    normalized.endsWith('@lakeshore-holdings.example.com') ||
-    normalized.includes('+apex@abarva.com') ||
-    normalized.includes('+meridian@abarva.com') ||
-    normalized.includes('+firstcapital@abarva.com') ||
-    normalized.includes('+northstar@abarva.com') ||
-    normalized.includes('+skyharbor@abarva.com') ||
-    normalized.includes('+lakeshore@abarva.com') ||
+    normalized.endsWith("@meridian-health.example.com") ||
+    normalized.endsWith("@apex-retail.example.com") ||
+    normalized.endsWith("@firstcapital.example.com") ||
+    normalized.endsWith("@northstar-clinical.example.com") ||
+    normalized.endsWith("@skyharbor-air.example.com") ||
+    normalized.endsWith("@lakeshore-holdings.example.com") ||
+    normalized.includes("+apex@abarva.com") ||
+    normalized.includes("+meridian@abarva.com") ||
+    normalized.includes("+firstcapital@abarva.com") ||
+    normalized.includes("+northstar@abarva.com") ||
+    normalized.includes("+skyharbor@abarva.com") ||
+    normalized.includes("+lakeshore@abarva.com") ||
     isAnandOperatorAlias(normalized)
   ) {
-    return 'client';
+    return "client";
   }
 
   return null;
 }
 
-export function resolveSessionRole(role: AppSessionRole, email: string | null | undefined): AppSessionRole {
+export function resolveSessionRole(
+  role: AppSessionRole,
+  email: string | null | undefined,
+): AppSessionRole {
   return role ?? inferSessionRoleFromEmail(email);
 }
 
-export function isLockedTenantRole(role: AppSessionRole, email: string | null | undefined): boolean {
+export function isLockedTenantRole(
+  role: AppSessionRole,
+  email: string | null | undefined,
+): boolean {
   const resolvedRole = resolveSessionRole(role, email);
-  return resolvedRole === 'client' || resolvedRole === 'maestro';
+  return resolvedRole === "client" || resolvedRole === "maestro";
 }
 
-export function resolvePinnedSessionClientKey(input: ResolveClientInput): ClientKey | null {
+export function resolvePinnedSessionClientKey(
+  input: ResolveClientInput,
+): ClientKey | null {
   const inferredClientKey = inferClientKeyFromEmail(input.email);
   if (hasExplicitTenantAlias(input.email) && inferredClientKey) {
     return inferredClientKey;
   }
 
-  const resolved = [input.clientId, input.defaultClientId, inferClientKeyFromEmail(input.email)].find((candidate) =>
-    isClientKey(candidate),
-  );
+  const resolved = [
+    input.clientId,
+    input.defaultClientId,
+    inferClientKeyFromEmail(input.email),
+  ].find((candidate) => isClientKey(candidate));
   return resolved ?? null;
 }
 
@@ -121,16 +150,21 @@ export function shouldStripUnauthorizedClientParam(
 }
 
 const SOURCE_EVENT_TENANT_HINTS: ReadonlyArray<readonly [RegExp, ClientKey]> = [
-  [/\b(?:apex-retail|apexretail|src-apx|apx-src)\b/i, 'apexretail'],
-  [/\b(?:meridian-health|meridian|src-mer|mer-src)\b/i, 'meridian'],
-  [/\b(?:firstcapital|first-capital|arcturus|src-fc|fc-src|src-arc|arc-src)\b/i, 'arcturus'],
-  [/\b(?:northstar-clinical|northstar|src-ns|ns-src)\b/i, 'northstar'],
-  [/\b(?:skyharbor-air|skyharbor|src-sh|sh-src)\b/i, 'skyharbor'],
-  [/\b(?:lakeshore-holdings|lakeshore|src-lsh|lsh-src)\b/i, 'lakeshore'],
+  [/\b(?:apex-retail|apexretail|src-apx|apx-src)\b/i, "apexretail"],
+  [/\b(?:meridian-health|meridian|src-mer|mer-src)\b/i, "meridian"],
+  [
+    /\b(?:firstcapital|first-capital|arcturus|src-fc|fc-src|src-arc|arc-src)\b/i,
+    "arcturus",
+  ],
+  [/\b(?:northstar-clinical|northstar|src-ns|ns-src)\b/i, "northstar"],
+  [/\b(?:skyharbor-air|skyharbor|src-sh|sh-src)\b/i, "skyharbor"],
+  [/\b(?:lakeshore-holdings|lakeshore|src-lsh|lsh-src)\b/i, "lakeshore"],
 ];
 
-export function inferSourceEventClientKeyFromSlug(eventSlug: string | null | undefined): ClientKey | null {
-  const normalized = eventSlug?.trim() ?? '';
+export function inferSourceEventClientKeyFromSlug(
+  eventSlug: string | null | undefined,
+): ClientKey | null {
+  const normalized = eventSlug?.trim() ?? "";
   if (!normalized) return null;
   for (const [pattern, clientKey] of SOURCE_EVENT_TENANT_HINTS) {
     if (pattern.test(normalized)) return clientKey;
@@ -161,8 +195,8 @@ export function shouldDenySourceEventSlugForActiveClient(
   return eventClientKey !== activeClientId;
 }
 
-export function isExternalOnlyRole(role: AppSessionRole): role is 'external' {
-  return role === 'external';
+export function isExternalOnlyRole(role: AppSessionRole): role is "external" {
+  return role === "external";
 }
 
 export function resolvePostSignInPath(
@@ -174,14 +208,14 @@ export function resolvePostSignInPath(
   const resolvedClientId = resolveSessionClientKey(input);
 
   if (isNewClientSetupEmail(input.email)) {
-    return '/tower/onboard';
+    return "/tower";
   }
 
   if (isExternalOnlyRole(resolvedRole)) {
-    return '/';
+    return "/";
   }
 
-  if (resolvedRole === 'investor') {
+  if (resolvedRole === "investor") {
     return `/investor?client=${resolvedClientId}`;
   }
 
@@ -191,24 +225,24 @@ export function resolvePostSignInPath(
   // Tower the moment they sign in. Empty-portfolio users continue to
   // `/home` as before. Investors and externals are intentionally excluded.
   if (input.hasTowerPortfolio === true) {
-    if (resolvedRole === 'client' || resolvedRole === 'maestro') {
-      return pinnedClientId ? `/tower?client=${pinnedClientId}` : '/tower';
+    if (resolvedRole === "client" || resolvedRole === "maestro") {
+      return pinnedClientId ? `/tower?client=${pinnedClientId}` : "/tower";
     }
-    if (resolvedRole === 'admin') {
+    if (resolvedRole === "admin") {
       return `/tower?client=${resolvedClientId}`;
     }
     return `/tower?client=${resolvedClientId}`;
   }
 
-  if (resolvedRole === 'admin') {
+  if (resolvedRole === "admin") {
     return `/home?client=${resolvedClientId}`;
   }
 
-  if (resolvedRole === 'client' || resolvedRole === 'maestro') {
+  if (resolvedRole === "client" || resolvedRole === "maestro") {
     if (pinnedClientId) {
       return `/home?client=${pinnedClientId}`;
     }
-    return '/home';
+    return "/home";
   }
 
   return `/home?client=${resolvedClientId}`;
