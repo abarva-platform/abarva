@@ -7,6 +7,12 @@ import type {
   SourceEventGateCriterion,
   SourceEventGateCriterionState,
 } from "@/lib/source/canvas-substrate";
+import {
+  isAssessmentMet,
+  type GateAssessment,
+  type GateCriterionAssessment,
+  type StageRecommendation,
+} from "@/lib/source/gate-auto-assessment";
 import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
 import { SOURCE_APPROVAL_REASON_MIN_LENGTH } from "@/lib/source/source-governance-enforcement";
 import type { SourceStageKey } from "@/lib/source/types";
@@ -24,6 +30,8 @@ interface GateTabProps {
   fromStage: SourceStageKey;
   /** Per-event criterion states for this from-stage. */
   states: SourceEventGateCriterion[];
+  assessment?: GateAssessment;
+  recommendation?: StageRecommendation;
   /** Mutator — when omitted (SSR / read-only previews) the per-row
    * Mark met / Reopen buttons hide. */
   onChangeCriterionState?: (
@@ -49,6 +57,8 @@ interface GateTabProps {
 export function GateTab({
   fromStage,
   states,
+  assessment,
+  recommendation,
   onChangeCriterionState,
   pendingByCriterionId,
   onPromoteStage,
@@ -59,10 +69,19 @@ export function GateTab({
   const ordered = [...states].sort((a, b) =>
     a.criterionId.localeCompare(b.criterionId),
   );
+  const assessmentById = new Map(
+    (assessment?.criteria ?? []).map((criterion) => [
+      criterion.criterionId,
+      criterion,
+    ]),
+  );
   const total = ordered.length;
-  const met = ordered.filter(
-    (s) => s.state === "met" || s.state === "waived",
-  ).length;
+  const met = ordered.filter((s) => {
+    const assessed = assessmentById.get(s.criterionId);
+    return assessed
+      ? isAssessmentMet(assessed)
+      : s.state === "met" || s.state === "waived";
+  }).length;
   const allMet = total > 0 && met === total;
   const targetStage = ordered[0]?.toStage ?? null;
   const targetLabel =
@@ -74,8 +93,17 @@ export function GateTab({
   // actually preventing promotion (pending / not_met) with their
   // titles, so the user has a diagnosis instead of a disabled button.
   const blockers = ordered
-    .filter((s) => s.state !== "met" && s.state !== "waived")
-    .map((s) => ({ state: s, def: criterionById(s.criterionId) }));
+    .filter((s) => {
+      const assessed = assessmentById.get(s.criterionId);
+      return assessed
+        ? !isAssessmentMet(assessed)
+        : s.state !== "met" && s.state !== "waived";
+    })
+    .map((s) => ({
+      state: s,
+      def: criterionById(s.criterionId),
+      assessment: assessmentById.get(s.criterionId),
+    }));
   const hardBlockers = blockers.filter((b) => b.def?.severity === "hard");
   const promoteHelpId = "source-canvas-gate-promote-help";
   const promotionReasonReady =
@@ -226,6 +254,10 @@ export function GateTab({
         </div>
       </header>
 
+      {recommendation ? (
+        <StageDecisionStatusPanel recommendation={recommendation} />
+      ) : null}
+
       {/* B3 — blocker summary surfaces the specific reasons promotion
           is disabled. Hard blockers come first, then the rest. */}
       {!allMet && blockers.length > 0 ? (
@@ -245,7 +277,7 @@ export function GateTab({
             {[
               ...hardBlockers,
               ...blockers.filter((b) => b.def?.severity !== "hard"),
-            ].map(({ state, def }) => (
+            ].map(({ state, def, assessment: criterionAssessment }) => (
               <li
                 key={state.criterionId}
                 style={BLOCKERS_LIST_ITEM_STYLE}
@@ -261,7 +293,7 @@ export function GateTab({
                   ) : null}
                   <span style={BLOCKERS_STATE_STYLE}>
                     {" — "}
-                    {STATE_LABEL[state.state]}
+                    {criterionAssessment?.reason ?? STATE_LABEL[state.state]}
                     {def?.linkedArtifactCodes &&
                     def.linkedArtifactCodes.length > 0
                       ? ` · evidence ${def.linkedArtifactCodes.join(", ")}`
@@ -287,6 +319,7 @@ export function GateTab({
                 key={s.criterionId}
                 state={s}
                 def={def}
+                assessment={assessmentById.get(s.criterionId)}
                 onChangeState={onChangeCriterionState}
                 pending={pendingByCriterionId?.[s.criterionId] ?? false}
               />
@@ -301,6 +334,7 @@ export function GateTab({
 interface CriterionRowProps {
   state: SourceEventGateCriterion;
   def: SourceGateCriterion | undefined;
+  assessment?: GateCriterionAssessment;
   onChangeState?: (
     criterionId: string,
     next: SourceEventGateCriterionState,
@@ -312,11 +346,14 @@ interface CriterionRowProps {
 function CriterionRow({
   state,
   def,
+  assessment,
   onChangeState,
   pending,
 }: CriterionRowProps) {
   const [reason, setReason] = useState("");
-  const isMet = state.state === "met" || state.state === "waived";
+  const isMet = assessment
+    ? isAssessmentMet(assessment)
+    : state.state === "met" || state.state === "waived";
   const indicatorColor = isMet
     ? CANVAS.ACTIVE
     : state.state === "not_met"
@@ -337,6 +374,7 @@ function CriterionRow({
         <div style={ROW_TITLE_STYLE}>
           <span style={ROW_TITLE_TEXT}>{def?.title ?? state.criterionId}</span>
           <StatePill state={state.state} />
+          {assessment ? <AssessmentBadge assessment={assessment} /> : null}
           {def?.severity === "hard" ? (
             <span style={HARD_TAG_STYLE}>hard</span>
           ) : null}
@@ -398,6 +436,19 @@ function CriterionRow({
         {def?.description ? (
           <div style={ROW_DESC_STYLE}>{def.description}</div>
         ) : null}
+        {assessment?.evidence.length ? (
+          <div
+            style={EVIDENCE_MATCH_STYLE}
+            data-testid={`source-canvas-gate-criterion-evidence-${state.criterionId}`}
+          >
+            {assessment.evidence.map((match) => (
+              <span key={match.requirementId}>
+                {match.label}: {match.currentState}
+                {match.satisfied ? " · ok" : ` · needs ${match.minimumState}`}
+              </span>
+            ))}
+          </div>
+        ) : null}
         <div style={ROW_META_STYLE}>
           <span style={CRITERION_CODE}>{state.criterionId}</span>
           {def?.ownerRole ? (
@@ -418,6 +469,73 @@ function CriterionRow({
   );
 }
 
+function StageDecisionStatusPanel({
+  recommendation,
+}: {
+  recommendation: StageRecommendation;
+}) {
+  const tone = recommendationTone(recommendation.status);
+  return (
+    <section
+      data-testid="source-stage-decision-status"
+      style={{
+        ...DECISION_STATUS_STYLE,
+        borderColor: tone.border,
+        background: tone.bg,
+      }}
+      aria-label="Stage Decision Status"
+    >
+      <div style={DECISION_STATUS_HEADER_STYLE}>
+        <span style={EYEBROW_STYLE}>Stage Decision Status</span>
+        <span style={{ ...DECISION_STATUS_PILL_STYLE, color: tone.fg }}>
+          {stageStatusLabel(recommendation.status)}
+        </span>
+      </div>
+      <div style={DECISION_STATUS_METRIC_STYLE}>
+        {recommendation.requiredMet} / {recommendation.requiredTotal} required
+        cleared · {recommendation.autoMetCount} auto-assessed ·{" "}
+        {recommendation.manualMetCount} manual
+      </div>
+      {recommendation.reasonCodes.length > 0 ? (
+        <div style={DECISION_REASON_STYLE}>
+          {recommendation.reasonCodes.join(" · ")}
+        </div>
+      ) : null}
+      {recommendation.blockers.length > 0 ? (
+        <ul style={DECISION_BLOCKER_LIST_STYLE}>
+          {recommendation.blockers.map((blocker) => (
+            <li key={blocker.criterionId}>
+              <strong>{blocker.title}</strong> — {blocker.reason}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
+  );
+}
+
+function AssessmentBadge({
+  assessment,
+}: {
+  assessment: GateCriterionAssessment;
+}) {
+  const label = assessmentBadgeLabel(assessment);
+  const tone = assessmentBadgeTone(assessment);
+  return (
+    <span
+      data-testid={`source-canvas-gate-criterion-assessment-${assessment.criterionId}`}
+      style={{
+        ...ASSESSMENT_BADGE_STYLE,
+        background: tone.bg,
+        borderColor: tone.border,
+        color: tone.fg,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
 function formatAuditTimestamp(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -427,6 +545,103 @@ function formatAuditTimestamp(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function assessmentBadgeLabel(assessment: GateCriterionAssessment): string {
+  switch (assessment.displayState) {
+    case "met_auto_evidence":
+      return "Auto-assessed from evidence";
+    case "blocked_evidence":
+      return "Blocked by missing evidence";
+    case "pending_review":
+      return "Needs human review";
+    case "met_manual":
+    case "not_met_manual":
+    case "waived":
+    case "deferred_manual":
+      return "Manual override";
+  }
+}
+
+function assessmentBadgeTone(assessment: GateCriterionAssessment): {
+  bg: string;
+  fg: string;
+  border: string;
+} {
+  switch (assessment.displayState) {
+    case "met_auto_evidence":
+      return {
+        bg: "rgba(46,125,50,0.08)",
+        fg: "#2E7D32",
+        border: "rgba(46,125,50,0.28)",
+      };
+    case "blocked_evidence":
+      return {
+        bg: "rgba(184,91,0,0.08)",
+        fg: "#A65300",
+        border: "rgba(184,91,0,0.24)",
+      };
+    case "pending_review":
+      return {
+        bg: "rgba(57,96,168,0.08)",
+        fg: "#315A9D",
+        border: "rgba(57,96,168,0.24)",
+      };
+    default:
+      return {
+        bg: "rgba(10,10,11,0.05)",
+        fg: CANVAS.INK_SOFT,
+        border: "rgba(10,10,11,0.16)",
+      };
+  }
+}
+
+function stageStatusLabel(status: StageRecommendation["status"]): string {
+  switch (status) {
+    case "ready":
+      return "Ready to advance";
+    case "ready_with_warnings":
+      return "Ready with warnings";
+    case "needs_review":
+      return "Needs human review";
+    case "blocked":
+    default:
+      return "Blocked by missing evidence";
+  }
+}
+
+function recommendationTone(status: StageRecommendation["status"]): {
+  bg: string;
+  fg: string;
+  border: string;
+} {
+  switch (status) {
+    case "ready":
+      return {
+        bg: "rgba(46,125,50,0.08)",
+        fg: "#2E7D32",
+        border: "rgba(46,125,50,0.24)",
+      };
+    case "ready_with_warnings":
+      return {
+        bg: "rgba(186,117,23,0.08)",
+        fg: "#A66400",
+        border: "rgba(186,117,23,0.24)",
+      };
+    case "needs_review":
+      return {
+        bg: "rgba(57,96,168,0.08)",
+        fg: "#315A9D",
+        border: "rgba(57,96,168,0.24)",
+      };
+    case "blocked":
+    default:
+      return {
+        bg: "rgba(184,91,0,0.08)",
+        fg: "#A65300",
+        border: "rgba(184,91,0,0.24)",
+      };
+  }
 }
 
 function StatePill({ state }: { state: SourceEventGateCriterionState }) {
@@ -636,15 +851,6 @@ const HARD_TAG_STYLE: CSSProperties = {
   fontWeight: 600,
 };
 
-const WAIVED_TAG_STYLE: CSSProperties = {
-  fontFamily: CANVAS.MONO,
-  fontSize: 9,
-  letterSpacing: "0.10em",
-  textTransform: "uppercase",
-  color: CANVAS.WAITING,
-  fontWeight: 600,
-};
-
 const ROW_DESC_STYLE: CSSProperties = {
   fontFamily: CANVAS.SANS,
   fontSize: 13,
@@ -675,6 +881,52 @@ const DOT_INLINE_STYLE: CSSProperties = {
 const EMPTY_BODY_STYLE: CSSProperties = {
   fontFamily: CANVAS.SANS,
   fontSize: 13,
+  color: CANVAS.INK_SOFT,
+};
+
+const DECISION_STATUS_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 8,
+  padding: "12px 14px",
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  border: "1px solid transparent",
+};
+
+const DECISION_STATUS_HEADER_STYLE: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 12,
+};
+
+const DECISION_STATUS_PILL_STYLE: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: "0.10em",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+};
+
+const DECISION_STATUS_METRIC_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 13,
+  color: CANVAS.INK,
+};
+
+const DECISION_REASON_STYLE: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: CANVAS.INK_SOFT,
+};
+
+const DECISION_BLOCKER_LIST_STYLE: CSSProperties = {
+  margin: 0,
+  paddingLeft: 16,
+  fontFamily: CANVAS.SANS,
+  fontSize: 12.5,
   color: CANVAS.INK_SOFT,
 };
 
@@ -734,6 +986,30 @@ const INLINE_HARD_TAG_STYLE: CSSProperties = {
   letterSpacing: "0.10em",
   textTransform: "uppercase",
   color: CANVAS.BLOCKED,
+};
+
+const ASSESSMENT_BADGE_STYLE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  fontWeight: 700,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  padding: "2px 7px",
+  borderRadius: 999,
+  border: "1px solid transparent",
+  whiteSpace: "nowrap",
+};
+
+const EVIDENCE_MATCH_STYLE: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "6px 10px",
+  marginTop: 8,
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  color: CANVAS.INK_SOFT,
 };
 
 const ROW_PRIMARY_BUTTON_STYLE: CSSProperties = {
