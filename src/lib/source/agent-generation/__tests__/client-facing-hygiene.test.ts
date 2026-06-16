@@ -64,4 +64,21 @@ describe("Source client-facing draft hygiene", () => {
 
     expect(result.match(/Company: SkyHarbor Air/g)).toHaveLength(1);
   });
+
+  it("dedupes repeated company labels already present in generated text", () => {
+    const result = sanitizeClientFacingSourceDraft(
+      [
+        "Document: Scope Memo",
+        "Company: SkyHarbor Air",
+        "Company: SkyHarbor Air",
+        "Decision owner: Tomas Singh",
+      ].join("\n"),
+      { companyName: "SkyHarbor Air" },
+    );
+
+    expect(result).toContain(
+      ["Document: Scope Memo", "Company: SkyHarbor Air"].join("\n"),
+    );
+    expect(result.match(/Company: SkyHarbor Air/g)).toHaveLength(1);
+  });
 });

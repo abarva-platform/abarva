@@ -45,6 +45,7 @@ export function sanitizeClientFacingSourceDraft(
     .join("\n");
 
   output = ensureCompanyLabel(output, options.companyName);
+  output = dedupeCompanyLabel(output, options.companyName);
 
   return output;
 }
@@ -79,4 +80,23 @@ function ensureCompanyLabel(markdown: string, companyName?: string | null) {
   if (documentLineIndex < 0) return markdown;
   lines.splice(documentLineIndex + 1, 0, `Company: ${company}`);
   return lines.join("\n");
+}
+
+function dedupeCompanyLabel(markdown: string, companyName?: string | null) {
+  const company = companyName?.trim();
+  if (!company) return markdown;
+  const companyLine = new RegExp(
+    `^\\s*Company\\s*:\\s*${escapeRegExp(company)}\\s*$`,
+    "i",
+  );
+  let seen = false;
+  return markdown
+    .split(/\r?\n/)
+    .filter((line) => {
+      if (!companyLine.test(line)) return true;
+      if (seen) return false;
+      seen = true;
+      return true;
+    })
+    .join("\n");
 }
