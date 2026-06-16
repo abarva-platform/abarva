@@ -295,8 +295,8 @@ function DataArea(props: AdminSetupExperienceProps) {
               role="radio"
               aria-checked={loadMode === "package"}
             >
-              <strong>Setup package</strong>
-              <span>First load: manifest plus related client files.</span>
+              <strong>First-time load</strong>
+              <span>Start with the first file for a data area.</span>
             </button>
             <button
               type="button"
@@ -305,30 +305,10 @@ function DataArea(props: AdminSetupExperienceProps) {
               role="radio"
               aria-checked={loadMode === "single"}
             >
-              <strong>Single file update</strong>
-              <span>
-                Ongoing update: one CMDB, contract, rate card, or policy.
-              </span>
+              <strong>Update one file</strong>
+              <span>Refresh one area when a source file changes.</span>
             </button>
           </div>
-          {loadMode === "package" ? (
-            <div className="setup-callout">
-              <strong>Package intake is review-first</strong>
-              <p>
-                Use this for a first client setup package. AbarVa should
-                classify the manifest and route files for review; only proven
-                structured mappings commit automatically.
-              </p>
-            </div>
-          ) : (
-            <div className="setup-callout">
-              <strong>Single file update</strong>
-              <p>
-                Approved values become the latest active facts. Older matching
-                facts are superseded and kept in history.
-              </p>
-            </div>
-          )}
           <CsvUploadConnector
             clientId={clientId}
             tenantKey={tenantKey}

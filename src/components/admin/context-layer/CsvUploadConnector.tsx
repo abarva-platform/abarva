@@ -1,13 +1,19 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 
 import {
   MERIDIAN_HEALTHCARE_CONTEXT_TEMPLATES,
   PHS_CONTEXT_TEMPLATES,
   getTemplatesForTenant,
 } from "@/lib/context-ingestion/template-registry";
-import { buildTemplateSchemaPreflight } from "@/lib/context-ingestion/schema-preflight";
+import { proposeCsvColumnMapping } from "@/lib/context-ingestion/csv-column-mapping";
 import { PILOT_UPLOAD_ATTESTATION_VERSION } from "@/lib/context-ingestion/upload-attestation";
 import { RATE_CARD_TEMPLATE_DEFINITIONS } from "@/lib/programs/expert-kernel/rate-card/rate-card-templates";
 
@@ -52,7 +58,20 @@ type UploadResult = {
     warnings: Array<{ field: string; message: string; rowIndex: number }>;
   };
   detail?: string;
+  reviewRequired?: boolean;
 };
+
+type AdminUploadFileFormat =
+  | "csv"
+  | "json"
+  | "jsonl"
+  | "yaml"
+  | "xlsx"
+  | "pdf"
+  | "docx"
+  | "pptx"
+  | "zip"
+  | "unknown";
 
 interface CsvUploadConnectorProps {
   clientId: string;
@@ -207,6 +226,52 @@ function splitHeaderLine(line: string): string[] {
   return headers.filter(Boolean);
 }
 
+function countCsvRows(text: string): number {
+  const lines = text.split(/\r?\n/).filter((line) => line.trim() !== "");
+  return Math.max(0, lines.length - 1);
+}
+
+function labelForField(field: string): string {
+  const friendly: Record<string, string> = {
+    team_id: "Team",
+    measured_at: "Measurement date",
+    deploy_freq_per_week: "Deployment frequency",
+    lead_time_hours: "Lead time",
+    mttr_hours: "Recovery time",
+    change_failure_rate_pct: "Change failure rate",
+  };
+  if (friendly[field]) return friendly[field];
+  return field
+    .replace(/_id$/i, "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function detectFileFormat(fileName: string): AdminUploadFileFormat {
+  const lowerName = fileName.toLowerCase();
+  if (lowerName.endsWith(".csv")) return "csv";
+  if (lowerName.endsWith(".json")) return "json";
+  if (lowerName.endsWith(".jsonl")) return "jsonl";
+  if (lowerName.endsWith(".yaml") || lowerName.endsWith(".yml")) return "yaml";
+  if (lowerName.endsWith(".xlsx")) return "xlsx";
+  if (lowerName.endsWith(".pdf")) return "pdf";
+  if (lowerName.endsWith(".docx")) return "docx";
+  if (lowerName.endsWith(".pptx")) return "pptx";
+  if (lowerName.endsWith(".zip")) return "zip";
+  return "unknown";
+}
+
+function readFileText(file: File): Promise<string> {
+  if (typeof file.text === "function") return file.text();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () =>
+      reject(reader.error ?? new Error("file_read_failed"));
+    reader.readAsText(file);
+  });
+}
+
 export function CsvUploadConnector({
   clientId,
   tenantKey,
@@ -215,18 +280,22 @@ export function CsvUploadConnector({
   mode = "single",
 }: CsvUploadConnectorProps) {
   const [headers, setHeaders] = useState<string[]>([]);
+  const [rowCount, setRowCount] = useState(0);
   const [file, setFile] = useState<File | null>(null);
-  const [fileFormat, setFileFormat] = useState<
-    "csv" | "json" | "jsonl" | "yaml" | "unknown"
-  >("unknown");
+  const [fileFormat, setFileFormat] =
+    useState<AdminUploadFileFormat>("unknown");
   const [templateId, setTemplateId] = useState(
     initialTemplateId ?? "application-portfolio",
+  );
+  const [fieldMappings, setFieldMappings] = useState<Record<string, string>>(
+    {},
   );
   const [sourceRecordIdColumn, setSourceRecordIdColumn] = useState("");
   const [titleColumn, setTitleColumn] = useState("");
   const [selectedTextColumns, setSelectedTextColumns] = useState<string[]>([]);
   const [attestationAccepted, setAttestationAccepted] = useState(false);
   const [attestationNote, setAttestationNote] = useState("");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const templates = useMemo(
@@ -269,16 +338,41 @@ export function CsvUploadConnector({
     [templateId],
   );
   const contextTemplate = rateCardTemplate ? null : template;
-  const schemaPreflight = useMemo(
+  const mappingProposal = useMemo(
     () =>
-      fileFormat === "csv" && headers.length > 0 && !rateCardTemplate
-        ? buildTemplateSchemaPreflight({ templateId, headers })
+      fileFormat === "csv" && headers.length > 0 && contextTemplate
+        ? proposeCsvColumnMapping({ headers, template: contextTemplate })
         : null,
-    [fileFormat, headers, rateCardTemplate, templateId],
+    [contextTemplate, fileFormat, headers],
+  );
+  const missingRequiredFields = useMemo(
+    () =>
+      contextTemplate
+        ? contextTemplate.requiredFields.filter(
+            (field) => !fieldMappings[field],
+          )
+        : [],
+    [contextTemplate, fieldMappings],
   );
   const requiredFieldsBlocked =
+    fileFormat === "csv" &&
     !rateCardTemplate &&
-    (schemaPreflight?.missingRequiredFields.length ?? 0) > 0;
+    missingRequiredFields.length > 0;
+  const reviewOnlyUpload = Boolean(
+    file &&
+    ["xlsx", "pdf", "docx", "pptx", "zip", "unknown"].includes(fileFormat),
+  );
+
+  useEffect(() => {
+    if (!mappingProposal) {
+      setFieldMappings({});
+      return;
+    }
+    setFieldMappings(mappingProposal.fieldMappings);
+    setSourceRecordIdColumn(mappingProposal.sourceRecordIdColumn ?? "");
+    setTitleColumn(mappingProposal.titleColumn ?? "");
+    setSelectedTextColumns(mappingProposal.textColumns);
+  }, [mappingProposal]);
 
   async function onFileChange(event: ChangeEvent<HTMLInputElement>) {
     const nextFile = event.target.files?.[0] ?? null;
@@ -286,23 +380,16 @@ export function CsvUploadConnector({
     setResult(null);
     if (!nextFile) {
       setHeaders([]);
+      setRowCount(0);
       setFileFormat("unknown");
       return;
     }
-    const lowerName = nextFile.name.toLowerCase();
-    const nextFormat = lowerName.endsWith(".csv")
-      ? "csv"
-      : lowerName.endsWith(".json")
-        ? "json"
-        : lowerName.endsWith(".jsonl")
-          ? "jsonl"
-          : lowerName.endsWith(".yaml") || lowerName.endsWith(".yml")
-            ? "yaml"
-            : "unknown";
+    const nextFormat = detectFileFormat(nextFile.name);
     setFileFormat(nextFormat);
-    const text = await nextFile.slice(0, 64 * 1024).text();
+    const text = await readFileText(nextFile);
     if (nextFormat !== "csv") {
       setHeaders([]);
+      setRowCount(0);
       setSourceRecordIdColumn("");
       setTitleColumn("");
       setSelectedTextColumns([]);
@@ -312,6 +399,7 @@ export function CsvUploadConnector({
       text.split(/\r?\n/).find((line) => line.trim() !== "") ?? "";
     const parsedHeaders = splitHeaderLine(firstLine);
     setHeaders(parsedHeaders);
+    setRowCount(countCsvRows(text));
     const detectedTemplate = detectTemplateFromHeaders(parsedHeaders);
     if (
       detectedTemplate &&
@@ -368,18 +456,7 @@ export function CsvUploadConnector({
       formData.set("sourceRecordIdColumn", sourceRecordIdColumn);
     if (titleColumn) formData.set("titleColumn", titleColumn);
     formData.set("textColumns", JSON.stringify(selectedTextColumns));
-    formData.set("fieldMappings", JSON.stringify({}));
-    if (schemaPreflight) {
-      formData.set(
-        "schemaPreflight",
-        JSON.stringify({
-          templateId,
-          clarificationRequired: schemaPreflight.clarificationRequired,
-          missingRequiredFields: schemaPreflight.missingRequiredFields,
-          unknownColumns: schemaPreflight.unknownColumns,
-        }),
-      );
-    }
+    formData.set("fieldMappings", JSON.stringify(fieldMappings));
 
     try {
       const response = await fetch("/api/admin/context-layer/csv-upload", {
@@ -462,7 +539,6 @@ export function CsvUploadConnector({
           aria-label="File type and data area"
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
             gap: 10,
           }}
         >
@@ -507,23 +583,6 @@ export function CsvUploadConnector({
               </optgroup>
             </select>
           </label>
-          <div
-            style={{
-              border: "1px solid #e3decf",
-              borderRadius: 6,
-              padding: "8px 10px",
-              background: "#F8F7F4",
-              color: "#514c43",
-              fontSize: 12,
-              lineHeight: 1.4,
-            }}
-          >
-            <strong style={{ color: "#171717", display: "block" }}>
-              Enterprise context update
-            </strong>
-            Approved values become the latest active facts. Older matching facts
-            are superseded and kept in history.
-          </div>
         </section>
 
         <label
@@ -550,8 +609,8 @@ export function CsvUploadConnector({
             </strong>
             <span style={{ color: "#6b665c", fontSize: 12.5, lineHeight: 1.4 }}>
               {mode === "package"
-                ? "Upload the manifest first, then add the referenced files. ZIP packages use Advanced review until server-side unpack is proven."
-                : "CSV, JSON, JSONL, or YAML can commit here. Excel, PDF, Word, PowerPoint, and ZIP use the Advanced review path."}
+                ? "Start with the file that best represents the first data area. AbarVa will ask before committing structured rows."
+                : "Use this when one data area needs a refresh. Documents and workbooks go to review before facts commit."}
             </span>
           </span>
           <span
@@ -582,11 +641,17 @@ export function CsvUploadConnector({
               ".jsonl",
               ".yaml",
               ".yml",
+              ".xlsx",
+              ".pdf",
+              ".docx",
+              ".pptx",
+              ".zip",
               "text/csv",
               "application/json",
               "application/x-ndjson",
               "application/yaml",
               "text/yaml",
+              "application/pdf",
             ].join(",")}
             onChange={onFileChange}
           />
@@ -597,48 +662,9 @@ export function CsvUploadConnector({
           ) : null}
         </label>
 
-        {headers.length > 0 && !rateCardTemplate && (
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
-            <label style={{ display: "grid", gap: 6 }}>
-              <span>Record id column</span>
-              <select
-                style={inputStyle}
-                value={sourceRecordIdColumn}
-                onChange={(event) =>
-                  setSourceRecordIdColumn(event.target.value)
-                }
-              >
-                <option value="">Row number</option>
-                {headers.map((header) => (
-                  <option key={header} value={header}>
-                    {header}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label style={{ display: "grid", gap: 6 }}>
-              <span>Title column</span>
-              <select
-                style={inputStyle}
-                value={titleColumn}
-                onChange={(event) => setTitleColumn(event.target.value)}
-              >
-                <option value="">None</option>
-                {headers.map((header) => (
-                  <option key={header} value={header}>
-                    {header}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        )}
-
-        {file && fileFormat !== "csv" && !rateCardTemplate && (
+        {file && reviewOnlyUpload && !rateCardTemplate && (
           <section
-            aria-label="Structured file preflight"
+            aria-label="Review-required upload"
             style={{
               border: "1px solid #e3decf",
               borderRadius: 6,
@@ -648,58 +674,122 @@ export function CsvUploadConnector({
               lineHeight: 1.5,
             }}
           >
-            JSON, JSONL, and YAML files are parsed on the server with the
-            selected template. Submit stays available after attestation; schema
-            errors, if any, return in the upload result.
+            This file will be preserved for review. Documents, workbooks, and
+            archives do not commit facts until source locations are reviewed.
           </section>
         )}
 
-        {headers.length > 0 && !rateCardTemplate && (
-          <fieldset
+        {headers.length > 0 && !rateCardTemplate && contextTemplate && (
+          <section
+            aria-label="Column mapping confirmation"
             style={{
               border: "1px solid #e3decf",
               borderRadius: 6,
               padding: 12,
+              background: "#fff",
+              display: "grid",
+              gap: 10,
             }}
           >
-            <legend>Chunk text columns</legend>
+            <div>
+              <strong style={{ display: "block", fontSize: 14 }}>
+                I read {rowCount.toLocaleString()} rows and matched your columns
+                to {contextTemplate.label}.
+              </strong>
+              <span style={{ color: "#514c43", fontSize: 12.5 }}>
+                Confirm or adjust:
+              </span>
+            </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              {contextTemplate.requiredFields.map((field) => {
+                const unresolved = !fieldMappings[field];
+                return (
+                  <label
+                    key={field}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "minmax(120px, 0.55fr) minmax(0, 1fr)",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <span style={{ color: "#171717", fontSize: 12.5 }}>
+                      {labelForField(field)}
+                    </span>
+                    <span style={{ display: "grid", gap: 4 }}>
+                      <select
+                        aria-label={`${labelForField(field)} source column`}
+                        style={{
+                          ...inputStyle,
+                          borderColor: unresolved ? "#b42318" : "#d8d2c4",
+                        }}
+                        value={fieldMappings[field] ?? ""}
+                        onChange={(event) =>
+                          setFieldMappings((current) => ({
+                            ...current,
+                            [field]: event.target.value,
+                          }))
+                        }
+                      >
+                        <option value="">Choose a column</option>
+                        {headers.map((header) => (
+                          <option key={header} value={header}>
+                            {header}
+                          </option>
+                        ))}
+                      </select>
+                      {unresolved ? (
+                        <span style={{ color: "#b42318", fontSize: 11.5 }}>
+                          Needs a matching source column before commit.
+                        </span>
+                      ) : null}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
             <div
               style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 8,
-                marginTop: 8,
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 10,
               }}
             >
-              {headers.map((header) => (
-                <label
-                  key={header}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    border: "1px solid #d8d2c4",
-                    borderRadius: 6,
-                    padding: "6px 8px",
-                    background: selectedTextColumns.includes(header)
-                      ? "#EEE8D8"
-                      : "#fff",
-                  }}
+              <label style={{ display: "grid", gap: 5 }}>
+                <span style={{ fontSize: 12, fontWeight: 700 }}>Record id</span>
+                <select
+                  style={inputStyle}
+                  value={sourceRecordIdColumn}
+                  onChange={(event) =>
+                    setSourceRecordIdColumn(event.target.value)
+                  }
                 >
-                  <input
-                    type="checkbox"
-                    checked={selectedTextColumns.includes(header)}
-                    onChange={() => toggleTextColumn(header)}
-                  />
-                  <span>{header}</span>
-                </label>
-              ))}
+                  <option value="">Row number</option>
+                  {headers.map((header) => (
+                    <option key={header} value={header}>
+                      {header}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label style={{ display: "grid", gap: 5 }}>
+                <span style={{ fontSize: 12, fontWeight: 700 }}>Title</span>
+                <select
+                  style={inputStyle}
+                  value={titleColumn}
+                  onChange={(event) => setTitleColumn(event.target.value)}
+                >
+                  <option value="">None</option>
+                  {headers.map((header) => (
+                    <option key={header} value={header}>
+                      {header}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
-            <p style={{ color: "#6b665c", marginBottom: 0 }}>
-              Required fields for {contextTemplate?.label}:{" "}
-              {(contextTemplate?.requiredFields ?? []).join(", ")}
-            </p>
-          </fieldset>
+          </section>
         )}
 
         {headers.length > 0 && rateCardTemplate && (
@@ -729,123 +819,110 @@ export function CsvUploadConnector({
           </section>
         )}
 
-        {schemaPreflight && (
-          <section
-            aria-label="Template schema preflight"
+        <details
+          open={advancedOpen}
+          onToggle={(event) =>
+            setAdvancedOpen((event.currentTarget as HTMLDetailsElement).open)
+          }
+          style={{
+            border: "1px solid #e3decf",
+            borderRadius: 6,
+            padding: "9px 10px",
+            background: "#fff",
+          }}
+        >
+          <summary
             style={{
-              border: "1px solid #e3decf",
-              borderRadius: 6,
-              padding: 12,
-              background:
-                schemaPreflight.missingRequiredFields.length > 0
-                  ? "#FFF9EC"
-                  : "#F4F8F1",
-              display: "grid",
-              gap: 8,
+              cursor: "pointer",
+              fontSize: 13,
+              fontWeight: 800,
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 12,
-                flexWrap: "wrap",
-              }}
-            >
-              <strong>
-                {schemaPreflight.missingRequiredFields.length > 0
-                  ? "Schema clarification required"
-                  : "Template fit confirmed"}
-              </strong>
-              <span style={{ color: "#6b665c" }}>
-                {schemaPreflight.mappedRequiredFields.length}/
-                {template.requiredFields.length} required fields mapped
-              </span>
-            </div>
-            {schemaPreflight.missingRequiredFields.length > 0 && (
-              <div>
-                <span style={{ fontWeight: 700 }}>
-                  Missing required fields:{" "}
-                </span>
-                <span>{schemaPreflight.missingRequiredFields.join(", ")}</span>
-              </div>
-            )}
-            {schemaPreflight.unknownColumns.length > 0 && (
-              <div>
-                <span style={{ fontWeight: 700 }}>
-                  Extra evidence columns captured:{" "}
-                </span>
-                <span>{schemaPreflight.unknownColumns.join(", ")}</span>
-              </div>
-            )}
-            {schemaPreflight.missingRequiredFields.length === 0 &&
-              schemaPreflight.unknownColumns.length > 0 && (
-                <p style={{ margin: 0, color: "#514c43", lineHeight: 1.45 }}>
-                  These columns are kept in the cited chunk text. They do not
-                  block commit unless a required template field is missing.
-                </p>
-              )}
-            {schemaPreflight.missingRequiredFields.length > 0 && (
-              <ul style={{ margin: 0, paddingLeft: 18, color: "#514c43" }}>
-                {schemaPreflight.clarificationRequests
-                  .filter(
-                    (request) =>
-                      request.action === "supply_missing_required_field",
-                  )
-                  .slice(0, 4)
-                  .map((request) => (
-                    <li key={`${request.action}:${request.field}`}>
-                      {request.message}
-                    </li>
+            Advanced
+          </summary>
+          <div style={{ display: "grid", gap: 12, marginTop: 10 }}>
+            {headers.length > 0 && !rateCardTemplate ? (
+              <fieldset
+                style={{
+                  border: "1px solid #e3decf",
+                  borderRadius: 6,
+                  padding: 12,
+                }}
+              >
+                <legend>Chunk text columns</legend>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                    marginTop: 8,
+                  }}
+                >
+                  {headers.map((header) => (
+                    <label
+                      key={header}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        border: "1px solid #d8d2c4",
+                        borderRadius: 6,
+                        padding: "6px 8px",
+                        background: selectedTextColumns.includes(header)
+                          ? "#EEE8D8"
+                          : "#fff",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedTextColumns.includes(header)}
+                        onChange={() => toggleTextColumn(header)}
+                      />
+                      <span>{header}</span>
+                    </label>
                   ))}
-              </ul>
-            )}
-          </section>
-        )}
+                </div>
+              </fieldset>
+            ) : null}
+            <label style={{ display: "grid", gap: 6 }}>
+              <span>Attestation note</span>
+              <textarea
+                style={{ ...inputStyle, minHeight: 72 }}
+                value={attestationNote}
+                onChange={(event) => setAttestationNote(event.target.value)}
+                placeholder="Optional approval reference or data-load ticket"
+              />
+            </label>
+          </div>
+        </details>
 
         <fieldset
           style={{
             border: "1px solid #d8d2c4",
             borderRadius: 6,
-            padding: 12,
+            padding: "9px 10px",
             background: "#fffaf0",
           }}
         >
-          <legend>Data load attestation</legend>
           <label
             style={{
               display: "flex",
-              alignItems: "flex-start",
+              alignItems: "center",
               gap: 8,
-              lineHeight: 1.5,
+              lineHeight: 1.35,
+              fontSize: 12.5,
             }}
           >
             <input
               type="checkbox"
               checked={attestationAccepted}
               onChange={(event) => setAttestationAccepted(event.target.checked)}
-              style={{ marginTop: 4 }}
             />
             <span>
-              I have authority to load this tenant data, I understand it will be
-              processed as pilot context for {tenantName}, and I have reviewed
-              the file for PHI, PII, payment-card, and other restricted data
-              before starting the load.
+              I have authority to load this data for {tenantName} and reviewed
+              it for restricted data.
             </span>
           </label>
-          <label style={{ display: "grid", gap: 6, marginTop: 10 }}>
-            <span>Attestation note</span>
-            <textarea
-              style={{ ...inputStyle, minHeight: 72 }}
-              value={attestationNote}
-              onChange={(event) => setAttestationNote(event.target.value)}
-              placeholder="Optional context, approval reference, or data-load ticket"
-            />
-          </label>
-          <p style={{ color: "#6b665c", margin: "8px 0 0", lineHeight: 1.45 }}>
-            Version {PILOT_UPLOAD_ATTESTATION_VERSION}. Uploads without this
-            confirmation are rejected before processing starts.
-          </p>
         </fieldset>
 
         <div>
@@ -881,12 +958,14 @@ export function CsvUploadConnector({
                 ? "Validating rate card..."
                 : "Loading structured data..."
               : requiredFieldsBlocked
-                ? "Resolve required fields"
+                ? "Needs review before commit"
                 : !attestationAccepted
                   ? "Accept attestation"
                   : rateCardTemplate
                     ? "Validate rate card"
-                    : "Start governed load"}
+                    : reviewOnlyUpload
+                      ? "Send to review"
+                      : "Confirm & load"}
           </button>
         </div>
       </form>

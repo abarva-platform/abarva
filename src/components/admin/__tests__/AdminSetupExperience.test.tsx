@@ -84,19 +84,20 @@ describe("AdminSetupExperience", () => {
 
     expect(
       screen
-        .getByRole("radio", { name: /Setup package First load/ })
+        .getByRole("radio", { name: /First-time load Start with/ })
         .getAttribute("aria-checked"),
     ).toBe("true");
-    expect(screen.getByText("Package intake is review-first")).toBeTruthy();
-    expect(screen.getByText(/ZIP packages use Advanced review/)).toBeTruthy();
+    expect(screen.queryByText("Package intake is review-first")).toBeNull();
+    expect(
+      screen.getByText(/Start with the file that best represents/),
+    ).toBeTruthy();
 
     fireEvent.click(
-      screen.getByRole("radio", { name: /Single file update Ongoing update/ }),
+      screen.getByRole("radio", { name: /Update one file Refresh one area/ }),
     );
 
-    expect(screen.getAllByText("Single file update").length).toBeGreaterThan(0);
     expect(
-      screen.getAllByText(/Older matching facts are superseded/).length,
+      screen.getAllByText(/when one data area needs a refresh/).length,
     ).toBeGreaterThan(0);
   });
 });

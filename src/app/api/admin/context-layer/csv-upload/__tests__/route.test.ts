@@ -400,6 +400,54 @@ describe("/api/admin/context-layer/csv-upload", () => {
     ]);
   });
 
+  it("stages workbook uploads for review without committing tenant facts", async () => {
+    const formData = new FormData();
+    formData.set("clientId", "client-apex");
+    formData.set("templateId", "dora-baseline");
+    addUploadAttestation(formData);
+    formData.set(
+      "file",
+      new File(["not-a-real-workbook"], "dora-baseline.xlsx", {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+    );
+
+    const response = await POST(csvRequest(formData));
+    const body = await response.json();
+
+    expect(response.status).toBe(202);
+    expect(body).toMatchObject({
+      ok: false,
+      reviewRequired: true,
+      readyForCommit: false,
+      rowsParsed: 0,
+      detail: expect.stringContaining("preserved for review"),
+      persistence: {
+        status: "needs_operator_review",
+        detail: expect.stringContaining("no tenant context rows or facts"),
+      },
+      sourceBlob: {
+        bucket: "context-uploads",
+      },
+    });
+    expect(mockBlobUpload).toHaveBeenCalledWith(
+      "context-uploads",
+      expect.stringContaining("apex-retail/_review-required/"),
+      expect.any(Buffer),
+      expect.objectContaining({
+        contentType:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        metadata: expect.objectContaining({
+          tenantKey: "apex-retail",
+          clientId: "client-apex",
+          reviewRequired: "true",
+          uploadFormat: "xlsx",
+        }),
+      }),
+    );
+    expect(mockDbCalls).toHaveLength(0);
+  });
+
   it("validates Moves rate-card uploads without writing context chunks", async () => {
     const formData = new FormData();
     formData.set("clientId", "client-apex");
