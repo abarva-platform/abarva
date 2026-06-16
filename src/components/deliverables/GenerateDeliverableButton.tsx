@@ -29,6 +29,8 @@ interface RunStatus {
   blockers?: string[];
   warnings?: string[];
   error?: string | null;
+  progressPct?: number | null;
+  progressLabel?: string | null;
 }
 
 const NAVY = '#0C1A3A';
@@ -59,6 +61,7 @@ export function GenerateDeliverableButton(props: GenerateDeliverableButtonProps)
           throw new Error(data.error ?? `HTTP ${res.status}`);
         }
         if (data.status === 'running') {
+          setRun(data); // surface live progress (pct/label) while still running
           if (Date.now() - (timers.current.start ?? 0) > MAX_MS) {
             clearTimers();
             setPhase('failed');
@@ -129,11 +132,30 @@ export function GenerateDeliverableButton(props: GenerateDeliverableButtonProps)
         {running ? `Authoring board-grade deliverable… ${mins}:${String(secs).padStart(2, '0')}` : (props.label ?? 'Generate board-grade deliverable')}
       </button>
 
-      {running && (
-        <div style={{ fontSize: 12, color: '#706D66' }}>
-          Multi-pass authoring (architect → draft → red-team → board-grade rewrite). This runs in the background and typically takes a few minutes; you can leave this page open.
-        </div>
-      )}
+      {running && (() => {
+        const pct = Math.max(0, Math.min(100, run?.progressPct ?? 0));
+        const label = run?.progressLabel ?? 'Starting the authoring engine';
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 12.5 }}>
+              <span style={{ color: NAVY, fontWeight: 600 }}>{label}</span>
+              <span style={{ color: '#706D66', fontVariantNumeric: 'tabular-nums' }}>{pct}%</span>
+            </div>
+            <div style={{ height: 8, borderRadius: 999, background: 'rgba(12,26,58,0.08)', overflow: 'hidden' }}>
+              <div
+                style={{
+                  height: '100%', width: `${pct}%`, borderRadius: 999,
+                  background: `linear-gradient(90deg, ${NAVY}, ${TEAL})`,
+                  transition: 'width 600ms cubic-bezier(0.4,0,0.2,1)',
+                }}
+              />
+            </div>
+            <div style={{ fontSize: 11.5, color: '#9A968E' }}>
+              Six governed passes — planning, grounding, drafting, red-teaming, polishing, formatting. Runs in the background; you can leave this open.
+            </div>
+          </div>
+        );
+      })()}
 
       {error && phase !== 'blocked' && (
         <div style={{ padding: '10px 12px', background: 'rgba(179,38,30,0.06)', border: '1px solid rgba(179,38,30,0.3)', borderRadius: 6, color: '#B3261E', fontSize: 13 }}>
