@@ -1,4 +1,11 @@
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
+import {
+  enqueueSourceArtifactGenerationJob,
+  isSourceArtifactGenerationQueueUnavailable,
+  processSourceArtifactGenerationJob,
+  type SourceArtifactGenerationJobRow,
+} from "@/lib/source/artifact-generation-queue";
 import { listSupportedGenerationCodes } from "@/lib/source/agent-generation";
 import type { SourceEventArtifactStateRow } from "@/lib/source/canvas-substrate/types";
 import type { SourceStageKey } from "@/lib/source/types";
@@ -10,6 +17,7 @@ export interface AutoDraftOnStageEntryInput {
 }
 
 export interface AutoDraftOnStageEntryResult {
+  queued: string[];
   generated: string[];
   skipped: string[];
   failed: string[];
@@ -30,6 +38,23 @@ export interface AutoDraftOnStageEntryDeps {
     artifactCode: string;
     request?: Request;
   }) => Promise<Response>;
+  enqueueGenerationJob?: (input: {
+    eventId: string;
+    clientKey: string;
+    artifactCode: string;
+    artifactRowId: string;
+    stageKey: SourceStageKey;
+  }) => Promise<SourceArtifactGenerationJobRow>;
+  processGenerationJob?: (input: {
+    job: SourceArtifactGenerationJobRow;
+    eventId: string;
+    artifactCode: string;
+    request?: Request;
+  }) => Promise<Response>;
+  updateArtifactStatus?: (input: {
+    artifactRowId: string;
+    status: "drafting";
+  }) => Promise<void>;
   log?: Pick<Console, "warn" | "error">;
 }
 
@@ -56,6 +81,7 @@ export async function autoDraftOnStageEntry(
 ): Promise<AutoDraftOnStageEntryResult> {
   const log = deps.log ?? console;
   const result: AutoDraftOnStageEntryResult = {
+    queued: [],
     generated: [],
     skipped: [],
     failed: [],
@@ -99,16 +125,31 @@ export async function autoDraftOnStageEntry(
     }
 
     try {
-      const response = await (deps.generateArtifact
-        ? deps.generateArtifact({
+      await (deps.updateArtifactStatus ?? defaultUpdateArtifactStatus)({
+        artifactRowId: row.id,
+        status: "drafting",
+      });
+      const job = await (deps.enqueueGenerationJob ?? defaultEnqueueGenerationJob)({
+        eventId: input.eventId,
+        clientKey: input.clientKey,
+        artifactCode,
+        artifactRowId: row.id,
+        stageKey: input.enteredStage,
+      });
+      result.queued.push(artifactCode);
+      const response = await (deps.processGenerationJob
+        ? deps.processGenerationJob({
+            job,
             eventId: input.eventId,
             artifactCode,
             request: deps.request,
           })
-        : defaultGenerateArtifact({
+        : processQueuedGenerationJob({
+            job,
             eventId: input.eventId,
             artifactCode,
             request: deps.request,
+            generateArtifact: deps.generateArtifact,
           }));
       if (!response.ok) {
         const payload = await safeReadJson(response);
@@ -127,6 +168,30 @@ export async function autoDraftOnStageEntry(
       }
       result.generated.push(artifactCode);
     } catch (error) {
+      if (isSourceArtifactGenerationQueueUnavailable(error)) {
+        log.warn("[source stage autodraft] durable queue unavailable; falling back to direct generation", {
+          ...input,
+          artifactCode,
+          message: error instanceof Error ? error.message : String(error),
+        });
+        const fallbackResponse = await runDirectGeneration({
+          eventId: input.eventId,
+          artifactCode,
+          request: deps.request,
+          generateArtifact: deps.generateArtifact,
+        });
+        if (fallbackResponse.ok) {
+          result.generated.push(artifactCode);
+          continue;
+        }
+        const payload = await safeReadJson(fallbackResponse);
+        const detail =
+          typeof payload?.error === "string"
+            ? payload.error
+            : `http_${fallbackResponse.status}`;
+        result.failed.push(`${artifactCode}:${detail}`);
+        continue;
+      }
       const message = error instanceof Error ? error.message : String(error);
       result.failed.push(`${artifactCode}:generation_failed`);
       log.error("[source stage autodraft] generation failed", {
@@ -138,6 +203,84 @@ export async function autoDraftOnStageEntry(
   }
 
   return result;
+}
+
+async function defaultEnqueueGenerationJob(input: {
+  eventId: string;
+  clientKey: string;
+  artifactCode: string;
+  artifactRowId: string;
+  stageKey: SourceStageKey;
+}): Promise<SourceArtifactGenerationJobRow> {
+  return enqueueSourceArtifactGenerationJob({
+    clientKey: input.clientKey,
+    sourceEventId: input.eventId,
+    artifactRowId: input.artifactRowId,
+    artifactCode: input.artifactCode,
+    stageKey: input.stageKey,
+    qualityTier: "real_engagement",
+    requestedVia: "stage_entry",
+  });
+}
+
+async function defaultUpdateArtifactStatus(input: {
+  artifactRowId: string;
+  status: "drafting";
+}): Promise<void> {
+  const write = await selectSourceWriteAdapter().updateArtifactStatus({
+    artifactRowId: input.artifactRowId,
+    status: input.status,
+    updatedAtIso: new Date().toISOString(),
+  });
+  if (!write.ok) {
+    throw new Error(write.error ?? "artifact status update failed");
+  }
+}
+
+async function processQueuedGenerationJob(input: {
+  job: SourceArtifactGenerationJobRow;
+  eventId: string;
+  artifactCode: string;
+  request?: Request;
+  generateArtifact?: (input: {
+    eventId: string;
+    artifactCode: string;
+    request?: Request;
+  }) => Promise<Response>;
+}): Promise<Response> {
+  const result = await processSourceArtifactGenerationJob(
+    { jobId: input.job.id, request: input.request },
+    {
+      generateArtifact: input.generateArtifact
+        ? () =>
+            input.generateArtifact!({
+              eventId: input.eventId,
+              artifactCode: input.artifactCode,
+              request: input.request,
+            })
+        : undefined,
+    },
+  );
+  if (result.ok) return Response.json({ ok: true, jobId: result.jobId });
+  return Response.json(
+    { error: result.error ?? "generation_failed", jobId: result.jobId },
+    { status: 502 },
+  );
+}
+
+async function runDirectGeneration(input: {
+  eventId: string;
+  artifactCode: string;
+  request?: Request;
+  generateArtifact?: (input: {
+    eventId: string;
+    artifactCode: string;
+    request?: Request;
+  }) => Promise<Response>;
+}): Promise<Response> {
+  return input.generateArtifact
+    ? input.generateArtifact(input)
+    : defaultGenerateArtifact(input);
 }
 
 async function loadArtifactRowsForStage(
