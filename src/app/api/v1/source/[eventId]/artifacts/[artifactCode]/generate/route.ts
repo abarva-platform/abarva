@@ -40,6 +40,7 @@ import {
 import { sanitizeClientFacingSourceDraft } from "@/lib/source/agent-generation/client-facing-hygiene";
 import { completeD09RfpGovernanceSections } from "@/lib/source/agent-generation/d09-completion";
 import {
+  normalizeRequiredSectionHeadings,
   verifyArtifactSections,
   withSectionVerificationMetadata,
 } from "@/lib/source/agent-generation/section-conformance";
@@ -572,6 +573,7 @@ export async function generateSourceArtifactDraft(
 
   // Persist body + provenance.
   const nowIso = new Date().toISOString();
+  body = normalizeRequiredSectionHeadings(artifactCode, body);
   const sectionVerification = verifyArtifactSections(
     artifactCode,
     body,

@@ -1,6 +1,7 @@
 import {
   formatRequiredSectionsForPrompt,
   getRequiredSectionsForArtifact,
+  normalizeRequiredSectionHeadings,
   verifyArtifactSections,
 } from "../section-conformance";
 
@@ -65,6 +66,46 @@ describe("Source artifact section conformance", () => {
 
     expect(sectionStyleA?.status).toBe("verified");
     expect(sectionStyleB?.status).toBe("verified");
+  });
+
+  it("normalizes exact required section labels emitted as plain text", () => {
+    const body = [
+      "# Sourcing Strategy Memo",
+      "Executive Summary",
+      "| Dimension | Signal |",
+      "| --- | --- |",
+      "| Business context | Consolidated managed-services event. |",
+      "## §1 · Why now",
+      "Contracts expire soon and accountability must be consolidated.",
+      "## §2 · What we are sourcing",
+      "The event covers managed services towers and operational support.",
+      "## §3 · Value target",
+      "The value range is directional and pending finance validation.",
+      "## §4 · Archetype + rigor",
+      "Managed services with strategic rigor is appropriate.",
+      "## §5 · Decision-gate posture",
+      "Proceed after sponsor confirmation and evidence closure.",
+    ].join("\n\n");
+
+    const normalized = normalizeRequiredSectionHeadings(
+      "d01_strategy_memo",
+      body,
+    );
+
+    expect(normalized).toContain("## Executive summary");
+    expect(
+      verifyArtifactSections("d01_strategy_memo", normalized)?.status,
+    ).toBe("verified");
+  });
+
+  it("does not duplicate existing required markdown headings", () => {
+    const body = completeD01Body("## Executive summary");
+    const normalized = normalizeRequiredSectionHeadings(
+      "d01_strategy_memo",
+      body,
+    );
+
+    expect(normalized.match(/^## Executive summary$/gm)).toHaveLength(1);
   });
 
   it("treats heading-only sections as missing", () => {
