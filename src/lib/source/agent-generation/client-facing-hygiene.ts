@@ -21,8 +21,13 @@ const RAW_INTERNAL_TERMS = [
 export function sanitizeClientFacingSourceDraft(markdown: string): string {
   let output = markdown;
   for (const [raw, label] of Object.entries(CLIENT_FACING_ARTIFACT_LABELS)) {
+    const markdownEscapedRaw = raw.replace(/_/g, "\\_");
     output = output.replace(
       new RegExp(`\\b${escapeRegExp(raw)}\\b`, "gi"),
+      label,
+    );
+    output = output.replace(
+      new RegExp(escapeRegExp(markdownEscapedRaw), "gi"),
       label,
     );
   }
@@ -37,6 +42,7 @@ export function sanitizeClientFacingSourceDraft(markdown: string): string {
 
 function sanitizeInternalTermLine(line: string): string {
   let next = line;
+  next = next.replace(/\bartifact\b(?=\s*:)/gi, "Document");
   for (const term of RAW_INTERNAL_TERMS) {
     next = next.replace(new RegExp(escapeRegExp(term), "gi"), "source label");
   }
