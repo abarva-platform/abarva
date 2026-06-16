@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function TowerPreviewIndexPage() {
+export default function RetiredTowerPreviewPage() {
   redirect("/tower");
 }
