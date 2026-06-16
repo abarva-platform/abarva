@@ -7,6 +7,34 @@ import type {
 
 const VALID_TIME_CLASSIFICATIONS = new Set(['invest', 'migrate', 'tolerate', 'retire']);
 
+const VALID_DOMAIN_SEGMENTS = new Set(['DATA_ANALYTICS','ERP','DIGITAL_CX','OPERATIONS','INFRASTRUCTURE','SECURITY_IDENTITY','HR_WORKFORCE','COLLABORATION']);
+const VALID_BUSINESS_FUNCTIONS = new Set(['FINANCE','SUPPLY_CHAIN','HUMAN_RESOURCES','OPERATIONS','COMMERCIAL_SALES','IT','COMPLIANCE_LEGAL','CORPORATE','INDUSTRY_OPS']);
+const VALID_CRITICALITIES = new Set(['TIER_1','TIER_2','TIER_3']);
+const VALID_VENDOR_CATEGORIES = new Set(['SOFTWARE_SAAS','PROFESSIONAL_SERVICES','HARDWARE','CLOUD_SERVICES','MANAGED_SERVICES','TELCO','DATA_SERVICES']);
+const VALID_AUTO_RENEW = new Set(['YES','NO','UNKNOWN']);
+
+// Vendor-name → domain_segment auto-infer map (for AUTO_INFERRED classification)
+const DOMAIN_SEGMENT_VENDOR_HINTS: Record<string, string> = {
+  sap: 'ERP', oracle: 'ERP', netsuite: 'ERP', workday: 'HR_WORKFORCE',
+  successfactors: 'HR_WORKFORCE', cornerstone: 'HR_WORKFORCE',
+  snowflake: 'DATA_ANALYTICS', databricks: 'DATA_ANALYTICS', tableau: 'DATA_ANALYTICS',
+  'power bi': 'DATA_ANALYTICS', looker: 'DATA_ANALYTICS', dbt: 'DATA_ANALYTICS',
+  salesforce: 'DIGITAL_CX', adobe: 'DIGITAL_CX', twilio: 'DIGITAL_CX', zendesk: 'DIGITAL_CX',
+  servicenow: 'COLLABORATION', microsoft: 'COLLABORATION', slack: 'COLLABORATION',
+  aws: 'INFRASTRUCTURE', amazon: 'INFRASTRUCTURE', azure: 'INFRASTRUCTURE',
+  gcp: 'INFRASTRUCTURE', google: 'INFRASTRUCTURE', vmware: 'INFRASTRUCTURE',
+  crowdstrike: 'SECURITY_IDENTITY', okta: 'SECURITY_IDENTITY', palo: 'SECURITY_IDENTITY',
+  qualys: 'SECURITY_IDENTITY', 'cyberark': 'SECURITY_IDENTITY', sailpoint: 'SECURITY_IDENTITY',
+};
+
+export function inferDomainSegment(vendorName: string): { segment: string; confidence: 'high' | 'low' } | null {
+  const lower = vendorName.toLowerCase();
+  for (const [hint, segment] of Object.entries(DOMAIN_SEGMENT_VENDOR_HINTS)) {
+    if (lower.includes(hint)) return { segment, confidence: 'high' };
+  }
+  return null;
+}
+
 export function validateExtractedFacts(args: {
   classification: FileClassification;
   facts: ExtractedContextFact[];
@@ -64,6 +92,92 @@ export function validateExtractedFacts(args: {
         field: 'time_classification',
         expected: 'invest | migrate | tolerate | retire',
         actual: timeClassification.valueText,
+      });
+    }
+
+    const domainSegmentFact = byField.get('domain_segment');
+    if (domainSegmentFact && domainSegmentFact.valueText && !VALID_DOMAIN_SEGMENTS.has(domainSegmentFact.valueText)) {
+      findings.push({
+        severity: 'error',
+        code: 'invalid_enum_value',
+        message: `${entityKey}.domain_segment must be one of: ${[...VALID_DOMAIN_SEGMENTS].join(' | ')}.`,
+        row: domainSegmentFact.sourceLocator.row,
+        field: 'domain_segment',
+        expected: [...VALID_DOMAIN_SEGMENTS].join(' | '),
+        actual: domainSegmentFact.valueText,
+      });
+    } else if (!domainSegmentFact || !domainSegmentFact.valueText) {
+      const vendorFact = byField.get('vendor_name') ?? byField.get('name') ?? byField.get('title');
+      const vendorName = vendorFact?.valueText ?? entityKey;
+      const inferred = inferDomainSegment(vendorName);
+      if (inferred && inferred.confidence === 'high') {
+        findings.push({
+          severity: 'info',
+          code: 'auto_inferred_domain_segment',
+          message: `${entityKey}.domain_segment was not set; inferred value '${inferred.segment}' from vendor name '${vendorName}'.`,
+          field: 'domain_segment',
+          expected: inferred.segment,
+          actual: '',
+        });
+      } else {
+        findings.push({
+          severity: 'warning',
+          code: 'missing_domain_segment',
+          message: `${entityKey} has no domain_segment; set to one of: ${[...VALID_DOMAIN_SEGMENTS].join(' | ')}.`,
+          field: 'domain_segment',
+        });
+      }
+    }
+
+    const businessFunctionFact = byField.get('business_function');
+    if (businessFunctionFact && businessFunctionFact.valueText && !VALID_BUSINESS_FUNCTIONS.has(businessFunctionFact.valueText)) {
+      findings.push({
+        severity: 'error',
+        code: 'invalid_enum_value',
+        message: `${entityKey}.business_function must be one of: ${[...VALID_BUSINESS_FUNCTIONS].join(' | ')}.`,
+        row: businessFunctionFact.sourceLocator.row,
+        field: 'business_function',
+        expected: [...VALID_BUSINESS_FUNCTIONS].join(' | '),
+        actual: businessFunctionFact.valueText,
+      });
+    }
+
+    const criticalityFact = byField.get('criticality');
+    if (criticalityFact && criticalityFact.valueText && !VALID_CRITICALITIES.has(criticalityFact.valueText)) {
+      findings.push({
+        severity: 'error',
+        code: 'invalid_enum_value',
+        message: `${entityKey}.criticality must be one of: ${[...VALID_CRITICALITIES].join(' | ')}.`,
+        row: criticalityFact.sourceLocator.row,
+        field: 'criticality',
+        expected: [...VALID_CRITICALITIES].join(' | '),
+        actual: criticalityFact.valueText,
+      });
+    }
+
+    const vendorCategoryFact = byField.get('vendor_category');
+    if (vendorCategoryFact && vendorCategoryFact.valueText && !VALID_VENDOR_CATEGORIES.has(vendorCategoryFact.valueText)) {
+      findings.push({
+        severity: 'error',
+        code: 'invalid_enum_value',
+        message: `${entityKey}.vendor_category must be one of: ${[...VALID_VENDOR_CATEGORIES].join(' | ')}.`,
+        row: vendorCategoryFact.sourceLocator.row,
+        field: 'vendor_category',
+        expected: [...VALID_VENDOR_CATEGORIES].join(' | '),
+        actual: vendorCategoryFact.valueText,
+      });
+    }
+
+    const autoRenewFact = byField.get('auto_renew');
+    if (autoRenewFact && autoRenewFact.valueText && !VALID_AUTO_RENEW.has(autoRenewFact.valueText)) {
+      findings.push({
+        severity: 'error',
+        code: 'invalid_enum_value',
+        message: `${entityKey}.auto_renew must be one of: ${[...VALID_AUTO_RENEW].join(' | ')}.`,
+        row: autoRenewFact.sourceLocator.row,
+        field: 'auto_renew',
+        expected: [...VALID_AUTO_RENEW].join(' | '),
+        actual: autoRenewFact.valueText,
       });
     }
 
