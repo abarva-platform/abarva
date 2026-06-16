@@ -33,9 +33,11 @@ export type SourceSectionVerifiedArtifactCode =
 export function getRequiredSectionsForArtifact(
   artifactCode: string,
 ): readonly string[] {
-  return SOURCE_ARTIFACT_REQUIRED_SECTIONS[
-    artifactCode as SourceSectionVerifiedArtifactCode
-  ] ?? [];
+  return (
+    SOURCE_ARTIFACT_REQUIRED_SECTIONS[
+      artifactCode as SourceSectionVerifiedArtifactCode
+    ] ?? []
+  );
 }
 
 export function formatRequiredSectionsForPrompt(artifactCode: string): string {
@@ -45,6 +47,31 @@ export function formatRequiredSectionsForPrompt(artifactCode: string): string {
     .map((section, index) =>
       index === 0 ? `## ${section}` : `## §${index} · ${section}`,
     )
+    .join("\n");
+}
+
+export function normalizeRequiredSectionHeadings(
+  artifactCode: string,
+  body: string,
+): string {
+  const requiredSections = getRequiredSectionsForArtifact(artifactCode);
+  if (requiredSections.length === 0) return body;
+
+  const requiredByNormalizedName = new Map(
+    requiredSections.map((section) => [normalizeHeading(section), section]),
+  );
+
+  return body
+    .split(/\r?\n/)
+    .map((line) => {
+      if (/^#{1,6}\s+/.test(line)) return line;
+      const trimmed = line.trim();
+      const requiredSection = requiredByNormalizedName.get(
+        normalizeHeading(trimmed),
+      );
+      if (!requiredSection) return line;
+      return `## ${requiredSection}`;
+    })
     .join("\n");
 }
 
@@ -116,7 +143,10 @@ function parseMarkdownLevelTwoSections(markdown: string): ParsedSection[] {
   return sections;
 }
 
-function normalizedHeadingIncludes(heading: string, sectionName: string): boolean {
+function normalizedHeadingIncludes(
+  heading: string,
+  sectionName: string,
+): boolean {
   const normalizedHeading = normalizeHeading(heading);
   const normalizedSection = normalizeHeading(sectionName);
   return (
@@ -141,8 +171,9 @@ function hasNonTrivialSectionBody(body: string): boolean {
   const cleaned = body
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/`[^`]*`/g, " ")
-    .replace(/^\s*\|.*\|\s*$/gm, " ")
-    .replace(/^\s*[-:| ]+\s*$/gm, " ")
+    .replace(/^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/gm, " ")
+    .replace(/[|]/g, " ")
+    .replace(/^\s*[-: ]+\s*$/gm, " ")
     .replace(/[#*_>\-[\]()]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
