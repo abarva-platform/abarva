@@ -282,9 +282,9 @@ function StatusPill({
         background: `${color}12`,
         color,
         borderRadius: 999,
-        padding: "4px 8px",
+        padding: "3px 7px",
         fontFamily: TOKENS.mono,
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: 800,
         textTransform: "uppercase",
         whiteSpace: "nowrap",
@@ -620,7 +620,7 @@ function LensCanvas({
 
   return (
     <section style={lensCanvasStyle} key={activeLens}>
-      <section style={sectionStyle}>
+      <section style={{ ...sectionStyle, marginTop: 0 }}>
         <div style={sectionHeaderStyle}>
           <div>
             <div style={eyebrowStyle}>{lensMeta.kicker} · Active canvas</div>
@@ -659,7 +659,7 @@ function LensCanvas({
         </div>
       </section>
 
-      <aside style={sectionStyle}>
+      <aside style={{ ...sectionStyle, marginTop: 0 }}>
         <div style={eyebrowStyle}>Decision read</div>
         <h2 style={sectionTitleStyle}>{lensMeta.shortLabel}</h2>
         <p style={sectionDeckStyle}>
@@ -710,7 +710,7 @@ function MetricTile({
         <div
           style={{
             fontFamily: TOKENS.serif,
-            fontSize: 27,
+            fontSize: 22,
             fontWeight: 760,
             lineHeight: 1,
             color: TOKENS.ink,
@@ -726,8 +726,8 @@ function MetricTile({
         style={{
           marginTop: 7,
           color: TOKENS.muted,
-          fontSize: 11,
-          lineHeight: 1.35,
+          fontSize: 10,
+          lineHeight: 1.25,
         }}
       >
         {detail}
@@ -754,7 +754,7 @@ function BarRow({
           display: "flex",
           justifyContent: "space-between",
           gap: 12,
-          fontSize: 11,
+          fontSize: 10,
           color: TOKENS.ink,
           fontWeight: 700,
         }}
@@ -768,7 +768,7 @@ function BarRow({
           background: TOKENS.faint,
           borderRadius: 999,
           overflow: "hidden",
-          marginTop: 6,
+          marginTop: 4,
         }}
       >
         <div
@@ -860,9 +860,7 @@ export function AiControlTowerPage({
       <section style={heroStyle}>
         <div>
           <div style={eyebrowStyle}>AI Control Tower · {tenantName}</div>
-          <h1 style={heroTitleStyle}>
-            AI value, productivity, spend, and risk.
-          </h1>
+          <h1 style={heroTitleStyle}>AI Control Tower.</h1>
           <p style={heroQuestionStyle}>{lensMeta.question}</p>
         </div>
         <div style={heroActionsStyle}>
@@ -917,7 +915,7 @@ export function AiControlTowerPage({
             </div>
             <StatusPill tone="green">live read</StatusPill>
           </div>
-          <div style={{ display: "grid", gap: 14 }}>
+          <div style={{ display: "grid", gap: 8 }}>
             <BarRow
               label="Value captured"
               value={summary.valueCapture}
@@ -960,17 +958,17 @@ export function AiControlTowerPage({
             </div>
             <StatusPill tone="amber">{`${pressuresView.cards.length} pressures`}</StatusPill>
           </div>
-          <div style={{ display: "grid", gap: 10 }}>
-            {priorityInitiatives.slice(0, 4).map((initiative) => (
+          <div style={{ display: "grid", gap: 4 }}>
+            {priorityInitiatives.slice(0, 3).map((initiative) => (
               <div key={initiative.initiativeId} style={rowStyle}>
                 <div>
                   <div
-                    style={{ fontSize: 13, fontWeight: 800, color: TOKENS.ink }}
+                    style={{ fontSize: 12, fontWeight: 800, color: TOKENS.ink }}
                   >
                     {initiative.name}
                   </div>
                   <div
-                    style={{ marginTop: 4, fontSize: 11, color: TOKENS.muted }}
+                    style={{ marginTop: 3, fontSize: 10, color: TOKENS.muted }}
                   >
                     {initiative.ownerName || "Unassigned owner"} ·{" "}
                     {normalizeStatus(initiative.stage)}
@@ -978,7 +976,7 @@ export function AiControlTowerPage({
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div
-                    style={{ fontSize: 12, fontWeight: 800, color: TOKENS.ink }}
+                    style={{ fontSize: 11, fontWeight: 800, color: TOKENS.ink }}
                   >
                     {money(initiativeMeasured(initiative))}
                   </div>
@@ -1053,8 +1051,8 @@ export function AiControlTowerPage({
       surface="ai-control-tower"
       surfaceContext={{ surface: "ai-control-tower", activeLens, clientId }}
       initialQuote="Ask about value, adoption, productivity, agents, spend, risk, evidence, or actions."
-      defaultLeftPercent={27}
-      minLeftPx={310}
+      defaultLeftPercent={24}
+      minLeftPx={280}
     />
   );
 }
@@ -1062,7 +1060,7 @@ export function AiControlTowerPage({
 const pageStyle: CSSProperties = {
   minHeight: "calc(100vh - 64px)",
   background: TOKENS.bg,
-  padding: "20px clamp(18px, 3vw, 36px) 34px",
+  padding: "14px clamp(16px, 2.6vw, 28px) 24px",
   fontFamily: TOKENS.sans,
   color: TOKENS.ink,
 };
@@ -1072,25 +1070,25 @@ const heroStyle: CSSProperties = {
   justifyContent: "space-between",
   alignItems: "flex-start",
   gap: 24,
-  paddingBottom: 16,
+  paddingBottom: 10,
   borderBottom: `1px solid ${TOKENS.rule}`,
 };
 
 const heroTitleStyle: CSSProperties = {
   margin: "6px 0 0",
   fontFamily: TOKENS.serif,
-  fontSize: "clamp(25px, 2.4vw, 36px)",
-  lineHeight: 1,
+  fontSize: "clamp(22px, 2vw, 30px)",
+  lineHeight: 0.98,
   fontWeight: 820,
   letterSpacing: 0,
   maxWidth: 760,
 };
 
 const heroQuestionStyle: CSSProperties = {
-  margin: "8px 0 0",
+  margin: "6px 0 0",
   color: TOKENS.muted,
-  fontSize: 13,
-  lineHeight: 1.35,
+  fontSize: 12,
+  lineHeight: 1.25,
   maxWidth: 1040,
 };
 
@@ -1106,7 +1104,7 @@ const primaryButtonStyle: CSSProperties = {
   borderRadius: 6,
   background: TOKENS.navy,
   color: TOKENS.surface,
-  padding: "8px 11px",
+  padding: "7px 10px",
   fontSize: 11,
   fontWeight: 800,
   textDecoration: "none",
@@ -1117,16 +1115,16 @@ const tabBarStyle: CSSProperties = {
   display: "flex",
   gap: 6,
   overflowX: "auto",
-  padding: "12px 0",
+  padding: "10px 0 8px",
 };
 
 const tabStyle: CSSProperties = {
   border: `1px solid ${TOKENS.rule}`,
   borderRadius: 4,
-  padding: "8px 12px 9px",
+  padding: "7px 10px 8px",
   display: "grid",
   gap: 2,
-  minWidth: 92,
+  minWidth: 86,
   textAlign: "center",
   fontSize: 12,
   fontWeight: 800,
@@ -1136,7 +1134,7 @@ const tabStyle: CSSProperties = {
 
 const tabKickerStyle: CSSProperties = {
   fontFamily: TOKENS.mono,
-  fontSize: 9,
+  fontSize: 8,
   letterSpacing: "0.12em",
   textTransform: "uppercase",
   color: TOKENS.muted,
@@ -1144,7 +1142,7 @@ const tabKickerStyle: CSSProperties = {
 };
 
 const tabLabelStyle: CSSProperties = {
-  fontSize: 12,
+  fontSize: 11,
   lineHeight: 1.15,
   fontWeight: 850,
 };
@@ -1152,49 +1150,50 @@ const tabLabelStyle: CSSProperties = {
 const metricGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(4, minmax(150px, 1fr))",
-  gap: 10,
+  gap: 8,
+  marginTop: 10,
 };
 
 const metricTileStyle: CSSProperties = {
   background: TOKENS.surface,
   border: `1px solid ${TOKENS.rule}`,
   borderRadius: 6,
-  padding: 13,
-  minHeight: 96,
+  padding: "9px 10px",
+  minHeight: 70,
 };
 
 const dashboardGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "minmax(0, 1.05fr) minmax(320px, 0.95fr)",
-  gap: 12,
-  marginTop: 12,
+  gap: 10,
+  marginTop: 10,
 };
 
 const lensCanvasStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1.45fr) minmax(280px, 0.55fr)",
-  gap: 12,
+  gridTemplateColumns: "minmax(0, 1.55fr) minmax(250px, 0.45fr)",
+  gap: 10,
 };
 
 const sectionStyle: CSSProperties = {
   background: TOKENS.surface,
   border: `1px solid ${TOKENS.rule}`,
   borderRadius: 6,
-  padding: 14,
-  marginTop: 12,
+  padding: 11,
+  marginTop: 0,
 };
 
 const sectionHeaderStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "flex-start",
-  gap: 14,
-  marginBottom: 14,
+  gap: 10,
+  marginBottom: 9,
 };
 
 const eyebrowStyle: CSSProperties = {
   fontFamily: TOKENS.mono,
-  fontSize: 9,
+  fontSize: 8,
   letterSpacing: "0.14em",
   textTransform: "uppercase",
   color: TOKENS.muted,
@@ -1202,19 +1201,19 @@ const eyebrowStyle: CSSProperties = {
 };
 
 const sectionTitleStyle: CSSProperties = {
-  margin: "5px 0 0",
+  margin: "4px 0 0",
   fontFamily: TOKENS.serif,
-  fontSize: 20,
-  lineHeight: 1.05,
+  fontSize: 17,
+  lineHeight: 1,
   fontWeight: 760,
   letterSpacing: 0,
 };
 
 const sectionDeckStyle: CSSProperties = {
-  margin: "6px 0 0",
+  margin: "4px 0 0",
   color: TOKENS.muted,
-  fontSize: 12,
-  lineHeight: 1.35,
+  fontSize: 11,
+  lineHeight: 1.25,
   maxWidth: 780,
 };
 
@@ -1222,60 +1221,61 @@ const rowStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   gap: 12,
-  padding: "9px 0",
+  padding: "7px 0",
   borderTop: `1px solid ${TOKENS.faint}`,
 };
 
 const calloutGridStyle: CSSProperties = {
   display: "grid",
-  gap: 8,
-  marginTop: 14,
+  gap: 7,
+  marginTop: 10,
 };
 
 const calloutStyle: CSSProperties = {
   border: `1px solid ${TOKENS.faint}`,
   borderRadius: 6,
-  padding: 10,
+  padding: 8,
   background: "#fbfcfa",
 };
 
 const calloutValueStyle: CSSProperties = {
-  marginTop: 6,
+  marginTop: 4,
   fontFamily: TOKENS.serif,
-  fontSize: 24,
+  fontSize: 19,
   lineHeight: 1,
   fontWeight: 780,
   color: TOKENS.ink,
 };
 
 const calloutDetailStyle: CSSProperties = {
-  marginTop: 5,
+  marginTop: 4,
   color: TOKENS.muted,
-  fontSize: 11,
-  lineHeight: 1.35,
+  fontSize: 10,
+  lineHeight: 1.25,
 };
 
 const tableStyle: CSSProperties = {
   width: "100%",
   borderCollapse: "collapse",
-  minWidth: 760,
+  minWidth: 700,
 };
 
 const tableHeadStyle: CSSProperties = {
   textAlign: "left",
-  padding: "8px 7px",
+  padding: "7px 6px",
   borderBottom: `1px solid ${TOKENS.rule}`,
   fontFamily: TOKENS.mono,
-  fontSize: 9,
+  fontSize: 8,
   letterSpacing: "0.12em",
   textTransform: "uppercase",
   color: TOKENS.muted,
 };
 
 const tableCellStyle: CSSProperties = {
-  padding: "9px 7px",
+  padding: "7px 6px",
   borderBottom: `1px solid ${TOKENS.faint}`,
-  fontSize: 12,
+  fontSize: 11,
+  lineHeight: 1.25,
   color: TOKENS.ink,
 };
 

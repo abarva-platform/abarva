@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The top-level Tower route now opens the simplified AI Control Tower executive surface instead of the older IT Portfolio view. The new view focuses on the CIO/CFO questions for AI value, adoption, productivity, agents, spend, risk, evidence, and system-derived actions. Legacy Tower subviews have been hard-retired, leaving `/tower` as the single Tower entry point. This slice also tightens the AI Control Tower visual system for high-density executive and tabular views, and corrects the lens interaction so tabs sit below the dashboard and refresh the active canvas.
+The top-level Tower route now opens the simplified AI Control Tower executive surface instead of the older IT Portfolio view. The new view focuses on the CIO/CFO questions for AI value, adoption, productivity, agents, spend, risk, evidence, and system-derived actions. Legacy Tower subviews have been hard-retired, leaving `/tower` as the single Tower entry point. This slice also tightens the AI Control Tower visual system for high-density executive and tabular views, corrects the lens interaction so tabs sit below the dashboard and refresh the active canvas, and further compresses the first viewport so the active tabular analysis starts immediately below the compact dashboard.
 
 ## Layer Impact
 
@@ -33,6 +33,8 @@ The top-level Tower route now opens the simplified AI Control Tower executive su
 - Refined the AI Control Tower view with compact, table-friendly typography, rectangular lens tabs, tighter metric cards, thinner row rhythm, and quieter dashboard spacing.
 - Moved the AI Control Tower lens tabs below the executive dashboard summary.
 - Added lens-specific canvases so Value, Productivity, Agents, Spend, Risk, Evidence, and Actions render distinct table/callout views on click.
+- Reduced the hero, metric cards, dashboard cards, focus rows, pills, and table/callout typography so the page behaves like an analysis control surface rather than a long report page.
+- Narrowed the default Atlas panel allocation to give the dashboard and active table more horizontal room.
 - Updated the legacy portfolio degradation test to assert retirement redirect behavior.
 - Added a focused React regression test for tab placement and tab-driven canvas refresh.
 
