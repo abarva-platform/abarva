@@ -27,6 +27,47 @@ vendor ingestion are **explicitly out of scope** (see §7). Do not start them.
 
 ---
 
+## 0.5 · VERIFIED pre-flight — the evidence→criterion mapping is already done
+
+A pre-flight analysis read both canonical catalogs in full and produced the join. **You do not
+have to discover the mapping — validate and encode this.** Across 39 criteria: **15 clean**
+(auto-assessable from readiness alone), **12 fuzzy** (evidence informs but a human act/signature
+remains — surface as "evidence ready, confirm", do NOT auto-flip), **12 manual-only** (no backing
+evidence — stays manual).
+
+**Build the join with these six rules (each is a real gotcha found in the catalogs):**
+1. **Do NOT key on ID prefix.** `EVID-SCOPE-01` (in `gate-criteria.ts`) is a *criterion*, not an
+   evidence requirement. Evidence requirements are `EVID-SRC-<STAGE>-<SLUG>`. Key the map on the
+   full ID, never on the `EVID-` prefix.
+2. **Tolerate cross-stage evidence.** `GATE-SCOPE-02` (scope→rfp) is satisfied by
+   `EVID-SRC-STR-SPONSOR-COMMIT` (a *strategy*-stage requirement). The join must allow an evidence
+   requirement whose `stage` differs from the criterion's `fromStage` — **no `stage===` guard**.
+3. **Per-requirement thresholds for multi-evidence criteria.** `GATE-PRICE-01` needs BOTH
+   `EVID-SRC-PRICE-VENDOR-PRICING` (≥Available) AND `EVID-SRC-PRICE-ASSUMPTIONS` (≥Usable Evidence).
+   Encode a list of `{requirementId, minState}`; ALL must reach their own threshold (strictest wins).
+4. **Recommended-level evidence must not hard-block.** e.g. `EVID-SRC-RFP-VENDOR-INTEL` is
+   `level: 'recommended'` — map it but never let it block promotion.
+5. **Ignore the legacy `ART-AMS-*` / `GATE-AMS-*` scheme** in `artifact-gate-map.ts` — those IDs
+   exist in neither canonical catalog (old `PAT_SRC_AMS_001` fixtures). Reuse its *shape*, not its IDs.
+6. **No dangling refs to fix** — zero gate criteria point at a missing evidence id. Four evidence
+   requirements are unconsumed (`EVID-SRC-SCOPE-ORG`, `EVID-SRC-SCOPE-FY-CONTRACT`, and two
+   fuzzy/recommended ones); tag them "informational, no gate" in the map.
+
+**Cover these stages first (most clean mappings = best positive-path demo):**
+- **`scope → rfp`** (hero demo): `GATE-SCOPE-01` ↔ `EVID-SRC-SCOPE-APP-INV` (≥Usable Evidence) and
+  `EVID-SCOPE-01` ↔ `EVID-SRC-SCOPE-TICKET-HISTORY` (≥Available) — the most literal label-matches
+  in the catalog, and the canonical example.
+- **`responses → evaluation`** (proves a no-manual-residue stage): `GATE-RESP-01` ↔
+  `EVID-SRC-RESP-PROPOSALS` (≥Available), `GATE-RESP-03` ↔ `EVID-SRC-RESP-CLARIFICATIONS` (≥Loaded);
+  zero manual-only criteria in this transition.
+- **`transition → value`**: `GATE-TRAN-02` ↔ `EVID-SRC-TRAN-MILESTONES`, `GATE-TRAN-03` ↔
+  `EVID-SRC-TRAN-KT-EVIDENCE`.
+
+Encode at minimum `scope → rfp` + one other clean stage in this slice; `log`/comment which
+criteria are intentionally left manual (no silent gaps).
+
+---
+
 ## 1 · Why this is the right first slice
 
 The substrate already exists. The only thing missing is the wire between two tables

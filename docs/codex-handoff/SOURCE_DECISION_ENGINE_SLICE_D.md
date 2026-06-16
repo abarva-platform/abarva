@@ -1,48 +1,59 @@
 # Codex Handoff — Source Decision Engine · Slice D
 
-**Archetype-specific artifact branching (audit-first)**
+**Archetype-specific artifact branching (audit done — verdict: build the injection wire)**
 
 > Read `SOURCE_DECISION_ENGINE_OVERVIEW.md` first. **Depends on Slice B** (auto-draft must exist;
 > this slice deepens what the draft contains).
 
 ---
 
-## 0 · Why this slice
+## 0 · Why this slice — AND the audit is already done
 
 An AMS RFP should not look like an ERP-SI, AI-data-platform, or renewal RFP — different sections,
-evaluation weights, commercial asks, risk areas, required evidence. The Source Event Archetype
-Framework canon exists (4 archetypes: AMS / ERP-SI / AI-data-platform / renewal). The question is
-whether that canon **flows into artifact generation**. From inspection it does not appear to —
-`stage-canvas-config.ts` offers the same choices regardless of archetype, and the `d09` RFP
-template is generic. **Confirm before building.**
+evaluation weights, commercial asks, risk areas, required evidence.
+
+**VERIFIED audit verdict (pre-flight, file/line evidence): NOT AT ALL — archetype is a label;
+generation is generic.** You do NOT need to re-run the audit. Findings:
+
+- `prompt-registry.ts` `d09_rfp_pack` has ONE hardcoded `systemPrompt` with a fixed `## §1…§10`
+  skeleton — identical for all archetypes. Archetype appears only as a printed label
+  (`buildUserMessage`: `Archetype: ${ctx.event.archetype}`). Same for `d01`/`d05`.
+- `context-binder.ts` threads `archetype` into the context as a passthrough string; nothing
+  downstream branches on it.
+- `stage-canvas-config.ts` and `stage-packs/S3_rfp.ts` have **zero** archetype references.
+
+**The canon EXISTS and is rich — and it is already on `main`.** `src/lib/source/archetypes/`
+(merged via PR #3374) defines per-archetype, *structurally distinct* content:
+- `archetypes/registry.ts` — per-archetype `rfpDocumentStructure` (AMS:
+  `service_towers / sla_kpi / resource_units / productivity / transition / retained_org`; ERP-SI:
+  `process_scope / rollout_waves / integrations / data_migration / testing_cutover / change_adoption`),
+  per-archetype `evaluationModel.criteria` **weights**, vendor-guide `ask[]` commercial asks,
+  `riskModel`, `negotiationLevers`, `deliverablePack`.
+- `archetypes/rfp-canon.ts` — `buildArchetypeRfp(archetype, readiness)` + `renderRfpMarkdown(rfp)`
+  already turn that structure into an evidence-gated RFP outline.
+- `archetypes/resolver.ts` — maps an event to its registry archetype.
+
+It is **dormant** (no runtime consumers outside `__tests__`). Since slices branch off `main`, the
+module is present — **the only missing work is the injection wire.** Do NOT rebuild canon.
+
+> Note: the canon is on `main` but was NOT on the `codex/corpus-wave-24` working branch. Branch
+> this slice off `main` (as all slices do) and the `archetypes/` module will be present.
 
 ---
 
-## 1 · Task 1 — AUDIT (do this first; report before implementing)
+## 1 · Task — implement the injection wire (canon already exists; reuse it)
 
-Determine, with file/line evidence, whether archetype already changes artifact structure:
-- Does `getPromptTemplate('d09_rfp_pack')` / the prompt registry inject any archetype-specific
-  sections, weights, or asks? (`src/lib/source/agent-generation/prompt-registry.ts`)
-- Does the archetype framework expose per-archetype RFP canon (sections / weights / commercial
-  asks / risk areas) that generation could consume but doesn't?
-- Is archetype already threaded into the generation context (`buildSourceGenerationContext`)?
-
-**If archetype branching already exists and is correct → STOP. Report that, do not add a second
-branching layer.** If partial → implement only the missing injection.
-
----
-
-## 2 · Task 2 — IMPLEMENT (only if the audit finds a gap)
-
-- Add an archetype → artifact-canon resolver that, given the event's archetype, supplies the
-  archetype-specific **sections, evaluation weights, commercial asks, risk areas, and required
-  evidence context** for the artifact being generated. Source this from the existing archetype
-  framework canon — do not hand-author new canon if the framework already has it.
-- Inject it into the prompt template's **system prompt** (structural sections + weights) and/or
-  **bound context** (commercial asks / risk areas), so the generated draft is materially
-  archetype-shaped. Keep the generic fallback for events with no archetype set.
-- Start with the **RFP (`d09`)** as the proof artifact; the resolver should be general enough to
-  extend to scope memo / scorecard later (don't build those here).
+- In `prompt-registry.ts`, make `d09_rfp_pack` archetype-aware: (a) resolve the archetype via
+  `archetypes/resolver.ts` from `ctx.event.archetype`; (b) replace the static `## §1…§10`
+  system-prompt skeleton with the resolved `archetype.rfpDocumentStructure` section titles;
+  (c) inject `evaluationModel.criteria` weights into the §evaluation section and the vendor
+  `ask[]` into the §required-capabilities / §pricing sections.
+- **Reuse `buildArchetypeRfp` / `renderRfpMarkdown` from `archetypes/rfp-canon.ts`** to produce the
+  archetype outline — do not re-implement rendering.
+- Keep the **generic fallback** for events with no archetype set (the current static skeleton).
+- Start with the **RFP (`d09`)** as the proof artifact; the wire should generalize to `d01`/`d05`
+  later (don't build those here). Leave `stage-canvas-config.ts` archetype-awareness as a separate,
+  smaller follow-on (today it's flat) — out of scope for this slice.
 
 ---
 

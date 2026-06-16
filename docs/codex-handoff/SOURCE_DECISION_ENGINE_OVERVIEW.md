@@ -25,12 +25,17 @@ Evidence  ──▶  Readiness  ──▶  Gate Assessment  ──▶  Artifact 
 | **B** | Auto-draft on stage entry (fast path) | — (pairs with A) | Enter a stage → a working draft is already waiting. Strategy memo generated at P0 approval. |
 | **B2** | Source → orchestrator bridge (board-pack, premium dial) | B | "Produce board pack" routes a Source artifact through the 6-pass orchestrator so `ABARVA_DOCGEN_QUALITY_PROFILE` finally reaches Source. |
 | **C** | Approval routing foundation | A | Gate approval label strings resolve to real people + persisted approval records. |
-| **D** | Archetype-specific artifact branching | B | An AMS RFP is materially different from an ERP-SI / renewal RFP. Audit first. |
+| **D** | Archetype-specific artifact branching | B | An AMS RFP is materially different from an ERP-SI / renewal RFP. **Audit done** — canon exists on `main`, build the injection wire. |
 | **E** | Vendor response ingestion boundary | — | Upload a vendor response → normalization + completeness + risk fire automatically. |
 
 **Recommended execution order:** A → B → A2 → C → D → B2 → E.
 (A and B are the two highest-value, lowest-risk wires. A2/C harden governance. D/B2 deepen
 quality. E opens the vendor side.)
+
+> **Pre-flight done (de-risking).** Slice A's evidence→criterion mapping (15 clean / 12 fuzzy /
+> 12 manual across 39 criteria, with 6 join gotchas) and Slice D's archetype audit (verdict:
+> generation is generic; canon exists on `main`, only the injection wire is missing) were
+> pre-resolved and folded into those briefs' §0.5 / §0. Codex starts with the hard analysis done.
 
 **Out of this roadmap (named, later):** *Slice F — section-batched large-package generation*
 (50-slide PPTX / multi-appendix RFP that cannot fit one model call even at premium budgets).
