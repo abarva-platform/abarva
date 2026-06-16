@@ -95,10 +95,22 @@ locked/superseded) → `collectUpstreamBodies` → `template.buildUserMessage` �
 `autoDraftOnStageEntry` POST that same generate route per target code (or extract `generateArtifact`
 into a callable server fn) — do NOT re-implement the sequence.
 
-### 2.3 — Surface generation status
-`DocumentTab.tsx` (and/or the workspace shelf): show per-artifact draft status —
-`Draft ready for review` / `Generating…` / `Generation failed · Retry`. Use the existing
-artifact status enum; do not invent a parallel state store. The manual "Generate" button stays.
+### 2.3 — Surface generation status (compact — obey OVERVIEW §UX density contract)
+`DocumentTab.tsx` (and/or the workspace shelf): **one row per artifact**, status as a single
+marker + one action — never a verbose card per artifact. Layout:
+
+```
+● Scope memo                Draft ready for review        [Open] [Regenerate]
+● Application inventory      Generating…
+● Decision authority log     Generation failed            [Retry]
+```
+
+- A single status marker per row (color/word): `Draft ready for review` / `Generating…` /
+  `Generation failed`. Don't stack a badge + sentence + label.
+- One action set per row, revealed inline (`Open` / `Regenerate` / `Retry`). The manual "Generate"
+  button stays as the regeneration fallback.
+- Use the existing artifact status enum; do not invent a parallel state store. Detail (generation
+  metadata, timestamps, failure reason) lives on expand/hover, not in the row.
 
 ---
 

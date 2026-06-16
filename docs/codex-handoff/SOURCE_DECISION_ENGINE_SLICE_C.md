@@ -43,12 +43,22 @@ and noting it as a migration follow-on. Each record carries: `requirementId`, `a
 resolved `personId` (or null), `status` (`pending | approved | rejected | skipped | unresolved`),
 `timestamp`, `actorId`, `comment/reason`.
 
-### 1.3 — Surface in the decision panel
-In the Stage Decision Status panel (Slice A) + `GateTab.tsx`: show the approval requirements for
-the current gate with their resolution state. An unresolved approver renders as
-**`Approval unresolved`** (clear, not silently treated as satisfied). A resolved-but-pending one
-renders as pending. The promote path may proceed per existing rules, but the panel must make the
-approval posture visible.
+### 1.3 — Surface in the decision panel (compact — obey OVERVIEW §UX density contract)
+In the Stage Decision Status panel (Slice A) + `GateTab.tsx`: **one row per approval requirement**,
+matching the gate-panel row shape from Slice A §UX. Layout:
+
+```
+● Business sponsor approval     Maya Rodriguez · pending        [Request]
+● Executive review              unresolved — no approver on event
+```
+
+- A single status marker per row: resolved approver name + `pending` / `approved` / `rejected`, or
+  **`Approval unresolved`** when no identity resolves (clear, never silently treated as satisfied).
+- One action per row (`Request` / view record), revealed inline. Do not stack badge + sentence +
+  label. The criterion/requirement ID and full record (timestamps, actor, comment) live on
+  expand/hover, not in the row.
+- The promote path may proceed per existing rules, but the panel must make the approval posture
+  visible at a glance — one row, one status, no second list.
 
 ### 1.4 — Notification hook (stub, clean)
 Define a `notifyApprover(requirement, approver)` seam that currently no-ops/logs. Do NOT wire

@@ -219,18 +219,60 @@ Same file or `stage-recommendation.ts`. Compose the assessment into:
 - In `UniversalCanvasShell.tsx`, compute `assessStageGate(...)` and
   `buildStageRecommendation(...)` from the already-loaded `stageCriteria` + `stageEvidence`,
   and pass both into `GateTab`.
-- In `GateTab.tsx`:
-  - Add a **Stage Decision Status** panel at the top: the recommendation status with its
-    reason codes and blocker list (this is the CXO's one-glance answer).
-  - On each criterion row, add a provenance badge using the exact UX language below.
-  - The met/total count and Promote-button gating must use the **derived** state
-    (manual-met + auto-met), so an auto-assessed-ready stage actually shows as promotable.
-  - Manual **Mark met / Reopen** buttons keep working unchanged.
+- The met/total count and Promote-button gating must use the **derived** state (manual-met +
+  auto-met), so an auto-assessed-ready stage actually shows as promotable.
+- Manual **Mark met / Reopen** buttons keep working unchanged.
 
 **UX language (use verbatim — reinforces the contract):**
 `Ready to advance` · `Blocked by missing evidence` · `Ready with warnings` ·
 `Auto-assessed from evidence` · `Manual override` · `Needs human review` ·
 `Draft ready for review`. Avoid adding new manual checkboxes.
+
+### 4.5 — §UX · The compact gate panel (MANDATORY layout — applies to EVERY stage)
+
+The founder rejected a first draft that rendered the same criteria three times (blocker summary +
+"N hard blockers" list + full cards) with an always-open approval textarea on every card. **Build it
+this way instead** — and the same panel renders at every stage (Scope, RFP, Evaluation…), so this
+layout is reused, not Scope-only. Obey the six rules in OVERVIEW §UX density contract.
+
+Structure (one header + one list + one footer — nothing repeated):
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ ● Scope → RFP gate    Blocked · 0 of 5 cleared        [Promote ↗] │  header: dot=overall status,
+├──────────────────────────────────────────────────────────────────┤        one count line, promote
+│ ● Application portfolio inventoried + tiered            ea council │  ONE row per criterion:
+│   Application inventory · not requested → needs usable evidence    │  - dot = status color
+│                                                       [Mark met]   │  - title (one line)
+├──────────────────────────────────────────────────────────────────┤  - ONE gap/action line
+│ ● L2/L3 ticket history parsed              sentinel   [Mark met]   │  - owner chip (quiet)
+│   Ticket history · not requested → needs available                │  - single action button
+├──────────────────────────────────────────────────────────────────┤
+│ ● Sponsor commitment letter on record       sponsor  [Mark met]   │  amber dot = needs review:
+│   Needs human review · sponsor sign-off                           │  NO fake evidence gap,
+├──────────────────────────────────────────────────────────────────┤  just the human action line
+│ ● Scope memo signed by sponsor + EA         sponsor  [Mark met]   │  many-input criterion:
+│   4 inputs not ready · see what's missing                         │  collapse to a count + link,
+├──────────────────────────────────────────────────────────────────┤  NOT all four inline
+│ → Next: RFP needs an approved legal template     Open Workspace ↗ │  footer: one look-ahead line
+└──────────────────────────────────────────────────────────────────┘
+```
+
+Rules specific to this panel:
+- **Dot colors:** red = `Blocked by missing evidence`, amber = `Needs human review`, green = met
+  (manual or `Auto-assessed from evidence`). The dot is the status — do not also render a state
+  badge + a reason sentence + a label on the same row.
+- **The gap line is derived, one line:** for evidence-blocked criteria show
+  `<evidence label> · <current state> → needs <minimum state>`; for review-only criteria show
+  `Needs human review · <what the human confirms>`. For a criterion with multiple unmet inputs,
+  show `N inputs not ready · see what's missing` (expand on click) — never list them all inline.
+- **Approval reason is collapsed.** The "what evidence did you review / why is this gate ready"
+  textarea appears ONLY after the user clicks **Mark met**, on that one row, and collapses again on
+  cancel/confirm. It is never pre-rendered open, and never shown for more than one row at a time.
+- **Detail on demand:** criterion ID (`GATE-SCOPE-01`), full description, and full owner role live
+  in a hover/expand affordance — present for audit, off the default glance.
+- **No second list.** The rows ARE the blockers — do not also render a separate "N hard blockers"
+  summary. The header count (`0 of 5 cleared`) is the only summary.
 
 ---
 

@@ -119,6 +119,32 @@ npm run test:behaviors                                   # or the targeted test 
 node scripts/release-check.mjs --base origin/main --head HEAD
 ```
 
+### UX density contract — THE HARD RULE for every panel (every slice)
+The founder has rejected cluttered Source canvas surfaces **twice** (the WorkspaceExplorer preview
+pane; the first Stage Decision Status panel that rendered the same 5 criteria three times with an
+always-open approval textarea on every card). Dense-everything-at-once is form-fill — the exact
+opposite of "every click is a decision." **Every panel you build or touch obeys these six rules:**
+
+1. **One row per item.** A criterion / evidence requirement / artifact / approval is ONE row.
+   Never render the same item in multiple stacked forms (summary + list + cards = three copies).
+2. **Color IS the status.** A single status dot carries state — `red` = blocked by evidence,
+   `amber` = needs human review, `green` = met. Do NOT also spell the state in a badge AND a
+   sentence AND a label.
+3. **One secondary line max.** Each row gets at most one context line: the actionable gap
+   (`Application inventory · not requested → needs usable evidence`) or the human action
+   (`Needs human review · sponsor sign-off`). Not description + reason + needs-stanza + id stacked.
+4. **Action reveals its form.** The approval-reason textarea (and any input) appears only AFTER
+   the user clicks the action, on that one row — never pre-rendered open for all rows.
+5. **Detail one level down.** Criterion IDs, full descriptions, multi-input breakdowns,
+   owner-beyond-a-chip live in hover / expand / click-through — present for audit, absent from the
+   glance. (e.g. a criterion needing 4 inputs shows "4 inputs not ready · see what's missing", not
+   all four inline.)
+6. **No duplication.** If the same data appears twice on a screen, delete one. The header is the
+   only summary; the rows are the detail.
+
+A compact reference layout for the gate panel is specified in Slice A §UX. Apply the same shape to
+the Evidence tab, the Documents/auto-draft status (Slice B), and the approvals surface (Slice C).
+
 ### Browser verification — THE HARD GATE (every slice)
 Code-complete is **not** done. **Done = you navigated the real deployed app and saw it work.**
 - Test target: **SkyHarbor Air**, event `affa4231-eecd-4019-9b76-06bb8d324988`
