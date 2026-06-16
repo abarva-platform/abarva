@@ -7,7 +7,6 @@ import type {
   WorkspaceGenerateCandidate,
   WorkspaceGenerateIntent,
   WorkspaceItem,
-  WorkspaceItemKind,
   WorkspaceItemState,
   WorkspaceUploadIntent,
 } from "@/lib/workspace-explorer/types";
@@ -83,15 +82,6 @@ type WorkspaceTableRow =
       doc: WorkspaceItem;
     };
 
-const KIND_LABELS: Record<WorkspaceItemKind, string> = {
-  input: "Inputs",
-  deliverable: "Deliverables",
-  approval: "Approvals",
-  evidence: "Evidence",
-  vendor_response: "Vendor responses",
-  attachment: "Attachments",
-};
-
 /** The lifecycle step an item belongs to (its folder in the by-step explorer). */
 function stageOf(item: WorkspaceItem): string {
   return typeof item.stageKey === "string" && item.stageKey.length > 0
@@ -151,7 +141,6 @@ export function WorkspaceExplorer({
   const [activeStage, setActiveStage] = useState<string>(
     () => stageFolders[0] ?? "all",
   );
-  const [activeId, setActiveId] = useState(documentItems[0]?.id ?? null);
   const [selectedGenerateId, setSelectedGenerateId] = useState(
     generateIntent?.candidates[0]?.id ?? "",
   );
@@ -222,12 +211,6 @@ export function WorkspaceExplorer({
       doc,
     })),
   ];
-  const activeItem =
-    realDocs.find((item) => item.id === activeId) ??
-    tableRows.find((row) => row.kind === "requirement" && row.doc)?.doc ??
-    extraDocs[0] ??
-    documentItems[0] ??
-    null;
   const selectedGenerateCandidate =
     generateIntent?.candidates.find(
       (candidate) => candidate.id === selectedGenerateId,
@@ -446,7 +429,7 @@ export function WorkspaceExplorer({
                     <th style={{ ...TH_STYLE, width: "20%" }}>Needed for</th>
                     <th style={{ ...TH_STYLE, width: "12%" }}>Status</th>
                     <th style={{ ...TH_STYLE, width: "11%" }}>Owner</th>
-                    <th style={{ ...TH_STYLE, width: "12%" }}>Used by</th>
+                    <th style={{ ...TH_STYLE, width: "12%" }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -454,15 +437,12 @@ export function WorkspaceExplorer({
                     const doc = row.doc;
                     const requirement =
                       row.kind === "requirement" ? row.requirement : null;
-                    const active = Boolean(doc && doc.id === activeItem?.id);
                     return (
                       <tr
                         key={row.id}
                         data-testid="workspace-explorer-row"
                         data-row-kind={row.kind}
-                        aria-current={active ? "true" : undefined}
-                        onClick={() => doc && setActiveId(doc.id)}
-                        style={tableRowStyle(active, Boolean(doc))}
+                        style={tableRowStyle()}
                       >
                         <td style={TD_STYLE}>
                           <span style={FILE_CELL_STYLE}>
@@ -499,7 +479,9 @@ export function WorkspaceExplorer({
                         </td>
                         <td style={TD_STYLE}>{tableOwner(row)}</td>
                         <td style={TD_STYLE}>
-                          {doc ? tableUsedBy(doc) : (
+                          {doc ? (
+                            <WorkspaceItemAction item={doc} />
+                          ) : (
                             <Link
                               href={`?intent=upload&stage=${activeStage}`}
                               style={NEED_UPLOAD_STYLE}
@@ -519,59 +501,25 @@ export function WorkspaceExplorer({
             <div style={EMPTY_STYLE}>No documents in this step yet.</div>
           )}
         </div>
-
-        <aside style={PREVIEW_STYLE} aria-label="Workspace item preview">
-          {activeItem ? (
-            <>
-              <div style={EYEBROW_STYLE}>Preview</div>
-              <h2 style={PREVIEW_TITLE_STYLE}>{activeItem.name}</h2>
-              <p style={PREVIEW_COPY_STYLE}>
-                {activeItem.description ?? "No description recorded yet."}
-              </p>
-              <dl style={DETAIL_GRID_STYLE}>
-                <div style={DETAIL_ITEM_STYLE}>
-                  <dt style={DETAIL_TERM_STYLE}>Kind</dt>
-                  <dd style={DETAIL_VALUE_STYLE}>{KIND_LABELS[activeItem.kind]}</dd>
-                </div>
-                <div style={DETAIL_ITEM_STYLE}>
-                  <dt style={DETAIL_TERM_STYLE}>Origin</dt>
-                  <dd style={DETAIL_VALUE_STYLE}>{activeItem.origin}</dd>
-                </div>
-                <div style={DETAIL_ITEM_STYLE}>
-                  <dt style={DETAIL_TERM_STYLE}>Classification</dt>
-                  <dd style={DETAIL_VALUE_STYLE}>
-                    {activeItem.classification ?? "Not classified"}
-                  </dd>
-                </div>
-                <div style={DETAIL_ITEM_STYLE}>
-                  <dt style={DETAIL_TERM_STYLE}>Source</dt>
-                  <dd style={DETAIL_VALUE_STYLE}>
-                    {displaySourceLabel(activeItem.sourceLabel)}
-                  </dd>
-                </div>
-              </dl>
-              <div style={LINEAGE_STYLE}>
-                <strong>Lineage</strong>
-                <span>
-                  {activeItem.lineage.status === "recorded"
-                    ? `${activeItem.lineage.cites.length} cited input(s) · ${activeItem.lineage.usedBy.length} used-by edge(s)`
-                    : "Lineage not yet recorded"}
-                </span>
-              </div>
-              {activeItem.href ? (
-                <a href={activeItem.href} style={ACTION_LINK_STYLE}>
-                  Open item
-                </a>
-              ) : (
-                <span style={DISABLED_ACTION_STYLE}>No file preview yet</span>
-              )}
-            </>
-          ) : (
-            <div style={EMPTY_STYLE}>No workspace items recorded yet.</div>
-          )}
-        </aside>
       </div>
     </section>
+  );
+}
+
+function WorkspaceItemAction({ item }: { item: WorkspaceItem }) {
+  const href = item.downloadHref ?? item.href;
+  if (!href) {
+    return <span style={DISABLED_ACTION_STYLE}>Not ready</span>;
+  }
+  return (
+    <a
+      href={href}
+      data-testid={`workspace-open-item-${item.id}`}
+      style={ACTION_LINK_STYLE}
+      onClick={(event) => event.stopPropagation()}
+    >
+      Open
+    </a>
   );
 }
 
@@ -816,7 +764,7 @@ function tableNeededFor(row: WorkspaceTableRow): string {
   if (row.kind === "document") {
     return row.doc.artifactCode
       ? row.doc.artifactCode.replace(/[_-]+/g, " ")
-      : KIND_LABELS[row.doc.kind];
+      : humanizeToken(row.doc.kind);
   }
   return row.requirement.unlocks;
 }
@@ -827,14 +775,6 @@ function tableOwner(row: WorkspaceTableRow): string {
   if (doc?.audit.updatedBy) return displayActor(doc.audit.updatedBy);
   if (row.kind === "requirement") return humanizeToken(row.requirement.level);
   return "Not recorded";
-}
-
-function tableUsedBy(doc: WorkspaceItem): string {
-  if (doc.lineage.usedBy.length > 0) return doc.lineage.usedBy.join(", ");
-  if (doc.kind === "vendor_response") return "Scorecard";
-  if (doc.kind === "deliverable") return "Review";
-  if (doc.kind === "evidence" || doc.kind === "input") return "Source";
-  return "Workspace";
 }
 
 function fileGlyph(item: WorkspaceItem): string {
@@ -857,16 +797,6 @@ function humanizeToken(value: string): string {
     .replace(/\s+/g, " ")
     .trim()
     .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function displaySourceLabel(value: string | null | undefined): string {
-  if (!value) return "Not recorded";
-  const normalized = value.toLowerCase();
-  if (normalized === "source_artifacts registry") return "Artifact registry";
-  if (normalized === "source canvas substrate") return "Source canvas";
-  if (normalized === "source evidence readiness") return "Evidence readiness";
-  if (normalized === "source gate criterion") return "Gate record";
-  return value;
 }
 
 function stateLabel(state: WorkspaceItemState): string {
@@ -912,11 +842,10 @@ function navButtonStyle(active: boolean): CSSProperties {
   };
 }
 
-function tableRowStyle(active: boolean, selectable: boolean): CSSProperties {
+function tableRowStyle(): CSSProperties {
   return {
-    background: active ? "#f4f8ff" : "#ffffff",
-    boxShadow: active ? "inset 3px 0 0 #2563eb" : "none",
-    cursor: selectable ? "pointer" : "default",
+    background: "#ffffff",
+    cursor: "default",
   };
 }
 
@@ -1116,7 +1045,7 @@ const INLINE_REVIEW_LINK_STYLE: CSSProperties = {
 
 const SHELL_STYLE: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "196px minmax(640px, 1.5fr) minmax(300px, 0.72fr)",
+  gridTemplateColumns: "196px minmax(720px, 1fr)",
   gap: 12,
   minHeight: 620,
 };
@@ -1208,14 +1137,6 @@ const FILE_GLYPH_STYLE: CSSProperties = {
   font: "800 9px/1 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
 };
 
-const PREVIEW_STYLE: CSSProperties = {
-  border: "1px solid #e5e1da",
-  borderRadius: 8,
-  background: "#ffffff",
-  padding: 18,
-  overflow: "auto",
-};
-
 const EMPTY_STYLE: CSSProperties = {
   color: "#5b6c8a",
   font: "500 13px/1.5 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
@@ -1249,57 +1170,9 @@ function needDotStyle(level: "required" | "recommended"): CSSProperties {
   };
 }
 
-const PREVIEW_TITLE_STYLE: CSSProperties = {
-  margin: "8px 0 6px",
-  font: "700 20px/1.16 var(--font-fraunces), 'Fraunces', Georgia, serif",
-  letterSpacing: 0,
-  color: "#10172f",
-  overflowWrap: "anywhere",
-};
-
 const PREVIEW_COPY_STYLE: CSSProperties = {
   margin: "0 0 14px",
   font: "500 12.5px/1.45 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
-  color: "#475569",
-};
-
-const DETAIL_GRID_STYLE: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: 8,
-  margin: "0 0 14px",
-};
-
-const DETAIL_ITEM_STYLE: CSSProperties = {
-  borderTop: "1px solid #ece8df",
-  paddingTop: 9,
-  display: "grid",
-  gap: 3,
-};
-
-const DETAIL_TERM_STYLE: CSSProperties = {
-  margin: 0,
-  font: "700 9.5px/1.2 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
-  letterSpacing: "0.12em",
-  textTransform: "uppercase",
-  color: "#7a8495",
-};
-
-const DETAIL_VALUE_STYLE: CSSProperties = {
-  margin: 0,
-  color: "#10172f",
-  font: "600 12.5px/1.35 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
-  overflowWrap: "anywhere",
-};
-
-const LINEAGE_STYLE: CSSProperties = {
-  borderTop: "1px solid #e5e7eb",
-  borderBottom: "1px solid #e5e7eb",
-  padding: "12px 0",
-  marginBottom: 14,
-  display: "grid",
-  gap: 4,
-  font: "500 12px/1.4 var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif",
   color: "#475569",
 };
 

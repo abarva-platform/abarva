@@ -169,10 +169,19 @@ describe("WorkspaceExplorer", () => {
     ).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Status" })).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Owner" })).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: "Used by" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Action" })).toBeTruthy();
     // the selected step still surfaces canonical, stage-specific requirements.
     expect(screen.getByText("Incumbent contract")).toBeTruthy();
     expect(screen.getByText("Sponsor commitment")).toBeTruthy();
+
+    fireEvent.click(screen.getByTestId("workspace-step-scope"));
+
+    const openLink = screen.getByTestId(
+      "workspace-open-item-artifact-application-inventory",
+    );
+    expect(openLink.getAttribute("href")).toBe(
+      "/api/v1/source/artifacts/artifact-application-inventory/download",
+    );
   });
 
   it("does not render gate approvals as workspace file rows", () => {
@@ -191,7 +200,8 @@ describe("WorkspaceExplorer", () => {
     expect(screen.queryByText("user_123")).toBeNull();
     expect(screen.getByText("User")).toBeTruthy();
     expect(screen.queryByText("source_artifacts registry")).toBeNull();
-    expect(screen.getByText("Artifact registry")).toBeTruthy();
+    expect(screen.queryByText("Artifact registry")).toBeNull();
+    expect(screen.queryByLabelText("Workspace item preview")).toBeNull();
   });
 
   it("surfaces missing upstream errors without fabricating a draft", async () => {
