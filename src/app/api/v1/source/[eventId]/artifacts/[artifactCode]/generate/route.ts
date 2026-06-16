@@ -73,8 +73,12 @@ import {
   ensurePersistedSourceEventForClient,
   scaffoldNewEventSubstrate,
 } from "@/lib/source/queries";
+import {
+  renderGeneratedSourceArtifactFormats,
+  type GeneratedArtifactFormat,
+  type RenderedGeneratedArtifact,
+} from "@/lib/source/generated-artifact-rendering";
 
-const REGISTRY_GENERATED_MIME = "text/markdown";
 const REGISTRY_STORAGE_BUCKET = "source-artifacts";
 const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
 // The ACA ingress cuts long synchronous requests well before the 300s
@@ -156,12 +160,30 @@ const SOURCE_QUALITY_REVIEW_TOOL: AnthropicTool = {
   },
 };
 
-function safeRegistryFilename(
+function registryMimeType(format: GeneratedArtifactFormat): string {
+  switch (format) {
+    case "docx":
+      return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    case "html":
+      return "text/html";
+    case "md":
+      return "text/markdown";
+  }
+}
+
+function registrySourceFormat(
+  format: GeneratedArtifactFormat,
+): "docx" | "html" | "markdown" {
+  return format === "md" ? "markdown" : format;
+}
+
+function registryArtifactKind(
   artifactCode: string,
-  artifactId: string,
+  artifact: RenderedGeneratedArtifact,
 ): string {
-  const stem = artifactCode.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 90);
-  return `${stem || "source-generated-artifact"}-${artifactId.slice(0, 8)}.md`;
+  if (artifact.role === "preview") return `${artifactCode}__preview`;
+  if (artifact.role === "source") return `${artifactCode}__source`;
+  return artifactCode;
 }
 
 export const runtime = "nodejs";
@@ -586,110 +608,155 @@ export async function generateSourceArtifactDraft(
     bodyWrite.data as unknown as SourceEventArtifactStateRow,
   );
 
-  // Also persist the generated body to Blob + source_artifacts so the File
-  // Cabinet/download route can retrieve real bytes. The substrate body remains
-  // canonical; Blob/registry failure is non-fatal and logged.
+  // Also persist rendered generated artifacts to Blob + source_artifacts so the
+  // File Cabinet/download route can retrieve real bytes. The substrate markdown
+  // body remains canonical. DOCX is the client-facing primary artifact when the
+  // renderer succeeds; HTML is a preview sibling; Markdown is retained as an
+  // internal source copy for re-rendering/lineage. Blob/registry failure is
+  // non-fatal and logged.
   let registryArtifact: SourceArtifactRegistryRecord | null = null;
+  const registryArtifacts: SourceArtifactRegistryRecord[] = [];
+  let renderErrors: string[] = [];
   try {
     const spec = specByCode(artifactCode);
     const family = spec?.family ?? "other";
-    const registryArtifactId = randomUUID();
     const substrateTenantKey = clientKeyToInventorySubstrateKey(ctx.tenantKey);
-    const filename = safeRegistryFilename(artifactCode, registryArtifactId);
-    const buffer = Buffer.from(body, "utf8");
-    const sha256 = createHash("sha256").update(buffer).digest("hex");
-    const blobUri = buildSourceArtifactBlobPath({
-      tenantKey: substrateTenantKey,
-      sourceEventId: ctx.event.id,
-      artifactId: registryArtifactId,
-      filename,
+    const rendered = await renderGeneratedSourceArtifactFormats({
+      artifactCode,
+      artifactId: artifactRow.id,
+      body,
+      ctx,
+      generatedAt: nowIso,
     });
+    renderErrors = rendered.errors;
+    const formats = [
+      rendered.primary,
+      ...(rendered.preview ? [rendered.preview] : []),
+      ...(rendered.source ? [rendered.source] : []),
+    ];
 
-    await getObjectStorageAdapter().upload(REGISTRY_STORAGE_BUCKET, blobUri, buffer, {
-      contentType: REGISTRY_GENERATED_MIME,
-      cacheControl: "private, max-age=0",
-      upsert: false,
-    });
+    for (const renderedArtifact of formats) {
+      const renderedArtifactId = randomUUID();
+      const fileCabinetArtifactType =
+        renderedArtifact.role === "preview"
+          ? `${artifactCode}__preview`
+          : artifactCode;
+      const artifactKind = registryArtifactKind(artifactCode, renderedArtifact);
+      const sha256 = createHash("sha256")
+        .update(renderedArtifact.bytes)
+        .digest("hex");
+      const blobUri = buildSourceArtifactBlobPath({
+        tenantKey: substrateTenantKey,
+        sourceEventId: ctx.event.id,
+        artifactId: renderedArtifactId,
+        filename: renderedArtifact.filename,
+      });
 
-    let fileCabinetVersion = 1;
-    let supersedesArtifactId: string | null = null;
-    if (activeClient?.id) {
-      try {
-        const prior = await getCurrentArtifacts(
+      await getObjectStorageAdapter().upload(
+        REGISTRY_STORAGE_BUCKET,
+        blobUri,
+        renderedArtifact.bytes,
+        {
+          contentType: renderedArtifact.contentType,
+          cacheControl: "private, max-age=0",
+          upsert: false,
+        },
+      );
+
+      let fileCabinetVersion = 1;
+      let supersedesArtifactId: string | null = null;
+      if (activeClient?.id && renderedArtifact.role !== "source") {
+        try {
+          const prior = await getCurrentArtifacts(
+            ctx.event.id,
+            fileCabinetArtifactType,
+            "generated",
+          );
+          fileCabinetVersion =
+            prior.reduce((max, item) => Math.max(max, item.version), 0) + 1;
+          supersedesArtifactId = prior[0]?.id ?? null;
+        } catch (fileCabinetReadError) {
+          console.error(
+            "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate] file cabinet prior-version read failed",
+            fileCabinetReadError instanceof Error
+              ? fileCabinetReadError.message
+              : String(fileCabinetReadError),
+          );
+        }
+      }
+
+      const record = await registerSourceArtifactUpload({
+        artifactId: renderedArtifactId,
+        tenantKey: substrateTenantKey,
+        sourceEventId: ctx.event.id,
+        sourceEventRowId: ctx.event.id,
+        stageKey: artifactRow.stage_key,
+        artifactFamily: family,
+        artifactKind,
+        sourceOrigin: "generated",
+        sourceFormat: registrySourceFormat(renderedArtifact.format),
+        originalName: renderedArtifact.filename,
+        blobUri,
+        uploaderUserId: currentUser?.clerkUserId ?? tenancy.userId,
+        mimeType: registryMimeType(renderedArtifact.format),
+        sizeBytes: renderedArtifact.bytes.byteLength,
+        sha256,
+        dataClassification: "Confidential",
+        createdBy: currentUser?.clerkUserId ?? tenancy.userId,
+        ...(supersedesArtifactId
+          ? { supersedesArtifactVersionId: supersedesArtifactId }
+          : {}),
+        ...(activeClient?.id && renderedArtifact.role !== "source"
+          ? {
+              fileCabinet: {
+                clientId: activeClient.id,
+                sourcingStage: artifactRow.stage_key,
+                artifactGroup: "generated",
+                artifactType: fileCabinetArtifactType,
+                title:
+                  renderedArtifact.role === "preview"
+                    ? `${spec?.name ?? artifactCode} — Preview`
+                    : spec?.name ?? artifactCode,
+                description:
+                  renderedArtifact.role === "preview"
+                    ? "HTML preview of the generated Source deliverable."
+                    : spec?.description ?? null,
+                fileName: renderedArtifact.filename,
+                fileFormat: renderedArtifact.format,
+                blobContainer: REGISTRY_STORAGE_BUCKET,
+                blobPath: blobUri,
+                fileSize: renderedArtifact.bytes.byteLength,
+                version: fileCabinetVersion,
+                status: "draft",
+                generatedBy: currentUser?.clerkUserId ?? tenancy.userId,
+                sourceBasis: `source_event_artifact_states:${artifactRow.id}`,
+                citationReady: false,
+                evidenceFamiliesUsed: [],
+                missingInputs: [],
+                clientCompleteItems: [],
+                assumptions: [],
+                supersedesArtifactId,
+                blobSha256: sha256,
+              },
+            }
+          : {}),
+      });
+      registryArtifacts.push(record);
+      if (renderedArtifact.role === "primary") {
+        registryArtifact = record;
+      }
+      if (
+        activeClient?.id &&
+        renderedArtifact.role !== "source" &&
+        supersedesArtifactId
+      ) {
+        await supersedePriorVersions(
           ctx.event.id,
-          artifactCode,
+          fileCabinetArtifactType,
           "generated",
-        );
-        fileCabinetVersion =
-          prior.reduce((max, item) => Math.max(max, item.version), 0) + 1;
-        supersedesArtifactId = prior[0]?.id ?? null;
-      } catch (fileCabinetReadError) {
-        console.error(
-          "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate] file cabinet prior-version read failed",
-          fileCabinetReadError instanceof Error
-            ? fileCabinetReadError.message
-            : String(fileCabinetReadError),
+          record.id,
         );
       }
-    }
-
-    registryArtifact = await registerSourceArtifactUpload({
-      artifactId: registryArtifactId,
-      tenantKey: substrateTenantKey,
-      sourceEventId: ctx.event.id,
-      sourceEventRowId: ctx.event.id,
-      stageKey: artifactRow.stage_key,
-      artifactFamily: family,
-      artifactKind: artifactCode,
-      sourceOrigin: "generated",
-      sourceFormat: "markdown",
-      originalName: filename,
-      blobUri,
-      uploaderUserId: currentUser?.clerkUserId ?? tenancy.userId,
-      mimeType: REGISTRY_GENERATED_MIME,
-      sizeBytes: buffer.byteLength,
-      sha256,
-      dataClassification: "Confidential",
-      createdBy: currentUser?.clerkUserId ?? tenancy.userId,
-      ...(supersedesArtifactId
-        ? { supersedesArtifactVersionId: supersedesArtifactId }
-        : {}),
-      ...(activeClient?.id
-        ? {
-            fileCabinet: {
-              clientId: activeClient.id,
-              sourcingStage: artifactRow.stage_key,
-              artifactGroup: "generated",
-              artifactType: artifactCode,
-              title: spec?.name ?? artifactCode,
-              description: spec?.description ?? null,
-              fileName: filename,
-              fileFormat: "md",
-              blobContainer: REGISTRY_STORAGE_BUCKET,
-              blobPath: blobUri,
-              fileSize: buffer.byteLength,
-              version: fileCabinetVersion,
-              status: "draft",
-              generatedBy: currentUser?.clerkUserId ?? tenancy.userId,
-              sourceBasis: `source_event_artifact_states:${artifactRow.id}`,
-              citationReady: false,
-              evidenceFamiliesUsed: [],
-              missingInputs: [],
-              clientCompleteItems: [],
-              assumptions: [],
-              supersedesArtifactId,
-              blobSha256: sha256,
-            },
-          }
-        : {}),
-    });
-    if (activeClient?.id && supersedesArtifactId) {
-      await supersedePriorVersions(
-        ctx.event.id,
-        artifactCode,
-        "generated",
-        registryArtifact.id,
-      );
     }
   } catch (registryError) {
     console.error(
@@ -718,6 +785,12 @@ export async function generateSourceArtifactDraft(
       tokensIn,
       tokensOut,
       latencyMs: Date.now() - startedAt,
+      renderedFormats: registryArtifacts.map((artifact) => ({
+        id: artifact.id,
+        sourceFormat: artifact.sourceFormat,
+        blobUri: artifact.blobUri,
+      })),
+      renderErrors,
       qualityGate: qualityGate
         ? {
             standardId: qualityGate.standardId,
@@ -739,6 +812,8 @@ export async function generateSourceArtifactDraft(
     ok: true,
     artifact: view,
     registryArtifact,
+    registryArtifacts,
+    renderErrors,
     generation: {
       ...generationMetadata,
       latencyMs: Date.now() - startedAt,
