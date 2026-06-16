@@ -97,4 +97,80 @@ describe('DocumentTab event documents', () => {
       '/api/v1/source/artifacts/doc-1/download',
     );
   });
+
+  it('shows a compact unverified marker when required sections are missing', () => {
+    render(
+      <DocumentTab
+        eventId="event-1"
+        stage="strategy"
+        artifacts={[
+          {
+            ...baseArtifact,
+            body: '# Strategy memo',
+            bodyGenerationMetadata: {
+              model: 'claude-sonnet-4-6',
+              promptTemplateId: 'd01_strategy_memo',
+              promptTemplateVersion: 1,
+              upstreamBoundCodes: [],
+              generatedAt: '2026-06-16T00:00:00.000Z',
+              generatedByUserId: 'user-1',
+              tokensIn: 100,
+              tokensOut: 200,
+              stopReason: 'end_turn',
+              sectionVerification: {
+                status: 'incomplete',
+                checkedAt: '2026-06-16T00:00:00.000Z',
+                requiredSections: ['Executive summary', 'Why now'],
+                missingSections: ['Executive summary'],
+              },
+            },
+          },
+        ]}
+        templateByCode={{ d01_strategy_memo: '# Strategy memo' }}
+      />,
+    );
+
+    expect(screen.getByText('Unverified · 1 section missing')).toHaveAttribute(
+      'title',
+      'Missing: Executive summary',
+    );
+  });
+
+  it('shows a quiet verified marker when required sections pass', () => {
+    render(
+      <DocumentTab
+        eventId="event-1"
+        stage="strategy"
+        artifacts={[
+          {
+            ...baseArtifact,
+            body: '# Strategy memo',
+            bodyGenerationMetadata: {
+              model: 'claude-sonnet-4-6',
+              promptTemplateId: 'd01_strategy_memo',
+              promptTemplateVersion: 1,
+              upstreamBoundCodes: [],
+              generatedAt: '2026-06-16T00:00:00.000Z',
+              generatedByUserId: 'user-1',
+              tokensIn: 100,
+              tokensOut: 200,
+              stopReason: 'end_turn',
+              sectionVerification: {
+                status: 'verified',
+                checkedAt: '2026-06-16T00:00:00.000Z',
+                requiredSections: ['Executive summary', 'Why now'],
+                missingSections: [],
+              },
+            },
+          },
+        ]}
+        templateByCode={{ d01_strategy_memo: '# Strategy memo' }}
+      />,
+    );
+
+    expect(screen.getByText('Verified')).toHaveAttribute(
+      'title',
+      'Required sections present: Executive summary, Why now',
+    );
+  });
 });

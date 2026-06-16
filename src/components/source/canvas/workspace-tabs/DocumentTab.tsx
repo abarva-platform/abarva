@@ -731,6 +731,7 @@ interface ArtifactRowProps {
 }
 
 function ArtifactRow({ artifact, spec, isActive, onClick }: ArtifactRowProps) {
+  const verification = sectionVerificationView(artifact);
   return (
     <li>
       <button
@@ -749,6 +750,20 @@ function ArtifactRow({ artifact, spec, isActive, onClick }: ArtifactRowProps) {
         </span>
         <span style={ROW_META_STYLE}>
           <StatusPill artifact={artifact} />
+          {verification ? (
+            <span
+              data-testid={`source-canvas-artifact-section-verification-${artifact.artifactCode}`}
+              style={{
+                ...SECTION_VERIFICATION_STYLE,
+                color: verification.color,
+                borderColor: verification.border,
+                background: verification.background,
+              }}
+              title={verification.title}
+            >
+              {verification.label}
+            </span>
+          ) : null}
           {artifact.gateDefining ? (
             <span style={GATE_TAG_STYLE}>Required to advance</span>
           ) : null}
@@ -756,6 +771,62 @@ function ArtifactRow({ artifact, spec, isActive, onClick }: ArtifactRowProps) {
       </button>
     </li>
   );
+}
+
+type SectionVerificationMetadata = {
+  status?: unknown;
+  checkedAt?: unknown;
+  missingSections?: unknown;
+  requiredSections?: unknown;
+};
+
+function sectionVerificationView(artifact: SourceEventArtifactState):
+  | {
+      label: string;
+      title: string;
+      color: string;
+      border: string;
+      background: string;
+    }
+  | null {
+  const raw = artifact.bodyGenerationMetadata?.sectionVerification;
+  if (!raw || typeof raw !== "object") return null;
+  const verification = raw as SectionVerificationMetadata;
+  const missingSections = Array.isArray(verification.missingSections)
+    ? verification.missingSections.map(String)
+    : [];
+
+  if (verification.status === "incomplete") {
+    const count = missingSections.length;
+    return {
+      label: `Unverified · ${count} section${count === 1 ? "" : "s"} missing`,
+      title:
+        missingSections.length > 0
+          ? `Missing: ${missingSections.join(", ")}`
+          : "Required section verification did not pass.",
+      color: "#8a5a00",
+      border: "rgba(138,90,0,0.28)",
+      background: "rgba(138,90,0,0.09)",
+    };
+  }
+
+  if (verification.status === "verified") {
+    const requiredSections = Array.isArray(verification.requiredSections)
+      ? verification.requiredSections.map(String)
+      : [];
+    return {
+      label: "Verified",
+      title:
+        requiredSections.length > 0
+          ? `Required sections present: ${requiredSections.join(", ")}`
+          : "Required sections present.",
+      color: "#2f6f4f",
+      border: "rgba(47,111,79,0.22)",
+      background: "rgba(47,111,79,0.08)",
+    };
+  }
+
+  return null;
 }
 
 function StatusPill({ artifact }: { artifact: SourceEventArtifactState }) {
@@ -1145,6 +1216,19 @@ const STATUS_CONTROLS_STYLE: CSSProperties = {
 };
 
 const PILL_STYLE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  fontWeight: 600,
+  letterSpacing: 0,
+  padding: "3px 8px",
+  borderRadius: 999,
+  border: "1px solid transparent",
+  whiteSpace: "nowrap",
+};
+
+const SECTION_VERIFICATION_STYLE: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   fontFamily: CANVAS.MONO,
