@@ -272,6 +272,7 @@ const DRY_RUN = args.includes('--dry-run');
 const ONLY_CHUNKS = args.includes('--only-chunks');
 const ONLY_TABLES = args.includes('--only-tables');
 const SKIP_TABLES = args.includes('--skip-tables');
+const RESOLVE_CLIENT_ID = !args.includes('--no-resolve-client-id');
 const CONCURRENCY = Number(args.find((a) => a.startsWith('--concurrency='))?.split('=')[1] ?? 6);
 
 const TENANT_KEY = process.env.TENANT_KEY;
@@ -414,6 +415,52 @@ class PostgresDb {
 
 const db = new PostgresDb();
 
+function tenantLookupAliases(): string[] {
+  const aliases = new Set<string>();
+  [TENANT.key, TENANT.tenantKey, TENANT_KEY]
+    .filter((alias): alias is string => Boolean(alias))
+    .forEach((alias) => aliases.add(alias));
+  if (TENANT.key === 'firstcapital' || TENANT.tenantKey === 'first-capital') {
+    aliases.add('first-capital');
+    aliases.add('firstcapital');
+    aliases.add('arcturus');
+  }
+  return [...aliases].filter(Boolean);
+}
+
+async function resolveTenantClientId(): Promise<void> {
+  const explicit = process.env.TENANT_CLIENT_ID?.trim();
+  if (explicit) {
+    if (TENANT.clientId !== explicit) {
+      console.log(`  Resolved client_id from TENANT_CLIENT_ID: ${explicit} (was ${TENANT.clientId})`);
+      TENANT.clientId = explicit;
+    }
+    return;
+  }
+
+  if (!RESOLVE_CLIENT_ID || DRY_RUN) return;
+
+  const aliases = tenantLookupAliases();
+  const rows = await db.query<{ id: string; tenant_key: string | null; slug: string | null; name: string | null }>(
+    `SELECT id, tenant_key, slug, name
+       FROM clients
+      WHERE tenant_key = ANY($1::text[])
+         OR slug = ANY($1::text[])
+      ORDER BY CASE WHEN tenant_key = $2 THEN 0 ELSE 1 END, name
+      LIMIT 1`,
+    [aliases, TENANT.tenantKey],
+  );
+  const row = rows[0];
+  if (!row) {
+    console.log(`  [WARN] Could not resolve clients row for aliases ${aliases.join(', ')}; using configured ${TENANT.clientId}`);
+    return;
+  }
+  if (TENANT.clientId !== row.id) {
+    console.log(`  Resolved client_id from clients.${row.tenant_key ?? row.slug ?? row.name ?? 'unknown'}: ${row.id} (was ${TENANT.clientId})`);
+    TENANT.clientId = row.id;
+  }
+}
+
 async function ensureLoaderSchema(): Promise<void> {
   await db.execute(`
     CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -519,18 +566,20 @@ async function phase0ClientProfile(): Promise<{ updated: number; errors: number 
     return { updated: 0, errors: 0 };
   }
 
-  const revenueUsd = optionalNumber(profile.revenue_usd);
-  const itBudgetUsd = optionalNumber(profile.it_budget_usd);
+  const revenueUsd = optionalNumber(profile.revenue_usd ?? profile.revenue_fy25_usd);
+  const itBudgetUsd = optionalNumber(profile.it_budget_usd ?? profile.it_budget_fy25_usd);
   const employees = optionalNumber(profile.employees);
-  const plants = optionalNumber(profile.plants);
-  const name = profile.name || null;
+  const plants = optionalNumber(profile.plants ?? profile.branches);
+  const name = profile.name || profile.display_name || null;
   const businessDescription = [
     name ? `${name} synthetic enterprise tenant` : `${TENANT.key} synthetic enterprise tenant`,
     revenueUsd ? `$${(revenueUsd / 1_000_000_000).toFixed(1)}B revenue` : null,
     employees ? `${employees.toLocaleString('en-US')} employees` : null,
-    plants ? `${plants} plants` : null,
+    plants ? `${plants} operational units` : null,
     profile.countries ? `${profile.countries} countries` : null,
+    profile.markets ? `${profile.markets} markets` : null,
     profile.strategic_posture ? `strategic posture: ${profile.strategic_posture}` : null,
+    profile.strategic_story ?? null,
   ].filter(Boolean).join('; ');
 
   const patch: Record<string, unknown> = {
@@ -1223,6 +1272,7 @@ async function phase5VendorContracts(): Promise<{ inserted: number; errors: numb
 
 async function main() {
   if (!DRY_RUN) await db.connect();
+  await resolveTenantClientId();
   if (!DRY_RUN) await ensureLoaderSchema();
   console.log('═══════════════════════════════════════════════════════════════');
   console.log(`Packet 24 Substrate Loader · tenant=${TENANT.key} · ${DRY_RUN ? 'DRY-RUN' : 'APPLY'}`);
@@ -1233,6 +1283,7 @@ async function main() {
   console.log(`  only-chunks: ${ONLY_CHUNKS}`);
   console.log(`  only-tables: ${ONLY_TABLES}`);
   console.log(`  skip-tables: ${SKIP_TABLES}`);
+  console.log(`  resolve-client-id: ${RESOLVE_CLIENT_ID}`);
 
   const p0 = await phase0ClientProfile();
   const p1 = ONLY_TABLES ? { inserted: 0, skipped: 0, errors: 0 } : await phase1SourceFiles();
