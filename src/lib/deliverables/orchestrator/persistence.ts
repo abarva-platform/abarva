@@ -16,6 +16,7 @@ import type {
   GeneratedArtifactType,
 } from '@/lib/artifacts/types';
 import { saveGeneratedArtifact, type GeneratedArtifactRecord } from '@/lib/artifacts/repository';
+import { prescribedFormatForDeliverableType } from '@/lib/programs/orchestrated-deliverable-map';
 import { renderDeliverableHtml } from './renderers';
 import type { OrchestrationResult } from './orchestrator';
 
@@ -58,7 +59,14 @@ export async function persistDeliverable(
   const doc = result.document;
   const html = renderDeliverableHtml(doc);
   const artifactType = artifactTypeFor(result.brief.module);
-  const outputFormat = opts.outputFormat ?? 'docx';
+  // The prescribed primary format follows the deliverable type: most narrative
+  // documents are Word/DOCX; the financial model (orchestrator 'estimate_model')
+  // is an Excel workbook. An explicit caller override (opts.outputFormat) wins so
+  // existing callers can still force a format; otherwise we resolve from the brief.
+  const prescribedFormat = prescribedFormatForDeliverableType(
+    result.brief.deliverableType,
+  );
+  const outputFormat: GeneratedArtifactFormat = opts.outputFormat ?? prescribedFormat;
 
   const facts: BoardPackRenderInput['facts'] = doc.sourceRegister.map((r) => ({
     id: `cite-${r.citationNumber}`,
@@ -102,5 +110,9 @@ export async function persistDeliverable(
   };
 
   const save = deps.save ?? saveGeneratedArtifact;
-  return save(input, rendered);
+  // Persist the FULL structured document alongside the HTML so the download route
+  // can render any prescribed format (docx/xlsx/html) on demand without re-running
+  // the orchestrator. Backward-compatible: older artifacts lack this and fall back
+  // to the stored HTML.
+  return save(input, rendered, { renderableDoc: doc });
 }

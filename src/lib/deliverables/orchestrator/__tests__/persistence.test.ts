@@ -56,6 +56,82 @@ describe('persistDeliverable', () => {
     expect(rendered.qualityScore as number).toBeGreaterThanOrEqual(0.5);
   });
 
+  it('persists the structured renderable doc in metadata for on-demand re-render', async () => {
+    let extraMeta: unknown;
+    const mockSave = (async (
+      _input: unknown,
+      _rendered: unknown,
+      extra: unknown,
+    ) => {
+      extraMeta = extra;
+      return { id: 'art-meta', clientId: 'c1', metadata: {} } as unknown as GeneratedArtifactRecord;
+    }) as never;
+
+    await persistDeliverable(
+      okResult(),
+      { clientId: 'c1', renderedBy: 'u1', sourceArtifactRef: 'evt', tenantPolicy },
+      { save: mockSave },
+    );
+
+    const meta = extraMeta as Record<string, unknown>;
+    expect(meta).toBeDefined();
+    expect(meta.renderableDoc).toBeDefined();
+    expect((meta.renderableDoc as Record<string, unknown>).title).toBe(goodDocument().title);
+  });
+
+  it('prescribes docx for a narrative deliverable (rfp_package)', async () => {
+    let rendered: Record<string, unknown> | undefined;
+    const mockSave = (async (_input: unknown, r: unknown) => {
+      rendered = r as Record<string, unknown>;
+      return { id: 'a', clientId: 'c1', metadata: {} } as unknown as GeneratedArtifactRecord;
+    }) as never;
+    await persistDeliverable(
+      okResult(),
+      { clientId: 'c1', renderedBy: 'u1', sourceArtifactRef: 'evt', tenantPolicy },
+      { save: mockSave },
+    );
+    expect(rendered?.outputFormat).toBe('docx');
+  });
+
+  it('prescribes xlsx for the financial model (estimate_model)', async () => {
+    let rendered: Record<string, unknown> | undefined;
+    const mockSave = (async (_input: unknown, r: unknown) => {
+      rendered = r as Record<string, unknown>;
+      return { id: 'a', clientId: 'c1', metadata: {} } as unknown as GeneratedArtifactRecord;
+    }) as never;
+
+    // moves financial model → orchestrator deliverableType 'estimate_model'
+    const req = amsRfpRequest({ module: 'moves', deliverableType: 'estimate_model' });
+    const result = {
+      ok: true,
+      brief: getArtifactBrief(req),
+      document: goodDocument(),
+      quality: { pass: true, blockers: [], warnings: [], metrics: {} as never },
+      passTrace: [],
+    } as OrchestrationResult;
+
+    await persistDeliverable(
+      result,
+      { clientId: 'c1', renderedBy: 'u1', sourceArtifactRef: 'evt', tenantPolicy },
+      { save: mockSave },
+    );
+    expect(rendered?.outputFormat).toBe('xlsx');
+  });
+
+  it('honors an explicit outputFormat override', async () => {
+    let rendered: Record<string, unknown> | undefined;
+    const mockSave = (async (_input: unknown, r: unknown) => {
+      rendered = r as Record<string, unknown>;
+      return { id: 'a', clientId: 'c1', metadata: {} } as unknown as GeneratedArtifactRecord;
+    }) as never;
+    await persistDeliverable(
+      okResult(),
+      { clientId: 'c1', renderedBy: 'u1', sourceArtifactRef: 'evt', tenantPolicy, outputFormat: 'html' },
+      { save: mockSave },
+    );
+    expect(rendered?.outputFormat).toBe('html');
+  });
+
   it('refuses to persist a gate-blocked result', async () => {
     const blocked = { ok: false, brief: getArtifactBrief(amsRfpRequest()), passTrace: [], blockedReason: 'quality gate blocked export: unsupported claims' } as OrchestrationResult;
     await expect(

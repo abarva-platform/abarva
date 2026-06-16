@@ -23,6 +23,11 @@
 // large_package), and normalizeDeliverableKey keeps lookups robust.
 
 import { normalizeDeliverableKey } from "@/lib/ai/document-generation-policy";
+import {
+  DELIVERABLE_REGISTRY,
+  getDeliverableSpec,
+  type DeliverableFormat,
+} from "@/lib/programs/deliverable-registry";
 
 /**
  * Registry deliverable-type key → orchestrator `deliverableType`.
@@ -60,4 +65,62 @@ const REGISTRY_TO_ORCHESTRATOR: Readonly<Record<string, string>> = {
 export function orchestratorDeliverableType(registryKey: string): string {
   const normalized = normalizeDeliverableKey(registryKey);
   return REGISTRY_TO_ORCHESTRATOR[normalized] ?? normalized;
+}
+
+/** Prescribed render/download format the orchestrator should persist a deliverable in. */
+export type PrescribedDeliverableFormat = "docx" | "xlsx";
+
+/** registry `formatRecommendation` → the concrete primary file format. */
+function registryFormatToFile(
+  format: DeliverableFormat,
+): PrescribedDeliverableFormat {
+  // 'excel' → the document IS the workbook; everything else's primary file is Word/DOCX
+  // ('html-word' and 'html-word-excel' both keep HTML for preview but download as DOCX).
+  return format === "excel" ? "xlsx" : "docx";
+}
+
+/**
+ * Reverse map: orchestrator `deliverableType` → the registry keys that map to it.
+ * Built once from REGISTRY_TO_ORCHESTRATOR so a single orchestrator type can be
+ * traced back to its registry spec (and thus its prescribed format).
+ */
+const ORCHESTRATOR_TO_REGISTRY_KEYS: Readonly<Record<string, string[]>> =
+  (() => {
+    const out: Record<string, string[]> = {};
+    for (const [registryKey, orchType] of Object.entries(
+      REGISTRY_TO_ORCHESTRATOR,
+    )) {
+      (out[orchType] ??= []).push(registryKey);
+    }
+    return out;
+  })();
+
+/**
+ * Resolve the prescribed primary file format for a deliverable, given the
+ * orchestrator `deliverableType` (e.g. 'estimate_model') OR a registry key
+ * (e.g. 'financial_model'). Uses the registry's `formatRecommendation` where
+ * resolvable; defaults to 'docx'.
+ *
+ *   financial_model / estimate_model → 'xlsx'   (formatRecommendation 'excel')
+ *   everything else                  → 'docx'
+ */
+export function prescribedFormatForDeliverableType(
+  deliverableType: string,
+): PrescribedDeliverableFormat {
+  const normalized = normalizeDeliverableKey(deliverableType);
+
+  // 1 · direct registry-key hit (e.g. 'financial_model', 'charter')
+  const directSpec = getDeliverableSpec(normalized);
+  if (directSpec) return registryFormatToFile(directSpec.formatRecommendation);
+
+  // 2 · the value is an orchestrator type — trace back to its registry key(s).
+  //     If ANY mapped registry spec prescribes Excel, the artifact is a workbook.
+  const registryKeys = ORCHESTRATOR_TO_REGISTRY_KEYS[normalized] ?? [];
+  for (const key of registryKeys) {
+    const spec = DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key);
+    if (spec && spec.formatRecommendation === "excel") return "xlsx";
+  }
+
+  // 3 · default: Word/DOCX is the conservative primary format for every narrative doc.
+  return "docx";
 }

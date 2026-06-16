@@ -30,8 +30,21 @@ module translates each per-phase registry key (charter, discovery_report, …) t
 the orchestrator's deliverable type so the artifact gets the right consultant
 section flow.
 
+Each deliverable is now persisted and downloaded in its **prescribed** format
+rather than HTML-only. The full structured `RenderableDeliverable` is stored in
+the artifact metadata (`metadata.renderableDoc`) alongside the existing HTML
+preview, and the persisted `outputFormat` follows the deliverable's prescribed
+format (most documents → Word/DOCX; the financial model → Excel/XLSX, resolved
+from the deliverable registry's `formatRecommendation`). The artifact download
+route (`GET /api/v1/artifacts/[artifactId]`) renders the structured doc on demand
+through the already-built `renderDeliverableDocx` / `renderDeliverableExcelCompanion`
+renderers, supports `?format=docx|xlsx|html`, and falls back to the stored HTML
+for older artifacts that predate structured persistence (never 500). Inline-HTML
+preview behavior is unchanged.
+
 No design changes: the existing Documents-tab layout, colors, fonts, and
-black/ghost buttons are unchanged — only the engine and the progress band.
+black/ghost buttons are unchanged — only the engine, the progress band, and the
+download format.
 
 ## Layer Impact
 

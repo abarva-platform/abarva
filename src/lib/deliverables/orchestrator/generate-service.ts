@@ -117,19 +117,22 @@ export async function runDeliverableForTenant(
     };
   }
 
-  // 4 · persist through the governed artifacts repository. The persisted artifact
-  // format is the document format (docx); 'xlsx' is a companion exhibit, not the
-  // artifact's primary format, so it never becomes the persisted outputFormat.
+  // 4 · persist through the governed artifacts repository. The persisted artifact's
+  // PRIMARY format follows the deliverable's prescribed format (resolved inside
+  // persistDeliverable from the brief: most → DOCX, financial model → XLSX). We only
+  // override here when the caller explicitly requested a presentation/print packaging
+  // (pptx/pdf/html) that the prescribed-format resolver does not produce; otherwise we
+  // let persistence pick docx/xlsx so the financial model is stored as a real workbook.
   const first = input.outputFormats?.[0];
-  const persistFormat: "docx" | "pptx" | "pdf" | "html" =
-    first === "pptx" || first === "pdf" || first === "html" ? first : "docx";
+  const explicitOverride: "pptx" | "pdf" | "html" | undefined =
+    first === "pptx" || first === "pdf" || first === "html" ? first : undefined;
   const { policy } = await loadPolicy(input.clientId);
   const record = await persist(result, {
     clientId: input.clientId,
     renderedBy: input.userId,
     sourceArtifactRef: input.sourceArtifactRef,
     tenantPolicy: policy,
-    outputFormat: persistFormat,
+    ...(explicitOverride ? { outputFormat: explicitOverride } : {}),
     userId: input.userId,
     evidenceLedgerIds: evidence.map((e) => e.provenanceRef),
   });
