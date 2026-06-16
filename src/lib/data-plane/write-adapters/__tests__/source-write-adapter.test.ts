@@ -211,11 +211,31 @@ describe("supabase source write adapter", () => {
       reviewerUserId: "rev-1",
       reviewedAtIso: "2026-05-15T00:00:00.000Z",
       notes: "reviewed artifacts",
+      evidenceArtifactIds: ["art-1"],
       updatedAtIso: "2026-05-15T00:00:00.000Z",
     });
     expect(result.ok).toBe(true);
     expect(result.data).toEqual({ id: "crit-1", state: "met" });
     expect(calls[0].table).toBe("source_event_gate_criterion_states");
+    expect(calls[0].payload).toMatchObject({
+      notes: "reviewed artifacts",
+      evidence_artifact_ids: ["art-1"],
+    });
+  });
+
+  it("updateGateCriterion leaves notes and evidence ids untouched when omitted", async () => {
+    const { client, calls } = fakeSupabase({ id: "crit-1", state: "met" });
+    const adapter = createSupabaseSourceWriteAdapter(() => client);
+    const result = await adapter.updateGateCriterion({
+      criterionRowId: "crit-1",
+      state: "met",
+      reviewerUserId: "rev-1",
+      reviewedAtIso: "2026-05-15T00:00:00.000Z",
+      updatedAtIso: "2026-05-15T00:00:00.000Z",
+    });
+    expect(result.ok).toBe(true);
+    expect(calls[0].payload).not.toHaveProperty("notes");
+    expect(calls[0].payload).not.toHaveProperty("evidence_artifact_ids");
   });
 
   it("updateArtifactBody persists the column body and returns the row", async () => {
@@ -365,12 +385,32 @@ describe("azure source write adapter", () => {
       reviewerUserId: "rev-1",
       reviewedAtIso: null,
       notes: "reviewed artifacts",
+      evidenceArtifactIds: ["art-1", "art-2"],
       updatedAtIso: "2026-05-15T00:00:00.000Z",
     });
     expect(result.ok).toBe(true);
     expect(result.data).toEqual({ id: "crit-1", state: "met" });
     expect(statements[0]).toContain("source_event_gate_criterion_states");
     expect(statements[0]).toContain("RETURNING *");
+    expect(statements[0]).toContain("notes = $");
+    expect(statements[0]).toContain("evidence_artifact_ids = $");
+  });
+
+  it("updateGateCriterion omits optional provenance columns on Azure when not provided", async () => {
+    const { session, statements } = fakeTxSession((sql) =>
+      sql.includes("RETURNING") ? [{ id: "crit-1", state: "met" }] : [],
+    );
+    const adapter = createAzureSourceWriteAdapter(session);
+    const result = await adapter.updateGateCriterion({
+      criterionRowId: "crit-1",
+      state: "met",
+      reviewerUserId: "rev-1",
+      reviewedAtIso: null,
+      updatedAtIso: "2026-05-15T00:00:00.000Z",
+    });
+    expect(result.ok).toBe(true);
+    expect(statements[0]).not.toContain("notes =");
+    expect(statements[0]).not.toContain("evidence_artifact_ids =");
   });
 
   it("insertActivityLog inserts a source_event_activity row", async () => {

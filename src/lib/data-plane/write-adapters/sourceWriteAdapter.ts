@@ -102,7 +102,8 @@ export interface GateCriterionUpdate {
   readonly state: string;
   readonly reviewerUserId: string | null;
   readonly reviewedAtIso: string | null;
-  readonly notes: string | null;
+  readonly notes?: string | null;
+  readonly evidenceArtifactIds?: readonly string[];
   readonly updatedAtIso: string;
 }
 
@@ -287,15 +288,19 @@ export function createSupabaseSourceWriteAdapter(
     },
 
     async updateGateCriterion(input) {
+      const updates: Record<string, unknown> = {
+        state: input.state,
+        reviewer_user_id: input.reviewerUserId,
+        reviewed_at: input.reviewedAtIso,
+        updated_at: input.updatedAtIso,
+      };
+      if ("notes" in input) updates.notes = input.notes ?? null;
+      if (input.evidenceArtifactIds) {
+        updates.evidence_artifact_ids = [...input.evidenceArtifactIds];
+      }
       const { data, error } = await getClient()
         .from("source_event_gate_criterion_states")
-        .update({
-          state: input.state,
-          reviewer_user_id: input.reviewerUserId,
-          reviewed_at: input.reviewedAtIso,
-          notes: input.notes,
-          updated_at: input.updatedAtIso,
-        })
+        .update(updates)
         .eq("id", input.criterionRowId)
         .select("*")
         .single();
@@ -500,20 +505,34 @@ export function createAzureSourceWriteAdapter(
 
     async updateGateCriterion(input) {
       try {
+        const assignments = [
+          "state = $1",
+          "reviewer_user_id = $2",
+          "reviewed_at = $3",
+          "updated_at = $4",
+        ];
+        const values: unknown[] = [
+          input.state,
+          input.reviewerUserId,
+          input.reviewedAtIso,
+          input.updatedAtIso,
+        ];
+        if ("notes" in input) {
+          values.push(input.notes ?? null);
+          assignments.push(`notes = $${values.length}`);
+        }
+        if (input.evidenceArtifactIds) {
+          values.push(JSON.stringify([...input.evidenceArtifactIds]));
+          assignments.push(`evidence_artifact_ids = $${values.length}::jsonb`);
+        }
+        values.push(input.criterionRowId);
         const rows = await session((run) =>
           run<Record<string, unknown>>(
             `UPDATE source_event_gate_criterion_states
-               SET state = $1, reviewer_user_id = $2, reviewed_at = $3, notes = $4, updated_at = $5
-             WHERE id = $6
+               SET ${assignments.join(", ")}
+             WHERE id = $${values.length}
              RETURNING *`,
-            [
-              input.state,
-              input.reviewerUserId,
-              input.reviewedAtIso,
-              input.notes,
-              input.updatedAtIso,
-              input.criterionRowId,
-            ],
+            values,
           ),
         );
         if (!rows[0]) return fail("gate criterion row not found after update");

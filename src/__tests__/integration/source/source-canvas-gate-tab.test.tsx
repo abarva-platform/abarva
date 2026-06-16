@@ -1,7 +1,6 @@
 /**
- * Focused SSR tests for GateTab — covers the B3 blocker-diagnostics
- * surface that UniversalCanvasShell's default-Document render path
- * doesn't exercise.
+ * Focused SSR tests for GateTab — covers the Source gate checklist
+ * and its required-input status surface.
  */
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -34,7 +33,7 @@ function makeCriterion(
   };
 }
 
-describe("GateTab · B3 blocker diagnostics", () => {
+describe("GateTab · required input checklist", () => {
   it("renders the evidence-derived stage decision status and criterion provenance", () => {
     const states = [
       makeCriterion({ criterionId: "GATE-SCOPE-01", state: "pending" }),
@@ -82,13 +81,16 @@ describe("GateTab · B3 blocker diagnostics", () => {
     );
 
     expect(html).toContain("source-stage-decision-status");
-    expect(html).toContain("Auto-assessed from evidence");
-    expect(html).toContain("Blocked by missing evidence");
-    expect(html).toContain("Application inventory: Usable Evidence");
-    expect(html).toContain("L2/L3 ticket history: Parsed");
+    expect(html).toContain("source-gate-required-inputs");
+    expect(html).toContain("Advanced gate details");
+    expect(html).toContain("Ready");
+    expect(html).toContain("Missing");
+    expect(html).toContain("Evidence ready: Application inventory");
+    expect(html).toContain("Add or parse: L2/L3 ticket history");
+    expect(html).not.toContain("hard criterion");
   });
 
-  it("surfaces explicit blocker rows when criteria are not met", () => {
+  it("surfaces a compact required-input table when criteria are not met", () => {
     const html = renderToStaticMarkup(
       createElement(GateTab, {
         fromStage: "scope",
@@ -105,12 +107,13 @@ describe("GateTab · B3 blocker diagnostics", () => {
     // Met criterion is excluded from the blocker callout (it still
     // renders in the criteria list below).
     expect(html).not.toContain("source-canvas-gate-blocker-GATE-SCOPE-03");
-    // Title reflects the unmet count.
-    expect(html).toMatch(
-      /2 (criteria pending|hard blockers).+before you can promote/,
-    );
+    // Fallback title reflects the unmet count when no recommendation is present.
+    expect(html).toContain("2 inputs");
     // Promote button is aria-described by the callout for screen readers.
     expect(html).toMatch(/aria-describedby="source-canvas-gate-promote-help"/);
+    expect(html).toContain("source-gate-required-inputs");
+    expect(html).toContain("Scope needs 2 inputs");
+    expect(html).toContain("Advance anyway");
     // State pills render alongside row titles.
     expect(html).toContain("source-canvas-gate-criterion-state-pending");
     expect(html).toContain("source-canvas-gate-criterion-state-not_met");
@@ -128,14 +131,14 @@ describe("GateTab · B3 blocker diagnostics", () => {
       }),
     );
     expect(html).not.toContain("source-canvas-gate-blockers");
-    expect(html).toContain("All items met. Write the reason and approve");
+    expect(html).toContain("All inputs are ready. Write the reason and approve");
     // Promote button has no aria-describedby when nothing is blocking.
     expect(html).not.toContain(
       'aria-describedby="source-canvas-gate-promote-help"',
     );
   });
 
-  it("renders Mark met button on pending criteria when onChangeCriterionState is wired", () => {
+  it("renders a manual confirmation control on pending criteria when onChangeCriterionState is wired", () => {
     const onChange = jest.fn();
     const html = renderToStaticMarkup(
       createElement(GateTab, {
@@ -149,6 +152,8 @@ describe("GateTab · B3 blocker diagnostics", () => {
       }),
     );
     expect(html).toContain("source-canvas-gate-criterion-mark-met-GATE-1");
+    expect(html).toContain("Confirm manually");
+    expect(html).toContain("Confirm input");
     expect(html).toContain("source-canvas-gate-criterion-reopen-GATE-2");
     // Waived rows hide both buttons (waiver path has its own flow).
     expect(html).not.toContain("source-canvas-gate-criterion-mark-met-GATE-3");
@@ -174,7 +179,7 @@ describe("GateTab · B3 blocker diagnostics", () => {
     expect(html).toContain("cursor:not-allowed");
   });
 
-  it("hides Mark met / Reopen entirely when onChangeCriterionState is omitted (SSR)", () => {
+  it("hides manual confirmation controls when onChangeCriterionState is omitted (SSR)", () => {
     const html = renderToStaticMarkup(
       createElement(GateTab, {
         fromStage: "scope",

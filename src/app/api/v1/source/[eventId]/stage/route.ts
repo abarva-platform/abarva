@@ -30,6 +30,8 @@ import {
   type SourceEventEvidenceStateRow,
   type SourceEventGateCriterionStateRow,
 } from "@/lib/source/canvas-substrate/types";
+import { getStageSubstrate } from "@/lib/source/canvas-substrate/queries";
+import { persistAutoAssessment } from "@/lib/source/gate-auto-assessment-persist";
 import {
   evaluateStagePromotionReadiness,
   firstGovernanceBlocker,
@@ -296,6 +298,27 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
         );
       }
 
+      const autoAssessmentWrite = await getStageSubstrate(
+        persistedEvent.id,
+        stageKey,
+      )
+        .then((substrate) =>
+          persistAutoAssessment({
+            eventId: persistedEvent.id,
+            clientKey: effectiveClientKey,
+            fromStage: stageKey,
+            criteria: substrate.criteria,
+            evidence: substrate.evidence,
+          }),
+        )
+        .catch((error) => {
+          console.error(
+            "[source stage] auto-assessment persistence failed:",
+            error instanceof Error ? error.message : String(error),
+          );
+          return null;
+        });
+
       const activityWrite = await sourceWrite.insertActivityLog({
         eventId: persistedEvent.id,
         clientKey: effectiveClientKey,
@@ -310,6 +333,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           fromStage: currentStage,
           toStage: stageKey,
           selfApproved: canPilotSelfApprove,
+          autoAssessment: autoAssessmentWrite,
           bypassedGovernanceBlockers: canPilotSelfApprove
             ? readiness.blockers
             : [],

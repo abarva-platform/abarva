@@ -8,6 +8,7 @@ import type {
   SourceEventGateCriterionState,
 } from "@/lib/source/canvas-substrate";
 import {
+  AUTO_EVIDENCE_REVIEWER_ID,
   isAssessmentMet,
   type GateAssessment,
   type GateCriterionAssessment,
@@ -104,7 +105,6 @@ export function GateTab({
       def: criterionById(s.criterionId),
       assessment: assessmentById.get(s.criterionId),
     }));
-  const hardBlockers = blockers.filter((b) => b.def?.severity === "hard");
   const promoteHelpId = "source-canvas-gate-promote-help";
   const promotionReasonReady =
     promotionReason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH;
@@ -157,6 +157,79 @@ export function GateTab({
     }
   };
 
+  const openCount = total - met;
+  const promotionControls = (
+    <>
+      <label
+        style={REASON_LABEL_STYLE}
+        htmlFor="source-canvas-gate-promote-reason"
+      >
+        Promotion reason
+      </label>
+      <textarea
+        id="source-canvas-gate-promote-reason"
+        data-testid="source-canvas-gate-promote-reason"
+        value={promotionReason}
+        onChange={(event) => setPromotionReason(event.target.value)}
+        placeholder="Record the human reason for advancing this sourcing stage."
+        rows={3}
+        style={REASON_TEXTAREA_STYLE}
+      />
+      <button
+        type="button"
+        disabled={!canPromote}
+        aria-describedby={!allMet && total > 0 ? promoteHelpId : undefined}
+        onClick={() => {
+          if (canPromote && onPromoteStage && targetStage) {
+            void onPromoteStage(
+              targetStage as SourceStageKey,
+              promotionReason.trim(),
+            );
+          }
+        }}
+        style={{
+          ...PROMOTE_BUTTON_STYLE,
+          background: canPromote ? CANVAS.INK : "rgba(10,10,11,0.08)",
+          color: canPromote ? "#fff" : CANVAS.INK_MUTED,
+          cursor: canPromote ? "pointer" : "not-allowed",
+          opacity: promotePending ? 0.7 : 1,
+        }}
+        data-testid="source-canvas-gate-promote"
+      >
+        {promotePending
+          ? "Promoting..."
+          : `Approve & advance to ${targetLabel}`}
+      </button>
+      {!allMet && total > 0 && onChangeCriterionState && onPromoteStage ? (
+        <button
+          type="button"
+          disabled={!canApproveWithGaps}
+          onClick={() => void approveWithGaps()}
+          style={{
+            ...PROMOTE_BUTTON_STYLE,
+            background: "transparent",
+            border: `1px solid ${canApproveWithGaps ? CANVAS.INK : "rgba(10,10,11,0.15)"}`,
+            color: canApproveWithGaps ? CANVAS.INK : CANVAS.INK_MUTED,
+            cursor: canApproveWithGaps ? "pointer" : "not-allowed",
+            opacity: gapsPending ? 0.7 : 1,
+            marginTop: 8,
+          }}
+          data-testid="source-canvas-gate-approve-with-gaps"
+        >
+          {gapsPending
+            ? "Approving with gaps..."
+            : `Advance with ${openCount} open`}
+        </button>
+      ) : null}
+      {!promotionReasonReady ? (
+        <p style={{ ...SUBLINE_STYLE, marginTop: 6 }}>
+          Add your reason above to enable approval
+          {` (min ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters)`}.
+        </p>
+      ) : null}
+    </>
+  );
+
   return (
     <div data-testid="source-canvas-gate-tab" style={CONTAINER_STYLE}>
       <header style={HEADER_STYLE}>
@@ -165,102 +238,42 @@ export function GateTab({
             Gate · {SOURCE_STAGE_LABELS[fromStage]} → {targetLabel}
           </div>
           <h2 style={TITLE_STYLE}>
-            {met} / {total} criteria met
+            {allMet
+              ? `${SOURCE_STAGE_LABELS[fromStage]} inputs are ready`
+              : `${SOURCE_STAGE_LABELS[fromStage]} needs ${openCount} ${openCount === 1 ? "input" : "inputs"}`}
           </h2>
           {!allMet && total > 0 ? (
             <p style={SUBLINE_STYLE}>
-              You&apos;re approving: advance to {targetLabel}. {total - met}{" "}
-              item
-              {total - met === 1 ? " is" : "s are"} still open — mark them met
-              below, or approve with gaps (your rationale is recorded and the
-              open items are deferred and carried forward, never hidden).
+              Add the missing files or confirm the evidence before moving to{" "}
+              {targetLabel}. Audit details stay available below, but the work
+              list only shows what to do next.
             </p>
           ) : null}
           {allMet ? (
             <p style={SUBLINE_STYLE}>
-              All items met. Write the reason and approve — the event advances
+              All inputs are ready. Write the reason and approve; the event advances
               to {targetLabel}.
             </p>
           ) : null}
         </div>
-        <div style={PROMOTE_CONTROL_STYLE}>
-          <label
-            style={REASON_LABEL_STYLE}
-            htmlFor="source-canvas-gate-promote-reason"
-          >
-            Promotion reason
-          </label>
-          <textarea
-            id="source-canvas-gate-promote-reason"
-            data-testid="source-canvas-gate-promote-reason"
-            value={promotionReason}
-            onChange={(event) => setPromotionReason(event.target.value)}
-            placeholder="Record the human reason for advancing this sourcing stage."
-            rows={3}
-            style={REASON_TEXTAREA_STYLE}
-          />
-          <button
-            type="button"
-            disabled={!canPromote}
-            aria-describedby={!allMet && total > 0 ? promoteHelpId : undefined}
-            onClick={() => {
-              if (canPromote && onPromoteStage && targetStage) {
-                void onPromoteStage(
-                  targetStage as SourceStageKey,
-                  promotionReason.trim(),
-                );
-              }
-            }}
-            style={{
-              ...PROMOTE_BUTTON_STYLE,
-              background: canPromote ? CANVAS.INK : "rgba(10,10,11,0.08)",
-              color: canPromote ? "#fff" : CANVAS.INK_MUTED,
-              cursor: canPromote ? "pointer" : "not-allowed",
-              opacity: promotePending ? 0.7 : 1,
-            }}
-            data-testid="source-canvas-gate-promote"
-          >
-            {promotePending
-              ? "Promoting…"
-              : `Approve & advance to ${targetLabel}`}
-          </button>
-          {!allMet && total > 0 && onChangeCriterionState && onPromoteStage ? (
-            <button
-              type="button"
-              disabled={!canApproveWithGaps}
-              onClick={() => void approveWithGaps()}
-              style={{
-                ...PROMOTE_BUTTON_STYLE,
-                background: "transparent",
-                border: `1px solid ${canApproveWithGaps ? CANVAS.INK : "rgba(10,10,11,0.15)"}`,
-                color: canApproveWithGaps ? CANVAS.INK : CANVAS.INK_MUTED,
-                cursor: canApproveWithGaps ? "pointer" : "not-allowed",
-                opacity: gapsPending ? 0.7 : 1,
-                marginTop: 8,
-              }}
-              data-testid="source-canvas-gate-approve-with-gaps"
-            >
-              {gapsPending
-                ? "Approving with gaps…"
-                : `Approve with gaps (${total - met} deferred)`}
-            </button>
-          ) : null}
-          {!promotionReasonReady ? (
-            <p style={{ ...SUBLINE_STYLE, marginTop: 6 }}>
-              Add your reason above to enable approval
-              {` (min ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters)`}.
-            </p>
-          ) : null}
-        </div>
+        {allMet ? (
+          <div style={PROMOTE_CONTROL_STYLE}>{promotionControls}</div>
+        ) : (
+          <details style={ADVANCE_DETAILS_STYLE}>
+            <summary style={ADVANCE_SUMMARY_STYLE}>Advance anyway</summary>
+            <div style={{ ...PROMOTE_CONTROL_STYLE, marginTop: 10 }}>
+              {promotionControls}
+            </div>
+          </details>
+        )}
       </header>
 
       {recommendation ? (
         <StageDecisionStatusPanel recommendation={recommendation} />
       ) : null}
 
-      {/* B3 — blocker summary surfaces the specific reasons promotion
-          is disabled. Hard blockers come first, then the rest. */}
-      {!allMet && blockers.length > 0 ? (
+      {/* Compact fallback summary only when the stage-status panel is unavailable. */}
+      {!recommendation && !allMet && blockers.length > 0 ? (
         <div
           id={promoteHelpId}
           data-testid="source-canvas-gate-blockers"
@@ -268,16 +281,11 @@ export function GateTab({
           role="status"
         >
           <div style={BLOCKERS_TITLE_STYLE}>
-            {hardBlockers.length > 0
-              ? `${hardBlockers.length} hard ${hardBlockers.length === 1 ? "blocker" : "blockers"}`
-              : `${blockers.length} ${blockers.length === 1 ? "criterion pending" : "criteria pending"}`}{" "}
-            before you can promote
+            {blockers.length} {blockers.length === 1 ? "input" : "inputs"}{" "}
+            still needed
           </div>
           <ul style={BLOCKERS_LIST_STYLE}>
-            {[
-              ...hardBlockers,
-              ...blockers.filter((b) => b.def?.severity !== "hard"),
-            ].map(({ state, def, assessment: criterionAssessment }) => (
+            {blockers.map(({ state, def, assessment: criterionAssessment }) => (
               <li
                 key={state.criterionId}
                 style={BLOCKERS_LIST_ITEM_STYLE}
@@ -288,9 +296,6 @@ export function GateTab({
                   <span style={BLOCKERS_ITEM_TITLE_STYLE}>
                     {def?.title ?? state.criterionId}
                   </span>
-                  {def?.severity === "hard" ? (
-                    <span style={INLINE_HARD_TAG_STYLE}>hard</span>
-                  ) : null}
                   <span style={BLOCKERS_STATE_STYLE}>
                     {" — "}
                     {criterionAssessment?.reason ?? STATE_LABEL[state.state]}
@@ -311,21 +316,38 @@ export function GateTab({
           No gate criteria defined for this stage transition.
         </p>
       ) : (
-        <ul style={LIST_STYLE}>
-          {ordered.map((s) => {
-            const def = criterionById(s.criterionId);
-            return (
-              <CriterionRow
-                key={s.criterionId}
-                state={s}
-                def={def}
-                assessment={assessmentById.get(s.criterionId)}
-                onChangeState={onChangeCriterionState}
-                pending={pendingByCriterionId?.[s.criterionId] ?? false}
-              />
-            );
-          })}
-        </ul>
+        <>
+          <RequiredInputsList
+            items={ordered.map((state) => ({
+              state,
+              def: criterionById(state.criterionId),
+              assessment: assessmentById.get(state.criterionId),
+            }))}
+          />
+          <details
+            data-testid="source-canvas-gate-advanced-details"
+            style={ADVANCED_GATE_DETAILS_STYLE}
+          >
+            <summary style={ADVANCE_SUMMARY_STYLE}>
+              Advanced gate details
+            </summary>
+            <ul style={{ ...LIST_STYLE, marginTop: 12 }}>
+              {ordered.map((s) => {
+                const def = criterionById(s.criterionId);
+                return (
+                  <CriterionRow
+                    key={s.criterionId}
+                    state={s}
+                    def={def}
+                    assessment={assessmentById.get(s.criterionId)}
+                    onChangeState={onChangeCriterionState}
+                    pending={pendingByCriterionId?.[s.criterionId] ?? false}
+                  />
+                );
+              })}
+            </ul>
+          </details>
+        </>
       )}
     </div>
   );
@@ -343,6 +365,154 @@ interface CriterionRowProps {
   pending: boolean;
 }
 
+interface RequiredInputItem {
+  state: SourceEventGateCriterion;
+  def: SourceGateCriterion | undefined;
+  assessment?: GateCriterionAssessment;
+}
+
+function RequiredInputsList({ items }: { items: RequiredInputItem[] }) {
+  return (
+    <section
+      aria-label="Required inputs"
+      data-testid="source-gate-required-inputs"
+      style={REQUIRED_INPUTS_STYLE}
+    >
+      <div style={REQUIRED_INPUTS_HEADER_STYLE}>
+        <span>Input</span>
+        <span>Status</span>
+      </div>
+      {items.map((item) => {
+        const status = requiredInputStatus(item);
+        const tone = requiredInputTone(status);
+        return (
+          <div
+            key={item.state.criterionId}
+            style={REQUIRED_INPUT_ROW_STYLE}
+            data-testid={`source-gate-required-input-${item.state.criterionId}`}
+          >
+            <div style={REQUIRED_INPUT_BODY_STYLE}>
+              <div style={REQUIRED_INPUT_TITLE_STYLE}>
+                {item.def?.title ?? item.state.criterionId}
+              </div>
+              <div style={REQUIRED_INPUT_HINT_STYLE}>
+                {requiredInputHint(item)}
+              </div>
+            </div>
+            <span
+              style={{
+                ...REQUIRED_INPUT_STATUS_STYLE,
+                background: tone.bg,
+                borderColor: tone.border,
+                color: tone.fg,
+              }}
+            >
+              {status}
+            </span>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+function requiredInputStatus(item: RequiredInputItem): string {
+  if (item.assessment) {
+    switch (item.assessment.displayState) {
+      case "met_auto_evidence":
+      case "met_manual":
+      case "waived":
+        return "Ready";
+      case "pending_review":
+        return "Review";
+      case "deferred_manual":
+        return "Deferred";
+      case "not_met_manual":
+        return "Needs work";
+      case "blocked_evidence":
+      default:
+        return "Missing";
+    }
+  }
+  switch (item.state.state) {
+    case "met":
+    case "waived":
+      return "Ready";
+    case "not_met":
+      return "Needs work";
+    case "deferred":
+      return "Deferred";
+    case "pending":
+    default:
+      return "Missing";
+  }
+}
+
+function requiredInputHint(item: RequiredInputItem): string {
+  const missingEvidence =
+    item.assessment?.evidence
+      .filter((match) => !match.satisfied)
+      .map((match) => match.label) ?? [];
+  const readyEvidence =
+    item.assessment?.evidence
+      .filter((match) => match.satisfied)
+      .map((match) => match.label) ?? [];
+
+  if (missingEvidence.length > 0) {
+    return `Add or parse: ${missingEvidence.join(", ")}.`;
+  }
+  if (readyEvidence.length > 0) {
+    return `Evidence ready: ${readyEvidence.join(", ")}.`;
+  }
+  if (item.assessment?.displayState === "pending_review") {
+    return "Confirm the evidence with the named owner.";
+  }
+  if (item.state.state === "met") {
+    return item.state.reviewerUserId === AUTO_EVIDENCE_REVIEWER_ID
+      ? "AbarVa matched this from parsed evidence."
+      : "Confirmed by a user.";
+  }
+  if (item.def?.description) {
+    return item.def.description;
+  }
+  return "Upload the source file or confirm this input.";
+}
+
+function requiredInputTone(status: string): {
+  bg: string;
+  fg: string;
+  border: string;
+} {
+  switch (status) {
+    case "Ready":
+      return {
+        bg: "rgba(46,125,50,0.08)",
+        fg: "#2E7D32",
+        border: "rgba(46,125,50,0.24)",
+      };
+    case "Review":
+      return {
+        bg: "rgba(57,96,168,0.08)",
+        fg: "#315A9D",
+        border: "rgba(57,96,168,0.24)",
+      };
+    case "Deferred":
+    case "Needs work":
+      return {
+        bg: "rgba(186,117,23,0.08)",
+        fg: "#A66400",
+        border: "rgba(186,117,23,0.24)",
+      };
+    case "Missing":
+    default:
+      return {
+        bg: "rgba(184,91,0,0.08)",
+        fg: "#A65300",
+        border: "rgba(184,91,0,0.24)",
+      };
+  }
+}
+
 function CriterionRow({
   state,
   def,
@@ -351,6 +521,8 @@ function CriterionRow({
   pending,
 }: CriterionRowProps) {
   const [reason, setReason] = useState("");
+  const autoEvidenceReviewed =
+    state.reviewerUserId === AUTO_EVIDENCE_REVIEWER_ID;
   const isMet = assessment
     ? isAssessmentMet(assessment)
     : state.state === "met" || state.state === "waived";
@@ -375,9 +547,6 @@ function CriterionRow({
           <span style={ROW_TITLE_TEXT}>{def?.title ?? state.criterionId}</span>
           <StatePill state={state.state} />
           {assessment ? <AssessmentBadge assessment={assessment} /> : null}
-          {def?.severity === "hard" ? (
-            <span style={HARD_TAG_STYLE}>hard</span>
-          ) : null}
           {onChangeState && state.state !== "waived" ? (
             isMetOrWaived ? (
               <button
@@ -393,6 +562,27 @@ function CriterionRow({
                 {pending ? "Reopening…" : "Reopen"}
               </button>
             ) : (
+              null
+            )
+          ) : null}
+        </div>
+        {!isMetOrWaived && onChangeState ? (
+          <details style={ROW_DISCLOSURE_STYLE}>
+            <summary style={ROW_DISCLOSURE_SUMMARY_STYLE}>
+              Confirm manually
+            </summary>
+            <div style={ROW_REASON_WRAP_STYLE}>
+              <label style={REASON_LABEL_STYLE}>
+                Approval reason
+                <textarea
+                  value={reason}
+                  onChange={(event) => setReason(event.target.value)}
+                  rows={2}
+                  placeholder="Explain what evidence you reviewed and why this input is ready."
+                  data-testid={`source-canvas-gate-criterion-reason-${state.criterionId}`}
+                  style={{ ...REASON_TEXTAREA_STYLE, marginTop: 5 }}
+                />
+              </label>
               <button
                 type="button"
                 disabled={pending || !reasonReady}
@@ -402,33 +592,24 @@ function CriterionRow({
                 data-testid={`source-canvas-gate-criterion-mark-met-${state.criterionId}`}
                 style={{
                   ...ROW_PRIMARY_BUTTON_STYLE,
+                  marginLeft: 0,
                   opacity: pending || !reasonReady ? 0.55 : 1,
                 }}
               >
-                {pending ? "Saving…" : "Mark met"}
+                {pending ? "Saving…" : "Confirm input"}
               </button>
-            )
-          ) : null}
-        </div>
-        {!isMetOrWaived && onChangeState ? (
-          <label style={ROW_REASON_WRAP_STYLE}>
-            <span style={REASON_LABEL_STYLE}>Human approval reason</span>
-            <textarea
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              rows={2}
-              placeholder="Explain what evidence you reviewed and why this gate is ready."
-              data-testid={`source-canvas-gate-criterion-reason-${state.criterionId}`}
-              style={REASON_TEXTAREA_STYLE}
-            />
-          </label>
+            </div>
+          </details>
         ) : null}
         {isMetOrWaived && state.reviewedAt ? (
           <div
             style={ROW_AUDIT_STYLE}
             data-testid={`source-canvas-gate-criterion-audit-${state.criterionId}`}
           >
-            Approved by {state.reviewerUserId ?? "recorded user"} ·{" "}
+            {autoEvidenceReviewed
+              ? "Auto-assessed by AbarVa evidence"
+              : `Approved by ${state.reviewerUserId ?? "recorded user"}`}{" "}
+            ·{" "}
             {formatAuditTimestamp(state.reviewedAt)}
             {state.notes ? ` · Reason: ${state.notes}` : ""}
           </div>
@@ -443,27 +624,30 @@ function CriterionRow({
           >
             {assessment.evidence.map((match) => (
               <span key={match.requirementId}>
-                {match.label}: {match.currentState}
-                {match.satisfied ? " · ok" : ` · needs ${match.minimumState}`}
+                {match.label} is {match.currentState}
+                {match.satisfied ? " · ready" : ` · needs ${match.minimumState}`}
               </span>
             ))}
           </div>
         ) : null}
-        <div style={ROW_META_STYLE}>
-          <span style={CRITERION_CODE}>{state.criterionId}</span>
-          {def?.ownerRole ? (
-            <>
-              <span style={DOT_INLINE_STYLE}>·</span>
-              <span>Owner: {def.ownerRole.replace(/-/g, " ")}</span>
-            </>
-          ) : null}
-          {def?.linkedArtifactCodes && def.linkedArtifactCodes.length > 0 ? (
-            <>
-              <span style={DOT_INLINE_STYLE}>·</span>
-              <span>Evidence: {def.linkedArtifactCodes.join(", ")}</span>
-            </>
-          ) : null}
-        </div>
+        <details style={AUDIT_DISCLOSURE_STYLE}>
+          <summary style={AUDIT_DISCLOSURE_SUMMARY_STYLE}>Audit details</summary>
+          <div style={ROW_META_STYLE}>
+            <span style={CRITERION_CODE}>{state.criterionId}</span>
+            {def?.ownerRole ? (
+              <>
+                <span style={DOT_INLINE_STYLE}>·</span>
+                <span>Owner: {def.ownerRole.replace(/-/g, " ")}</span>
+              </>
+            ) : null}
+            {def?.linkedArtifactCodes && def.linkedArtifactCodes.length > 0 ? (
+              <>
+                <span style={DOT_INLINE_STYLE}>·</span>
+                <span>Evidence: {def.linkedArtifactCodes.join(", ")}</span>
+              </>
+            ) : null}
+          </div>
+        </details>
       </div>
     </li>
   );
@@ -483,33 +667,19 @@ function StageDecisionStatusPanel({
         borderColor: tone.border,
         background: tone.bg,
       }}
-      aria-label="Stage Decision Status"
+      aria-label="Stage inputs"
     >
       <div style={DECISION_STATUS_HEADER_STYLE}>
-        <span style={EYEBROW_STYLE}>Stage Decision Status</span>
+        <span style={EYEBROW_STYLE}>Stage inputs</span>
         <span style={{ ...DECISION_STATUS_PILL_STYLE, color: tone.fg }}>
           {stageStatusLabel(recommendation.status)}
         </span>
       </div>
       <div style={DECISION_STATUS_METRIC_STYLE}>
-        {recommendation.requiredMet} / {recommendation.requiredTotal} required
-        cleared · {recommendation.autoMetCount} auto-assessed ·{" "}
-        {recommendation.manualMetCount} manual
+        {recommendation.requiredMet} ready ·{" "}
+        {recommendation.requiredTotal - recommendation.requiredMet} still needed
       </div>
-      {recommendation.reasonCodes.length > 0 ? (
-        <div style={DECISION_REASON_STYLE}>
-          {recommendation.reasonCodes.join(" · ")}
-        </div>
-      ) : null}
-      {recommendation.blockers.length > 0 ? (
-        <ul style={DECISION_BLOCKER_LIST_STYLE}>
-          {recommendation.blockers.map((blocker) => (
-            <li key={blocker.criterionId}>
-              <strong>{blocker.title}</strong> — {blocker.reason}
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      <div style={DECISION_REASON_STYLE}>{stageStatusIntro(recommendation)}</div>
     </section>
   );
 }
@@ -524,6 +694,7 @@ function AssessmentBadge({
   return (
     <span
       data-testid={`source-canvas-gate-criterion-assessment-${assessment.criterionId}`}
+      title={assessment.reason}
       style={{
         ...ASSESSMENT_BADGE_STYLE,
         background: tone.bg,
@@ -550,16 +721,19 @@ function formatAuditTimestamp(iso: string): string {
 function assessmentBadgeLabel(assessment: GateCriterionAssessment): string {
   switch (assessment.displayState) {
     case "met_auto_evidence":
-      return "Auto-assessed from evidence";
+      return "Ready";
     case "blocked_evidence":
-      return "Blocked by missing evidence";
+      return "Missing input";
     case "pending_review":
-      return "Needs human review";
+      return "Review needed";
     case "met_manual":
+      return "Confirmed";
     case "not_met_manual":
+      return "Needs work";
     case "waived":
+      return "Waived";
     case "deferred_manual":
-      return "Manual override";
+      return "Deferred";
   }
 }
 
@@ -599,14 +773,28 @@ function assessmentBadgeTone(assessment: GateCriterionAssessment): {
 function stageStatusLabel(status: StageRecommendation["status"]): string {
   switch (status) {
     case "ready":
-      return "Ready to advance";
+      return "Ready";
     case "ready_with_warnings":
       return "Ready with warnings";
     case "needs_review":
-      return "Needs human review";
+      return "Review needed";
     case "blocked":
     default:
-      return "Blocked by missing evidence";
+      return "Inputs needed";
+  }
+}
+
+function stageStatusIntro(recommendation: StageRecommendation): string {
+  switch (recommendation.status) {
+    case "ready":
+      return "All required inputs are ready for this stage.";
+    case "ready_with_warnings":
+      return "Required inputs are ready; review the open advisory items before advancing.";
+    case "needs_review":
+      return "Some inputs are ready from evidence and need a quick human review.";
+    case "blocked":
+    default:
+      return "Load or confirm the missing inputs before moving to the next stage.";
   }
 }
 
@@ -656,7 +844,7 @@ function StatePill({ state }: { state: SourceEventGateCriterionState }) {
         borderColor: tone.border,
       }}
     >
-      {STATE_LABEL[state]}
+      {state === "pending" ? "Needed" : STATE_LABEL[state]}
     </span>
   );
 }
@@ -761,6 +949,25 @@ const PROMOTE_CONTROL_STYLE: CSSProperties = {
   maxWidth: 320,
 };
 
+const ADVANCE_DETAILS_STYLE: CSSProperties = {
+  justifySelf: "end",
+  minWidth: 220,
+  maxWidth: 320,
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  background: "#ffffff",
+  padding: "10px 12px",
+};
+
+const ADVANCE_SUMMARY_STYLE: CSSProperties = {
+  cursor: "pointer",
+  fontFamily: CANVAS.SANS,
+  fontSize: 13,
+  fontWeight: 700,
+  color: CANVAS.INK,
+  width: "fit-content",
+};
+
 const REASON_LABEL_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 9,
@@ -790,6 +997,74 @@ const LIST_STYLE: CSSProperties = {
   margin: 0,
   display: "grid",
   gap: 0,
+};
+
+const REQUIRED_INPUTS_STYLE: CSSProperties = {
+  display: "grid",
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  overflow: "hidden",
+  background: "#ffffff",
+};
+
+const REQUIRED_INPUTS_HEADER_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) 120px",
+  gap: 16,
+  padding: "10px 14px",
+  borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  letterSpacing: "0.10em",
+  textTransform: "uppercase",
+  color: CANVAS.GRAY_DK,
+  background: "rgba(10,10,11,0.02)",
+};
+
+const REQUIRED_INPUT_ROW_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) 120px",
+  alignItems: "center",
+  gap: 16,
+  padding: "13px 14px",
+  borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
+};
+
+const REQUIRED_INPUT_BODY_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 3,
+  minWidth: 0,
+};
+
+const REQUIRED_INPUT_TITLE_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 14,
+  fontWeight: 650,
+  color: CANVAS.INK,
+  lineHeight: 1.3,
+};
+
+const REQUIRED_INPUT_HINT_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 12.5,
+  color: CANVAS.INK_SOFT,
+  lineHeight: 1.35,
+};
+
+const REQUIRED_INPUT_STATUS_STYLE: CSSProperties = {
+  justifySelf: "start",
+  border: "1px solid transparent",
+  borderRadius: 999,
+  padding: "5px 9px",
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  fontWeight: 700,
+  lineHeight: 1,
+};
+
+const ADVANCED_GATE_DETAILS_STYLE: CSSProperties = {
+  borderTop: `1px solid ${CANVAS.HAIRLINE}`,
+  paddingTop: 10,
 };
 
 const ROW_STYLE: CSSProperties = {
@@ -828,6 +1103,18 @@ const ROW_REASON_WRAP_STYLE: CSSProperties = {
   marginTop: 4,
 };
 
+const ROW_DISCLOSURE_STYLE: CSSProperties = {
+  marginTop: 6,
+};
+
+const ROW_DISCLOSURE_SUMMARY_STYLE: CSSProperties = {
+  cursor: "pointer",
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  color: CANVAS.INK_SOFT,
+  width: "fit-content",
+};
+
 const ROW_AUDIT_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 10,
@@ -840,15 +1127,6 @@ const ROW_TITLE_TEXT: CSSProperties = {
   fontSize: 14,
   fontWeight: 600,
   color: CANVAS.INK,
-};
-
-const HARD_TAG_STYLE: CSSProperties = {
-  fontFamily: CANVAS.MONO,
-  fontSize: 9,
-  letterSpacing: "0.10em",
-  textTransform: "uppercase",
-  color: CANVAS.BLOCKED,
-  fontWeight: 600,
 };
 
 const ROW_DESC_STYLE: CSSProperties = {
@@ -867,6 +1145,18 @@ const ROW_META_STYLE: CSSProperties = {
   letterSpacing: "0.04em",
   color: CANVAS.GRAY_DK,
   flexWrap: "wrap",
+};
+
+const AUDIT_DISCLOSURE_STYLE: CSSProperties = {
+  marginTop: 4,
+};
+
+const AUDIT_DISCLOSURE_SUMMARY_STYLE: CSSProperties = {
+  cursor: "pointer",
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  color: CANVAS.GRAY_DK,
+  width: "fit-content",
 };
 
 const CRITERION_CODE: CSSProperties = {
@@ -922,14 +1212,6 @@ const DECISION_REASON_STYLE: CSSProperties = {
   color: CANVAS.INK_SOFT,
 };
 
-const DECISION_BLOCKER_LIST_STYLE: CSSProperties = {
-  margin: 0,
-  paddingLeft: 16,
-  fontFamily: CANVAS.SANS,
-  fontSize: 12.5,
-  color: CANVAS.INK_SOFT,
-};
-
 const BLOCKERS_STYLE: CSSProperties = {
   display: "grid",
   gap: 8,
@@ -976,16 +1258,6 @@ const BLOCKERS_ITEM_TITLE_STYLE: CSSProperties = {
 const BLOCKERS_STATE_STYLE: CSSProperties = {
   color: CANVAS.INK_SOFT,
   fontSize: 12.5,
-};
-
-const INLINE_HARD_TAG_STYLE: CSSProperties = {
-  marginLeft: 6,
-  fontFamily: CANVAS.MONO,
-  fontSize: 9,
-  fontWeight: 700,
-  letterSpacing: "0.10em",
-  textTransform: "uppercase",
-  color: CANVAS.BLOCKED,
 };
 
 const ASSESSMENT_BADGE_STYLE: CSSProperties = {

@@ -7,6 +7,7 @@ import type {
   SourceEventGateCriterion,
 } from '@/lib/source/canvas-substrate';
 import {
+  AUTO_EVIDENCE_REVIEWER_ID,
   assessStageGate,
   buildStageRecommendation,
 } from '@/lib/source/gate-auto-assessment';
@@ -113,6 +114,31 @@ describe('Source gate auto assessment', () => {
       displayState: 'not_met_manual',
       provenance: 'manual',
       reason: 'Manual override',
+    });
+  });
+
+  it('renders a persisted system evidence assessment as auto-assessed after reload', () => {
+    const assessment = assessStageGate({
+      fromStage: 'scope',
+      criteria: [
+        criterion({
+          state: 'met',
+          reviewerUserId: AUTO_EVIDENCE_REVIEWER_ID,
+          notes: 'Auto-met from evidence: EVID-SRC-SCOPE-APP-INV',
+          evidenceArtifactIds: ['artifact-1'],
+        }),
+      ],
+      evidence: [evidence()],
+    });
+
+    expect(assessment.criteria[0]).toMatchObject({
+      displayState: 'met_auto_evidence',
+      provenance: 'auto-evidence',
+      reason: 'Auto-met from evidence: EVID-SRC-SCOPE-APP-INV',
+    });
+    expect(assessment.criteria[0]?.evidence[0]).toMatchObject({
+      requirementId: 'EVID-SRC-SCOPE-APP-INV',
+      sourceArtifactId: 'artifact-1',
     });
   });
 
