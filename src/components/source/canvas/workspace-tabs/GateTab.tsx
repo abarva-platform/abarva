@@ -27,6 +27,18 @@ const STATE_LABEL: Record<SourceEventGateCriterionState, string> = {
   deferred: "Deferred",
 };
 
+const VISUALLY_HIDDEN_STYLE: CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
 interface GateTabProps {
   fromStage: SourceStageKey;
   /** Per-event criterion states for this from-stage. */
@@ -67,6 +79,9 @@ export function GateTab({
 }: GateTabProps) {
   const [promotionReason, setPromotionReason] = useState("");
   const [gapsPending, setGapsPending] = useState(false);
+  const [activeCriterionId, setActiveCriterionId] = useState<string | null>(
+    null,
+  );
   const ordered = [...states].sort((a, b) =>
     a.criterionId.localeCompare(b.criterionId),
   );
@@ -90,9 +105,6 @@ export function GateTab({
       ? SOURCE_STAGE_LABELS[targetStage as SourceStageKey]
       : "Closed";
 
-  // B3 — explicit blocker summary. List the criteria that are
-  // actually preventing promotion (pending / not_met) with their
-  // titles, so the user has a diagnosis instead of a disabled button.
   const blockers = ordered
     .filter((s) => {
       const assessed = assessmentById.get(s.criterionId);
@@ -158,6 +170,11 @@ export function GateTab({
   };
 
   const openCount = total - met;
+  const headerTone = gateHeaderTone({
+    allMet,
+    blockers,
+    recommendation,
+  });
   const promotionControls = (
     <>
       <label
@@ -237,11 +254,23 @@ export function GateTab({
           <div style={EYEBROW_STYLE}>
             Gate · {SOURCE_STAGE_LABELS[fromStage]} → {targetLabel}
           </div>
-          <h2 style={TITLE_STYLE}>
-            {allMet
-              ? `${SOURCE_STAGE_LABELS[fromStage]} inputs are ready`
-              : `${SOURCE_STAGE_LABELS[fromStage]} needs ${openCount} ${openCount === 1 ? "input" : "inputs"}`}
-          </h2>
+          <div
+            id={promoteHelpId}
+            data-testid="source-stage-decision-status"
+            style={GATE_HEADER_STATUS_STYLE}
+            role="status"
+          >
+            <span
+              aria-hidden
+              style={{ ...HEADER_DOT_STYLE, background: headerTone.dot }}
+            />
+            <h2 style={TITLE_STYLE}>
+              {SOURCE_STAGE_LABELS[fromStage]} → {targetLabel} gate
+            </h2>
+            <span style={{ ...HEADER_COUNT_STYLE, color: headerTone.fg }}>
+              {met} of {total} cleared
+            </span>
+          </div>
           {!allMet && total > 0 ? (
             <p style={SUBLINE_STYLE}>
               Add the missing files or confirm the evidence before moving to{" "}
@@ -268,86 +297,32 @@ export function GateTab({
         )}
       </header>
 
-      {recommendation ? (
-        <StageDecisionStatusPanel recommendation={recommendation} />
-      ) : null}
-
-      {/* Compact fallback summary only when the stage-status panel is unavailable. */}
-      {!recommendation && !allMet && blockers.length > 0 ? (
-        <div
-          id={promoteHelpId}
-          data-testid="source-canvas-gate-blockers"
-          style={BLOCKERS_STYLE}
-          role="status"
-        >
-          <div style={BLOCKERS_TITLE_STYLE}>
-            {blockers.length} {blockers.length === 1 ? "input" : "inputs"}{" "}
-            still needed
-          </div>
-          <ul style={BLOCKERS_LIST_STYLE}>
-            {blockers.map(({ state, def, assessment: criterionAssessment }) => (
-              <li
-                key={state.criterionId}
-                style={BLOCKERS_LIST_ITEM_STYLE}
-                data-testid={`source-canvas-gate-blocker-${state.criterionId}`}
-              >
-                <span style={BLOCKERS_BULLET_STYLE}>·</span>
-                <span>
-                  <span style={BLOCKERS_ITEM_TITLE_STYLE}>
-                    {def?.title ?? state.criterionId}
-                  </span>
-                  <span style={BLOCKERS_STATE_STYLE}>
-                    {" — "}
-                    {criterionAssessment?.reason ?? STATE_LABEL[state.state]}
-                    {def?.linkedArtifactCodes &&
-                    def.linkedArtifactCodes.length > 0
-                      ? ` · evidence ${def.linkedArtifactCodes.join(", ")}`
-                      : ""}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
       {total === 0 ? (
         <p style={EMPTY_BODY_STYLE}>
           No gate criteria defined for this stage transition.
         </p>
       ) : (
-        <>
-          <RequiredInputsList
-            items={ordered.map((state) => ({
-              state,
-              def: criterionById(state.criterionId),
-              assessment: assessmentById.get(state.criterionId),
-            }))}
-          />
-          <details
-            data-testid="source-canvas-gate-advanced-details"
-            style={ADVANCED_GATE_DETAILS_STYLE}
-          >
-            <summary style={ADVANCE_SUMMARY_STYLE}>
-              Advanced gate details
-            </summary>
-            <ul style={{ ...LIST_STYLE, marginTop: 12 }}>
-              {ordered.map((s) => {
-                const def = criterionById(s.criterionId);
-                return (
-                  <CriterionRow
-                    key={s.criterionId}
-                    state={s}
-                    def={def}
-                    assessment={assessmentById.get(s.criterionId)}
-                    onChangeState={onChangeCriterionState}
-                    pending={pendingByCriterionId?.[s.criterionId] ?? false}
-                  />
-                );
-              })}
-            </ul>
-          </details>
-        </>
+        <ul
+          aria-label="Gate criteria"
+          data-testid="source-gate-required-inputs"
+          style={LIST_STYLE}
+        >
+          {ordered.map((s) => {
+            const def = criterionById(s.criterionId);
+            return (
+              <CriterionRow
+                key={s.criterionId}
+                state={s}
+                def={def}
+                assessment={assessmentById.get(s.criterionId)}
+                onChangeState={onChangeCriterionState}
+                pending={pendingByCriterionId?.[s.criterionId] ?? false}
+                activeCriterionId={activeCriterionId}
+                onOpenCriterion={setActiveCriterionId}
+              />
+            );
+          })}
+        </ul>
       )}
     </div>
   );
@@ -363,154 +338,106 @@ interface CriterionRowProps {
     reason: string,
   ) => Promise<void>;
   pending: boolean;
+  activeCriterionId: string | null;
+  onOpenCriterion: (criterionId: string | null) => void;
 }
 
-interface RequiredInputItem {
+interface CriterionViewModel {
+  isMet: boolean;
+  dotColor: string;
+  ownerLabel: string | null;
+  gapLine: string;
+  missingInputs: GateCriterionAssessment["evidence"];
+}
+
+function criterionViewModel(args: {
   state: SourceEventGateCriterion;
   def: SourceGateCriterion | undefined;
   assessment?: GateCriterionAssessment;
+}): CriterionViewModel {
+  const { state, def, assessment } = args;
+  const isMet = assessment
+    ? isAssessmentMet(assessment)
+    : state.state === "met" || state.state === "waived";
+  const missingInputs =
+    assessment?.evidence.filter((match) => !match.satisfied) ?? [];
+  const dotColor = isMet
+    ? CANVAS.ACTIVE
+    : missingInputs.length > 0 || assessment?.displayState === "blocked_evidence"
+      ? CANVAS.BLOCKED
+      : CANVAS.WAITING;
+  return {
+    isMet,
+    dotColor,
+    ownerLabel: def?.ownerRole ? compactOwnerLabel(def.ownerRole) : null,
+    gapLine: deriveGapLine({ state, def, assessment, missingInputs, isMet }),
+    missingInputs,
+  };
 }
 
-function RequiredInputsList({ items }: { items: RequiredInputItem[] }) {
-  return (
-    <section
-      aria-label="Required inputs"
-      data-testid="source-gate-required-inputs"
-      style={REQUIRED_INPUTS_STYLE}
-    >
-      <div style={REQUIRED_INPUTS_HEADER_STYLE}>
-        <span>Input</span>
-        <span>Status</span>
-      </div>
-      {items.map((item) => {
-        const status = requiredInputStatus(item);
-        const tone = requiredInputTone(status);
-        return (
-          <div
-            key={item.state.criterionId}
-            style={REQUIRED_INPUT_ROW_STYLE}
-            data-testid={`source-gate-required-input-${item.state.criterionId}`}
-          >
-            <div style={REQUIRED_INPUT_BODY_STYLE}>
-              <div style={REQUIRED_INPUT_TITLE_STYLE}>
-                {item.def?.title ?? item.state.criterionId}
-              </div>
-              <div style={REQUIRED_INPUT_HINT_STYLE}>
-                {requiredInputHint(item)}
-              </div>
-            </div>
-            <span
-              style={{
-                ...REQUIRED_INPUT_STATUS_STYLE,
-                background: tone.bg,
-                borderColor: tone.border,
-                color: tone.fg,
-              }}
-            >
-              {status}
-            </span>
-          </div>
-        );
-      })}
-    </section>
-  );
-}
-
-function requiredInputStatus(item: RequiredInputItem): string {
-  if (item.assessment) {
-    switch (item.assessment.displayState) {
-      case "met_auto_evidence":
-      case "met_manual":
-      case "waived":
-        return "Ready";
-      case "pending_review":
-        return "Review";
-      case "deferred_manual":
-        return "Deferred";
-      case "not_met_manual":
-        return "Needs work";
-      case "blocked_evidence":
-      default:
-        return "Missing";
+function deriveGapLine(args: {
+  state: SourceEventGateCriterion;
+  def: SourceGateCriterion | undefined;
+  assessment?: GateCriterionAssessment;
+  missingInputs: GateCriterionAssessment["evidence"];
+  isMet: boolean;
+}): string {
+  const { state, def, assessment, missingInputs, isMet } = args;
+  if (isMet) {
+    if (assessment?.displayState === "met_auto_evidence") {
+      return "Auto-assessed from evidence";
     }
+    if (state.state === "waived") return "Waived for this stage";
+    return "Cleared by human review";
   }
-  switch (item.state.state) {
-    case "met":
-    case "waived":
-      return "Ready";
-    case "not_met":
-      return "Needs work";
-    case "deferred":
-      return "Deferred";
-    case "pending":
-    default:
-      return "Missing";
+  if (missingInputs.length > 1) {
+    return `${missingInputs.length} inputs not ready · see what's missing`;
   }
+  if (missingInputs.length === 1) {
+    const input = missingInputs[0];
+    return `${input.label} · ${input.currentState.toString().toLowerCase()} → needs ${input.minimumState.toLowerCase()}`;
+  }
+  if (assessment?.reason && assessment.displayState !== "pending_review") {
+    return assessment.reason;
+  }
+  return `Needs human review · ${humanReviewAction(def)}`;
 }
 
-function requiredInputHint(item: RequiredInputItem): string {
-  const missingEvidence =
-    item.assessment?.evidence
-      .filter((match) => !match.satisfied)
-      .map((match) => match.label) ?? [];
-  const readyEvidence =
-    item.assessment?.evidence
-      .filter((match) => match.satisfied)
-      .map((match) => match.label) ?? [];
-
-  if (missingEvidence.length > 0) {
-    return `Add or parse: ${missingEvidence.join(", ")}.`;
-  }
-  if (readyEvidence.length > 0) {
-    return `Evidence ready: ${readyEvidence.join(", ")}.`;
-  }
-  if (item.assessment?.displayState === "pending_review") {
-    return "Confirm the evidence with the named owner.";
-  }
-  if (item.state.state === "met") {
-    return item.state.reviewerUserId === AUTO_EVIDENCE_REVIEWER_ID
-      ? "AbarVa matched this from parsed evidence."
-      : "Confirmed by a user.";
-  }
-  if (item.def?.description) {
-    return item.def.description;
-  }
-  return "Upload the source file or confirm this input.";
+function compactOwnerLabel(ownerRole: string): string {
+  return ownerRole
+    .replace(/-/g, " ")
+    .replace(/\bea council\b/i, "EA council")
+    .replace(/\batlas\b/i, "AbarVa")
+    .trim();
 }
 
-function requiredInputTone(status: string): {
-  bg: string;
-  fg: string;
-  border: string;
-} {
-  switch (status) {
-    case "Ready":
-      return {
-        bg: "rgba(46,125,50,0.08)",
-        fg: "#2E7D32",
-        border: "rgba(46,125,50,0.24)",
-      };
-    case "Review":
-      return {
-        bg: "rgba(57,96,168,0.08)",
-        fg: "#315A9D",
-        border: "rgba(57,96,168,0.24)",
-      };
-    case "Deferred":
-    case "Needs work":
-      return {
-        bg: "rgba(186,117,23,0.08)",
-        fg: "#A66400",
-        border: "rgba(186,117,23,0.24)",
-      };
-    case "Missing":
-    default:
-      return {
-        bg: "rgba(184,91,0,0.08)",
-        fg: "#A65300",
-        border: "rgba(184,91,0,0.24)",
-      };
+function humanReviewAction(def: SourceGateCriterion | undefined): string {
+  const owner = def?.ownerRole?.toLowerCase() ?? "";
+  const title = def?.title?.toLowerCase() ?? "";
+  if (owner.includes("sponsor") || title.includes("sponsor")) {
+    return "sponsor sign-off";
   }
+  if (owner.includes("ea")) return "EA confirmation";
+  if (owner.includes("legal")) return "legal review";
+  if (owner.includes("sentinel")) return "Sentinel evidence review";
+  return "owner confirmation";
+}
+
+function gateHeaderTone(args: {
+  allMet: boolean;
+  blockers: Array<{ assessment?: GateCriterionAssessment }>;
+  recommendation?: StageRecommendation;
+}): { dot: string; fg: string } {
+  if (args.allMet) return { dot: CANVAS.ACTIVE, fg: "#2E7D32" };
+  if (
+    args.recommendation?.status === "blocked" ||
+    args.blockers.some((blocker) =>
+      blocker.assessment?.evidence.some((match) => !match.satisfied),
+    )
+  ) {
+    return { dot: CANVAS.BLOCKED, fg: "#A65300" };
+  }
+  return { dot: CANVAS.WAITING, fg: "#A66400" };
 }
 
 function CriterionRow({
@@ -519,34 +446,53 @@ function CriterionRow({
   assessment,
   onChangeState,
   pending,
+  activeCriterionId,
+  onOpenCriterion,
 }: CriterionRowProps) {
   const [reason, setReason] = useState("");
   const autoEvidenceReviewed =
     state.reviewerUserId === AUTO_EVIDENCE_REVIEWER_ID;
-  const isMet = assessment
-    ? isAssessmentMet(assessment)
-    : state.state === "met" || state.state === "waived";
-  const indicatorColor = isMet
-    ? CANVAS.ACTIVE
-    : state.state === "not_met"
-      ? CANVAS.BLOCKED
-      : state.state === "deferred"
-        ? CANVAS.WAITING
-        : CANVAS.GRAY;
-
+  const view = criterionViewModel({ state, def, assessment });
+  const isConfirmOpen = activeCriterionId === state.criterionId;
   const isMetOrWaived = state.state === "met" || state.state === "waived";
   const reasonReady = reason.trim().length >= SOURCE_APPROVAL_REASON_MIN_LENGTH;
+  const closeReasonForm = () => {
+    setReason("");
+    onOpenCriterion(null);
+  };
+  const markMet = async () => {
+    if (!onChangeState || !reasonReady || pending) return;
+    await onChangeState(state.criterionId, "met", reason.trim());
+    closeReasonForm();
+  };
   return (
     <li
       style={ROW_STYLE}
       data-testid={`source-canvas-gate-criterion-${state.criterionId}`}
     >
-      <span aria-hidden style={{ ...DOT_STYLE, background: indicatorColor }} />
+      <span aria-hidden style={{ ...DOT_STYLE, background: view.dotColor }} />
+      <span
+        data-testid={`source-canvas-gate-criterion-state-${state.state}`}
+        style={VISUALLY_HIDDEN_STYLE}
+      >
+        {STATE_LABEL[state.state]}
+      </span>
+      {assessment ? (
+        <span
+          data-testid={`source-canvas-gate-criterion-assessment-${assessment.criterionId}`}
+          style={VISUALLY_HIDDEN_STYLE}
+        >
+          {assessmentBadgeLabel(assessment)}
+        </span>
+      ) : null}
       <div style={ROW_BODY_STYLE}>
         <div style={ROW_TITLE_STYLE}>
           <span style={ROW_TITLE_TEXT}>{def?.title ?? state.criterionId}</span>
-          <StatePill state={state.state} />
-          {assessment ? <AssessmentBadge assessment={assessment} /> : null}
+          {view.ownerLabel ? (
+            <span title={def?.ownerRole} style={OWNER_CHIP_STYLE}>
+              {view.ownerLabel}
+            </span>
+          ) : null}
           {onChangeState && state.state !== "waived" ? (
             isMetOrWaived ? (
               <button
@@ -562,148 +508,143 @@ function CriterionRow({
                 {pending ? "Reopening…" : "Reopen"}
               </button>
             ) : (
-              null
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => onOpenCriterion(state.criterionId)}
+                data-testid={`source-canvas-gate-criterion-mark-met-${state.criterionId}`}
+                style={{
+                  ...ROW_GHOST_BUTTON_STYLE,
+                  opacity: pending ? 0.55 : 1,
+                }}
+              >
+                {pending ? "Saving…" : "Mark met"}
+              </button>
             )
           ) : null}
         </div>
-        {!isMetOrWaived && onChangeState ? (
-          <details style={ROW_DISCLOSURE_STYLE}>
-            <summary style={ROW_DISCLOSURE_SUMMARY_STYLE}>
-              Confirm manually
-            </summary>
-            <div style={ROW_REASON_WRAP_STYLE}>
-              <label style={REASON_LABEL_STYLE}>
-                Approval reason
-                <textarea
-                  value={reason}
-                  onChange={(event) => setReason(event.target.value)}
-                  rows={2}
-                  placeholder="Explain what evidence you reviewed and why this input is ready."
-                  data-testid={`source-canvas-gate-criterion-reason-${state.criterionId}`}
-                  style={{ ...REASON_TEXTAREA_STYLE, marginTop: 5 }}
-                />
-              </label>
+        {view.missingInputs.length > 1 ? (
+          <details
+            data-testid={`source-gate-required-input-${state.criterionId}`}
+            style={ROW_DISCLOSURE_STYLE}
+          >
+            <summary style={GAP_LINE_SUMMARY_STYLE}>{view.gapLine}</summary>
+            <ul style={INPUT_DETAIL_LIST_STYLE}>
+              {view.missingInputs.map((input) => (
+                <li key={input.requirementId}>
+                  {input.label} · {input.currentState.toString().toLowerCase()}{" "}
+                  → needs {input.minimumState.toLowerCase()}
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : (
+          <div
+            data-testid={`source-gate-required-input-${state.criterionId}`}
+            style={GAP_LINE_STYLE}
+          >
+            {view.gapLine}
+          </div>
+        )}
+        {!isMetOrWaived && onChangeState && isConfirmOpen ? (
+          <div style={ROW_REASON_WRAP_STYLE}>
+            <label style={REASON_LABEL_STYLE}>
+              Approval reason
+              <textarea
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+                rows={2}
+                placeholder="Explain what evidence you reviewed and why this input is ready."
+                data-testid={`source-canvas-gate-criterion-reason-${state.criterionId}`}
+                style={{ ...REASON_TEXTAREA_STYLE, marginTop: 5 }}
+              />
+            </label>
+            <div style={ROW_CONFIRM_ACTIONS_STYLE}>
               <button
                 type="button"
                 disabled={pending || !reasonReady}
-                onClick={() =>
-                  onChangeState(state.criterionId, "met", reason.trim())
-                }
-                data-testid={`source-canvas-gate-criterion-mark-met-${state.criterionId}`}
+                onClick={() => void markMet()}
                 style={{
                   ...ROW_PRIMARY_BUTTON_STYLE,
                   marginLeft: 0,
                   opacity: pending || !reasonReady ? 0.55 : 1,
                 }}
               >
-                {pending ? "Saving…" : "Confirm input"}
+                {pending ? "Saving..." : "Confirm"}
               </button>
+              <button
+                type="button"
+                disabled={pending}
+                onClick={closeReasonForm}
+                style={ROW_CANCEL_BUTTON_STYLE}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {isMetOrWaived && state.reviewedAt ? (
+          <details
+            style={AUDIT_DISCLOSURE_STYLE}
+            data-testid={`source-canvas-gate-criterion-audit-${state.criterionId}`}
+          >
+            <summary style={AUDIT_DISCLOSURE_SUMMARY_STYLE}>
+              {autoEvidenceReviewed
+                ? "Auto-assessed from evidence"
+                : `Cleared ${formatAuditTimestamp(state.reviewedAt)}`}
+            </summary>
+            <div style={ROW_AUDIT_STYLE}>
+              {autoEvidenceReviewed
+                ? "Auto-assessed by AbarVa evidence"
+                : `Approved by ${state.reviewerUserId ?? "recorded user"}`}{" "}
+              · {formatAuditTimestamp(state.reviewedAt)}
+              {state.notes ? ` · Reason: ${state.notes}` : ""}
             </div>
           </details>
         ) : null}
-        {isMetOrWaived && state.reviewedAt ? (
-          <div
-            style={ROW_AUDIT_STYLE}
-            data-testid={`source-canvas-gate-criterion-audit-${state.criterionId}`}
-          >
-            {autoEvidenceReviewed
-              ? "Auto-assessed by AbarVa evidence"
-              : `Approved by ${state.reviewerUserId ?? "recorded user"}`}{" "}
-            ·{" "}
-            {formatAuditTimestamp(state.reviewedAt)}
-            {state.notes ? ` · Reason: ${state.notes}` : ""}
-          </div>
-        ) : null}
-        {def?.description ? (
-          <div style={ROW_DESC_STYLE}>{def.description}</div>
-        ) : null}
-        {assessment?.evidence.length ? (
-          <div
-            style={EVIDENCE_MATCH_STYLE}
-            data-testid={`source-canvas-gate-criterion-evidence-${state.criterionId}`}
-          >
-            {assessment.evidence.map((match) => (
-              <span key={match.requirementId}>
-                {match.label} is {match.currentState}
-                {match.satisfied ? " · ready" : ` · needs ${match.minimumState}`}
-              </span>
-            ))}
-          </div>
-        ) : null}
         <details style={AUDIT_DISCLOSURE_STYLE}>
-          <summary style={AUDIT_DISCLOSURE_SUMMARY_STYLE}>Audit details</summary>
-          <div style={ROW_META_STYLE}>
-            <span style={CRITERION_CODE}>{state.criterionId}</span>
-            {def?.ownerRole ? (
-              <>
-                <span style={DOT_INLINE_STYLE}>·</span>
-                <span>Owner: {def.ownerRole.replace(/-/g, " ")}</span>
-              </>
+          <summary style={AUDIT_DISCLOSURE_SUMMARY_STYLE}>Details</summary>
+          <div style={ROW_DETAIL_STACK_STYLE}>
+            {def?.description ? (
+              <div style={ROW_DESC_STYLE}>{def.description}</div>
             ) : null}
-            {def?.linkedArtifactCodes && def.linkedArtifactCodes.length > 0 ? (
-              <>
-                <span style={DOT_INLINE_STYLE}>·</span>
-                <span>Evidence: {def.linkedArtifactCodes.join(", ")}</span>
-              </>
+            {assessment?.evidence.length ? (
+              <div
+                style={EVIDENCE_MATCH_STYLE}
+                data-testid={`source-canvas-gate-criterion-evidence-${state.criterionId}`}
+              >
+                {assessment.evidence.map((match) => (
+                  <span key={match.requirementId}>
+                    {match.label}: {match.currentState}
+                    {match.satisfied
+                      ? " · ready"
+                      : ` · needs ${match.minimumState}`}
+                  </span>
+                ))}
+              </div>
             ) : null}
+            <div style={ROW_REASON_WRAP_STYLE}>
+              <div style={ROW_META_STYLE}>
+                <span style={CRITERION_CODE}>{state.criterionId}</span>
+                {def?.ownerRole ? (
+                  <>
+                    <span style={DOT_INLINE_STYLE}>·</span>
+                    <span>Owner: {def.ownerRole.replace(/-/g, " ")}</span>
+                  </>
+                ) : null}
+                {def?.linkedArtifactCodes &&
+                def.linkedArtifactCodes.length > 0 ? (
+                  <>
+                    <span style={DOT_INLINE_STYLE}>·</span>
+                    <span>Evidence: {def.linkedArtifactCodes.join(", ")}</span>
+                  </>
+                ) : null}
+              </div>
+            </div>
           </div>
         </details>
       </div>
     </li>
-  );
-}
-
-function StageDecisionStatusPanel({
-  recommendation,
-}: {
-  recommendation: StageRecommendation;
-}) {
-  const tone = recommendationTone(recommendation.status);
-  return (
-    <section
-      data-testid="source-stage-decision-status"
-      style={{
-        ...DECISION_STATUS_STYLE,
-        borderColor: tone.border,
-        background: tone.bg,
-      }}
-      aria-label="Stage inputs"
-    >
-      <div style={DECISION_STATUS_HEADER_STYLE}>
-        <span style={EYEBROW_STYLE}>Stage inputs</span>
-        <span style={{ ...DECISION_STATUS_PILL_STYLE, color: tone.fg }}>
-          {stageStatusLabel(recommendation.status)}
-        </span>
-      </div>
-      <div style={DECISION_STATUS_METRIC_STYLE}>
-        {recommendation.requiredMet} ready ·{" "}
-        {recommendation.requiredTotal - recommendation.requiredMet} still needed
-      </div>
-      <div style={DECISION_REASON_STYLE}>{stageStatusIntro(recommendation)}</div>
-    </section>
-  );
-}
-
-function AssessmentBadge({
-  assessment,
-}: {
-  assessment: GateCriterionAssessment;
-}) {
-  const label = assessmentBadgeLabel(assessment);
-  const tone = assessmentBadgeTone(assessment);
-  return (
-    <span
-      data-testid={`source-canvas-gate-criterion-assessment-${assessment.criterionId}`}
-      title={assessment.reason}
-      style={{
-        ...ASSESSMENT_BADGE_STYLE,
-        background: tone.bg,
-        borderColor: tone.border,
-        color: tone.fg,
-      }}
-    >
-      {label}
-    </span>
   );
 }
 
@@ -734,158 +675,6 @@ function assessmentBadgeLabel(assessment: GateCriterionAssessment): string {
       return "Waived";
     case "deferred_manual":
       return "Deferred";
-  }
-}
-
-function assessmentBadgeTone(assessment: GateCriterionAssessment): {
-  bg: string;
-  fg: string;
-  border: string;
-} {
-  switch (assessment.displayState) {
-    case "met_auto_evidence":
-      return {
-        bg: "rgba(46,125,50,0.08)",
-        fg: "#2E7D32",
-        border: "rgba(46,125,50,0.28)",
-      };
-    case "blocked_evidence":
-      return {
-        bg: "rgba(184,91,0,0.08)",
-        fg: "#A65300",
-        border: "rgba(184,91,0,0.24)",
-      };
-    case "pending_review":
-      return {
-        bg: "rgba(57,96,168,0.08)",
-        fg: "#315A9D",
-        border: "rgba(57,96,168,0.24)",
-      };
-    default:
-      return {
-        bg: "rgba(10,10,11,0.05)",
-        fg: CANVAS.INK_SOFT,
-        border: "rgba(10,10,11,0.16)",
-      };
-  }
-}
-
-function stageStatusLabel(status: StageRecommendation["status"]): string {
-  switch (status) {
-    case "ready":
-      return "Ready";
-    case "ready_with_warnings":
-      return "Ready with warnings";
-    case "needs_review":
-      return "Review needed";
-    case "blocked":
-    default:
-      return "Inputs needed";
-  }
-}
-
-function stageStatusIntro(recommendation: StageRecommendation): string {
-  switch (recommendation.status) {
-    case "ready":
-      return "All required inputs are ready for this stage.";
-    case "ready_with_warnings":
-      return "Required inputs are ready; review the open advisory items before advancing.";
-    case "needs_review":
-      return "Some inputs are ready from evidence and need a quick human review.";
-    case "blocked":
-    default:
-      return "Load or confirm the missing inputs before moving to the next stage.";
-  }
-}
-
-function recommendationTone(status: StageRecommendation["status"]): {
-  bg: string;
-  fg: string;
-  border: string;
-} {
-  switch (status) {
-    case "ready":
-      return {
-        bg: "rgba(46,125,50,0.08)",
-        fg: "#2E7D32",
-        border: "rgba(46,125,50,0.24)",
-      };
-    case "ready_with_warnings":
-      return {
-        bg: "rgba(186,117,23,0.08)",
-        fg: "#A66400",
-        border: "rgba(186,117,23,0.24)",
-      };
-    case "needs_review":
-      return {
-        bg: "rgba(57,96,168,0.08)",
-        fg: "#315A9D",
-        border: "rgba(57,96,168,0.24)",
-      };
-    case "blocked":
-    default:
-      return {
-        bg: "rgba(184,91,0,0.08)",
-        fg: "#A65300",
-        border: "rgba(184,91,0,0.24)",
-      };
-  }
-}
-
-function StatePill({ state }: { state: SourceEventGateCriterionState }) {
-  const tone = stateTone(state);
-  return (
-    <span
-      data-testid={`source-canvas-gate-criterion-state-${state}`}
-      style={{
-        ...STATE_PILL_STYLE,
-        background: tone.bg,
-        color: tone.fg,
-        borderColor: tone.border,
-      }}
-    >
-      {state === "pending" ? "Needed" : STATE_LABEL[state]}
-    </span>
-  );
-}
-
-function stateTone(state: SourceEventGateCriterionState): {
-  bg: string;
-  fg: string;
-  border: string;
-} {
-  switch (state) {
-    case "met":
-      return {
-        bg: "rgba(46,125,50,0.10)",
-        fg: "#2E7D32",
-        border: "rgba(46,125,50,0.32)",
-      };
-    case "not_met":
-      return {
-        bg: "rgba(211,84,0,0.10)",
-        fg: "#B85B00",
-        border: "rgba(211,84,0,0.30)",
-      };
-    case "deferred":
-      return {
-        bg: "rgba(186,117,23,0.10)",
-        fg: "#A66400",
-        border: "rgba(186,117,23,0.30)",
-      };
-    case "waived":
-      return {
-        bg: "rgba(10,10,11,0.06)",
-        fg: CANVAS.INK,
-        border: "rgba(10,10,11,0.22)",
-      };
-    case "pending":
-    default:
-      return {
-        bg: "rgba(10,10,11,0.04)",
-        fg: CANVAS.INK_SOFT,
-        border: "rgba(10,10,11,0.14)",
-      };
   }
 }
 
@@ -929,6 +718,29 @@ const SUBLINE_STYLE: CSSProperties = {
   fontSize: 13,
   color: CANVAS.INK_SOFT,
   lineHeight: 1.5,
+};
+
+const GATE_HEADER_STATUS_STYLE: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  flexWrap: "wrap",
+};
+
+const HEADER_DOT_STYLE: CSSProperties = {
+  width: 11,
+  height: 11,
+  borderRadius: 999,
+  flexShrink: 0,
+};
+
+const HEADER_COUNT_STYLE: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: 10,
+  letterSpacing: "0.10em",
+  textTransform: "uppercase",
+  fontWeight: 800,
+  whiteSpace: "nowrap",
 };
 
 const PROMOTE_BUTTON_STYLE: CSSProperties = {
@@ -997,80 +809,13 @@ const LIST_STYLE: CSSProperties = {
   margin: 0,
   display: "grid",
   gap: 0,
-};
-
-const REQUIRED_INPUTS_STYLE: CSSProperties = {
-  display: "grid",
-  border: `1px solid ${CANVAS.RULE}`,
-  borderRadius: CANVAS.RADIUS_TIGHT,
-  overflow: "hidden",
-  background: "#ffffff",
-};
-
-const REQUIRED_INPUTS_HEADER_STYLE: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) 120px",
-  gap: 16,
-  padding: "10px 14px",
-  borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
-  fontFamily: CANVAS.MONO,
-  fontSize: 10,
-  letterSpacing: "0.10em",
-  textTransform: "uppercase",
-  color: CANVAS.GRAY_DK,
-  background: "rgba(10,10,11,0.02)",
-};
-
-const REQUIRED_INPUT_ROW_STYLE: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) 120px",
-  alignItems: "center",
-  gap: 16,
-  padding: "13px 14px",
-  borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
-};
-
-const REQUIRED_INPUT_BODY_STYLE: CSSProperties = {
-  display: "grid",
-  gap: 3,
-  minWidth: 0,
-};
-
-const REQUIRED_INPUT_TITLE_STYLE: CSSProperties = {
-  fontFamily: CANVAS.SANS,
-  fontSize: 14,
-  fontWeight: 650,
-  color: CANVAS.INK,
-  lineHeight: 1.3,
-};
-
-const REQUIRED_INPUT_HINT_STYLE: CSSProperties = {
-  fontFamily: CANVAS.SANS,
-  fontSize: 12.5,
-  color: CANVAS.INK_SOFT,
-  lineHeight: 1.35,
-};
-
-const REQUIRED_INPUT_STATUS_STYLE: CSSProperties = {
-  justifySelf: "start",
-  border: "1px solid transparent",
-  borderRadius: 999,
-  padding: "5px 9px",
-  fontFamily: CANVAS.SANS,
-  fontSize: 12,
-  fontWeight: 700,
-  lineHeight: 1,
-};
-
-const ADVANCED_GATE_DETAILS_STYLE: CSSProperties = {
   borderTop: `1px solid ${CANVAS.HAIRLINE}`,
-  paddingTop: 10,
 };
 
 const ROW_STYLE: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "auto minmax(0, 1fr)",
-  gap: 14,
+  gap: 12,
   padding: "14px 0",
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
 };
@@ -1085,12 +830,12 @@ const DOT_STYLE: CSSProperties = {
 
 const ROW_BODY_STYLE: CSSProperties = {
   display: "grid",
-  gap: 4,
+  gap: 5,
   minWidth: 0,
 };
 
 const ROW_TITLE_STYLE: CSSProperties = {
-  display: "inline-flex",
+  display: "flex",
   alignItems: "center",
   gap: 8,
   flexWrap: "wrap",
@@ -1098,21 +843,59 @@ const ROW_TITLE_STYLE: CSSProperties = {
 
 const ROW_REASON_WRAP_STYLE: CSSProperties = {
   display: "grid",
-  gap: 5,
+  gap: 8,
   maxWidth: 540,
-  marginTop: 4,
+  marginTop: 6,
+};
+
+const ROW_CONFIRM_ACTIONS_STYLE: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  flexWrap: "wrap",
+};
+
+const ROW_CANCEL_BUTTON_STYLE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "4px 10px",
+  borderRadius: 5,
+  border: `1px solid ${CANVAS.RULE}`,
+  background: "transparent",
+  color: CANVAS.INK_SOFT,
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  fontWeight: 700,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  cursor: "pointer",
 };
 
 const ROW_DISCLOSURE_STYLE: CSSProperties = {
   marginTop: 6,
 };
 
-const ROW_DISCLOSURE_SUMMARY_STYLE: CSSProperties = {
+const GAP_LINE_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 13,
+  color: CANVAS.INK_SOFT,
+  lineHeight: 1.4,
+};
+
+const GAP_LINE_SUMMARY_STYLE: CSSProperties = {
+  ...GAP_LINE_STYLE,
   cursor: "pointer",
+  width: "fit-content",
+};
+
+const INPUT_DETAIL_LIST_STYLE: CSSProperties = {
+  margin: "6px 0 0",
+  paddingLeft: 18,
   fontFamily: CANVAS.SANS,
   fontSize: 12,
   color: CANVAS.INK_SOFT,
-  width: "fit-content",
+  lineHeight: 1.5,
 };
 
 const ROW_AUDIT_STYLE: CSSProperties = {
@@ -1127,6 +910,20 @@ const ROW_TITLE_TEXT: CSSProperties = {
   fontSize: 14,
   fontWeight: 600,
   color: CANVAS.INK,
+};
+
+const OWNER_CHIP_STYLE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: 999,
+  padding: "2px 7px",
+  fontFamily: CANVAS.MONO,
+  fontSize: 9,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  color: CANVAS.GRAY_DK,
+  background: "rgba(10,10,11,0.02)",
 };
 
 const ROW_DESC_STYLE: CSSProperties = {
@@ -1145,6 +942,12 @@ const ROW_META_STYLE: CSSProperties = {
   letterSpacing: "0.04em",
   color: CANVAS.GRAY_DK,
   flexWrap: "wrap",
+};
+
+const ROW_DETAIL_STACK_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 8,
+  marginTop: 6,
 };
 
 const AUDIT_DISCLOSURE_STYLE: CSSProperties = {
@@ -1172,106 +975,6 @@ const EMPTY_BODY_STYLE: CSSProperties = {
   fontFamily: CANVAS.SANS,
   fontSize: 13,
   color: CANVAS.INK_SOFT,
-};
-
-const DECISION_STATUS_STYLE: CSSProperties = {
-  display: "grid",
-  gap: 8,
-  padding: "12px 14px",
-  borderRadius: CANVAS.RADIUS_TIGHT,
-  border: "1px solid transparent",
-};
-
-const DECISION_STATUS_HEADER_STYLE: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: 12,
-};
-
-const DECISION_STATUS_PILL_STYLE: CSSProperties = {
-  fontFamily: CANVAS.MONO,
-  fontSize: 10,
-  fontWeight: 800,
-  letterSpacing: "0.10em",
-  textTransform: "uppercase",
-  whiteSpace: "nowrap",
-};
-
-const DECISION_STATUS_METRIC_STYLE: CSSProperties = {
-  fontFamily: CANVAS.SANS,
-  fontSize: 13,
-  color: CANVAS.INK,
-};
-
-const DECISION_REASON_STYLE: CSSProperties = {
-  fontFamily: CANVAS.MONO,
-  fontSize: 10,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: CANVAS.INK_SOFT,
-};
-
-const BLOCKERS_STYLE: CSSProperties = {
-  display: "grid",
-  gap: 8,
-  padding: "12px 14px",
-  borderRadius: CANVAS.RADIUS_TIGHT,
-  border: `1px solid rgba(211,84,0,0.20)`,
-  background: "rgba(211,84,0,0.04)",
-};
-
-const BLOCKERS_TITLE_STYLE: CSSProperties = {
-  fontFamily: CANVAS.MONO,
-  fontSize: 10,
-  letterSpacing: "0.10em",
-  textTransform: "uppercase",
-  color: "#B85B00",
-  fontWeight: 700,
-};
-
-const BLOCKERS_LIST_STYLE: CSSProperties = {
-  listStyle: "none",
-  padding: 0,
-  margin: 0,
-  display: "grid",
-  gap: 4,
-};
-
-const BLOCKERS_LIST_ITEM_STYLE: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "auto 1fr",
-  gap: 8,
-  fontFamily: CANVAS.SANS,
-  fontSize: 13,
-  color: CANVAS.INK,
-};
-
-const BLOCKERS_BULLET_STYLE: CSSProperties = {
-  color: CANVAS.GRAY,
-};
-
-const BLOCKERS_ITEM_TITLE_STYLE: CSSProperties = {
-  fontWeight: 600,
-};
-
-const BLOCKERS_STATE_STYLE: CSSProperties = {
-  color: CANVAS.INK_SOFT,
-  fontSize: 12.5,
-};
-
-const ASSESSMENT_BADGE_STYLE: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  fontFamily: CANVAS.MONO,
-  fontSize: 9,
-  fontWeight: 700,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  padding: "2px 7px",
-  borderRadius: 999,
-  border: "1px solid transparent",
-  whiteSpace: "nowrap",
 };
 
 const EVIDENCE_MATCH_STYLE: CSSProperties = {
@@ -1318,18 +1021,4 @@ const ROW_GHOST_BUTTON_STYLE: CSSProperties = {
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   cursor: "pointer",
-};
-
-const STATE_PILL_STYLE: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  fontFamily: CANVAS.MONO,
-  fontSize: 9,
-  fontWeight: 700,
-  letterSpacing: "0.10em",
-  textTransform: "uppercase",
-  padding: "2px 7px",
-  borderRadius: 999,
-  border: "1px solid transparent",
-  whiteSpace: "nowrap",
 };

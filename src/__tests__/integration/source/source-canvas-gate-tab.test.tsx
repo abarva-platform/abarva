@@ -1,15 +1,20 @@
 /**
+ * @jest-environment jsdom
+ *
  * Focused SSR tests for GateTab — covers the Source gate checklist
  * and its required-input status surface.
  */
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { SourceEventGateCriterion } from "@/lib/source/canvas-substrate";
 import { GateTab } from "@/components/source/canvas/workspace-tabs/GateTab";
 import {
   assessStageGate,
   buildStageRecommendation,
 } from "@/lib/source/gate-auto-assessment";
+
+type EvidenceState = Parameters<typeof assessStageGate>[0]["evidence"][number];
 
 function makeCriterion(
   overrides: Partial<SourceEventGateCriterion> = {},
@@ -29,6 +34,23 @@ function makeCriterion(
     waiverApprovalId: null,
     createdAt: "2026-05-07T20:00:00Z",
     updatedAt: "2026-05-07T20:00:00Z",
+    ...overrides,
+  };
+}
+
+function makeEvidence(overrides: Partial<EvidenceState>): EvidenceState {
+  return {
+    id: "e1",
+    sourceEventId: "evt-canvas-1",
+    tenantKey: "skyharbor-air",
+    requirementId: "EVID-SRC-SCOPE-APP-INV",
+    stage: "scope",
+    currentState: "Not Requested",
+    sourceArtifactId: null,
+    notes: null,
+    lastSyncedAt: null,
+    createdAt: "2026-06-15T00:00:00Z",
+    updatedAt: "2026-06-15T00:00:00Z",
     ...overrides,
   };
 }
@@ -82,15 +104,15 @@ describe("GateTab · required input checklist", () => {
 
     expect(html).toContain("source-stage-decision-status");
     expect(html).toContain("source-gate-required-inputs");
-    expect(html).toContain("Advanced gate details");
     expect(html).toContain("Ready");
     expect(html).toContain("Missing");
-    expect(html).toContain("Evidence ready: Application inventory");
-    expect(html).toContain("Add or parse: L2/L3 ticket history");
+    expect(html).toContain("Application inventory");
+    expect(html).toContain("L2/L3 ticket history");
     expect(html).not.toContain("hard criterion");
+    expect(html).not.toContain("source-canvas-gate-blockers");
   });
 
-  it("surfaces a compact required-input table when criteria are not met", () => {
+  it("surfaces one compact criteria list when criteria are not met", () => {
     const html = renderToStaticMarkup(
       createElement(GateTab, {
         fromStage: "scope",
@@ -101,18 +123,20 @@ describe("GateTab · required input checklist", () => {
         ],
       }),
     );
-    expect(html).toContain("source-canvas-gate-blockers");
-    expect(html).toContain("source-canvas-gate-blocker-GATE-SCOPE-01");
-    expect(html).toContain("source-canvas-gate-blocker-GATE-SCOPE-02");
-    // Met criterion is excluded from the blocker callout (it still
-    // renders in the criteria list below).
-    expect(html).not.toContain("source-canvas-gate-blocker-GATE-SCOPE-03");
-    // Fallback title reflects the unmet count when no recommendation is present.
-    expect(html).toContain("2 inputs");
-    // Promote button is aria-described by the callout for screen readers.
+    expect(html).not.toContain("source-canvas-gate-blockers");
+    expect(html).toContain("source-canvas-gate-criterion-GATE-SCOPE-01");
+    expect(html).toContain("source-canvas-gate-criterion-GATE-SCOPE-02");
+    expect(html).toContain("source-canvas-gate-criterion-GATE-SCOPE-03");
+    expect(
+      (html.match(/source-canvas-gate-criterion-GATE-SCOPE-01/g) ?? [])
+        .length,
+    ).toBe(1);
+    // Header is the only summary.
+    expect(html).toContain("1 of 3 cleared");
+    // Promote button is aria-described by the compact header for screen readers.
     expect(html).toMatch(/aria-describedby="source-canvas-gate-promote-help"/);
     expect(html).toContain("source-gate-required-inputs");
-    expect(html).toContain("Scope needs 2 inputs");
+    expect(html).toContain("Scope → RFP gate");
     expect(html).toContain("Advance anyway");
     // State pills render alongside row titles.
     expect(html).toContain("source-canvas-gate-criterion-state-pending");
@@ -138,9 +162,9 @@ describe("GateTab · required input checklist", () => {
     );
   });
 
-  it("renders a manual confirmation control on pending criteria when onChangeCriterionState is wired", () => {
+  it("keeps approval reasons hidden until Mark met opens one row", () => {
     const onChange = jest.fn();
-    const html = renderToStaticMarkup(
+    render(
       createElement(GateTab, {
         fromStage: "scope",
         states: [
@@ -151,13 +175,66 @@ describe("GateTab · required input checklist", () => {
         onChangeCriterionState: onChange,
       }),
     );
-    expect(html).toContain("source-canvas-gate-criterion-mark-met-GATE-1");
-    expect(html).toContain("Confirm manually");
-    expect(html).toContain("Confirm input");
-    expect(html).toContain("source-canvas-gate-criterion-reopen-GATE-2");
+    expect(
+      screen.getByTestId("source-canvas-gate-criterion-mark-met-GATE-1"),
+    ).toBeTruthy();
+    expect(
+      screen.queryByTestId("source-canvas-gate-criterion-reason-GATE-1"),
+    ).toBeNull();
+    fireEvent.click(
+      screen.getByTestId("source-canvas-gate-criterion-mark-met-GATE-1"),
+    );
+    expect(
+      screen.getByTestId("source-canvas-gate-criterion-reason-GATE-1"),
+    ).toBeTruthy();
+    expect(
+      screen.queryByTestId("source-canvas-gate-criterion-reason-GATE-2"),
+    ).toBeNull();
+    fireEvent.click(screen.getByText("Cancel"));
+    expect(
+      screen.queryByTestId("source-canvas-gate-criterion-reason-GATE-1"),
+    ).toBeNull();
+    expect(
+      screen.getByTestId("source-canvas-gate-criterion-reopen-GATE-2"),
+    ).toBeTruthy();
     // Waived rows hide both buttons (waiver path has its own flow).
-    expect(html).not.toContain("source-canvas-gate-criterion-mark-met-GATE-3");
-    expect(html).not.toContain("source-canvas-gate-criterion-reopen-GATE-3");
+    expect(
+      screen.queryByTestId("source-canvas-gate-criterion-mark-met-GATE-3"),
+    ).toBeNull();
+    expect(
+      screen.queryByTestId("source-canvas-gate-criterion-reopen-GATE-3"),
+    ).toBeNull();
+  });
+
+  it("collapses multi-input gaps behind one count line", () => {
+    const states = [
+      makeCriterion({ criterionId: "GATE-SCOPE-04", state: "pending" }),
+    ];
+    const assessment = assessStageGate({
+      fromStage: "scope",
+      criteria: states,
+      evidence: [
+        makeEvidence({ requirementId: "EVID-SRC-SCOPE-APP-INV" }),
+        makeEvidence({ requirementId: "EVID-SRC-SCOPE-ORG" }),
+        makeEvidence({ requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY" }),
+        makeEvidence({ requirementId: "EVID-SRC-SCOPE-FY-CONTRACT" }),
+      ],
+    });
+    const html = renderToStaticMarkup(
+      createElement(GateTab, {
+        fromStage: "scope",
+        states,
+        assessment,
+        recommendation: buildStageRecommendation(assessment),
+      }),
+    );
+    expect(html).toContain("4 inputs not ready");
+    expect(html).toContain("see what&#x27;s missing");
+    expect(html).toContain("source-gate-required-input-GATE-SCOPE-04");
+    expect(
+      (html.match(/source-canvas-gate-criterion-GATE-SCOPE-04/g) ?? [])
+        .length,
+    ).toBe(1);
   });
 
   it("Promote button stays disabled when onPromoteStage is omitted (SSR / no handler)", () => {
