@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The top-level Tower route now opens the simplified AI Control Tower executive surface instead of the older IT Portfolio view. The new view focuses on the CIO/CFO questions for AI value, adoption, productivity, agents, spend, risk, evidence, and system-derived actions. Legacy Tower subviews have been hard-retired, leaving `/tower` as the single Tower entry point. This slice also tightens the AI Control Tower visual system for high-density executive and tabular views.
+The top-level Tower route now opens the simplified AI Control Tower executive surface instead of the older IT Portfolio view. The new view focuses on the CIO/CFO questions for AI value, adoption, productivity, agents, spend, risk, evidence, and system-derived actions. Legacy Tower subviews have been hard-retired, leaving `/tower` as the single Tower entry point. This slice also tightens the AI Control Tower visual system for high-density executive and tabular views, and corrects the lens interaction so tabs sit below the dashboard and refresh the active canvas.
 
 ## Layer Impact
 
@@ -31,13 +31,17 @@ The top-level Tower route now opens the simplified AI Control Tower executive su
 - Updated `src/app/(maestro)/tower/page.tsx` to render the AI Control Tower surface by default.
 - Retired legacy Tower subroutes and removed the temporary legacy fallback.
 - Refined the AI Control Tower view with compact, table-friendly typography, rectangular lens tabs, tighter metric cards, thinner row rhythm, and quieter dashboard spacing.
+- Moved the AI Control Tower lens tabs below the executive dashboard summary.
+- Added lens-specific canvases so Value, Productivity, Agents, Spend, Risk, Evidence, and Actions render distinct table/callout views on click.
 - Updated the legacy portfolio degradation test to assert retirement redirect behavior.
+- Added a focused React regression test for tab placement and tab-driven canvas refresh.
 
 ## QA / Validation
 
 - `git diff --check` passed locally.
 - Focused ESLint for the changed AI Control Tower file passed locally.
 - TypeScript compile passed locally.
+- Focused AI Control Tower interaction test passed locally.
 - `npm run build` passed locally; the production route manifest contains `/tower` as the Tower app route and does not ship the retired Tower subviews.
 - Local browser smoke verified `/tower` routes through the Clerk sign-in boundary when unauthenticated; signed-in visual inspection was not completed in the local keyless Clerk session.
 
