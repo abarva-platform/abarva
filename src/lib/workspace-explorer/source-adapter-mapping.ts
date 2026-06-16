@@ -29,6 +29,16 @@ function humanizeToken(value: string): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function sourceArtifactReviewHref(sourceEventId: string, artifactId: string): string {
+  return `/source/events/${encodeURIComponent(
+    sourceEventId,
+  )}/artifacts/${encodeURIComponent(artifactId)}`;
+}
+
+function sourceArtifactDownloadHref(artifactId: string): string {
+  return `/api/v1/source/artifacts/${encodeURIComponent(artifactId)}/download`;
+}
+
 function sortableAuditTimestamp(value: unknown): string {
   if (!value) return "";
   if (value instanceof Date) return value.toISOString();
@@ -140,7 +150,8 @@ export function sourceRegistryArtifactToWorkspaceItem(
     description: `${humanizeToken(record.artifactFamily)} · ${humanizeToken(
       record.artifactKind,
     )}`,
-    href: `/api/v1/source/artifacts/${record.id}/download`,
+    href: sourceArtifactReviewHref(record.sourceEventId, record.id),
+    downloadHref: sourceArtifactDownloadHref(record.id),
     classification: record.dataClassification,
     lineage:
       citedSourceArtifactIds.length > 0
@@ -185,7 +196,10 @@ export function sourceArtifactStateToWorkspaceItem(
       spec?.description ??
       `${stageLabel} work product · ${humanizeToken(artifact.requirementLevel)}`,
     href: artifact.linkedArtifactId
-      ? `/api/v1/source/artifacts/${artifact.linkedArtifactId}/download`
+      ? sourceArtifactReviewHref(artifact.sourceEventId, artifact.linkedArtifactId)
+      : null,
+    downloadHref: artifact.linkedArtifactId
+      ? sourceArtifactDownloadHref(artifact.linkedArtifactId)
       : null,
     classification: null,
     lineage: { cites: [], usedBy: [], status: "not_recorded" },
@@ -217,7 +231,10 @@ export function sourceEvidenceStateToWorkspaceItem(
     sourceLabel: "Source evidence readiness",
     description: evidence.notes ?? `${stageLabel} evidence requirement`,
     href: evidence.sourceArtifactId
-      ? `/api/v1/source/artifacts/${evidence.sourceArtifactId}/download`
+      ? sourceArtifactReviewHref(evidence.sourceEventId, evidence.sourceArtifactId)
+      : null,
+    downloadHref: evidence.sourceArtifactId
+      ? sourceArtifactDownloadHref(evidence.sourceArtifactId)
       : null,
     classification: null,
     lineage: evidence.sourceArtifactId

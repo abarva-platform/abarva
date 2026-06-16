@@ -1,6 +1,7 @@
 import {
   buildSourceGenerateCandidates,
   buildSourceWorkspaceItems,
+  sourceArtifactStateToWorkspaceItem,
   sourceRegistryArtifactToWorkspaceItem,
 } from "../source-adapter-mapping";
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
@@ -110,7 +111,8 @@ describe("SourceWorkspaceAdapter mapping", () => {
       classification: "Confidential",
       blobPath: "source-artifacts/apex/event-1/artifact-1/vendor-a.pdf",
     });
-    expect(item.href).toBe("/api/v1/source/artifacts/artifact-1/download");
+    expect(item.href).toBe("/source/events/event-1/artifacts/artifact-1");
+    expect(item.downloadHref).toBe("/api/v1/source/artifacts/artifact-1/download");
     expect(item.lineage.status).toBe("not_recorded");
   });
 
@@ -137,6 +139,16 @@ describe("SourceWorkspaceAdapter mapping", () => {
     expect(
       items.some((item) => item.id === "source-artifact-state:state-linked"),
     ).toBe(false);
+  });
+
+  it("opens linked canvas artifacts through the event artifact page", () => {
+    const item = sourceArtifactStateToWorkspaceItem({
+      ...artifactState,
+      linkedArtifactId: "artifact-1",
+    });
+
+    expect(item.href).toBe("/source/events/event-1/artifacts/artifact-1");
+    expect(item.downloadHref).toBe("/api/v1/source/artifacts/artifact-1/download");
   });
 
   it("sorts workspace items when the live DB adapter returns Date timestamps", () => {
