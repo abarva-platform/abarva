@@ -26,6 +26,7 @@ import { getActiveClientRow } from "@/lib/active-client";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
+import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
 import {
@@ -59,9 +60,14 @@ import {
   type SourceEventArtifactStateRow,
 } from "@/lib/source/canvas-substrate/types";
 import {
+  buildSourceArtifactBlobPath,
   registerSourceArtifactUpload,
   type SourceArtifactRegistryRecord,
 } from "@/lib/source/artifact-registry";
+import {
+  getCurrentArtifacts,
+  supersedePriorVersions,
+} from "@/lib/source/file-cabinet/repository";
 import { specByCode } from "@/lib/source/canonical-specs";
 import {
   ensurePersistedSourceEventForClient,
@@ -69,7 +75,7 @@ import {
 } from "@/lib/source/queries";
 
 const REGISTRY_GENERATED_MIME = "text/markdown";
-const INLINE_REGISTRY_URI_PREFIX = "inline://source-event-artifact-state";
+const REGISTRY_STORAGE_BUCKET = "source-artifacts";
 const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
 // The ACA ingress cuts long synchronous requests well before the 300s
 // maxDuration (observed ~150s gateway 504 on the live runtime). Budget below
@@ -580,11 +586,9 @@ export async function generateSourceArtifactDraft(
     bodyWrite.data as unknown as SourceEventArtifactStateRow,
   );
 
-  // Also persist the generated body to the source_artifacts registry so the
-  // canvas Document tab's "Stored documents" shelf has a row to render. For
-  // inline AI drafts, the substrate body is already the canonical content, so
-  // the registry row uses an inline provenance URI instead of requiring a
-  // second object-storage write just to mirror the same markdown bytes.
+  // Also persist the generated body to Blob + source_artifacts so the File
+  // Cabinet/download route can retrieve real bytes. The substrate body remains
+  // canonical; Blob/registry failure is non-fatal and logged.
   let registryArtifact: SourceArtifactRegistryRecord | null = null;
   try {
     const spec = specByCode(artifactCode);
@@ -594,7 +598,41 @@ export async function generateSourceArtifactDraft(
     const filename = safeRegistryFilename(artifactCode, registryArtifactId);
     const buffer = Buffer.from(body, "utf8");
     const sha256 = createHash("sha256").update(buffer).digest("hex");
-    const inlineBlobUri = `${INLINE_REGISTRY_URI_PREFIX}/${ctx.event.id}/${artifactCode}/${registryArtifactId}/${filename}`;
+    const blobUri = buildSourceArtifactBlobPath({
+      tenantKey: substrateTenantKey,
+      sourceEventId: ctx.event.id,
+      artifactId: registryArtifactId,
+      filename,
+    });
+
+    await getObjectStorageAdapter().upload(REGISTRY_STORAGE_BUCKET, blobUri, buffer, {
+      contentType: REGISTRY_GENERATED_MIME,
+      cacheControl: "private, max-age=0",
+      upsert: false,
+    });
+
+    let fileCabinetVersion = 1;
+    let supersedesArtifactId: string | null = null;
+    if (activeClient?.id) {
+      try {
+        const prior = await getCurrentArtifacts(
+          ctx.event.id,
+          artifactCode,
+          "generated",
+        );
+        fileCabinetVersion =
+          prior.reduce((max, item) => Math.max(max, item.version), 0) + 1;
+        supersedesArtifactId = prior[0]?.id ?? null;
+      } catch (fileCabinetReadError) {
+        console.error(
+          "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate] file cabinet prior-version read failed",
+          fileCabinetReadError instanceof Error
+            ? fileCabinetReadError.message
+            : String(fileCabinetReadError),
+        );
+      }
+    }
+
     registryArtifact = await registerSourceArtifactUpload({
       artifactId: registryArtifactId,
       tenantKey: substrateTenantKey,
@@ -606,14 +644,53 @@ export async function generateSourceArtifactDraft(
       sourceOrigin: "generated",
       sourceFormat: "markdown",
       originalName: filename,
-      blobUri: inlineBlobUri,
+      blobUri,
       uploaderUserId: currentUser?.clerkUserId ?? tenancy.userId,
       mimeType: REGISTRY_GENERATED_MIME,
       sizeBytes: buffer.byteLength,
       sha256,
       dataClassification: "Confidential",
       createdBy: currentUser?.clerkUserId ?? tenancy.userId,
+      ...(supersedesArtifactId
+        ? { supersedesArtifactVersionId: supersedesArtifactId }
+        : {}),
+      ...(activeClient?.id
+        ? {
+            fileCabinet: {
+              clientId: activeClient.id,
+              sourcingStage: artifactRow.stage_key,
+              artifactGroup: "generated",
+              artifactType: artifactCode,
+              title: spec?.name ?? artifactCode,
+              description: spec?.description ?? null,
+              fileName: filename,
+              fileFormat: "md",
+              blobContainer: REGISTRY_STORAGE_BUCKET,
+              blobPath: blobUri,
+              fileSize: buffer.byteLength,
+              version: fileCabinetVersion,
+              status: "draft",
+              generatedBy: currentUser?.clerkUserId ?? tenancy.userId,
+              sourceBasis: `source_event_artifact_states:${artifactRow.id}`,
+              citationReady: false,
+              evidenceFamiliesUsed: [],
+              missingInputs: [],
+              clientCompleteItems: [],
+              assumptions: [],
+              supersedesArtifactId,
+              blobSha256: sha256,
+            },
+          }
+        : {}),
     });
+    if (activeClient?.id && supersedesArtifactId) {
+      await supersedePriorVersions(
+        ctx.event.id,
+        artifactCode,
+        "generated",
+        registryArtifact.id,
+      );
+    }
   } catch (registryError) {
     console.error(
       "[POST /api/v1/source/:eventId/artifacts/:artifactCode/generate] registry persist failed",

@@ -18,8 +18,8 @@ type Row = {
   stage_key: SourceStageKey;
   artifact_family: 'proposal';
   artifact_kind: string;
-  source_origin: 'uploaded';
-  source_format: 'pdf';
+  source_origin: 'uploaded' | 'generated';
+  source_format: 'pdf' | 'markdown';
   original_name: string;
   blob_uri: string;
   uploader_user_id: string;
@@ -265,6 +265,65 @@ describe('registerSourceArtifactUpload', () => {
     expect(rec.graphStatus).toBe('pending');
     expect(rec.evidenceState).toBe('unparsed');
     expect(rec.approvalState).toBe('draft');
+  });
+
+  it('optionally writes File Cabinet columns for generated artifacts', async () => {
+    nextSingle = async () => ({
+      data: {
+        ...baseRow,
+        source_origin: 'generated',
+        source_format: 'markdown',
+        mime_type: 'text/markdown',
+      },
+      error: null,
+    });
+
+    await registerSourceArtifactUpload({
+      ...baseInput,
+      sourceOrigin: 'generated',
+      sourceFormat: 'markdown',
+      mimeType: 'text/markdown',
+      originalName: 'd05_scope_memo.md',
+      artifactKind: 'd05_scope_memo',
+      blobUri: 'skyharbor-air/event-1/artifact-1/d05_scope_memo.md',
+      fileCabinet: {
+        clientId: 'client-skyh',
+        sourcingStage: 'scope',
+        artifactGroup: 'generated',
+        artifactType: 'd05_scope_memo',
+        title: 'Scope Memo with Boundaries',
+        description: 'In-scope, out-of-scope, target support tier, transition assumptions.',
+        fileName: 'd05_scope_memo.md',
+        fileFormat: 'md',
+        blobContainer: 'source-artifacts',
+        blobPath: 'skyharbor-air/event-1/artifact-1/d05_scope_memo.md',
+        fileSize: 1024,
+        version: 3,
+        status: 'draft',
+        generatedBy: 'user_123',
+        sourceBasis: 'source_event_artifact_states:state-1',
+        citationReady: false,
+        supersedesArtifactId: 'prior-artifact',
+        blobSha256: 'c'.repeat(64),
+      },
+    });
+
+    expect(insertCaptures[0].payload).toMatchObject({
+      blob_uri: 'skyharbor-air/event-1/artifact-1/d05_scope_memo.md',
+      client_id: 'client-skyh',
+      artifact_group: 'generated',
+      artifact_type: 'd05_scope_memo',
+      title: 'Scope Memo with Boundaries',
+      file_name: 'd05_scope_memo.md',
+      file_format: 'md',
+      blob_container: 'source-artifacts',
+      blob_path: 'skyharbor-air/event-1/artifact-1/d05_scope_memo.md',
+      version: 3,
+      status: 'draft',
+      lifecycle_state: 'current',
+      supersedes_artifact_id: 'prior-artifact',
+      blob_sha256: 'c'.repeat(64),
+    });
   });
 
   it('coerces bigint/string fields back to numbers', async () => {
