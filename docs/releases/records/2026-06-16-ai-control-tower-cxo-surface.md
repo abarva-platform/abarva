@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The top-level Tower route now opens the simplified AI Control Tower executive surface instead of the older IT Portfolio view. The new view focuses on the CIO/CFO questions for AI value, adoption, productivity, agents, spend, risk, evidence, and system-derived actions. Legacy Tower subviews are retired at the route layer and redirect back to `/tower`.
+The top-level Tower route now opens the simplified AI Control Tower executive surface instead of the older IT Portfolio view. The new view focuses on the CIO/CFO questions for AI value, adoption, productivity, agents, spend, risk, evidence, and system-derived actions. Legacy Tower subviews have been hard-retired, leaving `/tower` as the single Tower entry point. This slice also tightens the AI Control Tower visual system for high-density executive and tabular views.
 
 ## Layer Impact
 
@@ -23,21 +23,23 @@ The top-level Tower route now opens the simplified AI Control Tower executive su
 - Specific clients: None.
 - Internal only: None.
 - Public/demo only: None.
-- Feature flag: None. A follow-up hard-retirement slice removes the temporary legacy fallback.
+- Feature flag: None.
 
 ## Changes Included
 
 - Added `src/components/tower/AiControlTowerPage.tsx`.
 - Updated `src/app/(maestro)/tower/page.tsx` to render the AI Control Tower surface by default.
-- Retired legacy Tower subroutes by redirecting them to `/tower`.
+- Retired legacy Tower subroutes and removed the temporary legacy fallback.
+- Refined the AI Control Tower view with compact, table-friendly typography, rectangular lens tabs, tighter metric cards, thinner row rhythm, and quieter dashboard spacing.
 - Updated the legacy portfolio degradation test to assert retirement redirect behavior.
 
 ## QA / Validation
 
 - `git diff --check` passed locally.
-- Focused ESLint for the changed Tower files is expected to pass before merge.
-- TypeScript compile is expected to pass before merge.
-- Browser smoke will verify `/tower` renders the new executive surface and a retired route redirects to `/tower`.
+- Focused ESLint for the changed AI Control Tower file passed locally.
+- TypeScript compile passed locally.
+- `npm run build` passed locally; the production route manifest contains `/tower` as the Tower app route and does not ship the retired Tower subviews.
+- Local browser smoke verified `/tower` routes through the Clerk sign-in boundary when unauthenticated; signed-in visual inspection was not completed in the local keyless Clerk session.
 
 ## Rollout Plan
 
