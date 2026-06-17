@@ -7,6 +7,12 @@ import { recordContextRefreshEvent } from "@/lib/intelligence/refresh-events";
 import type { BoardPackRenderInput, BoardPackRenderResult } from "./types";
 import { renderBoardPack } from "./render-engine";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** evidence_ledger_ids / cited_input_ids are UUID[] columns; only genuine UUIDs may be written. */
+function isUuid(s: string): boolean {
+  return UUID_RE.test(s);
+}
+
 export interface GeneratedArtifactRecord {
   id: string;
   clientId: string;
@@ -115,8 +121,13 @@ export async function saveGeneratedArtifact(
       blob_url: generatedArtifactUrl(id),
       blob_sha256: rendered.blobSha256,
       quality_score: rendered.qualityScore,
-      evidence_ledger_ids: rendered.evidenceLedgerIds,
-      cited_input_ids: rendered.evidenceLedgerIds,
+      // Both columns are UUID[]. Governed-evidence refs sourced from the Azure
+      // tenant-context index are composite reference strings ("ctx:<tenant>:<segment>:…"),
+      // not ledger UUIDs — they belong in the document's source register, not these
+      // UUID audit columns. Write only the values that are genuine UUIDs so a
+      // tenant-context-grounded deliverable persists instead of failing the uuid insert.
+      evidence_ledger_ids: rendered.evidenceLedgerIds.filter(isUuid),
+      cited_input_ids: rendered.evidenceLedgerIds.filter(isUuid),
       generation_egress_audit: rendered.generationEgressAudit,
       rendered_by: input.renderedBy,
       quarantine_reason: rendered.quarantineReason,
