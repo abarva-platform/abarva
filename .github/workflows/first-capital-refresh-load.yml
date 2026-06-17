@@ -165,6 +165,7 @@ jobs:
 
           az containerapp job create \
             --resource-group "$RESOURCE_GROUP" \
+            --name "$PRIVATE_REFRESH_JOB" \
             --yaml audit-artifacts/first-capital-refresh-load/private-operator-job.yaml \
             --output none
 
