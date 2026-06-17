@@ -1,4 +1,5 @@
 import { AiControlTowerPage } from "@/components/tower/AiControlTowerPage";
+import { AppShell } from "@/components/shell/AppShell";
 import type { TowerSubstrateCounts } from "@/components/tower/TowerIndexPage";
 import { selectTowerPageReadAdapter } from "@/lib/data-plane/read-adapters/towerPageReadAdapter";
 import { requireTenancy } from "@/lib/auth/tenancy";
@@ -284,15 +285,25 @@ export default async function TowerPage({
     ).catch(() => null);
   }
   return (
-    <AiControlTowerPage
-      tenantName={towerSetupInitiativesFeed.tenantName}
-      clientId={activeClientId ?? undefined}
-      towerToday={towerToday}
-      initiatives={towerInitiatives}
-      vendors={towerVendors}
-      bandMetrics={towerBandMetrics}
-      pressuresView={towerPressures}
-      substrateCounts={towerSubstrateCounts}
-    />
+    <AppShell
+      surface="tower"
+      topBarProps={{
+        tenantName: towerSetupInitiativesFeed.tenantName,
+        showLocked: true,
+        context: `AI Control Tower · ${towerSetupInitiativesFeed.tenantName}`,
+      }}
+      hasTenantKey={Boolean(activeClientId)}
+    >
+      <AiControlTowerPage
+        tenantName={towerSetupInitiativesFeed.tenantName}
+        clientId={activeClientId ?? undefined}
+        towerToday={towerToday}
+        initiatives={towerInitiatives}
+        vendors={towerVendors}
+        bandMetrics={towerBandMetrics}
+        pressuresView={towerPressures}
+        substrateCounts={towerSubstrateCounts}
+      />
+    </AppShell>
   );
 }

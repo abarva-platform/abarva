@@ -336,6 +336,18 @@ function lensRowsFor(
   }
 
   if (lens === "spend") {
+    if (vendorRows.length === 0) {
+      return [
+        {
+          subject: "Spend contracts",
+          owner: "Finance / sourcing",
+          metric: "0 committed rows",
+          basis: "load or commit Spend Contracts before CFO demo",
+          state: "missing",
+          tone: "red",
+        },
+      ];
+    }
     return vendorRows.map((vendor) => {
       const days = renewalDays(vendor);
       return {
@@ -490,7 +502,7 @@ function lensCalloutsFor(
         label: "Spend exposure",
         value: money(summary.spend),
         detail: "vendor contracts in the AI portfolio",
-        tone: "amber",
+        tone: summary.spend > 0 ? "amber" : "red",
       },
       {
         label: "Renewals",
@@ -733,6 +745,10 @@ export function AiControlTowerPage({
     [initiatives, vendors],
   );
   const lensMeta = LENSES.find((item) => item.key === activeLens) ?? LENSES[0];
+  const evidenceRows =
+    substrateCounts.kpis +
+    substrateCounts.decisions +
+    substrateCounts.stakeholderNotes;
 
   const selectLens = (lens: LensKey) => {
     setActiveLens(lens);
@@ -856,18 +872,22 @@ export function AiControlTowerPage({
         <MetricTile
           label="AI spend exposure"
           value={money(summary.spend)}
-          detail={`${summary.renewal90} renewals inside 90 days`}
-          tone="amber"
+          detail={
+            summary.spend > 0
+              ? `${summary.renewal90} renewals inside 90 days`
+              : "0 committed contract rows"
+          }
+          tone={summary.spend > 0 ? "amber" : "red"}
         />
         <MetricTile
           label="Evidence posture"
-          value={String(
-            substrateCounts.kpis +
-              substrateCounts.decisions +
-              substrateCounts.stakeholderNotes,
-          )}
-          detail="facts, decisions, notes tracked"
-          tone={summary.atRisk > 0 ? "red" : "green"}
+          value={String(evidenceRows)}
+          detail={
+            evidenceRows > 0
+              ? "facts, decisions, notes tracked"
+              : "no committed evidence rows"
+          }
+          tone={evidenceRows > 0 ? "green" : "red"}
         />
       </section>
 
