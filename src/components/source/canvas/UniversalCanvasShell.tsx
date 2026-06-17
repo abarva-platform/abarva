@@ -155,6 +155,7 @@ import { PricingStageView } from "./pricing/PricingStageView";
 import { BafoStageView } from "./bafo/BafoStageView";
 import { ExecutiveDecisionStageView } from "./executive-decision/ExecutiveDecisionStageView";
 import { TransitionStageView } from "./transition/TransitionStageView";
+import { SimpleFrontErrorBoundary } from "./SimpleFrontErrorBoundary";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 
 interface UniversalCanvasShellProps {
@@ -450,15 +451,24 @@ export function UniversalCanvasShell({
     [stageArtifacts, stageCriteria, viewStage],
   );
   const simpleStageScreen = useMemo(
-    () =>
-      resolveSimpleStageScreen(
-        {
-          artifactStates: liveArtifactStates,
-          gateCriterionStates: liveGateCriterionStates,
-          evidenceStates,
-        },
-        viewStage,
-      ),
+    () => {
+      try {
+        return resolveSimpleStageScreen(
+          {
+            artifactStates: liveArtifactStates,
+            gateCriterionStates: liveGateCriterionStates,
+            evidenceStates,
+          },
+          viewStage,
+        );
+      } catch (error) {
+        console.error(
+          "[Source simple front] failed to resolve view model",
+          error,
+        );
+        return null;
+      }
+    },
     [evidenceStates, liveArtifactStates, liveGateCriterionStates, viewStage],
   );
 
@@ -1043,6 +1053,66 @@ export function UniversalCanvasShell({
       : []),
   ];
 
+  const advancedWorkspace = workspaceExplorerEnabled ? (
+    <SourceDeclutteredWorkspace
+      nextMove={nextMove}
+      onNextMoveAdvance={handleNextMoveAdvance}
+      onDraftWithSentinel={handleDraftWithSentinel}
+      fromStage={viewStage}
+      criteria={stageCriteria}
+      assessment={stageGateAssessment}
+      recommendation={stageRecommendation}
+      approvalViewByCriterionId={approvalViewByCriterionId}
+      onChangeCriterionState={handleCriterionStateChange}
+      pendingByCriterionId={pendingCriterionByCriterionId}
+      onPromoteStage={handlePromoteStage}
+      promotePending={promotePending}
+      workspaceHref={workspaceHref}
+    />
+  ) : (
+    <EventWorkspace
+      tabs={tabs}
+      defaultTab={initialTab}
+      nextMove={nextMove}
+      onNextMoveAdvance={handleNextMoveAdvance}
+    />
+  );
+
+  const simpleFrontWorkspace =
+    simpleFrontEnabled && simpleStageScreen ? (
+      <SimpleFrontErrorBoundary
+        key={`${event.id}:${viewStage}:${simpleStageScreen.deliverable.artifactCode}`}
+        fallback={
+          <SimpleFrontUnavailable>{advancedWorkspace}</SimpleFrontUnavailable>
+        }
+      >
+        <SimpleStageFront
+          eventId={event.id}
+          stage={viewStage}
+          view={simpleStageScreen}
+          generating={Boolean(
+            pendingGenerationByCode[
+              simpleStageScreen.deliverable.artifactCode
+            ],
+          )}
+          registryArtifacts={registryArtifactsState}
+          onGenerateArtifact={handleArtifactGenerate}
+          onAdvanceStage={(stage) =>
+            void handlePromoteStage(
+              stage,
+              `Advanced from Start here: ${simpleStageScreen.stageLabel}`,
+            )
+          }
+          onRefresh={() => router.refresh()}
+          advanced={advancedWorkspace}
+        />
+      </SimpleFrontErrorBoundary>
+    ) : simpleFrontEnabled ? (
+      <SimpleFrontUnavailable reason="Simple Start here view is unavailable for this event state. Showing the full workspace instead.">
+        {advancedWorkspace}
+      </SimpleFrontUnavailable>
+    ) : null;
+
   return (
     <AppShell
       surface="source-detail"
@@ -1109,76 +1179,7 @@ export function UniversalCanvasShell({
                 style={WORKSPACE_WRAPPER_STYLE}
               >
                 <div style={WORKSPACE_INNER_STYLE}>
-                  {simpleFrontEnabled ? (
-                    <SimpleStageFront
-                      eventId={event.id}
-                      stage={viewStage}
-                      view={simpleStageScreen}
-                      generating={Boolean(
-                        pendingGenerationByCode[
-                          simpleStageScreen.deliverable.artifactCode
-                        ],
-                      )}
-                      registryArtifacts={registryArtifactsState}
-                      onGenerateArtifact={handleArtifactGenerate}
-                      onAdvanceStage={(stage) =>
-                        void handlePromoteStage(
-                          stage,
-                          `Advanced from Start here: ${simpleStageScreen.stageLabel}`,
-                        )
-                      }
-                      onRefresh={() => router.refresh()}
-                      advanced={
-                        workspaceExplorerEnabled ? (
-                          <SourceDeclutteredWorkspace
-                            nextMove={nextMove}
-                            onNextMoveAdvance={handleNextMoveAdvance}
-                            onDraftWithSentinel={handleDraftWithSentinel}
-                            fromStage={viewStage}
-                            criteria={stageCriteria}
-                            assessment={stageGateAssessment}
-                            recommendation={stageRecommendation}
-                            approvalViewByCriterionId={approvalViewByCriterionId}
-                            onChangeCriterionState={handleCriterionStateChange}
-                            pendingByCriterionId={pendingCriterionByCriterionId}
-                            onPromoteStage={handlePromoteStage}
-                            promotePending={promotePending}
-                            workspaceHref={workspaceHref}
-                          />
-                        ) : (
-                          <EventWorkspace
-                            tabs={tabs}
-                            defaultTab={initialTab}
-                            nextMove={nextMove}
-                            onNextMoveAdvance={handleNextMoveAdvance}
-                          />
-                        )
-                      }
-                    />
-                  ) : workspaceExplorerEnabled ? (
-                    <SourceDeclutteredWorkspace
-                      nextMove={nextMove}
-                      onNextMoveAdvance={handleNextMoveAdvance}
-                      onDraftWithSentinel={handleDraftWithSentinel}
-                      fromStage={viewStage}
-                      criteria={stageCriteria}
-                      assessment={stageGateAssessment}
-                      recommendation={stageRecommendation}
-                      approvalViewByCriterionId={approvalViewByCriterionId}
-                      onChangeCriterionState={handleCriterionStateChange}
-                      pendingByCriterionId={pendingCriterionByCriterionId}
-                      onPromoteStage={handlePromoteStage}
-                      promotePending={promotePending}
-                      workspaceHref={workspaceHref}
-                    />
-                  ) : (
-                    <EventWorkspace
-                      tabs={tabs}
-                      defaultTab={initialTab}
-                      nextMove={nextMove}
-                      onNextMoveAdvance={handleNextMoveAdvance}
-                    />
-                  )}
+                  {simpleFrontWorkspace ?? advancedWorkspace}
                 </div>
               </div>
             }
@@ -1188,6 +1189,25 @@ export function UniversalCanvasShell({
         <CanvasTour />
       </main>
     </AppShell>
+  );
+}
+
+function SimpleFrontUnavailable({
+  children,
+  reason = "Simple Start here view is unavailable. Showing the full workspace instead.",
+}: {
+  children: ReactNode;
+  reason?: string;
+}) {
+  return (
+    <section
+      data-testid="source-simple-front-fallback"
+      aria-label="Start here unavailable"
+      style={SIMPLE_FRONT_FALLBACK_STYLE}
+    >
+      <div style={SIMPLE_FRONT_FALLBACK_NOTE_STYLE}>{reason}</div>
+      {children}
+    </section>
   );
 }
 
@@ -1546,6 +1566,22 @@ const WORKSPACE_CHIP_SECONDARY_STYLE: CSSProperties = {
   color: CANVAS.INK,
   background: "#ffffff",
   border: `1px solid ${CANVAS.HAIRLINE}`,
+};
+
+const SIMPLE_FRONT_FALLBACK_STYLE: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 12,
+};
+
+const SIMPLE_FRONT_FALLBACK_NOTE_STYLE: CSSProperties = {
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 8,
+  padding: "10px 12px",
+  background: "rgba(180,83,9,0.08)",
+  color: CANVAS.INK_SOFT,
+  fontFamily: CANVAS.SANS,
+  fontSize: 13,
 };
 
 const DECLUTTERED_WORKSPACE_STYLE: CSSProperties = {

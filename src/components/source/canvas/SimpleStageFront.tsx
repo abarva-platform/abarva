@@ -327,15 +327,26 @@ function latestGeneratedDoc(
   return (
     rows
       .filter((row) => {
-        const name = row.originalName.toLowerCase();
+        const name =
+          typeof row.originalName === "string"
+            ? row.originalName.toLowerCase()
+            : "";
         return (
           row.sourceOrigin === "generated" &&
           (name.includes(artifactCode.toLowerCase()) ||
             name.includes(artifactCode.replace(/^d\d+_/, "").toLowerCase()))
         );
       })
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null
+      .sort((a, b) =>
+        safeRegistryString(b.createdAt).localeCompare(
+          safeRegistryString(a.createdAt),
+        ),
+      )[0] ?? null
   );
+}
+
+function safeRegistryString(value: unknown): string {
+  return typeof value === "string" ? value : "";
 }
 
 function stateChipStyle(

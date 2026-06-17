@@ -4,7 +4,9 @@
 import { createElement } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { SimpleStageFront } from "@/components/source/canvas/SimpleStageFront";
+import { SimpleFrontErrorBoundary } from "@/components/source/canvas/SimpleFrontErrorBoundary";
 import type { SimpleStageScreenView } from "@/lib/source/simple-front";
+import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
 
 const view: SimpleStageScreenView = {
   stageLabel: "Scope",
@@ -61,6 +63,64 @@ describe("SimpleStageFront", () => {
   afterEach(() => {
     global.fetch = originalFetch;
     jest.restoreAllMocks();
+  });
+
+  it("renders with empty substrate-derived asks and malformed generated artifact metadata", () => {
+    const malformedRegistryRow = {
+      id: "registry-doc-1",
+      sourceOrigin: "generated",
+      originalName: null,
+      createdAt: null,
+    } as unknown as SourceArtifactRegistryRecord;
+
+    expect(() =>
+      render(
+        createElement(SimpleStageFront, {
+          eventId: "event-1",
+          stage: "scope",
+          view: {
+            ...view,
+            required: [],
+            extras: [],
+          },
+          generating: false,
+          registryArtifacts: [malformedRegistryRow],
+          onGenerateArtifact: jest.fn(async () => ({ ok: true as const })),
+          onAdvanceStage: jest.fn(),
+          onRefresh: jest.fn(),
+          advanced: createElement("div", null, "Advanced workspace"),
+        }),
+      ),
+    ).not.toThrow();
+
+    expect(screen.getByTestId("source-simple-front")).toBeTruthy();
+    expect(screen.queryByTestId("source-simple-front-download")).toBeNull();
+  });
+
+  it("falls back instead of blanking the surface when the simple view throws", () => {
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    function ThrowingSimpleView() {
+      throw new Error("simple-front-test-crash");
+      return createElement("div");
+    }
+
+    render(
+      createElement(
+        SimpleFrontErrorBoundary,
+        {
+          fallback: createElement(
+            "div",
+            { "data-testid": "advanced-fallback" },
+            "Advanced workspace",
+          ),
+        },
+        createElement(ThrowingSimpleView),
+      ),
+    );
+
+    expect(screen.getByTestId("advanced-fallback")).toBeTruthy();
+    expect(errorSpy).toHaveBeenCalled();
   });
 
   it("keeps skip local and still allows document generation", async () => {

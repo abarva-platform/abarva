@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { Suspense, useEffect, useMemo } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { usePostHog } from 'posthog-js/react';
@@ -184,9 +184,7 @@ function SignedInProductUsageTelemetry() {
 }
 
 export default function ProductUsageTelemetry({ clerkEnabled = true }: { clerkEnabled?: boolean }) {
-  if (!clerkEnabled) {
-    return <AnonymousProductUsageTelemetry />;
-  }
+  const telemetry = clerkEnabled ? <SignedInProductUsageTelemetry /> : <AnonymousProductUsageTelemetry />;
 
-  return <SignedInProductUsageTelemetry />;
+  return <Suspense fallback={null}>{telemetry}</Suspense>;
 }
