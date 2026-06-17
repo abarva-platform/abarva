@@ -1,0 +1,129 @@
+name: First Capital refresh load
+
+on:
+  workflow_dispatch:
+    inputs:
+      tenant_key:
+        description: "First Capital tenant alias to load."
+        required: true
+        default: "first-capital"
+        type: choice
+        options:
+          - first-capital
+          - firstcapital
+      dry_run:
+        description: "Plan the refresh without writing to the database."
+        required: false
+        type: boolean
+        default: true
+      require_live_embeddings:
+        description: "Fail unless Azure/OpenAI embedding credentials are configured."
+        required: false
+        type: boolean
+        default: true
+      evaluate_insights:
+        description: "Run the context insight evaluator after a write load."
+        required: false
+        type: boolean
+        default: true
+      run_population_audit:
+        description: "Run the live tenant population audit after the load."
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  first-capital-refresh-load:
+    name: Load First Capital substrate and insights
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DATABASE_URL: ${{ secrets.TARGET_DATABASE_URL || secrets.AZURE_LAB_DATABASE_URL || secrets.DATABASE_URL }}
+      AZURE_OPENAI_EMBEDDING_ENDPOINT: ${{ secrets.AZURE_OPENAI_EMBEDDING_ENDPOINT }}
+      AZURE_OPENAI_EMBEDDING_KEY: ${{ secrets.AZURE_OPENAI_EMBEDDING_KEY }}
+      AZURE_OPENAI_EMBEDDING_DEPLOYMENT: ${{ secrets.AZURE_OPENAI_EMBEDDING_DEPLOYMENT }}
+      AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify load configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "Missing TARGET_DATABASE_URL, AZURE_LAB_DATABASE_URL, or DATABASE_URL repository secret." >&2
+            exit 1
+          fi
+
+          if [ "${{ inputs.require_live_embeddings }}" = "true" ]; then
+            has_azure_embeddings="false"
+            if [ -n "${AZURE_OPENAI_EMBEDDING_ENDPOINT:-}" ] && [ -n "${AZURE_OPENAI_EMBEDDING_KEY:-}" ]; then
+              has_azure_embeddings="true"
+            fi
+
+            if [ "$has_azure_embeddings" != "true" ] && [ -z "${OPENAI_API_KEY:-}" ]; then
+              echo "Live embeddings required, but neither Azure embedding credentials nor OPENAI_API_KEY are configured." >&2
+              exit 1
+            fi
+          fi
+
+      - name: Load First Capital substrate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-artifacts/first-capital-refresh-load
+
+          args=()
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            args+=(--dry-run)
+          fi
+
+          TENANT_KEY="${{ inputs.tenant_key }}" \
+            npx tsx scripts/seed/load-tenant-substrate.ts "${args[@]}" \
+            | tee audit-artifacts/first-capital-refresh-load/substrate-load.log
+
+      - name: Evaluate context insights
+        if: ${{ inputs.dry_run == false && inputs.evaluate_insights == true }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TENANT_KEY="${{ inputs.tenant_key }}" \
+            npm run intel:context-insights:evaluate -- --tenant=first-capital \
+            | tee audit-artifacts/first-capital-refresh-load/context-insights-evaluation.json
+
+      - name: Audit live tenant population
+        if: ${{ inputs.run_population_audit == true }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/audit/live-tenant-population-audit.mjs \
+            | tee audit-artifacts/first-capital-refresh-load/live-tenant-population-audit.log
+
+          cp docs/build/data-quality/live-tenant-population-audit.json \
+            audit-artifacts/first-capital-refresh-load/live-tenant-population-audit.json
+          cp docs/build/data-quality/live-tenant-population-audit.md \
+            audit-artifacts/first-capital-refresh-load/live-tenant-population-audit.md
+
+      - name: Upload refresh evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: first-capital-refresh-load
+          path: audit-artifacts/first-capital-refresh-load
+          if-no-files-found: warn
