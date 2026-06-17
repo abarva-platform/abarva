@@ -55,20 +55,32 @@ export interface TenantContextChunk {
 /**
  * App-tier `ClientKey` form → canonical Azure-side tenant-key form.
  *
- * This is the same map the backfill uses (`tenant-context-backfill.ts`),
+ * This MUST mirror the map the backfill writes with (`tenant-context-backfill.ts`),
  * duplicated here on purpose: the retriever is on the read path and
  * shouldn't take a runtime dep on the backfill module (which pulls in
- * Postgres types). If a fourth tenant arrives, both maps update in
- * lockstep — and the parity test pins the canonical outputs so a drift
- * shows up as a red test, not a silent miss.
+ * Postgres types). When a tenant is added to the backfill map, add it here
+ * in lockstep — the parity test pins the canonical outputs so a drift shows
+ * up as a red test, not a silent miss. (Regression 2026-06-17: `skyharbor`,
+ * `lakeshore`, and `northstar` were indexed by the backfill but missing here,
+ * so their deliverable evidence retrieval returned 0 — a charter could not be
+ * grounded. Both maps now carry the full roster.)
  *
  * Memory ref: `project_apex_tenant_key_split` — app ClientKey is
  * `apexretail` (no dash); broker/data-room is `apex-retail` (with dash).
  */
 const TENANT_KEY_ALIASES: Readonly<Record<string, string>> = {
+  "apex-retail-group": "apex-retail",
   apexretail: "apex-retail",
   arcturus: "first-capital",
+  firstcapital: "first-capital",
+  "first-capital-bank": "first-capital",
+  lakeshore: "lakeshore-holdings",
+  "lakeshore-holding": "lakeshore-holdings",
   meridian: "meridian-health",
+  "meridian-healthcare": "meridian-health",
+  northstar: "northstar-clinical",
+  skyharbor: "skyharbor-air",
+  "skyharbor-airlines": "skyharbor-air",
 };
 
 /**
