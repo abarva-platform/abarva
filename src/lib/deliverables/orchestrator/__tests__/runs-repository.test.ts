@@ -75,6 +75,16 @@ describe('completeDeliverableRun', () => {
     expect(cap.payload?.artifact_id).toBe('art-9');
     expect(cap.filters).toContainEqual(['id', 'run-1']);
   });
+
+  it('serializes blockers/warnings as JSON strings so the JSONB columns accept non-empty arrays', async () => {
+    // Regression: the write client binds params raw, so a non-empty JS array reaches
+    // Postgres as an array literal ({a,b}) and JSONB rejects it. Pre-serializing to a
+    // JSON string is what makes a successful run (non-empty warnings) persist.
+    const { db, cap } = fakeDb(null);
+    await completeDeliverableRun('run-1', { status: 'succeeded', warnings: ['advisory note'], blockers: [] }, db);
+    expect(cap.payload?.warnings).toBe(JSON.stringify(['advisory note']));
+    expect(cap.payload?.blockers).toBe(JSON.stringify([]));
+  });
 });
 
 describe('getDeliverableRun', () => {
