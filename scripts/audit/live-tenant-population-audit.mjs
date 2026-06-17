@@ -21,7 +21,9 @@ function requireWorkspacePackage(name) {
   throw lastError ?? new Error(`Cannot resolve ${name}`);
 }
 const { Client } = requireWorkspacePackage('pg');
-const OUT_DIR = path.join(ROOT, 'docs/build/data-quality');
+const OUT_DIR = process.env.LIVE_TENANT_POPULATION_AUDIT_OUT_DIR
+  ? path.resolve(process.env.LIVE_TENANT_POPULATION_AUDIT_OUT_DIR)
+  : path.join(ROOT, 'docs/build/data-quality');
 const OUT_JSON = path.join(OUT_DIR, 'live-tenant-population-audit.json');
 const OUT_MD = path.join(OUT_DIR, 'live-tenant-population-audit.md');
 
