@@ -1,14 +1,19 @@
-// /intelligence sub-routes (old J0 corpus pages: [patternId], patterns, topics, etc.)
-// are still rendered outside the (maestro) group and must NOT inherit the root
-// app layout's Clerk auth initialisation — that breaks static prerender of pattern
-// detail pages during `next build`. This passthrough keeps the layout segment
-// boundary so Next.js isolates these routes from the Clerk-aware root layout.
+// Old J0 corpus sub-routes (author, patterns, topics, [patternId], signals, etc.)
+// These routes are dead code from before the Context/Corpus Explorer (PR #3594) and
+// are not linked from product navigation.
 //
-// The live Context/Corpus Explorer (page.tsx + loading.tsx) was moved to
-// (maestro)/intelligence/ in PR #3594 so that surface gets AppChrome + global nav.
-// The old J0 sub-routes remain here until they are formally retired.
+// force-dynamic applies to this entire segment so next build does not attempt static
+// prerender of any child page. Several children call useSearchParams() without a
+// Suspense boundary, which crashes static generation.
+//
+// The live Context/Corpus Explorer page.tsx lives at (maestro)/intelligence/page.tsx.
+// This layout only covers the old J0 subtree; it must stay until those routes are
+// formally retired.
 
 import type { ReactNode } from 'react';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default function IntelligenceSubroutesLayout({ children }: { children: ReactNode }) {
   return <>{children}</>;

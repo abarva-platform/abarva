@@ -12,12 +12,6 @@ import {
   getKnownPatternIds,
 } from '@/lib/intelligence/intelligence-pattern-detail-view';
 
-// IntelligencePatternDetailPage uses useSearchParams() without a Suspense boundary.
-// Force dynamic to prevent next build from attempting static prerender of these
-// dead J0 routes (they are not linked from the product navigation).
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 export function generateStaticParams() {
   return getKnownPatternIds().map((patternId) => ({ patternId }));
 }
