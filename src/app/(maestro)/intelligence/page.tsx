@@ -22,6 +22,7 @@ import { getEnterpriseContextOverviewForTenant } from '@/lib/enterprise-context/
 import { listInitiativesForClient } from '@/lib/admin/ai-initiatives/queries';
 import { loadTenantIntelligenceCorpusData } from '@/lib/intelligence-v3/tenant-corpus-loader';
 import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
+import { AppShell } from '@/components/shell/AppShell';
 
 export const metadata = {
   title: 'Intelligence · Explore layer for AI bets | AbarVa',
@@ -62,10 +63,20 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
   const featureFlagCtx = { clientKey: client?.key ?? null };
   if (isFeatureEnabled(featureFlagCtx, 'context_corpus_explorer_enabled')) {
     return (
-      <IntelligenceExplorerPage
-        tenantKey={client?.key ?? 'unknown'}
-        tenantName={client?.name ?? 'SkyHarbor Air'}
-      />
+      <AppShell
+        surface="intelligence"
+        topBarProps={{
+          tenantName: client?.name ?? 'SkyHarbor Air',
+          showLocked: true,
+          context: 'Intelligence',
+        }}
+        hasTenantKey={!!client?.key}
+      >
+        <IntelligenceExplorerPage
+          tenantKey={client?.key ?? 'unknown'}
+          tenantName={client?.name ?? 'SkyHarbor Air'}
+        />
+      </AppShell>
     );
   }
 
