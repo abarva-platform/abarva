@@ -39,6 +39,7 @@ This keeps monthly First Capital structured-data refreshes on the VNet path that
 - PASS: Private operator restore after the proof run returned the shared operator to command `/bin/true` on image `acrabarvalab001.azurecr.io/abarva/web@sha256:e7668ebbb670bc014893fcc3265341cc56810c98a73b104d05ef3a079c430b3c`.
 - PASS: Local whitespace validation: `git diff --check`.
 - PASS: Local release validation: `npm run release:check -- --base origin/main --head HEAD`.
+- FAIL, then fixed: First post-merge workflow dispatch `27698682569` failed before operator start because shell expanded SQL placeholders like `$1` in the generated receipt command and the restore YAML indentation was over-stripped. The follow-up patch escapes the SQL placeholders and preserves YAML indentation.
 - NOT RUN: Post-merge validation will dispatch `First Capital refresh load` on `main` with `dry_run=false` and verify the workflow finishes with a `firstcapital_refresh_receipt` log.
 
 ## Rollout Plan
@@ -52,6 +53,7 @@ Revert this workflow commit to restore the previous direct-runner workflow. If a
 ## Audit Evidence
 
 - Private VNet proof execution: `job-abarva-private-operator-eus-wz2j1vw`.
+- Failed first post-merge workflow dispatch, before loader execution: GitHub Actions run `27698682569`.
 - First Capital live client row observed in the proof run: `id=09d9a267-e89c-4fe1-831f-337a62787ec5`, `tenant_key=first-capital`, `slug=first-capital`, `name=First Capital Financial`.
 - First Capital live counts observed in the proof run: applications=180, ai_initiatives=42, vendor_contracts=70, chunks_by_client=400, chunks_by_tenant=400, active_moves=0, active_source_events=0.
 - Private operator restored to idle after the proof run.
