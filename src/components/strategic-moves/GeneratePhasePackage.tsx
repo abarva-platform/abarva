@@ -222,9 +222,9 @@ export function GeneratePhasePackage({
         <strong>{AI_DECISION_SUPPORT_WATERMARK}</strong>
         <div>{MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT}</div>
         <div style={{ marginTop: 4, color: "#525866" }}>
-          Each document is authored by the governed six-pass orchestrator
-          (planning · grounding · drafting · red-teaming · polishing ·
-          formatting) and held back by the quality gate if it does not meet the
+          Each document is authored by the governed orchestrator (planning the
+          structure · writing it section by section · assembling the final
+          document) and held back by the quality gate if it does not meet the
           board-grade bar.
         </div>
       </div>
