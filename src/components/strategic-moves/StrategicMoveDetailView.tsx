@@ -9,11 +9,19 @@ import { PhaseDocumentsPanel } from "./PhaseDocumentsPanel";
 import { FileCabinetPanel } from "./FileCabinetPanel";
 import { SessionPlaybookPanel } from "./SessionPlaybookPanel";
 import { BoardArtifactsPanel } from "./BoardArtifactsPanel";
+import { MovesExplorer, type ExplorerModel } from "./MovesExplorer";
+import { azureRead } from "@/lib/data-plane/azureRead";
+import { listAttachmentsForProgram } from "@/lib/programs/attachments";
+import {
+  DELIVERABLE_REGISTRY,
+  PHASE_CANONICAL_KEYS,
+  type DeliverableSpec,
+} from "@/lib/programs/deliverable-registry";
 import { MoveToSourceHandoffCta } from "./MoveToSourceHandoffCta";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 import type { MoveToSourceHandoffResult } from "@/lib/programs/source-trigger/move-to-source-handoff";
 
-type Tab = "overview" | "documents" | "sessions" | "cabinet" | "activity";
+type Tab = "overview" | "explorer" | "documents" | "sessions" | "cabinet" | "activity";
 
 /** A Source event already linked back to this Move, when one exists. */
 export interface LinkedSourceEvent {
@@ -83,6 +91,11 @@ function secondaryAction(
 function TabBar({ moveId, active }: { moveId: string; active: Tab }) {
   const tabs: { key: Tab; label: string; href: string }[] = [
     { key: "overview", label: "Overview", href: `/strategic-moves/${moveId}` },
+    {
+      key: "explorer",
+      label: "Explorer",
+      href: `/strategic-moves/${moveId}?tab=explorer`,
+    },
     {
       key: "documents",
       label: "Documents",
@@ -423,6 +436,167 @@ function DocumentsContent({ move }: { move: StrategicMove }) {
   );
 }
 
+// ── Explorer tab content ──────────────────────────────────────────────────────
+
+const EXPLORER_PHASE_LABEL: Record<number, string> = {
+  1: "P1 Charter",
+  2: "P2 Discover & Diagnose",
+  3: "P3 Design Future State",
+  4: "P4 Roadmap & Business Case",
+  5: "P5 Approval & Mobilization",
+};
+
+function explorerStatus(
+  hasContent: boolean,
+  status: string,
+): "ready" | "review" | "draft" | "none" {
+  if (!hasContent) return "none";
+  if (status === "signed_off") return "ready";
+  if (status === "in_review") return "review";
+  return "draft";
+}
+
+async function buildExplorerModel(move: StrategicMove): Promise<ExplorerModel> {
+  // Read through the Azure/Postgres data-plane adapter (no Supabase runtime
+  // dependency). azureRead has no join, so we use `current_version` as the
+  // "has a committed version" proxy — a deliverable row with a version ≥ 1 has
+  // generated content; the join-based content check the Documents tab does is
+  // not needed just to drive browse status and download affordances.
+  const rows = await azureRead
+    .select<{
+      id: string;
+      deliverable_type_key: string;
+      status: string;
+      current_version: number | null;
+      updated_at: string | null;
+    }>({
+      table: "deliverables_v2",
+      columns: ["id", "deliverable_type_key", "status", "current_version", "updated_at"],
+      where: { engagement_id: move.id },
+      orderBy: { column: "updated_at", direction: "desc" },
+      limit: 200,
+    })
+    .catch(() => []);
+
+  const byKey = new Map<
+    string,
+    { id: string; status: string; updatedAt: string | null; hasContent: boolean }
+  >();
+  for (const row of rows) {
+    if (byKey.has(row.deliverable_type_key)) continue;
+    byKey.set(row.deliverable_type_key, {
+      id: row.id,
+      status: row.status,
+      updatedAt: row.updated_at,
+      hasContent: (row.current_version ?? 0) >= 1,
+    });
+  }
+
+  const attachments = await listAttachmentsForProgram(move.id).catch(
+    () => [] as Awaited<ReturnType<typeof listAttachmentsForProgram>>,
+  );
+  const attByPhase = new Map<number, typeof attachments>();
+  for (const a of attachments) {
+    const p = a.phase ?? 0;
+    if (!attByPhase.has(p)) attByPhase.set(p, []);
+    attByPhase.get(p)!.push(a);
+  }
+
+  const fmtDate = (iso: string | null): string | undefined => {
+    if (!iso) return undefined;
+    const d = new Date(iso);
+    return isNaN(d.getTime())
+      ? undefined
+      : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
+  const fmtBytes = (n: number): string =>
+    n < 1024
+      ? `${n} B`
+      : n < 1048576
+        ? `${Math.round(n / 1024)} KB`
+        : `${(n / 1048576).toFixed(1)} MB`;
+
+  const currentPhase = move.currentPhase ?? 1;
+  const phases = [1, 2, 3, 4, 5].map((phase) => {
+    const keys = PHASE_CANONICAL_KEYS[phase] ?? [];
+    const specs = keys
+      .map((k) => DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === k))
+      .filter(Boolean) as DeliverableSpec[];
+    const gateSpecs = specs.filter((s) => s.gateArtifact);
+    const base = (id: string) =>
+      `/api/programs/${move.id}/deliverables/${id}/content-export`;
+    const deliverables = specs.map((s) => {
+      const db = byKey.get(s.deliverableTypeKey);
+      const hasContent = Boolean(db?.hasContent);
+      return {
+        key: s.deliverableTypeKey,
+        title: s.documentTitle,
+        audience: s.audiencePrimary,
+        gate: s.gateArtifact,
+        status: explorerStatus(hasContent, db?.status ?? ""),
+        downloadHtml: hasContent && db ? `${base(db.id)}?format=html` : undefined,
+        downloadDocx: hasContent && db ? `${base(db.id)}?format=docx` : undefined,
+        date: db ? fmtDate(db.updatedAt) : undefined,
+      };
+    });
+    const templates = specs.map((s) => ({
+      title: s.documentTitle,
+      purpose: s.documentPurpose,
+      audience: s.audiencePrimary,
+      gate: s.gateArtifact,
+    }));
+    const inputs = (attByPhase.get(phase) ?? []).map((a) => ({
+      id: a.id,
+      name: a.originalName,
+      meta: `${fmtBytes(a.sizeBytes)} · ${fmtDate(a.createdAt) ?? ""}`,
+      href: `/api/programs/${move.id}/attachments/${a.id}`,
+    }));
+    return {
+      phase,
+      label: EXPLORER_PHASE_LABEL[phase] ?? `P${phase}`,
+      current: phase === currentPhase,
+      locked: phase > currentPhase,
+      gateMet: gateSpecs.filter(
+        (s) => byKey.get(s.deliverableTypeKey)?.hasContent,
+      ).length,
+      gateTotal: gateSpecs.length,
+      templates,
+      inputs,
+      deliverables,
+    };
+  });
+
+  return { moveId: move.id, moveName: move.name, currentPhase, phases };
+}
+
+async function ExplorerInner({ move }: { move: StrategicMove }) {
+  const model = await buildExplorerModel(move);
+  return <MovesExplorer model={model} />;
+}
+
+function ExplorerContent({ move }: { move: StrategicMove }) {
+  return (
+    <div style={{ padding: "0 4px" }}>
+      <Suspense
+        fallback={
+          <div
+            style={{
+              padding: "32px 0",
+              textAlign: "center",
+              fontSize: 12,
+              color: "#9AA3B2",
+            }}
+          >
+            Loading explorer…
+          </div>
+        }
+      >
+        <ExplorerInner move={move} />
+      </Suspense>
+    </div>
+  );
+}
+
 // ── Right pane (workspace) ────────────────────────────────────────────────────
 
 function RightPane({
@@ -510,6 +684,7 @@ function RightPane({
           linkedSourceEvent={linkedSourceEvent}
         />
       )}
+      {activeTab === "explorer" && <ExplorerContent move={move} />}
       {activeTab === "documents" && <DocumentsContent move={move} />}
       {activeTab === "sessions" && <SessionPlaybookPanel moveId={move.id} />}
       {activeTab === "cabinet" && (

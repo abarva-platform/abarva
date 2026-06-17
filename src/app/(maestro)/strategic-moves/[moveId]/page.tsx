@@ -19,7 +19,7 @@ import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 
 export const dynamic = "force-dynamic";
 
-type Tab = "overview" | "documents" | "sessions" | "cabinet" | "activity";
+type Tab = "overview" | "explorer" | "documents" | "sessions" | "cabinet" | "activity";
 
 interface Props {
   params: Promise<{ moveId: string }>;
@@ -28,6 +28,7 @@ interface Props {
 
 function resolveTab(raw: string | undefined): Tab {
   if (
+    raw === "explorer" ||
     raw === "documents" ||
     raw === "activity" ||
     raw === "cabinet" ||
