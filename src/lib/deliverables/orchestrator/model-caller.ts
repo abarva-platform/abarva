@@ -1,7 +1,7 @@
 // Audited-egress ModelCaller for the Deliverable Intelligence Orchestrator.
 //
 // Backs the orchestrator's injected ModelCaller with the audited Anthropic egress
-// path (preflightAnthropicDirectClient → client.messages.create). Each pass is its
+// path (preflightAnthropicDirectClient → client.messages.stream). Each pass is its
 // own audited call with its own generous token budget and a workflow tag that
 // records the module / deliverable / pass.
 
@@ -105,12 +105,20 @@ export function createAuditedModelCaller(
       throw new Error(`Anthropic egress denied: ${preflight.reason}`);
     }
 
-    const response = await preflight.client.messages.create({
-      model,
-      system: prompt.system,
-      messages: [{ role: "user", content: prompt.user }],
-      max_tokens: prompt.maxTokens,
-    });
+    // Board-grade passes request large token budgets, so a single non-streaming
+    // call can exceed the Anthropic SDK's 10-minute ceiling — the SDK rejects it
+    // pre-flight ("Streaming is required for operations that may take longer than
+    // 10 minutes"). Stream the response and assemble the final Message instead;
+    // this lifts the ceiling while preserving the same Message shape that
+    // extractResponseText / response.id already consume.
+    const response = await preflight.client.messages
+      .stream({
+        model,
+        system: prompt.system,
+        messages: [{ role: "user", content: prompt.user }],
+        max_tokens: prompt.maxTokens,
+      })
+      .finalMessage();
 
     return {
       text: extractResponseText(response),
