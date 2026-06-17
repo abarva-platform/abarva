@@ -8,12 +8,7 @@ import { IntelligenceSignalDetailPage } from '@/components/intelligence/Intellig
 import { getActiveClientRow } from '@/lib/active-client';
 import {
   buildIntelligenceSignalDetailView,
-  getKnownSignalIds,
 } from '@/lib/intelligence/intelligence-signal-detail-view';
-
-export function generateStaticParams() {
-  return getKnownSignalIds().map((signalId) => ({ signalId }));
-}
 
 export async function generateMetadata({
   params,

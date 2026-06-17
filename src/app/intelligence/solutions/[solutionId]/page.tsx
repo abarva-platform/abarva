@@ -8,12 +8,7 @@ import { IntelligenceSolutionDetailPage } from '@/components/intelligence/Intell
 import { getActiveClientRow } from '@/lib/active-client';
 import {
   buildIntelligenceSolutionDetailView,
-  getKnownSolutionIds,
 } from '@/lib/intelligence/intelligence-solution-detail-view';
-
-export function generateStaticParams() {
-  return getKnownSolutionIds().map((solutionId) => ({ solutionId }));
-}
 
 export async function generateMetadata({
   params,

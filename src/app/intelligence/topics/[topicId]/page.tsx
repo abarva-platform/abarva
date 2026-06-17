@@ -14,9 +14,6 @@
 //
 // Per docs/build/intelligence/INT-2_DETAILED_DESIGN.md §4.2 + §2.3.
 //
-// generateStaticParams() pre-renders all 10 canonical topic IDs at
-// build. Unknown topicIds → notFound() → 404.
-
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
@@ -38,10 +35,6 @@ import { getActiveClientRow } from '@/lib/active-client';
 
 interface PageProps {
   params: Promise<{ topicId: string }>;
-}
-
-export async function generateStaticParams() {
-  return J1_TOPICS.map((t) => ({ topicId: t.topicId }));
 }
 
 export async function generateMetadata({ params }: PageProps) {

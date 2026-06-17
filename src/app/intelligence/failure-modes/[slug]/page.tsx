@@ -49,12 +49,6 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-export async function generateStaticParams() {
-  return J0_FAILURE_MODE_CARDS.map((card) => ({
-    slug: slugifyEditorialName(card.editorialName),
-  }));
-}
-
 export default async function FailureModePage({ params }: PageProps) {
   const { slug } = await params;
   const card = getJ0CardBySlug(slug);

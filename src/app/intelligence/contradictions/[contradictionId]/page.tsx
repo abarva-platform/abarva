@@ -9,12 +9,7 @@ import { IntelligenceContradictionDetailPage } from '@/components/intelligence/I
 import { getActiveClientRow } from '@/lib/active-client';
 import {
   buildIntelligenceContradictionDetailView,
-  getKnownContradictionIds,
 } from '@/lib/intelligence/intelligence-contradiction-detail-view';
-
-export function generateStaticParams() {
-  return getKnownContradictionIds().map((contradictionId) => ({ contradictionId }));
-}
 
 export async function generateMetadata({
   params,
