@@ -213,15 +213,21 @@ export function SentinelExplorerRail({ tenantKey }: SentinelExplorerRailProps) {
     [isAsking, messages.length, scrollToBottom, tenantKey, updateAgentMessage],
   );
 
-  const handleSubmit = useCallback(() => {
-    const v = inputValue.trim();
+  const handleSubmit = useCallback(
+    (event?: React.FormEvent<HTMLFormElement>) => {
+      event?.preventDefault();
+      const rawValue = textareaRef.current?.value ?? inputValue;
+      const v = rawValue.trim();
     if (!v) return;
     setInputValue("");
     if (textareaRef.current) {
+      textareaRef.current.value = "";
       textareaRef.current.style.height = "auto";
     }
     handleAsk(v);
-  }, [inputValue, handleAsk]);
+    },
+    [inputValue, handleAsk],
+  );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -234,9 +240,9 @@ export function SentinelExplorerRail({ tenantKey }: SentinelExplorerRailProps) {
   );
 
   const handleInput = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setInputValue(e.target.value);
-      const ta = e.target;
+    (e: React.FormEvent<HTMLTextAreaElement>) => {
+      const ta = e.currentTarget;
+      setInputValue(ta.value);
       ta.style.height = "auto";
       ta.style.height = Math.min(ta.scrollHeight, 110) + "px";
     },
@@ -434,7 +440,8 @@ export function SentinelExplorerRail({ tenantKey }: SentinelExplorerRailProps) {
           background: C.railBg,
         }}
       >
-        <div
+        <form
+          onSubmit={handleSubmit}
           style={{
             display: "flex",
             alignItems: "flex-end",
@@ -450,6 +457,7 @@ export function SentinelExplorerRail({ tenantKey }: SentinelExplorerRailProps) {
             rows={1}
             value={inputValue}
             onChange={handleInput}
+            onInput={handleInput}
             onKeyDown={handleKeyDown}
             placeholder='Ask anything · or "derive a view of…"'
             spellCheck
@@ -467,9 +475,9 @@ export function SentinelExplorerRail({ tenantKey }: SentinelExplorerRailProps) {
             }}
           />
           <button
-            type="button"
-            disabled={!inputValue.trim() || isAsking}
-            onClick={handleSubmit}
+            type="submit"
+            aria-label="Ask Sentinel"
+            disabled={isAsking}
             style={{
               width: 29,
               height: 29,
@@ -478,14 +486,14 @@ export function SentinelExplorerRail({ tenantKey }: SentinelExplorerRailProps) {
               color: "#fff",
               border: "none",
               fontSize: 15,
-              cursor: inputValue.trim() && !isAsking ? "pointer" : "default",
-              opacity: inputValue.trim() && !isAsking ? 1 : 0.4,
+              cursor: !isAsking ? "pointer" : "default",
+              opacity: !isAsking ? 1 : 0.4,
               flexShrink: 0,
             }}
           >
             ↑
           </button>
-        </div>
+        </form>
         <div
           style={{
             fontSize: 10,

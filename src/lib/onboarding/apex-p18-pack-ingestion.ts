@@ -353,6 +353,7 @@ function buildChunkRows(chunks: CorpusChunk[], sourceFilesById: Map<string, Sour
       client_id: clientId,
       tenant_key: TENANT_KEY,
       chunk_id: chunk.chunk_id,
+      source_system: source.source_system,
       source_segment_id: chunk.source_segment_id,
       source_record_id: chunk.source_record_id,
       source_doc: source.source_file,

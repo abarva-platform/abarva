@@ -39,15 +39,11 @@ const TABS: { key: TabKey; label: string; group: string }[] = [
 export interface IntelligenceExplorerPageProps {
   tenantKey: string;
   tenantName: string;
-  dimensionsLoaded?: number;
-  insightCount?: number;
 }
 
 export function IntelligenceExplorerPage({
   tenantKey,
   tenantName,
-  dimensionsLoaded = 9,
-  insightCount = 6,
 }: IntelligenceExplorerPageProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("insights");
   const [contextSummary, setContextSummary] =
@@ -94,20 +90,20 @@ export function IntelligenceExplorerPage({
     return () => controller.abort();
   }, [tenantKey]);
 
-  const liveInsightCount = contextSummary?.insightCount ?? insightCount;
-  const liveDimensionsLoaded =
-    contextSummary?.dimensionsLoaded ?? dimensionsLoaded;
+  const liveInsightCount = contextSummary?.insightCount;
+  const liveDimensionsLoaded = contextSummary?.dimensionsLoaded;
   const contextDate = contextSummary?.latestUpdatedAt
     ? new Date(contextSummary.latestUpdatedAt).toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
         year: "numeric",
       })
-    : "Jun 16, 2026";
+    : null;
 
   return (
     <div
       data-testid="intelligence-explorer-page"
+      data-tenant-key={tenantKey}
       style={{
         background: C.bg,
         display: "flex",
@@ -182,16 +178,22 @@ export function IntelligenceExplorerPage({
             Feature-gated explorer
           </span>
           <span>
-            <strong style={{ color: C.ink }}>{liveInsightCount}</strong> live
-            insights
+            <strong style={{ color: C.ink }}>
+              {typeof liveInsightCount === "number" ? liveInsightCount : "reading"}
+            </strong>{" "}
+            live insights
           </span>
           <span>
-            <strong style={{ color: C.ink }}>{liveDimensionsLoaded}/14</strong>{" "}
+            <strong style={{ color: C.ink }}>
+              {typeof liveDimensionsLoaded === "number"
+                ? `${liveDimensionsLoaded}/14`
+                : "reading"}
+            </strong>{" "}
             dimensions loaded
           </span>
           <span>
             context as of{" "}
-            <strong style={{ color: C.ink }}>{contextDate}</strong>
+            <strong style={{ color: C.ink }}>{contextDate ?? "reading"}</strong>
           </span>
         </div>
       </div>
