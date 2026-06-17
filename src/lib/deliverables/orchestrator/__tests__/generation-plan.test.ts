@@ -94,10 +94,25 @@ describe('MOVES_CHARTER structure (phase discipline)', () => {
     expect(structure.sections.map((s) => s.key)).not.toContain('current_state');
     expect(structure.requiredSectionKeys).not.toContain('current_state');
     // decision/commitment sections are present
-    for (const k of ['sponsor_commitment', 'value_hypothesis', 'kill_criterion']) {
+    for (const k of ['sponsor_commitment', 'success_criteria', 'kill_criterion']) {
       expect(structure.sections.map((s) => s.key)).toContain(k);
     }
     expect((structure.forbiddenSectionTopics ?? []).join(' ')).toMatch(/target state/i);
+  });
+
+  it('requires the four-part success-criteria model and change-ready sponsorship', () => {
+    const structure = getDeliverableStructure('moves', 'charter')!;
+    const sc = structure.sections.find((s) => s.key === 'success_criteria')!;
+    expect(sc).toBeTruthy();
+    expect(structure.requiredSectionKeys).toContain('success_criteria');
+    // outcomes + metrics + post-deployment measurement + business-process change
+    expect(sc.intent).toMatch(/outcome/i);
+    expect(sc.intent).toMatch(/baseline/i);
+    expect(sc.intent).toMatch(/measure(d|ment)? after|after.*deploy|post-go-live|post-deployment/i);
+    expect(sc.intent).toMatch(/process.?change|business-process/i);
+    // sponsor commitment carries change readiness + commitment to drive process change
+    const sponsor = structure.sections.find((s) => s.key === 'sponsor_commitment')!;
+    expect(sponsor.intent).toMatch(/change readiness|drive the business-process|process change/i);
   });
 
   it('surfaces the forbidden topics on the composed charter brief', () => {
