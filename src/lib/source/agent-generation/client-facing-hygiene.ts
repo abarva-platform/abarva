@@ -86,7 +86,7 @@ function dedupeCompanyLabel(markdown: string, companyName?: string | null) {
   const company = companyName?.trim();
   if (!company) return markdown;
   const companyLabel = new RegExp(
-    `\\bCompany\\s*:\\s*${escapeRegExp(company)}\\b`,
+    `(?:\\*\\*)?\\bCompany\\b\\s*:\\s*(?:\\*\\*)?\\s*${escapeRegExp(company)}\\b(?:\\*\\*)?`,
     "gi",
   );
   let seen = false;
