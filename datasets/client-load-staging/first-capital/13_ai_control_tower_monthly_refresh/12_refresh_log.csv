@@ -1,0 +1,2 @@
+refresh_run_id,run_type,reporting_period_start,reporting_period_end,started_at,status,rows_seen,rows_valid,rows_rejected,review_required,operator
+fcf-refresh-2026-06-candidate-v1,template_upload,2026-06-01,2026-06-30,2026-06-17T00:00:00.000Z,parsed,348,174,0,74,codex-data-refresh

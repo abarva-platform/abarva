@@ -1,0 +1,1 @@
+metric_id,system_id,metric_date,business_function,metric_type,metric_name,metric_value,metric_unit,peak_value,peak_window,average_daily_volume,monthly_volume,annual_volume,data_retention_years,data_volume_tb,annual_growth_pct,batch_window,latency_sla_ms,availability_sla_pct,rto_hours,rpo_minutes,measurement_source,measurement_method,confidence,owner_role,notes

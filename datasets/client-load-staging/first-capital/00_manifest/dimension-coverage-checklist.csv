@@ -1,0 +1,13 @@
+dimension,status,expected_live_gate,notes
+public_company_evidence,partial,stage_more_evidence_before_claim,No actual external annual/quarterly report files staged yet; use public-company template before production-like claim.
+strategy_and_finance,covered,parse_to_records_then_retrieval_proof,"Capex/opex, initiative commitments, renewal calendar, run cost, sponsor signal."
+org_and_operating_model,covered,parse_to_records_then_retrieval_proof,"Teams, roles, executives, demo personas."
+it_systems_landscape,covered,parse_to_records_then_retrieval_proof,Application portfolio and integration topology.
+architecture_infrastructure,partial,stage_more_evidence_before_claim,Infrastructure contracts exist; detailed DC/private cloud topology template still needed.
+data_and_integration,covered,parse_to_records_then_retrieval_proof,Integration topology plus retrieval corpus/source docs.
+security_risk_compliance,covered,parse_to_records_then_retrieval_proof,Expanded regulatory obligations and control evidence requirements.
+vendors_contracts_sourcing,covered,parse_to_records_then_retrieval_proof,"Vendor contracts, infrastructure contracts, renewal calendar."
+operations_service_management,covered,parse_to_records_then_retrieval_proof,"Incidents, changes, DORA, DevEx."
+ai_data_science_automation,covered,parse_to_records_then_retrieval_proof,"AI tool footprint, telemetry, governance posture."
+customer_product_market,partial,stage_more_evidence_before_claim,Benchmarks present; customer/product market source evidence still thin.
+ai_control_tower_monthly_refresh,covered_candidate,parse_to_records_then_retrieval_proof,Derived monthly refresh CSVs staged; needs workbook/API parser commit proof.

@@ -1,0 +1,1 @@
+provenance_id,client_key,metric_key,metric_name,source_system,source_table_or_report,source_file_id,citation_location,refresh_cadence,last_refreshed_at,measurement_method,calculation_formula,quality_score,known_limitations,attestation_required,attestation_status,notes

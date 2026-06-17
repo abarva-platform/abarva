@@ -1,0 +1,43 @@
+source_id,benefit_id,initiative_id,benefit_name,metric_key,baseline_value,current_value,target_value,promised_annual_value_usd,realized_annual_value_usd,confidence,readiness_state,evidence_state
+src-finance,BEN-FCF-INIT-BRANCH-VISION-AI,FCF-INIT-BRANCH-VISION-AI,Branch queue vision AI pilot value case,stop_or_reduce_spend,1900000,,600000,600000,,low,projected_only,review_required
+src-finance,BEN-FCF-INIT-CONTACT-SENTIMENT-V1,FCF-INIT-CONTACT-SENTIMENT-V1,Contact center sentiment AI v1 value case,stop_or_reduce_spend,2400000,,800000,800000,,low,projected_only,review_required
+src-finance,BEN-FCF-INIT-WEALTH-COPILOT-SHADOW,FCF-INIT-WEALTH-COPILOT-SHADOW,Wealth advisor copilot shadow rollout value case,stop_or_reduce_spend,3100000,,1700000,1700000,,low,projected_only,review_required
+src-finance,BEN-FCF-INIT-FEDNOW-RTP-MODERNIZATION,FCF-INIT-FEDNOW-RTP-MODERNIZATION,FedNow and RTP modernization value case,benefit_realization_usd,18600000,,42000000,42000000,,low,review_required,review_required
+src-finance,BEN-FCF-INIT-AML-TRIAGE-AI,FCF-INIT-AML-TRIAGE-AI,AML case triage automation value case,benefit_realization_usd,8900000,,21000000,21000000,,low,review_required,review_required
+src-finance,BEN-FCF-INIT-CORE-BANKING-FUTURE,FCF-INIT-CORE-BANKING-FUTURE,Core banking future decision value case,benefit_realization_usd,14000000,,0,0,,low,projected_only,review_required
+src-finance,BEN-FCF-INIT-FRAUD-GRAPH-V2,FCF-INIT-FRAUD-GRAPH-V2,Fraud graph analytics v2 value case,benefit_realization_usd,7300000,28600000,28600000,28600000,28600000,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-008,FCF-INIT-008,SAP S/4HANA finance future decision value case,benefit_realization_usd,1200000,,2500000,2500000,,low,baseline_set,received
+src-finance,BEN-FCF-INIT-009,FCF-INIT-009,Digital account opening abandonment recovery value case,benefit_realization_usd,1991000,,3990000,3990000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-010,FCF-INIT-010,Commercial credit memo automation value case,benefit_realization_usd,2782000,,5480000,5480000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-011,FCF-INIT-011,Treasury liquidity forecast modernization value case,benefit_realization_usd,3573000,,6970000,6970000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-012,FCF-INIT-012,KYC beneficial ownership refresh value case,benefit_realization_usd,4364000,,8460000,8460000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-013,FCF-INIT-013,Model inventory evidence automation value case,benefit_realization_usd,5155000,,9950000,9950000,,low,review_required,review_required
+src-finance,BEN-FCF-INIT-014,FCF-INIT-014,M365 Copilot controlled rollout value case,benefit_realization_usd,5946000,,11440000,11440000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-015,FCF-INIT-015,Cloud exit-risk reduction value case,benefit_realization_usd,6737000,,12930000,12930000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-016,FCF-INIT-016,ServiceNow CMDB truth remediation value case,benefit_realization_usd,7528000,,14420000,14420000,,low,baseline_set,received
+src-finance,BEN-FCF-INIT-017,FCF-INIT-017,Data lineage for regulatory reports value case,benefit_realization_usd,8319000,,15910000,15910000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-018,FCF-INIT-018,Debit-card disputes automation value case,benefit_realization_usd,9110000,,17400000,17400000,,low,review_required,review_required
+src-finance,BEN-FCF-INIT-019,FCF-INIT-019,Mortgage document intelligence value case,benefit_realization_usd,9901000,,18890000,18890000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-020,FCF-INIT-020,Branch appointment and workforce optimization value case,benefit_realization_usd,10692000,,20380000,20380000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-021,FCF-INIT-021,Open banking developer portal value case,benefit_realization_usd,11483000,,21870000,21870000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-022,FCF-INIT-022,Vendor AI indemnity clause refresh value case,benefit_realization_usd,12274000,,23360000,23360000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-023,FCF-INIT-023,IAM privileged access cleanup value case,benefit_realization_usd,13065000,,24850000,24850000,,low,review_required,review_required
+src-finance,BEN-FCF-INIT-024,FCF-INIT-024,SAS model-hosting rationalization value case,benefit_realization_usd,13856000,,26340000,26340000,,low,baseline_set,received
+src-finance,BEN-FCF-INIT-025,FCF-INIT-025,Snowflake cost governance value case,benefit_realization_usd,14647000,,27830000,27830000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-026,FCF-INIT-026,Client complaint root-cause analytics value case,benefit_realization_usd,1638000,,29320000,29320000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-027,FCF-INIT-027,Loan operations straight-through processing value case,benefit_realization_usd,2429000,,30810000,30810000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-028,FCF-INIT-028,Data retention and legal hold automation value case,benefit_realization_usd,3220000,,32300000,32300000,,low,review_required,review_required
+src-finance,BEN-FCF-INIT-029,FCF-INIT-029,Engineering productivity tooling for legacy apps value case,benefit_realization_usd,4011000,,33790000,33790000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-030,FCF-INIT-030,Payment exceptions workflow modernization value case,benefit_realization_usd,4802000,,3280000,3280000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-031,FCF-INIT-031,Customer 360 consent and preference hub value case,benefit_realization_usd,5593000,,4770000,4770000,,medium,realized_or_measured,usable
+src-finance,BEN-FCF-INIT-032,FCF-INIT-032,Third-party risk scoring automation value case,benefit_realization_usd,6384000,,6260000,6260000,,low,baseline_set,received
+src-finance,BEN-FCF-CLOSED-001,FCF-CLOSED-001,Branch teller desktop consolidation value case,benefit_realization_usd,900000,,1400000,1400000,,low,baseline_set,received
+src-finance,BEN-FCF-CLOSED-002,FCF-CLOSED-002,ACH exception queue triage uplift value case,benefit_realization_usd,1110000,,1700000,1700000,,low,baseline_set,received
+src-finance,BEN-FCF-CLOSED-003,FCF-CLOSED-003,Commercial credit memo template standardization value case,benefit_realization_usd,1320000,,2000000,2000000,,low,baseline_set,received
+src-finance,BEN-FCF-CLOSED-004,FCF-CLOSED-004,Mortgage document indexing remediation value case,benefit_realization_usd,1530000,,2300000,2300000,,low,baseline_set,received
+src-finance,BEN-FCF-CLOSED-005,FCF-CLOSED-005,Treasury intraday liquidity dashboard value case,benefit_realization_usd,1740000,,2600000,2600000,,low,baseline_set,received
+src-finance,BEN-FCF-CLOSED-006,FCF-CLOSED-006,Loan operations RPA retirement value case,benefit_realization_usd,1950000,,2900000,2900000,,low,baseline_set,received
+src-finance,BEN-FCF-CLOSED-007,FCF-CLOSED-007,Cyber privileged-access recertification value case,benefit_realization_usd,2160000,,3200000,3200000,,low,baseline_set,received
+src-finance,BEN-FCF-CLOSED-008,FCF-CLOSED-008,Vendor renewal evidence room pilot value case,benefit_realization_usd,2370000,,3500000,3500000,,low,baseline_set,received
+src-finance,BEN-FCF-CLOSED-009,FCF-CLOSED-009,Digital-servicing complaint taxonomy cleanup value case,benefit_realization_usd,2580000,,3800000,3800000,,low,baseline_set,received
+src-finance,BEN-FCF-CLOSED-010,FCF-CLOSED-010,Model inventory attestation cycle value case,benefit_realization_usd,2790000,,4100000,4100000,,low,baseline_set,received
