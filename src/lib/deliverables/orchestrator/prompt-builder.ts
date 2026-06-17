@@ -141,14 +141,36 @@ export function buildPassPrompt(pass: GenerationPass, inputs: PassInputs): PassP
   let user = '';
 
   switch (pass) {
-    case 'architect':
+    case 'architect': {
+      // The plan gate (validateGenerationPlan) auto-rejects plans that cite a
+      // non-existent evidence number or mark a section governed_facts/mixed
+      // without grounding it. The architect is an LLM and freelances both, so
+      // state the gate's rules explicitly (with the exact valid citation numbers)
+      // — this makes the plan reliably gate-valid instead of a non-deterministic
+      // ~1-in-4 pass.
+      const validCitations = evidence.map((e) => e.citationNumber);
+      const citationList =
+        validCitations.length > 0
+          ? validCitations.map((n) => `[${n}]`).join(', ')
+          : '(none — there is NO governed evidence; do not cite any [n])';
+      const planValidityRules = [
+        `PLAN VALIDITY RULES — your plan is AUTO-REJECTED (and the whole job fails) if you break any of these, so follow them exactly:`,
+        `1. evidenceCitations may use ONLY these citation numbers, which are the ones present in AVAILABLE GOVERNED EVIDENCE: ${citationList}. NEVER invent or cite any number outside this set.`,
+        `2. For EVERY section whose groundingMode is "governed_facts" or "mixed", you MUST populate at least one of: evidenceCitations (a valid number above), assumptionsUsed, or placeholders. A governed_facts/mixed section with all three empty would fabricate client facts and is rejected.`,
+        `3. If a section carries no client-specific facts (pure expert framing, methodology, narrative, or standard boilerplate), set its groundingMode to "expert_generic" — those need no citations, assumptions, or placeholders.`,
+        `4. Prefer "expert_generic" for any section you cannot ground with the evidence/assumptions/placeholders above, rather than marking it governed_facts/mixed and leaving it ungrounded.`,
+      ].join('\n');
       user = [
         context,
         ``,
         `PASS 1 — ARTIFACT ARCHITECT. Design the best possible structure for this deliverable. Use your expert knowledge of consulting, technology strategy, sourcing, transformation, and executive decision-making. Identify required sections, optional sections, exhibits, tables, and placeholders. Propose enhancements beyond the baseline structure where they raise quality. DO NOT draft the full document yet.`,
+        ``,
+        planValidityRules,
+        ``,
         PLAN_SCHEMA_HINT,
       ].join('\n');
       break;
+    }
     case 'evidence_grounding':
       user = [
         context,
