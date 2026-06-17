@@ -159,7 +159,7 @@ export function GenerateDeliverableButton(props: GenerateDeliverableButtonProps)
               />
             </div>
             <div style={{ fontSize: 11.5, color: MUTED }}>
-              Six governed passes — planning, grounding, drafting, red-teaming, polishing, formatting. Runs in the background; you can leave this open.
+              Governed generation — planning the structure, writing the document section by section, then assembling and quality-checking it. Runs in the background; you can leave this open.
             </div>
           </div>
         );

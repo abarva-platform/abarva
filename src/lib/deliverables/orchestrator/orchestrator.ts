@@ -124,6 +124,7 @@ async function call(
   req: DeliverableIntelligenceRequest,
   trace: PassTraceEntry[],
   onProgress?: (p: GenerationProgress) => void,
+  expectedTotal?: number,
 ): Promise<ModelCallResult> {
   const res = await modelCall(prompt, req);
   trace.push({
@@ -134,9 +135,11 @@ async function call(
     responseId: res.responseId,
   });
   // Emit a progress event for the pass that just completed (trace.length is the
-  // 1-based count of completed passes). The callback persists it to the run
-  // ledger so the UI can show a live percent band during generation.
-  onProgress?.(buildGenerationProgress(prompt.pass, trace.length));
+  // 1-based count of completed model calls). `expectedTotal` (architect + N
+  // sections + synthesis) is known only after the plan is parsed, so the
+  // architect call omits it and reports the "planning" percent. The callback
+  // persists the event so the UI can show a live band during generation.
+  onProgress?.(buildGenerationProgress(prompt.pass, trace.length, expectedTotal));
   return res;
 }
 
@@ -184,6 +187,8 @@ export async function runDeliverableOrchestration(
   const outlineSummary = plan.sectionPlan
     .map((s, i) => `${i + 1}. ${s.title} — ${s.rationale || ''}`)
     .join('\n');
+  // architect (1) + one call per planned section + synthesis (1) → the band denominator.
+  const expectedTotal = plan.sectionPlan.length + 2;
   const concurrency = (() => {
     const v = Number(process.env.ABARVA_DOCGEN_SECTION_CONCURRENCY);
     return Number.isFinite(v) && v > 0 ? v : 5;
@@ -200,6 +205,7 @@ export async function runDeliverableOrchestration(
         req,
         trace,
         opts.onProgress,
+        expectedTotal,
       );
       const parsed = extractJson<RenderableSection>(res.text);
       const body = parsed && parsed.bodyMarkdown ? parsed.bodyMarkdown : res.text;
@@ -225,6 +231,7 @@ export async function runDeliverableOrchestration(
     req,
     trace,
     opts.onProgress,
+    expectedTotal,
   );
   const synth = extractJson<SynthesisResult>(synthRes.text) ?? {};
   const document: RenderableDeliverable = assembleDeliverable(req, sections, synth, evidence);
