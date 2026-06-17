@@ -144,7 +144,55 @@ jobs:
                         TENANT_KEY="${{ inputs.tenant_key }}" npm run intel:context-insights:evaluate -- --tenant=first-capital
                       fi
                       if [ "${{ inputs.run_population_audit }}" = "true" ]; then
-                        LIVE_TENANT_POPULATION_AUDIT_OUT_DIR=/tmp/abarva-data-quality node scripts/audit/live-tenant-population-audit.mjs
+                        node <<'NODE'
+                      const fs = require('node:fs');
+                      const { createRequire } = require('node:module');
+                      const req = createRequire('/app/package.json');
+                      const { Client } = req('pg');
+                      const tenantKeys = ['first-capital', 'firstcapital', 'arcturus'];
+
+                      async function count(client, sql, params) {
+                        const result = await client.query(sql, params);
+                        return Number(result.rows[0]?.n ?? 0);
+                      }
+
+                      (async () => {
+                        const client = new Client({
+                          connectionString: process.env.DATABASE_URL,
+                          ssl: { rejectUnauthorized: false },
+                        });
+                        await client.connect();
+                        const clientResult = await client.query(
+                          'select id, tenant_key, slug, name from clients where tenant_key = any(\$1::text[]) or slug = any(\$1::text[]) order by case when tenant_key = \$2 then 0 else 1 end, created_at nulls last limit 1',
+                          [tenantKeys, 'first-capital'],
+                        );
+                        const clientRow = clientResult.rows[0];
+                        if (!clientRow) throw new Error('No First Capital client row found for population audit');
+                        const clientId = clientRow.id;
+                        const audit = {
+                          event: 'firstcapital_population_audit',
+                          tenant_keys: tenantKeys,
+                          client: clientRow,
+                          counts: {
+                            applications: await count(client, 'select count(*)::int as n from applications where client_id = \$1', [clientId]),
+                            ai_initiatives: await count(client, 'select count(*)::int as n from ai_initiatives where client_id = \$1', [clientId]),
+                            vendor_contracts: await count(client, 'select count(*)::int as n from vendor_contracts where client_id = \$1', [clientId]),
+                            context_chunks_by_client: await count(client, 'select count(*)::int as n from enterprise_context_chunks where client_id = \$1', [clientId]),
+                            context_chunks_by_tenant: await count(client, 'select count(*)::int as n from enterprise_context_chunks where tenant_key = any(\$1::text[])', [tenantKeys]),
+                            context_insights_active: await count(client, "select count(*)::int as n from context_insights where tenant_key = any(\$1::text[]) and lifecycle_state = 'active'", [tenantKeys]),
+                            active_moves: await count(client, 'select count(*)::int as n from engagements where client_id::text = \$1 and archived_at is null and deleted_at is null', [clientId]),
+                            active_source_events: await count(client, "select count(*)::int as n from source_events where client_key = any(\$1::text[]) and lifecycle_state <> 'archived'", [tenantKeys]),
+                          },
+                        };
+                        fs.mkdirSync('/tmp/abarva-data-quality', { recursive: true });
+                        fs.writeFileSync('/tmp/abarva-data-quality/first-capital-population-audit.json', JSON.stringify(audit, null, 2));
+                        console.log(JSON.stringify(audit, null, 2));
+                        await client.end();
+                      })().catch((error) => {
+                        console.error(error);
+                        process.exit(1);
+                      });
+                      NODE
                       fi
                       node -e 'const { createRequire } = require("node:module"); const req = createRequire("/app/package.json"); const { Client } = req("pg"); const aliases = ["first-capital","firstcapital","arcturus"]; (async () => { const client = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }); await client.connect(); const clients = await client.query("select id, tenant_key, slug, name from clients where tenant_key = any(\$1::text[]) or slug = any(\$1::text[]) order by case when tenant_key=\$2 then 0 else 1 end, created_at nulls last", [aliases, "${{ inputs.tenant_key }}"]); const first = clients.rows[0]; if (!first) throw new Error("No First Capital client row found"); const counts = await client.query("select (select count(*)::int from applications where client_id=\$1) as applications, (select count(*)::int from ai_initiatives where client_id=\$1) as ai_initiatives, (select count(*)::int from vendor_contracts where client_id=\$1) as vendor_contracts, (select count(*)::int from enterprise_context_chunks where client_id=\$1) as chunks_by_client, (select count(*)::int from enterprise_context_chunks where tenant_key = any(\$2::text[])) as chunks_by_tenant, (select count(*)::int from engagements where client_id::text=\$1 and archived_at is null and deleted_at is null) as active_moves, (select count(*)::int from source_events where client_key = any(\$2::text[]) and lifecycle_state <> '"'"'archived'"'"') as active_source_events", [first.id, aliases]); console.log(JSON.stringify({ event: "firstcapital_refresh_receipt", client: first, counts: counts.rows[0], aliases }, null, 2)); await client.end(); })().catch((error) => { console.error(error); process.exit(1); });'
                   env:
