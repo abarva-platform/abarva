@@ -29,14 +29,17 @@ import {
 
 export { ACTIVE_CLIENT_COOKIE };
 
-function isTenantLookupInfrastructureError(error: unknown): boolean {
-  const record = error as { code?: unknown; message?: unknown };
-  const code = typeof record?.code === 'string' ? record.code : '';
-  const message = typeof record?.message === 'string' ? record.message : String(error ?? '');
-  return (
-    ['EMAXCONN', 'ENOTFOUND', 'EAI_AGAIN', 'ETIMEDOUT', 'ECONNREFUSED', 'ECONNRESET'].includes(code) ||
-    /max client connections|remaining connection slots|too many clients|connection\s+timeout|connection\s+terminated|connect\s+etimedout|econnrefused|enotfound/i.test(message)
-  );
+/**
+ * Distinct error for a tenant lookup that failed for an infrastructure/DB reason (as
+ * opposed to a user who genuinely has no client). Callers that need to tell a retryable
+ * outage apart from a real "no client" (e.g. requireTenancy → 503) catch this. A DB blip
+ * must never silently collapse to a `no_client` 403. (Fix B.)
+ */
+export class TenantLookupUnavailableError extends Error {
+  constructor(public readonly cause?: unknown) {
+    super('tenant_lookup_unavailable');
+    this.name = 'TenantLookupUnavailableError';
+  }
 }
 
 export async function getActiveClientKey(requestedClientId?: string | null): Promise<ClientKey> {
@@ -77,10 +80,17 @@ export async function hasLockedTenantSession(): Promise<boolean> {
 export async function getActiveClientRow(
   requestedClientId?: string | null,
 ): Promise<{ id: string; name: string; industry_code: string | null; key: ClientKey } | null> {
-  const tenant = await resolveTenant({ requestedClient: requestedClientId }).catch((error) => {
-    if (isTenantLookupInfrastructureError(error)) throw error;
-    return null;
-  });
+  // Fix B: resolveTenant now THROWS on any DB/lookup failure (it returns a tenant with a
+  // null clientId for a genuine no-row). So any error here is a retryable lookup outage,
+  // not a "no client" — re-throw it as TenantLookupUnavailableError instead of collapsing
+  // it to null (which previously surfaced as a confusing `no_client` 403/empty-state). The
+  // infra classifier is kept to tag the cause; both infra and other DB errors re-throw.
+  let tenant: Awaited<ReturnType<typeof resolveTenant>> | null = null;
+  try {
+    tenant = await resolveTenant({ requestedClient: requestedClientId });
+  } catch (error) {
+    throw new TenantLookupUnavailableError(error);
+  }
   if (!tenant) return null;
   if (!tenant.clientId) return null;
   return {

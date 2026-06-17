@@ -38,6 +38,17 @@ describe('GET /api/v1/deliverables/runs/[runId]', () => {
     expect(json.sectionCount).toBe(12);
   });
 
+  it('returns queued status at 0% with a waiting label (before the worker claims it)', async () => {
+    runRow = { id: 'run-q', status: 'queued', artifactId: null, blockers: [], warnings: [], error: null, progressPct: null, progressLabel: null, updatedAt: 't' };
+    const res = await GET({} as never, params('run-q'));
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as Record<string, unknown>;
+    expect(json.status).toBe('queued');
+    expect(json.progressPct).toBe(0);
+    expect(json.progressLabel).toMatch(/queued/i);
+    expect(json.blobUrl).toBeNull();
+  });
+
   it('returns blocked status with blockers and no blob url', async () => {
     runRow = { id: 'run-2', status: 'blocked', artifactId: null, blockers: ['no source register'], warnings: [], error: 'quality gate blocked export', updatedAt: 't' };
     const res = await GET({} as never, params('run-2'));

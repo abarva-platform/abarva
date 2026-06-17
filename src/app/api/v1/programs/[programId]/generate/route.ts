@@ -7,9 +7,11 @@
 // That path could fabricate and was the one the founder asked to retire.
 //
 // It now delegates to the governed, multi-pass orchestrator (the same engine the
-// Documents tab uses via POST /api/v1/deliverables/generate): create a
-// deliverable_runs row, kick off runDeliverableForTenant in the background, and
-// return { runId, status: 'running' } (202). Callers should poll
+// Documents tab uses via POST /api/v1/deliverables/generate): ENQUEUE a
+// deliverable_runs row (status='queued') carrying the full job payload, and return
+// { runId, status: 'queued' } (202). The durable worker
+// (src/scripts/process-deliverable-queue.ts) claims and runs it, so a recycled web
+// replica can never orphan the generation. Callers should poll
 // GET /api/v1/deliverables/runs/{runId}. No Moves UI invokes this route anymore;
 // it is kept only so any lingering external/programmatic caller lands on the
 // governed path instead of the retired single-pass one.
@@ -25,11 +27,9 @@ import {
   type DeliverableSpec,
 } from "@/lib/programs/deliverable-registry";
 import { orchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
-import { runDeliverableForTenant } from "@/lib/deliverables/orchestrator/generate-service";
 import {
   createDeliverableRun,
-  completeDeliverableRun,
-  updateDeliverableRunProgress,
+  type DeliverableRunJobPayload,
 } from "@/lib/deliverables/orchestrator/runs-repository";
 
 export const runtime = "nodejs";
@@ -98,7 +98,19 @@ export async function POST(
   const initiativeDisplayName = program.name ?? "Strategic Move";
   const decisionContext = `${initiativeDisplayName} — ${phaseLabel}: ${purpose}`;
 
-  // 1 · create the run row (shared state; polls may hit a different replica)
+  // Build the self-contained job payload the durable worker runs the generation from.
+  const jobPayload: DeliverableRunJobPayload = {
+    module: "moves",
+    useCaseArchetype: archetype,
+    deliverableType,
+    decisionContext,
+    clientDisplayName,
+    initiativeDisplayName,
+    sourceArtifactRef: programId,
+  };
+
+  // Enqueue only — no model work in the request, so a recycled web replica cannot orphan
+  // an in-flight generation. The worker claims and runs it; the UI polls the run id.
   const run = await createDeliverableRun({
     clientId: ctx.clientId,
     tenantKey: clientKey,
@@ -106,61 +118,13 @@ export async function POST(
     module: "moves",
     archetype,
     deliverableType,
+    jobPayload,
   });
-
-  // 2 · run the governed multi-pass orchestrator in the background; the HTTP
-  //     response returns immediately. A failed progress write never aborts gen.
-  void (async () => {
-    try {
-      const result = await runDeliverableForTenant({
-        module: "moves",
-        useCaseArchetype: archetype,
-        deliverableType,
-        decisionContext,
-        clientDisplayName,
-        initiativeDisplayName,
-        sourceArtifactRef: programId,
-        tenantClientKey: clientKey,
-        clientId: ctx.clientId,
-        userId: ctx.userId,
-        onProgress: (p) => {
-          void updateDeliverableRunProgress(run.id, {
-            pct: p.pct,
-            label: p.nextLabel ?? p.label,
-            pass: p.pass,
-          }).catch(() => {});
-        },
-      });
-      await completeDeliverableRun(
-        run.id,
-        result.ok
-          ? {
-              status: "succeeded",
-              artifactId: result.artifactId ?? null,
-              sectionCount: result.sectionCount ?? null,
-              retrievedEvidence: result.retrievedEvidence ?? null,
-              warnings: result.warnings ?? [],
-            }
-          : {
-              status: "blocked",
-              blockers: result.blockers ?? [],
-              retrievedEvidence: result.retrievedEvidence ?? null,
-              sectionCount: result.sectionCount ?? null,
-              error: result.blockedReason ?? null,
-            },
-      );
-    } catch (err) {
-      await completeDeliverableRun(run.id, {
-        status: "failed",
-        error: (err instanceof Error ? err.message : String(err)).slice(0, 600),
-      }).catch(() => {});
-    }
-  })();
 
   return Response.json(
     {
       runId: run.id,
-      status: "running",
+      status: "queued",
       deliverableType,
       title: documentTitle,
       phase: targetPhase,

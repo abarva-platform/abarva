@@ -1,11 +1,13 @@
-import { getActiveClientRow } from "@/lib/active-client";
+import { getActiveClientRow, TenantLookupUnavailableError } from "@/lib/active-client";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { getCurrentPerson } from "@/lib/auth/maestro";
 import { ensureOperatorPersonProvisioned } from "@/lib/auth/operator-persona-provisioning";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
 export class TenancyError extends Error {
-  constructor(public readonly code: "unauthenticated" | "no_client") {
+  constructor(
+    public readonly code: "unauthenticated" | "no_client" | "tenant_lookup_unavailable",
+  ) {
     super(code);
   }
 }
@@ -23,7 +25,18 @@ export async function requireTenancy(): Promise<TenancyCtx> {
     user?.personId ??
     (user?.clerkUserId ? `clerk:${user.clerkUserId}` : null);
   if (!userId) throw new TenancyError("unauthenticated");
-  const client = await getActiveClientRow();
+  // Fix B: distinguish a retryable tenant-lookup outage from a real "no client". A DB blip
+  // now throws TenantLookupUnavailableError (instead of collapsing to null), which we map to
+  // a distinct 503 below rather than a misleading `no_client` 403.
+  let client: Awaited<ReturnType<typeof getActiveClientRow>>;
+  try {
+    client = await getActiveClientRow();
+  } catch (error) {
+    if (error instanceof TenantLookupUnavailableError) {
+      throw new TenancyError("tenant_lookup_unavailable");
+    }
+    throw error;
+  }
   if (!client) throw new TenancyError("no_client");
 
   // Operator/demo personas can authenticate via Clerk metadata without a graph
@@ -67,6 +80,14 @@ export function tenancyErrorResponse(err: unknown): Response {
   if (err instanceof TenancyError) {
     if (err.code === "unauthenticated") {
       return Response.json({ error: "unauthenticated" }, { status: 401 });
+    }
+    if (err.code === "tenant_lookup_unavailable") {
+      // Retryable: the tenant lookup hit a DB/infra failure, not a missing client. 503 so
+      // clients back off and retry instead of treating it as a hard "no client" 403.
+      return Response.json(
+        { error: "tenant_lookup_unavailable", detail: "Tenant lookup is temporarily unavailable. Retry shortly." },
+        { status: 503 },
+      );
     }
     return Response.json(
       { error: "no_client", detail: "No active client for this user" },

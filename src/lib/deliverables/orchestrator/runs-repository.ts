@@ -7,8 +7,29 @@
 import 'server-only';
 
 import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
+import { createTxSession, type SqlRunner } from '@/lib/data-plane/read-adapters/azureSession';
 
-export type DeliverableRunStatus = 'running' | 'succeeded' | 'blocked' | 'failed';
+export type DeliverableRunStatus = 'queued' | 'running' | 'succeeded' | 'blocked' | 'failed';
+
+/**
+ * The full job payload persisted on the run row so the worker can reconstruct the
+ * generation input from the row alone (the web replica that enqueued it may be gone).
+ * Mirrors the non-identity fields of GenerateDeliverableServiceInput; clientId/tenantKey/
+ * userId live in dedicated columns.
+ */
+export interface DeliverableRunJobPayload {
+  module: string;
+  useCaseArchetype: string;
+  deliverableType: string;
+  audience?: string[];
+  decisionContext: string;
+  clientDisplayName: string;
+  initiativeDisplayName: string;
+  sourceArtifactRef: string;
+  evidenceQuery?: string;
+  outputFormats?: string[];
+  model?: string;
+}
 
 export interface DeliverableRunRecord {
   id: string;
@@ -29,6 +50,12 @@ export interface DeliverableRunRecord {
   progressPct: number | null;
   /** human-facing label for the pass now in flight (e.g. "Pressure-testing for gaps"). */
   progressLabel: string | null;
+  /** lease bookkeeping: when the current worker last claimed/heartbeat this run. */
+  claimedAt: string | null;
+  /** id of the worker process that holds the lease (hostname+pid+ts). */
+  workerId: string | null;
+  /** self-contained job payload the worker runs the generation from. */
+  jobPayload: DeliverableRunJobPayload | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -40,6 +67,7 @@ export interface CreateRunInput {
   module: string;
   archetype: string;
   deliverableType: string;
+  jobPayload: DeliverableRunJobPayload;
 }
 
 export interface CompleteRunInput {
@@ -53,6 +81,31 @@ export interface CompleteRunInput {
 }
 
 type DbClient = ReturnType<typeof getAzureWriteFluentClient>;
+
+/**
+ * Raw-SQL runner for the atomic claim/sweep statements that the fluent client cannot
+ * express (`FOR UPDATE SKIP LOCKED`, `RETURNING`). Backed by the write-side transaction
+ * session (`createTxSession` — opens one pg connection, wraps the body in BEGIN/COMMIT,
+ * ROLLBACKs on throw). Injectable so the claim/sweep are unit-tested without the data plane.
+ */
+export type RawSqlRunner = <R = Record<string, unknown>>(
+  fn: (run: SqlRunner) => Promise<R>,
+) => Promise<R>;
+
+const defaultRawSql: RawSqlRunner = createTxSession('abarva-deliverable-runs-claim');
+
+function parsePayload(value: unknown): DeliverableRunJobPayload | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value) as DeliverableRunJobPayload;
+    } catch {
+      return null;
+    }
+  }
+  if (typeof value === 'object') return value as DeliverableRunJobPayload;
+  return null;
+}
 
 function rowToRecord(row: Record<string, unknown>): DeliverableRunRecord {
   const arr = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : []);
@@ -73,6 +126,9 @@ function rowToRecord(row: Record<string, unknown>): DeliverableRunRecord {
     error: typeof row.error === 'string' ? row.error : null,
     progressPct: row.progress_pct === null || row.progress_pct === undefined ? null : Number(row.progress_pct),
     progressLabel: typeof row.progress_label === 'string' ? row.progress_label : null,
+    claimedAt: row.claimed_at ? String(row.claimed_at) : null,
+    workerId: typeof row.worker_id === 'string' ? row.worker_id : null,
+    jobPayload: parsePayload(row.job_payload),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   };
@@ -91,12 +147,91 @@ export async function createDeliverableRun(
       module: input.module,
       archetype: input.archetype,
       deliverable_type: input.deliverableType,
-      status: 'running',
+      // Enqueue only — the durable worker (process-deliverable-queue) claims and runs it.
+      // No model work happens in the request, so a recycled web replica cannot orphan it.
+      status: 'queued',
+      job_payload: input.jobPayload,
     })
     .select('*')
     .single();
   if (error) throw new Error(`deliverable_runs insert failed: ${error.message}`);
   return rowToRecord(data as Record<string, unknown>);
+}
+
+/**
+ * Atomically claim the next runnable row for `workerId`. A row is runnable when it is
+ * 'queued' OR it is 'running' but its lease went stale (claimed_at older than the lease
+ * window — the previous worker died mid-run). The claim is a single UPDATE … WHERE id =
+ * (SELECT … FOR UPDATE SKIP LOCKED LIMIT 1) so two concurrent workers can never grab the
+ * same row: SKIP LOCKED makes the loser's sub-select skip the row the winner row-locked,
+ * and it falls through to the next candidate (or null). Returns the claimed row (with
+ * job_payload) or null when the queue is empty.
+ */
+export async function claimNextDeliverableRun(
+  workerId: string,
+  opts: { leaseMinutes?: number; rawSql?: RawSqlRunner } = {},
+): Promise<DeliverableRunRecord | null> {
+  const leaseMinutes = opts.leaseMinutes ?? 5;
+  const rawSql = opts.rawSql ?? defaultRawSql;
+  const sql = `
+    UPDATE deliverable_runs
+       SET status = 'running',
+           claimed_at = now(),
+           worker_id = $1,
+           updated_at = now()
+     WHERE id = (
+       SELECT id FROM deliverable_runs
+        WHERE status = 'queued'
+           OR (status = 'running' AND claimed_at < now() - ($2 || ' minutes')::interval)
+        ORDER BY created_at
+        FOR UPDATE SKIP LOCKED
+        LIMIT 1
+     )
+    RETURNING *`;
+  const rows = await rawSql((run) => run<Record<string, unknown>>(sql, [workerId, String(leaseMinutes)]));
+  const row = Array.isArray(rows) ? rows[0] : undefined;
+  return row ? rowToRecord(row) : null;
+}
+
+/**
+ * Keep a long-but-alive run from being reclaimed: bump its lease (claimed_at) on each
+ * progress update. Scoped to the holding worker so a reclaimer that already took over
+ * cannot have its lease pushed by a zombie. Best-effort — callers should swallow errors.
+ */
+export async function heartbeatDeliverableRun(
+  id: string,
+  workerId: string,
+  db: DbClient = getAzureWriteFluentClient(),
+): Promise<void> {
+  const { error } = await db
+    .from('deliverable_runs')
+    .update({ claimed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('worker_id', workerId);
+  if (error) throw new Error(`deliverable_runs heartbeat failed: ${error.message}`);
+}
+
+/**
+ * Hard deadline reaper: fail any run still queued/running that has not been touched
+ * (updated_at) within `deadlineMinutes`. Distinct from the claim's lease window — this
+ * is the absolute give-up bound so a run can never be stuck non-terminal forever. The
+ * worker runs this once at start of each invocation. Returns the ids it reclaimed.
+ */
+export async function sweepStaleDeliverableRuns(
+  deadlineMinutes = 15,
+  opts: { rawSql?: RawSqlRunner } = {},
+): Promise<string[]> {
+  const rawSql = opts.rawSql ?? defaultRawSql;
+  const sql = `
+    UPDATE deliverable_runs
+       SET status = 'failed',
+           error = 'reclaimed: worker did not complete within deadline',
+           updated_at = now()
+     WHERE status IN ('queued', 'running')
+       AND updated_at < now() - ($1 || ' minutes')::interval
+    RETURNING id`;
+  const rows = await rawSql((run) => run<{ id: string }>(sql, [String(deadlineMinutes)]));
+  return (Array.isArray(rows) ? rows : []).map((r) => String(r.id));
 }
 
 export async function completeDeliverableRun(
@@ -127,18 +262,23 @@ export async function completeDeliverableRun(
  */
 export async function updateDeliverableRunProgress(
   id: string,
-  progress: { pct: number; label: string; pass?: string | null },
+  progress: { pct: number; label: string; pass?: string | null; workerId?: string | null },
   db: DbClient = getAzureWriteFluentClient(),
 ): Promise<void> {
   const pct = Math.min(Math.max(Math.round(progress.pct), 0), 100);
+  const nowIso = new Date().toISOString();
+  const update: Record<string, unknown> = {
+    progress_pct: pct,
+    progress_label: progress.label,
+    progress_pass: progress.pass ?? null,
+    updated_at: nowIso,
+  };
+  // When a worker drives the run, every progress write doubles as a heartbeat so a
+  // long-but-alive generation does not trip the claim lease and get reclaimed.
+  if (progress.workerId) update.claimed_at = nowIso;
   const { error } = await db
     .from('deliverable_runs')
-    .update({
-      progress_pct: pct,
-      progress_label: progress.label,
-      progress_pass: progress.pass ?? null,
-      updated_at: new Date().toISOString(),
-    })
+    .update(update)
     .eq('id', id);
   if (error) throw new Error(`deliverable_runs progress update failed: ${error.message}`);
 }

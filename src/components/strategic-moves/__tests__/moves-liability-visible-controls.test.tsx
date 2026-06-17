@@ -102,7 +102,7 @@ describe("Documents tab routes generation through the orchestrated async path", 
       calls.push({ url, init });
       if (url === ORCHESTRATED) {
         return new Response(
-          JSON.stringify({ runId: "run_test_1", status: "running" }),
+          JSON.stringify({ runId: "run_test_1", status: "queued" }),
           { status: 202, headers: { "content-type": "application/json" } },
         );
       }
