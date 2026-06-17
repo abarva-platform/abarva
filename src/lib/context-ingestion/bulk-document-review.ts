@@ -332,6 +332,7 @@ export async function commitApprovedBulkDocumentReviewArtifact(args: {
     client_id: args.artifact.clientId,
     tenant_key: args.artifact.tenantKey,
     chunk_id: `${uploadId}:chunk-${candidate.chunkIndex + 1}`,
+    source_system: "admin_bulk_context_upload_review",
     source_segment_id: args.artifact.segmentKey,
     source_record_id: candidate.candidateId,
     source_doc: args.artifact.fileName,

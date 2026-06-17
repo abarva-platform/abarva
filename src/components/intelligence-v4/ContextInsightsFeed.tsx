@@ -4,7 +4,7 @@
 //
 // Domain filter chips, hero insight cards, and an insight feed with
 // expand/collapse derivation chain (facts → rule → significance).
-// Stub data from spec; no-fabrication: clearly marked illustrative.
+// No fixture fallback: this tab renders only live context_insights rows.
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -60,120 +60,14 @@ interface InsightsResponse {
   errors: string[];
 }
 
-const STUB_INSIGHTS: InsightData[] = [
-  {
-    id: "ams",
-    headline:
-      "You're about to auto-renew a $4.2M AMS contract with no benchmark",
-    soWhat:
-      "Kyndryl AMS auto-renews Sep 18 (94 days). Industry-context dimension isn't loaded — you'd negotiate blind.",
-    materiality: "high",
-    domain: "Vendor",
-    freshnessStatus: "attention",
-    confidence: "high",
-    ruleId: "renewal-window-no-benchmark",
-    evidence: "Vendor Contracts · row 41",
-    entityName: "Kyndryl",
-    hero: true,
-    facts: [
-      ["renewal_date", "Sep 18, 2026"],
-      ["annual_value", "$4.2M"],
-      ["benchmark_present", "false"],
-    ],
-  },
-  {
-    id: "copilot",
-    headline:
-      "Your Copilot value case is at risk — 31% adoption vs 70% assumed",
-    soWhat:
-      "$0.31M/yr committed; the case assumed 70% seat adoption. Gap concentrated in backend teams.",
-    materiality: "high",
-    domain: "AI Value",
-    freshnessStatus: "attention",
-    confidence: "high",
-    ruleId: "adoption-below-value-case",
-    evidence: "Operating telemetry + AI initiative charter",
-    entityName: "GitHub Copilot",
-    hero: true,
-    facts: [
-      ["active_users_pct", "31%"],
-      ["value_case_assumption", "70%"],
-      ["annual_spend", "$0.31M"],
-    ],
-  },
-  {
-    id: "mttr",
-    headline:
-      "Service quality is sliding — MTTR up 22% QoQ, 3 services out of SLA",
-    soWhat:
-      "Three P2 services breach SLA and the trend is worsening. Candidate for AI-assisted triage.",
-    materiality: "medium",
-    domain: "Service",
-    freshnessStatus: "stale",
-    confidence: "medium",
-    ruleId: "sla-breach-worsening",
-    evidence: "Operating telemetry · Apr 30 (stale)",
-    entityName: "ServiceNow",
-    hero: true,
-    facts: [
-      ["mttr_change_qoq", "+22%"],
-      ["services_breaching", "3"],
-      ["trend", "worsening"],
-    ],
-  },
-  {
-    id: "claim",
-    headline: "A material strategy shift is claimed but not yet trusted",
-    soWhat:
-      "CIO memo names AMS consolidation a top-3 FY27 priority — parsed but review-required, not committed.",
-    materiality: "high",
-    domain: "Strategy",
-    freshnessStatus: "review",
-    confidence: "none",
-    ruleId: "material-claim-unapproved",
-    evidence: "AMS Board Memo (PDF)",
-    entityName: "CIO Office",
-    facts: [
-      ["claim", "AMS = top-3 FY27 priority"],
-      ["lifecycle_state", "review-required"],
-    ],
-  },
-  {
-    id: "conflict",
-    headline: "Two systems disagree on who owns CrewSched",
-    soWhat:
-      "App inventory and org export name different owners (Ops vs IT) for a Tier-1 app.",
-    materiality: "medium",
-    domain: "Data quality",
-    freshnessStatus: "attention",
-    confidence: "high",
-    ruleId: "conflicting-fact",
-    evidence: "App Inventory row 88 ⨯ Org Structure",
-    entityName: "CrewSched",
-    facts: [
-      ["owner (App Inv)", "Ops · M. Reyes"],
-      ["owner (Org)", "IT · D. Kahn"],
-    ],
-  },
-  {
-    id: "gap",
-    headline: "You can't yet judge AI spend vs realised value",
-    soWhat:
-      "6 initiatives report spend, but IT-financials is stale and most lack a value fact.",
-    materiality: "medium",
-    domain: "Cost",
-    freshnessStatus: "stale",
-    confidence: "low",
-    ruleId: "value-coverage-gap",
-    evidence: "AI Initiative Register + (stale) IT financials",
-    entityName: "Contact-Centre AI",
-    facts: [
-      ["initiatives_with_spend", "6"],
-      ["with_value_fact", "1"],
-      ["it_financials", "stale"],
-    ],
-  },
-];
+interface EvaluationReceipt {
+  evaluated: number;
+  fired: number;
+  written: number;
+  errors: string[];
+}
+
+const evaluationRequestedTenants = new Set<string>();
 
 function freshnessColor(status: FreshnessStatus): string {
   const map: Record<FreshnessStatus, string> = {
@@ -607,33 +501,77 @@ interface Props {
 
 export function ContextInsightsFeed({ tenantKey, onSeeTheFacts }: Props) {
   const [domainFilter, setDomainFilter] = useState("All");
-  const [liveInsights, setLiveInsights] = useState<InsightData[] | null>(null);
+  const [liveInsights, setLiveInsights] = useState<InsightData[]>([]);
+  const [status, setStatus] = useState<
+    "loading" | "evaluating" | "ready" | "empty" | "error"
+  >("loading");
+  const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(
-      `/api/intelligence/insights?tenantKey=${encodeURIComponent(tenantKey)}`,
-      {
+
+    async function fetchInsights(): Promise<InsightsResponse> {
+      const response = await fetch(
+        `/api/intelligence/insights?tenantKey=${encodeURIComponent(tenantKey)}`,
+        {
+          signal: controller.signal,
+          cache: "no-store",
+        },
+      );
+      if (!response.ok) throw new Error(`insights ${response.status}`);
+      return response.json() as Promise<InsightsResponse>;
+    }
+
+    async function requestEvaluation(): Promise<EvaluationReceipt> {
+      const response = await fetch("/api/intelligence/insights/evaluate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         signal: controller.signal,
         cache: "no-store",
-      },
-    )
-      .then(async (response) => {
-        if (!response.ok) throw new Error(`insights ${response.status}`);
-        return response.json() as Promise<InsightsResponse>;
-      })
-      .then((payload) => {
-        setLiveInsights(payload.insights.map(mapLiveInsight));
-      })
-      .catch((error) => {
+        body: JSON.stringify({ tenantKey }),
+      });
+      if (!response.ok) throw new Error(`insights/evaluate ${response.status}`);
+      return response.json() as Promise<EvaluationReceipt>;
+    }
+
+    async function load() {
+      setStatus("loading");
+      setErrors([]);
+      try {
+        let payload = await fetchInsights();
+        let mapped = payload.insights.map(mapLiveInsight);
+        let nextErrors = payload.errors ?? [];
+
+        if (
+          mapped.length === 0 &&
+          !evaluationRequestedTenants.has(tenantKey)
+        ) {
+          evaluationRequestedTenants.add(tenantKey);
+          setStatus("evaluating");
+          const receipt = await requestEvaluation();
+          nextErrors = [...nextErrors, ...(receipt.errors ?? [])];
+          payload = await fetchInsights();
+          mapped = payload.insights.map(mapLiveInsight);
+          nextErrors = [...nextErrors, ...(payload.errors ?? [])];
+        }
+
+        setLiveInsights(mapped);
+        setErrors(nextErrors);
+        setStatus(mapped.length > 0 ? "ready" : nextErrors.length ? "error" : "empty");
+      } catch (error) {
         if (controller.signal.aborted) return;
         console.warn("[ContextInsightsFeed] insights fetch failed", error);
-        setLiveInsights(null);
-      });
+        setLiveInsights([]);
+        setErrors([error instanceof Error ? error.message : String(error)]);
+        setStatus("error");
+      }
+    }
+
+    void load();
     return () => controller.abort();
   }, [tenantKey]);
 
-  const insights = liveInsights ?? STUB_INSIGHTS;
+  const insights = liveInsights;
   const domains = useMemo(
     () => ["All", ...Array.from(new Set(insights.map((i) => i.domain)))],
     [insights],
@@ -714,6 +652,30 @@ export function ContextInsightsFeed({ tenantKey, onSeeTheFacts }: Props) {
 
       {/* Insight feed */}
       <div>
+        {(status === "loading" || status === "evaluating") && (
+          <div
+            style={{
+              border: `1px solid ${C.line}`,
+              borderRadius: 8,
+              background: C.panel,
+              padding: "18px 16px",
+              color: C.muted,
+              fontSize: 13,
+              lineHeight: 1.5,
+              marginBottom: 11,
+            }}
+          >
+            <strong style={{ color: C.ink, fontWeight: 500 }}>
+              {status === "evaluating"
+                ? "Evaluating live context."
+                : "Loading live insights."}
+            </strong>
+            <br />
+            {status === "evaluating"
+              ? "Running significance rules against the tenant facts, then refreshing this tab."
+              : "Reading context_insights from the tenant data plane."}
+          </div>
+        )}
         {filtered.map((insight) => (
           <InsightCard
             key={insight.id}
@@ -721,7 +683,7 @@ export function ContextInsightsFeed({ tenantKey, onSeeTheFacts }: Props) {
             onSeeTheFacts={onSeeTheFacts}
           />
         ))}
-        {filtered.length === 0 && (
+        {status !== "loading" && status !== "evaluating" && filtered.length === 0 && (
           <div
             style={{
               border: `1px solid ${C.line}`,
@@ -734,12 +696,14 @@ export function ContextInsightsFeed({ tenantKey, onSeeTheFacts }: Props) {
             }}
           >
             <strong style={{ color: C.ink, fontWeight: 500 }}>
-              Dimensions not yet loaded.
+              {status === "error"
+                ? "Live insights are not available yet."
+                : "No live derived insights yet."}
             </strong>
             <br />
-            Context can&apos;t derive significance yet. Load the next context
-            dimensions from Setup, then ask Sentinel which dimensions to load
-            first.
+            {status === "error"
+              ? `The explorer could not read or evaluate context_insights: ${errors.join("; ")}`
+              : "The evaluator ran, but no significance rule produced an active insight for this tenant yet."}
           </div>
         )}
       </div>

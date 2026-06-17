@@ -15,6 +15,7 @@ const mockGetPeerActivityData = jest.fn();
 const mockGetMyStrategyData = jest.fn();
 const mockGetEnterpriseContextOverviewForTenant = jest.fn();
 const mockListInitiativesForClient = jest.fn();
+const mockIsFeatureEnabled = jest.fn();
 
 jest.mock('@/lib/active-client', () => ({
   hasLockedTenantSession: () => mockHasLockedTenantSession(),
@@ -47,6 +48,14 @@ jest.mock('@/lib/admin/ai-initiatives/queries', () => ({
 
 jest.mock('@/components/intelligence-v3/IntelligenceV3Page', () => ({
   IntelligenceV3Page: 'mock-intelligence-v3-page',
+}));
+
+jest.mock('@/components/intelligence-v4/IntelligenceExplorerPage', () => ({
+  IntelligenceExplorerPage: 'mock-intelligence-explorer-page',
+}));
+
+jest.mock('@/lib/features/is-feature-enabled', () => ({
+  isFeatureEnabled: (ctx: unknown, key: string) => mockIsFeatureEnabled(ctx, key),
 }));
 
 const basePageData = {
@@ -93,6 +102,7 @@ describe('/intelligence tenant corpus route binding', () => {
     mockGetMyStrategyData.mockResolvedValue(null);
     mockListInitiativesForClient.mockResolvedValue([]);
     mockGetEnterpriseContextOverviewForTenant.mockResolvedValue(null);
+    mockIsFeatureEnabled.mockReturnValue(false);
   });
 
   it('passes Meridian seeded corpus data into the Intelligence page', async () => {
@@ -135,5 +145,26 @@ describe('/intelligence tenant corpus route binding', () => {
     expect(props.intelligenceCorpusData?.briefData.tenantName).toBe('SkyHarbor Air');
     expect(props.intelligenceCorpusData?.briefData.bets[0]?.useCase.name).toContain('IROPs Recovery');
     expect(props.intelligenceCorpusData?.mapData.totalUseCases).toBeGreaterThan(0);
+  });
+
+  it('renders exactly one gated explorer shell without fixture count props', async () => {
+    mockIsFeatureEnabled.mockReturnValue(true);
+    mockGetActiveClientRow.mockResolvedValue({
+      id: 'client_skyharbor',
+      key: 'skyharbor',
+      name: 'SkyHarbor Air',
+      industry_code: 'airline',
+    });
+
+    const element = await IntelligencePage({ searchParams: searchParamsFor('skyharbor') });
+
+    expect(element.type).toBe('mock-intelligence-explorer-page');
+    expect(element.props).toMatchObject({
+      tenantKey: 'skyharbor',
+      tenantName: 'SkyHarbor Air',
+    });
+    expect(element.props).not.toHaveProperty('dimensionsLoaded');
+    expect(element.props).not.toHaveProperty('insightCount');
+    expect(mockBuildIntelligenceV3PageData).not.toHaveBeenCalled();
   });
 });

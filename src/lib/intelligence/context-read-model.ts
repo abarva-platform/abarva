@@ -100,6 +100,11 @@ interface SourceRow {
 
 interface CountBySourceRow {
   source_system: string;
+  source_record_id?: string | null;
+}
+
+interface ChunkSourceRow {
+  source_record_id: string | null;
 }
 
 function toNumber(value: number | string | null | undefined): number {
@@ -134,6 +139,28 @@ function countRowsBySourceSystem(
     const value = row.source_system;
     if (!value) continue;
     counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+  return counts;
+}
+
+function countChunksByRecordSourceSystem(
+  chunks: ChunkSourceRow[],
+  records: CountBySourceRow[],
+): Map<string, number> {
+  const sourceByRecordId = new Map<string, string>();
+  for (const row of records) {
+    if (row.source_record_id && row.source_system) {
+      sourceByRecordId.set(row.source_record_id, row.source_system);
+    }
+  }
+
+  const counts = new Map<string, number>();
+  for (const chunk of chunks) {
+    const sourceSystem = chunk.source_record_id
+      ? sourceByRecordId.get(chunk.source_record_id)
+      : null;
+    if (!sourceSystem) continue;
+    counts.set(sourceSystem, (counts.get(sourceSystem) ?? 0) + 1);
   }
   return counts;
 }
@@ -266,17 +293,17 @@ export async function getContextReadModelForTenant(
       errors,
       db
         .from<CountBySourceRow[]>("enterprise_context_records")
-        .select("source_system")
+        .select("source_system,source_record_id")
         .eq("tenant_key", tenantKey)
         .eq("lifecycle_state", "active")
         .limit(5000),
     ),
-    safeQuery<CountBySourceRow>(
-      "enterprise_context_chunks.source_system",
+    safeQuery<ChunkSourceRow>(
+      "enterprise_context_chunks.source_record_id",
       errors,
       db
-        .from<CountBySourceRow[]>("enterprise_context_chunks")
-        .select("source_system")
+        .from<ChunkSourceRow[]>("enterprise_context_chunks")
+        .select("source_record_id")
         .eq("tenant_key", tenantKey)
         .eq("lifecycle_state", "active")
         .limit(5000),
@@ -296,7 +323,10 @@ export async function getContextReadModelForTenant(
   ]);
 
   const recordsBySource = countRowsBySourceSystem(recordSourceRows);
-  const chunksBySource = countRowsBySourceSystem(chunkSourceRows);
+  const chunksBySource = countChunksByRecordSourceSystem(
+    chunkSourceRows,
+    recordSourceRows,
+  );
   const entitySummaries = applicationRows.map(mapApplicationRow);
   const dimensionCoverage = dimensionRows.map((row) => ({
     recordType: row.record_type,

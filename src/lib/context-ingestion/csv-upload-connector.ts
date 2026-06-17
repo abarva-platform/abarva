@@ -97,6 +97,7 @@ export interface PreparedCsvContextChunk {
   client_id: string;
   tenant_key: string;
   chunk_id: string;
+  source_system: string;
   source_segment_id: string;
   source_record_id: string;
   source_doc: string;
@@ -591,6 +592,7 @@ export function prepareCsvUploadForTenantContext(
   const sourceBasis = input.sourceBlob
     ? "azure_blob_admin_upload"
     : "direct_structured_upload";
+  const sourceSystem = `admin_csv_${safeSlug(template.id)}`;
 
   const chunks = parsed.rows.map((row, index): PreparedCsvContextChunk => {
     const rowNumber = index + 2;
@@ -612,6 +614,7 @@ export function prepareCsvUploadForTenantContext(
       client_id: input.clientId,
       tenant_key: input.tenantKey,
       chunk_id: chunkId,
+      source_system: sourceSystem,
       source_segment_id: sourceSegmentId,
       source_record_id: sourceRecordId,
       source_doc: input.fileName,

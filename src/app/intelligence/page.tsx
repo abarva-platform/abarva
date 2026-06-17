@@ -65,8 +65,6 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
       <IntelligenceExplorerPage
         tenantKey={client?.key ?? 'unknown'}
         tenantName={client?.name ?? 'SkyHarbor Air'}
-        dimensionsLoaded={9}
-        insightCount={6}
       />
     );
   }

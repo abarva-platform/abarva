@@ -263,6 +263,7 @@
     "intel:canonical-corpus:backfill:write": "npx tsx src/scripts/intelligence/backfill-canonical-corpus.ts --apply",
     "intel:canonical-corpus:validate": "npx tsx src/scripts/intelligence/validate-canonical-corpus.ts",
     "intel:canonical-corpus:sample-retrieval-qa": "npx tsx src/scripts/intelligence/sample-retrieval-qa.ts",
+    "intel:context-insights:evaluate": "npx tsx src/scripts/intelligence/evaluate-context-insights.ts",
     "integrity:link-crawler": "npx tsx src/scripts/integrity/run-link-crawler.ts",
     "integrity:dom": "npx tsx src/scripts/integrity/check-dom-integrity.ts",
     "integrity:disclaimers": "jest src/__tests__/integration/composite-disclaimer-presence.test.ts src/__tests__/integration/pattern-observation-pipeline.test.ts",
