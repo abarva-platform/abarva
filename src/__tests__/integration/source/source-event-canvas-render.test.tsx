@@ -268,6 +268,7 @@ function render(
     activityEntries?: ActivityEntry[];
     event?: Partial<SourcingEventSummary>;
     workspaceExplorerEnabled?: boolean;
+    simpleFrontEnabled?: boolean;
   } = {},
 ): string {
   return renderToStaticMarkup(
@@ -285,6 +286,7 @@ function render(
       tenantName: "Apex Retail Group",
       vendorResponseReadiness: options.vendorResponseReadiness,
       workspaceExplorerEnabled: options.workspaceExplorerEnabled,
+      simpleFrontEnabled: options.simpleFrontEnabled,
     }),
   );
 }
@@ -751,6 +753,43 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("approve the gate");
     expect(html).not.toContain("source-canvas-gate-blockers");
     expect(html).toContain("lives in the Workspace");
+  });
+
+  it("renders the simple Start here front when source_simple_front is enabled", () => {
+    const html = render({
+      simpleFrontEnabled: true,
+      evidenceStates: [
+        makeEvidence({
+          requirementId: "EVID-SRC-SCOPE-APP-INV",
+          currentState: "Not Requested",
+        }),
+        makeEvidence({
+          id: "e2",
+          requirementId: "EVID-SRC-SCOPE-ORG",
+          currentState: "Not Requested",
+        }),
+        makeEvidence({
+          id: "e3",
+          requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
+          currentState: "Not Requested",
+        }),
+        makeEvidence({
+          id: "e4",
+          requirementId: "EVID-SRC-SCOPE-FY-CONTRACT",
+          currentState: "Not Requested",
+        }),
+      ],
+    });
+
+    expect(html).toContain("source-simple-front");
+    expect(html).toContain("You&#x27;re on Scope");
+    expect(html).toContain("Application inventory");
+    expect(html).toContain("Org chart");
+    expect(html).toContain("L2/L3 ticket history");
+    expect(html).toContain("What else would help?");
+    expect(html).toContain("Write my Scope Memo with Boundaries");
+    expect(html).toContain("Next step: Issue the RFP");
+    expect(html).not.toContain("source-canvas-tab-document");
   });
 
   it("document tab is active by default and hides starter templates until authored", () => {
