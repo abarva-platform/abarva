@@ -14,6 +14,7 @@ import type {
   DeliverableIntelligenceRequest,
   GenerationPass,
   PassPrompt,
+  PlannedSection,
 } from './types';
 import { renderEvidenceForPrompt } from './source-register';
 import type { GovernedEvidenceItem } from './types';
@@ -114,6 +115,14 @@ const PLAN_SCHEMA_HINT = `Return ONLY JSON matching DeliverableGenerationPlan:
   "clientCompletePlan":[{"key","label","owner","placement"}],
   "outputPackagePlan":[{"format","contents"}] }`;
 
+const SECTION_SCHEMA_HINT = `Return ONLY JSON for THIS ONE section:
+{ "key","title","bodyMarkdown","groundingMode","citationsUsed":[n] }`;
+
+const SYNTHESIS_SCHEMA_HINT = `Return ONLY JSON (the document-level executive layer):
+{ "title","subtitle","recommendation","nextActions":[],
+  "tables":[{"key","title","columns":[],"rows":[[]],"targetFormat":"docx"}],
+  "clientCompleteChecklist":[{"key","label","owner","reason":"client_judgment","placeholderText"}] }`;
+
 const RENDER_SCHEMA_HINT = `Return ONLY JSON matching RenderableDeliverable:
 { "title","subtitle","clientDisplayName","initiativeDisplayName",
   "generatedSections":[{"key","title","bodyMarkdown","groundingMode","citationsUsed":[n]}],
@@ -131,6 +140,12 @@ export interface PassInputs {
   draftMarkdown?: string;
   critiqueText?: string;
   revisedDraftMarkdown?: string;
+  /** decomposed: the single section this call drafts. */
+  section?: PlannedSection;
+  /** decomposed: all section titles+intent, so an independent section stays coherent. */
+  outlineSummary?: string;
+  /** decomposed: section summaries fed to the synthesis pass. */
+  sectionDrafts?: { title: string; summary: string }[];
 }
 
 export function buildPassPrompt(pass: GenerationPass, inputs: PassInputs): PassPrompt {
@@ -222,6 +237,40 @@ export function buildPassPrompt(pass: GenerationPass, inputs: PassInputs): PassP
         inputs.revisedDraftMarkdown ?? inputs.draftMarkdown ?? '(document missing)',
       ].join('\n');
       break;
+    case 'section_draft': {
+      const s = inputs.section;
+      const assigned = evidence.length > 0
+        ? evidence.map((e) => `[${e.citationNumber}] ${e.label}: ${e.statement}`).join('\n')
+        : '(no evidence assigned to this section — cite nothing; tag any client fact as a placeholder)';
+      user = [
+        context,
+        ``,
+        `FULL OUTLINE (for coherence only — do NOT write any other section):`,
+        inputs.outlineSummary ?? '',
+        ``,
+        `WRITE ONLY THIS SECTION: "${s?.title ?? ''}"  (groundingMode: ${s?.groundingMode ?? 'expert_template'}).`,
+        `Intent: ${s?.rationale || s?.title || ''}`,
+        `Write board-grade, senior-consulting Markdown for JUST this section (numbered sub-headings, tables/lists as needed). Use ONLY the assigned evidence below, cited [n]. For any client-specific number / $ / % / date you cannot ground, write [CLIENT TO COMPLETE: <what>] or [ASSUMPTION TO VALIDATE: <what>] — NEVER invent. Before returning, verify EVERY figure has a [n], an approved assumption, or a placeholder tag.`,
+        ``,
+        `ASSIGNED EVIDENCE (the only [n] you may cite):`,
+        assigned,
+        ``,
+        SECTION_SCHEMA_HINT,
+      ].join('\n');
+      break;
+    }
+    case 'synthesis': {
+      const summaries = (inputs.sectionDrafts ?? []).map((d) => `## ${d.title}\n${d.summary}`).join('\n\n');
+      user = [
+        `You are assembling the EXECUTIVE LAYER of a ${req.deliverableType.replace(/_/g, ' ')} for ${req.clientDisplayName} from its drafted sections (summaries below). Produce ONLY the document-level structured fields as JSON — do not rewrite the sections.`,
+        `Requirements: "recommendation" is 2–3 sentences stating the decision ask. "nextActions" is 3–6 concrete items. "tables" MUST include a risk/issues/dependencies table (key:"risk_register", title:"Risk / Issues / Dependencies", columns + rows). "clientCompleteChecklist" lists what the client must still provide. Do NOT introduce unsupported client facts — any figure needs a [n], an approved assumption, or a placeholder tag.`,
+        SYNTHESIS_SCHEMA_HINT,
+        ``,
+        `SECTION SUMMARIES:`,
+        summaries,
+      ].join('\n');
+      break;
+    }
   }
 
   return {

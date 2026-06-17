@@ -30,7 +30,9 @@ export type DocumentGenerationPass =
   | "full_draft"
   | "red_team"
   | "board_grade_rewrite"
-  | "render_package";
+  | "render_package"
+  | "section_draft"
+  | "synthesis";
 
 export interface ResolvedDocPolicy {
   tier: DocGenTier;
@@ -153,6 +155,8 @@ const PASS_ENV_KEY: Readonly<Record<DocumentGenerationPass, string>> = {
   red_team: "RED_TEAM",
   board_grade_rewrite: "BOARD_GRADE_REWRITE",
   render_package: "RENDER_PACKAGE",
+  section_draft: "SECTION_DRAFT",
+  synthesis: "SYNTHESIS",
 };
 
 const PASS_TOKEN_DEFAULTS: Readonly<
@@ -166,6 +170,8 @@ const PASS_TOKEN_DEFAULTS: Readonly<
     red_team: 6000,
     board_grade_rewrite: 16000,
     render_package: 16000,
+    section_draft: 12000,
+    synthesis: 6000,
   },
   // Real paid engagement profile. Total high-stakes ceiling: 132k output.
   real_engagement: {
@@ -175,6 +181,8 @@ const PASS_TOKEN_DEFAULTS: Readonly<
     red_team: 12000,
     board_grade_rewrite: 32000,
     render_package: 32000,
+    section_draft: 16000,
+    synthesis: 8000,
   },
   // Final board/executive pack profile. Total high-stakes ceiling: 456k output.
   premium_final: {
@@ -184,6 +192,8 @@ const PASS_TOKEN_DEFAULTS: Readonly<
     red_team: 24000,
     board_grade_rewrite: 128000,
     render_package: 128000,
+    section_draft: 24000,
+    synthesis: 12000,
   },
 };
 

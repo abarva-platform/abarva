@@ -17,12 +17,20 @@ import type {
   PlanValidationResult,
   QualityValidationResult,
   RenderableDeliverable,
+  RenderableSection,
 } from './types';
 import { getArtifactBrief } from './artifact-brief-registry';
 import { buildGenerationProgress, type GenerationProgress } from './progress';
 import { buildPassPrompt } from './prompt-builder';
 import { sanitizeGenerationPlan, validateGenerationPlan } from './generation-plan';
 import { validateDeliverableQuality } from './quality-validator';
+import {
+  mapWithConcurrency,
+  repairUncitedFigures,
+  summariseSection,
+  assembleDeliverable,
+  type SynthesisResult,
+} from './section-generation';
 
 export interface ModelCallResult {
   text: string;
@@ -168,30 +176,58 @@ export async function runDeliverableOrchestration(
   if (!planValidation.ok && enforcePlanGate) {
     return { ok: false, brief, plan, planValidation, passTrace: trace, blockedReason: `plan failed validation: ${planValidation.errors.join('; ')}` };
   }
-  const approvedPlanJson = JSON.stringify(plan);
+  // ── DECOMPOSED GENERATION ──
+  // One bounded-parallel call per planned section → deterministic citation-repair → a
+  // synthesis call for the doc-level structured fields → assemble in code. No monolithic
+  // draft/rewrite/render call, so truncation is structurally impossible and total length
+  // scales with section COUNT, not a single call's output ceiling.
+  const outlineSummary = plan.sectionPlan
+    .map((s, i) => `${i + 1}. ${s.title} — ${s.rationale || ''}`)
+    .join('\n');
+  const concurrency = (() => {
+    const v = Number(process.env.ABARVA_DOCGEN_SECTION_CONCURRENCY);
+    return Number.isFinite(v) && v > 0 ? v : 5;
+  })();
+  const validCitation = new Set(evidence.map((e) => e.citationNumber));
+  const sections: RenderableSection[] = await mapWithConcurrency(
+    plan.sectionPlan,
+    concurrency,
+    async (s) => {
+      const assignedEvidence = evidence.filter((e) => s.evidenceCitations.includes(e.citationNumber));
+      const res = await call(
+        modelCall,
+        buildPassPrompt('section_draft', { req, brief, evidence: assignedEvidence, section: s, outlineSummary }),
+        req,
+        trace,
+        opts.onProgress,
+      );
+      const parsed = extractJson<RenderableSection>(res.text);
+      const body = parsed && parsed.bodyMarkdown ? parsed.bodyMarkdown : res.text;
+      const citationsUsed = (parsed && Array.isArray(parsed.citationsUsed)
+        ? parsed.citationsUsed
+        : s.evidenceCitations
+      ).filter((n) => validCitation.has(n));
+      return {
+        key: s.key,
+        title: (parsed && parsed.title) || s.title,
+        bodyMarkdown: repairUncitedFigures(body),
+        groundingMode: s.groundingMode,
+        citationsUsed,
+      };
+    },
+  );
 
-  // Pass 2 — evidence grounding (refines mapping; output threaded as context only)
-  await call(modelCall, buildPassPrompt('evidence_grounding', { req, brief, evidence, approvedPlanJson }), req, trace, opts.onProgress);
-
-  // Pass 3 — full draft
-  const draftRes = await call(modelCall, buildPassPrompt('full_draft', { req, brief, evidence, approvedPlanJson }), req, trace, opts.onProgress);
-  const draftMarkdown = draftRes.text;
-
-  // Pass 4 — red-team
-  const critiqueRes = await call(modelCall, buildPassPrompt('red_team', { req, brief, evidence, draftMarkdown }), req, trace, opts.onProgress);
-  const critique = critiqueRes.text;
-
-  // Pass 5 — board-grade rewrite
-  const rewriteRes = await call(modelCall, buildPassPrompt('board_grade_rewrite', { req, brief, evidence, draftMarkdown, critiqueText: critique }), req, trace, opts.onProgress);
-  const revisedMarkdown = rewriteRes.text;
-
-  // Pass 6 — render package
-  const renderRes = await call(modelCall, buildPassPrompt('render_package', { req, brief, evidence, revisedDraftMarkdown: revisedMarkdown }), req, trace, opts.onProgress);
-  const document = extractJson<RenderableDeliverable>(renderRes.text);
-  trace[trace.length - 1].parsedOk = !!document;
-  if (!document) {
-    return { ok: false, brief, plan, planValidation, draftMarkdown, critique, revisedMarkdown, passTrace: trace, blockedReason: 'render pass did not return a parseable render package' };
-  }
+  // Synthesis — the doc-level structured fields the quality gate checks (recommendation,
+  // risk/issues/dependencies table, client-to-complete checklist).
+  const synthRes = await call(
+    modelCall,
+    buildPassPrompt('synthesis', { req, brief, evidence, sectionDrafts: sections.map(summariseSection) }),
+    req,
+    trace,
+    opts.onProgress,
+  );
+  const synth = extractJson<SynthesisResult>(synthRes.text) ?? {};
+  const document: RenderableDeliverable = assembleDeliverable(req, sections, synth, evidence);
 
   // Quality gate
   const quality = validateDeliverableQuality(document, req);
@@ -201,9 +237,6 @@ export async function runDeliverableOrchestration(
     brief,
     plan,
     planValidation,
-    draftMarkdown,
-    critique,
-    revisedMarkdown,
     document,
     quality,
     passTrace: trace,
