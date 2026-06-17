@@ -90,10 +90,11 @@ jobs:
           {
             echo "PRIVATE_OPERATOR_IMAGE=$image"
             echo "PRIVATE_OPERATOR_CONTAINER=firstcapital-refresh-load"
+            echo "PRIVATE_REFRESH_JOB=fc-refresh-${GITHUB_RUN_ID}"
           } >> "$GITHUB_ENV"
 
           cat > audit-artifacts/first-capital-refresh-load/private-operator-job.yaml <<YAML
-          name: ${PRIVATE_OPERATOR_JOB}
+          name: fc-refresh-${GITHUB_RUN_ID}
           properties:
             environmentId: ${PRIVATE_OPERATOR_ENVIRONMENT_ID}
             configuration:
@@ -162,16 +163,15 @@ jobs:
         run: |
           set -euo pipefail
 
-          az containerapp job update \
+          az containerapp job create \
             --resource-group "$RESOURCE_GROUP" \
-            --name "$PRIVATE_OPERATOR_JOB" \
             --yaml audit-artifacts/first-capital-refresh-load/private-operator-job.yaml \
             --output none
 
           execution="$(
             az containerapp job start \
               --resource-group "$RESOURCE_GROUP" \
-              --name "$PRIVATE_OPERATOR_JOB" \
+              --name "$PRIVATE_REFRESH_JOB" \
               --query name \
               -o tsv
           )"
@@ -183,7 +183,7 @@ jobs:
             status="$(
               az containerapp job execution show \
                 --resource-group "$RESOURCE_GROUP" \
-                --name "$PRIVATE_OPERATOR_JOB" \
+                --name "$PRIVATE_REFRESH_JOB" \
                 --job-execution-name "$execution" \
                 --query 'properties.status' \
                 -o tsv 2>/dev/null || true
@@ -203,10 +203,10 @@ jobs:
 
           az containerapp job logs show \
             --resource-group "$RESOURCE_GROUP" \
-            --name "$PRIVATE_OPERATOR_JOB" \
+            --name "$PRIVATE_REFRESH_JOB" \
             --execution "$execution" \
             --container "$PRIVATE_OPERATOR_CONTAINER" \
-            --tail 500 \
+            --tail 300 \
             | tee audit-artifacts/first-capital-refresh-load/private-operator.log || true
 
           if [ "${status:-}" != "Succeeded" ]; then
@@ -214,72 +214,22 @@ jobs:
             exit 1
           fi
 
-      - name: Restore private operator to idle
+      - name: Delete private refresh job
         if: always()
         shell: bash
         run: |
           set -euo pipefail
 
-          image="${PRIVATE_OPERATOR_IMAGE:-}"
-          if [ -z "$image" ]; then
-            image="$(
-              az containerapp job show \
-                --resource-group "$RESOURCE_GROUP" \
-                --name "$PRIVATE_OPERATOR_JOB" \
-                --query 'properties.template.containers[0].image' \
-                -o tsv
-            )"
+          if [ -z "${PRIVATE_REFRESH_JOB:-}" ]; then
+            echo "PRIVATE_REFRESH_JOB was not set; nothing to delete."
+            exit 0
           fi
 
-          cat > audit-artifacts/first-capital-refresh-load/private-operator-restore-job.yaml <<YAML
-          name: ${PRIVATE_OPERATOR_JOB}
-          properties:
-            environmentId: ${PRIVATE_OPERATOR_ENVIRONMENT_ID}
-            configuration:
-              triggerType: Manual
-              replicaRetryLimit: 0
-              replicaTimeout: 3600
-              manualTriggerConfig:
-                parallelism: 1
-                replicaCompletionCount: 1
-              registries:
-                - server: ${PRIVATE_OPERATOR_REGISTRY_SERVER}
-                  identity: ${PRIVATE_OPERATOR_REGISTRY_IDENTITY}
-              secrets:
-                - name: ${DATABASE_SECRET_NAME}
-                  keyVaultUrl: ${DATABASE_SECRET_KEYVAULT_URL}
-                  identity: ${PRIVATE_OPERATOR_REGISTRY_IDENTITY}
-                - name: ${OPENAI_SECRET_NAME}
-                  keyVaultUrl: ${OPENAI_SECRET_KEYVAULT_URL}
-                  identity: ${PRIVATE_OPERATOR_REGISTRY_IDENTITY}
-            template:
-              containers:
-                - name: private-operator-idle
-                  image: ${image}
-                  imageType: ContainerImage
-                  command:
-                    - /bin/true
-                  args:
-                    - ''
-                  env:
-                    - name: DATABASE_URL
-                      secretRef: ${DATABASE_SECRET_NAME}
-                    - name: OPENAI_API_KEY
-                      secretRef: ${OPENAI_SECRET_NAME}
-                    - name: NODE_OPTIONS
-                      value: --conditions=react-server
-                  resources:
-                    cpu: 0.5
-                    memory: 1Gi
-            workloadProfileName: Consumption
-          resourceGroup: ${RESOURCE_GROUP}
-          YAML
-
-          az containerapp job update \
+          az containerapp job delete \
             --resource-group "$RESOURCE_GROUP" \
-            --name "$PRIVATE_OPERATOR_JOB" \
-            --yaml audit-artifacts/first-capital-refresh-load/private-operator-restore-job.yaml \
-            --output none
+            --name "$PRIVATE_REFRESH_JOB" \
+            --yes \
+            --output none || true
 
       - name: Upload refresh evidence
         if: always()

@@ -41,6 +41,7 @@ This keeps monthly First Capital structured-data refreshes on the VNet path that
 - PASS: Local release validation: `npm run release:check -- --base origin/main --head HEAD`.
 - FAIL, then fixed: First post-merge workflow dispatch `27698682569` failed before operator start because shell expanded SQL placeholders like `$1` in the generated receipt command and the restore YAML indentation was over-stripped. The follow-up patch escapes the SQL placeholders and preserves YAML indentation.
 - FAIL, then fixed: Second workflow dispatch `27699679607` successfully ran the private loader and insight evaluator, but failed when the optional population audit attempted to write to read-only `/app/docs/build/data-quality` inside the immutable app image. The follow-up patch makes the audit output directory configurable and points the private workflow to `/tmp/abarva-data-quality`.
+- FAIL, then fixed: Third workflow dispatch `27700490190` reported success but started an idle shared-operator execution because the shared `job-abarva-private-operator-eus` template can be restored by concurrent deploy/operator activity between update and start. The follow-up patch creates a unique ephemeral ACA job per workflow run (`fc-refresh-${GITHUB_RUN_ID}`), starts that job, captures logs with Azure's supported `--tail 300`, and deletes the one-off job afterward.
 - NOT RUN: Post-merge validation will dispatch `First Capital refresh load` on `main` with `dry_run=false` and verify the workflow finishes with a `firstcapital_refresh_receipt` log.
 
 ## Rollout Plan
@@ -56,6 +57,7 @@ Revert this workflow commit to restore the previous direct-runner workflow. If a
 - Private VNet proof execution: `job-abarva-private-operator-eus-wz2j1vw`.
 - Failed first post-merge workflow dispatch, before loader execution: GitHub Actions run `27698682569`.
 - Failed second post-merge workflow dispatch, after successful loader execution but before final receipt: GitHub Actions run `27699679607`, ACA execution `job-abarva-private-operator-eus-81feota`.
+- Misleading successful third workflow dispatch, idle shared-operator execution rather than refresh execution: GitHub Actions run `27700490190`, ACA execution `job-abarva-private-operator-eus-oin1n4u`.
 - First Capital live client row observed in the proof run: `id=09d9a267-e89c-4fe1-831f-337a62787ec5`, `tenant_key=first-capital`, `slug=first-capital`, `name=First Capital Financial`.
 - First Capital live counts observed in the proof run: applications=180, ai_initiatives=42, vendor_contracts=70, chunks_by_client=400, chunks_by_tenant=400, active_moves=0, active_source_events=0.
 - Private operator restored to idle after the proof run.
