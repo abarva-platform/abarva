@@ -230,11 +230,15 @@ describe('full multi-pass orchestration (injected stub model)', () => {
     expect(res.quality?.pass).toBe(true);
   });
 
-  it('blocks at the plan gate when the architect returns a fabricating plan', async () => {
+  it('blocks at the plan gate when the architect returns a genuinely thin plan', async () => {
+    // An invalid-citation / ungrounded-section plan is now repaired by
+    // sanitizeGenerationPlan before the gate (covered in generation-plan.test.ts).
+    // The gate must STILL block a plan that is genuinely deficient — here, a plan
+    // with too few sections for the brief — which the sanitizer does not touch.
     const badStub: ModelCaller = async (prompt) => {
       if (prompt.pass === 'architect') {
         const p = goodPlan();
-        p.sectionPlan[1].evidenceCitations = [99];
+        p.sectionPlan = []; // thin: below the brief's required-section count
         return { text: JSON.stringify(p) };
       }
       return { text: '{}' };

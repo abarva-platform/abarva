@@ -12,6 +12,40 @@ import type {
   PlanValidationResult,
 } from './types';
 
+/**
+ * Deterministically repair an architect plan so it satisfies the plan gate
+ * WITHOUT weakening it. The architect (an LLM) persistently invents citation
+ * numbers outside the evidence bundle (e.g. cites [16]/[17]/[27] when only 12
+ * items exist) and marks sections fact-bearing without grounding them — explicit
+ * prompt instructions do not reliably stop it. Both would be broken references /
+ * fabrication, so we drop every citation not present in the bundle and downgrade
+ * any now-ungrounded governed_facts/mixed section to `expert_template` (standard
+ * framing, no client facts). `validateGenerationPlan` still runs afterward and
+ * still catches genuinely thin or unhandled plans — this only removes the
+ * LLM's invalid-citation / ungrounded-section noise that would otherwise hard-block
+ * an entire run for a defect the draft passes would never have honoured anyway.
+ */
+export function sanitizeGenerationPlan(
+  plan: DeliverableGenerationPlan,
+  req: DeliverableIntelligenceRequest,
+): DeliverableGenerationPlan {
+  const valid = new Set(req.governedEvidenceBundle.map((e) => e.citationNumber));
+  for (const s of plan.sectionPlan ?? []) {
+    s.evidenceCitations = (s.evidenceCitations ?? []).filter((n) => valid.has(n));
+    const grounded =
+      s.evidenceCitations.length > 0 ||
+      (s.placeholders ?? []).length > 0 ||
+      (s.assumptionsUsed ?? []).length > 0;
+    if ((s.groundingMode === 'governed_facts' || s.groundingMode === 'mixed') && !grounded) {
+      s.groundingMode = 'expert_template';
+    }
+  }
+  if (Array.isArray(plan.evidenceMapping)) {
+    plan.evidenceMapping = plan.evidenceMapping.filter((m) => valid.has(m.citationNumber));
+  }
+  return plan;
+}
+
 export function validateGenerationPlan(
   plan: DeliverableGenerationPlan,
   req: DeliverableIntelligenceRequest,
