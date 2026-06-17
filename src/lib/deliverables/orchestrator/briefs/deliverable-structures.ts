@@ -74,8 +74,8 @@ const MOVES_CHARTER: DeliverableStructure = {
     ),
     s(
       "sponsor_commitment",
-      "Sponsor & Stakeholder Commitment",
-      "Named sponsor, role, decision rights, review cadence, documented commitment evidence; key decision-makers, contributors, and blockers named as roles with decision rights.",
+      "Sponsor Commitment & Change Readiness",
+      "Named sponsor, role, decision rights, review cadence, commitment evidence; key decision-makers, contributors, and blockers as named roles. State change readiness explicitly: the sponsor's commitment is not only to FUND the technology but to DRIVE the business-process change and OWN the measurement the outcome depends on. Where the client is not yet willing to change a process, record it as a readiness risk, not a gap to paper over.",
       "mixed",
     ),
     s(
@@ -97,9 +97,9 @@ const MOVES_CHARTER: DeliverableStructure = {
       "mixed",
     ),
     s(
-      "value_hypothesis",
-      "Value Hypothesis & Success Metrics",
-      "Primary KPI with its current baseline and a preliminary value range $M–$M; label every figure PRELIMINARY_ESTIMATE with its stated assumption.",
+      "success_criteria",
+      "Success Criteria, Value Hypothesis & Measurement",
+      "Define success as a four-part commitment (see SUCCESS-CRITERIA-STANDARD): (1) BUSINESS OUTCOMES — the business result the move must produce, stated as a business change, not a feature/technology; (2) KEY METRICS — the KPIs that prove each outcome, each with a current baseline and a target (label every figure PRELIMINARY_ESTIMATE with its assumption, or cite it); (3) MEASUREMENT AFTER DEPLOYMENT — how each metric will actually be measured post-go-live: data source/instrumentation, owner, cadence, and the enablement needed to capture it (if it cannot be measured with what exists today, that enablement is a scope item — surface it, mark [CLIENT TO COMPLETE], never assume it); (4) BUSINESS-PROCESS CHANGE — the specific process/operating-model changes the client commits to make to enable the outcome (technology alone rarely delivers it). Include the preliminary value range $M–$M.",
       "mixed",
     ),
     s(
@@ -134,7 +134,7 @@ const MOVES_CHARTER: DeliverableStructure = {
     "problem_opportunity",
     "objectives",
     "scope",
-    "value_hypothesis",
+    "success_criteria",
     "governance_gates",
     "kill_criterion",
     "recommendation",
@@ -316,7 +316,7 @@ const MOVES_DISCOVERY: DeliverableStructure = {
     s(
       "readiness",
       "Change & Adoption Readiness",
-      "Readiness assessment.",
+      "Assess the client's ability AND willingness to make the business-process changes the outcome needs, and to stand up the measurement (per the charter's success criteria). Validate the metric baselines and whether each is measurable today. A high-value outcome with no process-change commitment is not ready — say so.",
       "mixed",
     ),
     s("implications", "Implications", "What it means for the move.", "mixed"),
@@ -447,8 +447,8 @@ const MOVES_OPERATING_MODEL: DeliverableStructure = {
     ),
     s(
       "change",
-      "Change, Adoption & Training",
-      "How work changes and how people adopt.",
+      "Business-Process Change, Adoption & Training",
+      "The concrete to-be business-process / operating-model changes that ENABLE each success-criteria outcome (which process change drives which outcome/metric), how people adopt them, and the enablement to capture the metrics post-deployment. This is the people-and-process lever the outcome depends on — make it specific, not a generic change-management paragraph.",
       "mixed",
     ),
     s(
@@ -568,8 +568,8 @@ const MOVES_VALUE: DeliverableStructure = {
     ),
     s(
       "measurement_model",
-      "Measurement Model",
-      "How value will be measured and attributed.",
+      "Measurement Model & Enablement",
+      "The operational post-deployment measurement plan for each success metric: data source/instrumentation, accountable owner, cadence, attribution method, and the enablement required to capture it. Tie each metric back to its charter outcome and the business-process-change adoption signal that drives it. Where a metric is not yet measurable, the enablement to measure it is a named action, not an assumption.",
       "mixed",
     ),
     s(
