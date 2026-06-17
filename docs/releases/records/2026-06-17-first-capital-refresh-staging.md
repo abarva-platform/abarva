@@ -38,6 +38,7 @@ This is not a completed live data load. The local packet is ready, preflighted, 
 - Staging builder: `scripts/staging/build-first-capital-load-staging.mjs`.
 - Static data audit: `scripts/audit/enterprise-synthetic-data-depth-audit.mjs`.
 - Live population probe: `scripts/audit/live-tenant-population-audit.mjs`.
+- Guarded private-network load workflow: `.github/workflows/first-capital-refresh-load.yml`; this is a loader-backed ingestion path, not a seed side-load.
 
 ## QA / Validation
 
@@ -57,14 +58,12 @@ This is not a completed live data load. The local packet is ready, preflighted, 
 ## Rollout Plan
 
 1. Merge this candidate branch so the staged packet and operator scripts are available to the deployment environment.
-2. Use the Admin Data Loader or a loader-backed private job path; no side-load is authorized for live pilot data.
-3. Record the load in the ingestion ledger (`data_ingestion_runs` / `pilot_ingestion`) with the First Capital batch id before treating the data as committed.
-4. From the private/VNet-capable data-plane job context, stage First Capital originals to Azure Blob.
-5. Run `TENANT_KEY=firstcapital npx tsx scripts/seed/load-tenant-substrate.ts`.
-6. Commit the AI Control Tower monthly refresh rows into `ai_control_*` tables.
-7. Refresh embeddings/search.
-8. Run `TENANT_KEY=first-capital npm run intel:context-insights:evaluate -- --tenant=first-capital`.
-9. Verify live counts, `/api/intelligence/insights`, Tower Evidence lens, and signed-in Atlas retrieval.
+2. Deploy `main` through the ACA main deploy workflow.
+3. Run the guarded `First Capital refresh load` workflow from `main` with `tenant_key=first-capital`, `dry_run=false`, `require_live_embeddings=true`, `evaluate_insights=true`, and `run_population_audit=true`; this is the approved loader-backed private job path until the Admin Data Loader supports the full substrate refresh end to end.
+4. Record the load in the ingestion ledger (`data_ingestion_runs` / `pilot_ingestion`) with the First Capital batch id before treating the data as committed.
+5. Use the workflow evidence artifact to confirm source files, chunks, applications, initiatives, vendors, context insights, and live tenant population counts.
+6. Commit the AI Control Tower monthly refresh rows into `ai_control_*` tables through the governed parser/API path once that parser is verified.
+7. Verify `/api/intelligence/insights`, Tower Evidence lens, and signed-in Atlas retrieval.
 
 ## Rollback Plan
 
@@ -79,6 +78,6 @@ Before live load, rollback is removing the staged branch/files. After live load,
 
 ## Known Gaps
 
-- Live Azure/Postgres load was not completed from this shell because private DNS is unavailable.
+- Live Azure/Postgres load was not completed from this shell because private DNS is unavailable; no side-load is authorized or claimed.
 - Azure Blob staging, parser commit receipts, embeddings/search refresh, retrieval proof, and insight evaluator proof are pending private-network execution.
 - Public-company annual/quarterly/investor source evidence and deeper infrastructure topology remain marked as follow-up evidence gaps before board-grade external claims.
