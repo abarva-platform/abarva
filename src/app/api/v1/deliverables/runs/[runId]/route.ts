@@ -26,7 +26,7 @@ export async function GET(_req: NextRequest, ctxParam: { params: Promise<{ runId
 
     return Response.json({
       runId: run.id,
-      status: run.status, // 'running' | 'succeeded' | 'blocked' | 'failed'
+      status: run.status, // 'queued' | 'running' | 'succeeded' | 'blocked' | 'failed'
       artifactId: run.artifactId,
       blobUrl: run.artifactId ? `/api/v1/artifacts/${run.artifactId}` : null,
       sectionCount: run.sectionCount,
@@ -34,9 +34,10 @@ export async function GET(_req: NextRequest, ctxParam: { params: Promise<{ runId
       blockers: run.blockers,
       warnings: run.warnings,
       error: run.error,
-      // Live progress band: 0..100 + the pass now in flight.
-      progressPct: run.status === 'running' ? (run.progressPct ?? 0) : 100,
-      progressLabel: run.progressLabel,
+      // Live progress band: 0..100 + the pass now in flight. Queued = waiting for the
+      // worker to claim it (0%); running = live percent; terminal = 100%.
+      progressPct: run.status === 'queued' ? 0 : run.status === 'running' ? (run.progressPct ?? 0) : 100,
+      progressLabel: run.status === 'queued' ? 'Queued — waiting for the generation worker' : run.progressLabel,
       updatedAt: run.updatedAt,
     });
   } catch (err) {

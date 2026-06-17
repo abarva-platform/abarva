@@ -22,7 +22,7 @@ export interface GenerateDeliverableButtonProps {
 type Phase = 'idle' | 'running' | 'succeeded' | 'blocked' | 'failed';
 
 interface RunStatus {
-  status: 'running' | 'succeeded' | 'blocked' | 'failed';
+  status: 'queued' | 'running' | 'succeeded' | 'blocked' | 'failed';
   artifactId?: string | null;
   sectionCount?: number | null;
   retrievedEvidence?: number | null;
@@ -65,7 +65,10 @@ export function GenerateDeliverableButton(props: GenerateDeliverableButtonProps)
         if (!res.ok && res.status !== 200) {
           throw new Error(data.error ?? `HTTP ${res.status}`);
         }
-        if (data.status === 'running') {
+        if (data.status === 'running' || data.status === 'queued') {
+          // 'queued' = enqueued, waiting for the durable worker to claim it; 'running' =
+          // the worker is generating. Both are non-terminal — keep polling and surface
+          // the live progress band (queued shows 0% with a "waiting" label).
           setRun(data); // surface live progress (pct/label) while still running
           if (Date.now() - (timers.current.start ?? 0) > MAX_MS) {
             clearTimers();

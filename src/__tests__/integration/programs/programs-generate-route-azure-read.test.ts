@@ -1,10 +1,11 @@
 // POST /api/v1/programs/[programId]/generate — orchestrated-delegation contract.
 //
 // The single-pass path (streamAgentTurn → draftModuleDeliverable → 200 inline doc)
-// is RETIRED. This route now delegates to the governed multi-pass orchestrator:
-// create a deliverable_runs row, kick runDeliverableForTenant in the background,
-// and return 202 { runId, status:'running' }. These tests assert that contract and
-// that the retired single-pass collaborators are never imported/invoked.
+// is RETIRED. This route now ENQUEUES a deliverable_runs row (status='queued') carrying
+// the full job payload and returns 202 { runId, status:'queued' }. It does NO model work
+// in the request — the durable worker (process-deliverable-queue) claims and runs it, so
+// a recycled web replica cannot orphan the generation. These tests assert that contract
+// and that neither the retired single-pass path nor the generation engine runs inline.
 
 const requireTenancy = jest.fn();
 const tenancyErrorResponse = jest.fn();
@@ -13,8 +14,6 @@ const getActiveClientRow = jest.fn();
 const getDeliverableSpec = jest.fn();
 const runDeliverableForTenant = jest.fn();
 const createDeliverableRun = jest.fn();
-const completeDeliverableRun = jest.fn();
-const updateDeliverableRunProgress = jest.fn();
 
 jest.mock('@/app/api/v1/programs/_auth', () => ({
   requireTenancy,
@@ -39,8 +38,6 @@ jest.mock('@/lib/deliverables/orchestrator/generate-service', () => ({
 
 jest.mock('@/lib/deliverables/orchestrator/runs-repository', () => ({
   createDeliverableRun,
-  completeDeliverableRun,
-  updateDeliverableRunProgress,
 }));
 
 function makeRequest(body: unknown): Request {
@@ -87,18 +84,9 @@ describe('POST /api/v1/programs/[programId]/generate delegates to the orchestrat
         : undefined,
     );
     createDeliverableRun.mockResolvedValue({ id: 'run_1' });
-    runDeliverableForTenant.mockResolvedValue({
-      ok: true,
-      artifactId: 'art_1',
-      sectionCount: 7,
-      retrievedEvidence: 3,
-      warnings: [],
-    });
-    completeDeliverableRun.mockResolvedValue(undefined);
-    updateDeliverableRunProgress.mockResolvedValue(undefined);
   });
 
-  it('creates a run, returns 202 { runId, status:"running" }, and never calls the single-pass save path', async () => {
+  it('enqueues a run, returns 202 { runId, status:"queued" } with the job payload, and does NO model work', async () => {
     const { POST } = await import('@/app/api/v1/programs/[programId]/generate/route');
     const res = await POST(makeRequest({ phase: 2, deliverableTypeKey: 'discovery_report' }), {
       params: Promise.resolve({ programId: 'program_1' }),
@@ -107,12 +95,13 @@ describe('POST /api/v1/programs/[programId]/generate delegates to the orchestrat
     expect(res.status).toBe(202);
     await expect(res.json()).resolves.toMatchObject({
       runId: 'run_1',
-      status: 'running',
+      status: 'queued',
       deliverableType: 'discovery_report',
       phase: 2,
     });
 
-    // The run row is created with the moves module + the move's archetype.
+    // The run row is enqueued with the moves module, the move's archetype, AND the full
+    // self-contained job payload the durable worker reconstructs the generation input from.
     expect(createDeliverableRun).toHaveBeenCalledWith(
       expect.objectContaining({
         clientId: 'client_1',
@@ -121,28 +110,20 @@ describe('POST /api/v1/programs/[programId]/generate delegates to the orchestrat
         module: 'moves',
         archetype: 'operational_optimization',
         deliverableType: 'discovery_report',
+        jobPayload: expect.objectContaining({
+          module: 'moves',
+          useCaseArchetype: 'operational_optimization',
+          deliverableType: 'discovery_report',
+          sourceArtifactRef: 'program_1',
+          clientDisplayName: 'Apex Retail',
+          initiativeDisplayName: 'Owned Brand Margin Recovery',
+        }),
       }),
     );
 
-    // The background generation runs through the governed orchestrator service.
+    // The request must not run the generation engine — that is the worker's job.
     await flushMicrotasks();
-    expect(runDeliverableForTenant).toHaveBeenCalledWith(
-      expect.objectContaining({
-        module: 'moves',
-        useCaseArchetype: 'operational_optimization',
-        deliverableType: 'discovery_report',
-        sourceArtifactRef: 'program_1',
-        clientDisplayName: 'Apex Retail',
-        initiativeDisplayName: 'Owned Brand Margin Recovery',
-        tenantClientKey: 'apex-retail',
-        clientId: 'client_1',
-        userId: 'user_1',
-      }),
-    );
-    expect(completeDeliverableRun).toHaveBeenCalledWith(
-      'run_1',
-      expect.objectContaining({ status: 'succeeded', artifactId: 'art_1' }),
-    );
+    expect(runDeliverableForTenant).not.toHaveBeenCalled();
   });
 
   it('maps an unknown / legacy registry key onto a valid orchestrator deliverable type', async () => {
@@ -157,9 +138,10 @@ describe('POST /api/v1/programs/[programId]/generate delegates to the orchestrat
       runId: 'run_1',
       deliverableType: 'p2_package',
     });
-    await flushMicrotasks();
-    expect(runDeliverableForTenant).toHaveBeenCalledWith(
-      expect.objectContaining({ deliverableType: 'p2_package', module: 'moves' }),
+    expect(createDeliverableRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jobPayload: expect.objectContaining({ deliverableType: 'p2_package', module: 'moves' }),
+      }),
     );
   });
 
