@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`completed`
 
 ## Plain-English Summary
 
@@ -45,7 +45,7 @@ This keeps monthly First Capital structured-data refreshes on the VNet path that
 - FAIL, then fixed: Fourth workflow dispatch `27701532924` failed before creating the ephemeral ACA job because Azure CLI still requires `--name` with `az containerapp job create --yaml`. The follow-up patch passes `--name "$PRIVATE_REFRESH_JOB"` explicitly.
 - FAIL, then fixed: Fifth workflow dispatch `27702192515` failed while provisioning the ephemeral ACA job because newly created jobs need the user-assigned identity attached at the job root. The follow-up patch adds the same `UserAssigned` identity block used by the existing private operator.
 - FAIL, then fixed: Sixth workflow dispatch `27702808240` successfully ran the loader, embedded 400/400 chunks, inserted 180 applications, inserted 42 initiatives, inserted 70 vendor contracts, and wrote 27 context insights, but failed when the existing app image ran an older population-audit script that still wrote to read-only `/app/docs/build/data-quality`. The follow-up patch replaces that optional image-baked script call with an inline Postgres population audit that writes under `/tmp` and prints a `firstcapital_population_audit` event into the captured ACA log.
-- NOT RUN: Post-merge validation will dispatch `First Capital refresh load` on `main` with `dry_run=false` and verify the workflow finishes with a `firstcapital_refresh_receipt` log.
+- PASS: Final post-merge workflow dispatch `27703561448` completed successfully on `main` with `dry_run=false`, `require_live_embeddings=true`, `evaluate_insights=true`, and `run_population_audit=true`. The private ACA execution `fc-refresh-27703561448-df8stfx` succeeded, the ephemeral job was deleted, and the evidence artifact uploaded.
 
 ## Rollout Plan
 
@@ -64,6 +64,10 @@ Revert this workflow commit to restore the previous direct-runner workflow. If a
 - Failed fourth workflow dispatch, before ephemeral job creation: GitHub Actions run `27701532924`.
 - Failed fifth workflow dispatch, during ephemeral job provisioning: GitHub Actions run `27702192515`.
 - Failed sixth workflow dispatch, after successful loader execution but before final workflow success: GitHub Actions run `27702808240`.
+- Successful final workflow dispatch: GitHub Actions run `27703561448`, ACA execution `fc-refresh-27703561448-df8stfx`, evidence artifact `first-capital-refresh-load`.
+- Final loader counts: chunks upserted=400, embedded=400, failed=0; applications inserted=180; initiatives inserted=42; vendor contracts inserted=70.
+- Final insight evaluation counts: factsActive=6072, dimensionsLoaded=7, evaluated=6, fired=5, written=27, errors=[].
+- Final population audit counts: applications=180, ai_initiatives=42, vendor_contracts=70, context_chunks_by_client=400, context_chunks_by_tenant=400, context_insights_active=15, active_moves=0, active_source_events=0.
 - First Capital live client row observed in the proof run: `id=09d9a267-e89c-4fe1-831f-337a62787ec5`, `tenant_key=first-capital`, `slug=first-capital`, `name=First Capital Financial`.
 - First Capital live counts observed in the proof run: applications=180, ai_initiatives=42, vendor_contracts=70, chunks_by_client=400, chunks_by_tenant=400, active_moves=0, active_source_events=0.
 - Private operator restored to idle after the proof run.
@@ -77,10 +81,10 @@ Revert this workflow commit to restore the previous direct-runner workflow. If a
 - Queue/private worker handoff happened: GitHub now hands off to the private ACA operator job.
 - Parser extracted text/tables/facts with source citations: Not changed by this workflow patch.
 - Review/approval queue received evidence: Not changed by this workflow patch.
-- Context rows/facts/chunks committed to the client data plane: The proof run verified existing committed First Capital counts; the post-merge workflow dispatch will refresh and prove the same state.
-- Embeddings/search index refreshed: The workflow enforces a live embedding credential check, but the proof run did not refresh embeddings.
+- Context rows/facts/chunks committed to the client data plane: Final workflow dispatch `27703561448` refreshed and proved committed First Capital counts in Azure/Postgres.
+- Embeddings/search index refreshed: Final workflow dispatch `27703561448` embedded 400/400 chunks with 0 failures.
 - Live signed-in retrieval or answer QA proved context is usable: Still not complete in this patch.
 
 ## Known Gaps
 
-The workflow still needs to be dispatched on `main` after merge to produce a durable GitHub Actions artifact for the refreshed First Capital run. Signed-in retrieval QA for First Capital remains a separate required proof before calling Intelligence/Tower fully demo-proven.
+The workflow dispatch and durable GitHub Actions artifact are complete for the refreshed First Capital run. Signed-in retrieval QA for First Capital remains a separate required proof before calling Intelligence/Tower fully demo-proven.
