@@ -557,6 +557,7 @@ function composeBrief(
     optionalSections: sections
       .map((s) => s.key)
       .filter((k) => !structure.requiredSectionKeys.includes(k)),
+    forbiddenSectionTopics: structure.forbiddenSectionTopics,
     expectedExhibits: pack?.exhibits ?? [],
     expectedTables: pack?.tables ?? [
       {
