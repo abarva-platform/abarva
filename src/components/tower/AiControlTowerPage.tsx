@@ -781,7 +781,7 @@ function LensCanvas({
               />
               <DetailField
                 label="Scope"
-                value={`${selectedInitiative.primaryCategoryName} · ${selectedInitiative.primaryGoalName}`}
+                value={`${selectedInitiative.primaryCategoryName} · ${outcomeMetricLabel(selectedInitiative)}`}
               />
               <DetailField
                 label="Promised value"
