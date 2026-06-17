@@ -96,7 +96,7 @@ describe('architect prompt — plan validity rules (regression 2026-06-17)', () 
     expect(prompt.user).toContain('[1], [2], [3], [4], [5]');
     expect(prompt.user).toMatch(/NEVER invent or cite any number outside this set/i);
     expect(prompt.user).toMatch(/governed_facts.*mixed.*at least one of: evidenceCitations/i);
-    expect(prompt.user).toMatch(/expert_generic/);
+    expect(prompt.user).toMatch(/expert_template/);
   });
 
   it('tells the architect not to cite anything when there is no governed evidence', () => {

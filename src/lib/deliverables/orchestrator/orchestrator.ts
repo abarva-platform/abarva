@@ -21,7 +21,7 @@ import type {
 import { getArtifactBrief } from './artifact-brief-registry';
 import { buildGenerationProgress, type GenerationProgress } from './progress';
 import { buildPassPrompt } from './prompt-builder';
-import { validateGenerationPlan } from './generation-plan';
+import { sanitizeGenerationPlan, validateGenerationPlan } from './generation-plan';
 import { validateDeliverableQuality } from './quality-validator';
 
 export interface ModelCallResult {
@@ -160,6 +160,10 @@ export async function runDeliverableOrchestration(
   if (!plan) {
     return { ok: false, brief, passTrace: trace, blockedReason: 'architect pass did not return a parseable generation plan' };
   }
+  // Deterministically repair the LLM's invalid citations / ungrounded sections
+  // before the gate — the architect won't reliably self-constrain (it cites
+  // numbers outside the bundle), and those would be broken references anyway.
+  sanitizeGenerationPlan(plan, req);
   const planValidation = validateGenerationPlan(plan, req, brief);
   if (!planValidation.ok && enforcePlanGate) {
     return { ok: false, brief, plan, planValidation, passTrace: trace, blockedReason: `plan failed validation: ${planValidation.errors.join('; ')}` };

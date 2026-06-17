@@ -157,8 +157,8 @@ export function buildPassPrompt(pass: GenerationPass, inputs: PassInputs): PassP
         `PLAN VALIDITY RULES — your plan is AUTO-REJECTED (and the whole job fails) if you break any of these, so follow them exactly:`,
         `1. evidenceCitations may use ONLY these citation numbers, which are the ones present in AVAILABLE GOVERNED EVIDENCE: ${citationList}. NEVER invent or cite any number outside this set.`,
         `2. For EVERY section whose groundingMode is "governed_facts" or "mixed", you MUST populate at least one of: evidenceCitations (a valid number above), assumptionsUsed, or placeholders. A governed_facts/mixed section with all three empty would fabricate client facts and is rejected.`,
-        `3. If a section carries no client-specific facts (pure expert framing, methodology, narrative, or standard boilerplate), set its groundingMode to "expert_generic" — those need no citations, assumptions, or placeholders.`,
-        `4. Prefer "expert_generic" for any section you cannot ground with the evidence/assumptions/placeholders above, rather than marking it governed_facts/mixed and leaving it ungrounded.`,
+        `3. If a section carries no client-specific facts (pure expert framing, methodology, narrative, or standard boilerplate), set its groundingMode to "expert_template" — those need no citations, assumptions, or placeholders.`,
+        `4. Prefer "expert_template" for any section you cannot ground with the evidence/assumptions/placeholders above, rather than marking it governed_facts/mixed and leaving it ungrounded.`,
       ].join('\n');
       user = [
         context,
