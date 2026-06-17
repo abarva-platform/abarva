@@ -13,9 +13,11 @@ jest.mock('@/lib/integrations/ai-egress', () => ({
     const pass = String((args.workflow as string).split(':').pop());
     const text = pass === 'architect'
       ? JSON.stringify(goodPlan())
-      : pass === 'render_package'
-        ? JSON.stringify(goodDocument())
-        : 'word '.repeat(300);
+      : pass === 'section_draft'
+        ? JSON.stringify({ key: 'sec', title: 'Section', bodyMarkdown: '## Detail\nWe recommend proceeding. Baseline supported by governed evidence [1]. ' + 'This section is complete and grounded. '.repeat(40), groundingMode: 'mixed', citationsUsed: [1] })
+        : pass === 'synthesis'
+          ? JSON.stringify({ title: 'SkyHarbor Air — AMS RFP', recommendation: 'We recommend issuing the RFP to the shortlisted vendors given the validated scope and the costed range.', nextActions: ['Issue RFP', 'Brief vendors', 'Open evaluation'], tables: [{ key: 'risk_register', title: 'Risk / Issues / Dependencies', columns: ['Risk', 'Owner'], rows: [['Transition risk', 'PMO']] }], clientCompleteChecklist: [] })
+          : 'word '.repeat(300);
     return {
       ok: true,
       auditId: 'audit-1',
@@ -72,14 +74,18 @@ describe('createAuditedModelCaller', () => {
 });
 
 describe('generateDeliverable — full live-shaped loop (mocked egress)', () => {
-  it('runs all six passes through audited egress and passes the gates', async () => {
+  it('runs architect + per-section + synthesis through audited egress and passes the gates', async () => {
     const req = amsRfpRequest();
     const result = await generateDeliverable(req, { tenantId: 'skyharbor-air', userId: 'u1' });
 
-    expect(result.passTrace.map((t) => t.pass)).toEqual(GENERATION_PASSES);
-    // one audited egress call per pass, each tagged distinctly
-    expect(auditedCalls).toHaveLength(6);
-    expect(auditedCalls.map((c) => (c.workflow as string).split(':').pop())).toEqual(GENERATION_PASSES);
+    const passes = result.passTrace.map((t) => t.pass);
+    const sectionCount = goodPlan().sectionPlan.length;
+    expect(passes[0]).toBe('architect');
+    expect(passes[passes.length - 1]).toBe('synthesis');
+    expect(passes.filter((p) => p === 'section_draft')).toHaveLength(sectionCount);
+    // one audited egress call per pass: architect + N sections + synthesis
+    expect(auditedCalls).toHaveLength(2 + sectionCount);
+    expect(auditedCalls.map((c) => (c.workflow as string).split(':').pop())).toEqual(passes);
     expect(result.ok).toBe(true);
     expect(result.document?.title).toMatch(/SkyHarbor/);
     expect(result.quality?.pass).toBe(true);

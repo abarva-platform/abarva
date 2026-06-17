@@ -253,7 +253,9 @@ export type GenerationPass =
   | 'full_draft' // Pass 3 — write the full document
   | 'red_team' // Pass 4 — critique as a senior partner
   | 'board_grade_rewrite' // Pass 5 — revise to board-grade
-  | 'render_package'; // Pass 6 — structure for renderers
+  | 'render_package' // Pass 6 — structure for renderers
+  | 'section_draft' // decomposed: write ONE planned section (bounded-parallel fan-out)
+  | 'synthesis'; // decomposed: the doc-level structured fields (recommendation, tables, checklist)
 
 export interface PassPrompt {
   pass: GenerationPass;

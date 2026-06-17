@@ -209,21 +209,24 @@ describe('extractJson', () => {
 describe('full multi-pass orchestration (injected stub model)', () => {
   const req = amsRfpRequest();
 
-  // a stub that returns appropriate output per pass
+  // Decomposed stub: architect → per-section drafts → synthesis. Each section cites [1]
+  // (in the bundle) and says "we recommend" so the assembled doc clears the gate's
+  // source-register / decision-section checks; synthesis supplies the risk table.
   const stub: ModelCaller = async (prompt) => {
     switch (prompt.pass) {
       case 'architect': return { text: JSON.stringify(goodPlan()), responseId: 'r1' };
-      case 'evidence_grounding': return { text: '{"evidenceMapping":[]}', responseId: 'r2' };
-      case 'full_draft': return { text: '# Draft\n' + 'word '.repeat(300), responseId: 'r3' };
-      case 'red_team': return { text: 'Tighten section 2; add a risk table.', responseId: 'r4' };
-      case 'board_grade_rewrite': return { text: '# Final\n' + 'word '.repeat(300), responseId: 'r5' };
-      case 'render_package': return { text: JSON.stringify(goodDocument()), responseId: 'r6' };
+      case 'section_draft': return { text: JSON.stringify({ key: 'sec', title: 'Section', bodyMarkdown: '## Detail\nWe recommend proceeding. The baseline is supported by governed evidence [1]. ' + 'This section is complete and grounded. '.repeat(40), groundingMode: 'mixed', citationsUsed: [1] }), responseId: 'rs' };
+      case 'synthesis': return { text: JSON.stringify({ title: 'SkyHarbor Air — AMS RFP', recommendation: 'We recommend issuing the RFP to the shortlisted vendors given the validated scope and the costed range.', nextActions: ['Issue RFP', 'Brief vendors', 'Open evaluation'], tables: [{ key: 'risk_register', title: 'Risk / Issues / Dependencies', columns: ['Risk', 'Owner'], rows: [['Transition risk', 'PMO']] }], clientCompleteChecklist: [] }), responseId: 'ry' };
+      default: return { text: '{}' };
     }
   };
 
-  it('runs all six passes, validates the plan, and passes the quality gate', async () => {
+  it('runs architect + per-section + synthesis, validates the plan, and passes the quality gate', async () => {
     const res = await runDeliverableOrchestration(req, stub);
-    expect(res.passTrace.map((t) => t.pass)).toEqual(GENERATION_PASSES);
+    const passes = res.passTrace.map((t) => t.pass);
+    expect(passes[0]).toBe('architect');
+    expect(passes[passes.length - 1]).toBe('synthesis');
+    expect(passes.filter((p) => p === 'section_draft')).toHaveLength(goodPlan().sectionPlan.length);
     expect(res.planValidation?.ok).toBe(true);
     expect(res.ok).toBe(true);
     expect(res.document?.title).toMatch(/SkyHarbor/);
