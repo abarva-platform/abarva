@@ -17,8 +17,8 @@ function okResult(): OrchestrationResult {
     document: goodDocument(),
     quality: { pass: true, blockers: [], warnings: ['evidence underused'], metrics: {} as never },
     passTrace: [
-      { pass: 'architect', maxTokens: 6000, highStakes: true, outputChars: 100, responseId: 'r1' },
-      { pass: 'render_package', maxTokens: 16000, highStakes: true, outputChars: 100, responseId: 'r6' },
+      { pass: 'architect', maxTokens: 6000, highStakes: true, outputChars: 100, responseId: 'msg_arch' },
+      { pass: 'synthesis', maxTokens: 16000, highStakes: true, outputChars: 100, responseId: '11111111-2222-3333-4444-555555555555' },
     ],
   } as OrchestrationResult;
 }
@@ -51,7 +51,9 @@ describe('persistDeliverable', () => {
     expect((rendered.html as string)).toMatch(/SkyHarbor/);
     expect(rendered.blobSha256).toMatch(/^[0-9a-f]{64}$/);
     expect(rendered.evidenceLedgerIds).toEqual(['ev-1', 'ev-2']);
-    expect(rendered.generationEgressAudit).toBe('r1,r6'); // response ids stitched
+    // generation_egress_audit is a UUID FK — link the first pass whose responseId is a
+    // genuine audit UUID (Anthropic msg_ ids are skipped); null when none qualify.
+    expect(rendered.generationEgressAudit).toBe('11111111-2222-3333-4444-555555555555');
     expect(rendered.qualityScore as number).toBeLessThan(1); // one warning → small penalty
     expect(rendered.qualityScore as number).toBeGreaterThanOrEqual(0.5);
   });

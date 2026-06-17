@@ -20,6 +20,8 @@ import { prescribedFormatForDeliverableType } from '@/lib/programs/orchestrated-
 import { renderDeliverableHtml } from './renderers';
 import type { OrchestrationResult } from './orchestrator';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export interface PersistDeliverableOptions {
   clientId: string;
   renderedBy: string;
@@ -104,7 +106,12 @@ export async function persistDeliverable(
     blobSha256: createHash('sha256').update(html).digest('hex'),
     qualityScore: qualityScore(result),
     evidenceLedgerIds: opts.evidenceLedgerIds ?? doc.sourceRegister.map((r) => String(r.citationNumber)),
-    generationEgressAudit: result.passTrace.map((t) => t.responseId).filter(Boolean).join(',') || null,
+    // generation_egress_audit is a single UUID FK to ai_egress_audit(id). Pass responseIds
+    // are Anthropic message ids (msg_…), not audit UUIDs — and the decomposed flow makes many
+    // calls, so a joined string would never be one valid UUID. Link the first pass whose
+    // responseId is a genuine audit UUID, else null (the per-call audit rows persist
+    // independently in ai_egress_audit regardless).
+    generationEgressAudit: result.passTrace.map((t) => t.responseId).find((r): r is string => !!r && UUID_RE.test(r)) ?? null,
     quarantined: false,
     quarantineReason: null,
   };
