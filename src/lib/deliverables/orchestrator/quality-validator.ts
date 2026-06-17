@@ -32,14 +32,27 @@ function wordCount(s: string): number {
 }
 
 /**
- * A substantial section that ends without sentence-terminating punctuation (or a
- * list/table/heading terminator) likely got cut off at the token ceiling.
+ * A substantial section that ends mid-sentence likely got cut off at the token ceiling.
+ *
+ * The signal is a PROSE cutoff. A complete section legitimately ends on a markdown
+ * structure — a table row, a list item, a heading, a fenced block, or an emphasised
+ * label — none of which carry sentence punctuation. Decomposed per-section generation
+ * routinely ends a section on its risk table or its next-steps list, so we judge the
+ * last non-empty LINE: structural endings are complete; only a prose line ending without
+ * terminal punctuation (and not on a markdown token) is treated as truncated.
  */
 function looksTruncated(markdown: string): boolean {
   const trimmed = markdown.trim();
   if (trimmed.length < 200) return false; // short sections aren't truncation evidence
+  const lines = trimmed.split('\n');
+  const lastLine = (lines[lines.length - 1] ?? '').trim();
+  // complete markdown structures end without sentence punctuation — not truncation
+  if (/^[#>|]/.test(lastLine)) return false; // heading / blockquote / table row
+  if (/^([-*+]|\d+[.)])\s/.test(lastLine)) return false; // list item
+  if (lastLine.includes('|')) return false; // table row (with or without leading pipe)
+  if (/[*_`)\]}]$/.test(lastLine)) return false; // bold/italic/code/link/paren/brace close
   const last = trimmed[trimmed.length - 1];
-  // acceptable endings: sentence punctuation, closing bracket/quote, or table pipe
+  // acceptable prose endings: sentence punctuation, closing bracket/quote, or table pipe
   return !/[.!?:)\]"'»”|`]/.test(last);
 }
 
