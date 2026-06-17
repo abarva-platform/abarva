@@ -792,6 +792,31 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).not.toContain("source-canvas-tab-document");
   });
 
+  it("renders the simple Start here front for empty substrate without trusting registry metadata", () => {
+    const html = render({
+      simpleFrontEnabled: true,
+      artifactStates: [],
+      gateCriterionStates: [],
+      evidenceStates: [],
+      registryArtifacts: [
+        {
+          ...makeRegistryArtifact({
+            sourceOrigin: "generated",
+            artifactKind: "d05_scope_memo",
+          }),
+          originalName: null,
+          createdAt: null,
+        } as unknown as SourceArtifactRegistryRecord,
+      ],
+    });
+
+    expect(html).toContain("source-simple-front");
+    expect(html).toContain("You&#x27;re on Scope");
+    expect(html).toContain("Application inventory");
+    expect(html).toContain("Write my Scope Memo with Boundaries");
+    expect(html).not.toContain("source-simple-front-fallback");
+  });
+
   it("document tab is active by default and hides starter templates until authored", () => {
     const html = render();
     expect(html).toContain('data-active-tab="document"');

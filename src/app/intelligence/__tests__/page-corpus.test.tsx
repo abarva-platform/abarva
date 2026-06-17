@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 
-import IntelligencePage from '../page';
+import IntelligencePage from "../../(maestro)/intelligence/page";
 
 jest.mock('server-only', () => ({}));
 

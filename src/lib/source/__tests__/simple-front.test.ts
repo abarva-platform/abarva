@@ -74,6 +74,58 @@ function evidence(
 }
 
 describe("resolveSimpleStageScreen", () => {
+  it("resolves Scope with empty substrate rows", () => {
+    expect(() =>
+      resolveSimpleStageScreen(
+        {
+          artifactStates: [],
+          gateCriterionStates: [],
+          evidenceStates: [],
+        },
+        "scope",
+      ),
+    ).not.toThrow();
+
+    const vm = resolveSimpleStageScreen(
+      {
+        artifactStates: [],
+        gateCriterionStates: [],
+        evidenceStates: [],
+      },
+      "scope",
+    );
+
+    expect(vm.required).toHaveLength(3);
+    expect(vm.deliverable.artifactCode).toBe("d05_scope_memo");
+    expect(vm.nextStep).toEqual({ label: "Issue the RFP", stage: "rfp" });
+  });
+
+  it("resolves Strategy with empty substrate rows", () => {
+    expect(() =>
+      resolveSimpleStageScreen(
+        {
+          artifactStates: [],
+          gateCriterionStates: [],
+          evidenceStates: [],
+        },
+        "strategy",
+      ),
+    ).not.toThrow();
+
+    const vm = resolveSimpleStageScreen(
+      {
+        artifactStates: [],
+        gateCriterionStates: [],
+        evidenceStates: [],
+      },
+      "strategy",
+    );
+
+    expect(vm.required.length).toBeLessThanOrEqual(3);
+    expect(vm.deliverable.artifactCode).toBe("d01_strategy_memo");
+    expect(vm.nextStep).toEqual({ label: "Issue the Scope", stage: "scope" });
+  });
+
   it("returns at most three Scope asks, the d05 deliverable, and the RFP next step", () => {
     const vm = resolveSimpleStageScreen(
       {

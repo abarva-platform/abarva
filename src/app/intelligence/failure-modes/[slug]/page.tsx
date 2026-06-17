@@ -573,6 +573,6 @@ export default async function FailureModePage({ params }: PageProps) {
           />
         </div>
       </div>
-    </AppShell>
+      </AppShell>
   );
 }
