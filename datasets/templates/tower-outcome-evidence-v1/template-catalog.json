@@ -1,0 +1,39 @@
+{
+  "template_pack": "tower-outcome-evidence-v1",
+  "purpose": "Templates for Tower value realization, decision queue, action commitments, risk watchlist, handoff metrics, and metric provenance.",
+  "classification": "template_only_no_seed_rows",
+  "templates": [
+    {
+      "file": "01_tower_metric_baselines.template.csv",
+      "grain": "one row per baseline metric per move/initiative"
+    },
+    {
+      "file": "02_tower_value_outcome_ledger.template.csv",
+      "grain": "one row per measured/projected/tracked outcome"
+    },
+    {
+      "file": "03_tower_decision_queue.template.csv",
+      "grain": "one row per executive decision"
+    },
+    {
+      "file": "04_tower_action_commitments.template.csv",
+      "grain": "one row per action commitment"
+    },
+    {
+      "file": "05_tower_risk_watchlist.template.csv",
+      "grain": "one row per risk/watch item"
+    },
+    {
+      "file": "06_tower_move_handoff_metrics.template.csv",
+      "grain": "one row per Move/Source/Intelligence metric handed to Tower"
+    },
+    {
+      "file": "07_tower_metric_provenance.template.csv",
+      "grain": "one row per metric source/provenance definition"
+    },
+    {
+      "file": "08_tower_executive_narrative_events.template.csv",
+      "grain": "one row per executive narrative claim or event"
+    }
+  ]
+}

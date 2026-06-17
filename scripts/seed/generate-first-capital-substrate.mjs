@@ -207,7 +207,18 @@ for (let i = 0; initiatives.length < 32; i++) {
 
 const closedInitiatives = Array.from({ length: 10 }, (_, i) => ({
   initiative_id: `FCF-CLOSED-${String(i + 1).padStart(3, '0')}`,
-  title: `Closed First Capital automation wave ${i + 1}`,
+  title: [
+    'Branch teller desktop consolidation',
+    'ACH exception queue triage uplift',
+    'Commercial credit memo template standardization',
+    'Mortgage document indexing remediation',
+    'Treasury intraday liquidity dashboard',
+    'Loan operations RPA retirement',
+    'Cyber privileged-access recertification',
+    'Vendor renewal evidence room pilot',
+    'Digital-servicing complaint taxonomy cleanup',
+    'Model inventory attestation cycle',
+  ][i],
   status: 'closed',
   accountable: teams[i % teams.length][2],
   vendors: categories[i % categories.length][1],
@@ -215,7 +226,18 @@ const closedInitiatives = Array.from({ length: 10 }, (_, i) => ({
   projected_value_usd: 1400000 + i * 300000,
   sentinel_posture: i % 2 === 0 ? 'Closed - value verified' : 'Closed - lessons captured',
   stage: 'Closed',
-  evidence_note: `Closed initiative retained as baseline evidence for First Capital financial-services corpus ${i + 1}.`,
+  evidence_note: [
+    'Closeout package includes before/after handle-time sample and branch adoption exceptions.',
+    'Operations evidence shows the triage model reduced aging over 5 business days but did not eliminate manual sanction-screening review.',
+    'Credit policy retained manual override authority; value is limited to memo assembly and reviewer cycle time.',
+    'Records management accepted the index remediation after sampling 600 loan files across 3 servicing centers.',
+    'Treasury signed off on liquidity dashboard timeliness but left stress-scenario lineage as an open control item.',
+    'RPA retirement delivered run-cost savings only after Pega case-routing controls were amended.',
+    'Cyber evidence includes recertification completion, privileged group exceptions, and post-cycle remediation owners.',
+    'Procurement reused the evidence room pattern for three renewals but did not yet integrate it with ServiceNow GRC.',
+    'Complaint taxonomy cleanup improved root-cause coding, with unresolved mapping to Salesforce FSC case types.',
+    'Model inventory attestation closed after second-line review, with monitoring evidence deferred to the next quarter.',
+  ][i],
 }));
 
 const vendorNames = [
@@ -285,23 +307,92 @@ const sourceTitles = [
   'FIS core API assessment',
 ];
 
+const sourceDocumentTypes = [
+  'Executive decision memo',
+  'Finance workbook narrative',
+  'Regulatory remediation update',
+  'Architecture review record',
+  'Operations review excerpt',
+  'Vendor renewal brief',
+  'Model risk committee note',
+  'Data lineage attestation',
+  'Cyber resilience evidence note',
+  'Board technology appendix',
+];
+
+function formatUsd(value) {
+  return `$${Number(value).toLocaleString('en-US')}`;
+}
+
+function articleFor(value) {
+  return /^[aeiou]/i.test(String(value)) ? 'an' : 'a';
+}
+
+function stripTerminalPeriod(value) {
+  return String(value).replace(/\.+$/, '');
+}
+
+function sourceDocumentBody({ id, title, app, initiative, vendor, edge }) {
+  const docType = sourceDocumentTypes[(id - 1) % sourceDocumentTypes.length];
+  const date = `2026-${String((id % 12) + 1).padStart(2, '0')}-${String(((id * 3) % 24) + 1).padStart(2, '0')}`;
+  const controlOwner = teams[(id * 2) % teams.length];
+  const dependency = edge?.to_app_id ?? apps[(id * 11) % apps.length].app_id;
+  const exposure = initiative[7] === 'Kill'
+    ? 'The steering group should not treat committed spend as proof of value; adoption and control evidence are both weak.'
+    : initiative[7] === 'Hold'
+      ? 'The decision is blocked until migration sequencing, regulator-facing remediation evidence, and fallback operating procedures are explicit.'
+      : initiative[7] === 'Restructure'
+        ? 'The value case is credible, but the scope must be narrowed to the evidence-backed cohort before additional funding.'
+        : 'The program is eligible to continue only while value measurement remains tied to the named control and operating metrics.';
+  return `# ${title}
+
+Document type: ${docType}
+Prepared for: ${initiative[3]}
+Evidence date: ${date}
+Primary system: ${app.app_id} - ${app.name}
+Owning team: ${app.it_owner}
+Related dependency: ${dependency}
+Vendor exposure: ${vendor.vendor} / ${formatUsd(vendor.annual_usd)} annual run-rate
+Classification: ${app.primary_dataclass}
+
+## Situation
+
+${app.name} is carried as a ${app.criticality} ${app.category} platform with ${formatUsd(app.run_cost_fy25_usd)} in FY25 run cost and ${articleFor(app.lifecycle_stage)} ${app.lifecycle_stage} modernization posture. The application is not a stand-alone decision: it sits in a dependency chain that includes ${dependency}, ${vendor.vendor}, and the ${controlOwner[1]} control owner group.
+
+## Evidence Observed
+
+- Current architecture: ${app.deployment} deployment with ${app.integration_count} cataloged upstream/downstream relationships.
+- Program tie: ${initiative[0]} - ${initiative[1]}; committed funding ${formatUsd(initiative[5])}, projected value ${formatUsd(initiative[6])}, Sentinel posture ${initiative[7]}.
+- Vendor condition: ${vendor.exit_terms}; AI/data-use clause: ${vendor.ai_usage_clauses}.
+- Risk lens: OCC/FFIEC operational resilience, GLBA safeguarding, BSA/AML evidence where customer or transaction data is in scope, and SR 11-7 model-risk expectations for AI-assisted decisions.
+
+## Decision Implication
+
+${exposure} Any recommendation must cite the application id, initiative id, vendor exposure, and the dependency above. If any of those facts are unavailable in the live context layer, Sentinel should answer that it cannot complete the recommendation yet.
+
+## Open Evidence Requests
+
+- Confirm whether ${dependency} has a tested rollback or parallel-run pattern.
+- Reconcile ${app.app_id} run cost to the latest finance allocation workbook.
+- Attach latest ServiceNow change/problem records for the last two high-risk release windows.
+- Confirm whether second-line risk has accepted the evidence basis for ${initiative[0]}.
+`;
+}
+
 for (let i = 1; i <= 60; i++) {
   const title = sourceTitles[(i - 1) % sourceTitles.length];
   const app = apps[(i * 3) % apps.length];
   const initiative = initiatives[(i * 5) % initiatives.length];
   const vendor = vendors[(i * 7) % vendors.length];
-  write(`13-context/source-files/FCF-SRC-${String(i).padStart(3, '0')}.md`, `# ${title} ${i}
-
-Synthetic tenant evidence for First Capital Financial. This source file is part of the banking context layer and should ground Sentinel, Source and Tower answers in First Capital-specific facts.
-
-- Referenced application: ${app.app_id} (${app.name})
-- Referenced initiative: ${initiative[0]} (${initiative[1]})
-- Referenced vendor: ${vendor.vendor}, annual exposure $${vendor.annual_usd}
-- Regulatory lens: OCC, FFIEC, GLBA, BSA/AML, SR 11-7 model-risk management and operational resilience.
-- Evidence note: ${initiative[9]}
-
-Use this source to explain the decision thread, cite the exact ID, and avoid importing retail, healthcare or medtech facts into First Capital.
-`);
+  const edge = edges[(i * 13) % edges.length];
+  write(`13-context/source-files/FCF-SRC-${String(i).padStart(3, '0')}.md`, sourceDocumentBody({
+    id: i,
+    title,
+    app,
+    initiative,
+    vendor,
+    edge,
+  }));
 }
 
 const corpus = Array.from({ length: 400 }, (_, i) => {
@@ -310,15 +401,16 @@ const corpus = Array.from({ length: 400 }, (_, i) => {
   const vendor = vendors[(i * 5) % vendors.length];
   const sourceId = `FCF-SRC-${String((i % 60) + 1).padStart(3, '0')}`;
   const topic = ['core modernization', 'payments modernization', 'AML triage', 'digital onboarding', 'ERP decision', 'vendor concentration', 'model-risk evidence', 'engineering productivity'][i % 8];
-  const text = `First Capital Financial evidence chunk ${i + 1}: ${app.app_id} (${app.name}) is a ${app.criticality} ${app.category} application owned by ${app.it_owner}, run cost $${app.run_cost_fy25_usd}, lifecycle ${app.lifecycle_stage}. Initiative ${initiative[0]} ${initiative[1]} has Sentinel posture ${initiative[7]} with committed spend $${initiative[5]} and projected value $${initiative[6]}. Vendor ${vendor.vendor} has annual exposure $${vendor.annual_usd}, renewal ${vendor.renewal_date}, exit terms "${vendor.exit_terms}". Use this for ${topic}; do not import Apex, Meridian or Northstar facts.`;
+  const dependency = edges[(i * 17) % edges.length];
+  const text = `${app.app_id} (${app.name}) is a ${app.criticality} ${app.category} platform owned by ${app.it_owner}, with FY25 run cost ${formatUsd(app.run_cost_fy25_usd)}, ${app.integration_count} cataloged dependencies, and lifecycle posture ${app.lifecycle_stage}. ${initiative[0]} (${initiative[1]}) carries ${initiative[7]} posture: committed funding ${formatUsd(initiative[5])}, projected value ${formatUsd(initiative[6])}, and evidence note "${stripTerminalPeriod(initiative[9])}". ${vendor.vendor} contributes ${formatUsd(vendor.annual_usd)} annual exposure with renewal ${vendor.renewal_date}; exit terms are "${vendor.exit_terms}". For ${topic}, the critical dependency to test is ${dependency.from_app_id} -> ${dependency.to_app_id} over ${dependency.integration_type}; recommendations should stay First Capital-specific and name missing evidence when any dependency, control, or run-cost fact is absent.`;
   return {
     chunk_id: `FCF-CHUNK-${String(i + 1).padStart(3, '0')}`,
     id: `FCF-CHUNK-${String(i + 1).padStart(3, '0')}`,
     source_file_id: sourceId,
     tenant_id: TENANT_KEY,
-    title: `${sourceTitles[i % sourceTitles.length]} chunk ${i + 1}`,
+    title: `${sourceTitles[i % sourceTitles.length]} evidence excerpt ${String(i + 1).padStart(3, '0')}`,
     text,
-    claim: `${app.app_id} and ${initiative[0]} are linked in First Capital's banking context layer.`,
+    claim: `${app.app_id}, ${initiative[0]}, ${vendor.vendor}, and dependency ${dependency.from_app_id}->${dependency.to_app_id} must be reasoned together for ${topic}.`,
     evidence_basis: `${sourceId}; ${vendor.vendor} contract; ${app.name} portfolio row.`,
     use_case: topic,
     industry: 'financial_services_banking',
@@ -390,7 +482,7 @@ strategic_story: >
 
 write('README.md', `# First Capital Financial Synthetic Substrate v1
 
-This pack turns First Capital from a thin demo fixture into a banking-grade context layer:
+This pack provides a banking-grade synthetic enterprise context layer for First Capital:
 
 - 180 application portfolio rows across core banking, payments, lending, wealth, fraud, ERP, data and cyber.
 - 380 integration-topology edges for dependency and kill-blocker reasoning.
@@ -558,12 +650,52 @@ write('10-incidents-changes/changes.csv', csv(['change_id', 'team_id', 'app_id',
   risk_rating: i % 9 === 0 ? 'high' : 'standard',
   outcome: i % 14 === 0 ? 'rolled_back' : 'successful',
 }))));
-write('11-regulatory/regulatory-obligations.csv', csv(['reg_id', 'regulator', 'obligation', 'affected_apps', 'evidence_required'], [
-  { reg_id: 'FCF-REG-OCC-MRA-001', regulator: 'OCC', obligation: 'Remediate core data-lineage MRA', affected_apps: 'FCF-APP-FIS-HORIZON|FCF-APP-SNOWFLAKE', evidence_required: 'lineage attestation and control testing' },
-  { reg_id: 'FCF-REG-BSA-AML-001', regulator: 'FinCEN/OCC', obligation: 'BSA AML case management remediation', affected_apps: 'FCF-APP-NICE-ACTIMIZE|FCF-APP-FENERGO-KYC', evidence_required: 'case quality, alert tuning and staffing evidence' },
-  { reg_id: 'FCF-REG-SR117-001', regulator: 'Federal Reserve', obligation: 'Model-risk management for AI-assisted decisions', affected_apps: 'FCF-APP-DATABRICKS|FCF-APP-NICE-ACTIMIZE', evidence_required: 'model inventory, validation and monitoring' },
-  { reg_id: 'FCF-REG-GLBA-001', regulator: 'Federal banking regulators', obligation: 'GLBA safeguarding of customer information', affected_apps: 'FCF-APP-MOBILE-BANKING|FCF-APP-SALESFORCE-FSC', evidence_required: 'access, encryption and vendor controls' },
-]));
+const regulatoryObligations = [
+  ['OCC', 'Remediate core data-lineage MRA', ['FCF-APP-FIS-HORIZON', 'FCF-APP-SNOWFLAKE'], 'lineage attestation, accountable owner signoff, and control testing'],
+  ['FinCEN/OCC', 'BSA AML case management remediation', ['FCF-APP-NICE-ACTIMIZE', 'FCF-APP-FENERGO-KYC'], 'case quality sample, alert tuning evidence, staffing model, and escalation history'],
+  ['Federal Reserve', 'SR 11-7 model-risk management for AI-assisted decisions', ['FCF-APP-DATABRICKS', 'FCF-APP-NICE-ACTIMIZE'], 'model inventory, independent validation, monitoring, and use limitation evidence'],
+  ['Federal banking regulators', 'GLBA safeguarding of customer information', ['FCF-APP-MOBILE-BANKING', 'FCF-APP-SALESFORCE-FSC'], 'access review, encryption control, vendor control, and incident response evidence'],
+  ['FFIEC', 'Operational resilience for critical payments', ['FCF-APP-FEDWIRE-ACH', 'FCF-APP-FEDNOW-RTP'], 'resilience tier, RTO/RPO test, failover evidence, and dependency map'],
+  ['OCC', 'Third-party risk concentration management', ['FCF-APP-FIS-HORIZON', 'FCF-APP-HOGAN-LOANS'], 'exit plan, concentration analysis, contract term review, and board reporting'],
+  ['CFPB', 'Digital account-opening adverse-action traceability', ['FCF-APP-ONLINE-ACCOUNT-OPENING', 'FCF-APP-FENERGO-KYC'], 'decision reason code audit, customer notice sample, and KYC workflow trace'],
+  ['FINRA', 'Wealth advisor supervision and client note retention', ['FCF-APP-SALESFORCE-FSC'], 'supervision review, retention policy, exception report, and surveillance evidence'],
+  ['SEC', 'Books and records retention for investment advisory workflows', ['FCF-APP-SALESFORCE-FSC', 'FCF-APP-WORKDAY-HCM'], 'retention configuration, legal hold evidence, and archival retrieval test'],
+  ['PCI DSS', 'Card payment data protection', ['FCF-APP-FEDWIRE-ACH', 'FCF-APP-FEDNOW-RTP'], 'segmentation evidence, tokenization control, quarterly scan, and remediation log'],
+  ['SOX', 'Finance close and access controls', ['FCF-APP-SAP-ECC', 'FCF-APP-ORACLE-EBS-REMNANTS'], 'ITGC control evidence, access recertification, batch reconciliation, and change approval'],
+  ['NYDFS', 'Cybersecurity program and incident reporting', ['FCF-APP-SPLUNK', 'FCF-APP-CROWDSTRIKE'], 'monitoring coverage, incident drill, vulnerability remediation, and board attestation'],
+];
+while (regulatoryObligations.length < 40) {
+  const i = regulatoryObligations.length;
+  const appA = apps[(i * 7) % apps.length].app_id;
+  const appB = apps[(i * 11) % apps.length].app_id;
+  regulatoryObligations.push([
+    ['OCC', 'FFIEC', 'Federal Reserve', 'CFPB', 'FinCEN', 'Internal Audit'][i % 6],
+    [
+      'Quarterly access recertification for regulated platform',
+      'Evidence retention for critical change window',
+      'Vendor due-diligence refresh and AI data-use attestation',
+      'Customer-impact incident postmortem and remediation proof',
+      'Data-quality control attestation for executive/regulatory report',
+      'Operational resilience dependency review',
+    ][i % 6],
+    [appA, appB],
+    [
+      'owner attestation, exception list, sampled evidence, and remediation owner',
+      'change ticket, rollback evidence, testing signoff, and production validation',
+      'contract clause, security review, data-flow boundary, and exit readiness evidence',
+      'timeline, impact assessment, root cause, corrective action, and control validation',
+      'lineage extract, reconciliation sample, data steward signoff, and issue register',
+      'dependency map, DR test, RTO/RPO evidence, and unresolved risk acceptance',
+    ][i % 6],
+  ]);
+}
+write('11-regulatory/regulatory-obligations.csv', csv(['reg_id', 'regulator', 'obligation', 'affected_apps', 'evidence_required'], regulatoryObligations.map((row, i) => ({
+  reg_id: `FCF-REG-${String(i + 1).padStart(3, '0')}`,
+  regulator: row[0],
+  obligation: row[1],
+  affected_apps: row[2].join('|'),
+  evidence_required: row[3],
+}))));
 write('12-benchmarks/financial-services-benchmarks.csv', csv(['benchmark_id', 'metric', 'first_capital_value', 'peer_median', 'top_quartile', 'notes'], [
   { benchmark_id: 'FCF-BENCH-001', metric: 'efficiency_ratio', first_capital_value: 0.68, peer_median: 0.61, top_quartile: 0.55, notes: 'Technology run cost and remediation burden pressure operating efficiency.' },
   { benchmark_id: 'FCF-BENCH-002', metric: 'mobile_app_rating', first_capital_value: 3.1, peer_median: 4.2, top_quartile: 4.6, notes: 'Digital friction story for CXO demo.' },

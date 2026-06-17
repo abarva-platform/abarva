@@ -1,0 +1,10 @@
+{
+  "generatedAt": "2026-06-17T13:07:41.689Z",
+  "databaseConfigured": true,
+  "connectionError": {
+    "name": "Error",
+    "code": "ENOTFOUND",
+    "message": "getaddrinfo ENOTFOUND pg-abarva-context-lab-001.postgres.database.azure.com"
+  },
+  "tenants": []
+}

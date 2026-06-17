@@ -1,11 +1,32 @@
-# FedNow and RTP board update 34
+# FedNow and RTP board update
 
-Synthetic tenant evidence for First Capital Financial. This source file is part of the banking context layer and should ground Sentinel, Source and Tower answers in First Capital-specific facts.
+Document type: Architecture review record
+Prepared for: SVP Infrastructure
+Evidence date: 2026-11-07
+Primary system: FCF-APP-DATA-PLATFORM-103 - First Capital Data Platform Service 103
+Owning team: TEAM-FCF-DATA
+Related dependency: FCF-APP-COMMERCIAL-LENDING-088
+Vendor exposure: Broadridge / $5,006,000 annual run-rate
+Classification: confidential
 
-- Referenced application: FCF-APP-DATA-PLATFORM-103 (First Capital Data Platform Service 103)
-- Referenced initiative: FCF-INIT-011 (Treasury liquidity forecast modernization)
-- Referenced vendor: Broadridge, annual exposure $5006000
-- Regulatory lens: OCC, FFIEC, GLBA, BSA/AML, SR 11-7 model-risk management and operational resilience.
-- Evidence note: Treasury liquidity forecast modernization is tied to Cloud Platform Engineering with healthy posture and board/CXO evidence requirements.
+## Situation
 
-Use this source to explain the decision thread, cite the exact ID, and avoid importing retail, healthcare or medtech facts into First Capital.
+First Capital Data Platform Service 103 is carried as a medium data platform platform with $1,661,000 in FY25 run cost and a maintain modernization posture. The application is not a stand-alone decision: it sits in a dependency chain that includes FCF-APP-COMMERCIAL-LENDING-088, Broadridge, and the Digital Banking and Client Experience control owner group.
+
+## Evidence Observed
+
+- Current architecture: cloud deployment with 57 cataloged upstream/downstream relationships.
+- Program tie: FCF-INIT-011 - Treasury liquidity forecast modernization; committed funding $3,573,000, projected value $6,970,000, Sentinel posture Healthy.
+- Vendor condition: standard annual renewal notice; AI/data-use clause: AI use requires prior written approval and audit evidence.
+- Risk lens: OCC/FFIEC operational resilience, GLBA safeguarding, BSA/AML evidence where customer or transaction data is in scope, and SR 11-7 model-risk expectations for AI-assisted decisions.
+
+## Decision Implication
+
+The program is eligible to continue only while value measurement remains tied to the named control and operating metrics. Any recommendation must cite the application id, initiative id, vendor exposure, and the dependency above. If any of those facts are unavailable in the live context layer, Sentinel should answer that it cannot complete the recommendation yet.
+
+## Open Evidence Requests
+
+- Confirm whether FCF-APP-COMMERCIAL-LENDING-088 has a tested rollback or parallel-run pattern.
+- Reconcile FCF-APP-DATA-PLATFORM-103 run cost to the latest finance allocation workbook.
+- Attach latest ServiceNow change/problem records for the last two high-risk release windows.
+- Confirm whether second-line risk has accepted the evidence basis for FCF-INIT-011.

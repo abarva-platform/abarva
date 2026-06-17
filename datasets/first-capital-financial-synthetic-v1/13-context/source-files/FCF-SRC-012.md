@@ -1,11 +1,32 @@
-# Data governance and lineage attestation 12
+# Data governance and lineage attestation
 
-Synthetic tenant evidence for First Capital Financial. This source file is part of the banking context layer and should ground Sentinel, Source and Tower answers in First Capital-specific facts.
+Document type: Finance workbook narrative
+Prepared for: SVP Commercial Bank CIO
+Evidence date: 2026-01-13
+Primary system: FCF-APP-CORE-BANKING-037 - First Capital Core Banking Service 037
+Owning team: TEAM-FCF-CORE
+Related dependency: FCF-APP-PAYMENTS-026
+Vendor exposure: Workday / $2,728,000 annual run-rate
+Classification: confidential
 
-- Referenced application: FCF-APP-CORE-BANKING-037 (First Capital Core Banking Service 037)
-- Referenced initiative: FCF-INIT-029 (Engineering productivity tooling for legacy apps)
-- Referenced vendor: Workday, annual exposure $2728000
-- Regulatory lens: OCC, FFIEC, GLBA, BSA/AML, SR 11-7 model-risk management and operational resilience.
-- Evidence note: Engineering productivity tooling for legacy apps is tied to Commercial Lending Technology with healthy posture and board/CXO evidence requirements.
+## Situation
 
-Use this source to explain the decision thread, cite the exact ID, and avoid importing retail, healthcare or medtech facts into First Capital.
+First Capital Core Banking Service 037 is carried as a medium core banking platform with $5,419,000 in FY25 run cost and a maintain modernization posture. The application is not a stand-alone decision: it sits in a dependency chain that includes FCF-APP-PAYMENTS-026, Workday, and the Digital Banking and Client Experience control owner group.
+
+## Evidence Observed
+
+- Current architecture: mainframe deployment with 15 cataloged upstream/downstream relationships.
+- Program tie: FCF-INIT-029 - Engineering productivity tooling for legacy apps; committed funding $4,011,000, projected value $33,790,000, Sentinel posture Healthy.
+- Vendor condition: standard annual renewal notice; AI/data-use clause: standard data-processing and confidentiality restrictions.
+- Risk lens: OCC/FFIEC operational resilience, GLBA safeguarding, BSA/AML evidence where customer or transaction data is in scope, and SR 11-7 model-risk expectations for AI-assisted decisions.
+
+## Decision Implication
+
+The program is eligible to continue only while value measurement remains tied to the named control and operating metrics. Any recommendation must cite the application id, initiative id, vendor exposure, and the dependency above. If any of those facts are unavailable in the live context layer, Sentinel should answer that it cannot complete the recommendation yet.
+
+## Open Evidence Requests
+
+- Confirm whether FCF-APP-PAYMENTS-026 has a tested rollback or parallel-run pattern.
+- Reconcile FCF-APP-CORE-BANKING-037 run cost to the latest finance allocation workbook.
+- Attach latest ServiceNow change/problem records for the last two high-risk release windows.
+- Confirm whether second-line risk has accepted the evidence basis for FCF-INIT-029.
