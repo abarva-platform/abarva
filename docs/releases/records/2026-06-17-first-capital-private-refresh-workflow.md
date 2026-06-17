@@ -44,6 +44,7 @@ This keeps monthly First Capital structured-data refreshes on the VNet path that
 - FAIL, then fixed: Third workflow dispatch `27700490190` reported success but started an idle shared-operator execution because the shared `job-abarva-private-operator-eus` template can be restored by concurrent deploy/operator activity between update and start. The follow-up patch creates a unique ephemeral ACA job per workflow run (`fc-refresh-${GITHUB_RUN_ID}`), starts that job, captures logs with Azure's supported `--tail 300`, and deletes the one-off job afterward.
 - FAIL, then fixed: Fourth workflow dispatch `27701532924` failed before creating the ephemeral ACA job because Azure CLI still requires `--name` with `az containerapp job create --yaml`. The follow-up patch passes `--name "$PRIVATE_REFRESH_JOB"` explicitly.
 - FAIL, then fixed: Fifth workflow dispatch `27702192515` failed while provisioning the ephemeral ACA job because newly created jobs need the user-assigned identity attached at the job root. The follow-up patch adds the same `UserAssigned` identity block used by the existing private operator.
+- FAIL, then fixed: Sixth workflow dispatch `27702808240` successfully ran the loader, embedded 400/400 chunks, inserted 180 applications, inserted 42 initiatives, inserted 70 vendor contracts, and wrote 27 context insights, but failed when the existing app image ran an older population-audit script that still wrote to read-only `/app/docs/build/data-quality`. The follow-up patch replaces that optional image-baked script call with an inline Postgres population audit that writes under `/tmp` and prints a `firstcapital_population_audit` event into the captured ACA log.
 - NOT RUN: Post-merge validation will dispatch `First Capital refresh load` on `main` with `dry_run=false` and verify the workflow finishes with a `firstcapital_refresh_receipt` log.
 
 ## Rollout Plan
@@ -62,6 +63,7 @@ Revert this workflow commit to restore the previous direct-runner workflow. If a
 - Misleading successful third workflow dispatch, idle shared-operator execution rather than refresh execution: GitHub Actions run `27700490190`, ACA execution `job-abarva-private-operator-eus-oin1n4u`.
 - Failed fourth workflow dispatch, before ephemeral job creation: GitHub Actions run `27701532924`.
 - Failed fifth workflow dispatch, during ephemeral job provisioning: GitHub Actions run `27702192515`.
+- Failed sixth workflow dispatch, after successful loader execution but before final workflow success: GitHub Actions run `27702808240`.
 - First Capital live client row observed in the proof run: `id=09d9a267-e89c-4fe1-831f-337a62787ec5`, `tenant_key=first-capital`, `slug=first-capital`, `name=First Capital Financial`.
 - First Capital live counts observed in the proof run: applications=180, ai_initiatives=42, vendor_contracts=70, chunks_by_client=400, chunks_by_tenant=400, active_moves=0, active_source_events=0.
 - Private operator restored to idle after the proof run.
