@@ -22,26 +22,9 @@ describe('Delta demo P0 graceful degradation', () => {
     jest.clearAllMocks();
   });
 
-  it('renders Tower portfolio as a degraded empty state when tenancy cannot load', async () => {
-    jest.doMock('@/lib/auth/tenancy', () => ({
-      requireTenancy: jest.fn(async () => {
-        throw new Error('Connection closed.');
-      }),
-    }));
-    jest.doMock('@/lib/tower/value-states', () => ({
-      getPortfolioValueRollup: jest.fn(async () => {
-        throw new Error('Connection closed.');
-      }),
-    }));
-
-    const { default: TowerPortfolioValuePage } = await import('@/app/(maestro)/tower/portfolio/page');
-    const { renderToStaticMarkup } = await import('react-dom/server');
-
-    const html = renderToStaticMarkup(await TowerPortfolioValuePage());
-
-    expect(html).toContain('Live data unavailable');
-    expect(html).toContain('degraded empty state rather than inventing value');
-    expect(html).not.toContain('Connection closed');
+  it('retires the old Tower portfolio route in favor of the AI Control Tower entry point', () => {
+    expect(() => require.resolve('@/app/(maestro)/tower/portfolio/page')).toThrow();
+    expect(() => require.resolve('@/app/(maestro)/tower/page')).not.toThrow();
   });
 
   it('renders Source value as a degraded empty ledger when ledger data cannot load', async () => {

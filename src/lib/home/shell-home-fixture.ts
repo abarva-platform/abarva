@@ -27,7 +27,7 @@ export const HOME_VIEW = {
     heroStat: 'Restricted',
     heroLabel: 'over budget · exact values hidden',
     atlasSentence: 'LLM inference is the top driver — a negotiated rate card would recover material run-rate value.',
-    href: '/tower/pressures/twr-ai-cloud-spend',
+    href: '/tower',
   },
 
   // Source highlight

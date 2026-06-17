@@ -710,7 +710,7 @@ function rowToPortfolioMove(row: PortfolioMoveRow): TowerPortfolioMove {
     projectedUsd: asNumber(row.projected_usd),
     trackedUsd: asNumber(row.tracked_usd),
     verifiedUsd: asNumber(row.verified_usd),
-    href: `/tower/programs/${row.id}/value`,
+    href: '/tower',
   };
 }
 

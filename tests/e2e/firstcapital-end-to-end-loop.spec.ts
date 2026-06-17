@@ -247,9 +247,9 @@ test.describe('First Capital end-to-end loop: FedNow model-risk (Slice 5.3)', ()
     // layer. The Tower outcomes ledger is the in-product surface.
     // Soft — see GAP-8 (no outcome-ledger → context-segment write-back
     // wiring; the loop is not closed in-product).
-    // Per Tower audit §5.4 / brief item 6, the /tower/outcomes redirect-shell
-    // has been removed. The outcome ledger lives on /tower/portfolio.
-    await page.goto('/tower/portfolio');
+    // The legacy Tower outcome/portfolio subroutes have been retired; the
+    // loop closes through the consolidated AI Control Tower route.
+    await page.goto('/tower');
 
     await expect(
       page.getByRole('heading', { name: /Outcome|Tower/i }).first(),

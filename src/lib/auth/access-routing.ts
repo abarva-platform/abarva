@@ -116,7 +116,7 @@ export function resolvePostSignInPath(
   const resolvedClientId = resolveSessionClientKey(input);
 
   if (isNewClientSetupEmail(input.email)) {
-    return '/tower/onboard';
+    return '/tower';
   }
 
   if (isExternalOnlyRole(resolvedRole)) {

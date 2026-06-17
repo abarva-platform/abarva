@@ -148,7 +148,7 @@ function writeHowToFillSheet(wb: ExcelJS.Workbook) {
     { text: 'Order of operations', bold: true, size: 13 },
     { text: '1. Fill Vendor Spend first. Make sure every vendor_id you intend to reference exists here.' },
     { text: '2. Fill Program Financials. vendor_id (if used) must match a row from sheet 1.' },
-    { text: '3. Save the file. Upload via /tower/onboard or run the CLI: npm run tower:ingest-erp -- --file <path>.' },
+    { text: '3. Save the file. Upload through Admin templates or run the CLI: npm run tower:ingest-erp -- --file <path>.' },
     { text: '' },
     { text: 'Required columns (teal headers) must be present and populated.', bold: true, size: 12 },
     { text: 'Optional columns can be blank. Numeric columns must be non-negative.' },
