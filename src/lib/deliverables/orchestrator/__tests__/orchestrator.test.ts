@@ -191,6 +191,19 @@ describe('extractJson', () => {
     expect(extractJson<{ a: number }>('Here is the plan: {"a": 2} — done.')).toEqual({ a: 2 });
     expect(extractJson('no json here')).toBeNull();
   });
+
+  it('recovers a render package whose bodyMarkdown contains nested ``` fences', () => {
+    // Regression 2026-06-17: a board-grade render package is wrapped in a ```json
+    // fence AND its bodyMarkdown string values contain their own ``` fences (code
+    // blocks / tables). The non-greedy fence regex slices at the first inner fence
+    // and yields truncated, unparseable JSON. The raw-text fallback must recover it.
+    const pkg = {
+      title: 'Program Charter',
+      sections: [{ key: 'approach', bodyMarkdown: 'Steps:\n```\nstep one\nstep two\n```\nDone.' }],
+    };
+    const modelText = 'Here is the render package:\n```json\n' + JSON.stringify(pkg) + '\n```';
+    expect(extractJson<typeof pkg>(modelText)).toEqual(pkg);
+  });
 });
 
 describe('full multi-pass orchestration (injected stub model)', () => {

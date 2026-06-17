@@ -58,13 +58,16 @@ export interface OrchestrationResult {
   blockedReason?: string;
 }
 
-/** Pull the first JSON object/array out of a model response (handles ``` fences). */
-export function extractJson<T>(text: string): T | null {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const candidate = fenced ? fenced[1] : text;
+/**
+ * Scan `candidate` for the first complete JSON object/array starting at the
+ * first `{`/`[` and ending at its depth-0 match. String-aware: braces inside
+ * "..." string values (including nested ``` fences in board-grade bodyMarkdown)
+ * do not affect depth, so the full object is recovered even when the content is
+ * rich markdown. Returns the parsed value or null.
+ */
+function scanJson<T>(candidate: string): T | null {
   const start = candidate.search(/[[{]/);
   if (start === -1) return null;
-  // find the matching close by scanning bracket depth (string-aware)
   const open = candidate[start];
   const close = open === '{' ? '}' : ']';
   let depth = 0;
@@ -89,6 +92,22 @@ export function extractJson<T>(text: string): T | null {
     }
   }
   return null;
+}
+
+/**
+ * Pull the first JSON object/array out of a model response.
+ *
+ * A ```json fence is the happy path, but the fence regex is non-greedy and a
+ * board-grade render package carries markdown bodyMarkdown that itself contains
+ * ``` fences — so the regex slices at the FIRST nested fence and yields truncated,
+ * unparseable JSON ("render pass did not return a parseable render package",
+ * 2026-06-17). So: try the fenced slice first, then fall back to scanning the RAW
+ * text. The raw scan is string-aware, so nested ``` fences inside string values
+ * never break it and the outermost JSON object is recovered intact.
+ */
+export function extractJson<T>(text: string): T | null {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  return (fenced ? scanJson<T>(fenced[1]) : null) ?? scanJson<T>(text);
 }
 
 async function call(
