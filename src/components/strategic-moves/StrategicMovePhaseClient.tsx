@@ -41,7 +41,7 @@ import { deliverableBelongsToPhase } from "@/lib/programs/phase-deliverables";
 import { PHASE_CANONICAL_KEYS } from "@/lib/programs/deliverable-registry";
 import styles from "./StrategicMoves.module.css";
 import { PhaseRail } from "./PhaseRail";
-import { GeneratePhasePackage } from "./GeneratePhasePackage";
+import { PhaseApproveAndBuild } from "./PhaseApproveAndBuild";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -1826,14 +1826,13 @@ export function StrategicMovePhaseClient({
                     lineHeight: 1.5,
                   }}
                 >
-                  Assembles all available context — engagement data, prior phase
-                  deliverables, client segments, matched patterns, and phase
-                  methodology — and generates a complete consulting-grade
-                  document. Equivalent to a McKinsey phase deliverable. Saves to
-                  the Evidence Hub.
+                  Approve &amp; Build assembles all available context — engagement
+                  data, prior-phase deliverables, client segments, matched
+                  patterns, and phase methodology — and builds every {config.label}{" "}
+                  deliverable in one governed batch. Saves to the Evidence Hub.
                 </div>
-                <GeneratePhasePackage
-                  programId={move.id}
+                <PhaseApproveAndBuild
+                  moveId={move.id}
                   phaseNum={phaseNum}
                   phaseLabel={config.label}
                   archetype={move.archetype}
