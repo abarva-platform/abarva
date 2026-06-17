@@ -91,4 +91,15 @@ describe("Source client-facing draft hygiene", () => {
     expect(result.match(/Company: SkyHarbor Air/g)).toHaveLength(1);
     expect(result).toContain("Classification: Strategic");
   });
+
+  it("dedupes markdown-decorated and plain company labels together", () => {
+    const result = sanitizeClientFacingSourceDraft(
+      "Document: Scope Memo · Event: SKYH-MANAGED-SERVICES-AQ2-2026 **Company:** SkyHarbor Air Company: SkyHarbor Air Classification: Strategic",
+      { companyName: "SkyHarbor Air" },
+    );
+
+    expect(result.match(/Company/g)).toHaveLength(1);
+    expect(result).toContain("**Company:** SkyHarbor Air");
+    expect(result).toContain("Classification: Strategic");
+  });
 });
