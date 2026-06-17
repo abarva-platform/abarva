@@ -807,14 +807,14 @@ export function AgentDock(props: AgentDockProps) {
                   </div>
                 ) : null}
                 <div style={BUBBLE_STYLE}>
+                  {turn.role === "agent"
+                    ? shapeAgentResponseForSurface(surface, turn.body)
+                    : turn.body}
                   {turn.role === "agent" &&
                   (!turn.citations || turn.citations.length === 0) &&
                   shouldShowPlainTextCitationGap(turn.body, surfaceContext) ? (
                     <CitationGapNotice compact />
                   ) : null}
-                  {turn.role === "agent"
-                    ? shapeAgentResponseForSurface(surface, turn.body)
-                    : turn.body}
                 </div>
                 {turn.role === "agent" &&
                 turn.citations &&

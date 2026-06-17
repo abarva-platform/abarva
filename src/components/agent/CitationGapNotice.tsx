@@ -33,8 +33,8 @@ export function CitationGapNotice({
         lineHeight: 1.45,
       }}
     >
-      Citation gap: this AI output has no source citations attached. Review
-      source basis before relying on this answer.
+      Source review needed: this answer has no source citations attached. Review
+      the source basis before relying on it.
     </div>
   );
 }

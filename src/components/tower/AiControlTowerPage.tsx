@@ -151,6 +151,37 @@ function captureRate(initiative: AIInitiative): number {
   return committed > 0 ? (initiativeMeasured(initiative) / committed) * 100 : 0;
 }
 
+function initiativeSignalText(initiative: AIInitiative): string {
+  return [
+    initiative.statusFlag,
+    initiative.statusSummary,
+    initiative.confidenceLevel,
+    initiative.stage,
+    initiative.name,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function isRiskSignal(initiative: AIInitiative): boolean {
+  return /risk|blocked|gap|watch|lag|review|kill|contested|stalled|governance|supervision|occ|sr 11-7|validation|privacy/i.test(
+    initiativeSignalText(initiative),
+  );
+}
+
+function outcomeMetricLabel(initiative: AIInitiative): string {
+  const text = `${initiative.displayId} ${initiative.name} ${initiative.primaryCategoryName} ${initiative.primaryGoalName}`.toLowerCase();
+  if (/fednow|rtp|payment/.test(text)) return "Deposit retention / payment throughput";
+  if (/aml|kyc|fraud|model/.test(text)) return "Case throughput + validation evidence";
+  if (/copilot|advisor|m365|engineering/.test(text)) return "Adoption, avoided work, quality guardrail";
+  if (/branch|contact|queue|sentiment/.test(text)) return "Service time, privacy, supervision";
+  if (/sap|finance|treasury|liquidity/.test(text)) return "Cycle time, forecast accuracy, control evidence";
+  if (/loan|credit|mortgage|disputes/.test(text)) return "Straight-through rate / exception reduction";
+  return initiative.primaryGoalName && !/^firstcapital /i.test(initiative.primaryGoalName)
+    ? initiative.primaryGoalName
+    : initiative.primaryCategoryName || "Outcome metric required";
+}
+
 function renewalDays(vendor: AIInitiativeVendorRow): number | null {
   if (!vendor.renewalDate) return null;
   const days = Math.ceil(
@@ -175,9 +206,7 @@ function summarize(
     (sum, vendor) => sum + Number(vendor.contractValueUsd ?? 0),
     0,
   );
-  const atRisk = initiatives.filter((item) =>
-    /risk|blocked|gap|watch/i.test(String(item.statusFlag ?? "")),
-  ).length;
+  const atRisk = initiatives.filter(isRiskSignal).length;
   const active = initiatives.filter(
     (item) => !/closed|cancel|settled/i.test(String(item.stage ?? "")),
   ).length;
@@ -215,11 +244,7 @@ function topInitiatives(initiatives: ReadonlyArray<AIInitiative>) {
 
 function atRiskInitiatives(initiatives: ReadonlyArray<AIInitiative>) {
   return [...initiatives]
-    .filter((initiative) =>
-      /risk|blocked|gap|watch|lag|review/i.test(
-        `${initiative.statusFlag} ${initiative.statusSummary} ${initiative.confidenceLevel}`,
-      ),
-    )
+    .filter(isRiskSignal)
     .sort(
       (a, b) =>
         initiativeCommitment(b) - initiativeMeasured(b) -
@@ -303,8 +328,8 @@ function lensRowsFor(
       .map((initiative) => ({
         subject: `${initiative.displayId} · ${initiative.name}`,
         owner: initiative.ownerName || "Named owner required",
-        metric: initiative.primaryGoalName,
-        basis: `${money(initiativeMeasured(initiative))} realized / ${money(initiativeCommitment(initiative))} promised`,
+        metric: outcomeMetricLabel(initiative),
+        basis: `${money(initiativeMeasured(initiative))} realized / ${money(initiativeCommitment(initiative))} promised · ${percent(captureRate(initiative))} capture`,
         state: normalizeStatus(initiative.statusFlag),
         tone:
           initiative.confidenceLevel === "HIGH"
@@ -321,7 +346,7 @@ function lensRowsFor(
       return {
         subject: initiative.name,
         owner: initiative.ownerName || "Named owner required",
-        metric: `${percent(rate)} captured`,
+        metric: outcomeMetricLabel(initiative),
         basis: `${money(initiativeMeasured(initiative))} of ${money(initiativeCommitment(initiative))}`,
         state: normalizeStatus(initiative.statusFlag),
         tone: rate >= 70 ? "green" : rate >= 35 ? "amber" : "red",
@@ -333,7 +358,7 @@ function lensRowsFor(
     return priority.map((initiative) => ({
       subject: initiative.name,
       owner: initiative.ownerFunction || initiative.ownerTitle || "Team owner",
-      metric: initiative.primaryGoalName,
+      metric: outcomeMetricLabel(initiative),
       basis:
         initiative.confidenceLevel === "HIGH"
           ? "before/after evidence ready"
@@ -347,7 +372,7 @@ function lensRowsFor(
     return priority.map((initiative) => ({
       subject: initiative.name,
       owner: initiative.ownerName || "Process owner",
-      metric: initiative.primaryCategoryName,
+      metric: outcomeMetricLabel(initiative),
       basis:
         /agent|copilot|automation|workflow/i.test(
           `${initiative.name} ${initiative.primaryCategoryName}`,
@@ -367,9 +392,9 @@ function lensRowsFor(
         {
           subject: "Spend contracts",
           owner: "Finance / sourcing",
-          metric: "0 committed rows",
-          basis: "load or commit Spend Contracts before CFO demo",
-          state: "missing",
+          metric: "Spend feed not committed",
+          basis: "template/API ready; CFO view needs contract rows",
+          state: "data gap",
           tone: "red",
         },
       ];
@@ -491,8 +516,12 @@ function lensCalloutsFor(
       {
         label: "Adoption gaps",
         value: String(summary.adoptionGaps),
-        detail: "initiatives flagged by usage/adoption",
-        tone: summary.adoptionGaps > 0 ? "amber" : "green",
+        detail:
+          summary.atRisk > 0
+            ? `${summary.atRisk} risk/watch items tracked separately`
+            : "initiatives flagged by usage/adoption",
+        tone:
+          summary.adoptionGaps > 0 || summary.atRisk > 0 ? "amber" : "green",
       },
     ],
     initiatives: [
@@ -545,21 +574,27 @@ function lensCalloutsFor(
       {
         label: "Spend exposure",
         value: money(summary.spend),
-        detail: "vendor contracts in the AI portfolio",
+        detail:
+          summary.spend > 0
+            ? "vendor contracts in the AI portfolio"
+            : "spend feed not committed",
         tone: summary.spend > 0 ? "amber" : "red",
       },
       {
         label: "Renewals",
         value: String(summary.renewal90),
-        detail: "inside 90 days",
-        tone: summary.renewal90 > 0 ? "red" : "green",
+        detail:
+          summary.spend > 0
+            ? "inside 90 days"
+            : "not assessed until spend feed commits",
+        tone: summary.spend === 0 ? "amber" : summary.renewal90 > 0 ? "red" : "green",
       },
     ],
     risk: [
       {
         label: "Watch items",
         value: String(summary.atRisk),
-        detail: "risk, blocked, gap, or watch status",
+        detail: "risk, kill, contested, gap, or watch signals",
         tone: summary.atRisk > 0 ? "red" : "green",
       },
       {
@@ -1045,7 +1080,7 @@ export function AiControlTowerPage({
           detail={
             summary.spend > 0
               ? `${summary.renewal90} renewals inside 90 days`
-              : "0 committed contract rows"
+              : "spend feed not committed"
           }
           tone={summary.spend > 0 ? "amber" : "red"}
         />
