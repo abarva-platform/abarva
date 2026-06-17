@@ -246,8 +246,13 @@ export async function completeDeliverableRun(
       artifact_id: input.artifactId ?? null,
       section_count: input.sectionCount ?? null,
       retrieved_evidence: input.retrievedEvidence ?? null,
-      blockers: input.blockers ?? [],
-      warnings: input.warnings ?? [],
+      // blockers/warnings are JSONB columns. The write client binds params raw,
+      // so a non-empty JS array reaches Postgres as an array literal ({a,b}) and
+      // JSONB rejects it ("invalid input syntax for type json") — empty arrays
+      // slip through only because they bind as {}. Pre-serialize to a JSON string
+      // so JSONB always accepts it (the read path parses it back to an array).
+      blockers: JSON.stringify(input.blockers ?? []),
+      warnings: JSON.stringify(input.warnings ?? []),
       error: input.error ?? null,
       updated_at: new Date().toISOString(),
     })
