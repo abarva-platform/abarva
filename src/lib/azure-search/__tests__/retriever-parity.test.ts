@@ -36,6 +36,26 @@ describe("Azure AI Search retriever — parity & invariants", () => {
       expect(canonicalizeTenantKey("arcturus")).toBe("first-capital");
     });
 
+    // Regression 2026-06-17: these were in the backfill map but missing from the
+    // retriever map, so their deliverable evidence retrieval keyed on the wrong
+    // tenant_key and returned 0 hits. Both maps must carry the full roster.
+    it("maps skyharbor → skyharbor-air", () => {
+      expect(canonicalizeTenantKey("skyharbor")).toBe("skyharbor-air");
+      expect(canonicalizeTenantKey("skyharbor-airlines")).toBe("skyharbor-air");
+    });
+
+    it("maps lakeshore → lakeshore-holdings", () => {
+      expect(canonicalizeTenantKey("lakeshore")).toBe("lakeshore-holdings");
+    });
+
+    it("maps northstar → northstar-clinical", () => {
+      expect(canonicalizeTenantKey("northstar")).toBe("northstar-clinical");
+    });
+
+    it("maps firstcapital → first-capital", () => {
+      expect(canonicalizeTenantKey("firstcapital")).toBe("first-capital");
+    });
+
     it("returns canonical keys verbatim (idempotent)", () => {
       expect(canonicalizeTenantKey("apex-retail")).toBe("apex-retail");
       expect(canonicalizeTenantKey("meridian-health")).toBe("meridian-health");
