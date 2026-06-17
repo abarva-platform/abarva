@@ -85,3 +85,24 @@ describe('generateDeliverable — full live-shaped loop (mocked egress)', () => 
     expect(result.quality?.pass).toBe(true);
   });
 });
+
+describe('architect prompt — plan validity rules (regression 2026-06-17)', () => {
+  it('states the exact valid citation numbers and the grounding rule so the plan gate passes reliably', () => {
+    const req = amsRfpRequest();
+    const brief = getArtifactBrief(req);
+    const prompt = buildPassPrompt('architect', { req, brief, evidence: req.governedEvidenceBundle });
+    // The fixture bundle is citations [1]..[5].
+    expect(prompt.user).toContain('PLAN VALIDITY RULES');
+    expect(prompt.user).toContain('[1], [2], [3], [4], [5]');
+    expect(prompt.user).toMatch(/NEVER invent or cite any number outside this set/i);
+    expect(prompt.user).toMatch(/governed_facts.*mixed.*at least one of: evidenceCitations/i);
+    expect(prompt.user).toMatch(/expert_generic/);
+  });
+
+  it('tells the architect not to cite anything when there is no governed evidence', () => {
+    const req = amsRfpRequest();
+    const brief = getArtifactBrief(req);
+    const prompt = buildPassPrompt('architect', { req, brief, evidence: [] });
+    expect(prompt.user).toMatch(/there is NO governed evidence; do not cite any/i);
+  });
+});
