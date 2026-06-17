@@ -95,6 +95,10 @@ jobs:
 
           cat > audit-artifacts/first-capital-refresh-load/private-operator-job.yaml <<YAML
           name: fc-refresh-${GITHUB_RUN_ID}
+          identity:
+            type: UserAssigned
+            userAssignedIdentities:
+              ${PRIVATE_OPERATOR_REGISTRY_IDENTITY}: {}
           properties:
             environmentId: ${PRIVATE_OPERATOR_ENVIRONMENT_ID}
             configuration:
