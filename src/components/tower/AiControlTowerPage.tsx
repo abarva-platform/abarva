@@ -62,6 +62,14 @@ const LENSES: Array<{
       "Is AI spend turning into measurable productivity, governed adoption, and defensible business value?",
   },
   {
+    key: "initiatives",
+    kicker: "LIST · L1",
+    label: "Initiatives",
+    shortLabel: "Initiative",
+    question:
+      "Which initiative needs detail before a scale, hold, prove, or risk decision?",
+  },
+  {
     key: "productivity",
     kicker: "FLOW · L2",
     label: "Productivity",
@@ -289,6 +297,24 @@ function lensRowsFor(
     )
     .slice(0, 5);
 
+  if (lens === "initiatives") {
+    return [...initiatives]
+      .sort((a, b) => a.displayId.localeCompare(b.displayId))
+      .map((initiative) => ({
+        subject: `${initiative.displayId} · ${initiative.name}`,
+        owner: initiative.ownerName || "Named owner required",
+        metric: initiative.primaryGoalName,
+        basis: `${money(initiativeMeasured(initiative))} realized / ${money(initiativeCommitment(initiative))} promised`,
+        state: normalizeStatus(initiative.statusFlag),
+        tone:
+          initiative.confidenceLevel === "HIGH"
+            ? "green"
+            : initiative.confidenceLevel === "MED"
+              ? "amber"
+              : "red",
+      }));
+  }
+
   if (lens === "value_adoption") {
     return priority.map((initiative) => {
       const rate = captureRate(initiative);
@@ -469,6 +495,24 @@ function lensCalloutsFor(
         tone: summary.adoptionGaps > 0 ? "amber" : "green",
       },
     ],
+    initiatives: [
+      {
+        label: "Initiatives",
+        value: String(substrateCounts.initiatives || summary.active),
+        detail: "select one to inspect owner, scope, value, evidence, and risk",
+        tone: summary.active > 0 ? "blue" : "red",
+      },
+      {
+        label: "Needs proof",
+        value: String(
+          substrateCounts.initiatives > 0
+            ? Math.max(0, substrateCounts.initiatives - substrateCounts.kpis)
+            : Math.max(0, summary.active - substrateCounts.kpis),
+        ),
+        detail: "initiative value claims without KPI evidence rows",
+        tone: substrateCounts.kpis > 0 ? "amber" : "red",
+      },
+    ],
     productivity: [
       {
         label: "Tracked initiatives",
@@ -574,16 +618,28 @@ function LensCanvas({
   substrateCounts: TowerSubstrateCounts;
   towerToday: string;
 }) {
+  const [selectedInitiativeId, setSelectedInitiativeId] = useState<string>(
+    initiatives[0]?.initiativeId ?? "",
+  );
   const rows = useMemo(
     () => lensRowsFor(activeLens, initiatives, vendors, summary, substrateCounts),
     [activeLens, initiatives, vendors, summary, substrateCounts],
   );
+  const sortedInitiatives = useMemo(
+    () => [...initiatives].sort((a, b) => a.displayId.localeCompare(b.displayId)),
+    [initiatives],
+  );
+  const selectedInitiative =
+    sortedInitiatives.find(
+      (initiative) => initiative.initiativeId === selectedInitiativeId,
+    ) ?? sortedInitiatives[0] ?? null;
   const callouts = useMemo(
     () => lensCalloutsFor(activeLens, summary, substrateCounts),
     [activeLens, summary, substrateCounts],
   );
   const title: Record<LensKey, string> = {
     value_adoption: "Which AI investments are converting into value?",
+    initiatives: "Which initiative do we need to understand in detail?",
     productivity: "Where did work get faster without quality drift?",
     agents: "Which agents are resolving work, not just creating usage?",
     spend: "Which spend should be scaled, challenged, or stopped?",
@@ -603,6 +659,28 @@ function LensCanvas({
           </div>
           <StatusPill tone="blue">{towerToday}</StatusPill>
         </div>
+        {activeLens === "initiatives" && selectedInitiative ? (
+          <div style={initiativePickerStyle}>
+            <label htmlFor="tower-initiative-picker" style={eyebrowStyle}>
+              Select initiative
+            </label>
+            <select
+              id="tower-initiative-picker"
+              value={selectedInitiative.initiativeId}
+              onChange={(event) => setSelectedInitiativeId(event.target.value)}
+              style={selectStyle}
+            >
+              {sortedInitiatives.map((initiative) => (
+                <option
+                  key={initiative.initiativeId}
+                  value={initiative.initiativeId}
+                >
+                  {initiative.displayId} · {initiative.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
         <div style={{ overflowX: "auto" }}>
           <table style={tableStyle}>
             <thead>
@@ -618,7 +696,29 @@ function LensCanvas({
             </thead>
             <tbody>
               {rows.map((row, index) => (
-                <tr key={`${activeLens}-${row.subject}-${index}`}>
+                <tr
+                  key={`${activeLens}-${row.subject}-${index}`}
+                  onClick={
+                    activeLens === "initiatives"
+                      ? () =>
+                          setSelectedInitiativeId(
+                            sortedInitiatives[index]?.initiativeId ?? "",
+                          )
+                      : undefined
+                  }
+                  style={
+                    activeLens === "initiatives"
+                      ? {
+                          cursor: "pointer",
+                          background:
+                            selectedInitiative?.initiativeId ===
+                            sortedInitiatives[index]?.initiativeId
+                              ? "#f3f7ff"
+                              : "transparent",
+                        }
+                      : undefined
+                  }
+                >
                   <td style={tableCellStrongStyle}>{row.subject}</td>
                   <td style={tableCellStyle}>{row.owner}</td>
                   <td style={tableCellStyle}>{row.metric}</td>
@@ -635,27 +735,92 @@ function LensCanvas({
 
       <aside style={{ ...sectionStyle, marginTop: 0 }}>
         <div style={eyebrowStyle}>Decision read</div>
-        <h2 style={sectionTitleStyle}>{lensMeta.shortLabel}</h2>
-        <p style={sectionDeckStyle}>
-          Atlas should answer this lens from loaded metrics, evidence status, and
-          owner-linked portfolio records.
-        </p>
-        <div style={calloutGridStyle}>
-          {callouts.map((callout) => (
-            <div key={callout.label} style={calloutStyle}>
-              <div style={eyebrowStyle}>{callout.label}</div>
-              <div style={calloutValueStyle}>{callout.value}</div>
-              <div style={calloutDetailStyle}>{callout.detail}</div>
-              <div style={{ marginTop: 8 }}>
-                <StatusPill tone={callout.tone}>
-                  {callout.tone === "neutral" ? "read" : callout.tone}
-                </StatusPill>
-              </div>
+        {activeLens === "initiatives" && selectedInitiative ? (
+          <>
+            <h2 style={sectionTitleStyle}>{selectedInitiative.name}</h2>
+            <p style={sectionDeckStyle}>{selectedInitiative.description}</p>
+            <div style={initiativeDetailGridStyle}>
+              <DetailField
+                label="Owner"
+                value={`${selectedInitiative.ownerName || "Named owner required"} · ${selectedInitiative.ownerTitle || selectedInitiative.ownerFunction || "role required"}`}
+              />
+              <DetailField
+                label="Scope"
+                value={`${selectedInitiative.primaryCategoryName} · ${selectedInitiative.primaryGoalName}`}
+              />
+              <DetailField
+                label="Promised value"
+                value={`${money(initiativeCommitment(selectedInitiative))} committed · ${money(initiativeMeasured(selectedInitiative))} measured`}
+              />
+              <DetailField
+                label="Tracking"
+                value={`${percent(captureRate(selectedInitiative))} capture · ${normalizeStatus(selectedInitiative.confidenceLevel)} confidence`}
+              />
+              <DetailField
+                label="Status"
+                value={selectedInitiative.statusSummary || normalizeStatus(selectedInitiative.statusFlag)}
+              />
+              <DetailField
+                label="Template lineage"
+                value={selectedInitiative.loadedViaTemplate || "template not recorded"}
+              />
             </div>
-          ))}
-        </div>
+            {selectedInitiative.alignedRationale ? (
+              <div style={{ ...calloutStyle, marginTop: 8 }}>
+                <div style={eyebrowStyle}>Why this matters</div>
+                <p style={calloutDetailStyle}>
+                  {selectedInitiative.alignedRationale}
+                </p>
+              </div>
+            ) : null}
+            <div style={{ marginTop: 10 }}>
+              <StatusPill
+                tone={
+                  selectedInitiative.confidenceLevel === "HIGH"
+                    ? "green"
+                    : selectedInitiative.confidenceLevel === "MED"
+                      ? "amber"
+                      : "red"
+                }
+              >
+                {normalizeStatus(selectedInitiative.statusFlag)}
+              </StatusPill>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 style={sectionTitleStyle}>{lensMeta.shortLabel}</h2>
+            <p style={sectionDeckStyle}>
+              Atlas should answer this lens from loaded metrics, evidence status,
+              and owner-linked portfolio records.
+            </p>
+            <div style={calloutGridStyle}>
+              {callouts.map((callout) => (
+                <div key={callout.label} style={calloutStyle}>
+                  <div style={eyebrowStyle}>{callout.label}</div>
+                  <div style={calloutValueStyle}>{callout.value}</div>
+                  <div style={calloutDetailStyle}>{callout.detail}</div>
+                  <div style={{ marginTop: 8 }}>
+                    <StatusPill tone={callout.tone}>
+                      {callout.tone === "neutral" ? "read" : callout.tone}
+                    </StatusPill>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </aside>
     </section>
+  );
+}
+
+function DetailField({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={detailFieldStyle}>
+      <div style={eyebrowStyle}>{label}</div>
+      <div style={detailFieldValueStyle}>{value}</div>
+    </div>
   );
 }
 
@@ -738,6 +903,11 @@ export function AiControlTowerPage({
       kind: "message",
       label: "What actions go to steering?",
       value: "What actions should go to the next steering meeting?",
+    },
+    {
+      kind: "message",
+      label: "Show initiative detail",
+      value: "Which AI initiatives need a detail review before the demo?",
     },
   ]);
   const summary = useMemo(
@@ -1101,6 +1271,24 @@ const sectionDeckStyle: CSSProperties = {
   maxWidth: 780,
 };
 
+const initiativePickerStyle: CSSProperties = {
+  display: "grid",
+  gap: 5,
+  margin: "0 0 9px",
+  maxWidth: 520,
+};
+
+const selectStyle: CSSProperties = {
+  border: `1px solid ${TOKENS.rule}`,
+  borderRadius: 5,
+  background: TOKENS.surface,
+  color: TOKENS.ink,
+  padding: "7px 8px",
+  fontFamily: TOKENS.sans,
+  fontSize: 12,
+  fontWeight: 750,
+};
+
 const calloutGridStyle: CSSProperties = {
   display: "grid",
   gap: 7,
@@ -1128,6 +1316,27 @@ const calloutDetailStyle: CSSProperties = {
   color: TOKENS.muted,
   fontSize: 10,
   lineHeight: 1.25,
+};
+
+const initiativeDetailGridStyle: CSSProperties = {
+  display: "grid",
+  gap: 7,
+  marginTop: 10,
+};
+
+const detailFieldStyle: CSSProperties = {
+  border: `1px solid ${TOKENS.faint}`,
+  borderRadius: 6,
+  background: "#fbfcfa",
+  padding: 8,
+};
+
+const detailFieldValueStyle: CSSProperties = {
+  marginTop: 4,
+  color: TOKENS.ink,
+  fontSize: 11,
+  lineHeight: 1.3,
+  fontWeight: 720,
 };
 
 const tableStyle: CSSProperties = {

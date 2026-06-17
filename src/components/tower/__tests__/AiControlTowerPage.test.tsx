@@ -164,4 +164,50 @@ describe("AiControlTowerPage", () => {
     expect(screen.getByText("ServiceNow")).toBeInTheDocument();
     expect(container.querySelector("[data-message-count='0']")).toBeTruthy();
   });
+
+  it("lets executives inspect an individual initiative from the Tower lens", () => {
+    renderTower();
+
+    fireEvent.click(screen.getByRole("button", { name: /initiatives/i }));
+
+    expect(
+      screen.getByText("Which initiative do we need to understand in detail?"),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/select initiative/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Claims ServiceNow Agent" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Agent automation for claims triage."),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Riya Patel · VP Operations/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/\$1.2M committed · \$360K measured/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Usage is below business case."),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/select initiative/i), {
+      target: { value: "init-copilot" },
+    });
+
+    expect(
+      screen.getByRole("heading", { name: "Finance Copilot Rollout" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Finance analyst productivity uplift."),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Maya Chen · CFO delegate/)).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getAllByText("AI-001 · Claims ServiceNow Agent").find(
+        (node) => node.tagName.toLowerCase() === "td",
+      )!,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Claims ServiceNow Agent" }),
+    ).toBeInTheDocument();
+  });
 });
