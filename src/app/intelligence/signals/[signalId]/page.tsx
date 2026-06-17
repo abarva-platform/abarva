@@ -47,3 +47,6 @@ export default async function SignalDetailRoute({
     />
   );
 }
+
+// Per-request render (tenant-scoped reads / useSearchParams CSR bailout) — no static prerender.
+export const dynamic = 'force-dynamic';

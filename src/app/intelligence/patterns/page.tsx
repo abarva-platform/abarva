@@ -30,3 +30,6 @@ export default async function PatternGraphRoute() {
     </>
   );
 }
+
+// Per-request render (tenant-scoped reads / useSearchParams CSR bailout) — no static prerender.
+export const dynamic = 'force-dynamic';
