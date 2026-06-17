@@ -2,7 +2,9 @@
 // citations / ungrounded sections never hard-block a run (regression 2026-06-17).
 import { sanitizeGenerationPlan } from '../generation-plan';
 import { amsRfpRequest } from '../__fixtures__/ams-rfp';
-import type { DeliverableGenerationPlan } from '../types';
+import { getArtifactBrief } from '../artifact-brief-registry';
+import { getDeliverableStructure } from '../briefs/deliverable-structures';
+import type { DeliverableArtifactBrief, DeliverableGenerationPlan } from '../types';
 
 function planWith(sections: DeliverableGenerationPlan['sectionPlan']): DeliverableGenerationPlan {
   return {
@@ -55,5 +57,62 @@ describe('sanitizeGenerationPlan', () => {
     ] as DeliverableGenerationPlan['sectionPlan']);
     sanitizeGenerationPlan(plan, amsRfpRequest());
     expect(plan.evidenceMapping.map((m) => m.citationNumber)).toEqual([2]);
+  });
+
+  it('drops forbidden later-phase sections but keeps the decision-sections', () => {
+    const brief = {
+      forbiddenSectionTopics: ['current state', 'target state', 'solution design'],
+    } as DeliverableArtifactBrief;
+    const plan = planWith([
+      { key: 'exec_summary', title: 'Executive Summary', groundingMode: 'mixed', evidenceCitations: [1], assumptionsUsed: [], placeholders: [], rationale: '' },
+      { key: 'current_state', title: 'Current-State Evidence', groundingMode: 'governed_facts', evidenceCitations: [1], assumptionsUsed: [], placeholders: [], rationale: '' },
+      { key: 'target_arch', title: 'Target State Architecture', groundingMode: 'mixed', evidenceCitations: [1], assumptionsUsed: [], placeholders: [], rationale: '' },
+      { key: 'value_hypothesis', title: 'Value Hypothesis', groundingMode: 'mixed', evidenceCitations: [1], assumptionsUsed: [], placeholders: [], rationale: '' },
+    ] as DeliverableGenerationPlan['sectionPlan']);
+    plan.tableAndExhibitPlan = [
+      { key: 'target_state_diagram', title: 'Target State Architecture', kind: 'exhibit', targetFormat: 'docx', groundingMode: 'mixed' },
+      { key: 'risk_register', title: 'Risk / Issues / Dependencies', kind: 'table', targetFormat: 'docx', groundingMode: 'mixed' },
+    ] as DeliverableGenerationPlan['tableAndExhibitPlan'];
+    sanitizeGenerationPlan(plan, amsRfpRequest(), brief);
+    expect(plan.sectionPlan.map((s) => s.key)).toEqual(['exec_summary', 'value_hypothesis']);
+    expect(plan.tableAndExhibitPlan.map((t) => t.key)).toEqual(['risk_register']);
+  });
+
+  it('is a no-op for forbidden topics when the brief omits them', () => {
+    const plan = planWith([
+      { key: 'current_state', title: 'Current-State Evidence', groundingMode: 'mixed', evidenceCitations: [1], assumptionsUsed: [], placeholders: [], rationale: '' },
+    ] as DeliverableGenerationPlan['sectionPlan']);
+    sanitizeGenerationPlan(plan, amsRfpRequest());
+    expect(plan.sectionPlan.map((s) => s.key)).toEqual(['current_state']);
+  });
+});
+
+describe('MOVES_CHARTER structure (phase discipline)', () => {
+  it('no longer carries a current-state evidence analysis section', () => {
+    const structure = getDeliverableStructure('moves', 'charter')!;
+    expect(structure).toBeTruthy();
+    expect(structure.sections.map((s) => s.key)).not.toContain('current_state');
+    expect(structure.requiredSectionKeys).not.toContain('current_state');
+    // decision/commitment sections are present
+    for (const k of ['sponsor_commitment', 'value_hypothesis', 'kill_criterion']) {
+      expect(structure.sections.map((s) => s.key)).toContain(k);
+    }
+    expect((structure.forbiddenSectionTopics ?? []).join(' ')).toMatch(/target state/i);
+  });
+
+  it('surfaces the forbidden topics on the composed charter brief', () => {
+    const brief = getArtifactBrief({
+      module: 'moves',
+      useCaseArchetype: 'ai_program',
+      deliverableType: 'charter',
+      audience: ['sponsor'],
+      decisionContext: 'charter the move',
+      governedEvidenceBundle: [],
+      missingEvidence: [],
+      clientCompleteItems: [],
+      outputFormats: ['docx'],
+    } as unknown as Parameters<typeof getArtifactBrief>[0]);
+    expect(brief.forbiddenSectionTopics ?? []).toContain('current state');
+    expect(brief.requiredSections).not.toContain('current_state');
   });
 });

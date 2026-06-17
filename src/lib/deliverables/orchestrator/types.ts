@@ -178,6 +178,15 @@ export interface DeliverableArtifactBrief {
   recommendedStructure: BriefSection[]; // ordered; Claude MAY add more
   requiredSections: string[]; // keys that must appear
   optionalSections: string[];
+  /**
+   * Phase-discipline guard. Topics that MUST NOT appear as sections in this
+   * deliverable because they belong to a later phase (e.g. a P1 Charter must not
+   * carry a current-state evidence analysis or target-state architecture — those
+   * are P2/P3 work). Matched case-insensitively against a planned section's key
+   * and title; the architect is told to omit them AND the plan sanitizer drops
+   * any that slip through, so runs stay consistent. Optional — absent = no guard.
+   */
+  forbiddenSectionTopics?: string[];
   expectedExhibits: ExpectedExhibit[];
   expectedTables: ExpectedTable[];
   requiredPlaceholders: string[]; // [CLIENT TO COMPLETE] / [EVIDENCE MISSING] keys

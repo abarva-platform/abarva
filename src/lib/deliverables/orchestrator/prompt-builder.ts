@@ -97,6 +97,12 @@ function buildContextBlock(
     `RECOMMENDED STRUCTURE (a senior consultant's baseline — improve on it):`,
     brief.recommendedStructure.map((s, i) => `  ${i + 1}. ${s.title} — ${s.intent} [${s.groundingMode}]`).join('\n'),
     ``,
+    ...(brief.forbiddenSectionTopics && brief.forbiddenSectionTopics.length > 0
+      ? [
+          `PHASE DISCIPLINE — OUT OF SCOPE for this deliverable (these belong to later phases; do NOT add sections, exhibits, or extended analysis on them, even to "improve" the artifact): ${brief.forbiddenSectionTopics.join('; ')}. Keep this document to the decision it must drive; reference later-phase work only as a forward pointer, never as analysis.`,
+          ``,
+        ]
+      : []),
     `EXPECTED EXHIBITS: ${brief.expectedExhibits.map((e) => e.title).join('; ') || '(use judgment)'}`,
     `EXPECTED TABLES: ${brief.expectedTables.map((t) => t.title).join('; ') || '(use judgment)'}`,
     ``,

@@ -39,7 +39,15 @@ describe('deliverable structures', () => {
     expect(getDeliverableStructure('source', 'sourcing_strategy_memo')).toBeTruthy();
     for (const d of DELIVERABLE_STRUCTURES) {
       expect(d.requiredSectionKeys.length).toBeGreaterThan(0);
-      expect(d.sections.some((s) => s.groundingMode === 'governed_facts')).toBe(true);
+      // Every structure must ground in governed evidence somewhere — but a
+      // commitment doc like the P1 Charter grounds through `mixed` sections
+      // (evidence + synthesis) rather than a pure `governed_facts` current-state
+      // analysis, which belongs to P2. Both modes are evidence-bearing.
+      expect(
+        d.sections.some(
+          (s) => s.groundingMode === 'governed_facts' || s.groundingMode === 'mixed',
+        ),
+      ).toBe(true);
     }
   });
 });

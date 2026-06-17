@@ -12,6 +12,16 @@ import type {
   PlanValidationResult,
 } from './types';
 
+/** True when any forbidden topic appears (case-insensitive) in the given text. */
+function matchesForbiddenTopic(
+  text: string | undefined,
+  topics: string[],
+): boolean {
+  if (!text) return false;
+  const haystack = text.toLowerCase().replace(/_/g, ' ');
+  return topics.some((t) => haystack.includes(t.toLowerCase()));
+}
+
 /**
  * Deterministically repair an architect plan so it satisfies the plan gate
  * WITHOUT weakening it. The architect (an LLM) persistently invents citation
@@ -28,7 +38,39 @@ import type {
 export function sanitizeGenerationPlan(
   plan: DeliverableGenerationPlan,
   req: DeliverableIntelligenceRequest,
+  brief?: DeliverableArtifactBrief,
 ): DeliverableGenerationPlan {
+  // Phase discipline: drop any planned section / exhibit / enhancement whose key
+  // or title is about a forbidden later-phase topic (e.g. a P1 Charter must not
+  // carry a current-state evidence analysis or target-state design). The architect
+  // is told to omit these, but it freelances "improvements" anyway, so we strip
+  // them deterministically — this is what makes charter runs consistent. A required
+  // section is never forbidden (the two lists are disjoint by construction), so the
+  // thin-plan guard still holds.
+  const forbidden = brief?.forbiddenSectionTopics ?? [];
+  if (forbidden.length > 0) {
+    plan.sectionPlan = (plan.sectionPlan ?? []).filter(
+      (s) =>
+        !matchesForbiddenTopic(s.key, forbidden) &&
+        !matchesForbiddenTopic(s.title, forbidden),
+    );
+    if (Array.isArray(plan.tableAndExhibitPlan)) {
+      plan.tableAndExhibitPlan = plan.tableAndExhibitPlan.filter(
+        (t) =>
+          !matchesForbiddenTopic(t.key, forbidden) &&
+          !matchesForbiddenTopic(t.title, forbidden),
+      );
+    }
+    if (Array.isArray(plan.artifactEnhancementSuggestions)) {
+      plan.artifactEnhancementSuggestions =
+        plan.artifactEnhancementSuggestions.filter(
+          (e) =>
+            !matchesForbiddenTopic(e.addsSectionOrExhibit, forbidden) &&
+            !matchesForbiddenTopic(e.suggestion, forbidden),
+        );
+    }
+  }
+
   const valid = new Set(req.governedEvidenceBundle.map((e) => e.citationNumber));
   for (const s of plan.sectionPlan ?? []) {
     s.evidenceCitations = (s.evidenceCitations ?? []).filter((n) => valid.has(n));

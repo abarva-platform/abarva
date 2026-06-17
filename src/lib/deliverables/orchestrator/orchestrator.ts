@@ -171,7 +171,7 @@ export async function runDeliverableOrchestration(
   // Deterministically repair the LLM's invalid citations / ungrounded sections
   // before the gate — the architect won't reliably self-constrain (it cites
   // numbers outside the bundle), and those would be broken references anyway.
-  sanitizeGenerationPlan(plan, req);
+  sanitizeGenerationPlan(plan, req, brief);
   const planValidation = validateGenerationPlan(plan, req, brief);
   if (!planValidation.ok && enforcePlanGate) {
     return { ok: false, brief, plan, planValidation, passTrace: trace, blockedReason: `plan failed validation: ${planValidation.errors.join('; ')}` };

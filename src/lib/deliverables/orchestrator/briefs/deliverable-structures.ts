@@ -17,6 +17,14 @@ export interface DeliverableStructure {
   decisionToSupport: string;
   sections: BriefSection[];
   requiredSectionKeys: string[];
+  /**
+   * Topics that belong to a LATER phase and must not appear as sections here
+   * (phase discipline). E.g. a P1 Charter frames the decision to fund discovery
+   * — it does not pre-empt P2's current-state analysis or P3's target-state
+   * design. Matched case-insensitively against a section's key/title; the
+   * architect is told to omit them and the plan sanitizer drops any that slip in.
+   */
+  forbiddenSectionTopics?: string[];
 }
 
 const s = (
@@ -37,84 +45,118 @@ const s = (
 
 // ── Moves deliverables (strategic transformation artifacts) ──
 
+// A P1 Charter is a COMMITMENT instrument — it frames the decision to fund
+// discovery & design, names the sponsor, sets the value hypothesis and the kill
+// criterion. It must NOT pre-empt later phases: no current-state evidence
+// analysis (that is P2 Discovery), no target/future-state or solution/architecture
+// design (that is P3). The earlier structure carried a required "Current-State
+// Evidence" section, which produced premature current/target-state perspectives
+// and varied run-to-run; these are the canonical decision-sections instead.
 const MOVES_CHARTER: DeliverableStructure = {
   module: "moves",
   deliverableType: "charter",
   purpose:
-    "Authorize a strategic move with a clear mandate, scope, value hypothesis, and governance.",
+    "Authorize a strategic move with a clear mandate, sponsor commitment, scope, value hypothesis, governance, and kill criterion — and fund the move into discovery & design.",
   decisionToSupport:
-    "Approve chartering of the move and its scope/operating model.",
+    "Approve chartering of the move (a funded discovery & design gate, NOT a build authorization).",
   sections: [
     s(
       "exec_summary",
       "Executive Summary",
-      "Frame the move and the decision sought.",
+      "One tight section: the problem, the recommended approach at a headline level, the preliminary value hypothesis ($M–$M, labelled PRELIMINARY), program duration, and the decision sought. Framing only — NOT a current-state analysis.",
       "mixed",
     ),
     s(
       "decision_required",
       "Decision Required",
-      "State the explicit ask.",
+      "State the explicit charter ask and exactly what approval authorizes: a funded discovery & design gate, not a build.",
+      "mixed",
+    ),
+    s(
+      "sponsor_commitment",
+      "Sponsor & Stakeholder Commitment",
+      "Named sponsor, role, decision rights, review cadence, documented commitment evidence; key decision-makers, contributors, and blockers named as roles with decision rights.",
       "mixed",
     ),
     s(
       "problem_opportunity",
-      "Problem / Opportunity",
-      "Why now; the value at stake.",
+      "Problem, Opportunity & Why Now",
+      "Why now and the value at stake — executive framing only. Do NOT pre-empt P2 with a detailed current-state evidence analysis.",
       "mixed",
-    ),
-    s(
-      "current_state",
-      "Current-State Evidence",
-      "What the evidence shows today.",
-      "governed_facts",
     ),
     s(
       "objectives",
       "Strategic Objectives",
-      "Outcomes and success measures.",
+      "Target outcomes and the success measures that define done.",
       "mixed",
     ),
-    s("scope", "Scope & Out-of-Scope", "Boundaries.", "mixed"),
+    s(
+      "scope",
+      "Scope & Out-of-Scope",
+      "Explicit in-scope / out-of-scope boundary — specific capabilities and business processes, not generic.",
+      "mixed",
+    ),
     s(
       "value_hypothesis",
-      "Value Hypothesis & KPIs",
-      "How value is created and measured.",
-      "mixed",
-    ),
-    s("operating_model", "Operating Model & RACI", "Who does what.", "mixed"),
-    s(
-      "risks",
-      "Risks, Issues & Dependencies",
-      "Top risks and mitigations.",
+      "Value Hypothesis & Success Metrics",
+      "Primary KPI with its current baseline and a preliminary value range $M–$M; label every figure PRELIMINARY_ESTIMATE with its stated assumption.",
       "mixed",
     ),
     s(
-      "phase_gates",
-      "Phase Gates",
-      "Stage gates and criteria.",
-      "expert_template",
+      "governance_gates",
+      "Governance, Operating Model & Phase Gates",
+      "Steering committee, escalation path, decision velocity, high-level RACI, and the stage gates ahead (P2→P5) with entry criteria.",
+      "mixed",
+    ),
+    s(
+      "kill_criterion",
+      "Key Risks, Dependencies & Kill Criterion",
+      "Top risks, issues and dependencies with mitigations, plus a specific, observable condition that would terminate the program — not a vague risk statement.",
+      "mixed",
     ),
     s(
       "evidence_gaps",
       "Evidence Gaps & Client-to-Complete",
-      "What is missing.",
+      "What must still be confirmed in discovery; mark each [CLIENT TO COMPLETE], never invent.",
       "client_to_complete",
     ),
     s(
       "recommendation",
       "Recommendation & Next Actions",
-      "Clear recommendation + next steps.",
+      "Clear recommendation and the immediate next steps into P2 discovery.",
       "mixed",
     ),
   ],
   requiredSectionKeys: [
     "exec_summary",
     "decision_required",
-    "current_state",
+    "sponsor_commitment",
+    "problem_opportunity",
     "objectives",
+    "scope",
     "value_hypothesis",
+    "governance_gates",
+    "kill_criterion",
     "recommendation",
+  ],
+  forbiddenSectionTopics: [
+    "current state",
+    "current-state",
+    "as-is",
+    "as is assessment",
+    "baseline assessment",
+    "target state",
+    "target-state",
+    "future state",
+    "future-state",
+    "to-be",
+    "gap analysis",
+    "solution design",
+    "solution architecture",
+    "reference architecture",
+    "technical architecture",
+    "detailed design",
+    "implementation plan",
   ],
 };
 
