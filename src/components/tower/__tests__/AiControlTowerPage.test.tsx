@@ -259,16 +259,20 @@ describe("AiControlTowerPage", () => {
     ).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText(/select initiative/i), {
-      target: { value: "init-copilot" },
+      target: { value: "init-wealth" },
     });
 
     expect(
-      screen.getByRole("heading", { name: "Finance Copilot Rollout" }),
+      screen.getByRole("heading", { name: "Wealth Advisor Copilot Shadow Rollout" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Finance analyst productivity uplift."),
+      screen.getByText("Advisor copilot pilot with supervision and data-path review."),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Maya Chen · CFO delegate/)).toBeInTheDocument();
+    expect(screen.getByText(/Nora Walsh · SVP Wealth Technology/)).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Adoption, avoided work, quality guardrail").length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByText("firstcapital value realization")).not.toBeInTheDocument();
 
     fireEvent.click(
       screen.getAllByText("AI-001 · Claims ServiceNow Agent").find(
