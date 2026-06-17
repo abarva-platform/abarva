@@ -22,9 +22,15 @@ jest.mock('@/lib/integrations/ai-egress', () => ({
       dataClass: 'confidential',
       client: {
         messages: {
-          create: jest.fn(async (req: Record<string, unknown>) => {
+          // Mirrors the streaming call site (messages.stream(...).finalMessage()).
+          stream: jest.fn((req: Record<string, unknown>) => {
             createCalls.push(req);
-            return { id: `msg-${pass}`, content: [{ type: 'text', text }] };
+            return {
+              finalMessage: async () => ({
+                id: `msg-${pass}`,
+                content: [{ type: 'text', text }],
+              }),
+            };
           }),
         },
       },
