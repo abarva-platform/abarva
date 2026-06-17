@@ -1,5 +1,5 @@
 import { Packer } from "docx";
-import { getActiveClientKey } from "@/lib/active-client";
+import { getActiveClientRow } from "@/lib/active-client";
 import {
   getGeneratedArtifactById,
   renderableDocFromGeneratedArtifact,
@@ -105,16 +105,19 @@ export async function GET(
     );
   }
 
-  const activeClientId = await getActiveClientKey().catch(() => null);
-  if (!activeClientId) {
+  const activeClient = await getActiveClientRow().catch(() => null);
+  if (!activeClient) {
     return Response.json(
       { error: "forbidden", detail: "Active tenant could not be resolved." },
       { status: 403 },
     );
   }
 
+  // Scope by the client UUID. generated_artifacts.client_id stores the resolved client id
+  // (ctx.clientId), NOT the app client key — querying by the key returned null and surfaced
+  // a generated deliverable as a spurious 404.
   const record = await getGeneratedArtifactById(artifactId, {
-    clientId: activeClientId,
+    clientId: activeClient.id,
   });
   if (!record) {
     return Response.json(
