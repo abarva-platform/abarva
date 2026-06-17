@@ -108,7 +108,7 @@ export function IntelligenceExplorerPage({
         background: C.bg,
         display: "flex",
         flexDirection: "column",
-        height: "calc(100vh - 54px)",
+        height: "100%",
         minHeight: 0,
       }}
     >
