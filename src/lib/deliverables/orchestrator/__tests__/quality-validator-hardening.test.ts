@@ -28,6 +28,21 @@ describe("quality validator — truncation + tenant casing", () => {
     expect(res.blockers.join(" ")).not.toMatch(/truncat/i);
   });
 
+  it("does not flag a long section that ends on a markdown table or list (decomposed sections legitimately do)", () => {
+    const tableEnding =
+      "## Risks, Issues and Dependencies\nThe programme carries the following risks, each with an owner and a mitigation, tracked through the steering cadence and reviewed at every gate as the operating model and dependencies evolve across the delivery teams over time.\n\n" +
+      "| Risk | Owner | Mitigation |\n| --- | --- | --- |\n| Transition risk | PMO | Phased cutover with coexistence |\n| Data quality | CDO | Profiling and remediation backlog |";
+    const listEnding =
+      "## Recommended Next Steps\nWe recommend proceeding to fund the shaping work given the validated scope and the costed range, and to mobilise the first wave at the primary hub while the foundation is established for later waves and reuse across the estate.\n\n" +
+      "- Issue the RFP to the shortlisted vendors\n- Brief vendors and open the evaluation window\n- Stand up programme governance and decision rights";
+    const d1 = goodDocument();
+    d1.generatedSections[0].bodyMarkdown = tableEnding;
+    const d2 = goodDocument();
+    d2.generatedSections[0].bodyMarkdown = listEnding;
+    expect(validateDeliverableQuality(d1, amsRfpRequest()).blockers.join(" ")).not.toMatch(/truncat/i);
+    expect(validateDeliverableQuality(d2, amsRfpRequest()).blockers.join(" ")).not.toMatch(/truncat/i);
+  });
+
   it("blocks a raw tenant slug as the display name", () => {
     const doc = goodDocument();
     doc.clientDisplayName = "skyharbor";
