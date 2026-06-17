@@ -779,7 +779,7 @@ export function AiControlTowerPage({
 
       setAtlasPending(true);
       const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 18_000);
+      const timeout = window.setTimeout(() => controller.abort(), 45_000);
       try {
         const res = await fetch("/api/v1/atlas/chat", {
           method: "POST",
@@ -824,8 +824,8 @@ export function AiControlTowerPage({
             role: "atlas",
             content:
               err instanceof DOMException && err.name === "AbortError"
-                ? "Atlas timed out. Retry the prompt or check back in a moment."
-                : "Atlas could not reach the response path just now. Retry when ready.",
+                ? "I could not complete the live Atlas answer within this screen response window. The Tower facts below are still available. Next step: retry the same question or open the relevant evidence view."
+                : "I could not complete the live Atlas answer just now. The Tower facts below are still available. Next step: retry the same question or open the relevant evidence view.",
           },
         ]);
       } finally {
