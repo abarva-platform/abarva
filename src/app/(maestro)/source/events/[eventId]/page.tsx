@@ -143,6 +143,7 @@ export default async function SourceEventDetailPage({
     flagScope,
     "source_strategy_auto_draft",
   );
+  const simpleFrontEnabled = isFeatureEnabled(flagScope, "source_simple_front");
 
   return (
     <UniversalCanvasShell
@@ -159,6 +160,7 @@ export default async function SourceEventDetailPage({
       vendorResponseReadiness={vendorResponseReadiness}
       workspaceExplorerEnabled={workspaceExplorerEnabled}
       strategyAutoDraftEnabled={strategyAutoDraftEnabled}
+      simpleFrontEnabled={simpleFrontEnabled}
     />
   );
 }

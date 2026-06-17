@@ -69,6 +69,7 @@ export type FeatureFlagKey =
   | "moves_orchestrated_deliverables"
   | "workspace_explorer_source"
   | "workspace_explorer_moves"
+  | "source_simple_front"
   | "source_strategy_auto_draft"
   | "source_strategy_at_p0"
   | "context_corpus_explorer_enabled";
@@ -78,6 +79,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "context_corpus_explorer_enabled",
     summary:
       "Replaces the /intelligence page with the Context & Corpus Explorer S1 shell: Sentinel rail + 5 tabs (Insights, Explore, Change Log, Coverage & Trust, Corpus). Default OFF — V3 page remains for all tenants until flag is set. Tenant opt-in via includeTenants or ABARVA_FEATURE_CONTEXT_CORPUS_EXPLORER_ENABLED_TENANTS env var.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "source_simple_front",
+    summary:
+      "Enables the Source Start Here simple front: one calm per-stage screen with up to three evidence asks, one write-document action, and one next-step line. Tenant opt-in; default off so the advanced canvas remains the default until proven live.",
     policy: "tenant",
     includeTenants: [],
   },

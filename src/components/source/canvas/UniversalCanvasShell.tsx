@@ -22,6 +22,7 @@ import {
   resolveStageNextMove,
   type StageNextMoveActionTarget,
 } from "@/lib/source/stage-next-move";
+import { resolveSimpleStageScreen } from "@/lib/source/simple-front";
 import { nextStepNeeds } from "@/lib/source/next-step-needs";
 import {
   assessStageGate,
@@ -136,6 +137,7 @@ import { EventIdStrip } from "./EventIdStrip";
 import { EventStepRail } from "./EventStepRail";
 import { EventWorkspace, type WorkspaceTabKey } from "./EventWorkspace";
 import { StageNextMoveCard } from "./StageNextMoveCard";
+import { SimpleStageFront } from "./SimpleStageFront";
 import { CANVAS } from "./canvas-tokens";
 import { DocumentTab } from "./workspace-tabs/DocumentTab";
 import { GateTab } from "./workspace-tabs/GateTab";
@@ -187,6 +189,7 @@ interface UniversalCanvasShellProps {
   vendorResponseReadiness?: SourceVendorResponseCompleteness;
   workspaceExplorerEnabled?: boolean;
   strategyAutoDraftEnabled?: boolean;
+  simpleFrontEnabled?: boolean;
 }
 
 function renderStageDocumentContent({
@@ -316,6 +319,7 @@ export function UniversalCanvasShell({
   vendorResponseReadiness,
   workspaceExplorerEnabled = false,
   strategyAutoDraftEnabled = false,
+  simpleFrontEnabled = false,
 }: UniversalCanvasShellProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -444,6 +448,18 @@ export function UniversalCanvasShell({
         criteria: stageCriteria,
       }),
     [stageArtifacts, stageCriteria, viewStage],
+  );
+  const simpleStageScreen = useMemo(
+    () =>
+      resolveSimpleStageScreen(
+        {
+          artifactStates: liveArtifactStates,
+          gateCriterionStates: liveGateCriterionStates,
+          evidenceStates,
+        },
+        viewStage,
+      ),
+    [evidenceStates, liveArtifactStates, liveGateCriterionStates, viewStage],
   );
 
   // Context-bundle counts for the chat header.
@@ -1093,7 +1109,53 @@ export function UniversalCanvasShell({
                 style={WORKSPACE_WRAPPER_STYLE}
               >
                 <div style={WORKSPACE_INNER_STYLE}>
-                  {workspaceExplorerEnabled ? (
+                  {simpleFrontEnabled ? (
+                    <SimpleStageFront
+                      eventId={event.id}
+                      stage={viewStage}
+                      view={simpleStageScreen}
+                      generating={Boolean(
+                        pendingGenerationByCode[
+                          simpleStageScreen.deliverable.artifactCode
+                        ],
+                      )}
+                      registryArtifacts={registryArtifactsState}
+                      onGenerateArtifact={handleArtifactGenerate}
+                      onAdvanceStage={(stage) =>
+                        void handlePromoteStage(
+                          stage,
+                          `Advanced from Start here: ${simpleStageScreen.stageLabel}`,
+                        )
+                      }
+                      onRefresh={() => router.refresh()}
+                      advanced={
+                        workspaceExplorerEnabled ? (
+                          <SourceDeclutteredWorkspace
+                            nextMove={nextMove}
+                            onNextMoveAdvance={handleNextMoveAdvance}
+                            onDraftWithSentinel={handleDraftWithSentinel}
+                            fromStage={viewStage}
+                            criteria={stageCriteria}
+                            assessment={stageGateAssessment}
+                            recommendation={stageRecommendation}
+                            approvalViewByCriterionId={approvalViewByCriterionId}
+                            onChangeCriterionState={handleCriterionStateChange}
+                            pendingByCriterionId={pendingCriterionByCriterionId}
+                            onPromoteStage={handlePromoteStage}
+                            promotePending={promotePending}
+                            workspaceHref={workspaceHref}
+                          />
+                        ) : (
+                          <EventWorkspace
+                            tabs={tabs}
+                            defaultTab={initialTab}
+                            nextMove={nextMove}
+                            onNextMoveAdvance={handleNextMoveAdvance}
+                          />
+                        )
+                      }
+                    />
+                  ) : workspaceExplorerEnabled ? (
                     <SourceDeclutteredWorkspace
                       nextMove={nextMove}
                       onNextMoveAdvance={handleNextMoveAdvance}
