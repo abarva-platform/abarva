@@ -29,6 +29,12 @@ describe("AgentResponse citation defense", () => {
     expect(screen.getByLabelText("Citation gap")).toHaveTextContent(
       "no source citations attached",
     );
+    expect(
+      screen
+        .getByText(/The program is likely ready for the next stage/i)
+        .compareDocumentPosition(screen.getByLabelText("Citation gap")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("does not show a citation gap for operational non-claim output", () => {

@@ -169,6 +169,12 @@ describe("AgentDock · default mode", () => {
     expect(screen.getByLabelText("Citation gap")).toHaveTextContent(
       "no source citations attached",
     );
+    expect(
+      screen
+        .getByText(/The tenant is ready for a board-grade decision/i)
+        .compareDocumentPosition(screen.getByLabelText("Citation gap")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("does not show a citation gap when the surface carries usable evidence context", () => {

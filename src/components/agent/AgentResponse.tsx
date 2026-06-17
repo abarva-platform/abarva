@@ -122,8 +122,6 @@ export function AgentResponse({
         <SparsitySignal evidenceSummary={viewModel.sparsityEvidenceSummary} />
       ) : null}
 
-      {showCitationGap ? <CitationGapNotice /> : null}
-
       <div
         className="agent-response-body"
         style={{
@@ -137,6 +135,8 @@ export function AgentResponse({
           inlineNodes={citationNodes}
         />
       </div>
+
+      {showCitationGap ? <CitationGapNotice /> : null}
 
       {viewModel.confidence ||
       viewModel.contextCategoriesUsed.length > 0 ||

@@ -79,6 +79,34 @@ const INITIATIVES: AIInitiative[] = [
     alignedRationale: "Aligned to planning cycle reduction.",
     loadedViaTemplate: "synthetic",
   },
+  {
+    initiativeId: "init-wealth",
+    displayId: "AI-003",
+    name: "Wealth Advisor Copilot Shadow Rollout",
+    description: "Advisor copilot pilot with supervision and data-path review.",
+    primaryCategoryId: "copilot",
+    primaryCategoryName: "Advisor Copilot",
+    secondaryCategoryId: null,
+    secondaryCategoryName: null,
+    primaryGoalId: "goal-governance",
+    primaryGoalName: "firstcapital value realization",
+    stage: "pilot",
+    stageDetail: "Stalled",
+    ownerName: "Nora Walsh",
+    ownerTitle: "SVP Wealth Technology",
+    ownerFunction: "Wealth",
+    committedAnnualUsd: 700_000,
+    committedTotalUsd: 700_000,
+    measuredValueUsd: 120_000,
+    statusFlag: "stalled",
+    statusSummary:
+      "KILL CANDIDATE: unapproved client-note data path and FINRA supervision gaps.",
+    confidenceLevel: "HIGH",
+    alignedCallout: true,
+    alignedRationale:
+      "Advisor-facing AI needs supervisory evidence before scale.",
+    loadedViaTemplate: "synthetic",
+  },
 ];
 
 const VENDORS: AIInitiativeVendorRow[] = [
@@ -94,14 +122,34 @@ const VENDORS: AIInitiativeVendorRow[] = [
   },
 ];
 
-function renderTower() {
+function renderTower({
+  vendors = VENDORS,
+  substrateCounts = {
+    initiatives: 3,
+    vendors: 1,
+    kpis: 8,
+    decisions: 3,
+    stakeholderNotes: 4,
+    scenarios: 0,
+  },
+}: {
+  vendors?: AIInitiativeVendorRow[];
+  substrateCounts?: {
+    initiatives: number;
+    vendors: number;
+    kpis: number;
+    decisions: number;
+    stakeholderNotes: number;
+    scenarios: number;
+  };
+} = {}) {
   return render(
     <AiControlTowerPage
       tenantName="SkyHarbor Air"
       clientId="skyharbor"
       towerToday="2026-06-16"
       initiatives={INITIATIVES}
-      vendors={VENDORS}
+      vendors={vendors}
       bandMetrics={{
         metrics: [],
         isEmpty: false,
@@ -116,14 +164,7 @@ function renderTower() {
         emptyHint: null,
         deterministicSeed: true,
       }}
-      substrateCounts={{
-        initiatives: 2,
-        vendors: 1,
-        kpis: 8,
-        decisions: 3,
-        stakeholderNotes: 4,
-        scenarios: 0,
-      }}
+      substrateCounts={substrateCounts}
     />,
   );
 }
@@ -163,6 +204,35 @@ describe("AiControlTowerPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("ServiceNow")).toBeInTheDocument();
     expect(container.querySelector("[data-message-count='0']")).toBeTruthy();
+  });
+
+  it("keeps demo-critical Tower summaries aligned with the visible canvas", () => {
+    renderTower({
+      vendors: [],
+      substrateCounts: {
+        initiatives: 3,
+        vendors: 0,
+        kpis: 0,
+        decisions: 0,
+        stakeholderNotes: 0,
+        scenarios: 0,
+      },
+    });
+
+    expect(screen.getAllByText("spend feed not committed").length).toBeGreaterThan(0);
+    expect(screen.queryByText("0 committed contract rows")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /risk/i }));
+    expect(screen.getByText("KILL CANDIDATE: unapproved client-note data path and FINRA supervision gaps.")).toBeInTheDocument();
+    expect(screen.getByText("risk, kill, contested, gap, or watch signals")).toBeInTheDocument();
+    expect(screen.getByText("Watch items")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /initiatives/i }));
+    expect(
+      screen.getAllByText("Adoption, avoided work, quality guardrail").length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByText("firstcapital value realization")).not.toBeInTheDocument();
   });
 
   it("lets executives inspect an individual initiative from the Tower lens", () => {
