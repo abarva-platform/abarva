@@ -33,6 +33,13 @@ const MATERIALITY_RANK: Record<ContextInsight["materiality"], number> = {
   low: 2,
 };
 
+const CONFIDENCE_RANK: Record<ContextInsight["confidence"], number> = {
+  high: 0,
+  medium: 1,
+  low: 2,
+  none: 3,
+};
+
 export interface InsightEvaluationReceipt {
   tenantKey: string;
   evaluated: number;
@@ -40,6 +47,61 @@ export interface InsightEvaluationReceipt {
   written: number;
   superseded: number;
   errors: string[];
+}
+
+type InsightWrite = Omit<ContextInsight, "id" | "createdAt" | "updatedAt">;
+
+function uniqueStrings(values: string[]): string[] {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+function isStrongerInsight(candidate: InsightWrite, current: InsightWrite) {
+  const materiality =
+    MATERIALITY_RANK[candidate.materiality] - MATERIALITY_RANK[current.materiality];
+  if (materiality !== 0) return materiality < 0;
+  return CONFIDENCE_RANK[candidate.confidence] < CONFIDENCE_RANK[current.confidence];
+}
+
+function mergeInsightForUpsert(current: InsightWrite, candidate: InsightWrite) {
+  const winner = isStrongerInsight(candidate, current) ? candidate : current;
+  return {
+    ...winner,
+    derivedFromRecordIds: uniqueStrings([
+      ...current.derivedFromRecordIds,
+      ...candidate.derivedFromRecordIds,
+    ]),
+    derivedFromFactIds: uniqueStrings([
+      ...current.derivedFromFactIds,
+      ...candidate.derivedFromFactIds,
+    ]),
+  };
+}
+
+export function dedupeInsightsForUpsert(insights: InsightWrite[]): InsightWrite[] {
+  const byConflictKey = new Map<string, InsightWrite>();
+  const output: InsightWrite[] = [];
+
+  for (const insight of insights) {
+    if (!insight.entityName) {
+      output.push(insight);
+      continue;
+    }
+
+    const key = `${insight.tenantKey}\u0000${insight.ruleId}\u0000${insight.entityName}`;
+    const existing = byConflictKey.get(key);
+    if (!existing) {
+      byConflictKey.set(key, insight);
+      output.push(insight);
+      continue;
+    }
+
+    const merged = mergeInsightForUpsert(existing, insight);
+    byConflictKey.set(key, merged);
+    const index = output.indexOf(existing);
+    if (index >= 0) output[index] = merged;
+  }
+
+  return output;
 }
 
 async function resolveClientId(tenantKey: string): Promise<string> {
@@ -73,21 +135,22 @@ async function loadEnabledRules(
 }
 
 async function writeInsights(
-  insights: Array<Omit<ContextInsight, "id" | "createdAt" | "updatedAt">>,
+  insights: InsightWrite[],
   errors: string[],
 ): Promise<number> {
   if (insights.length === 0) return 0;
   const db = getAzureWriteFluentClient();
+  const deduped = dedupeInsightsForUpsert(insights);
   const result = await db
     .from("context_insights")
-    .upsert(insights.map(insightToRow), {
+    .upsert(deduped.map(insightToRow), {
       onConflict: "tenant_key,rule_id,entity_name",
     });
   if (result.error) {
     errors.push(`context_insights upsert: ${result.error.message}`);
     return 0;
   }
-  return result.count ?? insights.length;
+  return result.count ?? deduped.length;
 }
 
 async function supersedeInactiveInsights(
