@@ -744,6 +744,7 @@ class Db {
   constructor(client) {
     this.client = client;
     this.columnCache = new Map();
+    this.typeCache = new Map();
   }
   async columns(table) {
     if (this.columnCache.has(table)) return this.columnCache.get(table);
@@ -756,6 +757,25 @@ class Db {
     return set;
   }
   async tableExists(table) { return (await this.columns(table)).size > 0; }
+  async columnTypes(table) {
+    if (this.typeCache.has(table)) return this.typeCache.get(table);
+    const result = await this.client.query(
+      `select column_name, data_type, udt_name
+         from information_schema.columns
+        where table_schema = 'public' and table_name = $1`,
+      [table],
+    );
+    const map = new Map(result.rows.map((row) => [row.column_name, row.data_type || row.udt_name]));
+    this.typeCache.set(table, map);
+    return map;
+  }
+  sqlParamFor(types, column, value) {
+    if (value === undefined) return null;
+    if (value === null) return null;
+    const type = types.get(column);
+    if (type === 'json' || type === 'jsonb') return JSON.stringify(value);
+    return value;
+  }
   async scopePredicate(table, preferredScopeColumn, client) {
     const columns = await this.columns(table);
     if (columns.size === 0) return null;
@@ -792,6 +812,7 @@ class Db {
     }).filter((row) => Object.keys(row).length);
     if (!filtered.length) return 0;
     const columns = Object.keys(filtered[0]);
+    const types = await this.columnTypes(table);
     const updateColumns = columns.filter((column) => !conflictColumns.includes(column) && column !== 'id' && column !== 'created_at');
     let written = 0;
     for (let offset = 0; offset < filtered.length; offset += 200) {
@@ -799,7 +820,7 @@ class Db {
       const params = [];
       const tuples = batch.map((row) => {
         const placeholders = columns.map((column) => {
-          params.push(row[column] === undefined ? null : row[column]);
+          params.push(this.sqlParamFor(types, column, row[column]));
           return `$${params.length}`;
         });
         return `(${placeholders.join(', ')})`;
@@ -808,10 +829,14 @@ class Db {
       const onConflict = conflict.length
         ? `on conflict (${conflict.map(quoteIdent).join(', ')}) ${updateColumns.length ? `do update set ${updateColumns.map((column) => `${quoteIdent(column)} = excluded.${quoteIdent(column)}`).join(', ')}` : 'do nothing'}`
         : '';
-      await this.client.query(
-        `insert into ${quoteIdent(table)} (${columns.map(quoteIdent).join(', ')}) values ${tuples.join(', ')} ${onConflict}`,
-        params,
-      );
+      try {
+        await this.client.query(
+          `insert into ${quoteIdent(table)} (${columns.map(quoteIdent).join(', ')}) values ${tuples.join(', ')} ${onConflict}`,
+          params,
+        );
+      } catch (error) {
+        throw new Error(`upsert_failed:${table}:batch_${offset / 200 + 1}:${error instanceof Error ? error.message : String(error)}`);
+      }
       written += batch.length;
     }
     return written;

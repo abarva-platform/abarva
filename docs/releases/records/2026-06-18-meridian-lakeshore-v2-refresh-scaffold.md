@@ -16,6 +16,8 @@ Follow-up hardening adds schema-aware scoped archive/delete guards after the fir
 
 Second-pass hardening maps client-native business function names into the constrained platform taxonomy after the patched ACA worker surfaced the live `enterprise_context_records_business_function_check` constraint. A one-off ACA inspection job confirmed the allowed values are `FINANCE`, `SUPPLY_CHAIN`, `HUMAN_RESOURCES`, `OPERATIONS`, `COMMERCIAL_SALES`, `IT`, `COMPLIANCE_LEGAL`, `CORPORATE`, and `INDUSTRY_OPS`. The richer source labels remain preserved in record payloads and facts.
 
+Third-pass hardening makes the worker introspect JSON/JSONB column types and serialize values before insert. This addresses the next live ACA failure, where raw string fact values reached a JSON column and Postgres returned `invalid input syntax for type json`.
+
 This does not delete or load database rows. It prepares the audit-safe path for replacing the current Meridian/Lakeshore context, corpus, Intelligence, and AI Control Tower rows with the new V2 packs.
 
 ## Layer Impact
@@ -56,6 +58,7 @@ This does not delete or load database rows. It prepares the audit-safe path for 
 - FAIL/BLOCKED: ACA apply execution `job-abarva-private-operator-eus-34p9fe8` advanced past scoped delete, then failed before commit with `enterprise_context_records_business_function_check`. This release record includes the follow-up business-function taxonomy mapper; the patched worker must be redeployed and retried before claiming data-plane commit.
 - FAIL/BLOCKED: ACA apply execution `job-abarva-private-operator-eus-bgohqqk` still failed with `enterprise_context_records_business_function_check` when the mapper used inferred plain-English labels.
 - PASS: ACA inspection execution `job-abarva-private-operator-eus-w14mkps` queried the live check constraint and confirmed uppercase allowed values for `enterprise_context_records.business_function`.
+- FAIL/BLOCKED: ACA apply execution `job-abarva-private-operator-eus-isbyroc` advanced past the business-function constraint, then failed before commit with `invalid input syntax for type json`. This record includes the follow-up JSON/JSONB serialization guard; patched worker retry is required.
 
 ## Rollout Plan
 
@@ -79,20 +82,20 @@ Delete `scripts/context-packs/refresh-meridian-lakeshore-v2.mjs`, `docs/codex-ha
 
 - Local artifact generated: Yes. Dry-run preflight receipt and generated SQL were produced under `outputs/context-refresh/`.
 - Local parse/preflight: Yes. Meridian and Lakeshore local packs passed manifest/count/pattern/graph validation, and the worker dry-run produced record/fact/chunk/Tower row counts.
-- Product loader/API acceptance: Attempted through ACA private worker. The first apply failed before commit with `column "client_id" does not exist`; later applies advanced and failed before commit with `enterprise_context_records_business_function_check`. A one-off ACA inspection job confirmed the exact allowed taxonomy, and patched worker retry is required.
+- Product loader/API acceptance: Attempted through ACA private worker. The first apply failed before commit with `column "client_id" does not exist`; later applies advanced and failed before commit with `enterprise_context_records_business_function_check`, then `invalid input syntax for type json`. A one-off ACA inspection job confirmed the exact allowed taxonomy, and patched worker retry is required.
 - Azure Blob/object storage staging: Not run.
-- Queue/private worker handoff: Attempted with ACA job executions `job-abarva-private-operator-eus-bju2nk9`, `job-abarva-private-operator-eus-34p9fe8`, and `job-abarva-private-operator-eus-bgohqqk`; all failed before commit due to schema/value constraints. Inspection execution `job-abarva-private-operator-eus-w14mkps` succeeded.
+- Queue/private worker handoff: Attempted with ACA job executions `job-abarva-private-operator-eus-bju2nk9`, `job-abarva-private-operator-eus-34p9fe8`, `job-abarva-private-operator-eus-bgohqqk`, and `job-abarva-private-operator-eus-isbyroc`; all failed before commit due to schema/value constraints. Inspection execution `job-abarva-private-operator-eus-w14mkps` succeeded.
 - Parser extraction with source citations: Not run.
 - Review/approval queue: Not run.
 - Client data-plane commit: Not completed/proven.
 - Embedding/search refresh: Not run.
 - Live signed-in retrieval or answer QA: Not run.
 
-Current state: local refresh scaffold validated, web runtime deployed, private-worker apply has exposed two live constraints, and the schema-aware plus taxonomy-mapping worker fixes are ready for redeploy/retry.
+Current state: local refresh scaffold validated, web runtime deployed, private-worker apply has exposed scoped-column, taxonomy, and JSON serialization constraints; schema-aware fixes are ready for redeploy/retry.
 
 ## Known Gaps
 
-- The ACA archive/delete/load worker was run with `--apply`, but executions failed before commit with scoped-column and business-function taxonomy constraints; patched worker retry is still required.
+- The ACA archive/delete/load worker was run with `--apply`, but executions failed before commit with scoped-column, business-function taxonomy, and JSON serialization constraints; patched worker retry is still required.
 - Does not yet prove committed V2 packs in Azure/Postgres.
 - Does not refresh embeddings/search.
 - Does not run signed-in Intelligence/Tower QA.
