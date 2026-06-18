@@ -41,6 +41,7 @@ import { CorpusNotSeededState } from '@/components/intelligence-v4/CorpusNotSeed
 import { FIRST_CAPITAL_DEMO, FIRST_CAPITAL_AOP_DEMO, MERIDIAN_AOP_DEMO, APEX_RETAIL_AOP_DEMO } from './demo-data';
 import { buildSentinelIntelContext } from '@/lib/intelligence-v3/sentinel-intel-context';
 import type { EnterpriseContextOverview } from '@/lib/enterprise-context/intelligence-read-model';
+import type { ContextInsight } from '@/lib/intelligence/context-insights';
 import {
   APEX_RETAIL_BY_FN_OUTCOMES,
   APEX_RETAIL_BY_FN_ROWS,
@@ -76,6 +77,7 @@ interface Props {
   apexRetailData?: ApexRetailIntelligenceData | null;
   clientKey?: string | null;
   enterpriseContextOverview?: EnterpriseContextOverview | null;
+  contextInsights?: ContextInsight[];
 }
 
 export function IntelligenceV3Page({
@@ -84,6 +86,7 @@ export function IntelligenceV3Page({
   apexRetailData = null,
   clientKey = null,
   enterpriseContextOverview = null,
+  contextInsights = [],
 }: Props = {}) {
   const data = dataProp ?? FIRST_CAPITAL_DEMO;
   // PR-K2 · default landing is The Brief — it's the canonical
@@ -294,6 +297,7 @@ export function IntelligenceV3Page({
                   <EnterpriseContextCanvas
                     overview={enterpriseContextOverview}
                     tenantName={activeTenantName}
+                    insights={contextInsights}
                   />
                 )}
                 {/*
