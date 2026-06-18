@@ -20,6 +20,8 @@ Third-pass hardening makes the worker introspect JSON/JSONB column types and ser
 
 Fourth-pass hardening skips blank/null AI Control context fact values before insert. This addresses the next live ACA failure, where `ai_control_context_facts.fact_value` rejected null fact rows.
 
+Fifth-pass hardening de-duplicates rows by configured conflict key before each batched upsert. This addresses the next live ACA failure, where duplicate `ai_control_context_facts` keys in one insert caused Postgres to reject an `ON CONFLICT DO UPDATE` batch.
+
 This does not delete or load database rows. It prepares the audit-safe path for replacing the current Meridian/Lakeshore context, corpus, Intelligence, and AI Control Tower rows with the new V2 packs.
 
 ## Layer Impact
@@ -62,6 +64,7 @@ This does not delete or load database rows. It prepares the audit-safe path for 
 - PASS: ACA inspection execution `job-abarva-private-operator-eus-w14mkps` queried the live check constraint and confirmed uppercase allowed values for `enterprise_context_records.business_function`.
 - FAIL/BLOCKED: ACA apply execution `job-abarva-private-operator-eus-isbyroc` advanced past the business-function constraint, then failed before commit with `invalid input syntax for type json`. This record includes the follow-up JSON/JSONB serialization guard; patched worker retry is required.
 - FAIL/BLOCKED: ACA apply execution `job-abarva-private-operator-eus-sbeelwb` advanced past JSON serialization, then failed before commit with `upsert_failed:ai_control_context_facts:batch_1:null value in column "fact_value"`. This record includes the follow-up null fact filter; patched worker retry is required.
+- FAIL/BLOCKED: ACA apply execution `job-abarva-private-operator-eus-brv4cv4` advanced past null fact filtering, then failed before commit with `upsert_failed:ai_control_context_facts:batch_1:ON CONFLICT DO UPDATE command cannot affect row a second time`. This record includes the follow-up conflict-key de-duplication; patched worker retry is required.
 
 ## Rollout Plan
 
@@ -85,20 +88,20 @@ Delete `scripts/context-packs/refresh-meridian-lakeshore-v2.mjs`, `docs/codex-ha
 
 - Local artifact generated: Yes. Dry-run preflight receipt and generated SQL were produced under `outputs/context-refresh/`.
 - Local parse/preflight: Yes. Meridian and Lakeshore local packs passed manifest/count/pattern/graph validation, and the worker dry-run produced record/fact/chunk/Tower row counts.
-- Product loader/API acceptance: Attempted through ACA private worker. The first apply failed before commit with `column "client_id" does not exist`; later applies advanced and failed before commit with `enterprise_context_records_business_function_check`, `invalid input syntax for type json`, then null `ai_control_context_facts.fact_value`. A one-off ACA inspection job confirmed the exact allowed taxonomy, and patched worker retry is required.
+- Product loader/API acceptance: Attempted through ACA private worker. The first apply failed before commit with `column "client_id" does not exist`; later applies advanced and failed before commit with `enterprise_context_records_business_function_check`, `invalid input syntax for type json`, null `ai_control_context_facts.fact_value`, then duplicate upsert conflict keys. A one-off ACA inspection job confirmed the exact allowed taxonomy, and patched worker retry is required.
 - Azure Blob/object storage staging: Not run.
-- Queue/private worker handoff: Attempted with ACA job executions `job-abarva-private-operator-eus-bju2nk9`, `job-abarva-private-operator-eus-34p9fe8`, `job-abarva-private-operator-eus-bgohqqk`, `job-abarva-private-operator-eus-isbyroc`, and `job-abarva-private-operator-eus-sbeelwb`; all failed before commit due to schema/value constraints. Inspection execution `job-abarva-private-operator-eus-w14mkps` succeeded.
+- Queue/private worker handoff: Attempted with ACA job executions `job-abarva-private-operator-eus-bju2nk9`, `job-abarva-private-operator-eus-34p9fe8`, `job-abarva-private-operator-eus-bgohqqk`, `job-abarva-private-operator-eus-isbyroc`, `job-abarva-private-operator-eus-sbeelwb`, and `job-abarva-private-operator-eus-brv4cv4`; all failed before commit due to schema/value constraints. Inspection execution `job-abarva-private-operator-eus-w14mkps` succeeded.
 - Parser extraction with source citations: Not run.
 - Review/approval queue: Not run.
 - Client data-plane commit: Not completed/proven.
 - Embedding/search refresh: Not run.
 - Live signed-in retrieval or answer QA: Not run.
 
-Current state: local refresh scaffold validated, web runtime deployed, private-worker apply has exposed scoped-column, taxonomy, JSON serialization, and non-null fact constraints; schema-aware fixes are ready for redeploy/retry.
+Current state: local refresh scaffold validated, web runtime deployed, private-worker apply has exposed scoped-column, taxonomy, JSON serialization, non-null fact, and duplicate upsert constraints; schema-aware fixes are ready for redeploy/retry.
 
 ## Known Gaps
 
-- The ACA archive/delete/load worker was run with `--apply`, but executions failed before commit with scoped-column, business-function taxonomy, JSON serialization, and null-fact constraints; patched worker retry is still required.
+- The ACA archive/delete/load worker was run with `--apply`, but executions failed before commit with scoped-column, business-function taxonomy, JSON serialization, null-fact, and duplicate upsert constraints; patched worker retry is still required.
 - Does not yet prove committed V2 packs in Azure/Postgres.
 - Does not refresh embeddings/search.
 - Does not run signed-in Intelligence/Tower QA.
