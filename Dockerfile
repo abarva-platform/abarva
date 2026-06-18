@@ -104,6 +104,7 @@ COPY --from=build --chown=node:node /app/tsconfig.json ./tsconfig.json
 COPY --from=build --chown=node:node /app/src/lib ./src/lib
 COPY --from=build --chown=node:node /app/src/scripts ./src/scripts
 COPY --from=build --chown=node:node /app/scripts ./scripts
+COPY --from=build --chown=node:node /app/datasets/first-capital-financial-synthetic-v2 ./datasets/first-capital-financial-synthetic-v2
 COPY --from=build --chown=node:node /app/supabase/migrations ./supabase/migrations
 
 USER node

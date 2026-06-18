@@ -44,6 +44,7 @@ It also restores `/home` as a signed-in executive hub so the buyer flow no longe
 - `src/app/api/context/demo/route.ts`, `src/app/api/tower/synthesis/route.ts`, and `src/app/api/reasoning/*`: Finish route-helper export cleanup required by Next 16.
 - `src/lib/tower/synthesis-route-helpers.ts` and `src/lib/reasoning/*-state.ts`: Hold reusable test/state helpers outside API route modules.
 - `src/lib/ingestion/document-upload-parser.ts`: Restores the expected ingestion parser API with conservative text parsing and explicit binary-document warnings, unblocking existing Lakeshore rehearsal utilities.
+- `Dockerfile`: Copies the packaged First Capital V2 synthetic dataset into the runtime image so the clearly labeled fallback read model works in ACA when committed AI-control rows are absent.
 
 ## QA / Validation
 
@@ -55,6 +56,7 @@ It also restores `/home` as a signed-in executive hub so the buyer flow no longe
 - `npx jest src/app/api/tower/synthesis/route.test.ts src/app/api/tower/synthesis/route-fix-c.test.ts src/lib/ai-control-tower/__tests__/read-model.test.ts src/app/api/chat/agent/__tests__/agent-route-context-bundle.test.ts src/components/shell/__tests__/topbar-nav-home-admin.test.ts --runInBand` — passed, 43 tests.
 - Local read-model probe confirmed First Capital fallback: 12 initiatives, 7 usage rows, 8 productivity rows, 17 agent rows, 13 benefit rows, 12 spend rows, 27 risk rows, 10 actions, 25 evidence rows, 40 facts.
 - `npx next build --webpack` — passed. Warnings observed: duplicate Jest manual mocks during tests, `--localstorage-file` warning during build worker startup, and existing pg SSL-mode deprecation warning.
+- `az acr build --registry acrabarvalab001 --image abarva/web:firstcapital-demo-21b76d150 .` — passed, but the first live crawl showed ACA traffic still routed to an older revision; after traffic was shifted to the new revision, Tower rendered the new shell with zero fallback rows because the runtime image did not include `datasets/first-capital-financial-synthetic-v2`. Dockerfile was patched and requires a rebuilt image.
 
 ## Rollout Plan
 
