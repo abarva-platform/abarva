@@ -702,13 +702,15 @@ function buildAiControlRows(client) {
       } else {
         const recordKey = row.initiative_id || row.model_id || row.refresh_id || row.milestone_id || `${sourceKey}:${index + 1}`;
         for (const [factKey, value] of Object.entries(row)) {
+          const factValue = jsonValue(value);
+          if (factValue === null) continue;
           rowsByTable.ai_control_context_facts.push({
             ...base,
             record_type: sourceKey,
             record_key: recordKey,
             fact_key: factKey,
-            fact_type: typeof jsonValue(value),
-            fact_value: jsonValue(value),
+            fact_type: typeof factValue,
+            fact_value: factValue,
             fact_text: `${sourceKey} ${recordKey} ${factKey}: ${value}`,
             period_start: PERIOD_START,
             period_end: PERIOD_END,
