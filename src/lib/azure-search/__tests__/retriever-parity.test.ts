@@ -156,6 +156,234 @@ describe("Azure AI Search retriever — parity & invariants", () => {
         `/indexes/${TENANT_CONTEXT_INDEX_NAME}/docs/search`,
       );
     });
+
+    it("runs a structured-segment pass before the general query for AI Tower questions", async () => {
+      const bodies: Record<string, unknown>[] = [];
+      const fetchImpl = jest.fn(
+        async (_url: unknown, init?: { body?: BodyInit | null }) => {
+          const body =
+            typeof init?.body === "string"
+              ? (JSON.parse(init.body) as Record<string, unknown>)
+              : {};
+          bodies.push(body);
+          const value =
+            bodies.length === 1
+              ? [
+                  {
+                    "@search.score": 10,
+                    id: "structured-1",
+                    tenant_key: "first-capital",
+                    source_segment: "program_inventory",
+                    record_id: "FCF-INIT-007",
+                    chunk_id:
+                      "ctx:first-capital:program-inventory:fcf-init-007:c30",
+                    title: "Initiative milestones",
+                    body: "initiative_id: FCF-INIT-007 status: kill_candidate",
+                    sensitivity: "internal",
+                  },
+                ]
+              : [
+                  {
+                    "@search.score": 9,
+                    id: "structured-1",
+                    tenant_key: "first-capital",
+                    source_segment: "program_inventory",
+                    record_id: "FCF-INIT-007",
+                    chunk_id:
+                      "ctx:first-capital:program-inventory:fcf-init-007:c30",
+                    title: "Initiative milestones",
+                    body: "initiative_id: FCF-INIT-007 status: kill_candidate",
+                    sensitivity: "internal",
+                  },
+                  {
+                    "@search.score": 8,
+                    id: "general-1",
+                    tenant_key: "first-capital",
+                    source_segment: "it_financials",
+                    record_id: "FCF-SRC-001",
+                    chunk_id: "FCF-CHUNK-001",
+                    title: "Legacy source chunk",
+                    body: "general context",
+                    sensitivity: "internal",
+                  },
+                ];
+          return new Response(JSON.stringify({ value }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        },
+      ) as unknown as jest.MockedFunction<typeof fetch>;
+      process.env.AZURE_SEARCH_ADMIN_KEY = "test-key";
+
+      const chunks = await queryTenantContext({
+        tenantClientKey: "firstcapital",
+        query: "Which AI initiatives should we kill?",
+        topK: 2,
+        fetchImpl,
+      });
+
+      expect(fetchImpl).toHaveBeenCalledTimes(2);
+      expect(String(bodies[0]?.filter)).toContain(
+        "tenant_key eq 'first-capital'",
+      );
+      expect(String(bodies[0]?.filter)).toContain(
+        "search.in(source_segment, 'program_inventory', ',')",
+      );
+      expect(String(bodies[0]?.search)).toContain("kill_candidate");
+      expect(String(bodies[0]?.search)).toContain("supervision");
+      expect(String(bodies[1]?.filter)).not.toContain(
+        "search.in(source_segment",
+      );
+      expect(chunks.map((chunk) => chunk.chunkId)).toEqual([
+        "ctx:first-capital:program-inventory:fcf-init-007:c30",
+        "FCF-CHUNK-001",
+      ]);
+    });
+
+    it("expands engineer productivity questions across persona, KPI, and AI-tool segments", async () => {
+      const bodies: Record<string, unknown>[] = [];
+      const fetchImpl = jest.fn(
+        async (_url: unknown, init?: { body?: BodyInit | null }) => {
+          const body =
+            typeof init?.body === "string"
+              ? (JSON.parse(init.body) as Record<string, unknown>)
+              : {};
+          bodies.push(body);
+          return new Response(JSON.stringify({ value: [] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        },
+      ) as unknown as jest.MockedFunction<typeof fetch>;
+      process.env.AZURE_SEARCH_ADMIN_KEY = "test-key";
+
+      await queryTenantContext({
+        tenantClientKey: "first-capital",
+        query:
+          "What is the productivity impact of AI on software engineers at First Capital?",
+        topK: 20,
+        fetchImpl,
+      });
+
+      expect(fetchImpl).toHaveBeenCalledTimes(5);
+      expect(String(bodies[0]?.filter)).toContain(
+        "search.in(record_id, 'FCF-AI-002,FCF-KPI-006,FCF-PERS-007', ',')",
+      );
+      const structured = bodies.find((body) =>
+        String(body.search).includes("code-completion"),
+      );
+      expect(String(structured?.search)).toContain("github");
+      expect(String(structured?.filter)).toContain(
+        "search.in(source_segment, 'it_landscape,org_structure,program_inventory', ',')",
+      );
+    });
+
+    it("expands fraud value questions toward KPI evidence rows", async () => {
+      const bodies: Record<string, unknown>[] = [];
+      const fetchImpl = jest.fn(
+        async (_url: unknown, init?: { body?: BodyInit | null }) => {
+          const body =
+            typeof init?.body === "string"
+              ? (JSON.parse(init.body) as Record<string, unknown>)
+              : {};
+          bodies.push(body);
+          return new Response(JSON.stringify({ value: [] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        },
+      ) as unknown as jest.MockedFunction<typeof fetch>;
+      process.env.AZURE_SEARCH_ADMIN_KEY = "test-key";
+
+      await queryTenantContext({
+        tenantClientKey: "first-capital",
+        query: "What evidence backs the Fraud Graph v2 value case?",
+        topK: 20,
+        fetchImpl,
+      });
+
+      expect(fetchImpl).toHaveBeenCalledTimes(3);
+      expect(String(bodies[0]?.search)).toContain("Fraud Loss Avoidance");
+      expect(String(bodies[0]?.search)).toContain("current_value");
+      const structured = bodies.find((body) =>
+        String(body.search).includes("fraud loss avoidance"),
+      );
+      expect(String(structured?.filter)).toContain(
+        "search.in(source_segment, 'it_landscape,program_inventory', ',')",
+      );
+    });
+
+    it("expands AML persona governance questions toward persona and SR 11-7 rows", async () => {
+      const bodies: Record<string, unknown>[] = [];
+      const fetchImpl = jest.fn(
+        async (_url: unknown, init?: { body?: BodyInit | null }) => {
+          const body =
+            typeof init?.body === "string"
+              ? (JSON.parse(init.body) as Record<string, unknown>)
+              : {};
+          bodies.push(body);
+          return new Response(JSON.stringify({ value: [] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        },
+      ) as unknown as jest.MockedFunction<typeof fetch>;
+      process.env.AZURE_SEARCH_ADMIN_KEY = "test-key";
+
+      await queryTenantContext({
+        tenantClientKey: "first-capital",
+        query:
+          "Show me all AI tools that serve the AML analyst persona and their governance status.",
+        topK: 20,
+        fetchImpl,
+      });
+
+      expect(fetchImpl).toHaveBeenCalledTimes(6);
+      expect(String(bodies[0]?.filter)).toContain(
+        "search.in(record_id, 'FCF-CTRL-003', ',')",
+      );
+      expect(String(bodies[1]?.search)).toContain("model_risk_sr11_7");
+      expect(String(bodies[3]?.search)).toContain(
+        "AML Financial Crimes Analyst",
+      );
+      const structured = bodies.find((body) =>
+        String(body.search).includes("nice actimize"),
+      );
+      expect(String(structured?.filter)).toContain(
+        "search.in(source_segment, 'it_landscape,org_structure,program_inventory', ',')",
+      );
+    });
+
+    it("anchors AML scaling blocker questions to the SR 11-7 control row", async () => {
+      const bodies: Record<string, unknown>[] = [];
+      const fetchImpl = jest.fn(
+        async (_url: unknown, init?: { body?: BodyInit | null }) => {
+          const body =
+            typeof init?.body === "string"
+              ? (JSON.parse(init.body) as Record<string, unknown>)
+              : {};
+          bodies.push(body);
+          return new Response(JSON.stringify({ value: [] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        },
+      ) as unknown as jest.MockedFunction<typeof fetch>;
+      process.env.AZURE_SEARCH_ADMIN_KEY = "test-key";
+
+      await queryTenantContext({
+        tenantClientKey: "first-capital",
+        query: "What blocks scaling AML triage automation?",
+        topK: 20,
+        fetchImpl,
+      });
+
+      expect(fetchImpl).toHaveBeenCalledTimes(6);
+      expect(String(bodies[0]?.filter)).toContain(
+        "search.in(record_id, 'FCF-CTRL-003', ',')",
+      );
+      expect(String(bodies[3]?.search)).toContain("FCF-CTRL-003");
+    });
   });
 
   describe("shape parity — Azure result is drop-in for chunksByVector", () => {

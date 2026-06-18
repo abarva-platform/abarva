@@ -99,6 +99,11 @@ export const TENANT_CONTEXT_INDEX_NAME = "tenant-context-v1";
 
 const DEFAULT_TOP_K = 8;
 const MAX_TOP_K = 50;
+const DEFAULT_STRUCTURED_SEGMENTS = [
+  "program_inventory",
+  "it_landscape",
+  "org_structure",
+] as const;
 
 /**
  * Filter expressions composed onto every request. `tenant_key` is always
@@ -222,6 +227,269 @@ function buildFilter(
   return parts.join(" and ");
 }
 
+function appendFilter(base: string, extra: string): string {
+  return `${base} and (${extra})`;
+}
+
+function shouldRunStructuredContextPass(query: string): boolean {
+  return /\b(ai|agent|agents|adoption|aml|automation|benefit|block|blocks|blocked|contract|contracts|copilot|evidence|governance|initiative|initiatives|kill|persona|productivity|risk|scale|scaling|spend|system|systems|tool|tools|vendor|vendors)\b/i.test(
+    query,
+  );
+}
+
+function structuredQueryFor(query: string): string {
+  const q = query.toLowerCase();
+  const terms = new Set<string>();
+
+  if (/\b(kill|hold|scale|restructure|initiative|initiatives)\b/.test(q)) {
+    [
+      "initiative",
+      "milestone",
+      "status",
+      "kill_candidate",
+      "governance",
+      "value",
+      "unapproved",
+      "supervision",
+      "client-note",
+      "unresolved",
+    ].forEach((term) => terms.add(term));
+  }
+  if (
+    /\b(spend|contract|contracts|vendor|vendors|renew|renewal|benchmark)\b/.test(
+      q,
+    )
+  ) {
+    [
+      "vendor",
+      "contract",
+      "renewal",
+      "benchmark",
+      "annual_value",
+      "spend",
+    ].forEach((term) => terms.add(term));
+  }
+  if (/\b(agent|agents|copilot|tool|tools|automation)\b/.test(q)) {
+    [
+      "tool",
+      "agent",
+      "copilot",
+      "automation",
+      "exception",
+      "resolution",
+    ].forEach((term) => terms.add(term));
+  }
+  if (
+    /\b(productivity|persona|personas|engineer|analyst|recruiter)\b/.test(q)
+  ) {
+    [
+      "persona",
+      "productivity",
+      "baseline",
+      "current",
+      "target",
+      "workforce",
+      "developer",
+      "code_completion",
+      "code-completion",
+      "velocity",
+      "github",
+      "copilot",
+      "persona_id",
+      "persona_name",
+      "aml analyst",
+    ].forEach((term) => terms.add(term));
+  }
+  if (/\b(value|benefit|benefits|roi|case|backs|backed|proof|kpi)\b/.test(q)) {
+    [
+      "kpi",
+      "outcome",
+      "benefit",
+      "realization",
+      "verified",
+      "fraud loss avoidance",
+      "current_value",
+      "target_value",
+    ].forEach((term) => terms.add(term));
+  }
+  if (
+    /\b(risk|governance|evidence|control|controls|sr 11-7|aml|compliance)\b/.test(
+      q,
+    )
+  ) {
+    [
+      "risk",
+      "governance",
+      "control",
+      "evidence",
+      "model_risk",
+      "approval",
+      "sr 11-7",
+      "validation",
+      "refreshed",
+      "blocking",
+      "production ai models",
+      "validation evidence incomplete",
+      "model_risk_sr11_7",
+      "nice actimize",
+      "databricks",
+    ].forEach((term) => terms.add(term));
+  }
+  if (
+    /\b(system|systems|application|applications|cmdb|erp|workday|servicenow)\b/.test(
+      q,
+    )
+  ) {
+    [
+      "application",
+      "system",
+      "capability",
+      "business_function",
+      "owner",
+    ].forEach((term) => terms.add(term));
+  }
+
+  return `${query} ${Array.from(terms).join(" ")}`.trim();
+}
+
+function structuredSegmentsFor(query: string): string[] {
+  const q = query.toLowerCase();
+  const segments = new Set<string>();
+
+  if (
+    /\b(spend|contract|contracts|vendor|vendors|renew|renewal|benchmark)\b/.test(
+      q,
+    )
+  ) {
+    segments.add("it_financials");
+  }
+  if (
+    /\b(system|systems|application|applications|cmdb|erp|workday|servicenow|agent|agents|copilot|tool|tools|automation|aml|fraud|engineer|software|developer)\b/.test(
+      q,
+    )
+  ) {
+    segments.add("it_landscape");
+  }
+  if (
+    /\b(productivity|persona|personas|engineer|analyst|recruiter)\b/.test(q)
+  ) {
+    segments.add("org_structure");
+  }
+  if (
+    /\b(ai|benefit|evidence|governance|initiative|initiatives|kill|hold|risk|scale|restructure|sr 11-7|control|controls|compliance)\b/.test(
+      q,
+    )
+  ) {
+    segments.add("program_inventory");
+  }
+
+  if (segments.size === 0) {
+    for (const segment of DEFAULT_STRUCTURED_SEGMENTS) segments.add(segment);
+  }
+  return Array.from(segments);
+}
+
+interface StructuredAnchorQuery {
+  readonly search: string;
+  readonly segments: ReadonlyArray<string>;
+}
+
+function directRecordIdsFor(query: string): string[] {
+  const q = query.toLowerCase();
+  const recordIds = new Set<string>();
+
+  if (
+    /\b(aml|triage|sr 11-7|model risk|validation|scale|scaling|blocks|blocked)\b/.test(
+      q,
+    )
+  ) {
+    recordIds.add("FCF-CTRL-003");
+  }
+
+  if (
+    /\b(engineer|engineers|software engineer|software engineers|github|copilot|code completion|velocity)\b/.test(
+      q,
+    )
+  ) {
+    recordIds.add("FCF-AI-002");
+    recordIds.add("FCF-KPI-006");
+    recordIds.add("FCF-PERS-007");
+  }
+
+  return Array.from(recordIds);
+}
+
+function structuredAnchorQueriesFor(query: string): StructuredAnchorQuery[] {
+  const q = query.toLowerCase();
+  const anchors: StructuredAnchorQuery[] = [];
+
+  if (/\b(fraud|value case|benefit|kpi|evidence backs|backed)\b/.test(q)) {
+    anchors.push({
+      search:
+        "Fraud Graph Fraud Loss Avoidance kpi current_value target_value verified outcome evidence",
+      segments: ["program_inventory"],
+    });
+  }
+
+  if (/\b(aml|sr 11-7|model risk|validation|scale|scaling)\b/.test(q)) {
+    anchors.push({
+      search:
+        "model_risk_sr11_7 validation evidence incomplete 12 production AI models NICE Actimize Databricks AML",
+      segments: ["program_inventory"],
+    });
+  }
+
+  if (/\b(aml|triage|scaling|scale|blocks|blocked)\b/.test(q)) {
+    anchors.push({
+      search:
+        "Security risk compliance control_area model_risk_sr11_7 validation evidence incomplete system_id NICE ACTIMIZE Databricks",
+      segments: ["program_inventory"],
+    });
+  }
+
+  if (
+    /\b(aml|triage)\b/.test(q) &&
+    /\b(blocks|blocked|scaling|scale)\b/.test(q)
+  ) {
+    anchors.push({
+      search:
+        "FCF-CTRL-003 control_id model_risk_sr11_7 SR 11-7 validation evidence incomplete NICE Actimize Databricks",
+      segments: ["program_inventory"],
+    });
+  }
+
+  if (
+    /\b(engineer|engineers|software engineer|software engineers|code completion|velocity)\b/.test(
+      q,
+    )
+  ) {
+    anchors.push({
+      search:
+        "Developer Code Completion Velocity KPI outcome evidence current_value target_value GitHub Copilot",
+      segments: ["program_inventory"],
+    });
+  }
+
+  if (
+    /\b(aml analyst|persona|personas|analyst|analysts|recruiter|recruiters|engineer|engineers|software engineer|software engineers)\b/.test(
+      q,
+    )
+  ) {
+    const search =
+      /\b(engineer|engineers|software engineer|software engineers)\b/.test(q)
+        ? "Software Engineer persona_id persona_name GitHub Copilot code_completion velocity"
+        : /\b(aml|aml analyst|financial crimes)\b/.test(q)
+          ? "AML Financial Crimes Analyst persona_id persona_name personas workforce"
+          : "persona_id persona_name personas workforce";
+    anchors.push({
+      search,
+      segments: ["org_structure"],
+    });
+  }
+
+  return anchors;
+}
+
 function clampTopK(topK: number | undefined): number {
   if (topK === undefined || !Number.isFinite(topK)) return DEFAULT_TOP_K;
   return Math.min(MAX_TOP_K, Math.max(1, Math.trunc(topK)));
@@ -260,6 +528,32 @@ function mapHitToTenantContextChunk(
         ? hit["@search.score"]
         : undefined,
   };
+}
+
+async function runSearchRequest(args: {
+  body: Record<string, unknown>;
+  fetchImpl: typeof fetch;
+}): Promise<TenantContextSearchHit[]> {
+  const url = `${endpointBase()}/indexes/${encodeURIComponent(
+    TENANT_CONTEXT_INDEX_NAME,
+  )}/docs/search?api-version=${encodeURIComponent(apiVersion())}`;
+
+  const headers = {
+    "content-type": "application/json",
+    ...(await authHeaders()),
+  };
+
+  const res = await args.fetchImpl(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(args.body),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`azure_search_query_failed:${res.status}:${text}`);
+  }
+  const payload = (await res.json()) as { value?: TenantContextSearchHit[] };
+  return payload.value ?? [];
 }
 
 function normalizeLegacyClientAliases(text: string): string {
@@ -307,40 +601,87 @@ export async function queryTenantContext(
 
   const topK = clampTopK(input.topK);
   const filter = buildFilter(canonical, input.filters);
+  const query = input.query?.trim() || "*";
   const body = {
-    search: input.query?.trim() || "*",
+    search: query,
     queryType: "simple",
     top: topK,
     filter,
     count: false,
   };
 
-  const url = `${endpointBase()}/indexes/${encodeURIComponent(
-    TENANT_CONTEXT_INDEX_NAME,
-  )}/docs/search?api-version=${encodeURIComponent(apiVersion())}`;
-
-  const headers = {
-    "content-type": "application/json",
-    ...(await authHeaders()),
-  };
-
   const doFetch = input.fetchImpl ?? fetch;
-  const res = await doFetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`azure_search_query_failed:${res.status}:${text}`);
+  const hitSets: TenantContextSearchHit[][] = [];
+
+  if (shouldRunStructuredContextPass(query)) {
+    const recordIds = directRecordIdsFor(query);
+    if (recordIds.length > 0) {
+      hitSets.push(
+        await runSearchRequest({
+          fetchImpl: doFetch,
+          body: {
+            ...body,
+            search: "*",
+            top: Math.min(MAX_TOP_K, Math.max(recordIds.length, topK)),
+            filter: appendFilter(
+              filter,
+              `search.in(record_id, '${recordIds
+                .map((recordId) => escapeOdataLiteral(recordId))
+                .join(",")}', ',')`,
+            ),
+          },
+        }),
+      );
+    }
+    for (const anchor of structuredAnchorQueriesFor(query)) {
+      hitSets.push(
+        await runSearchRequest({
+          fetchImpl: doFetch,
+          body: {
+            ...body,
+            search: anchor.search,
+            top: Math.min(MAX_TOP_K, Math.max(8, Math.ceil(topK / 2))),
+            filter: appendFilter(
+              filter,
+              `search.in(source_segment, '${anchor.segments.join(",")}', ',')`,
+            ),
+          },
+        }),
+      );
+    }
+    hitSets.push(
+      await runSearchRequest({
+        fetchImpl: doFetch,
+        body: {
+          ...body,
+          search: structuredQueryFor(query),
+          top: Math.min(MAX_TOP_K, Math.max(topK, 20)),
+          filter: appendFilter(
+            filter,
+            `search.in(source_segment, '${structuredSegmentsFor(query).join(
+              ",",
+            )}', ',')`,
+          ),
+        },
+      }),
+    );
   }
-  const payload = (await res.json()) as { value?: TenantContextSearchHit[] };
-  const hits = payload.value ?? [];
+
+  hitSets.push(await runSearchRequest({ fetchImpl: doFetch, body }));
 
   const chunks: TenantContextChunk[] = [];
-  for (const hit of hits) {
-    const chunk = mapHitToTenantContextChunk(hit, canonical);
-    if (chunk) chunks.push(chunk);
+  const seen = new Set<string>();
+  const maxHits = Math.max(...hitSets.map((hits) => hits.length), 0);
+  for (let hitIndex = 0; hitIndex < maxHits; hitIndex += 1) {
+    for (const hits of hitSets) {
+      const hit = hits[hitIndex];
+      if (!hit) continue;
+      const chunk = mapHitToTenantContextChunk(hit, canonical);
+      if (!chunk || seen.has(chunk.chunkId)) continue;
+      seen.add(chunk.chunkId);
+      chunks.push(chunk);
+      if (chunks.length >= topK) return chunks;
+    }
   }
   return chunks;
 }

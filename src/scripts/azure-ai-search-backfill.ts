@@ -35,6 +35,16 @@ function readIntEnv(name: string, fallback: number): number {
   return parsed;
 }
 
+function scopedTenantKeys(): string[] {
+  const raw = process.env.TENANT_KEY?.trim();
+  if (!raw) return [];
+  return [...new Set([raw, canonicalTenantKey(raw)])];
+}
+
+function canonicalScopeTenants(scope: string[]): string[] {
+  return [...new Set(scope.map((tenant) => canonicalTenantKey(tenant)))];
+}
+
 function mode(): Mode {
   const value = readEnv(
     "AZURE_SEARCH_BACKFILL_MODE",
@@ -93,14 +103,23 @@ function dbPool(): Pool {
   });
 }
 
-async function sourceCounts(db: Pool): Promise<Record<string, number>> {
-  const result = await db.query<{ tenant_key: string; count: string }>(`
+async function sourceCounts(
+  db: Pool,
+  scope: string[],
+): Promise<Record<string, number>> {
+  const params = scope.length > 0 ? [scope] : [];
+  const scopeSql = scope.length > 0 ? "and tenant_key = any($1::text[])" : "";
+  const result = await db.query<{ tenant_key: string; count: string }>(
+    `
     select tenant_key, count(*)::text as count
     from enterprise_context_chunks
     where coalesce(lifecycle_state, 'active') = 'active'
+      ${scopeSql}
     group by tenant_key
     order by tenant_key
-  `);
+  `,
+    params,
+  );
   const counts: Record<string, number> = {};
   for (const row of result.rows) {
     const tenantKey = canonicalTenantKey(row.tenant_key);
@@ -113,8 +132,12 @@ async function sourceCounts(db: Pool): Promise<Record<string, number>> {
 async function* readChunks(
   db: Pool,
   batchSize: number,
+  scope: string[],
 ): AsyncGenerator<EnterpriseContextChunkRow[]> {
   let offset = 0;
+  const params =
+    scope.length > 0 ? [batchSize, offset, scope] : [batchSize, offset];
+  const scopeSql = scope.length > 0 ? "and c.tenant_key = any($3::text[])" : "";
   for (;;) {
     const result = await db.query<EnterpriseContextChunkRow>(
       `
@@ -148,32 +171,39 @@ async function* readChunks(
        and gor.object_id = c.chunk_id
        and gor.client_key = c.tenant_key
       where coalesce(c.lifecycle_state, 'active') = 'active'
+        ${scopeSql}
       order by c.tenant_key, c.chunk_id
       limit $1 offset $2
     `,
-      [batchSize, offset],
+      params,
     );
     if (result.rows.length === 0) return;
     yield result.rows;
     offset += result.rows.length;
+    params[1] = offset;
   }
 }
 
 async function* readNonActiveChunkDeletes(
   db: Pool,
   batchSize: number,
+  scope: string[],
 ): AsyncGenerator<SearchDocument[]> {
   let offset = 0;
+  const params =
+    scope.length > 0 ? [batchSize, offset, scope] : [batchSize, offset];
+  const scopeSql = scope.length > 0 ? "and tenant_key = any($3::text[])" : "";
   for (;;) {
     const result = await db.query<{ tenant_key: string; chunk_id: string }>(
       `
       select tenant_key, chunk_id
       from enterprise_context_chunks
       where coalesce(lifecycle_state, 'active') <> 'active'
+        ${scopeSql}
       order by tenant_key, chunk_id
       limit $1 offset $2
     `,
-      [batchSize, offset],
+      params,
     );
     if (result.rows.length === 0) return;
     yield result.rows.map((row) =>
@@ -183,6 +213,7 @@ async function* readNonActiveChunkDeletes(
       ),
     );
     offset += result.rows.length;
+    params[1] = offset;
   }
 }
 
@@ -212,6 +243,64 @@ async function uploadBatch(docs: SearchDocument[]): Promise<void> {
       .join(" | ");
     throw new Error(
       `azure_search_doc_index_failed:${failed.length} document(s) rejected with HTTP 200: ${detail}`,
+    );
+  }
+}
+
+async function collectTenantSearchDocs(
+  tenant: string,
+): Promise<Array<{ tenant_key: string; chunk_id: string }>> {
+  const docs: Array<{ tenant_key: string; chunk_id: string }> = [];
+  const filter = `tenant_key eq '${tenant.replace(/'/g, "''")}'`;
+  for (let skip = 0; ; skip += 1000) {
+    const res = await searchRequest("/indexes/tenant-context-v1/docs/search", {
+      method: "POST",
+      body: JSON.stringify({
+        search: "*",
+        filter,
+        select: "tenant_key,chunk_id",
+        top: 1000,
+        skip,
+      }),
+    });
+    if (!res.ok) {
+      throw new Error(
+        `azure_search_purge_query_failed:${res.status}:${await res.text()}`,
+      );
+    }
+    const json = (await res.json()) as {
+      value?: Array<{ tenant_key?: string; chunk_id?: string }>;
+    };
+    const rows = json.value ?? [];
+    for (const row of rows) {
+      if (row.tenant_key && row.chunk_id) {
+        docs.push({ tenant_key: row.tenant_key, chunk_id: row.chunk_id });
+      }
+    }
+    if (rows.length < 1000) break;
+  }
+  return docs;
+}
+
+async function purgeTenantSearchDocs(tenants: string[]): Promise<void> {
+  for (const tenant of tenants) {
+    const rows = await collectTenantSearchDocs(tenant);
+    let deleted = 0;
+    for (let index = 0; index < rows.length; index += 1000) {
+      const batch = rows.slice(index, index + 1000);
+      await uploadBatch(
+        batch.map((row) =>
+          toTenantContextDeleteDocument(row.tenant_key, row.chunk_id),
+        ),
+      );
+      deleted += batch.length;
+    }
+    console.log(
+      JSON.stringify({
+        event: "azure_search_backfill_tenant_purged",
+        tenant,
+        deleted,
+      }),
     );
   }
 }
@@ -280,7 +369,8 @@ async function main(): Promise<void> {
   const runMode = mode();
   const db = dbPool();
   try {
-    const counts = await sourceCounts(db);
+    const scope = scopedTenantKeys();
+    const counts = await sourceCounts(db, scope);
     if (runMode === "plan") {
       console.log(
         JSON.stringify(
@@ -288,6 +378,7 @@ async function main(): Promise<void> {
             event: "azure_search_backfill_plan",
             endpoint: endpoint(),
             index: "tenant-context-v1",
+            tenantScope: scope,
             sourceCounts: counts,
           },
           null,
@@ -299,8 +390,15 @@ async function main(): Promise<void> {
 
     if (runMode === "apply") {
       const batchSize = readIntEnv("AZURE_SEARCH_BACKFILL_BATCH_SIZE", 500);
+      if (process.env.AZURE_SEARCH_BACKFILL_PURGE_BEFORE_APPLY === "true") {
+        const tenants = canonicalScopeTenants(scope);
+        if (tenants.length === 0) {
+          throw new Error("azure_search_backfill_purge_requires_tenant_scope");
+        }
+        await purgeTenantSearchDocs(tenants);
+      }
       let uploaded = 0;
-      for await (const rows of readChunks(db, batchSize)) {
+      for await (const rows of readChunks(db, batchSize, scope)) {
         const now = new Date();
         const deletes = staleAliasDeleteDocs(rows);
         if (deletes.length > 0) {
@@ -317,7 +415,11 @@ async function main(): Promise<void> {
           }),
         );
       }
-      for await (const deletes of readNonActiveChunkDeletes(db, batchSize)) {
+      for await (const deletes of readNonActiveChunkDeletes(
+        db,
+        batchSize,
+        scope,
+      )) {
         if (deletes.length > 0) {
           await uploadBatch(deletes);
           console.log(
