@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -38,12 +38,16 @@ Makes the Intelligence Enterprise Context canvas show the materialized live cont
 - PASS: `./node_modules/.bin/eslint src/app/intelligence/page.tsx src/components/intelligence-v3/EnterpriseContextCanvas.tsx src/components/intelligence-v3/IntelligenceV3Page.tsx src/components/intelligence-v3/__tests__/EnterpriseContextCanvas.test.tsx`
 - PASS: `./node_modules/.bin/tsc --noEmit --pretty false`
 - PASS: `git diff --check`
-- NOT RUN: PR CI is not run until the PR is opened.
-- NOT RUN: ACA deploy and signed-in browser smoke are not run until after merge.
+- PASS: PR #3665 CI on GitHub: ESLint, Routes and disclaimers, Typecheck + reasoning-layer tests.
+- PASS: ACR build `cadq` pushed `acrabarvalab001.azurecr.io/abarva/web:intelligence-live-insights-ui-2f118ce5@sha256:f5f75d8ee06b2a53dd59abeac343c55e34784ea172715cace0f250928d46c470`.
+- PASS: ACA web revision `ca-abarva-web-lab-eastus--0000105` is active at 100% traffic with image `acrabarvalab001.azurecr.io/abarva/web:intelligence-live-insights-ui-2f118ce5`.
+- PASS: Public health smoke returned HTTP 200 with `postgres: true`, `direct_postgres: true`, and `azure_graph: "postgres"`.
+- PASS: Anonymous `/api/intelligence/insights?limit=2` smoke returned Clerk sign-in redirect, proving the supporting live insights API remains protected.
+- NOT RUN: Signed-in `/intelligence#enterprise-context` browser smoke was not run because no reusable Clerk-authenticated browser/session cookie was available to the deploy job.
 
 ## Rollout Plan
 
-Merge to `codex/ai-control-tower-substrate`, build and deploy the ACA web image, shift web traffic after `/api/health` is green, then signed-in smoke `/intelligence#enterprise-context` for Meridian or Lakeshore.
+Merged to `codex/ai-control-tower-substrate` in PR #3665, built and deployed the ACA web image, shifted web traffic to revision `ca-abarva-web-lab-eastus--0000105` after `/api/health` was green, and confirmed the supporting live insights API remains Clerk-protected. A signed-in Meridian or Lakeshore browser smoke is still required before claiming user-visible proof.
 
 ## Rollback Plan
 
@@ -53,7 +57,13 @@ Git revert the UI binding PR and redeploy the previous healthy ACA web image. No
 
 - Prior data-plane proof: materializer verify execution `job-abarva-private-operator-eus-en2ye2q` proved 24 cited insights for `meridian-health` and 24 cited insights for `lakeshore`.
 - Prior API proof: PR #3663 added `/api/intelligence/insights`; PR #3664 recorded deployment to ACA revision `ca-abarva-web-lab-eastus--0000104`.
-- Pending PR URL, CI, deploy revision, and signed-in smoke output.
+- PR URL: https://github.com/abarva-platform/abarva/pull/3665
+- Merge commit: `2f118ce5301c1398acf58b95f3268a5dd6889398`
+- ACR build: `cadq`
+- Deployed image: `acrabarvalab001.azurecr.io/abarva/web:intelligence-live-insights-ui-2f118ce5@sha256:f5f75d8ee06b2a53dd59abeac343c55e34784ea172715cace0f250928d46c470`
+- ACA serving revision: `ca-abarva-web-lab-eastus--0000105`, 100% traffic as of 2026-06-18 10:18 UTC.
+- Health smoke: `https://app.abarva.ai/api/health` returned HTTP 200 with Postgres checks green.
+- Auth smoke: `https://app.abarva.ai/api/intelligence/insights?limit=2` returned HTTP 307 to Clerk sign-in when unsigned.
 
 ## Known Gaps
 
