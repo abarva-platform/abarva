@@ -28,6 +28,17 @@ jest.mock("@/lib/programs/attachments", () => ({
   listAttachmentsForProgram: async () => [],
 }));
 
+// PhaseDocumentsPanel now reads succeeded runs (orchestrator output) to additively
+// show built docs; mock those server deps so the jsdom render doesn't pull the
+// data-plane (ESM) chain. Null active client → no run-built rows, leaving the
+// liability-label assertions unchanged.
+jest.mock("@/lib/active-client", () => ({
+  getActiveClientRow: async () => null,
+}));
+jest.mock("@/lib/deliverables/orchestrator/runs-repository", () => ({
+  listSucceededRunsForMove: async () => [],
+}));
+
 describe("Strategic Moves visible AI liability controls", () => {
   it("labels the phase Approve & Build action as AI drafts requiring human edit before commit", () => {
     render(

@@ -11,6 +11,9 @@
 //   currentPhase  — highlights the current phase section
 
 import { getServerSupabase } from "@/lib/supabase-server";
+import { getActiveClientRow } from "@/lib/active-client";
+import { listSucceededRunsForMove } from "@/lib/deliverables/orchestrator/runs-repository";
+import { orchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
 import { listAttachmentsForProgram } from "@/lib/programs/attachments";
 import {
   DELIVERABLE_REGISTRY,
@@ -271,16 +274,27 @@ function DocumentRow({
   dbRow,
   moveId,
   phaseLabel,
+  runArtifact,
 }: {
   spec: DeliverableSpec;
   dbRow: DbDeliverable | undefined;
   moveId: string;
   phaseLabel: string;
+  /** A succeeded Approve & Build run for this slot (orchestrator output in
+   *  generated_artifacts), used when deliverables_v2 has no content for it. */
+  runArtifact?: { artifactId: string; updatedAt: string };
 }) {
   const hasContent = Boolean(dbRow?.latest_content?.trim());
+  // Approve & Build / orchestrator output lands in generated_artifacts, not
+  // deliverables_v2 — so a built document would otherwise read "not generated"
+  // here. Fall back to the run's artifact (download via /api/v1/artifacts/{id}).
+  const builtViaRun = !hasContent && Boolean(runArtifact);
   const dot = dbRow ? statusDot(dbRow.status) : null;
   const isExcel = spec.formatRecommendation === "excel";
   const base = `/api/programs/${moveId}/deliverables/${dbRow?.id}/content-export`;
+  const artBase = runArtifact
+    ? `/api/v1/artifacts/${runArtifact.artifactId}`
+    : "";
 
   return (
     <div
@@ -355,7 +369,7 @@ function DocumentRow({
           minWidth: 80,
         }}
       >
-        {dot && hasContent ? (
+        {hasContent && dot ? (
           <>
             <span
               style={{
@@ -367,6 +381,19 @@ function DocumentRow({
               }}
             />
             <span style={{ fontSize: 10, color: "#6B7280" }}>{dot.label}</span>
+          </>
+        ) : builtViaRun ? (
+          <>
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                backgroundColor: "#16A34A",
+                flexShrink: 0,
+              }}
+            />
+            <span style={{ fontSize: 10, color: "#6B7280" }}>Built</span>
           </>
         ) : (
           <span style={{ fontSize: 10, color: "#b4b4b8", fontStyle: "italic" }}>
@@ -404,6 +431,20 @@ function DocumentRow({
             )}
             <span style={{ fontSize: 10, color: "#b4b4b8" }}>
               {formatDate(dbRow.updated_at)}
+            </span>
+          </>
+        ) : builtViaRun && runArtifact ? (
+          // Approve & Build output (generated_artifacts), downloaded via the
+          // governed artifacts route.
+          <>
+            <a href={`${artBase}?format=html`} style={linkStyle("ghost")}>
+              ↓ HTML
+            </a>
+            <a href={`${artBase}?format=docx`} style={linkStyle("primary")}>
+              ↓ Word
+            </a>
+            <span style={{ fontSize: 10, color: "#b4b4b8" }}>
+              {formatDate(runArtifact.updatedAt)}
             </span>
           </>
         ) : (
@@ -501,6 +542,29 @@ export async function PhaseDocumentsPanel({
     listAttachmentsForProgram(moveId).catch(() => [] as AttachmentRecord[]),
   ]);
 
+  // Approve & Build / orchestrator output lands in generated_artifacts (via a
+  // succeeded deliverable_run), NOT deliverables_v2 — so without this a built
+  // document reads "not generated" here. Map the latest succeeded run per registry
+  // key so a slot reads "Built" with a /api/v1/artifacts/{id} download. Additive:
+  // deliverables_v2 content still wins. Mirrors the Move Explorer.
+  const runByKey = new Map<string, { artifactId: string; updatedAt: string }>();
+  const activeClient = await getActiveClientRow().catch(() => null);
+  if (activeClient) {
+    const runs = await listSucceededRunsForMove(activeClient.id, moveId).catch(
+      () => [] as Awaited<ReturnType<typeof listSucceededRunsForMove>>,
+    );
+    for (const spec of DELIVERABLE_REGISTRY) {
+      const orchType = orchestratorDeliverableType(spec.deliverableTypeKey);
+      const run = runs.find((r) => r.deliverableType === orchType && r.artifactId);
+      if (run?.artifactId) {
+        runByKey.set(spec.deliverableTypeKey, {
+          artifactId: run.artifactId,
+          updatedAt: run.updatedAt,
+        });
+      }
+    }
+  }
+
   // Group attachments by phase
   const attachmentsByPhase = new Map<number, AttachmentRecord[]>();
   for (const a of attachments) {
@@ -517,9 +581,15 @@ export async function PhaseDocumentsPanel({
     (d) => !canonicalKeys.has(d.deliverable_type_key),
   );
 
-  const withContent = Array.from(deliverablesByKey.values()).filter((d) =>
-    d.latest_content?.trim(),
-  ).length;
+  const contentKeys = new Set(
+    Array.from(deliverablesByKey.values())
+      .filter((d) => d.latest_content?.trim())
+      .map((d) => d.deliverable_type_key),
+  );
+  // Count a slot as built if deliverables_v2 has content OR a succeeded run exists.
+  const builtKeys = new Set(contentKeys);
+  for (const k of runByKey.keys()) builtKeys.add(k);
+  const withContent = builtKeys.size;
   const totalCanonical = DELIVERABLE_REGISTRY.filter(
     (d) => !d.deprecated,
   ).length;
@@ -632,8 +702,10 @@ export async function PhaseDocumentsPanel({
           )
           .filter(Boolean) as DeliverableSpec[];
         const phaseAttachments = attachmentsByPhase.get(phase) ?? [];
-        const generatedCount = specs.filter((s) =>
-          deliverablesByKey.get(s.deliverableTypeKey)?.latest_content?.trim(),
+        const generatedCount = specs.filter(
+          (s) =>
+            deliverablesByKey.get(s.deliverableTypeKey)?.latest_content?.trim() ||
+            runByKey.has(s.deliverableTypeKey),
         ).length;
         const isCurrent = phase === currentPhase;
 
@@ -705,6 +777,7 @@ export async function PhaseDocumentsPanel({
                   dbRow={deliverablesByKey.get(spec.deliverableTypeKey)}
                   moveId={moveId}
                   phaseLabel={PHASE_LABELS[phase] ?? `P${phase}`}
+                  runArtifact={runByKey.get(spec.deliverableTypeKey)}
                 />
               ))}
 
