@@ -34,7 +34,7 @@ function enterpriseContextTenantKey(value: string | null | undefined): string | 
   return key;
 }
 
-export default async function IntelligencePage({ searchParams }: IntelligencePageProps = {}) {
+export default async function IntelligencePage({ searchParams }: IntelligencePageProps) {
   const rawRequestedClient = firstSearchValue((await searchParams)?.client);
   const requestedClient = (await hasLockedTenantSession()) ? rawRequestedClient : null;
   const client = await getActiveClientRow(requestedClient).catch(() => null);

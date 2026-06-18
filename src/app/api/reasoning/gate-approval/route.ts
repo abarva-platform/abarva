@@ -9,7 +9,6 @@
 // in-memory store key is namespaced by tenant so a process-level Map
 // can never be read cross-tenant by instanceId.
 
-import { recordApproval } from '@/app/api/reasoning/audit/route';
 import {
   requireReasoningTenancy,
   tenancyErrorResponse,
@@ -17,6 +16,10 @@ import {
   requireGateApprovalRole,
   reasoningTenantId,
 } from '@/app/api/reasoning/_auth';
+import {
+  recordGateApproval,
+  type ApprovalRecord,
+} from '@/lib/reasoning/gate-approval-state';
 
 interface GateApprovalBody {
   instanceId: string;
@@ -25,51 +28,11 @@ interface GateApprovalBody {
   action: 'approve' | 'reject';
 }
 
-export interface ApprovalRecord {
-  action: 'approve' | 'reject';
-  justification: string;
-  timestamp: string;
-}
-
 function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
-}
-
-// In-memory store — keyed by `${tenantId}::${instanceId}::${criterionId}`.
-// The tenant prefix is the security boundary: a reader for one tenant can
-// never enumerate another tenant's records by guessing instanceIds.
-const approvalStore = new Map<string, ApprovalRecord>();
-
-/** Retrieve the approval/rejection record for a given tenant+instance+criterion. */
-export function getApproval(
-  tenantId: string,
-  instanceId: string,
-  criterionId: string,
-): ApprovalRecord | undefined {
-  return approvalStore.get(`${tenantId}::${instanceId}::${criterionId}`);
-}
-
-/** Retrieve all approval/rejection records for a given tenant + instanceId. */
-export function getApprovalsForInstance(
-  tenantId: string,
-  instanceId: string,
-): Array<{ criterionId: string; record: ApprovalRecord }> {
-  const prefix = `${tenantId}::${instanceId}::`;
-  const results: Array<{ criterionId: string; record: ApprovalRecord }> = [];
-  for (const [key, record] of approvalStore.entries()) {
-    if (key.startsWith(prefix)) {
-      results.push({ criterionId: key.slice(prefix.length), record });
-    }
-  }
-  return results;
-}
-
-/** Clear all gate approvals — used by the demo-reset endpoint. */
-export function clearApprovals(): void {
-  approvalStore.clear();
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -124,17 +87,12 @@ export async function POST(request: Request): Promise<Response> {
   if (scopeDenied) return scopeDenied;
 
   const tenantId = reasoningTenantId(ctx);
-  const key = `${tenantId}::${instanceId}::${criterionId}`;
-  const record: ApprovalRecord = { action, justification, timestamp: new Date().toISOString() };
-  approvalStore.set(key, record);
-
-  recordApproval({
+  const record: ApprovalRecord = recordGateApproval({
     tenantId,
     instanceId,
     criterionId,
     action,
     justification,
-    actedAt: record.timestamp,
     actorId: ctx.userId,
   });
 

@@ -6,9 +6,12 @@
 // state across every tenant — require an authenticated session and a
 // gate-approval role before allowing it.
 
-import { clearWaivers } from '@/app/api/reasoning/gate-waiver/route';
-import { clearApprovals } from '@/app/api/reasoning/gate-approval/route';
-import { clearWaiverAuditBuffer, clearApprovalAuditBuffer } from '@/app/api/reasoning/audit/route';
+import { clearWaivers } from '@/lib/reasoning/gate-waiver-state';
+import { clearApprovals } from '@/lib/reasoning/gate-approval-state';
+import {
+  clearApprovalAuditBuffer,
+  clearWaiverAuditBuffer,
+} from '@/lib/reasoning/gate-audit-state';
 import { clearResolved } from '@/lib/reasoning/contradiction-resolution-state';
 import { clearSynthesisTelemetry } from '@/lib/reasoning/synthesis-telemetry';
 import {

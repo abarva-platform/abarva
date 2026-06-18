@@ -16,6 +16,10 @@ import {
   isInstanceInTenant,
 } from '@/app/api/reasoning/_auth';
 import type { TenancyCtx } from '@/lib/programs/types.db';
+import {
+  approvalAuditBuffer,
+  waiverAuditBuffer,
+} from '@/lib/reasoning/gate-audit-state';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,54 +36,6 @@ export const dynamic = 'force-dynamic';
 // For the demo this is fine: both are Node.js server processes sharing the
 // same V8 heap. The audit page reads both the gate-waiver buffer exported
 // here AND the pre-seed below.
-
-interface WaiverRecord {
-  /** Substrate tenant slug — the cross-tenant filter key for the audit view. */
-  tenantId: string;
-  instanceId: string;
-  criterionId: string;
-  reason: string;
-  waivedAt: string;
-}
-
-// Module-level store — populated by the gate-waiver route via `recordWaiver`.
-export const waiverAuditBuffer: WaiverRecord[] = [];
-
-export function recordWaiver(record: WaiverRecord): void {
-  waiverAuditBuffer.push(record);
-}
-
-/** Clear the waiver audit buffer — used by the demo-reset endpoint. */
-export function clearWaiverAuditBuffer(): void {
-  waiverAuditBuffer.length = 0;
-}
-
-// ─── Approval audit buffer ────────────────────────────────────────────────────
-// Mirrors the waiver buffer pattern. Gate-approval POSTs push records here via
-// `recordApproval`; the GET handler reads them alongside the waiver buffer.
-
-interface ApprovalAuditRecord {
-  /** Substrate tenant slug — the cross-tenant filter key for the audit view. */
-  tenantId: string;
-  instanceId: string;
-  criterionId: string;
-  action: 'approve' | 'reject';
-  justification: string;
-  actedAt: string;
-  /** User id of the approver/rejecter, for audit attribution. */
-  actorId?: string;
-}
-
-export const approvalAuditBuffer: ApprovalAuditRecord[] = [];
-
-export function recordApproval(record: ApprovalAuditRecord): void {
-  approvalAuditBuffer.push(record);
-}
-
-/** Clear the approval audit buffer — used by the demo-reset endpoint. */
-export function clearApprovalAuditBuffer(): void {
-  approvalAuditBuffer.length = 0;
-}
 
 // ─── AuditEntry type ─────────────────────────────────────────────────────────
 

@@ -146,7 +146,7 @@ function bundleSummary(bundle: ContextBundle): ContextDemoBundleSummary {
  * — no side effects, no auth lookups — so it can be unit-tested
  * without a live request.
  */
-export function validateDemoRequest(raw: unknown): ValidationResult {
+function validateDemoRequest(raw: unknown): ValidationResult {
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
     return {
       kind: 'error',
@@ -260,7 +260,7 @@ function parseOptionalInteger(raw: unknown, field: string): OptionalIntegerResul
  * mapping). Throws `TenancyError` from `requireTenancy()` on missing
  * auth or no active client; the route translates those to 401/403.
  */
-export async function resolveDemoTenancy(): Promise<DemoTenancyContext> {
+async function resolveDemoTenancy(): Promise<DemoTenancyContext> {
   // Run auth + active-client + Clerk metadata in parallel for speed.
   const [ctx, client, clerkUser] = await Promise.all([
     requireTenancy(),
@@ -290,7 +290,7 @@ export async function resolveDemoTenancy(): Promise<DemoTenancyContext> {
  * caller is not allowed to access the requested tenant; the route
  * translates the throw into a 403 envelope.
  */
-export async function assembleDemoBundle(
+async function assembleDemoBundle(
   request: ContextDemoRequest,
   ctx: DemoTenancyContext,
 ): Promise<ContextBundle> {
@@ -323,7 +323,7 @@ export async function assembleDemoBundle(
   });
 }
 
-export async function assembleDemoBundles(
+async function assembleDemoBundles(
   request: ContextDemoRequest,
   ctx: DemoTenancyContext,
 ): Promise<{

@@ -208,14 +208,6 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   // tabbed `/admin?tab=tenant` (the standalone `/admin/tenant` route
   // was demoted to a tab inside /admin Overview — see AdminTenantTab).
   const homeToAdminMap: Record<string, string> = {
-    // CL-1 (2026-05-30) · Bare /home now redirects to the Trust Plane
-    // at /admin. The orphan src/app/(maestro)/home/page.tsx that
-    // rendered the retired 2026-05-08 fixture landing has been
-    // deleted. The /home/<subpage> routes below (queue, decision,
-    // source, learn, ai-initiatives, configuration, training) remain
-    // legitimate surfaces and are NOT remapped here. See
-    // docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md §2.
-    '/home': '/admin',
     '/home/data-trust': '/admin/data-trust',
     '/home/agent-readiness': '/admin/agent-readiness',
     '/home/connectors': '/admin/connectors',

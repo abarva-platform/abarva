@@ -18,7 +18,7 @@ import {
   TOWER_SYNTHESIS_TEMPERATURE,
   TOWER_SYNTHESIS_TIMEOUT_MS,
   TOWER_SYNTHESIS_TIMEOUT_MESSAGE,
-} from './route';
+} from '@/lib/tower/synthesis-route-helpers';
 
 describe('Tower synthesis Fix C levers', () => {
   it('uses temperature=0 so the same portfolio state produces the same read', () => {

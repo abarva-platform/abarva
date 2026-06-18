@@ -8,7 +8,10 @@
 //   red-alert   — set AMS event back to RFI stage, activate 3+ contradictions
 //   mid-review  — set AMS event to RFP stage, waive 2 gates, leave 2 unmet
 
-import { clearWaivers, recordWaiverInternal } from '@/app/api/reasoning/gate-waiver/route';
+import {
+  clearWaivers,
+  recordWaiverInternal,
+} from '@/lib/reasoning/gate-waiver-state';
 import { clearResolved, markResolved } from '@/lib/reasoning/contradiction-resolution-state';
 import { setStageOverride } from '@/lib/source/stage-overrides';
 import {
@@ -252,7 +255,3 @@ export async function POST(request: Request): Promise<Response> {
   const descriptor = SCENARIOS.find((s) => s.id === scenarioId);
   return jsonResponse({ ok: true, scenarioId, name: descriptor?.name }, 200);
 }
-
-// Export the scenario list for use by the panel component (avoids a runtime fetch
-// on first render — the panel also calls the GET endpoint for dynamic refreshes).
-export { SCENARIOS };

@@ -43,7 +43,7 @@ type Row = {
   method: string;
   chars: number;
   chunks: number;
-  warnings: string[];
+  warnings: readonly string[];
   error?: string;
 };
 

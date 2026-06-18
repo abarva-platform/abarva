@@ -7,8 +7,8 @@
 // active client and scopes the instanceId to the session tenant so a
 // caller cannot read another tenant's gate history by guessing ids.
 
-import { getWaiversForInstance } from '@/app/api/reasoning/gate-waiver/route';
-import { getApprovalsForInstance } from '@/app/api/reasoning/gate-approval/route';
+import { getWaiversForInstance } from '@/lib/reasoning/gate-waiver-state';
+import { getApprovalsForInstance } from '@/lib/reasoning/gate-approval-state';
 import {
   requireReasoningTenancy,
   tenancyErrorResponse,

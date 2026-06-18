@@ -2,7 +2,7 @@ import {
   buildAtlasSynthesisPrompt,
   composeAtlasSynthesisUserMessage,
   type AtlasSynthesisSnapshot,
-} from './route';
+} from '@/lib/tower/synthesis-route-helpers';
 import { buildTowerSynthesisContext } from '@/lib/reasoning/tower-synthesis-context-builder';
 import { loadTenantTowerPortfolio } from '@/lib/reasoning/tenant-tower-portfolio';
 
@@ -119,4 +119,3 @@ describe('composeAtlasSynthesisUserMessage — P0 cross-tenant invariants', () =
     expect(msg).toMatch(/APX-/);
   });
 });
-
