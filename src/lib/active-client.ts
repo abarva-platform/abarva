@@ -85,11 +85,30 @@ export async function getActiveClientRow(
   // not a "no client" — re-throw it as TenantLookupUnavailableError instead of collapsing
   // it to null (which previously surfaced as a confusing `no_client` 403/empty-state). The
   // infra classifier is kept to tag the cause; both infra and other DB errors re-throw.
+  //
+  // Resilience (artifact-download 503 fix): a single transient DB/VNet blip on a freshly
+  // routed request (e.g. a top-level navigation to the artifact-download endpoint) would
+  // otherwise surface as a hard 503 even though the very next request succeeds. Retry the
+  // lookup a couple of times with short backoff before giving up so one-off blips don't
+  // dead-end a download/open. Total added latency on the happy path is zero (succeeds on
+  // attempt 1); worst case ~0.6s before the 503.
   let tenant: Awaited<ReturnType<typeof resolveTenant>> | null = null;
-  try {
-    tenant = await resolveTenant({ requestedClient: requestedClientId });
-  } catch (error) {
-    throw new TenantLookupUnavailableError(error);
+  const RETRY_BACKOFF_MS = [150, 450];
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= RETRY_BACKOFF_MS.length; attempt += 1) {
+    try {
+      tenant = await resolveTenant({ requestedClient: requestedClientId });
+      lastError = undefined;
+      break;
+    } catch (error) {
+      lastError = error;
+      const backoff = RETRY_BACKOFF_MS[attempt];
+      if (backoff === undefined) break;
+      await new Promise((resolve) => setTimeout(resolve, backoff));
+    }
+  }
+  if (lastError !== undefined) {
+    throw new TenantLookupUnavailableError(lastError);
   }
   if (!tenant) return null;
   if (!tenant.clientId) return null;

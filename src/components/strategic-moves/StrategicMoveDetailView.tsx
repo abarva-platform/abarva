@@ -68,7 +68,13 @@ function primaryAction(move: StrategicMove): { label: string; href: string } {
       href: `/strategic-moves/${id}?panel=gate`,
     };
   if (status.key === "awaiting_decision")
-    return { label: "Resolve decision", href: "/admin/programs/approvals" };
+    // Resolve the gate in-place on the Move (the phase workspace holds the working
+    // save → approve primitive). Previously this dead-ended at /admin/programs/approvals
+    // (Setup mode), which has no Move-gate approval surface and no path back.
+    return {
+      label: "Resolve decision",
+      href: `/strategic-moves/${id}/phase/${currentPhase}?focus=gate`,
+    };
   if (status.key === "validated")
     return { label: "Review verification", href: `/tower?move=${id}` };
   return {
