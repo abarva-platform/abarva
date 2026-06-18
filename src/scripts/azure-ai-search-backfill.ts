@@ -169,12 +169,29 @@ async function* readChunks(
 }
 
 async function uploadBatch(docs: SearchDocument[]): Promise<void> {
+  if (docs.length === 0) return;
   const res = await searchRequest('/indexes/tenant-context-v1/docs/index', {
     method: 'POST',
     body: JSON.stringify({ value: docs }),
   });
   if (!res.ok) {
     throw new Error(`azure_search_upload_failed:${res.status}:${await res.text()}`);
+  }
+  const body = await res.json() as {
+    value?: Array<{
+      key?: string;
+      status?: boolean;
+      succeeded?: boolean;
+      statusCode?: number;
+      errorMessage?: string;
+    }>;
+  };
+  const failures = (body.value ?? []).filter((item) => item.succeeded === false || item.status === false);
+  if (failures.length > 0) {
+    throw new Error(`azure_search_upload_item_failed:${failures
+      .slice(0, 5)
+      .map((item) => `${item.key ?? 'unknown'}:${item.statusCode ?? 'unknown'}:${item.errorMessage ?? 'no message'}`)
+      .join('; ')}`);
   }
 }
 
@@ -202,16 +219,73 @@ async function searchCount(filter?: string): Promise<number> {
   return json['@odata.count'] ?? 0;
 }
 
-async function verify(expected: Record<string, number>): Promise<void> {
-  const observed: Record<string, number> = {};
-  for (const tenant of Object.keys(expected).sort()) {
-    observed[tenant] = await searchCount(`tenant_key eq '${tenant.replace(/'/g, "''")}'`);
+async function searchDocumentIds(filter: string): Promise<string[]> {
+  const ids: string[] = [];
+  const top = 1000;
+  for (let skip = 0; ; skip += top) {
+    const res = await searchRequest('/indexes/tenant-context-v1/docs/search', {
+      method: 'POST',
+      body: JSON.stringify({
+        search: '*',
+        filter,
+        select: 'id',
+        top,
+        skip,
+      }),
+    });
+    if (!res.ok) {
+      throw new Error(`azure_search_id_scan_failed:${res.status}:${await res.text()}`);
+    }
+    const json = await res.json() as { value?: Array<{ id?: string }> };
+    const batch = (json.value ?? []).map((item) => item.id).filter((id): id is string => Boolean(id));
+    ids.push(...batch);
+    if (batch.length < top) return ids;
   }
-  const mismatches = Object.entries(expected)
-    .filter(([tenant, count]) => observed[tenant] !== count)
-    .map(([tenant, count]) => `${tenant}: expected ${count}, got ${observed[tenant] ?? 0}`);
-  if (mismatches.length > 0) {
-    throw new Error(`azure_search_backfill_count_mismatch:${mismatches.join('; ')}`);
+}
+
+async function purgeTenantDocs(tenants: string[]): Promise<void> {
+  for (const tenant of tenants) {
+    const escapedTenant = tenant.replace(/'/g, "''");
+    const ids = await searchDocumentIds(`tenant_key eq '${escapedTenant}'`);
+    for (let i = 0; i < ids.length; i += 1000) {
+    const batch = ids.slice(i, i + 1000).map((id) => ({
+        '@search.action': 'delete' as const,
+        id,
+      }));
+      await uploadBatch(batch);
+    }
+    console.log(JSON.stringify({
+      event: 'azure_search_backfill_tenant_purged',
+      tenant,
+      deleted: ids.length,
+    }));
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function verify(expected: Record<string, number>, attempts = 1): Promise<void> {
+  const observed: Record<string, number> = {};
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    for (const tenant of Object.keys(expected).sort()) {
+      observed[tenant] = await searchCount(`tenant_key eq '${tenant.replace(/'/g, "''")}'`);
+    }
+    const mismatches = Object.entries(expected)
+      .filter(([tenant, count]) => observed[tenant] !== count)
+      .map(([tenant, count]) => `${tenant}: expected ${count}, got ${observed[tenant] ?? 0}`);
+    if (mismatches.length === 0) break;
+    if (attempt === attempts) {
+      throw new Error(`azure_search_backfill_count_mismatch:${mismatches.join('; ')}`);
+    }
+    console.log(JSON.stringify({
+      event: 'azure_search_backfill_verify_retry',
+      attempt,
+      observed,
+      mismatches,
+    }));
+    await sleep(5000);
   }
   console.log(JSON.stringify({
     event: 'azure_search_backfill_verified',
@@ -239,6 +313,7 @@ async function main(): Promise<void> {
 
     if (runMode === 'apply') {
       const batchSize = readIntEnv('AZURE_SEARCH_BACKFILL_BATCH_SIZE', 500);
+      await purgeTenantDocs(Object.keys(counts).sort());
       let uploaded = 0;
       for await (const rows of readChunks(db, batchSize, tenants)) {
         const now = new Date();
@@ -252,7 +327,7 @@ async function main(): Promise<void> {
       }
     }
 
-    await verify(counts);
+    await verify(counts, runMode === 'apply' ? 6 : 1);
   } finally {
     await db.end();
   }
