@@ -317,6 +317,7 @@ function normalizeSurfaceContext(value: unknown): AskSurfaceContext | null {
     useCaseFacts: readStringArray(record.useCaseFacts),
     graphFacts: readStringArray(record.graphFacts),
     riskFacts: readStringArray(record.riskFacts),
+    insightFacts: readStringArray(record.insightFacts),
     strategyFacts: readStringArray(record.strategyFacts),
     sourceFacts: readStringArray(record.sourceFacts),
     qualityFacts: readStringArray(record.qualityFacts),

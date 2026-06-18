@@ -56,6 +56,7 @@ export interface AskSurfaceContext {
   useCaseFacts?: string[];
   graphFacts?: string[];
   riskFacts?: string[];
+  insightFacts?: string[];
   strategyFacts?: string[];
   sourceFacts?: string[];
   qualityFacts?: string[];

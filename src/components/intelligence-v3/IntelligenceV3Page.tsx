@@ -161,6 +161,7 @@ export function IntelligenceV3Page({
     briefData,
     mapData,
     enterpriseContext: enterpriseContextOverview,
+    contextInsights,
   });
 
   return (

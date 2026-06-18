@@ -230,4 +230,28 @@ describe('Ask Intelligence guardrails', () => {
     });
     expect(sources[2].detail).toContain('integration-hub adjacency');
   });
+
+  it('promotes materialized insight facts as tenant evidence', () => {
+    const sources = retrieveSurfaceContextSources(
+      {
+        activeTab: 'enterprise-context',
+        activeClient: 'Meridian Health',
+        clientKey: 'meridian-health',
+        insightFacts: [
+          'Live context insight (high, data-foundation, healthcare-data-foundation-gate): Databricks lakehouse gates prior authorization AI. So what: automation depends on clinical, claims, pharmacy, and call center data landing in one governed semantic layer. Evidence: confidence high; freshness fresh; records rec-claims-1; facts fact-claims-1.',
+        ],
+      },
+      'What are the most important insights and recommended actions?',
+    );
+
+    expect(sources).toHaveLength(1);
+    expect(sources[0]).toMatchObject({
+      type: 'TENANT',
+      name: 'Meridian Health 360 Intelligence substrate',
+      id: 'meridian-health',
+      confidence: 0.96,
+    });
+    expect(sources[0].detail).toContain('Databricks lakehouse gates prior authorization AI');
+    expect(sources[0].detail).toContain('fact-claims-1');
+  });
 });
