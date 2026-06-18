@@ -44,10 +44,10 @@ interface SentinelAnswer {
 }
 
 const TABS: Array<{ key: IntelligenceTab; kicker: string; label: string }> = [
-  { key: 'signals', kicker: 'MEANING · L2', label: 'Signals' },
-  { key: 'context', kicker: 'CONTEXT · L1', label: 'Dimensions' },
-  { key: 'corpus', kicker: 'GLOBAL · L1', label: 'Corpus' },
-  { key: 'sentinel', kicker: 'ASK · L3', label: 'Sentinel' },
+  { key: 'signals', kicker: 'Meaning', label: 'Executive Signals' },
+  { key: 'context', kicker: 'Context', label: 'Context Browser' },
+  { key: 'corpus', kicker: 'Corpus', label: 'Corpus Library' },
+  { key: 'sentinel', kicker: 'Ask', label: 'Sentinel' },
 ];
 
 const DIMENSIONS = [
@@ -66,11 +66,11 @@ const DIMENSIONS = [
 ] as const;
 
 const STARTERS = [
-  'Which AI initiatives should we kill, and why?',
-  'Where are we exposed on platform contract renewals?',
-  'Why is retail AI adoption so low?',
-  'Which models are running without current validation?',
-  'What data is missing before I trust this dashboard?',
+  'Which AI risks need CIO attention first?',
+  'Where is value blocked by missing evidence?',
+  'What should we validate before scaling AI?',
+  'Which systems or contracts create execution drag?',
+  'What context is missing before I trust this?',
 ];
 
 const COLORS = {
@@ -108,6 +108,17 @@ function pct(value: number | null): string {
   return value === null ? 'n/a' : `${Math.round(value)}%`;
 }
 
+function refreshLabel(tenantName: string): string {
+  return tenantName.toLowerCase().includes('first capital') ? 'Jun 17, 2026' : 'Current load';
+}
+
+function readinessLabel(score: number): string {
+  if (score >= 80) return 'High';
+  if (score >= 50) return 'Usable';
+  if (score > 0) return 'Needs review';
+  return 'Thin';
+}
+
 function recordTypeCount(overview: EnterpriseContextOverview | null, needles: readonly string[]): number {
   if (!overview) return 0;
   return Object.entries(overview.recordTypeCounts).reduce((sum, [key, count]) => {
@@ -142,7 +153,7 @@ function deriveSignals(overview: EnterpriseContextOverview | null, tower: AiCont
     .slice(0, 4)
     .map((risk) => ({
       id: `risk-${risk.id}`,
-      headline: `${risk.name || risk.dimension} blocks an AI scale claim`,
+      headline: `${risk.name || risk.dimension} needs governance action before scale`,
       soWhat: risk.description,
       domain: risk.functionName || 'AI governance',
       materiality: risk.severity.toLowerCase() === 'critical' ? 'high' as const : 'medium' as const,
@@ -181,7 +192,7 @@ function deriveSignals(overview: EnterpriseContextOverview | null, tower: AiCont
 
 function buildSentinelAnswer(question: string, tower: AiControlTowerReadModel, overview: EnterpriseContextOverview | null): SentinelAnswer {
   const lower = question.toLowerCase();
-  if (lower.includes('kill') || lower.includes('validation') || lower.includes('risk')) {
+  if (lower.includes('hold') || lower.includes('validation') || lower.includes('risk') || lower.includes('scale')) {
     const rows = tower.risks
       .filter((risk) => ['critical', 'high'].includes(risk.severity.toLowerCase()) || risk.gate === 'fail')
       .slice(0, 6);
@@ -209,7 +220,7 @@ function buildSentinelAnswer(question: string, tower: AiControlTowerReadModel, o
     };
   }
 
-  if (lower.includes('adoption') || lower.includes('retail') || lower.includes('copilot')) {
+  if (lower.includes('adoption') || lower.includes('copilot') || lower.includes('productivity')) {
     const rows = tower.functions.sort((a, b) => (a.adoptionPct ?? 999) - (b.adoptionPct ?? 999)).slice(0, 6);
     return {
       headline: rows.length
@@ -223,26 +234,32 @@ function buildSentinelAnswer(question: string, tower: AiControlTowerReadModel, o
   }
 
   if (lower.includes('missing') || lower.includes('trust') || lower.includes('loaded')) {
+    const blockers = tower.risks
+      .filter((risk) => ['critical', 'high'].includes(risk.severity.toLowerCase()) || risk.gate === 'fail')
+      .slice(0, 3);
+    const readySignals = deriveSignals(overview, tower).slice(0, 3);
     return {
-      headline: `The context layer has ${overview?.counts.records ?? 0} records, ${overview?.counts.facts ?? 0} facts, ${overview?.counts.relationships ?? 0} graph edges, and Tower has ${tower.rowCounts.evidence} evidence rows.`,
-      columns: ['Layer', 'Loaded depth', 'Readiness'],
+      headline: readySignals.length
+        ? 'The strongest reads are ready to discuss, but scale decisions should still drill into support before approval.'
+        : 'The context is not yet strong enough for a confident executive read.',
+      columns: ['Readiness area', 'What it means', 'Executive use'],
       rows: [
-        ['Enterprise context', `${overview?.counts.records ?? 0} records / ${overview?.counts.facts ?? 0} facts`, overview ? 'loaded' : 'missing'],
-        ['Corpus/evidence', `${overview?.counts.evidence ?? 0} evidence rows`, (overview?.counts.evidence ?? 0) > 0 ? 'loaded' : 'missing'],
-        ['AI Tower', `${tower.rowCounts.initiatives} initiatives / ${tower.rowCounts.spend} spend / ${tower.rowCounts.actions} actions`, tower.source],
+        ['Ready to discuss', readySignals[0]?.headline ?? 'No strong signal surfaced yet', 'Use as the opening CIO read'],
+        ['Needs caution', blockers[0]?.requiredAction ?? 'No high-severity blocker surfaced', 'Validate before scaling or funding'],
+        ['Ask next', 'Where value, risk, and adoption disagree', 'Use Sentinel to pressure-test the claim'],
       ],
-      citations: tower.evidence.slice(0, 4).map((row) => row.id),
-      next: ['Open Dimensions', 'Open Corpus', 'Open Tower Evidence'],
+      citations: readySignals.flatMap((signal) => signal.evidence).slice(0, 4),
+      next: ['Open Executive Signals', 'Open Corpus Patterns', 'Ask a follow-up'],
     };
   }
 
   const topSignal = deriveSignals(overview, tower)[0];
   return {
-    headline: topSignal?.headline ?? 'Sentinel needs committed context, facts, or Tower rows before making a strong claim.',
+    headline: topSignal?.headline ?? 'Sentinel needs stronger support before making a confident executive claim.',
     columns: ['Signal', 'Why it matters', 'Action'],
     rows: topSignal ? [[topSignal.domain, topSignal.soWhat, topSignal.action]] : [],
     citations: topSignal?.evidence ?? [],
-    next: ['Open Signals', 'Open Dimensions', 'Ask what is missing'],
+    next: ['Open Executive Signals', 'Open Context Browser', 'Ask what is missing'],
   };
 }
 
@@ -258,14 +275,17 @@ export function ContextCorpusExplorerPage({
   const [answer, setAnswer] = useState<SentinelAnswer>(() =>
     buildSentinelAnswer('What is my context telling me right now?', towerModel, overview),
   );
-  const dimensionsLoaded = DIMENSIONS.filter(([, needles]) => recordTypeCount(overview, needles) > 0).length +
-    (towerModel.rowCounts.initiatives > 0 ? 1 : 0);
-  const loadedDimensions = Math.min(DIMENSIONS.length, dimensionsLoaded);
   const trustPct = overview && overview.counts.evidence > 0
     ? Math.round((overview.evidenceUsableCount / overview.counts.evidence) * 100)
     : towerModel.evidence.length > 0
       ? 100
       : 0;
+  const scaleBlockers = towerModel.risks.filter((risk) => ['critical', 'high'].includes(risk.severity.toLowerCase()) || risk.gate === 'fail');
+  const spendToProve = towerModel.spend.reduce((sum, row) => sum + row.annualizedSpendUsd, 0);
+  const decisionActions = towerModel.actions.filter((action) => !['done', 'closed', 'complete', 'completed'].includes(action.status.toLowerCase()));
+  const lowestAdoption = towerModel.functions
+    .filter((row) => row.adoptionPct !== null)
+    .sort((a, b) => (a.adoptionPct ?? 100) - (b.adoptionPct ?? 100))[0];
 
   const submit = (question: string) => {
     const trimmed = question.trim();
@@ -277,28 +297,31 @@ export function ContextCorpusExplorerPage({
 
   return (
     <main style={styles.page}>
+      <nav style={styles.breadcrumb} aria-label="Breadcrumb">
+        <span>{tenantName}</span>
+        <span>›</span>
+        <strong>Intelligence</strong>
+      </nav>
       <section style={styles.hero}>
         <div>
           <p style={styles.kicker}>CONTEXT INTELLIGENCE · {tenantName.toUpperCase()}</p>
           <h1 style={styles.h1}>What your context is telling us</h1>
-          <p style={styles.lede}>Evidence-cited signals from enterprise context, corpus, Tower rows, and graph relationships. Sentinel answers plainly and names missing context when the substrate is thin.</p>
+          <p style={styles.lede}>A reading of the loaded enterprise context and corpus — in plain English, cross-domain, with the supporting evidence and source citations one click away.</p>
         </div>
-        <div style={styles.meta}>
-          <span>tenant key</span>
-          <strong>{tenantKey ?? 'not resolved'}</strong>
-          <span>{towerModel.source === 'ai_control_data_plane' ? 'Tower committed' : 'Tower fallback/empty'}</span>
+        <div style={styles.refreshCard}>
+          <span>Context refreshed</span>
+          <strong><span style={styles.refreshDot} />{refreshLabel(tenantName)}</strong>
+          <small>{tenantKey ? 'Evidence-backed enterprise read' : 'Context routing pending'}</small>
         </div>
       </section>
 
-      <section style={styles.health}>
-        <HealthCard label="Dimensions loaded" value={`${loadedDimensions}/${DIMENSIONS.length}`} note="context families" tone={loadedDimensions >= 10 ? 'green' : 'amber'} />
-        <HealthCard label="Evidence points" value={(overview?.counts.facts ?? towerModel.facts.length).toLocaleString()} note="facts + Tower facts" tone={(overview?.counts.facts ?? towerModel.facts.length) > 0 ? 'green' : 'red'} />
-        <HealthCard label="Sources ingested" value={String(overview?.counts.sources ?? towerModel.rowCounts.sources)} note="source systems/files" tone={(overview?.counts.sources ?? 0) > 0 ? 'green' : 'amber'} />
-        <HealthCard label="Graph edges" value={String(overview?.counts.relationships ?? 0)} note="context relationships" tone={(overview?.counts.relationships ?? 0) > 0 ? 'green' : 'amber'} />
-        <HealthCard label="Trust" value={`${trustPct}%`} note="usable evidence" tone={trustPct > 70 ? 'green' : trustPct > 0 ? 'amber' : 'red'} />
+      <section style={styles.insightBand} aria-label="Derived insight summary">
+        <InsightTile label="Top CIO read" value={signals[0]?.domain ?? 'Context'} note={signals[0]?.headline ?? 'No derived insight is ready yet.'} tone={signals[0]?.materiality ?? 'medium'} />
+        <InsightTile label="Scale blockers" value={scaleBlockers.length ? `${scaleBlockers.length} areas` : 'None surfaced'} note={scaleBlockers.length ? 'Validate controls before expanding the affected AI work.' : 'No high-severity blocker is currently surfaced.'} tone={scaleBlockers.length ? 'high' : 'low'} />
+        <InsightTile label="Spend to prove" value={spendToProve > 0 ? money(spendToProve) : 'Not surfaced'} note="Tie investment to adoption, productivity, and renewal choices." tone={spendToProve > 0 ? 'medium' : 'low'} />
+        <InsightTile label="Adoption drag" value={lowestAdoption ? `${lowestAdoption.name}` : 'Not surfaced'} note={lowestAdoption ? `${pct(lowestAdoption.adoptionPct)} adoption; ${lowestAdoption.blocker}` : 'No weak adoption segment is surfaced.'} tone={(lowestAdoption?.adoptionPct ?? 100) < 50 ? 'high' : 'medium'} />
+        <InsightTile label="Decision confidence" value={readinessLabel(trustPct)} note="Strong enough for an executive read; drill into support when challenged." tone={trustPct >= 80 ? 'low' : 'medium'} />
       </section>
-
-      {towerModel.source !== 'ai_control_data_plane' ? <div style={styles.disclosure}>{towerModel.sourceDisclosure}</div> : null}
 
       <nav style={styles.tabs} aria-label="Intelligence views">
         {TABS.map((tab) => (
@@ -325,9 +348,7 @@ export function ContextCorpusExplorerPage({
           <div style={styles.answer}>
             <strong>{answer.headline}</strong>
             {answer.rows.length > 0 ? <AnswerTable columns={answer.columns} rows={answer.rows} /> : null}
-            {answer.citations.length > 0 ? (
-              <div style={styles.citations}>{answer.citations.slice(0, 5).map((citation) => <span key={citation}>{citation}</span>)}</div>
-            ) : null}
+            {answer.citations.length > 0 ? <EvidencePill count={answer.citations.length} /> : null}
             <div style={styles.next}>{answer.next.map((next) => <span key={next}>{next}</span>)}</div>
           </div>
           <div style={styles.starters}>
@@ -343,7 +364,7 @@ export function ContextCorpusExplorerPage({
             <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Ask Sentinel..." aria-label="Ask Sentinel" />
             <button type="submit">Ask</button>
           </form>
-          <p style={styles.guardrail}>Every answer is evidence-cited where available; unsupported claims are routed to missing-context guidance.</p>
+          <p style={styles.guardrail}>Sentinel answers only from loaded context and names what is missing.</p>
         </aside>
 
         <section style={styles.canvas}>
@@ -353,13 +374,17 @@ export function ContextCorpusExplorerPage({
           {activeTab === 'sentinel' ? <SentinelView answer={answer} /> : null}
         </section>
       </section>
+      <footer style={styles.footer}>
+        <span>First Capital Financial Corporation context intelligence</span>
+        <span>{decisionActions.length || scaleBlockers.length} decisions to review · refreshed {refreshLabel(tenantName)}</span>
+      </footer>
     </main>
   );
 }
 
-function HealthCard({ label, value, note, tone }: { label: string; value: string; note: string; tone: string }) {
+function InsightTile({ label, value, note, tone }: { label: string; value: string; note: string; tone: string }) {
   return (
-    <article style={styles.healthCard}>
+    <article style={{ ...styles.insightTile, borderTopColor: toneColor(tone) }}>
       <p style={styles.smallKicker}>{label}</p>
       <strong>{value}</strong>
       <span style={{ color: toneColor(tone) }}>{note}</span>
@@ -370,7 +395,7 @@ function HealthCard({ label, value, note, tone }: { label: string; value: string
 function SignalsView({ signals }: { signals: IntelligenceSignal[] }) {
   return (
     <>
-      <CanvasHeader kicker="MEANING · L2 · SIGNALS" title="The strongest cross-context reads." subtitle="Signals combine corpus facts, Tower rows, risk gates, spend, adoption, and evidence readiness." />
+      <CanvasHeader kicker="Executive Signals" title="The strongest cross-context reads." subtitle="Signals combine business context, corpus evidence, risk gates, spend, adoption, and readiness into plain-English decisions." />
       <div style={styles.signalGrid}>
         {signals.length > 0 ? signals.map((signal) => (
           <article key={signal.id} style={styles.signalCard}>
@@ -382,7 +407,11 @@ function SignalsView({ signals }: { signals: IntelligenceSignal[] }) {
             <p>{signal.soWhat}</p>
             <footer>
               <strong>{signal.action}</strong>
-              <div style={styles.citations}>{signal.evidence.slice(0, 3).map((item) => <span key={item}>{item}</span>)}</div>
+              <div style={styles.signalActions}>
+                <button type="button">See evidence</button>
+                <button type="button">Shape into Move</button>
+                {signal.evidence.length > 0 ? <EvidencePill count={signal.evidence.length} /> : null}
+              </div>
             </footer>
           </article>
         )) : <EmptyState message="No derived context insights or Tower signals are loaded yet." />}
@@ -394,7 +423,7 @@ function SignalsView({ signals }: { signals: IntelligenceSignal[] }) {
 function DimensionsView({ overview, tower }: { overview: EnterpriseContextOverview | null; tower: AiControlTowerReadModel }) {
   return (
     <>
-      <CanvasHeader kicker="CONTEXT · L1 · 12 DIMENSIONS" title="Coverage across the enterprise context layer." subtitle="Each tile shows whether that dimension has usable rows or Tower-derived context." />
+      <CanvasHeader kicker="Context Browser" title="Browse the business context behind the insights." subtitle="Use this view to understand which parts of the enterprise are contributing to the read, without exposing data plumbing." />
       <div style={styles.dimensionGrid}>
         {DIMENSIONS.map(([label, needles], index) => {
           const count = label === 'AI initiatives & adoption'
@@ -405,7 +434,7 @@ function DimensionsView({ overview, tower }: { overview: EnterpriseContextOvervi
               <span>{String(index + 1).padStart(2, '0')}</span>
               <strong>{label}</strong>
               <Badge label={count > 0 ? 'loaded' : 'missing'} />
-              <small>{count} records</small>
+              <small>{count > 0 ? 'Available for insight synthesis' : 'Needs more context before strong conclusions'}</small>
             </article>
           );
         })}
@@ -415,19 +444,25 @@ function DimensionsView({ overview, tower }: { overview: EnterpriseContextOvervi
 }
 
 function CorpusView({ overview, tower }: { overview: EnterpriseContextOverview | null; tower: AiControlTowerReadModel }) {
+  const topSignals = deriveSignals(overview, tower).slice(0, 5);
   const rows = [
-    ['Enterprise records', String(overview?.counts.records ?? 0), 'structured context rows'],
-    ['Facts', String(overview?.counts.facts ?? tower.facts.length), 'answerable context assertions'],
-    ['Evidence', String(overview?.counts.evidence ?? tower.evidence.length), 'citation-bearing rows'],
-    ['Relationships', String(overview?.counts.relationships ?? 0), 'graph edges'],
-    ['Tower facts', String(tower.facts.length), 'AI Control Tower answer substrate'],
+    ['AI governance', 'Which AI claims should be held until controls are validated?', 'Risk, owner, action, and timing read together.'],
+    ['Spend vs value', 'Which investments need proof before renewal or expansion?', 'Spend, adoption, productivity, and benefit claims are compared.'],
+    ['Adoption drag', 'Where is usage too weak to justify scaling?', 'Function-level adoption is interpreted against blockers and value.'],
+    ['Vendor leverage', 'Which platform contracts should be renegotiated or paused?', 'Renewal pressure is tied to business value and risk posture.'],
+    ['Move shaping', 'Which signals are strong enough to become executive moves?', 'Insights are converted into actions when support is sufficient.'],
   ];
   return (
     <>
-      <CanvasHeader kicker="GLOBAL · L1 · CORPUS" title="What Sentinel can search and cite." subtitle="The corpus view explains answerability before an executive asks the hard question." />
-      <AnswerTable columns={['Layer', 'Count', 'Meaning']} rows={rows} />
-      <div style={styles.sourceList}>
-        {(overview?.sourceSystems ?? []).slice(0, 16).map((source) => <span key={source}>{source}</span>)}
+      <CanvasHeader kicker="Corpus Library" title="Patterns the context can now reason across." subtitle="This is the practical value of the corpus: reusable question patterns, not a technical inventory." />
+      <AnswerTable columns={['Pattern', 'Question it answers', 'How it reasons']} rows={rows} />
+      <div style={styles.patternList}>
+        {topSignals.map((signal) => (
+          <article key={signal.id}>
+            <strong>{signal.headline}</strong>
+            <span>{signal.soWhat}</span>
+          </article>
+        ))}
       </div>
     </>
   );
@@ -436,14 +471,18 @@ function CorpusView({ overview, tower }: { overview: EnterpriseContextOverview |
 function SentinelView({ answer }: { answer: SentinelAnswer }) {
   return (
     <>
-      <CanvasHeader kicker="ASK · L3 · SENTINEL" title="Structured answer, not a wall of text." subtitle="Sentinel returns a headline, rows, citations, and next paths." />
+      <CanvasHeader kicker="Ask Sentinel" title="Ask questions against the loaded context." subtitle="Sentinel returns a headline, supporting rows, evidence status, and next paths." />
       <div style={styles.largeAnswer}>
         <h3>{answer.headline}</h3>
         {answer.rows.length > 0 ? <AnswerTable columns={answer.columns} rows={answer.rows} /> : null}
-        <div style={styles.citations}>{answer.citations.map((citation) => <span key={citation}>{citation}</span>)}</div>
+        {answer.citations.length > 0 ? <EvidencePill count={answer.citations.length} /> : null}
       </div>
     </>
   );
+}
+
+function EvidencePill({ count }: { count: number }) {
+  return <span style={styles.evidencePill}>{count} evidence {count === 1 ? 'item' : 'items'} available</span>;
 }
 
 function CanvasHeader({ kicker, title, subtitle }: { kicker: string; title: string; subtitle: string }) {
@@ -482,6 +521,14 @@ const styles: Record<string, CSSProperties> = {
     color: COLORS.ink,
     fontFamily: COLORS.sans,
     padding: '26px clamp(18px, 3vw, 38px) 34px',
+  },
+  breadcrumb: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+    color: COLORS.muted,
+    fontSize: 13,
   },
   hero: {
     display: 'flex',
@@ -530,26 +577,35 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 15,
     lineHeight: 1.35,
   },
-  meta: {
+  refreshCard: {
     display: 'grid',
-    gap: 4,
-    minWidth: 180,
+    gap: 6,
+    minWidth: 190,
     border: `1px solid ${COLORS.line}`,
     borderRadius: 8,
     background: COLORS.panel,
-    padding: 12,
+    padding: 14,
     fontSize: 12,
   },
-  health: {
+  refreshDot: {
+    display: 'inline-block',
+    width: 9,
+    height: 9,
+    marginRight: 7,
+    borderRadius: 999,
+    background: COLORS.green,
+  },
+  insightBand: {
     display: 'grid',
     gridTemplateColumns: 'repeat(5, minmax(150px, 1fr))',
     gap: 10,
     marginTop: 14,
   },
-  healthCard: {
+  insightTile: {
     display: 'grid',
     gap: 5,
     border: `1px solid ${COLORS.line}`,
+    borderTop: `3px solid ${COLORS.blue}`,
     borderRadius: 8,
     background: COLORS.panel,
     padding: 13,
@@ -681,6 +737,27 @@ const styles: Record<string, CSSProperties> = {
     flexWrap: 'wrap',
     gap: 6,
   },
+  evidencePill: {
+    display: 'inline-flex',
+    width: 'fit-content',
+    alignItems: 'center',
+    border: `1px solid ${COLORS.green}55`,
+    borderRadius: 999,
+    color: COLORS.green,
+    background: '#eef8f2',
+    padding: '4px 8px',
+    fontFamily: COLORS.mono,
+    fontSize: 10,
+    fontWeight: 850,
+    textTransform: 'uppercase',
+  },
+  signalActions: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 10,
+  },
   next: {
     display: 'flex',
     flexWrap: 'wrap',
@@ -714,6 +791,12 @@ const styles: Record<string, CSSProperties> = {
     gap: 8,
     marginTop: 14,
   },
+  patternList: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: 10,
+    marginTop: 14,
+  },
   largeAnswer: {
     display: 'grid',
     gap: 12,
@@ -728,5 +811,15 @@ const styles: Record<string, CSSProperties> = {
     color: COLORS.muted,
     background: '#fbfaf7',
     padding: 24,
+  },
+  footer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginTop: 18,
+    borderTop: `1px solid ${COLORS.line}`,
+    paddingTop: 12,
+    color: COLORS.muted,
+    fontSize: 12,
   },
 };
