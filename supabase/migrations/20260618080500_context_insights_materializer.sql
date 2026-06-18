@@ -7,6 +7,7 @@ BEGIN;
 CREATE TABLE IF NOT EXISTS significance_rules (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   rule_id TEXT NOT NULL UNIQUE,
+  rule_key TEXT,
   domain TEXT NOT NULL,
   title TEXT NOT NULL,
   description TEXT NOT NULL,
@@ -20,6 +21,7 @@ CREATE TABLE IF NOT EXISTS significance_rules (
 );
 
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS rule_id TEXT;
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS rule_key TEXT;
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS domain TEXT;
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS title TEXT;
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS description TEXT;
@@ -30,6 +32,16 @@ ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS required_record_types TE
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
+UPDATE significance_rules
+SET rule_id = rule_key
+WHERE rule_id IS NULL
+  AND rule_key IS NOT NULL;
+
+UPDATE significance_rules
+SET rule_key = rule_id
+WHERE rule_key IS NULL
+  AND rule_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS context_insights (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -93,6 +105,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_significance_rules_rule_id_unique
 
 INSERT INTO significance_rules (
   rule_id,
+  rule_key,
   domain,
   title,
   description,
@@ -102,6 +115,7 @@ INSERT INTO significance_rules (
   metadata
 ) VALUES
   (
+    'renewal-window-no-benchmark',
     'renewal-window-no-benchmark',
     'Vendor',
     'Near-term vendor renewal has commercial risk',
@@ -113,6 +127,7 @@ INSERT INTO significance_rules (
   ),
   (
     'value-coverage-gap',
+    'value-coverage-gap',
     'Cost',
     'Committed initiative spend lacks enough realized value proof',
     'Flags initiatives where promised benefit materially exceeds measured value or the evidence posture is incomplete.',
@@ -122,6 +137,7 @@ INSERT INTO significance_rules (
     '{"source":"context-insight-materializer","version":1}'::jsonb
   ),
   (
+    'critical-platform-drag',
     'critical-platform-drag',
     'Service',
     'Critical legacy platform is constraining transformation',
@@ -133,6 +149,7 @@ INSERT INTO significance_rules (
   ),
   (
     'data-foundation-readiness-gap',
+    'data-foundation-readiness-gap',
     'Data quality',
     'Data foundation gap blocks trusted analytics and automation',
     'Flags data assets where quality, freshness, semantic layer, or target platform readiness is not yet enough for reliable AI/analytics.',
@@ -142,6 +159,7 @@ INSERT INTO significance_rules (
     '{"source":"context-insight-materializer","version":1}'::jsonb
   ),
   (
+    'governed-ai-risk-gap',
     'governed-ai-risk-gap',
     'AI Value',
     'AI automation is ahead of governance evidence',
@@ -153,6 +171,7 @@ INSERT INTO significance_rules (
   ),
   (
     'operational-backlog-automation-pressure',
+    'operational-backlog-automation-pressure',
     'Service',
     'Operational volume is creating automation pressure',
     'Flags services or processes with high monthly volume, backlog, MTTR, or repeated failure signals that should inform Moves and Tower priorities.',
@@ -162,6 +181,7 @@ INSERT INTO significance_rules (
     '{"source":"context-insight-materializer","version":1}'::jsonb
   )
 ON CONFLICT (rule_id) DO UPDATE SET
+  rule_key = excluded.rule_key,
   domain = excluded.domain,
   title = excluded.title,
   description = excluded.description,

@@ -40,6 +40,7 @@ Adds the missing backend layer that turns loaded tenant context records and fact
 - PASS: `git diff --check`
 - PASS: `node scripts/release-check.mjs --base origin/codex/ai-control-tower-substrate --head HEAD`
 - FAIL/BLOCKED: ACA migration execution `job-abarva-private-operator-eus-2j5lnep` failed on the live lab database because an existing drifted `significance_rules` table did not have `rule_id`. The migration was updated to add missing columns and unique indexes for existing-table upgrade paths.
+- FAIL/BLOCKED: ACA migration execution `job-abarva-private-operator-eus-tl2s8qo` then exposed a second live drift: the existing table has a not-null `rule_key` column. The migration now treats `rule_key` as a compatibility alias, backfills `rule_id` from it where needed, and seeds both columns.
 - NOT RUN: ACA private operator plan/apply/verify. This must run after merge, image build/deploy, and migration apply.
 
 ## Rollout Plan
@@ -60,7 +61,9 @@ Code rollback is a Git revert. Data rollback is tenant-scoped: delete `context_i
 
 - Initial PR: #3658
 - Failed ACA migration attempt before drift fix: `job-abarva-private-operator-eus-2j5lnep`
-- Pending follow-up PR/CI, deployment, migration, and ACA execution IDs for the drift fix.
+- Follow-up drift fix PR: #3659
+- Failed ACA migration attempt before rule-key compatibility fix: `job-abarva-private-operator-eus-tl2s8qo`
+- Pending follow-up PR/CI, deployment, migration, and ACA execution IDs for the rule-key compatibility fix.
 
 ## Known Gaps
 
