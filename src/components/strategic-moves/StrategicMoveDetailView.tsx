@@ -5,6 +5,7 @@ import { PhaseRail } from "./PhaseRail";
 import { MoveArtifactUpload } from "./MoveArtifactUpload";
 import { NexusCurrentStateBriefingPanel } from "./NexusCurrentStateBriefingPanel";
 import { StrategicMoveDetailClient } from "./StrategicMoveDetailClient";
+import { ResolveDecisionButton } from "./ResolveDecisionButton";
 import { PhaseDocumentsPanel } from "./PhaseDocumentsPanel";
 import { FileCabinetPanel } from "./FileCabinetPanel";
 import { SessionPlaybookPanel } from "./SessionPlaybookPanel";
@@ -720,12 +721,20 @@ function RightPane({
                 {secondary.label}
               </Link>
             )}
-            <Link className={styles.btnPhase} href={primary.href}>
-              {primary.label}{" "}
-              <span className={styles.btnArrow} aria-hidden>
-                &rarr;
-              </span>
-            </Link>
+            {move.status.key === "awaiting_decision" ? (
+              <ResolveDecisionButton
+                moveId={move.id}
+                className={styles.btnPhase}
+                arrowClassName={styles.btnArrow}
+              />
+            ) : (
+              <Link className={styles.btnPhase} href={primary.href}>
+                {primary.label}{" "}
+                <span className={styles.btnArrow} aria-hidden>
+                  &rarr;
+                </span>
+              </Link>
+            )}
           </div>
         </div>
         <PhaseRail current={move.currentPhase} status={move.statusColor} />
