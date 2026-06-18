@@ -39,7 +39,6 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
       email: 'real-user@abarva.com',
-      password: 'Demo2026!',
       code: '424242',
     }));
 
@@ -52,7 +51,6 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
       email: 'demo-meridian+clerk_test@abarva.com',
-      password: 'Demo2026!',
       code: '424242',
     }));
 
@@ -61,24 +59,25 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     expect(getUserList).not.toHaveBeenCalled();
   });
 
-  it('rejects an invalid password', async () => {
+  it('accepts passcode-only requests without a password', async () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
-      email: 'cdio@meridian-health.example.com',
-      password: 'wrong-password',
+      email: 'kmysore@gmail.com',
       code: '424242',
     }));
 
-    expect(res.status).toBe(401);
-    await expect(res.json()).resolves.toMatchObject({ error: 'invalid_credentials' });
-    expect(getUserList).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({ ticket: 'ticket_demo_1' });
+    expect(getUserList).toHaveBeenCalledWith({
+      emailAddress: ['kmysore@gmail.com'],
+      limit: 1,
+    });
   });
 
   it('rejects an invalid demo code', async () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
       email: 'elena.rivera@meridian-health.example.com',
-      password: 'Demo2026!',
       code: '000000',
     }));
 
@@ -91,7 +90,6 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
       email: 'cdo@apex-retail.example.com',
-      password: 'Demo2026!',
       code: '424242',
     }));
 
@@ -111,7 +109,6 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
       email: 'cdio@meridian-health.example.com',
-      password: 'Demo2026!',
       code: '424242',
     }));
 

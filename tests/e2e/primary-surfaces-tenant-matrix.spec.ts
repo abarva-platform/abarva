@@ -10,7 +10,7 @@
 //   - Meridian Health System (cdio@meridian-health.example.com)
 //   - First Capital Financial (cio@firstcapital.example.com)
 //
-// All three share password Demo2026! and access code 424242 per the
+// All three share access code 424242 per the
 // canonical demo-account roster in `src/lib/auth/canonical-auth-roster.ts`.
 //
 // Run modes:
@@ -60,7 +60,6 @@ const TENANTS: ReadonlyArray<TenantFixture> = [
   },
 ];
 
-const PASSWORD = process.env.E2E_DEMO_PASSWORD ?? 'Demo2026!';
 const ACCESS_CODE = process.env.E2E_DEMO_ACCESS_CODE ?? '424242';
 
 async function typeCredential(page: Page, placeholder: RegExp, value: string): Promise<void> {
@@ -83,7 +82,6 @@ async function signInAsTenant(page: Page, tenant: TenantFixture): Promise<void> 
     { timeout: 30_000 },
   );
   await typeCredential(page, /name@company.com/i, tenant.email);
-  await typeCredential(page, /Password from invite/i, PASSWORD);
   await typeCredential(page, /6-digit code/i, ACCESS_CODE);
   await expect(page.getByRole('button', { name: /sign in/i })).toBeEnabled({
     timeout: 10_000,

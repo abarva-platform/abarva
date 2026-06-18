@@ -392,9 +392,9 @@ describe('Probe 5c · canonicalClientDisplayName', () => {
 // =====================================================================
 
 describe('Probe 6 · session role inference', () => {
-  it('does not infer admin from Anand emails without Clerk metadata', () => {
+  it('does not infer admin from Anand emails; pilot Anand email resolves as client access', () => {
     expect(inferSessionRoleFromEmail('anand+clerk_test@abarva.com')).toBeNull();
-    expect(inferSessionRoleFromEmail('anand.sundaram@thesundaram.com')).toBeNull();
+    expect(inferSessionRoleFromEmail('anand.sundaram@thesundaram.com')).toBe('client');
   });
 
   it('does not infer investor from retired investor emails', () => {
@@ -409,6 +409,7 @@ describe('Probe 6 · session role inference', () => {
       'client',
     );
     expect(inferSessionRoleFromEmail('anand+apex@abarva.com')).toBe('client');
+    expect(inferSessionRoleFromEmail('anand@abarva.ai')).toBe('client');
   });
 
   it('returns null for unknown emails', () => {

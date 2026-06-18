@@ -9,10 +9,9 @@
 //     meetings they attended, programs they sponsor, decisions they
 //     made — all already threaded through the data.
 //
-// Anand (anand.sundaram@thesundaram.com) is not in this roster — he
-// is a platform super-user via PLATFORM_ADMIN_EMAIL_ALLOWLIST in
-// tenant-roles.ts and signs in through normal Clerk flows, not the
-// demo OTP picker.
+// Pilot passcode access uses real invite emails in addition to the
+// role-based demo accounts. Keep these separate from CANONICAL_AUTH_EMAILS
+// because the latter drives synthetic CXO fixture provisioning.
 //
 // Persona binding (display name maintained in cxo-personas.ts and
 // in the Clerk user metadata seeded by the CXO provisioning script):
@@ -65,3 +64,29 @@ export const CANONICAL_CLIENT_ADMIN_EMAILS = [
 ] as const;
 
 export type CanonicalAuthEmail = (typeof CANONICAL_AUTH_EMAILS)[number];
+
+export const PILOT_PASSCODE_EMAILS = [
+  // Meridian Health System
+  'kmysore@gmail.com', // Kiran Mysore · CDAO / pilot sponsor
+  'anand.sundaram@thesundaram.com', // Anand operator access, metadata-pinned in Clerk
+  'anand+meridian@thesundaram.com',
+  'anand.sundaram+meridian@thesundaram.com',
+
+  // Lakeshore Holdings
+  'surekha.durvasula@gmail.com', // Surekha Durvasula · VP Innovation / Delivery
+  'anandshp@gmail.com',
+  'anand+lakeshore@thesundaram.com',
+  'anand.sundaram+lakeshore@thesundaram.com',
+
+  // First Capital Financial
+  'admin@abarva.ai',
+  'anand+firstcapital@thesundaram.com',
+  'anand.sundaram+firstcapital@thesundaram.com',
+
+  // SkyHarbor Air
+  'anand@abarva.ai',
+  'anand+skyharbor@thesundaram.com',
+  'anand.sundaram+skyharbor@thesundaram.com',
+] as const;
+
+export type PilotPasscodeEmail = (typeof PILOT_PASSCODE_EMAILS)[number];
