@@ -1,10 +1,12 @@
 import type { CSSProperties } from 'react';
 import { COLORS, FONT, SPACING } from '@/lib/design/abarva-theme';
 import type { EnterpriseContextOverview } from '@/lib/enterprise-context/intelligence-read-model';
+import type { ContextInsight } from '@/lib/intelligence/context-insights';
 
 interface Props {
   overview: EnterpriseContextOverview | null;
   tenantName: string;
+  insights?: ContextInsight[];
 }
 
 const DOMAIN_LABELS: Record<string, string> = {
@@ -34,7 +36,7 @@ const ACTION_HREFS: Record<string, string> = {
   'Open blocker brief': '/intelligence#brief',
 };
 
-export function EnterpriseContextCanvas({ overview, tenantName }: Props) {
+export function EnterpriseContextCanvas({ overview, tenantName, insights = [] }: Props) {
   if (!overview) {
     return (
       <section style={shellStyle}>
@@ -76,6 +78,52 @@ export function EnterpriseContextCanvas({ overview, tenantName }: Props) {
         <Metric label="Avg confidence" value={`${Math.round(overview.confidenceAverage * 100)}%`} />
         <Metric label="Fresh rows" value={`${overview.freshnessCounts.fresh ?? 0}`} />
       </div>
+
+      <section style={liveInsightsStyle} aria-label="Live context insights">
+        <div style={sectionHeaderStyle}>
+          <div>
+            <p style={eyebrowStyle}>What the context is telling you</p>
+            <h2 style={sectionTitleStyle}>Live cross-domain insights</h2>
+          </div>
+          <div style={insightCountStyle}>
+            <strong>{insights.length}</strong>
+            <span>active</span>
+          </div>
+        </div>
+        {insights.length > 0 ? (
+          <div style={liveInsightGridStyle}>
+            {insights.slice(0, 6).map((insight) => (
+              <article key={insight.id} style={liveInsightCardStyle}>
+                <div style={cardTopStyle}>
+                  <p style={cardEyebrowStyle}>{insight.domain} · {insight.ruleId}</p>
+                  <span style={severityBadgeStyle(insight.materiality)}>{insight.materiality}</span>
+                </div>
+                <h3 style={liveInsightTitleStyle}>{insight.headline}</h3>
+                <p style={liveInsightSummaryStyle}>{insight.soWhat}</p>
+                {insight.action && (
+                  <p style={bodyStyle}><strong>What to do:</strong> {insight.action}</p>
+                )}
+                <div style={metaGridStyle}>
+                  <MiniMeta label="Confidence" value={insight.confidence} />
+                  <MiniMeta label="Freshness" value={insight.freshnessStatus} />
+                  <MiniMeta label="Evidence" value={`${insight.derivedFromFactIds.length} facts`} />
+                </div>
+                <details style={evidenceDetailsStyle}>
+                  <summary style={evidenceSummaryStyle}>Show source IDs</summary>
+                  <div style={sourceIdBlockStyle}>
+                    <SourceIdGroup label="Records" values={insight.derivedFromRecordIds} />
+                    <SourceIdGroup label="Facts" values={insight.derivedFromFactIds} />
+                  </div>
+                </details>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div style={emptyInsightStyle}>
+            Context rows are loaded, but no materialized insight rows are active for this tenant yet.
+          </div>
+        )}
+      </section>
 
       <div style={cardGridStyle}>
         {overview.cards.map((card) => (
@@ -137,6 +185,41 @@ function MiniMeta({ label, value }: { label: string; value: string }) {
   );
 }
 
+function SourceIdGroup({ label, values }: { label: string; values: string[] }) {
+  return (
+    <div>
+      <span style={miniLabelStyle}>{label}</span>
+      <div style={sourceIdListStyle}>
+        {values.length > 0 ? values.slice(0, 8).map((value) => (
+          <code key={value} style={sourceIdStyle}>{value}</code>
+        )) : (
+          <span style={sourceEmptyStyle}>None attached</span>
+        )}
+        {values.length > 8 && <span style={sourceEmptyStyle}>+{values.length - 8} more</span>}
+      </div>
+    </div>
+  );
+}
+
+function severityBadgeStyle(materiality: ContextInsight['materiality']): CSSProperties {
+  const palette = materiality === 'high'
+    ? { background: '#fff1f0', color: '#b4232a', border: '#f3c5c1' }
+    : materiality === 'medium'
+      ? { background: '#fff8eb', color: '#9a6700', border: '#efd49a' }
+      : { background: '#eff8f4', color: '#2d6a4f', border: '#b9decf' };
+  return {
+    border: `1px solid ${palette.border}`,
+    borderRadius: 999,
+    padding: '4px 8px',
+    background: palette.background,
+    color: palette.color,
+    fontFamily: FONT.mono,
+    fontSize: 10,
+    textTransform: 'uppercase',
+    whiteSpace: 'nowrap',
+  };
+}
+
 const shellStyle = {
   padding: `${SPACING.xl}px clamp(${SPACING.lg}px, 4vw, ${SPACING.xxxl}px) ${SPACING.xxxl}px`,
   fontFamily: FONT.body,
@@ -192,6 +275,119 @@ const scorecardStyle = {
   gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
   gap: SPACING.md,
   marginTop: SPACING.lg,
+} satisfies CSSProperties;
+
+const liveInsightsStyle = {
+  marginTop: SPACING.xl,
+  border: `1px solid ${COLORS.border}`,
+  borderRadius: 8,
+  background: COLORS.surface2,
+  padding: SPACING.lg,
+} satisfies CSSProperties;
+
+const sectionHeaderStyle = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  gap: SPACING.lg,
+  alignItems: 'start',
+  marginBottom: SPACING.md,
+} satisfies CSSProperties;
+
+const insightCountStyle = {
+  display: 'inline-flex',
+  alignItems: 'baseline',
+  gap: 6,
+  border: `1px solid ${COLORS.border}`,
+  borderRadius: 999,
+  padding: '6px 10px',
+  background: '#fff',
+  color: COLORS.body,
+  fontFamily: FONT.mono,
+  fontSize: 11,
+  whiteSpace: 'nowrap',
+} satisfies CSSProperties;
+
+const liveInsightGridStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+  gap: SPACING.md,
+} satisfies CSSProperties;
+
+const liveInsightCardStyle = {
+  border: `1px solid ${COLORS.border}`,
+  borderRadius: 8,
+  background: '#fff',
+  padding: SPACING.md,
+  minHeight: 250,
+} satisfies CSSProperties;
+
+const liveInsightTitleStyle = {
+  margin: `${SPACING.sm}px 0`,
+  color: COLORS.ink,
+  fontSize: 17,
+  lineHeight: 1.25,
+  letterSpacing: 0,
+  fontFamily: FONT.display,
+} satisfies CSSProperties;
+
+const liveInsightSummaryStyle = {
+  margin: 0,
+  color: COLORS.body,
+  fontSize: 13,
+  lineHeight: 1.55,
+} satisfies CSSProperties;
+
+const evidenceDetailsStyle = {
+  marginTop: SPACING.md,
+  borderTop: `1px solid ${COLORS.border}`,
+  paddingTop: SPACING.sm,
+} satisfies CSSProperties;
+
+const evidenceSummaryStyle = {
+  cursor: 'pointer',
+  color: COLORS.body,
+  fontFamily: FONT.mono,
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: 1,
+  textTransform: 'uppercase',
+} satisfies CSSProperties;
+
+const sourceIdBlockStyle = {
+  display: 'grid',
+  gap: SPACING.sm,
+  marginTop: SPACING.sm,
+} satisfies CSSProperties;
+
+const sourceIdListStyle = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: 5,
+  marginTop: 5,
+} satisfies CSSProperties;
+
+const sourceIdStyle = {
+  border: `1px solid ${COLORS.border}`,
+  borderRadius: 5,
+  padding: '3px 5px',
+  background: COLORS.surface2,
+  color: COLORS.body,
+  fontSize: 10,
+  lineHeight: 1.2,
+} satisfies CSSProperties;
+
+const sourceEmptyStyle = {
+  color: COLORS.muted,
+  fontSize: 11,
+} satisfies CSSProperties;
+
+const emptyInsightStyle = {
+  border: `1px solid ${COLORS.border}`,
+  borderRadius: 8,
+  background: '#fff',
+  padding: SPACING.md,
+  color: COLORS.body,
+  fontSize: 13,
 } satisfies CSSProperties;
 
 const metricStyle = {

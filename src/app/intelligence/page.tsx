@@ -20,6 +20,7 @@ import {
 } from '@/lib/intelligence-v3/stages-data';
 import { getActiveClientRow, hasLockedTenantSession } from '@/lib/active-client';
 import { getEnterpriseContextOverviewForTenant } from '@/lib/enterprise-context/intelligence-read-model';
+import { listContextInsights } from '@/lib/intelligence/context-insights';
 import { listInitiativesForClient } from '@/lib/admin/ai-initiatives/queries';
 import {
   loadApexRetailIntelligenceData,
@@ -69,6 +70,7 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
     initiatives,
     apexRetailData,
     enterpriseContextOverview,
+    contextInsights,
   ] = await Promise.all([
     buildIntelligenceV3PageData(resolvedClientKey),
     client ? getVendorsForClient(client.id).catch(() => null) : Promise.resolve(null),
@@ -82,6 +84,9 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
         : loadApexRetailIntelligenceData(client)
     ).catch(() => null),
     client ? getEnterpriseContextOverviewForTenant(client.key, client.name).catch(() => null) : Promise.resolve(null),
+    client
+      ? listContextInsights({ tenantKey: client.key, limit: 12 }).catch(() => [])
+      : Promise.resolve([]),
   ]);
 
   return (
@@ -96,6 +101,7 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
       apexRetailData={apexRetailData}
       clientKey={client?.key ?? requestedClient ?? null}
       enterpriseContextOverview={enterpriseContextOverview}
+      contextInsights={contextInsights}
     />
   );
 }
