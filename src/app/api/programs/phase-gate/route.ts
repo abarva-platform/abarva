@@ -17,6 +17,7 @@ import { azureRead } from "@/lib/data-plane/azureRead";
 import { getSeedPlan } from "@/lib/deliverables/seed-route-resolver";
 import { writeProgramAuditLog } from "@/lib/programs/audit-log";
 import { selectProgramsWriteAdapter } from "@/lib/data-plane/write-adapters/programsWriteAdapter";
+import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import {
   isGateApprovalStrictMode,
@@ -410,6 +411,36 @@ export async function POST(request: NextRequest) {
           programCode,
           engagementId,
         });
+      }
+
+      // State reconciliation: keep the canonical gate signals in lockstep with
+      // current_phase. advanceEngagementPhase moved current_phase + gates_passed
+      // above; now record the approved gate as a phase_snapshot and clear any
+      // pending lifecycle so getMoveStatus (Overview) and the snapshot history
+      // don't read a stale "awaiting decision" after the advance. Best-effort —
+      // the authoritative record is the audit-log write below, so a failure here
+      // is logged, never fatal.
+      try {
+        const writeSb = getAzureWriteFluentClient();
+        await writeSb.from("phase_snapshots").insert({
+          engagement_id: engagementId,
+          phase_number: toPhase,
+          approval_status: "approved",
+        });
+        await writeSb
+          .from("engagements")
+          .update({ lifecycle_state: "approved" })
+          .eq("id", engagementId);
+      } catch (snapErr) {
+        console.warn(
+          "[phase-gate] snapshot/lifecycle reconciliation write failed",
+          {
+            programCode,
+            engagementId,
+            message:
+              snapErr instanceof Error ? snapErr.message : String(snapErr),
+          },
+        );
       }
     }
   } catch (err) {
