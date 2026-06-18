@@ -12,7 +12,7 @@ describe('PortfolioEmptyState preview rows', () => {
     );
 
     expect(source).toContain('SRC-DEMO-101');
-    expect(source).toContain('Sample preview · once populated');
+    expect(source).toContain('Generic sample · once populated');
     expect(source).not.toMatch(/SRC-(APX|MER|SKY)/);
     expect(source).not.toContain('Apex Retail');
     expect(source).not.toContain('Meridian');
