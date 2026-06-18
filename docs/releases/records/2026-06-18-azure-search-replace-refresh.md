@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-private-data-plane`
 
 ## Plain-English Summary
 
@@ -38,14 +38,23 @@ Hardens the tenant-context Azure Search refresh after the first scoped Meridian/
 - PASS: `/Users/anand/Projects/nexus/node_modules/.bin/tsc --noEmit --pretty false`
 - PASS: `git diff --check`
 - PASS: `node scripts/release-check.mjs --base origin/codex/ai-control-tower-substrate --head HEAD`
+- PASS: ACR build `cadh` produced `acrabarvalab001.azurecr.io/abarva/web:context-refresh-8ea3b75e` with digest `sha256:83b989f067e4beccc29c96aa5f1474723157d9640c4931618e293b392cbfe329`.
+- PASS: Web ACA deployed revision `ca-abarva-web-lab-eastus--0000099` and shifted 100% traffic to `context-refresh-8ea3b75e`.
+- PASS: Public health check returned `ok: true`, `postgres: true`, `direct_postgres: true`, `azure_graph: postgres`.
+- PASS: ACA scoped apply execution `job-abarva-private-operator-eus-zbdnod1` purged stale tenant docs, uploaded 941 tenant-context documents, and verified observed counts `lakeshore: 439`, `meridian-health: 502`.
+- PASS: Independent ACA verify execution `job-abarva-private-operator-eus-666ek2o` verified observed counts `lakeshore: 439`, `meridian-health: 502`.
+- PASS: Private operator was restored to idle image `acrabarvalab001.azurecr.io/abarva/web@sha256:e7668ebbb670bc014893fcc3265341cc56810c98a73b104d05ef3a079c430b3c`, command `/bin/true`, with Search refresh env vars removed.
 
 ## Rollout Plan
 
-Merge, rebuild the ACA image, deploy it, then rerun:
+Completed on June 18, 2026:
 
-`AZURE_SEARCH_BACKFILL_TENANTS=meridian-health,lakeshore npx tsx src/scripts/azure-ai-search-backfill.ts apply`
+- Merged PR #3656.
+- Rebuilt and deployed the web ACA image `context-refresh-8ea3b75e`.
+- Ran tenant-scoped Search apply for `meridian-health,lakeshore`.
+- Ran an independent tenant-scoped Search verify.
 
-The private operator must also set `AZURE_CLIENT_ID` to the user-assigned managed identity client id until a Search admin key secret is wired directly to the job.
+The private operator used `AZURE_CLIENT_ID=3b6e0c9d-2265-499f-af46-965e0ad78b95` for the user-assigned managed identity. It was restored to idle after apply and verify completed.
 
 ## Rollback Plan
 
@@ -55,7 +64,10 @@ Git-revert this release. If a bad Search apply occurred, rerun a known-good tena
 
 - Failed apply with no Search credential/identity selection: `job-abarva-private-operator-eus-07wvamh`
 - Failed apply with upload-only mismatch: `job-abarva-private-operator-eus-w9m2wh7`
-- Future PR/CI and successful ACA apply/verify execution ids once available.
+- Successful replace-style apply: `job-abarva-private-operator-eus-zbdnod1`
+- Successful independent verify: `job-abarva-private-operator-eus-666ek2o`
+- Web revision serving 100% traffic: `ca-abarva-web-lab-eastus--0000099`
+- Image digest: `sha256:83b989f067e4beccc29c96aa5f1474723157d9640c4931618e293b392cbfe329`
 
 ## Known Gaps
 
