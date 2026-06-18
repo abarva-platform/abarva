@@ -38,9 +38,10 @@ This change adds an **event-triggered worker** (`job-abarva-deliv-worker-event`)
 
 ## QA / Validation
 
-- Job provisioned: `provisioningState=Succeeded`, `triggerType=Event`, scale rule `postgresql`, min 0 / max 1 / poll 30s.
-- Live end-to-end: enqueue (generate-phase → 202) → event job execution auto-started ~20–30s later (`...-event-b2q58`, Running) → worker drained the queue. No cron wait.
-- Concurrency safety: worker uses `claimNextDeliverableRun` with `FOR UPDATE SKIP LOCKED`; cron + event workers cannot double-process a row.
+- **PASS** — Job provisioned: `provisioningState=Succeeded`, `triggerType=Event`, scale rule `postgresql`, min 0 / max 1 / poll 30s.
+- **PASS** — Live end-to-end: enqueue (generate-phase → 202) → event job execution auto-started ~20–30s later (`...-event-b2q58`, Running) → worker drained the queue. No cron wait.
+- **PASS** — `scripts/deploy/update-worker-jobs.sh` run live: updated both cron + event jobs to the current web digest.
+- **PASS** — Concurrency safety verified by design: worker uses `claimNextDeliverableRun` with `FOR UPDATE SKIP LOCKED`; cron + event workers cannot double-process a row.
 
 ## Rollout Plan
 
