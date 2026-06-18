@@ -335,6 +335,7 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
 
   return (
     <main style={styles.page}>
+      <TowerTableStyles />
       <section style={styles.hero}>
         <div>
           <p style={styles.kicker}>AI CONTROL TOWER · {model.tenantName.toUpperCase()}</p>
@@ -493,8 +494,8 @@ function KpiCard({ kpi }: { kpi: AiControlTowerKpi }) {
 
 function MiniTable({ columns, rows }: { columns: string[]; rows: string[][] }) {
   return (
-    <div style={styles.miniTableWrap}>
-      <table style={styles.table}>
+    <div className="ai-tower-mini-table-wrap" style={styles.miniTableWrap}>
+      <table className="ai-tower-mini-table" style={styles.table}>
         <thead>
           <tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr>
         </thead>
@@ -804,9 +805,110 @@ function EmptyState({ message }: { message: string }) {
 
 function TableShell({ children }: { children: React.ReactNode }) {
   return (
-    <div style={styles.tableWrap}>
-      <table style={styles.table}>{children}</table>
+    <div className="ai-tower-table-wrap" style={styles.tableWrap}>
+      <table className="ai-tower-table" style={styles.table}>{children}</table>
     </div>
+  );
+}
+
+function TowerTableStyles() {
+  return (
+    <style jsx global>{`
+      .ai-tower-table-wrap,
+      .ai-tower-mini-table-wrap {
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .ai-tower-table {
+        min-width: 980px;
+        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+
+      .ai-tower-mini-table {
+        min-width: 420px;
+        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+
+      .ai-tower-table th,
+      .ai-tower-table td,
+      .ai-tower-mini-table th,
+      .ai-tower-mini-table td {
+        border-bottom: 1px solid ${COLORS.line};
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+
+      .ai-tower-table th,
+      .ai-tower-mini-table th {
+        color: ${COLORS.muted};
+        font-family: ${COLORS.mono};
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .ai-tower-table td,
+      .ai-tower-mini-table td {
+        color: ${COLORS.ink};
+        font-size: 12px;
+      }
+
+      .ai-tower-table td strong,
+      .ai-tower-mini-table td strong {
+        display: block;
+        margin-bottom: 3px;
+        line-height: 1.3;
+      }
+
+      .ai-tower-table td span,
+      .ai-tower-mini-table td span {
+        color: ${COLORS.muted};
+        line-height: 1.35;
+      }
+
+      .ai-tower-table tr:last-child td,
+      .ai-tower-mini-table tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .ai-tower-table th:nth-child(1) {
+        width: 28%;
+      }
+
+      .ai-tower-table th:nth-child(2) {
+        width: 13%;
+      }
+
+      .ai-tower-table th:nth-child(3) {
+        width: 18%;
+      }
+
+      .ai-tower-table th:nth-child(4),
+      .ai-tower-table th:nth-child(5) {
+        width: 13%;
+      }
+
+      .ai-tower-table th:nth-child(6) {
+        width: 15%;
+      }
+
+      .ai-tower-mini-table th,
+      .ai-tower-mini-table td {
+        padding: 6px 8px;
+        font-size: 11px;
+      }
+    `}</style>
   );
 }
 
@@ -1118,14 +1220,18 @@ const styles: Record<string, React.CSSProperties> = {
   },
   tableWrap: {
     overflowX: 'auto',
+    border: `1px solid ${COLORS.line}`,
+    borderRadius: 8,
+    background: COLORS.panel,
   },
   miniTableWrap: {
     overflowX: 'auto',
     maxHeight: 260,
+    border: `1px solid ${COLORS.line}`,
+    borderRadius: 7,
   },
   table: {
     width: '100%',
-    borderCollapse: 'collapse',
     fontSize: 12,
   },
   clickRow: {
