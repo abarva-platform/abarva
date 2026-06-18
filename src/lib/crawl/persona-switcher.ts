@@ -26,7 +26,7 @@ export const CRAWL_PERSONAS: CrawlPersona[] = [
   explicitPersona({
     key: 'meridian-kiran',
     tenantKey: 'meridian',
-    tenantName: 'Meridian Health System',
+    tenantName: 'Meridian Health',
     title: 'CDAO',
     email: 'kmysore@gmail.com',
     sourceSlug: 'cdao-meridian-health',
