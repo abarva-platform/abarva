@@ -270,14 +270,14 @@ function providerOverloadDrillToken(): string | null {
     || null;
 }
 
-export function shouldRunProviderOverloadDrill(request: Request): boolean {
+function shouldRunProviderOverloadDrill(request: Request): boolean {
   const expected = providerOverloadDrillToken();
   if (!expected) return false;
   const supplied = request.headers.get(L9_PROVIDER_OVERLOAD_DRILL_HEADER)?.trim();
   return supplied === expected;
 }
 
-export function isProviderOverloadLike(error: unknown): boolean {
+function isProviderOverloadLike(error: unknown): boolean {
   const status = typeof error === 'object' && error !== null && 'status' in error
     ? Number((error as { status?: unknown }).status)
     : NaN;
@@ -288,7 +288,7 @@ export function isProviderOverloadLike(error: unknown): boolean {
     || /\b(529|overload|overloaded|capacity|rate\s*limit|temporarily\s+unavailable)\b/i.test(message);
 }
 
-export function formatProviderOverloadFallback(input: {
+function formatProviderOverloadFallback(input: {
   agentName: string | null;
   surface: string;
   tenantName: string;
@@ -302,7 +302,7 @@ export function formatProviderOverloadFallback(input: {
   ].join('\n');
 }
 
-export function getAgentResponseTokenBudget(surface: string): number {
+function getAgentResponseTokenBudget(surface: string): number {
   if (
     surface === '/programs' ||
     surface === '/programs/new' ||
@@ -317,7 +317,7 @@ export function getAgentResponseTokenBudget(surface: string): number {
   return DEFAULT_AGENT_RESPONSE_MAX_TOKENS;
 }
 
-export function selectInitialDeliverableToolChoice(surface: string, message: string, toolNames: ReadonlySet<string>) {
+function selectInitialDeliverableToolChoice(surface: string, message: string, toolNames: ReadonlySet<string>) {
   if (!isProgramsSurface(surface)) return false;
   if (!PROGRAM_DELIVERABLE_SAVE_RE.test(message) || !PROGRAM_DELIVERABLE_NOUN_RE.test(message)) return false;
   if (PROGRAM_MULTI_DELIVERABLE_RE.test(message) && toolNames.has('complete_deliverables')) {

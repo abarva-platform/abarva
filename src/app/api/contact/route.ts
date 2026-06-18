@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isWorkEmail } from '@/lib/public-site/work-email';
 
-export { isWorkEmail };
-
 export async function POST(req: NextRequest) {
   let body: { name?: string; email?: string; company?: string; program?: string; need?: string };
   try {

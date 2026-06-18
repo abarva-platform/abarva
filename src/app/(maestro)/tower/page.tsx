@@ -5,7 +5,7 @@ import { selectTowerPageReadAdapter } from "@/lib/data-plane/read-adapters/tower
 import { requireTenancy } from "@/lib/auth/tenancy";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
-import { getActiveClientRow } from "@/lib/active-client";
+import { getActiveClientKey, getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import {
   listPersistedSetupAiInitiatives,
@@ -19,6 +19,7 @@ import {
   type AIInitiative,
   type AIInitiativeVendorRow,
 } from "@/lib/admin/ai-initiatives/queries";
+import { getAiControlTowerReadModel } from "@/lib/ai-control-tower/read-model";
 import {
   buildTowerBandMetrics,
   type TowerBandMetricsView,
@@ -225,8 +226,20 @@ export default async function TowerPage({
   // bind Tower to the first pilot client that has real AI Initiative rows.
   const activeClient = await resolveTowerClient(resolvedSearchParams.client);
   const activeClientId = activeClient?.id ?? null;
+  const activeClientKey = activeClient?.key ??
+    (await getActiveClientKey(resolvedSearchParams.client).catch(() => resolvedSearchParams.client ?? null));
   const towerSetupInitiativesFeed =
     await buildTowerSetupInitiativesFeed(activeClient);
+  const tenantName =
+    canonicalClientDisplayName({
+      key: activeClientKey,
+      name: activeClient?.name ?? towerSetupInitiativesFeed.tenantName,
+    }) ?? towerSetupInitiativesFeed.tenantName;
+  const towerReadModel = await getAiControlTowerReadModel({
+    clientId: activeClientId,
+    clientKey: activeClientKey,
+    tenantName,
+  });
   const towerInitiatives = await buildTowerInitiatives(activeClientId);
   const towerVendors = await buildTowerVendors(activeClientId);
   const towerSubstrateCounts = await buildTowerSubstrateCounts(
@@ -252,7 +265,7 @@ export default async function TowerPage({
   const towerAlignment2x2 = buildStrategicAlignment2x2View(towerInitiatives);
   const atlasReasoningInput: AtlasReasoningInput = {
     tenant: {
-      name: towerSetupInitiativesFeed.tenantName,
+      name: tenantName,
       clientId: activeClientId,
     },
     todayIso: towerToday,
@@ -288,16 +301,17 @@ export default async function TowerPage({
     <AppShell
       surface="tower"
       topBarProps={{
-        tenantName: towerSetupInitiativesFeed.tenantName,
+        tenantName,
         showLocked: true,
-        context: `AI Control Tower · ${towerSetupInitiativesFeed.tenantName}`,
+        context: `AI Control Tower · ${tenantName}`,
       }}
-      hasTenantKey={Boolean(activeClientId)}
+      hasTenantKey={Boolean(activeClientId || activeClientKey)}
     >
       <AiControlTowerPage
-        tenantName={towerSetupInitiativesFeed.tenantName}
+        tenantName={tenantName}
         clientId={activeClientId ?? undefined}
         towerToday={towerToday}
+        readModel={towerReadModel}
         initiatives={towerInitiatives}
         vendors={towerVendors}
         bandMetrics={towerBandMetrics}

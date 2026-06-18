@@ -1,35 +1,16 @@
-// /intelligence · Explore layer for AI bets.
-//
-// v3 (2026-05-07) reframe: pattern-to-Move funnel surface with
-// Sentinel chat as a first-class three-mode layout.
-//
-// 2026-05-07 (live data wave): page reads the active tenant via
-// getActiveClientRow → loads initiatives + goals + per-stage data
-// in parallel → composes the v3 canvas data from real substrate.
-//
-// Spec: docs/build/intelligence/INTELLIGENCE_DESIGN_INTENT_2026-05-07.md
-// Wireframe: docs/design-canon/wireframe-intelligence-v3-2026-05-07.html
+// /intelligence · Context & Corpus Explorer inside the canonical app shell.
 
-import { IntelligenceV3Page } from '@/components/intelligence-v3/IntelligenceV3Page';
-import { buildIntelligenceV3PageData } from '@/lib/intelligence-v3/page-data';
-import { getVendorsForClient } from '@/lib/intelligence-v3/vendors-data';
-import {
-  getByFunctionData,
-  getPeerActivityData,
-  getMyStrategyData,
-} from '@/lib/intelligence-v3/stages-data';
-import { getActiveClientRow, hasLockedTenantSession } from '@/lib/active-client';
+import { AppShell } from '@/components/shell/AppShell';
+import { ContextCorpusExplorerPage } from '@/components/intelligence-v4/ContextCorpusExplorerPage';
+import { getActiveClientKey, getActiveClientRow, hasLockedTenantSession } from '@/lib/active-client';
+import { canonicalClientDisplayName } from '@/lib/client-config';
+import { getAiControlTowerReadModel } from '@/lib/ai-control-tower/read-model';
 import { getEnterpriseContextOverviewForTenant } from '@/lib/enterprise-context/intelligence-read-model';
-import { listInitiativesForClient } from '@/lib/admin/ai-initiatives/queries';
-import {
-  loadApexRetailIntelligenceData,
-  loadApexRetailIntelligenceDataForDemo,
-} from '@/lib/intelligence-v3/apex-retail-live';
 
 export const metadata = {
-  title: 'Intelligence · Explore layer for AI bets | AbarVa',
+  title: 'Intelligence · Context & Corpus Explorer | AbarVa',
   description:
-    'Explore three substrates — what we know about you, what patterns exist, and what is possible — to originate stronger Strategic Moves or validate the bets already in flight.',
+    'Explore tenant context, live facts, coverage, trust posture, and derived insights from the enterprise context layer.',
 };
 
 export const dynamic = 'force-dynamic';
@@ -44,58 +25,51 @@ function firstSearchValue(value: string | string[] | undefined): string | null {
   return value ?? null;
 }
 
+function enterpriseContextTenantKey(value: string | null | undefined): string | null {
+  const key = value?.trim().toLowerCase();
+  if (!key) return null;
+  if (key === 'arcturus' || key === 'firstcapital') return 'first-capital';
+  if (key === 'meridian') return 'meridian-health';
+  if (key === 'apexretail') return 'apex-retail';
+  return key;
+}
+
 export default async function IntelligencePage({ searchParams }: IntelligencePageProps = {}) {
-  // SEC-P0 (audit 2026-05-22): `/intelligence` is a PUBLIC route. A
-  // `?client=` URL param must never resolve tenant-scoped data unless the
-  // request carries an authenticated session pinned to exactly one tenant.
-  // For unauthenticated (or non-tenant-locked) visitors the param is
-  // ignored entirely — the page resolves the active client only from
-  // server-trusted sources (session pin / cookie / email) and renders the
-  // generic/corpus-only public state. Honoring the param here previously
-  // let an anonymous visitor read any tenant's real AI portfolio via
-  // `/intelligence?client=apexretail`.
   const rawRequestedClient = firstSearchValue((await searchParams)?.client);
   const requestedClient = (await hasLockedTenantSession()) ? rawRequestedClient : null;
   const client = await getActiveClientRow(requestedClient).catch(() => null);
-  const resolvedClientKey = client?.key ?? requestedClient;
-  const forceApexRetail = resolvedClientKey === 'apexretail';
-
-  const [
-    { data, isLiveBound },
-    vendorsData,
-    byFunctionData,
-    peerActivityData,
-    myStrategyData,
-    initiatives,
-    apexRetailData,
-    enterpriseContextOverview,
-  ] = await Promise.all([
-    buildIntelligenceV3PageData(resolvedClientKey),
-    client ? getVendorsForClient(client.id).catch(() => null) : Promise.resolve(null),
-    getByFunctionData().catch(() => null),
-    getPeerActivityData().catch(() => null),
-    getMyStrategyData().catch(() => null),
-    client ? listInitiativesForClient(client.id).catch(() => []) : Promise.resolve([]),
-    (
-      forceApexRetail
-        ? loadApexRetailIntelligenceDataForDemo()
-        : loadApexRetailIntelligenceData(client)
-    ).catch(() => null),
-    client ? getEnterpriseContextOverviewForTenant(client.key, client.name).catch(() => null) : Promise.resolve(null),
-  ]);
+  const resolvedClientKey = client?.key ??
+    (await getActiveClientKey(requestedClient).catch(() => requestedClient));
+  const contextTenantKey = enterpriseContextTenantKey(resolvedClientKey);
+  const tenantName =
+    canonicalClientDisplayName({ key: resolvedClientKey, name: client?.name }) ??
+    client?.name ??
+    'AbarVa Client';
+  const overview = contextTenantKey
+    ? await getEnterpriseContextOverviewForTenant(contextTenantKey, tenantName).catch(() => null)
+    : null;
+  const towerModel = await getAiControlTowerReadModel({
+    clientId: client?.id ?? null,
+    clientKey: resolvedClientKey,
+    tenantName,
+  });
 
   return (
-    <IntelligenceV3Page
-      data={data}
-      isLiveBound={isLiveBound}
-      vendorsData={vendorsData}
-      byFunctionData={byFunctionData}
-      peerActivityData={peerActivityData}
-      myStrategyData={myStrategyData}
-      initiatives={initiatives}
-      apexRetailData={apexRetailData}
-      clientKey={client?.key ?? requestedClient ?? null}
-      enterpriseContextOverview={enterpriseContextOverview}
-    />
+    <AppShell
+      surface="intelligence"
+      topBarProps={{
+        tenantName,
+        showLocked: Boolean(resolvedClientKey),
+        context: 'Intelligence',
+      }}
+      hasTenantKey={Boolean(resolvedClientKey)}
+    >
+      <ContextCorpusExplorerPage
+        tenantName={tenantName}
+        tenantKey={contextTenantKey}
+        overview={overview}
+        towerModel={towerModel}
+      />
+    </AppShell>
   );
 }

@@ -169,7 +169,7 @@ describe('agent route · CB-6 context-bundle wiring', () => {
 
   it('has a guarded L9 provider-overload drill path with graceful fallback copy', () => {
     expect(source).toContain("const L9_PROVIDER_OVERLOAD_DRILL_HEADER = 'x-abarva-l9-provider-drill-token'");
-    expect(source).toContain('export function shouldRunProviderOverloadDrill(request: Request): boolean');
+    expect(source).toContain('function shouldRunProviderOverloadDrill(request: Request): boolean');
     expect(source).toContain('AZURE_CONNECTIVITY_HEALTH_TOKEN');
     expect(source).toContain('throw new AgentProviderOverloadDrillError()');
     expect(source).toContain('isProviderOverloadLike(err)');

@@ -13,6 +13,7 @@ import type {
   AIInitiative,
   AIInitiativeVendorRow,
 } from "@/lib/admin/ai-initiatives/queries";
+import type { AiControlTowerReadModel } from "@/lib/ai-control-tower/read-model";
 import type { TowerBandMetricsView } from "@/lib/tower/band-metrics-view";
 import type { TowerPressuresView } from "@/lib/tower/pressure-cards-view";
 import type { TowerSubstrateCounts } from "@/components/tower/TowerIndexPage";
@@ -25,6 +26,7 @@ interface AiControlTowerPageProps {
   tenantName: string;
   clientId?: string;
   towerToday: string;
+  readModel?: AiControlTowerReadModel;
   initiatives: ReadonlyArray<AIInitiative>;
   vendors: ReadonlyArray<AIInitiativeVendorRow>;
   bandMetrics: TowerBandMetricsView;
@@ -448,6 +450,113 @@ function lensRowsFor(
   return actionRows.slice(0, 5);
 }
 
+function rowToneFromEvidence(state: string): PillTone {
+  const normalized = state.toLowerCase();
+  if (normalized === "missing") return "red";
+  if (normalized === "review_required") return "amber";
+  if (normalized === "retrieval_proven" || normalized === "committed") return "green";
+  return "blue";
+}
+
+function lensRowsForModel(lens: LensKey, model: AiControlTowerReadModel): LensRow[] {
+  if (lens === "value_adoption") {
+    return [...model.initiatives]
+      .sort((a, b) => b.realizedUsd - a.realizedUsd)
+      .slice(0, 7)
+      .map((initiative) => ({
+        subject: initiative.title,
+        owner: initiative.owner,
+        metric: initiative.realizedPct === null ? "capture pending" : `${percent(initiative.realizedPct)} captured`,
+        basis: `${money(initiative.realizedUsd)} of ${money(initiative.promisedUsd)} promised; ${money(initiative.spendUsd)} spend`,
+        state: normalizeStatus(initiative.status),
+        tone: initiative.realizedPct === null ? "amber" : initiative.realizedPct >= 70 ? "green" : initiative.realizedPct >= 25 ? "amber" : "red",
+      }));
+  }
+
+  if (lens === "productivity") {
+    return [...model.productivity]
+      .sort((a, b) => (b.current ?? 0) - (a.current ?? 0))
+      .slice(0, 7)
+      .map((row) => ({
+        subject: row.workflow,
+        owner: row.functionName || row.persona,
+        metric: row.metric,
+        basis: `${row.baseline ?? "n/a"} → ${row.current ?? "n/a"} ${row.unit}; target ${row.target ?? "n/a"}`,
+        state: row.initiativeId ?? row.confidence,
+        tone: row.evidenceState === "review_required" ? "amber" : "green",
+      }));
+  }
+
+  if (lens === "agents") {
+    return [...model.agents]
+      .sort((a, b) => (b.valueUsd || b.autoResolvePct || 0) - (a.valueUsd || a.autoResolvePct || 0))
+      .slice(0, 7)
+      .map((row) => ({
+        subject: row.name,
+        owner: row.functionName || row.persona,
+        metric: row.autoResolvePct !== null
+          ? `${percent(row.autoResolvePct)} auto-resolve`
+          : row.deflectionPct !== null
+            ? `${percent(row.deflectionPct)} deflection`
+            : "resolution pending",
+        basis: `${row.vendor} · ${row.module}; ${row.eligibleVolume?.toLocaleString() ?? "n/a"} eligible`,
+        state: row.governance || row.evidenceState,
+        tone: row.evidenceState === "review_required" ? "amber" : "green",
+      }));
+  }
+
+  if (lens === "spend") {
+    return [...model.spend]
+      .sort((a, b) => b.annualizedSpendUsd - a.annualizedSpendUsd)
+      .slice(0, 7)
+      .map((row) => ({
+        subject: row.vendor,
+        owner: row.functionName,
+        metric: money(row.annualizedSpendUsd),
+        basis: `${row.product}${row.renewalDate ? `; renews ${row.renewalDate}` : ""}`,
+        state: normalizeStatus(row.spendType),
+        tone: row.annualizedSpendUsd > 5_000_000 ? "amber" : "blue",
+      }));
+  }
+
+  if (lens === "risk") {
+    return [...model.risks]
+      .sort((a, b) => {
+        const rank = (value: string) => value.toLowerCase() === "critical" ? 0 : value.toLowerCase() === "high" ? 1 : 2;
+        return rank(a.severity) - rank(b.severity);
+      })
+      .slice(0, 7)
+      .map((row) => ({
+        subject: row.name || row.dimension,
+        owner: row.owner || row.functionName,
+        metric: `${normalizeStatus(row.severity)} · ${normalizeStatus(row.status)}`,
+        basis: row.description || row.requiredAction,
+        state: normalizeStatus(row.gate),
+        tone: row.severity.toLowerCase() === "critical" ? "red" : row.severity.toLowerCase() === "high" ? "amber" : "blue",
+      }));
+  }
+
+  if (lens === "evidence") {
+    return model.evidence.slice(0, 7).map((row) => ({
+      subject: row.citationLabel || row.id,
+      owner: row.recordType,
+      metric: row.evidenceType,
+      basis: row.pointer || row.recordKey,
+      state: normalizeStatus(row.evidenceState),
+      tone: rowToneFromEvidence(row.evidenceState),
+    }));
+  }
+
+  return model.actions.slice(0, 7).map((row) => ({
+    subject: row.title,
+    owner: row.owner,
+    metric: normalizeStatus(row.posture),
+    basis: row.rationale,
+    state: normalizeStatus(row.status),
+    tone: row.evidenceState === "review_required" ? "amber" : "green",
+  }));
+}
+
 function lensCalloutsFor(
   lens: LensKey,
   summary: ReturnType<typeof summarize>,
@@ -560,6 +669,120 @@ function lensCalloutsFor(
   return callouts[lens];
 }
 
+function lensCalloutsForModel(lens: LensKey, model: AiControlTowerReadModel): LensCallout[] {
+  const totalRealized = model.initiatives.reduce((sum, row) => sum + row.realizedUsd, 0);
+  const totalPromised = model.initiatives.reduce((sum, row) => sum + row.promisedUsd, 0);
+  const totalSpend = model.spend.reduce((sum, row) => sum + row.annualizedSpendUsd, 0);
+  const seats = model.usage.reduce((sum, row) => sum + row.seats, 0);
+  const active = model.usage.reduce((sum, row) => sum + row.activeUsers, 0);
+  const evidenceGood = model.evidence.filter((row) => row.evidenceState === "committed" || row.evidenceState === "retrieval_proven").length;
+  const highRisks = model.risks.filter((row) => ["critical", "high"].includes(row.severity.toLowerCase())).length;
+  const failedGates = model.risks.filter((row) => row.gate.toLowerCase() === "fail").length;
+  const agentRowsWithResolution = model.agents.filter((row) => row.autoResolvePct !== null || row.deflectionPct !== null).length;
+
+  const callouts: Record<LensKey, LensCallout[]> = {
+    value_adoption: [
+      {
+        label: "Value capture",
+        value: totalPromised > 0 ? percent((totalRealized / totalPromised) * 100) : "n/a",
+        detail: `${money(totalRealized)} realized of ${money(totalPromised)} promised`,
+        tone: totalRealized > 0 ? "green" : "amber",
+      },
+      {
+        label: "Active adoption",
+        value: seats > 0 ? percent((active / seats) * 100) : "n/a",
+        detail: `${active.toLocaleString()} active of ${seats.toLocaleString()} seats`,
+        tone: active > 0 ? "green" : "amber",
+      },
+    ],
+    productivity: [
+      {
+        label: "Persona baselines",
+        value: String(model.productivity.length),
+        detail: "before/current/target rows bound to functions",
+        tone: model.productivity.length > 0 ? "green" : "amber",
+      },
+      {
+        label: "Quality evidence",
+        value: String(model.productivity.filter((row) => row.evidenceState !== "missing").length),
+        detail: "productivity rows with evidence state",
+        tone: model.productivity.length > 0 ? "green" : "amber",
+      },
+    ],
+    agents: [
+      {
+        label: "Agent outcomes",
+        value: String(model.agents.length),
+        detail: "ERP, ServiceNow, and automation rows",
+        tone: model.agents.length > 0 ? "green" : "amber",
+      },
+      {
+        label: "Resolution proof",
+        value: String(agentRowsWithResolution),
+        detail: "rows with deflection or auto-resolution",
+        tone: agentRowsWithResolution > 0 ? "green" : "amber",
+      },
+    ],
+    spend: [
+      {
+        label: "Spend exposure",
+        value: money(totalSpend),
+        detail: `${model.spend.length} AI spend rows`,
+        tone: totalSpend > 0 ? "amber" : "red",
+      },
+      {
+        label: "Linked initiatives",
+        value: String(new Set(model.spend.map((row) => row.initiativeId).filter(Boolean)).size),
+        detail: "spend rows tied to initiative IDs",
+        tone: model.spend.length > 0 ? "green" : "red",
+      },
+    ],
+    risk: [
+      {
+        label: "Watch items",
+        value: String(highRisks),
+        detail: "critical/high governance risks",
+        tone: highRisks > 0 ? "red" : "green",
+      },
+      {
+        label: "Failed gates",
+        value: String(failedGates),
+        detail: "risk rows with failed control gates",
+        tone: failedGates > 0 ? "red" : "green",
+      },
+    ],
+    evidence: [
+      {
+        label: "Evidence rows",
+        value: String(evidenceGood),
+        detail: `${model.evidence.length} citation-bearing rows tracked`,
+        tone: evidenceGood > 0 ? "green" : "red",
+      },
+      {
+        label: "Answerability",
+        value: model.facts.length > 0 ? "On" : "Thin",
+        detail: `${model.facts.length} Tower facts available to Atlas`,
+        tone: model.facts.length > 0 ? "green" : "amber",
+      },
+    ],
+    actions: [
+      {
+        label: "Proposals",
+        value: String(model.actions.length),
+        detail: "derived from gates and evidence state",
+        tone: model.actions.length > 0 ? "blue" : "amber",
+      },
+      {
+        label: "Human gate",
+        value: "Required",
+        detail: "Atlas does not approve writes or decisions",
+        tone: "amber",
+      },
+    ],
+  };
+  return callouts[lens];
+}
+
 function atlasReplyForLens(
   lens: LensKey,
   rows: LensRow[],
@@ -600,6 +823,7 @@ function atlasReplyForLens(
 function LensCanvas({
   activeLens,
   lensMeta,
+  readModel,
   initiatives,
   vendors,
   summary,
@@ -608,6 +832,7 @@ function LensCanvas({
 }: {
   activeLens: LensKey;
   lensMeta: (typeof LENSES)[number];
+  readModel?: AiControlTowerReadModel;
   initiatives: ReadonlyArray<AIInitiative>;
   vendors: ReadonlyArray<AIInitiativeVendorRow>;
   summary: ReturnType<typeof summarize>;
@@ -615,12 +840,16 @@ function LensCanvas({
   towerToday: string;
 }) {
   const rows = useMemo(
-    () => lensRowsFor(activeLens, initiatives, vendors, summary, substrateCounts),
-    [activeLens, initiatives, vendors, summary, substrateCounts],
+    () => readModel
+      ? lensRowsForModel(activeLens, readModel)
+      : lensRowsFor(activeLens, initiatives, vendors, summary, substrateCounts),
+    [activeLens, initiatives, readModel, vendors, summary, substrateCounts],
   );
   const callouts = useMemo(
-    () => lensCalloutsFor(activeLens, summary, substrateCounts),
-    [activeLens, summary, substrateCounts],
+    () => readModel
+      ? lensCalloutsForModel(activeLens, readModel)
+      : lensCalloutsFor(activeLens, summary, substrateCounts),
+    [activeLens, readModel, summary, substrateCounts],
   );
   const title: Record<LensKey, string> = {
     value_adoption: "Which AI investments are converting into value?",
@@ -677,7 +906,7 @@ function LensCanvas({
         <div style={eyebrowStyle}>Decision read</div>
         <h2 style={sectionTitleStyle}>{lensMeta.shortLabel}</h2>
         <p style={sectionDeckStyle}>
-          Atlas should answer this lens from loaded metrics, evidence status, and
+          Atlas answers this lens from loaded metrics, evidence status, and
           owner-linked portfolio records.
         </p>
         <div style={calloutGridStyle}>
@@ -754,6 +983,7 @@ export function AiControlTowerPage({
   tenantName,
   clientId,
   towerToday,
+  readModel,
   initiatives,
   vendors,
   bandMetrics,
@@ -767,9 +997,11 @@ export function AiControlTowerPage({
   );
   const lensMeta = LENSES.find((item) => item.key === activeLens) ?? LENSES[0];
   const evidenceRows =
-    substrateCounts.kpis +
-    substrateCounts.decisions +
-    substrateCounts.stakeholderNotes;
+    readModel?.evidence.length ??
+    (substrateCounts.kpis +
+      substrateCounts.decisions +
+      substrateCounts.stakeholderNotes);
+  const modelKpis = readModel?.kpis.slice(0, 5);
 
   const suggestions: AtlasSuggestion[] = [
     {
@@ -810,8 +1042,12 @@ export function AiControlTowerPage({
                 ? "actions"
                 : "value_adoption";
     setActiveLens(nextLens);
-    const rows = lensRowsFor(nextLens, initiatives, vendors, summary, substrateCounts);
-    const callouts = lensCalloutsFor(nextLens, summary, substrateCounts);
+    const rows = readModel
+      ? lensRowsForModel(nextLens, readModel)
+      : lensRowsFor(nextLens, initiatives, vendors, summary, substrateCounts);
+    const callouts = readModel
+      ? lensCalloutsForModel(nextLens, readModel)
+      : lensCalloutsFor(nextLens, summary, substrateCounts);
     setAtlasMessages((prev) => [
       ...prev,
       {
@@ -846,39 +1082,57 @@ export function AiControlTowerPage({
       </section>
 
       <section style={metricGridStyle}>
-        <MetricTile
-          label="Observed initiatives"
-          value={String(substrateCounts.initiatives || initiatives.length)}
-          detail={`${summary.active} active or in-flight`}
-          tone="blue"
-        />
-        <MetricTile
-          label="Measured value"
-          value={money(summary.measured)}
-          detail={`${percent(summary.valueCapture)} of declared commitment`}
-          tone={summary.valueCapture >= 60 ? "green" : "amber"}
-        />
-        <MetricTile
-          label="AI spend exposure"
-          value={money(summary.spend)}
-          detail={
-            summary.spend > 0
-              ? `${summary.renewal90} renewals inside 90 days`
-              : "0 committed contract rows"
-          }
-          tone={summary.spend > 0 ? "amber" : "red"}
-        />
-        <MetricTile
-          label="Evidence posture"
-          value={String(evidenceRows)}
-          detail={
-            evidenceRows > 0
-              ? "facts, decisions, notes tracked"
-              : "no committed evidence rows"
-          }
-          tone={evidenceRows > 0 ? "green" : "red"}
-        />
+        {modelKpis
+          ? modelKpis.map((kpi) => (
+              <MetricTile
+                key={kpi.key}
+                label={kpi.label}
+                value={kpi.value}
+                detail={kpi.note}
+                tone={kpi.tone}
+              />
+            ))
+          : (
+              <>
+                <MetricTile
+                  label="Observed initiatives"
+                  value={String(substrateCounts.initiatives || initiatives.length)}
+                  detail={`${summary.active} active or in-flight`}
+                  tone="blue"
+                />
+                <MetricTile
+                  label="Measured value"
+                  value={money(summary.measured)}
+                  detail={`${percent(summary.valueCapture)} of declared commitment`}
+                  tone={summary.valueCapture >= 60 ? "green" : "amber"}
+                />
+                <MetricTile
+                  label="AI spend exposure"
+                  value={money(summary.spend)}
+                  detail={
+                    summary.spend > 0
+                      ? `${summary.renewal90} renewals inside 90 days`
+                      : "0 committed contract rows"
+                  }
+                  tone={summary.spend > 0 ? "amber" : "red"}
+                />
+                <MetricTile
+                  label="Evidence posture"
+                  value={String(evidenceRows)}
+                  detail={
+                    evidenceRows > 0
+                      ? "facts, decisions, notes tracked"
+                      : "no committed evidence rows"
+                  }
+                  tone={evidenceRows > 0 ? "green" : "red"}
+                />
+              </>
+            )}
       </section>
+
+      {readModel?.source !== "ai_control_data_plane" ? (
+        <div style={disclosureStyle}>{readModel?.sourceDisclosure}</div>
+      ) : null}
 
       <nav aria-label="AI Control Tower lenses" style={tabBarStyle}>
         {LENSES.map((lens) => {
@@ -907,6 +1161,7 @@ export function AiControlTowerPage({
       <LensCanvas
         activeLens={activeLens}
         lensMeta={lensMeta}
+        readModel={readModel}
         initiatives={initiatives}
         vendors={vendors}
         summary={summary}
@@ -1029,9 +1284,20 @@ const tabLabelStyle: CSSProperties = {
 
 const metricGridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(4, minmax(150px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
   gap: 8,
   marginTop: 10,
+};
+
+const disclosureStyle: CSSProperties = {
+  marginTop: 10,
+  border: `1px solid ${TOKENS.amber}55`,
+  borderRadius: 6,
+  background: "#fff6e5",
+  color: "#6f4717",
+  padding: "8px 10px",
+  fontSize: 11,
+  lineHeight: 1.35,
 };
 
 const metricTileStyle: CSSProperties = {
