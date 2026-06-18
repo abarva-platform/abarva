@@ -186,6 +186,18 @@ async function readManifest(datasetRoot: string): Promise<ManifestLoadEntry[]> {
   });
 }
 
+function isMissingOptionalTable(
+  table: string,
+  error: { message: string } | null,
+): boolean {
+  return (
+    table === "data_ingestion_runs" &&
+    /relation ["']?data_ingestion_runs["']? does not exist/i.test(
+      error?.message ?? "",
+    )
+  );
+}
+
 async function tenantScopedDelete(table: string): Promise<number> {
   const db = getAzureWriteFluentClient();
   const result = await db
@@ -193,6 +205,7 @@ async function tenantScopedDelete(table: string): Promise<number> {
     .delete({ count: "exact" })
     .eq("tenant_key", TENANT_KEY);
   if (result.error) {
+    if (isMissingOptionalTable(table, result.error)) return 0;
     throw new Error(`first_capital_delete_failed:${table}:${result.error.message}`);
   }
   return result.count ?? 0;

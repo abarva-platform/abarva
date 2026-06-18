@@ -159,6 +159,15 @@ async function throwOnError<T>(
   return result.data;
 }
 
+function isMissingOptionalIngestionRunTable(error: { message: string } | null) {
+  return (
+    Boolean(error) &&
+    /relation ["']?data_ingestion_runs["']? does not exist/i.test(
+      error?.message ?? "",
+    )
+  );
+}
+
 export async function commitContextBatch(
   input: ContextCommitBatchInput,
   db: PostgresCompatClient = getAzureWriteFluentClient(),
@@ -213,9 +222,13 @@ export async function commitContextBatch(
       },
     })
     .select("id");
-  const ingestionRunId = Array.isArray(runInsert.data)
-    ? (runInsert.data[0] as { id?: string } | undefined)?.id
-    : null;
+  if (runInsert.error && !isMissingOptionalIngestionRunTable(runInsert.error)) {
+    throw new Error(`data_ingestion_runs insert: ${runInsert.error.message}`);
+  }
+  const ingestionRunId =
+    !runInsert.error && Array.isArray(runInsert.data)
+      ? (runInsert.data[0] as { id?: string } | undefined)?.id
+      : null;
 
   async function updateIngestionRun(args: {
     status: "completed" | "failed";
@@ -224,7 +237,7 @@ export async function commitContextBatch(
     errorMessage?: string;
   }) {
     if (!ingestionRunId) return;
-    await db
+    const result = await db
       .from("data_ingestion_runs")
       .update({
         status: args.status,
@@ -235,6 +248,9 @@ export async function commitContextBatch(
         error_message: args.errorMessage ?? null,
       })
       .eq("id", ingestionRunId);
+    if (result.error && !isMissingOptionalIngestionRunTable(result.error)) {
+      throw new Error(`data_ingestion_runs update: ${result.error.message}`);
+    }
   }
 
   try {
