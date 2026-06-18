@@ -95,8 +95,66 @@ function StatusChip({ status }: { status: string }) {
   );
 }
 
+// Fetch an artifact with a short retry on 503 (transient tenant-lookup outage). A bare
+// <a href> top-level navigation that hit a one-off 503 previously dead-ended Open/Download;
+// fetching the bytes here lets us retry, then open/save via an object URL so the file is
+// reliably delivered regardless of format/cookie quirks.
+async function fetchArtifact(url: string): Promise<Blob> {
+  const backoffMs = [250, 700];
+  let res = await fetch(url, { credentials: "include" });
+  for (let i = 0; res.status === 503 && i < backoffMs.length; i += 1) {
+    await new Promise((r) => setTimeout(r, backoffMs[i]));
+    res = await fetch(url, { credentials: "include" });
+  }
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.blob();
+}
+
 function ArtifactRow({ a }: { a: Artifact }) {
   const stored = a.stored === "azure_blob";
+  const [busy, setBusy] = useState<null | "open" | "download">(null);
+  const [actionErr, setActionErr] = useState<string | null>(null);
+
+  const openArtifact = useCallback(async () => {
+    setBusy("open");
+    setActionErr(null);
+    try {
+      const blob = await fetchArtifact(`${a.downloadUrl}?inline=1`);
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, "_blank", "noopener");
+      if (!win) {
+        // Popup blocked — fall back to a same-tab navigation so Open is never a no-op.
+        window.location.href = url;
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e) {
+      setActionErr(e instanceof Error ? e.message : "open failed");
+    } finally {
+      setBusy(null);
+    }
+  }, [a.downloadUrl]);
+
+  const downloadArtifact = useCallback(async () => {
+    setBusy("download");
+    setActionErr(null);
+    try {
+      const blob = await fetchArtifact(a.downloadUrl);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download =
+        a.fileName ||
+        `${a.title.replace(/[\\/:*?"<>|]+/g, "_")}.${a.fileFormat || "bin"}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e) {
+      setActionErr(e instanceof Error ? e.message : "download failed");
+    } finally {
+      setBusy(null);
+    }
+  }, [a.downloadUrl, a.fileName, a.title, a.fileFormat]);
   return (
     <div
       style={{
@@ -176,39 +234,49 @@ function ArtifactRow({ a }: { a: Artifact }) {
           </span>
         </div>
       </div>
-      <div style={{ display: "flex", gap: 6 }}>
-        <a
-          href={`${a.downloadUrl}?inline=1`}
-          target="_blank"
-          rel="noreferrer"
+      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        {actionErr && (
+          <span
+            style={{ fontSize: 10.5, color: "#B71C1C", whiteSpace: "nowrap" }}
+            title={actionErr}
+          >
+            {actionErr}
+          </span>
+        )}
+        <button
+          onClick={openArtifact}
+          disabled={busy !== null}
           style={{
             fontSize: 11.5,
             fontWeight: 600,
             color: "#1B2B5C",
-            textDecoration: "none",
+            background: "transparent",
             border: "1px solid #D5DAE2",
             borderRadius: 5,
             padding: "5px 11px",
             whiteSpace: "nowrap",
+            cursor: busy ? "default" : "pointer",
           }}
         >
-          Open
-        </a>
-        <a
-          href={a.downloadUrl}
+          {busy === "open" ? "Opening…" : "Open"}
+        </button>
+        <button
+          onClick={downloadArtifact}
+          disabled={busy !== null}
           style={{
             fontSize: 11.5,
             fontWeight: 600,
             color: "#fff",
-            background: "#1B2B5C",
-            textDecoration: "none",
+            background: busy ? "#9AA3B2" : "#1B2B5C",
+            border: "none",
             borderRadius: 5,
             padding: "5px 11px",
             whiteSpace: "nowrap",
+            cursor: busy ? "default" : "pointer",
           }}
         >
-          Download
-        </a>
+          {busy === "download" ? "Downloading…" : "Download"}
+        </button>
       </div>
     </div>
   );

@@ -557,8 +557,8 @@ function CollapsePanel({
 
 type GenState =
   | { status: "idle" }
-  | { status: "generating" }
-  | { status: "done"; qualityScore: number; pass: boolean }
+  | { status: "generating"; pct?: number; label?: string }
+  | { status: "done"; qualityScore: number | null; pass: boolean }
   | { status: "error"; message: string };
 
 function CharterWorkflow({
@@ -626,6 +626,14 @@ function CharterWorkflow({
 
   // Generate state
   const [gen, setGen] = useState<GenState>({ status: "idle" });
+  // Guard async polling against unmount so a 15-min poll loop stops if the user leaves.
+  const genMounted = useRef(true);
+  useEffect(() => {
+    genMounted.current = true;
+    return () => {
+      genMounted.current = false;
+    };
+  }, []);
 
   const filledNow = sectionIds.filter((id) => (values[id] ?? "").trim()).length;
 
@@ -717,36 +725,112 @@ function CharterWorkflow({
   }, [deliverableId, move.id, sectionIds, values]);
 
   const generateArtifact = useCallback(async () => {
-    setGen({ status: "generating" });
+    // Async generation: ENQUEUE then POLL. The board-grade charter is a multi-pass
+    // (~minutes) build that cannot finish inside one HTTP request — the previous
+    // synchronous call to /current-state/deliverable/orchestrate hit the ~240s gateway
+    // timeout and surfaced "Generate failed (HTTP 504)" even though the durable worker
+    // had actually produced the artifact. We now reuse the proven enqueue+poll path that
+    // "Approve & Build" uses (POST /api/v1/deliverables/generate-phase → durable worker →
+    // GET /api/v1/deliverables/runs/{id}), so the request returns immediately and the UI
+    // tracks live progress to completion.
+    setGen({ status: "generating", pct: 0, label: "Queued…" });
+    const gateKey = workflow?.deliverableTypeKey;
     try {
-      const orchestrateKey = workflow?.orchestrateKey ?? "program_charter";
-      const res = await fetch(
-        `/api/v1/programs/${move.id}/current-state/deliverable/orchestrate?key=${orchestrateKey}&format=json&fresh=1`,
-        { credentials: "include" },
-      );
-      const data = (await res.json().catch(() => ({}))) as {
-        ok?: boolean;
-        quality?: { qualityScore?: number; pass?: boolean };
+      const enqueueRes = await fetch("/api/v1/deliverables/generate-phase", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          moveId: move.id,
+          phase: phaseNum,
+          useCaseArchetype: move.archetype,
+          moveName: move.name,
+          clientDisplayName: move.tenant.name,
+        }),
+      });
+      const enqueue = (await enqueueRes.json().catch(() => ({}))) as {
+        deliverables?: Array<{
+          deliverableTypeKey: string;
+          runId: string | null;
+          status: string;
+          error?: string;
+        }>;
         error?: string;
         detail?: string;
       };
-      if (!res.ok || !data.ok) {
+      if (!enqueueRes.ok || !Array.isArray(enqueue.deliverables)) {
         throw new Error(
-          data.detail || data.error || `Generate failed (HTTP ${res.status})`,
+          enqueue.detail ||
+            enqueue.error ||
+            `Generate failed (HTTP ${enqueueRes.status})`,
         );
       }
-      setGen({
-        status: "done",
-        qualityScore: data.quality?.qualityScore ?? 0,
-        pass: Boolean(data.quality?.pass),
-      });
+      // Track the phase's gate deliverable (the charter for P1), else the first queued run.
+      const target =
+        enqueue.deliverables.find(
+          (d) => d.deliverableTypeKey === gateKey && d.runId,
+        ) ?? enqueue.deliverables.find((d) => d.runId);
+      if (!target?.runId) {
+        const failed = enqueue.deliverables.find((d) => d.error);
+        throw new Error(
+          failed?.error || "Generation did not start (no run was queued).",
+        );
+      }
+      const runId = target.runId;
+
+      // Poll until terminal (succeeded/blocked/failed) or the 15-min ceiling.
+      const POLL_MS = 4000;
+      const MAX_MS = 15 * 60 * 1000;
+      const startedAt = Date.now();
+      while (true) {
+        if (!genMounted.current) return;
+        if (Date.now() - startedAt > MAX_MS) {
+          throw new Error("Generation timed out after 15 minutes.");
+        }
+        await new Promise((r) => setTimeout(r, POLL_MS));
+        if (!genMounted.current) return;
+        let poll: {
+          status?: string;
+          progressPct?: number;
+          progressLabel?: string | null;
+          error?: string;
+        } = {};
+        try {
+          const pollRes = await fetch(`/api/v1/deliverables/runs/${runId}`, {
+            credentials: "include",
+          });
+          poll = (await pollRes.json().catch(() => ({}))) as typeof poll;
+          if (!pollRes.ok) continue; // transient (e.g. 503) — keep polling
+        } catch {
+          continue; // network blip — keep polling
+        }
+        if (poll.status === "queued" || poll.status === "running") {
+          setGen({
+            status: "generating",
+            pct: poll.progressPct ?? 0,
+            label: poll.progressLabel ?? undefined,
+          });
+          continue;
+        }
+        if (poll.status === "succeeded") {
+          setGen({ status: "done", qualityScore: null, pass: true });
+          return;
+        }
+        if (poll.status === "blocked") {
+          // The artifact was produced but held below the board-grade gate.
+          setGen({ status: "done", qualityScore: null, pass: false });
+          return;
+        }
+        throw new Error(poll.error || "Generation failed.");
+      }
     } catch (err) {
+      if (!genMounted.current) return;
       setGen({
         status: "error",
         message: err instanceof Error ? err.message : "Generate failed",
       });
     }
-  }, [move.id, workflow]);
+  }, [move.id, move.archetype, move.name, move.tenant.name, phaseNum, workflow]);
 
   // Derived enable/disable:
   //  • Save: enabled unless a save is in flight.
@@ -942,13 +1026,15 @@ function CharterWorkflow({
             </button>
             {gen.status === "generating" && (
               <span className={styles.charterStepHint}>
-                Drafting the board-grade charter — this takes 1–4 minutes.
+                {gen.label
+                  ? `${gen.label}${gen.pct ? ` · ${gen.pct}%` : ""}`
+                  : "Drafting the board-grade charter — this runs in the background and can take a few minutes."}
               </span>
             )}
             {gen.status === "done" && (
               <span className={styles.charterStepOk}>
-                Quality {gen.qualityScore}
-                {gen.pass ? " · passed" : " · below gate"} ·{" "}
+                {gen.qualityScore != null ? `Quality ${gen.qualityScore} · ` : ""}
+                {gen.pass ? "Built ✓" : "Built · below gate"} ·{" "}
                 <Link href={`/strategic-moves/${move.id}/evidence`}>
                   Open File Cabinet →
                 </Link>
