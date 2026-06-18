@@ -222,18 +222,18 @@ function detectTitle(row, fallback) {
 function normalizeBusinessFunction(value) {
   const raw = String(value || '').trim();
   if (!raw) return null;
-  const direct = new Set(['Revenue Cycle', 'Technology', 'Finance', 'Operations', 'Clinical', 'Supply Chain', 'HR', 'Legal', 'Strategy']);
+  const direct = new Set(['FINANCE', 'SUPPLY_CHAIN', 'HUMAN_RESOURCES', 'OPERATIONS', 'COMMERCIAL_SALES', 'IT', 'COMPLIANCE_LEGAL', 'CORPORATE', 'INDUSTRY_OPS']);
   if (direct.has(raw)) return raw;
   const text = raw.toLowerCase();
-  if (/(revenue|coding|claims|billing|payment integrity|provider network|sales|customer|member|patient contact)/.test(text)) return 'Revenue Cycle';
-  if (/(clinical|ambulatory|hospital|pharmacy|quality|hedis|star|population health|care|provider performance|informatics)/.test(text)) return 'Clinical';
-  if (/(treasury|finance|controller|fp&a|actuarial|cash|liquidity|close|gl|margin|cost)/.test(text)) return 'Finance';
-  if (/(supply|procurement|supplier|logistics|manufacturing|plant|warehouse|inventory|working capital)/.test(text)) return 'Supply Chain';
-  if (/(hr|human capital|workday hcm|people|talent)/.test(text)) return 'HR';
-  if (/(legal|privacy|compliance|cybersecurity|risk|control|audit|security)/.test(text)) return 'Legal';
-  if (/(strategy|transformation|enterprise transformation|portfolio|program)/.test(text)) return 'Strategy';
-  if (/(data|analytics|ai|digital|it|technology|cloud|lakehouse|databricks|platform)/.test(text)) return 'Technology';
-  return 'Operations';
+  if (/(treasury|finance|controller|fp&a|actuarial|cash|liquidity|close|gl|margin|cost)/.test(text)) return 'FINANCE';
+  if (/(supply|procurement|supplier|logistics|warehouse|inventory|working capital)/.test(text)) return 'SUPPLY_CHAIN';
+  if (/(hr|human resources|human capital|workday hcm|people|talent)/.test(text)) return 'HUMAN_RESOURCES';
+  if (/(legal|privacy|compliance|cybersecurity|risk|control|audit|security)/.test(text)) return 'COMPLIANCE_LEGAL';
+  if (/(sales|customer|commercial|member|patient contact|provider network|crm)/.test(text)) return 'COMMERCIAL_SALES';
+  if (/(data|analytics|ai|digital|it|technology|cloud|lakehouse|databricks|platform)/.test(text)) return 'IT';
+  if (/(clinical|ambulatory|hospital|pharmacy|quality|hedis|star|population health|care|provider performance|informatics|claims|coding|billing|revenue cycle|manufacturing|plant|factory)/.test(text)) return 'INDUSTRY_OPS';
+  if (/(strategy|transformation|enterprise transformation|portfolio|program|corporate)/.test(text)) return 'CORPORATE';
+  return 'OPERATIONS';
 }
 function chunkText(title, row) {
   return `${title}: ${Object.entries(row).map(([key, value]) => `${key}=${value}`).join('; ')}`.slice(0, 7000);
