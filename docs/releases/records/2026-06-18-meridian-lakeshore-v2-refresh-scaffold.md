@@ -14,6 +14,8 @@ Adds the controlled refresh scaffold for Meridian Health and Lakeshore Industrie
 
 Follow-up hardening adds schema-aware scoped archive/delete guards after the first ACA apply attempt found a live table that did not have the expected `client_id` column. The worker now introspects each table before selecting or deleting client-scoped rows, uses `client_id` when present, falls back to `tenant_key` when present, and skips tables without either scoped column.
 
+Second-pass hardening maps client-native business function names into the constrained platform taxonomy (`Revenue Cycle`, `Technology`, `Finance`, `Operations`, `Clinical`, `Supply Chain`, `HR`, `Legal`, `Strategy`) after the patched ACA worker surfaced the live `enterprise_context_records_business_function_check` constraint. The richer source labels remain preserved in record payloads and facts.
+
 This does not delete or load database rows. It prepares the audit-safe path for replacing the current Meridian/Lakeshore context, corpus, Intelligence, and AI Control Tower rows with the new V2 packs.
 
 ## Layer Impact
@@ -51,6 +53,7 @@ This does not delete or load database rows. It prepares the audit-safe path for 
 - PASS: Meridian worker dry-run builds 24 source files, 497 context records, 5,428 facts, 502 chunks, 260 graph edges, 7 private patterns, and 14 Tower sources.
 - PASS: Lakeshore worker dry-run builds 22 source files, 436 context records, 4,809 facts, 439 chunks, 226 graph edges, 4 private patterns, and 14 Tower sources.
 - FAIL/BLOCKED: ACA apply execution `job-abarva-private-operator-eus-bju2nk9` failed before commit with `column "client_id" does not exist`. This release record includes the follow-up schema-aware guard; the patched worker must be redeployed and retried before claiming data-plane commit.
+- FAIL/BLOCKED: ACA apply execution `job-abarva-private-operator-eus-34p9fe8` advanced past scoped delete, then failed before commit with `enterprise_context_records_business_function_check`. This release record includes the follow-up business-function taxonomy mapper; the patched worker must be redeployed and retried before claiming data-plane commit.
 
 ## Rollout Plan
 
@@ -74,20 +77,20 @@ Delete `scripts/context-packs/refresh-meridian-lakeshore-v2.mjs`, `docs/codex-ha
 
 - Local artifact generated: Yes. Dry-run preflight receipt and generated SQL were produced under `outputs/context-refresh/`.
 - Local parse/preflight: Yes. Meridian and Lakeshore local packs passed manifest/count/pattern/graph validation, and the worker dry-run produced record/fact/chunk/Tower row counts.
-- Product loader/API acceptance: Attempted through ACA private worker. The initial apply failed before commit with `column "client_id" does not exist`; patched worker retry is required.
+- Product loader/API acceptance: Attempted through ACA private worker. The first apply failed before commit with `column "client_id" does not exist`; the second apply advanced and failed before commit with `enterprise_context_records_business_function_check`. Patched worker retry is required.
 - Azure Blob/object storage staging: Not run.
-- Queue/private worker handoff: Attempted with ACA job execution `job-abarva-private-operator-eus-bju2nk9`; failed before commit due to schema mismatch.
+- Queue/private worker handoff: Attempted with ACA job executions `job-abarva-private-operator-eus-bju2nk9` and `job-abarva-private-operator-eus-34p9fe8`; both failed before commit due to schema/value constraints.
 - Parser extraction with source citations: Not run.
 - Review/approval queue: Not run.
 - Client data-plane commit: Not completed/proven.
 - Embedding/search refresh: Not run.
 - Live signed-in retrieval or answer QA: Not run.
 
-Current state: local refresh scaffold validated, web runtime deployed, first private-worker apply blocked by schema mismatch, and schema-aware worker fix ready for redeploy/retry.
+Current state: local refresh scaffold validated, web runtime deployed, private-worker apply has exposed two live constraints, and the schema-aware plus taxonomy-mapping worker fixes are ready for redeploy/retry.
 
 ## Known Gaps
 
-- The ACA archive/delete/load worker was run with `--apply`, but the first execution failed before commit with `column "client_id" does not exist`; patched worker retry is still required.
+- The ACA archive/delete/load worker was run with `--apply`, but executions failed before commit with scoped-column and business-function taxonomy constraints; patched worker retry is still required.
 - Does not yet prove committed V2 packs in Azure/Postgres.
 - Does not refresh embeddings/search.
 - Does not run signed-in Intelligence/Tower QA.
