@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -39,12 +39,16 @@ Makes Sentinel's Intelligence ask flow aware of the same materialized `context_i
 - PASS: `./node_modules/.bin/tsc --noEmit --pretty false`
 - PASS: `./node_modules/.bin/eslint src/lib/intelligence-v3/sentinel-intel-context.ts src/lib/intelligence-v3/__tests__/sentinel-intel-context.test.ts src/lib/intelligence/ask/types.ts src/app/api/intelligence/ask/route.ts src/lib/intelligence/ask/retrievers/surface-context.ts src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts src/components/intelligence-v3/IntelligenceV3Page.tsx`
 - PASS: `git diff --check`
-- NOT RUN: PR CI is not run until the PR is opened.
-- NOT RUN: ACA deploy and signed-in Sentinel browser smoke are not run until after merge.
+- PASS: PR #3667 CI on GitHub: ESLint, Routes and disclaimers, Typecheck + reasoning-layer tests.
+- PASS: ACR build `cadr` pushed `acrabarvalab001.azurecr.io/abarva/web:intelligence-sentinel-insights-210d8470@sha256:76f22bf1011cbfe187ceed5ee7cbbe036033aadc608b17e0e1eb647635b2d075`.
+- PASS: ACA web revision `ca-abarva-web-lab-eastus--0000106` is active at 100% traffic with image `acrabarvalab001.azurecr.io/abarva/web:intelligence-sentinel-insights-210d8470`.
+- PASS: Public health smoke returned HTTP 200 with `postgres: true`, `direct_postgres: true`, and `azure_graph: "postgres"`.
+- PASS: Anonymous `/api/intelligence/ask` POST smoke returned Clerk sign-in redirect, proving the Sentinel ask route remains protected.
+- NOT RUN: Signed-in Sentinel browser smoke was not run because no reusable Clerk-authenticated browser/session cookie was available to the deploy job.
 
 ## Rollout Plan
 
-Merge to `codex/ai-control-tower-substrate`, build and deploy the ACA web image, shift web traffic after `/api/health` is green, then signed-in smoke Sentinel from `/intelligence#enterprise-context` with a Meridian or Lakeshore tenant session.
+Merged to `codex/ai-control-tower-substrate` in PR #3667, built and deployed the ACA web image, shifted web traffic to revision `ca-abarva-web-lab-eastus--0000106` after `/api/health` was green, and confirmed the Sentinel ask route remains Clerk-protected. A signed-in Meridian or Lakeshore Sentinel browser smoke is still required before claiming user-visible answer proof.
 
 ## Rollback Plan
 
@@ -54,7 +58,13 @@ Git revert the context-binding PR and redeploy the previous healthy ACA web imag
 
 - Prior data-plane proof: materializer verify execution `job-abarva-private-operator-eus-en2ye2q` proved 24 cited insights for `meridian-health` and 24 cited insights for `lakeshore`.
 - Prior UI proof: PR #3665 deployed the Enterprise Context live insight cards to ACA revision `ca-abarva-web-lab-eastus--0000105`.
-- Pending PR URL, CI, deploy revision, and signed-in smoke output.
+- PR URL: https://github.com/abarva-platform/abarva/pull/3667
+- Merge commit: `210d8470547e67a0cf09bc8a47e525f818821505`
+- ACR build: `cadr`
+- Deployed image: `acrabarvalab001.azurecr.io/abarva/web:intelligence-sentinel-insights-210d8470@sha256:76f22bf1011cbfe187ceed5ee7cbbe036033aadc608b17e0e1eb647635b2d075`
+- ACA serving revision: `ca-abarva-web-lab-eastus--0000106`, 100% traffic as of 2026-06-18 10:43 UTC.
+- Health smoke: `https://app.abarva.ai/api/health` returned HTTP 200 with Postgres checks green.
+- Auth smoke: unsigned POST to `https://app.abarva.ai/api/intelligence/ask` returned HTTP 307 to Clerk sign-in.
 
 ## Known Gaps
 
