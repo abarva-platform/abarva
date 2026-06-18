@@ -6,6 +6,7 @@ import { DefaultAzureCredential } from '@azure/identity';
 import { Pool } from 'pg';
 import {
   canonicalTenantKey,
+  tenantKeyAliasesFor,
   toTenantContextDeleteDocument,
   toTenantContextSearchDocument,
   type EnterpriseContextChunkRow,
@@ -35,6 +36,35 @@ function mode(): Mode {
   const value = readEnv('AZURE_SEARCH_BACKFILL_MODE', process.argv[2] ?? 'plan') as Mode;
   if (value === 'plan' || value === 'apply' || value === 'verify') return value;
   throw new Error(`Unsupported AZURE_SEARCH_BACKFILL_MODE: ${value}`);
+}
+
+function argValue(name: string): string | null {
+  const idx = process.argv.indexOf(name);
+  if (idx < 0) return null;
+  return process.argv[idx + 1]?.trim() || null;
+}
+
+function tenantFilter(): string[] | null {
+  const raw =
+    argValue('--tenant') ??
+    argValue('--tenants') ??
+    process.env.AZURE_SEARCH_BACKFILL_TENANTS?.trim() ??
+    null;
+  if (!raw) return null;
+  const tenants = raw
+    .split(',')
+    .map((value) => canonicalTenantKey(value))
+    .filter(Boolean);
+  return Array.from(new Set(tenants)).sort();
+}
+
+function requireScopedMutation(runMode: Mode, tenants: string[] | null): void {
+  if (runMode === 'plan') return;
+  if (tenants && tenants.length > 0) return;
+  if (process.env.AZURE_SEARCH_BACKFILL_ALL_TENANTS === 'true') return;
+  throw new Error(
+    'tenant_scope_required: pass --tenant <tenant-key> or set AZURE_SEARCH_BACKFILL_ALL_TENANTS=true',
+  );
 }
 
 function endpoint(): string {
@@ -71,6 +101,15 @@ async function searchRequest(path: string, init: RequestInit = {}): Promise<Resp
   });
 }
 
+function tenantSqlScope(tenants: string[] | null): { where: string; params: string[][] } {
+  if (!tenants || tenants.length === 0) return { where: '', params: [] };
+  const aliases = Array.from(new Set(tenants.flatMap((tenant) => tenantKeyAliasesFor(tenant))));
+  return {
+    where: 'where tenant_key = any($1::text[])',
+    params: [aliases],
+  };
+}
+
 function dbPool(): Pool {
   return new Pool({
     connectionString: readEnv('DATABASE_URL'),
@@ -80,13 +119,15 @@ function dbPool(): Pool {
   });
 }
 
-async function sourceCounts(db: Pool): Promise<Record<string, number>> {
+async function sourceCounts(db: Pool, tenants: string[] | null): Promise<Record<string, number>> {
+  const scope = tenantSqlScope(tenants);
   const result = await db.query<{ tenant_key: string; count: string }>(`
     select tenant_key, count(*)::text as count
     from enterprise_context_chunks
+    ${scope.where}
     group by tenant_key
     order by tenant_key
-  `);
+  `, scope.params);
   const counts: Record<string, number> = {};
   for (const row of result.rows) {
     const tenantKey = canonicalTenantKey(row.tenant_key);
@@ -95,7 +136,12 @@ async function sourceCounts(db: Pool): Promise<Record<string, number>> {
   return counts;
 }
 
-async function* readChunks(db: Pool, batchSize: number): AsyncGenerator<EnterpriseContextChunkRow[]> {
+async function* readChunks(
+  db: Pool,
+  batchSize: number,
+  tenants: string[] | null,
+): AsyncGenerator<EnterpriseContextChunkRow[]> {
+  const scope = tenantSqlScope(tenants);
   let offset = 0;
   for (;;) {
     const result = await db.query<EnterpriseContextChunkRow>(`
@@ -112,9 +158,10 @@ async function* readChunks(db: Pool, batchSize: number): AsyncGenerator<Enterpri
         provenance,
         chunk_metadata
       from enterprise_context_chunks
+      ${scope.where}
       order by tenant_key, chunk_id
-      limit $1 offset $2
-    `, [batchSize, offset]);
+      limit $${scope.params.length + 1} offset $${scope.params.length + 2}
+    `, [...scope.params, batchSize, offset]);
     if (result.rows.length === 0) return;
     yield result.rows;
     offset += result.rows.length;
@@ -174,14 +221,17 @@ async function verify(expected: Record<string, number>): Promise<void> {
 
 async function main(): Promise<void> {
   const runMode = mode();
+  const tenants = tenantFilter();
+  requireScopedMutation(runMode, tenants);
   const db = dbPool();
   try {
-    const counts = await sourceCounts(db);
+    const counts = await sourceCounts(db, tenants);
     if (runMode === 'plan') {
       console.log(JSON.stringify({
         event: 'azure_search_backfill_plan',
         endpoint: endpoint(),
         index: 'tenant-context-v1',
+        tenantFilter: tenants ?? 'all',
         sourceCounts: counts,
       }, null, 2));
       return;
@@ -190,7 +240,7 @@ async function main(): Promise<void> {
     if (runMode === 'apply') {
       const batchSize = readIntEnv('AZURE_SEARCH_BACKFILL_BATCH_SIZE', 500);
       let uploaded = 0;
-      for await (const rows of readChunks(db, batchSize)) {
+      for await (const rows of readChunks(db, batchSize, tenants)) {
         const now = new Date();
         const deletes = staleAliasDeleteDocs(rows);
         if (deletes.length > 0) {

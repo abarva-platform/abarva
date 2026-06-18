@@ -1,7 +1,7 @@
 /**
  * Canonical tenant-key normalization.
  *
- * Three of our seeded tenants have historical aliases that still appear in
+ * Several seeded tenants have historical aliases that still appear in
  * older substrate tables and a handful of hard-coded application paths.
  * Anywhere data flows from the app into a tenant-scoped retrieval surface
  * (Postgres, Azure AI Search, the broker), tenant keys MUST be canonicalized
@@ -13,6 +13,7 @@
  * | apex-retail       | apexretail             |
  * | meridian-health   | meridian               |
  * | first-capital     | arcturus               |
+ * | lakeshore         | lakeshore-industries   |
  *
  * This module is the single source of truth for that map. The Azure AI
  * Search adapter, the verification script, and any future writers should

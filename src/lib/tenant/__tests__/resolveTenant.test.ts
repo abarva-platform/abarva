@@ -44,9 +44,13 @@ describe('canonical tenant aliases', () => {
     expect(canonicalTenantKey('apexretail')).toBe('apex-retail');
     expect(canonicalTenantKey('meridian')).toBe('meridian-health');
     expect(canonicalTenantKey('arcturus')).toBe('first-capital');
+    expect(canonicalTenantKey('lakeshore-industries')).toBe('lakeshore');
+    expect(appClientKeyForTenant('lakeshore-holdings')).toBe('lakeshore');
     expect(appClientKeyForTenant('first-capital')).toBe('arcturus');
     expect(brokerTenantKey('meridian')).toBe('meridian');
+    expect(brokerTenantKey('lakeshore')).toBe('lakeshore');
     expect(tenantAliasesFor('skyharbor')).toEqual(expect.arrayContaining(['skyharbor', 'skyharbor-air']));
+    expect(tenantAliasesFor('lakeshore')).toEqual(expect.arrayContaining(['lakeshore', 'lakeshore-industries']));
   });
 });
 

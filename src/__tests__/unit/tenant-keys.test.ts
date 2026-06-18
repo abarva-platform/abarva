@@ -10,7 +10,7 @@ describe('canonicalTenantKey', () => {
   // The alias map is the source of truth that the SQL migration and I10
   // canonical tenant guard are derived from. If anyone adds aliases here,
   // the migration/guard needs a matching update.
-  it('exposes the documented five-tenant alias map', () => {
+  it('exposes the documented tenant alias map', () => {
     expect(TENANT_KEY_ALIASES).toEqual({
       apex: 'apex-retail',
       'apex retail': 'apex-retail',
@@ -23,6 +23,10 @@ describe('canonicalTenantKey', () => {
       firstcapital: 'first-capital',
       heliara: 'meridian-health',
       'heliara health': 'meridian-health',
+      'lakeshore holdings': 'lakeshore',
+      'lakeshore industries': 'lakeshore',
+      'lakeshore-holdings': 'lakeshore',
+      'lakeshore-industries': 'lakeshore',
       meridian: 'meridian-health',
       'meridian health': 'meridian-health',
       'meridian health system': 'meridian-health',
@@ -40,6 +44,7 @@ describe('canonicalTenantKey', () => {
     expect(canonicalTenantKey('arcturus')).toBe('first-capital');
     expect(canonicalTenantKey('northstar-clinical')).toBe('northstar-clinical');
     expect(canonicalTenantKey('skyharbor')).toBe('skyharbor-air');
+    expect(canonicalTenantKey('lakeshore-industries')).toBe('lakeshore');
   });
 
   it('is idempotent — canonical values pass through unchanged', () => {
@@ -79,6 +84,7 @@ describe('isLegacyTenantAlias', () => {
     expect(isLegacyTenantAlias('apex-retail')).toBe(false);
     expect(isLegacyTenantAlias('meridian-health')).toBe(false);
     expect(isLegacyTenantAlias('first-capital')).toBe(false);
+    expect(isLegacyTenantAlias('lakeshore')).toBe(false);
     expect(isLegacyTenantAlias('keystone')).toBe(false);
     expect(isLegacyTenantAlias('')).toBe(false);
   });

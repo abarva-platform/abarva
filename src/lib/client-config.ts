@@ -42,6 +42,13 @@ export const ALL_CLIENTS: ClientOption[] = [
     color: '#075985',
     vertical: 'Global Airline',
   },
+  {
+    id: 'lakeshore',
+    name: 'Lakeshore Industries',
+    shortName: 'Lakeshore',
+    color: '#2563EB',
+    vertical: 'Industrial Manufacturing',
+  },
 ] as const;
 
 export type ClientKey = (typeof ALL_CLIENTS)[number]['id'];
@@ -58,6 +65,7 @@ export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
   apexretail: ['Apex Retail', 'Apex Retail Group'],
   northstar: ['Northstar Clinical Technologies', 'Northstar'],
   skyharbor: ['SkyHarbor Air', 'SkyHarbor Airlines', 'SkyHarbor'],
+  lakeshore: ['Lakeshore Industries', 'Lakeshore Holdings', 'Lakeshore'],
 };
 
 export const CLIENT_KEY_TO_INDUSTRY_CODE: Record<ClientKey, string> = {
@@ -66,6 +74,7 @@ export const CLIENT_KEY_TO_INDUSTRY_CODE: Record<ClientKey, string> = {
   apexretail: 'RETAIL',
   northstar: 'MEDTECH',
   skyharbor: 'AIRLINE',
+  lakeshore: 'MANUFACTURING',
 };
 
 export function industryCodeForClientName(name: string | null | undefined): string | null {
@@ -153,6 +162,17 @@ export function canonicalClientDisplayName(args: {
     return 'SkyHarbor Air';
   }
 
+  if (
+    key === 'lakeshore' ||
+    key === 'lakeshore-industries' ||
+    key === 'lakeshore-holdings' ||
+    normalizedName === 'lakeshore industries' ||
+    normalizedName === 'lakeshore holdings' ||
+    normalizedName === 'lakeshore'
+  ) {
+    return 'Lakeshore Industries';
+  }
+
   if (name) return name;
   const option = getClientOption(args.key);
   return option?.name ?? null;
@@ -177,6 +197,7 @@ const EMAIL_DOMAIN_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = 
   ['firstcapital.example.com', 'arcturus'],
   ['northstar-clinical.example.com', 'northstar'],
   ['skyharbor-air.example.com', 'skyharbor'],
+  ['lakeshore-industries.example.com', 'lakeshore'],
   // Founder backdoor (`anand.sundaram@thesundaram.com`) lands on Meridian
   // by inference. Documented in demo_accounts memory. Anyone uncomfortable
   // with this should remove the entry and add the email to Clerk metadata
@@ -198,18 +219,21 @@ const LEGACY_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]
   ['+firstcapital', 'arcturus'],
   ['+northstar', 'northstar'],
   ['+skyharbor', 'skyharbor'],
+  ['+lakeshore', 'lakeshore'],
   // Demo-prefix pattern: demo-apexretail+clerk_test@abarva.com (retired)
   ['demo-apexretail+', 'apexretail'],
   ['demo-meridian+', 'meridian'],
   ['demo-firstcapital+', 'arcturus'],
   ['demo-northstar+', 'northstar'],
   ['demo-skyharbor+', 'skyharbor'],
+  ['demo-lakeshore+', 'lakeshore'],
   // Legacy short prefixes
   ['apex+', 'apexretail'],
   ['mh+', 'meridian'],
   ['af+', 'arcturus'],
   ['ns+', 'northstar'],
   ['sh+', 'skyharbor'],
+  ['li+', 'lakeshore'],
 ];
 
 export function inferClientKeyFromEmail(email: string | null | undefined): ClientKey | null {
