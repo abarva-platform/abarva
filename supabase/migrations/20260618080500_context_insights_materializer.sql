@@ -19,6 +19,18 @@ CREATE TABLE IF NOT EXISTS significance_rules (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS rule_id TEXT;
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS domain TEXT;
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS title TEXT;
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS enabled BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS severity_floor TEXT NOT NULL DEFAULT 'medium';
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS evaluator_key TEXT;
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS required_record_types TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
 CREATE TABLE IF NOT EXISTS context_insights (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
@@ -65,6 +77,8 @@ ALTER TABLE context_insights ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT
 
 CREATE INDEX IF NOT EXISTS idx_context_insights_tenant_materiality
   ON context_insights (tenant_key, lifecycle_state, materiality, updated_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_context_insights_tenant_rule_entity_unique
+  ON context_insights (tenant_key, rule_id, entity_name);
 CREATE INDEX IF NOT EXISTS idx_context_insights_rule
   ON context_insights (tenant_key, rule_id);
 CREATE INDEX IF NOT EXISTS idx_context_insights_records_gin
@@ -74,6 +88,8 @@ CREATE INDEX IF NOT EXISTS idx_context_insights_facts_gin
 
 CREATE INDEX IF NOT EXISTS idx_significance_rules_enabled
   ON significance_rules (enabled, rule_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_significance_rules_rule_id_unique
+  ON significance_rules (rule_id);
 
 INSERT INTO significance_rules (
   rule_id,
