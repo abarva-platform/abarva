@@ -52,6 +52,16 @@ export default async function StrategicMovePhaseWorkspacePage({
   const move = await getStrategicMoveById(ctx, moveId);
   if (!move) notFound();
 
+  // State reconciliation: current_phase is the single source of truth for where
+  // the Move actually is. A user must not work a phase ahead of it (e.g. open
+  // /phase/1 while P0 is still awaiting the brief approval), or the workspace
+  // would contradict the Overview/Documents/File Cabinet. Redirect forward-
+  // looking requests back to the true current phase.
+  const currentPhase = move.currentPhase ?? 0;
+  if (parsedPhase > currentPhase) {
+    redirect(`/strategic-moves/${moveId}/phase/${currentPhase}`);
+  }
+
   // Estate-derived current-state readiness for this phase (best-effort; never
   // blocks the workspace render).
   let readiness: ReadinessReport | null = null;

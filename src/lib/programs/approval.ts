@@ -430,7 +430,13 @@ export async function decideApprovalRequest(
       ? {
           lifecycle_state: "approved",
           status: "active",
-          current_phase: 0,
+          // State reconciliation: approving the P0 origination brief MUST advance
+          // the canonical phase to P1 Charter. Previously this pinned current_phase
+          // at 0, so after approval the Move stayed "P0" on the Overview/Documents/
+          // File Cabinet (which all read current_phase) while the phase workspace
+          // happily rendered /phase/1 — the four surfaces disagreed. current_phase
+          // is the single source of truth; advancing it here keeps them in lockstep.
+          current_phase: 1,
           ...(sponsorPersonIdFromBrief
             ? { sponsor_person_id: sponsorPersonIdFromBrief }
             : {}),
