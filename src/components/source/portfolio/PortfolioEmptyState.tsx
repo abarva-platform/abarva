@@ -57,7 +57,7 @@ export function PortfolioEmptyState() {
       </div>
 
       <aside style={PREVIEW_CARD_STYLE} aria-label="Preview of a populated portfolio">
-        <div style={PREVIEW_LABEL_STYLE}>Sample preview · once populated</div>
+        <div style={PREVIEW_LABEL_STYLE}>Generic sample · once populated</div>
         <table style={PREVIEW_TABLE_STYLE}>
           <thead>
             <tr>
