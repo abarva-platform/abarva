@@ -2,286 +2,298 @@
  * @jest-environment jsdom
  */
 
-import "@testing-library/jest-dom";
-import { fireEvent, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
+import '@testing-library/jest-dom';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 
-import { AiControlTowerPage } from "../AiControlTowerPage";
-import type {
-  AIInitiative,
-  AIInitiativeVendorRow,
-} from "@/lib/admin/ai-initiatives/queries";
+import { AiControlTowerPage } from '../AiControlTowerPage';
+import type { AiControlTowerReadModel } from '@/lib/ai-control-tower/read-model';
 
-jest.mock("@/components/atlas/AtlasChatPanel", () => ({
-  AtlasChatPanel: ({
-    messages,
-    workspace,
-  }: {
-    messages: Array<{ id: string }>;
-    workspace: ReactNode;
-  }) => (
-    <div data-testid="atlas-shell" data-message-count={messages.length}>
-      {workspace}
-    </div>
-  ),
-}));
+const MODEL: AiControlTowerReadModel = {
+  clientId: 'client-firstcapital',
+  clientKey: 'firstcapital',
+  tenantName: 'First Capital Financial',
+  source: 'ai_control_data_plane',
+  sourceDisclosure: 'Read from committed AI Control Tower data-plane tables.',
+  refreshRunId: 'refresh-1',
+  refreshRunKey: 'first-capital-v2',
+  reportingPeriodEnd: '2026-05-31',
+  rowCounts: {
+    refreshRuns: 1,
+    sources: 4,
+    initiatives: 2,
+    usage: 1,
+    productivity: 1,
+    dora: 0,
+    agents: 1,
+    benefits: 2,
+    spend: 1,
+    risks: 1,
+    actions: 1,
+    evidence: 1,
+    facts: 2,
+  },
+  kpis: [
+    { key: 'initiatives', label: 'Observed initiatives', value: '2', note: '1 governance / evidence pressures', tone: 'blue' },
+    { key: 'value', label: 'Measured value', value: '$1.2M', note: '60% of promised value', tone: 'green' },
+    { key: 'spend', label: 'AI spend exposure', value: '$2.4M', note: '1 committed spend rows', tone: 'amber' },
+    { key: 'adoption', label: 'Active adoption', value: '80%', note: '80 active of 100 seats', tone: 'green' },
+    { key: 'evidence', label: 'Evidence posture', value: '1', note: '1 evidence rows tracked', tone: 'green' },
+  ],
+  functions: [
+    {
+      name: 'Finance & Accounting',
+      initiatives: 1,
+      activeUsers: 80,
+      seats: 100,
+      adoptionPct: 80,
+      spendUsd: 2_400_000,
+      realizedUsd: 1_200_000,
+      promisedUsd: 2_000_000,
+      risks: 1,
+      actions: 1,
+      status: 'red',
+      driver: 'Finance Copilot Rollout',
+      blocker: 'DLP review required',
+    },
+  ],
+  initiatives: [
+    {
+      id: 'FCF-INIT-001',
+      title: 'Finance Copilot Rollout',
+      functionName: 'Finance & Accounting',
+      category: 'Copilot',
+      stage: 'Scale',
+      posture: 'continue',
+      owner: 'CFO delegate',
+      sponsor: 'CFO',
+      vendor: 'Microsoft',
+      system: 'M365 Copilot',
+      personas: ['Financial analysts'],
+      promisedBenefit: 'Close cycle compression and analyst productivity uplift.',
+      metric: 'close_cycle_hours',
+      baseline: 12,
+      target: 8,
+      committedUsd: 900_000,
+      spendUsd: 2_400_000,
+      promisedUsd: 2_000_000,
+      realizedUsd: 1_200_000,
+      realizedPct: 60,
+      confidence: 'high',
+      evidenceState: 'committed',
+      status: 'healthy',
+      notes: 'Measured in finance analyst workflow.',
+      risks: ['DLP review required'],
+      citations: ['EVID-001'],
+    },
+    {
+      id: 'FCF-INIT-002',
+      title: 'AML Case Triage Automation',
+      functionName: 'Risk & Compliance',
+      category: 'Agent',
+      stage: 'Pilot',
+      posture: 'hold',
+      owner: 'Chief Model Risk Officer',
+      sponsor: 'CRO',
+      vendor: 'ServiceNow',
+      system: 'ServiceNow AI Agent',
+      personas: ['AML analysts'],
+      promisedBenefit: 'Reduce false-positive review time.',
+      metric: 'case_review_minutes',
+      baseline: 42,
+      target: 25,
+      committedUsd: 1_400_000,
+      spendUsd: 0,
+      promisedUsd: 4_000_000,
+      realizedUsd: 0,
+      realizedPct: 0,
+      confidence: 'medium',
+      evidenceState: 'review_required',
+      status: 'blocked',
+      notes: 'SR 11-7 review required.',
+      risks: ['Model risk validation overdue'],
+      citations: ['EVID-002'],
+    },
+  ],
+  usage: [
+    {
+      id: 'usage-1',
+      functionName: 'Finance & Accounting',
+      toolName: 'M365 Copilot',
+      vendor: 'Microsoft',
+      persona: 'Financial analyst',
+      seats: 100,
+      activeUsers: 80,
+      adoptionPct: 80,
+      monthlySpendUsd: 200_000,
+      timeSavingsHours: 6,
+      estimatedBenefitUsd: 1_200_000,
+      blocker: 'DLP review required',
+      evidenceState: 'committed',
+    },
+  ],
+  productivity: [
+    {
+      id: 'prod-1',
+      functionName: 'Finance & Accounting',
+      persona: 'Financial analyst',
+      workflow: 'Monthly close analysis',
+      metric: 'cycle_time_hours',
+      baseline: 12,
+      current: 9,
+      target: 8,
+      unit: 'hours',
+      initiativeId: 'FCF-INIT-001',
+      confidence: 'high',
+      evidenceState: 'committed',
+    },
+  ],
+  agents: [
+    {
+      id: 'agent-1',
+      functionName: 'Finance & Accounting',
+      vendor: 'ServiceNow',
+      module: 'ITSM',
+      name: 'Finance Access Agent',
+      persona: 'Financial analyst',
+      workflow: 'Software access request',
+      eligibleVolume: 1000,
+      touchedVolume: 600,
+      autoResolvedVolume: 380,
+      deflectionPct: 60,
+      autoResolvePct: 38,
+      cycleTimeBefore: 8,
+      cycleTimeAfter: 2,
+      monthlySpendUsd: 0,
+      valueUsd: 140_000,
+      governance: 'assessed',
+      notes: 'Auto-approval for standard requests.',
+      evidenceState: 'committed',
+    },
+  ],
+  spend: [
+    {
+      id: 'spend-1',
+      initiativeId: 'FCF-INIT-001',
+      functionName: 'Finance & Accounting',
+      vendor: 'Microsoft',
+      product: 'M365 Copilot',
+      spendType: 'license',
+      monthlySpendUsd: 200_000,
+      annualizedSpendUsd: 2_400_000,
+      renewalDate: '2026-12-31',
+      unitMetric: 'cost_per_active_user',
+      unitValue: 250,
+      evidenceState: 'committed',
+      notes: 'Finance seats included.',
+    },
+  ],
+  risks: [
+    {
+      id: 'risk-1',
+      initiativeId: 'FCF-INIT-002',
+      functionName: 'Risk & Compliance',
+      name: 'SR 11-7 model validation overdue',
+      dimension: 'model_risk',
+      severity: 'critical',
+      status: 'open',
+      description: 'AML case triage cannot scale before validation.',
+      owner: 'Chief Model Risk Officer',
+      requiredAction: 'Schedule validation sprint.',
+      gate: 'fail',
+      evidenceState: 'review_required',
+    },
+  ],
+  actions: [
+    {
+      id: 'action-1',
+      relatedType: 'initiative',
+      relatedKey: 'FCF-INIT-002',
+      posture: 'hold',
+      title: 'Hold AML triage scale decision',
+      rationale: 'Model validation is overdue.',
+      owner: 'Chief Model Risk Officer',
+      dueDate: '2026-06-30',
+      status: 'proposed',
+      evidenceState: 'review_required',
+    },
+  ],
+  evidence: [
+    {
+      id: 'EVID-001',
+      recordType: 'initiative',
+      recordKey: 'FCF-INIT-001',
+      evidenceType: 'csv_row',
+      citationLabel: 'Finance Copilot evidence row',
+      pointer: 'T03 row 3',
+      evidenceState: 'committed',
+      confidence: 0.91,
+    },
+  ],
+  facts: [
+    {
+      factId: 'fact-1',
+      clientId: 'client-firstcapital',
+      refreshRunId: 'refresh-1',
+      recordType: 'benefit_realization',
+      recordKey: 'FCF-INIT-001',
+      factKey: 'benefit_realization_usd',
+      factType: 'money',
+      factText: 'Finance Copilot Rollout has $1.2M realized value with committed evidence.',
+      confidence: 0.9,
+      evidenceStatus: 'committed',
+      evidenceIds: ['EVID-001'],
+    },
+    {
+      factId: 'fact-2',
+      clientId: 'client-firstcapital',
+      refreshRunId: 'refresh-1',
+      recordType: 'risk_governance',
+      recordKey: 'FCF-INIT-002',
+      factKey: 'review_required_count',
+      factType: 'risk',
+      factText: 'AML case triage requires SR 11-7 validation before scale.',
+      confidence: 0.76,
+      evidenceStatus: 'review_required',
+      evidenceIds: ['EVID-002'],
+    },
+  ],
+};
 
-const INITIATIVES: AIInitiative[] = [
-  {
-    initiativeId: "init-agent",
-    displayId: "AI-001",
-    name: "Claims ServiceNow Agent",
-    description: "Agent automation for claims triage.",
-    primaryCategoryId: "agent",
-    primaryCategoryName: "Workflow Agent",
-    secondaryCategoryId: null,
-    secondaryCategoryName: null,
-    primaryGoalId: "goal-productivity",
-    primaryGoalName: "Operations productivity",
-    stage: "pilot",
-    stageDetail: "Claims pilot",
-    ownerName: "Riya Patel",
-    ownerTitle: "VP Operations",
-    ownerFunction: "Operations",
-    committedAnnualUsd: 1_200_000,
-    committedTotalUsd: 1_200_000,
-    measuredValueUsd: 360_000,
-    statusFlag: "adoption_gap",
-    statusSummary: "Usage is below business case.",
-    confidenceLevel: "MED",
-    alignedCallout: true,
-    alignedRationale: "Aligned to operations productivity.",
-    loadedViaTemplate: "synthetic",
-  },
-  {
-    initiativeId: "init-copilot",
-    displayId: "AI-002",
-    name: "Finance Copilot Rollout",
-    description: "Finance analyst productivity uplift.",
-    primaryCategoryId: "copilot",
-    primaryCategoryName: "Copilot",
-    secondaryCategoryId: null,
-    secondaryCategoryName: null,
-    primaryGoalId: "goal-value",
-    primaryGoalName: "Financial planning productivity",
-    stage: "scaled",
-    stageDetail: "Scaled",
-    ownerName: "Maya Chen",
-    ownerTitle: "CFO delegate",
-    ownerFunction: "Finance",
-    committedAnnualUsd: 900_000,
-    committedTotalUsd: 900_000,
-    measuredValueUsd: 840_000,
-    statusFlag: "healthy",
-    statusSummary: "Measured value is on track.",
-    confidenceLevel: "HIGH",
-    alignedCallout: true,
-    alignedRationale: "Aligned to planning cycle reduction.",
-    loadedViaTemplate: "synthetic",
-  },
-  {
-    initiativeId: "init-wealth",
-    displayId: "AI-003",
-    name: "Wealth Advisor Copilot Shadow Rollout",
-    description: "Advisor copilot pilot with supervision and data-path review.",
-    primaryCategoryId: "copilot",
-    primaryCategoryName: "Advisor Copilot",
-    secondaryCategoryId: null,
-    secondaryCategoryName: null,
-    primaryGoalId: "goal-governance",
-    primaryGoalName: "firstcapital value realization",
-    stage: "pilot",
-    stageDetail: "Stalled",
-    ownerName: "Nora Walsh",
-    ownerTitle: "SVP Wealth Technology",
-    ownerFunction: "Wealth",
-    committedAnnualUsd: 700_000,
-    committedTotalUsd: 700_000,
-    measuredValueUsd: 120_000,
-    statusFlag: "stalled",
-    statusSummary:
-      "KILL CANDIDATE: unapproved client-note data path and FINRA supervision gaps.",
-    confidenceLevel: "HIGH",
-    alignedCallout: true,
-    alignedRationale:
-      "Advisor-facing AI needs supervisory evidence before scale.",
-    loadedViaTemplate: "synthetic",
-  },
-];
-
-const VENDORS: AIInitiativeVendorRow[] = [
-  {
-    vendorId: "vendor-servicenow",
-    initiativeId: "init-agent",
-    initiativeDisplayId: "AI-001",
-    initiativeName: "Claims ServiceNow Agent",
-    vendorName: "ServiceNow",
-    contractValueUsd: 2_400_000,
-    renewalDate: "2099-01-01",
-    financialHealth: "watch",
-  },
-];
-
-function renderTower({
-  vendors = VENDORS,
-  substrateCounts = {
-    initiatives: 3,
-    vendors: 1,
-    kpis: 8,
-    decisions: 3,
-    stakeholderNotes: 4,
-    scenarios: 0,
-  },
-}: {
-  vendors?: AIInitiativeVendorRow[];
-  substrateCounts?: {
-    initiatives: number;
-    vendors: number;
-    kpis: number;
-    decisions: number;
-    stakeholderNotes: number;
-    scenarios: number;
-  };
-} = {}) {
-  return render(
-    <AiControlTowerPage
-      tenantName="SkyHarbor Air"
-      clientId="skyharbor"
-      towerToday="2026-06-16"
-      initiatives={INITIATIVES}
-      vendors={vendors}
-      bandMetrics={{
-        metrics: [],
-        isEmpty: false,
-        deterministicSeed: true,
-      }}
-      pressuresView={{
-        cards: [],
-        totalActive: 0,
-        demandingDecisions: 0,
-        sectionHeadline: "No pressure headline",
-        isEmpty: false,
-        emptyHint: null,
-        deterministicSeed: true,
-      }}
-      substrateCounts={substrateCounts}
-    />,
-  );
+function renderTower() {
+  return render(<AiControlTowerPage model={MODEL} />);
 }
 
-describe("AiControlTowerPage", () => {
-  it("places lens tabs below KPI dashboard and refreshes the active canvas without chat noise", () => {
-    const { container } = renderTower();
-
-    const evidenceTile = screen.getByText("Evidence posture");
-    const agentsTab = screen.getByRole("button", { name: /agents/i });
-    expect(
-      evidenceTile.compareDocumentPosition(agentsTab) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      screen.queryByText("Where Atlas will look first."),
-    ).not.toBeInTheDocument();
-
-    expect(
-      screen.getByText("Which AI investments are converting into value?"),
-    ).toBeInTheDocument();
-
-    fireEvent.click(agentsTab);
-    expect(
-      screen.getByText(
-        "Which agents are resolving work, not just creating usage?",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getAllByText("resolution and exception rate required").length,
-    ).toBeGreaterThan(0);
-    expect(container.querySelector("[data-message-count='0']")).toBeTruthy();
-
-    fireEvent.click(screen.getByRole("button", { name: /spend/i }));
-    expect(
-      screen.getByText("Which spend should be scaled, challenged, or stopped?"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("ServiceNow")).toBeInTheDocument();
-    expect(container.querySelector("[data-message-count='0']")).toBeTruthy();
-  });
-
-  it("keeps demo-critical Tower summaries aligned with the visible canvas", () => {
-    renderTower({
-      vendors: [],
-      substrateCounts: {
-        initiatives: 3,
-        vendors: 0,
-        kpis: 0,
-        decisions: 0,
-        stakeholderNotes: 0,
-        scenarios: 0,
-      },
-    });
-
-    expect(screen.getAllByText("spend feed not committed").length).toBeGreaterThan(0);
-    expect(screen.queryByText("0 committed contract rows")).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /risk/i }));
-    expect(screen.getByText("KILL CANDIDATE: unapproved client-note data path and FINRA supervision gaps.")).toBeInTheDocument();
-    expect(screen.getByText("risk, kill, contested, gap, or watch signals")).toBeInTheDocument();
-    expect(screen.getByText("Watch items")).toBeInTheDocument();
-    expect(screen.getByText("2")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /initiatives/i }));
-    expect(
-      screen.getAllByText("Adoption, avoided work, quality guardrail").length,
-    ).toBeGreaterThan(0);
-    expect(screen.queryByText("firstcapital value realization")).not.toBeInTheDocument();
-  });
-
-  it("lets executives inspect an individual initiative from the Tower lens", () => {
+describe('AiControlTowerPage', () => {
+  it('places lens tabs below KPI dashboard and refreshes the active canvas', () => {
     renderTower();
 
-    fireEvent.click(screen.getByRole("button", { name: /initiatives/i }));
+    const evidenceTile = screen.getByText('Evidence posture');
+    const agentsTab = screen.getByRole('button', { name: /agents/i });
+    expect(evidenceTile.compareDocumentPosition(agentsTab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
-    expect(
-      screen.getByText("Which initiative do we need to understand in detail?"),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText(/select initiative/i)).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Claims ServiceNow Agent" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Agent automation for claims triage."),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Riya Patel · VP Operations/)).toBeInTheDocument();
-    expect(
-      screen.getByText(/\$1.2M committed · \$360K measured/),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Usage is below business case."),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Which AI investments are converting into defensible value?')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText(/select initiative/i), {
-      target: { value: "init-wealth" },
-    });
-
-    expect(
-      screen.getByRole("heading", { name: "Wealth Advisor Copilot Shadow Rollout" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Advisor copilot pilot with supervision and data-path review."),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Nora Walsh · SVP Wealth Technology/)).toBeInTheDocument();
-    expect(
-      screen.getAllByText("Adoption, avoided work, quality guardrail").length,
-    ).toBeGreaterThan(0);
-    expect(screen.queryByText("firstcapital value realization")).not.toBeInTheDocument();
+    fireEvent.click(agentsTab);
+    expect(screen.getByText('Which agents are resolving work, not just creating usage?')).toBeInTheDocument();
+    expect(screen.getByText('Finance Access Agent')).toBeInTheDocument();
 
     fireEvent.click(
-      screen.getAllByText("AI-001 · Claims ServiceNow Agent").find(
-        (node) => node.tagName.toLowerCase() === "td",
-      )!,
+      screen
+        .getAllByRole('button')
+        .find((button) => button.textContent?.includes('COST · L1')) as HTMLElement,
     );
+    expect(screen.getByText('Which spend should be scaled, challenged, or stopped?')).toBeInTheDocument();
+    expect(screen.getByText('M365 Copilot')).toBeInTheDocument();
+  });
 
-    expect(
-      screen.getByRole("heading", { name: "Claims ServiceNow Agent" }),
-    ).toBeInTheDocument();
+  it('answers executive questions with structured rows and moves to the relevant lens', () => {
+    renderTower();
+
+    fireEvent.click(screen.getByRole('button', { name: /where is ai spend not backed by evidence/i }));
+
+    expect(screen.getByText('Which spend should be scaled, challenged, or stopped?')).toBeInTheDocument();
+    const atlasPanel = screen.getByText(/visible AI spend is available/i).closest('div');
+    expect(atlasPanel).toBeTruthy();
+    expect(within(atlasPanel as HTMLElement).getByText('Annual spend')).toBeInTheDocument();
   });
 });
