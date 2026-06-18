@@ -11,6 +11,9 @@ import { SessionPlaybookPanel } from "./SessionPlaybookPanel";
 import { BoardArtifactsPanel } from "./BoardArtifactsPanel";
 import { MovesExplorer, type ExplorerModel } from "./MovesExplorer";
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { getActiveClientRow } from "@/lib/active-client";
+import { listSucceededRunsForMove } from "@/lib/deliverables/orchestrator/runs-repository";
+import { orchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
 import { listAttachmentsForProgram } from "@/lib/programs/attachments";
 import {
   DELIVERABLE_REGISTRY,
@@ -502,6 +505,30 @@ async function buildExplorerModel(move: StrategicMove): Promise<ExplorerModel> {
     attByPhase.get(p)!.push(a);
   }
 
+  // Approve & Build / orchestrator output lands in generated_artifacts (via a
+  // succeeded deliverable_run), NOT deliverables_v2 — so without this a built
+  // document would show "Not generated" here while appearing in the Cabinet.
+  // Map the latest succeeded run per registry key (run.deliverableType ===
+  // orchestratorDeliverableType(key)) so a slot reads "built" with a download to
+  // /api/v1/artifacts/{id}. Additive: deliverables_v2 content still wins when present.
+  const runByKey = new Map<string, { artifactId: string; updatedAt: string }>();
+  const activeClient = await getActiveClientRow().catch(() => null);
+  if (activeClient) {
+    const runs = await listSucceededRunsForMove(activeClient.id, move.id).catch(
+      () => [] as Awaited<ReturnType<typeof listSucceededRunsForMove>>,
+    );
+    for (const spec of DELIVERABLE_REGISTRY) {
+      const orchType = orchestratorDeliverableType(spec.deliverableTypeKey);
+      const run = runs.find((r) => r.deliverableType === orchType && r.artifactId);
+      if (run?.artifactId) {
+        runByKey.set(spec.deliverableTypeKey, {
+          artifactId: run.artifactId,
+          updatedAt: run.updatedAt,
+        });
+      }
+    }
+  }
+
   const fmtDate = (iso: string | null): string | undefined => {
     if (!iso) return undefined;
     const d = new Date(iso);
@@ -528,17 +555,44 @@ async function buildExplorerModel(move: StrategicMove): Promise<ExplorerModel> {
     const deliverables = specs.map((s) => {
       const db = byKey.get(s.deliverableTypeKey);
       const hasContent = Boolean(db?.hasContent);
+      const run = runByKey.get(s.deliverableTypeKey);
+      const builtViaRun = !hasContent && Boolean(run);
       return {
         key: s.deliverableTypeKey,
         title: s.documentTitle,
         audience: s.audiencePrimary,
         gate: s.gateArtifact,
-        status: explorerStatus(hasContent, db?.status ?? ""),
-        downloadHtml: hasContent && db ? `${base(db.id)}?format=html` : undefined,
-        downloadDocx: hasContent && db ? `${base(db.id)}?format=docx` : undefined,
-        date: db ? fmtDate(db.updatedAt) : undefined,
+        // A succeeded run cleared the quality gate, so it reads "ready"; otherwise
+        // fall back to the deliverables_v2 status (or "none" when nothing is built).
+        status: builtViaRun ? "ready" : explorerStatus(hasContent, db?.status ?? ""),
+        downloadHtml:
+          hasContent && db
+            ? `${base(db.id)}?format=html`
+            : run
+              ? `/api/v1/artifacts/${run.artifactId}?format=html`
+              : undefined,
+        downloadDocx:
+          hasContent && db
+            ? `${base(db.id)}?format=docx`
+            : run
+              ? `/api/v1/artifacts/${run.artifactId}?format=docx`
+              : undefined,
+        date: db
+          ? fmtDate(db.updatedAt)
+          : run
+            ? fmtDate(run.updatedAt)
+            : undefined,
       };
     });
+    const builtKeys = new Set(
+      specs
+        .filter(
+          (s) =>
+            byKey.get(s.deliverableTypeKey)?.hasContent ||
+            runByKey.has(s.deliverableTypeKey),
+        )
+        .map((s) => s.deliverableTypeKey),
+    );
     const templates = specs.map((s) => ({
       title: s.documentTitle,
       purpose: s.documentPurpose,
@@ -556,9 +610,7 @@ async function buildExplorerModel(move: StrategicMove): Promise<ExplorerModel> {
       label: EXPLORER_PHASE_LABEL[phase] ?? `P${phase}`,
       current: phase === currentPhase,
       locked: phase > currentPhase,
-      gateMet: gateSpecs.filter(
-        (s) => byKey.get(s.deliverableTypeKey)?.hasContent,
-      ).length,
+      gateMet: gateSpecs.filter((s) => builtKeys.has(s.deliverableTypeKey)).length,
       gateTotal: gateSpecs.length,
       templates,
       inputs,
