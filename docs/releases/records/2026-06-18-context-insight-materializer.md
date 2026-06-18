@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-private-data-plane`
 
 ## Plain-English Summary
 
@@ -42,11 +42,17 @@ Adds the missing backend layer that turns loaded tenant context records and fact
 - FAIL/BLOCKED: ACA migration execution `job-abarva-private-operator-eus-2j5lnep` failed on the live lab database because an existing drifted `significance_rules` table did not have `rule_id`. The migration was updated to add missing columns and unique indexes for existing-table upgrade paths.
 - FAIL/BLOCKED: ACA migration execution `job-abarva-private-operator-eus-tl2s8qo` then exposed a second live drift: the existing table has a not-null `rule_key` column. The migration now treats `rule_key` as a compatibility alias, backfills `rule_id` from it where needed, and seeds both columns.
 - FAIL/BLOCKED: ACA migration execution `job-abarva-private-operator-eus-jtyi8fr` exposed the original S1/S3 rule registry shape: `name` is also not-null, with legacy rule metadata columns. The migration now seeds and updates both the legacy rule registry fields and the new materializer fields.
-- NOT RUN: ACA private operator plan/apply/verify. This must run after merge, image build/deploy, and migration apply.
+- PASS: PR #3661 CI passed: ESLint, Fresh Postgres migration replay, New migration drift surface, Routes and disclaimers, Typecheck + reasoning-layer tests.
+- PASS: ACR build `cadn` produced `acrabarvalab001.azurecr.io/abarva/web:context-insights-37555e82` with digest `sha256:89f1d9142784138e52383d9996ac5df062ee65021b67922eb15b2492aa9a16b6`.
+- PASS: Web revision `ca-abarva-web-lab-eastus--0000103` was shifted to 100% traffic and `/api/health` returned `ok:true`, `postgres:true`, `direct_postgres:true`, `azure_graph:"postgres"`.
+- PASS: ACA migration execution `job-abarva-private-operator-eus-3l41r5f` applied `20260618080500_context_insights_materializer.sql`.
+- PASS: ACA materializer apply execution `job-abarva-private-operator-eus-1ifed76` wrote 24 `context_insights` rows for `meridian-health` and 24 for `lakeshore`.
+- PASS: ACA materializer verify execution `job-abarva-private-operator-eus-en2ye2q` proved 24 total, 24 with record citations, 24 with fact citations, across 6 rules for each tenant.
+- PASS: Private operator restored to idle image `acrabarvalab001.azurecr.io/abarva/web@sha256:e7668ebbb670bc014893fcc3265341cc56810c98a73b104d05ef3a079c430b3c` with command `/bin/true`.
 
 ## Rollout Plan
 
-Merge, build/deploy the ACA image, apply the migration in the private data plane, then run:
+Completed in lab. The executed sequence was: merge, build/deploy ACA image, shift web traffic, apply migration in the private data plane, then run:
 
 `node scripts/jobs/materialize-context-insights.cjs apply --client meridian-health,lakeshore`
 
@@ -66,7 +72,16 @@ Code rollback is a Git revert. Data rollback is tenant-scoped: delete `context_i
 - Failed ACA migration attempt before rule-key compatibility fix: `job-abarva-private-operator-eus-tl2s8qo`
 - Rule-key compatibility fix PR: #3660
 - Failed ACA migration attempt before full legacy rule registry compatibility fix: `job-abarva-private-operator-eus-jtyi8fr`
-- Pending follow-up PR/CI, deployment, migration, and ACA execution IDs for the full legacy rule registry compatibility fix.
+- Full legacy rule registry compatibility PR: #3661
+- ACR build: `cadn`
+- Deployed image: `acrabarvalab001.azurecr.io/abarva/web:context-insights-37555e82@sha256:89f1d9142784138e52383d9996ac5df062ee65021b67922eb15b2492aa9a16b6`
+- Web revision: `ca-abarva-web-lab-eastus--0000103`, 100% traffic
+- Health check: `/api/health` returned `ok:true`, `postgres:true`, `direct_postgres:true`, `azure_graph:"postgres"`
+- Successful migration execution: `job-abarva-private-operator-eus-3l41r5f`
+- Successful materializer apply execution: `job-abarva-private-operator-eus-1ifed76`
+- Successful materializer verify execution: `job-abarva-private-operator-eus-en2ye2q`
+- Verified rows: `meridian-health` has 24 materialized insights, all 24 with record and fact citations; `lakeshore` has 24 materialized insights, all 24 with record and fact citations.
+- Private operator idle restore verified after execution.
 
 ## Known Gaps
 
