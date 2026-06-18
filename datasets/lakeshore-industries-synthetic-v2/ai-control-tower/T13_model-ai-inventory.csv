@@ -1,0 +1,11 @@
+model_id,model_name,model_type,use_case,risk_tier,validation_status,pii_phi_financial_data,owner_role
+LAK-AI-001-MODEL,Kyriba global cash and payments rollout model/service,LLM_workflow,Kyriba global cash and payments rollout,tier_1_high,overdue,yes,Treasurer
+LAK-AI-002-MODEL,Treasury bank connectivity control evidence model/service,predictive_ml,Treasury bank connectivity control evidence,tier_3,current,limited,Treasurer
+LAK-AI-003-MODEL,Liquidity forecasting automation model/service,rules_ml_hybrid,Liquidity forecasting automation,tier_3,current,yes,CFO
+LAK-AI-004-MODEL,Automated close and finance reporting semantic layer model/service,analytics_scoring,Automated close and finance reporting semantic layer,tier_2,conditional,limited,Controller
+LAK-AI-005-MODEL,ServiceNow finance support agent model/service,LLM_workflow,ServiceNow finance support agent,tier_3,current,yes,VP IT Operations
+LAK-AI-006-MODEL,Finance AI narrative and variance explainer model/service,predictive_ml,Finance AI narrative and variance explainer,tier_1_high,overdue,limited,CFO
+LAK-AI-007-MODEL,Supplier working-capital analytics model/service,rules_ml_hybrid,Supplier working-capital analytics,tier_2,conditional,yes,Chief Procurement Officer
+LAK-AI-008-MODEL,Kyriba rollout assistant and defect triage model/service,analytics_scoring,Kyriba rollout assistant and defect triage,tier_3,current,limited,Treasurer
+LAK-AI-009-MODEL,M365 Copilot finance rollout model/service,LLM_workflow,M365 Copilot finance rollout,tier_3,current,yes,Treasurer
+LAK-AI-010-MODEL,Codex/Claude developer productivity for finance integrations model/service,predictive_ml,Codex/Claude developer productivity for finance integrations,tier_2,conditional,limited,Treasurer

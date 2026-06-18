@@ -95,7 +95,7 @@ export interface CsvUploadLoadResult extends Omit<CsvUploadPreparedBatch, 'chunk
 const MAX_ROWS = 2_000;
 const MAX_TEXT_COLUMNS = 12;
 
-const SEGMENT_BY_DIMENSION: Record<ContextDimension, string> = {
+const SEGMENT_BY_DIMENSION: Partial<Record<ContextDimension, string>> = {
   enterprise_profile: 'enterprise_profile',
   financial_kpis: 'it_financials',
   annual_quarterly_reports: 'enterprise_profile',
@@ -115,6 +115,10 @@ const SEGMENT_BY_DIMENSION: Record<ContextDimension, string> = {
   ai_tooling_model_inventory: 'it_landscape',
   incidents_ops_telemetry: 'it_landscape',
 };
+
+function sourceSegmentForDimension(dimension: ContextDimension): string {
+  return SEGMENT_BY_DIMENSION[dimension] ?? dimension;
+}
 
 function normalizeHeader(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
@@ -284,7 +288,7 @@ export function prepareCsvUploadForTenantContext(input: CsvUploadInput): CsvUplo
     fileHash,
     compactTimestamp(uploadedAt),
   ].join(':');
-  const sourceSegmentId = SEGMENT_BY_DIMENSION[template.dimension];
+  const sourceSegmentId = sourceSegmentForDimension(template.dimension);
 
   const chunks = parsed.rows.map((row, index): PreparedCsvContextChunk => {
     const rowNumber = index + 2;

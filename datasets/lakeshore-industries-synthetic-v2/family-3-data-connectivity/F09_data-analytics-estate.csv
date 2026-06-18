@@ -1,0 +1,11 @@
+data_asset_id,data_asset_name,domain,source_systems,target_platform,data_owner,freshness,quality_score,semantic_layer_status,move_relevance
+LAK-DATA-001,cash positioning gold table,treasury,Kyriba; bank portals; SAP; treasury spreadsheets,Kyriba plus finance lakehouse,CFO,intraday target,48,not_ready,Kyriba rollout
+LAK-DATA-002,bank connectivity test evidence,controls,Kyriba; bank portals; SAP; treasury spreadsheets,Kyriba plus finance lakehouse,Treasurer,intraday target,52,partial,cash visibility
+LAK-DATA-003,payment approval lineage,finance,Kyriba; bank portals; SAP; treasury spreadsheets,Kyriba plus finance lakehouse,CIO,intraday target,56,certified_candidate,payments control
+LAK-DATA-004,liquidity forecast data product,procurement,Kyriba; bank portals; SAP; treasury spreadsheets,Kyriba plus finance lakehouse,Chief Supply Chain Officer,daily/monthly target,60,not_ready,automated close
+LAK-DATA-005,debt and FX exposure mart,operations,Kyriba; bank portals; SAP; treasury spreadsheets,Kyriba plus finance lakehouse,Controller,daily/monthly target,64,partial,finance AI
+LAK-DATA-006,close reconciliation semantic model,treasury,SAP; BlackLine; Coupa; ServiceNow; Power BI,semantic layer / BI,Chief Procurement Officer,daily/monthly target,68,certified_candidate,Kyriba rollout
+LAK-DATA-007,working capital data product,controls,SAP; BlackLine; Coupa; ServiceNow; Power BI,semantic layer / BI,Chief Data Officer,daily/monthly target,72,not_ready,cash visibility
+LAK-DATA-008,supplier spend risk mart,finance,SAP; BlackLine; Coupa; ServiceNow; Power BI,semantic layer / BI,CISO,daily/monthly target,76,partial,payments control
+LAK-DATA-009,finance service workload lake,procurement,SAP; BlackLine; Coupa; ServiceNow; Power BI,semantic layer / BI,CFO,daily/monthly target,80,certified_candidate,automated close
+LAK-DATA-010,Kyriba rollout defect/evidence corpus,operations,SAP; BlackLine; Coupa; ServiceNow; Power BI,semantic layer / BI,Treasurer,daily/monthly target,84,not_ready,finance AI

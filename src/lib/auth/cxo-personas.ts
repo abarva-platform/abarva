@@ -35,15 +35,15 @@ export interface CxoPersona {
    * Canonical app ClientKey — matches src/lib/client-config.ts.
    * Used for active-client resolution and Supabase clients-table
    * lookup (clients.name LIKE: Apex Retail / Meridian / Arcturus or
-   * First Capital). MUST be one of: apexretail · meridian · arcturus · northstar · skyharbor.
+   * First Capital). MUST be one of: apexretail · meridian · arcturus · northstar · skyharbor · lakeshore.
    */
-  clientKey: 'apexretail' | 'meridian' | 'arcturus' | 'northstar' | 'skyharbor';
+  clientKey: 'apexretail' | 'meridian' | 'arcturus' | 'northstar' | 'skyharbor' | 'lakeshore';
   /**
    * Tenant key used by the data-room / broker layer — a parallel
    * namespace per project memory ("App ClientKey is `apexretail`;
    * broker is `apex-retail`"). Kept for chrome rendering.
    */
-  tenantKey: 'apex-retail' | 'meridian-health' | 'firstcapital' | 'northstar-clinical' | 'skyharbor-air';
+  tenantKey: 'apex-retail' | 'meridian-health' | 'firstcapital' | 'northstar-clinical' | 'skyharbor-air' | 'lakeshore-holdings';
   /** Clerk publicMetadata.role override for demo operations accounts. */
   authRole?: 'maestro' | 'admin';
   /** Graph node id used by persons.graph_node_id (Supabase). */
@@ -373,6 +373,48 @@ export const CXO_PERSONAS: ReadonlyArray<CxoPersona> = [
       'Marcus Lee runs the Health Information Systems business, including clinical coding, CDI, audit, analytics, and customer-facing software modernization. He is the executive who tests whether AbarVa can connect product strategy, engineering execution, QMS constraints, Source events, and board-grade value artifacts.',
     workspaceTeaser:
       'Your workspace shows the clinical coding AI modernization move, HIS product families, QMS dependencies, Source vendor choices, and Tower value views for product-software outcomes.',
+  },
+  {
+    slug: 'cio-lakeshore',
+    email: 'cio@lakeshore-holdings.example.com',
+    shortLabel: 'cio@lakeshore',
+    firstName: 'Elena',
+    lastName: 'Marquez',
+    personaName: 'Elena Marquez',
+    monogram: 'EM',
+    titleShort: 'CIO',
+    titleFull: 'Chief Information Officer',
+    tenant: 'Lakeshore Holdings',
+    clientKey: 'lakeshore',
+    tenantKey: 'lakeshore-holdings',
+    graphNodeId: 'person:lakeshore:elena-marquez',
+    monogramBg: '#155E75',
+    bioShort: 'CIO. Owns the Kyriba-ready finance and treasury platform modernization path.',
+    bioLong:
+      'Elena Marquez runs technology for Lakeshore Holdings across treasury, ERP, integration, data, and shared services. Her 2026 mandate is to make the Kyriba rollout credible by proving bank connectivity, ERP readiness, treasury data quality, and operating controls before scale.',
+    workspaceTeaser:
+      'Your workspace shows Lakeshore treasury systems, Kyriba rollout dependencies, ERP and bank connectivity risks, data-quality blockers, and the AI Control Tower view of finance automation readiness.',
+  },
+  {
+    slug: 'cfo-lakeshore',
+    email: 'cfo@lakeshore-holdings.example.com',
+    shortLabel: 'cfo@lakeshore',
+    firstName: 'Daniel',
+    lastName: 'Mercer',
+    personaName: 'Daniel Mercer',
+    monogram: 'DM',
+    titleShort: 'CFO',
+    titleFull: 'Chief Financial Officer',
+    tenant: 'Lakeshore Holdings',
+    clientKey: 'lakeshore',
+    tenantKey: 'lakeshore-holdings',
+    graphNodeId: 'person:lakeshore:daniel-mercer',
+    monogramBg: '#155E75',
+    bioShort: 'CFO. Sponsors Kyriba, cash visibility, working-capital controls, and finance AI value proof.',
+    bioLong:
+      'Daniel Mercer owns finance, treasury, FP&A, procurement, and internal controls for Lakeshore Holdings. His decision bar for Kyriba is clear: cash visibility, bank fee reduction, working-capital discipline, close acceleration, and control evidence must be provable by opco and bank relationship.',
+    workspaceTeaser:
+      'Your workspace shows the Kyriba business case, treasury operating model, bank and ERP integration evidence, finance AI initiatives, and value-realization gaps that need CFO approval.',
   },
   {
     slug: 'cto-skyharbor',
