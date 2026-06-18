@@ -10,7 +10,8 @@ import type {
   CsvMappingSuggestion,
   RowClassificationResult,
 } from "./csv-upload-connector";
-import type { ContextDimension } from "./types";
+import { DIMENSION_FAMILY_MAP } from "./types";
+import type { ContextDimension, ContextDimensionFamily } from "./types";
 
 type CsvRow = Record<string, string>;
 
@@ -23,10 +24,18 @@ export interface AdminStructuredContextPromotionInput {
   uploadedAt: string;
   uploadId: string;
   sourcePathBase?: string | null;
+  sourceBlob?: {
+    bucket: string;
+    path: string;
+    sha256: string;
+    url?: string | null;
+    byteSize?: number | null;
+  } | null;
   template: ContextTemplateDefinition;
   mapping: CsvMappingSuggestion;
   rows: CsvRow[];
   rowClassifications?: RowClassificationResult[];
+  loadOrder?: number | null;
 }
 
 export interface EnterpriseContextRecordPromotionRow {
@@ -57,6 +66,8 @@ export interface EnterpriseContextRecordPromotionRow {
     | "AUTO_INFERRED"
     | "NEEDS_CLASSIFICATION"
     | "OPERATOR_CONFIRMED";
+  dimension_family: ContextDimensionFamily;
+  load_order: number | null;
   payload_hash: string;
   payload: Record<string, unknown>;
 }
@@ -78,6 +89,8 @@ export interface EnterpriseContextFactPromotionDraft {
   freshness_status: "fresh" | "attention" | "stale" | "unknown";
   evidence_pointer: string;
   lifecycle_state: "active";
+  dimension_family: ContextDimensionFamily;
+  domain_segment: string | null;
   value_hash: string;
 }
 
@@ -139,6 +152,10 @@ export interface AdminStructuredContextPromotionPlan {
     freshness_status: "fresh";
     evidence_pointer: string;
     metadata: Record<string, unknown>;
+    blob_container?: string | null;
+    blob_object_key?: string | null;
+    blob_url?: string | null;
+    byte_size?: number | null;
   };
   records: EnterpriseContextRecordPromotionRow[];
   factDrafts: EnterpriseContextFactPromotionDraft[];
@@ -415,6 +432,7 @@ export function buildAdminStructuredContextPromotionPlan(
       rows: input.rows.length,
     });
   const dimension = trueDimension(input.template, input.fileName);
+  const dimensionFamily = DIMENSION_FAMILY_MAP[dimension];
   const sourceId = stableUuid([
     "enterprise_context_sources",
     input.tenantKey,
@@ -483,6 +501,7 @@ export function buildAdminStructuredContextPromotionPlan(
         template_id: input.template.id,
         declared_dimension: input.template.dimension,
         promoted_dimension: dimension,
+        dimension_family: dimensionFamily,
         source_file_id: sourceFileId,
         source_row_number: sourceRow,
         field_mappings: input.mapping.fieldMappings,
@@ -515,6 +534,8 @@ export function buildAdminStructuredContextPromotionPlan(
       business_function: classification.businessFunction,
       criticality: classification.criticality,
       classification_source: classification.classificationSource,
+      dimension_family: dimensionFamily,
+      load_order: input.loadOrder ?? null,
       payload_hash: hashJson(payload),
       payload,
     });
@@ -552,6 +573,8 @@ export function buildAdminStructuredContextPromotionPlan(
         freshness_status: "fresh",
         evidence_pointer: pointer,
         lifecycle_state: "active",
+        dimension_family: dimensionFamily,
+        domain_segment: classification.domainSegment,
         value_hash: valueHash,
       });
     }
@@ -583,6 +606,7 @@ export function buildAdminStructuredContextPromotionPlan(
         template_id: input.template.id,
         declared_dimension: input.template.dimension,
         promoted_dimension: dimension,
+        dimension_family: dimensionFamily,
         source_state: "synthetic_admin_loader_backed",
       },
     },
@@ -611,8 +635,17 @@ export function buildAdminStructuredContextPromotionPlan(
         template_id: input.template.id,
         declared_dimension: input.template.dimension,
         promoted_dimension: dimension,
+        dimension_family: dimensionFamily,
         source_state: "synthetic_admin_loader_backed",
       },
+      blob_container: input.sourceBlob?.bucket ?? null,
+      blob_object_key: input.sourceBlob?.path ?? null,
+      blob_url:
+        input.sourceBlob?.url ??
+        (input.sourceBlob
+          ? `azure-blob://${input.sourceBlob.bucket}/${input.sourceBlob.path}`
+          : null),
+      byte_size: input.sourceBlob?.byteSize ?? null,
     },
     records,
     factDrafts,

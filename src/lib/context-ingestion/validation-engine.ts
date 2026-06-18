@@ -22,7 +22,7 @@ export const VALID_DOMAIN_SEGMENTS = new Set([
   "HR_WORKFORCE",
   "COLLABORATION",
 ]);
-const VALID_BUSINESS_FUNCTIONS = new Set([
+export const VALID_BUSINESS_FUNCTIONS = new Set([
   "FINANCE",
   "SUPPLY_CHAIN",
   "HUMAN_RESOURCES",
