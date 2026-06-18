@@ -1,0 +1,553 @@
+{
+  "run_id": "meridian-lakeshore-v2-2026-06-18T04-32-05",
+  "generated_at": "2026-06-18T04:32:05.549Z",
+  "mode": "dry_run_preflight",
+  "replace_tables": [
+    {
+      "table": "context_insights",
+      "filter": "tenant_key = any($tenant_aliases)"
+    },
+    {
+      "table": "enterprise_context_stewardship_tasks",
+      "filter": "tenant_key = any($tenant_aliases)"
+    },
+    {
+      "table": "enterprise_context_quality_issues",
+      "filter": "tenant_key = any($tenant_aliases)"
+    },
+    {
+      "table": "enterprise_context_relationships",
+      "filter": "tenant_key = any($tenant_aliases)"
+    },
+    {
+      "table": "enterprise_context_evidence",
+      "filter": "tenant_key = any($tenant_aliases)"
+    },
+    {
+      "table": "enterprise_context_facts",
+      "filter": "tenant_key = any($tenant_aliases)"
+    },
+    {
+      "table": "enterprise_context_chunks",
+      "filter": "tenant_key = any($tenant_aliases)"
+    },
+    {
+      "table": "enterprise_context_records",
+      "filter": "tenant_key = any($tenant_aliases)"
+    },
+    {
+      "table": "enterprise_context_source_files",
+      "filter": "tenant_key = any($tenant_aliases)"
+    },
+    {
+      "table": "enterprise_context_sources",
+      "filter": "tenant_key = any($tenant_aliases)"
+    },
+    {
+      "table": "enterprise_context_template_runs",
+      "filter": "tenant_key = any($tenant_aliases)"
+    },
+    {
+      "table": "data_ingestion_runs",
+      "filter": "tenant_key = any($tenant_aliases)"
+    },
+    {
+      "table": "client_private_patterns",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_control_atlas_context_packs",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_control_context_relationships",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_control_context_facts",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_control_evidence_items",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_control_actions",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_control_risk_governance",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_control_spend_contracts",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_control_benefit_realization",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_control_agent_outcomes",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_control_dora_metrics",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_control_persona_productivity",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_control_tool_usage_monthly",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_control_initiatives",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_control_sources",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_control_refresh_runs",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "tower_cloud_cost",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "tower_program_financials",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "tower_vendor_spend",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "tower_ai_tool_usage",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "tower_dora_metrics",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "tower_itsm_records",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "tower_jira_issues",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "tower_workforce",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "ai_initiatives",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "vendor_contracts",
+      "filter": "client_id = $client_id"
+    },
+    {
+      "table": "applications",
+      "filter": "client_id = $client_id"
+    }
+  ],
+  "results": [
+    {
+      "client": "meridian-health",
+      "ok": true,
+      "dataset_root": "datasets/meridian-health-synthetic-v2",
+      "manifest_path": "datasets/meridian-health-synthetic-v2/manifest.yaml",
+      "expected_counts_path": "datasets/meridian-health-synthetic-v2/99-verification/expected-row-counts.json",
+      "golden_questions_path": "datasets/meridian-health-synthetic-v2/99-verification/golden-questions.json",
+      "corpus_patterns_path": "datasets/meridian-health-synthetic-v2/corpus-patterns/move-patterns.jsonl",
+      "manifest_files": [
+        {
+          "order": 1,
+          "family": "enterprise_operating_model",
+          "dimension": "enterprise_profile",
+          "file": "family-1-enterprise-operating-model/F01_enterprise-profile.yaml",
+          "template_id": "enterprise-profile"
+        },
+        {
+          "order": 2,
+          "family": "enterprise_operating_model",
+          "dimension": "business_org_functions",
+          "file": "family-1-enterprise-operating-model/F02_business-org-functions.csv",
+          "template_id": "business-org-functions"
+        },
+        {
+          "order": 3,
+          "family": "enterprise_operating_model",
+          "dimension": "it_org_ownership",
+          "file": "family-1-enterprise-operating-model/F03_it-org-ownership.csv",
+          "template_id": "it-org-ownership"
+        },
+        {
+          "order": 4,
+          "family": "personas_workforce",
+          "dimension": "personas_workforce",
+          "file": "D19-personas-workforce/D19_personas-workforce.csv",
+          "template_id": "personas-workforce"
+        },
+        {
+          "order": 5,
+          "family": "enterprise_operating_model",
+          "dimension": "capabilities_value_streams",
+          "file": "family-1-enterprise-operating-model/F04_capabilities-value-streams.csv",
+          "template_id": "capabilities-value-streams"
+        },
+        {
+          "order": 6,
+          "family": "technology_estate",
+          "dimension": "applications_systems",
+          "file": "family-2-technology-estate/F05_applications-systems.csv",
+          "template_id": "applications-systems"
+        },
+        {
+          "order": 7,
+          "family": "technology_estate",
+          "dimension": "system_function_mapping",
+          "file": "family-2-technology-estate/F06_system-function-mapping.csv",
+          "template_id": "system-function-mapping"
+        },
+        {
+          "order": 8,
+          "family": "technology_estate",
+          "dimension": "infrastructure_cloud",
+          "file": "family-2-technology-estate/F07_infrastructure-cloud.csv",
+          "template_id": "infrastructure-cloud"
+        },
+        {
+          "order": 9,
+          "family": "technology_estate",
+          "dimension": "platform_volumetrics",
+          "file": "family-2-technology-estate/F08_platform-volumetrics.csv",
+          "template_id": "platform-volumetrics"
+        },
+        {
+          "order": 10,
+          "family": "data_connectivity",
+          "dimension": "data_analytics_estate",
+          "file": "family-3-data-connectivity/F09_data-analytics-estate.csv",
+          "template_id": "data-analytics-estate"
+        },
+        {
+          "order": 11,
+          "family": "data_connectivity",
+          "dimension": "integrations_interfaces",
+          "file": "family-3-data-connectivity/F10_integrations-interfaces.csv",
+          "template_id": "integrations-interfaces"
+        },
+        {
+          "order": 12,
+          "family": "financial_commercial",
+          "dimension": "vendors_contracts_licenses",
+          "file": "family-4-financial-commercial/F11_vendors-contracts-licenses.csv",
+          "template_id": "vendors-contracts-licenses"
+        },
+        {
+          "order": 13,
+          "family": "financial_commercial",
+          "dimension": "it_budget_financials",
+          "file": "family-4-financial-commercial/F12_it-budget-financials.csv",
+          "template_id": "it-budget-financials"
+        },
+        {
+          "order": 14,
+          "family": "execution_operations",
+          "dimension": "initiatives_portfolio",
+          "file": "family-5-execution-operations/F13_initiatives-portfolio.csv",
+          "template_id": "initiatives-portfolio"
+        },
+        {
+          "order": 15,
+          "family": "execution_operations",
+          "dimension": "operations_service_management",
+          "file": "family-5-execution-operations/F14_operations-service-management.csv",
+          "template_id": "operations-service-management"
+        },
+        {
+          "order": 16,
+          "family": "execution_operations",
+          "dimension": "kpis_outcome_evidence",
+          "file": "family-5-execution-operations/F15_kpis-outcome-evidence.csv",
+          "template_id": "kpis-outcome-evidence"
+        },
+        {
+          "order": 17,
+          "family": "governance_ai_evidence",
+          "dimension": "security_risk_compliance",
+          "file": "family-6-governance-ai-evidence/F16_security-risk-compliance.csv",
+          "template_id": "security-risk-compliance"
+        },
+        {
+          "order": 18,
+          "family": "governance_ai_evidence",
+          "dimension": "ai_automation_footprint",
+          "file": "family-6-governance-ai-evidence/F17_ai-automation-footprint.csv",
+          "template_id": "ai-automation-footprint"
+        },
+        {
+          "order": 19,
+          "family": "relationship_graph",
+          "dimension": "context_relationships",
+          "file": "graph/context-relationships.jsonl",
+          "template_id": "context-relationships",
+          "families": "6",
+          "dimensions": "19",
+          "relationship_edges_approx": "260",
+          "applications": "92",
+          "integrations": "132",
+          "ai_control_tower_initiatives": "14",
+          "corpus_patterns": "7"
+        }
+      ],
+      "expected_checks": {
+        "applications": 92,
+        "integrations": 132,
+        "edges": 260,
+        "ai_control_tower_registry": 14,
+        "corpus_patterns": 7
+      },
+      "expected_counts": {
+        "tenant_key": "meridian-health",
+        "business_functions": 15,
+        "it_teams": 12,
+        "personas": 14,
+        "capabilities": 10,
+        "applications": 92,
+        "system_mappings": 80,
+        "infrastructure_assets": 12,
+        "volumetrics": 12,
+        "data_assets": 9,
+        "integrations": 132,
+        "vendors": 34,
+        "budgets": 12,
+        "initiatives": 12,
+        "operations_signals": 12,
+        "kpis": 12,
+        "controls": 12,
+        "ai_footprint": 14,
+        "edges": 260,
+        "ai_control_tower_registry": 14,
+        "ai_control_tower_milestones": 70,
+        "ai_control_tower_tool_usage": 40,
+        "ai_control_tower_agent_outcomes": 14,
+        "ai_control_tower_evidence_items": 14,
+        "corpus_patterns": 7
+      },
+      "actual_counts": {
+        "manifest_entries": 19,
+        "context_csv_rows": 496,
+        "graph_edges": 260,
+        "tower_csv_rows": 259,
+        "corpus_patterns": 7,
+        "source_docs": 5
+      },
+      "errors": []
+    },
+    {
+      "client": "lakeshore",
+      "ok": true,
+      "dataset_root": "datasets/lakeshore-industries-synthetic-v2",
+      "manifest_path": "datasets/lakeshore-industries-synthetic-v2/manifest.yaml",
+      "expected_counts_path": "datasets/lakeshore-industries-synthetic-v2/99-verification/expected-row-counts.json",
+      "golden_questions_path": "datasets/lakeshore-industries-synthetic-v2/99-verification/golden-questions.json",
+      "corpus_patterns_path": "datasets/lakeshore-industries-synthetic-v2/corpus-patterns/move-patterns.jsonl",
+      "manifest_files": [
+        {
+          "order": 1,
+          "family": "enterprise_operating_model",
+          "dimension": "enterprise_profile",
+          "file": "family-1-enterprise-operating-model/F01_enterprise-profile.yaml",
+          "template_id": "enterprise-profile"
+        },
+        {
+          "order": 2,
+          "family": "enterprise_operating_model",
+          "dimension": "business_org_functions",
+          "file": "family-1-enterprise-operating-model/F02_business-org-functions.csv",
+          "template_id": "business-org-functions"
+        },
+        {
+          "order": 3,
+          "family": "enterprise_operating_model",
+          "dimension": "it_org_ownership",
+          "file": "family-1-enterprise-operating-model/F03_it-org-ownership.csv",
+          "template_id": "it-org-ownership"
+        },
+        {
+          "order": 4,
+          "family": "personas_workforce",
+          "dimension": "personas_workforce",
+          "file": "D19-personas-workforce/D19_personas-workforce.csv",
+          "template_id": "personas-workforce"
+        },
+        {
+          "order": 5,
+          "family": "enterprise_operating_model",
+          "dimension": "capabilities_value_streams",
+          "file": "family-1-enterprise-operating-model/F04_capabilities-value-streams.csv",
+          "template_id": "capabilities-value-streams"
+        },
+        {
+          "order": 6,
+          "family": "technology_estate",
+          "dimension": "applications_systems",
+          "file": "family-2-technology-estate/F05_applications-systems.csv",
+          "template_id": "applications-systems"
+        },
+        {
+          "order": 7,
+          "family": "technology_estate",
+          "dimension": "system_function_mapping",
+          "file": "family-2-technology-estate/F06_system-function-mapping.csv",
+          "template_id": "system-function-mapping"
+        },
+        {
+          "order": 8,
+          "family": "technology_estate",
+          "dimension": "infrastructure_cloud",
+          "file": "family-2-technology-estate/F07_infrastructure-cloud.csv",
+          "template_id": "infrastructure-cloud"
+        },
+        {
+          "order": 9,
+          "family": "technology_estate",
+          "dimension": "platform_volumetrics",
+          "file": "family-2-technology-estate/F08_platform-volumetrics.csv",
+          "template_id": "platform-volumetrics"
+        },
+        {
+          "order": 10,
+          "family": "data_connectivity",
+          "dimension": "data_analytics_estate",
+          "file": "family-3-data-connectivity/F09_data-analytics-estate.csv",
+          "template_id": "data-analytics-estate"
+        },
+        {
+          "order": 11,
+          "family": "data_connectivity",
+          "dimension": "integrations_interfaces",
+          "file": "family-3-data-connectivity/F10_integrations-interfaces.csv",
+          "template_id": "integrations-interfaces"
+        },
+        {
+          "order": 12,
+          "family": "financial_commercial",
+          "dimension": "vendors_contracts_licenses",
+          "file": "family-4-financial-commercial/F11_vendors-contracts-licenses.csv",
+          "template_id": "vendors-contracts-licenses"
+        },
+        {
+          "order": 13,
+          "family": "financial_commercial",
+          "dimension": "it_budget_financials",
+          "file": "family-4-financial-commercial/F12_it-budget-financials.csv",
+          "template_id": "it-budget-financials"
+        },
+        {
+          "order": 14,
+          "family": "execution_operations",
+          "dimension": "initiatives_portfolio",
+          "file": "family-5-execution-operations/F13_initiatives-portfolio.csv",
+          "template_id": "initiatives-portfolio"
+        },
+        {
+          "order": 15,
+          "family": "execution_operations",
+          "dimension": "operations_service_management",
+          "file": "family-5-execution-operations/F14_operations-service-management.csv",
+          "template_id": "operations-service-management"
+        },
+        {
+          "order": 16,
+          "family": "execution_operations",
+          "dimension": "kpis_outcome_evidence",
+          "file": "family-5-execution-operations/F15_kpis-outcome-evidence.csv",
+          "template_id": "kpis-outcome-evidence"
+        },
+        {
+          "order": 17,
+          "family": "governance_ai_evidence",
+          "dimension": "security_risk_compliance",
+          "file": "family-6-governance-ai-evidence/F16_security-risk-compliance.csv",
+          "template_id": "security-risk-compliance"
+        },
+        {
+          "order": 18,
+          "family": "governance_ai_evidence",
+          "dimension": "ai_automation_footprint",
+          "file": "family-6-governance-ai-evidence/F17_ai-automation-footprint.csv",
+          "template_id": "ai-automation-footprint"
+        },
+        {
+          "order": 19,
+          "family": "relationship_graph",
+          "dimension": "context_relationships",
+          "file": "graph/context-relationships.jsonl",
+          "template_id": "context-relationships",
+          "families": "6",
+          "dimensions": "19",
+          "relationship_edges_approx": "226",
+          "applications": "86",
+          "integrations": "118",
+          "ai_control_tower_initiatives": "10",
+          "corpus_patterns": "4"
+        }
+      ],
+      "expected_checks": {
+        "applications": 86,
+        "integrations": 118,
+        "edges": 226,
+        "ai_control_tower_registry": 10,
+        "corpus_patterns": 4
+      },
+      "expected_counts": {
+        "tenant_key": "lakeshore",
+        "business_functions": 10,
+        "it_teams": 10,
+        "personas": 10,
+        "capabilities": 8,
+        "applications": 86,
+        "system_mappings": 74,
+        "infrastructure_assets": 11,
+        "volumetrics": 12,
+        "data_assets": 10,
+        "integrations": 118,
+        "vendors": 28,
+        "budgets": 10,
+        "initiatives": 8,
+        "operations_signals": 10,
+        "kpis": 10,
+        "controls": 10,
+        "ai_footprint": 10,
+        "edges": 226,
+        "ai_control_tower_registry": 10,
+        "ai_control_tower_milestones": 50,
+        "ai_control_tower_tool_usage": 40,
+        "ai_control_tower_agent_outcomes": 10,
+        "ai_control_tower_evidence_items": 10,
+        "corpus_patterns": 4
+      },
+      "actual_counts": {
+        "manifest_entries": 19,
+        "context_csv_rows": 435,
+        "graph_edges": 226,
+        "tower_csv_rows": 201,
+        "corpus_patterns": 4,
+        "source_docs": 3
+      },
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+initiative_id,initiative_name,business_area,owner_role,stage,budget_usd,promised_benefit_usd,target_date,dependency,risk_status,move_relevance
+MER-INIT-001,Databricks AWS clinical + claims lakehouse foundation,Enterprise data,Chief Data Officer,mobilize,58000000,93000000,2027-03-31,"PHI networking, Unity Catalog, EMR/claims identity",high,Unified clinical + claims data
+MER-INIT-002,Unified semantic layer for automation-ready data products,Data governance,Chief Data Officer,design,18000000,42000000,2026-12-15,certified metric ownership,high,Data foundation for automation
+MER-INIT-003,Prior authorization automation evidence cockpit,Utilization management,Chief Health Plan Officer,pilot,22000000,61000000,2027-02-15,clinical record retrieval and policy evidence,critical,Prior auth automation
+MER-INIT-004,Call center agent assist and next-best-action,Member experience,Chief Customer Experience Officer,pilot,26000000,68000000,2027-01-20,real-time claims/member context,high,Call center optimization
+MER-INIT-005,HEDIS/STAR provider quality performance mart,Clinical quality,Chief Quality Officer,build,16000000,52000000,2026-11-30,attribution and measure closure rules,medium,Provider quality performance
+MER-INIT-006,Cost-of-care and margin transparency by population,Finance,CFO,design,19000000,76000000,2027-04-30,"claims, capitation, provider contracts, GL join",high,End-to-end cost transparency
+MER-INIT-007,Payment integrity leakage reduction analytics,Claims integrity,VP Payment Integrity,pilot,14000000,55000000,2027-01-31,provider pattern features and FWA feedback loop,high,Payment integrity
+MER-INIT-008,Automated close and management reporting pipelines,Finance operations,Controller,mobilize,12000000,31000000,2026-12-31,claims accrual and provider contract reconciliations,medium,Automated close
+MER-INIT-009,Ambient documentation scale with safety review,Clinical productivity,Chief Medical Officer,scale_gate,24000000,47000000,2026-10-15,specialty-specific quality evidence,medium,Clinical productivity
+MER-INIT-010,Epic to lakehouse FHIR/HL7 modernization,Interoperability,VP Integration,build,21000000,36000000,2027-05-15,interface retirement sequencing,high,Lakehouse migration dependency
+MER-INIT-011,Provider network contract analytics,Provider network,Chief Network Officer,design,9000000,27000000,2027-03-01,provider contract terms not machine-readable,medium,Cost and quality benchmarking
+MER-INIT-012,Responsible AI and PHI model governance operating model,Governance,Chief Compliance Officer,mobilize,8000000,19000000,2026-09-30,HIPAA review workflow and model inventory,high,AI governance foundation

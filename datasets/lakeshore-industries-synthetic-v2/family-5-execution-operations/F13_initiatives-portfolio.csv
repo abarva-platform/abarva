@@ -1,0 +1,9 @@
+initiative_id,initiative_name,business_area,owner_role,stage,budget_usd,promised_benefit_usd,target_date,dependency,risk_status,move_relevance
+LAK-INIT-001,Kyriba global cash and payments rollout,Treasury,Treasurer,build,42000000,86000000,2027-02-28,bank connectivity and SAP mapping,critical,Kyriba rollout
+LAK-INIT-002,Treasury bank connectivity control evidence,Treasury controls,Treasurer,mobilize,12000000,28000000,2026-10-30,ISO20022/BAI2 mapping signoff,high,Payments control
+LAK-INIT-003,Liquidity forecasting automation,FP&A,CFO,pilot,15000000,39000000,2027-01-31,AP/AR/S&OP forecast integration,high,Liquidity forecast
+LAK-INIT-004,Automated close and finance reporting semantic layer,Finance,Controller,build,18000000,46000000,2027-03-31,GL reconciliation and report lineage,high,Automated close
+LAK-INIT-005,ServiceNow finance support agent,IT Operations,VP IT Operations,pilot,6000000,14000000,2026-11-30,knowledge quality and SAP root-cause tagging,medium,Service automation
+LAK-INIT-006,Finance AI narrative and variance explainer,Finance,CFO,design,7000000,17000000,2026-12-15,governed metric store,medium,Finance AI
+LAK-INIT-007,Supplier working-capital analytics,Procurement,Chief Procurement Officer,pilot,10000000,26000000,2027-02-15,supplier terms and AP data quality,medium,Working capital
+LAK-INIT-008,Kyriba rollout assistant and defect triage,Treasury,Treasurer,pilot,5000000,11000000,2026-09-30,test defect corpus and RACI,medium,Moves support

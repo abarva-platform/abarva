@@ -1,0 +1,10 @@
+data_asset_id,data_asset_name,domain,source_systems,target_platform,data_owner,freshness,quality_score,semantic_layer_status,move_relevance
+MER-DATA-001,Longitudinal patient/member gold record,clinical_claims_pharmacy,Epic;Claims;Pharmacy;CRM,Databricks AWS,Chief Data Officer,target near real time,58,not_ready,Unified clinical + claims data
+MER-DATA-002,Prior authorization evidence corpus,utilization_management,UM;Epic;Policy repo;Claims,Databricks AWS,Chief Health Plan Officer,daily target,52,not_ready,Data foundation for automation
+MER-DATA-003,Call center transcript and intent lake,member_experience,Genesys;Salesforce;Claims;CRM,Databricks AWS,Chief Customer Experience Officer,hourly target,49,nascent,Call center optimization
+MER-DATA-004,HEDIS and STAR quality mart,quality,Epic;Claims;Provider network,Databricks AWS,Chief Quality Officer,weekly target,63,partial,Provider quality performance
+MER-DATA-005,Cost-of-care and product margin mart,finance,Claims;Contracts;GL;Capitation,Databricks AWS,CFO,monthly target,46,not_ready,Cost transparency
+MER-DATA-006,Payment integrity pattern library,claims_integrity,Claims;Provider;FWA cases,Databricks AWS,VP Payment Integrity,daily target,55,nascent,Payment integrity leakage reduction
+MER-DATA-007,Automated close semantic layer,finance_reporting,ERP;Claims accruals;Provider contracts,dbt semantic layer,Controller,monthly close day 2,51,not_ready,Automated close reporting
+MER-DATA-008,Provider attribution and contract economics,provider_network,Provider contracts;Claims;Quality,Databricks AWS,Chief Network Officer,weekly target,57,partial,Provider benchmarking and margin
+MER-DATA-009,Clinical documentation AI evidence store,clinical_ai,Epic;Ambient vendors;Audit review,Unity Catalog,Chief Medical Officer,daily target,61,partial,Ambient documentation scaling
