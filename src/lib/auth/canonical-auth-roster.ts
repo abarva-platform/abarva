@@ -22,6 +22,8 @@
 //   cdio@meridian-health.example.com → Dr. Anita Krishnamurthy (CDIO · Meridian)
 //   cdao@meridian-health.example.com → Kiran Rao (CDAO · Meridian)
 //   cio@firstcapital.example.com     → Patricia Huang (CIO · First Capital)
+//   cio@lakeshore-holdings.example.com → Elena Marquez (CIO · Lakeshore)
+//   cfo@lakeshore-holdings.example.com → Daniel Mercer (CFO · Lakeshore)
 //   cto@skyharbor-air.example.com    → Victor Hale (CTO · SkyHarbor)
 
 export const CANONICAL_AUTH_EMAILS = [
@@ -35,6 +37,10 @@ export const CANONICAL_AUTH_EMAILS = [
 
   // First Capital
   'cio@firstcapital.example.com', // Patricia Huang · CIO
+
+  // Lakeshore Holdings
+  'cio@lakeshore-holdings.example.com', // Elena Marquez · CIO
+  'cfo@lakeshore-holdings.example.com', // Daniel Mercer · CFO
 
   // SkyHarbor Air
   'cto@skyharbor-air.example.com', // Victor Hale · CTO
@@ -52,6 +58,8 @@ export const CANONICAL_CLIENT_ADMIN_EMAILS = [
   'cdio@meridian-health.example.com',
   'cdao@meridian-health.example.com',
   'cio@firstcapital.example.com',
+  'cio@lakeshore-holdings.example.com',
+  'cfo@lakeshore-holdings.example.com',
   'maestro@skyharbor-air.example.com',
   'admin@skyharbor-air.example.com',
 ] as const;

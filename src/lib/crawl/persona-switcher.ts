@@ -22,6 +22,7 @@ export const CRAWL_PERSONAS: CrawlPersona[] = [
   persona('meridian-cdio', 'cdio-meridian-health'),
   persona('meridian-cdao', 'cdao-meridian-health'),
   persona('firstcapital-cio', 'cio-firstcapital'),
+  persona('lakeshore-cio', 'cio-lakeshore'),
 ];
 
 export const PRIMARY_CRAWL_SURFACES: CrawlSurface[] = [
