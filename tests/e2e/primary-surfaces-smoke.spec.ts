@@ -10,7 +10,7 @@
 //   - Against prod:      BASE_URL=https://app.abarva.ai npx playwright test tests/e2e/primary-surfaces-smoke.spec.ts
 //
 // Requires a valid Clerk demo account to be available in the target environment.
-// Sign-in is via the DemoCodeSignIn flow (email + Demo2026! + 424242 access code).
+// Sign-in is via the DemoCodeSignIn flow (email + 424242 access code).
 //
 // This is a smoke test: it asserts page rendering and headline copy, not
 // agent answer quality. Agent-answer regression lives elsewhere (Atlas eval
@@ -25,14 +25,12 @@ const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000';
 // Default demo persona: Carlos Rivera, Apex Retail CIO.
 // Override via env if you want to smoke a different tenant.
 const DEMO_EMAIL = process.env.E2E_DEMO_EMAIL ?? 'cio@apex-retail.example.com';
-const DEMO_PASSWORD = process.env.E2E_DEMO_PASSWORD ?? 'Demo2026!';
 const DEMO_ACCESS_CODE = process.env.E2E_DEMO_ACCESS_CODE ?? '424242';
 const EXPECTED_TENANT_NAME = process.env.E2E_EXPECTED_TENANT_NAME ?? 'Apex Retail Group';
 
 async function signIn(page: Page): Promise<void> {
   await page.goto(`${BASE_URL}/sign-in`);
   await page.getByPlaceholder(/name@company.com/i).fill(DEMO_EMAIL);
-  await page.getByPlaceholder(/Password from invite/i).fill(DEMO_PASSWORD);
   await page.getByPlaceholder(/6-digit code/i).fill(DEMO_ACCESS_CODE);
   await page.getByRole('button', { name: /sign in/i }).click();
   // Land on /home (or wherever the post-sign-in redirect goes).

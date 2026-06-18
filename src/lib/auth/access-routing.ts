@@ -22,10 +22,26 @@ function normalizeEmail(email: string | null | undefined): string {
   return email?.trim().toLowerCase() ?? '';
 }
 
+function hasPilotTenantAlias(normalized: string): boolean {
+  return (
+    normalized === 'kmysore@gmail.com' ||
+    normalized === 'anand.sundaram@thesundaram.com' ||
+    normalized === 'surekha.durvasula@gmail.com' ||
+    normalized === 'anandshp@gmail.com' ||
+    normalized === 'admin@abarva.ai' ||
+    normalized === 'anand@abarva.ai' ||
+    normalized.includes('+meridian@thesundaram.com') ||
+    normalized.includes('+lakeshore@thesundaram.com') ||
+    normalized.includes('+firstcapital@thesundaram.com') ||
+    normalized.includes('+skyharbor@thesundaram.com')
+  );
+}
+
 export function hasExplicitTenantAlias(email: string | null | undefined): boolean {
   const normalized = normalizeEmail(email);
   if (!normalized) return false;
   return (
+    hasPilotTenantAlias(normalized) ||
     normalized.endsWith('@meridian-health.example.com') ||
     normalized.endsWith('@apex-retail.example.com') ||
     normalized.endsWith('@firstcapital.example.com') ||
@@ -49,6 +65,7 @@ export function inferSessionRoleFromEmail(email: string | null | undefined): App
   if (!normalized) return null;
 
   if (
+    hasPilotTenantAlias(normalized) ||
     normalized.endsWith('@meridian-health.example.com') ||
     normalized.endsWith('@apex-retail.example.com') ||
     normalized.endsWith('@firstcapital.example.com') ||

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { config as loadEnv } from 'dotenv';
 import { createClerkClient } from '@clerk/backend';
 import { createClient } from '@supabase/supabase-js';
-import { CANONICAL_AUTH_EMAILS } from '../src/lib/auth/canonical-auth-roster';
+import { CANONICAL_AUTH_EMAILS, PILOT_PASSCODE_EMAILS } from '../src/lib/auth/canonical-auth-roster';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv({ path: path.resolve(process.cwd(), '../nexus/.env.local') });
@@ -60,7 +60,10 @@ function normalizeEmail(email: string | null | undefined): string {
   return (email ?? '').trim().toLowerCase();
 }
 
-const CANONICAL_EMAIL_SET = new Set<string>(CANONICAL_AUTH_EMAILS);
+const CANONICAL_EMAIL_SET = new Set<string>([
+  ...CANONICAL_AUTH_EMAILS,
+  ...PILOT_PASSCODE_EMAILS,
+]);
 
 const LEGACY_EMAIL_RULES: Array<{ label: string; test: (email: string) => boolean }> = [
   { label: 'old clerk_test identity', test: (email) => email.endsWith('+clerk_test@abarva.com') || email.includes('+clerk_test@') },

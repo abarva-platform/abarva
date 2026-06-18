@@ -38,7 +38,7 @@ function describeFailure(err: unknown, alreadySignedIn: boolean): string {
   }
   const message = err instanceof Error ? err.message : String(err ?? 'demo_sign_in_failed')
   if (message === 'invalid_credentials') {
-    return 'We could not verify that email, password, and access code. Check the private invite and try again.'
+    return 'We could not verify that email and access code. Check the private invite and try again.'
   }
   if (message === 'demo_user_not_found') {
     return 'The demo user record is missing in Clerk. Ask Anand to re-run /api/admin/seed-clerk-metadata.'
@@ -130,13 +130,12 @@ const BUTTON_PRIMARY = {
 
 export function DemoCodeSignIn({ redirectUrl }: Props) {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email])
-  const canSubmit = normalizedEmail.length > 0 && password.length > 0 && code.trim().length > 0
+  const canSubmit = normalizedEmail.length > 0 && code.trim().length > 0
 
   async function completeDemoSignIn(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault()
@@ -154,7 +153,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
       const response = await fetch('/api/auth/demo-code-sign-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: normalizedEmail, password, code }),
+        body: JSON.stringify({ email: normalizedEmail, code }),
       })
 
       const payload = (await response.json().catch(() => null)) as { error?: string; ticket?: string } | null
@@ -243,7 +242,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
           marginBottom: 22,
         }}
       >
-        Enter the credentials from your private invite. Access is restricted to approved client identities.
+        Enter the email and access code from your private invite. Access is restricted to approved client identities.
       </div>
 
       <div
@@ -283,23 +282,6 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
             autoComplete="username"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            style={INPUT}
-            disabled={pending}
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="demo-password" style={LABEL}>
-            Password
-          </label>
-          <input
-            id="demo-password"
-            placeholder="Password from invite"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
             style={INPUT}
             disabled={pending}
             required

@@ -36,10 +36,11 @@ describe('access-routing', () => {
 
   test('infers roles for canonical client logins only', () => {
     expect(inferSessionRoleFromEmail('anand+clerk_test@abarva.com')).toBeNull();
-    expect(inferSessionRoleFromEmail('anand.sundaram@thesundaram.com')).toBeNull();
     expect(inferSessionRoleFromEmail('investor+clerk_test@abarva.com')).toBeNull();
     expect(inferSessionRoleFromEmail('demo-meridian+clerk_test@abarva.com')).toBeNull();
     expect(inferSessionRoleFromEmail('elena.rivera@meridian-health.example.com')).toBe('client');
+    expect(inferSessionRoleFromEmail('anand.sundaram@thesundaram.com')).toBe('client');
+    expect(inferSessionRoleFromEmail('anand@abarva.ai')).toBe('client');
     expect(resolveSessionRole(undefined, 'noah.patel@apex-retail.example.com')).toBe('client');
   });
 
@@ -64,8 +65,9 @@ describe('access-routing', () => {
   test('recognizes locked tenant roles from role or canonical email domain', () => {
     expect(isLockedTenantRole('client', null)).toBe(true);
     expect(isLockedTenantRole(undefined, 'ethan.brooks@firstcapital.example.com')).toBe(true);
+    expect(isLockedTenantRole(undefined, 'anand@abarva.ai')).toBe(true);
     expect(isLockedTenantRole(undefined, 'retired-energy-demo@example.com')).toBe(false);
-    expect(isLockedTenantRole(undefined, 'anand.sundaram@thesundaram.com')).toBe(false);
+    expect(isLockedTenantRole(undefined, 'anand.sundaram@thesundaram.com')).toBe(true);
   });
 
   test('strips unauthorized client params for locked sessions', () => {

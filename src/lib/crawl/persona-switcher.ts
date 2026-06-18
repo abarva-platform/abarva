@@ -23,6 +23,22 @@ export const CRAWL_PERSONAS: CrawlPersona[] = [
   persona('meridian-cdao', 'cdao-meridian-health'),
   persona('firstcapital-cio', 'cio-firstcapital'),
   persona('lakeshore-cio', 'cio-lakeshore'),
+  explicitPersona({
+    key: 'meridian-kiran',
+    tenantKey: 'meridian',
+    tenantName: 'Meridian Health System',
+    title: 'CDAO',
+    email: 'kmysore@gmail.com',
+    sourceSlug: 'cdao-meridian-health',
+  }),
+  explicitPersona({
+    key: 'lakeshore-surekha',
+    tenantKey: 'lakeshore',
+    tenantName: 'Lakeshore Holdings',
+    title: 'VP Innovation',
+    email: 'surekha.durvasula@gmail.com',
+    sourceSlug: 'lakeshore-vp-innovation-delivery',
+  }),
 ];
 
 export const PRIMARY_CRAWL_SURFACES: CrawlSurface[] = [
@@ -93,12 +109,11 @@ export async function createIsolatedPersonaContext(
 }
 
 export async function signInPersona(page: Page, persona: CrawlPersona, options: PersonaContextOptions): Promise<void> {
-  const password = firstPresent(
-    process.env[`CRAWL_${envKey(persona.key)}_PASSWORD`],
-    options.password,
-    process.env.CRAWL_DEMO_PASSWORD,
-    'Demo2026!',
-  );
+  const password =
+    process.env[`CRAWL_${envKey(persona.key)}_PASSWORD`]?.trim() ??
+    options.password?.trim() ??
+    process.env.CRAWL_DEMO_PASSWORD?.trim() ??
+    '';
   const email = firstPresent(process.env[`CRAWL_${envKey(persona.key)}_EMAIL`], persona.email);
   const code = firstPresent(process.env.CRAWL_DEMO_CODE, '424242');
 
@@ -107,7 +122,7 @@ export async function signInPersona(page: Page, persona: CrawlPersona, options: 
     return Boolean((window as unknown as { Clerk?: { loaded?: boolean } }).Clerk?.loaded);
   }, null, { timeout: 30_000 });
   await typeCredential(page, /name@company\.com|enter your email address/i, email);
-  await typeCredential(page, /password from invite|enter your password/i, password);
+  await typeOptionalCredential(page, /password from invite|enter your password/i, password);
   await typeCredential(page, /6-digit code|access code/i, code);
   const submit = page.getByRole('button', { name: /sign in|continue/i });
   await submit.waitFor({ state: 'visible', timeout: 10_000 });
@@ -171,6 +186,10 @@ function persona(key: string, slug: string): CrawlPersona {
   };
 }
 
+function explicitPersona(input: CrawlPersona): CrawlPersona {
+  return input;
+}
+
 function envKey(value: string): string {
   return value.toUpperCase().replace(/[^A-Z0-9]+/g, '_');
 }
@@ -184,6 +203,17 @@ function firstPresent(...values: Array<string | undefined>): string {
 async function typeCredential(page: Page, placeholder: RegExp, value: string): Promise<void> {
   const field = page.getByPlaceholder(placeholder).first();
   await field.waitFor({ state: 'visible', timeout: 10_000 });
+  await field.fill(value);
+  const actual = await field.inputValue();
+  if (actual !== value) {
+    throw new Error(`crawl_sign_in_field_not_filled:${String(placeholder)}:${actual.length}`);
+  }
+}
+
+async function typeOptionalCredential(page: Page, placeholder: RegExp, value: string): Promise<void> {
+  const field = page.getByPlaceholder(placeholder).first();
+  const visible = await field.isVisible().catch(() => false);
+  if (!visible) return;
   await field.fill(value);
   const actual = await field.inputValue();
   if (actual !== value) {

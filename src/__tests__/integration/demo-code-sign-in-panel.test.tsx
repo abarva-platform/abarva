@@ -6,20 +6,16 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { DemoCodeSignIn } from '@/components/auth/DemoCodeSignIn';
 
 describe('DemoCodeSignIn', () => {
-  it('requires email, password, and access code before sign-in', () => {
+  it('requires email and access code before sign-in', () => {
     render(<DemoCodeSignIn redirectUrl="/auth-redirect" />);
 
     const email = screen.getByLabelText('Email');
-    const password = screen.getByLabelText('Password');
     const code = screen.getByLabelText('Access code');
     const button = screen.getByRole('button', { name: 'Sign in' });
 
     expect((button as HTMLButtonElement).disabled).toBe(true);
 
     fireEvent.change(email, { target: { value: 'cdo@apex-retail.example.com' } });
-    expect((button as HTMLButtonElement).disabled).toBe(true);
-
-    fireEvent.change(password, { target: { value: 'Demo2026!' } });
     expect((button as HTMLButtonElement).disabled).toBe(true);
 
     fireEvent.change(code, { target: { value: '424242' } });

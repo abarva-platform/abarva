@@ -198,12 +198,19 @@ const EMAIL_DOMAIN_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = 
   ['northstar-clinical.example.com', 'northstar'],
   ['skyharbor-air.example.com', 'skyharbor'],
   ['lakeshore-industries.example.com', 'lakeshore'],
-  // Founder backdoor (`anand.sundaram@thesundaram.com`) lands on Meridian
-  // by inference. Documented in demo_accounts memory. Anyone uncomfortable
-  // with this should remove the entry and add the email to Clerk metadata
-  // pinning instead.
+  // Plain thesundaram.com operator access lands on Meridian by default.
+  // Per-client plus-addresses are handled first in the local-part map below.
   ['thesundaram.com', 'meridian'],
 ];
+
+const EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> = {
+  'kmysore@gmail.com': 'meridian',
+  'anand.sundaram@thesundaram.com': 'meridian',
+  'anandshp@gmail.com': 'lakeshore',
+  'surekha.durvasula@gmail.com': 'lakeshore',
+  'admin@abarva.ai': 'arcturus',
+  'anand@abarva.ai': 'skyharbor',
+};
 
 /**
  * Legacy `<prefix>+<role>@abarva.com` local-part-suffix routes. These
@@ -239,14 +246,13 @@ const LEGACY_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]
 export function inferClientKeyFromEmail(email: string | null | undefined): ClientKey | null {
   const normalized = email?.toLowerCase().trim() ?? '';
   if (!normalized || !normalized.includes('@')) return null;
+  const exact = EXACT_EMAIL_TO_CLIENT_KEY[normalized];
+  if (exact) return exact;
+
   const [localPart, domain] = normalized.split('@', 2);
   if (!localPart || !domain) return null;
 
-  for (const [suffix, key] of EMAIL_DOMAIN_TO_CLIENT_KEY) {
-    if (domain === suffix || domain.endsWith(`.${suffix}`)) return key;
-  }
-
-  if (domain === 'abarva.com') {
+  if (domain === 'abarva.com' || domain === 'thesundaram.com') {
     for (const [token, key] of LEGACY_LOCALPART_TO_CLIENT_KEY) {
       // Tokens starting with `+` match anywhere in the local part (sub-address);
       // tokens ending with `+` match only at the start (demo-prefix pattern).
@@ -256,6 +262,10 @@ export function inferClientKeyFromEmail(email: string | null | undefined): Clien
         return key;
       }
     }
+  }
+
+  for (const [suffix, key] of EMAIL_DOMAIN_TO_CLIENT_KEY) {
+    if (domain === suffix || domain.endsWith(`.${suffix}`)) return key;
   }
 
   return null;

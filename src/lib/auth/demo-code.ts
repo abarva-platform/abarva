@@ -1,8 +1,11 @@
-import { CANONICAL_AUTH_EMAILS } from '@/lib/auth/canonical-auth-roster';
+import { CANONICAL_AUTH_EMAILS, PILOT_PASSCODE_EMAILS } from '@/lib/auth/canonical-auth-roster';
 
 export const DEMO_CODE_VALUE = '424242';
 
-export const DEMO_CODE_ALLOWED_EMAILS = CANONICAL_AUTH_EMAILS;
+export const DEMO_CODE_ALLOWED_EMAILS = [
+  ...CANONICAL_AUTH_EMAILS,
+  ...PILOT_PASSCODE_EMAILS,
+] as const;
 
 const DEMO_CODE_ALLOWED_EMAIL_SET = new Set<string>(DEMO_CODE_ALLOWED_EMAILS);
 
