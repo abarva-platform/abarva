@@ -26,7 +26,11 @@ import {
   getTemplateForDimension,
   type ContextTemplateDefinition,
 } from "./template-registry";
-import { inferDomainSegment, VALID_DOMAIN_SEGMENTS } from "./validation-engine";
+import {
+  inferDomainSegment,
+  VALID_BUSINESS_FUNCTIONS,
+  VALID_DOMAIN_SEGMENTS,
+} from "./validation-engine";
 import type { ContextDimension } from "./types";
 import type { PilotUploadAttestation } from "./upload-attestation";
 import type { SegmentKey } from "@/lib/ingestion/azure-landing-zone-types";
@@ -52,6 +56,8 @@ export interface CsvUploadInput {
     bucket: string;
     path: string;
     sha256: string;
+    url?: string | null;
+    byteSize?: number | null;
   } | null;
   mapping?: CsvSchemaMapping;
   attestation?: PilotUploadAttestation;
@@ -63,6 +69,7 @@ export interface CsvUploadInput {
     businessFunction?: string;
     criticality?: string;
   };
+  loadOrder?: number | null;
 }
 
 export interface CsvParseResult {
@@ -151,7 +158,7 @@ export interface CsvUploadLoadResult extends Omit<
   };
 }
 
-const MAX_ROWS = 2_000;
+const MAX_ROWS = 50_000;
 const MAX_TEXT_COLUMNS = 12;
 
 const SEGMENT_BY_DIMENSION: Record<ContextDimension, SegmentKey> = {
@@ -199,6 +206,33 @@ const SEGMENT_BY_DIMENSION: Record<ContextDimension, SegmentKey> = {
   service_levels: "it_landscape",
   it_landscape: "it_landscape",
   infrastructure_dc: "infrastructure",
+  business_org_functions: "org_structure",
+  it_org_ownership: "org_structure",
+  personas_workforce: "org_structure",
+  capabilities_value_streams: "enterprise_profile",
+  applications_systems: "it_landscape",
+  system_function_mapping: "it_landscape",
+  infrastructure_cloud: "infrastructure",
+  platform_volumetrics: "infrastructure",
+  data_analytics_estate: "data_estate",
+  integrations_interfaces: "it_landscape",
+  vendors_contracts_licenses: "it_financials",
+  it_budget_financials: "it_financials",
+  initiatives_portfolio: "program_inventory",
+  operations_service_management: "it_landscape",
+  kpis_outcome_evidence: "program_inventory",
+  security_risk_compliance: "program_inventory",
+  ai_automation_footprint: "it_landscape",
+  initiative_milestones: "program_inventory",
+  benefit_realization: "program_inventory",
+  copilot_adoption_by_function: "org_structure",
+  erp_platform_agents: "it_landscape",
+  servicenow_automation_metrics: "it_landscape",
+  function_ai_productivity_scorecard: "org_structure",
+  model_risk_inventory: "program_inventory",
+  ai_spend_by_initiative: "it_financials",
+  ai_risk_register: "program_inventory",
+  gate_approval_history: "program_inventory",
 };
 
 export function segmentKeyForContextDimension(
@@ -702,6 +736,21 @@ function resolveRowClassification(
   row: CsvRow,
   classificationOverrides?: CsvUploadInput["classificationOverrides"],
 ): RowClassificationResult {
+  const normalizeCriticality = (value?: string | null): string | null => {
+    const trimmed = value?.trim();
+    if (!trimmed) return null;
+    const upper = trimmed.toUpperCase().replace(/[^A-Z0-9]+/g, "_");
+    if (["TIER_1", "TIER_2", "TIER_3"].includes(upper)) return upper;
+    if (["CRITICAL", "HIGH"].includes(upper)) return "TIER_1";
+    if (["IMPORTANT", "MEDIUM", "MODERATE"].includes(upper)) return "TIER_2";
+    if (["LOW", "NON_CRITICAL"].includes(upper)) return "TIER_3";
+    return null;
+  };
+  const normalizeBusinessFunction = (value?: string | null): string | null => {
+    const trimmed = value?.trim();
+    if (!trimmed) return null;
+    return VALID_BUSINESS_FUNCTIONS.has(trimmed) ? trimmed : null;
+  };
   // If the caller provides overrides, they win unconditionally.
   if (
     classificationOverrides?.domainSegment ||
@@ -710,8 +759,10 @@ function resolveRowClassification(
   ) {
     return {
       domainSegment: classificationOverrides.domainSegment ?? null,
-      businessFunction: classificationOverrides.businessFunction ?? null,
-      criticality: classificationOverrides.criticality ?? null,
+      businessFunction: normalizeBusinessFunction(
+        classificationOverrides.businessFunction,
+      ),
+      criticality: normalizeCriticality(classificationOverrides.criticality),
       classificationSource: "OPERATOR_CONFIRMED",
     };
   }
@@ -724,8 +775,8 @@ function resolveRowClassification(
   if (rowDomainSegment && VALID_DOMAIN_SEGMENTS.has(rowDomainSegment)) {
     return {
       domainSegment: rowDomainSegment,
-      businessFunction: rowBusinessFunction || null,
-      criticality: rowCriticality || null,
+      businessFunction: normalizeBusinessFunction(rowBusinessFunction),
+      criticality: normalizeCriticality(rowCriticality),
       classificationSource: "OPERATOR_CONFIRMED",
     };
   }
@@ -741,8 +792,8 @@ function resolveRowClassification(
   if (inferred.confidence === "high" && inferred.segment) {
     return {
       domainSegment: inferred.segment,
-      businessFunction: rowBusinessFunction || null,
-      criticality: rowCriticality || null,
+      businessFunction: normalizeBusinessFunction(rowBusinessFunction),
+      criticality: normalizeCriticality(rowCriticality),
       classificationSource: "AUTO_INFERRED",
     };
   }
@@ -750,8 +801,8 @@ function resolveRowClassification(
   // Could not classify — route to review.
   return {
     domainSegment: rowDomainSegment || null,
-    businessFunction: rowBusinessFunction || null,
-    criticality: rowCriticality || null,
+    businessFunction: normalizeBusinessFunction(rowBusinessFunction),
+    criticality: normalizeCriticality(rowCriticality),
     classificationSource: "NEEDS_CLASSIFICATION",
   };
 }
@@ -925,6 +976,8 @@ export async function loadCsvUploadToTenantContext(
         mapping: prepared.mapping,
         rows: parsedForPromotion.rows,
         rowClassifications,
+        sourceBlob: input.sourceBlob,
+        loadOrder: input.loadOrder,
         db,
       });
     await updateIngestionRun("completed");
