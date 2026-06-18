@@ -40,10 +40,12 @@ Approved pilot passcode emails:
 - `src/lib/auth/demo-code.ts`
 - `src/lib/auth/access-routing.ts`
 - `src/lib/client-config.ts`
+- `src/lib/tenant/aliases.ts`
 - `src/lib/crawl/persona-switcher.ts`
 - `scripts/cleanup-auth-users.ts`
 - `tests/e2e/primary-surfaces-smoke.spec.ts`
 - `tests/e2e/primary-surfaces-tenant-matrix.spec.ts`
+- `src/lib/__tests__/client-config-canonical.test.ts`
 - `src/__tests__/integration/demo-code-sign-in-panel.test.tsx`
 - `src/__tests__/integration/demo-code-sign-in-route.test.ts`
 
@@ -54,7 +56,10 @@ Approved pilot passcode emails:
 - Pass: `./node_modules/.bin/tsc --noEmit --pretty false`.
 - Pass: focused `./node_modules/.bin/eslint` over changed auth, crawl, test, and cleanup files.
 - Pass: `git diff --check`.
-- Blocked until after deploy: signed-in Meridian and Lakeshore Intelligence crawl with real pilot emails.
+- Pass: CI on PR #3672 — ESLint, Routes/disclaimers, and Typecheck + reasoning-layer tests.
+- Pass: ACR build `cadv` produced `acrabarvalab001.azurecr.io/abarva/web:real-pilot-passcode-30f4474c@sha256:c1ca871ba0b1b41d76046a36d1f47340dd9aee8e3bd59594c521d5f65d051e40`.
+- Pass: ACA revision `ca-abarva-web-lab-eastus--0000109` revision-specific and public `/api/health` returned ok with Postgres/direct Postgres true.
+- Watch: signed-in Lakeshore crawl initially passed auth but found tenant display text `Lakeshore Industries`; this record now includes the canonical display fix to render `Lakeshore Holdings`.
 
 ## Rollout Plan
 

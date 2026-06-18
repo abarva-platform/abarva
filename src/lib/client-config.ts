@@ -44,10 +44,10 @@ export const ALL_CLIENTS: ClientOption[] = [
   },
   {
     id: 'lakeshore',
-    name: 'Lakeshore Industries',
+    name: 'Lakeshore Holdings',
     shortName: 'Lakeshore',
     color: '#2563EB',
-    vertical: 'Industrial Manufacturing',
+    vertical: 'Diversified Holding Company',
   },
 ] as const;
 
@@ -170,7 +170,7 @@ export function canonicalClientDisplayName(args: {
     normalizedName === 'lakeshore holdings' ||
     normalizedName === 'lakeshore'
   ) {
-    return 'Lakeshore Industries';
+    return 'Lakeshore Holdings';
   }
 
   if (name) return name;
