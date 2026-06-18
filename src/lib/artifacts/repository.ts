@@ -238,6 +238,52 @@ export async function listGeneratedArtifactsForMove(args: {
   return ((data as Record<string, unknown>[] | null) ?? []).map(rowToRecord);
 }
 
+/**
+ * All generated artifacts for a Move, across BOTH source_artifact_ref conventions:
+ * the orchestrated / decomposed path stores the bare `moveId`; the legacy
+ * board-grade path stores `move:{moveId}:{artifactId}`. Returns a de-duplicated,
+ * newest-first list so a caller (e.g. the File Cabinet) sees every built document.
+ */
+export async function listGeneratedArtifactsForMoveAllRefs(args: {
+  clientId: string;
+  moveId: string;
+  limit?: number;
+}): Promise<GeneratedArtifactRecord[]> {
+  const client = getAzureWriteFluentClient();
+  const limit = args.limit ?? 50;
+  const [exact, prefixed] = await Promise.all([
+    client
+      .from("generated_artifacts")
+      .select("*")
+      .eq("client_id", args.clientId)
+      .eq("source_artifact_ref", args.moveId)
+      .order("rendered_at", { ascending: false })
+      .limit(limit),
+    client
+      .from("generated_artifacts")
+      .select("*")
+      .eq("client_id", args.clientId)
+      .like("source_artifact_ref", `move:${args.moveId}:%`)
+      .order("rendered_at", { ascending: false })
+      .limit(limit),
+  ]);
+  if (exact.error)
+    throw new Error(`generated_artifacts move(exact) lookup failed: ${exact.error.message}`);
+  if (prefixed.error)
+    throw new Error(`generated_artifacts move(prefix) lookup failed: ${prefixed.error.message}`);
+  const byId = new Map<string, GeneratedArtifactRecord>();
+  for (const row of [
+    ...((exact.data as Record<string, unknown>[] | null) ?? []),
+    ...((prefixed.data as Record<string, unknown>[] | null) ?? []),
+  ]) {
+    const rec = rowToRecord(row);
+    byId.set(rec.id, rec);
+  }
+  return [...byId.values()].sort((a, b) =>
+    a.renderedAt < b.renderedAt ? 1 : a.renderedAt > b.renderedAt ? -1 : 0,
+  );
+}
+
 export async function listGeneratedArtifactsForClient(args: {
   clientId: string;
   limit?: number;
