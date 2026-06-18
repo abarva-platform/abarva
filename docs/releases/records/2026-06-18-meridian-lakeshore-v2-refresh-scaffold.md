@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-private-data-plane`
 
 ## Plain-English Summary
 
@@ -22,13 +22,15 @@ Fourth-pass hardening skips blank/null AI Control context fact values before ins
 
 Fifth-pass hardening de-duplicates rows by configured conflict key before each batched upsert. This addresses the next live ACA failure, where duplicate `ai_control_context_facts` keys in one insert caused Postgres to reject an `ON CONFLICT DO UPDATE` batch.
 
-This does not delete or load database rows. It prepares the audit-safe path for replacing the current Meridian/Lakeshore context, corpus, Intelligence, and AI Control Tower rows with the new V2 packs.
+The hardened private-worker apply then succeeded for Meridian and Lakeshore under run id `meridian-lakeshore-v2-20260618064604`. The run replaced client-scoped context/corpus/Tower rows through the ACA private operator job, and a follow-up verifier job confirmed Meridian committed counts plus Lakeshore enterprise-context counts. Lakeshore AI Control counts are evidenced by the successful apply receipt because the verifier's tenant-key resolver did not resolve the live Lakeshore client alias.
+
+This release does not claim Azure Blob staging, document parser extraction, embeddings/search refresh, insight evaluator refresh, or signed-in Intelligence/Tower answer QA. Those remain separate gates.
 
 ## Layer Impact
 
 - `client-data-lane`: Adds refresh orchestration artifacts for Meridian and Lakeshore client data.
 - `internal-admin`: Adds a dry-run script and handoff brief for the delivery/admin team.
-- `experimental`: Supports the backend redesign path for Intelligence and AI Control Tower, but does not activate a runtime feature.
+- `experimental`: Supports the backend redesign path for Intelligence and AI Control Tower, but does not activate a runtime feature by itself.
 
 ## Client Applicability
 
@@ -65,14 +67,20 @@ This does not delete or load database rows. It prepares the audit-safe path for 
 - FAIL/BLOCKED: ACA apply execution `job-abarva-private-operator-eus-isbyroc` advanced past the business-function constraint, then failed before commit with `invalid input syntax for type json`. This record includes the follow-up JSON/JSONB serialization guard; patched worker retry is required.
 - FAIL/BLOCKED: ACA apply execution `job-abarva-private-operator-eus-sbeelwb` advanced past JSON serialization, then failed before commit with `upsert_failed:ai_control_context_facts:batch_1:null value in column "fact_value"`. This record includes the follow-up null fact filter; patched worker retry is required.
 - FAIL/BLOCKED: ACA apply execution `job-abarva-private-operator-eus-brv4cv4` advanced past null fact filtering, then failed before commit with `upsert_failed:ai_control_context_facts:batch_1:ON CONFLICT DO UPDATE command cannot affect row a second time`. This record includes the follow-up conflict-key de-duplication; patched worker retry is required.
+- PASS: ACA apply execution `job-abarva-private-operator-eus-4nzcpsg` succeeded for run id `meridian-lakeshore-v2-20260618064604`.
+- PASS: Public app health after apply returned `ok:true`, `postgres:true`, `direct_postgres:true`, and `azure_graph:"postgres"`.
+- PASS: Private verifier execution `job-abarva-private-operator-eus-x6jvy1r` succeeded and returned `ok:true`.
+- PASS: Verifier confirmed Meridian committed counts: 1 context source, 24 source files, 497 records, 5,428 facts, 502 chunks, 260 relationships, 7 private patterns, 14 AI Control initiatives, 40 tool-usage rows, 14 productivity rows, 12 DORA rows, 14 agent-outcome rows, 14 benefit rows, 14 spend rows, 14 risk rows, 10 action rows, 14 evidence rows, 356 AI Control facts, and 1 Atlas context pack.
+- PASS: Verifier confirmed Lakeshore enterprise-context counts: 1 context source, 22 source files, 436 records, 4,809 facts, 439 chunks, and 226 relationships.
+- PASS: Successful Lakeshore apply receipt from `job-abarva-private-operator-eus-4nzcpsg` showed 4 private patterns, 1 AI Control refresh run, 14 AI Control sources, 10 initiatives, 40 tool-usage rows, 10 productivity rows, 8 DORA rows, 10 agent-outcome rows, 10 benefit rows, 10 spend rows, 10 risk rows, 10 action rows, 10 evidence rows, 256 AI Control facts, and 1 Atlas context pack.
 
 ## Rollout Plan
 
-Roll out the patched worker through the controlled ACA/private data-plane execution flow. The run must archive current client rows, delete by client scope only, load V2 packs, refresh embeddings/search, run the insight evaluator, and prove signed-in Intelligence/Tower QA before the data refresh is considered complete.
+The patched worker was rolled out through the controlled ACA/private data-plane execution flow. The successful run archived current client rows, deleted by client scope only, and loaded V2 context/corpus/Tower packs. Remaining rollout gates are embeddings/search refresh, insight evaluator refresh, and signed-in Intelligence/Tower QA.
 
 ## Rollback Plan
 
-Delete `scripts/context-packs/refresh-meridian-lakeshore-v2.mjs`, `docs/codex-handoff/MERIDIAN_LAKESHORE_CONTEXT_REFRESH_BUILD_BRIEF.md`, and generated `outputs/context-refresh/` receipts, or git-revert this release. No database rollback is required because no data-plane writes are included.
+Code rollback is a git revert of this release lane. Data rollback requires restoring Meridian/Lakeshore from the archived rows captured by run id `meridian-lakeshore-v2-20260618064604`; do not delete global, auth, audit, or unrelated client rows. The private operator job was restored to its idle `/bin/true` image after the successful apply and verifier runs.
 
 ## Audit Evidence
 
@@ -83,25 +91,29 @@ Delete `scripts/context-packs/refresh-meridian-lakeshore-v2.mjs`, `docs/codex-ha
 - Source packs:
   - `datasets/meridian-health-synthetic-v2/`
   - `datasets/lakeshore-industries-synthetic-v2/`
+- Successful apply: ACA private operator execution `job-abarva-private-operator-eus-4nzcpsg`, run id `meridian-lakeshore-v2-20260618064604`
+- Successful verifier: ACA private operator execution `job-abarva-private-operator-eus-x6jvy1r`
 
 ## Context Ingestion Evidence
 
 - Local artifact generated: Yes. Dry-run preflight receipt and generated SQL were produced under `outputs/context-refresh/`.
 - Local parse/preflight: Yes. Meridian and Lakeshore local packs passed manifest/count/pattern/graph validation, and the worker dry-run produced record/fact/chunk/Tower row counts.
-- Product loader/API acceptance: Attempted through ACA private worker. The first apply failed before commit with `column "client_id" does not exist`; later applies advanced and failed before commit with `enterprise_context_records_business_function_check`, `invalid input syntax for type json`, null `ai_control_context_facts.fact_value`, then duplicate upsert conflict keys. A one-off ACA inspection job confirmed the exact allowed taxonomy, and patched worker retry is required.
+- Product loader/API acceptance: Yes. ACA private worker apply execution `job-abarva-private-operator-eus-4nzcpsg` succeeded for run id `meridian-lakeshore-v2-20260618064604` after the scoped-column, taxonomy, JSON/JSONB serialization, null-fact, and duplicate-upsert fixes.
 - Azure Blob/object storage staging: Not run.
-- Queue/private worker handoff: Attempted with ACA job executions `job-abarva-private-operator-eus-bju2nk9`, `job-abarva-private-operator-eus-34p9fe8`, `job-abarva-private-operator-eus-bgohqqk`, `job-abarva-private-operator-eus-isbyroc`, `job-abarva-private-operator-eus-sbeelwb`, and `job-abarva-private-operator-eus-brv4cv4`; all failed before commit due to schema/value constraints. Inspection execution `job-abarva-private-operator-eus-w14mkps` succeeded.
+- Queue/private worker handoff: Yes. Failed hardening executions were `job-abarva-private-operator-eus-bju2nk9`, `job-abarva-private-operator-eus-34p9fe8`, `job-abarva-private-operator-eus-bgohqqk`, `job-abarva-private-operator-eus-isbyroc`, `job-abarva-private-operator-eus-sbeelwb`, and `job-abarva-private-operator-eus-brv4cv4`; inspection execution `job-abarva-private-operator-eus-w14mkps` succeeded; final apply execution `job-abarva-private-operator-eus-4nzcpsg` succeeded; verifier execution `job-abarva-private-operator-eus-x6jvy1r` succeeded.
 - Parser extraction with source citations: Not run.
 - Review/approval queue: Not run.
-- Client data-plane commit: Not completed/proven.
+- Client data-plane commit: Yes. Meridian counts were verifier-proven; Lakeshore enterprise-context counts were verifier-proven and Lakeshore AI Control counts were apply-receipt-proven.
 - Embedding/search refresh: Not run.
 - Live signed-in retrieval or answer QA: Not run.
 
-Current state: local refresh scaffold validated, web runtime deployed, private-worker apply has exposed scoped-column, taxonomy, JSON serialization, non-null fact, and duplicate upsert constraints; schema-aware fixes are ready for redeploy/retry.
+Current state: local refresh scaffold validated, web runtime deployed, private-worker apply completed, verifier completed, private operator restored to idle, and public app health passed. Remaining gates are Blob staging, document parser extraction, review queue, embeddings/search refresh, insight evaluator refresh, and signed-in Intelligence/Tower answer QA.
 
 ## Known Gaps
 
-- The ACA archive/delete/load worker was run with `--apply`, but executions failed before commit with scoped-column, business-function taxonomy, JSON serialization, null-fact, and duplicate upsert constraints; patched worker retry is still required.
-- Does not yet prove committed V2 packs in Azure/Postgres.
+- Lakeshore AI Control counts are apply-receipt-proven, not independently resolver-verified, because the verifier did not resolve the live Lakeshore client alias.
+- Does not stage originals in Azure Blob/object storage.
+- Does not run deterministic document extraction from PDFs/DOCX/PPTX/XLSX.
 - Does not refresh embeddings/search.
+- Does not run the insight evaluator.
 - Does not run signed-in Intelligence/Tower QA.
