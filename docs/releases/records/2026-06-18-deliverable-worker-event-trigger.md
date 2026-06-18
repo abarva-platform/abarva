@@ -32,6 +32,8 @@ This change adds an **event-triggered worker** (`job-abarva-deliv-worker-event`)
 
 - `infra/azure/deliverable-worker-event-job.yaml` — codified definition of the event-triggered job (Event trigger, KEDA `postgresql` scale rule on `SELECT count(*) FROM deliverable_runs WHERE status = 'queued'`, `targetQueryValue=1`, `minExecutions=0 / maxExecutions=1`, `pollingInterval=30`, connection via the existing `azure-postgres-control-database-url` Key Vault secret, same UserAssigned identity / registry / env / command as the cron job).
 - Applied live with: `az containerapp job create -n job-abarva-deliv-worker-event -g rg-abarva-controlplane-lab-eastus --yaml infra/azure/deliverable-worker-event-job.yaml`.
+- `scripts/deploy/update-worker-jobs.sh` — reusable command that updates BOTH worker jobs (cron + event) to a given image; tolerant of a missing job.
+- `.github/workflows/aca-main-deploy.yml` — new "Update worker jobs to the new image" step runs that script every release with the digest-pinned image, so the worker jobs track `main` automatically (closes the web/worker staleness gap).
 - No application-code change. The cron job `job-abarva-deliv-worker` is unchanged (retained as fallback).
 
 ## QA / Validation
@@ -56,6 +58,6 @@ Already applied to the lab control-plane environment via `az containerapp job cr
 
 ## Known Gaps
 
-- **Worker image lifecycle:** `aca-main-deploy.yml` only updates the **web** app image; both worker jobs (cron + event) are updated out-of-band. They currently run `web:main-ac6b4095`. Worker-side code changes will NOT reach production until someone runs `az containerapp job update --image …` on **both** jobs. Pre-existing gap (the cron job had it too) — recommended follow-up: add a worker-image-update step to the deploy workflow (or codify both jobs in Bicep) so the worker tracks main automatically.
+- **Worker image lifecycle — ADDRESSED in this change.** `aca-main-deploy.yml` now runs `scripts/deploy/update-worker-jobs.sh` after the web deploy, updating both worker jobs to the same digest-pinned image every release, so the worker tracks `main` automatically. Both jobs were also brought current immediately (from `web:main-ac6b4095` → the live `62e1b213` digest). Remaining nicety: the jobs are still defined out-of-IaC (this YAML is the reproducible spec); codifying both in Bicep is an optional future cleanup.
 - Neither worker job is in Bicep yet; this YAML is the reproducible definition but is not auto-applied by a pipeline.
 - KEDA reachability to the control DB is proven in the lab env; if the env's VNet/private-DB topology changes, re-verify the scaler can still connect.

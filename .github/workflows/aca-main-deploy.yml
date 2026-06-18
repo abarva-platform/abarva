@@ -146,6 +146,18 @@ jobs:
             --revision-suffix "${{ steps.release.outputs.revision_suffix }}" \
             --output json | tee audit-artifacts/aca-main-deploy/containerapp-update.json
 
+      - name: Update worker jobs to the new image
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          set -euo pipefail
+          # The web deploy above only updates the web app. Bring the deliverable
+          # worker jobs (cron fallback + KEDA event-triggered) to the SAME image
+          # so worker-side code changes actually ship. Tolerant of a missing job.
+          bash scripts/deploy/update-worker-jobs.sh \
+            | tee audit-artifacts/aca-main-deploy/worker-jobs-update.txt
+
       - name: Wait for revision to become healthy
         shell: bash
         run: |
