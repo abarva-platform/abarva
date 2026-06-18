@@ -15,10 +15,22 @@ export type EnterpriseContextChunkRow = {
 };
 
 const TENANT_KEY_ALIASES: Record<string, string> = {
+  'apex-retail': 'apex-retail',
   apexretail: 'apex-retail',
+  'first-capital': 'first-capital',
   arcturus: 'first-capital',
+  firstcapital: 'first-capital',
+  'meridian-health': 'meridian-health',
   meridian: 'meridian-health',
+  'meridian-health-system': 'meridian-health',
+  lakeshore: 'lakeshore',
+  'lakeshore-holdings': 'lakeshore',
+  'lakeshore-industries': 'lakeshore',
 };
+
+function normalizeTenantKey(value: string): string {
+  return value.trim().toLowerCase().replace(/[_\s]+/g, '-');
+}
 
 function safeString(value: unknown, fallback: string): string {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
@@ -38,7 +50,18 @@ export function tenantContextSearchId(tenantKey: string, chunkId: string): strin
 }
 
 export function canonicalTenantKey(tenantKey: string): string {
-  return TENANT_KEY_ALIASES[tenantKey] ?? tenantKey;
+  const normalized = normalizeTenantKey(tenantKey);
+  return TENANT_KEY_ALIASES[normalized] ?? normalized;
+}
+
+export function tenantKeyAliasesFor(tenantKey: string): string[] {
+  const canonical = canonicalTenantKey(tenantKey);
+  return Array.from(new Set([
+    canonical,
+    ...Object.entries(TENANT_KEY_ALIASES)
+      .filter(([, value]) => value === canonical)
+      .map(([key]) => key),
+  ])).sort();
 }
 
 export function toTenantContextDeleteDocument(tenantKey: string, chunkId: string): SearchDocument {

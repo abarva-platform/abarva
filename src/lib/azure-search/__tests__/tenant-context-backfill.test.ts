@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 import {
   canonicalTenantKey,
+  tenantKeyAliasesFor,
   tenantContextSearchId,
   toTenantContextDeleteDocument,
   toTenantContextSearchDocument,
@@ -46,6 +47,12 @@ describe('tenant context search backfill mapping', () => {
     expect(canonicalTenantKey('arcturus')).toBe('first-capital');
     expect(canonicalTenantKey('meridian')).toBe('meridian-health');
     expect(canonicalTenantKey('apexretail')).toBe('apex-retail');
+    expect(canonicalTenantKey('Lakeshore Industries')).toBe('lakeshore');
+    expect(tenantKeyAliasesFor('lakeshore')).toEqual(expect.arrayContaining([
+      'lakeshore',
+      'lakeshore-holdings',
+      'lakeshore-industries',
+    ]));
     expect(toTenantContextSearchDocument({
       tenant_key: 'arcturus',
       chunk_id: 'chunk-1',
