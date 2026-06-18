@@ -34,15 +34,28 @@ Adds a real backend for the "Request access" form: a public, unauthenticated `PO
 - `public/marketing/*` — real product screenshot (`moves-real.png`) and abstract brand graphics (`accent.png`, `surf-*.png`). No AI-human imagery.
 
 ## QA / Validation
-- Form fields: name, work email, company, role, company size, industry, org type (enterprise vs SI/advisory), optional initiative.
-- Static design validated in the browser (hero, three-dimension stack, graphical Picture-this section, modal form, footer logo).
-- `npx tsc --noEmit` for the rewritten component + new route — to run before merge.
-- Migration `20260611193000_access_requests.sql` authored; apply via `npm run db:migrate` (localhost cannot reach the private VNet DB — apply on ACA / CI). The API route fails soft if the table is not yet present (logged, falls back to email).
-- Email path requires `RESEND_API_KEY`; without it, leads are still stored and (dev) logged.
 
-## Rollout / Rollback
-- Rollout: deploy the branch; apply the migration on ACA before public traffic relies on durable storage (email notification works without it).
-- Rollback: revert the component to the previous `LoggedOutLandingPage`, remove the public-route entry and the API route. The `access_requests` table is additive and can be left in place.
+Status: PASS (design) / NOT-RUN (migration, email)
+
+- PASS: Form fields validated in browser — name, work email, company, role, company size, industry, org type (enterprise vs SI/advisory), optional initiative.
+- PASS: Static design validated in the browser (hero, three-dimension stack, graphical Picture-this section, modal form, footer logo).
+- NOT-RUN: `npx tsc --noEmit` for the rewritten component + new route — to run before merge.
+- NOT-RUN: Migration `20260611193000_access_requests.sql` — apply via `npm run db:migrate` on ACA (localhost cannot reach the private VNet DB). The API route fails soft if the table is not yet present (logged, falls back to email).
+- NOT-RUN: Email path — requires `RESEND_API_KEY`; without it, leads are still stored and (dev) logged.
+
+## Rollout Plan
+
+Deploy the branch; apply the migration on ACA before public traffic relies on durable storage (email notification works without it).
+
+## Rollback Plan
+
+Revert the component to the previous `LoggedOutLandingPage`, remove the public-route entry and the API route. The `access_requests` table is additive and can be left in place.
 
 ## Audit Evidence
 - New table is append-only lead capture; `user_agent` and `created_at` recorded. No PII beyond what the requester submits; no tenant data involved.
+
+## Known Gaps
+
+- `npx tsc --noEmit` not yet run on the new component and route
+- Migration not applied to ACA private DB yet
+- Email notification path not tested end-to-end (Resend key required)

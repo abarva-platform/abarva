@@ -1,0 +1,135 @@
+# SYNTHETIC — LAKESHORE PILOT — NOT REAL DATA — ABARVA AI | context_domain=manifest | owner=AbarVa Delivery | system=AbarVa Generator | as_of=2026-06-06 | sensitivity=Internal
+evidence_id,context_domain,source_path,title,source_owner,source_system,source_date,sensitivity,provenance,sha256_prefix
+EVID-0001,manifest,source/00_manifest/pack_overview.md,Pack Overview,AbarVa Delivery,AbarVa Generator,2026-06-06,Internal,synthetic,fc3149114112e314
+EVID-0002,manifest,source/00_manifest/load_control_plan.md,Load Control Plan,AbarVa Delivery,AbarVa Generator,2026-06-06,Internal,synthetic,ebcfe643de2f8798
+EVID-0003,manifest,source/00_manifest/glossary_and_taxonomy.md,Glossary & Taxonomy,Aisha Bello,AbarVa Generator,2026-06-06,Internal,synthetic,ce79a356e4bcab56
+EVID-0004,manifest,source/00_manifest/context_domain_index.csv,Context Domain Index,AbarVa Delivery,AbarVa Generator,2026-06-06,Internal,synthetic,d0b0f7d22c2d0ef2
+EVID-0005,enterprise_profile,source/01_enterprise_profile/corporate_overview.pdf,Corporate Overview,Marcus Reilly,Corporate Strategy,2026-06-06,Confidential,synthetic,88862d1c66b97669
+EVID-0006,enterprise_profile,source/01_enterprise_profile/business_units.xlsx,Business Units,Marcus Reilly,Corporate Strategy,2026-06-06,Internal,synthetic,32813d417bb3b58d
+EVID-0007,enterprise_profile,source/01_enterprise_profile/geographic_footprint.xlsx,Geographic Footprint,Marcus Reilly,Corporate Strategy,2026-06-06,Internal,synthetic,9a257c8c2c87af8b
+EVID-0008,enterprise_profile,source/01_enterprise_profile/revenue_cost_baseline.xlsx,Revenue & Cost Baseline,Raymond Okafor,Oracle Hyperion,2026-06-06,Confidential,synthetic,33b877fdc1c000b1
+EVID-0009,enterprise_profile,source/01_enterprise_profile/leadership_priorities.pdf,Leadership Priorities,Maria Donnelly,Corporate Strategy,2026-06-06,Confidential,synthetic,4ad5fe64a9a28946
+EVID-0010,enterprise_profile,source/01_enterprise_profile/operating_model.docx,Operating Model,Marcus Reilly,Corporate Strategy,2026-06-06,Internal,synthetic,8005424dd06e561c
+EVID-0011,enterprise_profile,source/01_enterprise_profile/transformation_themes.md,Transformation Themes,Marcus Reilly,Corporate Strategy,2026-06-06,Internal,synthetic,564ba5d076c687f9
+EVID-0012,enterprise_profile,source/01_enterprise_profile/enterprise_fact_sheet.csv,Enterprise Fact Sheet,Marcus Reilly,Corporate Strategy,2026-06-06,Internal,synthetic,de40c2b44d4bee1c
+EVID-0013,enterprise_profile,source/01_enterprise_profile/segment_pnl_summary.xlsx,Segment P&L Summary,Sofia Marchetti,Oracle Hyperion,2026-06-06,Confidential,synthetic,aab246066db1ecf1
+EVID-0014,org_decision_rights,source/02_org_decision_rights/executive_org_chart.xlsx,Executive Org Chart.Xlsx,Maria Donnelly,Workday HCM,2026-06-06,Internal,synthetic,84e322e5b566a082
+EVID-0015,org_decision_rights,source/02_org_decision_rights/finance_org.xlsx,Finance Org.Xlsx,Raymond Okafor,Workday HCM,2026-06-06,Internal,synthetic,0f3cf3b487e31cd7
+EVID-0016,org_decision_rights,source/02_org_decision_rights/it_org.xlsx,It Org.Xlsx,Priya Natarajan,Workday HCM,2026-06-06,Internal,synthetic,df60db21996a97f0
+EVID-0017,org_decision_rights,source/02_org_decision_rights/procurement_vendor_mgmt_org.xlsx,Procurement Vendor Mgmt Org.Xlsx,Tomas Halvorsen,Coupa,2026-06-06,Internal,synthetic,e059fd37e183bf6a
+EVID-0018,org_decision_rights,source/02_org_decision_rights/shared_services_org.xlsx,Shared Services Org.Xlsx,Sofia Marchetti,Workday HCM,2026-06-06,Internal,synthetic,babe0620216dcabc
+EVID-0019,org_decision_rights,source/02_org_decision_rights/steering_committees.pdf,Steering Committees,Marcus Reilly,Corporate Strategy,2026-06-06,Internal,synthetic,84810db7cdf8e044
+EVID-0020,org_decision_rights,source/02_org_decision_rights/raci_decision_rights.xlsx,RACI / Decision Rights,Marcus Reilly,Corporate Strategy,2026-06-06,Internal,synthetic,397388b3808d4fd8
+EVID-0021,org_decision_rights,source/02_org_decision_rights/org_design_narrative.docx,Org Design Narrative,Marcus Reilly,Corporate Strategy,2026-06-06,Internal,synthetic,ff5ead2cc123d556
+EVID-0022,strategy_initiatives,source/03_strategy_initiatives/corporate_strategy_2026_2027.pdf,Corporate Strategy 2026-2027,Maria Donnelly,Corporate Strategy,2026-06-06,Confidential,synthetic,ee3639254cbea3e4
+EVID-0023,strategy_initiatives,source/03_strategy_initiatives/board_priorities.pdf,Board Priorities,Maria Donnelly,Board,2026-06-06,Confidential,synthetic,8d02b182d344d695
+EVID-0024,strategy_initiatives,source/03_strategy_initiatives/transformation_portfolio.xlsx,Transformation Portfolio,Marcus Reilly,Corporate Strategy,2026-06-06,Confidential,synthetic,bfab40493546744d
+EVID-0025,strategy_initiatives,source/03_strategy_initiatives/initiative_inventory.xlsx,Initiative Inventory,Marcus Reilly,Corporate Strategy,2026-06-06,Internal,synthetic,1cf24fae047b4340
+EVID-0026,strategy_initiatives,source/03_strategy_initiatives/budget_assumptions.xlsx,Budget Assumptions,Raymond Okafor,FP&A,2026-06-06,Internal,synthetic,45fca2967561f5f7
+EVID-0027,strategy_initiatives,source/03_strategy_initiatives/dependency_map.csv,Dependency Map,Marcus Reilly,Corporate Strategy,2026-06-06,Internal,synthetic,a2d03a415ad49f73
+EVID-0028,strategy_initiatives,source/03_strategy_initiatives/raid_log.xlsx,RAID Log,Marcus Reilly,Corporate Strategy,2026-06-06,Internal,synthetic,93bb752d51439ab6
+EVID-0029,strategy_initiatives,source/03_strategy_initiatives/strategy_narrative.docx,Strategy Narrative,Maria Donnelly,Corporate Strategy,2026-06-06,Internal,synthetic,49fd1cf928273230
+EVID-0030,finance_performance,source/04_finance_performance/pnl_baseline.xlsx,P&L Baseline,Raymond Okafor,Oracle Hyperion,2026-06-06,Confidential,synthetic,f6546d36b44ed04f
+EVID-0031,finance_performance,source/04_finance_performance/cash_working_capital.xlsx,Cash & Working Capital,Elena Vasquez,Kyriba TMS,2026-06-06,Confidential,synthetic,d0cf048d9d83eaf6
+EVID-0032,finance_performance,source/04_finance_performance/fpa_process.docx,FP&A Process,Sofia Marchetti,OneStream,2026-06-06,Internal,synthetic,f4eb01ca95fb52e0
+EVID-0033,finance_performance,source/04_finance_performance/forecasting_process.docx,Forecasting Process,Sofia Marchetti,OneStream,2026-06-06,Internal,synthetic,835c23bfc4d520ce
+EVID-0034,finance_performance,source/04_finance_performance/close_process.docx,Financial Close Process,Sofia Marchetti,OneStream,2026-06-06,Internal,synthetic,264ab3d5add0bbe6
+EVID-0035,finance_performance,source/04_finance_performance/management_reporting.pdf,Management Reporting,Sofia Marchetti,Power BI,2026-06-06,Internal,synthetic,570cac446e5a6289
+EVID-0036,finance_performance,source/04_finance_performance/kpi_catalog.xlsx,KPI Catalog,Raymond Okafor,Power BI,2026-06-06,Internal,synthetic,52a30278beb54188
+EVID-0037,finance_performance,source/04_finance_performance/value_pools.xlsx,Value Pools,Raymond Okafor,FP&A,2026-06-06,Confidential,synthetic,9b6d94764808c56a
+EVID-0038,finance_performance,source/04_finance_performance/monthly_management_pack.pdf,Monthly Management Pack,Raymond Okafor,Power BI,2026-06-06,Confidential,synthetic,d48679e0ffaa05fb
+EVID-0039,finance_performance,source/04_finance_performance/finance_calendar.csv,Finance Calendar,Sofia Marchetti,OneStream,2026-06-06,Internal,synthetic,6fd92eb7cde0d116
+EVID-0040,finance_performance,source/04_finance_performance/working_capital_drivers.xlsx,Working Capital Drivers,Elena Vasquez,Kyriba TMS,2026-06-06,Confidential,synthetic,03af785cb5f98eba
+EVID-0041,treasury_kyriba,source/05_treasury_kyriba/kyriba_rollout_plan.xlsx,Kyriba Rollout Plan,Elena Vasquez,Kyriba TMS,2026-06-06,Confidential,synthetic,2363d1a760b4fea9
+EVID-0042,treasury_kyriba,source/05_treasury_kyriba/bank_connectivity_inventory.xlsx,Bank Connectivity Inventory,Elena Vasquez,Kyriba TMS,2026-06-06,Confidential,synthetic,a3f19ce216f768cb
+EVID-0043,treasury_kyriba,source/05_treasury_kyriba/payment_process.docx,Payment Process,Elena Vasquez,Kyriba TMS,2026-06-06,Confidential,synthetic,00f047280b21ee11
+EVID-0044,treasury_kyriba,source/05_treasury_kyriba/kyriba_integration_design.docx,Kyriba Integration Design,Elena Vasquez,SAP S/4HANA,2026-06-06,Confidential,synthetic,12dc0da8f8ca4da4
+EVID-0045,treasury_kyriba,source/05_treasury_kyriba/treasury_policy.docx,Treasury Policy,Elena Vasquez,Treasury,2026-06-06,Confidential,synthetic,18272fd0ee43a925
+EVID-0046,treasury_kyriba,source/05_treasury_kyriba/cash_positioning.xlsx,Cash Positioning,Elena Vasquez,Kyriba TMS,2026-06-06,Confidential,synthetic,e01d8e957de392a2
+EVID-0047,treasury_kyriba,source/05_treasury_kyriba/liquidity_forecasting.xlsx,Liquidity Forecasting,Elena Vasquez,Kyriba TMS,2026-06-06,Confidential,synthetic,4b6d5f239bcb9441
+EVID-0048,treasury_kyriba,source/05_treasury_kyriba/debt_fx_exposure.xlsx,Debt & FX Exposure,Elena Vasquez,Kyriba TMS,2026-06-06,Confidential,synthetic,ffe449f72ff4b8d7
+EVID-0049,treasury_kyriba,source/05_treasury_kyriba/bank_fee_baseline.xlsx,Bank Fee Baseline,Elena Vasquez,Kyriba TMS,2026-06-06,Confidential,synthetic,36910b8b49fc6e03
+EVID-0050,treasury_kyriba,source/05_treasury_kyriba/treasury_controls.pdf,Treasury Controls,Elena Vasquez,Kyriba TMS,2026-06-06,Confidential,synthetic,fae77f9534cb4c2c
+EVID-0051,treasury_kyriba,source/05_treasury_kyriba/treasury_target_operating_model.pdf,Treasury TOM,Elena Vasquez,Kyriba TMS,2026-06-06,Internal,synthetic,b6931aba2745215f
+EVID-0052,treasury_kyriba,source/05_treasury_kyriba/kyriba_rollout_risks_defects.xlsx,Kyriba Rollout Risks/Defects,Elena Vasquez,Kyriba TMS,2026-06-06,Confidential,synthetic,c728cd80e12e4143
+EVID-0053,treasury_kyriba,source/05_treasury_kyriba/kyriba_test_defects.csv,Kyriba Test Defects,Elena Vasquez,Kyriba TMS,2026-06-06,Confidential,synthetic,48f02c47a8c4d025
+EVID-0054,it_systems_architecture,source/06_it_systems_architecture/application_inventory.xlsx,Application Inventory,Liam O'Sullivan,ServiceNow CMDB,2026-06-06,Internal,synthetic,c5617ef77c47f509
+EVID-0055,it_systems_architecture,source/06_it_systems_architecture/erp_landscape.pdf,ERP Landscape,Priya Natarajan,SAP,2026-06-06,Confidential,synthetic,9f7ab295cb620f97
+EVID-0056,it_systems_architecture,source/06_it_systems_architecture/hris_workday.docx,HRIS / Workday,Liam O'Sullivan,Workday HCM,2026-06-06,Internal,synthetic,0fa0a93f783a5461
+EVID-0057,it_systems_architecture,source/06_it_systems_architecture/procurement_systems.docx,Procurement Systems,Liam O'Sullivan,Coupa,2026-06-06,Internal,synthetic,af48ec106dfa95f8
+EVID-0058,it_systems_architecture,source/06_it_systems_architecture/identity_sso.docx,Identity & SSO,Liam O'Sullivan,Azure Active Directory,2026-06-06,Internal,synthetic,cd6b45517663d4b4
+EVID-0059,it_systems_architecture,source/06_it_systems_architecture/data_platforms.docx,Data Platforms,Aisha Bello,Snowflake,2026-06-06,Internal,synthetic,13373c97e53bb921
+EVID-0060,it_systems_architecture,source/06_it_systems_architecture/finance_systems.xlsx,Finance Systems,Raymond Okafor,SAP,2026-06-06,Internal,synthetic,0f3d93cb96095145
+EVID-0061,it_systems_architecture,source/06_it_systems_architecture/reporting_tools.xlsx,Reporting Tools,Aisha Bello,Power BI,2026-06-06,Internal,synthetic,97c41d1f02534399
+EVID-0062,it_systems_architecture,source/06_it_systems_architecture/security_tools.xlsx,Security Tools,David Chen,Sentinel,2026-06-06,Internal,synthetic,5638244296cbf4ca
+EVID-0063,it_systems_architecture,source/06_it_systems_architecture/legacy_applications.xlsx,Legacy Applications,Liam O'Sullivan,ServiceNow CMDB,2026-06-06,Internal,synthetic,bcc78d084e9e9727
+EVID-0064,it_systems_architecture,source/06_it_systems_architecture/integration_architecture.pdf,Integration Architecture,Liam O'Sullivan,SAP PI/PO,2026-06-06,Internal,synthetic,893c4c97de5f4fe2
+EVID-0065,it_systems_architecture,source/06_it_systems_architecture/interface_inventory.xlsx,Interface Inventory,Liam O'Sullivan,SAP PI/PO,2026-06-06,Internal,synthetic,e72e66869689dd52
+EVID-0066,data_analytics_reporting,source/07_data_analytics_reporting/report_inventory.xlsx,Report Inventory,Aisha Bello,Power BI,2026-06-06,Internal,synthetic,e655c673d21b2fde
+EVID-0067,data_analytics_reporting,source/07_data_analytics_reporting/dashboard_inventory.xlsx,Dashboard Inventory,Aisha Bello,Power BI,2026-06-06,Internal,synthetic,31f6194b15c49f63
+EVID-0068,data_analytics_reporting,source/07_data_analytics_reporting/kpi_definitions.xlsx,KPI Definitions,Aisha Bello,Snowflake,2026-06-06,Internal,synthetic,4d717ab36cb265ac
+EVID-0069,data_analytics_reporting,source/07_data_analytics_reporting/data_ownership.xlsx,Data Ownership,Aisha Bello,Snowflake,2026-06-06,Internal,synthetic,5c77c89aac8319d2
+EVID-0070,data_analytics_reporting,source/07_data_analytics_reporting/data_quality_issues.xlsx,Data Quality Issues,Aisha Bello,Snowflake,2026-06-06,Internal,synthetic,01eda08b61ed3f74
+EVID-0071,data_analytics_reporting,source/07_data_analytics_reporting/lineage_map.csv,Lineage Map,Aisha Bello,Snowflake,2026-06-06,Internal,synthetic,2ff691f9b32b7e72
+EVID-0072,data_analytics_reporting,source/07_data_analytics_reporting/semantic_layer_assumptions.docx,Semantic Layer Assumptions,Aisha Bello,Snowflake,2026-06-06,Internal,synthetic,53e0b3ce80097cc0
+EVID-0073,data_analytics_reporting,source/07_data_analytics_reporting/data_products.xlsx,Data Products,Aisha Bello,Snowflake,2026-06-06,Internal,synthetic,a624ac1e7bc3e401
+EVID-0074,data_analytics_reporting,source/07_data_analytics_reporting/analytics_backlog.xlsx,Analytics Backlog,Aisha Bello,Snowflake,2026-06-06,Internal,synthetic,2e03832799bb5245
+EVID-0075,data_analytics_reporting,source/07_data_analytics_reporting/reporting_rationalization_brief.pdf,Reporting Rationalization Brief,Aisha Bello,Power BI,2026-06-06,Internal,synthetic,3247fefe0b4f839c
+EVID-0076,operations_business_process,source/08_operations_business_process/order_to_cash.docx,Order-to-Cash,Sofia Marchetti,Salesforce,2026-06-06,Internal,synthetic,3bfe6c2321367d54
+EVID-0077,operations_business_process,source/08_operations_business_process/procure_to_pay.docx,Procure-to-Pay,Sofia Marchetti,Coupa,2026-06-06,Internal,synthetic,2ec1cb79752e4953
+EVID-0078,operations_business_process,source/08_operations_business_process/record_to_report.docx,Record-to-Report,Sofia Marchetti,SAP S/4HANA,2026-06-06,Internal,synthetic,82cbff97cb99ce8a
+EVID-0079,operations_business_process,source/08_operations_business_process/treasury_operations.docx,Treasury Operations,Sofia Marchetti,Kyriba TMS,2026-06-06,Internal,synthetic,10b6e78136b146d6
+EVID-0080,operations_business_process,source/08_operations_business_process/vendor_onboarding.docx,Vendor Onboarding,Sofia Marchetti,Coupa,2026-06-06,Internal,synthetic,85ba9e401d07d244
+EVID-0081,operations_business_process,source/08_operations_business_process/planning_cycle.docx,Planning Cycle,Sofia Marchetti,OneStream,2026-06-06,Internal,synthetic,8b89b1cf47a15c41
+EVID-0082,operations_business_process,source/08_operations_business_process/management_reporting_process.docx,Management Reporting Process,Sofia Marchetti,Power BI,2026-06-06,Internal,synthetic,b47035f26e221204
+EVID-0083,operations_business_process,source/08_operations_business_process/month_end_close.pdf,Month-End Close,Sofia Marchetti,OneStream,2026-06-06,Internal,synthetic,d8422eb6f02597ea
+EVID-0084,operations_business_process,source/08_operations_business_process/process_kpi_baseline.xlsx,Process KPI Baseline,Sofia Marchetti,ServiceNow,2026-06-06,Internal,synthetic,e2431f8bb35b25ab
+EVID-0085,servicenow_support_workload,source/09_servicenow_support_workload/servicenow_incidents.csv,ServiceNow Incidents,Priya Natarajan,ServiceNow ITSM,2026-06-06,Internal,synthetic,56cd04ad268191fe
+EVID-0086,servicenow_support_workload,source/09_servicenow_support_workload/servicenow_events.jsonl,ServiceNow Events,Priya Natarajan,ServiceNow ITSM,2026-06-06,Internal,synthetic,091cfebcb17aeaef
+EVID-0087,servicenow_support_workload,source/09_servicenow_support_workload/enhancement_backlog.xlsx,Enhancement Backlog,Priya Natarajan,ServiceNow ITSM,2026-06-06,Internal,synthetic,807b5713c8704688
+EVID-0088,servicenow_support_workload,source/09_servicenow_support_workload/defects.xlsx,Defects,Priya Natarajan,ServiceNow ITSM,2026-06-06,Internal,synthetic,b629c38549c3e418
+EVID-0089,servicenow_support_workload,source/09_servicenow_support_workload/sla_model.xlsx,SLA Model,Priya Natarajan,ServiceNow ITSM,2026-06-06,Internal,synthetic,9bc9e7dad629c72e
+EVID-0090,servicenow_support_workload,source/09_servicenow_support_workload/ticket_categories.xlsx,Ticket Categories,Priya Natarajan,ServiceNow ITSM,2026-06-06,Internal,synthetic,38173ee95835a78a
+EVID-0091,servicenow_support_workload,source/09_servicenow_support_workload/ticket_aging.xlsx,Ticket Aging,Priya Natarajan,ServiceNow ITSM,2026-06-06,Internal,synthetic,45192f8af462642e
+EVID-0092,servicenow_support_workload,source/09_servicenow_support_workload/root_cause_analysis.pdf,Root Cause Analysis,Priya Natarajan,ServiceNow ITSM,2026-06-06,Internal,synthetic,a06f8b0c73c986a5
+EVID-0093,servicenow_support_workload,source/09_servicenow_support_workload/support_team_structure.xlsx,Support Team Structure,Priya Natarajan,ServiceNow ITSM,2026-06-06,Internal,synthetic,dc79b759c72d0af9
+EVID-0094,servicenow_support_workload,source/09_servicenow_support_workload/automation_opportunities.xlsx,Automation Opportunities,Priya Natarajan,ServiceNow ITSM,2026-06-06,Internal,synthetic,b95765624d219113
+EVID-0095,vendors_contracts_source,source/10_vendors_contracts_source/si_contracts.xlsx,SI Contracts,Tomas Halvorsen,Coupa,2026-06-06,Confidential,synthetic,b406a009c980b950
+EVID-0096,vendors_contracts_source,source/10_vendors_contracts_source/software_contracts.xlsx,Software Contracts,Tomas Halvorsen,Coupa,2026-06-06,Confidential,synthetic,0d98c3e19858093a
+EVID-0097,vendors_contracts_source,source/10_vendors_contracts_source/bank_partner_contracts.xlsx,Bank Partner Contracts,Elena Vasquez,Kyriba TMS,2026-06-06,Confidential,synthetic,50af633ab656b545
+EVID-0098,vendors_contracts_source,source/10_vendors_contracts_source/rate_cards.xlsx,Rate Cards,Tomas Halvorsen,Coupa,2026-06-06,Confidential,synthetic,7c1edd98d7b853e3
+EVID-0099,vendors_contracts_source,source/10_vendors_contracts_source/vendor_scorecards.xlsx,Vendor Scorecards,Tomas Halvorsen,Coupa,2026-06-06,Internal,synthetic,97058c00c41ea723
+EVID-0100,vendors_contracts_source,source/10_vendors_contracts_source/sourcing_pipeline.xlsx,Sourcing Pipeline,Tomas Halvorsen,Coupa,2026-06-06,Internal,synthetic,1d29a7c69a017901
+EVID-0101,vendors_contracts_source,source/10_vendors_contracts_source/bafo_model.xlsx,BAFO Model,Tomas Halvorsen,Coupa,2026-06-06,Confidential,synthetic,b95f76208ec352e6
+EVID-0102,vendors_contracts_source,source/10_vendors_contracts_source/contract_risks.xlsx,Contract Risks,Tomas Halvorsen,Coupa,2026-06-06,Internal,synthetic,ee198d5ff657c6ca
+EVID-0103,vendors_contracts_source,source/10_vendors_contracts_source/renewal_calendar.xlsx,Renewal Calendar,Tomas Halvorsen,Coupa,2026-06-06,Internal,synthetic,7c6ab5eb049526e9
+EVID-0104,vendors_contracts_source,source/10_vendors_contracts_source/rfp_requirements.docx,RFP Requirements,Tomas Halvorsen,Coupa,2026-06-06,Internal,synthetic,d79c8359d5bdae5a
+EVID-0105,vendors_contracts_source,source/10_vendors_contracts_source/ams_contract.pdf,AMS Contract,Tomas Halvorsen,Coupa,2026-06-06,Confidential,synthetic,e490f293af96ed24
+EVID-0106,risk_controls_responsible_ai,source/11_risk_controls_responsible_ai/risk_control_register.xlsx,Risk & Control Register,David Chen,GRC,2026-06-06,Confidential,synthetic,ef6a110fb1ef72ee
+EVID-0107,risk_controls_responsible_ai,source/11_risk_controls_responsible_ai/sox_controls.xlsx,SOX Controls,David Chen,GRC,2026-06-06,Confidential,synthetic,f9b263775683c3bf
+EVID-0108,risk_controls_responsible_ai,source/11_risk_controls_responsible_ai/payment_fraud_controls.xlsx,Payment/Fraud Controls,Elena Vasquez,Kyriba TMS,2026-06-06,Confidential,synthetic,76ecbe93d03944da
+EVID-0109,risk_controls_responsible_ai,source/11_risk_controls_responsible_ai/segregation_of_duties.xlsx,Segregation of Duties,David Chen,SailPoint,2026-06-06,Confidential,synthetic,368c03fa4d3e1915
+EVID-0110,risk_controls_responsible_ai,source/11_risk_controls_responsible_ai/audit_findings.xlsx,Audit Findings,David Chen,GRC,2026-06-06,Confidential,synthetic,95942d05cf790b8c
+EVID-0111,risk_controls_responsible_ai,source/11_risk_controls_responsible_ai/cyber_risks.xlsx,Cyber Risks,David Chen,Sentinel,2026-06-06,Confidential,synthetic,9b798afad8a1758c
+EVID-0112,risk_controls_responsible_ai,source/11_risk_controls_responsible_ai/operational_risks.xlsx,Operational Risks,David Chen,GRC,2026-06-06,Internal,synthetic,1001a89468a7f9c5
+EVID-0113,risk_controls_responsible_ai,source/11_risk_controls_responsible_ai/responsible_ai_controls.xlsx,Responsible AI Controls,Aisha Bello,AI Governance,2026-06-06,Internal,synthetic,ebc8166a0dc87b5f
+EVID-0114,risk_controls_responsible_ai,source/11_risk_controls_responsible_ai/model_use_case_review_checklist.xlsx,Model Review Checklist,Aisha Bello,AI Governance,2026-06-06,Internal,synthetic,abca9855f9c45fdb
+EVID-0115,risk_controls_responsible_ai,source/11_risk_controls_responsible_ai/evidence_gap_register.csv,Evidence Gap Register,David Chen,GRC,2026-06-06,Internal,synthetic,349112ad8880246b
+EVID-0116,risk_controls_responsible_ai,source/11_risk_controls_responsible_ai/ai_governance.pdf,AI Governance Framework,Aisha Bello,AI Governance,2026-06-06,Internal,synthetic,2b565ec2083ac396
+EVID-0117,ai_use_cases_moves,source/12_ai_use_cases_moves/ai_opportunity_portfolio.xlsx,AI Opportunity Portfolio,Marcus Reilly,AbarVa,2026-06-06,Internal,synthetic,4d5cde7c3aad71bf
+EVID-0118,ai_use_cases_moves,source/12_ai_use_cases_moves/finance_ai_use_cases.xlsx,Finance AI Use Cases,Marcus Reilly,AbarVa,2026-06-06,Internal,synthetic,170dff4fef7fbd3e
+EVID-0119,ai_use_cases_moves,source/12_ai_use_cases_moves/it_modernization_use_cases.xlsx,IT Modernization Use Cases,Marcus Reilly,AbarVa,2026-06-06,Internal,synthetic,d0ad1a1b6d1c364f
+EVID-0120,ai_use_cases_moves,source/12_ai_use_cases_moves/procurement_vendor_optimization_use_cases.xlsx,Procurement/Vendor Optimization Use Cases,Marcus Reilly,AbarVa,2026-06-06,Internal,synthetic,022bb32ceb330fba
+EVID-0121,ai_use_cases_moves,source/12_ai_use_cases_moves/cost_optimization_use_case.xlsx,Cost Optimization Use Cases,Marcus Reilly,AbarVa,2026-06-06,Internal,synthetic,d14d8f6e5fe8765c
+EVID-0122,ai_use_cases_moves,source/12_ai_use_cases_moves/value_realization_model.xlsx,Value Realization Model,Marcus Reilly,AbarVa,2026-06-06,Internal,synthetic,35aba79f921e48cf
+EVID-0123,ai_use_cases_moves,source/12_ai_use_cases_moves/treasury_kyriba_success_use_case.pdf,Treasury/Kyriba Success Use Case,Elena Vasquez,Kyriba TMS,2026-06-06,Internal,synthetic,7316145928d5eee6
+EVID-0124,ai_use_cases_moves,source/12_ai_use_cases_moves/reporting_rationalization_use_case.docx,Reporting Rationalization Use Case,Aisha Bello,Power BI,2026-06-06,Internal,synthetic,449c0750ee18ccf6
+EVID-0125,ai_use_cases_moves,source/12_ai_use_cases_moves/human_agent_operating_model.docx,Human + Agent Operating Model,Marcus Reilly,AbarVa,2026-06-06,Internal,synthetic,0f27119e10477796
+EVID-0126,ai_use_cases_moves,source/12_ai_use_cases_moves/ai_moves_portfolio_summary.md,AI Moves Portfolio Summary,Marcus Reilly,AbarVa,2026-06-06,Internal,synthetic,580e9853f1794dad
+EVID-0127,it_systems_architecture,source/06_it_systems_architecture/current_state_architecture.svg,Current-State Enterprise Architecture,Liam O'Sullivan,Architecture,2026-06-06,Internal,synthetic,01003454bf75c379
+EVID-0128,it_systems_architecture,source/06_it_systems_architecture/integration_architecture_diagram.svg,Integration & Eventing Architecture,Liam O'Sullivan,SAP PI/PO,2026-06-06,Internal,synthetic,093c36317d8ab3d4
+EVID-0129,treasury_kyriba,source/05_treasury_kyriba/kyriba_connectivity_architecture.svg,Kyriba Treasury Connectivity Architecture,Elena Vasquez,Kyriba TMS,2026-06-06,Internal,synthetic,4051a328489ab9cd
+EVID-0130,data_analytics_reporting,source/07_data_analytics_reporting/data_platform_architecture.svg,Data & Analytics Platform Architecture,Aisha Bello,Snowflake,2026-06-06,Internal,synthetic,66b168f5a3f203f0
+EVID-0131,risk_controls_responsible_ai,source/11_risk_controls_responsible_ai/security_zero_trust_architecture.svg,Security & Zero-Trust Reference Architecture,David Chen,Microsoft Sentinel,2026-06-06,Internal,synthetic,e4400172d9db6ada
+EVID-0132,ai_use_cases_moves,source/12_ai_use_cases_moves/ai_agent_reference_architecture.svg,Enterprise AI & Agent Reference Architecture,Marcus Reilly,AbarVa,2026-06-06,Internal,synthetic,3556770711bdf8c9
+EVID-0133,strategy_initiatives,source/03_strategy_initiatives/roadmap_2026_2027.svg,Transformation Roadmap FY26-27,Marcus Reilly,Corporate Strategy,2026-06-06,Internal,synthetic,dd541b1ea621a4f5
