@@ -176,3 +176,52 @@ describe('sweepStaleDeliverableRuns', () => {
     expect(await sweepStaleDeliverableRuns(15, { rawSql: runner })).toEqual([]);
   });
 });
+
+// Move-listing: the move id lives inside job_payload, so the repo filters in code
+// and keeps the latest succeeded run per deliverable type (rows arrive newest-first).
+function fakeListDb(rows: Array<Record<string, unknown>>) {
+  const cap: { filters: Array<[string, unknown]> } = { filters: [] };
+  const b: Record<string, unknown> = {};
+  b.from = () => b;
+  b.select = () => b;
+  b.eq = (k: string, v: unknown) => { cap.filters.push([k, v]); return b; };
+  b.order = () => b;
+  b.limit = async () => ({ data: rows, error: null });
+  return { db: b as never, cap };
+}
+
+function runRow(over: Record<string, unknown>): Record<string, unknown> {
+  return {
+    id: 'r', client_id: 'c1', tenant_key: 't', user_id: 'u', module: 'moves',
+    archetype: 'ams', deliverable_type: 'charter', status: 'succeeded',
+    artifact_id: 'art-1', blockers: [], warnings: [], created_at: 'a', updated_at: 'b',
+    job_payload: { sourceArtifactRef: 'move-1' }, ...over,
+  };
+}
+
+describe('listSucceededRunsForMove', () => {
+  it('keeps only this move and the latest run per deliverable type', async () => {
+    const { listSucceededRunsForMove } = await import('../runs-repository');
+    const { db, cap } = fakeListDb([
+      runRow({ id: 'r1', deliverable_type: 'charter', artifact_id: 'art-new', updated_at: '2026-06-17', job_payload: { sourceArtifactRef: 'move-1' } }),
+      runRow({ id: 'r2', deliverable_type: 'charter', artifact_id: 'art-old', updated_at: '2026-06-10', job_payload: { sourceArtifactRef: 'move-1' } }),
+      runRow({ id: 'r3', deliverable_type: 'roadmap', artifact_id: 'art-rm', job_payload: { sourceArtifactRef: 'move-1' } }),
+      runRow({ id: 'r4', deliverable_type: 'charter', artifact_id: 'art-other', job_payload: { sourceArtifactRef: 'OTHER-move' } }),
+    ]);
+    const out = await listSucceededRunsForMove('c1', 'move-1', db);
+    expect(cap.filters).toContainEqual(['client_id', 'c1']);
+    expect(cap.filters).toContainEqual(['status', 'succeeded']);
+    const byType = Object.fromEntries(out.map((r) => [r.deliverableType, r.artifactId]));
+    expect(byType.charter).toBe('art-new'); // newest charter, not art-old/art-other
+    expect(byType.roadmap).toBe('art-rm');
+    expect(out).toHaveLength(2); // OTHER-move excluded
+  });
+
+  it('skips runs with no artifact id', async () => {
+    const { listSucceededRunsForMove } = await import('../runs-repository');
+    const { db } = fakeListDb([
+      runRow({ id: 'r1', deliverable_type: 'charter', artifact_id: null, job_payload: { sourceArtifactRef: 'move-1' } }),
+    ]);
+    expect(await listSucceededRunsForMove('c1', 'move-1', db)).toHaveLength(0);
+  });
+});

@@ -303,3 +303,36 @@ export async function getDeliverableRun(
   if (error) throw new Error(`deliverable_runs read failed: ${error.message}`);
   return data ? rowToRecord(data as Record<string, unknown>) : null;
 }
+
+/**
+ * Latest SUCCEEDED run per deliverable type for a Move. The source-artifact ref
+ * (the moveId) lives inside the JSONB job_payload, not a top-level column, so we
+ * read the client's recent succeeded runs (newest first) and filter in code,
+ * keeping only the first (latest) run seen for each deliverableType. Used to show
+ * orchestrator / Approve & Build output (which lands in generated_artifacts, not
+ * deliverables_v2) as "built" on the browse surfaces, with the artifactId for
+ * download via /api/v1/artifacts/{id}.
+ */
+export async function listSucceededRunsForMove(
+  clientId: string,
+  moveId: string,
+  db: DbClient = getAzureWriteFluentClient(),
+  limit = 300,
+): Promise<DeliverableRunRecord[]> {
+  const { data, error } = await db
+    .from('deliverable_runs')
+    .select('*')
+    .eq('client_id', clientId)
+    .eq('status', 'succeeded')
+    .order('updated_at', { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`deliverable_runs move list failed: ${error.message}`);
+  const rows = ((data as Record<string, unknown>[] | null) ?? []).map(rowToRecord);
+  const latestByType = new Map<string, DeliverableRunRecord>();
+  for (const r of rows) {
+    if (r.jobPayload?.sourceArtifactRef !== moveId) continue;
+    if (!r.artifactId) continue;
+    if (!latestByType.has(r.deliverableType)) latestByType.set(r.deliverableType, r);
+  }
+  return [...latestByType.values()];
+}
