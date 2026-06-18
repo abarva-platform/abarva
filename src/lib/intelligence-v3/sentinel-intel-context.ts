@@ -9,6 +9,7 @@ import {
 } from '@/components/intelligence-v3/cxo-fixtures';
 import type { ArtOfPossibleData, RetailIntelligenceStatus, StageKey } from '@/components/intelligence-v3/types';
 import type { EnterpriseContextOverview } from '@/lib/enterprise-context/intelligence-read-model';
+import type { ContextInsight } from '@/lib/intelligence/context-insights';
 import type { BriefData, MapData } from '@/lib/knowledge-corpus/types';
 
 export interface BuildSentinelIntelContextArgs {
@@ -23,6 +24,7 @@ export interface BuildSentinelIntelContextArgs {
   briefData?: BriefData | null;
   mapData?: MapData | null;
   enterpriseContext?: EnterpriseContextOverview | null;
+  contextInsights?: readonly ContextInsight[];
 }
 
 export function buildSentinelIntelContext(args: BuildSentinelIntelContextArgs): Record<string, unknown> {
@@ -46,11 +48,12 @@ export function buildSentinelIntelContext(args: BuildSentinelIntelContextArgs): 
   const strategyFacts = args.isApexBound ? apexStrategyFacts(args) : [];
   const sourceFacts = args.isApexBound ? apexSourceFacts(args) : [];
   const enterpriseFacts = enterpriseContextFacts(args.enterpriseContext);
+  const insightFacts = contextInsightFacts(args.contextInsights);
   const qualityFacts = uniqueFacts([
     ...(args.isApexBound ? apexQualityFacts(args) : []),
     ...enterpriseQualityFacts(args.enterpriseContext),
   ]);
-  const combinedTenantFacts = uniqueFacts([...tenantFacts, ...enterpriseFacts]);
+  const combinedTenantFacts = uniqueFacts([...tenantFacts, ...enterpriseFacts, ...insightFacts]);
 
   return {
     activeTab: args.stage,
@@ -64,6 +67,7 @@ export function buildSentinelIntelContext(args: BuildSentinelIntelContextArgs): 
     useCaseFacts,
     graphFacts,
     riskFacts,
+    insightFacts,
     strategyFacts,
     sourceFacts,
     qualityFacts,
@@ -72,6 +76,7 @@ export function buildSentinelIntelContext(args: BuildSentinelIntelContextArgs): 
       ...stageFacts,
       ...combinedTenantFacts,
       ...riskFacts,
+      ...insightFacts,
       ...strategyFacts,
       ...vendorFacts,
       ...useCaseFacts,
@@ -168,6 +173,20 @@ function enterpriseQualityFacts(overview: EnterpriseContextOverview | null | und
     `Enterprise Context quality: ${overview.counts.qualityIssues} open quality issues and ${overview.counts.stewardshipTasks} stewardship tasks; ${overview.evidenceUsableCount}/${overview.counts.evidence} evidence rows are usable.`,
     `Enterprise Context freshness: ${overview.freshnessCounts.fresh ?? 0} fresh records, ${overview.freshnessCounts.attention ?? 0} attention records, ${overview.freshnessCounts.stale ?? 0} stale records, ${overview.freshnessCounts.unknown ?? 0} unknown records.`,
   ];
+}
+
+function contextInsightFacts(insights: readonly ContextInsight[] | null | undefined): string[] {
+  if (!insights || insights.length === 0) return [];
+  return insights.slice(0, 12).map((insight) => {
+    const factIds = insight.derivedFromFactIds.slice(0, 6).join(', ') || 'no fact IDs attached';
+    const recordIds = insight.derivedFromRecordIds.slice(0, 6).join(', ') || 'no record IDs attached';
+    return [
+      `Live context insight (${insight.materiality}, ${insight.domain}, ${insight.ruleId}): ${insight.headline}.`,
+      `So what: ${insight.soWhat}`,
+      insight.action ? `Action: ${insight.action}` : null,
+      `Evidence: confidence ${insight.confidence}; freshness ${insight.freshnessStatus}; records ${recordIds}; facts ${factIds}.`,
+    ].filter(Boolean).join(' ');
+  });
 }
 
 function briefFacts(data: BriefData | null | undefined): string[] {

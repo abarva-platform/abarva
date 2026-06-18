@@ -30,6 +30,7 @@ export function retrieveSurfaceContextSources(
   ]);
   const tenantFacts = uniqueFacts([
     ...sanitizeFacts(context.tenantFacts),
+    ...sanitizeFacts(context.insightFacts),
     ...sanitizeFacts(context.riskFacts),
     ...sanitizeFacts(context.strategyFacts),
     ...sanitizeFacts(context.vendorFacts),
@@ -96,7 +97,7 @@ export function retrieveSurfaceContextSources(
 }
 
 function tenantMatchesQuery(query: string): boolean {
-  return /\b(current|state|tenant|apex|meridian|retail|priority|risk|strategy|vendor|use case|source|evidence|today|data|analytics|landscape|org|decision|cmdb|incident|problem|change|policy|contract|renewal|spend|stewardship)\b/i.test(query);
+  return /\b(current|state|tenant|apex|meridian|retail|priority|risk|strategy|insights?|so what|recommend(?:ed|ation|ations)?|actions?|why|vendor|use case|source|evidence|today|data|analytics|landscape|org|decision|cmdb|incident|problem|change|policy|contract|renewal|spend|stewardship)\b/i.test(query);
 }
 
 function graphMatchesQuery(query: string): boolean {

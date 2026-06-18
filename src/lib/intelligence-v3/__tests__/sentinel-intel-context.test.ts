@@ -95,6 +95,26 @@ describe('buildSentinelIntelContext', () => {
           'Meridian Health Enterprise Context: 1030 records, 11428 facts, 220 CI relationships, and 1030 evidence rows are loaded from internal context sources.',
         ],
       },
+      contextInsights: [{
+        id: 'insight-1',
+        tenantKey: 'meridian',
+        headline: 'Databricks lakehouse gates prior authorization AI',
+        soWhat: 'Prior authorization automation depends on clinical, claims, pharmacy, and call center data landing in one governed semantic layer.',
+        domain: 'data-foundation',
+        materiality: 'high',
+        derivedFromRecordIds: ['rec-claims-1'],
+        derivedFromFactIds: ['fact-claims-1'],
+        ruleId: 'healthcare-data-foundation-gate',
+        evidence: 'enterprise_context_facts',
+        confidence: 'high',
+        freshnessStatus: 'fresh',
+        lifecycleState: 'active',
+        action: 'Sequence prior authorization AI after the lakehouse gate.',
+        entityName: 'Databricks Lakehouse',
+        entityType: 'platform',
+        insightPayload: {},
+        updatedAt: '2026-06-18T09:00:00.000Z',
+      }],
     });
 
     expect(context).toMatchObject({
@@ -110,8 +130,13 @@ describe('buildSentinelIntelContext', () => {
       qualityFacts: expect.arrayContaining([
         expect.stringContaining('146 open quality issues'),
       ]),
+      insightFacts: expect.arrayContaining([
+        expect.stringContaining('Databricks lakehouse gates prior authorization AI'),
+        expect.stringContaining('fact-claims-1'),
+      ]),
     }));
     expect((context.facts as string[]).join('\n')).toContain('Incident and problem pressure');
+    expect((context.facts as string[]).join('\n')).toContain('healthcare-data-foundation-gate');
   });
 
   it('does not inject Apex as the active tenant for a non-Apex Sentinel call', () => {
