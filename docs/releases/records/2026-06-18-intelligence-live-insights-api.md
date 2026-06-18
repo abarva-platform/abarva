@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -38,13 +38,17 @@ Adds a tenant-scoped JSON API for the Intelligence module to read materialized `
 - PASS: `/Users/anand/Projects/nexus/node_modules/.bin/eslint src/lib/intelligence/context-insights.ts src/lib/intelligence/__tests__/context-insights.test.ts src/app/api/intelligence/insights/route.ts src/app/api/intelligence/insights/__tests__/route.test.ts`
 - PASS: `/Users/anand/Projects/nexus/node_modules/.bin/tsc --noEmit --pretty false`
 - PASS: `git diff --check`
-- PENDING: `node scripts/release-check.mjs --base origin/codex/ai-control-tower-substrate --head HEAD`
-- PENDING: CI on PR.
-- PENDING: ACA deployment and signed-in/live API smoke after merge.
+- PASS: `node scripts/release-check.mjs --base origin/codex/ai-control-tower-substrate --head HEAD`
+- PASS: PR #3663 CI on GitHub: ESLint, Routes and disclaimers, Typecheck + reasoning-layer tests.
+- PASS: ACR build `cadp` pushed `acrabarvalab001.azurecr.io/abarva/web:intelligence-insights-api-5b20dd3e@sha256:f346d3c110239c805bce30e94aa759d5a183db706d730a1baeb877cbf29705a8`.
+- PASS: ACA web revision `ca-abarva-web-lab-eastus--0000104` is active at 100% traffic with image `acrabarvalab001.azurecr.io/abarva/web:intelligence-insights-api-5b20dd3e`.
+- PASS: Public health smoke returned HTTP 200 with `postgres: true`, `direct_postgres: true`, and `azure_graph: "postgres"`.
+- PASS: Anonymous `/api/intelligence/insights?limit=3` smoke returned Clerk sign-in redirect, proving the route is not publicly exposed.
+- NOT RUN: Signed-in tenant API smoke was not run in this release record because no reusable Clerk-authenticated browser/session cookie was available to the deploy job.
 
 ## Rollout Plan
 
-Merge to `codex/ai-control-tower-substrate`, build and deploy the ACA web image, shift web traffic to the new revision after `/api/health` is green, then smoke `/api/intelligence/insights` with a signed-in Meridian or Lakeshore session.
+Merged to `codex/ai-control-tower-substrate` in PR #3663, built and deployed the ACA web image, shifted web traffic to revision `ca-abarva-web-lab-eastus--0000104` after `/api/health` was green, and confirmed the insights route is Clerk-protected. A signed-in Meridian or Lakeshore browser smoke is still required before claiming UI-visible retrieval.
 
 ## Rollback Plan
 
@@ -52,8 +56,14 @@ Code rollback is a Git revert and ACA web image rollback to the prior healthy re
 
 ## Audit Evidence
 
+- PR URL: https://github.com/abarva-platform/abarva/pull/3663
+- Merge commit: `5b20dd3e984a5815230462b811d376917321b189`
 - Prior data-plane proof: `context_insights` materializer verify execution `job-abarva-private-operator-eus-en2ye2q` proved 24 cited insights for `meridian-health` and 24 cited insights for `lakeshore`.
-- Pending PR URL, CI, deploy revision, and smoke output.
+- ACR build: `cadp`
+- Deployed image: `acrabarvalab001.azurecr.io/abarva/web:intelligence-insights-api-5b20dd3e@sha256:f346d3c110239c805bce30e94aa759d5a183db706d730a1baeb877cbf29705a8`
+- ACA serving revision: `ca-abarva-web-lab-eastus--0000104`, 100% traffic as of 2026-06-18 09:53 UTC.
+- Health smoke: `https://app.abarva.ai/api/health` returned HTTP 200 with Postgres checks green.
+- Auth smoke: `https://app.abarva.ai/api/intelligence/insights?limit=3` returned HTTP 307 to Clerk sign-in when unsigned.
 
 ## Known Gaps
 
