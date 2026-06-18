@@ -47,6 +47,43 @@ interface FileReceipt {
   status: "loaded" | "graph_loaded";
 }
 
+const CLASSIFICATION_BY_FAMILY: Record<
+  ContextDimensionFamily,
+  {
+    domainSegment: string;
+    businessFunction: string;
+  }
+> = {
+  enterprise_operating_model: {
+    domainSegment: "OPERATIONS",
+    businessFunction: "CORPORATE",
+  },
+  technology_estate: {
+    domainSegment: "INFRASTRUCTURE",
+    businessFunction: "IT",
+  },
+  data_connectivity: {
+    domainSegment: "DATA_ANALYTICS",
+    businessFunction: "IT",
+  },
+  financial_commercial: {
+    domainSegment: "ERP",
+    businessFunction: "FINANCE",
+  },
+  execution_operations: {
+    domainSegment: "OPERATIONS",
+    businessFunction: "IT",
+  },
+  governance_ai_evidence: {
+    domainSegment: "SECURITY_IDENTITY",
+    businessFunction: "COMPLIANCE_LEGAL",
+  },
+  personas_workforce: {
+    domainSegment: "HR_WORKFORCE",
+    businessFunction: "HUMAN_RESOURCES",
+  },
+};
+
 const TOWER_SUPPLEMENT_ENTRIES: ManifestLoadEntry[] = [
   {
     order: 7,
@@ -347,6 +384,7 @@ async function loadFile(
       byteSize: bytes.byteLength,
     },
     mapping: { templateId: entry.template_id },
+    classificationOverrides: CLASSIFICATION_BY_FAMILY[dimensionFamily],
     loadOrder: entry.order,
     db,
   });

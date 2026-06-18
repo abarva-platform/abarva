@@ -529,6 +529,9 @@ describe("csv upload connector", () => {
         client_id: "client-first-capital",
         tenant_key: "first-capital",
         source_record_id: "ven-1",
+        domain_segment: "DATA_ANALYTICS",
+        classification_source: "OPERATOR_CONFIRMED",
+        lifecycle_state: "active",
         embedding_status: "pending",
       }),
     ]);
