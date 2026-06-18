@@ -1,0 +1,1605 @@
+{
+  "package_id": "AI_CONTROL_TOWER_SYNTHETIC_CANONICAL_V1",
+  "generated_at": "2026-06-16T17:00:00.000Z",
+  "client": {
+    "client_reference": "firstcapital",
+    "client_display_name": "First Capital Financial",
+    "reporting_period_start": "2026-05-01",
+    "reporting_period_end": "2026-05-31",
+    "template_version": "ai-control-tower-template-v1"
+  },
+  "sheets": {
+    "source_manifest": [
+      {
+        "source_id": "SRC-M365-COPILOT-MAY",
+        "source_system": "Microsoft 365 Copilot",
+        "source_type": "usage_export",
+        "source_name": "M365 Copilot May usage",
+        "owner_role": "Digital Workplace Lead",
+        "cadence": "monthly",
+        "period_end": "2026-05-31",
+        "refresh_status": "committed",
+        "data_class": "internal"
+      },
+      {
+        "source_id": "SRC-GITHUB-DORA-MAY",
+        "source_system": "GitHub/Jira",
+        "source_type": "engineering_metrics",
+        "source_name": "Developer DORA May",
+        "owner_role": "VP Engineering",
+        "cadence": "monthly",
+        "period_end": "2026-05-31",
+        "refresh_status": "committed",
+        "data_class": "internal"
+      },
+      {
+        "source_id": "SRC-SNOW-AI-MAY",
+        "source_system": "ServiceNow",
+        "source_type": "agent_outcomes",
+        "source_name": "ServiceNow AI agent outcomes",
+        "owner_role": "VP Service Management",
+        "cadence": "monthly",
+        "period_end": "2026-05-31",
+        "refresh_status": "committed",
+        "data_class": "internal"
+      },
+      {
+        "source_id": "SRC-WORKDAY-AI-MAY",
+        "source_system": "Workday",
+        "source_type": "agent_outcomes",
+        "source_name": "Workday Illuminate outcomes",
+        "owner_role": "CHRO Operations",
+        "cadence": "monthly",
+        "period_end": "2026-05-31",
+        "refresh_status": "committed",
+        "data_class": "confidential"
+      },
+      {
+        "source_id": "SRC-ERP-AI-MAY",
+        "source_system": "SAP/Oracle ERP",
+        "source_type": "agent_outcomes",
+        "source_name": "ERP AI agent outcomes",
+        "owner_role": "ERP Platform Owner",
+        "cadence": "monthly",
+        "period_end": "2026-05-31",
+        "refresh_status": "committed",
+        "data_class": "confidential"
+      },
+      {
+        "source_id": "SRC-FINANCE-BENEFITS-MAY",
+        "source_system": "Finance PMO",
+        "source_type": "benefit_realization",
+        "source_name": "AI benefit realization ledger",
+        "owner_role": "CFO Transformation",
+        "cadence": "monthly",
+        "period_end": "2026-05-31",
+        "refresh_status": "committed",
+        "data_class": "confidential"
+      },
+      {
+        "source_id": "SRC-PROC-SPEND-MAY",
+        "source_system": "Procurement",
+        "source_type": "spend_contracts",
+        "source_name": "AI vendor spend and renewals",
+        "owner_role": "VP Procurement",
+        "cadence": "monthly",
+        "period_end": "2026-05-31",
+        "refresh_status": "committed",
+        "data_class": "confidential"
+      },
+      {
+        "source_id": "SRC-MRM-RISK-MAY",
+        "source_system": "Model Risk Management",
+        "source_type": "risk_governance",
+        "source_name": "AI governance and MRM status",
+        "owner_role": "Chief Risk Officer",
+        "cadence": "monthly",
+        "period_end": "2026-05-31",
+        "refresh_status": "review_required",
+        "data_class": "restricted"
+      },
+      {
+        "source_id": "SRC-EVIDENCE-MAY",
+        "source_system": "Evidence Register",
+        "source_type": "evidence_links",
+        "source_name": "AI control evidence links",
+        "owner_role": "AI Governance Lead",
+        "cadence": "monthly",
+        "period_end": "2026-05-31",
+        "refresh_status": "committed",
+        "data_class": "internal"
+      },
+      {
+        "source_id": "SRC-REFRESH-MAY",
+        "source_system": "Admin Loader",
+        "source_type": "refresh_log",
+        "source_name": "May template refresh run",
+        "owner_role": "AbarVa Operator",
+        "cadence": "monthly",
+        "period_end": "2026-05-31",
+        "refresh_status": "parsed",
+        "data_class": "internal"
+      }
+    ],
+    "initiative_registry": [
+      {
+        "source_id": "SRC-FINANCE-BENEFITS-MAY",
+        "initiative_id": "INIT-COPILOT-FINANCE",
+        "initiative_name": "Copilot for Finance Analysts",
+        "category": "productivity",
+        "stage": "scale",
+        "owner": "Finance Operations",
+        "sponsor": "CFO",
+        "vendor": "Microsoft",
+        "tool_or_system": "M365 Copilot",
+        "target_metric_key": "close_cycle_hours",
+        "status_flag": "amber"
+      },
+      {
+        "source_id": "SRC-SNOW-AI-MAY",
+        "initiative_id": "INIT-SNOW-ITSM",
+        "initiative_name": "ServiceNow ITSM Agent Assist",
+        "category": "agent",
+        "stage": "scale",
+        "owner": "IT Operations",
+        "sponsor": "CIO",
+        "vendor": "ServiceNow",
+        "tool_or_system": "Now Assist",
+        "target_metric_key": "deflection_rate",
+        "status_flag": "green"
+      },
+      {
+        "source_id": "SRC-WORKDAY-AI-MAY",
+        "initiative_id": "INIT-WORKDAY-HR",
+        "initiative_name": "Workday HR Case Agent",
+        "category": "agent",
+        "stage": "pilot",
+        "owner": "HR Shared Services",
+        "sponsor": "CHRO",
+        "vendor": "Workday",
+        "tool_or_system": "Illuminate",
+        "target_metric_key": "case_cycle_time",
+        "status_flag": "amber"
+      },
+      {
+        "source_id": "SRC-ERP-AI-MAY",
+        "initiative_id": "INIT-SAP-JOULE",
+        "initiative_name": "SAP Joule Finance Agent",
+        "category": "agent",
+        "stage": "blocked",
+        "owner": "ERP Finance",
+        "sponsor": "CFO/CIO",
+        "vendor": "SAP",
+        "tool_or_system": "Joule",
+        "target_metric_key": "invoice_exception_hours",
+        "status_flag": "red"
+      },
+      {
+        "source_id": "SRC-GITHUB-DORA-MAY",
+        "initiative_id": "INIT-CODE-ASSIST",
+        "initiative_name": "Developer AI Coding Assistants",
+        "category": "developer_productivity",
+        "stage": "scale",
+        "owner": "Engineering",
+        "sponsor": "CIO",
+        "vendor": "GitHub/OpenAI/Anthropic",
+        "tool_or_system": "Copilot/Codex/Claude Code",
+        "target_metric_key": "lead_time_hours",
+        "status_flag": "green"
+      },
+      {
+        "source_id": "SRC-MRM-RISK-MAY",
+        "initiative_id": "INIT-WEALTH-COPILOT",
+        "initiative_name": "Wealth Advisor Copilot",
+        "category": "front_office",
+        "stage": "hold",
+        "owner": "Wealth Management",
+        "sponsor": "Head of Wealth",
+        "vendor": "Microsoft/OpenAI",
+        "tool_or_system": "Advisor Copilot",
+        "target_metric_key": "advisor_prep_minutes",
+        "status_flag": "red"
+      },
+      {
+        "source_id": "SRC-MRM-RISK-MAY",
+        "initiative_id": "INIT-AML-TRIAGE",
+        "initiative_name": "AML Alert Triage AI",
+        "category": "risk_operations",
+        "stage": "pilot",
+        "owner": "Financial Crimes",
+        "sponsor": "CRO",
+        "vendor": "NICE Actimize",
+        "tool_or_system": "AML AI",
+        "target_metric_key": "alert_triage_minutes",
+        "status_flag": "amber"
+      }
+    ],
+    "tool_usage_monthly": [
+      {
+        "source_id": "SRC-M365-COPILOT-MAY",
+        "tool_id": "TOOL-M365",
+        "tool_name": "M365 Copilot",
+        "vendor": "Microsoft",
+        "team": "Finance Analysts",
+        "user_group_or_team": "Finance Analysts",
+        "persona": "Financial Analyst",
+        "period_start": "2026-05-01",
+        "period_end": "2026-05-31",
+        "licensed_seats": 420,
+        "active_users": 138,
+        "usage_events": 18400,
+        "accepted_events": 9100,
+        "monthly_spend_usd": 12600,
+        "evidence_state": "review_required"
+      },
+      {
+        "source_id": "SRC-GITHUB-DORA-MAY",
+        "tool_id": "TOOL-CODE",
+        "tool_name": "AI Coding Assistants",
+        "vendor": "GitHub/OpenAI/Anthropic",
+        "team": "Digital Engineering",
+        "user_group_or_team": "Digital Engineering",
+        "persona": "Developer",
+        "period_start": "2026-05-01",
+        "period_end": "2026-05-31",
+        "licensed_seats": 300,
+        "active_users": 246,
+        "usage_events": 52200,
+        "accepted_events": 33100,
+        "monthly_spend_usd": 27000,
+        "evidence_state": "retrieval_verified"
+      },
+      {
+        "source_id": "SRC-M365-COPILOT-MAY",
+        "tool_id": "TOOL-WEALTH",
+        "tool_name": "Advisor Copilot",
+        "vendor": "Microsoft/OpenAI",
+        "team": "Wealth Advisors",
+        "user_group_or_team": "Wealth Advisors",
+        "persona": "Advisor",
+        "period_start": "2026-05-01",
+        "period_end": "2026-05-31",
+        "licensed_seats": 600,
+        "active_users": 54,
+        "usage_events": 2600,
+        "accepted_events": 800,
+        "monthly_spend_usd": 42000,
+        "evidence_state": "review_required"
+      }
+    ],
+    "persona_productivity": [
+      {
+        "source_id": "SRC-FINANCE-BENEFITS-MAY",
+        "persona_id": "PER-FIN-ANALYST",
+        "persona_name": "Finance Analyst",
+        "function": "Finance",
+        "workflow": "monthly close variance prep",
+        "metric_key": "hours_per_close_package",
+        "baseline_value": 14,
+        "current_value": 10,
+        "target_value": 8,
+        "confidence": "medium",
+        "initiative_id": "INIT-COPILOT-FINANCE",
+        "evidence_state": "review_required"
+      },
+      {
+        "source_id": "SRC-GITHUB-DORA-MAY",
+        "persona_id": "PER-DEVELOPER",
+        "persona_name": "Developer",
+        "function": "Technology",
+        "workflow": "feature delivery",
+        "metric_key": "lead_time_hours",
+        "baseline_value": 96,
+        "current_value": 61,
+        "target_value": 55,
+        "confidence": "high",
+        "initiative_id": "INIT-CODE-ASSIST",
+        "evidence_state": "retrieval_verified"
+      },
+      {
+        "source_id": "SRC-WORKDAY-AI-MAY",
+        "persona_id": "PER-HR-AGENT",
+        "persona_name": "HR Service Agent",
+        "function": "HR",
+        "workflow": "employee case resolution",
+        "metric_key": "cycle_time_hours",
+        "baseline_value": 28,
+        "current_value": 22,
+        "target_value": 18,
+        "confidence": "medium",
+        "initiative_id": "INIT-WORKDAY-HR",
+        "evidence_state": "committed"
+      }
+    ],
+    "dora_metrics": [
+      {
+        "source_id": "SRC-GITHUB-DORA-MAY",
+        "team": "Digital Payments",
+        "repo": "payments-api",
+        "tool_id": "TOOL-CODE",
+        "period_start": "2026-05-01",
+        "period_end": "2026-05-31",
+        "lead_time_hours_before": 110,
+        "lead_time_hours_after": 68,
+        "change_failure_rate_pct_before": 12,
+        "change_failure_rate_pct_after": 9,
+        "mttr_hours_before": 7,
+        "mttr_hours_after": 5,
+        "sample_size_deploys": 84
+      },
+      {
+        "source_id": "SRC-GITHUB-DORA-MAY",
+        "team": "Mobile Banking",
+        "repo": "mobile-app",
+        "tool_id": "TOOL-CODE",
+        "period_start": "2026-05-01",
+        "period_end": "2026-05-31",
+        "lead_time_hours_before": 82,
+        "lead_time_hours_after": 54,
+        "change_failure_rate_pct_before": 10,
+        "change_failure_rate_pct_after": 8,
+        "mttr_hours_before": 6,
+        "mttr_hours_after": 4,
+        "sample_size_deploys": 61
+      }
+    ],
+    "servicenow_ai_agents": [
+      {
+        "source_id": "SRC-SNOW-AI-MAY",
+        "agent_id": "AGENT-SNOW-ITSM",
+        "vendor": "ServiceNow",
+        "module": "ITSM",
+        "agent_name": "Now Assist ITSM",
+        "workflow": "incident summarization and deflection",
+        "eligible_volume": 12200,
+        "ai_touched_volume": 8100,
+        "auto_resolved_volume": 2450,
+        "monthly_spend_usd": 38000,
+        "evidence_state": "retrieval_verified"
+      },
+      {
+        "source_id": "SRC-SNOW-AI-MAY",
+        "agent_id": "AGENT-SNOW-GRC",
+        "vendor": "ServiceNow",
+        "module": "GRC",
+        "agent_name": "Now Assist GRC",
+        "workflow": "control evidence drafting",
+        "eligible_volume": 1800,
+        "ai_touched_volume": 540,
+        "auto_resolved_volume": 110,
+        "monthly_spend_usd": 9000,
+        "evidence_state": "review_required"
+      }
+    ],
+    "erp_hr_finance_agents": [
+      {
+        "source_id": "SRC-ERP-AI-MAY",
+        "agent_id": "AGENT-SAP-JOULE",
+        "vendor": "SAP",
+        "module": "Finance",
+        "agent_name": "SAP Joule Finance",
+        "workflow": "invoice exception explanation",
+        "eligible_volume": 8900,
+        "ai_touched_volume": 0,
+        "auto_resolved_volume": 0,
+        "monthly_spend_usd": 52000,
+        "evidence_state": "review_required"
+      },
+      {
+        "source_id": "SRC-WORKDAY-AI-MAY",
+        "agent_id": "AGENT-WDAY-HR",
+        "vendor": "Workday",
+        "module": "HR",
+        "agent_name": "Workday Illuminate HR",
+        "workflow": "employee case summary",
+        "eligible_volume": 6200,
+        "ai_touched_volume": 2100,
+        "auto_resolved_volume": 620,
+        "monthly_spend_usd": 24000,
+        "evidence_state": "committed"
+      }
+    ],
+    "benefit_realization": [
+      {
+        "source_id": "SRC-FINANCE-BENEFITS-MAY",
+        "benefit_id": "BEN-FIN-CLOSE",
+        "initiative_id": "INIT-COPILOT-FINANCE",
+        "benefit_name": "Finance close analyst time reduction",
+        "metric_key": "close_cycle_hours",
+        "promised_annual_value_usd": 8200000,
+        "realized_annual_value_usd": null,
+        "confidence": "low",
+        "readiness_state": "projected_only",
+        "evidence_state": "review_required"
+      },
+      {
+        "source_id": "SRC-GITHUB-DORA-MAY",
+        "benefit_id": "BEN-CODE-DORA",
+        "initiative_id": "INIT-CODE-ASSIST",
+        "benefit_name": "Developer cycle-time improvement",
+        "metric_key": "lead_time_hours",
+        "promised_annual_value_usd": 11200000,
+        "realized_annual_value_usd": 6900000,
+        "confidence": "high",
+        "readiness_state": "partially_realized",
+        "evidence_state": "retrieval_verified"
+      },
+      {
+        "source_id": "SRC-SNOW-AI-MAY",
+        "benefit_id": "BEN-SNOW-DEFLECT",
+        "initiative_id": "INIT-SNOW-ITSM",
+        "benefit_name": "ITSM ticket deflection",
+        "metric_key": "deflection_rate",
+        "promised_annual_value_usd": 5200000,
+        "realized_annual_value_usd": 3100000,
+        "confidence": "medium",
+        "readiness_state": "partially_realized",
+        "evidence_state": "committed"
+      }
+    ],
+    "spend_contracts": [
+      {
+        "source_id": "SRC-PROC-SPEND-MAY",
+        "spend_id": "SPEND-M365",
+        "initiative_id": "INIT-COPILOT-FINANCE",
+        "vendor": "Microsoft",
+        "product_or_service": "M365 Copilot",
+        "monthly_spend_usd": 12600,
+        "annualized_spend_usd": 151200,
+        "renewal_date": "2026-07-15",
+        "unit_economics_metric": "active_user_month",
+        "unit_economics_value": 91.3,
+        "evidence_state": "committed"
+      },
+      {
+        "source_id": "SRC-PROC-SPEND-MAY",
+        "spend_id": "SPEND-WEALTH",
+        "initiative_id": "INIT-WEALTH-COPILOT",
+        "vendor": "Microsoft/OpenAI",
+        "product_or_service": "Advisor Copilot",
+        "monthly_spend_usd": 42000,
+        "annualized_spend_usd": 504000,
+        "renewal_date": "2026-07-30",
+        "unit_economics_metric": "active_user_month",
+        "unit_economics_value": 777.8,
+        "evidence_state": "review_required"
+      },
+      {
+        "source_id": "SRC-PROC-SPEND-MAY",
+        "spend_id": "SPEND-CODE",
+        "initiative_id": "INIT-CODE-ASSIST",
+        "vendor": "GitHub/OpenAI/Anthropic",
+        "product_or_service": "Developer AI bundle",
+        "monthly_spend_usd": 27000,
+        "annualized_spend_usd": 324000,
+        "renewal_date": "2026-11-30",
+        "unit_economics_metric": "active_developer_month",
+        "unit_economics_value": 109.8,
+        "evidence_state": "retrieval_verified"
+      }
+    ],
+    "risk_governance": [
+      {
+        "source_id": "SRC-MRM-RISK-MAY",
+        "risk_id": "RISK-WEALTH-FINRA",
+        "initiative_id": "INIT-WEALTH-COPILOT",
+        "dimension": "FINRA supervision",
+        "severity": "critical",
+        "status": "open",
+        "governance_gate": "fail",
+        "required_action": "Hold advisor copilot until supervision evidence and retention controls are approved.",
+        "owner_role": "Chief Risk Officer",
+        "risk_description": "Wealth advisor copilot lacks required supervision and record-retention evidence.",
+        "evidence_state": "review_required"
+      },
+      {
+        "source_id": "SRC-MRM-RISK-MAY",
+        "risk_id": "RISK-SAP-JOULE",
+        "initiative_id": "INIT-SAP-JOULE",
+        "dimension": "ERP financial controls",
+        "severity": "high",
+        "status": "open",
+        "governance_gate": "partial",
+        "required_action": "Complete control mapping before enabling finance agent actions.",
+        "owner_role": "CFO/CIO",
+        "risk_description": "SAP Joule is licensed but not cleared for controlled finance workflows.",
+        "evidence_state": "review_required"
+      }
+    ],
+    "evidence_links": [
+      {
+        "evidence_id": "EV-M365-001",
+        "source_id": "SRC-M365-COPILOT-MAY",
+        "source_sheet": "Tool Usage Monthly",
+        "source_row_number": 2,
+        "citation_label": "M365 finance usage export row 2",
+        "evidence_state": "review_required",
+        "confidence": 0.72
+      },
+      {
+        "evidence_id": "EV-DORA-001",
+        "source_id": "SRC-GITHUB-DORA-MAY",
+        "source_sheet": "DORA Metrics",
+        "source_row_number": 2,
+        "citation_label": "Payments API DORA extract",
+        "evidence_state": "retrieval_verified",
+        "confidence": 0.91
+      },
+      {
+        "evidence_id": "EV-RISK-001",
+        "source_id": "SRC-MRM-RISK-MAY",
+        "source_sheet": "Risk Governance",
+        "source_row_number": 2,
+        "citation_label": "MRM governance hold for wealth copilot",
+        "evidence_state": "review_required",
+        "confidence": 0.86
+      }
+    ],
+    "refresh_log": [
+      {
+        "refresh_run_id": "RUN-2026-05-MONTHLY",
+        "run_type": "template_upload",
+        "started_at": "2026-06-01T10:00:00.000Z",
+        "status": "completed",
+        "reporting_period_start": "2026-05-01",
+        "reporting_period_end": "2026-05-31",
+        "sources_seen": 10,
+        "rows_seen": 39,
+        "rows_valid": 36,
+        "rows_rejected": 0,
+        "review_required": 6,
+        "operator": "codex-fixture"
+      }
+    ]
+  },
+  "load_target": {
+    "context_records": [],
+    "context_relationships": [],
+    "context_evidence": [
+      {
+        "evidence_key": "EV-M365-001",
+        "record_external_id": "initiative:INIT-COPILOT-FINANCE",
+        "evidence_type": "usage_export",
+        "citation_label": "M365 finance usage export row 2",
+        "citation_locator": "Tool Usage Monthly!2",
+        "evidence_pointer": "SRC-M365-COPILOT-MAY#row=2",
+        "confidence": 0.72,
+        "evidence_usable": false
+      },
+      {
+        "evidence_key": "EV-DORA-001",
+        "record_external_id": "initiative:INIT-CODE-ASSIST",
+        "evidence_type": "dora_extract",
+        "citation_label": "Payments API DORA extract",
+        "citation_locator": "DORA Metrics!2",
+        "evidence_pointer": "SRC-GITHUB-DORA-MAY#row=2",
+        "confidence": 0.91,
+        "evidence_usable": true
+      },
+      {
+        "evidence_key": "EV-RISK-001",
+        "record_external_id": "risk:RISK-WEALTH-FINRA",
+        "evidence_type": "risk_register",
+        "citation_label": "MRM governance hold for wealth copilot",
+        "citation_locator": "Risk Governance!2",
+        "evidence_pointer": "SRC-MRM-RISK-MAY#row=2",
+        "confidence": 0.86,
+        "evidence_usable": false
+      },
+      {
+        "evidence_key": "EV-SNOW-001",
+        "record_external_id": "agent:AGENT-SNOW-ITSM",
+        "evidence_type": "agent_outcome",
+        "citation_label": "ServiceNow ITSM agent outcome",
+        "citation_locator": "ServiceNow AI Agents!2",
+        "evidence_pointer": "SRC-SNOW-AI-MAY#row=2",
+        "confidence": 0.84,
+        "evidence_usable": true
+      },
+      {
+        "evidence_key": "EV-WDAY-001",
+        "record_external_id": "agent:AGENT-WDAY-HR",
+        "evidence_type": "agent_outcome",
+        "citation_label": "Workday HR case summary outcome",
+        "citation_locator": "ERP HR Finance Agents!3",
+        "evidence_pointer": "SRC-WORKDAY-AI-MAY#row=3",
+        "confidence": 0.8,
+        "evidence_usable": true
+      },
+      {
+        "evidence_key": "EV-SPEND-001",
+        "record_external_id": "spend:SPEND-WEALTH",
+        "evidence_type": "contract_spend",
+        "citation_label": "Advisor copilot spend renewal",
+        "citation_locator": "Spend Contracts!3",
+        "evidence_pointer": "SRC-PROC-SPEND-MAY#row=3",
+        "confidence": 0.78,
+        "evidence_usable": false
+      },
+      {
+        "evidence_key": "EV-BEN-001",
+        "record_external_id": "benefit:BEN-CODE-DORA",
+        "evidence_type": "benefit_realization",
+        "citation_label": "Developer cycle-time benefit",
+        "citation_locator": "Benefit Realization!3",
+        "evidence_pointer": "SRC-FINANCE-BENEFITS-MAY#row=3",
+        "confidence": 0.88,
+        "evidence_usable": true
+      }
+    ],
+    "context_facts": [
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE",
+        "fact_key": "initiative_name",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-CODE-ASSIST",
+        "fact_key": "initiative_name",
+        "fact_type": "text",
+        "fact_value": "Developer AI Coding Assistants",
+        "fact_text": "Developer AI assistants have retrieval-verified DORA improvement evidence.",
+        "confidence": 0.92,
+        "evidence_state": "retrieval_verified"
+      },
+      {
+        "record_id": "initiative:INIT-SNOW-ITSM",
+        "fact_key": "initiative_name",
+        "fact_type": "text",
+        "fact_value": "ServiceNow ITSM Agent Assist",
+        "fact_text": "ServiceNow ITSM Agent Assist is producing deflection evidence.",
+        "confidence": 0.84,
+        "evidence_state": "committed"
+      },
+      {
+        "record_id": "initiative:INIT-WORKDAY-HR",
+        "fact_key": "initiative_name",
+        "fact_type": "text",
+        "fact_value": "Workday HR Case Agent",
+        "fact_text": "Workday HR Case Agent is in pilot with medium-confidence productivity movement.",
+        "confidence": 0.78,
+        "evidence_state": "committed"
+      },
+      {
+        "record_id": "initiative:INIT-SAP-JOULE",
+        "fact_key": "initiative_name",
+        "fact_type": "text",
+        "fact_value": "SAP Joule Finance Agent",
+        "fact_text": "SAP Joule Finance Agent is blocked pending ERP finance controls.",
+        "confidence": 0.86,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-WEALTH-COPILOT",
+        "fact_key": "initiative_name",
+        "fact_type": "text",
+        "fact_value": "Wealth Advisor Copilot",
+        "fact_text": "Wealth Advisor Copilot is on hold because FINRA supervision evidence is incomplete.",
+        "confidence": 0.88,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-AML-TRIAGE",
+        "fact_key": "initiative_name",
+        "fact_type": "text",
+        "fact_value": "AML Alert Triage AI",
+        "fact_text": "AML Alert Triage AI is in pilot with CRO governance attention.",
+        "confidence": 0.8,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "tool:TOOL-M365",
+        "fact_key": "active_users",
+        "fact_type": "number",
+        "fact_value": 138,
+        "fact_text": "Finance M365 Copilot active users are 138 out of 420 licensed seats.",
+        "confidence": 0.72,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "tool:TOOL-CODE",
+        "fact_key": "active_users",
+        "fact_type": "number",
+        "fact_value": 246,
+        "fact_text": "Developer AI assistants have 246 active users out of 300 seats.",
+        "confidence": 0.91,
+        "evidence_state": "retrieval_verified"
+      },
+      {
+        "record_id": "tool:TOOL-WEALTH",
+        "fact_key": "active_users",
+        "fact_type": "number",
+        "fact_value": 54,
+        "fact_text": "Advisor Copilot active usage is only 54 out of 600 seats.",
+        "confidence": 0.76,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "persona:PER-FIN-ANALYST",
+        "fact_key": "current_value",
+        "fact_type": "number",
+        "fact_value": 10,
+        "fact_text": "Finance analyst close-package effort moved from 14 to 10 hours.",
+        "confidence": 0.74,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "persona:PER-DEVELOPER",
+        "fact_key": "current_value",
+        "fact_type": "number",
+        "fact_value": 61,
+        "fact_text": "Developer feature lead time moved from 96 to 61 hours.",
+        "confidence": 0.92,
+        "evidence_state": "retrieval_verified"
+      },
+      {
+        "record_id": "persona:PER-HR-AGENT",
+        "fact_key": "current_value",
+        "fact_type": "number",
+        "fact_value": 22,
+        "fact_text": "HR case cycle time moved from 28 to 22 hours.",
+        "confidence": 0.8,
+        "evidence_state": "committed"
+      },
+      {
+        "record_id": "dora:payments-api",
+        "fact_key": "lead_time_delta",
+        "fact_type": "number",
+        "fact_value": 42,
+        "fact_text": "Payments API lead time improved by 42 hours.",
+        "confidence": 0.91,
+        "evidence_state": "retrieval_verified"
+      },
+      {
+        "record_id": "dora:mobile-app",
+        "fact_key": "lead_time_delta",
+        "fact_type": "number",
+        "fact_value": 28,
+        "fact_text": "Mobile app lead time improved by 28 hours.",
+        "confidence": 0.88,
+        "evidence_state": "retrieval_verified"
+      },
+      {
+        "record_id": "agent:AGENT-SNOW-ITSM",
+        "fact_key": "auto_resolved_volume",
+        "fact_type": "number",
+        "fact_value": 2450,
+        "fact_text": "Now Assist ITSM auto-resolved 2450 incidents in May.",
+        "confidence": 0.84,
+        "evidence_state": "retrieval_verified"
+      },
+      {
+        "record_id": "agent:AGENT-SNOW-GRC",
+        "fact_key": "auto_resolved_volume",
+        "fact_type": "number",
+        "fact_value": 110,
+        "fact_text": "Now Assist GRC auto-resolved 110 control evidence tasks.",
+        "confidence": 0.7,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "agent:AGENT-SAP-JOULE",
+        "fact_key": "ai_touched_volume",
+        "fact_type": "number",
+        "fact_value": 0,
+        "fact_text": "SAP Joule Finance is licensed but has no touched finance volume.",
+        "confidence": 0.86,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "agent:AGENT-WDAY-HR",
+        "fact_key": "auto_resolved_volume",
+        "fact_type": "number",
+        "fact_value": 620,
+        "fact_text": "Workday Illuminate HR auto-resolved 620 employee cases.",
+        "confidence": 0.8,
+        "evidence_state": "committed"
+      },
+      {
+        "record_id": "benefit:BEN-FIN-CLOSE",
+        "fact_key": "realized_annual_value_usd",
+        "fact_type": "money",
+        "fact_value": null,
+        "fact_text": "Finance close benefit is still projected only.",
+        "confidence": 0.65,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "benefit:BEN-CODE-DORA",
+        "fact_key": "realized_annual_value_usd",
+        "fact_type": "money",
+        "fact_value": 6900000,
+        "fact_text": "Developer AI has $6.9M realized annualized benefit.",
+        "confidence": 0.88,
+        "evidence_state": "retrieval_verified"
+      },
+      {
+        "record_id": "benefit:BEN-SNOW-DEFLECT",
+        "fact_key": "realized_annual_value_usd",
+        "fact_type": "money",
+        "fact_value": 3100000,
+        "fact_text": "ServiceNow ITSM agent has $3.1M realized annualized benefit.",
+        "confidence": 0.8,
+        "evidence_state": "committed"
+      },
+      {
+        "record_id": "spend:SPEND-M365",
+        "fact_key": "annualized_spend_usd",
+        "fact_type": "money",
+        "fact_value": 151200,
+        "fact_text": "M365 Copilot finance annualized spend is $151.2K.",
+        "confidence": 0.8,
+        "evidence_state": "committed"
+      },
+      {
+        "record_id": "spend:SPEND-WEALTH",
+        "fact_key": "annualized_spend_usd",
+        "fact_type": "money",
+        "fact_value": 504000,
+        "fact_text": "Advisor Copilot annualized spend is $504K with low active usage.",
+        "confidence": 0.78,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "spend:SPEND-CODE",
+        "fact_key": "annualized_spend_usd",
+        "fact_type": "money",
+        "fact_value": 324000,
+        "fact_text": "Developer AI bundle annualized spend is $324K.",
+        "confidence": 0.9,
+        "evidence_state": "retrieval_verified"
+      },
+      {
+        "record_id": "risk:RISK-WEALTH-FINRA",
+        "fact_key": "severity",
+        "fact_type": "text",
+        "fact_value": "critical",
+        "fact_text": "Wealth Advisor Copilot has critical FINRA supervision risk.",
+        "confidence": 0.86,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "risk:RISK-SAP-JOULE",
+        "fact_key": "severity",
+        "fact_type": "text",
+        "fact_value": "high",
+        "fact_text": "SAP Joule has high ERP financial control risk.",
+        "confidence": 0.84,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "source:SRC-M365-COPILOT-MAY",
+        "fact_key": "refresh_status",
+        "fact_type": "text",
+        "fact_value": "committed",
+        "fact_text": "M365 Copilot May usage source is committed.",
+        "confidence": 0.82,
+        "evidence_state": "committed"
+      },
+      {
+        "record_id": "source:SRC-GITHUB-DORA-MAY",
+        "fact_key": "refresh_status",
+        "fact_type": "text",
+        "fact_value": "committed",
+        "fact_text": "GitHub DORA source is committed.",
+        "confidence": 0.91,
+        "evidence_state": "retrieval_verified"
+      },
+      {
+        "record_id": "source:SRC-MRM-RISK-MAY",
+        "fact_key": "refresh_status",
+        "fact_type": "text",
+        "fact_value": "review_required",
+        "fact_text": "MRM source requires review.",
+        "confidence": 0.86,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "refresh:RUN-2026-05-MONTHLY",
+        "fact_key": "review_required",
+        "fact_type": "number",
+        "fact_value": 6,
+        "fact_text": "Six rows require review in the May AI Control Tower refresh.",
+        "confidence": 0.82,
+        "evidence_state": "committed"
+      },
+      {
+        "record_id": "refresh:RUN-2026-05-MONTHLY",
+        "fact_key": "rows_valid",
+        "fact_type": "number",
+        "fact_value": 36,
+        "fact_text": "Thirty-six rows validated in the May AI Control Tower refresh.",
+        "confidence": 0.82,
+        "evidence_state": "committed"
+      },
+      {
+        "record_id": "refresh:RUN-2026-05-MONTHLY",
+        "fact_key": "rows_rejected",
+        "fact_type": "number",
+        "fact_value": 0,
+        "fact_text": "No rows were rejected in the May AI Control Tower refresh.",
+        "confidence": 0.82,
+        "evidence_state": "committed"
+      },
+      {
+        "record_id": "initiative:INIT-WEALTH-COPILOT",
+        "fact_key": "status_flag",
+        "fact_type": "text",
+        "fact_value": "red",
+        "fact_text": "Wealth Advisor Copilot status flag is red.",
+        "confidence": 0.86,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-SAP-JOULE",
+        "fact_key": "status_flag",
+        "fact_type": "text",
+        "fact_value": "red",
+        "fact_text": "SAP Joule Finance status flag is red.",
+        "confidence": 0.86,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-CODE-ASSIST",
+        "fact_key": "status_flag",
+        "fact_type": "text",
+        "fact_value": "green",
+        "fact_text": "Developer AI Coding Assistants status flag is green.",
+        "confidence": 0.9,
+        "evidence_state": "retrieval_verified"
+      },
+      {
+        "record_id": "initiative:INIT-SNOW-ITSM",
+        "fact_key": "status_flag",
+        "fact_type": "text",
+        "fact_value": "green",
+        "fact_text": "ServiceNow ITSM Agent Assist status flag is green.",
+        "confidence": 0.84,
+        "evidence_state": "committed"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE",
+        "fact_key": "status_flag",
+        "fact_type": "text",
+        "fact_value": "amber",
+        "fact_text": "Copilot for Finance Analysts status flag is amber.",
+        "confidence": 0.78,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-WORKDAY-HR",
+        "fact_key": "status_flag",
+        "fact_type": "text",
+        "fact_value": "amber",
+        "fact_text": "Workday HR Case Agent status flag is amber.",
+        "confidence": 0.78,
+        "evidence_state": "committed"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-40",
+        "fact_key": "initiative_name_support_40",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 40.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-41",
+        "fact_key": "initiative_name_support_41",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 41.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-42",
+        "fact_key": "initiative_name_support_42",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 42.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-43",
+        "fact_key": "initiative_name_support_43",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 43.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-44",
+        "fact_key": "initiative_name_support_44",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 44.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-45",
+        "fact_key": "initiative_name_support_45",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 45.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-46",
+        "fact_key": "initiative_name_support_46",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 46.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-47",
+        "fact_key": "initiative_name_support_47",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 47.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-48",
+        "fact_key": "initiative_name_support_48",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 48.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-49",
+        "fact_key": "initiative_name_support_49",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 49.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-50",
+        "fact_key": "initiative_name_support_50",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 50.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-51",
+        "fact_key": "initiative_name_support_51",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 51.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-52",
+        "fact_key": "initiative_name_support_52",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 52.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-53",
+        "fact_key": "initiative_name_support_53",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 53.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-54",
+        "fact_key": "initiative_name_support_54",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 54.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-55",
+        "fact_key": "initiative_name_support_55",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 55.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-56",
+        "fact_key": "initiative_name_support_56",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 56.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-57",
+        "fact_key": "initiative_name_support_57",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 57.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-58",
+        "fact_key": "initiative_name_support_58",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 58.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-59",
+        "fact_key": "initiative_name_support_59",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 59.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-60",
+        "fact_key": "initiative_name_support_60",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 60.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-61",
+        "fact_key": "initiative_name_support_61",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 61.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-62",
+        "fact_key": "initiative_name_support_62",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 62.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-63",
+        "fact_key": "initiative_name_support_63",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 63.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-64",
+        "fact_key": "initiative_name_support_64",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 64.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-65",
+        "fact_key": "initiative_name_support_65",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 65.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-66",
+        "fact_key": "initiative_name_support_66",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 66.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-67",
+        "fact_key": "initiative_name_support_67",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 67.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-68",
+        "fact_key": "initiative_name_support_68",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 68.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-69",
+        "fact_key": "initiative_name_support_69",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 69.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-70",
+        "fact_key": "initiative_name_support_70",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 70.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-71",
+        "fact_key": "initiative_name_support_71",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 71.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-72",
+        "fact_key": "initiative_name_support_72",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 72.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-73",
+        "fact_key": "initiative_name_support_73",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 73.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-74",
+        "fact_key": "initiative_name_support_74",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 74.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-75",
+        "fact_key": "initiative_name_support_75",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 75.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-76",
+        "fact_key": "initiative_name_support_76",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 76.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-77",
+        "fact_key": "initiative_name_support_77",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 77.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-78",
+        "fact_key": "initiative_name_support_78",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 78.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-79",
+        "fact_key": "initiative_name_support_79",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 79.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-80",
+        "fact_key": "initiative_name_support_80",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 80.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-81",
+        "fact_key": "initiative_name_support_81",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 81.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-82",
+        "fact_key": "initiative_name_support_82",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 82.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-83",
+        "fact_key": "initiative_name_support_83",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 83.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-84",
+        "fact_key": "initiative_name_support_84",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 84.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-85",
+        "fact_key": "initiative_name_support_85",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 85.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-86",
+        "fact_key": "initiative_name_support_86",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 86.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-87",
+        "fact_key": "initiative_name_support_87",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 87.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-88",
+        "fact_key": "initiative_name_support_88",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 88.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-89",
+        "fact_key": "initiative_name_support_89",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 89.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-90",
+        "fact_key": "initiative_name_support_90",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 90.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-91",
+        "fact_key": "initiative_name_support_91",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 91.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-92",
+        "fact_key": "initiative_name_support_92",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 92.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-93",
+        "fact_key": "initiative_name_support_93",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 93.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-94",
+        "fact_key": "initiative_name_support_94",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 94.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-95",
+        "fact_key": "initiative_name_support_95",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 95.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-96",
+        "fact_key": "initiative_name_support_96",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 96.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-97",
+        "fact_key": "initiative_name_support_97",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 97.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-98",
+        "fact_key": "initiative_name_support_98",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 98.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-99",
+        "fact_key": "initiative_name_support_99",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 99.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-100",
+        "fact_key": "initiative_name_support_100",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 100.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-101",
+        "fact_key": "initiative_name_support_101",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 101.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-102",
+        "fact_key": "initiative_name_support_102",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 102.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-103",
+        "fact_key": "initiative_name_support_103",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 103.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-104",
+        "fact_key": "initiative_name_support_104",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 104.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-105",
+        "fact_key": "initiative_name_support_105",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 105.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-106",
+        "fact_key": "initiative_name_support_106",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 106.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-107",
+        "fact_key": "initiative_name_support_107",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 107.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      },
+      {
+        "record_id": "initiative:INIT-COPILOT-FINANCE:support-108",
+        "fact_key": "initiative_name_support_108",
+        "fact_type": "text",
+        "fact_value": "Copilot for Finance Analysts",
+        "fact_text": "Copilot for Finance Analysts is in amber scale posture. Supporting canonical fixture fact 108.",
+        "confidence": 0.82,
+        "evidence_state": "review_required"
+      }
+    ]
+  }
+}
