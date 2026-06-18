@@ -1,3 +1,5 @@
+import crypto from "node:crypto";
+
 import type { PostgresCompatClient } from "@/lib/data-plane/postgresCompat";
 
 export interface GraphLoadResult {
@@ -58,6 +60,22 @@ function parseProperties(value: unknown): Record<string, unknown> {
     return value as Record<string, unknown>;
   }
   return { value };
+}
+
+function stableUuid(parts: string[]): string {
+  const hex = crypto
+    .createHash("sha256")
+    .update(parts.join("\u0000"))
+    .digest("hex");
+  const version = `5${hex.slice(13, 16)}`;
+  const variant = (Number.parseInt(hex.slice(16, 18), 16) & 0x3f) | 0x80;
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    version,
+    variant.toString(16).padStart(2, "0") + hex.slice(18, 20),
+    hex.slice(20, 32),
+  ].join("-");
 }
 
 async function buildRecordLookup(
@@ -135,6 +153,11 @@ export async function loadJsonlGraphEdges(input: {
       .from("enterprise_context_relationships")
       .upsert(
         {
+          id: stableUuid([
+            "enterprise_context_relationships",
+            input.tenantKey,
+            edge.relationship_key,
+          ]),
           tenant_key: input.tenantKey,
           relationship_key: edge.relationship_key,
           relationship_type: edge.relationship_type,
