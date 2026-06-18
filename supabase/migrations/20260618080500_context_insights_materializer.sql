@@ -8,11 +8,16 @@ CREATE TABLE IF NOT EXISTS significance_rules (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   rule_id TEXT NOT NULL UNIQUE,
   rule_key TEXT,
+  name TEXT,
   domain TEXT NOT NULL,
   title TEXT NOT NULL,
   description TEXT NOT NULL,
+  required_dimension_numbers INT[] NOT NULL DEFAULT ARRAY[]::INT[],
+  required_fact_keys TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
   enabled BOOLEAN NOT NULL DEFAULT true,
   severity_floor TEXT NOT NULL DEFAULT 'medium' CHECK (severity_floor IN ('low','medium','high')),
+  default_materiality TEXT NOT NULL DEFAULT 'medium',
+  default_confidence TEXT NOT NULL DEFAULT 'medium',
   evaluator_key TEXT NOT NULL,
   required_record_types TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
   metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -22,11 +27,16 @@ CREATE TABLE IF NOT EXISTS significance_rules (
 
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS rule_id TEXT;
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS rule_key TEXT;
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS name TEXT;
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS domain TEXT;
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS title TEXT;
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS required_dimension_numbers INT[] NOT NULL DEFAULT ARRAY[]::INT[];
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS required_fact_keys TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS enabled BOOLEAN NOT NULL DEFAULT true;
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS severity_floor TEXT NOT NULL DEFAULT 'medium';
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS default_materiality TEXT NOT NULL DEFAULT 'medium';
+ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS default_confidence TEXT NOT NULL DEFAULT 'medium';
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS evaluator_key TEXT;
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS required_record_types TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
 ALTER TABLE significance_rules ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
@@ -42,6 +52,16 @@ UPDATE significance_rules
 SET rule_key = rule_id
 WHERE rule_key IS NULL
   AND rule_id IS NOT NULL;
+
+UPDATE significance_rules
+SET title = name
+WHERE title IS NULL
+  AND name IS NOT NULL;
+
+UPDATE significance_rules
+SET name = title
+WHERE name IS NULL
+  AND title IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS context_insights (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -106,9 +126,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_significance_rules_rule_id_unique
 INSERT INTO significance_rules (
   rule_id,
   rule_key,
+  name,
   domain,
   title,
   description,
+  required_dimension_numbers,
+  required_fact_keys,
+  default_materiality,
+  default_confidence,
   severity_floor,
   evaluator_key,
   required_record_types,
@@ -117,9 +142,14 @@ INSERT INTO significance_rules (
   (
     'renewal-window-no-benchmark',
     'renewal-window-no-benchmark',
+    'Near-term vendor renewal has commercial risk',
     'Vendor',
     'Near-term vendor renewal has commercial risk',
     'Flags vendor or license renewals due within the planning window where commercial risk is material.',
+    ARRAY[11,13],
+    ARRAY['contract_end_date','auto_renew','benchmark_present'],
+    'medium',
+    'medium',
     'medium',
     'renewalWindowCommercialRisk',
     ARRAY['vendors_contracts_licenses'],
@@ -128,9 +158,14 @@ INSERT INTO significance_rules (
   (
     'value-coverage-gap',
     'value-coverage-gap',
+    'Committed initiative spend lacks enough realized value proof',
     'Cost',
     'Committed initiative spend lacks enough realized value proof',
     'Flags initiatives where promised benefit materially exceeds measured value or the evidence posture is incomplete.',
+    ARRAY[4,6,5],
+    ARRAY['promised_benefit_usd','measured_value_usd','evidence_posture'],
+    'medium',
+    'medium',
     'medium',
     'valueCoverageGap',
     ARRAY['initiatives_portfolio','ai_automation_footprint'],
@@ -139,9 +174,14 @@ INSERT INTO significance_rules (
   (
     'critical-platform-drag',
     'critical-platform-drag',
+    'Critical legacy platform is constraining transformation',
     'Service',
     'Critical legacy platform is constraining transformation',
     'Flags critical applications with high run cost, integration gravity, and legacy or modernization pressure.',
+    ARRAY[3,4,5],
+    ARRAY['annual_run_cost_usd','criticality','integration_count'],
+    'medium',
+    'medium',
     'medium',
     'criticalPlatformDrag',
     ARRAY['applications_systems'],
@@ -150,9 +190,14 @@ INSERT INTO significance_rules (
   (
     'data-foundation-readiness-gap',
     'data-foundation-readiness-gap',
+    'Data foundation gap blocks trusted analytics and automation',
     'Data quality',
     'Data foundation gap blocks trusted analytics and automation',
     'Flags data assets where quality, freshness, semantic layer, or target platform readiness is not yet enough for reliable AI/analytics.',
+    ARRAY[2,5,9],
+    ARRAY['quality_score','freshness_status','semantic_layer_status'],
+    'medium',
+    'medium',
     'medium',
     'dataFoundationReadinessGap',
     ARRAY['data_analytics_estate','integrations_interfaces'],
@@ -161,9 +206,14 @@ INSERT INTO significance_rules (
   (
     'governed-ai-risk-gap',
     'governed-ai-risk-gap',
+    'AI automation is ahead of governance evidence',
     'AI Value',
     'AI automation is ahead of governance evidence',
     'Flags AI assets or agents with high/regulated risk, incomplete approval, or missing evidence for the next gate.',
+    ARRAY[6,9],
+    ARRAY['approval_status','risk_rating','evidence_status'],
+    'medium',
+    'medium',
     'medium',
     'governedAiRiskGap',
     ARRAY['ai_automation_footprint','security_risk_compliance'],
@@ -172,9 +222,14 @@ INSERT INTO significance_rules (
   (
     'operational-backlog-automation-pressure',
     'operational-backlog-automation-pressure',
+    'Operational volume is creating automation pressure',
     'Service',
     'Operational volume is creating automation pressure',
     'Flags services or processes with high monthly volume, backlog, MTTR, or repeated failure signals that should inform Moves and Tower priorities.',
+    ARRAY[5,10],
+    ARRAY['monthly_volume','backlog','mttr'],
+    'medium',
+    'medium',
     'medium',
     'operationalBacklogAutomationPressure',
     ARRAY['operations_service_management','platform_volumetrics'],
@@ -182,11 +237,16 @@ INSERT INTO significance_rules (
   )
 ON CONFLICT (rule_id) DO UPDATE SET
   rule_key = excluded.rule_key,
+  name = excluded.name,
   domain = excluded.domain,
   title = excluded.title,
   description = excluded.description,
+  required_dimension_numbers = excluded.required_dimension_numbers,
+  required_fact_keys = excluded.required_fact_keys,
   enabled = true,
   severity_floor = excluded.severity_floor,
+  default_materiality = excluded.default_materiality,
+  default_confidence = excluded.default_confidence,
   evaluator_key = excluded.evaluator_key,
   required_record_types = excluded.required_record_types,
   metadata = significance_rules.metadata || excluded.metadata,
