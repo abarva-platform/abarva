@@ -740,18 +740,28 @@ class Db {
     return set;
   }
   async tableExists(table) { return (await this.columns(table)).size > 0; }
-  async selectScoped(table, scopeColumn, client) {
-    if (!(await this.tableExists(table))) return [];
-    if (scopeColumn === 'client_id') {
-      return (await this.client.query(`select * from ${quoteIdent(table)} where client_id = $1`, [client.resolvedClientId])).rows;
+  async scopePredicate(table, preferredScopeColumn, client) {
+    const columns = await this.columns(table);
+    if (columns.size === 0) return null;
+    if (preferredScopeColumn === 'client_id' && columns.has('client_id')) {
+      return { sql: 'client_id = $1', params: [client.resolvedClientId], column: 'client_id' };
     }
-    return (await this.client.query(`select * from ${quoteIdent(table)} where tenant_key = any($1::text[])`, [client.aliases])).rows;
+    if (preferredScopeColumn === 'tenant_key' && columns.has('tenant_key')) {
+      return { sql: 'tenant_key = any($1::text[])', params: [client.aliases], column: 'tenant_key' };
+    }
+    if (columns.has('client_id')) return { sql: 'client_id = $1', params: [client.resolvedClientId], column: 'client_id' };
+    if (columns.has('tenant_key')) return { sql: 'tenant_key = any($1::text[])', params: [client.aliases], column: 'tenant_key' };
+    return null;
+  }
+  async selectScoped(table, scopeColumn, client) {
+    const predicate = await this.scopePredicate(table, scopeColumn, client);
+    if (!predicate) return [];
+    return (await this.client.query(`select * from ${quoteIdent(table)} where ${predicate.sql}`, predicate.params)).rows;
   }
   async deleteScoped(table, scopeColumn, client) {
-    if (!(await this.tableExists(table))) return 0;
-    const result = scopeColumn === 'client_id'
-      ? await this.client.query(`delete from ${quoteIdent(table)} where client_id = $1`, [client.resolvedClientId])
-      : await this.client.query(`delete from ${quoteIdent(table)} where tenant_key = any($1::text[])`, [client.aliases]);
+    const predicate = await this.scopePredicate(table, scopeColumn, client);
+    if (!predicate) return 0;
+    const result = await this.client.query(`delete from ${quoteIdent(table)} where ${predicate.sql}`, predicate.params);
     return result.rowCount || 0;
   }
   async upsert(table, rows, conflictColumns) {
