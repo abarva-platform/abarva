@@ -60,7 +60,7 @@ const LENSES: Array<{
 }> = [
   {
     key: "value_adoption",
-    kicker: "VALUE · L2",
+    kicker: "Value",
     label: "Value and adoption",
     shortLabel: "Value",
     question:
@@ -68,7 +68,7 @@ const LENSES: Array<{
   },
   {
     key: "productivity",
-    kicker: "FLOW · L2",
+    kicker: "Flow",
     label: "Productivity",
     shortLabel: "Productivity",
     question:
@@ -76,7 +76,7 @@ const LENSES: Array<{
   },
   {
     key: "agents",
-    kicker: "AGENTS · L1",
+    kicker: "Agents",
     label: "Agents",
     shortLabel: "Agents",
     question:
@@ -84,7 +84,7 @@ const LENSES: Array<{
   },
   {
     key: "spend",
-    kicker: "COST · L1",
+    kicker: "Cost",
     label: "Spend",
     shortLabel: "Spend",
     question:
@@ -92,7 +92,7 @@ const LENSES: Array<{
   },
   {
     key: "risk",
-    kicker: "GATES · L1",
+    kicker: "Gates",
     label: "Risk",
     shortLabel: "Risk",
     question:
@@ -100,7 +100,7 @@ const LENSES: Array<{
   },
   {
     key: "evidence",
-    kicker: "TRUST · L0",
+    kicker: "Trust",
     label: "Evidence",
     shortLabel: "Evidence",
     question:
@@ -108,7 +108,7 @@ const LENSES: Array<{
   },
   {
     key: "actions",
-    kicker: "MOVES · L3",
+    kicker: "Moves",
     label: "Actions",
     shortLabel: "Actions",
     question:
@@ -866,7 +866,7 @@ function LensCanvas({
       <section style={{ ...sectionStyle, marginTop: 0 }}>
         <div style={sectionHeaderStyle}>
           <div>
-            <div style={eyebrowStyle}>{lensMeta.kicker} · Active canvas</div>
+          <div style={eyebrowStyle}>{lensMeta.shortLabel} · Active canvas</div>
             <h2 style={sectionTitleStyle}>{title[activeLens]}</h2>
             <p style={sectionDeckStyle}>{lensMeta.question}</p>
           </div>
@@ -1068,7 +1068,7 @@ export function AiControlTowerPage({
       <section style={heroStyle}>
         <div>
           <div style={eyebrowStyle}>AI Control Tower · {tenantName}</div>
-          <h1 style={heroTitleStyle}>AI Control Tower.</h1>
+          <h1 style={heroTitleStyle}>Is AI producing measurable, governed value?</h1>
           <p style={heroQuestionStyle}>{lensMeta.question}</p>
         </div>
         <div style={heroActionsStyle}>
@@ -1129,10 +1129,6 @@ export function AiControlTowerPage({
               </>
             )}
       </section>
-
-      {readModel?.source !== "ai_control_data_plane" ? (
-        <div style={disclosureStyle}>{readModel?.sourceDisclosure}</div>
-      ) : null}
 
       <nav aria-label="AI Control Tower lenses" style={tabBarStyle}>
         {LENSES.map((lens) => {
@@ -1195,7 +1191,7 @@ export function AiControlTowerPage({
 const pageStyle: CSSProperties = {
   minHeight: "calc(100vh - 64px)",
   background: TOKENS.bg,
-  padding: "14px clamp(16px, 2.6vw, 28px) 24px",
+  padding: "28px 32px 34px",
   fontFamily: TOKENS.sans,
   color: TOKENS.ink,
 };
@@ -1205,26 +1201,26 @@ const heroStyle: CSSProperties = {
   justifyContent: "space-between",
   alignItems: "flex-start",
   gap: 24,
-  paddingBottom: 10,
+  paddingBottom: 22,
   borderBottom: `1px solid ${TOKENS.rule}`,
 };
 
 const heroTitleStyle: CSSProperties = {
-  margin: "6px 0 0",
+  margin: "8px 0 0",
   fontFamily: TOKENS.serif,
-  fontSize: "clamp(22px, 2vw, 30px)",
-  lineHeight: 0.98,
-  fontWeight: 820,
+  fontSize: "clamp(30px, 3.2vw, 42px)",
+  lineHeight: 1.05,
+  fontWeight: 500,
   letterSpacing: 0,
   maxWidth: 760,
 };
 
 const heroQuestionStyle: CSSProperties = {
-  margin: "6px 0 0",
+  margin: "10px 0 0",
   color: TOKENS.muted,
-  fontSize: 12,
-  lineHeight: 1.25,
-  maxWidth: 1040,
+  fontSize: 15,
+  lineHeight: 1.45,
+  maxWidth: 820,
 };
 
 const heroActionsStyle: CSSProperties = {
@@ -1248,19 +1244,24 @@ const primaryButtonStyle: CSSProperties = {
 
 const tabBarStyle: CSSProperties = {
   display: "flex",
-  gap: 6,
+  gap: 2,
   overflowX: "auto",
-  padding: "10px 0 8px",
+  padding: "0",
+  margin: "26px 0 22px",
+  borderBottom: `1px solid ${TOKENS.rule}`,
 };
 
 const tabStyle: CSSProperties = {
-  border: `1px solid ${TOKENS.rule}`,
-  borderRadius: 4,
-  padding: "7px 10px 8px",
-  display: "grid",
-  gap: 2,
-  minWidth: 86,
-  textAlign: "center",
+  border: "0",
+  borderBottom: `2px solid ${TOKENS.rule}`,
+  borderRadius: 0,
+  padding: "11px 16px 12px",
+  display: "flex",
+  alignItems: "baseline",
+  justifyContent: "center",
+  gap: 7,
+  minWidth: 92,
+  textAlign: "left",
   fontSize: 12,
   fontWeight: 800,
   whiteSpace: "nowrap",
@@ -1285,27 +1286,19 @@ const tabLabelStyle: CSSProperties = {
 const metricGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-  gap: 8,
-  marginTop: 10,
-};
-
-const disclosureStyle: CSSProperties = {
-  marginTop: 10,
-  border: `1px solid ${TOKENS.amber}55`,
-  borderRadius: 6,
-  background: "#fff6e5",
-  color: "#6f4717",
-  padding: "8px 10px",
-  fontSize: 11,
-  lineHeight: 1.35,
+  gap: 0,
+  marginTop: 18,
+  borderTop: `1px solid ${TOKENS.rule}`,
+  borderBottom: `1px solid ${TOKENS.rule}`,
 };
 
 const metricTileStyle: CSSProperties = {
-  background: TOKENS.surface,
-  border: `1px solid ${TOKENS.rule}`,
-  borderRadius: 6,
-  padding: "9px 10px",
-  minHeight: 70,
+  background: "transparent",
+  border: 0,
+  borderRight: `1px solid ${TOKENS.rule}`,
+  borderRadius: 0,
+  padding: "16px 18px 16px 0",
+  minHeight: 82,
 };
 
 const lensCanvasStyle: CSSProperties = {
@@ -1317,8 +1310,8 @@ const lensCanvasStyle: CSSProperties = {
 const sectionStyle: CSSProperties = {
   background: TOKENS.surface,
   border: `1px solid ${TOKENS.rule}`,
-  borderRadius: 6,
-  padding: 11,
+  borderRadius: 8,
+  padding: "18px 20px",
   marginTop: 0,
 };
 
@@ -1332,7 +1325,7 @@ const sectionHeaderStyle: CSSProperties = {
 
 const eyebrowStyle: CSSProperties = {
   fontFamily: TOKENS.mono,
-  fontSize: 8,
+  fontSize: 10,
   letterSpacing: "0.14em",
   textTransform: "uppercase",
   color: TOKENS.muted,
@@ -1342,17 +1335,17 @@ const eyebrowStyle: CSSProperties = {
 const sectionTitleStyle: CSSProperties = {
   margin: "4px 0 0",
   fontFamily: TOKENS.serif,
-  fontSize: 17,
-  lineHeight: 1,
-  fontWeight: 760,
+  fontSize: 24,
+  lineHeight: 1.08,
+  fontWeight: 500,
   letterSpacing: 0,
 };
 
 const sectionDeckStyle: CSSProperties = {
   margin: "4px 0 0",
   color: TOKENS.muted,
-  fontSize: 11,
-  lineHeight: 1.25,
+  fontSize: 13,
+  lineHeight: 1.45,
   maxWidth: 780,
 };
 

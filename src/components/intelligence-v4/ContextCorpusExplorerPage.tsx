@@ -44,9 +44,9 @@ interface SentinelAnswer {
 }
 
 const TABS: Array<{ key: IntelligenceTab; kicker: string; label: string }> = [
-  { key: 'signals', kicker: 'Meaning', label: 'Executive Signals' },
-  { key: 'context', kicker: 'Context', label: 'Context Browser' },
-  { key: 'corpus', kicker: 'Corpus', label: 'Corpus Library' },
+  { key: 'signals', kicker: 'Meaning', label: 'Signals' },
+  { key: 'context', kicker: 'Context', label: 'Browser' },
+  { key: 'corpus', kicker: 'Corpus', label: 'Library' },
   { key: 'sentinel', kicker: 'Ask', label: 'Sentinel' },
 ];
 
@@ -110,13 +110,6 @@ function pct(value: number | null): string {
 
 function refreshLabel(tenantName: string): string {
   return tenantName.toLowerCase().includes('first capital') ? 'Jun 17, 2026' : 'Current load';
-}
-
-function readinessLabel(score: number): string {
-  if (score >= 80) return 'High';
-  if (score >= 50) return 'Usable';
-  if (score > 0) return 'Needs review';
-  return 'Thin';
 }
 
 function recordTypeCount(overview: EnterpriseContextOverview | null, needles: readonly string[]): number {
@@ -275,17 +268,8 @@ export function ContextCorpusExplorerPage({
   const [answer, setAnswer] = useState<SentinelAnswer>(() =>
     buildSentinelAnswer('What is my context telling me right now?', towerModel, overview),
   );
-  const trustPct = overview && overview.counts.evidence > 0
-    ? Math.round((overview.evidenceUsableCount / overview.counts.evidence) * 100)
-    : towerModel.evidence.length > 0
-      ? 100
-      : 0;
   const scaleBlockers = towerModel.risks.filter((risk) => ['critical', 'high'].includes(risk.severity.toLowerCase()) || risk.gate === 'fail');
-  const spendToProve = towerModel.spend.reduce((sum, row) => sum + row.annualizedSpendUsd, 0);
   const decisionActions = towerModel.actions.filter((action) => !['done', 'closed', 'complete', 'completed'].includes(action.status.toLowerCase()));
-  const lowestAdoption = towerModel.functions
-    .filter((row) => row.adoptionPct !== null)
-    .sort((a, b) => (a.adoptionPct ?? 100) - (b.adoptionPct ?? 100))[0];
 
   const submit = (question: string) => {
     const trimmed = question.trim();
@@ -315,14 +299,6 @@ export function ContextCorpusExplorerPage({
         </div>
       </section>
 
-      <section style={styles.insightBand} aria-label="Derived insight summary">
-        <InsightTile label="Top CIO read" value={signals[0]?.domain ?? 'Context'} note={signals[0]?.headline ?? 'No derived insight is ready yet.'} tone={signals[0]?.materiality ?? 'medium'} />
-        <InsightTile label="Scale blockers" value={scaleBlockers.length ? `${scaleBlockers.length} areas` : 'None surfaced'} note={scaleBlockers.length ? 'Validate controls before expanding the affected AI work.' : 'No high-severity blocker is currently surfaced.'} tone={scaleBlockers.length ? 'high' : 'low'} />
-        <InsightTile label="Spend to prove" value={spendToProve > 0 ? money(spendToProve) : 'Not surfaced'} note="Tie investment to adoption, productivity, and renewal choices." tone={spendToProve > 0 ? 'medium' : 'low'} />
-        <InsightTile label="Adoption drag" value={lowestAdoption ? `${lowestAdoption.name}` : 'Not surfaced'} note={lowestAdoption ? `${pct(lowestAdoption.adoptionPct)} adoption; ${lowestAdoption.blocker}` : 'No weak adoption segment is surfaced.'} tone={(lowestAdoption?.adoptionPct ?? 100) < 50 ? 'high' : 'medium'} />
-        <InsightTile label="Decision confidence" value={readinessLabel(trustPct)} note="Strong enough for an executive read; drill into support when challenged." tone={trustPct >= 80 ? 'low' : 'medium'} />
-      </section>
-
       <nav style={styles.tabs} aria-label="Intelligence views">
         {TABS.map((tab) => (
           <button
@@ -332,7 +308,7 @@ export function ContextCorpusExplorerPage({
             style={{
               ...styles.tab,
               borderColor: activeTab === tab.key ? COLORS.navy : COLORS.line,
-              boxShadow: activeTab === tab.key ? 'inset 0 0 0 2px #006cff' : 'none',
+              borderBottomColor: activeTab === tab.key ? COLORS.green : COLORS.line,
             }}
           >
             <span>{tab.kicker}</span>
@@ -352,7 +328,11 @@ export function ContextCorpusExplorerPage({
             <div style={styles.next}>{answer.next.map((next) => <span key={next}>{next}</span>)}</div>
           </div>
           <div style={styles.starters}>
-            {STARTERS.map((question) => <button key={question} type="button" onClick={() => submit(question)}>{question}</button>)}
+            {STARTERS.map((question) => (
+              <button key={question} type="button" onClick={() => submit(question)} style={styles.starterButton}>
+                {question}
+              </button>
+            ))}
           </div>
           <form
             style={styles.ask}
@@ -361,8 +341,8 @@ export function ContextCorpusExplorerPage({
               submit(draft);
             }}
           >
-            <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Ask Sentinel..." aria-label="Ask Sentinel" />
-            <button type="submit">Ask</button>
+            <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Ask Sentinel..." aria-label="Ask Sentinel" style={styles.askInput} />
+            <button type="submit" style={styles.askButton}>Ask</button>
           </form>
           <p style={styles.guardrail}>Sentinel answers only from loaded context and names what is missing.</p>
         </aside>
@@ -382,16 +362,6 @@ export function ContextCorpusExplorerPage({
   );
 }
 
-function InsightTile({ label, value, note, tone }: { label: string; value: string; note: string; tone: string }) {
-  return (
-    <article style={{ ...styles.insightTile, borderTopColor: toneColor(tone) }}>
-      <p style={styles.smallKicker}>{label}</p>
-      <strong>{value}</strong>
-      <span style={{ color: toneColor(tone) }}>{note}</span>
-    </article>
-  );
-}
-
 function SignalsView({ signals }: { signals: IntelligenceSignal[] }) {
   return (
     <>
@@ -406,10 +376,9 @@ function SignalsView({ signals }: { signals: IntelligenceSignal[] }) {
             <h3>{signal.headline}</h3>
             <p>{signal.soWhat}</p>
             <footer>
-              <strong>{signal.action}</strong>
               <div style={styles.signalActions}>
-                <button type="button">See evidence</button>
-                <button type="button">Shape into Move</button>
+                <button type="button" style={styles.textButton}>See evidence</button>
+                <button type="button" style={styles.primaryAction}>Shape into Move</button>
                 {signal.evidence.length > 0 ? <EvidencePill count={signal.evidence.length} /> : null}
               </div>
             </footer>
@@ -520,7 +489,7 @@ const styles: Record<string, CSSProperties> = {
     background: COLORS.bg,
     color: COLORS.ink,
     fontFamily: COLORS.sans,
-    padding: '26px clamp(18px, 3vw, 38px) 34px',
+    padding: '24px 32px 34px',
   },
   breadcrumb: {
     display: 'flex',
@@ -536,7 +505,7 @@ const styles: Record<string, CSSProperties> = {
     gap: 24,
     alignItems: 'flex-start',
     borderBottom: `1px solid ${COLORS.line}`,
-    paddingBottom: 18,
+    paddingBottom: 22,
   },
   kicker: {
     margin: 0,
@@ -547,35 +516,29 @@ const styles: Record<string, CSSProperties> = {
     letterSpacing: 2,
     textTransform: 'uppercase',
   },
-  smallKicker: {
-    margin: 0,
-    color: COLORS.muted,
-    fontFamily: COLORS.mono,
-    fontSize: 10,
-    fontWeight: 850,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-  },
   h1: {
-    margin: '6px 0 4px',
+    margin: '8px 0 8px',
     fontFamily: COLORS.serif,
-    fontSize: 'clamp(34px, 4vw, 58px)',
-    lineHeight: 0.98,
+    fontSize: 'clamp(30px, 3.1vw, 42px)',
+    lineHeight: 1.05,
     letterSpacing: 0,
+    fontWeight: 500,
+    maxWidth: 760,
   },
   h2: {
     margin: '5px 0',
     fontFamily: COLORS.serif,
-    fontSize: 32,
-    lineHeight: 1.05,
+    fontSize: 24,
+    lineHeight: 1.12,
     letterSpacing: 0,
+    fontWeight: 500,
   },
   lede: {
     margin: 0,
     maxWidth: 780,
     color: COLORS.muted,
-    fontSize: 15,
-    lineHeight: 1.35,
+    fontSize: 14,
+    lineHeight: 1.45,
   },
   refreshCard: {
     display: 'grid',
@@ -595,44 +558,27 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 999,
     background: COLORS.green,
   },
-  insightBand: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(5, minmax(150px, 1fr))',
-    gap: 10,
-    marginTop: 14,
-  },
-  insightTile: {
-    display: 'grid',
-    gap: 5,
-    border: `1px solid ${COLORS.line}`,
-    borderTop: `3px solid ${COLORS.blue}`,
-    borderRadius: 8,
-    background: COLORS.panel,
-    padding: 13,
-  },
-  disclosure: {
-    marginTop: 14,
-    border: `1px solid ${COLORS.amber}55`,
-    borderRadius: 8,
-    background: '#fff5df',
-    color: '#6f4717',
-    padding: '10px 12px',
-    fontSize: 13,
-  },
   tabs: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 14,
+    gap: 2,
+    marginTop: 24,
+    borderBottom: `1px solid ${COLORS.line}`,
   },
   tab: {
-    minWidth: 130,
-    border: '1px solid',
-    borderRadius: 7,
-    background: COLORS.panel,
+    minWidth: 118,
+    display: 'flex',
+    alignItems: 'baseline',
+    justifyContent: 'center',
+    gap: 7,
+    border: '0',
+    borderBottom: '2px solid',
+    borderRadius: 0,
+    background: 'transparent',
     color: COLORS.ink,
-    padding: '9px 12px',
+    padding: '11px 14px 12px',
     cursor: 'pointer',
+    fontFamily: COLORS.sans,
   },
   workspace: {
     display: 'grid',
@@ -654,7 +600,8 @@ const styles: Record<string, CSSProperties> = {
   asideTitle: {
     margin: 0,
     fontFamily: COLORS.serif,
-    fontSize: 24,
+    fontSize: 19,
+    fontWeight: 500,
     letterSpacing: 0,
   },
   answer: {
@@ -671,10 +618,42 @@ const styles: Record<string, CSSProperties> = {
     display: 'grid',
     gap: 7,
   },
+  starterButton: {
+    border: `1px solid ${COLORS.line}`,
+    borderRadius: 6,
+    background: '#fffefa',
+    color: COLORS.ink,
+    padding: '9px 10px',
+    textAlign: 'left',
+    fontFamily: COLORS.sans,
+    fontSize: 13,
+    cursor: 'pointer',
+  },
   ask: {
     display: 'grid',
     gridTemplateColumns: '1fr auto',
     gap: 8,
+  },
+  askInput: {
+    minWidth: 0,
+    border: `1px solid ${COLORS.line}`,
+    borderRadius: 7,
+    background: '#fffefa',
+    color: COLORS.ink,
+    padding: '9px 10px',
+    fontFamily: COLORS.sans,
+    fontSize: 13,
+  },
+  askButton: {
+    border: `1px solid ${COLORS.navy}`,
+    borderRadius: 7,
+    background: COLORS.navy,
+    color: '#fff',
+    padding: '9px 12px',
+    fontFamily: COLORS.sans,
+    fontSize: 13,
+    fontWeight: 800,
+    cursor: 'pointer',
   },
   guardrail: {
     margin: 0,
@@ -694,7 +673,7 @@ const styles: Record<string, CSSProperties> = {
     border: `1px solid ${COLORS.line}`,
     borderRadius: 8,
     background: COLORS.panel,
-    padding: 14,
+    padding: 18,
   },
   canvasHeader: {
     borderBottom: `1px solid ${COLORS.line}`,
@@ -704,13 +683,13 @@ const styles: Record<string, CSSProperties> = {
   signalGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-    gap: 10,
+    gap: 12,
   },
   signalCard: {
     border: `1px solid ${COLORS.line}`,
     borderRadius: 8,
     background: '#fbfaf7',
-    padding: 13,
+    padding: '16px 18px',
   },
   cardTop: {
     display: 'flex',
@@ -755,8 +734,31 @@ const styles: Record<string, CSSProperties> = {
     display: 'flex',
     flexWrap: 'wrap',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 10,
+    gap: 10,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTop: `1px solid ${COLORS.line}`,
+  },
+  textButton: {
+    border: 0,
+    background: 'transparent',
+    color: COLORS.ink,
+    padding: 0,
+    fontFamily: COLORS.sans,
+    fontSize: 13,
+    fontWeight: 750,
+    cursor: 'pointer',
+  },
+  primaryAction: {
+    border: `1px solid ${COLORS.ink}`,
+    borderRadius: 7,
+    background: COLORS.ink,
+    color: '#fff',
+    padding: '8px 12px',
+    fontFamily: COLORS.sans,
+    fontSize: 12,
+    fontWeight: 800,
+    cursor: 'pointer',
   },
   next: {
     display: 'flex',
