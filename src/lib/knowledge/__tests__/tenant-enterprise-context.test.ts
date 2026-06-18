@@ -5,6 +5,8 @@ import {
   retrieveTenantStructuredFacts,
   selectTenantEnterpriseSegments,
 } from '@/lib/knowledge/tenant-enterprise-context';
+import { queryTenantContext } from '@/lib/azure-search/tenant-context-retriever';
+import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
 import type {
   ContextChunk,
   GraphEdge,
@@ -16,6 +18,14 @@ import type {
 
 let fakeAdapter: TenantDataAdapter;
 let fakeTables: Record<string, unknown[]> | null = null;
+
+jest.mock('@/lib/azure-search/tenant-context-retriever', () => ({
+  queryTenantContext: jest.fn(() => Promise.resolve([])),
+}));
+
+jest.mock('@/lib/features/is-feature-enabled', () => ({
+  isFeatureEnabled: jest.fn(() => false),
+}));
 
 jest.mock('@/lib/knowledge/tenant-data', () => {
   const actual = jest.requireActual('@/lib/knowledge/tenant-data');
@@ -105,8 +115,14 @@ function reportsTo(fromNodeId: string, toNodeId: string): GraphEdge {
   };
 }
 
+const mockQueryTenantContext = jest.mocked(queryTenantContext);
+const mockIsFeatureEnabled = jest.mocked(isFeatureEnabled);
+
 describe('tenant enterprise context retrieval', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
+    mockIsFeatureEnabled.mockReturnValue(false);
+    mockQueryTenantContext.mockResolvedValue([]);
     fakeTables = null;
     const chunks = [
       chunk(
@@ -174,6 +190,75 @@ describe('tenant enterprise context retrieval', () => {
     expect(detail).toContain('Dr. Anita Krishnamurthy');
     expect(detail).toContain('FY2026 IT budget envelope');
     expect(detail).toContain('Use these persisted setup-data chunks before saying tenant profile, org structure, budget, or system context is unavailable.');
+  });
+
+  it('leaves Azure Search retrieval off by default and uses persisted chunks only', async () => {
+    const sources = await retrieveTenantEnterpriseSources(
+      'meridian-health',
+      'What do you know about my IT leadership team and my budget?',
+    );
+
+    expect(mockQueryTenantContext).not.toHaveBeenCalled();
+    expect(sources.map((source) => source.id)).not.toContain('meridian-health:azure-search:tenant-context-v1');
+    expect(sources.map((source) => source.id)).toEqual(
+      expect.arrayContaining(['meridian-health:org_structure', 'meridian-health:it_financials']),
+    );
+  });
+
+  it('adds Azure Search indexed chunks when the tenant retrieval flag is enabled', async () => {
+    mockIsFeatureEnabled.mockImplementation((ctx, key) =>
+      key === 'retrieval_azure_search' && ctx?.clientKey === 'meridian',
+    );
+    mockQueryTenantContext.mockResolvedValueOnce([
+      {
+        tenantKey: 'meridian-health',
+        chunkId: 'MR-CHUNK-0789',
+        sourceSegmentId: 'it_landscape',
+        sourceDoc: 'source_uploads/platform-modernization.csv',
+        recordId: 'MR-SYS-DATABRICKS-001',
+        text: 'Meridian Databricks on AWS migration depends on claims, Epic, pharmacy, CRM, and call transcript pipelines before prior-auth automation can scale.',
+        embeddingStatus: 'embedded',
+        classification: 'internal',
+        vectorScore: 4.2,
+      },
+    ]);
+
+    const sources = await retrieveTenantEnterpriseSources(
+      'meridian-health',
+      'What context do we have for Databricks and prior auth automation?',
+    );
+    const azureSource = sources.find((source) => source.id === 'meridian-health:azure-search:tenant-context-v1');
+
+    expect(mockQueryTenantContext).toHaveBeenCalledWith({
+      tenantClientKey: 'meridian-health',
+      query: 'What context do we have for Databricks and prior auth automation?',
+      topK: 8,
+      filters: {
+        minConfidence: 0.45,
+        sensitivity: ['public', 'internal', 'confidential'],
+      },
+    });
+    expect(azureSource?.detail).toContain('Azure AI Search tenant-context-v1 results for meridian-health.');
+    expect(azureSource?.detail).toContain('MR-SYS-DATABRICKS-001');
+    expect(azureSource?.detail).toContain('prior-auth automation can scale');
+  });
+
+  it('falls back to persisted chunks when Azure Search is enabled but unavailable', async () => {
+    mockIsFeatureEnabled.mockImplementation((ctx, key) =>
+      key === 'retrieval_azure_search' && ctx?.clientKey === 'lakeshore',
+    );
+    mockQueryTenantContext.mockRejectedValueOnce(new Error('azure_search_query_failed:503:test'));
+
+    const sources = await retrieveTenantEnterpriseSources(
+      'lakeshore',
+      'What do you know about our systems and budget?',
+    );
+
+    expect(mockQueryTenantContext).toHaveBeenCalledTimes(1);
+    expect(sources.map((source) => source.id)).not.toContain('lakeshore:azure-search:tenant-context-v1');
+    expect(sources.map((source) => source.id)).toEqual(
+      expect.arrayContaining(['lakeshore:enterprise_profile', 'lakeshore:it_financials']),
+    );
   });
 
   it('normalizes SkyHarbor app aliases to the loaded skyharbor-air tenant key before chunk lookup', async () => {

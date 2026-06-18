@@ -15,6 +15,11 @@ import {
   tenantAliasesFor,
 } from '@/lib/tenant/aliases';
 import type { CanonicalTenant } from '@/lib/tenant/CanonicalTenant';
+import {
+  queryTenantContext,
+  type TenantContextChunk as AzureTenantContextChunk,
+} from '@/lib/azure-search/tenant-context-retriever';
+import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
 
 export interface TenantEnterpriseSource {
   type: 'TENANT';
@@ -137,10 +142,11 @@ export async function retrieveTenantEnterpriseSources(
 
   try {
     const adapter = getTenantDataAdapter();
-    const [directReportSource, cLevelSource, structuredSources, grouped] = await Promise.all([
+    const [directReportSource, cLevelSource, structuredSources, azureSearchSource, grouped] = await Promise.all([
       retrieveDirectReportsSource(canonicalTenantKey, query, opts).catch(() => null),
       retrieveCLevelLeaderSource(canonicalTenantKey, query).catch(() => null),
       retrieveStructuredTenantSources(canonicalTenantKey, query).catch(() => []),
+      retrieveAzureSearchTenantSource(canonicalTenantKey, query).catch(() => null),
       Promise.all(segments.map(async (segmentId) => {
         const chunks = await adapter.listContextChunks(canonicalTenantKey, {
           segmentIds: [segmentId],
@@ -167,11 +173,47 @@ export async function retrieveTenantEnterpriseSources(
         confidence: 0.94,
       }));
 
-    return [directReportSource, cLevelSource, ...structuredSources, ...segmentSources]
+    return [directReportSource, cLevelSource, ...structuredSources, azureSearchSource, ...segmentSources]
       .filter((source): source is TenantEnterpriseSource => Boolean(source));
   } catch {
     return [];
   }
+}
+
+function isAzureSearchRetrievalEnabled(tenantKey: string): boolean {
+  return tenantAliasesFor(tenantKey).some((alias) =>
+    isFeatureEnabled({ clientKey: alias }, 'retrieval_azure_search'),
+  );
+}
+
+async function retrieveAzureSearchTenantSource(
+  tenantKey: string,
+  query: string,
+): Promise<TenantEnterpriseSource | null> {
+  if (!isAzureSearchRetrievalEnabled(tenantKey)) return null;
+
+  const chunks = await queryTenantContext({
+    tenantClientKey: tenantKey,
+    query,
+    topK: 8,
+    filters: {
+      minConfidence: 0.45,
+      sensitivity: ['public', 'internal', 'confidential'],
+    },
+  });
+  if (chunks.length === 0) return null;
+
+  return {
+    type: 'TENANT',
+    name: `Azure Search indexed context (${tenantKey})`,
+    id: `${tenantKey}:azure-search:tenant-context-v1`,
+    detail: [
+      `Azure AI Search tenant-context-v1 results for ${tenantKey}.`,
+      'Use these indexed context chunks before saying tenant context, corpus context, or uploaded evidence is unavailable.',
+      ...chunks.map(formatAzureSearchChunk),
+    ].join('\n- '),
+    confidence: 0.96,
+  };
 }
 
 interface ClientProfileRow {
@@ -1091,6 +1133,18 @@ function formatChunk(chunk: ContextChunk): string {
   const text = normalizeLegacyClientAliases(chunk.text).replace(/\s+/g, ' ').trim();
   const clipped = text.length > 460 ? `${text.slice(0, 457).replace(/\s+\S*$/, '')}...` : text;
   return `${doc}${clipped}`;
+}
+
+function formatAzureSearchChunk(chunk: AzureTenantContextChunk): string {
+  const sourceParts = [
+    chunk.sourceDoc,
+    chunk.recordId ? `record ${chunk.recordId}` : null,
+    chunk.chunkId ? `chunk ${chunk.chunkId}` : null,
+  ].filter(Boolean);
+  const prefix = sourceParts.length > 0 ? `${sourceParts.join(' · ')}: ` : '';
+  const text = normalizeLegacyClientAliases(chunk.text).replace(/\s+/g, ' ').trim();
+  const clipped = text.length > 460 ? `${text.slice(0, 457).replace(/\s+\S*$/, '')}...` : text;
+  return `${prefix}${clipped}`;
 }
 
 function normalizeLegacyClientAliases(text: string): string {
