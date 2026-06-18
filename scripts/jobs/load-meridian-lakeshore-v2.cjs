@@ -813,12 +813,16 @@ class Db {
       return out;
     }).filter((row) => Object.keys(row).length);
     if (!filtered.length) return 0;
-    const columns = Object.keys(filtered[0]);
+    const conflict = conflictColumns.filter((column) => filtered.some((row) => Object.prototype.hasOwnProperty.call(row, column)));
+    const deduped = conflict.length
+      ? Array.from(new Map(filtered.map((row) => [conflict.map((column) => String(row[column] ?? '')).join('\u001f'), row])).values())
+      : filtered;
+    const columns = Object.keys(deduped[0]);
     const types = await this.columnTypes(table);
     const updateColumns = columns.filter((column) => !conflictColumns.includes(column) && column !== 'id' && column !== 'created_at');
     let written = 0;
-    for (let offset = 0; offset < filtered.length; offset += 200) {
-      const batch = filtered.slice(offset, offset + 200);
+    for (let offset = 0; offset < deduped.length; offset += 200) {
+      const batch = deduped.slice(offset, offset + 200);
       const params = [];
       const tuples = batch.map((row) => {
         const placeholders = columns.map((column) => {
@@ -827,7 +831,6 @@ class Db {
         });
         return `(${placeholders.join(', ')})`;
       });
-      const conflict = conflictColumns.filter((column) => columns.includes(column));
       const onConflict = conflict.length
         ? `on conflict (${conflict.map(quoteIdent).join(', ')}) ${updateColumns.length ? `do update set ${updateColumns.map((column) => `${quoteIdent(column)} = excluded.${quoteIdent(column)}`).join(', ')}` : 'do nothing'}`
         : '';
