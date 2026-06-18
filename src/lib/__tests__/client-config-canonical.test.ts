@@ -12,4 +12,11 @@ describe('canonicalClientDisplayName', () => {
     ).toBe('Meridian Health');
     expect(canonicalClientDisplayName({ name: 'Meridian Health' })).toBe('Meridian Health');
   });
+
+  it('renders Lakeshore aliases as Lakeshore Holdings', () => {
+    expect(getClientOption('lakeshore').name).toBe('Lakeshore Holdings');
+    expect(canonicalClientDisplayName({ key: 'lakeshore' })).toBe('Lakeshore Holdings');
+    expect(canonicalClientDisplayName({ key: 'lakeshore-industries' })).toBe('Lakeshore Holdings');
+    expect(canonicalClientDisplayName({ name: 'Lakeshore Industries' })).toBe('Lakeshore Holdings');
+  });
 });
