@@ -219,6 +219,22 @@ function detectTitle(row, fallback) {
   const titleKey = Object.keys(row).find((key) => /(name|title|label|metric_name|control_name|initiative_name|application_name|vendor_name)/i.test(key));
   return titleKey && row[titleKey] ? String(row[titleKey]) : fallback;
 }
+function normalizeBusinessFunction(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  const direct = new Set(['Revenue Cycle', 'Technology', 'Finance', 'Operations', 'Clinical', 'Supply Chain', 'HR', 'Legal', 'Strategy']);
+  if (direct.has(raw)) return raw;
+  const text = raw.toLowerCase();
+  if (/(revenue|coding|claims|billing|payment integrity|provider network|sales|customer|member|patient contact)/.test(text)) return 'Revenue Cycle';
+  if (/(clinical|ambulatory|hospital|pharmacy|quality|hedis|star|population health|care|provider performance|informatics)/.test(text)) return 'Clinical';
+  if (/(treasury|finance|controller|fp&a|actuarial|cash|liquidity|close|gl|margin|cost)/.test(text)) return 'Finance';
+  if (/(supply|procurement|supplier|logistics|manufacturing|plant|warehouse|inventory|working capital)/.test(text)) return 'Supply Chain';
+  if (/(hr|human capital|workday hcm|people|talent)/.test(text)) return 'HR';
+  if (/(legal|privacy|compliance|cybersecurity|risk|control|audit|security)/.test(text)) return 'Legal';
+  if (/(strategy|transformation|enterprise transformation|portfolio|program)/.test(text)) return 'Strategy';
+  if (/(data|analytics|ai|digital|it|technology|cloud|lakehouse|databricks|platform)/.test(text)) return 'Technology';
+  return 'Operations';
+}
 function chunkText(title, row) {
   return `${title}: ${Object.entries(row).map(([key, value]) => `${key}=${value}`).join('; ')}`.slice(0, 7000);
 }
@@ -320,7 +336,7 @@ function buildContextRows(client) {
         payload,
         dimension_family: entry.family || null,
         domain_segment: null,
-        business_function: row.business_function || row.function_name || row.business_area || null,
+        business_function: normalizeBusinessFunction(row.business_function || row.function_name || row.business_area),
         load_order: Number(entry.order) || null,
         updated_at: NOW,
       });
