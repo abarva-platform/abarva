@@ -151,7 +151,7 @@ describe('claimNextDeliverableRun', () => {
 });
 
 describe('sweepStaleDeliverableRuns', () => {
-  it('marks stale queued/running rows failed and returns their ids; leaves fresh rows alone', async () => {
+  it('reaps RUNNING on the heartbeat deadline and QUEUED only on a much longer bound', async () => {
     // The fake stands in for the DB-side predicate: only rows past the deadline are
     // returned by RETURNING id. A "fresh" row would not match the WHERE and is not returned.
     const staleIds = ['stale-1', 'stale-2'];
@@ -166,9 +166,25 @@ describe('sweepStaleDeliverableRuns', () => {
     };
     const reclaimed = await sweepStaleDeliverableRuns(15, { rawSql: runner });
     expect(reclaimed).toEqual(staleIds);
-    expect(captured.sql).toMatch(/status\s+IN\s+\('queued',\s*'running'\)/);
+    // Split predicate: queued is NOT reaped on the same tight deadline as running —
+    // a queued backlog is waiting for a worker, not stuck. Running uses $1, queued $2.
+    expect(captured.sql).toMatch(/status\s*=\s*'running'\s+AND\s+updated_at\s*<\s*now\(\)\s*-\s*\(\$1/);
+    expect(captured.sql).toMatch(/status\s*=\s*'queued'\s+AND\s+updated_at\s*<\s*now\(\)\s*-\s*\(\$2/);
+    expect(captured.sql).not.toMatch(/status\s+IN\s+\('queued',\s*'running'\)/);
     expect(captured.sql).toMatch(/SET\s+status\s*=\s*'failed'/);
-    expect(captured.params).toEqual(['15']);
+    // Default: running 15 min, queued 6h (360 min) — the longer abandonment bound.
+    expect(captured.params).toEqual(['15', '360']);
+  });
+
+  it('honors a custom queuedDeadlineMinutes override', async () => {
+    const captured: { params?: unknown[] } = {};
+    const runner: RawSqlRunner = async (fn) =>
+      fn((async (_sql: string, params: unknown[]) => {
+        captured.params = params;
+        return [];
+      }) as never);
+    await sweepStaleDeliverableRuns(15, { rawSql: runner, queuedDeadlineMinutes: 720 });
+    expect(captured.params).toEqual(['15', '720']);
   });
 
   it('returns an empty list when nothing is stale', async () => {

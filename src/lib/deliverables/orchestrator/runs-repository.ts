@@ -212,25 +212,37 @@ export async function heartbeatDeliverableRun(
 }
 
 /**
- * Hard deadline reaper: fail any run still queued/running that has not been touched
- * (updated_at) within `deadlineMinutes`. Distinct from the claim's lease window — this
- * is the absolute give-up bound so a run can never be stuck non-terminal forever. The
- * worker runs this once at start of each invocation. Returns the ids it reclaimed.
+ * Hard deadline reaper: fail runs that are genuinely stuck, never healthy pending work.
+ *
+ * Two different conditions, two different bounds — collapsing them is a bug:
+ *  • RUNNING: a claimed run whose heartbeat (`updated_at`, bumped each progress pass) is
+ *    older than `deadlineMinutes` ⇒ its worker died mid-run ⇒ reclaim it.
+ *  • QUEUED: NOT stuck — it is waiting for a worker slot. A backlog larger than one
+ *    worker batch (or several phases enqueued at once) can legitimately sit queued far
+ *    longer than `deadlineMinutes` before a serial worker reaches it. Reaping it on the
+ *    running-deadline marks healthy pending work as "failed" even though a worker would
+ *    have processed it. Queued runs only get reclaimed at a much longer abandonment bound
+ *    (`queuedDeadlineMinutes`, default 6h) — i.e. a queue entry no worker ever came for.
+ *
+ * The worker runs this once at the start of each invocation. Returns the ids it reclaimed.
  */
 export async function sweepStaleDeliverableRuns(
   deadlineMinutes = 15,
-  opts: { rawSql?: RawSqlRunner } = {},
+  opts: { rawSql?: RawSqlRunner; queuedDeadlineMinutes?: number } = {},
 ): Promise<string[]> {
   const rawSql = opts.rawSql ?? defaultRawSql;
+  const queuedDeadlineMinutes = opts.queuedDeadlineMinutes ?? 360;
   const sql = `
     UPDATE deliverable_runs
        SET status = 'failed',
            error = 'reclaimed: worker did not complete within deadline',
            updated_at = now()
-     WHERE status IN ('queued', 'running')
-       AND updated_at < now() - ($1 || ' minutes')::interval
+     WHERE (status = 'running' AND updated_at < now() - ($1 || ' minutes')::interval)
+        OR (status = 'queued'  AND updated_at < now() - ($2 || ' minutes')::interval)
     RETURNING id`;
-  const rows = await rawSql((run) => run<{ id: string }>(sql, [String(deadlineMinutes)]));
+  const rows = await rawSql((run) =>
+    run<{ id: string }>(sql, [String(deadlineMinutes), String(queuedDeadlineMinutes)]),
+  );
   return (Array.isArray(rows) ? rows : []).map((r) => String(r.id));
 }
 
