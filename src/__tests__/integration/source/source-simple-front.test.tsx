@@ -143,9 +143,67 @@ describe("SimpleStageFront", () => {
 
     fireEvent.click(screen.getAllByText("Skip")[0]!);
     expect(fetchMock).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByTestId("source-simple-front-write"));
+    fireEvent.click(screen.getByTestId("source-simple-front-approve"));
 
     expect(onGenerateArtifact).toHaveBeenCalledWith("d05_scope_memo");
+  });
+
+  it("APPROVE = generate + advance in one click; no separate generate button", () => {
+    const onGenerateArtifact = jest.fn(async () => ({ ok: true as const }));
+    const onAdvanceStage = jest.fn();
+    render(
+      createElement(SimpleStageFront, {
+        eventId: "event-1",
+        stage: "scope",
+        view,
+        generating: false,
+        registryArtifacts: [],
+        onGenerateArtifact,
+        onAdvanceStage,
+        onRefresh: jest.fn(),
+        advanced: createElement("div", null, "Advanced workspace"),
+      }),
+    );
+
+    // The Moves-parity contract: there is no standalone "Write/Generate"
+    // button to forget — approving the step is the single action.
+    expect(screen.queryByTestId("source-simple-front-next-step")).toBeNull();
+    const approve = screen.getByTestId("source-simple-front-approve");
+    expect(approve.textContent).toContain(
+      "Approve & write Scope Memo with Boundaries",
+    );
+
+    fireEvent.click(approve);
+    expect(onGenerateArtifact).toHaveBeenCalledWith("d05_scope_memo");
+    expect(onAdvanceStage).toHaveBeenCalledWith("rfp");
+  });
+
+  it("on the final stage (no next), approve just writes the deliverable", () => {
+    const onGenerateArtifact = jest.fn(async () => ({ ok: true as const }));
+    const onAdvanceStage = jest.fn();
+    const finalView: SimpleStageScreenView = {
+      ...view,
+      nextStep: { label: "Track the value", stage: undefined },
+    };
+    render(
+      createElement(SimpleStageFront, {
+        eventId: "event-1",
+        stage: "value",
+        view: finalView,
+        generating: false,
+        registryArtifacts: [],
+        onGenerateArtifact,
+        onAdvanceStage,
+        onRefresh: jest.fn(),
+        advanced: createElement("div", null, "Advanced workspace"),
+      }),
+    );
+
+    const approve = screen.getByTestId("source-simple-front-approve");
+    expect(approve.textContent).toContain("Write my Scope Memo with Boundaries");
+    fireEvent.click(approve);
+    expect(onGenerateArtifact).toHaveBeenCalledWith("d05_scope_memo");
+    expect(onAdvanceStage).not.toHaveBeenCalled();
   });
 
   it("saves a just-tell-me answer through the evidence answer route", async () => {
