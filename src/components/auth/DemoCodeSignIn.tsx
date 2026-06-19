@@ -14,21 +14,6 @@ interface ClerkErrorLike {
   status?: number
 }
 
-interface EmailCodeFactorLike {
-  strategy: string
-  emailAddressId?: string
-  safeIdentifier?: string
-}
-
-interface SignInResourceLike {
-  status?: string | null
-  createdSessionId?: string | null
-  supportedFirstFactors?: EmailCodeFactorLike[] | null
-  create: (params: { identifier: string }) => Promise<SignInResourceLike>
-  prepareFirstFactor: (params: { strategy: 'email_code'; emailAddressId?: string }) => Promise<SignInResourceLike>
-  attemptFirstFactor: (params: { strategy: 'email_code'; code: string }) => Promise<SignInResourceLike>
-}
-
 interface ClerkWindow extends Window {
   Clerk?: {
     loaded?: boolean
@@ -36,7 +21,12 @@ interface ClerkWindow extends Window {
     session?: { id?: string } | null
     signOut?: () => Promise<void>
     client: {
-      signIn: SignInResourceLike
+      signIn: {
+        create: (params: { strategy: 'ticket'; ticket: string }) => Promise<{
+          status: string
+          createdSessionId?: string | null
+        }>
+      }
     }
     setActive: (params: { session?: string | null }) => Promise<void>
   }
@@ -48,7 +38,7 @@ function describeFailure(err: unknown, alreadySignedIn: boolean): string {
   }
   const message = err instanceof Error ? err.message : String(err ?? 'demo_sign_in_failed')
   if (message === 'invalid_credentials') {
-    return 'We could not start sign-in for that email. Check the private invite and try again.'
+    return 'We could not verify that email, password, and access code. Check the private invite and try again.'
   }
   if (message === 'demo_user_not_found') {
     return 'The demo user record is missing in Clerk. Ask Anand to re-run /api/admin/seed-clerk-metadata.'
@@ -59,15 +49,8 @@ function describeFailure(err: unknown, alreadySignedIn: boolean): string {
   if (message === 'clerk_not_ready') {
     return 'Clerk JS did not finish loading. Refresh the page and retry.'
   }
-  if (message === 'email_code_not_available') {
-    return 'This invited identity is not configured for email-code sign-in. Ask Anand to re-check the Clerk user.'
-  }
   if (message.startsWith('ticket_sign_in_')) {
     const status = message.slice('ticket_sign_in_'.length)
-    return `Clerk did not finalize the session (status: ${status}). Refresh and retry.`
-  }
-  if (message.startsWith('email_code_sign_in_')) {
-    const status = message.slice('email_code_sign_in_'.length)
     return `Clerk did not finalize the session (status: ${status}). Refresh and retry.`
   }
   const clerkError = (err as ClerkErrorLike)?.errors?.[0]
@@ -147,14 +130,13 @@ const BUTTON_PRIMARY = {
 
 export function DemoCodeSignIn({ redirectUrl }: Props) {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
-  const [phase, setPhase] = useState<'email' | 'code'>('email')
-  const [sentTo, setSentTo] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email])
-  const canSubmit = phase === 'email' ? normalizedEmail.length > 0 : code.trim().length > 0
+  const canSubmit = normalizedEmail.length > 0 && password.length > 0 && code.trim().length > 0
 
   async function completeDemoSignIn(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault()
@@ -169,33 +151,28 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
         throw new Error('already_signed_in')
       }
 
+      const response = await fetch('/api/auth/demo-code-sign-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail, password, code }),
+      })
+
+      const payload = (await response.json().catch(() => null)) as { error?: string; ticket?: string } | null
+      if (!response.ok || !payload?.ticket) {
+        throw new Error(payload?.error || 'demo_sign_in_failed')
+      }
+
       if (!clerk?.loaded) {
         throw new Error('clerk_not_ready')
       }
 
-      if (phase === 'email') {
-        const signIn = await clerk.client.signIn.create({ identifier: normalizedEmail })
-        const emailFactor = signIn.supportedFirstFactors?.find((factor) => factor.strategy === 'email_code')
-        if (!emailFactor) {
-          throw new Error('email_code_not_available')
-        }
-
-        await signIn.prepareFirstFactor({
-          strategy: 'email_code',
-          emailAddressId: emailFactor.emailAddressId,
-        })
-        setSentTo(emailFactor.safeIdentifier || normalizedEmail)
-        setPhase('code')
-        return
-      }
-
-      const result = await clerk.client.signIn.attemptFirstFactor({
-        strategy: 'email_code',
-        code: code.trim(),
+      const result = await clerk.client.signIn.create({
+        strategy: 'ticket',
+        ticket: payload.ticket,
       })
 
       if (result.status !== 'complete' || !result.createdSessionId) {
-        throw new Error(`email_code_sign_in_${result.status}`)
+        throw new Error(`ticket_sign_in_${result.status}`)
       }
 
       await clerk.setActive({ session: result.createdSessionId })
@@ -266,7 +243,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
           marginBottom: 22,
         }}
       >
-        Enter your approved email. We will send a one-time code to continue.
+        Enter the credentials from your private invite. Access is restricted to approved client identities.
       </div>
 
       <div
@@ -282,7 +259,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
           marginBottom: 20,
         }}
       >
-        Invite-only workspace. Approved client identities receive a fresh sign-in code by email.
+        Invite-only workspace. If you need a new client profile, ask Anand to provision the user before sharing credentials.
       </div>
 
       <form onSubmit={completeDemoSignIn} style={{ display: 'grid', gap: 14 }}>
@@ -307,62 +284,44 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             style={INPUT}
-            disabled={pending || phase === 'code'}
+            disabled={pending}
             required
           />
         </div>
 
-        {phase === 'code' && (
-          <div>
-            <label htmlFor="demo-code" style={LABEL}>
-              Email code
-            </label>
-            <input
-              id="demo-code"
-              placeholder="Enter code from email"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-              style={INPUT}
-              disabled={pending}
-              required
-            />
-            <div
-              style={{
-                marginTop: 8,
-                color: BRAND.textMute,
-                fontFamily: BRAND.fSans,
-                fontSize: 12.5,
-                lineHeight: 1.45,
-              }}
-            >
-              Code sent to {sentTo || normalizedEmail}.{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setPhase('email')
-                  setCode('')
-                  setSentTo('')
-                  setError(null)
-                }}
-                style={{
-                  border: 0,
-                  background: 'transparent',
-                  color: BRAND.signalBlue,
-                  padding: 0,
-                  fontFamily: BRAND.fSans,
-                  fontSize: 12.5,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                }}
-              >
-                Use a different email
-              </button>
-            </div>
-          </div>
-        )}
+        <div>
+          <label htmlFor="demo-password" style={LABEL}>
+            Password
+          </label>
+          <input
+            id="demo-password"
+            placeholder="Password from invite"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            style={INPUT}
+            disabled={pending}
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="demo-code" style={LABEL}>
+            Access code
+          </label>
+          <input
+            id="demo-code"
+            placeholder="6-digit code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={code}
+            onChange={(event) => setCode(event.target.value)}
+            style={INPUT}
+            disabled={pending}
+            required
+          />
+        </div>
 
         {error && (
           <div
@@ -391,7 +350,7 @@ export function DemoCodeSignIn({ redirectUrl }: Props) {
           }}
           disabled={pending || !canSubmit}
         >
-          {pending ? (phase === 'email' ? 'Sending code...' : 'Verifying...') : (phase === 'email' ? 'Send code' : 'Sign in')}
+          {pending ? 'Signing in...' : 'Sign in'}
         </button>
       </form>
     </div>
