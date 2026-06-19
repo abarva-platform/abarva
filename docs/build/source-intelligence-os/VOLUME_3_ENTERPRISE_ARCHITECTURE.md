@@ -463,7 +463,7 @@ The same contract extends to the three Volume-3 agents introduced in Chapters 9�
 
 **Contract Agent (Ch9).**
 - *Mission:* verify the signed contract against the negotiated BAFO outcome and scorecard commitments — catch the "tier-1 SLA claimed in evaluation, best-effort in the contract" contradiction.
-- *Inputs:* uploaded contract via `artifact-registry/upload-contract.ts`, BAFO outcome envelope, d25 risk attestation.
+- *Inputs:* uploaded contract via `artifact-registry/upload-contract.ts`, the BAFO outcome envelope (d23), the d16 scorecard commitments, and d25 risk attestation.
 - *Outputs:* redline/clause-gap findings, SLA/liability verification, each as an envelope with the contradicting evidence cited.
 - *Decision rights:* RECOMMEND redlines and FLAG contradictions; route to legal sign-off. No authority to accept terms.
 - *Escalation:* any clause-gap touching liability/indemnity escalates to legal with Steward holding the gate.
@@ -815,7 +815,7 @@ Five principles govern every Source surface. They are not aesthetic preferences;
 
 **Principle 3 — The Ask-Anything agent toolbar is the agentic spine.** *Why it matters:* without a persistent, GPT-style bottom toolbar the surface does not *feel* agentic (recorded as a standing feedback item). *Problem it solves:* operators have questions that no static panel anticipates ("which vendor has the weakest SLA evidence?"). *How it works:* a sticky, auto-growing, spellchecked, Enter-submits toolbar fronts **Sentinel** (the one front agent for Source; Nexus=Moves, Atlas=Tower, Steward=governance voice) on every surface, routing to the grounded-answer engine (`source-answer-engine.ts`, today DORMANT) once it is wired. Existing scaffolds — `PersistentNexusPanel.tsx`, `SentinelMissionPanel.tsx`, `SentinelEngagementCanvas.tsx` — are the seams. *Business value:* the surface answers the question the screen didn't anticipate, which is where consulting value actually lives. *Implementation:* one toolbar component, rendered by the `(maestro)/source/layout.tsx` shell so it is universal.
 
-**Principle 4 — Format follows intent.** Rich, conversational reasoning renders inline (markdown → tables/lists); heavy or structured output renders as a downloadable artifact card (Claude-artifact / GPT-canvas style), reusing the HTML/DOCX/PPTX/XLSX renderers in `src/lib/source/exports/`. *Value:* the operator never wrestructures a wall of text into a board deck by hand.
+**Principle 4 — Format follows intent.** Rich, conversational reasoning renders inline (markdown → tables/lists); heavy or structured output renders as a downloadable artifact card (Claude-artifact / GPT-canvas style), reusing the HTML/DOCX/PPTX/XLSX renderers in `src/lib/source/exports/`. *Value:* the operator never restructures a wall of text into a board deck by hand.
 
 **Principle 5 — Anchor in the locked design system and the existing component set.** No new color, font, or layout primitive is introduced. Every surface specified below composes existing tokens and drawer/panel primitives. *Value:* the redesign is additive, not a rewrite, which is what keeps it shippable.
 

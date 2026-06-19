@@ -75,3 +75,16 @@ Grounding errors caught + fixed in remediation: render-pdf falsely called a 501 
 Verified counts (authoritative): gate-criteria = **38 distinct gate IDs / 39 criterion entries** (spec uses 38 = gate IDs, consistent across volumes); evidence-requirements = **21** distinct entries.
 
 Residual minor items (non-blocking, noted for a future copy pass): a few fragile exact line-number / LOC citations; one cross-chapter input-list reconciliation (Ch9 vs Ch12 contract-agent inputs); one cosmetic typo (Ch14 "wrestructures").
+
+---
+
+## Changelog — grounding patches applied 2026-06-19 (review against branch `docs/source-intelligence-os-spec`)
+
+Reviewer: Claude (Opus 4.8). Full review note: `docs/codex-handoff/SOURCE_INTELLIGENCE_OS_REVIEW_NOTE.md`. Each line is one surgical patch to the spec markdown.
+
+- **C1 (typo):** Vol3 Ch14 §14.1 + full spec — "wrestructures" → "restructures".
+- **C2 (Ch9↔Ch12 reconciliation):** Vol3 §12.4 Contract Agent *Inputs* — added the **d16 scorecard commitments** (and tagged BAFO as d23), matching Ch9's three deal-specific sources (d23 + d16 + d25); the mission already verifies scorecard commitments.
+- **B1 (route path):** Vol1 future-state, Vol2 §5.1, Vol4 §16.2 + seams-list + full spec — the Claude pipeline route corrected from `…/artifacts/generate/route.ts` to `…/artifacts/[artifactCode]/generate-from-claude/route.ts`. **Both files exist**, but `generate/route.ts` is a *persistence-only* endpoint (stores agent-supplied markdown); `generate-from-claude/route.ts` is the one that binds context + builds the prompt + streams Claude (POST @ line 55; seam @ 181–185). The grounding-map inventory cells that merely list `generate/route.ts` are left unchanged (the route legitimately exists), but grounding-map rows that *attribute the Claude pipeline* to it (rows 11/93/153) over-state it — flagged here, not auto-edited.
+- **B2 (canonical counts):** Master outline + full-spec exec-summary mirror — "(57 criteria), evidence requirements (28)" → "(38 criteria), evidence requirements (21)"; Vol1 stage-layer body — "~28 evidence requirements" → "~21 evidence requirements". Authoritative repo counts: **38 gate IDs / 39 criterion entries; 21 evidence requirements** (Vol1/Vol4/Ch15 already said 38 gates).
+
+**Not auto-patched (recommended follow-ups):** fragile exact line-number/LOC citations across `_GROUNDING_MAP.md` + Vol2 Ch6 + Vol3 §12.5/§12.6 (replace with `file:function` refs in a copy pass); the live-code stale comment in `should-cost-model.ts:13` ("NOT wired into source-answer-engine.ts" — it now is) — fix when Phase-1 opens that file; characterize the Source Event Archetype Framework as **absent-from-this-branch** (release-record + git refs only), not merely dormant — the live archetype seam is `classifier/category-classifier.ts`.

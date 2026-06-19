@@ -111,7 +111,7 @@ The headline reads bluntly: **we have specified a sourcing operating system and 
 
 Five gaps gate everything else. Each is named to a real file and to its downstream business consequence. Closing them in sequence is the program.
 
-1. **No reasoning/analysis layer.** The flow is `Event → ContextBinder → PromptRegistry → Claude → markdown`. There is no stage that produces structured analysis (claims, tested assumptions, confidence, caveats) before text is written. *Consequence:* every deliverable is an unaudited assertion; a CIO cannot see why a recommendation holds, and we cannot defend an award in a board room. The target inserts **Analysis** and **Recommendation** stages at the `server.ts` / generate-route seam (`src/app/api/v1/source/[eventId]/artifacts/generate/route.ts`).
+1. **No reasoning/analysis layer.** The flow is `Event → ContextBinder → PromptRegistry → Claude → markdown`. There is no stage that produces structured analysis (claims, tested assumptions, confidence, caveats) before text is written. *Consequence:* every deliverable is an unaudited assertion; a CIO cannot see why a recommendation holds, and we cannot defend an award in a board room. The target inserts **Analysis** and **Recommendation** stages at the `server.ts` / generate-route seam (`src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate-from-claude/route.ts`).
 
 2. **30 of 33 deliverables unbuilt.** Only d01/d05/d09 have prompts; the other 30 are template stubs in `src/content/source-templates/`. *Consequence:* the value-bearing stages — evaluation (d16–d18), pricing (d19–d21), BAFO (d22–d23), executive decision (d24–d26) — produce nothing automatically. The single most load-bearing missing artifact is **d19a, the pricing-template generator**: without it vendors cannot be sent a structured template, so submissions, normalization, comparison and the trap log are all blocked.
 
@@ -227,7 +227,7 @@ The eleven sourcing capability columns map to the lifecycle a sourcing partner w
 The live generation pipeline is the spine of the current product, and it is worth tracing precisely, because its shape *is* the problem the future state must solve.
 
 ```
-  POST /api/v1/source/[eventId]/artifacts/generate/route.ts
+  POST /api/v1/source/[eventId]/artifacts/[artifactCode]/generate-from-claude/route.ts
         │
         ▼
   buildSourceGenerationContext()          ← context-binder.ts
@@ -262,7 +262,7 @@ The upstream binding deserves a hard note. `collectUpstreamBodies` includes upst
 
 ### 2.3 Stage Machinery S0–S7 — Strong Spec, Weak Enforcement
 
-The stage layer is where Source's specification maturity is most impressive and its enforcement gap most acute. All eight stage packs exist as full TypeScript modules — `S0_intake.ts`, `S1_market_shape.ts`, `S2_shortlist.ts`, `S3_rfp.ts`, `S4_demo_poc.ts`, `S5_bafo.ts`, `S6_contract.ts`, `S7_activate.ts` — each carrying the full `StagePack` doctrine: outcome, definition-of-done, right-questions (open/converge/close), anti-patterns, coaching arc, and dependencies. The canonical specs in `src/lib/source/canonical-specs/` define 38 gate criteria (`gate-criteria.ts` — 38 distinct `GATE-` ids) with severity (hard/soft/informational), `linkedArtifactCodes`, and `ownerRole`, plus ~28 evidence requirements (`evidence-requirements.ts`) mapping each evidence source to a minimum readiness state on the 7-step ramp (Not Requested → Loaded → Parsed → Available → Usable Evidence, plus Stale and Low Confidence failure modes).
+The stage layer is where Source's specification maturity is most impressive and its enforcement gap most acute. All eight stage packs exist as full TypeScript modules — `S0_intake.ts`, `S1_market_shape.ts`, `S2_shortlist.ts`, `S3_rfp.ts`, `S4_demo_poc.ts`, `S5_bafo.ts`, `S6_contract.ts`, `S7_activate.ts` — each carrying the full `StagePack` doctrine: outcome, definition-of-done, right-questions (open/converge/close), anti-patterns, coaching arc, and dependencies. The canonical specs in `src/lib/source/canonical-specs/` define 38 gate criteria (`gate-criteria.ts` — 38 distinct `GATE-` ids) with severity (hard/soft/informational), `linkedArtifactCodes`, and `ownerRole`, plus ~21 evidence requirements (`evidence-requirements.ts`) mapping each evidence source to a minimum readiness state on the 7-step ramp (Not Requested → Loaded → Parsed → Available → Usable Evidence, plus Stale and Low Confidence failure modes).
 
 `src/lib/source/source-governance-enforcement.ts` even implements the *logic* — `evaluateCriterionMetReadiness()` and `evaluateStagePromotionReadiness()` — that would verify artifact status, evidence tier, and approval reason before a promotion. The machinery to enforce gates exists and is tested.
 
