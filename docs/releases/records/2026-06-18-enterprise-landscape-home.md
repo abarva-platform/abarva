@@ -6,7 +6,7 @@
 
 ## Status
 
-`ready-for-lab-deploy-v3`
+`deployed-lab-v3`
 
 ## Plain-English Summary
 
@@ -68,6 +68,14 @@ The retired Context/Corpus Explorer implementation that produced the poor screen
 - `npx tsc --noEmit --pretty false` passed.
 - `npm run build` passed.
 - `npm run release:check` passed.
+- ACR build `cafg` passed for image `acrabarvalab001.azurecr.io/abarva/web:intelligence-retired-explorer-09311f955`.
+- Image digest: `sha256:01e0559f2a4614708dfdb9d44105e4551b4fd60cf2e1909a93034fc49fc9996c`.
+- Azure Container Apps revision `ca-abarva-web-lab-eastus--0000113` is `Healthy` / `Running`.
+- Traffic is 100% on revision `ca-abarva-web-lab-eastus--0000113`.
+- `https://app.abarva.ai/api/health` returned `ok: true` with Postgres and Azure graph checks true.
+- Live unauthenticated route smoke: `/home`, `/admin`, and `/tower` redirect to sign-in; `/intelligence` returns 200.
+- Live `/intelligence` HTML contains `AbarVa Intelligence`, `Advisory board`, and `Recommendation`.
+- Live `/intelligence` HTML does not contain the retired bad-page strings: `What your context is telling us`, `The strongest cross-context reads`, `Dimensions Loaded`, `Graph Edges`, `Ask about loaded context`, or `ContextCorpusExplorerPage`.
 - 2026-06-19 cleanup: `src/components/intelligence-v4/ContextCorpusExplorerPage.tsx` deleted.
 - 2026-06-19 cleanup: `/tenant/[tenantSlug]/intelligence` now redirects to `/intelligence?client=<tenantKey>` instead of rendering `IntelligenceLensTabs`.
 - 2026-06-19 cleanup: runtime source scan across Home, Intelligence, Tower, tenant routes, and active Home/Intelligence/Tower components found no matches for the bad-page strings: `What your context is telling us`, `The strongest cross-context reads`, `Dimensions Loaded`, `Graph Edges`, `Ask about loaded context`, `ACTIVE CANVAS`, `AI CONTROL TOWER`, or `ContextCorpusExplorerPage`.
@@ -79,11 +87,13 @@ The retired Context/Corpus Explorer implementation that produced the poor screen
 
 ## Rollout Plan
 
-Build and deploy the v2 corrected image to Azure Container Apps lab, then verify `/home`, `/intelligence`, `/tower`, and `/admin` route separation. Verify signed-in visuals before promoting beyond lab/demo use.
+Deployed to Azure Container Apps lab on revision `ca-abarva-web-lab-eastus--0000113` with 100% traffic. Verify signed-in visuals before promoting beyond lab/demo use.
 
 ## Rollback Plan
 
 Rollback by shifting ACA traffic to the previous known-good revision `ca-abarva-web-lab-eastus--m6ece1b74`, then revert the `/home`, `/intelligence`, nav, and proxy route changes. No schema or data rollback is required.
+
+For the v3 cleanup specifically, rollback by shifting ACA traffic off `ca-abarva-web-lab-eastus--0000113` to the previous healthy revision, then reverting commit `09311f955`. No schema or data rollback is required.
 
 ## Audit Evidence
 
@@ -92,7 +102,11 @@ Rollback by shifting ACA traffic to the previous known-good revision `ca-abarva-
 - Git commit `893cb1539` was the incorrect `/admin` candidate.
 - Live traffic was rolled back to `ca-abarva-web-lab-eastus--m6ece1b74`.
 - Corrected git commit `bad4a1c82`.
-- Follow-up cleanup commit pending at this record update removes the retired v4 Explorer from runtime source and prevents tenant deep-link leakage.
+- Cleanup commit `09311f955` removes the retired v4 Explorer from runtime source and prevents tenant deep-link leakage.
+- ACR image `acrabarvalab001.azurecr.io/abarva/web:intelligence-retired-explorer-09311f955`.
+- ACR digest `sha256:01e0559f2a4614708dfdb9d44105e4551b4fd60cf2e1909a93034fc49fc9996c`.
+- ACA revision `ca-abarva-web-lab-eastus--0000113` with 100% traffic.
+- Live marker check for required Advisory Board copy and forbidden retired Explorer copy.
 - ACR image `acrabarvalab001.azurecr.io/abarva/web:home-intelligence-routes-bad4a1c82`.
 - ACR digest `sha256:49cf49da21ad2e608bd2d84318442c5148443222a82e9ae04e53d10fd8504212`.
 - ACA revision `ca-abarva-web-lab-eastus--0000111` with 100% traffic.
