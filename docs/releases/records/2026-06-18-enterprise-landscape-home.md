@@ -6,15 +6,15 @@
 
 ## Status
 
-`deployed-lab`
+`corrected-candidate`
 
 ## Plain-English Summary
 
-The signed-in Home surface now opens as an Enterprise Landscape current-state assessment instead of the prior setup/trust overview. The page uses a consulting-report layout with the same left assessment menu, a center report canvas, section-specific tables/charts/diagrams, a right leadership panel, and a source-trail drawer.
+The signed-in `/home` surface now opens as an Enterprise Landscape current-state assessment. `/admin` remains the setup/admin control plane. `/intelligence` now opens as an advisory-board surface instead of the older repository/explorer framing. Home uses the consulting-report layout with the same left assessment menu, a center report canvas, section-specific tables/charts/diagrams, a right leadership panel, and a source-trail drawer.
 
 ## Layer Impact
 
-- `global-control-lane`: changes the default Home overview experience for signed-in users because the top-nav Home route still lands on `/admin`.
+- `global-control-lane`: separates client-facing Home from Setup/Admin. Top-nav Home lands on `/home`; `/admin` remains setup/admin.
 - `client-data-lane`: no data is mutated. The first implementation reads a client-aware view model and uses SkyHarbor-specific derived assessment content with generic fallbacks for other clients.
 
 ## Client Applicability
@@ -28,40 +28,42 @@ The signed-in Home surface now opens as an Enterprise Landscape current-state as
 ## Changes Included
 
 - `src/app/(maestro)/admin/page.tsx`
+- `src/app/(maestro)/home/page.tsx`
+- `src/app/(maestro)/intelligence/page.tsx`
 - `src/components/home/EnterpriseLandscapeHome.tsx`
 - `src/components/home/EnterpriseLandscapeHome.module.css`
+- `src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx`
+- `src/components/intelligence-advisory/AdvisoryIntelligencePage.module.css`
 - `src/lib/home/enterprise-landscape-view-model.ts`
+- `src/proxy.ts`
+- `src/components/shell/topbar-nav-items.ts`
+- `src/lib/home/top-nav-items.ts`
 - `docs/build/intelligence/ENTERPRISE_LANDSCAPE_DYNAMIC_TEMPLATE_CONTRACT_2026-06-18.md`
 
 ## QA / Validation
 
 - `npx eslint src/components/home/EnterpriseLandscapeHome.tsx src/lib/home/enterprise-landscape-view-model.ts 'src/app/(maestro)/admin/page.tsx'` passed.
+- `npx eslint 'src/app/(maestro)/admin/page.tsx' 'src/app/(maestro)/home/page.tsx' 'src/app/(maestro)/intelligence/page.tsx' src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx src/proxy.ts src/components/shell/topbar-nav-items.ts src/lib/home/top-nav-items.ts` passed.
 - `npx tsc --noEmit --pretty false` passed.
 - `npm run build` passed locally before image build.
-- ACR build `caf7` passed for image `acrabarvalab001.azurecr.io/abarva/web:enterprise-landscape-home-893cb1539`.
-- Image digest: `sha256:30629302c827a0ac1b4f17ab5007ab725376682a4891885d7ddf44edaeb41bea`.
-- Azure Container Apps revision `ca-abarva-web-lab-eastus--0000110` is `Healthy` / `Running`.
-- `https://app.abarva.ai/api/health` returned `ok: true` with Postgres and Azure graph checks true.
-- `/admin` browser smoke without a Clerk session correctly redirected to `/sign-in?redirect=%2Fadmin`; signed-in visual QA is still pending.
+- Prior incorrect lab deploy routed Home through `/admin`; live traffic was rolled back to revision `ca-abarva-web-lab-eastus--m6ece1b74` before this corrected candidate.
+- Corrected ACR/ACA deployment evidence will be appended after deploy.
 
 ## Rollout Plan
 
-Built and deployed to Azure Container Apps lab. Traffic is 100% on revision `ca-abarva-web-lab-eastus--0000110`. Browser-smoke `/admin` as a signed-in SkyHarbor or switched SkyHarbor session before promoting beyond lab/demo use.
+Build and deploy corrected image to Azure Container Apps lab. Verify `/home` and `/intelligence` behind a signed-in session, and verify `/admin` still renders setup/admin rather than Enterprise Landscape.
 
 ## Rollback Plan
 
-Revert the import and early overview return in `src/app/(maestro)/admin/page.tsx` to restore the prior HomeOverviewV2 setup/trust overview. No schema or data rollback is required.
+Rollback by shifting ACA traffic to the previous known-good revision `ca-abarva-web-lab-eastus--m6ece1b74`, then revert the `/home`, `/intelligence`, nav, and proxy route changes. No schema or data rollback is required.
 
 ## Audit Evidence
 
 - Focused ESLint output.
 - TypeScript output.
-- Git commit `893cb1539`.
-- ACR image `acrabarvalab001.azurecr.io/abarva/web:enterprise-landscape-home-893cb1539`.
-- ACR digest `sha256:30629302c827a0ac1b4f17ab5007ab725376682a4891885d7ddf44edaeb41bea`.
-- ACA revision `ca-abarva-web-lab-eastus--0000110` with 100% traffic.
-- Public health response from `https://app.abarva.ai/api/health`.
-- Browser redirect check for protected `/admin` route.
+- Git commit `893cb1539` was the incorrect `/admin` candidate.
+- Live traffic was rolled back to `ca-abarva-web-lab-eastus--m6ece1b74`.
+- Corrected commit/image/revision to be appended after deployment.
 
 ## Context Ingestion Evidence
 

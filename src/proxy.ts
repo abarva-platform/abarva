@@ -195,10 +195,9 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
 
   // Wave 1 PR-1 (2026-05-30) · Setup/Admin Trust Plane consolidation.
   // /admin/* is the single canonical route tree for the Setup/Admin
-  // surface. The parallel /home/* re-export tree is retired. The
-  // panel pages that previously re-exported /admin/* counterparts now
-  // 301-redirect /home/<panel> → /admin/<panel> so any persisted links
-  // continue to resolve.
+  // surface. /home is now the client-facing Enterprise Landscape.
+  // Legacy /home panel pages that still re-export /admin counterparts
+  // redirect below, but bare /home must never redirect to /admin.
   //
   // /home, /home/queue, /home/learn, /home/ai-initiatives*,
   // /home/configuration, /home/training stay as real /home pages and
@@ -208,14 +207,6 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   // tabbed `/admin?tab=tenant` (the standalone `/admin/tenant` route
   // was demoted to a tab inside /admin Overview — see AdminTenantTab).
   const homeToAdminMap: Record<string, string> = {
-    // CL-1 (2026-05-30) · Bare /home now redirects to the Trust Plane
-    // at /admin. The orphan src/app/(maestro)/home/page.tsx that
-    // rendered the retired 2026-05-08 fixture landing has been
-    // deleted. The /home/<subpage> routes below (queue, decision,
-    // source, learn, ai-initiatives, configuration, training) remain
-    // legitimate surfaces and are NOT remapped here. See
-    // docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md §2.
-    '/home': '/admin',
     '/home/data-trust': '/admin/data-trust',
     '/home/agent-readiness': '/admin/agent-readiness',
     '/home/connectors': '/admin/connectors',

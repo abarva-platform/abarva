@@ -1,16 +1,15 @@
-// /intelligence · Context & Corpus Explorer inside the maestro app shell.
+// /intelligence · Advisory board surface.
 
 import { AppShell } from '@/components/shell/AppShell';
-import { ContextCorpusExplorerPage } from '@/components/intelligence-v4/ContextCorpusExplorerPage';
+import { AdvisoryIntelligencePage } from '@/components/intelligence-advisory/AdvisoryIntelligencePage';
 import { getActiveClientRow, hasLockedTenantSession } from '@/lib/active-client';
 import { canonicalClientDisplayName } from '@/lib/client-config';
-import { getAiControlTowerReadModel } from '@/lib/ai-control-tower/read-model';
-import { getEnterpriseContextOverviewForTenant } from '@/lib/enterprise-context/intelligence-read-model';
+import { getEnterpriseLandscapeViewModel } from '@/lib/home/enterprise-landscape-view-model';
 
 export const metadata = {
-  title: 'Intelligence · Context & Corpus Explorer | AbarVa',
+  title: 'Intelligence · Advisory Board | AbarVa',
   description:
-    'Explore tenant context, live facts, coverage, trust posture, and derived insights from the enterprise context layer.',
+    'A virtual advisory board that turns enterprise context and corpus knowledge into guidance, risks, benchmarks, and next actions.',
 };
 
 export const dynamic = 'force-dynamic';
@@ -43,14 +42,6 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
     canonicalClientDisplayName({ key: client?.key, name: client?.name }) ??
     client?.name ??
     'AbarVa Client';
-  const overview = contextTenantKey
-    ? await getEnterpriseContextOverviewForTenant(contextTenantKey, tenantName).catch(() => null)
-    : null;
-  const towerModel = await getAiControlTowerReadModel({
-    clientId: client?.id ?? null,
-    clientKey: client?.key ?? requestedClient,
-    tenantName,
-  });
 
   return (
     <AppShell
@@ -62,11 +53,11 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
       }}
       hasTenantKey={Boolean(client?.key)}
     >
-      <ContextCorpusExplorerPage
-        tenantName={tenantName}
-        tenantKey={contextTenantKey}
-        overview={overview}
-        towerModel={towerModel}
+      <AdvisoryIntelligencePage
+        viewModel={getEnterpriseLandscapeViewModel({
+          clientKey: contextTenantKey ?? client?.key ?? requestedClient,
+          tenantName,
+        })}
       />
     </AppShell>
   );

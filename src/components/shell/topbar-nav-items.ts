@@ -18,26 +18,15 @@ export type CockpitNavItem = {
 
 export const NAV_ITEMS: CockpitNavItem[] = [
   {
-    // CL-1 (2026-05-30) · Top-nav "Home" now lands on the Trust Plane
-    // at /admin (the consolidated Setup/Admin surface from Waves 1–3 of
-    // the Setup/Admin Trust Plane consolidation). The parallel /home
-    // landing was orphaned (rendered the retired 2026-05-08 fixture
-    // design) and is being removed. The real /home/<subpage> routes
-    // (queue, decision, source, learn, ai-initiatives, configuration,
-    // training) are preserved as legitimate surfaces.
-    //
-    // See docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md §2 (IA — three
-    // nav systems coexist).
     key: "home",
     label: "Home",
-    href: "/admin",
+    href: "/home",
     match: (pathname) =>
       pathname === "/" ||
       pathname === "/home" ||
       pathname.startsWith("/home/") ||
       pathname === "/dashboard" ||
-      pathname.startsWith("/dashboard/") ||
-      pathname.startsWith("/admin"),
+      pathname.startsWith("/dashboard/"),
   },
   {
     key: "intelligence",

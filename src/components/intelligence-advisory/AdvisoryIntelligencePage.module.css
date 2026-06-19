@@ -1,0 +1,307 @@
+.surface {
+  min-height: calc(100vh - 64px);
+  background: #f6f1e9;
+  color: #171411;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.command {
+  display: grid;
+  grid-template-columns: 180px minmax(320px, 1fr) 74px;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 22px;
+  border-bottom: 1px solid #ded6ca;
+  background: #fbfaf7;
+}
+
+.commandLabel,
+.eyebrow,
+.railTitle,
+.cardLabel,
+.sectionHead {
+  font-size: 10px;
+  line-height: 1.2;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #6e675e;
+  font-weight: 800;
+}
+
+.command input {
+  height: 42px;
+  border: 1px solid #d7cec1;
+  border-radius: 8px;
+  background: #fffdf9;
+  color: #171411;
+  font: inherit;
+  font-size: 14px;
+  padding: 0 14px;
+}
+
+.command button {
+  height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: #0b0b0b;
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 280px minmax(680px, 1fr) 320px;
+  gap: 16px;
+  padding: 16px 22px 28px;
+  align-items: start;
+}
+
+.rail,
+.panel,
+.hero,
+.card,
+.plan {
+  border: 1px solid #ded6ca;
+  background: #fffdf9;
+  border-radius: 8px;
+}
+
+.rail {
+  position: sticky;
+  top: 80px;
+  padding: 14px;
+}
+
+.railTitle {
+  margin: 8px 0 10px;
+}
+
+.advisorButton,
+.contextButton {
+  width: 100%;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #2d2924;
+  cursor: pointer;
+  text-align: left;
+}
+
+.advisorButton {
+  display: grid;
+  grid-template-columns: 10px 1fr;
+  column-gap: 9px;
+  row-gap: 2px;
+  padding: 9px 8px;
+}
+
+.advisorButton span:not(.dot) {
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.advisorButton small {
+  grid-column: 2;
+  color: #746e66;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.active,
+.activeContext {
+  background: #efe8dc;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 4px;
+}
+
+.teal {
+  background: #2f8d6b;
+}
+
+.amber {
+  background: #b67117;
+}
+
+.red {
+  background: #a8332d;
+}
+
+.contextButton {
+  padding: 7px 8px;
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.canvas {
+  display: grid;
+  gap: 14px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 18px;
+  padding: 22px;
+}
+
+.hero h1 {
+  margin: 6px 0 8px;
+  font-family: Newsreader, Georgia, serif;
+  font-size: 32px;
+  line-height: 1.02;
+  letter-spacing: 0;
+}
+
+.hero p,
+.card p,
+.panel p,
+.step p {
+  margin: 0;
+  color: #4f4942;
+  font-size: 14px;
+  line-height: 1.48;
+}
+
+.verdict {
+  border-left: 1px solid #ded6ca;
+  padding-left: 18px;
+}
+
+.verdict span {
+  display: block;
+  color: #746e66;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+}
+
+.verdict b {
+  font-family: Newsreader, Georgia, serif;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.boardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.card {
+  padding: 16px;
+}
+
+.card h2 {
+  margin: 8px 0;
+  font-size: 17px;
+  line-height: 1.22;
+  letter-spacing: 0;
+}
+
+.plan {
+  padding: 18px;
+}
+
+.sectionHead {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.sequence {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.step {
+  border-top: 2px solid #171411;
+  padding-top: 10px;
+}
+
+.step span {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #171411;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.panel {
+  position: sticky;
+  top: 80px;
+  padding: 16px;
+}
+
+.panelTitle {
+  margin: 4px 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.signal {
+  border-top: 1px solid #e6ded2;
+  padding: 10px 0;
+}
+
+.signal span {
+  display: block;
+  color: #746e66;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.signal b {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+@media (max-width: 1180px) {
+  .layout {
+    grid-template-columns: 250px minmax(0, 1fr);
+  }
+
+  .panel {
+    position: static;
+    grid-column: 2;
+  }
+
+  .boardGrid,
+  .sequence {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .command,
+  .layout,
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .rail,
+  .panel {
+    position: static;
+  }
+
+  .panel {
+    grid-column: auto;
+  }
+
+  .boardGrid,
+  .sequence {
+    grid-template-columns: 1fr;
+  }
+}
