@@ -16,6 +16,15 @@
 
 The live First Capital load (414 records · **192 facts** · 401 chunks · 28/28 blob-staged · Tower T01–T10) proved P0–P2 work. But the probe exposed two failures this brief fixes:
 
+> **⚠ RECONCILE THE BASELINE FACT COUNT BEFORE RUNNING P3.** This line says **192 facts**, but
+> §4f (Tower projection) says the same load "committed 414 records / **4,484 facts**," and the P3 QA
+> gate says "**≥ 3,500 (was 192)**." These cannot all be true. Confirm the actual current
+> `enterprise_context_facts` count for `first-capital` first (a one-line `SELECT count(*) … WHERE
+> tenant_key='first-capital' AND lifecycle_state='active'`). If it is already ~4,484, the "thin
+> facts / most records → zero facts" premise and the P3 target are wrong and P3 should be re-scoped
+> to *typing* existing facts, not *extracting* missing ones. If it is 192, fix §4f's number. Do not
+> start P3 against an unverified baseline.
+
 1. **Facts are too thin to answer with precision.** 414 records → only 192 facts means most records decomposed to _zero_ atomic facts. The CSV connector (`loadCsvUploadToTenantContext`) writes **chunks only**, no fact decomposition. You cannot chart a trend, answer "renewals in 90 days", or cite a number off chunks. **Facts are the substrate. P3 makes them deep and typed.**
 2. **Intelligence reads the wrong substrate.** The DB has clean `enterprise_context_records` + Tower T01–T10, but the Intelligence surface skews to stale general `it_financials` Azure Search chunks. That's a **read-model wiring bug, not a data bug** — never "fix" it with a reload. **P4 builds governed read models and re-points Intelligence + Tower at them; Search drops to citation-only.**
 
@@ -307,6 +316,12 @@ This is tenant-agnostic: SkyHarbor, Meridian, Lakeshore, Apex all get a live Tow
 - Intelligence Coverage shows 19/19 families with real record/fact counts from the view.
 - `audit:architecture-rules` passes with the new rule; grep confirms no module reads Search for numbers.
 - A second tenant (e.g. SkyHarbor) with committed context also renders `context_projection` — proves it's not first-capital-specific.
+- **Projection column-contract test (hardening).** §4f makes `ai_control_tower_lens_mv` a drop-in
+  for the 12 raw `ai_control_*` tables — that coupling is a silent-breakage seam: if a future MV
+  edit drops or renames a column the read-model `safeSelect`s, the Tower blanks with no error. Add a
+  test that asserts the MV's emitted column set **equals** the columns each `safeSelect('ai_control_*')`
+  expects (introspect `information_schema.columns` for the MV vs the read-model's select list), so a
+  drift fails CI, not production.
 - `tsc` clean · `release:check` passes · release record added.
 
 ---

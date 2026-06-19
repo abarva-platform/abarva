@@ -50,6 +50,20 @@
 
 **Execution authority:** Full. Branch per phase `feat/moves-workforce-economics-{phase}`; squash-merge after QA; deploy via `aca-main-deploy` on push to main.
 
+> **⚠ RECONCILE FIRST — read `docs/build/DELIVERABLE_TRANSFORMATION_RECONCILIATION.md`.**
+> AbarVa has **two business-case paths** (`move-business-case.ts` → `board-grade/*` routes, which
+> already has SVG exhibits; and the orchestrator `deliverable-structures.ts business_case`, prose).
+> The Deliverable Transformation is rebuilding the orchestrator path toward exhibit-led. To avoid
+> producing **two** economics-bearing business cases:
+> - **WE-1 / WE-2 (the economics engine) are conflict-free — build them now.** They are an input,
+>   not a binding.
+> - **WE-3 / WE-4 / WE-5 converge through the transformation's `MoveDecisionModel`**, not by
+>   patching two generators. The estimate-twice becomes the Value Model on that single object; the
+>   business-case/roadmap **archetype** consumes it and renders via the **existing** economic
+>   exhibits in `expert-kernel/exports/board-grade/svg-charts.ts` (investment waterfall · cost stack
+>   · value bridge · payback curve · tornado · roadmap swimlane — a 1:1 fit). Do **not** stand up a
+>   parallel exhibit or generation path. See the reconciliation note + the spec §9 P4 archetype.
+
 ## What exists today (verified on main — read before writing)
 
 | Asset                        | Location                                                                                                                                                                   | Role                                                                    |
@@ -71,7 +85,15 @@ Create `src/lib/workforce-economics/`:
 - `taxonomy.ts` — towers, capabilities (with scarcity + agent-amenability), role families (tower/capability/scarcity/min-max level), career levels (YOE + base salary), delivery pods (role mix, headcount, blended level, agent mix).
 - `assumptions.ts` — the parametric engine constants: load-component % (total 87.15%), billable hours/yr (2080), provider-tier multipliers (CONS-T1 1.85 / SI-T1 1.25 / SI-T2 0.85 / ENG-B 1.10 / AI-B 1.35), shore multipliers (on 1.00 / near 0.72 / off 0.45), scarcity multipliers (High 1.30 / Med 1.10 / Low 1.00), market base bill rate by level, geography multipliers, agent economics (equiv-FTE, utilization, monthly cost, productivity/doc/testing/arch multipliers).
 - `rate-engine.ts` — pure functions: `loadedHourly(level)`, `providerRate(provider, level, shore, scarcity)`, `blendedRate(mix)`, `rateCard()` (role × level expansion).
-- **Source-of-truth discipline:** values must match the workbook's Assumptions sheet. Add a snapshot test that fails if code constants drift from the workbook (or generate the TS from the same data the `.mjs` builder uses).
+- **Source-of-truth discipline — make drift impossible, don't merely detect it.** The canonical
+  numbers live in the **Python** builder `scripts/workforce-economics/build-workforce-taxonomy.py`
+  (not a `.mjs` — earlier wording was stale). A hand-ported TS + an xlsx-snapshot test is fragile
+  (binary parse in CI). Instead: have the Python builder **also emit
+  `src/lib/workforce-economics/workforce-economics.constants.json`** (the assumptions, multipliers,
+  and rate-card as plain JSON, checked in and diffable in PRs), and have `assumptions.ts` /
+  `rate-engine.ts` **import and validate against that JSON** at module load. Single source → the TS
+  cannot drift from the workbook by construction. CI re-runs the builder and fails if the emitted
+  JSON differs from the committed one.
 
 ## Phase WE-2 — Estimation engine (capacity model — estimate twice)
 
