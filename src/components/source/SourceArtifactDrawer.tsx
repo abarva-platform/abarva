@@ -56,6 +56,29 @@ function formatFreshness(value: unknown): string {
   return String(value);
 }
 
+/** A generated artifact body can be a full, self-contained HTML document
+ *  (the Sentinel HTML render). Detect it so we render the document rather than
+ *  dumping its source as escaped text. */
+function isFullHtmlDocument(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    /^\s*(<!doctype html|<html[\s>])/i.test(value)
+  );
+}
+
+/** Best-effort plain-text excerpt of HTML, for the one-line summary blurb where
+ *  the full document is rendered separately below. */
+function htmlToPlainText(value: string): string {
+  return value
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<head[\s\S]*?<\/head>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-z#0-9]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // ─── Seeded sign-off data ─────────────────────────────────────────────────────
 
 type SignOffStatus = "complete" | "pending" | "not_required";
@@ -455,7 +478,9 @@ export function SourceArtifactDrawer({
           color: SHELL.INK,
         }}
       >
-        {artifact.summary}
+        {isFullHtmlDocument(artifact.summary)
+          ? htmlToPlainText(artifact.summary).slice(0, 240)
+          : artifact.summary}
       </div>
       {provenance ? (
         <div style={sourceInsetCard} data-testid="provenance-panel">
@@ -503,16 +528,33 @@ export function SourceArtifactDrawer({
             <div style={{ fontWeight: 700, color: SHELL.INK }}>
               {section.label}
             </div>
-            <div
-              style={{
-                fontFamily: SHELL.SANS,
-                fontSize: 14,
-                lineHeight: 1.55,
-                color: SHELL.INK,
-              }}
-            >
-              {section.body}
-            </div>
+            {isFullHtmlDocument(section.body) ? (
+              <iframe
+                title={`${artifact.title} — rendered document`}
+                srcDoc={section.body}
+                sandbox=""
+                style={{
+                  width: "100%",
+                  height: "78vh",
+                  marginTop: 8,
+                  border: `1px solid ${SHELL.CARD_LINE}`,
+                  borderRadius: 8,
+                  background: "#ffffff",
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  fontFamily: SHELL.SANS,
+                  fontSize: 14,
+                  lineHeight: 1.55,
+                  color: SHELL.INK,
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {section.body}
+              </div>
+            )}
           </div>
         ))}
       </div>
