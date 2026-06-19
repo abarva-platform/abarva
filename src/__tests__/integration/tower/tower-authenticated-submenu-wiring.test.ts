@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 
 describe('IT Investment Tower v2 route wiring', () => {
+  const maestroChrome = readFileSync('src/components/chrome/MaestroChrome.tsx', 'utf8');
   const pageSource = readFileSync('src/app/(maestro)/tower/page.tsx', 'utf8');
   const frameRoute = readFileSync('src/app/api/tower/v2-frame/route.ts', 'utf8');
   const towerHtml = readFileSync('public/tower-v2/index.html', 'utf8');
@@ -13,6 +14,12 @@ describe('IT Investment Tower v2 route wiring', () => {
     expect(pageSource).not.toContain('<AiControlTowerPage');
   });
 
+  it('keeps the authenticated AbarVa product nav around /tower', () => {
+    expect(maestroChrome).toContain("'/admin'");
+    expect(maestroChrome).not.toContain("'/tower'");
+    expect(pageSource).toContain("height: 'calc(100dvh - 56px)'");
+  });
+
   it('does not allow URL-driven cross-client Tower switching', () => {
     expect(frameRoute).toContain('getActiveClientRow()');
     expect(frameRoute).not.toContain('searchParams');
@@ -20,12 +27,11 @@ describe('IT Investment Tower v2 route wiring', () => {
     expect(frameRoute).not.toContain('hasLockedTenantSession');
   });
 
-  it('keeps product navigation inside the v2 Tower shell', () => {
-    for (const label of ['Home', 'Intelligence', 'Moves', 'Source', 'Tower']) {
-      expect(towerHtml).toContain(label);
-    }
-    expect(towerHtml).toContain('First Capital Financial');
+  it('removes the standalone nav from the frame so the app toolbar is the only nav', () => {
     expect(towerHtml).toContain('tb-nav');
+    expect(frameRoute).toContain('stripStandaloneNavigation');
+    expect(frameRoute).toContain('<nav class="topbar">');
+    expect(frameRoute).toContain("top: 56px");
   });
 
   it('keeps the v2 Tower lenses and Ask Nexus in one canvas', () => {

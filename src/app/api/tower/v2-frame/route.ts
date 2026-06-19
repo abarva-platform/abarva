@@ -18,6 +18,19 @@ function escapeHtml(value: string): string {
     .replace(/"/g, '&quot;');
 }
 
+function stripStandaloneNavigation(html: string): string {
+  const topbarStart = html.indexOf('<nav class="topbar">');
+  const appStart = topbarStart >= 0 ? html.indexOf('<div class="app">', topbarStart) : -1;
+  const withoutTopbar =
+    topbarStart >= 0 && appStart > topbarStart
+      ? `${html.slice(0, topbarStart)}${html.slice(appStart)}`
+      : html;
+
+  return withoutTopbar
+    .replaceAll('top: 56px', 'top: 0')
+    .replaceAll('top:56px', 'top:0');
+}
+
 export async function GET(): Promise<NextResponse> {
   const client = await getActiveClientRow().catch(() => null);
   const tenantName =
@@ -30,7 +43,7 @@ export async function GET(): Promise<NextResponse> {
   });
   const htmlPath = path.join(process.cwd(), 'public', 'tower-v2', 'index.html');
   const template = await readFile(htmlPath, 'utf8');
-  const html = template
+  const html = stripStandaloneNavigation(template)
     .replace('src="681265c3-e232-440d-93fb-8ebf5caac7f7.svg"', 'src="/brand/abarva-logo-inverse.svg"')
     .replace(
       '<span class="tb-tenant">First Capital Financial</span>',

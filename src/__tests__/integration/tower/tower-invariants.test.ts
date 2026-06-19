@@ -7,6 +7,7 @@ const TOWER_V4_DATA = 'src/lib/tower-v2/v4-data.ts';
 const TOWER_V2_HTML = 'public/tower-v2/index.html';
 const TOWER_V2_DATA = 'public/tower-v2/default-data.js';
 const TOWER_V2_APP = 'public/tower-v2/app.js';
+const MAESTRO_CHROME = 'src/components/chrome/MaestroChrome.tsx';
 
 describe('IT Investment Tower v2 invariants', () => {
   const pageSource = readFileSync(TOWER_PAGE, 'utf8');
@@ -16,12 +17,19 @@ describe('IT Investment Tower v2 invariants', () => {
   const frameRoute = readFileSync(TOWER_FRAME_ROUTE, 'utf8');
   const dataRoute = readFileSync(TOWER_DATA_ROUTE, 'utf8');
   const v4DataSource = readFileSync(TOWER_V4_DATA, 'utf8');
+  const maestroChrome = readFileSync(MAESTRO_CHROME, 'utf8');
 
   it('mounts the approved standalone v2 Tower surface on /tower', () => {
     expect(pageSource).toContain('src="/api/tower/v2-frame"');
     expect(pageSource).toContain('title="AbarVa IT Investment Tower"');
     expect(pageSource).not.toContain('AiControlTowerPage');
     expect(pageSource).not.toContain('AppShell');
+  });
+
+  it('keeps /tower inside the authenticated product toolbar shell', () => {
+    expect(maestroChrome).not.toContain("'/tower'");
+    expect(pageSource).toContain("height: 'calc(100dvh - 56px)'");
+    expect(frameRoute).toContain('stripStandaloneNavigation');
   });
 
   it('binds the authenticated Tower frame to the active client only', () => {
@@ -44,10 +52,9 @@ describe('IT Investment Tower v2 invariants', () => {
     expect(towerHtml).toContain('/tower-v2/app.js');
   });
 
-  it('preserves the approved v2 navigation, KPI anchor, and lens set', () => {
-    for (const label of ['Home', 'Intelligence', 'Moves', 'Source', 'Tower']) {
-      expect(towerHtml).toContain(label);
-    }
+  it('preserves the approved v2 KPI anchor and lens set', () => {
+    expect(towerHtml).toContain('tb-nav');
+    expect(frameRoute).toContain('<nav class="topbar">');
     expect(towerHtml).toContain('Where is the IT money going, and what is it producing?');
     expect(towerApp).toContain("Programs");
     expect(towerApp).toContain("Spend");
