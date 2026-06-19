@@ -70,8 +70,8 @@ The retired Context/Corpus Explorer implementation that produced the poor screen
 - `npm run release:check` passed.
 - ACR build `cafg` passed for image `acrabarvalab001.azurecr.io/abarva/web:intelligence-retired-explorer-09311f955`.
 - Image digest: `sha256:01e0559f2a4614708dfdb9d44105e4551b4fd60cf2e1909a93034fc49fc9996c`.
-- Azure Container Apps revision `ca-abarva-web-lab-eastus--0000113` is `Healthy` / `Running`.
-- Traffic is 100% on revision `ca-abarva-web-lab-eastus--0000113`.
+- Azure Container Apps revision `ca-abarva-web-lab-eastus--0000114` is `Healthy` / `Running`.
+- Traffic is 100% on revision `ca-abarva-web-lab-eastus--0000114`.
 - `https://app.abarva.ai/api/health` returned `ok: true` with Postgres and Azure graph checks true.
 - Live unauthenticated route smoke: `/home`, `/admin`, and `/tower` redirect to sign-in; `/intelligence` returns 200.
 - Live `/intelligence` HTML contains `AbarVa Intelligence`, `Advisory board`, and `Recommendation`.
@@ -87,13 +87,13 @@ The retired Context/Corpus Explorer implementation that produced the poor screen
 
 ## Rollout Plan
 
-Deployed to Azure Container Apps lab on revision `ca-abarva-web-lab-eastus--0000113` with 100% traffic. Verify signed-in visuals before promoting beyond lab/demo use.
+Deployed to Azure Container Apps lab on revision `ca-abarva-web-lab-eastus--0000114` with 100% traffic. Verify signed-in visuals before promoting beyond lab/demo use.
 
 ## Rollback Plan
 
 Rollback by shifting ACA traffic to the previous known-good revision `ca-abarva-web-lab-eastus--m6ece1b74`, then revert the `/home`, `/intelligence`, nav, and proxy route changes. No schema or data rollback is required.
 
-For the v3 cleanup specifically, rollback by shifting ACA traffic off `ca-abarva-web-lab-eastus--0000113` to the previous healthy revision, then reverting commit `09311f955`. No schema or data rollback is required.
+For the v3 cleanup specifically, rollback by shifting ACA traffic off `ca-abarva-web-lab-eastus--0000114` to the previous healthy revision, then reverting commit `09311f955`. No schema or data rollback is required.
 
 ## Audit Evidence
 
@@ -105,7 +105,7 @@ For the v3 cleanup specifically, rollback by shifting ACA traffic off `ca-abarva
 - Cleanup commit `09311f955` removes the retired v4 Explorer from runtime source and prevents tenant deep-link leakage.
 - ACR image `acrabarvalab001.azurecr.io/abarva/web:intelligence-retired-explorer-09311f955`.
 - ACR digest `sha256:01e0559f2a4614708dfdb9d44105e4551b4fd60cf2e1909a93034fc49fc9996c`.
-- ACA revision `ca-abarva-web-lab-eastus--0000113` with 100% traffic.
+- ACA revision `ca-abarva-web-lab-eastus--0000114` with 100% traffic.
 - Live marker check for required Advisory Board copy and forbidden retired Explorer copy.
 - ACR image `acrabarvalab001.azurecr.io/abarva/web:home-intelligence-routes-bad4a1c82`.
 - ACR digest `sha256:49cf49da21ad2e608bd2d84318442c5148443222a82e9ae04e53d10fd8504212`.
