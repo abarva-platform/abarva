@@ -106,6 +106,14 @@ COPY --from=build --chown=node:node /app/src/scripts ./src/scripts
 COPY --from=build --chown=node:node /app/scripts ./scripts
 COPY --from=build --chown=node:node /app/supabase/migrations ./supabase/migrations
 
+# Tenant-scoped synthetic demo substrate used by the Tower v2 frame.
+# Keep this explicit; do not copy the whole datasets tree or aggregate clients.
+COPY --from=build --chown=node:node /app/datasets/apex-retail-synthetic-v4 ./datasets/apex-retail-synthetic-v4
+COPY --from=build --chown=node:node /app/datasets/first-capital-financial-synthetic-v4 ./datasets/first-capital-financial-synthetic-v4
+COPY --from=build --chown=node:node /app/datasets/lakeshore-industries-synthetic-v4 ./datasets/lakeshore-industries-synthetic-v4
+COPY --from=build --chown=node:node /app/datasets/meridian-health-synthetic-v4 ./datasets/meridian-health-synthetic-v4
+COPY --from=build --chown=node:node /app/datasets/skyharbor-air-synthetic-v4 ./datasets/skyharbor-air-synthetic-v4
+
 USER node
 
 EXPOSE 3000

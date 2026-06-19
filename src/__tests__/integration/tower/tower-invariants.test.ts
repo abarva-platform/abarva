@@ -1,42 +1,91 @@
 import { existsSync, readFileSync } from 'node:fs';
 
 const TOWER_PAGE = 'src/app/(maestro)/tower/page.tsx';
-const AI_TOWER_PAGE = 'src/components/tower/AiControlTowerPage.tsx';
+const TOWER_FRAME_ROUTE = 'src/app/api/tower/v2-frame/route.ts';
+const TOWER_DATA_ROUTE = 'src/app/api/tower/v2-data/route.ts';
+const TOWER_V4_DATA = 'src/lib/tower-v2/v4-data.ts';
+const TOWER_V2_HTML = 'public/tower-v2/index.html';
+const TOWER_V2_DATA = 'public/tower-v2/default-data.js';
+const TOWER_V2_APP = 'public/tower-v2/app.js';
 
-describe('AI Control Tower invariants', () => {
+describe('IT Investment Tower v2 invariants', () => {
   const pageSource = readFileSync(TOWER_PAGE, 'utf8');
-  const aiTowerSource = readFileSync(AI_TOWER_PAGE, 'utf8');
+  const towerHtml = readFileSync(TOWER_V2_HTML, 'utf8');
+  const towerData = readFileSync(TOWER_V2_DATA, 'utf8');
+  const towerApp = readFileSync(TOWER_V2_APP, 'utf8');
+  const frameRoute = readFileSync(TOWER_FRAME_ROUTE, 'utf8');
+  const dataRoute = readFileSync(TOWER_DATA_ROUTE, 'utf8');
+  const v4DataSource = readFileSync(TOWER_V4_DATA, 'utf8');
 
-  it('uses the standard application shell so product navigation remains visible', () => {
-    expect(pageSource).toContain('AppShell');
-    expect(pageSource).toContain('topBarProps');
-    expect(pageSource).toContain('surface="tower"');
-    expect(pageSource).toContain('hasTenantKey={Boolean(activeClientId)}');
+  it('mounts the approved standalone v2 Tower surface on /tower', () => {
+    expect(pageSource).toContain('src="/api/tower/v2-frame"');
+    expect(pageSource).toContain('title="AbarVa IT Investment Tower"');
+    expect(pageSource).not.toContain('AiControlTowerPage');
+    expect(pageSource).not.toContain('AppShell');
   });
 
-  it('opens the AI Control Tower surface instead of the older portfolio board', () => {
-    expect(pageSource).toContain('AiControlTowerPage');
-    expect(pageSource).not.toContain('<TowerIndexPage');
-    expect(pageSource).not.toContain('TowerMainSubmenuStrip');
+  it('binds the authenticated Tower frame to the active client only', () => {
+    expect(frameRoute).toContain('getActiveClientRow()');
+    expect(dataRoute).toContain('getActiveClientRow()');
+    expect(frameRoute).not.toContain('searchParams');
+    expect(dataRoute).not.toContain('searchParams');
+    expect(frameRoute).not.toContain('requestedClient');
+    expect(dataRoute).not.toContain('requestedClient');
+    expect(frameRoute).toContain('/api/tower/v2-data');
+    expect(frameRoute).toContain('resolveTowerV2V4Dataset');
+    expect(dataRoute).toContain('buildTowerV2V4DataScript');
   });
 
-  it('keeps lens tabs below the KPI dashboard inside the compact CXO surface', () => {
-    expect(aiTowerSource.indexOf('metricGridStyle')).toBeLessThan(
-      aiTowerSource.indexOf('tabBarStyle'),
-    );
-    for (const label of ['Value and adoption', 'Productivity', 'Agents', 'Spend', 'Risk', 'Evidence', 'Actions']) {
-      expect(aiTowerSource).toContain(label);
+  it('keeps the v2 offline assets in place', () => {
+    expect(existsSync(TOWER_V2_HTML)).toBe(true);
+    expect(existsSync(TOWER_V2_DATA)).toBe(true);
+    expect(existsSync(TOWER_V2_APP)).toBe(true);
+    expect(towerHtml).toContain('/tower-v2/default-data.js');
+    expect(towerHtml).toContain('/tower-v2/app.js');
+  });
+
+  it('preserves the approved v2 navigation, KPI anchor, and lens set', () => {
+    for (const label of ['Home', 'Intelligence', 'Moves', 'Source', 'Tower']) {
+      expect(towerHtml).toContain(label);
+    }
+    expect(towerHtml).toContain('Where is the IT money going, and what is it producing?');
+    expect(towerApp).toContain("Programs");
+    expect(towerApp).toContain("Spend");
+    expect(towerApp).toContain("Vendors");
+    expect(towerApp).toContain("By Function");
+    expect(towerApp).toContain("Actions");
+    for (const slice of ['CapEx vs OpEx', 'Software / HW / Services / Cloud', 'Run vs Change', 'AI vs non-AI']) {
+      expect(towerApp).toContain(slice);
     }
   });
 
-  it('does not render green evidence posture when no evidence rows are committed', () => {
-    expect(aiTowerSource).toContain('no committed evidence rows');
-    expect(aiTowerSource).toContain('tone={evidenceRows > 0 ? "green" : "red"}');
+  it('keeps the live binding mapped to the v4 private data-plane packs', () => {
+    expect(v4DataSource).toContain('family-4-financial-commercial/F12_it-budget-financials.csv');
+    expect(v4DataSource).toContain('family-4-financial-commercial/F11_vendors-contracts-licenses.csv');
+    expect(v4DataSource).toContain('ai-control-tower/T01_initiative-registry.csv');
+    expect(v4DataSource).toContain('ai-control-tower/T07_benefit-realization.csv');
+    expect(v4DataSource).toContain('ai-control-tower/T08_spend-contracts.csv');
+    expect(v4DataSource).toContain('ai-control-tower/T12_derived-actions.csv');
+    expect(v4DataSource).toContain('annual_contract_value_usd');
+    expect(v4DataSource).toContain('annual_run_rate_usd');
   });
 
-  it('shows an explicit Spend missing row when no vendor contracts are committed', () => {
-    expect(aiTowerSource).toContain('0 committed rows');
-    expect(aiTowerSource).toContain('load or commit Spend Contracts before CFO demo');
+  it('preserves the approved synthetic First Capital investment model', () => {
+    expect(towerData).toContain('$342M FY26 IT budget');
+    expect(towerData).toContain("budget: 84");
+    expect(towerData).toContain("name: 'Core Banking Platform'");
+    expect(towerData).toContain("name: 'DXC'");
+    expect(towerData).toContain("title: 'Kill three AI initiatives with no verified value.'");
+  });
+
+  it('retains the required interaction affordances', () => {
+    expect(towerApp).toContain('toggleViewBtn');
+    expect(towerApp).toContain('progDrawer');
+    expect(towerApp).toContain('vendorDrawer');
+    expect(towerApp).toContain('actionDrawer');
+    expect(towerApp).toContain('Approve & route');
+    expect(towerApp).toContain('Ask Nexus');
+    expect(towerApp).toContain('localStorage.setItem');
   });
 
   it('removes legacy Tower route files that can show retired views', () => {

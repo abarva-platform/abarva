@@ -1,39 +1,40 @@
 import { existsSync, readFileSync } from 'node:fs';
 
-describe('AI Control Tower route wiring', () => {
+describe('IT Investment Tower v2 route wiring', () => {
   const pageSource = readFileSync('src/app/(maestro)/tower/page.tsx', 'utf8');
-  const aiTowerSource = readFileSync('src/components/tower/AiControlTowerPage.tsx', 'utf8');
+  const frameRoute = readFileSync('src/app/api/tower/v2-frame/route.ts', 'utf8');
+  const towerHtml = readFileSync('public/tower-v2/index.html', 'utf8');
+  const towerApp = readFileSync('public/tower-v2/app.js', 'utf8');
 
-  it('renders the redesigned AI Control Tower inside the standard AppShell navigation', () => {
-    expect(pageSource).toContain('AppShell');
-    expect(pageSource).toContain('surface="tower"');
-    expect(pageSource).toContain('AI Control Tower ·');
-    expect(pageSource).toContain('<AiControlTowerPage');
+  it('renders the approved standalone v2 Tower in the authenticated /tower route', () => {
+    expect(pageSource).toContain('<iframe');
+    expect(pageSource).toContain('src="/api/tower/v2-frame"');
+    expect(pageSource).toContain('AbarVa IT Investment Tower');
+    expect(pageSource).not.toContain('<AiControlTowerPage');
   });
 
-  it('loads Tower substrate from the active client row', () => {
-    expect(pageSource).toContain('resolveTowerClient(resolvedSearchParams.client)');
-    expect(pageSource).toContain('TOWER_PILOT_CLIENT_KEYS');
-    expect(pageSource).toContain('clientHasTowerSubstrate(candidate.id)');
-    expect(pageSource).toContain('buildTowerInitiatives(activeClientId)');
-    expect(pageSource).toContain('buildTowerVendors(activeClientId)');
-    expect(pageSource).toContain('buildTowerSetupInitiativesFeed(activeClient)');
+  it('does not allow URL-driven cross-client Tower switching', () => {
+    expect(frameRoute).toContain('getActiveClientRow()');
+    expect(frameRoute).not.toContain('searchParams');
+    expect(frameRoute).not.toContain('requestedClient');
+    expect(frameRoute).not.toContain('hasLockedTenantSession');
   });
 
-  it('keeps the seven AI Control Tower lenses in one canvas', () => {
-    for (const label of [
-      'Value and adoption',
-      'Productivity',
-      'Agents',
-      'Spend',
-      'Risk',
-      'Evidence',
-      'Actions',
-    ]) {
-      expect(aiTowerSource).toContain(label);
+  it('keeps product navigation inside the v2 Tower shell', () => {
+    for (const label of ['Home', 'Intelligence', 'Moves', 'Source', 'Tower']) {
+      expect(towerHtml).toContain(label);
     }
-    expect(aiTowerSource).toContain('messages={atlasMessages}');
-    expect(aiTowerSource).toContain('atlasReplyForLens');
+    expect(towerHtml).toContain('First Capital Financial');
+    expect(towerHtml).toContain('tb-nav');
+  });
+
+  it('keeps the v2 Tower lenses and Ask Nexus in one canvas', () => {
+    for (const label of ['Programs', 'Spend', 'Vendors', 'By Function', 'Actions']) {
+      expect(towerApp).toContain(label);
+    }
+    expect(towerHtml).toContain('Ask Nexus about the IT portfolio');
+    expect(towerApp).toContain('answerFor(q)');
+    expect(towerApp).toContain('renderDock');
   });
 
   it('removes legacy Tower subroutes so the old portfolio board cannot reappear by URL', () => {
