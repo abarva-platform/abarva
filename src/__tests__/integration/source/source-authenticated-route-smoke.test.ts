@@ -40,7 +40,7 @@ describe('Source authenticated route smoke', () => {
     expect(proxySource).toContain("'/source(.*)'");
     expect(proxySource).toContain('authRequiredRoutes(request)');
     expect(proxySource).toContain('createSignInRedirect(request)');
-    expect(proxySource).toContain("'/api/auth/demo-code-sign-in(.*)'");
+    expect(proxySource).not.toContain("'/api/auth/demo-code-sign-in(.*)'");
     expect(proxySource).toContain('PUBLIC_ROUTE_PATTERNS');
   });
 
@@ -50,11 +50,11 @@ describe('Source authenticated route smoke', () => {
     }
   });
 
-  it('keeps the Source dashboard route wired to deterministic seed-only content', () => {
+  it('keeps the Source landing route canonical and the dashboard component seed-only', () => {
     const routeSource = readWorkspaceFile('src/app/(maestro)/source/page.tsx');
     const componentSource = readWorkspaceFile('src/components/source/SourceIndexPage.tsx');
 
-    expect(routeSource).toContain('SourceIndexPage');
+    expect(routeSource).toContain("redirect('/source/queue')");
     expect(componentSource).toContain('AMS Vendor Consolidation 2026');
     expect(componentSource).toContain('SOURCE_INDEX_VIEW');
     expect(componentSource).not.toMatch(/fetch\(|openai|claude|anthropic/i);

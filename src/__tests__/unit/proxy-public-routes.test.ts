@@ -6,9 +6,9 @@ describe('proxy public route patterns', () => {
   const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
   const isAuthRequiredRoute = createRouteMatcher([...AUTH_REQUIRED_ROUTE_PATTERNS]);
 
-  it('treats the demo code sign-in handoff as a public route', () => {
+  it('does not expose custom auth handoff APIs publicly', () => {
     const request = new NextRequest('https://app.abarva.ai/api/auth/demo-code-sign-in');
-    expect(isPublicRoute(request)).toBe(true);
+    expect(isPublicRoute(request)).toBe(false);
   });
 
   it('treats the health endpoint as a public platform probe', () => {

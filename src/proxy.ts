@@ -29,9 +29,6 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // P13 demo assets live under How it works and must be reachable
   // before auth so prospects can view the comparison/teaser pages.
   '/how-it-works(.*)',
-  // Demo code sign-in starts unauthenticated from /sign-in, so the ticket
-  // handoff route must stay publicly reachable and perform its own checks.
-  '/api/auth/demo-code-sign-in(.*)',
   // Health is intentionally public so platform probes can validate runtime
   // readiness before a browser session exists. The route masks raw backing
   // service errors when NODE_ENV=production.
