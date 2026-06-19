@@ -208,6 +208,16 @@ export function SimpleStageFront({
                 ) : null}
               </div>
               <div style={ASK_ACTIONS_STYLE}>
+                <a
+                  href={`/api/v1/source/${eventId}/evidence/${encodeURIComponent(
+                    requirement.requirementId,
+                  )}/template`}
+                  data-testid={`source-simple-front-template-${requirement.requirementId}`}
+                  style={TEMPLATE_LINK_STYLE}
+                  title="Download a blank, pre-shaped form for this item. Fill it in and upload it back — it attaches here automatically."
+                >
+                  Template
+                </a>
                 <input
                   ref={(node) => {
                     fileInputs.current[requirement.requirementId] = node;
@@ -505,6 +515,13 @@ const QUIET_BUTTON_STYLE: CSSProperties = {
   border: "1px solid transparent",
   background: "transparent",
   color: CANVAS.INK_MUTED,
+};
+
+const TEMPLATE_LINK_STYLE: CSSProperties = {
+  ...QUIET_BUTTON_STYLE,
+  textDecoration: "none",
+  display: "inline-flex",
+  alignItems: "center",
 };
 
 const ANSWER_BOX_STYLE: CSSProperties = {
