@@ -72,7 +72,8 @@ export type FeatureFlagKey =
   | "source_simple_front"
   | "source_strategy_auto_draft"
   | "source_strategy_at_p0"
-  | "context_corpus_explorer_enabled";
+  | "context_corpus_explorer_enabled"
+  | "source_reasoning_spine";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -152,6 +153,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     // includeTenants intentionally empty — flip on per tenant during
     // cutover. When parity is proven across the roster, swap to
     // `platform` policy with the inverse `excludeTenants` for rollback.
+    includeTenants: [],
+  },
+  {
+    key: "source_reasoning_spine",
+    summary:
+      "Run the Source reasoning spine (Analysis + Recommendation stages) on the generate path and CAPTURE a validated Reasoning Envelope as generation metadata. Default OFF; fully guarded (validate-or-fallback) so flag-off generation is byte-identical to today. Rendering the envelope into the deliverable prose is a separate slice. Tenant opt-in.",
+    policy: "tenant",
     includeTenants: [],
   },
   {

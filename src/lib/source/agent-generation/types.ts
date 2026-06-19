@@ -67,6 +67,14 @@ export interface SourceArtifactBodyGenerationMetadata {
   humanEditedAt?: string;
   /** Clerk user id of the human who edited/saved the AI draft. */
   humanEditedByUserId?: string | null;
+  /**
+   * Reasoning-spine capture (Slice 1.6, flag `source_reasoning_spine`). Present
+   * iff the flag was on. `"ok"` carries a validated Reasoning Envelope (stored as
+   * JSON); any other status records why none was captured. The generated body is
+   * unchanged either way — rendering the envelope into prose is a later slice.
+   */
+  reasoningStatus?: "disabled" | "ok" | "gate_failed" | "error";
+  reasoningEnvelope?: unknown;
 }
 
 /**
