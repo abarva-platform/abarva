@@ -51,6 +51,9 @@ The release also retires legacy `/intelligence/*` deep links by redirecting them
 - Pass: ACR build `cafq` for `acrabarvalab001.azurecr.io/abarva/web:prod-lab-command-center-7be0de0d9`.
 - Pass: ACA revision `ca-abarva-web-lab-eastus--0000116` is `Healthy` / `Running`.
 - Pass: ACA traffic is 100% on revision `ca-abarva-web-lab-eastus--0000116`.
+- Pass: follow-up ACR build `cafr` for `acrabarvalab001.azurecr.io/abarva/web:prod-lab-command-center-82d990fb2`.
+- Pass: follow-up ACA revision `ca-abarva-web-lab-eastus--0000117` is `Healthy` / `Running`.
+- Pass: ACA traffic is 100% on revision `ca-abarva-web-lab-eastus--0000117`.
 - Pass: `https://app.abarva.ai/api/health` returned `ok=true`, `postgres=true`, `direct_postgres=true`, `azure_graph=postgres`.
 - Initial signed-in Chrome crawl before this release showed the production-lab app still serving old content:
   - `/home`: `Good morning, User` decision-card page.
@@ -63,14 +66,17 @@ The release also retires legacy `/intelligence/*` deep links by redirecting them
   - `/tower`: `AI Control Tower · AbarVa`, H1 `Where technology money is going, what value is showing up, and what needs intervention.`, no old L0/L1/L2/L3 labels or old hero found.
   - `/admin`: `Setup · AbarVa`, Setup/Admin preserved.
   - `/intelligence/context-demo`: redirected to canonical `/intelligence`, Advisory Board rendered, no retired context/corpus strings found.
+- Pass: follow-up signed-in Chrome crawl after toolbar/Tower cleanup, cache-busted:
+  - `/home`: `Home · Enterprise Landscape | AbarVa`, product nav present (`Home`, `Intelligence`, `Moves`, `Source`, `Tower`).
+  - `/tower`: `AI Control Tower · AbarVa`, product nav present and the portfolio canvas renders before the Atlas rail.
 
 ## Rollout Plan
 
-Built a clean image from committed HEAD `7be0de0d9`, pushed it to ACR, updated the Azure Container Apps lab web app, confirmed the new healthy revision receives 100% traffic, then ran a cache-busted signed-in browser crawl.
+Built a clean image from committed HEAD `7be0de0d9`, then a follow-up image from committed HEAD `82d990fb2`, pushed both to ACR, updated the Azure Container Apps lab web app, confirmed the new healthy revision receives 100% traffic, then ran cache-busted signed-in browser crawls.
 
 ## Rollback Plan
 
-Shift Azure Container Apps traffic back to the previous healthy web revision `ca-abarva-web-lab-eastus--m2f50a5d9`. No database migration, schema rollback, or data-plane rollback is required.
+Shift Azure Container Apps traffic back to the previous healthy web revision `ca-abarva-web-lab-eastus--0000116` or earlier rollback revision `ca-abarva-web-lab-eastus--m2f50a5d9`. No database migration, schema rollback, or data-plane rollback is required.
 
 ## Audit Evidence
 
@@ -78,9 +84,13 @@ Shift Azure Container Apps traffic back to the previous healthy web revision `ca
 - Image tag: `acrabarvalab001.azurecr.io/abarva/web:prod-lab-command-center-7be0de0d9`
 - Image digest: `sha256:dfca56a56d744194af2bd047d5b5f0cc16f492f1ec3dd38ff2a54a99288c03d8`
 - ACR build run: `cafq`
-- ACA revision: `ca-abarva-web-lab-eastus--0000116`
-- ACA traffic: 100% on `ca-abarva-web-lab-eastus--0000116`
+- Follow-up image tag: `acrabarvalab001.azurecr.io/abarva/web:prod-lab-command-center-82d990fb2`
+- Follow-up image digest: `sha256:d55cad2db5c45f93bf63b77f91cea8d6638256f301107bbbe05bbab5979fb799`
+- Follow-up ACR build run: `cafr`
+- ACA revision: `ca-abarva-web-lab-eastus--0000117`
+- ACA traffic: 100% on `ca-abarva-web-lab-eastus--0000117`
 - Post-deploy signed-in Chrome crawl: `/home`, `/intelligence`, `/tower`, `/admin`, and `/intelligence/context-demo` verified on 2026-06-19.
+- Follow-up signed-in Chrome crawl: `/home` nav toolbar verified; `/tower` canvas-first layout verified on 2026-06-19.
 
 ## Context Ingestion Evidence
 
