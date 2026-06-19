@@ -6,11 +6,13 @@
 
 ## Status
 
-`deploying-lab-corrected-v2`
+`ready-for-lab-deploy-v3`
 
 ## Plain-English Summary
 
 The signed-in `/home` surface now opens as an Enterprise Landscape current-state assessment. `/admin` remains the setup/admin control plane. `/intelligence` now opens as an advisory-board surface instead of the older repository/explorer framing. `/tower` removes the old L0/L1/L2/L3 lens labels and opens as a portfolio command center with leadership-oriented spend, value, adoption, risk, evidence, and action language.
+
+The retired Context/Corpus Explorer implementation that produced the poor screenshots has been removed from runtime source, and tenant-specific `/tenant/[tenantSlug]/intelligence` deep links now redirect to canonical `/intelligence?client=...` so the old lens-tab page cannot appear through an alternate path.
 
 ## Layer Impact
 
@@ -34,8 +36,11 @@ The signed-in `/home` surface now opens as an Enterprise Landscape current-state
 - `src/components/home/EnterpriseLandscapeHome.module.css`
 - `src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx`
 - `src/components/intelligence-advisory/AdvisoryIntelligencePage.module.css`
+- `src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx`
+- `src/components/intelligence-v4/ContextCorpusExplorerPage.tsx` deleted
 - `src/components/tower/AiControlTowerPage.tsx`
 - `src/components/tower/__tests__/AiControlTowerPage.test.tsx`
+- `src/__tests__/integration/intelligence/context-corpus-explorer-route.test.ts`
 - `src/lib/home/enterprise-landscape-view-model.ts`
 - `src/proxy.ts`
 - `src/components/shell/topbar-nav-items.ts`
@@ -63,6 +68,14 @@ The signed-in `/home` surface now opens as an Enterprise Landscape current-state
 - `npx tsc --noEmit --pretty false` passed.
 - `npm run build` passed.
 - `npm run release:check` passed.
+- 2026-06-19 cleanup: `src/components/intelligence-v4/ContextCorpusExplorerPage.tsx` deleted.
+- 2026-06-19 cleanup: `/tenant/[tenantSlug]/intelligence` now redirects to `/intelligence?client=<tenantKey>` instead of rendering `IntelligenceLensTabs`.
+- 2026-06-19 cleanup: runtime source scan across Home, Intelligence, Tower, tenant routes, and active Home/Intelligence/Tower components found no matches for the bad-page strings: `What your context is telling us`, `The strongest cross-context reads`, `Dimensions Loaded`, `Graph Edges`, `Ask about loaded context`, `ACTIVE CANVAS`, `AI CONTROL TOWER`, or `ContextCorpusExplorerPage`.
+- `npx eslint 'src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx' src/__tests__/integration/intelligence/context-corpus-explorer-route.test.ts 'src/app/(maestro)/home/page.tsx' 'src/app/(maestro)/intelligence/page.tsx' 'src/app/(maestro)/tower/page.tsx'` passed.
+- `npx jest src/__tests__/integration/intelligence/context-corpus-explorer-route.test.ts --runInBand` passed.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npm run release:check` passed.
 
 ## Rollout Plan
 
@@ -79,6 +92,7 @@ Rollback by shifting ACA traffic to the previous known-good revision `ca-abarva-
 - Git commit `893cb1539` was the incorrect `/admin` candidate.
 - Live traffic was rolled back to `ca-abarva-web-lab-eastus--m6ece1b74`.
 - Corrected git commit `bad4a1c82`.
+- Follow-up cleanup commit pending at this record update removes the retired v4 Explorer from runtime source and prevents tenant deep-link leakage.
 - ACR image `acrabarvalab001.azurecr.io/abarva/web:home-intelligence-routes-bad4a1c82`.
 - ACR digest `sha256:49cf49da21ad2e608bd2d84318442c5148443222a82e9ae04e53d10fd8504212`.
 - ACA revision `ca-abarva-web-lab-eastus--0000111` with 100% traffic.
