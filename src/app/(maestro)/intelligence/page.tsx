@@ -64,7 +64,7 @@ export default async function IntelligencePage({
 
   let inner: ReactNode;
   if (binding) {
-    inner = <IntelligenceV2Surface payload={binding} />;
+    inner = <IntelligenceV2Surface payload={binding} tenantName={tenantName} />;
   } else {
     const overview = contextTenantKey
       ? await getEnterpriseContextOverviewForTenant(
