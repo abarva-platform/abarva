@@ -8,6 +8,10 @@ interface StageNextMoveCardProps {
   nextMove: StageNextMoveView;
   onPrimary: () => void;
   onSecondary?: () => void;
+  /** Drafting in progress — disables the primary action and shows a working
+   *  label so the user gets feedback during the (multi-second) governed
+   *  generation, instead of the button appearing to do nothing. */
+  pending?: boolean;
 }
 
 const NEXT_MOVE_ACCENT = "#1d4ed8";
@@ -16,6 +20,7 @@ export function StageNextMoveCard({
   nextMove,
   onPrimary,
   onSecondary,
+  pending = false,
 }: StageNextMoveCardProps) {
   return (
     <section
@@ -61,9 +66,21 @@ export function StageNextMoveCard({
           type="button"
           data-testid="source-canvas-next-move-primary"
           onClick={onPrimary}
-          style={PRIMARY_BUTTON_STYLE}
+          disabled={pending}
+          aria-busy={pending}
+          style={
+            pending
+              ? { ...PRIMARY_BUTTON_STYLE, opacity: 0.72, cursor: "wait" }
+              : PRIMARY_BUTTON_STYLE
+          }
         >
-          {nextMove.primaryLabel} <span aria-hidden="true">→</span>
+          {pending ? (
+            "Drafting…"
+          ) : (
+            <>
+              {nextMove.primaryLabel} <span aria-hidden="true">→</span>
+            </>
+          )}
         </button>
         {nextMove.secondaryLabel && onSecondary ? (
           <button

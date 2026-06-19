@@ -1056,6 +1056,10 @@ export function UniversalCanvasShell({
   const advancedWorkspace = workspaceExplorerEnabled ? (
     <SourceDeclutteredWorkspace
       nextMove={nextMove}
+      draftPending={Boolean(
+        nextMove.draftArtifactCode &&
+          pendingGenerationByCode[nextMove.draftArtifactCode],
+      )}
       onNextMoveAdvance={handleNextMoveAdvance}
       onDraftWithSentinel={handleDraftWithSentinel}
       fromStage={viewStage}
@@ -1253,6 +1257,7 @@ function WorkspaceExplorerChips({
 
 function SourceDeclutteredWorkspace({
   nextMove,
+  draftPending,
   onNextMoveAdvance,
   onDraftWithSentinel,
   fromStage,
@@ -1267,6 +1272,7 @@ function SourceDeclutteredWorkspace({
   workspaceHref,
 }: {
   nextMove: ReturnType<typeof resolveStageNextMove>;
+  draftPending: boolean;
   onNextMoveAdvance: () => void;
   onDraftWithSentinel: (code: string) => void;
   fromStage: SourceStageKey;
@@ -1339,6 +1345,7 @@ function SourceDeclutteredWorkspace({
       <div style={NEXT_MOVE_WRAP_STYLE}>
         <StageNextMoveCard
           nextMove={nextMove}
+          pending={draftPending}
           onPrimary={() =>
             nextMove.draftArtifactCode
               ? onDraftWithSentinel(nextMove.draftArtifactCode)
