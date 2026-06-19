@@ -488,6 +488,7 @@ function buildGenericSections(tenantName: string, vertical: string): Record<stri
     `Current-state enterprise landscape for ${vertical}.`,
     'This page turns the loaded context into a consulting-style current-state assessment. Section-specific exhibits should be enriched as the client data refresh completes.',
     'Use the left-side assessment sections to inspect business, technology, money, partners, AI, risk, and outside-in context.',
+    metaForTenant(tenantName),
   );
   const sections: Record<string, LandscapeSection> = { profile: base };
   for (const group of ENTERPRISE_LANDSCAPE_NAV) {
@@ -500,6 +501,7 @@ function buildGenericSections(tenantName: string, vertical: string): Record<stri
         `${tenantName} current-state assessment for ${nav.label.toLowerCase()}.`,
         'The section is ready for client-specific evidence, exhibits, and source trail enrichment from the context refresh.',
         'Use this section to convert loaded data into an executive read, not a raw inventory view.',
+        metaForTenant(tenantName),
       );
     }
   }
@@ -517,6 +519,14 @@ function section(input: Omit<LandscapeSection, 'meta'> & { meta?: LandscapeSecti
   };
 }
 
+function metaForTenant(tenantName: string): LandscapeSection['meta'] {
+  return [
+    { label: 'TENANT', value: tenantName.toUpperCase() },
+    { label: 'ASSEMBLED', value: 'JUN 18, 2026' },
+    { label: 'MODE', value: 'CURRENT STATE' },
+  ];
+}
+
 function basicSection(
   id: string,
   eyebrow: string,
@@ -524,12 +534,14 @@ function basicSection(
   subtitle: string,
   summary: string,
   leadershipRead: string,
+  meta?: LandscapeSection['meta'],
 ): LandscapeSection {
   return section({
     id,
     eyebrow,
     title,
     subtitle,
+    meta,
     executiveSummary: summary,
     currentState: [
       row('Current-state read', summary, 'READ', 'teal'),

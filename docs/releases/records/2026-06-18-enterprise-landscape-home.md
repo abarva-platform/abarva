@@ -76,6 +76,8 @@ The retired Context/Corpus Explorer implementation that produced the poor screen
 - Live unauthenticated route smoke: `/home`, `/admin`, and `/tower` redirect to sign-in; `/intelligence` returns 200.
 - Live `/intelligence` HTML contains `AbarVa Intelligence`, `Advisory board`, and `Recommendation`.
 - Live `/intelligence` HTML does not contain the retired bad-page strings: `What your context is telling us`, `The strongest cross-context reads`, `Dimensions Loaded`, `Graph Edges`, `Ask about loaded context`, or `ContextCorpusExplorerPage`.
+- Signed-in Chrome crawl found the old Intelligence tab title/body until cache-busted navigation; after cache-bust, `/intelligence` rendered `Intelligence · Advisory Board | AbarVa` and no retired Explorer copy.
+- Signed-in Chrome crawl found `/home` rendering First Capital chrome with a hardcoded `TENANT - SKYHARBOR AIR` meta value inside the generic assessment. Fixed generic Home sections to derive the `TENANT` meta value from the active tenant name.
 - 2026-06-19 cleanup: `src/components/intelligence-v4/ContextCorpusExplorerPage.tsx` deleted.
 - 2026-06-19 cleanup: `/tenant/[tenantSlug]/intelligence` now redirects to `/intelligence?client=<tenantKey>` instead of rendering `IntelligenceLensTabs`.
 - 2026-06-19 cleanup: runtime source scan across Home, Intelligence, Tower, tenant routes, and active Home/Intelligence/Tower components found no matches for the bad-page strings: `What your context is telling us`, `The strongest cross-context reads`, `Dimensions Loaded`, `Graph Edges`, `Ask about loaded context`, `ACTIVE CANVAS`, `AI CONTROL TOWER`, or `ContextCorpusExplorerPage`.
@@ -84,6 +86,10 @@ The retired Context/Corpus Explorer implementation that produced the poor screen
 - `npx tsc --noEmit --pretty false` passed.
 - `npm run build` passed.
 - `npm run release:check` passed.
+- 2026-06-19 Home tenant-meta fix: `npx eslint src/lib/home/enterprise-landscape-view-model.ts src/components/home/EnterpriseLandscapeHome.tsx 'src/app/(maestro)/home/page.tsx'` passed.
+- 2026-06-19 Home tenant-meta fix: `npx tsc --noEmit --pretty false` passed.
+- 2026-06-19 Home tenant-meta fix: `npm run build` passed.
+- 2026-06-19 Home tenant-meta fix: `npm run release:check` passed.
 
 ## Rollout Plan
 
