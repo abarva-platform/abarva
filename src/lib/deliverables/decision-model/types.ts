@@ -3,7 +3,7 @@
 // Spec §4 (Deliverable System Transformation): the Intelligence Layer produces ONE decision
 // model; every deliverable CONSUMES it and never independently reinterprets evidence. This is
 // the convergence point reconciled in docs/build/DELIVERABLE_TRANSFORMATION_RECONCILIATION.md:
-//   • governed evidence  → the model's evidence bundle (deepened later by First Capital Intel)
+//   • governed evidence  → the model's evidence bundle (deepened later by the Intelligence layer)
 //   • Workforce Economics estimate → the model's ValueModel.estimateTwice (WE-1/WE-2 output)
 //   • the model           → consumed by the Story Director / Visual Director / authors / gate
 //
