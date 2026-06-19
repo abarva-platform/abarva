@@ -127,7 +127,7 @@ export function runRecommendationStage(
   }
 
   const confidence = aggregateConfidence(analysis);
-  const base = {
+  const base: Omit<ReasoningEnvelope, "claims" | "refusal"> = {
     envelopeId: opts.envelopeId,
     eventId: ctx.event.id,
     tenantKey: ctx.tenantKey,
@@ -139,7 +139,7 @@ export function runRecommendationStage(
     confidence,
     caveats: [],
     decisionTrace,
-  } as const;
+  };
 
   // Grounded refusal: no gate-defining claim rests on usable evidence.
   const hasUsableGateClaim = claims.some(
