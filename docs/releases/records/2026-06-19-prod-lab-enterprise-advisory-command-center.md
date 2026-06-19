@@ -10,14 +10,14 @@
 
 ## Plain-English Summary
 
-This release corrects the signed-in production-lab app surfaces so `/home`, `/intelligence`, and `/tower` serve the current committed Enterprise Landscape, Advisory Board, and Portfolio Command Center experiences instead of the older decision-card, Context/Corpus Explorer, and old AI Tower lens pages. `/admin` remains the Setup/Admin control plane.
+This release corrects the signed-in production-lab app surfaces so `/home` and `/intelligence` serve the current committed Enterprise Landscape and Advisory Board experiences instead of the older decision-card and Context/Corpus Explorer pages. The previously deployed `/tower` implementation has now been removed from the route and replaced with a neutral replacement-pending shell until the approved HTML design is supplied. `/admin` remains the Setup/Admin control plane.
 
 The release also retires legacy `/intelligence/*` deep links by redirecting them to canonical `/intelligence`, preventing users from bypassing the new Advisory Board and landing on old context/corpus pages.
 
 ## Layer Impact
 
 - `global-control-lane`: changes shared signed-in route behavior for Home, Intelligence, Tower, and legacy Intelligence deep links.
-- `client-data-lane`: no data mutation. The surfaces read existing tenant-aware view models and committed Tower read models.
+- `client-data-lane`: no data mutation. The Tower route no longer reads committed Tower read models while awaiting the replacement HTML.
 - `internal-admin`: `/admin` remains unchanged and continues to render Setup/Admin.
 
 ## Client Applicability
@@ -32,22 +32,25 @@ The release also retires legacy `/intelligence/*` deep links by redirecting them
 
 - `src/proxy.ts`: redirects `/intelligence/*` legacy deep links to canonical `/intelligence`, preserving query parameters.
 - `src/app/(maestro)/home/page.tsx`: wraps the Enterprise Landscape home page in `AppShell` so the product nav toolbar is visible on `/home`.
-- `src/components/tower/AiControlTowerPage.tsx`: makes the Tower work area canvas-first, moves Atlas to a supporting right rail, and tightens typography for a cleaner executive dashboard.
+- `src/app/(maestro)/tower/page.tsx`: removes the current Tower implementation from the route and renders only a neutral replacement-pending shell inside the authenticated app chrome.
+- `src/components/tower/AiControlTowerPage.tsx`: previously made the Tower work area canvas-first, moves Atlas to a supporting right rail, and tightens typography for a cleaner executive dashboard; this component is no longer mounted by `/tower`.
 - `docs/build/ai-control-tower-template/ai-control-tower-synthetic-canonical-v1.json`: restores the canonical AI Control Tower template artifact required by the existing load-plan and persistence tests.
 - Test fixtures under `src/lib/intelligence-v3/__tests__/` and `src/lib/pilot-dashboard/__tests__/` are aligned with the current Enterprise Context read-model shape.
 - Current committed route source already maps:
   - `/home` to `EnterpriseLandscapeHome`
   - `/intelligence` to `AdvisoryIntelligencePage`
-  - `/tower` to `AiControlTowerPage`
+  - `/tower` to a replacement-pending shell, with the prior Tower implementation disconnected
   - `/admin` to Setup/Admin
 
 ## QA / Validation
 
 - Pass: `npx eslint src/proxy.ts src/lib/intelligence-v3/__tests__/sentinel-intel-context.test.ts src/lib/pilot-dashboard/__tests__/aggregates.test.ts src/lib/ai-control-tower/__tests__/load-plan.test.ts src/lib/ai-control-tower/__tests__/persistence.test.ts`
 - Pass: `npx eslint src/app/'(maestro)'/home/page.tsx src/components/tower/AiControlTowerPage.tsx`
+- Pass: `npx eslint "src/app/(maestro)/tower/page.tsx"`
 - Pass: `npx tsc --noEmit --pretty false`
 - Pass: `npm run build`
 - Pass: `npm run release:check`
+- Pass: source inspection confirms `/tower` no longer imports `AiControlTowerPage` or `getAiControlTowerReadModel`.
 - Pass: ACR build `cafq` for `acrabarvalab001.azurecr.io/abarva/web:prod-lab-command-center-7be0de0d9`.
 - Pass: ACA revision `ca-abarva-web-lab-eastus--0000116` is `Healthy` / `Running`.
 - Pass: ACA traffic is 100% on revision `ca-abarva-web-lab-eastus--0000116`.
