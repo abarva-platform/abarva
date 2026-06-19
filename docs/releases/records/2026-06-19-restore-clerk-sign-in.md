@@ -6,7 +6,7 @@
 
 ## Status
 
-`validated-local`
+`deployed-lab`
 
 ## Plain-English Summary
 
@@ -47,11 +47,16 @@ This release restores the signed-out `/sign-in` experience to a Clerk-backed ema
 - Pass: `npm run release:check`
 - Observed: Jest emits existing duplicate manual mock warnings for markdown mocks and local Source DB missing-env console messages; assertions pass.
 - Partial deployed finding before this follow-up: generic Clerk `<SignIn />` removed the static access-code form but still exposed a password field because the Clerk instance has password enabled.
-- Pending: deployed unauthenticated browser verification that `/sign-in` shows email-code sign-in and does not show `Password from invite`, `Password`, `Access code`, or `424242`.
+- Pass: ACR build `cafv` built and pushed `acrabarvalab001.azurecr.io/abarva/web:prod-lab-command-center-d90275eef`; this interim image was superseded because browser QA found the generic Clerk widget still exposed a password field.
+- Pass: ACR build `cafw` built and pushed `acrabarvalab001.azurecr.io/abarva/web:prod-lab-command-center-bbb10a069`, digest `sha256:a45969504104d2398a3a802e890cc047570a1ec48ee19a604e5a673367fa4a7f`.
+- Pass: ACA revision `ca-abarva-web-lab-eastus--0000120` is `Healthy` / `Running` and receives 100% traffic.
+- Pass: `https://app.abarva.ai/api/health` returned `ok=true`, `postgres=true`, `direct_postgres=true`, `azure_graph=postgres`.
+- Pass: unauthenticated browser QA for `/sign-in` showed exactly one email input (`Enter your email address`) and `Send code`; it did not show password text, `Password from invite`, `Access code`, or `424242`.
+- Pass: functional browser QA with `anand.sundaram+firstcapital@thesundaram.com` clicked `Send code` and advanced to the `Enter email code` / `Verify code` step with no error.
 
 ## Rollout Plan
 
-Build a new production-lab image from the committed release candidate, push it to ACR, update the Azure Container Apps lab web app, wait for a healthy revision, shift traffic to the new revision, and run unauthenticated browser verification against `https://app.abarva.ai/sign-in`.
+Built a new production-lab image from committed HEAD `bbb10a069`, pushed it to ACR, updated the Azure Container Apps lab web app, waited for healthy revision `ca-abarva-web-lab-eastus--0000120`, shifted traffic to 100%, and ran unauthenticated browser verification against `https://app.abarva.ai/sign-in`.
 
 ## Rollback Plan
 
@@ -61,7 +66,12 @@ Shift Azure Container Apps traffic back to the previous healthy revision. No dat
 
 - Source diff for `/sign-in`, proxy public routes, and deleted custom demo-code auth files.
 - Local build and release check listed above.
-- ACR build, ACA revision, and browser verification output to be added after deploy.
+- Image tag: `acrabarvalab001.azurecr.io/abarva/web:prod-lab-command-center-bbb10a069`
+- Image digest: `sha256:a45969504104d2398a3a802e890cc047570a1ec48ee19a604e5a673367fa4a7f`
+- ACR build run: `cafw`
+- ACA revision: `ca-abarva-web-lab-eastus--0000120`
+- ACA traffic: 100% on `ca-abarva-web-lab-eastus--0000120`
+- Browser QA: `/sign-in` email-only first step and code-entry second step verified on 2026-06-19.
 
 ## Known Gaps
 
