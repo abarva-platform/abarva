@@ -65,7 +65,11 @@ export default async function SourceArtifactPage({
         />
       }
     >
-      <SentinelAgentColumn
+      <main
+        data-testid="source-artifact-layout"
+        style={{ flex: 1, minHeight: 0, display: "flex", overflow: "hidden" }}
+      >
+        <SentinelAgentColumn
         quote={`Artifact state: ${artifactState}. Workflow status: ${artifact.status.replaceAll("_", " ")}. Source: ${provenanceLabel}. Evidence chain: ${artifact.sections.length} entries.`}
         agentContext={`Sentinel · ${artifact.title} · ${event.name}`}
         actions={[
@@ -97,6 +101,7 @@ export default async function SourceArtifactPage({
           }}
         />
       </SourceWorkingPane>
+      </main>
     </AppShell>
   );
 }

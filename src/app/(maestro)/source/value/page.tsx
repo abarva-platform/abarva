@@ -61,7 +61,11 @@ export default async function SourceValuePage() {
       }}
       subNav={<SourceSubNav />}
     >
-      <SentinelAgentColumn
+      <main
+        data-testid="source-value-layout"
+        style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}
+      >
+        <SentinelAgentColumn
         quote={quote}
         agentContext={`Sentinel · Source value ledger · ${activeClientDisplayName}`}
         actions={[
@@ -77,6 +81,7 @@ export default async function SourceValuePage() {
           isDegraded={ledger.isDegraded}
         />
       </SourceWorkingPane>
+      </main>
     </AppShell>
   );
 }
