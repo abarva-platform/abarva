@@ -46,6 +46,24 @@ function isAnandOperatorAlias(normalizedEmail: string): boolean {
   );
 }
 
+// Real external pilot users (tenant mapping lives in
+// PILOT_EXACT_EMAIL_TO_CLIENT_KEY, client-config.ts). Listing them here pins
+// their session to their client and gives them the locked `client` role — the
+// same access the production pilot already grants. NOT admins: Source/admin
+// rights still flow from their Clerk role, not from this list. Every entry is
+// an explicit access grant — review on change.
+const PILOT_ACCESS_EMAILS: ReadonlySet<string> = new Set([
+  "kmysore@gmail.com",
+  "surekha.durvasula@gmail.com",
+  "anandshp@gmail.com",
+  "admin@abarva.ai",
+  "anand@abarva.ai",
+]);
+
+function isPilotAccessEmail(normalizedEmail: string): boolean {
+  return PILOT_ACCESS_EMAILS.has(normalizedEmail);
+}
+
 export function hasExplicitTenantAlias(
   email: string | null | undefined,
 ): boolean {
@@ -64,7 +82,8 @@ export function hasExplicitTenantAlias(
     normalized.includes("+northstar@abarva.com") ||
     normalized.includes("+skyharbor@abarva.com") ||
     normalized.includes("+lakeshore@abarva.com") ||
-    isAnandOperatorAlias(normalized)
+    isAnandOperatorAlias(normalized) ||
+    isPilotAccessEmail(normalized)
   );
 }
 
@@ -94,7 +113,8 @@ export function inferSessionRoleFromEmail(
     normalized.includes("+northstar@abarva.com") ||
     normalized.includes("+skyharbor@abarva.com") ||
     normalized.includes("+lakeshore@abarva.com") ||
-    isAnandOperatorAlias(normalized)
+    isAnandOperatorAlias(normalized) ||
+    isPilotAccessEmail(normalized)
   ) {
     return "client";
   }

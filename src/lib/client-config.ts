@@ -267,11 +267,33 @@ const THESUNDARAM_OPERATOR_LOCALPART_TO_CLIENT_KEY: ReadonlyArray<
   ["anand.sundaram+lakeshore", "lakeshore"],
 ];
 
+/**
+ * Real external pilot users, each pinned to exactly one client. These are live
+ * people (pilot sponsors / evaluators), NOT synthetic demo personas — keep the
+ * list tiny, explicit, and reviewed: every entry is an access grant. Ported
+ * from the production pilot so the main line carries the same access.
+ * (fix/pilot-email-access-on-main)
+ */
+const PILOT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> = {
+  "kmysore@gmail.com": "meridian", // Kiran Mysore · CDAO / pilot sponsor
+  "surekha.durvasula@gmail.com": "lakeshore", // Surekha Durvasula · VP Innovation / Delivery
+  "anandshp@gmail.com": "lakeshore",
+  "admin@abarva.ai": "arcturus", // First Capital Financial
+  "anand@abarva.ai": "skyharbor",
+};
+
 export function inferClientKeyFromEmail(
   email: string | null | undefined,
 ): ClientKey | null {
   const normalized = email?.toLowerCase().trim() ?? "";
   if (!normalized || !normalized.includes("@")) return null;
+
+  // Exact pilot-user grants win first — full addresses on shared domains
+  // (gmail.com, abarva.ai) the domain/local-part maps below would otherwise
+  // miss or mis-route.
+  const pilotExact = PILOT_EXACT_EMAIL_TO_CLIENT_KEY[normalized];
+  if (pilotExact) return pilotExact;
+
   const [localPart, domain] = normalized.split("@", 2);
   if (!localPart || !domain) return null;
 
