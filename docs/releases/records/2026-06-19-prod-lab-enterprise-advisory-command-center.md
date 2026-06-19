@@ -31,6 +31,8 @@ The release also retires legacy `/intelligence/*` deep links by redirecting them
 ## Changes Included
 
 - `src/proxy.ts`: redirects `/intelligence/*` legacy deep links to canonical `/intelligence`, preserving query parameters.
+- `src/app/(maestro)/home/page.tsx`: wraps the Enterprise Landscape home page in `AppShell` so the product nav toolbar is visible on `/home`.
+- `src/components/tower/AiControlTowerPage.tsx`: makes the Tower work area canvas-first, moves Atlas to a supporting right rail, and tightens typography for a cleaner executive dashboard.
 - `docs/build/ai-control-tower-template/ai-control-tower-synthetic-canonical-v1.json`: restores the canonical AI Control Tower template artifact required by the existing load-plan and persistence tests.
 - Test fixtures under `src/lib/intelligence-v3/__tests__/` and `src/lib/pilot-dashboard/__tests__/` are aligned with the current Enterprise Context read-model shape.
 - Current committed route source already maps:
@@ -42,6 +44,7 @@ The release also retires legacy `/intelligence/*` deep links by redirecting them
 ## QA / Validation
 
 - Pass: `npx eslint src/proxy.ts src/lib/intelligence-v3/__tests__/sentinel-intel-context.test.ts src/lib/pilot-dashboard/__tests__/aggregates.test.ts src/lib/ai-control-tower/__tests__/load-plan.test.ts src/lib/ai-control-tower/__tests__/persistence.test.ts`
+- Pass: `npx eslint src/app/'(maestro)'/home/page.tsx src/components/tower/AiControlTowerPage.tsx`
 - Pass: `npx tsc --noEmit --pretty false`
 - Pass: `npm run build`
 - Pass: `npm run release:check`

@@ -1,4 +1,5 @@
 import { EnterpriseLandscapeHome } from '@/components/home/EnterpriseLandscapeHome';
+import { AppShell } from '@/components/shell/AppShell';
 import { getActiveClientRow } from '@/lib/active-client';
 import { canonicalClientDisplayName } from '@/lib/client-config';
 import { getEnterpriseLandscapeViewModel } from '@/lib/home/enterprise-landscape-view-model';
@@ -20,11 +21,21 @@ export default async function HomePage() {
     'AbarVa Client';
 
   return (
-    <EnterpriseLandscapeHome
-      viewModel={getEnterpriseLandscapeViewModel({
-        clientKey: client?.key ?? null,
+    <AppShell
+      surface="home"
+      topBarProps={{
         tenantName,
-      })}
-    />
+        showLocked: Boolean(client?.key),
+        context: `Enterprise Landscape · ${tenantName}`,
+      }}
+      hasTenantKey={Boolean(client?.key)}
+    >
+      <EnterpriseLandscapeHome
+        viewModel={getEnterpriseLandscapeViewModel({
+          clientKey: client?.key ?? null,
+          tenantName,
+        })}
+      />
+    </AppShell>
   );
 }

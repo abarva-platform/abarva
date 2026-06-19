@@ -377,6 +377,23 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
       </nav>
 
       <section style={styles.workspace}>
+        <section style={styles.canvas}>
+          <div style={styles.canvasHeader}>
+            <div>
+              <p style={styles.kicker}>{tabMeta.kicker}</p>
+              <h2 style={styles.h2}>{tabMeta.question}</h2>
+            </div>
+            <span style={styles.datePill}>{model.reportingPeriodEnd ?? 'no refresh'}</span>
+          </div>
+          <LensCanvas
+            model={model}
+            activeTab={activeTab}
+            selectedFunction={selectedFunction}
+            selectedInitiative={selectedInitiative}
+            onSelectInitiative={setSelectedInitiativeId}
+          />
+        </section>
+
         <aside style={styles.atlas}>
           <p style={styles.kicker}>ATLAS</p>
           <h2 style={styles.asideTitle}>Ask about the portfolio.</h2>
@@ -443,23 +460,6 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
           </form>
           <p style={styles.guardrail}>Human approval required: Atlas proposes; named leaders approve writes, submissions, and external actions.</p>
         </aside>
-
-        <section style={styles.canvas}>
-          <div style={styles.canvasHeader}>
-            <div>
-              <p style={styles.kicker}>{tabMeta.kicker}</p>
-              <h2 style={styles.h2}>{tabMeta.question}</h2>
-            </div>
-            <span style={styles.datePill}>{model.reportingPeriodEnd ?? 'no refresh'}</span>
-          </div>
-          <LensCanvas
-            model={model}
-            activeTab={activeTab}
-            selectedFunction={selectedFunction}
-            selectedInitiative={selectedInitiative}
-            onSelectInitiative={setSelectedInitiativeId}
-          />
-        </section>
       </section>
     </main>
   );
@@ -801,11 +801,12 @@ function TableShell({ children }: { children: React.ReactNode }) {
 
 const styles: Record<string, React.CSSProperties> = {
   page: {
-    minHeight: '100vh',
+    minHeight: '100%',
     background: COLORS.bg,
     color: COLORS.ink,
     fontFamily: COLORS.sans,
-    padding: '20px clamp(18px, 3vw, 34px) 30px',
+    padding: '18px clamp(18px, 3vw, 34px) 30px',
+    overflow: 'auto',
   },
   hero: {
     display: 'flex',
@@ -835,17 +836,19 @@ const styles: Record<string, React.CSSProperties> = {
   },
   h1: {
     margin: '6px 0 4px',
-    fontFamily: COLORS.serif,
-    fontSize: 'clamp(26px, 2.8vw, 42px)',
-    lineHeight: 1.05,
+    fontFamily: COLORS.sans,
+    fontSize: 'clamp(24px, 2.4vw, 34px)',
+    fontWeight: 850,
+    lineHeight: 1.08,
     letterSpacing: 0,
-    maxWidth: 980,
+    maxWidth: 920,
   },
   h2: {
     margin: '5px 0 0',
-    fontFamily: COLORS.serif,
-    fontSize: 23,
-    lineHeight: 1.12,
+    fontFamily: COLORS.sans,
+    fontSize: 20,
+    fontWeight: 850,
+    lineHeight: 1.18,
     letterSpacing: 0,
   },
   lede: {
@@ -895,8 +898,9 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 6,
   },
   kpiValue: {
-    fontFamily: COLORS.serif,
-    fontSize: 31,
+    fontFamily: COLORS.sans,
+    fontSize: 28,
+    fontWeight: 850,
     lineHeight: 1,
   },
   kpiNote: {
@@ -980,7 +984,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   workspace: {
     display: 'grid',
-    gridTemplateColumns: '340px minmax(0, 1fr)',
+    gridTemplateColumns: 'minmax(0, 1fr) minmax(280px, 330px)',
     gap: 14,
     marginTop: 14,
     alignItems: 'start',
@@ -989,16 +993,17 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'sticky',
     top: 12,
     display: 'grid',
-    gap: 12,
+    gap: 10,
     background: COLORS.panel,
     border: `1px solid ${COLORS.line}`,
     borderRadius: 8,
-    padding: 14,
+    padding: 12,
   },
   asideTitle: {
     margin: 0,
-    fontFamily: COLORS.serif,
-    fontSize: 24,
+    fontFamily: COLORS.sans,
+    fontSize: 18,
+    fontWeight: 850,
     letterSpacing: 0,
   },
   answerBox: {
