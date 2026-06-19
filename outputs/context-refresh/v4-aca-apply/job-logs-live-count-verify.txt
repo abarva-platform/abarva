@@ -1,0 +1,187 @@
+{"TimeStamp":"2026-06-18T23:08:00.92831","Log":"Connecting to the container 'job-phs-meridian-load2-0606'..."}
+{"TimeStamp":"2026-06-18T23:08:01.04848","Log":"Successfully Connected to container: 'job-phs-meridian-load2-0606' [Execution: 'job-phs-meridian-load2-0606-x3sjppu', Replica: 'job-phs-meridian-load2-0606-x3sjppu-562ft']"}
+{"TimeStamp":"2026-06-18T23:07:38.8602066+00:00","Log":"F (node:1) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'."}
+{"TimeStamp":"2026-06-18T23:07:38.8602462+00:00","Log":"F In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees."}
+{"TimeStamp":"2026-06-18T23:07:38.860271+00:00","Log":"F"}
+{"TimeStamp":"2026-06-18T23:07:38.8602801+00:00","Log":"F To prepare for this change:"}
+{"TimeStamp":"2026-06-18T23:07:38.8602825+00:00","Log":"F - If you want the current behavior, explicitly use 'sslmode=verify-full'"}
+{"TimeStamp":"2026-06-18T23:07:38.8602848+00:00","Log":"F - If you want libpq compatibility now, use 'uselibpqcompat=true\u0026sslmode=require'"}
+{"TimeStamp":"2026-06-18T23:07:38.860287+00:00","Log":"F"}
+{"TimeStamp":"2026-06-18T23:07:38.8602893+00:00","Log":"F See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions."}
+{"TimeStamp":"2026-06-18T23:07:38.8602916+00:00","Log":"F (Use \u0060node --trace-warnings ...\u0060 to show where the warning was created)"}
+{"TimeStamp":"2026-06-18T23:07:40.5703405+00:00","Log":"F RESULT_JSON {"}
+{"TimeStamp":"2026-06-18T23:07:40.5703928+00:00","Log":"F   "ok": true,"}
+{"TimeStamp":"2026-06-18T23:07:40.5704074+00:00","Log":"F   "verified_at": "2026-06-18T23:07:40.569Z","}
+{"TimeStamp":"2026-06-18T23:07:40.5704093+00:00","Log":"F   "clients": ["}
+{"TimeStamp":"2026-06-18T23:07:40.5704105+00:00","Log":"F     {"}
+{"TimeStamp":"2026-06-18T23:07:40.5704118+00:00","Log":"F       "key": "skyharbor-air","}
+{"TimeStamp":"2026-06-18T23:07:40.5704131+00:00","Log":"F       "name": "SkyHarbor Air","}
+{"TimeStamp":"2026-06-18T23:07:40.5704144+00:00","Log":"F       "client_id": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301","}
+{"TimeStamp":"2026-06-18T23:07:40.5704157+00:00","Log":"F       "tenant_counts": {"}
+{"TimeStamp":"2026-06-18T23:07:40.570417+00:00","Log":"F         "enterprise_context_sources": 1,"}
+{"TimeStamp":"2026-06-18T23:07:40.5704183+00:00","Log":"F         "enterprise_context_source_files": 35,"}
+{"TimeStamp":"2026-06-18T23:07:40.5704196+00:00","Log":"F         "enterprise_context_records": 6094,"}
+{"TimeStamp":"2026-06-18T23:07:40.5704252+00:00","Log":"F         "enterprise_context_facts": 55956,"}
+{"TimeStamp":"2026-06-18T23:07:40.5704266+00:00","Log":"F         "enterprise_context_chunks": 6094,"}
+{"TimeStamp":"2026-06-18T23:07:40.5704278+00:00","Log":"F         "enterprise_context_relationships": 5200"}
+{"TimeStamp":"2026-06-18T23:07:40.570429+00:00","Log":"F       },"}
+{"TimeStamp":"2026-06-18T23:07:40.5704302+00:00","Log":"F       "client_counts": {"}
+{"TimeStamp":"2026-06-18T23:07:40.5704313+00:00","Log":"F         "client_private_patterns": 9,"}
+{"TimeStamp":"2026-06-18T23:07:40.5704325+00:00","Log":"F         "ai_control_refresh_runs": 1,"}
+{"TimeStamp":"2026-06-18T23:07:40.5704337+00:00","Log":"F         "ai_control_sources": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5704349+00:00","Log":"F         "ai_control_initiatives": 30,"}
+{"TimeStamp":"2026-06-18T23:07:40.5704361+00:00","Log":"F         "ai_control_tool_usage_monthly": 12,"}
+{"TimeStamp":"2026-06-18T23:07:40.5704373+00:00","Log":"F         "ai_control_persona_productivity": 18,"}
+{"TimeStamp":"2026-06-18T23:07:40.5704385+00:00","Log":"F         "ai_control_dora_metrics": 18,"}
+{"TimeStamp":"2026-06-18T23:07:40.5704396+00:00","Log":"F         "ai_control_agent_outcomes": 12,"}
+{"TimeStamp":"2026-06-18T23:07:40.5704408+00:00","Log":"F         "ai_control_benefit_realization": 30,"}
+{"TimeStamp":"2026-06-18T23:07:40.570443+00:00","Log":"F         "ai_control_spend_contracts": 120,"}
+{"TimeStamp":"2026-06-18T23:07:40.5704443+00:00","Log":"F         "ai_control_risk_governance": 150,"}
+{"TimeStamp":"2026-06-18T23:07:40.5706752+00:00","Log":"F         "ai_control_actions": 5,"}
+{"TimeStamp":"2026-06-18T23:07:40.5707+00:00","Log":"F         "ai_control_evidence_items": 80,"}
+{"TimeStamp":"2026-06-18T23:07:40.570712+00:00","Log":"F         "ai_control_context_facts": 1106,"}
+{"TimeStamp":"2026-06-18T23:07:40.5707144+00:00","Log":"F         "ai_control_context_relationships": 0,"}
+{"TimeStamp":"2026-06-18T23:07:40.5707166+00:00","Log":"F         "ai_control_atlas_context_packs": 1"}
+{"TimeStamp":"2026-06-18T23:07:40.5707188+00:00","Log":"F       },"}
+{"TimeStamp":"2026-06-18T23:07:40.5707208+00:00","Log":"F       "chunk_embedding_status": {"}
+{"TimeStamp":"2026-06-18T23:07:40.5707229+00:00","Log":"F         "pending": 6094"}
+{"TimeStamp":"2026-06-18T23:07:40.5707251+00:00","Log":"F       }"}
+{"TimeStamp":"2026-06-18T23:07:40.5707271+00:00","Log":"F     },"}
+{"TimeStamp":"2026-06-18T23:07:40.5707291+00:00","Log":"F     {"}
+{"TimeStamp":"2026-06-18T23:07:40.5707311+00:00","Log":"F       "key": "first-capital","}
+{"TimeStamp":"2026-06-18T23:07:40.5707367+00:00","Log":"F       "name": "First Capital Financial","}
+{"TimeStamp":"2026-06-18T23:07:40.570739+00:00","Log":"F       "client_id": "09d9a267-e89c-4fe1-831f-337a62787ec5","}
+{"TimeStamp":"2026-06-18T23:07:40.5707413+00:00","Log":"F       "tenant_counts": {"}
+{"TimeStamp":"2026-06-18T23:07:40.5707621+00:00","Log":"F         "enterprise_context_sources": 1,"}
+{"TimeStamp":"2026-06-18T23:07:40.5707644+00:00","Log":"F         "enterprise_context_source_files": 31,"}
+{"TimeStamp":"2026-06-18T23:07:40.5707664+00:00","Log":"F         "enterprise_context_records": 2227,"}
+{"TimeStamp":"2026-06-18T23:07:40.5707684+00:00","Log":"F         "enterprise_context_facts": 24474,"}
+{"TimeStamp":"2026-06-18T23:07:40.5707704+00:00","Log":"F         "enterprise_context_chunks": 2227,"}
+{"TimeStamp":"2026-06-18T23:07:40.5707723+00:00","Log":"F         "enterprise_context_relationships": 1800"}
+{"TimeStamp":"2026-06-18T23:07:40.5707744+00:00","Log":"F       },"}
+{"TimeStamp":"2026-06-18T23:07:40.5707764+00:00","Log":"F       "client_counts": {"}
+{"TimeStamp":"2026-06-18T23:07:40.5707785+00:00","Log":"F         "client_private_patterns": 6,"}
+{"TimeStamp":"2026-06-18T23:07:40.5707806+00:00","Log":"F         "ai_control_refresh_runs": 1,"}
+{"TimeStamp":"2026-06-18T23:07:40.570784+00:00","Log":"F         "ai_control_sources": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5707863+00:00","Log":"F         "ai_control_initiatives": 42,"}
+{"TimeStamp":"2026-06-18T23:07:40.5707884+00:00","Log":"F         "ai_control_tool_usage_monthly": 35,"}
+{"TimeStamp":"2026-06-18T23:07:40.5707903+00:00","Log":"F         "ai_control_persona_productivity": 16,"}
+{"TimeStamp":"2026-06-18T23:07:40.5707923+00:00","Log":"F         "ai_control_dora_metrics": 12,"}
+{"TimeStamp":"2026-06-18T23:07:40.5709334+00:00","Log":"F         "ai_control_agent_outcomes": 42,"}
+{"TimeStamp":"2026-06-18T23:07:40.5709479+00:00","Log":"F         "ai_control_benefit_realization": 126,"}
+{"TimeStamp":"2026-06-18T23:07:40.5709541+00:00","Log":"F         "ai_control_spend_contracts": 42,"}
+{"TimeStamp":"2026-06-18T23:07:40.5709562+00:00","Log":"F         "ai_control_risk_governance": 42,"}
+{"TimeStamp":"2026-06-18T23:07:40.5709582+00:00","Log":"F         "ai_control_actions": 24,"}
+{"TimeStamp":"2026-06-18T23:07:40.5709602+00:00","Log":"F         "ai_control_evidence_items": 42,"}
+{"TimeStamp":"2026-06-18T23:07:40.5709622+00:00","Log":"F         "ai_control_context_facts": 1056,"}
+{"TimeStamp":"2026-06-18T23:07:40.5709641+00:00","Log":"F         "ai_control_context_relationships": 0,"}
+{"TimeStamp":"2026-06-18T23:07:40.570966+00:00","Log":"F         "ai_control_atlas_context_packs": 1"}
+{"TimeStamp":"2026-06-18T23:07:40.5709679+00:00","Log":"F       },"}
+{"TimeStamp":"2026-06-18T23:07:40.5709719+00:00","Log":"F       "chunk_embedding_status": {"}
+{"TimeStamp":"2026-06-18T23:07:40.570974+00:00","Log":"F         "pending": 2227"}
+{"TimeStamp":"2026-06-18T23:07:40.5709759+00:00","Log":"F       }"}
+{"TimeStamp":"2026-06-18T23:07:40.5709778+00:00","Log":"F     },"}
+{"TimeStamp":"2026-06-18T23:07:40.5709797+00:00","Log":"F     {"}
+{"TimeStamp":"2026-06-18T23:07:40.5709816+00:00","Log":"F       "key": "meridian-health","}
+{"TimeStamp":"2026-06-18T23:07:40.5709837+00:00","Log":"F       "name": "Meridian Health","}
+{"TimeStamp":"2026-06-18T23:07:40.5709856+00:00","Log":"F       "client_id": "6e419b6e-950d-4d34-a4fc-06c3e451a6c4","}
+{"TimeStamp":"2026-06-18T23:07:40.5709876+00:00","Log":"F       "tenant_counts": {"}
+{"TimeStamp":"2026-06-18T23:07:40.5709898+00:00","Log":"F         "enterprise_context_sources": 1,"}
+{"TimeStamp":"2026-06-18T23:07:40.5709918+00:00","Log":"F         "enterprise_context_source_files": 30,"}
+{"TimeStamp":"2026-06-18T23:07:40.5709937+00:00","Log":"F         "enterprise_context_records": 1538,"}
+{"TimeStamp":"2026-06-18T23:07:40.5709955+00:00","Log":"F         "enterprise_context_facts": 16728,"}
+{"TimeStamp":"2026-06-18T23:07:40.5709974+00:00","Log":"F         "enterprise_context_chunks": 1538,"}
+{"TimeStamp":"2026-06-18T23:07:40.5709994+00:00","Log":"F         "enterprise_context_relationships": 1000"}
+{"TimeStamp":"2026-06-18T23:07:40.5710032+00:00","Log":"F       },"}
+{"TimeStamp":"2026-06-18T23:07:40.571005+00:00","Log":"F       "client_counts": {"}
+{"TimeStamp":"2026-06-18T23:07:40.5710068+00:00","Log":"F         "client_private_patterns": 6,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710087+00:00","Log":"F         "ai_control_refresh_runs": 1,"}
+{"TimeStamp":"2026-06-18T23:07:40.571011+00:00","Log":"F         "ai_control_sources": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710381+00:00","Log":"F         "ai_control_initiatives": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710421+00:00","Log":"F         "ai_control_tool_usage_monthly": 40,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710455+00:00","Log":"F         "ai_control_persona_productivity": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710481+00:00","Log":"F         "ai_control_dora_metrics": 12,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710508+00:00","Log":"F         "ai_control_agent_outcomes": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710532+00:00","Log":"F         "ai_control_benefit_realization": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710558+00:00","Log":"F         "ai_control_spend_contracts": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710596+00:00","Log":"F         "ai_control_risk_governance": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710627+00:00","Log":"F         "ai_control_actions": 10,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710649+00:00","Log":"F         "ai_control_evidence_items": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710666+00:00","Log":"F         "ai_control_context_facts": 356,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710684+00:00","Log":"F         "ai_control_context_relationships": 0,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710703+00:00","Log":"F         "ai_control_atlas_context_packs": 1"}
+{"TimeStamp":"2026-06-18T23:07:40.571072+00:00","Log":"F       },"}
+{"TimeStamp":"2026-06-18T23:07:40.5710738+00:00","Log":"F       "chunk_embedding_status": {"}
+{"TimeStamp":"2026-06-18T23:07:40.5710756+00:00","Log":"F         "pending": 1538"}
+{"TimeStamp":"2026-06-18T23:07:40.5710774+00:00","Log":"F       }"}
+{"TimeStamp":"2026-06-18T23:07:40.5710791+00:00","Log":"F     },"}
+{"TimeStamp":"2026-06-18T23:07:40.5710808+00:00","Log":"F     {"}
+{"TimeStamp":"2026-06-18T23:07:40.5710825+00:00","Log":"F       "key": "lakeshore","}
+{"TimeStamp":"2026-06-18T23:07:40.5710844+00:00","Log":"F       "name": "Lakeshore Industries","}
+{"TimeStamp":"2026-06-18T23:07:40.5710862+00:00","Log":"F       "client_id": "49fc8aee-3d39-48c5-82ac-1313c31470c7","}
+{"TimeStamp":"2026-06-18T23:07:40.5710892+00:00","Log":"F       "tenant_counts": {"}
+{"TimeStamp":"2026-06-18T23:07:40.571091+00:00","Log":"F         "enterprise_context_sources": 1,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710929+00:00","Log":"F         "enterprise_context_source_files": 30,"}
+{"TimeStamp":"2026-06-18T23:07:40.5710947+00:00","Log":"F         "enterprise_context_records": 1348,"}
+{"TimeStamp":"2026-06-18T23:07:40.5711236+00:00","Log":"F         "enterprise_context_facts": 14619,"}
+{"TimeStamp":"2026-06-18T23:07:40.5711447+00:00","Log":"F         "enterprise_context_chunks": 1348,"}
+{"TimeStamp":"2026-06-18T23:07:40.5711623+00:00","Log":"F         "enterprise_context_relationships": 850"}
+{"TimeStamp":"2026-06-18T23:07:40.5711663+00:00","Log":"F       },"}
+{"TimeStamp":"2026-06-18T23:07:40.5711691+00:00","Log":"F       "client_counts": {"}
+{"TimeStamp":"2026-06-18T23:07:40.5711718+00:00","Log":"F         "client_private_patterns": 5,"}
+{"TimeStamp":"2026-06-18T23:07:40.5711742+00:00","Log":"F         "ai_control_refresh_runs": 1,"}
+{"TimeStamp":"2026-06-18T23:07:40.5711765+00:00","Log":"F         "ai_control_sources": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.571179+00:00","Log":"F         "ai_control_initiatives": 10,"}
+{"TimeStamp":"2026-06-18T23:07:40.5711829+00:00","Log":"F         "ai_control_tool_usage_monthly": 40,"}
+{"TimeStamp":"2026-06-18T23:07:40.5711856+00:00","Log":"F         "ai_control_persona_productivity": 10,"}
+{"TimeStamp":"2026-06-18T23:07:40.5711879+00:00","Log":"F         "ai_control_dora_metrics": 8,"}
+{"TimeStamp":"2026-06-18T23:07:40.5711901+00:00","Log":"F         "ai_control_agent_outcomes": 10,"}
+{"TimeStamp":"2026-06-18T23:07:40.5711923+00:00","Log":"F         "ai_control_benefit_realization": 10,"}
+{"TimeStamp":"2026-06-18T23:07:40.5711946+00:00","Log":"F         "ai_control_spend_contracts": 10,"}
+{"TimeStamp":"2026-06-18T23:07:40.5711974+00:00","Log":"F         "ai_control_risk_governance": 10,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712+00:00","Log":"F         "ai_control_actions": 10,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712026+00:00","Log":"F         "ai_control_evidence_items": 10,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712049+00:00","Log":"F         "ai_control_context_facts": 256,"}
+{"TimeStamp":"2026-06-18T23:07:40.571207+00:00","Log":"F         "ai_control_context_relationships": 0,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712094+00:00","Log":"F         "ai_control_atlas_context_packs": 1"}
+{"TimeStamp":"2026-06-18T23:07:40.5712121+00:00","Log":"F       },"}
+{"TimeStamp":"2026-06-18T23:07:40.5712155+00:00","Log":"F       "chunk_embedding_status": {"}
+{"TimeStamp":"2026-06-18T23:07:40.5712181+00:00","Log":"F         "pending": 1348"}
+{"TimeStamp":"2026-06-18T23:07:40.5712205+00:00","Log":"F       }"}
+{"TimeStamp":"2026-06-18T23:07:40.5712228+00:00","Log":"F     },"}
+{"TimeStamp":"2026-06-18T23:07:40.5712247+00:00","Log":"F     {"}
+{"TimeStamp":"2026-06-18T23:07:40.5712267+00:00","Log":"F       "key": "apex-retail","}
+{"TimeStamp":"2026-06-18T23:07:40.5712286+00:00","Log":"F       "name": "Apex Retail","}
+{"TimeStamp":"2026-06-18T23:07:40.5712304+00:00","Log":"F       "client_id": "c7578e7a-545a-4b75-860e-465358f5e00b","}
+{"TimeStamp":"2026-06-18T23:07:40.5712323+00:00","Log":"F       "tenant_counts": {"}
+{"TimeStamp":"2026-06-18T23:07:40.5712343+00:00","Log":"F         "enterprise_context_sources": 1,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712363+00:00","Log":"F         "enterprise_context_source_files": 31,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712516+00:00","Log":"F         "enterprise_context_records": 1644,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712544+00:00","Log":"F         "enterprise_context_facts": 17548,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712566+00:00","Log":"F         "enterprise_context_chunks": 1656,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712604+00:00","Log":"F         "enterprise_context_relationships": 1000"}
+{"TimeStamp":"2026-06-18T23:07:40.5712622+00:00","Log":"F       },"}
+{"TimeStamp":"2026-06-18T23:07:40.5712641+00:00","Log":"F       "client_counts": {"}
+{"TimeStamp":"2026-06-18T23:07:40.571266+00:00","Log":"F         "client_private_patterns": 6,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712677+00:00","Log":"F         "ai_control_refresh_runs": 1,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712695+00:00","Log":"F         "ai_control_sources": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712716+00:00","Log":"F         "ai_control_initiatives": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712734+00:00","Log":"F         "ai_control_tool_usage_monthly": 44,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712752+00:00","Log":"F         "ai_control_persona_productivity": 12,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712771+00:00","Log":"F         "ai_control_dora_metrics": 10,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712789+00:00","Log":"F         "ai_control_agent_outcomes": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712809+00:00","Log":"F         "ai_control_benefit_realization": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712827+00:00","Log":"F         "ai_control_spend_contracts": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712855+00:00","Log":"F         "ai_control_risk_governance": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712875+00:00","Log":"F         "ai_control_actions": 10,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712893+00:00","Log":"F         "ai_control_evidence_items": 14,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712911+00:00","Log":"F         "ai_control_context_facts": 356,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712929+00:00","Log":"F         "ai_control_context_relationships": 0,"}
+{"TimeStamp":"2026-06-18T23:07:40.5712949+00:00","Log":"F         "ai_control_atlas_context_packs": 1"}
+{"TimeStamp":"2026-06-18T23:07:40.5713132+00:00","Log":"F       },"}
+{"TimeStamp":"2026-06-18T23:07:40.571316+00:00","Log":"F       "chunk_embedding_status": {"}
+{"TimeStamp":"2026-06-18T23:07:40.5713179+00:00","Log":"F         "pending": 1656"}
+{"TimeStamp":"2026-06-18T23:07:40.5713197+00:00","Log":"F       }"}
+{"TimeStamp":"2026-06-18T23:07:40.5713221+00:00","Log":"F     }"}
+{"TimeStamp":"2026-06-18T23:07:40.5713245+00:00","Log":"F   ]"}
+{"TimeStamp":"2026-06-18T23:07:40.571327+00:00","Log":"F }"}
