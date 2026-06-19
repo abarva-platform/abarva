@@ -47,10 +47,11 @@ no internal identifiers were touched.
 
 ## QA / Validation
 
-- `eslint` on all 7 files → exit 0 (one pre-existing unrelated warning).
-- Confirmed no test asserts the old strings (the `board-grade-tenant-label`
-  tests cover a separate, deliberate "honest placeholder" — see Known Gaps).
-- Typecheck runs in CI.
+- `eslint` on all 7 files → **PASS** (exit 0; one pre-existing unrelated warning).
+- Grep for old strings in tests → **PASS** (no test asserts them; the
+  `board-grade-tenant-label` tests cover a separate deliberate placeholder — see
+  Known Gaps).
+- Typecheck — **runs in CI** (not run locally for this copy-only change).
 
 ## Rollout Plan
 
