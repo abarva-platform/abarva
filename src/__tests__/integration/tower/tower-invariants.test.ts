@@ -23,12 +23,13 @@ describe('IT Investment Tower v2 invariants', () => {
     expect(pageSource).toContain('src="/api/tower/v2-frame"');
     expect(pageSource).toContain('title="AbarVa IT Investment Tower"');
     expect(pageSource).not.toContain('AiControlTowerPage');
-    expect(pageSource).not.toContain('AppShell');
+    expect(pageSource).toContain('AppShell');
   });
 
   it('keeps /tower inside the authenticated product toolbar shell', () => {
-    expect(maestroChrome).not.toContain("'/tower'");
-    expect(pageSource).toContain("height: 'calc(100dvh - 56px)'");
+    expect(maestroChrome).toContain("'/tower'");
+    expect(pageSource).toContain('<AppShell');
+    expect(pageSource).toContain('surface="tower"');
     expect(frameRoute).toContain('stripStandaloneNavigation');
   });
 

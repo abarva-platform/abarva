@@ -9,6 +9,7 @@ import AbarvaNav from '@/components/AbarvaNav';
 const SHELL_SURFACE_PREFIXES = [
   '/admin',
   '/home',
+  '/tower',
   '/source',
   '/intelligence',
   '/learn',

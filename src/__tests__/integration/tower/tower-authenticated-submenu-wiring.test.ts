@@ -16,8 +16,9 @@ describe('IT Investment Tower v2 route wiring', () => {
 
   it('keeps the authenticated AbarVa product nav around /tower', () => {
     expect(maestroChrome).toContain("'/admin'");
-    expect(maestroChrome).not.toContain("'/tower'");
-    expect(pageSource).toContain("height: 'calc(100dvh - 56px)'");
+    expect(maestroChrome).toContain("'/tower'");
+    expect(pageSource).toContain('<AppShell');
+    expect(pageSource).toContain('surface="tower"');
   });
 
   it('does not allow URL-driven cross-client Tower switching', () => {
