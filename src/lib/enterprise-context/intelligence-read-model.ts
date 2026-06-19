@@ -1,6 +1,10 @@
 
 
 import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
+import {
+  getDerivedEnterpriseReadForTenant,
+  type DerivedEnterpriseReadSummary,
+} from '@/lib/enterprise-context/derived-enterprise-read';
 export interface EnterpriseContextRecordRow {
   record_type: string;
   title: string;
@@ -40,6 +44,39 @@ export interface EnterpriseContextOverviewCard {
   actions: string[];
 }
 
+export interface EnterpriseContextInsightRow {
+  id: string;
+  headline: string;
+  so_what: string;
+  domain: string;
+  materiality: 'high' | 'medium' | 'low' | string;
+  rule_id: string;
+  evidence: string | null;
+  confidence: 'high' | 'medium' | 'low' | 'none' | string;
+  freshness_status: 'fresh' | 'attention' | 'stale' | 'review' | 'unknown' | string;
+  lifecycle_state: 'active' | 'review_required' | 'blocked_by_gap' | 'superseded' | string;
+  action: string | null;
+  entity_name: string | null;
+  entity_type: string | null;
+  derived_from_fact_ids?: string[] | null;
+}
+
+export type EnterpriseContextVendorCategory = 'hardware-cloud' | 'software-saas' | 'services-si';
+export type EnterpriseContextVendorHealth = 'healthy' | 'watch' | 'risk';
+export type EnterpriseContextVendorTier = 'incumbent' | 'challenger' | 'emerging';
+
+export interface EnterpriseContextVendorSpendRow {
+  vendor: string;
+  category: EnterpriseContextVendorCategory;
+  subcategory: string;
+  spendUsdM: number;
+  spendLabel: string;
+  tier: EnterpriseContextVendorTier;
+  health: EnterpriseContextVendorHealth;
+  renewsInMonths: number | null;
+  takeaway: string;
+}
+
 export interface EnterpriseContextOverview {
   tenantKey: string;
   tenantName: string;
@@ -60,7 +97,10 @@ export interface EnterpriseContextOverview {
   confidenceAverage: number;
   qualitySummary: Record<string, number>;
   cards: EnterpriseContextOverviewCard[];
+  contextInsights: EnterpriseContextInsightRow[];
   sentinelFacts: string[];
+  vendorSpendRows: EnterpriseContextVendorSpendRow[];
+  derivedEnterpriseRead?: DerivedEnterpriseReadSummary | null;
 }
 
 const TABLES = {
@@ -80,6 +120,7 @@ export async function getEnterpriseContextOverviewForTenant(
 ): Promise<EnterpriseContextOverview | null> {
   const normalizedTenantKey = tenantKey?.trim();
   if (!normalizedTenantKey) return null;
+  const derivedEnterpriseRead = await getDerivedEnterpriseReadForTenant(normalizedTenantKey);
 
   try {
     const counts = await countEnterpriseContextRows(normalizedTenantKey);
@@ -103,8 +144,26 @@ export async function getEnterpriseContextOverviewForTenant(
       normalizedTenantKey,
       'evidence_usable',
     );
+    const insightRows = await fetchTenantRows<EnterpriseContextInsightRow>(
+      'context_insights',
+      normalizedTenantKey,
+      'id,headline,so_what,domain,materiality,rule_id,evidence,confidence,freshness_status,lifecycle_state,action,entity_name,entity_type,derived_from_fact_ids',
+    ).catch(() => []);
 
-    if (counts.records === 0) return null;
+    if (counts.records === 0 && !derivedEnterpriseRead) return null;
+    if (counts.records === 0 && derivedEnterpriseRead) {
+      return summarizeEnterpriseContextRows({
+        tenantKey: normalizedTenantKey,
+        tenantName: tenantName ?? normalizedTenantKey,
+        counts,
+        records: [],
+        sources: [],
+        qualityRows: [],
+        evidenceRows: [],
+        insightRows: [],
+        derivedEnterpriseRead,
+      });
+    }
 
     return summarizeEnterpriseContextRows({
       tenantKey: normalizedTenantKey,
@@ -114,9 +173,24 @@ export async function getEnterpriseContextOverviewForTenant(
       sources,
       qualityRows,
       evidenceRows,
+      insightRows,
+      derivedEnterpriseRead,
     });
   } catch (error) {
     console.warn('[enterprise-context.overview]', error);
+    if (derivedEnterpriseRead) {
+      return summarizeEnterpriseContextRows({
+        tenantKey: normalizedTenantKey,
+        tenantName: tenantName ?? normalizedTenantKey,
+        counts: emptyEnterpriseContextCounts(),
+        records: [],
+        sources: [],
+        qualityRows: [],
+        evidenceRows: [],
+        insightRows: [],
+        derivedEnterpriseRead,
+      });
+    }
     return null;
   }
 }
@@ -129,6 +203,8 @@ export function summarizeEnterpriseContextRows(input: {
   sources: EnterpriseContextSourceRow[];
   qualityRows: EnterpriseContextQualityRow[];
   evidenceRows: Array<{ evidence_usable: boolean }>;
+  insightRows?: EnterpriseContextInsightRow[];
+  derivedEnterpriseRead?: DerivedEnterpriseReadSummary | null;
 }): EnterpriseContextOverview {
   const recordTypeCounts = countBy(input.records, (row) => row.record_type);
   const freshnessCounts = countBy(input.records, (row) => row.freshness_status);
@@ -160,6 +236,27 @@ export function summarizeEnterpriseContextRows(input: {
   const highRenewals = renewals.filter((row) => String(row.payload.renewal_risk ?? '').toLowerCase() === 'high').length;
   const annualSpend = spendRows.reduce((sum, row) => sum + numeric(row.payload.run_rate_usd), 0);
   const renewalExposure = renewals.reduce((sum, row) => sum + numeric(row.payload.estimated_value_usd), 0);
+  const vendorSpendRows = buildVendorSpendRows({ contracts, renewals, spendRows });
+  const derivedContextInsights: EnterpriseContextInsightRow[] = (input.derivedEnterpriseRead?.insights ?? []).map((insight, index) => ({
+    id: insight.id,
+    headline: insight.headline,
+    so_what: insight.soWhat,
+    domain: insight.domain || input.derivedEnterpriseRead?.industry || 'Enterprise context',
+    materiality: insight.severity,
+    rule_id: `derived-enterprise-read:${input.derivedEnterpriseRead?.readId ?? 'unknown'}:${index + 1}`,
+    evidence: insight.evidence.join('; ') || input.derivedEnterpriseRead?.source.path || null,
+    confidence: insight.severity === 'high' ? 'high' : 'medium',
+    freshness_status: 'fresh',
+    lifecycle_state: 'active',
+    action: input.derivedEnterpriseRead?.recommendedMoves[index]?.decision ?? 'Review evidence and decide next move',
+    entity_name: input.derivedEnterpriseRead?.tenantName ?? input.tenantName,
+    entity_type: 'derived_enterprise_read',
+    derived_from_fact_ids: insight.evidence,
+  }));
+  const contextInsights = [...derivedContextInsights, ...(input.insightRows ?? [])].sort((a, b) => {
+    const materialityOrder = (value: string) => value === 'high' ? 0 : value === 'medium' ? 1 : 2;
+    return materialityOrder(a.materiality) - materialityOrder(b.materiality);
+  });
 
   const cards: EnterpriseContextOverviewCard[] = [
     {
@@ -241,12 +338,25 @@ export function summarizeEnterpriseContextRows(input: {
   ];
 
   const sentinelFacts = [
+    ...(input.derivedEnterpriseRead ? [
+      `${input.tenantName} Derived Enterprise Read: ${input.derivedEnterpriseRead.headline}`,
+      `${input.tenantName} executive summary: ${input.derivedEnterpriseRead.executiveSummary}`,
+      `${input.tenantName} architecture pattern: ${input.derivedEnterpriseRead.architecturePattern}`,
+      `${input.tenantName} benchmark/north-star read: ${input.derivedEnterpriseRead.northStar} ${input.derivedEnterpriseRead.peerImplication}`,
+      ...input.derivedEnterpriseRead.recommendedMoves.slice(0, 3).map((move) =>
+        `Recommended move: ${move.title}. Owner: ${move.owner}. Decision: ${move.decision}. Expected impact: ${move.expectedImpact}.`,
+      ),
+      `Sentinel rule: lead with the Derived Enterprise Read before internal substrate counts; use raw context counts only as supporting proof.`,
+    ] : []),
     `${input.tenantName} Enterprise Context: ${input.counts.records} records, ${input.counts.facts} facts, ${input.counts.relationships} CI relationships, and ${input.counts.evidence} evidence rows are loaded from internal context sources.`,
     `Enterprise Context domains include org and decision rights (${recordTypeCounts.org_decision_rights ?? 0}), facilities/business units (${recordTypeCounts.facilities_business_units ?? 0}), systems/services (${recordTypeCounts.cmdb_applications_services ?? 0}), vendors/contracts (${recordTypeCounts.vendors_contract_inventory ?? 0}), renewals (${recordTypeCounts.renewal_calendar ?? 0}), spend baseline (${recordTypeCounts.spend_baseline ?? 0}), incidents (${recordTypeCounts.incidents ?? 0}), problems (${recordTypeCounts.problems ?? 0}), changes (${recordTypeCounts.changes ?? 0}), policies/procedures (${recordTypeCounts.policies_procedures ?? 0}), initiatives (${recordTypeCounts.initiative_portfolio ?? 0}), data domains (${recordTypeCounts.data_domains_stewardship ?? 0}), and risks/compliance (${recordTypeCounts.risk_compliance_register ?? 0}).`,
     `Evidence posture: ${evidenceUsableCount}/${input.counts.evidence} evidence rows are currently usable; ${input.counts.qualityIssues} quality issues and ${input.counts.stewardshipTasks} stewardship tasks remain open.`,
     `Operational posture: ${incidents.length} incidents, ${problems.length} problems, ${changes.length} changes, and ${slaBreaches} SLA-breaching incidents are available for current-state guidance.`,
     `Commercial posture: ${contracts.length} contracts, ${renewals.length} renewal rows, ${highRenewals} high-risk renewals, ${formatUsd(renewalExposure)} estimated renewal exposure, and ${formatUsd(annualSpend)} annualized spend baseline are available.`,
-    `Sentinel rule: answer Meridian current-state questions from Enterprise Context first, cite internal source systems and freshness/confidence, and mark external or industry guidance as outside this internal-context layer.`,
+    ...contextInsights.slice(0, 8).map((insight) =>
+      `CIO insight ${insight.domain}: ${insight.headline}. So what: ${insight.so_what} Action: ${insight.action ?? 'review evidence'}. Evidence: ${insight.evidence ?? 'context insights'}.`,
+    ),
+    `Sentinel rule: answer ${input.tenantName} current-state questions from Enterprise Context first, cite internal source systems and freshness/confidence, and mark external or industry guidance as outside this internal-context layer.`,
   ];
 
   return {
@@ -260,8 +370,97 @@ export function summarizeEnterpriseContextRows(input: {
     confidenceAverage,
     qualitySummary,
     cards,
+    contextInsights,
     sentinelFacts,
+    vendorSpendRows,
+    derivedEnterpriseRead: input.derivedEnterpriseRead ?? null,
   };
+}
+
+function emptyEnterpriseContextCounts(): EnterpriseContextOverview['counts'] {
+  return {
+    sources: 0,
+    records: 0,
+    facts: 0,
+    relationships: 0,
+    evidence: 0,
+    qualityIssues: 0,
+    stewardshipTasks: 0,
+    chunkQueue: 0,
+  };
+}
+
+function buildVendorSpendRows(input: {
+  contracts: EnterpriseContextRecordRow[];
+  renewals: EnterpriseContextRecordRow[];
+  spendRows: EnterpriseContextRecordRow[];
+}): EnterpriseContextVendorSpendRow[] {
+  const renewalByVendor = new Map<string, EnterpriseContextRecordRow>();
+  for (const renewal of input.renewals) {
+    const key = normalizeVendorKey(vendorNameFor(renewal));
+    if (key && !renewalByVendor.has(key)) renewalByVendor.set(key, renewal);
+  }
+
+  const rows = input.contracts
+    .map((contract, index): EnterpriseContextVendorSpendRow | null => {
+      const vendor = vendorNameFor(contract);
+      if (!vendor) return null;
+      const renewal = renewalByVendor.get(normalizeVendorKey(vendor) ?? '');
+      const spend = firstNumeric(
+        contract.payload.annual_spend_usd,
+        contract.payload.annualized_spend_usd,
+        contract.payload.ttm_spend_usd,
+        contract.payload.run_rate_usd,
+        contract.payload.contract_value_usd,
+        contract.payload.estimated_annual_value_usd,
+        contract.payload.estimated_value_usd,
+        renewal?.payload.estimated_value_usd,
+        renewal?.payload.contract_value_usd,
+      );
+      const health = healthFor(contract, renewal);
+      return {
+        vendor,
+        category: categoryFor(contract),
+        subcategory: subcategoryFor(contract),
+        spendUsdM: spend / 1_000_000,
+        spendLabel: spend > 0 ? formatUsd(spend) : 'Not sized',
+        tier: tierFor(contract, index),
+        health,
+        renewsInMonths: renewalMonthsFor(contract, renewal),
+        takeaway: takeawayFor(contract, renewal, health),
+      };
+    })
+    .filter((row): row is EnterpriseContextVendorSpendRow => Boolean(row));
+
+  if (rows.length > 0) {
+    return rows.sort((a, b) => b.spendUsdM - a.spendUsdM).slice(0, 25);
+  }
+
+  return input.spendRows
+    .map((row, index): EnterpriseContextVendorSpendRow | null => {
+      const vendor = stringValue(row.payload.vendor_name, row.payload.vendor, row.payload.supplier_name, row.title);
+      if (!vendor) return null;
+      const spend = firstNumeric(
+        row.payload.run_rate_usd,
+        row.payload.annual_spend_usd,
+        row.payload.annualized_spend_usd,
+        row.payload.ttm_spend_usd,
+      );
+      return {
+        vendor,
+        category: categoryFor(row),
+        subcategory: subcategoryFor(row),
+        spendUsdM: spend / 1_000_000,
+        spendLabel: spend > 0 ? formatUsd(spend) : 'Not sized',
+        tier: index === 0 ? 'incumbent' : 'challenger',
+        health: 'watch',
+        renewsInMonths: null,
+        takeaway: `Spend baseline loaded from ${row.source_system}; confirm contract and renewal detail before acting.`,
+      };
+    })
+    .filter((row): row is EnterpriseContextVendorSpendRow => Boolean(row))
+    .sort((a, b) => b.spendUsdM - a.spendUsdM)
+    .slice(0, 25);
 }
 
 async function countEnterpriseContextRows(tenantKey: string): Promise<EnterpriseContextOverview['counts']> {
@@ -324,6 +523,139 @@ function numeric(value: unknown): number {
   if (typeof value !== 'string') return 0;
   const parsed = Number(value.replace(/[^0-9.-]/g, ''));
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function firstNumeric(...values: unknown[]): number {
+  for (const value of values) {
+    const parsed = numeric(value);
+    if (parsed > 0) return parsed;
+  }
+  return 0;
+}
+
+function stringValue(...values: unknown[]): string {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value.trim();
+    if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  }
+  return '';
+}
+
+function vendorNameFor(row: EnterpriseContextRecordRow): string {
+  return stringValue(
+    row.payload.vendor_name,
+    row.payload.vendor,
+    row.payload.supplier_name,
+    row.payload.provider,
+    row.payload.contract_vendor,
+    row.payload.counterparty,
+    row.title,
+  );
+}
+
+function normalizeVendorKey(value: string): string | null {
+  const key = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  return key || null;
+}
+
+function categoryFor(row: EnterpriseContextRecordRow): EnterpriseContextVendorCategory {
+  const text = [
+    row.title,
+    row.source_system,
+    row.payload.category,
+    row.payload.spend_category,
+    row.payload.contract_category,
+    row.payload.technology_category,
+    row.payload.platform,
+    row.payload.description,
+  ]
+    .map((value) => String(value ?? '').toLowerCase())
+    .join(' ');
+
+  if (/\b(si|systems integrator|implementation|consulting|advisory|managed service|staff aug|outsourc|professional service)\b/.test(text)) {
+    return 'services-si';
+  }
+  if (/\b(cloud|aws|azure|gcp|google cloud|vmware|dell|emc|cisco|network|storage|compute|data center|datacenter|hyperconverged|hci|hardware|infrastructure)\b/.test(text)) {
+    return 'hardware-cloud';
+  }
+  return 'software-saas';
+}
+
+function subcategoryFor(row: EnterpriseContextRecordRow): string {
+  return stringValue(
+    row.payload.subcategory,
+    row.payload.spend_subcategory,
+    row.payload.contract_type,
+    row.payload.platform,
+    row.payload.application_category,
+    row.payload.category,
+    row.record_type,
+  ) || 'Enterprise vendor';
+}
+
+function tierFor(row: EnterpriseContextRecordRow, index: number): EnterpriseContextVendorTier {
+  const text = stringValue(row.payload.tier, row.payload.vendor_tier, row.payload.relationship_type).toLowerCase();
+  if (text.includes('emerging')) return 'emerging';
+  if (text.includes('challenger')) return 'challenger';
+  if (text.includes('incumbent') || text.includes('strategic')) return 'incumbent';
+  return index < 8 ? 'incumbent' : 'challenger';
+}
+
+function healthFor(
+  contract: EnterpriseContextRecordRow,
+  renewal: EnterpriseContextRecordRow | undefined,
+): EnterpriseContextVendorHealth {
+  const text = [
+    contract.payload.risk,
+    contract.payload.risk_level,
+    contract.payload.health,
+    contract.payload.status,
+    contract.payload.renewal_risk,
+    renewal?.payload.renewal_risk,
+    renewal?.payload.risk_level,
+  ]
+    .map((value) => String(value ?? '').toLowerCase())
+    .join(' ');
+
+  if (/\b(high|critical|red|at risk|risk)\b/.test(text)) return 'risk';
+  if (/\b(medium|watch|amber|yellow|attention)\b/.test(text)) return 'watch';
+  return 'healthy';
+}
+
+function renewalMonthsFor(
+  contract: EnterpriseContextRecordRow,
+  renewal: EnterpriseContextRecordRow | undefined,
+): number | null {
+  const raw = stringValue(
+    renewal?.payload.renewal_date,
+    renewal?.payload.expiration_date,
+    renewal?.payload.contract_end_date,
+    contract.payload.renewal_date,
+    contract.payload.expiration_date,
+    contract.payload.contract_end_date,
+  );
+  if (!raw) return null;
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return null;
+  const diffMs = date.getTime() - Date.now();
+  return Math.max(0, Math.round(diffMs / (30.44 * 86_400_000)));
+}
+
+function takeawayFor(
+  contract: EnterpriseContextRecordRow,
+  renewal: EnterpriseContextRecordRow | undefined,
+  health: EnterpriseContextVendorHealth,
+): string {
+  const note = stringValue(
+    contract.payload.takeaway,
+    contract.payload.notes,
+    contract.payload.description,
+    renewal?.payload.notes,
+  );
+  if (note) return note;
+  if (health === 'risk') return `Risk signal loaded from ${contract.source_system}; review renewal and dependency evidence before action.`;
+  if (health === 'watch') return `Watch item loaded from ${contract.source_system}; confirm owner, renewal timing, and linked initiatives.`;
+  return `Loaded from ${contract.source_system}; validate spend, renewal, and dependency evidence before acting.`;
 }
 
 function topOwner(rows: EnterpriseContextRecordRow[]): string | null {

@@ -139,6 +139,7 @@ describe('enterprise context Intelligence read model', () => {
       'enterprise_context_sources:rows',
       'enterprise_context_quality_issues:rows',
       'enterprise_context_evidence:rows',
+      'context_insights:rows',
     ]);
 
     async function runQuery(table: string, options?: { count?: 'exact'; head?: boolean }) {

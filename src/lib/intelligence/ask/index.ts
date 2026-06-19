@@ -28,6 +28,10 @@ import {
   isBroadCurrentStateQuestion,
   sanitizeAskSynthesis,
 } from './response-policy';
+import {
+  derivedEnterpriseReadToAskSources,
+  getDerivedEnterpriseReadForTenant,
+} from '@/lib/enterprise-context/derived-enterprise-read';
 
 export type { AskIntent, AskSource, AskSurfaceContext, IntentClassification } from './types';
 
@@ -110,6 +114,9 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
     });
     yield { type: 'classified', classification };
     const questionCategory = classifyQuestionCategory(trimmed, classification.intent);
+    const derivedEnterpriseRead = await getDerivedEnterpriseReadForTenant(
+      opts.tenant?.canonicalKey ?? opts.tenantInventoryKey ?? opts.tenantClientKey,
+    );
 
     const surfaceContext = retrieveSurfaceContextSources(opts.surfaceContext, trimmed);
     // Keep DB-backed retrieval sequential to avoid exhausting session-mode pools under Ask verifier load.
@@ -135,6 +142,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
     const conciseAsk = isExplicitConciseAsk(trimmed);
     const sourceLimit = conciseAsk ? 8 : 16;
     const rawSources: AskSource[] = [
+      ...derivedEnterpriseReadToAskSources(derivedEnterpriseRead),
       ...surfaceContext,
       ...tenantStructuredFacts,
       ...tenantEnterprise,

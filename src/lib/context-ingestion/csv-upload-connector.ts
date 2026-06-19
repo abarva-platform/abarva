@@ -95,7 +95,7 @@ export interface CsvUploadLoadResult extends Omit<CsvUploadPreparedBatch, 'chunk
 const MAX_ROWS = 2_000;
 const MAX_TEXT_COLUMNS = 12;
 
-const SEGMENT_BY_DIMENSION: Record<ContextDimension, string> = {
+const SEGMENT_BY_DIMENSION: Partial<Record<ContextDimension, string>> = {
   enterprise_profile: 'enterprise_profile',
   financial_kpis: 'it_financials',
   annual_quarterly_reports: 'enterprise_profile',
@@ -106,12 +106,33 @@ const SEGMENT_BY_DIMENSION: Record<ContextDimension, string> = {
   manufacturing_sites: 'it_landscape',
   erp_landscape: 'it_landscape',
   application_portfolio: 'it_landscape',
+  ehr_platform: 'it_landscape',
   integration_topology: 'it_landscape',
+  interoperability_topology: 'it_landscape',
+  prior_authorization: 'program_inventory',
+  revenue_cycle_denials: 'it_financials',
+  ambient_clinical_documentation: 'program_inventory',
+  clinical_ai_model_inventory: 'it_landscape',
+  hipaa_ai_controls: 'it_landscape',
+  vendor_baa_contracts: 'it_financials',
+  service_line_pnl: 'it_financials',
+  workforce_scheduling: 'org_structure',
+  patient_access: 'program_inventory',
+  imaging_ai_triage: 'program_inventory',
+  cms_interoperability: 'program_inventory',
   vendor_contracts: 'it_financials',
   transformation_initiatives: 'program_inventory',
   org_roles_teams: 'org_structure',
   delivery_dora_devex: 'program_inventory',
   regulatory_qms_risk: 'program_inventory',
+  value_based_care: 'program_inventory',
+  population_health: 'program_inventory',
+  data_platform_lineage: 'it_landscape',
+  digital_front_door: 'it_landscape',
+  supply_chain_pharmacy: 'it_financials',
+  ai_governance_decisions: 'program_inventory',
+  clinical_downtime_cyber: 'it_landscape',
+  nursing_workload_acuity: 'org_structure',
   ai_tooling_model_inventory: 'it_landscape',
   incidents_ops_telemetry: 'it_landscape',
 };
@@ -141,11 +162,16 @@ function findHeader(headers: string[], candidates: string[]): string | null {
   return null;
 }
 
-function resolveTemplate(fileName: string, templateId?: string | null): ContextTemplateDefinition {
-  const explicit = templateId ? getTemplateById(templateId) : null;
+function resolveTemplate(
+  fileName: string,
+  templateId?: string | null,
+  tenantKey?: string | null,
+): ContextTemplateDefinition {
+  const explicit = templateId ? getTemplateById(templateId, { tenantKey }) : null;
   if (explicit) return explicit;
   const classification = classifyUploadedFile({ fileName, text: '' });
-  return getTemplateForDimension(classification.dimension) ?? getTemplateById('application-portfolio')!;
+  return getTemplateForDimension(classification.dimension, { tenantKey })
+    ?? getTemplateById('application-portfolio', { tenantKey })!;
 }
 
 function parseJsonObject(raw: unknown): Record<string, string> | undefined {
@@ -188,9 +214,10 @@ export function inferCsvSchemaMapping(args: {
   headers: string[];
   fileName: string;
   templateId?: string | null;
+  tenantKey?: string | null;
   mapping?: CsvSchemaMapping;
 }): CsvMappingSuggestion {
-  const template = resolveTemplate(args.fileName, args.templateId ?? args.mapping?.templateId);
+  const template = resolveTemplate(args.fileName, args.templateId ?? args.mapping?.templateId, args.tenantKey);
   const fieldMappings: Record<string, string> = {};
   const providedFieldMappings = args.mapping?.fieldMappings ?? {};
 
@@ -268,11 +295,12 @@ function buildChunkText(args: {
 
 export function prepareCsvUploadForTenantContext(input: CsvUploadInput): CsvUploadPreparedBatch {
   const parsed = parseCsvUpload(input.csvText);
-  const template = resolveTemplate(input.fileName, input.mapping?.templateId);
+  const template = resolveTemplate(input.fileName, input.mapping?.templateId, input.tenantKey);
   const mapping = inferCsvSchemaMapping({
     headers: parsed.headers,
     fileName: input.fileName,
     templateId: template.id,
+    tenantKey: input.tenantKey,
     mapping: input.mapping,
   });
   const uploadedAt = input.uploadedAt ?? new Date().toISOString();
@@ -284,7 +312,7 @@ export function prepareCsvUploadForTenantContext(input: CsvUploadInput): CsvUplo
     fileHash,
     compactTimestamp(uploadedAt),
   ].join(':');
-  const sourceSegmentId = SEGMENT_BY_DIMENSION[template.dimension];
+  const sourceSegmentId = SEGMENT_BY_DIMENSION[template.dimension] ?? 'program_inventory';
 
   const chunks = parsed.rows.map((row, index): PreparedCsvContextChunk => {
     const rowNumber = index + 2;

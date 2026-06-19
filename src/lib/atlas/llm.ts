@@ -13,6 +13,7 @@ import { assembleRetrievalContext } from '@/lib/agent/retrieval';
 import { CITATION_INSTRUCTION, formatRetrievedContext } from '@/lib/agent/retrieval-format';
 import { formatTowerCurrentStateForPrompt } from '@/lib/atlas/tower-grounding';
 import { buildAtlasValueGrounding, renderAtlasValueGrounding } from '@/lib/atlas/value-grounding';
+import { getDerivedEnterpriseReadForTenant } from '@/lib/enterprise-context/derived-enterprise-read';
 import type { AtlasExecutionMode, AtlasSuggestion, AtlasTenancyCtx, AtlasToolResultMap } from '@/lib/atlas/types';
 
 /**
@@ -78,6 +79,7 @@ function sanitizeForTenantPrompt(value: unknown): unknown {
 
 function buildFallback(toolResults: AtlasToolResultMap): string {
   const tower = toolResults.towerState;
+  const enterpriseRead = toolResults.derivedEnterpriseRead;
   const portfolio = toolResults.portfolio;
   const topSignal = toolResults.signalDetail ?? toolResults.signals?.[0];
   const programCount = toolResults.programs?.length ?? 0;
@@ -93,6 +95,10 @@ function buildFallback(toolResults: AtlasToolResultMap): string {
         ? 'I also pulled corpus or industry context for this turn.'
         : 'No corpus or industry chunks were retrieved for this turn, so I will keep external comparisons qualified.';
     return [
+      enterpriseRead ? `${enterpriseRead.tenantName} Enterprise Read: ${enterpriseRead.headline}` : null,
+      enterpriseRead?.recommendedMoves[0]
+        ? `The first context-aware move is ${enterpriseRead.recommendedMoves[0].title}: ${enterpriseRead.recommendedMoves[0].decision}`
+        : null,
       `${tower.client.clientName} Tower is grounded on ${tower.substrateCounts.initiatives} initiatives, ${tower.substrateCounts.vendors} vendors, ${tower.substrateCounts.kpiSnapshots} KPI snapshots, ${tower.substrateCounts.decisions} decisions, and ${tower.substrateCounts.scenarios} scenarios.`,
       hero ? `The lead displayed metric is ${hero.label}: ${hero.value} (${hero.confidence}).` : null,
       topPressure ? `The lead pressure is ${topPressure.headline}` : 'No active pressure card is displayed from the DB.',
@@ -158,7 +164,7 @@ export async function runAtlasLlm(
   promptVersion: string;
 }> {
   const towerState = await query_tower_current_state(ctx, surfaceContext);
-  const [portfolio, signals, programs, useCases, benchmark, retrievalContext] = await Promise.all([
+  const [portfolio, signals, programs, useCases, benchmark, retrievalContext, derivedEnterpriseRead] = await Promise.all([
     query_portfolio_aggregates(ctx),
     query_signals(ctx, { limit: 4 }),
     query_programs(ctx),
@@ -173,6 +179,7 @@ export async function runAtlasLlm(
       topKTopic: 3,
       atlasTenancy: ctx,
     }),
+    getDerivedEnterpriseReadForTenant(towerState.client.tenantKey ?? towerState.client.clientName),
   ]);
 
   const toolResults: AtlasToolResultMap = {
@@ -183,6 +190,7 @@ export async function runAtlasLlm(
     programs,
     useCases,
     benchmark,
+    derivedEnterpriseRead,
   };
   const valueGrounding = await buildAtlasValueGrounding({
     ctx,
@@ -280,6 +288,21 @@ export async function runAtlasLlm(
   const towerContext = formatTowerCurrentStateForPrompt(towerState);
   const retrievedContext = formatRetrievedContext(retrievalContext);
   const valueGroundingContext = renderAtlasValueGrounding(valueGrounding);
+  const enterpriseReadContext = derivedEnterpriseRead
+    ? [
+        'DERIVED ENTERPRISE READ',
+        `Headline: ${derivedEnterpriseRead.headline}`,
+        `Executive summary: ${derivedEnterpriseRead.executiveSummary}`,
+        `Architecture pattern: ${derivedEnterpriseRead.architecturePattern}`,
+        `Maturity read: ${derivedEnterpriseRead.maturityRead}`,
+        `North star: ${derivedEnterpriseRead.northStar}`,
+        `Peer implication: ${derivedEnterpriseRead.peerImplication}`,
+        'Derived insights:',
+        ...derivedEnterpriseRead.insights.slice(0, 5).map((insight) => `- ${insight.headline}: ${insight.soWhat}`),
+        'Recommended moves:',
+        ...derivedEnterpriseRead.recommendedMoves.slice(0, 3).map((move) => `- ${move.title}: ${move.decision} (${move.expectedImpact})`),
+      ].join('\n')
+    : 'DERIVED ENTERPRISE READ\nNo derived enterprise read artifact is available for this tenant.';
   const payload = JSON.stringify(sanitizeForTenantPrompt(toolResults), null, 2);
   const userText = [
     `User question: ${message}`,
@@ -287,6 +310,8 @@ export async function runAtlasLlm(
     'Answer from the current Tower state first. Then use retrieved corpus / industry context when present. For financial or value advice, keep projected, tracked, and verified value separate and ground recommendations in the canonical pattern confidence, KPIs, baseline requirements, and measurement method. If any baseline, measurement, or provenance field is missing, say so instead of quantifying an outcome. If the ask is strategic, explain the implications but route the actual choice to Sentinel or a Program charter.',
     '',
     towerContext,
+    '',
+    enterpriseReadContext,
     '',
     `ATLAS VALUE GROUNDING\n${valueGroundingContext}`,
     '',
