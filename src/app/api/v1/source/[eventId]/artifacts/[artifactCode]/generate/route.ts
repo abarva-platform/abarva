@@ -24,6 +24,8 @@ import type { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { getActiveClientRow } from "@/lib/active-client";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { captureReasoningEnvelope } from "@/lib/source/reasoning/capture";
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
@@ -579,6 +581,21 @@ export async function generateSourceArtifactDraft(
     body,
     nowIso,
   );
+  // Slice 1.6: optionally capture a validated Reasoning Envelope (flag
+  // `source_reasoning_spine`, default OFF). This NEVER changes the generated body
+  // — captureReasoningEnvelope is fully guarded, so any failure (or flag off)
+  // degrades to no envelope and generation is byte-identical to the legacy path.
+  const reasoningCapture = captureReasoningEnvelope(ctx, {
+    enabled: isFeatureEnabled(
+      {
+        clientKey: activeClient?.key ?? ctx.tenantKey,
+        clientId: activeClient?.id ?? null,
+      },
+      "source_reasoning_spine",
+    ),
+    envelopeId: randomUUID(),
+    now: nowIso,
+  });
   const generationMetadata = withSectionVerificationMetadata(
     {
       model,
@@ -593,6 +610,8 @@ export async function generateSourceArtifactDraft(
       qualityGate: qualityGate as unknown as
         | Record<string, unknown>
         | undefined,
+      reasoningStatus: reasoningCapture.status,
+      reasoningEnvelope: reasoningCapture.envelope ?? undefined,
     },
     sectionVerification,
   ) satisfies SourceArtifactBodyGenerationMetadata;
