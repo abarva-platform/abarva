@@ -1,0 +1,302 @@
+{"TimeStamp":"2026-06-18T22:52:04.83956","Log":"Connecting to the container 'job-phs-meridian-load2-0606'..."}
+{"TimeStamp":"2026-06-18T22:52:04.87306","Log":"Successfully Connected to container: 'job-phs-meridian-load2-0606' [Execution: 'job-phs-meridian-load2-0606-3yac13p', Replica: 'job-phs-meridian-load2-0606-3yac13p-s5vdc']"}
+{"TimeStamp":"2026-06-18T22:51:31.0128287+00:00","Log":"F (Use \u0060node --trace-warnings ...\u0060 to show where the warning was created)"}
+{"TimeStamp":"2026-06-18T22:51:43.3081226+00:00","Log":"F RESULT_JSON {"}
+{"TimeStamp":"2026-06-18T22:51:43.308177+00:00","Log":"F   "ok": true,"}
+{"TimeStamp":"2026-06-18T22:51:43.3081917+00:00","Log":"F   "run_id": "v4-aca-first-capital-20260618","}
+{"TimeStamp":"2026-06-18T22:51:43.3081943+00:00","Log":"F   "mode": "apply","}
+{"TimeStamp":"2026-06-18T22:51:43.3081964+00:00","Log":"F   "receipts": ["}
+{"TimeStamp":"2026-06-18T22:51:43.3081984+00:00","Log":"F     {"}
+{"TimeStamp":"2026-06-18T22:51:43.3082004+00:00","Log":"F       "client": "first-capital","}
+{"TimeStamp":"2026-06-18T22:51:43.3082023+00:00","Log":"F       "client_id": "09d9a267-e89c-4fe1-831f-337a62787ec5","}
+{"TimeStamp":"2026-06-18T22:51:43.3082045+00:00","Log":"F       "archive_root": "/tmp/abarva-context-refresh-archive/v4-aca-first-capital-20260618/first-capital","}
+{"TimeStamp":"2026-06-18T22:51:43.3082067+00:00","Log":"F       "archive": ["}
+{"TimeStamp":"2026-06-18T22:51:43.3082086+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3082104+00:00","Log":"F           "table": "context_insights","}
+{"TimeStamp":"2026-06-18T22:51:43.3082121+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3082139+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3082156+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.308219+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3082211+00:00","Log":"F           "table": "enterprise_context_stewardship_tasks","}
+{"TimeStamp":"2026-06-18T22:51:43.308223+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3082248+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3082266+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3082283+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3082301+00:00","Log":"F           "table": "enterprise_context_quality_issues","}
+{"TimeStamp":"2026-06-18T22:51:43.308232+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3082337+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3082354+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3082373+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.308239+00:00","Log":"F           "table": "enterprise_context_relationships","}
+{"TimeStamp":"2026-06-18T22:51:43.3082409+00:00","Log":"F           "archived": 1800,"}
+{"TimeStamp":"2026-06-18T22:51:43.3082428+00:00","Log":"F           "deleted": 1800"}
+{"TimeStamp":"2026-06-18T22:51:43.3082447+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3082465+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3082495+00:00","Log":"F           "table": "enterprise_context_evidence","}
+{"TimeStamp":"2026-06-18T22:51:43.3082515+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3082533+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.308255+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3082568+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3082592+00:00","Log":"F           "table": "enterprise_context_facts","}
+{"TimeStamp":"2026-06-18T22:51:43.3083953+00:00","Log":"F           "archived": 24474,"}
+{"TimeStamp":"2026-06-18T22:51:43.3084206+00:00","Log":"F           "deleted": 24474"}
+{"TimeStamp":"2026-06-18T22:51:43.3084305+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3084322+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3084335+00:00","Log":"F           "table": "enterprise_context_chunks","}
+{"TimeStamp":"2026-06-18T22:51:43.3084349+00:00","Log":"F           "archived": 2227,"}
+{"TimeStamp":"2026-06-18T22:51:43.3084361+00:00","Log":"F           "deleted": 2227"}
+{"TimeStamp":"2026-06-18T22:51:43.3084372+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3084384+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3084396+00:00","Log":"F           "table": "enterprise_context_records","}
+{"TimeStamp":"2026-06-18T22:51:43.3084411+00:00","Log":"F           "archived": 2227,"}
+{"TimeStamp":"2026-06-18T22:51:43.3084423+00:00","Log":"F           "deleted": 2227"}
+{"TimeStamp":"2026-06-18T22:51:43.3084466+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3084479+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3084491+00:00","Log":"F           "table": "enterprise_context_source_files","}
+{"TimeStamp":"2026-06-18T22:51:43.3084502+00:00","Log":"F           "archived": 31,"}
+{"TimeStamp":"2026-06-18T22:51:43.3084513+00:00","Log":"F           "deleted": 31"}
+{"TimeStamp":"2026-06-18T22:51:43.3084525+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3084536+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3084547+00:00","Log":"F           "table": "enterprise_context_sources","}
+{"TimeStamp":"2026-06-18T22:51:43.3084559+00:00","Log":"F           "archived": 1,"}
+{"TimeStamp":"2026-06-18T22:51:43.3084571+00:00","Log":"F           "deleted": 1"}
+{"TimeStamp":"2026-06-18T22:51:43.3084582+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3084593+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3084604+00:00","Log":"F           "table": "enterprise_context_template_runs","}
+{"TimeStamp":"2026-06-18T22:51:43.3084616+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3084628+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3084639+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3085275+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3085311+00:00","Log":"F           "table": "data_ingestion_runs","}
+{"TimeStamp":"2026-06-18T22:51:43.308533+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3085353+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3085372+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3085389+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3085407+00:00","Log":"F           "table": "client_private_patterns","}
+{"TimeStamp":"2026-06-18T22:51:43.3085425+00:00","Log":"F           "archived": 6,"}
+{"TimeStamp":"2026-06-18T22:51:43.3085441+00:00","Log":"F           "deleted": 6"}
+{"TimeStamp":"2026-06-18T22:51:43.3085459+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3085477+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3085494+00:00","Log":"F           "table": "ai_control_atlas_context_packs","}
+{"TimeStamp":"2026-06-18T22:51:43.3085513+00:00","Log":"F           "archived": 1,"}
+{"TimeStamp":"2026-06-18T22:51:43.308553+00:00","Log":"F           "deleted": 1"}
+{"TimeStamp":"2026-06-18T22:51:43.3085547+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3085576+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3085813+00:00","Log":"F           "table": "ai_control_context_relationships","}
+{"TimeStamp":"2026-06-18T22:51:43.308585+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3085874+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3085892+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3085913+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3085932+00:00","Log":"F           "table": "ai_control_context_facts","}
+{"TimeStamp":"2026-06-18T22:51:43.3085949+00:00","Log":"F           "archived": 1056,"}
+{"TimeStamp":"2026-06-18T22:51:43.3085967+00:00","Log":"F           "deleted": 1056"}
+{"TimeStamp":"2026-06-18T22:51:43.3085985+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3086002+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.308602+00:00","Log":"F           "table": "ai_control_evidence_items","}
+{"TimeStamp":"2026-06-18T22:51:43.3086037+00:00","Log":"F           "archived": 42,"}
+{"TimeStamp":"2026-06-18T22:51:43.3086055+00:00","Log":"F           "deleted": 42"}
+{"TimeStamp":"2026-06-18T22:51:43.3086073+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3086104+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3086123+00:00","Log":"F           "table": "ai_control_actions","}
+{"TimeStamp":"2026-06-18T22:51:43.3086141+00:00","Log":"F           "archived": 24,"}
+{"TimeStamp":"2026-06-18T22:51:43.3086158+00:00","Log":"F           "deleted": 24"}
+{"TimeStamp":"2026-06-18T22:51:43.3086177+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3086195+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3086213+00:00","Log":"F           "table": "ai_control_risk_governance","}
+{"TimeStamp":"2026-06-18T22:51:43.3086231+00:00","Log":"F           "archived": 42,"}
+{"TimeStamp":"2026-06-18T22:51:43.3086252+00:00","Log":"F           "deleted": 42"}
+{"TimeStamp":"2026-06-18T22:51:43.308627+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3086289+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3086309+00:00","Log":"F           "table": "ai_control_spend_contracts","}
+{"TimeStamp":"2026-06-18T22:51:43.3086328+00:00","Log":"F           "archived": 42,"}
+{"TimeStamp":"2026-06-18T22:51:43.3086345+00:00","Log":"F           "deleted": 42"}
+{"TimeStamp":"2026-06-18T22:51:43.3086363+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3086399+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3086422+00:00","Log":"F           "table": "ai_control_benefit_realization","}
+{"TimeStamp":"2026-06-18T22:51:43.3086439+00:00","Log":"F           "archived": 126,"}
+{"TimeStamp":"2026-06-18T22:51:43.3086457+00:00","Log":"F           "deleted": 126"}
+{"TimeStamp":"2026-06-18T22:51:43.3086475+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3086493+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3086511+00:00","Log":"F           "table": "ai_control_agent_outcomes","}
+{"TimeStamp":"2026-06-18T22:51:43.3086532+00:00","Log":"F           "archived": 42,"}
+{"TimeStamp":"2026-06-18T22:51:43.3086555+00:00","Log":"F           "deleted": 42"}
+{"TimeStamp":"2026-06-18T22:51:43.3086581+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3086605+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3086629+00:00","Log":"F           "table": "ai_control_dora_metrics","}
+{"TimeStamp":"2026-06-18T22:51:43.3086654+00:00","Log":"F           "archived": 12,"}
+{"TimeStamp":"2026-06-18T22:51:43.3086833+00:00","Log":"F           "deleted": 12"}
+{"TimeStamp":"2026-06-18T22:51:43.308686+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3086906+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3086932+00:00","Log":"F           "table": "ai_control_persona_productivity","}
+{"TimeStamp":"2026-06-18T22:51:43.3086956+00:00","Log":"F           "archived": 16,"}
+{"TimeStamp":"2026-06-18T22:51:43.3086979+00:00","Log":"F           "deleted": 16"}
+{"TimeStamp":"2026-06-18T22:51:43.3087004+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3087027+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.308705+00:00","Log":"F           "table": "ai_control_tool_usage_monthly","}
+{"TimeStamp":"2026-06-18T22:51:43.3087296+00:00","Log":"F           "archived": 35,"}
+{"TimeStamp":"2026-06-18T22:51:43.3087321+00:00","Log":"F           "deleted": 35"}
+{"TimeStamp":"2026-06-18T22:51:43.3087338+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3087355+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3087374+00:00","Log":"F           "table": "ai_control_initiatives","}
+{"TimeStamp":"2026-06-18T22:51:43.3087393+00:00","Log":"F           "archived": 42,"}
+{"TimeStamp":"2026-06-18T22:51:43.3087414+00:00","Log":"F           "deleted": 42"}
+{"TimeStamp":"2026-06-18T22:51:43.3087431+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3087461+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.308748+00:00","Log":"F           "table": "ai_control_sources","}
+{"TimeStamp":"2026-06-18T22:51:43.3087497+00:00","Log":"F           "archived": 14,"}
+{"TimeStamp":"2026-06-18T22:51:43.3087515+00:00","Log":"F           "deleted": 14"}
+{"TimeStamp":"2026-06-18T22:51:43.3087535+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3087552+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3087571+00:00","Log":"F           "table": "ai_control_refresh_runs","}
+{"TimeStamp":"2026-06-18T22:51:43.308759+00:00","Log":"F           "archived": 1,"}
+{"TimeStamp":"2026-06-18T22:51:43.3087608+00:00","Log":"F           "deleted": 1"}
+{"TimeStamp":"2026-06-18T22:51:43.3087624+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3087642+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3087658+00:00","Log":"F           "table": "tower_cloud_cost","}
+{"TimeStamp":"2026-06-18T22:51:43.3087677+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3087694+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3087714+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3087733+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3087762+00:00","Log":"F           "table": "tower_program_financials","}
+{"TimeStamp":"2026-06-18T22:51:43.3087779+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3087797+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3087815+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3087833+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.308785+00:00","Log":"F           "table": "tower_vendor_spend","}
+{"TimeStamp":"2026-06-18T22:51:43.3087869+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3087886+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3087904+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3087921+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.308794+00:00","Log":"F           "table": "tower_ai_tool_usage","}
+{"TimeStamp":"2026-06-18T22:51:43.3088095+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3088131+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3088162+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.30882+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3088226+00:00","Log":"F           "table": "tower_dora_metrics","}
+{"TimeStamp":"2026-06-18T22:51:43.3088246+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3088265+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3088285+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3088303+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.308832+00:00","Log":"F           "table": "tower_itsm_records","}
+{"TimeStamp":"2026-06-18T22:51:43.3088338+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3088356+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3088374+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3088392+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3088411+00:00","Log":"F           "table": "tower_jira_issues","}
+{"TimeStamp":"2026-06-18T22:51:43.3088436+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3088455+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3088477+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3088499+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3088535+00:00","Log":"F           "table": "tower_workforce","}
+{"TimeStamp":"2026-06-18T22:51:43.3088558+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3088577+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3088603+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3088626+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3088652+00:00","Log":"F           "table": "ai_initiatives","}
+{"TimeStamp":"2026-06-18T22:51:43.3088677+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3088702+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3088721+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3088744+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3088768+00:00","Log":"F           "table": "vendor_contracts","}
+{"TimeStamp":"2026-06-18T22:51:43.3088789+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3088811+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3088831+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3089+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3089027+00:00","Log":"F           "table": "applications","}
+{"TimeStamp":"2026-06-18T22:51:43.308906+00:00","Log":"F           "archived": 0,"}
+{"TimeStamp":"2026-06-18T22:51:43.3089082+00:00","Log":"F           "deleted": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3089101+00:00","Log":"F         }"}
+{"TimeStamp":"2026-06-18T22:51:43.3089118+00:00","Log":"F       ],"}
+{"TimeStamp":"2026-06-18T22:51:43.3089136+00:00","Log":"F       "load": ["}
+{"TimeStamp":"2026-06-18T22:51:43.3089155+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3089174+00:00","Log":"F           "table": "enterprise_context_sources","}
+{"TimeStamp":"2026-06-18T22:51:43.3089192+00:00","Log":"F           "rows": 1"}
+{"TimeStamp":"2026-06-18T22:51:43.3089211+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3089229+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3089246+00:00","Log":"F           "table": "enterprise_context_source_files","}
+{"TimeStamp":"2026-06-18T22:51:43.3089266+00:00","Log":"F           "rows": 31"}
+{"TimeStamp":"2026-06-18T22:51:43.3089285+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3089304+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3089476+00:00","Log":"F           "table": "enterprise_context_records","}
+{"TimeStamp":"2026-06-18T22:51:43.3089508+00:00","Log":"F           "rows": 2227"}
+{"TimeStamp":"2026-06-18T22:51:43.3089531+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.308955+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3089568+00:00","Log":"F           "table": "enterprise_context_facts","}
+{"TimeStamp":"2026-06-18T22:51:43.3089586+00:00","Log":"F           "rows": 24474"}
+{"TimeStamp":"2026-06-18T22:51:43.3089603+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3089622+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3089639+00:00","Log":"F           "table": "enterprise_context_chunks","}
+{"TimeStamp":"2026-06-18T22:51:43.3089657+00:00","Log":"F           "rows": 2227"}
+{"TimeStamp":"2026-06-18T22:51:43.3089678+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3089703+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3089721+00:00","Log":"F           "table": "enterprise_context_relationships","}
+{"TimeStamp":"2026-06-18T22:51:43.308974+00:00","Log":"F           "rows": 1800"}
+{"TimeStamp":"2026-06-18T22:51:43.3089762+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3089785+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.308982+00:00","Log":"F           "table": "client_private_patterns","}
+{"TimeStamp":"2026-06-18T22:51:43.3089845+00:00","Log":"F           "rows": 6"}
+{"TimeStamp":"2026-06-18T22:51:43.3089865+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3089883+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3089899+00:00","Log":"F           "table": "ai_control_refresh_runs","}
+{"TimeStamp":"2026-06-18T22:51:43.3089916+00:00","Log":"F           "rows": 1"}
+{"TimeStamp":"2026-06-18T22:51:43.3089933+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.308995+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.308997+00:00","Log":"F           "table": "ai_control_sources","}
+{"TimeStamp":"2026-06-18T22:51:43.3089997+00:00","Log":"F           "rows": 14"}
+{"TimeStamp":"2026-06-18T22:51:43.309002+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3090044+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3090064+00:00","Log":"F           "table": "ai_control_initiatives","}
+{"TimeStamp":"2026-06-18T22:51:43.3090082+00:00","Log":"F           "rows": 42"}
+{"TimeStamp":"2026-06-18T22:51:43.30901+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3090119+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3090149+00:00","Log":"F           "table": "ai_control_tool_usage_monthly","}
+{"TimeStamp":"2026-06-18T22:51:43.3090168+00:00","Log":"F           "rows": 35"}
+{"TimeStamp":"2026-06-18T22:51:43.3090184+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3090207+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3090231+00:00","Log":"F           "table": "ai_control_persona_productivity","}
+{"TimeStamp":"2026-06-18T22:51:43.3090256+00:00","Log":"F           "rows": 16"}
+{"TimeStamp":"2026-06-18T22:51:43.3090284+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3090305+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3090323+00:00","Log":"F           "table": "ai_control_dora_metrics","}
+{"TimeStamp":"2026-06-18T22:51:43.3090341+00:00","Log":"F           "rows": 12"}
+{"TimeStamp":"2026-06-18T22:51:43.3090359+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3090377+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3090531+00:00","Log":"F           "table": "ai_control_agent_outcomes","}
+{"TimeStamp":"2026-06-18T22:51:43.3090565+00:00","Log":"F           "rows": 42"}
+{"TimeStamp":"2026-06-18T22:51:43.3090597+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3090618+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3090644+00:00","Log":"F           "table": "ai_control_benefit_realization","}
+{"TimeStamp":"2026-06-18T22:51:43.309067+00:00","Log":"F           "rows": 126"}
+{"TimeStamp":"2026-06-18T22:51:43.3090694+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3090854+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3090887+00:00","Log":"F           "table": "ai_control_spend_contracts","}
+{"TimeStamp":"2026-06-18T22:51:43.3090914+00:00","Log":"F           "rows": 42"}
+{"TimeStamp":"2026-06-18T22:51:43.3090938+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3090963+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.309099+00:00","Log":"F           "table": "ai_control_risk_governance","}
+{"TimeStamp":"2026-06-18T22:51:43.3091013+00:00","Log":"F           "rows": 42"}
+{"TimeStamp":"2026-06-18T22:51:43.3091039+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3091063+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3091088+00:00","Log":"F           "table": "ai_control_actions","}
+{"TimeStamp":"2026-06-18T22:51:43.3091109+00:00","Log":"F           "rows": 24"}
+{"TimeStamp":"2026-06-18T22:51:43.3091149+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3091172+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3091193+00:00","Log":"F           "table": "ai_control_evidence_items","}
+{"TimeStamp":"2026-06-18T22:51:43.3091218+00:00","Log":"F           "rows": 42"}
+{"TimeStamp":"2026-06-18T22:51:43.3091241+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3091262+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3091288+00:00","Log":"F           "table": "ai_control_context_facts","}
+{"TimeStamp":"2026-06-18T22:51:43.3091311+00:00","Log":"F           "rows": 1056"}
+{"TimeStamp":"2026-06-18T22:51:43.3091336+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3091364+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.3091389+00:00","Log":"F           "table": "ai_control_context_relationships","}
+{"TimeStamp":"2026-06-18T22:51:43.3091412+00:00","Log":"F           "rows": 0"}
+{"TimeStamp":"2026-06-18T22:51:43.3091441+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-18T22:51:43.3091462+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-18T22:51:43.309148+00:00","Log":"F           "table": "ai_control_atlas_context_packs","}
+{"TimeStamp":"2026-06-18T22:51:43.3091511+00:00","Log":"F           "rows": 1"}
+{"TimeStamp":"2026-06-18T22:51:43.3091532+00:00","Log":"F         }"}
+{"TimeStamp":"2026-06-18T22:51:43.3091551+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-06-18T22:51:43.3091571+00:00","Log":"F     }"}
+{"TimeStamp":"2026-06-18T22:51:43.309159+00:00","Log":"F   ]"}
+{"TimeStamp":"2026-06-18T22:51:43.309161+00:00","Log":"F }"}

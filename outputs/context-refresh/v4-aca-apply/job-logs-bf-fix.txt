@@ -1,0 +1,12 @@
+{"TimeStamp":"2026-06-18T22:12:04.91319","Log":"Connecting to the container 'job-phs-meridian-load2-0606'..."}
+{"TimeStamp":"2026-06-18T22:12:05.10793","Log":"Successfully Connected to container: 'job-phs-meridian-load2-0606' [Execution: 'job-phs-meridian-load2-0606-uukd3ko', Replica: 'job-phs-meridian-load2-0606-uukd3ko-ljmjl']"}
+{"TimeStamp":"2026-06-18T22:11:01.9310077+00:00","Log":"F (node:1) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'."}
+{"TimeStamp":"2026-06-18T22:11:01.9310486+00:00","Log":"F In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees."}
+{"TimeStamp":"2026-06-18T22:11:01.9310738+00:00","Log":"F"}
+{"TimeStamp":"2026-06-18T22:11:01.9310759+00:00","Log":"F To prepare for this change:"}
+{"TimeStamp":"2026-06-18T22:11:01.9310772+00:00","Log":"F - If you want the current behavior, explicitly use 'sslmode=verify-full'"}
+{"TimeStamp":"2026-06-18T22:11:01.9310785+00:00","Log":"F - If you want libpq compatibility now, use 'uselibpqcompat=true\u0026sslmode=require'"}
+{"TimeStamp":"2026-06-18T22:11:01.9310815+00:00","Log":"F"}
+{"TimeStamp":"2026-06-18T22:11:01.9310827+00:00","Log":"F See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions."}
+{"TimeStamp":"2026-06-18T22:11:01.9310839+00:00","Log":"F (Use \u0060node --trace-warnings ...\u0060 to show where the warning was created)"}
+{"TimeStamp":"2026-06-18T22:11:03.9783623+00:00","Log":"F RESULT_JSON {"ok":false,"run_id":"v4-aca-all-20260618-bf-fix","error":"new row for relation \\"enterprise_context_records\\" violates check constraint \\"enterprise_context_records_dimension_family_check\\""}"}
