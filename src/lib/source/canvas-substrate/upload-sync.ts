@@ -161,6 +161,21 @@ export function matchEvidenceRequirementForUpload(args: {
   return best?.req ?? null;
 }
 
+/**
+ * The canonical filename token a downloadable input template should embed so
+ * that, once the user fills it in and re-uploads it, {@link
+ * matchEvidenceRequirementForUpload} reconciles it back to this exact
+ * requirement with no manual picking. Drawn from the same curated keyword map,
+ * so the template and the matcher can never drift apart. Returns null when a
+ * requirement has no keywords (no deterministic round-trip can be promised).
+ */
+export function templateFilenameTokenForRequirement(
+  requirementId: string,
+): string | null {
+  const keywords = REQUIREMENT_FILENAME_KEYWORDS[requirementId];
+  return keywords && keywords.length > 0 ? keywords[0] : null;
+}
+
 export interface UploadSubstrateSyncInput {
   /** source_events.id row (FK for the substrate tables). */
   sourceEventRowId: string;
