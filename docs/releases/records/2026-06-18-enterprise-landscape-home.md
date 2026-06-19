@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-lab`
 
 ## Plain-English Summary
 
@@ -37,11 +37,16 @@ The signed-in Home surface now opens as an Enterprise Landscape current-state as
 
 - `npx eslint src/components/home/EnterpriseLandscapeHome.tsx src/lib/home/enterprise-landscape-view-model.ts 'src/app/(maestro)/admin/page.tsx'` passed.
 - `npx tsc --noEmit --pretty false` passed.
-- Browser smoke and deployment verification still required before marking released.
+- `npm run build` passed locally before image build.
+- ACR build `caf7` passed for image `acrabarvalab001.azurecr.io/abarva/web:enterprise-landscape-home-893cb1539`.
+- Image digest: `sha256:30629302c827a0ac1b4f17ab5007ab725376682a4891885d7ddf44edaeb41bea`.
+- Azure Container Apps revision `ca-abarva-web-lab-eastus--0000110` is `Healthy` / `Running`.
+- `https://app.abarva.ai/api/health` returned `ok: true` with Postgres and Azure graph checks true.
+- `/admin` browser smoke without a Clerk session correctly redirected to `/sign-in?redirect=%2Fadmin`; signed-in visual QA is still pending.
 
 ## Rollout Plan
 
-Merge to the active release branch, build a new app image, deploy to Azure Container Apps, then browser-smoke `/admin` as a signed-in SkyHarbor or switched SkyHarbor session.
+Built and deployed to Azure Container Apps lab. Traffic is 100% on revision `ca-abarva-web-lab-eastus--0000110`. Browser-smoke `/admin` as a signed-in SkyHarbor or switched SkyHarbor session before promoting beyond lab/demo use.
 
 ## Rollback Plan
 
@@ -51,8 +56,12 @@ Revert the import and early overview return in `src/app/(maestro)/admin/page.tsx
 
 - Focused ESLint output.
 - TypeScript output.
-- Browser screenshot/crawl after deployment.
-- Git commit and deployed ACA revision/tag once released.
+- Git commit `893cb1539`.
+- ACR image `acrabarvalab001.azurecr.io/abarva/web:enterprise-landscape-home-893cb1539`.
+- ACR digest `sha256:30629302c827a0ac1b4f17ab5007ab725376682a4891885d7ddf44edaeb41bea`.
+- ACA revision `ca-abarva-web-lab-eastus--0000110` with 100% traffic.
+- Public health response from `https://app.abarva.ai/api/health`.
+- Browser redirect check for protected `/admin` route.
 
 ## Context Ingestion Evidence
 
@@ -63,3 +72,4 @@ Not applicable. This release does not load, parse, stage, commit, embed, or refr
 - SkyHarbor is the only richly authored client in this first candidate.
 - Other clients use the same dynamic template with generic section bodies until their derived enterprise reads are bound.
 - Source trail currently displays source titles and descriptions from the view model; live row/page/sheet citation binding remains a follow-up.
+- Signed-in visual QA is pending because the browser session used for deployment verification was not authenticated.
