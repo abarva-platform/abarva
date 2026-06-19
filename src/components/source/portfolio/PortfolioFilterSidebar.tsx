@@ -216,7 +216,7 @@ export function PortfolioFilterSidebar({
       {/* Lead-agent filter intentionally omitted — agents stay hidden behind
           workflow surfaces; primary nav + filters are workflow-anchored. */}
       {tenantOptions.length > 1 ? (
-        <FilterGroup label="Tenant">
+        <FilterGroup label="Company">
           {tenantOptions.map((tenant) => (
             <FilterRow
               key={tenant}

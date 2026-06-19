@@ -42,7 +42,7 @@ export function ApexRetailCaseStudyIntro() {
             'Archetype: Managed Services / Outsourcing',
             'Value: $35M projected · 3-year',
             'Rigor: Strategic',
-            'Tenant: Apex Retail (live demo)',
+            'Company: Apex Retail (live demo)',
             'Time: ~45 min · 8 chapters',
           ].map((tag) => (
             <span key={tag} style={{ fontFamily: T.fMono, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: 4, background: 'rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.9)', border: '1px solid rgba(255,255,255,0.14)' }}>

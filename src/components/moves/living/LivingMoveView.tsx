@@ -190,7 +190,7 @@ function CaseSwitcher({
     <div
       data-testid="living-move-case-switcher"
       role="tablist"
-      aria-label="Tenant case"
+      aria-label="Company case"
       style={{
         display: 'flex',
         flexWrap: 'wrap',

@@ -104,7 +104,7 @@ export function buildSourceCxoNarrativeReport(
         "CXO narrative report for the Source event. The deck tells the executive story; the Deal Pack remains the audit appendix.",
       proofLabel: "Event snapshot",
       metrics: [
-        { label: "Tenant", value: input.tenantName, note: input.eventCode },
+        { label: "Company", value: input.tenantName, note: input.eventCode },
         { label: "Status", value: input.eventStatus, note: stageLabel },
         {
           label: "Estimated value",
