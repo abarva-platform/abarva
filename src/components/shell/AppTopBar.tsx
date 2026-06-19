@@ -59,11 +59,11 @@ export function AppTopBar({ tenantName, showProductNav = true }: AppTopBarProps 
   const signOut = useSignOut();
   const { currentClient } = useClientContext();
   const signedIn = isLoaded && Boolean(user);
-  const resolvedTenantName =
-    canonicalClientDisplayName({ key: currentClient?.id, name: tenantName ?? currentClient?.name }) ??
-    tenantName ??
-    currentClient?.name ??
-    null;
+  const resolvedTenantName = tenantName
+    ? canonicalClientDisplayName({ name: tenantName }) ?? tenantName
+    : canonicalClientDisplayName({ key: currentClient?.id, name: currentClient?.name }) ??
+      currentClient?.name ??
+      null;
   const displayName =
     user?.fullName ||
     user?.emailAddresses?.[0]?.emailAddress?.split("@")?.[0] ||

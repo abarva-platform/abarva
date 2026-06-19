@@ -34,11 +34,25 @@ const TABS = [
   { id: 'fn', label: 'By Function', n: Object.keys(FN_OBS).length },
   { id: 'actions', label: 'Actions', n: ACTIONS.length, attn: true },
 ];
+const BINDING = window.ABARVA_TOWER_V2_BINDING || {};
+const NO_TOWER_DATA = Boolean(BINDING.fallback);
 
 // ── STATIC HEADER ─────────────────────────────────────────────────────
 function renderHeader() {
   const when = document.querySelector('.when');
   if (when) when.innerHTML = `Refreshed Jun 17, 2026<br>${PROGRAMS.length} programs · ${Object.keys(INITS).length} AI initiatives`;
+  if (NO_TOWER_DATA) {
+    if (when) when.innerHTML = `Tower data not loaded<br>${esc(BINDING.tenantName || 'Active client')}`;
+    $('dash-sub').innerHTML = `<b>${esc(BINDING.tenantName || 'This client')}</b> has no committed Tower v4 spend, vendor, benefit, or action rows available to this surface. No other client's sample data is being shown.`;
+    $('band').innerHTML = [
+      { l: 'FY26 IT budget', v: '$0', c: 'red', d: 'no committed budget rows' },
+      { l: 'Programs', v: '0', c: 'red', d: 'no Tower programs bound' },
+      { l: 'AI spend YTD', v: '$0', c: 'red', d: 'no committed spend rows' },
+      { l: 'Return on AI $', v: 'n/a', c: 'red', d: 'benefits not loaded' },
+      { l: 'Renewing soon', v: '$0', c: 'red', d: 'no vendor contracts bound' },
+    ].map(x => `<div class="metric"><div class="ml">${x.l}</div><div class="mv ${x.c}">${x.v}</div><div class="md">${x.d}</div></div>`).join('');
+    return;
+  }
   const topAiValue = Math.max(...Object.values(INITS).map(i => i.realized), 0);
   const renewing = [...VENDORS].sort((a, b) => a.months - b.months).slice(0, 3);
   const renewingValue = sum(renewing, v => v.acv);
@@ -262,9 +276,36 @@ function viewActions() {
 // ── RENDER ────────────────────────────────────────────────────────────
 function render() {
   renderTabs();
+  if (NO_TOWER_DATA) {
+    $('body').innerHTML = noDataView();
+    bindBody();
+    return;
+  }
   const v = { programs: viewPrograms, spend: viewSpend, vendors: viewVendors, fn: viewFn, actions: viewActions }[state.tab];
   $('body').innerHTML = (state.answer && !isDocked() ? answerCard(state.answer) : '') + v();
   bindBody();
+}
+
+function noDataView() {
+  const tenant = esc(BINDING.tenantName || 'Active client');
+  const source = esc(BINDING.source || 'client v4 pack');
+  const reason = esc(BINDING.reason || 'required Tower files are not present');
+  return `<div class="vctl"><div class="vtitle">Tower data is not loaded for ${tenant}</div></div>
+    <section class="answer" style="margin-top:16px">
+      <div class="ah"><div class="av">✦</div><div><div class="aq">Fail-closed client binding</div><div class="at">No cross-client fallback is displayed.</div></div></div>
+      <div class="abody">
+        <div class="aprose">${tenant}'s Tower surface needs the v4 Tower finance, spend, vendor, benefit, initiative, and derived-action templates committed before this dashboard can render live analysis.</div>
+        <table class="tbl" style="margin-top:12px">
+          <thead><tr><th>Check</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Resolved dataset</td><td>${source}</td></tr>
+            <tr><td>Binding result</td><td>${reason}</td></tr>
+            <tr><td>Rendered data policy</td><td>Zero rows shown; no First Capital, Lakeshore, Meridian, or SkyHarbor rows are borrowed across tenants.</td></tr>
+          </tbody>
+        </table>
+        <div class="acite">Required files <span class="src">F12_it-budget-financials.csv</span><span class="src">F11_vendors-contracts-licenses.csv</span><span class="src">T01/T07/T08/T12 Tower CSVs</span></div>
+      </div>
+    </section>`;
 }
 function bindBody() {
   $('body').querySelectorAll('[data-prog]').forEach(el => el.onclick = () => progDrawer(el.dataset.prog));

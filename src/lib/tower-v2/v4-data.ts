@@ -16,9 +16,9 @@ const CLIENT_ROOTS: Array<{
     tenantName: 'First Capital Financial',
   },
   {
-    keys: ['lakeshore', 'lakeshore-industries', 'lakeshore industries'],
+    keys: ['lakeshore', 'lakeshore-industries', 'lakeshore industries', 'lakeshore holdings'],
     datasetDir: 'lakeshore-industries-synthetic-v4',
-    tenantName: 'Lakeshore Industries',
+    tenantName: 'Lakeshore Holdings',
   },
   {
     keys: ['meridian', 'meridian-health', 'meridian health'],
@@ -112,18 +112,40 @@ async function buildFallbackDataScript(args: {
   tenantName: string;
   reason: string;
 }): Promise<string> {
-  const defaultDataPath = path.join(process.cwd(), 'public', 'tower-v2', 'default-data.js');
-  const defaultData = await readFile(defaultDataPath, 'utf8');
-  const browserGlobalData = defaultData.replace(
-    /\bconst (PROGRAMS|VENDORS|FN_OBS|INITS|ACTIONS|sum|TOTAL|CAT_MIX|AI_REALIZED|NEXUS_CHIPS)\b/g,
-    'var $1',
-  );
-  return `${browserGlobalData}
-window.ABARVA_TOWER_V2_BINDING = ${JSON.stringify({
+  const binding = {
     source: args.root,
     tenantName: args.tenantName,
     fallback: true,
     reason: args.reason,
+    programs: 0,
+    vendors: 0,
+    initiatives: 0,
+    spendRows: 0,
+    benefitRows: 0,
+  };
+  return `/* AbarVa Tower v2 fail-closed binding for ${args.tenantName}. No cross-tenant fallback data is emitted. */
+var PROGRAMS = [];
+var VENDORS = [];
+var FN_OBS = {};
+var INITS = {};
+var ACTIONS = [];
+var sum = (arr, f) => arr.reduce((a, x) => a + f(x), 0);
+var TOTAL = {
+  budget: 0,
+  ytd: 0,
+  capex: 0,
+  opex: 0,
+  aiBudget: 0,
+  aiYtd: 0,
+  run: 0,
+  change: 0,
+  transform: 0,
+};
+var CAT_MIX = ['software', 'hardware', 'services', 'cloud', 'labor'].map(k => ({ key: k, label: k[0].toUpperCase() + k.slice(1), val: 0 }));
+var AI_REALIZED = 0;
+var NEXUS_CHIPS = ['What Tower data is loaded?', 'Which template files are missing?', 'How do we load this client?', 'What can I safely show?', 'What should be loaded next?'];
+window.ABARVA_TOWER_V2_BINDING = ${JSON.stringify({
+    ...binding,
   })};
 `;
 }
