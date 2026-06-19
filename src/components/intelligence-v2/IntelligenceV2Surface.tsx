@@ -24,9 +24,10 @@ const CSS = `
 .iv2 .ask input{flex:1;border:none;outline:none;font-size:14px;background:transparent;color:var(--ink)}
 .iv2 .ask .spark{color:var(--green)}
 .iv2 .ask button{background:var(--ink);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer}
-.iv2 .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:780px;margin:16px auto 0}
-.iv2 .chip{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:6px 14px;font-size:12.5px;color:#3a3a34;cursor:pointer}
-.iv2 .chip .spark{color:var(--green);margin-right:5px}
+.iv2 .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:1080px;margin:16px auto 0}
+.iv2 .chip{display:inline-flex;align-items:center;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:5px 13px;font-size:12px;color:#3a3a34;cursor:pointer}
+.iv2 .chip .spark{color:var(--green);margin-right:5px;flex:none}
+.iv2 .chiptext{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .iv2 .trust{text-align:center;margin:22px 0 4px}
 .iv2 .trust .mono{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11.5px;color:var(--muted)}
 .iv2 .trust b{color:var(--ink)}
@@ -70,8 +71,10 @@ const CSS = `
 
 export function IntelligenceV2Surface({
   payload,
+  tenantName,
 }: {
   payload: IntelligenceBindingPayload;
+  tenantName?: string;
 }) {
   const [tab, setTab] = useState<Tab>("signals");
   const t = payload;
@@ -89,7 +92,7 @@ export function IntelligenceV2Surface({
           <h1>
             Ask anything about
             <br />
-            {t.tenant.displayName}.
+            {tenantName || t.tenant.displayName}.
           </h1>
           <p className="sub">{t.ask.contract}</p>
           <div className="ask">
@@ -103,9 +106,9 @@ export function IntelligenceV2Surface({
           </div>
           <div className="chips">
             {t.suggestedQuestions.map((q) => (
-              <span className="chip" key={q}>
+              <span className="chip" key={q} title={q}>
                 <span className="spark">✦</span>
-                {q}
+                <span className="chiptext">{q}</span>
               </span>
             ))}
           </div>
