@@ -73,6 +73,8 @@ import {
   getCanonicalTenantSwitchOptions,
 } from '@/lib/admin/tenant-switch-authority';
 import { tenantProfileForClientKey } from '@/lib/tenant/aliases';
+import { EnterpriseLandscapeHome } from '@/components/home/EnterpriseLandscapeHome';
+import { getEnterpriseLandscapeViewModel } from '@/lib/home/enterprise-landscape-view-model';
 
 export const metadata = { title: 'Setup · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -204,6 +206,7 @@ export default async function AdminOverviewPage({
 }) {
   const params = searchParams ? await searchParams : undefined;
   const activeTab = resolveAdminOverviewTab(params?.tab);
+  const renderLegacyOverview = process.env.ABARVA_LEGACY_ADMIN_OVERVIEW === '1';
 
   // Synchronous, fast prelude — needed for the masthead and the shell.
   // PR-G (2026-05-30 · Apex-leak F8):
@@ -217,6 +220,18 @@ export default async function AdminOverviewPage({
   const activeClient = await getActiveClientRow().catch(() => null);
   const activeClientDisplayName = tenant.tenantName;
   const clientKey = tenant.clientKey;
+
+  if (activeTab === 'overview' && !renderLegacyOverview) {
+    return (
+      <EnterpriseLandscapeHome
+        viewModel={getEnterpriseLandscapeViewModel({
+          clientKey,
+          tenantName: activeClientDisplayName,
+        })}
+      />
+    );
+  }
+
   const brokerTenantKey = clientKeyToInventorySubstrateKey(clientKey);
   // Wave 3 PR-7 · per-zone streaming. Trust strip, action queue,
   // posture grid, Steward orientation, and audit ribbon each fetch
@@ -357,11 +372,10 @@ export default async function AdminOverviewPage({
     ssoProvider: 'Tenant configured',
     createdDate: 'Tenant record',
   };
-
   return (
     <AdminCanonShellV2 agentRail={<SetupChatRail />} tenantName={activeClientDisplayName}>
       <AdminOverviewTabs activeTab={activeTab} />
-      {activeTab === 'overview' ? (
+      {activeTab === 'overview' && renderLegacyOverview ? (
         <HomeOverviewV2
           tenantName={activeClientDisplayName}
           clientKey={isClientKey(clientKey) ? clientKey : null}
