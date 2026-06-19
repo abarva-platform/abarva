@@ -130,6 +130,22 @@ export function SimpleStageFront({
     }
   };
 
+  // Approving a step is the only decision: it writes the step's deliverable AND
+  // moves on. No separate "generate" click — the write runs server-side and lands
+  // in the deliverables explorer / File Cabinet, so we never block the advance on
+  // a slow board-grade generation. Mirrors the Moves "Approve & Build" model.
+  const handleApproveAndContinue = async () => {
+    const nextStage = view.nextStep.stage;
+    if (!nextStage) {
+      // Final stage: nothing to advance to, so approving just writes the doc.
+      await handleGenerate();
+      return;
+    }
+    setMessage(`Writing your ${view.deliverable.name} and moving on…`);
+    void onGenerateArtifact(view.deliverable.artifactCode);
+    onAdvanceStage(nextStage);
+  };
+
   return (
     <section
       data-testid="source-simple-front"
@@ -283,12 +299,16 @@ export function SimpleStageFront({
       <div style={BOTTOM_BAR_STYLE}>
         <button
           type="button"
-          data-testid="source-simple-front-write"
-          onClick={() => void handleGenerate()}
+          data-testid="source-simple-front-approve"
+          onClick={() => void handleApproveAndContinue()}
           disabled={generating}
           style={PRIMARY_BUTTON_STYLE}
         >
-          {generating ? "Writing..." : `Write my ${view.deliverable.name}`}
+          {generating
+            ? "Writing..."
+            : view.nextStep.stage
+              ? `Approve & write ${view.deliverable.name}`
+              : `Write my ${view.deliverable.name}`}
         </button>
         {latestDoc ? (
           <Link
@@ -301,17 +321,7 @@ export function SimpleStageFront({
           </Link>
         ) : null}
         <div style={NEXT_STEP_STYLE}>
-          <span>Next step: {view.nextStep.label}</span>
-          {view.nextStep.stage ? (
-            <button
-              type="button"
-              data-testid="source-simple-front-next-step"
-              onClick={() => onAdvanceStage(view.nextStep.stage!)}
-              style={SECONDARY_BUTTON_STYLE}
-            >
-              Continue
-            </button>
-          ) : null}
+          <span>Then: {view.nextStep.label}</span>
         </div>
       </div>
 
