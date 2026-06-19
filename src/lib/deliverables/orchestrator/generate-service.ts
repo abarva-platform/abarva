@@ -14,6 +14,7 @@ import {
 } from "./build-request";
 import { generateDeliverable as defaultGenerate } from "./model-caller";
 import { persistDeliverable as defaultPersist } from "./persistence";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import type { GenerationProgress } from "./progress";
 import type { OutputFormat } from "./types";
 
@@ -127,6 +128,12 @@ export async function runDeliverableForTenant(
   const explicitOverride: "pptx" | "pdf" | "html" | undefined =
     first === "pptx" || first === "pdf" || first === "html" ? first : undefined;
   const { policy } = await loadPolicy(input.clientId);
+  // Flag-gated decision-storytelling: render Move deliverables as the exhibit-led deck. Skip when
+  // the caller forced a presentation format (pptx/pdf) — that explicit request wins.
+  const renderAsDeck =
+    result.brief.module === "moves" &&
+    !explicitOverride &&
+    isFeatureEnabled({ clientKey: input.tenantClientKey }, "moves_decision_storytelling");
   const record = await persist(result, {
     clientId: input.clientId,
     renderedBy: input.userId,
@@ -135,6 +142,7 @@ export async function runDeliverableForTenant(
     ...(explicitOverride ? { outputFormat: explicitOverride } : {}),
     userId: input.userId,
     evidenceLedgerIds: evidence.map((e) => e.provenanceRef),
+    ...(renderAsDeck ? { renderAsDeck: true, tenantKey: input.tenantClientKey } : {}),
   });
 
   return {

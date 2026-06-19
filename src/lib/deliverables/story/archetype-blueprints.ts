@@ -181,6 +181,31 @@ export function archetypeForDeliverableKey(registryKey: string): ArchetypeKey | 
   return REGISTRY_TO_ARCHETYPE[registryKey];
 }
 
+/**
+ * Map an ORCHESTRATOR deliverable type (the brief's `deliverableType`, e.g. 'target_architecture',
+ * 'estimate_model') to its narrative archetype — distinct from the registry keys above (which are
+ * the PHASE_CANONICAL_KEYS). Used by the live bridge from a generated RenderableDeliverable.
+ */
+const ORCHESTRATOR_TYPE_TO_ARCHETYPE: Readonly<Record<string, ArchetypeKey>> = {
+  charter: "initiative_charter",
+  discovery_report: "discover_and_diagnose",
+  target_architecture: "target_architecture",
+  operating_model: "operating_model",
+  sourcing_strategy: "sourcing_strategy",
+  roadmap: "roadmap",
+  business_case: "value_model",
+  estimate_model: "value_model",
+  value_model: "value_model",
+  handoff_pack: "handoff",
+};
+
+export function archetypeForOrchestratorType(orchestratorType: string): ArchetypeKey | undefined {
+  return (
+    ORCHESTRATOR_TYPE_TO_ARCHETYPE[orchestratorType] ??
+    REGISTRY_TO_ARCHETYPE[orchestratorType]
+  );
+}
+
 export function getArchetypeBlueprint(key: ArchetypeKey): ArchetypeBlueprint | undefined {
   return ARCHETYPE_BLUEPRINTS[key];
 }
