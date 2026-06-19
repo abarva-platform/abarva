@@ -558,7 +558,14 @@ function CollapsePanel({
 type GenState =
   | { status: "idle" }
   | { status: "generating"; pct?: number; label?: string }
-  | { status: "done"; qualityScore: number | null; pass: boolean }
+  | {
+      status: "done";
+      qualityScore: number | null;
+      pass: boolean;
+      // When pass === false, the specific board-grade gate blockers, so the UI
+      // can explain WHY it was held (not just "below gate") and the user can act.
+      blockers?: string[];
+    }
   | { status: "error"; message: string };
 
 function CharterWorkflow({
@@ -793,6 +800,7 @@ function CharterWorkflow({
           status?: string;
           progressPct?: number;
           progressLabel?: string | null;
+          blockers?: string[];
           error?: string;
         } = {};
         try {
@@ -817,8 +825,16 @@ function CharterWorkflow({
           return;
         }
         if (poll.status === "blocked") {
-          // The artifact was produced but held below the board-grade gate.
-          setGen({ status: "done", qualityScore: null, pass: false });
+          // The build completed but was held below the board-grade quality gate.
+          // Surface the specific blockers so the user understands WHY and can
+          // act (fix inputs / context) and re-run. The gate stays enforced — we
+          // never bypass it; "Regenerate" just runs another board-grade pass.
+          setGen({
+            status: "done",
+            qualityScore: null,
+            pass: false,
+            blockers: Array.isArray(poll.blockers) ? poll.blockers : undefined,
+          });
           return;
         }
         throw new Error(poll.error || "Generation failed.");
@@ -1022,7 +1038,11 @@ function CharterWorkflow({
             >
               {gen.status === "generating"
                 ? "Generating…"
-                : "Generate artifact"}
+                : gen.status === "done"
+                  ? gen.pass
+                    ? "Regenerate artifact"
+                    : "Regenerate at board-grade"
+                  : "Generate artifact"}
             </button>
             {gen.status === "generating" && (
               <span className={styles.charterStepHint}>
@@ -1031,14 +1051,46 @@ function CharterWorkflow({
                   : "Drafting the board-grade charter — this runs in the background and can take a few minutes."}
               </span>
             )}
-            {gen.status === "done" && (
+            {gen.status === "done" && gen.pass && (
               <span className={styles.charterStepOk}>
                 {gen.qualityScore != null ? `Quality ${gen.qualityScore} · ` : ""}
-                {gen.pass ? "Built ✓" : "Built · below gate"} ·{" "}
+                Built ✓ ·{" "}
                 <Link href={`/strategic-moves/${move.id}/evidence`}>
                   Open File Cabinet →
                 </Link>
               </span>
+            )}
+            {gen.status === "done" && !gen.pass && (
+              <div className={styles.gateDetail}>
+                <span className={styles.charterStepError}>
+                  Held below the board-grade gate
+                  {gen.blockers?.length
+                    ? ` — ${gen.blockers.length} reason${
+                        gen.blockers.length > 1 ? "s" : ""
+                      } to resolve before it can be approved:`
+                    : ". Re-run, or refine the inputs and context, then regenerate."}
+                </span>
+                {gen.blockers?.length ? (
+                  <div className={styles.charterAdvancedNote}>
+                    {gen.blockers.map((b, i) => (
+                      <span
+                        key={i}
+                        className={`${styles.gateLine} ${styles.gateLineRed}`}
+                      >
+                        <span className={styles.pulse} aria-hidden />
+                        <span className={styles.statusText}>{b}</span>
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+                <span className={styles.charterStepHint}>
+                  Use “Regenerate at board-grade” above to run another pass —
+                  the gate stays enforced.{" "}
+                  <Link href={`/strategic-moves/${move.id}/evidence`}>
+                    Open File Cabinet →
+                  </Link>
+                </span>
+              </div>
             )}
             {gen.status === "error" && (
               <span className={styles.charterStepError}>{gen.message}</span>
