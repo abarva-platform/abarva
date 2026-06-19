@@ -11,6 +11,11 @@ const CLIENT_ROOTS: Array<{
   tenantName: string;
 }> = [
   {
+    keys: ['apexretail', 'apex-retail', 'apex', 'apex retail', 'apex retail group'],
+    datasetDir: 'apex-retail-synthetic-v4',
+    tenantName: 'Apex Retail Group',
+  },
+  {
     keys: ['firstcapital', 'first-capital', 'arcturus', 'first capital financial'],
     datasetDir: 'first-capital-financial-synthetic-v4',
     tenantName: 'First Capital Financial',
@@ -42,9 +47,33 @@ const REQUIRED_TOWER_V2_FILES = [
   'ai-control-tower/T12_derived-actions.csv',
 ] as const;
 
+function normalizeClientProbe(value?: string | null): string {
+  return String(value ?? '').trim().toLowerCase().replace(/_/g, '-');
+}
+
 function pickRoot(clientKey?: string | null, tenantName?: string | null) {
-  const probe = `${clientKey ?? ''} ${tenantName ?? ''}`.toLowerCase();
-  return CLIENT_ROOTS.find((entry) => entry.keys.some((key) => probe.includes(key))) ?? CLIENT_ROOTS[0];
+  const normalizedClientKey = normalizeClientProbe(clientKey);
+  if (normalizedClientKey) {
+    const keyMatch = CLIENT_ROOTS.find((entry) =>
+      entry.keys.some((key) => normalizeClientProbe(key) === normalizedClientKey),
+    );
+    if (keyMatch) return keyMatch;
+  }
+
+  const normalizedTenantName = normalizeClientProbe(tenantName);
+  if (normalizedTenantName) {
+    const exactNameMatch = CLIENT_ROOTS.find((entry) =>
+      entry.keys.some((key) => normalizeClientProbe(key) === normalizedTenantName),
+    );
+    if (exactNameMatch) return exactNameMatch;
+
+    const containsNameMatch = CLIENT_ROOTS.find((entry) =>
+      entry.keys.some((key) => normalizedTenantName.includes(normalizeClientProbe(key))),
+    );
+    if (containsNameMatch) return containsNameMatch;
+  }
+
+  return CLIENT_ROOTS[0];
 }
 
 export function resolveTowerV2V4Dataset(args: {
@@ -53,7 +82,7 @@ export function resolveTowerV2V4Dataset(args: {
 } = {}): { tenantName: string; root: string } {
   const client = pickRoot(args.clientKey, args.tenantName);
   return {
-    tenantName: text(args.tenantName, client.tenantName),
+    tenantName: text(client.tenantName, args.tenantName ?? ''),
     root: `datasets/${client.datasetDir}`,
   };
 }
@@ -198,7 +227,7 @@ export async function buildTowerV2V4DataScript(args: {
   tenantName?: string | null;
 } = {}): Promise<{ script: string; tenantName: string; root: string }> {
   const client = pickRoot(args.clientKey, args.tenantName);
-  const displayTenantName = text(args.tenantName, client.tenantName);
+  const displayTenantName = text(client.tenantName, args.tenantName ?? '');
   const root = `datasets/${client.datasetDir}`;
 
   if (!(await hasFullTowerV2Dataset(client.datasetDir))) {

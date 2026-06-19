@@ -69,6 +69,14 @@ const TENANT_ALIAS_PROFILES: readonly TenantAliasProfile[] = [
     industryCode: CLIENT_KEY_TO_INDUSTRY_CODE.skyharbor,
     aliases: ['skyharbor', 'skyharbor-air', 'skyharbor air', 'skyharbor airlines'],
   },
+  {
+    appClientKey: 'lakeshore',
+    canonicalKey: 'lakeshore-industries',
+    brokerKey: 'lakeshore-industries',
+    displayName: 'Lakeshore Holdings',
+    industryCode: CLIENT_KEY_TO_INDUSTRY_CODE.lakeshore,
+    aliases: ['lakeshore', 'lakeshore-holdings', 'lakeshore holdings', 'lakeshore-industries', 'lakeshore industries'],
+  },
 ] as const;
 
 const normalizeTenantAlias = (value: string): string =>
