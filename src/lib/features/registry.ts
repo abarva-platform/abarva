@@ -67,6 +67,7 @@ export type FeatureFlagKey =
   | "tower_synthesis_apex_demo_fixture"
   | "discovery_intake_v2"
   | "moves_orchestrated_deliverables"
+  | "moves_decision_storytelling"
   | "workspace_explorer_source"
   | "workspace_explorer_moves"
   | "source_simple_front"
@@ -124,6 +125,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
       "Author Move board-grade deliverables through the Deliverable Intelligence Orchestrator (governed multi-pass Claude authoring) instead of the deterministic template renderer. Quality/plan gates enforced; falls back to the deterministic deck when the gate blocks. SkyHarbor is enrolled for live board-grade validation; other tenants remain opt-in.",
     policy: "tenant",
     includeTenants: ["skyharbor"],
+  },
+  {
+    key: "moves_decision_storytelling",
+    summary:
+      "Render Move deliverables as an exhibit-led executive deck (decision-storytelling pipeline: MoveDecisionModel → Story Director → Visual Director → deck) from the SAME governed generation, instead of the prose HTML. Falls back to prose on any error. Tenant opt-in; default off until live-proven per tenant. Env allowlist: ABARVA_FEATURE_MOVES_DECISION_STORYTELLING_TENANTS.",
+    policy: "tenant",
+    includeTenants: [],
   },
   {
     key: "discovery_intake_v2",

@@ -18,6 +18,7 @@ import type {
 import { saveGeneratedArtifact, type GeneratedArtifactRecord } from '@/lib/artifacts/repository';
 import { prescribedFormatForDeliverableType } from '@/lib/programs/orchestrated-deliverable-map';
 import { renderDeliverableHtml } from './renderers';
+import { buildDeckHtmlFromDocument } from '@/lib/deliverables/deck-from-result';
 import type { OrchestrationResult } from './orchestrator';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -32,6 +33,14 @@ export interface PersistDeliverableOptions {
   /** governed evidence ledger ids used (for the artifact's audit trail). */
   evidenceLedgerIds?: string[];
   userId?: string;
+  /**
+   * When true (the `moves_decision_storytelling` flag), render the artifact as the exhibit-led
+   * executive deck (HTML) instead of the prose HTML. Caller evaluates the tenant flag; this stays
+   * flag-system-decoupled. Any error falls back to the prose render — generation never breaks.
+   */
+  renderAsDeck?: boolean;
+  /** Tenant key for the deck's tenant line (only used when renderAsDeck). */
+  tenantKey?: string;
 }
 
 export interface PersistDeps {
@@ -59,7 +68,6 @@ export async function persistDeliverable(
     throw new Error(`cannot persist deliverable: ${result.blockedReason ?? 'generation did not pass the gates'}`);
   }
   const doc = result.document;
-  const html = renderDeliverableHtml(doc);
   const artifactType = artifactTypeFor(result.brief.module);
   // The prescribed primary format follows the deliverable type: most narrative
   // documents are Word/DOCX; the financial model (orchestrator 'estimate_model')
@@ -68,7 +76,36 @@ export async function persistDeliverable(
   const prescribedFormat = prescribedFormatForDeliverableType(
     result.brief.deliverableType,
   );
-  const outputFormat: GeneratedArtifactFormat = opts.outputFormat ?? prescribedFormat;
+  let html = renderDeliverableHtml(doc);
+  let outputFormat: GeneratedArtifactFormat = opts.outputFormat ?? prescribedFormat;
+
+  // Flag-gated (moves_decision_storytelling): emit the exhibit-led executive deck (HTML) from the
+  // SAME governed document instead of the prose HTML. Any failure falls back to the prose render —
+  // a deck-render error must never fail a generation that already passed the gates.
+  if (opts.renderAsDeck) {
+    try {
+      const deck = buildDeckHtmlFromDocument({
+        doc,
+        deliverableType: result.brief.deliverableType,
+        moveId: opts.sourceArtifactRef,
+        ...(result.brief.decisionToSupport
+          ? { decisionContext: result.brief.decisionToSupport }
+          : {}),
+        nowIso: new Date().toISOString(),
+        tenantLabel: doc.clientDisplayName,
+        ...(opts.tenantKey ? { tenantKey: opts.tenantKey } : {}),
+      });
+      if (deck) {
+        html = deck;
+        outputFormat = 'html';
+      }
+    } catch (err) {
+      console.error(
+        '[persistDeliverable] decision-storytelling deck render failed; using prose',
+        err,
+      );
+    }
+  }
 
   const facts: BoardPackRenderInput['facts'] = doc.sourceRegister.map((r) => ({
     id: `cite-${r.citationNumber}`,
