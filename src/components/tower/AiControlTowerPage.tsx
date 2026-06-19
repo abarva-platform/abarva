@@ -49,15 +49,15 @@ interface AtlasAnswer {
 }
 
 const TABS: Array<{ key: TowerTab; kicker: string; label: string; question: string }> = [
-  { key: 'value', kicker: 'VALUE · L2', label: 'Value', question: 'Which AI investments are converting into defensible value?' },
-  { key: 'initiatives', kicker: 'LIST · L1', label: 'Initiatives', question: 'Which initiative do we need to understand in detail?' },
-  { key: 'adoption', kicker: 'ADOPT · L2', label: 'Adoption', question: 'Where is AI being used by function, persona, and tool?' },
-  { key: 'productivity', kicker: 'FLOW · L2', label: 'Productivity', question: 'Where did work get faster without quality drift?' },
-  { key: 'agents', kicker: 'AGENTS · L1', label: 'Agents', question: 'Which agents are resolving work, not just creating usage?' },
-  { key: 'spend', kicker: 'COST · L1', label: 'Spend', question: 'Which spend should be scaled, challenged, or stopped?' },
-  { key: 'risk', kicker: 'GATES · L1', label: 'Risk', question: 'Which claims are blocked by governance or weak evidence?' },
-  { key: 'evidence', kicker: 'TRUST · L0', label: 'Evidence', question: 'What can Atlas answer from committed context?' },
-  { key: 'actions', kicker: 'MOVES · L3', label: 'Actions', question: 'What should go to the next steering meeting?' },
+  { key: 'value', kicker: 'Portfolio', label: 'Portfolio', question: 'Which investments should we scale, hold, restructure, or stop?' },
+  { key: 'initiatives', kicker: 'Programs', label: 'Programs', question: 'Which strategic programs need leadership attention?' },
+  { key: 'adoption', kicker: 'Adoption', label: 'Adoption', question: 'Where is adoption strong enough to support the value claim?' },
+  { key: 'productivity', kicker: 'Productivity', label: 'Productivity', question: 'Where did work get faster without quality drift?' },
+  { key: 'agents', kicker: 'Agents', label: 'Agents', question: 'Which agents are resolving real work?' },
+  { key: 'spend', kicker: 'Spend', label: 'Spend', question: 'Where is technology spend concentrated, exposed, or under-proven?' },
+  { key: 'risk', kicker: 'Risk', label: 'Risk', question: 'Which programs are blocked by governance, controls, or weak proof?' },
+  { key: 'evidence', kicker: 'Evidence', label: 'Evidence', question: 'Which decisions are backed strongly enough for executive challenge?' },
+  { key: 'actions', kicker: 'Actions', label: 'Actions', question: 'What should go to the next steering meeting?' },
 ];
 
 const SUGGESTED_QUESTIONS = [
@@ -294,14 +294,14 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
     <main style={styles.page}>
       <section style={styles.hero}>
         <div>
-          <p style={styles.kicker}>AI CONTROL TOWER · {model.tenantName.toUpperCase()}</p>
-          <h1 style={styles.h1}>Is AI producing measurable, governed value?</h1>
-          <p style={styles.lede}>{enterpriseRead?.headline ?? 'Segment spend, adoption, productivity, agents, risk, and evidence by function, initiative, tool, vendor, and persona.'}</p>
+          <p style={styles.kicker}>PORTFOLIO COMMAND CENTER · {model.tenantName.toUpperCase()}</p>
+          <h1 style={styles.h1}>Where technology money is going, what value is showing up, and what needs intervention.</h1>
+          <p style={styles.lede}>{enterpriseRead?.headline ?? 'A leadership view of spend, value, adoption, risk, vendor exposure, agent outcomes, and the decisions that need attention.'}</p>
         </div>
         <div style={styles.metaBox}>
-          <span>Monthly refresh</span>
+          <span>Refresh period</span>
           <strong>{model.reportingPeriodEnd ?? 'not committed'}</strong>
-          <span>{model.source === 'ai_control_data_plane' ? 'Data-plane read' : 'Demo fallback'}</span>
+          <span>{model.source === 'ai_control_data_plane' ? 'Committed portfolio data' : 'Demo data only'}</span>
         </div>
       </section>
 
@@ -378,8 +378,8 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
 
       <section style={styles.workspace}>
         <aside style={styles.atlas}>
-          <p style={styles.kicker}>SENTINEL · ATLAS</p>
-          <h2 style={styles.asideTitle}>Ask in plain English.</h2>
+          <p style={styles.kicker}>ATLAS</p>
+          <h2 style={styles.asideTitle}>Ask about the portfolio.</h2>
           <div style={styles.answerBox}>
             {pending ? (
               <p style={{ color: COLORS.muted, fontStyle: 'italic', margin: 0 }}>
@@ -447,7 +447,7 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
         <section style={styles.canvas}>
           <div style={styles.canvasHeader}>
             <div>
-              <p style={styles.kicker}>{tabMeta.kicker} · ACTIVE CANVAS</p>
+              <p style={styles.kicker}>{tabMeta.kicker}</p>
               <h2 style={styles.h2}>{tabMeta.question}</h2>
             </div>
             <span style={styles.datePill}>{model.reportingPeriodEnd ?? 'no refresh'}</span>
@@ -805,7 +805,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: COLORS.bg,
     color: COLORS.ink,
     fontFamily: COLORS.sans,
-    padding: '26px clamp(18px, 3vw, 38px) 34px',
+    padding: '20px clamp(18px, 3vw, 34px) 30px',
   },
   hero: {
     display: 'flex',
@@ -836,15 +836,16 @@ const styles: Record<string, React.CSSProperties> = {
   h1: {
     margin: '6px 0 4px',
     fontFamily: COLORS.serif,
-    fontSize: 'clamp(32px, 4vw, 58px)',
-    lineHeight: 0.96,
+    fontSize: 'clamp(26px, 2.8vw, 42px)',
+    lineHeight: 1.05,
     letterSpacing: 0,
+    maxWidth: 980,
   },
   h2: {
     margin: '5px 0 0',
     fontFamily: COLORS.serif,
-    fontSize: 28,
-    lineHeight: 1.05,
+    fontSize: 23,
+    lineHeight: 1.12,
     letterSpacing: 0,
   },
   lede: {

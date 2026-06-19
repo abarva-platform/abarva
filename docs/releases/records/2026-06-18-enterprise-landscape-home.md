@@ -6,11 +6,11 @@
 
 ## Status
 
-`deployed-lab-corrected`
+`deploying-lab-corrected-v2`
 
 ## Plain-English Summary
 
-The signed-in `/home` surface now opens as an Enterprise Landscape current-state assessment. `/admin` remains the setup/admin control plane. `/intelligence` now opens as an advisory-board surface instead of the older repository/explorer framing. Home uses the consulting-report layout with the same left assessment menu, a center report canvas, section-specific tables/charts/diagrams, a right leadership panel, and a source-trail drawer.
+The signed-in `/home` surface now opens as an Enterprise Landscape current-state assessment. `/admin` remains the setup/admin control plane. `/intelligence` now opens as an advisory-board surface instead of the older repository/explorer framing. `/tower` removes the old L0/L1/L2/L3 lens labels and opens as a portfolio command center with leadership-oriented spend, value, adoption, risk, evidence, and action language.
 
 ## Layer Impact
 
@@ -34,6 +34,8 @@ The signed-in `/home` surface now opens as an Enterprise Landscape current-state
 - `src/components/home/EnterpriseLandscapeHome.module.css`
 - `src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx`
 - `src/components/intelligence-advisory/AdvisoryIntelligencePage.module.css`
+- `src/components/tower/AiControlTowerPage.tsx`
+- `src/components/tower/__tests__/AiControlTowerPage.test.tsx`
 - `src/lib/home/enterprise-landscape-view-model.ts`
 - `src/proxy.ts`
 - `src/components/shell/topbar-nav-items.ts`
@@ -54,10 +56,17 @@ The signed-in `/home` surface now opens as an Enterprise Landscape current-state
 - `https://app.abarva.ai/api/health` returned `ok: true` with Postgres and Azure graph checks true.
 - Unauthenticated route smoke: `/home` redirects to `/sign-in?redirect=%2Fhome`, `/admin` redirects to `/sign-in?redirect=%2Fadmin`, and `/intelligence` returns 200 because the middleware currently treats `/intelligence` as public.
 - Deployed `/intelligence` HTML contains `AbarVa Intelligence`, `Advisory board`, and `Recommendation`.
+- Follow-up correction on 2026-06-19: live traffic was observed on revision `ca-abarva-web-lab-eastus--m25a59674` while latest ready revision was `ca-abarva-web-lab-eastus--0000111`; this made the older pages visible again.
+- `npx eslint src/components/tower/AiControlTowerPage.tsx src/components/tower/__tests__/AiControlTowerPage.test.tsx 'src/app/(maestro)/home/layout.tsx' 'src/app/(maestro)/home/page.tsx' 'src/app/(maestro)/intelligence/page.tsx' 'src/app/(maestro)/tower/page.tsx'` passed.
+- `npx jest src/components/tower/__tests__/AiControlTowerPage.test.tsx --runInBand` passed after pinning the new command-center labels and offline Atlas fallback.
+- `npx jest src/components/shell/__tests__/topbar-nav-home-admin.test.ts --runInBand` passed, preserving `/home` and `/admin` separation.
+- `npx tsc --noEmit --pretty false` passed.
+- `npm run build` passed.
+- `npm run release:check` passed.
 
 ## Rollout Plan
 
-Built and deployed corrected image to Azure Container Apps lab. Verify `/home` and `/admin` behind a signed-in session before promoting beyond lab/demo use.
+Build and deploy the v2 corrected image to Azure Container Apps lab, then verify `/home`, `/intelligence`, `/tower`, and `/admin` route separation. Verify signed-in visuals before promoting beyond lab/demo use.
 
 ## Rollback Plan
 
@@ -86,5 +95,5 @@ Not applicable. This release does not load, parse, stage, commit, embed, or refr
 - SkyHarbor is the only richly authored client in this first candidate.
 - Other clients use the same dynamic template with generic section bodies until their derived enterprise reads are bound.
 - Source trail currently displays source titles and descriptions from the view model; live row/page/sheet citation binding remains a follow-up.
-- Signed-in visual QA is pending because the browser session used for deployment verification was not authenticated.
+- Signed-in visual QA is pending until traffic is moved to the v2 corrected image and the authenticated browser session is refreshed.
 - ACA logs still show pre-existing tenant-id/notification warnings during unrelated background embedding/audit paths; this release did not change those paths.

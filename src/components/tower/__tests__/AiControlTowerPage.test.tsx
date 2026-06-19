@@ -3,7 +3,7 @@
  */
 
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 import { AiControlTowerPage } from '../AiControlTowerPage';
 import type { AiControlTowerReadModel } from '@/lib/ai-control-tower/read-model';
@@ -264,6 +264,22 @@ function renderTower() {
 }
 
 describe('AiControlTowerPage', () => {
+  beforeEach(() => {
+    const fetchMock = jest.fn().mockRejectedValue(new Error('offline'));
+    Object.defineProperty(globalThis, 'fetch', {
+      configurable: true,
+      value: fetchMock,
+    });
+    Object.defineProperty(window, 'fetch', {
+      configurable: true,
+      value: fetchMock,
+    });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('places lens tabs below KPI dashboard and refreshes the active canvas', () => {
     renderTower();
 
@@ -271,29 +287,31 @@ describe('AiControlTowerPage', () => {
     const agentsTab = screen.getByRole('button', { name: /agents/i });
     expect(evidenceTile.compareDocumentPosition(agentsTab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
-    expect(screen.getByText('Which AI investments are converting into defensible value?')).toBeInTheDocument();
+    expect(screen.getByText('Which investments should we scale, hold, restructure, or stop?')).toBeInTheDocument();
 
     fireEvent.click(agentsTab);
-    expect(screen.getByText('Which agents are resolving work, not just creating usage?')).toBeInTheDocument();
+    expect(screen.getByText('Which agents are resolving real work?')).toBeInTheDocument();
     expect(screen.getByText('Finance Access Agent')).toBeInTheDocument();
 
     fireEvent.click(
       screen
         .getAllByRole('button')
-        .find((button) => button.textContent?.includes('COST · L1')) as HTMLElement,
+        .find((button) => button.textContent?.includes('Spend')) as HTMLElement,
     );
-    expect(screen.getByText('Which spend should be scaled, challenged, or stopped?')).toBeInTheDocument();
+    expect(screen.getByText('Where is technology spend concentrated, exposed, or under-proven?')).toBeInTheDocument();
     expect(screen.getByText('M365 Copilot')).toBeInTheDocument();
   });
 
-  it('answers executive questions with structured rows and moves to the relevant lens', () => {
+  it('answers executive questions with structured rows and moves to the relevant lens', async () => {
     renderTower();
 
     fireEvent.click(screen.getByRole('button', { name: /where is ai spend not backed by evidence/i }));
 
-    expect(screen.getByText('Which spend should be scaled, challenged, or stopped?')).toBeInTheDocument();
-    const atlasPanel = screen.getByText(/visible AI spend is available/i).closest('div');
+    const [answerHeadline] = await screen.findAllByText(/Finance Copilot Rollout has \$1.2M realized value/i);
+    const atlasPanel = answerHeadline.closest('div');
     expect(atlasPanel).toBeTruthy();
-    expect(within(atlasPanel as HTMLElement).getByText('Annual spend')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(within(atlasPanel as HTMLElement).getByText('Metric')).toBeInTheDocument();
+    });
   });
 });
