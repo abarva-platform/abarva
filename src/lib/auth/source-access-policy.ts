@@ -119,6 +119,21 @@ function isClientAdminPolicy(level: SourceAccessLevel): boolean {
   return level === "client_admin";
 }
 
+// A Clerk tenant/client-admin is a Source admin for their OWN active client even
+// with no persons-backed membership row. Mirrors the proven Moves program-access
+// policy (program-access-policy.ts `isClientAdminRole`). The cross-tenant fence
+// is unchanged: events stay filtered by client_key at the query layer — this only
+// sets access *within* the already-resolved active client.
+function isClientAdminRole(role: string | null | undefined): boolean {
+  return (
+    role === "maestro" ||
+    role === "admin" ||
+    role === "tenant_admin" ||
+    role === "client_admin" ||
+    role === "abarva_super_admin"
+  );
+}
+
 function defaultDataClasses(
   canViewFinancialData: boolean,
 ): Pick<UserSourceAccessPolicy, "allowedDataClasses" | "deniedDataClasses"> {
@@ -211,9 +226,12 @@ async function resolveSourcePolicyPersonId(
 }
 
 function inferAccessLevel(
+  ctx: TenancyCtx,
   membership: ClientMembershipRow | null,
   participants: SourceParticipantRow[],
 ): SourceAccessLevel {
+  if (isClientAdminRole(ctx.role) || isClientAdminRole(membership?.role))
+    return "client_admin";
   const explicit = normalizeSourceAccessLevel(membership?.access_level);
   if (explicit) return explicit;
   if (membership?.role === "maestro" || membership?.role === "client_admin")
@@ -337,14 +355,14 @@ export async function loadUserSourceAccessPolicy(
     ? await loadClientMembership(ctx, personId)
     : null;
   const holdingGroupProfile = await loadHoldingGroupClientProfile(ctx);
-  const membershipAccessLevel = inferAccessLevel(membership, []);
+  const membershipAccessLevel = inferAccessLevel(ctx, membership, []);
   const participants = isClientAdminPolicy(membershipAccessLevel)
     ? []
     : personId
       ? await loadSourceParticipants(personId, opts.activeClientKey)
       : [];
 
-  const accessLevel = inferAccessLevel(membership, participants);
+  const accessLevel = inferAccessLevel(ctx, membership, participants);
   const admin = isClientAdminPolicy(accessLevel);
   const scopedParticipants = opts.sourceEventId
     ? participants.filter((p) => p.source_event_id === opts.sourceEventId)
