@@ -133,6 +133,14 @@ export interface TenantContextQueryInput {
    * Defaults to global `fetch`.
    */
   readonly fetchImpl?: typeof fetch;
+  /**
+   * Optional out-param. The retriever sets `degradedIndexContract = true` when a
+   * search had to fall back past a missing index field (index/contract drift,
+   * e.g. lifecycle_state). Lets a caller stamp result metadata
+   * (`degraded_index_contract: true`) and persist it on the run/artifact without
+   * changing the array return shape. The drift is also emitted to telemetry.
+   */
+  readonly telemetry?: { degradedIndexContract?: boolean };
 }
 
 /** Raw row shape we expect back from the search index. */
@@ -192,6 +200,23 @@ function escapeOdataLiteral(value: string): string {
   return value.replace(/'/g, "''");
 }
 
+// The lifecycle freshness clause. Some live indexes predate the field being
+// added to the contract; the retriever degrades past it on a missing-field 400
+// (see runSearchRequest) rather than failing the whole query.
+const LIFECYCLE_ACTIVE_CLAUSE = "lifecycle_state eq 'active'";
+
+// Remove ONLY the lifecycle_state clause from an assembled OData $filter, leaving
+// every other clause (tenant/program/client scope, confidence, search.in, …)
+// intact. The assembled filter joins top-level clauses with " and "; split/rejoin
+// on that separator is identity except for the dropped clause (inner " and "
+// inside parenthesised sub-clauses is preserved by the rejoin).
+function stripLifecycleStateFilter(filter: string): string {
+  return filter
+    .split(" and ")
+    .filter((clause) => clause.trim() !== LIFECYCLE_ACTIVE_CLAUSE)
+    .join(" and ");
+}
+
 function buildFilter(
   canonicalTenantKey: string,
   filters?: TenantContextFilters,
@@ -199,7 +224,7 @@ function buildFilter(
   // tenant_key is always pinned — broker boundary invariant.
   const parts: string[] = [
     `tenant_key eq '${escapeOdataLiteral(canonicalTenantKey)}'`,
-    "lifecycle_state eq 'active'",
+    LIFECYCLE_ACTIVE_CLAUSE,
   ];
 
   if (
@@ -533,6 +558,8 @@ function mapHitToTenantContextChunk(
 async function runSearchRequest(args: {
   body: Record<string, unknown>;
   fetchImpl: typeof fetch;
+  /** Invoked when the request had to degrade past a missing index field. */
+  onDegrade?: () => void;
 }): Promise<TenantContextSearchHit[]> {
   const url = `${endpointBase()}/indexes/${encodeURIComponent(
     TENANT_CONTEXT_INDEX_NAME,
@@ -543,14 +570,46 @@ async function runSearchRequest(args: {
     ...(await authHeaders()),
   };
 
-  const res = await args.fetchImpl(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(args.body),
-  });
+  const post = (body: Record<string, unknown>) =>
+    args.fetchImpl(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    });
+
+  // 1) Try the strict filter (includes the lifecycle freshness clause).
+  let res = await post(args.body);
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`azure_search_query_failed:${res.status}:${text}`);
+    const filter =
+      typeof args.body.filter === "string" ? args.body.filter : "";
+    // 2) Index/contract drift: the live index predates the lifecycle_state field
+    //    the current contract filters on. This is the SPECIFIC missing-field 400
+    //    — not a generic failure — so degrade gracefully instead of failing the
+    //    whole generation. We strip ONLY the lifecycle_state clause; tenant /
+    //    program / client scope and every other filter stay pinned.
+    const isMissingLifecycleField =
+      res.status === 400 &&
+      /Could not find a property named 'lifecycle_state'/i.test(text) &&
+      filter.includes(LIFECYCLE_ACTIVE_CLAUSE);
+    if (!isMissingLifecycleField) {
+      throw new Error(`azure_search_query_failed:${res.status}:${text}`);
+    }
+    // index-drift telemetry — surfaced, never silent.
+    console.warn("[tenant-context-retriever] azure_search_index_drift", {
+      event: "azure_search_index_drift",
+      index: TENANT_CONTEXT_INDEX_NAME,
+      missing_field: "lifecycle_state",
+      degraded_index_contract: true,
+      action: "retry_without_lifecycle_filter",
+    });
+    args.onDegrade?.();
+    // 3) Retry without the lifecycle_state clause only.
+    res = await post({ ...args.body, filter: stripLifecycleStateFilter(filter) });
+    if (!res.ok) {
+      const retryText = await res.text();
+      throw new Error(`azure_search_query_failed:${res.status}:${retryText}`);
+    }
   }
   const payload = (await res.json()) as { value?: TenantContextSearchHit[] };
   return payload.value ?? [];
@@ -611,6 +670,12 @@ export async function queryTenantContext(
   };
 
   const doFetch = input.fetchImpl ?? fetch;
+  // #4: record index/contract drift on the caller-supplied telemetry out-param so
+  // the result can be marked degraded_index_contract: true (also logged in
+  // runSearchRequest). No-op when the caller doesn't pass telemetry.
+  const markDegraded = () => {
+    if (input.telemetry) input.telemetry.degradedIndexContract = true;
+  };
   const hitSets: TenantContextSearchHit[][] = [];
 
   if (shouldRunStructuredContextPass(query)) {
@@ -619,6 +684,7 @@ export async function queryTenantContext(
       hitSets.push(
         await runSearchRequest({
           fetchImpl: doFetch,
+          onDegrade: markDegraded,
           body: {
             ...body,
             search: "*",
@@ -637,6 +703,7 @@ export async function queryTenantContext(
       hitSets.push(
         await runSearchRequest({
           fetchImpl: doFetch,
+          onDegrade: markDegraded,
           body: {
             ...body,
             search: anchor.search,
@@ -667,7 +734,9 @@ export async function queryTenantContext(
     );
   }
 
-  hitSets.push(await runSearchRequest({ fetchImpl: doFetch, body }));
+  hitSets.push(
+    await runSearchRequest({ fetchImpl: doFetch, body, onDegrade: markDegraded }),
+  );
 
   const chunks: TenantContextChunk[] = [];
   const seen = new Set<string>();
