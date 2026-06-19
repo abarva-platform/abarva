@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release restores the signed-out `/sign-in` experience to Clerk's built-in sign-in flow. The custom AbarVa demo form that asked for email, password, and a static access code has been removed from the route, and the public demo-code ticket API has been removed from the unauthenticated route allowlist.
+This release restores the signed-out `/sign-in` experience to a Clerk-backed email-code flow. The custom AbarVa demo form that asked for email, password, and a static access code has been removed from the route, and the public demo-code ticket API has been removed from the unauthenticated route allowlist.
 
 ## Layer Impact
 
@@ -28,7 +28,8 @@ This release restores the signed-out `/sign-in` experience to Clerk's built-in s
 
 ## Changes Included
 
-- `src/app/sign-in/[[...sign-in]]/page.tsx`: renders Clerk's `<SignIn />` component again, preserving redirect handling for already signed-in sessions.
+- `src/app/sign-in/[[...sign-in]]/page.tsx`: renders the restored email-code sign-in shell, preserving redirect handling for already signed-in sessions.
+- `src/components/auth/EmailCodeSignIn.tsx`: adds a Clerk-backed email-code-only sign-in form with no password field and no static access code.
 - `src/components/auth/SignInShell.tsx`: removed custom sign-in shell.
 - `src/components/auth/DemoCodeSignIn.tsx`: removed custom password/access-code form.
 - `src/app/api/auth/demo-code-sign-in/route.ts`: removed custom unauthenticated demo-code ticket endpoint.
@@ -45,7 +46,8 @@ This release restores the signed-out `/sign-in` experience to Clerk's built-in s
 - Pass: `npm run build`
 - Pass: `npm run release:check`
 - Observed: Jest emits existing duplicate manual mock warnings for markdown mocks and local Source DB missing-env console messages; assertions pass.
-- Pending: deployed unauthenticated browser verification that `/sign-in` shows Clerk sign-in and does not show `Password from invite`, `Access code`, or `424242`.
+- Partial deployed finding before this follow-up: generic Clerk `<SignIn />` removed the static access-code form but still exposed a password field because the Clerk instance has password enabled.
+- Pending: deployed unauthenticated browser verification that `/sign-in` shows email-code sign-in and does not show `Password from invite`, `Password`, `Access code`, or `424242`.
 
 ## Rollout Plan
 

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
-import { SignIn } from '@clerk/nextjs'
 import { currentUser } from '@clerk/nextjs/server'
+import { EmailCodeSignIn } from '@/components/auth/EmailCodeSignIn'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,13 +42,7 @@ export default async function SignInPage({
           gap: 16,
         }}
       >
-        <SignIn
-          routing="path"
-          path="/sign-in"
-          forceRedirectUrl={redirectUrl}
-          fallbackRedirectUrl="/auth-redirect"
-          signUpUrl="/sign-in"
-        />
+        <EmailCodeSignIn redirectUrl={redirectUrl} />
         <div
           style={{
             maxWidth: 460,
