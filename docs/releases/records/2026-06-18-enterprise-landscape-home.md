@@ -90,16 +90,26 @@ The retired Context/Corpus Explorer implementation that produced the poor screen
 - 2026-06-19 Home tenant-meta fix: `npx tsc --noEmit --pretty false` passed.
 - 2026-06-19 Home tenant-meta fix: `npm run build` passed.
 - 2026-06-19 Home tenant-meta fix: `npm run release:check` passed.
+- ACR build `cafn` passed for image `acrabarvalab001.azurecr.io/abarva/web:home-tenant-meta-8e4da3706`.
+- Image digest: `sha256:48cca57f350a513ba90b9905c20ce3b2997f27e1af06c657917b1d41ea86d344`.
+- Azure Container Apps revision `ca-abarva-web-lab-eastus--0000115` is `Healthy` / `Running`.
+- Traffic is 100% on revision `ca-abarva-web-lab-eastus--0000115`.
+- Signed-in Chrome crawl after cache-busted navigation: `/home` rendered `Home · Enterprise Landscape | AbarVa`, showed First Capital tenant meta, and did not show SkyHarbor tenant meta.
+- Signed-in Chrome crawl after cache-busted navigation: `/intelligence` rendered `Intelligence · Advisory Board | AbarVa` and did not show retired Explorer copy.
+- Signed-in Chrome crawl after cache-busted navigation: `/tower` rendered `AI Control Tower · AbarVa` and did not show retired Explorer copy.
+- Signed-in Chrome crawl after cache-busted navigation: `/admin` rendered `Setup · AbarVa`, preserving the setup/admin module.
 
 ## Rollout Plan
 
-Deployed to Azure Container Apps lab on revision `ca-abarva-web-lab-eastus--0000114` with 100% traffic. Verify signed-in visuals before promoting beyond lab/demo use.
+Deployed to Azure Container Apps lab on revision `ca-abarva-web-lab-eastus--0000115` with 100% traffic. Signed-in Chrome crawl has verified `/home`, `/intelligence`, `/tower`, and `/admin` after cache-busted navigation.
 
 ## Rollback Plan
 
 Rollback by shifting ACA traffic to the previous known-good revision `ca-abarva-web-lab-eastus--m6ece1b74`, then revert the `/home`, `/intelligence`, nav, and proxy route changes. No schema or data rollback is required.
 
 For the v3 cleanup specifically, rollback by shifting ACA traffic off `ca-abarva-web-lab-eastus--0000114` to the previous healthy revision, then reverting commit `09311f955`. No schema or data rollback is required.
+
+For the Home tenant-meta correction specifically, rollback by shifting ACA traffic off `ca-abarva-web-lab-eastus--0000115` to revision `ca-abarva-web-lab-eastus--0000114`, then reverting commit `8e4da3706`. No schema or data rollback is required.
 
 ## Audit Evidence
 
@@ -113,6 +123,11 @@ For the v3 cleanup specifically, rollback by shifting ACA traffic off `ca-abarva
 - ACR digest `sha256:01e0559f2a4614708dfdb9d44105e4551b4fd60cf2e1909a93034fc49fc9996c`.
 - ACA revision `ca-abarva-web-lab-eastus--0000114` with 100% traffic.
 - Live marker check for required Advisory Board copy and forbidden retired Explorer copy.
+- Home tenant-meta correction commit `8e4da3706`.
+- ACR image `acrabarvalab001.azurecr.io/abarva/web:home-tenant-meta-8e4da3706`.
+- ACR digest `sha256:48cca57f350a513ba90b9905c20ce3b2997f27e1af06c657917b1d41ea86d344`.
+- ACA revision `ca-abarva-web-lab-eastus--0000115` with 100% traffic.
+- Signed-in Chrome route crawl for `/home`, `/intelligence`, `/tower`, and `/admin` after cache-busted navigation.
 - ACR image `acrabarvalab001.azurecr.io/abarva/web:home-intelligence-routes-bad4a1c82`.
 - ACR digest `sha256:49cf49da21ad2e608bd2d84318442c5148443222a82e9ae04e53d10fd8504212`.
 - ACA revision `ca-abarva-web-lab-eastus--0000111` with 100% traffic.
