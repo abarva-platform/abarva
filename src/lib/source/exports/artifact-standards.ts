@@ -345,7 +345,7 @@ function createStandard(input: {
       visual('risk_or_tradeoff_view', 'Risk / tradeoff view', 'Decision risks in a scannable format.'),
     ],
     requiredEvidence: [
-      evidence('tenant_substrate', 'Tenant substrate grounding'),
+      evidence('tenant_substrate', 'Company substrate grounding'),
       evidence('source_methodology', 'Source methodology logic'),
       evidence('human_decision_owner', 'Named client decision owner or approval role'),
       evidence('ai_decision_attestation', 'Human decision attestation and AI-assisted decision-support watermark'),
