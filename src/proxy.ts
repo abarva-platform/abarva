@@ -286,6 +286,18 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL(target + request.nextUrl.search, request.url), 301))
   }
 
+  // 2026-06-19 · Intelligence route consolidation.
+  // The canonical client-facing Intelligence surface is the Advisory Board at
+  // /intelligence. Retire legacy deep links such as /intelligence/ask,
+  // /intelligence/context-demo, /intelligence/patterns, and other old
+  // context/corpus explorer paths so signed-in users cannot bypass the new
+  // page and land on raw facts/chunks/graph-oriented experiences.
+  if (request.nextUrl.pathname.startsWith('/intelligence/')) {
+    const url = new URL('/intelligence', request.url)
+    url.search = request.nextUrl.search
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url, 301))
+  }
+
   const requiresAuth = authRequiredRoutes(request) && !isTokenGuardedPublicOpsRoute(request)
 
   if (
