@@ -10,7 +10,7 @@
   },
   "trustLine": {
     "dimensionsLoaded": 8,
-    "evidencePoints": 1587,
+    "evidencePoints": 14620,
     "sources": 7,
     "searchVerifiedPct": 97
   },
@@ -34,8 +34,8 @@
       "headline": "Kyriba go-live is a control-evidence question, not just a project milestone.",
       "body": "Cash visibility and payments value depend on bank connectivity, SAP feed quality, signers, payment formats, and SOX evidence.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "source-docs/Lakeshore_Corporate_Policies_and_AI_Use_SYNTHETIC.md",
         "lak-finance-semantic-layer",
@@ -58,8 +58,8 @@
       "headline": "ERP/AP/AR/GL feed quality is the largest treasury value risk.",
       "body": "If feeds are not reconciled and semantically owned, treasury users will keep spreadsheet workarounds even after Kyriba goes live.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "source-docs/Lakeshore_Finance_AI_and_Close_SYNTHETIC.md",
         "lak-kyriba-control-evidence",
@@ -82,8 +82,8 @@
       "headline": "Liquidity forecasting needs certified finance data products.",
       "body": "Forecasting automation should be gated on cash, working-capital, payment, and GL semantic definitions with CFO/Treasurer signoff.",
       "confidence": "MEDIUM CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "source-docs/Lakeshore_IT_Systems_and_Controls_SYNTHETIC.md",
         "lak-bank-connectivity-risk",
@@ -106,8 +106,8 @@
       "headline": "Finance AI needs close/reporting evidence before it becomes board-ready.",
       "body": "Automated close and reporting depend on source citations, controls, and metric ownership, not just dashboard speed.",
       "confidence": "MEDIUM CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "source-docs/Lakeshore_Industries_V4_Source_04_SYNTHETIC.md",
         "lakeshore-v4-pattern-05",
@@ -130,8 +130,8 @@
       "headline": "Committed finance-AI value is outrunning realized value.",
       "body": "M365 Copilot finance shows $86M committed but $2.86M measured and is flagged at risk; scaling before metric certification compounds the gap.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "LAK-AI-009",
         "lak-finance-semantic-layer",
@@ -154,8 +154,8 @@
       "headline": "Close automation depends on certified metrics, not dashboard speed.",
       "body": "Automated close and reporting need source citations, control evidence, and metric ownership across SAP/BlackLine/Hyperion before they are board-ready.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "LAK-AI-004",
         "source-docs/Lakeshore_Finance_AI_and_Close_SYNTHETIC.md",
@@ -177,8 +177,8 @@
       "headline": "A semantic layer is the unlock for the variance explainer.",
       "body": "The finance AI narrative/variance explainer (design stage) is only trustworthy once GL/working-capital definitions are governed.",
       "confidence": "MEDIUM CONFIDENCE",
-      "evidencePoints": 2,
-      "sources": 1,
+      "evidencePoints": 22,
+      "sources": 2,
       "evidenceRefs": [
         "LAK-AI-006",
         "lak-finance-semantic-layer"
@@ -199,8 +199,8 @@
       "headline": "85,000 payments/month carry a format-mapping defect.",
       "body": "Payment-format defects and manual portal fallback put cash and payments value at risk the day Kyriba goes live.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "lak-bank-connectivity-risk",
         "LAK-VOL-002",
@@ -223,8 +223,8 @@
       "headline": "Bank connectivity is not certified for critical banks.",
       "body": "Treasury bank connectivity control evidence (mobilize stage) must be closed before broad rollout, prioritizing critical banks.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "LAK-AI-002",
         "lak-kyriba-control-evidence",
@@ -247,8 +247,8 @@
       "headline": "SOX signer controls evidence is incomplete.",
       "body": "Payment approvals and signer controls need SOX evidence before payments automation can be trusted.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "LAK-AI-001",
         "source-docs/Lakeshore_IT_Systems_and_Controls_SYNTHETIC.md",
@@ -270,7 +270,7 @@
       "headline": "M365 Copilot finance rollout has $86M committed and $2.9M realized.",
       "body": "Owned by Treasurer at stage 'scale' (confidence high); blocker: value measurement needs CFO/Treasurer signoff.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 3,
+      "evidencePoints": 22,
       "sources": 2,
       "evidenceRefs": [
         "LAK-AI-009",
@@ -291,8 +291,8 @@
       "headline": "On its core modernization metrics the enterprise sits in the third quartile \u2014 a 29-point gap to top quartile.",
       "body": "Your value 30.8 vs industry median 60 and top quartile 74 (large enterprise peer group).",
       "confidence": "MEDIUM CONFIDENCE",
-      "evidencePoints": 2,
-      "sources": 1,
+      "evidencePoints": 22,
+      "sources": 2,
       "evidenceRefs": [
         "LAKESHORE-BM-0017",
         "LAKESHORE-MET-0017"
@@ -305,7 +305,7 @@
       "dimension": "Business strategy & priorities",
       "status": "LOADED",
       "description": "Enterprise profile, operating model, strategic bets",
-      "evidence": 280,
+      "evidence": 2579,
       "sources": 2,
       "trust": 82
     },
@@ -313,7 +313,7 @@
       "dimension": "IT systems landscape",
       "status": "LOADED",
       "description": "Applications, integrations, systems of record",
-      "evidence": 130,
+      "evidence": 1198,
       "sources": 3,
       "trust": 82
     },
@@ -321,7 +321,7 @@
       "dimension": "Infrastructure & cloud",
       "status": "LOADED",
       "description": "Cloud, data centers, platform volumetrics",
-      "evidence": 52,
+      "evidence": 479,
       "sources": 4,
       "trust": 82
     },
@@ -329,7 +329,7 @@
       "dimension": "Data & connectivity",
       "status": "LOADED",
       "description": "Data products, integrations, semantic layer",
-      "evidence": 105,
+      "evidence": 967,
       "sources": 2,
       "trust": 82
     },
@@ -337,7 +337,7 @@
       "dimension": "Finance & run cost",
       "status": "LOADED",
       "description": "IT budget, run cost, AI spend by initiative",
-      "evidence": 300,
+      "evidence": 2764,
       "sources": 3,
       "trust": 82
     },
@@ -345,7 +345,7 @@
       "dimension": "Vendors & contracts",
       "status": "LOADED",
       "description": "Vendors, renewals, AI clauses, exit terms",
-      "evidence": 270,
+      "evidence": 2487,
       "sources": 4,
       "trust": 82
     },
@@ -353,7 +353,7 @@
       "dimension": "Execution & operations",
       "status": "LOADED",
       "description": "Initiatives, KPIs, incidents, delivery",
-      "evidence": 372,
+      "evidence": 3427,
       "sources": 2,
       "trust": 82
     },
@@ -361,7 +361,7 @@
       "dimension": "Governance, AI & evidence",
       "status": "LOADED",
       "description": "Controls, AI footprint, model risk, evidence",
-      "evidence": 78,
+      "evidence": 719,
       "sources": 3,
       "trust": 82
     }

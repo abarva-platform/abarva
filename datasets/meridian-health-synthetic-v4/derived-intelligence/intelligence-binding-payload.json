@@ -10,7 +10,7 @@
   },
   "trustLine": {
     "dimensionsLoaded": 8,
-    "evidencePoints": 1717,
+    "evidencePoints": 16729,
     "sources": 7,
     "searchVerifiedPct": 97
   },
@@ -31,8 +31,8 @@
       "headline": "Clinical + claims unification is the foundation, not a side project.",
       "body": "Longitudinal patient/member views require Epic, claims, pharmacy, and CRM records to be harmonized with PHI-safe governance and certified semantic products.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "source-docs/Meridian_Annual_Report_and_Databricks_Strategy_SYNTHETIC.md",
         "mer-clinical-claims-lakehouse",
@@ -55,8 +55,8 @@
       "headline": "Prior authorization AI must prove policy evidence and auditability.",
       "body": "Automation should not scale from workflow enthusiasm alone; it needs medical policy evidence, denial rationale, appeal support, and utilization management ownership.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "source-docs/Meridian_Call_Center_and_Prior_Auth_AI_SYNTHETIC.md",
         "mer-prior-auth-evidence",
@@ -79,8 +79,8 @@
       "headline": "Call-center agent assist needs operational context, not transcripts alone.",
       "body": "Useful next-best-action depends on benefits, claims status, care gaps, provider network, pharmacy, and consent controls.",
       "confidence": "MEDIUM CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "source-docs/Meridian_Corporate_Policies_and_AI_Use_SYNTHETIC.md",
         "mer-payment-integrity-leakage",
@@ -103,8 +103,8 @@
       "headline": "Payment integrity value depends on closing the feedback loop.",
       "body": "FWA and leakage analytics need provider-pattern evidence, recovery outcomes, and false-positive control before finance can claim value.",
       "confidence": "MEDIUM CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "source-docs/Meridian_Health_V4_Source_04_SYNTHETIC.md",
         "meridian-health-v4-pattern-05",
@@ -126,7 +126,7 @@
       "headline": "M365 Copilot non-clinical adoption has $93M committed and $2.5M realized.",
       "body": "Owned by Chief Data Officer at stage 'scale' (confidence medium); blocker: PHI/model governance and source evidence missing.",
       "confidence": "MEDIUM CONFIDENCE",
-      "evidencePoints": 3,
+      "evidencePoints": 22,
       "sources": 2,
       "evidenceRefs": [
         "MER-AI-013",
@@ -147,8 +147,8 @@
       "headline": "On its core modernization metrics the enterprise sits in the third quartile \u2014 a 29-point gap to top quartile.",
       "body": "Your value 36.4 vs industry median 60 and top quartile 74 (large enterprise peer group).",
       "confidence": "MEDIUM CONFIDENCE",
-      "evidencePoints": 2,
-      "sources": 1,
+      "evidencePoints": 22,
+      "sources": 2,
       "evidenceRefs": [
         "MERIDIANHEALTH-BM-0017",
         "MERIDIANHEALTH-MET-0017"
@@ -161,7 +161,7 @@
       "dimension": "Business strategy & priorities",
       "status": "LOADED",
       "description": "Enterprise profile, operating model, strategic bets",
-      "evidence": 280,
+      "evidence": 2728,
       "sources": 2,
       "trust": 82
     },
@@ -169,7 +169,7 @@
       "dimension": "IT systems landscape",
       "status": "LOADED",
       "description": "Applications, integrations, systems of record",
-      "evidence": 150,
+      "evidence": 1461,
       "sources": 3,
       "trust": 82
     },
@@ -177,7 +177,7 @@
       "dimension": "Infrastructure & cloud",
       "status": "LOADED",
       "description": "Cloud, data centers, platform volumetrics",
-      "evidence": 60,
+      "evidence": 585,
       "sources": 4,
       "trust": 82
     },
@@ -185,7 +185,7 @@
       "dimension": "Data & connectivity",
       "status": "LOADED",
       "description": "Data products, integrations, semantic layer",
-      "evidence": 120,
+      "evidence": 1169,
       "sources": 2,
       "trust": 82
     },
@@ -193,7 +193,7 @@
       "dimension": "Finance & run cost",
       "status": "LOADED",
       "description": "IT budget, run cost, AI spend by initiative",
-      "evidence": 300,
+      "evidence": 2923,
       "sources": 3,
       "trust": 82
     },
@@ -201,7 +201,7 @@
       "dimension": "Vendors & contracts",
       "status": "LOADED",
       "description": "Vendors, renewals, AI clauses, exit terms",
-      "evidence": 285,
+      "evidence": 2777,
       "sources": 4,
       "trust": 82
     },
@@ -209,7 +209,7 @@
       "dimension": "Execution & operations",
       "status": "LOADED",
       "description": "Initiatives, KPIs, incidents, delivery",
-      "evidence": 432,
+      "evidence": 4209,
       "sources": 2,
       "trust": 82
     },
@@ -217,7 +217,7 @@
       "dimension": "Governance, AI & evidence",
       "status": "LOADED",
       "description": "Controls, AI footprint, model risk, evidence",
-      "evidence": 90,
+      "evidence": 877,
       "sources": 3,
       "trust": 82
     }

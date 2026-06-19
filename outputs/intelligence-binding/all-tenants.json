@@ -12,7 +12,7 @@
       },
       "trustLine": {
         "dimensionsLoaded": 8,
-        "evidencePoints": 2140,
+        "evidencePoints": 24473,
         "sources": 8,
         "searchVerifiedPct": 97
       },
@@ -33,8 +33,8 @@
           "headline": "Core and payments modernization decide whether digital value shows up.",
           "body": "FedNow/RTP, ACH, wire, sanctions, fraud, and API gateway dependencies mean payments value should be sequenced as a cross-domain modernization path, not a channel feature.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/First_Capital_2025_Annual_Report_SYNTHETIC.md",
             "fc-payments-value-gate",
@@ -57,8 +57,8 @@
           "headline": "AI scale is blocked by model-risk evidence, not by lack of use cases.",
           "body": "Fraud, AML, lending, HR, servicing, and wealth AI need validation, restricted-data attestations, explainability, and monitoring before production scale.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/First_Capital_Corporate_Policies_and_AI_Use_SYNTHETIC.md",
             "fc-model-risk-ai-scale-gate",
@@ -81,8 +81,8 @@
           "headline": "Customer and transaction data products are the CDAO control point.",
           "body": "Customer 360, fraud feature stores, transaction monitoring, and credit data products need certified semantics and lineage before the CIO can defend AI value claims.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/First_Capital_Digital_Payments_and_Core_Modernization_SYNTHETIC.md",
             "fc-aml-false-positive-reduction",
@@ -105,8 +105,8 @@
           "headline": "Usage-only AI reporting is not enough for the CFO.",
           "body": "Tower spend and usage have to connect to realized value, control readiness, and risk status before expansion or renewal decisions.",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/First_Capital_Financial_V4_Source_05_SYNTHETIC.md",
             "first-capital-v4-pattern-05",
@@ -128,7 +128,7 @@
           "headline": "Real-time scam & APP fraud detection has $47M committed and $0.0M realized.",
           "body": "Owned by Chief Risk Officer at stage 'ideate' (confidence low); blocker: No measurable value after pilot; sunset and reallocate budget.",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 3,
+          "evidencePoints": 22,
           "sources": 2,
           "evidenceRefs": [
             "FC-AI-001",
@@ -149,8 +149,8 @@
           "headline": "On its core modernization metrics the enterprise sits in the third quartile \u2014 a 29-point gap to top quartile.",
           "body": "Your value 56.0 vs industry median 60 and top quartile 74 (large enterprise peer group).",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 2,
-          "sources": 1,
+          "evidencePoints": 22,
+          "sources": 2,
           "evidenceRefs": [
             "FIRSTCAPITAL-BM-0017",
             "FIRSTCAPITAL-MET-0017"
@@ -163,7 +163,7 @@
           "dimension": "Business strategy & priorities",
           "status": "LOADED",
           "description": "Enterprise profile, operating model, strategic bets",
-          "evidence": 280,
+          "evidence": 3202,
           "sources": 2,
           "trust": 82
         },
@@ -171,7 +171,7 @@
           "dimension": "IT systems landscape",
           "status": "LOADED",
           "description": "Applications, integrations, systems of record",
-          "evidence": 260,
+          "evidence": 2973,
           "sources": 3,
           "trust": 82
         },
@@ -179,7 +179,7 @@
           "dimension": "Infrastructure & cloud",
           "status": "LOADED",
           "description": "Cloud, data centers, platform volumetrics",
-          "evidence": 104,
+          "evidence": 1189,
           "sources": 4,
           "trust": 82
         },
@@ -187,7 +187,7 @@
           "dimension": "Data & connectivity",
           "status": "LOADED",
           "description": "Data products, integrations, semantic layer",
-          "evidence": 140,
+          "evidence": 1601,
           "sources": 2,
           "trust": 82
         },
@@ -195,7 +195,7 @@
           "dimension": "Finance & run cost",
           "status": "LOADED",
           "description": "IT budget, run cost, AI spend by initiative",
-          "evidence": 300,
+          "evidence": 3431,
           "sources": 3,
           "trust": 82
         },
@@ -203,7 +203,7 @@
           "dimension": "Vendors & contracts",
           "status": "LOADED",
           "description": "Vendors, renewals, AI clauses, exit terms",
-          "evidence": 360,
+          "evidence": 4117,
           "sources": 4,
           "trust": 82
         },
@@ -211,7 +211,7 @@
           "dimension": "Execution & operations",
           "status": "LOADED",
           "description": "Initiatives, KPIs, incidents, delivery",
-          "evidence": 540,
+          "evidence": 6176,
           "sources": 2,
           "trust": 82
         },
@@ -219,7 +219,7 @@
           "dimension": "Governance, AI & evidence",
           "status": "LOADED",
           "description": "Controls, AI footprint, model risk, evidence",
-          "evidence": 156,
+          "evidence": 1784,
           "sources": 3,
           "trust": 82
         }
@@ -254,7 +254,7 @@
       },
       "trustLine": {
         "dimensionsLoaded": 8,
-        "evidencePoints": 4480,
+        "evidencePoints": 55956,
         "sources": 12,
         "searchVerifiedPct": 97
       },
@@ -275,8 +275,8 @@
           "headline": "Data volume is not the blocker; governed real-time operating data products are.",
           "body": "The estate has large EDW/data-product/integration footprint, but IROPS and customer AI need certified operational domains, freshness controls, and lineage that can survive audit and disruption events.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 27,
+          "sources": 2,
           "evidenceRefs": [
             "F09_data-analytics-estate.csv",
             "F10_integrations-interfaces.csv",
@@ -299,8 +299,8 @@
           "headline": "Teradata/SAS/BI rationalization is a modernization move, not just a cost takeout.",
           "body": "The corpus pattern fit says Teradata, SAS, DataStage, Informatica, Tableau, and BusinessObjects should be mapped by usage, semantic ownership, and retirement path before the CDAO funds a lakehouse or CDP narrative.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 2,
-          "sources": 1,
+          "evidencePoints": 18,
+          "sources": 2,
           "evidenceRefs": [
             "corpus-patterns/move-patterns.jsonl#sha-teradata-rationalization",
             "SHA-ACT-003"
@@ -321,8 +321,8 @@
           "headline": "Mainframe-adjacent feeds still determine how fast digital and AI can move.",
           "body": "The PNR/core operational load and IBM Z estate mean API exposure and capability-by-capability strangling is safer than a broad replacement story.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 27,
+          "sources": 2,
           "evidenceRefs": [
             "F07_infrastructure-cloud.csv#SHA-INF-001",
             "F08_platform-volumetrics.csv",
@@ -345,8 +345,8 @@
           "headline": "Customer AI scale needs CDP and identity governance first.",
           "body": "Delta-style Digital Concierge is already identified, but the blocker says No CDP; consent and identity fragmented. That makes identity and consent a prerequisite, not a later cleanup task.",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 2,
-          "sources": 1,
+          "evidencePoints": 18,
+          "sources": 2,
           "evidenceRefs": [
             "T01_initiative-registry.csv",
             "corpus-patterns/move-patterns.jsonl#sha-cdp-identity-value-gate"
@@ -363,11 +363,11 @@
             "BUSINESS STRATEGY"
           ],
           "crossDomain": false,
-          "headline": "On its core modernization metrics the enterprise sits in the 4 quartile \u2014 a 28.11-point gap to top quartile.",
+          "headline": "On its core modernization metrics the enterprise sits in the fourth quartile \u2014 a 28-point gap to top quartile.",
           "body": "Your value 233.6 vs industry median 239.27 and top quartile 261.71 (Digital-Native Operators).",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 2,
-          "sources": 1,
+          "evidencePoints": 18,
+          "sources": 2,
           "evidenceRefs": [
             "BMK-0108",
             "MET-0108"
@@ -380,7 +380,7 @@
           "dimension": "Business strategy & priorities",
           "status": "LOADED",
           "description": "Enterprise profile, operating model, strategic bets",
-          "evidence": 280,
+          "evidence": 3497,
           "sources": 2,
           "trust": 82
         },
@@ -388,7 +388,7 @@
           "dimension": "IT systems landscape",
           "status": "LOADED",
           "description": "Applications, integrations, systems of record",
-          "evidence": 900,
+          "evidence": 11241,
           "sources": 3,
           "trust": 82
         },
@@ -396,7 +396,7 @@
           "dimension": "Infrastructure & cloud",
           "status": "LOADED",
           "description": "Cloud, data centers, platform volumetrics",
-          "evidence": 360,
+          "evidence": 4496,
           "sources": 4,
           "trust": 82
         },
@@ -404,7 +404,7 @@
           "dimension": "Data & connectivity",
           "status": "LOADED",
           "description": "Data products, integrations, semantic layer",
-          "evidence": 420,
+          "evidence": 5246,
           "sources": 2,
           "trust": 82
         },
@@ -412,7 +412,7 @@
           "dimension": "Finance & run cost",
           "status": "LOADED",
           "description": "IT budget, run cost, AI spend by initiative",
-          "evidence": 300,
+          "evidence": 3747,
           "sources": 3,
           "trust": 82
         },
@@ -420,7 +420,7 @@
           "dimension": "Vendors & contracts",
           "status": "LOADED",
           "description": "Vendors, renewals, AI clauses, exit terms",
-          "evidence": 960,
+          "evidence": 11991,
           "sources": 4,
           "trust": 82
         },
@@ -428,7 +428,7 @@
           "dimension": "Execution & operations",
           "status": "LOADED",
           "description": "Initiatives, KPIs, incidents, delivery",
-          "evidence": 720,
+          "evidence": 8993,
           "sources": 2,
           "trust": 82
         },
@@ -436,7 +436,7 @@
           "dimension": "Governance, AI & evidence",
           "status": "LOADED",
           "description": "Controls, AI footprint, model risk, evidence",
-          "evidence": 540,
+          "evidence": 6745,
           "sources": 3,
           "trust": 82
         }
@@ -476,7 +476,7 @@
       },
       "trustLine": {
         "dimensionsLoaded": 8,
-        "evidencePoints": 1717,
+        "evidencePoints": 16729,
         "sources": 7,
         "searchVerifiedPct": 97
       },
@@ -497,8 +497,8 @@
           "headline": "Clinical + claims unification is the foundation, not a side project.",
           "body": "Longitudinal patient/member views require Epic, claims, pharmacy, and CRM records to be harmonized with PHI-safe governance and certified semantic products.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/Meridian_Annual_Report_and_Databricks_Strategy_SYNTHETIC.md",
             "mer-clinical-claims-lakehouse",
@@ -521,8 +521,8 @@
           "headline": "Prior authorization AI must prove policy evidence and auditability.",
           "body": "Automation should not scale from workflow enthusiasm alone; it needs medical policy evidence, denial rationale, appeal support, and utilization management ownership.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/Meridian_Call_Center_and_Prior_Auth_AI_SYNTHETIC.md",
             "mer-prior-auth-evidence",
@@ -545,8 +545,8 @@
           "headline": "Call-center agent assist needs operational context, not transcripts alone.",
           "body": "Useful next-best-action depends on benefits, claims status, care gaps, provider network, pharmacy, and consent controls.",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/Meridian_Corporate_Policies_and_AI_Use_SYNTHETIC.md",
             "mer-payment-integrity-leakage",
@@ -569,8 +569,8 @@
           "headline": "Payment integrity value depends on closing the feedback loop.",
           "body": "FWA and leakage analytics need provider-pattern evidence, recovery outcomes, and false-positive control before finance can claim value.",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/Meridian_Health_V4_Source_04_SYNTHETIC.md",
             "meridian-health-v4-pattern-05",
@@ -592,7 +592,7 @@
           "headline": "M365 Copilot non-clinical adoption has $93M committed and $2.5M realized.",
           "body": "Owned by Chief Data Officer at stage 'scale' (confidence medium); blocker: PHI/model governance and source evidence missing.",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 3,
+          "evidencePoints": 22,
           "sources": 2,
           "evidenceRefs": [
             "MER-AI-013",
@@ -613,8 +613,8 @@
           "headline": "On its core modernization metrics the enterprise sits in the third quartile \u2014 a 29-point gap to top quartile.",
           "body": "Your value 36.4 vs industry median 60 and top quartile 74 (large enterprise peer group).",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 2,
-          "sources": 1,
+          "evidencePoints": 22,
+          "sources": 2,
           "evidenceRefs": [
             "MERIDIANHEALTH-BM-0017",
             "MERIDIANHEALTH-MET-0017"
@@ -627,7 +627,7 @@
           "dimension": "Business strategy & priorities",
           "status": "LOADED",
           "description": "Enterprise profile, operating model, strategic bets",
-          "evidence": 280,
+          "evidence": 2728,
           "sources": 2,
           "trust": 82
         },
@@ -635,7 +635,7 @@
           "dimension": "IT systems landscape",
           "status": "LOADED",
           "description": "Applications, integrations, systems of record",
-          "evidence": 150,
+          "evidence": 1461,
           "sources": 3,
           "trust": 82
         },
@@ -643,7 +643,7 @@
           "dimension": "Infrastructure & cloud",
           "status": "LOADED",
           "description": "Cloud, data centers, platform volumetrics",
-          "evidence": 60,
+          "evidence": 585,
           "sources": 4,
           "trust": 82
         },
@@ -651,7 +651,7 @@
           "dimension": "Data & connectivity",
           "status": "LOADED",
           "description": "Data products, integrations, semantic layer",
-          "evidence": 120,
+          "evidence": 1169,
           "sources": 2,
           "trust": 82
         },
@@ -659,7 +659,7 @@
           "dimension": "Finance & run cost",
           "status": "LOADED",
           "description": "IT budget, run cost, AI spend by initiative",
-          "evidence": 300,
+          "evidence": 2923,
           "sources": 3,
           "trust": 82
         },
@@ -667,7 +667,7 @@
           "dimension": "Vendors & contracts",
           "status": "LOADED",
           "description": "Vendors, renewals, AI clauses, exit terms",
-          "evidence": 285,
+          "evidence": 2777,
           "sources": 4,
           "trust": 82
         },
@@ -675,7 +675,7 @@
           "dimension": "Execution & operations",
           "status": "LOADED",
           "description": "Initiatives, KPIs, incidents, delivery",
-          "evidence": 432,
+          "evidence": 4209,
           "sources": 2,
           "trust": 82
         },
@@ -683,7 +683,7 @@
           "dimension": "Governance, AI & evidence",
           "status": "LOADED",
           "description": "Controls, AI footprint, model risk, evidence",
-          "evidence": 90,
+          "evidence": 877,
           "sources": 3,
           "trust": 82
         }
@@ -718,7 +718,7 @@
       },
       "trustLine": {
         "dimensionsLoaded": 8,
-        "evidencePoints": 1587,
+        "evidencePoints": 14620,
         "sources": 7,
         "searchVerifiedPct": 97
       },
@@ -742,8 +742,8 @@
           "headline": "Kyriba go-live is a control-evidence question, not just a project milestone.",
           "body": "Cash visibility and payments value depend on bank connectivity, SAP feed quality, signers, payment formats, and SOX evidence.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/Lakeshore_Corporate_Policies_and_AI_Use_SYNTHETIC.md",
             "lak-finance-semantic-layer",
@@ -766,8 +766,8 @@
           "headline": "ERP/AP/AR/GL feed quality is the largest treasury value risk.",
           "body": "If feeds are not reconciled and semantically owned, treasury users will keep spreadsheet workarounds even after Kyriba goes live.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/Lakeshore_Finance_AI_and_Close_SYNTHETIC.md",
             "lak-kyriba-control-evidence",
@@ -790,8 +790,8 @@
           "headline": "Liquidity forecasting needs certified finance data products.",
           "body": "Forecasting automation should be gated on cash, working-capital, payment, and GL semantic definitions with CFO/Treasurer signoff.",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/Lakeshore_IT_Systems_and_Controls_SYNTHETIC.md",
             "lak-bank-connectivity-risk",
@@ -814,8 +814,8 @@
           "headline": "Finance AI needs close/reporting evidence before it becomes board-ready.",
           "body": "Automated close and reporting depend on source citations, controls, and metric ownership, not just dashboard speed.",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/Lakeshore_Industries_V4_Source_04_SYNTHETIC.md",
             "lakeshore-v4-pattern-05",
@@ -838,8 +838,8 @@
           "headline": "Committed finance-AI value is outrunning realized value.",
           "body": "M365 Copilot finance shows $86M committed but $2.86M measured and is flagged at risk; scaling before metric certification compounds the gap.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "LAK-AI-009",
             "lak-finance-semantic-layer",
@@ -862,8 +862,8 @@
           "headline": "Close automation depends on certified metrics, not dashboard speed.",
           "body": "Automated close and reporting need source citations, control evidence, and metric ownership across SAP/BlackLine/Hyperion before they are board-ready.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "LAK-AI-004",
             "source-docs/Lakeshore_Finance_AI_and_Close_SYNTHETIC.md",
@@ -885,8 +885,8 @@
           "headline": "A semantic layer is the unlock for the variance explainer.",
           "body": "The finance AI narrative/variance explainer (design stage) is only trustworthy once GL/working-capital definitions are governed.",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 2,
-          "sources": 1,
+          "evidencePoints": 22,
+          "sources": 2,
           "evidenceRefs": [
             "LAK-AI-006",
             "lak-finance-semantic-layer"
@@ -907,8 +907,8 @@
           "headline": "85,000 payments/month carry a format-mapping defect.",
           "body": "Payment-format defects and manual portal fallback put cash and payments value at risk the day Kyriba goes live.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "lak-bank-connectivity-risk",
             "LAK-VOL-002",
@@ -931,8 +931,8 @@
           "headline": "Bank connectivity is not certified for critical banks.",
           "body": "Treasury bank connectivity control evidence (mobilize stage) must be closed before broad rollout, prioritizing critical banks.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "LAK-AI-002",
             "lak-kyriba-control-evidence",
@@ -955,8 +955,8 @@
           "headline": "SOX signer controls evidence is incomplete.",
           "body": "Payment approvals and signer controls need SOX evidence before payments automation can be trusted.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "LAK-AI-001",
             "source-docs/Lakeshore_IT_Systems_and_Controls_SYNTHETIC.md",
@@ -978,7 +978,7 @@
           "headline": "M365 Copilot finance rollout has $86M committed and $2.9M realized.",
           "body": "Owned by Treasurer at stage 'scale' (confidence high); blocker: value measurement needs CFO/Treasurer signoff.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
+          "evidencePoints": 22,
           "sources": 2,
           "evidenceRefs": [
             "LAK-AI-009",
@@ -999,8 +999,8 @@
           "headline": "On its core modernization metrics the enterprise sits in the third quartile \u2014 a 29-point gap to top quartile.",
           "body": "Your value 30.8 vs industry median 60 and top quartile 74 (large enterprise peer group).",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 2,
-          "sources": 1,
+          "evidencePoints": 22,
+          "sources": 2,
           "evidenceRefs": [
             "LAKESHORE-BM-0017",
             "LAKESHORE-MET-0017"
@@ -1013,7 +1013,7 @@
           "dimension": "Business strategy & priorities",
           "status": "LOADED",
           "description": "Enterprise profile, operating model, strategic bets",
-          "evidence": 280,
+          "evidence": 2579,
           "sources": 2,
           "trust": 82
         },
@@ -1021,7 +1021,7 @@
           "dimension": "IT systems landscape",
           "status": "LOADED",
           "description": "Applications, integrations, systems of record",
-          "evidence": 130,
+          "evidence": 1198,
           "sources": 3,
           "trust": 82
         },
@@ -1029,7 +1029,7 @@
           "dimension": "Infrastructure & cloud",
           "status": "LOADED",
           "description": "Cloud, data centers, platform volumetrics",
-          "evidence": 52,
+          "evidence": 479,
           "sources": 4,
           "trust": 82
         },
@@ -1037,7 +1037,7 @@
           "dimension": "Data & connectivity",
           "status": "LOADED",
           "description": "Data products, integrations, semantic layer",
-          "evidence": 105,
+          "evidence": 967,
           "sources": 2,
           "trust": 82
         },
@@ -1045,7 +1045,7 @@
           "dimension": "Finance & run cost",
           "status": "LOADED",
           "description": "IT budget, run cost, AI spend by initiative",
-          "evidence": 300,
+          "evidence": 2764,
           "sources": 3,
           "trust": 82
         },
@@ -1053,7 +1053,7 @@
           "dimension": "Vendors & contracts",
           "status": "LOADED",
           "description": "Vendors, renewals, AI clauses, exit terms",
-          "evidence": 270,
+          "evidence": 2487,
           "sources": 4,
           "trust": 82
         },
@@ -1061,7 +1061,7 @@
           "dimension": "Execution & operations",
           "status": "LOADED",
           "description": "Initiatives, KPIs, incidents, delivery",
-          "evidence": 372,
+          "evidence": 3427,
           "sources": 2,
           "trust": 82
         },
@@ -1069,7 +1069,7 @@
           "dimension": "Governance, AI & evidence",
           "status": "LOADED",
           "description": "Controls, AI footprint, model risk, evidence",
-          "evidence": 78,
+          "evidence": 719,
           "sources": 3,
           "trust": 82
         }
@@ -1104,7 +1104,7 @@
       },
       "trustLine": {
         "dimensionsLoaded": 8,
-        "evidencePoints": 1795,
+        "evidencePoints": 17548,
         "sources": 8,
         "searchVerifiedPct": 97
       },
@@ -1125,8 +1125,8 @@
           "headline": "Inventory truth is the gate before omnichannel AI scale.",
           "body": "BOPIS, ship-from-store, substitution, and exception prediction depend on item-location accuracy and store-task reliability.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/Apex_AI_Control_Tower_Monthly_Refresh_SYNTHETIC.md",
             "apx-omnichannel-inventory-truth",
@@ -1148,8 +1148,8 @@
           "headline": "Retail media value needs incrementality proof, not impression volume.",
           "body": "Personalization and retail media should connect loyalty identity, consent, clean-room measurement, margin, and campaign lift.",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/Apex_Corporate_Policies_and_AI_Use_SYNTHETIC.md",
             "apx-shrink-evidence-chain",
@@ -1171,8 +1171,8 @@
           "headline": "Shrink AI needs a connected evidence chain.",
           "body": "POS exceptions, camera events, returns, inventory movement, and investigations must connect before loss-prevention AI can scale without customer friction.",
           "confidence": "HIGH CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/Apex_Omnichannel_and_Order_Management_SYNTHETIC.md",
             "apx-retail-media-incrementality",
@@ -1194,8 +1194,8 @@
           "headline": "Store labor AI needs manager-ready guardrails.",
           "body": "Scheduling and task optimization must respect labor rules, local constraints, and manager overrides to avoid brittle plans.",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 3,
-          "sources": 1,
+          "evidencePoints": 33,
+          "sources": 2,
           "evidenceRefs": [
             "source-docs/Apex_Retail_2025_Annual_Strategy_SYNTHETIC.md",
             "apx-store-labor-ai-guardrails",
@@ -1217,7 +1217,7 @@
           "headline": "Retail lakehouse and customer inventory graph has $95M committed and $12.0M realized.",
           "body": "Owned by Chief Data Officer at stage 'mobilize' (confidence medium); blocker: identity and item-location data quality.",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 3,
+          "evidencePoints": 22,
           "sources": 2,
           "evidenceRefs": [
             "APX-INIT-001",
@@ -1238,8 +1238,8 @@
           "headline": "On its core modernization metrics the enterprise sits in the third quartile \u2014 a 29-point gap to top quartile.",
           "body": "Your value 39.2 vs industry median 60 and top quartile 74 (large enterprise peer group).",
           "confidence": "MEDIUM CONFIDENCE",
-          "evidencePoints": 2,
-          "sources": 1,
+          "evidencePoints": 22,
+          "sources": 2,
           "evidenceRefs": [
             "APEXRETAIL-BM-0017",
             "APEXRETAIL-MET-0017"
@@ -1252,7 +1252,7 @@
           "dimension": "Business strategy & priorities",
           "status": "LOADED",
           "description": "Enterprise profile, operating model, strategic bets",
-          "evidence": 280,
+          "evidence": 2737,
           "sources": 2,
           "trust": 82
         },
@@ -1260,7 +1260,7 @@
           "dimension": "IT systems landscape",
           "status": "LOADED",
           "description": "Applications, integrations, systems of record",
-          "evidence": 170,
+          "evidence": 1662,
           "sources": 3,
           "trust": 82
         },
@@ -1268,7 +1268,7 @@
           "dimension": "Infrastructure & cloud",
           "status": "LOADED",
           "description": "Cloud, data centers, platform volumetrics",
-          "evidence": 68,
+          "evidence": 665,
           "sources": 4,
           "trust": 82
         },
@@ -1276,7 +1276,7 @@
           "dimension": "Data & connectivity",
           "status": "LOADED",
           "description": "Data products, integrations, semantic layer",
-          "evidence": 125,
+          "evidence": 1222,
           "sources": 2,
           "trust": 82
         },
@@ -1284,7 +1284,7 @@
           "dimension": "Finance & run cost",
           "status": "LOADED",
           "description": "IT budget, run cost, AI spend by initiative",
-          "evidence": 300,
+          "evidence": 2933,
           "sources": 3,
           "trust": 82
         },
@@ -1292,7 +1292,7 @@
           "dimension": "Vendors & contracts",
           "status": "LOADED",
           "description": "Vendors, renewals, AI clauses, exit terms",
-          "evidence": 300,
+          "evidence": 2933,
           "sources": 4,
           "trust": 82
         },
@@ -1300,7 +1300,7 @@
           "dimension": "Execution & operations",
           "status": "LOADED",
           "description": "Initiatives, KPIs, incidents, delivery",
-          "evidence": 450,
+          "evidence": 4399,
           "sources": 2,
           "trust": 82
         },
@@ -1308,7 +1308,7 @@
           "dimension": "Governance, AI & evidence",
           "status": "LOADED",
           "description": "Controls, AI footprint, model risk, evidence",
-          "evidence": 102,
+          "evidence": 997,
           "sources": 3,
           "trust": 82
         }

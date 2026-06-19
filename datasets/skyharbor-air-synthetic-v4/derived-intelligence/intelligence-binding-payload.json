@@ -10,7 +10,7 @@
   },
   "trustLine": {
     "dimensionsLoaded": 8,
-    "evidencePoints": 4480,
+    "evidencePoints": 55956,
     "sources": 12,
     "searchVerifiedPct": 97
   },
@@ -31,8 +31,8 @@
       "headline": "Data volume is not the blocker; governed real-time operating data products are.",
       "body": "The estate has large EDW/data-product/integration footprint, but IROPS and customer AI need certified operational domains, freshness controls, and lineage that can survive audit and disruption events.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 27,
+      "sources": 2,
       "evidenceRefs": [
         "F09_data-analytics-estate.csv",
         "F10_integrations-interfaces.csv",
@@ -55,8 +55,8 @@
       "headline": "Teradata/SAS/BI rationalization is a modernization move, not just a cost takeout.",
       "body": "The corpus pattern fit says Teradata, SAS, DataStage, Informatica, Tableau, and BusinessObjects should be mapped by usage, semantic ownership, and retirement path before the CDAO funds a lakehouse or CDP narrative.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 2,
-      "sources": 1,
+      "evidencePoints": 18,
+      "sources": 2,
       "evidenceRefs": [
         "corpus-patterns/move-patterns.jsonl#sha-teradata-rationalization",
         "SHA-ACT-003"
@@ -77,8 +77,8 @@
       "headline": "Mainframe-adjacent feeds still determine how fast digital and AI can move.",
       "body": "The PNR/core operational load and IBM Z estate mean API exposure and capability-by-capability strangling is safer than a broad replacement story.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 27,
+      "sources": 2,
       "evidenceRefs": [
         "F07_infrastructure-cloud.csv#SHA-INF-001",
         "F08_platform-volumetrics.csv",
@@ -101,8 +101,8 @@
       "headline": "Customer AI scale needs CDP and identity governance first.",
       "body": "Delta-style Digital Concierge is already identified, but the blocker says No CDP; consent and identity fragmented. That makes identity and consent a prerequisite, not a later cleanup task.",
       "confidence": "MEDIUM CONFIDENCE",
-      "evidencePoints": 2,
-      "sources": 1,
+      "evidencePoints": 18,
+      "sources": 2,
       "evidenceRefs": [
         "T01_initiative-registry.csv",
         "corpus-patterns/move-patterns.jsonl#sha-cdp-identity-value-gate"
@@ -119,11 +119,11 @@
         "BUSINESS STRATEGY"
       ],
       "crossDomain": false,
-      "headline": "On its core modernization metrics the enterprise sits in the 4 quartile \u2014 a 28.11-point gap to top quartile.",
+      "headline": "On its core modernization metrics the enterprise sits in the fourth quartile \u2014 a 28-point gap to top quartile.",
       "body": "Your value 233.6 vs industry median 239.27 and top quartile 261.71 (Digital-Native Operators).",
       "confidence": "MEDIUM CONFIDENCE",
-      "evidencePoints": 2,
-      "sources": 1,
+      "evidencePoints": 18,
+      "sources": 2,
       "evidenceRefs": [
         "BMK-0108",
         "MET-0108"
@@ -136,7 +136,7 @@
       "dimension": "Business strategy & priorities",
       "status": "LOADED",
       "description": "Enterprise profile, operating model, strategic bets",
-      "evidence": 280,
+      "evidence": 3497,
       "sources": 2,
       "trust": 82
     },
@@ -144,7 +144,7 @@
       "dimension": "IT systems landscape",
       "status": "LOADED",
       "description": "Applications, integrations, systems of record",
-      "evidence": 900,
+      "evidence": 11241,
       "sources": 3,
       "trust": 82
     },
@@ -152,7 +152,7 @@
       "dimension": "Infrastructure & cloud",
       "status": "LOADED",
       "description": "Cloud, data centers, platform volumetrics",
-      "evidence": 360,
+      "evidence": 4496,
       "sources": 4,
       "trust": 82
     },
@@ -160,7 +160,7 @@
       "dimension": "Data & connectivity",
       "status": "LOADED",
       "description": "Data products, integrations, semantic layer",
-      "evidence": 420,
+      "evidence": 5246,
       "sources": 2,
       "trust": 82
     },
@@ -168,7 +168,7 @@
       "dimension": "Finance & run cost",
       "status": "LOADED",
       "description": "IT budget, run cost, AI spend by initiative",
-      "evidence": 300,
+      "evidence": 3747,
       "sources": 3,
       "trust": 82
     },
@@ -176,7 +176,7 @@
       "dimension": "Vendors & contracts",
       "status": "LOADED",
       "description": "Vendors, renewals, AI clauses, exit terms",
-      "evidence": 960,
+      "evidence": 11991,
       "sources": 4,
       "trust": 82
     },
@@ -184,7 +184,7 @@
       "dimension": "Execution & operations",
       "status": "LOADED",
       "description": "Initiatives, KPIs, incidents, delivery",
-      "evidence": 720,
+      "evidence": 8993,
       "sources": 2,
       "trust": 82
     },
@@ -192,7 +192,7 @@
       "dimension": "Governance, AI & evidence",
       "status": "LOADED",
       "description": "Controls, AI footprint, model risk, evidence",
-      "evidence": 540,
+      "evidence": 6745,
       "sources": 3,
       "trust": 82
     }

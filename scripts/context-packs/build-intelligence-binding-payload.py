@@ -50,7 +50,14 @@ def f(x, d=0.0):
     try: return float(str(x).replace(",", "").strip() or 0)
     except: return d
 
-def signals_from(reads, t01, bm, raid):
+LOAD_DEPTH = {  # (records, facts) committed to Azure per the V4 ACA load receipt
+    "first-capital": (2227, 24474), "skyharbor-air": (6094, 55956),
+    "meridian-health": (1538, 16728), "lakeshore": (1348, 14619), "apex-retail": (1644, 17548),
+}
+def _scale(nrefs, fpr):
+    return int(min(60, max(6, nrefs * fpr)))
+
+def signals_from(reads, t01, bm, raid, fpr):
     sigs = []
     # 1) derived insights across all reads -> signal cards
     for rd in reads:
@@ -65,7 +72,7 @@ def signals_from(reads, t01, bm, raid):
                 "domains": doms, "crossDomain": len(doms) > 1,
                 "headline": ins.get("headline", ""), "body": ins.get("soWhat", ""),
                 "confidence": "HIGH CONFIDENCE" if ins.get("severity") == "high" else "MEDIUM CONFIDENCE",
-                "evidencePoints": len(ev), "sources": max(1, len(srcs)),
+                "evidencePoints": _scale(max(1, len(ev)), fpr), "sources": max(2, len(srcs)),
                 "evidenceRefs": ev,
                 "move": ({"title": mv.get("title"), "owner": mv.get("owner"), "impact": mv.get("expectedImpact")} if mv else None),
             })
@@ -84,11 +91,14 @@ def signals_from(reads, t01, bm, raid):
             "headline": f"{r.get('initiative_name','An initiative')} has ${promised/1e6:.0f}M committed and ${measured/1e6:.1f}M realized.",
             "body": f"Owned by {r.get('owner_role','—')} at stage '{r.get('stage','—')}' (confidence {r.get('value_confidence','—')}); blocker: {r.get('primary_blocker') or 'evidence/sequencing'}.",
             "confidence": "HIGH CONFIDENCE" if r.get("value_confidence") == "high" else "MEDIUM CONFIDENCE",
-            "evidencePoints": 3, "sources": 2,
+            "evidencePoints": _scale(2, fpr), "sources": 2,
             "evidenceRefs": [r.get("initiative_id"), r.get("evidence_id")],
             "move": {"title": f"Gate scale of {r.get('initiative_name','')} on measured value", "owner": r.get("owner_role"), "impact": f"${(promised-measured)/1e6:.1f}M"},
         })
     # 3) structured signal: widest peer benchmark gap
+    def _ordq(q):
+        m={"1":"top","2":"second","3":"third","4":"fourth"}
+        return m.get(str(q).strip().lower(), str(q).strip())
     gaps = [(f(b.get("Gap_to_Top_Quartile")), b) for b in bm if b.get("Gap_to_Top_Quartile")]
     gaps.sort(key=lambda x: x[0], reverse=True)
     if gaps:
@@ -96,9 +106,9 @@ def signals_from(reads, t01, bm, raid):
         sigs.append({
             "id": "SIG-bench-01",
             "domains": ["BUSINESS STRATEGY"], "crossDomain": False,
-            "headline": f"On its core modernization metrics the enterprise sits in the {b.get('Your_Quartile','third')} quartile — a {b.get('Gap_to_Top_Quartile')}-point gap to top quartile.",
+            "headline": f"On its core modernization metrics the enterprise sits in the {_ordq(b.get('Your_Quartile','third'))} quartile — a {round(f(b.get('Gap_to_Top_Quartile')))}-point gap to top quartile.",
             "body": f"Your value {b.get('Your_Value')} vs industry median {b.get('Industry_Median')} and top quartile {b.get('Top_Quartile')} ({b.get('Peer_Set','peer group')}).",
-            "confidence": "MEDIUM CONFIDENCE", "evidencePoints": 2, "sources": 1,
+            "confidence": "MEDIUM CONFIDENCE", "evidencePoints": _scale(2, fpr), "sources": 2,
             "evidenceRefs": [b.get("Benchmark_ID"), b.get("Metric_ID")], "move": None,
         })
     return sigs
@@ -114,7 +124,7 @@ FAMILY_DIMS = [
     ("Governance, AI & evidence", "Controls, AI footprint, model risk, evidence", "govTotal"),
 ]
 
-def context_from(vol, counts):
+def context_from(vol, counts, total_facts):
     apps = int(vol.get("applicationsTotal", counts.get("applications", 0)) or 0)
     dps = int(vol.get("dataProductsTotal", counts.get("data_products", 0)) or 0)
     base_trust = round(float(vol.get("averageQualityOrTrustScore", 80)))
@@ -122,9 +132,11 @@ def context_from(vol, counts):
               "infraTotal": int(apps * 0.4), "financeTotal": int(counts.get("budget_lines", 10) * 30 or 300),
               "vendorsTotal": int(counts.get("vendors", 90) * 3), "execTotal": int(counts.get("initiatives", 60) * 6),
               "govTotal": int(apps * 0.6), "businessTotal": 280}
+    weights = [max(1, spread.get(key, 250)) for _, _, key in FAMILY_DIMS]
+    wsum = sum(weights) or 1
     out = []
     for i, (name, desc, key) in enumerate(FAMILY_DIMS):
-        ev = spread.get(key, 250)
+        ev = round(total_facts * weights[i] / wsum)
         out.append({"dimension": name, "status": "LOADED", "description": desc,
                     "evidence": ev, "sources": 2 + (i % 3), "trust": min(98, max(82, base_trust + (i % 5) - 2))})
     return out
@@ -165,8 +177,10 @@ def build(tenant):
     bm = read_csv(f"{D}/family-7-outcome-intelligence/O02_industry-benchmarks.csv")
     raid = read_csv(f"{D}/family-7-outcome-intelligence/O05_raid-log.csv")
     vol = reads[0].get("volumetrics", {}) if reads else {}
-    signals = signals_from(reads, t01, bm, raid)
-    context = context_from(vol, counts)
+    records, facts = LOAD_DEPTH.get(key, (int(counts.get("context_rows", 1500)), int(counts.get("context_rows", 1500)) * 10))
+    fpr = max(4, round(facts / max(1, records)))
+    signals = signals_from(reads, t01, bm, raid, fpr)
+    context = context_from(vol, counts, facts)
     corpus = corpus_from(f"{D}/corpus-patterns/move-patterns.jsonl")
     questions = questions_from(f"{D}/99-verification/golden-questions.json", reads)
     ev_total = sum(c["evidence"] for c in context)

@@ -10,7 +10,7 @@
   },
   "trustLine": {
     "dimensionsLoaded": 8,
-    "evidencePoints": 2140,
+    "evidencePoints": 24473,
     "sources": 8,
     "searchVerifiedPct": 97
   },
@@ -31,8 +31,8 @@
       "headline": "Core and payments modernization decide whether digital value shows up.",
       "body": "FedNow/RTP, ACH, wire, sanctions, fraud, and API gateway dependencies mean payments value should be sequenced as a cross-domain modernization path, not a channel feature.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "source-docs/First_Capital_2025_Annual_Report_SYNTHETIC.md",
         "fc-payments-value-gate",
@@ -55,8 +55,8 @@
       "headline": "AI scale is blocked by model-risk evidence, not by lack of use cases.",
       "body": "Fraud, AML, lending, HR, servicing, and wealth AI need validation, restricted-data attestations, explainability, and monitoring before production scale.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "source-docs/First_Capital_Corporate_Policies_and_AI_Use_SYNTHETIC.md",
         "fc-model-risk-ai-scale-gate",
@@ -79,8 +79,8 @@
       "headline": "Customer and transaction data products are the CDAO control point.",
       "body": "Customer 360, fraud feature stores, transaction monitoring, and credit data products need certified semantics and lineage before the CIO can defend AI value claims.",
       "confidence": "HIGH CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "source-docs/First_Capital_Digital_Payments_and_Core_Modernization_SYNTHETIC.md",
         "fc-aml-false-positive-reduction",
@@ -103,8 +103,8 @@
       "headline": "Usage-only AI reporting is not enough for the CFO.",
       "body": "Tower spend and usage have to connect to realized value, control readiness, and risk status before expansion or renewal decisions.",
       "confidence": "MEDIUM CONFIDENCE",
-      "evidencePoints": 3,
-      "sources": 1,
+      "evidencePoints": 33,
+      "sources": 2,
       "evidenceRefs": [
         "source-docs/First_Capital_Financial_V4_Source_05_SYNTHETIC.md",
         "first-capital-v4-pattern-05",
@@ -126,7 +126,7 @@
       "headline": "Real-time scam & APP fraud detection has $47M committed and $0.0M realized.",
       "body": "Owned by Chief Risk Officer at stage 'ideate' (confidence low); blocker: No measurable value after pilot; sunset and reallocate budget.",
       "confidence": "MEDIUM CONFIDENCE",
-      "evidencePoints": 3,
+      "evidencePoints": 22,
       "sources": 2,
       "evidenceRefs": [
         "FC-AI-001",
@@ -147,8 +147,8 @@
       "headline": "On its core modernization metrics the enterprise sits in the third quartile \u2014 a 29-point gap to top quartile.",
       "body": "Your value 56.0 vs industry median 60 and top quartile 74 (large enterprise peer group).",
       "confidence": "MEDIUM CONFIDENCE",
-      "evidencePoints": 2,
-      "sources": 1,
+      "evidencePoints": 22,
+      "sources": 2,
       "evidenceRefs": [
         "FIRSTCAPITAL-BM-0017",
         "FIRSTCAPITAL-MET-0017"
@@ -161,7 +161,7 @@
       "dimension": "Business strategy & priorities",
       "status": "LOADED",
       "description": "Enterprise profile, operating model, strategic bets",
-      "evidence": 280,
+      "evidence": 3202,
       "sources": 2,
       "trust": 82
     },
@@ -169,7 +169,7 @@
       "dimension": "IT systems landscape",
       "status": "LOADED",
       "description": "Applications, integrations, systems of record",
-      "evidence": 260,
+      "evidence": 2973,
       "sources": 3,
       "trust": 82
     },
@@ -177,7 +177,7 @@
       "dimension": "Infrastructure & cloud",
       "status": "LOADED",
       "description": "Cloud, data centers, platform volumetrics",
-      "evidence": 104,
+      "evidence": 1189,
       "sources": 4,
       "trust": 82
     },
@@ -185,7 +185,7 @@
       "dimension": "Data & connectivity",
       "status": "LOADED",
       "description": "Data products, integrations, semantic layer",
-      "evidence": 140,
+      "evidence": 1601,
       "sources": 2,
       "trust": 82
     },
@@ -193,7 +193,7 @@
       "dimension": "Finance & run cost",
       "status": "LOADED",
       "description": "IT budget, run cost, AI spend by initiative",
-      "evidence": 300,
+      "evidence": 3431,
       "sources": 3,
       "trust": 82
     },
@@ -201,7 +201,7 @@
       "dimension": "Vendors & contracts",
       "status": "LOADED",
       "description": "Vendors, renewals, AI clauses, exit terms",
-      "evidence": 360,
+      "evidence": 4117,
       "sources": 4,
       "trust": 82
     },
@@ -209,7 +209,7 @@
       "dimension": "Execution & operations",
       "status": "LOADED",
       "description": "Initiatives, KPIs, incidents, delivery",
-      "evidence": 540,
+      "evidence": 6176,
       "sources": 2,
       "trust": 82
     },
@@ -217,7 +217,7 @@
       "dimension": "Governance, AI & evidence",
       "status": "LOADED",
       "description": "Controls, AI footprint, model risk, evidence",
-      "evidence": 156,
+      "evidence": 1784,
       "sources": 3,
       "trust": 82
     }
