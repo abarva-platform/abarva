@@ -6,7 +6,7 @@
 
 ## Status
 
-`corrected-candidate`
+`deployed-lab-corrected`
 
 ## Plain-English Summary
 
@@ -47,11 +47,17 @@ The signed-in `/home` surface now opens as an Enterprise Landscape current-state
 - `npx tsc --noEmit --pretty false` passed.
 - `npm run build` passed locally before image build.
 - Prior incorrect lab deploy routed Home through `/admin`; live traffic was rolled back to revision `ca-abarva-web-lab-eastus--m6ece1b74` before this corrected candidate.
-- Corrected ACR/ACA deployment evidence will be appended after deploy.
+- ACR build `cafa` passed for image `acrabarvalab001.azurecr.io/abarva/web:home-intelligence-routes-bad4a1c82`.
+- Image digest: `sha256:49cf49da21ad2e608bd2d84318442c5148443222a82e9ae04e53d10fd8504212`.
+- Azure Container Apps revision `ca-abarva-web-lab-eastus--0000111` is `Healthy` / `Running`.
+- Traffic is 100% on revision `ca-abarva-web-lab-eastus--0000111`.
+- `https://app.abarva.ai/api/health` returned `ok: true` with Postgres and Azure graph checks true.
+- Unauthenticated route smoke: `/home` redirects to `/sign-in?redirect=%2Fhome`, `/admin` redirects to `/sign-in?redirect=%2Fadmin`, and `/intelligence` returns 200 because the middleware currently treats `/intelligence` as public.
+- Deployed `/intelligence` HTML contains `AbarVa Intelligence`, `Advisory board`, and `Recommendation`.
 
 ## Rollout Plan
 
-Build and deploy corrected image to Azure Container Apps lab. Verify `/home` and `/intelligence` behind a signed-in session, and verify `/admin` still renders setup/admin rather than Enterprise Landscape.
+Built and deployed corrected image to Azure Container Apps lab. Verify `/home` and `/admin` behind a signed-in session before promoting beyond lab/demo use.
 
 ## Rollback Plan
 
@@ -63,7 +69,13 @@ Rollback by shifting ACA traffic to the previous known-good revision `ca-abarva-
 - TypeScript output.
 - Git commit `893cb1539` was the incorrect `/admin` candidate.
 - Live traffic was rolled back to `ca-abarva-web-lab-eastus--m6ece1b74`.
-- Corrected commit/image/revision to be appended after deployment.
+- Corrected git commit `bad4a1c82`.
+- ACR image `acrabarvalab001.azurecr.io/abarva/web:home-intelligence-routes-bad4a1c82`.
+- ACR digest `sha256:49cf49da21ad2e608bd2d84318442c5148443222a82e9ae04e53d10fd8504212`.
+- ACA revision `ca-abarva-web-lab-eastus--0000111` with 100% traffic.
+- Public health response from `https://app.abarva.ai/api/health`.
+- Route smoke headers for `/home`, `/admin`, and `/intelligence`.
+- HTML marker check for the deployed advisory Intelligence surface.
 
 ## Context Ingestion Evidence
 
@@ -75,3 +87,4 @@ Not applicable. This release does not load, parse, stage, commit, embed, or refr
 - Other clients use the same dynamic template with generic section bodies until their derived enterprise reads are bound.
 - Source trail currently displays source titles and descriptions from the view model; live row/page/sheet citation binding remains a follow-up.
 - Signed-in visual QA is pending because the browser session used for deployment verification was not authenticated.
+- ACA logs still show pre-existing tenant-id/notification warnings during unrelated background embedding/audit paths; this release did not change those paths.
