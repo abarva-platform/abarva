@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-lab`
 
 ## Plain-English Summary
 
@@ -45,29 +45,39 @@ The release also retires legacy `/intelligence/*` deep links by redirecting them
 - Pass: `npx tsc --noEmit --pretty false`
 - Pass: `npm run build`
 - Pass: `npm run release:check`
+- Pass: ACR build `cafq` for `acrabarvalab001.azurecr.io/abarva/web:prod-lab-command-center-7be0de0d9`.
+- Pass: ACA revision `ca-abarva-web-lab-eastus--0000116` is `Healthy` / `Running`.
+- Pass: ACA traffic is 100% on revision `ca-abarva-web-lab-eastus--0000116`.
+- Pass: `https://app.abarva.ai/api/health` returned `ok=true`, `postgres=true`, `direct_postgres=true`, `azure_graph=postgres`.
 - Initial signed-in Chrome crawl before this release showed the production-lab app still serving old content:
   - `/home`: `Good morning, User` decision-card page.
   - `/intelligence`: `Intelligence · Context & Corpus Explorer | AbarVa` with `What your context is telling us`, `DIMENSIONS LOADED`, `GRAPH EDGES`, `Ask about loaded context`, and `The strongest cross-context reads`.
   - `/tower`: old `Is AI producing measurable, governed value?` hero and `VALUE · L2` / `TRUST · L0` style labels.
   - `/admin`: `Setup · AbarVa`, correctly preserved as Setup/Admin.
-- Pending: ACR build image tag/digest.
-- Pending: ACA revision health and 100% traffic.
-- Pending: signed-in Chrome crawl after deploy for `/home`, `/intelligence`, `/tower`, and `/admin`.
+- Pass: signed-in Chrome crawl after deploy, cache-busted:
+  - `/home`: `Home · Enterprise Landscape | AbarVa`, H1 `SkyHarbor Air`, no retired context/corpus strings found.
+  - `/intelligence`: `Intelligence · Advisory Board | AbarVa`, H1 `SkyHarbor Air is the decision area leadership should inspect next.`, no retired context/corpus strings found.
+  - `/tower`: `AI Control Tower · AbarVa`, H1 `Where technology money is going, what value is showing up, and what needs intervention.`, no old L0/L1/L2/L3 labels or old hero found.
+  - `/admin`: `Setup · AbarVa`, Setup/Admin preserved.
+  - `/intelligence/context-demo`: redirected to canonical `/intelligence`, Advisory Board rendered, no retired context/corpus strings found.
 
 ## Rollout Plan
 
-Build a clean image from committed HEAD, push to ACR, update the Azure Container Apps lab web app, confirm the new healthy revision receives 100% traffic, then run a cache-busted signed-in browser crawl.
+Built a clean image from committed HEAD `7be0de0d9`, pushed it to ACR, updated the Azure Container Apps lab web app, confirmed the new healthy revision receives 100% traffic, then ran a cache-busted signed-in browser crawl.
 
 ## Rollback Plan
 
-Shift Azure Container Apps traffic back to the previous healthy web revision. No database migration, schema rollback, or data-plane rollback is required.
+Shift Azure Container Apps traffic back to the previous healthy web revision `ca-abarva-web-lab-eastus--m2f50a5d9`. No database migration, schema rollback, or data-plane rollback is required.
 
 ## Audit Evidence
 
 - Initial signed-in Chrome crawl: `reports/live-route-crawl-2026-06-19-chrome-initial/raw.txt`
-- Pending: validation command outputs.
-- Pending: image tag, digest, ACA revision, traffic proof.
-- Pending: post-deploy signed-in Chrome crawl summary.
+- Image tag: `acrabarvalab001.azurecr.io/abarva/web:prod-lab-command-center-7be0de0d9`
+- Image digest: `sha256:dfca56a56d744194af2bd047d5b5f0cc16f492f1ec3dd38ff2a54a99288c03d8`
+- ACR build run: `cafq`
+- ACA revision: `ca-abarva-web-lab-eastus--0000116`
+- ACA traffic: 100% on `ca-abarva-web-lab-eastus--0000116`
+- Post-deploy signed-in Chrome crawl: `/home`, `/intelligence`, `/tower`, `/admin`, and `/intelligence/context-demo` verified on 2026-06-19.
 
 ## Context Ingestion Evidence
 
