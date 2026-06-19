@@ -121,7 +121,10 @@ else
   BUILD_NODE_OPTIONS="${NODE_OPTIONS:-}"
   case " $BUILD_NODE_OPTIONS " in
     *" --max-old-space-size="* | *" --max_old_space_size="*) ;;
-    *) BUILD_NODE_OPTIONS="${BUILD_NODE_OPTIONS:+$BUILD_NODE_OPTIONS }--max-old-space-size=4096" ;;
+    # The Next.js build OOMs at a 4096 MB heap (observed: heap death at ~4080 MB),
+    # which intermittently fails the gate and blocks every PR's merge. ubuntu-latest
+    # runners have 16 GB RAM, so give the build an 8 GB heap with ample headroom.
+    *) BUILD_NODE_OPTIONS="${BUILD_NODE_OPTIONS:+$BUILD_NODE_OPTIONS }--max-old-space-size=8192" ;;
   esac
   if NODE_OPTIONS="$BUILD_NODE_OPTIONS" npm run build >"$BUILD_LOG" 2>&1; then
     pass "npm run build succeeded"

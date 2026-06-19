@@ -787,8 +787,10 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("Org chart");
     expect(html).toContain("L2/L3 ticket history");
     expect(html).toContain("What else would help?");
-    expect(html).toContain("Write my Scope Memo with Boundaries");
-    expect(html).toContain("Next step: Issue the RFP");
+    // Approve = write + advance in one decision (Moves parity): the primary
+    // action names the deliverable it will write, then shows the next step.
+    expect(html).toContain("Approve &amp; write Scope Memo with Boundaries");
+    expect(html).toContain("Then: Issue the RFP");
     expect(html).not.toContain("source-canvas-tab-document");
   });
 
@@ -813,7 +815,7 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("source-simple-front");
     expect(html).toContain("You&#x27;re on Scope");
     expect(html).toContain("Application inventory");
-    expect(html).toContain("Write my Scope Memo with Boundaries");
+    expect(html).toContain("Approve &amp; write Scope Memo with Boundaries");
     expect(html).not.toContain("source-simple-front-fallback");
   });
 
