@@ -29,6 +29,8 @@ export interface GeneratedArtifactRecord {
   renderedAt: string;
   renderedBy: string;
   quarantineReason: string | null;
+  /** Set when a newer version supersedes this one; null = current. */
+  supersededBy: string | null;
   metadata: Record<string, unknown>;
 }
 
@@ -57,6 +59,8 @@ function rowToRecord(row: Record<string, unknown>): GeneratedArtifactRecord {
     renderedBy: String(row.rendered_by),
     quarantineReason:
       typeof row.quarantine_reason === "string" ? row.quarantine_reason : null,
+    supersededBy:
+      typeof row.superseded_by === "string" ? row.superseded_by : null,
     metadata:
       row.metadata &&
       typeof row.metadata === "object" &&

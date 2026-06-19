@@ -100,7 +100,19 @@ export async function GET(
               fileName: null,
               version: 1,
               status: rec.quarantineReason ? "quarantined" : "board_ready",
-              qualityScore: rec.qualityScore,
+              // Generated deliverables are current unless a newer version
+              // supersedes them. Without this the Cabinet's lifecycle filter
+              // (lifecycleState === 'current') hid every generated artifact by
+              // default, so a freshly-built charter showed "No artifacts yet".
+              lifecycleState: rec.supersededBy ? "superseded" : "current",
+              // Normalize quality to the 0–100 the Cabinet renders ("/100"):
+              // the orchestrator stores 0–1, move_artifacts store 0–100.
+              qualityScore:
+                rec.qualityScore == null
+                  ? null
+                  : rec.qualityScore <= 1
+                    ? Math.round(rec.qualityScore * 100)
+                    : Math.round(rec.qualityScore),
               generatedBy: rec.renderedBy,
               createdAt: rec.renderedAt,
               downloadUrl: `/api/v1/artifacts/${rec.id}`,

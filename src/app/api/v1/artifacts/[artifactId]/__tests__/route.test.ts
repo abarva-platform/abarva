@@ -27,6 +27,11 @@ jest.mock("@/lib/auth/current-user", () => ({
 
 jest.mock("@/lib/active-client", () => ({
   getActiveClientKey: () => mockGetClientKey(),
+  // The route resolves the active client row to scope the artifact lookup by
+  // client UUID. (Mock added: the route gained getActiveClientRow but this mock
+  // had only getActiveClientKey, so the suite threw "not a function".)
+  getActiveClientRow: () =>
+    Promise.resolve({ id: "c1", key: "c1", name: "C1", industry_code: null }),
 }));
 
 jest.mock("@/lib/artifacts/repository", () => {
@@ -61,6 +66,7 @@ function recordWith(
     renderedAt: new Date(0).toISOString(),
     renderedBy: "u1",
     quarantineReason: null,
+    supersededBy: null,
     metadata,
   };
 }

@@ -45,6 +45,7 @@ const generatedArtifact: GeneratedArtifactRecord = {
   renderedAt: "2026-06-12T11:00:00.000Z",
   renderedBy: "user-2",
   quarantineReason: null,
+  supersededBy: null,
   metadata: {
     title: "Board-grade Business Case",
     moveId: "move-1",
