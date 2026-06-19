@@ -537,3 +537,90 @@ describe("Azure AI Search retriever — parity & invariants", () => {
     });
   });
 });
+
+describe("Azure Search index/contract drift (lifecycle_state)", () => {
+  // Live indexes that predate the lifecycle_state field reject the strict filter
+  // with a specific missing-field 400. The retriever must degrade past ONLY that
+  // clause (keeping tenant scope) rather than failing the whole query.
+  function makeDriftFetch(): {
+    fetchImpl: jest.MockedFunction<typeof fetch>;
+    bodies: () => Array<Record<string, unknown>>;
+  } {
+    const captured: string[] = [];
+    const fetchImpl = jest.fn(
+      async (_url: unknown, init?: { body?: BodyInit | null }) => {
+        const raw = typeof init?.body === "string" ? init.body : "";
+        captured.push(raw);
+        const parsed = raw ? (JSON.parse(raw) as { filter?: string }) : {};
+        if (
+          typeof parsed.filter === "string" &&
+          parsed.filter.includes("lifecycle_state eq 'active'")
+        ) {
+          return new Response(
+            JSON.stringify({
+              error: {
+                code: "",
+                message:
+                  "Invalid expression: Could not find a property named 'lifecycle_state' on type 'search.document'.\r\nParameter name: $filter",
+              },
+            }),
+            { status: 400, headers: { "content-type": "application/json" } },
+          );
+        }
+        return new Response(JSON.stringify({ value: [] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      },
+    ) as unknown as jest.MockedFunction<typeof fetch>;
+    return {
+      fetchImpl,
+      bodies: () =>
+        captured.map((b) => JSON.parse(b) as Record<string, unknown>),
+    };
+  }
+
+  it("degrades past the missing lifecycle_state field (keeps tenant scope) and flags telemetry", async () => {
+    process.env.AZURE_SEARCH_ADMIN_KEY = "test-key";
+    const { fetchImpl, bodies } = makeDriftFetch();
+    const telemetry: { degradedIndexContract?: boolean } = {};
+
+    await expect(
+      queryTenantContext({
+        tenantClientKey: "apex-retail",
+        query: "*",
+        fetchImpl,
+        telemetry,
+      }),
+    ).resolves.toEqual([]);
+
+    const all = bodies();
+    const strict = all.find((b) =>
+      String(b.filter).includes("lifecycle_state eq 'active'"),
+    );
+    const degraded = all.find((b) => !String(b.filter).includes("lifecycle_state"));
+    expect(strict).toBeDefined(); // tried strict first
+    expect(degraded).toBeDefined(); // retried without the lifecycle clause
+    expect(String(degraded?.filter)).toMatch(/tenant_key eq 'apex-retail'/); // scope kept
+    expect(telemetry.degradedIndexContract).toBe(true);
+  });
+
+  it("still throws on a generic (non-lifecycle) search failure", async () => {
+    process.env.AZURE_SEARCH_ADMIN_KEY = "test-key";
+    const fetchImpl = jest.fn(
+      async () =>
+        new Response(JSON.stringify({ error: { message: "boom" } }), {
+          status: 500,
+          headers: { "content-type": "application/json" },
+        }),
+    ) as unknown as jest.MockedFunction<typeof fetch>;
+
+    await expect(
+      queryTenantContext({
+        tenantClientKey: "apex-retail",
+        query: "*",
+        fetchImpl,
+      }),
+    ).rejects.toThrow(/azure_search_query_failed:500/);
+  });
+});

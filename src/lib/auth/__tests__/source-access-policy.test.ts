@@ -106,6 +106,54 @@ describe("source access policy", () => {
     expect(fromMock).not.toHaveBeenCalledWith("source_event_participants");
   });
 
+  it("grants a Clerk tenant-admin with NO membership row source admin for their own active client (entry-path fix)", async () => {
+    setupRows({
+      person_client_memberships: null,
+      source_event_participants: [],
+    });
+    const { loadUserSourceAccessPolicy } =
+      await import("../source-access-policy");
+    const policy = await loadUserSourceAccessPolicy(
+      {
+        clientId: "client-firstcapital",
+        userId: "clerk:user_no_membership",
+        role: "tenant_admin",
+      },
+      { activeClientKey: "firstcapital" },
+    );
+
+    // The fix: a Clerk tenant_admin without a persons-backed membership row is a
+    // Source admin for their own active client (previously: no_source_access → 404).
+    expect(policy.accessLevel).toBe("client_admin");
+    expect(policy.sourceScope).toBe("all_client_source_events");
+    expect(policy.sourceEventIdsAllowed).toBeNull();
+    expect(policy.canApproveSourceStages).toBe(true);
+  });
+
+  it("FENCE: a non-admin Clerk user with no membership gets NO source access (no over-grant)", async () => {
+    setupRows({
+      person_client_memberships: null,
+      source_event_participants: [],
+    });
+    const { loadUserSourceAccessPolicy } =
+      await import("../source-access-policy");
+    const policy = await loadUserSourceAccessPolicy(
+      {
+        clientId: "client-firstcapital",
+        userId: "clerk:plain_member",
+        role: "member",
+      },
+      { activeClientKey: "firstcapital" },
+    );
+
+    // The fix must NOT over-grant: only genuine admin roles are upgraded. A plain
+    // member with no membership still fails closed. Cross-tenant isolation is
+    // enforced at the event-query layer (client_key) and is unchanged by this fix.
+    expect(policy.accessLevel).toBe("no_source_access");
+    expect(policy.sourceScope).toBe("none");
+    expect(policy.sourceEventIdsAllowed).toEqual([]);
+  });
+
   it("normalizes legacy abarva_super_admin to client_admin and never emits super-admin copy", async () => {
     setupRows({
       person_client_memberships: {
