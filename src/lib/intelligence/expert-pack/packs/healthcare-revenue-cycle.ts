@@ -844,7 +844,7 @@ export const healthcareRevenueCycleExpert: ExpertPack = {
       questionPattern: "AR days trend / days in AR over time",
       exhibitKind: "chart",
       chartKind: "line",
-      note: "Trend AR days with the line-chart family in svg-charts.",
+      note: "Trend AR days; builder TBD against the line-chart family in svg-charts.",
     },
     {
       questionPattern: "cash impact of denial reduction / value bridge",
@@ -864,6 +864,32 @@ export const healthcareRevenueCycleExpert: ExpertPack = {
       note: "Net collection rate, AR days, denial rate, clean claim rate, DNFB vs planning ranges.",
     },
   ],
+
+  successModel: {
+    probabilityOfSuccess: "high",
+    successDrivers: [
+      "Front-end prevention (eligibility/auth/estimates) is funded, not just back-end rework",
+      "Denials are measured back to the originating access point so root causes get fixed",
+      "Payer contracts are digitized so expected reimbursement can be modeled",
+      "Coding/CDI capacity and query workflows exist to absorb automation output",
+    ],
+    failureDrivers: [
+      "Automation bolted onto back-end rework while front-end errors keep flowing",
+      "Contract terms not digitized — variance detection has nothing to compare against",
+      "Staff workflow unchanged, so predicted denials are flagged but not prevented",
+      "Treating gross collection rate as success and missing true net yield",
+    ],
+    adoptionReadiness: "high",
+    adoptionCurve:
+      "Back-office RCM staff adopt readily because the work is measurable and the " +
+      "incentives align with cash; denials and variance teams first, then front-end " +
+      "access, then coding automation once HITL review is trusted.",
+    roiClarity: "high",
+    roiClarityBasis:
+      "Revenue-cycle outcomes are directly attributable in remit/ledger data " +
+      "(denials, AR days, recoveries), so ROI is unusually firm — the main haircut " +
+      "is payer response eroding recoveries over time, not measurement difficulty.",
+  },
 
   regulatoryFrame: {
     name: "No Surprises Act & Hospital Price Transparency",

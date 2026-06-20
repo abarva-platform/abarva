@@ -135,6 +135,39 @@ export interface ExpertOutputRecipe {
   note?: string;
 }
 
+/**
+ * A confidence band. Deliberately a coarse 3-step — boardroom-legible, and
+ * honest about the fact these are judgements, not point estimates.
+ */
+// Values align with AnswerConfidence (low | medium | high) so a pack never
+// carries two different 3-step vocabularies ("moderate" vs "medium").
+export type SuccessBand = "low" | "medium" | "high";
+
+/**
+ * The CXO stuck-point, made first-class. Boardrooms say "we know it matters, we
+ * don't know HOW, and we can't size the odds." Every expert must answer the
+ * odds explicitly: probability of success, adoption reality, and how firm the
+ * ROI case is — separate from the value MODEL (which sizes the prize) because a
+ * large prize with low odds and weak adoption is a different decision than a
+ * modest prize that almost always lands.
+ */
+export interface ExpertSuccessModel {
+  /** Likelihood a well-run program in this domain hits its target outcome. */
+  probabilityOfSuccess: SuccessBand;
+  /** Conditions that raise the odds — what "well-run" actually means here. */
+  successDrivers: string[];
+  /** Conditions that sink programs in this domain — the honest failure list. */
+  failureDrivers: string[];
+  /** How ready a typical enterprise is to adopt today. */
+  adoptionReadiness: SuccessBand;
+  /** The adoption shape: who adopts, in what order, what unlocks scale. */
+  adoptionCurve: string;
+  /** How firm the ROI case is — calibrates trust in the value model. */
+  roiClarity: SuccessBand;
+  /** Why ROI clarity sits where it does (attribution, data, payer/market response). */
+  roiClarityBasis: string;
+}
+
 /** Provenance — under AI-gate-only there is no human SME review tier. */
 export interface ExpertProvenance {
   authoredBy: string;
@@ -158,6 +191,8 @@ export interface ExpertPack {
   evidenceRules: ExpertEvidenceRules;
   hedgeRules: ExpertHedgeRules;
   outputRecipes: ExpertOutputRecipe[];
+  /** The CXO stuck-point: probability of success, adoption, ROI clarity. */
+  successModel: ExpertSuccessModel;
   regulatoryFrame: RegulatoryFrame | null;
   provenance: ExpertProvenance;
 }
