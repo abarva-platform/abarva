@@ -28,6 +28,13 @@ if [[ -z "$IMAGE" ]]; then
   exit 1
 fi
 
+if [[ "$IMAGE" != *@sha256:* && "${ALLOW_MUTABLE_ACA_IMAGE:-}" != "true" ]]; then
+  echo "ERROR: worker job image must be pinned by digest (@sha256:...)." >&2
+  echo "Received: $IMAGE" >&2
+  echo "Set ALLOW_MUTABLE_ACA_IMAGE=true only for a documented non-production exception." >&2
+  exit 1
+fi
+
 echo "Updating worker jobs to image: $IMAGE"
 echo "Resource group: $RESOURCE_GROUP"
 

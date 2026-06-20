@@ -93,6 +93,14 @@ Use these lanes consistently:
 
 If a PR changes release-relevant files, add or update a release record under `docs/releases/records/` using `docs/releases/templates/release-record-template.md`. The record must explain, in plain English, what changed, what layer changed, which clients are affected, what QA/validation was done, how it rolls out, how it rolls back, and what audit evidence exists. `npm run release:check` enforces this in CI; do not bypass it without explicit Anand approval.
 
+### Deployment authority and runtime invariant
+
+Only the repo-owned ACA main deploy workflow may shift shared Product/Lab web traffic. Feature-branch, local, or ad-hoc Azure commands must not mutate shared web traffic, revision weights, or the web Container App template. Preview/client environments need their own Container App or explicit environment lane; do not test a branch by writing to the shared runtime.
+
+ACA web and worker runtimes must use digest-pinned images (`@sha256:...`) for runtime updates. Do not use mutable branch tags such as `lab-*`, `tower-*`, `htmlfix-*`, or `promptfix-*` as a live runtime image. Any `az containerapp update` that changes env vars, flags, scale, or secrets for a shared runtime must also pass the currently approved digest-pinned `--image`; otherwise Azure can create a new revision from a stale template image.
+
+After any deploy or flag/env update, prove the ACA runtime invariant before claiming the change is live: the Container App template image, the 100% traffic revision image, and all required worker job images must match the approved digest. Then run the required live signed-in client proof for affected clients. A PR or release record may say `merged`, `deployed`, or `flagged`; it may not say `live-proven` until those checks are captured.
+
 ## Context & corpus governance (MANDATORY — all agents, all tenants)
 
 Every context/corpus object (tenant facts, enterprise chunks, uploaded evidence, artifacts,
