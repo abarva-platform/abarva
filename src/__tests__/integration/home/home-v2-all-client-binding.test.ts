@@ -131,5 +131,6 @@ describe('Home v2 all-client Context Explorer binding', () => {
     expect(homeApp).toContain('META.source');
     expect(homeApp).toContain('answerForAsk');
     expect(homeApp).toContain('bestAskFacts');
+    expect(homeApp).toContain('labelHits * 3');
   });
 });

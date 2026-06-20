@@ -87,10 +87,12 @@ function bestAskFacts(primarySection, q) {
   const ranked = sections.flatMap(section => {
     const facts = Array.isArray(section.askFacts) ? section.askFacts : [];
     return facts.map(fact => {
-      const hay = `${fact.label || ''} ${fact.matchText || ''}`.toLowerCase();
-      const score = tokens.reduce((s, tok) => s + (hay.includes(tok) ? 1 : 0), 0);
+      const label = `${fact.label || ''}`.toLowerCase();
+      const hay = `${fact.matchText || ''}`.toLowerCase();
+      const labelHits = tokens.reduce((s, tok) => s + (label.includes(tok) ? 1 : 0), 0);
+      const matchHits = tokens.reduce((s, tok) => s + (hay.includes(tok) ? 1 : 0), 0);
       const primaryBoost = section === primarySection ? 0.5 : 0;
-      return { fact, section, score: score + primaryBoost };
+      return { fact, section, score: (labelHits * 3) + matchHits + primaryBoost };
     });
   }).filter(hit => hit.score > 0)
     .sort((a, b) => b.score - a.score);
