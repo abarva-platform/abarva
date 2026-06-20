@@ -76,6 +76,54 @@ function renderOverview() {
 
 function ratingBar(r) { const [w, t] = RATING[r] || [50, 'amber']; return { w, color: toneColor[t] }; }
 
+const ASK_STOP = new Set(['about', 'anything', 'tell', 'show', 'give', 'what', 'where', 'when', 'with', 'from', 'that', 'this', 'your', 'mine', 'ours', 'their', 'have', 'does', 'for', 'the', 'and', 'are', 'how', 'much', 'many', 'into', 'please']);
+function askTokens(q) {
+  return String(q).toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2 && !ASK_STOP.has(w));
+}
+function bestAskFacts(primarySection, q) {
+  const tokens = askTokens(q);
+  if (!tokens.length) return [];
+  const sections = Object.values(SECTIONS);
+  const ranked = sections.flatMap(section => {
+    const facts = Array.isArray(section.askFacts) ? section.askFacts : [];
+    return facts.map(fact => {
+      const hay = `${fact.label || ''} ${fact.matchText || ''}`.toLowerCase();
+      const score = tokens.reduce((s, tok) => s + (hay.includes(tok) ? 1 : 0), 0);
+      const primaryBoost = section === primarySection ? 0.5 : 0;
+      return { fact, section, score: score + primaryBoost };
+    });
+  }).filter(hit => hit.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  const seen = new Set();
+  return ranked.filter(({ fact, section }) => {
+    const key = `${section.nav}:${fact.label}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 2).map(hit => hit.fact);
+}
+function answerForAsk(section, q) {
+  const facts = bestAskFacts(section, q);
+  if (facts.length) {
+    const fact = facts[0];
+    const extra = facts.slice(1).map(next => ` Also: ${next.answer}`).join('');
+    const sources = [...new Set(facts.map(next => next.source).filter(Boolean))].join(' + ');
+    const verified = facts.some(next => next.confidence === 'high');
+    return {
+      text: `${fact.answer}${extra}`,
+      source: sources || fact.source,
+      confidence: verified ? 'Verified source rows' : 'Partial source rows',
+    };
+  }
+  const firstSignal = Array.isArray(section.currentState) ? section.currentState.find(row => row && row[0] !== 'Source binding') : null;
+  return {
+    text: firstSignal ? firstSignal[2] : section.summary.replace(/<[^>]+>/g, ''),
+    source: section.sources && section.sources[0] ? section.sources[0][0] : 'source trail',
+    confidence: 'Dimension-level read',
+  };
+}
+
 const TONE_RANK = { red: 0, amber: 1, teal: 2 };
 const TONE_TAG = { teal: 'Strength', amber: 'Watch', red: 'Constraint' };
 const SIG_WLAB = ['Heaviest signal', 'High weight', 'Contributing', 'Context'];
@@ -143,7 +191,8 @@ function renderAssessment(id, askQ) {
   </div>`;
 
   const focus = s.focus.map((f, i) => `<div class="focusitem"><span class="n">${i + 1}</span><span>${esc(f)}</span></div>`).join('');
-  const lead = askQ ? `<div class="ans-lead"><div class="av">✦</div><div><div class="alq">${esc(askQ)}</div><div class="alt">That points to <b>${esc(s.nav)}</b>. ${esc(s.find)} Here is the current-state read.</div></div></div>` : '';
+  const askAnswer = askQ ? answerForAsk(s, askQ) : null;
+  const lead = askQ ? `<div class="ans-lead"><div class="av">✦</div><div><div class="alq">${esc(askQ)}</div><div class="alt"><b>${esc(askAnswer.text)}</b><div style="margin-top:8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--canon-gray-600)">${esc(askAnswer.confidence)} · ${esc(askAnswer.source)}</div></div></div></div>` : '';
 
   $('view').innerHTML = lead + `
     <div class="doc-head">

@@ -77,6 +77,14 @@ type EnterpriseRead = {
   };
 };
 
+type AskFact = {
+  label: string;
+  answer: string;
+  source: string;
+  confidence: 'high' | 'partial';
+  matchText: string;
+};
+
 export const HOME_V2_CLIENT_PACKS: HomeV2ClientPack[] = [
   {
     key: 'apexretail',
@@ -529,6 +537,138 @@ function sampleSignal(rows: Row[]): string {
   return entries.length ? sentence(entries.join(' · '), 220) : 'Structured source loaded, but no displayable sample fields were present.';
 }
 
+function money(value: unknown): string | null {
+  const amount = num(value);
+  if (!amount) return null;
+  if (amount >= 1_000_000) return `$${Math.round((amount / 1_000_000) * 10) / 10}M`;
+  if (amount >= 1_000) return `$${Math.round((amount / 1_000) * 10) / 10}K`;
+  return `$${Math.round(amount)}`;
+}
+
+function pct(value: unknown): string | null {
+  const amount = num(value);
+  return amount ? `${amount}%` : null;
+}
+
+function rowMatchText(row: Row): string {
+  return Object.values(row).map((value) => text(value).toLowerCase()).join(' ');
+}
+
+function buildBudgetAskFact(row: Row, source: string, confidence: 'high' | 'partial'): AskFact | null {
+  const label = text(row.budget_area ?? row.budget_id);
+  if (!label) return null;
+  const run = money(row.run_budget_usd);
+  const change = money(row.change_budget_usd);
+  const aiData = money(row.ai_or_data_budget_usd);
+  const vendorShare = pct(row.vendor_pct);
+  const pressure = text(row.budget_pressure);
+  const owner = text(row.owner_role);
+  const details = [
+    run ? `run budget ${run}` : null,
+    change ? `change budget ${change}` : null,
+    aiData ? `AI/data budget ${aiData}` : null,
+    vendorShare ? `vendor share ${vendorShare}` : null,
+    pressure ? `pressure: ${pressure}` : null,
+  ].filter(Boolean);
+  if (details.length === 0) return null;
+  return {
+    label,
+    answer: `${label}: ${details.join('; ')}.${owner ? ` Owner: ${owner}.` : ''}`,
+    source,
+    confidence,
+    matchText: rowMatchText(row),
+  };
+}
+
+function buildVendorAskFact(row: Row, source: string, confidence: 'high' | 'partial'): AskFact | null {
+  const label = text(row.vendor_name ?? row.vendor_id);
+  if (!label) return null;
+  const annual = money(row.annual_contract_value_usd);
+  const renewal = text(row.renewal_date);
+  const risk = text(row.commercial_risk);
+  const owner = text(row.owned_by);
+  const criticality = text(row.criticality);
+  const details = [
+    annual ? `annual contract value ${annual}` : null,
+    renewal ? `renewal ${renewal}` : null,
+    criticality ? `${criticality} criticality` : null,
+    risk ? `commercial risk: ${risk}` : null,
+  ].filter(Boolean);
+  if (details.length === 0) return null;
+  return {
+    label,
+    answer: `${label}: ${details.join('; ')}.${owner ? ` Owned by ${owner}.` : ''}`,
+    source,
+    confidence,
+    matchText: rowMatchText(row),
+  };
+}
+
+function buildInitiativeAskFact(row: Row, source: string, confidence: 'high' | 'partial'): AskFact | null {
+  const label = text(row.initiative_name ?? row.initiative_id);
+  if (!label) return null;
+  const budget = money(row.budget_usd);
+  const benefit = money(row.promised_benefit_usd);
+  const stage = text(row.stage);
+  const risk = text(row.risk_status);
+  const dependency = text(row.dependency);
+  const details = [
+    budget ? `budget ${budget}` : null,
+    benefit ? `promised benefit ${benefit}` : null,
+    stage ? `stage ${stage}` : null,
+    risk ? `risk ${risk}` : null,
+    dependency ? `dependency: ${dependency}` : null,
+  ].filter(Boolean);
+  if (details.length === 0) return null;
+  return {
+    label,
+    answer: `${label}: ${details.join('; ')}.`,
+    source,
+    confidence,
+    matchText: rowMatchText(row),
+  };
+}
+
+function buildGenericAskFact(row: Row, source: string, confidence: 'high' | 'partial'): AskFact | null {
+  const label = text(
+    row.application_name ??
+    row.system_name ??
+    row.data_product ??
+    row.capability_name ??
+    row.business_function ??
+    row.role_name ??
+    row.metric_name ??
+    row.risk_name ??
+    row.policy_name ??
+    row.benchmark_name ??
+    Object.values(row).find(Boolean),
+  );
+  if (!label) return null;
+  return {
+    label,
+    answer: sampleSignal([row]),
+    source,
+    confidence,
+    matchText: rowMatchText(row),
+  };
+}
+
+function buildAskFacts(schema: SectionSchema, rows: Row[], source: string, confidence: 'high' | 'partial'): AskFact[] {
+  const builders: Array<(row: Row, source: string, confidence: 'high' | 'partial') => AskFact | null> = [];
+  if (schema.id === 'budget') builders.push(buildBudgetAskFact);
+  if (schema.id === 'vendors') builders.push(buildVendorAskFact);
+  if (schema.id === 'initiatives' || schema.id === 'change') builders.push(buildInitiativeAskFact);
+  builders.push(buildGenericAskFact);
+
+  const facts: AskFact[] = [];
+  for (const row of rows.slice(0, 80)) {
+    const fact = builders.map((builder) => builder(row, source, confidence)).find(Boolean);
+    if (fact) facts.push(fact);
+    if (facts.length >= 24) break;
+  }
+  return facts;
+}
+
 function rowsForSummary(summary: DatasetSummary): number {
   return summary.contextRows || summary.sourceDocs || 0;
 }
@@ -587,6 +727,7 @@ async function buildSection(client: HomeV2ClientPack, schema: SectionSchema) {
   const urgency = tone === 'red' ? 3 : tone === 'amber' ? 2 : 1;
   const breadth = count > 150 ? 3 : count > 40 ? 2 : 1;
   const sample = sampleSignal(rows);
+  const askFacts = buildAskFacts(schema, rows, relativeFile, confidence);
 
   return {
     id: schema.id,
@@ -623,6 +764,7 @@ async function buildSection(client: HomeV2ClientPack, schema: SectionSchema) {
       `Carry this read into Intelligence only with the source trail attached.`,
     ],
     leadership: `${schema.nav} is a tenant-bound read for ${client.tenantName}. It is safe to compare across clients because the schema is common, but the values and source trail are specific to datasets/${client.datasetDir}.`,
+    askFacts,
     sources: [
       [relativeFile, `${schema.nav} source used for this panel.`, confidence],
       ['manifest.yaml', `Dataset root and refresh metadata for ${client.tenantName}.`, client.format === 'v4' ? 'high' : 'partial'],
@@ -751,6 +893,7 @@ export async function buildHomeV2DataScript(args: {
       maturity: section.maturity,
       focus: section.focus,
       leadership: section.leadership,
+      askFacts: section.askFacts,
       sources: section.sources,
     },
   ]));
