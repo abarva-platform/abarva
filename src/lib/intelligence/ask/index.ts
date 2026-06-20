@@ -16,6 +16,9 @@ import {
 } from './tenant-fact-fingerprint';
 import type { AskSource, IntentClassification, AskSurfaceContext } from './types';
 import type { CanonicalTenant } from '@/lib/tenant/CanonicalTenant';
+import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
+import { summonExpertsForQuery } from '@/lib/intelligence/answer/expert-grounding';
+import type { ExpertRef } from '@/lib/intelligence/answer/agent-answer';
 import {
   assertCoverage,
   classifyQuestionCategory,
@@ -32,13 +35,22 @@ import {
 export type { AskIntent, AskSource, AskSurfaceContext, IntentClassification } from './types';
 
 export interface AskEvent {
-  type: 'classified' | 'sources' | 'delta' | 'followups' | 'done' | 'error';
+  type:
+    | 'classified'
+    | 'sources'
+    | 'delta'
+    | 'followups'
+    | 'done'
+    | 'error'
+    | 'contributing-experts';
   classification?: IntentClassification;
   sources?: AskSource[];
   coverageReport?: CoverageReport;
   text?: string;
   followups?: string[];
   error?: string;
+  /** Consilium experts grounding the answer (Shared Context Brain, flag-gated). */
+  contributingExperts?: ExpertRef[];
 }
 
 export interface AskOptions {
@@ -137,6 +149,23 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       tenantInventoryKey: opts.tenantInventoryKey,
     });
     const factAvailabilityBlock = formatTenantFactAvailabilityBlock(factFingerprint);
+
+    // Shared Context Brain (W1.2/W1.3) — flag-gated, default OFF. When on for
+    // the tenant, summon the Consilium expert(s) for this question and inject
+    // their authored grounding (benchmarks, AI plays, honest odds, hedges) into
+    // the synthesizer so Ava answers AS the expert. Dormant until the flag is
+    // flipped per tenant; the existing path is byte-identical when off.
+    const sharedEngineOn = isFeatureEnabled(
+      { clientKey: opts.tenantClientKey },
+      'scb_shared_engine_intelligence',
+    );
+    const expertGrounding = sharedEngineOn
+      ? summonExpertsForQuery({ query: trimmed })
+      : { experts: [] as ExpertRef[], groundingBlock: '' };
+    const groundedFactBlock = expertGrounding.groundingBlock
+      ? `${expertGrounding.groundingBlock}\n\n${factAvailabilityBlock}`
+      : factAvailabilityBlock;
+
     const conciseAsk = isExplicitConciseAsk(trimmed);
     const sourceLimit = conciseAsk ? 8 : 16;
     const rawSources: AskSource[] = [
@@ -154,6 +183,9 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       : 0;
     const coverageReport = assertCoverage(questionCategory, sources);
     yield { type: 'sources', sources, coverageReport };
+    if (expertGrounding.experts.length > 0) {
+      yield { type: 'contributing-experts', contributingExperts: expertGrounding.experts };
+    }
 
     const handoff = atlasStakeholderConflictHandoff(trimmed);
     if (handoff) {
@@ -203,7 +235,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       userId: opts.userId,
       userContextBlock: opts.userContextBlock,
       conversationContextBlock: opts.conversationContextBlock,
-      factAvailabilityBlock,
+      factAvailabilityBlock: groundedFactBlock,
       coverageReportBlock: formatCoverageReportForPrompt(coverageReport),
       averageConfidence,
       onModelInput: opts.onModelInput,
