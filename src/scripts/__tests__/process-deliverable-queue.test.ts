@@ -12,6 +12,9 @@ jest.mock('@/lib/deliverables/orchestrator/runs-repository', () => ({
 jest.mock('@/lib/deliverables/orchestrator/generate-service', () => ({
   runDeliverableForTenant: jest.fn(),
 }));
+jest.mock('@/lib/deliverables/orchestrator/tenant-invariant', () => ({
+  validateDeliverableTenantInvariant: jest.fn(async () => ({ ok: true, sourceKind: 'move', sourceId: 'evt-1' })),
+}));
 
 import { processDeliverableQueue } from '../process-deliverable-queue';
 
@@ -25,8 +28,12 @@ const repo = jest.requireMock('@/lib/deliverables/orchestrator/runs-repository')
 const svc = jest.requireMock('@/lib/deliverables/orchestrator/generate-service') as {
   runDeliverableForTenant: jest.Mock;
 };
+const invariant = jest.requireMock('@/lib/deliverables/orchestrator/tenant-invariant') as {
+  validateDeliverableTenantInvariant: jest.Mock;
+};
 const { sweepStaleDeliverableRuns, claimNextDeliverableRun, completeDeliverableRun } = repo;
 const { runDeliverableForTenant } = svc;
+const { validateDeliverableTenantInvariant } = invariant;
 
 const jobPayload = {
   module: 'source',
@@ -51,6 +58,7 @@ function claimedRow(id: string) {
 beforeEach(() => {
   jest.clearAllMocks();
   sweepStaleDeliverableRuns.mockResolvedValue([]);
+  validateDeliverableTenantInvariant.mockResolvedValue({ ok: true, sourceKind: 'move', sourceId: 'evt-1' });
 });
 
 describe('processDeliverableQueue', () => {
@@ -80,6 +88,12 @@ describe('processDeliverableQueue', () => {
         userId: 'u1',
       }),
     );
+    expect(validateDeliverableTenantInvariant).toHaveBeenCalledWith({
+      module: 'source',
+      sourceArtifactRef: 'evt-1',
+      clientId: 'c1',
+      tenantKey: 'skyharbor-air',
+    });
     expect(completeDeliverableRun).toHaveBeenCalledWith(
       'run-1',
       expect.objectContaining({ status: 'succeeded', artifactId: 'art-1' }),
@@ -114,6 +128,33 @@ describe('processDeliverableQueue', () => {
     expect(completeDeliverableRun).toHaveBeenCalledWith(
       'run-4',
       expect.objectContaining({ status: 'failed', error: expect.stringContaining('job_payload missing') }),
+    );
+  });
+
+  it('fails the run before generation when the persisted row tenant does not own the source artifact', async () => {
+    claimNextDeliverableRun.mockResolvedValueOnce(claimedRow('run-tenant-drift')).mockResolvedValueOnce(null);
+    validateDeliverableTenantInvariant.mockResolvedValueOnce({
+      ok: false,
+      code: 'tenant_mismatch',
+      sourceKind: 'move',
+      sourceId: 'move-fc',
+      detail: 'move source tenant does not match the active generation tenant.',
+      expectedClientId: 'client-lakeshore',
+      expectedTenantKey: 'lakeshore-holdings',
+      actualClientId: 'client-first-capital',
+      actualTenantKey: 'first-capital',
+    });
+
+    await processDeliverableQueue({ workerId: 'w', batchSize: 5 });
+
+    expect(runDeliverableForTenant).not.toHaveBeenCalled();
+    expect(completeDeliverableRun).toHaveBeenCalledWith(
+      'run-tenant-drift',
+      expect.objectContaining({
+        status: 'failed',
+        error: expect.stringContaining('tenant invariant failed: tenant_mismatch'),
+        blockers: [expect.stringContaining('expected tenant lakeshore-holdings')],
+      }),
     );
   });
 

@@ -23,6 +23,7 @@
 import "server-only";
 
 import { runDeliverableForTenant } from "@/lib/deliverables/orchestrator/generate-service";
+import { validateDeliverableTenantInvariant } from "@/lib/deliverables/orchestrator/tenant-invariant";
 import {
   claimNextDeliverableRun,
   completeDeliverableRun,
@@ -75,6 +76,23 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
   }
 
   try {
+    const tenantInvariant = await validateDeliverableTenantInvariant({
+      module: payload.module as DeliverableModule,
+      sourceArtifactRef: payload.sourceArtifactRef,
+      clientId: run.clientId,
+      tenantKey: run.tenantKey,
+    });
+    if (!tenantInvariant.ok) {
+      await completeDeliverableRun(run.id, {
+        status: "failed",
+        error: `tenant invariant failed: ${tenantInvariant.code}; ${tenantInvariant.detail}`,
+        blockers: [
+          `${tenantInvariant.sourceKind}:${tenantInvariant.sourceId} expected tenant ${tenantInvariant.expectedTenantKey} but resolved ${tenantInvariant.actualTenantKey ?? "none"}`,
+        ],
+      }).catch(() => {});
+      return;
+    }
+
     const result = await runDeliverableForTenant({
       module: payload.module as DeliverableModule,
       useCaseArchetype: payload.useCaseArchetype,

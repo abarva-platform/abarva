@@ -12,6 +12,10 @@
 import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { createDeliverableRun, type DeliverableRunJobPayload } from '@/lib/deliverables/orchestrator/runs-repository';
+import {
+  tenantInvariantHttpStatus,
+  validateDeliverableTenantInvariant,
+} from '@/lib/deliverables/orchestrator/tenant-invariant';
 import type { AudienceRole, DeliverableModule, OutputFormat } from '@/lib/deliverables/orchestrator/types';
 
 export const runtime = 'nodejs';
@@ -60,6 +64,26 @@ export async function POST(req: NextRequest) {
     if (!deliverableType) return Response.json({ error: 'bad_request', detail: 'deliverableType is required.' }, { status: 400 });
     if (!sourceArtifactRef) return Response.json({ error: 'bad_request', detail: 'sourceArtifactRef is required.' }, { status: 400 });
     if (!decisionContext) return Response.json({ error: 'bad_request', detail: 'decisionContext is required.' }, { status: 400 });
+
+    const tenantInvariant = await validateDeliverableTenantInvariant({
+      module: body.module,
+      sourceArtifactRef,
+      clientId: ctx.clientId,
+      tenantKey: clientKey,
+    });
+    if (!tenantInvariant.ok) {
+      return Response.json(
+        {
+          error: tenantInvariant.code,
+          detail: tenantInvariant.detail,
+          sourceKind: tenantInvariant.sourceKind,
+          sourceId: tenantInvariant.sourceId,
+          expectedTenantKey: tenantInvariant.expectedTenantKey,
+          actualTenantKey: tenantInvariant.actualTenantKey,
+        },
+        { status: tenantInvariantHttpStatus(tenantInvariant) },
+      );
+    }
 
     // Build the self-contained job payload the worker reconstructs the generation input
     // from. clientId/tenantKey/userId are stored as first-class run columns; everything
