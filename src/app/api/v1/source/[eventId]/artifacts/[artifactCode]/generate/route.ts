@@ -848,6 +848,47 @@ export async function generateSourceArtifactDraft(
       activityWrite.error,
     );
   }
+
+  // Slice 1.8: persist the validated reasoning envelope to source_reasoning_envelopes
+  // for durable audit lineage. Non-fatal — if this fails, the envelope is still present
+  // in body_generation_metadata.reasoningEnvelope and generation succeeds normally.
+  if (
+    reasoningCapture.status !== "disabled" &&
+    reasoningCapture.envelope !== null
+  ) {
+    const env = reasoningCapture.envelope;
+    const { error: envelopeInsertError } = await supabase
+      .from("source_reasoning_envelopes")
+      .insert({
+        envelope_id: env.envelopeId,
+        source_event_id: ctx.event.id,
+        artifact_code: artifactCode,
+        tenant_key: ctx.tenantKey,
+        stage: env.stage,
+        status: reasoningCapture.status,
+        archetype: env.archetype ?? null,
+        rigor: env.rigor ?? null,
+        confidence_label: env.confidence?.label ?? null,
+        confidence_score: env.confidence?.score ?? null,
+        refusal_reason: env.refusal?.reason ?? null,
+        missing_evidence: env.refusal?.missingEvidence
+          ? JSON.stringify(env.refusal.missingEvidence)
+          : null,
+        claims: env.claims?.length
+          ? JSON.stringify(env.claims)
+          : null,
+        envelope: JSON.stringify(env),
+        generated_by_user_id: currentUser?.clerkUserId ?? null,
+        generated_at: nowIso,
+      });
+    if (envelopeInsertError) {
+      console.error(
+        "[source reasoning envelope persist] insert failed:",
+        envelopeInsertError.message,
+      );
+    }
+  }
+
   return Response.json({
     ok: true,
     artifact: view,
