@@ -1,13 +1,13 @@
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-import { getActiveClientRow } from '@/lib/active-client';
-import { canonicalClientDisplayName } from '@/lib/client-config';
-import { buildHomeV2DataScript } from '@/lib/home-v2/data';
+import { getActiveClientRow } from "@/lib/active-client";
+import { canonicalClientDisplayName } from "@/lib/client-config";
+import { buildHomeV2DataScript } from "@/lib/home-v2/data";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const EMBED_CSS = `
@@ -17,6 +17,10 @@ const EMBED_CSS = `
   .askbar { top: 0 !important; }
   .canvas { min-height: 100vh !important; }
 </style>`;
+
+function rewriteHomeV2AssetUrls(html: string): string {
+  return html.replace(/url\("([0-9a-f-]+\.woff2)"\)/g, 'url("/home-v2/$1")');
+}
 
 export async function GET(): Promise<NextResponse> {
   const client = await getActiveClientRow();
@@ -28,17 +32,17 @@ export async function GET(): Promise<NextResponse> {
     clientKey: client?.key ?? null,
     tenantName: activeTenantName,
   });
-  const htmlPath = path.join(process.cwd(), 'public', 'home-v2', 'index.html');
-  const template = await readFile(htmlPath, 'utf8');
-  const safeScript = script.replace(/<\/script/gi, '<\\/script');
-  const html = template
-    .replace('</head>', `${EMBED_CSS}</head>`)
-    .replace('<!-- ABARVA_HOME_V2_DATA -->', `<script>${safeScript}</script>`);
+  const htmlPath = path.join(process.cwd(), "public", "home-v2", "index.html");
+  const template = await readFile(htmlPath, "utf8");
+  const safeScript = script.replace(/<\/script/gi, "<\\/script");
+  const html = rewriteHomeV2AssetUrls(template)
+    .replace("</head>", `${EMBED_CSS}</head>`)
+    .replace("<!-- ABARVA_HOME_V2_DATA -->", `<script>${safeScript}</script>`);
 
   return new NextResponse(html, {
     headers: {
-      'Cache-Control': 'no-store',
-      'Content-Type': 'text/html; charset=utf-8',
+      "Cache-Control": "no-store",
+      "Content-Type": "text/html; charset=utf-8",
     },
   });
 }
