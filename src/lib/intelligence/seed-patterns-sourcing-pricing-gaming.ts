@@ -394,7 +394,7 @@ Normalized TCO, risk-adjusted vendor position, target range, walk-away range, an
     slug: "change-control-margin-recapture",
     title: "Change-Control Margin Recapture",
     thesis:
-      "Vendors can concede base run price while preserving margin through undefined change-control rates, minor enhancement exclusions, and weak threshold language.",
+      "Vendors can concede base run price while preserving margin through unpriced change-control rates, minor enhancement exclusions, and weak threshold language.",
     applicability:
       "Apply when the scope includes application support, enhancements, releases, integration changes, or transformation adjacency.",
     standardClauses: [
@@ -416,7 +416,7 @@ Normalized TCO, risk-adjusted vendor position, target range, walk-away range, an
 Base-price concessions can be neutralized by weak change-control language. For AMS, the boundary between support, release, minor enhancement, and change can decide the economics.
 
 ## Detection
-Flag proposals with undefined change-control rates, broad exclusions, or no leakage reporting.
+Flag proposals with unpriced change-control rates, broad exclusions, or no leakage reporting.
 
 ## Evidence required
 Service catalogue, rate card, enhancement threshold, historical change-order spend, and approval workflow.

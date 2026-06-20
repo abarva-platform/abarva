@@ -237295,8 +237295,8 @@
       "crossIndustry": true,
       "sectorApplicability": ["cross_sector"],
       "primarySector": null,
-      "shortDescription": "Vendors can concede base run price while preserving margin through undefined change-control rates, minor enhancement exclusions, and weak threshold language.",
-      "longDescription": "Apply when the scope includes application support, enhancements, releases, integration changes, or transformation adjacency.\n\n## Summary\nBase-price concessions can be neutralized by weak change-control language. For AMS, the boundary between support, release, minor enhancement, and change can decide the economics.\n\n## Detection\nFlag proposals with undefined change-control rates, broad exclusions, or no leakage reporting.\n\n## Evidence required\nService catalogue, rate card, enhancement threshold, historical change-order spend, and approval workflow.\n\n## CXO language\n\"A low run price with unbounded change control is not a low-cost contract.\"",
+      "shortDescription": "Vendors can concede base run price while preserving margin through unpriced change-control rates, minor enhancement exclusions, and weak threshold language.",
+      "longDescription": "Apply when the scope includes application support, enhancements, releases, integration changes, or transformation adjacency.\n\n## Summary\nBase-price concessions can be neutralized by weak change-control language. For AMS, the boundary between support, release, minor enhancement, and change can decide the economics.\n\n## Detection\nFlag proposals with unpriced change-control rates, broad exclusions, or no leakage reporting.\n\n## Evidence required\nService catalogue, rate card, enhancement threshold, historical change-order spend, and approval workflow.\n\n## CXO language\n\"A low run price with unbounded change control is not a low-cost contract.\"",
       "confidenceFloor": 0.82,
       "nObservationsFloor": 0,
       "relatedPatternIds": ["PAT-SRC-001", "PAT-SRC-002"],
@@ -237322,7 +237322,7 @@
         {
           "id": "detection",
           "title": "Detection",
-          "body": "Flag proposals with undefined change-control rates, broad exclusions, or no leakage reporting."
+          "body": "Flag proposals with unpriced change-control rates, broad exclusions, or no leakage reporting."
         },
         {
           "id": "evidence-required",
