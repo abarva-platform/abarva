@@ -94,4 +94,51 @@ describe("captureReasoningEnvelope (Slices 1.6 + 1.7)", () => {
       expect(r.envelope!.refusal).toBeDefined();
     }
   });
+
+  describe("Slice 1.8 — envelope shape satisfies source_reasoning_envelopes insert contract", () => {
+    it("envelope has all fields required for the persistence insert", () => {
+      const r = captureReasoningEnvelope(ctxFixture(), opts(true));
+      // Only ok/refusal produce non-null envelopes that get persisted.
+      if (r.status !== "ok" && r.status !== "refusal") return;
+      const env = r.envelope!;
+
+      // Primary key fields.
+      expect(typeof env.envelopeId).toBe("string");
+      expect(env.envelopeId.length).toBeGreaterThan(0);
+      expect(typeof env.eventId).toBe("string");
+      expect(typeof env.tenantKey).toBe("string");
+      expect(typeof env.stage).toBe("string");
+
+      // Extracted columns.
+      expect(typeof env.archetype).toBe("string");
+      expect(typeof env.rigor).toBe("string");
+      expect(env.confidence).toBeDefined();
+      expect(["low", "moderate", "high"]).toContain(env.confidence.label);
+      expect(typeof env.confidence.score).toBe("number");
+
+      // Refusal branch fields (present when status = "refusal").
+      if (r.status === "refusal") {
+        expect(typeof env.refusal!.reason).toBe("string");
+        expect(Array.isArray(env.refusal!.missingEvidence)).toBe(true);
+        // Each missingEvidence entry has a requirement field (used as the DB column).
+        if (env.refusal!.missingEvidence!.length > 0) {
+          expect(typeof env.refusal!.missingEvidence![0].requirement).toBe("string");
+        }
+      }
+
+      // Claims array is always present (empty for refusal, non-empty for ok).
+      expect(Array.isArray(env.claims)).toBe(true);
+      if (r.status === "ok") {
+        expect(env.claims.length).toBeGreaterThan(0);
+      } else {
+        expect(env.claims).toHaveLength(0);
+      }
+    });
+
+    it("CaptureStatus 'disabled' never produces an envelope (never inserted)", () => {
+      const r = captureReasoningEnvelope(ctxFixture(), opts(false));
+      expect(r.status).toBe("disabled");
+      expect(r.envelope).toBeNull();
+    });
+  });
 });
