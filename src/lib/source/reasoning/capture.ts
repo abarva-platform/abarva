@@ -1,4 +1,4 @@
-// Source reasoning · live-path capture (Phase 1, Slice 1.6)
+// Source reasoning · live-path capture (Phase 1, Slices 1.6 + 1.7)
 //
 // The single, guarded entry point the generate route calls to run the reasoning
 // spine and produce a VALIDATED ReasoningEnvelope — or null. By contract this
@@ -6,7 +6,13 @@
 // errors, or when the envelope fails the gate, it returns a null envelope and the
 // route proceeds on the legacy path UNCHANGED. This slice CAPTURES the envelope
 // (the route persists it as reasoning metadata, with zero change to the generated
-// prose); rendering the envelope into the deliverable is a later slice (1.6b).
+// prose); rendering the envelope into the deliverable is Slice 1.6b.
+//
+// Slice 1.7 (grounded refusal enforcement, annotation-only): when the recommendation
+// stage fires the grounded refusal path (no gate-defining claim rests on usable
+// evidence), `status` is now "refusal" (not "ok") and the envelope is non-null so
+// the route and UI can surface the specific missing-evidence requirements. Generation
+// still proceeds — hard-blocking belongs in Phase 2 when evidence loading is reliable.
 
 import type { SourceGenerationContext } from "@/lib/source/agent-generation/types";
 import type { ReasoningEnvelope } from "./reasoning-envelope";
@@ -22,10 +28,14 @@ export interface CaptureOptions {
   now: string;
 }
 
-export type CaptureStatus = "disabled" | "ok" | "gate_failed" | "error";
+export type CaptureStatus = "disabled" | "ok" | "refusal" | "gate_failed" | "error";
 
 export interface CaptureResult {
-  /** The validated envelope, or null when status !== "ok". */
+  /**
+   * The validated envelope.
+   * - Non-null for "ok" (claims grounded) and "refusal" (spine ran; no usable evidence).
+   * - Null for "disabled", "gate_failed", and "error".
+   */
   envelope: ReasoningEnvelope | null;
   status: CaptureStatus;
   /** Failure kinds / error message, for the generation receipt + logs. */
@@ -57,7 +67,11 @@ export function captureReasoningEnvelope(
         failures: validation.failures.map((f) => f.kind),
       };
     }
-    return { envelope, status: "ok" };
+    // Slice 1.7: "ok" = claims grounded on usable evidence; "refusal" = spine ran
+    // but no gate-defining claim rests on usable evidence (envelope.refusal is set).
+    // Both paths return a non-null envelope; the difference is the status, which the
+    // route and UI use to surface the refusal reason without blocking generation.
+    return { envelope, status: envelope.refusal ? "refusal" : "ok" };
   } catch (err) {
     return {
       envelope: null,

@@ -748,15 +748,19 @@ function ReasoningBanner({
   reasoning: { status: string; envelope?: unknown };
   artifactCode: string;
 }) {
-  if (reasoning.status !== "ok") return null;
+  // Slice 1.7: "ok" = grounded claims; "refusal" = no usable evidence (amber).
+  // Gate-failed / error / disabled: suppress (internal, not user-actionable).
+  if (reasoning.status !== "ok" && reasoning.status !== "refusal") return null;
   const env = reasoning.envelope as ReasoningEnvelopeShape | undefined;
   if (!env) return null;
 
+  const isRefusal = reasoning.status === "refusal";
   const archetype = env.archetype ?? "unknown";
   const rigor = env.rigor ?? "standard";
   const conf = env.confidence;
-  const refusal = env.refusal;
   const claimCount = env.claims?.length ?? 0;
+  const missing =
+    env.refusal?.missingEvidence?.map((m) => m.requirement).join(", ") ?? "";
 
   const label = [
     archetype.toUpperCase(),
@@ -766,16 +770,13 @@ function ReasoningBanner({
     .filter(Boolean)
     .join(" · ");
 
-  const missing =
-    refusal?.missingEvidence?.map((m) => m.requirement).join(", ") ?? "";
-
   return (
     <div
       data-testid={`source-reasoning-banner-${artifactCode}`}
-      style={refusal ? REASONING_WARN_STYLE : REASONING_INFO_STYLE}
+      style={isRefusal ? REASONING_WARN_STYLE : REASONING_INFO_STYLE}
     >
       <span style={REASONING_LABEL_STYLE}>Reasoning · {label}</span>
-      {refusal ? (
+      {isRefusal ? (
         <span style={REASONING_DETAIL_STYLE}>
           {" "}
           — no gate-defining evidence yet
