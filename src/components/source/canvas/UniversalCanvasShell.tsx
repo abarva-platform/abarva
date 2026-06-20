@@ -357,6 +357,11 @@ export function UniversalCanvasShell({
   const [pendingGenerationByCode, setPendingGenerationByCode] = useState<
     Record<string, boolean>
   >({});
+  // Reasoning envelope captured from the generate route (Slice 1.6b). Only
+  // populated when the source_reasoning_spine flag is ON for this tenant.
+  const [reasoningByCode, setReasoningByCode] = useState<
+    Record<string, { status: string; envelope?: unknown }>
+  >({});
   // Stored-documents shelf is server-seeded but mutates client-side when
   // "Generate with Sentinel" succeeds — the generate route now
   // also writes to the source_artifacts registry and returns the new row.
@@ -638,6 +643,7 @@ export function UniversalCanvasShell({
       const payload = (await res.json().catch(() => null)) as {
         artifact?: SourceEventArtifactState;
         registryArtifact?: SourceArtifactRegistryRecord | null;
+        generation?: { reasoningStatus?: string; reasoningEnvelope?: unknown };
         error?: string;
         detail?: string;
         missingUpstream?: string[];
@@ -662,6 +668,18 @@ export function UniversalCanvasShell({
           const without = prev.filter((doc) => doc.id !== newRow.id);
           return [newRow, ...without];
         });
+      }
+      if (
+        payload.generation?.reasoningStatus &&
+        payload.generation.reasoningStatus !== "disabled"
+      ) {
+        setReasoningByCode((prev) => ({
+          ...prev,
+          [code]: {
+            status: payload.generation!.reasoningStatus!,
+            envelope: payload.generation!.reasoningEnvelope,
+          },
+        }));
       }
       return { ok: true };
     } catch (err) {
@@ -935,6 +953,7 @@ export function UniversalCanvasShell({
       onGenerateArtifact={handleArtifactGenerate}
       generatableCodes={generatableCodes}
       generationPendingByCode={pendingGenerationByCode}
+      reasoningByCode={reasoningByCode}
       xlsxGeneratableCodes={XLSX_GENERATABLE_CODES_CLIENT}
       xlsxDownloadHref={(code) => sourceArtifactRenderHref(code, "xlsx")}
       xlsxComparisonCodes={XLSX_COMPARISON_CODES_CLIENT}

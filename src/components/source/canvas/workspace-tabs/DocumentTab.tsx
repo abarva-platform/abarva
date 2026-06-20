@@ -70,6 +70,8 @@ interface DocumentTabProps {
   generatableCodes?: ReadonlySet<string>;
   /** Per-artifact generation-pending flag. */
   generationPendingByCode?: Record<string, boolean>;
+  /** Reasoning envelope captured after "Generate with Sentinel" (Slice 1.6b). */
+  reasoningByCode?: Record<string, { status: string; envelope?: unknown }>;
   /**
    * Set of codes that have an xlsx renderer wired.
    */
@@ -137,6 +139,7 @@ export function DocumentTab({
   onGenerateArtifact,
   generatableCodes,
   generationPendingByCode,
+  reasoningByCode,
   xlsxGeneratableCodes,
   xlsxDownloadHref,
   xlsxComparisonCodes,
@@ -311,6 +314,7 @@ export function DocumentTab({
                     pdfGeneratableCodes?.has(active.artifactCode) ||
                     false)
                 }
+                reasoning={reasoningByCode?.[active.artifactCode]}
               />
               {eventId && VENDOR_SUBMISSIONS_CODES.has(active.artifactCode) ? (
                 <VendorPricingSubmissionsPanel
@@ -491,6 +495,8 @@ interface ArtifactBodyEditorProps {
   /** When non-null the card shows a "Download PDF" anchor. */
   pdfDownloadHref?: string | null;
   exportOptionsHidden: boolean;
+  /** Reasoning envelope from the last "Generate with Sentinel" call (Slice 1.6b). */
+  reasoning?: { status: string; envelope?: unknown };
 }
 
 function ArtifactBodyEditor({
@@ -509,6 +515,7 @@ function ArtifactBodyEditor({
   htmlViewHref,
   pdfDownloadHref,
   exportOptionsHidden,
+  reasoning,
 }: ArtifactBodyEditorProps) {
   const [editing, setEditing] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -695,6 +702,9 @@ function ArtifactBodyEditor({
           Generation failed — {generationError}
         </div>
       ) : null}
+      {reasoning && reasoning.status !== "disabled" ? (
+        <ReasoningBanner reasoning={reasoning} artifactCode={artifact.artifactCode} />
+      ) : null}
       {exportOptionsHidden ? (
         <div style={EXPORT_EMPTY_NOTE_STYLE}>
           Document exports appear once this artifact has a draft. Workbook
@@ -718,6 +728,61 @@ function ArtifactBodyEditor({
           treated as review-ready. The starter content is kept out of the main
           workspace so it is not mistaken for approved event content.
         </div>
+      ) : null}
+    </div>
+  );
+}
+
+interface ReasoningEnvelopeShape {
+  archetype?: string;
+  rigor?: string;
+  confidence?: { label: string; score: number };
+  refusal?: { reason: string; missingEvidence?: { requirement: string }[] };
+  claims?: unknown[];
+}
+
+function ReasoningBanner({
+  reasoning,
+  artifactCode,
+}: {
+  reasoning: { status: string; envelope?: unknown };
+  artifactCode: string;
+}) {
+  if (reasoning.status !== "ok") return null;
+  const env = reasoning.envelope as ReasoningEnvelopeShape | undefined;
+  if (!env) return null;
+
+  const archetype = env.archetype ?? "unknown";
+  const rigor = env.rigor ?? "standard";
+  const conf = env.confidence;
+  const refusal = env.refusal;
+  const claimCount = env.claims?.length ?? 0;
+
+  const label = [
+    archetype.toUpperCase(),
+    rigor,
+    conf ? `${conf.label} confidence` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const missing =
+    refusal?.missingEvidence?.map((m) => m.requirement).join(", ") ?? "";
+
+  return (
+    <div
+      data-testid={`source-reasoning-banner-${artifactCode}`}
+      style={refusal ? REASONING_WARN_STYLE : REASONING_INFO_STYLE}
+    >
+      <span style={REASONING_LABEL_STYLE}>Reasoning · {label}</span>
+      {refusal ? (
+        <span style={REASONING_DETAIL_STYLE}>
+          {" "}
+          — no gate-defining evidence yet
+          {missing ? `: ${missing}` : ""}
+        </span>
+      ) : claimCount > 0 ? (
+        <span style={REASONING_DETAIL_STYLE}> — {claimCount} claim{claimCount !== 1 ? "s" : ""} grounded</span>
       ) : null}
     </div>
   );
@@ -1339,6 +1404,40 @@ const READER_BADGE_STYLE: CSSProperties = {
   letterSpacing: 0,
   color: CANVAS.INK_SOFT,
   fontWeight: 600,
+};
+
+const REASONING_WARN_STYLE: CSSProperties = {
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  border: "1px solid rgba(186,117,23,0.25)",
+  background: "rgba(186,117,23,0.04)",
+  padding: "7px 12px",
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  color: "#8B5500",
+  lineHeight: 1.45,
+};
+
+const REASONING_INFO_STYLE: CSSProperties = {
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  background: "rgba(10,10,11,0.02)",
+  padding: "7px 12px",
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
+  color: CANVAS.INK_SOFT,
+  lineHeight: 1.45,
+};
+
+const REASONING_LABEL_STYLE: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: 0.2,
+};
+
+const REASONING_DETAIL_STYLE: CSSProperties = {
+  fontFamily: CANVAS.SANS,
+  fontSize: 12,
 };
 
 const EXPORT_EMPTY_NOTE_STYLE: CSSProperties = {
