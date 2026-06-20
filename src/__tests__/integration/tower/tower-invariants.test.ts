@@ -22,9 +22,11 @@ describe('IT Investment Tower v2 invariants', () => {
 
   it('mounts the approved standalone v2 Tower surface on /tower', () => {
     expect(pageSource).toContain('/api/tower/v2-frame?client=');
+    expect(pageSource).toContain('<AppShell');
+    expect(pageSource).toContain('surface="tower"');
+    expect(pageSource).toContain('src={frameSrc}');
     expect(pageSource).toContain('title="AbarVa IT Investment Tower"');
     expect(pageSource).not.toContain('AiControlTowerPage');
-    expect(pageSource).not.toContain('AppShell');
   });
 
   it('binds the authenticated Tower frame to the active client only', () => {
@@ -78,7 +80,7 @@ describe('IT Investment Tower v2 invariants', () => {
     expect(frameRoute).toContain('abarva-option2-hq-nav-dark-standard.svg');
   });
 
-  it('preserves the approved v2 navigation, KPI anchor, and lens set', () => {
+  it('preserves the approved v2 KPI anchor and lens set', () => {
     for (const label of ['Home', 'Intelligence', 'Moves', 'Source', 'Tower']) {
       expect(towerHtml).toContain(label);
     }
@@ -122,6 +124,11 @@ describe('IT Investment Tower v2 invariants', () => {
     expect(towerApp).toContain('Approve & route');
     expect(towerApp).toContain('Ask Nexus');
     expect(towerApp).toContain('localStorage.setItem');
+  });
+
+  it('hides standalone Tower chrome when embedded under AppShell', () => {
+    expect(frameRoute).toContain('abarva-tower-v2-embed-css');
+    expect(frameRoute).toContain('.topbar { display: none !important; }');
   });
 
   it('removes legacy Tower route files that can show retired views', () => {

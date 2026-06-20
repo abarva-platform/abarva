@@ -7,6 +7,8 @@ describe('IT Investment Tower v2 route wiring', () => {
   const towerApp = readFileSync('public/tower-v2/app.js', 'utf8');
 
   it('renders the approved standalone v2 Tower in the authenticated /tower route', () => {
+    expect(pageSource).toContain('<AppShell');
+    expect(pageSource).toContain('surface="tower"');
     expect(pageSource).toContain('<iframe');
     expect(pageSource).toContain('/api/tower/v2-frame?client=');
     expect(pageSource).toContain('AbarVa IT Investment Tower');
@@ -21,7 +23,10 @@ describe('IT Investment Tower v2 route wiring', () => {
     expect(frameRoute).not.toContain('catch(() => null)');
   });
 
-  it('keeps product navigation inside the v2 Tower shell', () => {
+  it('keeps canonical product navigation on the route shell and hides standalone iframe chrome', () => {
+    expect(pageSource).toContain('AppShell');
+    expect(frameRoute).toContain('abarva-tower-v2-embed-css');
+    expect(frameRoute).toContain('.topbar { display: none !important; }');
     for (const label of ['Home', 'Intelligence', 'Moves', 'Source', 'Tower']) {
       expect(towerHtml).toContain(label);
     }

@@ -12,6 +12,11 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 const LOGO_SRC = '/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-standard.svg';
+const EMBED_CSS = `
+<style id="abarva-tower-v2-embed-css">
+  .topbar { display: none !important; }
+  .app { min-height: 100vh !important; }
+</style>`;
 
 function towerAssetUrl(relativeAsset: string): string {
   return `/tower-v2/${relativeAsset}`;
@@ -59,6 +64,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const template = await readFile(htmlPath, 'utf8');
   const safeScript = script.replace(/<\/script/gi, '<\\/script');
   const html = rewriteTenantShell(rewriteRelativeTowerAssets(template), tenantName, root)
+    .replace('</head>', `${EMBED_CSS}</head>`)
     .replace(
       '<script src="/tower-v2/default-data.js"></script>',
       `<script>${safeScript}</script>`,
