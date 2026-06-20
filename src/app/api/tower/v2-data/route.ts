@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 import { getActiveClientRow } from '@/lib/active-client';
 import { canonicalClientDisplayName } from '@/lib/client-config';
@@ -16,8 +17,9 @@ function javascriptResponse(source: string): NextResponse {
   });
 }
 
-export async function GET(): Promise<NextResponse> {
-  const client = await getActiveClientRow();
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const requestedClient = request.nextUrl.searchParams.get('client');
+  const client = await getActiveClientRow(requestedClient);
   const tenantName =
     canonicalClientDisplayName({ key: client?.key, name: client?.name }) ??
     client?.name ??

@@ -21,19 +21,18 @@ describe('IT Investment Tower v2 invariants', () => {
   const v4DataSource = readFileSync(TOWER_V4_DATA, 'utf8');
 
   it('mounts the approved standalone v2 Tower surface on /tower', () => {
-    expect(pageSource).toContain('src="/api/tower/v2-frame"');
+    expect(pageSource).toContain('/api/tower/v2-frame?client=');
     expect(pageSource).toContain('title="AbarVa IT Investment Tower"');
     expect(pageSource).not.toContain('AiControlTowerPage');
     expect(pageSource).not.toContain('AppShell');
   });
 
   it('binds the authenticated Tower frame to the active client only', () => {
-    expect(frameRoute).toContain('getActiveClientRow()');
-    expect(dataRoute).toContain('getActiveClientRow()');
-    expect(frameRoute).not.toContain('searchParams');
-    expect(dataRoute).not.toContain('searchParams');
-    expect(frameRoute).not.toContain('requestedClient');
-    expect(dataRoute).not.toContain('requestedClient');
+    expect(pageSource).toContain('getActiveClientRow()');
+    expect(frameRoute).toContain('request.nextUrl.searchParams.get');
+    expect(dataRoute).toContain('request.nextUrl.searchParams.get');
+    expect(frameRoute).toContain('getActiveClientRow(requestedClient)');
+    expect(dataRoute).toContain('getActiveClientRow(requestedClient)');
     expect(frameRoute).not.toContain('catch(() => null)');
     expect(dataRoute).not.toContain('catch(() => null)');
     expect(frameRoute).toContain('buildTowerV2V4DataScript');
@@ -71,6 +70,9 @@ describe('IT Investment Tower v2 invariants', () => {
     expect(existsSync(TOWER_V2_APP)).toBe(true);
     expect(towerHtml).toContain('/tower-v2/default-data.js');
     expect(towerHtml).toContain('/tower-v2/app.js');
+    expect(frameRoute).toContain('rewriteRelativeTowerAssets');
+    expect(frameRoute).toContain('/tower-v2/');
+    expect(frameRoute).toContain('abarva-option2-hq-nav-dark-standard.svg');
   });
 
   it('preserves the approved v2 navigation, KPI anchor, and lens set', () => {
