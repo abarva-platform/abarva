@@ -46,6 +46,12 @@ import { lifeSciencesRdCommercialExpert } from "./packs/life-sciences-rd-commerc
 import { telecomNetworkOperationsExpert } from "./packs/telecom-network-operations";
 import { mediaEntertainmentExpert } from "./packs/media-entertainment";
 import { publicSectorCitizenServicesExpert } from "./packs/public-sector-citizen-services";
+import { itOutsourcingManagedServicesExpert } from "./packs/it-outsourcing-managed-services";
+import { itSpendOptimizationExpert } from "./packs/it-spend-optimization-tbm";
+import { aiEngineeringDeliveryExpert } from "./packs/ai-engineering-delivery";
+import { cloudInfrastructureModernizationExpert } from "./packs/cloud-infrastructure-modernization";
+import { erpPlatformModernizationExpert } from "./packs/erp-platform-modernization";
+import { applicationModernizationExpert } from "./packs/application-modernization";
 
 /** All registered experts. Order is not significant — the router ranks. */
 export const EXPERT_PACKS: readonly ExpertPack[] = [
@@ -90,6 +96,12 @@ export const EXPERT_PACKS: readonly ExpertPack[] = [
   telecomNetworkOperationsExpert,
   mediaEntertainmentExpert,
   publicSectorCitizenServicesExpert,
+  itOutsourcingManagedServicesExpert,
+  itSpendOptimizationExpert,
+  aiEngineeringDeliveryExpert,
+  cloudInfrastructureModernizationExpert,
+  erpPlatformModernizationExpert,
+  applicationModernizationExpert,
 ];
 
 export function getExpertById(id: string): ExpertPack | undefined {
