@@ -507,7 +507,7 @@ function sectionsFromParts(
   parts: Array<[string, string | null]>,
 ): PatternManifestSection[] {
   return parts
-    .filter(([, body]) => isNonEmptyString(body))
+    .filter((part): part is [string, string] => isNonEmptyString(part[1]))
     .map(([title, body]) => ({
       id: slugify(title),
       title,
