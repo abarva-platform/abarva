@@ -394,8 +394,14 @@ function fallbackAllowed(clientKey: string | null | undefined, tenantName: strin
   return probe.includes('first') || probe.includes('capital');
 }
 
-async function parseCsv(relativePath: string): Promise<JsonRecord[]> {
-  const absolute = path.join(process.cwd(), relativePath);
+const FIRST_CAPITAL_FALLBACK_ROOT = path.join(
+  process.cwd(),
+  'datasets',
+  'first-capital-financial-synthetic-v2',
+);
+
+async function parseFirstCapitalFallbackCsv(relativePath: string): Promise<JsonRecord[]> {
+  const absolute = path.join(FIRST_CAPITAL_FALLBACK_ROOT, relativePath);
   const csv = await readFile(absolute, 'utf8');
   const parsed = Papa.parse<JsonRecord>(csv, {
     header: true,
@@ -419,16 +425,16 @@ async function readFirstCapitalFallbackRows(): Promise<AiControlTowerReadRows> {
       risks,
       gates,
     ] = await Promise.all([
-      parseCsv('datasets/first-capital-financial-synthetic-v2/06-initiatives/initiatives.csv').catch(() => []),
-      parseCsv('datasets/first-capital-financial-synthetic-v2/ai-control-tower/T02_benefit-realization.csv'),
-      parseCsv('datasets/first-capital-financial-synthetic-v2/ai-control-tower/T03_copilot-adoption-by-function.csv'),
-      parseCsv('datasets/first-capital-financial-synthetic-v2/ai-control-tower/T04_erp-platform-agents.csv'),
-      parseCsv('datasets/first-capital-financial-synthetic-v2/ai-control-tower/T05_servicenow-automation-metrics.csv'),
-      parseCsv('datasets/first-capital-financial-synthetic-v2/ai-control-tower/T06_function-ai-productivity-scorecard.csv'),
-      parseCsv('datasets/first-capital-financial-synthetic-v2/ai-control-tower/T07_model-risk-inventory.csv'),
-      parseCsv('datasets/first-capital-financial-synthetic-v2/ai-control-tower/T08_ai-spend-by-initiative.csv'),
-      parseCsv('datasets/first-capital-financial-synthetic-v2/ai-control-tower/T09_ai-risk-register.csv'),
-      parseCsv('datasets/first-capital-financial-synthetic-v2/ai-control-tower/T10_gate-approval-history.csv'),
+      parseFirstCapitalFallbackCsv('06-initiatives/initiatives.csv').catch(() => []),
+      parseFirstCapitalFallbackCsv('ai-control-tower/T02_benefit-realization.csv'),
+      parseFirstCapitalFallbackCsv('ai-control-tower/T03_copilot-adoption-by-function.csv'),
+      parseFirstCapitalFallbackCsv('ai-control-tower/T04_erp-platform-agents.csv'),
+      parseFirstCapitalFallbackCsv('ai-control-tower/T05_servicenow-automation-metrics.csv'),
+      parseFirstCapitalFallbackCsv('ai-control-tower/T06_function-ai-productivity-scorecard.csv'),
+      parseFirstCapitalFallbackCsv('ai-control-tower/T07_model-risk-inventory.csv'),
+      parseFirstCapitalFallbackCsv('ai-control-tower/T08_ai-spend-by-initiative.csv'),
+      parseFirstCapitalFallbackCsv('ai-control-tower/T09_ai-risk-register.csv'),
+      parseFirstCapitalFallbackCsv('ai-control-tower/T10_gate-approval-history.csv'),
     ]);
 
     const initiativeRows = initiatives.map((row) => ({

@@ -1,136 +1,147 @@
-// Tower invariant tests — Apple-grade polish guardrails.
-//
-// These assertions back the Tower design-system + decide-and-route +
-// fixture-strip work in the "feat(tower): Apple-grade polish" slice.
-// They are intentionally cheap (file-text greps) so they run on every CI
-// pass without spinning up Next or the DB.
+import { existsSync, readFileSync } from 'node:fs';
 
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { ALL_CLIENTS } from '@/lib/client-config';
+import { TOWER_V2_CLIENT_PACKS, resolveTowerV2ClientPack } from '@/lib/tower-v2/v4-data';
 
-const TOWER_ROUTES_DIR = 'src/app/(maestro)/tower';
-const TOWER_COMPONENTS_DIR = 'src/components/tower';
-const TOWER_INDEX = 'src/components/tower/TowerIndexPage.tsx';
+const TOWER_PAGE = 'src/app/(maestro)/tower/page.tsx';
+const TOWER_FRAME_ROUTE = 'src/app/api/tower/v2-frame/route.ts';
+const TOWER_DATA_ROUTE = 'src/app/api/tower/v2-data/route.ts';
+const TOWER_V4_DATA = 'src/lib/tower-v2/v4-data.ts';
+const TOWER_V2_HTML = 'public/tower-v2/index.html';
+const TOWER_V2_DATA = 'public/tower-v2/default-data.js';
+const TOWER_V2_APP = 'public/tower-v2/app.js';
 
-function walk(dir: string, out: string[] = []): string[] {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    const stat = statSync(full);
-    if (stat.isDirectory()) walk(full, out);
-    else if (entry.endsWith('.tsx') || entry.endsWith('.ts')) out.push(full);
-  }
-  return out;
-}
+describe('IT Investment Tower v2 invariants', () => {
+  const pageSource = readFileSync(TOWER_PAGE, 'utf8');
+  const towerHtml = readFileSync(TOWER_V2_HTML, 'utf8');
+  const towerData = readFileSync(TOWER_V2_DATA, 'utf8');
+  const towerApp = readFileSync(TOWER_V2_APP, 'utf8');
+  const frameRoute = readFileSync(TOWER_FRAME_ROUTE, 'utf8');
+  const dataRoute = readFileSync(TOWER_DATA_ROUTE, 'utf8');
+  const v4DataSource = readFileSync(TOWER_V4_DATA, 'utf8');
 
-describe('Tower invariants — Apple-grade polish slice', () => {
-  describe('design system (locked AbarVa tokens on the index)', () => {
-    const indexSource = readFileSync(TOWER_INDEX, 'utf8');
-
-    it('uses #F8F7F4 cream as the index page background, not #ffffff', () => {
-      // The audit (`§5.2`) called out the white-bg divergence on `/tower`.
-      // The page wrapper must use the locked cream token.
-      expect(indexSource).toContain("PAGE_BG: '#F8F7F4'");
-      expect(indexSource).not.toContain("PAGE_BG: '#ffffff'");
-    });
-
-    it('binds Fraunces (serif) and Inter (sans) as the headline + body fonts', () => {
-      expect(indexSource).toContain('Fraunces');
-      expect(indexSource).toContain('Inter');
-    });
+  it('mounts the approved standalone v2 Tower surface on /tower', () => {
+    expect(pageSource).toContain('src="/api/tower/v2-frame"');
+    expect(pageSource).toContain('title="AbarVa IT Investment Tower"');
+    expect(pageSource).not.toContain('AiControlTowerPage');
+    expect(pageSource).not.toContain('AppShell');
   });
 
-  describe('fixture strip (Apex contact-centre card)', () => {
-    const towerPageSource = readFileSync(`${TOWER_ROUTES_DIR}/page.tsx`, 'utf8');
-
-    it('gates buildApexPortfolioCards behind TOWER_APEX_FIXTURE_ENABLED', () => {
-      // Per the broker-boundary memory the app-tier must not directly
-      // surface hardcoded fixtures without an explicit opt-in. The fixture
-      // import is only safe to call when the env flag is set.
-      expect(towerPageSource).toContain('TOWER_APEX_FIXTURE_ENABLED');
-      expect(towerPageSource).toContain('apexFixtureEnabled');
-    });
-
-    it('does not surface a hardcoded "Apex Contact Center" string on any non-fixture Tower render-path file', () => {
-      // Grep every Tower page + component file for the literal product
-      // name. The single allowed exception is the fixture file itself,
-      // which is *only* reached when the env flag is enabled.
-      const files = [
-        ...walk(TOWER_ROUTES_DIR),
-        ...walk(TOWER_COMPONENTS_DIR),
-      ];
-      const offenders = files.filter((f) => {
-        if (f.endsWith('apex-contact-center-portfolio-fixture.ts')) return false;
-        const source = readFileSync(f, 'utf8');
-        return /Apex Contact Center/.test(source);
-      });
-      expect(offenders).toEqual([]);
-    });
+  it('binds the authenticated Tower frame to the active client only', () => {
+    expect(frameRoute).toContain('getActiveClientRow()');
+    expect(dataRoute).toContain('getActiveClientRow()');
+    expect(frameRoute).not.toContain('searchParams');
+    expect(dataRoute).not.toContain('searchParams');
+    expect(frameRoute).not.toContain('requestedClient');
+    expect(dataRoute).not.toContain('requestedClient');
+    expect(frameRoute).not.toContain('catch(() => null)');
+    expect(dataRoute).not.toContain('catch(() => null)');
+    expect(frameRoute).toContain('buildTowerV2V4DataScript');
+    expect(dataRoute).toContain('buildTowerV2V4DataScript');
   });
 
-  describe('decide-and-route (Fund / Pause / Kill)', () => {
-    it('ships a /api/tower/decision endpoint that audit-logs through writeProgramAuditLog', () => {
-      const path = 'src/app/api/tower/decision/route.ts';
-      expect(existsSync(path)).toBe(true);
-      const source = readFileSync(path, 'utf8');
-      expect(source).toContain('writeProgramAuditLog');
-      expect(source).toContain("'fund'");
-      expect(source).toContain("'pause'");
-      expect(source).toContain("'kill'");
-    });
+  it('maps every configured client to an explicit Tower data pack', () => {
+    expect(ALL_CLIENTS.map((client) => client.id).sort()).toEqual([
+      'apexretail',
+      'arcturus',
+      'lakeshore',
+      'meridian',
+      'northstar',
+      'skyharbor',
+    ]);
+    expect(TOWER_V2_CLIENT_PACKS.map((pack) => pack.datasetDir).sort()).toEqual([
+      'apex-retail-synthetic-v4',
+      'first-capital-financial-synthetic-v4',
+      'lakeshore-industries-synthetic-v4',
+      'meridian-health-synthetic-v4',
+      'northstar-clinical-tech-synthetic-v1',
+      'skyharbor-air-synthetic-v4',
+    ]);
 
-    it('renders the TowerDecisionActionRow on each portfolio card', () => {
-      const path = 'src/components/tower/MovePortfolioCardPanel.tsx';
-      const source = readFileSync(path, 'utf8');
-      expect(source).toContain('TowerDecisionActionRow');
-    });
+    for (const client of ALL_CLIENTS) {
+      const pack = resolveTowerV2ClientPack(client.id, client.name);
+      expect(existsSync(`datasets/${pack.datasetDir}`)).toBe(true);
+      expect(pack.keys).toEqual(expect.arrayContaining([client.id]));
+    }
   });
 
-  describe('redirect-shell cleanup (audit §5.4)', () => {
-    const deletedShells = [
-      'src/app/(maestro)/tower/lens/value/page.tsx',
-      'src/app/(maestro)/tower/lens/cost/page.tsx',
-      'src/app/(maestro)/tower/lens/risk/page.tsx',
-      'src/app/(maestro)/tower/lens/adoption/page.tsx',
-      'src/app/(maestro)/tower/lens/inventory/page.tsx',
+  it('keeps the v2 offline assets in place', () => {
+    expect(existsSync(TOWER_V2_HTML)).toBe(true);
+    expect(existsSync(TOWER_V2_DATA)).toBe(true);
+    expect(existsSync(TOWER_V2_APP)).toBe(true);
+    expect(towerHtml).toContain('/tower-v2/default-data.js');
+    expect(towerHtml).toContain('/tower-v2/app.js');
+  });
+
+  it('preserves the approved v2 navigation, KPI anchor, and lens set', () => {
+    for (const label of ['Home', 'Intelligence', 'Moves', 'Source', 'Tower']) {
+      expect(towerHtml).toContain(label);
+    }
+    expect(towerHtml).toContain('Where is the IT money going, and what is it producing?');
+    expect(towerApp).toContain("Programs");
+    expect(towerApp).toContain("Spend");
+    expect(towerApp).toContain("Vendors");
+    expect(towerApp).toContain("By Function");
+    expect(towerApp).toContain("Actions");
+    for (const slice of ['CapEx vs OpEx', 'Software / HW / Services / Cloud', 'Run vs Change', 'AI vs non-AI']) {
+      expect(towerApp).toContain(slice);
+    }
+  });
+
+  it('keeps the live binding mapped to the v4 private data-plane packs', () => {
+    expect(v4DataSource).toContain('family-4-financial-commercial/F12_it-budget-financials.csv');
+    expect(v4DataSource).toContain('family-4-financial-commercial/F11_vendors-contracts-licenses.csv');
+    expect(v4DataSource).toContain('ai-control-tower/T01_initiative-registry.csv');
+    expect(v4DataSource).toContain('ai-control-tower/T07_benefit-realization.csv');
+    expect(v4DataSource).toContain('ai-control-tower/T08_spend-contracts.csv');
+    expect(v4DataSource).toContain('ai-control-tower/T12_derived-actions.csv');
+    expect(v4DataSource).toContain('northstar-clinical-tech-synthetic-v1');
+    expect(v4DataSource).toContain('10-initiatives/initiatives-active.csv');
+    expect(v4DataSource).toContain('annual_contract_value_usd');
+    expect(v4DataSource).toContain('annual_run_rate_usd');
+  });
+
+  it('preserves the approved synthetic First Capital investment model', () => {
+    expect(towerData).toContain('$342M FY26 IT budget');
+    expect(towerData).toContain("budget: 84");
+    expect(towerData).toContain("name: 'Core Banking Platform'");
+    expect(towerData).toContain("name: 'DXC'");
+    expect(towerData).toContain("title: 'Kill three AI initiatives with no verified value.'");
+  });
+
+  it('retains the required interaction affordances', () => {
+    expect(towerApp).toContain('toggleViewBtn');
+    expect(towerApp).toContain('progDrawer');
+    expect(towerApp).toContain('vendorDrawer');
+    expect(towerApp).toContain('actionDrawer');
+    expect(towerApp).toContain('Approve & route');
+    expect(towerApp).toContain('Ask Nexus');
+    expect(towerApp).toContain('localStorage.setItem');
+  });
+
+  it('removes legacy Tower route files that can show retired views', () => {
+    const removedRoutes = [
       'src/app/(maestro)/tower/activity/page.tsx',
+      'src/app/(maestro)/tower/lens/page.tsx',
+      'src/app/(maestro)/tower/onboard/page.tsx',
+      'src/app/(maestro)/tower/onboard/[dimension]/page.tsx',
       'src/app/(maestro)/tower/outcomes/page.tsx',
+      'src/app/(maestro)/tower/portfolio/page.tsx',
+      'src/app/(maestro)/tower/portfolio-dag/page.tsx',
+      'src/app/(maestro)/tower/pressures/page.tsx',
+      'src/app/(maestro)/tower/pressures/[pressureId]/page.tsx',
+      'src/app/(maestro)/tower/preview/page.tsx',
+      'src/app/(maestro)/tower/programs/page.tsx',
+      'src/app/(maestro)/tower/programs/[programId]/page.tsx',
+      'src/app/(maestro)/tower/programs/[programId]/value/page.tsx',
       'src/app/(maestro)/tower/projects/page.tsx',
+      'src/app/(maestro)/tower/source-portfolio-value/page.tsx',
       'src/app/(maestro)/tower/staff-aug/page.tsx',
       'src/app/(maestro)/tower/tech-stack/page.tsx',
       'src/app/(maestro)/tower/volumetrics/page.tsx',
-      'src/app/(maestro)/tower/preview/page.tsx',
-      'src/app/(maestro)/preview/tower/page.tsx',
     ];
-
-    it.each(deletedShells)('removes the legacy redirect-shell %s', (path) => {
-      expect(existsSync(path)).toBe(false);
-    });
-
-    it('builds tower/programs/[programId] as a real route (not a redirect)', () => {
-      const source = readFileSync(
-        'src/app/(maestro)/tower/programs/[programId]/page.tsx',
-        'utf8',
-      );
-      // The shell-form was `redirect(\`/tower?detail=…\`)`. The real
-      // route now loads data through getProgramById and renders.
-      expect(source).not.toContain("redirect(`/tower?detail=");
-      expect(source).toContain('getProgramById');
-      expect(source).toContain('TowerDecisionActionRow');
-    });
-
-    it('keeps Tower program detail dynamic segments aligned for Next.js 16', () => {
-      expect(existsSync('src/app/(maestro)/tower/programs/[programId]/page.tsx')).toBe(true);
-      expect(existsSync('src/app/(maestro)/tower/programs/[programId]/value/page.tsx')).toBe(true);
-      expect(existsSync('src/app/(maestro)/tower/programs/[moveId]/value/page.tsx')).toBe(false);
-    });
-
-    it('documents the per-route decision', () => {
-      const path = 'docs/pilot/TOWER-REDIRECT-SHELL-DECISIONS.md';
-      expect(existsSync(path)).toBe(true);
-      const md = readFileSync(path, 'utf8');
-      expect(md).toContain('REMOVED');
-      expect(md).toContain('BUILT');
-      expect(md).toContain('KEPT (redirect)');
-    });
+    for (const route of removedRoutes) {
+      expect(existsSync(route)).toBe(false);
+    }
   });
 });
