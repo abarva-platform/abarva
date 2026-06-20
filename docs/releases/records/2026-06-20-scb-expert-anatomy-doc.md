@@ -30,7 +30,7 @@ Adds one self-contained developer HTML doc, `docs/build/CONSILIUM_EXPERT_ANATOMY
 
 ## QA / Validation
 
-- Self-contained HTML; opens standalone. Content sourced from the live packs (counts computed from `EXPERT_PACKS`, sample content from the revenue-cycle pack).
+Validation: Pass. Self-contained HTML opens standalone; content sourced from the live packs (counts computed from `EXPERT_PACKS`, sample content from the revenue-cycle pack). Automated tests: not-run — static documentation, no executable code.
 
 ## Rollout Plan
 
