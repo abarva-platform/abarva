@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Consilium — Inside a Virtual Expert</title>
+<style>
+  :root{
+    --bg:#F8F7F4; --surface:#ffffff; --ink:#1a1a18; --mute:#6b6b63; --hint:#9a998e;
+    --line:#e3e0d8; --line2:#d4d0c8; --accent:#1a1a18;
+    --green-bg:#e7f0e9; --green-tx:#1f6b3a; --amber-bg:#fbf3e3; --amber-tx:#7c4d0a; --red-bg:#fde8e8; --red-tx:#991b1b;
+    --info-bg:#e6f1fb; --info-tx:#0c447c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;font-size:15px}
+  .wrap{max-width:980px;margin:0 auto;padding:40px 28px 80px}
+  header.doc{margin-bottom:8px}
+  .eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--hint);font-family:monospace}
+  h1{font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:30px;letter-spacing:-.01em;margin:6px 0 6px}
+  .lede{font-size:16px;color:var(--mute);max-width:70ch;margin-bottom:6px}
+  .meta{font-size:12px;color:var(--hint);font-family:monospace;margin-bottom:30px}
+  h2{font-family:Georgia,serif;font-weight:400;font-size:21px;margin:38px 0 6px;padding-top:18px;border-top:1px solid var(--line)}
+  h2 .n{color:var(--hint);font-size:14px;font-family:monospace;margin-right:8px}
+  .sub{color:var(--mute);margin-bottom:16px;max-width:72ch}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:16px 0}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .stat .v{font-size:26px;font-weight:600}
+  .stat .l{font-size:12.5px;color:var(--mute)}
+  .note{font-size:13px;color:var(--mute);margin-top:8px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin:16px 0}
+  .who{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .who .av{width:42px;height:42px;border-radius:50%;background:var(--info-bg);color:var(--info-tx);display:flex;align-items:center;justify-content:center;font-size:20px}
+  .who .nm{font-weight:600;font-size:16px}
+  .who .sc{font-size:12.5px;color:var(--mute)}
+  .layer{border-left:2px solid var(--line2);padding:2px 0 2px 12px;margin:13px 0}
+  .layer.k{border-left-color:#1a1a18}
+  .layer .lab{font-size:12px;color:var(--mute);text-transform:none}
+  .layer .main{font-size:14.5px;margin:1px 0}
+  .layer .det{font-size:13px;color:var(--mute)}
+  .mono{font-family:monospace}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:11px;background:#f0efea;color:#4a4a46;white-space:nowrap}
+  .pill.g{background:var(--green-bg);color:var(--green-tx)} .pill.a{background:var(--amber-bg);color:var(--amber-tx)} .pill.r{background:var(--red-bg);color:var(--red-tx)}
+  .flow{display:flex;flex-direction:column;gap:0;margin:16px 0}
+  .step{border-radius:10px;padding:12px 15px}
+  .step.q{background:#f0efea} .step.s{background:var(--surface);border:1px solid var(--line)} .step.ans{border:1px solid #9ec3ea;background:#f4f9fe}
+  .step .lab{font-size:11.5px;color:var(--mute)}
+  .arr{text-align:center;color:var(--hint);font-size:18px;line-height:1.1}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0}
+  th{text-align:left;background:#1a1a18;color:#fff;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+  td{padding:8px 10px;border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:none}
+  .center{text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <div class="eyebrow">AbarVa · Shared Context Brain · developer reference</div>
+  <h1>Inside a Consilium expert</h1>
+  <p class="lede">How much depth a virtual industry expert actually holds — and how that depth turns a CXO question into a grounded answer.</p>
+  <div class="meta">Generated 2026-06-20 · 17 experts live on main · every field machine-gated by gateExpertPack</div>
+</header>
+
+<h2><span class="n">01</span>The faculty, by the numbers</h2>
+<p class="sub">An expert is not a prompt. It is a structured object of ~80 hand-grade fields. Across the 17 experts on main today that is <strong>1,323 discrete authored fields</strong> — each one validated by a deterministic content gate (depth bar, value-mechanism, metric-reference integrity, planning-range benchmarks, hedge rules).</p>
+<div class="stat-grid">
+  <div class="stat"><div class="v">17</div><div class="l">experts</div></div>
+  <div class="stat"><div class="v">1,323</div><div class="l">authored fields</div></div>
+  <div class="stat"><div class="v">197</div><div class="l">operating metrics</div></div>
+  <div class="stat"><div class="v">115</div><div class="l">failure modes</div></div>
+  <div class="stat"><div class="v">97</div><div class="l">AI plays</div></div>
+  <div class="stat"><div class="v">77</div><div class="l">evidence anchors</div></div>
+  <div class="stat"><div class="v">123</div><div class="l">diagnostic questions</div></div>
+  <div class="stat"><div class="v">63</div><div class="l">honest haircut factors</div></div>
+</div>
+<p class="note">Plus 72 reference architectures · 78 red flags · 96 output recipes · 101 terms of art · 90 systems of record · 88 accountable roles · 55 value benchmarks · 71 vendor-landscape entries.</p>
+
+<h2><span class="n">02</span>One expert, thirteen layers</h2>
+<p class="sub">Real content pulled from the Healthcare Revenue Cycle expert. Every other expert carries the same thirteen layers at the same depth.</p>
+<div class="card">
+  <div class="who">
+    <div class="av">⚕</div>
+    <div><div class="nm">Healthcare Revenue Cycle Expert</div><div class="sc">industry-function · anchored to Epic Resolute PB/HB · excludes payer adjudication + clinical care (separate experts)</div></div>
+  </div>
+
+  <div class="layer k">
+    <div class="lab">Operating metric — 1 of 11 (each carries a benchmark range, data source, and rationale)</div>
+    <div class="main">Net collection rate — planning range <span class="mono">95–99%</span> · source: 835 remittances vs contractual allowed (Resolute PB/HB)</div>
+    <div class="det">Why it matters: isolates true yield from contractual write-offs — a 2-point gap on a $2B net-revenue system is ≈ $40M.</div>
+  </div>
+
+  <div class="layer">
+    <div class="lab">Failure mode — 1 of 6</div>
+    <div class="main">Front-end-seeded denial spiral</div>
+    <div class="det">Detect: denials concentrated in CARC <span class="mono">CO-27</span> (eligibility) / <span class="mono">CO-197</span> (auth) by access point. Diagnostic: “what share of denials trace to front-end errors, measured back to the originating registrar?”</div>
+  </div>
+
+  <div class="layer">
+    <div class="lab">AI play — 1 of 5 · with control posture + the exact metrics it moves</div>
+    <div class="main">Denial prediction &amp; prevention &nbsp;<span class="pill">human-in-the-loop</span></div>
+    <div class="det">Score claims pre-submission and route high-risk ones to correction before they ship. Moves: initial denial rate, clean claim rate, net collection rate. Risk: the model must explain <em>why</em> a claim is high-risk so staff can act.</div>
+  </div>
+
+  <div class="layer">
+    <div class="lab">Evidence rule — what proof a claim requires</div>
+    <div class="main">Denial-rate claims require 835 (CARC/RARC) joined to 837, broken out by reason, payer, and access point</div>
+    <div class="det">Rejects as weak evidence: “a single staff-reported percentage with no remit-level breakdown.”</div>
+  </div>
+
+  <div class="layer">
+    <div class="lab">Hedge rule — confident synthesis, honestly marked</div>
+    <div class="main">No tenant contract data → “Across provider revenue cycles, denial rates typically run…”</div>
+    <div class="det">Frames the answer as an industry pattern, not the tenant’s measured number — never refuses, never fabricates a specific figure.</div>
+  </div>
+
+  <div class="layer">
+    <div class="lab">Success model — the CXO stuck-point, answered</div>
+    <div class="main"><span class="pill g">P(success): high</span> <span class="pill g">adoption: high</span> <span class="pill g">ROI clarity: high</span></div>
+    <div class="det">Why high: revenue-cycle outcomes are directly attributable in remit/ledger data, so ROI is unusually firm — the main haircut is payer response eroding recoveries over time, not measurement difficulty.</div>
+  </div>
+
+  <div class="layer">
+    <div class="lab">…and the rest</div>
+    <div class="det">4 reference architectures (financial-clearance hub, denials-triage workflow, autonomous-coding pipeline, contract-variance engine) · value model + 3 haircut factors · output recipes (denials → cost-stack, AR → line, cash impact → value-bridge) · 5 systems of record · 5 accountable roles · terms of art (DNFB, CARC/RARC, net collection rate, CC/MCC, 835/837).</div>
+  </div>
+</div>
+
+<h2><span class="n">03</span>How an expert comes to life</h2>
+<p class="sub">The same flow runs for every surface. The expert’s authored content — not the model’s imagination — supplies the numbers, the framing, and the honesty.</p>
+<div class="flow">
+  <div class="step q"><div class="lab">CXO asks</div>“How exposed are we on claim denials, and what would fix it?”</div>
+  <div class="arr">↓</div>
+  <div class="step s"><div class="lab">Router (W1.1)</div>Summons <strong>Healthcare Revenue Cycle</strong> by industry + keywords; infers output shape → table + value-bridge.</div>
+  <div class="arr">↓</div>
+  <div class="step s"><div class="lab">Expert grounds the answer (W1.3)</div>Pulls its denial metrics (95–99% / 5–10% bands), the front-end-spiral failure mode, the denial-prevention play, and the evidence rule (needs 835+837) — hedging to “industry pattern” where the tenant’s data is thin.</div>
+  <div class="arr">↓</div>
+  <div class="step ans">
+    <div class="lab" style="color:var(--info-tx)">Ava answers · AgentAnswer</div>
+    <div style="margin:4px 0 8px">“Denials are your biggest controllable leakage. Best-in-class is &lt;5%; ~65% of denials are never reworked, so the initial rate is largely permanent loss. The fix is front-end prevention, not back-end rework.”</div>
+    <span class="pill">▦ table: denials by reason</span> <span class="pill">▟ value-bridge: cash recovered</span> <span class="pill">❝ cites 835/837</span> <span class="pill g">odds: high / high / high</span>
+  </div>
+</div>
+
+<h2><span class="n">04</span>The 17 experts on main today</h2>
+<p class="sub">5 industries + 12 cross-cutting domains. The success-model columns are the honest odds, not marketing — note where ROI clarity is deliberately low.</p>
+<table>
+  <thead><tr><th>Expert</th><th>Kind</th><th>P(success) / adoption / ROI clarity</th></tr></thead>
+  <tbody>
+    <tr><td>Healthcare Revenue Cycle</td><td>industry</td><td><span class="pill g">high / high / high</span></td></tr>
+    <tr><td>Clinical Process Transformation</td><td>industry</td><td><span class="pill a">med / med / low</span></td></tr>
+    <tr><td>Financial Services — Fraud &amp; Financial Crime</td><td>industry</td><td><span class="pill a">med / med / med</span></td></tr>
+    <tr><td>Retail — Merchandising &amp; Pricing</td><td>industry</td><td><span class="pill a">med / med / med</span></td></tr>
+    <tr><td>Airline — Operations &amp; Revenue Management</td><td>industry</td><td><span class="pill a">med / med / med</span></td></tr>
+    <tr><td>Energy — Grid &amp; Asset Operations</td><td>industry</td><td><span class="pill a">med / med / med</span></td></tr>
+    <tr><td>Back-Office Shared Services</td><td>cross-cutting</td><td><span class="pill g">high / high / high</span></td></tr>
+    <tr><td>Future of Work &amp; Workforce Productivity</td><td>cross-cutting</td><td><span class="pill a">med / med / low</span></td></tr>
+    <tr><td>Contact Center &amp; CX Transformation</td><td>cross-cutting</td><td><span class="pill a">med / med / med</span></td></tr>
+    <tr><td>Treasury Transformation</td><td>cross-cutting</td><td><span class="pill a">med / med / med</span></td></tr>
+    <tr><td>Legal / Contract AI &amp; Legal Operations</td><td>cross-cutting</td><td><span class="pill a">med / low / med</span></td></tr>
+    <tr><td>AI Governance &amp; Model Risk</td><td>cross-cutting</td><td><span class="pill a">med / med / low</span></td></tr>
+    <tr><td>Supply Chain Transformation</td><td>cross-cutting</td><td><span class="pill a">med / med / med</span></td></tr>
+    <tr><td>Cybersecurity &amp; AI-Augmented SecOps</td><td>cross-cutting</td><td><span class="pill a">med / med / med</span></td></tr>
+    <tr><td>Software &amp; Engineering Productivity</td><td>cross-cutting</td><td><span class="pill a">med / med / med</span></td></tr>
+    <tr><td>Data &amp; Analytics Platform</td><td>cross-cutting</td><td><span class="pill a">med / med / med</span></td></tr>
+    <tr><td>Sales &amp; Revenue Operations</td><td>cross-cutting</td><td><span class="pill a">med / med / med</span></td></tr>
+  </tbody>
+</table>
+<p class="note">Source of truth: <span class="mono">src/lib/intelligence/expert-pack/packs/*.ts</span> · contract <span class="mono">expert-pack.ts</span> · gate <span class="mono">quality-gate.ts</span> · registry <span class="mono">registry.ts</span> · router <span class="mono">answer/router.ts</span> · engine <span class="mono">answer/engine.ts</span>. Faculty target ~210; authored in adversarially-gated parallel waves.</p>
+
+</div>
+</body>
+</html>
