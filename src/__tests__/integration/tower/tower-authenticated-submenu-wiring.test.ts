@@ -8,15 +8,15 @@ describe('IT Investment Tower v2 route wiring', () => {
 
   it('renders the approved standalone v2 Tower in the authenticated /tower route', () => {
     expect(pageSource).toContain('<iframe');
-    expect(pageSource).toContain('src="/api/tower/v2-frame"');
+    expect(pageSource).toContain('/api/tower/v2-frame?client=');
     expect(pageSource).toContain('AbarVa IT Investment Tower');
     expect(pageSource).not.toContain('<AiControlTowerPage');
   });
 
-  it('does not allow URL-driven cross-client Tower switching', () => {
-    expect(frameRoute).toContain('getActiveClientRow()');
-    expect(frameRoute).not.toContain('searchParams');
-    expect(frameRoute).not.toContain('requestedClient');
+  it('threads the server-resolved tenant into the Tower frame without bypassing locked-session enforcement', () => {
+    expect(pageSource).toContain('getActiveClientRow()');
+    expect(frameRoute).toContain('request.nextUrl.searchParams.get');
+    expect(frameRoute).toContain('getActiveClientRow(requestedClient)');
     expect(frameRoute).not.toContain('hasLockedTenantSession');
     expect(frameRoute).not.toContain('catch(() => null)');
   });
