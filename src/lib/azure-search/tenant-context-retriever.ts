@@ -1,7 +1,7 @@
 /**
  * Azure AI Search retrieval lane for the `tenant-context-v1` index.
  *
- * This is the parallel-run drop-in for the pgvector / Pinecone path the
+ * This is the parallel-run drop-in for the pgvector path the
  * broker uses today. The shape returned by `queryTenantContext` matches
  * `TenantDataAdapter.chunksByVector` 1:1 — `TenantContextChunk[]` with an
  * attached `vectorScore` — so the broker can swap backends behind the
@@ -46,7 +46,7 @@ export interface TenantContextChunk {
   sourceDoc?: string;
   recordId?: string;
   text: string;
-  embeddingStatus: "pending" | "embedding" | "embedded" | "error";
+  embeddingStatus: "pending" | "skipped" | "embedded" | "failed";
   sourceBasis?: string;
   classification?: "public" | "internal" | "confidential" | "restricted";
   vectorScore?: number;
@@ -581,8 +581,7 @@ async function runSearchRequest(args: {
   let res = await post(args.body);
   if (!res.ok) {
     const text = await res.text();
-    const filter =
-      typeof args.body.filter === "string" ? args.body.filter : "";
+    const filter = typeof args.body.filter === "string" ? args.body.filter : "";
     // 2) Index/contract drift: the live index predates the lifecycle_state field
     //    the current contract filters on. This is the SPECIFIC missing-field 400
     //    — not a generic failure — so degrade gracefully instead of failing the
@@ -605,7 +604,10 @@ async function runSearchRequest(args: {
     });
     args.onDegrade?.();
     // 3) Retry without the lifecycle_state clause only.
-    res = await post({ ...args.body, filter: stripLifecycleStateFilter(filter) });
+    res = await post({
+      ...args.body,
+      filter: stripLifecycleStateFilter(filter),
+    });
     if (!res.ok) {
       const retryText = await res.text();
       throw new Error(`azure_search_query_failed:${res.status}:${retryText}`);
@@ -735,7 +737,11 @@ export async function queryTenantContext(
   }
 
   hitSets.push(
-    await runSearchRequest({ fetchImpl: doFetch, body, onDegrade: markDegraded }),
+    await runSearchRequest({
+      fetchImpl: doFetch,
+      body,
+      onDegrade: markDegraded,
+    }),
   );
 
   const chunks: TenantContextChunk[] = [];

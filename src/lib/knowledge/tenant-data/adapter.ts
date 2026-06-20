@@ -1,4 +1,4 @@
-import 'server-only';
+import "server-only";
 import type {
   SegmentId,
   SegmentRollup,
@@ -11,7 +11,7 @@ import type {
   ContextChunk,
   ChunkEmbeddingStatus,
   EvidenceRecord,
-} from './types';
+} from "./types";
 
 /**
  * Read-only contract for the persisted tenant-data layer.
@@ -42,7 +42,7 @@ export interface TenantDataAdapter {
   listGraphEdgesForNode(
     tenantKey: string,
     nodeId: string,
-    direction?: 'outgoing' | 'incoming' | 'both',
+    direction?: "outgoing" | "incoming" | "both",
   ): Promise<GraphEdge[]>;
 
   /** Bounded BFS expansion around a root node. See design doc §4.2. */
@@ -75,22 +75,34 @@ export interface TenantDataAdapter {
   chunksByRecord(tenantKey: string, recordId: string): Promise<ContextChunk[]>;
 
   /** Keyword retrieval over chunks (ILIKE / ts_rank). See design doc §5.2. */
-  chunksByKeyword(tenantKey: string, keywords: string[], limit?: number): Promise<ContextChunk[]>;
+  chunksByKeyword(
+    tenantKey: string,
+    keywords: string[],
+    limit?: number,
+  ): Promise<ContextChunk[]>;
 
   /**
-   * Vector retrieval against the Pinecone index. CB-3 wires the live
-   * implementation in `SupabaseTenantDataAdapter` — throws with
-   * `'Pinecone not configured. Set PINECONE_API_KEY.'` when the key
-   * is missing so callers can fall back. See design doc §5.3.
+   * Vector retrieval against Postgres pgvector. The live implementation
+   * in `SupabaseTenantDataAdapter` uses `enterprise_context_chunks
+   * .embedding_vector`; callers fall back to keyword retrieval when the
+   * vector column/index or private Postgres connection is unavailable.
+   * See design doc §5.3 and ADR-001.
    *
    * Returned chunks may carry `vectorScore` (cosine similarity from
-   * Pinecone). Records that are not in Pinecone metadata stay
-   * undefined (e.g. keyword-fallback hits via `chunksByKeyword`).
+   * pgvector). Keyword-fallback hits via `chunksByKeyword` leave it
+   * undefined.
    */
-  chunksByVector(tenantKey: string, queryVector: number[], limit?: number): Promise<ContextChunk[]>;
+  chunksByVector(
+    tenantKey: string,
+    queryVector: number[],
+    limit?: number,
+  ): Promise<ContextChunk[]>;
 
   /** Provenance-aware fetch for evidence_ledger ids. */
-  getEvidence(tenantKey: string, evidenceId: string): Promise<EvidenceRecord | null>;
+  getEvidence(
+    tenantKey: string,
+    evidenceId: string,
+  ): Promise<EvidenceRecord | null>;
 
   /** Tells callers whether this adapter has any persisted data for the tenant. */
   hasPersistedData(tenantKey: string): Promise<boolean>;
