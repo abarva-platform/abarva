@@ -193,6 +193,8 @@
     "azure:env-secret-injection:verify": "node scripts/azure/verify-env-secret-injection-proof.mjs",
     "audit:planes": "npx tsx src/scripts/audit/audit-tenant-data-planes.ts",
     "audit:loaded-datasets": "npx tsx src/scripts/audit/report-loaded-datasets.ts",
+    "audit:agent-substrate": "node scripts/audit/agent-substrate-readiness.mjs",
+    "audit:agent-substrate:strict": "node scripts/audit/agent-substrate-readiness.mjs --strict",
     "audit:architecture-rules": "node scripts/audit/architecture-rules.mjs --mode=changed --base=origin/main --head=HEAD",
     "audit:architecture-rules:full": "node scripts/audit/architecture-rules.mjs --mode=full",
     "audit:architecture-rules:self-test": "node scripts/audit/architecture-rules.mjs --self-test",
