@@ -3,10 +3,9 @@
 // Intelligence v2 surface — the Lens. Renders the binding contract (signals /
 // context / corpus / suggested questions / trust line) for the active tenant.
 // Faithful to the Claude-Design v2 spec (Fraunces headlines, mono eyebrows,
-// hairline cards, cross-domain chips). Ask bar + chips are presentational in v1;
-// conversational answers wire to the grounded engine in a follow-on.
+// hairline cards, cross-domain chips). Ask bar wired to /api/intelligence/ask.
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { IntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
 
 type Tab = "signals" | "context" | "corpus";
@@ -31,6 +30,10 @@ const CSS = `
 .iv2 .trust{text-align:center;margin:22px 0 4px}
 .iv2 .trust .mono{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11.5px;color:var(--muted)}
 .iv2 .trust b{color:var(--ink)}
+.iv2 .ansbox{max-width:660px;margin:16px auto 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 22px;text-align:left}
+.iv2 .ansbox .anslabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--green);margin-bottom:8px}
+.iv2 .ansbox .ansbody{font-size:14px;line-height:1.65;color:var(--ink);white-space:pre-wrap}
+.iv2 .ansbox .ansfetching{color:var(--faint);font-style:italic;font-size:13.5px}
 .iv2 .tabs{display:flex;justify-content:center;gap:30px;border-bottom:1px solid var(--line);margin-top:18px}
 .iv2 .tab{padding:14px 2px;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:7px;background:none;font-family:inherit}
 .iv2 .tab.active{color:var(--ink);border-bottom-color:var(--green)}
@@ -77,9 +80,52 @@ export function IntelligenceV2Surface({
   tenantName?: string;
 }) {
   const [tab, setTab] = useState<Tab>("signals");
+  const [query, setQuery] = useState("");
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [fetching, setFetching] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
   const t = payload;
   const tl = t.trustLine;
   const contextEvidence = t.context.reduce((a, c) => a + (c.evidence || 0), 0);
+
+  const askSentinel = useCallback(async (q: string) => {
+    const trimmed = q.trim();
+    if (!trimmed) return;
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    setFetching(true);
+    setAnswer(null);
+    try {
+      const res = await fetch(
+        `/api/intelligence/ask?q=${encodeURIComponent(trimmed)}`,
+        { signal: ctrl.signal },
+      );
+      if (!res.ok) {
+        setAnswer("Sentinel couldn't retrieve an answer. Try again.");
+        return;
+      }
+      const reader = res.body?.getReader();
+      if (!reader) {
+        setAnswer(await res.text());
+        return;
+      }
+      const dec = new TextDecoder();
+      let buf = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        setAnswer(buf);
+      }
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") {
+        setAnswer("Sentinel couldn't retrieve an answer. Try again.");
+      }
+    } finally {
+      setFetching(false);
+    }
+  }, []);
 
   return (
     <div className="iv2">
@@ -99,16 +145,57 @@ export function IntelligenceV2Surface({
             <span className="spark">✦</span>
             <input
               placeholder={t.ask.placeholder}
-              readOnly
               aria-label="Ask Sentinel"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  askSentinel(query);
+                }
+              }}
+              disabled={fetching}
             />
-            <button type="button">Ask</button>
+            <button
+              type="button"
+              onClick={() => askSentinel(query)}
+              disabled={fetching || !query.trim()}
+              style={{ opacity: fetching || !query.trim() ? 0.5 : 1 }}
+            >
+              {fetching ? "…" : "Ask"}
+            </button>
           </div>
+          {(fetching || answer) && (
+            <div className="ansbox">
+              <div className="anslabel">Sentinel · Intelligence</div>
+              {fetching && !answer ? (
+                <div className="ansfetching">Thinking…</div>
+              ) : (
+                <div className="ansbody">{answer}</div>
+              )}
+            </div>
+          )}
           <div className="chips">
-            {t.suggestedQuestions.map((q) => (
-              <span className="chip" key={q} title={q}>
+            {t.suggestedQuestions.map((sq) => (
+              <span
+                className="chip"
+                key={sq}
+                title={sq}
+                onClick={() => {
+                  setQuery(sq);
+                  askSentinel(sq);
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setQuery(sq);
+                    askSentinel(sq);
+                  }
+                }}
+              >
                 <span className="spark">✦</span>
-                <span className="chiptext">{q}</span>
+                <span className="chiptext">{sq}</span>
               </span>
             ))}
           </div>
