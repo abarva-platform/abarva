@@ -358,6 +358,29 @@ function answerFor(q) {
       cites: ['T01_initiative-milestones.csv', 'F13_initiatives-portfolio.csv'],
     };
   }
+  // Program-specific lookup — match any significant word from the program name or vendor
+  const progMatch = PROGRAMS.find(p => {
+    const words = p.name.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    return words.some(w => l.includes(w)) || (p.vendor && l.includes(p.vendor.toLowerCase()));
+  });
+  if (progMatch) {
+    const p = progMatch;
+    const spentPct = pct(p.ytd, p.budget);
+    const aiLine = p.aiBudget > 0
+      ? ` AI allocation is <b>${fmt(p.aiBudget)}</b> with <b>${fmt(p.aiYtd)}</b> spent YTD.`
+      : '';
+    return {
+      q,
+      h: `${p.name}: ${fmt(p.budget)} budget · ${spentPct}% spent YTD.`,
+      p: `<b>${esc(p.name)}</b> (${esc(p.cat)} · ${esc(p.fn)}) has a <b>${fmt(p.budget)}</b> FY26 budget: <b>${fmt(p.capex)}</b> CapEx + <b>${fmt(p.opex)}</b> OpEx. YTD spend is <b>${fmt(p.ytd)}</b> (${spentPct}%).${aiLine} Status: <b>${esc(p.status)}</b>. ${esc(p.note)}`,
+      render: ansBarChart([
+        { label: 'Budget', sub: 'FY26 total', v: p.budget, color: '' },
+        { label: 'Spent YTD', sub: 'to date', v: p.ytd, color: p.status === 'at-risk' ? 'red' : p.status === 'watch' ? 'amber' : '' },
+        ...(p.aiBudget > 0 ? [{ label: 'AI YTD', sub: 'AI portion', v: p.aiYtd, color: '' }] : []),
+      ], p.budget),
+      cites: ['F12_it-budget-financials.csv'],
+    };
+  }
   // fallback
   return {
     q, h: 'Here is the portfolio in one line.',

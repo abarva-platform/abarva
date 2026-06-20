@@ -244,6 +244,8 @@ export function AppTopBar({
           alignItems: "center",
           gap: 16,
           justifySelf: "end",
+          minWidth: 0,
+          overflow: "hidden",
         }}
       >
         {signedIn && (
