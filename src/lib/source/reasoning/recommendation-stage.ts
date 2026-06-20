@@ -78,7 +78,11 @@ export function runRecommendationStage(
 ): ReasoningEnvelope {
   const rigor = toRigorLevel(ctx);
   const classifier = analysis.find((a) => a.framework === "archetype_method_set");
+  // Slice 1.1: prefer the pre-classified categoryId stored at intake over the
+  // live re-classification, which is the same deterministic result but reads
+  // from the DB rather than re-running the classifier on every generate call.
   const archetype =
+    ctx.event.classifiedCategory ??
     (classifier?.finding as { categoryId?: string } | undefined)?.categoryId ??
     ctx.event.archetype ??
     "unknown";

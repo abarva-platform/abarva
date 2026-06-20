@@ -93,7 +93,10 @@ export interface SourceGenerationContext {
     id: string;
     code: string;
     name: string;
+    /** Coarse label derived from event_type (legacy fallback). Prefer classifiedCategory when present. */
     archetype: string | null;
+    /** Deterministic categoryId stored at intake (Slice 1.1). Preferred over archetype for reasoning. */
+    classifiedCategory?: string | null;
     rigor: string | null;
     currentStageKey: SourceStageKey;
     statusLabel: string;
