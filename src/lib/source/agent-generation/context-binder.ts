@@ -99,6 +99,7 @@ export async function buildSourceGenerationContext(
       code: event.code,
       name: event.name,
       archetype: event.archetype ?? null,
+      classifiedCategory: event.classifiedCategory ?? null,
       rigor: event.rigor ?? null,
       currentStageKey: event.currentStageKey,
       statusLabel: event.statusLabel,

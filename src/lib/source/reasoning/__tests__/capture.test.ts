@@ -141,4 +141,27 @@ describe("captureReasoningEnvelope (Slices 1.6 + 1.7)", () => {
       expect(r.envelope).toBeNull();
     });
   });
+
+  describe("Slice 1.1 — pre-classified archetype from intake flows into envelope", () => {
+    it("envelope.archetype uses classifiedCategory when set (preferred over live classifier)", () => {
+      // Simulate an event that was classified at intake as 'erp_si'.
+      const ctxWithPreClassified = ctxFixture({
+        archetype: "managed_service",   // coarse legacy label
+        classifiedCategory: "erp_si",  // precise category stored at intake
+      } as unknown as Partial<Parameters<typeof ctxFixture>[0]>);
+      const r = captureReasoningEnvelope(ctxWithPreClassified, opts(true));
+      if (r.status !== "ok" && r.status !== "refusal") return;
+      // recommendation-stage.ts prefers classifiedCategory → envelope.archetype = "erp_si"
+      expect(r.envelope!.archetype).toBe("erp_si");
+    });
+
+    it("falls back to live classifier when classifiedCategory is null", () => {
+      // No pre-classified category; the live classifier runs and produces a categoryId.
+      const r = captureReasoningEnvelope(ctxFixture(), opts(true));
+      if (r.status !== "ok" && r.status !== "refusal") return;
+      // archetype is whatever the live classifier resolved (not null/unknown from the fallback).
+      expect(r.envelope!.archetype).toBeTruthy();
+      expect(r.envelope!.archetype).not.toBe("unknown");
+    });
+  });
 });

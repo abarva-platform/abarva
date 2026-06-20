@@ -21,7 +21,7 @@ export interface AnalysisStageOutput {
 export function runAnalysisStage(
   ctx: SourceGenerationContext,
 ): AnalysisStageOutput {
-  const archetype = ctx.event.archetype ?? "unknown";
+  const archetype = ctx.event.classifiedCategory ?? ctx.event.archetype ?? "unknown";
   const rigor = toRigorLevel(ctx);
   const stage = ctx.event.currentStageKey;
   const plan = resolveAnalysisPlan(archetype, rigor, stage);

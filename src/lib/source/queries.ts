@@ -28,6 +28,7 @@ import {
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import { getActiveClientRow } from "@/lib/active-client";
+import { classifySourcingEvent } from "./classifier/category-classifier";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
 import { requireTenancy } from "@/lib/auth/tenancy";
@@ -65,6 +66,7 @@ export interface SourceEventRow {
   event_code: string;
   event_name: string;
   event_type: string;
+  classified_category: string | null;
   current_stage_key: string;
   lifecycle_state: string;
   linked_program_id: string | null;
@@ -196,6 +198,38 @@ export async function createSourcingEvent(
 
   if (error) throw new Error(error.message);
   const row = data as SourceEventRow;
+
+  // Slice 1.1: classify at intake. The classifier is a pure deterministic function
+  // (no LLM, no I/O). We store the categoryId so the reasoning spine can read a
+  // stable pre-classified archetype instead of re-running classification at every
+  // generate call. Non-fatal: a failure here leaves classified_category NULL, and
+  // the generate route falls back to the live classifier result.
+  if (!row.classified_category) {
+    try {
+      const classification = classifySourcingEvent(
+        {
+          name: input.eventName,
+          archetype: input.eventType,
+          description:
+            [input.triggerDescription, input.scopeDescription]
+              .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+              .join(" — ") || undefined,
+        },
+        { loadedSegments: [] },
+      );
+      await supabase
+        .from("source_events")
+        .update({ classified_category: classification.categoryId })
+        .eq("id", row.id);
+      row.classified_category = classification.categoryId;
+    } catch (classifyError) {
+      console.warn(
+        "source classify-at-intake failure:",
+        row.id,
+        classifyError instanceof Error ? classifyError.message : classifyError,
+      );
+    }
+  }
 
   // Auto-scaffold the per-event canvas substrate so the universal canvas can
   // render real data from the moment the event is created. Uses canonical
@@ -405,6 +439,7 @@ export function sourceEventRowToSummary(
     nextDecision: waitingForApproval
       ? `Approval authority: ${approvalCopy}`
       : row.scope_description || "Continue Source workflow from current stage.",
+    classifiedCategory: row.classified_category ?? null,
   };
 }
 
