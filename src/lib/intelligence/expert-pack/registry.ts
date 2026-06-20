@@ -30,6 +30,10 @@ import { airlineLoyaltyCustomerExpert } from "./packs/airline-loyalty-customer";
 import { airlineGroundAirportOpsExpert } from "./packs/airline-ground-operations";
 import { retailStoreOperationsExpert } from "./packs/retail-store-operations";
 import { retailOmnichannelFulfillmentExpert } from "./packs/retail-omnichannel-fulfillment";
+import { valueOfficeAiEnablementExpert } from "./packs/value-office-ai-enablement";
+import { consumerProductsOperationsExpert } from "./packs/consumer-products-operations";
+import { foodserviceHospitalityOperationsExpert } from "./packs/foodservice-hospitality-operations";
+import { marketingBrandExpert } from "./packs/marketing-brand";
 
 /** All registered experts. Order is not significant — the router ranks. */
 export const EXPERT_PACKS: readonly ExpertPack[] = [
@@ -58,6 +62,10 @@ export const EXPERT_PACKS: readonly ExpertPack[] = [
   airlineGroundAirportOpsExpert,
   retailStoreOperationsExpert,
   retailOmnichannelFulfillmentExpert,
+  valueOfficeAiEnablementExpert,
+  consumerProductsOperationsExpert,
+  foodserviceHospitalityOperationsExpert,
+  marketingBrandExpert,
 ];
 
 export function getExpertById(id: string): ExpertPack | undefined {
