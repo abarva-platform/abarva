@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa — Intelligence & Data Flow: Technical Training Guide</title>
+<style>
+/* ─── Reset & Base ───────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;font-size:14px;line-height:1.65;background:#f8f7f4;color:#1a1a18;display:flex;min-height:100vh}
+
+/* ─── Sidebar ────────────────────────────────────────────────────────────── */
+.sidebar{width:240px;min-width:240px;background:#111110;color:#d4d4cc;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100;display:flex;flex-direction:column}
+.sidebar-logo{padding:20px 18px 14px;border-bottom:1px solid #2a2a28}
+.sidebar-logo .brand{font-size:14px;font-weight:700;color:#fff;letter-spacing:-.01em}
+.sidebar-logo .doc-title{font-size:10px;color:#6b6b63;margin-top:2px;letter-spacing:.04em;text-transform:uppercase}
+.sidebar nav{flex:1;padding:10px 0}
+.nav-group{margin-bottom:4px}
+.nav-group-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#4a4a46;padding:10px 18px 4px}
+.nav-link{display:block;padding:6px 18px;font-size:12.5px;color:#a4a49c;text-decoration:none;border-left:2px solid transparent;transition:all .15s}
+.nav-link:hover{color:#fff;background:rgba(255,255,255,.04)}
+.nav-link.active{color:#fff;border-left-color:#4ade80;background:rgba(255,255,255,.06)}
+.nav-link .num{font-size:10px;color:#4a4a46;margin-right:6px;font-family:'JetBrains Mono',monospace}
+
+/* ─── Main content ───────────────────────────────────────────────────────── */
+.main{margin-left:240px;flex:1;padding:0}
+.hero{background:#111110;color:#fff;padding:48px 56px 40px}
+.hero .eyebrow{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#4a4a46;margin-bottom:12px;font-family:'JetBrains Mono',monospace}
+.hero h1{font-family:Georgia,serif;font-size:32px;font-weight:500;line-height:1.15;letter-spacing:-.02em;margin-bottom:12px}
+.hero .sub{color:#8a8a82;font-size:14px;max-width:640px}
+
+section{padding:44px 56px;border-bottom:1px solid #e7e3da}
+section:last-child{border-bottom:none}
+h2{font-family:Georgia,serif;font-size:24px;font-weight:500;letter-spacing:-.01em;margin-bottom:6px}
+h3{font-size:14px;font-weight:700;margin:24px 0 10px;color:#1a1a18}
+h4{font-size:12.5px;font-weight:700;margin:18px 0 8px;color:#3a3a34;text-transform:uppercase;letter-spacing:.05em}
+.section-eyebrow{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#9a998e;margin-bottom:18px;font-family:'JetBrains Mono',monospace}
+p{margin-bottom:12px;color:#3d3d36}
+p:last-child{margin-bottom:0}
+
+/* ─── Callouts ───────────────────────────────────────────────────────────── */
+.callout{border-radius:8px;padding:14px 18px;margin:16px 0;font-size:13px}
+.callout.info{background:#e7f0e9;border-left:3px solid #1f6b3a;color:#1a4028}
+.callout.warn{background:#fbf3e3;border-left:3px solid #a66a1f;color:#6b3f0f}
+.callout.tip{background:#eff6ff;border-left:3px solid #3b82f6;color:#1e3a5f}
+
+/* ─── Tables ─────────────────────────────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto;margin:16px 0}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead tr{background:#1a1a18;color:#fff}
+thead th{padding:9px 13px;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+tbody tr{border-bottom:1px solid #e7e3da;transition:background .1s}
+tbody tr:hover{background:#faf9f7}
+tbody td{padding:9px 13px;vertical-align:top}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11.5px;background:#f0efec;padding:1px 5px;border-radius:3px;color:#3a3a34}
+.tag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600}
+.tag.green{background:#e7f0e9;color:#1f6b3a}
+.tag.amber{background:#fbf3e3;color:#a66a1f}
+.tag.red{background:#fde8e8;color:#c0392b}
+.tag.grey{background:#f0f0ec;color:#6b6b63}
+.tag.blue{background:#eff6ff;color:#1e40af}
+
+/* ─── Code blocks ────────────────────────────────────────────────────────── */
+pre{background:#111110;color:#d4e6c3;border-radius:8px;padding:16px 20px;overflow-x:auto;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;line-height:1.7;margin:14px 0}
+pre .comment{color:#4a4a46}
+pre .key{color:#86efac}
+pre .val{color:#fbbf24}
+pre .str{color:#93c5fd}
+
+/* ─── Flow diagrams ──────────────────────────────────────────────────────── */
+.flow{display:flex;align-items:flex-start;gap:0;margin:20px 0;flex-wrap:wrap}
+.flow-step{display:flex;flex-direction:column;align-items:center;gap:0;position:relative}
+.flow-box{background:#fff;border:1px solid #e7e3da;border-radius:8px;padding:10px 14px;min-width:120px;max-width:150px;text-align:center;font-size:12px;line-height:1.4}
+.flow-box .fb-num{font-size:9px;font-family:monospace;color:#9a998e;margin-bottom:3px}
+.flow-box .fb-label{font-weight:600;color:#1a1a18;font-size:12px}
+.flow-box .fb-sub{font-size:10.5px;color:#6b6b63;margin-top:3px}
+.flow-box.highlight{background:#1a1a18;border-color:#1a1a18;color:#fff}
+.flow-box.highlight .fb-label{color:#fff}
+.flow-box.highlight .fb-sub{color:#8a8a82}
+.flow-box.highlight .fb-num{color:#4a4a46}
+.flow-box.green{background:#e7f0e9;border-color:#a3d5b0}
+.flow-box.amber{background:#fbf3e3;border-color:#f0c97a}
+.flow-box.red{background:#fde8e8;border-color:#f5a0a0}
+.flow-arrow{display:flex;align-items:center;padding:0 4px;color:#9a998e;font-size:18px;padding-top:26px}
+.flow-arrow-down{text-align:center;color:#9a998e;font-size:16px;margin:2px 0}
+
+/* ─── Layer stack ────────────────────────────────────────────────────────── */
+.layer-stack{display:flex;flex-direction:column;gap:0;border-radius:10px;overflow:hidden;border:1px solid #e7e3da;margin:16px 0}
+.layer-item{display:flex;align-items:stretch;border-bottom:1px solid #e7e3da}
+.layer-item:last-child{border-bottom:none}
+.layer-num{width:40px;min-width:40px;display:flex;align-items:center;justify-content:center;background:#1a1a18;color:#fff;font-size:11px;font-weight:700;font-family:monospace}
+.layer-content{flex:1;padding:12px 16px;background:#fff}
+.layer-content .lc-title{font-weight:700;font-size:13px;margin-bottom:4px}
+.layer-content .lc-desc{font-size:12px;color:#5a5a52}
+.layer-status{min-width:90px;display:flex;align-items:center;justify-content:center;padding:8px;background:#faf9f7;border-left:1px solid #e7e3da}
+
+/* ─── Tenant cards ───────────────────────────────────────────────────────── */
+.tenant-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
+.tenant-card{background:#fff;border:1px solid #e7e3da;border-radius:10px;padding:14px 16px}
+.tc-name{font-weight:700;font-size:13px;margin-bottom:4px}
+.tc-keys{font-family:monospace;font-size:10.5px;color:#6b6b63;margin-bottom:6px}
+.tc-detail{font-size:11.5px;color:#5a5a52}
+
+/* ─── Step lists ─────────────────────────────────────────────────────────── */
+.steps{list-style:none;display:flex;flex-direction:column;gap:12px;margin:16px 0}
+.steps li{display:flex;gap:12px;align-items:flex-start}
+.step-num{width:24px;height:24px;min-width:24px;border-radius:50%;background:#1a1a18;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.step-body{flex:1;padding-top:2px}
+.step-body strong{display:block;font-size:13px;margin-bottom:3px}
+.step-body span{font-size:12.5px;color:#5a5a52}
+.step-body .step-file{font-family:monospace;font-size:11px;color:#1f6b3a;margin-top:4px;display:block}
+
+/* ─── Component map ──────────────────────────────────────────────────────── */
+.comp-map{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+.comp-card{background:#fff;border:1px solid #e7e3da;border-radius:10px;padding:14px 16px}
+.cc-header{font-weight:700;font-size:12.5px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.cc-file{font-family:monospace;font-size:10.5px;color:#1f6b3a;display:block;margin-bottom:6px}
+.cc-items{font-size:12px;color:#5a5a52;display:flex;flex-direction:column;gap:3px}
+.cc-items li{list-style:none}
+.cc-items li::before{content:"→ ";color:#9a998e}
+
+/* ─── Gap matrix ─────────────────────────────────────────────────────────── */
+.gap-matrix{width:100%;border-collapse:collapse;margin:16px 0;font-size:12.5px}
+.gap-matrix th{background:#1a1a18;color:#fff;padding:9px 13px;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
+.gap-matrix td{padding:9px 13px;border-bottom:1px solid #e7e3da;vertical-align:top}
+.gap-matrix tr:hover td{background:#faf9f7}
+
+/* ─── Scrollspy active ───────────────────────────────────────────────────── */
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ══════════════════════════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">AbarVa</div>
+    <div class="doc-title">Intelligence · Data Flow Guide</div>
+  </div>
+  <nav>
+    <div class="nav-group">
+      <div class="nav-group-label">Foundations</div>
+      <a class="nav-link active" href="#big-picture"><span class="num">01</span>Big Picture</a>
+      <a class="nav-link" href="#tenants"><span class="num">02</span>The 5 Tenants</a>
+      <a class="nav-link" href="#v4-pack"><span class="num">03</span>V4 Data Pack</a>
+      <a class="nav-link" href="#database"><span class="num">04</span>Database Schema</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Ingestion</div>
+      <a class="nav-link" href="#load-new-client"><span class="num">05</span>Load a New Client</a>
+      <a class="nav-link" href="#load-new-data"><span class="num">06</span>Add Data — Existing Client</a>
+      <a class="nav-link" href="#propagation"><span class="num">07</span>How Changes Propagate</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Intelligence Flows</div>
+      <a class="nav-link" href="#ask-flow"><span class="num">08</span>How "Ask" Works</a>
+      <a class="nav-link" href="#tower-flow"><span class="num">09</span>Tower Data Flow</a>
+      <a class="nav-link" href="#retrieval"><span class="num">10</span>Context Retrieval</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Architecture</div>
+      <a class="nav-link" href="#component-map"><span class="num">11</span>Component Map</a>
+      <a class="nav-link" href="#gaps"><span class="num">12</span>Gaps & What's Next</a>
+    </div>
+  </nav>
+</aside>
+
+<!-- ═══ MAIN CONTENT ════════════════════════════════════════════════════════ -->
+<div class="main">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="eyebrow">Technical Training Guide · v1 · June 2026</div>
+  <h1>How the Sausage Gets Made:<br>Intelligence, Data & Ask-Anything</h1>
+  <p class="sub">A click-by-click guide to how client data flows from raw CSV files all the way to a grounded AI answer. Built for engineers joining the team — no prior context assumed.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 01: BIG PICTURE
+═══════════════════════════════════════════════════════════════════════════════ -->
+<section id="big-picture">
+  <div class="section-eyebrow">01 · Foundations</div>
+  <h2>The Big Picture</h2>
+  <p>AbarVa helps large enterprise IT leaders understand their technology estate, make strategic decisions, and execute sourcing and transformation moves — all grounded in the client's own data, not generic AI guesses.</p>
+
+  <div class="callout info">
+    <strong>The golden rule:</strong> Every answer AbarVa gives must cite a real source from the client's own data. If the data isn't there, the system says "I don't know" — it does not make something up.
+  </div>
+
+  <h3>The 4 Product Surfaces</h3>
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-box green">
+        <div class="fb-num">Surface 1</div>
+        <div class="fb-label">Intelligence</div>
+        <div class="fb-sub">Ask anything · Signals · Context Explorer</div>
+      </div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box green">
+        <div class="fb-num">Surface 2</div>
+        <div class="fb-label">Moves</div>
+        <div class="fb-sub">Strategic initiatives · Deliverables</div>
+      </div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box green">
+        <div class="fb-num">Surface 3</div>
+        <div class="fb-label">Source</div>
+        <div class="fb-sub">IT sourcing · Vendor RFPs</div>
+      </div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box green">
+        <div class="fb-num">Surface 4</div>
+        <div class="fb-label">Tower</div>
+        <div class="fb-sub">IT investment portfolio dashboard</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>The 3 Main Questions Users Ask</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>User question type</th><th>Example</th><th>Which surface</th><th>How it's answered</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Portfolio / budget</strong></td><td>"How much do we spend on Epic?"</td><td>Tower</td><td>Client v4 data pack (PROGRAMS array) → pattern match or Sentinel AI</td></tr>
+        <tr><td><strong>Strategic question</strong></td><td>"What are our biggest IT risks this year?"</td><td>Intelligence</td><td>Sentinel reasoning pipeline → context facts from DB → cited answer</td></tr>
+        <tr><td><strong>Sourcing / vendor</strong></td><td>"Draft an RFP for our ERP replacement"</td><td>Source</td><td>Source archetype framework → governed document generator</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>The Technology Stack</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>Frontend</td><td>Next.js 16.2 (App Router), React 19, TypeScript 5</td><td>All UI surfaces</td></tr>
+        <tr><td>Auth</td><td>Clerk</td><td>User identity, session management</td></tr>
+        <tr><td>Database</td><td>Azure PostgreSQL (private VNet)</td><td>All client context data, facts, chunks</td></tr>
+        <tr><td>AI</td><td>Anthropic Claude (claude-opus-4-8 / claude-sonnet-4-6)</td><td>Sentinel reasoning, answer synthesis</td></tr>
+        <tr><td>Hosting</td><td>Azure Container Apps (ACA)</td><td>Production runtime — ca-abarva-web-lab-eastus</td></tr>
+        <tr><td>Search — client data (today)</td><td>Postgres full-text (GIN index on chunk_text) ONLY. pgvector extension is not yet enabled — embeddings write to a JSONB audit column, not a vector type. Pinecone is fully disabled (DisabledVectorClient stub). Azure AI Search flag exists but includeTenants=[] everywhere.</td><td>Keyword retrieval is live. Semantic/vector retrieval is dormant until ADR-001 migration completes.</td></tr>
+        <tr><td>Search — client data (north-star)</td><td>pgvector (vector(1536) column on enterprise_context_chunks, HNSW index) — once extension is enabled on Azure Flexible Server and migration + backfill run</td><td>Replaces Pinecone/JSONB path. Same DB, same VNet, same RLS. No external vector service.</td></tr>
+        <tr><td>Search — shared corpus (optional)</td><td>Azure AI Search — feature-flagged off. Available for worldview/industry corpus only if it grows document-heavy enough to justify hybrid search. Never for per-tenant client facts.</td><td>Shared industry benchmarks, analyst reports, frameworks — cross-tenant, not in enterprise_context_* tables.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 02: THE 5 TENANTS
+═══════════════════════════════════════════════════════════════════════════════ -->
+<section id="tenants">
+  <div class="section-eyebrow">02 · Foundations</div>
+  <h2>The Canonical Tenants</h2>
+  <p>AbarVa is multi-tenant. Every piece of data, every AI answer, and every UI element is scoped to exactly one tenant. A user signed in as Meridian Health can never see First Capital's data — enforced at the database level (Row Level Security) and at the Sentinel reasoning layer (cross-tenant fence).</p>
+  <p><strong>Note:</strong> <span class="mono">TENANT_ALIAS_PROFILES</span> in <span class="mono">src/lib/tenant/aliases.ts</span> currently registers <strong>six</strong> profiles: the five V4 demo tenants below plus a legacy <span class="mono">northstar</span> entry retained for compatibility. New engineers should treat northstar as a legacy/v1 artifact — it has no V4 data pack and no live retrieval proof.</p>
+
+  <h3>Canonical Tenant Registry</h3>
+  <p>Defined in <span class="mono">src/lib/tenant/aliases.ts</span> — this is the source of truth for all tenant identifiers:</p>
+
+  <div class="tenant-grid">
+    <div class="tenant-card">
+      <div class="tc-name">First Capital Financial</div>
+      <div class="tc-keys">
+        App key: <span class="mono">arcturus</span><br>
+        Canonical: <span class="mono">first-capital</span><br>
+        Dataset: <span class="mono">first-capital-financial-synthetic-v4</span>
+      </div>
+      <div class="tc-detail">Large financial services firm. $342M FY26 IT budget. 200 apps, 120 vendors, 42 AI initiatives.</div>
+    </div>
+    <div class="tenant-card">
+      <div class="tc-name">Meridian Health System</div>
+      <div class="tc-keys">
+        App key: <span class="mono">meridian</span><br>
+        Canonical: <span class="mono">meridian-health</span><br>
+        Dataset: <span class="mono">meridian-health-synthetic-v4</span>
+      </div>
+      <div class="tc-detail">Regional health system. Largest program: Epic and Clinical Systems ($174.8M budget).</div>
+    </div>
+    <div class="tenant-card">
+      <div class="tc-name">Apex Retail Group</div>
+      <div class="tc-keys">
+        App key: <span class="mono">apexretail</span><br>
+        Canonical: <span class="mono">apex-retail</span><br>
+        Dataset: <span class="mono">apex-retail-synthetic-v4</span>
+      </div>
+      <div class="tc-detail">Multi-channel retail enterprise. AI-native initiatives: Contact Center AI, CDP.</div>
+    </div>
+    <div class="tenant-card">
+      <div class="tc-name">SkyHarbor Air</div>
+      <div class="tc-keys">
+        App key: <span class="mono">skyharbor</span><br>
+        Canonical: <span class="mono">skyharbor-air</span><br>
+        Dataset: <span class="mono">skyharbor-air-synthetic-v4</span>
+      </div>
+      <div class="tc-detail">Regional airline. Primary demo/staging tenant. First live-proved for most features.</div>
+    </div>
+    <div class="tenant-card">
+      <div class="tc-name">Lakeshore Holdings</div>
+      <div class="tc-keys">
+        App key: <span class="mono">lakeshore</span><br>
+        Canonical: <span class="mono">lakeshore-holdings</span><br>
+        Dataset: <span class="mono">lakeshore-industries-synthetic-v4</span>
+      </div>
+      <div class="tc-detail">Industrial conglomerate. Intelligence v2 live-proven signed-in (commit 35049e8c).</div>
+    </div>
+  </div>
+
+  <h3>How the System Knows Which Tenant You Are</h3>
+  <p>When a user loads a page, the app resolves their tenant through this priority chain (defined in <span class="mono">src/lib/tenant/resolveTenant.ts</span>):</p>
+
+  <div class="flow" style="flex-wrap:wrap;gap:6px">
+    <div class="flow-step">
+      <div class="flow-box"><div class="fb-num">Check 1</div><div class="fb-label">URL param</div><div class="fb-sub">?client=arcturus</div></div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box"><div class="fb-num">Check 2</div><div class="fb-label">Request body</div><div class="fb-sub">requestedClient field</div></div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box"><div class="fb-num">Check 3</div><div class="fb-label">Cookie</div><div class="fb-sub">abarva_active_client</div></div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box"><div class="fb-num">Check 4</div><div class="fb-label">Clerk session</div><div class="fb-sub">session.clientId</div></div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box"><div class="fb-num">Check 5</div><div class="fb-label">Email domain</div><div class="fb-sub">@meridian.com → meridian</div></div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box highlight"><div class="fb-num">Result</div><div class="fb-label">clients table</div><div class="fb-sub">Azure Postgres lookup</div></div>
+    </div>
+  </div>
+
+  <div class="callout tip">
+    <strong>For developers:</strong> When testing locally, set the cookie <span class="mono">abarva_active_client=arcturus</span> (or any app key) to force a specific tenant. Without valid Clerk + DB credentials, tenant resolution falls back to fixture data.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 03: V4 DATA PACK
+═══════════════════════════════════════════════════════════════════════════════ -->
+<section id="v4-pack">
+  <div class="section-eyebrow">03 · Foundations</div>
+  <h2>The V4 Data Pack — What's in a Client Dataset?</h2>
+  <p>Every client (tenant) has a synthetic dataset that mimics a real $50B+ enterprise. These live in <span class="mono">datasets/{client}-synthetic-v4/</span>. They are NOT real client data — they are high-fidelity synthetic data generated to test the platform at realistic scale.</p>
+
+  <div class="callout warn">
+    <strong>Synthetic ≠ fake.</strong> These datasets are calibrated to be statistically realistic for large enterprises — 180–220 applications, 35–50 initiatives, real vendor names with realistic contract values. The AI treats them as real and reasons about them accordingly.
+  </div>
+
+  <h3>The 17 File Families (F01–F17 + D19)</h3>
+  <p>Each family is a group of CSV/YAML files. Together they paint a complete picture of the client's IT estate.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>File</th><th>Family name</th><th>What it contains</th><th>Example row</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">F01</span></td><td>Enterprise Profile</td><td>Company name, industry, revenue, employee count, HQ location, fiscal year</td><td>First Capital Financial · Banking · $28B revenue · 12,400 employees</td></tr>
+        <tr><td><span class="mono">F02</span></td><td>Business Org / Functions</td><td>Business units, their functions, IT ownership assignments</td><td>Retail Banking · Operations · CIO owns IT</td></tr>
+        <tr><td><span class="mono">F03</span></td><td>IT Org Ownership</td><td>IT org chart, reporting lines, budget owners per tower</td><td>Infrastructure · VP Sarah Chen · $42M budget</td></tr>
+        <tr><td><span class="mono">F04</span></td><td>Capabilities / Value Streams</td><td>Business capabilities mapped to IT systems</td><td>Customer Onboarding → CRM + Identity Platform</td></tr>
+        <tr><td><span class="mono">F05</span></td><td>Applications / Systems</td><td>All ~200 applications with owner, vendor, lifecycle, criticality</td><td>FIS Core Banking · Production · Mission Critical · Legacy</td></tr>
+        <tr><td><span class="mono">F06</span></td><td>System–Function Mapping</td><td>Which apps support which business functions</td><td>FIS Core Banking → Retail Deposits, Lending, Compliance</td></tr>
+        <tr><td><span class="mono">F07</span></td><td>Infrastructure / Cloud</td><td>Data centers, cloud providers, network topology</td><td>Azure East US · 65% of workloads · $8.2M/yr</td></tr>
+        <tr><td><span class="mono">F08</span></td><td>Platform Volumetrics</td><td>Transaction volumes, user counts, peak loads per system</td><td>Core Banking · 2.3M daily transactions · 99.99% SLA</td></tr>
+        <tr><td><span class="mono">F09</span></td><td>Data / Analytics Estate</td><td>Data platforms, pipelines, ML models in production</td><td>Azure Synapse · Fraud Detection Model · 94% accuracy</td></tr>
+        <tr><td><span class="mono">F10</span></td><td>Integrations / Interfaces</td><td>~140 system integrations, API/batch/event patterns</td><td>FIS → Salesforce · Batch · Nightly reconciliation</td></tr>
+        <tr><td><span class="mono">F11</span></td><td>Vendors / Contracts / Licenses</td><td>~120 vendors with ACV, renewal dates, contract type</td><td>FIS Inc · $18.2M/yr · Renews Mar 2027 · Core platform</td></tr>
+        <tr><td><span class="mono">F12</span></td><td>IT Budget / Financials</td><td>FY26 budget by program, CapEx/OpEx, YTD spend, AI allocation</td><td>Digital Banking · $34M budget · $18.2M YTD · 54% spent</td></tr>
+        <tr><td><span class="mono">F13</span></td><td>Initiatives Portfolio</td><td>~42 initiatives with status, owner, budget, timeline</td><td>Payments Modernization · Active · CTO owns · $28M · On track</td></tr>
+        <tr><td><span class="mono">F14</span></td><td>Operations / Service Mgmt</td><td>Incident volumes, MTTR, change success rates per system</td><td>Core Banking · 847 incidents/yr · 4.2h MTTR</td></tr>
+        <tr><td><span class="mono">F15</span></td><td>KPIs / Outcome Evidence</td><td>Business outcomes tied to IT investments</td><td>Digital Banking → 34% cost reduction in onboarding</td></tr>
+        <tr><td><span class="mono">F16</span></td><td>Security / Risk / Compliance</td><td>Risk register, compliance posture, audit findings</td><td>PCI-DSS · Compliant · SOC2 Type II · In progress</td></tr>
+        <tr><td><span class="mono">F17</span></td><td>AI / Automation Footprint</td><td>AI models in production, automation coverage by function</td><td>Fraud Detection AI · Production · $2.1M allocated · $4.8M realized</td></tr>
+        <tr><td><span class="mono">D19</span></td><td>Personas / Workforce</td><td>IT workforce roles, headcount, skills, move patterns</td><td>Cloud Engineer · 34 FTEs · Azure certified · High demand</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Real Example — First Capital Financial F12 (Budget)</h3>
+  <p>This is what the Tower "Where is the money going?" answer draws from. The file lives at <span class="mono">datasets/first-capital-financial-synthetic-v4/family-4-financial-commercial/F12_it-budget-financials.csv</span>:</p>
+
+  <pre><span class="comment"># F12_it-budget-financials.csv (excerpt)</span>
+<span class="key">program_id</span>,<span class="key">program_name</span>,<span class="key">function</span>,<span class="key">budget</span>,<span class="key">ytd</span>,<span class="key">capex</span>,<span class="key">opex</span>,<span class="key">ai_budget</span>,<span class="key">status</span>
+<span class="val">P001</span>,<span class="str">Core Banking Platform</span>,Infrastructure,<span class="val">82000000</span>,<span class="val">44280000</span>,<span class="val">24600000</span>,<span class="val">57400000</span>,<span class="val">0</span>,on-track
+<span class="val">P002</span>,<span class="str">Digital Banking</span>,Transform,<span class="val">34000000</span>,<span class="val">18360000</span>,<span class="val">20400000</span>,<span class="val">13600000</span>,<span class="val">4200000</span>,on-track
+<span class="val">P003</span>,<span class="str">Payments Modernization</span>,Transform,<span class="val">28000000</span>,<span class="val">11760000</span>,<span class="val">19600000</span>,<span class="val">8400000</span>,<span class="val">2800000</span>,watch
+<span class="val">P004</span>,<span class="str">Fraud Detection AI</span>,AI/Analytics,<span class="val">12000000</span>,<span class="val">7200000</span>,<span class="val">3600000</span>,<span class="val">8400000</span>,<span class="val">9600000</span>,on-track
+<span class="comment"># ... 200 apps / ~18 programs / $342M total</span></pre>
+
+  <h3>The manifest.yaml — Control File for Ingestion</h3>
+  <p>Each dataset has a <span class="mono">manifest.yaml</span> that tells the loader what to load and in what order. Located at <span class="mono">datasets/{client}-synthetic-v4/manifest.yaml</span>:</p>
+
+  <pre><span class="key">tenant_key</span>: <span class="str">first-capital</span>
+<span class="key">client_id</span>: <span class="str">09d9a267-e89c-4fe1-831f-337a62787ec5</span>
+<span class="key">display_name</span>: <span class="str">First Capital Financial Corporation</span>
+<span class="key">industry</span>: <span class="str">Banking</span>
+<span class="key">dataset_version</span>: <span class="str">v4</span>
+
+<span class="key">load_entries</span>:
+  - <span class="key">file</span>: <span class="str">family-1-enterprise-operating-model/F01_enterprise-profile.yaml</span>
+    <span class="key">segment</span>: <span class="str">org_structure</span>
+    <span class="key">record_type</span>: <span class="str">enterprise_profile</span>
+  - <span class="key">file</span>: <span class="str">family-4-financial-commercial/F12_it-budget-financials.csv</span>
+    <span class="key">segment</span>: <span class="str">it_financials</span>
+    <span class="key">record_type</span>: <span class="str">budget_program</span>
+  <span class="comment"># ... 19 entries total in load order</span></pre>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 04: DATABASE SCHEMA
+═══════════════════════════════════════════════════════════════════════════════ -->
+<section id="database">
+  <div class="section-eyebrow">04 · Foundations</div>
+  <h2>Database Schema — How Data Lives in Azure Postgres</h2>
+  <p>The database is a private Azure PostgreSQL instance, accessible only through the ACA VNet. All tables are prefixed with <span class="mono">enterprise_context_</span> and are partitioned by <span class="mono">tenant_key</span> — so a query for "first-capital" literally cannot touch "meridian-health" rows.</p>
+
+  <div class="callout info">
+    Migration files live at <span class="mono">supabase/migrations/</span> (raw SQL). The key migration is <span class="mono">20260514100000_enterprise_context_layer.sql</span>.
+  </div>
+
+  <h3>The 9 Core Tables (in data-flow order)</h3>
+
+  <div class="layer-stack">
+    <div class="layer-item">
+      <div class="layer-num">1</div>
+      <div class="layer-content">
+        <div class="lc-title">enterprise_context_sources</div>
+        <div class="lc-desc">Where did this data come from? One row per data source (e.g., "F12 budget CSV loaded on 2026-06-17"). Columns: tenant_key, source_system, source_key, source_type, display_name, freshness_status, confidence.</div>
+      </div>
+      <div class="layer-status"><span class="tag amber">Schema exists — row counts vary per tenant; verify per-tenant before claiming live</span></div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-num">2</div>
+      <div class="layer-content">
+        <div class="lc-title">enterprise_context_source_files</div>
+        <div class="lc-desc">One row per uploaded file. Tracks file_hash (dedup), row_count, and links back to the source. Prevents loading the same file twice.</div>
+      </div>
+      <div class="layer-status"><span class="tag amber">Schema exists — verify per tenant</span></div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-num">3</div>
+      <div class="layer-content">
+        <div class="lc-title">enterprise_context_records</div>
+        <div class="lc-desc">One row per logical entity (one application, one initiative, one vendor contract). Columns: tenant_key, canonical_record_id, record_type, title, source_system, source_sheet, source_row_number, lifecycle_state, payload (JSONB). <em>This is the heart of the schema.</em></div>
+      </div>
+      <div class="layer-status"><span class="tag amber">Schema exists — verify per tenant</span></div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-num">4</div>
+      <div class="layer-content">
+        <div class="lc-title">enterprise_context_facts</div>
+        <div class="lc-desc">Individual atomic facts extracted from records. One row per fact: fact_key (e.g. "annual_budget"), fact_type (number/string/date), fact_value (JSONB), fact_text (human-readable), source_row_number. This is what the AI reads to cite specific numbers.</div>
+      </div>
+      <div class="layer-status"><span class="tag amber">Schema exists — verify per tenant</span></div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-num">5</div>
+      <div class="layer-content">
+        <div class="lc-title">enterprise_context_evidence</div>
+        <div class="lc-desc">Linkage table connecting facts to specific citable locations. Columns: citation_label (e.g. "F12, row 4"), citation_locator (sheet + cell), evidence_pointer, evidence_usable. AI answers MUST cite from this table.</div>
+      </div>
+      <div class="layer-status"><span class="tag amber">Schema exists — verify per tenant</span></div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-num">6</div>
+      <div class="layer-content">
+        <div class="lc-title">enterprise_context_relationships</div>
+        <div class="lc-desc">Graph edges between records. E.g. "FIS Core Banking (app) → Retail Deposits (business function)". Enables AI to reason about connections. ~1,050 edges per client from the graph/ folder.</div>
+      </div>
+      <div class="layer-status"><span class="tag amber">Schema exists — verify per tenant</span></div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-num">7</div>
+      <div class="layer-content">
+        <div class="lc-title">enterprise_context_chunks</div>
+        <div class="lc-desc">Text chunks for full-text and vector search. Each record is split into ~500-token chunks. Columns: chunk_text, token_count, embedding_status (pending/done), embedded_at. This is what the search query hits.</div>
+      </div>
+      <div class="layer-status"><span class="tag amber">Partial</span></div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-num">8</div>
+      <div class="layer-content">
+        <div class="lc-title">data_inventory_segments</div>
+        <div class="lc-desc">Coverage score per data segment (org_structure, it_landscape, it_financials, vendor_contracts, etc.). The Context Explorer reads from here to show "8 of 16 dimensions loaded." Columns: segment_name, coverage_score, health_state, record_count.</div>
+      </div>
+      <div class="layer-status"><span class="tag amber">Schema exists — verify per tenant</span></div>
+    </div>
+    <div class="layer-item">
+      <div class="layer-num">9</div>
+      <div class="layer-content">
+        <div class="lc-title">knowledge_sources</div>
+        <div class="lc-desc">Industry/corpus knowledge NOT specific to any client — analyst reports, benchmarks, best-practice frameworks. Columns: title, publisher, content_type, industry_tags, topic_tags. Provides market context for AI answers.</div>
+      </div>
+      <div class="layer-status"><span class="tag amber">Partial</span></div>
+    </div>
+  </div>
+
+  <h3>Real Example — What a Fact Row Looks Like</h3>
+  <p>When the AI answers "What is First Capital's FY26 IT budget?", it reads from <span class="mono">enterprise_context_facts</span>:</p>
+  <pre><span class="comment">-- enterprise_context_facts (simplified)</span>
+<span class="key">tenant_key</span>    | <span class="str">first-capital</span>
+<span class="key">record_id</span>     | <span class="str">FCF-BUDGET-FY26-TOTAL</span>
+<span class="key">fact_key</span>      | <span class="str">annual_budget_total</span>
+<span class="key">fact_type</span>     | <span class="str">number</span>
+<span class="key">fact_value</span>    | <span class="str">{"amount": 342000000, "currency": "USD", "fiscal_year": "FY26"}</span>
+<span class="key">fact_text</span>     | <span class="str">$342M total FY26 IT budget</span>
+<span class="key">source_system</span> | <span class="str">F12_it-budget-financials.csv</span>
+<span class="key">source_row</span>    | <span class="val">1</span>
+
+<span class="comment">-- enterprise_context_evidence (citation)</span>
+<span class="key">citation_label</span>   | <span class="str">F12_it-budget-financials.csv · Total row</span>
+<span class="key">citation_locator</span> | <span class="str">Sheet: Financials, Row: 1, Col: budget_total</span>
+<span class="key">evidence_usable</span>  | <span class="val">true</span></pre>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 05: LOADING A NEW CLIENT
+═══════════════════════════════════════════════════════════════════════════════ -->
+<section id="load-new-client">
+  <div class="section-eyebrow">05 · Ingestion</div>
+  <h2>Loading a New Client — Step by Step</h2>
+  <p>This is the full process to onboard a brand-new client tenant from scratch, starting with raw data files all the way to a live, queryable client in the app.</p>
+
+  <div class="callout warn">
+    <strong>Do not claim "loaded" until all 10 states are verified.</strong> "Local artifact generated" and "context committed to DB" are two different things. Each state must be confirmed separately.
+  </div>
+
+  <ul class="steps">
+    <li>
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Create the V4 dataset folder</strong>
+        <span>Create <span class="mono">datasets/{new-client}-synthetic-v4/</span> with the 17 file families. Either generate synthetic CSVs or supply real client data in the same schema.</span>
+        <span class="step-file">📁 datasets/northstar-clinical-tech-synthetic-v4/</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Write manifest.yaml</strong>
+        <span>Define tenant_key, client_id (new UUID), display_name, industry, and all load_entries in the correct dependency order (F01 before F05, F05 before F12, etc.).</span>
+        <span class="step-file">📄 datasets/{client}-synthetic-v4/manifest.yaml</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Insert client row in the DB</strong>
+        <span>Run the seed script or admin mutation to INSERT a row into the <span class="mono">clients</span> table with tenant_key, slug, name, and industry. This is what <span class="mono">resolveTenant()</span> queries when routing users.</span>
+        <span class="step-file">📄 src/scripts/seed-client.ts (or via Admin UI)</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <strong>Add tenant alias</strong>
+        <span>Add an entry to <span class="mono">TENANT_ALIAS_PROFILES</span> so the app knows how to map the Clerk session's client key to the canonical tenant key. Without this, the app resolves to "unknown" tenant.</span>
+        <span class="step-file">📄 src/lib/tenant/aliases.ts</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <strong>Run the Admin bulk loader</strong>
+        <span>Run the substrate loader script directly — <span class="mono">npm run load:enterprise-context</span> is not a package.json script. Use the governed operator path: <span class="mono">npx tsx src/scripts/seed/load-tenant-substrate.ts --tenant=first-capital</span> (or the tenant-specific seed script if one exists, e.g. <span class="mono">npm run seed:skyharbor</span>). This reads the manifest, parses each CSV/YAML, and upserts rows into enterprise_context_sources → records → facts → evidence → chunks. Allow 3–15 minutes for a full V4 pack. Always run inside the private VNet via an ACA job — direct localhost calls cannot reach the Azure PostgreSQL private endpoint.</span>
+        <span class="step-file">📄 src/scripts/seed/load-tenant-substrate.ts · src/scripts/embed-pending-chunks.ts</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <strong>Embed pending chunks</strong>
+        <span>The loader creates chunks with <span class="mono">embedding_status = 'pending'</span>. Run the embedding job to generate vector embeddings via the OpenAI or Anthropic embedding API. Required for semantic search.</span>
+        <span class="step-file">📄 src/scripts/embed-pending-chunks.ts</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">7</div>
+      <div class="step-body">
+        <strong>Build Tower v4 data script</strong>
+        <span>Verify that <span class="mono">buildTowerV2V4DataScript({clientKey: 'new-client'})</span> resolves the correct dataset folder and can parse F12 + F11 + T01 + T07 without errors. Check the Tower iframe renders with real program data.</span>
+        <span class="step-file">📄 src/lib/tower-v2/v4-data.ts</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">8</div>
+      <div class="step-body">
+        <strong>Run golden questions</strong>
+        <span>Execute the 3–5 golden questions from <span class="mono">99-verification/golden-questions.json</span> against the live signed-in session. Every question must return a cited answer with no hallucination. This is proof the pipeline works end-to-end.</span>
+        <span class="step-file">📄 datasets/{client}-synthetic-v4/99-verification/golden-questions.json</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">9</div>
+      <div class="step-body">
+        <strong>Create Clerk user(s)</strong>
+        <span>Create test user accounts in Clerk (or invite real client contacts). Map their email domain or metadata to the new tenant_key. Without this step, no one can sign in as the new client.</span>
+        <span class="step-file">🔑 Clerk Dashboard → Users → Invite</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">10</div>
+      <div class="step-body">
+        <strong>Verify signed-in retrieval</strong>
+        <span>Sign in as the new client user. Ask a question in Intelligence. Confirm the answer references real data from the dataset. Confirm no cross-tenant data leaks (ask about another client's data — should return "I don't have information on that").</span>
+        <span class="step-file">🌐 app.abarva.ai/intelligence</span>
+      </div>
+    </li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 06: ADD DATA — EXISTING CLIENT
+═══════════════════════════════════════════════════════════════════════════════ -->
+<section id="load-new-data">
+  <div class="section-eyebrow">06 · Ingestion</div>
+  <h2>Adding New Data — Existing Client</h2>
+  <p>When a client provides a new data file (e.g., their actual vendor contract list), here is how it flows into the system via the Admin bulk loader or CSV upload.</p>
+
+  <h3>Path A: Admin CSV Upload (Single File)</h3>
+  <p>An operator goes to <strong>/admin → Upload CSV</strong>. Under the hood:</p>
+
+  <div class="flow" style="flex-wrap:wrap;gap:6px">
+    <div class="flow-step">
+      <div class="flow-box"><div class="fb-num">UI</div><div class="fb-label">Admin uploads CSV</div><div class="fb-sub">/admin → context-layer</div></div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box"><div class="fb-num">API</div><div class="fb-label">POST /api/admin/context-layer/csv-upload</div><div class="fb-sub">max 5MB · CSV only</div></div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box amber"><div class="fb-num">Guard</div><div class="fb-label">Sensitive data check</div><div class="fb-sub">evaluateSensitiveUpload()</div></div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box"><div class="fb-num">Parse</div><div class="fb-label">CSV → records + facts</div><div class="fb-sub">csv-upload-connector.ts</div></div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box"><div class="fb-num">DB</div><div class="fb-label">Upsert to context tables</div><div class="fb-sub">records → facts → chunks</div></div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box green"><div class="fb-num">Queue</div><div class="fb-label">Chunks → embedding queue</div><div class="fb-sub">embedding_status='pending'</div></div>
+    </div>
+  </div>
+
+  <div class="tbl-wrap" style="margin-top:16px">
+    <table>
+      <thead><tr><th>State</th><th>How to verify</th><th>Where to look</th></tr></thead>
+      <tbody>
+        <tr><td>✅ File accepted</td><td>HTTP 200 from upload API</td><td>Network tab / Admin UI</td></tr>
+        <tr><td>✅ Records written</td><td>COUNT on enterprise_context_records WHERE tenant_key='...'</td><td>Azure Postgres (via VNet job)</td></tr>
+        <tr><td>✅ Facts extracted</td><td>COUNT on enterprise_context_facts WHERE tenant_key='...'</td><td>Azure Postgres</td></tr>
+        <tr><td>✅ Chunks created</td><td>COUNT on enterprise_context_chunks WHERE embedding_status='pending'</td><td>Azure Postgres</td></tr>
+        <tr><td>✅ Embeddings done</td><td>COUNT WHERE embedding_status='embedded' (not 'done' — valid values: pending | skipped | embedded | failed)</td><td>Azure Postgres / embed job logs</td></tr>
+        <tr><td>✅ Retrieval works</td><td>Ask a question that should use the new data → verify cited answer</td><td>app.abarva.ai/intelligence</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Path B: Manifest-Driven Bulk Reload</h3>
+  <p>Used when adding an entirely new file family or re-loading after data corrections. Update the manifest, then re-run the loader. Rows are upserted (not duplicated) because each record has a <span class="mono">canonical_record_id</span> derived from the file + row. Existing rows are updated, new rows are added.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 07: HOW CHANGES PROPAGATE
+═══════════════════════════════════════════════════════════════════════════════ -->
+<section id="propagation">
+  <div class="section-eyebrow">07 · Ingestion</div>
+  <h2>How Changes Propagate to Each Layer</h2>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>What changed</th><th>Intelligence "Ask"</th><th>Tower Dashboard</th><th>Context Explorer counts</th><th>Time to live</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>New CSV uploaded via Admin</td>
+          <td><span class="tag green">Auto</span> Next query picks up new facts (Postgres full-text is live)</td>
+          <td><span class="tag amber">Manual</span> Tower reads CSV files at page load — must update datasets/ folder AND redeploy</td>
+          <td><span class="tag green">Auto</span> Segment coverage score recalculates on next load</td>
+          <td>Intelligence: seconds · Tower: next deploy</td>
+        </tr>
+        <tr>
+          <td>New embedding generated</td>
+          <td><span class="tag green">Auto</span> Vector search now includes new chunk</td>
+          <td><span class="tag grey">N/A</span> Tower doesn't use vector search</td>
+          <td><span class="tag grey">N/A</span></td>
+          <td>Seconds after embed job completes</td>
+        </tr>
+        <tr>
+          <td>V4 CSV file updated on disk</td>
+          <td><span class="tag red">Not auto</span> Must re-run loader to push to DB</td>
+          <td><span class="tag red">Not auto</span> Tower reads CSV files baked into the image at build time via buildTowerV2V4DataScript. A file change on disk is NOT live until it is committed, the Docker image is rebuilt, and the ACA revision is deployed.</td>
+          <td><span class="tag red">Not auto</span> Re-run loader</td>
+          <td>Both: after commit → image build → ACA deploy (~5–10 min)</td>
+        </tr>
+        <tr>
+          <td>New Sentinel reasoning logic</td>
+          <td><span class="tag green">Auto</span> Next code deploy activates new logic</td>
+          <td><span class="tag grey">N/A</span></td>
+          <td><span class="tag grey">N/A</span></td>
+          <td>ACA redeploy ~3-5 minutes</td>
+        </tr>
+        <tr>
+          <td>Intelligence binding payload (all-tenants.json)</td>
+          <td><span class="tag red">Manual</span> Must regenerate + commit file to branch</td>
+          <td><span class="tag grey">N/A</span></td>
+          <td><span class="tag amber">Drives</span> The payload IS the Context Explorer's signal/context/corpus data</td>
+          <td>Manual regeneration step — this is a known gap</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout warn">
+    <strong>The Intelligence binding payload is currently static.</strong> The <span class="mono">outputs/intelligence-binding/all-tenants.json</span> file is committed to the branch and not auto-regenerated when context data changes. This means the Intelligence v2 surface's signal cards and trust line numbers can go stale if the DB is updated. Automating payload regeneration is a known gap.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 08: HOW "ASK" WORKS (INTELLIGENCE)
+═══════════════════════════════════════════════════════════════════════════════ -->
+<section id="ask-flow">
+  <div class="section-eyebrow">08 · Intelligence Flows</div>
+  <h2>How "Ask" Works — The Full Intelligence Pipeline</h2>
+  <p>When a user types a question in the Intelligence ask bar and hits Enter, here is every step that happens — including which file handles it and what the Postgres query looks like.</p>
+
+  <div class="callout info">
+    <strong>Real example:</strong> Anand, signed in as Meridian Health, types: <em>"Which of our vendors has the highest renewal risk?"</em>
+  </div>
+
+  <ul class="steps">
+    <li>
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Browser → API: POST /api/intelligence/ask?q=which+of+our+vendors...</strong>
+        <span>The IntelligenceV2Surface component calls <span class="mono">fetch('/api/intelligence/ask?q=...')</span>. The Clerk session cookie travels with the request automatically — no manual token handling needed.</span>
+        <span class="step-file">📄 src/components/intelligence-v2/IntelligenceV2Surface.tsx</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Auth: Who is this user?</strong>
+        <span><span class="mono">currentUser()</span> from Clerk validates the session and returns the Clerk user object. If no valid session → 401 Unauthorized. The user ID and email are used to look up the person record.</span>
+        <span class="step-file">📄 src/app/api/intelligence/ask/route.ts · handleAsk()</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Tenant resolution: Which client's data do we use?</strong>
+        <span><span class="mono">resolveTenant()</span> runs the resolution chain (URL → cookie → session → email). For Anand at Meridian, this returns <span class="mono">tenant_key = 'meridian-health'</span>. All subsequent DB queries are scoped to this tenant_key.</span>
+        <span class="step-file">📄 src/lib/tenant/resolveTenant.ts</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <strong>Session memory: What has this user asked before?</strong>
+        <span><span class="mono">prepareAskSessionMemory()</span> loads the last N turns of conversation for this user+tenant. This lets Sentinel understand "who is DXC?" when the user's previous question was about DXC's contract.</span>
+        <span class="step-file">📄 src/lib/intelligence/ask/session-memory.ts</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <strong>Intent classification: What kind of question is this?</strong>
+        <span><span class="mono">classifySentinelIntent()</span> keyword-scores the query against <span class="mono">IT_PRODUCTIVITY_TERMS</span> and calls Claude for classification. "Vendor renewal risk" → classified as <span class="mono">vendor_contracts</span> intent. This routes to the right retrieval strategy.</span>
+        <span class="step-file">📄 src/lib/agents/sentinel-reasoning/intent-classifier.ts</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <strong>Context retrieval: Pull relevant facts from the database</strong>
+        <span>Multiple retrieval methods run in parallel:
+          <br>• Full-text: <span class="mono">SELECT * FROM enterprise_context_chunks WHERE tenant_key='meridian-health' AND (chunk_text ILIKE '%vendor%' OR chunk_text ILIKE '%renewal%')</span>
+          <br>• Structured: <span class="mono">SELECT * FROM enterprise_context_facts WHERE tenant_key='meridian-health' AND fact_key LIKE '%vendor%'</span>
+          <br>• Vector search: semantic similarity on embeddings
+        </span>
+        <span class="step-file">📄 src/lib/intelligence/ask/index.ts · retrieveTenantEnterpriseSources()</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">7</div>
+      <div class="step-body">
+        <strong>Context assembly: Build the Claude prompt</strong>
+        <span><span class="mono">assembleUserContextBlock()</span> takes retrieved facts + user session context and formats them into a structured prompt block. Each fact includes its citation label ("F11, row 14"). This becomes the grounding context for Claude.</span>
+        <span class="step-file">📄 src/lib/agent/prompts/_shared/user-context.ts</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">8</div>
+      <div class="step-body">
+        <strong>Sentinel reasoning: Claude synthesizes an answer</strong>
+        <span><span class="mono">runSentinelReasoning()</span> calls Claude with the assembled context. Claude is instructed: <em>"Only state facts that are in the provided context. Every claim must include its citation. If you cannot answer from the context, say 'I don't have sufficient information.'"</em> The response streams back token by token.</span>
+        <span class="step-file">📄 src/lib/agents/sentinel-reasoning/index.ts</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">9</div>
+      <div class="step-body">
+        <strong>Claim validation: Strip uncited statements</strong>
+        <span><span class="mono">validateClaimsAndCitations()</span> parses Claude's response. Any sentence that makes a factual claim without a citation label gets removed before the response is sent to the user. This is the anti-hallucination gate.</span>
+        <span class="step-file">📄 src/lib/agent-claims.ts</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">10</div>
+      <div class="step-body">
+        <strong>Stream to UI + save turn</strong>
+        <span>The validated response streams to the browser. In parallel, <span class="mono">appendAskSessionTurn()</span> saves this Q&A pair to session memory so future questions can reference it. Telemetry is logged via <span class="mono">recordSynthesisEvent()</span>.</span>
+        <span class="step-file">📄 src/lib/intelligence/ask/session-memory.ts · src/lib/reasoning/synthesis-telemetry.ts</span>
+      </div>
+    </li>
+  </ul>
+
+  <div class="callout info">
+    <strong>Result for Meridian:</strong> "Your highest renewal risk vendor is <strong>DXC Technology</strong> (<em>F11, row 8</em>), with a $14.2M/year contract renewing in <strong>September 2026</strong> — 3 months away. No renewal owner is currently assigned. The second-highest is <strong>Epic Systems</strong> (<em>F11, row 2</em>), $22.4M/year, renewing Q2 FY27."
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 09: TOWER DATA FLOW
+═══════════════════════════════════════════════════════════════════════════════ -->
+<section id="tower-flow">
+  <div class="section-eyebrow">09 · Intelligence Flows</div>
+  <h2>Tower Data Flow — How the IT Dashboard Works</h2>
+  <p>Tower is architecturally different from Intelligence. It uses a self-contained iframe that loads a static HTML/JS application, pre-injected with the client's data. There is <strong>no AI call for Tower's ask bar today</strong> — answers come from client-side JavaScript pattern matching.</p>
+
+  <div class="callout warn">
+    <strong>Tower is data-smart but not AI-smart.</strong> It knows the numbers because it reads the same CSVs the loader uses. But its "ask" answers are hardcoded regex patterns, not Sentinel reasoning. This is a known architectural gap.
+  </div>
+
+  <h3>When a User Navigates to /tower</h3>
+  <ul class="steps">
+    <li>
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>TowerPage (Server Component) runs</strong>
+        <span><span class="mono">getActiveClientRow()</span> resolves the tenant. For Meridian: <span class="mono">clientKey = 'meridian'</span>. The iframe src is set to <span class="mono">/api/tower/v2-frame?client=meridian</span>.</span>
+        <span class="step-file">📄 src/app/(maestro)/tower/page.tsx</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>GET /api/tower/v2-frame?client=meridian runs server-side</strong>
+        <span><span class="mono">buildTowerV2V4DataScript({clientKey: 'meridian'})</span> is called. It looks up the dataset folder: <span class="mono">datasets/meridian-health-synthetic-v4/</span> and reads 6 CSV files from disk.</span>
+        <span class="step-file">📄 src/app/api/tower/v2-frame/route.ts · src/lib/tower-v2/v4-data.ts</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>CSVs → JavaScript data script</strong>
+        <span>The 6 CSV files are parsed and converted into JavaScript constants that look like this (injected into the HTML at page load):
+          <span class="mono">window.PROGRAMS = [{id:"P001", name:"Epic and Clinical Systems", budget:174800000, ytd:94400000, ...}];</span>
+          <span class="mono">window.VENDORS = [{name:"Epic Systems", acv:22400000, renew:"Q2 FY27", months:9}];</span>
+        </span>
+        <span class="step-file">The 6 CSVs: F12 (budget) · F11 (vendors) · T01 (initiative registry) · T07 (benefit realization) · T08 (spend) · T12 (actions)</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <strong>HTML template → served as iframe</strong>
+        <span>The static <span class="mono">public/tower-v2/index.html</span> template is injected with: the tenant name, the JavaScript data script, and the AbarVa logo. The inner topbar is hidden via <span class="mono">EMBED_CSS (.topbar { display:none })</span>. The full HTML is returned as the iframe's document.</span>
+        <span class="step-file">📄 public/tower-v2/index.html · public/tower-v2/app.js</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <strong>User asks: "How much do we spend on Epic?"</strong>
+        <span><span class="mono">answerFor("How much do we spend on Epic?")</span> runs entirely in the browser. It splits "Epic and Clinical Systems" into words ["epic", "and", "clinical", "systems"], filters to words longer than 3 chars, finds "epic" matches the query, and returns the program's budget/YTD data directly from <span class="mono">window.PROGRAMS</span>.</span>
+        <span class="step-file">📄 public/tower-v2/app.js · answerFor() · programMatch lookup</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <strong>Bar chart renders — no network call made</strong>
+        <span>The answer renders with a bar chart: Budget ($174.8M) vs YTD Spent ($94.4M). The chart is drawn using inline SVG, all client-side. Zero AI, zero API calls — everything came from the injected CSV data.</span>
+        <span class="step-file">📄 public/tower-v2/app.js · ansBarChart()</span>
+      </div>
+    </li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 10: CONTEXT RETRIEVAL
+═══════════════════════════════════════════════════════════════════════════════ -->
+<section id="retrieval">
+  <div class="section-eyebrow">10 · Intelligence Flows</div>
+  <h2>Context Retrieval — How a Question Becomes a Database Query</h2>
+  <p>The <span class="mono">AgentContextBroker</span> is the gatekeeper between AI agents and the database. No AI agent directly queries Postgres — everything goes through the broker, which enforces tenant isolation and retrieval strategy.</p>
+
+  <h3>The Broker Decision Tree</h3>
+  <div class="flow" style="flex-direction:column;gap:10px;align-items:flex-start;max-width:600px">
+    <div class="flow-box" style="min-width:400px;text-align:left">
+      <div class="fb-num">Step 1</div>
+      <div class="fb-label">Has this tenant been loaded to the private DB?</div>
+      <div class="fb-sub">TenantDataAdapter.hasPersistedData(tenantKey)</div>
+    </div>
+    <div class="flow-arrow-down">↓ Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ↓ No</div>
+    <div style="display:flex;gap:16px">
+      <div class="flow-box green" style="min-width:180px">
+        <div class="fb-label">Live DB retrieval</div>
+        <div class="fb-sub">buildEnterpriseAgentContextBundleAsync()</div>
+      </div>
+      <div class="flow-box amber" style="min-width:180px">
+        <div class="fb-label">Fixture fallback</div>
+        <div class="fb-sub">EnterpriseDataRoom static data</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Live DB Retrieval — The 7 Segments Fetched</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Segment</th><th>Postgres query (simplified)</th><th>What it returns for "vendor renewal risk"</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="mono">org_structure</span></td>
+          <td><span class="mono">SELECT * FROM enterprise_context_records WHERE tenant_key='meridian-health' AND record_type='org_unit'</span></td>
+          <td>Business unit names, IT owners — gives context for "who owns vendor decisions"</td>
+        </tr>
+        <tr>
+          <td><span class="mono">vendor_contracts</span></td>
+          <td><span class="mono">SELECT * FROM enterprise_context_facts WHERE tenant_key='meridian-health' AND (fact_key LIKE '%vendor%' OR fact_key LIKE '%contract%')</span></td>
+          <td>All vendor names, ACVs, renewal dates — the direct answer source</td>
+        </tr>
+        <tr>
+          <td><span class="mono">it_financials</span></td>
+          <td><span class="mono">SELECT * FROM enterprise_context_facts WHERE tenant_key='meridian-health' AND (fact_key LIKE '%budget%' OR fact_key LIKE '%spend%')</span></td>
+          <td>Budget context — how much spend is at risk from unrenewed contracts</td>
+        </tr>
+        <tr>
+          <td><span class="mono">program_inventory</span></td>
+          <td><span class="mono">SELECT * FROM data_segment_program_inventory WHERE tenant_key='meridian-health'</span></td>
+          <td>Programs that depend on at-risk vendors</td>
+        </tr>
+        <tr>
+          <td><span class="mono">evidence_ledger</span></td>
+          <td><span class="mono">SELECT * FROM enterprise_context_evidence WHERE tenant_key='meridian-health' AND evidence_usable=true</span></td>
+          <td>Citable sources for every fact (required for anti-hallucination)</td>
+        </tr>
+        <tr>
+          <td><span class="mono">kpi_dictionary</span></td>
+          <td><span class="mono">SELECT * FROM data_segment_kpi_dictionary WHERE tenant_key='meridian-health'</span></td>
+          <td>Outcome KPIs linked to vendor relationships</td>
+        </tr>
+        <tr>
+          <td><span class="mono">cross_program_signals</span></td>
+          <td><span class="mono">SELECT * FROM data_segment_cross_program_signals WHERE tenant_key='meridian-health'</span></td>
+          <td>Signals linking vendor risk to program delivery risk</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Full-Text Chunk Search</h3>
+  <pre><span class="comment">-- Searches the text chunks for keywords from the user's query</span>
+SELECT chunk_id, chunk_text, source_record_id, provenance
+FROM enterprise_context_chunks
+WHERE tenant_key = <span class="str">'meridian-health'</span>
+  AND chunk_text ILIKE <span class="str">'%vendor%'</span>
+  AND chunk_text ILIKE <span class="str">'%renewal%'</span>
+  AND lifecycle_state = <span class="str">'active'</span>
+LIMIT 20;</pre>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 11: COMPONENT MAP
+═══════════════════════════════════════════════════════════════════════════════ -->
+<section id="component-map">
+  <div class="section-eyebrow">11 · Architecture</div>
+  <h2>Component Map — Who Talks to Whom</h2>
+  <p>Every component that participates in the data flow, with its file path and responsibility.</p>
+
+  <div class="comp-map">
+    <div class="comp-card">
+      <div class="cc-header">🧠 Sentinel Reasoning</div>
+      <span class="cc-file">src/lib/agents/sentinel-reasoning/</span>
+      <ul class="cc-items">
+        <li>index.ts — main reasoning pipeline (6 stages)</li>
+        <li>intent-classifier.ts — routes question to right strategy</li>
+        <li>state-machine.ts — tracks reasoning state</li>
+        <li>model.ts — Claude API call wrapper</li>
+        <li>db.ts — saves reasoning traces to DB</li>
+      </ul>
+    </div>
+    <div class="comp-card">
+      <div class="cc-header">🔍 Agent Context Broker</div>
+      <span class="cc-file">src/lib/knowledge/agent-context-broker.ts</span>
+      <ul class="cc-items">
+        <li>buildEnterpriseAgentContextBundleAsync() — live DB retrieval</li>
+        <li>buildEnterpriseAgentContextBundle() — fixture fallback</li>
+        <li>Checks TenantDataAdapter.hasPersistedData()</li>
+        <li>Routes to 7 segment fetchers</li>
+        <li>Enforces tenant isolation</li>
+      </ul>
+    </div>
+    <div class="comp-card">
+      <div class="cc-header">📡 Intelligence Ask API</div>
+      <span class="cc-file">src/app/api/intelligence/ask/route.ts</span>
+      <ul class="cc-items">
+        <li>GET + POST — accepts ?q= or body.query</li>
+        <li>Clerk auth → resolveTenant → session memory</li>
+        <li>classifySentinelIntent() → routing</li>
+        <li>runSentinelReasoning() or askIntelligence()</li>
+        <li>validateClaimsAndCitations() → anti-hallucination gate</li>
+        <li>recordSynthesisEvent() → telemetry</li>
+      </ul>
+    </div>
+    <div class="comp-card">
+      <div class="cc-header">🏗️ Tower Frame API</div>
+      <span class="cc-file">src/app/api/tower/v2-frame/route.ts</span>
+      <ul class="cc-items">
+        <li>GET — returns full HTML for the iframe</li>
+        <li>Calls buildTowerV2V4DataScript()</li>
+        <li>Reads 6 CSVs from datasets/ folder</li>
+        <li>Injects PROGRAMS/VENDORS/INITS as JS</li>
+        <li>Injects EMBED_CSS to hide inner topbar</li>
+      </ul>
+    </div>
+    <div class="comp-card">
+      <div class="cc-header">📦 Context Loader</div>
+      <span class="cc-file">src/scripts/enterprise-context/</span>
+      <ul class="cc-items">
+        <li>load-enterprise-context.ts — reads manifest, loads all families</li>
+        <li>chunking.ts — splits records into searchable chunks</li>
+        <li>csv-upload-connector.ts — single-file CSV path</li>
+        <li>embed-pending-chunks.ts — generates embeddings</li>
+      </ul>
+    </div>
+    <div class="comp-card">
+      <div class="cc-header">🎨 Intelligence V2 Surface</div>
+      <span class="cc-file">src/components/intelligence-v2/IntelligenceV2Surface.tsx</span>
+      <ul class="cc-items">
+        <li>Renders ask bar → streams from /api/intelligence/ask</li>
+        <li>Renders signal cards from binding payload</li>
+        <li>Renders context/corpus tabs</li>
+        <li>Chip click → auto-submits question</li>
+      </ul>
+    </div>
+    <div class="comp-card">
+      <div class="cc-header">🏠 Tower Iframe Container</div>
+      <span class="cc-file">src/app/(maestro)/tower/TowerIframeContainer.tsx</span>
+      <ul class="cc-items">
+        <li>Client component wrapping the iframe</li>
+        <li>pointerdown listener — blurs iframe on outside click</li>
+        <li>Fixes nav multiple-click issue</li>
+      </ul>
+    </div>
+    <div class="comp-card">
+      <div class="cc-header">🧭 Tenant Resolver</div>
+      <span class="cc-file">src/lib/tenant/resolveTenant.ts</span>
+      <ul class="cc-items">
+        <li>resolves canonical tenant_key from request context</li>
+        <li>Priority: URL param → cookie → session → email domain</li>
+        <li>Queries clients table in Azure Postgres</li>
+        <li>TENANT_ALIAS_PROFILES maps app keys → canonical keys</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SECTION 12: GAPS & WHAT'S NEXT
+═══════════════════════════════════════════════════════════════════════════════ -->
+<section id="gaps">
+  <div class="section-eyebrow">12 · Architecture</div>
+  <h2>Gaps — What Exists vs What's Needed</h2>
+  <p>This is the honest current-state audit of all three "Ask" surfaces against the three layers required for smart, non-hallucinating, rich-output answers.</p>
+
+  <div class="tbl-wrap">
+    <table class="gap-matrix">
+      <thead>
+        <tr>
+          <th>Surface</th>
+          <th>Layer 1: Substrate<br><small style="font-weight:400;text-transform:none">Data the AI can read from</small></th>
+          <th>Layer 2: Grounding<br><small style="font-weight:400;text-transform:none">Anti-hallucination contract</small></th>
+          <th>Layer 3: Output Schema<br><small style="font-weight:400;text-transform:none">Tables, charts, citations</small></th>
+          <th>Overall</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Intelligence</strong><br><small>Sentinel / ask bar</small></td>
+          <td><span class="tag amber">Partial</span> Schema exists and full-text search is live. Embedding status varies per tenant (verify COUNT WHERE embedding_status='embedded'). Semantic/vector retrieval is dormant until pgvector migration (ADR-001) completes. Claims of "done" require signed-in retrieval proof per tenant.</td>
+          <td><span class="tag green">Done</span> Sentinel governed contract, citation gate, refuse-on-insufficient, cross-tenant fence</td>
+          <td><span class="tag red">Missing</span> Returns plain streaming text only. No structured JSON schema. No table or chart renderer.</td>
+          <td><span class="tag amber">70%</span></td>
+        </tr>
+        <tr>
+          <td><strong>Home</strong><br><small>Context Explorer ask</small></td>
+          <td><span class="tag green">Done</span> Same substrate as Intelligence — data is there</td>
+          <td><span class="tag amber">Partial</span> Needs to be wired to /api/intelligence/ask (not yet done)</td>
+          <td><span class="tag red">Missing</span> Same gap as Intelligence</td>
+          <td><span class="tag amber">50%</span></td>
+        </tr>
+        <tr>
+          <td><strong>Tower</strong><br><small>Atlas ask bar</small></td>
+          <td><span class="tag amber">Client-side only</span> V4 CSV data injected at page load into browser JS. Server-side Sentinel cannot read it.</td>
+          <td><span class="tag amber">Data-bound</span> No hallucination because it's pattern matching, not AI. But not "smart" — can't reason across data.</td>
+          <td><span class="tag amber">Local only</span> ansBarChart() / stackBar() work in browser but are hardcoded responses, not AI-generated charts.</td>
+          <td><span class="tag red">40%</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Build Order for Full Smart Ask</h3>
+  <ul class="steps">
+    <li>
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Intelligence: Add structured output schema</strong>
+        <span>Modify the Sentinel prompt to return structured JSON: <span class="mono">{ prose, table?: {headers, rows}, chart?: {type, labels, series}, citations[] }</span> via Claude tool call. Add a table/chart renderer to IntelligenceV2Surface. Estimated effort: 1–2 days.</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Home: Wire to /api/intelligence/ask</strong>
+        <span>Same pattern as Intelligence v2. The Context Explorer ask bar should call the same route. Share the renderer component. Estimated effort: 0.5 days.</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Tower: Commit v4 data to context layer</strong>
+        <span>The Tower v4 CSVs (F12, F11, T01, T07) are already loaded into enterprise_context_* for clients where the loader has run. Tower's ask bar should POST to /api/intelligence/ask (not do client-side pattern matching). The Sentinel pipeline will retrieve the same program/vendor data from Postgres. The bar chart renderer becomes the output schema's chart component. Estimated effort: 2–3 days.</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <strong>Automate binding payload regeneration</strong>
+        <span>The <span class="mono">outputs/intelligence-binding/all-tenants.json</span> that powers Intelligence v2's signal cards is currently static. Wire a nightly job (ACA scheduled job or GitHub Actions cron) that re-runs <span class="mono">getDerivedEnterpriseReadForTenant()</span> for all active tenants and commits the updated payload. Estimated effort: 1 day.</span>
+      </div>
+    </li>
+  </ul>
+
+  <div class="callout info">
+    <strong>Key principle for new engineers:</strong> The anti-hallucination contract is not a prompt trick — it's an architectural constraint. The AI can only cite from <span class="mono">enterprise_context_evidence</span> rows where <span class="mono">evidence_usable = true</span>. If the data isn't loaded to that table, the answer is "I don't have sufficient information" — never a guess.
+  </div>
+</section>
+
+</div><!-- end .main -->
+
+<script>
+// Scrollspy — highlight active nav link as user scrolls
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-link');
+
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.nav-link[href="#${e.target.id}"]`);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+sections.forEach(s => obs.observe(s));
+
+// Smooth scroll for nav clicks
+navLinks.forEach(l => {
+  l.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(l.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+</body>
+</html>
