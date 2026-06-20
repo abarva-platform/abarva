@@ -103,6 +103,25 @@ describe('Home v2 all-client Context Explorer binding', () => {
     }
   });
 
+  it('answers Meridian Epic spend questions with row-level budget evidence', async () => {
+    const result = await buildHomeV2DataScript({
+      clientKey: 'meridian',
+      tenantName: 'Meridian Health System',
+    });
+
+    expect(result.script).toContain('"askFacts"');
+    expect(result.script).toContain('Epic and Clinical Systems');
+    expect(result.script).toContain('run budget $116.6M');
+    expect(result.script).toContain('change budget $58.3M');
+    expect(result.script).toContain('AI/data budget $20.7M');
+    expect(result.script).toContain('vendor share 43%');
+    expect(result.script).toContain('Epic: annual contract value $1.2M');
+    expect(result.script).toContain('renewal 2026-07-05');
+    expect(result.script).toContain('commercial risk: renewal before evidence gate');
+    expect(result.script).toContain('family-4-financial-commercial/F12_it-budget-financials.csv');
+    expect(result.script).toContain('family-4-financial-commercial/F11_vendors-contracts-licenses.csv');
+  });
+
   it('removes First Capital static copy from the reusable Home v2 frame', () => {
     expect(homeHtml).toContain('<!-- ABARVA_HOME_V2_DATA -->');
     expect(homeHtml).toContain('/home-v2/app.js');
@@ -110,5 +129,7 @@ describe('Home v2 all-client Context Explorer binding', () => {
     expect(homeApp).not.toContain('First Capital Financial');
     expect(homeApp).toContain('window.ABARVA_HOME_V2_BINDING');
     expect(homeApp).toContain('META.source');
+    expect(homeApp).toContain('answerForAsk');
+    expect(homeApp).toContain('bestAskFacts');
   });
 });
