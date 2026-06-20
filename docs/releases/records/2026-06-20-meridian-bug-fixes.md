@@ -1,4 +1,4 @@
-# 2026-06-20-meridian-bug-fixes — Intelligence ask bar + Tower chat + nav fix
+# 2026-06-20-meridian-bug-fixes — Intelligence ask bar + Tower chat + nav click fix
 
 ## Release ID
 
@@ -16,7 +16,9 @@ Three targeted bug fixes surfaced during a Meridian Health System signed-in sess
 
 2. **Tower chat program-specific answer** — Asking "how much do we spend on Epic?" (or any program name) returned a generic portfolio fallback instead of program-specific budget/spend data. `answerFor()` in `public/tower-v2/app.js` now checks program names and vendor names before falling back, returning the matched program's budget, YTD spend, CapEx/OpEx split, and status.
 
-3. **AppTopBar right rail nav shift** — At moderate viewport widths (~1100–1300px), the AppTopBar's right rail (Learn, inbox badge, user avatar, sign-out) could overflow its `1fr` grid column and be clipped by the AppShell container's `overflow: hidden`. The right rail outer div now declares `minWidth: 0; overflow: hidden`, which allows the CSS grid to shrink the column correctly instead of the content overflowing and disappearing.
+3. **Tower nav requires multiple clicks** — After interacting with content inside the Tower iframe (clicking tabs, asking questions), the iframe gains document focus. The browser then treats the first outer-page click as a "blur" click on the iframe rather than a navigation action, so clicking from Tower to Intelligence or any other surface required two or more clicks. A `TowerIframeContainer` client component now listens for `pointerdown` events on the outer document in capture phase; when the pointer goes outside the iframe, it preemptively blurs the iframe so the very next click on the AppTopBar nav links navigates immediately.
+
+4. **AppTopBar right rail nav shift** — At moderate viewport widths (~1100–1300px), the AppTopBar's right rail (Learn, inbox badge, user avatar, sign-out) could overflow its `1fr` grid column and be clipped by the AppShell container's `overflow: hidden`. The right rail outer div now declares `minWidth: 0; overflow: hidden`, which allows the CSS grid to shrink the column correctly instead of the content overflowing and disappearing.
 
 ## Layer Impact
 
@@ -31,6 +33,8 @@ Three targeted bug fixes surfaced during a Meridian Health System signed-in sess
 
 - `src/components/intelligence-v2/IntelligenceV2Surface.tsx` — remove `readOnly`, add `useState`/`useRef` for query/answer/fetching, streaming fetch to `/api/intelligence/ask?q=`, answer box display, chip click-to-ask.
 - `public/tower-v2/app.js` — add program-name + vendor word-match lookup before the generic fallback in `answerFor()`.
+- `src/app/(maestro)/tower/TowerIframeContainer.tsx` — new client component; `pointerdown` capture-phase listener to pre-blur iframe when clicking outside it, fixing single-click nav from Tower.
+- `src/app/(maestro)/tower/page.tsx` — swap direct `<iframe>` for `<TowerIframeContainer>`.
 - `src/components/shell/AppTopBar.tsx` — add `minWidth: 0; overflow: hidden` to right rail outer div.
 
 ## QA / Validation
