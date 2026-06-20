@@ -155,7 +155,7 @@ const LEVERS: LeverSeed[] = [
     slug: "change-control-rate-card-cap",
     title: "Change-Control Rate Card Cap",
     thesis:
-      "Base-price concessions are fragile when change-control rates and approval thresholds are undefined.",
+      "Base-price concessions are fragile when change-control rates and approval thresholds are left open.",
     applicability:
       "Apply to services with enhancements, releases, integrations, transformation adjacency, or variable scope.",
     lever: "Change-control discipline",

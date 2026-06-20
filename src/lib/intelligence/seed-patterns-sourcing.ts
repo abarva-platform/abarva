@@ -908,7 +908,7 @@ Compliance check log, scored evaluation matrix (initial), TCO comparison model, 
     tier: "validated",
     vertical: "cross-industry",
     thesis:
-      "Hypercare must be a formally bounded period with an explicit exit sign-off, because undefined hypercare end points create SLA ambiguity and undermine the governance baseline established during award.",
+      "Hypercare must be a formally bounded period with an explicit exit sign-off, because open-ended hypercare periods create SLA ambiguity and undermine the governance baseline established during award.",
     applicability:
       "Apply after contract execution to validate go-live readiness, manage the elevated-support period, and confirm steady-state transition through a post-implementation review.",
     status: "AUTHORED-DRAFT",

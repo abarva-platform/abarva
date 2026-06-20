@@ -204,7 +204,7 @@ Track expiry date, notice deadline, auto-renewal terms, business criticality, us
         label: "Cross-tower accountability gap",
         severity: "critical",
         detectionSignals: [
-          "Vendors price towers separately but shared governance, incident ownership, or tooling is undefined.",
+          "Vendors price towers separately but shared governance, incident ownership, or tooling is left open.",
           "Retained-client duties are not separated from vendor-run obligations.",
         ],
         mitigations: [
