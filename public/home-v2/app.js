@@ -83,8 +83,8 @@ function askTokens(q) {
 function bestAskFacts(primarySection, q) {
   const tokens = askTokens(q);
   if (!tokens.length) return [];
-  const sections = Object.values(SECTIONS);
-  const ranked = sections.flatMap(section => {
+  const costIntent = tokens.some(tok => ['budget', 'spend', 'cost', 'financial', 'contract', 'vendor', 'renewal', 'license'].includes(tok));
+  const ranked = Object.entries(SECTIONS).flatMap(([sectionId, section]) => {
     const facts = Array.isArray(section.askFacts) ? section.askFacts : [];
     return facts.map(fact => {
       const label = `${fact.label || ''}`.toLowerCase();
@@ -92,7 +92,8 @@ function bestAskFacts(primarySection, q) {
       const labelHits = tokens.reduce((s, tok) => s + (label.includes(tok) ? 1 : 0), 0);
       const matchHits = tokens.reduce((s, tok) => s + (hay.includes(tok) ? 1 : 0), 0);
       const primaryBoost = section === primarySection ? 0.5 : 0;
-      return { fact, section, score: (labelHits * 3) + matchHits + primaryBoost };
+      const intentBoost = costIntent && ['budget', 'vendors'].includes(sectionId) ? 1.25 : 0;
+      return { fact, section, score: (labelHits * 3) + matchHits + primaryBoost + intentBoost };
     });
   }).filter(hit => hit.score > 0)
     .sort((a, b) => b.score - a.score);

@@ -30,6 +30,7 @@ This release improves the Home v2 ask bar so questions like "tell me about my Ep
 - Adds row-level `askFacts` to the Home v2 generated data script.
 - Updates `public/home-v2/app.js` so ask responses choose the closest matching sourced rows across Home v2 sections before falling back to a dimension-level read.
 - Weights entity-name hits above generic row-text hits so a query like "Epic spend" prefers the Epic budget and Epic vendor rows instead of another budget row that merely mentions spend.
+- Adds a cost-intent tie-breaker so spend/cost questions prefer budget and vendor rows over application rows when the same entity appears in multiple sections.
 - Adds regression coverage for Meridian Epic spend budget and vendor-contract evidence.
 
 ## QA / Validation
@@ -41,6 +42,7 @@ This release improves the Home v2 ask bar so questions like "tell me about my Ep
 - Pass: `npm run audit:control-plane-purity:check`.
 - Partial: `npm run build` compiled successfully, then the TypeScript phase went idle and was stopped after the build process showed no CPU progress.
 - Live finding before ranking correction: signed-in Meridian `/home` proved the first Epic budget row rendered, but the second corroborating row selected a generic spend match. This PR corrects that scorer.
+- Live finding before cost-intent correction: signed-in Meridian `/home` then selected the Epic application row before the Epic vendor row. This PR corrects that cost-question tie-breaker.
 
 ## Rollout Plan
 
