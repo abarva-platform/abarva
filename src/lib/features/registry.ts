@@ -63,6 +63,7 @@ export type FeatureFlagKey =
   | "intelligence_brief_v4"
   | "first_capital_substrate_overlay"
   | "retrieval_azure_search"
+  | "scb_shared_engine_intelligence"
   | "graph_neo4j_enabled"
   | "tower_synthesis_apex_demo_fixture"
   | "discovery_intake_v2"
@@ -161,6 +162,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     // includeTenants intentionally empty — flip on per tenant during
     // cutover. When parity is proven across the roster, swap to
     // `platform` policy with the inverse `excludeTenants` for rollback.
+    includeTenants: [],
+  },
+  {
+    key: "scb_shared_engine_intelligence",
+    summary:
+      "Shared Context Brain: ground the Intelligence ask in the Consilium expert faculty (router summons expert(s); their authored benchmarks/AI-plays/hedges are injected into synthesis; contributing experts surfaced). Default OFF; tenant opt-in via includeTenants. The first surface-level flag of the staged-rollout exposure policy (W6.1); flip per tenant after parity proof.",
+    policy: "tenant",
     includeTenants: [],
   },
   {
