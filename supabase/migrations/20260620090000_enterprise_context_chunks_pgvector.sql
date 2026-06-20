@@ -3,12 +3,21 @@
 -- Keep the existing JSONB `embedding` column as rollback/audit material,
 -- and add the native vector column used by Postgres semantic retrieval.
 
-CREATE EXTENSION IF NOT EXISTS vector;
-
 DO $$
 DECLARE
   target_schema text;
 BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+      FROM pg_available_extensions
+     WHERE name = 'vector'
+  ) THEN
+    RAISE NOTICE 'pgvector extension is not installed on this Postgres image; skipping embedding_vector migration in this replay environment.';
+    RETURN;
+  END IF;
+
+  CREATE EXTENSION IF NOT EXISTS vector;
+
   FOR target_schema IN
     SELECT table_schema
       FROM information_schema.tables
