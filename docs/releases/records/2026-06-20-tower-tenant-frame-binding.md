@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The live post-deploy crawl showed a SkyHarbor signed-in persona seeing the Tower frame with First Capital content. This release threads the server-resolved tenant key from `/tower` into the Tower iframe/data routes and keeps those routes behind `getActiveClientRow(...)`, so locked sessions still resolve from server-trusted tenant identity. It also rewrites the standalone Tower HTML font and logo asset URLs so they resolve from `/tower-v2/` and existing brand assets instead of returning 404s under `/api/tower/`.
+The live post-deploy crawl showed a SkyHarbor signed-in persona seeing the Tower frame with First Capital content. This release threads the server-resolved tenant key from `/tower` into the Tower iframe/data routes and keeps those routes behind `getActiveClientRow(...)`, so locked sessions still resolve from server-trusted tenant identity. It also rewrites the standalone Tower HTML shell tenant label/title/footer plus font and logo asset URLs so they resolve from the active tenant/data pack instead of the First Capital reference shell.
 
 ## Layer Impact
 
@@ -28,9 +28,9 @@ The live post-deploy crawl showed a SkyHarbor signed-in persona seeing the Tower
 ## Changes Included
 
 - `src/app/(maestro)/tower/page.tsx`: resolves the active client server-side and passes its key into the iframe URL.
-- `src/app/api/tower/v2-frame/route.ts`: reads the explicit client hint, resolves through `getActiveClientRow(requestedClient)`, and rewrites relative Tower asset URLs.
+- `src/app/api/tower/v2-frame/route.ts`: reads the explicit client hint, resolves through `getActiveClientRow(requestedClient)`, rewrites relative Tower asset URLs, and rewrites the standalone Tower shell title/topbar/footer to the generated tenant binding.
 - `src/app/api/tower/v2-data/route.ts`: mirrors the frame route tenant hint through the same resolver.
-- `src/__tests__/integration/tower/tower-invariants.test.ts`: updates Tower invariants for tenant-threading and static asset rewriting.
+- `src/__tests__/integration/tower/tower-invariants.test.ts`: updates Tower invariants for tenant-threading, static asset rewriting, and tenant shell rewriting.
 - `src/__tests__/integration/tower/tower-authenticated-submenu-wiring.test.ts`: updates the route wiring guard.
 
 ## QA / Validation
@@ -38,6 +38,8 @@ The live post-deploy crawl showed a SkyHarbor signed-in persona seeing the Tower
 - `npm test -- --runTestsByPath src/__tests__/integration/tower/tower-invariants.test.ts src/__tests__/integration/tower/tower-authenticated-submenu-wiring.test.ts` — passed, 2 suites / 14 tests.
 - Live post-deploy crawl artifact that exposed the issue: GitHub Actions run `27859425933`, artifact `post-deploy-crawl`.
 - Local inspection of `skyharbor-cto__tower-root.png` confirmed the pre-fix cross-tenant Tower frame displayed First Capital content for the SkyHarbor persona.
+- Follow-up post-deploy crawl after merge commit `18184d5be8daaaf7a2ddfb058ffea9dd01bc562f`: GitHub Actions run `27860330831`, artifact `post-deploy-crawl`, comparison `P0=0`, `P1=8`, `P2=58`.
+- Follow-up local inspection of `skyharbor-cto__tower-root.png` from run `27860330831` confirmed SkyHarbor data rows loaded, but the static topbar still displayed `First Capital Financial`; this release record now includes the static shell rewrite required before calling Tower live-proven.
 
 ## Rollout Plan
 

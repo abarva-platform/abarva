@@ -28,6 +28,22 @@ function rewriteRelativeTowerAssets(html: string): string {
     );
 }
 
+function rewriteTenantShell(html: string, tenantName: string, root: string): string {
+  return html
+    .replace(
+      '<title>AbarVa · IT Investment Tower · First Capital Financial</title>',
+      `<title>AbarVa · IT Investment Tower · ${tenantName}</title>`,
+    )
+    .replace(
+      '<span class="tb-tenant">First Capital Financial</span>',
+      `<span class="tb-tenant">${tenantName}</span>`,
+    )
+    .replace(
+      'Synthetic reference dataset · First Capital Financial Corporation · not a real customer · $342M FY26 IT budget · generated 2026-06-17',
+      `Synthetic reference dataset · ${tenantName} · not a real customer · data pack ${root} · generated 2026-06-17`,
+    );
+}
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const requestedClient = request.nextUrl.searchParams.get('client');
   const client = await getActiveClientRow(requestedClient);
@@ -42,14 +58,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const htmlPath = path.join(process.cwd(), 'public', 'tower-v2', 'index.html');
   const template = await readFile(htmlPath, 'utf8');
   const safeScript = script.replace(/<\/script/gi, '<\\/script');
-  const html = rewriteRelativeTowerAssets(template)
+  const html = rewriteTenantShell(rewriteRelativeTowerAssets(template), tenantName, root)
     .replace(
       '<script src="/tower-v2/default-data.js"></script>',
       `<script>${safeScript}</script>`,
-    )
-    .replace(
-      'Synthetic reference dataset · First Capital Financial Corporation · not a real customer · $342M FY26 IT budget · generated 2026-06-17',
-      `Synthetic reference dataset · ${tenantName} · not a real customer · data pack ${root} · generated 2026-06-17`,
     );
 
   return new NextResponse(html, {
