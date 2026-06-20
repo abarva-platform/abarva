@@ -10,6 +10,10 @@ import { backOfficeSharedServicesExpert } from "./packs/back-office-shared-servi
 import { futureOfWorkExpert } from "./packs/future-of-work";
 import { contactCenterCxExpert } from "./packs/contact-center-cx";
 import { clinicalProcessTransformationExpert } from "./packs/clinical-process-transformation";
+import { treasuryTransformationExpert } from "./packs/treasury-transformation";
+import { legalContractAiExpert } from "./packs/legal-contract-ai";
+import { aiGovernanceExpert } from "./packs/ai-governance";
+import { supplyChainTransformationExpert } from "./packs/supply-chain-transformation";
 
 /** All registered experts. Order is not significant — the router ranks. */
 export const EXPERT_PACKS: readonly ExpertPack[] = [
@@ -18,6 +22,10 @@ export const EXPERT_PACKS: readonly ExpertPack[] = [
   futureOfWorkExpert,
   contactCenterCxExpert,
   clinicalProcessTransformationExpert,
+  treasuryTransformationExpert,
+  legalContractAiExpert,
+  aiGovernanceExpert,
+  supplyChainTransformationExpert,
 ];
 
 export function getExpertById(id: string): ExpertPack | undefined {
