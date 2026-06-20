@@ -844,7 +844,7 @@ export const healthcareRevenueCycleExpert: ExpertPack = {
       questionPattern: "AR days trend / days in AR over time",
       exhibitKind: "chart",
       chartKind: "line",
-      note: "Trend AR days; builder TBD against the line-chart family in svg-charts.",
+      note: "Trend AR days with the line-chart family in svg-charts.",
     },
     {
       questionPattern: "cash impact of denial reduction / value bridge",
