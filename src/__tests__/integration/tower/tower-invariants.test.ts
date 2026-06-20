@@ -37,6 +37,9 @@ describe('IT Investment Tower v2 invariants', () => {
     expect(dataRoute).not.toContain('catch(() => null)');
     expect(frameRoute).toContain('buildTowerV2V4DataScript');
     expect(dataRoute).toContain('buildTowerV2V4DataScript');
+    expect(frameRoute).toContain('rewriteTenantShell');
+    expect(frameRoute).toContain('<span class="tb-tenant">${tenantName}</span>');
+    expect(frameRoute).toContain('<title>AbarVa · IT Investment Tower · ${tenantName}</title>');
   });
 
   it('maps every configured client to an explicit Tower data pack', () => {
