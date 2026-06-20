@@ -30,7 +30,7 @@ Documentation only: brings the shared execution tracker current — marks W1.2/W
 
 ## QA / Validation
 
-Validation: not-run — documentation only, no executable code.
+Validation: not run — documentation only, no executable code.
 
 ## Rollout Plan
 
