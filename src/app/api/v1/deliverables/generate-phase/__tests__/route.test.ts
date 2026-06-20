@@ -15,6 +15,13 @@ jest.mock('@/lib/deliverables/orchestrator/runs-repository', () => ({
     return createBehavior(input);
   }),
 }));
+const validateDeliverableTenantInvariant: jest.Mock<Promise<unknown>, unknown[]> = jest.fn(
+  async () => ({ ok: true, sourceKind: 'move', sourceId: 'm-1' }),
+);
+jest.mock('@/lib/deliverables/orchestrator/tenant-invariant', () => ({
+  validateDeliverableTenantInvariant: (...args: unknown[]) => validateDeliverableTenantInvariant(...(args as [])),
+  tenantInvariantHttpStatus: () => 403,
+}));
 
 import { POST } from '../route';
 
@@ -25,6 +32,8 @@ function req(body: unknown) {
 beforeEach(() => {
   createCalls.length = 0;
   createBehavior = (input) => ({ id: `run-${(input as { deliverableType: string }).deliverableType}` });
+  validateDeliverableTenantInvariant.mockClear();
+  validateDeliverableTenantInvariant.mockResolvedValue({ ok: true, sourceKind: 'move', sourceId: 'm-1' });
 });
 
 describe('POST /api/v1/deliverables/generate-phase', () => {
@@ -48,6 +57,12 @@ describe('POST /api/v1/deliverables/generate-phase', () => {
     expect(json.total).toBeGreaterThanOrEqual(2);
     expect(json.queued).toBe(json.total);
     expect(json.deliverables.every((d) => d.status === 'queued' && typeof d.runId === 'string')).toBe(true);
+    expect(validateDeliverableTenantInvariant).toHaveBeenCalledWith({
+      module: 'moves',
+      sourceArtifactRef: 'm-1',
+      clientId: 'client-uuid',
+      tenantKey: 'skyharbor-air',
+    });
     // every enqueue carried the caller's tenant + the move as the source ref
     expect(createCalls.length).toBe(json.total);
     for (const c of createCalls) {
@@ -76,5 +91,24 @@ describe('POST /api/v1/deliverables/generate-phase', () => {
     createBehavior = () => { throw new Error('db down'); };
     const res = await POST(req({ moveId: 'm-3', phase: 1, useCaseArchetype: 'ams' }));
     expect(res.status).toBe(500);
+  });
+
+  it('403s before enqueueing when the Move belongs to another tenant', async () => {
+    validateDeliverableTenantInvariant.mockResolvedValueOnce({
+      ok: false,
+      code: 'tenant_mismatch',
+      sourceKind: 'move',
+      sourceId: 'm-fc',
+      detail: 'move source tenant does not match the active generation tenant.',
+      expectedClientId: 'client-lakeshore',
+      expectedTenantKey: 'lakeshore-holdings',
+      actualClientId: 'client-first-capital',
+      actualTenantKey: 'first-capital',
+    });
+    const res = await POST(req({ moveId: 'm-fc', phase: 3, useCaseArchetype: 'ams' }));
+    expect(res.status).toBe(403);
+    expect(createCalls).toHaveLength(0);
+    const json = (await res.json()) as Record<string, unknown>;
+    expect(json.error).toBe('tenant_mismatch');
   });
 });

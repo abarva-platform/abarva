@@ -1,0 +1,20 @@
+{
+  "name": "ca-abarva-web-lab-eastus",
+  "id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.App/containerapps/ca-abarva-web-lab-eastus",
+  "location": "East US",
+  "managedEnvironmentId": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.App/managedEnvironments/cae-abarva-scale-lab-eastus",
+  "templateImage": "acrabarvalab001.azurecr.io/abarva/web@sha256:f7287907e61182e6a3a50f368fb7737135556c4a983c73b415d16e961faa48a9",
+  "traffic": [
+    {
+      "revisionName": "ca-abarva-web-lab-eastus--mef66dec9",
+      "weight": 100
+    }
+  ],
+  "identity": {
+    "type": "UserAssigned",
+    "principalId": null,
+    "userAssignedIdentities": [
+      "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourcegroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-abarva-scale-runtime-lab-eastus"
+    ]
+  }
+}

@@ -16,6 +16,10 @@ import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { createDeliverableRun, type DeliverableRunJobPayload } from '@/lib/deliverables/orchestrator/runs-repository';
 import {
+  tenantInvariantHttpStatus,
+  validateDeliverableTenantInvariant,
+} from '@/lib/deliverables/orchestrator/tenant-invariant';
+import {
   PHASE_CANONICAL_KEYS,
   DELIVERABLE_REGISTRY,
   type DeliverableSpec,
@@ -70,6 +74,26 @@ export async function POST(req: NextRequest) {
 
     const moveName = body.moveName?.trim() || 'Strategic Move';
     const clientDisplayName = body.clientDisplayName?.trim() || 'Client';
+
+    const tenantInvariant = await validateDeliverableTenantInvariant({
+      module: 'moves',
+      sourceArtifactRef: moveId,
+      clientId: ctx.clientId,
+      tenantKey: clientKey,
+    });
+    if (!tenantInvariant.ok) {
+      return Response.json(
+        {
+          error: tenantInvariant.code,
+          detail: tenantInvariant.detail,
+          sourceKind: tenantInvariant.sourceKind,
+          sourceId: tenantInvariant.sourceId,
+          expectedTenantKey: tenantInvariant.expectedTenantKey,
+          actualTenantKey: tenantInvariant.actualTenantKey,
+        },
+        { status: tenantInvariantHttpStatus(tenantInvariant) },
+      );
+    }
 
     // Resolve the phase's canonical deliverables from the registry. These are the
     // documents an "Approve & Build" for this phase produces.
