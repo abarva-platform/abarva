@@ -66,7 +66,7 @@ export interface SourceEventRow {
   event_code: string;
   event_name: string;
   event_type: string;
-  classified_category: string | null;
+  classified_category?: string | null;
   current_stage_key: string;
   lifecycle_state: string;
   linked_program_id: string | null;
