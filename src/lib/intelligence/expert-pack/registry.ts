@@ -22,6 +22,14 @@ import { fsFinancialCrimeExpert } from "./packs/financial-services-fraud";
 import { retailMerchandisingExpert } from "./packs/retail-merchandising-pricing";
 import { airlineOperationsExpert } from "./packs/airline-operations";
 import { energyGridOperationsExpert } from "./packs/energy-grid-operations";
+import { healthcareCareManagementVbcExpert } from "./packs/healthcare-care-management-vbc";
+import { healthcarePatientAccessExpert } from "./packs/healthcare-patient-access";
+import { healthcarePharmacyOperationsExpert } from "./packs/healthcare-pharmacy-operations";
+import { airlineNetworkPlanningExpert } from "./packs/airline-network-planning";
+import { airlineLoyaltyCustomerExpert } from "./packs/airline-loyalty-customer";
+import { airlineGroundAirportOpsExpert } from "./packs/airline-ground-operations";
+import { retailStoreOperationsExpert } from "./packs/retail-store-operations";
+import { retailOmnichannelFulfillmentExpert } from "./packs/retail-omnichannel-fulfillment";
 
 /** All registered experts. Order is not significant — the router ranks. */
 export const EXPERT_PACKS: readonly ExpertPack[] = [
@@ -42,6 +50,14 @@ export const EXPERT_PACKS: readonly ExpertPack[] = [
   retailMerchandisingExpert,
   airlineOperationsExpert,
   energyGridOperationsExpert,
+  healthcareCareManagementVbcExpert,
+  healthcarePatientAccessExpert,
+  healthcarePharmacyOperationsExpert,
+  airlineNetworkPlanningExpert,
+  airlineLoyaltyCustomerExpert,
+  airlineGroundAirportOpsExpert,
+  retailStoreOperationsExpert,
+  retailOmnichannelFulfillmentExpert,
 ];
 
 export function getExpertById(id: string): ExpertPack | undefined {
