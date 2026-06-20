@@ -15,13 +15,13 @@ import "server-only";
  *   wires the catalog). Tags a `'Corpus retrieval pending CB-6.'`
  *   warning.
  * - `tenant`  — Postgres facts + graph + chunks for one tenant.
- *   Refuses to run without `tenantKey`. CB-3 wires real Pinecone
- *   vector retrieval; when `PINECONE_API_KEY` is missing the broker
+ *   Refuses to run without `tenantKey`. SCB W2.2 uses Postgres
+ *   pgvector retrieval; when the vector path is unavailable the broker
  *   catches the throw and falls back to keyword retrieval (TD-6),
  *   tagging the bundle with
  *   `'Vector retrieval pending — using keyword-only chunk retrieval'`.
  *   On success the broker attaches a
- *   `'Vector retrieval via Pinecone (top-K=N).'` info-tag.
+ *   `'Vector retrieval via Postgres pgvector (top-K=N).'` info-tag.
  * - `full`    — same as `tenant` plus (in the future) corpus
  *   composition. Behaves identically to `tenant` in CB-1 and tags a
  *   `'Corpus retrieval pending CB-6.'` warning.
@@ -148,7 +148,7 @@ export function worldviewRetrievalInfoTag(hits: number, topK: number): string {
  * without having to introspect the bundle.
  */
 export function vectorRetrievalInfoTag(topK: number): string {
-  return `Vector retrieval via Pinecone (top-K=${topK}).`;
+  return `Vector retrieval via Postgres pgvector (top-K=${topK}).`;
 }
 
 /**
@@ -881,8 +881,8 @@ async function defaultCorpusPatternRetriever(
 
 /**
  * Default `ContextBroker` — TD-2/TD-3-backed for facts/graph/chunks
- * + Pinecone vector retrieval (CB-3); corpus retrieval is still
- * stubbed (CB-6).
+ * + Postgres pgvector retrieval; corpus retrieval is still stubbed
+ * (CB-6).
  *
  * The constructor accepts an optional OpenAI-embeddings client for
  * tests so vector retrieval can be exercised without an OPENAI_API_KEY
@@ -990,7 +990,7 @@ export class DefaultContextBroker implements ContextBroker {
 
     const warnings: string[] = [];
     // CB-10 · info-tags are success metadata about how retrieval ran
-    // (e.g. "Vector retrieval via Pinecone (top-K=N).") — kept distinct
+    // (e.g. "Vector retrieval via Postgres pgvector (top-K=N).") — kept distinct
     // from warnings so the panel can render them in a separate
     // slate-toned strip rather than the amber warnings strip.
     const infoTags: string[] = [];
@@ -1117,9 +1117,9 @@ export class DefaultContextBroker implements ContextBroker {
     }
 
     // ──────────────── Semantic chunks ────────────────
-    // CB-3: try real vector retrieval first. The adapter throws when
-    // Pinecone is not configured (no PINECONE_API_KEY); on that
-    // throw, or any embedding/query failure, fall back to keyword
+    // CB-3 / SCB W2.2: try Postgres pgvector retrieval first. If the
+    // vector column/index is unavailable, or any embedding/query failure
+    // occurs, fall back to keyword
     // retrieval and tag the bundle so the panel renders the right
     // empty-state copy.
     let semanticChunks: SemanticChunkHit[] = [];
@@ -1168,8 +1168,8 @@ export class DefaultContextBroker implements ContextBroker {
     } else {
       try {
         // Embed the query once. `embedTexts` throws if OPENAI_API_KEY
-        // is missing — which we catch below and fall back as if
-        // Pinecone weren't configured.
+        // is missing — which we catch below and fall back as vector
+        // retrieval unavailable.
         const embedResult = await embedTexts(
           [input.query],
           {

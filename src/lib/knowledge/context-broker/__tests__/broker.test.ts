@@ -696,7 +696,7 @@ describe("DefaultContextBroker.assemble — tenant mode", () => {
     ]);
   });
 
-  it("uses Pinecone vector retrieval when chunksByVector succeeds", async () => {
+  it("uses pgvector retrieval when chunksByVector succeeds", async () => {
     const seedChunks: ContextChunk[] = [
       makeChunk("chunk:apex:cdp:001", "program:apex-cdp-2026"),
     ];

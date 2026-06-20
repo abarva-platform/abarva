@@ -1,6 +1,7 @@
 /**
- * CB-2 / CB-3 · Embed pending `enterprise_context_chunks` rows via
- * OpenAI and upsert the resulting vectors to Pinecone.
+ * CB-2 / CB-3 / SCB W2.2 · Embed pending `enterprise_context_chunks`
+ * rows via OpenAI, write native pgvector embeddings to Postgres, and
+ * optionally mirror vectors to Pinecone for legacy replay.
  *
  * Index-name resolution: prefer `PINECONE_INDEX_NAME`, fall back to
  * `PINECONE_INDEX` (legacy alias used by the existing Vercel project
@@ -8,10 +9,10 @@
  *
  * Reads chunks where `embedding_status = 'pending'`, calls the OpenAI
  * embeddings API (`text-embedding-3-small`, 1536 dims), writes the
- * vector to the `embedding` jsonb column (audit trail in Postgres),
- * flips status to `embedded`, and — when `PINECONE_API_KEY` is set —
- * upserts the same vector into the shared
- * `abarva-tenant-context-prod` index for retrieval.
+ * vector to the `embedding` jsonb column plus `embedding_vector`
+ * pgvector column, flips status to `embedded`, and — when
+ * `PINECONE_API_KEY` is set — optionally mirrors the same vector into
+ * the shared `abarva-tenant-context-prod` index for replay.
  *
  * When `PINECONE_API_KEY` is missing, the script logs a one-time
  * warning and continues in Postgres-only mode. `--postgres-only`
@@ -21,7 +22,7 @@
  *   npm run embed:pending-chunks                       # all tenants, real run
  *   npm run embed:pending-chunks -- --dry-run          # show what would run
  *   npm run embed:pending-chunks -- --tenant apex-retail
- *   npm run embed:pending-chunks -- --postgres-only    # skip Pinecone
+ *   npm run embed:pending-chunks -- --postgres-only    # Postgres pgvector only
  *
  * Env:
  *   OPENAI_API_KEY              required (unless --dry-run)
@@ -34,8 +35,9 @@
  *
  * Idempotence: re-runs only pick up `pending` rows. Already-embedded chunks
  * are untouched. Failed chunks (status='failed') are not retried unless an
- * operator manually flips them back to 'pending'. Pinecone upsert keys
- * on `chunk_id`, so re-runs overwrite cleanly.
+ * operator manually flips them back to 'pending'. Postgres remains the
+ * retrieval source of truth; Pinecone upsert keys on `chunk_id`, so
+ * optional replays overwrite cleanly.
  *
  * Cost guardrails: per-run hard cap is BATCH_SIZE * MAX_BATCHES. At default
  * (1000 chunks) the worst case is ~$0.02. The script prints an estimated
@@ -233,7 +235,10 @@ export async function runEmbedJob(
   let pineconeEnabled = false;
   const pineconeConfig = resolvePineconeIndexConfig(options.tenantKey);
   if (!options.dryRun && !options.postgresOnly) {
-    pinecone = options.pineconeClient ?? getPineconeClient(pineconeConfig);
+    pinecone =
+      options.pineconeClient === undefined
+        ? getPineconeClient(pineconeConfig)
+        : options.pineconeClient;
     if (pinecone) {
       pineconeEnabled = true;
     } else {
@@ -353,9 +358,9 @@ export async function runEmbedJob(
     result.totalTokens += batchResults.summary.totalTokens;
     result.estimatedCostUsd += batchResults.summary.estimatedCostUsd;
 
-    // Pair successful (row, embedding) tuples for the Pinecone upsert
-    // step below. We only push to Pinecone after Postgres confirms the
-    // write — keeps Postgres the source of truth.
+    // Pair successful (row, embedding) tuples for the optional Pinecone
+    // mirror below. We only push to Pinecone after Postgres confirms the
+    // JSONB + pgvector write, keeping Postgres the retrieval source of truth.
     const pineconeReady: Array<{ row: PendingChunkRow; embedding: number[] }> =
       [];
 
@@ -529,6 +534,7 @@ async function writeEmbedded(
     .from("enterprise_context_chunks")
     .update({
       embedding,
+      embedding_vector: toPgVectorLiteral(embedding),
       embedding_dim: EMBEDDING_DIM,
       embedding_model: EMBEDDING_MODEL,
       embedding_status: "embedded",
@@ -540,6 +546,15 @@ async function writeEmbedded(
     .eq("chunk_id", row.chunk_id);
   const { error } = await update;
   return error ? error.message : null;
+}
+
+function toPgVectorLiteral(embedding: number[]): string {
+  if (embedding.length !== EMBEDDING_DIM) {
+    throw new Error(
+      `embedding_vector dimension mismatch: expected ${EMBEDDING_DIM}, got ${embedding.length}`,
+    );
+  }
+  return `[${embedding.map((value) => Number(value).toString()).join(",")}]`;
 }
 
 async function markFailed(
