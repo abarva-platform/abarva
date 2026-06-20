@@ -1,4 +1,6 @@
+import { AppShell } from '@/components/shell/AppShell';
 import { getActiveClientRow } from '@/lib/active-client';
+import { canonicalClientDisplayName } from '@/lib/client-config';
 
 export const metadata = { title: 'IT Investment Tower · AbarVa' };
 export const dynamic = 'force-dynamic';
@@ -9,20 +11,35 @@ export default async function TowerPage() {
   const frameSrc = activeClient?.key
     ? `/api/tower/v2-frame?client=${encodeURIComponent(activeClient.key)}`
     : '/api/tower/v2-frame';
+  const activeTenantName =
+    canonicalClientDisplayName({
+      key: activeClient?.key,
+      name: activeClient?.name,
+    }) ?? activeClient?.name ?? 'Your workspace';
 
   return (
-    <main style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: '#f7f5ef' }}>
-      <iframe
-        src={frameSrc}
-        title="AbarVa IT Investment Tower"
-        style={{
-          width: '100%',
-          height: '100%',
-          border: 0,
-          display: 'block',
-          background: '#f7f5ef',
-        }}
-      />
-    </main>
+    <AppShell
+      surface="tower"
+      topBarProps={{
+        tenantName: activeTenantName,
+        showLocked: Boolean(activeClient?.key),
+        context: 'Tower',
+      }}
+      hasTenantKey={Boolean(activeClient?.key)}
+    >
+      <main style={{ flex: 1, minHeight: 0, overflow: 'hidden', background: '#f7f5ef' }}>
+        <iframe
+          src={frameSrc}
+          title="AbarVa IT Investment Tower"
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 0,
+            display: 'block',
+            background: '#f7f5ef',
+          }}
+        />
+      </main>
+    </AppShell>
   );
 }
