@@ -4,6 +4,10 @@ import path from 'node:path';
 import Papa from 'papaparse';
 
 import { azureRead } from '@/lib/data-plane/azureRead';
+import {
+  getControlTowerLensProjection,
+  type ControlTowerLensProjection,
+} from '@/lib/tower/control-tower-lens-projection';
 import type {
   AiControlTowerContextFact,
   AiControlTowerEvidenceStatus,
@@ -13,6 +17,7 @@ type JsonRecord = Record<string, unknown>;
 
 export type AiControlTowerReadSource =
   | 'ai_control_data_plane'
+  | 'context_projection'
   | 'first_capital_local_synthetic_fallback'
   | 'empty';
 
@@ -1066,9 +1071,11 @@ function buildModel(args: {
   const sourceDisclosure =
     args.source === 'ai_control_data_plane'
       ? 'Read from committed AI Control Tower data-plane tables.'
-      : args.source === 'first_capital_local_synthetic_fallback'
-        ? 'No committed AI Control Tower rows were found for this tenant in this session, so the page is using the packaged tenant synthetic substrate as a clearly labeled demo fallback.'
-        : 'No AI Control Tower substrate was found for this tenant.';
+      : args.source === 'context_projection'
+        ? 'Projected live from this tenant’s committed context layer (the durable AI Control Tower lens over enterprise_context_*), not the packaged synthetic demo.'
+        : args.source === 'first_capital_local_synthetic_fallback'
+          ? 'No committed AI Control Tower rows were found for this tenant in this session, so the page is using the packaged tenant synthetic substrate as a clearly labeled demo fallback.'
+          : 'No AI Control Tower substrate was found for this tenant.';
 
   return {
     clientId: args.clientId,
@@ -1091,6 +1098,56 @@ function buildModel(args: {
     actions,
     evidence,
     facts,
+  };
+}
+
+function buildModelFromProjection(args: {
+  projection: ControlTowerLensProjection;
+  clientId: string | null;
+  clientKey: string | null;
+  tenantName: string;
+}): AiControlTowerReadModel {
+  const { projection } = args;
+  const { initiatives, usage, productivity, agents, spend, risks, actions, evidence } = projection;
+  const functions = buildFunctions({ initiatives, usage, spend, risks, actions });
+  const kpis = buildKpis({ initiatives, usage, spend, evidence, risks });
+  const rowCounts = {
+    refreshRuns: 0,
+    sources: 0,
+    initiatives: initiatives.length,
+    usage: usage.length,
+    productivity: productivity.length,
+    dora: 0,
+    agents: agents.length,
+    benefits: 0,
+    spend: spend.length,
+    risks: risks.length,
+    actions: actions.length,
+    evidence: evidence.length,
+    facts: 0,
+  };
+  return {
+    clientId: args.clientId,
+    clientKey: args.clientKey,
+    tenantName: args.tenantName,
+    source: 'context_projection',
+    sourceDisclosure:
+      'Projected live from this tenant’s committed context layer (the durable AI Control Tower lens over enterprise_context_*), not the packaged synthetic demo.',
+    refreshRunId: null,
+    refreshRunKey: null,
+    reportingPeriodEnd: null,
+    rowCounts,
+    kpis,
+    functions,
+    initiatives,
+    usage,
+    productivity,
+    agents,
+    spend,
+    risks,
+    actions,
+    evidence,
+    facts: [],
   };
 }
 
@@ -1126,6 +1183,27 @@ export async function getAiControlTowerReadModel(args: {
       clientKey: args.clientKey ?? text(rows.refreshRun?.client_key) ?? null,
       tenantName: args.tenantName ?? 'AbarVa Client',
       source: 'ai_control_data_plane',
+    });
+  }
+
+  // Durable Tower projection precedence: BEFORE the synthetic fallback, try the
+  // committed context-layer projection (`ai_control_tower_lens_mv`). Precedence
+  // order is `ai_control_data_plane` → `context_projection` →
+  // `first_capital_local_synthetic_fallback` → `empty` (brief §4, line 306).
+  //
+  // Degrades gracefully: when the MV is absent/empty (it is not applied live yet,
+  // and localhost cannot reach the private VNet), `getControlTowerLensProjection`
+  // returns null and this read model falls through to today's behavior unchanged.
+  const projection = await getControlTowerLensProjection({
+    tenantKey: args.clientKey,
+    clientId: args.clientId,
+  }).catch(() => null);
+  if (projection) {
+    return buildModelFromProjection({
+      projection,
+      clientId: args.clientId ?? projection.clientId ?? null,
+      clientKey: args.clientKey ?? projection.tenantKey ?? null,
+      tenantName: args.tenantName ?? 'AbarVa Client',
     });
   }
 
