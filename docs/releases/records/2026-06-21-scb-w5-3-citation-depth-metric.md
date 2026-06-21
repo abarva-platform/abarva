@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -50,27 +50,33 @@ facts such as money, percentages, dates, and file/source names.
 - PASS: `npx eslint scripts/crawl/post-deploy-harness.ts scripts/crawl/render-agent-response-report.ts src/lib/crawl/baseline-compare.ts src/lib/crawl/__tests__/post-deploy-crawl-guard.test.ts`
 - PASS: `git diff --check`
 - PASS: `npm run release:check`
-- NOT RUN CLEAN LOCALLY: full `NODE_OPTIONS=--max-old-space-size=8192 npx tsc
-  --noEmit --pretty false` is blocked in this checkout by unrelated missing
-  local dependencies/types for `js-yaml`, Azure Document Intelligence, and axe
-  Playwright. CI typecheck remains the broad gate after PR creation.
+- PASS: GitHub PR checks for #3780, including Typecheck + reasoning-layer tests,
+  ESLint, browser matrix, Lighthouse, bundle budget, production readiness,
+  release control, and hygiene.
+- PASS: Post-merge deploy run 27900778392.
+- PASS: Focused signed-in post-deploy crawl run 27901071378 on
+  `skyharbor-cto` / `intelligence-ask` returned 0 P0 / 0 P1 / 0 P2 and proved
+  the metric shape: `hardQuestionExactFieldCitations=0`,
+  `hardQuestionGroundingEvidence=42`.
 
 ## Rollout Plan
 
-Merge to main through the normal PR path. The repo-owned ACA deploy workflow will
-build and deploy the updated crawl/report scripts with the application image, but
-this change only affects post-deploy crawl scoring and generated reports.
+Merged to main through PR #3780 and deployed through the repo-owned ACA main
+deploy workflow. This change affects post-deploy crawl scoring and generated
+reports; it does not change answer generation.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: required for normal main deploy.
+- Repo-owned deploy workflow: run 27900778392 succeeded for merge commit
+  `bf355be305275d819596c41715e6f00d59955ba1`.
 - Shared runtime mutators: none.
-- Approved image digest: captured by deploy workflow after merge.
-- ACA runtime invariant: verified by deploy workflow after merge.
+- Approved image digest:
+  `sha256:521fa98364c3ce3396a9b9d308791ae93dbec035d49e4d3ba8818cf3ef6c03f8`.
+- ACA runtime invariant: revision `mbf355be3` healthy at 100% traffic; health
+  endpoint OK.
 - Worker image invariant: unchanged.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes; run the post-deploy crawl after merge to
-  confirm the false-P1 metric is gone without changing answer output.
+- Live signed-in proof required: complete via post-deploy crawl run 27901071378.
 
 ## Rollback Plan
 
@@ -79,13 +85,16 @@ No database, feature flag, or data-plane rollback is required.
 
 ## Audit Evidence
 
-- PR URL and CI run after PR creation.
+- PR #3780 and CI checks.
+- Deploy run 27900778392.
+- Signed-in post-deploy crawl run 27901071378.
 - Focused Jest/ESLint output listed above.
-- Post-merge post-deploy crawl comparison showing no false
-  `hard-question-citation-depth` P1 for answers that provide structured sources
-  or concrete prose evidence.
+- Crawl artifact:
+  `transcripts/skyharbor-cto__intelligence-ask.json`, with
+  `hardQuestionExactFieldCitations=0` and `hardQuestionGroundingEvidence=42` in
+  `crawl-run.json`.
 
 ## Known Gaps
 
-This does not improve answer quality. It only fixes a metric that was counting
-the wrong evidence shape.
+None for W5.3 acceptance. This does not improve answer quality; it only fixes a
+metric that was counting the wrong evidence shape.
