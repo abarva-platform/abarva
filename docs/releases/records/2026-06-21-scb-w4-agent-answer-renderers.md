@@ -56,7 +56,7 @@ Revert the PR. No data, schema, migration, worker, or feature-flag rollback requ
 
 ## Audit Evidence
 
-- PR URL: to be filled when opened.
+- PR URL: https://github.com/abarva-platform/abarva/pull/3782
 - Focused Jest and ESLint commands above.
 - Release gate: `npm run release:check` before PR.
 
