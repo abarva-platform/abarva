@@ -46,9 +46,9 @@ const SOURCE_CUE =
   /\b(source|sources|loaded sources|basis|benchmark|planning range|as of|evidence|per (the )?ledger|industry data|from pattern|pattern, clearly labeled|peer health systems|across peer|health systems that have deployed|typically report)\b/i;
 const RANGE_OR_NUMBER = /(\d+\s*[–-]\s*\d+|\d+%|\$\s?\d|\bbps\b)/i;
 const HEDGE_CUE =
-  /\b(typically|tends to|often|range|depends on|varies|uncertain|directional|order of magnitude|rule of thumb|planning range|can|rarely|realistically|pressure-test|failure mode|failure modes|pattern i'?ve seen|most of them|well enough|likely)\b/i;
+  /\b(typically|tends to|often|range|depends on|varies|uncertain|directional|order of magnitude|rule of thumb|planning range|can|rarely|realistically|pressure-test|failure mode|failure modes|pattern i'?ve seen|most of them|most health systems|well enough|likely|front-loaded|predictable)\b/i;
 const NEXT_MOVE_CUE =
-  /\b(next step|recommend|start by|pilot|run a|stand up|prioritize|sequence|validate|baseline|workshop|assess|pull(?:s)? the data|pulled data|reporting workbench|source system|focus first|faster win|decision-grade|first thing to fix|before we get to tactics)\b/i;
+  /\b(next step|recommend|start by|pilot|run a|stand up|prioritize|sequence|validate|baseline|workshop|assess|pull(?:s)? the data|pulled data|reporting workbench|source system|focus first|faster win|decision-grade|first thing to fix|before we get to tactics|in order|triage)\b/i;
 const STUCK_POINT_CUE =
   /\b(odds|adoption|roi clarity|stuck|stall|stalls|stall points|honest odds|probability of success|where this stalls|failure mode|failure modes)\b/i;
 const REFUSE_CROSS_TENANT_CUE =
