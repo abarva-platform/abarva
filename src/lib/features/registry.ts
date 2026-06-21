@@ -65,6 +65,7 @@ export type FeatureFlagKey =
   | "retrieval_azure_search"
   | "scb_shared_engine_intelligence"
   | "scb_shared_engine_source"
+  | "scb_shared_engine_moves"
   | "scb_shared_engine_tower"
   | "graph_neo4j_enabled"
   | "tower_synthesis_apex_demo_fixture"
@@ -177,6 +178,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "scb_shared_engine_source",
     summary:
       "Shared Context Brain on the Source synthesis path: ground sourcing-event synthesis in the Consilium expert(s) for the event (e.g. AMS vendor consolidation → IT Outsourcing & Managed Services expert). Default OFF; tenant opt-in. Wired in /api/source/synthesis; flag off = byte-identical. NOTE on flip: include the flag in the synthesis cache key, or clear the source synthesis cache, when flipping per tenant (current cache key does not vary by flag).",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "scb_shared_engine_moves",
+    summary:
+      "Shared Context Brain on the Moves/Programs synthesis path: ground program-state synthesis in the Consilium expert(s) for the program subject (industry-fenced via the active client key). Default OFF; tenant opt-in. Wired in /api/programs/synthesis; flag off = byte-identical. NOTE on flip: include the flag in the synthesis cache key, or clear the programs synthesis cache, when flipping per tenant (current cache key does not vary by flag).",
     policy: "tenant",
     includeTenants: [],
   },
