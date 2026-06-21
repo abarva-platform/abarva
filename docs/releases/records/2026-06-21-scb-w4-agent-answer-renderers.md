@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -34,6 +34,9 @@ Adds the reusable rendering layer for Ava's structured `AgentAnswer` output. An 
 
 - `npx jest src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx --runInBand` — PASS, 2/2.
 - `npx eslint src/components/agent-answer/AgentAnswerRenderer.tsx src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx` — PASS.
+- PR #3782 CI — PASS, including Typecheck + reasoning-layer tests, ESLint, browser smoke, public axe accessibility, bundle budget, release record, production readiness, hygiene, and safety gates.
+- Deploy run 27902083945 — PASS. ACA revision `m4e897b23`, image `sha256:792cd0962d226a843a1c7e7a8225cae81eedb42935c1b1d568ab9e7509640554`, 100% traffic, health OK.
+- Signed-in post-deploy crawl run 27902380941 — PASS on `skyharbor-cto` / `intelligence-ask`: 0 P0 / 0 P1 / 0 P2, 49 grounding evidence signals.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` — repo-wide TypeScript still fails on unrelated local missing declarations/dependencies: `js-yaml`, `@azure-rest/ai-document-intelligence`, and `@axe-core/playwright`. No renderer errors appeared.
 
 ## Rollout Plan
@@ -57,6 +60,10 @@ Revert the PR. No data, schema, migration, worker, or feature-flag rollback requ
 ## Audit Evidence
 
 - PR URL: https://github.com/abarva-platform/abarva/pull/3782
+- Merge commit: `4e897b230c930a67fc759dd762633a8159100742`
+- Deploy run: https://github.com/abarva-platform/abarva/actions/runs/27902083945
+- Deployed revision/image: `ca-abarva-web-lab-eastus--m4e897b23` / `sha256:792cd0962d226a843a1c7e7a8225cae81eedb42935c1b1d568ab9e7509640554`
+- Signed-in crawl: https://github.com/abarva-platform/abarva/actions/runs/27902380941
 - Focused Jest and ESLint commands above.
 - Release gate: `npm run release:check` before PR.
 
