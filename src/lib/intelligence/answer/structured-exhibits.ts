@@ -155,6 +155,31 @@ function sourceRegisterTable(citations: AnswerCitation[]): AnswerTable | null {
   };
 }
 
+function evidenceRequiredTable(citations: AnswerCitation[]): AnswerTable {
+  return {
+    id: "answer-evidence-required",
+    title: "Evidence Required",
+    columns: [
+      { key: "evidence", label: "Evidence" },
+      { key: "status", label: "Status" },
+      { key: "nextMove", label: "Next Move" },
+    ],
+    rows: [
+      {
+        evidence: "Tenant data extract for the requested comparison",
+        status:
+          citations.length > 0
+            ? "Not present in the retrieved cited sources"
+            : "No cited source available for the requested rows",
+        nextMove:
+          "Validate or load the source table before approving tenant-specific numbers.",
+      },
+    ],
+    note: "Rendered because the user asked for a table, but Ava did not have enough connected data to populate tenant-specific rows without fabrication.",
+    citationIds: citations.map((citation) => citation.id),
+  };
+}
+
 function figuresTable(
   figures: ExtractedFigure[],
   citations: AnswerCitation[],
@@ -214,7 +239,9 @@ export function buildStructuredExhibits(
     input.routing.outputShape === "table" || figures.length > 0;
   if (wantsTable) {
     const table =
-      figuresTable(figures, citations) ?? sourceRegisterTable(citations);
+      figuresTable(figures, citations) ??
+      sourceRegisterTable(citations) ??
+      evidenceRequiredTable(citations);
     if (table) tables.push(table);
   }
 

@@ -9,6 +9,7 @@ import type { AskSource, AskIntent } from "./types";
 import {
   applyPartialEvidencePolicy,
   chunkAskText,
+  enforceDecisionGradeAnswer,
   sanitizeAskSynthesis,
 } from "./response-policy";
 import {
@@ -477,7 +478,8 @@ export async function* synthesizeStream(args: {
       sanitized,
       args.sources,
     );
-    for (const chunk of chunkAskText(evidenceDisciplined)) {
+    const decisionGrade = enforceDecisionGradeAnswer(evidenceDisciplined);
+    for (const chunk of chunkAskText(decisionGrade)) {
       yield chunk;
     }
   } catch (err) {
