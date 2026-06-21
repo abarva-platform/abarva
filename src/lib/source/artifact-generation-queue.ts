@@ -248,15 +248,63 @@ async function defaultGenerateQueuedArtifact(
   const { generateSourceArtifactDraft } = await import(
     "@/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route"
   );
-  return generateSourceArtifactDraft(
-    request ?? new Request("https://app.abarva.ai/source-artifact-worker"),
-    {
-      params: Promise.resolve({
-        eventId: job.source_event_id,
-        artifactCode: job.artifact_code,
-      }),
-    },
-  );
+  // Pass X-Source-Worker-Call so the generate route resets the sync budget
+  // and always attempts the quality-gate rewrite regardless of generation time.
+  const workerRequest =
+    request ??
+    new Request("https://app.abarva.ai/source-artifact-worker", {
+      headers: { "x-source-worker-call": "1" },
+    });
+  return generateSourceArtifactDraft(workerRequest, {
+    params: Promise.resolve({
+      eventId: job.source_event_id,
+      artifactCode: job.artifact_code,
+    }),
+  });
+}
+
+/**
+ * Find the oldest queued job without claiming it. Use this to discover the
+ * next job to process; the actual claim/lock happens inside
+ * `processSourceArtifactGenerationJob` via an optimistic WHERE status='queued'
+ * update, so concurrent workers are safe.
+ */
+export async function findNextQueuedSourceArtifactGenerationJob(): Promise<SourceArtifactGenerationJobRow | null> {
+  const { data, error } = await getAzureReadFluentClient()
+    .from("source_artifact_generation_jobs")
+    .select("*")
+    .eq("status", "queued")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle<SourceArtifactGenerationJobRow>();
+  if (error) throw new Error(error.message);
+  return data ?? null;
+}
+
+/**
+ * Mark jobs that have been in 'running' status longer than `staleAfterMs` as
+ * failed. Board-grade (d09) jobs can take 20+ minutes including the rewrite
+ * pass, so the default deadline is generous (90 min).
+ */
+export async function sweepStaleSourceArtifactGenerationJobs(
+  staleAfterMs = 90 * 60 * 1000,
+): Promise<string[]> {
+  const cutoff = new Date(Date.now() - staleAfterMs).toISOString();
+  const nowIso = new Date().toISOString();
+  const { data, error } = await getAzureWriteFluentClient()
+    .from("source_artifact_generation_jobs")
+    .update({
+      status: "failed",
+      completed_at: nowIso,
+      updated_at: nowIso,
+      last_error:
+        "job_timed_out: reclaimed by stale sweep — worker was killed mid-run",
+    })
+    .eq("status", "running")
+    .lt("locked_at", cutoff)
+    .select("id");
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Array<{ id: string }>).map((r) => r.id);
 }
 
 async function safeReadJson(response: Response): Promise<Record<
