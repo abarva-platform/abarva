@@ -397,6 +397,130 @@ Quality requirement: produce a draft that can pass the partner-grade quality rev
       return lines.join("\n");
     },
   },
+
+  d04_app_inv: {
+    artifactCode: "d04_app_inv",
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d01_strategy_memo"],
+    upstreamOptional: ["d05_scope_memo"],
+    systemPrompt: `${SENTINEL_VOICE}
+
+You are drafting the Application and System Inventory (artifact d04_app_inv). This document catalogs the in-scope application and technology estate for this sourcing event — it is the estate baseline that drives scope definition, vendor sizing, SLA design, and the current-state baseline in the RFP.
+
+Required structural sections:
+## §1 · In-scope application and system inventory
+## §2 · Criticality and risk tiering
+## §3 · Integration and dependency map
+## §4 · Disposition and support-model analysis
+## §5 · Coverage gaps and assumptions
+
+Requirements:
+- §1 must include a table: Application/System | Type | Technology stack | Department/function | Current support model | Annual incident volume (if known) | Disposition. Derive the list from the scope memo, strategy memo, and uploaded evidence. If no application list is available, construct a representative draft from the event context and mark each row as [ASSUMED — client to validate].
+- §2 classifies each application by criticality tier (Mission Critical / Business Critical / Standard) and risk dimension (compliance, data sensitivity, integration breadth, age/tech debt). Use a compact table.
+- §3 captures key integration touch-points, upstream/downstream dependencies, and data flows relevant to sourcing scope decisions. Focus on dependencies that create transition risk or scope-split ambiguity.
+- §4 recommends a disposition per application: retain current support model / include in scope / carve out / rationalize / retire. Ground recommendations in evidence where available; flag assumptions explicitly.
+- §5 lists applications the evidence cannot confirm, assumptions made, and client actions needed to validate the inventory before RFP issue.
+- 700–1,100 words total across narrative and tables. No generic IT boilerplate. Cite uploaded evidence files by name where they substantiate a row or claim.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
+        `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
+        "",
+        "— UPSTREAM CONTEXT —",
+        "",
+        `Approved Sourcing Strategy Memo (d01_strategy_memo):`,
+        upstream.d01_strategy_memo ??
+          "(NOT YET AUTHORED — derive from event intake; mark assumptions explicitly)",
+        "",
+      ].filter((line): line is string => line !== null);
+
+      if (upstream.d05_scope_memo) {
+        lines.push("Approved Scope Memo (d05_scope_memo) — use as primary scope boundary:");
+        lines.push(upstream.d05_scope_memo);
+        lines.push("");
+      }
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "Draft the Application and System Inventory per the system prompt requirements. Every application row not directly supported by uploaded evidence must be marked [ASSUMED — client to validate]. Do not expose internal product terms.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d07_ticket_synth: {
+    artifactCode: "d07_ticket_synth",
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d01_strategy_memo"],
+    upstreamOptional: ["d05_scope_memo"],
+    systemPrompt: `${SENTINEL_VOICE}
+
+You are drafting the Ticket History Synthesis (artifact d07_ticket_synth). This document analyzes service demand, incident patterns, and ITSM volumetrics to ground the SLA obligations, vendor sizing, and pricing-volume basis in the RFP — so the §5 service-level table and §7 pricing instructions are evidence-anchored, not assumed.
+
+Required structural sections:
+## §1 · Ticket volume baseline and demand profile
+## §2 · Incident severity distribution and SLA performance
+## §3 · Service tower workload breakdown
+## §4 · Trend analysis and seasonality
+## §5 · SLA and operational implications for the RFP
+
+Requirements:
+- §1 must include a demand table: Period | Total tickets | P1 | P2 | P3/P4 | Monthly average | Peak month | Channel split. Derive from uploaded ITSM/ticket evidence or SLA reports. Where evidence is missing, construct a representative baseline from the event context and mark every row [ASSUMED — client to validate].
+- §2 must include an SLA performance table: Severity | SLA target | Actual performance | Breach count | Breach penalty (if stated) | Root cause trend. Cite uploaded SLA performance evidence by filename.
+- §3 breaks ticket volume by service tower (e.g. MDR/SOC, endpoint, IAM, PAM, OT security for a cybersecurity event; or service desk, infrastructure, application ops for a managed services event). Use a workload-by-tower table: Tower | Volume | % of total | Primary driver | SLA tier.
+- §4 identifies demand trends, seasonality peaks, and structural shifts that the vendor must price for. Note any incident patterns (recurring root causes, growing categories) that signal scope risk.
+- §5 translates the analysis into concrete SLA and operational implications: which SLA targets are achievable based on current incumbent performance, which need to be renegotiated, and where demand growth requires pricing-volume escalators. Write this as direct advice to the sourcing team.
+- 700–1,100 words total across narrative and tables. No generic ITSM boilerplate. Cite uploaded evidence files by name where they substantiate a claim. Mark every unsupported claim as an assumption.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.owner ? `Owner: ${ctx.event.owner}` : null,
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
+        `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
+        "",
+        "— UPSTREAM CONTEXT —",
+        "",
+        `Approved Sourcing Strategy Memo (d01_strategy_memo):`,
+        upstream.d01_strategy_memo ??
+          "(NOT YET AUTHORED — derive the SLA context from the event intake; mark all baselines as assumptions)",
+        "",
+      ].filter((line): line is string => line !== null);
+
+      if (upstream.d05_scope_memo) {
+        lines.push("Approved Scope Memo (d05_scope_memo) — use as the tower/service-level boundary:");
+        lines.push(upstream.d05_scope_memo);
+        lines.push("");
+      }
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "Draft the Ticket History Synthesis per the system prompt requirements. Prioritize uploaded SLA performance, incident log, and ITSM evidence; where that evidence exists, derive every SLA figure and volume from it. Where it is absent, construct a plausible baseline from the event context and mark every row [ASSUMED — client to validate]. Do not expose internal product terms.",
+      );
+      return lines.join("\n");
+    },
+  },
 };
 
 export function getPromptTemplate(
