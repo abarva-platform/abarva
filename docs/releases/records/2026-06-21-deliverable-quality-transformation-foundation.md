@@ -50,15 +50,24 @@ orchestrator. Wiring + live ACA proof is the next phase.
 - W2 `src/lib/visual-system/architecture-model.ts` + `architecture-html-renderer.ts` + First Capital
   fixture — cloud-agnostic architecture exhibit (commit `55e7eff19`).
 - Seam `src/lib/deliverables/quality/assess-deliverable.ts` — gates + mode-downgrade entry point.
+- W1 vertical `src/lib/deliverables/synthesis/charter-shaper.ts` — decision-first, machinery-free
+  charter; the shaped narrative is proven to PASS the gates.
+- W3 `src/lib/visual-system/storyline-deck.ts` — board-final storyline deck model + HTML renderer
+  (one governing message/slide, decision by slide 2, evidence→speaker notes).
+- W5 `src/lib/deliverables/__tests__/golden-regression.test.ts` — byte-stable snapshots of the
+  architecture HTML, handoff deck, and charter markdown.
+- Shared First Capital fixtures (architecture, charter, handoff).
 - `docs/build/DELIVERABLE_QUALITY_TRANSFORMATION_BUILD_SEQUENCE.md` — authoritative build sequence.
 
 ## QA / Validation
 
 - `tsc --noEmit` clean across all new modules.
-- `jest` — 31 tests green across 4 suites (profiles, gates, assess seam, architecture renderer).
-- The First Capital architecture exhibit was rendered to HTML and screenshot-verified for visual
-  quality (premium consulting readout; current→target, named services, agentic overlay, waves).
-- `node scripts/release-check.mjs --base origin/main --head HEAD` run locally.
+- `jest` — 66 tests green across 11 suites (profiles, gates, assess seam, architecture renderer,
+  charter shaper, storyline deck, golden regression).
+- First Capital artifacts rendered + screenshot-verified for visual quality: the Target Architecture
+  HTML (current→target, named services, agentic overlay, waves) and the Executive Handoff deck
+  (10 storyline slides, decision by slide 2, evidence off-slide).
+- `node scripts/release-check.mjs --base origin/main --head HEAD` — Release Control Gate passed.
 
 ## Rollout Plan
 
@@ -93,7 +102,10 @@ runtime behavior; no migration or data rollback is involved.
 
 ## Known Gaps
 
-- Not wired into the live orchestrator/persistence path (inert).
-- W3 (PPTX storyline renderer reuse), W4 (remaining profile verticals + working-binder tier), and W5
-  (full golden-sample library + regression) are not in this release.
-- No live ACA generation proof yet — that is the explicit next phase before any client-facing change.
+- Not wired into the live orchestrator/persistence path (inert) — this is the gating frontier.
+- W3 storyline deck renders to HTML; **native PPTX export** (reuse expert-kernel `pptx-renderer`) is
+  not yet wired — the model is PPTX-ready.
+- W4 remaining profile verticals (discovery, root-cause, solution design, operating model, sourcing,
+  value measurement shapers) + the working-binder tier are not yet built (charter is the proven pattern).
+- No live ACA generation proof yet — the explicit next phase before any client-facing change. Same
+  gate-fragility + tenant-session blockers documented for the deck wiring.
