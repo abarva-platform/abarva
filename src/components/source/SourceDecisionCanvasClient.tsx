@@ -288,7 +288,7 @@ export function SourceDecisionCanvasClient({
         open={evidenceOpen}
         onClose={() => setEvidenceOpen(false)}
         eyebrow="T13 · Evidence trail"
-        title="Sentinel evidence attestation"
+        title="Ava evidence attestation"
       >
         <SourceEvidenceDrawerContent items={AMS_EVIDENCE_ITEMS} />
       </SourceDrawerShell>

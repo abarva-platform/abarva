@@ -97,7 +97,7 @@ const SEEDED_SIGN_OFFS: SignOff[] = [
   },
   { role: "Atlas", status: "complete", note: "Executive content verified" },
   { role: "Procurement Lead", status: "pending", note: "Awaiting BAFO close" },
-  { role: "Sentinel", status: "complete", note: "Evidence chain attested" },
+  { role: "Ava", status: "complete", note: "Evidence chain attested" },
 ];
 
 const SIGN_OFF_COLORS: Record<SignOffStatus, { dot: string; text: string }> = {
@@ -626,7 +626,7 @@ export function SourceArtifactDrawer({
                 id="artifact-custom-input"
                 type="text"
                 readOnly
-                placeholder="Ask Nexus about this artifact, evidence chain, or source version..."
+                placeholder="Ask Ava about this artifact, evidence chain, or source version..."
                 style={{
                   border: "1px solid " + SHELL.BLUE_LINE,
                   borderRadius: 8,

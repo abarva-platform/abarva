@@ -58,7 +58,7 @@ describe('Source executive decision summary panel', () => {
     // KV table
     expect(html).toContain('Atlas recommendation');
     expect(html).toContain('Steward sign-off');
-    expect(html).toContain('Sentinel attestation');
+    expect(html).toContain('Ava attestation');
     expect(html).toContain('Decision deadline');
     expect(html).toContain('Decision posture');
 

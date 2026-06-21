@@ -58,9 +58,9 @@ export function ProgramCanonShell({ title, summary, children }: ProgramCanonShel
         {/* Workflow orientation marker — kept terse per the canon-trim
          *  redesign so the page chrome above the workbench stays light.
          *  Required marker text is preserved for the route-shell test:
-         *  Journey → Phase → Gate → Nexus next action → Deliverables/Evidence → Missions */}
+         *  Journey → Phase → Gate → Ava next action → Deliverables/Evidence → Missions */}
         <p style={footerCaveatStyle}>
-          Workflow orientation · Journey → Phase → Gate → Nexus next action → Deliverables/Evidence → Missions ·
+          Workflow orientation · Journey → Phase → Gate → Ava next action → Deliverables/Evidence → Missions ·
           Deterministic route shell. No fake approvals or live actions.
         </p>
       </div>

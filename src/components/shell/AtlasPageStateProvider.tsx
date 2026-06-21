@@ -81,10 +81,10 @@ const DEFAULT_AGENT: Record<string, string> = {
   // agent ids, telemetry), surfaced to users only as named specialists in
   // trace/audit — never as the agent the user talks to.
   tower: "Ava",
-  programs: "Nexus",
-  "programs-detail": "Nexus",
-  source: "Sentinel",
-  "source-detail": "Sentinel",
+  programs: "Ava",
+  "programs-detail": "Ava",
+  source: "Ava",
+  "source-detail": "Ava",
   intelligence: "Ava",
   home: "Ava",
   setup: "Steward",

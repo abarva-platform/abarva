@@ -71,7 +71,7 @@ export function SourcePortfolioPage({
   return (
     <AppShell
       surface="source"
-      agentName="Sentinel"
+      agentName="Ava"
       surfaceContext={{
         sourcePortfolioMode: true,
         sourceEventCount: visibleEvents.length,

@@ -156,7 +156,7 @@ describe("SourceArtifactDrawer · shell", () => {
       createElement(SourceArtifactDrawer, { artifact: BASE_ARTIFACT }),
     );
     expect(html).toContain(
-      "Ask Nexus about this artifact, evidence chain, or source version",
+      "Ask Ava about this artifact, evidence chain, or source version",
     );
     expect(html).not.toContain("Ask Sentinel about this artifact");
   });

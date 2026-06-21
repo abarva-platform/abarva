@@ -44,8 +44,8 @@ interface Props {
 }
 
 const SENTINEL_AGENT = {
-  initials: 'SS',
-  name: 'Sentinel Source',
+  initials: 'Av',
+  name: 'Ava',
   role: 'Source Portfolio Conductor',
 };
 const SENTINEL_RUNTIME_AGENT_NAME = 'Sentinel';
@@ -136,7 +136,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
       }
 
       const trimmed = acc.trim();
-      const finalBody = trimmed.length > 0 ? trimmed : 'Sentinel did not return a response.';
+      const finalBody = trimmed.length > 0 ? trimmed : 'Ava did not return a response.';
       setThread((prev) => [
         ...prev,
         { id: `a-${Date.now()}`, role: 'agent', body: finalBody },

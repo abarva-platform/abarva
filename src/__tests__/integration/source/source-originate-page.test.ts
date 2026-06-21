@@ -141,7 +141,7 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
   it("renders the optional category selector with five canonical archetypes", () => {
     expect(html).toContain("Sourcing category");
     expect(html).toContain(
-      "Sentinel can infer this after the intake facts are clear",
+      "Ava can infer this after the intake facts are clear",
     );
     expect(html).toContain("Application Managed Services");
     expect(html).toContain("Cloud &amp; Infrastructure");

@@ -166,7 +166,7 @@ export function SourceContradictionCard(props: SourceContradictionCardProps) {
 
       {/* Sentinel diagnosis */}
       <div>
-        <SectionLabel>Sentinel diagnosis</SectionLabel>
+        <SectionLabel>Ava diagnosis</SectionLabel>
         <div
           style={{
             fontFamily: SHELL.SANS,

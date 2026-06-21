@@ -49,7 +49,7 @@ const CANONICAL_DIMENSIONS: Array<{
     key: 'commercial',
     label: 'Commercial',
     keywords: ['pricing', 'commercial', 'vendor', 'bafo', 'award', 'cost'],
-    fallbackOwner: 'Sentinel',
+    fallbackOwner: 'Ava',
   },
   {
     key: 'transition',
@@ -61,19 +61,19 @@ const CANONICAL_DIMENSIONS: Array<{
     key: 'evidence',
     label: 'Evidence',
     keywords: ['evidence', 'baseline', 'data', 'response', 'source', 'rationale'],
-    fallbackOwner: 'Sentinel',
+    fallbackOwner: 'Ava',
   },
   {
     key: 'automation',
     label: 'Automation',
     keywords: ['automation', 'tool', 'platform', 'workflow', 'service', 'ai'],
-    fallbackOwner: 'Sentinel',
+    fallbackOwner: 'Ava',
   },
   {
     key: 'risk',
     label: 'Risk',
     keywords: ['risk', 'security', 'compliance', 'control', 'exception'],
-    fallbackOwner: 'Sentinel',
+    fallbackOwner: 'Ava',
   },
   {
     key: 'governance',

@@ -81,7 +81,7 @@ describe('DESROUTE5 program route shell enforcement', () => {
   describe('ProgramCanonShell.tsx workflow orientation markers', () => {
     it('workflow orientation signals are present in canonical shell', () => {
       const shell = read(shellComponent);
-      expect(shell).toContain('Journey → Phase → Gate → Nexus next action');
+      expect(shell).toContain('Journey → Phase → Gate → Ava next action');
       expect(shell).toContain('Deliverables/Evidence');
       expect(shell).toContain('Missions');
     });

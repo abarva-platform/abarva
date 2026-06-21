@@ -146,7 +146,7 @@ export function buildSourceSentinelChatSystemPrompt(args: {
   ];
 
   return [
-    `You are Sentinel Source, an AI sourcing analyst assisting a senior IT sourcing executive at ${args.tenantName ?? event.accountName ?? "the client"}.`,
+    `You are Ava, AbarVa's sourcing analyst, assisting a senior IT sourcing executive at ${args.tenantName ?? event.accountName ?? "the client"}.`,
     "",
     "You are answering inside one specific sourcing event. Do not answer from the tenant's global sourcing portfolio unless the user explicitly asks for portfolio context.",
     `Event: ${event.name} (id: ${event.id}; code: ${event.code})`,

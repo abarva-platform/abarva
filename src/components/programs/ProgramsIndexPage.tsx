@@ -437,7 +437,7 @@ export function ProgramsIndexPage({ view, hasTenantKey = false }: ProgramsIndexP
         <div style={{ padding: '20px 28px 0' }}>
           <AgentCanvas
             surface="/programs"
-            agent={{ initials: 'Nx', name: 'Nexus', role: 'Move Orchestrator' }}
+            agent={{ initials: 'Av', name: 'Ava', role: 'Move Orchestrator' }}
             quote={view.portfolioWorkbench.prose}
             artifacts={nexusArtifacts}
             onArtifact={handleNexusArtifact}

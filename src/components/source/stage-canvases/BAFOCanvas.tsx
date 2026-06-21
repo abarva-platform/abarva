@@ -79,7 +79,7 @@ export function BAFOCanvas({ stageKey, event, nextGateEvaluations = [] }: BAFOCa
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <div>
-          <div style={EYEBROW}>Step 7 · Nexus</div>
+          <div style={EYEBROW}>Step 7 · Ava</div>
           <h2 style={HEADING}>{stageLabel}</h2>
         </div>
         {isCurrentStage && <span style={ACTIVE_BADGE}>Active</span>}
@@ -109,7 +109,7 @@ export function BAFOCanvas({ stageKey, event, nextGateEvaluations = [] }: BAFOCa
         </div>
         {responsesReceived < BAFO_VENDORS.length && (
           <div style={{ marginTop: 8, fontFamily: SHELL.SANS, fontSize: 11.5, color: SHELL.INK_SOFT }}>
-            Waiting on {BAFO_VENDORS.length - responsesReceived} BAFO response{BAFO_VENDORS.length - responsesReceived > 1 ? 's' : ''}. Deadline: May 15, 2026. Sentinel will flag overdue submissions.
+            Waiting on {BAFO_VENDORS.length - responsesReceived} BAFO response{BAFO_VENDORS.length - responsesReceived > 1 ? 's' : ''}. Deadline: May 15, 2026. Ava will flag overdue submissions.
           </div>
         )}
       </div>

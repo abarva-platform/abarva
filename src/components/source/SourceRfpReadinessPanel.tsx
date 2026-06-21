@@ -50,7 +50,7 @@ export function SourceRfpReadinessPanel({ readiness }: { readiness: SourceRfpRea
           </div>
         </InfoCard>
 
-        <InfoCard title="Sentinel recommendation">
+        <InfoCard title="Ava recommendation">
           <div style={{ color: SHELL.INK, fontWeight: 700 }}>{readiness.recommendedNextAction}</div>
         </InfoCard>
       </div>
@@ -118,7 +118,7 @@ export function SourceRfpReadinessPanel({ readiness }: { readiness: SourceRfpRea
             ))}
           </ul>
           <div style={{ ...sourceSectionLabel, color: SHELL.INK_MUTED }}>
-            {readiness.sentinelEvidenceNotes[0] ?? 'Sentinel evidence notes are not yet initialized.'}
+            {readiness.sentinelEvidenceNotes[0] ?? 'Ava evidence notes are not yet initialized.'}
           </div>
           <div style={{ ...sourceSectionLabel, color: SHELL.INK_MUTED, marginTop: 8 }}>
             Atlas view: {readiness.atlasExecutiveImplication}

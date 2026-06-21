@@ -904,7 +904,7 @@ export function UniversalCanvasShell({
         payload?.summary ??
         payload?.nexusSummary?.summary ??
         payload?.error?.message ??
-        `${dockAgent} could not produce a response right now.`;
+        `${displayAgentName(dockAgent)} could not produce a response right now.`;
       const agentTurn: ChatMessage = {
         id: `a-${Date.now() + 1}`,
         role: "agent",
@@ -1139,7 +1139,7 @@ export function UniversalCanvasShell({
   return (
     <AppShell
       surface="source-detail"
-      agentName={dockAgent}
+      agentName={displayAgentName(dockAgent)}
       surfaceContext={{
         sourceEventId: event.id,
         sourceEventCode: event.code,
@@ -1467,11 +1467,11 @@ const AGENT_DOCK_ROLE_COPY: Record<"Sentinel" | "Atlas", string> = {
 };
 
 function displayAgentName(agent: "Sentinel" | "Atlas"): string {
-  return agent === "Sentinel" ? "Sentinel Source" : agent;
+  return agent === "Sentinel" ? "Ava" : agent;
 }
 
 function displayAgentInitials(agent: "Sentinel" | "Atlas"): string {
-  return agent === "Sentinel" ? "SS" : agent[0];
+  return agent === "Sentinel" ? "Av" : agent[0];
 }
 
 function CanvasTour() {

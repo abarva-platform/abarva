@@ -346,7 +346,7 @@ describe("UniversalCanvasShell · SSR render", () => {
   it("collapses Sentinel by default on the Executive Decision stage", () => {
     const html = render({ viewStage: "executive_decision" });
     expect(html).toContain("agent-dock-collapsed-chip");
-    expect(html).toContain("Sentinel Source");
+    expect(html).toContain("Ava");
     expect(html).toContain("Click to expand · 3 stage-specific suggestions");
     expect(html).toContain("source-canvas-next-move-card");
   });
@@ -510,7 +510,7 @@ describe("UniversalCanvasShell · SSR render", () => {
     // AgentDock panel replaces the legacy EventChatLane testid.
     expect(html).toContain("agent-dock-panel");
     // Scope stage (1-9) → Sentinel per canvasDockAgentForStage.
-    expect(html).toContain("Sentinel");
+    expect(html).toContain("Ava");
     // Three-choice catalog now renders as AgentDock suggested actions.
     expect(html).toContain("agent-dock-suggestion-c0");
     expect(html).toContain("agent-dock-suggestion-c1");
@@ -690,7 +690,7 @@ describe("UniversalCanvasShell · SSR render", () => {
   it("renders the sticky AgentDock composer", () => {
     const html = render();
     expect(html).toContain("agent-dock-input");
-    expect(html).toContain("Ask Sentinel Source…");
+    expect(html).toContain("Ask Ava…");
     // Paperclip upload button is rendered.
     expect(html).toContain("agent-dock-attach");
   });
@@ -976,7 +976,7 @@ describe("UniversalCanvasShell · SSR render", () => {
   it("renders the AgentDock empty-thread hint and suggested questions label", () => {
     const html = render();
     // Scope stage (1-9) renders the Source-branded Sentinel lane.
-    expect(html).toContain("Ask Sentinel Source anything.");
+    expect(html).toContain("Ask Ava anything.");
     // The dock surfaces the agent role under the name as the empty-state
     // subtitle (matches the AGENT_DOCK_ROLE_COPY entry for Sentinel).
     expect(html).toContain(
@@ -1053,7 +1053,7 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain(
       "source-canvas-document-body-generate-d01_strategy_memo",
     );
-    expect(html).toContain("Generate with Sentinel");
+    expect(html).toContain("Generate with Ava");
   });
 
   it("button label flips to Regenerate once a body is authored (or generated)", () => {
@@ -1065,7 +1065,7 @@ describe("UniversalCanvasShell · SSR render", () => {
         }),
       ],
     });
-    expect(html).toContain("Regenerate with Sentinel");
+    expect(html).toContain("Regenerate with Ava");
   });
 
   it("does NOT render Generate button on artifacts not in the prompt registry", () => {
@@ -1183,7 +1183,7 @@ describe("UniversalCanvasShell · SSR render", () => {
     );
     expect(html).toContain("source-canvas-document-tab");
     expect(html).toContain("Start with the next RFP document.");
-    expect(html).toContain("draft the required document with Sentinel");
+    expect(html).toContain("draft the required document with Ava");
     expect(html).toContain("ask your AbarVa lead");
     expect(html).not.toContain("npm run db:backfill:source-canvas");
   });

@@ -299,17 +299,17 @@ function GuidanceCard({
 
 const AGENT_GUIDANCE = [
   {
-    agent: "Sentinel",
+    agent: "Ava",
     label: "Chat-driven brief",
-    body: "Tell Sentinel your sourcing situation in plain language; the brief on the right fills as you talk. Override any field manually if Sentinel got it wrong.",
+    body: "Tell Ava your sourcing situation in plain language; the brief on the right fills as you talk. Override any field manually if Ava got it wrong.",
   },
   {
-    agent: "Sentinel",
+    agent: "Ava",
     label: "Five fields",
     body: "Trigger, decision owner, scope boundary, value basis, baseline owner. Capture all five before the event opens for approval.",
   },
   {
-    agent: "Sentinel",
+    agent: "Ava",
     label: "Evidence caution",
     body: "Loaded or promised data is not usable evidence yet; name the baseline owner and confidence limits.",
   },
@@ -495,8 +495,8 @@ function sanitizeEventNameClause(value: string | undefined): string {
 }
 
 const SENTINEL_INTAKE_AGENT = {
-  initials: "SS",
-  name: "Sentinel Source",
+  initials: "Av",
+  name: "Ava",
   role: "Source Orchestrator",
 } as const;
 
@@ -706,8 +706,8 @@ export function SourceOriginatePage({
         <div>
           <div style={EYEBROW}>
             {intakeShape
-              ? `Step 0 · Sentinel · ${intakeShape.eyebrow}`
-              : "Step 0 · Sentinel"}
+              ? `Step 0 · Ava · ${intakeShape.eyebrow}`
+              : "Step 0 · Ava"}
           </div>
           <h2 style={HEADING}>
             {intakeShape ? intakeShape.heading : "Sourcing event intake"}
@@ -715,7 +715,7 @@ export function SourceOriginatePage({
           <p style={SUBHEAD}>
             {intakeShape
               ? intakeShape.subhead
-              : "Tell Sentinel your sourcing situation in plain language — the brief on the right fills as you talk. Override any field manually if Sentinel got it wrong. The event opens for approval only after all five facts are captured."}
+              : "Tell Ava your sourcing situation in plain language — the brief on the right fills as you talk. Override any field manually if Ava got it wrong. The event opens for approval only after all five facts are captured."}
           </p>
         </div>
 
@@ -866,7 +866,7 @@ export function SourceOriginatePage({
                   color: SHELL.INK_SOFT,
                 }}
               >
-                Optional. Sentinel can infer this after the intake facts are
+                Optional. Ava can infer this after the intake facts are
                 clear.
               </div>
             </div>
@@ -1011,8 +1011,8 @@ export function SourceOriginatePage({
         clientName,
         sourceIntent: intakeShape?.intent,
         context: intakeShape
-          ? `New IT sourcing event intake — ${intakeShape.eyebrow} (Sentinel guided)`
-          : "New IT sourcing event intake — Sentinel guided",
+          ? `New IT sourcing event intake — ${intakeShape.eyebrow} (Ava guided)`
+          : "New IT sourcing event intake — Ava guided",
       }}
       topBarProps={{
         tenantName: clientName,
@@ -1035,7 +1035,7 @@ export function SourceOriginatePage({
           active={tourActive}
           config={{
             step: 2,
-            title: "Sentinel just needs the trigger.",
+            title: "Ava just needs the trigger.",
             body: (
               <>
                 Fill the <strong>Why now / trigger</strong> field first, then
@@ -1503,7 +1503,7 @@ function RelatedContextSection() {
             background: SHELL.PAPER_SOFT,
           }}
         >
-          As Sentinel cites vendors, systems, owners, and dollar amounts during
+          As Ava cites vendors, systems, owners, and dollar amounts during
           the conversation, they will surface here so you can see the tenant
           context grounding the brief.
         </div>

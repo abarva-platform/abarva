@@ -214,8 +214,8 @@ export function StrategicMoveDetailClient({
   return (
     <AgentDock
       agent={{
-        initials: 'N',
-        name: 'Nexus',
+        initials: 'A',
+        name: 'Ava',
         role: 'Strategic Moves Conductor',
       }}
       surface="moves/detail"

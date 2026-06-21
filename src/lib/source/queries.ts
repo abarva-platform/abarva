@@ -784,7 +784,7 @@ export function sourceEventRowToDetail(
 
   return {
     ...summary,
-    synopsis: `${summary.name} is a persisted Source event for ${accountName}. Sentinel is tracking intake, evidence, artifacts, approvals, and value from the live source_events row.`,
+    synopsis: `${summary.name} is a persisted Source event for ${accountName}. Ava is tracking intake, evidence, artifacts, approvals, and value from the live source_events row.`,
     problemStatement: trigger,
     stages: buildWorkflowStagesForRow(row),
     alerts: buildAlertsForRow(row),

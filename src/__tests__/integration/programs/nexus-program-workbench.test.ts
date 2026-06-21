@@ -209,11 +209,11 @@ describe('NexusProgramWorkbench · component contract', () => {
 
   it('keeps the required visual contract text', () => {
     // Section labels visible in the DOM
-    expect(componentSource).toContain('Nexus Program Workbench');
+    expect(componentSource).toContain('Ava Program Workbench');
     expect(componentSource).toContain('Program journey');
     expect(componentSource).toContain('Context used');
-    expect(componentSource).toContain('Suggested Nexus actions');
-    expect(componentSource).toContain('Ask Nexus');
+    expect(componentSource).toContain('Suggested Ava actions');
+    expect(componentSource).toContain('Ask Ava');
     expect(componentSource).toContain('Agent handoff rail');
     expect(componentSource).toContain('Current gate');
     expect(componentSource).toContain('Evidence coverage');
