@@ -22,6 +22,7 @@
 import {
   buildMoveCostedBusinessCasePack,
   type MoveCostedBusinessCasePack,
+  type MoveCostedBusinessCasePackOptions,
   type MoveCostedBusinessCaseResult,
   type MoveSectionAnatomy,
   type MoveEvidenceStrip,
@@ -667,10 +668,12 @@ function renderUnboundDocument(
 export function renderMoveCostedBusinessCaseHtml(
   move: MoveBusinessCaseInput,
   generatedOn: string,
+  opts: MoveCostedBusinessCasePackOptions = {},
 ): string {
   const result: MoveCostedBusinessCaseResult = buildMoveCostedBusinessCasePack(
     move,
     generatedOn,
+    opts,
   );
 
   if (!result.bound) {
