@@ -108,6 +108,7 @@ function isAllowlistedFile(relPath) {
   if (FILENAME_ALLOWLIST_SUFFIXES.some((s) => relPath.endsWith(s))) return true;
   if (relPath.includes('/__tests__/')) return true;
   if (relPath.includes('/__mocks__/')) return true;
+  if (relPath.includes('/__fixtures__/')) return true; // test fixtures — verification data, never runtime
   return false;
 }
 
