@@ -252,6 +252,9 @@ async function crawlSurface(
   const transcript = surface.requiresAgentProbe
     ? await askHardQuestions(page, persona, surface, safeName, out, questions)
     : { exactFieldCitations: 0 };
+  if (surface.requiresContextDemoVectorProof) {
+    await proveContextDemoVectorPath(page, persona, safeName, out);
+  }
 
   const html = await page.content();
   const visibleText = await page.locator('body').innerText({ timeout: 10_000 }).catch(() => '');
@@ -477,6 +480,150 @@ async function askIntelligenceApi(
       window.clearTimeout(timeout);
     }
   }, { question, persona, surface });
+}
+
+interface ContextDemoVectorProof {
+  ok: boolean;
+  status: number;
+  brokerTenantKey: string;
+  vectorInfoTag: string | null;
+  semanticChunkCount: number;
+  topScore: number | null;
+  topChunkId: string | null;
+  topSourceDoc: string | null;
+  topTenantKey: string | null;
+  warnings: string[];
+  error?: string;
+  responseSnippet?: string;
+}
+
+async function proveContextDemoVectorPath(
+  page: Page,
+  persona: { key: string; tenantKey: string; tenantName: string },
+  safeName: string,
+  out: string,
+): Promise<void> {
+  const brokerTenantKey = brokerTenantKeyForClient(persona.tenantKey);
+  const proof = await page.evaluate(
+    async ({ tenantKey, tenantName }) => {
+      const response = await fetch("/api/context/demo", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: `Which ${tenantName} context chunks best explain AI automation, spend, initiatives, and risk?`,
+          mode: "tenant",
+          tenantKey,
+          maxFacts: 8,
+          maxChunks: 5,
+          graphTraversalDepth: 2,
+        }),
+      });
+      const text = await response.text();
+      let body: unknown = null;
+      try {
+        body = JSON.parse(text);
+      } catch {
+        body = null;
+      }
+      return {
+        ok: response.ok,
+        status: response.status,
+        body,
+        responseSnippet: text.slice(0, 800),
+      };
+    },
+    { tenantKey: brokerTenantKey, tenantName: persona.tenantName },
+  );
+
+  const body = asRecord(proof.body);
+  const bundle = asRecord(body?.bundle);
+  const infoTags = stringArray(bundle?.infoTags);
+  const warnings = stringArray(bundle?.warnings);
+  const semanticChunks = arrayOfRecords(bundle?.semanticChunks);
+  const topHit = asRecord(semanticChunks[0]);
+  const topChunk = asRecord(topHit?.chunk);
+  const topScore = typeof topHit?.score === "number" ? topHit.score : null;
+  const vectorInfoTag =
+    infoTags.find((tag) => /Postgres pgvector/i.test(tag)) ?? null;
+  const summary: ContextDemoVectorProof = {
+    ok: proof.ok,
+    status: proof.status,
+    brokerTenantKey,
+    vectorInfoTag,
+    semanticChunkCount: semanticChunks.length,
+    topScore,
+    topChunkId: stringOrNull(topChunk?.chunkId),
+    topSourceDoc: stringOrNull(topChunk?.sourceDoc),
+    topTenantKey: stringOrNull(topChunk?.tenantKey),
+    warnings,
+    responseSnippet: proof.responseSnippet,
+  };
+
+  const failures = [
+    proof.ok ? null : `context_demo_http_${proof.status}`,
+    vectorInfoTag ? null : "missing_pgvector_info_tag",
+    semanticChunks.length > 0 ? null : "no_semantic_chunks",
+    typeof topScore === "number" && topScore > 0 ? null : "missing_positive_vector_score",
+    summary.topTenantKey === brokerTenantKey
+      ? null
+      : `top_chunk_tenant_mismatch:${summary.topTenantKey ?? "missing"}`,
+    warnings.some((warning) => /Vector retrieval pending/i.test(warning))
+      ? "vector_retrieval_fell_back_to_keyword"
+      : null,
+  ].filter((failure): failure is string => Boolean(failure));
+
+  summary.error = failures.length > 0 ? failures.join(",") : undefined;
+  await fs.writeFile(
+    path.join(out, "transcripts", `${safeName}.context-demo-vector.json`),
+    JSON.stringify(summary, null, 2),
+  );
+
+  if (failures.length > 0) {
+    throw new Error(
+      `context_demo_vector_proof_failed:${persona.key}:${failures.join(",")}`,
+    );
+  }
+
+  console.log(
+    `context_demo_vector_proof:${persona.key}:${brokerTenantKey}:chunks=${summary.semanticChunkCount}:topScore=${summary.topScore}:topChunk=${summary.topChunkId}`,
+  );
+}
+
+function brokerTenantKeyForClient(clientKey: string): string {
+  const map: Record<string, string> = {
+    apexretail: "apex-retail",
+    arcturus: "firstcapital",
+    firstcapital: "firstcapital",
+    lakeshore: "lakeshore-holdings",
+    meridian: "meridian-health",
+    northstar: "northstar-clinical",
+    skyharbor: "skyharbor-air",
+  };
+  return map[clientKey] ?? clientKey;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function arrayOfRecords(value: unknown): Array<Record<string, unknown>> {
+  return Array.isArray(value)
+    ? value.map(asRecord).filter((item): item is Record<string, unknown> => Boolean(item))
+    : [];
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function stringOrNull(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
 }
 
 async function readBaseline(file: string): Promise<CrawlBaseline | null> {

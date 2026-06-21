@@ -15,6 +15,7 @@ export interface CrawlSurface {
   id: string;
   path: string;
   requiresAgentProbe?: boolean;
+  requiresContextDemoVectorProof?: boolean;
 }
 
 export const CRAWL_PERSONAS: CrawlPersona[] = [
@@ -54,6 +55,14 @@ export const PRIMARY_CRAWL_SURFACES: CrawlSurface[] = [
   { id: "admin-setup", path: "/admin?tab=tenant" },
   { id: "admin-production-readiness", path: "/admin/production-readiness" },
   { id: "admin-releases", path: "/admin/releases" },
+];
+
+const EXPLICIT_CRAWL_SURFACES: CrawlSurface[] = [
+  {
+    id: "context-demo",
+    path: "/intelligence/context-demo",
+    requiresContextDemoVectorProof: true,
+  },
 ];
 
 export const POST_DEPLOY_HARD_QUESTIONS = [
@@ -382,7 +391,9 @@ export function resolveCrawlSurfaces(filter?: string): CrawlSurface[] {
       .map((item) => item.trim())
       .filter(Boolean),
   );
-  return PRIMARY_CRAWL_SURFACES.filter((surface) => requested.has(surface.id));
+  return [...PRIMARY_CRAWL_SURFACES, ...EXPLICIT_CRAWL_SURFACES].filter(
+    (surface) => requested.has(surface.id),
+  );
 }
 
 function persona(key: string, slug: string): CrawlPersona {

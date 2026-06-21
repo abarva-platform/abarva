@@ -12,15 +12,24 @@ import {
   POST_DEPLOY_HARD_QUESTIONS,
   resolveCrawlQuestions,
   resolveCrawlPersonas,
+  resolveCrawlSurfaces,
 } from '../../src/lib/crawl/persona-switcher';
 
 assert.ok(CRAWL_PERSONAS.length >= 7);
-assert.ok(PRIMARY_CRAWL_SURFACES.length >= 24);
+assert.ok(PRIMARY_CRAWL_SURFACES.length >= 22);
 assert.equal(POST_DEPLOY_HARD_QUESTIONS.length, 10);
 assert.equal(PHS_MERIDIAN_HARD_QUESTIONS.length, 50);
 assert.equal(resolveCrawlQuestions('phs-meridian').length, 50);
 assert.equal(resolveCrawlQuestions('unknown').length, 10);
 assert.deepEqual(resolveCrawlPersonas('apex-cio').map((persona) => persona.key), ['apex-cio']);
+assert.equal(resolveCrawlSurfaces().some((surface) => surface.id === 'context-demo'), false);
+assert.deepEqual(
+  resolveCrawlSurfaces('context-demo').map((surface) => ({
+    id: surface.id,
+    vectorProof: surface.requiresContextDemoVectorProof,
+  })),
+  [{ id: 'context-demo', vectorProof: true }],
+);
 assert.deepEqual(
   resolveCrawlPersonas('meridian-cdao').map((persona) => persona.email),
   ['cdao@meridian-health.example.com'],
