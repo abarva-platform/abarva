@@ -24,6 +24,7 @@ import { BATCH_5_IT_ESTATE_A } from "./golden/batch5-it-estate-a";
 import { BATCH_6_IT_ESTATE_B } from "./golden/batch6-it-estate-b";
 import { BATCH_7_INDUSTRY_OPS } from "./golden/batch7-industry-ops";
 import { BATCH_8_STAGED_CROSS } from "./golden/batch8-staged-cross";
+import { BATCH_8_STAGED_INDUSTRY } from "./golden/batch8-staged-industry";
 
 export const GOLDEN_QUESTIONS: GoldenQuestion[] = [
   ...BATCH_1_HEALTHCARE_AIRLINE,
@@ -34,4 +35,5 @@ export const GOLDEN_QUESTIONS: GoldenQuestion[] = [
   ...BATCH_6_IT_ESTATE_B,
   ...BATCH_7_INDUSTRY_OPS,
   ...BATCH_8_STAGED_CROSS,
+  ...BATCH_8_STAGED_INDUSTRY,
 ];
