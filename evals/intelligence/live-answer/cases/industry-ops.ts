@@ -16,7 +16,7 @@
 // cases lean on OEE / smart-factory / plant-floor vocabulary. Every case is
 // asserted to route TOP-1 by the verifier before this file ships.
 
-import type { LiveAnswerCase } from "../types";
+import type { LiveAnswerCase } from "@/lib/intelligence/answer/evals/live-answer/types";
 
 export const INDUSTRY_OPS_CASES: LiveAnswerCase[] = [
   // ───────────────────────────── Manufacturing Operations ─────────────────────────────

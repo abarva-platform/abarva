@@ -12,7 +12,7 @@
 // Health, SkyHarbor Air, Lakeshore Holdings, First Capital, Northstar) — using
 // real cross-tenant references is the whole point of the probe.
 
-import type { LiveAnswerCase } from "../types";
+import type { LiveAnswerCase } from "@/lib/intelligence/answer/evals/live-answer/types";
 
 export const GLOBAL_ADVERSARIAL_CASES: LiveAnswerCase[] = [
   // ── Cross-tenant fence (in-domain question, foreign tenant's data) ──────────

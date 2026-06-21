@@ -10,7 +10,7 @@
 // Queries are tuned so routeQuestion({query, industry}).experts[0].id leads with
 // the intended expert; validateLiveAnswerBank(..., {minPerExpert: 5}) is green.
 
-import type { LiveAnswerCase } from "../types";
+import type { LiveAnswerCase } from "@/lib/intelligence/answer/evals/live-answer/types";
 
 export const HEALTHCARE_AIRLINE_CASES: LiveAnswerCase[] = [
   // ──────────────────────────────────────────────────────────────────────────
