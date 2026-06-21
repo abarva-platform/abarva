@@ -14,6 +14,8 @@ Adds deterministic release gates for the Shared Context Brain so authored data, 
 
 Follow-up compatibility patch: removes the live container's `tsx` dependency on the `@/data/...` alias for the Apex CDP seed shim. The deployed truth-gate runner imports source files directly, so this shim must be resolvable without assuming the Next/Turbopack alias layer.
 
+Second live-proof patch: the deployed runtime image copied `src/lib` and `src/scripts` for ACA jobs, but not `src/data`, so the private VNet truth-gate still could not load the Apex CDP seed after the import was made relative. The Docker runtime layer now includes `src/data` for operational scripts that intentionally execute from source inside ACA jobs.
+
 ## Layer Impact
 
 - `global-control-lane`: Adds repo/CI validation scripts and release-check wiring. No application route behavior changes.
@@ -32,6 +34,7 @@ Follow-up compatibility patch: removes the live container's `tsx` dependency on 
 - `src/scripts/intelligence/scb-truth-gates.ts`
 - `src/scripts/__tests__/scb-truth-gates.test.ts`
 - `src/lib/intelligence/seed-patterns-cdp.ts`
+- `Dockerfile`
 - `scripts/release-control/check-scb-truth-gates.mjs`
 - `scripts/release-check.mjs`
 - `package.json`
@@ -46,7 +49,8 @@ Follow-up compatibility patch: removes the live container's `tsx` dependency on 
 - BLOCKED: Private-VNet SQL proof showed the live gate would correctly fail because `northstar-clinical` has vectorized chunks but zero `enterprise_context_records`.
 - PASS: Private-VNet remediation loaded `northstar-clinical` structured records and SQL proof confirmed all dataset tenants have `enterprise_context_records` plus embedded chunks with non-null vectors.
 - BLOCKED: A second private-VNet run of `npm run scb:truth-gates -- --require-live` reached the packaged gate but failed on `Cannot find module '@/data/apexretail/cdp-pattern-seed'`; this compatibility patch addresses that import path.
-- PENDING: Rerun `npm run scb:truth-gates -- --require-live` inside the private VNet after this patch is merged and deployed.
+- BLOCKED: A third private-VNet run on deployed #3772 reached the relative import but failed on `Cannot find module '../../data/apexretail/cdp-pattern-seed'`; this confirmed the runtime image did not package `src/data`.
+- PENDING: Rerun `npm run scb:truth-gates -- --require-live` inside the private VNet after the Docker runtime packaging patch is merged and deployed.
 
 ## Rollout Plan
 
@@ -55,7 +59,7 @@ Merge to `main`. The static gate runs as part of `npm run release:check`. Live d
 ## Deployment Authority
 
 - Repo-owned deploy workflow: Not changed.
-- Shared runtime mutators: None.
+- Shared runtime mutators: ACA deploy updates the runtime image after merge.
 - Approved image digest: Not applicable until merged/deployed.
 - ACA runtime invariant: Not applicable.
 - Worker image invariant: Not applicable.
@@ -75,4 +79,4 @@ Revert the checker, release-check import, package script, tests, and this releas
 
 ## Known Gaps
 
-The Northstar data-plane gap has been remediated and SQL-proven. The remaining gap is packaged live truth-gate proof after the Apex CDP seed import compatibility patch deploys.
+The Northstar data-plane gap has been remediated and SQL-proven. The remaining gap is packaged live truth-gate proof after the Docker runtime includes `src/data` and deploys.
