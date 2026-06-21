@@ -386,7 +386,7 @@ export function StewardOrientationSkeleton() {
     <div
       data-testid="admin-steward-orientation-skeleton"
       role="status"
-      aria-label="Loading Steward orientation"
+      aria-label="Loading Ava orientation"
       style={{
         border: `1px dashed ${C.borderLight}`,
         background: C.surface,
@@ -406,7 +406,7 @@ export function StewardOrientationSkeleton() {
           marginBottom: 12,
         }}
       >
-        Steward · Tenant orientation
+        Ava · Tenant orientation
       </div>
       <div
         style={{

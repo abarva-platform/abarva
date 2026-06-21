@@ -87,8 +87,8 @@ const DEFAULT_AGENT: Record<string, string> = {
   "source-detail": "Ava",
   intelligence: "Ava",
   home: "Ava",
-  setup: "Steward",
-  "setup-detail": "Steward",
+  setup: "Ava",
+  "setup-detail": "Ava",
 };
 
 const DEFAULT_AGENT_TURN_TIMEOUT_MS = 90_000;

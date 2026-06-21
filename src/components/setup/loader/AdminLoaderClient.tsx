@@ -429,7 +429,7 @@ export function AdminLoaderClient({
                     fontFamily: TYPOGRAPHY.sans,
                   }}
                 >
-                  Ask Steward · {preserved.filename}
+                  Ask Ava · {preserved.filename}
                 </button>
               ))}
             </div>

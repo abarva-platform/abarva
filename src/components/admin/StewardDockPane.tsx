@@ -60,8 +60,8 @@ const DEFAULT_SUGGESTED_ACTIONS: SuggestedAction[] = [
 // ── Steward agent profile ────────────────────────────────────────────────────
 
 const STEWARD_AGENT = {
-  initials: "St",
-  name: "Steward",
+  initials: "Av",
+  name: "Ava",
   role: "Setup & Admin Conductor",
 } as const;
 
