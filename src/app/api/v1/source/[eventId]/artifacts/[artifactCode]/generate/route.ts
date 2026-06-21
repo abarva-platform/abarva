@@ -499,20 +499,27 @@ export async function generateSourceArtifactDraft(
           { status: 403 },
         );
       }
-      const response = await preflight.client.messages.create({
+      const sdkStream = preflight.client.messages.stream({
         model: template.model,
         max_tokens: template.maxTokens,
         system: template.systemPrompt,
         messages: [{ role: "user", content: userMessage }],
       });
-      body = response.content
-        .map((block) => (block.type === "text" ? block.text : ""))
-        .join("")
-        .trim();
-      model = response.model ?? template.model;
-      stopReason = response.stop_reason ?? null;
-      tokensIn = response.usage?.input_tokens ?? null;
-      tokensOut = response.usage?.output_tokens ?? null;
+      const parts: string[] = [];
+      for await (const chunk of sdkStream) {
+        if (
+          chunk.type === "content_block_delta" &&
+          chunk.delta.type === "text_delta"
+        ) {
+          parts.push(chunk.delta.text);
+        }
+      }
+      body = parts.join("").trim();
+      const finalMsg = await sdkStream.finalMessage();
+      model = finalMsg.model ?? template.model;
+      stopReason = finalMsg.stop_reason ?? null;
+      tokensIn = finalMsg.usage?.input_tokens ?? null;
+      tokensOut = finalMsg.usage?.output_tokens ?? null;
     }
   } catch (err) {
     console.error(
