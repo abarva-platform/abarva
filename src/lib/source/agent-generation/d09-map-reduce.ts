@@ -15,7 +15,10 @@
 // The assembled body feeds directly into the existing quality gate and
 // d09-completion governance appender — no other route changes required.
 
-import Anthropic from "@anthropic-ai/sdk";
+import type {
+  AnthropicDirectClient,
+  TextBlock,
+} from "@/lib/integrations/ai-egress";
 import type { SourceGenerationContext } from "./types";
 
 const SECTION_MODEL = "claude-opus-4-8";
@@ -219,7 +222,7 @@ export interface D09SectionResult {
 async function generateSection(args: {
   section: SectionDef;
   sharedContext: string;
-  client: Anthropic;
+  client: AnthropicDirectClient;
 }): Promise<D09SectionResult> {
   const { section, sharedContext, client } = args;
   const systemPrompt = `${SENTINEL_VOICE}
@@ -236,7 +239,7 @@ You are writing a single section of the d09 RFP Package for a large enterprise s
       messages: [{ role: "user", content: userMessage }],
     });
     const text = result.content
-      .filter((b): b is Anthropic.TextBlock => b.type === "text")
+      .filter((b): b is TextBlock => b.type === "text")
       .map((b) => b.text)
       .join("")
       .trim();
@@ -258,7 +261,7 @@ You are writing a single section of the d09 RFP Package for a large enterprise s
 async function assembleWithExecSummary(args: {
   sharedContext: string;
   sectionResults: D09SectionResult[];
-  client: Anthropic;
+  client: AnthropicDirectClient;
 }): Promise<{ body: string; tokensOut: number }> {
   const { sharedContext, sectionResults, client } = args;
 
@@ -280,7 +283,7 @@ You are writing §1 of the d09 RFP Package. You have been given the complete §2
       messages: [{ role: "user", content: userMessage }],
     });
     execSummary = result.content
-      .filter((b): b is Anthropic.TextBlock => b.type === "text")
+      .filter((b): b is TextBlock => b.type === "text")
       .map((b) => b.text)
       .join("")
       .trim();
@@ -312,7 +315,7 @@ export interface D09MapReduceResult {
 export async function generateD09ViaMapReduce(args: {
   ctx: SourceGenerationContext;
   upstreamBound: Record<string, string | null>;
-  client: Anthropic;
+  client: AnthropicDirectClient;
 }): Promise<D09MapReduceResult> {
   const { ctx, upstreamBound, client } = args;
   const sharedContext = buildSharedContext(ctx, upstreamBound);
