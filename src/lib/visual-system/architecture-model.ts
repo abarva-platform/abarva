@@ -2,9 +2,9 @@
 //
 // The typed, cloud-AGNOSTIC architecture model the synthesis layer emits per
 // engagement. The renderer draws this model; it never hardcodes a cloud or a
-// service. First Capital shows AWS/Databricks because the solution reasoned it
-// — a different engagement yields different providers/services in the SAME
-// fields. Cloud is an OUTPUT, never a build-time setting.
+// service. A banking engagement might show AWS/Databricks because the solution
+// reasoned it — a different engagement yields different providers/services in the
+// SAME fields. Cloud is an OUTPUT, never a build-time setting.
 //
 // Models two states (as-is + to-be), an agentic "come-alive" overlay that
 // animates the target, the patterns in play, the control points, and the
