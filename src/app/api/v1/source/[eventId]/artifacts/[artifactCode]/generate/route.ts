@@ -577,6 +577,9 @@ export async function generateSourceArtifactDraft(
           error: qualityResult.error,
           detail: qualityResult.detail,
           qualityGate: qualityResult.qualityGate ?? null,
+          // Include the artifact row ID so callers can enqueue an async worker
+          // retry without needing a separate lookup.
+          artifactId: artifactRow.id,
         },
         { status: qualityResult.status },
       );
