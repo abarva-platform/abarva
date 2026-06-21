@@ -390,11 +390,88 @@ function answerFor(q) {
   };
 }
 
-function askNexus(q) {
-  if (!q || !q.trim()) return;
-  state.answer = answerFor(q.trim());
+// Render the current answer wherever it lives (canvas card or side dock).
+function paintAnswer() {
   if (isDocked()) { renderDock(); }
-  else { render(); $('body').scrollIntoView ? window.scrollTo({ top: $('ask').offsetTop - 70, behavior: 'smooth' }) : null; }
+  else { render(); }
+}
+
+// Turn streamed plain-text into the prose HTML the answer card expects:
+// escape, then promote blank lines to paragraph breaks and single newlines to <br>.
+function proseFromText(text) {
+  return esc(text)
+    .replace(/\n{2,}/g, '</p><p style="margin-top:12px">')
+    .replace(/\n/g, '<br>');
+}
+
+// W1.4 — the ask handler. Calls the server answer endpoint first and streams the
+// reply into the SAME answer card; on ANY failure it falls back to the in-browser
+// deterministic answerFor(q) so the surface never breaks (envs without the
+// endpoint / Anthropic creds / shared-engine flag still work).
+async function askNexus(q) {
+  if (!q || !q.trim()) return;
+  const question = q.trim();
+
+  // Token guards against a slow stream clobbering a newer question's answer.
+  const token = (askNexus._token = (askNexus._token || 0) + 1);
+
+  // (a) thinking state in the answer card.
+  state.answer = { q: question, h: 'Thinking…', p: '<span class="aprose-think">Asking Ava…</span>', render: '', cites: [] };
+  paintAnswer();
+  if (!isDocked()) { window.scrollTo ? window.scrollTo({ top: ($('ask').offsetTop || 0) - 70, behavior: 'smooth' }) : null; }
+
+  const fallback = () => {
+    if (askNexus._token !== token) return; // a newer question is in flight
+    state.answer = answerFor(question);
+    paintAnswer();
+  };
+
+  try {
+    // (b) hit the server answer endpoint.
+    const res = await fetch('/api/tower/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question }),
+    });
+    if (!res.ok || !res.body) { fallback(); return; }
+
+    // (c) stream the response body, progressively rendering into the same card.
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let acc = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (askNexus._token !== token) return; // superseded — stop painting
+      acc += decoder.decode(value, { stream: true });
+      if (acc.trim()) {
+        state.answer = {
+          q: question,
+          h: 'Ava · Tower',
+          p: '<p>' + proseFromText(acc) + '</p>',
+          render: '',
+          cites: ['Live · /api/tower/ask'],
+        };
+        paintAnswer();
+      }
+    }
+    acc += decoder.decode(); // flush
+    if (askNexus._token !== token) return;
+
+    // (d) empty body → fall back so the card is never blank.
+    if (!acc.trim()) { fallback(); return; }
+    state.answer = {
+      q: question,
+      h: 'Ava · Tower',
+      p: '<p>' + proseFromText(acc) + '</p>',
+      render: '',
+      cites: ['Live · /api/tower/ask'],
+    };
+    paintAnswer();
+  } catch (_err) {
+    // network/abort/any error → deterministic browser answer.
+    fallback();
+  }
 }
 
 // ── DOCK ──────────────────────────────────────────────────────────────
