@@ -185,4 +185,37 @@ describe("live-answer bank", () => {
       expect(result.deterministicPass).toBe(true);
     }
   });
+
+  it("recognizes final live hedge and next-move phrasings", () => {
+    const hedge = checkLiveAnswerCase(
+      {
+        id: "regression-final-hedge",
+        query: "Will this move clean claim rate or stall?",
+        expectedExpertId: "xp.healthcare-provider.revenue-cycle",
+        expectedBehaviors: ["surface_stuck_point", "hedge_uncertainty"],
+        notes: "Regression for final deployed Ava hedge phrasing.",
+      },
+      {
+        prose:
+          "These programs move clean claim rate, but the lift is front-loaded and the stall points are predictable. Most health systems hit at least two of them.",
+      },
+    );
+
+    const nextMove = checkLiveAnswerCase(
+      {
+        id: "regression-final-next-move",
+        query: "Where should the digital front door team focus first?",
+        expectedExpertId: "xp.healthcare-provider.patient-access",
+        expectedBehaviors: ["name_real_next_move"],
+        notes: "Regression for final deployed Ava next-move phrasing.",
+      },
+      {
+        prose:
+          "Given that, here's where I'd focus the digital front door team, in order: (1) Triage the patient record quality issue, then baseline no-show workflows.",
+      },
+    );
+
+    expect(hedge.deterministicPass).toBe(true);
+    expect(nextMove.deterministicPass).toBe(true);
+  });
 });
