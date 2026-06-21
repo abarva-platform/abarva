@@ -16,6 +16,8 @@ Follow-up compatibility patch: removes the live container's `tsx` dependency on 
 
 Second live-proof patch: the deployed runtime image copied `src/lib` and `src/scripts` for ACA jobs, but not `src/data`, so the private VNet truth-gate still could not load the Apex CDP seed after the import was made relative. The Docker runtime layer now includes `src/data` for operational scripts that intentionally execute from source inside ACA jobs.
 
+Third live-proof patch: after `src/data` was packaged, the deployed proof progressed to the next source-executed dependency and failed on `intelligence/seeds/archetype-phase-deliverable-matrix.json`. The Docker runtime layer now also includes the top-level `intelligence` seed assets required by `src/lib/programs/enhancement-spec.ts` and `pattern-manifest.ts`.
+
 ## Layer Impact
 
 - `global-control-lane`: Adds repo/CI validation scripts and release-check wiring. No application route behavior changes.
@@ -50,7 +52,8 @@ Second live-proof patch: the deployed runtime image copied `src/lib` and `src/sc
 - PASS: Private-VNet remediation loaded `northstar-clinical` structured records and SQL proof confirmed all dataset tenants have `enterprise_context_records` plus embedded chunks with non-null vectors.
 - BLOCKED: A second private-VNet run of `npm run scb:truth-gates -- --require-live` reached the packaged gate but failed on `Cannot find module '@/data/apexretail/cdp-pattern-seed'`; this compatibility patch addresses that import path.
 - BLOCKED: A third private-VNet run on deployed #3772 reached the relative import but failed on `Cannot find module '../../data/apexretail/cdp-pattern-seed'`; this confirmed the runtime image did not package `src/data`.
-- PENDING: Rerun `npm run scb:truth-gates -- --require-live` inside the private VNet after the Docker runtime packaging patch is merged and deployed.
+- BLOCKED: A fourth private-VNet run on deployed #3773 loaded `src/data` but failed on `Cannot find module '../../../intelligence/seeds/archetype-phase-deliverable-matrix.json'`; this confirmed the runtime image also needs the top-level `intelligence` seed folder.
+- PENDING: Rerun `npm run scb:truth-gates -- --require-live` inside the private VNet after the expanded Docker runtime packaging patch is merged and deployed.
 
 ## Rollout Plan
 
@@ -79,4 +82,4 @@ Revert the checker, release-check import, package script, tests, and this releas
 
 ## Known Gaps
 
-The Northstar data-plane gap has been remediated and SQL-proven. The remaining gap is packaged live truth-gate proof after the Docker runtime includes `src/data` and deploys.
+The Northstar data-plane gap has been remediated and SQL-proven. The remaining gap is packaged live truth-gate proof after the Docker runtime includes both `src/data` and top-level `intelligence` seed assets and deploys.
