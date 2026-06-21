@@ -127,6 +127,7 @@ describe("post-deploy crawl guard", () => {
         path: "/intelligence/ask",
         visibleText: "SkyHarbor Air ask Sentinel",
         hardQuestionExactFieldCitations: 0,
+        hardQuestionGroundingEvidence: 0,
       }),
     );
 
@@ -138,6 +139,24 @@ describe("post-deploy crawl guard", () => {
         }),
       ]),
     );
+  });
+
+  it("accepts structured source events as hard-question grounding evidence", () => {
+    const findings = comparePage(
+      observation({
+        surfaceId: "intelligence-ask",
+        path: "/intelligence/ask",
+        visibleText: "SkyHarbor Air ask Sentinel",
+        hardQuestionExactFieldCitations: 0,
+        hardQuestionGroundingEvidence: 2,
+      }),
+    );
+
+    expect(
+      findings.some(
+        (finding) => finding.dimension === "hard-question-citation-depth",
+      ),
+    ).toBe(false);
   });
 
   it("classifies crawl auth bootstrap failures as P1 without tenant-leakage noise", () => {

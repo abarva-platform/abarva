@@ -20,6 +20,7 @@ interface CrawlLatest {
       path?: string;
       url?: string;
       hardQuestionExactFieldCitations?: number;
+      hardQuestionGroundingEvidence?: number;
       consoleErrors?: string[];
       networkErrors?: Array<{ url: string; status: number }>;
     }>;
@@ -45,6 +46,10 @@ interface TranscriptTurn {
   status?: string;
   error?: string;
   eventCount?: number;
+  sourceEventCitations?: number;
+  exactFieldCitations?: number;
+  concreteFactSignals?: number;
+  groundingEvidence?: number;
 }
 
 interface TranscriptFile {
@@ -133,10 +138,10 @@ function summarize(rows: ReturnType<typeof flattenTranscripts>, latest: CrawlLat
   const errors = rows.filter((row) => row.status === 'error' || !(row.answer ?? '').trim() || looksLikeSynthesisError(row.answer ?? ''));
   const chromeOnly = rows.filter((row) => looksLikeChromeOnlyAnswer(row.answer ?? ''));
   const synthesisErrors = rows.filter((row) => looksLikeSynthesisError(row.answer ?? ''));
-  const exactFieldCitations = rows.reduce((sum, row) => {
-    const matches = (row.answer ?? '').match(/\b(?:intake|source_events|vendor_pricing|pricing_submissions|selection_memo|legal_review|contract_terms|telemetry)\.[a-z0-9_[\].-]+/gi);
-    return sum + (matches?.length ?? 0);
-  }, 0);
+  const groundingEvidence = rows.reduce(
+    (sum, row) => sum + (row.groundingEvidence ?? row.exactFieldCitations ?? 0),
+    0,
+  );
   const observations = latest.run?.observations?.length ?? 0;
   return {
     totalTurns: rows.length,
@@ -144,7 +149,7 @@ function summarize(rows: ReturnType<typeof flattenTranscripts>, latest: CrawlLat
     errorTurns: errors.length,
     synthesisErrorTurns: synthesisErrors.length,
     chromeOnlyTurns: chromeOnly.length,
-    exactFieldCitations,
+    groundingEvidence,
     observations,
     p0: latest.comparison?.p0 ?? 0,
     p1: latest.comparison?.p1 ?? 0,
@@ -191,7 +196,7 @@ function renderHtml(
     ${metric('Error / Empty Turns', String(summary.errorTurns))}
     ${metric('Synthesis Error Turns', String(summary.synthesisErrorTurns))}
     ${metric('Chrome-only Turns', String(summary.chromeOnlyTurns))}
-    ${metric('Exact Field Citations', String(summary.exactFieldCitations))}
+    ${metric('Grounding Evidence Signals', String(summary.groundingEvidence))}
     ${metric('P0 / P1 / P2', `${summary.p0} / ${summary.p1} / ${summary.p2}`)}
     ${metric('Page Observations', String(summary.observations))}
     ${metric('Transcript Files', String(transcripts.length))}

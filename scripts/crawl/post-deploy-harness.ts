@@ -149,6 +149,7 @@ function buildAuthBootstrapObservation(
     proofPointCount: 0,
     citationDensity: 0,
     hardQuestionExactFieldCitations: 0,
+    hardQuestionGroundingEvidence: 0,
     watchlistTopEntries: [],
     visualCanon: {
       backgroundOk: true,
@@ -251,7 +252,7 @@ async function crawlSurface(
 
   const transcript = surface.requiresAgentProbe
     ? await askHardQuestions(page, persona, surface, safeName, out, questions)
-    : { exactFieldCitations: 0 };
+    : { exactFieldCitations: 0, groundingEvidence: 0 };
   if (surface.requiresContextDemoVectorProof) {
     await proveContextDemoVectorPath(page, persona, safeName, out);
   }
@@ -288,6 +289,7 @@ async function crawlSurface(
     proofPointCount: counts.proofPointCount,
     citationDensity: counts.citationDensity,
     hardQuestionExactFieldCitations: transcript.exactFieldCitations,
+    hardQuestionGroundingEvidence: transcript.groundingEvidence,
     watchlistTopEntries: counts.watchlistTopEntries,
     visualCanon: counts.visualCanon,
     metrics: counts.metrics,
@@ -361,34 +363,50 @@ async function askHardQuestions(
   safeName: string,
   out: string,
   questions: readonly string[],
-): Promise<{ exactFieldCitations: number }> {
+): Promise<{ exactFieldCitations: number; groundingEvidence: number }> {
   const transcript: Array<{
     question: string;
     answer: string;
     status: 'answered' | 'error';
     error?: string;
     eventCount?: number;
+    sourceEventCitations?: number;
+    exactFieldCitations?: number;
+    concreteFactSignals?: number;
+    groundingEvidence?: number;
   }> = [];
   let exactFieldCitations = 0;
+  let groundingEvidence = 0;
   for (const question of questions) {
     const questionNumber = transcript.length + 1;
     console.log(`crawl_question_start:${persona.key}:${surface.id}:${questionNumber}/${questions.length}`);
     const response = await askIntelligenceApi(page, question, persona, surface);
     const answer = response.answer;
-    exactFieldCitations += (answer.match(/\b(?:intake|source_events|vendor_pricing|pricing_submissions|selection_memo|legal_review|contract_terms|telemetry)\.[a-z0-9_[\].-]+/gi) ?? []).length;
+    const answerExactFieldCitations = countExactFieldCitations(answer);
+    const concreteFactSignals = countConcreteFactSignals(answer);
+    const answerGroundingEvidence =
+      response.sourceEventCitations +
+      answerExactFieldCitations +
+      concreteFactSignals;
+    exactFieldCitations += answerExactFieldCitations;
+    groundingEvidence += answerGroundingEvidence;
     transcript.push({
       question,
       answer,
       status: response.ok ? 'answered' : 'error',
       error: response.error,
       eventCount: response.eventCount,
+      sourceEventCitations: response.sourceEventCitations,
+      exactFieldCitations: answerExactFieldCitations,
+      concreteFactSignals,
+      groundingEvidence: answerGroundingEvidence,
     });
     console.log(
       `crawl_question_complete:${persona.key}:${surface.id}:${questionNumber}/${questions.length}:ok=${response.ok}:events=${response.eventCount}`,
     );
   }
   await fs.writeFile(path.join(out, 'transcripts', `${safeName}.json`), JSON.stringify(transcript, null, 2));
-  return { exactFieldCitations };
+  return { exactFieldCitations, groundingEvidence };
 }
 
 async function askIntelligenceApi(
@@ -396,7 +414,7 @@ async function askIntelligenceApi(
   question: string,
   persona: { tenantKey: string; tenantName: string },
   surface: CrawlSurface,
-): Promise<{ ok: boolean; answer: string; error?: string; eventCount: number }> {
+): Promise<{ ok: boolean; answer: string; error?: string; eventCount: number; sourceEventCitations: number }> {
   return page.evaluate(async ({ question: q, persona: p, surface: s }) => {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 55_000);
@@ -428,6 +446,7 @@ async function askIntelligenceApi(
           answer: '',
           error: `ask_api_http_${response.status}`,
           eventCount: 0,
+          sourceEventCitations: 0,
         };
       }
 
@@ -436,6 +455,7 @@ async function askIntelligenceApi(
       let buffer = '';
       let answer = '';
       let eventCount = 0;
+      let sourceEventCitations = 0;
       let error: string | undefined;
 
       while (true) {
@@ -453,9 +473,13 @@ async function askIntelligenceApi(
             delta?: string;
             error?: string;
             stage?: { name?: string; content?: string };
+            sources?: unknown[];
           };
           if (event.type === 'delta' && event.text) answer += event.text;
           if (event.type === 'delta' && event.delta) answer += event.delta;
+          if (event.type === 'sources' && Array.isArray(event.sources)) {
+            sourceEventCitations += event.sources.length;
+          }
           if (event.type === 'sentinel-stage' && event.stage?.content) {
             answer += `${event.stage.name ?? 'Stage'}: ${event.stage.content}\n`;
           }
@@ -468,6 +492,7 @@ async function askIntelligenceApi(
         answer: answer.trim(),
         error,
         eventCount,
+        sourceEventCitations,
       };
     } catch (err) {
       return {
@@ -475,11 +500,36 @@ async function askIntelligenceApi(
         answer: '',
         error: err instanceof Error ? err.message : String(err),
         eventCount: 0,
+        sourceEventCitations: 0,
       };
     } finally {
       window.clearTimeout(timeout);
     }
   }, { question, persona, surface });
+}
+
+const EXACT_FIELD_CITATION_PATTERN =
+  /\b(?:intake|source_events|vendor_pricing|pricing_submissions|selection_memo|legal_review|contract_terms|telemetry)\.[a-z0-9_[\].-]+/gi;
+
+function countExactFieldCitations(answer: string): number {
+  return (answer.match(EXACT_FIELD_CITATION_PATTERN) ?? []).length;
+}
+
+function countConcreteFactSignals(answer: string): number {
+  const signals = new Set<string>();
+  for (const match of answer.matchAll(/\$\s?\d[\d,.]*(?:\s?(?:k|m|b|million|billion))?/gi)) {
+    signals.add(`money:${match[0].toLowerCase()}`);
+  }
+  for (const match of answer.matchAll(/\b\d+(?:\.\d+)?\s?%/g)) {
+    signals.add(`percent:${match[0]}`);
+  }
+  for (const match of answer.matchAll(/\b(?:FY\s?)?20\d{2}\b|\bQ[1-4]\s+20\d{2}\b/gi)) {
+    signals.add(`date:${match[0].toLowerCase()}`);
+  }
+  for (const match of answer.matchAll(/\b[\w./-]+\.(?:csv|json|jsonl|md|pdf|docx|xlsx|pptx)\b/gi)) {
+    signals.add(`file:${match[0].toLowerCase()}`);
+  }
+  return signals.size;
 }
 
 interface ContextDemoVectorProof {
