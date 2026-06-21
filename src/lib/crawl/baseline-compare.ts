@@ -26,7 +26,8 @@ export interface CrawlPageObservation {
   evidenceChipCount: number;
   proofPointCount: number;
   citationDensity: number;
-  hardQuestionExactFieldCitations: number;
+  hardQuestionExactFieldCitations?: number;
+  hardQuestionGroundingEvidence?: number;
   watchlistTopEntries: string[];
   visualCanon: {
     backgroundOk: boolean;
@@ -296,12 +297,16 @@ export function comparePage(
 
   if (
     requiresHardQuestionCitationDepth(observation.surfaceId) &&
-    observation.hardQuestionExactFieldCitations < 2
+    hardQuestionGroundingEvidence(observation) < 2
   ) {
     add(
       "P1",
       "hard-question-citation-depth",
-      "Hard-question answers did not cite at least two exact intake/evidence fields.",
+      "Hard-question answers did not provide at least two grounded evidence signals.",
+      {
+        groundingEvidence: hardQuestionGroundingEvidence(observation),
+        exactFieldCitations: observation.hardQuestionExactFieldCitations ?? 0,
+      },
     );
   }
 
@@ -311,6 +316,16 @@ export function comparePage(
 function requiresHardQuestionCitationDepth(surfaceId: string): boolean {
   return /(?:^|[-_])(ask|agent|sentinel)(?:$|[-_])|source-event-detail/i.test(
     surfaceId,
+  );
+}
+
+function hardQuestionGroundingEvidence(
+  observation: CrawlPageObservation,
+): number {
+  return (
+    observation.hardQuestionGroundingEvidence ??
+    observation.hardQuestionExactFieldCitations ??
+    0
   );
 }
 
