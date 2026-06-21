@@ -34,6 +34,7 @@ import {
 } from "@/components/agent/AgentDock";
 import type { ChatMessage } from "./types";
 import type { AskSource } from "@/lib/intelligence/ask/types";
+import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
 
 const LEGACY_STORAGE_KEY = "abarva.intelligence.chat-mode";
 const LEGACY_MIGRATED_FLAG = "abarva.intelligence.chat-mode.migrated";
@@ -201,6 +202,7 @@ export function SentinelChat({
             error?: string;
             telemetryEventId?: string;
             sources?: AskSource[];
+            answer?: AgentAnswer;
           };
           const delta = event.delta ?? event.text;
           if (
@@ -226,6 +228,15 @@ export function SentinelChat({
             setLocalTurns((prev) =>
               prev.map((turn) =>
                 turn.id === agentTurnId ? { ...turn, body: answer } : turn,
+              ),
+            );
+          }
+          if (event.type === "agent-answer" && event.answer) {
+            setLocalTurns((prev) =>
+              prev.map((turn) =>
+                turn.id === agentTurnId
+                  ? { ...turn, agentAnswer: event.answer }
+                  : turn,
               ),
             );
           }
