@@ -26,8 +26,9 @@ export function Ch09SelectionChapter() {
         <Eyebrow light>Meridian Case Study · Chapter 09 · Stage 09 Selection</Eyebrow>
         <SectionTitle light size="xl">Day 95. One winner letter, two loser letters.</SectionTitle>
         <Lead light>
-          Sentinel takes the lead-agent role back from Atlas to draft the
-          three vendor letters. The shape of each is different: B gets a
+          Ava drafts the three vendor letters — back in sourcing register
+          after the executive Decision brief. The shape of each is
+          different: B gets a
           welcome with day-1 expectations; A gets a courteous close-out
           naming the exclusivity-clause concern; D gets a courteous
           close-out with the rubric breakdown showing exactly where they
@@ -62,7 +63,7 @@ export function Ch09SelectionChapter() {
         <Eyebrow>Day 95 · Letter to Vendor B</Eyebrow>
         <SectionTitle>The winner letter (d27)</SectionTitle>
         <Lead>
-          Sentinel composes d27 from d24 + the BAFO closure summary +
+          Ava composes d27 from d24 + the BAFO closure summary +
           the d09 cover note. Janet reviews and personalizes the
           opening; the rest is mechanical.
         </Lead>
@@ -127,7 +128,7 @@ export function Ch09SelectionChapter() {
         <Lead>
           A&rsquo;s letter has to acknowledge the BAFO withdrawal as the
           formal closure point and provide enough specificity that the
-          vendor understands what closed them out. Sentinel uses the
+          vendor understands what closed them out. Ava uses the
           d22 pattern-2 closure template.
         </Lead>
 
@@ -265,7 +266,7 @@ export function Ch09SelectionChapter() {
         <SectionTitle>Each letter carries a receipt</SectionTitle>
         <AgentSplitBox
           agent={{
-            who: 'Sentinel',
+            who: 'Ava',
             did: (
               <>
                 Composed all three letters from the canonical d27

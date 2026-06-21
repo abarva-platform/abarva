@@ -439,7 +439,7 @@ export function ArtifactSpecimen({
 }
 
 /**
- * Sentinel-vs-human callout — explains what Sentinel did automatically
+ * Agent-vs-human callout — explains what Ava did automatically
  * vs what the procurement lead had to decide. Used inline within
  * chapter narrative.
  */
@@ -447,7 +447,7 @@ export function AgentSplitBox({
   agent,
   human,
 }: {
-  agent: { who: 'Sentinel' | 'Atlas'; did: React.ReactNode };
+  agent: { who: 'Ava' | 'Sentinel' | 'Atlas'; did: React.ReactNode };
   human: { who: string; did: React.ReactNode };
 }) {
   const agentBg = agent.who === 'Atlas' ? T.purpleSoft : T.navySoft;

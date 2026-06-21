@@ -110,7 +110,7 @@ export async function POST(
 
     // 5. Phase-specific system prompt
     const systemPrompt = [
-      `You are Nexus, workspace delivery agent for ${phaseLabel}.`,
+      `You are Ava, workspace delivery agent for ${phaseLabel}.`,
       `Draft the ${body.deliverableKey} for ${context.program.name}.`,
       `Move code: ${program.name}. Phase: P${phase} ${phaseLabel}.`,
       `Archetype: ${context.program.archetype ?? "strategic_transformation"}.`,

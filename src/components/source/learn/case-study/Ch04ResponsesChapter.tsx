@@ -27,7 +27,7 @@ export function Ch04ResponsesChapter() {
         <Lead light>
           Four responses come in. Three are usable; one is not. Vendor C
           treats the d19a pricing template as a suggestion and submits its
-          own format with six fields missing. Sentinel&rsquo;s d11 checklist
+          own format with six fields missing. Ava&rsquo;s d11 checklist
           flags the gaps in 90 seconds. C is offered a correction window,
           declines, and drops out. The pool is now three.
         </Lead>
@@ -53,7 +53,7 @@ export function Ch04ResponsesChapter() {
         </Lead>
         <BodyP>
           Janet uploads each response packet to the canvas as a vendor
-          submission. Sentinel receipts them, indexes them, and runs the
+          submission. Ava receipts them, indexes them, and runs the
           d11 completeness check overnight. By 9:00 a.m. on Day 34 there
           are four d11 reports waiting.
         </BodyP>
@@ -125,7 +125,7 @@ export function Ch04ResponsesChapter() {
         <Eyebrow>Why C&rsquo;s response failed</Eyebrow>
         <SectionTitle>The d19a substitution problem</SectionTitle>
         <Lead>
-          Sentinel&rsquo;s analysis of the C response, surfaced inline on
+          Ava&rsquo;s analysis of the C response, surfaced inline on
           the d11 report: &ldquo;Vendor C substituted their published
           portfolio pricing schedule for the d19a workbook. The d09 cover
           note explicitly stated d19a fields could not be substituted. This
@@ -162,14 +162,14 @@ export function Ch04ResponsesChapter() {
         <Lead>
           Per the d09 cover note, an incomplete response gets one
           short-cycle correction window. Janet drafts the correction email
-          via Sentinel, with the 6 missing items enumerated and the d19a
+          via Ava, with the 6 missing items enumerated and the d19a
           template re-attached. Five business days; respond in d19a format
           or the bid is withdrawn.
         </Lead>
 
         <AgentSplitBox
           agent={{
-            who: 'Sentinel',
+            who: 'Ava',
             did: (
               <>
                 Drafted the correction email enumerating the 6 missing
@@ -184,7 +184,7 @@ export function Ch04ResponsesChapter() {
             who: 'Janet',
             did: (
               <>
-                Reviewed and sent. Asked Sentinel to escalate to vendor
+                Reviewed and sent. Asked Ava to escalate to vendor
                 C&rsquo;s account exec on Day 38 if no response. Day 38
                 comes; Vendor C&rsquo;s account exec calls Janet directly
                 and declines the correction. They&rsquo;d rather withdraw.
@@ -207,7 +207,7 @@ export function Ch04ResponsesChapter() {
         <Eyebrow>Where the three live bids stand</Eyebrow>
         <SectionTitle>A, B, D — all complete, all comparable</SectionTitle>
         <Lead>
-          With three complete responses in d19a format, Sentinel can run
+          With three complete responses in d19a format, Ava can run
           structured comparison. Pricing-trap detection will follow in
           Chapter 6. For now, the d11 status of each looks like this:
         </Lead>

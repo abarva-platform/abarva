@@ -53,7 +53,7 @@ export function GatesSection() {
             An advisory gate requirement. The gate can clear even if this is open — but it appears as a warning in the gate view and in the audit trail seen by Control Tower. <em>Examples: stakeholder review completed, technical sign-off obtained.</em>
           </Term>
           <Term name="Gate approval">
-            The human action that clears a gate. In the current pilot, any user can self-approve. In production, only admin or Maestro-role users can approve. <em>Nexus (the AI) cannot approve a gate on your behalf — gate approval is always a human action.</em>
+            The human action that clears a gate. In the current pilot, any user can self-approve. In production, only admin or Maestro-role users can approve. <em>Ava (the AI) cannot approve a gate on your behalf — gate approval is always a human action.</em>
           </Term>
         </TermGrid>
       </Section>
@@ -73,8 +73,8 @@ export function GatesSection() {
           <Step title="Select the document and click Generate">
             Gate artifacts are marked with a green GATE chip. Generate these first — they&rsquo;re what the gate checks for. Format is HTML preview + Word download for narrative docs; Excel for the Financial Model.
           </Step>
-          <Step title="Wait ~10–30s, then preview or download" note="💡 Give Nexus rich context when generating: 'generate the charter — sponsor is Sarah Chen (COO), scope is inbound routing only, deadline is Q3.' More context = better document.">
-            Nexus assembles the document from your scaffold data, phase inputs, and chat history. Complex documents (Business Case, Financial Model) may take longer. Regenerate any time after major chat updates.
+          <Step title="Wait ~10–30s, then preview or download" note="💡 Give Ava rich context when generating: 'generate the charter — sponsor is Sarah Chen (COO), scope is inbound routing only, deadline is Q3.' More context = better document.">
+            Ava assembles the document from your scaffold data, phase inputs, and chat history. Complex documents (Business Case, Financial Model) may take longer. Regenerate any time after major chat updates.
           </Step>
         </StepList>
       </Section>
@@ -103,7 +103,7 @@ export function GatesSection() {
         </TermGrid>
 
         <Callout kind="info" icon="📎" label="Uploading supporting evidence">
-          Upload files via the Evidence Hub directly, or attach them in the Nexus chat with the paperclip icon. Supported: PDF, Word, Excel, CSV, PowerPoint. Uploaded files are indexed by the evidence specialist and attached to the relevant phase automatically.
+          Upload files via the Evidence Hub directly, or attach them in the Ava chat with the paperclip icon. Supported: PDF, Word, Excel, CSV, PowerPoint. Uploaded files are indexed by the evidence specialist and attached to the relevant phase automatically.
         </Callout>
       </Section>
     </>

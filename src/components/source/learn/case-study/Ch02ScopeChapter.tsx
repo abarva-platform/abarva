@@ -28,7 +28,7 @@ export function Ch02ScopeChapter() {
         <Lead light>
           Karen Liu and Janet Fischer spend three working days enumerating
           what&rsquo;s in and what&rsquo;s out. The d05 scope memo is what
-          vendors will price and Sentinel will trap-detect against. Get this
+          vendors will price and Ava will trap-detect against. Get this
           right and the next eight chapters fall into shape; under-enumerate
           one system and you&rsquo;re paying for the surprise in Chapter 10.
         </Lead>
@@ -64,17 +64,17 @@ export function Ch02ScopeChapter() {
 
       <Section>
         <Eyebrow>Day 2 · Discovery</Eyebrow>
-        <SectionTitle>Karen pulls the app inventory; Sentinel populates d04</SectionTitle>
+        <SectionTitle>Karen pulls the app inventory; Ava populates d04</SectionTitle>
         <Lead>
           The d04 application inventory is a tier-classified list of every
           app that talks to the colo. Karen&rsquo;s team had a stale CMDB
           export from last year; she pulls the current one, drops it into
-          Sentinel, and asks for d04 generation.
+          Ava, and asks for d04 generation.
         </Lead>
 
         <AgentSplitBox
           agent={{
-            who: 'Sentinel',
+            who: 'Ava',
             did: (
               <>
                 Parsed the CMDB export, joined it against the ServiceNow
@@ -85,7 +85,7 @@ export function Ch02ScopeChapter() {
                 months).
               </>
             ),
-            // intentional: agent.who Sentinel
+            // intentional: agent.who Ava
           }}
           human={{
             who: 'Karen',
@@ -146,9 +146,9 @@ export function Ch02ScopeChapter() {
 
       <Section>
         <Eyebrow>Day 4 · d05 lands</Eyebrow>
-        <SectionTitle>The scope memo Sentinel composed</SectionTitle>
+        <SectionTitle>The scope memo Ava composed</SectionTitle>
         <Lead>
-          With d04 stabilized and the DR boundary decided, Sentinel composes
+          With d04 stabilized and the DR boundary decided, Ava composes
           d05 in eight minutes. Karen and Janet review it together.
         </Lead>
 

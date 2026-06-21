@@ -1466,12 +1466,16 @@ const AGENT_DOCK_ROLE_COPY: Record<"Sentinel" | "Atlas", string> = {
   Atlas: "Frames the executive brief, ranks finalists, locks the decision.",
 };
 
-function displayAgentName(agent: "Sentinel" | "Atlas"): string {
-  return agent === "Sentinel" ? "Ava" : agent;
+// Unified voice: the user always talks to "Ava", regardless of which internal
+// specialist (Sentinel on stages 1–9, Atlas on the executive stages) leads the
+// stage. The stage-appropriate role copy still differs (see AGENT_DOCK_ROLE_COPY);
+// only the displayed agent NAME is always Ava.
+function displayAgentName(_agent: "Sentinel" | "Atlas"): string {
+  return "Ava";
 }
 
-function displayAgentInitials(agent: "Sentinel" | "Atlas"): string {
-  return agent === "Sentinel" ? "Av" : agent[0];
+function displayAgentInitials(_agent: "Sentinel" | "Atlas"): string {
+  return "Av";
 }
 
 function CanvasTour() {

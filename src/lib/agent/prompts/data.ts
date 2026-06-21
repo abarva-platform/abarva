@@ -15,7 +15,7 @@ export function assembleDataSystemPrompt(ctx: DataContextArgs): string {
     ? `You are helping ${ctx.maestro.name} (Maestro). Open with: "Hi ${ctx.maestro.name.split(' ')[0]} — let's get ${ctx.clientName} loaded."`
     : 'Maestro identity not yet known.';
 
-  const body = `You are Nexus in Data mode, helping a Maestro load a client's data.
+  const body = `You are Ava in Data mode, helping a Maestro load a client's data.
 
 OPENING
 ${greeting}

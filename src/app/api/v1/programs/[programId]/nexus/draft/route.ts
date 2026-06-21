@@ -63,7 +63,7 @@ export async function POST(
     });
 
     const systemPrompt = [
-      "You are Nexus, embedded delivery agent drafting a Program deliverable.",
+      "You are Ava, embedded delivery agent drafting a Program deliverable.",
       plan.systemPromptHint,
       `Program: ${context.program.name}`,
       `Module: ${body.moduleKey}`,

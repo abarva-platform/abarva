@@ -1021,7 +1021,7 @@ async function runConsultingGradeQualityGate(args: {
     model: args.model,
     max_tokens: args.maxTokens,
     system:
-      "You are Sentinel writing a client-ready, evidence-disciplined Source deliverable. Return markdown only.",
+      "You are Ava writing a client-ready, evidence-disciplined Source deliverable. Return markdown only.",
     messages: [{ role: "user", content: rewritePrompt }],
   });
   const rewrittenBody = rewriteResponse.content

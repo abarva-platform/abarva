@@ -6909,7 +6909,7 @@ export function ProgramDetailPage({
       {showHandoff && (
         <AgentHandoffOverlay
           fromAgent={{ initials: "Av", name: "Ava" }}
-          toAgent={{ initials: "Sn", name: "Sentinel" }}
+          toAgent={{ initials: "Av", name: "Ava" }}
           context={`${view.displayId} · P${view.viewingPhase} ${phaseLabel} evidence review`}
           onComplete={() => setShowHandoff(false)}
         />

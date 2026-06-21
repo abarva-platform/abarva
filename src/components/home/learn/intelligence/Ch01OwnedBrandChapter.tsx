@@ -30,14 +30,14 @@ export function Ch01OwnedBrandChapter() {
 
       <StoryRecap>
         APX-01 &ldquo;Morrison Owned Brand Margin Recovery&rdquo; is currently in Phase 4 (Validate).
-        The Intelligence substrate has been live for two quarters. Sentinel has surfaced the owned
+        The Intelligence substrate has been live for two quarters. Ava has surfaced the owned
         brand signal three times — each time with more evidence. This chapter shows what that signal
         actually contains and what to do with it.
       </StoryRecap>
 
       <Section>
         <Eyebrow>The signal</Eyebrow>
-        <SectionTitle>What Sentinel surfaced</SectionTitle>
+        <SectionTitle>What Ava surfaced</SectionTitle>
         <Lead>
           The pressure card reads: <em>&ldquo;Private label gross margin 240bps below plan across 14
           segments. Three contributing factors identified: promotional depth, markdown timing,
@@ -46,7 +46,7 @@ export function Ch01OwnedBrandChapter() {
         <BodyP>
           The signal isn&rsquo;t novel — finance has been tracking the GM gap for two quarters.
           What&rsquo;s new is the decomposition. Before Intelligence, the gap was an aggregate number.
-          Sentinel breaks it into three causal buckets and ties each to a specific set of SKUs,
+          Ava breaks it into three causal buckets and ties each to a specific set of SKUs,
           categories, and weeks. That&rsquo;s what makes it actionable.
         </BodyP>
         <Callout kind="info" icon="💡" label="Why decomposition matters">
@@ -60,7 +60,7 @@ export function Ch01OwnedBrandChapter() {
         <Eyebrow>The breakdown</Eyebrow>
         <SectionTitle>240bps traced to three causes</SectionTitle>
         <Lead>
-          Sentinel&rsquo;s attribution model runs across the promotional calendar, markdown log, and
+          Ava&rsquo;s attribution model runs across the promotional calendar, markdown log, and
           assortment performance data. Here&rsquo;s the split.
         </Lead>
 

@@ -18,7 +18,7 @@ export function IntelligenceSynthesisPage({
       topBarProps={{ tenantName, showLocked: true, context: 'Intelligence · Atlas synthesis' }}
     >
       <AgentColumn
-        agent={{ initials: 'At', name: 'Atlas', role: 'Synthesizer' }}
+        agent={{ initials: 'Av', name: 'Ava', role: 'Synthesizer' }}
         quote={`Deterministic synthesis ready. ${view.result.wordCount} words, ${view.result.citations.length} corpus citations, no live model call.`}
         agentContext="Atlas · deterministic synthesis · I6"
         actions={[

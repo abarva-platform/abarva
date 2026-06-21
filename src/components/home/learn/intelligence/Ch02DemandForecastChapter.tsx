@@ -50,7 +50,7 @@ export function Ch02DemandForecastChapter() {
           phantom demand signals that distort the next forecast cycle. The two-day gap compounds.
         </BodyP>
         <BodyP>
-          The Sentinel substrate traces the 2-day excess to three categories: seasonal apparel
+          The intelligence substrate traces the 2-day excess to three categories: seasonal apparel
           (0.8 days), Morrison private label household (0.7 days), and electronics adjacencies
           (0.5 days). Seasonal apparel is the most fixable — it&rsquo;s a timing issue, not a
           structural one.

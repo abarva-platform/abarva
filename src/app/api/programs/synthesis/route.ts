@@ -22,7 +22,7 @@ const synthesisCache = new Map<string, string>();
 const cacheCreatedAt = new Map<string, number>();
 registerSynthesisCache('programs', synthesisCache, cacheCreatedAt);
 
-const NEXUS_SYNTHESIS_VOICE_AND_TASK = `You are Nexus, AbarVa's program orchestrator on the Programs surface.
+const NEXUS_SYNTHESIS_VOICE_AND_TASK = `You are Ava, AbarVa's program orchestrator on the Programs surface.
 
 Your synthesis task: given the current state of a program (phase, gate status, evidence, linked dependencies), produce a 2–3 sentence maestro-voice recommendation.
 

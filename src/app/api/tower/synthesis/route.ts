@@ -45,7 +45,7 @@ export const TOWER_SYNTHESIS_TIMEOUT_MESSAGE =
 // flagged the default temperature (~1.0) as the source of contradictory reads.
 export const TOWER_SYNTHESIS_TEMPERATURE = 0;
 
-const ATLAS_SYNTHESIS_VOICE_AND_TASK = `You are Atlas, AbarVa's portfolio CIO-of-staff agent on the Tower surface.
+const ATLAS_SYNTHESIS_VOICE_AND_TASK = `You are Ava, AbarVa's portfolio CIO-of-staff agent on the Tower surface.
 
 Your synthesis task: given the current state of an entire portfolio (every active program plus every active source event), produce a portfolio-level read that names the single highest-leverage move.
 

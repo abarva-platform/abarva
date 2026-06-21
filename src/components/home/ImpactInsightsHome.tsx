@@ -257,7 +257,7 @@ export function ImpactInsightsHome({
                     Open in the workspace — review &amp; decide →
                   </Link>
                   <Link href="/intelligence" style={ghostBtn}>
-                    Ask Atlas to brief me
+                    Ask Ava to brief me
                   </Link>
                 </div>
               </div>

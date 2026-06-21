@@ -95,7 +95,7 @@ const SEEDED_SIGN_OFFS: SignOff[] = [
     status: "pending",
     note: "Governance review not yet initiated",
   },
-  { role: "Atlas", status: "complete", note: "Executive content verified" },
+  { role: "Ava", status: "complete", note: "Executive content verified" },
   { role: "Procurement Lead", status: "pending", note: "Awaiting BAFO close" },
   { role: "Ava", status: "complete", note: "Evidence chain attested" },
 ];

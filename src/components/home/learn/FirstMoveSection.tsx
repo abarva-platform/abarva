@@ -51,7 +51,7 @@ function ChatMessage({
           flexShrink: 0,
         }}
       >
-        {isUser ? 'YOU' : 'NX'}
+        {isUser ? 'YOU' : 'AVA'}
       </div>
 
       {/* Bubble */}
@@ -247,7 +247,7 @@ export function FirstMoveSection() {
         <Eyebrow light>First Move · Walkthrough</Eyebrow>
         <SectionTitle light size="xl" level={1}>First Move walkthrough</SectionTitle>
         <Lead light>
-          A complete walkthrough of the P0 → P5 workflow using a realistic example: reducing contact center handle time with AI routing. You'll see exactly what Nexus does at each phase and what decisions stay with you.
+          A complete walkthrough of the P0 → P5 workflow using a realistic example: reducing contact center handle time with AI routing. You'll see exactly what Ava does at each phase and what decisions stay with you.
         </Lead>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
           {['Surface: Strategic Moves', 'Audience: First-time users', 'Time: ~25 min'].map((tag) => (
@@ -328,10 +328,10 @@ export function FirstMoveSection() {
       <Section>
         <PhaseStep phase="P0" name="Originate" color={T.ink2} gate="Promotion to P1">
           <BodyP>
-            <strong>What you do:</strong> Navigate to Strategic Moves → New Move. Paste the CEO note into the chat. Nexus immediately starts extracting structure.
+            <strong>What you do:</strong> Navigate to Strategic Moves → New Move. Paste the CEO note into the chat. Ava immediately starts extracting structure.
           </BodyP>
 
-          <ChatWindow title="Nexus · P0 Originate">
+          <ChatWindow title="Ava · P0 Originate">
             <ChatMessage role="user">
               <em style={{ color: T.faint }}>[Pastes the CEO note]</em>
               <br />
@@ -368,7 +368,7 @@ export function FirstMoveSection() {
           </ChatWindow>
 
           <OutcomeRow
-            label="What Nexus produced at P0"
+            label="What Ava produced at P0"
             items={[
               'Falsifiable hypothesis',
               'Archetype: Workflow Automation',
@@ -380,7 +380,7 @@ export function FirstMoveSection() {
           />
 
           <Callout kind="info" icon="💡" label="The UNVALIDATED HYPOTHESIS label">
-            Notice that Nexus never confirms the $4M figure — it records it as an unvalidated hypothesis. This isn't a limitation; it's a discipline. You will validate (or revise) this against real baseline data in P2.
+            Notice that Ava never confirms the $4M figure — she records it as an unvalidated hypothesis. This isn't a limitation; it's a discipline. You will validate (or revise) this against real baseline data in P2.
           </Callout>
         </PhaseStep>
       </Section>
@@ -392,7 +392,7 @@ export function FirstMoveSection() {
             <strong>What you do:</strong> Brief the COO on the structured initiative and engage her as the named functional sponsor. Her sign-off at P1 means she's aligned on scope and governance — not yet approving cost or timeline. That comes at P4 after the business case is built.
           </BodyP>
 
-          <ChatWindow title="Nexus · P1 Charter">
+          <ChatWindow title="Ava · P1 Charter">
             <ChatMessage role="nexus">
               Welcome to P1. The P0 gate cleared — we have a hypothesis and a sponsor candidate: the COO. P1 goal: engage her on scope and governance, then produce a charter that reflects her input. Has she had a chance to review the initiative framing?
             </ChatMessage>
@@ -428,7 +428,7 @@ export function FirstMoveSection() {
           </ChatWindow>
 
           <OutcomeRow
-            label="What Nexus produced at P1"
+            label="What Ava produced at P1"
             items={[
               'Program Charter (11 sections)',
               'Sponsor engagement documented (COO)',
@@ -449,10 +449,10 @@ export function FirstMoveSection() {
       <Section>
         <PhaseStep phase="P2" name="Discover & Diagnose" color={T.navy} gate="Diagnosis Sign-Off">
           <BodyP>
-            <strong>What you do:</strong> Pull the last 6 months of call center data. Upload the IVR routing logs. Nexus analyzes what's driving high AHT and builds the root cause analysis.
+            <strong>What you do:</strong> Pull the last 6 months of call center data. Upload the IVR routing logs. Ava analyzes what's driving high AHT and builds the root cause analysis, drawing on her diagnosis expertise.
           </BodyP>
 
-          <ChatWindow title="Nexus · P2 Discover & Diagnose">
+          <ChatWindow title="Ava · P2 Discover & Diagnose">
             <ChatMessage role="user">
               <em style={{ color: T.faint }}>[Uploads: call_center_ops_Q3Q4.xlsx, ivr_routing_logs_6mo.csv]</em>
               <br />
@@ -478,7 +478,7 @@ export function FirstMoveSection() {
           </ChatWindow>
 
           <OutcomeRow
-            label="What Nexus produced at P2"
+            label="What Ava produced at P2"
             items={[
               'Current State Assessment',
               'Root Cause Analysis (3 root causes)',
@@ -494,10 +494,10 @@ export function FirstMoveSection() {
       <Section>
         <PhaseStep phase="P3" name="Design Future State" color={T.navy} gate="Design Approval">
           <BodyP>
-            <strong>What you do:</strong> Address each root cause with a design decision. Make the build/buy/partner call. Nexus drafts the architecture, but the sourcing decision is yours.
+            <strong>What you do:</strong> Address each root cause with a design decision. Make the build/buy/partner call. Ava drafts the architecture, but the sourcing decision is yours.
           </BodyP>
 
-          <ChatWindow title="Nexus · P3 Design Future State">
+          <ChatWindow title="Ava · P3 Design Future State">
             <ChatMessage role="user">
               Given the "no ML infra" flag from P0 — this needs to be a Buy. We'll evaluate an ML routing vendor.
               Rationale: time to value is critical for Q3, and we don't have 18 months to build internal ML.
@@ -516,7 +516,7 @@ export function FirstMoveSection() {
           </ChatWindow>
 
           <OutcomeRow
-            label="What Nexus produced at P3"
+            label="What Ava produced at P3"
             items={[
               'Target State Architecture',
               'Solution Design',
@@ -527,7 +527,7 @@ export function FirstMoveSection() {
           />
 
           <Callout kind="info" icon="💡" label="Your decision at P3: build/buy/partner">
-            Nexus flagged the infrastructure gap and presented the options — but you made the call. "Buy, because Q3 deadline and no in-house ML." That rationale is recorded and flows directly into the P4 financial model assumptions.
+            Ava flagged the infrastructure gap and presented the options — but you made the call. "Buy, because Q3 deadline and no in-house ML." That rationale is recorded and flows directly into the P4 financial model assumptions.
           </Callout>
         </PhaseStep>
       </Section>
@@ -539,7 +539,7 @@ export function FirstMoveSection() {
             <strong>What you do:</strong> Vendor quotes come in. Update the financial model. Get executive sign-off on the business case. This is the highest-stakes gate.
           </BodyP>
 
-          <ChatWindow title="Nexus · P4 Roadmap & Business Case">
+          <ChatWindow title="Ava · P4 Roadmap & Business Case">
             <ChatMessage role="user">
               Vendor quotes came in. Implementation cost is $420K (higher than the $380K we assumed). Year 1 licensing is $180K annually.
             </ChatMessage>
@@ -570,7 +570,7 @@ export function FirstMoveSection() {
           </ChatWindow>
 
           <OutcomeRow
-            label="What Nexus produced at P4"
+            label="What Ava produced at P4"
             items={[
               'Execution Roadmap (milestones + owners)',
               'Business Case (14mo payback, 3-yr NPV $4.8M)',
@@ -586,10 +586,10 @@ export function FirstMoveSection() {
       <Section>
         <PhaseStep phase="P5" name="Mobilize & Handoff" color={T.teal} gate="Tower Acceptance">
           <BodyP>
-            <strong>What you do:</strong> Name the delivery team. Generate the handoff package. Get Tower acceptance. The Move closes and transitions to Atlas in Control Tower.
+            <strong>What you do:</strong> Name the delivery team. Generate the handoff package. Get Tower acceptance. The Move closes and transitions into Control Tower, where Ava keeps watching — now drawing on her portfolio-monitoring expertise.
           </BodyP>
 
-          <ChatWindow title="Nexus · P5 Mobilize & Handoff">
+          <ChatWindow title="Ava · P5 Mobilize & Handoff">
             <ChatMessage role="user">
               Delivery team: PM is Priya Mehta, tech lead is Marcus Kim. Generate the handoff package.
             </ChatMessage>
@@ -611,23 +611,23 @@ export function FirstMoveSection() {
               ✓ Tower acceptance: confirmed<br />
               ✓ All deliverables at Signed Off status<br />
               <br />
-              <strong>Move closed.</strong> This Move has transitioned to Control Tower. Atlas has picked it up — it will appear in the portfolio heatmap within a few minutes.
+              <strong>Move closed.</strong> This Move has transitioned to Control Tower. I'll keep watching it there with my portfolio-monitoring expertise — it will appear in the portfolio heatmap within a few minutes.
             </ChatMessage>
           </ChatWindow>
 
           <OutcomeRow
-            label="What Nexus produced at P5"
+            label="What Ava produced at P5"
             items={[
               'Handoff Package (compiled, all phases)',
               'Delivery RACI (Priya / Marcus / COO)',
               'Readiness Assessment',
               'Tower acceptance: confirmed',
-              'Move closed → Atlas monitoring',
+              'Move closed → Ava monitoring in Tower',
             ]}
           />
 
           <Callout kind="success" icon="→" label="The Move has closed">
-            From a one-line CEO note to a fully governed, investment-approved, Tower-accepted program — in 6 phases. Atlas now monitors execution progress, KPIs, and signals in Control Tower. You can track the program from the portfolio heatmap at <code style={{ fontFamily: T.fMono, fontSize: 12, background: T.surface3, padding: '2px 6px', borderRadius: 3 }}>/tower</code>.
+            From a one-line CEO note to a fully governed, investment-approved, Tower-accepted program — in 6 phases. Ava keeps watching in Control Tower — same assistant, now monitoring execution progress, KPIs, and signals. You can track the program from the portfolio heatmap at <code style={{ fontFamily: T.fMono, fontSize: 12, background: T.surface3, padding: '2px 6px', borderRadius: 3 }}>/tower</code>.
           </Callout>
         </PhaseStep>
       </Section>
@@ -637,18 +637,18 @@ export function FirstMoveSection() {
         <Eyebrow>Walkthrough recap</Eyebrow>
         <SectionTitle>What just happened</SectionTitle>
         <Lead>
-          You ran a complete Strategic Move — from a CEO note to a Tower-accepted program — with Nexus handling the structure and you making the decisions that mattered.
+          You ran a complete Strategic Move — from a CEO note to a Tower-accepted program — with Ava handling the structure and you making the decisions that mattered.
         </Lead>
 
         <TermGrid>
           <Term name="P0 decision">
-            You named the COO as sponsor candidate and bounded the scope to inbound routing. Nexus extracted the hypothesis and value seed — you confirmed.
+            You named the COO as sponsor candidate and bounded the scope to inbound routing. Ava extracted the hypothesis and value seed — you confirmed.
           </Term>
           <Term name="P1 decision">
             You engaged the COO as named sponsor — she's aligned on scope and signed the charter. The value range ($2–$5M with stated assumptions) was deliberated together. Her formal investment approval comes at P4 after the business case.
           </Term>
           <Term name="P2 decision">
-            You made the Continue/Discontinue call. (In this case: Continue.) Nexus surfaced the root causes — but the judgment to proceed was yours.
+            You made the Continue/Discontinue call. (In this case: Continue.) Ava surfaced the root causes — but the judgment to proceed was yours.
           </Term>
           <Term name="P3 decision">
             You chose Buy over Build, with an explicit rationale (Q3 deadline + no in-house ML). This single decision shaped the entire P4 financial model.
@@ -661,13 +661,13 @@ export function FirstMoveSection() {
           </Term>
         </TermGrid>
 
-        <SubHead>What Nexus contributed</SubHead>
+        <SubHead>What Ava contributed</SubHead>
         <BodyP>
           Extracted structure from an email, classified the archetype, drafted every document, built the financial model, tracked every gate criterion, flagged every anti-pattern, and compiled the handoff package. Every draft was reviewed and confirmed by you.
         </BodyP>
 
         <Callout kind="info" icon="🎯" label="Now run your own">
-          Ready to originate your first real Move? Go to <code style={{ fontFamily: T.fMono, fontSize: 12, background: T.surface3, padding: '2px 6px', borderRadius: 3 }}>/strategic-moves → + New Move</code> and paste whatever signal you're working with — a note, an email, a problem description. Nexus will take it from there.
+          Ready to originate your first real Move? Go to <code style={{ fontFamily: T.fMono, fontSize: 12, background: T.surface3, padding: '2px 6px', borderRadius: 3 }}>/strategic-moves → + New Move</code> and paste whatever signal you're working with — a note, an email, a problem description. Ava will take it from there.
         </Callout>
       </Section>
     </>

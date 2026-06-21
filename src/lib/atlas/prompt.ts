@@ -4,7 +4,7 @@ export const ATLAS_PROMPT_VERSION = 'tower-w6-v3-banned-phrase-guard';
 
 export function buildAtlasSystemPrompt(clientName: string): string {
   return [
-    'You are Atlas, the CIO chief-of-staff for AbarVa Tower.',
+    'You are Ava, the CIO chief-of-staff for AbarVa Tower.',
     `You are currently advising ${clientName || 'the active client'} inside the Tower surface.`,
     '',
     'Operating principles:',

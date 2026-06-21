@@ -5,7 +5,7 @@
  * Flagship training anchor for the Strategic Moves Learn section.
  *
  * A real-scale enterprise AI program ($35M net value, 3 years) walked through
- * all six phases with business context, Nexus contributions, and human decisions
+ * all six phases with business context, Ava's contributions, and human decisions
  * at each gate. Designed so a CXO reading this immediately grasps:
  *  1. The scale of value a well-governed Move can generate
  *  2. What phases actually do — not abstractly, but in a real program
@@ -209,7 +209,7 @@ function PhaseCard({
           gap: 0,
         }}
       >
-        {/* Left: situation + Nexus */}
+        {/* Left: situation + Ava */}
         <div
           style={{
             padding: '20px 22px',
@@ -244,7 +244,7 @@ function PhaseCard({
               marginBottom: 8,
             }}
           >
-            What Nexus contributed
+            What Ava contributed
           </div>
           <ul style={{ margin: 0, padding: '0 0 0 14px', display: 'flex', flexDirection: 'column', gap: 5 }}>
             {nexusDidItems.map((item) => (
@@ -400,7 +400,7 @@ export function CaseStudySection() {
             margin: '0 0 36px',
           }}
         >
-          A CFO note about markdown rates turned into a fully governed AI program — run through six phase gates, supported by Nexus at every step, and handed off to Control Tower with a 13-month payback. This is the anatomy of a Strategic Move at real enterprise scale.
+          A CFO note about markdown rates turned into a fully governed AI program — run through six phase gates, supported by Ava at every step, and carried into Control Tower with a 13-month payback. This is the anatomy of a Strategic Move at real enterprise scale.
         </p>
 
         {/* Outcome stats */}
@@ -546,12 +546,12 @@ export function CaseStudySection() {
             Not another dashboard. A plan."
           </p>
           <div style={{ marginTop: 14, fontFamily: T.fBody, fontSize: 11, color: T.faint }}>
-            This note was pasted directly into Nexus. P0 began.
+            This note was pasted directly to Ava. P0 began.
           </div>
         </div>
 
         <BodyP>
-          The Head of Digital Transformation opened Nexus, pasted the CFO note, and typed: <em>"I want to originate a Move from this."</em> Nexus extracted the hypothesis in 40 seconds. The Move was born.
+          The Head of Digital Transformation opened the Moves workspace, pasted the CFO note to Ava, and typed: <em>"I want to originate a Move from this."</em> Ava extracted the hypothesis in 40 seconds. The Move was born.
         </BodyP>
       </Section>
 
@@ -653,7 +653,7 @@ export function CaseStudySection() {
           name="Discover & Diagnose"
           color={T.navy}
           gate="Diagnosis Sign-Off"
-          situation="Six weeks of structured discovery. The team uploaded 18 months of POS data, regional buying plans, ERP replenishment logs, and buyer interview transcripts. Nexus analyzed across all sources. Three root causes emerged — and the Continue/Discontinue decision had to be made with full information."
+          situation="Six weeks of structured discovery. The team uploaded 18 months of POS data, regional buying plans, ERP replenishment logs, and buyer interview transcripts. Ava analyzed across all sources. Three root causes emerged — and the Continue/Discontinue decision had to be made with full information."
           nexusDidItems={[
             'Parsed 18-month POS dataset (4.2M rows) — identified 6-week average lag from sell-through signal to replenishment trigger (industry: 10–14 days)',
             'Analyzed regional buying plans — found 40% of overstock situations traceable to buyers\' ignoring AI recommendations from the legacy tool (adoption failure, not algorithm failure)',
@@ -695,7 +695,7 @@ export function CaseStudySection() {
             'Modeled three scenarios: conservative (65% automation adoption), base (80%), optimistic (90%)',
             'Updated model when vendor implementation quote came in at $1.92M vs. modeled $1.7M — recalculated payback from 12 to 13 months automatically, flagged change in executive summary',
             'Drafted 28-milestone execution roadmap with named workstream owners and Q1–Q4 phasing',
-            'Built Tower Metrics Plan: 4 KPIs for Atlas to track post-handoff (markdown rate, stockout rate, AI recommendation adoption rate, inventory turn velocity)',
+            'Built Tower Metrics Plan: 4 KPIs for Ava to track in Control Tower post-handoff (markdown rate, stockout rate, AI recommendation adoption rate, inventory turn velocity)',
           ]}
           humanDecided='"$4.2M all-in for $39.6M gross value over 3 years and 13-month payback. Approved. This is the business case we needed two years ago." — CFO and CMO co-signature, investment approval, Week 20'
           gateOutcome="Gate cleared: financial model with 3-year projection, 28-milestone roadmap, CFO + CMO co-signed business case, Tower metrics defined. $3.72M implementation approved. Advanced to P5."
@@ -707,15 +707,15 @@ export function CaseStudySection() {
           name="Mobilize & Handoff"
           color={T.teal}
           gate="Tower Acceptance"
-          situation="Two weeks to assemble the delivery team, resolve every open risk, compile the handoff package, and get Tower acceptance. Nexus flagged three risks from the P2 register that still needed owners — one of which (change management for buyer adoption) was the exact failure mode that killed the 2022 initiative."
+          situation="Two weeks to assemble the delivery team, resolve every open risk, compile the handoff package, and get Tower acceptance. Ava flagged three risks from the P2 register that still needed owners — one of which (change management for buyer adoption) was the exact failure mode that killed the 2022 initiative."
           nexusDidItems={[
             'Compiled full Handoff Package: Charter (P1), Current State Assessment (P2), Target State Architecture (P3), Business Case + Financial Model (P4), Roadmap, Risk Register',
             'Pre-filled RACI with delivery team: PM = Head of Digital Transformation, Tech Lead = Director of Platform Engineering, Vendor Lead = selected after RFP award',
             'Flagged 3 open risks needing owners before Tower acceptance: change management (buyer adoption), SAP integration timeline buffer, vendor selection delay risk',
-            'Submitted for Tower acceptance — Atlas confirmed intake and added the Move to the portfolio heatmap',
+            'Submitted for Tower acceptance — in Control Tower, Ava confirmed intake and added the Move to the portfolio heatmap',
           ]}
           humanDecided='"Change management risk owner: CMO personally. She owns the buyer adoption target — it goes into her OKRs. That is the lesson from 2022." — Head of Digital Transformation, P5 session, Week 22'
-          gateOutcome="Gate cleared: delivery team assembled, all risks assigned owners, Handoff Package complete, Tower acceptance confirmed. Move closed. Atlas monitoring live."
+          gateOutcome="Gate cleared: delivery team assembled, all risks assigned owners, Handoff Package complete, Tower acceptance confirmed. Move closed. Ava monitoring live in Control Tower."
           gateCleared
         />
       </Section>
@@ -867,9 +867,9 @@ export function CaseStudySection() {
       {/* ── After the Move ─────────────────────────────────────────────── */}
       <Section>
         <Eyebrow>Post-handoff · Control Tower</Eyebrow>
-        <SectionTitle>What Atlas watches — today</SectionTitle>
+        <SectionTitle>What Ava watches — today</SectionTitle>
         <Lead>
-          The Move closed at P5. Atlas picked it up in Control Tower. The four KPIs defined in the P4 Tower Metrics Plan are live — updated weekly, visible in the portfolio heatmap.
+          The Move closed at P5. In Control Tower, Ava — the same assistant who ran the Move with you, now drawing on her portfolio-monitoring expertise — picked it up. The four KPIs defined in the P4 Tower Metrics Plan are live — updated weekly, visible in the portfolio heatmap.
         </Lead>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14, margin: '24px 0' }}>
@@ -947,7 +947,7 @@ export function CaseStudySection() {
         </div>
 
         <Callout kind="warn" icon="⚠️" label="The one KPI under target — and why it matters">
-          AI recommendation adoption is at 71%, short of the 75% target. Atlas flagged this at Week 8. The CMO owns this OKR — and that ownership was a deliberate P5 gate decision after the 2022 adoption failure. Without that decision, this signal would have no owner. With it, the CMO is already adjusting buyer coaching and override-review processes. The Tower signal is working.
+          AI recommendation adoption is at 71%, short of the 75% target. Ava flagged this at Week 8. The CMO owns this OKR — and that ownership was a deliberate P5 gate decision after the 2022 adoption failure. Without that decision, this signal would have no owner. With it, the CMO is already adjusting buyer coaching and override-review processes. The Tower signal is working.
         </Callout>
       </Section>
 
@@ -1013,7 +1013,7 @@ export function CaseStudySection() {
         </div>
 
         <Callout kind="success" icon="→" label="Run your own Move">
-          The Apex Retail case is the template. A signal from leadership, a structured hypothesis, six phases of disciplined work, and a business outcome visible in Tower. Your first Move starts the same way — with something your business already knows is a problem. Navigate to <span style={{ fontFamily: T.fMono, fontSize: 12 }}>/strategic-moves → + New Move</span> and paste whatever signal you have. Nexus takes it from there.
+          The Apex Retail case is the template. A signal from leadership, a structured hypothesis, six phases of disciplined work, and a business outcome visible in Tower. Your first Move starts the same way — with something your business already knows is a problem. Navigate to <span style={{ fontFamily: T.fMono, fontSize: 12 }}>/strategic-moves → + New Move</span> and paste whatever signal you have. Ava takes it from there.
         </Callout>
       </Section>
     </>

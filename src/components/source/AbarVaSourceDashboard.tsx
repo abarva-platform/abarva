@@ -515,6 +515,6 @@ function getDashboardMissionPreviewMissions(report: SourceAgentMissionReport): S
 function agentLabel(agentName: SourceAgentMission['agentName']): string {
   if (agentName === 'nexus') return 'Ava';
   if (agentName === 'sentinel') return 'Ava';
-  if (agentName === 'atlas') return 'Atlas';
-  return 'Steward';
+  if (agentName === 'atlas') return 'Ava';
+  return 'Ava';
 }

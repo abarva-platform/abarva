@@ -40,7 +40,7 @@ export function IntelligenceSection() {
         </BodyP>
         <PressureCardMock />
         <Callout kind="success" icon="✓" label="Pressure cards pre-fill Moves">
-          When you click &ldquo;Originate a Move&rdquo; from a pressure card, Nexus pre-populates the bet/outcome, value hypothesis, and evidence family fields from the card&rsquo;s data. You start P0 already 60% complete instead of from scratch.
+          When you click &ldquo;Originate a Move&rdquo; from a pressure card, Ava pre-populates the bet/outcome, value hypothesis, and evidence family fields from the card&rsquo;s data. You start P0 already 60% complete instead of from scratch.
         </Callout>
       </Section>
 
@@ -58,8 +58,8 @@ export function IntelligenceSection() {
           <Step title="Open a pressure card and read the evidence">
             Check the evidence sources. Are they recent? Is the data from connected systems you trust? The stronger the evidence, the more defensible the business case in P4 will be.
           </Step>
-          <Step title="Ask Sentinel to go deeper">
-            Use the chat to ask <strong>&ldquo;What&rsquo;s driving the 18% AHT increase?&rdquo;</strong> or <strong>&ldquo;Which teams are most affected?&rdquo;</strong> Sentinel can drill further into the substrate before you decide to act.
+          <Step title="Ask Ava to go deeper">
+            Use the chat to ask <strong>&ldquo;What&rsquo;s driving the 18% AHT increase?&rdquo;</strong> or <strong>&ldquo;Which teams are most affected?&rdquo;</strong> Ava can drill further into the substrate before you decide to act.
           </Step>
           <Step title='Click "→ Originate a Move" to promote the signal' path="Pressure card → Originate a Move → /strategic-moves/new">
             This opens the P0 origination screen with the pressure card data pre-loaded into the scaffold. You confirm the fields, name the Move, and promote it to P1.
@@ -74,8 +74,8 @@ export function IntelligenceSection() {
         <TermGrid>
           <Term name="Signal">An AI-detected pattern in operational or financial data. Signals are surfaced automatically from connected data sources. <em>You don&rsquo;t need to ask for them — they appear when the substrate finds something worth noting.</em></Term>
           <Term name="Pressure card">The structured presentation of a signal. Includes type, severity, evidence, impact estimate, and recommended action. <em>Think of it as an AI-authored executive brief on a specific problem.</em></Term>
-          <Term name="Archetype">The category of a signal or Move — Cost Reduction, Revenue Growth, Risk Mitigation, or Operational Excellence. <em>Nexus uses archetype to choose which deliverable templates and gate criteria to apply.</em></Term>
-          <Term name="Sentinel">The front agent for Intelligence and Source. Answers questions about signals, drills into evidence, and coordinates specialist functions for deep analysis. <em>You talk to Sentinel — it orchestrates everything behind the scenes.</em></Term>
+          <Term name="Archetype">The category of a signal or Move — Cost Reduction, Revenue Growth, Risk Mitigation, or Operational Excellence. <em>Ava uses archetype to choose which deliverable templates and gate criteria to apply.</em></Term>
+          <Term name="Ava">The single assistant you talk to across every surface — Home, Intelligence, Moves, Source, Tower, and Setup. On Intelligence she answers questions about signals, drills into evidence, and draws on named specialist capabilities for deep analysis. <em>You always talk to Ava — she orchestrates the faculty behind her, and you never get handed off to a different agent.</em></Term>
           <Term name="Provenance">The data lineage behind a signal — which connector, which dataset, which time period. <em>High-provenance signals have strong, recent, specific evidence. Low-provenance signals are more uncertain.</em></Term>
         </TermGrid>
       </Section>
@@ -188,7 +188,7 @@ export function IntelligenceSection() {
           Rachel Torres, CFO, asks at every quarterly review: &ldquo;What exactly is pulling down private label margin?&rdquo; The pressure card reads: <em>&ldquo;Private label gross margin 240bps below plan across 14 segments. Three contributing factors: promotional depth, markdown timing, assortment mix.&rdquo;</em>
         </Lead>
         <BodyP>
-          The signal isn&rsquo;t novel — finance has been tracking the GM gap for two quarters. What&rsquo;s new is the decomposition. Before Intelligence, the gap was an aggregate number. Sentinel breaks it into three causal buckets and ties each to specific SKUs, categories, and weeks.
+          The signal isn&rsquo;t novel — finance has been tracking the GM gap for two quarters. What&rsquo;s new is the decomposition. Before Intelligence, the gap was an aggregate number. Ava breaks it into three causal buckets and ties each to specific SKUs, categories, and weeks.
         </BodyP>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, margin: '20px 0' }}>
@@ -344,7 +344,7 @@ export function IntelligenceSection() {
               {[
                 { name: 'APX-01 · Owned Brand Margin', phase: 'P4 · Validate', status: '🟡 Watch',    statusColor: T.amber,   watch: '12-week pilot read due June. Override rate down to 31% (from 47%). Need 2 more weeks before P5 gate.' },
                 { name: 'APX-02 · Demand Forecasting', phase: 'P3 · Design',   status: '🟢 On track', statusColor: T.teal,    watch: 'P3→P4 gate targeted end of Q2. CDC pipeline architecture decision pending this week.' },
-                { name: 'APX-03 · Store Labor',        phase: 'P5 · Complete', status: '✅ Done',     statusColor: T.teal,    watch: 'Value realization tracking in Atlas. Post-deployment override rate 19% vs 31% at program start.' },
+                { name: 'APX-03 · Store Labor',        phase: 'P5 · Complete', status: '✅ Done',     statusColor: T.teal,    watch: 'Value realization tracking in Control Tower. Post-deployment override rate 19% vs 31% at program start.' },
                 { name: 'APX-04 · Assortment Copilot', phase: 'P2 · Diagnose', status: '🟢 On track', statusColor: T.teal,    watch: '12% zero-velocity SKUs. Diagnosis phase identifying root causes. P2→P3 gate in 4 weeks.' },
                 { name: 'APX-05 · Supply Chain Tower', phase: 'P1 · Initiate', status: '🔴 At risk',  statusColor: '#DC2626', watch: 'Must pass P1→P2 gate by end of May for peak season impact. Vendor coverage map + ownership matrix missing.' },
                 { name: 'APX-06 · Returns Fraud',      phase: 'P4 · Validate', status: '🟡 Watch',    statusColor: T.amber,   watch: '74% precision vs 85% target. $180M returns — every 1% precision gain = ~$1.8M in fraud recovery.' },

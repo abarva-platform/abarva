@@ -236,7 +236,7 @@ function EventAgentLead({
           detail={`${nextAction} Then prepare the team for the next gate with inputs, session plan, and output packet.`}
         />
         <EventAgentCard
-          agent="Steward"
+          agent="Ava"
           role={event.blocker ? 'Gate / approval blocked' : 'Gate / approval in review'}
           detail={`${blockerCopy} Waivers need explicit rationale; approvals are placeholders until the engine is wired.`}
         />
@@ -246,7 +246,7 @@ function EventAgentLead({
           detail="Paperclip uploads, pasted notes, and vendor files must become validated evidence before they support recommendations."
         />
         <EventAgentCard
-          agent="Atlas"
+          agent="Ava"
           role="Artifacts and executive decision"
           detail={`Decision posture: ${stripTrailingPeriod(nextDecision)}. Generate the right HTML, Word, or Excel packet before review.`}
         />

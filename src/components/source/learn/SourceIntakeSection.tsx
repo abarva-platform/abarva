@@ -22,7 +22,7 @@ export function SourceIntakeSection() {
         <Lead light>
           The intake card is the start of every Source event. Six to eight critical
           fields here drive the entire lifecycle — from which artifacts get
-          scaffolded to how Sentinel weights its scoring rubric. Get the intake
+          scaffolded to how Ava weights its scoring rubric. Get the intake
           right and the rest of the event is shaping clay; get it wrong and you
           fight the canvas every step.
         </Lead>
@@ -34,7 +34,7 @@ export function SourceIntakeSection() {
         <Lead>
           Three fields above all the rest set the shape of the event:{' '}
           <strong>archetype</strong>, <strong>rigor</strong>, and{' '}
-          <strong>estimated value band</strong>. Every default Sentinel produces
+          <strong>estimated value band</strong>. Every default Ava produces
           downstream — line items in the d19 pricing template, criteria + weights
           in the d16 scorecard, mandatory items in the d11 response checklist —
           comes from these three fields.
@@ -64,7 +64,7 @@ export function SourceIntakeSection() {
           The kind of sourcing this is. Five canonical archetypes today:{' '}
           <em>cloud / infrastructure</em>, <em>AMS / managed services</em>,{' '}
           <em>data platform</em>, <em>enterprise software</em>,{' '}
-          <em>custom build</em>. Sentinel uses the archetype to seed defaults
+          <em>custom build</em>. Ava uses the archetype to seed defaults
           across artifacts — Cloud archetype gets egress + lock-in P0 traps in d20;
           AMS gets shift-coverage P0; pricing weight in d16 sits at 25% for Cloud
           and 30% for AMS.
@@ -76,7 +76,7 @@ export function SourceIntakeSection() {
           <em>standard</em> (most events), <em>elevated</em> (board-visible spend
           or regulated industries), <em>strict</em> (any Tier-1 system). Rigor
           drives which artifacts are required vs recommended at each gate, and
-          how many evidence sources Sentinel demands before promoting.
+          how many evidence sources Ava demands before promoting.
         </BodyP>
 
         <SubHead>4 · Estimated value band</SubHead>
@@ -84,7 +84,7 @@ export function SourceIntakeSection() {
           Annual run-rate range (low / high) the buyer expects to commit. Used
           in the d19 pricing template as the indicative envelope, in the d24
           decision brief as the &ldquo;value at stake&rdquo; figure, and in
-          Sentinel&rsquo;s scoring weights (higher value bands → tighter pricing
+          Ava&rsquo;s scoring weights (higher value bands → tighter pricing
           weight in the scorecard).
         </BodyP>
 
@@ -92,7 +92,7 @@ export function SourceIntakeSection() {
         <BodyP>
           The named individuals who will sign at d24 (Decision Brief). Typically
           a CTO + CFO pair, sometimes a single C-level. Their names show up in
-          the cover block of every export and in Sentinel&rsquo;s addressing
+          the cover block of every export and in Ava&rsquo;s addressing
           (&ldquo;CTO Marcus Webb (decision sponsor) + CFO Sarah Kim&rdquo;).
         </BodyP>
 
@@ -106,7 +106,7 @@ export function SourceIntakeSection() {
         <SubHead>7 · Trigger / strategic driver</SubHead>
         <BodyP>
           One paragraph on why this event exists. Lease expiring? Vendor
-          contract ending? New regulatory requirement? Sentinel uses this verbatim
+          contract ending? New regulatory requirement? Ava uses this verbatim
           in the d01 strategy memo; the d09 RFP package opens with it as
           &ldquo;Strategic driver.&rdquo; Be specific — &ldquo;Portland colo lease
           expires Q3 2027 with 18% YoY rate escalation locked, while Epic
@@ -116,7 +116,7 @@ export function SourceIntakeSection() {
 
         <SubHead>8 · Scope description (optional but high-leverage)</SubHead>
         <BodyP>
-          A few sentences listing in-scope systems / capabilities. Sentinel uses
+          A few sentences listing in-scope systems / capabilities. Ava uses
           this to extract candidate line items in d19 (pricing template) and
           candidate apps in d04 (app inventory). Authoring this here saves you
           authoring it again in the d05 scope memo.
@@ -140,8 +140,8 @@ export function SourceIntakeSection() {
         </Callout>
         <BodyP>
           Note how the trigger paragraph is specific (named lease, Q3 2027,
-          18% rate, systems in scope, and enterprise footprint). Sentinel can use
-          that level of detail; &ldquo;cloud migration&rdquo; alone leaves it guessing.
+          18% rate, systems in scope, and enterprise footprint). Ava can use
+          that level of detail; &ldquo;cloud migration&rdquo; alone leaves her guessing.
         </BodyP>
       </Section>
 
@@ -163,7 +163,7 @@ export function SourceIntakeSection() {
             shape above.
           </Step>
           <Step title="Submit">
-            On submit, Sentinel scaffolds 33 artifact slots across all 11 stages.
+            On submit, Ava scaffolds 33 artifact slots across all 11 stages.
             The event lands you on Stage 1 / Strategy with d01 ready to author or
             generate.
           </Step>

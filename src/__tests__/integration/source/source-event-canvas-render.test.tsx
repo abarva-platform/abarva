@@ -697,11 +697,11 @@ describe("UniversalCanvasShell · SSR render", () => {
 
   it("uses Atlas as the lead agent on transition (stage 10) and value (stage 11)", () => {
     const transitionHtml = render({ viewStage: "transition" });
-    expect(transitionHtml).toContain("Ask Atlas…");
+    expect(transitionHtml).toContain("Ask Ava…");
     expect(transitionHtml).toContain("agent-dock-panel");
 
     const valueHtml = render({ viewStage: "value" });
-    expect(valueHtml).toContain("Ask Atlas…");
+    expect(valueHtml).toContain("Ask Ava…");
     expect(valueHtml).toContain("agent-dock-panel");
   });
 

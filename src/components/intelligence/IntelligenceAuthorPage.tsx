@@ -17,7 +17,7 @@ export function IntelligenceAuthorPage({
       topBarProps={{ tenantName, showLocked: true, context: 'Intelligence · Pattern authoring' }}
     >
       <AgentColumn
-        agent={{ initials: 'At', name: 'Atlas', role: 'Authoring' }}
+        agent={{ initials: 'Av', name: 'Ava', role: 'Authoring' }}
         quote="Authoring intake is staged. Atlas can draft framing; Sentinel still validates promotion readiness before the pattern enters the library."
         agentContext="Atlas · deterministic authoring intake · I6"
         actions={[
