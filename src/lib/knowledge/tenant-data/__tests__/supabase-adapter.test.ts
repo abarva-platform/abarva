@@ -862,6 +862,53 @@ describe("SupabaseTenantDataAdapter.chunksByVector", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("falls back to public pgvector rows when the lab private schema is not created yet", async () => {
+    process.env.DATABASE_URL = "postgres://example";
+    mockPgQuery
+      .mockRejectedValueOnce(
+        new Error(
+          'relation "client_apex_retail_private.enterprise_context_chunks" does not exist',
+        ),
+      )
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            tenant_key: "apex-retail",
+            chunk_id: "chunk:apex:ai-footprint:0",
+            source_segment_id: "governance_ai_evidence",
+            source_record_id: "APX-AI-001",
+            source_doc: "F17_ai-automation-footprint.csv",
+            source_path: "family-6-governance-ai-evidence/F17_ai-automation-footprint.csv",
+            chunk_index: 0,
+            chunk_text: "Retail lakehouse and customer inventory graph …",
+            token_count: 30,
+            embedding_status: "embedded",
+            embedding_model: "text-embedding-3-small",
+            embedded_at: "2026-06-20T00:00:00Z",
+            provenance: null,
+            chunk_metadata: null,
+            vector_score: 0.88,
+          },
+        ],
+      });
+
+    const out = await makeAdapter().chunksByVector("apex-retail", [0.1, 0.2], 5);
+
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({
+      tenantKey: "apex-retail",
+      chunkId: "chunk:apex:ai-footprint:0",
+      vectorScore: 0.88,
+    });
+    expect(mockPgQuery).toHaveBeenCalledTimes(2);
+    expect(mockPgQuery.mock.calls[0][0]).toContain(
+      'from "client_apex_retail_private"."enterprise_context_chunks"',
+    );
+    expect(mockPgQuery.mock.calls[1][0]).toContain(
+      'from "public"."enterprise_context_chunks"',
+    );
+  });
+
   it("clamps limit to MAX_VECTOR_LIMIT (50) and defaults to 10", async () => {
     process.env.DATABASE_URL = "postgres://example";
     mockPgQuery.mockResolvedValue({ rows: [] });
