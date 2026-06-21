@@ -116,15 +116,27 @@ runtime behavior; no migration or data rollback is involved.
   non-`client_ready` artifacts are quarantined as internal drafts when enforcement is on. Enforcement
   is staged per tenant via flag, then platform-default. Existing persistence behavior unchanged.
 
+## WIRE phase — complete (flag-gated, deploy-dark)
+
+The full governed pipeline is now wired end-to-end, behind two tenant flags (both default OFF, so
+deploy is byte-identical to today):
+
+- `deliverable_structured_exhibits` — `runDeliverableForTenant` generates the ArchitectureModel via
+  the **governed adapter** (egress-owned client), grounded in the tenant's own generated narrative,
+  and hands it to persistence; the profile's renderer (premium HTML architecture) draws it and its
+  exhibits satisfy the gate.
+- `deliverable_quality_contract` — enforces the contract at persistence (non-`client_ready` →
+  quarantined as internal draft). Off = observe-only (gate still runs and records the state).
+
+Same path for every tenant; SkyHarbor IROPS is only the context proof point.
+
 ## Known Gaps
 
-- Quality-contract enforcement is wired but **defaults to observe-only**; staged flip per tenant is
-  the rollout (the gate always runs and records the state regardless).
-- The **structured generation passes** (ArchitectureModel emission inside the orchestrator, grounded
-  via the broker) are not yet called in the live flow — so required-exhibit checks correctly report
-  missing exhibits until that lands. Renderer-selection-by-profile (HTML/PPT) is profiled but not yet
-  switched in persist.
-- No live ACA generation proof yet — the gating frontier; SkyHarbor IROPS is the intended proof point.
+- Both flags **default OFF** — the staged per-tenant flip (then platform-default) is the rollout.
+- Native **PPTX export** still renders as the HTML storyline deck (the model is PPTX-ready).
+- **No live ACA generation proof yet** — the one remaining frontier. Flipping the flags for a tenant
+  + a signed-in run (SkyHarbor IROPS) proves the whole pipeline live; because it is tenant-agnostic,
+  that proof covers First Capital, Morgan Street, PHS, Delta, and every future tenant.
 - W3 storyline deck renders to HTML; **native PPTX export** (reuse expert-kernel `pptx-renderer`) is
   not yet wired — the model is PPTX-ready.
 - W4 remaining profile verticals (discovery, root-cause, solution design, operating model, sourcing,
