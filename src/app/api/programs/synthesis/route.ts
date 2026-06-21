@@ -4,6 +4,9 @@
 
 import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { getActiveClientRow } from "@/lib/active-client";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { summonExpertsForQuery } from "@/lib/intelligence/answer/expert-grounding";
+import type { ExpertRef } from "@/lib/intelligence/answer/agent-answer";
 import { APEX_RETAIL_PROGRAM_INSTANCES, APX_CDP_2026_INSTANCE } from "@/lib/programs/program-instances";
 import {
   buildProgramSynthesisContext,
@@ -154,11 +157,27 @@ export async function POST(request: Request) {
   if (!activeClient) {
     return Response.json({ error: 'no_client', detail: 'No active client for AI egress policy.' }, { status: 403 });
   }
+
+  // Shared Context Brain (flag-gated, default OFF). When on for the tenant,
+  // ground this program synthesis in the Consilium expert(s) for the program
+  // subject (industry-fenced via the active client key). Flag off = byte-
+  // identical to the prior path (groundedUserMessage === userMessage).
+  const sharedMovesOn = isFeatureEnabled(
+    { clientKey: activeClient.key },
+    'scb_shared_engine_moves',
+  );
+  const expertGrounding = sharedMovesOn
+    ? summonExpertsForQuery({ query: snap.name, clientKey: activeClient.key })
+    : { experts: [] as ExpertRef[], groundingBlock: '' };
+  const groundedUserMessage = expertGrounding.groundingBlock
+    ? `${expertGrounding.groundingBlock}\n\n${userMessage}`
+    : userMessage;
+
   const preflight = await preflightAnthropicDirectClient({
     tenantId: activeClient.id,
     workflow: 'programs-synthesis',
     model: 'claude-sonnet-4-6',
-    prompt: [buildNexusSynthesisPrompt(userContextBlock), userMessage].join('\n\n'),
+    prompt: [buildNexusSynthesisPrompt(userContextBlock), groundedUserMessage].join('\n\n'),
     dataClass: 'confidential',
     metadata: { programId: instance.id, surface: 'programs' },
   });
@@ -174,7 +193,7 @@ export async function POST(request: Request) {
     model: "claude-sonnet-4-6",
     max_tokens: 150,
     system: buildNexusSynthesisPrompt(userContextBlock),
-    messages: [{ role: "user", content: userMessage }],
+    messages: [{ role: "user", content: groundedUserMessage }],
   });
 
   const encoder = new TextEncoder();
