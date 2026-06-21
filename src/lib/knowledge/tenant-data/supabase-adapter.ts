@@ -381,9 +381,9 @@ async function queryPgvectorRows(
       "chunksByVector requires DATABASE_URL for Postgres pgvector retrieval.",
     );
   }
-  const schema = privateSchemaForTenant(tenantKey) ?? "public";
-  const tableRef = `${quoteIdent(schema)}.${quoteIdent("enterprise_context_chunks")}`;
-  const sql = `
+  const runQuery = async (schema: string): Promise<ContextChunkRow[]> => {
+    const tableRef = `${quoteIdent(schema)}.${quoteIdent("enterprise_context_chunks")}`;
+    const sql = `
     select ${CHUNK_COLUMNS},
            greatest(0, 1 - (embedding_vector <=> $2::vector))::float8 as vector_score
       from ${tableRef}
@@ -393,12 +393,26 @@ async function queryPgvectorRows(
      order by embedding_vector <=> $2::vector
      limit $3
   `;
-  const result = await pool.query<ContextChunkRow>(sql, [
-    tenantKey,
-    pgVectorLiteral(queryVector),
-    limit,
-  ]);
-  return result.rows;
+    const result = await pool.query<ContextChunkRow>(sql, [
+      tenantKey,
+      pgVectorLiteral(queryVector),
+      limit,
+    ]);
+    return result.rows;
+  };
+
+  const privateSchema = privateSchemaForTenant(tenantKey);
+  if (!privateSchema) return runQuery("public");
+
+  try {
+    return await runQuery(privateSchema);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (shouldUsePrivatePgFallback(tenantKey, message)) {
+      return runQuery("public");
+    }
+    throw error;
+  }
 }
 
 function ilikePattern(raw: string): string {

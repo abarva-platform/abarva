@@ -45,6 +45,7 @@ chunks directly from Postgres before falling back to keyword retrieval.
 - `src/lib/knowledge/tenant-data/types.ts`
 - `src/lib/knowledge/context-broker/broker.ts`
 - `src/lib/knowledge/context-broker/types.ts`
+- `src/lib/knowledge/tenant-data/__tests__/supabase-adapter.test.ts`
 - `src/lib/crawl/persona-switcher.ts`
 - `scripts/crawl/post-deploy-harness.ts`
 - `scripts/smoke/p21-post-deploy-crawl.spec.ts`
@@ -67,6 +68,12 @@ chunks directly from Postgres before falling back to keyword retrieval.
   protected `/api/context/demo`, and fails unless the broker returns the
   Postgres pgvector info tag, semantic chunks, a positive vector score, and a
   tenant-matched top chunk.
+- ADDED: pgvector private-schema fallback proof. Live signed-in probe showed
+  Apex routed to `client_apex_retail_private.enterprise_context_chunks`, which
+  does not exist yet, while public `enterprise_context_chunks` has 1656/1656
+  Apex embedded vectors. `chunksByVector` now falls back to public pgvector rows
+  on the same missing-private-schema class that keyword retrieval already
+  handled.
 
 ## Rollout Plan
 
