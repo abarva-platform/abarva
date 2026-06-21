@@ -332,7 +332,8 @@
     "validate:context-corpus:duplicates": "npx tsx src/scripts/governance/validate-context-corpus.ts duplicates",
     "validate:context-corpus:manifests": "npx tsx src/scripts/governance/validate-context-corpus.ts manifests",
     "governance:tenant-coverage-report": "npx tsx src/scripts/governance/tenant-coverage-report.ts",
-    "scb:golden-eval": "npx tsx src/scripts/intelligence/scb-golden-eval-runner.ts"
+    "scb:golden-eval": "npx tsx src/scripts/intelligence/scb-golden-eval-runner.ts",
+    "scb:live-answer-eval": "npx tsx src/scripts/intelligence/scb-live-answer-eval-runner.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
