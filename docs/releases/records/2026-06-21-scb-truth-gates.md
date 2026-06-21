@@ -53,7 +53,9 @@ Third live-proof patch: after `src/data` was packaged, the deployed proof progre
 - BLOCKED: A second private-VNet run of `npm run scb:truth-gates -- --require-live` reached the packaged gate but failed on `Cannot find module '@/data/apexretail/cdp-pattern-seed'`; this compatibility patch addresses that import path.
 - BLOCKED: A third private-VNet run on deployed #3772 reached the relative import but failed on `Cannot find module '../../data/apexretail/cdp-pattern-seed'`; this confirmed the runtime image did not package `src/data`.
 - BLOCKED: A fourth private-VNet run on deployed #3773 loaded `src/data` but failed on `Cannot find module '../../../intelligence/seeds/archetype-phase-deliverable-matrix.json'`; this confirmed the runtime image also needs the top-level `intelligence` seed folder.
-- PENDING: Rerun `npm run scb:truth-gates -- --require-live` inside the private VNet after the expanded Docker runtime packaging patch is merged and deployed.
+- PASS: Deployed #3774 to ACA revision `m5a17bf76` at 100% traffic on image `sha256:2629cf2246764fbf5128dd869d465154672ae65e533fe8e895678cc46db394ef`.
+- PASS: Private-VNet execution `job-abarva-private-operator-eus-5q6s1px` ran `npm run scb:truth-gates -- --require-live` and passed with `tenantKeys=6`, `authoredPatterns=3569`, and `authoredExpertPacks=54`.
+- PASS: Post-deploy authenticated crawl run `27896104696` completed successfully for #3774.
 
 ## Rollout Plan
 
@@ -63,9 +65,9 @@ Merge to `main`. The static gate runs as part of `npm run release:check`. Live d
 
 - Repo-owned deploy workflow: Not changed.
 - Shared runtime mutators: ACA deploy updates the runtime image after merge.
-- Approved image digest: Not applicable until merged/deployed.
-- ACA runtime invariant: Not applicable.
-- Worker image invariant: Not applicable.
+- Approved image digest: `sha256:2629cf2246764fbf5128dd869d465154672ae65e533fe8e895678cc46db394ef`.
+- ACA runtime invariant: Template image and 100% traffic revision image both pointed to #3774 revision `m5a17bf76` after deploy.
+- Worker image invariant: Private operator was temporarily pointed to the #3774 digest for the VNet proof, then restored to idle image `sha256:e7668ebbb670bc014893fcc3265341cc56810c98a73b104d05ef3a079c430b3c`.
 - Feature/env flag update path: None.
 - Live signed-in proof required: No UI change. Live VNet DB proof is required before marking W2.4 done.
 
@@ -77,9 +79,11 @@ Revert the checker, release-check import, package script, tests, and this releas
 
 - Focused Jest output from the W2.4 branch.
 - Static truth-gate output from the W2.4 branch.
-- Future PR and CI run for this branch.
-- Future private-VNet `--require-live` output for live DB truth.
+- PR #3774 merged to main.
+- ACA main deploy run `27895869086` completed successfully.
+- Private-VNet proof execution `job-abarva-private-operator-eus-5q6s1px`.
+- Post-deploy authenticated crawl run `27896104696` completed successfully.
 
 ## Known Gaps
 
-The Northstar data-plane gap has been remediated and SQL-proven. The remaining gap is packaged live truth-gate proof after the Docker runtime includes both `src/data` and top-level `intelligence` seed assets and deploys.
+W2.4 has no remaining known gap. W2.2 pgvector still needs its separate live extension/index/vector-retrieval proof before that tracker row can be marked done.
