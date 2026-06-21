@@ -105,4 +105,61 @@ describe("live-answer bank", () => {
 
     expect(result.deterministicPass).toBe(true);
   });
+
+  it("recognizes peer-pattern benchmark language from live Ava answers", () => {
+    const result = checkLiveAnswerCase(
+      {
+        id: "regression-benchmark",
+        query: "Give me the exact savings.",
+        expectedExpertId: "xp.healthcare-provider.revenue-cycle",
+        expectedBehaviors: ["cite_benchmark", "hedge_uncertainty"],
+        adversarialKind: "tempts_fake_precision",
+        notes: "Regression for live Ava peer-pattern benchmark phrasing.",
+      },
+      {
+        prose:
+          "I won't fabricate those numbers. What I can give you from pattern, clearly labeled as such: health systems that have deployed autonomous coding at scale typically see initial denial rate reductions in the 2-5 percentage point range.",
+      },
+    );
+
+    expect(result.deterministicPass).toBe(true);
+  });
+
+  it("recognizes live-answer next-move wording for table-shaped asks", () => {
+    const result = checkLiveAnswerCase(
+      {
+        id: "regression-next-move",
+        query: "Break down denials by reason category.",
+        expectedExpertId: "xp.healthcare-provider.revenue-cycle",
+        expectedBehaviors: ["output_shape_table", "name_real_next_move"],
+        notes: "Regression for live Ava pull-the-data phrasing.",
+      },
+      {
+        prose:
+          "I won't fabricate that table. What I can give you is the right structure for the analysis, so when your VP of Revenue Cycle pulls the data, it's immediately decision-grade.",
+        hasTable: true,
+      },
+    );
+
+    expect(result.deterministicPass).toBe(true);
+  });
+
+  it("recognizes live-answer uncertainty language for pilot-scale asks", () => {
+    const result = checkLiveAnswerCase(
+      {
+        id: "regression-uncertainty",
+        query: "Will ambient documentation scale beyond a pilot?",
+        expectedExpertId:
+          "xp.healthcare-provider.clinical-process-transformation",
+        expectedBehaviors: ["surface_stuck_point", "hedge_uncertainty"],
+        notes: "Regression for live Ava pilot-scale uncertainty phrasing.",
+      },
+      {
+        prose:
+          "The pattern I've seen across health systems is this: the technology works well enough in a contained pilot. Most of them stall because the workflow change was not actually built in.",
+      },
+    );
+
+    expect(result.deterministicPass).toBe(true);
+  });
 });
