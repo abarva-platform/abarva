@@ -80,9 +80,25 @@ export type FeatureFlagKey =
   | "source_strategy_auto_draft"
   | "source_strategy_at_p0"
   | "context_corpus_explorer_enabled"
-  | "source_reasoning_spine";
+  | "source_reasoning_spine"
+  | "deliverable_structured_exhibits"
+  | "deliverable_quality_contract";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
+  {
+    key: "deliverable_structured_exhibits",
+    summary:
+      "Generate the structured exhibit models (ArchitectureModel) for architecture deliverables via the governed generation pass, and render the profile's renderer (premium HTML architecture) instead of prose. Default OFF; tenant opt-in. Falls back to prose on any error. Same governed pipeline for every tenant.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "deliverable_quality_contract",
+    summary:
+      "Enforce the Deliverable Quality Contract at persistence: a non-client_ready artifact is quarantined as an internal draft rather than served as client-ready. Default OFF (observe-only — the gate always runs and records the state); flip per tenant to enforce, then platform-default once proven.",
+    policy: "tenant",
+    includeTenants: [],
+  },
   {
     key: "context_corpus_explorer_enabled",
     summary:

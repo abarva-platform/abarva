@@ -4,6 +4,7 @@
 import { buildDeliverableRequest } from '../build-request';
 import { assembleGovernedEvidence } from '../evidence-assembler';
 import { runDeliverableForTenant } from '../generate-service';
+import { FIRST_CAPITAL_ARCHITECTURE } from '@/lib/visual-system/__fixtures__/first-capital-architecture';
 import type { GovernedEvidenceItem, OrchestrationResult } from '../index';
 import type { TenantContextChunk } from '@/lib/azure-search/tenant-context-retriever';
 
@@ -100,5 +101,43 @@ describe('runDeliverableForTenant', () => {
     expect(out.ok).toBe(false);
     expect(out.blockers).toContain('no source register');
     expect(persisted).toBe(false);
+  });
+
+  it('generates the architecture model and hands it to persistence when the flag is on (any tenant)', async () => {
+    process.env.ABARVA_FEATURE_DELIVERABLE_STRUCTURED_EXHIBITS_TENANTS = 'skyharbor-air';
+    let persistOpts: Record<string, unknown> | undefined;
+    const generate = (async () => ({
+      ok: true,
+      brief: { deliverableType: 'target_architecture', module: 'moves' } as never,
+      document: {
+        generatedSections: [{ title: 'Current state', bodyMarkdown: 'mainframe-bound today' }],
+        clientDisplayName: 'SkyHarbor Air',
+        initiativeDisplayName: 'IROPS Agentic Response',
+      } as never,
+      quality: { pass: true, warnings: [] } as never,
+      passTrace: [],
+    } as OrchestrationResult)) as never;
+    const persist = (async (_r: unknown, opts: unknown) => {
+      persistOpts = opts as Record<string, unknown>;
+      return { id: 'art-arch' };
+    }) as never;
+    let calledWith: { engagement?: string } = {};
+    const generateArchitecture = (async (req: { engagement: string }) => {
+      calledWith = req;
+      return { model: FIRST_CAPITAL_ARCHITECTURE };
+    }) as never;
+
+    const out = await runDeliverableForTenant(
+      { ...baseInput, module: 'moves' as const, deliverableType: 'target_architecture' },
+      { assemble, loadPolicy, generate, persist, generateArchitecture },
+    );
+
+    expect(out.ok).toBe(true);
+    expect(calledWith.engagement).toBe('IROPS Agentic Response');
+    expect(persistOpts?.renderViaProfile).toBe(true);
+    expect(
+      (persistOpts?.structuredModels as { architectureModel?: unknown })?.architectureModel,
+    ).toBeDefined();
+    delete process.env.ABARVA_FEATURE_DELIVERABLE_STRUCTURED_EXHIBITS_TENANTS;
   });
 });
