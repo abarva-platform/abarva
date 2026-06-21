@@ -85,6 +85,13 @@ export function routeQuestion(input: RouteInput): RoutingDecision {
   const qTokens = tokens(query);
 
   const scores = EXPERT_PACKS.map((p) => {
+    // When the tenant industry is known, an industry-specific expert from a
+    // DIFFERENT industry is not relevant to this tenant — exclude it (score 0,
+    // dropped below). Cross-cutting experts (no `identity.industry`) stay
+    // eligible for every tenant; same-industry experts get the bonus.
+    if (industry && p.identity.industry && p.identity.industry !== industry) {
+      return { id: p.identity.id, name: p.identity.expertName, score: 0 };
+    }
     const kw = packKeywords(p);
     let score = 0;
     for (const t of qTokens) if (kw.has(t)) score += 1;

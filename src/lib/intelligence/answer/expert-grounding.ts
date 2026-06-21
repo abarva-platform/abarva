@@ -14,6 +14,31 @@ import { routeQuestion } from "@/lib/intelligence/answer/router";
 import { getExpertById } from "@/lib/intelligence/expert-pack/registry";
 import type { ExpertPack } from "@/lib/intelligence/expert-pack/expert-pack";
 import type { ExpertRef } from "@/lib/intelligence/answer/agent-answer";
+import { CLIENT_KEY_TO_INDUSTRY_CODE } from "@/lib/client-config";
+import type { ClientKey } from "@/lib/client-config";
+
+// Bridge the tenant's canonical industry CODE (CLIENT_KEY_TO_INDUSTRY_CODE) to
+// the ExpertPack `identity.industry` token used by industry-specific experts.
+// Only clean, unambiguous matches are listed — a tenant whose code has no entry
+// (e.g. MEDTECH, DIVERSIFIED) resolves to `undefined`, which means "no industry
+// exclusion": the router then keeps every cross-cutting expert and ranks on
+// keywords alone, rather than wrongly fencing a conglomerate to one vertical.
+const EXPERT_INDUSTRY_BY_CODE: Record<string, string> = {
+  RETAIL: "retail",
+  AIRLINE: "airline",
+  HEALTHCARE_IDN: "healthcare_provider",
+  FINSERV: "financial_services_banking",
+  ENERGY: "energy",
+};
+
+/** Resolve a tenant's ExpertPack industry token from its app client key. */
+export function expertIndustryForClientKey(
+  clientKey?: string | null,
+): string | undefined {
+  if (!clientKey) return undefined;
+  const code = CLIENT_KEY_TO_INDUSTRY_CODE[clientKey as ClientKey];
+  return code ? EXPERT_INDUSTRY_BY_CODE[code] : undefined;
+}
 
 export interface ExpertGrounding {
   /** The summoned experts (for trace/audit + AgentAnswer.contributingExperts). */
@@ -56,11 +81,15 @@ function formatExpert(p: ExpertPack): string {
 export function summonExpertsForQuery(input: {
   query: string;
   industry?: string;
+  /** Tenant app client key — used to derive the industry when not passed explicitly. */
+  clientKey?: string | null;
   maxExperts?: number;
 }): ExpertGrounding {
+  const industry =
+    input.industry ?? expertIndustryForClientKey(input.clientKey);
   const routing = routeQuestion({
     query: input.query,
-    industry: input.industry,
+    industry,
     maxExperts: input.maxExperts ?? 2,
   });
   const packs = routing.experts

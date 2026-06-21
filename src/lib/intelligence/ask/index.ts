@@ -160,7 +160,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       'scb_shared_engine_intelligence',
     );
     const expertGrounding = sharedEngineOn
-      ? summonExpertsForQuery({ query: trimmed })
+      ? summonExpertsForQuery({ query: trimmed, clientKey: opts.tenantClientKey })
       : { experts: [] as ExpertRef[], groundingBlock: '' };
     const groundedFactBlock = expertGrounding.groundingBlock
       ? `${expertGrounding.groundingBlock}\n\n${factAvailabilityBlock}`
