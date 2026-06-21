@@ -139,7 +139,7 @@ describe('admin/skeletons', () => {
     it('renders the editorial frame with placeholder content', () => {
       const html = renderToStaticMarkup(<StewardOrientationSkeleton />);
       expect(html).toContain('data-testid="admin-steward-orientation-skeleton"');
-      expect(html).toContain('Steward · Tenant orientation');
+      expect(html).toContain('Ava · Tenant orientation');
       expect(html).toContain('Loaded · grounded');
       expect(html).toContain('Missing · authored only');
     });
