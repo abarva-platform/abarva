@@ -241,6 +241,8 @@
     "db:verify:meridian-setup-data": "npx tsx src/scripts/setup-data/verify-meridian-setup-data.ts",
     "db:seed:firstcapital-setup-data": "npx tsx src/scripts/setup-data/load-firstcapital-setup-data.ts",
     "db:seed:northstar-clinical-setup-data": "npx tsx src/scripts/setup-data/load-northstar-clinical-setup-data.ts",
+    "db:dry:northstar-clinical-setup-data:postgres": "npx tsx src/scripts/setup-data/load-northstar-clinical-setup-data-postgres.ts",
+    "db:seed:northstar-clinical-setup-data:postgres": "npx tsx src/scripts/setup-data/load-northstar-clinical-setup-data-postgres.ts --apply",
     "db:verify:northstar-clinical-setup-data": "npx tsx src/scripts/setup-data/verify-northstar-clinical-setup-data.ts",
     "db:seed:meridian-intelligence": "npx tsx src/scripts/seed/seed-meridian-intelligence-layer.ts",
     "db:verify:meridian-intelligence": "npx tsx src/scripts/seed/verify-meridian-intelligence-layer.ts",
