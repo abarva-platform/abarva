@@ -456,8 +456,8 @@ export function ProgramScopePage() {
     >
       <AgentColumn
         agent={{
-          initials: "At",
-          name: "Atlas",
+          initials: "Av",
+          name: "Ava",
           role: "Cross-Program Synthesizer",
         }}
         quote={scope.agentQuote}

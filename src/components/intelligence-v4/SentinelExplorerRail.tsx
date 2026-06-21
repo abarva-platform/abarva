@@ -288,7 +288,7 @@ export function SentinelExplorerRail({ tenantKey }: SentinelExplorerRailProps) {
               color: C.ink,
             }}
           >
-            Sentinel
+            Ava
           </span>
         </div>
         <p
@@ -476,7 +476,7 @@ export function SentinelExplorerRail({ tenantKey }: SentinelExplorerRailProps) {
           />
           <button
             type="submit"
-            aria-label="Ask Sentinel"
+            aria-label="Ask Ava"
             disabled={isAsking}
             style={{
               width: 29,

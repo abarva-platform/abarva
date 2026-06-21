@@ -65,7 +65,7 @@ export function MyStrategyCxoCanvas({ bullets = MERIDIAN_STRATEGY_BULLETS }: Pro
           </>
         }
         title="What you're committing to · the evidence basis · and what stays unresolved."
-        lead="Three numbered moves. Each one names the bet, the why, and the pattern that binds it. Sentinel pushes back on framing in the right rail."
+        lead="Three numbered moves. Each one names the bet, the why, and the pattern that binds it. Ava pushes back on framing in the right rail."
         meta={
           <>
             <strong style={{ color: COLORS.ink }}>{bullets.length}</strong> strategic posture statements ·{' '}

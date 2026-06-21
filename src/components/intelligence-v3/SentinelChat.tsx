@@ -74,7 +74,7 @@ interface Props {
  * - localStorage migrates legacy 3-mode pref onto new dock keys once.
  */
 export function SentinelChat({
-  agentName = "Sentinel Intel",
+  agentName = "Ava Intel",
   scopeLabel,
   opener,
   conversation,
@@ -177,7 +177,7 @@ export function SentinelChat({
         }),
       });
       if (!response.ok || !response.body) {
-        throw new Error(`Sentinel request failed (${response.status})`);
+        throw new Error(`Ava request failed (${response.status})`);
       }
 
       const reader = response.body.getReader();
@@ -230,7 +230,7 @@ export function SentinelChat({
             );
           }
           if (event.type === "error")
-            throw new Error(event.error ?? "Sentinel stream error");
+            throw new Error(event.error ?? "Ava stream error");
           if (event.type === "done" && event.telemetryEventId) {
             setLocalTurns((prev) =>
               prev.map((turn) =>
@@ -263,8 +263,8 @@ export function SentinelChat({
                 ...turn,
                 body:
                   error instanceof Error
-                    ? `Sentinel could not complete that request: ${error.message}`
-                    : "Sentinel could not complete that request.",
+                    ? `Ava could not complete that request: ${error.message}`
+                    : "Ava could not complete that request.",
               }
             : turn,
         ),
@@ -291,7 +291,7 @@ export function SentinelChat({
 
   return (
     <AgentDock
-      agent={{ initials: "SI", name: agentName, role }}
+      agent={{ initials: "Av", name: agentName, role }}
       surface={SURFACE}
       defaultMode="side-rail"
       defaultLeftPercent={30}

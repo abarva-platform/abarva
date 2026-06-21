@@ -183,7 +183,7 @@ export function ProgramPressureCards({ tenant, view, topN }: ProgramPressureCard
           borderTop: `1px dashed ${COLORS.border}`,
         }}
       >
-        Composed deterministically from the S9e Programs Control Tower signal read model. No live agent or model call. Atlas runtime subscriber + persistence are deferred to a later slice.
+        Composed deterministically from the S9e Programs Control Tower signal read model. No live agent or model call. Ava runtime subscriber + persistence are deferred to a later slice.
       </footer>
     </section>
   );
@@ -196,7 +196,7 @@ function AtlasExecutiveBriefPanel({ brief }: { brief: AtlasProgramPressureBrief 
   const accentBg = atlasBriefAccentBg(brief.confidenceLabel);
   return (
     <article
-      aria-label="Atlas executive brief"
+      aria-label="Ava executive brief"
       style={{
         padding: '18px 22px',
         background: COLORS.card,
@@ -229,7 +229,7 @@ function AtlasExecutiveBriefPanel({ brief }: { brief: AtlasProgramPressureBrief 
               marginBottom: 4,
             }}
           >
-            Atlas executive brief · {brief.sourceLabel.replace(/_/g, ' ')}
+            Ava executive brief · {brief.sourceLabel.replace(/_/g, ' ')}
           </div>
           <h3
             style={{
@@ -346,7 +346,7 @@ function AtlasExecutiveBriefPanel({ brief }: { brief: AtlasProgramPressureBrief 
             color: COLORS.mutedSoft,
           }}
         >
-          Ask Atlas · suggested follow-ups · {brief.suggestedFollowUps.length}
+          Ask Ava · suggested follow-ups · {brief.suggestedFollowUps.length}
         </span>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {brief.suggestedFollowUps.map((followUp) => (
@@ -356,7 +356,7 @@ function AtlasExecutiveBriefPanel({ brief }: { brief: AtlasProgramPressureBrief 
               disabled
               aria-disabled="true"
               data-atlas-followup-id={followUp.id}
-              title={`${followUp.reason} · live Atlas runtime is deferred`}
+              title={`${followUp.reason} · live Ava runtime is deferred`}
               style={{
                 padding: '8px 12px',
                 background: COLORS.surface,
@@ -386,7 +386,7 @@ function AtlasExecutiveBriefPanel({ brief }: { brief: AtlasProgramPressureBrief 
                   fontWeight: 700,
                 }}
               >
-                deferred · live atlas runtime
+                deferred · live ava runtime
               </span>
             </button>
           ))}

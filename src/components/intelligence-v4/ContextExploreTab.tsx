@@ -694,7 +694,7 @@ function SystemExpandedRow({ system, dim, dimName }: SystemExpandedRowProps) {
                 fontFamily: "inherit",
               }}
             >
-              Ask Sentinel about {system.nm} →
+              Ask Ava about {system.nm} →
             </button>
           </div>
         </div>
@@ -1147,7 +1147,7 @@ export function ContextExploreTab({
             <div style={{ fontSize: 12.5, maxWidth: 460, margin: "0 auto" }}>
               Tabular view — segmented by domain, same pattern as IT Systems.
               Columns and segments are dimension-specific in the live build. Ask
-              Sentinel to explore, or switch to IT Systems to see a full
+              Ava to explore, or switch to IT Systems to see a full
               example.
             </div>
           </div>

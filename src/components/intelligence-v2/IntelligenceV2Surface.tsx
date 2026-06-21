@@ -114,7 +114,7 @@ export function IntelligenceV2Surface({
         { signal: ctrl.signal },
       );
       if (!res.ok) {
-        setAnswer("Sentinel couldn't retrieve an answer. Try again.");
+        setAnswer("Ava couldn't retrieve an answer. Try again.");
         return;
       }
       const reader = res.body?.getReader();
@@ -171,7 +171,7 @@ export function IntelligenceV2Surface({
       applyLine(buf); // flush any trailing line with no terminating newline
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
-        setAnswer("Sentinel couldn't retrieve an answer. Try again.");
+        setAnswer("Ava couldn't retrieve an answer. Try again.");
       }
     } finally {
       setFetching(false);
@@ -196,7 +196,7 @@ export function IntelligenceV2Surface({
             <span className="spark">✦</span>
             <input
               placeholder={t.ask.placeholder}
-              aria-label="Ask Sentinel"
+              aria-label="Ask Ava"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
@@ -218,7 +218,7 @@ export function IntelligenceV2Surface({
           </div>
           {(fetching || answer || experts.length > 0) && (
             <div className="ansbox">
-              <div className="anslabel">Sentinel · Intelligence</div>
+              <div className="anslabel">Ava · Intelligence</div>
               {fetching && !answer ? (
                 <div className="ansfetching">Thinking…</div>
               ) : (

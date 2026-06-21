@@ -104,7 +104,7 @@ const TABS: Array<{
     key: "evidence",
     kicker: "TRUST · L0",
     label: "Evidence",
-    question: "What can Atlas answer from committed context?",
+    question: "What can Ava answer from committed context?",
   },
   {
     key: "actions",
@@ -306,7 +306,7 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
   const [answer, setAnswer] = useState<AtlasAnswer | null>(() => ({
     headline: model.initiatives.length
       ? `I am watching ${model.tenantName}'s AI portfolio across ${model.functions.length} functions, ${model.initiatives.length} initiatives, ${model.spend.length} spend rows, and ${model.evidence.length} evidence links.`
-      : "Atlas is ready, but this tenant does not yet have committed AI Control Tower rows.",
+      : "Ava is ready, but this tenant does not yet have committed AI Control Tower rows.",
     disclosure: model.sourceDisclosure,
     columns: ["Area", "Loaded rows", "Readiness"],
     rows: [
@@ -374,7 +374,7 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
         headline: "",
         body:
           data.response?.trim() ||
-          "Atlas returned no answer for that question.",
+          "Ava returned no answer for that question.",
         disclosure: model.sourceDisclosure,
         columns: [],
         rows: [],
@@ -392,8 +392,8 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
       setAnswer({
         ...built.answer,
         disclosure: built.answer.disclosure
-          ? `${built.answer.disclosure} (offline read — Atlas engine unreachable)`
-          : "Offline read — Atlas engine unreachable.",
+          ? `${built.answer.disclosure} (offline read — Ava engine unreachable)`
+          : "Offline read — Ava engine unreachable.",
       });
     } finally {
       setPending(false);
@@ -490,14 +490,14 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
 
       <section style={styles.workspace}>
         <aside style={styles.atlas}>
-          <p style={styles.kicker}>SENTINEL · ATLAS</p>
+          <p style={styles.kicker}>AVA · CONTROL TOWER</p>
           <h2 style={styles.asideTitle}>Ask in plain English.</h2>
           <div style={styles.answerBox}>
             {pending ? (
               <p
                 style={{ color: COLORS.muted, fontStyle: "italic", margin: 0 }}
               >
-                Atlas is reading the committed context…
+                Ava is reading the committed context…
               </p>
             ) : answer ? (
               <>
@@ -569,10 +569,10 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
             }}
           >
             <input
-              aria-label="Ask Atlas"
+              aria-label="Ask Ava"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder="Ask Atlas..."
+              placeholder="Ask Ava..."
               style={styles.askInput}
               disabled={pending}
             />
@@ -581,7 +581,7 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
             </button>
           </form>
           <p style={styles.guardrail}>
-            Human approval required: Atlas proposes; named leaders approve
+            Human approval required: Ava proposes; named leaders approve
             writes, submissions, and external actions.
           </p>
         </aside>
@@ -1011,7 +1011,7 @@ function EvidenceTable({
   if (rows.length === 0)
     return (
       <EmptyState
-        message={`No committed evidence rows are available. Atlas has ${facts} context facts but cannot cite source rows until evidence is committed.`}
+        message={`No committed evidence rows are available. Ava has ${facts} context facts but cannot cite source rows until evidence is committed.`}
       />
     );
   return (

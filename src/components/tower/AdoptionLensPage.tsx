@@ -253,7 +253,7 @@ export function AdoptionLensPage() {
       }}
     >
       <AgentColumn
-        agent={{ initials: 'At', name: 'Atlas', role: 'Cross-Program Synthesizer' }}
+        agent={{ initials: 'Av', name: 'Ava', role: 'Cross-Program Synthesizer' }}
         quote={ADOPTION_AGENT_VOICE.quote}
         agentContext={ADOPTION_AGENT_VOICE.agentContext}
         actions={ADOPTION_AGENT_VOICE.actions}

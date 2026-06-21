@@ -70,7 +70,7 @@ describe("SentinelExplorerRail", () => {
     fireEvent.input(composer, {
       target: { value: "What is my context telling me right now?" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Ask Sentinel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ask Ava" }));
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(

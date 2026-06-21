@@ -733,7 +733,7 @@ function atlasDecisionSupportDisclosure(view?: AtlasObservationsView): {
       accountability?.decisionSupportLabel ?? "AI-assisted decision support",
     boundary:
       accountability?.humanDecisionBoundary ??
-      "Atlas supports executive review only; it does not approve spend, vendor actions, sequencing, or program status changes.",
+      "Ava supports executive review only; it does not approve spend, vendor actions, sequencing, or program status changes.",
     citations:
       accountability?.citationSummary ??
       (view?.isEmpty
@@ -1375,7 +1375,7 @@ function TowerInlineDetailPanel({
                 fontWeight: 800,
               }}
             >
-              Atlas read · {labelize(initiative.statusFlag)} · confidence{" "}
+              Ava read · {labelize(initiative.statusFlag)} · confidence{" "}
               {initiative.confidenceLevel}
             </div>
             <p
@@ -2236,7 +2236,7 @@ function TowerDataDesignPanel({
       refreshNow: "Weekly",
       refreshFuture: "Daily API/export",
       dashboardUpdate:
-        "Refreshes adoption blockers and Atlas citations after consent and theme checks.",
+        "Refreshes adoption blockers and Ava citations after consent and theme checks.",
       day1: "Interview notes, change-readiness survey, enablement feedback, workshop notes.",
     },
     {
@@ -3288,7 +3288,7 @@ export function TowerIndexPage({
     role: "atlas",
     content:
       atlasObservationsView?.headline ??
-      "Atlas is waiting for tenant-bound Tower substrate before it can answer portfolio questions.",
+      "Ava is waiting for tenant-bound Tower substrate before it can answer portfolio questions.",
   };
   const [atlasMessages, setAtlasMessages] = useState<AtlasMessage[]>([
     initialOpener,
@@ -3337,7 +3337,7 @@ export function TowerIndexPage({
             id: `atlas-no-tenant-${Date.now()}`,
             role: "atlas",
             content:
-              "Atlas needs an active tenant to answer. Sign in or pick a tenant from the top bar to wake up the live response path.",
+              "Ava needs an active tenant to answer. Sign in or pick a tenant from the top bar to wake up the live response path.",
           },
         ]);
         return;
@@ -3379,7 +3379,7 @@ export function TowerIndexPage({
               id: `atlas-error-${Date.now()}`,
               role: "atlas",
               content:
-                "Atlas could not answer that right now. Honest read: the Tower summary is still valid, but the live response path needs a retry.",
+                "Ava could not answer that right now. Honest read: the Tower summary is still valid, but the live response path needs a retry.",
             },
           ]);
           return;
@@ -3398,8 +3398,8 @@ export function TowerIndexPage({
             role: "atlas",
             content:
               err instanceof DOMException && err.name === "AbortError"
-                ? "I could not complete the live Atlas answer within this screen response window. The Tower facts below are still available. Next step: retry the same question or open the relevant program evidence view."
-                : "I could not complete the live Atlas answer just now. The Tower facts below are still available. Next step: retry the same question or open the relevant program evidence view.",
+                ? "I could not complete the live Ava answer within this screen response window. The Tower facts below are still available. Next step: retry the same question or open the relevant program evidence view."
+                : "I could not complete the live Ava answer just now. The Tower facts below are still available. Next step: retry the same question or open the relevant program evidence view.",
           },
         ]);
       } finally {
@@ -3560,7 +3560,7 @@ export function TowerIndexPage({
                   marginTop: 5,
                 }}
               >
-                Atlas · {tenantName} · {timestamp} PT
+                Ava · {tenantName} · {timestamp} PT
               </div>
               <div
                 style={{
@@ -3853,7 +3853,7 @@ export function TowerIndexPage({
         onSuggestion={handleAtlasSuggestion}
         workspace={towerWorkspace}
         surface="tower"
-        initialQuote="AI-assisted decision support: review citations, assumptions, and missing data before acting on Atlas output."
+        initialQuote="AI-assisted decision support: review citations, assumptions, and missing data before acting on Ava output."
         surfaceContext={{
           clientId: clientId ?? null,
           tenantName,
