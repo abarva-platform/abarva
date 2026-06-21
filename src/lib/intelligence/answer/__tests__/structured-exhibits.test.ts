@@ -44,4 +44,19 @@ describe("buildStructuredExhibits", () => {
       ]),
     );
   });
+
+  it("renders an evidence table for table-shaped questions with cited sources even without extractable figures", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: { ...routing, outputShape: "table" },
+      sources,
+      prose:
+        "The right breakdown is denial reason category, AR days, and overturn rate. Next move: ask Revenue Cycle Operations to validate the category extract from the evidence ledger.",
+    });
+
+    expect(exhibits.tables[0]?.title).toBe("Evidence Used");
+    expect(exhibits.tables[0]?.rows).toEqual([
+      expect.objectContaining({ source: "F12 IT budget" }),
+    ]);
+    expect(exhibits.charts).toHaveLength(0);
+  });
 });

@@ -4,7 +4,10 @@ import process from "node:process";
 
 import { chromium, type Page } from "@playwright/test";
 
-import { scoreAnswer } from "@/lib/eval/answer-quality/scorer";
+import {
+  scoreAnswer,
+  type AnswerQualityScore,
+} from "@/lib/eval/answer-quality/scorer";
 import {
   createIsolatedPersonaContext,
   resolveCrawlPersonas,
@@ -45,6 +48,8 @@ interface CaseReport {
   eventCount: number;
   sourceEventCitations: number;
   answerQualityGatePassed: boolean;
+  answerQualityOverall: number;
+  answerQualityViolations: AnswerQualityScore["violations"];
   deterministicPass: boolean;
   modelJudged: string[];
   hasTable: boolean;
@@ -315,6 +320,8 @@ async function main() {
         eventCount: obs.eventCount,
         sourceEventCitations: obs.sourceEventCitations,
         answerQualityGatePassed: quality.gatePassed,
+        answerQualityOverall: quality.overall,
+        answerQualityViolations: quality.violations,
         deterministicPass:
           obs.ok && behavior.deterministicPass && quality.gatePassed,
         modelJudged: behavior.modelJudged,
