@@ -59,6 +59,8 @@ export interface AskOptions {
   tenantId?: string | null;
   tenantClientKey?: string | null;
   tenant?: CanonicalTenant | null;
+  /** Caller surface renders Markdown — allow light formatting (tables/bold). Default false. */
+  richText?: boolean;
   userId?: string | null;
   tenantInventoryKey?: string | null;
   surfaceContext?: AskSurfaceContext | null;
@@ -227,6 +229,7 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
     // through unchanged.
     let answer = '';
     for await (const delta of synthesizeStream({
+      richText: opts.richText,
       query: trimmed,
       sources,
       intent: classification.intent,

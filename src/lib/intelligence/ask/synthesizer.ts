@@ -297,6 +297,13 @@ export async function* synthesizeStream(args: {
    */
   averageConfidence?: number;
   /**
+   * Caller surface renders Markdown. When true, the "plain text only" output
+   * convention is overridden to ALLOW light formatting (blank-line paragraphs,
+   * sparing bold, a compact table for benchmark ranges). Default false →
+   * byte-identical plain-text output for every existing caller.
+   */
+  richText?: boolean;
+  /**
    * Observability hook · invoked with the EXACT system + user content sent to
    * the model, right before the model call. The agent-trace spine hashes this
    * to prove Claude is downstream of retrieval. Must not mutate the args.
@@ -344,9 +351,15 @@ export async function* synthesizeStream(args: {
     args.conversationContextBlock?.trim() ?? '',
   ].filter(Boolean);
   const rolePrompt = isExplicitConciseAsk(args.query) ? CONCISE_SYSTEM_PROMPT : SYSTEM_PROMPT;
+  // Rich-text surfaces (e.g. the v2 Lens, which renders Markdown) opt in to
+  // light formatting. Placed AFTER the role prompt so it overrides the earlier
+  // "plain text only" convention. Empty for every plain-text caller.
+  const richTextAddendum = args.richText
+    ? `\n\nRICH-TEXT SURFACE OVERRIDE: This answer is rendered as Markdown — this overrides the "plain text only" convention above. You MAY use: a blank line between paragraphs; **bold** on the single most decision-relevant figure or verb in a paragraph (sparingly — not every line); a compact GitHub-flavored Markdown table ONLY when you present three or more comparable numeric ranges, such as benchmark planning ranges (a header row + up to ~5 rows, at most 3 columns); and short "- " bullet lists where they genuinely aid scanning. Do NOT use Markdown headings (#). Every other rule stands unchanged — same length discipline, tenant isolation, no fabricated numbers, no hollow openers.`
+    : '';
   const system = contextBlocks.length > 0
-    ? `${contextBlocks.join('\n\n')}\n\n${rolePrompt}${confidenceHint}`
-    : `${rolePrompt}${confidenceHint}`;
+    ? `${contextBlocks.join('\n\n')}\n\n${rolePrompt}${confidenceHint}${richTextAddendum}`
+    : `${rolePrompt}${confidenceHint}${richTextAddendum}`;
   const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present.'
