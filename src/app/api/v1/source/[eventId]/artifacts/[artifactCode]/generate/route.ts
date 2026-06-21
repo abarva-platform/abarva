@@ -196,10 +196,9 @@ function registryArtifactKind(
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-// Long ceiling — large RFP-class generations stream tokens for 60–120s.
-// Vercel Pro caps Node functions at 300s; matching that gives room for
-// retries inside the route without surfacing a timeout to the user.
-export const maxDuration = 300;
+// Extended ceiling for board-grade artifacts (d09 RFP at 40k tokens ≈ 4–8 min
+// on Opus 4.8). ACA runtime; not subject to Vercel's 300s cap.
+export const maxDuration = 600;
 
 type RouteCtx = { params: Promise<{ eventId: string; artifactCode: string }> };
 

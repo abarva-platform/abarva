@@ -27,13 +27,10 @@ const DEFAULT_MODEL =
   process.env.ABARVA_SOURCE_DEFAULT_MODEL?.trim() || "claude-sonnet-4-6";
 const BOARD_GRADE_MODEL =
   process.env.ABARVA_SOURCE_BOARD_GRADE_MODEL?.trim() || "claude-opus-4-8";
-// Practical ceiling — 4000 output tokens produces ~10–12 pages
-// of polished markdown in ~30–45s wall-clock. Above 4000 the marginal
-// quality is small and the wall-clock blows past Vercel function
-// budgets. Override per template only when the artifact genuinely needs
-// more (BAFO question pack with finalist-specific sections, decision
-// brief with multiple appendices).
-const DEFAULT_MAX_TOKENS = 4000;
+// Output token ceilings — quality over speed. Board-grade artifacts need room
+// to develop complete arguments, tables, and all required sections without
+// truncation. Increase these rather than accept a truncated draft.
+const DEFAULT_MAX_TOKENS = 24_000;
 
 const SENTINEL_VOICE = `You are a senior sourcing and vendor-strategy advisor writing for a CIO and their leadership team. You have personally run dozens of large-enterprise sourcing events. You write with the judgment, structure, and candor of a top-tier consulting partner — never like a template engine or a compliance checklist.
 
@@ -123,10 +120,7 @@ This memo is your recommendation to the CIO on whether and how to take this to m
     artifactCode: "d02_value_target",
     version: 3,
     model: BOARD_GRADE_MODEL,
-    // Short doc (600-1000 words). Cap output so the draft + consulting-grade
-    // review + rewrite all complete inside the synchronous request budget on
-    // the ACA runtime (the 4000-token default overran and 504'd mid-rewrite).
-    maxTokens: 2_000,
+    maxTokens: 12_000,
     upstreamRequired: [],
     upstreamOptional: ["d01_strategy_memo"],
     systemPrompt: `${SENTINEL_VOICE}
@@ -176,9 +170,7 @@ Requirements:
     artifactCode: "d03_archetype_decision",
     version: 3,
     model: BOARD_GRADE_MODEL,
-    // Short doc (500-900 words). Cap output so the gated draft + review +
-    // rewrite fit the synchronous request budget on ACA (see d02 note).
-    maxTokens: 2_000,
+    maxTokens: 12_000,
     upstreamRequired: [],
     upstreamOptional: ["d01_strategy_memo"],
     systemPrompt: `${SENTINEL_VOICE}
@@ -277,7 +269,7 @@ Tone: precise, business-facing, list-heavy. Start with an executive summary that
     artifactCode: "d09_rfp_pack",
     version: 9,
     model: BOARD_GRADE_MODEL,
-    maxTokens: 6200,
+    maxTokens: 40_000,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
     upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth"],
     systemPrompt: `${SENTINEL_VOICE}
