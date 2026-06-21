@@ -100,9 +100,31 @@ runtime behavior; no migration or data rollback is involved.
 - Local validation: `tsc` clean; 31 jest tests green; rendered exhibit screenshot.
 - No deployment URL (no runtime rollout).
 
+## WIRE phase (governed pipeline enforcement)
+
+- §0a/§0b added to the build sequence: the 8-stage governed pipeline (broker → profile → governed
+  generation → exhibits → quality gate → renderer → persist → audit) and the **Deliverable Quality
+  Contract** as a first-class capability, separate from egress governance.
+- Profile registry extended with contract fields + **14 Source artifact profiles** (strategy memo …
+  value ledger), profiled distinctly; RFP/pricing/evaluation/transition allowed deep/exhaustive depth.
+- `assessClientDeliverable` is now the **blocking gate** returning result states (`client_ready` /
+  `internal_draft` / `blocked_missing_inputs` / `blocked_missing_exhibits` / `blocked_quality` /
+  `blocked_governance`), evaluating against the profile across 12 dimensions (not word count).
+- Generation pass is **governed by construction** — the model call is an injected adapter; a direct
+  SDK client is impossible by type.
+- **Wired into `persistDeliverable`**: the contract runs for every deliverable (tenant-agnostic);
+  non-`client_ready` artifacts are quarantined as internal drafts when enforcement is on. Enforcement
+  is staged per tenant via flag, then platform-default. Existing persistence behavior unchanged.
+
 ## Known Gaps
 
-- Not wired into the live orchestrator/persistence path (inert) — this is the gating frontier.
+- Quality-contract enforcement is wired but **defaults to observe-only**; staged flip per tenant is
+  the rollout (the gate always runs and records the state regardless).
+- The **structured generation passes** (ArchitectureModel emission inside the orchestrator, grounded
+  via the broker) are not yet called in the live flow — so required-exhibit checks correctly report
+  missing exhibits until that lands. Renderer-selection-by-profile (HTML/PPT) is profiled but not yet
+  switched in persist.
+- No live ACA generation proof yet — the gating frontier; SkyHarbor IROPS is the intended proof point.
 - W3 storyline deck renders to HTML; **native PPTX export** (reuse expert-kernel `pptx-renderer`) is
   not yet wired — the model is PPTX-ready.
 - W4 remaining profile verticals (discovery, root-cause, solution design, operating model, sourcing,
