@@ -47,6 +47,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { config as loadEnv } from "dotenv";
 import path from "node:path";
+import { Pool } from "pg";
 
 import {
   embedTexts,
@@ -68,6 +69,7 @@ import {
   getPrivateDataPlaneResource,
   isPrivateVectorAvailable,
 } from "@/lib/knowledge/private-data-plane/registry";
+import { runtimePostgresPoolConfig } from "@/lib/data-plane/postgresCompat";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -153,6 +155,10 @@ interface SupabaseUpdateBuilder {
     col: string,
     val: string,
   ) => SupabaseUpdateBuilder & Promise<{ error: { message: string } | null }>;
+}
+
+interface CloseableSupabaseLike extends SupabaseLike {
+  close?: () => Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -578,6 +584,189 @@ async function markFailed(
   }
 }
 
+const CHUNK_TABLE = "enterprise_context_chunks";
+const SELECTABLE_CHUNK_COLUMNS = new Set([
+  "chunk_id",
+  "tenant_key",
+  "client_id",
+  "chunk_text",
+  "source_segment_id",
+  "source_record_id",
+  "source_doc",
+  "chunk_index",
+  "chunk_metadata",
+  "provenance",
+]);
+const FILTERABLE_CHUNK_COLUMNS = new Set([
+  "tenant_key",
+  "chunk_id",
+  "embedding_status",
+]);
+const UPDATEABLE_CHUNK_COLUMNS = new Set([
+  "embedding",
+  "embedding_vector",
+  "embedding_dim",
+  "embedding_model",
+  "embedding_status",
+  "embedded_at",
+  "embedding_error",
+  "updated_at",
+]);
+
+function assertKnownColumn(column: string, allowed: Set<string>): void {
+  if (!allowed.has(column)) {
+    throw new Error(`unsupported enterprise_context_chunks column: ${column}`);
+  }
+}
+
+function parseSelectColumns(cols: string): string[] {
+  const columns = cols
+    .split(",")
+    .map((col) => col.trim())
+    .filter(Boolean);
+  for (const column of columns) {
+    assertKnownColumn(column, SELECTABLE_CHUNK_COLUMNS);
+  }
+  return columns;
+}
+
+function quoteIdent(identifier: string): string {
+  return `"${identifier.replace(/"/g, '""')}"`;
+}
+
+function normalizeUpdateValue(column: string, value: unknown): unknown {
+  if (column === "embedding") {
+    return JSON.stringify(value);
+  }
+  return value;
+}
+
+function updateCast(column: string): string {
+  if (column === "embedding") return "::jsonb";
+  if (column === "embedding_vector") return "::vector";
+  return "";
+}
+
+function getPostgresClient(): CloseableSupabaseLike {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is required for --postgres-only.");
+  }
+  const pool = new Pool(
+    runtimePostgresPoolConfig(
+      connectionString,
+      "embed-pending-enterprise-context-chunks",
+    ),
+  );
+
+  const from = (table: string): SupabaseQueryBuilder => {
+    if (table !== CHUNK_TABLE) {
+      throw new Error(`unsupported table for Postgres embedding adapter: ${table}`);
+    }
+
+    return {
+      select(cols: string): SupabaseSelectBuilder {
+        const selectedColumns = parseSelectColumns(cols);
+        const filters: Array<{ column: string; value: string }> = [];
+        const builder: SupabaseSelectBuilder = {
+          eq(col: string, val: string) {
+            assertKnownColumn(col, FILTERABLE_CHUNK_COLUMNS);
+            filters.push({ column: col, value: val });
+            return builder;
+          },
+          order(_col: string) {
+            return builder;
+          },
+          async limit(n: number) {
+            const values: unknown[] = [];
+            const where = filters.map(({ column, value }) => {
+              values.push(value);
+              return `${quoteIdent(column)} = $${values.length}`;
+            });
+            values.push(n);
+            const sql = `
+              select ${selectedColumns.map(quoteIdent).join(", ")}
+                from public.enterprise_context_chunks
+               ${where.length > 0 ? `where ${where.join(" and ")}` : ""}
+               order by tenant_key, chunk_id
+               limit $${values.length}
+            `;
+            try {
+              const result = await pool.query<PendingChunkRow>(sql, values);
+              return { data: result.rows, error: null };
+            } catch (error) {
+              return {
+                data: null,
+                error: {
+                  message: error instanceof Error ? error.message : String(error),
+                },
+              };
+            }
+          },
+        };
+        return builder;
+      },
+      update(values: Record<string, unknown>): SupabaseUpdateBuilder {
+        const filters: Array<{ column: string; value: string }> = [];
+        const builder = {
+          eq(col: string, val: string) {
+            assertKnownColumn(col, FILTERABLE_CHUNK_COLUMNS);
+            filters.push({ column: col, value: val });
+            return builder as SupabaseUpdateBuilder & Promise<{
+              error: { message: string } | null;
+            }>;
+          },
+          then(
+            onFulfilled: (v: {
+              error: { message: string } | null;
+            }) => unknown,
+          ) {
+            return (async () => {
+              const entries = Object.entries(values);
+              for (const [column] of entries) {
+                assertKnownColumn(column, UPDATEABLE_CHUNK_COLUMNS);
+              }
+              if (entries.length === 0) return { error: null };
+
+              const params: unknown[] = [];
+              const sets = entries.map(([column, value]) => {
+                params.push(normalizeUpdateValue(column, value));
+                return `${quoteIdent(column)} = $${params.length}${updateCast(column)}`;
+              });
+              const where = filters.map(({ column, value }) => {
+                params.push(value);
+                return `${quoteIdent(column)} = $${params.length}`;
+              });
+              const sql = `
+                update public.enterprise_context_chunks
+                   set ${sets.join(", ")}
+                 ${where.length > 0 ? `where ${where.join(" and ")}` : ""}
+              `;
+              try {
+                await pool.query(sql, params);
+                return { error: null };
+              } catch (error) {
+                return {
+                  error: {
+                    message:
+                      error instanceof Error ? error.message : String(error),
+                  },
+                };
+              }
+            })().then(onFulfilled);
+          },
+        };
+        return builder as SupabaseUpdateBuilder;
+      },
+    };
+  };
+
+  return {
+    from,
+    close: () => pool.end(),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Default Supabase client wrapper (typed against `SupabaseLike`).
 // ---------------------------------------------------------------------------
@@ -645,13 +834,18 @@ export async function main(
     throw new Error("OPENAI_API_KEY is required for non-dry-run executions.");
   }
 
-  const supabase = getSupabaseClient() as unknown as SupabaseLike;
+  const supabase: CloseableSupabaseLike =
+    args.postgresOnly && process.env.DATABASE_URL
+      ? getPostgresClient()
+      : (getSupabaseClient() as unknown as SupabaseLike);
   const result = await runEmbedJob(supabase, {
     batchSize,
     maxBatches,
     tenantKey: args.tenantKey,
     dryRun: args.dryRun,
     postgresOnly: args.postgresOnly,
+  }).finally(async () => {
+    await supabase.close?.();
   });
 
   console.log("────────────────────────────────────────────────────────────");
