@@ -30,6 +30,7 @@ import { createClerkClient } from '@clerk/backend';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import path from 'node:path';
 import { CXO_PERSONAS } from '../src/lib/auth/cxo-personas';
+import { AGENT_CLIENT_LOGINS } from '../src/lib/auth/agent-client-logins';
 
 const PROTECTED_EMAILS = new Set<string>([
   'anand.sundaram@thesundaram.com',
@@ -39,6 +40,7 @@ const DEMO_PASSWORD = 'Demo2026!';
 const KEEP_EMAILS = new Set<string>([
   ...PROTECTED_EMAILS,
   ...CXO_PERSONAS.map((p) => p.email),
+  ...AGENT_CLIENT_LOGINS.map((p) => p.email),
 ]);
 
 function requireEnv(name: string): string {
@@ -73,7 +75,11 @@ function parseArgs() {
     client: clientValue,
     clerkOnly: args.has('--clerk-only'),
     planOnly: args.has('--plan-only'),
-    skipBan: args.has('--skip-ban') || Boolean(clientValue),
+    // --agents provisions the per-client automation logins (AGENT_CLIENT_LOGINS)
+    // instead of the human CXO_PERSONAS. Skip the ban sweep for agent runs
+    // (the agent roster is its own closed set).
+    agents: args.has('--agents'),
+    skipBan: args.has('--skip-ban') || Boolean(clientValue) || args.has('--agents'),
   };
 }
 
@@ -339,12 +345,14 @@ async function listAllUsers(clerk: ReturnType<typeof createClerkClient>) {
 }
 
 async function main() {
-  const { apply, client, clerkOnly, planOnly, skipBan } = parseArgs();
+  const { apply, client, clerkOnly, planOnly, skipBan, agents } = parseArgs();
+  const roster = agents ? AGENT_CLIENT_LOGINS : CXO_PERSONAS;
+  if (agents) console.log('Roster: AGENT_CLIENT_LOGINS (per-client automation logins)');
   const selectedPersonas = client
-    ? CXO_PERSONAS.filter((persona) => persona.clientKey === client)
-    : CXO_PERSONAS;
+    ? roster.filter((persona) => persona.clientKey === client)
+    : roster;
   if (client && selectedPersonas.length === 0) {
-    throw new Error(`Unknown --client ${client}; no CXO personas found.`);
+    throw new Error(`Unknown --client ${client}; no ${agents ? 'agent logins' : 'CXO personas'} found.`);
   }
 
   console.log('━'.repeat(70));
