@@ -38,9 +38,9 @@ describe("Profile registry", () => {
 
   it("no profile has maxWords, maxSlides, or maxSections", () => {
     for (const p of getAllSourceArtifactProfiles()) {
-      expect((p as Record<string, unknown>)["maxWords"]).toBeUndefined();
-      expect((p as Record<string, unknown>)["maxSlides"]).toBeUndefined();
-      expect((p as Record<string, unknown>)["maxSections"]).toBeUndefined();
+      expect(Object.hasOwn(p, "maxWords")).toBe(false);
+      expect(Object.hasOwn(p, "maxSlides")).toBe(false);
+      expect(Object.hasOwn(p, "maxSections")).toBe(false);
     }
   });
 
@@ -58,7 +58,9 @@ describe("Profile registry", () => {
   });
 
   it("d09 missingInputPolicy is block_until_complete", () => {
-    expect(getSourceArtifactProfile("d09")!.missingInputPolicy).toBe("block_until_complete");
+    expect(getSourceArtifactProfile("d09")!.missingInputPolicy).toBe(
+      "block_until_complete",
+    );
   });
 
   it("d24 is board-grade riskDepth and decision-brief readerMode", () => {
@@ -81,17 +83,28 @@ describe("Banned terms scanner", () => {
   });
 
   it("flags AI generation language", () => {
-    const result = scanForBannedTerms("This was AI generated using map-reduce.", "d01");
-    expect(result.some((t) => t.toLowerCase().includes("ai generated"))).toBe(true);
+    const result = scanForBannedTerms(
+      "This was AI generated using map-reduce.",
+      "d01",
+    );
+    expect(result.some((t) => t.toLowerCase().includes("ai generated"))).toBe(
+      true,
+    );
   });
 
   it("flags vendor sensitivity in vendor-facing profile", () => {
-    const result = scanForBannedTerms("Our internal sensitivity is $4.5M.", "d09");
+    const result = scanForBannedTerms(
+      "Our internal sensitivity is $4.5M.",
+      "d09",
+    );
     expect(result).toContain("internal sensitivity");
   });
 
   it("does not flag normal text in internal artifact", () => {
-    const result = scanForBannedTerms("d02 value analysis complete. Substrate confirmed.", "d02");
+    const result = scanForBannedTerms(
+      "d02 value analysis complete. Substrate confirmed.",
+      "d02",
+    );
     // d02 is internal — only AI labels banned, not d-codes
     expect(result).toContain("substrate");
     expect(result).not.toContain("d02");
@@ -116,14 +129,16 @@ describe("QA gate runner", () => {
   });
 
   it("blocks when client-facing artifact contains banned terms", () => {
-    const content = "This strategy memo references d01 and was AI generated via map-reduce.";
+    const content =
+      "This strategy memo references d01 and was AI generated via map-reduce.";
     const report = runDocumentQA({ artifactCode: "d01", content });
     expect(report.passed).toBe(false);
     expect(report.blockers.length).toBeGreaterThan(0);
   });
 
   it("blocks when vendor-facing artifact exposes internal sensitivity", () => {
-    const content = "Our internal sensitivity is $3.5M walk-away. Vendor scorecard follows.";
+    const content =
+      "Our internal sensitivity is $3.5M walk-away. Vendor scorecard follows.";
     const report = runDocumentQA({ artifactCode: "d09", content });
     expect(report.passed).toBe(false);
   });
@@ -140,7 +155,9 @@ describe("QA gate runner", () => {
     ${"Detailed analysis of current state and vendor landscape. ".repeat(200)}`;
     const report = runDocumentQA({ artifactCode: "d01", content: longContent });
     const lengthBlocker = report.blockers.find(
-      (b) => b.toLowerCase().includes("word count") || b.toLowerCase().includes("length"),
+      (b) =>
+        b.toLowerCase().includes("word count") ||
+        b.toLowerCase().includes("length"),
     );
     expect(lengthBlocker).toBeUndefined();
   });
@@ -168,7 +185,9 @@ describe("Human consultant voice gate", () => {
     What we know: 180 apps. What remains open: ticket volume.
     Value hypothesis: $4–7M. Next gate: scope locked.`;
     const report = runDocumentQA({ artifactCode: "d01", content });
-    const voiceWarning = report.warnings.find((w) => w.includes("Human consultant voice"));
+    const voiceWarning = report.warnings.find((w) =>
+      w.includes("Human consultant voice"),
+    );
     expect(voiceWarning).toBeDefined();
     // Warning only, not a blocker
     expect(report.passed).toBe(true);
@@ -184,7 +203,9 @@ describe("Human consultant voice gate", () => {
     Value hypothesis: $4–7M annually.
     Next gate: scope boundary locked.`;
     const report = runDocumentQA({ artifactCode: "d01", content });
-    const voiceWarning = report.warnings.find((w) => w.includes("Human consultant voice"));
+    const voiceWarning = report.warnings.find((w) =>
+      w.includes("Human consultant voice"),
+    );
     expect(voiceWarning).toBeUndefined();
   });
 });
@@ -200,7 +221,9 @@ describe("Exhibit interpretation gate", () => {
     | Vendor A | $8M | 87 |
     | Vendor B | $9M | 82 |`;
     const report = runDocumentQA({ artifactCode: "d01", content });
-    const exhibitWarning = report.warnings.find((w) => w.includes("Exhibit interpretation"));
+    const exhibitWarning = report.warnings.find((w) =>
+      w.includes("Exhibit interpretation"),
+    );
     expect(exhibitWarning).toBeDefined();
   });
 
@@ -216,7 +239,9 @@ describe("Exhibit interpretation gate", () => {
 
     What this means for the decision: Vendor A leads on both price and quality.`;
     const report = runDocumentQA({ artifactCode: "d01", content });
-    const exhibitWarning = report.warnings.find((w) => w.includes("Exhibit interpretation"));
+    const exhibitWarning = report.warnings.find((w) =>
+      w.includes("Exhibit interpretation"),
+    );
     expect(exhibitWarning).toBeUndefined();
   });
 });

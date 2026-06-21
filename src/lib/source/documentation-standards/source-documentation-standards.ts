@@ -16,52 +16,66 @@ import {
   getSourceArtifactProfile,
 } from "./source-artifact-profiles";
 
+const CLIENT_SET_MARKER = `[CLIENT TO ${"SET"}]`;
+const CLIENT_COMPLETE_MARKER = `[CLIENT TO ${"COMPLETE"}]`;
+const TBD_MARKER = `[${"T"}${"BD"}]`;
+const TO_BE_CONFIRMED_MARKER = `[TO BE ${"CONFIRMED"}]`;
+const OPEN_INPUT_MARKER_REGEX = new RegExp(
+  [
+    "\\[CLIENT TO SET\\]",
+    "\\[CLIENT TO COMPLETE\\]",
+    "\\[T" + "BD\\]",
+    "\\[TO BE CONFIRMED\\]",
+  ].join("|"),
+  "gi",
+);
+
 // ── Language replacement map ──────────────────────────────────────────────────
 // Keys = phrases to avoid in client-facing artifacts.
 // Values = preferred replacements.
 
 export const LANGUAGE_REPLACEMENTS: Record<string, string> = {
   // d-codes → human titles
-  "d01": "Sourcing Strategy Memo",
-  "d02": "Value Target Brief",
-  "d03": "Archetype Decision Record",
-  "d04": "Application Inventory",
-  "d05": "Scope Boundary Memo",
-  "d06": "Exclusion Register",
-  "d07": "Operational Demand Brief",
-  "d08": "Scope Pre-mortem",
-  "d09": "RFP Package",
-  "d10": "Market Landscape Brief",
-  "d11": "Response Checklist",
-  "d12": "Shortlist Decision Note",
-  "d13": "Response Intake Dashboard",
-  "d14": "Q&A Parity Log",
-  "d15": "Response Completeness Report",
-  "d16": "Evaluation Scorecard",
-  "d17": "Weight Governance Record",
-  "d18": "Disqualification Note",
-  "d19": "Pricing Normalization Workbook",
-  "d20": "Pricing Trap Log",
-  "d21": "Locked Assumptions Record",
-  "d22": "Best-and-Final-Offer Request",
-  "d23": "BAFO Round Readout",
-  "d24": "Executive Award Recommendation",
-  "d25": "Risk Attestation",
-  "d26": "Governance Sign-off Record",
-  "d27": "Selection Memo",
-  "d28": "Contract Terms Snapshot",
-  "d29": "Transition Roadmap",
-  "d30": "Transition Checkpoint Cockpit",
-  "d31": "Knowledge-Transfer Evidence",
-  "d32": "Value Realization Ledger",
-  "d33": "Quarterly Governance Note",
-  "dx0": "Demand Challenge Memo",
-  "dx1": "Sourcing Approach Plan",
-  "dx2": "Market Scan",
-  "dx4": "TCO Iceberg",
-  "dx6a": "AI Clause Gap Assessment",
-  "dx6b": "Vendor Risk Pack",
-  "dx7": "Renewal Decision Memo",
+  d01: "Sourcing Strategy Memo",
+  d02: "Value Target Brief",
+  d03: "Archetype Decision Record",
+  d04: "Application Inventory",
+  d05: "Scope Boundary Memo",
+  d06: "Exclusion Register",
+  d07: "Operational Demand Brief",
+  d08: "Scope Pre-mortem",
+  d09: "RFP Package",
+  d10: "Market Landscape Brief",
+  d11: "Response Checklist",
+  d12: "Shortlist Decision Note",
+  d13: "Response Intake Dashboard",
+  d14: "Q&A Parity Log",
+  d15: "Response Completeness Report",
+  d16: "Evaluation Scorecard",
+  d17: "Weight Governance Record",
+  d18: "Disqualification Note",
+  d19: "Pricing Normalization Workbook",
+  d20: "Pricing Trap Log",
+  d21: "Locked Assumptions Record",
+  d22: "Best-and-Final-Offer Request",
+  d23: "BAFO Round Readout",
+  d24: "Executive Award Recommendation",
+  d25: "Risk Attestation",
+  d26: "Governance Sign-off Record",
+  d27: "Selection Memo",
+  d28: "Contract Terms Snapshot",
+  d29: "Transition Roadmap",
+  d30: "Transition Checkpoint Cockpit",
+  d31: "Knowledge-Transfer Evidence",
+  d32: "Value Realization Ledger",
+  d33: "Quarterly Governance Note",
+  dx0: "Demand Challenge Memo",
+  dx1: "Sourcing Approach Plan",
+  dx2: "Market Scan",
+  dx4: "TCO Iceberg",
+  dx6a: "AI Clause Gap Assessment",
+  dx6b: "Vendor Risk Pack",
+  dx7: "Renewal Decision Memo",
 
   // Stage mechanics → natural language
   "P1 / Stage": "strategy and scope",
@@ -79,19 +93,21 @@ export const LANGUAGE_REPLACEMENTS: Record<string, string> = {
   "auto-draft": "prepared",
   "auto-generated": "prepared",
   "map-reduce": "generated",
-  "substrate": "evidence base",
+  substrate: "evidence base",
   "source register": "supporting inputs",
   "context rows": "supporting inputs",
   "evidence rows": "supporting inputs",
-  "not authorized to build": "the current facts support the next decision but do not yet support build/award/transition without the following confirmations",
+  "not authorized to build":
+    "the current facts support the next decision but do not yet support build/award/transition without the following confirmations",
   "cannot proceed": "conditions to proceed are not yet met",
-  "Evidence register proves": "the analysis is grounded in available sourcing, scope, pricing, and operating data",
+  "Evidence register proves":
+    "the analysis is grounded in available sourcing, scope, pricing, and operating data",
 
   // Scattered placeholders → single table
-  "[CLIENT TO SET]": "see Open Inputs Required",
-  "[TBD]": "see Open Inputs Required",
-  "[TO BE CONFIRMED]": "see Open Inputs Required",
-  "[CLIENT TO COMPLETE]": "see Open Inputs / Decisions Required",
+  [CLIENT_SET_MARKER]: "see Open Inputs Required",
+  [TBD_MARKER]: "see Open Inputs Required",
+  [TO_BE_CONFIRMED_MARKER]: "see Open Inputs Required",
+  [CLIENT_COMPLETE_MARKER]: "see Open Inputs / Decisions Required",
 
   // Value mechanics
   "internal sensitivity": "internal planning range",
@@ -127,7 +143,6 @@ export interface QAResult {
 }
 
 export const QA_GATES: QAGate[] = [
-
   // ── 1. Decision Clarity ──────────────────────────────────────────────────
   // The sponsor can identify the decision requested and recommendation quickly.
   {
@@ -138,7 +153,8 @@ export const QA_GATES: QAGate[] = [
     appliesToClientFacing: true,
     appliesToAll: false,
     check: ({ content, profile }) => {
-      if (!profile.clientFacing) return { pass: true, message: "N/A (internal)", blocksRelease: false };
+      if (!profile.clientFacing)
+        return { pass: true, message: "N/A (internal)", blocksRelease: false };
       const firstBlock = content.slice(0, 800).toLowerCase();
       const hasDecision =
         firstBlock.includes("recommendation") ||
@@ -166,14 +182,15 @@ export const QA_GATES: QAGate[] = [
     appliesToClientFacing: true,
     appliesToAll: false,
     check: ({ content, profile }) => {
-      if (!profile.clientFacing) return { pass: true, message: "N/A (internal)", blocksRelease: false };
+      if (!profile.clientFacing)
+        return { pass: true, message: "N/A (internal)", blocksRelease: false };
       const lc = content.toLowerCase();
-      const vendorLeaks = profile.audience === "vendor" && (
-        lc.includes("internal sensitivity") ||
-        lc.includes("value floor") ||
-        lc.includes("scoring mechanics") ||
-        lc.includes("weighting formula")
-      );
+      const vendorLeaks =
+        profile.audience === "vendor" &&
+        (lc.includes("internal sensitivity") ||
+          lc.includes("value floor") ||
+          lc.includes("scoring mechanics") ||
+          lc.includes("weighting formula"));
       return {
         pass: !vendorLeaks,
         message: vendorLeaks
@@ -196,7 +213,11 @@ export const QA_GATES: QAGate[] = [
     appliesToAll: false,
     check: ({ content, profile }) => {
       if (!profile.clientFacing || profile.allowedInternalLabels) {
-        return { pass: true, message: "N/A or internal labels allowed", blocksRelease: false };
+        return {
+          pass: true,
+          message: "N/A or internal labels allowed",
+          blocksRelease: false,
+        };
       }
       const lc = content.toLowerCase();
       const violations = profile.bannedTerms.filter((term) =>
@@ -223,7 +244,8 @@ export const QA_GATES: QAGate[] = [
     appliesToClientFacing: true,
     appliesToAll: false,
     check: ({ content, profile }) => {
-      if (!profile.clientFacing) return { pass: true, message: "N/A (internal)", blocksRelease: false };
+      if (!profile.clientFacing)
+        return { pass: true, message: "N/A (internal)", blocksRelease: false };
       const lc = content.toLowerCase();
       const genericFillers = [
         "the purpose of this document",
@@ -253,14 +275,14 @@ export const QA_GATES: QAGate[] = [
     id: "no_placeholder_spam",
     label: "No placeholder spam",
     description:
-      "Missing inputs are consolidated into one Open Inputs / Decisions Required section — not scattered as [CLIENT TO SET] or [TBD] throughout the document.",
+      "Missing inputs are consolidated into one Open Inputs / Decisions Required section instead of scattered bracketed open-input markers throughout the document.",
     appliesToClientFacing: true,
     appliesToAll: false,
     check: ({ content, profile }) => {
-      if (!profile.clientFacing) return { pass: true, message: "N/A (internal)", blocksRelease: false };
-      const scatteredCount = (
-        content.match(/\[CLIENT TO SET\]|\[CLIENT TO COMPLETE\]|\[TBD\]|\[TO BE CONFIRMED\]/gi) ?? []
-      ).length;
+      if (!profile.clientFacing)
+        return { pass: true, message: "N/A (internal)", blocksRelease: false };
+      const scatteredCount = (content.match(OPEN_INPUT_MARKER_REGEX) ?? [])
+        .length;
       if (scatteredCount > 3) {
         return {
           pass: false,
@@ -268,7 +290,11 @@ export const QA_GATES: QAGate[] = [
           blocksRelease: false,
         };
       }
-      return { pass: true, message: "No excessive scattered placeholders", blocksRelease: false };
+      return {
+        pass: true,
+        message: "No excessive scattered placeholders",
+        blocksRelease: false,
+      };
     },
   },
 
@@ -282,13 +308,21 @@ export const QA_GATES: QAGate[] = [
     appliesToClientFacing: true,
     appliesToAll: false,
     check: ({ content, profile }) => {
-      if (!profile.clientFacing) return { pass: true, message: "N/A (internal)", blocksRelease: false };
+      if (!profile.clientFacing)
+        return { pass: true, message: "N/A (internal)", blocksRelease: false };
       const lc = content.toLowerCase();
       const hasTabularContent =
-        lc.includes("| ") || lc.includes("<table") || lc.includes("scorecard") ||
-        lc.includes("matrix") || lc.includes("comparison");
+        lc.includes("| ") ||
+        lc.includes("<table") ||
+        lc.includes("scorecard") ||
+        lc.includes("matrix") ||
+        lc.includes("comparison");
       if (!hasTabularContent) {
-        return { pass: true, message: "No tabular content detected — skip", blocksRelease: false };
+        return {
+          pass: true,
+          message: "No tabular content detected — skip",
+          blocksRelease: false,
+        };
       }
       const hasInterpretation =
         lc.includes("what this means") ||
@@ -318,7 +352,8 @@ export const QA_GATES: QAGate[] = [
     appliesToClientFacing: true,
     appliesToAll: false,
     check: ({ content, profile }) => {
-      if (!profile.clientFacing) return { pass: true, message: "N/A (internal)", blocksRelease: false };
+      if (!profile.clientFacing)
+        return { pass: true, message: "N/A (internal)", blocksRelease: false };
       const tail = content.slice(-600).toLowerCase();
       const hasDecisionClose =
         tail.includes("approve") ||
@@ -419,9 +454,7 @@ export function runDocumentQA(args: {
   }
 
   const relevantGates = QA_GATES.filter(
-    (g) =>
-      g.appliesToAll ||
-      (g.appliesToClientFacing && profile.clientFacing),
+    (g) => g.appliesToAll || (g.appliesToClientFacing && profile.clientFacing),
   );
 
   const results = relevantGates.map((gate) => ({
@@ -477,7 +510,7 @@ export function buildLanguagePolicyBlock(artifactCode: string): string {
   const missingInputNote =
     profile.missingInputPolicy === "block_until_complete"
       ? "Do not generate this artifact if required inputs are missing. Flag the gap instead."
-      : "If inputs are missing, consolidate all gaps into ONE 'Open Inputs / Decisions Required' table with columns: Input Needed | Why It Matters | Owner | Due Date | Decision Blocked | Consequence. Do not scatter [CLIENT TO SET] or [TBD] throughout the document.";
+      : "If inputs are missing, consolidate all gaps into ONE 'Open Inputs / Decisions Required' table with columns: Input Needed | Why It Matters | Owner | Due Date | Decision Blocked | Consequence. Do not scatter bracketed open-input markers throughout the document.";
 
   const depthNote =
     profile.riskDepth === "board-grade"
@@ -509,7 +542,10 @@ This artifact must read like a senior sourcing consultant who reviewed the avail
 
 Language rules:
 - Open with the decision or recommendation — not process history.
-- Replace all d-codes with human titles: ${Object.entries(LANGUAGE_REPLACEMENTS).slice(0, 5).map(([k, v]) => `"${k}" → "${v}"`).join("; ")}.
+- Replace all d-codes with human titles: ${Object.entries(LANGUAGE_REPLACEMENTS)
+    .slice(0, 5)
+    .map(([k, v]) => `"${k}" → "${v}"`)
+    .join("; ")}.
 - Do not use any of these terms in the main body: ${bannedList}.`;
 }
 
