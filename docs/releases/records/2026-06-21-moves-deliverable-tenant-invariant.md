@@ -33,6 +33,7 @@ Governed Strategic Moves deliverable generation was blocked in Azure for SkyHarb
 - `src/lib/deliverables/orchestrator/generate-service.ts`: Passes the Move id and client id into evidence assembly so deliverables can retrieve move-scoped evidence.
 - `src/lib/deliverables/orchestrator/__tests__/surface.test.ts`: Adds regression coverage for empty tenant retrieval plus move current-state evidence.
 - `src/app/api/v1/programs/[programId]/phase-capture/route.ts`: Aligns P3 capture with `solution_design`, a registered design sign-off key accepted by `evaluateGate`, instead of the stale `design_spec` key.
+- `src/app/api/v1/deliverables/generate/route.ts` and `src/app/api/v1/deliverables/generate-phase/route.ts`: Return the caught error message in internal-error JSON so pilot QA can diagnose enqueue failures without relying on delayed ACA log capture.
 
 ## QA / Validation
 
@@ -48,6 +49,9 @@ Governed Strategic Moves deliverable generation was blocked in Azure for SkyHarb
 - Live proof: SkyHarbor P1 Program Charter generated successfully after deploy with run `7948e4f0-5941-4fec-b39e-8d9e7b0614c7`, artifact `d703b1fe-ba42-4665-bd8a-1c11a978615f`, `retrievedEvidence=5`, no blockers.
 - Live proof: SkyHarbor P2 generated successfully after deploy with runs `4d77bf35-aa2f-482a-8bfd-006a14e43bdb` and `1968db58-9897-4d83-b2a6-a4ec88db567e`, both `retrievedEvidence=5`, no blockers.
 - Live proof: SkyHarbor P3 generated three successful artifacts (`0a1ccec0-a949-4040-9b36-b9418409d556`, `eb4c152e-53f7-4a1d-a4fb-0c43f28565d2`, `e5f76c90-173b-4c51-8c5f-269a9b544cdf`) and correctly blocked the Sourcing Strategy run `ae8d7072-90eb-487b-89b0-b01545f2124e` on the quality contract for unsupported client-fact claims.
+- Live proof: SkyHarbor P3 -> P4 gate passed after a signed `requirements_traceability` artifact was created (`a909f3e3-d4e4-42f0-8de4-480db6fa8dc0`).
+- Live proof: SkyHarbor P4 -> P5 gate passed after signed P4 governance artifacts and milestone were created. P4 generated Tower Metrics Plan successfully (`d7b12668-3f67-44b1-834b-65d185d7fc03`) and correctly blocked generated Roadmap, Business Case, and Financial Model exports for unsupported numeric client-fact claims.
+- Live proof: SkyHarbor P5 capture and sign-off succeeded; P5 generation currently returns HTTP 500 before the worker queue is created. This release adds error-message return to identify the enqueue failure on the next signed-in retry.
 
 ## Rollout Plan
 
@@ -75,4 +79,4 @@ Rollback by setting the web app and worker job back to the previously serving im
 
 ## Known Gaps
 
-The SkyHarbor P3 Sourcing Strategy artifact is correctly blocked by the deliverable quality contract until the unsupported client-fact claims are regenerated or edited with citations, assumptions, or placeholders. This is a content quality blocker, not a platform crash.
+The SkyHarbor P3 Sourcing Strategy artifact and three P4 artifacts (Roadmap, Business Case, Financial Model) are correctly blocked by the deliverable quality contract until unsupported client-fact claims are regenerated or edited with citations, assumptions, or placeholders. This is a content quality blocker, not a platform crash. P5 generation also has a platform enqueue failure still under diagnosis; route responses now expose the caught error message for the next signed-in QA run.
