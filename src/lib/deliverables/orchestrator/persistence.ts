@@ -20,6 +20,12 @@ import { prescribedFormatForDeliverableType } from '@/lib/programs/orchestrated-
 import { renderDeliverableHtml } from './renderers';
 import { buildDeckHtmlFromDocument } from '@/lib/deliverables/deck-from-result';
 import type { OrchestrationResult } from './orchestrator';
+import { assessClientDeliverable } from '@/lib/deliverables/quality/assess-deliverable';
+import {
+  buildContractInput,
+  deliverableKeyForOrchestratorType,
+} from '@/lib/deliverables/quality/deliverable-key-map';
+import type { OutputFormat } from './types';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -41,6 +47,17 @@ export interface PersistDeliverableOptions {
   renderAsDeck?: boolean;
   /** Tenant key for the deck's tenant line (only used when renderAsDeck). */
   tenantKey?: string;
+  /**
+   * Deliverable Quality Contract enforcement. The contract ALWAYS runs (its
+   * result state is recorded); when this is true, a non-`client_ready` artifact
+   * is persisted as an internal draft (quarantined) rather than client-ready.
+   * Staged per tenant via flag during rollout, then platform-default.
+   */
+  enforceQualityContract?: boolean;
+  /** Tenant-specific terms the artifact should use (client-specificity check). */
+  tenantTerms?: ReadonlyArray<string>;
+  /** Whether stage-3 egress/data governance passed (for the contract). */
+  governanceOk?: boolean;
 }
 
 export interface PersistDeps {
@@ -107,6 +124,40 @@ export async function persistDeliverable(
     }
   }
 
+  // ── Stage 5: Deliverable Quality Contract (blocking gate before persistence) ──
+  // Always runs and records the result state. When enforcement is on, a
+  // non-`client_ready` artifact is quarantined (saved as internal draft) so it
+  // cannot be served as client-ready. Tenant-agnostic; runs for every tenant.
+  let qualityQuarantined = false;
+  let qualityQuarantineReason: string | null = null;
+  const deliverableKey = deliverableKeyForOrchestratorType(result.brief.deliverableType);
+  if (deliverableKey) {
+    const assessment = assessClientDeliverable({
+      ...buildContractInput({
+        doc,
+        deliverableKey,
+        outputFormat: outputFormat as OutputFormat,
+        ...(opts.tenantTerms ? { tenantTerms: opts.tenantTerms } : {}),
+        ...(opts.governanceOk !== undefined ? { governanceOk: opts.governanceOk } : {}),
+      }),
+      deliverableKey,
+    });
+    if (!assessment.clientReady) {
+      const reasons = assessment.quality.findings
+        .filter((f) => f.severity === 'block')
+        .map((f) => f.dimension)
+        .join(', ');
+      console.warn(
+        `[persistDeliverable] quality contract: ${assessment.state} (${reasons || 'n/a'})` +
+          (opts.enforceQualityContract ? ' — persisting as internal_draft' : ' — observe-only'),
+      );
+      if (opts.enforceQualityContract) {
+        qualityQuarantined = true;
+        qualityQuarantineReason = `${assessment.state}: ${reasons}`;
+      }
+    }
+  }
+
   const facts: BoardPackRenderInput['facts'] = doc.sourceRegister.map((r) => ({
     id: `cite-${r.citationNumber}`,
     label: r.label,
@@ -149,8 +200,8 @@ export async function persistDeliverable(
     // responseId is a genuine audit UUID, else null (the per-call audit rows persist
     // independently in ai_egress_audit regardless).
     generationEgressAudit: result.passTrace.map((t) => t.responseId).find((r): r is string => !!r && UUID_RE.test(r)) ?? null,
-    quarantined: false,
-    quarantineReason: null,
+    quarantined: qualityQuarantined,
+    quarantineReason: qualityQuarantineReason,
   };
 
   const save = deps.save ?? saveGeneratedArtifact;
