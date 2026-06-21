@@ -75,13 +75,18 @@ import type { InlineFile } from "@/lib/shell/atlas-page-state";
 // ── Default surface-to-agent mapping ─────────────────────────────────────────
 
 const DEFAULT_AGENT: Record<string, string> = {
-  tower: "Atlas",
+  // Voice-only rebrand (2026-06-21): "Ava" is the single user-facing agent
+  // name across surfaces. The per-surface specialist names (Atlas/Sentinel/
+  // Nexus/Steward) survive only as internal identifiers (component names,
+  // agent ids, telemetry), surfaced to users only as named specialists in
+  // trace/audit — never as the agent the user talks to.
+  tower: "Ava",
   programs: "Nexus",
   "programs-detail": "Nexus",
   source: "Sentinel",
   "source-detail": "Sentinel",
-  intelligence: "Sentinel",
-  home: "Atlas",
+  intelligence: "Ava",
+  home: "Ava",
   setup: "Steward",
   "setup-detail": "Steward",
 };

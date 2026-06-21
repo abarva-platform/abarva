@@ -495,7 +495,7 @@ export default async function TopicDeepDivePage({ params }: PageProps) {
                 fontWeight: 500,
               }}
             >
-              Ask Sentinel Intel about this topic →
+              Ask Ava Intel about this topic →
             </J1TopicLink>
             <Link
               href="/intelligence/topics"

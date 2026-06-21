@@ -47,7 +47,7 @@ const TABS: Array<{ key: IntelligenceTab; kicker: string; label: string }> = [
   { key: 'signals', kicker: 'MEANING · L2', label: 'Signals' },
   { key: 'context', kicker: 'CONTEXT · L1', label: 'Dimensions' },
   { key: 'corpus', kicker: 'GLOBAL · L1', label: 'Corpus' },
-  { key: 'sentinel', kicker: 'ASK · L3', label: 'Sentinel' },
+  { key: 'sentinel', kicker: 'ASK · L3', label: 'Ava' },
 ];
 
 const DIMENSIONS = [
@@ -201,7 +201,7 @@ function buildSentinelAnswer(question: string, tower: AiControlTowerReadModel, o
     return {
       headline: rows.length
         ? `${money(rows.reduce((sum, row) => sum + row.annualizedSpendUsd, 0))} of AI spend is loaded for vendor/product inspection.`
-        : 'Spend contracts are not committed yet, so Sentinel should not claim renewal exposure.',
+        : 'Spend contracts are not committed yet, so Ava should not claim renewal exposure.',
       columns: ['Vendor', 'Product', 'Function', 'Annual spend', 'Renewal'],
       rows: rows.map((row) => [row.vendor, row.product, row.functionName, money(row.annualizedSpendUsd), row.renewalDate ?? 'n/a']),
       citations: rows.map((row) => row.id),
@@ -238,7 +238,7 @@ function buildSentinelAnswer(question: string, tower: AiControlTowerReadModel, o
 
   const topSignal = deriveSignals(overview, tower)[0];
   return {
-    headline: topSignal?.headline ?? 'Sentinel needs committed context, facts, or Tower rows before making a strong claim.',
+    headline: topSignal?.headline ?? 'Ava needs committed context, facts, or Tower rows before making a strong claim.',
     columns: ['Signal', 'Why it matters', 'Action'],
     rows: topSignal ? [[topSignal.domain, topSignal.soWhat, topSignal.action]] : [],
     citations: topSignal?.evidence ?? [],
@@ -281,7 +281,7 @@ export function ContextCorpusExplorerPage({
         <div>
           <p style={styles.kicker}>CONTEXT INTELLIGENCE · {tenantName.toUpperCase()}</p>
           <h1 style={styles.h1}>What your context is telling us</h1>
-          <p style={styles.lede}>Evidence-cited signals from enterprise context, corpus, Tower rows, and graph relationships. Sentinel answers plainly and names missing context when the substrate is thin.</p>
+          <p style={styles.lede}>Evidence-cited signals from enterprise context, corpus, Tower rows, and graph relationships. Ava answers plainly and names missing context when the substrate is thin.</p>
         </div>
         <div style={styles.meta}>
           <span>tenant key</span>
@@ -320,7 +320,7 @@ export function ContextCorpusExplorerPage({
 
       <section style={styles.workspace}>
         <aside style={styles.sentinel}>
-          <p style={styles.kicker}>SENTINEL</p>
+          <p style={styles.kicker}>AVA</p>
           <h2 style={styles.asideTitle}>Ask about loaded context.</h2>
           <div style={styles.answer}>
             <strong>{answer.headline}</strong>
@@ -340,7 +340,7 @@ export function ContextCorpusExplorerPage({
               submit(draft);
             }}
           >
-            <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Ask Sentinel..." aria-label="Ask Sentinel" />
+            <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Ask Ava..." aria-label="Ask Ava" />
             <button type="submit">Ask</button>
           </form>
           <p style={styles.guardrail}>Every answer is evidence-cited where available; unsupported claims are routed to missing-context guidance.</p>
@@ -424,7 +424,7 @@ function CorpusView({ overview, tower }: { overview: EnterpriseContextOverview |
   ];
   return (
     <>
-      <CanvasHeader kicker="GLOBAL · L1 · CORPUS" title="What Sentinel can search and cite." subtitle="The corpus view explains answerability before an executive asks the hard question." />
+      <CanvasHeader kicker="GLOBAL · L1 · CORPUS" title="What Ava can search and cite." subtitle="The corpus view explains answerability before an executive asks the hard question." />
       <AnswerTable columns={['Layer', 'Count', 'Meaning']} rows={rows} />
       <div style={styles.sourceList}>
         {(overview?.sourceSystems ?? []).slice(0, 16).map((source) => <span key={source}>{source}</span>)}
@@ -436,7 +436,7 @@ function CorpusView({ overview, tower }: { overview: EnterpriseContextOverview |
 function SentinelView({ answer }: { answer: SentinelAnswer }) {
   return (
     <>
-      <CanvasHeader kicker="ASK · L3 · SENTINEL" title="Structured answer, not a wall of text." subtitle="Sentinel returns a headline, rows, citations, and next paths." />
+      <CanvasHeader kicker="ASK · L3 · AVA" title="Structured answer, not a wall of text." subtitle="Ava returns a headline, rows, citations, and next paths." />
       <div style={styles.largeAnswer}>
         <h3>{answer.headline}</h3>
         {answer.rows.length > 0 ? <AnswerTable columns={answer.columns} rows={answer.rows} /> : null}

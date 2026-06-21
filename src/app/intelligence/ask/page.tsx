@@ -21,9 +21,9 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { DEFAULT_CLIENT_KEY, getClientOption } from '@/lib/client-config';
 
 export const metadata = {
-  title: 'Sentinel Intel · Ask | AbarVa',
+  title: 'Ava Intel · Ask | AbarVa',
   description:
-    'Sentinel Intel — AbarVa\'s knowledge librarian. Ask about the corpus, cite ' +
+    'Ava Intel — AbarVa\'s knowledge librarian. Ask about the corpus, cite ' +
     'evidence, or vet a synthesis.',
 };
 
@@ -51,7 +51,7 @@ export default async function IntelligenceAskPage({
       topBarProps={{
         tenantName: activeClientDisplayName,
         showLocked: true,
-        context: 'Intelligence · Ask Sentinel Intel',
+        context: 'Intelligence · Ask Ava Intel',
       }}
     >
       <IntelligenceAskTabCookie />
@@ -100,7 +100,7 @@ export default async function IntelligenceAskPage({
               ← Intelligence
             </Link>
             <span style={{ margin: '0 8px' }}>·</span>
-            <span style={{ color: SHELL.INK_MUTED }}>Ask Sentinel Intel</span>
+            <span style={{ color: SHELL.INK_MUTED }}>Ask Ava Intel</span>
           </nav>
 
           {/* Page header */}
@@ -115,7 +115,7 @@ export default async function IntelligenceAskPage({
                 marginBottom: 4,
               }}
             >
-              Sentinel Intel · knowledge librarian
+              Ava Intel · knowledge librarian
             </div>
             <h1
               style={{

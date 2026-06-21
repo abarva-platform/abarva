@@ -164,7 +164,7 @@ export function ControlTowerActiveLens({ view }: ControlTowerActiveLensProps) {
             cursor: 'pointer',
           }}
         >
-          Ask Atlas →
+          Ask Ava →
         </button>
       </div>
     </div>

@@ -161,7 +161,7 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
                 marginBottom: 6,
               }}
             >
-              INTELLIGENCE · <span style={{ color: C.ink }}>SENTINEL INTEL</span>
+              INTELLIGENCE · <span style={{ color: C.ink }}>AVA INTEL</span>
             </div>
             <h1
               style={{
@@ -193,7 +193,7 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
           </div>
 
           <aside
-            aria-label="Sentinel Intel summary"
+            aria-label="Ava Intel summary"
             style={{
               borderLeft: `4px solid ${C.navy}`,
               background: C.surface,
@@ -441,7 +441,7 @@ export function IntelligenceBrief({ data, activeClient, surfaceContext }: Props)
             paddingTop: 12,
           }}
         >
-          <span style={{ color: C.navy, fontWeight: 700 }}>SENTINEL INTEL</span>
+          <span style={{ color: C.navy, fontWeight: 700 }}>AVA INTEL</span>
           {' · '}
           {data.totals.totalUseCases} use cases · {data.totals.totalPatterns} patterns · {data.totals.totalVendors} vendors · {data.proofPoints.length} proof points · refreshed {data.totals.lastRefreshQuarter}
         </div>
@@ -919,7 +919,7 @@ function OpenTensionsPanel({ data }: { data: BriefData }) {
       }}
     >
       <h2 style={{ color: C.ink, fontFamily: F_DISPLAY, fontSize: 23, fontWeight: 520, margin: '0 0 12px' }}>
-        Open tensions Sentinel would raise
+        Open tensions Ava would raise
       </h2>
       <div style={{ display: 'grid', gap: 13 }}>
         {tensions.map((tension) => (

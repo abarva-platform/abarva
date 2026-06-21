@@ -30,7 +30,7 @@ export function AtlasExecutiveBriefCanvas({
             marginBottom: "8px",
           }}
         >
-          ATLAS · EXECUTIVE BRIEF
+          AVA · EXECUTIVE BRIEF
         </div>
         <div
           data-testid="atlas-brief-accountability-label"
@@ -238,7 +238,7 @@ export function AtlasExecutiveBriefCanvas({
         }}
       >
         <span style={{ fontSize: "11px", fontWeight: 600, color: "#1B2B5C" }}>
-          Atlas recommends:{" "}
+          Ava recommends:{" "}
         </span>
         <span style={{ fontSize: "11px", color: "#0A0C12" }}>
           {view.recommendedExecutiveAction}

@@ -197,7 +197,7 @@ export function ActivityPage() {
       }}
     >
       <AgentColumn
-        agent={{ initials: 'At', name: 'Atlas', role: 'Cross-Program Synthesizer' }}
+        agent={{ initials: 'Av', name: 'Ava', role: 'Cross-Program Synthesizer' }}
         quote={ACTIVITY_AGENT_VOICE.quote}
         agentContext={ACTIVITY_AGENT_VOICE.agentContext}
         actions={ACTIVITY_AGENT_VOICE.actions}

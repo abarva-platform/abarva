@@ -542,7 +542,7 @@ export default async function FailureModePage({ params }: PageProps) {
                 fontWeight: 500,
               }}
             >
-              Ask Sentinel Intel about this →
+              Ask Ava Intel about this →
             </Link>
             <Link
               href="/intelligence"

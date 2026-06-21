@@ -200,7 +200,7 @@ export function CostLensPage() {
       }}
     >
       <AgentColumn
-        agent={{ initials: 'At', name: 'Atlas', role: 'Cross-Program Synthesizer' }}
+        agent={{ initials: 'Av', name: 'Ava', role: 'Cross-Program Synthesizer' }}
         quote={COST_AGENT_VOICE.quote}
         agentContext={COST_AGENT_VOICE.agentContext}
         actions={COST_AGENT_VOICE.actions}
