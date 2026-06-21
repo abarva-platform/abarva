@@ -56,7 +56,7 @@ const events: SourcingEventDetail[] = [
     nextDecision:
       "Confirm whether the scope is narrow enough to start SI strategy design.",
     synopsis:
-      "Sentinel is structuring a modernization sourcing event that needs the baseline inventory before the strategy can be trusted.",
+      "Ava is structuring a modernization sourcing event that needs the baseline inventory before the strategy can be trusted.",
     problemStatement:
       "The estate is large enough to support a major sourcing event, but the scope is still vulnerable to narrative inflation because the application and analytics baselines are incomplete.",
     stages: [

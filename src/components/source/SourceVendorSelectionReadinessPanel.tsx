@@ -141,16 +141,16 @@ export function SourceVendorSelectionReadinessPanel({
               ? readiness.stewardGateNotes.map((note) => <li key={note}>{note}</li>)
               : <li>No steward gate notes are currently required.</li>}
           </ul>
-          <div style={sourceSectionLabel}>Sentinel cautions</div>
+          <div style={sourceSectionLabel}>Ava cautions</div>
           <ul style={LIST}>
             {readiness.sentinelCautions.length > 0
               ? readiness.sentinelCautions.map((note) => <li key={note}>{note}</li>)
-              : <li>No Sentinel cautions are currently flagged.</li>}
+              : <li>No Ava cautions are currently flagged.</li>}
           </ul>
         </Section>
 
-        <Section title="Sentinel guidance">
-          <div style={sourceSectionLabel}>Sentinel recommendation</div>
+        <Section title="Ava guidance">
+          <div style={sourceSectionLabel}>Ava recommendation</div>
           <div style={{ fontFamily: SHELL.SANS, fontSize: 12, lineHeight: 1.4, color: SHELL.INK_MUTED }}>
             {readiness.nexusRecommendation}
           </div>

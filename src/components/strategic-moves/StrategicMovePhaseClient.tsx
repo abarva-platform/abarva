@@ -1403,7 +1403,7 @@ export function StrategicMovePhaseClient({
       ? "readiness"
       : "generate";
   const nextActionText = firstUnfilled
-    ? `Next: work with Nexus to capture — ${firstUnfilled.label}`
+    ? `Next: work with Ava to capture — ${firstUnfilled.label}`
     : hardGapCount > 0
       ? `Next: upload evidence — ${hardGapCount} hard gap${
           hardGapCount > 1 ? "s" : ""
@@ -1482,7 +1482,7 @@ export function StrategicMovePhaseClient({
                 &#10022;
               </div>
               <div>
-                <div className={styles.agentName}>Nexus</div>
+                <div className={styles.agentName}>Ava</div>
                 <div className={styles.agentStatus}>
                   <span className={styles.agentStatusDot} aria-hidden />
                   {move.displayCode} &middot; {config.shortLabel}
@@ -1594,8 +1594,8 @@ export function StrategicMovePhaseClient({
                 }}
                 placeholder={
                   streaming
-                    ? "Nexus is responding… you can type your next message"
-                    : `Ask Nexus about ${move.displayCode} ${config.label}…`
+                    ? "Ava is responding… you can type your next message"
+                    : `Ask Ava about ${move.displayCode} ${config.label}…`
                 }
                 spellCheck
               />
@@ -1920,7 +1920,7 @@ export function StrategicMovePhaseClient({
                             color: "var(--abarva-slate)",
                           }}
                         >
-                          Work with Nexus in the chat pane to populate this
+                          Work with Ava in the chat pane to populate this
                           section.
                         </div>
                       )}
@@ -2011,7 +2011,7 @@ export function StrategicMovePhaseClient({
                       padding: "4px 0",
                     }}
                   >
-                    No {config.label} artifacts yet. Nexus will generate
+                    No {config.label} artifacts yet. Ava will generate
                     artifacts as you work through the phase steps.
                   </div>
                 ) : (

@@ -150,7 +150,7 @@ export function StageGateBlock({
                         disabled={disabled}
                         onClick={() =>
                           pageState?.ask(
-                            `I need to upload a completed ${artifact.label} for ${stageLabel}. What format should it be, what must it contain, and how will Sentinel validate it?`,
+                            `I need to upload a completed ${artifact.label} for ${stageLabel}. What format should it be, what must it contain, and how will Ava validate it?`,
                           )
                         }
                         style={{ ...UPLOAD_BUTTON, opacity: disabled ? 0.6 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}

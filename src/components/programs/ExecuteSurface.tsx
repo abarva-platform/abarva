@@ -63,7 +63,7 @@ export function ExecuteSurface(props: ExecuteSurfaceProps) {
                   </div>
                 </div>
                 <div className="programs-row" style={{ gap: 8 }}>
-                  {item.nexusDrafted ? <span className="programs-chip teal">Nexus drafted</span> : null}
+                  {item.nexusDrafted ? <span className="programs-chip teal">Ava drafted</span> : null}
                   <span className={`programs-chip ${item.status === 'blocked' ? 'red' : item.status === 'done' ? 'green' : item.status === 'in_progress' ? 'amber' : 'teal'}`}>
                     {item.status.replace('_', ' ')}
                   </span>
@@ -129,7 +129,7 @@ export function ExecuteSurface(props: ExecuteSurfaceProps) {
               </div>
               <div className="programs-row" style={{ justifyContent: 'space-between', marginTop: 12 }}>
                 <div className="programs-subtle" style={{ fontSize: 12 }}>
-                  Drafted by {report.draftedBy === 'nexus' ? 'Nexus' : 'lead'}
+                  Drafted by {report.draftedBy === 'nexus' ? 'Ava' : 'lead'}
                 </div>
                 <div className="programs-subtle" style={{ fontSize: 12 }}>
                   {report.publishedAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}

@@ -386,8 +386,8 @@ export function CurrentStateReadinessPanel({
             ? "Approve parsed document below"
             : "Upload document (review-required)"
           : i.backingTable
-            ? "CSV ingest coming — supply via Nexus"
-            : "Capture with Nexus";
+            ? "CSV ingest coming — supply via Ava"
+            : "Capture with Ava";
       return { i, effort, path, wired };
     })
     .sort((a, b) => a.effort - b.effort);
@@ -921,8 +921,8 @@ export function CurrentStateReadinessPanel({
                       }}
                     >
                       {i.backingTable
-                        ? "Deterministic CSV ingest coming — supply via Nexus for now."
-                        : "Captured in the charter with Nexus."}
+                        ? "Deterministic CSV ingest coming — supply via Ava for now."
+                        : "Captured in the charter with Ava."}
                     </span>
                   )}
                   {i.documentFamily && (

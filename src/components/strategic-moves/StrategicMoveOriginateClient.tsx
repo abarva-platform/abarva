@@ -540,7 +540,7 @@ export function StrategicMoveOriginateClient({
                 &#10022;
               </div>
               <div>
-                <div className={styles.agentName}>Nexus</div>
+                <div className={styles.agentName}>Ava</div>
                 <div className={styles.agentStatus}>
                   <span className={styles.agentStatusDot} aria-hidden />
                   NEW MOVE &middot; P0 ORIGINATE
@@ -759,7 +759,7 @@ export function StrategicMoveOriginateClient({
                         </div>
                       ) : (
                         <div className={styles.scaffoldEmpty}>
-                          Nexus will capture {label.toLowerCase()} from your
+                          Ava will capture {label.toLowerCase()} from your
                           conversation.
                         </div>
                       )}
@@ -789,7 +789,7 @@ export function StrategicMoveOriginateClient({
               <input
                 id="orig-identity-name-input"
                 type="text"
-                placeholder="Move name (Nexus will suggest, or type here)"
+                placeholder="Move name (Ava will suggest, or type here)"
                 value={brief.programName}
                 onChange={(e) =>
                   setBrief((prev) => ({ ...prev, programName: e.target.value }))

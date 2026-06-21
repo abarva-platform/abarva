@@ -36,7 +36,7 @@ export function SourceBafoNegotiationPanel({ plan }: { plan: SourceBafoNegotiati
           <div style={{ color: SHELL.INK, fontWeight: 700 }}>
             {plan.executiveTradeoffSummary}
           </div>
-          <div style={sourceSectionLabel}>Sentinel recommendation</div>
+          <div style={sourceSectionLabel}>Ava recommendation</div>
           <div style={{ color: SHELL.INK_MUTED }}>{plan.nexusGuidance}</div>
           <div style={{ ...sourceSectionLabel, color: SHELL.INK_MUTED, marginTop: 8 }}>
             Atlas: {plan.atlasExecutiveImplication}
@@ -106,14 +106,14 @@ export function SourceBafoNegotiationPanel({ plan }: { plan: SourceBafoNegotiati
           </div>
         </InfoCard>
 
-        <InfoCard title="Steward and Sentinel notes">
+        <InfoCard title="Steward and Ava notes">
           <div style={sourceSectionLabel}>Steward gate notes</div>
           <ul style={LIST}>
             {plan.stewardGateNotes.map((note) => (
               <li key={note} style={{ marginBottom: 7, color: SHELL.INK_MUTED }}>{note}</li>
             ))}
           </ul>
-          <div style={sourceSectionLabel}>Sentinel caution</div>
+          <div style={sourceSectionLabel}>Ava caution</div>
           <ul style={LIST}>
             {plan.sentinelEvidenceNotes.length > 0 ? (
               plan.sentinelEvidenceNotes.map((note) => (

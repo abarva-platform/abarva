@@ -50,7 +50,7 @@ export function SentinelMissionPanel({
       }}
     >
       <div>
-        <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Sentinel guidance</div>
+        <div style={{ ...sourceSectionLabel, color: SHELL.INK_SOFT }}>Ava guidance</div>
         <div style={{ fontSize: 22, fontWeight: 800, color: SHELL.INK }}>
           Lead sourcing agent
         </div>
@@ -129,7 +129,7 @@ export function SentinelMissionPanel({
         </div>
         <div style={{ color: SHELL.INK, fontWeight: 800 }}>Event, stage, gate, and mission state</div>
         <div style={{ ...sourceMuted, color: SHELL.INK_MUTED }}>
-          Sentinel guidance is limited to the current event context and readiness signals.
+          Ava guidance is limited to the current event context and readiness signals.
         </div>
       </div>
     </aside>

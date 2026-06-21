@@ -384,7 +384,7 @@ export function SourceExecutiveDecisionSummaryPanel({
       tone: kv.stewardSignOffTone,
     },
     {
-      label: "Sentinel attestation",
+      label: "Ava attestation",
       value: kv.sentinelAttestation,
       tone: kv.sentinelAttestationTone,
     },

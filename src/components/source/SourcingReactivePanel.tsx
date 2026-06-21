@@ -34,7 +34,7 @@ function CardShell({ kind, children }: { kind: string; children: ReactNode }) {
     <AISuggestionFrame
       status="suggested"
       detail="Validate before action"
-      ariaLabel={`Sentinel Source AI suggestion: ${kind}`}
+      ariaLabel={`Ava AI suggestion: ${kind}`}
       style={{
         background: '#FFFFFF',
         border: `1px solid rgba(12,26,58,0.12)`,
@@ -59,7 +59,7 @@ function CardShell({ kind, children }: { kind: string; children: ReactNode }) {
           marginBottom: 8,
         }}
       >
-        Sentinel - {kind}
+        Ava - {kind}
       </div>
       {children}
     </AISuggestionFrame>
@@ -393,10 +393,10 @@ export function SourcingReactivePanel({ artifacts }: SourcingReactivePanelProps)
             fontWeight: 700,
           }}
         >
-          Sentinel sourcing reasoning - live
+          Ava sourcing reasoning - live
         </div>
         <p style={{ margin: '2px 0 0', fontSize: 12.5, lineHeight: 1.45 }}>
-          Ask Sentinel Source to compare vendors, inspect clauses, benchmark pricing, or test walkaway leverage.
+          Ask Ava to compare vendors, inspect clauses, benchmark pricing, or test walkaway leverage.
         </p>
         <p
           style={{
@@ -437,7 +437,7 @@ export function SourcingReactivePanel({ artifacts }: SourcingReactivePanelProps)
           fontWeight: 700,
         }}
       >
-        Sentinel sourcing reasoning - live
+        Ava sourcing reasoning - live
       </header>
       {visible.map((artifact) => {
         const key = stableSourcingArtifactKey(artifact);

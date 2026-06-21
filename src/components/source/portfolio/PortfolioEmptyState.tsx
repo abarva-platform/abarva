@@ -33,7 +33,7 @@ export function PortfolioEmptyState() {
         </h2>
         <p style={LEAD_PARAGRAPH_STYLE}>
           Source is the operating room for IT sourcing — strategy, scope, RFP, evaluation,
-          BAFO, decision, transition, and value realization, with Sentinel running the thread.
+          BAFO, decision, transition, and value realization, with Ava running the thread.
           Originate your first event and the portfolio populates from there.
         </p>
         <Link

@@ -53,7 +53,7 @@ export function buildProgramToSourcingHandoffMarker(
     agentName: '__handoff__',
     text:
       `Sourcing event opened from **${programName}**. ` +
-      `Sentinel is now running **${sourceEventName}** with the program context attached.`,
+      `Ava is now running **${sourceEventName}** with the program context attached.`,
     timestamp: Date.now(),
   };
 }

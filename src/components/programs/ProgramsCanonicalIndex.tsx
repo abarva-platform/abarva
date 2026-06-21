@@ -248,7 +248,7 @@ export function ProgramsCanonicalIndex({ tenant }: ProgramsCanonicalIndexProps) 
 
         {/* Zone D · Nexus-style portfolio guidance panel */}
         <aside
-          aria-label="Nexus portfolio guidance"
+          aria-label="Ava portfolio guidance"
           style={{
             marginTop: 28,
             padding: '16px 20px',
@@ -269,7 +269,7 @@ export function ProgramsCanonicalIndex({ tenant }: ProgramsCanonicalIndexProps) 
               marginBottom: 8,
             }}
           >
-            Nexus · portfolio guidance · deterministic
+            Ava · portfolio guidance · deterministic
           </div>
           <p
             style={{

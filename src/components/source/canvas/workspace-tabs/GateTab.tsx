@@ -424,7 +424,7 @@ function humanReviewAction(def: SourceGateCriterion | undefined): string {
   }
   if (owner.includes("ea")) return "EA confirmation";
   if (owner.includes("legal")) return "legal review";
-  if (owner.includes("sentinel")) return "Sentinel evidence review";
+  if (owner.includes("sentinel")) return "Ava evidence review";
   return "owner confirmation";
 }
 

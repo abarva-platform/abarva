@@ -120,7 +120,7 @@ export function SentinelEngagementCanvas({
             <SourceAlertPanel
               alerts={event.alerts}
               title="Event pressure signals"
-              emptyLabel="No open event alerts. Sentinel will keep this shell focused on the current stage."
+              emptyLabel="No open event alerts. Ava will keep this shell focused on the current stage."
               variant="light"
             />
           </div>

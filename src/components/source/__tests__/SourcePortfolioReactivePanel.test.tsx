@@ -39,10 +39,10 @@ describe('SourcePortfolioReactivePanel', () => {
       }),
     );
 
-    expect(html).toContain('Sentinel - Operating model');
-    expect(html).toContain('Sentinel - Portfolio posture');
-    expect(html).toContain('Sentinel - Top mission signal');
+    expect(html).toContain('Ava - Operating model');
+    expect(html).toContain('Ava - Portfolio posture');
+    expect(html).toContain('Ava - Top mission signal');
     expect(html).toContain('data-ai-suggestion-frame="suggested"');
-    expect(html).toContain('Sentinel portfolio AI suggestion: Operating model');
+    expect(html).toContain('Ava portfolio AI suggestion: Operating model');
   });
 });

@@ -260,8 +260,8 @@ function LifecycleStateBanner({ view }: { view: ProgramDetailView }) {
       </div>
       <div style={{ fontSize: 13 }}>
         {isPendingSetup
-          ? "The strategic move seed has been captured, but Phase 0 is locked until a tenant admin approves it in Setup. Nexus should preserve the draft and avoid pretending the move is active."
-          : "This strategic move can now begin P0 Origination. Nexus should complete the P0 entry and exit criteria, generate/save the seed outputs, and submit the P0 exit approval before Discovery unlocks."}
+          ? "The strategic move seed has been captured, but Phase 0 is locked until a tenant admin approves it in Setup. Ava should preserve the draft and avoid pretending the move is active."
+          : "This strategic move can now begin P0 Origination. Ava should complete the P0 entry and exit criteria, generate/save the seed outputs, and submit the P0 exit approval before Discovery unlocks."}
       </div>
       {isPendingSetup && (
         <Link
@@ -3084,7 +3084,7 @@ function SuggestedActionOverlay({
               marginBottom: 10,
             }}
           >
-            Nexus suggests
+            Ava suggests
           </div>
           <div
             style={{
@@ -3221,7 +3221,7 @@ function SuggestedActionOverlay({
               lineHeight: 1.5,
             }}
           >
-            Action queued in the current preview state. Nexus follow-up remains
+            Action queued in the current preview state. Ava follow-up remains
             seeded until runtime automation is wired.
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -3292,7 +3292,7 @@ function getUploadStageMessage(uploadState: {
 }): string {
   if (uploadState.stage === "uploading") return "Uploading...";
   if (uploadState.stage === "capturing")
-    return "Nexus is capturing evidence...";
+    return "Ava is capturing evidence...";
   const evidence = uploadState.evidence;
   if (evidence?.status === "captured") {
     return evidence.parseMethod === "metadata-only"
@@ -3824,7 +3824,7 @@ function FileUploadOverlay({
             marginBottom: 4,
           }}
         >
-          Nexus
+          Ava
         </div>
         <div
           style={{
@@ -5597,8 +5597,8 @@ export function ProgramDetailPage({
         }}
       >
         <RibbonSynthesis
-          agentInitials="Nx"
-          agentName="Nexus"
+          agentInitials="Av"
+          agentName="Ava"
           quote={synthesisQuote}
           isOpen={drawerOpen}
           onToggle={() => setDrawerOpen((v) => !v)}
@@ -5899,8 +5899,8 @@ export function ProgramDetailPage({
               surface={`/programs/${view.programId}`}
               programId={view.programId}
               agent={{
-                initials: "Nx",
-                name: "Nexus",
+                initials: "Av",
+                name: "Ava",
                 role: "Move Orchestrator",
               }}
               quote={view.workbench.prose}
@@ -6452,7 +6452,7 @@ export function ProgramDetailPage({
                           marginBottom: 8,
                         }}
                       >
-                        Nexus · {view.workbench.title}
+                        Ava · {view.workbench.title}
                       </div>
                       <p
                         style={{
@@ -6563,7 +6563,7 @@ export function ProgramDetailPage({
                         marginBottom: 12,
                       }}
                     >
-                      Nexus · Next actions · P{view.viewingPhase} {phaseLabel}
+                      Ava · Next actions · P{view.viewingPhase} {phaseLabel}
                     </div>
                     <div
                       style={{
@@ -6908,7 +6908,7 @@ export function ProgramDetailPage({
       {/* PRG-STA-AGENT-HANDOFF overlay */}
       {showHandoff && (
         <AgentHandoffOverlay
-          fromAgent={{ initials: "Nx", name: "Nexus" }}
+          fromAgent={{ initials: "Av", name: "Ava" }}
           toAgent={{ initials: "Sn", name: "Sentinel" }}
           context={`${view.displayId} · P${view.viewingPhase} ${phaseLabel} evidence review`}
           onComplete={() => setShowHandoff(false)}

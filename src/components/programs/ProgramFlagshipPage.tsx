@@ -345,7 +345,7 @@ export function ProgramFlagshipPage(props: ProgramFlagshipPageProps) {
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={eyebrowStyle}>Anchor agent</span>
-            <AgentBadge label="Nexus" />
+            <AgentBadge label="Ava" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={eyebrowStyle}>Question</span>
@@ -539,7 +539,7 @@ export function ProgramFlagshipPage(props: ProgramFlagshipPageProps) {
         {/* Section 5 — Nexus workshop canvas slot */}
         <section data-section="workshop-canvas">
           {workshopCanvasSlot ?? (
-            <SlotPlaceholder note="Nexus workshop canvas — provided by PROG12." />
+            <SlotPlaceholder note="Ava workshop canvas — provided by PROG12." />
           )}
         </section>
 

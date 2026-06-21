@@ -131,7 +131,7 @@ function SlimPhaseMarker({
       data-phase-state={phase.state}
       data-phase-selected={isSelected ? 'true' : 'false'}
       aria-pressed={isSelected}
-      aria-label={`Focus Nexus workbench on ${phase.label} (${phase.stateLabel})`}
+      aria-label={`Focus Ava workbench on ${phase.label} (${phase.stateLabel})`}
       onClick={() => onSelect(phase.key)}
       style={{
         display: 'inline-flex',
@@ -326,7 +326,7 @@ function NexusBriefCard({
 }) {
   return (
     <section
-      aria-label="Nexus workbench"
+      aria-label="Ava workbench"
       style={{
         padding: '24px 26px 22px',
         borderRadius: 20,
@@ -346,7 +346,7 @@ function NexusBriefCard({
           lineHeight: 1.2,
         }}
       >
-        Nexus Program Workbench
+        Ava Program Workbench
       </h3>
       <p
         style={{
@@ -412,7 +412,7 @@ function SuggestedActionsCard({
 }) {
   return (
     <section
-      aria-label="Suggested Nexus actions"
+      aria-label="Suggested Ava actions"
       style={{
         padding: '18px 18px 16px',
         borderRadius: 18,
@@ -429,7 +429,7 @@ function SuggestedActionsCard({
           color: INK,
         }}
       >
-        Suggested Nexus actions
+        Suggested Ava actions
       </h4>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 14 }}>
         {actions.map((action) => (
@@ -454,7 +454,7 @@ function SuggestedActionsCard({
       </div>
       <label htmlFor="nexus-program-custom-ask" style={{ display: 'block', marginTop: 16 }}>
         <span style={{ display: 'block' }}>
-          <Eyebrow>Ask Nexus</Eyebrow>
+          <Eyebrow>Ask Ava</Eyebrow>
         </span>
       </label>
       <input
@@ -736,7 +736,7 @@ function WorkshopColumn({ title, items }: { title: string; items: string[] }) {
 function WorkshopCanvas({ workshop }: { workshop: NexusWorkbenchWorkshop }) {
   return (
     <section
-      aria-label="Nexus workshop canvas"
+      aria-label="Ava workshop canvas"
       style={{
         padding: '20px 22px 18px',
         borderRadius: 18,
@@ -748,7 +748,7 @@ function WorkshopCanvas({ workshop }: { workshop: NexusWorkbenchWorkshop }) {
       }}
     >
       <div>
-        <Eyebrow>Nexus workshop canvas</Eyebrow>
+        <Eyebrow>Ava workshop canvas</Eyebrow>
         <h4
           style={{
             margin: '6px 0 0',
@@ -1065,7 +1065,7 @@ export function NexusProgramWorkbench(props: NexusProgramWorkbenchProps) {
     <section
       id={props.id}
       data-component="NexusProgramWorkbench"
-      aria-label="Nexus workbench"
+      aria-label="Ava workbench"
       style={{ fontFamily: FONT, color: BODY }}
     >
       {/* Identity header — terse, then the journey card is the spine. */}

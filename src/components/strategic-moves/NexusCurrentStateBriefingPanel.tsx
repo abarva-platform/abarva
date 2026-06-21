@@ -122,7 +122,7 @@ export function NexusCurrentStateBriefingPanel({ moveId }: Props) {
               marginBottom: 6,
             }}
           >
-            Nexus current-state briefing
+            Ava current-state briefing
           </div>
           <h2
             id="nexus-current-state-brief-heading"
@@ -134,7 +134,7 @@ export function NexusCurrentStateBriefingPanel({ moveId }: Props) {
               color: SHELL.INK,
             }}
           >
-            Ask Nexus what is true right now.
+            Ask Ava what is true right now.
           </h2>
         </div>
         <button
@@ -239,7 +239,7 @@ export function NexusCurrentStateBriefingPanel({ moveId }: Props) {
             <input
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
-              aria-label="Ask Nexus a current-state question"
+              aria-label="Ask Ava a current-state question"
               style={{
                 flex: 1,
                 minHeight: 36,
