@@ -261,6 +261,7 @@
     "corpus:phs-health-plan:dry-run": "npx tsx src/scripts/corpus/load-phs-health-plan-corpus.ts",
     "corpus:phs-health-plan:load": "npx tsx src/scripts/corpus/load-phs-health-plan-corpus.ts --apply --status=in_review",
     "intel:patterns:generate": "npx tsx src/scripts/intelligence/generate-pattern-manifest.ts",
+    "intel:expert-packs:load": "npx tsx src/scripts/intelligence/load-expert-packs.ts",
     "intel:canonical-corpus:preview": "npx tsx src/scripts/intelligence/preview-canonical-corpus-backfill.ts",
     "intel:canonical-corpus:backfill:dry": "npx tsx src/scripts/intelligence/backfill-canonical-corpus.ts",
     "intel:canonical-corpus:backfill:write": "npx tsx src/scripts/intelligence/backfill-canonical-corpus.ts --apply",
