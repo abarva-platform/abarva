@@ -17,7 +17,7 @@
 //    custodian / fiduciary) sits in financial_services and must out-route the
 //    banking pair; its queries use advisory/asset-management terms only.
 
-import type { LiveAnswerCase } from "../types";
+import type { LiveAnswerCase } from "@/lib/intelligence/answer/evals/live-answer/types";
 
 export const INDUSTRY_CASES: LiveAnswerCase[] = [
   // ───────────────────────────── Retail · Merchandising & Pricing ──────────

@@ -1,4 +1,4 @@
-import type { LiveAnswerCase } from "../types";
+import type { LiveAnswerCase } from "@/lib/intelligence/answer/evals/live-answer/types";
 
 // Live-answer cases — Finance & Risk cross-cutting faculty (W5.2).
 //

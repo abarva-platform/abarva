@@ -12,7 +12,7 @@
 // (lakehouse/BI vs model-risk vs LLM/RAG; ITSM vs MSP vs TBM vs cloud/FinOps).
 // industry is intentionally OMITTED — these are cross-cutting estate experts.
 
-import type { LiveAnswerCase } from "../types";
+import type { LiveAnswerCase } from "@/lib/intelligence/answer/evals/live-answer/types";
 
 export const IT_ESTATE_A_CASES: LiveAnswerCase[] = [
   // ── xp.x.cybersecurity ────────────────────────────────────────────────────
