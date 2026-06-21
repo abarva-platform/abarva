@@ -4,6 +4,7 @@ import {
   runTruthGates,
   type TruthGateSnapshot,
 } from "../intelligence/scb-truth-gates";
+import { CDP_PATTERN_COUNT } from "@/lib/intelligence/seed-patterns-cdp";
 import { EXPERT_PACKS } from "@/lib/intelligence/expert-pack/registry";
 
 const rootDir = process.cwd();
@@ -28,6 +29,10 @@ function failures(
 }
 
 describe("scb truth gates", () => {
+  it("loads the CDP pattern shim without relying on runtime tsconfig aliases", () => {
+    expect(CDP_PATTERN_COUNT).toBeGreaterThan(0);
+  });
+
   it("passes with a clean deterministic snapshot", async () => {
     const findings = await runTruthGates({
       rootDir,
