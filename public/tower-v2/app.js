@@ -250,7 +250,7 @@ function viewFn() {
 
 // ════════════════ TAB: ACTIONS ════════════════
 function viewActions() {
-  const sub = `<div class="vctl"><div class="vtitle">What to do about it</div><div class="vspacer"></div><span class="selr">Each move needs a named approver — Nexus proposes, it never acts.</span></div>`;
+  const sub = `<div class="vctl"><div class="vtitle">What to do about it</div><div class="vspacer"></div><span class="selr">Each move needs a named approver — Ava proposes, it never acts.</span></div>`;
   return sub + `<div class="actions">${ACTIONS.map(a => `<article class="acard ${a.kind}" data-action="${a.id}">
     <div class="akick">${esc(a.kicker)}</div>
     <h3>${esc(a.title)}</h3>
@@ -427,7 +427,7 @@ function renderDock() {
   const a = state.answer;
   $('dock').innerHTML = `
     <div class="dock-head">
-      <div class="dt"><span class="spark">✦</span> Ask Nexus</div>
+      <div class="dt"><span class="spark">✦</span> Ask Ava</div>
       <div class="dock-pos">
         ${['left', 'right', 'bottom'].map(p => `<button data-pos="${p}" class="${state.dock === p ? 'on' : ''}" title="Pin ${p}">${POS_ICONS[p]}</button>`).join('')}
         <button data-pos="hidden" title="Hide">${POS_ICONS.hidden}</button>
