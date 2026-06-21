@@ -34,6 +34,10 @@ const CSS = `
 .iv2 .ansbox .anslabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--green);margin-bottom:8px}
 .iv2 .ansbox .ansbody{font-size:14px;line-height:1.65;color:var(--ink);white-space:pre-wrap}
 .iv2 .ansbox .ansfetching{color:var(--faint);font-style:italic;font-size:13.5px}
+.iv2 .ansbox .ansexperts{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+.iv2 .ansbox .ansexpertslabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-right:3px}
+.iv2 .ansbox .ansexpertchip{display:inline-flex;align-items:center;background:var(--greenbg);color:var(--green);border-radius:20px;padding:3px 11px;font-size:11.5px;font-weight:500}
+.iv2 .ansbox .ansfollowups{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
 .iv2 .tabs{display:flex;justify-content:center;gap:30px;border-bottom:1px solid var(--line);margin-top:18px}
 .iv2 .tab{padding:14px 2px;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:7px;background:none;font-family:inherit}
 .iv2 .tab.active{color:var(--ink);border-bottom-color:var(--green)}
@@ -82,6 +86,8 @@ export function IntelligenceV2Surface({
   const [tab, setTab] = useState<Tab>("signals");
   const [query, setQuery] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
+  const [experts, setExperts] = useState<{ id: string; name: string }[]>([]);
+  const [followups, setFollowups] = useState<string[]>([]);
   const [fetching, setFetching] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const t = payload;
@@ -96,6 +102,8 @@ export function IntelligenceV2Surface({
     abortRef.current = ctrl;
     setFetching(true);
     setAnswer(null);
+    setExperts([]);
+    setFollowups([]);
     try {
       const res = await fetch(
         `/api/intelligence/ask?q=${encodeURIComponent(trimmed)}`,
@@ -110,14 +118,53 @@ export function IntelligenceV2Surface({
         setAnswer(await res.text());
         return;
       }
+      // The /api/intelligence/ask endpoint streams newline-delimited JSON
+      // events (session, classified, sources, contributing-experts, delta,
+      // followups, validation, done). Parse them: accumulate `delta` text into
+      // the prose answer, surface the Consilium experts and follow-ups. Any
+      // non-JSON line is treated as plain text (defensive fallback).
       const dec = new TextDecoder();
       let buf = "";
+      let prose = "";
+      const applyLine = (raw: string) => {
+        const s = raw.trim();
+        if (!s) return;
+        let evt: {
+          type?: string;
+          text?: string;
+          contributingExperts?: { id: string; name: string }[];
+          followups?: string[];
+        };
+        try {
+          evt = JSON.parse(s);
+        } catch {
+          prose += prose ? `\n${s}` : s;
+          setAnswer(prose);
+          return;
+        }
+        if (evt.type === "delta" && typeof evt.text === "string") {
+          prose += evt.text;
+          setAnswer(prose);
+        } else if (
+          evt.type === "contributing-experts" &&
+          Array.isArray(evt.contributingExperts)
+        ) {
+          setExperts(evt.contributingExperts);
+        } else if (evt.type === "followups" && Array.isArray(evt.followups)) {
+          setFollowups(evt.followups);
+        }
+      };
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buf += dec.decode(value, { stream: true });
-        setAnswer(buf);
+        let nl: number;
+        while ((nl = buf.indexOf("\n")) >= 0) {
+          applyLine(buf.slice(0, nl));
+          buf = buf.slice(nl + 1);
+        }
       }
+      applyLine(buf); // flush any trailing line with no terminating newline
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
         setAnswer("Sentinel couldn't retrieve an answer. Try again.");
@@ -165,13 +212,42 @@ export function IntelligenceV2Surface({
               {fetching ? "…" : "Ask"}
             </button>
           </div>
-          {(fetching || answer) && (
+          {(fetching || answer || experts.length > 0) && (
             <div className="ansbox">
               <div className="anslabel">Sentinel · Intelligence</div>
               {fetching && !answer ? (
                 <div className="ansfetching">Thinking…</div>
               ) : (
                 <div className="ansbody">{answer}</div>
+              )}
+              {experts.length > 0 && (
+                <div className="ansexperts">
+                  <span className="ansexpertslabel">Experts consulted</span>
+                  {experts.map((e) => (
+                    <span className="ansexpertchip" key={e.id} title={e.id}>
+                      {e.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {followups.length > 0 && (
+                <div className="ansfollowups">
+                  {followups.map((f) => (
+                    <span
+                      className="chip"
+                      key={f}
+                      title={f}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        setQuery(f);
+                        askSentinel(f);
+                      }}
+                    >
+                      {f}
+                    </span>
+                  ))}
+                </div>
               )}
             </div>
           )}
