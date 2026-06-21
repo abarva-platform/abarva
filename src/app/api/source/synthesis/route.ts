@@ -4,6 +4,9 @@
 
 import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { getActiveClientRow } from "@/lib/active-client";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { summonExpertsForQuery } from "@/lib/intelligence/answer/expert-grounding";
+import type { ExpertRef } from "@/lib/intelligence/answer/agent-answer";
 import { SOURCE_EVENT_INSTANCES } from "@/lib/source/source-event-instances";
 import { PAT_SRC_AMS_001 } from "@/lib/intelligence/source-lifecycle-patterns";
 import { buildSourceSynthesisContext, instanceStateHash } from "@/lib/reasoning/synthesis-context-builder";
@@ -146,11 +149,27 @@ export async function POST(request: Request) {
     return Response.json({ error: 'no_client', detail: 'No active client for AI egress policy.' }, { status: 403 });
   }
   const systemPrompt = buildSentinelSynthesisPrompt(userContextBlock);
+
+  // Shared Context Brain (flag-gated, default OFF). When on for the tenant,
+  // ground this sourcing synthesis in the Consilium expert(s) for the event
+  // (e.g. AMS vendor consolidation → IT Outsourcing & Managed Services expert).
+  // Flag off = byte-identical to the prior path (groundedUserMessage === userMessage).
+  const sharedSourceOn = isFeatureEnabled(
+    { clientKey: activeClient.key },
+    'scb_shared_engine_source',
+  );
+  const expertGrounding = sharedSourceOn
+    ? summonExpertsForQuery({ query: instance.name })
+    : { experts: [] as ExpertRef[], groundingBlock: '' };
+  const groundedUserMessage = expertGrounding.groundingBlock
+    ? `${expertGrounding.groundingBlock}\n\n${userMessage}`
+    : userMessage;
+
   const preflight = await preflightAnthropicDirectClient({
     tenantId: activeClient.id,
     workflow: 'source-synthesis',
     model: 'claude-sonnet-4-6',
-    prompt: [systemPrompt, userMessage].join('\n\n'),
+    prompt: [systemPrompt, groundedUserMessage].join('\n\n'),
     dataClass: 'confidential',
     metadata: { sourceInstanceId: instance.id, surface: 'source' },
   });
@@ -166,7 +185,7 @@ export async function POST(request: Request) {
     model: "claude-sonnet-4-6",
     max_tokens: 150,
     system: systemPrompt,
-    messages: [{ role: "user", content: userMessage }],
+    messages: [{ role: "user", content: groundedUserMessage }],
   });
 
   const encoder = new TextEncoder();

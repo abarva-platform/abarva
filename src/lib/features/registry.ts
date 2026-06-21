@@ -64,6 +64,8 @@ export type FeatureFlagKey =
   | "first_capital_substrate_overlay"
   | "retrieval_azure_search"
   | "scb_shared_engine_intelligence"
+  | "scb_shared_engine_source"
+  | "scb_shared_engine_tower"
   | "graph_neo4j_enabled"
   | "tower_synthesis_apex_demo_fixture"
   | "discovery_intake_v2"
@@ -168,6 +170,20 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "scb_shared_engine_intelligence",
     summary:
       "Shared Context Brain: ground the Intelligence ask in the Consilium expert faculty (router summons expert(s); their authored benchmarks/AI-plays/hedges are injected into synthesis; contributing experts surfaced). Default OFF; tenant opt-in via includeTenants. The first surface-level flag of the staged-rollout exposure policy (W6.1); flip per tenant after parity proof.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "scb_shared_engine_source",
+    summary:
+      "Shared Context Brain on the Source synthesis path: ground sourcing-event synthesis in the Consilium expert(s) for the event (e.g. AMS vendor consolidation → IT Outsourcing & Managed Services expert). Default OFF; tenant opt-in. Wired in /api/source/synthesis; flag off = byte-identical. NOTE on flip: include the flag in the synthesis cache key, or clear the source synthesis cache, when flipping per tenant (current cache key does not vary by flag).",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
+    key: "scb_shared_engine_tower",
+    summary:
+      "Shared Context Brain on Tower (placeholder hook). Default OFF. Tower currently answers in the browser (public/tower-v2/app.js answerFor); making Tower consume the shared engine requires a server-side answer endpoint (Codex W1.4) before this flag has a consumer.",
     policy: "tenant",
     includeTenants: [],
   },
