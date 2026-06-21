@@ -8,6 +8,7 @@
 // renderers to read it.
 
 import type { DeliverableKey, DeliverableProfile } from "./types";
+import { SOURCE_PROFILES } from "./registry-source";
 
 const charter: DeliverableProfile = {
   key: "charter",
@@ -366,6 +367,7 @@ export const DELIVERABLE_PROFILES: Readonly<
   tower_metrics_plan: towerMetricsPlan,
   handoff_package: handoffPackage,
   value_measurement_contract: valueMeasurementContract,
+  ...SOURCE_PROFILES,
 };
 
 export function getDeliverableProfile(

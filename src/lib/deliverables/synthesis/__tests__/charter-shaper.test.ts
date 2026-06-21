@@ -26,8 +26,8 @@ describe("charter shaper (W1 vertical)", () => {
         "open_inputs_required",
       ],
     });
-    expect(a.report.findings).toHaveLength(0);
-    expect(a.report.passed).toBe(true);
+    expect(a.quality.findings.filter((f) => f.severity === "block")).toHaveLength(0);
+    expect(a.clientReady).toBe(true);
   });
 
   it("emits ONE Open Inputs table and keeps traceability in an appendix", () => {

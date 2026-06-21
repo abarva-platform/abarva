@@ -1,37 +1,35 @@
-// Deliverable Quality Transformation — assessment entry point (W1/W4 seam)
+// Deliverable Quality Transformation — the blocking assessment gate (§0b)
 //
-// The single function the generation/persistence path calls to evaluate a
-// client-facing artifact against its profile and the transformation gates, and
-// to resolve the correct title (business-case mode-downgrade).
-//
-// Inert until imported. Pure + deterministic — safe to call anywhere.
+// The single function the pipeline calls before persistence. It evaluates a
+// generated client artifact against its profile via the Deliverable Quality
+// Contract and returns a result STATE — not a boolean. A non-`client_ready`
+// deliverable must be persisted only as `internal_draft` with failure reasons.
 
 import {
   getDeliverableProfile,
   type DeliverableKey,
 } from "@/lib/deliverables/profiles";
+import type { BusinessCaseMode } from "@/lib/deliverables/profiles/types";
 import {
-  runTransformationGates,
-  type FinancialInputs,
-  type GateInput,
-  type GateReport,
-} from "./transformation-gates";
-import type { BusinessCaseMode, ExhibitId } from "@/lib/deliverables/profiles/types";
+  evaluateDeliverableQuality,
+  type ContractInput,
+  type DeliverableQualityResult,
+  type DeliverableResultState,
+} from "./deliverable-quality-contract";
 
-export interface AssessmentInput {
+export type AssessmentInput = Omit<ContractInput, "profile"> & {
   deliverableKey: DeliverableKey;
-  narrativeText: string;
-  renderedExhibits?: ReadonlyArray<ExhibitId>;
-  sourceRegisterInBody?: boolean;
-  scatteredPlaceholderCount?: number;
-  financialInputs?: FinancialInputs;
-}
+};
 
 export interface DeliverableAssessment {
   deliverableKey: DeliverableKey;
-  /** The client-facing title to render (downgraded when finance-grade data is absent). */
+  /** Title to render, applying business-case mode-downgrade. */
   resolvedTitle: string;
-  report: GateReport;
+  /** The contract result state. */
+  state: DeliverableResultState;
+  /** True only when state === 'client_ready'. */
+  clientReady: boolean;
+  quality: DeliverableQualityResult;
 }
 
 const BUSINESS_MODE_TITLE: Record<BusinessCaseMode, string> = {
@@ -40,41 +38,33 @@ const BUSINESS_MODE_TITLE: Record<BusinessCaseMode, string> = {
   full_business_case: "Business Case",
 };
 
-/**
- * Resolve the title for an artifact, applying business-case mode-downgrade so a
- * thin-data "Business Case" is honestly retitled rather than over-promising.
- */
 export function resolveArtifactTitle(
   deliverableKey: DeliverableKey,
   mode?: BusinessCaseMode,
 ): string {
   const profile = getDeliverableProfile(deliverableKey);
-  if (profile.supportsModeDowngrade && mode) {
-    return BUSINESS_MODE_TITLE[mode];
-  }
+  if (profile.supportsModeDowngrade && mode) return BUSINESS_MODE_TITLE[mode];
   return profile.title;
 }
 
-/** Evaluate a generated client artifact: run the gates and resolve its title. */
+/**
+ * Evaluate a generated client artifact: run the quality contract and resolve the
+ * title. This is the blocking gate — the caller persists `client_ready` artifacts
+ * as client-ready and everything else as `internal_draft`.
+ */
 export function assessClientDeliverable(
   input: AssessmentInput,
 ): DeliverableAssessment {
   const profile = getDeliverableProfile(input.deliverableKey);
-  const gateInput: GateInput = {
-    profile,
-    narrativeText: input.narrativeText,
-    renderedExhibits: input.renderedExhibits,
-    sourceRegisterInBody: input.sourceRegisterInBody,
-    scatteredPlaceholderCount: input.scatteredPlaceholderCount,
-    financialInputs: input.financialInputs,
-  };
-  const report = runTransformationGates(gateInput);
+  const quality = evaluateDeliverableQuality({ ...input, profile });
   return {
     deliverableKey: input.deliverableKey,
     resolvedTitle: resolveArtifactTitle(
       input.deliverableKey,
-      report.businessCaseMode,
+      quality.businessCaseMode,
     ),
-    report,
+    state: quality.state,
+    clientReady: quality.clientReady,
+    quality,
   };
 }

@@ -38,7 +38,7 @@ describe("storyline deck (W3)", () => {
       renderedExhibits: deckExhibits(deck),
       sourceRegisterInBody: false,
     });
-    expect(a.report.passed).toBe(true);
+    expect(a.clientReady).toBe(true);
   });
 
   it("renders a self-contained HTML deck with speaker notes off the slide body", () => {

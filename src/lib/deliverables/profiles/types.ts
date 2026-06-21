@@ -31,7 +31,7 @@ import type {
  * `src/lib/programs/deliverable-registry.ts`. Keeping this as an explicit union
  * gives every profile call site compile-time safety.
  */
-export type DeliverableKey =
+export type MovesDeliverableKey =
   | "charter" // P1
   | "discovery_report" // P2
   | "root_cause_worksheet" // P2
@@ -45,6 +45,26 @@ export type DeliverableKey =
   | "tower_metrics_plan" // P4 (Tower value model)
   | "handoff_package" // P5
   | "value_measurement_contract"; // P5
+
+/** Source (IT sourcing) artifact keys — profiled distinctly from Moves. */
+export type SourceDeliverableKey =
+  | "source_strategy_memo"
+  | "source_value_target_brief"
+  | "source_scope_memo"
+  | "source_rfp_package"
+  | "source_response_checklist"
+  | "source_evaluation_scorecard"
+  | "source_pricing_workbook"
+  | "source_pricing_trap_log"
+  | "source_bafo_question_pack"
+  | "source_atlas_decision_brief"
+  | "source_sentinel_risk_attestation"
+  | "source_selection_memo"
+  | "source_transition_plan"
+  | "source_value_ledger";
+
+/** Every profiled artifact, across modules. The registry is keyed by this. */
+export type DeliverableKey = MovesDeliverableKey | SourceDeliverableKey;
 
 /**
  * Where the evidence machinery lives relative to the client narrative. Evidence
@@ -130,6 +150,88 @@ export type BusinessCaseMode =
   | "investment_thesis" // value directional, not finance-grade
   | "full_business_case"; // baseline + cost + benefit + sensitivity all present
 
+/** What the artifact is FOR — drives audience-fit and intent checks. */
+export type ArtifactIntent =
+  | "decision_memo"
+  | "diagnostic_readout"
+  | "architecture_brief"
+  | "solution_blueprint"
+  | "operating_model"
+  | "options_paper"
+  | "business_case"
+  | "financial_model"
+  | "roadmap"
+  | "value_contract"
+  | "executive_readout"
+  // Source family
+  | "strategy_memo"
+  | "value_target_brief"
+  | "scope_memo"
+  | "rfp_package"
+  | "response_checklist"
+  | "evaluation_scorecard"
+  | "pricing_workbook"
+  | "pricing_trap_log"
+  | "bafo_question_pack"
+  | "risk_attestation"
+  | "selection_memo"
+  | "transition_plan"
+  | "value_ledger";
+
+/** Where traceability lives for this artifact. */
+export type AppendixMode =
+  | "none"
+  | "source_register_appendix"
+  | "evidence_binder" // the artifact IS a binder — machinery allowed
+  | "audit_metadata";
+
+export type SourceTracePolicy = "appendix" | "audit_metadata" | "inline_binder" | "download";
+
+/**
+ * Depth the artifact's PURPOSE permits — the "reader energy" control, NOT a word
+ * cap. RFP/pricing/evaluation/transition may be exhaustive; a charter is concise.
+ */
+export type AllowedDepth = "concise" | "standard" | "deep" | "exhaustive";
+
+export type RendererId =
+  | "docx_narrative"
+  | "html_architecture"
+  | "pptx_storyline"
+  | "xlsx_workbook"
+  | "html_report"
+  | "appendix";
+
+/** The quality dimensions the gate evaluates against the profile's rubric. */
+export type QualityDimensionId =
+  | "audience_fit"
+  | "artifact_intent"
+  | "format_fit"
+  | "human_consultant_voice"
+  | "decision_clarity"
+  | "evidence_discipline"
+  | "evidence_placement"
+  | "missing_input_handling"
+  | "exhibit_enforcement"
+  | "non_mechanical_writing"
+  | "client_specificity"
+  | "so_what_quality";
+
+/** The default rubric every client-facing artifact is held to (all 12 dimensions). */
+export const DEFAULT_QUALITY_RUBRIC: ReadonlyArray<QualityDimensionId> = [
+  "audience_fit",
+  "artifact_intent",
+  "format_fit",
+  "human_consultant_voice",
+  "decision_clarity",
+  "evidence_discipline",
+  "evidence_placement",
+  "missing_input_handling",
+  "exhibit_enforcement",
+  "non_mechanical_writing",
+  "client_specificity",
+  "so_what_quality",
+];
+
 export interface DeliverableProfile {
   /** Canonical registry key. */
   readonly key: DeliverableKey;
@@ -163,4 +265,26 @@ export interface DeliverableProfile {
   readonly supportsModeDowngrade?: boolean;
   /** Profile-specific acceptance checks (in addition to global gates). */
   readonly acceptanceChecks: ReadonlyArray<string>;
+
+  // ── Deliverable Quality Contract fields (§0b) ──────────────────────────────
+  /** What the artifact is for — drives audience/intent checks. */
+  readonly intent?: ArtifactIntent;
+  /** Where traceability lives. */
+  readonly appendixMode?: AppendixMode;
+  /** Tables the artifact must contain (by label/id). */
+  readonly requiredTables?: ReadonlyArray<string>;
+  /** The renderer the pipeline selects for this artifact. */
+  readonly renderer?: RendererId;
+  /** Which quality dimensions apply (defaults to DEFAULT_QUALITY_RUBRIC). */
+  readonly qualityRubric?: ReadonlyArray<QualityDimensionId>;
+  /** Profile-specific banned main-body language (beyond the global lexicon). */
+  readonly bannedMainBodyLanguage?: ReadonlyArray<string>;
+  /** Where the source trace goes. */
+  readonly sourceTracePolicy?: SourceTracePolicy;
+  /** Depth the purpose permits — reader-energy control, never a word cap. */
+  readonly allowedDepth?: AllowedDepth;
+  /** Golden-sample references for this profile. */
+  readonly examples?: ReadonlyArray<string>;
+  /** Known failure modes the gate watches for. */
+  readonly failureModes?: ReadonlyArray<string>;
 }

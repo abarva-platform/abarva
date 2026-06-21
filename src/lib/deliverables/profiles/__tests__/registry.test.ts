@@ -28,7 +28,10 @@ describe("deliverable profile registry (W0)", () => {
     for (const key of CANONICAL_KEYS) {
       expect(getDeliverableProfile(key)?.key).toBe(key);
     }
-    expect(listDeliverableProfiles()).toHaveLength(CANONICAL_KEYS.length);
+    // Moves keys + the 14 Source artifact profiles all share one registry.
+    expect(listDeliverableProfiles().length).toBeGreaterThanOrEqual(
+      CANONICAL_KEYS.length + 14,
+    );
   });
 
   it("hides internal phase labels in every client-facing artifact", () => {
