@@ -51,7 +51,7 @@ Governed Strategic Moves deliverable generation was blocked in Azure for SkyHarb
 - Live proof: SkyHarbor P3 generated three successful artifacts (`0a1ccec0-a949-4040-9b36-b9418409d556`, `eb4c152e-53f7-4a1d-a4fb-0c43f28565d2`, `e5f76c90-173b-4c51-8c5f-269a9b544cdf`) and correctly blocked the Sourcing Strategy run `ae8d7072-90eb-487b-89b0-b01545f2124e` on the quality contract for unsupported client-fact claims.
 - Live proof: SkyHarbor P3 -> P4 gate passed after a signed `requirements_traceability` artifact was created (`a909f3e3-d4e4-42f0-8de4-480db6fa8dc0`).
 - Live proof: SkyHarbor P4 -> P5 gate passed after signed P4 governance artifacts and milestone were created. P4 generated Tower Metrics Plan successfully (`d7b12668-3f67-44b1-834b-65d185d7fc03`) and correctly blocked generated Roadmap, Business Case, and Financial Model exports for unsupported numeric client-fact claims.
-- Live proof: SkyHarbor P5 capture and sign-off succeeded; P5 generation currently returns HTTP 500 before the worker queue is created. This release adds error-message return to identify the enqueue failure on the next signed-in retry.
+- Live proof: SkyHarbor P5 capture and sign-off succeeded. After deploying the diagnostic image, P5 generation queued and ran. Handoff Package succeeded (`45544299-594b-4d56-ae8f-a1ef9caaaa82`, `retrievedEvidence=5`); Value Measurement Contract was correctly blocked by the quality contract for unsupported numeric client-fact claims.
 
 ## Rollout Plan
 
@@ -79,4 +79,4 @@ Rollback by setting the web app and worker job back to the previously serving im
 
 ## Known Gaps
 
-The SkyHarbor P3 Sourcing Strategy artifact and three P4 artifacts (Roadmap, Business Case, Financial Model) are correctly blocked by the deliverable quality contract until unsupported client-fact claims are regenerated or edited with citations, assumptions, or placeholders. This is a content quality blocker, not a platform crash. P5 generation also has a platform enqueue failure still under diagnosis; route responses now expose the caught error message for the next signed-in QA run.
+The SkyHarbor P3 Sourcing Strategy artifact, three P4 artifacts (Roadmap, Business Case, Financial Model), and the P5 Value Measurement Contract are correctly blocked by the deliverable quality contract until unsupported client-fact claims are regenerated or edited with citations, assumptions, or placeholders. This is a content quality blocker, not a platform crash.
