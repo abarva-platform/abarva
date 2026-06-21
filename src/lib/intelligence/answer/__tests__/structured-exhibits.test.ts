@@ -59,4 +59,20 @@ describe("buildStructuredExhibits", () => {
     ]);
     expect(exhibits.charts).toHaveLength(0);
   });
+
+  it("renders a truthful evidence-required table when a table is requested without enough cited rows", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: { ...routing, outputShape: "table" },
+      sources: [],
+      prose:
+        "The requested denial-category table is not in the connected tenant evidence. Next move: validate the source extract before approving numbers.",
+    });
+
+    expect(exhibits.tables[0]?.title).toBe("Evidence Required");
+    expect(exhibits.tables[0]?.rows[0]).toEqual(
+      expect.objectContaining({
+        status: "No cited source available for the requested rows",
+      }),
+    );
+  });
 });
