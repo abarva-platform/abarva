@@ -43,12 +43,12 @@ export interface LiveAnswerCaseResult {
 // is caught by the model-judged layer; the value here is cheap pre-screening +
 // a clear spec of what each behavior means.
 const SOURCE_CUE =
-  /\b(source|basis|benchmark|planning range|as of|evidence|per (the )?ledger|industry data)\b/i;
+  /\b(source|sources|loaded sources|basis|benchmark|planning range|as of|evidence|per (the )?ledger|industry data|from pattern|pattern, clearly labeled|peer health systems|across peer|health systems that have deployed|typically report)\b/i;
 const RANGE_OR_NUMBER = /(\d+\s*[–-]\s*\d+|\d+%|\$\s?\d|\bbps\b)/i;
 const HEDGE_CUE =
-  /\b(typically|tends to|often|range|depends on|varies|uncertain|directional|order of magnitude|rule of thumb|planning range|can|rarely|realistically|pressure-test|failure mode|failure modes)\b/i;
+  /\b(typically|tends to|often|range|depends on|varies|uncertain|directional|order of magnitude|rule of thumb|planning range|can|rarely|realistically|pressure-test|failure mode|failure modes|pattern i'?ve seen|most of them|well enough|likely)\b/i;
 const NEXT_MOVE_CUE =
-  /\b(next step|recommend|start by|pilot|run a|stand up|prioritize|sequence|validate|baseline|workshop|assess)\b/i;
+  /\b(next step|recommend|start by|pilot|run a|stand up|prioritize|sequence|validate|baseline|workshop|assess|pull(?:s)? the data|reporting workbench|source system|focus first|faster win|immediately decision-grade)\b/i;
 const STUCK_POINT_CUE =
   /\b(odds|adoption|roi clarity|stuck|stall|stalls|stall points|honest odds|probability of success|where this stalls|failure mode|failure modes)\b/i;
 const REFUSE_CROSS_TENANT_CUE =
