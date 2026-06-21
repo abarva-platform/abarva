@@ -31,6 +31,50 @@ function describeUseCase(archetype: string): string {
   return USE_CASE_TITLE[archetype] ?? archetype.replace(/_/g, ' ').toLowerCase();
 }
 
+function artifactHonestyDiscipline(req: DeliverableIntelligenceRequest): string {
+  if (req.module !== 'moves') {
+    return [
+      `HONESTY DISCIPLINE: No number, date, dollar value, percentage, timeline, benefit, ROI, NPV, payback, vendor price, or KPI may be asserted as fact unless it cites governed evidence [n].`,
+      `If the source is absent, label it [ASSUMPTION TO VALIDATE: ...] or put it in the single Open Inputs Required table. Do not scatter [CLIENT TO COMPLETE] placeholders through the prose.`,
+    ].join(' ');
+  }
+
+  switch (req.deliverableType) {
+    case 'business_case':
+      return [
+        `HONEST BUSINESS-CASE MODE: If baseline, cost, benefit, and sensitivity inputs are not all present as governed evidence, produce a Business Case Readiness Memo, not a full Business Case.`,
+        `Do not assert ROI, NPV, payback, total benefit, total cost, or a funding amount as fact unless cited [n]. State value hypotheses qualitatively and route missing finance inputs to one Open Inputs Required table.`,
+      ].join(' ');
+    case 'estimate_model':
+    case 'financial_model':
+      return [
+        `HONEST FINANCIAL-MODEL MODE: If finance-grade baseline/cost/benefit/sensitivity inputs are absent, do not fabricate a model. Produce a Financial Model Input Register that states the model is omitted until inputs exist.`,
+        `Every cell/value/date/range must be cited [n] or explicitly labeled as an assumption; otherwise route it to one Open Inputs Required table.`,
+      ].join(' ');
+    case 'roadmap':
+    case 'execution_roadmap':
+      return [
+        `HONEST ROADMAP MODE: Workstreams, gates, dependencies, owners, and sequencing may be recommended. Calendar dates, durations, and capacity commitments must be cited [n] or labeled [ASSUMPTION TO VALIDATE: indicative timeline pending capacity confirmation].`,
+        `Use one Open Inputs Required table for capacity, date, or dependency inputs that must be confirmed.`,
+      ].join(' ');
+    case 'value_measurement_contract':
+      return [
+        `HONEST VALUE-MEASUREMENT MODE: This artifact defines HOW value will be measured: metric, owner, source, method, cadence, baseline status, and acceptance rule.`,
+        `Do not assert realized value, target value, ROI, or dates as fact unless cited [n]. Use "TBD by measurement" for absent values and route missing baselines/sources to one Open Inputs Required table.`,
+      ].join(' ');
+    case 'sourcing_strategy':
+      return [
+        `HONEST SOURCING-STRATEGY MODE: Provide build/buy/partner/hybrid options, criteria, guardrails, and a recommended path.`,
+        `Costs, vendor prices, dates, and commercial ranges must be cited [n] or labeled as assumptions; otherwise route them to one Open Inputs Required table.`,
+      ].join(' ');
+    default:
+      return [
+        `HONESTY DISCIPLINE: No number, date, dollar value, percentage, timeline, benefit, ROI, NPV, payback, vendor price, or KPI may be asserted as fact unless it cites governed evidence [n].`,
+        `If the source is absent, label it [ASSUMPTION TO VALIDATE: ...] or put it in the single Open Inputs Required table. Do not scatter [CLIENT TO COMPLETE] placeholders through the prose.`,
+      ].join(' ');
+  }
+}
+
 /** The standing role + governance system prompt shared by every pass. */
 export function buildSystemPrompt(req: DeliverableIntelligenceRequest): string {
   const expertise = describeUseCase(req.useCaseArchetype);
@@ -44,6 +88,8 @@ export function buildSystemPrompt(req: DeliverableIntelligenceRequest): string {
     ``,
     `Hard rules:`,
     `- Cite every client-specific fact with [n] tied to the Source Register.`,
+    `- No numeric, date, currency, percentage, timeline, ROI, NPV, payback, or value claim may appear as an asserted fact without [n]. If not grounded, label it [ASSUMPTION TO VALIDATE: ...] or route it to Open Inputs Required.`,
+    `- Use ONE consolidated Open Inputs Required table for missing inputs. Do not scatter [CLIENT TO COMPLETE] tags through the narrative.`,
     `- Where a client fact is missing, write [EVIDENCE MISSING: <what>], [ASSUMPTION TO VALIDATE: <what>], or [CLIENT TO COMPLETE: <what>] — never fabricate.`,
     `- Never expose internal source ids, chunk ids, table names, fact keys, or system status words in the body.`,
     `- Do not optimize for short documents. Optimize for high-quality, decision-grade artifacts.`,
@@ -81,6 +127,8 @@ function buildContextBlock(
     `EXPERT LATITUDE: Use your expert knowledge to design the best artifact for this use case. You are NOT limited to the minimum sections — add sections, exhibits, tables, and decision views if they materially improve the artifact. ${brief.allowedExpertKnowledge}`,
     ``,
     `GOVERNANCE BOUNDARY: ${brief.disallowedFabrication} ${brief.citationPolicy}`,
+    ``,
+    artifactHonestyDiscipline(req),
     ``,
     `AVAILABLE GOVERNED EVIDENCE (cite by [n]):`,
     renderEvidenceForPrompt(evidence),
@@ -256,7 +304,7 @@ export function buildPassPrompt(pass: GenerationPass, inputs: PassInputs): PassP
         ``,
         `WRITE ONLY THIS SECTION: "${s?.title ?? ''}"  (groundingMode: ${s?.groundingMode ?? 'expert_template'}).`,
         `Intent: ${s?.rationale || s?.title || ''}`,
-        `Write board-grade, senior-consulting Markdown for JUST this section (numbered sub-headings, tables/lists as needed). Use ONLY the assigned evidence below, cited [n]. For any client-specific number / $ / % / date you cannot ground, write [CLIENT TO COMPLETE: <what>] or [ASSUMPTION TO VALIDATE: <what>] — NEVER invent. Before returning, verify EVERY figure has a [n], an approved assumption, or a placeholder tag.`,
+        `Write board-grade, senior-consulting Markdown for JUST this section (numbered sub-headings, tables/lists as needed). Use ONLY the assigned evidence below, cited [n]. For any client-specific number / $ / % / date you cannot ground, write [ASSUMPTION TO VALIDATE: <what>] or describe the required input for the Open Inputs Required table — NEVER invent. Before returning, verify EVERY figure has a [n], an approved assumption, or a placeholder tag.`,
         ``,
         `ASSIGNED EVIDENCE (the only [n] you may cite):`,
         assigned,

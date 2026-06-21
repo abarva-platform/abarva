@@ -54,7 +54,7 @@ function renderedExhibitsFromDoc(
 ): ExhibitId[] {
   const ids: ExhibitId[] = [];
   for (const ex of doc.exhibits ?? []) {
-    const id = (ex as { id?: string }).id;
+    const id = (ex as { id?: string; key?: string }).id ?? (ex as { key?: string }).key;
     if (id && VALID_EXHIBITS.has(id)) ids.push(id as ExhibitId);
   }
   return ids;
