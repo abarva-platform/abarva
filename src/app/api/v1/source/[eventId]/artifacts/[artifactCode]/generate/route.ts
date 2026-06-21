@@ -41,6 +41,7 @@ import {
 } from "@/lib/source/agent-generation/server";
 import { sanitizeClientFacingSourceDraft } from "@/lib/source/agent-generation/client-facing-hygiene";
 import { completeD09RfpGovernanceSections } from "@/lib/source/agent-generation/d09-completion";
+import { generateD09ViaMapReduce } from "@/lib/source/agent-generation/d09-map-reduce";
 import {
   normalizeRequiredSectionHeadings,
   verifyArtifactSections,
@@ -505,27 +506,51 @@ export async function generateSourceArtifactDraft(
           { status: 403 },
         );
       }
-      const sdkStream = preflight.client.messages.stream({
-        model: template.model,
-        max_tokens: template.maxTokens,
-        system: template.systemPrompt,
-        messages: [{ role: "user", content: userMessage }],
-      });
-      const parts: string[] = [];
-      for await (const chunk of sdkStream) {
-        if (
-          chunk.type === "content_block_delta" &&
-          chunk.delta.type === "text_delta"
-        ) {
-          parts.push(chunk.delta.text);
+      // Parallel map-reduce path for d09: generates §2-§11 concurrently
+      // then stitches + writes §1 in a fast assembly pass. ~2-3 min vs
+      // 8-9 min for the monolithic single call.
+      const useD09MapReduce =
+        artifactCode === "d09_rfp_pack" &&
+        process.env.ABARVA_SOURCE_D09_MAP_REDUCE === "1";
+
+      if (useD09MapReduce) {
+        const mapReduceResult = await generateD09ViaMapReduce({
+          ctx,
+          upstreamBound,
+          client: preflight.client,
+        });
+        body = mapReduceResult.body;
+        model = "claude-opus-4-8";
+        stopReason = "end_turn";
+        tokensOut = mapReduceResult.tokensTotal;
+        if (mapReduceResult.failedSections.length > 0) {
+          console.warn(
+            `[d09-map-reduce] failed sections: ${mapReduceResult.failedSections.join(", ")}`,
+          );
         }
+      } else {
+        const sdkStream = preflight.client.messages.stream({
+          model: template.model,
+          max_tokens: template.maxTokens,
+          system: template.systemPrompt,
+          messages: [{ role: "user", content: userMessage }],
+        });
+        const parts: string[] = [];
+        for await (const chunk of sdkStream) {
+          if (
+            chunk.type === "content_block_delta" &&
+            chunk.delta.type === "text_delta"
+          ) {
+            parts.push(chunk.delta.text);
+          }
+        }
+        body = parts.join("").trim();
+        const finalMsg = await sdkStream.finalMessage();
+        model = finalMsg.model ?? template.model;
+        stopReason = finalMsg.stop_reason ?? null;
+        tokensIn = finalMsg.usage?.input_tokens ?? null;
+        tokensOut = finalMsg.usage?.output_tokens ?? null;
       }
-      body = parts.join("").trim();
-      const finalMsg = await sdkStream.finalMessage();
-      model = finalMsg.model ?? template.model;
-      stopReason = finalMsg.stop_reason ?? null;
-      tokensIn = finalMsg.usage?.input_tokens ?? null;
-      tokensOut = finalMsg.usage?.output_tokens ?? null;
     }
   } catch (err) {
     console.error(
