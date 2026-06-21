@@ -81,11 +81,11 @@ export function NexusTurn({
     <article
       className="intel-turn nexus"
       role="article"
-      aria-label={`Nexus ${turn.mode ?? "answer"} ${turn.format ?? "format"}`}
+      aria-label={`Ava ${turn.mode ?? "answer"} ${turn.format ?? "format"}`}
     >
       <div className="intel-turn-header">
         <div className="intel-inline-list">
-          <span className="intel-chip mono teal">Nexus</span>
+          <span className="intel-chip mono teal">Ava</span>
           {turn.mode ? (
             <span
               className={`intel-chip mono ${turn.mode === "grounded" ? "green" : turn.mode === "pivot" ? "amber" : "teal"}`}

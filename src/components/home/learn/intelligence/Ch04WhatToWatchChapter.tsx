@@ -30,7 +30,7 @@ export function Ch04WhatToWatchChapter() {
 
       <StoryRecap>
         This is the final chapter. We&rsquo;ve walked three of the six programs. Here we step
-        back to the portfolio level — the view Sentinel gives when you ask &ldquo;How is the
+        back to the portfolio level — the view Ava gives when you ask &ldquo;How is the
         overall AI portfolio performing?&rdquo; and &ldquo;What should I be worried about?&rdquo;
       </StoryRecap>
 
@@ -96,7 +96,7 @@ export function Ch04WhatToWatchChapter() {
                   status: '✅ Done',
                   statusColor: T.teal,
                   watch:
-                    'Value realization tracking in Atlas. 31% override rate was the signal; post-deployment rate is 19%. On measurement cadence.',
+                    'Value realization tracking in Control Tower. 31% override rate was the signal; post-deployment rate is 19%. On measurement cadence.',
                 },
                 {
                   name: 'APX-04 · Digital Assortment',
@@ -157,7 +157,7 @@ export function Ch04WhatToWatchChapter() {
         <Eyebrow>Three caution flags</Eyebrow>
         <SectionTitle>What needs a decision this week</SectionTitle>
         <Lead>
-          Sentinel flags time-sensitive items separately from status. These three require
+          Ava flags time-sensitive items separately from status. These three require
           a decision or action in the next 7 days — waiting degrades the options.
         </Lead>
 
@@ -228,10 +228,10 @@ export function Ch04WhatToWatchChapter() {
       </Section>
 
       <Section>
-        <Eyebrow>What Sentinel monitors automatically</Eyebrow>
+        <Eyebrow>What Ava monitors automatically</Eyebrow>
         <SectionTitle>The substrate watches so you don&rsquo;t have to</SectionTitle>
         <Lead>
-          Intelligence doesn&rsquo;t require manual queries to surface these signals. Sentinel
+          Intelligence doesn&rsquo;t require manual queries to surface these signals. Ava
           monitors the substrate continuously and surfaces new pressure cards when thresholds
           are crossed. Here&rsquo;s what&rsquo;s in the automatic watchlist for Apex Retail.
         </Lead>

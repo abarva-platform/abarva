@@ -86,7 +86,7 @@ function formatHistory(history: StewardChatTurn[]): string {
   const recent = history.slice(-MAX_HISTORY_TURNS);
   return recent
     .map((turn) => {
-      const who = turn.author === "operator" ? "Operator" : "Steward";
+      const who = turn.author === "operator" ? "Operator" : "Ava";
       return `${who}: ${truncate(turn.body, 1500)}`;
     })
     .join("\n");
@@ -107,7 +107,7 @@ export function buildStewardChatPrompt(args: StewardChatArgs): string {
   );
 
   return [
-    `You are Steward, a calm data-mapping assistant. Answer ONLY about how to map/interpret THIS file; never invent data; if asked for data you don't have, say so.`,
+    `You are Ava, a calm data-mapping assistant. Answer ONLY about how to map/interpret THIS file; never invent data; if asked for data you don't have, say so.`,
     "",
     `You are helping an operator review how one preserved file was mapped to AbarVa's canonical context schema for tenant "${proposal.source.tenantKey}".`,
     `Preserved source file: ${proposal.source.filename} (objectKey: ${proposal.source.objectKey}).`,

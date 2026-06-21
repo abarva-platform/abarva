@@ -13,7 +13,7 @@ export function ApexCh04ResponsesChapter() {
         <SectionTitle light size="xl">Week 5. Four proposals. One flag.</SectionTitle>
         <Lead light>
           All four vendors respond on time with completed pricing templates. Within six
-          hours of submission, Sentinel surfaces pattern PAT-AMS-VND-001 against
+          hours of submission, Ava surfaces pattern PAT-AMS-VND-001 against
           BlueMaster&rsquo;s SLA commitment section. The flag is not a disqualification
           yet — it is a documented risk that the evaluation committee will have to
           account for. Pricing normalisation begins in parallel.
@@ -22,27 +22,27 @@ export function ApexCh04ResponsesChapter() {
 
       <StoryRecap>
         The RFP closed at 5:00 p.m. on the response deadline. All four vendors submitted
-        on time using the mandatory pricing template. Sentinel is running initial pattern
+        on time using the mandatory pricing template. Ava is running initial pattern
         analysis across all four proposal texts. Rachel is loading responses into the
         evaluation workbench.
       </StoryRecap>
 
       <Section>
-        <Eyebrow>Sentinel pattern detection · within 6 hours of submission</Eyebrow>
+        <Eyebrow>Ava pattern detection · within 6 hours of submission</Eyebrow>
         <SectionTitle>PAT-AMS-VND-001: SLA overstatement without penalty backstop</SectionTitle>
         <Lead>
-          Sentinel surfaces one pattern flag across the four proposals. BlueMaster&rsquo;s
+          Ava surfaces one pattern flag across the four proposals. BlueMaster&rsquo;s
           SLA commitment section states 99.95% uptime for the infrastructure tower — the
           highest commitment in the field. But there is no corresponding penalty schedule
           attached. The SLA section references &ldquo;performance credits as mutually
           agreed&rdquo; in lieu of a defined penalty table.
         </Lead>
         <BodyP>
-          Pattern PAT-AMS-VND-001 is Sentinel&rsquo;s classification for this structure:
+          Pattern PAT-AMS-VND-001 is Ava&rsquo;s classification for this structure:
           an SLA headline that exceeds peers, with penalty terms deferred to negotiation.
           It is a known AMS vendor tactic. The commitment gets the vendor scored highly on
           SLA in a naive evaluation, then the penalty backstop gets softened in contract
-          negotiation when the buyer has already committed to the vendor. Sentinel flags
+          negotiation when the buyer has already committed to the vendor. Ava flags
           it at response stage, not contract stage.
         </BodyP>
         <Callout kind="warn" icon="⚠️" label="PAT-AMS-VND-001 · BlueMaster IT · SLA overstatement">

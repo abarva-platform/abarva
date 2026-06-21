@@ -56,7 +56,7 @@ describe("buildStewardChatPrompt", () => {
     expect(prompt).toContain("Why is this leadership?");
     expect(prompt).toContain("Because the columns are names and titles.");
     // System framing is present.
-    expect(prompt).toContain("You are Steward");
+    expect(prompt).toContain("You are Ava");
     expect(prompt).toContain("never invent data");
   });
 

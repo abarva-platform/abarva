@@ -29,7 +29,7 @@ export function Ch11ValueChapter() {
           Eighteen months after Day 100. Twelve months after the value
           clock would have started under the d24-committed Month-7
           cutover, but only 9 months after the actual Month-9 cutover.
-          Atlas&rsquo;s d32 ledger reads $29.8M realized against a
+          Ava&rsquo;s d32 ledger reads $29.8M realized against a
           straight-line projection of $38.4M. The $8.6M gap traces to the
           2-month slip and delayed payer-data controls. Variance owned, not hidden.
         </Lead>
@@ -50,7 +50,7 @@ export function Ch11ValueChapter() {
         <Eyebrow>The value model</Eyebrow>
         <SectionTitle>How d32 measures realized vs projected</SectionTitle>
         <Lead>
-          Atlas&rsquo;s d32 value ledger compares realized run-rate
+          Ava&rsquo;s d32 value ledger compares realized run-rate
           savings against the d24 straight-line projection.
           Straight-line projection assumes value realization starts at
           the d24-committed cutover date (Month 7) and accumulates
@@ -88,7 +88,7 @@ export function Ch11ValueChapter() {
         <Eyebrow>The variance math</Eyebrow>
         <SectionTitle>Why $29.8M, not $38.4M</SectionTitle>
         <Lead>
-          The full variance attribution, surfaced by Atlas in the d32
+          The full variance attribution, surfaced by Ava in the d32
           ledger, runs like this.
         </Lead>
 
@@ -157,7 +157,7 @@ export function Ch11ValueChapter() {
 
         <AgentSplitBox
           agent={{
-            who: 'Atlas',
+            who: 'Ava',
             did: (
               <>
                 Computed the variance attribution from d24
@@ -193,13 +193,13 @@ export function Ch11ValueChapter() {
         <SectionTitle>Five things this event did right</SectionTitle>
         <Lead>
           End-of-event learning review. Patricia ran one at Month 12;
-          Atlas re-runs it at Month 18 with the value-realization data
+          Ava re-runs it at Month 18 with the value-realization data
           included. Five things this event did right:
         </Lead>
         <SubHead>1 · Pricing-trap detection ran cell-by-cell, not summary-by-summary</SubHead>
         <BodyP>
           The Vendor A egress structure was buried in Appendix C. A
-          summary-level read would have missed it. Sentinel&rsquo;s
+          summary-level read would have missed it. Ava&rsquo;s
           deterministic cell-level pass surfaced it and quantified the
           $4.14M / 5-year exposure with an exit fee at 2× run-rate.
           That single finding is worth more than the cost of the entire
@@ -231,7 +231,7 @@ export function Ch11ValueChapter() {
         <SubHead>5 · Variance was named, not hidden</SubHead>
         <BodyP>
           The Cloverleaf slip could have been buried under
-          &ldquo;migration complexity&rdquo; in a status report. Atlas
+          &ldquo;migration complexity&rdquo; in a status report. Ava
           surfaced it explicitly, named Karen as owner, set the
           measurement cadence. Patricia accepted the variance instead
           of demanding magical recovery. The mature procurement signal.
@@ -320,7 +320,7 @@ export function Ch11ValueChapter() {
         </Lead>
         <BodyP>
           From Day 1 (Marcus walks into Janet&rsquo;s office with the
-          lease letter) to Month 18 (Atlas&rsquo;s d32 ledger commits),
+          lease letter) to Month 18 (Ava&rsquo;s d32 ledger commits),
           we ran one $108M sourcing event end-to-end. We made one
           structural mistake (under-enumerated Cloverleaf
           integrations); we had one big win (caught Vendor A&rsquo;s

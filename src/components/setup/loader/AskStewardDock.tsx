@@ -68,7 +68,7 @@ export function AskStewardDock({
   return (
     <aside
       className={className}
-      aria-label={`Ask Steward about ${file.filename}`}
+      aria-label={`Ask Ava about ${file.filename}`}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -95,7 +95,7 @@ export function AskStewardDock({
           <div
             style={{ fontFamily: TYPOGRAPHY.serif, fontSize: 18, color: COLORS.ink }}
           >
-            Ask Steward
+            Ask Ava
           </div>
           <div style={{ fontSize: 12, color: `${COLORS.ink}99`, marginTop: 2 }}>
             About one file only

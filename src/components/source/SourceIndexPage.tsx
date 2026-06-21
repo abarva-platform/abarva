@@ -395,7 +395,7 @@ function SourceEmptyState() {
       }}
     >
       <AgentColumn
-        agent={{ initials: 'St', name: 'Steward', role: 'Source Coordinator' }}
+        agent={{ initials: 'Av', name: 'Ava', role: 'Source Coordinator' }}
         quote="No source events have been created for this tenant yet. Source events track structured procurement and vendor activity — from initial planning through award and onboarding."
         agentContext="Steward · Source · No events · Apr 27 2026"
         actions={[

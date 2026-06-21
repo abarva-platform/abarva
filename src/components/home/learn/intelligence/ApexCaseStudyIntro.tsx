@@ -94,7 +94,7 @@ export function ApexCaseStudyIntro() {
           Most platform primers explain features: &ldquo;Intelligence shows signals and patterns.&rdquo;
           That teaches the interface, not the job. This case study shows how a real CXO team at a
           real-sized retailer should use Intelligence — which questions to ask, how to read a pressure
-          card, when a pattern points to a program, and when to push back on what Sentinel surfaces.
+          card, when a pattern points to a program, and when to push back on what Ava surfaces.
         </Lead>
         <Callout kind="info" icon="📖" label="How to read this">
           Read the four chapters in order for the full picture. Each chapter ends with a{' '}

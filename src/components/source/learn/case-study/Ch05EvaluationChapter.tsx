@@ -26,7 +26,7 @@ export function Ch05EvaluationChapter() {
         <Eyebrow light>Meridian Case Study · Chapter 05 · Stage 05 Evaluation</Eyebrow>
         <SectionTitle light size="xl">Day 42. Blind scoring. B leads.</SectionTitle>
         <Lead light>
-          Three vendors, six criteria, four scorers, one rubric. Sentinel
+          Three vendors, six criteria, four scorers, one rubric. Ava
           assembles the d16 rubric from d09; Janet runs blind scoring with
           Karen, two architecture leads, and an external clinical-systems
           advisor. Vendor B comes out at 87, Vendor A at 82, Vendor D at
@@ -48,7 +48,7 @@ export function Ch05EvaluationChapter() {
         <SectionTitle>Six criteria, weights summing to 100</SectionTitle>
         <Lead>
           d16 was issued with d09 — vendors knew the criteria and weights
-          before they bid. The rubric defaults Sentinel produces from
+          before they bid. The rubric defaults Ava produces from
           archetype + value band + rigor are visible in d16; Janet and
           Karen reviewed and approved them at issuance.
         </Lead>
@@ -136,7 +136,7 @@ export function Ch05EvaluationChapter() {
 
         <AgentSplitBox
           agent={{
-            who: 'Sentinel',
+            who: 'Ava',
             did: (
               <>
                 Redacted vendor identifiers from each response (logo, name,
@@ -152,7 +152,7 @@ export function Ch05EvaluationChapter() {
             who: 'Janet',
             did: (
               <>
-                Set the redaction rules. Reviewed Sentinel&rsquo;s
+                Set the redaction rules. Reviewed Ava&rsquo;s
                 inter-scorer variance flags — found two on Vendor D
                 (criteria 4 and 5) where the clinical advisor and the Epic
                 architect disagreed. Convened a 30-minute calibration call
@@ -170,7 +170,7 @@ export function Ch05EvaluationChapter() {
         <Lead>
           With criterion 2 (commercial commitment) deferred, the
           Chapter-5 scoring runs across criteria 1, 3, 4, 5, 6 — total
-          weight 75. Sentinel normalizes the partial score to a 100-point
+          weight 75. Ava normalizes the partial score to a 100-point
           basis for legibility.
         </Lead>
 

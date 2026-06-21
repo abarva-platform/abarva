@@ -594,7 +594,7 @@ export function PhaseCard({
               marginBottom: 8,
             }}
           >
-            Example chat with Nexus
+            Example chat with Ava
           </div>
           <div style={{ fontFamily: T.fBody, fontSize: 13, color: T.body, lineHeight: 1.6 }}>
             {chatExample}

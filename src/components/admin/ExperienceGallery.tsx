@@ -111,7 +111,7 @@ const agents = [
     recommends: 'Decision posture and concise executive brief.',
   },
   {
-    name: 'Ava',
+    name: 'Steward',
     mission: 'Protect governance and release gates.',
     watches: 'Readiness blockers, policy exceptions, unresolved controls.',
     recommends: 'Gate actions required for safe progression.',

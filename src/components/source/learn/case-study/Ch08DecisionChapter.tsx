@@ -26,12 +26,12 @@ export function Ch08DecisionChapter() {
         <Eyebrow light>Meridian Case Study · Chapter 08 · Stage 08 Decision</Eyebrow>
         <SectionTitle light size="xl">Day 90. CTO + CFO sign d24.</SectionTitle>
         <Lead light>
-          Atlas (not Sentinel) composes the decision brief. The lead-agent
-          handoff is deliberate — d24 reads to the procurement panel
-          differently than the working artifacts that preceded it. Marcus
-          signs at 11:00 a.m.; Sarah signs at 4:30 p.m. after a 90-minute
-          challenge session on the value-realization model. Vendor B is
-          the choice.
+          Ava composes the decision brief — the same assistant who ran
+          every stage before it, now drawing on executive-synthesis
+          expertise. d24 reads to the procurement panel differently than
+          the working artifacts that preceded it. Marcus signs at 11:00
+          a.m.; Sarah signs at 4:30 p.m. after a 90-minute challenge
+          session on the value-realization model. Vendor B is the choice.
         </Lead>
       </HeroBand>
 
@@ -45,14 +45,14 @@ export function Ch08DecisionChapter() {
       </StoryRecap>
 
       <Section>
-        <Eyebrow>The agent handoff</Eyebrow>
-        <SectionTitle>Why Atlas, not Sentinel, composes d24</SectionTitle>
+        <Eyebrow>One assistant, a different register</Eyebrow>
+        <SectionTitle>Why d24 reads differently — same Ava, executive register</SectionTitle>
         <Lead>
-          d01 through d22 are working artifacts — Sentinel&rsquo;s native
-          surface. d24 is the executive decision brief. Atlas (the Tower
-          and Decision agent) takes the handoff because the audience is
-          not the working team but the procurement panel, the board
-          (eventually), and the audit trail.
+          d01 through d22 are working artifacts. d24 is the executive
+          decision brief. Ava composes it too — no handoff — but she
+          shifts register because the audience is no longer the working
+          team but the procurement panel, the board (eventually), and the
+          audit trail.
         </Lead>
         <BodyP>
           The shape of d24 is different. It opens with the
@@ -66,21 +66,22 @@ export function Ch08DecisionChapter() {
         <Callout
           kind="info"
           icon="🤝"
-          label="Two agents, one event"
+          label="One assistant, every stage"
         >
-          Sentinel runs Stages 1–7 and Stage 9. Atlas runs Stage 8 and
-          Stage 11. Stage 10 (Transition) is co-led — Atlas owns the
-          milestones, Sentinel owns the operational checkpoints. The
-          chat lane changes the lead-agent label when the rail advances
-          to Stage 8. Receipts on d24 name Atlas, not Sentinel.
+          Ava runs the whole event end to end — Stages 1 through 11. The
+          expertise she leans on changes with the stage: sourcing and
+          trap-detection through BAFO and Selection, executive synthesis
+          for the Decision brief, portfolio monitoring through Transition
+          and Value. The chat lane stays with the same assistant the
+          whole way; receipts on d24 name Ava.
         </Callout>
       </Section>
 
       <Section>
         <Eyebrow>Day 88 · d24 generation</Eyebrow>
-        <SectionTitle>What Atlas composed and what survived review</SectionTitle>
+        <SectionTitle>What Ava composed and what survived review</SectionTitle>
         <Lead>
-          Janet clicks Generate on the d24 card. Atlas binds 8 upstream
+          Janet clicks Generate on the d24 card. Ava binds 8 upstream
           artifacts: d01 (strategic posture), d05 (scope), d16 (final
           scoring), d19 (normalized pricing), d20 (trap log), d22 (BAFO
           closure summary), d11 (response completeness), and the event
@@ -145,7 +146,7 @@ export function Ch08DecisionChapter() {
           CFO Sarah Kim does not sign d24 on first read. She schedules a
           90-minute review with Janet, Karen, and an analyst from her
           team. Three challenges, all of which have been anticipated by
-          Atlas in the brief, but Sarah wants to hear the answers from
+          Ava in the brief, but Sarah wants to hear the answers from
           named humans before she co-signs.
         </Lead>
 
@@ -157,7 +158,7 @@ export function Ch08DecisionChapter() {
           Karen&rsquo;s response: the new sites&rsquo; workloads are inside the 920
           count (existing apps just running on more endpoints);
           per-endpoint load growth is what would bend the assumption.
-          Sentinel&rsquo;s archive of 6-year IT-load data shows
+          Ava&rsquo;s archive of 6-year IT-load data shows
           per-endpoint compute flat to slightly declining. The assumption
           holds.
         </BodyP>
@@ -178,7 +179,7 @@ export function Ch08DecisionChapter() {
 
         <AgentSplitBox
           agent={{
-            who: 'Atlas',
+            who: 'Ava',
             did: (
               <>
                 Re-read the d23 transition cost line item ($4.0M one-time
@@ -218,7 +219,7 @@ export function Ch08DecisionChapter() {
         <BodyP>
           This conversation foreshadows Chapter 11 exactly. The cutover
           will slip 2 months. The value model will dent by ~$3.2M in
-          year 1 (close to Sarah&rsquo;s $3.4M number). And Atlas&rsquo;s
+          year 1 (close to Sarah&rsquo;s $3.4M number). And Ava&rsquo;s
           d32 ledger will surface the variance with named owner — exactly
           the discipline Sarah is asking for here.
         </BodyP>
@@ -297,7 +298,7 @@ export function Ch08DecisionChapter() {
           One d24 decision brief. ~1,800 words, 8 upstream artifacts
           bound, signed by 2 sponsors with a 3rd acknowledgment.
           Provenance receipt names model{' '}
-          <em>claude-sonnet-4-6</em>, agent <em>Atlas</em>, prompt
+          <em>claude-sonnet-4-6</em>, agent <em>Ava</em>, prompt
           template <em>decision-brief@v2.1</em>, upstream codes d01 d05
           d11 d16 d19 d20 d22 + event metadata, tokens 18,400 in / 4,200
           out, stop reason <em>end_turn</em>, generated by Janet on

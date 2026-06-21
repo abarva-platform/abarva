@@ -16,7 +16,9 @@ import {
   T,
 } from './primitives';
 
-// ─── What Nexus owns vs. what requires you ─────────────────────────────────
+// ─── What Ava owns vs. what requires you ───────────────────────────────────
+// NOTE: the `nexus`/`NEXUS_LABEL` identifiers below are retained data keys; the
+// rendered copy reads "Ava" (the single agent), not the retired "Nexus" name.
 
 const OWNERSHIP_ROWS: Array<{ task: string; nexus: 'auto' | 'draft' | 'no'; you: 'confirm' | 'direct' | 'both' }> = [
   { task: 'Extract a hypothesis from your description', nexus: 'auto', you: 'confirm' },
@@ -41,9 +43,9 @@ const OWNERSHIP_ROWS: Array<{ task: string; nexus: 'auto' | 'draft' | 'no'; you:
 ];
 
 const NEXUS_LABEL: Record<'auto' | 'draft' | 'no', { text: string; bg: string; color: string }> = {
-  auto:  { text: 'Nexus auto-drafts', bg: T.tealSoft,   color: T.teal },
-  draft: { text: 'Nexus proposes',    bg: T.navySoft,   color: T.navy },
-  no:    { text: '—',                 bg: 'transparent', color: T.faint },
+  auto:  { text: 'Ava auto-drafts', bg: T.tealSoft,   color: T.teal },
+  draft: { text: 'Ava proposes',    bg: T.navySoft,   color: T.navy },
+  no:    { text: '—',               bg: 'transparent', color: T.faint },
 };
 const YOU_LABEL: Record<'confirm' | 'direct' | 'both', { text: string }> = {
   confirm: { text: 'Review & confirm' },
@@ -55,24 +57,24 @@ const YOU_LABEL: Record<'confirm' | 'direct' | 'both', { text: string }> = {
 
 const GOOD_PROMPTS = [
   {
-    text: 'Give Nexus outcomes, not solutions',
+    text: 'Give Ava outcomes, not solutions',
     example: '"We want to cut contact center handle time by 30%" — not "We need a call routing AI."',
   },
   {
     text: 'Say what triggered the initiative',
-    example: '"After the CEO saw the AHT benchmark last quarter" gives Nexus context for urgency and framing.',
+    example: '"After the CEO saw the AHT benchmark last quarter" gives Ava context for urgency and framing.',
   },
   {
     text: 'Name the sponsor explicitly',
-    example: '"The COO asked us to own this" — Nexus records who committed before it can advance.',
+    example: '"The COO asked us to own this" — Ava records who committed before the Move can advance.',
   },
   {
     text: 'State scope explicitly — in and out',
-    example: '"In scope: inbound routing only. Out of scope: outbound and email" — Nexus cannot infer scope.',
+    example: '"In scope: inbound routing only. Out of scope: outbound and email" — Ava cannot infer scope.',
   },
   {
-    text: 'Correct Nexus when it\'s wrong',
-    example: '"That archetype is wrong — this is revenue growth, not cost reduction" — Nexus accepts overrides immediately.',
+    text: 'Correct Ava when she\'s wrong',
+    example: '"That archetype is wrong — this is revenue growth, not cost reduction" — Ava accepts overrides immediately.',
   },
   {
     text: 'Push back on vague outputs',
@@ -86,24 +88,24 @@ const BAD_PROMPTS = [
     example: '"We want to deploy Salesforce Einstein for the contact center" — name the problem first; vendor comes in P3.',
   },
   {
-    text: 'Give Nexus a list of problems',
-    example: '"We have issues with AHT, routing, billing, and staffing" — Nexus will ask you to pick one primary outcome first.',
+    text: 'Give Ava a list of problems',
+    example: '"We have issues with AHT, routing, billing, and staffing" — Ava will ask you to pick one primary outcome first.',
   },
   {
     text: 'Skip the sponsor',
-    example: '"We\'ll figure out the sponsor later" — Nexus will block gate advancement until a candidate is named.',
+    example: '"We\'ll figure out the sponsor later" — Ava will block gate advancement until a candidate is named.',
   },
   {
     text: 'State value as a point estimate',
-    example: '"This is a $4M opportunity" — Nexus will record it but will ask for low/high/assumptions.',
+    example: '"This is a $4M opportunity" — Ava will record it but will ask for low/high/assumptions.',
   },
   {
-    text: 'Ask Nexus to approve a gate',
-    example: '"Go ahead and approve the gate" — Nexus cannot approve gates. All gate approvals are human actions.',
+    text: 'Ask Ava to approve a gate',
+    example: '"Go ahead and approve the gate" — Ava cannot approve gates. All gate approvals are human actions.',
   },
   {
-    text: 'Expect Nexus to know your org chart',
-    example: '"Who should sponsor this?" — Nexus can suggest based on role/function patterns; you confirm the actual name.',
+    text: 'Expect Ava to know your org chart',
+    example: '"Who should sponsor this?" — Ava can suggest based on role/function patterns; you confirm the actual name.',
   },
 ];
 
@@ -114,10 +116,10 @@ export function NexusGuideSection() {
     <>
       {/* Hero */}
       <HeroBand color="navy">
-        <Eyebrow light>Nexus · Agent Guide</Eyebrow>
-        <SectionTitle light size="xl" level={1}>Working with Nexus</SectionTitle>
+        <Eyebrow light>Ava · Moves · Agent Guide</Eyebrow>
+        <SectionTitle light size="xl" level={1}>Working with Ava on a Move</SectionTitle>
         <Lead light>
-          Nexus is the AI agent behind Strategic Moves. It helps you structure programs, draft documents, and navigate phase gates — but it doesn't replace your judgment on the decisions that count.
+          Ava is the one assistant you talk to across every AbarVa surface. On Strategic Moves she helps you structure programs, draft documents, and navigate phase gates — drawing on her strategy and authoring expertise — but she doesn't replace your judgment on the decisions that count.
         </Lead>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
           {['Surface: Strategic Moves', 'Audience: All users', 'Time: ~15 min'].map((tag) => (
@@ -142,12 +144,12 @@ export function NexusGuideSection() {
         </div>
       </HeroBand>
 
-      {/* What Nexus is */}
+      {/* What Ava is */}
       <Section>
-        <Eyebrow>Nexus · 01</Eyebrow>
-        <SectionTitle>What Nexus is — and isn't</SectionTitle>
+        <Eyebrow>Ava · Moves · 01</Eyebrow>
+        <SectionTitle>What Ava is — and isn't</SectionTitle>
         <Lead>
-          Nexus is a structured conversation partner, document drafter, and gate evaluator. It's not a search engine, a decision-maker, or an approval mechanism.
+          On a Move, Ava is a structured conversation partner, document drafter, and gate evaluator. She's not a search engine, a decision-maker, or an approval mechanism.
         </Lead>
 
         <div
@@ -159,7 +161,7 @@ export function NexusGuideSection() {
           }}
         >
           {[
-            { icon: '✓', title: 'What Nexus does', color: T.teal, bg: T.tealSoft, line: T.tealLine, items: [
+            { icon: '✓', title: 'What Ava does', color: T.teal, bg: T.tealSoft, line: T.tealLine, items: [
               'Extracts structured fields from natural language',
               'Classifies Move archetype from your description',
               'Drafts program documents (charter, CSA, architecture)',
@@ -168,7 +170,7 @@ export function NexusGuideSection() {
               'Surfaces relevant patterns from your tenant data',
               'Warns you when a claim looks unvalidated',
             ]},
-            { icon: '✗', title: 'What Nexus doesn\'t do', color: T.amber, bg: T.amberSoft, line: T.amberLine, items: [
+            { icon: '✗', title: 'What Ava doesn\'t do', color: T.amber, bg: T.amberSoft, line: T.amberLine, items: [
               'Approve gates (all gate approvals are human actions)',
               'Commit a sponsor on your behalf',
               'State value figures as validated projections',
@@ -221,16 +223,16 @@ export function NexusGuideSection() {
         </div>
 
         <Callout kind="info" icon="💬" label="The human-in-the-loop principle">
-          Nexus drafts, proposes, and flags — but decisions with real business consequences (sponsor commitment, scope, value range, gate approval) always require a human to explicitly confirm. If Nexus ever seems to be making a decision it shouldn't, correct it directly.
+          Ava drafts, proposes, and flags — but decisions with real business consequences (sponsor commitment, scope, value range, gate approval) always require a human to explicitly confirm. If Ava ever seems to be making a decision she shouldn't, correct her directly.
         </Callout>
       </Section>
 
       {/* Ownership table */}
       <Section>
-        <Eyebrow>Nexus · 02</Eyebrow>
+        <Eyebrow>Ava · Moves · 02</Eyebrow>
         <SectionTitle>Who owns what</SectionTitle>
         <Lead>
-          A practical breakdown of every major task in a Move — whether Nexus handles it automatically, proposes a draft for you to confirm, or whether it's purely your call.
+          A practical breakdown of every major task in a Move — whether Ava handles it automatically, proposes a draft for you to confirm, or whether it's purely your call.
         </Lead>
 
         <div
@@ -251,7 +253,7 @@ export function NexusGuideSection() {
               padding: '10px 16px',
             }}
           >
-            {['Task', 'Nexus', 'You'].map((h) => (
+            {['Task', 'Ava', 'You'].map((h) => (
               <div
                 key={h}
                 style={{
@@ -317,12 +319,12 @@ export function NexusGuideSection() {
         </div>
       </Section>
 
-      {/* How to talk to Nexus */}
+      {/* How to talk to Ava */}
       <Section>
-        <Eyebrow>Nexus · 03</Eyebrow>
-        <SectionTitle>How to get the best out of Nexus</SectionTitle>
+        <Eyebrow>Ava · Moves · 03</Eyebrow>
+        <SectionTitle>How to get the best out of Ava</SectionTitle>
         <Lead>
-          Nexus responds to what you give it. Precise inputs produce precise outputs. Vague inputs produce draft outputs that need more revision.
+          Ava responds to what you give her. Precise inputs produce precise outputs. Vague inputs produce draft outputs that need more revision.
         </Lead>
 
         <TipGrid>
@@ -339,12 +341,12 @@ export function NexusGuideSection() {
         </TipGrid>
       </Section>
 
-      {/* Nexus posture per phase */}
+      {/* Ava posture per phase */}
       <Section>
-        <Eyebrow>Nexus · 04</Eyebrow>
-        <SectionTitle>How Nexus behaves in each phase</SectionTitle>
+        <Eyebrow>Ava · Moves · 04</Eyebrow>
+        <SectionTitle>How Ava behaves in each phase</SectionTitle>
         <Lead>
-          Nexus shifts posture as the Move advances. Early phases are exploratory and extractive. Later phases are more exacting — Nexus will push back on incomplete inputs.
+          Ava shifts posture as the Move advances. Early phases are exploratory and extractive. Later phases are more exacting — Ava will push back on incomplete inputs.
         </Lead>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, margin: '24px 0' }}>
@@ -361,35 +363,35 @@ export function NexusGuideSection() {
               name: 'Charter',
               color: T.navy,
               posture: 'Engagement-focused',
-              behavior: 'P1 is about engaging the named sponsor — not extracting a financial commitment. Nexus will ask whether the sponsor has been briefed and is aligned, draft the charter from your inputs, and flag scope or governance gaps. It will not ask whether they have approved cost or timeline — that is P4. The P1 gate clears when the sponsor has engaged on scope and the charter is signed off.',
+              behavior: 'P1 is about engaging the named sponsor — not extracting a financial commitment. Ava will ask whether the sponsor has been briefed and is aligned, draft the charter from your inputs, and flag scope or governance gaps. She will not ask whether they have approved cost or timeline — that is P4. The P1 gate clears when the sponsor has engaged on scope and the charter is signed off.',
             },
             {
               phase: 'P2',
               name: 'Discover & Diagnose',
               color: T.navy,
               posture: 'Rigorous & evidence-grounded',
-              behavior: 'P2 is where the quality of your data determines the quality of the diagnosis. Upload what you have — call logs, operational data, org charts. Nexus will flag thin data coverage explicitly. It will not soften a Continue/Discontinue decision if the evidence points one way.',
+              behavior: 'P2 is where the quality of your data determines the quality of the diagnosis. Upload what you have — call logs, operational data, org charts. Ava will flag thin data coverage explicitly. She will not soften a Continue/Discontinue decision if the evidence points one way.',
             },
             {
               phase: 'P3',
               name: 'Design Future State',
               color: T.navy,
               posture: 'Structured & trace-focused',
-              behavior: 'Every design decision must trace back to a P2 root cause. Nexus will flag a design element that lacks this trace. It will not auto-select build/buy/partner — that decision requires your rationale and the Foundation Readiness assessment from P0.',
+              behavior: 'Every design decision must trace back to a P2 root cause. Ava will flag a design element that lacks this trace. She will not auto-select build/buy/partner — that decision requires your rationale and the Foundation Readiness assessment from P0.',
             },
             {
               phase: 'P4',
               name: 'Roadmap & Business Case',
               color: T.navy,
               posture: 'Financial precision',
-              behavior: 'Nexus builds the financial model from your P0 value hypothesis seed and P3 sourcing costs. Every cell that flows from an assumption is labeled. When you update an input, it recalculates automatically and flags which gate criteria are now met or at risk.',
+              behavior: 'Ava builds the financial model from your P0 value hypothesis seed and P3 sourcing costs. Every cell that flows from an assumption is labeled. When you update an input, she recalculates automatically and flags which gate criteria are now met or at risk.',
             },
             {
               phase: 'P5',
               name: 'Mobilize & Handoff',
               color: T.teal,
               posture: 'Completion-focused',
-              behavior: 'Nexus compiles the handoff package from every prior phase. It flags open risks that still need an owner. Tower acceptance is a hard gate — it cannot be waived. Once confirmed, the Move closes and Atlas picks it up in Control Tower.',
+              behavior: 'Ava compiles the handoff package from every prior phase. She flags open risks that still need an owner. Tower acceptance is a hard gate — it cannot be waived. Once confirmed, the Move closes and Ava keeps watching it in Control Tower, now drawing on her portfolio-monitoring expertise — same assistant, no handoff to a different agent.',
             },
           ].map((item) => (
             <div
@@ -451,44 +453,44 @@ export function NexusGuideSection() {
 
       {/* Key limits */}
       <Section>
-        <Eyebrow>Nexus · 05</Eyebrow>
+        <Eyebrow>Ava · Moves · 05</Eyebrow>
         <SectionTitle>Key limits to know</SectionTitle>
         <Lead>
-          Nexus is designed with explicit limits — not because of technical constraints, but because these are the decisions that should always be human-made.
+          Ava is designed with explicit limits — not because of technical constraints, but because these are the decisions that should always be human-made.
         </Lead>
 
         <TermGrid>
           <Term name="Sponsor naming vs. investment approval">
-            There are two distinct sponsor milestones. <strong>P0–P1:</strong> Name the sponsor candidate and engage them on scope and charter — no financial commitment yet. <strong>P4:</strong> Formal investment approval — the sponsor (and/or board) approves the business case, cost, solution, and timeline. This is the real commitment gate. Nexus will not conflate these two steps.
+            There are two distinct sponsor milestones. <strong>P0–P1:</strong> Name the sponsor candidate and engage them on scope and charter — no financial commitment yet. <strong>P4:</strong> Formal investment approval — the sponsor (and/or board) approves the business case, cost, solution, and timeline. This is the real commitment gate. Ava will not conflate these two steps.
           </Term>
           <Term name="Gate approval">
-            No gate can be approved by Nexus. Gate approvals are always human actions. This is by design: gate approval signals program-level accountability, not just document completeness.
+            No gate can be approved by Ava. Gate approvals are always human actions. This is by design: gate approval signals program-level accountability, not just document completeness.
           </Term>
           <Term name="Value figures">
-            All value figures at P0–P1 are labeled <strong>UNVALIDATED HYPOTHESIS</strong> or <strong>PRELIMINARY ESTIMATE</strong>. Nexus will not state a value as validated until P2 baseline evidence supports it.
+            All value figures at P0–P1 are labeled <strong>UNVALIDATED HYPOTHESIS</strong> or <strong>PRELIMINARY ESTIMATE</strong>. Ava will not state a value as validated until P2 baseline evidence supports it.
           </Term>
           <Term name="Scope definition">
-            Nexus can propose scope based on your description, but the scope boundary — what is in and out — must be deliberately stated by you. Nexus cannot finalize scope from inference alone.
+            Ava can propose scope based on your description, but the scope boundary — what is in and out — must be deliberately stated by you. Ava cannot finalize scope from inference alone.
           </Term>
           <Term name="People data">
-            Nexus only references names from your tenant's connected people data (ACL). It will not generate or infer names from general knowledge. If no people data is connected, Nexus will ask you to name stakeholders directly.
+            Ava only references names from your tenant's connected people data (ACL). She will not generate or infer names from general knowledge. If no people data is connected, Ava will ask you to name stakeholders directly.
           </Term>
           <Term name="Continue/Discontinue">
-            In P2, Nexus will surface the Continue/Discontinue decision explicitly. It will present the evidence — but the decision is yours to record. Nexus cannot make this call.
+            In P2, Ava will surface the Continue/Discontinue decision explicitly. She will present the evidence — but the decision is yours to record. Ava cannot make this call.
           </Term>
         </TermGrid>
 
-        <Callout kind="warn" icon="⚠️" label="If Nexus gets something wrong">
-          Correct it directly in chat: "That sponsor is wrong — the correct sponsor is [Name]." Nexus updates immediately. All corrections are tracked in the audit trail, which is visible in the Evidence Hub.
+        <Callout kind="warn" icon="⚠️" label="If Ava gets something wrong">
+          Correct her directly in chat: "That sponsor is wrong — the correct sponsor is [Name]." Ava updates immediately. All corrections are tracked in the audit trail, which is visible in the Evidence Hub.
         </Callout>
       </Section>
 
-      {/* Nexus output quality */}
+      {/* Ava output quality */}
       <Section>
-        <Eyebrow>Nexus · 06</Eyebrow>
+        <Eyebrow>Ava · Moves · 06</Eyebrow>
         <SectionTitle>Document quality — what to expect</SectionTitle>
         <Lead>
-          Nexus-generated documents are consulting-grade starting points. The richer your inputs, the less editing the outputs need.
+          Documents Ava generates are consulting-grade starting points. The richer your inputs, the less editing the outputs need.
         </Lead>
 
         <BodyP>
@@ -496,7 +498,7 @@ export function NexusGuideSection() {
         </BodyP>
 
         <BodyP>
-          The best-quality documents come from sessions where you've had a real conversation with Nexus across multiple messages — not a single prompt asking it to generate everything at once. Think of it as working with a junior consultant: the more context you give during the session, the better the artifact.
+          The best-quality documents come from sessions where you've had a real conversation with Ava across multiple messages — not a single prompt asking her to generate everything at once. Think of it as working with a junior consultant: the more context you give during the session, the better the artifact.
         </BodyP>
 
         <div
@@ -536,7 +538,7 @@ export function NexusGuideSection() {
         </div>
 
         <Callout kind="success" icon="💡" label="Regenerate freely">
-          Documents can be regenerated any time. After adding new information in chat — new data, a corrected sponsor, a refined scope — regenerate the affected documents. Nexus will incorporate all updates from the session. There is no cost to regenerating a document.
+          Documents can be regenerated any time. After adding new information in chat — new data, a corrected sponsor, a refined scope — regenerate the affected documents. Ava will incorporate all updates from the session. There is no cost to regenerating a document.
         </Callout>
       </Section>
     </>

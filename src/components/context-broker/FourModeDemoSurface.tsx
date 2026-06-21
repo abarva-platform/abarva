@@ -232,7 +232,7 @@ function Form({
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           rows={3}
-          placeholder="Ask Sentinel anything…"
+          placeholder="Ask Ava anything…"
           style={{
             fontFamily: TYPOGRAPHY.sans,
             fontSize: 14,

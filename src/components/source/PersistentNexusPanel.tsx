@@ -104,7 +104,7 @@ function resolveAgentIdentity(leadAgent: string): {
       avatar: 'A',
       avatarBg: '#2a3040',
       dotColor: '#7a8aaa',
-      subhead: 'Atlas is leading this step. I synthesise evidence into a decision brief.',
+      subhead: 'Ava is leading this step. I synthesise evidence into a decision brief.',
     };
   }
   // Default: Nexus

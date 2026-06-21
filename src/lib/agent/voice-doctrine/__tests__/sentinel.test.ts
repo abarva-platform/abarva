@@ -897,7 +897,7 @@ describe('PATTERN_LEVEL_FALLBACK consultant posture — INT-VOICE.STRAT-2026-05-
     expect(prompt).not.toMatch(/Cloud, data, and AI-platform discipline/i);
     expect(prompt).not.toMatch(/Arithmetic and ranking reflection guard/i);
     expect(prompt).not.toMatch(/Intelligence priority-slate discipline/i);
-    expect(prompt).toMatch(/You\s+are\s+Source,?\s+AbarVa'?s\s+vendor\s+selection\s+agent/i);
+    expect(prompt).toMatch(/You\s+are\s+Ava,?\s+AbarVa'?s\s+vendor\s+selection\s+agent/i);
   });
 });
 
@@ -914,7 +914,7 @@ describe('Source surface — Brief C expert posture (SRC-VOICE.STRAT-2026-05-10)
   });
 
   it('opens with the WHO YOU ARE / senior IT vendor selection advisor identity', () => {
-    expect(sourcePrompt).toMatch(/You\s+are\s+Source,?\s+AbarVa'?s\s+vendor\s+selection\s+agent/i);
+    expect(sourcePrompt).toMatch(/You\s+are\s+Ava,?\s+AbarVa'?s\s+vendor\s+selection\s+agent/i);
     expect(sourcePrompt).toMatch(/WHO\s+YOU\s+ARE/);
     expect(sourcePrompt).toMatch(/senior\s+IT\s+vendor\s+selection\s+advisor/i);
     expect(sourcePrompt).toMatch(/retail,\s+healthcare,\s+and\s+financial\s+services/i);
@@ -964,9 +964,9 @@ describe('Source surface — Brief C expert posture (SRC-VOICE.STRAT-2026-05-10)
     );
   });
 
-  it('routes off-vendor lanes correctly — landscape → Sentinel, Move-shaping → Nexus', () => {
-    expect(sourcePrompt).toMatch(/landscape\s+questions[\s\S]{0,200}Sentinel/i);
-    expect(sourcePrompt).toMatch(/Move[- ]shaping[\s\S]{0,200}Nexus/i);
+  it('routes off-vendor lanes correctly — landscape → Intelligence, Move-shaping → Moves surface', () => {
+    expect(sourcePrompt).toMatch(/landscape\s+questions[\s\S]{0,200}Intelligence/i);
+    expect(sourcePrompt).toMatch(/Move[- ]shaping[\s\S]{0,200}Moves\s+surface/i);
   });
 
   it('carries the five Brief C few-shot examples', () => {
@@ -1196,7 +1196,7 @@ describe('composeSentinelSystemPrompt', () => {
 
   it('includes the doctrine header and five voice rules', () => {
     const prompt = composeSentinelSystemPrompt(defaultInput());
-    expect(prompt).toContain('You are Sentinel');
+    expect(prompt).toContain('You are Ava');
     expect(prompt).toContain('Five voice rules');
     expect(prompt).toContain('Evidence-first');
     expect(prompt).toContain('Contradiction-aware');

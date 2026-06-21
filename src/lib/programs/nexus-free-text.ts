@@ -688,7 +688,7 @@ async function synthesizeWithClaude(args: {
     2,
   );
   const system = [
-    'You are Nexus, the Programs-zone orchestration agent for the AbarVa platform.',
+    'You are Ava, the Programs-zone orchestration agent for the AbarVa platform.',
     'Use only the provided composition and context. Do not invent program state, evidence, or gate decisions.',
     'Stay direct, structured, and specific. Never flatter the user.',
     'Use the provided markdown citations verbatim.',

@@ -23,7 +23,7 @@ export function ApexCh06PricingChapter() {
 
       <StoryRecap>
         The BAFO shortlist is approved: Northstar and ArcVault advance. BlueMaster and
-        DataPeak are eliminated. Sentinel has continued contract-clause analysis against
+        DataPeak are eliminated. Ava has continued contract-clause analysis against
         the two finalist proposals while the evaluation gate was being closed. Two
         flags are now in the pricing analysis record.
       </StoryRecap>
@@ -92,10 +92,10 @@ export function ApexCh06PricingChapter() {
       </Section>
 
       <Section>
-        <Eyebrow>P0 contract risks · Sentinel flags · both finalists</Eyebrow>
+        <Eyebrow>P0 contract risks · Ava flags · both finalists</Eyebrow>
         <SectionTitle>Two risks the proposals buried in fee schedule appendices</SectionTitle>
         <BodyP>
-          Sentinel runs contract-clause analysis against the finalist proposals after
+          Ava runs contract-clause analysis against the finalist proposals after
           the evaluation gate closes. Two P0 risks surface — one in each finalist.
           Both are in appendix-level language, not in the main proposal body.
         </BodyP>
@@ -131,8 +131,8 @@ export function ApexCh06PricingChapter() {
           </div>
           <GateStatusRow id="G-PR01" label="3-year TCO normalised for all 4 vendors using mandatory pricing template" status="met" evidence="d06 · pricing normalisation table · Chris Varela" />
           <GateStatusRow id="G-PR02" label="Year-over-year step-up analysis documented — no hidden inflation accepted" status="met" evidence="d06 Annex D · YoY step-up summary" />
-          <GateStatusRow id="G-PR03" label="P0 risk · Northstar exit provision gap — BAFO mandatory item raised" status="met" evidence="Sentinel contract-clause flag · BAFO letter item 1" />
-          <GateStatusRow id="G-PR04" label="P0 risk · ArcVault auto-renewal window (60 days vs 90) — BAFO mandatory item raised" status="met" evidence="Sentinel contract-clause flag · BAFO letter item 2" />
+          <GateStatusRow id="G-PR03" label="P0 risk · Northstar exit provision gap — BAFO mandatory item raised" status="met" evidence="Ava contract-clause flag · BAFO letter item 1" />
+          <GateStatusRow id="G-PR04" label="P0 risk · ArcVault auto-renewal window (60 days vs 90) — BAFO mandatory item raised" status="met" evidence="Ava contract-clause flag · BAFO letter item 2" />
         </div>
       </Section>
 
@@ -144,7 +144,7 @@ export function ApexCh06PricingChapter() {
           Northstar&rsquo;s exit provision gap was in Section 12 — the termination
           appendix. ArcVault&rsquo;s auto-renewal shortfall was in Section 14 — the
           contract renewal appendix. Both sections are standard boilerplate that a
-          rushed evaluation would have skimmed. Sentinel reads them as structured data,
+          rushed evaluation would have skimmed. Ava reads them as structured data,
           not prose, and flags deviations from Apex&rsquo;s documented contract standards.
         </BodyP>
         <BodyP>

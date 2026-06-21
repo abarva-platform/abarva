@@ -407,7 +407,7 @@ export function MovesReferenceCard() {
             The category of the Move: <em>Cost Reduction, Revenue Growth, Risk Mitigation,</em> or <em>Operational Excellence.</em> Classified in P0, confirmed by the user.
           </Term>
           <Term name="Scaffold">
-            The 7-field structure Nexus fills during P0. Fields 1–4 are required (gate-blocking). Feeds every downstream document.
+            The 7-field structure Ava fills during P0. Fields 1–4 are required (gate-blocking). Feeds every downstream document.
           </Term>
           <Term name="Hard criterion">
             A blocking gate requirement. The Advance button stays locked until satisfied. Examples: named sponsor, signed charter, scope boundary.
@@ -425,7 +425,7 @@ export function MovesReferenceCard() {
             Build / Buy / Partner. Made in P3 with explicit rationale against Foundation Readiness from P0. Drives P4 financial model.
           </Term>
           <Term name="Tower acceptance">
-            The P5 gate confirmation that Control Tower has received the handoff. A hard gate — cannot be waived. Atlas picks up the Move after acceptance.
+            The P5 gate confirmation that Control Tower has received the handoff. A hard gate — cannot be waived. Ava keeps watching the Move in Tower after acceptance, drawing on her portfolio-monitoring expertise.
           </Term>
           <Term name="Evidence Hub">
             The document store for a Move: generated deliverables, uploads, and status history. Access at <code style={{ fontFamily: T.fMono, fontSize: 11, color: T.navy }}>/strategic-moves/{'{id}'}/evidence</code>

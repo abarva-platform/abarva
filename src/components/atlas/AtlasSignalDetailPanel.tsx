@@ -251,7 +251,7 @@ export function AtlasSignalDetailPanel({
               cursor: 'pointer',
             }}
           >
-            Ask Atlas about this signal
+            Ask Ava about this signal
           </button>
         </div>
       </div>

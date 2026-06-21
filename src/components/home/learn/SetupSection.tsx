@@ -30,7 +30,7 @@ export function SetupSection() {
               system: 'Enterprise + org baseline',
               icon: '🛒',
               what: 'Enterprise profile, executive roster, decision rights, political map, strategic priorities, and program ownership.',
-              signal: 'Nexus can answer who owns the decision, who should approve, and which leadership gaps would block a Move from scaling.',
+              signal: 'Ava can answer who owns the decision, who should approve, and which leadership gaps would block a Move from scaling.',
               color: T.purpleLine,
               soft: T.purpleSoft,
             },
@@ -39,7 +39,7 @@ export function SetupSection() {
               system: 'Technology + data landscape',
               icon: '🏭',
               what: 'Systems inventory, integrations, ownership, infrastructure dependencies, data platforms, and known technology constraints.',
-              signal: 'Sentinel can discuss whether a Move is a product/platform problem, a vendor decision, an integration risk, or an operating-model gap.',
+              signal: 'Ava can discuss whether a Move is a product/platform problem, a vendor decision, an integration risk, or an operating-model gap.',
               color: T.navyLine,
               soft: T.navySoft,
             },
@@ -163,7 +163,7 @@ export function SetupSection() {
         <Eyebrow>Admin workspace · Tenant Profile</Eyebrow>
         <SectionTitle>Apex Retail&rsquo;s tenant profile</SectionTitle>
         <Lead>
-          The tenant profile is the context layer that makes signals specific to your company. Without it, Intelligence produces generic industry patterns — with it, Sentinel can say &ldquo;Marcus Chen, COO, owns the markdown calendar that&rsquo;s driving the promo miss rate.&rdquo;
+          The tenant profile is the context layer that makes signals specific to your company. Without it, Intelligence produces generic industry patterns — with it, Ava can say &ldquo;Marcus Chen, COO, owns the markdown calendar that&rsquo;s driving the promo miss rate.&rdquo;
         </Lead>
 
         <div
@@ -373,7 +373,7 @@ export function SetupSection() {
         <Eyebrow>Your Admin Workspace</Eyebrow>
         <SectionTitle>How admin readiness should feel for a real customer</SectionTitle>
         <Lead>
-          The demo starts from a loaded composite tenant. In a real implementation, Steward should be explicit about what is connected, what is document-loaded, what is inferred, and what is not ready yet. That honesty is part of the product.
+          The demo starts from a loaded composite tenant. In a real implementation, Ava should be explicit about what is connected, what is document-loaded, what is inferred, and what is not ready yet. That honesty is part of the product.
         </Lead>
 
         <StepList>
@@ -381,7 +381,7 @@ export function SetupSection() {
             Start with the facts required for executive decisions: org structure, systems, vendor contracts, financial baselines, KPIs, active initiatives, and evidence documents. Live connectors are valuable, but documents and verified extracts can create useful signal first.
           </Step>
           <Step title="Add your executive team to the tenant profile" path="/admin → Tenant Profile → Executives">
-            Name and title for every executive who will sponsor, own, or be consulted on Moves. Nexus looks these up when filling P0 sponsor fields and P1 charter stakeholder maps. Unnamed executives become bottlenecks — Nexus has to ask &ldquo;Who is the CFO?&rdquo; instead of already knowing.
+            Name and title for every executive who will sponsor, own, or be consulted on Moves. Ava looks these up when filling P0 sponsor fields and P1 charter stakeholder maps. Unnamed executives become bottlenecks — Ava has to ask &ldquo;Who is the CFO?&rdquo; instead of already knowing.
           </Step>
           <Step title="Set 2–3 strategic priorities">
             One sentence each. These weight which Intelligence signals are most relevant to surface for your business. Apex Retail set &ldquo;Private label margin recovery&rdquo; as Priority 1 — that&rsquo;s partly why the Morrison GM gap card appeared at the top of their substrate, not buried in a list of 40 signals.
@@ -401,19 +401,19 @@ export function SetupSection() {
             An integration between <InlineAbarvaLogo /> and an external data system. Connectors strengthen freshness, but they are not the only evidence path. <em>Verified documents, extracts, and persisted tenant records can also ground Intelligence and Moves.</em>
           </Term>
           <Term name="Substrate">
-            The combined data layer that agents query. It includes tenant records, documents, embeddings, graph relationships, program state, sourcing artifacts, and connector data where available. <em>Think of it as the shared evidence base, not a generic memory.</em>
+            The combined data layer Ava queries. It includes tenant records, documents, embeddings, graph relationships, program state, sourcing artifacts, and connector data where available. <em>Think of it as the shared evidence base, not a generic memory.</em>
           </Term>
-          <Term name="Steward">
-            The Admin agent. Guides connector configuration, runs data quality checks, and declares substrate readiness. <em>Steward is the only agent that can flag &ldquo;foundation not ready&rdquo; — a hard blocker on Move P3 sourcing quality.</em>
+          <Term name="Ava (in Admin)">
+            The same assistant you talk to on every surface. In Admin she draws on her data-onboarding specialty to guide connector configuration, run data quality checks, and declare substrate readiness — there&rsquo;s no separate Admin bot and no handoff. <em>In this specialty she is the one who can flag &ldquo;foundation not ready&rdquo; — a hard blocker on Move P3 sourcing quality.</em>
           </Term>
           <Term name="Tenant profile">
-            Your organization&rsquo;s context layer: executive roster, strategic priorities, business units. <em>Low-effort, high-leverage — takes 30 minutes and makes every Nexus document more specific.</em>
+            Your organization&rsquo;s context layer: executive roster, strategic priorities, business units. <em>Low-effort, high-leverage — takes 30 minutes and makes every document Ava drafts more specific.</em>
           </Term>
           <Term name="Foundation readiness">
-            An assessment of how complete and current your substrate is for a given initiative. <em>Low readiness = thin P3 design documents and weak P4 financial models. Steward surfaces readiness gaps at origination.</em>
+            An assessment of how complete and current your substrate is for a given initiative. <em>Low readiness = thin P3 design documents and weak P4 financial models. Ava surfaces readiness gaps at origination.</em>
           </Term>
           <Term name="Data quality flag">
-            A Steward alert that a connector is returning sparse, stale, or malformed data. <em>Flags appear in Admin before they affect signal quality — better to catch here than in Intelligence.</em>
+            An alert from Ava that a connector is returning sparse, stale, or malformed data. <em>Flags appear in Admin before they affect signal quality — better to catch here than in Intelligence.</em>
           </Term>
         </TermGrid>
       </Section>

@@ -24,7 +24,7 @@ const synthesisCache = new Map<string, string>();
 const cacheCreatedAt = new Map<string, number>();
 registerSynthesisCache('source', synthesisCache, cacheCreatedAt);
 
-const SENTINEL_SYNTHESIS_VOICE_AND_TASK = `You are Sentinel, AbarVa's intelligence validator on the Source surface.
+const SENTINEL_SYNTHESIS_VOICE_AND_TASK = `You are Ava, AbarVa's intelligence validator on the Source surface.
 
 Your synthesis task: given the structured state of a sourcing event (current stage, gate evaluations, missing artifacts, linked program dependencies), produce a 2–3 sentence validator's assessment in Sentinel voice.
 

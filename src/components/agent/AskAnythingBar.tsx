@@ -32,10 +32,10 @@ const TEXT_EXTRACTABLE: ReadonlySet<string> = new Set([
 // ── Agent profiles ─────────────────────────────────────────────────────────
 
 const AGENT_CFG = {
-  nexus:    { name: 'Nexus',    glyph: '✱', accent: '#0E9F8C' },
-  sentinel: { name: 'Sentinel', glyph: '◈', accent: '#9B6DFF' },
-  atlas:    { name: 'Atlas',    glyph: '▲', accent: '#F59E0B' },
-  steward:  { name: 'Steward',  glyph: '◆', accent: '#3B82F6' },
+  nexus:    { name: 'Ava',    glyph: '✱', accent: '#0E9F8C' },
+  sentinel: { name: 'Ava', glyph: '◈', accent: '#9B6DFF' },
+  atlas:    { name: 'Ava',    glyph: '▲', accent: '#F59E0B' },
+  steward:  { name: 'Ava',  glyph: '◆', accent: '#3B82F6' },
 } as const;
 
 export type AskAnythingAgent = keyof typeof AGENT_CFG;

@@ -298,7 +298,7 @@ function SentinelBriefPanel({ brief }: { brief: SentinelBrief }) {
             color: COLORS.mutedSoft,
           }}
         >
-          Ask Sentinel Intel · suggested follow-ups · {brief.suggestedFollowUps.length}
+          Ask Ava · suggested follow-ups · {brief.suggestedFollowUps.length}
         </span>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {brief.suggestedFollowUps.map((followUp) => (
