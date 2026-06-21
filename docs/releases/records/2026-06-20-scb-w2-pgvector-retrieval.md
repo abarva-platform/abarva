@@ -46,6 +46,10 @@ chunks directly from Postgres before falling back to keyword retrieval.
 - `src/lib/knowledge/context-broker/broker.ts`
 - `src/lib/knowledge/context-broker/types.ts`
 - `src/lib/knowledge/tenant-data/__tests__/supabase-adapter.test.ts`
+- `src/lib/integrations/ai-egress/tenant-client-resolver.ts`
+- `src/lib/integrations/ai-egress/tenant-policy.ts`
+- `src/lib/admin/broker/egress-audit-writer.ts`
+- `src/lib/integrations/ai-egress/__tests__/tenant-client-resolver.test.ts`
 - `src/lib/crawl/persona-switcher.ts`
 - `scripts/crawl/post-deploy-harness.ts`
 - `scripts/smoke/p21-post-deploy-crawl.spec.ts`
@@ -74,6 +78,12 @@ chunks directly from Postgres before falling back to keyword retrieval.
   Apex embedded vectors. `chunksByVector` now falls back to public pgvector rows
   on the same missing-private-schema class that keyword retrieval already
   handled.
+- ADDED: AI egress tenant-resolution fix. A VNet app-module probe showed the
+  broker query embedding was blocked before OpenAI by
+  `AI egress audit write failed: invalid input syntax for type uuid:
+  "apex-retail"`. The policy/audit path now resolves dashed tenant keys and
+  legacy app keys (`apex-retail`/`apexretail`, `first-capital`/`arcturus`,
+  etc.) to `clients.id` before writing `ai_egress_audit`.
 
 ## Rollout Plan
 

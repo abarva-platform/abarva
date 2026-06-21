@@ -52,6 +52,7 @@ import "server-only";
 
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { emitNotification } from "@/lib/admin/broker/notification-broker";
+import { resolveTenantClientUuid } from "@/lib/integrations/ai-egress/tenant-client-resolver";
 import type {
   AiDataClass,
   AiEgressAuditRecord,
@@ -296,13 +297,7 @@ async function resolveTenantUuid(tenantId: string): Promise<string> {
   const cached = tenantUuidCache.get(tenantId);
   if (cached) return cached;
   try {
-    const sb = getAzureWriteFluentClient();
-    const { data } = await sb
-      .from("clients")
-      .select("id")
-      .eq("key", tenantId)
-      .maybeSingle();
-    const id = (data as { id?: string } | null)?.id;
+    const id = await resolveTenantClientUuid(tenantId);
     if (id && TENANT_UUID_RE.test(id)) {
       tenantUuidCache.set(tenantId, id);
       return id;
