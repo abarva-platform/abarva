@@ -81,6 +81,8 @@ export async function runDeliverableForTenant(
   // 1 · governed evidence (clean, citation-numbered, vendor-facing exclusion applied)
   const { evidence, sourceRegister, retrievedCount } = await assemble({
     tenantClientKey: input.tenantClientKey,
+    clientId: input.clientId,
+    sourceArtifactRef: input.sourceArtifactRef,
     query:
       input.evidenceQuery ??
       `${input.deliverableType} ${input.useCaseArchetype} current state baseline`,
