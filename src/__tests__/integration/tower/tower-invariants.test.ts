@@ -122,7 +122,7 @@ describe('IT Investment Tower v2 invariants', () => {
     expect(towerApp).toContain('vendorDrawer');
     expect(towerApp).toContain('actionDrawer');
     expect(towerApp).toContain('Approve & route');
-    expect(towerApp).toContain('Ask Nexus');
+    expect(towerApp).toContain('Ask Ava');
     expect(towerApp).toContain('localStorage.setItem');
   });
 

@@ -34,11 +34,11 @@ describe('IT Investment Tower v2 route wiring', () => {
     expect(towerHtml).toContain('tb-nav');
   });
 
-  it('keeps the v2 Tower lenses and Ask Nexus in one canvas', () => {
+  it('keeps the v2 Tower lenses and Ask Ava in one canvas', () => {
     for (const label of ['Programs', 'Spend', 'Vendors', 'By Function', 'Actions']) {
       expect(towerApp).toContain(label);
     }
-    expect(towerHtml).toContain('Ask Nexus about the IT portfolio');
+    expect(towerHtml).toContain('Ask Ava about the IT portfolio');
     expect(towerApp).toContain('answerFor(q)');
     expect(towerApp).toContain('renderDock');
   });
