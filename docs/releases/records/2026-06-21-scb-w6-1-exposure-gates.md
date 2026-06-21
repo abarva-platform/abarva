@@ -42,6 +42,7 @@ gate before any tenant rollout.
   parity-gate sections.
 - Adds focused tests for default-off flag policy, readiness, and parity failure
   modes.
+- PR: #3793.
 
 ## QA / Validation
 
@@ -79,7 +80,15 @@ not require data migration.
 
 ## Audit Evidence
 
-To be filled with PR URL, CI run, and post-merge deploy/crawl evidence.
+- PR: https://github.com/abarva-platform/abarva/pull/3793
+- CI: all PR checks passed, including Typecheck + reasoning-layer tests,
+  ESLint, Chrome Firefox Safari mobile smoke, Lighthouse CI budget, Public axe
+  accessibility, Production readiness gate, release record, hygiene, and
+  boundary checks.
+- Local eval report: `/tmp/abarva-scb-w6-1-golden-eval.json` showed 35/35
+  AgentAnswer eval pass, parity gate pass, and ExpertPack readiness 56 total /
+  35 exposable.
+- Post-merge deploy/crawl evidence: pending until merged to `main`.
 
 ## Known Gaps
 
