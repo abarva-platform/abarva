@@ -7,6 +7,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { IntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
+import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 
 type Tab = "signals" | "context" | "corpus";
 
@@ -32,7 +33,10 @@ const CSS = `
 .iv2 .trust b{color:var(--ink)}
 .iv2 .ansbox{max-width:660px;margin:16px auto 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 22px;text-align:left}
 .iv2 .ansbox .anslabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--green);margin-bottom:8px}
-.iv2 .ansbox .ansbody{font-size:14px;line-height:1.65;color:var(--ink);white-space:pre-wrap}
+.iv2 .ansbox .ansbody{font-size:14px;line-height:1.65;color:var(--ink)}
+.iv2 .ansbox .ansbody>:first-child{margin-top:0}
+.iv2 .ansbox .ansbody>:last-child{margin-bottom:0}
+.iv2 .ansbox .ansbody table{font-size:13px;margin:10px 0}
 .iv2 .ansbox .ansfetching{color:var(--faint);font-style:italic;font-size:13.5px}
 .iv2 .ansbox .ansexperts{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
 .iv2 .ansbox .ansexpertslabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-right:3px}
@@ -106,7 +110,7 @@ export function IntelligenceV2Surface({
     setFollowups([]);
     try {
       const res = await fetch(
-        `/api/intelligence/ask?q=${encodeURIComponent(trimmed)}`,
+        `/api/intelligence/ask?q=${encodeURIComponent(trimmed)}&format=rich`,
         { signal: ctrl.signal },
       );
       if (!res.ok) {
@@ -218,7 +222,9 @@ export function IntelligenceV2Surface({
               {fetching && !answer ? (
                 <div className="ansfetching">Thinking…</div>
               ) : (
-                <div className="ansbody">{answer}</div>
+                <div className="ansbody">
+                  {answer ? <AgentMarkdown text={answer} /> : null}
+                </div>
               )}
               {experts.length > 0 && (
                 <div className="ansexperts">
