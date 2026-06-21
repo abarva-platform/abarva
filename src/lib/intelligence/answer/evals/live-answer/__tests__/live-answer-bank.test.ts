@@ -162,4 +162,27 @@ describe("live-answer bank", () => {
 
     expect(result.deterministicPass).toBe(true);
   });
+
+  it("recognizes additional live next-move phrasing from the deployed eval", () => {
+    const cases = [
+      "Here's what I can give you that's decision-grade: use this table to compare the alert families by override rate before routing the Epic report.",
+      "That's the first thing to fix — not the TCOC model. Validate the attribution file first.",
+      "Before we get to tactics, baseline the patient/member record quality and route the scheduling workstream around that constraint.",
+    ];
+
+    for (const prose of cases) {
+      const result = checkLiveAnswerCase(
+        {
+          id: "regression-next-move-extra",
+          query: "Where should we act first?",
+          expectedExpertId: "xp.healthcare-provider.patient-access",
+          expectedBehaviors: ["name_real_next_move"],
+          notes: "Regression for deployed Ava next-move phrasing.",
+        },
+        { prose },
+      );
+
+      expect(result.deterministicPass).toBe(true);
+    }
+  });
 });
