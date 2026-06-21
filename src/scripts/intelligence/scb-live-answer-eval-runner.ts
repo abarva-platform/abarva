@@ -8,6 +8,7 @@ import {
   scoreAnswer,
   type AnswerQualityScore,
 } from "@/lib/eval/answer-quality/scorer";
+import { ANSWER_QUALITY_PASS_THRESHOLD } from "@/lib/eval/answer-quality/rubric";
 import {
   createIsolatedPersonaContext,
   resolveCrawlPersonas,
@@ -79,6 +80,14 @@ interface Report {
   pass: boolean;
   bankValidation: ReturnType<typeof validateLiveAnswerBank>;
   results: CaseReport[];
+}
+
+function liveAnswerQualityPass(quality: AnswerQualityScore): boolean {
+  return (
+    quality.overall >= ANSWER_QUALITY_PASS_THRESHOLD &&
+    quality.dimensions.noRawIds > 0 &&
+    quality.dimensions.noFakePrecision > 0
+  );
 }
 
 function parseArgs(argv: string[]): Args {
@@ -310,6 +319,7 @@ async function main() {
         tenantKey: persona.tenantKey,
         surface: "intelligence",
       });
+      const qualityPassed = liveAnswerQualityPass(quality);
       results.push({
         id: item.id,
         query: item.query,
@@ -319,11 +329,11 @@ async function main() {
         error: obs.error,
         eventCount: obs.eventCount,
         sourceEventCitations: obs.sourceEventCitations,
-        answerQualityGatePassed: quality.gatePassed,
+        answerQualityGatePassed: qualityPassed,
         answerQualityOverall: quality.overall,
         answerQualityViolations: quality.violations,
         deterministicPass:
-          obs.ok && behavior.deterministicPass && quality.gatePassed,
+          obs.ok && behavior.deterministicPass && qualityPassed,
         modelJudged: behavior.modelJudged,
         hasTable: obs.hasTable,
         hasChart: obs.hasChart,
