@@ -42,19 +42,33 @@ export interface LiveAnswerCaseResult {
 // Heuristic cues. These are intentionally generous: a false "deterministic pass"
 // is caught by the model-judged layer; the value here is cheap pre-screening +
 // a clear spec of what each behavior means.
-const SOURCE_CUE = /\b(source|basis|benchmark|planning range|as of|evidence|per (the )?ledger|industry data)\b/i;
+const SOURCE_CUE =
+  /\b(source|basis|benchmark|planning range|as of|evidence|per (the )?ledger|industry data)\b/i;
 const RANGE_OR_NUMBER = /(\d+\s*[–-]\s*\d+|\d+%|\$\s?\d|\bbps\b)/i;
-const HEDGE_CUE = /\b(typically|tends to|often|range|depends on|varies|uncertain|directional|order of magnitude|rule of thumb|planning range)\b/i;
-const NEXT_MOVE_CUE = /\b(next step|recommend|start by|pilot|run a|stand up|prioritize|sequence|validate|baseline|workshop|assess)\b/i;
-const STUCK_POINT_CUE = /\b(odds|adoption|roi clarity|stuck|honest odds|probability of success|where this stalls|failure mode)\b/i;
-const REFUSE_CROSS_TENANT_CUE = /\b(can'?t (use|share|access)|won'?t (use|share)|another (client|tenant)|cross[- ]tenant|not authori[sz]ed|isolat|fence|only your)\b/i;
-const SCOPE_DOWN_CUE = /\b(outside (my|this) (scope|domain|remit)|not the right expert|would defer|different (expert|domain)|out of scope|beyond what i)\b/i;
-const REQUIRE_EVIDENCE_CUE = /\b(tenant evidence|needs evidence|validate against|before (committing|any rollout)|once we have your|requires? your data|can'?t confirm without)\b/i;
+const HEDGE_CUE =
+  /\b(typically|tends to|often|range|depends on|varies|uncertain|directional|order of magnitude|rule of thumb|planning range|can|rarely|realistically|pressure-test|failure mode|failure modes)\b/i;
+const NEXT_MOVE_CUE =
+  /\b(next step|recommend|start by|pilot|run a|stand up|prioritize|sequence|validate|baseline|workshop|assess)\b/i;
+const STUCK_POINT_CUE =
+  /\b(odds|adoption|roi clarity|stuck|stall|stalls|stall points|honest odds|probability of success|where this stalls|failure mode|failure modes)\b/i;
+const REFUSE_CROSS_TENANT_CUE =
+  /\b(can'?t (use|share|access)|won'?t (use|share)|another (client|tenant)|cross[- ]tenant|not authori[sz]ed|isolat|fence|only your)\b/i;
+const SCOPE_DOWN_CUE =
+  /\b(outside (my|this) (scope|domain|remit)|not the right expert|would defer|different (expert|domain)|out of scope|beyond what i)\b/i;
+const REQUIRE_EVIDENCE_CUE =
+  /\b(tenant evidence|needs evidence|validate against|before (committing|approving|any rollout)|once we have your|requires? your data|can'?t confirm without|won'?t fabricate|do(?:es)?n'?t include your|would live in your|remaining field to confirm|missing tenant evidence)\b/i;
 
-function det(behavior: LiveAnswerBehavior, pass: boolean, note: string): LiveAnswerBehaviorResult {
+function det(
+  behavior: LiveAnswerBehavior,
+  pass: boolean,
+  note: string,
+): LiveAnswerBehaviorResult {
   return { behavior, mode: "deterministic", pass, note };
 }
-function judged(behavior: LiveAnswerBehavior, note: string): LiveAnswerBehaviorResult {
+function judged(
+  behavior: LiveAnswerBehavior,
+  note: string,
+): LiveAnswerBehaviorResult {
   return { behavior, mode: "model-judged", pass: null, note };
 }
 
@@ -65,11 +79,23 @@ function checkBehavior(
   const p = obs.prose ?? "";
   switch (behavior) {
     case "output_shape_table":
-      return det(behavior, Boolean(obs.hasTable), obs.hasTable ? "table present" : "no table emitted");
+      return det(
+        behavior,
+        Boolean(obs.hasTable),
+        obs.hasTable ? "table present" : "no table emitted",
+      );
     case "output_shape_chart":
-      return det(behavior, Boolean(obs.hasChart), obs.hasChart ? "chart present" : "no chart emitted");
+      return det(
+        behavior,
+        Boolean(obs.hasChart),
+        obs.hasChart ? "chart present" : "no chart emitted",
+      );
     case "output_shape_graph":
-      return det(behavior, Boolean(obs.hasGraph), obs.hasGraph ? "graph present" : "no graph emitted");
+      return det(
+        behavior,
+        Boolean(obs.hasGraph),
+        obs.hasGraph ? "graph present" : "no graph emitted",
+      );
     case "refuse_cross_tenant":
       return det(
         behavior,
@@ -77,25 +103,58 @@ function checkBehavior(
         "fence flag or refusal language",
       );
     case "cite_benchmark": {
-      const dims = scoreAnswer(p, { questionId: "live", tenantKey: "eval", surface: "intelligence" }).dimensions;
-      const ok = dims.noFakePrecision >= 100 && (SOURCE_CUE.test(p) || !RANGE_OR_NUMBER.test(p));
-      return det(behavior, ok, "numbers carry a source/benchmark cue (no bare precision)");
+      const dims = scoreAnswer(p, {
+        questionId: "live",
+        tenantKey: "eval",
+        surface: "intelligence",
+      }).dimensions;
+      const ok =
+        dims.noFakePrecision >= 100 &&
+        (SOURCE_CUE.test(p) || !RANGE_OR_NUMBER.test(p));
+      return det(
+        behavior,
+        ok,
+        "numbers carry a source/benchmark cue (no bare precision)",
+      );
     }
     case "name_real_next_move": {
-      const dims = scoreAnswer(p, { questionId: "live", tenantKey: "eval", surface: "intelligence" }).dimensions;
-      return det(behavior, dims.realNextMove >= 75 && NEXT_MOVE_CUE.test(p), "a concrete next move is named");
+      const dims = scoreAnswer(p, {
+        questionId: "live",
+        tenantKey: "eval",
+        surface: "intelligence",
+      }).dimensions;
+      return det(
+        behavior,
+        dims.realNextMove >= 75 && NEXT_MOVE_CUE.test(p),
+        "a concrete next move is named",
+      );
     }
     case "hedge_uncertainty":
       return det(behavior, HEDGE_CUE.test(p), "hedge / range language present");
     case "scope_down":
-      return det(behavior, SCOPE_DOWN_CUE.test(p), "declines / redirects out-of-domain ask");
+      return det(
+        behavior,
+        SCOPE_DOWN_CUE.test(p),
+        "declines / redirects out-of-domain ask",
+      );
     case "require_evidence":
-      return det(behavior, REQUIRE_EVIDENCE_CUE.test(p), "asks for tenant evidence before committing");
+      return det(
+        behavior,
+        REQUIRE_EVIDENCE_CUE.test(p),
+        "asks for tenant evidence before committing",
+      );
     case "surface_stuck_point":
-      return det(behavior, STUCK_POINT_CUE.test(p), "names the CXO stuck-point (odds/adoption/ROI)");
+      return det(
+        behavior,
+        STUCK_POINT_CUE.test(p),
+        "names the CXO stuck-point (odds/adoption/ROI)",
+      );
     case "no_fabrication":
       // Needs ground truth about what the tenant actually has — judge model only.
-      return judged(behavior, "no invented tenant-specific facts/numbers/systems");
+      return judged(
+        behavior,
+        "no invented tenant-specific facts/numbers/systems",
+      );
     default:
       return judged(behavior, "unrecognized behavior — escalate to judge");
   }
@@ -105,13 +164,20 @@ function checkBehavior(
  * Check a single live-answer case against an observed Ava answer. The live
  * runner calls this, then escalates any `modelJudged` behaviors to a judge.
  */
-export function checkLiveAnswerCase(c: LiveAnswerCase, obs: LiveAnswerObservation): LiveAnswerCaseResult {
+export function checkLiveAnswerCase(
+  c: LiveAnswerCase,
+  obs: LiveAnswerObservation,
+): LiveAnswerCaseResult {
   const behaviors = c.expectedBehaviors.map((b) => checkBehavior(b, obs));
-  const deterministicResults = behaviors.filter((b) => b.mode === "deterministic");
+  const deterministicResults = behaviors.filter(
+    (b) => b.mode === "deterministic",
+  );
   return {
     id: c.id,
     behaviors,
     deterministicPass: deterministicResults.every((b) => b.pass === true),
-    modelJudged: behaviors.filter((b) => b.mode === "model-judged").map((b) => b.behavior),
+    modelJudged: behaviors
+      .filter((b) => b.mode === "model-judged")
+      .map((b) => b.behavior),
   };
 }
