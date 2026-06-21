@@ -1,13 +1,17 @@
 // Source artifact profile registry.
 //
 // Every Source deliverable (d01–d33 + dx series) binds to a profile before
-// generation or rendering. The profile controls: audience, format, length,
-// evidence mode, source-register policy, missing-input handling, visual
-// density, allowed internal labels, required exhibits, and banned terms.
+// generation or rendering. The profile controls: audience, format, risk depth,
+// reader mode, evidence mode, source-register policy, missing-input handling,
+// visual density, allowed internal labels, required exhibits, and banned terms.
+//
+// No hard caps on length, pages, or sections. Depth is allowed when the
+// decision, audience, commercial risk, vendor exposure, or delivery complexity
+// requires it. See source-documentation-standards.ts for the quality gates.
 //
 // Profiles are consumed by:
 //   - generation prompts (bind profile before writing)
-//   - QA gates (scan against bannedTerms, check length, audience)
+//   - QA gates (scan against bannedTerms, audience, quality signals)
 //   - renderers (route format, apply evidence mode)
 //   - tests (fail when client-facing artifact exposes internal labels)
 
@@ -44,6 +48,18 @@ export type VisualDensity = "low" | "medium" | "high";
 
 export type DefaultFormat = "docx" | "pptx" | "html" | "xlsx";
 
+// Determines how much evidence, controls, and detail are justified.
+export type RiskDepth = "low" | "medium" | "high" | "board-grade";
+
+// Defines the structural reader experience and rendering target.
+export type ReaderMode =
+  | "executive-narrative"  // short, judgment-led, plain language, minimal labels
+  | "decision-brief"       // recommendation + comparison + decision page
+  | "vendor-pack"          // precise, complete, legally reviewed, no internal details
+  | "workbook-log"         // structured tables, traceable assumptions, operational records
+  | "html-cockpit"         // interactive, progressive disclosure, navigable lifecycle detail
+  | "internal-binder";     // internal working paper, audit trail, allowed internal labels
+
 export interface SourceArtifactProfile {
   id: string;
   title: string;
@@ -52,11 +68,10 @@ export interface SourceArtifactProfile {
   audience: ArtifactAudience | ArtifactAudience[];
   clientFacing: boolean;
   decisionPurpose: string;          // one sentence: what decision this document enables
+  riskDepth: RiskDepth;             // depth of evidence, controls, and detail justified
+  readerMode: ReaderMode;           // structural reader experience and rendering target
   defaultFormat: DefaultFormat;
   secondaryFormats?: DefaultFormat[];
-  maxWords?: number;
-  maxSlides?: number;
-  maxSections?: number;
   evidenceMode: EvidenceMode;
   sourceRegisterPolicy: SourceRegisterPolicy;
   missingInputPolicy: MissingInputPolicy;
@@ -108,9 +123,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: "executive",
     clientFacing: true,
     decisionPurpose: "Approve the sourcing event and authorize scope and RFP preparation work.",
+    riskDepth: "high",
+    readerMode: "executive-narrative",
     defaultFormat: "docx",
-    maxWords: 1800,
-    maxSections: 7,
     evidenceMode: "basis_only",
     sourceRegisterPolicy: "appendix",
     missingInputPolicy: "single_open_inputs_table",
@@ -136,9 +151,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["executive", "finance"],
     clientFacing: false,
     decisionPurpose: "Establish the value target range and levers; never disclosed externally.",
+    riskDepth: "high",
+    readerMode: "internal-binder",
     defaultFormat: "docx",
-    maxWords: 1200,
-    maxSections: 5,
     evidenceMode: "appendix_only",
     sourceRegisterPolicy: "internal_only",
     missingInputPolicy: "inline_allowed_internal_only",
@@ -162,8 +177,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: "internal",
     clientFacing: false,
     decisionPurpose: "Record and defend the archetype and rigor level selection for audit trail.",
+    riskDepth: "medium",
+    readerMode: "internal-binder",
     defaultFormat: "html",
-    maxWords: 600,
     evidenceMode: "appendix_only",
     sourceRegisterPolicy: "internal_only",
     missingInputPolicy: "inline_allowed_internal_only",
@@ -183,6 +199,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["procurement", "delivery"],
     clientFacing: true,
     decisionPurpose: "Establish the tier-classified application inventory as pricing and scope basis.",
+    riskDepth: "medium",
+    readerMode: "workbook-log",
     defaultFormat: "xlsx",
     secondaryFormats: ["docx"],
     evidenceMode: "caption_level",
@@ -210,9 +228,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["procurement", "delivery"],
     clientFacing: true,
     decisionPurpose: "Define exactly what vendors must price and what they must not price.",
+    riskDepth: "high",
+    readerMode: "decision-brief",
     defaultFormat: "docx",
-    maxWords: 2500,
-    maxSections: 6,
     evidenceMode: "basis_only",
     sourceRegisterPolicy: "appendix",
     missingInputPolicy: "single_open_inputs_table",
@@ -236,6 +254,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["internal", "risk"],
     clientFacing: false,
     decisionPurpose: "Name every excluded app, service, and region with audit-defensible rationale.",
+    riskDepth: "medium",
+    readerMode: "internal-binder",
     defaultFormat: "html",
     evidenceMode: "appendix_only",
     sourceRegisterPolicy: "internal_only",
@@ -259,9 +279,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["procurement", "delivery"],
     clientFacing: true,
     decisionPurpose: "Convert ticket volume data into SLA obligations, sizing signals, and transition implications.",
+    riskDepth: "medium",
+    readerMode: "workbook-log",
     defaultFormat: "docx",
-    maxWords: 1500,
-    maxSections: 5,
     evidenceMode: "basis_only",
     sourceRegisterPolicy: "appendix",
     missingInputPolicy: "single_open_inputs_table",
@@ -285,8 +305,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: "internal",
     clientFacing: false,
     decisionPurpose: "Surface top scope risks before the RFP is issued; one-page challenge view.",
+    riskDepth: "medium",
+    readerMode: "internal-binder",
     defaultFormat: "docx",
-    maxWords: 600,
     evidenceMode: "basis_only",
     sourceRegisterPolicy: "internal_only",
     missingInputPolicy: "inline_allowed_internal_only",
@@ -306,9 +327,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: "vendor",
     clientFacing: true,
     decisionPurpose: "Obtain complete, comparable vendor bids on a defined scope and assumption set.",
+    riskDepth: "high",
+    readerMode: "vendor-pack",
     defaultFormat: "docx",
-    maxWords: 7000,
-    maxSections: 11,
     evidenceMode: "none",
     sourceRegisterPolicy: "internal_only",
     missingInputPolicy: "block_until_complete",
@@ -338,9 +359,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["procurement", "executive"],
     clientFacing: true,
     decisionPurpose: "Summarize the vendor landscape, capability map, and shortlisting rationale.",
+    riskDepth: "medium",
+    readerMode: "executive-narrative",
     defaultFormat: "docx",
-    maxWords: 2000,
-    maxSections: 5,
     evidenceMode: "basis_only",
     sourceRegisterPolicy: "appendix",
     missingInputPolicy: "single_open_inputs_table",
@@ -363,6 +384,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: "vendor",
     clientFacing: true,
     decisionPurpose: "Define every required submission item with machine-checkable pass/fail criteria.",
+    riskDepth: "medium",
+    readerMode: "vendor-pack",
     defaultFormat: "xlsx",
     secondaryFormats: ["docx"],
     evidenceMode: "none",
@@ -388,8 +411,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["procurement", "executive"],
     clientFacing: false,
     decisionPurpose: "Record which vendors are invited to bid and the screening rationale.",
+    riskDepth: "medium",
+    readerMode: "decision-brief",
     defaultFormat: "html",
-    maxWords: 800,
     evidenceMode: "basis_only",
     sourceRegisterPolicy: "appendix",
     missingInputPolicy: "single_open_inputs_table",
@@ -409,6 +433,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: "procurement",
     clientFacing: false,
     decisionPurpose: "Convert vendor submissions into a completeness dashboard and exception list.",
+    riskDepth: "medium",
+    readerMode: "html-cockpit",
     defaultFormat: "html",
     secondaryFormats: ["docx"],
     evidenceMode: "drilldown",
@@ -433,6 +459,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["vendor", "procurement"],
     clientFacing: true,
     decisionPurpose: "Publish authoritative answers to vendor questions simultaneously to all shortlisted vendors.",
+    riskDepth: "medium",
+    readerMode: "vendor-pack",
     defaultFormat: "html",
     evidenceMode: "none",
     sourceRegisterPolicy: "internal_only",
@@ -457,6 +485,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: "procurement",
     clientFacing: false,
     decisionPurpose: "Confirm each vendor meets the completeness threshold before evaluation opens.",
+    riskDepth: "medium",
+    readerMode: "html-cockpit",
     defaultFormat: "html",
     evidenceMode: "drilldown",
     sourceRegisterPolicy: "download",
@@ -482,6 +512,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["procurement", "executive"],
     clientFacing: false,
     decisionPurpose: "Produce a defensible, evidence-cited ranking of vendors against locked criteria.",
+    riskDepth: "high",
+    readerMode: "workbook-log",
     defaultFormat: "xlsx",
     secondaryFormats: ["docx"],
     evidenceMode: "caption_level",
@@ -508,6 +540,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["internal", "risk"],
     clientFacing: false,
     decisionPurpose: "Prove evaluation weights were locked before any vendor response was scored.",
+    riskDepth: "high",
+    readerMode: "internal-binder",
     defaultFormat: "html",
     evidenceMode: "appendix_only",
     sourceRegisterPolicy: "internal_only",
@@ -526,8 +560,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["internal", "risk"],
     clientFacing: false,
     decisionPurpose: "Document the rule triggered and evidence for any eliminated vendor.",
+    riskDepth: "high",
+    readerMode: "internal-binder",
     defaultFormat: "html",
-    maxWords: 400,
     evidenceMode: "basis_only",
     sourceRegisterPolicy: "internal_only",
     missingInputPolicy: "inline_allowed_internal_only",
@@ -547,6 +582,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["finance", "procurement"],
     clientFacing: false,
     decisionPurpose: "Normalize vendor pricing on locked assumptions and expose TCO bridge and pricing traps.",
+    riskDepth: "high",
+    readerMode: "workbook-log",
     defaultFormat: "xlsx",
     secondaryFormats: ["docx"],
     evidenceMode: "caption_level",
@@ -574,6 +611,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["finance", "procurement"],
     clientFacing: false,
     decisionPurpose: "Surface P0/P1/P2 pricing traps and track resolution before BAFO.",
+    riskDepth: "high",
+    readerMode: "internal-binder",
     defaultFormat: "html",
     evidenceMode: "basis_only",
     sourceRegisterPolicy: "appendix",
@@ -599,6 +638,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["finance", "risk"],
     clientFacing: false,
     decisionPurpose: "Lock the commercial comparison assumptions before pricing normalization is built.",
+    riskDepth: "high",
+    readerMode: "internal-binder",
     defaultFormat: "html",
     evidenceMode: "appendix_only",
     sourceRegisterPolicy: "internal_only",
@@ -625,6 +666,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: "vendor",
     clientFacing: true,
     decisionPurpose: "Issue precise BAFO questions that close pricing traps, evaluation gaps, and commercial terms.",
+    riskDepth: "high",
+    readerMode: "vendor-pack",
     defaultFormat: "xlsx",
     secondaryFormats: ["docx"],
     evidenceMode: "none",
@@ -650,6 +693,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["finance", "procurement"],
     clientFacing: false,
     decisionPurpose: "Compare BAFO responses against initial bids and record unresolved issues.",
+    riskDepth: "high",
+    readerMode: "decision-brief",
     defaultFormat: "html",
     evidenceMode: "caption_level",
     sourceRegisterPolicy: "appendix",
@@ -676,9 +721,10 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: "executive",
     clientFacing: true,
     decisionPurpose: "Approve the recommended vendor award with a clear recommendation, comparison, and residual risks.",
+    riskDepth: "board-grade",
+    readerMode: "decision-brief",
     defaultFormat: "pptx",
     secondaryFormats: ["docx"],
-    maxSlides: 10,
     evidenceMode: "caption_level",
     sourceRegisterPolicy: "appendix",
     missingInputPolicy: "single_open_inputs_table",
@@ -707,8 +753,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["risk", "executive"],
     clientFacing: false,
     decisionPurpose: "Attest to the aggregated risk position and residual risks requiring sponsor acceptance.",
+    riskDepth: "high",
+    readerMode: "internal-binder",
     defaultFormat: "html",
-    maxWords: 1200,
     evidenceMode: "basis_only",
     sourceRegisterPolicy: "appendix",
     missingInputPolicy: "single_open_inputs_table",
@@ -734,6 +781,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["internal", "risk"],
     clientFacing: false,
     decisionPurpose: "Attest that the scorecard is evidence-cited and weights were locked before scoring.",
+    riskDepth: "board-grade",
+    readerMode: "internal-binder",
     defaultFormat: "html",
     evidenceMode: "appendix_only",
     sourceRegisterPolicy: "internal_only",
@@ -759,9 +808,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: "executive",
     clientFacing: true,
     decisionPurpose: "Record the vendor selection decision with rationale, commercial terms, and conditions to close.",
+    riskDepth: "high",
+    readerMode: "executive-narrative",
     defaultFormat: "docx",
-    maxWords: 1200,
-    maxSections: 5,
     evidenceMode: "basis_only",
     sourceRegisterPolicy: "appendix",
     missingInputPolicy: "single_open_inputs_table",
@@ -785,6 +834,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["risk", "finance"],
     clientFacing: false,
     decisionPurpose: "Capture the contract terms that govern transition, governance, value, and exit.",
+    riskDepth: "high",
+    readerMode: "internal-binder",
     defaultFormat: "html",
     evidenceMode: "appendix_only",
     sourceRegisterPolicy: "internal_only",
@@ -812,6 +863,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["delivery", "executive"],
     clientFacing: true,
     decisionPurpose: "Define milestones, cutover, knowledge transfer, and go/no-go checkpoints.",
+    riskDepth: "high",
+    readerMode: "executive-narrative",
     defaultFormat: "html",
     evidenceMode: "caption_level",
     sourceRegisterPolicy: "download",
@@ -837,6 +890,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: "delivery",
     clientFacing: false,
     decisionPurpose: "Track go/no-go decisions at every transition milestone in real time.",
+    riskDepth: "medium",
+    readerMode: "html-cockpit",
     defaultFormat: "html",
     evidenceMode: "drilldown",
     sourceRegisterPolicy: "download",
@@ -863,6 +918,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["delivery", "risk"],
     clientFacing: false,
     decisionPurpose: "Prove competency transfer — not just session attendance — system by system.",
+    riskDepth: "medium",
+    readerMode: "workbook-log",
     defaultFormat: "html",
     evidenceMode: "appendix_only",
     sourceRegisterPolicy: "download",
@@ -891,6 +948,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["finance", "executive"],
     clientFacing: true,
     decisionPurpose: "Track projected, committed, measuring, and realized value against the original target.",
+    riskDepth: "high",
+    readerMode: "html-cockpit",
     defaultFormat: "html",
     secondaryFormats: ["xlsx"],
     evidenceMode: "caption_level",
@@ -919,8 +978,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["executive", "finance"],
     clientFacing: true,
     decisionPurpose: "Report quarterly on SLA performance, value progress, open issues, and re-baseline triggers.",
+    riskDepth: "medium",
+    readerMode: "executive-narrative",
     defaultFormat: "html",
-    maxWords: 800,
     evidenceMode: "basis_only",
     sourceRegisterPolicy: "appendix",
     missingInputPolicy: "single_open_inputs_table",
@@ -946,9 +1006,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: "executive",
     clientFacing: true,
     decisionPurpose: "Challenge whether to source at all — versus renew, insource, or defer.",
+    riskDepth: "high",
+    readerMode: "decision-brief",
     defaultFormat: "docx",
-    maxWords: 1000,
-    maxSections: 4,
     evidenceMode: "basis_only",
     sourceRegisterPolicy: "appendix",
     missingInputPolicy: "single_open_inputs_table",
@@ -971,9 +1031,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["procurement", "executive"],
     clientFacing: true,
     decisionPurpose: "Define the market engagement approach, timeline, governance, and sourcing rationale.",
+    riskDepth: "medium",
+    readerMode: "executive-narrative",
     defaultFormat: "docx",
-    maxWords: 1500,
-    maxSections: 5,
     evidenceMode: "basis_only",
     sourceRegisterPolicy: "appendix",
     missingInputPolicy: "single_open_inputs_table",
@@ -997,6 +1057,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["procurement", "executive"],
     clientFacing: true,
     decisionPurpose: "Map the vendor landscape, capability differences, and shortlisting axes.",
+    riskDepth: "medium",
+    readerMode: "executive-narrative",
     defaultFormat: "html",
     secondaryFormats: ["docx"],
     evidenceMode: "caption_level",
@@ -1021,6 +1083,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: "finance",
     clientFacing: false,
     decisionPurpose: "Surface hidden costs the standard pricing template misses and quantify true TCO.",
+    riskDepth: "high",
+    readerMode: "workbook-log",
     defaultFormat: "html",
     secondaryFormats: ["docx"],
     evidenceMode: "caption_level",
@@ -1048,8 +1112,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["risk", "procurement"],
     clientFacing: false,
     decisionPurpose: "Identify AI/ML vendor capability gaps and negotiable contract clause deficiencies.",
+    riskDepth: "high",
+    readerMode: "internal-binder",
     defaultFormat: "docx",
-    maxWords: 2000,
     evidenceMode: "basis_only",
     sourceRegisterPolicy: "appendix",
     missingInputPolicy: "single_open_inputs_table",
@@ -1073,6 +1138,8 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: ["risk", "executive"],
     clientFacing: false,
     decisionPurpose: "Assess vendor financial, operational, strategic, and geopolitical risk before award.",
+    riskDepth: "high",
+    readerMode: "internal-binder",
     defaultFormat: "html",
     secondaryFormats: ["docx"],
     evidenceMode: "caption_level",
@@ -1100,9 +1167,9 @@ const PROFILES: SourceArtifactProfile[] = [
     audience: "executive",
     clientFacing: true,
     decisionPurpose: "Frame the renew / re-compete / renegotiate options with financial and transition tradeoffs.",
+    riskDepth: "high",
+    readerMode: "decision-brief",
     defaultFormat: "docx",
-    maxWords: 1500,
-    maxSections: 5,
     evidenceMode: "basis_only",
     sourceRegisterPolicy: "appendix",
     missingInputPolicy: "single_open_inputs_table",

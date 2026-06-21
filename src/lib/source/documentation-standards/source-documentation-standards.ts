@@ -1,6 +1,11 @@
 // Source documentation standards — banned terms, language replacements,
 // QA gates, and formatting policies.
 //
+// Standard: no arbitrary length restrictions. AbarVa Source should be deep
+// where the sourcing decision requires depth, but never mechanical. Optimize
+// for client trust, decision usefulness, contextual judgment, and professional
+// artifact design — not word counts.
+//
 // Consumed by:
 //   - generation prompts (language policy injected into system prompt)
 //   - QA gate scanner (bannedTermsForProfile, runDocumentQA)
@@ -38,7 +43,7 @@ export const LANGUAGE_REPLACEMENTS: Record<string, string> = {
   "d19": "Pricing Normalization Workbook",
   "d20": "Pricing Trap Log",
   "d21": "Locked Assumptions Record",
-  "d22": "BAFO Request",
+  "d22": "Best-and-Final-Offer Request",
   "d23": "BAFO Round Readout",
   "d24": "Executive Award Recommendation",
   "d25": "Risk Attestation",
@@ -58,10 +63,16 @@ export const LANGUAGE_REPLACEMENTS: Record<string, string> = {
   "dx6b": "Vendor Risk Pack",
   "dx7": "Renewal Decision Memo",
 
-  // Gate / stage mechanics → decision language
+  // Stage mechanics → natural language
+  "P1 / Stage": "strategy and scope",
+  "P2 / Stage": "RFP and evaluation",
+  "P3 / Stage": "pricing and BAFO",
+  "P4 / Stage": "decision and selection",
+  "P5 / Stage": "transition and value",
+
+  // Gate / AI / infrastructure language → decision language
   "gate-defining": "approval required",
   "stage gate": "decision point",
-  "Gate:": "Decision:",
   "quality score": "readiness assessment",
   "quality gate": "readiness check",
   "AI generated": "prepared from current evidence and approved inputs",
@@ -72,13 +83,15 @@ export const LANGUAGE_REPLACEMENTS: Record<string, string> = {
   "source register": "supporting inputs",
   "context rows": "supporting inputs",
   "evidence rows": "supporting inputs",
-  "not authorized to build": "Recommended decision: approve discovery only",
+  "not authorized to build": "the current facts support the next decision but do not yet support build/award/transition without the following confirmations",
   "cannot proceed": "conditions to proceed are not yet met",
+  "Evidence register proves": "the analysis is grounded in available sourcing, scope, pricing, and operating data",
 
   // Scattered placeholders → single table
   "[CLIENT TO SET]": "see Open Inputs Required",
   "[TBD]": "see Open Inputs Required",
   "[TO BE CONFIRMED]": "see Open Inputs Required",
+  "[CLIENT TO COMPLETE]": "see Open Inputs / Decisions Required",
 
   // Value mechanics
   "internal sensitivity": "internal planning range",
@@ -87,6 +100,9 @@ export const LANGUAGE_REPLACEMENTS: Record<string, string> = {
 };
 
 // ── QA gate definitions ───────────────────────────────────────────────────────
+// Gates are quality signals, not mechanical length enforcers.
+// blocksRelease: true means the artifact cannot be saved/shown to a client.
+// blocksRelease: false means a warning is added for human review.
 
 export interface QAGate {
   id: string;
@@ -111,11 +127,14 @@ export interface QAResult {
 }
 
 export const QA_GATES: QAGate[] = [
+
+  // ── 1. Decision Clarity ──────────────────────────────────────────────────
+  // The sponsor can identify the decision requested and recommendation quickly.
   {
-    id: "executive_readability",
-    label: "Executive readability",
+    id: "decision_clarity",
+    label: "Decision clarity",
     description:
-      "First page/slide states recommendation, decision needed, owner, and next step. A sponsor can understand the ask in 90 seconds.",
+      "Opening section clearly states the recommendation, decision needed, and why it matters. A sponsor can understand the ask in 60–90 seconds.",
     appliesToClientFacing: true,
     appliesToAll: false,
     check: ({ content, profile }) => {
@@ -130,13 +149,15 @@ export const QA_GATES: QAGate[] = [
       return {
         pass: hasDecision,
         message: hasDecision
-          ? "First section contains decision framing"
+          ? "Opening section contains decision framing"
           : "Missing: recommendation or decision statement in opening section",
         blocksRelease: !hasDecision,
       };
     },
   },
 
+  // ── 2. Audience fit ──────────────────────────────────────────────────────
+  // Vendor docs do not expose internal scoring, commercial sensitivity, AI labels.
   {
     id: "audience_fit",
     label: "Audience fit",
@@ -163,38 +184,14 @@ export const QA_GATES: QAGate[] = [
     },
   },
 
+  // ── 3. Mechanical language ───────────────────────────────────────────────
+  // Client-facing docs do not expose d-codes, AI labels, gate language, or
+  // repetitive PMO boilerplate.
   {
-    id: "length_discipline",
-    label: "Length discipline",
+    id: "mechanical_language",
+    label: "Mechanical language",
     description:
-      "Client-facing docs stay within profile maxWords/maxSlides. Detailed evidence moves to appendix or drilldown.",
-    appliesToClientFacing: true,
-    appliesToAll: false,
-    check: ({ profile, wordCount, slideCount }) => {
-      if (!profile.clientFacing) return { pass: true, message: "N/A (internal)", blocksRelease: false };
-      if (profile.maxWords && wordCount && wordCount > profile.maxWords) {
-        return {
-          pass: false,
-          message: `Word count ${wordCount} exceeds profile limit of ${profile.maxWords}`,
-          blocksRelease: false,
-        };
-      }
-      if (profile.maxSlides && slideCount && slideCount > profile.maxSlides) {
-        return {
-          pass: false,
-          message: `Slide count ${slideCount} exceeds profile limit of ${profile.maxSlides}`,
-          blocksRelease: false,
-        };
-      }
-      return { pass: true, message: "Within length limits", blocksRelease: false };
-    },
-  },
-
-  {
-    id: "banned_terms",
-    label: "Banned terms scan",
-    description:
-      "Client-facing output does not expose d-codes, AI model names, map-reduce, substrate, source rows, or internal gates.",
+      "Client-facing output does not expose d-codes, AI model names, stage-gate labels, or repetitive template boilerplate that makes the artifact feel AI-generated.",
     appliesToClientFacing: true,
     appliesToAll: false,
     check: ({ content, profile }) => {
@@ -209,29 +206,65 @@ export const QA_GATES: QAGate[] = [
         pass: violations.length === 0,
         message:
           violations.length === 0
-            ? "No banned terms found"
-            : `Banned terms found: ${violations.slice(0, 5).join(", ")}${violations.length > 5 ? ` (+${violations.length - 5} more)` : ""}`,
+            ? "No banned or mechanical terms found"
+            : `Mechanical/banned terms found: ${violations.slice(0, 5).join(", ")}${violations.length > 5 ? ` (+${violations.length - 5} more)` : ""}`,
         blocksRelease: violations.length > 0,
       };
     },
   },
 
+  // ── 4. Human consultant voice ────────────────────────────────────────────
+  // Artifact sounds like a senior sourcing advisor, not a PMO template dump.
   {
-    id: "missing_input_consolidation",
-    label: "Missing input handling",
+    id: "human_consultant_voice",
+    label: "Human consultant voice",
     description:
-      "Missing inputs are consolidated into one Open Inputs Required table — not scattered as [CLIENT TO SET] or [TBD] throughout.",
+      "Artifact reads like a senior sourcing consultant who reviewed the facts. Fails if it reads like a generated checklist, PMO template, or evidence dump with no judgment.",
+    appliesToClientFacing: true,
+    appliesToAll: false,
+    check: ({ content, profile }) => {
+      if (!profile.clientFacing) return { pass: true, message: "N/A (internal)", blocksRelease: false };
+      const lc = content.toLowerCase();
+      const genericFillers = [
+        "the purpose of this document",
+        "as mentioned above",
+        "in conclusion, this document",
+        "overview of the methodology",
+        "framework overview",
+        "in summary, this document provides",
+        "per our standard process",
+        "in accordance with the methodology",
+      ];
+      const foundFillers = genericFillers.filter((f) => lc.includes(f));
+      const pass = foundFillers.length === 0;
+      return {
+        pass,
+        message: pass
+          ? "No generic template language detected"
+          : `Generic template language found (${foundFillers.length} pattern${foundFillers.length > 1 ? "s" : ""}): "${foundFillers[0]}"`,
+        blocksRelease: false,
+      };
+    },
+  },
+
+  // ── 5. No placeholder spam ───────────────────────────────────────────────
+  // Missing inputs consolidated into one table — not scattered throughout.
+  {
+    id: "no_placeholder_spam",
+    label: "No placeholder spam",
+    description:
+      "Missing inputs are consolidated into one Open Inputs / Decisions Required section — not scattered as [CLIENT TO SET] or [TBD] throughout the document.",
     appliesToClientFacing: true,
     appliesToAll: false,
     check: ({ content, profile }) => {
       if (!profile.clientFacing) return { pass: true, message: "N/A (internal)", blocksRelease: false };
       const scatteredCount = (
-        content.match(/\[CLIENT TO SET\]|\[TBD\]|\[TO BE CONFIRMED\]/gi) ?? []
+        content.match(/\[CLIENT TO SET\]|\[CLIENT TO COMPLETE\]|\[TBD\]|\[TO BE CONFIRMED\]/gi) ?? []
       ).length;
       if (scatteredCount > 3) {
         return {
           pass: false,
-          message: `${scatteredCount} scattered placeholders found. Consolidate into one Open Inputs Required table.`,
+          message: `${scatteredCount} scattered placeholders found. Consolidate into one Open Inputs / Decisions Required table with owner, due date, and decision impact.`,
           blocksRelease: false,
         };
       }
@@ -239,40 +272,49 @@ export const QA_GATES: QAGate[] = [
     },
   },
 
+  // ── 6. Exhibit interpretation ────────────────────────────────────────────
+  // Every major table/exhibit has a "so what" interpretation underneath.
   {
-    id: "no_fabrication",
-    label: "No fabrication",
+    id: "exhibit_interpretation",
+    label: "Exhibit interpretation",
     description:
-      "No invented prices, savings, volumes, SLAs, ticket counts, FTE counts, transition costs, or vendor scores.",
-    appliesToClientFacing: false,
-    appliesToAll: true,
-    check: ({ content }) => {
-      // Heuristic: flag common fabrication-risk patterns
-      const suspiciousPatterns = [
-        /\$[\d,]+\s*(M|million|B|billion)\s*savings/i,
-        /\d+%\s*reduction in cost/i,
-        /\d+\s*FTE/i,
-        /uptime of\s*\d+\.?\d*%/i,
-        /MTTR of\s*\d+/i,
-      ];
-      const flags = suspiciousPatterns.filter((p) => p.test(content));
-      // These are warnings, not hard blocks — human review required
+      'Every major table, matrix, or scorecard is followed by a human interpretation: "What this means for the decision." Tables are not left as raw structured data.',
+    appliesToClientFacing: true,
+    appliesToAll: false,
+    check: ({ content, profile }) => {
+      if (!profile.clientFacing) return { pass: true, message: "N/A (internal)", blocksRelease: false };
+      const lc = content.toLowerCase();
+      const hasTabularContent =
+        lc.includes("| ") || lc.includes("<table") || lc.includes("scorecard") ||
+        lc.includes("matrix") || lc.includes("comparison");
+      if (!hasTabularContent) {
+        return { pass: true, message: "No tabular content detected — skip", blocksRelease: false };
+      }
+      const hasInterpretation =
+        lc.includes("what this means") ||
+        lc.includes("so what") ||
+        lc.includes("this indicates") ||
+        lc.includes("this suggests") ||
+        lc.includes("the implication") ||
+        lc.includes("key takeaway") ||
+        lc.includes("what it means for the decision");
       return {
-        pass: true,
-        message:
-          flags.length > 0
-            ? `Warning: ${flags.length} numeric claim(s) detected — verify these are evidence-grounded, not fabricated`
-            : "No fabrication risk patterns detected",
+        pass: hasInterpretation,
+        message: hasInterpretation
+          ? "Exhibit interpretation language present"
+          : "Tables/exhibits detected but no 'what this means' interpretation found — add a short decision interpretation after each major exhibit",
         blocksRelease: false,
       };
     },
   },
 
+  // ── 7. Decision closure ──────────────────────────────────────────────────
+  // Document ends with a clear decision frame, not a generic conclusion.
   {
     id: "decision_closure",
     label: "Decision closure",
     description:
-      "Every document ends with: approve / redirect / hold / stop, or next decision — not a generic conclusion.",
+      "Document closes with: approve / redirect / hold / conditions to proceed, or next decision required — not a generic conclusion paragraph.",
     appliesToClientFacing: true,
     appliesToAll: false,
     check: ({ content, profile }) => {
@@ -285,7 +327,9 @@ export const QA_GATES: QAGate[] = [
         tail.includes("decision required") ||
         tail.includes("conditions to proceed") ||
         tail.includes("next step") ||
-        tail.includes("recommended action");
+        tail.includes("next gate") ||
+        tail.includes("recommended action") ||
+        tail.includes("recommended path");
       return {
         pass: hasDecisionClose,
         message: hasDecisionClose
@@ -296,11 +340,42 @@ export const QA_GATES: QAGate[] = [
     },
   },
 
+  // ── 8. Evidence discipline ───────────────────────────────────────────────
+  // No invented prices, volumes, FTE counts, SLAs, or vendor scores.
+  {
+    id: "evidence_discipline",
+    label: "Evidence discipline",
+    description:
+      "No invented prices, savings, volumes, SLAs, ticket counts, FTE counts, transition costs, or vendor scores. All numeric claims are evidence-grounded.",
+    appliesToClientFacing: false,
+    appliesToAll: true,
+    check: ({ content }) => {
+      const suspiciousPatterns = [
+        /\$[\d,]+\s*(M|million|B|billion)\s*savings/i,
+        /\d+%\s*reduction in cost/i,
+        /\d+\s*FTE/i,
+        /uptime of\s*\d+\.?\d*%/i,
+        /MTTR of\s*\d+/i,
+      ];
+      const flags = suspiciousPatterns.filter((p) => p.test(content));
+      return {
+        pass: true,
+        message:
+          flags.length > 0
+            ? `Warning: ${flags.length} numeric claim(s) detected — verify these are evidence-grounded, not fabricated`
+            : "No fabrication risk patterns detected",
+        blocksRelease: false,
+      };
+    },
+  },
+
+  // ── 9. Required exhibits ─────────────────────────────────────────────────
+  // All required structural sections/exhibits are present per the profile.
   {
     id: "required_exhibits",
     label: "Required exhibits",
     description:
-      "All required structural sections/exhibits are present per the artifact profile.",
+      "All required structural sections and exhibits are present per the artifact profile.",
     appliesToClientFacing: false,
     appliesToAll: true,
     check: ({ content, profile }) => {
@@ -374,21 +449,22 @@ export function runDocumentQA(args: {
 
 // ── Language policy injector ──────────────────────────────────────────────────
 // Returns a paragraph to prepend to generation system prompts.
+// Implements the master prompt block from the No Hard Caps Update standard.
 
 export function buildLanguagePolicyBlock(artifactCode: string): string {
   const profile = getSourceArtifactProfile(artifactCode);
   if (!profile) return "";
 
   if (!profile.clientFacing) {
-    return `This is an internal working artifact. d-codes and internal labels are permitted.`;
+    return `This is an internal working artifact (${profile.humanTitle}). d-codes and internal labels are permitted. Depth is allowed but must be purposeful — every section must support the audit trail, decision record, or operational need.`;
   }
 
-  // Surface non-d-code terms first (AI labels, internal language), then d-codes
   const prioritized = [
     ...profile.bannedTerms.filter((t) => !/^d\d/.test(t) && !/^dx/.test(t)),
     ...profile.bannedTerms.filter((t) => /^d\d/.test(t) || /^dx/.test(t)),
   ];
   const bannedList = prioritized.slice(0, 25).join(", ");
+
   const evidenceNote =
     profile.evidenceMode === "none"
       ? "Include no source-register or evidence mechanics — this is a vendor-facing document."
@@ -401,24 +477,40 @@ export function buildLanguagePolicyBlock(artifactCode: string): string {
   const missingInputNote =
     profile.missingInputPolicy === "block_until_complete"
       ? "Do not generate this artifact if required inputs are missing. Flag the gap instead."
-      : "If inputs are missing, consolidate all gaps into ONE 'Open Inputs Required' table with columns: Input Needed | Why It Matters | Owner | Due Date | Decision Blocked | Consequence. Do not scatter [CLIENT TO SET] or [TBD] throughout the document.";
+      : "If inputs are missing, consolidate all gaps into ONE 'Open Inputs / Decisions Required' table with columns: Input Needed | Why It Matters | Owner | Due Date | Decision Blocked | Consequence. Do not scatter [CLIENT TO SET] or [TBD] throughout the document.";
+
+  const depthNote =
+    profile.riskDepth === "board-grade"
+      ? "This is a board-grade artifact. Depth is required — include all evidence, exhibits, tradeoffs, and residual risks needed for a governance forum to approve. Do not shorten artificially."
+      : profile.riskDepth === "high"
+        ? "This is a high-stakes artifact. Use the depth required by the decision — include exhibits and appendices for complex details, but keep the main narrative crisp and judgment-led."
+        : "Use the depth required by the decision. Concise where the decision is simple; detailed where risk or complexity requires it.";
 
   return `DOCUMENT STANDARDS FOR THIS ARTIFACT (${profile.humanTitle}):
 
 Audience: ${Array.isArray(profile.audience) ? profile.audience.join(", ") : profile.audience}
 Client-facing: YES. Hide internal mechanics.
 Decision purpose: ${profile.decisionPurpose}
+Risk depth: ${profile.riskDepth}
+Reader mode: ${profile.readerMode}
+
+Quality standard:
+This artifact must read like a senior sourcing consultant who reviewed the available facts and is helping the client make a decision. It fails if it reads like a generated checklist, PMO template, legal filing, or evidence dump.
+
+- Lead with the recommendation, decision, or key judgment — not with process history.
+- Use plain executive language. Avoid internal system terms.
+- ${depthNote}
+- Layer detail into: main narrative (decision-led) → exhibits (comparisons, scorecards, roadmaps) → appendix (evidence, assumptions, citations) → HTML drilldowns (navigable detail).
+- Every major table or exhibit must include a "What this means for the decision" interpretation. Do not leave tables as raw structured data.
+- Replace all repeated labels, governance caveats, and phase mechanics with natural narrative transitions.
+- ${evidenceNote}
+- ${missingInputNote}
+- Close with a decision: approve / redirect / hold / stop, or conditions to proceed.
 
 Language rules:
 - Open with the decision or recommendation — not process history.
 - Replace all d-codes with human titles: ${Object.entries(LANGUAGE_REPLACEMENTS).slice(0, 5).map(([k, v]) => `"${k}" → "${v}"`).join("; ")}.
-- Do not use any of these terms in the main body: ${bannedList}.
-- ${evidenceNote}
-- ${missingInputNote}
-- Close with a decision: approve / redirect / hold / stop, or next step required.
-${profile.maxWords ? `- Maximum length: ${profile.maxWords} words.` : ""}
-${profile.maxSlides ? `- Maximum slides: ${profile.maxSlides}.` : ""}
-${profile.maxSections ? `- Maximum sections: ${profile.maxSections}.` : ""}`;
+- Do not use any of these terms in the main body: ${bannedList}.`;
 }
 
 // ── Banned terms scanner (lightweight, for fast inline checks) ────────────────
