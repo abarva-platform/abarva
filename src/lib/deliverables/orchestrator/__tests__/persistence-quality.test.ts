@@ -7,6 +7,7 @@ import { getArtifactBrief } from '../artifact-brief-registry';
 import { amsRfpRequest, goodDocument } from '../__fixtures__/ams-rfp';
 import type { GeneratedArtifactRecord } from '@/lib/artifacts/repository';
 import type { TenantAiPolicy } from '@/lib/integrations/ai-egress';
+import { FIRST_CAPITAL_ARCHITECTURE } from '@/lib/visual-system/__fixtures__/first-capital-architecture';
 
 const tenantPolicy = {} as TenantAiPolicy;
 
@@ -49,5 +50,22 @@ describe('persistDeliverable — quality contract enforcement', () => {
     const rendered = await persistWith({ enforceQualityContract: false });
     expect(rendered.quarantined).toBe(false);
     expect(rendered.quarantineReason).toBeNull();
+  });
+
+  it('renders the architecture exhibit when renderViaProfile + a model is supplied', async () => {
+    const rendered = await persistWith({
+      renderViaProfile: true,
+      structuredModels: { architectureModel: FIRST_CAPITAL_ARCHITECTURE },
+    });
+    expect(rendered.outputFormat).toBe('html');
+    expect(String(rendered.html)).toContain('Target state (to-be)');
+  });
+
+  it('counts model-produced exhibits toward exhibit enforcement (no missing-exhibit block)', async () => {
+    const rendered = await persistWith({
+      enforceQualityContract: true,
+      structuredModels: { architectureModel: FIRST_CAPITAL_ARCHITECTURE },
+    });
+    expect(String(rendered.quarantineReason ?? '')).not.toMatch(/blocked_missing_exhibits/);
   });
 });

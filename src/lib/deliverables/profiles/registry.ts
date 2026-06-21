@@ -12,6 +12,7 @@ import { SOURCE_PROFILES } from "./registry-source";
 
 const charter: DeliverableProfile = {
   key: "charter",
+  renderer: "docx_narrative",
   title: "Initiative Charter",
   clientFacing: true,
   audience: ["steering_committee", "program_leadership"],
@@ -43,6 +44,7 @@ const charter: DeliverableProfile = {
 
 const discoveryReport: DeliverableProfile = {
   key: "discovery_report",
+  renderer: "pptx_storyline",
   title: "Discovery & Diagnostic Readout",
   clientFacing: true,
   audience: ["steering_committee", "program_leadership", "cio"],
@@ -72,6 +74,7 @@ const discoveryReport: DeliverableProfile = {
 
 const rootCauseWorksheet: DeliverableProfile = {
   key: "root_cause_worksheet",
+  renderer: "pptx_storyline",
   title: "Root-Cause Readout",
   clientFacing: true,
   audience: ["program_leadership", "cio"],
@@ -97,6 +100,7 @@ const rootCauseWorksheet: DeliverableProfile = {
 
 const targetStateArchitecture: DeliverableProfile = {
   key: "target_state_architecture",
+  renderer: "html_architecture",
   title: "Target Architecture",
   clientFacing: true,
   audience: ["cio", "cto"],
@@ -133,6 +137,7 @@ const targetStateArchitecture: DeliverableProfile = {
 
 const solutionDesign: DeliverableProfile = {
   key: "solution_design",
+  renderer: "html_architecture",
   title: "Solution Design",
   clientFacing: true,
   audience: ["cto", "program_leadership", "ciso"],
@@ -162,6 +167,7 @@ const solutionDesign: DeliverableProfile = {
 
 const operatingModelDesign: DeliverableProfile = {
   key: "operating_model_design",
+  renderer: "docx_narrative",
   title: "Operating Model",
   clientFacing: true,
   audience: ["program_leadership", "ciso", "cio"],
@@ -189,6 +195,7 @@ const operatingModelDesign: DeliverableProfile = {
 
 const sourcingStrategy: DeliverableProfile = {
   key: "sourcing_strategy",
+  renderer: "docx_narrative",
   title: "Sourcing Strategy",
   clientFacing: true,
   audience: ["procurement", "cio", "program_leadership"],
@@ -211,6 +218,7 @@ const sourcingStrategy: DeliverableProfile = {
 
 const executionRoadmap: DeliverableProfile = {
   key: "execution_roadmap",
+  renderer: "pptx_storyline",
   title: "Execution Roadmap",
   clientFacing: true,
   audience: ["program_leadership", "cio", "steering_committee"],
@@ -233,6 +241,7 @@ const executionRoadmap: DeliverableProfile = {
 
 const businessCase: DeliverableProfile = {
   key: "business_case",
+  renderer: "docx_narrative",
   title: "Business Case",
   clientFacing: true,
   audience: ["cfo", "steering_committee", "ceo"],
@@ -258,6 +267,7 @@ const businessCase: DeliverableProfile = {
 
 const financialModel: DeliverableProfile = {
   key: "financial_model",
+  renderer: "xlsx_workbook",
   title: "Financial Model",
   clientFacing: false,
   audience: ["cfo"],
@@ -280,6 +290,7 @@ const financialModel: DeliverableProfile = {
 
 const towerMetricsPlan: DeliverableProfile = {
   key: "tower_metrics_plan",
+  renderer: "docx_narrative",
   title: "Value & Metrics Model",
   clientFacing: true,
   audience: ["cfo", "program_leadership"],
@@ -302,6 +313,7 @@ const towerMetricsPlan: DeliverableProfile = {
 
 const handoffPackage: DeliverableProfile = {
   key: "handoff_package",
+  renderer: "pptx_storyline",
   title: "Executive Handoff",
   clientFacing: true,
   audience: ["board", "steering_committee", "ceo"],
@@ -330,6 +342,7 @@ const handoffPackage: DeliverableProfile = {
 
 const valueMeasurementContract: DeliverableProfile = {
   key: "value_measurement_contract",
+  renderer: "docx_narrative",
   title: "Value Measurement Contract",
   clientFacing: true,
   audience: ["cfo", "program_leadership"],

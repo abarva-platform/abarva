@@ -25,6 +25,18 @@ import {
   type ArchitectureStateModel,
 } from "./architecture-model";
 
+/** The exhibits the architecture renderer always produces from a model. */
+export const ARCHITECTURE_RENDERED_EXHIBITS = [
+  "current_state_architecture",
+  "target_state_architecture",
+  "data_flow",
+  "ai_decision_flow",
+  "agentic_overlay",
+  "integration_pattern",
+  "control_points",
+  "implementation_waves",
+] as const;
+
 function esc(s: string | undefined): string {
   if (!s) return "";
   return s

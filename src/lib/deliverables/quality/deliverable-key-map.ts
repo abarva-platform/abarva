@@ -69,6 +69,8 @@ export function buildContractInput(args: {
   outputFormat: OutputFormat;
   tenantTerms?: ReadonlyArray<string>;
   governanceOk?: boolean;
+  /** Exhibits the structured generation passes produced (stage 4). */
+  additionalExhibits?: ReadonlyArray<ExhibitId>;
 }): ContractInput {
   const { doc } = args;
   const narrativeText = [
@@ -85,10 +87,15 @@ export function buildContractInput(args: {
     0,
   );
 
+  const renderedExhibits = [
+    ...renderedExhibitsFromDoc(doc),
+    ...(args.additionalExhibits ?? []),
+  ];
+
   return {
     profile: DELIVERABLE_PROFILES[args.deliverableKey],
     narrativeText,
-    renderedExhibits: renderedExhibitsFromDoc(doc),
+    renderedExhibits,
     outputFormat: args.outputFormat,
     scatteredPlaceholderCount: scattered,
     citationCount,

@@ -25,6 +25,18 @@ import {
   buildContractInput,
   deliverableKeyForOrchestratorType,
 } from '@/lib/deliverables/quality/deliverable-key-map';
+import { DELIVERABLE_PROFILES } from '@/lib/deliverables/profiles/registry';
+import {
+  renderArchitectureHtml,
+  ARCHITECTURE_RENDERED_EXHIBITS,
+} from '@/lib/visual-system/architecture-html-renderer';
+import type { ArchitectureModel } from '@/lib/visual-system/architecture-model';
+import {
+  renderDeckHtml,
+  deckExhibits,
+  type StorylineDeck,
+} from '@/lib/visual-system/storyline-deck';
+import type { ExhibitId } from '@/lib/deliverables/profiles/types';
 import type { OutputFormat } from './types';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -58,6 +70,17 @@ export interface PersistDeliverableOptions {
   tenantTerms?: ReadonlyArray<string>;
   /** Whether stage-3 egress/data governance passed (for the contract). */
   governanceOk?: boolean;
+  /**
+   * Structured exhibit models the generation passes produced (stage 4). When
+   * present and `renderViaProfile` is on, the renderer is selected by the
+   * profile (e.g. html_architecture draws the ArchitectureModel).
+   */
+  structuredModels?: {
+    architectureModel?: ArchitectureModel;
+    storylineDeck?: StorylineDeck;
+  };
+  /** Select the renderer by profile (stage 6). Staged per tenant via flag. */
+  renderViaProfile?: boolean;
 }
 
 export interface PersistDeps {
@@ -95,6 +118,23 @@ export async function persistDeliverable(
   );
   let html = renderDeliverableHtml(doc);
   let outputFormat: GeneratedArtifactFormat = opts.outputFormat ?? prescribedFormat;
+  const deliverableKey = deliverableKeyForOrchestratorType(result.brief.deliverableType);
+
+  // ── Stage 6: renderer selection by profile (flag-gated rollout) ──
+  // When the generation passes produced structured models, render the profile's
+  // renderer (e.g. the premium HTML architecture exhibit) instead of prose.
+  if (opts.renderViaProfile && deliverableKey) {
+    const profile = DELIVERABLE_PROFILES[deliverableKey];
+    const models = opts.structuredModels;
+    if (profile.renderer === 'html_architecture' && models?.architectureModel) {
+      html = renderArchitectureHtml(models.architectureModel);
+      outputFormat = 'html';
+    } else if (profile.renderer === 'pptx_storyline' && models?.storylineDeck) {
+      // HTML storyline deck now; native PPTX export is the same model later.
+      html = renderDeckHtml(models.storylineDeck);
+      outputFormat = 'html';
+    }
+  }
 
   // Flag-gated (moves_decision_storytelling): emit the exhibit-led executive deck (HTML) from the
   // SAME governed document instead of the prose HTML. Any failure falls back to the prose render —
@@ -130,13 +170,21 @@ export async function persistDeliverable(
   // cannot be served as client-ready. Tenant-agnostic; runs for every tenant.
   let qualityQuarantined = false;
   let qualityQuarantineReason: string | null = null;
-  const deliverableKey = deliverableKeyForOrchestratorType(result.brief.deliverableType);
   if (deliverableKey) {
+    // Exhibits the structured generation passes produced (stage 4) count toward
+    // the contract's exhibit-enforcement check.
+    const additionalExhibits: ExhibitId[] = [];
+    if (opts.structuredModels?.architectureModel)
+      additionalExhibits.push(...ARCHITECTURE_RENDERED_EXHIBITS);
+    if (opts.structuredModels?.storylineDeck)
+      additionalExhibits.push(...deckExhibits(opts.structuredModels.storylineDeck));
+
     const assessment = assessClientDeliverable({
       ...buildContractInput({
         doc,
         deliverableKey,
         outputFormat: outputFormat as OutputFormat,
+        additionalExhibits,
         ...(opts.tenantTerms ? { tenantTerms: opts.tenantTerms } : {}),
         ...(opts.governanceOk !== undefined ? { governanceOk: opts.governanceOk } : {}),
       }),
