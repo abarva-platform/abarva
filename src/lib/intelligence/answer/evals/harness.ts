@@ -2,6 +2,13 @@ import { scoreAnswer, type AnswerQualityScore } from "@/lib/eval/answer-quality/
 import { routeQuestion } from "@/lib/intelligence/answer/router";
 import { assembleAgentAnswer } from "@/lib/intelligence/answer/engine";
 import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
+import {
+  buildExpertPackReadinessReport,
+  buildSharedEngineParityGateReport,
+  type ExpertPackReadinessReport,
+  type SharedEngineParityGateOptions,
+  type SharedEngineParityGateReport,
+} from "@/lib/intelligence/exposure/shared-engine-policy";
 import type { ContextBundle } from "@/lib/knowledge/context-broker/types";
 import { GOLDEN_QUESTIONS, type GoldenQuestion } from "./golden-questions";
 import { runGoldenEval, type GoldenEvalReport, type GoldenResult } from "./golden-eval";
@@ -31,12 +38,15 @@ export interface AgentAnswerEvalReport {
   goldenPassCount: number;
   answerQualityPassCount: number;
   golden: GoldenEvalReport;
+  packReadiness: ExpertPackReadinessReport;
+  parityGate: SharedEngineParityGateReport;
   results: AgentAnswerEvalCaseResult[];
 }
 
 export interface AgentAnswerEvalHarnessOptions {
   generatedAt?: string;
   runId?: string;
+  parityGate?: SharedEngineParityGateOptions;
   answerRunner?: (question: GoldenQuestion) => Promise<AgentAnswer>;
 }
 
@@ -129,7 +139,7 @@ export async function runAgentAnswerEvalHarness(
     }),
   );
 
-  return {
+  const reportWithoutGates = {
     schemaVersion: "scb-agent-answer-eval/v1",
     runId,
     generatedAt,
@@ -140,5 +150,11 @@ export async function runAgentAnswerEvalHarness(
     answerQualityPassCount: results.filter((result) => result.answerQuality.gatePassed).length,
     golden,
     results,
+  } satisfies Omit<AgentAnswerEvalReport, "packReadiness" | "parityGate">;
+
+  return {
+    ...reportWithoutGates,
+    packReadiness: buildExpertPackReadinessReport(golden),
+    parityGate: buildSharedEngineParityGateReport(reportWithoutGates, options.parityGate),
   };
 }

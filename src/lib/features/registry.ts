@@ -63,6 +63,7 @@ export type FeatureFlagKey =
   | "intelligence_brief_v4"
   | "first_capital_substrate_overlay"
   | "retrieval_azure_search"
+  | "scb_shared_engine_home"
   | "scb_shared_engine_intelligence"
   | "scb_shared_engine_source"
   | "scb_shared_engine_moves"
@@ -168,11 +169,18 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     includeTenants: [],
   },
   {
+    key: "scb_shared_engine_home",
+    summary:
+      "Shared Context Brain on Home: allow Ava/Consilium outputs to drive Home decision-support summaries only after pack readiness and parity proof pass. Default OFF; tenant opt-in only through the W6.1 exposure gate.",
+    policy: "tenant",
+    includeTenants: [],
+  },
+  {
     key: "scb_shared_engine_intelligence",
     summary:
-      "Shared Context Brain: ground the Intelligence ask in the Consilium expert faculty (router summons expert(s); their authored benchmarks/AI-plays/hedges are injected into synthesis; contributing experts surfaced). Default OFF; tenant opt-in via includeTenants. The first surface-level flag of the staged-rollout exposure policy (W6.1); flip per tenant after parity proof. apexretail enrolled as the first retail demo tenant (Maresca/Ulta-style retail walkthrough — loyalty/personalization + store-ops + CIO-estate grounding); pending signed-in parity proof.",
+      "Shared Context Brain: ground the Intelligence ask in the Consilium expert faculty (router summons expert(s); their authored benchmarks/AI-plays/hedges are injected into synthesis; contributing experts surfaced). Default OFF; tenant opt-in only through the W6.1 exposure gate after pack readiness and parity proof pass.",
     policy: "tenant",
-    includeTenants: ["apexretail"],
+    includeTenants: [],
   },
   {
     key: "scb_shared_engine_source",

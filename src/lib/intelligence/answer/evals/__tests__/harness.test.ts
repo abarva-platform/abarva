@@ -18,6 +18,9 @@ describe("runAgentAnswerEvalHarness", () => {
     expect(report.results[0]?.answer.engineVersion).toBe("agent-answer/v1");
     expect(report.results[0]?.answer.surface).toBe("intelligence");
     expect(report.results[0]?.answer.contributingExperts.length).toBeGreaterThan(0);
+    expect(report.parityGate.pass).toBe(true);
+    expect(report.parityGate.passRate).toBe(1);
+    expect(report.packReadiness.exposableCount).toBeGreaterThan(0);
   });
 
   it("marks a case failed when the captured answer fails quality scoring", async () => {
