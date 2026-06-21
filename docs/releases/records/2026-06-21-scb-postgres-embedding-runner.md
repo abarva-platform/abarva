@@ -33,7 +33,9 @@ The pending-chunk embedding script can now run in the private Azure runtime with
 - PASS: `npx jest src/scripts/__tests__/embed-pending-chunks.test.ts --runInBand`
 - PASS: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`
 - PASS: `npx eslint src/scripts/embed-pending-chunks.ts`
-- NOT-RUN: private VNet run with `npm run embed:pending-chunks -- --postgres-only`; requires this change to be deployed in the ACA image first.
+- PASS: Private VNet DB proof `job-abarva-private-operator-eus-gnxyv7q` confirmed pgvector extension `0.8.2`, `enterprise_context_chunks.embedding_vector` type `vector`, HNSW index `idx_enterprise_context_chunks_embedding_vector_hnsw`, and zero embedded rows missing vectors across all six tenants.
+- PASS: The same VNet proof ran a tenant-scoped vector-distance query with `<=>` and returned ranked Apex Retail chunks from `F17_ai-automation-footprint.csv` and `F13_initiatives-portfolio.csv`.
+- PENDING: signed-in retrieval proof that the app/broker path cites a chunk via the vector path.
 
 ## Rollout Plan
 
@@ -47,7 +49,7 @@ Merge to `main`, deploy through the repo-owned ACA main deploy workflow, then ru
 - ACA runtime invariant: required after main deploy.
 - Worker image invariant: required after main deploy.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes, retrieval proof should show a cited chunk from pgvector after backfill.
+- Live signed-in proof required: yes, retrieval proof should show a cited chunk from pgvector after backfill. The database/index layer is proven; browser/API citation proof remains pending.
 
 ## Rollback Plan
 
@@ -55,10 +57,10 @@ Revert the script change. Existing database columns and vectors are left intact;
 
 ## Audit Evidence
 
-- PR URL: pending.
-- CI run: pending.
-- Private proof: prior VNet job proved `pgvector` extension/column live and exposed 878 `embedded` rows with null vectors before this fix.
+- PR #3731 merged to main.
+- Private proof: VNet job `job-abarva-private-operator-eus-gnxyv7q` proved `pgvector` extension/column/index live and all embedded chunks vectorized across six tenants.
+- Vector query proof: VNet job `job-abarva-private-operator-eus-gnxyv7q` returned tenant-scoped ranked chunks with the pgvector `<=>` operator.
 
 ## Known Gaps
 
-This PR fixes the runner path. It does not itself backfill the existing 878 null-vector rows until the updated image is deployed and the private job is run.
+The database/index/vectorization layer is proven live. Remaining gap is the signed-in app/broker proof that a user-visible retrieval cites a chunk via the vector path.
