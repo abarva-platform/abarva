@@ -58,6 +58,7 @@ import { digitalProductManagementExpert } from "./packs/digital-product-manageme
 import { integrationApiManagementExpert } from "./packs/integration-api-management";
 import { identityAccessManagementExpert } from "./packs/identity-access-management";
 import { technologyResilienceBcdrExpert } from "./packs/technology-resilience-bcdr";
+import { customerLoyaltyPersonalizationExpert } from "./packs/customer-loyalty-personalization";
 
 /** All registered experts. Order is not significant — the router ranks. */
 export const EXPERT_PACKS: readonly ExpertPack[] = [
@@ -114,6 +115,7 @@ export const EXPERT_PACKS: readonly ExpertPack[] = [
   integrationApiManagementExpert,
   identityAccessManagementExpert,
   technologyResilienceBcdrExpert,
+  customerLoyaltyPersonalizationExpert,
 ];
 
 export function getExpertById(id: string): ExpertPack | undefined {
