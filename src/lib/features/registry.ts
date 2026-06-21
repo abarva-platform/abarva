@@ -169,9 +169,9 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "scb_shared_engine_intelligence",
     summary:
-      "Shared Context Brain: ground the Intelligence ask in the Consilium expert faculty (router summons expert(s); their authored benchmarks/AI-plays/hedges are injected into synthesis; contributing experts surfaced). Default OFF; tenant opt-in via includeTenants. The first surface-level flag of the staged-rollout exposure policy (W6.1); flip per tenant after parity proof.",
+      "Shared Context Brain: ground the Intelligence ask in the Consilium expert faculty (router summons expert(s); their authored benchmarks/AI-plays/hedges are injected into synthesis; contributing experts surfaced). Default OFF; tenant opt-in via includeTenants. The first surface-level flag of the staged-rollout exposure policy (W6.1); flip per tenant after parity proof. apexretail enrolled as the first retail demo tenant (Maresca/Ulta-style retail walkthrough — loyalty/personalization + store-ops + CIO-estate grounding); pending signed-in parity proof.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["apexretail"],
   },
   {
     key: "scb_shared_engine_source",
