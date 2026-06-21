@@ -5,6 +5,8 @@ import { createClerkClient } from '@clerk/backend';
 import { chromium, type BrowserContext, type Page } from '@playwright/test';
 import { config as loadEnv } from 'dotenv';
 
+import { AGENT_CLIENT_LOGINS } from '../../src/lib/auth/agent-client-logins';
+
 import {
   RESPONSIBLE_AI_ACKNOWLEDGMENT_ROUTE,
   RESPONSIBLE_AI_ACKNOWLEDGMENT_VERSION,
@@ -46,80 +48,26 @@ const REPORT_DIR = path.join(REPO_ROOT, 'reports', 'agent-client-auth');
 const ACTIVE_CLIENT_COOKIE = 'abarva_active_client';
 const ACTIVE_CLIENT_LOCAL_STORAGE_KEY = 'abarva_selected_client';
 
-const PERSONAS: AgentAuthPersona[] = [
-  {
-    key: 'apexretail-cio',
-    clientKey: 'apexretail',
-    tenantName: 'Apex Retail Group',
-    email: 'cio@apex-retail.example.com',
-    role: 'CIO',
-    storageFile: 'agent-apexretail-cio.json',
-    probeRoutes: ['/home?client=apexretail', '/tower?client=apexretail', '/source?client=apexretail'],
-  },
-  {
-    key: 'meridian-cdao',
-    clientKey: 'meridian',
-    tenantName: 'Meridian Health System',
-    email: 'cdao@meridian-health.example.com',
-    role: 'CDAO',
-    storageFile: 'agent-meridian-cdao.json',
-    probeRoutes: ['/home?client=meridian', '/intelligence?client=meridian', '/strategic-moves?client=meridian'],
-  },
-  {
-    key: 'firstcapital-cio',
-    clientKey: 'arcturus',
-    tenantName: 'First Capital',
-    email: 'cio@firstcapital.example.com',
-    role: 'CIO',
-    storageFile: 'agent-firstcapital-cio.json',
-    probeRoutes: ['/home?client=arcturus', '/tower?client=arcturus', '/source?client=arcturus'],
-  },
-  {
-    key: 'northstar-cio',
-    clientKey: 'northstar',
-    tenantName: 'Northstar Clinical Technologies',
-    email: 'cio@northstar-clinical.example.com',
-    role: 'CIO',
-    storageFile: 'agent-northstar-cio.json',
-    probeRoutes: ['/home?client=northstar', '/tower?client=northstar', '/strategic-moves?client=northstar'],
-  },
-  {
-    key: 'skyharbor-cto',
-    clientKey: 'skyharbor',
-    tenantName: 'SkyHarbor Air',
-    email: 'cto@skyharbor-air.example.com',
-    role: 'CTO',
-    storageFile: 'agent-skyharbor-cto.json',
-    probeRoutes: ['/home?client=skyharbor', '/tower?client=skyharbor', '/source?client=skyharbor'],
-  },
-  {
-    key: 'skyharbor-admin',
-    clientKey: 'skyharbor',
-    tenantName: 'SkyHarbor Air',
-    email: 'admin@skyharbor-air.example.com',
-    role: 'Tenant Admin',
-    storageFile: 'agent-skyharbor-admin.json',
-    probeRoutes: ['/home?client=skyharbor', '/admin/setup?client=skyharbor', '/source?client=skyharbor'],
-  },
-  {
-    key: 'lakeshore-cfo',
-    clientKey: 'lakeshore',
-    tenantName: 'Lakeshore Holdings',
-    email: 'cfo@lakeshore-holdings.example.com',
-    role: 'CFO',
-    storageFile: 'agent-lakeshore-cfo.json',
-    probeRoutes: ['/home?client=lakeshore', '/tower?client=lakeshore', '/strategic-moves?client=lakeshore'],
-  },
-  {
-    key: 'lakeshore-cio',
-    clientKey: 'lakeshore',
-    tenantName: 'Lakeshore Holdings',
-    email: 'cio@lakeshore-holdings.example.com',
-    role: 'CIO',
-    storageFile: 'agent-lakeshore-cio.json',
-    probeRoutes: ['/home?client=lakeshore', '/intelligence?client=lakeshore', '/source?client=lakeshore'],
-  },
-];
+// One automation persona per client, derived from the canonical agent roster
+// (src/lib/auth/agent-client-logins.ts). Replaces the prior hardcoded human
+// CXO emails (removed → access-stale). Each agent probes all main surfaces for
+// its tenant. Provision the underlying Clerk users once with:
+//   npx tsx scripts/provision-cxo-personas.ts --agents --apply
+const PERSONAS: AgentAuthPersona[] = AGENT_CLIENT_LOGINS.map((login) => ({
+  key: login.slug,
+  clientKey: login.clientKey,
+  tenantName: login.tenant,
+  email: login.email,
+  role: 'Automation agent',
+  storageFile: `agent-${login.clientKey}.json`,
+  probeRoutes: [
+    `/home?client=${login.clientKey}`,
+    `/intelligence?client=${login.clientKey}`,
+    `/tower?client=${login.clientKey}`,
+    `/source?client=${login.clientKey}`,
+    `/strategic-moves?client=${login.clientKey}`,
+  ],
+}));
 
 const TENANT_NAMES_BY_CLIENT = new Map<ClientKey, string>(
   PERSONAS.map((persona) => [persona.clientKey, persona.tenantName]),
