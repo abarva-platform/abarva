@@ -3,4 +3,4 @@ export {
   CDP_PATTERN_IDS,
   CDP_PATTERNS,
   default,
-} from '@/data/apexretail/cdp-pattern-seed';
+} from '../../data/apexretail/cdp-pattern-seed';

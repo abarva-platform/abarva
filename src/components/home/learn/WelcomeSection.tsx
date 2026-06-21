@@ -403,7 +403,7 @@ export function WelcomeSection() {
           The AI strategy operating system for <span style={{ fontStyle: 'italic' }}>your</span> enterprise.
         </SectionTitle>
         <Lead light>
-          AbarVa is one platform with one assistant — Ava — who grounds every recommendation in your enterprise truth — your org, your systems, your funding authority — not generic AI patterns. She's present on every surface and draws on a faculty of specialist expertise as the work demands. Pick a composite tenant below and pressure-test what Ava actually knows.
+          AbarVa is one platform with one assistant — Ava — who grounds every recommendation in your enterprise truth — your org, your systems, your funding authority — not generic AI patterns. She is present on every surface and draws on a faculty of specialist expertise as the work demands. Pick a composite tenant below and pressure-test what Ava actually knows.
         </Lead>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 18 }}>
           {[
@@ -467,7 +467,7 @@ export function WelcomeSection() {
         <Eyebrow>Who we are · Why this matters</Eyebrow>
         <SectionTitle>One assistant. One enterprise truth. Zero generic AI advice.</SectionTitle>
         <Lead>
-          Every other AI tool starts with the model. AbarVa starts with your enterprise — your org chart, your IT financials, your funding authority matrix, your vendor scorecards, your in-flight programs. You always talk to Ava; she adapts to what you're doing and reaches into that substrate every time she answers. Her views are opinions, calibrated, and grounded in your real numbers. Behind her sits a faculty of specialist expertise — strategy, investment shaping, sourcing — but you never switch agents or get handed off.
+          Every other AI tool starts with the model. AbarVa starts with your enterprise — your org chart, your IT financials, your funding authority matrix, your vendor scorecards, your in-flight programs. You always talk to Ava; she adapts to what you are doing and reaches into that substrate every time she answers. Her views are opinions, calibrated, and grounded in your real numbers. Behind her sits a faculty of specialist expertise — strategy, investment shaping, sourcing — but you never switch agents or get handed off.
         </Lead>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, margin: '24px 0 8px' }}>
           {AGENT_TRIO.map((a) => (
