@@ -58,7 +58,6 @@ const TENANT_ALIASES: Record<string, string> = {
   lakeshore: "lakeshore",
   meridian: "meridian-health",
   northstar: "northstar-clinical",
-  "northstar-clinical-tech": "northstar-clinical",
   skyharbor: "skyharbor-air",
 };
 
