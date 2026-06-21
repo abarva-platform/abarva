@@ -27,10 +27,17 @@ export { renderMoveCostedBusinessCaseHtml } from './move-html-renderer';
 export {
   buildMoveCostedBusinessCasePack,
   type MoveCostedBusinessCasePack,
+  type MoveCostedBusinessCasePackOptions,
   type MoveUnboundResult,
   type MoveCostedBusinessCaseResult,
   type MovePackSections,
 } from './move-pack-model';
+
+// WE-3 — Workforce Economics estimate-twice binding for the board-grade pack.
+export {
+  buildMoveWorkforceEconomics,
+  deriveWorkforceEstimateInput,
+} from './move-workforce-economics-binding';
 
 export { renderApexDiscoverBriefHtml } from './discover-brief-renderer';
 export {

@@ -164,13 +164,27 @@ export async function GET(req: NextRequest): Promise<Response> {
         );
       }
 
+      // WE-3 — Workforce Economics estimate-twice, gated on the tenant flag.
+      // Flag OFF ⇒ the renderer is called with no opts and is byte-identical to
+      // today. The flag is folded into the cache key so a flagged and an
+      // unflagged tenant never share a memoised render.
+      const workforceEconomicsEnabled = isFeatureEnabled(
+        flagCtx,
+        "moves_workforce_economics",
+      );
+
       // The generic renderer is pure; a throw here would be a renderer bug.
       // Memoised per day, keyed by the move id so two Moves never collide.
       let html: string;
       try {
         html = cachedRender(
-          `move-costed-business-case:html:${moveId}:${generatedOn}`,
-          () => renderMoveCostedBusinessCaseHtml(moveInput!, generatedOn),
+          `move-costed-business-case:html:${moveId}:${generatedOn}:we${
+            workforceEconomicsEnabled ? "1" : "0"
+          }`,
+          () =>
+            renderMoveCostedBusinessCaseHtml(moveInput!, generatedOn, {
+              workforceEconomicsEnabled,
+            }),
         );
       } catch (err) {
         console.error(

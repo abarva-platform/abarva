@@ -72,6 +72,7 @@ export type FeatureFlagKey =
   | "tower_synthesis_apex_demo_fixture"
   | "discovery_intake_v2"
   | "moves_orchestrated_deliverables"
+  | "moves_workforce_economics"
   | "moves_decision_storytelling"
   | "workspace_explorer_source"
   | "workspace_explorer_moves"
@@ -130,6 +131,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
       "Author Move board-grade deliverables through the Deliverable Intelligence Orchestrator (governed multi-pass Claude authoring) instead of the deterministic template renderer. Quality/plan gates enforced; falls back to the deterministic deck when the gate blocks. SkyHarbor is enrolled for live board-grade validation; other tenants remain opt-in.",
     policy: "tenant",
     includeTenants: ["skyharbor"],
+  },
+  {
+    key: "moves_workforce_economics",
+    summary:
+      "Attach the Workforce Economics 'estimate-twice' view (traditional people-only vs AI-native people+agents, with the cost/timeline/headcount delta and the productivity gain) to the Move board-grade Costed Business-Case Pack. The estimate-twice is DERIVED from the kernel's own effort skeleton (headcount × duration × rate-card), so the traditional figure reconciles to the kernel investment — no parallel estimate path. Default OFF; tenant opt-in. Flag off = byte-identical (the engine is not called and no workforce field is attached). Honesty discipline preserved: planning ranges, conservative agent-capacity haircut, NOT a quote. Env allowlist: ABARVA_FEATURE_MOVES_WORKFORCE_ECONOMICS_TENANTS.",
+    policy: "tenant",
+    includeTenants: [],
   },
   {
     key: "moves_decision_storytelling",
