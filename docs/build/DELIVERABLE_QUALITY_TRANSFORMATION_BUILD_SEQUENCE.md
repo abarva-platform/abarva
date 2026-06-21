@@ -29,6 +29,38 @@ client-specific judgment requires — and not one paragraph of machinery longer.
 5. **Rigor and honesty kept.** No fabricated numbers (state the implication once). No "Business Case"
    without finance-grade inputs (downgrade to Readiness Memo). One Open Inputs Required table.
 
+## 0a. Enforcement architecture — one governed pipeline, every client, no bandages
+
+This is a **platform capability**, not a per-engagement or per-client artifact. The design makes
+quality enforcement structural, so no deliverable can bypass it and no client needs a forked path.
+
+1. **One pipeline, all tenants.** Every deliverable for every tenant flows through the single
+   orchestrator path (`runDeliverableForTenant` → generate `RenderableDeliverable` → `persistDeliverable`).
+   There is no per-client code branch. SkyHarbor, First Capital, any client = same code, different
+   *tenant context*. Client specificity comes from data + config + flags, never forked code.
+2. **Profiles are the universal contract** (W0). The pipeline reads the `DeliverableProfile` to know
+   the format, required exhibits, evidence mode, and gates — the same registry for every tenant.
+3. **Generation passes are governed and tenant-grounded** (W2 generation). Structured passes (the
+   ArchitectureModel pass, the charter/handoff shapers) run *inside* the pipeline. The model call is
+   **injected as a governed adapter** — routed through the egress governance (tenant policy +
+   preflight + audit), never a direct client — and **grounded in the tenant's own governed context**
+   via the AgentContextBroker. The same prompt yields SkyHarbor IROPS for SkyHarbor and First Capital
+   trade finance for First Capital. No per-client prompts.
+4. **A hard quality gate** (W1). `assessClientDeliverable` runs as a **blocking** step before persist,
+   for every artifact and every tenant: machinery, filler, open-inputs, evidence-placement,
+   visual-completeness, business-mode. A failing artifact is blocked or downgraded — uniformly. The
+   profile's `requiredExhibits` are enforced here, so "the architecture exhibit must render" is not a
+   hope, it is a gate.
+5. **Renderers are pure and tenant-agnostic** (W2/W3). The pipeline selects the renderer by
+   `profile.defaultFormat`; renderers draw the model, hold no client logic.
+6. **Deployed via the control lane.** Merge → `aca-main-deploy` updates the single pipeline for ALL
+   tenants at once. Rollout is staged by feature flag, then promoted to platform-default once proven —
+   but enforcement (gate + profile) lives in the one path regardless of the flag.
+
+**No-bandages rule:** every capability is added to the shared pipeline, governed, gated, and
+tenant-agnostic — never as a one-off script, direct client, or per-client fork. The SkyHarbor IROPS
+run is the **live proof of the enforced system**, not a special-case demo.
+
 ## 1. Format tiering — the right surface for the story
 
 Same governed generation, three surfaces:
