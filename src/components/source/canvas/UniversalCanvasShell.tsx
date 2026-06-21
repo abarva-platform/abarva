@@ -336,6 +336,7 @@ export function UniversalCanvasShell({
     return `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?${params.toString()}`;
   };
   const [thread, setThread] = useState<ChatMessage[]>([]);
+  const messageSequenceRef = useRef(0);
   const [selectedDocCode, setSelectedDocCode] = useState<string | undefined>(
     undefined,
   );
@@ -870,12 +871,16 @@ export function UniversalCanvasShell({
     text: string,
     attachments: AttachmentRef[],
   ): Promise<void> => {
+    const nextMessageId = (prefix: "u" | "a") => {
+      messageSequenceRef.current += 1;
+      return `${prefix}-${messageSequenceRef.current}`;
+    };
     const trimmed = text.trim();
     const attachmentIds = attachments.map((a) => a.id);
     if (!trimmed && attachmentIds.length === 0) return;
 
     const userTurn: ChatMessage = {
-      id: `u-${Date.now()}`,
+      id: nextMessageId("u"),
       role: "user",
       body:
         trimmed.length > 0
@@ -906,14 +911,14 @@ export function UniversalCanvasShell({
         payload?.error?.message ??
         `${displayAgentName(dockAgent)} could not produce a response right now.`;
       const agentTurn: ChatMessage = {
-        id: `a-${Date.now() + 1}`,
+        id: nextMessageId("a"),
         role: "agent",
         body,
       };
       setThread((t) => [...t, agentTurn]);
     } catch (err) {
       const agentTurn: ChatMessage = {
-        id: `a-${Date.now() + 1}`,
+        id: nextMessageId("a"),
         role: "agent",
         body:
           err instanceof Error
