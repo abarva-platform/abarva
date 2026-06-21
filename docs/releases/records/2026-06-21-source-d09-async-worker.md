@@ -27,9 +27,10 @@ This release adds an async durable worker that drains the `source_artifact_gener
 
 ## Changes Included
 
-- `src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route.ts`: `isWorkerCall` detection + `requestStartedAtMs` override
+- `src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route.ts`: `isWorkerCall` detection + `requestStartedAtMs` override; `artifactId` added to 422 quality_gate_failed response
 - `src/lib/source/artifact-generation-queue.ts`: `findNextQueuedSourceArtifactGenerationJob`, `sweepStaleSourceArtifactGenerationJobs`, worker header in `defaultGenerateQueuedArtifact`
 - `src/scripts/process-source-artifact-generation-queue.ts`: new worker script
+- `src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/enqueue-worker/route.ts`: new `POST` endpoint to queue a worker job after a sync 422
 
 ## QA / Validation
 
