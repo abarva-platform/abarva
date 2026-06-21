@@ -45,6 +45,9 @@ chunks directly from Postgres before falling back to keyword retrieval.
 - `src/lib/knowledge/tenant-data/types.ts`
 - `src/lib/knowledge/context-broker/broker.ts`
 - `src/lib/knowledge/context-broker/types.ts`
+- `src/lib/crawl/persona-switcher.ts`
+- `scripts/crawl/post-deploy-harness.ts`
+- `scripts/smoke/p21-post-deploy-crawl.spec.ts`
 - Focused Jest coverage for embedding writes, pgvector retrieval, broker info
   tags, and Azure Search parity shape.
 
@@ -55,8 +58,15 @@ chunks directly from Postgres before falling back to keyword retrieval.
   - Result: 4 suites passed, 106 tests passed, 9 skipped.
   - Note: Jest emitted pre-existing duplicate manual mock warnings for
     markdown/GFM mocks; they did not fail the run.
-- PENDING: private VNet migration apply proof.
+- PASS: Private VNet DB proof `job-abarva-private-operator-eus-gnxyv7q`
+  confirmed pgvector extension `0.8.2`, native `embedding_vector` column,
+  HNSW index, zero embedded rows missing vectors across six tenants, and a
+  tenant-scoped `<=>` query returning ranked Apex chunks.
 - PENDING: signed-in retrieval proof showing a chunk cited via pgvector path.
+- ADDED: explicit post-deploy crawl surface `context-demo` that logs in, calls
+  protected `/api/context/demo`, and fails unless the broker returns the
+  Postgres pgvector info tag, semantic chunks, a positive vector score, and a
+  tenant-matched top chunk.
 
 ## Rollout Plan
 
@@ -64,7 +74,10 @@ Merge after CI is green. Apply the migration inside the private VNet so every
 existing schema with `enterprise_context_chunks` receives `embedding_vector` and
 HNSW/tenant indexes. Re-run the embedding job with `--postgres-only` or the
 normal path to populate `embedding_vector`, then run signed-in answer/retrieval
-QA for at least one tenant before declaring W2.2 complete.
+QA for at least one tenant before declaring W2.2 complete. The signed-in proof
+can be run on demand with the post-deploy crawl `context-demo` surface; it is
+kept out of the default full crawl to avoid adding OpenAI/vector cost to every
+normal deploy.
 
 ## Deployment Authority
 
@@ -92,8 +105,11 @@ indexes and then the column in each affected schema.
 - VNet migration output proving extension, column, and index creation.
 - Signed-in answer/retrieval proof showing pgvector info tag and cited tenant
   chunk.
+- On-demand crawl artifact:
+  `transcripts/<persona>__context-demo.context-demo-vector.json`.
 
 ## Known Gaps
 
-Live extension/column/index proof and signed-in retrieval proof are still
-pending because those must run inside the private VNet, not from the laptop.
+Live extension/column/index proof is complete. Signed-in retrieval proof remains
+pending until the `context-demo` crawl surface runs against the deployed app and
+captures a pgvector-backed semantic chunk from the protected route.
