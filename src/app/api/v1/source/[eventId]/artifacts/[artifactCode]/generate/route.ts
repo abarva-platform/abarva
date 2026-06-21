@@ -286,6 +286,10 @@ export async function generateSourceArtifactDraft(
   _req: Request,
   { params }: RouteCtx,
 ) {
+  // When called from the async worker (X-Source-Worker-Call: 1), the 110s sync
+  // budget does not apply — the worker has no web-request deadline, so the
+  // quality-gate rewrite can always run regardless of how long generation took.
+  const isWorkerCall = _req.headers.get("x-source-worker-call") === "1";
   let tenancy;
   let tenancyError: unknown = null;
   try {
@@ -563,7 +567,9 @@ export async function generateSourceArtifactDraft(
       artifactId: artifactRow.id,
       model: template.model,
       maxTokens: template.maxTokens,
-      requestStartedAtMs: startedAt,
+      // Worker calls have no sync deadline — reset the clock so the rewrite
+      // always has the full budget regardless of how long generation took.
+      requestStartedAtMs: isWorkerCall ? Date.now() : startedAt,
     });
     if (!qualityResult.ok) {
       return Response.json(
