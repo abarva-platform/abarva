@@ -89,12 +89,14 @@ import {
 
 const REGISTRY_STORAGE_BUCKET = "source-artifacts";
 const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
-// The ACA ingress cuts long synchronous requests well before the 300s
-// maxDuration (observed ~150s gateway 504 on the live runtime). Budget below
-// that so the gate returns its draft + verdict gracefully (422) instead of
-// being killed mid-rewrite with a 504. Pair with capped artifact maxTokens so
-// the full draft→review→rewrite still fits.
-const SOURCE_SYNC_GENERATION_BUDGET_MS = 110_000;
+// Board-grade artifacts (e.g. d09 with 128k maxTokens) take 450-550s for the
+// first draft — far beyond the original 110s budget, which meant the
+// quality-gate rewrite never fired (stuck at 7/10). The X-Abarva-Json-Heartbeat
+// wrapper keeps the ACA ingress alive for the full duration, so the practical
+// limit is the ACA replica session timeout (no forced cut at 150s). Setting
+// the budget to 20 min lets rewrite always attempt for any artifact that
+// completes draft generation within that window.
+const SOURCE_SYNC_GENERATION_BUDGET_MS = 1_200_000;
 const SOURCE_JSON_HEARTBEAT_INTERVAL_MS = 12_000;
 const SOURCE_QUALITY_REVIEW_MAX_TOKENS = 3_200;
 const SOURCE_QUALITY_REWRITE_MIN_REMAINING_MS = 45_000;
