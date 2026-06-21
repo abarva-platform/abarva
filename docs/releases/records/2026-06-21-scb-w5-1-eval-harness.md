@@ -59,7 +59,7 @@ Revert the PR. No data, migration, worker, environment, or feature flag rollback
 
 ## Audit Evidence
 
-- PR URL: to be filled when opened.
+- PR URL: https://github.com/abarva-platform/abarva/pull/3788
 - JSON proof artifact path from local run: `/tmp/abarva-scb-w5-1-golden-eval.json`.
 - Commands listed in QA / Validation.
 
