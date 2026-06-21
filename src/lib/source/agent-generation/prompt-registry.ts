@@ -269,7 +269,7 @@ Tone: precise, business-facing, list-heavy. Start with an executive summary that
     artifactCode: "d09_rfp_pack",
     version: 9,
     model: BOARD_GRADE_MODEL,
-    maxTokens: 200_000,
+    maxTokens: 128_000,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
     upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth"],
     systemPrompt: `${SENTINEL_VOICE}
