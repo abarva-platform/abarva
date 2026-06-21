@@ -253,4 +253,24 @@ describe("live-answer bank", () => {
     expect(evidence.deterministicPass).toBe(true);
     expect(patternRange.deterministicPass).toBe(true);
   });
+
+  it("recognizes clinical reporting-source next-move wording", () => {
+    const result = checkLiveAnswerCase(
+      {
+        id: "regression-clinical-next-move",
+        query: "Compare top clinical decision support alerts by override rate.",
+        expectedExpertId:
+          "xp.healthcare-provider.clinical-process-transformation",
+        expectedBehaviors: ["output_shape_table", "name_real_next_move"],
+        notes: "Regression for deployed clinical reporting-source phrasing.",
+      },
+      {
+        prose:
+          "Those baselines aren't in the connected enterprise data for this session — they live in your Epic reporting environment, specifically the BPA analytics workbench and the in-basket activity reports. That said, here's what's worth knowing as you go pull that data.",
+        hasTable: true,
+      },
+    );
+
+    expect(result.deterministicPass).toBe(true);
+  });
 });
