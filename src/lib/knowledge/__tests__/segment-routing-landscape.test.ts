@@ -28,6 +28,13 @@ describe("landscape segment routing (data_estate + infrastructure)", () => {
     expect(segs).toContain("data_estate");
   });
 
+  it("routes ampersand data landscape wording to data_estate", () => {
+    const segs = selectTenantEnterpriseSegments(
+      "Talk about our current data & analytics landscape — name the platforms and owners you can see in our loaded context.",
+    );
+    expect(segs).toContain("data_estate");
+  });
+
   it("routes infrastructure questions to infrastructure", () => {
     const segs = selectTenantEnterpriseSegments(
       "What is our infrastructure estate — datacenters, virtualization, storage, network, and cloud accounts?",

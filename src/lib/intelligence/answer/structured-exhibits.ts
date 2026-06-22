@@ -24,6 +24,7 @@ function sourceClassForAskSource(
 ): AnswerCitation["sourceClass"] {
   switch (source.type) {
     case "TENANT":
+    case "SURFACE":
       return "tenant-fact";
     case "GRAPH":
       return "graph";
