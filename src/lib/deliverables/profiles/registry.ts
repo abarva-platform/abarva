@@ -184,6 +184,7 @@ const targetStateArchitecture: DeliverableProfile = {
 const solutionDesign: DeliverableProfile = {
   key: "solution_design",
   renderer: "html_architecture",
+  visualRendererRequired: true,
   title: "Solution Design",
   clientFacing: true,
   audience: ["cto", "program_leadership", "ciso"],

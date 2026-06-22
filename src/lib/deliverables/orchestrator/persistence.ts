@@ -33,6 +33,7 @@ import {
   renderArchitectureHtml,
   ARCHITECTURE_RENDERED_EXHIBITS,
   deriveArchitectureContractSignals,
+  type ArchitectureContractSignals,
 } from "@/lib/visual-system/architecture-html-renderer";
 import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
 import {
@@ -129,6 +130,7 @@ export async function persistDeliverable(
   const deliverableKey = deliverableKeyForOrchestratorType(
     result.brief.deliverableType,
   );
+  let profileRenderedHtml = false;
 
   // ── Stage 6: renderer selection by profile (flag-gated rollout) ──
   // When the generation passes produced structured models, render the profile's
@@ -139,6 +141,7 @@ export async function persistDeliverable(
     if (profile.renderer === "html_architecture" && models?.architectureModel) {
       html = renderArchitectureHtml(models.architectureModel);
       outputFormat = "html";
+      profileRenderedHtml = true;
     } else if (profile.renderer === "pptx_storyline" && models?.storylineDeck) {
       // HTML storyline deck now; native PPTX export is the same model later.
       html = renderDeckHtml(models.storylineDeck);
@@ -149,7 +152,7 @@ export async function persistDeliverable(
   // Flag-gated (moves_decision_storytelling): emit the exhibit-led executive deck (HTML) from the
   // SAME governed document instead of the prose HTML. Any failure falls back to the prose render —
   // a deck-render error must never fail a generation that already passed the gates.
-  if (opts.renderAsDeck) {
+  if (opts.renderAsDeck && !profileRenderedHtml) {
     try {
       const deck = buildDeckHtmlFromDocument({
         doc,
@@ -181,10 +184,21 @@ export async function persistDeliverable(
   let qualityQuarantined = false;
   let qualityQuarantineReason: string | null = null;
   if (deliverableKey) {
+    const profile = DELIVERABLE_PROFILES[deliverableKey];
+    const architectureSignals: Partial<ArchitectureContractSignals> = opts
+      .structuredModels?.architectureModel
+      ? deriveArchitectureContractSignals(
+          opts.structuredModels.architectureModel,
+          html,
+        )
+      : {};
     // Exhibits the structured generation passes produced (stage 4) count toward
-    // the contract's exhibit-enforcement check.
+    // the contract's exhibit-enforcement check only when the FINAL persisted
+    // HTML still contains real rendered architecture visuals. This prevents a
+    // later prose/deck fallback from getting credit for diagrams that no longer
+    // exist in the artifact the client sees.
     const additionalExhibits: ExhibitId[] = [];
-    if (opts.structuredModels?.architectureModel)
+    if (architectureSignals.exhibitsRenderedAsVisual === true)
       additionalExhibits.push(...ARCHITECTURE_RENDERED_EXHIBITS);
     if (opts.structuredModels?.storylineDeck)
       additionalExhibits.push(
@@ -201,12 +215,6 @@ export async function persistDeliverable(
         ? { governanceOk: opts.governanceOk }
         : {}),
     });
-    const architectureSignals = opts.structuredModels?.architectureModel
-      ? deriveArchitectureContractSignals(
-          opts.structuredModels.architectureModel,
-          html,
-        )
-      : {};
     const assessment = assessClientDeliverable({
       ...contractInput,
       ...architectureSignals,
@@ -223,7 +231,7 @@ export async function persistDeliverable(
             ? " — persisting as internal_draft"
             : " — observe-only"),
       );
-      if (opts.enforceQualityContract) {
+      if (opts.enforceQualityContract || profile.visualRendererRequired) {
         qualityQuarantined = true;
         qualityQuarantineReason = `${assessment.state}: ${reasons}`;
       }

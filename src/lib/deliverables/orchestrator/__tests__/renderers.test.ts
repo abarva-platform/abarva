@@ -86,4 +86,10 @@ describe('HTML preview', () => {
     // Confidence rendered as a status pill, not raw text in a bare cell.
     expect(html).toMatch(/class="pill pill-fresh"/);
   });
+
+  it('renders declared exhibits as visible SVG-backed exhibit blocks', () => {
+    expect(html).toMatch(/class="visual-exhibit"/);
+    expect(html).toMatch(/Service Tower Scope Map/);
+    expect(html).toMatch(/<svg class="exhibit-svg"/);
+  });
 });
