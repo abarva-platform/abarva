@@ -1,4 +1,8 @@
 import { POST } from '../route';
+import {
+  classifySentinelIntent,
+  runSentinelReasoning,
+} from '@/lib/agents/sentinel-reasoning';
 import { recordSynthesisEvent } from '@/lib/reasoning/synthesis-telemetry';
 
 jest.mock('@clerk/nextjs/server', () => ({
@@ -95,5 +99,71 @@ describe('POST /api/intelligence/ask telemetry', () => {
     );
     expect(text).toContain('"type":"done"');
     expect(text).toContain('"telemetryEventId":"tlm_sentinel_1"');
+  });
+
+  it('emits AgentAnswer exhibits for the Sentinel reasoning path', async () => {
+    jest.mocked(classifySentinelIntent).mockResolvedValueOnce({
+      intent: 'it_productivity',
+      confidence: 0.91,
+      entities: ['Apex Retail Group'],
+      matchedPatternSlugs: ['ai-productivity-value-gate'],
+      citations: [],
+      reason: 'IT productivity question',
+    });
+    jest.mocked(runSentinelReasoning).mockImplementationOnce(async function* () {
+      yield {
+        id: 'clarify',
+        name: 'Clarify',
+        sequence: 1,
+        content:
+          'Apex should stage a $590K productivity-AI portfolio and hold $120K until telemetry proves adoption.',
+        citations: [
+          {
+            id: 'PAT-AI-001',
+            label: 'AI productivity value gate',
+            sourceType: 'corpus_pattern',
+            version: 1,
+            detail: 'Require telemetry before scaling AI productivity claims.',
+          },
+        ],
+        confidence: 0.82,
+        dataClass: 'internal',
+        clientId: 'client-1',
+        corpusVersionPinned: 1,
+        templateVersionPinned: 1,
+        traceId: 'trace-1',
+      };
+    });
+
+    const response = await POST(
+      makeRequest({ q: 'Show Apex AI productivity spend as a table', client: 'apexretail' }) as never,
+    );
+    const text = await readResponseText(response);
+    const events = text
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const agentAnswer = events.find((event) => event.type === 'agent-answer')?.answer;
+
+    expect(agentAnswer).toBeTruthy();
+    expect(agentAnswer.tables[0]).toEqual(
+      expect.objectContaining({
+        id: 'answer-figures',
+        title: 'Figures Mentioned',
+      }),
+    );
+    expect(agentAnswer.tables[0].rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ value: '$590K' }),
+        expect.objectContaining({ value: '$120K' }),
+      ]),
+    );
+    expect(agentAnswer.citations[0]).toEqual(
+      expect.objectContaining({
+        recordId: 'PAT-AI-001',
+        sourceClass: 'corpus-pattern',
+      }),
+    );
+    expect(text).toContain('"type":"done"');
   });
 });

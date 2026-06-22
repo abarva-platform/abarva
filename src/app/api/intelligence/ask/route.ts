@@ -5,6 +5,7 @@ import {
   classifySentinelIntent,
   runSentinelReasoning,
 } from "@/lib/agents/sentinel-reasoning";
+import type { SentinelCitation } from "@/lib/agents/sentinel-reasoning";
 import { getCurrentPerson } from "@/lib/auth/maestro";
 import { assembleUserContextBlock } from "@/lib/agent/prompts/_shared/user-context";
 import type { AskSource, AskSurfaceContext } from "@/lib/intelligence/ask";
@@ -180,6 +181,7 @@ async function handleAsk(payload: AskPayload) {
         };
         patternId = sentinelIntent.matchedPatternSlugs[0] ?? null;
         if (sentinelIntent.intent === "it_productivity") {
+          const sentinelCitations: SentinelCitation[] = [];
           controller.enqueue(
             encoder.encode(
               JSON.stringify({
@@ -204,9 +206,49 @@ async function handleAsk(payload: AskPayload) {
           })) {
             assistantText += `${stage.name}: ${stage.content}\n`;
             citationCount += stage.citations.length;
+            sentinelCitations.push(...stage.citations);
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({ type: "sentinel-stage", stage }) + "\n",
+              ),
+            );
+          }
+          const routing = routeQuestion({ query });
+          const exhibits = buildStructuredExhibits({
+            prose: assistantText,
+            routing,
+            sources: sentinelSourcesFromCitations(sentinelCitations),
+          });
+          if (hasRenderableStructuredExhibits({ ...exhibits, graphs: [] })) {
+            const agentAnswer: AgentAnswer = {
+              engineVersion: "agent-answer/v1",
+              surface: "intelligence",
+              expertId: routing.experts[0]?.id ?? null,
+              contributingExperts: routing.experts,
+              prose: "",
+              tables: exhibits.tables,
+              charts: exhibits.charts,
+              graphs: [],
+              citations: exhibits.citations,
+              gaps: [],
+              recommendedActions: [],
+              groundingMode: exhibits.citations.some(
+                (citation) => citation.sourceClass === "tenant-fact",
+              )
+                ? "mixed"
+                : "industry-pattern",
+              confidence: exhibits.citations.length > 0 ? "medium" : "low",
+              limits: [
+                "Structured exhibits only include figures or sources already present in Ava's answer.",
+              ],
+              crossTenantBlocked: false,
+            };
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "agent-answer",
+                  answer: agentAnswer,
+                }) + "\n",
               ),
             );
           }
@@ -428,6 +470,32 @@ async function handleAsk(payload: AskPayload) {
       "Cache-Control": "no-cache",
     },
   });
+}
+
+function sentinelSourcesFromCitations(
+  citations: SentinelCitation[],
+): AskSource[] {
+  const seen = new Set<string>();
+  const sources: AskSource[] = [];
+  for (const citation of citations) {
+    const key = citation.id || `${citation.label}:${citation.detail ?? ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    sources.push({
+      type:
+        citation.sourceType === "client_data"
+          ? "TENANT"
+          : citation.sourceType === "reasoning_trace"
+            ? "GRAPH"
+            : "PATTERN",
+      id: citation.id || null,
+      name: citation.label || citation.id || "Sentinel citation",
+      detail: citation.detail ?? "",
+      url: citation.url,
+      confidence: undefined,
+    });
+  }
+  return sources;
 }
 
 function recordSentinelTelemetry(input: {
