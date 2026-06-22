@@ -12,7 +12,9 @@
 
 Adds a **real React Home surface** (`HomeSurface`) whose "Ask about anything" is the **canonical AvaAsk** — it POSTs the shared `/api/intelligence/ask` engine and renders the answer through the one `AgentAnswerRenderer`, exactly like the Intelligence surface. This replaces the static `/home-v2` iframe and its **fake local answer** (`answerForAsk`, which globbed pre-baked facts with "Also:" and never called a model). It also introduces a **reusable `AvaAsk` component** so any surface can answer + render identically — one ask, one renderer, no surface-local logic.
 
-The new surface is **gated behind a new `home_react_surface` flag, default OFF**, so the live static Home is unchanged until the React surface is proven live. The full 19-dimension Context Explorer content port is a follow-up that must land before the flag is flipped.
+It is a full **Context Explorer**: a left rail of the tenant's **loaded context dimensions** (from the binding — real per-tenant data, not the static page's single-tenant demo blob), a canvas overview (trust posture + signals + industry-corpus patterns), and per-dimension detail on click — with the canonical ask always at the top.
+
+The new surface is **gated behind a new `home_react_surface` flag, default OFF**, so the live static Home is unchanged until the React surface is proven live.
 
 ## Layer Impact
 
@@ -31,13 +33,13 @@ Feature flag — `home_react_surface`, **default OFF**, tenant opt-in via `inclu
 ## Changes Included
 
 - `src/components/agent-answer/AvaAsk.tsx` (+ `__tests__/AvaAsk.test.tsx`) — the reusable canonical ask.
-- `src/components/home/HomeSurface.tsx` (+ `__tests__/HomeSurface.test.tsx`) — the React Home surface.
+- `src/components/home/HomeSurface.tsx` (+ `__tests__/HomeSurface.test.tsx`) — the React Home Context Explorer: dimension rail + overview + per-dimension detail, all from the binding, plus the canonical ask.
 - `src/app/(maestro)/home/page.tsx` — flag branch: React Home when `home_react_surface` is on, static iframe otherwise.
 - `src/lib/features/registry.ts` — registered the `home_react_surface` flag.
 
 ## QA / Validation
 
-- Jest (jsdom): `AvaAsk.test.tsx` — AvaAsk makes the canonical `POST /api/intelligence/ask` (rich + surfaceContext) and renders the streamed `AgentAnswer` table once, with exactly one "Ava ·" header (no double-render). `HomeSurface.test.tsx` — composes the canonical ask + real context cards from the binding (not a row-dump). Result: **passed**.
+- Jest (jsdom): `AvaAsk.test.tsx` — AvaAsk makes the canonical `POST /api/intelligence/ask` (rich + surfaceContext) and renders the streamed `AgentAnswer` table once, with exactly one "Ava ·" header (no double-render). `HomeSurface.test.tsx` — renders the overview (ask + real signals + the loaded-dimension rail) and opens a dimension's detail from the rail. Result: **passed** (3 tests).
 - `tsc --noEmit` clean on all new/changed files.
 - Live signed-in verification of the flipped flag is **not run** yet — it is the gate before any rollout.
 
@@ -67,5 +69,6 @@ The flag is default OFF, so the merge is inert — nothing to roll back at merge
 
 ## Known Gaps
 
-- **The 19-dimension Context Explorer content is not yet ported.** The React Home currently renders the canonical ask + the top context signal cards; the static `public/home-v2` still holds the full rail + per-dimension current-state assessments. That content port must land **before** the flag is flipped, or flipping would lose the rich explorer.
+- The explorer renders the binding's **loaded context dimensions** (8 per tenant today) + signals + corpus — the real per-tenant data. This intentionally **retires** the static page's single-tenant demo blob (19 hand-authored assessments that were identical for every tenant); the React surface shows real per-tenant context instead. If a richer per-dimension current-state model is later wanted, it should be sourced from the data plane, not re-baked.
+- Live flip + signed-in verification is the gate before rollout (flip `home_react_surface` for one tenant, confirm on `/home`, then platform-default + retire `public/home-v2`).
 - The engine-side exhibit-quality issue (charts/tables scraped from prose) is tracked separately; Home uses the shared engine + renderer, so it inherits that fix automatically with no Home-specific code.
