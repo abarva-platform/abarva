@@ -358,6 +358,36 @@ describe("runDeliverableForTenant", () => {
     expect(out.retrievedEvidence).toBe(1);
   });
 
+  it("returns blocked when persistence quarantines the generated artifact", async () => {
+    const generate = (async () =>
+      ({
+        ok: true,
+        brief: {} as never,
+        document: { generatedSections: [{}, {}, {}] } as never,
+        quality: { pass: true, warnings: [] } as never,
+        passTrace: [],
+      }) as OrchestrationResult) as never;
+    const persist = (async () => ({
+      id: "art-quarantine",
+      blobUrl: "/api/v1/artifacts/art-quarantine",
+      quarantineReason:
+        "blocked_storyline: architecture_completeness, missing_input_handling",
+    })) as never;
+    const out = await runDeliverableForTenant(baseInput, {
+      assemble,
+      loadPolicy,
+      generate,
+      persist,
+    });
+    expect(out.ok).toBe(false);
+    expect(out.artifactId).toBe("art-quarantine");
+    expect(out.qualityPass).toBe(false);
+    expect(out.blockedReason).toMatch(/quality gate blocked export/);
+    expect(out.blockers).toContain(
+      "blocked_storyline: architecture_completeness, missing_input_handling",
+    );
+  });
+
   it("returns blockers (and does NOT persist) when the quality gate refuses", async () => {
     let persisted = false;
     const generate = (async () =>

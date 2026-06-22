@@ -265,6 +265,20 @@ export async function runDeliverableForTenant(
     ],
   });
 
+  if (record.quarantineReason) {
+    return {
+      ok: false,
+      artifactId: record.id,
+      blobUrl: record.blobUrl,
+      qualityPass: false,
+      blockers: [record.quarantineReason],
+      blockedReason: `quality gate blocked export: ${record.quarantineReason}`,
+      warnings: result.quality?.warnings ?? [],
+      sectionCount: result.document.generatedSections.length,
+      retrievedEvidence: retrievedCount,
+    };
+  }
+
   return {
     ok: true,
     artifactId: record.id,
