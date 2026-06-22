@@ -1,0 +1,232 @@
+"use client";
+
+// Canonical "Ask Ava" — the ONE ask component every surface should use.
+//
+// It posts to the shared engine (/api/intelligence/ask), streams the answer, and
+// renders it through the canonical AgentAnswerRenderer — prose + tables + charts +
+// citations + named experts. No surface-local answer assembly, no per-surface
+// renderer. Drop this into Home, Intelligence, Tower, Source, Moves and every
+// surface answers (and renders) identically. This is what retires the static
+// Home mock + its fake `answerForAsk`.
+//
+// Note on exhibits: this renders whatever AgentAnswer the engine emits. Exhibit
+// *quality* (e.g. not scraping figures out of prose) is the engine's job — fix it
+// once, in the engine, and every surface using AvaAsk benefits at once.
+
+import { useCallback, useRef, useState } from "react";
+import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
+import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
+import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
+import type { AskSurfaceContext } from "@/lib/intelligence/ask/types";
+
+const CSS = `
+.avaask{--aa-line:#E7E3DA;--aa-ink:#1A1A18;--aa-muted:#6B6B63;--aa-faint:#9A998E;--aa-green:#1F6B3A;--aa-card:#fff;font-family:var(--font-geist-sans),Inter,system-ui,sans-serif}
+.avaask .aa-bar{display:flex;align-items:center;gap:10px;background:var(--aa-card);border:1px solid var(--aa-line);border-radius:14px;padding:10px 10px 10px 18px;max-width:760px;margin:0 auto;box-shadow:0 1px 0 rgba(15,23,42,.02)}
+.avaask .aa-bar:focus-within{border-color:#22AEEA;box-shadow:0 0 0 3px rgba(34,174,234,.12)}
+.avaask .aa-spark{color:var(--aa-green);flex:none}
+.avaask .aa-bar input{flex:1;border:none;outline:none;font-size:14px;background:transparent;color:var(--aa-ink)}
+.avaask .aa-bar button{background:var(--aa-ink);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer}
+.avaask .aa-bar button:disabled{opacity:.5;cursor:default}
+.avaask .aa-box{max-width:960px;margin:16px auto 0;background:var(--aa-card);border:1px solid var(--aa-line);border-radius:12px;padding:18px 22px;text-align:left}
+.avaask .aa-label{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--aa-green);margin-bottom:8px}
+.avaask .aa-prose{font-size:14px;line-height:1.65;color:var(--aa-ink)}
+.avaask .aa-think{color:var(--aa-faint);font-style:italic;font-size:13.5px}
+.avaask .aa-exps{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px;padding-top:13px;border-top:1px solid var(--aa-line)}
+.avaask .aa-exp{display:inline-flex;align-items:center;background:#E7F0E9;color:var(--aa-green);border-radius:20px;padding:3px 11px;font-size:11.5px;font-weight:500}
+.avaask .aa-fu{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
+.avaask .aa-chip{display:inline-flex;align-items:center;border:1px solid var(--aa-line);border-radius:20px;padding:5px 13px;font-size:12px;color:#3a3a34;cursor:pointer;background:var(--aa-card)}
+`;
+
+type Evt = {
+  type?: string;
+  text?: string;
+  contributingExperts?: { id: string; name: string }[];
+  followups?: string[];
+  answer?: AgentAnswer;
+};
+
+export function AvaAsk({
+  placeholder = "Ask about anything — data, vendors, risk, adoption, customers…",
+  client,
+  surfaceContext,
+}: {
+  placeholder?: string;
+  /** Optional tenant override; otherwise the session's active client is used. */
+  client?: string;
+  /** Surface tagging + page facts passed to the engine (e.g. activeTab "home"). */
+  surfaceContext?: AskSurfaceContext;
+}) {
+  const [query, setQuery] = useState("");
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [experts, setExperts] = useState<{ id: string; name: string }[]>([]);
+  const [followups, setFollowups] = useState<string[]>([]);
+  const [agentAnswer, setAgentAnswer] = useState<AgentAnswer | null>(null);
+  const [fetching, setFetching] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const ask = useCallback(
+    async (q: string) => {
+      const trimmed = q.trim();
+      if (!trimmed) return;
+      abortRef.current?.abort();
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+      setFetching(true);
+      setAnswer(null);
+      setExperts([]);
+      setFollowups([]);
+      setAgentAnswer(null);
+      try {
+        const res = await fetch("/api/intelligence/ask", {
+          method: "POST",
+          headers: {
+            Accept: "application/x-ndjson",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            q: trimmed,
+            client,
+            format: "rich",
+            surfaceContext,
+          }),
+          signal: ctrl.signal,
+        });
+        if (!res.ok) {
+          setAnswer("Ava couldn't retrieve an answer. Try again.");
+          return;
+        }
+        const reader = res.body?.getReader();
+        if (!reader) {
+          setAnswer(await res.text());
+          return;
+        }
+        const dec = new TextDecoder();
+        let buf = "";
+        let prose = "";
+        const apply = (raw: string) => {
+          const s = raw.trim();
+          if (!s) return;
+          let evt: Evt;
+          try {
+            evt = JSON.parse(s);
+          } catch {
+            prose += prose ? `\n${s}` : s;
+            setAnswer(prose);
+            return;
+          }
+          if (evt.type === "delta" && typeof evt.text === "string") {
+            prose += evt.text;
+            setAnswer(prose);
+          } else if (
+            evt.type === "contributing-experts" &&
+            Array.isArray(evt.contributingExperts)
+          ) {
+            setExperts(evt.contributingExperts);
+          } else if (evt.type === "followups" && Array.isArray(evt.followups)) {
+            setFollowups(evt.followups);
+          } else if (evt.type === "agent-answer" && evt.answer) {
+            setAgentAnswer(evt.answer);
+          }
+        };
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          let nl: number;
+          while ((nl = buf.indexOf("\n")) >= 0) {
+            apply(buf.slice(0, nl));
+            buf = buf.slice(nl + 1);
+          }
+        }
+        apply(buf);
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          setAnswer("Ava couldn't retrieve an answer. Try again.");
+        }
+      } finally {
+        setFetching(false);
+      }
+    },
+    [client, surfaceContext],
+  );
+
+  return (
+    <div className="avaask">
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      <div className="aa-bar">
+        <span className="aa-spark">✦</span>
+        <input
+          value={query}
+          placeholder={placeholder}
+          aria-label="Ask Ava"
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              ask(query);
+            }
+          }}
+          disabled={fetching}
+        />
+        <button
+          type="button"
+          onClick={() => ask(query)}
+          disabled={fetching || !query.trim()}
+        >
+          {fetching ? "…" : "Ask"}
+        </button>
+      </div>
+
+      {(fetching || answer || agentAnswer) && (
+        <div className="aa-box">
+          {agentAnswer ? (
+            // Canonical render: one renderer, prose + exhibits + citations + experts.
+            // Prose streams on its own channel, so merge it onto the structured
+            // answer — this avoids the double-header seen when both are rendered.
+            <AgentAnswerRenderer
+              answer={{ ...agentAnswer, prose: answer ?? agentAnswer.prose }}
+            />
+          ) : (
+            <>
+              <div className="aa-label">Ava · Intelligence</div>
+              {fetching && !answer ? (
+                <div className="aa-think">Thinking…</div>
+              ) : answer ? (
+                <div className="aa-prose">
+                  <AgentMarkdown text={answer} />
+                </div>
+              ) : null}
+              {experts.length > 0 && (
+                <div className="aa-exps">
+                  {experts.map((e) => (
+                    <span className="aa-exp" key={e.id} title={e.id}>
+                      {e.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+          {followups.length > 0 && (
+            <div className="aa-fu">
+              {followups.map((f) => (
+                <span
+                  className="aa-chip"
+                  key={f}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    setQuery(f);
+                    ask(f);
+                  }}
+                >
+                  {f}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
