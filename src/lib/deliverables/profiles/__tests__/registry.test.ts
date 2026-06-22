@@ -1,5 +1,4 @@
 import {
-  DELIVERABLE_PROFILES,
   getDeliverableProfile,
   listDeliverableProfiles,
   CLIENT_NARRATIVE_BANNED_TERMS,
@@ -80,6 +79,65 @@ describe("deliverable profile registry (W0)", () => {
         expect(p.missingInputPolicy).toBe("single_open_inputs_table");
       }
     }
+  });
+
+  it("codifies the executive visual standards for major Moves artifacts", () => {
+    expect(getDeliverableProfile("target_state_architecture").visualStandard?.requiredVisuals).toEqual(
+      expect.arrayContaining([
+        "Conceptual architecture diagram",
+        "Logical architecture diagram",
+        "Physical/deployment architecture diagram",
+        "Data flow diagram",
+        "Integration flow diagram",
+        "Security/trust boundary diagram",
+      ]),
+    );
+    expect(getDeliverableProfile("business_case").visualStandard?.requiredVisuals).toEqual(
+      expect.arrayContaining([
+        "Value waterfall",
+        "Cost baseline bridge",
+        "Investment vs benefit timeline",
+        "Scenario comparison",
+      ]),
+    );
+    expect(getDeliverableProfile("execution_roadmap").visualStandard?.requiredVisuals).toEqual(
+      expect.arrayContaining([
+        "30/60/90-day action plan",
+        "Multi-wave roadmap",
+        "Dependency map",
+        "Stage-gate model",
+      ]),
+    );
+    expect(getDeliverableProfile("handoff_package").visualStandard?.requiredVisuals).toEqual(
+      expect.arrayContaining([
+        "One-page executive storyline",
+        "Target-state architecture",
+        "Business case waterfall",
+        "Risk heatmap",
+        "Decision summary page",
+      ]),
+    );
+  });
+
+  it("requires aVa/Source decision and scorecard artifacts to render executive visuals", () => {
+    expect(getDeliverableProfile("source_atlas_decision_brief").visualRendererRequired).toBe(true);
+    expect(getDeliverableProfile("source_atlas_decision_brief").visualStandard?.requiredVisuals).toEqual(
+      expect.arrayContaining([
+        "One-page executive storyline",
+        "Decision tree",
+        "Recommendation scorecard",
+      ]),
+    );
+    expect(getDeliverableProfile("source_evaluation_scorecard").visualStandard?.requiredVisuals).toEqual(
+      expect.arrayContaining([
+        "Evaluation heatmap",
+        "Weighted scorecard",
+        "Vendor comparison chart",
+      ]),
+    );
+    expect(getDeliverableProfile("source_transition_plan").visualStandard?.requiredVisuals).toContain(
+      "Multi-wave roadmap",
+    );
   });
 
   it("keeps a non-empty client-narrative banned lexicon incl. phase labels", () => {

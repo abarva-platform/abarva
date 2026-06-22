@@ -10,6 +10,174 @@
 import type { DeliverableKey, DeliverableProfile } from "./types";
 import { SOURCE_PROFILES } from "./registry-source";
 
+const CURRENT_STATE_VISUAL_STANDARD = {
+  requiredVisuals: [
+    "Enterprise landscape map",
+    "Capability heatmap",
+    "Process landscape map",
+    "Application portfolio summary",
+    "Data landscape map",
+    "Pain point/root cause map",
+    "Risk and control heatmap",
+    "Maturity assessment heatmap",
+    "Current-state architecture diagram",
+    "Current-state data flow diagram",
+  ],
+  requiredCharts: [
+    "Spend by tower/function",
+    "Applications by criticality/health",
+    "Incidents/service volume by category",
+    "Risk exposure by domain",
+  ],
+  requiredTables: ["Findings-to-implications matrix"],
+  clientToCompleteChecklistRequired: true,
+  readinessLabelRequired: true,
+} as const;
+
+const ARCHITECTURE_VISUAL_STANDARD = {
+  requiredVisuals: [
+    "Conceptual architecture diagram",
+    "Logical architecture diagram",
+    "Physical/deployment architecture diagram",
+    "Data flow diagram",
+    "Integration flow diagram",
+    "Security/trust boundary diagram",
+    "Application/platform interaction diagram",
+    "Operating model interaction pattern",
+    "Current-state vs target-state comparison",
+  ],
+  requiredTables: [
+    "Key architecture decisions table",
+    "Architecture risks and tradeoffs table",
+    "Client-to-complete checklist",
+  ],
+  clientToCompleteChecklistRequired: true,
+  readinessLabelRequired: true,
+} as const;
+
+const BUSINESS_CASE_VISUAL_STANDARD = {
+  requiredVisuals: [
+    "Value waterfall",
+    "Cost baseline bridge",
+    "Investment vs benefit timeline",
+    "Payback chart",
+    "Sensitivity analysis chart",
+    "Benefit realization roadmap",
+    "Risk-adjusted value view",
+    "Scenario comparison",
+    "Business outcomes mapped to value levers",
+  ],
+  requiredCharts: [
+    "Value waterfall",
+    "Payback chart",
+    "Scenario comparison: conservative / expected / upside",
+    "One-time vs run-rate cost view",
+  ],
+  requiredTables: [
+    "ROI / NPV / IRR summary table where available",
+    "Value pool assumptions",
+    "Benefit calculation logic",
+    "Cost categories",
+    "Investment estimate",
+    "Financial assumptions",
+    "Finance validation status",
+    "Measurement plan",
+  ],
+  clientToCompleteChecklistRequired: true,
+  readinessLabelRequired: true,
+} as const;
+
+const ROADMAP_VISUAL_STANDARD = {
+  requiredVisuals: [
+    "30/60/90-day action plan",
+    "Multi-wave roadmap",
+    "Workstream timeline",
+    "Milestone map",
+    "Dependency map",
+    "Critical path view",
+    "Resource ramp chart",
+    "Governance cadence model",
+    "Stage-gate model",
+    "Readiness burndown or maturity progression view",
+  ],
+  requiredTables: [
+    "Workstream plan",
+    "Milestone register",
+    "Dependency register",
+    "Decision log",
+    "Risk and mitigation plan",
+    "Acceptance criteria by phase",
+  ],
+  clientToCompleteChecklistRequired: true,
+  readinessLabelRequired: true,
+} as const;
+
+const GOVERNANCE_VISUAL_STANDARD = {
+  requiredVisuals: [
+    "Decision tree",
+    "Options comparison matrix",
+    "Recommendation scorecard",
+    "Risk/value tradeoff matrix",
+    "Gate readiness dashboard",
+    "Decision log",
+    "Approval flow",
+    "Escalation path",
+    "Open issues dashboard",
+  ],
+  requiredTables: ["Decision options and recommendation", "Open issues register"],
+  clientToCompleteChecklistRequired: true,
+  readinessLabelRequired: true,
+} as const;
+
+const OPERATING_MODEL_VISUAL_STANDARD = {
+  requiredVisuals: [
+    "Operating model diagram",
+    "RACI / value ownership matrix",
+    "Decision-rights model",
+    "Governance cadence model",
+    "Escalation path",
+    "Human / AI responsibility split",
+  ],
+  requiredTables: ["RACI", "Decision rights", "Operating cadence"],
+  clientToCompleteChecklistRequired: true,
+  readinessLabelRequired: true,
+} as const;
+
+const EXECUTIVE_READOUT_VISUAL_STANDARD = {
+  requiredVisuals: [
+    "One-page executive storyline",
+    "Before/after transformation visual",
+    "Value at stake chart",
+    "Current-state heatmap",
+    "Target-state architecture",
+    "Operating model diagram",
+    "Roadmap timeline",
+    "Business case waterfall",
+    "Risk heatmap",
+    "Decision summary page",
+    "KPI/outcome dashboard",
+  ],
+  requiredTables: ["Appendix evidence tables"],
+  clientToCompleteChecklistRequired: true,
+  readinessLabelRequired: true,
+} as const;
+
+const VALUE_REALIZATION_VISUAL_STANDARD = {
+  requiredVisuals: [
+    "Planned vs delivered scope",
+    "Benefits planned vs realized",
+    "KPI movement chart",
+    "Adoption trend",
+    "Timeline of delivered milestones",
+    "Residual risk heatmap",
+    "Sustainment model",
+    "Next-wave opportunity map",
+  ],
+  requiredTables: ["Measurement plan", "Benefits owner register"],
+  clientToCompleteChecklistRequired: true,
+  readinessLabelRequired: true,
+} as const;
+
 const charter: DeliverableProfile = {
   key: "charter",
   renderer: "docx_narrative",
@@ -45,6 +213,8 @@ const charter: DeliverableProfile = {
 const discoveryReport: DeliverableProfile = {
   key: "discovery_report",
   renderer: "pptx_storyline",
+  visualRendererRequired: true,
+  visualStandard: CURRENT_STATE_VISUAL_STANDARD,
   title: "Discovery & Diagnostic Readout",
   clientFacing: true,
   audience: ["steering_committee", "program_leadership", "cio"],
@@ -75,6 +245,18 @@ const discoveryReport: DeliverableProfile = {
 const rootCauseWorksheet: DeliverableProfile = {
   key: "root_cause_worksheet",
   renderer: "pptx_storyline",
+  visualRendererRequired: true,
+  visualStandard: {
+    requiredVisuals: [
+      "Pain point/root cause map",
+      "Root-cause tree",
+      "Process pain map",
+      "Findings-to-implications matrix",
+    ],
+    requiredTables: ["Symptoms vs causes table"],
+    clientToCompleteChecklistRequired: true,
+    readinessLabelRequired: true,
+  },
   title: "Root-Cause Readout",
   clientFacing: true,
   audience: ["program_leadership", "cio"],
@@ -101,6 +283,7 @@ const rootCauseWorksheet: DeliverableProfile = {
 const targetStateArchitecture: DeliverableProfile = {
   key: "target_state_architecture",
   renderer: "html_architecture",
+  visualStandard: ARCHITECTURE_VISUAL_STANDARD,
   // ── Story-Led / Exhibit-Led Standard (v2 redo) ──
   narrativeQuestion:
     "How does the proposed solution change the way the client senses, decides, acts, governs, and measures the operational event?",
@@ -185,6 +368,7 @@ const solutionDesign: DeliverableProfile = {
   key: "solution_design",
   renderer: "html_architecture",
   visualRendererRequired: true,
+  visualStandard: ARCHITECTURE_VISUAL_STANDARD,
   title: "Solution Design",
   clientFacing: true,
   audience: ["cto", "program_leadership", "ciso"],
@@ -215,6 +399,8 @@ const solutionDesign: DeliverableProfile = {
 const operatingModelDesign: DeliverableProfile = {
   key: "operating_model_design",
   renderer: "docx_narrative",
+  visualRendererRequired: true,
+  visualStandard: OPERATING_MODEL_VISUAL_STANDARD,
   title: "Operating Model",
   clientFacing: true,
   audience: ["program_leadership", "ciso", "cio"],
@@ -243,6 +429,8 @@ const operatingModelDesign: DeliverableProfile = {
 const sourcingStrategy: DeliverableProfile = {
   key: "sourcing_strategy",
   renderer: "docx_narrative",
+  visualRendererRequired: true,
+  visualStandard: GOVERNANCE_VISUAL_STANDARD,
   title: "Sourcing Strategy",
   clientFacing: true,
   audience: ["procurement", "cio", "program_leadership"],
@@ -266,6 +454,8 @@ const sourcingStrategy: DeliverableProfile = {
 const executionRoadmap: DeliverableProfile = {
   key: "execution_roadmap",
   renderer: "pptx_storyline",
+  visualRendererRequired: true,
+  visualStandard: ROADMAP_VISUAL_STANDARD,
   title: "Execution Roadmap",
   clientFacing: true,
   audience: ["program_leadership", "cio", "steering_committee"],
@@ -289,6 +479,8 @@ const executionRoadmap: DeliverableProfile = {
 const businessCase: DeliverableProfile = {
   key: "business_case",
   renderer: "docx_narrative",
+  visualRendererRequired: true,
+  visualStandard: BUSINESS_CASE_VISUAL_STANDARD,
   title: "Business Case",
   clientFacing: true,
   audience: ["cfo", "steering_committee", "ceo"],
@@ -338,6 +530,8 @@ const financialModel: DeliverableProfile = {
 const towerMetricsPlan: DeliverableProfile = {
   key: "tower_metrics_plan",
   renderer: "docx_narrative",
+  visualRendererRequired: true,
+  visualStandard: VALUE_REALIZATION_VISUAL_STANDARD,
   title: "Value & Metrics Model",
   clientFacing: true,
   audience: ["cfo", "program_leadership"],
@@ -361,6 +555,8 @@ const towerMetricsPlan: DeliverableProfile = {
 const handoffPackage: DeliverableProfile = {
   key: "handoff_package",
   renderer: "pptx_storyline",
+  visualRendererRequired: true,
+  visualStandard: EXECUTIVE_READOUT_VISUAL_STANDARD,
   title: "Executive Handoff",
   clientFacing: true,
   audience: ["board", "steering_committee", "ceo"],
@@ -390,6 +586,8 @@ const handoffPackage: DeliverableProfile = {
 const valueMeasurementContract: DeliverableProfile = {
   key: "value_measurement_contract",
   renderer: "docx_narrative",
+  visualRendererRequired: true,
+  visualStandard: VALUE_REALIZATION_VISUAL_STANDARD,
   title: "Value Measurement Contract",
   clientFacing: true,
   audience: ["cfo", "program_leadership"],

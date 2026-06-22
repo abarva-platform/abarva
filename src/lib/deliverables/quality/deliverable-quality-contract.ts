@@ -243,15 +243,21 @@ function checkArchitectureLevels(input: ContractInput): QualityFinding[] {
 
 /** Required exhibits must render as real visuals (SVG/HTML), not prose. */
 function checkVisualExhibits(input: ContractInput): QualityFinding[] {
-  if (!input.profile.visualRendererRequired) return [];
+  const requiresRenderedVisuals =
+    input.profile.visualRendererRequired ||
+    (!isBinder(input.profile) &&
+      Boolean(input.profile.visualStandard?.requiredVisuals.length));
+  if (!requiresRenderedVisuals) return [];
   if (input.exhibitsRenderedAsVisual === true) return [];
+  const required = input.profile.visualStandard?.requiredVisuals.slice(0, 8);
   return [
     {
       gate: "visual_complete",
       dimension: "visual_exhibit_quality",
       severity: "block",
       message:
-        "Required exhibits did not render as visuals (prose-only). Architecture/solution exhibits must be SVG/HTML diagrams, not text tables.",
+        "Required exhibits did not render as visuals (prose-only). Published executive artifacts must show diagrams, charts, tables, scorecards, heatmaps, or roadmaps in the final output.",
+      ...(required?.length ? { detail: required } : {}),
     },
   ];
 }

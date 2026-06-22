@@ -20,8 +20,107 @@ import type {
 } from "./types";
 import { DEFAULT_QUALITY_RUBRIC } from "./types";
 
+const SOURCING_STRATEGY_VISUAL_STANDARD = {
+  requiredVisuals: [
+    "Options comparison matrix",
+    "Recommendation scorecard",
+    "Risk/value tradeoff matrix",
+    "Value lever map",
+    "Decision summary page",
+  ],
+  requiredCharts: ["Vendor/tower landscape map", "Scenario comparison"],
+  requiredTables: ["Sourcing options comparison", "Open Inputs Required"],
+  clientToCompleteChecklistRequired: true,
+  readinessLabelRequired: true,
+} as const;
+
+const SOURCING_VALUE_VISUAL_STANDARD = {
+  requiredVisuals: [
+    "Value waterfall or value bridge",
+    "Cost baseline bridge",
+    "Scenario comparison",
+    "Benefit realization roadmap",
+    "Value ownership matrix",
+  ],
+  requiredCharts: ["Value waterfall", "One-time vs run-rate cost view"],
+  requiredTables: ["Value hypothesis by lever", "Baseline assumptions"],
+  clientToCompleteChecklistRequired: true,
+  readinessLabelRequired: true,
+} as const;
+
+const SOURCING_SCORECARD_VISUAL_STANDARD = {
+  requiredVisuals: [
+    "Evaluation heatmap",
+    "Weighted scorecard",
+    "Vendor comparison chart",
+    "Recommendation scorecard",
+    "Open issues dashboard",
+  ],
+  requiredCharts: ["Stacked bar chart", "Heatmap"],
+  requiredTables: ["Weighted scoring matrix", "Evidence citations by score"],
+  clientToCompleteChecklistRequired: true,
+  readinessLabelRequired: true,
+} as const;
+
+const SOURCING_COMMERCIAL_VISUAL_STANDARD = {
+  requiredVisuals: [
+    "Pricing comparison chart",
+    "Cost baseline bridge",
+    "Risk-adjusted value view",
+    "Commercial trap heatmap",
+    "Negotiation leverage map",
+  ],
+  requiredCharts: ["Bar chart", "Waterfall chart", "Scenario comparison"],
+  requiredTables: ["Normalised pricing comparison", "Pricing traps and mitigations"],
+  clientToCompleteChecklistRequired: true,
+  readinessLabelRequired: true,
+} as const;
+
+const SOURCING_DECISION_VISUAL_STANDARD = {
+  requiredVisuals: [
+    "One-page executive storyline",
+    "Decision tree",
+    "Options comparison matrix",
+    "Recommendation scorecard",
+    "Risk/value tradeoff matrix",
+    "Approval flow",
+  ],
+  requiredTables: ["Decision options and recommendation", "Why-not for rejected options"],
+  clientToCompleteChecklistRequired: true,
+  readinessLabelRequired: true,
+} as const;
+
+const SOURCING_RISK_VISUAL_STANDARD = {
+  requiredVisuals: [
+    "Risk heatmap",
+    "Control gap matrix",
+    "Go / No-Go scorecard",
+    "Remediation roadmap",
+    "Escalation path",
+  ],
+  requiredTables: ["Risk register with controls and owners", "Open Inputs Required"],
+  clientToCompleteChecklistRequired: true,
+  readinessLabelRequired: true,
+} as const;
+
+const SOURCING_TRANSITION_VISUAL_STANDARD = {
+  requiredVisuals: [
+    "30/60/90-day action plan",
+    "Multi-wave roadmap",
+    "Workstream timeline",
+    "Dependency map",
+    "Critical path view",
+    "Stage-gate model",
+  ],
+  requiredTables: ["Transition workstreams and owners", "Cutover gates"],
+  clientToCompleteChecklistRequired: true,
+  readinessLabelRequired: true,
+} as const;
+
 const sourceStrategyMemo: DeliverableProfile = {
   key: "source_strategy_memo",
+  visualRendererRequired: true,
+  visualStandard: SOURCING_STRATEGY_VISUAL_STANDARD,
   title: "Sourcing Strategy Memo",
   clientFacing: true,
   audience: ["steering_committee", "cio"],
@@ -58,6 +157,7 @@ const sourceStrategyMemo: DeliverableProfile = {
 
 const sourceValueTargetBrief: DeliverableProfile = {
   key: "source_value_target_brief",
+  visualStandard: SOURCING_VALUE_VISUAL_STANDARD,
   title: "Value Target Brief",
   clientFacing: false,
   audience: ["program_leadership", "cfo"],
@@ -130,6 +230,23 @@ const sourceScopeMemo: DeliverableProfile = {
 
 const sourceRfpPackage: DeliverableProfile = {
   key: "source_rfp_package",
+  visualRendererRequired: true,
+  visualStandard: {
+    requiredVisuals: [
+      "Requirements matrix",
+      "Evaluation criteria and weighting table",
+      "Pricing response schedule",
+      "Response compliance checklist",
+    ],
+    requiredTables: [
+      "Requirements matrix",
+      "Evaluation criteria and weighting",
+      "Pricing response schedule",
+      "Open Inputs Required",
+    ],
+    clientToCompleteChecklistRequired: true,
+    readinessLabelRequired: true,
+  },
   title: "RFP Package",
   clientFacing: true,
   audience: ["vendor_facing", "procurement"],
@@ -206,6 +323,8 @@ const sourceResponseChecklist: DeliverableProfile = {
 
 const sourceEvaluationScorecard: DeliverableProfile = {
   key: "source_evaluation_scorecard",
+  visualRendererRequired: true,
+  visualStandard: SOURCING_SCORECARD_VISUAL_STANDARD,
   title: "Evaluation Scorecard",
   clientFacing: true,
   audience: ["steering_committee", "procurement"],
@@ -242,6 +361,7 @@ const sourceEvaluationScorecard: DeliverableProfile = {
 
 const sourcePricingWorkbook: DeliverableProfile = {
   key: "source_pricing_workbook",
+  visualStandard: SOURCING_COMMERCIAL_VISUAL_STANDARD,
   title: "Pricing Workbook",
   clientFacing: false,
   audience: ["cfo", "procurement"],
@@ -278,6 +398,8 @@ const sourcePricingWorkbook: DeliverableProfile = {
 
 const sourcePricingTrapLog: DeliverableProfile = {
   key: "source_pricing_trap_log",
+  visualRendererRequired: true,
+  visualStandard: SOURCING_COMMERCIAL_VISUAL_STANDARD,
   title: "Pricing Trap Log",
   clientFacing: true,
   audience: ["cfo", "procurement"],
@@ -314,6 +436,8 @@ const sourcePricingTrapLog: DeliverableProfile = {
 
 const sourceBafoQuestionPack: DeliverableProfile = {
   key: "source_bafo_question_pack",
+  visualRendererRequired: true,
+  visualStandard: SOURCING_COMMERCIAL_VISUAL_STANDARD,
   title: "BAFO Question Pack",
   clientFacing: true,
   audience: ["procurement", "vendor_facing"],
@@ -350,6 +474,8 @@ const sourceBafoQuestionPack: DeliverableProfile = {
 
 const sourceAtlasDecisionBrief: DeliverableProfile = {
   key: "source_atlas_decision_brief",
+  visualRendererRequired: true,
+  visualStandard: SOURCING_DECISION_VISUAL_STANDARD,
   title: "Sourcing Decision Brief",
   clientFacing: true,
   audience: ["board", "steering_committee", "ceo"],
@@ -386,6 +512,8 @@ const sourceAtlasDecisionBrief: DeliverableProfile = {
 
 const sourceSentinelRiskAttestation: DeliverableProfile = {
   key: "source_sentinel_risk_attestation",
+  visualRendererRequired: true,
+  visualStandard: SOURCING_RISK_VISUAL_STANDARD,
   title: "Sourcing Risk Attestation",
   clientFacing: true,
   audience: ["ciso", "legal"],
@@ -422,6 +550,8 @@ const sourceSentinelRiskAttestation: DeliverableProfile = {
 
 const sourceSelectionMemo: DeliverableProfile = {
   key: "source_selection_memo",
+  visualRendererRequired: true,
+  visualStandard: SOURCING_DECISION_VISUAL_STANDARD,
   title: "Selection Memo",
   clientFacing: true,
   audience: ["steering_committee", "procurement"],
@@ -458,6 +588,8 @@ const sourceSelectionMemo: DeliverableProfile = {
 
 const sourceTransitionPlan: DeliverableProfile = {
   key: "source_transition_plan",
+  visualRendererRequired: true,
+  visualStandard: SOURCING_TRANSITION_VISUAL_STANDARD,
   title: "Transition Plan",
   clientFacing: true,
   audience: ["program_leadership"],
@@ -494,6 +626,8 @@ const sourceTransitionPlan: DeliverableProfile = {
 
 const sourceValueLedger: DeliverableProfile = {
   key: "source_value_ledger",
+  visualRendererRequired: true,
+  visualStandard: SOURCING_VALUE_VISUAL_STANDARD,
   title: "Value Ledger",
   clientFacing: true,
   audience: ["cfo", "program_leadership"],

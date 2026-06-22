@@ -105,6 +105,16 @@ function qualityScore(result: OrchestrationResult): number {
   return Math.max(0.5, Math.round((1 - warnings * 0.1) * 100) / 100);
 }
 
+function renderedVisualsPresent(html: string): boolean {
+  return (
+    /class=["'][^"']*\bvisual-exhibit\b/i.test(html) ||
+    /<svg\b/i.test(html) ||
+    /<table\b/i.test(html) ||
+    /data-exhibit=/i.test(html) ||
+    /class=["'][^"']*\bdeck-exhibit\b/i.test(html)
+  );
+}
+
 export async function persistDeliverable(
   result: OrchestrationResult,
   opts: PersistDeliverableOptions,
@@ -217,6 +227,9 @@ export async function persistDeliverable(
     });
     const assessment = assessClientDeliverable({
       ...contractInput,
+      exhibitsRenderedAsVisual:
+        architectureSignals.exhibitsRenderedAsVisual ??
+        renderedVisualsPresent(html),
       ...architectureSignals,
       deliverableKey,
     });
