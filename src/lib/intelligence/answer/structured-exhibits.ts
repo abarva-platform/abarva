@@ -243,6 +243,30 @@ function costChart(
   };
 }
 
+function percentChart(
+  figures: ExtractedFigure[],
+  citations: AnswerCitation[],
+): AnswerChart | null {
+  const percentages = figures
+    .filter((figure) => figure.format === "percent" && figure.value > 0)
+    .slice(0, 5);
+  if (percentages.length < 2) return null;
+  return {
+    id: "answer-percent-bars",
+    kind: "bar",
+    title: "Rates as Chart",
+    data: percentages.map((figure, index) => ({
+      label:
+        figure.label.length > 28
+          ? `${figure.label.slice(0, 25).trimEnd()}...`
+          : figure.label,
+      value: figure.value,
+      color: index === 0 ? "#0b4a91" : index % 2 === 0 ? "#dbe6f3" : "#1f6f43",
+    })),
+    citationIds: citations.slice(0, 3).map((citation) => citation.id),
+  };
+}
+
 export function buildStructuredExhibits(
   input: StructuredExhibitsInput,
 ): StructuredExhibits {
@@ -266,10 +290,10 @@ export function buildStructuredExhibits(
     input.routing.outputShape === "chart" ||
     /\b(chart|graph|visuali[sz]e)\b/i.test(input.prose);
   if (wantsChart) {
-    const chart = costChart(
-      uniqueFigures([...figures, ...citedFigures]),
-      citations,
-    );
+    const chartFigures = uniqueFigures([...figures, ...citedFigures]);
+    const chart =
+      costChart(chartFigures, citations) ??
+      percentChart(chartFigures, citations);
     if (chart) charts.push(chart);
   }
 
