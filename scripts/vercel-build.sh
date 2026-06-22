@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
-# Vercel deploy entry point.
+# LEGACY ONLY. Do not use this script for app.abarva.ai.
+#
+# app.abarva.ai deploys through Azure Container Apps. The active Vercel
+# sentinel is scripts/vercel-disabled.sh, which fails accidental Vercel
+# deploys loudly. This file is preserved only for historical reference.
+#
+# Historical Vercel deploy entry point.
 #
 # Invoked by the buildCommand declared in vercel.ts. Decides — based on
 # $VERCEL_ENV — whether to apply pending Postgres migrations before

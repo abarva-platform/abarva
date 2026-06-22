@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { config as loadEnv } from 'dotenv';
@@ -24,11 +23,6 @@ function mark(ok) {
 
 function envHas(name) {
   return Boolean(process.env[name]?.trim());
-}
-
-function readJsonIfExists(filePath) {
-  if (!fs.existsSync(filePath)) return null;
-  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
 function checkEnvFile() {
@@ -130,85 +124,99 @@ async function checkPineconeLive() {
   }
 }
 
-function checkVercelLocal() {
-  const vercelPath = path.join(cwd, '.vercel');
-  const project = readJsonIfExists(path.join(vercelPath, 'project.json'));
-  const authPath = path.join(os.homedir(), '.vercel', 'auth.json');
-  const hasToken = envHas('VERCEL_TOKEN');
-  const previewEnv = path.join(vercelPath, '.env.production.local');
-  const hasPreviewEnv = fs.existsSync(previewEnv);
+function checkAzureLocal() {
+  const azureEnvPath = path.join(cwd, '.env.azure.local');
+  const runbookPath = path.join(cwd, 'docs/runbooks/azure-container-apps-deploy.md');
 
   addResult(
-    'Vercel local',
-    Boolean(project),
-    project
-      ? `Linked to ${project.projectName} (${project.projectId})`
-      : 'No .vercel/project.json link found.',
-    'Run `vercel link` in this repo.',
+    'Azure deploy runbook',
+    fs.existsSync(runbookPath),
+    fs.existsSync(runbookPath)
+      ? `Canonical ACA runbook found at ${runbookPath}`
+      : 'Missing docs/runbooks/azure-container-apps-deploy.md.',
+    'Restore the Azure Container Apps deploy runbook.',
   );
 
   addResult(
-    'Vercel auth',
-    true,
-    hasToken
-      ? 'VERCEL_TOKEN is available in the environment.'
-      : fs.existsSync(authPath)
-        ? `Found ${authPath}`
-        : 'No ~/.vercel/auth.json or VERCEL_TOKEN found. The Vercel CLI may still be authenticated via a stored system session.',
-    hasToken || fs.existsSync(authPath)
-      ? ''
-      : 'Run the live check to confirm whether the installed Vercel CLI can already authenticate.',
-  );
-
-  addResult(
-    'Vercel env snapshot',
-    hasPreviewEnv,
-    hasPreviewEnv ? `Found ${previewEnv}` : 'No .vercel/.env.production.local snapshot found.',
-    'Run `vercel pull --environment=production` if you want local copies of Vercel env vars.',
+    'Azure env snapshot',
+    fs.existsSync(azureEnvPath),
+    fs.existsSync(azureEnvPath)
+      ? `Readable at ${azureEnvPath}`
+      : 'No .env.azure.local file found. This is acceptable if Azure auth is provided by az login.',
+    'Use az login / az account set for live Azure operations.',
   );
 }
 
-function checkVercelLive() {
-  const token = process.env.VERCEL_TOKEN;
-  const baseArgs = token ? ['whoami', '--token', token] : ['whoami'];
-  const result = spawnSync('vercel', baseArgs, {
+function checkAzureLive() {
+  const account = spawnSync('az', ['account', 'show', '--query', '{name:name,id:id}', '-o', 'json'], {
     cwd,
     encoding: 'utf8',
     timeout: 6000,
     env: process.env,
   });
 
-  if (result.error) {
+  if (account.error) {
     addResult(
-      'Vercel live',
+      'Azure account',
       false,
-      `CLI failed: ${result.error.message}`,
-      'Check that the Vercel CLI is installed and the network is available.',
+      `CLI failed: ${account.error.message}`,
+      'Install Azure CLI or run this check in an environment with az available.',
     );
     return;
   }
 
-  if (result.signal === 'SIGTERM') {
+  if (account.signal === 'SIGTERM') {
     addResult(
-      'Vercel live',
+      'Azure account',
       false,
-      'CLI timed out waiting for authentication or network response.',
-      'Run `vercel login`, set VERCEL_TOKEN, or retry with working network access.',
+      'Azure CLI timed out.',
+      'Run `az login` and retry with network access.',
     );
     return;
   }
 
-  if (result.status !== 0) {
+  if (account.status !== 0) {
     addResult(
-      'Vercel live',
+      'Azure account',
       false,
-      (result.stderr || result.stdout || 'Unknown Vercel CLI error').trim(),
-      'Refresh your Vercel login or provide VERCEL_TOKEN.',
+      (account.stderr || account.stdout || 'Unknown Azure CLI error').trim(),
+      'Run `az login` and `az account set --subscription abarva-lab-sub`.',
     );
     return;
   }
 
-  addResult('Vercel live', true, (result.stdout || 'Authenticated with Vercel CLI.').trim(), '');
+  addResult('Azure account', true, (account.stdout || 'Authenticated with Azure CLI.').trim(), '');
+
+  const app = spawnSync(
+    'az',
+    [
+      'containerapp',
+      'show',
+      '-g',
+      'rg-abarva-controlplane-lab-eastus',
+      '-n',
+      'ca-abarva-web-lab-eastus',
+      '--query',
+      '{latestRevisionName:properties.latestRevisionName,latestReadyRevisionName:properties.latestReadyRevisionName,image:properties.template.containers[0].image,traffic:properties.configuration.ingress.traffic}',
+      '-o',
+      'json',
+    ],
+    {
+      cwd,
+      encoding: 'utf8',
+      timeout: 10000,
+      env: process.env,
+    },
+  );
+
+  addResult(
+    'Azure Container App',
+    app.status === 0,
+    app.status === 0
+      ? (app.stdout || 'Read ca-abarva-web-lab-eastus.')
+      : (app.stderr || app.stdout || 'Could not read ca-abarva-web-lab-eastus.').trim(),
+    'Verify Azure subscription, resource group, and Container Apps permissions.',
+  );
 }
 
 function printResults() {
@@ -225,12 +233,12 @@ async function main() {
   checkEnvFile();
   checkSupabaseLocal();
   checkPineconeLocal();
-  checkVercelLocal();
+  checkAzureLocal();
 
   if (live) {
     await checkSupabaseLive();
     await checkPineconeLive();
-    checkVercelLive();
+    checkAzureLive();
   }
 
   printResults();

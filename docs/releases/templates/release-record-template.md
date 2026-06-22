@@ -36,7 +36,9 @@ List validation performed and the result. Include commands, CI checks, smoke tes
 
 ## Rollout Plan
 
-Describe how this becomes active: merge to main, Vercel production deploy, Azure control-lane deploy, migration apply, feature flag, manual runbook, or no runtime rollout.
+Describe how this becomes active: merge to main, Azure Container Apps deploy, Azure control-lane deploy, migration apply, feature flag, manual runbook, or no runtime rollout.
+
+For `app.abarva.ai`, use the Azure Container Apps runbook and record the exact ACA revision/image when deployed. Do not cite Vercel deployment status as production evidence.
 
 ## Rollback Plan
 

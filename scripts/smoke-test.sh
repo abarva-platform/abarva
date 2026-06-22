@@ -5,7 +5,7 @@
 # Usage:
 #   ./scripts/smoke-test.sh [BASE_URL]
 #
-# BASE_URL defaults to https://nexus-vert-kappa.vercel.app
+# BASE_URL defaults to https://app.abarva.ai
 # Set SMOKE_BASE_URL environment variable to override.
 #
 # Exit code:
@@ -14,7 +14,7 @@
 
 set -euo pipefail
 
-BASE_URL="${1:-${SMOKE_BASE_URL:-https://nexus-vert-kappa.vercel.app}}"
+BASE_URL="${1:-${SMOKE_BASE_URL:-https://app.abarva.ai}}"
 
 ROUTES=(
   "/"

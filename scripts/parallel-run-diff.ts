@@ -2,7 +2,7 @@
 //
 // Parallel-run diff harness (Lane D — cutover decision tool).
 //
-// Compares the CURRENT production path (left) against the AZURE LAB path
+// Compares the canonical app domain (left) against a candidate ACA path
 // (right) and produces a founder-readable pass / warn / fail / preflight-
 // blocked report so a non-engineer can answer one question:
 //
@@ -16,7 +16,7 @@
 //
 // Usage:
 //   npx tsx scripts/parallel-run-diff.ts \
-//     --left-base-url  https://nexus-vert-kappa.vercel.app \
+//     --left-base-url  https://app.abarva.ai \
 //     --right-base-url https://ca-abarva-web-lab-eastus.<region>.azurecontainerapps.io \
 //     [--tenant apex-retail] [--tenant meridian-health] \
 //     [--invariant-token <shared-secret>] \
