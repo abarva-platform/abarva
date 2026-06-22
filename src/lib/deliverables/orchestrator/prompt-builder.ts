@@ -15,63 +15,67 @@ import type {
   GenerationPass,
   PassPrompt,
   PlannedSection,
-} from './types';
-import { renderEvidenceForPrompt } from './source-register';
-import type { GovernedEvidenceItem } from './types';
-import { resolvePassTokenBudget } from '@/lib/ai/document-generation-policy';
+} from "./types";
+import { renderEvidenceForPrompt } from "./source-register";
+import type { GovernedEvidenceItem } from "./types";
+import { resolvePassTokenBudget } from "@/lib/ai/document-generation-policy";
 
 const USE_CASE_TITLE: Record<string, string> = {
-  AMS_IT_OUTSOURCING: 'application management services and IT outsourcing',
-  ERP_SI_SELECTION: 'ERP and systems-integrator selection',
-  CLOUD_MODERNIZATION: 'cloud modernization and migration',
-  AI_PDLC: 'the AI-powered product development lifecycle',
+  AMS_IT_OUTSOURCING: "application management services and IT outsourcing",
+  ERP_SI_SELECTION: "ERP and systems-integrator selection",
+  CLOUD_MODERNIZATION: "cloud modernization and migration",
+  AI_PDLC: "the AI-powered product development lifecycle",
 };
 
 function describeUseCase(archetype: string): string {
-  return USE_CASE_TITLE[archetype] ?? archetype.replace(/_/g, ' ').toLowerCase();
+  return (
+    USE_CASE_TITLE[archetype] ?? archetype.replace(/_/g, " ").toLowerCase()
+  );
 }
 
-function artifactHonestyDiscipline(req: DeliverableIntelligenceRequest): string {
-  if (req.module !== 'moves') {
+function artifactHonestyDiscipline(
+  req: DeliverableIntelligenceRequest,
+): string {
+  if (req.module !== "moves") {
     return [
       `HONESTY DISCIPLINE: No number, date, dollar value, percentage, timeline, benefit, ROI, NPV, payback, vendor price, or KPI may be asserted as fact unless it cites governed evidence [n].`,
       `If the source is absent, label it [ASSUMPTION TO VALIDATE: ...] or put it in the single Open Inputs Required table. Do not scatter [CLIENT TO COMPLETE] placeholders through the prose.`,
-    ].join(' ');
+    ].join(" ");
   }
 
   switch (req.deliverableType) {
-    case 'business_case':
+    case "business_case":
       return [
         `HONEST BUSINESS-CASE MODE: If baseline, cost, benefit, and sensitivity inputs are not all present as governed evidence, produce a Business Case Readiness Memo, not a full Business Case.`,
         `Do not assert ROI, NPV, payback, total benefit, total cost, or a funding amount as fact unless cited [n]. State value hypotheses qualitatively and route missing finance inputs to one Open Inputs Required table.`,
-      ].join(' ');
-    case 'estimate_model':
-    case 'financial_model':
+      ].join(" ");
+    case "estimate_model":
+    case "financial_model":
       return [
         `HONEST FINANCIAL-MODEL MODE: If finance-grade baseline/cost/benefit/sensitivity inputs are absent, do not fabricate a model. Produce a Financial Model Input Register that states the model is omitted until inputs exist.`,
         `Every cell/value/date/range must be cited [n] or explicitly labeled as an assumption; otherwise route it to one Open Inputs Required table.`,
-      ].join(' ');
-    case 'roadmap':
-    case 'execution_roadmap':
+      ].join(" ");
+    case "roadmap":
+    case "execution_roadmap":
       return [
         `HONEST ROADMAP MODE: Workstreams, gates, dependencies, owners, and sequencing may be recommended. Calendar dates, durations, and capacity commitments must be cited [n] or labeled [ASSUMPTION TO VALIDATE: indicative timeline pending capacity confirmation].`,
         `Use one Open Inputs Required table for capacity, date, or dependency inputs that must be confirmed.`,
-      ].join(' ');
-    case 'value_measurement_contract':
+      ].join(" ");
+    case "value_measurement_contract":
       return [
         `HONEST VALUE-MEASUREMENT MODE: This artifact defines HOW value will be measured: metric, owner, source, method, cadence, baseline status, and acceptance rule.`,
-        `Do not assert realized value, target value, ROI, or dates as fact unless cited [n]. Use "TBD by measurement" for absent values and route missing baselines/sources to one Open Inputs Required table.`,
-      ].join(' ');
-    case 'sourcing_strategy':
+        `Do not assert realized value, target value, ROI, or dates as fact unless cited [n]. For absent values, state that measurement input is required and route missing baselines/sources to one Open Inputs Required table.`,
+      ].join(" ");
+    case "sourcing_strategy":
       return [
         `HONEST SOURCING-STRATEGY MODE: Provide build/buy/partner/hybrid options, criteria, guardrails, and a recommended path.`,
         `Costs, vendor prices, dates, and commercial ranges must be cited [n] or labeled as assumptions; otherwise route them to one Open Inputs Required table.`,
-      ].join(' ');
+      ].join(" ");
     default:
       return [
         `HONESTY DISCIPLINE: No number, date, dollar value, percentage, timeline, benefit, ROI, NPV, payback, vendor price, or KPI may be asserted as fact unless it cites governed evidence [n].`,
         `If the source is absent, label it [ASSUMPTION TO VALIDATE: ...] or put it in the single Open Inputs Required table. Do not scatter [CLIENT TO COMPLETE] placeholders through the prose.`,
-      ].join(' ');
+      ].join(" ");
   }
 }
 
@@ -93,7 +97,7 @@ export function buildSystemPrompt(req: DeliverableIntelligenceRequest): string {
     `- Where a client fact is missing, write [EVIDENCE MISSING: <what>], [ASSUMPTION TO VALIDATE: <what>], or [CLIENT TO COMPLETE: <what>] — never fabricate.`,
     `- Never expose internal source ids, chunk ids, table names, fact keys, or system status words in the body.`,
     `- Do not optimize for short documents. Optimize for high-quality, decision-grade artifacts.`,
-  ].join('\n');
+  ].join("\n");
 }
 
 /** The shared context block (mission → formatting) injected into the generation passes. */
@@ -102,26 +106,34 @@ function buildContextBlock(
   brief: DeliverableArtifactBrief,
   evidence: GovernedEvidenceItem[],
 ): string {
-  const audience = req.audience.join(', ');
+  const audience = req.audience.join(", ");
   const missing =
     req.missingEvidence.length === 0
-      ? '(none flagged)'
+      ? "(none flagged)"
       : req.missingEvidence
-          .map((m) => `- ${m.label} (${m.evidenceFamily}): ${m.whyItMatters} → ${m.completionPath}`)
-          .join('\n');
+          .map(
+            (m) =>
+              `- ${m.label} (${m.evidenceFamily}): ${m.whyItMatters} → ${m.completionPath}`,
+          )
+          .join("\n");
   const clientComplete =
     req.clientCompleteItems.length === 0
-      ? '(none)'
-      : req.clientCompleteItems.map((c) => `- ${c.label} [owner: ${c.owner}; ${c.reason}]`).join('\n');
+      ? "(none)"
+      : req.clientCompleteItems
+          .map((c) => `- ${c.label} [owner: ${c.owner}; ${c.reason}]`)
+          .join("\n");
   const assumptions =
     req.approvedAssumptions.length === 0
-      ? '(none approved)'
+      ? "(none approved)"
       : req.approvedAssumptions
-          .map((a) => `- ${a.statement} (basis: ${a.basis}${a.mustValidate ? '; VALIDATE' : ''})`)
-          .join('\n');
+          .map(
+            (a) =>
+              `- ${a.statement} (basis: ${a.basis}${a.mustValidate ? "; VALIDATE" : ""})`,
+          )
+          .join("\n");
 
   return [
-    `MISSION: Create the best possible ${req.deliverableType.replace(/_/g, ' ')} for ${req.clientDisplayName} — initiative "${req.initiativeDisplayName}" — for ${audience} to support this decision:`,
+    `MISSION: Create the best possible ${req.deliverableType.replace(/_/g, " ")} for ${req.clientDisplayName} — initiative "${req.initiativeDisplayName}" — for ${audience} to support this decision:`,
     `  ${req.decisionContext}`,
     ``,
     `EXPERT LATITUDE: Use your expert knowledge to design the best artifact for this use case. You are NOT limited to the minimum sections — add sections, exhibits, tables, and decision views if they materially improve the artifact. ${brief.allowedExpertKnowledge}`,
@@ -143,21 +155,25 @@ function buildContextBlock(
     assumptions,
     ``,
     `RECOMMENDED STRUCTURE (a senior consultant's baseline — improve on it):`,
-    brief.recommendedStructure.map((s, i) => `  ${i + 1}. ${s.title} — ${s.intent} [${s.groundingMode}]`).join('\n'),
+    brief.recommendedStructure
+      .map(
+        (s, i) => `  ${i + 1}. ${s.title} — ${s.intent} [${s.groundingMode}]`,
+      )
+      .join("\n"),
     ``,
     ...(brief.forbiddenSectionTopics && brief.forbiddenSectionTopics.length > 0
       ? [
-          `PHASE DISCIPLINE — OUT OF SCOPE for this deliverable (these belong to later phases; do NOT add sections, exhibits, or extended analysis on them, even to "improve" the artifact): ${brief.forbiddenSectionTopics.join('; ')}. Keep this document to the decision it must drive; reference later-phase work only as a forward pointer, never as analysis.`,
+          `PHASE DISCIPLINE — OUT OF SCOPE for this deliverable (these belong to later phases; do NOT add sections, exhibits, or extended analysis on them, even to "improve" the artifact): ${brief.forbiddenSectionTopics.join("; ")}. Keep this document to the decision it must drive; reference later-phase work only as a forward pointer, never as analysis.`,
           ``,
         ]
       : []),
-    `EXPECTED EXHIBITS: ${brief.expectedExhibits.map((e) => e.title).join('; ') || '(use judgment)'}`,
-    `EXPECTED TABLES: ${brief.expectedTables.map((t) => t.title).join('; ') || '(use judgment)'}`,
+    `EXPECTED EXHIBITS: ${brief.expectedExhibits.map((e) => e.title).join("; ") || "(use judgment)"}`,
+    `EXPECTED TABLES: ${brief.expectedTables.map((t) => t.title).join("; ") || "(use judgment)"}`,
     ``,
-    `QUALITY BAR: ${brief.qualityCriteria.join(' ')} Output must read like a board-grade consulting artifact, not an LLM draft. Strengthen synthesis, implications, and the decision ask.`,
+    `QUALITY BAR: ${brief.qualityCriteria.join(" ")} Output must read like a board-grade consulting artifact, not an LLM draft. Strengthen synthesis, implications, and the decision ask.`,
     ``,
-    `FORMATTING: ${brief.formattingInstructions} Body ≈ ${req.formattingProfile.bodyPointSize}pt. ${req.formattingProfile.wideDataToExcelCompanion ? 'Move wide datasets into an Excel companion exhibit rather than tiny in-document tables.' : ''} Output formats: ${req.outputFormats.join(', ')}.`,
-  ].join('\n');
+    `FORMATTING: ${brief.formattingInstructions} Body ≈ ${req.formattingProfile.bodyPointSize}pt. ${req.formattingProfile.wideDataToExcelCompanion ? "Move wide datasets into an Excel companion exhibit rather than tiny in-document tables." : ""} Output formats: ${req.outputFormats.join(", ")}.`,
+  ].join("\n");
 }
 
 const PLAN_SCHEMA_HINT = `Return ONLY JSON matching DeliverableGenerationPlan:
@@ -202,15 +218,18 @@ export interface PassInputs {
   sectionDrafts?: { title: string; summary: string }[];
 }
 
-export function buildPassPrompt(pass: GenerationPass, inputs: PassInputs): PassPrompt {
+export function buildPassPrompt(
+  pass: GenerationPass,
+  inputs: PassInputs,
+): PassPrompt {
   const { req, brief, evidence } = inputs;
-  const highStakes = req.qualityBar.tone === 'board_grade_consulting';
+  const highStakes = req.qualityBar.tone === "board_grade_consulting";
   const system = buildSystemPrompt(req);
   const context = buildContextBlock(req, brief, evidence);
-  let user = '';
+  let user = "";
 
   switch (pass) {
-    case 'architect': {
+    case "architect": {
       // The plan gate (validateGenerationPlan) auto-rejects plans that cite a
       // non-existent evidence number or mark a section governed_facts/mixed
       // without grounding it. The architect is an LLM and freelances both, so
@@ -220,15 +239,15 @@ export function buildPassPrompt(pass: GenerationPass, inputs: PassInputs): PassP
       const validCitations = evidence.map((e) => e.citationNumber);
       const citationList =
         validCitations.length > 0
-          ? validCitations.map((n) => `[${n}]`).join(', ')
-          : '(none — there is NO governed evidence; do not cite any [n])';
+          ? validCitations.map((n) => `[${n}]`).join(", ")
+          : "(none — there is NO governed evidence; do not cite any [n])";
       const planValidityRules = [
         `PLAN VALIDITY RULES — your plan is AUTO-REJECTED (and the whole job fails) if you break any of these, so follow them exactly:`,
         `1. evidenceCitations may use ONLY these citation numbers, which are the ones present in AVAILABLE GOVERNED EVIDENCE: ${citationList}. NEVER invent or cite any number outside this set.`,
         `2. For EVERY section whose groundingMode is "governed_facts" or "mixed", you MUST populate at least one of: evidenceCitations (a valid number above), assumptionsUsed, or placeholders. A governed_facts/mixed section with all three empty would fabricate client facts and is rejected.`,
         `3. If a section carries no client-specific facts (pure expert framing, methodology, narrative, or standard boilerplate), set its groundingMode to "expert_template" — those need no citations, assumptions, or placeholders.`,
         `4. Prefer "expert_template" for any section you cannot ground with the evidence/assumptions/placeholders above, rather than marking it governed_facts/mixed and leaving it ungrounded.`,
-      ].join('\n');
+      ].join("\n");
       user = [
         context,
         ``,
@@ -237,92 +256,99 @@ export function buildPassPrompt(pass: GenerationPass, inputs: PassInputs): PassP
         planValidityRules,
         ``,
         PLAN_SCHEMA_HINT,
-      ].join('\n');
+      ].join("\n");
       break;
     }
-    case 'evidence_grounding':
+    case "evidence_grounding":
       user = [
         context,
         ``,
         `PASS 2 — EVIDENCE GROUNDING. Here is the approved plan:`,
-        inputs.approvedPlanJson ?? '(plan missing)',
+        inputs.approvedPlanJson ?? "(plan missing)",
         ``,
         `For EACH planned section, state precisely: what is supported by governed evidence (with [n]), what is missing, what must be client-to-complete, and what is standard expert/template content. Return the updated evidenceMapping + missingEvidenceHandling arrays of the plan as JSON.`,
-      ].join('\n');
+      ].join("\n");
       break;
-    case 'full_draft':
+    case "full_draft":
       user = [
         context,
         ``,
         `PASS 3 — FULL DRAFT. Using the approved plan below, write the FULL document in senior consulting style. Use governed evidence (cited [n]) for client facts; use expert knowledge for structure, framing, standard sections, exhibits, and professional language. Clearly mark every missing client fact with the correct placeholder tag. Include decision tables, evidence tables, a risk/issues/dependencies table, a client-to-complete checklist, a source register, and a clear recommendation with next steps. Write in Markdown with numbered headings.`,
         `APPROVED PLAN:`,
-        inputs.approvedPlanJson ?? '(plan missing)',
-      ].join('\n');
+        inputs.approvedPlanJson ?? "(plan missing)",
+      ].join("\n");
       break;
-    case 'red_team':
+    case "red_team":
       user = [
-        `Review the following ${req.deliverableType.replace(/_/g, ' ')} draft as a skeptical senior McKinsey partner and CIO advisor preparing it for a board steering committee.`,
+        `Review the following ${req.deliverableType.replace(/_/g, " ")} draft as a skeptical senior McKinsey partner and CIO advisor preparing it for a board steering committee.`,
         `Identify, specifically and section by section: weak or generic language, missing exhibits/tables, UNSUPPORTED client claims (facts asserted without a [n] citation, an approved assumption, or a placeholder), unclear or missing decisions, thin synthesis, poor formatting, and any place client input is required but not flagged. Also flag if the draft followed the template too mechanically or is too short for a board-grade artifact.`,
         `Be concrete and prescriptive — name the section and the fix. Do not rewrite; produce a critique.`,
         ``,
         `DRAFT:`,
-        inputs.draftMarkdown ?? '(draft missing)',
-      ].join('\n');
+        inputs.draftMarkdown ?? "(draft missing)",
+      ].join("\n");
       break;
-    case 'board_grade_rewrite':
+    case "board_grade_rewrite":
       user = [
         context,
         ``,
         `PASS 5 — BOARD-GRADE REWRITE. Revise the draft to board-grade quality using the critique. Strengthen synthesis, implications, the decision ask, tables, exhibits, placeholders, and source discipline. Remove generic language and mechanical template-following. DO NOT add unsupported client facts — every client-specific claim stays cited, an approved assumption, or a placeholder. Return the full revised document in Markdown.`,
         ``,
         `CRITIQUE TO ADDRESS:`,
-        inputs.critiqueText ?? '(critique missing)',
+        inputs.critiqueText ?? "(critique missing)",
         ``,
         `CURRENT DRAFT:`,
-        inputs.draftMarkdown ?? '(draft missing)',
-      ].join('\n');
+        inputs.draftMarkdown ?? "(draft missing)",
+      ].join("\n");
       break;
-    case 'render_package':
+    case "render_package":
       user = [
         `Convert the final board-grade document into the structured render package below. Preserve all content, citations [n], placeholders, tables, exhibits, the source register, assumptions, the client-to-complete checklist, the recommendation, and next actions. Wide datasets should be expressed as tables with targetFormat "xlsx".`,
         RENDER_SCHEMA_HINT,
         ``,
         `FINAL DOCUMENT:`,
-        inputs.revisedDraftMarkdown ?? inputs.draftMarkdown ?? '(document missing)',
-      ].join('\n');
+        inputs.revisedDraftMarkdown ??
+          inputs.draftMarkdown ??
+          "(document missing)",
+      ].join("\n");
       break;
-    case 'section_draft': {
+    case "section_draft": {
       const s = inputs.section;
-      const assigned = evidence.length > 0
-        ? evidence.map((e) => `[${e.citationNumber}] ${e.label}: ${e.statement}`).join('\n')
-        : '(no evidence assigned to this section — cite nothing; tag any client fact as a placeholder)';
+      const assigned =
+        evidence.length > 0
+          ? evidence
+              .map((e) => `[${e.citationNumber}] ${e.label}: ${e.statement}`)
+              .join("\n")
+          : "(no evidence assigned to this section — cite nothing; tag any client fact as a placeholder)";
       user = [
         context,
         ``,
         `FULL OUTLINE (for coherence only — do NOT write any other section):`,
-        inputs.outlineSummary ?? '',
+        inputs.outlineSummary ?? "",
         ``,
-        `WRITE ONLY THIS SECTION: "${s?.title ?? ''}"  (groundingMode: ${s?.groundingMode ?? 'expert_template'}).`,
-        `Intent: ${s?.rationale || s?.title || ''}`,
+        `WRITE ONLY THIS SECTION: "${s?.title ?? ""}"  (groundingMode: ${s?.groundingMode ?? "expert_template"}).`,
+        `Intent: ${s?.rationale || s?.title || ""}`,
         `Write board-grade, senior-consulting Markdown for JUST this section (numbered sub-headings, tables/lists as needed). Use ONLY the assigned evidence below, cited [n]. For any client-specific number / $ / % / date you cannot ground, write [ASSUMPTION TO VALIDATE: <what>] or describe the required input for the Open Inputs Required table — NEVER invent. Before returning, verify EVERY figure has a [n], an approved assumption, or a placeholder tag.`,
         ``,
         `ASSIGNED EVIDENCE (the only [n] you may cite):`,
         assigned,
         ``,
         SECTION_SCHEMA_HINT,
-      ].join('\n');
+      ].join("\n");
       break;
     }
-    case 'synthesis': {
-      const summaries = (inputs.sectionDrafts ?? []).map((d) => `## ${d.title}\n${d.summary}`).join('\n\n');
+    case "synthesis": {
+      const summaries = (inputs.sectionDrafts ?? [])
+        .map((d) => `## ${d.title}\n${d.summary}`)
+        .join("\n\n");
       user = [
-        `You are assembling the EXECUTIVE LAYER of a ${req.deliverableType.replace(/_/g, ' ')} for ${req.clientDisplayName} from its drafted sections (summaries below). Produce ONLY the document-level structured fields as JSON — do not rewrite the sections.`,
+        `You are assembling the EXECUTIVE LAYER of a ${req.deliverableType.replace(/_/g, " ")} for ${req.clientDisplayName} from its drafted sections (summaries below). Produce ONLY the document-level structured fields as JSON — do not rewrite the sections.`,
         `Requirements: "recommendation" is 2–3 sentences stating the decision ask. "nextActions" is 3–6 concrete items. "tables" MUST include a risk/issues/dependencies table (key:"risk_register", title:"Risk / Issues / Dependencies", columns + rows). "clientCompleteChecklist" lists what the client must still provide. Do NOT introduce unsupported client facts — any figure needs a [n], an approved assumption, or a placeholder tag.`,
         SYNTHESIS_SCHEMA_HINT,
         ``,
         `SECTION SUMMARIES:`,
         summaries,
-      ].join('\n');
+      ].join("\n");
       break;
     }
   }
@@ -342,10 +368,10 @@ export function buildPassPrompt(pass: GenerationPass, inputs: PassInputs): PassP
 
 /** The ordered six-pass sequence. */
 export const GENERATION_PASSES: GenerationPass[] = [
-  'architect',
-  'evidence_grounding',
-  'full_draft',
-  'red_team',
-  'board_grade_rewrite',
-  'render_package',
+  "architect",
+  "evidence_grounding",
+  "full_draft",
+  "red_team",
+  "board_grade_rewrite",
+  "render_package",
 ];
