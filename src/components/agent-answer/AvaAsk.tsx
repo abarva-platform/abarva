@@ -203,7 +203,7 @@ export function AvaAsk({
             // Prose streams on its own channel, so merge it onto the structured
             // answer — this avoids the double-header seen when both are rendered.
             <AgentAnswerRenderer
-              answer={{ ...agentAnswer, prose: answer ?? agentAnswer.prose }}
+              answer={{ ...agentAnswer, prose: agentAnswer.prose || answer || "" }}
             />
           ) : (
             <>

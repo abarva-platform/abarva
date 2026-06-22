@@ -79,6 +79,50 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.charts).toHaveLength(0);
   });
 
+  it("converts complete markdown tables from Ava prose into typed tables", () => {
+    const exhibits = buildStructuredExhibits({
+      routing,
+      sources,
+      prose: [
+        "Here are planning ranges from the cited context.",
+        "",
+        "| Use case | Primary benefit | Range |",
+        "|---|---|---|",
+        "| Demand forecasting | Inventory turn | 2-5% margin lift |",
+        "| Markdown optimization | Recovered margin | 1-2% category margin |",
+        "",
+        "Next move: validate tenant-specific numbers before board use.",
+      ].join("\n"),
+    });
+
+    expect(exhibits.prose).toContain(
+      "Here are planning ranges from the cited context.",
+    );
+    expect(exhibits.prose).toContain(
+      "Next move: validate tenant-specific numbers before board use.",
+    );
+    expect(exhibits.prose).not.toContain("| Use case |");
+    expect(exhibits.tables[0]).toEqual(
+      expect.objectContaining({
+        id: "answer-markdown-table-1",
+        title: "Answer Table",
+        rows: [
+          expect.objectContaining({
+            use_case: "Demand forecasting",
+            primary_benefit: "Inventory turn",
+            range: "2-5% margin lift",
+          }),
+          expect.objectContaining({
+            use_case: "Markdown optimization",
+            primary_benefit: "Recovered margin",
+            range: "1-2% category margin",
+          }),
+        ],
+      }),
+    );
+    expect(exhibits.charts).toHaveLength(0);
+  });
+
   it("does not infer percentage charts from cited source prose", () => {
     const exhibits = buildStructuredExhibits({
       routing,
