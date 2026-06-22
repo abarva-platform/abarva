@@ -231,9 +231,13 @@ export function checkBusinessMode(input: GateInput): {
 } {
   if (!input.profile.supportsModeDowngrade) return { findings: [] };
   const mode = resolveBusinessCaseMode(input.financialInputs);
-  const titledFullBusinessCase = /\bbusiness case\b/i.test(
-    input.narrativeText.slice(0, 600),
-  );
+  const head = input.narrativeText.slice(0, 600);
+  const titledReadinessMemo = /\bbusiness case readiness memo\b/i.test(head);
+  const titledInvestmentThesis = /\binvestment thesis\b/i.test(head);
+  const titledFullBusinessCase =
+    /\bbusiness case\b/i.test(head) &&
+    !titledReadinessMemo &&
+    !titledInvestmentThesis;
   if (mode !== "full_business_case" && titledFullBusinessCase) {
     return {
       findings: [

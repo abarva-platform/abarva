@@ -51,6 +51,64 @@ describe('assembleGovernedEvidence', () => {
     expect(vendor.evidence.some((e) => e.evidenceFamily === 'contract_baseline')).toBe(false);
     expect(vendor.evidence.some((e) => e.evidenceFamily === 'sla_baseline')).toBe(true);
   });
+
+  it('adds approved move current-state evidence when tenant context retrieval is empty', async () => {
+    const fakeQuery = (async () => []) as never;
+    const fakeDb = {
+      from(table: string) {
+        if (table === 'evidence_ledger') {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  order: () => ({
+                    limit: async () => ({
+                      data: [{
+                        id: 'ledger-1',
+                        claim_text: 'IT organization baseline ingested: 14 workforce records.',
+                        source_ref: { moveId: 'move-1', family: 'it_org_structure', fileRef: '01_it_org_structure.csv' },
+                        freshness_at: '2026-06-21T00:00:00Z',
+                        confidence: 0.8,
+                      }],
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'program_evidence_reviews') {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  eq: () => ({
+                    limit: async () => ({ data: [] }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: () => ({ in: async () => ({ data: [] }) }) };
+      },
+    } as never;
+
+    const out = await assembleGovernedEvidence(
+      {
+        tenantClientKey: 'skyharbor-air',
+        clientId: 'client-1',
+        sourceArtifactRef: 'move-1',
+        query: 'charter current state',
+      },
+      { queryTenantContext: fakeQuery, db: fakeDb },
+    );
+
+    expect(out.retrievedCount).toBe(1);
+    expect(out.evidence[0].statement).toMatch(/IT organization baseline/);
+    expect(out.evidence[0].label).toBe('01 It Org Structure.csv');
+    expect(out.sourceRegister).toHaveLength(1);
+  });
 });
 
 describe('buildDeliverableRequest', () => {

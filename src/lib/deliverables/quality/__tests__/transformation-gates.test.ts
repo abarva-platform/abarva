@@ -146,5 +146,23 @@ describe("transformation gates (W1)", () => {
       expect(r.findings.some((f) => f.gate === "business_mode")).toBe(true);
       expect(r.businessCaseMode).toBe("readiness_memo");
     });
+
+    it("allows an explicitly downgraded Business Case Readiness Memo", () => {
+      const bc = getDeliverableProfile("business_case");
+      const r = runTransformationGates({
+        profile: bc,
+        narrativeText:
+          "Business Case Readiness Memo for AI Trade Finance. We recommend closing finance-grade inputs before funding the program.",
+        renderedExhibits: ["value_tree", "decision_box", "open_inputs_required"],
+        financialInputs: {
+          hasBaseline: false,
+          hasCost: false,
+          hasBenefit: false,
+          hasSensitivity: false,
+        },
+      });
+      expect(r.findings.some((f) => f.gate === "business_mode")).toBe(false);
+      expect(r.businessCaseMode).toBe("readiness_memo");
+    });
   });
 });

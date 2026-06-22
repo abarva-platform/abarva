@@ -52,9 +52,9 @@ const REGISTRY_TO_ORCHESTRATOR: Readonly<Record<string, string>> = {
   business_case: "business_case",
   financial_model: "estimate_model",
   tower_metrics_plan: "value_model",
-  // P5 — handoff → handoff_pack; value contract → value_model
+  // P5 — handoff → handoff_pack; value contract has its own quality profile.
   handoff_package: "handoff_pack",
-  value_measurement_contract: "value_model",
+  value_measurement_contract: "value_measurement_contract",
 };
 
 /**

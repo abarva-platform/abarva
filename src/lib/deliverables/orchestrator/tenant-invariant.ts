@@ -55,16 +55,34 @@ function sourceEventIdFromSourceRef(sourceArtifactRef: string): string {
 async function lookupMoveOwner(moveId: string, db: DbClient): Promise<SourceOwner | null> {
   let query = db
     .from("engagements")
-    .select("id, graph_node_id, client_id, tenant_key");
+    .select("id, graph_node_id, client_id");
   query = UUID_RE.test(moveId) ? query.eq("id", moveId) : query.eq("graph_node_id", moveId);
   const { data, error } = await query.maybeSingle();
   if (error) throw new Error(`tenant invariant move lookup failed: ${error.message}`);
   if (!data) return null;
   const row = data as Record<string, unknown>;
+  const clientId = typeof row.client_id === "string" ? row.client_id : null;
+  const tenantKey = clientId ? await lookupClientTenantKey(clientId, db) : null;
   return {
-    clientId: typeof row.client_id === "string" ? row.client_id : null,
-    tenantKey: typeof row.tenant_key === "string" ? row.tenant_key : null,
+    clientId,
+    tenantKey,
   };
+}
+
+async function lookupClientTenantKey(clientId: string, db: DbClient): Promise<string | null> {
+  const { data, error } = await db
+    .from("clients")
+    .select("*")
+    .eq("id", clientId)
+    .maybeSingle();
+  if (error) throw new Error(`tenant invariant client lookup failed: ${error.message}`);
+  if (!data) return null;
+  const row = data as Record<string, unknown>;
+  for (const key of ["tenant_key", "key", "slug"]) {
+    const value = row[key];
+    if (typeof value === "string" && value.trim()) return value;
+  }
+  return null;
 }
 
 async function lookupSourceEventOwner(sourceEventId: string, db: DbClient): Promise<SourceOwner | null> {
@@ -108,7 +126,11 @@ function compareOwner(args: {
 
   const clientMatches = !args.owner.clientId || args.owner.clientId === args.expectedClientId;
   const tenantMatches = actualTenant === expectedTenant;
-  if (clientMatches && tenantMatches) {
+  // Moves are authored under engagements.client_id. Some lab schemas do not
+  // duplicate tenant_key on engagements (or even clients), so a verified
+  // source client match is enough when no tenant key can be resolved.
+  const clientOnlyMatch = clientMatches && Boolean(args.owner.clientId) && !args.owner.tenantKey;
+  if (clientMatches && (tenantMatches || clientOnlyMatch)) {
     return { ok: true, sourceKind: args.sourceKind, sourceId: args.sourceId };
   }
 

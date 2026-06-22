@@ -13,12 +13,16 @@ import 'server-only';
 
 import type {
   DeliverableIntelligenceRequest,
+  DeliverableArtifactBrief,
   GovernedEvidenceItem,
   RenderableDeliverable,
+  RenderableExhibit,
   RenderableSection,
   RenderableTable,
   SourceRegisterEntry,
 } from './types';
+import { deliverableKeyForOrchestratorType } from '@/lib/deliverables/quality/deliverable-key-map';
+import { DELIVERABLE_PROFILES } from '@/lib/deliverables/profiles/registry';
 
 /** Bounded-concurrency map that preserves input order. */
 export async function mapWithConcurrency<T, R>(
@@ -44,6 +48,21 @@ export async function mapWithConcurrency<T, R>(
 const FACT_LIKE = /(\$\s?\d|\b\d{1,3}(?:,\d{3})+\b|\b\d+%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/;
 const SUPPORTED = /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING/;
 
+export interface UnsupportedFigureClaim {
+  sectionKey: string;
+  sectionTitle: string;
+  claim: string;
+  treatment: 'assumption_to_validate' | 'open_input_required';
+}
+
+export function extractUnsupportedFigureClaims(markdown: string): string[] {
+  if (!markdown) return [];
+  return markdown
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => FACT_LIKE.test(s) && !SUPPORTED.test(s));
+}
+
 /**
  * Deterministically surface any client-fact-looking figure (number/$/%/date) that lacks a
  * [n] citation, an approved assumption, or a placeholder — by tagging the sentence
@@ -58,7 +77,10 @@ export function repairUncitedFigures(markdown: string): string {
   const repaired = sentences.map((s) => {
     if (FACT_LIKE.test(s) && !SUPPORTED.test(s)) {
       changed = true;
-      return s.replace(/\s*$/, ' [CLIENT TO COMPLETE]');
+      return s.replace(
+        /\s*$/,
+        ' [ASSUMPTION TO VALIDATE: numeric/date/value claim requires client confirmation or cited source before it is treated as committed.]',
+      );
     }
     return s;
   });
@@ -101,6 +123,87 @@ export interface SynthesisResult {
   clientCompleteChecklist?: RenderableDeliverable['clientCompleteChecklist'];
 }
 
+function honestTitle(req: DeliverableIntelligenceRequest, synth: SynthesisResult): string {
+  const fallback = `${req.deliverableType.replace(/_/g, ' ')} — ${req.initiativeDisplayName}`;
+  const modelTitle = synth.title && synth.title.trim() ? synth.title.trim() : fallback;
+  if (req.module !== 'moves') return modelTitle;
+  switch (req.deliverableType) {
+    case 'business_case':
+      return `Business Case Readiness Memo — ${req.initiativeDisplayName}`;
+    case 'estimate_model':
+    case 'financial_model':
+      return `Financial Model Input Register — ${req.initiativeDisplayName}`;
+    case 'value_measurement_contract':
+      return `Value Measurement Contract — Measurement Framework`;
+    default:
+      return modelTitle;
+  }
+}
+
+function openInputsTable(
+  req: DeliverableIntelligenceRequest,
+  unsupportedClaims: readonly UnsupportedFigureClaim[],
+): RenderableTable | null {
+  const rows: string[][] = [];
+  for (const m of req.missingEvidence ?? []) {
+    rows.push([
+      m.label,
+      m.whyItMatters,
+      m.completionPath,
+      'Open input',
+    ]);
+  }
+  for (const c of unsupportedClaims) {
+    rows.push([
+      c.sectionTitle,
+      c.claim,
+      c.treatment === 'assumption_to_validate'
+        ? 'Confirm the assumption or replace it with a cited source.'
+        : 'Provide supporting source evidence before asserting this as fact.',
+      c.treatment === 'assumption_to_validate'
+        ? 'Labeled assumption in draft'
+        : 'Open input required',
+    ]);
+  }
+  if (rows.length === 0) return null;
+  return {
+    key: 'open_inputs_required',
+    title: 'Open Inputs Required',
+    columns: ['Area', 'Input needed', 'How to close', 'Treatment in this artifact'],
+    rows,
+    targetFormat: 'docx',
+  };
+}
+
+function expectedExhibitsForProfile(req: DeliverableIntelligenceRequest, brief?: DeliverableArtifactBrief): RenderableExhibit[] {
+  const byKey = new Map<string, RenderableExhibit>();
+  for (const ex of brief?.expectedExhibits ?? []) {
+    byKey.set(ex.key, {
+      key: ex.key,
+      title: ex.title,
+      kind: ex.kind,
+      description: ex.purpose,
+      targetFormat: ex.preferredFormat,
+    });
+  }
+  const deliverableKey = deliverableKeyForOrchestratorType(req.deliverableType);
+  if (deliverableKey) {
+    const profile = DELIVERABLE_PROFILES[deliverableKey];
+    for (const key of profile.requiredExhibits) {
+      if (!byKey.has(key)) {
+        byKey.set(key, {
+          key,
+          title: key.replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase()),
+          kind: key.includes('roadmap') || key.includes('calendar') ? 'timeline' : key.includes('map') || key.includes('flow') ? 'flow' : 'matrix',
+          description: `Profile-required view for ${profile.title}; populated from cited evidence, assumptions, and open inputs.`,
+          targetFormat: profile.defaultFormat === 'xlsx' ? 'xlsx' : 'docx',
+        });
+      }
+    }
+  }
+  return [...byKey.values()];
+}
+
 /**
  * Assemble the final RenderableDeliverable in code from the per-section drafts + the synthesis
  * result. No monolithic render call → no single-blob ceiling. Falls back to the request's own
@@ -111,19 +214,28 @@ export function assembleDeliverable(
   sections: RenderableSection[],
   synth: SynthesisResult,
   evidence: readonly GovernedEvidenceItem[],
+  options: {
+    brief?: DeliverableArtifactBrief;
+    unsupportedClaims?: readonly UnsupportedFigureClaim[];
+  } = {},
 ): RenderableDeliverable {
+  const openInputs = openInputsTable(req, options.unsupportedClaims ?? []);
+  const tables = [...(synth.tables ?? [])];
+  if (openInputs && !tables.some((t) => t.key === openInputs.key)) {
+    tables.push(openInputs);
+  }
   const checklist =
     synth.clientCompleteChecklist && synth.clientCompleteChecklist.length > 0
       ? synth.clientCompleteChecklist
       : (req.clientCompleteItems ?? []);
   return {
-    title: (synth.title && synth.title.trim()) || `${req.deliverableType.replace(/_/g, ' ')} — ${req.initiativeDisplayName}`,
+    title: honestTitle(req, synth),
     subtitle: synth.subtitle,
     clientDisplayName: req.clientDisplayName,
     initiativeDisplayName: req.initiativeDisplayName,
     generatedSections: sections,
-    tables: synth.tables ?? [],
-    exhibits: [],
+    tables,
+    exhibits: expectedExhibitsForProfile(req, options.brief),
     sourceRegister: buildSourceRegister(evidence, sections),
     assumptions: req.approvedAssumptions ?? [],
     clientCompleteChecklist: checklist,
