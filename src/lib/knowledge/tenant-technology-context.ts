@@ -13,7 +13,7 @@ export interface TenantTechnologySource {
 
 const TECHNOLOGY_QUESTION_PATTERNS = [
   /\b(current state|today|what do we have|what technologies|tech stack|technology inventory|systems inventory)\b/i,
-  /\b(data analytics|analytics platform|data platform|data stack|bi|business intelligence)\b/i,
+  /\b(data\s*(?:&|and)?\s*analytics|analytics platforms?|data platforms?|data landscape|analytics landscape|data stack|bi|business intelligence)\b/i,
   /\b(warehouse|lakehouse|snowflake|databricks|tableau|power bi|dbt|fivetran|etl|elt)\b/i,
   /\b(ml platform|ai platform|vector database|model platform|activation stack)\b/i,
 ];

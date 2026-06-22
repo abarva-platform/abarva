@@ -71,6 +71,7 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
+    expect(exhibits.citations[0]?.sourceClass).toBe("tenant-fact");
     expect(exhibits.charts).toHaveLength(0);
   });
 

@@ -135,7 +135,7 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
   }
 
   if (
-    /\b(data\s+stack|analytics\s+stack|data\s+and\s+analytics|data\s+platform|data\s+warehouse|warehouse|lakehouse|data\s*lake|\bbi\b|business\s+intelligence|reporting|dashboards?|olap|cube|data\s*marts?|semantic\s+layer|etl|elt|pipelines?|snowflake|databricks|teradata|netezza|power\s*bi|tableau|cognos|microstrategy|clarity|caboodle|informatica|dbt)\b/.test(
+    /\b(data\s+stack|analytics\s+stack|data\s*(?:&|and)\s*analytics|data\s+landscape|analytics\s+landscape|data\s+estate|data\s+platforms?|analytics\s+platforms?|data\s+warehouse|warehouse|lakehouse|data\s*lake|\bbi\b|business\s+intelligence|reporting|dashboards?|olap|cube|data\s*marts?|semantic\s+layer|etl|elt|pipelines?|snowflake|databricks|teradata|netezza|power\s*bi|tableau|cognos|microstrategy|clarity|caboodle|informatica|dbt)\b/.test(
       normalized,
     )
   ) {
@@ -440,12 +440,17 @@ async function retrieveStructuredTenantSources(
     /\b(dora|mttr|lead\s+time|deploy\s+frequency|deployment\s+frequency|change\s+failure|engineering\s+productivity|modernization\s+correlation|factory\s+throughput)\b/.test(
       normalized,
     );
+  const wantsContextChunks =
+    /\b(data\s*(?:&|and)\s*analytics|data\s+landscape|analytics\s+landscape|data\s+estate|data\s+platforms?|analytics\s+platforms?|platforms?|owners?|loaded\s+context|current\s+data|warehouse|lakehouse|\bbi\b|business\s+intelligence|reporting|dashboards?|semantic\s+layer|etl|elt|snowflake|databricks|tableau|power\s*bi)\b/.test(
+      normalized,
+    );
   if (
     !wantsProfile &&
     !wantsApps &&
     !wantsVendors &&
     !wantsInitiatives &&
-    !wantsEngineeringProductivity
+    !wantsEngineeringProductivity &&
+    !wantsContextChunks
   )
     return [];
 
