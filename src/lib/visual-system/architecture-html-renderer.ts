@@ -16,7 +16,10 @@
 import {
   ARCH_LAYER_LABELS,
   ARCH_LAYER_ORDER,
+  ARCHITECTURE_V2_EXHIBITS,
   type AgentBinding,
+  type ArchitectureExhibitKey,
+  type ArchitectureLevelModel,
   type ArchFlow,
   type ArchFlowKind,
   type ArchLayer,
@@ -36,6 +39,17 @@ export const ARCHITECTURE_RENDERED_EXHIBITS = [
   "control_points",
   "implementation_waves",
 ] as const;
+
+export interface ArchitectureContractSignals {
+  hasStorySpine: boolean;
+  currentStateVisualPresent: boolean;
+  gapToTargetBridgePresent: boolean;
+  conceptualArchPresent: boolean;
+  logicalArchPresent: boolean;
+  physicalArchPresent: boolean;
+  exhibitsRenderedAsVisual: boolean;
+  exhibitsInterpreted: boolean;
+}
 
 function esc(s: string | undefined): string {
   if (!s) return "";
@@ -78,9 +92,7 @@ function nodeCard(n: ArchNode): string {
   const status = n.status
     ? `<span class="badge st st-${n.status}">${esc(STATUS_LABEL[n.status])}</span>`
     : "";
-  const service = n.service
-    ? `<div class="svc">${esc(n.service)}</div>`
-    : "";
+  const service = n.service ? `<div class="svc">${esc(n.service)}</div>` : "";
   const note = n.note ? `<div class="note">${esc(n.note)}</div>` : "";
   return `<div class="node k-${n.kind}">
     <div class="node-h"><span class="node-label">${esc(n.label)}</span>${provider}${status}</div>
@@ -102,9 +114,19 @@ function stateMap(state: ArchitectureStateModel): string {
   return `<div class="statemap">${bands}</div>`;
 }
 
+function levelState(level: ArchitectureLevelModel): ArchitectureStateModel {
+  return {
+    title: level.title,
+    thesis: level.thesis,
+    nodes: level.nodes,
+    flows: level.flows,
+  };
+}
+
 function nodeLabelMap(model: ArchitectureModel): Record<string, string> {
   const m: Record<string, string> = {};
-  for (const n of [...model.current.nodes, ...model.target.nodes]) m[n.id] = n.label;
+  for (const n of [...model.current.nodes, ...model.target.nodes])
+    m[n.id] = n.label;
   return m;
 }
 
@@ -126,7 +148,10 @@ function flowList(
       </div>`;
     })
     .join("");
-  return rows || `<p class="empty">No ${kinds.map((k) => FLOW_LABEL[k]).join("/")} flows modelled.</p>`;
+  return (
+    rows ||
+    `<p class="empty">No ${kinds.map((k) => FLOW_LABEL[k]).join("/")} flows modelled.</p>`
+  );
 }
 
 function agenticOverlay(
@@ -176,19 +201,243 @@ function section(
   </section>`;
 }
 
+function exhibitMeta(
+  model: ArchitectureModel,
+  id: ArchitectureExhibitKey,
+): { title: string; soWhat: string; decisionImplication: string } {
+  const planned = model.exhibitPlan?.find((e) => e.id === id);
+  return {
+    title: planned?.title ?? id.replace(/_/g, " "),
+    soWhat: planned?.soWhat ?? "No interpretation modelled.",
+    decisionImplication:
+      planned?.decisionImplication ?? "Decision implication not modelled.",
+  };
+}
+
+function exhibitSection(
+  model: ArchitectureModel,
+  id: ArchitectureExhibitKey,
+  num: number,
+  body: string,
+): string {
+  const meta = exhibitMeta(model, id);
+  return `<section class="exhibit" id="${id}" data-exhibit="${id}">
+    <div class="sec-h"><span class="num">${num}</span><h2>${esc(meta.title)}</h2></div>
+    <div class="visual-body">${body}</div>
+    <p class="so-what"><strong>So what:</strong> ${esc(meta.soWhat)}</p>
+    <p class="decision-implication"><strong>Decision implication:</strong> ${esc(meta.decisionImplication)}</p>
+  </section>`;
+}
+
+function svgTimeline(
+  items: ReadonlyArray<{ id: string; label: string; detail?: string }>,
+  accent = "var(--data)",
+): string {
+  const width = Math.max(720, items.length * 190);
+  const nodes = items
+    .map((item, i) => {
+      const x = 80 + i * 180;
+      const text = esc(item.label);
+      const detail = esc(item.detail);
+      const line =
+        i < items.length - 1
+          ? `<path d="M${x + 48} 92 L${x + 132} 92" stroke="${accent}" stroke-width="2" marker-end="url(#arrow)"/>`
+          : "";
+      return `${line}<g>
+        <circle cx="${x}" cy="92" r="28" fill="#fff" stroke="${accent}" stroke-width="2"/>
+        <text x="${x}" y="97" text-anchor="middle" font-size="13" font-weight="700">${i + 1}</text>
+        <text x="${x}" y="142" text-anchor="middle" font-size="12" font-weight="700">${text}</text>
+        ${detail ? `<text x="${x}" y="160" text-anchor="middle" font-size="10" fill="#6b6b66">${detail.slice(0, 42)}</text>` : ""}
+      </g>`;
+    })
+    .join("");
+  return `<svg class="diagram timeline" viewBox="0 0 ${width} 190" role="img" aria-label="Architecture flow diagram">
+    <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${accent}"/></marker></defs>
+    ${nodes}
+  </svg>`;
+}
+
+function svgFlowDiagram(
+  flows: ArchFlow[],
+  labels: Record<string, string>,
+  kinds: ArchFlowKind[],
+  title: string,
+): string {
+  const filtered = flows.filter((f) => kinds.includes(f.kind)).slice(0, 8);
+  const items = filtered.length
+    ? filtered.map((f) => ({
+        id: f.id,
+        label: `${labels[f.from] ?? f.from} → ${labels[f.to] ?? f.to}`,
+        detail: f.label ?? FLOW_LABEL[f.kind],
+      }))
+    : [{ id: "empty", label: title, detail: "No modelled flow" }];
+  const accent =
+    kinds.includes("control") || kinds.includes("human_approval")
+      ? "var(--control)"
+      : "var(--data)";
+  return svgTimeline(items, accent);
+}
+
+function svgGapBridge(model: ArchitectureModel): string {
+  const items = (model.gapToTargetBridge ?? []).map((b) => ({
+    id: b.id,
+    label: b.targetCapability,
+    detail: b.gap,
+  }));
+  return svgTimeline(items, "var(--changed)");
+}
+
+function svgLevel(
+  level: ArchitectureLevelModel | undefined,
+  title: string,
+): string {
+  if (!level) {
+    return svgTimeline(
+      [{ id: "missing", label: title, detail: "Missing level" }],
+      "var(--muted)",
+    );
+  }
+  return svgTimeline(
+    level.nodes.slice(0, 7).map((n) => ({
+      id: n.id,
+      label: n.label,
+      detail: n.service ?? ARCH_LAYER_LABELS[n.layer],
+    })),
+    "var(--data)",
+  );
+}
+
+function currentOperatingFlow(model: ArchitectureModel): string {
+  const steps = (model.currentStateFlow ?? []).map((s) => ({
+    id: s.id,
+    label: s.label,
+    detail: s.actor ?? s.trigger,
+  }));
+  return `${svgTimeline(steps, "var(--control)")}<div class="grid2">${(
+    model.currentStateFlow ?? []
+  )
+    .map(
+      (s) =>
+        `<div class="card"><div class="card-h">${esc(s.label)}</div><div class="note">${esc(
+          s.bottleneck ?? s.manualWork ?? s.handoff ?? s.decision,
+        )}</div></div>`,
+    )
+    .join("")}</div>`;
+}
+
+function gapsMap(model: ArchitectureModel): string {
+  const cards = (model.gapsMap ?? [])
+    .map(
+      (g) =>
+        `<div class="card"><div class="card-h">${esc(g.gap)}</div><div class="note">${esc(g.observation)}</div><div class="outcome">${esc(g.designImplication)}</div></div>`,
+    )
+    .join("");
+  return `${svgGapBridge(model)}<div class="grid2">${cards}</div>`;
+}
+
+function levelBody(
+  level: ArchitectureLevelModel | undefined,
+  title: string,
+): string {
+  if (!level)
+    return `${svgLevel(undefined, title)}<p class="empty">Missing ${esc(title)}.</p>`;
+  return `${svgLevel(level, title)}<p class="caption">${esc(level.thesis)}</p>${stateMap(levelState(level))}${flowList(level.flows, Object.fromEntries(level.nodes.map((n) => [n.id, n.label])), ["data", "event", "control", "human_approval"])}`;
+}
+
+function humanApproval(
+  model: ArchitectureModel,
+  labels: Record<string, string>,
+): string {
+  const approvals = model.agentic
+    .filter((a) => a.humanInLoop)
+    .map((a) => ({
+      id: a.agentId,
+      label: labels[a.agentId] ?? a.agentId,
+      detail: a.humanInLoop,
+    }));
+  return `${svgTimeline(approvals, "var(--control)")}${agenticOverlay(model, labels)}`;
+}
+
+function integrationMap(
+  model: ArchitectureModel,
+  labels: Record<string, string>,
+): string {
+  const integrationNodes = model.target.nodes.filter(
+    (n) =>
+      n.layer === "integration" ||
+      n.kind === "integration" ||
+      n.layer === "core_systems",
+  );
+  const svg = svgTimeline(
+    integrationNodes.map((n) => ({
+      id: n.id,
+      label: n.label,
+      detail: n.service,
+    })),
+    "var(--data)",
+  );
+  return `${svg}${stateMap({
+    title: "Integration map",
+    thesis: "Target integration rail",
+    nodes: integrationNodes,
+    flows: model.target.flows.filter((f) => labels[f.from] && labels[f.to]),
+  })}`;
+}
+
+function governanceTelemetry(model: ArchitectureModel): string {
+  const items = model.controlPoints.map((c) => ({
+    id: c.id,
+    label: c.label,
+    detail: c.owner ?? c.what,
+  }));
+  return `${svgTimeline(items, "var(--control)")}<div class="grid2">${model.controlPoints
+    .map(
+      (c) =>
+        `<div class="card"><div class="card-h">${esc(c.label)}</div><div class="note">${esc(c.what)}</div>${c.owner ? `<div class="owner">${esc(c.owner)}</div>` : ""}</div>`,
+    )
+    .join("")}</div>`;
+}
+
+function decisionLog(model: ArchitectureModel): string {
+  const rows = (model.decisionLog ?? []).map(
+    (d) =>
+      `<div class="card"><div class="card-h">${esc(d.decision)}</div><div class="outcome">${esc(d.recommendation)}</div><div class="note">${esc(d.rationale)}</div>${d.status ? `<span class="badge">${esc(d.status)}</span>` : ""}</div>`,
+  );
+  return `${svgTimeline(
+    (model.decisionLog ?? []).map((d) => ({
+      id: d.id,
+      label: d.status ?? "decision",
+      detail: d.recommendation,
+    })),
+    "var(--accent)",
+  )}<div class="grid2">${rows.join("")}</div>`;
+}
+
+function storySpine(model: ArchitectureModel): string {
+  const bridge = model.gapToTargetBridge ?? [];
+  if (!bridge.length) return `<p class="empty">No story spine modelled.</p>`;
+  return `<div class="story-spine">${bridge
+    .map(
+      (b) =>
+        `<div class="story-beat"><span>${esc(b.observation)}</span><strong>${esc(b.targetCapability)}</strong><em>${esc(b.architectureResponse)}</em></div>`,
+    )
+    .join("")}</div>`;
+}
+
 /** Render the full premium architecture HTML document. */
 export function renderArchitectureHtml(model: ArchitectureModel): string {
   const labels = nodeLabelMap(model);
   const nav = [
     ["thesis", "Thesis"],
-    ["current", "Current state"],
-    ["target", "Target state"],
-    ["dataflow", "Data flow"],
-    ["aiflow", "AI control & agents"],
-    ["patterns", "Patterns"],
-    ["controls", "Controls"],
-    ["waves", "Waves"],
-    ["decisions", "Decisions"],
+    ["current_state_operating_flow", "Current flow"],
+    ["current_state_gaps_map", "Gaps"],
+    ["target_conceptual_architecture", "Conceptual"],
+    ["target_logical_architecture", "Logical"],
+    ["target_physical_deployment", "Physical"],
+    ["end_to_end_data_flow", "Data flow"],
+    ["ai_recommendation_control_flow", "AI control"],
+    ["governance_audit_telemetry_flow", "Governance"],
+    ["architecture_decision_log", "Decisions"],
   ]
     .map(([h, l]) => `<a href="#${h}">${esc(l)}</a>`)
     .join("");
@@ -201,15 +450,6 @@ export function renderArchitectureHtml(model: ArchitectureModel): string {
         )
         .join("")}</div>`
     : `<p class="empty">No patterns modelled.</p>`;
-
-  const controlsBody = model.controlPoints.length
-    ? `<div class="grid2">${model.controlPoints
-        .map(
-          (c) =>
-            `<div class="card"><div class="card-h">${esc(c.label)}</div><div class="note">${esc(c.what)}</div>${c.owner ? `<div class="owner">${esc(c.owner)}</div>` : ""}</div>`,
-        )
-        .join("")}</div>`
-    : `<p class="empty">No control points modelled.</p>`;
 
   const wavesBody = model.waves.length
     ? `<div class="waves">${model.waves
@@ -300,6 +540,13 @@ export function renderArchitectureHtml(model: ArchitectureModel): string {
   .legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-bottom:14px}
   .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
   .legend .l-data::before{background:var(--data)} .legend .l-control::before{background:var(--control)}
+  .visual-body{display:flex;flex-direction:column;gap:18px}
+  .diagram{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:10px}
+  .so-what,.decision-implication{background:#fff;border-left:3px solid var(--data);padding:10px 14px;margin:14px 0 0;color:var(--ink)}
+  .decision-implication{border-left-color:var(--control);color:var(--muted)}
+  .story-spine{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .story-beat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+  .story-beat span{font-size:12px;color:var(--muted)} .story-beat strong{font-size:14px} .story-beat em{font-size:12px;color:var(--control);font-style:normal}
   @media(max-width:720px){.header,.nav,.wrap{padding-left:20px;padding-right:20px}.band{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
 </style></head>
 <body>
@@ -312,14 +559,91 @@ export function renderArchitectureHtml(model: ArchitectureModel): string {
   <nav class="nav">${nav}</nav>
   <div class="wrap">
     ${section("thesis", 1, "Architecture thesis", "The single idea the future-state design turns on.", `<p class="decision" style="border-color:var(--data)">${esc(model.target.thesis)}</p>`)}
-    ${section("current", 2, model.current.title || "Current state (as-is)", model.current.thesis, stateMap(model.current) + `<h3 style="font-size:15px;margin:20px 0 8px">Today's information flows</h3>` + flowList(model.current.flows, labels, ["data", "event"]))}
-    ${section("target", 3, model.target.title || "Target state (to-be)", "Named services reflect the solution we designed — not a predetermined cloud.", stateMap(model.target))}
-    ${section("dataflow", 4, "End-to-end data flow", "Where data moves — rendered distinct from where AI judgment happens.", `<div class="legend"><span class="l-data">Data flow</span></div>` + flowList(model.target.flows, labels, ["data", "event"]))}
-    ${section("aiflow", 5, "AI decision & control flow — how the services come alive", "The agentic overlay: where agents sit, what they call, how they are grounded and guarded, and where humans approve.", `<div class="legend"><span class="l-control">AI control / decision flow</span></div>` + flowList(model.target.flows, labels, ["control", "human_approval"]) + `<h3 style="font-size:15px;margin:22px 0 10px">Agentic overlay</h3>` + agenticOverlay(model, labels))}
-    ${section("patterns", 6, "Architecture patterns", "The patterns the design relies on, and why each matters.", patternsBody)}
-    ${section("controls", 7, "Control points", "Human-in-the-loop, model-risk, and policy checkpoints built in by design.", controlsBody)}
-    ${section("waves", 8, "Implementation waves", "How the target is delivered — sequenced, with the outcome each wave unlocks.", wavesBody)}
-    ${section("decisions", 9, "Architecture decisions required", "What the architecture leadership must decide, and what we still need to confirm.", decisionsBody || `<p class="empty">No open decisions outstanding.</p>`)}
+    ${section("story-spine-summary", 2, "Story spine summary", `${model.current.title || "Current state (as-is)"} → ${model.target.title || "Target state (to-be)"}. Current observation → gap → target capability → architecture response.`, storySpine(model))}
+    ${section("target-state-overview", 3, model.target.title || "Target state (to-be)", "Named services reflect the solution we designed — not a predetermined cloud.", stateMap(model.target))}
+    ${exhibitSection(model, "current_state_operating_flow", 3, currentOperatingFlow(model))}
+    ${exhibitSection(model, "current_state_system_data_flow", 4, `${svgFlowDiagram(model.current.flows, labels, ["data", "event"], "Current state (as-is) system/data flow")}${stateMap(model.current)}${flowList(model.current.flows, labels, ["data", "event"])}`)}
+    ${exhibitSection(model, "current_state_gaps_map", 5, gapsMap(model))}
+    ${exhibitSection(model, "target_conceptual_architecture", 6, levelBody(model.architectureLevels?.conceptual, "conceptual architecture"))}
+    ${exhibitSection(model, "target_logical_architecture", 7, levelBody(model.architectureLevels?.logical, "logical architecture"))}
+    ${exhibitSection(model, "target_physical_deployment", 8, levelBody(model.architectureLevels?.physical, "physical architecture"))}
+    ${exhibitSection(model, "end_to_end_data_flow", 9, `<div class="legend"><span class="l-data">Data flow</span></div>${svgFlowDiagram(model.target.flows, labels, ["data", "event"], "End-to-end data flow")}${flowList(model.target.flows, labels, ["data", "event"])}`)}
+    ${exhibitSection(model, "ai_recommendation_control_flow", 10, `<div class="legend"><span class="l-control">AI control / decision flow</span></div><h3 style="font-size:15px;margin:0 0 10px">AI decision &amp; control flow</h3>${svgFlowDiagram(model.target.flows, labels, ["control", "human_approval"], "AI decision & control flow")}${flowList(model.target.flows, labels, ["control", "human_approval"])}<h3 style="font-size:15px;margin:22px 0 10px">Agentic overlay — how the services come alive</h3>${agenticOverlay(model, labels)}`)}
+    ${exhibitSection(model, "human_approval_override_model", 11, humanApproval(model, labels))}
+    ${exhibitSection(model, "integration_map", 12, integrationMap(model, labels))}
+    ${exhibitSection(model, "governance_audit_telemetry_flow", 13, governanceTelemetry(model))}
+    ${exhibitSection(
+      model,
+      "implementation_waves",
+      14,
+      `${svgTimeline(
+        model.waves.map((w) => ({
+          id: w.id,
+          label: w.label,
+          detail: w.window ?? w.outcome,
+        })),
+        "var(--data)",
+      )}${wavesBody}`,
+    )}
+    ${exhibitSection(model, "architecture_decision_log", 15, decisionLog(model))}
+    ${section("patterns", 16, "Architecture patterns", "The patterns the design relies on, and why each matters.", patternsBody)}
+    ${section("decisions", 17, "Open inputs required", "What the architecture leadership still needs to confirm.", decisionsBody || `<p class="empty">No open decisions outstanding.</p>`)}
   </div>
 </body></html>`;
+}
+
+function blockHasSvg(html: string, id: ArchitectureExhibitKey): boolean {
+  const re = new RegExp(
+    `<section[^>]+data-exhibit="${id}"[\\s\\S]*?<\\/section>`,
+    "i",
+  );
+  return re.test(html) && /<svg\b/i.test(html.match(re)?.[0] ?? "");
+}
+
+function hasLevel(level: ArchitectureLevelModel | undefined): boolean {
+  return (
+    !!level &&
+    !!level.title?.trim() &&
+    !!level.thesis?.trim() &&
+    !!level.soWhat?.trim() &&
+    level.nodes.length > 0
+  );
+}
+
+export function deriveArchitectureContractSignals(
+  model: ArchitectureModel,
+  html = renderArchitectureHtml(model),
+): ArchitectureContractSignals {
+  const visualExhibits = ARCHITECTURE_V2_EXHIBITS.filter((id) =>
+    blockHasSvg(html, id),
+  );
+  const interpreted = ARCHITECTURE_V2_EXHIBITS.every((id) => {
+    const meta = model.exhibitPlan?.find((e) => e.id === id);
+    return !!meta?.soWhat?.trim() && !!meta.decisionImplication?.trim();
+  });
+  return {
+    hasStorySpine:
+      (model.gapToTargetBridge?.length ?? 0) >= 3 &&
+      (model.currentStateFlow?.length ?? 0) >= 2 &&
+      !!model.target.thesis?.trim(),
+    currentStateVisualPresent:
+      (model.currentStateFlow?.length ?? 0) > 0 &&
+      blockHasSvg(html, "current_state_operating_flow") &&
+      blockHasSvg(html, "current_state_system_data_flow"),
+    gapToTargetBridgePresent:
+      (model.gapToTargetBridge?.length ?? 0) > 0 &&
+      blockHasSvg(html, "current_state_gaps_map"),
+    conceptualArchPresent:
+      hasLevel(model.architectureLevels?.conceptual) &&
+      blockHasSvg(html, "target_conceptual_architecture"),
+    logicalArchPresent:
+      hasLevel(model.architectureLevels?.logical) &&
+      blockHasSvg(html, "target_logical_architecture"),
+    physicalArchPresent:
+      hasLevel(model.architectureLevels?.physical) &&
+      blockHasSvg(html, "target_physical_deployment"),
+    exhibitsRenderedAsVisual:
+      visualExhibits.length === ARCHITECTURE_V2_EXHIBITS.length,
+    exhibitsInterpreted: interpreted,
+  };
 }

@@ -5,41 +5,46 @@
 // function is injectable so the mapping is unit-tested without the data plane. A result
 // that did not pass the gates is refused — the quality gate is integrated here too.
 
-import 'server-only';
+import "server-only";
 
-import { createHash } from 'node:crypto';
-import type { TenantAiPolicy } from '@/lib/integrations/ai-egress';
+import { createHash } from "node:crypto";
+import type { TenantAiPolicy } from "@/lib/integrations/ai-egress";
 import type {
   BoardPackRenderInput,
   BoardPackRenderResult,
   GeneratedArtifactFormat,
   GeneratedArtifactType,
-} from '@/lib/artifacts/types';
-import { saveGeneratedArtifact, type GeneratedArtifactRecord } from '@/lib/artifacts/repository';
-import { prescribedFormatForDeliverableType } from '@/lib/programs/orchestrated-deliverable-map';
-import { renderDeliverableHtml } from './renderers';
-import { buildDeckHtmlFromDocument } from '@/lib/deliverables/deck-from-result';
-import type { OrchestrationResult } from './orchestrator';
-import { assessClientDeliverable } from '@/lib/deliverables/quality/assess-deliverable';
+} from "@/lib/artifacts/types";
+import {
+  saveGeneratedArtifact,
+  type GeneratedArtifactRecord,
+} from "@/lib/artifacts/repository";
+import { prescribedFormatForDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
+import { renderDeliverableHtml } from "./renderers";
+import { buildDeckHtmlFromDocument } from "@/lib/deliverables/deck-from-result";
+import type { OrchestrationResult } from "./orchestrator";
+import { assessClientDeliverable } from "@/lib/deliverables/quality/assess-deliverable";
 import {
   buildContractInput,
   deliverableKeyForOrchestratorType,
-} from '@/lib/deliverables/quality/deliverable-key-map';
-import { DELIVERABLE_PROFILES } from '@/lib/deliverables/profiles/registry';
+} from "@/lib/deliverables/quality/deliverable-key-map";
+import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import {
   renderArchitectureHtml,
   ARCHITECTURE_RENDERED_EXHIBITS,
-} from '@/lib/visual-system/architecture-html-renderer';
-import type { ArchitectureModel } from '@/lib/visual-system/architecture-model';
+  deriveArchitectureContractSignals,
+} from "@/lib/visual-system/architecture-html-renderer";
+import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
 import {
   renderDeckHtml,
   deckExhibits,
   type StorylineDeck,
-} from '@/lib/visual-system/storyline-deck';
-import type { ExhibitId } from '@/lib/deliverables/profiles/types';
-import type { OutputFormat } from './types';
+} from "@/lib/visual-system/storyline-deck";
+import type { ExhibitId } from "@/lib/deliverables/profiles/types";
+import type { OutputFormat } from "./types";
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface PersistDeliverableOptions {
   clientId: string;
@@ -88,9 +93,9 @@ export interface PersistDeps {
 }
 
 function artifactTypeFor(module: string): GeneratedArtifactType {
-  if (module === 'source') return 'source_board_pack';
-  if (module === 'moves') return 'move_board_pack';
-  return 'dossier_board_pack';
+  if (module === "source") return "source_board_pack";
+  if (module === "moves") return "move_board_pack";
+  return "dossier_board_pack";
 }
 
 /** Quality → 0..1 score: starts at 1.0, small penalty per advisory warning. */
@@ -105,7 +110,9 @@ export async function persistDeliverable(
   deps: PersistDeps = {},
 ): Promise<GeneratedArtifactRecord> {
   if (!result.ok || !result.document) {
-    throw new Error(`cannot persist deliverable: ${result.blockedReason ?? 'generation did not pass the gates'}`);
+    throw new Error(
+      `cannot persist deliverable: ${result.blockedReason ?? "generation did not pass the gates"}`,
+    );
   }
   const doc = result.document;
   const artifactType = artifactTypeFor(result.brief.module);
@@ -117,8 +124,11 @@ export async function persistDeliverable(
     result.brief.deliverableType,
   );
   let html = renderDeliverableHtml(doc);
-  let outputFormat: GeneratedArtifactFormat = opts.outputFormat ?? prescribedFormat;
-  const deliverableKey = deliverableKeyForOrchestratorType(result.brief.deliverableType);
+  let outputFormat: GeneratedArtifactFormat =
+    opts.outputFormat ?? prescribedFormat;
+  const deliverableKey = deliverableKeyForOrchestratorType(
+    result.brief.deliverableType,
+  );
 
   // ── Stage 6: renderer selection by profile (flag-gated rollout) ──
   // When the generation passes produced structured models, render the profile's
@@ -126,13 +136,13 @@ export async function persistDeliverable(
   if (opts.renderViaProfile && deliverableKey) {
     const profile = DELIVERABLE_PROFILES[deliverableKey];
     const models = opts.structuredModels;
-    if (profile.renderer === 'html_architecture' && models?.architectureModel) {
+    if (profile.renderer === "html_architecture" && models?.architectureModel) {
       html = renderArchitectureHtml(models.architectureModel);
-      outputFormat = 'html';
-    } else if (profile.renderer === 'pptx_storyline' && models?.storylineDeck) {
+      outputFormat = "html";
+    } else if (profile.renderer === "pptx_storyline" && models?.storylineDeck) {
       // HTML storyline deck now; native PPTX export is the same model later.
       html = renderDeckHtml(models.storylineDeck);
-      outputFormat = 'html';
+      outputFormat = "html";
     }
   }
 
@@ -154,11 +164,11 @@ export async function persistDeliverable(
       });
       if (deck) {
         html = deck;
-        outputFormat = 'html';
+        outputFormat = "html";
       }
     } catch (err) {
       console.error(
-        '[persistDeliverable] decision-storytelling deck render failed; using prose',
+        "[persistDeliverable] decision-storytelling deck render failed; using prose",
         err,
       );
     }
@@ -177,27 +187,41 @@ export async function persistDeliverable(
     if (opts.structuredModels?.architectureModel)
       additionalExhibits.push(...ARCHITECTURE_RENDERED_EXHIBITS);
     if (opts.structuredModels?.storylineDeck)
-      additionalExhibits.push(...deckExhibits(opts.structuredModels.storylineDeck));
+      additionalExhibits.push(
+        ...deckExhibits(opts.structuredModels.storylineDeck),
+      );
 
+    const contractInput = buildContractInput({
+      doc,
+      deliverableKey,
+      outputFormat: outputFormat as OutputFormat,
+      additionalExhibits,
+      ...(opts.tenantTerms ? { tenantTerms: opts.tenantTerms } : {}),
+      ...(opts.governanceOk !== undefined
+        ? { governanceOk: opts.governanceOk }
+        : {}),
+    });
+    const architectureSignals = opts.structuredModels?.architectureModel
+      ? deriveArchitectureContractSignals(
+          opts.structuredModels.architectureModel,
+          html,
+        )
+      : {};
     const assessment = assessClientDeliverable({
-      ...buildContractInput({
-        doc,
-        deliverableKey,
-        outputFormat: outputFormat as OutputFormat,
-        additionalExhibits,
-        ...(opts.tenantTerms ? { tenantTerms: opts.tenantTerms } : {}),
-        ...(opts.governanceOk !== undefined ? { governanceOk: opts.governanceOk } : {}),
-      }),
+      ...contractInput,
+      ...architectureSignals,
       deliverableKey,
     });
     if (!assessment.clientReady) {
       const reasons = assessment.quality.findings
-        .filter((f) => f.severity === 'block')
+        .filter((f) => f.severity === "block")
         .map((f) => f.dimension)
-        .join(', ');
+        .join(", ");
       console.warn(
-        `[persistDeliverable] quality contract: ${assessment.state} (${reasons || 'n/a'})` +
-          (opts.enforceQualityContract ? ' — persisting as internal_draft' : ' — observe-only'),
+        `[persistDeliverable] quality contract: ${assessment.state} (${reasons || "n/a"})` +
+          (opts.enforceQualityContract
+            ? " — persisting as internal_draft"
+            : " — observe-only"),
       );
       if (opts.enforceQualityContract) {
         qualityQuarantined = true;
@@ -206,24 +230,26 @@ export async function persistDeliverable(
     }
   }
 
-  const facts: BoardPackRenderInput['facts'] = doc.sourceRegister.map((r) => ({
+  const facts: BoardPackRenderInput["facts"] = doc.sourceRegister.map((r) => ({
     id: `cite-${r.citationNumber}`,
     label: r.label,
-    value: `${r.evidenceFamily} (${r.confidence}${r.asOf ? `, ${r.asOf}` : ''})`,
+    value: `${r.evidenceFamily} (${r.confidence}${r.asOf ? `, ${r.asOf}` : ""})`,
     evidenceLedgerId: String(r.citationNumber),
   }));
-  const sections: BoardPackRenderInput['sections'] = doc.generatedSections.map((s) => ({
-    id: s.key,
-    title: s.title,
-    claims: [s.bodyMarkdown.slice(0, 500)],
-  }));
+  const sections: BoardPackRenderInput["sections"] = doc.generatedSections.map(
+    (s) => ({
+      id: s.key,
+      title: s.title,
+      claims: [s.bodyMarkdown.slice(0, 500)],
+    }),
+  );
 
   const input: BoardPackRenderInput = {
     clientId: opts.clientId,
     sourceArtifactRef: opts.sourceArtifactRef,
     artifactType,
     outputFormat,
-    renderEngine: 'internal',
+    renderEngine: "internal",
     renderedBy: opts.renderedBy,
     title: doc.title,
     sections,
@@ -235,19 +261,24 @@ export async function persistDeliverable(
   const rendered: BoardPackRenderResult = {
     artifactType,
     sourceArtifactRef: opts.sourceArtifactRef,
-    renderEngine: 'internal',
+    renderEngine: "internal",
     outputFormat,
     html,
-    blobUrl: '',
-    blobSha256: createHash('sha256').update(html).digest('hex'),
+    blobUrl: "",
+    blobSha256: createHash("sha256").update(html).digest("hex"),
     qualityScore: qualityScore(result),
-    evidenceLedgerIds: opts.evidenceLedgerIds ?? doc.sourceRegister.map((r) => String(r.citationNumber)),
+    evidenceLedgerIds:
+      opts.evidenceLedgerIds ??
+      doc.sourceRegister.map((r) => String(r.citationNumber)),
     // generation_egress_audit is a single UUID FK to ai_egress_audit(id). Pass responseIds
     // are Anthropic message ids (msg_…), not audit UUIDs — and the decomposed flow makes many
     // calls, so a joined string would never be one valid UUID. Link the first pass whose
     // responseId is a genuine audit UUID, else null (the per-call audit rows persist
     // independently in ai_egress_audit regardless).
-    generationEgressAudit: result.passTrace.map((t) => t.responseId).find((r): r is string => !!r && UUID_RE.test(r)) ?? null,
+    generationEgressAudit:
+      result.passTrace
+        .map((t) => t.responseId)
+        .find((r): r is string => !!r && UUID_RE.test(r)) ?? null,
     quarantined: qualityQuarantined,
     quarantineReason: qualityQuarantineReason,
   };

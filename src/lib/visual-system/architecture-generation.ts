@@ -52,7 +52,10 @@ const NODE_SCHEMA = {
         "infrastructure",
       ],
     },
-    service: { type: "string", description: "Named platform/service if applicable" },
+    service: {
+      type: "string",
+      description: "Named platform/service if applicable",
+    },
     provider: {
       type: "string",
       enum: ["azure", "aws", "gcp", "on_prem", "saas", "hybrid", "other"],
@@ -73,7 +76,8 @@ const FLOW_SCHEMA = {
     kind: {
       type: "string",
       enum: ["data", "control", "event", "human_approval"],
-      description: "data = information movement; control = AI decision/agent flow",
+      description:
+        "data = information movement; control = AI decision/agent flow",
     },
     note: { type: "string" },
   },
@@ -87,6 +91,110 @@ const STATE_SCHEMA = {
     thesis: { type: "string" },
     nodes: { type: "array", items: NODE_SCHEMA },
     flows: { type: "array", items: FLOW_SCHEMA },
+  },
+} as const;
+
+const CURRENT_STATE_FLOW_SCHEMA = {
+  type: "object",
+  required: ["id", "label"],
+  properties: {
+    id: { type: "string" },
+    label: { type: "string" },
+    actor: { type: "string" },
+    trigger: { type: "string" },
+    systems: { type: "array", items: { type: "string" } },
+    dataSources: { type: "array", items: { type: "string" } },
+    handoff: { type: "string" },
+    decision: { type: "string" },
+    manualWork: { type: "string" },
+    delay: { type: "string" },
+    bottleneck: { type: "string" },
+    missingTelemetry: { type: "string" },
+    controlGap: { type: "string" },
+    valueLeakage: { type: "string" },
+  },
+} as const;
+
+const OBSERVED_GAP_SCHEMA = {
+  type: "object",
+  required: ["id", "observation", "gap", "designImplication"],
+  properties: {
+    id: { type: "string" },
+    observation: { type: "string" },
+    gap: { type: "string" },
+    designImplication: { type: "string" },
+  },
+} as const;
+
+const GAP_BRIDGE_SCHEMA = {
+  type: "object",
+  required: [
+    "id",
+    "observation",
+    "gap",
+    "designImplication",
+    "targetCapability",
+    "architectureResponse",
+  ],
+  properties: {
+    id: { type: "string" },
+    gapId: { type: "string" },
+    observation: { type: "string" },
+    gap: { type: "string" },
+    designImplication: { type: "string" },
+    targetCapability: { type: "string" },
+    architectureResponse: { type: "string" },
+  },
+} as const;
+
+const ARCH_LEVEL_SCHEMA = {
+  type: "object",
+  required: ["title", "thesis", "nodes", "flows", "soWhat"],
+  properties: {
+    title: { type: "string" },
+    thesis: { type: "string" },
+    nodes: { type: "array", items: NODE_SCHEMA },
+    flows: { type: "array", items: FLOW_SCHEMA },
+    soWhat: { type: "string" },
+  },
+} as const;
+
+const EXHIBIT_IDS = [
+  "current_state_operating_flow",
+  "current_state_system_data_flow",
+  "current_state_gaps_map",
+  "target_conceptual_architecture",
+  "target_logical_architecture",
+  "target_physical_deployment",
+  "end_to_end_data_flow",
+  "ai_recommendation_control_flow",
+  "human_approval_override_model",
+  "integration_map",
+  "governance_audit_telemetry_flow",
+  "implementation_waves",
+  "architecture_decision_log",
+] as const;
+
+const EXHIBIT_PLAN_SCHEMA = {
+  type: "object",
+  required: ["id", "title", "soWhat", "decisionImplication"],
+  properties: {
+    id: { type: "string", enum: [...EXHIBIT_IDS] },
+    title: { type: "string" },
+    soWhat: { type: "string" },
+    decisionImplication: { type: "string" },
+  },
+} as const;
+
+const DECISION_SCHEMA = {
+  type: "object",
+  required: ["id", "decision", "recommendation", "rationale"],
+  properties: {
+    id: { type: "string" },
+    decision: { type: "string" },
+    recommendation: { type: "string" },
+    rationale: { type: "string" },
+    status: { type: "string", enum: ["recommended", "open", "deferred"] },
   },
 } as const;
 
@@ -104,6 +212,12 @@ export const ARCHITECTURE_TOOL = {
       "engagement",
       "client",
       "decisionHeadline",
+      "currentStateFlow",
+      "gapsMap",
+      "gapToTargetBridge",
+      "architectureLevels",
+      "exhibitPlan",
+      "decisionLog",
       "current",
       "target",
       "agentic",
@@ -115,9 +229,44 @@ export const ARCHITECTURE_TOOL = {
       engagement: { type: "string" },
       client: { type: "string" },
       decisionHeadline: { type: "string" },
+      currentStateFlow: {
+        type: "array",
+        items: CURRENT_STATE_FLOW_SCHEMA,
+        description:
+          "Ordered current-state operating flow: actors, trigger, systems, handoffs, decisions, manual work, bottlenecks, telemetry/control gaps, value leakage.",
+      },
+      gapsMap: {
+        type: "array",
+        items: OBSERVED_GAP_SCHEMA,
+        description:
+          "Current observation → gap → design implication. Must be grounded in the client context.",
+      },
+      gapToTargetBridge: {
+        type: "array",
+        items: GAP_BRIDGE_SCHEMA,
+        description:
+          "Explicit current observation → gap → design implication → target capability → architecture response chain.",
+      },
+      architectureLevels: {
+        type: "object",
+        required: ["conceptual", "logical", "physical"],
+        properties: {
+          conceptual: ARCH_LEVEL_SCHEMA,
+          logical: ARCH_LEVEL_SCHEMA,
+          physical: ARCH_LEVEL_SCHEMA,
+        },
+      },
+      exhibitPlan: {
+        type: "array",
+        items: EXHIBIT_PLAN_SCHEMA,
+        description:
+          "All 13 required exhibits, each with a so-what and decision implication.",
+      },
+      decisionLog: { type: "array", items: DECISION_SCHEMA },
       provenanceNote: {
         type: "string",
-        description: "Where the cloud/service choices came from (the solution).",
+        description:
+          "Where the cloud/service choices came from (the solution).",
       },
       current: STATE_SCHEMA,
       target: STATE_SCHEMA,
@@ -127,7 +276,10 @@ export const ARCHITECTURE_TOOL = {
           type: "object",
           required: ["agentId", "role", "callsTools"],
           properties: {
-            agentId: { type: "string", description: "a target 'agent' node id" },
+            agentId: {
+              type: "string",
+              description: "a target 'agent' node id",
+            },
             role: { type: "string" },
             callsTools: { type: "array", items: { type: "string" } },
             grounding: { type: "array", items: { type: "string" } },
@@ -188,6 +340,17 @@ Rules:
 - Cloud provider and named services come from the solution YOU reason for this client and this use
   case — never a generic default. Use the providers/services implied by the client's stated target
   platform and systems of record. State that lineage in provenanceNote.
+- Emit ArchitectureModel v2: currentStateFlow, gapsMap, gapToTargetBridge, conceptual/logical/physical
+  architecture levels, all 13 exhibitPlan items, and an architecture decision log.
+- The currentStateFlow must show actors/teams, triggering event, systems, data sources, handoffs,
+  decisions, manual work, delays/bottlenecks, missing telemetry/control gaps, and value leakage where
+  the context supports them.
+- Every gap must bridge to a target capability and an architecture response. Do not jump from current
+  state to target state without the reasoning chain.
+- Conceptual architecture = business capabilities and human/AI/context/integration/governance/value
+  layers. Logical architecture = components, services, interactions, data flows, decision points.
+  Physical architecture = cloud/environment, tenant boundary, runtime, stores, endpoints, identity,
+  logging, model boundary, security, and deployment waves.
 - Model the CURRENT state (as-is) honestly from the client's existing systems, and the TARGET state
   (to-be) as the designed future. Mark target nodes new/changed/existing.
 - Data flow (kind=data) is DISTINCT from AI decision/control flow (kind=control). Include event and
@@ -207,6 +370,12 @@ export interface ArchitectureGenRequest {
   maxTokens?: number;
 }
 
+export interface GovernedToolDefinition {
+  name: string;
+  description: string;
+  input_schema: unknown;
+}
+
 /**
  * The governed model call, INJECTED by the caller. Production wires this to the
  * egress governance (tenant policy + preflight + audit); tests pass a fake.
@@ -215,7 +384,7 @@ export interface ArchitectureGenRequest {
 export type GovernedToolCall = (params: {
   system: string;
   userMessage: string;
-  tool: typeof ARCHITECTURE_TOOL;
+  tool: GovernedToolDefinition;
   model: string;
   maxTokens: number;
 }) => Promise<{ toolInput: unknown; modelId: string }>;
@@ -226,7 +395,9 @@ export interface GeneratedArchitecture {
   modelId: string;
 }
 
-export function buildArchitectureUserMessage(req: ArchitectureGenRequest): string {
+export function buildArchitectureUserMessage(
+  req: ArchitectureGenRequest,
+): string {
   return (
     `Engagement: ${req.engagement}\nClient: ${req.client}\n\n` +
     `Client context and use-case brief:\n${req.contextText}\n\n` +

@@ -3,6 +3,7 @@ import {
   validateStorylineDeck,
   deckExhibits,
   renderDeckHtml,
+  renderStorylineDeckPptx,
 } from "../storyline-deck";
 import { FC_HANDOFF } from "../__fixtures__/first-capital-handoff";
 import { assessClientDeliverable } from "@/lib/deliverables/quality/assess-deliverable";
@@ -10,7 +11,9 @@ import { assessClientDeliverable } from "@/lib/deliverables/quality/assess-deliv
 describe("storyline deck (W3)", () => {
   it("puts the decision in the first two slides", () => {
     const deck = buildHandoffDeck(FC_HANDOFF);
-    expect(validateStorylineDeck(deck).filter((i) => i.level === "error")).toHaveLength(0);
+    expect(
+      validateStorylineDeck(deck).filter((i) => i.level === "error"),
+    ).toHaveLength(0);
     expect(deck.slides[0].kind).toBe("decision_headline");
     expect(deck.slides[1].kind).toBe("decision_requested");
   });
@@ -51,6 +54,27 @@ describe("storyline deck (W3)", () => {
   it("flags a deck that hides the decision past slide 2", () => {
     const deck = buildHandoffDeck(FC_HANDOFF);
     deck.slides = [deck.slides[2], deck.slides[3], deck.slides[0]]; // bury the decision
-    expect(validateStorylineDeck(deck).some((i) => i.level === "error")).toBe(true);
+    expect(validateStorylineDeck(deck).some((i) => i.level === "error")).toBe(
+      true,
+    );
+  });
+
+  it("keeps slide headlines as insight sentences, not topic labels", () => {
+    const deck = buildHandoffDeck(FC_HANDOFF);
+    const issues = validateStorylineDeck(deck);
+    expect(issues.filter((i) => /topic label/i.test(i.message))).toHaveLength(
+      0,
+    );
+
+    deck.slides[2].governingMessage = "Findings";
+    expect(
+      validateStorylineDeck(deck).some((i) => /topic label/i.test(i.message)),
+    ).toBe(true);
+  });
+
+  it("renders a native editable PPTX buffer", async () => {
+    const pptx = await renderStorylineDeckPptx(buildHandoffDeck(FC_HANDOFF));
+    expect(Buffer.isBuffer(pptx)).toBe(true);
+    expect(pptx.subarray(0, 2).toString("utf8")).toBe("PK");
   });
 });

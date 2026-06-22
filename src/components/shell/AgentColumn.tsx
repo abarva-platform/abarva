@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // AgentColumn · Shell Layout Spec v2 §4 — Mode A implementation
 //
@@ -14,17 +14,22 @@
 //
 // Shell Layout Spec v2 §4.1 · April 2026
 
-import type { ReactNode } from 'react';
-import { useRef, useEffect } from 'react';
-import { SHELL } from '@/lib/shell/shell-tokens';
-import { useAgentStream } from '@/hooks/useAgentStream';
-import { ATLAS_SYNTHESIS_TURN_ID } from '@/lib/shell/atlas-page-state';
-import { useAtlasPageState } from '@/hooks/useAtlasPageState';
+import type { ReactNode } from "react";
+import { useRef, useEffect } from "react";
+import { SHELL } from "@/lib/shell/shell-tokens";
+import { useAgentStream } from "@/hooks/useAgentStream";
+import { ATLAS_SYNTHESIS_TURN_ID } from "@/lib/shell/atlas-page-state";
+import { useAtlasPageState } from "@/hooks/useAtlasPageState";
+import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
+import {
+  parseAgentResponseParts,
+  type AgentChartSpec,
+} from "@/lib/agent/response-parts";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface AgentAction {
-  letter: 'A' | 'B' | 'C';
+  letter: "A" | "B" | "C";
   text: string;
   detail?: string;
 }
@@ -39,7 +44,7 @@ export interface AgentColumnProps {
   agentContext?: string;
   actions: AgentAction[];
   inputPlaceholder?: string;
-  onActionClick?: (letter: 'A' | 'B' | 'C') => void;
+  onActionClick?: (letter: "A" | "B" | "C") => void;
   /** Optional panel rendered between actions and the conversation thread. */
   bottomSlot?: ReactNode;
   /** Surface identifier passed to local useAgentStream fallback. */
@@ -84,21 +89,24 @@ export function AgentColumn({
   // not yet wrapped in AtlasPageStateProvider (backward compat during migration).
   const pageState = useAtlasPageState();
   const localStream = useAgentStream({
-    surface: surface ?? 'home',
+    surface: surface ?? "home",
     programId,
     agentName: agent.name,
   });
 
-  const ask          = pageState?.ask             ?? localStream.ask;
-  const response     = pageState?.currentResponse ?? localStream.response;
-  const isStreaming  = pageState?.isStreaming      ?? localStream.isStreaming;
-  const error        = pageState?.error            ?? localStream.error;
-  const clearLocal   = pageState?.clearResponse    ?? localStream.clear;
+  const ask = pageState?.ask ?? localStream.ask;
+  const response = pageState?.currentResponse ?? localStream.response;
+  const isStreaming = pageState?.isStreaming ?? localStream.isStreaming;
+  const error = pageState?.error ?? localStream.error;
+  const clearLocal = pageState?.clearResponse ?? localStream.clear;
   const conversation = pageState
-    ? pageState.conversation.filter((turn) => turn.id !== ATLAS_SYNTHESIS_TURN_ID)
+    ? pageState.conversation.filter(
+        (turn) => turn.id !== ATLAS_SYNTHESIS_TURN_ID,
+      )
     : [];
 
-  const hasThread = conversation.length > 0 || isStreaming || !!response || !!error;
+  const hasThread =
+    conversation.length > 0 || isStreaming || !!response || !!error;
 
   // Auto-scroll only the thread container once there is an active thread.
   // Calling scrollIntoView on mount can pull the whole page to the bottom.
@@ -115,8 +123,8 @@ export function AgentColumn({
     const text = el.value.trim();
     if (!text || isStreaming) return;
     ask(text);
-    el.value = '';
-    el.style.height = 'auto';
+    el.value = "";
+    el.style.height = "auto";
   }
 
   return (
@@ -125,24 +133,24 @@ export function AgentColumn({
         width: 480,
         flexShrink: 0,
         background: SHELL.INK,
-        padding: '28px 28px 0',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden',
-        boxSizing: 'border-box',
+        padding: "28px 28px 0",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        overflow: "hidden",
+        boxSizing: "border-box",
       }}
     >
       {/* ── Agent identity row ── */}
       <div
         style={{
-          display: 'flex',
-          flexDirection: 'row',
+          display: "flex",
+          flexDirection: "row",
           gap: 12,
           marginBottom: 18,
           paddingBottom: 16,
-          borderBottom: '1px solid rgba(250,247,241,0.15)',
-          alignItems: 'center',
+          borderBottom: "1px solid rgba(250,247,241,0.15)",
+          alignItems: "center",
           flexShrink: 0,
         }}
       >
@@ -151,11 +159,11 @@ export function AgentColumn({
           style={{
             width: 36,
             height: 36,
-            borderRadius: '50%',
+            borderRadius: "50%",
             background: SHELL.PAPER,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             flexShrink: 0,
           }}
         >
@@ -173,12 +181,12 @@ export function AgentColumn({
         </div>
 
         {/* Name + role */}
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
           <span
             style={{
               fontFamily: SHELL.SERIF,
               fontSize: 17,
-              color: 'rgba(250,247,241,1)',
+              color: "rgba(250,247,241,1)",
               fontWeight: 600,
               lineHeight: 1.2,
             }}
@@ -189,9 +197,9 @@ export function AgentColumn({
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 9.5,
-              color: 'rgba(250,247,241,0.55)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.16em',
+              color: "rgba(250,247,241,0.55)",
+              textTransform: "uppercase",
+              letterSpacing: "0.16em",
               marginTop: 3,
               lineHeight: 1,
             }}
@@ -205,17 +213,17 @@ export function AgentColumn({
           style={{
             fontFamily: SHELL.MONO,
             fontSize: 9.5,
-            color: 'rgba(250,247,241,0.7)',
-            padding: '4px 9px',
-            background: 'rgba(250,247,241,0.10)',
+            color: "rgba(250,247,241,0.7)",
+            padding: "4px 9px",
+            background: "rgba(250,247,241,0.10)",
             borderRadius: 12,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
+            textTransform: "uppercase",
+            letterSpacing: "0.04em",
             flexShrink: 0,
             lineHeight: 1,
           }}
         >
-          <span style={{ color: '#9bb87a' }}>●</span>{' '}Active
+          <span style={{ color: "#9bb87a" }}>●</span> Active
         </div>
       </div>
 
@@ -227,18 +235,20 @@ export function AgentColumn({
             style={{
               fontFamily: SHELL.SERIF,
               fontSize: 19,
-              fontStyle: 'italic',
-              color: 'rgba(250,247,241,0.95)',
+              fontStyle: "italic",
+              color: "rgba(250,247,241,0.95)",
               lineHeight: 1.5,
-              letterSpacing: '-0.008em',
-              margin: '0 0 6px 0',
+              letterSpacing: "-0.008em",
+              margin: "0 0 6px 0",
             }}
           >
             {synthesisNode ?? quote}
           </p>
 
           {/* Provenance slot — renders directly below the synthesis quote (REASON-27) */}
-          {provenanceSlot && <div style={{ margin: '0 0 14px 0' }}>{provenanceSlot}</div>}
+          {provenanceSlot && (
+            <div style={{ margin: "0 0 14px 0" }}>{provenanceSlot}</div>
+          )}
 
           {/* Agent context */}
           {agentContext && (
@@ -246,9 +256,9 @@ export function AgentColumn({
               style={{
                 fontFamily: SHELL.SANS,
                 fontSize: 12,
-                color: 'rgba(250,247,241,0.55)',
-                fontStyle: 'italic',
-                margin: '0 0 22px 0',
+                color: "rgba(250,247,241,0.55)",
+                fontStyle: "italic",
+                margin: "0 0 22px 0",
               }}
             >
               {agentContext}
@@ -259,7 +269,7 @@ export function AgentColumn({
           <div
             style={{
               paddingTop: 18,
-              borderTop: '1px solid rgba(250,247,241,0.15)',
+              borderTop: "1px solid rgba(250,247,241,0.15)",
               marginTop: agentContext ? 0 : 22,
             }}
           >
@@ -267,9 +277,9 @@ export function AgentColumn({
               style={{
                 fontFamily: SHELL.MONO,
                 fontSize: 9.5,
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
-                color: 'rgba(250,247,241,0.55)',
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "rgba(250,247,241,0.55)",
                 marginBottom: 4,
                 fontWeight: 500,
                 lineHeight: 1,
@@ -279,16 +289,16 @@ export function AgentColumn({
             </div>
 
             {actions.map((action) => (
-              <ActionItem key={action.letter} action={action} onActionClick={onActionClick} />
+              <ActionItem
+                key={action.letter}
+                action={action}
+                onActionClick={onActionClick}
+              />
             ))}
           </div>
 
           {/* Optional bottom slot */}
-          {bottomSlot && (
-            <div style={{ paddingTop: 12 }}>
-              {bottomSlot}
-            </div>
-          )}
+          {bottomSlot && <div style={{ paddingTop: 12 }}>{bottomSlot}</div>}
         </div>
       )}
 
@@ -298,7 +308,7 @@ export function AgentColumn({
           style={{
             flexShrink: 0,
             paddingBottom: 12,
-            borderBottom: '1px solid rgba(250,247,241,0.10)',
+            borderBottom: "1px solid rgba(250,247,241,0.10)",
             marginBottom: 4,
           }}
         >
@@ -306,14 +316,14 @@ export function AgentColumn({
             style={{
               fontFamily: SHELL.SERIF,
               fontSize: 13,
-              fontStyle: 'italic',
-              color: 'rgba(250,247,241,0.45)',
+              fontStyle: "italic",
+              color: "rgba(250,247,241,0.45)",
               lineHeight: 1.4,
               margin: 0,
-              overflow: 'hidden',
-              display: '-webkit-box',
+              overflow: "hidden",
+              display: "-webkit-box",
               WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
+              WebkitBoxOrient: "vertical",
             }}
             dangerouslySetInnerHTML={{ __html: quote }}
           />
@@ -326,12 +336,12 @@ export function AgentColumn({
         style={{
           flex: 1,
           minHeight: 0,
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
+          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
           paddingTop: hasThread ? 12 : 0,
-          scrollbarWidth: 'thin',
-          scrollbarColor: 'rgba(250,247,241,0.12) transparent',
+          scrollbarWidth: "thin",
+          scrollbarColor: "rgba(250,247,241,0.12) transparent",
         }}
       >
         {/* Thread label */}
@@ -340,9 +350,9 @@ export function AgentColumn({
             style={{
               fontFamily: SHELL.MONO,
               fontSize: 9,
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
-              color: 'rgba(250,247,241,0.25)',
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
+              color: "rgba(250,247,241,0.25)",
               marginBottom: 14,
               flexShrink: 0,
             }}
@@ -357,7 +367,11 @@ export function AgentColumn({
             key={turn.id}
             role={turn.role}
             text={turn.text}
-            label={turn.role === 'user' ? 'You' : `${agent.initials} · ${turn.agentName}`}
+            label={
+              turn.role === "user"
+                ? "You"
+                : `${agent.initials} · ${turn.agentName}`
+            }
           />
         ))}
 
@@ -368,9 +382,9 @@ export function AgentColumn({
               style={{
                 fontFamily: SHELL.MONO,
                 fontSize: 9,
-                color: 'rgba(250,247,241,0.3)',
+                color: "rgba(250,247,241,0.3)",
                 marginBottom: 5,
-                letterSpacing: '0.08em',
+                letterSpacing: "0.08em",
               }}
             >
               {agent.initials} · {agent.name}
@@ -379,24 +393,29 @@ export function AgentColumn({
               style={{
                 fontFamily: SHELL.SANS,
                 fontSize: 13,
-                color: 'rgba(250,247,241,0.88)',
+                color: "rgba(250,247,241,0.88)",
                 lineHeight: 1.65,
-                whiteSpace: 'pre-wrap',
+                whiteSpace: "pre-wrap",
               }}
             >
               {isStreaming && !response ? (
-                <span style={{ color: 'rgba(250,247,241,0.35)', fontStyle: 'italic' }}>
+                <span
+                  style={{
+                    color: "rgba(250,247,241,0.35)",
+                    fontStyle: "italic",
+                  }}
+                >
                   thinking…
                 </span>
               ) : (
                 <>
-                  {response}
+                  <AgentResponseBody text={response} />
                   {isStreaming && (
                     <span
                       style={{
-                        display: 'inline-block',
+                        display: "inline-block",
                         opacity: 0.5,
-                        animation: 'none',
+                        animation: "none",
                         marginLeft: 1,
                       }}
                     >
@@ -416,14 +435,14 @@ export function AgentColumn({
               fontFamily: SHELL.SANS,
               fontSize: 12,
               color: SHELL.PEACH_TEXT,
-              padding: '8px 12px',
-              background: 'rgba(255,100,60,0.08)',
+              padding: "8px 12px",
+              background: "rgba(255,100,60,0.08)",
               borderRadius: 6,
               marginBottom: 8,
               flexShrink: 0,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
               gap: 10,
             }}
           >
@@ -431,12 +450,12 @@ export function AgentColumn({
             <button
               onClick={clearLocal}
               style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
+                background: "none",
+                border: "none",
+                cursor: "pointer",
                 fontFamily: SHELL.MONO,
                 fontSize: 9,
-                color: 'rgba(250,247,241,0.3)',
+                color: "rgba(250,247,241,0.3)",
                 padding: 0,
                 flexShrink: 0,
               }}
@@ -451,17 +470,17 @@ export function AgentColumn({
       </div>
 
       {/* ── Input bar (always pinned to bottom) ── */}
-      <div style={{ flexShrink: 0, padding: '16px 0 24px' }}>
+      <div style={{ flexShrink: 0, padding: "16px 0 24px" }}>
         <div
           style={{
-            background: 'rgba(250,247,241,0.08)',
-            border: '1px solid rgba(250,247,241,0.20)',
+            background: "rgba(250,247,241,0.08)",
+            border: "1px solid rgba(250,247,241,0.20)",
             borderRadius: 22,
-            padding: '11px 12px 11px 18px',
-            display: 'flex',
-            flexDirection: 'row',
+            padding: "11px 12px 11px 18px",
+            display: "flex",
+            flexDirection: "row",
             gap: 10,
-            alignItems: 'flex-end',
+            alignItems: "flex-end",
           }}
         >
           <textarea
@@ -475,24 +494,24 @@ export function AgentColumn({
             style={{
               fontFamily: SHELL.SANS,
               fontSize: 13,
-              color: 'rgba(250,247,241,0.85)',
+              color: "rgba(250,247,241,0.85)",
               flex: 1,
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              resize: 'none',
+              background: "transparent",
+              border: "none",
+              outline: "none",
+              resize: "none",
               lineHeight: 1.5,
               maxHeight: 120,
-              overflowY: 'auto',
+              overflowY: "auto",
               caretColor: SHELL.PAPER,
             }}
             onInput={(e) => {
               const el = e.currentTarget;
-              el.style.height = 'auto';
+              el.style.height = "auto";
               el.style.height = `${el.scrollHeight}px`;
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleSubmit();
               }
@@ -503,26 +522,28 @@ export function AgentColumn({
           <button
             onClick={handleSubmit}
             disabled={isStreaming}
-            aria-label={isStreaming ? 'Sending…' : 'Send'}
+            aria-label={isStreaming ? "Sending…" : "Send"}
             style={{
               width: 28,
               height: 28,
-              borderRadius: '50%',
-              background: isStreaming ? 'rgba(250,247,241,0.12)' : SHELL.PAPER,
-              border: 'none',
-              cursor: isStreaming ? 'default' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              borderRadius: "50%",
+              background: isStreaming ? "rgba(250,247,241,0.12)" : SHELL.PAPER,
+              border: "none",
+              cursor: isStreaming ? "default" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               flexShrink: 0,
-              transition: 'background 0.15s',
+              transition: "background 0.15s",
               padding: 0,
             }}
           >
             {isStreaming ? (
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <circle
-                  cx="6" cy="6" r="4.5"
+                  cx="6"
+                  cy="6"
+                  r="4.5"
                   stroke="rgba(250,247,241,0.35)"
                   strokeWidth="1.5"
                   strokeDasharray="14 8"
@@ -554,19 +575,19 @@ function ChatBubble({
   text,
   label,
 }: {
-  role: 'user' | 'agent';
+  role: "user" | "agent";
   text: string;
   label: string;
 }) {
-  const isUser = role === 'user';
+  const isUser = role === "user";
 
   return (
     <div
       style={{
         marginBottom: 14,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: isUser ? 'flex-end' : 'flex-start',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: isUser ? "flex-end" : "flex-start",
         flexShrink: 0,
       }}
     >
@@ -575,9 +596,9 @@ function ChatBubble({
         style={{
           fontFamily: SHELL.MONO,
           fontSize: 9,
-          color: 'rgba(250,247,241,0.28)',
+          color: "rgba(250,247,241,0.28)",
           marginBottom: 4,
-          letterSpacing: '0.08em',
+          letterSpacing: "0.08em",
         }}
       >
         {label}
@@ -586,32 +607,113 @@ function ChatBubble({
       {/* Message bubble */}
       <div
         style={{
-          maxWidth: '88%',
-          padding: '9px 13px',
-          borderRadius: isUser
-            ? '14px 14px 4px 14px'
-            : '14px 14px 14px 4px',
+          maxWidth: "88%",
+          padding: "9px 13px",
+          borderRadius: isUser ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
           background: isUser
-            ? 'rgba(250,247,241,0.12)'
-            : 'rgba(250,247,241,0.06)',
+            ? "rgba(250,247,241,0.12)"
+            : "rgba(250,247,241,0.06)",
           border: `1px solid ${
-            isUser
-              ? 'rgba(250,247,241,0.18)'
-              : 'rgba(250,247,241,0.09)'
+            isUser ? "rgba(250,247,241,0.18)" : "rgba(250,247,241,0.09)"
           }`,
           fontFamily: SHELL.SANS,
           fontSize: 13,
-          color: isUser
-            ? 'rgba(250,247,241,0.90)'
-            : 'rgba(250,247,241,0.85)',
+          color: isUser ? "rgba(250,247,241,0.90)" : "rgba(250,247,241,0.85)",
           lineHeight: 1.65,
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
         }}
       >
-        {text}
+        {isUser ? text : <AgentResponseBody text={text} />}
       </div>
     </div>
+  );
+}
+
+function AgentResponseBody({ text }: { text: string }) {
+  return (
+    <>
+      {parseAgentResponseParts(text).map((part, index) => {
+        if (part.type === "chart") {
+          return <AgentMiniChart key={`chart-${index}`} chart={part.chart} />;
+        }
+        return <AgentMarkdown key={`md-${index}`} text={part.text} />;
+      })}
+    </>
+  );
+}
+
+function AgentMiniChart({ chart }: { chart: AgentChartSpec }) {
+  const max = Math.max(...chart.data.map((d) => d.value), 1);
+  const width = 320;
+  const rowHeight = 30;
+  const height = 54 + chart.data.length * rowHeight;
+  const unit = chart.unit ? ` ${chart.unit}` : "";
+
+  return (
+    <figure
+      style={{
+        margin: "10px 0",
+        padding: "10px 12px",
+        borderRadius: 8,
+        border: "1px solid rgba(250,247,241,0.14)",
+        background: "rgba(250,247,241,0.06)",
+      }}
+    >
+      <figcaption
+        style={{
+          fontFamily: SHELL.MONO,
+          fontSize: 10,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "rgba(250,247,241,0.62)",
+          marginBottom: 8,
+        }}
+      >
+        {chart.title}
+      </figcaption>
+      <svg
+        role="img"
+        aria-label={chart.title}
+        viewBox={`0 0 ${width} ${height}`}
+        style={{ width: "100%", height: "auto", display: "block" }}
+      >
+        {chart.data.map((datum, index) => {
+          const y = 34 + index * rowHeight;
+          const barWidth = Math.max(4, Math.round((datum.value / max) * 176));
+          return (
+            <g key={`${datum.label}-${index}`}>
+              <text
+                x="0"
+                y={y + 13}
+                fontSize="11"
+                fill="rgba(250,247,241,0.72)"
+              >
+                {datum.label.slice(0, 24)}
+              </text>
+              <rect
+                x="128"
+                y={y}
+                width={barWidth}
+                height="16"
+                rx="3"
+                fill="rgba(227,188,92,0.82)"
+              />
+              <text
+                x={312}
+                y={y + 13}
+                fontSize="11"
+                textAnchor="end"
+                fill="rgba(250,247,241,0.72)"
+              >
+                {datum.value.toLocaleString()}
+                {unit}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </figure>
   );
 }
 
@@ -622,39 +724,39 @@ function ActionItem({
   onActionClick,
 }: {
   action: AgentAction;
-  onActionClick?: (letter: 'A' | 'B' | 'C') => void;
+  onActionClick?: (letter: "A" | "B" | "C") => void;
 }) {
   return (
     <div
       role="button"
       tabIndex={0}
       style={{
-        display: 'grid',
-        gridTemplateColumns: '18px 1fr',
+        display: "grid",
+        gridTemplateColumns: "18px 1fr",
         gap: 12,
-        padding: '12px 0',
-        borderBottom: '1px solid rgba(250,247,241,0.10)',
-        alignItems: 'baseline',
-        cursor: 'pointer',
-        transition: 'padding-left 0.15s',
+        padding: "12px 0",
+        borderBottom: "1px solid rgba(250,247,241,0.10)",
+        alignItems: "baseline",
+        cursor: "pointer",
+        transition: "padding-left 0.15s",
       }}
-      onClick={() => onActionClick?.(action.letter as 'A' | 'B' | 'C')}
+      onClick={() => onActionClick?.(action.letter as "A" | "B" | "C")}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ')
-          onActionClick?.(action.letter as 'A' | 'B' | 'C');
+        if (e.key === "Enter" || e.key === " ")
+          onActionClick?.(action.letter as "A" | "B" | "C");
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.paddingLeft = '6px';
+        (e.currentTarget as HTMLDivElement).style.paddingLeft = "6px";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.paddingLeft = '0px';
+        (e.currentTarget as HTMLDivElement).style.paddingLeft = "0px";
       }}
     >
       <span
         style={{
           fontFamily: SHELL.MONO,
           fontSize: 11,
-          color: 'rgba(250,247,241,1)',
+          color: "rgba(250,247,241,1)",
           fontWeight: 600,
           opacity: 0.55,
           lineHeight: 1,
@@ -668,10 +770,10 @@ function ActionItem({
           style={{
             fontFamily: SHELL.SERIF,
             fontSize: 14.5,
-            color: 'rgba(250,247,241,0.95)',
+            color: "rgba(250,247,241,0.95)",
             fontWeight: 500,
             lineHeight: 1.4,
-            letterSpacing: '-0.005em',
+            letterSpacing: "-0.005em",
           }}
         >
           {action.text}
@@ -681,7 +783,7 @@ function ActionItem({
             style={{
               fontFamily: SHELL.SANS,
               fontSize: 11.5,
-              color: 'rgba(250,247,241,0.55)',
+              color: "rgba(250,247,241,0.55)",
               marginTop: 3,
             }}
           >
