@@ -54,6 +54,16 @@ describe("Ask Intelligence response policy", () => {
     );
   });
 
+  it("removes raw internal record ids from prose while preserving readable labels", () => {
+    const answer = sanitizeAskSynthesis(
+      "Customer gold record (FC-DATA-001) is on Databricks. APX-IT-004 owns the inventory mart.",
+    );
+
+    expect(answer).toContain("Customer gold record is on Databricks.");
+    expect(answer).toContain("the cited record owns the inventory mart.");
+    expect(answer).not.toMatch(/\b[A-Z]{2,6}-[A-Z0-9]{2,8}-\d{2,4}\b/);
+  });
+
   it("builds an advisor-style current-state answer instead of a metric dump", () => {
     const answer = buildCurrentStateAdvisory(surfaceSources);
 

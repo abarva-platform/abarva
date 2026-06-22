@@ -126,6 +126,7 @@ async function fetchAskText(auth, query, client) {
   const body = {
     q: query,
     client,
+    tabId: `tenant-matrix-${client}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     format: "rich",
     surfaceContext: { activeTab: "home", clientKey: client },
   };

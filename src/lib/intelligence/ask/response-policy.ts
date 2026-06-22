@@ -5,6 +5,7 @@ const HOLLOW_OPENER_RE =
 
 const BROAD_CURRENT_STATE_RE =
   /\b(current state|state of play|where are we|where do we stand|how are we doing|what is going on|what do you see|give me perspective|your perspective|executive read|simple question|our state)\b/i;
+const RAW_INTERNAL_ID_RE = /\b[A-Z]{2,6}-[A-Z0-9]{2,8}-\d{2,4}\b/g;
 
 export function isBroadCurrentStateQuestion(query: string): boolean {
   return BROAD_CURRENT_STATE_RE.test(query);
@@ -23,7 +24,7 @@ export function stripMarkdownControl(text: string): string {
 
 export function sanitizeAskSynthesis(text: string, maxWords = 120): string {
   const withoutOpener = stripMarkdownControl(
-    text.replace(HOLLOW_OPENER_RE, "").trim(),
+    stripInternalRecordIds(text).replace(HOLLOW_OPENER_RE, "").trim(),
   );
   const words = withoutOpener.split(/\s+/).filter(Boolean);
   if (words.length <= maxWords) return withoutOpener;
@@ -36,6 +37,14 @@ export function sanitizeAskSynthesis(text: string, maxWords = 120): string {
   );
   if (lastSentenceEnd > 80) return capped.slice(0, lastSentenceEnd + 1);
   return `${capped.replace(/[,\s;:]+$/, "")}...`;
+}
+
+export function stripInternalRecordIds(text: string): string {
+  return text
+    .replace(/\s*\(\s*[A-Z]{2,6}-[A-Z0-9]{2,8}-\d{2,4}\s*\)/g, "")
+    .replace(RAW_INTERNAL_ID_RE, "the cited record")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 export function applyPartialEvidencePolicy(
