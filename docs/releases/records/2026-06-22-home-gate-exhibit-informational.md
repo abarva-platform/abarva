@@ -59,4 +59,4 @@ Revert the one-line change. No runtime impact (QA script only).
 
 ## Known Gaps
 
-None known.
+None for this script change. The underlying exhibit-quality fix itself lives in #3836 (suppress inferred exhibits) and #3841 (expert coverage); this change only adjusts the operator gate that observes the result, so it stops reporting `FAILED` on a correctly-suppressed (prose-only) answer.
