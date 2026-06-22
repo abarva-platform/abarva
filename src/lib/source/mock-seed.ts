@@ -819,7 +819,7 @@ const events: SourcingEventDetail[] = [
     nextDecision:
       "Select preferred AMS partner from BAFO responses by May 30, 2026.",
     synopsis:
-      "Apex Retail is consolidating three incumbent AMS providers into a preferred-supplier structure. Sentinel has guided the event through scope, strategy, RFP, vendor responses, and evaluation. Two vendors (Northstar Managed Services and ArcVault Managed) have been invited to BAFO. A BAFO round decision is expected by end of May 2026.",
+      "Apex Retail is consolidating three incumbent AMS providers into a preferred-supplier structure. Ava has guided the event through scope, strategy, RFP, vendor responses, and evaluation. Two vendors (Northstar Managed Services and ArcVault Managed) have been invited to BAFO. A BAFO round decision is expected by end of May 2026.",
     problemStatement:
       "Apex Retail's fragmented AMS landscape — three incumbent providers with overlapping scope — creates delivery risk for the CDP Implementation programme (APX-CDP-2026). A consolidated AMS partner must be selected before the CDP data migration window in Q3 2026.",
     stages: [

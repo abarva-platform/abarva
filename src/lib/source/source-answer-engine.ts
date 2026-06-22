@@ -205,7 +205,7 @@ export function buildSourceAnswerEngine(
         ]
       : []),
   ]);
-  const answerText = hardQuestionAnswer?.answerText ?? formatAnswerText({
+  const rawAnswerText = hardQuestionAnswer?.answerText ?? formatAnswerText({
     mode,
     currentStateFindings,
     sourcingImplications,
@@ -227,6 +227,13 @@ export function buildSourceAnswerEngine(
   const recommendedNextAction =
     hardQuestionAnswer?.recommendedNextAction ?? playbook.nextAction;
   const evidenceCitations = evidence.map(toAnswerCitation);
+  const answerText = toAvaVisibleText(rawAnswerText);
+  const visibleCurrentStateFindings = currentStateFindings.map(toAvaVisibleText);
+  const visibleSourcingImplications = sourcingImplications.map(toAvaVisibleText);
+  const visibleCxoGuidance = finalCxoGuidance.map(toAvaVisibleText);
+  const visibleRiskTraps = finalRiskTraps.map(toAvaVisibleText);
+  const visibleMissingData = finalMissingData.map(toAvaVisibleText);
+  const visibleRecommendedNextAction = toAvaVisibleText(recommendedNextAction);
   const categoryStrategy = classifyEventCategory(input.contextBundle);
   const deliveryModelGate = gateEventDeliveryModel(input.contextBundle);
   const shouldCostEstimate = estimateEventShouldCost(input.contextBundle);
@@ -237,13 +244,13 @@ export function buildSourceAnswerEngine(
     mode,
     title: `${playbook.label} answer`,
     answerText,
-    currentStateFindings,
-    sourcingImplications,
-    cxoGuidance: finalCxoGuidance,
+    currentStateFindings: visibleCurrentStateFindings,
+    sourcingImplications: visibleSourcingImplications,
+    cxoGuidance: visibleCxoGuidance,
     expertLens: finalExpertLens,
-    riskTraps: finalRiskTraps,
-    missingData: finalMissingData,
-    recommendedNextAction,
+    riskTraps: visibleRiskTraps,
+    missingData: visibleMissingData,
+    recommendedNextAction: visibleRecommendedNextAction,
     confidence,
     limits,
     evidenceCitations,
@@ -251,13 +258,13 @@ export function buildSourceAnswerEngine(
       mode,
       answerText,
       confidence,
-      currentStateFindings,
-      sourcingImplications,
-      cxoGuidance: finalCxoGuidance,
-      riskTraps: finalRiskTraps,
-      missingData: finalMissingData,
+      currentStateFindings: visibleCurrentStateFindings,
+      sourcingImplications: visibleSourcingImplications,
+      cxoGuidance: visibleCxoGuidance,
+      riskTraps: visibleRiskTraps,
+      missingData: visibleMissingData,
       evidenceCitations,
-      recommendedNextAction,
+      recommendedNextAction: visibleRecommendedNextAction,
       deliveryModelGate,
       shouldCostEstimate,
       proposalNormalization,
@@ -713,7 +720,7 @@ function toAnswerCitation(
     recordId: item.recordId,
     sourceDoc: item.sourceDoc,
     sourcePath: item.sourcePath,
-    excerpt: cleanEvidenceExcerpt(item.excerpt),
+    excerpt: toAvaVisibleText(cleanEvidenceExcerpt(item.excerpt)),
     confidence: item.confidence,
   };
 }
@@ -736,7 +743,7 @@ function buildAvaResponseParts(args: {
   const parts: AgentResponsePart[] = [
     {
       type: 'metricStrip',
-      title: 'aVa sourcing read',
+      title: 'Ava sourcing read',
       metrics: [
         { label: 'Mode', value: formatMode(args.mode), tone: 'info' },
         { label: 'Confidence', value: args.confidence, tone: confidenceTone(args.confidence) },
@@ -900,6 +907,10 @@ function cleanEvidenceExcerpt(excerpt: string): string {
     .replace(/\s+source_type:.*$/i, "")
     .trim()
     .replace(/[.。]?$/, ".");
+}
+
+function toAvaVisibleText(value: string): string {
+  return value.replace(/\bSentinel\b/g, "Ava");
 }
 
 function joinSentences(items: string[]): string {
