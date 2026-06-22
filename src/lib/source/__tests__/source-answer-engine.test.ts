@@ -266,6 +266,47 @@ describe("Source answer engine", () => {
     expect(answer?.responseParts.some((part) => part.type === 'citations')).toBe(true);
   });
 
+  it("renders Source answer branding as Ava even when retrieved evidence still says Sentinel", () => {
+    const contextWithLegacyBranding: SourceAgentContextBundle = {
+      ...contextBundle,
+      liveTenantContext: {
+        ...liveTenantContext,
+        retrievedEvidence: [
+          {
+            ...liveTenantContext.retrievedEvidence[0],
+            excerpt:
+              "claim: Sentinel has guided the event through scope, strategy, RFP, vendor responses, and evaluation.",
+          },
+          ...liveTenantContext.retrievedEvidence.slice(1),
+        ],
+      },
+    };
+
+    const answer = buildSourceAnswerEngine({
+      prompt: "Compare BAFO deltas across rounds",
+      contextBundle: contextWithLegacyBranding,
+      userRole: "cio",
+    });
+
+    const visiblePayload = JSON.stringify({
+      answerText: answer?.answerText,
+      currentStateFindings: answer?.currentStateFindings,
+      sourcingImplications: answer?.sourcingImplications,
+      cxoGuidance: answer?.cxoGuidance,
+      riskTraps: answer?.riskTraps,
+      missingData: answer?.missingData,
+      recommendedNextAction: answer?.recommendedNextAction,
+      evidenceCitations: answer?.evidenceCitations,
+      responseParts: answer?.responseParts,
+    });
+    expect(visiblePayload).toContain("Ava has guided");
+    expect(visiblePayload).not.toContain("Sentinel has guided");
+    expect(answer?.responseParts[0]).toMatchObject({
+      type: "metricStrip",
+      title: "Ava sourcing read",
+    });
+  });
+
   it("attaches a Slice 1.1 category strategy classification (CDP -> data/AI platform)", () => {
     const answer = buildSourceAnswerEngine({
       prompt: "How should the CIO shape the CDP sourcing event?",
