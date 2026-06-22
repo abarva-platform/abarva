@@ -18,6 +18,11 @@ import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { generateArchitectureModel } from "@/lib/visual-system/architecture-generation";
 import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
 import { governedArchitectureToolCall } from "@/lib/deliverables/quality/architecture-egress-adapter";
+import {
+  generateDeliverablePlan,
+  type DeliverablePlanGenRequest,
+} from "@/lib/deliverables/planning/deliverable-plan-generation";
+import type { DeliverablePlan } from "@/lib/deliverables/planning/deliverable-plan";
 import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import type { GenerationProgress } from "./progress";
@@ -57,6 +62,10 @@ export interface GenerateServiceDeps {
   loadPolicy?: typeof defaultLoadPolicy;
   generate?: typeof defaultGenerate;
   persist?: typeof defaultPersist;
+  /** Reason-first deliverable plan generation. Injectable for tests. */
+  generatePlan?: (
+    req: DeliverablePlanGenRequest,
+  ) => Promise<{ plan: DeliverablePlan }>;
   /** Architecture model generation — defaults to the governed adapter. Injectable for tests. */
   generateArchitecture?: (req: {
     engagement: string;
@@ -104,6 +113,53 @@ export async function runDeliverableForTenant(
     evidence,
     sourceRegister,
   );
+  const deliverableKey = deliverableKeyForOrchestratorType(
+    input.deliverableType,
+  );
+  const wantsArchitecture =
+    !!deliverableKey &&
+    DELIVERABLE_PROFILES[deliverableKey].renderer === "html_architecture";
+  const structuredExhibitsEnabled =
+    wantsArchitecture &&
+    isFeatureEnabled(
+      { clientKey: input.tenantClientKey },
+      "deliverable_structured_exhibits",
+    );
+
+  let deliverablePlan: DeliverablePlan | undefined;
+  if (structuredExhibitsEnabled && deliverableKey) {
+    try {
+      const contextText = [
+        `Decision context: ${input.decisionContext}`,
+        ...evidence.map(
+          (e) =>
+            `[${e.citationNumber}] ${e.label} (${e.evidenceFamily}, ${e.confidence}): ${e.statement}`,
+        ),
+      ]
+        .join("\n")
+        .slice(0, 24000);
+      const genPlan =
+        deps.generatePlan ??
+        ((req) => generateDeliverablePlan(req, governedArchitectureToolCall));
+      const gen = await genPlan({
+        artifactType: deliverableKey,
+        audience: req.audience.join(", "),
+        decisionPurpose: DELIVERABLE_PROFILES[deliverableKey].decisionPurpose,
+        client: input.clientDisplayName,
+        initiative: input.initiativeDisplayName,
+        contextText,
+        requireGapChain:
+          DELIVERABLE_PROFILES[deliverableKey].gapAnalysisRequired === true,
+        ...(input.model ? { model: input.model } : {}),
+      });
+      deliverablePlan = gen.plan;
+    } catch (err) {
+      console.error(
+        "[generate-service] deliverable plan generation failed; structured exhibit plan unavailable",
+        err,
+      );
+    }
+  }
 
   // 3 · multi-pass generation through the audited egress (plan gate + quality gate inside)
   const result = await generate(
@@ -143,29 +199,22 @@ export async function runDeliverableForTenant(
   // the profile's renderer. Tenant-agnostic; grounded in the tenant's own generated
   // narrative. Any failure falls back to prose — generation never breaks.
   let structuredModels: { architectureModel?: ArchitectureModel } | undefined;
-  const deliverableKey = deliverableKeyForOrchestratorType(result.brief.deliverableType);
-  const wantsArchitecture =
-    !!deliverableKey &&
-    DELIVERABLE_PROFILES[deliverableKey].renderer === "html_architecture";
-  if (
-    wantsArchitecture &&
-    isFeatureEnabled(
-      { clientKey: input.tenantClientKey },
-      "deliverable_structured_exhibits",
-    )
-  ) {
+  if (structuredExhibitsEnabled) {
     try {
       const contextText = result.document.generatedSections
         .map((s) => `## ${s.title}\n${s.bodyMarkdown}`)
         .join("\n\n")
         .slice(0, 24000);
+      const planContext = deliverablePlan
+        ? `Reason-first DeliverablePlan:\n${JSON.stringify(deliverablePlan)}\n\n`
+        : "";
       const genArch =
         deps.generateArchitecture ??
         ((req) => generateArchitectureModel(req, governedArchitectureToolCall));
       const gen = await genArch({
         engagement: result.document.initiativeDisplayName,
         client: result.document.clientDisplayName,
-        contextText,
+        contextText: `${planContext}${contextText}`.slice(0, 32000),
         ...(input.model ? { model: input.model } : {}),
       });
       structuredModels = { architectureModel: gen.model };
@@ -190,7 +239,10 @@ export async function runDeliverableForTenant(
   const renderAsDeck =
     result.brief.module === "moves" &&
     !explicitOverride &&
-    isFeatureEnabled({ clientKey: input.tenantClientKey }, "moves_decision_storytelling");
+    isFeatureEnabled(
+      { clientKey: input.tenantClientKey },
+      "moves_decision_storytelling",
+    );
   const record = await persist(result, {
     clientId: input.clientId,
     renderedBy: input.userId,
@@ -199,7 +251,9 @@ export async function runDeliverableForTenant(
     ...(explicitOverride ? { outputFormat: explicitOverride } : {}),
     userId: input.userId,
     evidenceLedgerIds: evidence.map((e) => e.provenanceRef),
-    ...(renderAsDeck ? { renderAsDeck: true, tenantKey: input.tenantClientKey } : {}),
+    ...(renderAsDeck
+      ? { renderAsDeck: true, tenantKey: input.tenantClientKey }
+      : {}),
     // Stage 4-7: hand the structured exhibit models to persistence so the profile's
     // renderer draws them and they count toward exhibit enforcement.
     ...(structuredModels ? { structuredModels, renderViaProfile: true } : {}),

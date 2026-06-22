@@ -1,5 +1,10 @@
 import { validateArchitectureModel } from "../architecture-model";
-import { renderArchitectureHtml } from "../architecture-html-renderer";
+import type { ArchitectureModel } from "../architecture-model";
+import {
+  deriveArchitectureContractSignals,
+  renderArchitectureHtml,
+} from "../architecture-html-renderer";
+import { ARCHITECTURE_V2_EXHIBITS } from "../architecture-model";
 import { FIRST_CAPITAL_ARCHITECTURE } from "../__fixtures__/first-capital-architecture";
 
 describe("architecture model + HTML renderer (W2)", () => {
@@ -57,5 +62,90 @@ describe("architecture model + HTML renderer (W2)", () => {
     const html = renderArchitectureHtml(FIRST_CAPITAL_ARCHITECTURE);
     expect(html).toContain("Wave 1 — Foundation");
     expect(html).toContain("SR 11-7 model risk");
+  });
+
+  it("validates ArchitectureModel v2 fields as hard requirements", () => {
+    const missingPhysical: ArchitectureModel = {
+      ...FIRST_CAPITAL_ARCHITECTURE,
+      architectureLevels: {
+        conceptual: FIRST_CAPITAL_ARCHITECTURE.architectureLevels?.conceptual,
+        logical: FIRST_CAPITAL_ARCHITECTURE.architectureLevels?.logical,
+      },
+    };
+    const missingLevelIssues = validateArchitectureModel(missingPhysical);
+    expect(
+      missingLevelIssues.some((i) =>
+        /Missing physical architecture level/i.test(i.message),
+      ),
+    ).toBe(true);
+
+    const brokenBridge: ArchitectureModel = {
+      ...FIRST_CAPITAL_ARCHITECTURE,
+      gapToTargetBridge: [
+        {
+          id: "broken",
+          gapId: "g1",
+          observation: "Documents arrive manually.",
+          gap: "",
+          designImplication: "",
+          targetCapability: "",
+          architectureResponse: "",
+        },
+      ],
+    };
+    const brokenBridgeIssues = validateArchitectureModel(brokenBridge);
+    expect(
+      brokenBridgeIssues.some((i) =>
+        /Gap bridge broken is missing/i.test(i.message),
+      ),
+    ).toBe(true);
+  });
+
+  it("renders all 13 architecture exhibits as SVG-backed blocks with so-what captions", () => {
+    const html = renderArchitectureHtml(FIRST_CAPITAL_ARCHITECTURE);
+    for (const exhibit of ARCHITECTURE_V2_EXHIBITS) {
+      const block = html.match(
+        new RegExp(
+          `<section[^>]+data-exhibit="${exhibit}"[\\s\\S]*?<\\/section>`,
+          "i",
+        ),
+      )?.[0];
+      expect(block).toBeDefined();
+      expect(block).toContain("<svg");
+      expect(block).toContain("So what:");
+      expect(block).toContain("Decision implication:");
+    }
+  });
+
+  it("derives quality signals from rendered model content", () => {
+    const html = renderArchitectureHtml(FIRST_CAPITAL_ARCHITECTURE);
+    const signals = deriveArchitectureContractSignals(
+      FIRST_CAPITAL_ARCHITECTURE,
+      html,
+    );
+    expect(signals).toMatchObject({
+      hasStorySpine: true,
+      currentStateVisualPresent: true,
+      gapToTargetBridgePresent: true,
+      conceptualArchPresent: true,
+      logicalArchPresent: true,
+      physicalArchPresent: true,
+      exhibitsRenderedAsVisual: true,
+      exhibitsInterpreted: true,
+    });
+  });
+
+  it("does not claim a missing physical level is present", () => {
+    const missingPhysical: ArchitectureModel = {
+      ...FIRST_CAPITAL_ARCHITECTURE,
+      architectureLevels: {
+        conceptual: FIRST_CAPITAL_ARCHITECTURE.architectureLevels?.conceptual,
+        logical: FIRST_CAPITAL_ARCHITECTURE.architectureLevels?.logical,
+      },
+    };
+    const html = renderArchitectureHtml(missingPhysical);
+    const signals = deriveArchitectureContractSignals(missingPhysical, html);
+    expect(signals.physicalArchPresent).toBe(false);
+    expect(signals.exhibitsRenderedAsVisual).toBe(true);
   });
 });

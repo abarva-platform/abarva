@@ -12,6 +12,8 @@
 //
 // Reference: docs/build/DELIVERABLE_QUALITY_TRANSFORMATION_BUILD_SEQUENCE.md (§2)
 
+import type { ObservedGap } from "@/lib/deliverables/planning/deliverable-plan";
+
 /** The seven architecture layers, top (user) to bottom (infra). */
 export type ArchLayer =
   | "experience" // channels, users, front doors
@@ -138,11 +140,109 @@ export interface ImplementationWave {
   outcome: string;
 }
 
+export interface CurrentStateFlowStep {
+  id: string;
+  label: string;
+  actor?: string;
+  trigger?: string;
+  systems?: string[];
+  dataSources?: string[];
+  handoff?: string;
+  decision?: string;
+  manualWork?: string;
+  delay?: string;
+  bottleneck?: string;
+  missingTelemetry?: string;
+  controlGap?: string;
+  valueLeakage?: string;
+}
+
+export interface GapToTargetBridgeItem {
+  id: string;
+  /** Optional pointer to gapsMap.id, when this bridge item derives from one gap. */
+  gapId?: string;
+  observation: string;
+  gap: string;
+  designImplication: string;
+  targetCapability: string;
+  architectureResponse: string;
+}
+
+export type ArchitectureLevel = "conceptual" | "logical" | "physical";
+
+export interface ArchitectureLevelModel {
+  title: string;
+  thesis: string;
+  nodes: ArchNode[];
+  flows: ArchFlow[];
+  soWhat: string;
+}
+
+export interface ArchitectureDecision {
+  id: string;
+  decision: string;
+  recommendation: string;
+  rationale: string;
+  status?: "recommended" | "open" | "deferred";
+}
+
+export type ArchitectureExhibitKey =
+  | "current_state_operating_flow"
+  | "current_state_system_data_flow"
+  | "current_state_gaps_map"
+  | "target_conceptual_architecture"
+  | "target_logical_architecture"
+  | "target_physical_deployment"
+  | "end_to_end_data_flow"
+  | "ai_recommendation_control_flow"
+  | "human_approval_override_model"
+  | "integration_map"
+  | "governance_audit_telemetry_flow"
+  | "implementation_waves"
+  | "architecture_decision_log";
+
+export interface ArchitectureExhibitPlanItem {
+  id: ArchitectureExhibitKey;
+  title: string;
+  soWhat: string;
+  decisionImplication: string;
+}
+
+export const ARCHITECTURE_V2_EXHIBITS: ReadonlyArray<ArchitectureExhibitKey> = [
+  "current_state_operating_flow",
+  "current_state_system_data_flow",
+  "current_state_gaps_map",
+  "target_conceptual_architecture",
+  "target_logical_architecture",
+  "target_physical_deployment",
+  "end_to_end_data_flow",
+  "ai_recommendation_control_flow",
+  "human_approval_override_model",
+  "integration_map",
+  "governance_audit_telemetry_flow",
+  "implementation_waves",
+  "architecture_decision_log",
+];
+
 export interface ArchitectureModel {
   engagement: string;
   client: string;
   /** The architecture decision/recommendation — leads the exhibit. */
   decisionHeadline: string;
+  /** Ordered current-state operating flow: actors, events, handoffs, decisions, leakage. */
+  currentStateFlow?: CurrentStateFlowStep[];
+  /** Current observation → gap → design implication. */
+  gapsMap?: ObservedGap[];
+  /** Explicit current→gap→target bridge the reader can inspect. */
+  gapToTargetBridge?: GapToTargetBridgeItem[];
+  /** Conceptual, logical, and physical architecture levels. */
+  architectureLevels?: Partial<
+    Record<ArchitectureLevel, ArchitectureLevelModel>
+  >;
+  /** The 13 visual exhibits the renderer must draw, each with interpretation. */
+  exhibitPlan?: ArchitectureExhibitPlanItem[];
+  /** Architecture decision log for open/recommended design choices. */
+  decisionLog?: ArchitectureDecision[];
   current: ArchitectureStateModel; // as-is
   target: ArchitectureStateModel; // to-be
   agentic: AgentBinding[]; // come-alive overlay on target
@@ -158,6 +258,49 @@ export interface ArchitectureModel {
 export interface ArchValidationIssue {
   level: "error" | "warn";
   message: string;
+}
+
+function hasText(s: string | undefined): boolean {
+  return !!s?.trim();
+}
+
+function validateLevel(
+  level: ArchitectureLevel,
+  model: ArchitectureLevelModel | undefined,
+  issues: ArchValidationIssue[],
+): void {
+  if (!model) {
+    issues.push({
+      level: "error",
+      message: `Missing ${level} architecture level.`,
+    });
+    return;
+  }
+  if (
+    !hasText(model.title) ||
+    !hasText(model.thesis) ||
+    !hasText(model.soWhat)
+  ) {
+    issues.push({
+      level: "error",
+      message: `${level} architecture level is missing title, thesis, or soWhat.`,
+    });
+  }
+  if (!model.nodes.length) {
+    issues.push({
+      level: "error",
+      message: `${level} architecture level has no nodes.`,
+    });
+  }
+  const ids = new Set(model.nodes.map((n) => n.id));
+  for (const f of model.flows) {
+    if (!ids.has(f.from) || !ids.has(f.to)) {
+      issues.push({
+        level: "error",
+        message: `${level} architecture flow ${f.id} references an unknown node (${f.from}→${f.to}).`,
+      });
+    }
+  }
 }
 
 /** Validate referential integrity + the transformation's hard requirements. */
@@ -191,7 +334,8 @@ export function validateArchitectureModel(
   if (!kinds.has("control")) {
     issues.push({
       level: "warn",
-      message: "Target has no AI control/decision-flow edges (agentic overlay).",
+      message:
+        "Target has no AI control/decision-flow edges (agentic overlay).",
     });
   }
 
@@ -221,6 +365,93 @@ export function validateArchitectureModel(
       message:
         "Target names services but carries no provenanceNote (where the cloud choice came from).",
     });
+  }
+
+  if (!model.currentStateFlow?.length) {
+    issues.push({
+      level: "error",
+      message: "Current-state operating flow is empty.",
+    });
+  }
+
+  if (!model.gapsMap?.length) {
+    issues.push({
+      level: "error",
+      message: "Gaps map is empty.",
+    });
+  }
+  for (const g of model.gapsMap ?? []) {
+    if (
+      !hasText(g.observation) ||
+      !hasText(g.gap) ||
+      !hasText(g.designImplication)
+    ) {
+      issues.push({
+        level: "error",
+        message: `Gap ${g.id} is missing observation / gap / designImplication.`,
+      });
+    }
+  }
+
+  if (!model.gapToTargetBridge?.length) {
+    issues.push({
+      level: "error",
+      message: "Gap-to-target bridge is empty.",
+    });
+  }
+  const gapIds = new Set((model.gapsMap ?? []).map((g) => g.id));
+  for (const b of model.gapToTargetBridge ?? []) {
+    if (
+      !hasText(b.observation) ||
+      !hasText(b.gap) ||
+      !hasText(b.designImplication) ||
+      !hasText(b.targetCapability) ||
+      !hasText(b.architectureResponse)
+    ) {
+      issues.push({
+        level: "error",
+        message: `Gap bridge ${b.id} is missing observation / gap / designImplication / targetCapability / architectureResponse.`,
+      });
+    }
+    if (b.gapId && !gapIds.has(b.gapId)) {
+      issues.push({
+        level: "error",
+        message: `Gap bridge ${b.id} references unknown gap ${b.gapId}.`,
+      });
+    }
+  }
+  for (const g of model.gapsMap ?? []) {
+    const covered = (model.gapToTargetBridge ?? []).some(
+      (b) => b.gapId === g.id || b.gap === g.gap,
+    );
+    if (!covered) {
+      issues.push({
+        level: "error",
+        message: `Gap ${g.id} is not covered by the gap-to-target bridge.`,
+      });
+    }
+  }
+
+  validateLevel("conceptual", model.architectureLevels?.conceptual, issues);
+  validateLevel("logical", model.architectureLevels?.logical, issues);
+  validateLevel("physical", model.architectureLevels?.physical, issues);
+
+  const exhibitIds = new Set((model.exhibitPlan ?? []).map((e) => e.id));
+  for (const id of ARCHITECTURE_V2_EXHIBITS) {
+    if (!exhibitIds.has(id)) {
+      issues.push({
+        level: "error",
+        message: `Missing required architecture exhibit plan item ${id}.`,
+      });
+    }
+  }
+  for (const e of model.exhibitPlan ?? []) {
+    if (!hasText(e.soWhat) || !hasText(e.decisionImplication)) {
+      issues.push({
+        level: "error",
+        message: `Exhibit ${e.id} is missing soWhat or decisionImplication.`,
+      });
+    }
   }
 
   return issues;

@@ -1188,9 +1188,12 @@ export async function POST(request: Request) {
   // (/api/programs/synthesis). Empty string (and byte-identical prompt) when off,
   // off-Home, or with no question — so this is inert until the flag is flipped.
   const homeConsiliumBlock =
-    surface === "/home" && message && activeClientKey
-      && isFeatureEnabled({ clientKey: activeClientKey }, "scb_shared_engine_home")
-      ? summonExpertsForQuery({ query: message, clientKey: activeClientKey }).groundingBlock
+    surface === "/home" &&
+    message &&
+    activeClientKey &&
+    isFeatureEnabled({ clientKey: activeClientKey }, "scb_shared_engine_home")
+      ? summonExpertsForQuery({ query: message, clientKey: activeClientKey })
+          .groundingBlock
       : "";
 
   const systemPrompt = [
@@ -1338,7 +1341,7 @@ export async function POST(request: Request) {
     // observations in code blocks and reciting raw IDs. The chat
     // pane is conversational; the structured workspace is on the
     // RIGHT (artifacts). Keep the chat in flowing prose.
-    "- Write in flowing prose. Do NOT use markdown code blocks (``` … ```), SQL/JSON snippets, table outlines, or bracketed identifier dumps in the chat reply. Code blocks make the chat feel like a debugger, not a partner.",
+    '- Write in flowing prose. Markdown tables are allowed when the user asks to compare options, risks, vendors, milestones, or economics; keep them compact and add a one-sentence interpretation. Do NOT use SQL snippets, raw JSON dumps, bracketed identifier dumps, or generic code blocks. The only allowed fenced block is a compact ```abarva-chart JSON block for a response-window bar chart with {"type":"bar","title":"...","data":[{"label":"...","value":123}]}; never expose internal ids in it.',
     '- Reference patterns, programs, and people by NAME, not raw ID. Say "AMS Consolidation" not "[PAT-PRG-AMS-CONSOLIDATION-001]". The right-pane card carries the ID; you carry the conversation.',
     "- Bullet lists are fine sparingly (≤ 3 bullets). When the user asks an open question, lead with one or two sentences before any list.",
     // OV2-4c · attachment doctrine. Always rendered (cheap; the model
