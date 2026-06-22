@@ -24,7 +24,7 @@ const CSS = `
 .avaask .aa-bar{display:flex;align-items:center;gap:10px;background:var(--aa-card);border:1px solid var(--aa-line);border-radius:14px;padding:10px 10px 10px 18px;max-width:760px;margin:0 auto;box-shadow:0 1px 0 rgba(15,23,42,.02)}
 .avaask .aa-bar:focus-within{border-color:#22AEEA;box-shadow:0 0 0 3px rgba(34,174,234,.12)}
 .avaask .aa-spark{color:var(--aa-green);flex:none}
-.avaask .aa-bar input{flex:1;border:none;outline:none;font-size:14px;background:transparent;color:var(--aa-ink)}
+.avaask .aa-bar textarea{flex:1;min-height:22px;max-height:140px;border:none;outline:none;font:inherit;font-size:14px;line-height:1.45;background:transparent;color:var(--aa-ink);resize:none;overflow:auto;padding:0}
 .avaask .aa-bar button{background:var(--aa-ink);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer}
 .avaask .aa-bar button:disabled{opacity:.5;cursor:default}
 .avaask .aa-box{max-width:960px;margin:16px auto 0;background:var(--aa-card);border:1px solid var(--aa-line);border-radius:12px;padding:18px 22px;text-align:left}
@@ -45,6 +45,17 @@ type Evt = {
   answer?: AgentAnswer;
 };
 
+function resizeAskTextarea(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
+}
+
+function resetAskTextarea(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+}
+
 export function AvaAsk({
   placeholder = "Ask about anything — data, vendors, risk, adoption, customers…",
   client,
@@ -63,11 +74,14 @@ export function AvaAsk({
   const [agentAnswer, setAgentAnswer] = useState<AgentAnswer | null>(null);
   const [fetching, setFetching] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const ask = useCallback(
     async (q: string) => {
       const trimmed = q.trim();
       if (!trimmed) return;
+      setQuery("");
+      resetAskTextarea(textareaRef.current);
       abortRef.current?.abort();
       const ctrl = new AbortController();
       abortRef.current = ctrl;
@@ -155,11 +169,16 @@ export function AvaAsk({
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div className="aa-bar">
         <span className="aa-spark">✦</span>
-        <input
+        <textarea
+          ref={textareaRef}
+          rows={1}
           value={query}
           placeholder={placeholder}
           aria-label="Ask Ava"
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            resizeAskTextarea(e.currentTarget);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -216,7 +235,6 @@ export function AvaAsk({
                   role="button"
                   tabIndex={0}
                   onClick={() => {
-                    setQuery(f);
                     ask(f);
                   }}
                 >

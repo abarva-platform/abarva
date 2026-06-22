@@ -113,7 +113,11 @@ export function buildStructuredExhibits(
   const tables: AnswerTable[] = [];
   const charts: AnswerChart[] = [];
 
-  if (input.routing.outputShape === "table") {
+  if (
+    input.routing.outputShape === "table" ||
+    input.routing.outputShape === "chart" ||
+    input.routing.outputShape === "graph"
+  ) {
     const table =
       sourceRegisterTable(citations) ?? evidenceRequiredTable(citations);
     if (table) tables.push(table);

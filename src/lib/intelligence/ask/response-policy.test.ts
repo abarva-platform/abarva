@@ -54,6 +54,31 @@ describe("Ask Intelligence response policy", () => {
     );
   });
 
+  it("preserves markdown table layout when capping long ask answers", () => {
+    const answer = sanitizeAskSynthesis(
+      [
+        "Planning ranges from the cited context:",
+        "",
+        "| Use case | Primary benefit |",
+        "|---|---|",
+        "| Demand forecasting | Inventory turn and lost-sale reduction |",
+        "",
+        "Next move: validate tenant-specific benefit ranges before putting a number in front of the board. The rest of this sentence is intentionally long enough to force a cap.",
+      ].join("\n"),
+      24,
+    );
+
+    expect(answer).toContain(
+      "\n| Use case | Primary benefit |\n|---|---|\n",
+    );
+    expect(answer).toContain(
+      "| Demand forecasting | Inventory turn and lost-sale reduction |",
+    );
+    expect(answer).not.toContain(
+      "| Use case | Primary benefit | |---|---| | Demand forecasting |",
+    );
+  });
+
   it("removes raw internal record ids from prose while preserving readable labels", () => {
     const answer = sanitizeAskSynthesis(
       "Customer gold record (FC-DATA-001) is on Databricks. APX-IT-004 owns the inventory mart.",
