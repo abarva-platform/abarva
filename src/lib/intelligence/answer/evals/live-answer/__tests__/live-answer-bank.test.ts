@@ -273,4 +273,25 @@ describe("live-answer bank", () => {
 
     expect(result.deterministicPass).toBe(true);
   });
+
+  it("recognizes clinical retirement/restructure candidate wording", () => {
+    const result = checkLiveAnswerCase(
+      {
+        id: "regression-clinical-retirement-candidate-next-move",
+        query: "Compare top clinical decision support alerts by override rate.",
+        expectedExpertId:
+          "xp.healthcare-provider.clinical-process-transformation",
+        expectedBehaviors: ["output_shape_table", "name_real_next_move"],
+        notes:
+          "Regression for live Ava first-retirement-or-restructure phrasing.",
+      },
+      {
+        prose:
+          "A BPA with a high override rate is generating noise; a BPA that also drives high in-basket volume is generating noise and work. Those are your first retirement or restructure candidates, by specialty.",
+        hasTable: true,
+      },
+    );
+
+    expect(result.deterministicPass).toBe(true);
+  });
 });
