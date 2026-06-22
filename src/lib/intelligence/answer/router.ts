@@ -35,6 +35,16 @@ export interface RouteInput {
 }
 
 const WORD = /[a-z0-9]+/g;
+const VERTICAL_CROSS_CUTTING_COMPATIBILITY: Record<string, string[]> = {
+  "consumer-products-operations": ["retail"],
+  "foodservice-hospitality-operations": [],
+  "insurance-underwriting-claims": [],
+  "life-sciences-rd-commercial": [],
+  "manufacturing-operations": [],
+  "media-entertainment": [],
+  "public-sector-citizen-services": [],
+  "telecom-network-operations": [],
+};
 
 function tokens(s: string): Set<string> {
   return new Set((s.toLowerCase().match(WORD) ?? []).filter((w) => w.length > 3));
@@ -77,6 +87,18 @@ function inferOutputShape(query: string): OutputShape {
   return "prose";
 }
 
+function isIndustryCompatibleCrossCuttingPack(
+  p: ExpertPack,
+  industry: string,
+): boolean {
+  const domain = p.identity.crossCuttingDomain;
+  if (!domain) return true;
+  const compatibleIndustries = VERTICAL_CROSS_CUTTING_COMPATIBILITY[domain];
+  return compatibleIndustries
+    ? compatibleIndustries.includes(industry)
+    : true;
+}
+
 /**
  * Route a question to expert(s) + an output shape. Industry, when known, gives
  * a relevance bonus to industry-matched packs so a healthcare tenant's "denials"
@@ -95,6 +117,13 @@ export function routeQuestion(input: RouteInput): RoutingDecision {
     if (industry && p.identity.industry && p.identity.industry !== industry) {
       return { id: p.identity.id, name: p.identity.expertName, score: 0 };
     }
+    if (
+      industry &&
+      !p.identity.industry &&
+      !isIndustryCompatibleCrossCuttingPack(p, industry)
+    ) {
+      return { id: p.identity.id, name: p.identity.expertName, score: 0 };
+    }
     const kw = packKeywords(p);
     let score = 0;
     for (const t of qTokens) if (kw.has(t)) score += 1;
@@ -103,10 +132,30 @@ export function routeQuestion(input: RouteInput): RoutingDecision {
     return { id: p.identity.id, name: p.identity.expertName, score };
   }).sort((a, b) => b.score - a.score);
 
-  const experts: ExpertRef[] = scores
-    .filter((s) => s.score > 0)
-    .slice(0, maxExperts)
-    .map((s) => ({ id: s.id, name: s.name }));
+  const ranked = scores.filter((s) => s.score > 0);
+  const packById = new Map(EXPERT_PACKS.map((p) => [p.identity.id, p]));
+  const selected = ranked.slice(0, maxExperts);
+  if (
+    industry &&
+    maxExperts > 0 &&
+    selected.every((s) => packById.get(s.id)?.identity.industry !== industry)
+  ) {
+    const industryCandidate = ranked.find(
+      (s) => packById.get(s.id)?.identity.industry === industry,
+    );
+    if (industryCandidate) {
+      if (selected.length < maxExperts) {
+        selected.push(industryCandidate);
+      } else {
+        selected[selected.length - 1] = industryCandidate;
+      }
+    }
+  }
+
+  const experts: ExpertRef[] = selected.map((s) => ({
+    id: s.id,
+    name: s.name,
+  }));
 
   return {
     query,
