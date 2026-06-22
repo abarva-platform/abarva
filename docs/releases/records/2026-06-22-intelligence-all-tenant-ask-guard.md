@@ -28,10 +28,13 @@ Adds a regression guard at the streamed Intelligence ask boundary so Ava's visib
 ## Changes Included
 
 - `src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts`: adds an all-tenant streamed `agent-answer` matrix that verifies the visible expert-chip family and blocks cross-vertical expert leakage.
+- `src/lib/source/__tests__/sentinel-chat-llm.test.ts`: updates Source test fixtures to the current response-parts and Anthropic/Sonnet egress contracts so full-project typecheck remains green on current `main`.
 
 ## QA / Validation
 
 - `npx jest src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts --runInBand` — passed.
+- `npx jest src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts src/lib/source/__tests__/sentinel-chat-llm.test.ts --runInBand` — passed.
+- `npx eslint src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts src/lib/source/__tests__/sentinel-chat-llm.test.ts` — passed.
 
 ## Rollout Plan
 
