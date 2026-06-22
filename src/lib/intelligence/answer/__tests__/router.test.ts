@@ -2,6 +2,27 @@ import { expertIndustryForClientKey } from "@/lib/intelligence/answer/expert-gro
 import { routeQuestion } from "@/lib/intelligence/answer/router";
 
 describe("routeQuestion", () => {
+  it("resolves expert industries from both app client keys and canonical tenant keys", () => {
+    expect(expertIndustryForClientKey("apexretail")).toBe("retail");
+    expect(expertIndustryForClientKey("apex-retail")).toBe("retail");
+    expect(expertIndustryForClientKey("meridian")).toBe(
+      "healthcare_provider",
+    );
+    expect(expertIndustryForClientKey("meridian-health")).toBe(
+      "healthcare_provider",
+    );
+    expect(expertIndustryForClientKey("arcturus")).toBe(
+      "financial_services_banking",
+    );
+    expect(expertIndustryForClientKey("first-capital")).toBe(
+      "financial_services_banking",
+    );
+    expect(expertIndustryForClientKey("skyharbor")).toBe("airline");
+    expect(expertIndustryForClientKey("skyharbor-air")).toBe("airline");
+    expect(expertIndustryForClientKey("lakeshore")).toBeUndefined();
+    expect(expertIndustryForClientKey("lakeshore-holdings")).toBeUndefined();
+  });
+
   it("keeps a tenant-industry expert in the selected set when cross-cutting experts score higher", () => {
     const routing = routeQuestion({
       query:
