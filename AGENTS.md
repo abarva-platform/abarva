@@ -69,6 +69,20 @@ These rules are executable policy, not guidance. Every agent and PR must preserv
 - Do not reintroduce Vercel as the production runtime or deployment path. `app.abarva.ai` is Azure Container Apps; Vercel references belong only in deprecation docs or explicit shutdown/runbook work. Tool/plugin availability in a local agent environment does **not** authorize Vercel deploys, Vercel env changes, or Vercel production assumptions.
 - Run `npm run audit:architecture-rules` before opening or updating PRs that touch runtime, provider, data-plane, CI, or config files. The GitHub `Architecture Rules` workflow enforces this on PRs.
 
+## Production deployment lane
+
+`app.abarva.ai` is deployed through Azure Container Apps, not Vercel. Do not use Vercel deploys, Vercel production aliases, Vercel rollback commands, or `*.vercel.app` URLs as evidence that the live product is current.
+
+Canonical production/lab release path:
+
+1. Build an image from the exact git SHA with `az acr build`.
+2. Deploy that image to `ca-abarva-web-lab-eastus` with `az containerapp update --image acrabarvalab001.azurecr.io/abarva/web@sha256:<digest>`.
+3. Wait for the new revision to become healthy.
+4. Assign 100% ingress traffic to the new ACA revision.
+5. Verify `https://app.abarva.ai` with live route/browser checks.
+
+Use [docs/runbooks/azure-container-apps-deploy.md](/Users/anand/Projects/nexus/docs/runbooks/azure-container-apps-deploy.md) as the operator runbook. Vercel files in this repository are legacy sentinels or historical records only; they are not an approved deployment path for `app.abarva.ai`.
+
 ## Release control discipline
 
 Every non-trivial change must be traceable as a controlled release candidate, not just as a PR. Before opening or updating a PR, classify the release lane, explain the layer impact, identify client applicability, record QA/validation, and describe rollout plus rollback.
