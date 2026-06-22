@@ -144,15 +144,103 @@ jobs:
           } | tee audit-artifacts/aca-main-deploy/image.txt
 
       - name: Deploy new revision
+        id: deploy_revision
         shell: bash
         run: |
           set -euo pipefail
-          az containerapp update \
-            --name "$CONTAINER_APP_NAME" \
-            --resource-group "$RESOURCE_GROUP" \
-            --image "${{ steps.image.outputs.image }}" \
-            --revision-suffix "${{ steps.release.outputs.revision_suffix }}" \
-            --output json | tee audit-artifacts/aca-main-deploy/containerapp-update.json
+          expected_image="${{ steps.image.outputs.image }}"
+          IMAGE="$expected_image"
+          base_suffix="${{ steps.release.outputs.revision_suffix }}"
+
+          revision_exists() {
+            local revision_name="$1"
+            az containerapp revision show \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --revision "$revision_name" \
+              --output json >/tmp/aca-existing-revision.json 2>/dev/null
+          }
+
+          base_revision="${CONTAINER_APP_NAME}--${base_suffix}"
+          revision_suffix="$base_suffix"
+          revision_name="$base_revision"
+
+          if revision_exists "$base_revision"; then
+            existing_image="$(jq -r '.properties.template.containers[0].image // ""' /tmp/aca-existing-revision.json)"
+            if [[ "$existing_image" == "$expected_image" ]]; then
+              echo "Revision $base_revision already exists with the expected image; reusing it."
+              cp /tmp/aca-existing-revision.json audit-artifacts/aca-main-deploy/revision.json
+              printf '{"status":"reused","revision":"%s","image":"%s"}\n' "$base_revision" "$expected_image" \
+                | tee audit-artifacts/aca-main-deploy/containerapp-update.json
+              echo "revision_suffix=$revision_suffix" >> "$GITHUB_OUTPUT"
+              echo "revision_name=$revision_name" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            echo "Base revision $base_revision already exists with a different image." >&2
+            echo "existing=$existing_image" >&2
+            echo "expected=$expected_image" >&2
+            echo "Using a rerun-safe revision suffix instead of failing on a duplicate suffix."
+            for candidate in "${base_suffix}r${GITHUB_RUN_ATTEMPT:-1}" "${base_suffix}r${GITHUB_RUN_ATTEMPT:-1}x2" "${base_suffix}r${GITHUB_RUN_ATTEMPT:-1}x3"; do
+              candidate_revision="${CONTAINER_APP_NAME}--${candidate}"
+              if revision_exists "$candidate_revision"; then
+                candidate_image="$(jq -r '.properties.template.containers[0].image // ""' /tmp/aca-existing-revision.json)"
+                if [[ "$candidate_image" == "$expected_image" ]]; then
+                  echo "Revision $candidate_revision already exists with the expected image; reusing it."
+                  cp /tmp/aca-existing-revision.json audit-artifacts/aca-main-deploy/revision.json
+                  printf '{"status":"reused","revision":"%s","image":"%s"}\n' "$candidate_revision" "$expected_image" \
+                    | tee audit-artifacts/aca-main-deploy/containerapp-update.json
+                  echo "revision_suffix=$candidate" >> "$GITHUB_OUTPUT"
+                  echo "revision_name=$candidate_revision" >> "$GITHUB_OUTPUT"
+                  exit 0
+                fi
+                continue
+              else
+                revision_suffix="$candidate"
+                revision_name="$candidate_revision"
+                break
+              fi
+            done
+          fi
+
+          if revision_exists "$revision_name"; then
+            echo "No unique revision suffix available for $revision_name." >&2
+            exit 1
+          fi
+
+          for attempt in {1..12}; do
+            if az containerapp update \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --image "$IMAGE" \
+              --revision-suffix "$revision_suffix" \
+              --output json | tee audit-artifacts/aca-main-deploy/containerapp-update.json; then
+              echo "revision_suffix=$revision_suffix" >> "$GITHUB_OUTPUT"
+              echo "revision_name=$revision_name" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            echo "Deploy update attempt $attempt failed; waiting for any active ACA operation to settle."
+            if revision_exists "$revision_name"; then
+              deployed_image="$(jq -r '.properties.template.containers[0].image // ""' /tmp/aca-existing-revision.json)"
+              if [[ "$deployed_image" == "$expected_image" ]]; then
+                echo "Revision $revision_name now exists with the expected image after the failed update; continuing."
+                cp /tmp/aca-existing-revision.json audit-artifacts/aca-main-deploy/revision.json
+                echo "revision_suffix=$revision_suffix" >> "$GITHUB_OUTPUT"
+                echo "revision_name=$revision_name" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+
+              echo "Revision $revision_name exists after update failure, but with an unexpected image." >&2
+              echo "existing=$deployed_image" >&2
+              echo "expected=$expected_image" >&2
+              exit 1
+            fi
+            sleep 20
+          done
+
+          echo "Failed to create ACA revision $revision_name after retries." >&2
+          exit 1
 
       - name: Update worker jobs to the new image
         shell: bash
@@ -170,7 +258,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          revision="${{ steps.release.outputs.revision_name }}"
+          revision="${{ steps.deploy_revision.outputs.revision_name }}"
           for attempt in {1..60}; do
             if ! az containerapp revision show \
               --name "$CONTAINER_APP_NAME" \
@@ -201,10 +289,23 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          az containerapp ingress traffic set \
-            --name "$CONTAINER_APP_NAME" \
-            --resource-group "$RESOURCE_GROUP" \
-            --revision-weight "${{ steps.release.outputs.revision_name }}=100"
+          revision="${{ steps.deploy_revision.outputs.revision_name }}"
+          for attempt in {1..12}; do
+            if az containerapp ingress traffic set \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --revision-weight "${revision}=100"; then
+              break
+            fi
+
+            if [[ "$attempt" == "12" ]]; then
+              echo "Failed to shift traffic to $revision after retries." >&2
+              exit 1
+            fi
+
+            echo "Traffic shift attempt $attempt failed; waiting for any active ACA operation to settle."
+            sleep 20
+          done
 
           az containerapp ingress traffic show \
             --name "$CONTAINER_APP_NAME" \
@@ -216,7 +317,7 @@ jobs:
         run: |
           set -euo pipefail
           expected_image="${{ steps.image.outputs.image }}"
-          expected_revision="${{ steps.release.outputs.revision_name }}"
+          expected_revision="${{ steps.deploy_revision.outputs.revision_name }}"
 
           az containerapp show \
             --name "$CONTAINER_APP_NAME" \
@@ -279,7 +380,7 @@ jobs:
             echo "|---|---|"
             echo "| Commit | \`${{ steps.release.outputs.sha }}\` |"
             echo "| Image | \`${{ steps.image.outputs.image }}\` |"
-            echo "| Revision | \`${{ steps.release.outputs.revision_name }}\` |"
+            echo "| Revision | \`${{ steps.deploy_revision.outputs.revision_name }}\` |"
             echo "| Base URL | \`${PRODUCTION_BASE_URL}\` |"
             echo
             echo "Rollback command:"
