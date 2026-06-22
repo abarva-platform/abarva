@@ -39,12 +39,12 @@ export const HEALTHCARE_AIRLINE_CASES: LiveAnswerCase[] = [
   {
     id: "hc-revcycle-3",
     query:
-      "Break down our revenue cycle denials by CARC/RARC reason category and show the AR days and overturn rate for each so we can compare where to invest.",
+      "Show me a chart of revenue cycle denials by CARC/RARC reason category, including initial denial rate, AR days, and overturn rate so we can compare where to invest.",
     industry: "healthcare_provider",
     expectedExpertId: "xp.healthcare-provider.revenue-cycle",
-    expectedBehaviors: ["output_shape_table", "name_real_next_move"],
+    expectedBehaviors: ["output_shape_chart", "name_real_next_move"],
     adversarialKind: null,
-    notes: "Comparison/breakdown that wants a denials-by-reason table.",
+    notes: "Comparison/breakdown that explicitly wants a chart and a concrete next move.",
   },
   {
     id: "hc-revcycle-4",
