@@ -15,7 +15,7 @@ import { getExpertById } from "@/lib/intelligence/expert-pack/registry";
 import type { ExpertPack } from "@/lib/intelligence/expert-pack/expert-pack";
 import type { ExpertRef } from "@/lib/intelligence/answer/agent-answer";
 import { CLIENT_KEY_TO_INDUSTRY_CODE } from "@/lib/client-config";
-import type { ClientKey } from "@/lib/client-config";
+import { appClientKeyForTenant } from "@/lib/tenant/aliases";
 
 // Bridge the tenant's canonical industry CODE (CLIENT_KEY_TO_INDUSTRY_CODE) to
 // the ExpertPack `identity.industry` token used by industry-specific experts.
@@ -35,8 +35,9 @@ const EXPERT_INDUSTRY_BY_CODE: Record<string, string> = {
 export function expertIndustryForClientKey(
   clientKey?: string | null,
 ): string | undefined {
-  if (!clientKey) return undefined;
-  const code = CLIENT_KEY_TO_INDUSTRY_CODE[clientKey as ClientKey];
+  const appClientKey = appClientKeyForTenant(clientKey);
+  if (!appClientKey) return undefined;
+  const code = CLIENT_KEY_TO_INDUSTRY_CODE[appClientKey];
   return code ? EXPERT_INDUSTRY_BY_CODE[code] : undefined;
 }
 
