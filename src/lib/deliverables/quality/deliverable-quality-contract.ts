@@ -32,7 +32,12 @@ export type DeliverableResultState =
   | "blocked_missing_inputs"
   | "blocked_missing_exhibits"
   | "blocked_quality"
-  | "blocked_governance";
+  | "blocked_governance"
+  // Story-Led / Exhibit-Led Standard (v2 redo, §12)
+  | "blocked_storyline"
+  | "blocked_missing_current_state"
+  | "blocked_missing_architecture_level"
+  | "blocked_missing_visuals";
 
 export interface ContractInput extends GateInput {
   /** The actual rendered output format (for format-fit). */
@@ -45,6 +50,20 @@ export interface ContractInput extends GateInput {
   exhibitsInterpreted?: boolean;
   /** Whether egress/data governance (stage 3) passed. */
   governanceOk?: boolean;
+
+  // ── Story-Led / Exhibit-Led signals (v2 redo) ──────────────────────────────
+  /** A visible story spine is present (>= 3 beats connecting the arc). */
+  hasStorySpine?: boolean;
+  /** Current state is interpreted AND drawn as a visual (not just listed). */
+  currentStateVisualPresent?: boolean;
+  /** The current→gaps→target reasoning bridge is present. */
+  gapToTargetBridgePresent?: boolean;
+  /** Architecture levels actually rendered. */
+  conceptualArchPresent?: boolean;
+  logicalArchPresent?: boolean;
+  physicalArchPresent?: boolean;
+  /** Required exhibits rendered as real visuals (SVG/HTML diagrams), not prose. */
+  exhibitsRenderedAsVisual?: boolean;
 }
 
 export interface QualityFinding extends GateFinding {
@@ -156,7 +175,88 @@ function checkEvidenceDiscipline(input: ContractInput): QualityFinding[] {
   return [];
 }
 
-/** Resolve the result state from the findings (most severe reason wins). */
+// ── Story-Led / Exhibit-Led checks (v2 redo, §12) ────────────────────────────
+
+/** Story spine — enforced once a profile adopts a storyArc. */
+function checkStorySpine(input: ContractInput): QualityFinding[] {
+  if (!input.profile.storyArc?.length) return [];
+  if (input.hasStorySpine === true) return [];
+  return [
+    {
+      gate: "filler",
+      dimension: "story_spine",
+      severity: "block",
+      message:
+        "No visible story spine. The artifact must connect current state → gaps → target → solution → value → decision as a coherent narrative.",
+    },
+  ];
+}
+
+/** Current state must be DRAWN (visual), not just described. */
+function checkCurrentStateReasoning(input: ContractInput): QualityFinding[] {
+  if (!input.profile.currentStateRequired) return [];
+  if (input.currentStateVisualPresent === true) return [];
+  return [
+    {
+      gate: "visual_complete",
+      dimension: "current_state_reasoning",
+      severity: "block",
+      message:
+        "Current state is not drawn. Actors, systems, flows, handoffs, bottlenecks, and value-leakage must be shown visually — not only described.",
+    },
+  ];
+}
+
+/** The current→gaps→design-implication→target reasoning bridge. */
+function checkGapToTarget(input: ContractInput): QualityFinding[] {
+  if (!input.profile.gapAnalysisRequired) return [];
+  if (input.gapToTargetBridgePresent === true) return [];
+  return [
+    {
+      gate: "filler",
+      dimension: "gap_to_target_reasoning",
+      severity: "block",
+      message:
+        "Missing the current→gaps→design-implication→target chain. The artifact jumps to target state without reasoning from the evidence.",
+    },
+  ];
+}
+
+/** Conceptual + logical + physical architecture levels must all render. */
+function checkArchitectureLevels(input: ContractInput): QualityFinding[] {
+  const p = input.profile;
+  const out: QualityFinding[] = [];
+  const miss = (level: string): QualityFinding => ({
+    gate: "visual_complete",
+    dimension: "architecture_completeness",
+    severity: "block",
+    message: `Missing ${level} architecture level — not client-ready without it.`,
+  });
+  if (p.conceptualArchitectureRequired && input.conceptualArchPresent !== true)
+    out.push(miss("conceptual"));
+  if (p.logicalArchitectureRequired && input.logicalArchPresent !== true)
+    out.push(miss("logical"));
+  if (p.physicalArchitectureRequired && input.physicalArchPresent !== true)
+    out.push(miss("physical"));
+  return out;
+}
+
+/** Required exhibits must render as real visuals (SVG/HTML), not prose. */
+function checkVisualExhibits(input: ContractInput): QualityFinding[] {
+  if (!input.profile.visualRendererRequired) return [];
+  if (input.exhibitsRenderedAsVisual === true) return [];
+  return [
+    {
+      gate: "visual_complete",
+      dimension: "visual_exhibit_quality",
+      severity: "block",
+      message:
+        "Required exhibits did not render as visuals (prose-only). Architecture/solution exhibits must be SVG/HTML diagrams, not text tables.",
+    },
+  ];
+}
+
+/** Resolve the result state from the findings (most specific reason wins). */
 export function resolveResultState(
   findings: ReadonlyArray<QualityFinding>,
   governanceOk: boolean | undefined,
@@ -164,7 +264,12 @@ export function resolveResultState(
   if (governanceOk === false) return "blocked_governance";
   const blocking = findings.filter((f) => f.severity === "block");
   if (!blocking.length) return "client_ready";
-  if (blocking.some((f) => f.dimension === "exhibit_enforcement" || f.gate === "visual_complete"))
+  const has = (d: string) => blocking.some((f) => f.dimension === d);
+  if (has("story_spine")) return "blocked_storyline";
+  if (has("current_state_reasoning")) return "blocked_missing_current_state";
+  if (has("architecture_completeness")) return "blocked_missing_architecture_level";
+  if (has("visual_exhibit_quality")) return "blocked_missing_visuals";
+  if (has("exhibit_enforcement") || blocking.some((f) => f.gate === "visual_complete"))
     return "blocked_missing_exhibits";
   if (blocking.some((f) => f.gate === "open_inputs")) return "blocked_missing_inputs";
   return "blocked_quality";
@@ -205,6 +310,13 @@ export function evaluateDeliverableQuality(
   findings.push(
     ...bc.findings.map((f) => ({ ...f, dimension: "artifact_intent" as const })),
   );
+
+  // Story-Led / Exhibit-Led checks — self-gate on profile flags (v2 redo).
+  findings.push(...checkStorySpine(input));
+  findings.push(...checkCurrentStateReasoning(input));
+  findings.push(...checkGapToTarget(input));
+  findings.push(...checkArchitectureLevels(input));
+  findings.push(...checkVisualExhibits(input));
 
   const state = resolveResultState(findings, input.governanceOk);
   return {
