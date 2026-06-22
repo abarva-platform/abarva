@@ -146,38 +146,126 @@ async function askLiveAva(
   question: string,
   persona: { tenantKey: string; tenantName: string },
 ): Promise<AskObservation> {
-  return page.evaluate(
-    async ({ q, p }) => {
-      const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 75_000);
-      try {
-        const response = await fetch("/api/intelligence/ask", {
-          method: "POST",
-          headers: {
-            Accept: "application/x-ndjson",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            q,
-            client: p.tenantKey,
-            surfaceContext: {
-              activeTab: "scb-live-answer-eval",
-              activeClient: p.tenantKey,
-              clientKey: p.tenantKey,
-              facts: [
-                `live_eval_persona_tenant=${p.tenantName}`,
-                "live_eval_surface=/intelligence/ask",
-              ],
+  try {
+    return await page.evaluate(
+      async ({ q, p }) => {
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), 75_000);
+        try {
+          const response = await fetch("/api/intelligence/ask", {
+            method: "POST",
+            headers: {
+              Accept: "application/x-ndjson",
+              "Content-Type": "application/json",
             },
-          }),
-          signal: controller.signal,
-        });
+            body: JSON.stringify({
+              q,
+              client: p.tenantKey,
+              surfaceContext: {
+                activeTab: "scb-live-answer-eval",
+                activeClient: p.tenantKey,
+                clientKey: p.tenantKey,
+                facts: [
+                  `live_eval_persona_tenant=${p.tenantName}`,
+                  "live_eval_surface=/intelligence/ask",
+                ],
+              },
+            }),
+            signal: controller.signal,
+          });
 
-        if (!response.ok || !response.body) {
+          if (!response.ok || !response.body) {
+            return {
+              ok: false,
+              prose: "",
+              error: `ask_api_http_${response.status}`,
+              eventCount: 0,
+              sourceEventCitations: 0,
+              hasTable: false,
+              hasChart: false,
+              hasGraph: false,
+              crossTenantBlocked: false,
+            };
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          let prose = "";
+          let eventCount = 0;
+          let sourceEventCitations = 0;
+          let hasTable = false;
+          let hasChart = false;
+          let hasGraph = false;
+          let crossTenantBlocked = false;
+          let error: string | undefined;
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() ?? "";
+            for (const line of lines) {
+              if (!line.trim()) continue;
+              eventCount += 1;
+              const event = JSON.parse(line) as {
+                type?: string;
+                text?: string;
+                delta?: string;
+                error?: string;
+                stage?: { name?: string; content?: string };
+                sources?: unknown[];
+                answer?: {
+                  prose?: string;
+                  tables?: unknown[];
+                  charts?: unknown[];
+                  graphs?: unknown[];
+                  crossTenantBlocked?: boolean;
+                };
+              };
+              if (event.type === "delta" && event.text) prose += event.text;
+              if (event.type === "delta" && event.delta) prose += event.delta;
+              if (event.type === "sources" && Array.isArray(event.sources)) {
+                sourceEventCitations += event.sources.length;
+              }
+              if (event.type === "sentinel-stage" && event.stage?.content) {
+                prose += `${event.stage.name ?? "Stage"}: ${event.stage.content}\n`;
+              }
+              if (event.type === "agent-answer" && event.answer) {
+                if (event.answer.prose) prose += `\n${event.answer.prose}`;
+                hasTable ||=
+                  Array.isArray(event.answer.tables) &&
+                  event.answer.tables.length > 0;
+                hasChart ||=
+                  Array.isArray(event.answer.charts) &&
+                  event.answer.charts.length > 0;
+                hasGraph ||=
+                  Array.isArray(event.answer.graphs) &&
+                  event.answer.graphs.length > 0;
+                crossTenantBlocked ||= Boolean(event.answer.crossTenantBlocked);
+              }
+              if (event.type === "error")
+                error = event.error ?? "ask_api_stream_error";
+            }
+          }
+
+          return {
+            ok: !error && prose.trim().length > 0,
+            prose: prose.trim(),
+            error,
+            eventCount,
+            sourceEventCitations,
+            hasTable,
+            hasChart,
+            hasGraph,
+            crossTenantBlocked,
+          };
+        } catch (err) {
           return {
             ok: false,
             prose: "",
-            error: `ask_api_http_${response.status}`,
+            error: err instanceof Error ? err.message : String(err),
             eventCount: 0,
             sourceEventCitations: 0,
             hasTable: false,
@@ -185,99 +273,25 @@ async function askLiveAva(
             hasGraph: false,
             crossTenantBlocked: false,
           };
+        } finally {
+          window.clearTimeout(timeout);
         }
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-        let prose = "";
-        let eventCount = 0;
-        let sourceEventCitations = 0;
-        let hasTable = false;
-        let hasChart = false;
-        let hasGraph = false;
-        let crossTenantBlocked = false;
-        let error: string | undefined;
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() ?? "";
-          for (const line of lines) {
-            if (!line.trim()) continue;
-            eventCount += 1;
-            const event = JSON.parse(line) as {
-              type?: string;
-              text?: string;
-              delta?: string;
-              error?: string;
-              stage?: { name?: string; content?: string };
-              sources?: unknown[];
-              answer?: {
-                prose?: string;
-                tables?: unknown[];
-                charts?: unknown[];
-                graphs?: unknown[];
-                crossTenantBlocked?: boolean;
-              };
-            };
-            if (event.type === "delta" && event.text) prose += event.text;
-            if (event.type === "delta" && event.delta) prose += event.delta;
-            if (event.type === "sources" && Array.isArray(event.sources)) {
-              sourceEventCitations += event.sources.length;
-            }
-            if (event.type === "sentinel-stage" && event.stage?.content) {
-              prose += `${event.stage.name ?? "Stage"}: ${event.stage.content}\n`;
-            }
-            if (event.type === "agent-answer" && event.answer) {
-              if (event.answer.prose) prose += `\n${event.answer.prose}`;
-              hasTable ||=
-                Array.isArray(event.answer.tables) &&
-                event.answer.tables.length > 0;
-              hasChart ||=
-                Array.isArray(event.answer.charts) &&
-                event.answer.charts.length > 0;
-              hasGraph ||=
-                Array.isArray(event.answer.graphs) &&
-                event.answer.graphs.length > 0;
-              crossTenantBlocked ||= Boolean(event.answer.crossTenantBlocked);
-            }
-            if (event.type === "error")
-              error = event.error ?? "ask_api_stream_error";
-          }
-        }
-
-        return {
-          ok: !error && prose.trim().length > 0,
-          prose: prose.trim(),
-          error,
-          eventCount,
-          sourceEventCitations,
-          hasTable,
-          hasChart,
-          hasGraph,
-          crossTenantBlocked,
-        };
-      } catch (err) {
-        return {
-          ok: false,
-          prose: "",
-          error: err instanceof Error ? err.message : String(err),
-          eventCount: 0,
-          sourceEventCitations: 0,
-          hasTable: false,
-          hasChart: false,
-          hasGraph: false,
-          crossTenantBlocked: false,
-        };
-      } finally {
-        window.clearTimeout(timeout);
-      }
-    },
-    { q: question, p: persona },
-  );
+      },
+      { q: question, p: persona },
+    );
+  } catch (err) {
+    return {
+      ok: false,
+      prose: "",
+      error: err instanceof Error ? err.message : String(err),
+      eventCount: 0,
+      sourceEventCitations: 0,
+      hasTable: false,
+      hasChart: false,
+      hasGraph: false,
+      crossTenantBlocked: false,
+    };
+  }
 }
 
 async function main() {
@@ -309,9 +323,18 @@ async function main() {
   });
 
   try {
+    await active.page.goto("/intelligence/ask", {
+      waitUntil: "domcontentloaded",
+      timeout: 45_000,
+    });
+    await active.page.waitForLoadState("networkidle", { timeout: 15_000 }).catch(() => undefined);
+
     const results: CaseReport[] = [];
     for (const item of selected) {
       console.log(`scb_live_answer_case_start:${persona.key}:${item.id}`);
+      if (active.page.isClosed()) {
+        throw new Error(`live_answer_page_closed_before_case:${item.id}`);
+      }
       const obs = await askLiveAva(active.page, item.query, persona);
       const behavior = checkLiveAnswerCase(item, obs);
       const quality = scoreAnswer(obs.prose, {
