@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 type LoggedOutLandingPageProps = {
@@ -132,7 +131,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
       }
       setSubmitted(true)
     } catch {
-      setError('Something went wrong. Please try again, or email admin@abarva.ai.')
+      setError('Something went wrong. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -1443,9 +1442,6 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               style={{ height: 24, width: 'auto', display: 'block' }}
             />
             <div className="navlinks">
-              <Link className="btn btn-dark" href="/sign-in">
-                Sign in
-              </Link>
               <button className="btn btn-prime" type="button" onClick={openReq}>
                 Request access
               </button>
@@ -1467,11 +1463,8 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
             </p>
             <div className="fb-cta">
               <button className="btn btn-prime" type="button" onClick={openReq}>
-                Request private preview
+                Request access
               </button>
-              <a className="btn btn-dark" href="#loop">
-                See the value loop
-              </a>
             </div>
             <div className="fb-micro">
               <span>
@@ -2092,14 +2085,8 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
             </div>
             <br />
             <button className="btn btn-prime" type="button" onClick={openReq}>
-              Request private preview
+              Request access
             </button>
-            <p style={{ marginTop: 20, fontSize: 14, color: '#8493ab' }}>
-              Founder-led private previews ·{' '}
-              <a href="mailto:admin@abarva.ai" style={{ color: '#8fb6ff' }}>
-                admin@abarva.ai
-              </a>
-            </p>
           </div>
         </div>
       </section>
@@ -2151,7 +2138,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
             <div className="req-success">
               <div className="ok">✓</div>
               <h3>Request received</h3>
-              <p>We&rsquo;ll be in touch from admin@abarva.ai.</p>
+              <p>We&rsquo;ll be in touch.</p>
             </div>
           ) : (
             <form className="req-body" onSubmit={handleSubmit}>
@@ -2283,10 +2270,10 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
                 </div>
               </div>
               <button className="btn btn-prime req-submit" type="submit" disabled={submitting}>
-                {submitting ? 'Sending…' : 'Request private preview'}
+                {submitting ? 'Sending…' : 'Request access'}
               </button>
               {error && <div className="req-error">{error}</div>}
-              <div className="req-fine">We&rsquo;ll reach out from admin@abarva.ai. No spam, ever.</div>
+              <div className="req-fine">We review every request before granting access. No spam, ever.</div>
             </form>
           )}
         </div>

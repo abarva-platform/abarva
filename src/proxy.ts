@@ -2,6 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { isExternalOnlyRole, resolvePinnedSessionClientKey, resolveSessionRole, shouldStripUnauthorizedClientParam } from '@/lib/auth/access-routing'
+import { isLaunchApprovedEmail } from '@/lib/auth/launch-access-server'
 
 const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
 const ACTIVE_CLIENT_COOKIE = 'abarva_active_client'
@@ -19,8 +20,10 @@ const PRODUCTION_READINESS_NO_STORE_HEADERS = {
 } as const
 
 export const PUBLIC_ROUTE_PATTERNS = [
+  '/access(.*)',
   '/sign-in(.*)',
   '/signed-out(.*)',
+  '/forbidden',
   '/invite(.*)',
   '/auth-redirect(.*)',
   '/',
@@ -29,9 +32,10 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // P13 demo assets live under How it works and must be reachable
   // before auth so prospects can view the comparison/teaser pages.
   '/how-it-works(.*)',
-  // Demo code sign-in starts unauthenticated from /sign-in, so the ticket
+  // Demo code sign-in starts unauthenticated from /access, so the ticket
   // handoff route must stay publicly reachable and perform its own checks.
   '/api/auth/demo-code-sign-in(.*)',
+  '/api/auth/access-eligibility(.*)',
   // Health is intentionally public so platform probes can validate runtime
   // readiness before a browser session exists. The route masks raw backing
   // service errors when NODE_ENV=production.
@@ -163,10 +167,28 @@ export const AUTH_REQUIRED_ROUTE_PATTERNS = [
 
 const authRequiredRoutes = createRouteMatcher([...AUTH_REQUIRED_ROUTE_PATTERNS])
 
+function resolveSessionEmail(sessionClaims: unknown): string | null {
+  const claims = sessionClaims as
+    | {
+        emailAddress?: string | null
+        emailAddresses?: Array<{ emailAddress?: string | null }>
+        email_addresses?: Array<{ emailAddress?: string | null }>
+      }
+    | null
+    | undefined
+
+  return (
+    claims?.emailAddress ??
+    claims?.emailAddresses?.[0]?.emailAddress ??
+    claims?.email_addresses?.[0]?.emailAddress ??
+    null
+  )
+}
+
 function createSignInRedirect(request: NextRequest) {
-  const url = new URL('/sign-in', request.url)
+  const url = new URL('/access', request.url)
   const requestedPath = `${request.nextUrl.pathname}${request.nextUrl.search}`
-  if (requestedPath && requestedPath !== '/' && !request.nextUrl.pathname.startsWith('/sign-in')) {
+  if (requestedPath && requestedPath !== '/' && !request.nextUrl.pathname.startsWith('/access')) {
     url.searchParams.set('redirect', requestedPath)
   }
   return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(url))
@@ -189,9 +211,10 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   const { userId, sessionClaims } = await auth()
   const metadata = (sessionClaims?.publicMetadata as { role?: string; clientId?: string; defaultClientId?: string } | undefined) ?? {}
   const metadataRole = metadata.role ?? null
-  const email = (sessionClaims as { emailAddress?: string } | undefined)?.emailAddress ?? null
+  const email = resolveSessionEmail(sessionClaims)
   const role = resolveSessionRole(metadataRole, email)
   const requestedClientId = request.nextUrl.searchParams.get('client')
+  const isLaunchApprovedSession = !userId || isLaunchApprovedEmail(email)
 
   // Wave 1 PR-1 (2026-05-30) · Setup/Admin Trust Plane consolidation.
   // /admin/* is the single canonical route tree for the Setup/Admin
@@ -305,7 +328,15 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(redirectUrl))
   }
 
-  if (userId && (request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/sign-in'))) {
+  if (userId && !isLaunchApprovedSession && !request.nextUrl.pathname.startsWith('/forbidden')) {
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/forbidden', request.url)))
+  }
+
+  if (!userId && request.nextUrl.pathname.startsWith('/sign-in')) {
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/', request.url)))
+  }
+
+  if (userId && (request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/sign-in') || request.nextUrl.pathname.startsWith('/access'))) {
     return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/auth-redirect', request.url)))
   }
 

@@ -1,4 +1,5 @@
 import { DEFAULT_CLIENT_KEY, inferClientKeyFromEmail, isClientKey, type ClientKey } from '@/lib/client-config';
+import { getStaticLaunchAccessProfile } from '@/lib/auth/launch-access';
 
 export type AppSessionRole = 'admin' | 'investor' | 'maestro' | 'client' | 'external' | string | null | undefined;
 
@@ -25,12 +26,15 @@ function normalizeEmail(email: string | null | undefined): string {
 export function hasExplicitTenantAlias(email: string | null | undefined): boolean {
   const normalized = normalizeEmail(email);
   if (!normalized) return false;
+  const launchProfile = getStaticLaunchAccessProfile(normalized);
+  if (launchProfile?.clientKey) return true;
   return (
     normalized.endsWith('@meridian-health.example.com') ||
     normalized.endsWith('@apex-retail.example.com') ||
     normalized.endsWith('@firstcapital.example.com') ||
     normalized.endsWith('@northstar-clinical.example.com') ||
     normalized.endsWith('@skyharbor-air.example.com') ||
+    normalized.endsWith('@lakeshore-industries.example.com') ||
     normalized.includes('+apex@abarva.com') ||
     normalized.includes('+meridian@abarva.com') ||
     normalized.includes('+firstcapital@abarva.com') ||
@@ -47,6 +51,8 @@ export function isNewClientSetupEmail(email: string | null | undefined): boolean
 export function inferSessionRoleFromEmail(email: string | null | undefined): AppSessionRole {
   const normalized = normalizeEmail(email);
   if (!normalized) return null;
+  const launchProfile = getStaticLaunchAccessProfile(normalized);
+  if (launchProfile) return launchProfile.role;
 
   if (
     normalized.endsWith('@meridian-health.example.com') ||
@@ -54,6 +60,7 @@ export function inferSessionRoleFromEmail(email: string | null | undefined): App
     normalized.endsWith('@firstcapital.example.com') ||
     normalized.endsWith('@northstar-clinical.example.com') ||
     normalized.endsWith('@skyharbor-air.example.com') ||
+    normalized.endsWith('@lakeshore-industries.example.com') ||
     normalized.includes('+apex@abarva.com') ||
     normalized.includes('+meridian@abarva.com') ||
     normalized.includes('+firstcapital@abarva.com') ||

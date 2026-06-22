@@ -1,4 +1,5 @@
 import { CANONICAL_AUTH_EMAILS } from '@/lib/auth/canonical-auth-roster';
+import { isLaunchApprovedEmail } from '@/lib/auth/launch-access-server';
 
 export const DEMO_CODE_VALUE = '424242';
 
@@ -11,5 +12,6 @@ export function normalizeDemoCodeEmail(email: string | null | undefined): string
 }
 
 export function isDemoCodeEmail(email: string | null | undefined): boolean {
-  return DEMO_CODE_ALLOWED_EMAIL_SET.has(normalizeDemoCodeEmail(email));
+  const normalized = normalizeDemoCodeEmail(email);
+  return DEMO_CODE_ALLOWED_EMAIL_SET.has(normalized) || isLaunchApprovedEmail(normalized);
 }

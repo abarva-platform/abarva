@@ -42,6 +42,13 @@ export const ALL_CLIENTS: ClientOption[] = [
     color: '#075985',
     vertical: 'Global Airline',
   },
+  {
+    id: 'lakeshore',
+    name: 'Lakeshore Industries',
+    shortName: 'Lakeshore',
+    color: '#2563EB',
+    vertical: 'Industrial Manufacturing',
+  },
 ] as const;
 
 export type ClientKey = (typeof ALL_CLIENTS)[number]['id'];
@@ -58,6 +65,7 @@ export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
   apexretail: ['Apex Retail', 'Apex Retail Group'],
   northstar: ['Northstar Clinical Technologies', 'Northstar'],
   skyharbor: ['SkyHarbor Air', 'SkyHarbor Airlines', 'SkyHarbor'],
+  lakeshore: ['Lakeshore Industries', 'Lakeshore Holdings', 'Lakeshore'],
 };
 
 export const CLIENT_KEY_TO_INDUSTRY_CODE: Record<ClientKey, string> = {
@@ -66,6 +74,7 @@ export const CLIENT_KEY_TO_INDUSTRY_CODE: Record<ClientKey, string> = {
   apexretail: 'RETAIL',
   northstar: 'MEDTECH',
   skyharbor: 'AIRLINE',
+  lakeshore: 'INDUSTRIAL',
 };
 
 export function industryCodeForClientName(name: string | null | undefined): string | null {
@@ -153,6 +162,17 @@ export function canonicalClientDisplayName(args: {
     return 'SkyHarbor Air';
   }
 
+  if (
+    key === 'lakeshore' ||
+    key === 'lakeshore-industries' ||
+    key === 'lakeshore-holdings' ||
+    normalizedName === 'lakeshore industries' ||
+    normalizedName === 'lakeshore holdings' ||
+    normalizedName === 'lakeshore'
+  ) {
+    return 'Lakeshore Industries';
+  }
+
   if (name) return name;
   const option = getClientOption(args.key);
   return option?.name ?? null;
@@ -177,11 +197,17 @@ const EMAIL_DOMAIN_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = 
   ['firstcapital.example.com', 'arcturus'],
   ['northstar-clinical.example.com', 'northstar'],
   ['skyharbor-air.example.com', 'skyharbor'],
-  // Founder backdoor (`anand.sundaram@thesundaram.com`) lands on Meridian
-  // by inference. Documented in demo_accounts memory. Anyone uncomfortable
-  // with this should remove the entry and add the email to Clerk metadata
-  // pinning instead.
-  ['thesundaram.com', 'meridian'],
+  ['lakeshore-industries.example.com', 'lakeshore'],
+];
+
+const EXACT_EMAIL_TO_CLIENT_KEY: ReadonlyArray<readonly [string, ClientKey]> = [
+  ['anand.sundaram+apex@thesundaram.com', 'apexretail'],
+  ['anand.sundaram+firstcapital@thesundaram.com', 'arcturus'],
+  ['anand.sundaram+meridian@thesundaram.com', 'meridian'],
+  ['anand.sundaram+skyharbor@thesundaram.com', 'skyharbor'],
+  ['anand.sundaram+lakeshore@thesundaram.com', 'lakeshore'],
+  ['anand.sundaram@thesundaram.com', 'meridian'],
+  ['anandshp@gmail.com', 'lakeshore'],
 ];
 
 /**
@@ -217,6 +243,10 @@ export function inferClientKeyFromEmail(email: string | null | undefined): Clien
   if (!normalized || !normalized.includes('@')) return null;
   const [localPart, domain] = normalized.split('@', 2);
   if (!localPart || !domain) return null;
+
+  for (const [candidate, key] of EXACT_EMAIL_TO_CLIENT_KEY) {
+    if (normalized === candidate) return key;
+  }
 
   for (const [suffix, key] of EMAIL_DOMAIN_TO_CLIENT_KEY) {
     if (domain === suffix || domain.endsWith(`.${suffix}`)) return key;

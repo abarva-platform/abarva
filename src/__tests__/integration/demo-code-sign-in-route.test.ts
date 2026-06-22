@@ -61,10 +61,23 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     expect(getUserList).not.toHaveBeenCalled();
   });
 
-  it('rejects an invalid password', async () => {
+  it('rejects retired role-based demo email addresses', async () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
       email: 'cdio@meridian-health.example.com',
+      password: 'Demo2026!',
+      code: '424242',
+    }));
+
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toMatchObject({ error: 'invalid_credentials' });
+    expect(getUserList).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid password', async () => {
+    const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
+    const res = await POST(makeRequest({
+      email: 'anand.sundaram+meridian@thesundaram.com',
       password: 'wrong-password',
       code: '424242',
     }));
@@ -77,7 +90,7 @@ describe('POST /api/auth/demo-code-sign-in', () => {
   it('rejects an invalid demo code', async () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
-      email: 'elena.rivera@meridian-health.example.com',
+      email: 'anand.sundaram+meridian@thesundaram.com',
       password: 'Demo2026!',
       code: '000000',
     }));
@@ -90,7 +103,7 @@ describe('POST /api/auth/demo-code-sign-in', () => {
   it('returns a sign-in ticket for a supported Apex account', async () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
-      email: 'cdo@apex-retail.example.com',
+      email: 'anand.sundaram+apex@thesundaram.com',
       password: 'Demo2026!',
       code: '424242',
     }));
@@ -98,7 +111,7 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({ ticket: 'ticket_demo_1' });
     expect(getUserList).toHaveBeenCalledWith({
-      emailAddress: ['cdo@apex-retail.example.com'],
+      emailAddress: ['anand.sundaram+apex@thesundaram.com'],
       limit: 1,
     });
     expect(createSignInToken).toHaveBeenCalledWith({
@@ -110,7 +123,7 @@ describe('POST /api/auth/demo-code-sign-in', () => {
   it('returns a sign-in ticket for a supported Meridian account', async () => {
     const { POST } = await import('@/app/api/auth/demo-code-sign-in/route');
     const res = await POST(makeRequest({
-      email: 'cdio@meridian-health.example.com',
+      email: 'anand.sundaram+meridian@thesundaram.com',
       password: 'Demo2026!',
       code: '424242',
     }));
@@ -118,7 +131,7 @@ describe('POST /api/auth/demo-code-sign-in', () => {
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({ ticket: 'ticket_demo_1' });
     expect(getUserList).toHaveBeenCalledWith({
-      emailAddress: ['cdio@meridian-health.example.com'],
+      emailAddress: ['anand.sundaram+meridian@thesundaram.com'],
       limit: 1,
     });
   });

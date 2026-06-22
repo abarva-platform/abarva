@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation'
 import { currentUser } from '@clerk/nextjs/server'
+import { SignInShell } from '@/components/auth/SignInShell'
 
 export const dynamic = 'force-dynamic'
 
-export default async function SignInPage({
+export default async function AccessPage({
   searchParams,
 }: {
   searchParams: Promise<{ redirect?: string }>
@@ -17,5 +18,5 @@ export default async function SignInPage({
     redirect(params.redirect || '/auth-redirect')
   }
 
-  redirect('/')
+  return <SignInShell redirectUrl={params.redirect || '/auth-redirect'} />
 }
