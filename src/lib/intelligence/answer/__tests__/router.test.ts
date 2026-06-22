@@ -66,4 +66,22 @@ describe("routeQuestion", () => {
       routing.experts.some((expert) => expert.id.startsWith("xp.airline.")),
     ).toBe(false);
   });
+
+  it("routes explicit table and visual requests to renderable output shapes", () => {
+    expect(
+      routeQuestion({
+        query:
+          "Show me the benefits of investing in AI for merchandising visually with charts and tables.",
+        industry: expertIndustryForClientKey("apexretail"),
+      }).outputShape,
+    ).toBe("chart");
+
+    expect(
+      routeQuestion({
+        query:
+          "Show SkyHarbor cloud and vendor exposure as a table with evidence.",
+        industry: expertIndustryForClientKey("skyharbor"),
+      }).outputShape,
+    ).toBe("table");
+  });
 });

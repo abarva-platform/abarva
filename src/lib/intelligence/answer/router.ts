@@ -75,13 +75,13 @@ function inferOutputShape(query: string): OutputShape {
   if (/\b(relate|related|connect|connected|depend|dependenc|map of|network|upstream|downstream|impact of .* on)\b/.test(q)) {
     return "graph";
   }
-  if (/\b(chart|visuali[sz]e|plot)\b/.test(q)) {
+  if (/\b(chart|charts|visual|visually|visuali[sz]e|plot|graphically)\b/.test(q)) {
     return "chart";
   }
   if (/\b(trend|over time|by month|by quarter|year over year|trajectory)\b/.test(q)) {
     return "chart";
   }
-  if (/\b(break ?down|by vendor|by category|by function|by segment|compare|comparison|how much|spend|cost|budget|top \d|rank)\b/.test(q)) {
+  if (/\b(table|tables|tabular|matrix|break ?down|by vendor|by category|by function|by segment|compare|comparison|how much|spend|cost|budget|top \d|rank)\b/.test(q)) {
     return "table";
   }
   return "prose";
