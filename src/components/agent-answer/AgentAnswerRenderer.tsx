@@ -252,6 +252,8 @@ export function AnswerChartRenderer({
 
 export function AgentAnswerRenderer({ answer }: { answer: AgentAnswer }) {
   const hasStructured = answer.charts.length > 0 || answer.tables.length > 0;
+  const hasAttribution =
+    answer.contributingExperts.length > 0 || answer.citations.length > 0;
   return (
     <section className="agentAnswer" aria-label="Ava answer">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
@@ -294,7 +296,14 @@ export function AgentAnswerRenderer({ answer }: { answer: AgentAnswer }) {
         </div>
       ) : null}
 
-      {!answer.prose && !hasStructured ? (
+      {!hasStructured && answer.citations.length > 0 ? (
+        <div className="aaSection">
+          <div className="aaTitle">Sources</div>
+          <CitationChips citations={answer.citations} />
+        </div>
+      ) : null}
+
+      {!answer.prose && !hasStructured && !hasAttribution ? (
         <div className="aaFallback" role="status">
           Ava did not return a renderable answer.
         </div>
