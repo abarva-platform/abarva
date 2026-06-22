@@ -21,6 +21,11 @@ describe('Tower Atlas synthesis prompt', () => {
     expect(prompt).toContain('do not emit raw markdown emphasis markers');
     expect(prompt).toContain('do not show raw pattern, use-case, vendor, database field, or artifact IDs');
     expect(prompt).toContain('Prefer lead-bullets for the Tower quote');
+    expect(prompt).toContain('CONSULTANT ANSWER SHAPE');
+    expect(prompt).toContain('Read: the direct recommendation or judgment');
+    expect(prompt).toContain('Evidence: the specific tenant facts');
+    expect(prompt).toContain('Implication: what this means for the executive decision');
+    expect(prompt).toContain('Next move: the owner, artifact, gate');
   });
 });
 

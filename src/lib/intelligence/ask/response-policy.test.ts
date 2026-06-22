@@ -196,4 +196,29 @@ describe("Ask Intelligence response policy", () => {
         .every((paragraph) => paragraph.split(/\s+/).length <= 70),
     ).toBe(true);
   });
+
+  it("reshapes dense consultant prose into readable executive sections", () => {
+    const text = [
+      "Honest read first: I don't have your IT landscape or data platform inventory loaded in this session, so I can't list the actual vendors, versions, owners, and costs for Apex's analytics stack.",
+      "What the loaded context does tell me is the strategic shape, and that's worth being direct about.",
+      "What we know from loaded sources about Apex's analytics technology: Retail Lakehouse & Customer Inventory Graph: $95M committed, $12M realized, mobilize stage.",
+      "This is the consolidation bet — the platform meant to replace the fragmented banner-level analytics estate.",
+      "Demand Forecasting platform sits inside the lakehouse program, currently on a contain posture, gated by item-location accuracy.",
+      "Inventory truth is the blocker across the analytics stack — confident-wrong signals at holiday volume is the risk.",
+      "Next move: assign the accountable data owner to validate the missing tenant evidence before approving a number or using it in a board artifact.",
+    ].join(" ");
+
+    const answer = enforceDecisionGradeAnswer(text);
+
+    expect(answer).toContain("Read:");
+    expect(answer).toContain("Evidence:");
+    expect(answer).toContain("Implication:");
+    expect(answer).toContain("Next move:");
+    expect(answer).not.toMatch(/Honest read first:/i);
+    expect(
+      answer
+        .split(/\n{2,}/)
+        .every((paragraph) => paragraph.split(/\s+/).length <= 70),
+    ).toBe(true);
+  });
 });

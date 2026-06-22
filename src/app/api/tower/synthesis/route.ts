@@ -25,6 +25,7 @@ import {
   sanitizeRestrictedFinancialText,
 } from "@/lib/agent/restricted-output-policy";
 import { composeAllAgentDoctrineBlock } from "@/lib/agent/all-agent-doctrine";
+import { CONSULTANT_ANSWER_SHAPE_CONTRACT } from "@/lib/intelligence/ask/response-policy";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
@@ -56,7 +57,9 @@ Atlas voice register (from brand voice spec §9):
 - Quantify portfolio scope when relevant (e.g. "across 4 programs and 1 active sourcing event").
 - Precise, executive register. No filler. No hedging.
 
-Format: Use the shared agent output contract. Prefer lead-bullets for the Tower quote: one direct lead line, then 2-4 short evidence bullets. No raw markdown emphasis.`;
+Format: Use the shared agent output contract. Prefer lead-bullets for the Tower quote: one direct lead line, then 2-4 short evidence bullets. No raw markdown emphasis.
+
+${CONSULTANT_ANSWER_SHAPE_CONTRACT}`;
 
 export function buildAtlasSynthesisPrompt(
   userContextBlock: string,

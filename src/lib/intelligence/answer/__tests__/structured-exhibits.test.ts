@@ -161,6 +161,36 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.charts).toHaveLength(0);
   });
 
+  it("formats dense prose after extracting typed tables", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: { ...routing, outputShape: "table" },
+      sources,
+      prose:
+        "Honest read first: I don't have the full Apex IT landscape inventory loaded, so I cannot list every analytics vendor. What the loaded context does tell me is the strategic shape. Apex's Retail Lakehouse & Customer Inventory Graph has $95M committed and $12M realized. Analytics technology cut | Layer | Typical stack | |---|---| | Lakehouse / warehouse | Databricks or Snowflake | | Legacy marts | Teradata / Oracle / SQL Server | This is the consolidation bet meant to replace fragmented banner-level analytics. Inventory truth is the gating risk for any AI workload on top of it. Next move: assign the accountable data owner to validate the missing tenant evidence before approving a board number.",
+    });
+
+    expect(exhibits.prose).toContain("Read:");
+    expect(exhibits.prose).toContain("Evidence:");
+    expect(exhibits.prose).toContain("Implication:");
+    expect(exhibits.prose).toContain("Next move:");
+    expect(exhibits.prose).not.toContain("| Layer |");
+    expect(exhibits.tables[0]).toEqual(
+      expect.objectContaining({
+        id: "answer-inline-table-1",
+        rows: [
+          expect.objectContaining({
+            layer: "Lakehouse / warehouse",
+            typical_stack: "Databricks or Snowflake",
+          }),
+          expect.objectContaining({
+            layer: "Legacy marts",
+            typical_stack: "Teradata / Oracle / SQL Server",
+          }),
+        ],
+      }),
+    );
+  });
+
   it("renders a chart only from exact numeric columns in an extracted table", () => {
     const exhibits = buildStructuredExhibits({
       routing,

@@ -9,6 +9,7 @@ import type { AskSource, AskIntent } from "./types";
 import {
   applyPartialEvidencePolicy,
   chunkAskText,
+  CONSULTANT_ANSWER_SHAPE_CONTRACT,
   enforceDecisionGradeAnswer,
   sanitizeAskSynthesis,
 } from "./response-policy";
@@ -385,8 +386,8 @@ export async function* synthesizeStream(args: {
     : "";
   const system =
     contextBlocks.length > 0
-      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}${confidenceHint}${richTextAddendum}`
-      : `${rolePrompt}${confidenceHint}${richTextAddendum}`;
+      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}`
+      : `${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}`;
   const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? "\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present."

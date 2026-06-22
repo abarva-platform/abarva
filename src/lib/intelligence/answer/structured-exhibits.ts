@@ -8,6 +8,7 @@ import type {
   AnswerTableColumn,
 } from "@/lib/intelligence/answer/agent-answer";
 import { CHART } from "@/lib/programs/expert-kernel/exports/board-grade/svg-charts";
+import { enforceDecisionGradeAnswer } from "@/lib/intelligence/ask/response-policy";
 
 export interface StructuredExhibitsInput {
   prose: string;
@@ -328,7 +329,9 @@ function inlineMarkdownTablesFromProse(
       continue;
     }
 
-    keep.push(headerInfo.prefix);
+    if (headerInfo.prefix.trim()) {
+      keep.push(`${headerInfo.prefix.trimEnd()} `);
+    }
     tables.push({
       id: `answer-inline-table-${tables.length + 1}`,
       title: tables.length === 0 ? "Answer Table" : `Answer Table ${tables.length + 1}`,
@@ -343,7 +346,11 @@ function inlineMarkdownTablesFromProse(
 
   keep.push(prose.slice(cursor));
   return {
-    prose: keep.join("").replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim(),
+    prose: keep
+      .join("")
+      .replace(/[ \t]{2,}/g, " ")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim(),
     tables,
   };
 }
@@ -474,7 +481,12 @@ export function buildStructuredExhibits(
     if (table) tables.push(table);
   }
 
-  return { prose: inline.prose, citations, tables, charts };
+  return {
+    prose: inline.prose ? enforceDecisionGradeAnswer(inline.prose) : "",
+    citations,
+    tables,
+    charts,
+  };
 }
 
 export function hasRenderableStructuredExhibits(
