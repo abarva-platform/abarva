@@ -229,29 +229,95 @@ function exhibitSection(
   </section>`;
 }
 
+function wrapSvgText(text: string | undefined, maxChars: number, maxLines: number): string[] {
+  if (!text) return [];
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = "";
+
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length <= maxChars) {
+      current = next;
+      continue;
+    }
+    if (current) lines.push(current);
+    current = word.length > maxChars ? word.slice(0, maxChars - 3) + "..." : word;
+    if (lines.length === maxLines - 1) break;
+  }
+  if (current && lines.length < maxLines) lines.push(current);
+
+  const consumed = lines.join(" ").replace(/\.\.\.$/, "");
+  if (words.join(" ").length > consumed.length && lines.length) {
+    const last = lines[lines.length - 1];
+    lines[lines.length - 1] =
+      last.length > maxChars - 3 ? last.slice(0, maxChars - 3) + "..." : `${last}...`;
+  }
+  return lines;
+}
+
+function svgTextBlock(
+  text: string | undefined,
+  x: number,
+  y: number,
+  opts: {
+    maxChars: number;
+    maxLines: number;
+    lineHeight: number;
+    fontSize: number;
+    weight?: number;
+    fill?: string;
+  },
+): string {
+  const lines = wrapSvgText(text, opts.maxChars, opts.maxLines);
+  if (!lines.length) return "";
+  const tspans = lines
+    .map(
+      (line, i) =>
+        `<tspan x="${x}" dy="${i === 0 ? 0 : opts.lineHeight}">${esc(line)}</tspan>`,
+    )
+    .join("");
+  const fill = opts.fill ? ` fill="${opts.fill}"` : "";
+  const weight = opts.weight ? ` font-weight="${opts.weight}"` : "";
+  return `<text x="${x}" y="${y}" text-anchor="middle" font-size="${opts.fontSize}"${weight}${fill}>${tspans}</text>`;
+}
+
 function svgTimeline(
   items: ReadonlyArray<{ id: string; label: string; detail?: string }>,
   accent = "var(--data)",
 ): string {
-  const width = Math.max(720, items.length * 190);
+  const leftGutter = 132;
+  const step = 220;
+  const width = Math.max(760, leftGutter * 2 + Math.max(0, items.length - 1) * step);
+  const height = 214;
   const nodes = items
     .map((item, i) => {
-      const x = 80 + i * 180;
-      const text = esc(item.label);
-      const detail = esc(item.detail);
+      const x = leftGutter + i * step;
       const line =
         i < items.length - 1
-          ? `<path d="M${x + 48} 92 L${x + 132} 92" stroke="${accent}" stroke-width="2" marker-end="url(#arrow)"/>`
+          ? `<path d="M${x + 48} 92 L${x + step - 48} 92" stroke="${accent}" stroke-width="2" marker-end="url(#arrow)"/>`
           : "";
       return `${line}<g>
         <circle cx="${x}" cy="92" r="28" fill="#fff" stroke="${accent}" stroke-width="2"/>
         <text x="${x}" y="97" text-anchor="middle" font-size="13" font-weight="700">${i + 1}</text>
-        <text x="${x}" y="142" text-anchor="middle" font-size="12" font-weight="700">${text}</text>
-        ${detail ? `<text x="${x}" y="160" text-anchor="middle" font-size="10" fill="#6b6b66">${detail.slice(0, 42)}</text>` : ""}
+        ${svgTextBlock(item.label, x, 140, {
+          maxChars: 24,
+          maxLines: 2,
+          lineHeight: 14,
+          fontSize: 12,
+          weight: 700,
+        })}
+        ${svgTextBlock(item.detail, x, 174, {
+          maxChars: 32,
+          maxLines: 2,
+          lineHeight: 12,
+          fontSize: 10,
+          fill: "#6b6b66",
+        })}
       </g>`;
     })
     .join("");
-  return `<svg class="diagram timeline" viewBox="0 0 ${width} 190" role="img" aria-label="Architecture flow diagram">
+  return `<svg class="diagram timeline" viewBox="0 0 ${width} ${height}" role="img" aria-label="Architecture flow diagram">
     <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${accent}"/></marker></defs>
     ${nodes}
   </svg>`;
