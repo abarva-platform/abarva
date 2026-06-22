@@ -7,7 +7,9 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { IntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
+import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
+import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 
 type Tab = "signals" | "context" | "corpus";
 
@@ -33,7 +35,7 @@ const CSS = `
 .iv2 .trust{text-align:center;margin:22px 0 4px}
 .iv2 .trust .mono{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11.5px;color:var(--muted)}
 .iv2 .trust b{color:var(--ink)}
-.iv2 .ansbox{max-width:660px;margin:16px auto 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 22px;text-align:left}
+.iv2 .ansbox{max-width:960px;margin:16px auto 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 22px;text-align:left}
 .iv2 .ansbox .anslabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--green);margin-bottom:8px}
 .iv2 .ansbox .ansbody{font-size:14px;line-height:1.65;color:var(--ink)}
 .iv2 .ansbox .ansbody>:first-child{margin-top:0}
@@ -82,8 +84,43 @@ const CSS = `
 @media(max-width:900px){.iv2 .grid2,.iv2 .grid3{grid-template-columns:1fr}}
 `;
 
+function buildSurfaceContext(payload: IntelligenceBindingPayload) {
+  const tenantFacts = [
+    `Active tenant is ${payload.tenant.displayName} (${payload.tenant.key}), industry ${payload.tenant.industry}.`,
+    `${payload.trustLine.dimensionsLoaded} context dimensions loaded with ${payload.trustLine.evidencePoints.toLocaleString()} evidence points across ${payload.trustLine.sources} sources at ${payload.trustLine.searchVerifiedPct}% search verification.`,
+    ...payload.context.map(
+      (dimension) =>
+        `${dimension.dimension}: ${dimension.status.toLowerCase()} with ${dimension.evidence.toLocaleString()} evidence points, ${dimension.sources} sources, trust ${dimension.trust}. ${dimension.description}.`,
+    ),
+  ];
+  const strategyFacts = payload.signals.map((signal) => {
+    const move = signal.move
+      ? ` Recommended move: ${signal.move.title}; owner ${signal.move.owner ?? "unassigned"}; impact ${signal.move.impact ?? "not quantified"}.`
+      : "";
+    return `${signal.headline} ${signal.body} Confidence ${signal.confidence}; evidence refs ${signal.evidenceRefs.join(", ")}.${move}`;
+  });
+  const qualityFacts = payload.corpus.map(
+    (pattern) =>
+      `Industry corpus pattern: ${pattern.patternName} (${pattern.domain}). Apply when: ${pattern.whenToApply}`,
+  );
+
+  return {
+    activeTab: "intelligence-v2",
+    activeClient: payload.tenant.displayName,
+    clientKey: payload.tenant.key,
+    pageFacts: [
+      "This is the Intelligence v2 Lens surface. Prefer tenant-specific loaded context over generic examples.",
+      ...payload.suggestedQuestions.map((question) => `Suggested executive question: ${question}`),
+    ],
+    tenantFacts,
+    strategyFacts,
+    qualityFacts,
+  };
+}
+
 export function IntelligenceV2Surface({
   payload,
+  tenantName,
 }: {
   payload: IntelligenceBindingPayload;
   // Accepted for API compatibility (callers still pass it) but intentionally
@@ -94,6 +131,7 @@ export function IntelligenceV2Surface({
   const [tab, setTab] = useState<Tab>("signals");
   const [query, setQuery] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
+  const [agentAnswer, setAgentAnswer] = useState<AgentAnswer | null>(null);
   const [experts, setExperts] = useState<{ id: string; name: string }[]>([]);
   const [followups, setFollowups] = useState<string[]>([]);
   const [fetching, setFetching] = useState(false);
@@ -110,13 +148,31 @@ export function IntelligenceV2Surface({
     abortRef.current = ctrl;
     setFetching(true);
     setAnswer(null);
+    setAgentAnswer(null);
     setExperts([]);
     setFollowups([]);
     try {
-      const res = await fetch(
-        `/api/intelligence/ask?q=${encodeURIComponent(trimmed)}&format=rich`,
-        { signal: ctrl.signal },
-      );
+      const surfaceContext = buildSurfaceContext({
+        ...t,
+        tenant: {
+          ...t.tenant,
+          displayName: tenantName?.trim() || t.tenant.displayName,
+        },
+      });
+      const res = await fetch("/api/intelligence/ask", {
+        method: "POST",
+        headers: {
+          Accept: "application/x-ndjson",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          q: trimmed,
+          client: t.tenant.key,
+          format: "rich",
+          surfaceContext,
+        }),
+        signal: ctrl.signal,
+      });
       if (!res.ok) {
         setAnswer("Ava couldn't retrieve an answer. Try again.");
         return;
@@ -142,6 +198,7 @@ export function IntelligenceV2Surface({
           text?: string;
           contributingExperts?: { id: string; name: string }[];
           followups?: string[];
+          answer?: AgentAnswer;
         };
         try {
           evt = JSON.parse(s);
@@ -160,6 +217,8 @@ export function IntelligenceV2Surface({
           setExperts(evt.contributingExperts);
         } else if (evt.type === "followups" && Array.isArray(evt.followups)) {
           setFollowups(evt.followups);
+        } else if (evt.type === "agent-answer" && evt.answer) {
+          setAgentAnswer(evt.answer);
         }
       };
       while (true) {
@@ -180,7 +239,7 @@ export function IntelligenceV2Surface({
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [t, tenantName]);
 
   return (
     <div className="iv2">
@@ -220,7 +279,7 @@ export function IntelligenceV2Surface({
               {fetching ? "…" : "Ask"}
             </button>
           </div>
-          {(fetching || answer || experts.length > 0) && (
+          {(fetching || answer || agentAnswer || experts.length > 0) && (
             <div className="ansbox">
               <div className="anslabel">Ava · Intelligence</div>
               {fetching && !answer ? (
@@ -230,6 +289,7 @@ export function IntelligenceV2Surface({
                   {answer ? <AgentMarkdown text={answer} /> : null}
                 </div>
               )}
+              {agentAnswer ? <AgentAnswerRenderer answer={agentAnswer} /> : null}
               {experts.length > 0 && (
                 <div className="ansexperts">
                   <span className="ansexpertslabel">Experts consulted</span>
