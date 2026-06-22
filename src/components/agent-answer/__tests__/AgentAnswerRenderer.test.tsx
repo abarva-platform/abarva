@@ -6,11 +6,13 @@ import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen, within } from "@testing-library/react";
 import {
+  AgentAnswerRenderer,
   AnswerChartRenderer,
   DataTable,
   renderAnswerChartSvg,
 } from "@/components/agent-answer/AgentAnswerRenderer";
 import type {
+  AgentAnswer,
   AnswerChart,
   AnswerCitation,
   AnswerTable,
@@ -80,5 +82,41 @@ describe("AgentAnswerRenderer", () => {
     expect(within(tableNode).getByText("42%")).toBeInTheDocument();
     expect(screen.getByText("Includes run-cost categories only.")).toBeInTheDocument();
     expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
+  });
+
+  it("renders attribution and sources without fallback when no typed exhibits are present", () => {
+    const answer: AgentAnswer = {
+      engineVersion: "agent-answer/v1",
+      surface: "intelligence",
+      expertId: "xp.retail.merchandising-pricing",
+      contributingExperts: [
+        {
+          id: "xp.retail.merchandising-pricing",
+          name: "Retail Merchandising & Pricing Expert",
+        },
+      ],
+      prose: "",
+      tables: [],
+      charts: [],
+      graphs: [],
+      citations,
+      gaps: [],
+      recommendedActions: [],
+      groundingMode: "mixed",
+      confidence: "medium",
+      limits: [],
+      crossTenantBlocked: false,
+    };
+
+    render(<AgentAnswerRenderer answer={answer} />);
+
+    expect(
+      screen.getByText("Retail Merchandising & Pricing Expert"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Sources")).toBeInTheDocument();
+    expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Ava did not return a renderable answer."),
+    ).not.toBeInTheDocument();
   });
 });

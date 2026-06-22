@@ -25,7 +25,7 @@ const sources: AskSource[] = [
 ];
 
 describe("buildStructuredExhibits", () => {
-  it("creates grounded tables and charts only from figures already in the answer", () => {
+  it("does not infer tables or charts from figures mentioned in prose", () => {
     const exhibits = buildStructuredExhibits({
       routing,
       sources,
@@ -34,15 +34,8 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
-    expect(exhibits.tables[0]?.title).toBe("Figures Mentioned");
-    expect(exhibits.tables[0]?.rows).toHaveLength(2);
-    expect(exhibits.charts[0]?.kind).toBe("cost-stack");
-    expect(exhibits.charts[0]?.data).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ value: 1_200_000 }),
-        expect.objectContaining({ value: 350_000 }),
-      ]),
-    );
+    expect(exhibits.tables).toHaveLength(0);
+    expect(exhibits.charts).toHaveLength(0);
   });
 
   it("renders an evidence table for table-shaped questions with cited sources even without extractable figures", () => {
@@ -60,7 +53,7 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.charts).toHaveLength(0);
   });
 
-  it("creates chart data from cited source detail for chart-shaped questions", () => {
+  it("does not infer chart data from cited source prose", () => {
     const exhibits = buildStructuredExhibits({
       routing,
       sources: [
@@ -77,18 +70,11 @@ describe("buildStructuredExhibits", () => {
         "Medical Necessity is the highest-priority investment target. Prior Authorization is second, and Eligibility should be handled as a cleanup lane.",
     });
 
-    expect(exhibits.charts[0]?.kind).toBe("cost-stack");
-    expect(exhibits.charts[0]?.data).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ value: 1_200_000 }),
-        expect.objectContaining({ value: 650_000 }),
-        expect.objectContaining({ value: 310_000 }),
-      ]),
-    );
-    expect(exhibits.charts[0]?.citationIds).toEqual(["c1"]);
+    expect(exhibits.citations).toHaveLength(1);
+    expect(exhibits.charts).toHaveLength(0);
   });
 
-  it("creates a chart from percentage figures when currency figures are insufficient", () => {
+  it("does not infer percentage charts from cited source prose", () => {
     const exhibits = buildStructuredExhibits({
       routing,
       sources: [
@@ -105,13 +91,8 @@ describe("buildStructuredExhibits", () => {
         "Medical necessity is the highest-priority investment target because the rate and AR drag are both worse than the other categories.",
     });
 
-    expect(exhibits.charts[0]?.kind).toBe("bar");
-    const values = (exhibits.charts[0]?.data as Array<{ value: number }>).map(
-      (item) => item.value,
-    );
-    expect(values[0]).toBeCloseTo(0.118);
-    expect(values[1]).toBeCloseTo(0.084);
-    expect(values[2]).toBeCloseTo(0.049);
+    expect(exhibits.citations).toHaveLength(1);
+    expect(exhibits.charts).toHaveLength(0);
   });
 
   it("renders a truthful evidence-required table when a table is requested without enough cited rows", () => {

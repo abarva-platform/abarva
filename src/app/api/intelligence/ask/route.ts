@@ -26,6 +26,7 @@ import { resolveTenant } from "@/lib/tenant/resolveTenant";
 import type { CanonicalTenant } from "@/lib/tenant/CanonicalTenant";
 import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
 import { routeQuestion } from "@/lib/intelligence/answer/router";
+import { expertIndustryForClientKey } from "@/lib/intelligence/answer/expert-grounding";
 import {
   buildStructuredExhibits,
   hasRenderableStructuredExhibits,
@@ -213,13 +214,20 @@ async function handleAsk(payload: AskPayload) {
               ),
             );
           }
-          const routing = routeQuestion({ query });
+          const routing = routeQuestion({
+            query,
+            industry: expertIndustryForClientKey(tenantClientKey),
+          });
           const exhibits = buildStructuredExhibits({
             prose: assistantText,
             routing,
             sources: sentinelSourcesFromCitations(sentinelCitations),
           });
-          if (hasRenderableStructuredExhibits({ ...exhibits, graphs: [] })) {
+          if (
+            hasRenderableStructuredExhibits({ ...exhibits, graphs: [] }) ||
+            exhibits.citations.length > 0 ||
+            routing.experts.length > 0
+          ) {
             const agentAnswer: AgentAnswer = {
               engineVersion: "agent-answer/v1",
               surface: "intelligence",
@@ -239,7 +247,7 @@ async function handleAsk(payload: AskPayload) {
                 : "industry-pattern",
               confidence: exhibits.citations.length > 0 ? "medium" : "low",
               limits: [
-                "Structured exhibits only include figures or sources already present in Ava's answer.",
+                "Charts and tables are emitted only when Ava has validated structured data; citations and expert attribution remain visible otherwise.",
               ],
               crossTenantBlocked: false,
             };
@@ -378,13 +386,20 @@ async function handleAsk(payload: AskPayload) {
               ),
             );
           }
-          const routing = routeQuestion({ query });
+          const routing = routeQuestion({
+            query,
+            industry: expertIndustryForClientKey(tenantClientKey),
+          });
           const exhibits = buildStructuredExhibits({
             prose: assistantText,
             routing,
             sources: traceSources as AskSource[],
           });
-          if (hasRenderableStructuredExhibits({ ...exhibits, graphs: [] })) {
+          if (
+            hasRenderableStructuredExhibits({ ...exhibits, graphs: [] }) ||
+            exhibits.citations.length > 0 ||
+            routing.experts.length > 0
+          ) {
             const agentAnswer: AgentAnswer = {
               engineVersion: "agent-answer/v1",
               surface: "intelligence",
@@ -404,7 +419,7 @@ async function handleAsk(payload: AskPayload) {
                 : "industry-pattern",
               confidence: exhibits.citations.length > 0 ? "medium" : "low",
               limits: [
-                "Structured exhibits only include figures or sources already present in Ava's answer.",
+                "Charts and tables are emitted only when Ava has validated structured data; citations and expert attribution remain visible otherwise.",
               ],
               crossTenantBlocked: false,
             };
