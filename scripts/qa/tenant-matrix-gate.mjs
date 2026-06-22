@@ -10,6 +10,7 @@
  * engine for both Home and Intelligence at once. Per tenant it asserts:
  *
  *   render     — /home serves the React Context Explorer (flag flipped)
+ *   intel      — /intelligence serves the canonical v2 Lens (not a fallback/error)
  *   synthesis  — a real answer, not the fake `Also:` row-dump
  *   grounded   — NO "context not loaded" hedge  ← the failure pattern; ideally cites tenant evidence
  *   noRawId    — no raw internal IDs (APX-DATA-003 …)
@@ -70,6 +71,18 @@ async function homeIsReact(cookie) {
   }
 }
 
+async function intelIsV2(cookie) {
+  // /intelligence should serve the canonical v2 Lens (IntelligenceV2Surface, root
+  // `class="iv2"`), not a fallback/error. Markers are in the SSR HTML.
+  try {
+    const res = await fetch(`${BASE_URL}/intelligence`, { headers: { cookie } });
+    const html = await res.text();
+    return /class="iv2"|ANALYSIS ENGINE/i.test(html);
+  } catch {
+    return false;
+  }
+}
+
 async function ask(cookie, query, client) {
   const res = await fetch(`${BASE_URL}/api/intelligence/ask`, {
     method: "POST",
@@ -123,6 +136,7 @@ async function runTenant(t) {
   const checks = {};
   let note = "";
   checks.render = await homeIsReact(cookie);
+  checks.intel = await intelIsV2(cookie);
   try {
     const r = await ask(cookie, Q, t.binding);
     checks.synthesis = r.prose.length > 120 && !FAKE_GLOB.test(r.prose);
@@ -147,7 +161,7 @@ async function runTenant(t) {
   return { tenant: t, checks, note };
 }
 
-const COLS = ["render", "synthesis", "grounded", "noRawId", "experts", "fence"];
+const COLS = ["render", "intel", "synthesis", "grounded", "noRawId", "experts", "fence"];
 const pad = (s, n) => String(s).padEnd(n);
 
 async function main() {
