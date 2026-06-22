@@ -48,10 +48,10 @@ describe('persistDeliverable — quality contract enforcement', () => {
     expect(String(rendered.quarantineReason)).toMatch(/^blocked_/);
   });
 
-  it('does NOT quarantine in observe-only mode (records but does not block)', async () => {
+  it('still quarantines visual-required architecture when observe-only would otherwise allow prose', async () => {
     const rendered = await persistWith({ enforceQualityContract: false });
-    expect(rendered.quarantined).toBe(false);
-    expect(rendered.quarantineReason).toBeNull();
+    expect(rendered.quarantined).toBe(true);
+    expect(String(rendered.quarantineReason)).toMatch(/^blocked_/);
   });
 
   it('renders the architecture exhibit when renderViaProfile + a model is supplied', async () => {
@@ -61,13 +61,28 @@ describe('persistDeliverable — quality contract enforcement', () => {
     });
     expect(rendered.outputFormat).toBe('html');
     expect(String(rendered.html)).toContain('Target state (to-be)');
+    expect(String(rendered.html)).toContain('data-exhibit="target_conceptual_architecture"');
+    expect((String(rendered.html).match(/<svg\b/g) ?? []).length).toBeGreaterThanOrEqual(13);
   });
 
-  it('counts model-produced exhibits toward exhibit enforcement (no missing-exhibit block)', async () => {
+  it('preserves architecture visuals when the decision-storytelling deck flag is also on', async () => {
+    const rendered = await persistWith({
+      structuredModels: { architectureModel: FIRST_CAPITAL_ARCHITECTURE },
+      renderViaProfile: true,
+      renderAsDeck: true,
+    });
+    expect(String(rendered.html)).toContain('data-exhibit="target_physical_deployment"');
+    expect(String(rendered.html)).toContain('Architecture thesis');
+    expect(String(rendered.html)).not.toContain('Use ← → to move through the deck');
+  });
+
+  it('does not credit a structured model when the final HTML is prose-only', async () => {
     const rendered = await persistWith({
       enforceQualityContract: true,
       structuredModels: { architectureModel: FIRST_CAPITAL_ARCHITECTURE },
     });
-    expect(String(rendered.quarantineReason ?? '')).not.toMatch(/blocked_missing_exhibits/);
+    expect(rendered.quarantined).toBe(true);
+    expect(String(rendered.html)).not.toContain('data-exhibit="target_conceptual_architecture"');
+    expect(String(rendered.quarantineReason)).toMatch(/^blocked_/);
   });
 });

@@ -39,7 +39,11 @@ import {
 } from '@/lib/exports-shared/docx-base';
 import { markdownToDocxBlocks } from '@/lib/exports-shared/markdown-to-docx';
 import { markdownToHtml } from '@/lib/programs/deliverables/orchestrated/render-html';
-import type { RenderableDeliverable, RenderableTable } from './types';
+import type {
+  RenderableDeliverable,
+  RenderableExhibit,
+  RenderableTable,
+} from './types';
 
 // ── helpers ──
 
@@ -295,6 +299,98 @@ function tableHtml(t: RenderableTable): string {
   return `<h3>${esc(t.title)}</h3><table class="md"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
+function exhibitClauses(exhibit: RenderableExhibit): string[] {
+  const raw = exhibit.description || exhibit.title;
+  const parts = raw
+    .split(/\s*(?:→|->|;|\n|\.\s+)\s*/g)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+  if (parts.length >= 3) return parts;
+  return [
+    exhibit.kind.replace(/_/g, ' '),
+    exhibit.title,
+    exhibit.description || 'Decision implication to confirm',
+  ].slice(0, 5);
+}
+
+function svgFlowExhibit(exhibit: RenderableExhibit, domId: string): string {
+  const clauses = exhibitClauses(exhibit);
+  const width = Math.max(720, clauses.length * 180);
+  const nodes = clauses
+    .map((clause, i) => {
+      const x = 56 + i * 170;
+      const arrow =
+        i < clauses.length - 1
+          ? `<path d="M${x + 116} 72 L${x + 154} 72" stroke="var(--fresh)" stroke-width="2" marker-end="url(#arrow-${domId})"/>`
+          : '';
+      return `${arrow}<g>
+        <rect x="${x}" y="38" width="118" height="68" rx="8" fill="#fff" stroke="var(--line)"/>
+        <text x="${x + 59}" y="65" text-anchor="middle" font-size="11" font-weight="700">${esc(clause.slice(0, 28))}</text>
+        <text x="${x + 59}" y="84" text-anchor="middle" font-size="9" fill="var(--muted)">${esc(exhibit.kind)}</text>
+      </g>`;
+    })
+    .join('');
+  return `<svg class="exhibit-svg" viewBox="0 0 ${width} 140" role="img" aria-label="${esc(exhibit.title)}">
+    <defs><marker id="arrow-${domId}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--fresh)"/></marker></defs>
+    ${nodes}
+  </svg>`;
+}
+
+function svgMatrixExhibit(exhibit: RenderableExhibit): string {
+  const clauses = exhibitClauses(exhibit).slice(0, 4);
+  const cells = clauses
+    .map((clause, i) => {
+      const x = i % 2 === 0 ? 36 : 378;
+      const y = i < 2 ? 44 : 132;
+      return `<g>
+        <rect x="${x}" y="${y}" width="300" height="66" rx="8" fill="#fff" stroke="var(--line)"/>
+        <text x="${x + 16}" y="${y + 28}" font-size="12" font-weight="700">${esc(clause.slice(0, 36))}</text>
+        <text x="${x + 16}" y="${y + 48}" font-size="10" fill="var(--muted)">Implication: ${esc(exhibit.kind)}</text>
+      </g>`;
+    })
+    .join('');
+  return `<svg class="exhibit-svg" viewBox="0 0 720 230" role="img" aria-label="${esc(exhibit.title)}">
+    <path d="M360 28 L360 210 M24 120 L696 120" stroke="var(--line)" stroke-width="1"/>
+    ${cells}
+  </svg>`;
+}
+
+function svgTimelineExhibit(exhibit: RenderableExhibit): string {
+  const clauses = exhibitClauses(exhibit);
+  const width = Math.max(720, clauses.length * 170);
+  const nodes = clauses
+    .map((clause, i) => {
+      const x = 70 + i * 160;
+      const line =
+        i < clauses.length - 1
+          ? `<path d="M${x + 28} 84 L${x + 132} 84" stroke="var(--fresh)" stroke-width="2"/>`
+          : '';
+      return `${line}<g>
+        <circle cx="${x}" cy="84" r="24" fill="#fff" stroke="var(--fresh)" stroke-width="2"/>
+        <text x="${x}" y="89" text-anchor="middle" font-size="12" font-weight="700">${i + 1}</text>
+        <text x="${x}" y="130" text-anchor="middle" font-size="11" font-weight="700">${esc(clause.slice(0, 28))}</text>
+      </g>`;
+    })
+    .join('');
+  return `<svg class="exhibit-svg" viewBox="0 0 ${width} 165" role="img" aria-label="${esc(exhibit.title)}">${nodes}</svg>`;
+}
+
+function exhibitHtml(exhibit: RenderableExhibit, index: number): string {
+  const domId = `exhibit-${index + 1}`;
+  const visual =
+    exhibit.kind === 'matrix' || exhibit.kind === 'heatmap'
+      ? svgMatrixExhibit(exhibit)
+      : exhibit.kind === 'timeline'
+        ? svgTimelineExhibit(exhibit)
+        : svgFlowExhibit(exhibit, domId);
+  return `<figure class="visual-exhibit" data-exhibit="${domId}" data-kind="${esc(exhibit.kind)}">
+    <figcaption><span>${esc(exhibit.kind)}</span><strong>${esc(exhibit.title)}</strong></figcaption>
+    ${visual}
+    <p>${esc(exhibit.description)}</p>
+  </figure>`;
+}
+
 export function renderDeliverableHtml(doc: RenderableDeliverable): string {
   // Render each section's authored markdown PROPERLY (headings, bold,
   // ordered/unordered + nested lists, inline GFM tables) via the shared,
@@ -302,6 +398,7 @@ export function renderDeliverableHtml(doc: RenderableDeliverable): string {
   const sections = doc.generatedSections
     .map((s) => `<section><h2>${esc(s.title)}</h2>${markdownToHtml(s.bodyMarkdown)}</section>`)
     .join('');
+  const exhibits = doc.exhibits.map(exhibitHtml).join('');
   const tables = doc.tables.map(tableHtml).join('');
   const register = doc.sourceRegister
     .map(
@@ -344,6 +441,12 @@ export function renderDeliverableHtml(doc: RenderableDeliverable): string {
   .pill-unknown{color:#A39C90;background:#A39C9018}.pill-unknown .dot{background:#A39C90}
   .rec{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--fresh);border-radius:8px;padding:14px 18px;margin:14px 0;font-size:13.5px}
   .checklist li{color:var(--ink)}
+  .visual-exhibit{margin:16px 0 22px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto}
+  .visual-exhibit figcaption{display:flex;gap:8px;align-items:baseline;margin-bottom:10px}
+  .visual-exhibit figcaption span{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+  .visual-exhibit figcaption strong{font-size:14px}
+  .visual-exhibit p{margin:10px 0 0;color:var(--muted);font-size:12.5px}
+  .exhibit-svg{display:block;width:100%;min-width:620px;height:auto;background:#fbfaf6;border:1px solid var(--line2);border-radius:8px}
   </style></head><body><div class="wrap">
   <div class="eyebrow">AbarVa · Board-grade deliverable</div>
   <h1>${esc(doc.title)}</h1>
@@ -351,7 +454,7 @@ export function renderDeliverableHtml(doc: RenderableDeliverable): string {
   <p class="eyebrow">${esc(doc.clientDisplayName)} — ${esc(doc.initiativeDisplayName)}</p>
   <h2>Recommendation</h2><div class="rec"><strong>Recommendation.</strong> ${esc(doc.recommendation)}</div>
   ${sections}
-  ${tables ? `<h2>Tables &amp; Exhibits</h2>${tables}` : ''}
+  ${exhibits || tables ? `<h2>Tables &amp; Exhibits</h2>${exhibits}${tables}` : ''}
   ${nextActions ? `<h3>Next Actions</h3><ol>${nextActions}</ol>` : ''}
   ${checklist ? `<h2>Client-to-Complete Checklist</h2><ul class="checklist">${checklist}</ul>` : ''}
   ${register ? `<h2>Source Register</h2><table class="md"><thead><tr><th>[n]</th><th>Source</th><th>Family</th><th>Confidence</th><th>As of</th></tr></thead><tbody>${register}</tbody></table>` : ''}
