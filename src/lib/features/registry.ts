@@ -89,9 +89,9 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "home_react_surface",
     summary:
-      "Replaces the static /home Context Explorer iframe (public/home-v2) with the real React Home surface (HomeSurface): the ask is the canonical AvaAsk (shared engine + AgentAnswerRenderer), retiring the fake `answerForAsk` row-globbing. Tenant opt-in; default off so the static Home remains until the React surface is proven live.",
+      "Replaces the static /home Context Explorer iframe (public/home-v2) with the real React Home surface (HomeSurface): the ask is the canonical AvaAsk (shared engine + AgentAnswerRenderer), retiring the fake `answerForAsk` row-globbing. Tenant opt-in; piloting on apexretail (synthetic demo) first — verify signed-in, then expand to the rest. Can also be flipped live without a deploy via ABARVA_FEATURE_HOME_REACT_SURFACE_TENANTS.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["apexretail"],
   },
   {
     key: "deliverable_structured_exhibits",

@@ -22,13 +22,13 @@ The new surface is **gated behind a new `home_react_surface` flag, default OFF**
 
 ## Client Applicability
 
-Feature flag — `home_react_surface`, **default OFF**, tenant opt-in via `includeTenants` or the env override. No client receives the React Home until the flag is flipped; every tenant keeps the static Home until then.
+Feature flag — `home_react_surface`, default OFF for all tenants, **piloting on `apexretail` (Apex Retail — a synthetic demo tenant)** via `includeTenants`. Every other tenant keeps the static Home. Apex is the first signed-in verification before expanding.
 
-- All clients: no (until flipped)
-- Specific clients: opt-in via flag
+- All clients: no
+- Specific clients: **`apexretail` (pilot, synthetic demo)** via `includeTenants`; expandable per tenant or via the `ABARVA_FEATURE_HOME_REACT_SURFACE_TENANTS` env override
 - Internal only: no
-- Public/demo only: no
-- Feature flag: `home_react_surface` (default off)
+- Public/demo only: pilot tenant is a synthetic demo tenant
+- Feature flag: `home_react_surface`
 
 ## Changes Included
 
@@ -45,7 +45,7 @@ Feature flag — `home_react_surface`, **default OFF**, tenant opt-in via `inclu
 
 ## Rollout Plan
 
-Merge to `main` with the flag default OFF → no runtime change (static Home stays). To activate: set `home_react_surface` for a tenant (`includeTenants` or the env override), verify signed-in, then platform-default once proven and retire `public/home-v2`. No migration, no worker/job change.
+Merge to `main`. On deploy, the React Home is live **only for `apexretail`** (the pilot); every other tenant keeps the static Home. Verify signed-in on `/home` as Apex, then expand per tenant (add to `includeTenants`) and finally platform-default + retire `public/home-v2`. The pilot can also be toggled instantly without a deploy via the `ABARVA_FEATURE_HOME_REACT_SURFACE_TENANTS` env override. No migration, no worker/job change.
 
 ## Deployment Authority
 
