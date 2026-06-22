@@ -261,6 +261,9 @@ describe("Source answer engine", () => {
         "CDP-Round-1-Selection-Memo-2026-04-15.pdf",
       ]),
     );
+    expect(answer?.responseParts.some((part) => part.type === 'table')).toBe(true);
+    expect(answer?.responseParts.some((part) => part.type === 'barChart')).toBe(true);
+    expect(answer?.responseParts.some((part) => part.type === 'citations')).toBe(true);
   });
 
   it("attaches a Slice 1.1 category strategy classification (CDP -> data/AI platform)", () => {
@@ -300,6 +303,9 @@ describe("Source answer engine", () => {
     // Should-cost must exceed the quote once the hidden layers are modelled.
     expect(estimate?.totalHigh ?? 0).toBeGreaterThan(2_400_000);
     expect(estimate?.headline).toContain("should-cost");
+    expect(answer?.responseParts.some((part) => part.type === "barChart")).toBe(
+      true,
+    );
   });
 
   it("attaches a Slice 1.4 proposal-normalization matrix scoped to the event", () => {

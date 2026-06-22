@@ -26,6 +26,7 @@ import type {
   ProposalNormalizationMatrix,
   RawVendorProposal,
 } from "./proposal-normalization/proposal-normalization-types";
+import type { AgentResponsePart } from "@/lib/agent/response-parts";
 import type { TenantContextSegment } from "./taxonomy/category-taxonomy";
 import { answerHardSourceQuestion } from "./expert-judgment/source-hard-question-answer";
 import { getSourceCorpusAnswerPatternSections } from "./source-corpus-uplift";
@@ -64,6 +65,12 @@ export interface SourceAnswerEngineOutput {
   confidence: "low" | "medium" | "high";
   limits: string[];
   evidenceCitations: SourceAnswerEvidenceCitation[];
+  /**
+   * Structured aVa response parts for the Source response window. The prose
+   * answer remains as a fallback, while the UI can render tables, charts,
+   * evidence, and next actions when these parts are present.
+   */
+  responseParts: AgentResponsePart[];
   /**
    * Slice 1.1 — category strategy classification for the sourcing event.
    * Maps the event onto the IT sourcing taxonomy: category, buying motion,
@@ -178,6 +185,9 @@ export function buildSourceAnswerEngine(
     playbook.missingData,
     inferMissingData(input.contextBundle, live),
   );
+  const finalRiskTraps = unique([...riskTraps, ...corpusRiskTraps]);
+  const finalMissingData = unique([...missingData, ...corpusMissingData]);
+  const finalExpertLens = unique([...playbook.expertLens, ...corpusExpertLens]);
   const confidence = deriveAnswerConfidence(live, evidence);
   const limits = unique([
     ...live.warnings,
@@ -195,46 +205,67 @@ export function buildSourceAnswerEngine(
         ]
       : []),
   ]);
+  const answerText = hardQuestionAnswer?.answerText ?? formatAnswerText({
+    mode,
+    currentStateFindings,
+    sourcingImplications,
+    cxoGuidance,
+    riskTraps: finalRiskTraps,
+    missingData: finalMissingData,
+    confidence,
+    evidence,
+    limits,
+  });
+  const finalCxoGuidance = hardQuestionAnswer
+    ? [
+        hardQuestionAnswer.directAnswer,
+        hardQuestionAnswer.sourcingJudgment,
+        hardQuestionAnswer.whatWouldChangeTheAnswer,
+        ...corpusExpertLens,
+      ]
+    : cxoGuidance;
+  const recommendedNextAction =
+    hardQuestionAnswer?.recommendedNextAction ?? playbook.nextAction;
+  const evidenceCitations = evidence.map(toAnswerCitation);
+  const categoryStrategy = classifyEventCategory(input.contextBundle);
+  const deliveryModelGate = gateEventDeliveryModel(input.contextBundle);
+  const shouldCostEstimate = estimateEventShouldCost(input.contextBundle);
+  const proposalNormalization = normalizeEventProposals(input.contextBundle);
 
   return {
     engineVersion: "source-answer-engine/v1",
     mode,
     title: `${playbook.label} answer`,
-    answerText:
-      hardQuestionAnswer?.answerText ??
-      formatAnswerText({
-        mode,
-        currentStateFindings,
-        sourcingImplications,
-        cxoGuidance,
-        riskTraps: unique([...riskTraps, ...corpusRiskTraps]),
-        missingData: unique([...missingData, ...corpusMissingData]),
-        confidence,
-        evidence,
-        limits,
-      }),
+    answerText,
     currentStateFindings,
     sourcingImplications,
-    cxoGuidance: hardQuestionAnswer
-      ? [
-          hardQuestionAnswer.directAnswer,
-          hardQuestionAnswer.sourcingJudgment,
-          hardQuestionAnswer.whatWouldChangeTheAnswer,
-          ...corpusExpertLens,
-        ]
-      : cxoGuidance,
-    expertLens: unique([...playbook.expertLens, ...corpusExpertLens]),
-    riskTraps: unique([...riskTraps, ...corpusRiskTraps]),
-    missingData: unique([...missingData, ...corpusMissingData]),
-    recommendedNextAction:
-      hardQuestionAnswer?.recommendedNextAction ?? playbook.nextAction,
+    cxoGuidance: finalCxoGuidance,
+    expertLens: finalExpertLens,
+    riskTraps: finalRiskTraps,
+    missingData: finalMissingData,
+    recommendedNextAction,
     confidence,
     limits,
-    evidenceCitations: evidence.map(toAnswerCitation),
-    categoryStrategy: classifyEventCategory(input.contextBundle),
-    deliveryModelGate: gateEventDeliveryModel(input.contextBundle),
-    shouldCostEstimate: estimateEventShouldCost(input.contextBundle),
-    proposalNormalization: normalizeEventProposals(input.contextBundle),
+    evidenceCitations,
+    responseParts: buildAvaResponseParts({
+      mode,
+      answerText,
+      confidence,
+      currentStateFindings,
+      sourcingImplications,
+      cxoGuidance: finalCxoGuidance,
+      riskTraps: finalRiskTraps,
+      missingData: finalMissingData,
+      evidenceCitations,
+      recommendedNextAction,
+      deliveryModelGate,
+      shouldCostEstimate,
+      proposalNormalization,
+    }),
+    categoryStrategy,
+    deliveryModelGate,
+    shouldCostEstimate,
+    proposalNormalization,
   };
 }
 
@@ -685,6 +716,161 @@ function toAnswerCitation(
     excerpt: cleanEvidenceExcerpt(item.excerpt),
     confidence: item.confidence,
   };
+}
+
+function buildAvaResponseParts(args: {
+  mode: SourceAnswerMode;
+  answerText: string;
+  confidence: SourceAnswerEngineOutput['confidence'];
+  currentStateFindings: string[];
+  sourcingImplications: string[];
+  cxoGuidance: string[];
+  riskTraps: string[];
+  missingData: string[];
+  evidenceCitations: SourceAnswerEvidenceCitation[];
+  recommendedNextAction: string;
+  deliveryModelGate: DeliveryModelGateResult | null;
+  shouldCostEstimate: ShouldCostEstimate | null;
+  proposalNormalization: ProposalNormalizationMatrix | null;
+}): AgentResponsePart[] {
+  const parts: AgentResponsePart[] = [
+    {
+      type: 'metricStrip',
+      title: 'aVa sourcing read',
+      metrics: [
+        { label: 'Mode', value: formatMode(args.mode), tone: 'info' },
+        { label: 'Confidence', value: args.confidence, tone: confidenceTone(args.confidence) },
+        {
+          label: 'Evidence',
+          value: String(args.evidenceCitations.length),
+          tone: args.evidenceCitations.length > 0 ? 'good' : 'warning',
+        },
+        {
+          label: 'Open inputs',
+          value: String(args.missingData.length),
+          tone: args.missingData.length > 0 ? 'warning' : 'good',
+        },
+      ],
+    },
+    {
+      type: 'text',
+      title: 'Advisor answer',
+      text: args.answerText,
+    },
+  ];
+
+  if (args.currentStateFindings.length > 0 || args.sourcingImplications.length > 0) {
+    parts.push({
+      type: 'table',
+      title: 'Current state to sourcing implication',
+      columns: ['Current-state signal', 'So what for sourcing'],
+      rows: zipRows(args.currentStateFindings, args.sourcingImplications),
+      caption: 'This preserves the advisory chain: evidence observed, then the sourcing implication.',
+    });
+  }
+
+  if (args.deliveryModelGate) {
+    parts.push({
+      type: 'table',
+      title: 'Delivery-model gate',
+      columns: ['Decision item', 'aVa read'],
+      rows: [
+        ['Recommended model', args.deliveryModelGate.recommendedModelLabel],
+        ['Gate status', args.deliveryModelGate.gateStatus.replace(/_/g, ' ')],
+        ['Confidence', args.deliveryModelGate.confidence],
+        [
+          'Open questions',
+          args.deliveryModelGate.openQuestions.map((q) => q.question).join(' ') || 'None recorded.',
+        ],
+      ],
+      caption: 'This prevents an RFP from being shaped before build/buy/partner/SI is explicit.',
+    });
+  }
+
+  if (args.shouldCostEstimate) {
+    parts.push({
+      type: 'barChart',
+      title: 'TCO iceberg by should-cost layer',
+      unit: 'usd',
+      bars: args.shouldCostEstimate.icebergLayers.slice(0, 8).map((layer) => ({
+        label: layer.label,
+        value: layer.point,
+        displayValue: `$${Math.round(layer.point).toLocaleString('en-US')}`,
+        tone: layer.visible ? 'info' : 'warning',
+      })),
+      caption: args.shouldCostEstimate.headline,
+    });
+  }
+
+  if (args.proposalNormalization) {
+    parts.push({
+      type: 'table',
+      title: 'Proposal normalization posture',
+      columns: ['Dimension', 'Divergence', 'Buyer blind spot'],
+      rows: args.proposalNormalization.rows.slice(0, 6).map((row) => [
+        row.label,
+        row.divergence.replace(/_/g, ' '),
+        row.buyerBlindSpot ?? 'No submitted proposal data yet.',
+      ]),
+      caption: args.proposalNormalization.recommendedNextAction,
+    });
+  }
+
+  if (args.riskTraps.length > 0 || args.missingData.length > 0) {
+    parts.push({
+      type: 'table',
+      title: 'Risks and missing inputs',
+      columns: ['Risk or missing input', 'Treatment'],
+      rows: [
+        ...args.riskTraps.slice(0, 4).map((risk) => [
+          risk,
+          'Resolve before award logic or pricing normalization is treated as final.',
+        ]),
+        ...args.missingData.slice(0, 4).map((gap) => [
+          gap,
+          'Keep visible as an open input; do not fabricate around it.',
+        ]),
+      ],
+    });
+  }
+
+  if (args.evidenceCitations.length > 0) {
+    parts.push({
+      type: 'citations',
+      title: 'Evidence used',
+      citations: args.evidenceCitations.slice(0, 5).map((citation) => ({
+        label: citation.label,
+        excerpt: citation.excerpt,
+        confidence: citation.confidence,
+        sourceDoc: citation.sourceDoc,
+      })),
+    });
+  }
+
+  parts.push({
+    type: 'nextAction',
+    label: 'Recommended next action',
+    detail: args.recommendedNextAction,
+    confidence: args.confidence,
+  });
+
+  return parts;
+}
+
+function zipRows(left: string[], right: string[]): string[][] {
+  const size = Math.max(left.length, right.length, 1);
+  return Array.from({ length: size }, (_, index) => [
+    left[index] ?? 'No additional current-state signal.',
+    right[index] ?? 'No additional implication recorded.',
+  ]);
+}
+
+function confidenceTone(
+  confidence: SourceAnswerEngineOutput['confidence'],
+): 'good' | 'warning' | 'danger' {
+  if (confidence === 'high') return 'good';
+  if (confidence === 'medium') return 'warning';
+  return 'danger';
 }
 
 function eventName(bundle: SourceAgentContextBundle): string {

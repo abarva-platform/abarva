@@ -118,6 +118,8 @@ describe('Source Nexus API live context', () => {
         'data-quality-baseline-2026-q1.xlsx',
       ]),
     );
+    expect(response.agentResponseParts.some((part) => part.type === 'table')).toBe(true);
+    expect(response.agentResponseParts.some((part) => part.type === 'barChart')).toBe(true);
     expect(response.summary).toBe(response.sourceAnswer?.answerText);
     expect(response.sentinelBriefing?.primaryVoice.contextUsed[0]?.deterministicFieldsUsed).toEqual(
       expect.arrayContaining(['sourcingEvent', 'workflowStage', 'liveTenantContext']),

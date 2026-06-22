@@ -28,6 +28,7 @@ import {
   buildSourceAnswerEngine,
   type SourceAnswerEngineOutput,
 } from "./source-answer-engine";
+import type { AgentResponsePart } from "@/lib/agent/response-parts";
 import type { SourceStageKey, SourcingEventDetail } from "./types";
 import {
   getSourceWorkflowValidationReadableReport,
@@ -131,6 +132,7 @@ export interface SourceNexusApiStubResponse {
   };
   sourceIntelligence: SourceNexusSourceIntelligenceSummary | null;
   sourceAnswer: SourceAnswerEngineOutput | null;
+  agentResponseParts: AgentResponsePart[];
   answerQuality?: LiveAgentAnswerQualityResult;
   sentinelBriefing: SentinelSourceBriefing | null;
   /** @deprecated Use sentinelBriefing. Reconstructed via adapter for back-compat; retire in next wave. */
@@ -311,6 +313,9 @@ export function createSourceNexusApiStubResponse(
     },
     sourceIntelligence: summarizeSourceIntelligence(contextResult.bundle),
     sourceAnswer: renderedSourceAnswer,
+    agentResponseParts: intakeGuidance
+      ? buildIntakeGuidanceParts(intakeGuidance)
+      : renderedSourceAnswer?.responseParts ?? [],
     answerQuality,
     sentinelBriefing,
     multiAgentBriefing,
@@ -503,6 +508,7 @@ function createErrorResponse(args: {
     },
     sourceIntelligence: null,
     sourceAnswer: null,
+    agentResponseParts: [],
     sentinelBriefing: null,
     multiAgentBriefing: null,
     nexusSummary: null,
@@ -515,6 +521,31 @@ function createErrorResponse(args: {
     summary: args.error.message,
     error: args.error,
   };
+}
+
+function buildIntakeGuidanceParts(
+  guidance: SourceNexusIntakeGuidance,
+): AgentResponsePart[] {
+  return [
+    {
+      type: 'text',
+      title: 'aVa intake read',
+      text: guidance.opening,
+    },
+    {
+      type: 'table',
+      title: 'Minimum facts before sourcing starts',
+      columns: ['Fact', 'What aVa needs'],
+      rows: guidance.facts.map((fact) => [fact.label, fact.prompt]),
+      caption: 'These are capture requirements, not optional notes.',
+    },
+    {
+      type: 'nextAction',
+      label: 'Recommended next action',
+      detail: guidance.nextStep,
+      confidence: 'medium',
+    },
+  ];
 }
 
 function summarizeSourceIntelligence(

@@ -44,11 +44,13 @@ import { CANVAS } from "@/components/source/canvas/canvas-tokens";
 import { ResizableSplitter } from "@/components/source/canvas/ResizableSplitter";
 import { SynthesisFeedbackWidget } from "@/components/reasoning/SynthesisFeedbackWidget";
 import { shapeAgentResponseForSurface } from "@/lib/agent/response-shape";
+import type { AgentResponsePart } from "@/lib/agent/response-parts";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { AILabel } from "@/components/abarva/AILabel";
 import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFooter";
 import { shouldShowPlainTextCitationGap } from "@/lib/agent/citation-gap";
 import { AgentActionApprovalNotice } from "./AgentActionApprovalNotice";
+import { AgentResponseParts } from "./AgentResponseParts";
 import { CitationGapNotice } from "./CitationGapNotice";
 import { EvidenceBasis } from "./EvidenceBasis";
 import type { AskSource } from "@/lib/intelligence/ask/types";
@@ -178,6 +180,8 @@ export interface ChatMessage {
   id: string;
   role: "agent" | "user";
   body: string;
+  /** Optional structured UI parts, used by Source/aVa for tables and charts. */
+  parts?: AgentResponsePart[];
   /** Optional createdAt for byline rendering. */
   at?: string;
   /** Optional telemetry event id that can receive thumbs feedback. */
@@ -811,9 +815,13 @@ export function AgentDock(props: AgentDockProps) {
                   </div>
                 ) : null}
                 <div style={BUBBLE_STYLE}>
-                  {turn.role === "agent"
-                    ? shapeAgentResponseForSurface(surface, turn.body)
-                    : turn.body}
+                  {turn.role === "agent" && turn.parts?.length ? (
+                    <AgentResponseParts parts={turn.parts} />
+                  ) : turn.role === "agent" ? (
+                    shapeAgentResponseForSurface(surface, turn.body)
+                  ) : (
+                    turn.body
+                  )}
                   {turn.role === "agent" &&
                   (!turn.citations || turn.citations.length === 0) &&
                   shouldShowPlainTextCitationGap(turn.body, surfaceContext) ? (

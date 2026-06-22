@@ -872,6 +872,45 @@ describe("AgentDock · thread render", () => {
       }
     }
   });
+
+  it('renders structured response parts with tables and charts', () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface="source/events/canvas"
+        thread={[
+          {
+            id: 'a',
+            role: 'agent',
+            body: 'fallback prose',
+            parts: [
+              {
+                type: 'table',
+                title: 'Current state to sourcing implication',
+                columns: ['Fact', 'Implication'],
+                rows: [['Identity match rate is 71%', 'Gate CDP shortlist on data quality lift.']],
+              },
+              {
+                type: 'barChart',
+                title: 'TCO iceberg',
+                unit: 'USD',
+                bars: [
+                  { label: 'Quoted', value: 2_400_000 },
+                  { label: 'Run support', value: 840_000 },
+                ],
+              },
+            ],
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    expect(screen.getByTestId('agent-response-table')).toHaveTextContent('Current state');
+    expect(screen.getByTestId('agent-response-bar-chart')).toHaveTextContent('TCO iceberg');
+    expect(screen.queryByText('fallback prose')).not.toBeInTheDocument();
+  });
 });
 
 describe("AgentDock · viewport-bound side-rail", () => {

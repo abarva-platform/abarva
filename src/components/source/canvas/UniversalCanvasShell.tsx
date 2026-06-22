@@ -30,6 +30,7 @@ import {
   isAssessmentMet,
 } from "@/lib/source/gate-auto-assessment";
 import { approvalViewForCriterion } from "@/lib/source/approval-routing";
+import type { AgentResponsePart } from "@/lib/agent/response-parts";
 
 // xlsx-generatable codes — surfaced to the canvas so the artifact card
 // shows a "Download xlsx template" anchor on the right rows. Hardcoded
@@ -863,7 +864,7 @@ export function UniversalCanvasShell({
 
   const dockAgent = canvasDockAgentForStage(viewStage);
 
-  // POSTs the message + attachment ids to the source Sentinel/Atlas runtime.
+  // POSTs the message + attachment ids to the Source agent runtime.
   // The route handler links the attachments to this event (via
   // linked_event_id) before invoking the deterministic stub. The runtime
   // itself is unchanged — we just feed it the canvas-scoped attachment refs.
@@ -902,6 +903,7 @@ export function UniversalCanvasShell({
       });
       const payload = (await res.json().catch(() => null)) as {
         summary?: string;
+        agentResponseParts?: AgentResponsePart[];
         nexusSummary?: { summary?: string } | null;
         error?: { message?: string };
       } | null;
@@ -914,6 +916,7 @@ export function UniversalCanvasShell({
         id: nextMessageId("a"),
         role: "agent",
         body,
+        parts: payload?.agentResponseParts,
       };
       setThread((t) => [...t, agentTurn]);
     } catch (err) {
@@ -1476,10 +1479,12 @@ const AGENT_DOCK_ROLE_COPY: Record<"Sentinel" | "Atlas", string> = {
 // stage. The stage-appropriate role copy still differs (see AGENT_DOCK_ROLE_COPY);
 // only the displayed agent NAME is always Ava.
 function displayAgentName(_agent: "Sentinel" | "Atlas"): string {
+  void _agent;
   return "Ava";
 }
 
 function displayAgentInitials(_agent: "Sentinel" | "Atlas"): string {
+  void _agent;
   return "Av";
 }
 
