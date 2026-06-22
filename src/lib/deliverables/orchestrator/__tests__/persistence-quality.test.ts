@@ -43,7 +43,9 @@ describe('persistDeliverable — quality contract enforcement', () => {
   it('quarantines a failing artifact as internal draft when enforcement is on', async () => {
     const rendered = await persistWith({ enforceQualityContract: true });
     expect(rendered.quarantined).toBe(true);
-    expect(String(rendered.quarantineReason)).toMatch(/blocked_missing_exhibits/);
+    // Architecture artifacts now fail the story-led/visual gate when the prose
+    // path emits no current-state/story/visual signals — any blocked_* reason.
+    expect(String(rendered.quarantineReason)).toMatch(/^blocked_/);
   });
 
   it('does NOT quarantine in observe-only mode (records but does not block)', async () => {

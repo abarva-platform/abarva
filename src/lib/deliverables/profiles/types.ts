@@ -214,7 +214,13 @@ export type QualityDimensionId =
   | "exhibit_enforcement"
   | "non_mechanical_writing"
   | "client_specificity"
-  | "so_what_quality";
+  | "so_what_quality"
+  // Story-Led / Exhibit-Led Standard (v2 redo, §12)
+  | "story_spine"
+  | "current_state_reasoning"
+  | "gap_to_target_reasoning"
+  | "architecture_completeness"
+  | "visual_exhibit_quality";
 
 /** The default rubric every client-facing artifact is held to (all 12 dimensions). */
 export const DEFAULT_QUALITY_RUBRIC: ReadonlyArray<QualityDimensionId> = [
@@ -287,4 +293,34 @@ export interface DeliverableProfile {
   readonly examples?: ReadonlyArray<string>;
   /** Known failure modes the gate watches for. */
   readonly failureModes?: ReadonlyArray<string>;
+
+  // ── Story-Led / Exhibit-Led Standard (v2 redo, §13) ────────────────────────
+  /** The question the artifact's narrative must answer. */
+  readonly narrativeQuestion?: string;
+  /** The visible story arc (ordered narrative spine). */
+  readonly storyArc?: ReadonlyArray<string>;
+  /** The artifact must interpret + draw current state. */
+  readonly currentStateRequired?: boolean;
+  /** The artifact must reason current → gaps. */
+  readonly gapAnalysisRequired?: boolean;
+  /** The artifact must define the target state. */
+  readonly targetStateRequired?: boolean;
+  /** Story beats the artifact must hit. */
+  readonly requiredStoryBeats?: ReadonlyArray<string>;
+  /** The narrative role each exhibit plays (exhibitId → role). */
+  readonly exhibitNarrativeRole?: Readonly<Record<string, string>>;
+  /** Exhibits must render as real visuals (not prose) to pass. */
+  readonly visualRendererRequired?: boolean;
+  /** Architecture artifacts must carry each level. */
+  readonly conceptualArchitectureRequired?: boolean;
+  readonly logicalArchitectureRequired?: boolean;
+  readonly physicalArchitectureRequired?: boolean;
+  /** Every exhibit must carry a so-what interpretation. */
+  readonly soWhatRequired?: boolean;
+  /** The decision the artifact builds toward. */
+  readonly decisionMoment?: string;
+  /** What the reader should be able to say after reading. */
+  readonly readerTakeaway?: string;
+  /** Patterns the gate rejects for this artifact. */
+  readonly antiPatterns?: ReadonlyArray<string>;
 }
