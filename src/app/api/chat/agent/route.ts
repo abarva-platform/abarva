@@ -99,6 +99,9 @@ import {
 // ('programs-detail') into URL-shaped keys ('/programs/<id>') so tool
 // resolution and the artifact-channel gate stay aligned.
 import { canonicalizeFromBody } from "@/lib/agent/surface";
+// W1.4 Home · Shared Context Brain grounding (flag-gated, default OFF).
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { summonExpertsForQuery } from "@/lib/intelligence/answer/expert-grounding";
 // Surface 2 PR-A — Phase Intelligence Packs. When the user is on a
 // program-detail surface, load the pack for the engagement's current
 // phase into Nexus's system block. The pack is opinionated coaching
@@ -1177,6 +1180,19 @@ export async function POST(request: Request) {
     return lines.join("\n");
   })();
 
+  // W1.4 Home · Shared Context Brain (flag-gated, default OFF). When
+  // `scb_shared_engine_home` is on for the tenant, summon the Consilium
+  // expert(s) for the question and ground Ava's Home answer in their authored
+  // content — the same dormant-until-flipped pattern as Intelligence (ask),
+  // Tower (/api/tower/ask), Source (/api/source/synthesis), and Moves
+  // (/api/programs/synthesis). Empty string (and byte-identical prompt) when off,
+  // off-Home, or with no question — so this is inert until the flag is flipped.
+  const homeConsiliumBlock =
+    surface === "/home" && message && activeClientKey
+      && isFeatureEnabled({ clientKey: activeClientKey }, "scb_shared_engine_home")
+      ? summonExpertsForQuery({ query: message, clientKey: activeClientKey }).groundingBlock
+      : "";
+
   const systemPrompt = [
     voiceLine,
     "",
@@ -1209,6 +1225,12 @@ export async function POST(request: Request) {
     // PR-R / CXO grounding · tenant current-state block for all
     // canonical agents on tenant-scoped surfaces.
     agentTenantContextBlock,
+    "",
+    // W1.4 Home · Consilium expert grounding ("" unless surface === "/home"
+    // and scb_shared_engine_home is on for the tenant). Placed with the tenant
+    // current-state block so Ava reads tenant posture + the summoned expert(s)
+    // together before reasoning. The join-filter strips it when empty.
+    homeConsiliumBlock,
     "",
     // Wave 3 PR-3 · Steward TrustSpine context. Empty string for
     // non-Steward / non-admin turns. Positioned with the broker /

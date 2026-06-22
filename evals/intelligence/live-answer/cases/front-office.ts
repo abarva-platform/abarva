@@ -17,7 +17,7 @@
 // pricing (pocket price/elasticity/markdown). Each query leans on the terms that
 // are unique to its owning pack so the top-1 route is unambiguous.
 
-import type { LiveAnswerCase } from "../types";
+import type { LiveAnswerCase } from "@/lib/intelligence/answer/evals/live-answer/types";
 
 export const FRONT_OFFICE_CASES: LiveAnswerCase[] = [
   // ── xp.x.back-office-shared-services ──────────────────────────────────────

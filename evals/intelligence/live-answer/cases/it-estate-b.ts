@@ -1,4 +1,4 @@
-import type { LiveAnswerCase } from "../types";
+import type { LiveAnswerCase } from "@/lib/intelligence/answer/evals/live-answer/types";
 
 // IT-estate-B live-answer case file (W5.2). Cross-cutting IT-estate experts —
 // no industry tag (these packs carry no industry×function key, so omitting

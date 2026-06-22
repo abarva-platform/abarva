@@ -10,7 +10,7 @@
 // Queries are tuned so routeQuestion({query, industry}).experts[0].id leads with
 // the intended expert; validateLiveAnswerBank(..., {minPerExpert: 5}) is green.
 
-import type { LiveAnswerCase } from "../types";
+import type { LiveAnswerCase } from "@/lib/intelligence/answer/evals/live-answer/types";
 
 export const HEALTHCARE_AIRLINE_CASES: LiveAnswerCase[] = [
   // ──────────────────────────────────────────────────────────────────────────
@@ -39,12 +39,17 @@ export const HEALTHCARE_AIRLINE_CASES: LiveAnswerCase[] = [
   {
     id: "hc-revcycle-3",
     query:
-      "Break down our revenue cycle denials by CARC/RARC reason category and show the AR days and overturn rate for each so we can compare where to invest.",
+      "Show me a chart of revenue cycle denials by CARC/RARC reason category, including initial denial rate, AR days, and overturn rate so we can compare where to invest.",
     industry: "healthcare_provider",
     expectedExpertId: "xp.healthcare-provider.revenue-cycle",
-    expectedBehaviors: ["output_shape_table", "name_real_next_move"],
+    expectedBehaviors: ["output_shape_chart", "name_real_next_move"],
+    surfaceFacts: [
+      "Revenue cycle denial chart support: CARC/RARC category medical necessity has initial denial rate 11.8%, AR days 42, overturn rate 18%, and leakage exposure $1.2M.",
+      "Revenue cycle denial chart support: CARC/RARC category prior authorization has initial denial rate 8.4%, AR days 38, overturn rate 22%, and leakage exposure $650K.",
+      "Revenue cycle denial chart support: CARC/RARC category eligibility has initial denial rate 4.9%, AR days 21, overturn rate 31%, and leakage exposure $310K.",
+    ],
     adversarialKind: null,
-    notes: "Comparison/breakdown that wants a denials-by-reason table.",
+    notes: "Comparison/breakdown that explicitly wants a chart and includes surface evidence for a concrete next move.",
   },
   {
     id: "hc-revcycle-4",
