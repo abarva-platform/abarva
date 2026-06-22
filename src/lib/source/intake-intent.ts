@@ -46,7 +46,7 @@ export interface IntakeFieldShape {
   id: IntakeFieldId;
   /** Field label, re-worded for the intent. */
   label: string;
-  /** The question Sentinel asks for this field, re-worded for the intent. */
+  /** The question Ava asks for this field, re-worded for the intent. */
   prompt: string;
   placeholder: string;
 }
@@ -71,11 +71,11 @@ export interface SourceIntakeShape {
   /** One-sentence framing under the heading. */
   subhead: string;
   /**
-   * Prompt pre-loaded into the Sentinel chat composer so the conversation
+   * Prompt pre-loaded into the Ava chat composer so the conversation
    * starts already shaped toward the intent.
    */
   prefilledPrompt: string;
-  /** Sentinel's opening line, re-worded for the intent. */
+  /** Ava's opening line, re-worded for the intent. */
   initialQuote: string;
   /** The intake facts, re-labelled / re-prompted for the intent. */
   fields: IntakeFieldShape[];
@@ -101,7 +101,7 @@ const INTAKE_SHAPES: Record<SourceIntakeIntent, SourceIntakeShape> = {
     eyebrow: 'Vendor intake',
     heading: 'Source around a vendor',
     subhead:
-      'You already have a vendor in mind. Tell Sentinel who they are and what they would deliver — the brief shapes around evaluating and standing up that vendor.',
+      'You already have a vendor in mind. Tell Ava who they are and what they would deliver — the brief shapes around evaluating and standing up that vendor.',
     prefilledPrompt:
       'I have a specific vendor I want to source around. Help me scope the event.',
     initialQuote:
@@ -149,7 +149,7 @@ const INTAKE_SHAPES: Record<SourceIntakeIntent, SourceIntakeShape> = {
     eyebrow: 'Renewal intake',
     heading: 'Stand up a renewal',
     subhead:
-      'A contract is up for renewal. Tell Sentinel which contract — the brief shapes toward the Renewal Cockpit so the renewal decision is evidenced before the clock runs out.',
+      'A contract is up for renewal. Tell Ava which contract — the brief shapes toward the Renewal Cockpit so the renewal decision is evidenced before the clock runs out.',
     prefilledPrompt:
       'I have a contract coming up for renewal. Help me scope the renewal decision.',
     initialQuote:
@@ -197,7 +197,7 @@ const INTAKE_SHAPES: Record<SourceIntakeIntent, SourceIntakeShape> = {
     eyebrow: 'RFP response intake',
     heading: 'Normalize an RFP response',
     subhead:
-      'You have a vendor proposal or RFP response in hand. Tell Sentinel what came in — the brief shapes toward proposal normalization so responses become comparable.',
+      'You have a vendor proposal or RFP response in hand. Tell Ava what came in — the brief shapes toward proposal normalization so responses become comparable.',
     prefilledPrompt:
       'I have an RFP response / vendor proposal to work through. Help me normalize it.',
     initialQuote:
@@ -245,7 +245,7 @@ const INTAKE_SHAPES: Record<SourceIntakeIntent, SourceIntakeShape> = {
     eyebrow: 'Business request intake',
     heading: 'Triage a business request',
     subhead:
-      'A business stakeholder asked for something. Tell Sentinel what they want — the brief shapes toward the category classifier so the request lands in the right sourcing path.',
+      'A business stakeholder asked for something. Tell Ava what they want — the brief shapes toward the category classifier so the request lands in the right sourcing path.',
     prefilledPrompt:
       'A business team raised a request and I need to turn it into a sourcing event. Help me triage it.',
     initialQuote:
@@ -293,7 +293,7 @@ const INTAKE_SHAPES: Record<SourceIntakeIntent, SourceIntakeShape> = {
     eyebrow: 'Cut-spend intake',
     heading: 'Find spend to cut',
     subhead:
-      'You need to take cost out. Tell Sentinel where the pressure is — the brief shapes toward savings and shelfware analysis to surface defensible cuts.',
+      'You need to take cost out. Tell Ava where the pressure is — the brief shapes toward savings and shelfware analysis to surface defensible cuts.',
     prefilledPrompt:
       'I need to cut IT spend. Help me find where the savings are.',
     initialQuote:
@@ -341,7 +341,7 @@ const INTAKE_SHAPES: Record<SourceIntakeIntent, SourceIntakeShape> = {
     eyebrow: 'Vendor comparison intake',
     heading: 'Compare vendors head-to-head',
     subhead:
-      'You have more than one vendor on the table. Tell Sentinel who is in the running — the brief shapes toward a normalized scorecard so the comparison is fair.',
+      'You have more than one vendor on the table. Tell Ava who is in the running — the brief shapes toward a normalized scorecard so the comparison is fair.',
     prefilledPrompt:
       'I need to compare several vendors for the same need. Help me set up a fair comparison.',
     initialQuote:

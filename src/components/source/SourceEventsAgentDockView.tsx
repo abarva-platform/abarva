@@ -38,15 +38,15 @@ import {
 interface Props {
   /** Server-rendered portfolio body — becomes the AgentDock workspace. */
   workspace: ReactNode;
-  /** Active filters (forwarded to surfaceContext so Sentinel can reason about them). */
+  /** Active filters (forwarded to surfaceContext so Ava can reason about them). */
   filterStage?: string | null;
   filterStatus?: string | null;
 }
 
-const SENTINEL_AGENT = {
+const AVA_AGENT = {
   initials: 'Av',
   name: 'Ava',
-  role: 'Source Portfolio Conductor',
+  role: 'Source portfolio assistant',
 };
 const SENTINEL_RUNTIME_AGENT_NAME = 'Sentinel';
 
@@ -63,7 +63,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
   const router = useRouter();
   const [thread, setThread] = useState<ChatMessage[]>([]);
 
-  // Translate AgentDock onMessage into a streamed Sentinel runtime call,
+  // Translate AgentDock onMessage into a streamed Source runtime call,
   // accumulating the response locally so we can commit a single agent
   // turn when streaming finishes. We use the same /api/chat/agent
   // endpoint every other Source agent surface uses; surfaceContext
@@ -81,7 +81,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
         { id: `u-${Date.now()}`, role: 'user', body: userBody },
       ]);
 
-      // Inline the extracted attachment text so Sentinel has the file
+      // Inline the extracted attachment text so Ava has the file
       // contents as context even before a long-form retrieval pipeline
       // is wired up. The dock route already trims preview to ~4000
       // chars per attachment which is safe to stitch into the prompt.
@@ -101,7 +101,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
         filterSummary.length > 0
           ? ` Portfolio filters: ${filterSummary.join(', ')}.`
           : ' Portfolio filters: none.';
-      const context = `Surface: source/events. Agent: ${SENTINEL_AGENT.name}.${portfolioContextLine} The user is asking within the AbarVa platform.`;
+      const context = `Surface: source/events. Agent: ${AVA_AGENT.name}.${portfolioContextLine} The user is asking within the AbarVa platform.`;
 
       let acc = '';
       try {
@@ -116,7 +116,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
           }),
         });
         if (!res.ok) {
-          throw new Error(`Sentinel returned ${res.status}`);
+          throw new Error(`Ava returned ${res.status}`);
         }
         const reader = res.body?.getReader();
         if (!reader) throw new Error('No response body');
@@ -182,7 +182,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
 
   return (
     <AgentDock
-      agent={SENTINEL_AGENT}
+      agent={AVA_AGENT}
       surface="source/events"
       defaultMode="side-rail"
       defaultLeftPercent={30}
