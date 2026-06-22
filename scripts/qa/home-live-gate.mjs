@@ -124,7 +124,20 @@ async function run() {
       r.prose.slice(0, 80) + "…",
     );
     rec("no raw internal IDs", !RAW_ID.test(r.prose), RAW_ID.exec(r.prose)?.[0] || "clean");
-    rec("structured exhibit emitted (table/chart)", r.hasExhibit, r.answer?.tables?.length ? "structured" : r.hasExhibit ? "markdown" : "none");
+    // Informational, NOT a hard requirement: since #3836 suppresses inferred
+    // (prose-scraped) exhibits, a prose-only answer is the correct, honest result.
+    // Report whether a genuinely-structured exhibit was emitted; never fail on its absence.
+    rec(
+      "exhibit (informational — present only for genuinely structured answers)",
+      true,
+      r.answer?.tables?.length
+        ? "structured table"
+        : r.answer?.charts?.length
+          ? "structured chart"
+          : r.hasExhibit
+            ? "markdown table in prose"
+            : "prose-only (inferred exhibits suppressed — correct)",
+    );
     rec("named experts surfaced", r.experts.length > 0, r.experts.map((e) => e.name).join(", ") || "none");
   } catch (e) {
     rec("Home ask reached the engine", false, String(e.message || e));
