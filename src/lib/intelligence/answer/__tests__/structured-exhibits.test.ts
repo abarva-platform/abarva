@@ -60,6 +60,34 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.charts).toHaveLength(0);
   });
 
+  it("creates chart data from cited source detail for chart-shaped questions", () => {
+    const exhibits = buildStructuredExhibits({
+      routing,
+      sources: [
+        {
+          id: "surface-denials",
+          type: "SURFACE",
+          name: "Revenue cycle denial chart support",
+          detail:
+            "Medical necessity leakage exposure is $1.2M. Prior authorization leakage exposure is $650K. Eligibility leakage exposure is $310K.",
+          confidence: 0.92,
+        },
+      ],
+      prose:
+        "Medical Necessity is the highest-priority investment target. Prior Authorization is second, and Eligibility should be handled as a cleanup lane.",
+    });
+
+    expect(exhibits.charts[0]?.kind).toBe("cost-stack");
+    expect(exhibits.charts[0]?.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ value: 1_200_000 }),
+        expect.objectContaining({ value: 650_000 }),
+        expect.objectContaining({ value: 310_000 }),
+      ]),
+    );
+    expect(exhibits.charts[0]?.citationIds).toEqual(["c1"]);
+  });
+
   it("renders a truthful evidence-required table when a table is requested without enough cited rows", () => {
     const exhibits = buildStructuredExhibits({
       routing: { ...routing, outputShape: "table" },
