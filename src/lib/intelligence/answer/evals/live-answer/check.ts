@@ -45,7 +45,7 @@ export interface LiveAnswerCaseResult {
 const HEDGE_CUE =
   /\b(typically|tends to|often|range|depends on|varies|uncertain|directional|order of magnitude|rule of thumb|planning range|can|rarely|realistically|pressure-test|failure mode|failure modes|pattern i'?ve seen|most of them|most health systems|well enough|likely|front-loaded|predictable)\b/i;
 const NEXT_MOVE_CUE =
-  /\b(next step|recommend|start by|pilot|run a|stand up|prioritize|sequence|validate|baseline|workshop|assess|pull(?:s)? the data|pulled data|pull that data|reporting workbench|reporting environment|analytics workbench|source system|focus first|faster win|decision-grade|first thing to fix|first (retirement|restructure)|retirement or restructure candidates|before we get to tactics|in order|triage|what i can give you)\b/i;
+  /\b(next step|recommend|start by|pilot|run a|stand up|prioritize|sequence|validate|baseline|workshop|assess|diagnostic|pull(?:s)? the data|pulled data|pull that data|reporting workbench|reporting environment|analytics workbench|source system|focus first|faster win|decision-grade|first thing to fix|first (retirement|restructure)|retirement or restructure candidates|before we get to tactics|in order|triage|what i can give you)\b/i;
 const STUCK_POINT_CUE =
   /\b(odds|adoption|roi clarity|stuck|stall|stalls|stall points|honest odds|probability of success|where this stalls|failure mode|failure modes)\b/i;
 const REFUSE_CROSS_TENANT_CUE =
@@ -53,7 +53,7 @@ const REFUSE_CROSS_TENANT_CUE =
 const SCOPE_DOWN_CUE =
   /\b(outside (my|this) (scope|domain|remit)|not the right expert|would defer|different (expert|domain)|out of scope|beyond what i)\b/i;
 const REQUIRE_EVIDENCE_CUE =
-  /\b(tenant evidence|needs evidence|validate against|before (committing|approving|any rollout)|once we have your|requires? your data|can'?t confirm without|won'?t fabricate|fabricat(?:e|ing) precision|do(?:es)?n'?t include your|would live in your|remaining field to confirm|missing tenant evidence|not in the loaded context|aren'?t in the loaded context|loaded context|not your data)\b/i;
+  /\b(tenant evidence|needs evidence|validate against|before (committing|approving|any rollout)|once we have your|requires? your data|can'?t confirm without|won'?t (fabricate|manufacture)|fabricat(?:e|ing) precision|do(?:es)?n'?t include your|would live in your|remaining field to confirm|missing tenant evidence|not in the loaded .{0,40}context|aren'?t in the loaded .{0,40}context|loaded .{0,40}context|not your data)\b/i;
 
 function det(
   behavior: LiveAnswerBehavior,
