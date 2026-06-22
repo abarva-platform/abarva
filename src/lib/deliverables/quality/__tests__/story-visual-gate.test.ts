@@ -94,4 +94,86 @@ describe("story-led / exhibit-led quality gate (v2 redo)", () => {
     });
     expect(r.state).toBe("client_ready"); // charter has no storyArc/arch flags yet
   });
+
+  it("blocks a prose-only business case even when exhibit ids are present", () => {
+    const businessCase = getDeliverableProfile("business_case");
+    const r = evaluateDeliverableQuality({
+      profile: businessCase,
+      narrativeText:
+        "We recommend funding the SkyHarbor recovery transformation. Business Case",
+      renderedExhibits: [
+        "value_tree",
+        "decision_box",
+        "open_inputs_required",
+      ],
+      outputFormat: "docx",
+      financialInputs: {
+        hasBaseline: true,
+        hasCost: true,
+        hasBenefit: true,
+        hasSensitivity: true,
+      },
+      exhibitsRenderedAsVisual: false,
+    });
+    expect(r.state).toBe("blocked_missing_visuals");
+    expect(r.findings.find((f) => f.dimension === "visual_exhibit_quality")?.detail).toContain(
+      "Value waterfall",
+    );
+  });
+
+  it("blocks a prose-only roadmap under the executive visual standard", () => {
+    const roadmap = getDeliverableProfile("execution_roadmap");
+    const r = evaluateDeliverableQuality({
+      profile: roadmap,
+      narrativeText: "We recommend approving mobilisation against the roadmap.",
+      renderedExhibits: [
+        "roadmap_lanes",
+        "dependency_map",
+        "decision_calendar",
+      ],
+      outputFormat: "pptx",
+      exhibitsRenderedAsVisual: false,
+    });
+    expect(r.state).toBe("blocked_missing_visuals");
+    expect(r.findings.find((f) => f.dimension === "visual_exhibit_quality")?.detail).toContain(
+      "30/60/90-day action plan",
+    );
+  });
+
+  it("blocks a prose-only Source decision brief so aVa renders decision visuals", () => {
+    const sourceDecision = getDeliverableProfile("source_atlas_decision_brief");
+    const r = evaluateDeliverableQuality({
+      profile: sourceDecision,
+      narrativeText:
+        "We recommend selecting the preferred sourcing path and approving negotiation guardrails.",
+      renderedExhibits: [
+        "decision_headline",
+        "risks_and_mitigations",
+        "value_story",
+      ],
+      outputFormat: "pptx",
+      exhibitsRenderedAsVisual: false,
+    });
+    expect(r.state).toBe("blocked_missing_visuals");
+    expect(r.findings.find((f) => f.dimension === "visual_exhibit_quality")?.detail).toContain(
+      "One-page executive storyline",
+    );
+  });
+
+  it("allows visual-standard artifacts when final output contains rendered visuals or tables", () => {
+    const sourceDecision = getDeliverableProfile("source_atlas_decision_brief");
+    const r = evaluateDeliverableQuality({
+      profile: sourceDecision,
+      narrativeText:
+        "We recommend selecting the preferred sourcing path and approving negotiation guardrails.",
+      renderedExhibits: [
+        "decision_headline",
+        "risks_and_mitigations",
+        "value_story",
+      ],
+      outputFormat: "pptx",
+      exhibitsRenderedAsVisual: true,
+    });
+    expect(r.state).toBe("client_ready");
+  });
 });

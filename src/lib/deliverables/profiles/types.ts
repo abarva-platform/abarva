@@ -201,6 +201,25 @@ export type RendererId =
   | "html_report"
   | "appendix";
 
+/**
+ * Executive visual standard for published artifacts. This is deliberately
+ * separate from `requiredExhibits`: exhibits are renderer-addressable ids,
+ * while this list names the client-facing visual obligations from the artifact
+ * template (diagrams, charts, scorecards, heatmaps, roadmaps, and tables).
+ */
+export interface ArtifactVisualStandard {
+  /** Visual pages/objects the final artifact must show, not merely describe. */
+  readonly requiredVisuals: ReadonlyArray<string>;
+  /** Chart types expected when quantitative inputs exist. */
+  readonly requiredCharts?: ReadonlyArray<string>;
+  /** Required styled/native tables beyond the generic source register. */
+  readonly requiredTables?: ReadonlyArray<string>;
+  /** Client-to-complete checklist required when inputs are missing. */
+  readonly clientToCompleteChecklistRequired?: boolean;
+  /** Readiness label such as Draft, Executive Review Ready, or Board Ready. */
+  readonly readinessLabelRequired?: boolean;
+}
+
 /** The quality dimensions the gate evaluates against the profile's rubric. */
 export type QualityDimensionId =
   | "audience_fit"
@@ -279,6 +298,8 @@ export interface DeliverableProfile {
   readonly appendixMode?: AppendixMode;
   /** Tables the artifact must contain (by label/id). */
   readonly requiredTables?: ReadonlyArray<string>;
+  /** Published executive visual standard for this artifact type. */
+  readonly visualStandard?: ArtifactVisualStandard;
   /** The renderer the pipeline selects for this artifact. */
   readonly renderer?: RendererId;
   /** Which quality dimensions apply (defaults to DEFAULT_QUALITY_RUBRIC). */
