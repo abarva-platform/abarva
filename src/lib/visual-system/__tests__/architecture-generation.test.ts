@@ -124,6 +124,43 @@ describe("architecture generation pass (governed, tenant-agnostic)", () => {
     expect(signals.logicalArchPresent).toBe(true);
     expect(signals.physicalArchPresent).toBe(true);
     expect(signals.exhibitsRenderedAsVisual).toBe(true);
-    expect(model.openInputs?.join(" ")).toMatch(/Client to confirm|Architecture detail required|incomplete/i);
+    expect(model.openInputs?.join(" ")).toMatch(/confirm|validation/i);
+  });
+
+  it("removes machinery vocabulary from plan-derived fallback text", () => {
+    const model = buildGroundedArchitectureFallback({
+      engagement: "IROPS Agentic Response",
+      client: "SkyHarbor Air",
+      contextText: "Current recovery decisions are fragmented.",
+      plan: {
+        artifactType: "target_state_architecture",
+        audience: "cio",
+        decisionPurpose: "Approve the architecture substrate.",
+        storyline: "The current substrate must become governed.",
+        currentStateInterpretation: "The source register is fragmented.",
+        majorGaps: [
+          {
+            id: "g1",
+            observation: "Context rows are scattered.",
+            gap: "The substrate is not governed.",
+            designImplication: "Build a safer substrate.",
+          },
+        ],
+        targetStateHypothesis: "The target substrate supports decisions.",
+        requiredDecisions: [],
+        requiredExhibits: [],
+        narrativeSequence: [],
+        evidenceNeeded: [],
+        missingInputs: ["Client to complete integration protocol."],
+        assumptions: [],
+        risks: [],
+        readerTakeaway: "The reader understands the substrate.",
+      },
+    });
+    const html = renderArchitectureHtml(model).toLowerCase();
+
+    expect(html).not.toContain("substrate");
+    expect(html).not.toContain("source register");
+    expect(html).not.toContain("client to complete");
   });
 });

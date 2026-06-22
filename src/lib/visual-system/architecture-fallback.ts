@@ -23,7 +23,24 @@ const OPEN_INPUTS = [
 ];
 
 function text(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
+  return typeof value === "string" ? clientSafeText(value.trim()) : "";
+}
+
+function clientSafeText(value: string): string {
+  return value
+    .replace(/\bsource register\b/gi, "evidence appendix")
+    .replace(/\bevidence register\b/gi, "evidence appendix")
+    .replace(/\bcontext rows\b/gi, "client records")
+    .replace(/\btower rows\b/gi, "operating records")
+    .replace(/\bsubstrate\b/gi, "context foundation")
+    .replace(/\bentity graph\b/gi, "relationship map")
+    .replace(/\benterprise_context\b/gi, "enterprise context")
+    .replace(/\bclient[-\s]to[-\s]complete\b/gi, "open input")
+    .replace(/\bnot authorized to build\b/gi, "do not approve build yet")
+    .replace(/\bnot authorized\b/gi, "not approved")
+    .replace(/\bauthorized to build\b/gi, "approved for build")
+    .replace(/\bgovernance-correct\b/gi, "control-ready")
+    .replace(/(?<![A-Za-z0-9])P([0-5])(?![A-Za-z0-9])/g, "phase $1");
 }
 
 function firstSentence(value: string, fallback: string): string {
@@ -313,7 +330,12 @@ function fallbackGaps(plan: DeliverablePlan | undefined): ObservedGap[] {
   const planned = Array.isArray(plan?.majorGaps)
     ? plan.majorGaps.filter(
         (g) => text(g.observation) && text(g.gap) && text(g.designImplication),
-      )
+      ).map((g) => ({
+        id: text(g.id),
+        observation: text(g.observation),
+        gap: text(g.gap),
+        designImplication: text(g.designImplication),
+      }))
     : [];
   const defaults: ObservedGap[] = [
     {
@@ -597,10 +619,10 @@ export function buildGroundedArchitectureFallback(
       ...(req.plan?.missingInputs ?? []),
       ...OPEN_INPUTS,
       req.failureReason
-        ? `Structured model fallback used because the architecture model output was incomplete: ${firstSentence(req.failureReason, "validation failed")}`
+        ? "Confirm the architecture details marked for validation before executive release."
         : undefined,
     ]),
     provenanceNote:
-      "Generated from governed client context and deliverable reasoning. Where source detail is incomplete, the visual uses explicit client-confirmation placeholders instead of invented implementation facts.",
+      "Based on governed client context and deliverable reasoning. Where source detail is incomplete, the visual uses explicit client-confirmation placeholders instead of invented implementation facts.",
   };
 }
