@@ -12,6 +12,8 @@
 
 Source now presents the sourcing assistant as Ava in the visible intake and next-move surfaces. The new-source intake response window can render structured Ava output, including text, readiness metrics, a table, a chart, and a recommended next action. The shared agent dock now supports explicit left, right, top, bottom, expanded, and hidden layouts.
 
+The Source answer engine also normalizes legacy Sentinel-branded evidence excerpts to Ava at presentation time, so persisted event context does not leak the retired name back into generated answers.
+
 ## Layer Impact
 
 `global-control-lane`: AgentDock is shared UI infrastructure, so the new right-rail mode and updated mode labels apply anywhere the shared dock is used.
@@ -33,11 +35,14 @@ Source now presents the sourcing assistant as Ava in the visible intake and next
 - `src/lib/source/ava-intake-response-parts.ts`: pure structured intake response helper.
 - `src/lib/source/intake-intent.ts`, `src/lib/source/stage-next-move.ts`, and `src/lib/source/learn/learn-nav.ts`: visible Sentinel copy changed to Ava.
 - `src/components/source/SourceEventAgentCanvas.tsx` and `src/components/source/SourceEventsAgentDockView.tsx`: visible Source dock roles/errors adjusted to Ava language.
+- `src/lib/source/source-answer-engine.ts` and `src/lib/source/mock-seed.ts`: legacy Sentinel evidence/context strings render as Ava in Source answers and seeded Apex event context.
 - Tests/docs updated for the new label and six dock modes.
 
 ## QA / Validation
 
 - PASS: `npx jest src/lib/source/__tests__/ava-intake-response-parts.test.ts src/lib/source/__tests__/stage-next-move.test.ts src/lib/source/__tests__/intake-intent.test.ts src/components/agent/__tests__/AgentDock.test.tsx --runInBand`
+- PASS: `npx jest src/lib/source/__tests__/source-answer-engine.test.ts src/lib/source/__tests__/ava-intake-response-parts.test.ts src/lib/source/__tests__/stage-next-move.test.ts src/lib/source/__tests__/intake-intent.test.ts src/components/agent/__tests__/AgentDock.test.tsx --runInBand`
+- PASS: `npx eslint src/lib/source/source-answer-engine.ts src/lib/source/__tests__/source-answer-engine.test.ts src/lib/source/mock-seed.ts src/components/agent/AgentDock.tsx src/components/agent/__tests__/AgentDock.test.tsx src/components/source/SourceOriginatePage.tsx src/lib/source/ava-intake-response-parts.ts src/lib/source/__tests__/ava-intake-response-parts.test.ts`
 - PASS: `npx eslint src/components/agent/AgentDock.tsx src/components/agent/__tests__/AgentDock.test.tsx src/components/source/SourceOriginatePage.tsx src/components/source/SourceEventAgentCanvas.tsx src/components/source/SourceEventsAgentDockView.tsx src/components/source/canvas/UniversalCanvasShell.tsx src/lib/source/ava-intake-response-parts.ts src/lib/source/__tests__/ava-intake-response-parts.test.ts src/lib/source/intake-intent.ts src/lib/source/learn/learn-nav.ts src/lib/source/stage-next-move.ts src/lib/source/__tests__/stage-next-move.test.ts`
 - PASS: `git diff --check`
 - PASS: `NODE_OPTIONS=--max-old-space-size=8192 npm run build`
