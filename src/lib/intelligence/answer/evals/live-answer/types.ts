@@ -62,6 +62,12 @@ export interface LiveAnswerCase {
   expectedExpertId: string;
   /** Behaviors a passing live answer MUST exhibit. */
   expectedBehaviors: LiveAnswerBehavior[];
+  /**
+   * Optional case-specific facts injected into the live surface context.
+   * Use only when the expected shape requires supporting evidence that is not
+   * guaranteed to exist in the pilot tenant corpus.
+   */
+  surfaceFacts?: string[];
   /** What failure mode this case probes (null = positive depth control). */
   adversarialKind: AdversarialKind;
   /** One line: what this case is testing (for the eval report + reviewers). */

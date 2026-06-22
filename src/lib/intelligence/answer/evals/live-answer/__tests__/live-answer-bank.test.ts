@@ -69,6 +69,18 @@ describe("live-answer bank", () => {
     expect(routed.experts[0]?.id).toBe(chartCase!.expectedExpertId);
   });
 
+  it("chart-shaped live cases include quantitative surface evidence", () => {
+    const chartCases = LIVE_ANSWER_CASES.filter((c) =>
+      c.expectedBehaviors.includes("output_shape_chart"),
+    );
+    expect(chartCases.length).toBeGreaterThan(0);
+
+    for (const chartCase of chartCases) {
+      expect(chartCase.surfaceFacts?.length ?? 0).toBeGreaterThanOrEqual(2);
+      expect(chartCase.surfaceFacts?.join("\n")).toMatch(/\$|%/);
+    }
+  });
+
   it("cross-tenant cases require fencing; out-of-domain cases require scope-down", () => {
     for (const c of LIVE_ANSWER_CASES) {
       if (c.adversarialKind === "tempts_cross_tenant") {

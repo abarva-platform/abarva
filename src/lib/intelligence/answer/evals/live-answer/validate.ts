@@ -66,6 +66,13 @@ export function validateLiveAnswerBank(
 
     if (!c.query?.trim()) issues.push({ caseId: c.id, message: "empty query" });
     if (!c.notes?.trim()) issues.push({ caseId: c.id, message: "missing notes (what is this case testing?)" });
+    if (c.surfaceFacts) {
+      if (!Array.isArray(c.surfaceFacts)) {
+        issues.push({ caseId: c.id, message: "surfaceFacts must be an array when present" });
+      } else if (c.surfaceFacts.some((fact) => typeof fact !== "string" || fact.trim().length === 0)) {
+        issues.push({ caseId: c.id, message: "surfaceFacts must contain only non-empty strings" });
+      }
+    }
 
     // expectedExpertId integrity.
     if (c.expectedExpertId === "") {
@@ -98,6 +105,12 @@ export function validateLiveAnswerBank(
           message: `adversarialKind ${c.adversarialKind} must require one of: ${required.join(", ")}`,
         });
       }
+    }
+    if (
+      c.expectedBehaviors.includes("output_shape_chart") &&
+      (!c.surfaceFacts || c.surfaceFacts.length < 2)
+    ) {
+      issues.push({ caseId: c.id, message: "chart-shaped cases need >=2 surfaceFacts for live evidence" });
     }
   }
 
