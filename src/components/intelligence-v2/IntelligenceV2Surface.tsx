@@ -302,7 +302,7 @@ export function IntelligenceV2Surface({
             <div className="ansbox">
               {agentAnswer ? (
                 <AgentAnswerRenderer
-                  answer={{ ...agentAnswer, prose: answer ?? agentAnswer.prose }}
+                  answer={{ ...agentAnswer, prose: agentAnswer.prose || answer || "" }}
                 />
               ) : (
                 <>

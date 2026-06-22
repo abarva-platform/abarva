@@ -14,6 +14,7 @@ export interface StructuredExhibitsInput {
 }
 
 export interface StructuredExhibits {
+  prose: string;
   citations: AnswerCitation[];
   tables: AnswerTable[];
   charts: AnswerChart[];
@@ -106,24 +107,113 @@ function evidenceRequiredTable(citations: AnswerCitation[]): AnswerTable {
   };
 }
 
+function splitMarkdownTableRow(line: string): string[] {
+  const trimmed = line.trim();
+  if (!trimmed.includes("|")) return [];
+  return trimmed
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim())
+    .filter((cell, index, cells) => cell.length > 0 || index < cells.length);
+}
+
+function isMarkdownSeparatorRow(cells: string[]): boolean {
+  return (
+    cells.length >= 2 &&
+    cells.every((cell) => /^:?-{3,}:?$/.test(cell.replace(/\s+/g, "")))
+  );
+}
+
+function keyForColumn(label: string, index: number): string {
+  const key = label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return key || `column_${index + 1}`;
+}
+
+function markdownTablesFromProse(
+  prose: string,
+  citationIds: string[],
+): { prose: string; tables: AnswerTable[] } {
+  const lines = prose.split(/\r?\n/);
+  const tables: AnswerTable[] = [];
+  const keep: string[] = [];
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const header = splitMarkdownTableRow(lines[i] ?? "");
+    const separator = splitMarkdownTableRow(lines[i + 1] ?? "");
+    if (
+      header.length >= 2 &&
+      separator.length === header.length &&
+      isMarkdownSeparatorRow(separator)
+    ) {
+      const rows: Record<string, string>[] = [];
+      const columns = header.map((label, index) => ({
+        key: keyForColumn(label, index),
+        label,
+      }));
+      let cursor = i + 2;
+      while (cursor < lines.length) {
+        const cells = splitMarkdownTableRow(lines[cursor] ?? "");
+        if (cells.length !== header.length) break;
+        rows.push(
+          Object.fromEntries(
+            columns.map((column, index) => [
+              column.key,
+              cells[index] ?? "",
+            ]),
+          ),
+        );
+        cursor += 1;
+      }
+      if (rows.length > 0) {
+        tables.push({
+          id: `answer-markdown-table-${tables.length + 1}`,
+          title: tables.length === 0 ? "Answer Table" : `Answer Table ${tables.length + 1}`,
+          columns,
+          rows,
+          note:
+            "Rendered from a Markdown table emitted in Ava's answer; values are not inferred from surrounding prose.",
+          citationIds,
+        });
+        i = cursor - 1;
+        continue;
+      }
+    }
+    keep.push(lines[i] ?? "");
+  }
+
+  return {
+    prose: keep.join("\n").replace(/\n{3,}/g, "\n\n").trim(),
+    tables,
+  };
+}
+
 export function buildStructuredExhibits(
   input: StructuredExhibitsInput,
 ): StructuredExhibits {
   const citations = answerCitationsFromAskSources(input.sources);
+  const markdown = markdownTablesFromProse(
+    input.prose,
+    citations.map((citation) => citation.id),
+  );
   const tables: AnswerTable[] = [];
   const charts: AnswerChart[] = [];
+  tables.push(...markdown.tables);
 
-  if (
+  if (tables.length === 0 && (
     input.routing.outputShape === "table" ||
     input.routing.outputShape === "chart" ||
     input.routing.outputShape === "graph"
-  ) {
+  )) {
     const table =
       sourceRegisterTable(citations) ?? evidenceRequiredTable(citations);
     if (table) tables.push(table);
   }
 
-  return { citations, tables, charts };
+  return { prose: markdown.prose, citations, tables, charts };
 }
 
 export function hasRenderableStructuredExhibits(
