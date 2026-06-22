@@ -2,8 +2,9 @@
 
 // AgentDock · shared chat-dock foundation for every agent surface.
 //
-// Five toggleable modes per surface, persisted in localStorage:
-//   side-rail   — resizable column (default)
+// Six toggleable modes per surface, persisted in localStorage:
+//   side-rail   — resizable left column (default)
+//   side-rail-right — resizable right column
 //   pin-bottom  — full-width strip at viewport bottom (~120 → 480px)
 //   pin-top     — mirror of pin-bottom anchored below the AppTopBar
 //   expand      — modal overlay 80% viewport, workspace dimmed behind
@@ -23,7 +24,7 @@
 //   - No external icon library — chevrons are inline SVG
 //   - Tokens borrowed from canvas-tokens (CHAT_BG, INK, RULE, etc.)
 //
-// Spec source: this PR · feat(agent): shared AgentDock with 5 modes.
+// Spec source: this PR · feat(agent): shared AgentDock with 6 modes.
 
 import {
   useCallback,
@@ -154,6 +155,7 @@ function useDockSelfTop(ref: RefObject<HTMLDivElement | null>) {
 
 export type DockMode =
   | "side-rail"
+  | "side-rail-right"
   | "pin-bottom"
   | "pin-top"
   | "expand"
@@ -161,6 +163,7 @@ export type DockMode =
 
 export const DOCK_MODES: readonly DockMode[] = [
   "side-rail",
+  "side-rail-right",
   "pin-bottom",
   "pin-top",
   "expand",
@@ -261,7 +264,7 @@ export interface AgentDockProps {
     text: string,
     attachments: AttachmentRef[],
   ) => void | Promise<void>;
-  /** For side-rail mode this becomes the right pane; other modes flow normally. */
+  /** For side-rail modes this becomes the opposite pane; other modes flow normally. */
   workspace: ReactNode;
   /** Side-rail splitter overrides. */
   minLeftPx?: number;
@@ -1052,7 +1055,7 @@ export function AgentDock(props: AgentDockProps) {
     );
   }
 
-  if (mode === "side-rail") {
+  if (mode === "side-rail" || mode === "side-rail-right") {
     // The dock is always viewport-bounded — height is NEVER inherited from
     // the workspace pane. This guarantees the composer is always above the
     // fold even when the workspace renders a 3000px-tall scroll body.
@@ -1062,16 +1065,32 @@ export function AgentDock(props: AgentDockProps) {
     // `--agent-dock-self-top`. The calc() expressions consume it. Surfaces
     // with custom chrome don't need to set anything; the dock figures out
     // its own offset.
+    const dockOnRight = mode === "side-rail-right";
     return (
       <div
         ref={shellRef}
         data-testid="agent-dock-side-rail-shell"
+        data-side={dockOnRight ? "right" : "left"}
         style={SIDE_RAIL_SHELL_STYLE}
       >
         <ResizableSplitter
-          left={chatPanel}
-          right={<div style={WORKSPACE_PANE_STYLE}>{workspace}</div>}
-          defaultLeftPercent={defaultLeftPercent}
+          left={
+            dockOnRight ? (
+              <div style={WORKSPACE_PANE_STYLE}>{workspace}</div>
+            ) : (
+              chatPanel
+            )
+          }
+          right={
+            dockOnRight ? (
+              chatPanel
+            ) : (
+              <div style={WORKSPACE_PANE_STYLE}>{workspace}</div>
+            )
+          }
+          defaultLeftPercent={
+            dockOnRight ? 100 - defaultLeftPercent : defaultLeftPercent
+          }
           minLeftPx={minLeftPx}
           minRightPx={Math.max(420, minLeftPx)}
           storageKey={splitStorageKey(surface)}
@@ -1143,18 +1162,28 @@ function ModePicker({ mode, onChange, dockId }: ModePickerProps) {
         mode="side-rail"
         active={mode === "side-rail"}
         onClick={() => onChange("side-rail")}
-        aria-label="Dock as side rail"
-        title="Side rail"
+        aria-label="Lock chat to left"
+        title="Lock left"
         dockId={dockId}
       >
         <SideRailIcon />
       </ModeButton>
       <ModeButton
+        mode="side-rail-right"
+        active={mode === "side-rail-right"}
+        onClick={() => onChange("side-rail-right")}
+        aria-label="Lock chat to right"
+        title="Lock right"
+        dockId={dockId}
+      >
+        <SideRailRightIcon />
+      </ModeButton>
+      <ModeButton
         mode="pin-bottom"
         active={mode === "pin-bottom"}
         onClick={() => onChange("pin-bottom")}
-        aria-label="Pin to bottom"
-        title="Pin to bottom"
+        aria-label="Lock chat to bottom"
+        title="Lock bottom"
         dockId={dockId}
       >
         <ArrowDownIcon />
@@ -1163,8 +1192,8 @@ function ModePicker({ mode, onChange, dockId }: ModePickerProps) {
         mode="pin-top"
         active={mode === "pin-top"}
         onClick={() => onChange("pin-top")}
-        aria-label="Pin to top"
-        title="Pin to top"
+        aria-label="Lock chat to top"
+        title="Lock top"
         dockId={dockId}
       >
         <ArrowUpIcon />
@@ -1183,8 +1212,8 @@ function ModePicker({ mode, onChange, dockId }: ModePickerProps) {
         mode="collapsed"
         active={mode === "collapsed"}
         onClick={() => onChange("collapsed")}
-        aria-label="Collapse to chip"
-        title="Collapse"
+        aria-label="Hide chat to chip"
+        title="Hide"
         dockId={dockId}
       >
         <CloseIcon />
@@ -1398,6 +1427,24 @@ function SideRailIcon() {
     >
       <rect x="3" y="3" width="18" height="18" rx="2" />
       <line x1="9" y1="3" x2="9" y2="21" />
+    </svg>
+  );
+}
+function SideRailRightIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <line x1="15" y1="3" x2="15" y2="21" />
     </svg>
   );
 }

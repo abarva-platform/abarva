@@ -12,7 +12,7 @@
  *   render     — /home serves the React Context Explorer (flag flipped)
  *   intel      — /intelligence serves the canonical v2 Lens (not a fallback/error)
  *   synthesis  — a real answer, not the fake `Also:` row-dump
- *   grounded   — NO "context not loaded" hedge  ← the failure pattern; ideally cites tenant evidence
+ *   grounded   — cites tenant evidence AND has no "context not loaded" hedge
  *   noRawId    — no raw internal IDs (APX-DATA-003 …)
  *   experts    — named experts surfaced (routing landed)
  *   fence      — a cross-tenant probe is refused/blocked
@@ -140,14 +140,15 @@ async function runTenant(t) {
   try {
     const r = await ask(cookie, Q, t.binding);
     checks.synthesis = r.prose.length > 120 && !FAKE_GLOB.test(r.prose);
-    checks.grounded = !NOT_LOADED.test(r.prose); // ← the failure pattern is a positive NOT_LOADED match
+    const hasLoadedContextHedge = NOT_LOADED.test(r.prose);
+    checks.grounded = !hasLoadedContextHedge && r.citesTenant;
     checks.noRawId = !RAW_ID.test(r.prose);
     checks.experts = r.experts.length > 0;
     note = checks.grounded
-      ? r.citesTenant
-        ? "grounded · cites tenant evidence"
-        : "no 'not-loaded' hedge (no tenant citation seen)"
-      : "HEDGED 'not loaded' — retrieval gap";
+      ? "grounded · cites tenant evidence"
+      : hasLoadedContextHedge
+        ? "HEDGED 'not loaded' — retrieval gap"
+        : "NO tenant citation — retrieval/render gap";
   } catch (e) {
     return { tenant: t, error: String(e.message || e) };
   }

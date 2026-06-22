@@ -24,6 +24,7 @@ import {
   type IntakeFieldId,
   type SourceIntakeShape,
 } from "@/lib/source/intake-intent";
+import { buildAvaIntakeResponseParts } from "@/lib/source/ava-intake-response-parts";
 type SubmitState =
   | { status: "idle" }
   | { status: "submitting" }
@@ -326,7 +327,7 @@ const initialIntakeState: IntakeState = {
 // Legacy cleanup only. Earlier builds restored /source/new drafts from
 // localStorage, which made a new intake open with stale values and even kept
 // the optional category selector expanded. A new sourcing event now starts
-// clean; Sentinel fills the brief from chat instead of browser residue.
+// clean; Ava fills the brief from chat instead of browser residue.
 const AUTOSAVE_KEY_PREFIX = "abarva.source.originate.intake";
 function autosaveKey(clientKey: string): string {
   return `${AUTOSAVE_KEY_PREFIX}.${clientKey}`;
@@ -494,10 +495,10 @@ function sanitizeEventNameClause(value: string | undefined): string {
     .trim();
 }
 
-const SENTINEL_INTAKE_AGENT = {
+const AVA_INTAKE_AGENT = {
   initials: "Av",
   name: "Ava",
-  role: "Source Orchestrator",
+  role: "End-to-end sourcing assistant",
 } as const;
 
 export function SourceOriginatePage({
@@ -1030,6 +1031,8 @@ export function SourceOriginatePage({
           clientKey={clientKey}
           workspace={intakeWorkspace}
           intakeShape={intakeShape}
+          intakeFields={intakeFields}
+          capturedFacts={capturedFacts}
         />
         <SourceOnboardingTour
           active={tourActive}
@@ -1055,32 +1058,45 @@ export function SourceOriginatePage({
 // ── SourceOriginateDock ───────────────────────────────────────────────────
 //
 // Thin connector between AgentDock (presentation) and the AtlasPageState
-// runtime (Sentinel conversation). Reads `conversation` + `ask` from
-// shared shell state so this surface keeps the existing Sentinel runtime
-// contract untouched while picking up the AgentDock chrome (5 modes,
-// Claude-style upload, mode picker, persisted side-rail width).
+// runtime. Reads `conversation` + `ask` from shared shell state so this
+// surface keeps the existing runtime contract untouched while picking up the
+// AgentDock chrome, upload, mode picker, and persisted side-rail width.
 function SourceOriginateDock({
   clientName,
   clientKey,
   workspace,
   intakeShape,
+  intakeFields,
+  capturedFacts,
 }: {
   clientName: string;
   clientKey: string;
   workspace: ReactNode;
   intakeShape: SourceIntakeShape | null;
+  intakeFields: IntakeFieldDefinition[];
+  capturedFacts: CapturedFact[];
 }) {
   const pageState = useAtlasPageState();
 
   const thread: ChatMessage[] = useMemo(() => {
     if (!pageState) return [];
+    const capturedIds = new Set(capturedFacts.map((fact) => fact.id));
     return pageState.conversation.map((turn) => ({
       id: turn.id,
       role: turn.role,
       body: turn.text,
       at: new Date(turn.timestamp).toISOString(),
+      parts:
+        turn.role === "agent"
+          ? buildAvaIntakeResponseParts({
+              body: turn.text,
+              fields: intakeFields,
+              capturedIds,
+              routeLabel: intakeShape?.routingHint.label,
+            })
+          : undefined,
     }));
-  }, [pageState]);
+  }, [capturedFacts, intakeFields, intakeShape, pageState]);
 
   const onMessage = (text: string, attachments: AttachmentRef[]) => {
     if (!pageState) return;
@@ -1138,7 +1154,7 @@ function SourceOriginateDock({
 
   return (
     <AgentDock
-      agent={SENTINEL_INTAKE_AGENT}
+      agent={AVA_INTAKE_AGENT}
       surface="source/new"
       defaultMode="side-rail"
       defaultLeftPercent={45}

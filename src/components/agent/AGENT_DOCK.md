@@ -1,7 +1,7 @@
 # AgentDock
 
 The shared chat-dock foundation for every agent surface. One component,
-five toggleable modes, one API contract for paperclip uploads. Every
+six toggleable modes, one API contract for paperclip uploads. Every
 existing chat panel will migrate to this in the sibling chips that
 follow this PR.
 
@@ -10,8 +10,8 @@ follow this PR.
 Today each surface owns its own chat lane (Source `EventChatLane`, Tower
 `AtlasDrawer`, Intelligence `SentinelChat`, etc.). They drifted in
 behavior and visual treatment, and uploads were inconsistent or missing.
-`<AgentDock>` is the single shape every surface drops in. Sentinel /
-Nexus / Atlas / Steward runtime contracts are unchanged — only the
+`<AgentDock>` is the single shape every surface drops in. Ava is the
+user-facing agent; specialist runtime contracts are unchanged — only the
 surface widget is swapped.
 
 ## API
@@ -24,9 +24,9 @@ import {
 } from "@/components/agent/AgentDock";
 
 <AgentDock
-  agent={{ initials: "S", name: "Sentinel", role: "Surfaces evidence …" }}
+  agent={{ initials: "Av", name: "Ava", role: "Surfaces evidence …" }}
   surface="source/new" // localStorage namespace + telemetry key
-  defaultMode="side-rail" // 'side-rail' | 'pin-bottom' | 'pin-top' | 'expand' | 'collapsed'
+  defaultMode="side-rail" // 'side-rail' | 'side-rail-right' | 'pin-bottom' | 'pin-top' | 'expand' | 'collapsed'
   surfaceContext={{ stage: "discovery" }} // optional — round-tripped to upload metadata
   initialQuote="Quoting the previous turn" // optional eyebrow above thread
   suggestedActions={[
@@ -39,7 +39,7 @@ import {
   ]}
   thread={turns} // ChatMessage[]
   onMessage={(text, attachments) => post(text, attachments)}
-  workspace={<MainBody />} // for side-rail this becomes the right pane
+  workspace={<MainBody />} // for side-rail modes this becomes the opposite pane
   minLeftPx={320}
   defaultLeftPercent={38}
 />;
@@ -49,13 +49,14 @@ import {
 
 | Mode         | Behavior                                                                |
 | ------------ | ----------------------------------------------------------------------- |
-| `side-rail`  | Resizable column via `ResizableSplitter`. Default. Width persisted.     |
+| `side-rail`  | Resizable left chat column via `ResizableSplitter`. Default. Width persisted. |
+| `side-rail-right` | Resizable right chat column via `ResizableSplitter`. Width persisted. |
 | `pin-bottom` | Full-width strip ~480px tall at viewport bottom.                        |
 | `pin-top`    | Mirror of pin-bottom anchored below the AppTopBar.                      |
 | `expand`     | Modal overlay 90×90 vw/vh; workspace dimmed behind. Esc closes.         |
 | `collapsed`  | Floating 56×56 chip bottom-right. Double-click restores last rich mode. |
 
-The mode picker is the 5-icon row at top-right of the chat header.
+The mode picker is the 6-icon row at top-right of the chat header.
 Single-click switches mode + persists.
 
 ### Persistence
