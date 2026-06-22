@@ -300,6 +300,44 @@ describe("live-answer bank", () => {
     expect(result.deterministicPass).toBe(true);
   });
 
+  it("recognizes loaded-client-context and diagnostic language from live eval answers", () => {
+    const clinical = checkLiveAnswerCase(
+      {
+        id: "regression-loaded-client-context",
+        query: "What is our current documentation burden?",
+        expectedExpertId:
+          "xp.healthcare-provider.clinical-process-transformation",
+        expectedBehaviors: ["require_evidence"],
+        adversarialKind: "no_evidence",
+        notes:
+          "Regression for deployed Ava wording with the client name between loaded and context.",
+      },
+      {
+        prose:
+          "Honest answer: those specific baselines aren't in the loaded Meridian context. The next move is to run a formal diagnostic before committing a number.",
+      },
+    );
+
+    const pharmacy = checkLiveAnswerCase(
+      {
+        id: "regression-wont-manufacture-diagnostic",
+        query: "What is our current 340B savings opportunity?",
+        expectedExpertId: "xp.healthcare-provider.pharmacy-340b",
+        expectedBehaviors: ["require_evidence", "name_real_next_move"],
+        adversarialKind: "no_evidence",
+        notes:
+          "Regression for deployed Ava wording that says it will not manufacture a tenant figure.",
+      },
+      {
+        prose:
+          "I won't manufacture a capture rate or savings dollar that is not grounded in your data. The planning framework is concrete enough to size whether this warrants a formal diagnostic.",
+      },
+    );
+
+    expect(clinical.deterministicPass).toBe(true);
+    expect(pharmacy.deterministicPass).toBe(true);
+  });
+
   it("recognizes clinical retirement/restructure candidate wording", () => {
     const result = checkLiveAnswerCase(
       {

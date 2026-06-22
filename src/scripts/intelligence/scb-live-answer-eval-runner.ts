@@ -90,6 +90,11 @@ function liveAnswerQualityPass(quality: AnswerQualityScore): boolean {
   );
 }
 
+function answerQualityText(obs: AskObservation): string {
+  if (obs.sourceEventCitations <= 0) return obs.prose;
+  return `${obs.prose}\n\nEvidence basis: cited sources were emitted for this answer.`;
+}
+
 function parseArgs(argv: string[]): Args {
   const args: Args = {
     baseUrl: process.env.SCB_LIVE_EVAL_BASE_URL ?? "https://app.abarva.ai",
@@ -393,7 +398,7 @@ async function main() {
       }
       const obs = await askLiveAvaWithRetry(active.page, item, persona);
       const behavior = checkLiveAnswerCase(item, obs);
-      const quality = scoreAnswer(obs.prose, {
+      const quality = scoreAnswer(answerQualityText(obs), {
         questionId: item.id,
         tenantKey: persona.tenantKey,
         surface: "intelligence",
