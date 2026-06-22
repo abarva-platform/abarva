@@ -94,6 +94,49 @@ function structuredSignals(value: unknown): string[] {
   return out;
 }
 
+function evidenceItemToCandidate(
+  row: Record<string, unknown>,
+  opts: {
+    family?: string | null;
+    familyPrefix?: 'document_extract' | 'program_evidence';
+    title?: string | null;
+    asOf?: string | null;
+  } = {},
+): GovernedCandidateLike | null {
+  const family =
+    stringOrNull(opts.family) ??
+    stringOrNull(row.evidence_type) ??
+    'current_state_evidence';
+  const title =
+    stringOrNull(opts.title) ??
+    stringOrNull(row.title) ??
+    family;
+  const signals = structuredSignals(row.extracted_structured);
+  const statement = compactText(
+    [
+      stringOrNull(row.summary),
+      signals.length ? `Extracted signals: ${signals.join('; ')}` : null,
+      stringOrNull(row.extracted_text),
+    ],
+    1000,
+  );
+  if (!statement) return null;
+  return {
+    label: title,
+    statement,
+    evidenceFamily: `${opts.familyPrefix ?? 'program_evidence'}:${family}`,
+    confidence: confidenceFromScore(numberOrDefault(row.confidence, 0.72)),
+    asOf:
+      stringOrNull(opts.asOf) ??
+      stringOrNull(row.created_at) ??
+      undefined,
+    disclosureTier: 'internal_only',
+    provenanceRef:
+      stringOrNull(row.id) ??
+      `program_evidence:${family}:${statement.slice(0, 48)}`,
+  };
+}
+
 async function loadMoveCurrentStateCandidates(
   params: Pick<AssembleEvidenceParams, 'tenantClientKey' | 'clientId' | 'sourceArtifactRef'>,
   db: FluentDb = getAzureWriteFluentClient(),
@@ -103,6 +146,7 @@ async function loadMoveCurrentStateCandidates(
   if (!clientId || !moveId) return [];
 
   const candidates: GovernedCandidateLike[] = [];
+  const reviewedEvidenceIds = new Set<string>();
 
   // Structured current-state CSVs land in canonical tower_* tables and write a
   // move-scoped evidence_ledger row. Pull those ledger claims into the governed
@@ -138,9 +182,9 @@ async function loadMoveCurrentStateCandidates(
     // Retrieval should degrade to tenant-context-only rather than fail generation.
   }
 
-  // Document-derived current-state evidence is append-only in
-  // program_evidence_items and only counts after program_evidence_reviews is
-  // approved. Pull approved review rows and their extracted summaries/signals.
+  // Reviewed document-derived current-state evidence is append-only in
+  // program_evidence_items. Pull approved review rows and their extracted
+  // summaries/signals first so explicit human review remains the preferred path.
   try {
     const { data: reviews } = await db
       .from('program_evidence_reviews')
@@ -154,10 +198,11 @@ async function loadMoveCurrentStateCandidates(
       const evidenceIds = reviewRows
         .map((r) => stringOrNull(r.evidence_id))
         .filter((id): id is string => Boolean(id));
+      evidenceIds.forEach((id) => reviewedEvidenceIds.add(id));
       if (evidenceIds.length > 0) {
         const { data: evidenceRows } = await db
           .from('program_evidence_items')
-          .select('id, title, summary, extracted_structured, confidence, created_at')
+          .select('id, title, summary, extracted_text, extracted_structured, confidence, created_at')
           .in('id', evidenceIds);
         const byId = new Map(
           (Array.isArray(evidenceRows) ? evidenceRows : []).map((row) => [
@@ -176,33 +221,43 @@ async function loadMoveCurrentStateCandidates(
             stringOrNull(sourceRef.filename) ??
             stringOrNull(row.title) ??
             family;
-          const signals = structuredSignals(row.extracted_structured);
-          const statement = compactText(
-            [
-              stringOrNull(row.summary),
-              signals.length ? `Extracted signals: ${signals.join('; ')}` : null,
-            ],
-            1000,
-          );
-          if (!statement) continue;
-          candidates.push({
-            label: title,
-            statement,
-            evidenceFamily: `document_extract:${family}`,
-            confidence: confidenceFromScore(numberOrDefault(row.confidence, 0.72)),
-            asOf:
-              stringOrNull(review.reviewed_at) ??
-              stringOrNull(row.created_at) ??
-              undefined,
-            disclosureTier: 'internal_only',
-            provenanceRef: evidenceId,
+          const candidate = evidenceItemToCandidate(row, {
+            family,
+            familyPrefix: 'document_extract',
+            title,
+            asOf: stringOrNull(review.reviewed_at),
           });
+          if (candidate) candidates.push(candidate);
         }
       }
     }
   } catch {
     // Same principle: current-state evidence augments retrieval but should not
     // crash the generator when older tenants lack the review tables.
+  }
+
+  // Controlled canary/setup evidence can be committed directly to
+  // program_evidence_items before an explicit review workflow exists. Treat those
+  // move-scoped rows as internal governed evidence, preserving source register
+  // citations without exposing raw provenance handles in generated deliverables.
+  try {
+    const { data } = await db
+      .from('program_evidence_items')
+      .select('id, title, summary, extracted_text, extracted_structured, evidence_type, confidence, created_at')
+      .eq('tenant_key', params.tenantClientKey)
+      .eq('program_id', moveId)
+      .order('created_at', { ascending: false })
+      .limit(40);
+    if (Array.isArray(data)) {
+      for (const row of data as Array<Record<string, unknown>>) {
+        const id = stringOrNull(row.id);
+        if (id && reviewedEvidenceIds.has(id)) continue;
+        const candidate = evidenceItemToCandidate(row);
+        if (candidate) candidates.push(candidate);
+      }
+    }
+  } catch {
+    // Older schemas may not have program_evidence_items in all environments.
   }
 
   const seen = new Set<string>();

@@ -157,6 +157,100 @@ describe("assembleGovernedEvidence", () => {
     expect(out.evidence[0].label).toBe("01 It Org Structure.csv");
     expect(out.sourceRegister).toHaveLength(1);
   });
+
+  it("uses committed program evidence items as move citations when review rows are absent", async () => {
+    const fakeQuery = (async () => []) as never;
+    const fakeDb = {
+      from(table: string) {
+        if (table === "evidence_ledger") {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  order: () => ({
+                    limit: async () => ({ data: [] }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "program_evidence_reviews") {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  eq: () => ({
+                    limit: async () => ({ data: [] }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "program_evidence_items") {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  order: () => ({
+                    limit: async () => ({
+                      data: [
+                        {
+                          id: "evidence-1",
+                          title:
+                            "SkyHarbor IROPS workshop decision ledger",
+                          summary:
+                            "Client approved the two-plane architecture and triage-to-recovery operating model.",
+                          extracted_structured: {
+                            decisions: [
+                              "Approve operational command center as the first release.",
+                            ],
+                            risks: [
+                              "Manual airport rebooking workarounds remain fragile.",
+                            ],
+                          },
+                          evidence_type: "architecture_approval",
+                          confidence: 0.82,
+                          created_at: "2026-06-22T16:00:00Z",
+                        },
+                      ],
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        throw new Error(`unexpected table ${table}`);
+      },
+    } as never;
+
+    const out = await assembleGovernedEvidence(
+      {
+        tenantClientKey: "skyharbor-air",
+        clientId: "client-1",
+        sourceArtifactRef: "move-1",
+        query: "target architecture evidence",
+      },
+      { queryTenantContext: fakeQuery, db: fakeDb },
+    );
+
+    expect(out.retrievedCount).toBe(1);
+    expect(out.sourceRegister).toHaveLength(1);
+    expect(out.sourceRegister[0].label).toBe(
+      "SkyHarbor IROPS workshop decision ledger",
+    );
+    expect(out.sourceRegister[0].evidenceFamily).toBe(
+      "program_evidence:architecture_approval",
+    );
+    expect(out.evidence[0].statement).toContain(
+      "Client approved the two-plane architecture",
+    );
+    expect(out.evidence[0].statement).toContain(
+      "Approve operational command center",
+    );
+  });
 });
 
 describe("buildDeliverableRequest", () => {
