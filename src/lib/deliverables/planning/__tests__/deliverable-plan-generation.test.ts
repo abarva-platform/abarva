@@ -129,6 +129,31 @@ describe("deliverable plan generation pass", () => {
     ).rejects.toThrow(/Storyline is not a real|No target-state hypothesis/i);
   });
 
+  it("repairs a missing reader takeaway from the target hypothesis", async () => {
+    const partial: Partial<DeliverablePlan> = { ...VALID_PLAN };
+    delete partial.readerTakeaway;
+    const call: GovernedToolCall = async () => ({
+      toolInput: partial,
+      modelId: "m",
+    });
+
+    const out = await generateDeliverablePlan(
+      {
+        artifactType: "target_state_architecture",
+        audience: "cio",
+        decisionPurpose: "Align.",
+        client: "SkyHarbor Air",
+        initiative: "IROPS Agentic Response",
+        contextText: "ctx",
+        requireGapChain: true,
+      },
+      call,
+    );
+
+    expect(out.plan.readerTakeaway).toBe(VALID_PLAN.targetStateHypothesis);
+    expect(out.issues.some((i) => i.level === "error")).toBe(false);
+  });
+
   it("passes the forced plan tool to the governed call", async () => {
     let seenTool: unknown;
     const call: GovernedToolCall = async (params) => {
