@@ -292,6 +292,72 @@ describe('POST /api/intelligence/ask telemetry', () => {
     );
   });
 
+  it('emits typed tables and charts instead of leaving inline table prose in the stream', async () => {
+    jest.mocked(askIntelligence).mockImplementationOnce(async function* () {
+      yield {
+        type: 'sources',
+        sources: [
+          {
+            type: 'TENANT',
+            id: 'APX-OMNI-001',
+            name: 'Apex omnichannel dependency ledger',
+            detail:
+              'Sterling, Toshiba, and Salesforce dependency rows with annual cost and integration counts.',
+          },
+        ],
+      };
+      yield {
+        type: 'delta',
+        text:
+          'Here is the visual cut. Omnichannel dependency risk — ranked | System | Annual cost | Integrations | Posture | Risk driver | |---|---|---|---|---| | IBM Sterling OMS | $22M/yr | 10 | Contain | Routing ship-from-store | | Toshiba POS | $23M/yr | 11 | Replace | Store-edge transition | | Salesforce Commerce | $12M/yr | 8 | Invest | Healthy posture | Next move: validate the risk owner.',
+      };
+      yield { type: 'done' };
+    });
+
+    const response = await POST(
+      makeRequest({
+        q: 'Show Apex omnichannel dependency risk as charts and tables',
+        client: 'apexretail',
+      }) as never,
+    );
+    const text = await readResponseText(response);
+    const events = text
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const agentAnswer = events.find(
+      (event) => event.type === 'agent-answer',
+    )?.answer;
+
+    expect(agentAnswer).toBeTruthy();
+    expect(agentAnswer.prose).not.toContain('| System |');
+    expect(agentAnswer.tables).toEqual([
+      expect.objectContaining({
+        id: 'answer-inline-table-1',
+        rows: [
+          expect.objectContaining({
+            system: 'IBM Sterling OMS',
+            annual_cost: '$22M/yr',
+          }),
+          expect.objectContaining({
+            system: 'Toshiba POS',
+            annual_cost: '$23M/yr',
+          }),
+          expect.objectContaining({
+            system: 'Salesforce Commerce',
+            annual_cost: '$12M/yr',
+          }),
+        ],
+      }),
+    ]);
+    expect(agentAnswer.charts).toEqual([
+      expect.objectContaining({
+        kind: 'cost-stack',
+        title: 'Annual cost by System',
+      }),
+    ]);
+  });
+
   it.each(tenantAskCases)(
     'routes streamed AgentAnswer expert chips for $displayName without vertical leakage',
     async ({

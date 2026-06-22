@@ -123,6 +123,79 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.charts).toHaveLength(0);
   });
 
+  it("converts collapsed inline markdown tables from live Ava prose into typed tables", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: { ...routing, outputShape: "table" },
+      sources,
+      prose:
+        "Here's the visual cut. Omnichannel dependency risk — ranked | System | Annual cost | Integrations | Posture | Risk driver | |---|---|---|---|---| | IBM Sterling OMS | $22M/yr | 10 | Contain | Routing ship-from-store | | Toshiba POS | $23M/yr | 11 | Replace | Store-edge transition | The single chart that matters is dependency concentration.",
+    });
+
+    expect(exhibits.prose).toContain("Here's the visual cut.");
+    expect(exhibits.prose).toContain(
+      "The single chart that matters is dependency concentration.",
+    );
+    expect(exhibits.prose).not.toContain("| System |");
+    expect(exhibits.tables[0]).toEqual(
+      expect.objectContaining({
+        id: "answer-inline-table-1",
+        title: "Answer Table",
+        rows: [
+          expect.objectContaining({
+            system: "IBM Sterling OMS",
+            annual_cost: "$22M/yr",
+            integrations: "10",
+            posture: "Contain",
+            risk_driver: "Routing ship-from-store",
+          }),
+          expect.objectContaining({
+            system: "Toshiba POS",
+            annual_cost: "$23M/yr",
+            integrations: "11",
+            posture: "Replace",
+            risk_driver: "Store-edge transition",
+          }),
+        ],
+      }),
+    );
+    expect(exhibits.charts).toHaveLength(0);
+  });
+
+  it("renders a chart only from exact numeric columns in an extracted table", () => {
+    const exhibits = buildStructuredExhibits({
+      routing,
+      sources,
+      prose:
+        "Here's the visual cut. Omnichannel dependency risk — ranked | System | Annual cost | Integrations | Posture | Risk driver | |---|---|---|---|---| | IBM Sterling OMS | $22M/yr | 10 | Contain | Routing ship-from-store | | Toshiba POS | $23M/yr | 11 | Replace | Store-edge transition | | Salesforce Commerce | $12M/yr | 8 | Invest | Healthy posture | Next move: validate the risk owner.",
+    });
+
+    expect(exhibits.tables).toHaveLength(1);
+    expect(exhibits.charts).toEqual([
+      expect.objectContaining({
+        id: "answer-table-chart-1",
+        kind: "cost-stack",
+        title: "Annual cost by System",
+        data: [
+          expect.objectContaining({ label: "IBM Sterling OMS", value: 22_000_000 }),
+          expect.objectContaining({ label: "Toshiba POS", value: 23_000_000 }),
+          expect.objectContaining({ label: "Salesforce Commerce", value: 12_000_000 }),
+        ],
+      }),
+    ]);
+  });
+
+  it("does not chart directional ranges from an extracted table", () => {
+    const exhibits = buildStructuredExhibits({
+      routing,
+      sources,
+      prose:
+        "Merchandising AI benefit pools — planning ranges | Use case | Primary benefit | Planning range | Basis | |---|---|---|---| | Demand forecasting | Inventory turn | 2-5% margin lift | Apex evidence ledger | | Assortment optimization | SKU productivity | 3-8% margin lift | Corpus pattern | Next move: validate tenant-specific numbers.",
+    });
+
+    expect(exhibits.tables).toHaveLength(1);
+    expect(exhibits.charts).toHaveLength(0);
+  });
+
   it("does not infer percentage charts from cited source prose", () => {
     const exhibits = buildStructuredExhibits({
       routing,
