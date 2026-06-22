@@ -23,7 +23,7 @@ const CSS = `
 .iv2 .hero h1{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:44px;line-height:1.06;letter-spacing:-.015em;margin:14px 0 16px}
 .iv2 .hero .sub{color:var(--muted);font-size:15px;max-width:620px;margin:0 auto}
 .iv2 .ask{max-width:660px;margin:26px auto 0;display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 10px 10px 18px}
-.iv2 .ask input{flex:1;border:none;outline:none;font-size:14px;background:transparent;color:var(--ink)}
+.iv2 .ask textarea{flex:1;min-height:22px;max-height:140px;border:none;outline:none;font:inherit;font-size:14px;line-height:1.45;background:transparent;color:var(--ink);resize:none;overflow:auto;padding:0}
 .iv2 .ask .spark{color:var(--green)}
 .iv2 .ask button{background:var(--ink);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer}
 .iv2 .chips{display:flex;flex-wrap:nowrap;gap:8px;justify-content:center;max-width:1080px;margin:16px auto 0;overflow:hidden}
@@ -118,6 +118,17 @@ function buildSurfaceContext(payload: IntelligenceBindingPayload) {
   };
 }
 
+function resizeAskTextarea(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
+}
+
+function resetAskTextarea(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+}
+
 export function IntelligenceV2Surface({
   payload,
   tenantName,
@@ -136,6 +147,7 @@ export function IntelligenceV2Surface({
   const [followups, setFollowups] = useState<string[]>([]);
   const [fetching, setFetching] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const t = payload;
   const tl = t.trustLine;
   const contextEvidence = t.context.reduce((a, c) => a + (c.evidence || 0), 0);
@@ -143,6 +155,8 @@ export function IntelligenceV2Surface({
   const askSentinel = useCallback(async (q: string) => {
     const trimmed = q.trim();
     if (!trimmed) return;
+    setQuery("");
+    resetAskTextarea(textareaRef.current);
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
@@ -257,11 +271,16 @@ export function IntelligenceV2Surface({
           <p className="sub">{t.ask.contract}</p>
           <div className="ask">
             <span className="spark">✦</span>
-            <input
+            <textarea
+              ref={textareaRef}
+              rows={1}
               placeholder={t.ask.placeholder}
               aria-label="Ask Ava"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                resizeAskTextarea(e.currentTarget);
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -281,24 +300,31 @@ export function IntelligenceV2Surface({
           </div>
           {(fetching || answer || agentAnswer || experts.length > 0) && (
             <div className="ansbox">
-              <div className="anslabel">Ava · Intelligence</div>
-              {fetching && !answer ? (
-                <div className="ansfetching">Thinking…</div>
+              {agentAnswer ? (
+                <AgentAnswerRenderer
+                  answer={{ ...agentAnswer, prose: answer ?? agentAnswer.prose }}
+                />
               ) : (
-                <div className="ansbody">
-                  {answer ? <AgentMarkdown text={answer} /> : null}
-                </div>
-              )}
-              {agentAnswer ? <AgentAnswerRenderer answer={agentAnswer} /> : null}
-              {experts.length > 0 && (
-                <div className="ansexperts">
-                  <span className="ansexpertslabel">Experts consulted</span>
-                  {experts.map((e) => (
-                    <span className="ansexpertchip" key={e.id} title={e.id}>
-                      {e.name}
-                    </span>
-                  ))}
-                </div>
+                <>
+                  <div className="anslabel">Ava · Intelligence</div>
+                  {fetching && !answer ? (
+                    <div className="ansfetching">Thinking…</div>
+                  ) : (
+                    <div className="ansbody">
+                      {answer ? <AgentMarkdown text={answer} /> : null}
+                    </div>
+                  )}
+                  {experts.length > 0 && (
+                    <div className="ansexperts">
+                      <span className="ansexpertslabel">Experts consulted</span>
+                      {experts.map((e) => (
+                        <span className="ansexpertchip" key={e.id} title={e.id}>
+                          {e.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
               {followups.length > 0 && (
                 <div className="ansfollowups">
@@ -310,7 +336,6 @@ export function IntelligenceV2Surface({
                       role="button"
                       tabIndex={0}
                       onClick={() => {
-                        setQuery(f);
                         askSentinel(f);
                       }}
                     >
@@ -328,14 +353,12 @@ export function IntelligenceV2Surface({
                 key={sq}
                 title={sq}
                 onClick={() => {
-                  setQuery(sq);
                   askSentinel(sq);
                 }}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    setQuery(sq);
                     askSentinel(sq);
                   }
                 }}

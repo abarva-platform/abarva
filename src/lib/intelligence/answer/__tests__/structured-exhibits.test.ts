@@ -25,7 +25,7 @@ const sources: AskSource[] = [
 ];
 
 describe("buildStructuredExhibits", () => {
-  it("does not infer tables or charts from figures mentioned in prose", () => {
+  it("does not infer chart data from figures mentioned in prose", () => {
     const exhibits = buildStructuredExhibits({
       routing,
       sources,
@@ -34,7 +34,7 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
-    expect(exhibits.tables).toHaveLength(0);
+    expect(exhibits.tables[0]?.title).toBe("Evidence Used");
     expect(exhibits.charts).toHaveLength(0);
   });
 
@@ -53,7 +53,7 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.charts).toHaveLength(0);
   });
 
-  it("does not infer chart data from cited source prose", () => {
+  it("renders cited evidence for chart requests without inventing chart rows", () => {
     const exhibits = buildStructuredExhibits({
       routing,
       sources: [
@@ -72,6 +72,10 @@ describe("buildStructuredExhibits", () => {
 
     expect(exhibits.citations).toHaveLength(1);
     expect(exhibits.citations[0]?.sourceClass).toBe("tenant-fact");
+    expect(exhibits.tables[0]?.title).toBe("Evidence Used");
+    expect(exhibits.tables[0]?.rows).toEqual([
+      expect.objectContaining({ source: "Revenue cycle denial chart support" }),
+    ]);
     expect(exhibits.charts).toHaveLength(0);
   });
 
@@ -93,6 +97,7 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
+    expect(exhibits.tables[0]?.title).toBe("Evidence Used");
     expect(exhibits.charts).toHaveLength(0);
   });
 

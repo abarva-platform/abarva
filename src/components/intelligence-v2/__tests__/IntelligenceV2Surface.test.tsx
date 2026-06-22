@@ -152,17 +152,21 @@ describe("IntelligenceV2Surface Ask Ava", () => {
 
     render(<IntelligenceV2Surface payload={apexPayload} tenantName="Apex Retail Group" />);
 
-    fireEvent.change(screen.getByLabelText("Ask Ava"), {
-      target: { value: "what should we do about apex ai spend?" },
+    const askBox = screen.getByLabelText("Ask Ava");
+    expect(askBox.tagName).toBe("TEXTAREA");
+
+    fireEvent.change(askBox, {
+      target: { value: "what should we do about\napex ai spend?" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(askBox).toHaveValue("");
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(init.method).toBe("POST");
     const body = JSON.parse(String(init.body));
     expect(body).toMatchObject({
-      q: "what should we do about apex ai spend?",
+      q: "what should we do about\napex ai spend?",
       client: "apex-retail",
       format: "rich",
       surfaceContext: {
@@ -195,6 +199,7 @@ describe("IntelligenceV2Surface Ask Ava", () => {
     expect(within(table).getByText("$95,000,000")).toBeInTheDocument();
     expect(within(table).getByText("$12,000,000")).toBeInTheDocument();
     expect(screen.getByText("APX-INIT-001")).toBeInTheDocument();
+    expect(screen.getAllByText(/Ava ·/i)).toHaveLength(1);
   });
 
   it("has an Intelligence v2 binding payload for every configured client tenant", () => {

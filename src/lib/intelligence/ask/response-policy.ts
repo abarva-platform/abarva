@@ -26,10 +26,9 @@ export function sanitizeAskSynthesis(text: string, maxWords = 120): string {
   const withoutOpener = stripMarkdownControl(
     stripInternalRecordIds(text).replace(HOLLOW_OPENER_RE, "").trim(),
   );
-  const words = withoutOpener.split(/\s+/).filter(Boolean);
-  if (words.length <= maxWords) return withoutOpener;
+  if (wordCount(withoutOpener) <= maxWords) return withoutOpener;
 
-  const capped = words.slice(0, maxWords).join(" ");
+  const capped = capWordsPreservingLayout(withoutOpener, maxWords);
   const lastSentenceEnd = Math.max(
     capped.lastIndexOf("."),
     capped.lastIndexOf("?"),
@@ -43,8 +42,23 @@ export function stripInternalRecordIds(text: string): string {
   return text
     .replace(/\s*\(\s*[A-Z]{2,6}-[A-Z0-9]{2,8}-\d{2,4}\s*\)/g, "")
     .replace(RAW_INTERNAL_ID_RE, "the cited record")
-    .replace(/\s{2,}/g, " ")
+    .replace(/[ \t]{2,}/g, " ")
     .trim();
+}
+
+function capWordsPreservingLayout(text: string, maxWords: number): string {
+  let seen = 0;
+  let endIndex = text.length;
+  const tokenRe = /\S+/g;
+  let match: RegExpExecArray | null;
+  while ((match = tokenRe.exec(text))) {
+    seen += 1;
+    if (seen > maxWords) {
+      endIndex = match.index;
+      break;
+    }
+  }
+  return text.slice(0, endIndex).replace(/[,\s;:]+$/, "");
 }
 
 export function applyPartialEvidencePolicy(

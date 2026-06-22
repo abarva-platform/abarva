@@ -84,12 +84,16 @@ describe("AvaAsk — canonical ask reused across surfaces", () => {
       <AvaAsk client="apex-retail" surfaceContext={{ activeTab: "home", clientKey: "apex-retail" }} />,
     );
 
-    fireEvent.change(screen.getByLabelText("Ask Ava"), {
-      target: { value: "which AI investments before holiday readiness?" },
+    const askBox = screen.getByLabelText("Ask Ava");
+    expect(askBox.tagName).toBe("TEXTAREA");
+
+    fireEvent.change(askBox, {
+      target: { value: "which AI investments\nbefore holiday readiness?" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(askBox).toHaveValue("");
 
     // Canonical call: POST to the shared engine, rich format, with surfaceContext.
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -97,7 +101,7 @@ describe("AvaAsk — canonical ask reused across surfaces", () => {
     expect(init.method).toBe("POST");
     const body = JSON.parse(String(init.body));
     expect(body).toMatchObject({
-      q: "which AI investments before holiday readiness?",
+      q: "which AI investments\nbefore holiday readiness?",
       client: "apex-retail",
       format: "rich",
       surfaceContext: { activeTab: "home" },
