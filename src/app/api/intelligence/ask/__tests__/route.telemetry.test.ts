@@ -5,6 +5,12 @@ import {
 } from '@/lib/agents/sentinel-reasoning';
 import { askIntelligence } from '@/lib/intelligence/ask';
 import { recordSynthesisEvent } from '@/lib/reasoning/synthesis-telemetry';
+import { resolveTenant } from '@/lib/tenant/resolveTenant';
+import {
+  brokerTenantKey,
+  tenantAliasesFor,
+  tenantIndustryCode,
+} from '@/lib/tenant/aliases';
 
 jest.mock('@clerk/nextjs/server', () => ({
   currentUser: jest.fn(async () => ({ id: 'user-1' })),
@@ -70,6 +76,74 @@ function makeRequest(body: unknown) {
     cookies: { get: () => undefined },
   };
 }
+
+const tenantAskCases = [
+  {
+    client: 'apexretail',
+    canonicalKey: 'apex-retail',
+    displayName: 'Apex Retail Group',
+    query: 'Which AI investments should Apex scale before holiday readiness?',
+    expectedPrefix: 'xp.retail.',
+    disallowedPrefixes: [
+      'xp.airline.',
+      'xp.financial-services-banking.',
+      'xp.healthcare-provider.',
+    ],
+  },
+  {
+    client: 'skyharbor',
+    canonicalKey: 'skyharbor-air',
+    displayName: 'SkyHarbor Air',
+    query:
+      'What should SkyHarbor benchmark against for AI-assisted mainframe modernization?',
+    expectedPrefix: 'xp.airline.',
+    disallowedPrefixes: [
+      'xp.financial-services-banking.',
+      'xp.healthcare-provider.',
+      'xp.retail.',
+    ],
+  },
+  {
+    client: 'meridian',
+    canonicalKey: 'meridian-health',
+    displayName: 'Meridian Health System',
+    query:
+      'What should Meridian do about Epic revenue cycle denials and workflow leakage?',
+    expectedPrefix: 'xp.healthcare-provider.',
+    disallowedPrefixes: [
+      'xp.airline.',
+      'xp.financial-services-banking.',
+      'xp.retail.',
+    ],
+  },
+  {
+    client: 'arcturus',
+    canonicalKey: 'first-capital',
+    displayName: 'First Capital',
+    query:
+      'Which AI controls should First Capital prioritize for fraud and financial crime modernization?',
+    expectedPrefix: 'xp.financial-services-banking.',
+    disallowedPrefixes: [
+      'xp.airline.',
+      'xp.healthcare-provider.',
+      'xp.retail.',
+    ],
+  },
+  {
+    client: 'lakeshore',
+    canonicalKey: 'lakeshore-holdings',
+    displayName: 'Lakeshore Holdings',
+    query:
+      'What supply chain resilience questions should Lakeshore prioritize across its portfolio?',
+    expectedPrefix: 'xp.x.',
+    disallowedPrefixes: [
+      'xp.airline.',
+      'xp.financial-services-banking.',
+      'xp.healthcare-provider.',
+      'xp.retail.',
+    ],
+  },
+] as const;
 
 async function readResponseText(response: Response): Promise<string> {
   const reader = response.body?.getReader();
@@ -217,4 +291,68 @@ describe('POST /api/intelligence/ask telemetry', () => {
       'xp.healthcare-provider.clinical-process-transformation',
     );
   });
+
+  it.each(tenantAskCases)(
+    'routes streamed AgentAnswer expert chips for $displayName without vertical leakage',
+    async ({
+      client,
+      canonicalKey,
+      displayName,
+      query,
+      expectedPrefix,
+      disallowedPrefixes,
+    }) => {
+      jest.mocked(resolveTenant).mockResolvedValueOnce({
+        clientId: `client-${client}`,
+        canonicalKey,
+        appClientKey: client,
+        brokerKey: brokerTenantKey(client) ?? canonicalKey,
+        displayName,
+        industryCode: tenantIndustryCode(client),
+        aliases: tenantAliasesFor(client),
+        source: 'body',
+      });
+      jest.mocked(askIntelligence).mockImplementationOnce(async function* () {
+        yield {
+          type: 'sources',
+          sources: [
+            {
+              type: 'TENANT',
+              id: `${client}-context-1`,
+              name: `${displayName} tenant context`,
+              detail: 'Loaded tenant context used for grounding.',
+            },
+          ],
+        };
+        yield {
+          type: 'delta',
+          text: `${displayName} should sequence this decision from loaded context and industry guidance.`,
+        };
+        yield { type: 'done' };
+      });
+
+      const response = await POST(makeRequest({ q: query, client }) as never);
+      const text = await readResponseText(response);
+      const events = text
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => JSON.parse(line));
+      const agentAnswer = events.find(
+        (event) => event.type === 'agent-answer',
+      )?.answer;
+      const expertIds = agentAnswer.contributingExperts.map(
+        (expert: { id: string }) => expert.id,
+      );
+
+      expect(expertIds.some((id: string) => id.startsWith(expectedPrefix))).toBe(
+        true,
+      );
+      for (const prefix of disallowedPrefixes) {
+        expect(expertIds.some((id: string) => id.startsWith(prefix))).toBe(
+          false,
+        );
+      }
+      expect(agentAnswer.charts).toEqual([]);
+    },
+  );
 });
