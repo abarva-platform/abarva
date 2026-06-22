@@ -4,6 +4,12 @@ import {
   ARCHITECTURE_TOOL,
   type GovernedToolCall,
 } from "../architecture-generation";
+import { buildGroundedArchitectureFallback } from "../architecture-fallback";
+import { validateArchitectureModel } from "../architecture-model";
+import {
+  deriveArchitectureContractSignals,
+  renderArchitectureHtml,
+} from "../architecture-html-renderer";
 import { FIRST_CAPITAL_ARCHITECTURE } from "../__fixtures__/first-capital-architecture";
 
 describe("architecture generation pass (governed, tenant-agnostic)", () => {
@@ -97,5 +103,27 @@ describe("architecture generation pass (governed, tenant-agnostic)", () => {
     });
     expect(msg).toContain("SkyHarbor Air");
     expect(msg).toContain("fleet of 240 aircraft");
+  });
+
+  it("builds a client-marked visual fallback that satisfies the architecture contract", () => {
+    const model = buildGroundedArchitectureFallback({
+      engagement: "IROPS Agentic Response",
+      client: "SkyHarbor Air",
+      contextText: "Current recovery decisions are fragmented.",
+      failureReason: "Missing current architecture state.",
+    });
+    const issues = validateArchitectureModel(model);
+    const html = renderArchitectureHtml(model);
+    const signals = deriveArchitectureContractSignals(model, html);
+
+    expect(issues.some((i) => i.level === "error")).toBe(false);
+    expect(signals.hasStorySpine).toBe(true);
+    expect(signals.currentStateVisualPresent).toBe(true);
+    expect(signals.gapToTargetBridgePresent).toBe(true);
+    expect(signals.conceptualArchPresent).toBe(true);
+    expect(signals.logicalArchPresent).toBe(true);
+    expect(signals.physicalArchPresent).toBe(true);
+    expect(signals.exhibitsRenderedAsVisual).toBe(true);
+    expect(model.openInputs?.join(" ")).toMatch(/Client to confirm|Architecture detail required|incomplete/i);
   });
 });

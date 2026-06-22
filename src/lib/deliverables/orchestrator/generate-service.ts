@@ -17,6 +17,7 @@ import { persistDeliverable as defaultPersist } from "./persistence";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { generateArchitectureModel } from "@/lib/visual-system/architecture-generation";
 import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
+import { buildGroundedArchitectureFallback } from "@/lib/visual-system/architecture-fallback";
 import { governedArchitectureToolCall } from "@/lib/deliverables/quality/architecture-egress-adapter";
 import {
   generateDeliverablePlan,
@@ -200,14 +201,14 @@ export async function runDeliverableForTenant(
   // narrative. Any failure falls back to prose — generation never breaks.
   let structuredModels: { architectureModel?: ArchitectureModel } | undefined;
   if (structuredExhibitsEnabled) {
+    const contextText = result.document.generatedSections
+      .map((s) => `## ${s.title}\n${s.bodyMarkdown}`)
+      .join("\n\n")
+      .slice(0, 24000);
+    const planContext = deliverablePlan
+      ? `Reason-first DeliverablePlan:\n${JSON.stringify(deliverablePlan)}\n\n`
+      : "";
     try {
-      const contextText = result.document.generatedSections
-        .map((s) => `## ${s.title}\n${s.bodyMarkdown}`)
-        .join("\n\n")
-        .slice(0, 24000);
-      const planContext = deliverablePlan
-        ? `Reason-first DeliverablePlan:\n${JSON.stringify(deliverablePlan)}\n\n`
-        : "";
       const genArch =
         deps.generateArchitecture ??
         ((req) => generateArchitectureModel(req, governedArchitectureToolCall));
@@ -220,9 +221,18 @@ export async function runDeliverableForTenant(
       structuredModels = { architectureModel: gen.model };
     } catch (err) {
       console.error(
-        "[generate-service] architecture model generation failed; prose fallback",
+        "[generate-service] architecture model generation failed; using grounded architecture fallback",
         err,
       );
+      structuredModels = {
+        architectureModel: buildGroundedArchitectureFallback({
+          engagement: result.document.initiativeDisplayName,
+          client: result.document.clientDisplayName,
+          contextText: `${planContext}${contextText}`.slice(0, 32000),
+          ...(deliverablePlan ? { plan: deliverablePlan } : {}),
+          failureReason: err instanceof Error ? err.message : String(err),
+        }),
+      };
     }
   }
   const enforceQualityContract = isFeatureEnabled(

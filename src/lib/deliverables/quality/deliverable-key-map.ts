@@ -71,15 +71,18 @@ export function buildContractInput(args: {
   governanceOk?: boolean;
   /** Exhibits the structured generation passes produced (stage 4). */
   additionalExhibits?: ReadonlyArray<ExhibitId>;
+  /** Visible final text, when a profile renderer replaces the generated prose. */
+  narrativeTextOverride?: string;
 }): ContractInput {
   const { doc } = args;
-  const narrativeText = [
+  const generatedNarrativeText = [
     doc.title,
     doc.recommendation,
     ...doc.generatedSections.map((s) => `${s.title}\n${s.bodyMarkdown}`),
   ]
     .filter(Boolean)
     .join("\n\n");
+  const narrativeText = args.narrativeTextOverride ?? generatedNarrativeText;
 
   const scattered = (narrativeText.match(PLACEHOLDER_RE) ?? []).length;
   const citationCount = doc.generatedSections.reduce(

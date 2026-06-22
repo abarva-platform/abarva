@@ -110,6 +110,24 @@ export interface GeneratedDeliverablePlan {
   modelId: string;
 }
 
+function text(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeDeliverablePlan(
+  value: unknown,
+  req: DeliverablePlanGenRequest,
+): DeliverablePlan {
+  const plan = value as Partial<DeliverablePlan>;
+  if (!text(plan.readerTakeaway)) {
+    plan.readerTakeaway =
+      text(plan.targetStateHypothesis) ||
+      text(plan.storyline) ||
+      `The reader can explain the ${req.client} current-to-target decision chain for ${req.initiative}.`;
+  }
+  return plan as DeliverablePlan;
+}
+
 export function buildDeliverablePlanUserMessage(
   req: DeliverablePlanGenRequest,
 ): string {
@@ -142,7 +160,7 @@ export async function generateDeliverablePlan(
   if (!toolInput || typeof toolInput !== "object") {
     throw new Error("Deliverable plan generation returned no structured plan.");
   }
-  const plan = toolInput as DeliverablePlan;
+  const plan = normalizeDeliverablePlan(toolInput, req);
   const issues = validateDeliverablePlan(plan, {
     requireGapChain: req.requireGapChain === true,
   });
