@@ -122,7 +122,8 @@ export async function POST(req: NextRequest) {
     } catch {
       /* not a tenancy error */
     }
+    const message = err instanceof Error ? err.message : 'unknown error';
     console.error('[POST /api/v1/deliverables/generate]', err);
-    return Response.json({ error: 'internal_error' }, { status: 500 });
+    return Response.json({ error: 'internal_error', message }, { status: 500 });
   }
 }

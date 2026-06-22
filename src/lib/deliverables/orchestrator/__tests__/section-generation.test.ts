@@ -1,6 +1,7 @@
 // Decomposed-generation helpers (Slice 0) — pure, no model.
 import {
   mapWithConcurrency,
+  extractUnsupportedFigureClaims,
   repairUncitedFigures,
   buildSourceRegister,
   assembleDeliverable,
@@ -26,9 +27,10 @@ describe('mapWithConcurrency', () => {
 });
 
 describe('repairUncitedFigures', () => {
-  it('tags an uncited figure and leaves cited/figure-free prose alone', () => {
-    expect(repairUncitedFigures('Revenue grew 25% last year.')).toContain('[CLIENT TO COMPLETE]');
-    expect(repairUncitedFigures('Revenue grew 25% last year [3].')).not.toContain('[CLIENT TO COMPLETE]');
+  it('labels an uncited figure as an assumption and leaves cited/figure-free prose alone', () => {
+    expect(extractUnsupportedFigureClaims('Revenue grew 25% last year.')).toEqual(['Revenue grew 25% last year.']);
+    expect(repairUncitedFigures('Revenue grew 25% last year.')).toContain('[ASSUMPTION TO VALIDATE:');
+    expect(repairUncitedFigures('Revenue grew 25% last year [3].')).not.toContain('[ASSUMPTION TO VALIDATE:');
     expect(repairUncitedFigures('We will modernise the platform.')).toBe('We will modernise the platform.');
   });
 });
@@ -59,5 +61,26 @@ describe('assembleDeliverable', () => {
     expect(doc.sourceRegister.map((r) => r.citationNumber)).toEqual([1]);
     expect(doc.tables[0]!.title).toBe('Risk');
     expect(doc.clientDisplayName).toBe(req.clientDisplayName);
+  });
+
+  it('downgrades a business case title and consolidates unsupported figure claims into open inputs', () => {
+    const req = amsRfpRequest({ module: 'moves', deliverableType: 'business_case' });
+    const sections: RenderableSection[] = [
+      { key: 'value', title: 'Value', bodyMarkdown: 'Value is an assumption.', groundingMode: 'mixed', citationsUsed: [] },
+    ];
+    const doc = assembleDeliverable(req, sections, {}, req.governedEvidenceBundle, {
+      unsupportedClaims: [{
+        sectionKey: 'value',
+        sectionTitle: 'Value',
+        claim: 'The program will generate $8.5M in year one.',
+        treatment: 'open_input_required',
+      }],
+    });
+    expect(doc.title).toMatch(/^Business Case Readiness Memo/);
+    expect(doc.tables.find((t) => t.key === 'open_inputs_required')?.rows).toEqual(
+      expect.arrayContaining([
+        expect.arrayContaining(['The program will generate $8.5M in year one.']),
+      ]),
+    );
   });
 });

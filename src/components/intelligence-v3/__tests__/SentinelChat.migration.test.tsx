@@ -15,14 +15,20 @@
 // toggles modes. These tests pin that contract so the next migration
 // chip doesn't accidentally re-introduce the legacy key.
 
-import '@testing-library/jest-dom';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { TextDecoder } from 'util';
-import { SentinelChat } from '../SentinelChat';
+import "@testing-library/jest-dom";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { TextDecoder } from "util";
+import { SentinelChat } from "../SentinelChat";
 
-const LEGACY = 'abarva.intelligence.chat-mode';
-const NEW = 'abarva.agent-dock.intelligence.mode';
-const FLAG = 'abarva.intelligence.chat-mode.migrated';
+const LEGACY = "abarva.intelligence.chat-mode";
+const NEW = "abarva.agent-dock.intelligence.mode";
+const FLAG = "abarva.intelligence.chat-mode.migrated";
 
 function makeMockBody(text: string) {
   const bytes = new Uint8Array(Array.from(text).map((c) => c.charCodeAt(0)));
@@ -31,7 +37,8 @@ function makeMockBody(text: string) {
     getReader() {
       return {
         async read() {
-          if (yielded) return { done: true, value: undefined as Uint8Array | undefined };
+          if (yielded)
+            return { done: true, value: undefined as Uint8Array | undefined };
           yielded = true;
           return { done: false, value: bytes };
         },
@@ -51,57 +58,57 @@ function renderHarness() {
   );
 }
 
-describe('SentinelChat · legacy mode-key migration', () => {
+describe("SentinelChat · legacy mode-key migration", () => {
   beforeEach(() => {
     window.localStorage.clear();
     (global as { fetch: unknown }).fetch = undefined;
     globalThis.TextDecoder = TextDecoder as typeof globalThis.TextDecoder;
   });
 
-  it('migrates side-rail → side-rail', () => {
-    window.localStorage.setItem(LEGACY, 'side-rail');
+  it("migrates side-rail → side-rail", () => {
+    window.localStorage.setItem(LEGACY, "side-rail");
     renderHarness();
-    expect(window.localStorage.getItem(NEW)).toBe('side-rail');
-    expect(window.localStorage.getItem(FLAG)).toBe('1');
+    expect(window.localStorage.getItem(NEW)).toBe("side-rail");
+    expect(window.localStorage.getItem(FLAG)).toBe("1");
   });
 
-  it('migrates dock-expanded → pin-bottom', () => {
-    window.localStorage.setItem(LEGACY, 'dock-expanded');
+  it("migrates dock-expanded → pin-bottom", () => {
+    window.localStorage.setItem(LEGACY, "dock-expanded");
     renderHarness();
-    expect(window.localStorage.getItem(NEW)).toBe('pin-bottom');
-    expect(window.localStorage.getItem(FLAG)).toBe('1');
+    expect(window.localStorage.getItem(NEW)).toBe("pin-bottom");
+    expect(window.localStorage.getItem(FLAG)).toBe("1");
   });
 
-  it('migrates dock-collapsed → collapsed', () => {
-    window.localStorage.setItem(LEGACY, 'dock-collapsed');
+  it("migrates dock-collapsed → collapsed", () => {
+    window.localStorage.setItem(LEGACY, "dock-collapsed");
     renderHarness();
-    expect(window.localStorage.getItem(NEW)).toBe('collapsed');
-    expect(window.localStorage.getItem(FLAG)).toBe('1');
+    expect(window.localStorage.getItem(NEW)).toBe("collapsed");
+    expect(window.localStorage.getItem(FLAG)).toBe("1");
   });
 
-  it('does NOT overwrite an existing new-key preference', () => {
-    window.localStorage.setItem(LEGACY, 'dock-expanded');
-    window.localStorage.setItem(NEW, 'expand'); // user already chose
+  it("does NOT overwrite an existing new-key preference", () => {
+    window.localStorage.setItem(LEGACY, "dock-expanded");
+    window.localStorage.setItem(NEW, "expand"); // user already chose
     renderHarness();
-    expect(window.localStorage.getItem(NEW)).toBe('expand');
-    expect(window.localStorage.getItem(FLAG)).toBe('1');
+    expect(window.localStorage.getItem(NEW)).toBe("expand");
+    expect(window.localStorage.getItem(FLAG)).toBe("1");
   });
 
-  it('skips migration when the flag is already set', () => {
-    window.localStorage.setItem(FLAG, '1');
-    window.localStorage.setItem(LEGACY, 'dock-collapsed');
+  it("skips migration when the flag is already set", () => {
+    window.localStorage.setItem(FLAG, "1");
+    window.localStorage.setItem(LEGACY, "dock-collapsed");
     renderHarness();
     // No new key was written because we already migrated.
     expect(window.localStorage.getItem(NEW)).toBeNull();
   });
 
-  it('handles a missing legacy key without crashing', () => {
+  it("handles a missing legacy key without crashing", () => {
     renderHarness();
     expect(window.localStorage.getItem(NEW)).toBeNull();
-    expect(window.localStorage.getItem(FLAG)).toBe('1');
+    expect(window.localStorage.getItem(FLAG)).toBe("1");
   });
 
-  it('renders the opener as the first agent turn', () => {
+  it("renders the opener as the first agent turn", () => {
     const { getByText } = render(
       <SentinelChat
         scopeLabel="Meridian · The Brief"
@@ -115,18 +122,24 @@ describe('SentinelChat · legacy mode-key migration', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders text-based NDJSON delta chunks from the Intelligence ask endpoint', async () => {
+  it("renders text-based NDJSON delta chunks from the Intelligence ask endpoint", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
       body: makeMockBody(
         [
-          JSON.stringify({ type: 'classified', classification: { intent: 'general_synthesis', entities: [] } }),
-          JSON.stringify({ type: 'sources', sources: [] }),
-          JSON.stringify({ type: 'delta', text: 'Apex has current Intelligence evidence.' }),
-          JSON.stringify({ type: 'done' }),
-          '',
-        ].join('\n'),
+          JSON.stringify({
+            type: "classified",
+            classification: { intent: "general_synthesis", entities: [] },
+          }),
+          JSON.stringify({ type: "sources", sources: [] }),
+          JSON.stringify({
+            type: "delta",
+            text: "Apex has current Intelligence evidence.",
+          }),
+          JSON.stringify({ type: "done" }),
+          "",
+        ].join("\n"),
       ),
     });
     (global as { fetch: unknown }).fetch = fetchMock;
@@ -136,33 +149,39 @@ describe('SentinelChat · legacy mode-key migration', () => {
         scopeLabel="Apex Retail Group · this page"
         opener="Apex Retail Intelligence is live."
         conversation={[]}
-        surfaceContext={{ clientKey: 'apex-retail' }}
+        surfaceContext={{ clientKey: "apex-retail" }}
         workspace={<div>workspace</div>}
       />,
     );
 
     await act(async () => {
-      fireEvent.change(screen.getByTestId('agent-dock-input'), {
-        target: { value: 'current state of data analytics landscape' },
+      fireEvent.change(screen.getByTestId("agent-dock-input"), {
+        target: { value: "current state of data analytics landscape" },
       });
     });
 
     await act(async () => {
-      fireEvent.submit(screen.getByTestId('agent-dock-form'));
+      fireEvent.submit(screen.getByTestId("agent-dock-form"));
     });
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     await waitFor(() => {
-      expect(screen.getByText('Apex has current Intelligence evidence.')).toBeInTheDocument();
+      expect(
+        screen.getByText("Apex has current Intelligence evidence."),
+      ).toBeInTheDocument();
     });
-    expect(screen.queryByText(/I did not find enough indexed Intelligence evidence/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        /I did not find enough indexed Intelligence evidence/i,
+      ),
+    ).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/intelligence/ask',
+      "/api/intelligence/ask",
       expect.objectContaining({
-        method: 'POST',
+        method: "POST",
         headers: {
-          Accept: 'application/x-ndjson',
-          'Content-Type': 'application/json',
+          Accept: "application/x-ndjson",
+          "Content-Type": "application/json",
         },
         body: expect.any(String),
       }),
@@ -170,13 +189,97 @@ describe('SentinelChat · legacy mode-key migration', () => {
     const [, init] = fetchMock.mock.calls[0];
     const body = JSON.parse(init.body);
     expect(body).toMatchObject({
-      q: 'current state of data analytics landscape',
-      client: 'apex-retail',
-      surfaceContext: { clientKey: 'apex-retail' },
+      q: "current state of data analytics landscape",
+      client: "apex-retail",
+      surfaceContext: { clientKey: "apex-retail" },
     });
   });
 
-  it('renders thumbs feedback after a completed Sentinel answer and posts the selected rating', async () => {
+  it("renders structured AgentAnswer exhibits streamed by the Intelligence ask endpoint", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: makeMockBody(
+        [
+          JSON.stringify({ type: "delta", text: "Epic maintenance is $1.2M." }),
+          JSON.stringify({
+            type: "agent-answer",
+            answer: {
+              engineVersion: "agent-answer/v1",
+              surface: "intelligence",
+              expertId: "xp.healthcare.revenue-cycle",
+              contributingExperts: [
+                {
+                  id: "xp.healthcare.revenue-cycle",
+                  name: "Healthcare Revenue Cycle Expert",
+                },
+              ],
+              prose: "",
+              tables: [
+                {
+                  id: "answer-figures",
+                  title: "Figures Mentioned",
+                  columns: [
+                    { key: "metric", label: "Metric" },
+                    { key: "value", label: "Value" },
+                  ],
+                  rows: [{ metric: "Epic maintenance", value: "$1.2M" }],
+                  citationIds: ["c1"],
+                },
+              ],
+              charts: [],
+              graphs: [],
+              citations: [
+                {
+                  id: "c1",
+                  label: "F12 IT budget",
+                  sourceClass: "tenant-fact",
+                },
+              ],
+              gaps: [],
+              recommendedActions: [],
+              groundingMode: "mixed",
+              confidence: "medium",
+              limits: [],
+              crossTenantBlocked: false,
+            },
+          }),
+          JSON.stringify({ type: "done" }),
+          "",
+        ].join("\n"),
+      ),
+    });
+    (global as { fetch: unknown }).fetch = fetchMock;
+
+    render(
+      <SentinelChat
+        scopeLabel="Meridian · this page"
+        opener="Meridian Intelligence is live."
+        conversation={[]}
+        surfaceContext={{ clientKey: "meridian" }}
+        workspace={<div>workspace</div>}
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.change(screen.getByTestId("agent-dock-input"), {
+        target: { value: "Show me a table of Epic spend" },
+      });
+    });
+    await act(async () => {
+      fireEvent.submit(screen.getByTestId("agent-dock-form"));
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText("Figures Mentioned")).toBeInTheDocument(),
+    );
+    expect(
+      screen.getByText("Healthcare Revenue Cycle Expert"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
+  });
+
+  it("renders thumbs feedback after a completed Sentinel answer and posts the selected rating", async () => {
     const fetchMock = jest
       .fn()
       .mockResolvedValueOnce({
@@ -184,10 +287,16 @@ describe('SentinelChat · legacy mode-key migration', () => {
         status: 200,
         body: makeMockBody(
           [
-            JSON.stringify({ type: 'delta', text: 'Sentinel answer with evidence.' }),
-            JSON.stringify({ type: 'done', telemetryEventId: 'tlm_sentinel_1' }),
-            '',
-          ].join('\n'),
+            JSON.stringify({
+              type: "delta",
+              text: "Sentinel answer with evidence.",
+            }),
+            JSON.stringify({
+              type: "done",
+              telemetryEventId: "tlm_sentinel_1",
+            }),
+            "",
+          ].join("\n"),
         ),
       })
       .mockResolvedValueOnce({
@@ -202,31 +311,33 @@ describe('SentinelChat · legacy mode-key migration', () => {
         scopeLabel="Apex Retail Group · this page"
         opener="Apex Retail Intelligence is live."
         conversation={[]}
-        surfaceContext={{ clientKey: 'apex-retail' }}
+        surfaceContext={{ clientKey: "apex-retail" }}
         workspace={<div>workspace</div>}
       />,
     );
 
     await act(async () => {
-      fireEvent.change(screen.getByTestId('agent-dock-input'), {
-        target: { value: 'What should we sequence?' },
+      fireEvent.change(screen.getByTestId("agent-dock-input"), {
+        target: { value: "What should we sequence?" },
       });
     });
     await act(async () => {
-      fireEvent.submit(screen.getByTestId('agent-dock-form'));
+      fireEvent.submit(screen.getByTestId("agent-dock-form"));
     });
 
-    const usefulButton = await screen.findByLabelText('Mark sentinel synthesis as useful');
+    const usefulButton = await screen.findByLabelText(
+      "Mark sentinel synthesis as useful",
+    );
     await act(async () => {
       fireEvent.click(usefulButton);
     });
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     expect(fetchMock).toHaveBeenLastCalledWith(
-      '/api/reasoning/feedback',
+      "/api/reasoning/feedback",
       expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({ eventId: 'tlm_sentinel_1', feedback: 'up' }),
+        method: "POST",
+        body: JSON.stringify({ eventId: "tlm_sentinel_1", feedback: "up" }),
       }),
     );
   });

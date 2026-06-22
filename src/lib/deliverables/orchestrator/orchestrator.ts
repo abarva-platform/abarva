@@ -26,10 +26,12 @@ import { sanitizeGenerationPlan, validateGenerationPlan } from './generation-pla
 import { validateDeliverableQuality } from './quality-validator';
 import {
   mapWithConcurrency,
+  extractUnsupportedFigureClaims,
   repairUncitedFigures,
   summariseSection,
   assembleDeliverable,
   type SynthesisResult,
+  type UnsupportedFigureClaim,
 } from './section-generation';
 
 export interface ModelCallResult {
@@ -194,6 +196,7 @@ export async function runDeliverableOrchestration(
     return Number.isFinite(v) && v > 0 ? v : 5;
   })();
   const validCitation = new Set(evidence.map((e) => e.citationNumber));
+  const unsupportedFigureClaims: UnsupportedFigureClaim[] = [];
   const sections: RenderableSection[] = await mapWithConcurrency(
     plan.sectionPlan,
     concurrency,
@@ -209,6 +212,21 @@ export async function runDeliverableOrchestration(
       );
       const parsed = extractJson<RenderableSection>(res.text);
       const body = parsed && parsed.bodyMarkdown ? parsed.bodyMarkdown : res.text;
+      const unsupported = extractUnsupportedFigureClaims(body);
+      for (const claim of unsupported) {
+        unsupportedFigureClaims.push({
+          sectionKey: s.key,
+          sectionTitle: (parsed && parsed.title) || s.title,
+          claim,
+          treatment:
+            req.deliverableType === 'business_case' ||
+            req.deliverableType === 'estimate_model' ||
+            req.deliverableType === 'financial_model' ||
+            req.deliverableType === 'value_measurement_contract'
+              ? 'open_input_required'
+              : 'assumption_to_validate',
+        });
+      }
       const citationsUsed = (parsed && Array.isArray(parsed.citationsUsed)
         ? parsed.citationsUsed
         : s.evidenceCitations
@@ -234,7 +252,10 @@ export async function runDeliverableOrchestration(
     expectedTotal,
   );
   const synth = extractJson<SynthesisResult>(synthRes.text) ?? {};
-  const document: RenderableDeliverable = assembleDeliverable(req, sections, synth, evidence);
+  const document: RenderableDeliverable = assembleDeliverable(req, sections, synth, evidence, {
+    brief,
+    unsupportedClaims: unsupportedFigureClaims,
+  });
 
   // Quality gate
   const quality = validateDeliverableQuality(document, req);

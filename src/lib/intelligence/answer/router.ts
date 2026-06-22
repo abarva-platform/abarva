@@ -65,6 +65,9 @@ function inferOutputShape(query: string): OutputShape {
   if (/\b(relate|related|connect|connected|depend|dependenc|map of|network|upstream|downstream|impact of .* on)\b/.test(q)) {
     return "graph";
   }
+  if (/\b(chart|visuali[sz]e|plot)\b/.test(q)) {
+    return "chart";
+  }
   if (/\b(trend|over time|by month|by quarter|year over year|trajectory)\b/.test(q)) {
     return "chart";
   }

@@ -28,7 +28,7 @@ export const dynamic = "force-dynamic";
 // phase gate checks signed_off against (verified against governance.ts):
 //   P1 charter_signed_off          → findDeliverable('charter')
 //   P2 discovery_report_signed_off → findDeliverable('discovery_report', …)
-//   P3 design_approved             → findDeliverable('design_spec', 'design', …)
+//   P3 design_approved             → findDeliverable('solution_design', …)
 //   P4 business_case_approved      → findDeliverable('business_case', …)
 //   P5 tower_handoff_plan_accepted → findDeliverable('tower_handoff_plan', …)
 interface PhaseCaptureConfig {
@@ -68,7 +68,7 @@ const PHASE_CAPTURE: Record<number, PhaseCaptureConfig> = {
   },
   3: {
     moduleKey: "p3",
-    deliverableTypeKey: "design_spec",
+    deliverableTypeKey: "solution_design",
     title: "Future-State Design",
     recordHeading: "Future-State Design (record)",
     fields: [

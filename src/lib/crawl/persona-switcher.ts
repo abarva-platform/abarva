@@ -1,6 +1,7 @@
 import { createClerkClient } from "@clerk/backend";
 import type { Browser, BrowserContext, Page } from "@playwright/test";
-import { CXO_PERSONAS, type CxoPersona } from "@/lib/auth/cxo-personas";
+import type { CxoPersona } from "@/lib/auth/cxo-personas";
+import { AGENT_CLIENT_LOGINS } from "@/lib/auth/agent-client-logins";
 
 export interface CrawlPersona {
   key: string;
@@ -9,6 +10,11 @@ export interface CrawlPersona {
   title: string;
   email: string;
   sourceSlug: string;
+  /**
+   * Playwright storage-state filename minted by the prime-auth harness
+   * (scripts/auth/prime-agent-client-auth-states.ts → `.auth/agent-<clientKey>.json`).
+   */
+  storageFile: string;
 }
 
 export interface CrawlSurface {
@@ -18,15 +24,23 @@ export interface CrawlSurface {
   requiresContextDemoVectorProof?: boolean;
 }
 
-export const CRAWL_PERSONAS: CrawlPersona[] = [
-  persona("apex-cio", "cio-apex"),
-  persona("apex-cdo", "cdo-apex"),
-  persona("meridian-cdio", "cdio-meridian-health"),
-  persona("meridian-cdao", "cdao-meridian-health"),
-  persona("firstcapital-cio", "cio-firstcapital"),
-  persona("skyharbor-cto", "cto-skyharbor"),
-  persona("skyharbor-cio", "cio-skyharbor"),
-];
+// Crawl personas are DERIVED from the durable per-client agent roster
+// (src/lib/auth/agent-client-logins.ts) so there is one source of truth across
+// the prime-auth harness and the post-deploy crawl/gauntlet. This replaced the
+// prior hardcoded human CXO emails (cio@/cdao@…), which were removed and left
+// the crawl access-stale. One automation persona per client; each authenticates
+// via Clerk sign-in tokens (no password) as a maestro agent.
+export const CRAWL_PERSONAS: CrawlPersona[] = AGENT_CLIENT_LOGINS.map(
+  (login) => ({
+    key: login.slug,
+    tenantKey: login.clientKey,
+    tenantName: login.tenant,
+    title: login.titleShort,
+    email: login.email,
+    sourceSlug: login.slug,
+    storageFile: `agent-${login.clientKey}.json`,
+  }),
+);
 
 export const PRIMARY_CRAWL_SURFACES: CrawlSurface[] = [
   { id: "home", path: "/home" },
@@ -394,19 +408,6 @@ export function resolveCrawlSurfaces(filter?: string): CrawlSurface[] {
   return [...PRIMARY_CRAWL_SURFACES, ...EXPLICIT_CRAWL_SURFACES].filter(
     (surface) => requested.has(surface.id),
   );
-}
-
-function persona(key: string, slug: string): CrawlPersona {
-  const found = CXO_PERSONAS.find((item) => item.slug === slug);
-  if (!found) throw new Error(`Missing CXO persona fixture for ${slug}`);
-  return {
-    key,
-    tenantKey: found.clientKey,
-    tenantName: found.tenant,
-    title: found.titleShort,
-    email: found.email,
-    sourceSlug: found.slug,
-  };
 }
 
 function envKey(value: string): string {

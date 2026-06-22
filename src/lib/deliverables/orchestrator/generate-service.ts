@@ -15,6 +15,11 @@ import {
 import { generateDeliverable as defaultGenerate } from "./model-caller";
 import { persistDeliverable as defaultPersist } from "./persistence";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { generateArchitectureModel } from "@/lib/visual-system/architecture-generation";
+import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
+import { governedArchitectureToolCall } from "@/lib/deliverables/quality/architecture-egress-adapter";
+import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
+import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import type { GenerationProgress } from "./progress";
 import type { OutputFormat } from "./types";
 
@@ -52,6 +57,13 @@ export interface GenerateServiceDeps {
   loadPolicy?: typeof defaultLoadPolicy;
   generate?: typeof defaultGenerate;
   persist?: typeof defaultPersist;
+  /** Architecture model generation — defaults to the governed adapter. Injectable for tests. */
+  generateArchitecture?: (req: {
+    engagement: string;
+    client: string;
+    contextText: string;
+    model?: string;
+  }) => Promise<{ model: ArchitectureModel }>;
 }
 
 export async function runDeliverableForTenant(
@@ -69,6 +81,8 @@ export async function runDeliverableForTenant(
   // 1 · governed evidence (clean, citation-numbered, vendor-facing exclusion applied)
   const { evidence, sourceRegister, retrievedCount } = await assemble({
     tenantClientKey: input.tenantClientKey,
+    clientId: input.clientId,
+    sourceArtifactRef: input.sourceArtifactRef,
     query:
       input.evidenceQuery ??
       `${input.deliverableType} ${input.useCaseArchetype} current state baseline`,
@@ -124,6 +138,49 @@ export async function runDeliverableForTenant(
   // override here when the caller explicitly requested a presentation/print packaging
   // (pptx/pdf/html) that the prescribed-format resolver does not produce; otherwise we
   // let persistence pick docx/xlsx so the financial model is stored as a real workbook.
+  // 3b · structured exhibit generation (flag-gated, stage 4 + 6). For architecture
+  // deliverables, generate the ArchitectureModel via the GOVERNED adapter and render
+  // the profile's renderer. Tenant-agnostic; grounded in the tenant's own generated
+  // narrative. Any failure falls back to prose — generation never breaks.
+  let structuredModels: { architectureModel?: ArchitectureModel } | undefined;
+  const deliverableKey = deliverableKeyForOrchestratorType(result.brief.deliverableType);
+  const wantsArchitecture =
+    !!deliverableKey &&
+    DELIVERABLE_PROFILES[deliverableKey].renderer === "html_architecture";
+  if (
+    wantsArchitecture &&
+    isFeatureEnabled(
+      { clientKey: input.tenantClientKey },
+      "deliverable_structured_exhibits",
+    )
+  ) {
+    try {
+      const contextText = result.document.generatedSections
+        .map((s) => `## ${s.title}\n${s.bodyMarkdown}`)
+        .join("\n\n")
+        .slice(0, 24000);
+      const genArch =
+        deps.generateArchitecture ??
+        ((req) => generateArchitectureModel(req, governedArchitectureToolCall));
+      const gen = await genArch({
+        engagement: result.document.initiativeDisplayName,
+        client: result.document.clientDisplayName,
+        contextText,
+        ...(input.model ? { model: input.model } : {}),
+      });
+      structuredModels = { architectureModel: gen.model };
+    } catch (err) {
+      console.error(
+        "[generate-service] architecture model generation failed; prose fallback",
+        err,
+      );
+    }
+  }
+  const enforceQualityContract = isFeatureEnabled(
+    { clientKey: input.tenantClientKey },
+    "deliverable_quality_contract",
+  );
+
   const first = input.outputFormats?.[0];
   const explicitOverride: "pptx" | "pdf" | "html" | undefined =
     first === "pptx" || first === "pdf" || first === "html" ? first : undefined;
@@ -143,6 +200,15 @@ export async function runDeliverableForTenant(
     userId: input.userId,
     evidenceLedgerIds: evidence.map((e) => e.provenanceRef),
     ...(renderAsDeck ? { renderAsDeck: true, tenantKey: input.tenantClientKey } : {}),
+    // Stage 4-7: hand the structured exhibit models to persistence so the profile's
+    // renderer draws them and they count toward exhibit enforcement.
+    ...(structuredModels ? { structuredModels, renderViaProfile: true } : {}),
+    enforceQualityContract,
+    governanceOk: true, // the multi-pass generation already cleared audited egress
+    tenantTerms: [
+      result.document.clientDisplayName,
+      result.document.initiativeDisplayName,
+    ],
   });
 
   return {

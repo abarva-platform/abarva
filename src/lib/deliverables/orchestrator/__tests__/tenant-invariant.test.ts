@@ -1,10 +1,29 @@
 import { validateDeliverableTenantInvariant } from "../tenant-invariant";
 
-function fakeDb(row: Record<string, unknown> | null) {
-  const cap: { table?: string; filters: Array<[string, unknown]> } = { filters: [] };
+function fakeDb(
+  row: Record<string, unknown> | null,
+  opts: { clientRow?: Record<string, unknown> | null } = {},
+) {
+  const cap: { table?: string; tables: string[]; filters: Array<[string, unknown]> } = { tables: [], filters: [] };
+  let currentTable = "";
+  const clientId = typeof row?.client_id === "string" ? row.client_id : null;
+  const rowsByTable: Record<string, Record<string, unknown> | null> = {
+    engagements: row,
+    source_events: row,
+    clients: opts.clientRow !== undefined
+      ? opts.clientRow
+      : clientId
+      ? {
+          id: clientId,
+          tenant_key: typeof row?.tenant_key === "string" ? row.tenant_key : null,
+        }
+      : null,
+  };
   const builder: Record<string, unknown> = {};
   builder.from = (table: string) => {
-    cap.table = table;
+    currentTable = table;
+    cap.table ??= table;
+    cap.tables.push(table);
     return builder;
   };
   builder.select = () => builder;
@@ -12,7 +31,7 @@ function fakeDb(row: Record<string, unknown> | null) {
     cap.filters.push([key, value]);
     return builder;
   };
-  builder.maybeSingle = async () => ({ data: row, error: null });
+  builder.maybeSingle = async () => ({ data: rowsByTable[currentTable] ?? null, error: null });
   return { db: builder as never, cap };
 }
 
@@ -60,6 +79,31 @@ describe("validateDeliverableTenantInvariant", () => {
 
     expect(result).toMatchObject({ ok: true, sourceKind: "move", sourceId: moveId });
     expect(cap.filters).toContainEqual(["id", moveId]);
+  });
+
+  it("resolves Move tenant ownership from the client row when engagements has no tenant_key column", async () => {
+    const moveId = "33333333-3333-4333-8333-333333333333";
+    const { db, cap } = fakeDb(
+      {
+        id: moveId,
+        graph_node_id: "move-graph-2",
+        client_id: "client-sky",
+      },
+      { clientRow: { id: "client-sky", key: "skyharbor-air" } },
+    );
+
+    const result = await validateDeliverableTenantInvariant(
+      {
+        module: "moves",
+        sourceArtifactRef: `move:${moveId}:charter`,
+        clientId: "client-sky",
+        tenantKey: "skyharbor",
+      },
+      db,
+    );
+
+    expect(result).toMatchObject({ ok: true, sourceKind: "move", sourceId: moveId });
+    expect(cap.tables).toEqual(["engagements", "clients"]);
   });
 
   it("blocks a Move owned by another client before generation can retrieve evidence", async () => {

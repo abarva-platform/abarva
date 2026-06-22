@@ -24,7 +24,9 @@ const CSS = `
 .iv2 .ask input{flex:1;border:none;outline:none;font-size:14px;background:transparent;color:var(--ink)}
 .iv2 .ask .spark{color:var(--green)}
 .iv2 .ask button{background:var(--ink);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer}
-.iv2 .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:1080px;margin:16px auto 0}
+.iv2 .chips{display:flex;flex-wrap:nowrap;gap:8px;justify-content:center;max-width:1080px;margin:16px auto 0;overflow:hidden}
+.iv2 .chips .chip{max-width:230px}
+@media(max-width:760px){.iv2 .chips{flex-wrap:wrap}.iv2 .chips .chip{max-width:340px}}
 .iv2 .chip{display:inline-flex;align-items:center;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:5px 13px;font-size:12px;color:#3a3a34;cursor:pointer}
 .iv2 .chip .spark{color:var(--green);margin-right:5px;flex:none}
 .iv2 .chiptext{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -82,9 +84,11 @@ const CSS = `
 
 export function IntelligenceV2Surface({
   payload,
-  tenantName,
 }: {
   payload: IntelligenceBindingPayload;
+  // Accepted for API compatibility (callers still pass it) but intentionally
+  // NOT rendered: the header stays generic ("your enterprise") in production so
+  // it never surfaces a client/tenant name. Re-bind here to restore personalization.
   tenantName?: string;
 }) {
   const [tab, setTab] = useState<Tab>("signals");
@@ -189,7 +193,7 @@ export function IntelligenceV2Surface({
           <h1>
             Ask anything about
             <br />
-            {tenantName || t.tenant.displayName}.
+            your enterprise.
           </h1>
           <p className="sub">{t.ask.contract}</p>
           <div className="ask">

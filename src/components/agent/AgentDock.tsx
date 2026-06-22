@@ -52,6 +52,8 @@ import { AgentActionApprovalNotice } from "./AgentActionApprovalNotice";
 import { CitationGapNotice } from "./CitationGapNotice";
 import { EvidenceBasis } from "./EvidenceBasis";
 import type { AskSource } from "@/lib/intelligence/ask/types";
+import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
+import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
 // real values in the browser, so fall back to the no-op effect on the
@@ -185,6 +187,8 @@ export interface ChatMessage {
    *  surfaced via <EvidenceBasis>; when present the citation-gap warning is
    *  suppressed because the answer is visibly grounded. */
   citations?: AskSource[];
+  /** Structured Ava answer channels (tables/charts/graphs) emitted by SCB surfaces. */
+  agentAnswer?: AgentAnswer;
 }
 
 export interface AttachmentRef {
@@ -820,6 +824,11 @@ export function AgentDock(props: AgentDockProps) {
                 turn.citations &&
                 turn.citations.length > 0 ? (
                   <EvidenceBasis citations={turn.citations} />
+                ) : null}
+                {turn.role === "agent" && turn.agentAnswer ? (
+                  <div style={{ marginTop: 12 }}>
+                    <AgentAnswerRenderer answer={turn.agentAnswer} />
+                  </div>
                 ) : null}
                 {turn.role === "agent" && turn.feedbackEventId ? (
                   <div style={FEEDBACK_ROW_STYLE}>

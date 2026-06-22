@@ -7,7 +7,7 @@ function observation(
   return {
     tenantKey: "skyharbor",
     expectedTenantName: "SkyHarbor Air",
-    personaKey: "skyharbor-cto",
+    personaKey: "agent-skyharbor",
     surfaceId: "intelligence-root",
     path: "/intelligence",
     url: "https://app.abarva.ai/intelligence",
@@ -34,7 +34,7 @@ describe("post-deploy crawl guard", () => {
     const personaKeys = resolveCrawlPersonas().map((persona) => persona.key);
 
     expect(personaKeys).toEqual(
-      expect.arrayContaining(["meridian-cdao", "skyharbor-cto", "skyharbor-cio"]),
+      expect.arrayContaining(["agent-meridian", "agent-skyharbor"]),
     );
   });
 
@@ -68,7 +68,7 @@ describe("post-deploy crawl guard", () => {
       observation({
         tenantKey: "meridian",
         expectedTenantName: "Meridian Health System",
-        personaKey: "meridian-cdio",
+        personaKey: "agent-meridian",
         visibleText:
           "Meridian Health uses Clinical care ambient AI with MH-07 and Innovaccer in revenue cycle planning",
       }),
@@ -104,7 +104,7 @@ describe("post-deploy crawl guard", () => {
       observation({
         tenantKey: "apexretail",
         expectedTenantName: "Apex Retail Group",
-        personaKey: "apex-cio",
+        personaKey: "agent-apexretail",
         surfaceId: "source-events",
         path: "/source/events",
         visibleText:
