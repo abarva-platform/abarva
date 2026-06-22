@@ -82,6 +82,10 @@ const KEY_ALIASES: Record<string, string> = {
   lakeshore: "lakeshore",
   "lakeshore-holdings": "lakeshore",
   "lakeshore-industries": "lakeshore",
+  northstar: "northstar-clinical",
+  "northstar-clinical": "northstar-clinical",
+  "northstar-clinical-technologies": "northstar-clinical",
+  "northstar-health": "northstar-clinical",
 };
 
 /** Resolve a tenant key (app ClientKey or context key) to its binding payload, or null. */
