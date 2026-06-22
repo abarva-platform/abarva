@@ -23,6 +23,7 @@ export const PUBLIC_ROUTE_PATTERNS = [
   '/access(.*)',
   '/sign-in(.*)',
   '/signed-out(.*)',
+  '/access-denied',
   '/forbidden',
   '/invite(.*)',
   '/auth-redirect(.*)',
@@ -311,6 +312,14 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
 
   const requiresAuth = authRequiredRoutes(request) && !isTokenGuardedPublicOpsRoute(request)
 
+  if (request.nextUrl.pathname === '/signed-out') {
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/', request.url), 307))
+  }
+
+  if (request.nextUrl.pathname === '/forbidden') {
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/access-denied', request.url), 307))
+  }
+
   if (
     requiresAuth
     && shouldStripUnauthorizedClientParam(
@@ -328,8 +337,8 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(redirectUrl))
   }
 
-  if (userId && !isLaunchApprovedSession && !request.nextUrl.pathname.startsWith('/forbidden')) {
-    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/forbidden', request.url)))
+  if (userId && !isLaunchApprovedSession && !request.nextUrl.pathname.startsWith('/access-denied')) {
+    return withProductionReadinessNoStoreHeaders(request, NextResponse.redirect(new URL('/access-denied', request.url)))
   }
 
   if (!userId && request.nextUrl.pathname.startsWith('/sign-in')) {
