@@ -143,7 +143,7 @@ function selectCases(limit: number): LiveAnswerCase[] {
 
 async function askLiveAva(
   page: Page,
-  question: string,
+  item: LiveAnswerCase,
   persona: { tenantKey: string; tenantName: string },
 ): Promise<AskObservation> {
   try {
@@ -165,10 +165,7 @@ async function askLiveAva(
                 activeTab: "scb-live-answer-eval",
                 activeClient: p.tenantKey,
                 clientKey: p.tenantKey,
-                facts: [
-                  `live_eval_persona_tenant=${p.tenantName}`,
-                  "live_eval_surface=/intelligence/ask",
-                ],
+                facts: p.surfaceFacts,
               },
             }),
             signal: controller.signal,
@@ -277,7 +274,18 @@ async function askLiveAva(
           window.clearTimeout(timeout);
         }
       },
-      { q: question, p: persona },
+      {
+        q: item.query,
+        p: {
+          tenantKey: persona.tenantKey,
+          tenantName: persona.tenantName,
+          surfaceFacts: [
+            `live_eval_persona_tenant=${persona.tenantName}`,
+            "live_eval_surface=/intelligence/ask",
+            ...(item.surfaceFacts ?? []),
+          ],
+        },
+      },
     );
   } catch (err) {
     return {
@@ -292,6 +300,54 @@ async function askLiveAva(
       crossTenantBlocked: false,
     };
   }
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolveDelay) => {
+    setTimeout(resolveDelay, ms);
+  });
+}
+
+function isRetryableAskFailure(obs: AskObservation): boolean {
+  if (obs.ok || obs.eventCount > 0) return false;
+  const error = obs.error ?? "";
+  return (
+    error.includes("Failed to fetch") ||
+    error.includes("Execution context was destroyed") ||
+    error.includes("Target page") ||
+    error.includes("Navigation failed") ||
+    error.includes("abort")
+  );
+}
+
+async function stabilizeAskPage(page: Page): Promise<void> {
+  if (page.isClosed()) return;
+  await page
+    .goto("/intelligence/ask", {
+      waitUntil: "domcontentloaded",
+      timeout: 45_000,
+    })
+    .catch(() => undefined);
+  await page.waitForLoadState("networkidle", { timeout: 15_000 }).catch(() => undefined);
+}
+
+async function askLiveAvaWithRetry(
+  page: Page,
+  item: LiveAnswerCase,
+  persona: { tenantKey: string; tenantName: string },
+): Promise<AskObservation> {
+  let latest: AskObservation | null = null;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const obs = await askLiveAva(page, item, persona);
+    latest = obs;
+    if (!isRetryableAskFailure(obs)) return obs;
+    console.warn(
+      `scb_live_answer_retry:${item.id}:attempt=${attempt}:error=${obs.error ?? "unknown"}`,
+    );
+    await delay(750 * attempt);
+    await stabilizeAskPage(page);
+  }
+  return latest!;
 }
 
 async function main() {
@@ -335,7 +391,7 @@ async function main() {
       if (active.page.isClosed()) {
         throw new Error(`live_answer_page_closed_before_case:${item.id}`);
       }
-      const obs = await askLiveAva(active.page, item.query, persona);
+      const obs = await askLiveAvaWithRetry(active.page, item, persona);
       const behavior = checkLiveAnswerCase(item, obs);
       const quality = scoreAnswer(obs.prose, {
         questionId: item.id,

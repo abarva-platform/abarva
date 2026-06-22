@@ -43,8 +43,13 @@ export const HEALTHCARE_AIRLINE_CASES: LiveAnswerCase[] = [
     industry: "healthcare_provider",
     expectedExpertId: "xp.healthcare-provider.revenue-cycle",
     expectedBehaviors: ["output_shape_chart", "name_real_next_move"],
+    surfaceFacts: [
+      "Revenue cycle denial chart support: CARC/RARC category medical necessity has initial denial rate 11.8%, AR days 42, overturn rate 18%, and leakage exposure $1.2M.",
+      "Revenue cycle denial chart support: CARC/RARC category prior authorization has initial denial rate 8.4%, AR days 38, overturn rate 22%, and leakage exposure $650K.",
+      "Revenue cycle denial chart support: CARC/RARC category eligibility has initial denial rate 4.9%, AR days 21, overturn rate 31%, and leakage exposure $310K.",
+    ],
     adversarialKind: null,
-    notes: "Comparison/breakdown that explicitly wants a chart and a concrete next move.",
+    notes: "Comparison/breakdown that explicitly wants a chart and includes surface evidence for a concrete next move.",
   },
   {
     id: "hc-revcycle-4",
