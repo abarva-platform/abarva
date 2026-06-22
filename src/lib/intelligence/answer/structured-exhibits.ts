@@ -135,6 +135,22 @@ function extractFigures(prose: string): ExtractedFigure[] {
   return figures.slice(0, 8);
 }
 
+function extractSourceFigures(sources: AskSource[]): ExtractedFigure[] {
+  return extractFigures(sources.map((source) => source.detail).join("\n"));
+}
+
+function uniqueFigures(figures: ExtractedFigure[]): ExtractedFigure[] {
+  const seen = new Set<string>();
+  const out: ExtractedFigure[] = [];
+  for (const figure of figures) {
+    const key = `${figure.format}:${figure.raw.toLowerCase()}:${figure.label.toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(figure);
+  }
+  return out.slice(0, 8);
+}
+
 function sourceRegisterTable(citations: AnswerCitation[]): AnswerTable | null {
   if (citations.length === 0) return null;
   return {
@@ -232,6 +248,7 @@ export function buildStructuredExhibits(
 ): StructuredExhibits {
   const citations = answerCitationsFromAskSources(input.sources);
   const figures = extractFigures(input.prose);
+  const citedFigures = extractSourceFigures(input.sources);
   const tables: AnswerTable[] = [];
   const charts: AnswerChart[] = [];
 
@@ -249,7 +266,10 @@ export function buildStructuredExhibits(
     input.routing.outputShape === "chart" ||
     /\b(chart|graph|visuali[sz]e)\b/i.test(input.prose);
   if (wantsChart) {
-    const chart = costChart(figures, citations);
+    const chart = costChart(
+      uniqueFigures([...figures, ...citedFigures]),
+      citations,
+    );
     if (chart) charts.push(chart);
   }
 
