@@ -529,13 +529,13 @@ function buildIntakeGuidanceParts(
   return [
     {
       type: 'text',
-      title: 'aVa intake read',
+      title: 'Ava intake read',
       text: guidance.opening,
     },
     {
       type: 'table',
       title: 'Minimum facts before sourcing starts',
-      columns: ['Fact', 'What aVa needs'],
+      columns: ['Fact', 'What Ava needs'],
       rows: guidance.facts.map((fact) => [fact.label, fact.prompt]),
       caption: 'These are capture requirements, not optional notes.',
     },

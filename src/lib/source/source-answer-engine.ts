@@ -66,7 +66,7 @@ export interface SourceAnswerEngineOutput {
   limits: string[];
   evidenceCitations: SourceAnswerEvidenceCitation[];
   /**
-   * Structured aVa response parts for the Source response window. The prose
+   * Structured Ava response parts for the Source response window. The prose
    * answer remains as a fallback, while the UI can render tables, charts,
    * evidence, and next actions when these parts are present.
    */
@@ -780,7 +780,7 @@ function buildAvaResponseParts(args: {
     parts.push({
       type: 'table',
       title: 'Delivery-model gate',
-      columns: ['Decision item', 'aVa read'],
+      columns: ['Decision item', 'Ava read'],
       rows: [
         ['Recommended model', args.deliveryModelGate.recommendedModelLabel],
         ['Gate status', args.deliveryModelGate.gateStatus.replace(/_/g, ' ')],

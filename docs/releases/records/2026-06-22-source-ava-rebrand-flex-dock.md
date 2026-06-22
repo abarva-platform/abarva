@@ -36,6 +36,7 @@ The Source answer engine also normalizes legacy Sentinel-branded evidence excerp
 - `src/lib/source/intake-intent.ts`, `src/lib/source/stage-next-move.ts`, and `src/lib/source/learn/learn-nav.ts`: visible Sentinel copy changed to Ava.
 - `src/components/source/SourceEventAgentCanvas.tsx` and `src/components/source/SourceEventsAgentDockView.tsx`: visible Source dock roles/errors adjusted to Ava language.
 - `src/lib/source/source-answer-engine.ts` and `src/lib/source/mock-seed.ts`: legacy Sentinel evidence/context strings render as Ava in Source answers and seeded Apex event context.
+- `src/lib/source/source-answer-engine.ts` and `src/lib/source/nexus-api.ts`: Ava response/table labels use consistent `Ava` casing.
 - Tests/docs updated for the new label and six dock modes.
 
 ## QA / Validation
