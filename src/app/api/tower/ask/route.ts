@@ -25,6 +25,7 @@ import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
 import { composeAllAgentDoctrineBlock } from "@/lib/agent/all-agent-doctrine";
+import { CONSULTANT_ANSWER_SHAPE_CONTRACT } from "@/lib/intelligence/ask/response-policy";
 
 // Ava's Tower voice mirrors the synthesis route (which already says Ava on the
 // Tower surface). The ask path answers a single user question rather than
@@ -41,7 +42,9 @@ Ava voice register (from brand voice spec §9):
 - Precise, executive register. No filler. No hedging.
 - Do NOT fabricate IDs, vendors, or figures. If the portfolio context for a claim is not provided, say so plainly rather than inventing it.
 
-Format: Use the shared agent output contract. Prefer a direct lead line, then 2-4 short evidence bullets. No raw markdown emphasis.`;
+Format: Use the shared agent output contract. Prefer a direct lead line, then 2-4 short evidence bullets. No raw markdown emphasis.
+
+${CONSULTANT_ANSWER_SHAPE_CONTRACT}`;
 
 export function buildAvaTowerAskPrompt(userContextBlock: string): string {
   // Mirrors the synthesis prompt composition (voice → doctrine → user context →

@@ -6,6 +6,19 @@ const HOLLOW_OPENER_RE =
 const BROAD_CURRENT_STATE_RE =
   /\b(current state|state of play|where are we|where do we stand|how are we doing|what is going on|what do you see|give me perspective|your perspective|executive read|simple question|our state)\b/i;
 const RAW_INTERNAL_ID_RE = /\b[A-Z]{2,6}-[A-Z0-9]{2,8}-\d{2,4}\b/g;
+const CONSULTANT_LABEL_RE =
+  /^\s*(?:Read|Recommendation|Decision|Why|Evidence|Implication|Watchout|Watch-out|Next move|Owner|Action):/im;
+const MARKDOWN_TABLE_RE = /^\s*\|.+\|\s*$/m;
+
+export const CONSULTANT_ANSWER_SHAPE_CONTRACT = `CONSULTANT ANSWER SHAPE
+
+For Home, Intelligence, and Tower, answer like a senior expert consultant, not a transcript. Use this shape unless the user asks for a very short answer:
+- Read: the direct recommendation or judgment in 1-2 sentences.
+- Evidence: the specific tenant facts, corpus pattern, benchmark, system, vendor, program, dollar value, or cited constraint that supports the read.
+- Implication: what this means for the executive decision.
+- Next move: the owner, artifact, gate, Source/Tower/Moves handoff, or evidence to validate.
+
+Keep each paragraph under roughly 55 words. If a table or chart is requested, still give the Read/Evidence/Implication/Next move prose, then emit the table/chart data separately.`;
 
 export function isBroadCurrentStateQuestion(query: string): boolean {
   return BROAD_CURRENT_STATE_RE.test(query);
@@ -96,7 +109,9 @@ const MISSING_EVIDENCE_RE =
   /\b(don't have|do not have|won't fabricate|not in the loaded sources|remaining field to confirm|missing|before committing|before approving)\b/i;
 
 export function enforceDecisionGradeAnswer(text: string): string {
-  const paragraphDisciplined = splitLongParagraphs(text);
+  const paragraphDisciplined = splitLongParagraphs(
+    shapeDenseConsultantAnswer(text),
+  );
   if (ACTION_CUE_RE.test(paragraphDisciplined)) return paragraphDisciplined;
 
   const nextMove = MISSING_EVIDENCE_RE.test(paragraphDisciplined)
@@ -104,6 +119,74 @@ export function enforceDecisionGradeAnswer(text: string): string {
     : "Next move: assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves.";
 
   return `${paragraphDisciplined.replace(/\s+$/, "")}\n\n${nextMove}`;
+}
+
+function shapeDenseConsultantAnswer(text: string): string {
+  const normalized = text.replace(/\r\n/g, "\n").trim();
+  if (!normalized) return normalized;
+  if (CONSULTANT_LABEL_RE.test(normalized)) return normalized;
+  if (MARKDOWN_TABLE_RE.test(normalized)) return normalized;
+  if (wordCount(normalized) < 75) return normalized;
+
+  const paragraphs = normalized.split(/\n{2,}/).filter((p) => p.trim());
+  if (paragraphs.length > 2) return normalized;
+
+  const sentences = splitSentences(normalized);
+  if (sentences.length < 4) return normalized;
+
+  const nextMoveSentences = sentences.filter((sentence) =>
+    /^Next move\b/i.test(sentence),
+  );
+  const bodySentences = sentences.filter(
+    (sentence) => !/^Next move\b/i.test(sentence),
+  );
+  if (bodySentences.length < 3) return normalized;
+
+  const read = normalizeConsultantLead(bodySentences[0] ?? "");
+  const rest = bodySentences.slice(1);
+  const evidence = takeSentences(rest, (sentence) =>
+    /\b(loaded|source|context|evidence|corpus|benchmark|ledger|row|system|vendor|program|initiative|budget|cost|spend|committed|realized)\b|[$%]\d|\d+[$%]?/i.test(
+      sentence,
+    ),
+  );
+  const evidenceSet = new Set(evidence);
+  const remaining = rest.filter((sentence) => !evidenceSet.has(sentence));
+  const implication =
+    remaining.length > 0
+      ? remaining
+      : rest.filter((sentence) => !evidenceSet.has(sentence));
+
+  const sections: string[] = [];
+  if (read) sections.push(`Read: ${read}`);
+  if (evidence.length > 0) {
+    sections.push(`Evidence: ${evidence.slice(0, 3).join(" ")}`);
+  }
+  if (implication.length > 0) {
+    sections.push(`Implication: ${implication.slice(0, 3).join(" ")}`);
+  }
+  if (nextMoveSentences.length > 0) {
+    sections.push(nextMoveSentences.join(" "));
+  }
+
+  return sections.length >= 3 ? sections.join("\n\n") : normalized;
+}
+
+function normalizeConsultantLead(sentence: string): string {
+  return sentence
+    .replace(/^\s*Honest\s+(?:read|answer)\s+(?:up\s+front|first)\s*:\s*/i, "")
+    .trim();
+}
+
+function takeSentences(
+  sentences: string[],
+  predicate: (sentence: string) => boolean,
+): string[] {
+  const picked: string[] = [];
+  for (const sentence of sentences) {
+    if (predicate(sentence)) picked.push(sentence);
+    if (picked.length >= 3) break;
+  }
+  return picked;
 }
 
 export function chunkAskText(text: string): string[] {
@@ -138,6 +221,14 @@ function splitParagraphIfLong(paragraph: string): string {
   }
   if (current.length > 0) groups.push(current.join(" "));
   return groups.join("\n\n");
+}
+
+function splitSentences(text: string): string[] {
+  return (
+    text.match(/[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$/g) ?? [text]
+  )
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
 }
 
 function wordCount(text: string): number {
