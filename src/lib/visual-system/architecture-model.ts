@@ -286,14 +286,16 @@ function validateLevel(
       message: `${level} architecture level is missing title, thesis, or soWhat.`,
     });
   }
-  if (!model.nodes.length) {
+  const nodes = Array.isArray(model.nodes) ? model.nodes : [];
+  const flows = Array.isArray(model.flows) ? model.flows : [];
+  if (!nodes.length) {
     issues.push({
       level: "error",
       message: `${level} architecture level has no nodes.`,
     });
   }
-  const ids = new Set(model.nodes.map((n) => n.id));
-  for (const f of model.flows) {
+  const ids = new Set(nodes.map((n) => n.id));
+  for (const f of flows) {
     if (!ids.has(f.from) || !ids.has(f.to)) {
       issues.push({
         level: "error",
@@ -308,14 +310,38 @@ export function validateArchitectureModel(
   model: ArchitectureModel,
 ): ArchValidationIssue[] {
   const issues: ArchValidationIssue[] = [];
-  const targetIds = new Set(model.target.nodes.map((n) => n.id));
-  const currentIds = new Set(model.current.nodes.map((n) => n.id));
+  if (!model || typeof model !== "object") {
+    return [{ level: "error", message: "Architecture model is missing." }];
+  }
+
+  const current = model.current;
+  const target = model.target;
+  if (!current) {
+    issues.push({ level: "error", message: "Missing current architecture state." });
+  }
+  if (!target) {
+    issues.push({ level: "error", message: "Missing target architecture state." });
+  }
+
+  const currentNodes = Array.isArray(current?.nodes) ? current.nodes : [];
+  const currentFlows = Array.isArray(current?.flows) ? current.flows : [];
+  const targetNodes = Array.isArray(target?.nodes) ? target.nodes : [];
+  const targetFlows = Array.isArray(target?.flows) ? target.flows : [];
+  if (current && !currentNodes.length) {
+    issues.push({ level: "error", message: "Current architecture state has no nodes." });
+  }
+  if (target && !targetNodes.length) {
+    issues.push({ level: "error", message: "Target architecture state has no nodes." });
+  }
+
+  const targetIds = new Set(targetNodes.map((n) => n.id));
+  const currentIds = new Set(currentNodes.map((n) => n.id));
 
   for (const [state, ids] of [
     ["current", currentIds],
     ["target", targetIds],
   ] as const) {
-    const flows = model[state].flows;
+    const flows = state === "current" ? currentFlows : targetFlows;
     for (const f of flows) {
       if (!ids.has(f.from) || !ids.has(f.to)) {
         issues.push({
@@ -327,7 +353,7 @@ export function validateArchitectureModel(
   }
 
   // Hard requirement: data flow distinct from AI control flow on the target.
-  const kinds = new Set(model.target.flows.map((f) => f.kind));
+  const kinds = new Set(targetFlows.map((f) => f.kind));
   if (!kinds.has("data")) {
     issues.push({ level: "warn", message: "Target has no data-flow edges." });
   }
@@ -340,7 +366,7 @@ export function validateArchitectureModel(
   }
 
   // Agentic overlay must reference real agent + tool nodes.
-  for (const b of model.agentic) {
+  for (const b of model.agentic ?? []) {
     if (!targetIds.has(b.agentId)) {
       issues.push({
         level: "error",
@@ -358,7 +384,7 @@ export function validateArchitectureModel(
   }
 
   // A target with named services but no provenance note risks looking predetermined.
-  const hasNamedServices = model.target.nodes.some((n) => n.service);
+  const hasNamedServices = targetNodes.some((n) => n.service);
   if (hasNamedServices && !model.provenanceNote) {
     issues.push({
       level: "warn",

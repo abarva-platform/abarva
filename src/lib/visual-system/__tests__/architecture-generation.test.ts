@@ -57,6 +57,24 @@ describe("architecture generation pass (governed, tenant-agnostic)", () => {
     ).rejects.toThrow(/no structured model/i);
   });
 
+  it("turns malformed partial output into validation errors, not a TypeError", async () => {
+    const call: GovernedToolCall = async () => ({
+      toolInput: {
+        engagement: "IROPS",
+        client: "SkyHarbor Air",
+        decisionHeadline: "Approve recovery command architecture",
+        current: { title: "Current", thesis: "Manual", flows: [] },
+      },
+      modelId: "m",
+    });
+    await expect(
+      generateArchitectureModel(
+        { engagement: "IROPS", client: "SkyHarbor Air", contextText: "c" },
+        call,
+      ),
+    ).rejects.toThrow(/Current architecture state has no nodes|Missing target architecture state/i);
+  });
+
   it("passes the tool + system contract to the governed call (forced output)", async () => {
     let seen: { tool?: unknown; system?: string } = {};
     const call: GovernedToolCall = async (p) => {
