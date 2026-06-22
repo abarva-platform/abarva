@@ -55,6 +55,20 @@ describe("live-answer bank", () => {
     expect(misrouted).toHaveLength(0);
   });
 
+  it("contains a chart-shaped live case and routes explicit chart language as chart intent", () => {
+    const chartCase = LIVE_ANSWER_CASES.find((c) =>
+      c.expectedBehaviors.includes("output_shape_chart"),
+    );
+    expect(chartCase).toBeDefined();
+
+    const routed = routeQuestion({
+      query: chartCase!.query,
+      industry: chartCase!.industry,
+    });
+    expect(routed.outputShape).toBe("chart");
+    expect(routed.experts[0]?.id).toBe(chartCase!.expectedExpertId);
+  });
+
   it("cross-tenant cases require fencing; out-of-domain cases require scope-down", () => {
     for (const c of LIVE_ANSWER_CASES) {
       if (c.adversarialKind === "tempts_cross_tenant") {
