@@ -103,6 +103,32 @@ describe("deliverable plan generation pass", () => {
     ).rejects.toThrow(/failed validation/i);
   });
 
+  it("turns malformed partial output into validation errors, not a TypeError", async () => {
+    const call: GovernedToolCall = async () => ({
+      toolInput: {
+        artifactType: "target_state_architecture",
+        audience: "cio",
+        majorGaps: [{ id: "g1", observation: "Fragmented operations." }],
+      },
+      modelId: "m",
+    });
+
+    await expect(
+      generateDeliverablePlan(
+        {
+          artifactType: "target_state_architecture",
+          audience: "cio",
+          decisionPurpose: "Align.",
+          client: "Client",
+          initiative: "Move",
+          contextText: "ctx",
+          requireGapChain: true,
+        },
+        call,
+      ),
+    ).rejects.toThrow(/Storyline is not a real|No target-state hypothesis/i);
+  });
+
   it("passes the forced plan tool to the governed call", async () => {
     let seenTool: unknown;
     const call: GovernedToolCall = async (params) => {
