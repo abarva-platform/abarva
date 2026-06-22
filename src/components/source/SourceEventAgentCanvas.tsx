@@ -33,10 +33,10 @@ interface SourceEventAgentCanvasProps {
   nextGateEvaluations?: GateEvaluation[];
 }
 
-const SENTINEL_EVENT_AGENT = {
+const AVA_EVENT_AGENT = {
   initials: 'Av',
   name: 'Ava',
-  role: 'Source Orchestrator',
+  role: 'End-to-end sourcing assistant',
 } as const;
 
 export function SourceEventAgentCanvas({
@@ -143,7 +143,7 @@ export function SourceEventAgentCanvas({
                       onClose={() => {
                         // Embedded Source event workspace stays visible; it is not a drawer overlay.
                       }}
-                      agent={SENTINEL_EVENT_AGENT}
+                      agent={AVA_EVENT_AGENT}
                       quote={safeQuote}
                       surface="/source"
                       onArtifact={handleArtifact}

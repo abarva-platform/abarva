@@ -78,6 +78,10 @@ describe("AgentDock · default mode", () => {
       "data-mode",
       "side-rail",
     );
+    expect(screen.getByTestId("agent-dock-side-rail-shell")).toHaveAttribute(
+      "data-side",
+      "left",
+    );
     expect(screen.getByTestId("workspace")).toBeInTheDocument();
   });
 
@@ -249,6 +253,15 @@ describe("AgentDock · mode picker", () => {
         onMessage={jest.fn()}
         workspace={<div data-testid="workspace">workspace</div>}
       />,
+    );
+
+    fireEvent.click(screen.getByTestId("agent-dock-mode-side-rail-right"));
+    expect(window.localStorage.getItem(modeStorageKey(SURFACE))).toBe(
+      "side-rail-right",
+    );
+    expect(screen.getByTestId("agent-dock-side-rail-shell")).toHaveAttribute(
+      "data-side",
+      "right",
     );
 
     fireEvent.click(screen.getByTestId("agent-dock-mode-pin-bottom"));

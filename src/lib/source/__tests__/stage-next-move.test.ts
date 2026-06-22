@@ -62,9 +62,9 @@ describe("resolveStageNextMove", () => {
     });
 
     expect(view.title).toBe("Draft your Sourcing Strategy Memo");
-    expect(view.primaryLabel).toBe("Draft with Sentinel");
+    expect(view.primaryLabel).toBe("Draft with Ava");
     expect(view.primaryTarget).toBe("document");
-    // The draft move exposes its target artifact so "Draft with Sentinel" can
+    // The draft move exposes its target artifact so "Draft with Ava" can
     // run governed generation in place (no navigation).
     expect(view.draftArtifactCode).toBe("d01_strategy_memo");
     expect(view.gateSummary).toBe("0 of 1 cleared to advance");

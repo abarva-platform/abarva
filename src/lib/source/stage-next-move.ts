@@ -33,7 +33,7 @@ export interface StageNextMoveView {
   /**
    * The artifact this stage's draft move produces (e.g. `d01_strategy_memo`).
    * Set only on the draft move so the canvas can run governed generation in
-   * place ("Draft with Sentinel") instead of navigating away.
+   * place ("Draft with Ava") instead of navigating away.
    */
   draftArtifactCode?: string;
 }
@@ -59,8 +59,8 @@ const STAGE_DRAFT_CONFIG: Partial<Record<SourceStageKey, StageDraftConfig>> = {
     artifactCodes: ["d01_strategy_memo"],
     draftTitle: "Draft your Sourcing Strategy Memo",
     draftBody:
-      "Sentinel drafts from the event facts: why now, scope, value target, archetype, and rigor. You review before anything external uses it.",
-    draftPrimary: "Draft with Sentinel",
+      "Ava drafts from the event facts: why now, scope, value target, archetype, and rigor. You review before anything external uses it.",
+    draftPrimary: "Draft with Ava",
     draftedGateTitle: "Clear gates: sponsor sign-off, value target, archetype",
   },
   scope: {
@@ -78,7 +78,7 @@ const STAGE_DRAFT_CONFIG: Partial<Record<SourceStageKey, StageDraftConfig>> = {
     draftTitle: "Draft the RFP package",
     draftBody:
       "Prepare the vendor-facing requirements, response format, scoring rubric, and sign-off trail from the locked scope.",
-    draftPrimary: "Draft with Sentinel",
+    draftPrimary: "Draft with Ava",
     draftedGateTitle: "Sponsor sign-off required before release",
   },
   responses: {
@@ -110,7 +110,7 @@ const STAGE_DRAFT_CONFIG: Partial<Record<SourceStageKey, StageDraftConfig>> = {
     draftTitle: "Draft Round 2 questions for open P0 traps",
     draftBody:
       "Use the trap log and pricing variance to draft targeted BAFO questions for finalist vendors.",
-    draftPrimary: "Draft with Sentinel",
+    draftPrimary: "Draft with Ava",
     draftedGateTitle: "Clear BAFO gates before executive decision",
   },
   executive_decision: {
@@ -118,7 +118,7 @@ const STAGE_DRAFT_CONFIG: Partial<Record<SourceStageKey, StageDraftConfig>> = {
     draftTitle: "Draft the decision brief",
     draftBody:
       "Lead with the recommendation, savings, trade-off, and dissent before routing to executive approvers.",
-    draftPrimary: "Draft with Sentinel",
+    draftPrimary: "Draft with Ava",
     draftedGateTitle: "Route decision brief for co-approval",
   },
   selection: {
@@ -213,7 +213,7 @@ export function resolveStageNextMove({
       primaryLabel: config.draftPrimary,
       primaryTarget: "document",
       secondaryLabel:
-        config.draftPrimary === "Draft with Sentinel"
+        config.draftPrimary === "Draft with Ava"
           ? "Author manually"
           : "Open document workspace",
       secondaryTarget: "document",

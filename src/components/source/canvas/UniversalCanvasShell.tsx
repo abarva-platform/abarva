@@ -699,7 +699,7 @@ export function UniversalCanvasShell({
     }
   };
 
-  // "Draft with Sentinel" — run the SAME governed generation as the Workspace
+    // "Draft with Ava" — run the SAME governed generation as the Workspace
   // (persists the artifact + runs the quality gate), but IN PLACE and narrated
   // in the left dock, so the one Sentinel the user already sees does the work.
   // No navigation. When it lands, the gate criterion linked to the artifact
@@ -1325,8 +1325,8 @@ function SourceDeclutteredWorkspace({
   const [gateOpen, setGateOpen] = useState(false);
   // Route a next-move action by its target. advance → advance; gate → expand +
   // scroll to the inline gate; document/evidence → the Document Explorer. The
-  // draft move ("Draft with Sentinel") is handled separately at the call site —
-  // it runs governed generation IN PLACE via onDraftWithSentinel, not here.
+  // draft move ("Draft with Ava") is handled separately at the call site: it
+  // runs governed generation IN PLACE via onDraftWithSentinel, not here.
   const runNextMoveTarget = (target: StageNextMoveActionTarget) => {
     if (target === "advance") {
       onNextMoveAdvance();
