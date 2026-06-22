@@ -130,7 +130,6 @@ const fallbackResponse = {
   warnings: [],
   defers: [],
   cannotProceedReasons: [],
-  agentResponseParts: [],
   summary: "Deterministic fallback answer.",
 } satisfies SourceNexusApiStubResponse;
 
