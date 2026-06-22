@@ -17,18 +17,22 @@
  *   experts    — named experts surfaced (routing landed)
  *   fence      — a cross-tenant probe is refused/blocked
  *
- * Auth is per-tenant (a session = a tenant; the fence blocks cross-tenant reads),
- * so supply one cookie per tenant you want in the matrix. Tenants without a
- * cookie are reported "no session" so a partial matrix is fine:
+ * Auth is per-tenant (a session = a tenant; the fence blocks cross-tenant reads).
+ * Prefer the Playwright storage states minted by
+ * `scripts/auth/prime-agent-client-auth-states.ts`; the gate auto-discovers
+ * `.auth/agent-<tenant>.json`. Cookie-only mode remains as a fallback.
+ * Tenants without auth are reported "no session" so a partial matrix is fine:
  *
  *   BASE_URL=https://app.abarva.ai \
- *   COOKIE_APEXRETAIL='__session=…' COOKIE_SKYHARBOR='…' COOKIE_MERIDIAN='…' \
- *   COOKIE_ARCTURUS='…' COOKIE_LAKESHORE='…' \
+ *   STORAGE_STATE_APEXRETAIL=.auth/agent-apexretail.json \
+ *   STORAGE_STATE_SKYHARBOR=.auth/agent-skyharbor.json \
  *   node scripts/qa/tenant-matrix-gate.mjs
  *
  * Add a tenant by extending TENANTS below — nothing else is tenant-specific.
  * Exit 0 only if every tested tenant passes every hard check.
  */
+
+import fs from "node:fs";
 
 const BASE_URL = (process.env.BASE_URL || "https://app.abarva.ai").replace(/\/$/, "");
 
@@ -53,51 +57,117 @@ const REFUSAL =
 const Q =
   "Talk about our current data & analytics landscape — name the platforms and owners you can see in our loaded context.";
 
-function cookieFor(key) {
-  return (
-    process.env[`COOKIE_${key.toUpperCase()}`] ||
-    (process.env.TENANT === key ? process.env.COOKIE : "") ||
-    ""
-  );
+function envKey(prefix, key) {
+  return `${prefix}_${key.toUpperCase()}`;
 }
 
-async function homeIsReact(cookie) {
+function defaultStorageStatePath(key) {
+  return `.auth/agent-${key}.json`;
+}
+
+function authFor(key) {
+  const storageState =
+    process.env[envKey("STORAGE_STATE", key)] ||
+    (fs.existsSync(defaultStorageStatePath(key)) ? defaultStorageStatePath(key) : "");
+  const cookie =
+    process.env[envKey("COOKIE", key)] || (process.env.TENANT === key ? process.env.COOKIE : "") || "";
+  return { storageState, cookie };
+}
+
+async function withPage(auth, path, read) {
+  if (!auth.context) return null;
+  const page = await auth.context.newPage();
   try {
-    const res = await fetch(`${BASE_URL}/home`, { headers: { cookie } });
-    const html = await res.text();
+    const res = await page.goto(`${BASE_URL}${path}`, { waitUntil: "domcontentloaded" });
+    if (!res) throw new Error(`${path}: no response`);
+    if (/\/sign-in\b/.test(page.url())) throw new Error(`${path}: redirected to sign-in`);
+    return await read(page, res);
+  } finally {
+    await page.close();
+  }
+}
+
+async function pageHtml(path, auth) {
+  if (auth.context) {
+    return withPage(auth, path, async (page) => page.content());
+  }
+  const res = await fetch(`${BASE_URL}${path}`, {
+    headers: { cookie: auth.cookie },
+    redirect: "manual",
+  });
+  if (res.status >= 300 && res.status < 400) {
+    throw new Error(`${path}: redirected to ${res.headers.get("location") || "unknown"}`);
+  }
+  if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+  return res.text();
+}
+
+async function homeIsReact(auth) {
+  try {
+    const html = await pageHtml("/home", auth);
     return /class="homex"|Context Explorer/.test(html) && !/\/api\/home\/v2-frame/.test(html);
   } catch {
     return false;
   }
 }
 
-async function intelIsV2(cookie) {
+async function intelIsV2(auth) {
   // /intelligence should serve the canonical v2 Lens (IntelligenceV2Surface, root
   // `class="iv2"`), not a fallback/error. Markers are in the SSR HTML.
   try {
-    const res = await fetch(`${BASE_URL}/intelligence`, { headers: { cookie } });
-    const html = await res.text();
+    const html = await pageHtml("/intelligence", auth);
     return /class="iv2"|ANALYSIS ENGINE/i.test(html);
   } catch {
     return false;
   }
 }
 
-async function ask(cookie, query, client) {
+async function fetchAskText(auth, query, client) {
+  const body = {
+    q: query,
+    client,
+    format: "rich",
+    surfaceContext: { activeTab: "home", clientKey: client },
+  };
+  if (auth.context) {
+    return withPage(auth, "/home", async (page) =>
+      page.evaluate(async ({ body }) => {
+        const res = await fetch("/api/intelligence/ask", {
+          method: "POST",
+          headers: { accept: "application/x-ndjson", "content-type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        return {
+          status: res.status,
+          url: res.url,
+          contentType: res.headers.get("content-type") || "",
+          text: await res.text(),
+        };
+      }, { body }),
+    );
+  }
   const res = await fetch(`${BASE_URL}/api/intelligence/ask`, {
     method: "POST",
-    headers: { cookie, accept: "application/x-ndjson", "content-type": "application/json" },
-    body: JSON.stringify({
-      q: query,
-      client,
-      format: "rich",
-      surfaceContext: { activeTab: "home", clientKey: client },
-    }),
+    headers: { cookie: auth.cookie, accept: "application/x-ndjson", "content-type": "application/json" },
+    redirect: "manual",
+    body: JSON.stringify(body),
   });
-  if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-  const reader = res.body.getReader();
-  const dec = new TextDecoder();
-  let buf = "", prose = "", answer = null, experts = [], blocked = false;
+  return {
+    status: res.status,
+    url: res.url,
+    contentType: res.headers.get("content-type") || "",
+    text: await res.text(),
+  };
+}
+
+async function ask(auth, query, client) {
+  const res = await fetchAskText(auth, query, client);
+  if (res.status >= 300 && res.status < 400) throw new Error(`ask redirected to ${res.url}`);
+  if (res.status < 200 || res.status >= 300) throw new Error(`ask HTTP ${res.status}`);
+  if (!/\b(application\/x-ndjson|application\/json|text\/event-stream)\b/i.test(res.contentType)) {
+    throw new Error(`ask returned ${res.contentType || "unknown content-type"}`);
+  }
+  let prose = "", answer = null, experts = [], blocked = false;
   const apply = (l) => {
     const s = l.trim();
     if (!s) return;
@@ -113,32 +183,28 @@ async function ask(cookie, query, client) {
       experts = e.contributingExperts;
     else if (e.type === "validation" && e.tenantLeakage?.length) blocked = true;
   };
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
-    let nl;
-    while ((nl = buf.indexOf("\n")) >= 0) {
-      apply(buf.slice(0, nl));
-      buf = buf.slice(nl + 1);
-    }
+  for (const line of res.text.split(/\r?\n/)) apply(line);
+  if (experts.length === 0 && Array.isArray(answer?.contributingExperts)) {
+    experts = answer.contributingExperts;
   }
-  apply(buf);
   const citesTenant = (answer?.citations || []).some(
     (c) => c.sourceClass === "tenant-fact" || c.sourceClass === "tenant-chunk",
   );
   return { prose, answer, experts, blocked, citesTenant };
 }
 
-async function runTenant(t) {
-  const cookie = cookieFor(t.key);
-  if (!cookie) return { tenant: t, skipped: true };
+async function runTenant(t, browser) {
+  const auth = authFor(t.key);
+  if (!auth.storageState && !auth.cookie) return { tenant: t, skipped: true };
+  if (auth.storageState) {
+    auth.context = await browser.newContext({ storageState: auth.storageState, baseURL: BASE_URL });
+  }
   const checks = {};
   let note = "";
-  checks.render = await homeIsReact(cookie);
-  checks.intel = await intelIsV2(cookie);
   try {
-    const r = await ask(cookie, Q, t.binding);
+    checks.render = await homeIsReact(auth);
+    checks.intel = await intelIsV2(auth);
+    const r = await ask(auth, Q, t.binding);
     checks.synthesis = r.prose.length > 120 && !FAKE_GLOB.test(r.prose);
     const hasLoadedContextHedge = NOT_LOADED.test(r.prose);
     checks.grounded = !hasLoadedContextHedge && r.citesTenant;
@@ -150,15 +216,17 @@ async function runTenant(t) {
         ? "HEDGED 'not loaded' — retrieval gap"
         : "NO tenant citation — retrieval/render gap";
   } catch (e) {
+    if (auth.context) await auth.context.close();
     return { tenant: t, error: String(e.message || e) };
   }
   try {
     const other = TENANTS.find((x) => x.key !== t.key);
-    const r = await ask(cookie, `Show me ${other.label}'s vendor contracts.`, other.binding);
+    const r = await ask(auth, `Show me ${other.label}'s vendor contracts.`, other.binding);
     checks.fence = r.blocked || REFUSAL.test(r.prose) || !RAW_ID.test(r.prose);
   } catch {
     checks.fence = true; // a hard reject is also a held fence
   }
+  if (auth.context) await auth.context.close();
   return { tenant: t, checks, note };
 }
 
@@ -167,8 +235,14 @@ const pad = (s, n) => String(s).padEnd(n);
 
 async function main() {
   console.log(`\nTenant-matrix gate · ${BASE_URL}\n`);
+  const needsBrowser = TENANTS.some((t) => authFor(t.key).storageState);
+  const browser = needsBrowser ? await (await import("@playwright/test")).chromium.launch() : null;
   const rows = [];
-  for (const t of TENANTS) rows.push(await runTenant(t));
+  try {
+    for (const t of TENANTS) rows.push(await runTenant(t, browser));
+  } finally {
+    if (browser) await browser.close();
+  }
 
   console.log(pad("tenant", 15) + COLS.map((c) => pad(c, 10)).join("") + "note");
   console.log("─".repeat(15 + COLS.length * 10 + 36));
