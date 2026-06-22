@@ -79,26 +79,42 @@ export function validateDeliverablePlan(
   const need = (cond: boolean, message: string, level: "error" | "warn" = "error") => {
     if (!cond) issues.push({ level, message });
   };
+  if (!plan || typeof plan !== "object") {
+    return [{ level: "error", message: "Deliverable plan is missing." }];
+  }
 
-  need(plan.storyline.trim().split(/\s+/).length >= 6, "Storyline is not a real one-sentence spine.");
-  need(plan.currentStateInterpretation.trim().length > 0, "Current state is not interpreted.");
-  need(plan.targetStateHypothesis.trim().length > 0, "No target-state hypothesis.");
-  need(plan.requiredDecisions.length > 0, "No required decisions — the artifact asks for no decision.");
-  need(plan.narrativeSequence.length >= 3, "Story spine has fewer than 3 beats.");
-  need(plan.requiredExhibits.length > 0, "No planned exhibits.");
-  need(plan.readerTakeaway.trim().length > 0, "No reader takeaway.");
+  const text = (value: unknown): string =>
+    typeof value === "string" ? value.trim() : "";
+  const requiredDecisions = Array.isArray(plan.requiredDecisions)
+    ? plan.requiredDecisions
+    : [];
+  const narrativeSequence = Array.isArray(plan.narrativeSequence)
+    ? plan.narrativeSequence
+    : [];
+  const requiredExhibits = Array.isArray(plan.requiredExhibits)
+    ? plan.requiredExhibits
+    : [];
+  const majorGaps = Array.isArray(plan.majorGaps) ? plan.majorGaps : [];
+
+  need(text(plan.storyline).split(/\s+/).filter(Boolean).length >= 6, "Storyline is not a real one-sentence spine.");
+  need(text(plan.currentStateInterpretation).length > 0, "Current state is not interpreted.");
+  need(text(plan.targetStateHypothesis).length > 0, "No target-state hypothesis.");
+  need(requiredDecisions.length > 0, "No required decisions — the artifact asks for no decision.");
+  need(narrativeSequence.length >= 3, "Story spine has fewer than 3 beats.");
+  need(requiredExhibits.length > 0, "No planned exhibits.");
+  need(text(plan.readerTakeaway).length > 0, "No reader takeaway.");
 
   // Every planned exhibit must carry purpose + so-what (no decorative visuals).
-  for (const ex of plan.requiredExhibits) {
-    need(!!ex.purpose?.trim(), `Exhibit ${ex.exhibit} has no purpose.`);
-    need(!!ex.soWhat?.trim(), `Exhibit ${ex.exhibit} has no so-what interpretation.`);
+  for (const ex of requiredExhibits) {
+    need(!!text(ex.purpose), `Exhibit ${ex.exhibit} has no purpose.`);
+    need(!!text(ex.soWhat), `Exhibit ${ex.exhibit} has no so-what interpretation.`);
   }
 
   if (opts.requireGapChain) {
-    need(plan.majorGaps.length > 0, "Architecture plan has no gaps — current→gap→target chain missing.");
-    for (const g of plan.majorGaps) {
+    need(majorGaps.length > 0, "Architecture plan has no gaps — current→gap→target chain missing.");
+    for (const g of majorGaps) {
       need(
-        !!g.observation?.trim() && !!g.gap?.trim() && !!g.designImplication?.trim(),
+        !!text(g.observation) && !!text(g.gap) && !!text(g.designImplication),
         `Gap ${g.id} is missing observation / gap / designImplication (broken reasoning chain).`,
       );
     }
