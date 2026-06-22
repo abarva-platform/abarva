@@ -45,7 +45,7 @@ export interface LiveAnswerCaseResult {
 const HEDGE_CUE =
   /\b(typically|tends to|often|range|depends on|varies|uncertain|directional|order of magnitude|rule of thumb|planning range|can|rarely|realistically|pressure-test|failure mode|failure modes|pattern i'?ve seen|most of them|most health systems|well enough|likely|front-loaded|predictable)\b/i;
 const NEXT_MOVE_CUE =
-  /\b(next step|recommend|start by|pilot|run a|stand up|prioritize|sequence|validate|baseline|workshop|assess|diagnostic|pull(?:s)? the data|pulled data|pull that data|reporting workbench|reporting environment|analytics workbench|source system|focus first|faster win|decision-grade|first thing to fix|first (retirement|restructure)|retirement or restructure candidates|before we get to tactics|in order|triage|what i can give you)\b/i;
+  /\b(next step|next move|recommend|start by|pilot|run a|stand up|prioritize|sequence|validate|baseline|workshop|assess|diagnostic|can run right now|pull(?:s)? the data|pulled data|pull that data|reporting workbench|reporting environment|analytics workbench|source system|focus first|faster win|decision-grade|first thing to fix|first (retirement|restructure)|retirement or restructure candidates|before we get to tactics|in order|triage|what i can give you|what'?s actually useful)\b/i;
 const STUCK_POINT_CUE =
   /\b(odds|adoption|roi clarity|stuck|stall|stalls|stall points|honest odds|probability of success|where this stalls|failure mode|failure modes)\b/i;
 const REFUSE_CROSS_TENANT_CUE =

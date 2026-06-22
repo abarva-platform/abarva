@@ -88,6 +88,32 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.charts[0]?.citationIds).toEqual(["c1"]);
   });
 
+  it("creates a chart from percentage figures when currency figures are insufficient", () => {
+    const exhibits = buildStructuredExhibits({
+      routing,
+      sources: [
+        {
+          id: "surface-denial-rates",
+          type: "SURFACE",
+          name: "Revenue cycle denial rate support",
+          detail:
+            "Medical necessity denial rate is 11.8%. Prior authorization denial rate is 8.4%. Eligibility denial rate is 4.9%.",
+          confidence: 0.92,
+        },
+      ],
+      prose:
+        "Medical necessity is the highest-priority investment target because the rate and AR drag are both worse than the other categories.",
+    });
+
+    expect(exhibits.charts[0]?.kind).toBe("bar");
+    const values = (exhibits.charts[0]?.data as Array<{ value: number }>).map(
+      (item) => item.value,
+    );
+    expect(values[0]).toBeCloseTo(0.118);
+    expect(values[1]).toBeCloseTo(0.084);
+    expect(values[2]).toBeCloseTo(0.049);
+  });
+
   it("renders a truthful evidence-required table when a table is requested without enough cited rows", () => {
     const exhibits = buildStructuredExhibits({
       routing: { ...routing, outputShape: "table" },

@@ -338,6 +338,27 @@ describe("live-answer bank", () => {
     expect(pharmacy.deterministicPass).toBe(true);
   });
 
+  it("recognizes reporting pulls a clinical team can run now as a real next move", () => {
+    const result = checkLiveAnswerCase(
+      {
+        id: "regression-clinical-can-run-now",
+        query: "Compare BPA alerts by override rate.",
+        expectedExpertId:
+          "xp.healthcare-provider.clinical-process-transformation",
+        expectedBehaviors: ["output_shape_table", "name_real_next_move"],
+        notes:
+          "Regression for deployed Ava wording naming reporting pulls a team can run now.",
+      },
+      {
+        prose:
+          "Three pulls your clinical informatics team can run right now: BPA fire rate and override rate by alert type, in-basket message volume by specialty, and note-quality audit results by workflow.",
+        hasTable: true,
+      },
+    );
+
+    expect(result.deterministicPass).toBe(true);
+  });
+
   it("recognizes clinical retirement/restructure candidate wording", () => {
     const result = checkLiveAnswerCase(
       {
