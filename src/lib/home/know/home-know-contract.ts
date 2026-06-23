@@ -49,18 +49,57 @@ export interface HomeKnowTable {
 }
 
 export type HomeKnowChartKind = "cost-stack" | "bar";
+export type HomeKnowChartType =
+  | "bar"
+  | "stacked_bar"
+  | "line"
+  | "waterfall"
+  | "cost_stack";
 
 export interface HomeKnowChart {
   id: string;
   title: string;
   kind: HomeKnowChartKind;
+  type: HomeKnowChartType;
   dimensionId: string;
   data: Array<{
     label: string;
     value: number;
     color?: string;
   }>;
+  sourceIds: string[];
   citationIds: string[];
+  caveats: string[];
+  status: "tenant-fact" | "pattern-planning" | "unavailable";
+}
+
+export interface HomeKnowGraphNode {
+  id: string;
+  label: string;
+  type: string;
+}
+
+export interface HomeKnowGraphEdge {
+  from: string;
+  to: string;
+  label: string;
+  type: string;
+  confidence?: "low" | "medium" | "high";
+}
+
+export interface HomeKnowGraph {
+  id: string;
+  title: string;
+  nodes: HomeKnowGraphNode[];
+  edges: HomeKnowGraphEdge[];
+  nodeTypes: string[];
+  edgeTypes: string[];
+  sourceIds: string[];
+  citationIds: string[];
+  confidence: "low" | "medium" | "high";
+  gaps: string[];
+  inferredEdges: boolean;
+  warning?: string;
 }
 
 export interface HomeKnowGap {
@@ -120,6 +159,7 @@ export interface HomeKnowResponse {
   facts: HomeKnowFact[];
   tables: HomeKnowTable[];
   charts: HomeKnowChart[];
+  graphs: HomeKnowGraph[];
   gaps: HomeKnowGap[];
   conflicts: HomeKnowConflict[];
   citations: HomeKnowCitation[];
