@@ -9,13 +9,31 @@ export interface GraphLoadResult {
 }
 
 interface RawGraphEdge {
+  relationship_key?: string;
+  relationship_type?: string;
+  from_record_key?: string;
+  to_record_key?: string;
+  edge_id?: string;
+  type?: string;
+  relationship?: string;
+  from?: string;
+  to?: string;
+  domain?: string;
+  confidence?: number | string;
+  evidence?: string;
+  source_system?: string;
+  source_file?: string;
+  properties?: unknown;
+}
+
+interface NormalizedGraphEdge {
   relationship_key: string;
   relationship_type: string;
   from_record_key: string;
   to_record_key: string;
   source_system?: string;
   source_file?: string;
-  properties?: unknown;
+  properties: Record<string, unknown>;
 }
 
 const PAYLOAD_ID_FIELDS = [
@@ -78,6 +96,47 @@ function stableUuid(parts: string[]): string {
   ].join("-");
 }
 
+function stringValue(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function normalizeGraphEdge(edge: RawGraphEdge): NormalizedGraphEdge {
+  const relationshipKey = stringValue(edge.relationship_key) ?? stringValue(edge.edge_id);
+  const relationshipType =
+    stringValue(edge.relationship_type) ??
+    stringValue(edge.relationship) ??
+    stringValue(edge.type);
+  const fromRecordKey = stringValue(edge.from_record_key) ?? stringValue(edge.from);
+  const toRecordKey = stringValue(edge.to_record_key) ?? stringValue(edge.to);
+
+  if (!relationshipKey || !relationshipType || !fromRecordKey || !toRecordKey) {
+    return {
+      relationship_key: relationshipKey ?? "",
+      relationship_type: relationshipType ?? "",
+      from_record_key: fromRecordKey ?? "",
+      to_record_key: toRecordKey ?? "",
+      source_system: edge.source_system,
+      source_file: edge.source_file,
+      properties: parseProperties(edge.properties),
+    };
+  }
+
+  return {
+    relationship_key: relationshipKey,
+    relationship_type: relationshipType,
+    from_record_key: fromRecordKey,
+    to_record_key: toRecordKey,
+    source_system: edge.source_system,
+    source_file: edge.source_file,
+    properties: {
+      ...parseProperties(edge.properties),
+      ...(edge.domain === undefined ? {} : { domain: edge.domain }),
+      ...(edge.confidence === undefined ? {} : { confidence: edge.confidence }),
+      ...(edge.evidence === undefined ? {} : { evidence: edge.evidence }),
+    },
+  };
+}
+
 async function buildRecordLookup(
   db: PostgresCompatClient,
   tenantKey: string,
@@ -132,10 +191,25 @@ export async function loadJsonlGraphEdges(input: {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => JSON.parse(line) as RawGraphEdge);
+    .map((line) => normalizeGraphEdge(JSON.parse(line) as RawGraphEdge));
 
   for (let index = 0; index < rows.length; index++) {
     const edge = rows[index]!;
+    if (
+      !edge.relationship_key ||
+      !edge.relationship_type ||
+      !edge.from_record_key ||
+      !edge.to_record_key
+    ) {
+      fkResolutionErrors++;
+      console.warn("[jsonl-graph-loader] skipped malformed edge", {
+        tenantKey: input.tenantKey,
+        relationshipKey: edge.relationship_key,
+        fromRecordKey: edge.from_record_key,
+        toRecordKey: edge.to_record_key,
+      });
+      continue;
+    }
     const fromRecordId = lookup.get(edge.from_record_key);
     const toRecordId = lookup.get(edge.to_record_key);
     if (!fromRecordId || !toRecordId) {
@@ -171,7 +245,7 @@ export async function loadJsonlGraphEdges(input: {
           source_sheet: null,
           source_row_number: index + 1,
           lifecycle_state: "active",
-          properties: parseProperties(edge.properties),
+          properties: edge.properties,
         },
         { onConflict: "tenant_key,relationship_key" },
       )
