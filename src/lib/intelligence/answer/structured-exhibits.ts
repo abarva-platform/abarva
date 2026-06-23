@@ -4,6 +4,7 @@ import type {
   AgentAnswer,
   AnswerChart,
   AnswerCitation,
+  AnswerGraph,
   AnswerTable,
   AnswerTableColumn,
 } from "@/lib/intelligence/answer/agent-answer";
@@ -21,6 +22,7 @@ export interface StructuredExhibits {
   citations: AnswerCitation[];
   tables: AnswerTable[];
   charts: AnswerChart[];
+  graphs: AnswerGraph[];
 }
 
 function sourceClassForAskSource(
@@ -471,6 +473,68 @@ function chartFromExtractedTable(
   };
 }
 
+function findColumnByLabel(
+  table: AnswerTable,
+  pattern: RegExp,
+): AnswerTableColumn | undefined {
+  return table.columns.find((column) => pattern.test(column.label));
+}
+
+function textForCell(value: string | number | null | undefined): string {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
+
+function graphFromExtractedTable(
+  table: AnswerTable,
+  citationIds: string[],
+): AnswerGraph | null {
+  const fromColumn =
+    findColumnByLabel(table, /\b(from|source|upstream|system|application|platform|vendor|capability|initiative)\b/i) ??
+    table.columns.find((column) => column.format === "text");
+  const toColumn =
+    findColumnByLabel(table, /\b(to|target|downstream|depends?\s*on|dependency|consumer|owner|function|outcome)\b/i) ??
+    table.columns.find(
+      (column) => column.key !== fromColumn?.key && column.format === "text",
+    );
+  if (!fromColumn || !toColumn || fromColumn.key === toColumn.key) return null;
+
+  const relationshipColumn = findColumnByLabel(
+    table,
+    /\b(relationship|edge|link|dependency|risk|signal|evidence)\b/i,
+  );
+  const nodes = new Map<string, { id: string; label: string }>();
+  const edges: AnswerGraph["edges"] = [];
+
+  for (const row of table.rows) {
+    const from = textForCell(row[fromColumn.key]);
+    const to = textForCell(row[toColumn.key]);
+    if (!from || !to || from === to) continue;
+    const fromId = `n${nodes.size + 1}`;
+    if (!nodes.has(from)) nodes.set(from, { id: fromId, label: from });
+    const toId = `n${nodes.size + 1}`;
+    if (!nodes.has(to)) nodes.set(to, { id: toId, label: to });
+    const source = nodes.get(from);
+    const target = nodes.get(to);
+    if (!source || !target) continue;
+    edges.push({
+      from: source.id,
+      to: target.id,
+      label: relationshipColumn
+        ? textForCell(row[relationshipColumn.key]).slice(0, 80)
+        : undefined,
+    });
+  }
+
+  if (nodes.size < 2 || edges.length < 1) return null;
+  return {
+    id: "answer-relationship-graph-1",
+    title: table.title ?? "Relationship Graph",
+    nodes: [...nodes.values()],
+    edges: edges.slice(0, 12),
+    citationIds,
+  };
+}
+
 export function buildStructuredExhibits(
   input: StructuredExhibitsInput,
 ): StructuredExhibits {
@@ -485,19 +549,26 @@ export function buildStructuredExhibits(
   );
   const tables: AnswerTable[] = [];
   const charts: AnswerChart[] = [];
+  const graphs: AnswerGraph[] = [];
   tables.push(...markdown.tables);
   tables.push(...inline.tables);
 
   if (
     tables.length > 0 &&
-    (input.routing.outputShape === "chart" ||
-      input.routing.outputShape === "graph")
+    input.routing.outputShape === "chart"
   ) {
     const chart = chartFromExtractedTable(
       tables[0],
       citations.map((citation) => citation.id),
     );
     if (chart) charts.push(chart);
+  }
+  if (tables.length > 0 && input.routing.outputShape === "graph") {
+    const graph = graphFromExtractedTable(
+      tables[0],
+      citations.map((citation) => citation.id),
+    );
+    if (graph) graphs.push(graph);
   }
 
   if (tables.length === 0 && (
@@ -517,6 +588,7 @@ export function buildStructuredExhibits(
     citations,
     tables,
     charts,
+    graphs,
   };
 }
 

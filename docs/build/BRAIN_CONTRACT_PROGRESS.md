@@ -36,6 +36,7 @@ overall + the exhibit categories here, and link the HTML report.
 | Run (date · SHA) | overall | table | chart | graph | grounded | report |
 |---|--:|--:|--:|--:|--:|---|
 | 2026-06-23 · `803f34088` · deployed crawl after #3886/#3888 | 147/290 | 45/50 | 4/50 | 0/40 | 63/100 data+strategy | `out/reality-crawl/report.html` · 15 signed-in screenshots captured under `out/reality-crawl/shots/` |
+| 2026-06-23 · `f0ae3083` · Apex smoke before visual-graph candidate | 31/58 | 10/10 | 0/10 | 0/8 | 12/20 data+strategy | `out/reality-crawl-smoke-apex/summary.json` · repaired harness captured real deployed answers |
 | 2026-06-23 · `036693168` · tenant matrix only | 49/50 current columns | — | — | — | 5/5 | report blocked: `reality-crawl.mjs` + bank are open in PR #3881, not on `origin/main` |
 
 ---
@@ -44,6 +45,15 @@ overall + the exhibit categories here, and link the HTML report.
 
 Each landed step: what changed, the root cause it fixed, the PR, the gate/crawl delta, the report link.
 
+- 2026-06-23 · Visual/graph contract candidate (PR pending): repairs `reality-crawl.mjs` to use the same signed-in
+  Playwright storage-state session and `tabId` path as `tenant-matrix-gate.mjs`, adds a timeout so one stuck answer
+  cannot hang the run, strengthens rich visual prompting so chart/graph questions must emit valid Markdown data tables
+  when evidence supports them, converts relationship tables into typed `AgentAnswer.graphs`, and renders graphs in the
+  canonical `AgentAnswerRenderer`. Root cause: the matrix gate proved final rendered shape, but the deep crawl first
+  produced false empty answers via cookie-only auth, then showed the live visual path still passed tables while chart
+  and graph categories were 0 for Apex. Gate/crawl delta: candidate not marked green until deployed and all five tenants
+  pass matrix plus reality crawl/report. Release record:
+  `docs/releases/records/2026-06-23-brain-contract-visual-graph-contract.md`.
 - 2026-06-23 · Final-answer proof alignment candidate ([#3891](https://github.com/abarva-platform/abarva/pull/3891)): strips orphan pipe-table
   fragments from final `AgentAnswer.prose` and updates the tenant matrix plus reality crawl to
   score the final `AgentAnswer` that Home/Intelligence render, not transient stream text. Root

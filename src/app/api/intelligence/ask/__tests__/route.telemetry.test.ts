@@ -358,6 +358,58 @@ describe('POST /api/intelligence/ask telemetry', () => {
     ]);
   });
 
+  it('emits typed relationship graphs instead of dropping graph-shaped answers', async () => {
+    jest.mocked(askIntelligence).mockImplementationOnce(async function* () {
+      yield {
+        type: 'sources',
+        sources: [
+          {
+            type: 'TENANT',
+            id: 'APX-GRAPH-001',
+            name: 'Apex dependency ledger',
+            detail:
+              'Retail Lakehouse, POS, and forecasting platform dependency rows.',
+          },
+        ],
+      };
+      yield {
+        type: 'delta',
+        text:
+          'Dependency graph | From | Relationship | To | Evidence | |---|---|---|---| | Retail Lakehouse | feeds | Demand Forecasting | Inventory history | | Toshiba POS | sends transactions to | Retail Lakehouse | Store sales feed | Next move: validate the integration owner.',
+      };
+      yield { type: 'done' };
+    });
+
+    const response = await POST(
+      makeRequest({
+        q: 'Map the upstream and downstream dependencies as a graph',
+        client: 'apexretail',
+      }) as never,
+    );
+    const text = await readResponseText(response);
+    const events = text
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const agentAnswer = events.find(
+      (event) => event.type === 'agent-answer',
+    )?.answer;
+
+    expect(agentAnswer).toBeTruthy();
+    expect(agentAnswer.graphs).toEqual([
+      expect.objectContaining({
+        id: 'answer-relationship-graph-1',
+        nodes: expect.arrayContaining([
+          expect.objectContaining({ label: 'Retail Lakehouse' }),
+          expect.objectContaining({ label: 'Demand Forecasting' }),
+        ]),
+        edges: expect.arrayContaining([
+          expect.objectContaining({ label: 'feeds' }),
+        ]),
+      }),
+    ]);
+  });
+
   it.each(tenantAskCases)(
     'routes streamed AgentAnswer expert chips for $displayName without vertical leakage',
     async ({

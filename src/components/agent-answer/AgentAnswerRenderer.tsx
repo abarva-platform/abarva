@@ -8,6 +8,7 @@ import type {
   AgentAnswer,
   AnswerChart,
   AnswerCitation,
+  AnswerGraph,
   AnswerTable,
   AnswerTableColumn,
 } from "@/lib/intelligence/answer/agent-answer";
@@ -22,12 +23,18 @@ const CSS = `
 .agentAnswer .aaProse{font-size:14px;line-height:1.65}
 .agentAnswer .aaSection{display:grid;gap:12px}
 .agentAnswer .aaTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--aa-muted);font-weight:700}
-.agentAnswer .aaChart,.agentAnswer .aaTableWrap{border:1px solid var(--aa-line);border-radius:8px;background:var(--aa-paper);overflow:hidden}
+.agentAnswer .aaChart,.agentAnswer .aaGraph,.agentAnswer .aaTableWrap{border:1px solid var(--aa-line);border-radius:8px;background:var(--aa-paper);overflow:hidden}
 .agentAnswer .aaChartHead,.agentAnswer .aaTableHead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--aa-line);background:var(--aa-soft)}
-.agentAnswer .aaChartTitle,.agentAnswer .aaTableTitle{font-size:14px;font-weight:700}
+.agentAnswer .aaGraphHead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--aa-line);background:var(--aa-soft)}
+.agentAnswer .aaChartTitle,.agentAnswer .aaGraphTitle,.agentAnswer .aaTableTitle{font-size:14px;font-weight:700}
 .agentAnswer .aaBuilder{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;color:var(--aa-faint)}
 .agentAnswer .aaSvg{padding:12px;background:#fff}
 .agentAnswer .aaSvg svg{display:block;width:100%;height:auto}
+.agentAnswer .aaGraphSvg{display:block;width:100%;height:auto;background:#fff}
+.agentAnswer .aaGraphNode{fill:#eef7f0;stroke:#cfe8d7;stroke-width:1.5}
+.agentAnswer .aaGraphEdge{stroke:#77838f;stroke-width:1.6;marker-end:url(#aaArrow)}
+.agentAnswer .aaGraphLabel{font-size:11px;fill:#111827;font-weight:650}
+.agentAnswer .aaGraphEdgeLabel{font-size:10px;fill:#6b7280}
 .agentAnswer .aaFallback{padding:14px;color:var(--aa-muted);font-size:13px}
 .agentAnswer table{width:100%;border-collapse:collapse;font-size:13px}
 .agentAnswer th,.agentAnswer td{padding:10px 12px;border-bottom:1px solid var(--aa-line);vertical-align:top}
@@ -251,9 +258,92 @@ export function AnswerChartRenderer({
   );
 }
 
+export function AnswerGraphRenderer({
+  graph,
+  citations = [],
+}: {
+  graph: AnswerGraph;
+  citations?: AnswerCitation[];
+}) {
+  const graphCitations = citationsFor(graph.citationIds, citations);
+  const nodes = graph.nodes.slice(0, 10);
+  const nodeById = new Map(nodes.map((node, index) => [node.id, { node, index }]));
+  const width = 720;
+  const height = Math.max(260, Math.ceil(nodes.length / 2) * 84 + 48);
+  const positions = new Map(
+    nodes.map((node, index) => {
+      const column = index % 2;
+      const row = Math.floor(index / 2);
+      return [
+        node.id,
+        {
+          x: column === 0 ? 160 : 560,
+          y: 58 + row * 84,
+        },
+      ] as const;
+    }),
+  );
+  const edges = graph.edges
+    .filter((edge) => nodeById.has(edge.from) && nodeById.has(edge.to))
+    .slice(0, 12);
+  return (
+    <div className="aaGraph">
+      <div className="aaGraphHead">
+        <div className="aaGraphTitle">{graph.title ?? "Relationship graph"}</div>
+        <div className="aaBuilder">{nodes.length} nodes · {edges.length} links</div>
+      </div>
+      <svg
+        className="aaGraphSvg"
+        role="img"
+        aria-label={graph.title ?? "Relationship graph"}
+        viewBox={`0 0 ${width} ${height}`}
+      >
+        <defs>
+          <marker id="aaArrow" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4">
+            <path d="M0,0 L8,4 L0,8 Z" fill="#77838f" />
+          </marker>
+        </defs>
+        {edges.map((edge, index) => {
+          const from = positions.get(edge.from);
+          const to = positions.get(edge.to);
+          if (!from || !to) return null;
+          const midX = (from.x + to.x) / 2;
+          const midY = (from.y + to.y) / 2 - 8;
+          return (
+            <g key={`${edge.from}-${edge.to}-${index}`}>
+              <line className="aaGraphEdge" x1={from.x + 92} x2={to.x - 92} y1={from.y} y2={to.y} />
+              {edge.label ? (
+                <text className="aaGraphEdgeLabel" textAnchor="middle" x={midX} y={midY}>
+                  {edge.label.length > 44 ? `${edge.label.slice(0, 41)}...` : edge.label}
+                </text>
+              ) : null}
+            </g>
+          );
+        })}
+        {nodes.map((node) => {
+          const position = positions.get(node.id);
+          if (!position) return null;
+          return (
+            <g key={node.id}>
+              <rect className="aaGraphNode" height="42" rx="8" width="184" x={position.x - 92} y={position.y - 21} />
+              <text className="aaGraphLabel" textAnchor="middle" x={position.x} y={position.y + 4}>
+                {node.label.length > 25 ? `${node.label.slice(0, 22)}...` : node.label}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <CitationChips citations={graphCitations} />
+    </div>
+  );
+}
+
 export function AgentAnswerRenderer({ answer }: { answer: AgentAnswer }) {
   const displayAnswer = sanitizeAgentAnswerForRender(answer);
-  const hasStructured = displayAnswer.charts.length > 0 || displayAnswer.tables.length > 0;
+  const hasStructured =
+    displayAnswer.charts.length > 0 ||
+    displayAnswer.graphs.length > 0 ||
+    displayAnswer.tables.length > 0;
   const hasAttribution =
     displayAnswer.contributingExperts.length > 0 || displayAnswer.citations.length > 0;
   return (
@@ -285,6 +375,15 @@ export function AgentAnswerRenderer({ answer }: { answer: AgentAnswer }) {
           <div className="aaTitle">Charts</div>
           {displayAnswer.charts.map((chart) => (
             <AnswerChartRenderer chart={chart} citations={displayAnswer.citations} key={chart.id} />
+          ))}
+        </div>
+      ) : null}
+
+      {displayAnswer.graphs.length > 0 ? (
+        <div className="aaSection">
+          <div className="aaTitle">Graphs</div>
+          {displayAnswer.graphs.map((graph) => (
+            <AnswerGraphRenderer graph={graph} citations={displayAnswer.citations} key={graph.id} />
           ))}
         </div>
       ) : null}
