@@ -33,7 +33,7 @@ Specific clients — `apexretail`, `arcturus` (First Capital), `skyharbor`, `mer
 ## QA / Validation
 
 - **Apex proven live signed-in**: React `/home` Context Explorer, synthesized honest answer (no `Also:` row-dump, no raw IDs), correct retail experts, no scraped chart.
-- The other four each have **8 context dimensions + signals + corpus** in the binding (verified), so the explorer renders populated; per-tenant signed-in confirmation is one command each via `scripts/qa/home-live-gate.mjs` (`TENANT=arcturus|skyharbor|meridian|lakeshore`).
+- Superseded by `2026-06-22-home-intelligence-19-dimension-binding`: this record originally described **8 context roll-up buckets** in the binding. That was not the canonical product dimension roster. Home and Intelligence must expose the 19 enterprise context dimensions; per-tenant signed-in confirmation is one command each via `scripts/qa/home-live-gate.mjs` / `scripts/qa/tenant-matrix-gate.mjs`.
 - Feature-flag registry tests pass. Status: **passed** (Apex live + all-5 binding verified) / pending (other-4 signed-in spot-check).
 
 ## Rollout Plan
