@@ -1464,6 +1464,9 @@ function homeKnowProse(input: {
   hasChart: boolean;
 }): string {
   if (!input.hasData) {
+    if (input.packet.coverage.length > 0 || input.hasGaps) {
+      return "Read: Home found related tenant context, but the exact field family needed to answer this request did not return usable rows. Evidence: the response is grounded in the tenant read-model coverage and gap metadata below; Home is returning the specific missing evidence path rather than filling the gap with generated assumptions.";
+    }
     return "I do not see that in the loaded data.";
   }
   const orgCount = input.packet.org.length;
