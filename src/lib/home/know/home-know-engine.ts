@@ -163,27 +163,20 @@ export function classifyHomeKnowIntent(question: string): HomeKnowIntent {
 }
 
 export async function fetchHomeKnowPacket(tenantKey: string): Promise<HomeKnowPacket> {
-  const [
-    coverage,
-    org,
-    applications,
-    vendors,
-    budgets,
-    relationships,
-    records,
-    gaps,
-    conflicts,
-  ] = await Promise.all([
-    fetchRows<HomeDimensionCoverageRow>("mv_home_dimension_coverage_view", tenantKey),
-    fetchRows<HomeItOrgViewRow>("mv_home_it_org_view", tenantKey),
-    fetchRows<HomeApplicationOwnershipViewRow>("mv_home_application_ownership_view", tenantKey),
-    fetchRows<HomeVendorLandscapeViewRow>("mv_home_vendor_landscape_view", tenantKey),
-    fetchRows<HomeBudgetPortfolioViewRow>("mv_home_budget_by_portfolio_view", tenantKey),
-    fetchRows<HomeRelationshipRow>("enterprise_context_relationships", tenantKey, 10000),
-    fetchRows<HomeContextRecordRow>("enterprise_context_records", tenantKey, 10000),
-    fetchRows<HomeGapRegisterViewRow>("mv_home_gap_register_view", tenantKey),
-    fetchRows<HomeConflictRegisterViewRow>("mv_home_conflict_register_view", tenantKey),
-  ]);
+  // Home KNOW is a hot signed-in path. The views are small, but the reality
+  // crawl runs multiple asks concurrently; parallelizing every view fetch per
+  // ask can spike the ACA/Postgres connection pool and produce blank answers.
+  // Keep the packet deterministic and low-pressure until this is replaced by a
+  // single materialized Home packet query.
+  const coverage = await fetchRows<HomeDimensionCoverageRow>("mv_home_dimension_coverage_view", tenantKey);
+  const org = await fetchRows<HomeItOrgViewRow>("mv_home_it_org_view", tenantKey);
+  const applications = await fetchRows<HomeApplicationOwnershipViewRow>("mv_home_application_ownership_view", tenantKey);
+  const vendors = await fetchRows<HomeVendorLandscapeViewRow>("mv_home_vendor_landscape_view", tenantKey);
+  const budgets = await fetchRows<HomeBudgetPortfolioViewRow>("mv_home_budget_by_portfolio_view", tenantKey);
+  const relationships = await fetchRows<HomeRelationshipRow>("enterprise_context_relationships", tenantKey, 10000);
+  const records = await fetchRows<HomeContextRecordRow>("enterprise_context_records", tenantKey, 10000);
+  const gaps = await fetchRows<HomeGapRegisterViewRow>("mv_home_gap_register_view", tenantKey);
+  const conflicts = await fetchRows<HomeConflictRegisterViewRow>("mv_home_conflict_register_view", tenantKey);
   return { coverage, org, applications, vendors, budgets, relationships, records, gaps, conflicts };
 }
 

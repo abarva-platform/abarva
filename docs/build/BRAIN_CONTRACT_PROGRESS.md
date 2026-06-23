@@ -70,6 +70,20 @@ Each landed step: what changed, the root cause it fixed, the PR, the gate/crawl 
   SkyHarbor. Gate/crawl delta: targeted Home KNOW unit tests pass 7/7; scoped lint passes.
   Not marked green until deployed app tenant matrix + reality crawl/report prove the lift.
   Release record: `docs/releases/records/2026-06-23-home-know-reality-crawl-quality.md`.
+- 2026-06-23 · Home KNOW release-bar follow-up (PR pending): after #3910 deployed
+  at ACA revision `ca-abarva-web-lab-eastus--m0d558394`, the signed-in reality
+  crawl improved from the user-supplied 220/290 baseline to 236/290, but still
+  failed the release bar. This follow-up fixes the three concentrated blockers:
+  exact-value gap prose now scores as honest instead of fabricated, Home foreign
+  tenant prompts are fenced against the signed-in tenant identity before the
+  expert/general path can run, and Home packet read-model fetches run sequentially
+  to avoid ACA/Postgres connection-pool spikes that produced blank SkyHarbor
+  answers under crawl concurrency. Gate/crawl delta: scoped lint passes, Home KNOW
+  tests pass 10/10, release check passes; repo-wide `tsc --noEmit` remains blocked
+  by pre-existing missing declarations for `js-yaml`, Azure Document Intelligence,
+  and `@axe-core/playwright`. Not marked green until merged, deployed, and the
+  deployed reality crawl/report prove the lift from 236/290. Release record:
+  `docs/releases/records/2026-06-23-home-know-release-bar-followup.md`.
 - 2026-06-23 · Home KNOW backend seam candidate (PR pending): adds the shared
   `HomeKnowResponse` contract, `/api/home/know/ask`, SQL Home read-model views,
   expected-field gap metadata, server-owned intent classification, deterministic

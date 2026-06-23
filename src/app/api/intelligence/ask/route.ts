@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { askIntelligence } from "@/lib/intelligence/ask";
+import { inferClientKeyFromEmail } from "@/lib/client-config";
 import {
   classifySentinelIntent,
   runSentinelReasoning,
@@ -36,6 +37,7 @@ import {
   buildHomeKnowAgentAnswer,
   shouldUseHomeKnowAgentAnswer,
 } from "@/lib/home/know/home-know-agent-answer";
+import { appClientKeyForTenant, tenantAliasesFor } from "@/lib/tenant/aliases";
 import "@/lib/reasoning/telemetry-init";
 
 export const runtime = "nodejs";
@@ -84,6 +86,7 @@ async function handleAsk(payload: AskPayload) {
   let sessionUserId: string | null = null;
   let activePersonGraphNodeId: string | null = null;
   let activePersonDisplayName: string | null = null;
+  let signedInTenantAliases: string[] = [];
   try {
     const [person, clerkUser, client] = await Promise.all([
       getCurrentPerson(),
@@ -98,6 +101,7 @@ async function handleAsk(payload: AskPayload) {
     tenant = client;
     sessionUserId = clerkUser?.id ?? null;
     const resolvedClient = client;
+    signedInTenantAliases = aliasesForClerkTenant(clerkUser);
     tenantInventoryKey = resolvedClient?.canonicalKey ?? null;
     tenantClientKey = resolvedClient?.appClientKey ?? null;
     tenantId = resolvedClient?.clientId ?? null;
@@ -172,10 +176,49 @@ async function handleAsk(payload: AskPayload) {
             ),
           );
         }
-        if (
-          shouldUseHomeKnowAgentAnswer({ query, surfaceContext }) &&
-          !mentionsForeignTenant(query, tenantInventoryKey, tenantClientKey)
-        ) {
+        if (shouldUseHomeKnowAgentAnswer({ query, surfaceContext })) {
+          const foreignTenantAliases =
+            signedInTenantAliases.length > 0
+              ? signedInTenantAliases
+              : [tenantInventoryKey, tenantClientKey].filter(Boolean);
+          if (mentionsForeignTenant(query, foreignTenantAliases)) {
+            const answer = buildHomeKnowTenantFenceAnswer({
+              activeTenantDisplayName:
+                tenant?.displayName ??
+                surfaceContext?.activeClient ??
+                requestedOrSurfaceClient ??
+                "the signed-in tenant",
+            });
+            assistantText = answer.prose;
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "agent-answer",
+                  answer,
+                }) + "\n",
+              ),
+            );
+            const event = recordSentinelTelemetry({
+              startedAt,
+              tenantId,
+              instanceId:
+                memory?.sessionId ??
+                memory?.tabId ??
+                requestedOrSurfaceClient ??
+                "home-know-ask",
+              patternId: "home-know-fence",
+              citationCount: 0,
+            });
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "done",
+                  telemetryEventId: event.id,
+                }) + "\n",
+              ),
+            );
+            return;
+          }
           const homeTenantKey =
             tenantInventoryKey ??
             tenantClientKey ??
@@ -590,26 +633,63 @@ function recordSentinelTelemetry(input: {
 
 function mentionsForeignTenant(
   query: string,
-  tenantInventoryKey: string | null,
-  tenantClientKey: string | null,
+  activeTenantAliases: Array<string | null | undefined>,
 ): boolean {
   const normalized = query.toLowerCase();
-  const current = new Set(
-    [tenantInventoryKey, tenantClientKey].filter((value): value is string => Boolean(value)),
-  );
+  const current = new Set(activeTenantAliases.flatMap((value) => tenantAliasesFor(value)));
   const tenants = [
-    { key: "apex-retail", app: "apexretail", terms: ["apex retail", "apexretail"] },
-    { key: "firstcapital", app: "arcturus", terms: ["first capital", "arcturus", "firstcapital"] },
-    { key: "skyharbor-air", app: "skyharbor", terms: ["skyharbor", "skyharbor air"] },
-    { key: "meridian-health", app: "meridian", terms: ["meridian", "meridian health"] },
-    { key: "lakeshore", app: "lakeshore", terms: ["lakeshore"] },
+    { aliases: tenantAliasesFor("apexretail"), terms: ["apex retail", "apexretail"] },
+    { aliases: tenantAliasesFor("arcturus"), terms: ["first capital", "arcturus", "firstcapital"] },
+    { aliases: tenantAliasesFor("skyharbor"), terms: ["skyharbor", "skyharbor air"] },
+    { aliases: tenantAliasesFor("meridian"), terms: ["meridian", "meridian health"] },
+    { aliases: tenantAliasesFor("lakeshore"), terms: ["lakeshore"] },
   ];
   for (const tenant of tenants) {
     if (!tenant.terms.some((term) => normalized.includes(term))) continue;
-    if (current.has(tenant.key) || current.has(tenant.app)) continue;
+    if (tenant.aliases.some((alias) => current.has(alias))) continue;
     return true;
   }
   return false;
+}
+
+function aliasesForClerkTenant(
+  user: Awaited<ReturnType<typeof currentUser>>,
+): string[] {
+  const metadata = user?.publicMetadata as Record<string, unknown> | undefined;
+  const metadataClient =
+    readString(metadata?.clientId) ??
+    readString(metadata?.defaultClientId) ??
+    readString(metadata?.tenantKey);
+  const email =
+    user?.primaryEmailAddress?.emailAddress ??
+    user?.emailAddresses?.[0]?.emailAddress ??
+    null;
+  const appClientKey =
+    appClientKeyForTenant(metadataClient) ??
+    inferClientKeyFromEmail(email);
+  return appClientKey ? tenantAliasesFor(appClientKey) : [];
+}
+
+function buildHomeKnowTenantFenceAnswer(input: {
+  activeTenantDisplayName: string;
+}): AgentAnswer {
+  return {
+    engineVersion: "agent-answer/v1",
+    surface: "home",
+    expertId: null,
+    contributingExperts: [],
+    prose: `Read: I can't share or use another tenant's data from Home. Your signed-in session is fenced to ${input.activeTenantDisplayName}; ask from this tenant's loaded context only.`,
+    tables: [],
+    charts: [],
+    graphs: [],
+    citations: [],
+    gaps: ["Cross-tenant data is fenced by the signed-in session tenant."],
+    recommendedActions: [],
+    groundingMode: "tenant-evidence",
+    confidence: "high",
+    limits: ["Cross-tenant request blocked before retrieval."],
+    crossTenantBlocked: true,
+  };
 }
 
 async function parseGetPayload(req: NextRequest): Promise<AskPayload> {
