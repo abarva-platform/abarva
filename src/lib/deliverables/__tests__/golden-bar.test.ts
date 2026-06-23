@@ -22,14 +22,16 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
   });
 
   it("FAILS a prose-only artifact (no visuals, no tables)", () => {
-    const r = meetsGoldenBar("<html><body><h1>Design Brief</h1><p>lots of prose.</p></body></html>");
+    const r = meetsGoldenBar(
+      "<html><body><h1>Design Brief</h1><p>lots of prose.</p></body></html>",
+    );
     expect(r.pass).toBe(false);
     expect(r.reasons.join(" ")).toMatch(/prose-only|no rendered/i);
   });
 
   it("FAILS an artifact that still contains [DATA GAP]", () => {
     const r = meetsGoldenBar(
-      '<html><body><svg></svg><p>Current state: [DATA GAP: tech_stack]</p></body></html>',
+      "<html><body><svg></svg><p>Current state: [DATA GAP: tech_stack]</p></body></html>",
     );
     expect(r.hasDataGap).toBe(true);
     expect(r.pass).toBe(false);
@@ -43,5 +45,24 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
     );
     expect(r.pass).toBe(false);
     expect(r.missingVisuals.length).toBeGreaterThan(0);
+  });
+
+  it("recognizes contract exhibits when rendered as section titles plus tables", () => {
+    const r = meetsGoldenBar(
+      `<html><body>
+        <svg><text>Value Tree</text></svg>
+        <svg><text>Stakeholder Map</text></svg>
+        <h2>KPI Scorecard - Shell Pending Input</h2>
+        <table><tr><th>Outcome Domain</th><th>Target</th></tr></table>
+        <h2>Scope Boundary - In / Out / Adjacent</h2>
+        <table><tr><th>Dimension</th><th>In Scope</th><th>Out of Scope</th></tr></table>
+        <h2>Proceed / Hold / Stop - P0 Gate Criteria</h2>
+        <table><tr><th>Decision</th><th>Criteria</th></tr></table>
+      </body></html>`,
+      "charter",
+    );
+    expect(r.missingVisuals).toEqual([]);
+    expect(r.missingTables).toEqual([]);
+    expect(r.pass).toBe(true);
   });
 });
