@@ -152,11 +152,11 @@ export function createMovesGenerateArtifactDeps(
           created_at: string;
           deliverable_type_key: string;
         }>(
-          "SELECT dv.structured_data, dv.version, dv.created_at, d.deliverable_type_key " +
+          "SELECT dv.structured_data, dv.version, d.created_at, d.deliverable_type_key " +
             "FROM deliverable_versions dv " +
             "JOIN deliverables_v2 d ON d.id = dv.deliverable_id " +
             "WHERE d.engagement_id = $1 " +
-            "ORDER BY dv.created_at ASC, dv.version ASC",
+            "ORDER BY d.created_at ASC, dv.version ASC",
           [moveId],
           { missingTable: "empty" },
         );
