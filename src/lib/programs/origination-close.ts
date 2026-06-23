@@ -147,6 +147,7 @@ export async function closeP0OnApproval(input: {
   tenantKey: string;
   deciderUserId: string;
   rationale?: string | null;
+  actorTenancy?: TenancyCtx;
 }): Promise<CloseP0Result> {
   const result: CloseP0Result = {
     briefEnsured: false,
@@ -169,10 +170,14 @@ export async function closeP0OnApproval(input: {
     if ((row.current_phase ?? 0) !== 0) return result;
 
     const ctx: TenancyCtx = {
+      ...(input.actorTenancy ?? {}),
       clientId: row.client_id,
-      clientKey: input.tenantKey,
       userId: input.deciderUserId,
-      role: "client_admin",
+      clientKey: input.actorTenancy?.clientKey ?? input.tenantKey,
+      role: input.actorTenancy?.role ?? "client_admin",
+      tenantRole: input.actorTenancy?.tenantRole ?? "tenant_admin",
+      email: input.actorTenancy?.email ?? null,
+      clerkUserId: input.actorTenancy?.clerkUserId,
     };
 
     const deliverableId = await ensureOriginationBrief(

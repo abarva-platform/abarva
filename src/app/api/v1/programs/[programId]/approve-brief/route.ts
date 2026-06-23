@@ -63,6 +63,7 @@ export async function POST(
       requestId: row.id,
       decidedByUserId: ctx.userId,
       decision: "approved",
+      actorTenancy: ctx,
       rationale:
         body.rationale?.trim() ||
         "P0 origination brief approved in-place; advancing to P1 Charter.",

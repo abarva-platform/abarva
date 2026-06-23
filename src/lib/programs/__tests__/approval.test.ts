@@ -109,9 +109,14 @@ function makeQueryBuilder(table: string) {
 }
 
 const fromMock = jest.fn((table: string) => makeQueryBuilder(table));
+const mockCloseP0OnApproval = jest.fn();
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: () => ({ from: fromMock }),
+}));
+
+jest.mock("../origination-close", () => ({
+  closeP0OnApproval: mockCloseP0OnApproval,
 }));
 
 import {
@@ -155,6 +160,14 @@ beforeEach(() => {
   singleMock.mockClear();
   maybeSingleMock.mockClear();
   fromMock.mockClear();
+  mockCloseP0OnApproval.mockReset();
+  mockCloseP0OnApproval.mockResolvedValue({
+    briefEnsured: true,
+    briefSigned: true,
+    advanced: true,
+    newPhase: 1,
+    blockedBy: [],
+  });
   lastQuery = null;
 });
 
@@ -284,6 +297,13 @@ describe("decideApprovalRequest", () => {
       requestId: "req_1",
       decidedByUserId: "admin_1",
       decision: "approved",
+      actorTenancy: {
+        clientId: "client-1",
+        clientKey: "meridian",
+        userId: "admin_1",
+        role: "client_admin",
+        email: "agent-meridian@abarva.ai",
+      },
     });
 
     expect(out.requestStatus).toBe("approved");
@@ -317,6 +337,17 @@ describe("decideApprovalRequest", () => {
       ([t]) => t === "engagements",
     )?.[1] as Record<string, unknown> | undefined;
     expect(engagementUpdate).not.toHaveProperty("current_phase");
+    expect(mockCloseP0OnApproval).toHaveBeenCalledWith(
+      expect.objectContaining({
+        programId: "eng_1",
+        tenantKey: "apex-retail",
+        deciderUserId: "admin_1",
+        actorTenancy: expect.objectContaining({
+          clientKey: "meridian",
+          email: "agent-meridian@abarva.ai",
+        }),
+      }),
+    );
   });
 
   it("rejects with rationale and persists the rationale", async () => {
