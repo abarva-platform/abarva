@@ -49,8 +49,10 @@ The wiring per slice (files already named in the plan):
   `architectureMayProceed`.
 - **Slice 4:** call `applyPhaseDigest` after each generation; per-phase reads full `SolutionContext`.
 - **Slice 5:** upload→parse→`FeedbackItem` ingestion + the review/regenerate UI.
-- **Slice 6:** `assertPhaseReadyForGeneration` on every entry point (see
-  `PHASE_GATE_GENERATION_GUARD_BRIEF.md`) + the 3 gate states.
+- **Slice 6:** `assertPhaseReadyForGeneration` is **BUILT + tested**
+  (`src/lib/programs/assert-phase-ready.ts`, injectable → returns 409 + structured blockers). You wire
+  its 2 sources (`captureComplete`, `gateApproved` → governance/`phase_snapshots`) and call it in every
+  generation entry point + the worker requeue. See `PHASE_GATE_GENERATION_GUARD_BRIEF.md`.
 - **Slice 7:** full P0→P5 run on the live Meridian move to the golden bar.
 
 ## Related briefs on the branch (reference, not separate work)
