@@ -16,7 +16,7 @@ import type {
 import type { AskSurfaceContext } from "@/lib/intelligence/ask";
 
 const HOME_KNOW_MODE_RE =
-  /\b(chart|graph|visual|plot|table|list|show|which|breakdown|gap|missing|loaded|coverage|dimensions|who leads|organized|topology|dependency|lineage|relationship|relationships|interfaces?|integrations?)\b/i;
+  /\b(chart|graph|visuali[sz]e|visual|plot|waterfall|table|list|show|breakdown|missing|loaded|coverage|dimensions|who leads|organized|topology|dependency|lineage|relationship|relationships|interfaces?|integrations?|data|analytics|applications?|systems?|vendors?|contracts?|cloud|infrastructure|security|compliance|budget|spend|cost|initiatives?|automation)\b/i;
 
 export function shouldUseHomeKnowAgentAnswer(input: {
   query: string;

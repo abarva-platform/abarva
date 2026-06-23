@@ -35,6 +35,7 @@ overall + the exhibit categories here, and link the HTML report.
 
 | Run (date · SHA) | overall | table | chart | graph | grounded | report |
 |---|--:|--:|--:|--:|--:|---|
+| 2026-06-23 · `697670b40` · deployed crawl after #3904 | 190/290 | 47/50 | 30/50 | 32/40 | 42/100 data+strategy | `out/reality-crawl/summary.json` · Home KNOW deterministic visual pass improved charts/graphs; strategy and SkyHarbor remain below bar |
 | 2026-06-23 · `803f34088` · deployed crawl after #3886/#3888 | 147/290 | 45/50 | 4/50 | 0/40 | 63/100 data+strategy | `out/reality-crawl/report.html` · 15 signed-in screenshots captured under `out/reality-crawl/shots/` |
 | 2026-06-23 · `49ecc9564` · deployed crawl after #3895 | 150/290 | 45/50 | 9/50 | 5/40 | not separately promoted | `out/reality-crawl-49ecc956/report.html` · rolled back by #3896 because overall score worsened vs #3894 |
 | 2026-06-23 · `94956a2c9` · deployed crawl after #3894 | 155/290 | 44/50 | 6/50 | 2/40 | not separately promoted | `out/reality-crawl-94956a2c/report.html` · current safer baseline restored by #3896 |
@@ -48,6 +49,17 @@ overall + the exhibit categories here, and link the HTML report.
 
 Each landed step: what changed, the root cause it fixed, the PR, the gate/crawl delta, the report link.
 
+- 2026-06-23 · Home KNOW crawl-quality follow-up (PR pending): tightens Home KNOW mode
+  selection so more factual visual/data/application/vendor/cloud/security questions route
+  through deterministic read-model retrieval, keeps row-level citations ahead of coverage
+  citations, adds honest record-distribution chart fallback when precise chart fields are
+  missing, and returns a medium-confidence relationship graph from loaded edges instead of
+  empty prose when a graph prompt does not match a narrower edge family. Root cause:
+  deployed #3904 proved the backend visual path, but the 190/290 crawl still showed misses
+  from query classification and overly narrow chart/graph source selection, especially on
+  SkyHarbor. Gate/crawl delta: targeted Home KNOW unit tests pass 7/7; scoped lint passes.
+  Not marked green until deployed app tenant matrix + reality crawl/report prove the lift.
+  Release record: `docs/releases/records/2026-06-23-home-know-reality-crawl-quality.md`.
 - 2026-06-23 · Home KNOW backend seam candidate (PR pending): adds the shared
   `HomeKnowResponse` contract, `/api/home/know/ask`, SQL Home read-model views,
   expected-field gap metadata, server-owned intent classification, deterministic
