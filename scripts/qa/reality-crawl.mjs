@@ -41,7 +41,7 @@ const TENANTS = [
   { key: "lakeshore", binding: "lakeshore", label: "Lakeshore" },
 ];
 
-const RAW_ID = /\b[A-Z]{2,6}-[A-Z0-9]{2,8}-\d{2,4}\b/;
+const RAW_ID = /\b[A-Z][A-Z0-9]{1,20}-[A-Z0-9]{2,20}-\d{2,6}\b/;
 const FAKE_GLOB = /\bAlso:\s/;
 const NOT_LOADED = /\b(don'?t have[^.]*loaded|not (yet )?loaded|aren'?t (in|loaded)|not in (this|the) session|no (tenant )?(context|evidence)\b|can'?t see your)\b/i;
 const REFUSAL = /can'?t (use|share|access)|won'?t (use|share)|another (client|tenant)|not authori[sz]ed|only your|isolat|fenc/i;

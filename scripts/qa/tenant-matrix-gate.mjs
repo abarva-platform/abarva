@@ -49,7 +49,7 @@ const TENANTS = [
   { key: "lakeshore", binding: "lakeshore", label: "Lakeshore" },
 ];
 
-const RAW_ID = /\b[A-Z]{2,6}-[A-Z0-9]{2,8}-\d{2,4}\b/;
+const RAW_ID = /\b[A-Z][A-Z0-9]{1,20}-[A-Z0-9]{2,20}-\d{2,6}\b/;
 const FAKE_GLOB = /\bAlso:\s/;
 // The grounding failure signature: the engine claiming it can't see loaded context.
 const NOT_LOADED =
