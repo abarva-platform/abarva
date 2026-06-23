@@ -15,6 +15,7 @@ import type {
   AgentAnswer,
   AnswerChart,
   AnswerCitation,
+  AnswerGraph,
   AnswerTable,
 } from "@/lib/intelligence/answer/agent-answer";
 
@@ -81,6 +82,44 @@ describe("AgentAnswerRenderer", () => {
     expect(within(tableNode).getByText("$1,200,000")).toBeInTheDocument();
     expect(within(tableNode).getByText("42%")).toBeInTheDocument();
     expect(screen.getByText("Includes run-cost categories only.")).toBeInTheDocument();
+    expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
+  });
+
+  it("renders typed relationship graphs through the canonical answer renderer", () => {
+    const graph: AnswerGraph = {
+      id: "graph-1",
+      title: "Dependency graph",
+      nodes: [
+        { id: "n1", label: "Retail Lakehouse" },
+        { id: "n2", label: "Demand Forecasting" },
+      ],
+      edges: [{ from: "n1", to: "n2", label: "feeds" }],
+      citationIds: ["c1"],
+    };
+    const answer: AgentAnswer = {
+      engineVersion: "agent-answer/v1",
+      surface: "intelligence",
+      expertId: "xp.retail.merchandising-pricing",
+      contributingExperts: [],
+      prose: "Read: the dependency path is explicit.",
+      tables: [],
+      charts: [],
+      graphs: [graph],
+      citations,
+      gaps: [],
+      recommendedActions: [],
+      groundingMode: "mixed",
+      confidence: "medium",
+      limits: [],
+      crossTenantBlocked: false,
+    };
+
+    render(<AgentAnswerRenderer answer={answer} />);
+
+    expect(screen.getByText("Graphs")).toBeInTheDocument();
+    expect(screen.getByText("Dependency graph")).toBeInTheDocument();
+    expect(screen.getByText("2 nodes · 1 links")).toBeInTheDocument();
+    expect(screen.getByLabelText("Dependency graph")).toBeInTheDocument();
     expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
   });
 

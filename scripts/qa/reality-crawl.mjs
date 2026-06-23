@@ -25,6 +25,7 @@
  */
 
 import { mkdir, writeFile, appendFile } from "node:fs/promises";
+import fs from "node:fs";
 import path from "node:path";
 import { BANK, CATEGORIES } from "./reality-crawl-bank.mjs";
 
@@ -32,6 +33,7 @@ const BASE_URL = (process.env.BASE_URL || "https://app.abarva.ai").replace(/\/$/
 const OUT = process.env.OUT_DIR || "out/reality-crawl";
 const CONCURRENCY = Number(process.env.CONCURRENCY || 5);
 const JUDGE = process.env.JUDGE === "1" && Boolean(process.env.ANTHROPIC_API_KEY);
+const ASK_TIMEOUT_MS = Number(process.env.REALITY_CRAWL_ASK_TIMEOUT_MS || 45_000);
 
 const TENANTS = [
   { key: "apexretail", binding: "apex-retail", label: "Apex Retail" },
@@ -47,21 +49,90 @@ const NOT_LOADED = /\b(don'?t have[^.]*loaded|not (yet )?loaded|aren'?t (in|load
 const REFUSAL = /can'?t (use|share|access)|won'?t (use|share)|another (client|tenant)|not authori[sz]ed|only your|isolat|fenc/i;
 const HEDGE = /\b(don'?t have|can'?t (say|confirm|predict|commit)|no (reliable )?way to|depends on|a range|estimate|directional|won'?t (commit|fabricate)|would need|uncertain|approximate|order of magnitude|planning (range|assumption)|can'?t give you an exact)\b/i;
 
-function cookieFor(key) {
-  return process.env[`COOKIE_${key.toUpperCase()}`] || (process.env.TENANT === key ? process.env.COOKIE : "") || "";
+function envKey(prefix, key) {
+  return `${prefix}_${key.toUpperCase()}`;
 }
 
-async function ask(cookie, q, client) {
-  const t0 = Date.now();
+function defaultStorageStatePath(key) {
+  return `.auth/agent-${key}.json`;
+}
+
+function authFor(key) {
+  const storageState =
+    process.env[envKey("STORAGE_STATE", key)] ||
+    (fs.existsSync(defaultStorageStatePath(key)) ? defaultStorageStatePath(key) : "");
+  const cookie =
+    process.env[envKey("COOKIE", key)] || (process.env.TENANT === key ? process.env.COOKIE : "") || "";
+  return { storageState, cookie };
+}
+
+async function withPage(auth, read) {
+  if (!auth.context) return null;
+  const page = await auth.context.newPage();
+  try {
+    const res = await page.goto(`${BASE_URL}/home`, { waitUntil: "domcontentloaded" });
+    if (!res) throw new Error("/home: no response");
+    if (/\/sign-in\b/.test(page.url())) throw new Error("/home: redirected to sign-in");
+    return await read(page);
+  } finally {
+    await page.close();
+  }
+}
+
+async function fetchAskText(auth, q, client) {
+  const body = {
+    q,
+    client,
+    tabId: `reality-crawl-${client}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    format: "rich",
+    surfaceContext: { activeTab: "home", clientKey: client },
+  };
+  if (auth.context) {
+    return withPage(auth, async (page) =>
+      page.evaluate(async ({ body, timeoutMs }) => {
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+        const res = await fetch("/api/intelligence/ask", {
+          method: "POST",
+          headers: { accept: "application/x-ndjson", "content-type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify(body),
+        }).finally(() => window.clearTimeout(timeout));
+        return {
+          status: res.status,
+          url: res.url,
+          contentType: res.headers.get("content-type") || "",
+          text: await res.text(),
+        };
+      }, { body, timeoutMs: ASK_TIMEOUT_MS }),
+    );
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ASK_TIMEOUT_MS);
   const res = await fetch(`${BASE_URL}/api/intelligence/ask`, {
     method: "POST",
-    headers: { cookie, accept: "application/x-ndjson", "content-type": "application/json" },
-    body: JSON.stringify({ q, client, format: "rich", surfaceContext: { activeTab: "home", clientKey: client } }),
-  });
-  if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-  const reader = res.body.getReader();
-  const dec = new TextDecoder();
-  let buf = "", prose = "", answer = null, experts = [], blocked = false;
+    headers: { cookie: auth.cookie, accept: "application/x-ndjson", "content-type": "application/json" },
+    redirect: "manual",
+    signal: controller.signal,
+    body: JSON.stringify(body),
+  }).finally(() => clearTimeout(timeout));
+  return {
+    status: res.status,
+    url: res.url,
+    contentType: res.headers.get("content-type") || "",
+    text: await res.text(),
+  };
+}
+
+async function ask(auth, q, client) {
+  const t0 = Date.now();
+  const res = await fetchAskText(auth, q, client);
+  if (res.status >= 300 && res.status < 400) throw new Error(`ask redirected to ${res.url}`);
+  if (res.status < 200 || res.status >= 300) throw new Error(`ask HTTP ${res.status}`);
+  if (!/\b(application\/x-ndjson|application\/json|text\/event-stream)\b/i.test(res.contentType)) {
+    throw new Error(`ask returned ${res.contentType || "unknown content-type"}`);
+  }
+  let prose = "", answer = null, experts = [], blocked = false;
   const apply = (l) => {
     const s = l.trim();
     if (!s) return;
@@ -72,14 +143,10 @@ async function ask(cookie, q, client) {
     else if (e.type === "contributing-experts" && Array.isArray(e.contributingExperts)) experts = e.contributingExperts;
     else if (e.type === "validation" && e.tenantLeakage?.length) blocked = true;
   };
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
-    let nl;
-    while ((nl = buf.indexOf("\n")) >= 0) { apply(buf.slice(0, nl)); buf = buf.slice(nl + 1); }
+  for (const line of res.text.split(/\r?\n/)) apply(line);
+  if (experts.length === 0 && Array.isArray(answer?.contributingExperts)) {
+    experts = answer.contributingExperts;
   }
-  apply(buf);
   const visibleProse = answer?.prose || prose;
   return {
     prose: visibleProse,
@@ -167,47 +234,60 @@ async function pool(items, n, fn) {
   return out;
 }
 
-async function runTenant(t) {
-  const cookie = cookieFor(t.key);
-  if (!cookie) return null;
+async function runTenant(t, browser) {
+  const auth = authFor(t.key);
+  if (!auth.storageState && !auth.cookie) return null;
+  if (auth.storageState) {
+    auth.context = await browser.newContext({ storageState: auth.storageState, baseURL: BASE_URL });
+  }
   const other = TENANTS.find((x) => x.key !== t.key);
   const file = path.join(OUT, `${t.key}.jsonl`);
   await writeFile(file, "");
-  const records = await pool(BANK, CONCURRENCY, async (item) => {
-    const q = item.q.replace("{other}", other.label);
-    let rec;
-    try {
-      const r = await ask(cookie, q, item.category === "fence" ? other.binding : t.binding);
-      const s = score(item, r);
-      const jd = s.pass ? null : await judge(item, r.prose); // judge the failures (cheap)
-      rec = {
-        tenant: t.key, id: item.id, category: item.category, q,
-        pass: s.pass, reason: s.reason,
-        prose: r.prose,
-        streamProse: r.streamProse,
-        exhibits: s.sig.exhibits,
-        experts: r.experts.map((e) => e.name),
-        citations: (r.answer?.citations || []).map((c) => c.sourceClass), latencyMs: r.latencyMs,
-        signals: { grounded: s.sig.grounded, noRawId: s.sig.noRawId, hedged: s.sig.hedged, blocked: s.sig.blocked },
-        judge: jd,
-      };
-    } catch (e) {
-      rec = { tenant: t.key, id: item.id, category: item.category, q, pass: false, reason: "ERROR: " + String(e.message || e) };
-    }
-    await appendFile(file, JSON.stringify(rec) + "\n");
-    return rec;
-  });
-  return { tenant: t, records };
+  try {
+    const records = await pool(BANK, CONCURRENCY, async (item) => {
+      const q = item.q.replace("{other}", other.label);
+      let rec;
+      try {
+        const r = await ask(auth, q, item.category === "fence" ? other.binding : t.binding);
+        const s = score(item, r);
+        const jd = s.pass ? null : await judge(item, r.prose); // judge the failures (cheap)
+        rec = {
+          tenant: t.key, id: item.id, category: item.category, q,
+          pass: s.pass, reason: s.reason,
+          prose: r.prose,
+          streamProse: r.streamProse,
+          exhibits: s.sig.exhibits,
+          experts: r.experts.map((e) => e.name),
+          citations: (r.answer?.citations || []).map((c) => c.sourceClass), latencyMs: r.latencyMs,
+          signals: { grounded: s.sig.grounded, noRawId: s.sig.noRawId, hedged: s.sig.hedged, blocked: s.sig.blocked },
+          judge: jd,
+        };
+      } catch (e) {
+        rec = { tenant: t.key, id: item.id, category: item.category, q, pass: false, reason: "ERROR: " + String(e.message || e) };
+      }
+      await appendFile(file, JSON.stringify(rec) + "\n");
+      return rec;
+    });
+    return { tenant: t, records };
+  } finally {
+    if (auth.context) await auth.context.close();
+  }
 }
 
 async function main() {
   await mkdir(OUT, { recursive: true });
   console.log(`\nReality crawl · ${BASE_URL} · ${BANK.length} questions × tenants · judge=${JUDGE ? "on" : "off"}\n`);
   const results = [];
-  for (const t of TENANTS) {
-    const r = await runTenant(t);
-    if (!r) { console.log(`${t.label.padEnd(15)} no session (set COOKIE_${t.key.toUpperCase()})`); continue; }
-    results.push(r);
+  const needsBrowser = TENANTS.some((t) => authFor(t.key).storageState);
+  const browser = needsBrowser ? await (await import("@playwright/test")).chromium.launch() : null;
+  try {
+    for (const t of TENANTS) {
+      const r = await runTenant(t, browser);
+      if (!r) { console.log(`${t.label.padEnd(15)} no session (set COOKIE_${t.key.toUpperCase()})`); continue; }
+      results.push(r);
+    }
+  } finally {
+    if (browser) await browser.close();
   }
   if (!results.length) { console.log("\nNo tenants tested — set COOKIE_<TENANT> envs.\n"); process.exit(1); }
 

@@ -285,6 +285,31 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.charts).toHaveLength(0);
   });
 
+  it("converts relationship tables into typed graphs for graph-shaped questions", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: { ...routing, outputShape: "graph" },
+      sources,
+      prose:
+        "Dependency graph | From | Relationship | To | Evidence | |---|---|---|---| | Retail Lakehouse | feeds | Demand Forecasting | Inventory history | | Toshiba POS | sends transactions to | Retail Lakehouse | Store sales feed | Next move: validate the integration owner.",
+    });
+
+    expect(exhibits.tables).toHaveLength(1);
+    expect(exhibits.graphs).toEqual([
+      expect.objectContaining({
+        id: "answer-relationship-graph-1",
+        nodes: expect.arrayContaining([
+          expect.objectContaining({ label: "Retail Lakehouse" }),
+          expect.objectContaining({ label: "Demand Forecasting" }),
+          expect.objectContaining({ label: "Toshiba POS" }),
+        ]),
+        edges: expect.arrayContaining([
+          expect.objectContaining({ label: "feeds" }),
+          expect.objectContaining({ label: "sends transactions to" }),
+        ]),
+      }),
+    ]);
+  });
+
   it("does not infer percentage charts from cited source prose", () => {
     const exhibits = buildStructuredExhibits({
       routing,

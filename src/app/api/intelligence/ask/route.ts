@@ -224,7 +224,7 @@ async function handleAsk(payload: AskPayload) {
             sources: sentinelSourcesFromCitations(sentinelCitations),
           });
           if (
-            hasRenderableStructuredExhibits({ ...exhibits, graphs: [] }) ||
+            hasRenderableStructuredExhibits(exhibits) ||
             exhibits.citations.length > 0 ||
             routing.experts.length > 0
           ) {
@@ -236,7 +236,7 @@ async function handleAsk(payload: AskPayload) {
               prose: exhibits.prose,
               tables: exhibits.tables,
               charts: exhibits.charts,
-              graphs: [],
+              graphs: exhibits.graphs,
               citations: exhibits.citations,
               gaps: [],
               recommendedActions: [],
@@ -396,7 +396,7 @@ async function handleAsk(payload: AskPayload) {
             sources: traceSources as AskSource[],
           });
           if (
-            hasRenderableStructuredExhibits({ ...exhibits, graphs: [] }) ||
+            hasRenderableStructuredExhibits(exhibits) ||
             exhibits.citations.length > 0 ||
             routing.experts.length > 0
           ) {
@@ -408,7 +408,7 @@ async function handleAsk(payload: AskPayload) {
               prose: exhibits.prose,
               tables: exhibits.tables,
               charts: exhibits.charts,
-              graphs: [],
+              graphs: exhibits.graphs,
               citations: exhibits.citations,
               gaps: [],
               recommendedActions: [],
