@@ -92,6 +92,42 @@ const apexPacket: HomeKnowPacket = {
       confidence: 0.9,
     },
   ],
+  relationships: [
+    {
+      tenant_key: "apex-retail",
+      relationship_key: "rel-1",
+      relationship_type: "supports",
+      from_external_id: "APP-ORACLE-RETAIL",
+      to_external_id: "TEAM-STORE-SYSTEMS",
+      source_file: "family-2-technology-estate/F08_integrations-interfaces.csv",
+      source_row_number: 4,
+      properties: {},
+    },
+  ],
+  records: [
+    {
+      tenant_key: "apex-retail",
+      canonical_record_id: "rec-app-oracle-retail",
+      source_record_id: "APP-ORACLE-RETAIL",
+      record_type: "application",
+      dimension: "applications_core_systems",
+      payload: {
+        app_id: "APP-ORACLE-RETAIL",
+        application_name: "Oracle Retail Merchandising",
+      },
+    },
+    {
+      tenant_key: "apex-retail",
+      canonical_record_id: "rec-team-store-systems",
+      source_record_id: "TEAM-STORE-SYSTEMS",
+      record_type: "team",
+      dimension: "it_org_ownership",
+      payload: {
+        team_id: "TEAM-STORE-SYSTEMS",
+        team_name: "Store Systems and POS",
+      },
+    },
+  ],
   gaps: [
     {
       tenant_key: "apex-retail",
@@ -116,6 +152,7 @@ describe("Home KNOW contract engine", () => {
       "decision_handoff",
     );
     expect(classifyHomeKnowIntent("Show this visually as a chart")).toBe("chart");
+    expect(classifyHomeKnowIntent("Show the integration topology")).toBe("chart");
   });
 
   it("answers IT org lookup from deterministic view rows with gaps and citations", () => {
@@ -192,6 +229,7 @@ describe("Home KNOW contract engine", () => {
     expect(response.charts[0]).toMatchObject({
       id: "home-budget-mix-chart",
       kind: "cost-stack",
+      type: "cost_stack",
       dimensionId: "it_budget_financials",
     });
     expect(response.charts[0]?.data).toEqual([
@@ -199,6 +237,29 @@ describe("Home KNOW contract engine", () => {
       { label: "Change", value: 71400000, color: expect.any(String) },
       { label: "AI", value: 650000, color: expect.any(String) },
     ]);
+  });
+
+  it("emits deterministic graph data from relationship rows", () => {
+    const response = buildHomeKnowResponseFromPacket({
+      tenantKey: "apex-retail",
+      question: "Show the integration topology between our systems.",
+      packet: apexPacket,
+    });
+
+    expect(response.intent).toBe("chart");
+    expect(response.graphs[0]).toMatchObject({
+      id: "home-relationship-graph",
+      confidence: "high",
+      inferredEdges: false,
+    });
+    expect(response.graphs[0]?.nodes.map((node) => node.label)).toEqual(
+      expect.arrayContaining(["Oracle Retail Merchandising", "Store Systems and POS"]),
+    );
+    expect(response.graphs[0]?.edges[0]).toMatchObject({
+      from: "APP-ORACLE-RETAIL",
+      to: "TEAM-STORE-SYSTEMS",
+      type: "supports",
+    });
   });
 
   it("sets the backend tripwire if unsafe text survives validation", () => {
@@ -213,6 +274,7 @@ describe("Home KNOW contract engine", () => {
       facts: [],
       tables: [],
       charts: [],
+      graphs: [],
       gaps: [],
       conflicts: [],
       citations: [],
@@ -230,7 +292,7 @@ describe("Home KNOW contract engine", () => {
     expect(response.safety.serverValidated).toBe(true);
     expect(response.safety.unsupportedClaimsRemoved).toBeGreaterThan(0);
     expect(response.safety.frontendTripwireShouldFire).toBe(false);
-    expect(response.prose).not.toMatch(/DORA|Wave-0|local env|APX-APP/i);
+    expect(response.prose).not.toMatch(/DORA|Wave-0|local env|APX-APP|the cited record/i);
   });
 });
 

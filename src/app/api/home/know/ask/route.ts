@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
       facts: [],
       tables: [],
       charts: [],
+      graphs: [],
       gaps: [],
       conflicts: [],
       citations: [],

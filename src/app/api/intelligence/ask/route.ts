@@ -32,6 +32,10 @@ import {
   hasRenderableStructuredExhibits,
 } from "@/lib/intelligence/answer/structured-exhibits";
 import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
+import {
+  buildHomeKnowAgentAnswer,
+  shouldUseHomeKnowAgentAnswer,
+} from "@/lib/home/know/home-know-agent-answer";
 import "@/lib/reasoning/telemetry-init";
 
 export const runtime = "nodejs";
@@ -167,6 +171,56 @@ async function handleAsk(payload: AskPayload) {
               }) + "\n",
             ),
           );
+        }
+        if (
+          shouldUseHomeKnowAgentAnswer({ query, surfaceContext }) &&
+          !mentionsForeignTenant(query, tenantInventoryKey, tenantClientKey)
+        ) {
+          const homeTenantKey =
+            tenantInventoryKey ??
+            tenantClientKey ??
+            requestedOrSurfaceClient ??
+            null;
+          const { response, answer } = await buildHomeKnowAgentAnswer({
+            question: query,
+            tenantKey: homeTenantKey,
+            client: tenantClientKey ?? requestedOrSurfaceClient,
+          });
+          classificationForMemory = {
+            mode: "home-know",
+            intent: response.intent,
+            answerStatus: response.answerStatus,
+          };
+          assistantText = answer.prose;
+          citationCount = answer.citations.length;
+          controller.enqueue(
+            encoder.encode(
+              JSON.stringify({
+                type: "agent-answer",
+                answer,
+              }) + "\n",
+            ),
+          );
+          const event = recordSentinelTelemetry({
+            startedAt,
+            tenantId,
+            instanceId:
+              memory?.sessionId ??
+              memory?.tabId ??
+              requestedOrSurfaceClient ??
+              "home-know-ask",
+            patternId: "home-know",
+            citationCount,
+          });
+          controller.enqueue(
+            encoder.encode(
+              JSON.stringify({
+                type: "done",
+                telemetryEventId: event.id,
+              }) + "\n",
+            ),
+          );
+          return;
         }
         const sentinelIntent = await classifySentinelIntent({
           query,
@@ -532,6 +586,30 @@ function recordSentinelTelemetry(input: {
     failureModeCount: 0,
     gateCount: 0,
   });
+}
+
+function mentionsForeignTenant(
+  query: string,
+  tenantInventoryKey: string | null,
+  tenantClientKey: string | null,
+): boolean {
+  const normalized = query.toLowerCase();
+  const current = new Set(
+    [tenantInventoryKey, tenantClientKey].filter((value): value is string => Boolean(value)),
+  );
+  const tenants = [
+    { key: "apex-retail", app: "apexretail", terms: ["apex retail", "apexretail"] },
+    { key: "firstcapital", app: "arcturus", terms: ["first capital", "arcturus", "firstcapital"] },
+    { key: "skyharbor-air", app: "skyharbor", terms: ["skyharbor", "skyharbor air"] },
+    { key: "meridian-health", app: "meridian", terms: ["meridian", "meridian health"] },
+    { key: "lakeshore", app: "lakeshore", terms: ["lakeshore"] },
+  ];
+  for (const tenant of tenants) {
+    if (!tenant.terms.some((term) => normalized.includes(term))) continue;
+    if (current.has(tenant.key) || current.has(tenant.app)) continue;
+    return true;
+  }
+  return false;
 }
 
 async function parseGetPayload(req: NextRequest): Promise<AskPayload> {
