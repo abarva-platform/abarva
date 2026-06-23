@@ -93,7 +93,13 @@ const TENANT_ALIAS_PROFILES: readonly TenantAliasProfile[] = [
     brokerKey: "lakeshore-holdings",
     displayName: "Lakeshore Holdings",
     industryCode: CLIENT_KEY_TO_INDUSTRY_CODE.lakeshore,
-    aliases: ["lakeshore", "lakeshore-holdings", "lakeshore holdings"],
+    aliases: [
+      "lakeshore",
+      "lakeshore-holdings",
+      "lakeshore holdings",
+      "lakeshore-industries",
+      "lakeshore industries",
+    ],
   },
 ] as const;
 

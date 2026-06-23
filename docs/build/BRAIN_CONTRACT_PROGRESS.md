@@ -48,6 +48,20 @@ overall + the exhibit categories here, and link the HTML report.
 
 Each landed step: what changed, the root cause it fixed, the PR, the gate/crawl delta, the report link.
 
+- 2026-06-23 · Home KNOW backend seam candidate (PR pending): adds the shared
+  `HomeKnowResponse` contract, `/api/home/know/ask`, SQL Home read-model views,
+  expected-field gap metadata, server-owned intent classification, deterministic
+  packet/table/chart/citation/gap assembly, backend safety validation, and the
+  live `scripts/qa/home-know-data-gate.mjs` GO/NO-GO script. It also removes the
+  first-cut Home hook from `/api/intelligence/ask`, so Home KNOW no longer rides
+  through the Intelligence synthesis path. Root cause: Home was using the shared
+  consultant/synthesis path and could blur KNOW vs DECIDE; the FE/BE seam needed
+  a stable backend-owned contract before frontend work. Gate/crawl delta: targeted
+  unit tests pass 6/6, scoped lint passes, release check passes; live data gate is
+  blocked locally because DB env is unavailable and must run inside the private
+  VNet. Not marked green until migration + live data gate + deployed tenant matrix
+  + reality crawl screenshots prove all five tenants. Release record:
+  `docs/releases/records/2026-06-23-home-know-mode-read-model.md`.
 - 2026-06-23 · Visual source-selection candidate (PR pending): expands the canonical structured-fact retriever so
   visual application, vendor, initiative, value-at-stake, and dependency wording retrieves the existing
   Postgres-backed source rows instead of relying on model-emitted Markdown. Adds a deterministic application-count
