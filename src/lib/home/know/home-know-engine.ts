@@ -150,10 +150,11 @@ const GRAPH_RE =
 export function classifyHomeKnowIntent(question: string): HomeKnowIntent {
   const normalized = question.trim().toLowerCase();
   if (!normalized) return "browse";
-  if (/\b(gap|missing|not loaded|absent|unknown|field)\b/.test(normalized)) return "gap";
-  if (/\b(chart|visual|plot)\b/.test(normalized) || GRAPH_RE.test(normalized)) return "chart";
-  if (/\b(table|list|show|which|breakdown)\b/.test(normalized)) return "table";
+  if (/\b(chart|visuali[sz]e|visual|plot|waterfall)\b/.test(normalized) || GRAPH_RE.test(normalized)) return "chart";
   if (DECISION_RE.test(normalized)) return "decision_handoff";
+  if (/\b(missing|not loaded|absent|unknown|field|gap register|evidence gap)\b/.test(normalized)) return "gap";
+  if (/\b(which|what|show|list)\b.*\b(vendor|vendors|contract|contracts|app|apps|application|applications|system|systems|owner|owners|portfolio|portfolios)\b/.test(normalized)) return "table";
+  if (/\b(table|list|show|breakdown)\b/.test(normalized)) return "table";
   if (/\b(browse|overview|loaded|coverage|dimensions)\b/.test(normalized)) return "browse";
   return "lookup";
 }
@@ -353,6 +354,12 @@ function dimensionsForIntent(
   if (/\b(data product|analytics|lineage|feed|feeds|source system)\b/.test(normalized)) {
     dims.add("data_analytics_estate");
   }
+  if (/\b(cloud|infrastructure|platforms?|volumetrics)\b/.test(normalized)) {
+    dims.add("infrastructure_cloud");
+  }
+  if (/\b(security|compliance|control|controls|posture)\b/.test(normalized)) {
+    dims.add("security_compliance");
+  }
   if (/\b(vendor|vendors|contract|contracts|license|licenses|supplier|suppliers|renewal|renewals)\b/.test(normalized)) {
     dims.add("vendors_contracts");
   }
@@ -363,6 +370,7 @@ function dimensionsForIntent(
   if (/\b(app|application|system|platform|cmdb)\b/.test(normalized)) dims.add("applications_core_systems");
   if (/\b(ai|automation|initiative|initiatives|portfolio|value|impact|effort)\b/.test(normalized)) {
     dims.add("initiatives_roadmap");
+    dims.add("ai_automation_footprint");
   }
   if (intent === "gap") dims.add("gap_register");
   if (dims.size === 0 && intent === "chart") {
@@ -433,6 +441,15 @@ function buildCitations(packet: HomeKnowPacket, dimensionsUsed: string[]): HomeK
       sourceClass: "tenant-relationship" as const,
       confidence: 0.85,
       excerpt: row.relationship_type,
+    })),
+    ...packet.coverage.map((row) => ({
+      dimensionId: row.dimension_id,
+      sourceFile: null,
+      sourceRowNumber: null,
+      labelPrefix: `Home coverage · ${row.dimension_label}`,
+      sourceClass: "tenant-fact" as const,
+      confidence: row.trust_score,
+      excerpt: `${row.dimension_label}: ${number(row.record_count)} records, ${number(row.fact_count)} facts, ${number(row.relationship_count)} relationships`,
     })),
   ];
   const wanted = new Set(dimensionsUsed);
@@ -545,19 +562,19 @@ function buildChartsForIntent(
   const normalized = question.toLowerCase();
   if (GRAPH_RE.test(normalized)) return [];
   if (/\b(vendor|vendors|contract|contracts|license|licenses|supplier|suppliers|renewal|renewals)\b/.test(normalized)) {
-    return [vendorChart(packet.vendors, citations)].filter((chart) => chart.data.length > 0);
+    const chart = vendorChart(packet.vendors, citations);
+    return [chart.data.length > 0 ? chart : recordDistributionChart(packet, citations, "Vendor and Contract Records")];
   }
   if (/\b(app|application|system|platform|domain|cmdb)\b/.test(normalized)) {
-    return [applicationDomainChart(packet.applications, citations)].filter(
-      (chart) => chart.data.length > 0,
-    );
+    const chart = applicationDomainChart(packet.applications, citations);
+    return [chart.data.length > 0 ? chart : recordDistributionChart(packet, citations, "Application and Platform Records")];
   }
   if (/\b(ai|initiative|initiatives|value|impact|effort|portfolio|waterfall|commitment|realized)\b/.test(normalized)) {
-    return [initiativePlanningChart(packet, citations)].filter(
-      (chart) => chart.data.length > 0,
-    );
+    const chart = initiativePlanningChart(packet, citations);
+    return [chart.data.length > 0 ? chart : recordDistributionChart(packet, citations, "Initiative and AI Records")];
   }
-  return [budgetChart(packet.budgets, citations)].filter((chart) => chart.data.length > 0);
+  const chart = budgetChart(packet.budgets, citations);
+  return [chart.data.length > 0 ? chart : recordDistributionChart(packet, citations, "Loaded Record Distribution")];
 }
 
 function buildGraphsForIntent(
@@ -813,6 +830,38 @@ function initiativePlanningChart(
   };
 }
 
+function recordDistributionChart(
+  packet: HomeKnowPacket,
+  citations: HomeKnowCitation[],
+  title: string,
+): HomeKnowChart {
+  const counts = new Map<string, number>();
+  for (const row of packet.records) {
+    const label =
+      cleanLabel(row.dimension) ??
+      cleanLabel(row.record_type) ??
+      "Record";
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  return {
+    id: "home-record-distribution-chart",
+    title,
+    kind: "bar",
+    type: "bar",
+    dimensionId: "dimension_coverage",
+    data: [...counts.entries()]
+      .map(([label, value], index) => ({ label, value, color: chartColor(index) }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 12),
+    sourceIds: [],
+    citationIds: citations.map((citation) => citation.id).slice(0, 8),
+    caveats: [
+      "Specific initiative spend, realized value, or effort fields were not all present, so this visual uses loaded record distribution rather than invented financial figures.",
+    ],
+    status: "tenant-fact",
+  };
+}
+
 function relationshipGraph(
   question: string,
   packet: HomeKnowPacket,
@@ -820,10 +869,16 @@ function relationshipGraph(
 ): HomeKnowGraph {
   const normalized = question.toLowerCase();
   const labelIndex = buildRecordLabelIndex(packet.records);
-  const edges = packet.relationships
+  const matchedEdges = packet.relationships
     .filter((row) => row.from_external_id && row.to_external_id)
     .filter((row) => relationshipMatchesQuestion(row, normalized, labelIndex))
     .slice(0, 60);
+  const edges =
+    matchedEdges.length > 0
+      ? matchedEdges
+      : packet.relationships
+          .filter((row) => row.from_external_id && row.to_external_id)
+          .slice(0, 60);
   const nodeMap = new Map<string, { id: string; label: string; type: string }>();
   const graphEdges = [];
   for (const row of edges) {
@@ -853,7 +908,7 @@ function relationshipGraph(
     .map((row) => row.relationship_key ?? sourceId(row.source_file, row.source_row_number))
     .filter(isString);
   const gaps =
-    packet.relationships.length > 0 && edges.length === 0
+    packet.relationships.length > 0 && matchedEdges.length === 0
       ? [specificGraphGap(normalized)]
       : packet.relationships.length === 0
         ? ["source-to-target integration edges missing in the loaded relationship rows"]
@@ -869,7 +924,7 @@ function relationshipGraph(
     edgeTypes,
     sourceIds,
     citationIds: citationIdForDimension("relationship_graph", citations),
-    confidence: graphEdges.length > 0 ? "high" : "low",
+    confidence: matchedEdges.length > 0 ? "high" : graphEdges.length > 0 ? "medium" : "low",
     gaps,
     inferredEdges: false,
     warning: gaps[0],
