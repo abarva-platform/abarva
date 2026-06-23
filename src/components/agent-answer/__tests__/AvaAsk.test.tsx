@@ -115,4 +115,48 @@ describe("AvaAsk — canonical ask reused across surfaces", () => {
     // Exactly one "Ava ·" header — no double-render.
     expect(screen.getAllByText(/Ava ·/i)).toHaveLength(1);
   });
+
+  it("keeps prior turns visible when a second question is asked", async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        body: streamFromLines([
+          JSON.stringify({ type: "delta", text: "First answer stays visible." }),
+          JSON.stringify({ type: "done" }),
+          "",
+        ]),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        body: streamFromLines([
+          JSON.stringify({ type: "delta", text: "Second answer appears below it." }),
+          JSON.stringify({ type: "done" }),
+          "",
+        ]),
+      });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(
+      <AvaAsk client="apex-retail" surfaceContext={{ activeTab: "home", clientKey: "apex-retail" }} />,
+    );
+
+    const askBox = screen.getByLabelText("Ask Ava");
+    fireEvent.change(askBox, { target: { value: "first question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+
+    expect(await screen.findByText("First answer stays visible.")).toBeInTheDocument();
+    expect(askBox).toHaveValue("");
+
+    fireEvent.change(askBox, { target: { value: "second question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+
+    expect(await screen.findByText("Second answer appears below it.")).toBeInTheDocument();
+    expect(screen.getByText("first question")).toBeInTheDocument();
+    expect(screen.getByText("second question")).toBeInTheDocument();
+    expect(screen.getByText("First answer stays visible.")).toBeInTheDocument();
+    expect(screen.getAllByText(/Ava ·/i)).toHaveLength(2);
+  });
 });

@@ -19,7 +19,7 @@ Cells = current status on the **deployed** app. Keep this in sync with the live 
 | 1 · substrate / `dims19` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3884](https://github.com/abarva-platform/abarva/pull/3884) gate-only baseline; screenshot report pending |
 | 2 · retrievable / `grounded` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3884](https://github.com/abarva-platform/abarva/pull/3884) gate-only baseline; screenshot report pending |
 | 3 · one engine / `experts` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3884](https://github.com/abarva-platform/abarva/pull/3884) gate-only baseline; code assertion pending |
-| 4 · one voice / `readable` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3886](https://github.com/abarva-platform/abarva/pull/3886) answer-safety deployed; follow-up readable section candidate in progress; all-green proof pending |
+| 4 · one voice / `readable` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3886](https://github.com/abarva-platform/abarva/pull/3886) answer-safety deployed; shared threaded AvaAsk candidate pending browser proof |
 | 5 · exhibits / `visual` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3894](https://github.com/abarva-platform/abarva/pull/3894) restored matrix-green visual plumbing; source-owned typed visual candidate in progress |
 | 6 · continuity (to add) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | — |
 | 7 · honesty / `fence`+`noRawId` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3886](https://github.com/abarva-platform/abarva/pull/3886) answer-safety candidate; deployed proof pending |
@@ -49,6 +49,16 @@ overall + the exhibit categories here, and link the HTML report.
 
 Each landed step: what changed, the root cause it fixed, the PR, the gate/crawl delta, the report link.
 
+- 2026-06-23 · Shared Ava conversation thread (PR pending): changes the canonical
+  `AvaAsk` from a single latest-answer panel into a visible Q/A thread, clears
+  the composer after submit, preserves multi-line prompts, and makes Intelligence
+  v2 use the same shared component as Home instead of duplicating ask/render state.
+  Root cause: the backend stored session turns, but the UI only kept one answer
+  in state (`answer`/`agentAnswer`), so each new response replaced the prior
+  visible turn. Gate/crawl delta: focused component tests pass 4/4 and scoped
+  lint passes. Not marked green until deployed Home + Intelligence screenshots
+  show multiple turns retained for all five tenants. Release record:
+  `docs/releases/records/2026-06-23-shared-ava-thread.md`.
 - 2026-06-23 · Home KNOW crawl-quality follow-up (PR pending): tightens Home KNOW mode
   selection so more factual visual/data/application/vendor/cloud/security questions route
   through deterministic read-model retrieval, keeps row-level citations ahead of coverage
