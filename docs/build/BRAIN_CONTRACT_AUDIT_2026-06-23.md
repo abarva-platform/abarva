@@ -7,6 +7,45 @@ No runtime code changed in this step. The purpose is to name the current owners,
 the canonical owners, the root causes still blocking the brain contract, and the
 next smallest PRs.
 
+## 2026-06-23 proof addendum
+
+After Step 0 merged, PR #3881 landed the reality-crawl runner/bank, PR #3886
+landed answer render-safety, and PR #3888 landed readable section normalization.
+The proof harness was then rerun against the deployed app with signed-in browser
+storage states for all five tenants.
+
+Current live matrix result, with the stricter raw-ID detector used by this PR:
+
+```text
+Apex Retail    all current columns green
+First Capital  visual red; all other current columns green
+SkyHarbor      all current columns green
+Meridian       all current columns green
+Lakeshore      all current columns green
+MATRIX FAILED — 1/5 tenants
+```
+
+Reality crawl evidence:
+
+```text
+Overall: 147/290 (51%)
+Tables: 45/50
+Charts: 4/50
+Graphs: 0/40
+Grounded data+strategy: 63/100
+Fence: 20/20
+```
+
+The generated report is `out/reality-crawl/report.html`, with 15 signed-in
+browser screenshots under `out/reality-crawl/shots/` (`data-01`, `tbl-01`, and
+`cht-01` for each tenant). This is not committed because the report is a local
+QA artifact, but it is the current evidence bundle to attach to the PR.
+
+Important scoring correction: the original raw-ID detector missed long
+tenant-prefixed IDs such as `APEXRETAIL-DATA-0011`. This PR tightens the detector
+in both the matrix gate and the reality crawl. After rescoring the captured
+corpus, raw-ID leaks are present on Apex (5), Meridian (2), and Lakeshore (4).
+
 Pre-flight was run from a clean worktree based on `origin/main`:
 
 - `git fetch origin`

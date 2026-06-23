@@ -35,6 +35,7 @@ overall + the exhibit categories here, and link the HTML report.
 
 | Run (date · SHA) | overall | table | chart | graph | grounded | report |
 |---|--:|--:|--:|--:|--:|---|
+| 2026-06-23 · `803f34088` · deployed crawl after #3886/#3888 | 147/290 | 45/50 | 4/50 | 0/40 | 63/100 data+strategy | `out/reality-crawl/report.html` · 15 signed-in screenshots captured under `out/reality-crawl/shots/` |
 | 2026-06-23 · `036693168` · tenant matrix only | 49/50 current columns | — | — | — | 5/5 | report blocked: `reality-crawl.mjs` + bank are open in PR #3881, not on `origin/main` |
 
 ---
@@ -43,6 +44,16 @@ overall + the exhibit categories here, and link the HTML report.
 
 Each landed step: what changed, the root cause it fixed, the PR, the gate/crawl delta, the report link.
 
+- 2026-06-23 · QA raw-ID detector + deployed crawl proof ([#3890](https://github.com/abarva-platform/abarva/pull/3890)): tightens the shared
+  `RAW_ID` detector used by `tenant-matrix-gate.mjs` and `reality-crawl.mjs` so long
+  tenant-prefixed IDs such as `APEXRETAIL-DATA-0011` count as public-answer leaks.
+  Root cause: the previous regex only matched short 2-6 character prefixes, so the
+  reality crawl over-counted passes. Deployed proof after rescoring the captured corpus:
+  tenant matrix remains `MATRIX FAILED — 1/5 tenants` with First Capital `visual` red;
+  reality crawl is `147/290` overall, with tables `45/50`, charts `4/50`, graphs `0/40`,
+  and raw-ID leaks on Apex (5), Meridian (2), and Lakeshore (4). HTML report:
+  `out/reality-crawl/report.html` with 15 signed-in screenshots under
+  `out/reality-crawl/shots/`.
 - 2026-06-23 · Readable section normalization candidate ([#3888](https://github.com/abarva-platform/abarva/pull/3888)): normalizes live model section
   variants like `Evidence — what's actually in your estate:` and inline `Implication:` / `Next move:`
   markers into the canonical consultant paragraph shape after typed table extraction. Root cause:
