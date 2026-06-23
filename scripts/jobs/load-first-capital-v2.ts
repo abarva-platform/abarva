@@ -2,10 +2,14 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import yaml from "js-yaml";
+import Papa from "papaparse";
 
 import { stageFileToBlob } from "@/lib/context-ingestion/blob-stager";
 import { commitContextBatch } from "@/lib/context-ingestion/context-commit";
-import { loadCsvUploadToTenantContext } from "@/lib/context-ingestion/csv-upload-connector";
+import {
+  loadCsvUploadToTenantContext,
+  prepareCsvUploadForTenantContext,
+} from "@/lib/context-ingestion/csv-upload-connector";
 import { loadJsonlGraphEdges } from "@/lib/context-ingestion/jsonl-graph-loader";
 import { getTemplateById } from "@/lib/context-ingestion/template-registry";
 import {
@@ -22,6 +26,12 @@ const CLIENT_ID =
 const DATASET_PATH =
   process.env.DATASET_PATH ?? "datasets/first-capital-financial-synthetic-v2";
 const UPLOADED_BY = process.env.UPLOADED_BY ?? "aca-seed-job";
+const ENABLE_V4_HEADER_ALIASES = /(?:^|[-/])v4(?:[-/]|$)|synthetic-v4/i.test(
+  DATASET_PATH,
+);
+
+type CsvRow = Record<string, string>;
+type FieldDeriver = (row: CsvRow) => string;
 
 interface ManifestLoadEntry {
   order: number;
@@ -191,6 +201,159 @@ function entryType(fileName: string): "yaml" | "csv" | "jsonl" {
   return "csv";
 }
 
+function normalizeHeader(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
+}
+
+function findHeader(headers: string[], candidates: string[]): string | null {
+  const byNormalized = new Map(
+    headers.map((header) => [normalizeHeader(header), header]),
+  );
+  for (const candidate of candidates) {
+    const found = byNormalized.get(normalizeHeader(candidate));
+    if (found) return found;
+  }
+  return null;
+}
+
+function numberFromRow(row: CsvRow, field: string): number {
+  const raw = row[field]?.replace(/[$,]/g, "").trim();
+  if (!raw) return 0;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function sumFields(...fields: string[]): FieldDeriver {
+  return (row) => {
+    const total = fields.reduce((sum, field) => sum + numberFromRow(row, field), 0);
+    return total > 0 ? String(total) : "";
+  };
+}
+
+const V4_CANONICAL_FIELD_ALIASES: Record<
+  string,
+  Record<string, { aliases?: string[]; derive?: FieldDeriver; defaultValue?: string }>
+> = {
+  "personas-workforce": {
+    business_function: { aliases: ["business_area"] },
+    head_count: { aliases: ["population_count"] },
+    notes: { aliases: ["work_context"] },
+  },
+  "applications-systems": {
+    app_id: { aliases: ["application_id"] },
+    name: { aliases: ["application_name"] },
+    vendor: { defaultValue: "" },
+    category: { aliases: ["domain"] },
+    deployment: { aliases: ["hosting_model", "environment"] },
+    lifecycle_stage: { aliases: ["modernization_state"] },
+    run_cost_fy25_usd: { aliases: ["annual_run_cost_usd"] },
+    primary_dataclass: { aliases: ["data_classification"] },
+  },
+  "system-function-mapping": {
+    app_id: { aliases: ["application_id"] },
+    capability_id: { aliases: ["business_function", "process_supported"] },
+    process_area: { aliases: ["process_supported"] },
+  },
+  "infrastructure-cloud": {
+    resource_id: { aliases: ["asset_id"] },
+    resource_type: { aliases: ["hosting_model", "asset_name"] },
+    provider: { aliases: ["platform"] },
+    region: { aliases: ["region_or_datacenter"] },
+    monthly_cost_usd: { aliases: ["annual_cost_usd"] },
+  },
+  "platform-volumetrics": {
+    platform_id: { aliases: ["metric_id", "platform_or_system"] },
+    period: { defaultValue: "" },
+    value: { aliases: ["monthly_volume"] },
+    unit: { aliases: ["sla_target"] },
+    notes: { aliases: ["observed_issue"] },
+  },
+  "data-analytics-estate": {
+    data_product_id: { aliases: ["data_asset_id"] },
+    name: { aliases: ["data_asset_name"] },
+    source_system: { aliases: ["source_systems"] },
+    owner_team: { aliases: ["data_owner"] },
+    refresh_sla: { aliases: ["freshness"] },
+  },
+  "integrations-interfaces": {
+    edge_id: { aliases: ["integration_id"] },
+    source_app_id: { aliases: ["source_system"] },
+    target_app_id: { aliases: ["target_system"] },
+    support_type: { aliases: ["interface_type"] },
+  },
+  "vendors-contracts-licenses": {
+    annual_value_usd: { aliases: ["annual_contract_value_usd"] },
+    vendor_category: { aliases: ["category"] },
+    business_function: { aliases: ["owned_by"] },
+  },
+  "it-budget-financials": {
+    budget_line_id: { aliases: ["budget_id"] },
+    category: { aliases: ["budget_area"] },
+    annual_budget_usd: {
+      derive: sumFields("run_budget_usd", "change_budget_usd", "ai_or_data_budget_usd"),
+    },
+  },
+  "initiatives-portfolio": {
+    title: { aliases: ["initiative_name"] },
+    status: { aliases: ["stage", "risk_status"] },
+  },
+  "operations-service-management": {
+    record_id: { aliases: ["signal_id"] },
+    record_type: { aliases: ["ticket_or_event_type"] },
+    system_id: { aliases: ["service_or_process"] },
+  },
+  "kpis-outcome-evidence": {
+    initiative_id: { defaultValue: "" },
+  },
+  "security-risk-compliance": {
+    control_area: { aliases: ["domain"] },
+    system_id: { defaultValue: "" },
+  },
+  "ai-automation-footprint": {
+    tool_id: { aliases: ["ai_asset_id"] },
+    tool_name: { aliases: ["ai_asset_name"] },
+    vendor: { aliases: ["tool_or_model"] },
+  },
+};
+
+function materializeV4CanonicalHeaders(args: {
+  csvText: string;
+  templateId: string;
+}): string {
+  if (!ENABLE_V4_HEADER_ALIASES) return args.csvText;
+  const aliases = V4_CANONICAL_FIELD_ALIASES[args.templateId];
+  if (!aliases) return args.csvText;
+
+  const parsed = Papa.parse<CsvRow>(args.csvText, {
+    header: true,
+    skipEmptyLines: "greedy",
+    transformHeader: (header) => header.trim(),
+    transform: (value) => String(value ?? "").trim(),
+  });
+  if (parsed.errors.length > 0) return args.csvText;
+
+  const headers = (parsed.meta.fields ?? []).filter((header) => header.trim());
+  if (headers.length === 0) return args.csvText;
+
+  const rows = parsed.data.filter((row) =>
+    headers.some((header) => String(row[header] ?? "").trim() !== ""),
+  );
+  const outputHeaders = [...headers];
+
+  for (const [field, config] of Object.entries(aliases)) {
+    if (findHeader(outputHeaders, [field])) continue;
+    outputHeaders.push(field);
+    const sourceHeader = findHeader(headers, config.aliases ?? []);
+    for (const row of rows) {
+      row[field] =
+        config.derive?.(row) ??
+        (sourceHeader ? row[sourceHeader] ?? "" : config.defaultValue ?? "");
+    }
+  }
+
+  return Papa.unparse(rows, { columns: outputHeaders, newline: "\n" });
+}
+
 async function readManifest(datasetRoot: string): Promise<ManifestLoadEntry[]> {
   const manifestText = await fs.readFile(
     path.join(datasetRoot, "manifest.yaml"),
@@ -213,9 +376,20 @@ async function readManifest(datasetRoot: string): Promise<ManifestLoadEntry[]> {
     } satisfies ManifestLoadEntry;
   });
   const present = new Set(baseEntries.map((entry) => entry.file));
+  const supplementalEntries: ManifestLoadEntry[] = [];
+  for (const entry of TOWER_SUPPLEMENT_ENTRIES) {
+    if (present.has(entry.file)) continue;
+    try {
+      await fs.access(path.join(datasetRoot, entry.file));
+      supplementalEntries.push(entry);
+    } catch {
+      // The v4 packs carry their own AI-control filenames. Supplements are
+      // opportunistic legacy additions, not a reason to fail a manifest load.
+    }
+  }
   return [
     ...baseEntries,
-    ...TOWER_SUPPLEMENT_ENTRIES.filter((entry) => !present.has(entry.file)),
+    ...supplementalEntries,
   ].sort((a, b) => {
     if (a.type === "relationship_graph") return 1;
     if (b.type === "relationship_graph") return -1;
@@ -317,6 +491,15 @@ async function loadFile(
   if (!template) {
     throw new Error(`first_capital_unknown_template:${entry.template_id}`);
   }
+  console.log(
+    JSON.stringify({
+      event: "tenant_dataset_load_file",
+      tenantKey: TENANT_KEY,
+      file: entry.file,
+      templateId: entry.template_id,
+      v4HeaderAliases: ENABLE_V4_HEADER_ALIASES,
+    }),
+  );
 
   const staged = await stageFileToBlob({
     tenantKey: TENANT_KEY,
@@ -375,7 +558,10 @@ async function loadFile(
     tenantKey: TENANT_KEY,
     uploadedBy: UPLOADED_BY,
     fileName: entry.file,
-    csvText: fileText,
+    csvText: materializeV4CanonicalHeaders({
+      csvText: fileText,
+      templateId: entry.template_id,
+    }),
     sourceBlob: {
       bucket: staged.blobContainer ?? "context-drops",
       path: staged.blobObjectKey ?? entry.file,
@@ -408,6 +594,71 @@ async function loadFile(
 async function main() {
   const startedAt = new Date().toISOString();
   const datasetRoot = path.resolve(process.cwd(), DATASET_PATH);
+  const preflightOnly = process.argv.includes("--preflight");
+  if (preflightOnly) {
+    const entries = await readManifest(datasetRoot);
+    const checked: Array<{
+      file: string;
+      templateId: string;
+      rows: number;
+      fields: string[];
+    }> = [];
+    for (const entry of entries) {
+      if (!entry.template_id || entryType(entry.file) !== "csv") continue;
+      const dimension = entry.dimension as ContextDimension | undefined;
+      const dimensionFamily = (
+        entry.family ??
+        (dimension ? DIMENSION_FAMILY_MAP[dimension] : null)
+      ) as ContextDimensionFamily | null;
+      if (!dimensionFamily) continue;
+      const filePath = path.join(datasetRoot, cleanManifestFile(entry.file));
+      const csvText = materializeV4CanonicalHeaders({
+        csvText: await fs.readFile(filePath, "utf8"),
+        templateId: entry.template_id,
+      });
+      let prepared: ReturnType<typeof prepareCsvUploadForTenantContext>;
+      try {
+        prepared = prepareCsvUploadForTenantContext({
+          clientId: CLIENT_ID,
+          tenantKey: TENANT_KEY,
+          uploadedBy: UPLOADED_BY,
+          fileName: entry.file,
+          csvText,
+          mapping: { templateId: entry.template_id },
+          classificationOverrides: CLASSIFICATION_BY_FAMILY[dimensionFamily],
+          loadOrder: entry.order,
+        });
+      } catch (error) {
+        throw new Error(
+          `preflight_failed:${entry.file}:${entry.template_id}:${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      }
+      checked.push({
+        file: entry.file,
+        templateId: entry.template_id,
+        rows: prepared.rowsParsed,
+        fields: Object.keys(prepared.mapping.fieldMappings).sort(),
+      });
+    }
+    console.log(
+      JSON.stringify(
+        {
+          ok: true,
+          mode: "preflight",
+          tenantKey: TENANT_KEY,
+          datasetPath: DATASET_PATH,
+          v4HeaderAliases: ENABLE_V4_HEADER_ALIASES,
+          checkedFiles: checked.length,
+          checked,
+        },
+        null,
+        2,
+      ),
+    );
+    return;
+  }
   const deleted = await resetTenantContext();
   const entries = await readManifest(datasetRoot);
   const files: FileReceipt[] = [];
