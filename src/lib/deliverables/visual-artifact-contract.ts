@@ -107,6 +107,12 @@ export function visualContractFor(
 export function renderVisualContractPrompt(contract: VisualArtifactContract): string {
   const v = contract.requiredVisuals.map((s) => `  - ${s}`).join("\n");
   const t = contract.requiredTables.map((s) => `  - ${s}`).join("\n");
+  const tableRule =
+    contract.requiredTables.length > 0
+      ? `\nHard table rule: every Tables/matrices item above must be rendered as an actual <table>
+element with a visible heading that uses the required exhibit name or a close singular/plural
+variant. Do not satisfy a table requirement with bullets, cards, or prose.`
+      : "";
   return `REQUIRED EXHIBITS for ${contract.artifact} (minimum — add more where they clarify):
 Diagrams/charts:
 ${v}
@@ -114,7 +120,7 @@ Tables/matrices:
 ${t}
 Narrative depth: ${contract.minNarrativeDepth}.
 Use these required exhibit names, or close singular/plural variants of them, as visible section,
-table, or figure headings so reviewers can verify the artifact contains them.`;
+table, or figure headings so reviewers can verify the artifact contains them.${tableRule}`;
 }
 
 export interface VisualContractCheck {

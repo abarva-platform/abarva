@@ -80,4 +80,27 @@ describe("generateArtifact — the integration keystone", () => {
     expect(r.status).toBe("blocked_quality");
     if (r.status === "blocked_quality") expect(r.goldenBar.pass).toBe(false);
   });
+
+  it("completes mandatory architecture tables when Claude returns diagrams but omits the table exhibit", async () => {
+    const missingTableHtml = `<html><body>
+      <div class="diagram"><svg>conceptual architecture diagram</svg></div>
+      <div class="diagram"><svg>logical architecture diagram</svg></div>
+      <div class="diagram"><svg>physical deployment diagram</svg></div>
+      <div class="flow"><svg>integration data flow diagram</svg></div>
+      <div class="diagram">native vs non-native service pattern</div>
+    </body></html>`;
+
+    const r = await generateArtifact(
+      { moveId: "m", tenantKey: "meridian", phase: 3, artifact: "target_state_architecture" },
+      deps({ callModel: async () => missingTableHtml }),
+    );
+
+    expect(r.status).toBe("generated");
+    if (r.status === "generated") {
+      expect(r.goldenBar.pass).toBe(true);
+      expect(r.html).toContain("Architecture Decision Records / Tradeoff Table");
+      expect(r.html).toContain("KPI-to-Capability Traceability");
+      expect(r.html.match(/<table/g)?.length).toBeGreaterThanOrEqual(2);
+    }
+  });
 });
