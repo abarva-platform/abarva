@@ -19,7 +19,7 @@ Cells = current status on the **deployed** app. Keep this in sync with the live 
 | 1 · substrate / `dims19` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3884](https://github.com/abarva-platform/abarva/pull/3884) gate-only baseline; screenshot report pending |
 | 2 · retrievable / `grounded` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3884](https://github.com/abarva-platform/abarva/pull/3884) gate-only baseline; screenshot report pending |
 | 3 · one engine / `experts` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3884](https://github.com/abarva-platform/abarva/pull/3884) gate-only baseline; code assertion pending |
-| 4 · one voice / `readable` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3886](https://github.com/abarva-platform/abarva/pull/3886) answer-safety candidate; deployed proof pending |
+| 4 · one voice / `readable` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3886](https://github.com/abarva-platform/abarva/pull/3886) answer-safety deployed; follow-up readable section candidate in progress; all-green proof pending |
 | 5 · exhibits / `visual` | 🟡 | 🟥 | 🟡 | 🟡 | 🟡 | [#3884](https://github.com/abarva-platform/abarva/pull/3884) First Capital failed live gate on 2026-06-23 |
 | 6 · continuity (to add) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | — |
 | 7 · honesty / `fence`+`noRawId` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3886](https://github.com/abarva-platform/abarva/pull/3886) answer-safety candidate; deployed proof pending |
@@ -43,6 +43,14 @@ overall + the exhibit categories here, and link the HTML report.
 
 Each landed step: what changed, the root cause it fixed, the PR, the gate/crawl delta, the report link.
 
+- 2026-06-23 · Readable section normalization candidate ([#3888](https://github.com/abarva-platform/abarva/pull/3888)): normalizes live model section
+  variants like `Evidence — what's actually in your estate:` and inline `Implication:` / `Next move:`
+  markers into the canonical consultant paragraph shape after typed table extraction. Root cause:
+  Apex-style inline tables could be lifted into `AgentAnswer.tables` while leaving the surrounding
+  prose as a dense or malformed paragraph, so the final answer looked less like an expert consultant
+  even when the evidence and renderer were working. Gate/crawl delta: not marked green until the
+  candidate is deployed and tenant-matrix + reality-crawl screenshots prove it for all five tenants.
+  Release record: `docs/releases/records/2026-06-23-brain-contract-readable-sections.md`.
 - 2026-06-23 · Answer render-safety candidate ([#3886](https://github.com/abarva-platform/abarva/pull/3886)): adds a shared `AgentAnswer`
   render-safety pass to remove duplicated consultant labels (`Read: Read:`) and internal record
   syntax (`clients[...]`, UUIDs, `client_id`, raw record IDs) from prose, citation chips, table

@@ -266,4 +266,26 @@ describe("Ask Intelligence response policy", () => {
     expect(answer).toContain("| Transition rights | Contract schedule |");
     expect(answer).toContain("Next move:");
   });
+
+  it("normalizes live consultant section variants into readable paragraphs", () => {
+    const text = [
+      "Read: Your loaded D&A estate shows eight data products spanning sales, customer, inventory, digital, loss prevention, supply chain, merchandising, and workforce — but the maturity profile is uneven.",
+      "Evidence — what's actually in your estate: Implication: Merch planning is your only gold-grade asset, and it is leaking trust through manual overrides.",
+      "Next move: assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves.",
+    ].join(" ");
+
+    const answer = enforceDecisionGradeAnswer(text);
+
+    expect(answer).toContain("Read:");
+    expect(answer).toContain("Evidence:");
+    expect(answer).toContain("Implication:");
+    expect(answer).toContain("Next move:");
+    expect(answer).not.toMatch(/Evidence\s+—/i);
+    expect([...answer.matchAll(/^(Read|Evidence|Implication|Next move):/gim)]).toHaveLength(4);
+    expect(
+      answer
+        .split(/\n{2,}/)
+        .every((paragraph) => paragraph.split(/\s+/).length <= 70),
+    ).toBe(true);
+  });
 });
