@@ -430,13 +430,11 @@ export async function decideApprovalRequest(
       ? {
           lifecycle_state: "approved",
           status: "active",
-          // State reconciliation: approving the P0 origination brief MUST advance
-          // the canonical phase to P1 Charter. Previously this pinned current_phase
-          // at 0, so after approval the Move stayed "P0" on the Overview/Documents/
-          // File Cabinet (which all read current_phase) while the phase workspace
-          // happily rendered /phase/1 — the four surfaces disagreed. current_phase
-          // is the single source of truth; advancing it here keeps them in lockstep.
-          current_phase: 1,
+          // Phase advancement is owned by closeP0OnApproval -> advancePhase.
+          // That path signs the P0 brief, evaluates the governed gate, and
+          // writes the phase_snapshots row the generation guard reads. Do not
+          // set current_phase here, or the close helper will see the Move as
+          // already past P0 and skip the canonical gate write.
           ...(sponsorPersonIdFromBrief
             ? { sponsor_person_id: sponsorPersonIdFromBrief }
             : {}),
