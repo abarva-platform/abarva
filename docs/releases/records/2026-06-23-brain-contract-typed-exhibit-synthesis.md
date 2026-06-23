@@ -6,11 +6,11 @@
 
 ## Status
 
-`candidate`
+`rolled-back`
 
 ## Plain-English Summary
 
-This release adds an audited second-pass exhibit synthesis step for Ava. If a chart-shaped or graph-shaped question finishes without the requested typed chart or graph, the route asks a small governed model pass to produce only a valid Markdown data table from the already retrieved sources and final answer. The existing exhibit validator then decides whether that table becomes a typed chart or graph. This replaces prompt-only compliance with a stricter, validated fallback path.
+This release added an audited second-pass exhibit synthesis step for Ava. If a chart-shaped or graph-shaped question finished without the requested typed chart or graph, the route asked a small governed model pass to produce only a valid Markdown data table from the already retrieved sources and final answer. The deployed reality crawl showed this did not improve quality enough and reduced the overall pass rate, so it is being rolled back by `2026-06-23-revert-typed-exhibit-synthesis`.
 
 ## Layer Impact
 
@@ -62,4 +62,4 @@ Rollback the ACA web app to the prior approved revision/image digest. No databas
 
 ## Known Gaps
 
-This candidate is specifically aimed at the #3894 post-deploy deep-crawl failures: charts `6/50`, graphs `2/40`, overall `155/290`. It is not complete until the post-deploy crawl proves a material lift across all five tenants.
+Rolled back because the #3895 deployed crawl scored `150/290`, worse than #3894's `155/290`. The permanent fix remains deterministic visual specifications from structured tenant facts/relationships, not prompt-only or second-pass prose extraction.
