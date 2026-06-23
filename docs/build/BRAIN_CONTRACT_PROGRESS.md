@@ -38,6 +38,7 @@ overall + the exhibit categories here, and link the HTML report.
 | 2026-06-23 · `803f34088` · deployed crawl after #3886/#3888 | 147/290 | 45/50 | 4/50 | 0/40 | 63/100 data+strategy | `out/reality-crawl/report.html` · 15 signed-in screenshots captured under `out/reality-crawl/shots/` |
 | 2026-06-23 · `49ecc9564` · deployed crawl after #3895 | 150/290 | 45/50 | 9/50 | 5/40 | not separately promoted | `out/reality-crawl-49ecc956/report.html` · rolled back by #3896 because overall score worsened vs #3894 |
 | 2026-06-23 · `94956a2c9` · deployed crawl after #3894 | 155/290 | 44/50 | 6/50 | 2/40 | not separately promoted | `out/reality-crawl-94956a2c/report.html` · current safer baseline restored by #3896 |
+| 2026-06-23 · `497848f2` · deployed crawl after #3897 | 156/290 | 48/50 | 3/50 | 1/40 | 84/100 data+strategy | `out/reality-crawl-497848f2/report.html` · source-owned structured rows improved tables but charts/graphs remain the quality blocker |
 | 2026-06-23 · `f0ae3083` · Apex smoke before visual-graph candidate | 31/58 | 10/10 | 0/10 | 0/8 | 12/20 data+strategy | `out/reality-crawl-smoke-apex/summary.json` · repaired harness captured real deployed answers |
 | 2026-06-23 · `036693168` · tenant matrix only | 49/50 current columns | — | — | — | 5/5 | report blocked: `reality-crawl.mjs` + bank are open in PR #3881, not on `origin/main` |
 
@@ -47,14 +48,23 @@ overall + the exhibit categories here, and link the HTML report.
 
 Each landed step: what changed, the root cause it fixed, the PR, the gate/crawl delta, the report link.
 
+- 2026-06-23 · Visual source-selection candidate (PR pending): expands the canonical structured-fact retriever so
+  visual application, vendor, initiative, value-at-stake, and dependency wording retrieves the existing
+  Postgres-backed source rows instead of relying on model-emitted Markdown. Adds a deterministic application-count
+  by function aggregate for chart-by-domain questions. Root cause: #3897 proved source-owned tables but chart/graph
+  questions often missed the structured source rows entirely, so the renderer had nothing truthful to draw.
+  Gate/crawl delta: targeted unit tests pass; not marked green until deployed app matrix + reality crawl prove the
+  chart/graph lift across all five tenants. Release record:
+  `docs/releases/records/2026-06-23-brain-contract-visual-source-selection.md`.
 - 2026-06-23 · Source-owned typed visual candidate ([#3897](https://github.com/abarva-platform/abarva/pull/3897)): adds optional structured rows/columns/chart/graph
   hints to `AskSource`, populates them from Postgres-backed application, vendor, renewal, and initiative
   retrievers, and makes `buildStructuredExhibits` render visuals from those cited source rows before falling
   back to Markdown tables or evidence-required tables. Root cause: #3894 made charts/graphs renderable, but
   answer quality still depended on the model emitting a perfect table; #3895's second-pass model synthesis
   was deployed and matrix-green but lowered the deep crawl to `150/290`, proving model-call fallback is not the
-  scalable fix. Gate/crawl delta: not marked green until deployed app matrix + reality crawl prove improvement.
-  Release record: `docs/releases/records/2026-06-23-brain-contract-source-structured-visuals.md`.
+  scalable fix. Gate/crawl delta after deploy: tenant matrix 5/5, post-deploy crawl 0 P0/P1/P2, deep crawl
+  `156/290` with tables `48/50`, charts `3/50`, graphs `1/40`. Release record:
+  `docs/releases/records/2026-06-23-brain-contract-source-structured-visuals.md`.
 - 2026-06-23 · Rolled back typed exhibit synthesis ([#3896](https://github.com/abarva-platform/abarva/pull/3896)):
   reverted #3895 after deployed deep crawl regressed from #3894's `155/290` to `150/290`. Runtime proof after
   rollback: ACA revision `md92b1cdf`, digest `sha256:9625eb2a...`, 100% traffic; signed-in tenant matrix passed
