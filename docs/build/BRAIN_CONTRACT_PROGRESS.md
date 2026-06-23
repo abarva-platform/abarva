@@ -37,7 +37,6 @@ overall + the exhibit categories here, and link the HTML report.
 |---|--:|--:|--:|--:|--:|---|
 | 2026-06-23 · `803f34088` · deployed crawl after #3886/#3888 | 147/290 | 45/50 | 4/50 | 0/40 | 63/100 data+strategy | `out/reality-crawl/report.html` · 15 signed-in screenshots captured under `out/reality-crawl/shots/` |
 | 2026-06-23 · `f0ae3083` · Apex smoke before visual-graph candidate | 31/58 | 10/10 | 0/10 | 0/8 | 12/20 data+strategy | `out/reality-crawl-smoke-apex/summary.json` · repaired harness captured real deployed answers |
-| 2026-06-23 · `94956a2c` · deployed crawl after #3894 | 155/290 | 44/50 | 6/50 | 2/40 | 61/100 data+strategy | `out/reality-crawl-94956a2c/report.html` · matrix passed 5/5 but visual quality still blocked |
 | 2026-06-23 · `036693168` · tenant matrix only | 49/50 current columns | — | — | — | 5/5 | report blocked: `reality-crawl.mjs` + bank are open in PR #3881, not on `origin/main` |
 
 ---
@@ -46,13 +45,6 @@ overall + the exhibit categories here, and link the HTML report.
 
 Each landed step: what changed, the root cause it fixed, the PR, the gate/crawl delta, the report link.
 
-- 2026-06-23 · Typed exhibit synthesis candidate (PR pending): adds an audited second-pass visual exhibit synthesizer
-  that runs only when a chart/graph-shaped question lacks the requested typed exhibit after the primary answer. It
-  returns only a validated Markdown data table from retrieved sources + final answer, then reuses the canonical
-  `buildStructuredExhibits` validator to produce charts/graphs. Root cause: #3894 fixed plumbing and deployed
-  graph rendering, but the full deployed crawl still showed charts `6/50` and graphs `2/40`; prompt-only visual
-  compliance is not reliable enough for consultant-grade output. Release record:
-  `docs/releases/records/2026-06-23-brain-contract-typed-exhibit-synthesis.md`.
 - 2026-06-23 · Visual/graph contract candidate (PR pending): repairs `reality-crawl.mjs` to use the same signed-in
   Playwright storage-state session and `tabId` path as `tenant-matrix-gate.mjs`, adds a timeout so one stuck answer
   cannot hang the run, strengthens rich visual prompting so chart/graph questions must emit valid Markdown data tables
