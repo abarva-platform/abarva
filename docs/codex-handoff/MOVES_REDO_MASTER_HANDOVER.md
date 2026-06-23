@@ -27,6 +27,18 @@ Do NOT start from `main` (the redo isn't merged there yet) and do NOT start from
   (`meetsGoldenBar`), `tests/e2e/moves-deliverable-redo.spec.ts` (the click-through harness).
 - The new **`solution_approach_options`** deliverable + profile.
 
+## The integration keystone (call this from the route)
+
+`src/lib/deliverables/generate-artifact.ts` → **`generateArtifact(args, deps)`** composes the whole
+pipeline (gate → assemble real context → readiness → dynamic prompt → governed model → golden-bar
+gate) and is tested. **Your route wiring collapses to: provide 3 injected deps and call it.**
+- `deps.gateSources` → `{ captureComplete, gateApproved }` (governance / `phase_snapshots`).
+- `deps.contextSources` → `{ retrieveCurrentState (broker), loadPriorDigests (full, from
+  deliverable_versions), loadDecisions }`.
+- `deps.callModel(system, user)` → the GOVERNED egress call returning artifact HTML.
+Result: `generated` → persist client-ready; `blocked_gate` → 409 + blockers; `blocked_context` →
+missing inputs / unapproved option; `blocked_quality` → persist as `internal_draft`.
+
 ## Your job — execute the slices (the plan §Slices), in order
 
 For EACH slice: build → unit (jest) → integration → **E2E click-through** (the harness, on the live
