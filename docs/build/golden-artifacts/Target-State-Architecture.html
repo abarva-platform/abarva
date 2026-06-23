@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Target State Architecture — Enterprise Data Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#080B14;
+    --bg-2:#0C1120;
+    --panel:rgba(255,255,255,.04);
+    --panel-2:rgba(255,255,255,.06);
+    --stroke:rgba(255,255,255,.10);
+    --stroke-2:rgba(255,255,255,.18);
+    --ink:#EAEEF8;
+    --muted:#94A1BC;
+    --faint:#5C6987;
+    --azure:#3D8BFF;
+    --cyan:#36D9F0;
+    --coral:#FF5E47;
+    --coral-2:#FF8A5B;
+    --teal:#2DD4BF;
+    --violet:#9B7DFF;
+    --bronze:#CF8A4E;
+    --silver:#C4CCDA;
+    --gold:#F3C552;
+    --grad:linear-gradient(100deg,var(--cyan),var(--azure) 45%,var(--violet) 78%,var(--coral));
+    font-synthesis:none;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ===== Stage ===== */
+  .stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  .slide{
+    position:absolute;inset:0;
+    display:none;
+    padding:54px 72px 70px;
+    flex-direction:column;
+    opacity:0;
+    transform:translateY(14px);
+    transition:opacity .5s ease,transform .5s ease;
+    background:
+      radial-gradient(1100px 620px at 82% -8%,rgba(61,139,255,.16),transparent 60%),
+      radial-gradient(900px 560px at 6% 108%,rgba(255,94,71,.13),transparent 58%),
+      linear-gradient(180deg,var(--bg-2),var(--bg));
+  }
+  .slide.active{display:flex;opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){
+    .slide{transition:none;transform:none}
+    .flow{animation:none!important}
+  }
+
+  /* ===== Shared atoms ===== */
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--cyan);
+    display:flex;align-items:center;gap:12px;margin-bottom:18px;
+  }
+  .eyebrow::before{content:"";width:34px;height:2px;border-radius:2px;background:var(--grad)}
+  h1{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:-.02em;line-height:1.02}
+  h2{font-family:'Space Grotesk',sans-serif;font-weight:600;letter-spacing:-.015em;line-height:1.05;font-size:clamp(26px,3.4vw,44px)}
+  .sub{color:var(--muted);font-size:clamp(14px,1.25vw,17px);line-height:1.55;max-width:60ch}
+  .accent{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .mono{font-family:'JetBrains Mono',monospace}
+
+  .grid{display:grid;gap:18px;flex:1;min-height:0}
+  .card{
+    background:var(--panel);
+    border:1px solid var(--stroke);
+    border-radius:16px;
+    padding:22px 22px 20px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:var(--grad);opacity:.0;transition:opacity .3s}
+  .card:hover::before{opacity:.7}
+  .card h3{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+  .card p{color:var(--muted);font-size:13.5px;line-height:1.5}
+  .tag{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);border:1px solid var(--stroke);border-radius:999px;padding:3px 9px}
+  .dot{width:9px;height:9px;border-radius:3px;flex:none}
+
+  ul.lean{list-style:none;display:flex;flex-direction:column;gap:9px;margin-top:4px}
+  ul.lean li{position:relative;padding-left:20px;color:var(--muted);font-size:13.5px;line-height:1.45}
+  ul.lean li::before{content:"";position:absolute;left:0;top:7px;width:7px;height:7px;border-radius:2px;background:var(--grad)}
+
+  /* ===== Chrome: progress + nav + counter ===== */
+  .topbar{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:50}
+  .topbar > i{display:block;height:100%;width:0;background:var(--grad);transition:width .5s ease}
+  .brandmark{position:fixed;top:20px;right:26px;z-index:50;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;color:var(--faint);text-transform:uppercase}
+  .counter{position:fixed;bottom:22px;left:72px;z-index:50;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+  .counter b{color:var(--ink);font-weight:700}
+  .nav{position:fixed;bottom:18px;right:26px;z-index:50;display:flex;gap:9px}
+  .nav button{
+    width:42px;height:42px;border-radius:11px;cursor:pointer;
+    background:var(--panel-2);border:1px solid var(--stroke-2);color:var(--ink);
+    font-size:17px;display:flex;align-items:center;justify-content:center;
+    transition:.2s;
+  }
+  .nav button:hover{background:var(--grad);border-color:transparent;color:#06080f}
+  .nav button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .dots{position:fixed;bottom:27px;left:50%;transform:translateX(-50%);z-index:50;display:flex;gap:7px;max-width:60vw;flex-wrap:wrap;justify-content:center}
+  .dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;transition:.25s}
+  .dots i.on{background:var(--grad);width:22px;border-radius:4px}
+  .hint{position:fixed;bottom:24px;left:50%;transform:translate(-50%,40px);z-index:40;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--faint);opacity:0;animation:fade 4s ease forwards}
+  @keyframes fade{0%,70%{opacity:.7}100%{opacity:0}}
+
+  /* ===== Title slide ===== */
+  .title-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:1000px}
+  .title-wrap h1{font-size:clamp(40px,6.4vw,86px)}
+  .megasub{color:var(--muted);font-size:clamp(15px,1.5vw,20px);margin-top:22px;max-width:62ch;line-height:1.5}
+  .stat-row{display:flex;gap:48px;margin-top:46px;flex-wrap:wrap}
+  .stat .n{font-family:'Space Grotesk',sans-serif;font-size:34px;font-weight:700}
+  .stat .l{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin-top:4px}
+  .pillrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:30px}
+  .pill{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;border:1px solid var(--stroke-2);border-radius:999px;padding:7px 14px;color:var(--muted)}
+
+  /* ===== From / To split ===== */
+  .fromto{display:grid;grid-template-columns:1fr 64px 1fr;align-items:stretch;gap:0;flex:1;min-height:0}
+  .ft-col{border:1px solid var(--stroke);border-radius:18px;padding:26px;display:flex;flex-direction:column}
+  .ft-col.legacy{background:linear-gradient(180deg,rgba(255,94,71,.06),transparent)}
+  .ft-col.future{background:linear-gradient(180deg,rgba(54,217,240,.07),transparent)}
+  .ft-col h3{font-family:'Space Grotesk',sans-serif;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  .ft-col .big{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;margin:6px 0 16px}
+  .ft-arrow{display:flex;align-items:center;justify-content:center;color:var(--cyan);font-size:26px}
+  .ft-list{list-style:none;display:flex;flex-direction:column;gap:11px}
+  .ft-list li{display:flex;gap:11px;align-items:flex-start;font-size:13.5px;color:var(--muted);line-height:1.4}
+  .ft-list li span{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--faint);flex:none;width:62px;padding-top:1px}
+
+  /* ===== Diagram helpers ===== */
+  .diagram{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+  svg{width:100%;height:100%;max-height:100%}
+  .nbox{fill:var(--panel-2);stroke:var(--stroke-2)}
+  .ntext{fill:var(--ink);font-family:'Inter',sans-serif;font-weight:600}
+  .nsub{fill:var(--muted);font-family:'JetBrains Mono',monospace}
+  .lbl{fill:var(--faint);font-family:'JetBrains Mono',monospace;letter-spacing:.12em}
+  .flow{stroke-dasharray:7 9;animation:dash 1.1s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-32}}
+
+  /* layout helpers for grids */
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g23{grid-template-columns:1.15fr 1fr}
+  .rows-2{grid-template-rows:1fr 1fr}
+  .span2{grid-column:span 2}
+  .slide-head{margin-bottom:22px;flex:none}
+  .slide-head .row{display:flex;justify-content:space-between;align-items:flex-end;gap:20px}
+  .slide-head .sub{margin-top:10px}
+
+  /* medallion */
+  .med-row{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;flex:1;min-height:0}
+  .med{border-radius:18px;padding:24px;position:relative;overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--stroke)}
+  .med .ring{position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;filter:blur(6px);opacity:.5}
+  .med .lname{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase}
+  .med .ltitle{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;margin:6px 0 12px}
+  .med.bronze{background:linear-gradient(180deg,rgba(207,138,78,.14),transparent)}
+  .med.silver{background:linear-gradient(180deg,rgba(196,204,218,.14),transparent)}
+  .med.gold{background:linear-gradient(180deg,rgba(243,197,82,.15),transparent)}
+
+  /* roadmap */
+  .road{display:grid;grid-template-columns:repeat(4,1fr);gap:0;flex:1;min-height:0;position:relative}
+  .phase{padding:24px 22px;border-left:1px solid var(--stroke);position:relative;display:flex;flex-direction:column}
+  .phase:first-child{border-left:none}
+  .phase .pn{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;color:var(--cyan)}
+  .phase .pt{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;margin:8px 0 4px}
+  .phase .pw{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--faint);margin-bottom:14px}
+  .phase .node{position:absolute;top:-7px;left:-7px;width:14px;height:14px;border-radius:50%;background:var(--grad);box-shadow:0 0 0 4px var(--bg)}
+  .road::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--violet),var(--coral))}
+
+  /* kpi */
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;flex:1;min-height:0}
+  .kpi .card{display:flex;flex-direction:column;justify-content:center}
+  .kpi .num{font-family:'Space Grotesk',sans-serif;font-size:clamp(32px,4vw,52px);font-weight:700;line-height:1}
+  .kpi .cap{color:var(--muted);font-size:13px;margin-top:10px;line-height:1.4}
+
+  .footnote{flex:none;margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--faint);letter-spacing:.08em}
+</style>
+</head>
+<body>
+
+<div class="topbar"><i id="bar"></i></div>
+<div class="brandmark">Enterprise Data Platform · Target State</div>
+
+<div class="stage" id="stage">
+
+  <!-- ================= 1 · TITLE ================= -->
+  <section class="slide">
+    <div class="title-wrap">
+      <div class="eyebrow">Target State Architecture · v1.0</div>
+      <h1>The Healthcare<br><span class="accent">Lakehouse</span> Blueprint</h1>
+      <p class="megasub">A reference architecture for retiring the legacy Epic Clarity / Caboodle / SQL Server warehouse and consolidating clinical and operational analytics onto an Azure Databricks lakehouse with Power BI — secured, orchestrated, and AI-ready.</p>
+      <div class="pillrow">
+        <span class="pill">Azure Databricks</span>
+        <span class="pill">Power BI</span>
+        <span class="pill">Medallion · Bronze→Silver→Gold</span>
+        <span class="pill">Unity Catalog</span>
+        <span class="pill">Mosaic AI · Agents</span>
+        <span class="pill">Epic + Workday</span>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="n accent">1</div><div class="l">Governed Platform</div></div>
+        <div class="stat"><div class="n accent">2</div><div class="l">Clinical + Operational</div></div>
+        <div class="stat"><div class="n accent">3</div><div class="l">Medallion Layers</div></div>
+        <div class="stat"><div class="n accent">∞</div><div class="l">Agentic Workloads</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 2 · EXEC SUMMARY (From/To) ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Executive Summary</div>
+      <div class="row">
+        <h2>From a brittle warehouse to a governed lakehouse</h2>
+      </div>
+      <p class="sub">The shift is not a lift-and-shift. We move from siloed, script-driven extracts feeding a single BI tool to one open, governed platform that serves BI, data science, and AI agents from the same trusted data.</p>
+    </div>
+    <div class="fromto">
+      <div class="ft-col legacy">
+        <h3>Current State</h3>
+        <div class="big">Legacy EDW</div>
+        <ul class="ft-list">
+          <li><span>SOURCE</span> Epic Clarity &amp; Caboodle on SQL Server</li>
+          <li><span>PIPELINE</span> IBM DataStage, T-SQL stored procedures, hand-built scripts</li>
+          <li><span>COMPUTE</span> Scale-up SQL Server, batch-bound, nightly windows</li>
+          <li><span>ANALYTICS</span> Tableau extracts, report sprawl, no shared model</li>
+          <li><span>AI/ML</span> Effectively none — data not science-ready</li>
+          <li><span>GOVERNANCE</span> Per-system, manual, hard to audit</li>
+        </ul>
+      </div>
+      <div class="ft-arrow">→</div>
+      <div class="ft-col future">
+        <h3>Target State</h3>
+        <div class="big accent">Azure Lakehouse</div>
+        <ul class="ft-list">
+          <li><span>SOURCE</span> Epic (Clarity, Caboodle, FHIR/HL7) + Workday ERP</li>
+          <li><span>PIPELINE</span> ADF + Delta Live Tables + Databricks Workflows</li>
+          <li><span>COMPUTE</span> Elastic Spark + Photon, streaming &amp; batch</li>
+          <li><span>ANALYTICS</span> Power BI on a governed semantic layer</li>
+          <li><span>AI/ML</span> Mosaic AI, MLflow, GenAI &amp; agentic workloads</li>
+          <li><span>GOVERNANCE</span> Unity Catalog + Purview, lineage by default</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3 · GUIDING PRINCIPLES ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Design Tenets</div>
+      <div class="row"><h2>Six principles that govern every decision</h2></div>
+    </div>
+    <div class="grid g3 rows-2">
+      <div class="card"><h3><span class="dot" style="background:var(--cyan)"></span>One source of truth</h3><p>A single governed lakehouse replaces overlapping marts and extracts. Clinical and operational data share one Gold layer and one set of definitions.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--azure)"></span>Open by default</h3><p>Delta Lake open format and open APIs prevent vendor lock-in. Data is consumable by Power BI, notebooks, and external apps alike.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--violet)"></span>Secure &amp; compliant</h3><p>PHI protection, HIPAA, and least-privilege access are built in through Unity Catalog, not bolted on per report.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--teal)"></span>Governed self-service</h3><p>Certified semantic models let analysts and clinicians answer their own questions without re-engineering the pipeline.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--coral)"></span>AI-ready foundation</h3><p>Every curated dataset is science-ready — feature stores, vector search, and agents draw from the same trusted tables.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--gold)"></span>Automate the toil</h3><p>Declarative pipelines and orchestration replace fragile stored procedures and manual scripts, with quality enforced as data flows.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= 4 · CURRENT STATE OVERVIEW ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Current State · Narrative</div>
+      <div class="row"><h2>Where the data lives today</h2></div>
+      <p class="sub">Analytics today is anchored on Epic's reporting databases landing into SQL Server, transformed by a mix of DataStage jobs and stored procedures, then surfaced almost entirely through Tableau.</p>
+    </div>
+    <div class="grid g23">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--coral)"></span>The stack as it stands</h3>
+        <ul class="lean" style="margin-top:14px">
+          <li><b>Epic Clarity</b> — relational, normalized extract of the EHR for detailed reporting.</li>
+          <li><b>Epic Caboodle</b> — dimensional warehouse for friendlier, faster analytics.</li>
+          <li><b>SQL Server</b> — the central EDW where marts, snapshots, and history accumulate.</li>
+          <li><b>IBM DataStage</b> — ETL moving and shaping source data into the warehouse.</li>
+          <li><b>Stored procedures &amp; scripts</b> — business logic embedded in thousands of lines of T-SQL.</li>
+          <li><b>Tableau</b> — the primary consumption layer for dashboards and extracts.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--gold)"></span>What it costs us</h3>
+        <ul class="lean" style="margin-top:14px">
+          <li>Logic is scattered and undocumented — change is slow and risky.</li>
+          <li>Nightly batch windows can't keep up with near-real-time clinical demand.</li>
+          <li>Tableau extracts drift from source; "two numbers" disputes are common.</li>
+          <li>No native path to ML, GenAI, or agents on this data.</li>
+          <li>Operational data (finance, supply chain, HR) sits outside the warehouse.</li>
+          <li>Governance and PHI controls are manual and audited per system.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 5 · CURRENT STATE DIAGRAM ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Current State · Architecture</div>
+      <div class="row"><h2>Legacy reference architecture</h2></div>
+    </div>
+    <div class="diagram">
+      <svg viewBox="0 0 1180 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="legacyflow" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#FF5E47"/><stop offset="1" stop-color="#FF8A5B"/>
+          </linearGradient>
+        </defs>
+        <!-- columns labels -->
+        <text x="120" y="34" class="lbl" font-size="13">SOURCES</text>
+        <text x="395" y="34" class="lbl" font-size="13">INGEST / ETL</text>
+        <text x="650" y="34" class="lbl" font-size="13">LEGACY EDW</text>
+        <text x="945" y="34" class="lbl" font-size="13">CONSUME</text>
+
+        <!-- source boxes -->
+        <g>
+          <rect x="40" y="70" width="200" height="74" rx="12" class="nbox"/>
+          <text x="60" y="104" class="ntext" font-size="16">Epic EHR</text>
+          <text x="60" y="126" class="nsub" font-size="11">Clinical system of record</text>
+
+          <rect x="40" y="170" width="200" height="74" rx="12" class="nbox"/>
+          <text x="60" y="204" class="ntext" font-size="16">Epic Clarity</text>
+          <text x="60" y="226" class="nsub" font-size="11">Normalized reporting DB</text>
+
+          <rect x="40" y="270" width="200" height="74" rx="12" class="nbox"/>
+          <text x="60" y="304" class="ntext" font-size="16">Epic Caboodle</text>
+          <text x="60" y="326" class="nsub" font-size="11">Dimensional warehouse</text>
+
+          <rect x="40" y="370" width="200" height="74" rx="12" class="nbox"/>
+          <text x="60" y="404" class="ntext" font-size="16">Ancillary apps</text>
+          <text x="60" y="426" class="nsub" font-size="11">Lab · pharmacy · flat files</text>
+        </g>
+
+        <!-- ETL -->
+        <rect x="330" y="150" width="200" height="84" rx="12" class="nbox"/>
+        <text x="350" y="186" class="ntext" font-size="16">IBM DataStage</text>
+        <text x="350" y="208" class="nsub" font-size="11">Batch ETL jobs</text>
+
+        <rect x="330" y="280" width="200" height="84" rx="12" class="nbox"/>
+        <text x="350" y="316" class="ntext" font-size="16">Stored procs</text>
+        <text x="350" y="338" class="nsub" font-size="11">T-SQL · scripts · cron</text>
+
+        <!-- EDW -->
+        <rect x="600" y="150" width="210" height="214" rx="14" fill="rgba(255,94,71,.07)" stroke="rgba(255,94,71,.4)"/>
+        <text x="620" y="186" class="ntext" font-size="17">SQL Server EDW</text>
+        <text x="620" y="210" class="nsub" font-size="11">Scale-up · single node</text>
+        <line x1="620" y1="226" x2="790" y2="226" stroke="rgba(255,255,255,.12)"/>
+        <text x="620" y="252" class="nsub" font-size="11" fill="#94A1BC">• Staging tables</text>
+        <text x="620" y="276" class="nsub" font-size="11" fill="#94A1BC">• Conformed marts</text>
+        <text x="620" y="300" class="nsub" font-size="11" fill="#94A1BC">• Snapshots / history</text>
+        <text x="620" y="324" class="nsub" font-size="11" fill="#94A1BC">• Nightly batch windows</text>
+
+        <!-- Consume -->
+        <rect x="900" y="190" width="200" height="84" rx="12" class="nbox"/>
+        <text x="920" y="226" class="ntext" font-size="16">Tableau</text>
+        <text x="920" y="248" class="nsub" font-size="11">Dashboards &amp; extracts</text>
+
+        <rect x="900" y="300" width="200" height="74" rx="12" class="nbox"/>
+        <text x="920" y="334" class="ntext" font-size="15">Manual exports</text>
+        <text x="920" y="354" class="nsub" font-size="11">Excel · ad-hoc reports</text>
+
+        <!-- connectors -->
+        <g stroke="url(#legacyflow)" stroke-width="2.5" fill="none">
+          <path class="flow" d="M240 207 H300 Q330 207 330 192 V192"/>
+          <path class="flow" d="M240 307 H300 Q330 307 330 322 V322"/>
+          <path class="flow" d="M240 107 H285 Q330 107 330 165 V165"/>
+          <path class="flow" d="M240 407 H285 Q330 407 330 350 V350"/>
+          <path class="flow" d="M530 192 H565 Q600 192 600 210 V210"/>
+          <path class="flow" d="M530 322 H565 Q600 322 600 300 V300"/>
+          <path class="flow" d="M810 232 H900 V232"/>
+          <path class="flow" d="M810 300 Q860 300 900 330 H900"/>
+        </g>
+      </svg>
+    </div>
+    <div class="footnote">Single-engine, batch-bound, script-driven. Every arrow above is a place logic hides and lineage breaks.</div>
+  </section>
+
+  <!-- ================= 6 · CURRENT STATE LIMITATIONS ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Current State · Constraints</div>
+      <div class="row"><h2>Why the legacy estate can't take us forward</h2></div>
+    </div>
+    <div class="grid g4">
+      <div class="card"><span class="tag">Scale</span><h3 style="margin-top:12px">Vertical ceiling</h3><p>SQL Server scales up, not out. Peak loads contend for one engine, and the nightly window is already full.</p></div>
+      <div class="card"><span class="tag">Latency</span><h3 style="margin-top:12px">Batch-only</h3><p>Clinical and operational teams increasingly need intraday data; ETL cycles deliver yesterday.</p></div>
+      <div class="card"><span class="tag">Agility</span><h3 style="margin-top:12px">Hidden logic</h3><p>Business rules live in stored procedures and DataStage jobs with little lineage, making change slow and fragile.</p></div>
+      <div class="card"><span class="tag">Trust</span><h3 style="margin-top:12px">Metric sprawl</h3><p>Tableau extracts each redefine measures, producing competing versions of the same KPI.</p></div>
+      <div class="card"><span class="tag">AI</span><h3 style="margin-top:12px">No ML path</h3><p>Data isn't structured or accessible for model training, feature engineering, or GenAI.</p></div>
+      <div class="card"><span class="tag">Scope</span><h3 style="margin-top:12px">Clinical-only</h3><p>Finance, supply chain, and HR data live outside the warehouse, blocking enterprise views.</p></div>
+      <div class="card"><span class="tag">Risk</span><h3 style="margin-top:12px">Manual governance</h3><p>PHI access and auditing are handled per system, raising compliance burden and exposure.</p></div>
+      <div class="card"><span class="tag">Cost</span><h3 style="margin-top:12px">Fixed footprint</h3><p>Licensing and hardware are sized for peak and paid for around the clock, idle or not.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= 7 · TARGET NORTH STAR ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Target State · North Star</div>
+      <div class="row"><h2>One lakehouse for the whole enterprise</h2></div>
+      <p class="sub">Azure Databricks becomes the unified platform for storage, processing, governance, and AI. Power BI is the enterprise lens. Clinical and operational workloads finally share one foundation.</p>
+    </div>
+    <div class="diagram">
+      <svg viewBox="0 0 1180 470" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="nf" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#36D9F0"/><stop offset=".5" stop-color="#3D8BFF"/><stop offset="1" stop-color="#9B7DFF"/>
+          </linearGradient>
+        </defs>
+        <!-- sources -->
+        <rect x="30" y="60" width="180" height="64" rx="12" class="nbox"/>
+        <text x="48" y="90" class="ntext" font-size="15">Epic Clarity</text>
+        <text x="48" y="110" class="nsub" font-size="10.5">+ Caboodle · FHIR · HL7</text>
+        <rect x="30" y="150" width="180" height="64" rx="12" class="nbox"/>
+        <text x="48" y="180" class="ntext" font-size="15">Workday ERP</text>
+        <text x="48" y="200" class="nsub" font-size="10.5">Finance · HR · Supply</text>
+        <rect x="30" y="240" width="180" height="64" rx="12" class="nbox"/>
+        <text x="48" y="270" class="ntext" font-size="15">Ancillary &amp; IoT</text>
+        <text x="48" y="290" class="nsub" font-size="10.5">Devices · labs · files</text>
+        <rect x="30" y="330" width="180" height="64" rx="12" class="nbox"/>
+        <text x="48" y="360" class="ntext" font-size="15">External / SaaS</text>
+        <text x="48" y="380" class="nsub" font-size="10.5">Claims · reference</text>
+
+        <!-- lakehouse core -->
+        <rect x="320" y="60" width="520" height="350" rx="18" fill="rgba(61,139,255,.07)" stroke="rgba(61,139,255,.45)"/>
+        <text x="345" y="92" class="ntext" font-size="18">Azure Databricks Lakehouse</text>
+        <text x="345" y="114" class="nsub" font-size="11">Delta Lake · Unity Catalog · Photon</text>
+
+        <rect x="345" y="135" width="220" height="58" rx="10" class="nbox"/>
+        <text x="362" y="162" class="ntext" font-size="13">Ingestion &amp; Orchestration</text>
+        <text x="362" y="180" class="nsub" font-size="10">ADF · Auto Loader · DLT</text>
+
+        <rect x="595" y="135" width="220" height="58" rx="10" class="nbox"/>
+        <text x="612" y="162" class="ntext" font-size="13">Medallion Lakehouse</text>
+        <text x="612" y="180" class="nsub" font-size="10">Bronze · Silver · Gold</text>
+
+        <rect x="345" y="208" width="220" height="58" rx="10" class="nbox"/>
+        <text x="362" y="235" class="ntext" font-size="13">Mosaic AI &amp; ML</text>
+        <text x="362" y="253" class="nsub" font-size="10">MLflow · agents · GenAI</text>
+
+        <rect x="595" y="208" width="220" height="58" rx="10" class="nbox"/>
+        <text x="612" y="235" class="ntext" font-size="13">Governance &amp; Security</text>
+        <text x="612" y="253" class="nsub" font-size="10">Unity Catalog · Purview</text>
+
+        <rect x="345" y="281" width="470" height="106" rx="12" fill="rgba(45,212,191,.06)" stroke="rgba(45,212,191,.35)"/>
+        <text x="362" y="308" class="ntext" font-size="13">Serving layer</text>
+        <text x="362" y="330" class="nsub" font-size="10.5">Databricks SQL warehouses · semantic models · REST &amp; vector endpoints</text>
+        <text x="362" y="360" class="nsub" font-size="10.5" fill="#2DD4BF">One certified Gold layer for clinical &amp; operational consumers</text>
+
+        <!-- consume -->
+        <rect x="950" y="90" width="200" height="70" rx="12" class="nbox"/>
+        <text x="968" y="122" class="ntext" font-size="15">Power BI</text>
+        <text x="968" y="142" class="nsub" font-size="10.5">Enterprise BI &amp; self-service</text>
+        <rect x="950" y="185" width="200" height="70" rx="12" class="nbox"/>
+        <text x="968" y="217" class="ntext" font-size="14">Clinical apps</text>
+        <text x="968" y="237" class="nsub" font-size="10.5">Back into Epic workflows</text>
+        <rect x="950" y="280" width="200" height="70" rx="12" class="nbox"/>
+        <text x="968" y="312" class="ntext" font-size="14">AI agents &amp; APIs</text>
+        <text x="968" y="332" class="nsub" font-size="10.5">Copilots · automation</text>
+
+        <g stroke="url(#nf)" stroke-width="2.5" fill="none">
+          <path class="flow" d="M210 92 H320"/>
+          <path class="flow" d="M210 182 H320"/>
+          <path class="flow" d="M210 272 H320"/>
+          <path class="flow" d="M210 362 H320"/>
+          <path class="flow" d="M840 150 H950 V125"/>
+          <path class="flow" d="M840 230 H895 Q950 230 950 220 H950"/>
+          <path class="flow" d="M840 300 Q900 300 950 315 H950"/>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ================= 8 · TARGET REFERENCE ARCHITECTURE (layered) ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Target State · Reference Architecture</div>
+      <div class="row"><h2>The platform, layer by layer</h2></div>
+    </div>
+    <div class="grid" style="grid-template-rows:auto auto auto auto auto;gap:12px">
+      <div class="card span2" style="grid-column:1 / -1;padding:14px 20px">
+        <h3 style="margin:0"><span class="dot" style="background:var(--cyan)"></span>Sources &nbsp;<span class="tag">ingest</span></h3>
+        <p style="margin-top:6px">Epic Clarity &amp; Caboodle · Epic FHIR / HL7v2 streams · Workday ERP · ancillary clinical apps · device &amp; IoT telemetry · external claims &amp; reference data</p>
+      </div>
+      <div class="grid g4" style="grid-column:1 / -1;gap:12px;min-height:0">
+        <div class="card"><h3><span class="dot" style="background:var(--azure)"></span>Ingestion</h3><p>Azure Data Factory, Auto Loader, and Delta Live Tables land batch and streaming data with schema enforcement.</p></div>
+        <div class="card"><h3><span class="dot" style="background:var(--violet)"></span>Lakehouse</h3><p>Delta Lake medallion storage on ADLS Gen2 — Bronze, Silver, Gold — versioned, ACID, time-travel.</p></div>
+        <div class="card"><h3><span class="dot" style="background:var(--coral)"></span>Intelligence</h3><p>Mosaic AI, MLflow, feature store, vector search, and agent frameworks operate on Gold data.</p></div>
+        <div class="card"><h3><span class="dot" style="background:var(--teal)"></span>Serving</h3><p>Databricks SQL, certified semantic models, REST &amp; model-serving endpoints feed every consumer.</p></div>
+      </div>
+      <div class="grid g2" style="grid-column:1 / -1;gap:12px;min-height:0">
+        <div class="card"><h3><span class="dot" style="background:var(--gold)"></span>Governance &amp; Security (cross-cutting)</h3><p>Unity Catalog for unified access, lineage, and PHI controls · Microsoft Purview for enterprise cataloging · Entra ID, Key Vault, Private Link, and audit logging across every layer.</p></div>
+        <div class="card"><h3><span class="dot" style="background:var(--cyan)"></span>Orchestration &amp; Ops (cross-cutting)</h3><p>Databricks Workflows and ADF coordinate pipelines · DLT expectations enforce quality · CI/CD via Git &amp; Azure DevOps · observability, cost controls, and alerting throughout.</p></div>
+      </div>
+      <div class="card span2" style="grid-column:1 / -1;padding:14px 20px;background:linear-gradient(90deg,rgba(54,217,240,.06),rgba(255,94,71,.06))">
+        <h3 style="margin:0"><span class="dot" style="background:var(--teal)"></span>Consumers &nbsp;<span class="tag">deliver</span></h3>
+        <p style="margin-top:6px">Power BI enterprise &amp; self-service · clinical decision support written back into Epic · operational dashboards · AI copilots &amp; agents · downstream APIs and data products</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 9 · MEDALLION ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Target State · Data Architecture</div>
+      <div class="row"><h2>Medallion: raw → refined → ready</h2></div>
+      <p class="sub">Data flows through three progressively trusted layers. Quality is enforced as it moves, so consumers only ever touch certified Gold.</p>
+    </div>
+    <div class="med-row">
+      <div class="med bronze">
+        <div class="ring" style="background:var(--bronze)"></div>
+        <div class="lname" style="color:var(--bronze)">Layer 01</div>
+        <div class="ltitle">Bronze</div>
+        <p style="color:var(--muted);font-size:13.5px;line-height:1.5">Raw, immutable landing zone. Every source — Clarity, Caboodle, Workday, FHIR streams — ingested as-is with full history and metadata.</p>
+        <ul class="lean" style="margin-top:auto;padding-top:14px">
+          <li>Exact source fidelity, append-only</li>
+          <li>Schema captured, nothing dropped</li>
+          <li>Replayable for reprocessing &amp; audit</li>
+        </ul>
+      </div>
+      <div class="med silver">
+        <div class="ring" style="background:var(--silver)"></div>
+        <div class="lname" style="color:var(--silver)">Layer 02</div>
+        <div class="ltitle">Silver</div>
+        <p style="color:var(--muted);font-size:13.5px;line-height:1.5">Cleansed, conformed, and joined. De-duplicated, validated against expectations, and standardized into an enterprise model.</p>
+        <ul class="lean" style="margin-top:auto;padding-top:14px">
+          <li>Data quality rules enforced (DLT)</li>
+          <li>Patient, encounter &amp; cost entities conformed</li>
+          <li>Clinical + operational data integrated</li>
+        </ul>
+      </div>
+      <div class="med gold">
+        <div class="ring" style="background:var(--gold)"></div>
+        <div class="lname" style="color:var(--gold)">Layer 03</div>
+        <div class="ltitle">Gold</div>
+        <p style="color:var(--muted);font-size:13.5px;line-height:1.5">Business-ready, aggregated marts and semantic models. The single certified source for Power BI, ML features, and agents.</p>
+        <ul class="lean" style="margin-top:auto;padding-top:14px">
+          <li>Curated KPIs &amp; star schemas</li>
+          <li>Certified metrics — one definition</li>
+          <li>Feeds BI, ML, and AI alike</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footnote">Bronze ⟶ Silver ⟶ Gold · governed end-to-end by Unity Catalog with column-level lineage.</div>
+  </section>
+
+  <!-- ================= 10 · EPIC INTEGRATION ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Target State · Integration</div>
+      <div class="row"><h2>Integrating with Epic — both ways</h2></div>
+      <p class="sub">We meet Epic where it is: batch from the reporting databases for depth, and standards-based streams for timeliness — then close the loop by surfacing insight back inside clinician workflow.</p>
+    </div>
+    <div class="grid g3 rows-2">
+      <div class="card"><span class="tag">Inbound · batch</span><h3 style="margin-top:12px"><span class="dot" style="background:var(--azure)"></span>Clarity &amp; Caboodle</h3><p>ADF extracts the relational and dimensional reporting databases into Bronze on a managed schedule — preserving the depth teams rely on today.</p></div>
+      <div class="card"><span class="tag">Inbound · real-time</span><h3 style="margin-top:12px"><span class="dot" style="background:var(--cyan)"></span>FHIR &amp; HL7</h3><p>FHIR APIs and HL7v2 feeds stream events (ADT, orders, results) into Bronze for near-real-time clinical use cases.</p></div>
+      <div class="card"><span class="tag">Inbound · bulk</span><h3 style="margin-top:12px"><span class="dot" style="background:var(--violet)"></span>Bulk FHIR export</h3><p>Population-scale FHIR export hydrates cohorts and research datasets without hammering operational systems.</p></div>
+      <div class="card"><span class="tag">Transform</span><h3 style="margin-top:12px"><span class="dot" style="background:var(--teal)"></span>Conform &amp; map</h3><p>Silver maps Epic structures to a common patient/encounter model and reconciles identifiers across sources.</p></div>
+      <div class="card"><span class="tag">Outbound</span><h3 style="margin-top:12px"><span class="dot" style="background:var(--coral)"></span>Write-back</h3><p>Gold insights and model scores flow back to Epic via FHIR / interconnect so clinicians act inside their existing workflow.</p></div>
+      <div class="card"><span class="tag">Govern</span><h3 style="margin-top:12px"><span class="dot" style="background:var(--gold)"></span>PHI controls</h3><p>Unity Catalog enforces de-identification, masking, and minimum-necessary access on every Epic-sourced field.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= 11 · ORCHESTRATION ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Target State · Orchestration</div>
+      <div class="row"><h2>Declarative pipelines replace fragile scripts</h2></div>
+      <p class="sub">The stored-procedure-and-cron tangle gives way to declarative, observable, version-controlled orchestration where data quality is enforced as part of the flow.</p>
+    </div>
+    <div class="grid g23">
+      <div class="diagram" style="flex:none">
+        <svg viewBox="0 0 620 360" preserveAspectRatio="xMidYMid meet">
+          <defs><linearGradient id="orc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#36D9F0"/><stop offset="1" stop-color="#9B7DFF"/></linearGradient></defs>
+          <rect x="20" y="30" width="160" height="60" rx="11" class="nbox"/><text x="38" y="58" class="ntext" font-size="13">Triggers</text><text x="38" y="77" class="nsub" font-size="10">schedule · event · file</text>
+          <rect x="230" y="30" width="160" height="60" rx="11" class="nbox"/><text x="248" y="58" class="ntext" font-size="13">ADF</text><text x="248" y="77" class="nsub" font-size="10">orchestrate &amp; copy</text>
+          <rect x="440" y="30" width="160" height="60" rx="11" class="nbox"/><text x="458" y="58" class="ntext" font-size="13">Auto Loader</text><text x="458" y="77" class="nsub" font-size="10">incremental ingest</text>
+          <rect x="230" y="140" width="160" height="60" rx="11" fill="rgba(45,212,191,.08)" stroke="rgba(45,212,191,.4)"/><text x="248" y="168" class="ntext" font-size="13">Delta Live Tables</text><text x="248" y="187" class="nsub" font-size="10">transform + expectations</text>
+          <rect x="440" y="140" width="160" height="60" rx="11" class="nbox"/><text x="458" y="168" class="ntext" font-size="13">Workflows</text><text x="458" y="187" class="nsub" font-size="10">DAG · retries · alerts</text>
+          <rect x="20" y="140" width="160" height="60" rx="11" class="nbox"/><text x="38" y="168" class="ntext" font-size="13">Git / DevOps</text><text x="38" y="187" class="nsub" font-size="10">CI/CD · IaC</text>
+          <rect x="120" y="260" width="380" height="64" rx="12" fill="rgba(61,139,255,.07)" stroke="rgba(61,139,255,.4)"/><text x="140" y="288" class="ntext" font-size="14">Medallion lakehouse (Bronze → Silver → Gold)</text><text x="140" y="308" class="nsub" font-size="10.5">quality-gated, lineage-tracked, observable</text>
+          <g stroke="url(#orc)" stroke-width="2.4" fill="none">
+            <path class="flow" d="M180 60 H230"/><path class="flow" d="M390 60 H440"/>
+            <path class="flow" d="M520 90 V140"/><path class="flow" d="M520 200 Q520 230 460 230 V260"/>
+            <path class="flow" d="M310 200 V260"/><path class="flow" d="M100 200 V230 Q100 260 130 260"/>
+            <path class="flow" d="M310 90 Q310 115 310 140"/>
+          </g>
+        </svg>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--cyan)"></span>What changes operationally</h3>
+        <ul class="lean" style="margin-top:14px">
+          <li><b>Declarative, not procedural</b> — DLT defines what good data looks like; the engine handles how.</li>
+          <li><b>Quality as code</b> — expectations quarantine or fail bad records before they reach Gold.</li>
+          <li><b>Version-controlled</b> — every pipeline in Git, promoted through CI/CD, not edited in production.</li>
+          <li><b>Observable</b> — built-in lineage, run history, data-quality metrics, and alerting.</li>
+          <li><b>Elastic</b> — compute scales to the job and spins down, replacing the fixed nightly window.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 12 · SECURITY & GOVERNANCE ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Target State · Security &amp; Governance</div>
+      <div class="row"><h2>Compliance built into the platform</h2></div>
+      <p class="sub">In healthcare, governance can't be a layer you add at the dashboard. PHI protection, HIPAA alignment, and least-privilege access are enforced once, centrally, and inherited everywhere.</p>
+    </div>
+    <div class="grid g4">
+      <div class="card"><h3><span class="dot" style="background:var(--gold)"></span>Unity Catalog</h3><p>One permission model across all data and AI assets — catalogs, schemas, tables, models, and files — with fine-grained, attribute-based access.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--azure)"></span>Identity</h3><p>Microsoft Entra ID for SSO and conditional access; groups map to roles so clinicians, analysts, and engineers see only what they should.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--violet)"></span>PHI protection</h3><p>Column masking, row-level filters, and de-identified views enforce minimum-necessary access to protected health information.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--teal)"></span>Lineage &amp; audit</h3><p>Automatic end-to-end lineage and immutable audit logs answer "who accessed what" for HIPAA and internal review.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--cyan)"></span>Microsoft Purview</h3><p>Enterprise cataloging, classification, and sensitivity labeling unify governance across Azure and the lakehouse.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--coral)"></span>Network isolation</h3><p>Private Link, VNet injection, and no-public-endpoint posture keep data on trusted, private paths.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--azure)"></span>Encryption &amp; keys</h3><p>Encryption at rest and in transit with customer-managed keys in Azure Key Vault.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--gold)"></span>Compliance posture</h3><p>HIPAA-aligned controls, BAA-backed services, and policy-as-code guardrails monitored continuously.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= 13 · AGENTIC / AI-ML ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Target State · Intelligence</div>
+      <div class="row"><h2>Agentic &amp; AI workloads on trusted data</h2></div>
+      <p class="sub">Because Gold data is governed and science-ready, AI is a first-class workload — not a side project. Mosaic AI, MLflow, and agent frameworks operate directly on the lakehouse.</p>
+    </div>
+    <div class="grid g23">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--coral)"></span>Platform capabilities</h3>
+        <ul class="lean" style="margin-top:14px">
+          <li><b>Mosaic AI</b> — model training, fine-tuning, and serving against governed data.</li>
+          <li><b>MLflow</b> — experiment tracking, model registry, and lifecycle management.</li>
+          <li><b>Feature store</b> — reusable, consistent features for training and inference.</li>
+          <li><b>Vector search</b> — retrieval over clinical notes &amp; documents for RAG.</li>
+          <li><b>Agent framework</b> — tool-using agents grounded in lakehouse data, governed by Unity Catalog.</li>
+          <li><b>Model serving</b> — low-latency, monitored endpoints with guardrails.</li>
+        </ul>
+      </div>
+      <div class="grid" style="grid-template-rows:1fr 1fr 1fr;gap:14px;min-height:0">
+        <div class="card" style="padding:16px 20px"><h3 style="margin:0"><span class="dot" style="background:var(--cyan)"></span>Clinical agents</h3><p style="margin-top:5px">Summarize charts, surface care gaps, draft documentation, and answer clinician questions grounded in patient data.</p></div>
+        <div class="card" style="padding:16px 20px"><h3 style="margin:0"><span class="dot" style="background:var(--azure)"></span>Predictive models</h3><p style="margin-top:5px">Readmission, sepsis, length-of-stay, and no-show risk scored on fresh data and written back to Epic.</p></div>
+        <div class="card" style="padding:16px 20px"><h3 style="margin:0"><span class="dot" style="background:var(--violet)"></span>Operational copilots</h3><p style="margin-top:5px">Natural-language analytics for finance and supply chain, plus agents that automate routine data-ops tasks.</p></div>
+      </div>
+    </div>
+    <div class="footnote">Every agent and model is governed, logged, and lineage-tracked — the same controls that protect BI protect AI.</div>
+  </section>
+
+  <!-- ================= 14 · ANALYTICS & BI ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Target State · Analytics</div>
+      <div class="row"><h2>Power BI on a governed semantic layer</h2></div>
+      <p class="sub">Tableau's extract sprawl is replaced by Power BI reading from certified Gold through a shared semantic model — one definition of every metric, self-service without the chaos.</p>
+    </div>
+    <div class="grid g3 rows-2">
+      <div class="card"><h3><span class="dot" style="background:var(--gold)"></span>Certified metrics</h3><p>KPIs are defined once in the Gold semantic layer, so "readmission rate" or "cost per case" means the same thing everywhere.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--azure)"></span>Direct on lakehouse</h3><p>Power BI connects to Databricks SQL — DirectQuery for live data or import for speed — no more brittle nightly extracts.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--teal)"></span>Governed self-service</h3><p>Analysts and clinicians build their own reports on trusted models; governance travels with the data.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--cyan)"></span>Enterprise &amp; embedded</h3><p>Standard executive and operational dashboards, plus embedded analytics inside applications and portals.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--violet)"></span>Copilot for BI</h3><p>Natural-language Q&amp;A over the semantic model lets users ask questions in plain English and get governed answers.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--coral)"></span>Migration path</h3><p>Existing Tableau content is inventoried, rationalized, and rebuilt on the semantic layer — consolidating duplicates along the way.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= 15 · CLINICAL TRANSFORMATION ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Outcomes · Clinical</div>
+      <div class="row"><h2>Clinical process transformation</h2></div>
+      <p class="sub">The platform exists to change care, not just dashboards. Fresh, trusted, AI-enriched data closes the loop from insight to action inside clinical workflow.</p>
+    </div>
+    <div class="grid g4">
+      <div class="card"><span class="tag">Timeliness</span><h3 style="margin-top:12px">Real-time signals</h3><p>Streaming ADT and results power early-warning and bed-flow use cases that batch could never support.</p></div>
+      <div class="card"><span class="tag">Quality</span><h3 style="margin-top:12px">Care-gap closure</h3><p>Cohort logic and risk scores surface gaps and route them to care teams — and back into Epic.</p></div>
+      <div class="card"><span class="tag">Safety</span><h3 style="margin-top:12px">Predictive risk</h3><p>Sepsis, deterioration, and readmission models alert clinicians earlier, with explainable inputs.</p></div>
+      <div class="card"><span class="tag">Efficiency</span><h3 style="margin-top:12px">Reduced burden</h3><p>GenAI summarization and ambient documentation give time back to clinicians at the point of care.</p></div>
+      <div class="card span2"><h3><span class="dot" style="background:var(--teal)"></span>Closed-loop workflow</h3><p>Insight doesn't stop at a report. Scores and recommendations are written back to Epic via FHIR so clinicians act where they already work — and outcomes feed back to improve the models.</p></div>
+      <div class="card span2"><h3><span class="dot" style="background:var(--violet)"></span>Research &amp; population health</h3><p>Bulk FHIR cohorts and a governed, de-identified data layer accelerate research, registries, and population-health programs without disrupting operations.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= 16 · OPERATIONAL / WORKDAY ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Outcomes · Operational</div>
+      <div class="row"><h2>One platform for the non-clinical enterprise</h2></div>
+      <p class="sub">For the first time, operational data joins clinical data on the same governed lakehouse — with Workday as the ERP system of record for finance, HR, and supply chain.</p>
+    </div>
+    <div class="grid g4">
+      <div class="card"><span class="tag">ERP</span><h3 style="margin-top:12px"><span class="dot" style="background:var(--azure)"></span>Workday</h3><p>Finance, HCM, and supply-chain data ingested via Workday integrations into Bronze, conformed in Silver.</p></div>
+      <div class="card"><span class="tag">Finance</span><h3 style="margin-top:12px"><span class="dot" style="background:var(--gold)"></span>Cost &amp; revenue</h3><p>Cost-to-serve and margin analytics that join Workday financials with clinical activity — impossible in the old EDW.</p></div>
+      <div class="card"><span class="tag">Supply</span><h3 style="margin-top:12px"><span class="dot" style="background:var(--teal)"></span>Supply chain</h3><p>Inventory, utilization, and demand forecasting link supply data to clinical consumption.</p></div>
+      <div class="card"><span class="tag">People</span><h3 style="margin-top:12px"><span class="dot" style="background:var(--violet)"></span>Workforce</h3><p>Staffing, labor cost, and productivity analytics blend HR data with operational volumes.</p></div>
+      <div class="card span2"><h3><span class="dot" style="background:var(--cyan)"></span>Clinical + operational, joined</h3><p>The Gold layer lets leaders see cost, quality, and outcomes together — cost per case, labor per encounter, supply per procedure — on one certified set of definitions.</p></div>
+      <div class="card span2"><h3><span class="dot" style="background:var(--coral)"></span>Enterprise self-service</h3><p>Finance, operations, and HR teams get governed Power BI self-service on the same platform — no separate stack, no separate governance model.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= 17 · ROADMAP ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Delivery · Roadmap</div>
+      <div class="row"><h2>A phased path, value at every step</h2></div>
+      <p class="sub">We modernize incrementally — standing up the platform, migrating in waves, and decommissioning legacy only once parity and trust are proven.</p>
+    </div>
+    <div class="road">
+      <div class="phase"><span class="node"></span><div class="pn">Phase 01</div><div class="pt">Foundation</div><div class="pw">Quarters 1–2</div>
+        <ul class="lean"><li>Stand up Azure landing zone &amp; Databricks</li><li>Unity Catalog, networking, security baseline</li><li>Ingest first Epic &amp; Workday sources to Bronze</li><li>Establish CI/CD &amp; governance operating model</li></ul></div>
+      <div class="phase"><span class="node"></span><div class="pn">Phase 02</div><div class="pt">Migrate</div><div class="pw">Quarters 2–4</div>
+        <ul class="lean"><li>Rebuild priority marts in Silver/Gold</li><li>Convert DataStage &amp; stored-proc logic to DLT</li><li>Stand up certified semantic models</li><li>Launch first Power BI workloads</li></ul></div>
+      <div class="phase"><span class="node"></span><div class="pn">Phase 03</div><div class="pt">Expand</div><div class="pw">Quarters 4–6</div>
+        <ul class="lean"><li>Real-time FHIR/HL7 streaming use cases</li><li>Onboard ML, GenAI &amp; first agents</li><li>Operational (Workday) analytics live</li><li>Migrate &amp; consolidate Tableau content</li></ul></div>
+      <div class="phase"><span class="node"></span><div class="pn">Phase 04</div><div class="pt">Optimize</div><div class="pw">Quarters 6+</div>
+        <ul class="lean"><li>Decommission legacy SQL Server EDW</li><li>Scale agentic &amp; closed-loop clinical workflows</li><li>Cost &amp; performance optimization (FinOps)</li><li>Continuous governance &amp; enablement</li></ul></div>
+    </div>
+  </section>
+
+  <!-- ================= 18 · OUTCOMES / KPIs ================= -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">The Case for Change</div>
+      <div class="row"><h2>What the target state delivers</h2></div>
+    </div>
+    <div class="kpi">
+      <div class="card"><div class="num accent">1</div><div class="cap">Governed platform for clinical &amp; operational analytics, replacing siloed marts and extracts.</div></div>
+      <div class="card"><div class="num accent">Real-time</div><div class="cap">Streaming alongside batch — intraday clinical &amp; operational data instead of nightly windows.</div></div>
+      <div class="card"><div class="num accent">AI-ready</div><div class="cap">Science-ready Gold data makes ML, GenAI, and agents a first-class, governed workload.</div></div>
+      <div class="card"><div class="num accent">Elastic</div><div class="cap">Pay-for-use compute that scales to the job and spins down, replacing a fixed footprint.</div></div>
+      <div class="card span2"><h3><span class="dot" style="background:var(--teal)"></span>Trust &amp; compliance</h3><p>One certified definition of every metric, end-to-end lineage, and PHI controls enforced centrally — measurable reduction in "two-numbers" disputes and audit effort.</p></div>
+      <div class="card span2"><h3><span class="dot" style="background:var(--gold)"></span>Agility &amp; cost</h3><p>Declarative pipelines and self-service shorten time-to-insight; consolidating tools and retiring legacy hardware lowers total cost of ownership.</p></div>
+    </div>
+    <div class="footnote">Azure Databricks + Power BI · Medallion · Unity Catalog · Epic &amp; Workday · Secured · Orchestrated · Agentic — End of deck.</div>
+  </section>
+
+</div>
+
+<div class="counter"><b id="cur">01</b> / <span id="tot">18</span></div>
+<div class="dots" id="dots"></div>
+<div class="nav">
+  <button id="prev" aria-label="Previous slide">‹</button>
+  <button id="next" aria-label="Next slide">›</button>
+</div>
+<div class="hint">← → / Space to navigate · F for fullscreen</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const total=slides.length;
+  let i=0;
+  const bar=document.getElementById('bar');
+  const cur=document.getElementById('cur');
+  const dotsWrap=document.getElementById('dots');
+  document.getElementById('tot').textContent=String(total).padStart(2,'0');
+
+  slides.forEach((_,n)=>{
+    const d=document.createElement('i');
+    d.addEventListener('click',()=>go(n));
+    dotsWrap.appendChild(d);
+  });
+  const dots=[...dotsWrap.children];
+
+  function go(n){
+    i=Math.max(0,Math.min(total-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    dots.forEach((d,k)=>d.classList.toggle('on',k===i));
+    bar.style.width=((i+1)/total*100)+'%';
+    cur.textContent=String(i+1).padStart(2,'0');
+  }
+  function next(){go(i+1)}
+  function prev(){go(i-1)}
+
+  document.getElementById('next').addEventListener('click',next);
+  document.getElementById('prev').addEventListener('click',prev);
+  window.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();next();}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev();}
+    else if(e.key==='Home'){go(0);}
+    else if(e.key==='End'){go(total-1);}
+    else if(e.key.toLowerCase()==='f'){
+      if(!document.fullscreenElement){document.documentElement.requestFullscreen?.();}
+      else{document.exitFullscreen?.();}
+    }
+  });
+  // swipe
+  let x0=null;
+  window.addEventListener('touchstart',e=>x0=e.touches[0].clientX,{passive:true});
+  window.addEventListener('touchend',e=>{
+    if(x0===null)return;
+    const dx=e.changedTouches[0].clientX-x0;
+    if(Math.abs(dx)>50){dx<0?next():prev();}
+    x0=null;
+  },{passive:true});
+
+  go(0);
+</script>
+</body>
+</html>
