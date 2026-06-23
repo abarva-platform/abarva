@@ -26,6 +26,12 @@ function normaliseForMatch(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
+function wordAppears(lowerHtml: string, word: string): boolean {
+  if (lowerHtml.includes(word)) return true;
+  if (word.endsWith("s") && lowerHtml.includes(word.slice(0, -1))) return true;
+  return lowerHtml.includes(`${word}s`);
+}
+
 function requiredExhibitAppears(html: string, requirement: string): boolean {
   const lower = html.toLowerCase();
   const normalisedHtml = normaliseForMatch(html);
@@ -38,7 +44,7 @@ function requiredExhibitAppears(html: string, requirement: string): boolean {
     .replace(/\b(table|diagram|chart|map|matrix)\b/g, " ")
     .split(/[^a-z0-9]+/)
     .filter((word) => word.length > 1);
-  return words.every((word) => lower.includes(word));
+  return words.every((word) => wordAppears(lower, word));
 }
 
 function extractExhibitKinds(

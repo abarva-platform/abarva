@@ -2,7 +2,7 @@ import "server-only";
 
 import { requireTenancy, tenancyErrorResponse } from "../../../_auth";
 import { getProgramById } from "@/lib/programs/queries";
-import { draftModuleDeliverable } from "@/lib/programs/nexus";
+import { completeDeliverable } from "@/lib/programs/mutations";
 import type { SolutionOption } from "@/lib/programs/solution-context";
 
 export const runtime = "nodejs";
@@ -72,18 +72,18 @@ export async function POST(
     ],
   };
 
-  const { deliverableId, versionId } = await draftModuleDeliverable(ctx, {
-    programId,
-    moduleKey: "design",
+  const { deliverableId, versionId } = await completeDeliverable(ctx, programId, {
     deliverableTypeKey: "solution_approach_options",
     title: "Approved Solution Approach Option",
-    draftContent: [
+    content: [
       "# Approved Solution Approach Option",
       "",
       `Chosen option: ${chosenOption}`,
       "",
       `Rationale: ${solutionContextDigest.decisions[0].rationale}`,
     ].join("\n"),
+    moduleKey: "design",
+    signOff: true,
     structuredData: {
       phase: 3,
       artifact: "solution_approach_options",

@@ -112,7 +112,9 @@ Diagrams/charts:
 ${v}
 Tables/matrices:
 ${t}
-Narrative depth: ${contract.minNarrativeDepth}.`;
+Narrative depth: ${contract.minNarrativeDepth}.
+Use these required exhibit names, or close singular/plural variants of them, as visible section,
+table, or figure headings so reviewers can verify the artifact contains them.`;
 }
 
 export interface VisualContractCheck {

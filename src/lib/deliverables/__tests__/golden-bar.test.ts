@@ -65,4 +65,25 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
     expect(r.missingTables).toEqual([]);
     expect(r.pass).toBe(true);
   });
+
+  it("accepts singular/plural variants for architecture decision-record tradeoff exhibits", () => {
+    const r = meetsGoldenBar(
+      `<html><body>
+        <svg><text>Conceptual architecture diagram</text></svg>
+        <svg><text>Logical architecture diagram</text></svg>
+        <svg><text>Physical deployment diagram</text></svg>
+        <svg><text>Integration data flow diagram</text></svg>
+        <svg><text>Native vs non-native service pattern</text></svg>
+        <h2>Decision Record and Tradeoff Table</h2>
+        <table><tr><th>Decision</th><th>Tradeoff</th></tr></table>
+        <h2>KPI to Capability Traceability</h2>
+        <table><tr><th>KPI</th><th>Capability</th></tr></table>
+      </body></html>`,
+      "target_state_architecture",
+    );
+
+    expect(r.missingVisuals).toEqual([]);
+    expect(r.missingTables).toEqual([]);
+    expect(r.pass).toBe(true);
+  });
 });
