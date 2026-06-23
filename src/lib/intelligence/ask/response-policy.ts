@@ -6,8 +6,8 @@ const HOLLOW_OPENER_RE =
 const BROAD_CURRENT_STATE_RE =
   /\b(current state|state of play|where are we|where do we stand|how are we doing|what is going on|what do you see|give me perspective|your perspective|executive read|simple question|our state)\b/i;
 const RAW_INTERNAL_ID_RE = /\b[A-Z]{2,6}-[A-Z0-9]{2,8}-\d{2,4}\b/g;
-const CONSULTANT_LABEL_RE =
-  /^\s*(?:Read|Recommendation|Decision|Why|Evidence|Implication|Watchout|Watch-out|Next move|Owner|Action):/im;
+const CONSULTANT_SECTION_RE =
+  /^\s*(?:Read|Recommendation|Decision|Why|Evidence|Implication|Watchout|Watch-out|Next move|Owner|Action):/gim;
 const MARKDOWN_TABLE_RE = /^\s*\|.+\|\s*$/m;
 
 export const CONSULTANT_ANSWER_SHAPE_CONTRACT = `CONSULTANT ANSWER SHAPE
@@ -112,20 +112,30 @@ export function enforceDecisionGradeAnswer(text: string): string {
   const paragraphDisciplined = splitLongParagraphs(
     shapeDenseConsultantAnswer(text),
   );
-  if (ACTION_CUE_RE.test(paragraphDisciplined)) return paragraphDisciplined;
+  if (
+    ACTION_CUE_RE.test(paragraphDisciplined) &&
+    consultantSectionCount(paragraphDisciplined) >= 2
+  ) {
+    return paragraphDisciplined;
+  }
+
+  if (ACTION_CUE_RE.test(paragraphDisciplined)) {
+    return ensureReadableConsultantShape(paragraphDisciplined);
+  }
 
   const nextMove = MISSING_EVIDENCE_RE.test(paragraphDisciplined)
     ? "Next move: assign the accountable data owner to validate the missing tenant evidence before approving a number or using it in a board artifact."
     : "Next move: assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves.";
 
-  return `${paragraphDisciplined.replace(/\s+$/, "")}\n\n${nextMove}`;
+  return ensureReadableConsultantShape(
+    `${paragraphDisciplined.replace(/\s+$/, "")}\n\n${nextMove}`,
+  );
 }
 
 function shapeDenseConsultantAnswer(text: string): string {
   const normalized = text.replace(/\r\n/g, "\n").trim();
   if (!normalized) return normalized;
-  if (CONSULTANT_LABEL_RE.test(normalized)) return normalized;
-  if (MARKDOWN_TABLE_RE.test(normalized)) return normalized;
+  if (consultantSectionCount(normalized) >= 2) return normalized;
   if (wordCount(normalized) < 75) return normalized;
 
   const paragraphs = normalized.split(/\n{2,}/).filter((p) => p.trim());
@@ -169,6 +179,53 @@ function shapeDenseConsultantAnswer(text: string): string {
   }
 
   return sections.length >= 3 ? sections.join("\n\n") : normalized;
+}
+
+function ensureReadableConsultantShape(text: string): string {
+  const normalized = text.trim();
+  if (!normalized || consultantSectionCount(normalized) >= 2) {
+    return normalized;
+  }
+
+  const nextMove = extractNextMove(normalized);
+  const lead = extractLeadSentence(normalized);
+  if (!lead) return normalized;
+
+  const body = removeFirstOccurrence(normalized, lead).trim();
+  const sections = [`Read: ${normalizeConsultantLead(lead)}`];
+  if (body) sections.push(body);
+  if (nextMove && !/\bNext move:/i.test(body)) sections.push(nextMove);
+  return sections.join("\n\n");
+}
+
+function consultantSectionCount(text: string): number {
+  return [...text.matchAll(CONSULTANT_SECTION_RE)].length;
+}
+
+function extractNextMove(text: string): string | null {
+  return (
+    text
+      .split(/\n{1,}/)
+      .map((line) => line.trim())
+      .find((line) => /^Next move:/i.test(line)) ?? null
+  );
+}
+
+function extractLeadSentence(text: string): string | null {
+  const tableStart = text.search(MARKDOWN_TABLE_RE);
+  const prose = (tableStart >= 0 ? text.slice(0, tableStart) : text)
+    .split(/\n{1,}/)
+    .filter((line) => !MARKDOWN_TABLE_RE.test(line))
+    .join(" ")
+    .replace(/^Next move:[^.?!]*(?:[.?!]|$)/i, "")
+    .trim();
+  return splitSentences(prose).find((sentence) => sentence.trim()) ?? null;
+}
+
+function removeFirstOccurrence(text: string, value: string): string {
+  const index = text.indexOf(value);
+  if (index < 0) return text;
+  return `${text.slice(0, index)}${text.slice(index + value.length)}`;
 }
 
 function normalizeConsultantLead(sentence: string): string {

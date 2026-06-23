@@ -130,12 +130,27 @@ async function intelIsV2(auth) {
 }
 
 async function hasCanonicalDimensionCount(path, auth) {
-  try {
-    const html = await pageHtml(path, auth);
-    return /\b19\s+(?:context\s+)?dimensions?\b|Loaded context\s*·\s*19/i.test(html);
-  } catch {
-    return false;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const text = auth.context
+        ? await withPage(auth, path, async (page) => {
+            await page.waitForFunction(
+              () => /\b(Loaded context|dimensions loaded|DIMENSIONS)\b/i.test(document.body.innerText),
+              null,
+              { timeout: 10000 },
+            ).catch(() => null);
+            return page.locator("body").innerText();
+          })
+        : await pageHtml(path, auth);
+      const normalized = text.replace(/<!--\s*-->/g, " ").replace(/\s+/g, " ");
+      if (/\b19\s+(?:context\s+)?dimensions?\b|Loaded context\s*·\s*19/i.test(normalized)) {
+        return true;
+      }
+    } catch {
+      // retry below
+    }
   }
+  return false;
 }
 
 async function fetchAskText(auth, query, client) {

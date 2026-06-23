@@ -221,4 +221,36 @@ describe("Ask Intelligence response policy", () => {
         .every((paragraph) => paragraph.split(/\s+/).length <= 70),
     ).toBe(true);
   });
+
+  it("keeps short visual answers readable when they already include a next move", () => {
+    const text = [
+      "The loaded sources give us two KPI families that are both CIO-owned and both off-target. 9% | +7.",
+      "Next move: assign the accountable owner to validate the KPI owner and decide whether this should move into Source or Moves.",
+    ].join("\n");
+
+    const answer = enforceDecisionGradeAnswer(text);
+
+    expect(answer).toContain("Read:");
+    expect(answer).toContain("Next move:");
+    expect([...answer.matchAll(/^(Read|Next move):/gim)]).toHaveLength(2);
+  });
+
+  it("preserves markdown tables while adding readable consultant framing", () => {
+    const text = [
+      "The loaded sources point to IBM transition-rights friction as the decision risk.",
+      "",
+      "| Risk | Basis |",
+      "|---|---|",
+      "| Transition rights | Contract schedule |",
+      "",
+      "Next move: validate the contract schedule before approving the renewal position.",
+    ].join("\n");
+
+    const answer = enforceDecisionGradeAnswer(text);
+
+    expect(answer).toContain("Read:");
+    expect(answer).toContain("| Risk | Basis |");
+    expect(answer).toContain("| Transition rights | Contract schedule |");
+    expect(answer).toContain("Next move:");
+  });
 });
