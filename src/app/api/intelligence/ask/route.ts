@@ -31,6 +31,10 @@ import {
   buildStructuredExhibits,
   hasRenderableStructuredExhibits,
 } from "@/lib/intelligence/answer/structured-exhibits";
+import {
+  missingRequestedVisual,
+  synthesizeVisualExhibitTable,
+} from "@/lib/intelligence/answer/visual-exhibit-synthesis";
 import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
 import "@/lib/reasoning/telemetry-init";
 
@@ -218,11 +222,28 @@ async function handleAsk(payload: AskPayload) {
             query,
             industry: expertIndustryForClientKey(tenantClientKey),
           });
-          const exhibits = buildStructuredExhibits({
+          let exhibits = buildStructuredExhibits({
             prose: assistantText,
             routing,
             sources: sentinelSourcesFromCitations(sentinelCitations),
           });
+          if (missingRequestedVisual(routing, exhibits)) {
+            const visualTable = await synthesizeVisualExhibitTable({
+              query,
+              routing,
+              prose: assistantText,
+              sources: sentinelSourcesFromCitations(sentinelCitations),
+              tenantId,
+              userId,
+            });
+            if (visualTable) {
+              exhibits = buildStructuredExhibits({
+                prose: `${assistantText}\n\n${visualTable}`,
+                routing,
+                sources: sentinelSourcesFromCitations(sentinelCitations),
+              });
+            }
+          }
           if (
             hasRenderableStructuredExhibits(exhibits) ||
             exhibits.citations.length > 0 ||
@@ -390,11 +411,28 @@ async function handleAsk(payload: AskPayload) {
             query,
             industry: expertIndustryForClientKey(tenantClientKey),
           });
-          const exhibits = buildStructuredExhibits({
+          let exhibits = buildStructuredExhibits({
             prose: assistantText,
             routing,
             sources: traceSources as AskSource[],
           });
+          if (missingRequestedVisual(routing, exhibits)) {
+            const visualTable = await synthesizeVisualExhibitTable({
+              query,
+              routing,
+              prose: assistantText,
+              sources: traceSources as AskSource[],
+              tenantId,
+              userId,
+            });
+            if (visualTable) {
+              exhibits = buildStructuredExhibits({
+                prose: `${assistantText}\n\n${visualTable}`,
+                routing,
+                sources: traceSources as AskSource[],
+              });
+            }
+          }
           if (
             hasRenderableStructuredExhibits(exhibits) ||
             exhibits.citations.length > 0 ||
