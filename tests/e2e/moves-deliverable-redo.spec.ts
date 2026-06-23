@@ -37,7 +37,9 @@ test.describe("Moves deliverable redo — live click-through", () => {
 
   test("the move surface drives capture → gate → generate without click failure", async ({ page }) => {
     await page.goto(`${BASE}/strategic-moves/${MOVE_ID}`);
-    await expect(page.getByText(/Strategic Moves/i)).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /^Strategic Moves$/ }),
+    ).toBeVisible();
     // Phase rail + Documents tab present (the surfaces the redo touches).
     await page.getByRole("link", { name: /Documents/i }).click();
     await expect(page).toHaveURL(/tab=documents/);
