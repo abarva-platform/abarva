@@ -34,7 +34,13 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
-    expect(exhibits.tables[0]?.title).toBe("Evidence Used");
+    expect(exhibits.tables[0]?.title).toBe("Decision Evidence");
+    expect(exhibits.tables[0]?.rows[0]).toEqual(
+      expect.objectContaining({
+        source: "F12 IT budget",
+        signal: "Epic maintenance and integration spend records.",
+      }),
+    );
     expect(exhibits.charts).toHaveLength(0);
   });
 
@@ -46,9 +52,12 @@ describe("buildStructuredExhibits", () => {
         "The right breakdown is denial reason category, AR days, and overturn rate. Next move: ask Revenue Cycle Operations to validate the category extract from the evidence ledger.",
     });
 
-    expect(exhibits.tables[0]?.title).toBe("Evidence Used");
+    expect(exhibits.tables[0]?.title).toBe("Decision Evidence");
     expect(exhibits.tables[0]?.rows).toEqual([
-      expect.objectContaining({ source: "F12 IT budget" }),
+      expect.objectContaining({
+        source: "F12 IT budget",
+        signal: "Epic maintenance and integration spend records.",
+      }),
     ]);
     expect(exhibits.charts).toHaveLength(0);
   });
@@ -72,9 +81,13 @@ describe("buildStructuredExhibits", () => {
 
     expect(exhibits.citations).toHaveLength(1);
     expect(exhibits.citations[0]?.sourceClass).toBe("tenant-fact");
-    expect(exhibits.tables[0]?.title).toBe("Evidence Used");
+    expect(exhibits.tables[0]?.title).toBe("Decision Evidence");
     expect(exhibits.tables[0]?.rows).toEqual([
-      expect.objectContaining({ source: "Revenue cycle denial chart support" }),
+      expect.objectContaining({
+        source: "Revenue cycle denial chart support",
+        signal:
+          "Medical necessity leakage exposure is $1.2M. Prior authorization leakage exposure is $650K. Eligibility leakage exposure is $310K.",
+      }),
     ]);
     expect(exhibits.charts).toHaveLength(0);
   });
@@ -244,7 +257,7 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
-    expect(exhibits.tables[0]?.title).toBe("Evidence Used");
+    expect(exhibits.tables[0]?.title).toBe("Decision Evidence");
     expect(exhibits.charts).toHaveLength(0);
   });
 

@@ -65,26 +65,6 @@ export function answerCitationsFromAskSources(
   }));
 }
 
-function sourceRegisterTable(citations: AnswerCitation[]): AnswerTable | null {
-  if (citations.length === 0) return null;
-  return {
-    id: "answer-source-register",
-    title: "Evidence Used",
-    columns: [
-      { key: "source", label: "Source" },
-      { key: "class", label: "Class" },
-      { key: "confidence", label: "Confidence" },
-    ],
-    rows: citations.slice(0, 5).map((citation) => ({
-      source: citation.label,
-      class: citation.sourceClass,
-      confidence: citation.confidence ?? "not scored",
-    })),
-    note: "Generated from the sources retrieved for this answer.",
-    citationIds: citations.map((citation) => citation.id),
-  };
-}
-
 function evidenceRequiredTable(citations: AnswerCitation[]): AnswerTable {
   return {
     id: "answer-evidence-required",
@@ -106,6 +86,39 @@ function evidenceRequiredTable(citations: AnswerCitation[]): AnswerTable {
       },
     ],
     note: "Rendered because the user asked for a table, but Ava did not have enough connected data to populate tenant-specific rows without fabrication.",
+    citationIds: citations.map((citation) => citation.id),
+  };
+}
+
+function compactEvidenceSignal(excerpt: string | undefined): string {
+  const text = (excerpt ?? "")
+    .replace(/\s+/g, " ")
+    .replace(/^[-•]\s*/g, "")
+    .trim();
+  if (!text) return "Cited source retrieved for this answer.";
+  return text.length > 180 ? `${text.slice(0, 177).trimEnd()}...` : text;
+}
+
+function decisionEvidenceTable(citations: AnswerCitation[]): AnswerTable | null {
+  if (citations.length === 0) return null;
+  return {
+    id: "answer-decision-evidence",
+    title: "Decision Evidence",
+    columns: [
+      { key: "source", label: "Source" },
+      { key: "signal", label: "Signal" },
+      { key: "confidence", label: "Confidence" },
+      { key: "nextMove", label: "Next Move" },
+    ],
+    rows: citations.slice(0, 5).map((citation) => ({
+      source: citation.label,
+      signal: compactEvidenceSignal(citation.excerpt),
+      confidence: citation.confidence ?? "not scored",
+      nextMove:
+        "Validate this cited evidence before approving the decision or moving it into Source, Tower, or Moves.",
+    })),
+    note:
+      "Rendered because the user asked for a table or visual and Ava did not emit a valid row/column exhibit. Rows are cited evidence signals, not inferred chart data.",
     citationIds: citations.map((citation) => citation.id),
   };
 }
@@ -477,7 +490,7 @@ export function buildStructuredExhibits(
     input.routing.outputShape === "graph"
   )) {
     const table =
-      sourceRegisterTable(citations) ?? evidenceRequiredTable(citations);
+      decisionEvidenceTable(citations) ?? evidenceRequiredTable(citations);
     if (table) tables.push(table);
   }
 
