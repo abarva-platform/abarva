@@ -280,6 +280,42 @@ const rootCauseWorksheet: DeliverableProfile = {
   ],
 };
 
+const solutionApproachOptions: DeliverableProfile = {
+  key: "solution_approach_options",
+  renderer: "html_architecture",
+  title: "Solution Approach & Options",
+  clientFacing: true,
+  audience: ["steering_committee", "cio", "cto"],
+  decisionPurpose:
+    "Choose the solution approach (and option) that will drive the architecture — before any architecture is designed.",
+  defaultFormat: "html",
+  supportingFormats: ["pptx", "docx"],
+  tone: "board_grade",
+  visualDensity: "high",
+  allowPhaseLabels: false,
+  evidenceMode: "appendix_only",
+  sourceRegisterPolicy: "appendix_only",
+  missingInputPolicy: "single_open_inputs_table",
+  requiredExhibits: ["options_matrix", "decision_box", "value_tree"],
+  intent: "options_paper",
+  visualRendererRequired: true,
+  soWhatRequired: true,
+  currentStateRequired: true,
+  gapAnalysisRequired: true,
+  storyArc: [
+    "Current state + gaps frame the problem",
+    "2-3 credible solution options, scored on what matters",
+    "The recommended option, with the tradeoffs accepted",
+    "This decision is what the architecture will be built to",
+  ],
+  acceptanceChecks: [
+    "names 2-3 credible options with a scored decision matrix",
+    "states the recommended option and the tradeoffs accepted",
+    "the choice traces to the use case, KPIs, current state and gaps",
+  ],
+  failureModes: ["no_options", "no_recommendation", "architecture_before_approval"],
+};
+
 const targetStateArchitecture: DeliverableProfile = {
   key: "target_state_architecture",
   renderer: "html_architecture",
@@ -625,6 +661,7 @@ export const DELIVERABLE_PROFILES: Readonly<
   tower_metrics_plan: towerMetricsPlan,
   handoff_package: handoffPackage,
   value_measurement_contract: valueMeasurementContract,
+  solution_approach_options: solutionApproachOptions,
   ...SOURCE_PROFILES,
 };
 
