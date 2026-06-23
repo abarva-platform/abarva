@@ -35,6 +35,7 @@ export type MovesDeliverableKey =
   | "charter" // P1
   | "discovery_report" // P2
   | "root_cause_worksheet" // P2
+  | "solution_approach_options" // P3a — the decision spine that drives the architecture
   | "target_state_architecture" // P3
   | "solution_design" // P3
   | "operating_model_design" // P3
