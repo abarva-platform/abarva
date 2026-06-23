@@ -1,5 +1,23 @@
 # Codex Master Handover — Moves Deliverable Redo (single entry point)
 
+## Scope & autonomy — read this first
+
+This is the **complete, end-to-end backlog** for the Moves deliverable redo. Run it **autonomously,
+start to finish** — do not stop for confirmation between slices, do not ask the user to choose, do not
+hand back partial work. Only pause if you are genuinely blocked, and then state the exact blocker +
+what you tried + what you need.
+
+**The older briefs are SUBSUMED into the slices below — do NOT run them as separate work:**
+`SKYHARBOR_IROPS_DELIVERABLE_REPAIR_BRIEF.md` (→ folded into Slices 1–2: real context + honest
+generation), `MOVES_DELIVERABLE_STORY_REDO_PR_B_TO_F_HANDOVER.md` (→ the renderer/prompt detail for
+Slice 2), `PHASE_GATE_GENERATION_GUARD_BRIEF.md` (→ Slice 6). They are reference, not parallel tracks.
+
+**The hard logic is already built + tested** (the muscles + `generateArtifact`); your job is the
+wiring, the UI, and the live deploy/click-through cycle. Execute all 7 slices, each through its QA gate,
+to the golden bar, on the live Meridian move. Report per slice; keep going until Slice 7 passes live.
+
+---
+
 **Base off branch `feat/moves-deliverable-story-redo` (PR #3840)** — it contains everything below.
 Do NOT start from `main` (the redo isn't merged there yet) and do NOT start from `#3816` alone
 (it lacks these files). If you must build on `#3816`'s live routes, first merge/rebase
