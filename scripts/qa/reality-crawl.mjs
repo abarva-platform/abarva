@@ -52,7 +52,7 @@ const CITATION_CLAIM = /\b(citation|citations|cited|source-backed|source files?|
 const HOME_DECIDE_LEAK =
   /\b(Decision frame|DORA|Wave-?0|P11|local env|org_topology unavailable|roles_inventory unavailable|TIME x AI-fit|kill criteria|AI Platform owner|Knowledge Engineer|productivity lift|90-day pilot|current visible run-cost basis is \$0)\b/i;
 const REFUSAL = /can'?t (use|share|access)|won'?t (use|share)|another (client|tenant)|not authori[sz]ed|only your|isolat|fenc/i;
-const HEDGE = /\b(don'?t have|can'?t (say|confirm|predict|commit)|no (reliable )?way to|depends on|a range|estimate|directional|won'?t (commit|fabricate)|would need|uncertain|approximate|order of magnitude|planning (range|assumption)|can'?t give you an exact)\b/i;
+const HEDGE = /\b(don'?t have|can'?t (say|confirm|predict|commit|give(?: you)? (?:that |an )?exact)|no (reliable )?way to|depends on|a range|estimate|directional|won'?t (commit|fabricate)|would need|uncertain|approximate|order of magnitude|planning (range|assumption))\b/i;
 
 function envKey(prefix, key) {
   return `${prefix}_${key.toUpperCase()}`;
