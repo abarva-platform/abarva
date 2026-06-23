@@ -61,6 +61,7 @@ const Q =
   "Talk about our current data & analytics landscape — name the platforms and owners you can see in our loaded context.";
 const VISUAL_Q =
   "Show this as a decision-grade table or chart: which current technology/data investments need action, who owns them, what is the risk, and what is the next move?";
+const ASK_TIMEOUT_MS = Number(process.env.TENANT_MATRIX_ASK_TIMEOUT_MS || 45_000);
 
 const CONSULTANT_SECTIONS = /\b(Read|Evidence|Implication|Next move):/g;
 
@@ -163,27 +164,33 @@ async function fetchAskText(auth, query, client) {
   };
   if (auth.context) {
     return withPage(auth, "/home", async (page) =>
-      page.evaluate(async ({ body }) => {
+      page.evaluate(async ({ body, timeoutMs }) => {
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
         const res = await fetch("/api/intelligence/ask", {
           method: "POST",
           headers: { accept: "application/x-ndjson", "content-type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify(body),
-        });
+        }).finally(() => window.clearTimeout(timeout));
         return {
           status: res.status,
           url: res.url,
           contentType: res.headers.get("content-type") || "",
           text: await res.text(),
         };
-      }, { body }),
+      }, { body, timeoutMs: ASK_TIMEOUT_MS }),
     );
   }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ASK_TIMEOUT_MS);
   const res = await fetch(`${BASE_URL}/api/intelligence/ask`, {
     method: "POST",
     headers: { cookie: auth.cookie, accept: "application/x-ndjson", "content-type": "application/json" },
     redirect: "manual",
+    signal: controller.signal,
     body: JSON.stringify(body),
-  });
+  }).finally(() => clearTimeout(timeout));
   return {
     status: res.status,
     url: res.url,
@@ -291,38 +298,45 @@ async function runTenant(t, browser) {
 const COLS = ["render", "intel", "dims19", "synthesis", "readable", "visual", "grounded", "noRawId", "experts", "fence"];
 const pad = (s, n) => String(s).padEnd(n);
 
+function printHeader() {
+  console.log(pad("tenant", 15) + COLS.map((c) => pad(c, 10)).join("") + "note");
+  console.log("─".repeat(15 + COLS.length * 10 + 36));
+}
+
+function printRow(r) {
+  if (r.skipped) {
+    console.log(pad(r.tenant.label, 15) + `· no session (set COOKIE_${r.tenant.key.toUpperCase()})`);
+    return { tested: 0, failed: 0 };
+  }
+  if (r.error) {
+    console.log(pad(r.tenant.label, 15) + "ERROR: " + r.error);
+    return { tested: 1, failed: 1 };
+  }
+  const cells = COLS.map((c) =>
+    pad(r.checks[c] === true ? "✅" : r.checks[c] === false ? "❌" : "·", 10),
+  );
+  const failed = COLS.some((c) => r.checks[c] === false) ? 1 : 0;
+  console.log(pad(r.tenant.label, 15) + cells.join("") + (r.note || ""));
+  return { tested: 1, failed };
+}
+
 async function main() {
   console.log(`\nTenant-matrix gate · ${BASE_URL}\n`);
   const needsBrowser = TENANTS.some((t) => authFor(t.key).storageState);
   const browser = needsBrowser ? await (await import("@playwright/test")).chromium.launch() : null;
-  const rows = [];
+  let failed = 0,
+    tested = 0;
+  printHeader();
   try {
-    for (const t of TENANTS) rows.push(await runTenant(t, browser));
+    for (const t of TENANTS) {
+      const result = printRow(await runTenant(t, browser));
+      tested += result.tested;
+      failed += result.failed;
+    }
   } finally {
     if (browser) await browser.close();
   }
 
-  console.log(pad("tenant", 15) + COLS.map((c) => pad(c, 10)).join("") + "note");
-  console.log("─".repeat(15 + COLS.length * 10 + 36));
-  let failed = 0,
-    tested = 0;
-  for (const r of rows) {
-    if (r.skipped) {
-      console.log(pad(r.tenant.label, 15) + `· no session (set COOKIE_${r.tenant.key.toUpperCase()})`);
-      continue;
-    }
-    tested++;
-    if (r.error) {
-      console.log(pad(r.tenant.label, 15) + "ERROR: " + r.error);
-      failed++;
-      continue;
-    }
-    const cells = COLS.map((c) =>
-      pad(r.checks[c] === true ? "✅" : r.checks[c] === false ? "❌" : "·", 10),
-    );
-    if (COLS.some((c) => r.checks[c] === false)) failed++;
-    console.log(pad(r.tenant.label, 15) + cells.join("") + (r.note || ""));
-  }
   console.log("─".repeat(15 + COLS.length * 10 + 36));
   const verdict =
     tested === 0
