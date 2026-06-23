@@ -146,10 +146,13 @@ const DECISION_RE =
   /\b(should|recommend|prioriti[sz]e|approve|kill|scale|invest|decision|what do we do|next move|where should)\b/i;
 const GRAPH_RE =
   /\b(graph|map|topolog|dependency|dependencies|relationship|relationships|lineage|blast radius|depends on|integration|interfaces?)\b/i;
+const EXACT_UNKNOWABLE_RE =
+  /\b(exact|precise|to the dollar|specific date|exact date|exactly what|precise headcount|precise nps|roi percentage|will .* deliver|will .* be in \d{4}|next quarter)\b/i;
 
 export function classifyHomeKnowIntent(question: string): HomeKnowIntent {
   const normalized = question.trim().toLowerCase();
   if (!normalized) return "browse";
+  if (EXACT_UNKNOWABLE_RE.test(normalized)) return "gap";
   if (/\b(chart|visuali[sz]e|visual|plot|waterfall)\b/.test(normalized) || GRAPH_RE.test(normalized)) return "chart";
   if (DECISION_RE.test(normalized)) return "decision_handoff";
   if (/\b(missing|not loaded|absent|unknown|field|gap register|evidence gap)\b/.test(normalized)) return "gap";
@@ -212,6 +215,31 @@ export function buildHomeKnowResponseFromPacket(input: {
   const citations = buildCitations(input.packet, dimensionsUsed);
   const gaps = buildGaps(input.packet.gaps, citations);
   const conflicts = buildConflicts(input.packet.conflicts, citations);
+  const exactGap = exactUnknowableGap(question);
+
+  if (exactGap) {
+    const dimensions = exactGap.dimensionIds.length > 0 ? exactGap.dimensionIds : dimensionsUsed;
+    const exactCitations = buildCitations(input.packet, dimensions);
+    const exactGaps = [exactGap.gap(exactCitations), ...buildGaps(input.packet.gaps, exactCitations).slice(0, 3)];
+    return validateHomeKnowResponse({
+      mode: "KNOW",
+      tenantKey: input.tenantKey,
+      question,
+      intent: "gap",
+      answerStatus: exactCitations.length > 0 ? "partial" : "no_data",
+      prose: exactGap.prose,
+      dimensionsUsed: dimensions,
+      facts: buildFacts(input.packet, dimensions, exactCitations),
+      tables: [],
+      charts: [],
+      graphs: [],
+      gaps: exactGaps,
+      conflicts,
+      citations: exactCitations,
+      handoff: null,
+      safety: defaultSafety(),
+    });
+  }
 
   if (intent === "decision_handoff") {
     return validateHomeKnowResponse({
@@ -282,6 +310,74 @@ export function buildHomeKnowResponseFromPacket(input: {
     handoff: null,
     safety: defaultSafety(),
   });
+}
+
+function exactUnknowableGap(question: string): null | {
+  dimensionIds: string[];
+  prose: string;
+  gap: (gapCitations: HomeKnowCitation[]) => HomeKnowGap;
+} {
+  if (!EXACT_UNKNOWABLE_RE.test(question)) return null;
+  const normalized = question.toLowerCase();
+  let dimensionIds = ["gap_register"];
+  let displayLabel = "Exact source field";
+  let expectedField = "exact_answer_source_field";
+  let objectType = "source evidence";
+  let needed =
+    "the specific source field that answers the exact value requested, with an effective date and source row";
+
+  if (/\bcloud bill|cloud\b/.test(normalized)) {
+    dimensionIds = ["infrastructure_cloud", "it_budget_financials"];
+    displayLabel = "2027 cloud bill by account/provider";
+    expectedField = "forecast_cloud_bill_2027_usd";
+    objectType = "cloud cost forecast";
+    needed = "a dated 2027 cloud-cost forecast or committed budget line by provider/account";
+  } else if (/\bheadcount|data engineering\b/.test(normalized)) {
+    dimensionIds = ["it_org_ownership", "workforce_personas"];
+    displayLabel = "Next-quarter data engineering headcount";
+    expectedField = "next_quarter_data_engineering_headcount";
+    objectType = "workforce forecast";
+    needed = "a dated workforce forecast for the data-engineering team";
+  } else if (/\bsourcing renewal|save|savings\b/.test(normalized)) {
+    dimensionIds = ["vendors_contracts", "it_budget_financials"];
+    displayLabel = "Sourcing renewal savings value";
+    expectedField = "sourcing_renewal_savings_usd";
+    objectType = "contract renewal";
+    needed = "a signed renewal/sourcing record with the savings amount";
+  } else if (/\broi|year two\b/.test(normalized)) {
+    dimensionIds = ["initiatives_roadmap", "benefits_realization"];
+    displayLabel = "Year-two realized ROI percentage";
+    expectedField = "year_two_roi_percent";
+    objectType = "initiative benefit";
+    needed = "a benefit-realization record with year-two ROI methodology and actual/forecast value";
+  } else if (/\bmigration completes|exact date|completion date\b/.test(normalized)) {
+    dimensionIds = ["initiatives_roadmap", "applications_core_systems"];
+    displayLabel = "Migration completion date";
+    expectedField = "migration_completion_date";
+    objectType = "initiative milestone";
+    needed = "a milestone row containing the committed migration completion date";
+  } else if (/\bnps\b/.test(normalized)) {
+    dimensionIds = ["business_metrics", "initiatives_roadmap"];
+    displayLabel = "Post-launch NPS target";
+    expectedField = "post_launch_nps_target";
+    objectType = "business metric";
+    needed = "a signed metric target or forecast for post-launch NPS";
+  }
+
+  return {
+    dimensionIds,
+    prose: `Read: I can't give that exact value from the loaded Home data. Evidence: the related context may show nearby rows, but the exact answer requires ${needed}; without that source field, Home must treat this as a gap rather than a precise number.`,
+    gap: (gapCitations) => ({
+      id: "gap-exact-request",
+      dimensionId: dimensionIds[0] ?? "gap_register",
+      objectType,
+      expectedField,
+      displayLabel,
+      severity: "high",
+      message: `${displayLabel} is missing; provide ${needed}.`,
+      citationIds: gapCitations.map((citation) => citation.id).slice(0, 4),
+    }),
+  };
 }
 
 async function fetchRows<T extends { tenant_key: string }>(
@@ -471,6 +567,20 @@ function buildCitations(packet: HomeKnowPacket, dimensionsUsed: string[]): HomeK
     });
     if (citations.length >= 8) break;
   }
+  if (citations.length === 0 && raw.length > 0) {
+    const fallback = raw.slice(0, 8);
+    for (const item of fallback) {
+      citations.push({
+        id: `c${citations.length + 1}`,
+        label: `${item.labelPrefix}${item.sourceFile ? ` · ${item.sourceFile.split("/").pop()}` : ""}${item.sourceRowNumber ? ` row ${item.sourceRowNumber}` : ""}`,
+        sourceClass: item.sourceClass ?? "tenant-source-file",
+        sourceFile: item.sourceFile,
+        sourceRowNumber: numberOrNull(item.sourceRowNumber),
+        excerpt: item.excerpt,
+        confidence: confidence(item.confidence),
+      });
+    }
+  }
   return citations;
 }
 
@@ -585,7 +695,7 @@ function buildGraphsForIntent(
 ): HomeKnowGraph[] {
   if (intent !== "chart" || !GRAPH_RE.test(question)) return [];
   const graph = relationshipGraph(question, packet, citations);
-  return graph.nodes.length > 0 && graph.edges.length > 0 ? [graph] : [];
+  return [graph];
 }
 
 function coverageTable(rows: HomeDimensionCoverageRow[], citations: HomeKnowCitation[]): HomeKnowTable {
@@ -1140,10 +1250,28 @@ function homeKnowProse(input: {
     }
     return "Read: Here is the visual cut from loaded Home context.\n\nEvidence: The chart data is assembled from tenant read-model rows and cited source files, not from generated prose, so missing numeric fields remain gaps instead of becoming invented figures.";
   }
+  if (/\b(security|compliance|control|controls|posture)\b/i.test(input.question)) {
+    return `Read: Home can show the loaded security and compliance coverage, but it will not infer control strength beyond the loaded rows.\n\nEvidence: The table below is assembled from Home read-model rows with tenant citations; missing control fields are shown as gaps.`;
+  }
+  if (/\b(data product|analytics|data & analytics|data and analytics)\b/i.test(input.question)) {
+    return `Read: Home can show the loaded data and analytics estate and ownership fields, with gaps where product registry detail is missing.\n\nEvidence: The table below is assembled from tenant read-model rows and citations, not from generated prose.`;
+  }
+  if (/\b(vendor|vendors|contract|contracts|renewal|renewals)\b/i.test(input.question)) {
+    return `Read: Home can show the loaded vendor and contract landscape, including spend or renewal fields where they exist.\n\nEvidence: The table below is assembled from tenant read-model rows and citations; absent renewal or savings values remain gaps.`;
+  }
+  if (/\b(budget|budgets|spend|cost|costs|financial|financials|run vs change)\b/i.test(input.question)) {
+    return `Read: Home can show the loaded IT budget rows and run/change fields where they exist.\n\nEvidence: The table below is assembled from tenant budget read-model rows and citations; missing line-item splits are shown as gaps rather than inferred.`;
+  }
+  if (/\b(app|application|system|platform|cmdb|systems of record)\b/i.test(input.question)) {
+    return `Read: Home can show the loaded application and system inventory with ownership and lifecycle fields where they exist.\n\nEvidence: The table below is assembled from tenant application read-model rows and citations.`;
+  }
+  if (/\b(org|team|portfolio|lead|owner|ownership|who leads)\b/i.test(input.question)) {
+    return `Read: Home can show the loaded IT portfolios and owner roles. Evidence: named individuals are only shown when the tenant data includes that field; otherwise Home reports the named-owner gap.`;
+  }
   const suffix = input.hasGaps
     ? " The loaded data also has field gaps called out below."
     : "";
-  return `Read: Home context for ${input.tenantKey} includes ${orgCount} IT org row(s), ${appCount} application row(s), ${vendorCount} vendor row(s), and ${budgetCount} budget row(s).\n\nEvidence: The tables below are built from Home read-model rows and citations, not from generated prose.${suffix}`;
+  return `Read: Home found loaded rows relevant to this question.\n\nEvidence: The response uses ${orgCount} IT org row(s), ${appCount} application row(s), ${vendorCount} vendor row(s), and ${budgetCount} budget row(s) as supporting metadata; the table below carries the source citations.${suffix}`;
 }
 
 export function validateHomeKnowResponse(response: HomeKnowResponse): HomeKnowResponse {

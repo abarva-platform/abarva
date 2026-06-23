@@ -4,6 +4,7 @@ import {
   validateHomeKnowResponse,
   type HomeKnowPacket,
 } from "../home-know-engine";
+import { shouldUseHomeKnowAgentAnswer } from "../home-know-agent-answer";
 import type { HomeKnowResponse } from "../home-know-contract";
 
 const apexPacket: HomeKnowPacket = {
@@ -153,6 +154,22 @@ describe("Home KNOW contract engine", () => {
     );
     expect(classifyHomeKnowIntent("Show this visually as a chart")).toBe("chart");
     expect(classifyHomeKnowIntent("Show the integration topology")).toBe("chart");
+    expect(classifyHomeKnowIntent("What will our exact cloud bill be in 2027, to the dollar?")).toBe("gap");
+  });
+
+  it("routes every Home ask through Home KNOW so experts cannot leak", () => {
+    expect(
+      shouldUseHomeKnowAgentAnswer({
+        query: "What would you tell our CIO is the riskiest assumption in the current plan?",
+        surfaceContext: { activeTab: "home", clientKey: "apex-retail" },
+      }),
+    ).toBe(true);
+    expect(
+      shouldUseHomeKnowAgentAnswer({
+        query: "What would you tell our CIO is the riskiest assumption in the current plan?",
+        surfaceContext: { activeTab: "intelligence", clientKey: "apex-retail" },
+      }),
+    ).toBe(false);
   });
 
   it("answers IT org lookup from deterministic view rows with gaps and citations", () => {
@@ -218,6 +235,25 @@ describe("Home KNOW contract engine", () => {
     expect(response.tables[0]?.rows).toEqual([]);
   });
 
+  it("refuses exact unknowable questions with a specific gap instead of generic coverage", () => {
+    const response = buildHomeKnowResponseFromPacket({
+      tenantKey: "apex-retail",
+      question: "What will our exact cloud bill be in 2027, to the dollar?",
+      packet: apexPacket,
+    });
+
+    expect(response.intent).toBe("gap");
+    expect(response.answerStatus).toBe("partial");
+    expect(response.prose).toMatch(/can't give that exact value/i);
+    expect(response.prose).toMatch(/2027 cloud-cost forecast/i);
+    expect(response.prose).not.toMatch(/Home context for .* includes .* row/i);
+    expect(response.tables).toEqual([]);
+    expect(response.gaps[0]).toMatchObject({
+      expectedField: "forecast_cloud_bill_2027_usd",
+      displayLabel: "2027 cloud bill by account/provider",
+    });
+  });
+
   it("emits deterministic chart data from the packet, not prose", () => {
     const response = buildHomeKnowResponseFromPacket({
       tenantKey: "apex-retail",
@@ -260,6 +296,26 @@ describe("Home KNOW contract engine", () => {
       to: "TEAM-STORE-SYSTEMS",
       type: "supports",
     });
+  });
+
+  it("returns a graph artifact with a specific gap instead of a blank graph answer", () => {
+    const response = buildHomeKnowResponseFromPacket({
+      tenantKey: "apex-retail",
+      question: "Show the relationship graph between vendors and the systems they support.",
+      packet: {
+        ...apexPacket,
+        relationships: [],
+      },
+    });
+
+    expect(response.intent).toBe("chart");
+    expect(response.graphs).toHaveLength(1);
+    expect(response.graphs[0]).toMatchObject({
+      id: "home-relationship-graph",
+      confidence: "low",
+      inferredEdges: false,
+    });
+    expect(response.graphs[0]?.gaps[0]).toMatch(/source-to-target integration edges missing/i);
   });
 
   it("sets the backend tripwire if unsafe text survives validation", () => {

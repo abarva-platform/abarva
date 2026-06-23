@@ -3,10 +3,7 @@ import type {
   AgentAnswer,
   CitationSourceClass,
 } from "@/lib/intelligence/answer/agent-answer";
-import {
-  buildHomeKnowResponse,
-  classifyHomeKnowIntent,
-} from "@/lib/home/know/home-know-engine";
+import { buildHomeKnowResponse } from "@/lib/home/know/home-know-engine";
 import type {
   HomeKnowAskRequest,
   HomeKnowChartKind,
@@ -15,17 +12,12 @@ import type {
 } from "@/lib/home/know/home-know-contract";
 import type { AskSurfaceContext } from "@/lib/intelligence/ask";
 
-const HOME_KNOW_MODE_RE =
-  /\b(chart|graph|visuali[sz]e|visual|plot|waterfall|table|list|show|breakdown|missing|loaded|coverage|dimensions|who leads|organized|topology|dependency|lineage|relationship|relationships|interfaces?|integrations?|data|analytics|applications?|systems?|vendors?|contracts?|cloud|infrastructure|security|compliance|budget|spend|cost|initiatives?|automation)\b/i;
-
 export function shouldUseHomeKnowAgentAnswer(input: {
   query: string;
   surfaceContext: AskSurfaceContext | null;
 }): boolean {
   if (input.surfaceContext?.activeTab !== "home") return false;
-  if (!HOME_KNOW_MODE_RE.test(input.query)) return false;
-  const intent = classifyHomeKnowIntent(input.query);
-  return intent !== "decision_handoff";
+  return input.query.trim().length > 0;
 }
 
 export async function buildHomeKnowAgentAnswer(
