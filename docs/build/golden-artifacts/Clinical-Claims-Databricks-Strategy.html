@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strategy · Unifying Clinical + Claims on Databricks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#080B14;--bg-2:#0C1120;
+    --panel:rgba(255,255,255,.04);--panel-2:rgba(255,255,255,.06);
+    --stroke:rgba(255,255,255,.10);--stroke-2:rgba(255,255,255,.18);
+    --ink:#EAEEF8;--muted:#94A1BC;--faint:#5C6987;
+    --azure:#3D8BFF;--cyan:#36D9F0;--coral:#FF5E47;--coral-2:#FF8A5B;
+    --teal:#2DD4BF;--violet:#9B7DFF;--gold:#F3C552;
+    --grad:linear-gradient(100deg,var(--cyan),var(--azure) 45%,var(--violet) 78%,var(--coral));
+    font-synthesis:none;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+  .stage{position:fixed;inset:0}
+  .slide{
+    position:absolute;inset:0;display:none;flex-direction:column;
+    padding:50px 64px 66px;opacity:0;transform:translateY(14px);
+    transition:opacity .5s ease,transform .5s ease;
+    background:
+      radial-gradient(1100px 620px at 84% -8%,rgba(61,139,255,.16),transparent 60%),
+      radial-gradient(900px 560px at 4% 110%,rgba(255,94,71,.12),transparent 58%),
+      linear-gradient(180deg,var(--bg-2),var(--bg));
+  }
+  .slide.active{display:flex;opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){.slide{transition:none;transform:none}.flow{animation:none!important}}
+
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--cyan);display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .eyebrow::before{content:"";width:34px;height:2px;border-radius:2px;background:var(--grad)}
+  h1{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:-.02em;line-height:1.02}
+  h2{font-family:'Space Grotesk',sans-serif;font-weight:600;letter-spacing:-.015em;line-height:1.05;font-size:clamp(25px,3.2vw,42px)}
+  .sub{color:var(--muted);font-size:clamp(13.5px,1.2vw,16.5px);line-height:1.55;max-width:74ch}
+  .accent{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .slide-head{margin-bottom:20px;flex:none}
+  .slide-head .sub{margin-top:10px}
+
+  .grid{display:grid;gap:16px;flex:1;min-height:0}
+  .g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+  .g23{grid-template-columns:1.1fr 1fr}.rows-2{grid-template-rows:1fr 1fr}.span2{grid-column:span 2}
+  .card{background:var(--panel);border:1px solid var(--stroke);border-radius:15px;padding:20px;position:relative;overflow:hidden}
+  .card::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:var(--grad);opacity:0;transition:opacity .3s}
+  .card:hover::before{opacity:.7}
+  .card h3{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;margin-bottom:7px;display:flex;align-items:center;gap:10px}
+  .card p{color:var(--muted);font-size:13px;line-height:1.5}
+  .tag{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);border:1px solid var(--stroke);border-radius:999px;padding:3px 9px}
+  .dot{width:9px;height:9px;border-radius:3px;flex:none}
+  ul.lean{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:4px}
+  ul.lean li{position:relative;padding-left:19px;color:var(--muted);font-size:13px;line-height:1.45}
+  ul.lean li::before{content:"";position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:2px;background:var(--grad)}
+  ul.lean li b{color:var(--ink);font-weight:600}
+
+  /* chrome */
+  .topbar{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:50}
+  .topbar>i{display:block;height:100%;width:0;background:var(--grad);transition:width .5s ease}
+  .brandmark{position:fixed;top:18px;right:24px;z-index:50;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;color:var(--faint);text-transform:uppercase}
+  .counter{position:fixed;bottom:20px;left:64px;z-index:50;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+  .counter b{color:var(--ink)}
+  .nav{position:fixed;bottom:16px;right:24px;z-index:50;display:flex;gap:9px}
+  .nav button{width:40px;height:40px;border-radius:11px;cursor:pointer;background:var(--panel-2);border:1px solid var(--stroke-2);color:var(--ink);font-size:16px;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .nav button:hover{background:var(--grad);border-color:transparent;color:#06080f}
+  .nav button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .dots{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);z-index:50;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:55vw}
+  .dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;transition:.25s}
+  .dots i.on{background:var(--grad);width:22px;border-radius:4px}
+
+  /* title */
+  .title-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:1020px}
+  .title-wrap h1{font-size:clamp(38px,6vw,80px)}
+  .megasub{color:var(--muted);font-size:clamp(15px,1.4vw,19px);margin-top:20px;max-width:64ch;line-height:1.5}
+  .pillrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+  .pill{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;border:1px solid var(--stroke-2);border-radius:999px;padding:7px 14px;color:var(--muted)}
+  .stat-row{display:flex;gap:46px;margin-top:40px;flex-wrap:wrap}
+  .stat .n{font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:700}
+  .stat .l{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-top:4px}
+
+  /* KPI scorecard */
+  .kgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1;min-height:0}
+  .kpanel{border:1px solid var(--stroke);border-radius:15px;overflow:hidden;display:flex;flex-direction:column}
+  .kpanel .khdr{padding:14px 20px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--stroke)}
+  .kpanel.clin .khdr{background:linear-gradient(90deg,rgba(45,212,191,.12),transparent)}
+  .kpanel.ops .khdr{background:linear-gradient(90deg,rgba(61,139,255,.12),transparent)}
+  .krow{display:grid;grid-template-columns:1.7fr auto;align-items:center;gap:12px;padding:13px 20px;border-top:1px solid var(--stroke)}
+  .krow:first-of-type{border-top:none}
+  .krow .km{font-size:13.5px;color:var(--ink);font-weight:500}
+  .krow .km small{display:block;color:var(--faint);font-size:11px;font-weight:400;margin-top:2px}
+  .kmove{font-family:'JetBrains Mono',monospace;font-size:13px;white-space:nowrap;text-align:right}
+  .kmove .b{color:var(--faint)}
+  .kmove .arr{color:var(--cyan);margin:0 5px}
+  .kmove .t{color:var(--teal);font-weight:700}
+
+  /* approach arc */
+  .arc{display:grid;grid-template-columns:repeat(4,1fr);gap:0;flex:1;min-height:0;position:relative}
+  .arc::before{content:"";position:absolute;top:30px;left:6%;right:6%;height:2px;background:linear-gradient(90deg,var(--cyan),var(--azure),var(--violet),var(--coral))}
+  .arcstep{padding:0 18px;display:flex;flex-direction:column;align-items:flex-start}
+  .arcnode{width:18px;height:18px;border-radius:50%;background:var(--grad);box-shadow:0 0 0 5px var(--bg);margin:21px 0 16px}
+  .arcstep .an{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;color:var(--cyan)}
+  .arcstep .at{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600;margin:6px 0 4px}
+  .arcstep .ad{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--faint);margin-bottom:12px}
+
+  /* decision matrix */
+  .matrix{display:grid;grid-template-columns:1.5fr 1fr 1fr 1.05fr;border:1px solid var(--stroke);border-radius:15px;overflow:hidden;flex:1;min-height:0}
+  .mx{padding:13px 16px;border-top:1px solid var(--stroke);border-left:1px solid var(--stroke);display:flex;flex-direction:column;justify-content:center;font-size:13px}
+  .mx:nth-child(4n+1){border-left:none}
+  .matrix>.mx:nth-child(-n+4){border-top:none}
+  .mxhead{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;background:var(--panel-2);color:var(--ink)}
+  .mxhead small{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:10px;color:var(--faint);letter-spacing:.08em;margin-top:3px;text-transform:uppercase}
+  .mxcrit{color:var(--muted);font-weight:500}
+  .winner{background:linear-gradient(180deg,rgba(54,217,240,.10),rgba(155,125,255,.06))}
+  .winner.mxhead{background:linear-gradient(180deg,rgba(54,217,240,.18),rgba(155,125,255,.10))}
+  .badge{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.12em;color:#06080f;background:var(--cyan);border-radius:5px;padding:2px 7px;display:inline-block;margin-top:5px;width:fit-content}
+  .rate{display:inline-flex;gap:3px}
+  .rate i{width:9px;height:9px;border-radius:2px;background:rgba(255,255,255,.14)}
+  .rate i.f{background:var(--grad)}
+
+  /* recommendation */
+  .reco{border:1px solid rgba(54,217,240,.4);background:linear-gradient(120deg,rgba(54,217,240,.08),rgba(155,125,255,.06));border-radius:16px;padding:24px 26px;display:flex;gap:22px;align-items:flex-start;flex:none}
+  .reco .mark{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;color:var(--cyan);text-transform:uppercase}
+  .reco h3{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;margin:6px 0 8px}
+  .reco p{color:var(--muted);font-size:14px;line-height:1.55;max-width:80ch}
+  .reco .check{font-size:34px;line-height:1;color:var(--teal);flex:none}
+
+  /* diagram */
+  .diagram{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+  svg{width:100%;height:100%;max-height:100%}
+  .nbox{fill:var(--panel-2);stroke:var(--stroke-2)}
+  .ntext{fill:var(--ink);font-family:'Inter',sans-serif;font-weight:600}
+  .nsub{fill:var(--muted);font-family:'JetBrains Mono',monospace}
+  .lbl{fill:var(--faint);font-family:'JetBrains Mono',monospace;letter-spacing:.12em}
+  .flow{stroke-dasharray:7 9;animation:dash 1.1s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-32}}
+  .legend{display:flex;gap:20px;flex:none;margin-bottom:6px;flex-wrap:wrap}
+  .legend span{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+  .legend i{width:13px;height:13px;border-radius:4px;flex:none}
+
+  /* roadmap */
+  .road{display:grid;grid-template-columns:repeat(4,1fr);gap:0;flex:1;min-height:0;position:relative}
+  .road::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--azure),var(--violet),var(--coral))}
+  .phase{padding:22px 20px;border-left:1px solid var(--stroke);position:relative;display:flex;flex-direction:column}
+  .phase:first-child{border-left:none}
+  .phase .node{position:absolute;top:-7px;left:-7px;width:14px;height:14px;border-radius:50%;background:var(--grad);box-shadow:0 0 0 4px var(--bg)}
+  .phase .pn{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;color:var(--cyan)}
+  .phase .pt{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;margin:7px 0 3px}
+  .phase .pw{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--faint);margin-bottom:12px}
+  .phase .kpitag{margin-top:auto;padding-top:12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--teal);line-height:1.5;border-top:1px solid var(--stroke)}
+
+  /* trajectory */
+  .traj{flex:1;min-height:0;display:flex;flex-direction:column}
+  .footnote{flex:none;margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--faint);letter-spacing:.06em}
+  .assume{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:var(--gold);border:1px solid rgba(243,197,82,.35);border-radius:5px;padding:2px 7px;margin-left:10px;text-transform:uppercase;vertical-align:middle}
+</style>
+</head>
+<body>
+
+<div class="topbar"><i id="bar"></i></div>
+<div class="brandmark">Strategy · Clinical + Claims on Databricks</div>
+
+<div class="stage" id="stage">
+
+  <!-- 1 · TITLE -->
+  <section class="slide">
+    <div class="title-wrap">
+      <div class="eyebrow">Data Strategy · 12-Month Plan</div>
+      <h1>Clinical <span class="accent">+</span> Claims,<br>Unified for <span class="accent">Quality &amp; Performance</span></h1>
+      <p class="megasub">A use-case-led strategy: build one trusted data foundation in Azure Databricks by unifying Epic clinical and payer claims data, then use it to move a focused set of clinical and operational KPIs — delivered incrementally over four 90-day increments.</p>
+      <div class="pillrow">
+        <span class="pill">Use case → Foundation → Clinical value</span>
+        <span class="pill">Azure Databricks Lakehouse</span>
+        <span class="pill">Power BI</span>
+        <span class="pill">3 / 6 / 9 / 12-month roadmap</span>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="n accent">6</div><div class="l">Target KPIs</div></div>
+        <div class="stat"><div class="n accent">4</div><div class="l">90-Day Increments</div></div>
+        <div class="stat"><div class="n accent">1</div><div class="l">Unified Foundation</div></div>
+        <div class="stat"><div class="n accent">C</div><div class="l">Recommended Option</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · USE CASE / PROBLEM -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">The Use Case</div>
+      <h2>Clinical depth and claims breadth live apart — so value-based care underperforms</h2>
+      <p class="sub">Epic tells us what happened inside our walls. Claims tell us what happened everywhere else — and what it cost. Neither alone answers the questions that drive quality and performance. The strategy: unify them once, then solve specific clinical use cases on that foundation.</p>
+    </div>
+    <div class="grid g3 rows-2">
+      <div class="card"><h3><span class="dot" style="background:var(--teal)"></span>Clinical (Epic)</h3><p>Deep, real-time detail — labs, vitals, diagnoses, meds, encounters — but only for care delivered in our network. Blind to what happens elsewhere.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--azure)"></span>Claims (Payer)</h3><p>The longitudinal, cross-setting view — utilization, cost, leakage, out-of-network care — but lagged, coded, and missing clinical nuance.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--violet)"></span>The gap</h3><p>Without a unified member view we can't see total cost of care, true leakage, or where quality gaps actually close. Programs run on partial truth.</p></div>
+      <div class="card span2"><h3><span class="dot" style="background:var(--cyan)"></span>What unifying unlocks</h3><p>A single member spine joining clinical + claims lets us target the right patients, close gaps that matter, recapture risk accurately, keep care in-network, and prove value to payers — all from one governed source instead of disconnected spreadsheets and extracts.</p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--gold)"></span>The bet</h3><p>Foundation first, but never foundation-only. Each increment ships a working clinical or operational capability, not just plumbing.</p></div>
+    </div>
+  </section>
+
+  <!-- 3 · KPIs -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">What We're Solving For</div>
+      <h2>Six KPIs, two domains, one foundation <span class="assume">Illustrative baselines</span></h2>
+      <p class="sub">The strategy is judged on movement in these metrics — not on platform milestones. Every increment is mapped to at least one of them.</p>
+    </div>
+    <div class="kgrid">
+      <div class="kpanel clin">
+        <div class="khdr"><span class="dot" style="background:var(--teal)"></span>Clinical — Quality &amp; Safety</div>
+        <div class="krow"><div class="km">30-day all-cause readmission rate<small>Predictive risk + closed-loop intervention</small></div><div class="kmove"><span class="b">15.8%</span><span class="arr">→</span><span class="t">≤13.0%</span></div></div>
+        <div class="krow"><div class="km">HEDIS care-gap closure rate<small>Unified gaps surfaced to care teams</small></div><div class="kmove"><span class="b">62%</span><span class="arr">→</span><span class="t">≥80%</span></div></div>
+        <div class="krow"><div class="km">HCC risk recapture accuracy<small>Claims + clinical evidence reconciliation</small></div><div class="kmove"><span class="b">71%</span><span class="arr">→</span><span class="t">≥85%</span></div></div>
+      </div>
+      <div class="kpanel ops">
+        <div class="khdr"><span class="dot" style="background:var(--azure)"></span>Operational — Performance &amp; Cost</div>
+        <div class="krow"><div class="km">Network leakage rate<small>Referral &amp; out-of-network visibility</small></div><div class="kmove"><span class="b">22%</span><span class="arr">→</span><span class="t">≤15%</span></div></div>
+        <div class="krow"><div class="km">Total cost of care (PMPM)<small>Total-cost analytics across settings</small></div><div class="kmove"><span class="b">base</span><span class="arr">→</span><span class="t">−6%</span></div></div>
+        <div class="krow"><div class="km">Claims-to-insight latency<small>Automated pipelines vs. manual extracts</small></div><div class="kmove"><span class="b">45 d</span><span class="arr">→</span><span class="t">&lt;7 d</span></div></div>
+      </div>
+    </div>
+    <div class="footnote">Baselines are placeholders — swap in your actuals. Targets shown are 12-month exit goals.</div>
+  </section>
+
+  <!-- 4 · APPROACH NARRATION -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Strategic Approach</div>
+      <h2>Solve it in thin slices, not big phases</h2>
+      <p class="sub">We don't build the whole platform and then look for value. We cut a narrow vertical slice — one claims feed, Epic clinical, a unified identity — prove it end to end, then widen the data and the use-case portfolio. Each 90-day increment leaves a working capability behind.</p>
+    </div>
+    <div class="arc">
+      <div class="arcstep"><div class="arcnode"></div><div class="an">0–3 MO</div><div class="at">Prove the slice</div><div class="ad">Foundation + identity</div><ul class="lean"><li>Land Epic + first claims feed to Bronze</li><li>Unified member spine v1</li><li>First operational dashboard live</li></ul></div>
+      <div class="arcstep"><div class="arcnode"></div><div class="an">3–6 MO</div><div class="at">First clinical win</div><div class="ad">One use case, end to end</div><ul class="lean"><li>Conformed clinical+claims in Silver</li><li>First quality model → Epic write-back</li><li>Move 1 clinical + 1 ops KPI</li></ul></div>
+      <div class="arcstep"><div class="arcnode"></div><div class="an">6–9 MO</div><div class="at">Scale the portfolio</div><div class="ad">More data, more measures</div><ul class="lean"><li>Add remits, pharmacy, more cohorts</li><li>Quality + risk-recapture programs</li><li>Self-service semantic layer</li></ul></div>
+      <div class="arcstep"><div class="arcnode"></div><div class="an">9–12 MO</div><div class="at">Optimize &amp; embed</div><div class="ad">Agentic + decommission</div><ul class="lean"><li>Agents &amp; GenAI for ops</li><li>Retire first legacy extracts</li><li>Hit 12-month KPI targets</li></ul></div>
+    </div>
+    <div class="footnote">Principle: every increment ships something a clinician or operator uses — value compounds, risk stays small.</div>
+  </section>
+
+  <!-- 5 · SOLUTION OPTIONS -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Solution Options</div>
+      <h2>Three credible paths, scored against what matters</h2>
+    </div>
+    <div class="matrix">
+      <div class="mx mxhead">Decision criterion</div>
+      <div class="mx mxhead">A · Extend legacy EDW<small>SQL Server + DataStage</small></div>
+      <div class="mx mxhead">B · Azure-native warehouse<small>Fabric / Synapse</small></div>
+      <div class="mx mxhead winner">C · Databricks Lakehouse<small>Recommended</small><span class="badge">PICK</span></div>
+
+      <div class="mx mxcrit">Unify clinical + claims at scale</div>
+      <div class="mx"><span class="rate" data-s="2"></span></div>
+      <div class="mx"><span class="rate" data-s="4"></span></div>
+      <div class="mx winner"><span class="rate" data-s="5"></span></div>
+
+      <div class="mx mxcrit">AI / ML / agentic readiness</div>
+      <div class="mx"><span class="rate" data-s="1"></span></div>
+      <div class="mx"><span class="rate" data-s="3"></span></div>
+      <div class="mx winner"><span class="rate" data-s="5"></span></div>
+
+      <div class="mx mxcrit">Governance &amp; PHI compliance</div>
+      <div class="mx"><span class="rate" data-s="2"></span></div>
+      <div class="mx"><span class="rate" data-s="4"></span></div>
+      <div class="mx winner"><span class="rate" data-s="5"></span></div>
+
+      <div class="mx mxcrit">Time to first value</div>
+      <div class="mx"><span class="rate" data-s="3"></span></div>
+      <div class="mx"><span class="rate" data-s="4"></span></div>
+      <div class="mx winner"><span class="rate" data-s="4"></span></div>
+
+      <div class="mx mxcrit">Leverages Azure + Power BI estate</div>
+      <div class="mx"><span class="rate" data-s="3"></span></div>
+      <div class="mx"><span class="rate" data-s="5"></span></div>
+      <div class="mx winner"><span class="rate" data-s="5"></span></div>
+
+      <div class="mx mxcrit">Openness · avoids lock-in · 3-yr TCO</div>
+      <div class="mx"><span class="rate" data-s="2"></span></div>
+      <div class="mx"><span class="rate" data-s="3"></span></div>
+      <div class="mx winner"><span class="rate" data-s="5"></span></div>
+    </div>
+    <div class="footnote">A perpetuates tech debt and has no AI path. B is strong for BI but weaker for large-scale data engineering, ML, and open lakehouse interop. A fourth option (Snowflake best-of-breed) was considered but adds multi-vendor governance overhead.</div>
+  </section>
+
+  <!-- 6 · RECOMMENDATION -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Recommendation</div>
+      <h2>Option C — Azure Databricks Lakehouse</h2>
+    </div>
+    <div class="reco">
+      <div class="check">✓</div>
+      <div>
+        <div class="mark">Recommended Solution</div>
+        <h3>One open, governed lakehouse for data engineering, BI, and AI</h3>
+        <p>Databricks is the only option that unifies clinical + claims at scale, treats AI/ML and agents as first-class workloads, and enforces PHI governance centrally — while leveraging our existing Azure and Power BI investment and avoiding warehouse lock-in. It directly enables every KPI we're solving for.</p>
+      </div>
+    </div>
+    <div class="grid g4" style="flex:1;margin-top:16px">
+      <div class="card"><h3 style="font-size:15px"><span class="dot" style="background:var(--cyan)"></span>Unifies both</h3><p>Delta Lake handles claims EDI batch and Epic clinical batch + streams in one model with a shared member spine.</p></div>
+      <div class="card"><h3 style="font-size:15px"><span class="dot" style="background:var(--violet)"></span>AI-native</h3><p>Mosaic AI, MLflow, feature store, and agents run on the same governed Gold tables that feed Power BI.</p></div>
+      <div class="card"><h3 style="font-size:15px"><span class="dot" style="background:var(--gold)"></span>Governed once</h3><p>Unity Catalog applies PHI masking, lineage, and least-privilege across every consumer — not per report.</p></div>
+      <div class="card"><h3 style="font-size:15px"><span class="dot" style="background:var(--teal)"></span>Azure-first</h3><p>First-party Azure service; Power BI, Purview, Entra ID, and ADLS plug in natively — no new estate.</p></div>
+    </div>
+  </section>
+
+  <!-- 7 · SOLUTION ARCHITECTURE -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Solution Architecture</div>
+      <h2>The chosen architecture, layer by layer</h2>
+    </div>
+    <div class="grid" style="grid-template-rows:auto 1fr auto auto;gap:12px">
+      <div class="card span2" style="grid-column:1/-1;padding:13px 18px">
+        <h3 style="margin:0;font-size:15px"><span class="dot" style="background:var(--cyan)"></span>Sources&nbsp; <span class="tag">ingest</span></h3>
+        <p style="margin-top:5px">Epic Clarity &amp; Caboodle (batch) · Epic FHIR / HL7 (stream) · Payer claims X12 837/835 &amp; eligibility (EDI batch) · pharmacy &amp; lab feeds · Workday operational reference</p>
+      </div>
+      <div class="grid g4" style="grid-column:1/-1;gap:12px;min-height:0">
+        <div class="card"><h3 style="font-size:15px"><span class="dot" style="background:var(--azure)"></span>Ingest</h3><p>ADF + Auto Loader land batch &amp; streaming sources into Bronze with schema enforcement.</p></div>
+        <div class="card"><h3 style="font-size:15px"><span class="dot" style="background:var(--teal)"></span>Identity</h3><p>Member/patient resolution builds the unified spine that joins clinical to claims.</p></div>
+        <div class="card"><h3 style="font-size:15px"><span class="dot" style="background:var(--violet)"></span>Lakehouse</h3><p>Delta medallion (Bronze→Silver→Gold) on ADLS, transformed by Delta Live Tables.</p></div>
+        <div class="card"><h3 style="font-size:15px"><span class="dot" style="background:var(--coral)"></span>Intelligence</h3><p>Mosaic AI, MLflow, feature store &amp; agents produce risk scores and gap lists.</p></div>
+      </div>
+      <div class="grid g2" style="grid-column:1/-1;gap:12px">
+        <div class="card" style="padding:14px 18px"><h3 style="margin:0;font-size:15px"><span class="dot" style="background:var(--gold)"></span>Govern &amp; orchestrate <span class="tag">cross-cutting</span></h3><p style="margin-top:5px">Unity Catalog (access, lineage, PHI) · Purview catalog · Databricks Workflows + DLT expectations · Entra ID, Key Vault, Private Link · CI/CD via Azure DevOps</p></div>
+        <div class="card" style="padding:14px 18px;background:linear-gradient(90deg,rgba(45,212,191,.06),rgba(255,94,71,.06))"><h3 style="margin:0;font-size:15px"><span class="dot" style="background:var(--teal)"></span>Serve &amp; act <span class="tag">deliver</span></h3><p style="margin-top:5px">Power BI on certified semantic models · Databricks SQL · model endpoints &amp; FHIR write-back into Epic clinician workflow</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · PATTERN DIAGRAM (native / non-native) -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Implementation Pattern</div>
+      <h2>Making it real — native &amp; non-native services</h2>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--azure)"></i>Azure-native (first-party)</span>
+      <span><i style="background:var(--violet)"></i>Databricks platform</span>
+      <span><i style="background:var(--coral)"></i>Non-native / external</span>
+      <span><i style="background:var(--teal)"></i>Identity &amp; serving</span>
+    </div>
+    <div class="diagram">
+      <svg viewBox="0 0 1200 460" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="pf" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#36D9F0"/><stop offset="1" stop-color="#9B7DFF"/></linearGradient>
+          <linearGradient id="pf2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9B7DFF"/><stop offset="1" stop-color="#FF5E47"/></linearGradient>
+        </defs>
+
+        <text x="30" y="28" class="lbl" font-size="12">SOURCES · NON-NATIVE</text>
+        <text x="330" y="28" class="lbl" font-size="12">INGEST · AZURE-NATIVE</text>
+        <text x="585" y="28" class="lbl" font-size="12">DATABRICKS LAKEHOUSE</text>
+        <text x="1000" y="28" class="lbl" font-size="12">CONSUME</text>
+
+        <!-- sources (coral) -->
+        <g>
+          <rect x="20" y="48" width="180" height="52" rx="10" fill="rgba(255,94,71,.10)" stroke="rgba(255,94,71,.45)"/><text x="36" y="72" class="ntext" font-size="13">Epic Clarity/Caboodle</text><text x="36" y="90" class="nsub" font-size="9.5">batch reporting DBs</text>
+          <rect x="20" y="112" width="180" height="52" rx="10" fill="rgba(255,94,71,.10)" stroke="rgba(255,94,71,.45)"/><text x="36" y="136" class="ntext" font-size="13">Epic FHIR / HL7</text><text x="36" y="154" class="nsub" font-size="9.5">clinical event streams</text>
+          <rect x="20" y="176" width="180" height="52" rx="10" fill="rgba(255,94,71,.10)" stroke="rgba(255,94,71,.45)"/><text x="36" y="200" class="ntext" font-size="13">Payer claims X12</text><text x="36" y="218" class="nsub" font-size="9.5">837 / 835 / eligibility</text>
+          <rect x="20" y="240" width="180" height="52" rx="10" fill="rgba(255,94,71,.10)" stroke="rgba(255,94,71,.45)"/><text x="36" y="264" class="ntext" font-size="13">Pharmacy / Lab</text><text x="36" y="282" class="nsub" font-size="9.5">ancillary feeds</text>
+        </g>
+
+        <!-- ingest (azure) -->
+        <rect x="300" y="100" width="170" height="60" rx="11" fill="rgba(61,139,255,.12)" stroke="rgba(61,139,255,.5)"/><text x="316" y="126" class="ntext" font-size="13">Azure Data Factory</text><text x="316" y="145" class="nsub" font-size="9.5">batch EDI + extracts</text>
+        <rect x="300" y="178" width="170" height="60" rx="11" fill="rgba(61,139,255,.12)" stroke="rgba(61,139,255,.5)"/><text x="316" y="204" class="ntext" font-size="13">Event ingest</text><text x="316" y="223" class="nsub" font-size="9.5">Event Hubs → Auto Loader</text>
+
+        <!-- lakehouse (violet) -->
+        <rect x="540" y="48" width="430" height="364" rx="16" fill="rgba(155,125,255,.06)" stroke="rgba(155,125,255,.4)"/>
+        <rect x="562" y="70" width="180" height="48" rx="9" fill="rgba(45,212,191,.12)" stroke="rgba(45,212,191,.5)"/><text x="578" y="92" class="ntext" font-size="12">Identity resolution</text><text x="578" y="108" class="nsub" font-size="9">unified member spine</text>
+
+        <rect x="562" y="132" width="386" height="52" rx="9" fill="rgba(207,138,78,.12)" stroke="rgba(207,138,78,.45)"/><text x="578" y="155" class="ntext" font-size="12">Bronze</text><text x="640" y="155" class="nsub" font-size="10">raw clinical + claims, immutable</text><text x="578" y="172" class="nsub" font-size="9">Delta Lake on ADLS Gen2</text>
+        <rect x="562" y="194" width="386" height="52" rx="9" fill="rgba(196,204,218,.12)" stroke="rgba(196,204,218,.45)"/><text x="578" y="217" class="ntext" font-size="12">Silver</text><text x="640" y="217" class="nsub" font-size="10">conformed via Delta Live Tables</text><text x="578" y="234" class="nsub" font-size="9">common member / encounter / cost model</text>
+        <rect x="562" y="256" width="386" height="52" rx="9" fill="rgba(243,197,82,.14)" stroke="rgba(243,197,82,.5)"/><text x="578" y="279" class="ntext" font-size="12">Gold</text><text x="640" y="279" class="nsub" font-size="10">certified marts · features · gap lists</text><text x="578" y="296" class="nsub" font-size="9">one definition per KPI</text>
+
+        <rect x="562" y="320" width="186" height="74" rx="9" fill="rgba(255,94,71,.10)" stroke="rgba(255,94,71,.4)"/><text x="578" y="345" class="ntext" font-size="12">Mosaic AI / MLflow</text><text x="578" y="363" class="nsub" font-size="9">risk scores · agents</text><text x="578" y="380" class="nsub" font-size="9">readmit · HCC · leakage</text>
+        <rect x="762" y="320" width="186" height="74" rx="9" fill="rgba(243,197,82,.10)" stroke="rgba(243,197,82,.45)"/><text x="778" y="345" class="ntext" font-size="12">Unity Catalog</text><text x="778" y="363" class="nsub" font-size="9">PHI · lineage · access</text><text x="778" y="380" class="nsub" font-size="9">+ Purview catalog</text>
+
+        <!-- consume (teal/azure) -->
+        <rect x="1000" y="80" width="180" height="58" rx="11" fill="rgba(61,139,255,.12)" stroke="rgba(61,139,255,.5)"/><text x="1016" y="105" class="ntext" font-size="13">Power BI</text><text x="1016" y="123" class="nsub" font-size="9.5">certified semantic layer</text>
+        <rect x="1000" y="152" width="180" height="58" rx="11" fill="rgba(45,212,191,.12)" stroke="rgba(45,212,191,.5)"/><text x="1016" y="177" class="ntext" font-size="13">Epic write-back</text><text x="1016" y="195" class="nsub" font-size="9.5">FHIR · in-workflow alerts</text>
+        <rect x="1000" y="224" width="180" height="58" rx="11" fill="rgba(45,212,191,.12)" stroke="rgba(45,212,191,.5)"/><text x="1016" y="249" class="ntext" font-size="13">Care &amp; ops teams</text><text x="1016" y="267" class="nsub" font-size="9.5">gap lists · copilots</text>
+
+        <!-- flows -->
+        <g stroke="url(#pf)" stroke-width="2.4" fill="none">
+          <path class="flow" d="M200 74 Q260 74 300 120 H300"/>
+          <path class="flow" d="M200 138 H260 Q300 138 300 178 V178"/>
+          <path class="flow" d="M200 202 H300"/>
+          <path class="flow" d="M200 266 Q260 266 300 215 V215"/>
+          <path class="flow" d="M470 130 H520 Q540 130 540 150 V150"/>
+          <path class="flow" d="M470 208 H520 Q540 208 540 188 V188"/>
+        </g>
+        <g stroke="url(#pf2)" stroke-width="2.4" fill="none">
+          <path class="flow" d="M948 158 H980 Q1000 158 1000 120 V120"/>
+          <path class="flow" d="M948 282 H975 Q1000 282 1000 200 V200"/>
+          <path class="flow" d="M948 356 Q975 356 1000 270 V270"/>
+        </g>
+      </svg>
+    </div>
+    <div class="footnote">Pattern: external sources land via Azure-native ingest → resolved to a member spine → governed Delta medallion → served to Power BI &amp; back into Epic. Each block is a buildable, swappable unit.</div>
+  </section>
+
+  <!-- 9 · DATA FOUNDATION -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">The Data Foundation</div>
+      <h2>How clinical + claims actually become one</h2>
+      <p class="sub">Unification isn't a join — it's an engineered spine. The foundation resolves identity, conforms two very different data shapes, and certifies the result so every use case starts from the same truth.</p>
+    </div>
+    <div class="grid g4">
+      <div class="card"><span class="tag">Step 01</span><h3 style="margin-top:11px"><span class="dot" style="background:var(--teal)"></span>Member identity</h3><p>Probabilistic + deterministic matching builds a master member/patient ID linking Epic records to claims members across payers.</p></div>
+      <div class="card"><span class="tag">Step 02</span><h3 style="margin-top:11px"><span class="dot" style="background:var(--azure)"></span>Conform shapes</h3><p>Map Epic encounters and claims lines to a common model — member, encounter, diagnosis, procedure, cost — in Silver.</p></div>
+      <div class="card"><span class="tag">Step 03</span><h3 style="margin-top:11px"><span class="dot" style="background:var(--gold)"></span>Enforce quality</h3><p>DLT expectations validate completeness and reconcile overlaps (e.g., a visit present in both clinical and claims).</p></div>
+      <div class="card"><span class="tag">Step 04</span><h3 style="margin-top:11px"><span class="dot" style="background:var(--violet)"></span>Certify Gold</h3><p>Publish curated marts, features, and certified KPI definitions consumed by BI, ML, and agents alike.</p></div>
+      <div class="card span2"><h3><span class="dot" style="background:var(--cyan)"></span>Why this order matters</h3><p>Identity first means every downstream metric — leakage, total cost of care, gap closure — is computed on a complete member journey, not a fragment. Get the spine right once and every use case inherits it.</p></div>
+      <div class="card span2"><h3><span class="dot" style="background:var(--coral)"></span>Governed throughout</h3><p>PHI controls, masking, and lineage are applied at the foundation in Unity Catalog, so use cases built on top are compliant by inheritance — not by re-implementing security per project.</p></div>
+    </div>
+  </section>
+
+  <!-- 10 · CLINICAL USE CASES -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Use Cases on the Foundation</div>
+      <h2>From foundation to clinical quality &amp; performance</h2>
+      <p class="sub">Once the spine exists, each use case is a thin build — not a new platform. These map directly to the KPIs we're solving for.</p>
+    </div>
+    <div class="grid g3 rows-2">
+      <div class="card"><h3><span class="dot" style="background:var(--teal)"></span>Readmission reduction</h3><p>Risk model on unified history flags high-risk discharges; care teams intervene and the score writes back to Epic. <b>→ readmissions ↓</b></p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--azure)"></span>Care-gap closure</h3><p>Claims + clinical evidence identify open HEDIS gaps the EHR alone would miss, routed to outreach. <b>→ gap closure ↑</b></p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--gold)"></span>Risk recapture</h3><p>Reconcile coded conditions across claims and clinical notes to recapture HCCs accurately and compliantly. <b>→ recapture ↑</b></p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--violet)"></span>Leakage management</h3><p>Claims reveal out-of-network care; dashboards target referral patterns to keep care in-network. <b>→ leakage ↓</b></p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--coral)"></span>Total cost of care</h3><p>Member-level cost across all settings exposes high-cost cohorts and savings opportunities. <b>→ PMPM ↓</b></p></div>
+      <div class="card"><h3><span class="dot" style="background:var(--cyan)"></span>VBC performance</h3><p>One certified view of quality + cost proves performance to payers and runs the value-based care program. <b>→ all KPIs</b></p></div>
+    </div>
+  </section>
+
+  <!-- 11 · ROADMAP 3/6/9/12 -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Roadmap · 3 / 6 / 9 / 12 Months</div>
+      <h2>Each quarter ships a capability and a KPI</h2>
+    </div>
+    <div class="road">
+      <div class="phase"><span class="node"></span><div class="pn">MONTH 0–3</div><div class="pt">Foundation</div><div class="pw">Prove the slice</div>
+        <ul class="lean"><li>Azure landing zone + Databricks + Unity Catalog</li><li>Ingest Epic + first claims (837) to Bronze</li><li>Member identity spine v1</li><li>First operational dashboard in Power BI</li></ul>
+        <div class="kpitag">KPI: claims-to-insight latency baseline → trending ↓</div>
+      </div>
+      <div class="phase"><span class="node"></span><div class="pn">MONTH 3–6</div><div class="pt">First win</div><div class="pw">One use case, end to end</div>
+        <ul class="lean"><li>Silver conformed clinical+claims model</li><li>Readmission risk model → Epic write-back</li><li>Care-gap closure for priority measures</li><li>Certified Gold KPIs live</li></ul>
+        <div class="kpitag">KPI: readmissions ↓ · gap closure ↑ (first cohorts)</div>
+      </div>
+      <div class="phase"><span class="node"></span><div class="pn">MONTH 6–9</div><div class="pt">Scale</div><div class="pw">More data, more measures</div>
+        <ul class="lean"><li>Add 835 remits, pharmacy, eligibility</li><li>HCC recapture + leakage analytics</li><li>Expand cohorts &amp; measures</li><li>Governed self-service semantic layer</li></ul>
+        <div class="kpitag">KPI: recapture ↑ · leakage ↓ · TCoC visibility</div>
+      </div>
+      <div class="phase"><span class="node"></span><div class="pn">MONTH 9–12</div><div class="pt">Optimize</div><div class="pw">Agentic &amp; embed</div>
+        <ul class="lean"><li>Agents &amp; GenAI copilots for ops</li><li>VBC performance dashboard for payers</li><li>Retire first legacy extracts (FinOps)</li><li>Hit 12-month KPI exit targets</li></ul>
+        <div class="kpitag">KPI: all six at target · TCoC −6%</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 · KPI TRAJECTORY -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Value Realization</div>
+      <h2>How the KPIs move across 12 months <span class="assume">Illustrative</span></h2>
+    </div>
+    <div class="traj">
+      <div class="diagram">
+        <svg viewBox="0 0 1180 420" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="tg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#36D9F0"/><stop offset="1" stop-color="#2DD4BF"/></linearGradient>
+            <linearGradient id="tg2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9B7DFF"/><stop offset="1" stop-color="#FF5E47"/></linearGradient>
+          </defs>
+          <!-- axes -->
+          <line x1="80" y1="40" x2="80" y2="350" stroke="rgba(255,255,255,.15)"/>
+          <line x1="80" y1="350" x2="1130" y2="350" stroke="rgba(255,255,255,.15)"/>
+          <text x="40" y="50" class="lbl" font-size="11">improve</text>
+          <text x="40" y="345" class="lbl" font-size="11">today</text>
+          <!-- quarter gridlines -->
+          <g stroke="rgba(255,255,255,.06)">
+            <line x1="342" y1="40" x2="342" y2="350"/><line x1="605" y1="40" x2="605" y2="350"/><line x1="868" y1="40" x2="868" y2="350"/>
+          </g>
+          <g class="lbl" font-size="11" fill="#5C6987">
+            <text x="70" y="372">M0</text><text x="320" y="372">M3</text><text x="585" y="372">M6</text><text x="848" y="372">M9</text><text x="1095" y="372">M12</text>
+          </g>
+          <!-- clinical curve -->
+          <path d="M80 330 C 300 322 360 280 605 230 S 900 150 1130 95" fill="none" stroke="url(#tg)" stroke-width="3.5"/>
+          <!-- operational curve -->
+          <path d="M80 338 C 320 334 380 300 605 255 S 920 180 1130 130" fill="none" stroke="url(#tg2)" stroke-width="3.5" stroke-dasharray="2 0"/>
+          <!-- nodes -->
+          <g>
+            <circle cx="342" cy="290" r="6" fill="#36D9F0"/><circle cx="605" cy="230" r="6" fill="#36D9F0"/><circle cx="868" cy="160" r="6" fill="#36D9F0"/><circle cx="1130" cy="95" r="7" fill="#2DD4BF"/>
+            <circle cx="342" cy="312" r="6" fill="#9B7DFF"/><circle cx="605" cy="255" r="6" fill="#9B7DFF"/><circle cx="868" cy="200" r="6" fill="#FF5E47"/><circle cx="1130" cy="130" r="7" fill="#FF5E47"/>
+          </g>
+          <!-- annotations -->
+          <text x="350" y="278" class="nsub" font-size="11" fill="#94A1BC">first cohorts</text>
+          <text x="613" y="218" class="nsub" font-size="11" fill="#94A1BC">model live</text>
+          <text x="820" y="128" class="nsub" font-size="11" fill="#94A1BC">scaled programs</text>
+          <text x="990" y="84" class="ntext" font-size="12" fill="#2DD4BF">clinical targets</text>
+          <text x="1018" y="158" class="ntext" font-size="12" fill="#FF5E47">ops targets</text>
+        </svg>
+      </div>
+    </div>
+    <div class="legend" style="margin-top:0">
+      <span><i style="background:linear-gradient(90deg,#36D9F0,#2DD4BF)"></i>Clinical KPIs (readmissions, gaps, recapture)</span>
+      <span><i style="background:linear-gradient(90deg,#9B7DFF,#FF5E47)"></i>Operational KPIs (leakage, TCoC, latency)</span>
+    </div>
+    <div class="footnote">Value lags the foundation by one increment, then compounds — the curve steepens as use cases reuse the same spine.</div>
+  </section>
+
+  <!-- 13 · OPERATING MODEL -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">How We Deliver</div>
+      <h2>Operating model &amp; ways of working</h2>
+      <p class="sub">Incremental delivery needs an operating model to match: small cross-functional pods, product ownership of data, and engineering discipline so quality scales with scope.</p>
+    </div>
+    <div class="grid g4">
+      <div class="card"><h3 style="font-size:15px"><span class="dot" style="background:var(--cyan)"></span>Delivery pods</h3><p>Each pod pairs data engineering, clinical informatics, and analytics around one use case — owning it end to end.</p></div>
+      <div class="card"><h3 style="font-size:15px"><span class="dot" style="background:var(--azure)"></span>Data products</h3><p>The foundation and certified marts are managed as products with owners, SLAs, and roadmaps — not one-off projects.</p></div>
+      <div class="card"><h3 style="font-size:15px"><span class="dot" style="background:var(--violet)"></span>DataOps / MLOps</h3><p>Git-based CI/CD, automated testing, and DLT quality gates make every pipeline and model promotable and observable.</p></div>
+      <div class="card"><h3 style="font-size:15px"><span class="dot" style="background:var(--gold)"></span>Governance council</h3><p>A cross-functional council owns PHI policy, metric definitions, and access — keeping "one source of truth" true.</p></div>
+      <div class="card span2"><h3><span class="dot" style="background:var(--teal)"></span>Clinical partnership</h3><p>Clinicians co-design every use case and validate model outputs before write-back. Adoption is engineered in from day one — insight that doesn't reach the workflow doesn't move a KPI.</p></div>
+      <div class="card span2"><h3><span class="dot" style="background:var(--coral)"></span>Enablement &amp; FinOps</h3><p>Analyst enablement on the semantic layer drives self-service; cost monitoring and right-sizing keep elastic compute economical as workloads grow.</p></div>
+    </div>
+  </section>
+
+  <!-- 14 · RISKS & GUARDRAILS -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Risks &amp; Guardrails</div>
+      <h2>What could derail this — and how we hold the line</h2>
+    </div>
+    <div class="grid g2 rows-2">
+      <div class="card"><h3 style="font-size:16px"><span class="dot" style="background:var(--coral)"></span>Identity match quality</h3><p>Weak member matching corrupts every downstream metric. <b style="color:var(--ink)">Guardrail:</b> measured match rates, stewardship workflow, and human review thresholds before Gold publishes.</p></div>
+      <div class="card"><h3 style="font-size:16px"><span class="dot" style="background:var(--gold)"></span>PHI &amp; compliance</h3><p>Claims + clinical together raise sensitivity. <b style="color:var(--ink)">Guardrail:</b> Unity Catalog masking, minimum-necessary access, BAA-backed services, and full audit from day one.</p></div>
+      <div class="card"><h3 style="font-size:16px"><span class="dot" style="background:var(--azure)"></span>Claims data lag</h3><p>Claims arrive 30–90 days late, limiting real-time use. <b style="color:var(--ink)">Guardrail:</b> design use cases for the data's cadence; pair lagging claims with real-time clinical signals.</p></div>
+      <div class="card"><h3 style="font-size:16px"><span class="dot" style="background:var(--violet)"></span>Adoption &amp; trust</h3><p>Unused insight moves nothing. <b style="color:var(--ink)">Guardrail:</b> clinician co-design, write-back into existing workflow, and certified single-definition metrics to retire "two numbers."</p></div>
+    </div>
+  </section>
+
+  <!-- 15 · SUMMARY / THE ASK -->
+  <section class="slide">
+    <div class="slide-head">
+      <div class="eyebrow">Summary · The Ask</div>
+      <h2>One foundation, four increments, six KPIs</h2>
+    </div>
+    <div class="grid g3" style="flex:none">
+      <div class="card"><h3 style="font-size:15px"><span class="dot" style="background:var(--cyan)"></span>The strategy</h3><p>Unify Epic clinical + payer claims on an Azure Databricks lakehouse, then solve prioritized clinical quality and operational performance use cases on that foundation.</p></div>
+      <div class="card"><h3 style="font-size:15px"><span class="dot" style="background:var(--violet)"></span>The approach</h3><p>Four 90-day increments, each shipping a working capability and moving a KPI — foundation first, but never foundation-only.</p></div>
+      <div class="card"><h3 style="font-size:15px"><span class="dot" style="background:var(--teal)"></span>The decision</h3><p>Option C — Databricks Lakehouse — chosen over extending legacy or a native-only warehouse, on unification, AI, governance, and TCO.</p></div>
+    </div>
+    <div class="reco" style="margin-top:16px">
+      <div class="check">→</div>
+      <div>
+        <div class="mark">The ask</div>
+        <h3 style="font-size:23px">Fund increment one (0–3 months) to prove the slice</h3>
+        <p>Stand up the foundation, ingest Epic + the first claims feed, build the member spine, and ship the first operational dashboard. Decision gate at month 3 on measured results before scaling.</p>
+      </div>
+    </div>
+    <div class="footnote">Azure Databricks · Power BI · Unity Catalog · Epic + Claims · clinical &amp; operational KPIs · 3/6/9/12-month roadmap — End of strategy.</div>
+  </section>
+
+</div>
+
+<div class="counter"><b id="cur">01</b> / <span id="tot">15</span></div>
+<div class="dots" id="dots"></div>
+<div class="nav">
+  <button id="prev" aria-label="Previous slide">‹</button>
+  <button id="next" aria-label="Next slide">›</button>
+</div>
+
+<script>
+  // expand rating dots
+  document.querySelectorAll('.rate').forEach(el=>{
+    const s=+el.dataset.s||0;
+    for(let k=0;k<5;k++){const i=document.createElement('i');if(k<s)i.className='f';el.appendChild(i);}
+  });
+
+  const slides=[...document.querySelectorAll('.slide')];
+  const total=slides.length;let i=0;
+  const bar=document.getElementById('bar');
+  const cur=document.getElementById('cur');
+  const dotsWrap=document.getElementById('dots');
+  document.getElementById('tot').textContent=String(total).padStart(2,'0');
+  slides.forEach((_,n)=>{const d=document.createElement('i');d.addEventListener('click',()=>go(n));dotsWrap.appendChild(d);});
+  const dots=[...dotsWrap.children];
+  function go(n){
+    i=Math.max(0,Math.min(total-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    dots.forEach((d,k)=>d.classList.toggle('on',k===i));
+    bar.style.width=((i+1)/total*100)+'%';
+    cur.textContent=String(i+1).padStart(2,'0');
+  }
+  const next=()=>go(i+1),prev=()=>go(i-1);
+  document.getElementById('next').addEventListener('click',next);
+  document.getElementById('prev').addEventListener('click',prev);
+  window.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();next();}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev();}
+    else if(e.key==='Home')go(0);else if(e.key==='End')go(total-1);
+    else if(e.key.toLowerCase()==='f'){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}
+  });
+  let x0=null;
+  window.addEventListener('touchstart',e=>x0=e.touches[0].clientX,{passive:true});
+  window.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0;if(Math.abs(dx)>50)dx<0?next():prev();x0=null;},{passive:true});
+  go(0);
+</script>
+</body>
+</html>

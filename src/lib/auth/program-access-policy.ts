@@ -1,5 +1,6 @@
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import "server-only";
+import { AGENT_CLIENT_LOGINS } from "@/lib/auth/agent-client-logins";
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
@@ -75,11 +76,25 @@ function isCanonicalClientAdminEmail(
   );
 }
 
+function agentLoginClientKeyForEmail(
+  email: string | null | undefined,
+): string | null {
+  const normalized = email?.trim().toLowerCase() ?? "";
+  if (!normalized) return null;
+  return (
+    AGENT_CLIENT_LOGINS.find(
+      (login) => login.email.toLowerCase() === normalized,
+    )?.clientKey ?? null
+  );
+}
+
 function inferCanonicalClientKeyFromEmail(
   email: string | null | undefined,
 ): string | null {
   const normalized = email?.trim().toLowerCase() ?? "";
   if (!normalized) return null;
+  const agentClientKey = agentLoginClientKeyForEmail(normalized);
+  if (agentClientKey) return agentClientKey;
   if (
     normalized.endsWith("@skyharbor-air.example.com") ||
     normalized.includes("+skyharbor@abarva.com")
@@ -284,6 +299,29 @@ export async function loadUserProgramAccessPolicy(
   ctx: TenancyCtx,
   opts: { programId?: string | null } = {},
 ): Promise<UserProgramAccessPolicy> {
+  const agentClientKey = agentLoginClientKeyForEmail(ctx.email);
+  if (
+    !isUuidLike(ctx.userId) &&
+    agentClientKey &&
+    ctx.clientKey === agentClientKey
+  ) {
+    // Dedicated automation users are provisioned per tenant for signed-in
+    // post-deploy proof. They must act as client-pinned Moves admins for their
+    // own tenant only, while still denying restricted financial output.
+    return buildPolicy({
+      ctx,
+      accessLevel: "client_admin",
+      programIdsAllowed: null,
+      canViewFinancialData: false,
+      canAdminUsers: true,
+      canCreatePrograms: true,
+      canApproveGates: true,
+      canUploadArtifacts: true,
+      canGenerateDeliverables: true,
+      canPublishDeliverables: true,
+    });
+  }
+
   if (!isUuidLike(ctx.userId) && isCanonicalClientAdminEmail(ctx.email)) {
     // Mirror Source's client-admin fallback for demo/test Clerk accounts that
     // are pinned by canonical email but do not yet carry a persons UUID in
