@@ -300,11 +300,7 @@ export async function loadUserProgramAccessPolicy(
   opts: { programId?: string | null } = {},
 ): Promise<UserProgramAccessPolicy> {
   const agentClientKey = agentLoginClientKeyForEmail(ctx.email);
-  if (
-    !isUuidLike(ctx.userId) &&
-    agentClientKey &&
-    ctx.clientKey === agentClientKey
-  ) {
+  if (agentClientKey && ctx.clientKey === agentClientKey) {
     // Dedicated automation users are provisioned per tenant for signed-in
     // post-deploy proof. They must act as client-pinned Moves admins for their
     // own tenant only, while still denying restricted financial output.
