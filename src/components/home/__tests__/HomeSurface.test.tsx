@@ -1,10 +1,9 @@
 /**
  * @jest-environment jsdom
  *
- * Home is a real React Context Explorer: the canonical AvaAsk (shared engine +
- * AgentAnswerRenderer) plus a per-tenant explorer rendered from the binding —
- * loaded dimensions (rail), signals, corpus. No static iframe, no fake
- * `answerForAsk`, no single-tenant demo blob.
+ * Home is a real React Context Explorer: HomeKnowAsk posts to the Home KNOW
+ * endpoint and renders HomeKnowResponse only. No Intelligence ask path, no
+ * experts, no static iframe, no fake `answerForAsk`, no single-tenant demo blob.
  */
 
 import React from "react";
@@ -12,10 +11,6 @@ import "@testing-library/jest-dom";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { HomeSurface } from "@/components/home/HomeSurface";
 import type { IntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
-
-jest.mock("@/lib/agent/markdownRenderer", () => ({
-  AgentMarkdown: ({ text }: { text: string }) => <div>{text}</div>,
-}));
 
 const payload = {
   tenant: { key: "apex-retail", displayName: "Apex Retail Group", industry: "retail" },
@@ -57,16 +52,19 @@ const payload = {
 } as unknown as IntelligenceBindingPayload;
 
 describe("HomeSurface — real React Context Explorer", () => {
-  it("renders the overview: canonical ask + real signals + the loaded-dimension rail", () => {
-    render(<HomeSurface payload={payload} surfaceContext={{ activeTab: "home" }} />);
-    expect(screen.getByText("Ask anything about your enterprise.")).toBeInTheDocument();
-    expect(screen.getByLabelText("Ask Ava")).toBeInTheDocument();
+  it("renders the overview: Home KNOW ask + real signals + the loaded-dimension rail", () => {
+    render(<HomeSurface clientKey="apexretail" payload={payload} />);
+    expect(screen.getByText("Ask what is loaded in your enterprise context.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Ask Home KNOW")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Ask Ava")).not.toBeInTheDocument();
     // real per-tenant signal (not a fake row-dump)
     expect(
       screen.getByText("Inventory truth is the gate before omnichannel AI scale."),
     ).toBeInTheDocument();
     expect(screen.getByText(/33 evidence points · 2 sources/)).toBeInTheDocument();
     // rail lists the loaded context dimension; detail not shown yet
+    expect(screen.getByText("Loaded context · 1")).toBeInTheDocument();
+    expect(screen.queryByText("Loaded context · 8")).not.toBeInTheDocument();
     expect(screen.getByText("IT systems landscape")).toBeInTheDocument();
     expect(
       screen.queryByText("Applications, integrations, systems of record"),
@@ -74,7 +72,7 @@ describe("HomeSurface — real React Context Explorer", () => {
   });
 
   it("opens a loaded dimension's detail from the rail", () => {
-    render(<HomeSurface payload={payload} surfaceContext={{ activeTab: "home" }} />);
+    render(<HomeSurface clientKey="apexretail" payload={payload} />);
     fireEvent.click(screen.getByText("IT systems landscape"));
     expect(
       screen.getByText("Applications, integrations, systems of record"),

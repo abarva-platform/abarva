@@ -1,26 +1,16 @@
 "use client";
 
-// Home — real React Context Explorer (replaces the static /home-v2 iframe + its
-// fake `answerForAsk`). Two things, both canonical:
-//
-//  1. The ask is AvaAsk: shared /api/intelligence/ask + the ONE AgentAnswerRenderer.
-//  2. The explorer renders REAL per-tenant context from the binding payload
-//     (the loaded dimensions, signals, and corpus) — NOT the single-tenant demo
-//     blob the static page baked in. Same source of truth as Intelligence.
-//
-// Left rail = the tenant's loaded context dimensions. Canvas = the ask (always)
-// plus either an overview (trust posture + signals + corpus) or one dimension's
-// detail. When the engine's exhibit quality is fixed, the ask inherits it for
-// free — Home has no renderer of its own.
+// Home — real React Context Explorer. Home is a KNOW-mode surface: it asks the
+// Home KNOW endpoint and renders the shared HomeKnowResponse contract. It does
+// not classify intent, retrieve data, or render Intelligence experts locally.
 
 import { useState } from "react";
-import { AvaAsk } from "@/components/agent-answer/AvaAsk";
+import { HomeKnowAsk } from "@/components/home/know/HomeKnowAsk";
 import type {
   IntelligenceBindingPayload,
   BindingDimension,
   BindingSignal,
 } from "@/lib/intelligence/binding/binding-payload";
-import type { AskSurfaceContext } from "@/lib/intelligence/ask/types";
 
 const CSS = `
 .homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);min-height:100%;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
@@ -155,6 +145,7 @@ function Overview({ payload }: { payload: IntelligenceBindingPayload | null }) {
   const tl = payload?.trustLine;
   const signals = (payload?.signals ?? []).slice(0, 4);
   const corpus = (payload?.corpus ?? []).slice(0, 3);
+  const dimensionCount = payload?.context.length ?? tl?.dimensionsLoaded ?? 0;
   return (
     <div className="hx-body">
       <div className="hx-ey">Current-state read</div>
@@ -163,7 +154,7 @@ function Overview({ payload }: { payload: IntelligenceBindingPayload | null }) {
         <div className="hx-stats">
           <div className="hx-stat">
             <div className="k">Dimensions</div>
-            <div className="v">{tl.dimensionsLoaded}</div>
+            <div className="v">{dimensionCount}</div>
           </div>
           <div className="hx-stat">
             <div className="k">Evidence points</div>
@@ -221,10 +212,10 @@ function Overview({ payload }: { payload: IntelligenceBindingPayload | null }) {
 
 export function HomeSurface({
   payload,
-  surfaceContext,
+  clientKey,
 }: {
   payload: IntelligenceBindingPayload | null;
-  surfaceContext?: AskSurfaceContext;
+  clientKey?: string | null;
 }) {
   const dims = payload?.context ?? [];
   const signals = payload?.signals ?? [];
@@ -263,12 +254,17 @@ export function HomeSurface({
 
         <main className="hx-canvas">
           <div className="hx-ask">
-            <h1>Ask anything about your enterprise.</h1>
+            <h1>Ask what is loaded in your enterprise context.</h1>
             <p className="hx-sub">
               Every answer is read from your loaded context and cited to its source — and
               says so honestly when the evidence isn&rsquo;t there.
             </p>
-            <AvaAsk client={payload?.tenant.key} surfaceContext={surfaceContext} />
+            <HomeKnowAsk
+              client={clientKey}
+              placeholder="Ask what is loaded in your enterprise context…"
+              suggestedQuestions={payload?.suggestedQuestions ?? []}
+              tenantKey={payload?.tenant.key ?? clientKey}
+            />
           </div>
           {selected ? (
             <DimensionView dim={selected} signals={signals} />

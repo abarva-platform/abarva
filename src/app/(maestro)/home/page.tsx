@@ -36,9 +36,9 @@ export default async function HomePage() {
     ? getClientOption(activeClient.key)
     : null;
 
-  // Real React Home (canonical AvaAsk → shared engine + AgentAnswerRenderer)
-  // behind a tenant flag. The static iframe remains the default until the React
-  // surface is proven live, then we flip the flag and retire public/home-v2.
+  // Real React Home (Home KNOW endpoint + HomeKnowResponse renderer) behind a
+  // tenant flag. The static iframe remains the default until the React surface is
+  // proven live, then we flip the flag and retire public/home-v2.
   const reactHome = isFeatureEnabled(
     { clientKey: activeClient?.key, clientId: activeClient?.id },
     'home_react_surface',
@@ -60,12 +60,8 @@ export default async function HomePage() {
       {reactHome ? (
         <main style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: '#FBFAF7' }}>
           <HomeSurface
+            clientKey={activeClient?.key ?? null}
             payload={binding}
-            surfaceContext={{
-              activeTab: 'home',
-              activeClient: activeTenantName,
-              clientKey: binding?.tenant.key ?? activeClient?.key ?? null,
-            }}
           />
         </main>
       ) : (
