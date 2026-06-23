@@ -56,7 +56,7 @@ Rollback the ACA web app to the prior approved revision/image digest. No databas
 
 ## Audit Evidence
 
-- PR URL: to be added after PR creation.
+- PR URL: https://github.com/abarva-platform/abarva/pull/3895
 - CI: focused Jest, eslint, and `npm run release:check`.
 - Live proof after deploy: tenant matrix, reality crawl, and generated HTML report.
 
