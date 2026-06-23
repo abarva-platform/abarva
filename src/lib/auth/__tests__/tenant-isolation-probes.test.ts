@@ -14,6 +14,7 @@ import {
   canAccessTenantClient,
   tenantKeyForProgramCode,
 } from "../tenant-access";
+import { AGENT_CLIENT_LOGINS } from "../agent-client-logins";
 import {
   inferSessionRoleFromEmail,
   isLockedTenantRole,
@@ -366,9 +367,9 @@ describe("Probe 5 · inferClientKeyFromEmail", () => {
     expect(inferClientKeyFromEmail("cfo@lakeshore-holdings.example.com")).toBe(
       "lakeshore",
     );
-    expect(inferClientKeyFromEmail("admin@lakeshore-holdings.example.com")).toBe(
-      "lakeshore",
-    );
+    expect(
+      inferClientKeyFromEmail("admin@lakeshore-holdings.example.com"),
+    ).toBe("lakeshore");
     expect(inferClientKeyFromEmail("anand+lakeshore@abarva.com")).toBe(
       "lakeshore",
     );
@@ -394,6 +395,26 @@ describe("Probe 5 · inferClientKeyFromEmail", () => {
     expect(
       inferClientKeyFromEmail("elena.rivera@meridian-health.example.com"),
     ).not.toBe("apexretail");
+  });
+
+  it("pins every automation agent roster email to its client key", () => {
+    for (const agent of AGENT_CLIENT_LOGINS) {
+      expect(inferClientKeyFromEmail(agent.email)).toBe(agent.clientKey);
+      expect(inferClientKeyFromEmail(agent.email.toUpperCase())).toBe(
+        agent.clientKey,
+      );
+    }
+  });
+
+  it("does not infer non-roster automation-domain emails", () => {
+    expect(
+      inferClientKeyFromEmail("unknown-agent@abarva.example.com"),
+    ).toBeNull();
+    expect(
+      resolveSessionClientKey({
+        email: "unknown-agent@abarva.example.com",
+      }),
+    ).toBe(DEFAULT_CLIENT_KEY);
   });
 });
 
@@ -483,9 +504,7 @@ describe("Probe 6 · session role inference", () => {
     expect(
       inferSessionRoleFromEmail("anand.sundaram+apex@thesundaram.com"),
     ).toBe("client");
-    expect(
-      inferSessionRoleFromEmail("other+apex@thesundaram.com"),
-    ).toBeNull();
+    expect(inferSessionRoleFromEmail("other+apex@thesundaram.com")).toBeNull();
   });
 
   it("does not infer investor from retired investor emails", () => {
@@ -596,6 +615,19 @@ describe("Probe 7 · resolvePinnedSessionClientKey", () => {
         email: "cfo@lakeshore-holdings.example.com",
       }),
     ).toBe("lakeshore");
+  });
+
+  it("agent roster emails override stale conflicting metadata", () => {
+    for (const agent of AGENT_CLIENT_LOGINS) {
+      expect(
+        resolvePinnedSessionClientKey({
+          clientId:
+            agent.clientKey === "apexretail" ? "meridian" : "apexretail",
+          defaultClientId: DEFAULT_CLIENT_KEY,
+          email: agent.email,
+        }),
+      ).toBe(agent.clientKey);
+    }
   });
 
   it("returns null when no signal resolves to a ClientKey", () => {
