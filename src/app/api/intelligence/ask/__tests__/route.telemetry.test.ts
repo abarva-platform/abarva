@@ -223,8 +223,8 @@ describe('POST /api/intelligence/ask telemetry', () => {
     expect(agentAnswer).toBeTruthy();
     expect(agentAnswer.tables).toEqual([
       expect.objectContaining({
-        id: 'answer-source-register',
-        title: 'Evidence Used',
+        id: 'answer-decision-evidence',
+        title: 'Decision Evidence',
       }),
     ]);
     expect(agentAnswer.tables[0].rows).not.toEqual(
