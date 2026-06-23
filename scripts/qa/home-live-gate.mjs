@@ -8,7 +8,9 @@
  *   2. The Home ask is the real shared engine — a synthesized answer, NOT the old
  *      fake `answerForAsk` row-dump ("field: value · Also: …") — with no raw
  *      internal IDs, named experts, and the cross-tenant fence holding.
- *   3. A prompt that explicitly asks for a table/chart emits a typed exhibit for
+ *   3. The canonical 19-dimension context roster is exposed, not the old 8
+ *      roll-up buckets.
+ *   4. A prompt that explicitly asks for a table/chart emits a typed exhibit for
  *      the canonical renderer, and the prose is readable consultant-shaped text.
  *
  * One command, signed in as the pilot tenant (Apex by default):
@@ -127,6 +129,13 @@ async function run() {
         : /v2-frame/.test(html)
           ? "still the static iframe — flag not on for this tenant"
           : "unexpected /home markup",
+    );
+    rec(
+      "canonical 19-dimension roster visible",
+      /\b19\s+(?:context\s+)?dimensions?\b|Loaded context\s*·\s*19/i.test(html),
+      /\b8\s+(?:context\s+)?dimensions?\b|Loaded context\s*·\s*8/i.test(html)
+        ? "still showing 8 roll-up dimensions"
+        : "expects 19 dimensions",
     );
   } catch (e) {
     rec("/home reachable", false, String(e.message || e));

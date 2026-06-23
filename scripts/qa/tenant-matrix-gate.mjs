@@ -11,6 +11,7 @@
  *
  *   render     — /home serves the React Context Explorer (flag flipped)
  *   intel      — /intelligence serves the canonical v2 Lens (not a fallback/error)
+ *   dims19     — Home/Intelligence expose the canonical 19-dimension context
  *   synthesis  — a real answer, not the fake `Also:` row-dump
  *   readable   — answer is shaped like a consultant read, not one dense paragraph
  *   visual     — a visual/table prompt emits a typed table or chart for the renderer
@@ -128,6 +129,15 @@ async function intelIsV2(auth) {
   }
 }
 
+async function hasCanonicalDimensionCount(path, auth) {
+  try {
+    const html = await pageHtml(path, auth);
+    return /\b19\s+(?:context\s+)?dimensions?\b|Loaded context\s*·\s*19/i.test(html);
+  } catch {
+    return false;
+  }
+}
+
 async function fetchAskText(auth, query, client) {
   const body = {
     q: query,
@@ -231,6 +241,9 @@ async function runTenant(t, browser) {
   try {
     checks.render = await homeIsReact(auth);
     checks.intel = await intelIsV2(auth);
+    checks.dims19 =
+      (await hasCanonicalDimensionCount("/home", auth)) &&
+      (await hasCanonicalDimensionCount("/intelligence", auth));
     const r = await ask(auth, Q, t.binding);
     checks.synthesis = r.prose.length > 120 && !FAKE_GLOB.test(r.prose);
     checks.readable = isReadableConsultantAnswer(r.prose);
@@ -260,7 +273,7 @@ async function runTenant(t, browser) {
   return { tenant: t, checks, note };
 }
 
-const COLS = ["render", "intel", "synthesis", "readable", "visual", "grounded", "noRawId", "experts", "fence"];
+const COLS = ["render", "intel", "dims19", "synthesis", "readable", "visual", "grounded", "noRawId", "experts", "fence"];
 const pad = (s, n) => String(s).padEnd(n);
 
 async function main() {

@@ -10,6 +10,7 @@
 // return shape and call sites stay identical.
 
 import bindingData from "./all-tenants.json";
+import { expandUniversalContextDimensions } from "./universal-dimensions";
 
 export interface BindingMove {
   title: string;
@@ -96,7 +97,17 @@ export function getIntelligenceBindingPayload(
   const raw = tenantKey.trim().toLowerCase();
   const resolved = FILE.tenants[raw] ? raw : KEY_ALIASES[raw];
   if (!resolved) return null;
-  return FILE.tenants[resolved] ?? null;
+  const payload = FILE.tenants[resolved] ?? null;
+  if (!payload) return null;
+  const context = expandUniversalContextDimensions(payload.context);
+  return {
+    ...payload,
+    trustLine: {
+      ...payload.trustLine,
+      dimensionsLoaded: context.filter((dimension) => dimension.evidence > 0).length,
+    },
+    context,
+  };
 }
 
 export function hasIntelligenceBindingPayload(
