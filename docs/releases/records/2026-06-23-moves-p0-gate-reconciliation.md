@@ -28,6 +28,7 @@ Approving a Move's P0 origination brief must create the same canonical gate reco
 
 - `src/lib/programs/approval.ts`: P0 approval lifecycle sync no longer writes `current_phase` directly; `closeP0OnApproval` remains the single phase-transition path.
 - `src/lib/programs/approval.ts`, `src/lib/programs/origination-close.ts`, and `src/app/api/v1/programs/[programId]/approve-brief/route.ts`: the in-place approval path now threads full actor tenancy into the P0 close helper instead of reconstructing access context from only user id and tenant key.
+- `src/lib/deliverables/moves-generate-deps.ts`: prior solution-context digest loading no longer selects `deliverable_versions.created_at`; live Azure Postgres stores the timestamp on `deliverables_v2`, so the query orders by the parent deliverable timestamp plus version.
 - `src/lib/programs/__tests__/approval.test.ts`: regressions that the approval sync does not patch `current_phase` and that actor tenancy is forwarded into P0 close.
 - `tests/e2e/moves-deliverable-redo.spec.ts`: strict locator fix for the live Moves click-through harness.
 
@@ -38,6 +39,7 @@ Approving a Move's P0 origination brief must create the same canonical gate reco
 - `E2E_BASE_URL=https://app.abarva.ai E2E_MOVE_ID=82d01ebb-d9f4-4f53-b2d3-c66f0ad8fcfd E2E_STORAGE_STATE=.auth/agent-meridian.json npx playwright test tests/e2e/moves-deliverable-redo.spec.ts --project=chromium --reporter=line` — pass, one expected artifact-url skip.
 - Live diagnosis before the fix: `agent-meridian` approved the P0 brief, the UI moved to P1, but VNet DB proof showed `gates_passed=[]`, `phase_snapshots=[]`, and generation returned `generation_gate_blocked`.
 - Post-deploy diagnosis after the first fix found a second context-binding issue: fresh Meridian Move `25bdec8b-3be0-4221-abb4-8686d8d38da3` was correctly bound to DB tenant key `meridian-health`, but P0 close failed with `[programs/nexus] program not accessible` because the close helper received only the shorthand approval tenant key and not the full signed-in actor tenancy.
+- Post-deploy diagnosis after the actor-tenancy fix showed P0 close working on fresh Meridian Move `2dbed99d-cca5-4f80-978a-c1175cc1714f`, but generation hit a live-schema query error because `deliverable_versions.created_at` does not exist.
 
 ## Rollout Plan
 
