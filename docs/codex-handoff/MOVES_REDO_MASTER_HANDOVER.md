@@ -35,8 +35,13 @@ release record + tenant-purity → merge → `aca-main-deploy` → **live verify
 its live click-through is green and the artifact meets the golden bar.
 
 The wiring per slice (files already named in the plan):
-- **Slice 1:** add `assembleMoveSolutionContext(programId, targetPhase)` (broker-backed current-state
-  retrieval) + **replace the `[DATA GAP]` stubs** in `v2-generator.ts:336-341`.
+- **Slice 1:** `assembleMoveSolutionContext` is **BUILT + tested** (`src/lib/programs/assemble-solution-context.ts`,
+  injectable). You only wire its 3 real `SolutionContextSources`: `retrieveCurrentState` →
+  AgentContextBroker / `enterprise_context`; `loadPriorDigests` → full structured digests from
+  `deliverable_versions` (NOT 1800-char clips); `loadDecisions` → gate approvals (`phase_snapshots` /
+  governance). Then **replace the `[DATA GAP]` stubs** in `v2-generator.ts:336-341` with the assembled
+  `SolutionContext`. (`currentStateBound=false` ⇒ leave it MISSING — the prompt-factory flags it, never
+  invents.)
 - **Slice 2:** wire `buildArtifactPrompt` + `output_format:'html'` into
   `api/v1/programs/[programId]/generate/route.ts:196` and
   `api/programs/workspace/[moveId]/artifact/route.ts:101`.
