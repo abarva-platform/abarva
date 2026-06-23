@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Approving a Move's P0 origination brief must create the same canonical gate record that deliverable generation checks. This fix stops the approval request update from prematurely moving the phase before the governed P0 close helper can sign the brief, evaluate the gate, and write the approved phase snapshot.
+Approving a Move's P0 origination brief must create the same canonical gate record that deliverable generation checks. This fix stops the approval request update from prematurely moving the phase before the governed P0 close helper can sign the brief, evaluate the gate, and write the approved phase snapshot. It also preserves the full signed-in tenancy context when the in-place approval route calls the close helper, so agent/demo sessions using shorthand client keys can still write canonical data-plane gate records for the engagement's client id.
 
 ## Layer Impact
 
@@ -27,14 +27,17 @@ Approving a Move's P0 origination brief must create the same canonical gate reco
 ## Changes Included
 
 - `src/lib/programs/approval.ts`: P0 approval lifecycle sync no longer writes `current_phase` directly; `closeP0OnApproval` remains the single phase-transition path.
-- `src/lib/programs/__tests__/approval.test.ts`: regression that the approval sync does not patch `current_phase`.
+- `src/lib/programs/approval.ts`, `src/lib/programs/origination-close.ts`, and `src/app/api/v1/programs/[programId]/approve-brief/route.ts`: the in-place approval path now threads full actor tenancy into the P0 close helper instead of reconstructing access context from only user id and tenant key.
+- `src/lib/programs/__tests__/approval.test.ts`: regressions that the approval sync does not patch `current_phase` and that actor tenancy is forwarded into P0 close.
 - `tests/e2e/moves-deliverable-redo.spec.ts`: strict locator fix for the live Moves click-through harness.
 
 ## QA / Validation
 
 - `npx jest src/lib/programs/__tests__/approval.test.ts --runInBand` — pass, 31 tests.
+- `npx eslint src/lib/programs/approval.ts src/lib/programs/origination-close.ts 'src/app/api/v1/programs/[programId]/approve-brief/route.ts' src/lib/programs/__tests__/approval.test.ts` — pass.
 - `E2E_BASE_URL=https://app.abarva.ai E2E_MOVE_ID=82d01ebb-d9f4-4f53-b2d3-c66f0ad8fcfd E2E_STORAGE_STATE=.auth/agent-meridian.json npx playwright test tests/e2e/moves-deliverable-redo.spec.ts --project=chromium --reporter=line` — pass, one expected artifact-url skip.
 - Live diagnosis before the fix: `agent-meridian` approved the P0 brief, the UI moved to P1, but VNet DB proof showed `gates_passed=[]`, `phase_snapshots=[]`, and generation returned `generation_gate_blocked`.
+- Post-deploy diagnosis after the first fix found a second context-binding issue: fresh Meridian Move `25bdec8b-3be0-4221-abb4-8686d8d38da3` was correctly bound to DB tenant key `meridian-health`, but P0 close failed with `[programs/nexus] program not accessible` because the close helper received only the shorthand approval tenant key and not the full signed-in actor tenancy.
 
 ## Rollout Plan
 

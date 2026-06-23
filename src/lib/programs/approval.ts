@@ -27,6 +27,7 @@ import {
   notifyApprovalRejected,
   notifyApprovalSubmitted,
 } from "@/lib/programs/approval-notifications";
+import type { TenancyCtx } from "@/lib/programs/types.db";
 import { writeProgramAuditLogBestEffort } from "./audit-log";
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -80,6 +81,13 @@ export interface DecideApprovalInput {
   decision: "approved" | "rejected";
   /** Required (and non-empty) when decision === 'rejected'. */
   rationale?: string;
+  /**
+   * Full signed-in tenancy from the deciding route. P0 close needs this because
+   * agent/demo sessions can use a shorthand client key while the DB row carries
+   * the canonical client id; reconstructing context from only user id + tenant
+   * key can fail the program access check.
+   */
+  actorTenancy?: TenancyCtx;
 }
 
 export interface ListApprovalAuditForTenantInput {
@@ -486,6 +494,7 @@ export async function decideApprovalRequest(
         tenantKey: request.tenantKey,
         deciderUserId: input.decidedByUserId,
         rationale: input.rationale ?? null,
+        actorTenancy: input.actorTenancy,
       });
       if (!closed.advanced && closed.blockedBy.length > 0) {
         console.error("[approval] P0 close blocked after approval", {
