@@ -8,6 +8,8 @@ const BROAD_CURRENT_STATE_RE =
 const RAW_INTERNAL_ID_RE = /\b[A-Z]{2,6}-[A-Z0-9]{2,8}-\d{2,4}\b/g;
 const CONSULTANT_SECTION_RE =
   /^\s*(?:Read|Recommendation|Decision|Why|Evidence|Implication|Watchout|Watch-out|Next move|Owner|Action):/gim;
+const CONSULTANT_INLINE_SECTION_RE =
+  /\s*\b(Read|Recommendation|Decision|Why|Evidence|Implication|Watchout|Watch-out|Next move|Owner|Action)\s*(?:[-—]\s*[^:\n]{1,96})?:\s*/gi;
 const MARKDOWN_TABLE_RE = /^\s*\|.+\|\s*$/m;
 
 export const CONSULTANT_ANSWER_SHAPE_CONTRACT = `CONSULTANT ANSWER SHAPE
@@ -110,7 +112,7 @@ const MISSING_EVIDENCE_RE =
 
 export function enforceDecisionGradeAnswer(text: string): string {
   const paragraphDisciplined = splitLongParagraphs(
-    shapeDenseConsultantAnswer(text),
+    normalizeConsultantSectionBoundaries(shapeDenseConsultantAnswer(text)),
   );
   if (
     ACTION_CUE_RE.test(paragraphDisciplined) &&
@@ -130,6 +132,31 @@ export function enforceDecisionGradeAnswer(text: string): string {
   return ensureReadableConsultantShape(
     `${paragraphDisciplined.replace(/\s+$/, "")}\n\n${nextMove}`,
   );
+}
+
+function normalizeConsultantSectionBoundaries(text: string): string {
+  const normalized = text.replace(/\r\n/g, "\n").trim();
+  if (!normalized) return normalized;
+
+  return normalized
+    .replace(
+      CONSULTANT_INLINE_SECTION_RE,
+      (_match, rawLabel: string, offset: number) => {
+        const label = normalizeSectionLabel(rawLabel);
+        return `${offset === 0 ? "" : "\n\n"}${label}: `;
+      },
+    )
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function normalizeSectionLabel(label: string): string {
+  const normalized = label.toLowerCase().replace(/[-\s]+/g, " ").trim();
+  if (normalized === "next move") return "Next move";
+  if (normalized === "watchout" || normalized === "watch out") {
+    return "Watchout";
+  }
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
 function shapeDenseConsultantAnswer(text: string): string {

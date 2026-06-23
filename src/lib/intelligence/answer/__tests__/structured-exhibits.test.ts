@@ -204,6 +204,37 @@ describe("buildStructuredExhibits", () => {
     );
   });
 
+  it("keeps Apex-style inline tables out of prose and preserves readable sections", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: { ...routing, outputShape: "table" },
+      sources,
+      prose:
+        "Read: Your loaded D&A estate shows eight data products spanning sales, customer, inventory, digital, loss prevention, supply chain, merchandising, and workforce — but the maturity profile is uneven, and the customer/digital domains are your weakest links. Evidence — what's actually in your estate: | Data Product | Domain | Owner Team | Cadence | Maturity | Known Gap | |---|---|---|---|---|---| | POS transaction lake | Sales | Analytics platform | Daily | Silver | Partial lineage | | Customer 360 / loyalty graph | Customer | Customer data team | Near real-time | Bronze | Identity gaps | Implication: Merch planning is your only gold-grade asset, and it is leaking trust through manual overrides. Next move: assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves.",
+    });
+
+    expect(exhibits.tables).toHaveLength(1);
+    expect(exhibits.tables[0]?.rows).toEqual([
+      expect.objectContaining({
+        data_product: "POS transaction lake",
+        domain: "Sales",
+        owner_team: "Analytics platform",
+      }),
+      expect.objectContaining({
+        data_product: "Customer 360 / loyalty graph",
+        domain: "Customer",
+        owner_team: "Customer data team",
+      }),
+    ]);
+    expect(exhibits.prose).toContain("Read:");
+    expect(exhibits.prose).toContain("Evidence:");
+    expect(exhibits.prose).toContain("Implication:");
+    expect(exhibits.prose).toContain("Next move:");
+    expect(exhibits.prose).not.toContain("| Data Product |");
+    expect([
+      ...exhibits.prose.matchAll(/^(Read|Evidence|Implication|Next move):/gim),
+    ]).toHaveLength(4);
+  });
+
   it("renders a chart only from exact numeric columns in an extracted table", () => {
     const exhibits = buildStructuredExhibits({
       routing,
