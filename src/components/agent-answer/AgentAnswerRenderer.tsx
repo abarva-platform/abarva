@@ -3,6 +3,7 @@
 import * as SvgCharts from "@/lib/programs/expert-kernel/exports/board-grade/svg-charts";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { builderForChartKind } from "@/lib/intelligence/answer/chart-kind-builders";
+import { sanitizeAgentAnswerForRender } from "@/lib/intelligence/answer/answer-safety";
 import type {
   AgentAnswer,
   AnswerChart,
@@ -251,19 +252,20 @@ export function AnswerChartRenderer({
 }
 
 export function AgentAnswerRenderer({ answer }: { answer: AgentAnswer }) {
-  const hasStructured = answer.charts.length > 0 || answer.tables.length > 0;
+  const displayAnswer = sanitizeAgentAnswerForRender(answer);
+  const hasStructured = displayAnswer.charts.length > 0 || displayAnswer.tables.length > 0;
   const hasAttribution =
-    answer.contributingExperts.length > 0 || answer.citations.length > 0;
+    displayAnswer.contributingExperts.length > 0 || displayAnswer.citations.length > 0;
   return (
     <section className="agentAnswer" aria-label="Ava answer">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <header className="aaHeader">
         <div>
-          <div className="aaKicker">Ava · {answer.surface}</div>
+          <div className="aaKicker">Ava · {displayAnswer.surface}</div>
           <div className="aaMeta">
-            <span className="aaPill">{answer.groundingMode}</span>
-            <span className="aaPill">{answer.confidence} confidence</span>
-            {answer.contributingExperts.map((expert) => (
+            <span className="aaPill">{displayAnswer.groundingMode}</span>
+            <span className="aaPill">{displayAnswer.confidence} confidence</span>
+            {displayAnswer.contributingExperts.map((expert) => (
               <span className="aaPill aaExpert" key={expert.id} title={expert.id}>
                 {expert.name}
               </span>
@@ -272,38 +274,38 @@ export function AgentAnswerRenderer({ answer }: { answer: AgentAnswer }) {
         </div>
       </header>
 
-      {answer.prose ? (
+      {displayAnswer.prose ? (
         <div className="aaProse">
-          <AgentMarkdown text={answer.prose} />
+          <AgentMarkdown text={displayAnswer.prose} />
         </div>
       ) : null}
 
-      {answer.charts.length > 0 ? (
+      {displayAnswer.charts.length > 0 ? (
         <div className="aaSection">
           <div className="aaTitle">Charts</div>
-          {answer.charts.map((chart) => (
-            <AnswerChartRenderer chart={chart} citations={answer.citations} key={chart.id} />
+          {displayAnswer.charts.map((chart) => (
+            <AnswerChartRenderer chart={chart} citations={displayAnswer.citations} key={chart.id} />
           ))}
         </div>
       ) : null}
 
-      {answer.tables.length > 0 ? (
+      {displayAnswer.tables.length > 0 ? (
         <div className="aaSection">
           <div className="aaTitle">Tables</div>
-          {answer.tables.map((table) => (
-            <DataTable table={table} citations={answer.citations} key={table.id} />
+          {displayAnswer.tables.map((table) => (
+            <DataTable table={table} citations={displayAnswer.citations} key={table.id} />
           ))}
         </div>
       ) : null}
 
-      {!hasStructured && answer.citations.length > 0 ? (
+      {!hasStructured && displayAnswer.citations.length > 0 ? (
         <div className="aaSection">
           <div className="aaTitle">Sources</div>
-          <CitationChips citations={answer.citations} />
+          <CitationChips citations={displayAnswer.citations} />
         </div>
       ) : null}
 
-      {!answer.prose && !hasStructured && !hasAttribution ? (
+      {!displayAnswer.prose && !hasStructured && !hasAttribution ? (
         <div className="aaFallback" role="status">
           Ava did not return a renderable answer.
         </div>

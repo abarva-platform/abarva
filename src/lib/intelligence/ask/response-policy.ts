@@ -230,6 +230,10 @@ function removeFirstOccurrence(text: string, value: string): string {
 
 function normalizeConsultantLead(sentence: string): string {
   return sentence
+    .replace(
+      /^\s*(?:Read|Evidence|Implication|Next move|Recommendation|Decision|Owner|Action)\s*:\s*/i,
+      "",
+    )
     .replace(/^\s*Honest\s+(?:read|answer)\s+(?:up\s+front|first)\s*:\s*/i, "")
     .trim();
 }
