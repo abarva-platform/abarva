@@ -59,7 +59,7 @@ Rollback the ACA web app to the previous approved revision/image digest if the v
 
 ## Audit Evidence
 
-- PR URL: to be added after PR creation.
+- PR URL: https://github.com/abarva-platform/abarva/pull/3894
 - CI: focused Jest, eslint, and `npm run release:check`.
 - Live proof after deploy: `tenant-matrix-gate.mjs`, `reality-crawl.mjs`, generated `out/reality-crawl/report.html`, and screenshots.
 
