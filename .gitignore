@@ -79,3 +79,4 @@ parallel-run-diff-results.md
 
 # Playwright auth state (Source E2E)
 .auth/
+out/
