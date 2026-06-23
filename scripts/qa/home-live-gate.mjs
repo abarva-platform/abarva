@@ -8,6 +8,8 @@
  *   2. The Home ask is the real shared engine — a synthesized answer, NOT the old
  *      fake `answerForAsk` row-dump ("field: value · Also: …") — with no raw
  *      internal IDs, named experts, and the cross-tenant fence holding.
+ *   3. A prompt that explicitly asks for a table/chart emits a typed exhibit for
+ *      the canonical renderer, and the prose is readable consultant-shaped text.
  *
  * One command, signed in as the pilot tenant (Apex by default):
  *   BASE_URL=https://app.abarva.ai \
@@ -30,6 +32,7 @@ const RAW_ID = /\b[A-Z]{2,6}-[A-Z0-9]{2,8}-\d{2,4}\b/; // APX-DATA-003 etc.
 const FAKE_GLOB = /\bAlso:\s/; // the old answerForAsk row-globbing signature
 const REFUSAL =
   /can'?t (use|share|access)|another (client|tenant)|not authori[sz]ed|only your|isolat|fenc/i;
+const CONSULTANT_SECTIONS = /\b(Read|Evidence|Implication|Next move):/g;
 
 if (!COOKIE) {
   console.error("Set COOKIE (signed-in session). See header for usage.");
@@ -93,6 +96,22 @@ async function ask(query, requestedClient) {
   return { prose, answer, experts, blocked, hasExhibit };
 }
 
+function isReadableConsultantAnswer(prose) {
+  const text = prose.trim();
+  if (!text) return false;
+  const sectionCount = [...text.matchAll(CONSULTANT_SECTIONS)].length;
+  if (sectionCount >= 2) return true;
+
+  const paragraphs = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  if (paragraphs.length >= 3) return true;
+
+  const longestParagraphWords = Math.max(
+    0,
+    ...paragraphs.map((p) => p.split(/\s+/).filter(Boolean).length),
+  );
+  return paragraphs.length >= 2 && longestParagraphWords <= 90;
+}
+
 async function run() {
   console.log(`\nHome live gate · tenant=${TENANT} · ${BASE_URL}\n${"─".repeat(58)}`);
 
@@ -124,19 +143,21 @@ async function run() {
       r.prose.slice(0, 80) + "…",
     );
     rec("no raw internal IDs", !RAW_ID.test(r.prose), RAW_ID.exec(r.prose)?.[0] || "clean");
-    // Informational, NOT a hard requirement: since #3836 suppresses inferred
-    // (prose-scraped) exhibits, a prose-only answer is the correct, honest result.
-    // Report whether a genuinely-structured exhibit was emitted; never fail on its absence.
     rec(
-      "exhibit (informational — present only for genuinely structured answers)",
-      true,
+      "typed table/chart emitted for explicit visual prompt",
+      Boolean(r.answer?.tables?.length || r.answer?.charts?.length),
       r.answer?.tables?.length
         ? "structured table"
         : r.answer?.charts?.length
           ? "structured chart"
           : r.hasExhibit
             ? "markdown table in prose"
-            : "prose-only (inferred exhibits suppressed — correct)",
+            : "missing typed exhibit",
+    );
+    rec(
+      "readable consultant-shaped answer",
+      isReadableConsultantAnswer(r.prose),
+      isReadableConsultantAnswer(r.prose) ? "structured prose" : "dense prose",
     );
     rec("named experts surfaced", r.experts.length > 0, r.experts.map((e) => e.name).join(", ") || "none");
   } catch (e) {
