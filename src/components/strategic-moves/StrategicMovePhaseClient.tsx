@@ -846,7 +846,14 @@ function CharterWorkflow({
         message: err instanceof Error ? err.message : "Generate failed",
       });
     }
-  }, [move.id, move.archetype, move.name, move.tenant.name, phaseNum, workflow]);
+  }, [
+    move.id,
+    move.archetype,
+    move.name,
+    move.tenant.name,
+    phaseNum,
+    workflow,
+  ]);
 
   // Derived enable/disable:
   //  • Save: enabled unless a save is in flight.
@@ -1053,7 +1060,9 @@ function CharterWorkflow({
             )}
             {gen.status === "done" && gen.pass && (
               <span className={styles.charterStepOk}>
-                {gen.qualityScore != null ? `Quality ${gen.qualityScore} · ` : ""}
+                {gen.qualityScore != null
+                  ? `Quality ${gen.qualityScore} · `
+                  : ""}
                 Built ✓ ·{" "}
                 <Link href={`/strategic-moves/${move.id}/evidence`}>
                   Open File Cabinet →
@@ -1184,6 +1193,11 @@ export function StrategicMovePhaseClient({
         const fd = new FormData();
         fd.append("file", file);
         fd.append("phase", String(phaseNum));
+        fd.append("purpose", "artifact_review");
+        fd.append(
+          "artifactType",
+          PHASE_CANONICAL_KEYS[phaseNum]?.[0] ?? "phase_artifact",
+        );
         const res = await fetch(`/api/programs/workspace/${move.id}/upload`, {
           method: "POST",
           body: fd,
@@ -1194,7 +1208,10 @@ export function StrategicMovePhaseClient({
           };
           throw new Error(body.error ?? `HTTP ${res.status}`);
         }
-        const data = (await res.json()) as { attachmentId: string };
+        const data = (await res.json()) as {
+          attachmentId: string;
+          review?: { extractedFeedback?: Array<{ requestedChange: string }> };
+        };
         setAttachments((prev) =>
           prev.map((a) =>
             a.id === pendingId
@@ -1202,6 +1219,20 @@ export function StrategicMovePhaseClient({
               : a,
           ),
         );
+        const feedbackCount = data.review?.extractedFeedback?.length ?? 0;
+        if (feedbackCount > 0) {
+          updateTurns((prev) => [
+            ...prev,
+            {
+              id: generateTurnId(),
+              role: "assistant",
+              agentName: "Nexus",
+              text:
+                `I parsed **${feedbackCount}** review feedback item${feedbackCount === 1 ? "" : "s"} from **${file.name}**. ` +
+                "Use **Regenerate artifact** after triage to apply approved changes into the next version.",
+            },
+          ]);
+        }
       } catch (err) {
         setAttachments((prev) =>
           prev.map((a) =>
@@ -1217,7 +1248,7 @@ export function StrategicMovePhaseClient({
         );
       }
     },
-    [move.id, phaseNum],
+    [move.id, phaseNum, updateTurns],
   );
 
   const send = useCallback(
@@ -1449,6 +1480,15 @@ export function StrategicMovePhaseClient({
       PHASE_CANONICAL_KEYS[phaseNum],
     ),
   ).length;
+  const knownSoFarItems = [
+    `Use case: ${move.name}`,
+    `Sponsor: ${move.sponsor?.name ?? "Unassigned"}`,
+    `Capture: ${filledCount} of ${canvasSections.length} inputs saved`,
+    `Artifacts: ${phaseArtifactCount} phase artifact${phaseArtifactCount === 1 ? "" : "s"} on file`,
+    gateItemsWithStatus.length > 0
+      ? `Gate: ${totalGateDone} of ${gateItemsWithStatus.length} criteria met`
+      : "Gate: no active outgoing gate on this viewed phase",
+  ];
 
   return (
     <div id={`ws-phase-p${phaseNum}-page`} className={styles.page}>
@@ -1685,6 +1725,25 @@ export function StrategicMovePhaseClient({
                 </div>
               </div>
             )}
+
+            <section
+              id={`ws-canvas-p${phaseNum}-solution-context`}
+              className={styles.detailSection}
+            >
+              <div className={styles.detailSectionTitle}>
+                What we know so far
+              </div>
+              <div className={styles.captureChipRow}>
+                {knownSoFarItems.map((item) => (
+                  <span
+                    key={item}
+                    className={`${styles.captureChip} ${styles.captureChipFilled}`}
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </section>
 
             {/* Gate criteria panel */}
             <CollapsePanel
@@ -1964,10 +2023,11 @@ export function StrategicMovePhaseClient({
                     lineHeight: 1.5,
                   }}
                 >
-                  Approve &amp; Build assembles all available context — engagement
-                  data, prior-phase deliverables, client segments, matched
-                  patterns, and phase methodology — and builds every {config.label}{" "}
-                  deliverable in one governed batch. Saves to the Evidence Hub.
+                  Approve &amp; Build assembles all available context —
+                  engagement data, prior-phase deliverables, client segments,
+                  matched patterns, and phase methodology — and builds every{" "}
+                  {config.label} deliverable in one governed batch. Saves to the
+                  Evidence Hub.
                 </div>
                 <PhaseApproveAndBuild
                   moveId={move.id}
@@ -2011,8 +2071,8 @@ export function StrategicMovePhaseClient({
                       padding: "4px 0",
                     }}
                   >
-                    No {config.label} artifacts yet. Ava will generate
-                    artifacts as you work through the phase steps.
+                    No {config.label} artifacts yet. Ava will generate artifacts
+                    as you work through the phase steps.
                   </div>
                 ) : (
                   <div className={styles.evidenceList}>

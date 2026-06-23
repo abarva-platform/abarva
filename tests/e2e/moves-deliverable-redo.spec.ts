@@ -12,14 +12,28 @@
 // Skips cleanly when those are absent so CI stays green.
 
 import { test, expect } from "@playwright/test";
+import fs from "node:fs";
+import path from "node:path";
 import { meetsGoldenBar } from "@/lib/deliverables/golden-bar";
 
 const BASE = process.env.E2E_BASE_URL;
 const MOVE_ID = process.env.E2E_MOVE_ID;
-const ready = Boolean(BASE && MOVE_ID && process.env.E2E_STORAGE_STATE);
+const DEFAULT_AGENT_STORAGE_STATE = path.resolve(
+  process.cwd(),
+  ".auth",
+  `agent-${process.env.E2E_AGENT_CLIENT_KEY ?? "meridian"}.json`,
+);
+const STORAGE_STATE =
+  process.env.E2E_STORAGE_STATE?.trim() ||
+  (fs.existsSync(DEFAULT_AGENT_STORAGE_STATE) ? DEFAULT_AGENT_STORAGE_STATE : "");
+const ready = Boolean(BASE && MOVE_ID && STORAGE_STATE);
 
 test.describe("Moves deliverable redo — live click-through", () => {
-  test.skip(!ready, "set E2E_BASE_URL + E2E_MOVE_ID + E2E_STORAGE_STATE to run");
+  test.use({ storageState: STORAGE_STATE || undefined });
+  test.skip(
+    !ready,
+    "set E2E_BASE_URL + E2E_MOVE_ID plus E2E_STORAGE_STATE or .auth/agent-meridian.json to run",
+  );
 
   test("the move surface drives capture → gate → generate without click failure", async ({ page }) => {
     await page.goto(`${BASE}/strategic-moves/${MOVE_ID}`);
@@ -32,7 +46,7 @@ test.describe("Moves deliverable redo — live click-through", () => {
   // Per-slice acceptance: as each slice lands, fetch the generated artifact's
   // HTML and assert it meets the golden bar. (Wired to the artifact view/export
   // endpoint once Slice 2 renders Claude-authored HTML.)
-  test("a generated Target Architecture meets the golden bar", async ({ page, request }) => {
+  test("a generated Target Architecture meets the golden bar", async ({ request }) => {
     test.skip(!process.env.E2E_ARTIFACT_URL, "set E2E_ARTIFACT_URL once Slice 2 renders HTML");
     const res = await request.get(process.env.E2E_ARTIFACT_URL!);
     const html = await res.text();

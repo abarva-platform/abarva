@@ -1,40 +1,27 @@
 // POST /api/v1/programs/:programId/generate
 //
-// DEPRECATED single-pass shim → orchestrated async path.
-//
-// This route ONCE ran a single Claude call (streamAgentTurn / draftModuleDeliverable)
-// with NO plan gate and NO quality gate, saving straight to deliverable_versions.
-// That path could fabricate and was the one the founder asked to retire.
-//
-// It now delegates to the governed, multi-pass orchestrator (the same engine the
-// Documents tab uses via POST /api/v1/deliverables/generate): ENQUEUE a
-// deliverable_runs row (status='queued') carrying the full job payload, and return
-// { runId, status: 'queued' } (202). The durable worker
-// (src/scripts/process-deliverable-queue.ts) claims and runs it, so a recycled web
-// replica can never orphan the generation. Callers should poll
-// GET /api/v1/deliverables/runs/{runId}. No Moves UI invokes this route anymore;
-// it is kept only so any lingering external/programmatic caller lands on the
-// governed path instead of the retired single-pass one.
+// Governed Moves artifact generation. This route is intentionally thin: tenancy,
+// program lookup, canonical artifact mapping, then the tested generateArtifact()
+// keystone. That keystone owns phase gates, cumulative SolutionContext binding,
+// dynamic prompt construction, Claude invocation, and the visual golden bar.
 //
 // Body (back-compat): { phase?: number, deliverableTypeKey?: string, title?: string }
 
 import "server-only";
 import { requireTenancy, tenancyErrorResponse } from "../../_auth";
 import { getProgramById } from "@/lib/programs/queries";
-import { getActiveClientRow } from "@/lib/active-client";
+import { generateArtifact } from "@/lib/deliverables/generate-artifact";
+import { buildGeneratedPhaseDigest } from "@/lib/deliverables/generated-phase-digest";
 import {
-  getDeliverableSpec,
-  type DeliverableSpec,
-} from "@/lib/programs/deliverable-registry";
-import { orchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
-import {
-  createDeliverableRun,
-  type DeliverableRunJobPayload,
-} from "@/lib/deliverables/orchestrator/runs-repository";
+  createMovesGenerateArtifactDeps,
+  normalizeMovesDeliverableKey,
+} from "@/lib/deliverables/moves-generate-deps";
+import { getDeliverableProfile } from "@/lib/deliverables/profiles/registry";
+import { draftModuleDeliverable } from "@/lib/programs/nexus";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 const PHASE_LABEL: Record<number, string> = {
   0: "P0 Originate",
@@ -62,7 +49,10 @@ export async function POST(
 
   if (!ctx.clientKey) {
     return Response.json(
-      { error: "no_tenant_key", detail: "Active tenant has no resolvable tenant key." },
+      {
+        error: "no_tenant_key",
+        detail: "Active tenant has no resolvable tenant key.",
+      },
       { status: 409 },
     );
   }
@@ -83,56 +73,100 @@ export async function POST(
   const targetPhase = body.phase ?? program.currentPhase ?? 1;
   const registryKey = body.deliverableTypeKey ?? `p${targetPhase}_package`;
 
-  // Resolve the registry spec for purpose/title; unknown keys still produce a
-  // valid orchestrator run via the generic board-grade brief.
-  const spec: DeliverableSpec | undefined = getDeliverableSpec(registryKey);
   const phaseLabel = PHASE_LABEL[targetPhase] ?? `P${targetPhase}`;
-  const documentTitle = spec?.documentTitle ?? body.title ?? `Phase ${targetPhase} Deliverable`;
-  const purpose = spec?.documentPurpose ?? "Phase deliverable";
+  const artifact = normalizeMovesDeliverableKey(
+    registryKey,
+    targetPhase,
+    body.title,
+  );
+  const profile = getDeliverableProfile(artifact);
+  const result = await generateArtifact(
+    {
+      moveId: programId,
+      tenantKey: clientKey,
+      phase: targetPhase,
+      artifact,
+      allowApprovedRetry: true,
+      useCaseQuery:
+        program.problemStatement ?? program.targetOutcome ?? program.name,
+    },
+    createMovesGenerateArtifactDeps(ctx),
+  );
 
-  const archetype = program.archetype ?? "strategic_transformation";
-  const deliverableType = orchestratorDeliverableType(registryKey);
+  if (result.status === "blocked_gate") {
+    return Response.json(
+      {
+        error: "generation_gate_blocked",
+        blockers: result.blockers,
+        phase: targetPhase,
+        deliverableKey: artifact,
+      },
+      { status: result.httpStatus },
+    );
+  }
 
-  const activeClient = await getActiveClientRow().catch(() => null);
-  const clientDisplayName = activeClient?.name ?? "Client";
-  const initiativeDisplayName = program.name ?? "Strategic Move";
-  const decisionContext = `${initiativeDisplayName} — ${phaseLabel}: ${purpose}`;
+  if (result.status === "blocked_context") {
+    return Response.json(
+      {
+        error: "generation_context_blocked",
+        missing: result.missing,
+        phase: targetPhase,
+        deliverableKey: artifact,
+      },
+      { status: 409 },
+    );
+  }
 
-  // Build the self-contained job payload the durable worker runs the generation from.
-  const jobPayload: DeliverableRunJobPayload = {
-    module: "moves",
-    useCaseArchetype: archetype,
-    deliverableType,
-    decisionContext,
-    clientDisplayName,
-    initiativeDisplayName,
-    sourceArtifactRef: programId,
-  };
+  if (result.status === "blocked_quality") {
+    return Response.json(
+      {
+        error: "golden_bar_failed",
+        goldenBar: result.goldenBar,
+        rawContent: result.html,
+        detail: "Artifact did not meet the visual-first golden bar.",
+      },
+      { status: 422 },
+    );
+  }
 
-  // Enqueue only — no model work in the request, so a recycled web replica cannot orphan
-  // an in-flight generation. The worker claims and runs it; the UI polls the run id.
-  const run = await createDeliverableRun({
-    clientId: ctx.clientId,
-    tenantKey: clientKey,
-    userId: ctx.userId,
-    module: "moves",
-    archetype,
-    deliverableType,
-    jobPayload,
+  const solutionContextDigest = buildGeneratedPhaseDigest({
+    artifact,
+    phase: targetPhase,
+    html: result.html,
+    context: result.context,
   });
 
-  return Response.json(
-    {
-      runId: run.id,
-      status: "queued",
-      deliverableType,
-      title: documentTitle,
+  const { deliverableId, versionId } = await draftModuleDeliverable(ctx, {
+    programId,
+    moduleKey: artifact,
+    deliverableTypeKey: artifact,
+    title: body.title ?? profile.title,
+    draftContent: result.html,
+    structuredData: {
       phase: targetPhase,
-      // Back-compat hint for any old caller that expected an inline document:
-      // the artifact is now produced asynchronously and governed by quality gates.
-      detail:
-        "Single-pass generation is retired. This deliverable is now authored by the governed multi-pass orchestrator; poll GET /api/v1/deliverables/runs/{runId}.",
+      artifact,
+      output_format: "html",
+      mode: "program_generate",
+      solutionContextDigest,
+      solution_context: result.context,
+      golden_bar: result.goldenBar,
     },
-    { status: 202 },
-  );
+    provenanceMap: {
+      program: program.name,
+      phase: targetPhase,
+      phase_label: phaseLabel,
+      artifact,
+      output_format: "html",
+    },
+  });
+
+  return Response.json({
+    deliverableId,
+    versionId,
+    content: result.html,
+    phase: targetPhase,
+    deliverableKey: artifact,
+    outputFormat: "html",
+    goldenBar: result.goldenBar,
+  });
 }

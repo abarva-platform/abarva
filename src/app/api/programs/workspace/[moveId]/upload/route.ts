@@ -54,6 +54,7 @@ import {
   evaluateSensitiveUpload,
   sensitiveUploadRejectedResponse,
 } from "@/lib/security/sensitive-upload-guard";
+import type { FeedbackItem } from "@/lib/deliverables/review-loop";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -79,6 +80,45 @@ function parseOptionalPhase(
     throw new Error(`phase must be an integer in [1,5], got ${str}`);
   }
   return n;
+}
+
+function extractReviewFeedbackItems(args: {
+  attachmentId: string;
+  filename: string;
+  buffer: Buffer;
+  artifactType: string | null;
+}): FeedbackItem[] {
+  const text = args.buffer.toString("utf8").replace(/\s+/g, " ").trim();
+  if (!text) return [];
+  const fragments = text
+    .split(/(?:\n|\. |; |\r)/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) =>
+      /(change|revise|update|correct|approve|approved|final|decision|assumption|gap|option|architecture|roadmap|kpi)/i.test(
+        line,
+      ),
+    )
+    .slice(0, 12);
+
+  const fallback = fragments.length > 0 ? fragments : [text.slice(0, 500)];
+  return fallback.map((comment, index) => ({
+    id: `${args.attachmentId}-feedback-${index + 1}`,
+    sourceFileId: args.attachmentId,
+    sourceLocator: `${args.filename}#item-${index + 1}`,
+    comment,
+    requestedChange: comment,
+    affectedSection: args.artifactType ?? "artifact",
+    changeType: /approved|final|decision/i.test(comment)
+      ? "decision_change"
+      : /scope/i.test(comment)
+        ? "scope_change"
+        : /correct/i.test(comment)
+          ? "correction"
+          : "new_context",
+    confidence: fragments.length > 0 ? "medium" : "low",
+    requiresApproval: true,
+  }));
 }
 
 export async function POST(
@@ -130,6 +170,9 @@ export async function POST(
     return jsonError(400, "missing_file");
   }
   const file = fileEntry as File;
+  const uploadPurpose = String(formData.get("purpose") ?? "").trim();
+  const artifactType =
+    String(formData.get("artifactType") ?? "").trim() || null;
 
   // 3. Mime + size pre-flight.
   const mimeType = file.type || "application/octet-stream";
@@ -344,6 +387,19 @@ export async function POST(
         : { id: null, status: "not_captured", warning: evidenceWarning },
       discovery: discoveryReceipt ?? undefined,
       discoveryReadiness: discoveryReadiness ?? undefined,
+      review:
+        uploadPurpose === "artifact_review"
+          ? {
+              artifactType,
+              extractedFeedback: extractReviewFeedbackItems({
+                attachmentId: record.id,
+                filename,
+                buffer,
+                artifactType,
+              }),
+              reviewStatus: "needs_triage",
+            }
+          : undefined,
     },
     { status: 200 },
   );

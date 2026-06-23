@@ -16,7 +16,11 @@ import {
 
 export interface SolutionContextSources {
   /** Retrieve the tenant's real current-state estate (AgentContextBroker / enterprise_context). */
-  retrieveCurrentState: (tenantKey: string, query: string) => Promise<string>;
+  retrieveCurrentState: (
+    tenantKey: string,
+    query: string,
+    moveId?: string,
+  ) => Promise<string>;
   /** Full structured digests from prior approved deliverables (NOT 1800-char clips). */
   loadPriorDigests: (moveId: string) => Promise<PhaseDigest[]>;
   /** Approved gate decisions for the move. */
@@ -37,10 +41,21 @@ export interface AssembledContext {
  * the prompt-factory will mark it as a blocking input.
  */
 export async function assembleMoveSolutionContext(
-  args: { moveId: string; tenantKey: string; targetPhase: number; useCaseQuery?: string },
+  args: {
+    moveId: string;
+    tenantKey: string;
+    targetPhase: number;
+    useCaseQuery?: string;
+  },
   sources: SolutionContextSources,
 ): Promise<AssembledContext> {
   let ctx = emptySolutionContext(args.moveId, args.tenantKey);
+  if (args.useCaseQuery?.trim()) {
+    ctx = applyPhaseDigest(ctx, {
+      problemSeed: args.useCaseQuery.trim(),
+      useCaseCandidate: args.useCaseQuery.trim(),
+    });
+  }
 
   // 1) fold prior approved phase digests (full, structured) — cumulative memory.
   for (const digest of await sources.loadPriorDigests(args.moveId)) {
@@ -49,9 +64,16 @@ export async function assembleMoveSolutionContext(
 
   // 2) bind the REAL current state from the broker — replaces [DATA GAP].
   const query =
-    args.useCaseQuery ?? ctx.useCase ?? ctx.useCaseCandidate ?? `${args.tenantKey} current state estate`;
-  const currentState = (await sources.retrieveCurrentState(args.tenantKey, query))?.trim() ?? "";
-  const currentStateBound = currentState.length > 0;
+    args.useCaseQuery ??
+    ctx.useCase ??
+    ctx.useCaseCandidate ??
+    `${args.tenantKey} current state estate`;
+  const currentState =
+    (
+      await sources.retrieveCurrentState(args.tenantKey, query, args.moveId)
+    )?.trim() ?? "";
+  const currentStateBound =
+    currentState.length > 0 && !currentState.startsWith("[MISSING");
   if (currentStateBound) ctx = applyPhaseDigest(ctx, { currentState });
 
   // 3) fold approved gate decisions.
