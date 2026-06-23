@@ -380,6 +380,12 @@ interface ApplicationRow {
   annual_cost_usd: number | string | null;
 }
 
+interface ApplicationDomainCountRow {
+  business_function: string | null;
+  application_count: number | string;
+  annual_cost_usd: number | string | null;
+}
+
 interface InitiativeRow {
   initiative_id: string;
   display_id: string | null;
@@ -667,8 +673,12 @@ export async function retrieveTenantStructuredFacts(
   const canonicalTenantKey = normalizeTenantEnterpriseKey(tenantKey);
   if (!canonicalTenantKey) return [];
   const normalized = query.toLowerCase();
+  const wantsVisual =
+    /\b(chart|charts|visual|visually|visuali[sz]e|plot|graph|graphs|map|topology|network|dependency|dependencies|lineage|relationship|relationships|blast radius)\b/.test(
+      normalized,
+    );
   const wantsTopApps =
-    /top\s+\d+\s+(?:apps?|applications?)\s+by\s+criticality|(?:application|app)\s+portfolio.*criticality/.test(
+    /top\s+\d+\s+(?:apps?|applications?)\s+by\s+criticality|(?:application|app)\s+portfolio.*criticality|(?:application|app|system|systems)\s+(?:count|counts)\s+by\s+(?:domain|function|capability)|(?:applications?|apps?|systems?).*(?:domain|function|capability|lifecycle|status|system\s+of\s+record|systems\s+of\s+record)|(?:core|key)\s+systems?|business\s+capabilit(?:y|ies).*(?:applications?|apps?|systems?)/.test(
       normalized,
     );
   const wantsRetiringApps =
@@ -676,7 +686,7 @@ export async function retrieveTenantStructuredFacts(
       normalized,
     );
   const wantsTopVendors =
-    /(?:top|biggest|largest)\s+vendors?|vendor.*\b(?:spend|cost|annual)\b|\b(?:ibm|aws|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling|tooling\s+stack|sourcing\s+events?)\b/.test(
+    /(?:top|biggest|largest)\s+vendors?|vendor.*\b(?:spend|cost|annual|concentration|contract|contracts?)\b|contracts?.*(?:value|renewal|vendor|supplier)|\b(?:ibm|aws|edp|true[-\s]?up|snowflake|databricks|cyber|security\s+stack|ai\s+tooling|tooling\s+stack|sourcing\s+events?)\b/.test(
       normalized,
     );
   const wantsVendorRenewals =
@@ -684,7 +694,7 @@ export async function retrieveTenantStructuredFacts(
       normalized,
     );
   const wantsActiveInitiatives =
-    /active\s+initiatives?|in[-\s]?flight\s+initiatives?|biggest\s+in[-\s]?flight\s+initiative|\b(?:sap|s\/4|s4)\b.*\bwave\b|\bwave\s*0\b|operating\s+model|target\s+operating\s+model|\btom\b|modernization\s+moves?|90\s+days?|ai\s+tooling|sdlc|cobol|gcc|global\s+capability|value\s+stuck|projected/.test(
+    /active\s+initiatives?|in[-\s]?flight\s+initiatives?|biggest\s+in[-\s]?flight\s+initiative|initiatives?.*(?:committed|realized|measured|value|stage|impact|effort|risk|owner|spend|fund|kill|pause|accelerate)|ai\s+(?:spend|investment|investments?|initiatives?|portfolio|commitment|commitments?)|value\s+at\s+stake|top\s+bets?|\b(?:sap|s\/4|s4)\b.*\bwave\b|\bwave\s*0\b|operating\s+model|target\s+operating\s+model|\btom\b|modernization\s+moves?|90\s+days?|ai\s+tooling|sdlc|cobol|gcc|global\s+capability|value\s+stuck|projected/.test(
       normalized,
     );
   const wantsInitiativesByStage = /initiatives?\s+by\s+(?:stage|phase)/.test(
@@ -692,6 +702,16 @@ export async function retrieveTenantStructuredFacts(
   );
   const wantsKillInitiatives =
     /(?:which\s+)?(?:initiatives?|moves?).*(?:kill|stop|pause|cut)/.test(
+      normalized,
+    );
+  const wantsDependencyGraph =
+    wantsVisual &&
+    /\b(dependency|dependencies|depend|depends|relationship|relationships|connect|connected|integration|integrations|interface|interfaces|topology|lineage|feeds?|upstream|downstream|blast radius|platforms?)\b/.test(
+      normalized,
+    );
+  const wantsAnyVisualSource =
+    wantsVisual &&
+    /\b(application|applications|apps?|systems?|vendors?|contracts?|renewals?|initiatives?|portfolio|domain|function|capability|data products?|analytics|platforms?)\b/.test(
       normalized,
     );
 
@@ -702,7 +722,9 @@ export async function retrieveTenantStructuredFacts(
     !wantsVendorRenewals &&
     !wantsActiveInitiatives &&
     !wantsInitiativesByStage &&
-    !wantsKillInitiatives
+    !wantsKillInitiatives &&
+    !wantsDependencyGraph &&
+    !wantsAnyVisualSource
   ) {
     return [];
   }
@@ -715,7 +737,19 @@ export async function retrieveTenantStructuredFacts(
       );
       if (!clientId) return [];
       const sources: TenantStructuredSource[] = [];
-      if (wantsTopApps) {
+      if (wantsTopApps || wantsDependencyGraph || wantsAnyVisualSource) {
+        if (
+          /(?:application|app|system|systems)\s+(?:count|counts)\s+by\s+(?:domain|function|capability)|(?:application|app)\s+count|count\s+by\s+(?:domain|function|capability)/.test(
+            normalized,
+          )
+        ) {
+          const source = await readStructuredApplicationDomainCountsSource(
+            run,
+            canonicalTenantKey,
+            clientId,
+          );
+          if (source) sources.push(source);
+        }
         const source = await readStructuredTopApplicationsSource(
           run,
           canonicalTenantKey,
@@ -731,7 +765,7 @@ export async function retrieveTenantStructuredFacts(
         );
         if (source) sources.push(source);
       }
-      if (wantsTopVendors) {
+      if (wantsTopVendors || wantsDependencyGraph || wantsAnyVisualSource) {
         const source = await readStructuredTopVendorsSource(
           run,
           canonicalTenantKey,
@@ -750,7 +784,9 @@ export async function retrieveTenantStructuredFacts(
       if (
         wantsActiveInitiatives ||
         wantsInitiativesByStage ||
-        wantsKillInitiatives
+        wantsKillInitiatives ||
+        wantsDependencyGraph ||
+        wantsAnyVisualSource
       ) {
         const source = await readStructuredInitiativesSource(
           run,
@@ -768,6 +804,71 @@ export async function retrieveTenantStructuredFacts(
   } catch {
     return [];
   }
+}
+
+async function readStructuredApplicationDomainCountsSource(
+  run: SqlRunner,
+  tenantKey: string,
+  clientId: string,
+): Promise<TenantStructuredSource | null> {
+  const rows = await run<ApplicationDomainCountRow>(
+    `SELECT COALESCE(NULLIF(TRIM(business_function), ''), 'unknown') AS business_function,
+            count(*)::int AS application_count,
+            SUM(COALESCE(annual_cost_usd, 0)) AS annual_cost_usd
+       FROM applications
+      WHERE client_id = $1
+      GROUP BY COALESCE(NULLIF(TRIM(business_function), ''), 'unknown')
+      ORDER BY application_count DESC, annual_cost_usd DESC NULLS LAST
+      LIMIT 12`,
+    [clientId],
+  );
+  if (rows.length === 0) return null;
+  return {
+    type: "TENANT",
+    name: `Structured fact · application count by function (${tenantKey})`,
+    id: `${tenantKey}:structured-fact:application-count-by-function`,
+    detail: [
+      `Application counts by business function from public.applications for ${tenantKey}.`,
+      ...rows.map(
+        (row) =>
+          `${row.business_function ?? "unknown"} · ${row.application_count} applications · ${formatUsd(row.annual_cost_usd) ?? "$0"} annual run cost`,
+      ),
+    ].join("\n- "),
+    confidence: 0.99,
+    structured: {
+      tables: [
+        {
+          id: `${tenantKey}-application-count-by-function`,
+          title: "Application Count by Function",
+          columns: [
+            { key: "function", label: "Function" },
+            {
+              key: "applicationCount",
+              label: "Application Count",
+              format: "number",
+              align: "right",
+            },
+            {
+              key: "annualCost",
+              label: "Annual Cost",
+              format: "currency",
+              align: "right",
+            },
+          ],
+          rows: rows.map((row) => ({
+            function: row.business_function ?? "unknown",
+            applicationCount: numericValue(row.application_count) ?? 0,
+            annualCost: numericValue(row.annual_cost_usd),
+          })),
+          chart: {
+            labelKey: "function",
+            valueKey: "applicationCount",
+            title: "Application Count by Function",
+          },
+        },
+      ],
+    },
+  };
 }
 
 async function readStructuredTopApplicationsSource(

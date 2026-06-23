@@ -31,6 +31,22 @@ jest.mock('@/lib/data-plane/read-adapters/azureSession', () => ({
     const run = async (sql: string): Promise<unknown[]> => {
       const table = tableFromSql(sql);
       let rows = [...(fakeTables?.[table] ?? (table === 'clients' ? [{ id: 'northstar-client' }] : []))];
+      if (table === 'applications' && /\bGROUP\s+BY\b/i.test(sql)) {
+        const grouped = new Map<string, { business_function: string; application_count: number; annual_cost_usd: number }>();
+        for (const row of rows as Array<{ business_function?: string | null; annual_cost_usd?: number | string | null }>) {
+          const businessFunction = row.business_function?.trim() || 'unknown';
+          const current = grouped.get(businessFunction) ?? {
+            business_function: businessFunction,
+            application_count: 0,
+            annual_cost_usd: 0,
+          };
+          current.application_count += 1;
+          const cost = typeof row.annual_cost_usd === 'number' ? row.annual_cost_usd : Number(row.annual_cost_usd ?? 0);
+          current.annual_cost_usd += Number.isFinite(cost) ? cost : 0;
+          grouped.set(businessFunction, current);
+        }
+        rows = [...grouped.values()].sort((a, b) => b.application_count - a.application_count || b.annual_cost_usd - a.annual_cost_usd);
+      }
       const limit = Number(sql.match(/LIMIT\s+(\d+)/i)?.[1] ?? rows.length);
       rows = rows.slice(0, limit);
       return rows;
@@ -511,6 +527,174 @@ describe('tenant enterprise context retrieval', () => {
     expect(sources[0]?.confidence).toBe(0.99);
     expect(sources[0]?.detail).toContain('NST-APP-234');
     expect(sources[0]?.detail).toContain('Do not substitute industry-typical provider EHR');
+  });
+
+  it('returns application-count structured rows for chart-by-domain questions', async () => {
+    mockPostgresTables({
+      applications: [
+        {
+          id: 'app-row-234',
+          name: 'Java legacy Capability 234',
+          vendor: 'SAP',
+          business_function: 'Clinical Operations',
+          deployment_model: 'on_prem',
+          criticality: 'tier1',
+          status: 'active',
+          annual_cost_usd: 17298000,
+        },
+        {
+          id: 'app-row-235',
+          name: 'Modern microservice Capability 235',
+          vendor: 'Infosys',
+          business_function: 'Clinical Operations',
+          deployment_model: 'hybrid',
+          criticality: 'tier2',
+          status: 'active',
+          annual_cost_usd: 6100000,
+        },
+        {
+          id: 'app-row-240',
+          name: 'Revenue Cycle Capability 240',
+          vendor: 'Oracle',
+          business_function: 'Revenue Cycle',
+          deployment_model: 'saas',
+          criticality: 'tier2',
+          status: 'active',
+          annual_cost_usd: 4100000,
+        },
+      ],
+    });
+
+    const sources = await retrieveTenantStructuredFacts(
+      'northstar-clinical',
+      'Give me a chart of our application count by domain.',
+    );
+    const aggregate = sources.find((source) =>
+      source.id.endsWith(':structured-fact:application-count-by-function'),
+    );
+
+    expect(aggregate?.confidence).toBe(0.99);
+    expect(aggregate?.structured?.tables[0]?.chart).toEqual(
+      expect.objectContaining({
+        labelKey: 'function',
+        valueKey: 'applicationCount',
+      }),
+    );
+    expect(aggregate?.structured?.tables[0]?.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          function: 'Clinical Operations',
+          applicationCount: 2,
+        }),
+        expect.objectContaining({
+          function: 'Revenue Cycle',
+          applicationCount: 1,
+        }),
+      ]),
+    );
+  });
+
+  it('returns initiative rows for visual AI-spend and value-at-stake questions', async () => {
+    mockPostgresTables({
+      ai_initiatives: [
+        {
+          initiative_id: 'NST-INIT-CODING-AI',
+          display_id: 'NST-CODING-AI',
+          name: 'Clinical Coding AI Modernization',
+          stage: 'pilot',
+          status_flag: 'healthy',
+          committed_total_usd: 42000000,
+          measured_value_usd: 126000000,
+          status_summary: 'accelerate',
+          metadata: { sentinel_posture: 'accelerate_with_guardrails' },
+        },
+        {
+          initiative_id: 'NST-INIT-DENIALS',
+          display_id: 'NST-DENIALS',
+          name: 'Denials Prevention AI',
+          stage: 'industrialize',
+          status_flag: 'at_risk',
+          committed_total_usd: 18000000,
+          measured_value_usd: 54000000,
+          status_summary: 'fix_data_first',
+          metadata: { sentinel_posture: 'hold_until_source_quality' },
+        },
+      ],
+    });
+
+    const sources = await retrieveTenantStructuredFacts(
+      'northstar-clinical',
+      'Chart our AI spend by initiative and show value at stake.',
+    );
+    const initiatives = sources.find((source) =>
+      source.id.endsWith(':structured-fact:active-initiatives'),
+    );
+
+    expect(initiatives?.structured?.tables[0]?.chart).toEqual(
+      expect.objectContaining({
+        labelKey: 'initiative',
+        valueKey: 'committed',
+      }),
+    );
+    expect(initiatives?.detail).toContain('Clinical Coding AI Modernization');
+    expect(initiatives?.detail).toContain('Denials Prevention AI');
+  });
+
+  it('returns relationship-ready structured rows for dependency graph questions', async () => {
+    mockPostgresTables({
+      applications: [
+        {
+          id: 'app-row-234',
+          name: 'Java legacy Capability 234',
+          vendor: 'SAP',
+          business_function: 'Clinical Operations',
+          deployment_model: 'on_prem',
+          criticality: 'tier1',
+          status: 'active',
+          annual_cost_usd: 17298000,
+        },
+      ],
+      vendor_contracts: [
+        {
+          vendor_id: 'NST-VEND-090',
+          vendor_name: 'SAP Program 90',
+          contract_category: 'ERP',
+          annual_contract_value_usd: 31200000,
+          renewal_date: '2026-07-15T05:00:00.000Z',
+          exit_terms_jsonb: { summary: 'annual renewal window' },
+          ai_usage_clauses: true,
+          indemnity_provided: true,
+          concentration_pct: 2.1,
+        },
+      ],
+      ai_initiatives: [
+        {
+          initiative_id: 'NST-INIT-S4-WAVE0',
+          display_id: 'NST-S4-WAVE0',
+          name: 'SAP S/4 Global Consolidation Wave 0',
+          stage: 'multi_year_strategic_bet',
+          status_flag: 'value_lag',
+          committed_total_usd: 68000000,
+          measured_value_usd: 204000000,
+          status_summary: 'hold_contested',
+          metadata: { sentinel_posture: 'hold_contested' },
+        },
+      ],
+    });
+
+    const sources = await retrieveTenantStructuredFacts(
+      'northstar-clinical',
+      'Show me the dependency graph of our core systems and initiatives.',
+    );
+
+    expect(sources.map((source) => source.id)).toEqual(
+      expect.arrayContaining([
+        'northstar-clinical:structured-fact:top-applications',
+        'northstar-clinical:structured-fact:top-vendors',
+        'northstar-clinical:structured-fact:active-initiatives',
+      ]),
+    );
+    expect(sources.flatMap((source) => source.structured?.tables ?? []).some((table) => Boolean(table.graph))).toBe(true);
   });
 
   it('returns explicit 0.99 structured facts for vendor renewals in the next six months', async () => {
