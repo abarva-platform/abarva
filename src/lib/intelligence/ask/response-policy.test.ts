@@ -235,6 +235,19 @@ describe("Ask Intelligence response policy", () => {
     expect([...answer.matchAll(/^(Read|Next move):/gim)]).toHaveLength(2);
   });
 
+  it("does not duplicate consultant section labels when the model already supplied them", () => {
+    const text = [
+      "Read: The loaded evidence points to inventory truth as the gating issue.",
+      "Evidence: Retail Lakehouse is committed but not fully realized.",
+      "Next move: assign the CDO to validate item-location accuracy before approving the holiday AI scale path.",
+    ].join("\n");
+
+    const answer = enforceDecisionGradeAnswer(text);
+
+    expect(answer).toContain("Read: The loaded evidence");
+    expect(answer).not.toMatch(/\bRead:\s*Read:/i);
+  });
+
   it("preserves markdown tables while adding readable consultant framing", () => {
     const text = [
       "The loaded sources point to IBM transition-rights friction as the decision risk.",
