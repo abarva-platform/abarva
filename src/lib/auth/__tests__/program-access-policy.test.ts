@@ -224,6 +224,28 @@ describe("program access policy", () => {
     expect(fromMock).not.toHaveBeenCalled();
   });
 
+  it("grants matching automation-agent permissions after JIT person provisioning resolves a UUID user id", async () => {
+    setupRows({});
+    const { loadUserProgramAccessPolicy } =
+      await import("../program-access-policy");
+
+    const policy = await loadUserProgramAccessPolicy({
+      clientId: "client-meridian",
+      clientKey: "meridian",
+      userId: "00000000-0000-4000-8000-00000000a6e7",
+      clerkUserId: "user_agent_meridian",
+      role: "client_viewer",
+      email: "meridian-agent@abarva.example.com",
+    });
+
+    expect(policy.accessLevel).toBe("client_admin");
+    expect(policy.programIdsAllowed).toBeNull();
+    expect(policy.canCreatePrograms).toBe(true);
+    expect(policy.canGenerateDeliverables).toBe(true);
+    expect(policy.canViewFinancialData).toBe(false);
+    expect(fromMock).not.toHaveBeenCalled();
+  });
+
   it("does not grant an automation agent access to a different active tenant", async () => {
     setupRows({
       persons: null,
