@@ -1,0 +1,215 @@
+"use client";
+
+import { useCallback, useRef, useState } from "react";
+import { HomeKnowAnswerRenderer } from "@/components/home/know/HomeKnowAnswerRenderer";
+import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
+
+const CSS = `
+.homeKnowAsk{--hka-line:#E7E3DA;--hka-ink:#1A1A18;--hka-muted:#6B6B63;--hka-faint:#9A998E;--hka-green:#1F6B3A;--hka-card:#fff;font-family:var(--font-geist-sans),Inter,system-ui,sans-serif}
+.homeKnowAsk .hka-bar{display:flex;align-items:flex-start;gap:10px;background:var(--hka-card);border:1px solid var(--hka-line);border-radius:14px;padding:10px 10px 10px 18px;max-width:760px;margin:0 auto;box-shadow:0 1px 0 rgba(15,23,42,.02)}
+.homeKnowAsk .hka-bar:focus-within{border-color:#22AEEA;box-shadow:0 0 0 3px rgba(34,174,234,.12)}
+.homeKnowAsk .hka-spark{color:var(--hka-green);flex:none;line-height:28px}
+.homeKnowAsk .hka-bar textarea{flex:1;min-height:28px;max-height:150px;border:none;outline:none;font:inherit;font-size:14px;line-height:1.45;background:transparent;color:var(--hka-ink);resize:none;overflow:auto;padding:4px 0 0}
+.homeKnowAsk .hka-bar button{background:var(--hka-ink);color:#fff;border:none;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;min-width:64px}
+.homeKnowAsk .hka-bar button:disabled{opacity:.52;cursor:default}
+.homeKnowAsk .hka-suggestions{max-width:960px;margin:12px auto 0;display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.homeKnowAsk .hka-chip{display:inline-flex;align-items:center;border:1px solid var(--hka-line);border-radius:20px;padding:5px 13px;font-size:12px;color:#3a3a34;cursor:pointer;background:var(--hka-card)}
+.homeKnowAsk .hka-chip:hover{border-color:#c6ded0;color:var(--hka-green)}
+.homeKnowAsk .hka-thread{max-width:960px;margin:16px auto 0;display:flex;flex-direction:column;gap:14px}
+.homeKnowAsk .hka-turn{display:flex;flex-direction:column;gap:8px}
+.homeKnowAsk .hka-user{align-self:flex-end;max-width:min(760px,90%);background:#F6F4EE;border:1px solid var(--hka-line);border-radius:12px;padding:9px 13px;font-size:13px;line-height:1.45;white-space:pre-wrap;color:#2b2b26}
+.homeKnowAsk .hka-loading,.homeKnowAsk .hka-error{background:#fff;border:1px solid var(--hka-line);border-radius:12px;padding:18px 22px;color:var(--hka-faint);font-size:13.5px}
+.homeKnowAsk .hka-error{color:#7f1d1d;background:#fff7f7}
+`;
+
+type HomeKnowTurn = {
+  id: string;
+  question: string;
+  response: HomeKnowResponse | null;
+  fetching: boolean;
+  error: string | null;
+};
+
+function resizeAskTextarea(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = `${Math.min(el.scrollHeight, 150)}px`;
+}
+
+function resetAskTextarea(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+}
+
+function newTurnId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function isHomeKnowResponse(value: unknown): value is HomeKnowResponse {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  return record.mode === "KNOW" && typeof record.intent === "string";
+}
+
+export function HomeKnowAsk({
+  tenantKey,
+  client,
+  placeholder = "Ask what is loaded in your enterprise context…",
+  suggestedQuestions = [],
+}: {
+  tenantKey?: string | null;
+  client?: string | null;
+  placeholder?: string;
+  suggestedQuestions?: string[];
+}) {
+  const [query, setQuery] = useState("");
+  const [turns, setTurns] = useState<HomeKnowTurn[]>([]);
+  const [fetching, setFetching] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const ask = useCallback(
+    async (q: string) => {
+      const trimmed = q.trim();
+      if (!trimmed) return;
+      const turnId = newTurnId();
+      const updateTurn = (patch: Partial<Omit<HomeKnowTurn, "id" | "question">>) => {
+        setTurns((current) =>
+          current.map((turn) => (turn.id === turnId ? { ...turn, ...patch } : turn)),
+        );
+      };
+
+      setQuery("");
+      resetAskTextarea(textareaRef.current);
+      abortRef.current?.abort();
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+      setFetching(true);
+      setTurns((current) => [
+        ...current,
+        {
+          id: turnId,
+          question: trimmed,
+          response: null,
+          fetching: true,
+          error: null,
+        },
+      ]);
+
+      try {
+        const res = await fetch("/api/home/know/ask", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            question: trimmed,
+            tenantKey,
+            client,
+          }),
+          signal: ctrl.signal,
+        });
+
+        const payload = await res.json().catch(() => null);
+        if (!res.ok || !isHomeKnowResponse(payload)) {
+          updateTurn({
+            error:
+              payload &&
+              typeof payload === "object" &&
+              !Array.isArray(payload) &&
+              typeof (payload as { error?: unknown }).error === "string"
+                ? (payload as { error: string }).error
+                : "Ava could not read the loaded Home context.",
+          });
+          return;
+        }
+
+        updateTurn({ response: payload });
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          updateTurn({ error: "Ava could not read the loaded Home context." });
+        }
+      } finally {
+        updateTurn({ fetching: false });
+        setFetching(false);
+      }
+    },
+    [client, tenantKey],
+  );
+
+  return (
+    <div className="homeKnowAsk">
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      <div className="hka-bar">
+        <span className="hka-spark">✦</span>
+        <textarea
+          ref={textareaRef}
+          aria-label="Ask Home KNOW"
+          disabled={fetching}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            resizeAskTextarea(event.currentTarget);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              ask(query);
+            }
+          }}
+          placeholder={placeholder}
+          rows={1}
+          value={query}
+        />
+        <button
+          disabled={fetching || !query.trim()}
+          onClick={() => ask(query)}
+          type="button"
+        >
+          {fetching ? "…" : "Ask"}
+        </button>
+      </div>
+
+      {suggestedQuestions.length > 0 ? (
+        <div aria-label="Suggested Home KNOW questions" className="hka-suggestions">
+          {suggestedQuestions.map((suggestion) => (
+            <button
+              className="hka-chip"
+              disabled={fetching}
+              key={suggestion}
+              onClick={() => ask(suggestion)}
+              title={suggestion}
+              type="button"
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {turns.length > 0 ? (
+        <div aria-label="Home KNOW conversation" className="hka-thread">
+          {turns.map((turn) => (
+            <div className="hka-turn" key={turn.id}>
+              <div className="hka-user">{turn.question}</div>
+              {turn.response ? (
+                <HomeKnowAnswerRenderer response={turn.response} />
+              ) : turn.error ? (
+                <div className="hka-error" role="status">
+                  {turn.error}
+                </div>
+              ) : turn.fetching ? (
+                <div className="hka-loading" role="status">
+                  Reading loaded context…
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
