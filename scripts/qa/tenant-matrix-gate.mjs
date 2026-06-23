@@ -154,16 +154,16 @@ async function hasCanonicalDimensionCount(path, auth) {
   return false;
 }
 
-async function fetchAskText(auth, query, client) {
+async function fetchAskText(auth, query, client, surface = "home") {
   const body = {
     q: query,
     client,
     tabId: `tenant-matrix-${client}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     format: "rich",
-    surfaceContext: { activeTab: "home", clientKey: client },
+    surfaceContext: { activeTab: surface, clientKey: client },
   };
   if (auth.context) {
-    return withPage(auth, "/home", async (page) =>
+    return withPage(auth, surface === "intelligence" ? "/intelligence" : "/home", async (page) =>
       page.evaluate(async ({ body, timeoutMs }) => {
         const controller = new AbortController();
         const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -199,8 +199,8 @@ async function fetchAskText(auth, query, client) {
   };
 }
 
-async function ask(auth, query, client) {
-  const res = await fetchAskText(auth, query, client);
+async function ask(auth, query, client, surface = "home") {
+  const res = await fetchAskText(auth, query, client, surface);
   if (res.status >= 300 && res.status < 400) throw new Error(`ask redirected to ${res.url}`);
   if (res.status < 200 || res.status >= 300) throw new Error(`ask HTTP ${res.status}`);
   if (!/\b(application\/x-ndjson|application\/json|text\/event-stream)\b/i.test(res.contentType)) {
@@ -274,7 +274,8 @@ async function runTenant(t, browser) {
     const hasLoadedContextHedge = NOT_LOADED.test(r.visibleProse);
     checks.grounded = !hasLoadedContextHedge && r.citesTenant;
     checks.noRawId = !RAW_ID.test(r.visibleProse);
-    checks.experts = r.experts.length > 0;
+    const expertProbe = await ask(auth, Q, t.binding, "intelligence");
+    checks.experts = expertProbe.experts.length > 0;
     const visual = await ask(auth, VISUAL_Q, t.binding);
     checks.visual =
       hasTypedExhibit(visual.answer) &&
