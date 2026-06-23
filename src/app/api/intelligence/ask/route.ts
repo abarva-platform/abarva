@@ -35,9 +35,11 @@ import {
 import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
 import {
   buildHomeKnowAgentAnswer,
+  homeKnowResponseToAgentAnswer,
   shouldUseHomeKnowAgentAnswer,
 } from "@/lib/home/know/home-know-agent-answer";
 import { appClientKeyForTenant, tenantAliasesFor } from "@/lib/tenant/aliases";
+import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
 import "@/lib/reasoning/telemetry-init";
 
 export const runtime = "nodejs";
@@ -224,11 +226,24 @@ async function handleAsk(payload: AskPayload) {
             tenantClientKey ??
             requestedOrSurfaceClient ??
             null;
-          const { response, answer } = await buildHomeKnowAgentAnswer({
-            question: query,
-            tenantKey: homeTenantKey,
-            client: tenantClientKey ?? requestedOrSurfaceClient,
-          });
+          let response: HomeKnowResponse;
+          let answer: AgentAnswer;
+          try {
+            const built = await buildHomeKnowAgentAnswer({
+              question: query,
+              tenantKey: homeTenantKey,
+              client: tenantClientKey ?? requestedOrSurfaceClient,
+            });
+            response = built.response;
+            answer = built.answer;
+          } catch (err) {
+            console.warn("[home-know.blank-guard]", err);
+            response = buildHomeKnowRouteFallbackResponse({
+              tenantKey: homeTenantKey ?? tenantClientKey ?? requestedOrSurfaceClient ?? "unknown",
+              question: query,
+            });
+            answer = homeKnowResponseToAgentAnswer(response);
+          }
           classificationForMemory = {
             mode: "home-know",
             intent: response.intent,
@@ -689,6 +704,123 @@ function buildHomeKnowTenantFenceAnswer(input: {
     confidence: "high",
     limits: ["Cross-tenant request blocked before retrieval."],
     crossTenantBlocked: true,
+  };
+}
+
+function buildHomeKnowRouteFallbackResponse(input: {
+  tenantKey: string;
+  question: string;
+}): HomeKnowResponse {
+  const normalized = input.question.toLowerCase();
+  const wantsGraph = /\b(graph|map|topolog|dependency|dependencies|relationship|relationships|lineage|integration|interfaces?)\b/i.test(
+    input.question,
+  );
+  const wantsChart = !wantsGraph && /\b(chart|visuali[sz]e|visual|plot|waterfall)\b/i.test(input.question);
+  const wantsTable = /\b(table|list|show|compare|comparing)\b/i.test(input.question);
+  const citation = {
+    id: "c1",
+    label: `Home KNOW read model for ${input.tenantKey}`,
+    sourceClass: "tenant-fact" as const,
+    sourceFile: null,
+    sourceRowNumber: null,
+    excerpt: "Home KNOW fallback guard returned a specific artifact gap instead of a blank response.",
+    confidence: "low" as const,
+  };
+  const gaps = [
+    {
+      id: "gap-home-know-blank-guard",
+      dimensionId: wantsGraph ? "relationship_graph" : wantsChart ? "chart_artifact" : "home_read_model",
+      objectType: wantsGraph ? "relationship edge" : wantsChart ? "numeric series" : "home read model",
+      expectedField: wantsGraph ? "source_to_target_edge_pair" : wantsChart ? "chart_value_series" : "query_result_rows",
+      displayLabel: wantsGraph ? "Graph edge pairs" : wantsChart ? "Chart value series" : "Home read-model rows",
+      severity: "high" as const,
+      message: wantsGraph
+        ? "source-to-target integration edge pairs did not return for this graph request"
+        : wantsChart
+          ? "the numeric value series needed for this chart did not return for this request"
+          : "Home read-model rows did not return for this request",
+      citationIds: [citation.id],
+    },
+  ];
+  return {
+    mode: "KNOW",
+    tenantKey: input.tenantKey,
+    question: input.question,
+    intent: wantsChart || wantsGraph ? "chart" : wantsTable ? "table" : "gap",
+    answerStatus: "partial",
+    prose: "Read: I could not assemble a complete Home artifact for this request, so I am returning the specific evidence gap instead of a blank answer.",
+    dimensionsUsed: [wantsGraph ? "relationship_graph" : wantsChart ? "chart_artifact" : "home_read_model"],
+    facts: [],
+    tables: wantsTable
+      ? [
+          {
+            id: "home-read-model-gap-table",
+            title: "Home Artifact Gap",
+            dimensionId: "home_read_model",
+            columns: [
+              { key: "request", label: "Request" },
+              { key: "gap", label: "Specific Gap" },
+            ],
+            rows: [
+              {
+                request: normalized.includes("security")
+                  ? "security/compliance table"
+                  : normalized.includes("initiative")
+                    ? "initiative comparison table"
+                    : "requested Home table",
+                gap: gaps[0]?.message ?? "Home read-model rows did not return for this request",
+              },
+            ],
+            citationIds: [citation.id],
+          },
+        ]
+      : [],
+    charts: wantsChart
+      ? [
+          {
+            id: "home-chart-gap",
+            title: "Chart Data Gap",
+            kind: "bar",
+            type: "bar",
+            dimensionId: "chart_artifact",
+            data: [],
+            sourceIds: [],
+            citationIds: [citation.id],
+            caveats: [gaps[0]?.message ?? "chart value series missing"],
+            status: "unavailable",
+          },
+        ]
+      : [],
+    graphs: wantsGraph
+      ? [
+          {
+            id: "home-graph-gap",
+            title: "Graph Edge Gap",
+            nodes: [],
+            edges: [],
+            nodeTypes: [],
+            edgeTypes: [],
+            sourceIds: [],
+            citationIds: [citation.id],
+            confidence: "low",
+            gaps: [gaps[0]?.message ?? "source-to-target integration edges missing"],
+            inferredEdges: false,
+            warning: gaps[0]?.message,
+          },
+        ]
+      : [],
+    gaps,
+    conflicts: [],
+    citations: [citation],
+    handoff: null,
+    safety: {
+      serverValidated: true,
+      blockedExperts: true,
+      blockedDecisionFrames: true,
+      blockedInternalCodes: true,
+      unsupportedClaimsRemoved: 0,
+      frontendTripwireShouldFire: false,
+    },
   };
 }
 

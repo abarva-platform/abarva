@@ -144,6 +144,196 @@ const apexPacket: HomeKnowPacket = {
   conflicts: [],
 };
 
+const skyharborPacket: HomeKnowPacket = {
+  ...apexPacket,
+  coverage: [
+    ...apexPacket.coverage.map((row) => ({ ...row, tenant_key: "skyharbor-air" })),
+    {
+      tenant_key: "skyharbor-air",
+      dimension_id: "data_analytics_estate",
+      dimension_label: "Data & Analytics Estate",
+      record_count: 8,
+      fact_count: 48,
+      relationship_count: 12,
+      source_count: 1,
+      gap_count: 1,
+      conflict_count: 0,
+      last_loaded_at: "2026-06-23T00:00:00Z",
+      trust_score: 88,
+    },
+    {
+      tenant_key: "skyharbor-air",
+      dimension_id: "infrastructure_cloud",
+      dimension_label: "Infrastructure & Cloud",
+      record_count: 6,
+      fact_count: 36,
+      relationship_count: 4,
+      source_count: 1,
+      gap_count: 1,
+      conflict_count: 0,
+      last_loaded_at: "2026-06-23T00:00:00Z",
+      trust_score: 84,
+    },
+    {
+      tenant_key: "skyharbor-air",
+      dimension_id: "security_compliance",
+      dimension_label: "Security & Compliance",
+      record_count: 5,
+      fact_count: 30,
+      relationship_count: 2,
+      source_count: 1,
+      gap_count: 2,
+      conflict_count: 0,
+      last_loaded_at: "2026-06-23T00:00:00Z",
+      trust_score: 82,
+    },
+    {
+      tenant_key: "skyharbor-air",
+      dimension_id: "initiatives_roadmap",
+      dimension_label: "Initiatives & Roadmap",
+      record_count: 12,
+      fact_count: 72,
+      relationship_count: 8,
+      source_count: 1,
+      gap_count: 2,
+      conflict_count: 0,
+      last_loaded_at: "2026-06-23T00:00:00Z",
+      trust_score: 86,
+    },
+  ],
+  org: apexPacket.org.map((row) => ({ ...row, tenant_key: "skyharbor-air" })),
+  applications: [
+    {
+      tenant_key: "skyharbor-air",
+      application_name: "Flight Operations Control",
+      domain: "operations",
+      primary_business_owner: "COO",
+      technical_owner_team: "Operations Technology",
+      technical_owner_role: "VP Operations Technology",
+      criticality: "critical",
+      annual_run_cost_usd: 8400000,
+      source_file: "family-2-technology-estate/F05_applications-systems.csv",
+      source_row_number: 5,
+      confidence: 0.91,
+    },
+  ],
+  vendors: [
+    {
+      tenant_key: "skyharbor-air",
+      vendor_name: "Sabre",
+      category: "airline operations",
+      annual_spend_usd: 18000000,
+      renewal_risk: "medium",
+      business_owner: "COO",
+      technology_owner: "Operations Technology",
+      source_file: "family-4-financial-commercial/F11_vendors-contracts-licenses.csv",
+      source_row_number: 4,
+      confidence: 0.9,
+    },
+  ],
+  budgets: [
+    {
+      tenant_key: "skyharbor-air",
+      function_or_platform: "Operations Technology",
+      run_budget_usd: 62000000,
+      change_budget_usd: 28000000,
+      ai_budget_usd: 3000000,
+      owner_role: "VP Operations Technology",
+      source_file: "family-4-financial-commercial/F12_it-budget-financials.csv",
+      source_row_number: 3,
+      confidence: 0.9,
+    },
+  ],
+  relationships: [
+    {
+      tenant_key: "skyharbor-air",
+      relationship_key: "sky-rel-1",
+      relationship_type: "feeds",
+      from_external_id: "SYS-FLIGHT-OPS",
+      to_external_id: "DP-OPS-360",
+      source_file: "family-3-data-connectivity/F10_integrations-interfaces.csv",
+      source_row_number: 9,
+      properties: { domain: "operations" },
+    },
+    {
+      tenant_key: "skyharbor-air",
+      relationship_key: "sky-rel-2",
+      relationship_type: "supports",
+      from_external_id: "VENDOR-SABRE",
+      to_external_id: "SYS-FLIGHT-OPS",
+      source_file: "family-4-financial-commercial/F11_vendors-contracts-licenses.csv",
+      source_row_number: 4,
+      properties: { domain: "operations" },
+    },
+  ],
+  records: [
+    {
+      tenant_key: "skyharbor-air",
+      canonical_record_id: "rec-sky-data-product",
+      source_record_id: "DP-OPS-360",
+      record_type: "data_product",
+      dimension: "data_analytics_estate",
+      payload: {
+        data_product_name: "Operations 360 Data Product",
+        domain: "operations",
+        owning_team: "Operations Analytics",
+        maturity: "silver",
+      },
+    },
+    {
+      tenant_key: "skyharbor-air",
+      canonical_record_id: "rec-sky-system",
+      source_record_id: "SYS-FLIGHT-OPS",
+      record_type: "system_of_record",
+      dimension: "applications_core_systems",
+      payload: {
+        system_name: "Flight Operations Control",
+        business_capability: "irregular operations management",
+        owner_team: "Operations Technology",
+        lifecycle_status: "run",
+      },
+    },
+    {
+      tenant_key: "skyharbor-air",
+      canonical_record_id: "rec-sky-initiative",
+      source_record_id: "INIT-CONTACT-CENTER-AI",
+      record_type: "initiative",
+      dimension: "initiatives_roadmap",
+      payload: {
+        initiative_name: "Contact Center AI",
+        business_impact: "front-office service productivity",
+        risk_level: "medium",
+        owning_team: "Customer Operations",
+        status: "mobilize",
+      },
+    },
+    {
+      tenant_key: "skyharbor-air",
+      canonical_record_id: "rec-sky-vendor",
+      source_record_id: "VENDOR-SABRE",
+      record_type: "vendor",
+      dimension: "vendors_contracts",
+      payload: {
+        vendor_name: "Sabre",
+        category: "airline operations",
+      },
+    },
+  ],
+  gaps: [
+    {
+      tenant_key: "skyharbor-air",
+      dimension_id: "security_compliance",
+      object_type: "control",
+      expected_field: "severity",
+      display_label: "Security gap severity",
+      severity: "medium",
+      missing_count: 1,
+      source_file: "family-6-governance-ai-evidence/F16_security-risk-compliance.csv",
+    },
+  ],
+  conflicts: [],
+};
+
 describe("Home KNOW contract engine", () => {
   it("keeps server intent authoritative", () => {
     expect(
@@ -349,6 +539,76 @@ describe("Home KNOW contract engine", () => {
     expect(response.safety.unsupportedClaimsRemoved).toBeGreaterThan(0);
     expect(response.safety.frontendTripwireShouldFire).toBe(false);
     expect(response.prose).not.toMatch(/DORA|Wave-0|local env|APX-APP|the cited record/i);
+  });
+
+  it.each([
+    "Show our data products in a table with domain and owning team.",
+    "Give me a table comparing our top three initiatives on impact, risk, and owner.",
+    "List our systems of record in a table with the business capability each supports.",
+    "Table our IT budget by category with run vs change split.",
+  ])("keeps SkyHarbor table artifact prompts nonblank: %s", (question) => {
+    const response = buildHomeKnowResponseFromPacket({
+      tenantKey: "skyharbor-air",
+      question,
+      packet: skyharborPacket,
+    });
+
+    expect(response.prose.trim().length).toBeGreaterThan(0);
+    expect(response.tables.length).toBeGreaterThan(0);
+    expect(response.citations.length).toBeGreaterThan(0);
+    assertNoForbiddenHomeText(response);
+  });
+
+  it.each([
+    "Visualize how the next $30M would be allocated across the top bets.",
+    "Visualize vendor spend concentration across our top contracts.",
+    "Chart the adoption curve we should expect for the contact-center / front-office AI bet.",
+  ])("keeps SkyHarbor chart artifact prompts nonblank: %s", (question) => {
+    const response = buildHomeKnowResponseFromPacket({
+      tenantKey: "skyharbor-air",
+      question,
+      packet: skyharborPacket,
+    });
+
+    expect(response.prose.trim().length).toBeGreaterThan(0);
+    expect(response.charts.length).toBeGreaterThan(0);
+    expect(response.citations.length).toBeGreaterThan(0);
+    assertNoForbiddenHomeText(response);
+  });
+
+  it.each([
+    "Show me the dependency graph of our core systems.",
+    "Map the relationships between our data products and the systems that feed them.",
+    "Show the relationship graph between vendors and the systems they support.",
+  ])("keeps SkyHarbor graph artifact prompts nonblank: %s", (question) => {
+    const response = buildHomeKnowResponseFromPacket({
+      tenantKey: "skyharbor-air",
+      question,
+      packet: skyharborPacket,
+    });
+
+    expect(response.prose.trim().length).toBeGreaterThan(0);
+    expect(response.graphs.length).toBeGreaterThan(0);
+    expect(response.citations.length).toBeGreaterThan(0);
+    assertNoForbiddenHomeText(response);
+  });
+
+  it.each([
+    "What will our exact cloud bill be in 2027, to the dollar?",
+    "Tell me the exact date our lakehouse migration completes.",
+    "Give me the precise headcount of our data engineering team next quarter.",
+  ])("keeps SkyHarbor exact questions honest and nonblank: %s", (question) => {
+    const response = buildHomeKnowResponseFromPacket({
+      tenantKey: "skyharbor-air",
+      question,
+      packet: skyharborPacket,
+    });
+
+    expect(response.prose.trim().length).toBeGreaterThan(0);
+    expect(response.answerStatus).not.toBe("answered");
+    expect(response.gaps.length).toBeGreaterThan(0);
+    expect(response.prose).toMatch(/can't give that exact value/i);
+    assertNoForbiddenHomeText(response);
   });
 });
 

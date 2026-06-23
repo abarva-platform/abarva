@@ -132,6 +132,7 @@ export interface HomeKnowPacket {
   records: HomeContextRecordRow[];
   gaps: HomeGapRegisterViewRow[];
   conflicts: HomeConflictRegisterViewRow[];
+  readErrors?: string[];
 }
 
 const BLOCKED_PUBLIC_TEXT =
@@ -168,16 +169,51 @@ export async function fetchHomeKnowPacket(tenantKey: string): Promise<HomeKnowPa
   // ask can spike the ACA/Postgres connection pool and produce blank answers.
   // Keep the packet deterministic and low-pressure until this is replaced by a
   // single materialized Home packet query.
-  const coverage = await fetchRows<HomeDimensionCoverageRow>("mv_home_dimension_coverage_view", tenantKey);
-  const org = await fetchRows<HomeItOrgViewRow>("mv_home_it_org_view", tenantKey);
-  const applications = await fetchRows<HomeApplicationOwnershipViewRow>("mv_home_application_ownership_view", tenantKey);
-  const vendors = await fetchRows<HomeVendorLandscapeViewRow>("mv_home_vendor_landscape_view", tenantKey);
-  const budgets = await fetchRows<HomeBudgetPortfolioViewRow>("mv_home_budget_by_portfolio_view", tenantKey);
-  const relationships = await fetchRows<HomeRelationshipRow>("enterprise_context_relationships", tenantKey, 10000);
-  const records = await fetchRows<HomeContextRecordRow>("enterprise_context_records", tenantKey, 10000);
-  const gaps = await fetchRows<HomeGapRegisterViewRow>("mv_home_gap_register_view", tenantKey);
-  const conflicts = await fetchRows<HomeConflictRegisterViewRow>("mv_home_conflict_register_view", tenantKey);
-  return { coverage, org, applications, vendors, budgets, relationships, records, gaps, conflicts };
+  const readErrors: string[] = [];
+  const coverage = await fetchRowsOrEmpty<HomeDimensionCoverageRow>(
+    "mv_home_dimension_coverage_view",
+    tenantKey,
+    readErrors,
+  );
+  const org = await fetchRowsOrEmpty<HomeItOrgViewRow>("mv_home_it_org_view", tenantKey, readErrors);
+  const applications = await fetchRowsOrEmpty<HomeApplicationOwnershipViewRow>(
+    "mv_home_application_ownership_view",
+    tenantKey,
+    readErrors,
+  );
+  const vendors = await fetchRowsOrEmpty<HomeVendorLandscapeViewRow>(
+    "mv_home_vendor_landscape_view",
+    tenantKey,
+    readErrors,
+  );
+  const budgets = await fetchRowsOrEmpty<HomeBudgetPortfolioViewRow>(
+    "mv_home_budget_by_portfolio_view",
+    tenantKey,
+    readErrors,
+  );
+  const relationships = await fetchRowsOrEmpty<HomeRelationshipRow>(
+    "enterprise_context_relationships",
+    tenantKey,
+    readErrors,
+    5000,
+  );
+  const records = await fetchRowsOrEmpty<HomeContextRecordRow>(
+    "enterprise_context_records",
+    tenantKey,
+    readErrors,
+    5000,
+  );
+  const gaps = await fetchRowsOrEmpty<HomeGapRegisterViewRow>(
+    "mv_home_gap_register_view",
+    tenantKey,
+    readErrors,
+  );
+  const conflicts = await fetchRowsOrEmpty<HomeConflictRegisterViewRow>(
+    "mv_home_conflict_register_view",
+    tenantKey,
+    readErrors,
+  );
+  return { coverage, org, applications, vendors, budgets, relationships, records, gaps, conflicts, readErrors };
 }
 
 export async function buildHomeKnowResponse(input: HomeKnowAskRequest): Promise<HomeKnowResponse> {
@@ -206,14 +242,17 @@ export function buildHomeKnowResponseFromPacket(input: {
   const intent = classifyHomeKnowIntent(question);
   const dimensionsUsed = dimensionsForIntent(intent, question, input.packet);
   const citations = buildCitations(input.packet, dimensionsUsed);
-  const gaps = buildGaps(input.packet.gaps, citations);
+  const gaps = buildGaps(input.packet.gaps, citations, input.packet.readErrors);
   const conflicts = buildConflicts(input.packet.conflicts, citations);
   const exactGap = exactUnknowableGap(question);
 
   if (exactGap) {
     const dimensions = exactGap.dimensionIds.length > 0 ? exactGap.dimensionIds : dimensionsUsed;
     const exactCitations = buildCitations(input.packet, dimensions);
-    const exactGaps = [exactGap.gap(exactCitations), ...buildGaps(input.packet.gaps, exactCitations).slice(0, 3)];
+    const exactGaps = [
+      exactGap.gap(exactCitations),
+      ...buildGaps(input.packet.gaps, exactCitations, input.packet.readErrors).slice(0, 3),
+    ];
     return validateHomeKnowResponse({
       mode: "KNOW",
       tenantKey: input.tenantKey,
@@ -388,6 +427,41 @@ async function fetchRows<T extends { tenant_key: string }>(
     throw new Error(`${table} fetch failed: ${error.message}`);
   }
   return (data ?? []) as unknown as T[];
+}
+
+async function fetchRowsOrEmpty<T extends { tenant_key: string }>(
+  table: string,
+  tenantKey: string,
+  readErrors: string[],
+  limit = 500,
+): Promise<T[]> {
+  try {
+    return await fetchRows<T>(table, tenantKey, limit);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn(`[home-know.read-model] ${table} returned no usable rows for ${tenantKey}: ${message}`);
+    readErrors.push(readModelGapMessage(table));
+    return [];
+  }
+}
+
+function readModelGapMessage(table: string): string {
+  if (table.includes("relationship")) {
+    return "source-to-target integration edge pairs did not return from the Home relationship view for this request";
+  }
+  if (table.includes("application")) {
+    return "application ownership rows did not return from the Home application view for this request";
+  }
+  if (table.includes("vendor")) {
+    return "vendor-to-system support rows did not return from the Home vendor view for this request";
+  }
+  if (table.includes("budget")) {
+    return "run/change line-item split rows did not return from the Home budget view for this request";
+  }
+  if (table.includes("record")) {
+    return "source record rows did not return from the Home context record view for this request";
+  }
+  return "Home read-model rows did not return for this request";
 }
 
 function defaultSafety() {
@@ -640,6 +714,46 @@ function buildTablesForIntent(
   const normalized = question.toLowerCase();
   if (intent === "gap") return [gapTable(packet.gaps, citations)];
   if (intent === "browse") return [coverageTable(packet.coverage, citations)];
+  if (/\b(data product|analytics|data & analytics|data and analytics)\b/.test(normalized)) {
+    return [
+      recordTable({
+        id: "home-data-products",
+        title: "Data Products and Ownership",
+        dimensionId: "data_analytics_estate",
+        rows: recordsForDimensions(packet.records, ["data_analytics_estate"]),
+        citations,
+        note: "Shows loaded data-product rows where present; missing domain or owning-team fields are explicit field gaps.",
+      }),
+    ];
+  }
+  if (/\b(cloud|infrastructure|volumetrics)\b/.test(normalized)) {
+    return [
+      recordTable({
+        id: "home-cloud-platforms",
+        title: "Cloud Platforms and Volumetrics",
+        dimensionId: "infrastructure_cloud",
+        rows: recordsForDimensions(packet.records, ["infrastructure_cloud"]),
+        citations,
+        note: "Shows loaded cloud/infrastructure rows where present; missing provider, volume, or cost fields remain gaps.",
+      }),
+    ];
+  }
+  if (/\b(security|compliance|control|controls|posture)\b/.test(normalized)) {
+    const securityGaps = packet.gaps.filter((row) => row.dimension_id === "security_compliance");
+    return [gapTable(securityGaps.length > 0 ? securityGaps : packet.gaps, citations)];
+  }
+  if (/\b(ai|initiative|initiatives|portfolio|value|impact|effort)\b/.test(normalized)) {
+    return [
+      recordTable({
+        id: "home-initiatives",
+        title: "Initiatives by Impact, Risk, and Owner",
+        dimensionId: "initiatives_roadmap",
+        rows: recordsForDimensions(packet.records, ["initiatives_roadmap", "ai_automation_footprint"]).slice(0, 3),
+        citations,
+        note: "Shows loaded initiative rows; missing impact, effort, realized value, or owner fields remain gaps.",
+      }),
+    ];
+  }
   if (/\b(org|team|portfolio|lead|owner|ownership|who leads)\b/.test(normalized)) {
     return [orgTable(packet.org, citations)];
   }
@@ -835,6 +949,106 @@ function gapTable(rows: HomeGapRegisterViewRow[], citations: HomeKnowCitation[])
   };
 }
 
+function recordTable(input: {
+  id: string;
+  title: string;
+  dimensionId: string;
+  rows: HomeContextRecordRow[];
+  citations: HomeKnowCitation[];
+  note?: string;
+}): HomeKnowTable {
+  return {
+    id: input.id,
+    title: input.title,
+    dimensionId: input.dimensionId,
+    columns: [
+      { key: "name", label: "Name" },
+      { key: "type", label: "Type" },
+      { key: "domain", label: "Domain / Capability" },
+      { key: "owner", label: "Owner / Team" },
+      { key: "status", label: "Status / Maturity" },
+      { key: "measure", label: "Loaded Measure" },
+    ],
+    rows: input.rows.slice(0, 25).map((row) => {
+      const payload = row.payload ?? {};
+      return {
+        name:
+          cleanLabel(
+            firstPayloadValue(payload, [
+              "name",
+              "label",
+              "title",
+              "data_product_name",
+              "product_name",
+              "application_name",
+              "system_name",
+              "platform_name",
+              "initiative_name",
+              "capability_name",
+            ]),
+          ) ?? "Name field missing",
+        type: cleanLabel(row.record_type) ?? "Type field missing",
+        domain:
+          cleanLabel(
+            firstPayloadValue(payload, [
+              "domain",
+              "business_domain",
+              "capability",
+              "capability_name",
+              "business_capability",
+              "category",
+            ]),
+          ) ?? "Domain field missing",
+        owner:
+          cleanLabel(
+            firstPayloadValue(payload, [
+              "owning_team",
+              "owner_team",
+              "team_name",
+              "owner",
+              "business_owner",
+              "technology_owner",
+              "executive_owner_role",
+              "primary_business_owner",
+            ]),
+          ) ?? "Owner field missing",
+        status:
+          cleanLabel(
+            firstPayloadValue(payload, [
+              "status",
+              "lifecycle_status",
+              "maturity",
+              "stage",
+              "risk",
+              "risk_level",
+              "posture",
+            ]),
+          ) ?? "Status field missing",
+        measure:
+          cleanLabel(
+            firstPayloadValue(payload, [
+              "impact",
+              "business_impact",
+              "annual_spend_usd",
+              "run_budget_usd",
+              "change_budget_usd",
+              "volumetric",
+              "volume",
+              "record_count",
+            ]),
+          ) ?? "Measure field missing",
+      };
+    }),
+    citationIds: citationIdForDimension(input.dimensionId, input.citations),
+    note: input.note,
+  };
+}
+
+function recordsForDimensions(rows: HomeContextRecordRow[], dimensions: string[]): HomeContextRecordRow[] {
+  const wanted = new Set(dimensions);
+  return rows.filter((row) => row.dimension && wanted.has(row.dimension));
+}
+
 function vendorChart(rows: HomeVendorLandscapeViewRow[], citations: HomeKnowCitation[]): HomeKnowChart {
   return {
     id: "home-vendor-spend-chart",
@@ -946,6 +1160,13 @@ function recordDistributionChart(
       "Record";
     counts.set(label, (counts.get(label) ?? 0) + 1);
   }
+  if (counts.size === 0) {
+    for (const row of packet.coverage) {
+      const label = cleanLabel(row.dimension_label) ?? cleanLabel(row.dimension_id) ?? "Loaded context";
+      const value = number(row.record_count);
+      if (value > 0) counts.set(label, value);
+    }
+  }
   return {
     id: "home-record-distribution-chart",
     title,
@@ -959,7 +1180,9 @@ function recordDistributionChart(
     sourceIds: [],
     citationIds: citations.map((citation) => citation.id).slice(0, 8),
     caveats: [
-      "Specific initiative spend, realized value, or effort fields were not all present, so this visual uses loaded record distribution rather than invented financial figures.",
+      counts.size > 0
+        ? "Specific initiative spend, realized value, or effort fields were not all present, so this visual uses loaded record distribution rather than invented financial figures."
+        : "The requested numeric series is missing; Home returns this chart shell with a gap instead of inventing values.",
     ],
     status: "tenant-fact",
   };
@@ -1186,8 +1409,12 @@ function specificGraphGap(normalizedQuestion: string): string {
   return "source-to-target integration edges missing for this graph request";
 }
 
-function buildGaps(rows: HomeGapRegisterViewRow[], citations: HomeKnowCitation[]): HomeKnowGap[] {
-  return rows.map((row, index) => ({
+function buildGaps(
+  rows: HomeGapRegisterViewRow[],
+  citations: HomeKnowCitation[],
+  readErrors: string[] = [],
+): HomeKnowGap[] {
+  const gaps = rows.map((row, index) => ({
     id: `gap-${index + 1}`,
     dimensionId: row.dimension_id,
     objectType: row.object_type,
@@ -1197,6 +1424,19 @@ function buildGaps(rows: HomeGapRegisterViewRow[], citations: HomeKnowCitation[]
     message: `${row.display_label} is not loaded for ${number(row.missing_count)} ${row.object_type} row(s).`,
     citationIds: citations.map((citation) => citation.id),
   }));
+  for (const [index, message] of readErrors.entries()) {
+    gaps.push({
+      id: `gap-read-model-${index + 1}`,
+      dimensionId: "home_read_model",
+      objectType: "home read model",
+      expectedField: "query_result_rows",
+      displayLabel: "Home read-model rows",
+      severity: "medium",
+      message,
+      citationIds: citations.map((citation) => citation.id).slice(0, 4),
+    });
+  }
+  return gaps;
 }
 
 function buildConflicts(
