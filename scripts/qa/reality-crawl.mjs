@@ -80,7 +80,15 @@ async function ask(cookie, q, client) {
     while ((nl = buf.indexOf("\n")) >= 0) { apply(buf.slice(0, nl)); buf = buf.slice(nl + 1); }
   }
   apply(buf);
-  return { prose, answer, experts, blocked, latencyMs: Date.now() - t0 };
+  const visibleProse = answer?.prose || prose;
+  return {
+    prose: visibleProse,
+    streamProse: prose,
+    answer,
+    experts,
+    blocked,
+    latencyMs: Date.now() - t0,
+  };
 }
 
 function exhibits(answer, prose) {
@@ -175,7 +183,10 @@ async function runTenant(t) {
       rec = {
         tenant: t.key, id: item.id, category: item.category, q,
         pass: s.pass, reason: s.reason,
-        prose: r.prose, exhibits: s.sig.exhibits, experts: r.experts.map((e) => e.name),
+        prose: r.prose,
+        streamProse: r.streamProse,
+        exhibits: s.sig.exhibits,
+        experts: r.experts.map((e) => e.name),
         citations: (r.answer?.citations || []).map((c) => c.sourceClass), latencyMs: r.latencyMs,
         signals: { grounded: s.sig.grounded, noRawId: s.sig.noRawId, hedged: s.sig.hedged, blocked: s.sig.blocked },
         judge: jd,
