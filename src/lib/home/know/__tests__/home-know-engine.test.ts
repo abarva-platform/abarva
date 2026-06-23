@@ -420,7 +420,8 @@ describe("Home KNOW contract engine", () => {
 
     expect(response.intent).toBe("table");
     expect(response.answerStatus).toBe("no_data");
-    expect(response.prose).toBe("I do not see that in the loaded data.");
+    expect(response.prose).toMatch(/related tenant context/i);
+    expect(response.prose.length).toBeGreaterThan(120);
     expect(response.tables[0]?.id).toBe("home-vendor-landscape");
     expect(response.tables[0]?.rows).toEqual([]);
   });
