@@ -197,6 +197,58 @@ describe("program access policy", () => {
     expect(policy.canApproveGates).toBe(true);
   });
 
+  it("grants tenant-scoped Moves admin permissions to the matching automation agent", async () => {
+    setupRows({});
+    const { loadUserProgramAccessPolicy, canReadProgram } =
+      await import("../program-access-policy");
+    const ctx = {
+      clientId: "client-meridian",
+      clientKey: "meridian",
+      userId: "clerk:user_agent_meridian",
+      clerkUserId: "user_agent_meridian",
+      role: "maestro",
+      email: "meridian-agent@abarva.example.com",
+    };
+
+    const policy = await loadUserProgramAccessPolicy(ctx);
+
+    expect(policy.accessLevel).toBe("client_admin");
+    expect(policy.programScope).toBe("all_client_programs");
+    expect(policy.programIdsAllowed).toBeNull();
+    expect(policy.canCreatePrograms).toBe(true);
+    expect(policy.canApproveGates).toBe(true);
+    expect(policy.canGenerateDeliverables).toBe(true);
+    expect(policy.canPublishDeliverables).toBe(true);
+    expect(policy.canViewFinancialData).toBe(false);
+    await expect(canReadProgram(ctx, "move-any")).resolves.toBe(true);
+    expect(fromMock).not.toHaveBeenCalled();
+  });
+
+  it("does not grant an automation agent access to a different active tenant", async () => {
+    setupRows({
+      persons: null,
+      person_client_memberships: null,
+      engagement_participants: [],
+    });
+    const { loadUserProgramAccessPolicy, canReadProgram } =
+      await import("../program-access-policy");
+    const ctx = {
+      clientId: "client-skyharbor",
+      clientKey: "skyharbor",
+      userId: "clerk:user_agent_meridian",
+      clerkUserId: "user_agent_meridian",
+      role: "client_viewer",
+      email: "meridian-agent@abarva.example.com",
+    };
+
+    const policy = await loadUserProgramAccessPolicy(ctx);
+
+    expect(policy.accessLevel).toBe("no_program_access");
+    expect(policy.programIdsAllowed).toEqual([]);
+    expect(policy.canCreatePrograms).toBe(false);
+    await expect(canReadProgram(ctx, "sky-move")).resolves.toBe(false);
+  });
+
   it("does not over-grant non-admin Clerk tenant roles", async () => {
     setupRows({
       person_client_memberships: {
