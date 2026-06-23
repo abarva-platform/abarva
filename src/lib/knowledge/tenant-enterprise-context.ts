@@ -12,6 +12,7 @@ import {
 } from "@/lib/data-plane/read-adapters/azureSession";
 import { canonicalTenantKey, tenantAliasesFor } from "@/lib/tenant/aliases";
 import type { CanonicalTenant } from "@/lib/tenant/CanonicalTenant";
+import type { AskStructuredTable } from "@/lib/intelligence/ask/types";
 
 export interface TenantEnterpriseSource {
   type: "TENANT";
@@ -19,6 +20,9 @@ export interface TenantEnterpriseSource {
   id: string;
   detail: string;
   confidence: number;
+  structured?: {
+    tables: AskStructuredTable[];
+  };
 }
 
 export type TenantStructuredSource = TenantEnterpriseSource & {
@@ -800,6 +804,41 @@ async function readStructuredTopApplicationsSource(
       "Do not substitute industry-typical provider EHR or interoperability systems unless they appear in these tenant rows.",
     ].join("\n- "),
     confidence: 0.99,
+    structured: {
+      tables: [
+        {
+          id: `${tenantKey}-top-applications`,
+          title: "Top Applications by Criticality",
+          columns: [
+            { key: "application", label: "Application" },
+            { key: "vendor", label: "Vendor" },
+            { key: "function", label: "Function" },
+            { key: "criticality", label: "Criticality" },
+            { key: "annualCost", label: "Annual Cost", format: "currency", align: "right" },
+            { key: "status", label: "Status" },
+          ],
+          rows: rows.map((row) => ({
+            application: row.name,
+            vendor: row.vendor ?? "unknown",
+            function: row.business_function ?? "unknown",
+            criticality: row.criticality ?? "unknown",
+            annualCost: numericValue(row.annual_cost_usd),
+            status: row.status ?? "unknown",
+          })),
+          chart: {
+            labelKey: "application",
+            valueKey: "annualCost",
+            title: "Annual Application Cost",
+          },
+          graph: {
+            fromKey: "application",
+            toKey: "function",
+            labelKey: "criticality",
+            title: "Application Ownership Map",
+          },
+        },
+      ],
+    },
   };
 }
 
@@ -865,6 +904,39 @@ async function readStructuredTopVendorsSource(
       ),
     ].join("\n- "),
     confidence: 0.99,
+    structured: {
+      tables: [
+        {
+          id: `${tenantKey}-top-vendors`,
+          title: "Top Vendors by Annual Spend",
+          columns: [
+            { key: "vendor", label: "Vendor" },
+            { key: "category", label: "Category" },
+            { key: "annualValue", label: "Annual Value", format: "currency", align: "right" },
+            { key: "renewalDate", label: "Renewal Date", format: "date" },
+            { key: "concentration", label: "Concentration", format: "percent", align: "right" },
+          ],
+          rows: rows.map((row) => ({
+            vendor: row.vendor_name,
+            category: row.contract_category ?? "unknown",
+            annualValue: numericValue(row.annual_contract_value_usd),
+            renewalDate: formatDate(row.renewal_date),
+            concentration: numericValue(row.concentration_pct),
+          })),
+          chart: {
+            labelKey: "vendor",
+            valueKey: "annualValue",
+            title: "Annual Vendor Spend",
+          },
+          graph: {
+            fromKey: "vendor",
+            toKey: "category",
+            labelKey: "renewalDate",
+            title: "Vendor Category Map",
+          },
+        },
+      ],
+    },
   };
 }
 
@@ -907,6 +979,44 @@ async function readStructuredVendorRenewalsSource(
       }),
     ].join("\n- "),
     confidence: 0.99,
+    structured: {
+      tables: [
+        {
+          id: `${tenantKey}-vendor-renewals-6mo`,
+          title: "Vendor Renewals in the Next Six Months",
+          columns: [
+            { key: "vendor", label: "Vendor" },
+            { key: "renewalDate", label: "Renewal Date", format: "date" },
+            { key: "annualValue", label: "Annual Value", format: "currency", align: "right" },
+            { key: "exitTerms", label: "Exit Terms" },
+            { key: "aiClauses", label: "AI Clauses" },
+            { key: "indemnity", label: "Indemnity" },
+          ],
+          rows: rows.map((row) => ({
+            vendor: row.vendor_name,
+            renewalDate: formatDate(row.renewal_date),
+            annualValue: numericValue(row.annual_contract_value_usd),
+            exitTerms:
+              typeof row.exit_terms_jsonb?.summary === "string"
+                ? row.exit_terms_jsonb.summary
+                : "not specified",
+            aiClauses: row.ai_usage_clauses ? "yes" : "no",
+            indemnity: row.indemnity_provided ? "yes" : "no",
+          })),
+          chart: {
+            labelKey: "vendor",
+            valueKey: "annualValue",
+            title: "Renewal Exposure by Vendor",
+          },
+          graph: {
+            fromKey: "vendor",
+            toKey: "exitTerms",
+            labelKey: "renewalDate",
+            title: "Renewal Exit-Term Exposure",
+          },
+        },
+      ],
+    },
   };
 }
 
@@ -961,6 +1071,27 @@ async function readStructuredInitiativesSource(
         ...rows.map((row) => formatInitiativeStructuredLine(row)),
       ].join("\n- "),
       confidence: 0.99,
+      structured: {
+        tables: [
+          {
+            id: `${tenantKey}-initiatives-by-stage`,
+            title: "Active Initiatives by Stage",
+            columns: [
+              { key: "stage", label: "Stage" },
+              { key: "count", label: "Count", format: "number", align: "right" },
+            ],
+            rows: Object.entries(counts).map(([stage, count]) => ({
+              stage,
+              count,
+            })),
+            chart: {
+              labelKey: "stage",
+              valueKey: "count",
+              title: "Initiative Count by Stage",
+            },
+          },
+        ],
+      },
     };
   }
   return {
@@ -978,6 +1109,51 @@ async function readStructuredInitiativesSource(
       ...rows.map(formatInitiativeStructuredLine),
     ].join("\n- "),
     confidence: 0.99,
+    structured: {
+      tables: [
+        {
+          id: opts.killOnly
+            ? `${tenantKey}-kill-initiatives`
+            : `${tenantKey}-active-initiatives`,
+          title: opts.killOnly
+            ? "Kill-Candidate Initiatives"
+            : "Active Initiatives",
+          columns: [
+            { key: "initiative", label: "Initiative" },
+            { key: "stage", label: "Stage" },
+            { key: "status", label: "Status" },
+            { key: "posture", label: "Posture" },
+            { key: "committed", label: "Committed", format: "currency", align: "right" },
+            { key: "value", label: "Value", format: "currency", align: "right" },
+          ],
+          rows: rows.map((row) => {
+            const posture =
+              typeof row.metadata?.sentinel_posture === "string"
+                ? row.metadata.sentinel_posture
+                : row.status_summary;
+            return {
+              initiative: row.name,
+              stage: row.stage ?? "unknown",
+              status: row.status_flag ?? "unknown",
+              posture: posture ?? "unknown",
+              committed: numericValue(row.committed_total_usd),
+              value: numericValue(row.measured_value_usd),
+            };
+          }),
+          chart: {
+            labelKey: "initiative",
+            valueKey: "committed",
+            title: "Committed Investment by Initiative",
+          },
+          graph: {
+            fromKey: "initiative",
+            toKey: "stage",
+            labelKey: "posture",
+            title: "Initiative Stage/Posture Map",
+          },
+        },
+      ],
+    },
   };
 }
 
@@ -1078,6 +1254,43 @@ async function readApplicationPortfolioSource(
       }),
     ].join("\n- "),
     confidence: 0.97,
+    structured: {
+      tables: [
+        {
+          id: `${tenantKey}-application-portfolio`,
+          title: "Application Portfolio",
+          columns: [
+            { key: "application", label: "Application" },
+            { key: "vendor", label: "Vendor" },
+            { key: "function", label: "Function" },
+            { key: "deployment", label: "Deployment" },
+            { key: "criticality", label: "Criticality" },
+            { key: "annualRunCost", label: "Annual Run Cost", format: "currency", align: "right" },
+            { key: "status", label: "Status" },
+          ],
+          rows: rows.map((row) => ({
+            application: row.name,
+            vendor: row.vendor ?? "unknown",
+            function: row.business_function ?? "unknown",
+            deployment: row.deployment_model ?? "unknown",
+            criticality: row.criticality ?? "unknown",
+            annualRunCost: numericValue(row.annual_cost_usd),
+            status: row.status ?? "unknown",
+          })),
+          chart: {
+            labelKey: "application",
+            valueKey: "annualRunCost",
+            title: "Annual Run Cost by Application",
+          },
+          graph: {
+            fromKey: "application",
+            toKey: "function",
+            labelKey: "vendor",
+            title: "Application to Function Map",
+          },
+        },
+      ],
+    },
   };
 }
 
@@ -1112,6 +1325,48 @@ async function readVendorContractsSource(
       }),
     ].join("\n- "),
     confidence: 0.97,
+    structured: {
+      tables: [
+        {
+          id: `${tenantKey}-vendor-contracts`,
+          title: "Vendor Contracts",
+          columns: [
+            { key: "vendor", label: "Vendor" },
+            { key: "category", label: "Category" },
+            { key: "annualValue", label: "Annual Value", format: "currency", align: "right" },
+            { key: "renewalDate", label: "Renewal Date", format: "date" },
+            { key: "exitTerms", label: "Exit Terms" },
+            { key: "aiClauses", label: "AI Clauses" },
+            { key: "indemnity", label: "Indemnity" },
+            { key: "concentration", label: "Concentration", format: "percent", align: "right" },
+          ],
+          rows: rows.map((row) => ({
+            vendor: row.vendor_name,
+            category: row.contract_category ?? "unknown",
+            annualValue: numericValue(row.annual_contract_value_usd),
+            renewalDate: formatDate(row.renewal_date),
+            exitTerms:
+              typeof row.exit_terms_jsonb?.summary === "string"
+                ? row.exit_terms_jsonb.summary
+                : "not specified",
+            aiClauses: row.ai_usage_clauses ? "yes" : "no",
+            indemnity: row.indemnity_provided ? "yes" : "no",
+            concentration: numericValue(row.concentration_pct),
+          })),
+          chart: {
+            labelKey: "vendor",
+            valueKey: "annualValue",
+            title: "Annual Contract Value by Vendor",
+          },
+          graph: {
+            fromKey: "vendor",
+            toKey: "category",
+            labelKey: "renewalDate",
+            title: "Vendor Category Map",
+          },
+        },
+      ],
+    },
   };
 }
 
@@ -1149,6 +1404,47 @@ async function readInitiativesSource(
       }),
     ].join("\n- "),
     confidence: 0.97,
+    structured: {
+      tables: [
+        {
+          id: `${tenantKey}-initiatives`,
+          title: "Initiatives",
+          columns: [
+            { key: "initiative", label: "Initiative" },
+            { key: "stage", label: "Stage" },
+            { key: "status", label: "Status" },
+            { key: "posture", label: "Posture" },
+            { key: "committed", label: "Committed", format: "currency", align: "right" },
+            { key: "value", label: "Value", format: "currency", align: "right" },
+          ],
+          rows: rows.map((row) => {
+            const posture =
+              typeof row.metadata?.sentinel_posture === "string"
+                ? row.metadata.sentinel_posture
+                : row.status_summary;
+            return {
+              initiative: row.name,
+              stage: row.stage ?? "unknown",
+              status: row.status_flag ?? "unknown",
+              posture: posture ?? "unknown",
+              committed: numericValue(row.committed_total_usd),
+              value: numericValue(row.measured_value_usd),
+            };
+          }),
+          chart: {
+            labelKey: "initiative",
+            valueKey: "committed",
+            title: "Committed Investment by Initiative",
+          },
+          graph: {
+            fromKey: "initiative",
+            toKey: "stage",
+            labelKey: "posture",
+            title: "Initiative Stage/Posture Map",
+          },
+        },
+      ],
+    },
   };
 }
 
@@ -1504,8 +1800,8 @@ function deriveAppRef(
 
 function formatUsd(value: number | string | null | undefined): string | null {
   if (value == null) return null;
-  const numeric = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(numeric)) return null;
+  const numeric = numericValue(value);
+  if (numeric == null) return null;
   if (Math.abs(numeric) >= 1_000_000_000)
     return `$${(numeric / 1_000_000_000).toFixed(1)}B`;
   if (Math.abs(numeric) >= 1_000_000)
@@ -1514,10 +1810,16 @@ function formatUsd(value: number | string | null | undefined): string | null {
   return `$${numeric.toLocaleString("en-US")}`;
 }
 
-function formatPct(value: number | string | null | undefined): string | null {
+function numericValue(value: number | string | null | undefined): number | null {
   if (value == null) return null;
   const numeric = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(numeric)) return null;
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function formatPct(value: number | string | null | undefined): string | null {
+  if (value == null) return null;
+  const numeric = numericValue(value);
+  if (numeric == null) return null;
   return `${numeric.toFixed(2)}%`;
 }
 

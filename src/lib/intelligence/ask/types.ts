@@ -36,6 +36,49 @@ export interface AskSource {
   detail: string;
   url?: string;
   confidence?: number;
+  /**
+   * Optional structured rows emitted by retrievers that already read typed
+   * source data. This is the source-owned visual contract: the model narrates
+   * and interprets, while tables/charts/graphs render from cited rows.
+   */
+  structured?: AskStructuredPayload;
+}
+
+export type AskStructuredCell = string | number | null;
+
+export interface AskStructuredColumn {
+  key: string;
+  label: string;
+  align?: 'left' | 'right' | 'center';
+  format?: 'text' | 'number' | 'currency' | 'percent' | 'date';
+}
+
+export interface AskStructuredChartHint {
+  kind?: 'cost-stack' | 'bar';
+  labelKey: string;
+  valueKey: string;
+  title?: string;
+}
+
+export interface AskStructuredGraphHint {
+  fromKey: string;
+  toKey: string;
+  labelKey?: string;
+  title?: string;
+}
+
+export interface AskStructuredTable {
+  id: string;
+  title: string;
+  columns: AskStructuredColumn[];
+  rows: Array<Record<string, AskStructuredCell>>;
+  note?: string;
+  chart?: AskStructuredChartHint;
+  graph?: AskStructuredGraphHint;
+}
+
+export interface AskStructuredPayload {
+  tables: AskStructuredTable[];
 }
 
 export interface RetrievalResult {
