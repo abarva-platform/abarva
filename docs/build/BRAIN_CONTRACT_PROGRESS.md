@@ -92,6 +92,17 @@ Each landed step: what changed, the root cause it fixed, the PR, the gate/crawl 
   Gate/crawl delta: targeted unit tests pass; not marked green until deployed app matrix + reality crawl prove the
   chart/graph lift across all five tenants. Release record:
   `docs/releases/records/2026-06-23-brain-contract-visual-source-selection.md`.
+- 2026-06-23 · Home KNOW readability + matrix expert-probe alignment candidate (PR pending): after
+  #3907 deployed at ACA revision `ca-abarva-web-lab-eastus--m90ba1a2c`, signed-in Apex browser
+  proof showed Home and Intelligence keep two visible Ask Ava turns and clear the composer. The
+  all-tenant matrix then proved render, Intelligence v2, 19 dimensions, grounded tenant citations,
+  raw-ID blocking, and tenant fence for 5/5 tenants, but failed `readable`, `visual`, and `experts`.
+  Root cause: Home KNOW prose was deterministic but too compressed for the consultant-readability
+  gate, and the matrix was requiring experts from a Home KNOW lookup even though the Home backend
+  contract blocks contributing experts. Candidate shapes Home KNOW prose as `Read:` / `Evidence:`
+  and moves the expert probe to the Intelligence-mode ask path. Not marked green until merged,
+  deployed, and the signed-in matrix flips on the deployed app. Release record:
+  `docs/releases/records/2026-06-23-home-know-readable-gate-alignment.md`.
 - 2026-06-23 · Source-owned typed visual candidate ([#3897](https://github.com/abarva-platform/abarva/pull/3897)): adds optional structured rows/columns/chart/graph
   hints to `AskSource`, populates them from Postgres-backed application, vendor, renewal, and initiative
   retrievers, and makes `buildStructuredExhibits` render visuals from those cited source rows before falling

@@ -1129,21 +1129,21 @@ function homeKnowProse(input: {
   const budgetCount = input.packet.budgets.length;
   if (input.intent === "gap") {
     return input.packet.gaps.length
-      ? `I found ${input.packet.gaps.length} Home evidence gap(s) in the loaded data.`
-      : "I do not see Home evidence gaps in the loaded data.";
+      ? `Read: I found ${input.packet.gaps.length} Home evidence gap(s) in the loaded data.\n\nEvidence: The gap register below lists the missing fields, affected object type, severity, and count from the Home read model.`
+      : "Read: I do not see Home evidence gaps in the loaded data.\n\nEvidence: The Home gap register returned no rows for this tenant.";
   }
   if (input.intent === "chart") {
     if (GRAPH_RE.test(input.question)) {
       return input.hasGraph
-        ? "Here is the relationship graph assembled from loaded tenant edge rows and source citations. The nodes and edges below come from the relationship read model; where a requested edge family is absent, Home reports that as a gap instead of inferring a dependency."
-        : "The loaded relationship rows do not contain the source-to-target edge pairs needed for that graph. Home can see related context, but the specific edge family needed for this visual is missing from the tenant relationship read model.";
+        ? "Read: The relationship graph is assembled from loaded tenant edge rows and source citations.\n\nEvidence: The nodes and edges below come from the relationship read model; where a requested edge family is absent, Home reports that as a gap instead of inferring a dependency."
+        : "Read: The loaded relationship rows do not contain the source-to-target edge pairs needed for that graph.\n\nEvidence: Home can see related context, but the specific edge family needed for this visual is missing from the tenant relationship read model.";
     }
-    return "Here is the visual cut from loaded Home context. The chart data is assembled from tenant read-model rows and cited source files, not from generated prose, so missing numeric fields remain gaps instead of becoming invented figures.";
+    return "Read: Here is the visual cut from loaded Home context.\n\nEvidence: The chart data is assembled from tenant read-model rows and cited source files, not from generated prose, so missing numeric fields remain gaps instead of becoming invented figures.";
   }
   const suffix = input.hasGaps
     ? " The loaded data also has field gaps called out below."
     : "";
-  return `Home read for ${input.tenantKey}: loaded context includes ${orgCount} IT org row(s), ${appCount} application row(s), ${vendorCount} vendor row(s), and ${budgetCount} budget row(s).${suffix}`;
+  return `Read: Home context for ${input.tenantKey} includes ${orgCount} IT org row(s), ${appCount} application row(s), ${vendorCount} vendor row(s), and ${budgetCount} budget row(s).\n\nEvidence: The tables below are built from Home read-model rows and citations, not from generated prose.${suffix}`;
 }
 
 export function validateHomeKnowResponse(response: HomeKnowResponse): HomeKnowResponse {
