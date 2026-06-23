@@ -35,7 +35,7 @@ import {
 
 interface QueryCall {
   table: string;
-  op: 'insert' | 'update';
+  op: 'insert' | 'update' | 'upsert';
   body: Record<string, unknown>;
   eqs: Array<{ col: string; val: unknown }>;
 }
@@ -51,7 +51,11 @@ function fakeSupabase(opts: { rowFor?: RowFor; errFor?: ErrFor } = {}): {
   const errFor = opts.errFor ?? (() => null);
   const calls: QueryCall[] = [];
 
-  function builder(table: string, op: 'insert' | 'update', body: Record<string, unknown>) {
+  function builder(
+    table: string,
+    op: 'insert' | 'update' | 'upsert',
+    body: Record<string, unknown>,
+  ) {
     const call: QueryCall = { table, op, body, eqs: [] };
     calls.push(call);
     const result = () => ({ data: rowFor(table, op), error: errFor(table, op) });
@@ -81,6 +85,7 @@ function fakeSupabase(opts: { rowFor?: RowFor; errFor?: ErrFor } = {}): {
     from(table: string) {
       return {
         insert: (body: Record<string, unknown>) => builder(table, 'insert', body),
+        upsert: (body: Record<string, unknown>) => builder(table, 'upsert', body),
         update: (body: Record<string, unknown>) => builder(table, 'update', body),
         select() {
           // for the deliverables_v2 existing-row lookup
@@ -260,6 +265,10 @@ describe('programs runDraftModuleDeliverable', () => {
     const res = await adapter.runDraftModuleDeliverable(DRAFT_INPUT);
     expect(res.ok).toBe(true);
     expect(res.data).toEqual({ deliverableId: 'deliv-1', versionId: 'ver-1' });
+    expect(calls.find((c) => c.table === 'deliverable_types')?.body).toMatchObject({
+      type_key: 'p2_package',
+      output_format: 'markdown',
+    });
     const inserted = calls.filter((c) => c.op === 'insert').map((c) => c.table);
     expect(inserted).toEqual(['deliverables_v2', 'deliverable_versions']);
   });
@@ -284,6 +293,7 @@ describe('programs runDraftModuleDeliverable', () => {
     const res = await adapter.runDraftModuleDeliverable(DRAFT_INPUT);
     expect(res.ok).toBe(true);
     expect(tx.state.transactions).toBe(1);
+    expect(tx.statements[0]).toContain('INSERT INTO deliverable_types');
     expect(tx.statements.some((s) => s.includes('INSERT INTO deliverables_v2'))).toBe(true);
     expect(tx.statements.some((s) => s.includes('INSERT INTO deliverable_versions'))).toBe(true);
   });

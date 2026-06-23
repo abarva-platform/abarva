@@ -385,6 +385,24 @@ export function createSupabaseProgramsWriteAdapter(
 
     async runDraftModuleDeliverable(input) {
       const sb = getClient();
+      const { error: typeErr } = await sb.from('deliverable_types').upsert(
+        {
+          type_key: input.deliverableTypeKey,
+          title: input.title,
+          description: `Generated Moves deliverable: ${input.title}`,
+          applicable_phases: [],
+          applicable_topics: [],
+          template_structure: {},
+          required_data_inputs: {},
+          quality_rubric: {},
+          generation_prompt_template: '',
+          output_format: 'markdown',
+          maturity: 'pilot',
+        },
+        { onConflict: 'type_key' },
+      );
+      if (typeErr) return { ok: false, error: typeErr.message };
+
       const { data: existing, error: existingErr } = await sb
         .from('deliverables_v2')
         .select('id, current_version')
@@ -643,6 +661,28 @@ export function createAzureProgramsWriteAdapter(
       try {
         // One transaction: deliverables_v2 upsert + deliverable_versions insert.
         const result = await session(async (run) => {
+          await run(
+            'INSERT INTO deliverable_types '
+              + '(type_key, title, description, applicable_phases, applicable_topics, '
+              + 'template_structure, required_data_inputs, quality_rubric, '
+              + 'generation_prompt_template, output_format, maturity) '
+              + 'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) '
+              + 'ON CONFLICT (type_key) DO UPDATE SET '
+              + 'title = EXCLUDED.title, description = EXCLUDED.description',
+            [
+              input.deliverableTypeKey,
+              input.title,
+              `Generated Moves deliverable: ${input.title}`,
+              [],
+              [],
+              {},
+              {},
+              {},
+              '',
+              'markdown',
+              'pilot',
+            ],
+          );
           const existingRows = await run<{ id: string; current_version: number }>(
             'SELECT id, current_version FROM deliverables_v2 '
               + 'WHERE engagement_id = $1 AND deliverable_type_key = $2 LIMIT 1',
