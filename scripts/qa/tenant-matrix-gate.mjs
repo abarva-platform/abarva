@@ -12,6 +12,8 @@
  *   render     — /home serves the React Context Explorer (flag flipped)
  *   intel      — /intelligence serves the canonical v2 Lens (not a fallback/error)
  *   synthesis  — a real answer, not the fake `Also:` row-dump
+ *   readable   — answer is shaped like a consultant read, not one dense paragraph
+ *   visual     — a visual/table prompt emits a typed table or chart for the renderer
  *   grounded   — cites tenant evidence AND has no "context not loaded" hedge
  *   noRawId    — no raw internal IDs (APX-DATA-003 …)
  *   experts    — named experts surfaced (routing landed)
@@ -56,6 +58,10 @@ const REFUSAL =
 
 const Q =
   "Talk about our current data & analytics landscape — name the platforms and owners you can see in our loaded context.";
+const VISUAL_Q =
+  "Show this as a decision-grade table or chart: which current technology/data investments need action, who owns them, what is the risk, and what is the next move?";
+
+const CONSULTANT_SECTIONS = /\b(Read|Evidence|Implication|Next move):/g;
 
 function envKey(prefix, key) {
   return `${prefix}_${key.toUpperCase()}`;
@@ -194,6 +200,26 @@ async function ask(auth, query, client) {
   return { prose, answer, experts, blocked, citesTenant };
 }
 
+function hasTypedExhibit(answer) {
+  return Boolean(answer?.tables?.length || answer?.charts?.length);
+}
+
+function isReadableConsultantAnswer(prose) {
+  const text = prose.trim();
+  if (!text) return false;
+  const sectionCount = [...text.matchAll(CONSULTANT_SECTIONS)].length;
+  if (sectionCount >= 2) return true;
+
+  const paragraphs = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  if (paragraphs.length >= 3) return true;
+
+  const longestParagraphWords = Math.max(
+    0,
+    ...paragraphs.map((p) => p.split(/\s+/).filter(Boolean).length),
+  );
+  return paragraphs.length >= 2 && longestParagraphWords <= 90;
+}
+
 async function runTenant(t, browser) {
   const auth = authFor(t.key);
   if (!auth.storageState && !auth.cookie) return { tenant: t, skipped: true };
@@ -207,10 +233,13 @@ async function runTenant(t, browser) {
     checks.intel = await intelIsV2(auth);
     const r = await ask(auth, Q, t.binding);
     checks.synthesis = r.prose.length > 120 && !FAKE_GLOB.test(r.prose);
+    checks.readable = isReadableConsultantAnswer(r.prose);
     const hasLoadedContextHedge = NOT_LOADED.test(r.prose);
     checks.grounded = !hasLoadedContextHedge && r.citesTenant;
     checks.noRawId = !RAW_ID.test(r.prose);
     checks.experts = r.experts.length > 0;
+    const visual = await ask(auth, VISUAL_Q, t.binding);
+    checks.visual = hasTypedExhibit(visual.answer) && isReadableConsultantAnswer(visual.prose);
     note = checks.grounded
       ? "grounded · cites tenant evidence"
       : hasLoadedContextHedge
@@ -231,7 +260,7 @@ async function runTenant(t, browser) {
   return { tenant: t, checks, note };
 }
 
-const COLS = ["render", "intel", "synthesis", "grounded", "noRawId", "experts", "fence"];
+const COLS = ["render", "intel", "synthesis", "readable", "visual", "grounded", "noRawId", "experts", "fence"];
 const pad = (s, n) => String(s).padEnd(n);
 
 async function main() {
