@@ -2,6 +2,7 @@ import {
   DEFAULT_CLIENT_KEY,
   inferClientKeyFromEmail,
   isClientKey,
+  isKnownAgentClientLoginEmail,
   type ClientKey,
 } from "@/lib/client-config";
 
@@ -82,6 +83,7 @@ export function hasExplicitTenantAlias(
     normalized.includes("+northstar@abarva.com") ||
     normalized.includes("+skyharbor@abarva.com") ||
     normalized.includes("+lakeshore@abarva.com") ||
+    isKnownAgentClientLoginEmail(normalized) ||
     isAnandOperatorAlias(normalized) ||
     isPilotAccessEmail(normalized)
   );
@@ -113,6 +115,7 @@ export function inferSessionRoleFromEmail(
     normalized.includes("+northstar@abarva.com") ||
     normalized.includes("+skyharbor@abarva.com") ||
     normalized.includes("+lakeshore@abarva.com") ||
+    isKnownAgentClientLoginEmail(normalized) ||
     isAnandOperatorAlias(normalized) ||
     isPilotAccessEmail(normalized)
   ) {

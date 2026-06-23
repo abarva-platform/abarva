@@ -1,3 +1,5 @@
+import { AGENT_CLIENT_LOGINS } from "@/lib/auth/agent-client-logins";
+
 export interface ClientOption {
   id: string;
   name: string;
@@ -282,6 +284,21 @@ const PILOT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> = {
   "anand@abarva.ai": "skyharbor",
 };
 
+const AGENT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> =
+  Object.fromEntries(
+    AGENT_CLIENT_LOGINS.map((agent) => [
+      agent.email.trim().toLowerCase(),
+      agent.clientKey,
+    ]),
+  ) as Readonly<Record<string, ClientKey>>;
+
+export function isKnownAgentClientLoginEmail(
+  email: string | null | undefined,
+): boolean {
+  const normalized = email?.toLowerCase().trim() ?? "";
+  return !!normalized && !!AGENT_EXACT_EMAIL_TO_CLIENT_KEY[normalized];
+}
+
 export function inferClientKeyFromEmail(
   email: string | null | undefined,
 ): ClientKey | null {
@@ -293,6 +310,9 @@ export function inferClientKeyFromEmail(
   // miss or mis-route.
   const pilotExact = PILOT_EXACT_EMAIL_TO_CLIENT_KEY[normalized];
   if (pilotExact) return pilotExact;
+
+  const agentExact = AGENT_EXACT_EMAIL_TO_CLIENT_KEY[normalized];
+  if (agentExact) return agentExact;
 
   const [localPart, domain] = normalized.split("@", 2);
   if (!localPart || !domain) return null;
@@ -314,7 +334,10 @@ export function inferClientKeyFromEmail(
   }
 
   if (domain === "thesundaram.com") {
-    for (const [localPartAlias, key] of THESUNDARAM_OPERATOR_LOCALPART_TO_CLIENT_KEY) {
+    for (const [
+      localPartAlias,
+      key,
+    ] of THESUNDARAM_OPERATOR_LOCALPART_TO_CLIENT_KEY) {
       if (localPart === localPartAlias) return key;
     }
   }
