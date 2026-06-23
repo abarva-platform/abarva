@@ -198,7 +198,7 @@ describe("IntelligenceV2Surface Ask Ava", () => {
     ).toBeInTheDocument();
     expect(within(table).getByText("$95,000,000")).toBeInTheDocument();
     expect(within(table).getByText("$12,000,000")).toBeInTheDocument();
-    expect(screen.getByText("APX-INIT-001")).toBeInTheDocument();
+    expect(screen.queryByText("APX-INIT-001")).not.toBeInTheDocument();
     expect(screen.getAllByText(/Ava ·/i)).toHaveLength(1);
   });
 

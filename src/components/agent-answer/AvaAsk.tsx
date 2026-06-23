@@ -27,7 +27,12 @@ const CSS = `
 .avaask .aa-bar textarea{flex:1;min-height:22px;max-height:140px;border:none;outline:none;font:inherit;font-size:14px;line-height:1.45;background:transparent;color:var(--aa-ink);resize:none;overflow:auto;padding:0}
 .avaask .aa-bar button{background:var(--aa-ink);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer}
 .avaask .aa-bar button:disabled{opacity:.5;cursor:default}
+.avaask .aa-suggestions{max-width:960px;margin:12px auto 0;display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.avaask .aa-thread{max-width:960px;margin:16px auto 0;display:flex;flex-direction:column;gap:14px}
+.avaask .aa-turn{display:flex;flex-direction:column;gap:8px}
+.avaask .aa-user{align-self:flex-end;max-width:min(760px,90%);background:#F6F4EE;border:1px solid var(--aa-line);border-radius:12px;padding:9px 13px;font-size:13px;line-height:1.45;white-space:pre-wrap;color:#2b2b26}
 .avaask .aa-box{max-width:960px;margin:16px auto 0;background:var(--aa-card);border:1px solid var(--aa-line);border-radius:12px;padding:18px 22px;text-align:left}
+.avaask .aa-thread .aa-box{margin:0}
 .avaask .aa-label{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--aa-green);margin-bottom:8px}
 .avaask .aa-prose{font-size:14px;line-height:1.65;color:var(--aa-ink)}
 .avaask .aa-think{color:var(--aa-faint);font-style:italic;font-size:13.5px}
@@ -45,6 +50,16 @@ type Evt = {
   answer?: AgentAnswer;
 };
 
+type AvaTurn = {
+  id: string;
+  question: string;
+  answer: string;
+  experts: { id: string; name: string }[];
+  followups: string[];
+  agentAnswer: AgentAnswer | null;
+  fetching: boolean;
+};
+
 function resizeAskTextarea(el: HTMLTextAreaElement | null) {
   if (!el) return;
   el.style.height = "auto";
@@ -60,18 +75,18 @@ export function AvaAsk({
   placeholder = "Ask about anything — data, vendors, risk, adoption, customers…",
   client,
   surfaceContext,
+  suggestedQuestions = [],
 }: {
   placeholder?: string;
   /** Optional tenant override; otherwise the session's active client is used. */
   client?: string;
   /** Surface tagging + page facts passed to the engine (e.g. activeTab "home"). */
   surfaceContext?: AskSurfaceContext;
+  /** Optional surface-provided starters rendered by the canonical ask component. */
+  suggestedQuestions?: string[];
 }) {
   const [query, setQuery] = useState("");
-  const [answer, setAnswer] = useState<string | null>(null);
-  const [experts, setExperts] = useState<{ id: string; name: string }[]>([]);
-  const [followups, setFollowups] = useState<string[]>([]);
-  const [agentAnswer, setAgentAnswer] = useState<AgentAnswer | null>(null);
+  const [turns, setTurns] = useState<AvaTurn[]>([]);
   const [fetching, setFetching] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -80,16 +95,33 @@ export function AvaAsk({
     async (q: string) => {
       const trimmed = q.trim();
       if (!trimmed) return;
+      const turnId =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const updateTurn = (patch: Partial<Omit<AvaTurn, "id" | "question">>) => {
+        setTurns((current) =>
+          current.map((turn) => (turn.id === turnId ? { ...turn, ...patch } : turn)),
+        );
+      };
       setQuery("");
       resetAskTextarea(textareaRef.current);
       abortRef.current?.abort();
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       setFetching(true);
-      setAnswer(null);
-      setExperts([]);
-      setFollowups([]);
-      setAgentAnswer(null);
+      setTurns((current) => [
+        ...current,
+        {
+          id: turnId,
+          question: trimmed,
+          answer: "",
+          experts: [],
+          followups: [],
+          agentAnswer: null,
+          fetching: true,
+        },
+      ]);
       try {
         const res = await fetch("/api/intelligence/ask", {
           method: "POST",
@@ -106,12 +138,12 @@ export function AvaAsk({
           signal: ctrl.signal,
         });
         if (!res.ok) {
-          setAnswer("Ava couldn't retrieve an answer. Try again.");
+          updateTurn({ answer: "Ava couldn't retrieve an answer. Try again." });
           return;
         }
         const reader = res.body?.getReader();
         if (!reader) {
-          setAnswer(await res.text());
+          updateTurn({ answer: await res.text() });
           return;
         }
         const dec = new TextDecoder();
@@ -125,21 +157,21 @@ export function AvaAsk({
             evt = JSON.parse(s);
           } catch {
             prose += prose ? `\n${s}` : s;
-            setAnswer(prose);
+            updateTurn({ answer: prose });
             return;
           }
           if (evt.type === "delta" && typeof evt.text === "string") {
             prose += evt.text;
-            setAnswer(prose);
+            updateTurn({ answer: prose });
           } else if (
             evt.type === "contributing-experts" &&
             Array.isArray(evt.contributingExperts)
           ) {
-            setExperts(evt.contributingExperts);
+            updateTurn({ experts: evt.contributingExperts });
           } else if (evt.type === "followups" && Array.isArray(evt.followups)) {
-            setFollowups(evt.followups);
+            updateTurn({ followups: evt.followups });
           } else if (evt.type === "agent-answer" && evt.answer) {
-            setAgentAnswer(evt.answer);
+            updateTurn({ agentAnswer: evt.answer });
           }
         };
         for (;;) {
@@ -155,9 +187,10 @@ export function AvaAsk({
         apply(buf);
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
-          setAnswer("Ava couldn't retrieve an answer. Try again.");
+          updateTurn({ answer: "Ava couldn't retrieve an answer. Try again." });
         }
       } finally {
+        updateTurn({ fetching: false });
         setFetching(false);
       }
     },
@@ -196,53 +229,87 @@ export function AvaAsk({
         </button>
       </div>
 
-      {(fetching || answer || agentAnswer) && (
-        <div className="aa-box">
-          {agentAnswer ? (
-            // Canonical render: one renderer, prose + exhibits + citations + experts.
-            // Prose streams on its own channel, so merge it onto the structured
-            // answer — this avoids the double-header seen when both are rendered.
-            <AgentAnswerRenderer
-              answer={{ ...agentAnswer, prose: agentAnswer.prose || answer || "" }}
-            />
-          ) : (
-            <>
-              <div className="aa-label">Ava · Intelligence</div>
-              {fetching && !answer ? (
-                <div className="aa-think">Thinking…</div>
-              ) : answer ? (
-                <div className="aa-prose">
-                  <AgentMarkdown text={answer} />
-                </div>
-              ) : null}
-              {experts.length > 0 && (
-                <div className="aa-exps">
-                  {experts.map((e) => (
-                    <span className="aa-exp" key={e.id} title={e.id}>
-                      {e.name}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-          {followups.length > 0 && (
-            <div className="aa-fu">
-              {followups.map((f) => (
-                <span
-                  className="aa-chip"
-                  key={f}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => {
-                    ask(f);
-                  }}
-                >
-                  {f}
-                </span>
-              ))}
+      {suggestedQuestions.length > 0 && (
+        <div className="aa-suggestions" aria-label="Suggested questions">
+          {suggestedQuestions.map((suggestion) => (
+            <span
+              className="aa-chip"
+              key={suggestion}
+              role="button"
+              tabIndex={0}
+              title={suggestion}
+              onClick={() => {
+                ask(suggestion);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  ask(suggestion);
+                }
+              }}
+            >
+              {suggestion}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {turns.length > 0 && (
+        <div className="aa-thread" aria-label="Ava conversation">
+          {turns.map((turn) => (
+            <div className="aa-turn" key={turn.id}>
+              <div className="aa-user">{turn.question}</div>
+              <div className="aa-box">
+                {turn.agentAnswer ? (
+                  // Canonical render: one renderer, prose + exhibits + citations + experts.
+                  // Prose streams on its own channel, so merge it onto the structured
+                  // answer — this avoids the double-header seen when both are rendered.
+                  <AgentAnswerRenderer
+                    answer={{
+                      ...turn.agentAnswer,
+                      prose: turn.agentAnswer.prose || turn.answer || "",
+                    }}
+                  />
+                ) : (
+                  <>
+                    <div className="aa-label">Ava · Intelligence</div>
+                    {turn.fetching && !turn.answer ? (
+                      <div className="aa-think">Thinking…</div>
+                    ) : turn.answer ? (
+                      <div className="aa-prose">
+                        <AgentMarkdown text={turn.answer} />
+                      </div>
+                    ) : null}
+                    {turn.experts.length > 0 && (
+                      <div className="aa-exps">
+                        {turn.experts.map((e) => (
+                          <span className="aa-exp" key={e.id} title={e.id}>
+                            {e.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+                {turn.followups.length > 0 && (
+                  <div className="aa-fu">
+                    {turn.followups.map((f) => (
+                      <span
+                        className="aa-chip"
+                        key={f}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => {
+                          ask(f);
+                        }}
+                      >
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+          ))}
         </div>
       )}
     </div>

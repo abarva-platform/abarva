@@ -3,13 +3,12 @@
 // Intelligence v2 surface — the Lens. Renders the binding contract (signals /
 // context / corpus / suggested questions / trust line) for the active tenant.
 // Faithful to the Claude-Design v2 spec (Fraunces headlines, mono eyebrows,
-// hairline cards, cross-domain chips). Ask bar wired to /api/intelligence/ask.
+// hairline cards, cross-domain chips). Ask bar uses the canonical AvaAsk
+// component so Home and Intelligence keep the same visible thread behavior.
 
-import { useCallback, useRef, useState } from "react";
+import { useState } from "react";
 import type { IntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
-import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
-import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
-import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
+import { AvaAsk } from "@/components/agent-answer/AvaAsk";
 
 type Tab = "signals" | "context" | "corpus";
 
@@ -118,17 +117,6 @@ function buildSurfaceContext(payload: IntelligenceBindingPayload) {
   };
 }
 
-function resizeAskTextarea(el: HTMLTextAreaElement | null) {
-  if (!el) return;
-  el.style.height = "auto";
-  el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
-}
-
-function resetAskTextarea(el: HTMLTextAreaElement | null) {
-  if (!el) return;
-  el.style.height = "auto";
-}
-
 export function IntelligenceV2Surface({
   payload,
   tenantName,
@@ -140,120 +128,16 @@ export function IntelligenceV2Surface({
   tenantName?: string;
 }) {
   const [tab, setTab] = useState<Tab>("signals");
-  const [query, setQuery] = useState("");
-  const [answer, setAnswer] = useState<string | null>(null);
-  const [agentAnswer, setAgentAnswer] = useState<AgentAnswer | null>(null);
-  const [experts, setExperts] = useState<{ id: string; name: string }[]>([]);
-  const [followups, setFollowups] = useState<string[]>([]);
-  const [fetching, setFetching] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const t = payload;
   const tl = t.trustLine;
   const contextEvidence = t.context.reduce((a, c) => a + (c.evidence || 0), 0);
-
-  const askSentinel = useCallback(async (q: string) => {
-    const trimmed = q.trim();
-    if (!trimmed) return;
-    setQuery("");
-    resetAskTextarea(textareaRef.current);
-    abortRef.current?.abort();
-    const ctrl = new AbortController();
-    abortRef.current = ctrl;
-    setFetching(true);
-    setAnswer(null);
-    setAgentAnswer(null);
-    setExperts([]);
-    setFollowups([]);
-    try {
-      const surfaceContext = buildSurfaceContext({
-        ...t,
-        tenant: {
-          ...t.tenant,
-          displayName: tenantName?.trim() || t.tenant.displayName,
-        },
-      });
-      const res = await fetch("/api/intelligence/ask", {
-        method: "POST",
-        headers: {
-          Accept: "application/x-ndjson",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          q: trimmed,
-          client: t.tenant.key,
-          format: "rich",
-          surfaceContext,
-        }),
-        signal: ctrl.signal,
-      });
-      if (!res.ok) {
-        setAnswer("Ava couldn't retrieve an answer. Try again.");
-        return;
-      }
-      const reader = res.body?.getReader();
-      if (!reader) {
-        setAnswer(await res.text());
-        return;
-      }
-      // The /api/intelligence/ask endpoint streams newline-delimited JSON
-      // events (session, classified, sources, contributing-experts, delta,
-      // followups, validation, done). Parse them: accumulate `delta` text into
-      // the prose answer, surface the Consilium experts and follow-ups. Any
-      // non-JSON line is treated as plain text (defensive fallback).
-      const dec = new TextDecoder();
-      let buf = "";
-      let prose = "";
-      const applyLine = (raw: string) => {
-        const s = raw.trim();
-        if (!s) return;
-        let evt: {
-          type?: string;
-          text?: string;
-          contributingExperts?: { id: string; name: string }[];
-          followups?: string[];
-          answer?: AgentAnswer;
-        };
-        try {
-          evt = JSON.parse(s);
-        } catch {
-          prose += prose ? `\n${s}` : s;
-          setAnswer(prose);
-          return;
-        }
-        if (evt.type === "delta" && typeof evt.text === "string") {
-          prose += evt.text;
-          setAnswer(prose);
-        } else if (
-          evt.type === "contributing-experts" &&
-          Array.isArray(evt.contributingExperts)
-        ) {
-          setExperts(evt.contributingExperts);
-        } else if (evt.type === "followups" && Array.isArray(evt.followups)) {
-          setFollowups(evt.followups);
-        } else if (evt.type === "agent-answer" && evt.answer) {
-          setAgentAnswer(evt.answer);
-        }
-      };
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += dec.decode(value, { stream: true });
-        let nl: number;
-        while ((nl = buf.indexOf("\n")) >= 0) {
-          applyLine(buf.slice(0, nl));
-          buf = buf.slice(nl + 1);
-        }
-      }
-      applyLine(buf); // flush any trailing line with no terminating newline
-    } catch (err) {
-      if ((err as Error).name !== "AbortError") {
-        setAnswer("Ava couldn't retrieve an answer. Try again.");
-      }
-    } finally {
-      setFetching(false);
-    }
-  }, [t, tenantName]);
+  const surfaceContext = buildSurfaceContext({
+    ...t,
+    tenant: {
+      ...t.tenant,
+      displayName: tenantName?.trim() || t.tenant.displayName,
+    },
+  });
 
   return (
     <div className="iv2">
@@ -269,105 +153,12 @@ export function IntelligenceV2Surface({
             your enterprise.
           </h1>
           <p className="sub">{t.ask.contract}</p>
-          <div className="ask">
-            <span className="spark">✦</span>
-            <textarea
-              ref={textareaRef}
-              rows={1}
-              placeholder={t.ask.placeholder}
-              aria-label="Ask Ava"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                resizeAskTextarea(e.currentTarget);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  askSentinel(query);
-                }
-              }}
-              disabled={fetching}
-            />
-            <button
-              type="button"
-              onClick={() => askSentinel(query)}
-              disabled={fetching || !query.trim()}
-              style={{ opacity: fetching || !query.trim() ? 0.5 : 1 }}
-            >
-              {fetching ? "…" : "Ask"}
-            </button>
-          </div>
-          {(fetching || answer || agentAnswer || experts.length > 0) && (
-            <div className="ansbox">
-              {agentAnswer ? (
-                <AgentAnswerRenderer
-                  answer={{ ...agentAnswer, prose: agentAnswer.prose || answer || "" }}
-                />
-              ) : (
-                <>
-                  <div className="anslabel">Ava · Intelligence</div>
-                  {fetching && !answer ? (
-                    <div className="ansfetching">Thinking…</div>
-                  ) : (
-                    <div className="ansbody">
-                      {answer ? <AgentMarkdown text={answer} /> : null}
-                    </div>
-                  )}
-                  {experts.length > 0 && (
-                    <div className="ansexperts">
-                      <span className="ansexpertslabel">Experts consulted</span>
-                      {experts.map((e) => (
-                        <span className="ansexpertchip" key={e.id} title={e.id}>
-                          {e.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-              {followups.length > 0 && (
-                <div className="ansfollowups">
-                  {followups.map((f) => (
-                    <span
-                      className="chip"
-                      key={f}
-                      title={f}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => {
-                        askSentinel(f);
-                      }}
-                    >
-                      {f}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-          <div className="chips">
-            {t.suggestedQuestions.map((sq) => (
-              <span
-                className="chip"
-                key={sq}
-                title={sq}
-                onClick={() => {
-                  askSentinel(sq);
-                }}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    askSentinel(sq);
-                  }
-                }}
-              >
-                <span className="spark">✦</span>
-                <span className="chiptext">{sq}</span>
-              </span>
-            ))}
-          </div>
+          <AvaAsk
+            placeholder={t.ask.placeholder}
+            client={t.tenant.key}
+            surfaceContext={surfaceContext}
+            suggestedQuestions={t.suggestedQuestions}
+          />
           <div className="trust">
             <span className="mono">
               <b>{tl.dimensionsLoaded}</b> dimensions loaded ·{" "}
