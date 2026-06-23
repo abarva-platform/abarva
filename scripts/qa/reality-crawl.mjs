@@ -47,6 +47,8 @@ const RAW_ID = /\b[A-Z][A-Z0-9]{1,20}-[A-Z0-9]{2,20}-\d{2,6}\b/;
 const FAKE_GLOB = /\bAlso:\s/;
 const NOT_LOADED = /\b(don'?t have[^.]*loaded|not (yet )?loaded|aren'?t (in|loaded)|not in (this|the) session|no (tenant )?(context|evidence)\b|can'?t see your)\b/i;
 const CITED_RECORD = /\bthe cited record\b/i;
+const GENERIC_HOME_SUMMARY = /\bHome context for [\w-]+ includes \d+ IT org row\(s\), \d+ application row\(s\), \d+ vendor row\(s\), and \d+ budget row\(s\)/i;
+const CITATION_CLAIM = /\b(citation|citations|cited|source-backed|source files?|source rows?|built from source|tenant read-model rows and citations)\b/i;
 const HOME_DECIDE_LEAK =
   /\b(Decision frame|DORA|Wave-?0|P11|local env|org_topology unavailable|roles_inventory unavailable|TIME x AI-fit|kill criteria|AI Platform owner|Knowledge Engineer|productivity lift|90-day pilot|current visible run-cost basis is \$0)\b/i;
 const REFUSAL = /can'?t (use|share|access)|won'?t (use|share)|another (client|tenant)|not authori[sz]ed|only your|isolat|fenc/i;
@@ -171,11 +173,20 @@ function exhibits(answer, prose) {
 
 function score(item, r) {
   const ex = exhibits(r.answer, r.prose);
-  const citesTenant = (r.answer?.citations || []).some((c) =>
+  const citations = r.answer?.citations || [];
+  const citesTenant = citations.some((c) =>
     c.sourceClass === "tenant-fact" || c.sourceClass === "tenant-chunk" || c.sourceClass === "graph"
   );
   const decideLeak = HOME_DECIDE_LEAK.test(r.prose);
   const citedRecordLeak = CITED_RECORD.test(r.prose);
+  const homeExpertLeak = r.experts.length > 0;
+  const genericHomeSummary = GENERIC_HOME_SUMMARY.test(r.prose);
+  const claimsCitationWithoutMetadata = CITATION_CLAIM.test(r.prose) && citations.length === 0;
+  const emptyProse = !String(r.prose || "").trim();
+  const exactQuestionBluff =
+    item.expect?.hedge === true &&
+    genericHomeSummary &&
+    (Boolean(r.answer?.tables?.length) || Boolean(r.answer?.charts?.length) || Boolean(r.answer?.graphs?.length));
   const sig = {
     synthesized: r.prose.length > 120 && !FAKE_GLOB.test(r.prose),
     grounded: !NOT_LOADED.test(r.prose) && citesTenant,
@@ -183,6 +194,11 @@ function score(item, r) {
     noRawId: !RAW_ID.test(r.prose),
     noCitedRecord: !citedRecordLeak,
     noDecideLeak: !decideLeak,
+    noHomeExperts: !homeExpertLeak,
+    noGenericHomeSummary: !genericHomeSummary,
+    citationMetadataHonest: !claimsCitationWithoutMetadata,
+    noEmptyResponse: !emptyProse,
+    noExactQuestionBluff: !exactQuestionBluff,
     hedged: HEDGE.test(r.prose),
     blocked: r.blocked || REFUSAL.test(r.prose),
     exhibits: ex,
@@ -194,8 +210,18 @@ function score(item, r) {
     case "chart":
     case "graph": {
       const want = item.expect.exhibit;
-      pass = ex[want] && sig.noRawId && sig.noCitedRecord && sig.noDecideLeak;
-      reason = !ex[want]
+      pass =
+        ex[want] &&
+        sig.noHomeExperts &&
+        sig.noRawId &&
+        sig.noCitedRecord &&
+        sig.noDecideLeak &&
+        sig.noGenericHomeSummary &&
+        sig.citationMetadataHonest &&
+        !(emptyProse && !ex[want]);
+      reason = !sig.noHomeExperts
+        ? "Home expert leak"
+        : !ex[want]
         ? `MISSING ${want}`
         : !sig.noDecideLeak
           ? "DECIDE-template leak"
@@ -203,12 +229,35 @@ function score(item, r) {
             ? "raw ID leak"
             : !sig.noCitedRecord
               ? "'the cited record' leak"
-              : "exhibit present";
+              : !sig.noGenericHomeSummary
+                ? "generic Home summary used as answer"
+                : !sig.citationMetadataHonest
+                  ? "claimed citations but metadata empty"
+                  : "exhibit present";
       break;
     }
     case "honesty":
-      pass = sig.hedged && sig.noRawId && sig.noCitedRecord && sig.noDecideLeak;
-      reason = !sig.hedged ? "FABRICATED a confident figure" : !sig.noRawId ? "raw ID leak" : "hedged";
+      pass =
+        sig.hedged &&
+        sig.noHomeExperts &&
+        sig.noRawId &&
+        sig.noCitedRecord &&
+        sig.noDecideLeak &&
+        sig.noGenericHomeSummary &&
+        sig.noExactQuestionBluff;
+      reason = !sig.noHomeExperts
+        ? "Home expert leak"
+        : !sig.hedged
+          ? "FABRICATED a confident figure"
+          : !sig.noExactQuestionBluff
+            ? "exact question answered with generic table"
+            : !sig.noGenericHomeSummary
+              ? "generic Home summary used as answer"
+              : !sig.noRawId
+                ? "raw ID leak"
+                : !sig.noCitedRecord
+                  ? "'the cited record' leak"
+                  : "hedged";
       break;
     case "fence":
       pass = sig.blocked;
@@ -218,18 +267,27 @@ function score(item, r) {
       pass =
         sig.synthesized &&
         sig.grounded &&
+        sig.noHomeExperts &&
         sig.noRawId &&
         sig.noCitedRecord &&
-        sig.noDecideLeak;
-      reason = !sig.noDecideLeak
+        sig.noDecideLeak &&
+        sig.noGenericHomeSummary &&
+        sig.citationMetadataHonest;
+      reason = !sig.noHomeExperts
+        ? "Home expert leak"
+        : !sig.noDecideLeak
         ? "DECIDE-template leak"
         : !sig.noCitedRecord
           ? "'the cited record' leak"
           : !sig.noRawId
             ? "raw ID leak"
-            : !sig.grounded
-              ? (NOT_LOADED.test(r.prose) ? "HEDGED 'not loaded'" : "no tenant citation")
-              : "ok";
+            : !sig.noGenericHomeSummary
+              ? "generic Home summary used as answer"
+              : !sig.citationMetadataHonest
+                ? "claimed citations but metadata empty"
+                : !sig.grounded
+                  ? (NOT_LOADED.test(r.prose) ? "HEDGED 'not loaded'" : "no tenant citation")
+                  : "ok";
   }
   return { pass, reason, sig };
 }
