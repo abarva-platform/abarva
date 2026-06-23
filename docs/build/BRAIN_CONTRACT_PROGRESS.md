@@ -20,7 +20,7 @@ Cells = current status on the **deployed** app. Keep this in sync with the live 
 | 2 · retrievable / `grounded` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3884](https://github.com/abarva-platform/abarva/pull/3884) gate-only baseline; screenshot report pending |
 | 3 · one engine / `experts` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3884](https://github.com/abarva-platform/abarva/pull/3884) gate-only baseline; code assertion pending |
 | 4 · one voice / `readable` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3886](https://github.com/abarva-platform/abarva/pull/3886) answer-safety deployed; follow-up readable section candidate in progress; all-green proof pending |
-| 5 · exhibits / `visual` | 🟡 | 🟥 | 🟡 | 🟡 | 🟡 | [#3884](https://github.com/abarva-platform/abarva/pull/3884) First Capital failed live gate on 2026-06-23 |
+| 5 · exhibits / `visual` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3894](https://github.com/abarva-platform/abarva/pull/3894) restored matrix-green visual plumbing; source-owned typed visual candidate in progress |
 | 6 · continuity (to add) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | — |
 | 7 · honesty / `fence`+`noRawId` | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3886](https://github.com/abarva-platform/abarva/pull/3886) answer-safety candidate; deployed proof pending |
 | render / intel (pages) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | [#3884](https://github.com/abarva-platform/abarva/pull/3884) gate-only baseline; screenshot report pending |
@@ -36,6 +36,8 @@ overall + the exhibit categories here, and link the HTML report.
 | Run (date · SHA) | overall | table | chart | graph | grounded | report |
 |---|--:|--:|--:|--:|--:|---|
 | 2026-06-23 · `803f34088` · deployed crawl after #3886/#3888 | 147/290 | 45/50 | 4/50 | 0/40 | 63/100 data+strategy | `out/reality-crawl/report.html` · 15 signed-in screenshots captured under `out/reality-crawl/shots/` |
+| 2026-06-23 · `49ecc9564` · deployed crawl after #3895 | 150/290 | 45/50 | 9/50 | 5/40 | not separately promoted | `out/reality-crawl-49ecc956/report.html` · rolled back by #3896 because overall score worsened vs #3894 |
+| 2026-06-23 · `94956a2c9` · deployed crawl after #3894 | 155/290 | 44/50 | 6/50 | 2/40 | not separately promoted | `out/reality-crawl-94956a2c/report.html` · current safer baseline restored by #3896 |
 | 2026-06-23 · `f0ae3083` · Apex smoke before visual-graph candidate | 31/58 | 10/10 | 0/10 | 0/8 | 12/20 data+strategy | `out/reality-crawl-smoke-apex/summary.json` · repaired harness captured real deployed answers |
 | 2026-06-23 · `036693168` · tenant matrix only | 49/50 current columns | — | — | — | 5/5 | report blocked: `reality-crawl.mjs` + bank are open in PR #3881, not on `origin/main` |
 
@@ -45,6 +47,24 @@ overall + the exhibit categories here, and link the HTML report.
 
 Each landed step: what changed, the root cause it fixed, the PR, the gate/crawl delta, the report link.
 
+- 2026-06-23 · Source-owned typed visual candidate ([#3897](https://github.com/abarva-platform/abarva/pull/3897)): adds optional structured rows/columns/chart/graph
+  hints to `AskSource`, populates them from Postgres-backed application, vendor, renewal, and initiative
+  retrievers, and makes `buildStructuredExhibits` render visuals from those cited source rows before falling
+  back to Markdown tables or evidence-required tables. Root cause: #3894 made charts/graphs renderable, but
+  answer quality still depended on the model emitting a perfect table; #3895's second-pass model synthesis
+  was deployed and matrix-green but lowered the deep crawl to `150/290`, proving model-call fallback is not the
+  scalable fix. Gate/crawl delta: not marked green until deployed app matrix + reality crawl prove improvement.
+  Release record: `docs/releases/records/2026-06-23-brain-contract-source-structured-visuals.md`.
+- 2026-06-23 · Rolled back typed exhibit synthesis ([#3896](https://github.com/abarva-platform/abarva/pull/3896)):
+  reverted #3895 after deployed deep crawl regressed from #3894's `155/290` to `150/290`. Runtime proof after
+  rollback: ACA revision `md92b1cdf`, digest `sha256:9625eb2a...`, 100% traffic; signed-in tenant matrix passed
+  5/5. Release records: `docs/releases/records/2026-06-23-brain-contract-typed-exhibit-synthesis.md` and
+  `docs/releases/records/2026-06-23-revert-typed-exhibit-synthesis.md`.
+- 2026-06-23 · Typed visual graph plumbing ([#3894](https://github.com/abarva-platform/abarva/pull/3894)):
+  repaired reality-crawl auth to use Playwright storage-state sessions and `tabId`, routed `AgentAnswer.graphs`
+  through the API, and rendered relationship graphs in the canonical renderer. Deployed proof: tenant matrix 5/5;
+  deep crawl `155/290`, tables `44/50`, charts `6/50`, graphs `2/40`. This proved the render path but not enough
+  source-owned visual depth.
 - 2026-06-23 · Visual/graph contract candidate (PR pending): repairs `reality-crawl.mjs` to use the same signed-in
   Playwright storage-state session and `tabId` path as `tenant-matrix-gate.mjs`, adds a timeout so one stuck answer
   cannot hang the run, strengthens rich visual prompting so chart/graph questions must emit valid Markdown data tables

@@ -44,6 +44,139 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.charts).toHaveLength(0);
   });
 
+  it("renders charts from structured retrieved source rows instead of prose", () => {
+    const exhibits = buildStructuredExhibits({
+      routing,
+      sources: [
+        {
+          id: "apex:structured:vendor_contracts",
+          type: "TENANT",
+          name: "Structured vendor contracts (apex-retail)",
+          detail: "Largest vendor contracts from public.vendor_contracts.",
+          confidence: 0.99,
+          structured: {
+            tables: [
+              {
+                id: "apex-vendor-contracts",
+                title: "Vendor Contracts",
+                columns: [
+                  { key: "vendor", label: "Vendor" },
+                  {
+                    key: "annualValue",
+                    label: "Annual Value",
+                    format: "currency",
+                    align: "right",
+                  },
+                ],
+                rows: [
+                  { vendor: "Retail Lakehouse", annualValue: 95_000_000 },
+                  { vendor: "Toshiba POS", annualValue: 23_000_000 },
+                  { vendor: "IBM Sterling OMS", annualValue: 22_000_000 },
+                ],
+                chart: {
+                  labelKey: "vendor",
+                  valueKey: "annualValue",
+                  title: "Annual Contract Value by Vendor",
+                },
+              },
+            ],
+          },
+        },
+      ],
+      prose:
+        "The loaded vendor portfolio has three visible spend lines. Next move: validate the renewal owner.",
+    });
+
+    expect(exhibits.tables[0]).toEqual(
+      expect.objectContaining({
+        id: "source-apex-vendor-contracts",
+        title: "Vendor Contracts",
+        rows: [
+          expect.objectContaining({ vendor: "Retail Lakehouse", annualValue: 95_000_000 }),
+          expect.objectContaining({ vendor: "Toshiba POS", annualValue: 23_000_000 }),
+          expect.objectContaining({ vendor: "IBM Sterling OMS", annualValue: 22_000_000 }),
+        ],
+      }),
+    );
+    expect(exhibits.charts).toEqual([
+      expect.objectContaining({
+        id: "source-apex-vendor-contracts-chart",
+        kind: "cost-stack",
+        title: "Annual Contract Value by Vendor",
+        data: [
+          expect.objectContaining({ label: "Retail Lakehouse", value: 95_000_000 }),
+          expect.objectContaining({ label: "Toshiba POS", value: 23_000_000 }),
+          expect.objectContaining({ label: "IBM Sterling OMS", value: 22_000_000 }),
+        ],
+      }),
+    ]);
+  });
+
+  it("renders graphs from structured retrieved source relationships", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: { ...routing, outputShape: "graph" },
+      sources: [
+        {
+          id: "apex:structured:applications",
+          type: "TENANT",
+          name: "Structured application portfolio (apex-retail)",
+          detail: "Application portfolio rows from public.applications.",
+          confidence: 0.99,
+          structured: {
+            tables: [
+              {
+                id: "apex-applications",
+                title: "Application Portfolio",
+                columns: [
+                  { key: "application", label: "Application" },
+                  { key: "function", label: "Function" },
+                  { key: "vendor", label: "Vendor" },
+                ],
+                rows: [
+                  {
+                    application: "Retail Lakehouse",
+                    function: "Data & Analytics",
+                    vendor: "Databricks",
+                  },
+                  {
+                    application: "Toshiba POS",
+                    function: "Store Operations",
+                    vendor: "Toshiba",
+                  },
+                ],
+                graph: {
+                  fromKey: "application",
+                  toKey: "function",
+                  labelKey: "vendor",
+                  title: "Application to Function Map",
+                },
+              },
+            ],
+          },
+        },
+      ],
+      prose:
+        "The dependency map is application to owning function. Next move: validate owners.",
+    });
+
+    expect(exhibits.graphs).toEqual([
+      expect.objectContaining({
+        id: "source-apex-applications-graph",
+        title: "Application to Function Map",
+        nodes: expect.arrayContaining([
+          expect.objectContaining({ label: "Retail Lakehouse" }),
+          expect.objectContaining({ label: "Data & Analytics" }),
+          expect.objectContaining({ label: "Toshiba POS" }),
+          expect.objectContaining({ label: "Store Operations" }),
+        ]),
+        edges: expect.arrayContaining([
+          expect.objectContaining({ label: "Databricks" }),
+          expect.objectContaining({ label: "Toshiba" }),
+        ]),
+      }),
+    ]);
+  });
+
   it("renders an evidence table for table-shaped questions with cited sources even without extractable figures", () => {
     const exhibits = buildStructuredExhibits({
       routing: { ...routing, outputShape: "table" },

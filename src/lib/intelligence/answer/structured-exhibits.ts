@@ -1,4 +1,9 @@
-import type { AskSource } from "@/lib/intelligence/ask/types";
+import type {
+  AskSource,
+  AskStructuredChartHint,
+  AskStructuredGraphHint,
+  AskStructuredTable,
+} from "@/lib/intelligence/ask/types";
 import type { RoutingDecision } from "@/lib/intelligence/answer/router";
 import type {
   AgentAnswer,
@@ -535,10 +540,137 @@ function graphFromExtractedTable(
   };
 }
 
+function tableFromStructuredSource(
+  sourceTable: AskStructuredTable,
+  citationIds: string[],
+): AnswerTable {
+  return {
+    id: `source-${sourceTable.id}`,
+    title: sourceTable.title,
+    columns: sourceTable.columns,
+    rows: sourceTable.rows,
+    note:
+      sourceTable.note ??
+      "Rendered from structured retrieved source rows, not inferred from prose.",
+    citationIds,
+  };
+}
+
+function chartFromStructuredTable(
+  table: AnswerTable,
+  hint: AskStructuredChartHint | undefined,
+  citationIds: string[],
+): AnswerChart | null {
+  if (!hint) return null;
+  const labelColumn = table.columns.find((column) => column.key === hint.labelKey);
+  const valueColumn = table.columns.find((column) => column.key === hint.valueKey);
+  if (!labelColumn || !valueColumn) return null;
+
+  const segments = table.rows
+    .map((row, index) => {
+      const value = exactCurrencyOrNumber(row[valueColumn.key] ?? null);
+      const label = textForCell(row[labelColumn.key]);
+      if (value === null || value <= 0 || !label) return null;
+      return {
+        label: label.length > 32 ? `${label.slice(0, 29)}...` : label,
+        value,
+        color:
+          COST_STACK_COLORS[index % COST_STACK_COLORS.length] ?? CHART.accent,
+      };
+    })
+    .filter(
+      (segment): segment is { label: string; value: number; color: string } =>
+        Boolean(segment),
+    )
+    .slice(0, 6);
+
+  if (segments.length < 2) return null;
+  return {
+    id: `${table.id}-chart`,
+    kind: "cost-stack",
+    title: hint.title ?? `${valueColumn.label} by ${labelColumn.label}`,
+    data: segments,
+    builder: "costStack",
+    citationIds,
+  };
+}
+
+function graphFromStructuredTable(
+  table: AnswerTable,
+  hint: AskStructuredGraphHint | undefined,
+  citationIds: string[],
+): AnswerGraph | null {
+  if (!hint) return null;
+  const nodes = new Map<string, { id: string; label: string }>();
+  const edges: AnswerGraph["edges"] = [];
+
+  for (const row of table.rows) {
+    const from = textForCell(row[hint.fromKey]);
+    const to = textForCell(row[hint.toKey]);
+    if (!from || !to || from === to) continue;
+    if (!nodes.has(from)) nodes.set(from, { id: `n${nodes.size + 1}`, label: from });
+    if (!nodes.has(to)) nodes.set(to, { id: `n${nodes.size + 1}`, label: to });
+    const source = nodes.get(from);
+    const target = nodes.get(to);
+    if (!source || !target) continue;
+    edges.push({
+      from: source.id,
+      to: target.id,
+      label: hint.labelKey ? textForCell(row[hint.labelKey]).slice(0, 80) : undefined,
+    });
+  }
+
+  if (nodes.size < 2 || edges.length < 1) return null;
+  return {
+    id: `${table.id}-graph`,
+    title: hint.title ?? table.title,
+    nodes: [...nodes.values()],
+    edges: edges.slice(0, 12),
+    citationIds,
+  };
+}
+
+function structuredSourceExhibits(
+  sources: AskSource[],
+  routing: RoutingDecision,
+): Pick<StructuredExhibits, "tables" | "charts" | "graphs"> {
+  const tables: AnswerTable[] = [];
+  const charts: AnswerChart[] = [];
+  const graphs: AnswerGraph[] = [];
+
+  sources.forEach((source, sourceIndex) => {
+    const citationIds = [`c${sourceIndex + 1}`];
+    for (const sourceTable of source.structured?.tables ?? []) {
+      if (sourceTable.rows.length === 0) continue;
+      const table = tableFromStructuredSource(sourceTable, citationIds);
+      tables.push(table);
+      if (routing.outputShape === "chart") {
+        const chart = chartFromStructuredTable(
+          table,
+          sourceTable.chart,
+          citationIds,
+        );
+        if (chart) charts.push(chart);
+      }
+      if (routing.outputShape === "graph") {
+        const graph = graphFromStructuredTable(
+          table,
+          sourceTable.graph,
+          citationIds,
+        );
+        if (graph) graphs.push(graph);
+      }
+    }
+  });
+
+  return { tables, charts, graphs };
+}
+
 export function buildStructuredExhibits(
   input: StructuredExhibitsInput,
 ): StructuredExhibits {
   const citations = answerCitationsFromAskSources(input.sources);
+  const sourceExhibits = structuredSourceExhibits(input.sources, input.routing);
   const markdown = markdownTablesFromProse(
     input.prose,
     citations.map((citation) => citation.id),
@@ -550,10 +682,14 @@ export function buildStructuredExhibits(
   const tables: AnswerTable[] = [];
   const charts: AnswerChart[] = [];
   const graphs: AnswerGraph[] = [];
+  tables.push(...sourceExhibits.tables);
+  charts.push(...sourceExhibits.charts);
+  graphs.push(...sourceExhibits.graphs);
   tables.push(...markdown.tables);
   tables.push(...inline.tables);
 
   if (
+    charts.length === 0 &&
     tables.length > 0 &&
     input.routing.outputShape === "chart"
   ) {
@@ -563,7 +699,7 @@ export function buildStructuredExhibits(
     );
     if (chart) charts.push(chart);
   }
-  if (tables.length > 0 && input.routing.outputShape === "graph") {
+  if (graphs.length === 0 && tables.length > 0 && input.routing.outputShape === "graph") {
     const graph = graphFromExtractedTable(
       tables[0],
       citations.map((citation) => citation.id),
