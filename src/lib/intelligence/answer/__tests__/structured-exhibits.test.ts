@@ -235,6 +235,21 @@ describe("buildStructuredExhibits", () => {
     ]).toHaveLength(4);
   });
 
+  it("strips orphan table fragments when the model emits an incomplete visual table", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: { ...routing, outputShape: "table" },
+      sources,
+      prose:
+        "Read: First Capital Financial has several live technology investments where the risk profile and ownership are clear enough to drive action now — the table below organizes them by urgency.\n2M run cost | Critical; restricted non-public data, vendor-hosted | Data residency and exit rights review — restricted classification + vendor-hosted is a red flag combination |\n| Marqeta Dispute Manager | Head of Cards & Payments | $4.\nNext move: assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves.",
+    });
+
+    expect(exhibits.tables[0]?.title).toBe("Decision Evidence");
+    expect(exhibits.prose).toContain("Read:");
+    expect(exhibits.prose).toContain("Next move:");
+    expect(exhibits.prose).not.toContain("|");
+    expect(exhibits.prose).not.toContain("Marqeta Dispute Manager");
+  });
+
   it("renders a chart only from exact numeric columns in an extracted table", () => {
     const exhibits = buildStructuredExhibits({
       routing,

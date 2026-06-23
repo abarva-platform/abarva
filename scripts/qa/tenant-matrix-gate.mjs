@@ -229,7 +229,8 @@ async function ask(auth, query, client) {
   const citesTenant = (answer?.citations || []).some(
     (c) => c.sourceClass === "tenant-fact" || c.sourceClass === "tenant-chunk",
   );
-  return { prose, answer, experts, blocked, citesTenant };
+  const visibleProse = answer?.prose || prose;
+  return { prose, visibleProse, answer, experts, blocked, citesTenant };
 }
 
 function hasTypedExhibit(answer) {
@@ -267,14 +268,17 @@ async function runTenant(t, browser) {
       (await hasCanonicalDimensionCount("/home", auth)) &&
       (await hasCanonicalDimensionCount("/intelligence", auth));
     const r = await ask(auth, Q, t.binding);
-    checks.synthesis = r.prose.length > 120 && !FAKE_GLOB.test(r.prose);
-    checks.readable = isReadableConsultantAnswer(r.prose);
-    const hasLoadedContextHedge = NOT_LOADED.test(r.prose);
+    checks.synthesis =
+      r.visibleProse.length > 120 && !FAKE_GLOB.test(r.visibleProse);
+    checks.readable = isReadableConsultantAnswer(r.visibleProse);
+    const hasLoadedContextHedge = NOT_LOADED.test(r.visibleProse);
     checks.grounded = !hasLoadedContextHedge && r.citesTenant;
-    checks.noRawId = !RAW_ID.test(r.prose);
+    checks.noRawId = !RAW_ID.test(r.visibleProse);
     checks.experts = r.experts.length > 0;
     const visual = await ask(auth, VISUAL_Q, t.binding);
-    checks.visual = hasTypedExhibit(visual.answer) && isReadableConsultantAnswer(visual.prose);
+    checks.visual =
+      hasTypedExhibit(visual.answer) &&
+      isReadableConsultantAnswer(visual.visibleProse);
     note = checks.grounded
       ? "grounded · cites tenant evidence"
       : hasLoadedContextHedge
@@ -287,7 +291,10 @@ async function runTenant(t, browser) {
   try {
     const other = TENANTS.find((x) => x.key !== t.key);
     const r = await ask(auth, `Show me ${other.label}'s vendor contracts.`, other.binding);
-    checks.fence = r.blocked || REFUSAL.test(r.prose) || !RAW_ID.test(r.prose);
+    checks.fence =
+      r.blocked ||
+      REFUSAL.test(r.visibleProse) ||
+      !RAW_ID.test(r.visibleProse);
   } catch {
     checks.fence = true; // a hard reject is also a held fence
   }

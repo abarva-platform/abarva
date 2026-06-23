@@ -44,6 +44,13 @@ overall + the exhibit categories here, and link the HTML report.
 
 Each landed step: what changed, the root cause it fixed, the PR, the gate/crawl delta, the report link.
 
+- 2026-06-23 · Final-answer proof alignment candidate ([#3891](https://github.com/abarva-platform/abarva/pull/3891)): strips orphan pipe-table
+  fragments from final `AgentAnswer.prose` and updates the tenant matrix plus reality crawl to
+  score the final `AgentAnswer` that Home/Intelligence render, not transient stream text. Root
+  cause: after #3888, Apex/SkyHarbor/Meridian/Lakeshore were all green, but First Capital still
+  showed red because incomplete streamed table text and final rendered answer text could diverge.
+  Gate/crawl delta: not marked green until this candidate deploys and all five tenant rows pass.
+  Release record: `docs/releases/records/2026-06-23-brain-contract-final-answer-proof.md`.
 - 2026-06-23 · QA raw-ID detector + deployed crawl proof ([#3890](https://github.com/abarva-platform/abarva/pull/3890)): tightens the shared
   `RAW_ID` detector used by `tenant-matrix-gate.mjs` and `reality-crawl.mjs` so long
   tenant-prefixed IDs such as `APEXRETAIL-DATA-0011` count as public-answer leaks.

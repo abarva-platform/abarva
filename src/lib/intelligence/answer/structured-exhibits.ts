@@ -368,6 +368,22 @@ function inlineMarkdownTablesFromProse(
   };
 }
 
+function stripResidualTableFragments(prose: string): string {
+  return prose
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => {
+      if (!line) return false;
+      const pipeCount = (line.match(/\|/g) ?? []).length;
+      if (pipeCount >= 2) return false;
+      if (/^\|/.test(line) || /\|$/.test(line)) return false;
+      return true;
+    })
+    .join("\n\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function exactCurrencyOrNumber(value: string | number | null): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value !== "string") return null;
@@ -495,7 +511,9 @@ export function buildStructuredExhibits(
   }
 
   return {
-    prose: inline.prose ? enforceDecisionGradeAnswer(inline.prose) : "",
+    prose: inline.prose
+      ? enforceDecisionGradeAnswer(stripResidualTableFragments(inline.prose))
+      : "",
     citations,
     tables,
     charts,
