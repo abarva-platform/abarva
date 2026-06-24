@@ -34,6 +34,10 @@ import {
 } from "@/lib/intelligence/answer/structured-exhibits";
 import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
 import {
+  enforceHomeKnowAgentAnswerDoctrine,
+  enforceIntelligenceAdvisorDoctrine,
+} from "@/lib/intelligence/answer/surface-doctrine";
+import {
   buildHomeKnowAgentAnswer,
   homeKnowResponseToAgentAnswer,
   shouldUseHomeKnowAgentAnswer,
@@ -340,7 +344,7 @@ async function handleAsk(payload: AskPayload) {
             exhibits.citations.length > 0 ||
             routing.experts.length > 0
           ) {
-            const agentAnswer: AgentAnswer = {
+            const agentAnswer = enforceIntelligenceAdvisorDoctrine({
               engineVersion: "agent-answer/v1",
               surface: "intelligence",
               expertId: routing.experts[0]?.id ?? null,
@@ -362,7 +366,7 @@ async function handleAsk(payload: AskPayload) {
                 "Charts and tables are emitted only when Ava has validated structured data; citations and expert attribution remain visible otherwise.",
               ],
               crossTenantBlocked: false,
-            };
+            });
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
@@ -512,7 +516,7 @@ async function handleAsk(payload: AskPayload) {
             exhibits.citations.length > 0 ||
             routing.experts.length > 0
           ) {
-            const agentAnswer: AgentAnswer = {
+            const agentAnswer = enforceIntelligenceAdvisorDoctrine({
               engineVersion: "agent-answer/v1",
               surface: "intelligence",
               expertId: routing.experts[0]?.id ?? null,
@@ -534,7 +538,7 @@ async function handleAsk(payload: AskPayload) {
                 "Charts and tables are emitted only when Ava has validated structured data; citations and expert attribution remain visible otherwise.",
               ],
               crossTenantBlocked: false,
-            };
+            });
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
@@ -688,7 +692,7 @@ function aliasesForClerkTenant(
 function buildHomeKnowTenantFenceAnswer(input: {
   activeTenantDisplayName: string;
 }): AgentAnswer {
-  return {
+  return enforceHomeKnowAgentAnswerDoctrine({
     engineVersion: "agent-answer/v1",
     surface: "home",
     expertId: null,
@@ -704,7 +708,7 @@ function buildHomeKnowTenantFenceAnswer(input: {
     confidence: "high",
     limits: ["Cross-tenant request blocked before retrieval."],
     crossTenantBlocked: true,
-  };
+  });
 }
 
 function buildHomeKnowRouteFallbackResponse(input: {

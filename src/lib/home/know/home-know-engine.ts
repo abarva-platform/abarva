@@ -144,7 +144,7 @@ const INTERNAL_CODE_RE =
 const INTERNAL_CODE_REPLACE =
   /\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 const DECISION_RE =
-  /\b(should|recommend|prioriti[sz]e|approve|kill|scale|invest|decision|what do we do|next move|where should)\b/i;
+  /\b(should|recommend|prioriti[sz]e|approve|kill|scale|invest|allocate|allocation|top bets|decision|what do we do|next move|where should)\b/i;
 const GRAPH_RE =
   /\b(graph|map|topolog|dependency|dependencies|relationship|relationships|lineage|blast radius|depends on|integration|interfaces?)\b/i;
 const EXACT_UNKNOWABLE_RE =
@@ -154,8 +154,8 @@ export function classifyHomeKnowIntent(question: string): HomeKnowIntent {
   const normalized = question.trim().toLowerCase();
   if (!normalized) return "browse";
   if (EXACT_UNKNOWABLE_RE.test(normalized)) return "gap";
-  if (/\b(chart|visuali[sz]e|visual|plot|waterfall)\b/.test(normalized) || GRAPH_RE.test(normalized)) return "chart";
   if (DECISION_RE.test(normalized)) return "decision_handoff";
+  if (/\b(chart|visuali[sz]e|visual|plot|waterfall)\b/.test(normalized) || GRAPH_RE.test(normalized)) return "chart";
   if (/\b(missing|not loaded|absent|unknown|field|gap register|evidence gap)\b/.test(normalized)) return "gap";
   if (/\b(which|what|show|list)\b.*\b(vendor|vendors|contract|contracts|app|apps|application|applications|system|systems|owner|owners|portfolio|portfolios)\b/.test(normalized)) return "table";
   if (/\b(table|list|show|breakdown)\b/.test(normalized)) return "table";
@@ -1567,9 +1567,14 @@ export function validateHomeKnowResponse(response: HomeKnowResponse): HomeKnowRe
     prose = "Here is what is loaded in Home context.";
     unsupportedClaimsRemoved += 1;
   }
-  return {
+  const sanitized = sanitizeHomeKnowPayload({
     ...response,
     prose,
+  });
+  unsupportedClaimsRemoved += sanitized.unsupportedClaimsRemoved;
+  const publicText = collectPublicHomeText(sanitized.response);
+  return {
+    ...sanitized.response,
     safety: {
       serverValidated: true,
       blockedExperts: true,
@@ -1577,11 +1582,94 @@ export function validateHomeKnowResponse(response: HomeKnowResponse): HomeKnowRe
       blockedInternalCodes: true,
       unsupportedClaimsRemoved,
       frontendTripwireShouldFire:
-        BLOCKED_PUBLIC_TEXT.test(prose) ||
-        INTERNAL_CODE_RE.test(prose) ||
+        BLOCKED_PUBLIC_TEXT.test(publicText) ||
+        INTERNAL_CODE_RE.test(publicText) ||
         lookupHasDecisionLanguage,
     },
   };
+}
+
+function sanitizeHomeKnowPayload(response: HomeKnowResponse): {
+  response: HomeKnowResponse;
+  unsupportedClaimsRemoved: number;
+} {
+  let unsupportedClaimsRemoved = 0;
+  const sanitized = sanitizeUnknownPublicStrings(response, (changed) => {
+    if (changed) unsupportedClaimsRemoved += 1;
+  });
+  return { response: sanitized as HomeKnowResponse, unsupportedClaimsRemoved };
+}
+
+const HOME_METADATA_KEYS = new Set([
+  "answerStatus",
+  "citationIds",
+  "confidence",
+  "dimensionId",
+  "dimensionsUsed",
+  "from",
+  "id",
+  "intent",
+  "kind",
+  "mode",
+  "question",
+  "recordId",
+  "safety",
+  "sourceClass",
+  "sourceFile",
+  "sourceIds",
+  "sourceRowNumber",
+  "status",
+  "target",
+  "tenantKey",
+  "to",
+  "type",
+]);
+
+function sanitizeUnknownPublicStrings(
+  value: unknown,
+  onStringSanitized: (changed: boolean) => void,
+  key = "",
+): unknown {
+  if (typeof value === "string") {
+    if (HOME_METADATA_KEYS.has(key)) return value;
+    const sanitized = sanitizePublicHomeText(value);
+    onStringSanitized(sanitized !== value);
+    return sanitized;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeUnknownPublicStrings(item, onStringSanitized));
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([entryKey, entryValue]) => [
+        entryKey,
+        sanitizeUnknownPublicStrings(entryValue, onStringSanitized, entryKey),
+      ]),
+    );
+  }
+  return value;
+}
+
+function collectPublicHomeText(response: HomeKnowResponse): string {
+  const parts: string[] = [];
+  collectPublicStrings(response, parts);
+  return parts.join("\n");
+}
+
+function collectPublicStrings(value: unknown, parts: string[], key = ""): void {
+  if (typeof value === "string") {
+    if (!HOME_METADATA_KEYS.has(key)) parts.push(value);
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) collectPublicStrings(item, parts);
+    return;
+  }
+  if (value && typeof value === "object") {
+    for (const [entryKey, entryValue] of Object.entries(value)) {
+      collectPublicStrings(entryValue, parts, entryKey);
+    }
+  }
 }
 
 function sanitizePublicHomeText(value: string): string {

@@ -4,7 +4,10 @@ import {
   validateHomeKnowResponse,
   type HomeKnowPacket,
 } from "../home-know-engine";
-import { shouldUseHomeKnowAgentAnswer } from "../home-know-agent-answer";
+import {
+  homeKnowResponseToAgentAnswer,
+  shouldUseHomeKnowAgentAnswer,
+} from "../home-know-agent-answer";
 import type { HomeKnowResponse } from "../home-know-contract";
 
 const apexPacket: HomeKnowPacket = {
@@ -342,6 +345,9 @@ describe("Home KNOW contract engine", () => {
     expect(classifyHomeKnowIntent("Where should we invest $30M?")).toBe(
       "decision_handoff",
     );
+    expect(classifyHomeKnowIntent("Visualize how we should invest the next $30M")).toBe(
+      "decision_handoff",
+    );
     expect(classifyHomeKnowIntent("Show this visually as a chart")).toBe("chart");
     expect(classifyHomeKnowIntent("Show the integration topology")).toBe("chart");
     expect(classifyHomeKnowIntent("What will our exact cloud bill be in 2027, to the dollar?")).toBe("gap");
@@ -547,6 +553,77 @@ describe("Home KNOW contract engine", () => {
     expect(response.prose).not.toMatch(/\b(Read|Evidence|Implication|Next move):/);
   });
 
+  it("sanitizes unsafe Home text outside prose before render", () => {
+    const response = validateHomeKnowResponse({
+      mode: "KNOW",
+      tenantKey: "apex-retail",
+      question: "What do we know?",
+      intent: "lookup",
+      answerStatus: "answered",
+      prose: "Here is what is loaded.",
+      dimensionsUsed: [],
+      facts: [],
+      tables: [
+        {
+          id: "t1",
+          title: "Decision frame",
+          dimensionId: "applications_core_systems",
+          columns: [{ key: "name", label: "AI Platform owner" }],
+          rows: [{ name: "APEXRETAIL-INIT-0017" }],
+          citationIds: ["c1"],
+          note: "the cited record",
+        },
+      ],
+      charts: [],
+      graphs: [],
+      gaps: [],
+      conflicts: [],
+      citations: [
+        {
+          id: "c1",
+          label: "DORA Wave-0",
+          sourceClass: "tenant-fact",
+          excerpt: "local env",
+        },
+      ],
+      handoff: null,
+      safety: {
+        serverValidated: false,
+        blockedExperts: false,
+        blockedDecisionFrames: false,
+        blockedInternalCodes: false,
+        unsupportedClaimsRemoved: 0,
+        frontendTripwireShouldFire: false,
+      },
+    });
+
+    const publicJson = JSON.stringify(response);
+    expect(response.safety.frontendTripwireShouldFire).toBe(false);
+    expect(response.safety.unsupportedClaimsRemoved).toBeGreaterThan(0);
+    expect(publicJson).not.toMatch(/Decision frame|AI Platform owner|DORA|Wave-0|local env|the cited record|APEXRETAIL-INIT/i);
+  });
+
+  it("maps Home KNOW to a Home-only AgentAnswer contract", () => {
+    const response = buildHomeKnowResponseFromPacket({
+      tenantKey: "apex-retail",
+      question: "How is our IT team organized?",
+      packet: apexPacket,
+    });
+    const answer = homeKnowResponseToAgentAnswer(response);
+
+    expect(answer.surface).toBe("home");
+    expect(answer.expertId).toBeNull();
+    expect(answer.contributingExperts).toEqual([]);
+    expect(answer.groundingMode).toBe("tenant-evidence");
+    expect(answer.basis?.map((basis) => basis.kind)).toEqual(["tenant_fact"]);
+    expect(answer.basis).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: "industry_pattern" }),
+        expect.objectContaining({ kind: "expert_inference" }),
+      ]),
+    );
+  });
+
   it.each([
     "Show our data products in a table with domain and owning team.",
     "Give me a table comparing our top three initiatives on impact, risk, and owner.",
@@ -566,9 +643,7 @@ describe("Home KNOW contract engine", () => {
   });
 
   it.each([
-    "Visualize how the next $30M would be allocated across the top bets.",
     "Visualize vendor spend concentration across our top contracts.",
-    "Chart the adoption curve we should expect for the contact-center / front-office AI bet.",
   ])("keeps SkyHarbor chart artifact prompts nonblank: %s", (question) => {
     const response = buildHomeKnowResponseFromPacket({
       tenantKey: "skyharbor-air",
@@ -579,6 +654,23 @@ describe("Home KNOW contract engine", () => {
     expect(response.prose.trim().length).toBeGreaterThan(0);
     expect(response.charts.length).toBeGreaterThan(0);
     expect(response.citations.length).toBeGreaterThan(0);
+    assertNoForbiddenHomeText(response);
+  });
+
+  it.each([
+    "Visualize how the next $30M would be allocated across the top bets.",
+    "Chart the adoption curve we should expect for the contact-center / front-office AI bet.",
+  ])("hands decision-shaped visual prompts to Intelligence: %s", (question) => {
+    const response = buildHomeKnowResponseFromPacket({
+      tenantKey: "skyharbor-air",
+      question,
+      packet: skyharborPacket,
+    });
+
+    expect(response.intent).toBe("decision_handoff");
+    expect(response.answerStatus).toBe("handoff");
+    expect(response.handoff?.target).toBe("intelligence");
+    expect(response.charts).toEqual([]);
     assertNoForbiddenHomeText(response);
   });
 

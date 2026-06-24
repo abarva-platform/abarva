@@ -21,6 +21,10 @@ import type {
   CitationSourceClass,
   GroundingMode,
 } from "@/lib/intelligence/answer/agent-answer";
+import {
+  enforceHomeKnowAgentAnswerDoctrine,
+  enforceIntelligenceAdvisorDoctrine,
+} from "@/lib/intelligence/answer/surface-doctrine";
 
 /** Map the broker's provenance source-class to the answer citation taxonomy. */
 function mapSourceClass(
@@ -104,7 +108,7 @@ export function assembleAgentAnswer(args: AssembleAgentAnswerArgs): AgentAnswer 
   const confidence: AnswerConfidence =
     groundingMode === "tenant-evidence" ? "high" : groundingMode === "mixed" ? "medium" : "low";
 
-  return {
+  const answer: AgentAnswer = {
     engineVersion: "agent-answer/v1",
     surface,
     expertId: routing.experts[0]?.id ?? null,
@@ -121,6 +125,9 @@ export function assembleAgentAnswer(args: AssembleAgentAnswerArgs): AgentAnswer 
     limits: [],
     crossTenantBlocked,
   };
+  if (surface === "home") return enforceHomeKnowAgentAnswerDoctrine(answer);
+  if (surface === "intelligence") return enforceIntelligenceAdvisorDoctrine(answer);
+  return answer;
 }
 
 export interface SharedBrainInput {

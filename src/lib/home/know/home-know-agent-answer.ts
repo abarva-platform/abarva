@@ -11,6 +11,7 @@ import type {
   HomeKnowResponse,
 } from "@/lib/home/know/home-know-contract";
 import type { AskSurfaceContext } from "@/lib/intelligence/ask";
+import { enforceHomeKnowAgentAnswerDoctrine } from "@/lib/intelligence/answer/surface-doctrine";
 
 export function shouldUseHomeKnowAgentAnswer(input: {
   query: string;
@@ -28,7 +29,7 @@ export async function buildHomeKnowAgentAnswer(
 }
 
 export function homeKnowResponseToAgentAnswer(response: HomeKnowResponse): AgentAnswer {
-  return {
+  return enforceHomeKnowAgentAnswerDoctrine({
     engineVersion: "agent-answer/v1",
     surface: "home",
     expertId: null,
@@ -88,11 +89,11 @@ export function homeKnowResponseToAgentAnswer(response: HomeKnowResponse): Agent
           },
         ]
       : [],
-    groundingMode: response.citations.length > 0 ? "tenant-evidence" : "industry-pattern",
+    groundingMode: "tenant-evidence",
     confidence: response.answerStatus === "answered" ? "high" : "medium",
     limits: response.answerStatus === "partial" ? ["Some fields are missing and shown as gaps."] : [],
     crossTenantBlocked: false,
-  };
+  });
 }
 
 function coerceTableRow(

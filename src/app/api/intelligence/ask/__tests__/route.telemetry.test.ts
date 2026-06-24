@@ -240,6 +240,12 @@ describe('POST /api/intelligence/ask telemetry', () => {
         sourceClass: 'corpus-pattern',
       }),
     );
+    expect(agentAnswer.basis).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'industry_pattern' }),
+        expect.objectContaining({ kind: 'expert_inference' }),
+      ]),
+    );
     expect(text).toContain('"type":"done"');
   });
 
@@ -285,6 +291,12 @@ describe('POST /api/intelligence/ask telemetry', () => {
       expect.arrayContaining([
         'xp.retail.merchandising-pricing',
         'xp.retail.store-operations',
+      ]),
+    );
+    expect(agentAnswer.basis).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'tenant_fact' }),
+        expect.objectContaining({ kind: 'expert_inference' }),
       ]),
     );
     expect(expertIds).not.toContain(
