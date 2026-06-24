@@ -1,0 +1,95 @@
+name: ACA runtime drift monitor
+
+on:
+  schedule:
+    # Frequent enough to catch flip-back quickly without creating deploy churn.
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: aca-runtime-drift-monitor
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  ACR_NAME: ${{ vars.AZURE_ACR_NAME || 'acrabarvalab001' }}
+  IMAGE_REPOSITORY: ${{ vars.AZURE_WEB_IMAGE_REPOSITORY || 'abarva/web' }}
+  CONTAINER_APP_NAME: ${{ vars.AZURE_WEB_CONTAINER_APP_NAME || 'ca-abarva-web-lab-eastus' }}
+  RESOURCE_GROUP: ${{ vars.AZURE_WEB_RESOURCE_GROUP || 'rg-abarva-controlplane-lab-eastus' }}
+  PRODUCTION_BASE_URL: ${{ vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
+  AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
+  AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
+  AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID || '701a8554-a166-46e9-bf13-743bc50e3b20' }}
+
+jobs:
+  drift-monitor:
+    name: Verify live ACA runtime still serves approved main image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Verify Azure OIDC configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          if [[ -z "${AZURE_DEPLOY_CLIENT_ID}" ]]; then missing+=("AZURE_CLIENT_ID or AZURE_LAB_CLIENT_ID"); fi
+          if [[ -z "${AZURE_DEPLOY_TENANT_ID}" ]]; then missing+=("AZURE_TENANT_ID or AZURE_LAB_TENANT_ID"); fi
+          if [[ -z "${AZURE_DEPLOY_SUBSCRIPTION_ID}" ]]; then missing+=("AZURE_SUBSCRIPTION_ID or AZURE_LAB_SUBSCRIPTION_ID"); fi
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing Azure monitor configuration:\n' >&2
+            printf -- '- %s\n' "${missing[@]}" >&2
+            exit 1
+          fi
+
+      - name: Azure login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_DEPLOY_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_DEPLOY_SUBSCRIPTION_ID }}
+
+      - name: Check live runtime invariant
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/deploy/check-aca-runtime-invariant.mjs \
+            --out-dir audit-artifacts/aca-runtime-drift
+
+      - name: Write monitor summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## ACA runtime drift monitor"
+            echo
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Base URL | \`${PRODUCTION_BASE_URL}\` |"
+            echo "| Container App | \`${CONTAINER_APP_NAME}\` |"
+            echo "| Resource Group | \`${RESOURCE_GROUP}\` |"
+            echo "| Azure client id | \`${AZURE_DEPLOY_CLIENT_ID}\` |"
+            echo "| Checked at | \`$(date -u +%Y-%m-%dT%H:%M:%SZ)\` |"
+            echo
+            if [[ -f audit-artifacts/aca-runtime-drift/runtime-invariant-proof.json ]]; then
+              echo "Runtime proof:"
+              echo
+              echo '```json'
+              cat audit-artifacts/aca-runtime-drift/runtime-invariant-proof.json
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload drift evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: aca-runtime-drift
+          path: audit-artifacts/aca-runtime-drift
+          if-no-files-found: warn

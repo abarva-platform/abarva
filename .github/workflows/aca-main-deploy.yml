@@ -41,6 +41,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "Shared ACA production deploys may only run from refs/heads/main." >&2
+            echo "GITHUB_REF=${GITHUB_REF}" >&2
+            exit 1
+          fi
           deployed_sha="$(git rev-parse HEAD)"
           main_sha="$(git rev-parse origin/main)"
           if [[ "$deployed_sha" != "$main_sha" ]]; then
@@ -80,6 +85,20 @@ jobs:
             printf -- '- %s\n' "${missing[@]}" >&2
             exit 1
           fi
+
+      - name: Capture deploy identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-artifacts/aca-main-deploy
+          {
+            echo "github_actor=${GITHUB_ACTOR}"
+            echo "github_ref=${GITHUB_REF}"
+            echo "github_sha=${GITHUB_SHA}"
+            echo "azure_client_id=${AZURE_DEPLOY_CLIENT_ID}"
+            echo "azure_subscription_id=${AZURE_DEPLOY_SUBSCRIPTION_ID}"
+            echo "utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } | tee audit-artifacts/aca-main-deploy/deploy-identity.txt
 
       - name: Azure login
         uses: azure/login@v3
@@ -290,6 +309,10 @@ jobs:
         run: |
           set -euo pipefail
           revision="${{ steps.deploy_revision.outputs.revision_name }}"
+          if [[ ! "$revision" =~ ^${CONTAINER_APP_NAME}--m[0-9a-f]{8}$ ]]; then
+            echo "Refusing to shift shared runtime traffic to non-main revision name: $revision" >&2
+            exit 1
+          fi
           for attempt in {1..12}; do
             if az containerapp ingress traffic set \
               --name "$CONTAINER_APP_NAME" \
@@ -314,45 +337,13 @@ jobs:
 
       - name: Verify ACA runtime invariant
         shell: bash
+        env:
+          EXPECTED_ACA_IMAGE: ${{ steps.image.outputs.image }}
         run: |
           set -euo pipefail
-          expected_image="${{ steps.image.outputs.image }}"
-          expected_revision="${{ steps.deploy_revision.outputs.revision_name }}"
-
-          az containerapp show \
-            --name "$CONTAINER_APP_NAME" \
-            --resource-group "$RESOURCE_GROUP" \
-            --output json | tee audit-artifacts/aca-main-deploy/containerapp-after.json
-
-          template_image="$(jq -r '.properties.template.containers[0].image // ""' audit-artifacts/aca-main-deploy/containerapp-after.json)"
-          if [[ "$template_image" != "$expected_image" ]]; then
-            echo "ACA template image drift detected after deploy." >&2
-            echo "expected=$expected_image" >&2
-            echo "actual=$template_image" >&2
-            exit 1
-          fi
-
-          active_revision="$(jq -r '.properties.configuration.ingress.traffic[] | select((.weight // 0) == 100) | .revisionName' audit-artifacts/aca-main-deploy/containerapp-after.json)"
-          if [[ "$active_revision" != "$expected_revision" ]]; then
-            echo "ACA traffic drift detected after deploy." >&2
-            echo "expected_revision=$expected_revision" >&2
-            echo "active_revision=$active_revision" >&2
-            exit 1
-          fi
-
-          az containerapp revision show \
-            --name "$CONTAINER_APP_NAME" \
-            --resource-group "$RESOURCE_GROUP" \
-            --revision "$active_revision" \
-            --output json | tee audit-artifacts/aca-main-deploy/active-revision-after.json
-
-          active_image="$(jq -r '.properties.template.containers[0].image // ""' audit-artifacts/aca-main-deploy/active-revision-after.json)"
-          if [[ "$active_image" != "$expected_image" ]]; then
-            echo "ACA active traffic revision image drift detected after deploy." >&2
-            echo "expected=$expected_image" >&2
-            echo "actual=$active_image" >&2
-            exit 1
-          fi
+          node scripts/deploy/check-aca-runtime-invariant.mjs \
+            --expected-image "$EXPECTED_ACA_IMAGE" \
+            --out-dir audit-artifacts/aca-main-deploy/runtime-invariant
 
       - name: Verify production health endpoint
         shell: bash
@@ -382,6 +373,8 @@ jobs:
             echo "| Image | \`${{ steps.image.outputs.image }}\` |"
             echo "| Revision | \`${{ steps.deploy_revision.outputs.revision_name }}\` |"
             echo "| Base URL | \`${PRODUCTION_BASE_URL}\` |"
+            echo "| Deploy actor | \`${GITHUB_ACTOR}\` |"
+            echo "| Azure client id | \`${AZURE_DEPLOY_CLIENT_ID}\` |"
             echo
             echo "Rollback command:"
             echo

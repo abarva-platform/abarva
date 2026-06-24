@@ -43,7 +43,24 @@ const REQUIRED_MARKERS = [
     markers: [
       'Assert main deploy authority',
       'Verify ACA runtime invariant',
+      'Refusing to shift shared runtime traffic to non-main revision name',
       'origin/main HEAD only',
+    ],
+  },
+  {
+    file: '.github/workflows/aca-runtime-drift-monitor.yml',
+    markers: [
+      'ACA runtime drift monitor',
+      'Check live runtime invariant',
+      'scripts/deploy/check-aca-runtime-invariant.mjs',
+    ],
+  },
+  {
+    file: 'scripts/deploy/check-aca-runtime-invariant.mjs',
+    markers: [
+      'FORBIDDEN_TAG_PREFIXES',
+      'Active digest must have a main-<sha> ACR tag',
+      '100% traffic revision must be a main revision',
     ],
   },
   {
@@ -67,6 +84,7 @@ const RELEASE_RECORD_PATTERN = /^docs\/releases\/records\/[^/]+\.md$/;
 const EXCEPTION_MARKER = 'deploy-authority-exception:';
 const PATH_ALLOWLIST = new Set([
   'scripts/release-control/check-deploy-authority-policy.mjs',
+  'scripts/deploy/check-aca-runtime-invariant.mjs',
 ]);
 
 function argValue(name, fallback) {
@@ -124,6 +142,44 @@ function scanAzContainerAppUpdate(file, text) {
         `${file}:${index + 1}: az containerapp update must include a digest-pinned --image so env-only changes cannot mint a stale-image revision.`,
       );
     }
+  }
+
+  return errors;
+}
+
+function scanAzContainerAppTrafficSet(file, text) {
+  const errors = [];
+  if (PATH_ALLOWLIST.has(file)) return errors;
+  const lines = text.split('\n');
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!/\baz\s+containerapp\s+ingress\s+traffic\s+set\b/.test(line)) continue;
+    if (lineHasException(lines, index)) continue;
+    if (file === '.github/workflows/aca-main-deploy.yml') continue;
+
+    errors.push(
+      `${file}:${index + 1}: shared ACA traffic can only be shifted by .github/workflows/aca-main-deploy.yml.`,
+    );
+  }
+
+  return errors;
+}
+
+function scanAzAcrBuild(file, text) {
+  const errors = [];
+  if (PATH_ALLOWLIST.has(file)) return errors;
+  const lines = text.split('\n');
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!/\baz\s+acr\s+build\b/.test(line)) continue;
+    if (lineHasException(lines, index)) continue;
+    if (file === '.github/workflows/aca-main-deploy.yml') continue;
+
+    errors.push(
+      `${file}:${index + 1}: shared ACR web images must be built by .github/workflows/aca-main-deploy.yml.`,
+    );
   }
 
   return errors;
@@ -187,6 +243,8 @@ for (const file of changedPolicyFiles) {
   const text = fileText(file);
   if (!text) continue;
   errors.push(...scanAzContainerAppUpdate(file, text));
+  errors.push(...scanAzContainerAppTrafficSet(file, text));
+  errors.push(...scanAzAcrBuild(file, text));
   errors.push(...scanMutableAbarvaRuntimeImages(file, text));
 }
 

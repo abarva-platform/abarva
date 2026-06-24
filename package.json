@@ -50,6 +50,7 @@
     "access:check:live": "node scripts/check-access.mjs --live",
     "release:check": "node scripts/release-check.mjs",
     "release:deploy-authority:check": "node scripts/release-control/check-deploy-authority-policy.mjs",
+    "deploy:aca-runtime-invariant": "node scripts/deploy/check-aca-runtime-invariant.mjs",
     "scb:truth-gates": "npx tsx src/scripts/intelligence/scb-truth-gates.ts",
     "guard:reasoning": "node scripts/guardrails/anthropic-only-reasoning.mjs",
     "scaffold:release": "node scripts/scaffold/release-record.mjs",

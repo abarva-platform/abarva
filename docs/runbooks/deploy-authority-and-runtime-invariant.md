@@ -8,12 +8,16 @@ The only allowed shared Product/Lab web traffic mutator is the repo-owned `ACA m
 
 Shared runtime means any Container App or Container Apps Job that serves or generates artifacts for multiple clients in Product/Lab. Branch experiments, preview testing, and client-specific rehearsals must use their own environment or Container App.
 
+The scheduled `ACA runtime drift monitor` workflow in `.github/workflows/aca-runtime-drift-monitor.yml` is read-only drift detection. It must never shift traffic or mutate the Container App.
+
 ## Runtime Invariant
 
 For every shared ACA web app update:
 
 - The source commit is `origin/main` HEAD.
 - The web image is pinned by digest: `acr.../abarva/web@sha256:<digest>`.
+- The ACR digest has a `main-<sha>` tag and no forbidden runtime tag such as `source-*`, `codex-*`, `worktree-*`, `preview-*`, or `local-*`.
+- The 100 percent traffic revision name is a main revision: `m<sha>` or `main-<sha>`.
 - The Container App template image equals the approved digest-pinned image.
 - The 100 percent traffic revision image equals the same approved digest-pinned image.
 - Worker jobs that execute code for the same release use the same approved digest-pinned image.
@@ -71,12 +75,30 @@ az containerapp revision show \
   --output json
 ```
 
+Or run the invariant checker:
+
+```bash
+npm run deploy:aca-runtime-invariant -- \
+  --expected-image 'acrabarvalab001.azurecr.io/abarva/web@sha256:<digest>' \
+  --out-dir audit-artifacts/aca-runtime-drift
+```
+
+The checker fails if:
+
+- Traffic is split or the 100 percent revision is not a main revision.
+- The template image and traffic revision image differ.
+- The active image is not digest-pinned.
+- The active digest lacks a `main-<sha>` tag.
+- The active digest has a forbidden tag such as `source-*`.
+- The health endpoint is not `ok=true`.
+
 ## Proof Bundle
 
 Do not call a release live-proven until the evidence bundle contains:
 
 - PR and merge commit.
 - ACA deploy workflow run.
+- Deploy identity: GitHub actor, Azure client id, subscription, and UTC timestamp.
 - Approved digest-pinned image.
 - Template image after update.
 - 100 percent traffic revision image after update.
@@ -94,3 +116,76 @@ Cloud-side enforcement must match the repo rule:
 - Human/operator identities may have read access by default; write access requires a named break-glass role, time-bound assignment, and evidence capture.
 - Branch or preview deploy identities must be scoped to preview/client-preprod Container Apps only.
 - The ACR promotion path must record the image digest before any Product/Lab runtime update.
+
+## RBAC Lockdown Procedure
+
+Read current writers before changing anything:
+
+```bash
+APP_SCOPE='/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.App/containerApps/ca-abarva-web-lab-eastus'
+ACR_SCOPE='/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ContainerRegistry/registries/acrabarvalab001'
+
+az role assignment list --scope "$APP_SCOPE" --include-inherited \
+  --query '[].{principalName:principalName,principalType:principalType,role:roleDefinitionName,scope:scope,principalId:principalId}' \
+  --output table
+
+az role assignment list --scope "$ACR_SCOPE" --include-inherited \
+  --query '[].{principalName:principalName,principalType:principalType,role:roleDefinitionName,scope:scope,principalId:principalId}' \
+  --output table
+```
+
+The intended steady state for the shared Product/Lab web app is:
+
+- `abarva-github-aca-main-deploy` has the minimum Container Apps write role needed for `ca-abarva-web-lab-eastus` and the minimum ACR push/build role needed for `acrabarvalab001/abarva/web`.
+- Runtime managed identities have only pull/data-plane permissions needed at runtime; they do not have Container Apps write or ACR push.
+- Agent/Codex/preview service principals do not have write access to the shared Product/Lab Container App or ACR repository. They use preview/client-preprod resources.
+- Human users have Reader by default. Break-glass write access is time-bound and documented.
+
+Revoke broad non-main writers only after confirming the approved deploy principal:
+
+```bash
+# Example only: replace PRINCIPAL_ID and ROLE with the exact assignment found above.
+az role assignment delete \
+  --assignee '<principal-id-to-remove>' \
+  --role '<role-to-remove>' \
+  --scope "$APP_SCOPE"
+
+az role assignment delete \
+  --assignee '<principal-id-to-remove>' \
+  --role '<role-to-remove>' \
+  --scope "$ACR_SCOPE"
+```
+
+After RBAC changes, immediately run:
+
+```bash
+npm run deploy:aca-runtime-invariant -- --out-dir audit-artifacts/aca-runtime-drift-rbac-proof
+```
+
+## 2026-06-24 Flip-Back Incident Evidence
+
+Observed bad state:
+
+- Rogue ACR tag: `source-ava-93055367`.
+- Rogue digest: `sha256:50ffc9dd48f40522a1c344e211d7ff30ff537722fc8d7223b59c66657803994b`.
+- ACR created time: `2026-06-24T00:10:43.010835Z`.
+- Rogue ACA revision: `ca-abarva-web-lab-eastus--0000141`.
+- Rogue revision created time: `2026-06-24T00:11:28Z`.
+- Rogue revision image: `acrabarvalab001.azurecr.io/abarva/web@sha256:50ffc9dd48f40522a1c344e211d7ff30ff537722fc8d7223b59c66657803994b`.
+- Bad traffic state: `0000141` received `100%` traffic.
+
+Live correction:
+
+- Approved revision: `ca-abarva-web-lab-eastus--main-e70ae041`.
+- Approved digest: `sha256:67812c07215f98662aed720ee38ca7aaa8674bcda267fbdf520b8334fad99e9c`.
+- The rogue `0000141` revision was deactivated after traffic was restored to the approved main revision.
+
+RBAC finding at incident time:
+
+- Human account `anand.sundaram@thesundaram.com` had inherited subscription Owner.
+- Service principal `sp-abarva-codex-lab` had subscription Owner plus resource-group Contributor and ACR push.
+- Service principal `cursor-abarva-cloud-agent-20260606` had resource-group Contributor, Container Apps Contributor, and ACR push.
+- Service principal `abarva-github-aca-main-deploy` had resource-group Contributor.
+- User `admin@abarva.ai` had subscription Contributor.
+
+Those broad writers mean the repo kernel can catch drift but cannot prevent a terminal, agent, or non-main workflow with Azure credentials from mutating the shared runtime. Cloud RBAC must be reduced to the intended steady state above.
