@@ -21,10 +21,9 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { DEFAULT_CLIENT_KEY, getClientOption } from '@/lib/client-config';
 
 export const metadata = {
-  title: 'Ava Intel · Ask | AbarVa',
+  title: 'Ava Intelligence · Ask | AbarVa',
   description:
-    'Ava Intel — AbarVa\'s knowledge librarian. Ask about the corpus, cite ' +
-    'evidence, or vet a synthesis.',
+    'Ava Intelligence — advisor-style analysis grounded in tenant evidence, corpus patterns, and citations.',
 };
 
 export default async function IntelligenceAskPage({
@@ -51,7 +50,7 @@ export default async function IntelligenceAskPage({
       topBarProps={{
         tenantName: activeClientDisplayName,
         showLocked: true,
-        context: 'Intelligence · Ask Ava Intel',
+        context: 'Intelligence · Ask Ava',
       }}
     >
       <IntelligenceAskTabCookie />
@@ -100,7 +99,7 @@ export default async function IntelligenceAskPage({
               ← Intelligence
             </Link>
             <span style={{ margin: '0 8px' }}>·</span>
-            <span style={{ color: SHELL.INK_MUTED }}>Ask Ava Intel</span>
+            <span style={{ color: SHELL.INK_MUTED }}>Ask Ava</span>
           </nav>
 
           {/* Page header */}
@@ -115,7 +114,7 @@ export default async function IntelligenceAskPage({
                 marginBottom: 4,
               }}
             >
-              Ava Intel · knowledge librarian
+              Ava Intelligence · advisor
             </div>
             <h1
               style={{
@@ -128,11 +127,11 @@ export default async function IntelligenceAskPage({
                 letterSpacing: '-0.01em',
               }}
             >
-              Ask the corpus
+              Ask Ava
             </h1>
           </div>
 
-          {/* INT-5 · Reasoning mode strip — frames Sentinel's answer scope */}
+          {/* INT-5 · Reasoning mode strip — frames Ava's answer scope */}
           <IntelligenceReasoningModeStrip searchParams={params} />
 
           <SentinelReasoningCards
