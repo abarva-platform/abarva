@@ -1,0 +1,302 @@
+{"TimeStamp":"2026-06-24T06:22:43.70464","Log":"Connecting to the container 'private-operator-idle'..."}
+{"TimeStamp":"2026-06-24T06:22:43.85858","Log":"Successfully Connected to container: 'private-operator-idle' [Execution: 'job-abarva-private-operator-eus-t5ucypa', Replica: 'job-abarva-private-operator-eus-t5ucypa-v8q9f']"}
+{"TimeStamp":"2026-06-24T06:21:53.8420559+00:00","Log":"F           "source_type": "enterprise_context_source_files","}
+{"TimeStamp":"2026-06-24T06:21:53.8420579+00:00","Log":"F           "dimension_key": "enterprise_context_file","}
+{"TimeStamp":"2026-06-24T06:21:53.8420598+00:00","Log":"F           "family_key": "enterprise_context","}
+{"TimeStamp":"2026-06-24T06:21:53.8420617+00:00","Log":"F           "evidence_type": "file_lineage","}
+{"TimeStamp":"2026-06-24T06:21:53.8420636+00:00","Log":"F           "record_count": "30","}
+{"TimeStamp":"2026-06-24T06:21:53.8420668+00:00","Log":"F           "coverage_status": "partial","}
+{"TimeStamp":"2026-06-24T06:21:53.8420689+00:00","Log":"F           "synthetic_demo_flag": false,"}
+{"TimeStamp":"2026-06-24T06:21:53.8420708+00:00","Log":"F           "finance_validated_flag": false"}
+{"TimeStamp":"2026-06-24T06:21:53.8420804+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8420827+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8420847+00:00","Log":"F           "tenant_key": "lakeshore","}
+{"TimeStamp":"2026-06-24T06:21:53.8420866+00:00","Log":"F           "source_type": "enterprise_context_sources","}
+{"TimeStamp":"2026-06-24T06:21:53.8420884+00:00","Log":"F           "dimension_key": "enterprise_context_source","}
+{"TimeStamp":"2026-06-24T06:21:53.8420901+00:00","Log":"F           "family_key": "enterprise_context","}
+{"TimeStamp":"2026-06-24T06:21:53.842092+00:00","Log":"F           "evidence_type": "source_registry","}
+{"TimeStamp":"2026-06-24T06:21:53.8420939+00:00","Log":"F           "record_count": "1","}
+{"TimeStamp":"2026-06-24T06:21:53.8420958+00:00","Log":"F           "coverage_status": "partial","}
+{"TimeStamp":"2026-06-24T06:21:53.8420977+00:00","Log":"F           "synthetic_demo_flag": true,"}
+{"TimeStamp":"2026-06-24T06:21:53.8420994+00:00","Log":"F           "finance_validated_flag": false"}
+{"TimeStamp":"2026-06-24T06:21:53.8421026+00:00","Log":"F         }"}
+{"TimeStamp":"2026-06-24T06:21:53.8421045+00:00","Log":"F       ],"}
+{"TimeStamp":"2026-06-24T06:21:53.8421162+00:00","Log":"F       "readinessRows": ["}
+{"TimeStamp":"2026-06-24T06:21:53.842119+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8421214+00:00","Log":"F           "tenant_key": "lakeshore","}
+{"TimeStamp":"2026-06-24T06:21:53.8421235+00:00","Log":"F           "question_pattern": "What data do we have for this tenant?","}
+{"TimeStamp":"2026-06-24T06:21:53.8421254+00:00","Log":"F           "intent_type": "inventory","}
+{"TimeStamp":"2026-06-24T06:21:53.8421273+00:00","Log":"F           "readiness_status": "answerable","}
+{"TimeStamp":"2026-06-24T06:21:53.8421291+00:00","Log":"F           "confidence_score": "0.760","}
+{"TimeStamp":"2026-06-24T06:21:53.8421311+00:00","Log":"F           "required_dimensions": ["}
+{"TimeStamp":"2026-06-24T06:21:53.8421331+00:00","Log":"F             "enterprise_context_record""}
+{"TimeStamp":"2026-06-24T06:21:53.842135+00:00","Log":"F           ],"}
+{"TimeStamp":"2026-06-24T06:21:53.842137+00:00","Log":"F           "suggested_next_action": "Use deterministic query first, then narrative synthesis with citations.""}
+{"TimeStamp":"2026-06-24T06:21:53.8421405+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8421426+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8421446+00:00","Log":"F           "tenant_key": "lakeshore","}
+{"TimeStamp":"2026-06-24T06:21:53.8421467+00:00","Log":"F           "question_pattern": "What work is repetitive?","}
+{"TimeStamp":"2026-06-24T06:21:53.8421488+00:00","Log":"F           "intent_type": "process_intelligence","}
+{"TimeStamp":"2026-06-24T06:21:53.8421509+00:00","Log":"F           "readiness_status": "not_answerable","}
+{"TimeStamp":"2026-06-24T06:21:53.842153+00:00","Log":"F           "confidence_score": "0.760","}
+{"TimeStamp":"2026-06-24T06:21:53.8421551+00:00","Log":"F           "required_dimensions": ["}
+{"TimeStamp":"2026-06-24T06:21:53.8421571+00:00","Log":"F             "operational_work_item","}
+{"TimeStamp":"2026-06-24T06:21:53.8421592+00:00","Log":"F             "automation_opportunity""}
+{"TimeStamp":"2026-06-24T06:21:53.8421612+00:00","Log":"F           ],"}
+{"TimeStamp":"2026-06-24T06:21:53.8421634+00:00","Log":"F           "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer.""}
+{"TimeStamp":"2026-06-24T06:21:53.8421655+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8421674+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8421704+00:00","Log":"F           "tenant_key": "lakeshore","}
+{"TimeStamp":"2026-06-24T06:21:53.8421835+00:00","Log":"F           "question_pattern": "Where are the bottlenecks?","}
+{"TimeStamp":"2026-06-24T06:21:53.8421854+00:00","Log":"F           "intent_type": "process_intelligence","}
+{"TimeStamp":"2026-06-24T06:21:53.8421868+00:00","Log":"F           "readiness_status": "not_answerable","}
+{"TimeStamp":"2026-06-24T06:21:53.842188+00:00","Log":"F           "confidence_score": "0.760","}
+{"TimeStamp":"2026-06-24T06:21:53.8421891+00:00","Log":"F           "required_dimensions": ["}
+{"TimeStamp":"2026-06-24T06:21:53.8421902+00:00","Log":"F             "process_observation","}
+{"TimeStamp":"2026-06-24T06:21:53.8421913+00:00","Log":"F             "operational_event""}
+{"TimeStamp":"2026-06-24T06:21:53.8421924+00:00","Log":"F           ],"}
+{"TimeStamp":"2026-06-24T06:21:53.8421936+00:00","Log":"F           "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer.""}
+{"TimeStamp":"2026-06-24T06:21:53.8421947+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8421958+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8421978+00:00","Log":"F           "tenant_key": "lakeshore","}
+{"TimeStamp":"2026-06-24T06:21:53.8421991+00:00","Log":"F           "question_pattern": "Which apps create the most operational friction?","}
+{"TimeStamp":"2026-06-24T06:21:53.8422003+00:00","Log":"F           "intent_type": "process_intelligence","}
+{"TimeStamp":"2026-06-24T06:21:53.8422014+00:00","Log":"F           "readiness_status": "not_answerable","}
+{"TimeStamp":"2026-06-24T06:21:53.8422092+00:00","Log":"F           "confidence_score": "0.760","}
+{"TimeStamp":"2026-06-24T06:21:53.8422106+00:00","Log":"F           "required_dimensions": ["}
+{"TimeStamp":"2026-06-24T06:21:53.8422117+00:00","Log":"F             "system_service_map","}
+{"TimeStamp":"2026-06-24T06:21:53.8422129+00:00","Log":"F             "operational_work_item""}
+{"TimeStamp":"2026-06-24T06:21:53.842214+00:00","Log":"F           ],"}
+{"TimeStamp":"2026-06-24T06:21:53.8422152+00:00","Log":"F           "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer.""}
+{"TimeStamp":"2026-06-24T06:21:53.8422163+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8422174+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8422185+00:00","Log":"F           "tenant_key": "lakeshore","}
+{"TimeStamp":"2026-06-24T06:21:53.8422206+00:00","Log":"F           "question_pattern": "What value can we expect?","}
+{"TimeStamp":"2026-06-24T06:21:53.842227+00:00","Log":"F           "intent_type": "business_case","}
+{"TimeStamp":"2026-06-24T06:21:53.8422286+00:00","Log":"F           "readiness_status": "not_answerable","}
+{"TimeStamp":"2026-06-24T06:21:53.84223+00:00","Log":"F           "confidence_score": "0.760","}
+{"TimeStamp":"2026-06-24T06:21:53.8422312+00:00","Log":"F           "required_dimensions": ["}
+{"TimeStamp":"2026-06-24T06:21:53.8422323+00:00","Log":"F             "value_estimate","}
+{"TimeStamp":"2026-06-24T06:21:53.8422335+00:00","Log":"F             "benefit_realization""}
+{"TimeStamp":"2026-06-24T06:21:53.8422346+00:00","Log":"F           ],"}
+{"TimeStamp":"2026-06-24T06:21:53.8422358+00:00","Log":"F           "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer.""}
+{"TimeStamp":"2026-06-24T06:21:53.8422369+00:00","Log":"F         }"}
+{"TimeStamp":"2026-06-24T06:21:53.842238+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-06-24T06:21:53.8422392+00:00","Log":"F     },"}
+{"TimeStamp":"2026-06-24T06:21:53.8422404+00:00","Log":"F     "meridian-health": {"}
+{"TimeStamp":"2026-06-24T06:21:53.8422415+00:00","Log":"F       "volumetricRows": ["}
+{"TimeStamp":"2026-06-24T06:21:53.8422442+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8422454+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8422466+00:00","Log":"F           "source_type": "enterprise_context_facts","}
+{"TimeStamp":"2026-06-24T06:21:53.8422478+00:00","Log":"F           "dimension_key": "enterprise_context_fact","}
+{"TimeStamp":"2026-06-24T06:21:53.8422489+00:00","Log":"F           "family_key": "enterprise_context","}
+{"TimeStamp":"2026-06-24T06:21:53.8422501+00:00","Log":"F           "evidence_type": "fact","}
+{"TimeStamp":"2026-06-24T06:21:53.8422512+00:00","Log":"F           "record_count": "16728","}
+{"TimeStamp":"2026-06-24T06:21:53.8422523+00:00","Log":"F           "coverage_status": "strong","}
+{"TimeStamp":"2026-06-24T06:21:53.8422534+00:00","Log":"F           "synthetic_demo_flag": false,"}
+{"TimeStamp":"2026-06-24T06:21:53.8422546+00:00","Log":"F           "finance_validated_flag": false"}
+{"TimeStamp":"2026-06-24T06:21:53.8422557+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8422569+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.842258+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.84226+00:00","Log":"F           "source_type": "enterprise_context_records","}
+{"TimeStamp":"2026-06-24T06:21:53.8422613+00:00","Log":"F           "dimension_key": "enterprise_context_record","}
+{"TimeStamp":"2026-06-24T06:21:53.8422624+00:00","Log":"F           "family_key": "enterprise_context","}
+{"TimeStamp":"2026-06-24T06:21:53.8422687+00:00","Log":"F           "evidence_type": "normalized_record","}
+{"TimeStamp":"2026-06-24T06:21:53.8422703+00:00","Log":"F           "record_count": "1538","}
+{"TimeStamp":"2026-06-24T06:21:53.8422717+00:00","Log":"F           "coverage_status": "strong","}
+{"TimeStamp":"2026-06-24T06:21:53.8422729+00:00","Log":"F           "synthetic_demo_flag": false,"}
+{"TimeStamp":"2026-06-24T06:21:53.8422741+00:00","Log":"F           "finance_validated_flag": false"}
+{"TimeStamp":"2026-06-24T06:21:53.8422752+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8422763+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8422774+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8422786+00:00","Log":"F           "source_type": "enterprise_context_chunks","}
+{"TimeStamp":"2026-06-24T06:21:53.8422797+00:00","Log":"F           "dimension_key": "enterprise_context_chunk","}
+{"TimeStamp":"2026-06-24T06:21:53.8422824+00:00","Log":"F           "family_key": "enterprise_context","}
+{"TimeStamp":"2026-06-24T06:21:53.8422836+00:00","Log":"F           "evidence_type": "search_chunk","}
+{"TimeStamp":"2026-06-24T06:21:53.8422847+00:00","Log":"F           "record_count": "1538","}
+{"TimeStamp":"2026-06-24T06:21:53.8422858+00:00","Log":"F           "coverage_status": "strong","}
+{"TimeStamp":"2026-06-24T06:21:53.8422869+00:00","Log":"F           "synthetic_demo_flag": false,"}
+{"TimeStamp":"2026-06-24T06:21:53.8422929+00:00","Log":"F           "finance_validated_flag": false"}
+{"TimeStamp":"2026-06-24T06:21:53.8422942+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8422954+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8422965+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8422977+00:00","Log":"F           "source_type": "enterprise_context_relationships","}
+{"TimeStamp":"2026-06-24T06:21:53.8422989+00:00","Log":"F           "dimension_key": "enterprise_context_relationship","}
+{"TimeStamp":"2026-06-24T06:21:53.8423+00:00","Log":"F           "family_key": "enterprise_context","}
+{"TimeStamp":"2026-06-24T06:21:53.8423012+00:00","Log":"F           "evidence_type": "relationship","}
+{"TimeStamp":"2026-06-24T06:21:53.8423031+00:00","Log":"F           "record_count": "1000","}
+{"TimeStamp":"2026-06-24T06:21:53.8423044+00:00","Log":"F           "coverage_status": "strong","}
+{"TimeStamp":"2026-06-24T06:21:53.8423055+00:00","Log":"F           "synthetic_demo_flag": false,"}
+{"TimeStamp":"2026-06-24T06:21:53.8423113+00:00","Log":"F           "finance_validated_flag": false"}
+{"TimeStamp":"2026-06-24T06:21:53.8423127+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8423141+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8423153+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8423164+00:00","Log":"F           "source_type": "ai_control_context_facts","}
+{"TimeStamp":"2026-06-24T06:21:53.8423176+00:00","Log":"F           "dimension_key": "enterprise_context_fact","}
+{"TimeStamp":"2026-06-24T06:21:53.8423187+00:00","Log":"F           "family_key": "ai_control_tower","}
+{"TimeStamp":"2026-06-24T06:21:53.8423198+00:00","Log":"F           "evidence_type": "fact","}
+{"TimeStamp":"2026-06-24T06:21:53.8423209+00:00","Log":"F           "record_count": "356","}
+{"TimeStamp":"2026-06-24T06:21:53.842322+00:00","Log":"F           "coverage_status": "sufficient","}
+{"TimeStamp":"2026-06-24T06:21:53.8423239+00:00","Log":"F           "synthetic_demo_flag": false,"}
+{"TimeStamp":"2026-06-24T06:21:53.842325+00:00","Log":"F           "finance_validated_flag": false"}
+{"TimeStamp":"2026-06-24T06:21:53.8423261+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8423272+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8423283+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8423294+00:00","Log":"F           "source_type": "ai_control_tool_usage_monthly","}
+{"TimeStamp":"2026-06-24T06:21:53.8423306+00:00","Log":"F           "dimension_key": "ai_tool_usage","}
+{"TimeStamp":"2026-06-24T06:21:53.8423317+00:00","Log":"F           "family_key": "ai_control_tower","}
+{"TimeStamp":"2026-06-24T06:21:53.8423328+00:00","Log":"F           "evidence_type": "usage_metric","}
+{"TimeStamp":"2026-06-24T06:21:53.8423339+00:00","Log":"F           "record_count": "40","}
+{"TimeStamp":"2026-06-24T06:21:53.842335+00:00","Log":"F           "coverage_status": "partial","}
+{"TimeStamp":"2026-06-24T06:21:53.8423361+00:00","Log":"F           "synthetic_demo_flag": false,"}
+{"TimeStamp":"2026-06-24T06:21:53.8423372+00:00","Log":"F           "finance_validated_flag": false"}
+{"TimeStamp":"2026-06-24T06:21:53.8423383+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8423402+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8423413+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8423424+00:00","Log":"F           "source_type": "enterprise_context_source_files","}
+{"TimeStamp":"2026-06-24T06:21:53.8423435+00:00","Log":"F           "dimension_key": "enterprise_context_file","}
+{"TimeStamp":"2026-06-24T06:21:53.8423498+00:00","Log":"F           "family_key": "enterprise_context","}
+{"TimeStamp":"2026-06-24T06:21:53.8423514+00:00","Log":"F           "evidence_type": "file_lineage","}
+{"TimeStamp":"2026-06-24T06:21:53.8423527+00:00","Log":"F           "record_count": "30","}
+{"TimeStamp":"2026-06-24T06:21:53.8423539+00:00","Log":"F           "coverage_status": "partial","}
+{"TimeStamp":"2026-06-24T06:21:53.8423551+00:00","Log":"F           "synthetic_demo_flag": false,"}
+{"TimeStamp":"2026-06-24T06:21:53.8423562+00:00","Log":"F           "finance_validated_flag": false"}
+{"TimeStamp":"2026-06-24T06:21:53.8423573+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8423585+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8423595+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8423617+00:00","Log":"F           "source_type": "ai_control_evidence_items","}
+{"TimeStamp":"2026-06-24T06:21:53.8423629+00:00","Log":"F           "dimension_key": "control_evidence_item","}
+{"TimeStamp":"2026-06-24T06:21:53.8423641+00:00","Log":"F           "family_key": "ai_control_tower","}
+{"TimeStamp":"2026-06-24T06:21:53.8423652+00:00","Log":"F           "evidence_type": "evidence_item","}
+{"TimeStamp":"2026-06-24T06:21:53.8423663+00:00","Log":"F           "record_count": "14","}
+{"TimeStamp":"2026-06-24T06:21:53.8423675+00:00","Log":"F           "coverage_status": "partial","}
+{"TimeStamp":"2026-06-24T06:21:53.8423764+00:00","Log":"F           "synthetic_demo_flag": false,"}
+{"TimeStamp":"2026-06-24T06:21:53.8423779+00:00","Log":"F           "finance_validated_flag": false"}
+{"TimeStamp":"2026-06-24T06:21:53.842379+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8423802+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8423813+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8423824+00:00","Log":"F           "source_type": "ai_control_sources","}
+{"TimeStamp":"2026-06-24T06:21:53.8423835+00:00","Log":"F           "dimension_key": "enterprise_context_source","}
+{"TimeStamp":"2026-06-24T06:21:53.8423854+00:00","Log":"F           "family_key": "ai_control_tower","}
+{"TimeStamp":"2026-06-24T06:21:53.8423866+00:00","Log":"F           "evidence_type": "source_registry","}
+{"TimeStamp":"2026-06-24T06:21:53.8423878+00:00","Log":"F           "record_count": "14","}
+{"TimeStamp":"2026-06-24T06:21:53.8423889+00:00","Log":"F           "coverage_status": "partial","}
+{"TimeStamp":"2026-06-24T06:21:53.84239+00:00","Log":"F           "synthetic_demo_flag": true,"}
+{"TimeStamp":"2026-06-24T06:21:53.8423958+00:00","Log":"F           "finance_validated_flag": false"}
+{"TimeStamp":"2026-06-24T06:21:53.8423973+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8423986+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8423998+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8424009+00:00","Log":"F           "source_type": "ai_control_initiatives","}
+{"TimeStamp":"2026-06-24T06:21:53.842402+00:00","Log":"F           "dimension_key": "ai_control_initiative","}
+{"TimeStamp":"2026-06-24T06:21:53.8424032+00:00","Log":"F           "family_key": "ai_control_tower","}
+{"TimeStamp":"2026-06-24T06:21:53.8424043+00:00","Log":"F           "evidence_type": "initiative","}
+{"TimeStamp":"2026-06-24T06:21:53.8424067+00:00","Log":"F           "record_count": "14","}
+{"TimeStamp":"2026-06-24T06:21:53.8424079+00:00","Log":"F           "coverage_status": "partial","}
+{"TimeStamp":"2026-06-24T06:21:53.842409+00:00","Log":"F           "synthetic_demo_flag": false,"}
+{"TimeStamp":"2026-06-24T06:21:53.8424101+00:00","Log":"F           "finance_validated_flag": false"}
+{"TimeStamp":"2026-06-24T06:21:53.8424112+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8424123+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8424133+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8424144+00:00","Log":"F           "source_type": "ai_control_benefit_realization","}
+{"TimeStamp":"2026-06-24T06:21:53.8424156+00:00","Log":"F           "dimension_key": "benefit_realization","}
+{"TimeStamp":"2026-06-24T06:21:53.8424167+00:00","Log":"F           "family_key": "ai_control_tower","}
+{"TimeStamp":"2026-06-24T06:21:53.8424178+00:00","Log":"F           "evidence_type": "value_metric","}
+{"TimeStamp":"2026-06-24T06:21:53.8424189+00:00","Log":"F           "record_count": "14","}
+{"TimeStamp":"2026-06-24T06:21:53.84242+00:00","Log":"F           "coverage_status": "partial","}
+{"TimeStamp":"2026-06-24T06:21:53.8424211+00:00","Log":"F           "synthetic_demo_flag": false,"}
+{"TimeStamp":"2026-06-24T06:21:53.842423+00:00","Log":"F           "finance_validated_flag": false"}
+{"TimeStamp":"2026-06-24T06:21:53.8424241+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8424252+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8424263+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8424274+00:00","Log":"F           "source_type": "ai_control_spend_contracts","}
+{"TimeStamp":"2026-06-24T06:21:53.8424284+00:00","Log":"F           "dimension_key": "spend_contract","}
+{"TimeStamp":"2026-06-24T06:21:53.8424342+00:00","Log":"F           "family_key": "ai_control_tower","}
+{"TimeStamp":"2026-06-24T06:21:53.8424357+00:00","Log":"F           "evidence_type": "financial_evidence","}
+{"TimeStamp":"2026-06-24T06:21:53.8424371+00:00","Log":"F           "record_count": "14","}
+{"TimeStamp":"2026-06-24T06:21:53.8424383+00:00","Log":"F           "coverage_status": "partial","}
+{"TimeStamp":"2026-06-24T06:21:53.8424394+00:00","Log":"F           "synthetic_demo_flag": false,"}
+{"TimeStamp":"2026-06-24T06:21:53.8424405+00:00","Log":"F           "finance_validated_flag": false"}
+{"TimeStamp":"2026-06-24T06:21:53.8424416+00:00","Log":"F         }"}
+{"TimeStamp":"2026-06-24T06:21:53.8424437+00:00","Log":"F       ],"}
+{"TimeStamp":"2026-06-24T06:21:53.8424448+00:00","Log":"F       "readinessRows": ["}
+{"TimeStamp":"2026-06-24T06:21:53.842446+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8424471+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8424482+00:00","Log":"F           "question_pattern": "What data do we have for this tenant?","}
+{"TimeStamp":"2026-06-24T06:21:53.8424494+00:00","Log":"F           "intent_type": "inventory","}
+{"TimeStamp":"2026-06-24T06:21:53.8424505+00:00","Log":"F           "readiness_status": "answerable","}
+{"TimeStamp":"2026-06-24T06:21:53.8424516+00:00","Log":"F           "confidence_score": "0.760","}
+{"TimeStamp":"2026-06-24T06:21:53.8424574+00:00","Log":"F           "required_dimensions": ["}
+{"TimeStamp":"2026-06-24T06:21:53.8424588+00:00","Log":"F             "enterprise_context_record""}
+{"TimeStamp":"2026-06-24T06:21:53.8424599+00:00","Log":"F           ],"}
+{"TimeStamp":"2026-06-24T06:21:53.8424611+00:00","Log":"F           "suggested_next_action": "Use deterministic query first, then narrative synthesis with citations.""}
+{"TimeStamp":"2026-06-24T06:21:53.8424623+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8424641+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8424654+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8424665+00:00","Log":"F           "question_pattern": "What work is repetitive?","}
+{"TimeStamp":"2026-06-24T06:21:53.8424677+00:00","Log":"F           "intent_type": "process_intelligence","}
+{"TimeStamp":"2026-06-24T06:21:53.8424688+00:00","Log":"F           "readiness_status": "not_answerable","}
+{"TimeStamp":"2026-06-24T06:21:53.84247+00:00","Log":"F           "confidence_score": "0.760","}
+{"TimeStamp":"2026-06-24T06:21:53.8424711+00:00","Log":"F           "required_dimensions": ["}
+{"TimeStamp":"2026-06-24T06:21:53.8424767+00:00","Log":"F             "operational_work_item","}
+{"TimeStamp":"2026-06-24T06:21:53.8424782+00:00","Log":"F             "automation_opportunity""}
+{"TimeStamp":"2026-06-24T06:21:53.8424796+00:00","Log":"F           ],"}
+{"TimeStamp":"2026-06-24T06:21:53.8424807+00:00","Log":"F           "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer.""}
+{"TimeStamp":"2026-06-24T06:21:53.8424819+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.842483+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8424851+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8424863+00:00","Log":"F           "question_pattern": "Where are the bottlenecks?","}
+{"TimeStamp":"2026-06-24T06:21:53.8424874+00:00","Log":"F           "intent_type": "process_intelligence","}
+{"TimeStamp":"2026-06-24T06:21:53.8424886+00:00","Log":"F           "readiness_status": "not_answerable","}
+{"TimeStamp":"2026-06-24T06:21:53.8424897+00:00","Log":"F           "confidence_score": "0.760","}
+{"TimeStamp":"2026-06-24T06:21:53.8424908+00:00","Log":"F           "required_dimensions": ["}
+{"TimeStamp":"2026-06-24T06:21:53.8424919+00:00","Log":"F             "process_observation","}
+{"TimeStamp":"2026-06-24T06:21:53.842493+00:00","Log":"F             "operational_event""}
+{"TimeStamp":"2026-06-24T06:21:53.8424941+00:00","Log":"F           ],"}
+{"TimeStamp":"2026-06-24T06:21:53.8424952+00:00","Log":"F           "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer.""}
+{"TimeStamp":"2026-06-24T06:21:53.8424963+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.8424974+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8424985+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8425004+00:00","Log":"F           "question_pattern": "Which apps create the most operational friction?","}
+{"TimeStamp":"2026-06-24T06:21:53.8425017+00:00","Log":"F           "intent_type": "process_intelligence","}
+{"TimeStamp":"2026-06-24T06:21:53.8425029+00:00","Log":"F           "readiness_status": "not_answerable","}
+{"TimeStamp":"2026-06-24T06:21:53.842504+00:00","Log":"F           "confidence_score": "0.760","}
+{"TimeStamp":"2026-06-24T06:21:53.8425051+00:00","Log":"F           "required_dimensions": ["}
+{"TimeStamp":"2026-06-24T06:21:53.8425062+00:00","Log":"F             "system_service_map","}
+{"TimeStamp":"2026-06-24T06:21:53.8425126+00:00","Log":"F             "operational_work_item""}
+{"TimeStamp":"2026-06-24T06:21:53.8425143+00:00","Log":"F           ],"}
+{"TimeStamp":"2026-06-24T06:21:53.8425157+00:00","Log":"F           "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer.""}
+{"TimeStamp":"2026-06-24T06:21:53.8425169+00:00","Log":"F         },"}
+{"TimeStamp":"2026-06-24T06:21:53.842518+00:00","Log":"F         {"}
+{"TimeStamp":"2026-06-24T06:21:53.8425192+00:00","Log":"F           "tenant_key": "meridian-health","}
+{"TimeStamp":"2026-06-24T06:21:53.8425203+00:00","Log":"F           "question_pattern": "What value can we expect?","}
+{"TimeStamp":"2026-06-24T06:21:53.8425226+00:00","Log":"F           "intent_type": "business_case","}
+{"TimeStamp":"2026-06-24T06:21:53.8425237+00:00","Log":"F           "readiness_status": "partially_answerable","}
+{"TimeStamp":"2026-06-24T06:21:53.8425249+00:00","Log":"F           "confidence_score": "0.760","}
+{"TimeStamp":"2026-06-24T06:21:53.8425261+00:00","Log":"F           "required_dimensions": ["}
+{"TimeStamp":"2026-06-24T06:21:53.8425272+00:00","Log":"F             "value_estimate","}
+{"TimeStamp":"2026-06-24T06:21:53.8425284+00:00","Log":"F             "benefit_realization""}
+{"TimeStamp":"2026-06-24T06:21:53.8425295+00:00","Log":"F           ],"}
+{"TimeStamp":"2026-06-24T06:21:53.8425306+00:00","Log":"F           "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer.""}
+{"TimeStamp":"2026-06-24T06:21:53.8425318+00:00","Log":"F         }"}
+{"TimeStamp":"2026-06-24T06:21:53.8425385+00:00","Log":"F       ]"}
+{"TimeStamp":"2026-06-24T06:21:53.8425399+00:00","Log":"F     }"}
+{"TimeStamp":"2026-06-24T06:21:53.8425411+00:00","Log":"F   },"}
+{"TimeStamp":"2026-06-24T06:21:53.8425422+00:00","Log":"F   "globalCounts": ["}
+{"TimeStamp":"2026-06-24T06:21:53.8425434+00:00","Log":"F     {"}
+{"TimeStamp":"2026-06-24T06:21:53.8425453+00:00","Log":"F       "table_name": "semantic_dimensions","}
+{"TimeStamp":"2026-06-24T06:21:53.8425465+00:00","Log":"F       "rows": 30"}
+{"TimeStamp":"2026-06-24T06:21:53.8425477+00:00","Log":"F     },"}
+{"TimeStamp":"2026-06-24T06:21:53.8425488+00:00","Log":"F     {"}
+{"TimeStamp":"2026-06-24T06:21:53.84255+00:00","Log":"F       "table_name": "tenant_data_volumetrics","}
+{"TimeStamp":"2026-06-24T06:21:53.8425512+00:00","Log":"F       "rows": 131"}
+{"TimeStamp":"2026-06-24T06:21:53.8425523+00:00","Log":"F     },"}
+{"TimeStamp":"2026-06-24T06:21:53.8425534+00:00","Log":"F     {"}
+{"TimeStamp":"2026-06-24T06:21:53.8425546+00:00","Log":"F       "table_name": "tenant_dimension_coverage","}
+{"TimeStamp":"2026-06-24T06:21:53.8425557+00:00","Log":"F       "rows": 113"}
+{"TimeStamp":"2026-06-24T06:21:53.8425569+00:00","Log":"F     },"}
+{"TimeStamp":"2026-06-24T06:21:53.842558+00:00","Log":"F     {"}
+{"TimeStamp":"2026-06-24T06:21:53.8425592+00:00","Log":"F       "table_name": "tenant_question_readiness","}
+{"TimeStamp":"2026-06-24T06:21:53.8425604+00:00","Log":"F       "rows": 55"}
+{"TimeStamp":"2026-06-24T06:21:53.8425616+00:00","Log":"F     }"}
+{"TimeStamp":"2026-06-24T06:21:53.8425627+00:00","Log":"F   ]"}
+{"TimeStamp":"2026-06-24T06:21:53.8425648+00:00","Log":"F }"}

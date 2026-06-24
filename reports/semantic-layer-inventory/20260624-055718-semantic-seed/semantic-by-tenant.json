@@ -1,0 +1,90 @@
+[
+  {
+    "tenant_key": "skyharbor-air",
+    "semantic_record_count": "73397",
+    "volumetric_rows": 7,
+    "dimensions": 7,
+    "source_tables": 7,
+    "contains_synthetic": true
+  },
+  {
+    "tenant_key": "first-capital",
+    "semantic_record_count": "32261",
+    "volumetric_rows": 21,
+    "dimensions": 17,
+    "source_tables": 21,
+    "contains_synthetic": true
+  },
+  {
+    "tenant_key": "apex-retail",
+    "semantic_record_count": "22418",
+    "volumetric_rows": 21,
+    "dimensions": 17,
+    "source_tables": 21,
+    "contains_synthetic": true
+  },
+  {
+    "tenant_key": "meridian-health",
+    "semantic_record_count": "21373",
+    "volumetric_rows": 21,
+    "dimensions": 17,
+    "source_tables": 21,
+    "contains_synthetic": true
+  },
+  {
+    "tenant_key": "lakeshore",
+    "semantic_record_count": "18196",
+    "volumetric_rows": 6,
+    "dimensions": 6,
+    "source_tables": 6,
+    "contains_synthetic": true
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "semantic_record_count": "14680",
+    "volumetric_rows": 21,
+    "dimensions": 17,
+    "source_tables": 21,
+    "contains_synthetic": true
+  },
+  {
+    "tenant_key": "morganstreet",
+    "semantic_record_count": "14127",
+    "volumetric_rows": 14,
+    "dimensions": 13,
+    "source_tables": 14,
+    "contains_synthetic": true
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "semantic_record_count": "1610",
+    "volumetric_rows": 16,
+    "dimensions": 15,
+    "source_tables": 16,
+    "contains_synthetic": true
+  },
+  {
+    "tenant_key": "northstar-clinical",
+    "semantic_record_count": "933",
+    "volumetric_rows": 2,
+    "dimensions": 2,
+    "source_tables": 2,
+    "contains_synthetic": false
+  },
+  {
+    "tenant_key": "skyharbor",
+    "semantic_record_count": "17",
+    "volumetric_rows": 1,
+    "dimensions": 1,
+    "source_tables": 1,
+    "contains_synthetic": false
+  },
+  {
+    "tenant_key": "morganstreet-other",
+    "semantic_record_count": "1",
+    "volumetric_rows": 1,
+    "dimensions": 1,
+    "source_tables": 1,
+    "contains_synthetic": false
+  }
+]
