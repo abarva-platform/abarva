@@ -568,5 +568,163 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(expertIds.some((id: string) => id.startsWith("xp.retail."))).toBe(
       false,
     );
+    expect(agentAnswer.corpusUsed).toEqual([
+      expect.objectContaining({ id: "corpus-support" }),
+    ]);
+    expect(agentAnswer.citations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          recordId: "airline-irops-recovery-orchestration-pattern",
+          sourceClass: "corpus-pattern",
+        }),
+        expect.objectContaining({
+          recordId: "airline-irops-ai-roi-planning-ranges",
+          sourceClass: "worldview",
+        }),
+      ]),
+    );
   });
+
+  it.each([
+    {
+      name: "finance",
+      prompt: "Show IT budget by portfolio as a table",
+      source: "IT budget and run cost ledger",
+      columns: "Portfolio | Annual spend | Owner | Caveat",
+      row1: "Operations | $22M | CIO office | run/change split missing",
+      row2: "Data platforms | $18M | CDAO | realized value missing",
+    },
+    {
+      name: "vendors",
+      prompt: "Compare our top vendors by spend and risk",
+      source: "Vendor and contract landscape",
+      columns: "Vendor | Annual spend | Supported system | Risk",
+      row1: "IBM | $23M | Core operations | integration concentration",
+      row2: "Salesforce | $12M | Customer engagement | adoption dependency",
+    },
+    {
+      name: "applications",
+      prompt: "List core applications with owning capability",
+      source: "Applications and core systems inventory",
+      columns: "Application | Capability | Owner | Status",
+      row1: "Crew Ops | Flight operations | Operations technology | contain",
+      row2: "Customer 360 | Customer experience | Data office | invest",
+    },
+    {
+      name: "integrations",
+      prompt: "Map integration dependencies as a graph",
+      source: "Integration and interface dependency ledger",
+      columns: "From | Relationship | To | Evidence",
+      row1: "PSS | feeds | Customer 360 | passenger event stream",
+      row2: "Crew Ops | constrains | IROPS recovery | crew legality",
+    },
+    {
+      name: "data",
+      prompt: "Show our data products by domain and maturity",
+      source: "Data product registry",
+      columns: "Data product | Domain | Maturity | Gap",
+      row1: "Customer 360 | Customer | Silver | identity resolution",
+      row2: "Ops events | Operations | Bronze | freshness controls",
+    },
+    {
+      name: "workforce",
+      prompt: "Table workforce AI opportunities by function",
+      source: "Workforce and personas substrate",
+      columns: "Function | AI opportunity | Expected range | Caveat",
+      row1: "Contact center | assist and deflect | 5% | quality baseline",
+      row2: "Field service | schedule optimization | 7% | adoption proof",
+    },
+    {
+      name: "risk",
+      prompt: "Show AI governance risks and controls",
+      source: "Risk and control register",
+      columns: "Risk | Control | Owner | Severity",
+      row1: "Model drift | monitoring policy | AI governance | high",
+      row2: "Data lineage | source certification | Data office | medium",
+    },
+    {
+      name: "initiatives",
+      prompt: "Compare top initiatives by impact and owner",
+      source: "Initiatives roadmap",
+      columns: "Initiative | Impact | Owner | Next gate",
+      row1: "Lakehouse modernization | $95M | CDAO | data quality",
+      row2: "IROPS recovery | $30M | COO | integration readiness",
+    },
+    {
+      name: "benefits",
+      prompt: "Show benefits realization by value lever",
+      source: "Benefits realization ledger",
+      columns: "Value lever | Annual value | Evidence | Caveat",
+      row1: "Inventory accuracy | $12M | realized run-rate | seasonality",
+      row2: "Contact deflection | $8M | benchmark support | tenant proof missing",
+    },
+    {
+      name: "operations",
+      prompt: "Show operational bottlenecks by process",
+      source: "Operations and service evidence",
+      columns: "Process | Bottleneck | Impact | Required evidence",
+      row1: "IROPS recovery | write-back latency | disruption recovery | event stream",
+      row2: "Store fulfillment | inventory accuracy | lost sales | item-location truth",
+    },
+    {
+      name: "architecture",
+      prompt: "Table architecture constraints and business impact",
+      source: "Enterprise architecture substrate",
+      columns: "Constraint | Business impact | Dependency | Status",
+      row1: "Mainframe APIs | slows recovery orchestration | IBM Z | contain",
+      row2: "Identity graph | limits personalization | CDP | build",
+    },
+    {
+      name: "customer",
+      prompt: "Show customer experience AI opportunities",
+      source: "Customer and channel substrate",
+      columns: "Journey | AI use case | Value range | Caveat",
+      row1: "Disruption support | proactive reaccommodation | 6% | service baseline",
+      row2: "Digital self-service | next-best action | 4% | adoption measurement",
+    },
+  ])(
+    "renders clean structured artifacts across the $name function path",
+    async ({ prompt, source, columns, row1, row2 }) => {
+      jest.mocked(askIntelligence).mockImplementationOnce(async function* () {
+        yield {
+          type: "sources",
+          sources: [
+            {
+              type: "TENANT",
+              id: `${source.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-1`,
+              name: source,
+              detail: "Loaded tenant evidence for the requested function.",
+            },
+          ],
+        };
+        yield {
+          type: "delta",
+          text: `Here is the evidence view. Function answer table | ${columns} | |---|---|---|---| | ${row1} | | ${row2} | Next move: validate the cited owner and gap before action.`,
+        };
+        yield { type: "done" };
+      });
+
+      const response = await POST(
+        makeRequest({ q: prompt, client: "skyharbor" }) as never,
+      );
+      const text = await readResponseText(response);
+      const events = text
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => JSON.parse(line));
+      const agentAnswer = events.find(
+        (event) => event.type === "agent-answer",
+      )?.answer;
+
+      expect(agentAnswer).toBeTruthy();
+      expect(agentAnswer.directAnswer).not.toContain("|---|");
+      expect(agentAnswer.directAnswer).not.toMatch(/(?:[A-Z]\.\s*){2,}/);
+      expect(agentAnswer.citations.length).toBeGreaterThan(0);
+      expect(
+        agentAnswer.artifacts.some(
+          (artifact: { artifact?: string }) => artifact.artifact === "table",
+        ),
+      ).toBe(true);
+    },
+  );
 });

@@ -356,7 +356,7 @@ function inlineMarkdownTablesFromProse(
 }
 
 function stripResidualTableFragments(prose: string): string {
-  return prose
+  const stripped = prose
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => {
@@ -364,9 +364,17 @@ function stripResidualTableFragments(prose: string): string {
       const pipeCount = (line.match(/\|/g) ?? []).length;
       if (pipeCount >= 2) return false;
       if (/^\|/.test(line) || /\|$/.test(line)) return false;
+      if (/^(?:[A-Z]\.\s*){2,}$/i.test(line)) return false;
       return true;
     })
     .join("\n\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  return stripped
+    .replace(
+      /\b(?:Named examples|Named Examples|ROI \/ value pool|ROI and value pool|Chart data)\s+Table\s*(?=\n{2,}(?:Evidence gap:|Next move:|This is|$))/g,
+      "",
+    )
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -398,6 +406,11 @@ function exactCurrencyOrNumber(value: string | number | null): number | null {
     /~|approx|about|directional/i.test(trimmed)
   ) {
     return null;
+  }
+  const percent = trimmed.match(/^([0-9]+(?:\.[0-9]+)?)\s*%$/);
+  if (percent) {
+    const value = Number(percent[1]);
+    return Number.isFinite(value) ? value : null;
   }
   const money = trimmed.match(
     /^\$?\s*([0-9]+(?:\.[0-9]+)?)\s*(k|m|b)?(?:\s*\/\s*(?:yr|year|annual))?$/i,

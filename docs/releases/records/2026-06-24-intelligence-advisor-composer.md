@@ -92,3 +92,30 @@ Additional validation:
   pass (`14 passed` across 2 suites).
 - Focused ESLint for the changed route/composer/test files: pass.
 - `npm run release:check`: pass after this release-record update.
+
+## Follow-up Artifact + Coverage Correction
+
+Second live proof showed the advisor route had the right experts but still let
+malformed inline Markdown table residue through (`Named Examples Table` followed
+by `S. S.`) and the Intelligence workspace could show `Evidence 0 / Corpus 0`
+even when the advisor route used corpus/expert-pack support. This patch hardens
+both sides of the seam:
+
+- aVa's advisor composer now requires standalone Markdown artifact blocks and
+  explicitly forbids orphan table fragments.
+- The structured exhibit parser strips orphan table residue and can chart exact
+  percent values, not only currency values.
+- The Intelligence route attaches deterministic airline IROPS pattern/worldview
+  support citations for the advisor route so corpus/evidence tabs stay truthful.
+- Regression coverage now spans 12 function paths, not only IROPS: finance,
+  vendors, applications, integrations, data products, workforce, risk,
+  initiatives, benefits, operations, architecture, and customer experience.
+
+Additional validation:
+
+- Focused Jest for Golden IROPS composer + Intelligence ask route telemetry:
+  pass (`26 passed` across 2 suites, including the 12-function artifact matrix).
+- Focused ESLint for changed files: pass.
+- Full TypeScript remains blocked by the existing repo baseline missing type
+  packages (`js-yaml`, `@azure-rest/ai-document-intelligence`,
+  `@axe-core/playwright`), not by this patch.

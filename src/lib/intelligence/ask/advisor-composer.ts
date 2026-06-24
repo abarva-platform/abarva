@@ -41,6 +41,25 @@ export interface AdvisorComposerResult {
   };
 }
 
+const AIRLINE_IROPS_ADVISOR_SUPPORT_SOURCES: AskSource[] = [
+  {
+    type: "PATTERN",
+    id: "airline-irops-recovery-orchestration-pattern",
+    name: "Airline IROPS recovery orchestration pattern",
+    detail:
+      "Industry pattern support for disruption prediction moving into recovery orchestration across reaccommodation, crew, aircraft, gates, contact center, maintenance, and operations-control workflows.",
+    confidence: 0.78,
+  },
+  {
+    type: "WORLDVIEW",
+    id: "airline-irops-ai-roi-planning-ranges",
+    name: "Airline IROPS AI ROI planning ranges",
+    detail:
+      "Expert-pack planning support for IROPS value pools. Treat as directional pattern support unless tenant realized-value evidence is cited separately.",
+    confidence: 0.7,
+  },
+];
+
 export function routeIntelligenceAdvisorQuestion(
   query: string,
 ): IntelligenceAdvisorRoute | null {
@@ -54,6 +73,31 @@ export function routeIntelligenceAdvisorQuestion(
 
 export function isAirlineIropsAiRoiQuestion(query: string): boolean {
   return routeIntelligenceAdvisorQuestion(query) === "airline_irops_ai_roi";
+}
+
+export function advisorSupportSourcesForRoute(query: string): AskSource[] {
+  const route = routeIntelligenceAdvisorQuestion(query);
+  if (route !== "airline_irops_ai_roi") return [];
+  return AIRLINE_IROPS_ADVISOR_SUPPORT_SOURCES;
+}
+
+export function withAdvisorSupportSources(
+  query: string,
+  sources: AskSource[],
+): AskSource[] {
+  const support = advisorSupportSourcesForRoute(query);
+  if (support.length === 0) return sources;
+  const seen = new Set(
+    sources
+      .map((source) => source.id ?? `${source.type}:${source.name}`)
+      .filter(Boolean),
+  );
+  return [
+    ...sources,
+    ...support.filter(
+      (source) => !seen.has(source.id ?? `${source.type}:${source.name}`),
+    ),
+  ];
 }
 
 export function buildIntelligenceAdvisorComposerBlock(
@@ -98,7 +142,16 @@ export function buildIntelligenceAdvisorComposerBlock(
       "8. End with an Intelligence decision frame: where to scale, where to hold, which Move/Tower controls to create, and the next analysis options.",
       "",
       "Artifact requirement:",
-      "If the user asks for charts, tables, graphs, trends, ROI, or visuals, produce at least one valid GitHub-flavored Markdown table. For chart-like output, include a compact numeric table that the renderer can turn into a chart. For relationship output, include From | Relationship | To | Evidence rows only when connected evidence exists.",
+      "If the user asks for charts, tables, graphs, trends, ROI, or visuals, produce at least one valid GitHub-flavored Markdown table as a standalone block. Do not put table pipes inline inside a paragraph.",
+      "",
+      "Table formatting contract:",
+      "- Put a blank line before every table.",
+      "- Put the table title on its own line, then the header row immediately below it.",
+      "- Every table must have a header row, a separator row, and at least two data rows.",
+      "- Never write a table title like 'Named Examples Table' unless a complete table immediately follows.",
+      "- Never emit orphan fragments such as 'S. S.', partial separator rows, or abbreviated row leftovers.",
+      "- For chart-like output, include a compact numeric table with columns: Value lever, Low estimate, High estimate, Unit, Basis, Caveat.",
+      "- For relationship output, include From | Relationship | To | Evidence rows only when connected evidence exists.",
       "",
       "Quality gates you must satisfy:",
       "- Do not start with row counts, retrieval mechanics, or 'I found X records'.",

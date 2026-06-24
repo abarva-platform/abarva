@@ -69,6 +69,9 @@ describe("Golden IROPS Intelligence advisor composer", () => {
     expect(prompt).toContain("crew, aircraft, gates, maintenance");
     expect(prompt).toContain("named examples table");
     expect(prompt).toContain("ROI / value pool table");
+    expect(prompt).toContain("standalone block");
+    expect(prompt).toContain("Never emit orphan fragments");
+    expect(prompt).toContain("Low estimate, High estimate");
     expect(prompt).toContain("SkyHarbor relevance panel");
     expect(prompt).toContain("crew legality data");
     expect(prompt).toContain("real-time aircraft/crew/passenger event streams");
