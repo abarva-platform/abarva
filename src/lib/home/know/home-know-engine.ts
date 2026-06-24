@@ -322,7 +322,7 @@ export function buildHomeKnowResponseFromPacket(input: {
       intent,
       answerStatus: "handoff",
       prose:
-        "That asks for judgment, not just lookup. Home will not invent a recommendation here; it can show the loaded facts first, or hand the question to Intelligence for analysis and Moves/Tower for action proof.",
+        "That question needs analysis, prioritization, and an accountable recommendation. This view can show the supporting facts first, or pass the question to Intelligence for decision work and to Moves or Tower for execution proof.",
       dimensionsUsed,
       facts: buildFacts(input.packet, dimensionsUsed, citations),
       tables: [],
@@ -335,7 +335,7 @@ export function buildHomeKnowResponseFromPacket(input: {
         target: "intelligence",
         label: "Analyze this in Intelligence",
         reason:
-          "The question asks for judgment or prioritization beyond Home's KNOW mode.",
+          "The question needs judgment, prioritization, and trade-off analysis.",
       },
       safety: defaultSafety(),
     });
@@ -1768,7 +1768,7 @@ function homeKnowProse(input: {
 }): string {
   if (!input.hasData) {
     if (input.packet.coverage.length > 0 || input.hasGaps) {
-      return "I found related tenant context, but not the exact field family needed to answer this cleanly. The specific missing source path is listed below, so the answer stays grounded instead of filling the gap with assumptions.";
+      return "The available enterprise context is adjacent to the question, but the specific source fields needed for a clean answer are not complete yet. The answer stays grounded by showing the missing evidence path instead of filling the gap with assumptions.";
     }
     return "I do not see that in the loaded data.";
   }

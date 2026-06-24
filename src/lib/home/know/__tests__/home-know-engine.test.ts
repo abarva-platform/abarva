@@ -46,7 +46,8 @@ const apexPacket: HomeKnowPacket = {
       executive_owner_person_name: null,
       head_count_fte: 740,
       annual_budget_usd: 210000000,
-      source_file: "family-1-enterprise-operating-model/F03_it-org-ownership.csv",
+      source_file:
+        "family-1-enterprise-operating-model/F03_it-org-ownership.csv",
       source_row_number: 2,
       confidence: 0.91,
     },
@@ -75,7 +76,8 @@ const apexPacket: HomeKnowPacket = {
       renewal_risk: "high",
       business_owner: "COO",
       technology_owner: "Store Systems and POS",
-      source_file: "family-4-financial-commercial/F11_vendors-contracts-licenses.csv",
+      source_file:
+        "family-4-financial-commercial/F11_vendors-contracts-licenses.csv",
       source_row_number: 2,
       confidence: 0.9,
     },
@@ -138,7 +140,8 @@ const apexPacket: HomeKnowPacket = {
       display_label: "Named portfolio lead",
       severity: "medium",
       missing_count: 1,
-      source_file: "family-1-enterprise-operating-model/F03_it-org-ownership.csv",
+      source_file:
+        "family-1-enterprise-operating-model/F03_it-org-ownership.csv",
     },
   ],
   conflicts: [],
@@ -147,7 +150,10 @@ const apexPacket: HomeKnowPacket = {
 const skyharborPacket: HomeKnowPacket = {
   ...apexPacket,
   coverage: [
-    ...apexPacket.coverage.map((row) => ({ ...row, tenant_key: "skyharbor-air" })),
+    ...apexPacket.coverage.map((row) => ({
+      ...row,
+      tenant_key: "skyharbor-air",
+    })),
     {
       tenant_key: "skyharbor-air",
       dimension_id: "data_analytics_estate",
@@ -226,7 +232,8 @@ const skyharborPacket: HomeKnowPacket = {
       renewal_risk: "medium",
       business_owner: "COO",
       technology_owner: "Operations Technology",
-      source_file: "family-4-financial-commercial/F11_vendors-contracts-licenses.csv",
+      source_file:
+        "family-4-financial-commercial/F11_vendors-contracts-licenses.csv",
       source_row_number: 4,
       confidence: 0.9,
     },
@@ -261,7 +268,8 @@ const skyharborPacket: HomeKnowPacket = {
       relationship_type: "supports",
       from_external_id: "VENDOR-SABRE",
       to_external_id: "SYS-FLIGHT-OPS",
-      source_file: "family-4-financial-commercial/F11_vendors-contracts-licenses.csv",
+      source_file:
+        "family-4-financial-commercial/F11_vendors-contracts-licenses.csv",
       source_row_number: 4,
       properties: { domain: "operations" },
     },
@@ -328,7 +336,8 @@ const skyharborPacket: HomeKnowPacket = {
       display_label: "Security gap severity",
       severity: "medium",
       missing_count: 1,
-      source_file: "family-6-governance-ai-evidence/F16_security-risk-compliance.csv",
+      source_file:
+        "family-6-governance-ai-evidence/F16_security-risk-compliance.csv",
     },
   ],
   conflicts: [],
@@ -337,26 +346,38 @@ const skyharborPacket: HomeKnowPacket = {
 describe("Home KNOW contract engine", () => {
   it("keeps server intent authoritative", () => {
     expect(
-      classifyHomeKnowIntent("How is our IT team organized? Who leads the portfolios?"),
+      classifyHomeKnowIntent(
+        "How is our IT team organized? Who leads the portfolios?",
+      ),
     ).toBe("lookup");
     expect(classifyHomeKnowIntent("Where should we invest $30M?")).toBe(
       "decision_handoff",
     );
-    expect(classifyHomeKnowIntent("Show this visually as a chart")).toBe("chart");
-    expect(classifyHomeKnowIntent("Show the integration topology")).toBe("chart");
-    expect(classifyHomeKnowIntent("What will our exact cloud bill be in 2027, to the dollar?")).toBe("gap");
+    expect(classifyHomeKnowIntent("Show this visually as a chart")).toBe(
+      "chart",
+    );
+    expect(classifyHomeKnowIntent("Show the integration topology")).toBe(
+      "chart",
+    );
+    expect(
+      classifyHomeKnowIntent(
+        "What will our exact cloud bill be in 2027, to the dollar?",
+      ),
+    ).toBe("gap");
   });
 
   it("routes every Home ask through Home KNOW so experts cannot leak", () => {
     expect(
       shouldUseHomeKnowAgentAnswer({
-        query: "What would you tell our CIO is the riskiest assumption in the current plan?",
+        query:
+          "What would you tell our CIO is the riskiest assumption in the current plan?",
         surfaceContext: { activeTab: "home", clientKey: "apex-retail" },
       }),
     ).toBe(true);
     expect(
       shouldUseHomeKnowAgentAnswer({
-        query: "What would you tell our CIO is the riskiest assumption in the current plan?",
+        query:
+          "What would you tell our CIO is the riskiest assumption in the current plan?",
         surfaceContext: { activeTab: "intelligence", clientKey: "apex-retail" },
       }),
     ).toBe(false);
@@ -381,7 +402,9 @@ describe("Home KNOW contract engine", () => {
       executive_owner_role: "VP Store Technology",
       annual_budget_usd: 210000000,
     });
-    expect(response.citations[0]?.label).toContain("F03_it-org-ownership.csv row 2");
+    expect(response.citations[0]?.label).toContain(
+      "F03_it-org-ownership.csv row 2",
+    );
     expect(response.gaps[0]).toMatchObject({
       expectedField: "executive_owner_person_name",
       displayLabel: "Named portfolio lead",
@@ -393,7 +416,9 @@ describe("Home KNOW contract engine", () => {
       blockedInternalCodes: true,
       frontendTripwireShouldFire: false,
     });
-    expect(response.prose).not.toMatch(/\b(Read|Evidence|Implication|Next move):/);
+    expect(response.prose).not.toMatch(
+      /\b(Read|Evidence|Implication|Next move):/,
+    );
     expect(response.prose).not.toMatch(/^Home can show/i);
     assertNoForbiddenHomeText(response);
   });
@@ -408,10 +433,12 @@ describe("Home KNOW contract engine", () => {
     expect(response.intent).toBe("decision_handoff");
     expect(response.answerStatus).toBe("handoff");
     expect(response.handoff?.target).toBe("intelligence");
-    expect(response.prose).toContain("judgment");
+    expect(response.prose).toContain("accountable recommendation");
     expect(response.charts).toEqual([]);
     expect(response.safety.frontendTripwireShouldFire).toBe(false);
-    expect(response.prose).not.toMatch(/\b(Read|Evidence|Implication|Next move):/);
+    expect(response.prose).not.toMatch(
+      /\b(Read|Evidence|Implication|Next move):/,
+    );
   });
 
   it("returns no_data instead of bluffing when a subject is absent", () => {
@@ -423,7 +450,7 @@ describe("Home KNOW contract engine", () => {
 
     expect(response.intent).toBe("table");
     expect(response.answerStatus).toBe("no_data");
-    expect(response.prose).toMatch(/related tenant context/i);
+    expect(response.prose).toMatch(/specific source fields/i);
     expect(response.prose.length).toBeGreaterThan(120);
     expect(response.tables[0]?.id).toBe("home-vendor-landscape");
     expect(response.tables[0]?.rows).toEqual([]);
@@ -440,7 +467,9 @@ describe("Home KNOW contract engine", () => {
     expect(response.answerStatus).toBe("partial");
     expect(response.prose).toMatch(/can't give that exact value/i);
     expect(response.prose).toMatch(/2027 cloud-cost forecast/i);
-    expect(response.prose).not.toMatch(/\b(Read|Evidence|Implication|Next move):/);
+    expect(response.prose).not.toMatch(
+      /\b(Read|Evidence|Implication|Next move):/,
+    );
     expect(response.prose).not.toMatch(/Home context for .* includes .* row/i);
     expect(response.tables).toEqual([]);
     expect(response.gaps[0]).toMatchObject({
@@ -484,7 +513,10 @@ describe("Home KNOW contract engine", () => {
       inferredEdges: false,
     });
     expect(response.graphs[0]?.nodes.map((node) => node.label)).toEqual(
-      expect.arrayContaining(["Oracle Retail Merchandising", "Store Systems and POS"]),
+      expect.arrayContaining([
+        "Oracle Retail Merchandising",
+        "Store Systems and POS",
+      ]),
     );
     expect(response.graphs[0]?.edges[0]).toMatchObject({
       from: "APP-ORACLE-RETAIL",
@@ -496,7 +528,8 @@ describe("Home KNOW contract engine", () => {
   it("returns a graph artifact with a specific gap instead of a blank graph answer", () => {
     const response = buildHomeKnowResponseFromPacket({
       tenantKey: "apex-retail",
-      question: "Show the relationship graph between vendors and the systems they support.",
+      question:
+        "Show the relationship graph between vendors and the systems they support.",
       packet: {
         ...apexPacket,
         relationships: [],
@@ -510,7 +543,9 @@ describe("Home KNOW contract engine", () => {
       confidence: "low",
       inferredEdges: false,
     });
-    expect(response.graphs[0]?.gaps[0]).toMatch(/source-to-target integration edges missing/i);
+    expect(response.graphs[0]?.gaps[0]).toMatch(
+      /source-to-target integration edges missing/i,
+    );
   });
 
   it("sets the backend tripwire if unsafe text survives validation", () => {
@@ -543,8 +578,12 @@ describe("Home KNOW contract engine", () => {
     expect(response.safety.serverValidated).toBe(true);
     expect(response.safety.unsupportedClaimsRemoved).toBeGreaterThan(0);
     expect(response.safety.frontendTripwireShouldFire).toBe(false);
-    expect(response.prose).not.toMatch(/DORA|Wave-0|local env|APX-APP|the cited record/i);
-    expect(response.prose).not.toMatch(/\b(Read|Evidence|Implication|Next move):/);
+    expect(response.prose).not.toMatch(
+      /DORA|Wave-0|local env|APX-APP|the cited record/i,
+    );
+    expect(response.prose).not.toMatch(
+      /\b(Read|Evidence|Implication|Next move):/,
+    );
   });
 
   it.each([

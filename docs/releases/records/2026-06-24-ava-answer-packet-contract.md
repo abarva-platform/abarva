@@ -33,6 +33,7 @@ This release replaces the old prose-first aVa answer shape with a governed `AvaA
 - Migrated the shared answer renderer to consume packet fields and typed artifacts.
 - Added answer-quality tests and docs under `docs/ava-answer-quality/`.
 - Hardened Home KNOW fallback prose and visible status labels after live crawl showed mechanical row-count language still leaking into the answer rail.
+- Hardened Home KNOW no-data and Intelligence-handoff copy after the final live crawl showed adjacent-context and workspace-mode wording still sounded too internal.
 
 ## QA / Validation
 
