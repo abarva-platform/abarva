@@ -287,6 +287,7 @@ describe("Ask Intelligence response policy", () => {
     expect(answer).toContain("Implication:");
     expect(answer).toContain("Next move:");
     expect(answer).not.toMatch(/Evidence\s+—/i);
+    expect(answer).not.toContain("validate the cited evidence");
     expect([...answer.matchAll(/^(Read|Evidence|Implication|Next move):/gim)]).toHaveLength(4);
     expect(
       answer
