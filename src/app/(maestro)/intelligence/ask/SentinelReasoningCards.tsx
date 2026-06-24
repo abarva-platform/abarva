@@ -73,20 +73,6 @@ function eventFromLine(line: string): StreamEvent | null {
   }
 }
 
-function answerBodyForThread(answer: AgentAnswer): string {
-  const prose = answer.prose.trim();
-  if (prose) return prose;
-  const artifactCount =
-    answer.tables.length + answer.charts.length + answer.graphs.length;
-  if (artifactCount > 0) {
-    return "I found structured evidence for this. Review the canvas for the table, chart, graph, citations, and gaps.";
-  }
-  if (answer.gaps.length > 0) {
-    return `I found gaps rather than a complete answer: ${answer.gaps.join("; ")}`;
-  }
-  return "Ava returned an answer shell without a renderable narrative.";
-}
-
 function messageWithAttachments(text: string, attachments: AttachmentRef[]): string {
   if (attachments.length === 0) return text;
   const names = attachments.map((attachment) => attachment.file_name).join(", ");
@@ -278,7 +264,7 @@ export function SentinelReasoningCards({
         sawRenderableAnswer = true;
         setCurrentAnswer(event.answer);
         setCurrentNarrative(event.answer.prose);
-        setAgentTurn(agentTurnId, { body: answerBodyForThread(event.answer) });
+        setAgentTurn(agentTurnId, { body: "Answer is ready on the canvas." });
         return;
       }
       if (event.type === "done" && event.telemetryEventId) {
