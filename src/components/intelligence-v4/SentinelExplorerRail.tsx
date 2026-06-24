@@ -12,6 +12,8 @@
 
 import { useState, useRef, useCallback } from "react";
 
+import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
+
 const C = {
   bg: "#F8F7F4",
   railBg: "#FCFBF8",
@@ -452,6 +454,13 @@ export function SentinelExplorerRail({ tenantKey }: SentinelExplorerRailProps) {
             padding: "7px 9px",
           }}
         >
+          <AvaAskMark
+            style={{
+              minWidth: 34,
+              fontSize: 20,
+              alignSelf: "center",
+            }}
+          />
           <textarea
             ref={textareaRef}
             rows={1}

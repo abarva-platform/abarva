@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { AvaAskMark } from '@/components/agent-answer/AvaAskMark';
 
 interface BriefSection {
   id: string;
@@ -234,8 +235,9 @@ export function NexusCurrentStateBriefingPanel({ moveId }: Props) {
               event.preventDefault();
               void askQuestion();
             }}
-            style={{ display: 'flex', gap: 8, marginTop: 16 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}
           >
+            <AvaAskMark style={{ minWidth: 38, fontSize: 22 }} />
             <input
               value={question}
               onChange={(event) => setQuestion(event.target.value)}

@@ -24,6 +24,7 @@ import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFoot
 import { AgentActionApprovalNotice } from "@/components/agent/AgentActionApprovalNotice";
 import { CitationGapNotice } from "@/components/agent/CitationGapNotice";
 import { shouldShowPlainTextCitationGap } from "@/lib/agent/citation-gap";
+import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -455,6 +456,13 @@ export function AtlasDrawer({
             const files = Array.from(e.target.files ?? []);
             handleFileSelection(files);
             if (fileInputRef.current) fileInputRef.current.value = "";
+          }}
+        />
+        <AvaAskMark
+          style={{
+            minWidth: 36,
+            fontSize: 21,
+            alignSelf: "center",
           }}
         />
         <textarea

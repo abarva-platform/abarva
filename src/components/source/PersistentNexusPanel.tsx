@@ -15,6 +15,7 @@
 
 import type { CSSProperties } from 'react';
 import { SHELL } from '@/lib/shell/shell-tokens';
+import { AvaAskMark } from '@/components/agent-answer/AvaAskMark';
 import type { SourceAgentMissionReport } from '@/lib/source';
 import type { SourcingEventDetail } from '@/lib/source/types';
 import { formatUsd } from '@/lib/source/value-ledger';
@@ -407,6 +408,7 @@ export function PersistentNexusPanel({
             alignItems: 'center',
           }}
         >
+          <AvaAskMark style={{ minWidth: 34, fontSize: 20 }} />
           <input
             type="text"
             placeholder={`Or ask ${agentName}…`}

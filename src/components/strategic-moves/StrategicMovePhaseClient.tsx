@@ -43,6 +43,7 @@ import styles from "./StrategicMoves.module.css";
 import { PhaseRail } from "./PhaseRail";
 import { PhaseApproveAndBuild } from "./PhaseApproveAndBuild";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
+import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -1621,6 +1622,7 @@ export function StrategicMovePhaseClient({
               >
                 &#x1F4CE;
               </button>
+              <AvaAskMark className={styles.avaComposerMark} />
               <textarea
                 id={`ws-chat-p${phaseNum}-input-field`}
                 rows={1}
