@@ -14,6 +14,8 @@ import type {
 } from "@/lib/home/know/home-know-contract";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { CHART } from "@/lib/programs/expert-kernel/exports/board-grade/svg-charts";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { synthesizeHomeKnowProse } from "@/lib/home/know/home-know-synthesis";
 
 export interface HomeDimensionCoverageRow {
   tenant_key: string;
@@ -262,10 +264,31 @@ export async function buildHomeKnowResponse(
     });
   }
   const packet = await fetchHomeKnowPacket(tenantKey);
-  return buildHomeKnowResponseFromPacket({
+  const response = buildHomeKnowResponseFromPacket({
     tenantKey,
     question: input.question,
     packet,
+  });
+  if (
+    response.intent === "decision_handoff" ||
+    !isFeatureEnabled(
+      { clientKey: input.client ?? tenantKey, clientId: tenantKey },
+      "home_know_llm_synthesis",
+    )
+  ) {
+    return response;
+  }
+  const synthesized = await synthesizeHomeKnowProse({
+    tenantKey,
+    question: response.question,
+    intent: response.intent,
+    facts: response.facts,
+    gaps: response.gaps,
+  });
+  if (!synthesized) return response;
+  return validateHomeKnowResponse({
+    ...response,
+    prose: synthesized,
   });
 }
 
