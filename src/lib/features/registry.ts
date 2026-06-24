@@ -81,10 +81,18 @@ export type FeatureFlagKey =
   | "source_strategy_at_p0"
   | "context_corpus_explorer_enabled"
   | "source_reasoning_spine"
+  | "home_know_llm_synthesis"
   | "deliverable_structured_exhibits"
   | "deliverable_quality_contract";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
+  {
+    key: "home_know_llm_synthesis",
+    summary:
+      "Phrase-only Claude Opus synthesis for Home KNOW prose. Retrieval, facts, gaps, tables, charts, citations, and contracts stay deterministic; the LLM only rewrites the lead prose from supplied facts/gaps and falls back to templates on validation failure. Tenant opt-in; SkyHarbor only for proof. Env allowlist: ABARVA_FEATURE_HOME_KNOW_LLM_SYNTHESIS_TENANTS.",
+    policy: "tenant",
+    includeTenants: ["skyharbor"],
+  },
   {
     key: "deliverable_structured_exhibits",
     summary:
