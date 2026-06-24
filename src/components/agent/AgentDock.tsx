@@ -267,6 +267,8 @@ export interface AgentDockProps {
   initialQuote?: string;
   /** Three-or-fewer suggested actions surfaced above the composer. */
   suggestedActions?: SuggestedAction[];
+  /** Human-facing composer placeholder. Defaults to "Ask {agent.name}…". */
+  placeholder?: string;
   thread: ChatMessage[];
   /** Caller handles network. We pass plain text + attachment refs. */
   onMessage: (
@@ -467,6 +469,7 @@ export function AgentDock(props: AgentDockProps) {
     surfaceContext,
     initialQuote,
     suggestedActions = [],
+    placeholder,
     thread,
     onMessage,
     workspace,
@@ -999,7 +1002,7 @@ export function AgentDock(props: AgentDockProps) {
             value={draft}
             onChange={(e) => onChangeDraft(e.target.value)}
             onKeyDown={onComposerKeyDown}
-            placeholder={`Ask ${agent.name}…`}
+            placeholder={placeholder ?? `Ask ${agent.name}…`}
             rows={1}
             spellCheck
             disabled={submitting}
@@ -1043,6 +1046,7 @@ export function AgentDock(props: AgentDockProps) {
     mode,
     onChangeDraft,
     onComposerKeyDown,
+    placeholder,
     onDragLeave,
     onDragOver,
     onDrop,
