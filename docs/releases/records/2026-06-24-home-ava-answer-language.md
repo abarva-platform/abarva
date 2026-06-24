@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Home and aVa now avoid scaffold-style answer labels in the client-facing response surface. The chat answer, Home context panel, source drawer, loading state, and fallback responses use plain client language instead of model-internal phrasing.
+Home and aVa now avoid scaffold-style answer labels in the client-facing response surface. The chat answer, Home context panel, source drawer, loading state, and fallback responses use plain client language instead of model-internal phrasing. Home also stops restoring old chat turns into the left rail, and production sign-in remains email-code only unless a server-side demo flag is explicitly enabled.
 
 ## Layer Impact
 
@@ -30,6 +30,8 @@ Home and aVa now avoid scaffold-style answer labels in the client-facing respons
 - Home aVa answer renderer strips old scaffold labels from payload prose before rendering.
 - Home context panel labels now say source/context terms instead of proof-process jargon.
 - Home KNOW and Intelligence fallback responses no longer prepend scaffold labels.
+- Home aVa clears legacy Home chat session storage and shows the current question only.
+- The hidden demo-code password sign-in mode is disabled unless `ENABLE_DEMO_CODE_SIGN_IN=1` is set server-side.
 - Regression tests cover scaffold-label cleanup in rendered answers.
 
 ## QA / Validation

@@ -28,7 +28,8 @@ export default async function SignInPage({
 
   const signInMode = (await shouldUseAccessibilitySignInFallback())
     ? "accessibility"
-    : params.mode === "demo-code"
+    : params.mode === "demo-code" &&
+        process.env.ENABLE_DEMO_CODE_SIGN_IN === "1"
       ? "demo-code"
       : params.mode === "clerk"
         ? "clerk"

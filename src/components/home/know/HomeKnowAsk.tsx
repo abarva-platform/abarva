@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { HomeKnowAnswerRenderer } from "@/components/home/know/HomeKnowAnswerRenderer";
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
@@ -36,7 +36,6 @@ const CSS = `
 @media(max-width:720px){.homeKnowAsk .hka-bar{max-width:none}.homeKnowAsk .hka-question,.homeKnowAsk .hka-loading,.homeKnowAsk .hka-error{max-width:100%}.homeKnowAsk .hka-suggestions{justify-content:flex-start}}
 `;
 
-const MAX_STORED_TURNS = 12;
 const CONTEXT_EXPLORER_SUGGESTIONS = [
   "What context is loaded for this tenant?",
   "Show the loaded context dimensions in a table.",
@@ -95,67 +94,30 @@ export function HomeKnowAsk({
   const [turns, setTurns] = useState<HomeKnowTurn[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const threadEndRef = useRef<HTMLDivElement | null>(null);
-  const storageKey = useMemo(
-    () => `abarva.homeKnow.thread.${tenantKey ?? client ?? "default"}`,
-    [client, tenantKey],
-  );
   const contextSuggestions =
     suggestedQuestions.length > 0
       ? suggestedQuestions
       : CONTEXT_EXPLORER_SUGGESTIONS;
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const prefix = "abarva.homeKnow.thread.";
     try {
-      const raw = window.sessionStorage.getItem(storageKey);
-      if (!raw) {
-        setTurns([]);
-        return;
-      }
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) {
-        setTurns([]);
-        return;
-      }
-      setTurns(
-        parsed
-          .filter((turn): turn is HomeKnowTurn => {
-            if (!turn || typeof turn !== "object" || Array.isArray(turn))
-              return false;
-            const candidate = turn as Partial<HomeKnowTurn>;
-            return (
-              typeof candidate.id === "string" &&
-              typeof candidate.question === "string" &&
-              (candidate.response === null ||
-                isHomeKnowResponse(candidate.response)) &&
-              typeof candidate.error !== "undefined"
-            );
-          })
-          .map((turn) => ({ ...turn, fetching: false }))
-          .slice(-MAX_STORED_TURNS),
-      );
-    } catch {
-      setTurns([]);
-    }
-  }, [storageKey]);
-
-  useEffect(() => {
-    const completedTurns = turns
-      .filter((turn) => !turn.fetching)
-      .map((turn) => ({ ...turn, fetching: false }))
-      .slice(-MAX_STORED_TURNS);
-    try {
-      if (completedTurns.length === 0) {
-        window.sessionStorage.removeItem(storageKey);
-      } else {
-        window.sessionStorage.setItem(
-          storageKey,
-          JSON.stringify(completedTurns),
-        );
+      for (
+        let index = window.sessionStorage.length - 1;
+        index >= 0;
+        index -= 1
+      ) {
+        const key = window.sessionStorage.key(index);
+        if (key?.startsWith(prefix)) {
+          window.sessionStorage.removeItem(key);
+        }
       }
     } catch {
-      // Session history is helpful, but the chat must keep working if storage is blocked.
+      // Storage cleanup is best-effort; the chat itself stays live.
     }
-  }, [storageKey, turns]);
+    setTurns([]);
+  }, [client, tenantKey]);
 
   useEffect(() => {
     if (typeof threadEndRef.current?.scrollIntoView === "function") {
@@ -184,8 +146,7 @@ export function HomeKnowAsk({
       setQuery("");
       resetAskTextarea(textareaRef.current);
       const ctrl = new AbortController();
-      setTurns((current) => [
-        ...current.slice(-(MAX_STORED_TURNS - 1)),
+      setTurns([
         {
           id: turnId,
           question: trimmed,

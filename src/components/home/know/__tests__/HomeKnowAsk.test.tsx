@@ -77,7 +77,9 @@ describe("HomeKnowAsk", () => {
     const input = screen.getByLabelText("Ask Home KNOW");
     expect(screen.getByTestId("ava-ask-mark")).toBeInTheDocument();
     expect(screen.getByTestId("ava-ask-v-mark")).toBeInTheDocument();
-    fireEvent.change(input, { target: { value: "Show apps owned by Finance" } });
+    fireEvent.change(input, {
+      target: { value: "Show apps owned by Finance" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -96,7 +98,7 @@ describe("HomeKnowAsk", () => {
     expect(screen.getByText("ERP Finance")).toBeInTheDocument();
   });
 
-  it("keeps a visible question history and accepts another question after an answer", async () => {
+  it("keeps the rail focused on the latest question", async () => {
     const secondResponse: HomeKnowResponse = {
       ...response,
       question: "Which vendors support data platforms?",
@@ -133,7 +135,9 @@ describe("HomeKnowAsk", () => {
     render(<HomeKnowAsk tenantKey="apex-retail" />);
 
     const input = screen.getByLabelText("Ask Home KNOW");
-    fireEvent.change(input, { target: { value: "Show apps owned by Finance" } });
+    fireEvent.change(input, {
+      target: { value: "Show apps owned by Finance" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 
     await screen.findByText("Finance applications");
@@ -143,7 +147,9 @@ describe("HomeKnowAsk", () => {
     expect(screen.getByText("You · Question 1")).toBeInTheDocument();
     expect(screen.getByText("Show apps owned by Finance")).toBeInTheDocument();
 
-    fireEvent.change(input, { target: { value: "Which vendors support data platforms?" } });
+    fireEvent.change(input, {
+      target: { value: "Which vendors support data platforms?" },
+    });
     expect(input).toHaveValue("Which vendors support data platforms?");
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 
@@ -152,11 +158,15 @@ describe("HomeKnowAsk", () => {
     expect(input).toHaveValue("");
     expect(input).not.toBeDisabled();
     expect(screen.getByText("You · Question 1")).toBeInTheDocument();
-    expect(screen.getByText("You · Question 2")).toBeInTheDocument();
-    expect(screen.getByText("Which vendors support data platforms?")).toBeInTheDocument();
+    expect(
+      screen.getByText("Which vendors support data platforms?"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Show apps owned by Finance"),
+    ).not.toBeInTheDocument();
   });
 
-  it("restores completed tenant session history from session storage", async () => {
+  it("clears old tenant session history instead of restoring stale questions", async () => {
     const storedTurn = {
       id: "turn-1",
       question: "What did I ask before?",
@@ -171,9 +181,13 @@ describe("HomeKnowAsk", () => {
 
     render(<HomeKnowAsk tenantKey="apex-retail" />);
 
-    expect(await screen.findByText("Conversation history")).toBeInTheDocument();
-    expect(screen.getByText("You · Question 1")).toBeInTheDocument();
-    expect(screen.getByText("What did I ask before?")).toBeInTheDocument();
-    expect(screen.getByText("Finance applications")).toBeInTheDocument();
+    expect(screen.queryByText("Conversation history")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("What did I ask before?"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Finance applications")).not.toBeInTheDocument();
+    expect(
+      window.sessionStorage.getItem("abarva.homeKnow.thread.apex-retail"),
+    ).toBeNull();
   });
 });
