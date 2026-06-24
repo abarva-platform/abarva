@@ -8,6 +8,11 @@ The live eval (`scripts/qa/eval-home-know-quality.mjs`, 8 SkyHarbor questions, 2
 - Q2/Q6: *"The enterprise context has enough … detail to frame this answer."* (canned non-answer → `blocked`)
 - Q3: *"I found 3 Home source gap(s)."* (row-count lead, hard fail)
 
+**Worst case, observed live (app.abarva.ai/home, 2026-06-24).** Question: *"how is our IT and business organized today? who are our technology leaders under our CIO?"*
+- **Engine answered (BAD):** *"The organizational structure of IT and business functions cannot be characterized from the available information, and the technology leaders reporting to the CIO cannot be identified… missing named technical owner across roughly 900 applications, the named portfolio lead for 18 portfolios, and the named contract owner for approximately 320 vendor contracts."* It produced a table (1 table, 0 charts) — so retrieval worked — but the prose **collapsed the missing-names gap into a total refusal.**
+- **Required (GOOD):** lead with what IS known — *"SkyHarbor's IT is portfolio-led under the Office of the CDTO, across 18 portfolios spanning Operations Control / IROPS, Flight Operations, Crew Operations, Airport Customer Service, and TechOps / MRO. The technology leaders under the CIO are identifiable by role (EVP CDTO, SVP Ops Technology, …); named individuals are not loaded — that is the gap, not a reason the org can't be described."*
+- This is the exact behaviour the new system-prompt rule (above) forbids: never refuse the whole answer because names are missing when structure/roles/portfolios/counts are present.
+
 ## The graft point
 `src/lib/home/know/home-know-engine.ts`, in the response-assembly function that ends with `return validateHomeKnowResponse({ … prose: homeKnowProse({ … }) … })`. At that point `input.tenantKey`, `input.packet`, `intent`, `question`, the computed `facts` array, and the `gaps` array are all in scope. Replace **only** the `prose` value.
 
@@ -35,8 +40,11 @@ GAPS below. Write 2–5 sentences of executive prose: lead with the business rea
 then the key implication, then name the specific missing evidence from GAPS.
 Rules: never lead with a count or "I found N …"; never put internal IDs, table/view
 names, or system language in the prose; state gaps as the specific missing field,
-never "no data"; do not recommend, summon experts, or frame a decision. Return ONLY
-the prose — no preamble, no JSON, no headings.
+never "no data"; NEVER say the organization/estate "cannot be characterized" or that
+leaders "cannot be identified" when structure, roles, portfolios, domains, or counts
+are present in FACTS — lead with what IS known (structure + roles) and treat a missing
+named individual as a specific gap, not a refusal; do not recommend, summon experts,
+or frame a decision. Return ONLY the prose — no preamble, no JSON, no headings.
 ```
 **User message:** `QUESTION:\n<question>\n\nFACTS:\n<facts lines>\n\nGAPS:\n<gap lines>`
 
