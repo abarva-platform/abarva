@@ -23,11 +23,14 @@ describe("Home v2 all-client Context Explorer binding", () => {
   const homeHtml = readFileSync(HOME_V2_HTML, "utf8");
   const homeApp = readFileSync(HOME_V2_APP, "utf8");
 
-  it("mounts Home v2 under the canonical app navigation toolbar", () => {
+  it("mounts the React Home KNOW surface under the canonical app navigation toolbar", () => {
     expect(pageSource).toContain("<AppShell");
     expect(pageSource).toContain('surface="home"');
-    expect(pageSource).toContain('src="/api/home/v2-frame"');
-    expect(pageSource).toContain('title="AbarVa Home Context Explorer"');
+    expect(pageSource).toContain("<HomeSurface");
+    expect(pageSource).toContain("searchParams");
+    expect(pageSource).toContain("getActiveClientRow(requestedClient)");
+    expect(pageSource).not.toContain('src="/api/home/v2-frame"');
+    expect(pageSource).not.toContain('title="AbarVa Home Context Explorer"');
     expect(pageSource).not.toContain("ImpactInsightsHome");
   });
 
