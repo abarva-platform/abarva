@@ -7,6 +7,41 @@ that tenant AND a signed-in screenshot in the HTML report.
 
 Contract spec: `docs/build/BRAIN_CONTRACT.md` · Gate: `scripts/qa/tenant-matrix-gate.mjs` ·
 Deep test: `scripts/qa/reality-crawl.mjs` → report `scripts/qa/reality-crawl-report.mjs`.
+Surface doctrine: `docs/product/HOME_INTELLIGENCE_SURFACE_DOCTRINE.md`.
+
+---
+
+## Locked top-line execution status
+
+This section stays at the top. It is the founder-readable status view before the detailed
+tenant matrix. Percentages are conservative and must move only when the matching proof state
+moves. Do not mark work complete from design, merge, or deploy alone.
+
+**Overall execution:** **63%**  
+**Overall proof state:** in progress; not all-green on deployed app until the matrix and
+reality crawl prove it for all five tenants.
+
+| Phase / category | % | Current state | Next proof needed |
+|---|--:|---|---|
+| P0 · Product doctrine and surface boundaries | 100% | Home vs Intelligence doctrine is explicit and linked from this tracker. | Keep future PRs aligned to `HOME_INTELLIGENCE_SURFACE_DOCTRINE.md`. |
+| P1 · Home / Explorer KNOW mode | 80% | Backend/frontend KNOW path exists, but quality and all-tenant browser proof must stay current. | Re-run deployed matrix + reality crawl after each Home change. |
+| P2 · Intelligence advisor mode | 55% | Shared engine, corpus, and ExpertPack pieces exist, but advisor quality and semantic binding are not yet proven to the desired consultant bar. | Run semantic/advisor quality bank and prove tenant-fact + corpus + expert separation. |
+| P3 · Shared chat/thread experience | 70% | Shared Ava shell controls exist on main; GPT/Claude-like interaction and cross-surface consistency still need final proof. | Browser-prove multi-turn history, multi-line composer, clear-after-submit, and fixed composer across Home/Intelligence/Tower. |
+| P4 · Typed exhibits and visual artifacts | 65% | Typed table/chart/graph plumbing exists, but exhibit correctness must remain source-owned and crawl-proven. | Table/chart/graph prompts pass reality crawl with non-fabricated artifacts. |
+| P5 · Cross-surface decision continuity | 15% | Contract names the invariant; continuity gate is still the missing matrix column. | Add continuity proof from Context → Intelligence → Moves → Source → Tower. |
+| P6 · Release/proof harness | 55% | Matrix and crawl harnesses exist; deployed reports must be regenerated after each candidate. | Attach fresh HTML report with screenshots and pass-rate deltas to each PR. |
+
+### Percent rule
+
+- `0%`: not started.
+- `25%`: designed / contracted.
+- `50%`: implemented locally with focused tests.
+- `70%`: merged and deployable with targeted proof.
+- `85%`: deployed and live API-proven.
+- `100%`: browser-proven for all five tenants and reflected in the matrix below.
+
+The top-line percentage is not a substitute for the tenant matrix. If the matrix is red, the
+brain is not done.
 
 ---
 

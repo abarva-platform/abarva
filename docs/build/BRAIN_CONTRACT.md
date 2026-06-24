@@ -2,6 +2,7 @@
 
 **Status:** v1 · 2026-06-22
 **Source of truth:** the architecture promised in `docs/build/ABARVA_HOW_THE_BRAIN_WORKS.html`.
+**Surface doctrine:** `docs/product/HOME_INTELLIGENCE_SURFACE_DOCTRINE.md`.
 **Purpose:** turn that doc's promises into explicit, machine-checkable invariants so we can
 test whether the product *actually instantiates the brain* — not whether the UI merely renders.
 This file is the **acceptance test and the anti-flip-back anchor**: changing an invariant
@@ -17,6 +18,21 @@ quietly revert the architecture.
 - **Depth of corpus** — e.g. "≈210 virtual experts", the full 5-tier substrate breadth. These
   are **tracked as a coverage metric, not a pass/fail gate.** A thin-but-correct faculty still
   conforms; we report depth separately so we never fail the conformance test on roadmap.
+
+## Surface posture boundary
+
+The product has two different ask postures:
+
+- **Home / Explorer answers "what do we know?"** It is the evidence room. It returns loaded
+  facts, dimensions, gaps, conflicts, simple source-owned tables/charts/graphs, and citations.
+  It does not summon experts or write strategy recommendations.
+- **Intelligence answers "what does it mean?"** It is the advisor layer. It combines the same
+  tenant facts with governed corpus, benchmarks, ExpertPacks, patterns, and reasoning. It must
+  label tenant fact versus pattern, benchmark, inference, and gap.
+
+The detailed doctrine is `docs/product/HOME_INTELLIGENCE_SURFACE_DOCTRINE.md`. Any
+implementation that makes Home behave like Intelligence, or makes Intelligence bypass the
+loaded evidence layer, violates this contract.
 
 ---
 
