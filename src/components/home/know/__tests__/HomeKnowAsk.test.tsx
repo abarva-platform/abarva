@@ -139,7 +139,7 @@ describe("HomeKnowAsk", () => {
     expect(input).toHaveValue("");
     expect(input).not.toBeDisabled();
     expect(screen.getByText("Conversation history")).toBeInTheDocument();
-    expect(screen.getByText("You asked · Question 1")).toBeInTheDocument();
+    expect(screen.getByText("You · Question 1")).toBeInTheDocument();
     expect(screen.getByText("Show apps owned by Finance")).toBeInTheDocument();
 
     fireEvent.change(input, { target: { value: "Which vendors support data platforms?" } });
@@ -150,8 +150,8 @@ describe("HomeKnowAsk", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(input).toHaveValue("");
     expect(input).not.toBeDisabled();
-    expect(screen.getByText("You asked · Question 1")).toBeInTheDocument();
-    expect(screen.getByText("You asked · Question 2")).toBeInTheDocument();
+    expect(screen.getByText("You · Question 1")).toBeInTheDocument();
+    expect(screen.getByText("You · Question 2")).toBeInTheDocument();
     expect(screen.getByText("Which vendors support data platforms?")).toBeInTheDocument();
   });
 
@@ -171,7 +171,7 @@ describe("HomeKnowAsk", () => {
     render(<HomeKnowAsk tenantKey="apex-retail" />);
 
     expect(await screen.findByText("Conversation history")).toBeInTheDocument();
-    expect(screen.getByText("You asked · Question 1")).toBeInTheDocument();
+    expect(screen.getByText("You · Question 1")).toBeInTheDocument();
     expect(screen.getByText("What did I ask before?")).toBeInTheDocument();
     expect(screen.getByText("Finance applications")).toBeInTheDocument();
   });
