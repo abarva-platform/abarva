@@ -70,7 +70,6 @@ const FILE_ALLOWLIST = new Set([
   'src/lib/admin/release-ledger.ts',     // internal audit sanitizer replaces tenant names before display
   'src/lib/knowledge/synthetic-datasets.ts', // tenant-tagged corpus fixture data
   'src/lib/tower-v2/v4-data.ts',          // tenant-pack mapper for the Tower data-plane binding
-  'src/lib/home-v2/data.ts',              // tenant-pack mapper for the Home v2 data-plane binding
   'src/app/api/tower/v2-frame/route.ts',  // tenant-pack frame binding replaces the offline Tower placeholder
   'src/app/(maestro)/platform/admin/approvals/page.tsx', // internal cross-tenant admin queue
   'src/app/(maestro)/platform/admin/data-governance/page.tsx', // internal cross-tenant governance inventory

@@ -16,10 +16,6 @@ function exists(relativePath) {
   return fs.existsSync(path.join(root, relativePath));
 }
 
-function relativeExists(base, relativePath) {
-  return fs.existsSync(path.join(root, base, relativePath));
-}
-
 const findings = [];
 
 function finding(severity, id, detail, evidence = []) {
@@ -36,34 +32,6 @@ function warn(id, detail, evidence = []) {
 
 function critical(id, detail, evidence = []) {
   finding("critical", id, detail, evidence);
-}
-
-function parseHomeClientPacks(homeSource) {
-  const packs = [];
-  const regex =
-    /key:\s*'([^']+)'[\s\S]*?datasetDir:\s*'([^']+)'[\s\S]*?tenantName:\s*'([^']+)'[\s\S]*?format:\s*'([^']+)'/g;
-  for (const match of homeSource.matchAll(regex)) {
-    packs.push({
-      key: match[1],
-      datasetDir: match[2],
-      tenantName: match[3],
-      format: match[4],
-    });
-  }
-  return packs;
-}
-
-function parseHomeSections(homeSource) {
-  const sections = [];
-  const regex = /id:\s*'([^']+)'[\s\S]*?nav:\s*'([^']+)'[\s\S]*?v4File:\s*'([^']+)'/g;
-  for (const match of homeSource.matchAll(regex)) {
-    sections.push({
-      id: match[1],
-      nav: match[2],
-      v4File: match[3],
-    });
-  }
-  return sections;
 }
 
 function countJsonlLines(relativePath) {
@@ -106,139 +74,90 @@ for (const migration of contract.requiredMigrations ?? []) {
   }
 }
 
-const homePath = "src/lib/home-v2/data.ts";
-if (!exists(homePath)) {
-  critical("home_v2_binding_missing", `${homePath} is missing.`);
-} else {
-  const homeSource = read(homePath);
-  const packs = parseHomeClientPacks(homeSource);
-  const sections = parseHomeSections(homeSource);
+const homePagePath = "src/app/(maestro)/home/page.tsx";
+const homeSurfacePath = "src/components/home/HomeSurface.tsx";
+const homeAskPath = "src/components/home/know/HomeKnowAsk.tsx";
+const homeContractPath = "src/lib/home/know/home-know-contract.ts";
+const homeEnginePath = "src/lib/home/know/home-know-engine.ts";
+const retiredHomeV2Paths = [
+  "src/app/api/home/v2-frame/route.ts",
+  "src/app/api/home/v2-data/route.ts",
+  "src/lib/home-v2/data.ts",
+  "public/home-v2",
+];
 
-  if (packs.length === 0) {
-    critical("home_v2_client_packs_empty", "No Home v2 client packs were parsed.");
-  } else {
-    pass("home_v2_client_packs_present", `Parsed ${packs.length} Home v2 client packs.`);
-  }
-
-  if (sections.length < contract.currentHomeDimensionCount) {
+for (const retiredPath of retiredHomeV2Paths) {
+  if (exists(retiredPath)) {
     critical(
-      "home_v2_dimension_contract_short",
-      `Parsed ${sections.length} Home v2 dimensions, expected at least ${contract.currentHomeDimensionCount}.`,
+      "legacy_home_v2_runtime_present",
+      `${retiredPath} still exists. Home KNOW must not have a static Home v2 fallback path.`,
+      [retiredPath],
     );
-  } else {
-    pass("home_v2_dimension_contract_present", `Parsed ${sections.length} Home v2 dimensions.`);
   }
+}
+if (retiredHomeV2Paths.every((retiredPath) => !exists(retiredPath))) {
+  pass("legacy_home_v2_runtime_retired", "Static Home v2 frame/data/assets are absent from runtime.");
+}
 
-  warn(
-    "home_v2_dimension_registry_not_durable",
-    "Home v2 dimensions are still hardcoded in src/lib/home-v2/data.ts; the 20th dimension requires registry pushdown before it is data-plane-native.",
-    [homePath],
-  );
-
-  const v4Packs = packs.filter((pack) => pack.format === "v4");
-  const requiredPackFiles = contract.v4DatasetRequirements?.requiredFiles ?? [];
-  const requiredTowerFiles =
-    contract.v4DatasetRequirements?.requiredAiControlTowerFiles ?? [];
-
-  for (const pack of v4Packs) {
-    const datasetRoot = path.join("datasets", pack.datasetDir);
-    if (!exists(datasetRoot)) {
-      critical("v4_dataset_missing", `${pack.key} dataset root is missing: ${datasetRoot}.`);
-      continue;
-    }
-
-    const missingPackFiles = requiredPackFiles.filter(
-      (file) => !relativeExists(datasetRoot, file),
-    );
-    if (missingPackFiles.length > 0) {
-      critical(
-        "v4_dataset_required_file_missing",
-        `${pack.key} is missing required dataset files: ${missingPackFiles.join(", ")}.`,
-        [datasetRoot],
-      );
-    } else {
-      pass("v4_dataset_required_files_ok", `${pack.key} has manifest, row-count receipt, and graph file.`, [
-        datasetRoot,
-      ]);
-    }
-
-    const missingDimensionFiles = sections
-      .map((section) => section.v4File)
-      .filter((file) => !relativeExists(datasetRoot, file));
-    if (missingDimensionFiles.length > 0) {
-      critical(
-        "v4_dataset_dimension_file_missing",
-        `${pack.key} is missing Home dimension files: ${missingDimensionFiles.join(", ")}.`,
-        [datasetRoot],
-      );
-    } else {
-      pass(
-        "v4_dataset_dimension_files_ok",
-        `${pack.key} has all ${sections.length} Home v2 dimension files.`,
-        [datasetRoot],
-      );
-    }
-
-    const missingTowerFiles = requiredTowerFiles.filter(
-      (file) => !relativeExists(datasetRoot, file),
-    );
-    if (missingTowerFiles.length > 0) {
-      warn(
-        "v4_dataset_tower_depth_partial",
-        `${pack.key} is missing AI Control Tower depth files: ${missingTowerFiles.join(", ")}.`,
-        [datasetRoot],
-      );
-    } else {
-      pass(
-        "v4_dataset_tower_depth_ok",
-        `${pack.key} has the full T00-T13 AI Control Tower file set.`,
-        [datasetRoot],
-      );
-    }
-
-    const edgeCount = countJsonlLines(path.join(datasetRoot, "graph/context-relationships.jsonl"));
-    if (edgeCount === 0) {
-      critical(
-        "v4_dataset_relationship_graph_empty",
-        `${pack.key} has no relationship edges in graph/context-relationships.jsonl.`,
-        [datasetRoot],
-      );
-    } else {
-      pass("v4_dataset_relationship_graph_ok", `${pack.key} has ${edgeCount} relationship edges.`);
-    }
+for (const requiredPath of [homePagePath, homeSurfacePath, homeAskPath, homeContractPath, homeEnginePath]) {
+  if (!exists(requiredPath)) {
+    critical("home_know_file_missing", `${requiredPath} is missing.`);
   }
 }
 
-const browserPath = "public/home-v2/app.js";
-if (!exists(browserPath)) {
-  critical("home_v2_browser_bundle_missing", `${browserPath} is missing.`);
-} else {
-  const browserSource = read(browserPath);
-  const browserOwnsAnswerLogic =
-    browserSource.includes("function answerForAsk") ||
-    browserSource.includes("function bestAskFacts") ||
-    browserSource.includes("const WEIGHTS");
-  const browserOwnsDatasetTruth =
-    /datasets\/|datasetDir|manifest\.yaml|expected-row-counts/.test(browserSource);
-
-  if (browserOwnsDatasetTruth) {
-    critical(
-      "browser_dataset_truth_detected",
-      "Browser JS contains dataset/source truth references. Dataset truth must stay server/repo-side.",
-      [browserPath],
-    );
-  } else {
-    pass("browser_dataset_truth_absent", "Browser JS does not contain dataset-root or manifest truth.");
+if (exists(homePagePath)) {
+  const pageSource = read(homePagePath);
+  if (pageSource.includes("v2-frame") || pageSource.includes("<iframe")) {
+    critical("home_page_legacy_frame_reference", "/home still references the legacy frame route or iframe.", [
+      homePagePath,
+    ]);
+  } else if (pageSource.includes("<HomeSurface")) {
+    pass("home_page_uses_react_home_surface", "/home mounts the React HomeSurface directly.");
   }
+}
 
-  if (browserOwnsAnswerLogic) {
-    warn(
-      "browser_answer_logic_pushdown_required",
-      "Home v2 browser JS still owns ask routing, ranking, weighting, or answer assembly. Push this behind a server/database-owned answer endpoint before claiming agent-grade answers.",
-      [browserPath],
-    );
+if (exists(homeAskPath)) {
+  const askSource = read(homeAskPath);
+  if (askSource.includes("/api/home/know/ask") && !askSource.includes("/api/intelligence/ask")) {
+    pass("home_ask_uses_home_know_endpoint", "Home ask uses the Home KNOW endpoint, not Intelligence ask.");
   } else {
-    pass("browser_answer_logic_pushed_down", "Home v2 browser JS does not own answer-ranking logic.");
+    critical("home_ask_endpoint_drift", "Home ask must post to /api/home/know/ask only.", [homeAskPath]);
+  }
+  if (askSource.includes("answerForAsk") || askSource.includes("bestAskFacts")) {
+    critical("home_browser_answer_logic_detected", "Browser-side Home answer assembly has returned.", [
+      homeAskPath,
+    ]);
+  } else {
+    pass("home_browser_answer_logic_absent", "Home browser code does not own answer assembly.");
+  }
+}
+
+if (exists(homeContractPath) && exists(homeEnginePath)) {
+  const contractSource = read(homeContractPath);
+  const engineSource = read(homeEnginePath);
+  const contractTerms = [
+    "HomeKnowResponse",
+    "tables",
+    "charts",
+    "graphs",
+    "citations",
+    "gaps",
+    "safety",
+  ];
+  const missingTerms = contractTerms.filter((term) => !contractSource.includes(term));
+  if (missingTerms.length > 0) {
+    critical("home_know_contract_incomplete", `HomeKnowResponse contract missing: ${missingTerms.join(", ")}.`, [
+      homeContractPath,
+    ]);
+  } else {
+    pass("home_know_contract_present", "HomeKnowResponse owns tables, charts, graphs, citations, gaps, and safety.");
+  }
+  if (engineSource.includes("templatePrefix") && !engineSource.includes("Read: I can't give that exact value")) {
+    pass("home_know_prose_template_guard", "Home KNOW strips mechanical Read/Evidence template prefixes.");
+  } else {
+    warn("home_know_prose_template_guard_missing", "Home KNOW should strip mechanical prose prefixes.", [
+      homeEnginePath,
+    ]);
   }
 }
 

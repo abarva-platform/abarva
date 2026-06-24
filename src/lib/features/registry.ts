@@ -82,17 +82,9 @@ export type FeatureFlagKey =
   | "context_corpus_explorer_enabled"
   | "source_reasoning_spine"
   | "deliverable_structured_exhibits"
-  | "deliverable_quality_contract"
-  | "home_react_surface";
+  | "deliverable_quality_contract";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
-  {
-    key: "home_react_surface",
-    summary:
-      "Replaces the static /home Context Explorer iframe (public/home-v2) with the real React Home surface (HomeSurface): the ask is the canonical AvaAsk (shared engine + AgentAnswerRenderer), retiring the fake `answerForAsk` row-globbing. Proven on apexretail, now enabled for all 5 binding-backed tenants. Northstar is intentionally excluded (no binding payload → empty explorer). Can also be toggled per tenant without a deploy via ABARVA_FEATURE_HOME_REACT_SURFACE_TENANTS.",
-    policy: "tenant",
-    includeTenants: ["apexretail", "arcturus", "skyharbor", "meridian", "lakeshore"],
-  },
   {
     key: "deliverable_structured_exhibits",
     summary:
