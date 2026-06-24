@@ -16,7 +16,7 @@ import type {
 const CSS = `
 .agentAnswer{--aa-ink:#111827;--aa-muted:#6b7280;--aa-faint:#9ca3af;--aa-line:#e5e7eb;--aa-paper:#fff;--aa-soft:#f9fafb;--aa-green:#166534;--aa-green-bg:#eaf7ee;display:grid;gap:18px;color:var(--aa-ink)}
 .agentAnswer .aaHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;border-bottom:1px solid var(--aa-line);padding-bottom:14px}
-.agentAnswer .aaKicker{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--aa-green);font-weight:700}
+.agentAnswer .aaKicker{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;letter-spacing:.08em;color:var(--aa-green);font-weight:700}
 .agentAnswer .aaMeta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .agentAnswer .aaPill{display:inline-flex;align-items:center;border:1px solid var(--aa-line);border-radius:999px;padding:3px 9px;font-size:12px;color:var(--aa-muted);background:var(--aa-paper)}
 .agentAnswer .aaExpert{background:var(--aa-green-bg);border-color:transparent;color:var(--aa-green);font-weight:600}

@@ -604,13 +604,13 @@ export function AgentDock(props: AgentDockProps) {
         )
         .map((u) => u.ref);
       if (trimmed.length === 0 && refs.length === 0) return;
+      setDraft("");
+      setUploads([]);
+      const ta = inputRef.current;
+      if (ta) ta.style.height = "auto";
       try {
         setSubmitting(true);
         await onMessage(trimmed, refs);
-        setDraft("");
-        setUploads([]);
-        const ta = inputRef.current;
-        if (ta) ta.style.height = "auto";
       } finally {
         setSubmitting(false);
       }
@@ -1799,7 +1799,6 @@ const AGENT_BYLINE_STYLE: CSSProperties = {
   fontFamily: CANVAS.MONO,
   fontSize: 9,
   letterSpacing: "0.10em",
-  textTransform: "uppercase",
   color: CANVAS.GRAY_DK,
   fontWeight: 600,
 };
