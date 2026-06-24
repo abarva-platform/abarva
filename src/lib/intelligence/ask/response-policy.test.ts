@@ -17,7 +17,7 @@ const surfaceSources: AskSource[] = [
       "Active Intelligence surface: brief.",
       "- Active client: Apex Retail.",
       "- Brief: 3 ranked bets above the line, 5 below the line, 3 triggered patterns.",
-      "- Brief synthesis: Sentinel sees Apex Retail priorities above the line: fix customer identity before scaling loyalty AI, sequence demand sensing through data readiness, and make the AI roadmap honest about platform prerequisites.",
+      "- Brief synthesis: aVa sees Apex Retail priorities above the line: fix customer identity before scaling loyalty AI, sequence demand sensing through data readiness, and make the AI roadmap honest about platform prerequisites.",
     ].join("\n"),
   },
   {
@@ -100,7 +100,7 @@ describe("Ask Intelligence response policy", () => {
 
     expect(answer).toContain("My read: Apex Retail is not short on AI ideas.");
     expect(answer).toContain(
-      "Business lens: Sentinel sees Apex Retail priorities",
+      "Business lens: aVa sees Apex Retail priorities",
     );
     expect(answer).toContain("Technical lens: resolve customer identity");
     expect(answer).toContain("CFO value lens");

@@ -27,7 +27,7 @@ Heuristics:
 - research_query: "research", "study", "paper", "journal", "what does the data say"
 - regulation_query: regulation name (HIPAA, NIST AI RMF, EU AI Act, GDPR, SOC2), "compliance"
 - benchmark_query: industry metric, "benchmark", "median", "top quartile"
-- insight_query: "what has Nexus noticed", "patterns across engagements", "meta"
+- insight_query: "what has aVa noticed", "patterns across engagements", "meta"
 - general_synthesis: fallback
 
 Query: ${q}`;

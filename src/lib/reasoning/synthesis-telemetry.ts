@@ -24,7 +24,12 @@
  * routes and from tests (use `_resetForTests()` to clear state between cases).
  */
 
-export type SynthesisSurface = 'source' | 'programs' | 'tower' | 'sentinel';
+export type SynthesisSurface =
+  | 'source'
+  | 'programs'
+  | 'tower'
+  | 'intelligence'
+  | 'sentinel';
 
 export type SynthesisFeedback = 'up' | 'down';
 

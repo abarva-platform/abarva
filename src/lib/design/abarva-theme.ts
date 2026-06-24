@@ -154,12 +154,11 @@ export const BORDER = {
 // AGENT ACCENTS  (canon §H · agent partition)
 // ---------------------------------------------------------------------
 //
-// Nexus    → NAVY  (mastermind)
-// Sentinel → AMBER (intelligence)
-// Atlas    → INK on dark hero, NAVY on light
-// Steward  → MUTED (governance / setup)
+// aVa      → NAVY  (single conversational agent)
+// Legacy agent tokens remain for older surfaces until they migrate to aVa.
 
 export const ABARVA_AGENT_NAMES = [
+  'ava',
   'nexus',
   'sentinel',
   'atlas',
@@ -172,6 +171,11 @@ export const AGENT_ACCENT: Record<
   AbarvaAgent,
   { fg: string; bg: string; ring: string }
 > = {
+  ava: {
+    fg: COLORS.navy,
+    bg: COLORS.navySoft,
+    ring: COLORS.navy,
+  },
   nexus: {
     fg: COLORS.navy,
     bg: COLORS.navySoft,

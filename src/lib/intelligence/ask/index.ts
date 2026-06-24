@@ -106,8 +106,8 @@ export function atlasStakeholderConflictHandoff(query: string): string | null {
   if (!asksForAdvice || !namesConflict) return null;
 
   return [
-    "Atlas should own that call. I can surface the contradiction and evidence, but Sentinel should not prescribe the political resolution.",
-    "Handoff to Atlas: map the growth thesis, cost-takeout posture, affected programs, and decision owner; then return options with tradeoffs.",
+    "That belongs in an Intelligence decision workspace. I can surface the contradiction and evidence, but aVa should not prescribe the political resolution from this narrow ask alone.",
+    "Handoff: map the growth thesis, cost-takeout posture, affected programs, and decision owner; then return options with tradeoffs.",
     "Which program is the conflict surfacing in?",
   ].join(" ");
 }
@@ -123,7 +123,7 @@ export function atlasStakeholderConflictHandoff(query: string): string | null {
 // flagged in the 2026-05-10 audit.
 //
 // Doctrine now: ~80% of strategic questions will not hit the corpus directly.
-// In that case, Sentinel must take the tenant context block + broad domain
+// In that case, aVa must take the tenant context block + broad domain
 // expertise and answer like a senior AI strategy advisor. Honesty is reserved
 // for tenant-specific quantitative claims (KPI values, exact vendor figures,
 // quantified business cases) — and the model handles that itself, in one
@@ -247,7 +247,7 @@ export async function* askIntelligence(
       yield {
         type: "followups",
         followups: [
-          "Ask Atlas to map the contradiction",
+          "Map the contradiction in Intelligence",
           "Show the evidence behind this tension",
         ],
       };

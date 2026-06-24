@@ -1,4 +1,4 @@
-type AgentKey = 'sentinel' | 'nexus';
+type AgentKey = 'ava' | 'sentinel' | 'nexus';
 type ModuleKey = 'intelligence' | 'moves' | 'source';
 
 export interface AgentContextSourceLike {
@@ -102,7 +102,9 @@ function moduleMandate(module: ModuleKey): string {
 }
 
 function agentName(agent: AgentKey): string {
-  return agent === 'nexus' ? 'Nexus' : 'Sentinel';
+  if (agent === 'ava') return 'aVa';
+  if (agent === 'sentinel') return 'aVa';
+  return agent === 'nexus' ? 'Moves' : 'aVa';
 }
 
 export function buildAgentContextContractBlock(input: AgentContextContractInput): string {

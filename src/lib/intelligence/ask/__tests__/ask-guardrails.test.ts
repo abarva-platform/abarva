@@ -8,15 +8,15 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 describe('Ask Intelligence guardrails', () => {
-  it('routes advice requests about executive contradictions to Atlas', () => {
+  it('routes advice requests about executive contradictions to the decision workspace', () => {
     const handoff = atlasStakeholderConflictHandoff('What should I do about the CMO-vs-CFO contradiction?');
 
-    expect(handoff).toContain('Atlas should own that call');
-    expect(handoff).toContain('Sentinel should not prescribe');
+    expect(handoff).toContain('Intelligence decision workspace');
+    expect(handoff).toContain('aVa should not prescribe');
     expect(handoff).not.toContain('concrete playbook');
   });
 
-  it('does not route ordinary synthesis questions to Atlas', () => {
+  it('does not route ordinary synthesis questions to the decision handoff', () => {
     expect(atlasStakeholderConflictHandoff('Why is Apex CDP at risk right now?')).toBeNull();
   });
 
@@ -64,14 +64,14 @@ describe('Ask Intelligence guardrails', () => {
   //
   // The 2026-05-10 Apex / Carlos re-test captured "ApexRetail" /
   // "demandsensing" / "upstreamconditions" word-fusion across every test on
-  // every Sentinel surface. Carlos labeled it a frontend bug; root cause was
+  // every aVa surface. Carlos labeled it a frontend bug; root cause was
   // server-side: askIntelligence used to call sanitizeAskSynthesis(delta,
   // 500) on each streamed chunk, and that function's trim() stripped the
   // trailing whitespace from chunks produced by chunkAskText (which depend
   // on that whitespace as the inter-chunk separator). The client then
   // concatenated stripped chunks and produced fused words.
   //
-  // Lock in: a long sentinel-shaped sentence must round-trip through the
+  // Lock in: a long aVa-shaped sentence must round-trip through the
   // chunk → (no trim) → join pipeline byte-for-byte.
   it('does not fuse words across streamed chunk boundaries (INT-VOICE.STRAT-2026-05-10b)', () => {
     // Build a sentence longer than the 80-char chunk regex cap so chunkAskText

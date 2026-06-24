@@ -1,8 +1,8 @@
 // HOME1 · Agentic Executive Home Entry surface.
 //
 // Calm, single-fold executive landing that orients an arriving visitor
-// toward the four canonical agent surfaces (Nexus / Atlas / Sentinel /
-// Steward) and exposes a small, deterministic "what needs attention"
+// toward the canonical work surfaces and exposes a small, deterministic
+// "what needs attention"
 // strip. No live runtime, no model invocation, no telemetry — every
 // number renders from a deterministic seed helper and is labelled as
 // such via `data-deterministic="true"` markers and an honest-disclaimer
@@ -65,32 +65,32 @@ const AGENT_SURFACES: readonly AgentSurface[] = [
   {
     key: 'programs',
     title: 'Programs',
-    agent: 'nexus',
-    agentLabel: 'Nexus',
+    agent: 'ava',
+    agentLabel: 'aVa',
     subline: 'Active programs, phase progress, gate readiness.',
     hrefBuilder: (slug) => `/tenant/${slug}/programs`,
   },
   {
     key: 'tower',
     title: 'Control Tower',
-    agent: 'atlas',
-    agentLabel: 'Atlas',
+    agent: 'ava',
+    agentLabel: 'aVa',
     subline: 'AI portfolio posture across seven dimensions.',
     hrefBuilder: (slug) => `/tenant/${slug}/tower`,
   },
   {
     key: 'intelligence',
     title: 'Intelligence',
-    agent: 'sentinel',
-    agentLabel: 'Sentinel',
+    agent: 'ava',
+    agentLabel: 'aVa',
     subline: 'Patterns, failure-mode signals, evidence lineage.',
     hrefBuilder: (slug) => `/tenant/${slug}/intelligence`,
   },
   {
     key: 'admin',
     title: 'Admin',
-    agent: 'steward',
-    agentLabel: 'Steward',
+    agent: 'ava',
+    agentLabel: 'aVa',
     subline: 'Dataset domains, evidence loading, governance.',
     hrefBuilder: () => '/platform/admin',
   },
@@ -114,7 +114,7 @@ interface AttentionCard {
 }
 
 function buildAttentionCards(): readonly AttentionCard[] {
-  // Three cards · canonical ordering: Programs → Steward → Sentinel.
+  // Three cards · canonical ordering: Programs → Stewardship → Intelligence.
   // Numbers are deterministic constants. DO NOT bind to live reads
   // here — that contract belongs to a future slice.
   const PROGRAMS_AT_G2 = 1;
@@ -125,22 +125,22 @@ function buildAttentionCards(): readonly AttentionCard[] {
       id: 'home1-attn-programs-g2',
       eyebrow: 'Programs · gate readiness',
       body: `${PROGRAMS_AT_G2} program at Gate G2 — CXO interview pending.`,
-      agent: 'nexus',
-      agentLabel: 'Nexus',
+      agent: 'ava',
+      agentLabel: 'aVa',
     },
     {
       id: 'home1-attn-domains-partial',
       eyebrow: 'Admin · dataset domains',
       body: `${DOMAINS_PARTIAL} dataset domains partially loaded.`,
-      agent: 'steward',
-      agentLabel: 'Steward',
+      agent: 'ava',
+      agentLabel: 'aVa',
     },
     {
       id: 'home1-attn-patterns-active',
       eyebrow: 'Intelligence · active patterns',
-      body: `${ACTIVE_PATTERNS} active patterns surfaced by Sentinel.`,
-      agent: 'sentinel',
-      agentLabel: 'Sentinel',
+      body: `${ACTIVE_PATTERNS} active patterns surfaced by aVa.`,
+      agent: 'ava',
+      agentLabel: 'aVa',
     },
   ];
 }

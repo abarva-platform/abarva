@@ -231,7 +231,10 @@ async function askLiveAva(
               if (event.type === "sources" && Array.isArray(event.sources)) {
                 sourceEventCitations += event.sources.length;
               }
-              if (event.type === "sentinel-stage" && event.stage?.content) {
+              if (
+                (event.type === "ava-stage" || event.type === "sentinel-stage") &&
+                event.stage?.content
+              ) {
                 prose += `${event.stage.name ?? "Stage"}: ${event.stage.content}\n`;
               }
               if (event.type === "agent-answer" && event.answer) {

@@ -13,7 +13,7 @@ import {
 import { TextDecoder, TextEncoder } from "util";
 
 import { modeStorageKey } from "@/components/agent/AgentDock";
-import { SentinelReasoningCards } from "../SentinelReasoningCards";
+import { AvaReasoningCards } from "../AvaReasoningCards";
 
 function makeNdjsonBody(events: unknown[]) {
   const payload = `${events.map((event) => JSON.stringify(event)).join("\n")}\n`;
@@ -49,7 +49,7 @@ function mockAskResponse(answer: string): jest.Mock {
 
 function renderSurface() {
   return render(
-    <SentinelReasoningCards
+    <AvaReasoningCards
       initialClient="skyharbor"
       initialClientDisplayName="SkyHarbor Air"
     />,
@@ -63,7 +63,7 @@ beforeEach(() => {
   globalThis.TextEncoder = TextEncoder as typeof globalThis.TextEncoder;
 });
 
-describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
+describe("AvaReasoningCards · Ava Intelligence chat shell", () => {
   it("renders Intelligence through the shared AgentDock shell", () => {
     renderSurface();
 

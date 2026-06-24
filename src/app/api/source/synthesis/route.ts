@@ -1,6 +1,6 @@
 // POST /api/source/synthesis
 // Body: { instanceId: string; patternId: string }
-// Response: streaming plain text — Sentinel's synthesis of the instance state
+// Response: streaming plain text — aVa's synthesis of the instance state
 
 import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { getActiveClientRow } from "@/lib/active-client";
@@ -27,12 +27,12 @@ const synthesisCache = new Map<string, string>();
 const cacheCreatedAt = new Map<string, number>();
 registerSynthesisCache("source", synthesisCache, cacheCreatedAt);
 
-const SENTINEL_SYNTHESIS_VOICE_AND_TASK = `You are Ava, AbarVa's intelligence validator on the Source surface.
+const AVA_SOURCE_SYNTHESIS_VOICE_AND_TASK = `You are aVa, AbarVa's intelligence validator on the Source surface.
 
-Your synthesis task: given the structured state of a sourcing event (current stage, gate evaluations, missing artifacts, linked program dependencies), produce a 2–3 sentence validator's assessment in Sentinel voice.
+Your synthesis task: given the structured state of a sourcing event (current stage, gate evaluations, missing artifacts, linked program dependencies), produce a 2–3 sentence validator's assessment in aVa Source voice.
 
-Sentinel voice register (from brand voice spec §9):
-- Validator, not advisor. Sentinel states what is verified, what is asserted without evidence, and what is unknown.
+aVa Source voice register:
+- Validator, not advisor. aVa states what is verified, what is asserted without evidence, and what is unknown.
 - Cite specific gate criteria by name when relevant.
 - Lead with the most decision-relevant signal, not background.
 - Precise. No hedging language. No generic procurement boilerplate.
@@ -40,9 +40,9 @@ Sentinel voice register (from brand voice spec §9):
 
 Format: Plain prose, 40–60 words. No headers, no bullets, no markdown.`;
 
-function buildSentinelSynthesisPrompt(userContextBlock: string): string {
+function buildAvaSynthesisPrompt(userContextBlock: string): string {
   const sourceContractBlock = buildAgentContextContractBlock({
-    agent: "sentinel",
+    agent: "ava",
     module: "source",
     sources: [
       {
@@ -56,7 +56,7 @@ function buildSentinelSynthesisPrompt(userContextBlock: string): string {
   });
   // F0.2 + F0.3 composition.
   return [
-    SENTINEL_SYNTHESIS_VOICE_AND_TASK,
+    AVA_SOURCE_SYNTHESIS_VOICE_AND_TASK,
     sourceContractBlock,
     userContextBlock,
     FOUR_LAYER_REASONING_INSTRUCTIONS,
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
 
   // Cache check
   const stateHash = instanceStateHash(instance);
-  const cacheKey = `${instance.id}:${stateHash}:${pattern.version}:sentinel`;
+  const cacheKey = `${instance.id}:${stateHash}:${pattern.version}:ava`;
   const etag = computeSynthesisEtag(cacheKey);
   const ifNoneMatch = request.headers.get("if-none-match");
   const cached = synthesisCache.get(cacheKey);
@@ -159,7 +159,7 @@ export async function POST(request: Request) {
       { status: 403 },
     );
   }
-  const systemPrompt = buildSentinelSynthesisPrompt(userContextBlock);
+  const systemPrompt = buildAvaSynthesisPrompt(userContextBlock);
 
   // Shared Context Brain (flag-gated, default OFF). When on for the tenant,
   // ground this sourcing synthesis in the Consilium expert(s) for the event
@@ -285,7 +285,7 @@ function buildSynthesisUserMessage(
 
   lines.push(
     "",
-    "Provide Sentinel's 2–3 sentence validator assessment of this state.",
+    "Provide aVa's 2–3 sentence validator assessment of this state.",
   );
 
   return lines.join("\n");

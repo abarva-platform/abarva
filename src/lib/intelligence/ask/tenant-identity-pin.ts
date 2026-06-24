@@ -1,9 +1,9 @@
 /**
- * Tenant-identity pin for the Sentinel ask synthesizer system prompt.
+ * Tenant-identity pin for the aVa Intelligence synthesizer system prompt.
  *
  * Background
  * ----------
- * The Sentinel ask synthesizer system prompt previously contained a hardcoded
+ * The aVa Intelligence synthesizer system prompt previously contained a hardcoded
  * pin that read, verbatim:
  *
  *     "If TENANT or GRAPH sources say the active tenant is Apex Retail,
@@ -113,7 +113,7 @@ const VERTICAL_PROFILES: Record<string, VerticalProfile> = {
 };
 
 /**
- * Builds the authoritative tenant-identity pin block prepended to the Sentinel
+ * Builds the authoritative tenant-identity pin block prepended to the aVa
  * synthesizer system prompt for every ask call.
  *
  * The block instructs the model to:
@@ -168,7 +168,7 @@ export function buildTenantIdentityPin(clientKey: string | null | undefined): st
 }
 
 /**
- * Detects whether a Sentinel response asserts a different tenant identity than
+ * Detects whether an aVa response asserts a different tenant identity than
  * the authenticated session expects. Used by the post-response guard + the
  * audit-runner scorer.
  *

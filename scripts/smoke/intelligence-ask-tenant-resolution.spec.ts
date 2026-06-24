@@ -4,14 +4,14 @@
  * Background
  * ----------
  * The 2026-05-24 full-module stress test on Meridian Health found that
- * Sentinel's response to a Meridian-authenticated CDIO asserted "you're
+ * aVa response to a Meridian-authenticated CDIO asserted "you're
  * Apex Retail Group". PR #2341 fixed the hardcoded tenant pin in the
  * synthesizer system prompt, but the leak persisted because three layers
  * ABOVE the synthesizer hardcoded 'apexretail' / 'Apex Retail Group':
  *
  *   1. src/app/intelligence/ask/page.tsx — topBarProps.tenantName and
- *      <SentinelReasoningCards initialClient="apexretail" /> both hardcoded
- *   2. src/app/(maestro)/intelligence/ask/SentinelReasoningCards.tsx —
+ *      <AvaReasoningCards initialClient="apexretail" /> both hardcoded
+ *   2. src/app/(maestro)/intelligence/ask/AvaReasoningCards.tsx —
  *      surfaceContext.activeClient: 'Apex Retail Group' hardcoded in the
  *      request body, and default initialClient prop = 'apexretail'
  *   3. The route already had Codex's PR #2343 fallback fix
@@ -39,7 +39,7 @@ describe('STRESS-P0-002..005 — multi-layer tenant resolution', () => {
       expect(src).not.toMatch(/tenantName:\s*['"]Apex Retail Group['"]/);
     });
 
-    it('does NOT hardcode initialClient="apexretail" on SentinelReasoningCards', () => {
+    it('does NOT hardcode initialClient="apexretail" on AvaReasoningCards', () => {
       expect(src).not.toMatch(/initialClient=['"]apexretail['"]/);
     });
 
@@ -51,13 +51,13 @@ describe('STRESS-P0-002..005 — multi-layer tenant resolution', () => {
       expect(src).toMatch(/tenantName:\s*activeClientDisplayName/);
     });
 
-    it('passes the resolved active tenant to SentinelReasoningCards initialClient', () => {
+    it('passes the resolved active tenant to AvaReasoningCards initialClient', () => {
       expect(src).toMatch(/initialClient=\{activeClientKey\}/);
     });
   });
 
-  describe('src/app/(maestro)/intelligence/ask/SentinelReasoningCards.tsx', () => {
-    const src = read('src/app/(maestro)/intelligence/ask/SentinelReasoningCards.tsx');
+  describe('src/app/(maestro)/intelligence/ask/AvaReasoningCards.tsx', () => {
+    const src = read('src/app/(maestro)/intelligence/ask/AvaReasoningCards.tsx');
 
     it('does NOT hardcode activeClient: \'Apex Retail Group\' in surfaceContext', () => {
       expect(src).not.toMatch(/activeClient:\s*['"]Apex Retail Group['"]/);

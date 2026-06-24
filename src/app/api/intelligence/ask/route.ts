@@ -11,7 +11,7 @@ import { getCurrentPerson } from "@/lib/auth/maestro";
 import { assembleUserContextBlock } from "@/lib/agent/prompts/_shared/user-context";
 import type { AskSource, AskSurfaceContext } from "@/lib/intelligence/ask";
 import {
-  buildSentinelTrace,
+  buildAvaTrace,
   emitAgentContextTraceAsync,
   hashModelInput,
   type RawAskSource,
@@ -163,7 +163,7 @@ async function handleAsk(payload: AskPayload) {
       let citationCount = 0;
       let patternId: string | null = null;
       let sawStreamError = false;
-      // Agent-trace capture (Sentinel intelligence path).
+      // Agent-trace capture (aVa Intelligence path).
       let traceSources: RawAskSource[] = [];
       let traceModelInputHash: string | undefined;
       try {
@@ -201,7 +201,7 @@ async function handleAsk(payload: AskPayload) {
                 }) + "\n",
               ),
             );
-            const event = recordSentinelTelemetry({
+            const event = recordIntelligenceTelemetry({
               startedAt,
               tenantId,
               instanceId:
@@ -264,7 +264,7 @@ async function handleAsk(payload: AskPayload) {
               }) + "\n",
             ),
           );
-          const event = recordSentinelTelemetry({
+          const event = recordIntelligenceTelemetry({
             startedAt,
             tenantId,
             instanceId:
@@ -327,7 +327,7 @@ async function handleAsk(payload: AskPayload) {
             sentinelCitations.push(...stage.citations);
             controller.enqueue(
               encoder.encode(
-                JSON.stringify({ type: "sentinel-stage", stage }) + "\n",
+                JSON.stringify({ type: "ava-stage", stage }) + "\n",
               ),
             );
           }
@@ -338,7 +338,7 @@ async function handleAsk(payload: AskPayload) {
           const exhibits = buildStructuredExhibits({
             prose: assistantText,
             routing,
-            sources: sentinelSourcesFromCitations(sentinelCitations),
+            sources: intelligenceSourcesFromCitations(sentinelCitations),
           });
           if (
             hasRenderableStructuredExhibits(exhibits) ||
@@ -409,14 +409,14 @@ async function handleAsk(payload: AskPayload) {
               ),
             );
           }
-          const event = recordSentinelTelemetry({
+          const event = recordIntelligenceTelemetry({
             startedAt,
             tenantId,
             instanceId:
               memory?.sessionId ??
               memory?.tabId ??
               requestedOrSurfaceClient ??
-              "sentinel-ask",
+              "intelligence-ask",
             patternId,
             citationCount,
           });
@@ -462,21 +462,21 @@ async function handleAsk(payload: AskPayload) {
           controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
         }
         if (!sawStreamError && assistantText.trim()) {
-          const event = recordSentinelTelemetry({
+          const event = recordIntelligenceTelemetry({
             startedAt,
             tenantId,
             instanceId:
               memory?.sessionId ??
               memory?.tabId ??
               requestedOrSurfaceClient ??
-              "sentinel-ask",
+              "intelligence-ask",
             patternId,
             citationCount,
           });
           // Observability · build the context-bundle trace, run post-response
           // claim/citation + tenant-isolation validation against it, stamp the
           // verdicts, then emit (non-blocking). IDs only; model input hashed.
-          const sentinelTrace = buildSentinelTrace({
+          const avaTrace = buildAvaTrace({
             questionId: randomUUID(),
             tenantId,
             tenantKey: tenantInventoryKey,
@@ -497,25 +497,25 @@ async function handleAsk(payload: AskPayload) {
           try {
             validation = validateClaimsAndCitations({
               trace: {
-                tenant_key: sentinelTrace.tenant_key,
+                tenant_key: avaTrace.tenant_key,
                 retrieved_tenant_context:
-                  sentinelTrace.retrieved_tenant_context,
+                  avaTrace.retrieved_tenant_context,
                 retrieved_corpus_patterns:
-                  sentinelTrace.retrieved_corpus_patterns,
-                retrieved_artifacts: sentinelTrace.retrieved_artifacts,
+                  avaTrace.retrieved_corpus_patterns,
+                retrieved_artifacts: avaTrace.retrieved_artifacts,
                 citation_objects_emitted:
-                  sentinelTrace.citation_objects_emitted,
+                  avaTrace.citation_objects_emitted,
               },
               answerText: assistantText,
             });
-            sentinelTrace.claim_validation_status =
+            avaTrace.claim_validation_status =
               validation.claimValidationStatus;
-            sentinelTrace.tenant_isolation_status =
+            avaTrace.tenant_isolation_status =
               validation.tenantIsolationStatus;
           } catch {
             // Validation must never break the response path.
           }
-          emitAgentContextTraceAsync(sentinelTrace);
+          emitAgentContextTraceAsync(avaTrace);
           if (
             validation &&
             (validation.unsupportedClaims.length > 0 ||
@@ -668,7 +668,7 @@ async function handleAsk(payload: AskPayload) {
   });
 }
 
-function sentinelSourcesFromCitations(
+function intelligenceSourcesFromCitations(
   citations: SentinelCitation[],
 ): AskSource[] {
   const seen = new Set<string>();
@@ -685,7 +685,7 @@ function sentinelSourcesFromCitations(
             ? "GRAPH"
             : "PATTERN",
       id: citation.id || null,
-      name: citation.label || citation.id || "Sentinel citation",
+      name: citation.label || citation.id || "aVa citation",
       detail: citation.detail ?? "",
       url: citation.url,
       confidence: undefined,
@@ -694,7 +694,7 @@ function sentinelSourcesFromCitations(
   return sources;
 }
 
-function recordSentinelTelemetry(input: {
+function recordIntelligenceTelemetry(input: {
   startedAt: number;
   tenantId: string | null;
   instanceId: string | null;
@@ -702,9 +702,9 @@ function recordSentinelTelemetry(input: {
   citationCount: number;
 }) {
   return recordSynthesisEvent({
-    surface: "sentinel",
+    surface: "intelligence",
     tenantId: input.tenantId ?? undefined,
-    instanceId: input.instanceId ?? "sentinel-ask",
+    instanceId: input.instanceId ?? "intelligence-ask",
     patternId: input.patternId,
     cacheHit: false,
     latencyMs: Math.max(0, Date.now() - input.startedAt),
