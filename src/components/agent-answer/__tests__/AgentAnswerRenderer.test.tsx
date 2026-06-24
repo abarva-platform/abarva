@@ -186,7 +186,7 @@ describe("AgentAnswerRenderer", () => {
     expect(screen.getByText("Sources")).toBeInTheDocument();
     expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
     expect(
-      screen.queryByText("Ava did not return a renderable answer."),
+      screen.queryByText("aVa did not return a renderable answer."),
     ).not.toBeInTheDocument();
   });
 });

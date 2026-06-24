@@ -1,11 +1,7 @@
 "use client";
 
 import { useMemo, useState, type CSSProperties } from "react";
-import type {
-  AttachmentRef,
-  ChatMessage,
-  SuggestedAction,
-} from "@/components/agent/AgentDock";
+import type { AttachmentRef, ChatMessage } from "@/components/agent/AgentDock";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { AvaCanvas, AvaChatShell } from "@/components/ava-chat/AvaChatShell";
 import { EvidenceBasis } from "@/components/intelligence/EvidenceBasis";
@@ -46,24 +42,6 @@ const AVA_INTELLIGENCE_AGENT = {
   name: "aVa",
   role: "Intelligence advisor",
 };
-
-const DEFAULT_SUGGESTIONS: SuggestedAction[] = [
-  {
-    id: "advisor-read",
-    label: "Give me the executive read",
-    body: "Give me the executive read of the loaded enterprise context, with evidence and gaps.",
-  },
-  {
-    id: "relevant-experts",
-    label: "Which experts apply?",
-    body: "Which expert lenses and industry patterns are most relevant to this client right now?",
-  },
-  {
-    id: "patterns",
-    label: "Show matching patterns",
-    body: "Show the most relevant corpus patterns and where tenant evidence supports or gaps them.",
-  },
-];
 
 function eventFromLine(line: string): StreamEvent | null {
   try {
@@ -118,6 +96,14 @@ function EmptyTabMessage({ text }: { text: string }) {
       <p style={MUTED_BODY_TEXT_STYLE}>{text}</p>
     </div>
   );
+}
+
+function answerForThread(answer: AvaAnswerPacket): AvaAnswerPacket {
+  return {
+    ...answer,
+    surface: "intelligence",
+    directAnswer: answer.directAnswer || "aVa returned structured evidence for this answer.",
+  };
 }
 
 interface SentinelReasoningCardsProps {
@@ -230,7 +216,7 @@ export function SentinelReasoningCards({
       {
         id: agentTurnId,
         role: "agent",
-        body: "Reading the evidence and updating the canvas...",
+        body: "Reading tenant evidence, corpus patterns, and expert context...",
       },
     ]);
 
@@ -251,7 +237,9 @@ export function SentinelReasoningCards({
             stage,
           ].sort((a, b) => a.sequence - b.sequence);
           setAgentTurn(agentTurnId, {
-            body: "I found expert reasoning blocks. Review the canvas for details.",
+            body:
+              accumulatedText.trim() ||
+              "I found expert reasoning blocks and am forming the answer...",
           });
           return next;
         });
@@ -261,7 +249,7 @@ export function SentinelReasoningCards({
         sawRenderableAnswer = true;
         accumulatedText += event.text;
         setCurrentNarrative(accumulatedText);
-        setAgentTurn(agentTurnId, { body: "Answer is ready on the canvas." });
+        setAgentTurn(agentTurnId, { body: accumulatedText });
         return;
       }
       if (event.type === "sources") {
@@ -277,7 +265,10 @@ export function SentinelReasoningCards({
         sawRenderableAnswer = true;
         setCurrentAnswer(event.answer);
         setCurrentNarrative(event.answer.directAnswer);
-        setAgentTurn(agentTurnId, { body: "Answer is ready on the canvas." });
+        setAgentTurn(agentTurnId, {
+          body: event.answer.directAnswer,
+          agentAnswer: answerForThread(event.answer),
+        });
         return;
       }
       if (event.type === "done" && event.telemetryEventId) {
@@ -619,7 +610,7 @@ export function SentinelReasoningCards({
         activeClient: initialClientDisplayName,
         activeTab: "intelligence-advisor-chat",
       }}
-      suggestedActions={DEFAULT_SUGGESTIONS}
+      suggestedActions={[]}
       thread={thread}
       onMessage={ask}
       canvas={workspace}

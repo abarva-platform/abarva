@@ -277,7 +277,7 @@ export function AvaAsk({
                   />
                 ) : (
                   <>
-                    <div className="aa-label">Ava · Intelligence</div>
+                    <div className="aa-label">aVa · Intelligence</div>
                     {turn.fetching && !turn.answer ? (
                       <div className="aa-think">Thinking…</div>
                     ) : turn.answer ? (
