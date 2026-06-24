@@ -76,7 +76,13 @@ describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
       "left",
     );
     expect(screen.getByText("Ava")).toBeInTheDocument();
-    expect(screen.getByText("Current answer, evidence, and exhibits.")).toBeInTheDocument();
+    expect(screen.getAllByTestId("ava-ask-v-mark").length).toBeGreaterThan(0);
+    expect(
+      screen.getByText("Explore the answer, evidence, experts, and corpus."),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("intelligence-workspace-tab-answer")).toBeInTheDocument();
+    expect(screen.getByTestId("intelligence-workspace-tab-evidence")).toBeInTheDocument();
+    expect(screen.getByTestId("intelligence-workspace-tab-experts")).toBeInTheDocument();
   });
 
   it("submits multiline prompts and preserves the question and answer in history", async () => {
@@ -116,7 +122,7 @@ describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
     );
   });
 
-  it("keeps multiple prior questions and answers visible in the chat thread", async () => {
+  it("keeps prior questions visible while rendering answer detail on the canvas", async () => {
     const fetchMock = jest
       .fn()
       .mockResolvedValueOnce({
@@ -156,9 +162,12 @@ describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
 
     const thread = screen.getByTestId("agent-dock-thread");
     expect(thread).toHaveTextContent("Question one");
-    expect(thread).toHaveTextContent("First advisor answer.");
     expect(thread).toHaveTextContent("Question two");
-    expect(thread).toHaveTextContent("Second advisor answer.");
+    expect(thread).toHaveTextContent("Answer is ready on the canvas.");
+    expect(thread).not.toHaveTextContent("First advisor answer.");
+    expect(screen.getByTestId("intelligence-workspace-panel-answer")).toHaveTextContent(
+      "Second advisor answer.",
+    );
   });
 
   it("supports right, top, expanded, and hidden dock modes from the shared controls", () => {

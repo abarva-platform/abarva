@@ -174,6 +174,8 @@ export const DOCK_MODES: readonly DockMode[] = [
 export interface AgentProfile {
   /** 1–2 character glyph or initials shown in the avatar. */
   initials: string;
+  /** Optional branded mark for Ava surfaces. */
+  mark?: "ava";
   /** Full name shown in the header. */
   name: string;
   /** Eyebrow under the name. Action verbs the user can ask for. */
@@ -252,6 +254,12 @@ export interface AgentDockProps {
   agent: AgentProfile;
   /** Used as the localStorage namespace + telemetry key. */
   surface: string;
+  /**
+   * `standard` keeps the full operational dock used by Source/Moves/Tower.
+   * `focused` keeps the chat rail quiet for GPT-like advisor surfaces and
+   * leaves citations, artifacts, feedback, and guardrails to the workspace.
+   */
+  variant?: "standard" | "focused";
   defaultMode?: DockMode;
   /** Free-form context passed back to the API on submit. */
   surfaceContext?: Record<string, unknown>;
@@ -454,6 +462,7 @@ export function AgentDock(props: AgentDockProps) {
   const {
     agent,
     surface,
+    variant = "standard",
     defaultMode = "side-rail",
     surfaceContext,
     initialQuote,
@@ -466,6 +475,7 @@ export function AgentDock(props: AgentDockProps) {
     collapsedSummary,
     isAgentBusy: isAgentBusyOverride,
   } = props;
+  const focused = variant === "focused";
 
   // Founder feedback 2026-05-10: 'while any agent is busy retrieving info,
   // it will be nice to show a spinning icon / throbber or similar to show
@@ -736,6 +746,10 @@ export function AgentDock(props: AgentDockProps) {
   );
   const collapsedSummaryLabel = collapsedSummary?.label;
   const collapsedSummaryDetail = collapsedSummary?.detail;
+  const visibleSuggestedActions = useMemo(
+    () => (focused && thread.length > 0 ? [] : suggestedActions),
+    [focused, suggestedActions, thread.length],
+  );
 
   // Render the chat panel inner — used by every mode (side-rail, pin-*,
   // expand). The collapsed mode renders the floating chip instead.
@@ -751,6 +765,7 @@ export function AgentDock(props: AgentDockProps) {
         onDrop={onDrop}
         style={{
           ...PANEL_STYLE,
+          ...(focused ? FOCUSED_PANEL_STYLE : null),
           outline: draggingOver
             ? `2px dashed ${CANVAS.SPLITTER_ACTIVE}`
             : "none",
@@ -771,7 +786,11 @@ export function AgentDock(props: AgentDockProps) {
         {/* Header */}
         <div style={HEADER_STYLE}>
           <div style={AGENT_ROW_STYLE}>
-            <span style={AVATAR_STYLE}>{agent.initials}</span>
+            {agent.mark === "ava" ? (
+              <AvaAskMark style={AVATAR_AVA_MARK_STYLE} />
+            ) : (
+              <span style={AVATAR_STYLE}>{agent.initials}</span>
+            )}
             <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
               <span style={AGENT_NAME_STYLE}>{agent.name}</span>
               <span style={AGENT_ROLE_STYLE}>{agent.role}</span>
@@ -791,7 +810,7 @@ export function AgentDock(props: AgentDockProps) {
         {/* Thread */}
         <div
           ref={threadScrollRef}
-          style={THREAD_STYLE}
+          style={focused ? FOCUSED_THREAD_STYLE : THREAD_STYLE}
           data-testid="agent-dock-thread"
         >
           {thread.length === 0 ? (
@@ -805,20 +824,34 @@ export function AgentDock(props: AgentDockProps) {
                 key={turn.id}
                 data-testid={`agent-dock-turn-${turn.role}`}
                 style={
-                  turn.role === "user" ? USER_TURN_STYLE : AGENT_TURN_STYLE
+                  turn.role === "user"
+                    ? focused
+                      ? FOCUSED_USER_TURN_STYLE
+                      : USER_TURN_STYLE
+                    : AGENT_TURN_STYLE
                 }
               >
                 {turn.role === "agent" ? (
                   <div style={AGENT_BYLINE_STYLE}>
                     <span>{agent.name}</span>
-                    <AILabel
-                      status="draft"
-                      detail="Review before acting"
-                      compact
-                    />
+                    {!focused ? (
+                      <AILabel
+                        status="draft"
+                        detail="Review before acting"
+                        compact
+                      />
+                    ) : null}
                   </div>
                 ) : null}
-                <div style={BUBBLE_STYLE}>
+                <div
+                  style={
+                    focused
+                      ? turn.role === "user"
+                        ? FOCUSED_USER_BUBBLE_STYLE
+                        : FOCUSED_AGENT_BUBBLE_STYLE
+                      : BUBBLE_STYLE
+                  }
+                >
                   {turn.role === "agent" && turn.parts?.length ? (
                     <AgentResponseParts parts={turn.parts} />
                   ) : turn.role === "agent" ? (
@@ -826,29 +859,29 @@ export function AgentDock(props: AgentDockProps) {
                   ) : (
                     turn.body
                   )}
-                  {turn.role === "agent" &&
+                  {!focused &&
+                  turn.role === "agent" &&
                   (!turn.citations || turn.citations.length === 0) &&
                   shouldShowPlainTextCitationGap(turn.body, surfaceContext) ? (
                     <CitationGapNotice compact />
                   ) : null}
                 </div>
-                {turn.role === "agent" &&
+                {!focused &&
+                turn.role === "agent" &&
                 turn.citations &&
                 turn.citations.length > 0 ? (
                   <EvidenceBasis citations={turn.citations} />
                 ) : null}
-                {turn.role === "agent" && turn.agentAnswer ? (
+                {!focused && turn.role === "agent" && turn.agentAnswer ? (
                   <div style={{ marginTop: 12 }}>
                     <AgentAnswerRenderer answer={turn.agentAnswer} />
                   </div>
                 ) : null}
-                {turn.role === "agent" && turn.feedbackEventId ? (
+                {!focused && turn.role === "agent" && turn.feedbackEventId ? (
                   <div style={FEEDBACK_ROW_STYLE}>
                     <SynthesisFeedbackWidget
                       synthesisId={turn.feedbackEventId}
-                      surface={
-                        surface === "intelligence" ? "sentinel" : "program"
-                      }
+                      surface={surface === "intelligence" ? "sentinel" : "program"}
                     />
                   </div>
                 ) : null}
@@ -888,10 +921,10 @@ export function AgentDock(props: AgentDockProps) {
         </div>
 
         {/* Suggested actions */}
-        {suggestedActions.length > 0 ? (
+        {visibleSuggestedActions.length > 0 ? (
           <div style={SUGGESTIONS_STYLE} aria-label="Suggested actions">
             <div style={SUGGESTIONS_LABEL_STYLE}>Suggested questions</div>
-            {suggestedActions.map((action) => (
+            {visibleSuggestedActions.map((action) => (
               <button
                 key={action.id}
                 type="button"
@@ -987,12 +1020,16 @@ export function AgentDock(props: AgentDockProps) {
             ↑
           </button>
         </form>
-        <div style={ACTION_APPROVAL_NOTICE_WRAP_STYLE}>
-          <AgentActionApprovalNotice compact />
-        </div>
-        <div style={RESPONSIBILITY_FOOTER_WRAP_STYLE}>
-          <AIResponsibilityFooter compact />
-        </div>
+        {!focused ? (
+          <>
+            <div style={ACTION_APPROVAL_NOTICE_WRAP_STYLE}>
+              <AgentActionApprovalNotice compact />
+            </div>
+            <div style={RESPONSIBILITY_FOOTER_WRAP_STYLE}>
+              <AIResponsibilityFooter compact />
+            </div>
+          </>
+        ) : null}
       </div>
     );
   }, [
@@ -1000,6 +1037,7 @@ export function AgentDock(props: AgentDockProps) {
     dockId,
     draft,
     draggingOver,
+    focused,
     initialQuote,
     isAgentBusy, // throbber visibility flips when this changes
     mode,
@@ -1017,10 +1055,10 @@ export function AgentDock(props: AgentDockProps) {
     startUploads,
     submit,
     submitting,
-    suggestedActions,
     thread,
     uploads,
     uploadProgressNowMs,
+    visibleSuggestedActions,
   ]);
 
   // ── Render by mode ──────────────────────────────────────────────────────
@@ -1041,7 +1079,11 @@ export function AgentDock(props: AgentDockProps) {
           }
           style={COLLAPSED_CHIP_STYLE}
         >
-          <span style={COLLAPSED_CHIP_INITIALS_STYLE}>{agent.initials}</span>
+          {agent.mark === "ava" ? (
+            <AvaAskMark style={COLLAPSED_CHIP_AVA_MARK_STYLE} />
+          ) : (
+            <span style={COLLAPSED_CHIP_INITIALS_STYLE}>{agent.initials}</span>
+          )}
           <span style={COLLAPSED_CHIP_TEXT_STYLE}>
             <span style={COLLAPSED_CHIP_LABEL_STYLE}>
               {collapsedSummaryLabel ?? `Ask ${agent.name}`}
@@ -1578,6 +1620,11 @@ const PANEL_STYLE: CSSProperties = {
   position: "relative",
 };
 
+const FOCUSED_PANEL_STYLE: CSSProperties = {
+  background: "#FFFFFF",
+  borderRight: `1px solid ${CANVAS.HAIRLINE}`,
+};
+
 const HEADER_STYLE: CSSProperties = {
   display: "flex",
   alignItems: "center",
@@ -1608,6 +1655,12 @@ const AVATAR_STYLE: CSSProperties = {
   fontSize: 14,
   fontWeight: 500,
   flexShrink: 0,
+};
+
+const AVATAR_AVA_MARK_STYLE: CSSProperties = {
+  minWidth: 52,
+  fontSize: 27,
+  alignSelf: "center",
 };
 
 const AGENT_NAME_STYLE: CSSProperties = {
@@ -1684,6 +1737,13 @@ const THREAD_STYLE: CSSProperties = {
   background: CANVAS.CHAT_BG,
 };
 
+const FOCUSED_THREAD_STYLE: CSSProperties = {
+  ...THREAD_STYLE,
+  padding: "18px 18px 16px",
+  gap: 16,
+  background: "#FFFFFF",
+};
+
 const EMPTY_STATE_STYLE: CSSProperties = {
   paddingTop: 12,
   display: "grid",
@@ -1718,6 +1778,11 @@ const USER_TURN_STYLE: CSSProperties = {
   justifyItems: "end",
 };
 
+const FOCUSED_USER_TURN_STYLE: CSSProperties = {
+  ...USER_TURN_STYLE,
+  justifyItems: "end",
+};
+
 const AGENT_BYLINE_STYLE: CSSProperties = {
   display: "flex",
   alignItems: "center",
@@ -1739,6 +1804,22 @@ const BUBBLE_STYLE: CSSProperties = {
   whiteSpace: "pre-wrap",
   wordBreak: "break-word",
   maxWidth: "100%",
+};
+
+const FOCUSED_AGENT_BUBBLE_STYLE: CSSProperties = {
+  ...BUBBLE_STYLE,
+  maxWidth: "92%",
+  padding: "10px 0",
+  color: CANVAS.INK,
+};
+
+const FOCUSED_USER_BUBBLE_STYLE: CSSProperties = {
+  ...BUBBLE_STYLE,
+  maxWidth: "88%",
+  padding: "10px 12px",
+  borderRadius: 14,
+  background: "#F4F7F4",
+  border: `1px solid ${CANVAS.HAIRLINE}`,
 };
 
 const FEEDBACK_ROW_STYLE: CSSProperties = {
@@ -2089,6 +2170,11 @@ const COLLAPSED_CHIP_INITIALS_STYLE: CSSProperties = {
   fontSize: 18,
   fontWeight: 500,
   letterSpacing: "0.02em",
+};
+
+const COLLAPSED_CHIP_AVA_MARK_STYLE: CSSProperties = {
+  minWidth: 46,
+  fontSize: 24,
 };
 
 const COLLAPSED_CHIP_LABEL_STYLE: CSSProperties = {
