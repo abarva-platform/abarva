@@ -21,9 +21,9 @@ import { getActiveClientRow } from '@/lib/active-client';
 import { DEFAULT_CLIENT_KEY, getClientOption } from '@/lib/client-config';
 
 export const metadata = {
-  title: 'Ava Intelligence · Ask | AbarVa',
+  title: 'aVa Intelligence · Ask | AbarVa',
   description:
-    'Ava Intelligence — advisor-style analysis grounded in tenant evidence, corpus patterns, and citations.',
+    'aVa Intelligence — advisor-style analysis grounded in tenant evidence, corpus patterns, and citations.',
 };
 
 export default async function IntelligenceAskPage({
@@ -50,7 +50,7 @@ export default async function IntelligenceAskPage({
       topBarProps={{
         tenantName: activeClientDisplayName,
         showLocked: true,
-        context: 'Intelligence · Ask Ava',
+        context: 'Intelligence · Ask aVa',
       }}
     >
       <IntelligenceAskTabCookie />
@@ -99,7 +99,7 @@ export default async function IntelligenceAskPage({
               ← Intelligence
             </Link>
             <span style={{ margin: '0 8px' }}>·</span>
-            <span style={{ color: SHELL.INK_MUTED }}>Ask Ava</span>
+            <span style={{ color: SHELL.INK_MUTED }}>Ask aVa</span>
           </nav>
 
           {/* Page header */}
@@ -114,7 +114,7 @@ export default async function IntelligenceAskPage({
                 marginBottom: 4,
               }}
             >
-              Ava Intelligence · advisor
+              aVa Intelligence · advisor
             </div>
             <h1
               style={{
@@ -127,7 +127,7 @@ export default async function IntelligenceAskPage({
                 letterSpacing: '-0.01em',
               }}
             >
-              Ask Ava
+              Ask aVa
             </h1>
           </div>
 

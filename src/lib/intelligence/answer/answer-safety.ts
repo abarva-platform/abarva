@@ -5,8 +5,10 @@ import type {
   AvaAnswerPacket,
 } from "@/lib/ava-answer/contract";
 
-const RAW_RECORD_ID_RE = /\b[A-Z]{2,8}-[A-Z0-9]{2,12}-\d{2,5}\b/g;
-const RAW_RECORD_ID_TEST_RE = /\b[A-Z]{2,8}-[A-Z0-9]{2,12}-\d{2,5}\b/;
+const RAW_RECORD_ID_RE =
+  /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\b/g;
+const RAW_RECORD_ID_TEST_RE =
+  /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\b/;
 const UUID_RE =
   /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 const UUID_TEST_RE =
@@ -62,7 +64,7 @@ export function sanitizePublicText(
   const cleaned = dedupeConsultantLabels(value)
     .replace(BRACKET_RECORD_RE, fallback)
     .replace(UUID_RE, fallback)
-    .replace(RAW_RECORD_ID_RE, "the cited record")
+    .replace(RAW_RECORD_ID_RE, fallback)
     .replace(INTERNAL_FIELD_RE, "source field")
     .replace(/[ \t]{2,}/g, " ")
     .trim();

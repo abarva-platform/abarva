@@ -96,40 +96,6 @@ function evidenceRequiredTable(citations: AnswerCitation[]): AnswerTable {
   };
 }
 
-function compactEvidenceSignal(excerpt: string | undefined): string {
-  const text = (excerpt ?? "")
-    .replace(/\s+/g, " ")
-    .replace(/^[-•]\s*/g, "")
-    .trim();
-  if (!text) return "Cited source retrieved for this answer.";
-  return text.length > 180 ? `${text.slice(0, 177).trimEnd()}...` : text;
-}
-
-function decisionEvidenceTable(
-  citations: AnswerCitation[],
-): AnswerTable | null {
-  if (citations.length === 0) return null;
-  return {
-    id: "answer-decision-evidence",
-    title: "Decision Evidence",
-    columns: [
-      { key: "source", label: "Source" },
-      { key: "signal", label: "Signal" },
-      { key: "confidence", label: "Confidence" },
-      { key: "nextMove", label: "Next Move" },
-    ],
-    rows: citations.slice(0, 5).map((citation) => ({
-      source: citation.label,
-      signal: compactEvidenceSignal(citation.excerpt),
-      confidence: citation.confidence ?? "not scored",
-      nextMove:
-        "Validate this cited evidence before approving the decision or moving it into Source, Tower, or Moves.",
-    })),
-    note: "Rendered because the user asked for a table or visual and Ava did not emit a valid row/column exhibit. Rows are cited evidence signals, not inferred chart data.",
-    citationIds: citations.map((citation) => citation.id),
-  };
-}
-
 function splitMarkdownTableRow(line: string): string[] {
   const trimmed = line.trim();
   if (!trimmed.includes("|")) return [];
@@ -403,6 +369,23 @@ function stripResidualTableFragments(prose: string): string {
     .join("\n\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+function artifactGapText(
+  outputShape: RoutingDecision["outputShape"],
+  citations: AnswerCitation[],
+): string {
+  const citedContext =
+    citations.length > 0
+      ? " The retrieved citations are still attached for source inspection."
+      : "";
+  if (outputShape === "chart") {
+    return `Evidence gap: I do not see connected numeric row/column source data for a defensible chart.${citedContext} I am not rendering a visual from prose-only figures.`;
+  }
+  if (outputShape === "graph") {
+    return `Evidence gap: I do not see source-to-target relationship edge pairs for a defensible graph.${citedContext} I am not rendering a graph from integration counts alone.`;
+  }
+  return "";
 }
 
 function exactCurrencyOrNumber(value: string | number | null): number | null {
@@ -748,21 +731,17 @@ export function buildStructuredExhibits(
     if (graph) graphs.push(graph);
   }
 
-  if (
-    tables.length === 0 &&
-    (input.routing.outputShape === "table" ||
-      input.routing.outputShape === "chart" ||
-      input.routing.outputShape === "graph")
-  ) {
-    const table =
-      decisionEvidenceTable(citations) ?? evidenceRequiredTable(citations);
-    if (table) tables.push(table);
+  if (tables.length === 0 && input.routing.outputShape === "table") {
+    tables.push(evidenceRequiredTable(citations));
   }
 
+  const artifactGap = artifactGapText(input.routing.outputShape, citations);
+  const cleanedProse = inline.prose
+    ? enforceDecisionGradeAnswer(stripResidualTableFragments(inline.prose))
+    : "";
+
   return {
-    prose: inline.prose
-      ? enforceDecisionGradeAnswer(stripResidualTableFragments(inline.prose))
-      : "",
+    prose: [cleanedProse, artifactGap].filter(Boolean).join("\n\n"),
     citations,
     tables,
     charts,
