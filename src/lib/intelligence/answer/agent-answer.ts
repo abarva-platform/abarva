@@ -150,6 +150,27 @@ export interface RecommendedAction {
   citationIds?: string[];
 }
 
+export type AnswerBasisKind =
+  | "tenant_fact"
+  | "industry_pattern"
+  | "benchmark"
+  | "expert_inference"
+  | "gap"
+  | "source_coverage"
+  | "conflict"
+  | "simple_derived_metric";
+
+/**
+ * Explicit honesty layer. Renderers use this to show HOW Ava knows something
+ * without inferring it from prose or expert chips.
+ */
+export interface AnswerBasis {
+  kind: AnswerBasisKind;
+  label: string;
+  citationIds?: string[];
+  note?: string;
+}
+
 /** A Consilium expert that contributed to the answer (shown by name in trace). */
 export interface ExpertRef {
   /** ExpertPack identity id, e.g. "xp.healthcare.revenue-cycle". */
@@ -190,6 +211,8 @@ export interface AgentAnswer {
   confidence: AnswerConfidence;
   /** Hedges/limits per confident-synthesis doctrine (NOT a refusal). */
   limits: string[];
+  /** Tenant facts, corpus patterns, expert inference, and gaps separated. */
+  basis?: AnswerBasis[];
 
   /**
    * The ONLY hard block. True when the cross-tenant fence replaced the answer
