@@ -170,6 +170,61 @@ describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
     );
   });
 
+  it("keeps AgentAnswer prose out of the chat rail and on the canvas", async () => {
+    const fullProse =
+      "Board-grade answer belongs on the Intelligence canvas, not inside the chat rail.";
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: makeNdjsonBody([
+        {
+          type: "agent-answer",
+          answer: {
+            engineVersion: "agent-answer/v1",
+            surface: "intelligence",
+            expertId: "xp.airline.operations",
+            contributingExperts: [
+              {
+                id: "xp.airline.operations",
+                name: "Airline Ground & Airport Operations Expert",
+              },
+            ],
+            prose: fullProse,
+            tables: [],
+            charts: [],
+            graphs: [],
+            citations: [],
+            gaps: [],
+            recommendedActions: [],
+            groundingMode: "industry-pattern",
+            confidence: "low",
+            limits: [],
+            crossTenantBlocked: false,
+          },
+        },
+        { type: "done", telemetryEventId: "tlm-agent-answer" },
+      ]),
+    });
+    (global as { fetch: unknown }).fetch = fetchMock;
+    renderSurface();
+
+    fireEvent.change(screen.getByTestId("agent-dock-input"), {
+      target: { value: "Question with structured answer" },
+    });
+    await act(async () => {
+      fireEvent.submit(screen.getByTestId("agent-dock-form"));
+    });
+
+    await screen.findByText(fullProse);
+    const thread = screen.getByTestId("agent-dock-thread");
+    expect(thread).toHaveTextContent("Question with structured answer");
+    expect(thread).toHaveTextContent("Answer is ready on the canvas.");
+    expect(thread).not.toHaveTextContent(fullProse);
+    expect(screen.getByTestId("intelligence-workspace-panel-answer")).toHaveTextContent(
+      fullProse,
+    );
+  });
+
   it("supports right, top, expanded, and hidden dock modes from the shared controls", () => {
     renderSurface();
 
