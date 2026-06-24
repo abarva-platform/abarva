@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { HomeKnowAnswerRenderer } from "@/components/home/know/HomeKnowAnswerRenderer";
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
 
@@ -8,7 +9,9 @@ const CSS = `
 .homeKnowAsk{--hka-line:#E7E3DA;--hka-ink:#1A1A18;--hka-muted:#6B6B63;--hka-faint:#9A998E;--hka-green:#1F6B3A;--hka-card:#fff;font-family:var(--font-geist-sans),Inter,system-ui,sans-serif}
 .homeKnowAsk .hka-bar{display:flex;align-items:flex-start;gap:10px;background:var(--hka-card);border:1px solid var(--hka-line);border-radius:14px;padding:10px 10px 10px 18px;max-width:760px;margin:0 auto;box-shadow:0 1px 0 rgba(15,23,42,.02)}
 .homeKnowAsk .hka-bar:focus-within{border-color:#22AEEA;box-shadow:0 0 0 3px rgba(34,174,234,.12)}
-.homeKnowAsk .hka-spark{color:var(--hka-green);flex:none;line-height:28px}
+.homeKnowAsk .avaAskMark{flex:none;font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-weight:800;font-size:28px;line-height:1;letter-spacing:-.08em;color:#22AEEA;min-width:50px;text-align:center;margin-top:2px}
+.homeKnowAsk .avaAskMark-v{color:#12AFCB}
+.homeKnowAsk .avaAskMark-a{color:#23B8E6}
 .homeKnowAsk .hka-bar textarea{flex:1;min-height:28px;max-height:150px;border:none;outline:none;font:inherit;font-size:14px;line-height:1.45;background:transparent;color:var(--hka-ink);resize:none;overflow:auto;padding:4px 0 0}
 .homeKnowAsk .hka-bar button{background:var(--hka-ink);color:#fff;border:none;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;min-width:64px}
 .homeKnowAsk .hka-bar button:disabled{opacity:.52;cursor:default}
@@ -145,7 +148,7 @@ export function HomeKnowAsk({
     <div className="homeKnowAsk">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div className="hka-bar">
-        <span className="hka-spark">✦</span>
+        <AvaAskMark />
         <textarea
           ref={textareaRef}
           aria-label="Ask Home KNOW"

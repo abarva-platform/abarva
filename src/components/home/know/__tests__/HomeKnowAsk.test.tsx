@@ -74,6 +74,7 @@ describe("HomeKnowAsk", () => {
     render(<HomeKnowAsk tenantKey="apex-retail" />);
 
     const input = screen.getByLabelText("Ask Home KNOW");
+    expect(screen.getByTestId("ava-ask-mark")).toHaveTextContent("aVa");
     fireEvent.change(input, { target: { value: "Show apps owned by Finance" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 

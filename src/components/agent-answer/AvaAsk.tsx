@@ -14,6 +14,7 @@
 // once, in the engine, and every surface using AvaAsk benefits at once.
 
 import { useCallback, useRef, useState } from "react";
+import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
@@ -23,7 +24,9 @@ const CSS = `
 .avaask{--aa-line:#E7E3DA;--aa-ink:#1A1A18;--aa-muted:#6B6B63;--aa-faint:#9A998E;--aa-green:#1F6B3A;--aa-card:#fff;font-family:var(--font-geist-sans),Inter,system-ui,sans-serif}
 .avaask .aa-bar{display:flex;align-items:center;gap:10px;background:var(--aa-card);border:1px solid var(--aa-line);border-radius:14px;padding:10px 10px 10px 18px;max-width:760px;margin:0 auto;box-shadow:0 1px 0 rgba(15,23,42,.02)}
 .avaask .aa-bar:focus-within{border-color:#22AEEA;box-shadow:0 0 0 3px rgba(34,174,234,.12)}
-.avaask .aa-spark{color:var(--aa-green);flex:none}
+.avaask .avaAskMark{flex:none;font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-weight:800;font-size:28px;line-height:1;letter-spacing:-.08em;color:#22AEEA;min-width:50px;text-align:center}
+.avaask .avaAskMark-v{color:#12AFCB}
+.avaask .avaAskMark-a{color:#23B8E6}
 .avaask .aa-bar textarea{flex:1;min-height:22px;max-height:140px;border:none;outline:none;font:inherit;font-size:14px;line-height:1.45;background:transparent;color:var(--aa-ink);resize:none;overflow:auto;padding:0}
 .avaask .aa-bar button{background:var(--aa-ink);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer}
 .avaask .aa-bar button:disabled{opacity:.5;cursor:default}
@@ -201,7 +204,7 @@ export function AvaAsk({
     <div className="avaask">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div className="aa-bar">
-        <span className="aa-spark">✦</span>
+        <AvaAskMark />
         <textarea
           ref={textareaRef}
           rows={1}
