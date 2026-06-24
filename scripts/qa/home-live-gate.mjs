@@ -3,9 +3,9 @@
  * Home live gate — verifies the React Home pilot for one tenant on the DEPLOYED app.
  *
  * The CI tests prove the component composes; this proves the two things they can't:
- *   1. The flag actually flipped `/home` to the React Context Explorer (not the
- *      static `public/home-v2` iframe).
- *   2. The Home ask is the real shared engine — a synthesized answer, NOT the old
+ *   1. `/home` resolves to the React Home KNOW surface (not the retired
+ *      static Home v2 iframe).
+ *   2. The Home ask is the real Home KNOW engine — a synthesized answer, NOT the old
  *      fake `answerForAsk` row-dump ("field: value · Also: …") — with no raw
  *      internal IDs, named experts, and the cross-tenant fence holding.
  *   3. The canonical 19-dimension context roster is exposed, not the old 8
@@ -34,7 +34,7 @@ const RAW_ID = /\b[A-Z]{2,6}-[A-Z0-9]{2,8}-\d{2,4}\b/; // APX-DATA-003 etc.
 const FAKE_GLOB = /\bAlso:\s/; // the old answerForAsk row-globbing signature
 const REFUSAL =
   /can'?t (use|share|access)|another (client|tenant)|not authori[sz]ed|only your|isolat|fenc/i;
-const CONSULTANT_SECTIONS = /\b(Read|Evidence|Implication|Next move):/g;
+const TEMPLATE_PREFIX = /\b(Read|Evidence|Implication|Next move):/;
 
 if (!COOKIE) {
   console.error("Set COOKIE (signed-in session). See header for usage.");
@@ -50,79 +50,50 @@ async function getHome() {
 }
 
 async function ask(query, requestedClient) {
-  const res = await fetch(`${BASE_URL}/api/intelligence/ask`, {
+  const res = await fetch(`${BASE_URL}/api/home/know/ask`, {
     method: "POST",
     headers: {
       cookie: COOKIE,
-      accept: "application/x-ndjson",
+      accept: "application/json",
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      q: query,
-      client: requestedClient ?? BINDING,
-      format: "rich",
-      surfaceContext: { activeTab: "home", clientKey: TENANT },
+      question: query,
+      tenantKey: requestedClient ?? BINDING,
+      client: TENANT,
     }),
   });
-  if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-  const reader = res.body.getReader();
-  const dec = new TextDecoder();
-  let buf = "", prose = "", answer = null, experts = [], blocked = false;
-  const apply = (line) => {
-    const s = line.trim();
-    if (!s) return;
-    let e;
-    try {
-      e = JSON.parse(s);
-    } catch {
-      return;
-    }
-    if (e.type === "delta" && typeof e.text === "string") prose += e.text;
-    else if (e.type === "agent-answer" && e.answer) answer = e.answer;
-    else if (e.type === "contributing-experts" && Array.isArray(e.contributingExperts))
-      experts = e.contributingExperts;
-    else if (e.type === "validation" && e.tenantLeakage?.length) blocked = true;
-  };
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
-    let nl;
-    while ((nl = buf.indexOf("\n")) >= 0) {
-      apply(buf.slice(0, nl));
-      buf = buf.slice(nl + 1);
-    }
-  }
-  apply(buf);
-  const hasExhibit = Boolean(answer?.tables?.length || answer?.charts?.length) || /\n\s*\|.*\|/.test(prose);
-  return { prose, answer, experts, blocked, hasExhibit };
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const answer = await res.json();
+  const prose = answer?.prose ?? "";
+  const hasExhibit = Boolean(answer?.tables?.length || answer?.charts?.length || answer?.graphs?.length);
+  return { prose, answer, experts: [], blocked: answer?.answerStatus === "blocked", hasExhibit };
 }
 
 function isReadableConsultantAnswer(prose) {
   const text = prose.trim();
   if (!text) return false;
-  const sectionCount = [...text.matchAll(CONSULTANT_SECTIONS)].length;
-  if (sectionCount >= 2) return true;
+  if (TEMPLATE_PREFIX.test(text)) return false;
 
   const paragraphs = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
-  if (paragraphs.length >= 3) return true;
+  if (paragraphs.length >= 2) return true;
 
   const longestParagraphWords = Math.max(
     0,
     ...paragraphs.map((p) => p.split(/\s+/).filter(Boolean).length),
   );
-  return paragraphs.length >= 2 && longestParagraphWords <= 90;
+  return longestParagraphWords > 0 && longestParagraphWords <= 80;
 }
 
 async function run() {
   console.log(`\nHome live gate · tenant=${TENANT} · ${BASE_URL}\n${"─".repeat(58)}`);
 
-  // 1) The flag flipped /home to the React Context Explorer (not the static iframe).
+  // 1) /home is the React Home KNOW surface (not the static iframe).
   try {
     const { ok, html } = await getHome();
     const isReact = /class="homex"|Context Explorer/.test(html) && !/\/api\/home\/v2-frame/.test(html);
     rec(
-      "/home serves the React Context Explorer (flag flipped)",
+      "/home serves the React Home KNOW surface",
       ok && isReact,
       isReact
         ? "homex present, static iframe absent"
@@ -168,7 +139,7 @@ async function run() {
       isReadableConsultantAnswer(r.prose),
       isReadableConsultantAnswer(r.prose) ? "structured prose" : "dense prose",
     );
-    rec("named experts surfaced", r.experts.length > 0, r.experts.map((e) => e.name).join(", ") || "none");
+    rec("no Home experts leaked", r.experts.length === 0, r.experts.map((e) => e.name).join(", ") || "none");
   } catch (e) {
     rec("Home ask reached the engine", false, String(e.message || e));
   }

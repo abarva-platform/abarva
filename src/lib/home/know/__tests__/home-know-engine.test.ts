@@ -393,6 +393,8 @@ describe("Home KNOW contract engine", () => {
       blockedInternalCodes: true,
       frontendTripwireShouldFire: false,
     });
+    expect(response.prose).not.toMatch(/\b(Read|Evidence|Implication|Next move):/);
+    expect(response.prose).not.toMatch(/^Home can show/i);
     assertNoForbiddenHomeText(response);
   });
 
@@ -406,9 +408,10 @@ describe("Home KNOW contract engine", () => {
     expect(response.intent).toBe("decision_handoff");
     expect(response.answerStatus).toBe("handoff");
     expect(response.handoff?.target).toBe("intelligence");
-    expect(response.prose).toContain("judgment question");
+    expect(response.prose).toContain("judgment");
     expect(response.charts).toEqual([]);
     expect(response.safety.frontendTripwireShouldFire).toBe(false);
+    expect(response.prose).not.toMatch(/\b(Read|Evidence|Implication|Next move):/);
   });
 
   it("returns no_data instead of bluffing when a subject is absent", () => {
@@ -437,6 +440,7 @@ describe("Home KNOW contract engine", () => {
     expect(response.answerStatus).toBe("partial");
     expect(response.prose).toMatch(/can't give that exact value/i);
     expect(response.prose).toMatch(/2027 cloud-cost forecast/i);
+    expect(response.prose).not.toMatch(/\b(Read|Evidence|Implication|Next move):/);
     expect(response.prose).not.toMatch(/Home context for .* includes .* row/i);
     expect(response.tables).toEqual([]);
     expect(response.gaps[0]).toMatchObject({
@@ -540,6 +544,7 @@ describe("Home KNOW contract engine", () => {
     expect(response.safety.unsupportedClaimsRemoved).toBeGreaterThan(0);
     expect(response.safety.frontendTripwireShouldFire).toBe(false);
     expect(response.prose).not.toMatch(/DORA|Wave-0|local env|APX-APP|the cited record/i);
+    expect(response.prose).not.toMatch(/\b(Read|Evidence|Implication|Next move):/);
   });
 
   it.each([
