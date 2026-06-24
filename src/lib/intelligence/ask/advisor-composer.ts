@@ -3,7 +3,9 @@ import { getExpertById } from "@/lib/intelligence/expert-pack/registry";
 import type { ExpertPack } from "@/lib/intelligence/expert-pack/expert-pack";
 import type { ExpertRef } from "@/lib/ava-answer/contract";
 
-export type IntelligenceAdvisorRoute = "airline_irops_ai_roi";
+export type IntelligenceAdvisorRoute =
+  | "airline_irops_ai_roi"
+  | "enterprise_function_artifact";
 
 const AIRLINE_IROPS_RE =
   /\b(irops|irregular\s+operations?|disruption\s+recovery|reaccommodat(?:e|ion)|re-accommodat(?:e|ion)|ops\s+recovery|operations\s+control|occ)\b/i;
@@ -11,6 +13,8 @@ const AIRLINE_CONTEXT_RE =
   /\b(airline|airlines|airport|flight|flights|crew|aircraft|gate|passenger|network|schedule|skyharbor)\b/i;
 const VALUE_OR_VISUAL_RE =
   /\b(roi|return|value|benefit|benefits|trend|trends|investment|investments|chart|charts|table|tables|visual|visualize|graph)\b/i;
+const FUNCTION_ARTIFACT_RE =
+  /\b(table|tables|chart|charts|visuali[sz]e|visual|graph|map|compare|list|show|break\s?down)\b/i;
 
 const AIRLINE_IROPS_EXPERT_IDS = [
   "xp.airline.operations-revenue-management",
@@ -60,15 +64,256 @@ const AIRLINE_IROPS_ADVISOR_SUPPORT_SOURCES: AskSource[] = [
   },
 ];
 
+interface EnterpriseFunctionRoute {
+  key: string;
+  label: string;
+  requiredArtifact: "table" | "chart" | "graph";
+  columns: string;
+  supportSource: AskSource;
+}
+
+const ENTERPRISE_FUNCTION_ROUTES: EnterpriseFunctionRoute[] = [
+  {
+    key: "finance",
+    label: "IT finance, budget, and run-cost",
+    requiredArtifact: "table",
+    columns:
+      "Portfolio / category | Loaded amount | Run/change posture | Evidence | Gap / caveat",
+    supportSource: {
+      type: "WORLDVIEW",
+      id: "enterprise-it-finance-run-cost-analysis-pattern",
+      name: "Enterprise IT finance and run-cost analysis pattern",
+      detail:
+        "Advisor pattern for turning loaded budget, run-cost, initiative, and contract evidence into finance tables while separating loaded tenant figures from missing run/change line-item splits.",
+      confidence: 0.68,
+    },
+  },
+  {
+    key: "vendors",
+    label: "vendor spend and concentration",
+    requiredArtifact: "chart",
+    columns:
+      "Vendor / contract | Loaded spend | Concentration or risk signal | Evidence | Caveat",
+    supportSource: {
+      type: "WORLDVIEW",
+      id: "enterprise-vendor-concentration-risk-pattern",
+      name: "Enterprise vendor concentration and contract-risk pattern",
+      detail:
+        "Advisor pattern for vendor concentration, renewal exposure, utilization, and contract-risk reads. Treat as pattern support unless tenant contract rows cite exact figures.",
+      confidence: 0.7,
+    },
+  },
+  {
+    key: "applications",
+    label: "application portfolio and modernization",
+    requiredArtifact: "table",
+    columns:
+      "Application / system | Capability or owner | Modernization posture | Loaded risk | Caveat",
+    supportSource: {
+      type: "PATTERN",
+      id: "enterprise-application-modernization-portfolio-pattern",
+      name: "Enterprise application modernization portfolio pattern",
+      detail:
+        "Advisor pattern for application posture, lifecycle, criticality, integration, and modernization sequencing. Tenant-specific system claims require loaded application evidence.",
+      confidence: 0.72,
+    },
+  },
+  {
+    key: "integrations",
+    label: "integration topology and dependency graph",
+    requiredArtifact: "graph",
+    columns:
+      "From | Relationship | To | Evidence | Confidence",
+    supportSource: {
+      type: "PATTERN",
+      id: "enterprise-integration-topology-pattern",
+      name: "Enterprise integration topology and dependency pattern",
+      detail:
+        "Advisor pattern for representing systems, vendors, data products, and capabilities as cited dependency edges. Graphs require source-to-target edge evidence or an explicit edge-data gap.",
+      confidence: 0.74,
+    },
+  },
+  {
+    key: "data_products",
+    label: "data products and analytics readiness",
+    requiredArtifact: "table",
+    columns:
+      "Data product / domain | Maturity | Owner / team | AI readiness | Gap / caveat",
+    supportSource: {
+      type: "PATTERN",
+      id: "enterprise-data-product-ai-readiness-pattern",
+      name: "Enterprise data-product AI-readiness pattern",
+      detail:
+        "Advisor pattern for data-product maturity, ownership, freshness, lineage, and AI readiness. Missing registry fields should be named as gaps instead of broad not-loaded language.",
+      confidence: 0.72,
+    },
+  },
+  {
+    key: "workforce",
+    label: "workforce AI and productivity",
+    requiredArtifact: "table",
+    columns:
+      "Function | AI opportunity | Readiness | Benefit range / signal | Evidence quality",
+    supportSource: {
+      type: "WORLDVIEW",
+      id: "enterprise-workforce-ai-productivity-pattern",
+      name: "Enterprise workforce AI productivity pattern",
+      detail:
+        "Advisor pattern for workforce AI opportunity scans across operations, contact center, corporate functions, and field/service work. Planning ranges are pattern-only unless tenant value evidence exists.",
+      confidence: 0.66,
+    },
+  },
+  {
+    key: "risk_controls",
+    label: "risk, governance, and controls",
+    requiredArtifact: "table",
+    columns:
+      "Risk | Control / mitigation | Owner | Severity | Evidence / gap",
+    supportSource: {
+      type: "PATTERN",
+      id: "enterprise-ai-risk-control-pattern",
+      name: "Enterprise AI risk and control pattern",
+      detail:
+        "Advisor pattern for model risk, data lineage, access control, auditability, regulatory, and operational-resilience controls. Control claims require loaded control or risk evidence.",
+      confidence: 0.7,
+    },
+  },
+  {
+    key: "initiatives",
+    label: "initiative portfolio and prioritization",
+    requiredArtifact: "table",
+    columns:
+      "Initiative | Impact / value | Owner | Dependency / risk | Scale-hold-stop posture",
+    supportSource: {
+      type: "PATTERN",
+      id: "enterprise-initiative-portfolio-sequencing-pattern",
+      name: "Enterprise initiative portfolio sequencing pattern",
+      detail:
+        "Advisor pattern for comparing initiatives by value, risk, dependency, owner, and stage-gate posture. Recommendations must cite tenant initiative evidence or be labeled pattern-only.",
+      confidence: 0.72,
+    },
+  },
+  {
+    key: "benefits",
+    label: "benefits realization and value leakage",
+    requiredArtifact: "chart",
+    columns:
+      "Value lever | Loaded realized value | At-risk value | Evidence | Gap / caveat",
+    supportSource: {
+      type: "WORLDVIEW",
+      id: "enterprise-benefits-realization-value-leakage-pattern",
+      name: "Enterprise benefits realization and value-leakage pattern",
+      detail:
+        "Advisor pattern for separating realized value, committed value, at-risk value, benefit leakage, and missing value-ledger evidence.",
+      confidence: 0.68,
+    },
+  },
+  {
+    key: "operations",
+    label: "operations and process bottlenecks",
+    requiredArtifact: "table",
+    columns:
+      "Process | Bottleneck | Business impact | Root cause | Next decision",
+    supportSource: {
+      type: "PATTERN",
+      id: "enterprise-operational-bottleneck-pattern",
+      name: "Enterprise operational bottleneck analysis pattern",
+      detail:
+        "Advisor pattern for process bottlenecks, operating constraints, root causes, and decision handoffs. Tenant-specific bottlenecks require cited process, KPI, incident, or initiative evidence.",
+      confidence: 0.69,
+    },
+  },
+  {
+    key: "architecture",
+    label: "enterprise architecture constraints",
+    requiredArtifact: "table",
+    columns:
+      "Constraint | Business impact | Dependency | Status / posture | Evidence",
+    supportSource: {
+      type: "PATTERN",
+      id: "enterprise-architecture-constraint-pattern",
+      name: "Enterprise architecture constraint pattern",
+      detail:
+        "Advisor pattern for architecture constraints across legacy platforms, identity, data, APIs, integration, and resilience. Tenant facts must anchor specific system or platform claims.",
+      confidence: 0.73,
+    },
+  },
+  {
+    key: "customer",
+    label: "customer operations and front-office AI",
+    requiredArtifact: "table",
+    columns:
+      "Journey / operation | AI opportunity | Value hypothesis | Readiness | Caveat",
+    supportSource: {
+      type: "WORLDVIEW",
+      id: "enterprise-customer-operations-front-office-ai-pattern",
+      name: "Enterprise customer operations and front-office AI pattern",
+      detail:
+        "Advisor pattern for customer operations, contact-center AI, agent assist, personalization, service recovery, and governance caveats. Industry value ranges are pattern-only unless tenant evidence is loaded.",
+      confidence: 0.68,
+    },
+  },
+];
+
 export function routeIntelligenceAdvisorQuestion(
   query: string,
 ): IntelligenceAdvisorRoute | null {
   const normalized = query.trim();
   if (!normalized) return null;
-  if (!AIRLINE_IROPS_RE.test(normalized)) return null;
-  if (!AIRLINE_CONTEXT_RE.test(normalized)) return null;
-  if (!VALUE_OR_VISUAL_RE.test(normalized)) return null;
-  return "airline_irops_ai_roi";
+  if (
+    AIRLINE_IROPS_RE.test(normalized) &&
+    AIRLINE_CONTEXT_RE.test(normalized) &&
+    VALUE_OR_VISUAL_RE.test(normalized)
+  ) {
+    return "airline_irops_ai_roi";
+  }
+  return enterpriseFunctionRouteForQuery(normalized)
+    ? "enterprise_function_artifact"
+    : null;
+}
+
+function enterpriseFunctionRouteForQuery(
+  query: string,
+): EnterpriseFunctionRoute | null {
+  const normalized = query.trim().toLowerCase();
+  if (!FUNCTION_ARTIFACT_RE.test(normalized)) return null;
+  if (/\b(integration|dependency|dependencies|topolog|graph|edge|edges|relationship|relationships)\b/.test(normalized)) {
+    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "integrations") ?? null;
+  }
+  if (/\b(budget|run.?cost|finance|spend|cost|portfolio or category)\b/.test(normalized)) {
+    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "finance") ?? null;
+  }
+  if (/\b(vendor|contract|supplier|concentration|renewal)\b/.test(normalized)) {
+    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "vendors") ?? null;
+  }
+  if (/\b(application|applications|system|systems|modernization|lifecycle)\b/.test(normalized)) {
+    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "applications") ?? null;
+  }
+  if (/\b(data product|data products|analytics|maturity|ai readiness)\b/.test(normalized)) {
+    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "data_products") ?? null;
+  }
+  if (/\b(workforce|persona|people|fte|labor|productivity|function)\b/.test(normalized)) {
+    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "workforce") ?? null;
+  }
+  if (/\b(risk|risks|control|controls|governance|severity|compliance)\b/.test(normalized)) {
+    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "risk_controls") ?? null;
+  }
+  if (/\b(initiative|initiatives|roadmap|scale|hold|stop|dependency)\b/.test(normalized)) {
+    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "initiatives") ?? null;
+  }
+  if (/\b(benefit|benefits|realization|realized|value lever|leakage|at-risk)\b/.test(normalized)) {
+    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "benefits") ?? null;
+  }
+  if (/\b(operations|operational|process|bottleneck|root cause)\b/.test(normalized)) {
+    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "operations") ?? null;
+  }
+  if (/\b(architecture|mainframe|platform|identity|api|apis|constraint|constraints)\b/.test(normalized)) {
+    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "architecture") ?? null;
+  }
+  if (/\b(customer|front.?office|contact.?center|journey|service|loyalty)\b/.test(normalized)) {
+    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "customer") ?? null;
+  }
+  return null;
 }
 
 export function isAirlineIropsAiRoiQuestion(query: string): boolean {
@@ -77,8 +322,11 @@ export function isAirlineIropsAiRoiQuestion(query: string): boolean {
 
 export function advisorSupportSourcesForRoute(query: string): AskSource[] {
   const route = routeIntelligenceAdvisorQuestion(query);
-  if (route !== "airline_irops_ai_roi") return [];
-  return AIRLINE_IROPS_ADVISOR_SUPPORT_SOURCES;
+  if (route === "airline_irops_ai_roi") {
+    return AIRLINE_IROPS_ADVISOR_SUPPORT_SOURCES;
+  }
+  const functionRoute = enterpriseFunctionRouteForQuery(query);
+  return functionRoute ? [functionRoute.supportSource] : [];
 }
 
 export function withAdvisorSupportSources(
@@ -105,6 +353,9 @@ export function buildIntelligenceAdvisorComposerBlock(
 ): AdvisorComposerResult | null {
   const route = routeIntelligenceAdvisorQuestion(input.query);
   if (!route) return null;
+  if (route === "enterprise_function_artifact") {
+    return buildEnterpriseFunctionComposerBlock(input);
+  }
 
   const experts = AIRLINE_IROPS_EXPERT_IDS.map((id) => getExpertById(id)).filter(
     (expert): expert is ExpertPack => Boolean(expert),
@@ -171,7 +422,7 @@ export function buildIntelligenceAdvisorComposerBlock(
 
 export function expertRefsForAdvisorRoute(query: string): ExpertRef[] {
   const route = routeIntelligenceAdvisorQuestion(query);
-  if (!route) return [];
+  if (route !== "airline_irops_ai_roi") return [];
   return advisorExpertRefs(
     AIRLINE_IROPS_EXPERT_IDS.map((id) => getExpertById(id)).filter(
       (expert): expert is ExpertPack => Boolean(expert),
@@ -180,11 +431,73 @@ export function expertRefsForAdvisorRoute(query: string): ExpertRef[] {
 }
 
 export function chooseAdvisorTokenBudget(query: string, fallback: number): number {
-  return isAirlineIropsAiRoiQuestion(query) ? 1800 : fallback;
+  const route = routeIntelligenceAdvisorQuestion(query);
+  if (route === "airline_irops_ai_roi") return 1800;
+  if (route === "enterprise_function_artifact") return Math.max(fallback, 1300);
+  return fallback;
 }
 
 export function chooseAdvisorWordCap(query: string, fallback: number): number {
-  return isAirlineIropsAiRoiQuestion(query) ? 950 : fallback;
+  const route = routeIntelligenceAdvisorQuestion(query);
+  if (route === "airline_irops_ai_roi") return 950;
+  if (route === "enterprise_function_artifact") return Math.max(fallback, 620);
+  return fallback;
+}
+
+function buildEnterpriseFunctionComposerBlock(
+  input: AdvisorComposerInput,
+): AdvisorComposerResult | null {
+  const functionRoute = enterpriseFunctionRouteForQuery(input.query);
+  if (!functionRoute) return null;
+  const sourceSummary = summarizeSources(input.sources);
+  return {
+    route: "enterprise_function_artifact",
+    expertNames: [],
+    expertRefs: [],
+    selectedSourceSummary: sourceSummary,
+    promptBlock: [
+      "INTELLIGENCE ADVISOR FUNCTION ROUTE",
+      `Function: ${functionRoute.label}`,
+      `Required artifact: ${functionRoute.requiredArtifact}`,
+      "",
+      "Treat this as a cross-enterprise function analysis, not a generic chat answer. Build the response like a senior enterprise AI / technology advisor briefing a CIO, CFO, COO, or CDAO.",
+      "",
+      "Evidence order is binding:",
+      "1. Tenant read-model facts first for any client-specific claim.",
+      "2. Corpus / pattern / expert support second for industry or operating-model claims.",
+      "3. Planning ranges are allowed only when labeled pattern-only.",
+      "4. If a tenant-specific field is missing, name the exact field gap instead of saying the whole context is not loaded.",
+      "",
+      "Answer shape:",
+      "- Open with a crisp 2-4 sentence executive read.",
+      "- Then provide the requested artifact as a standalone Markdown table.",
+      "- Do not bury the artifact as inline pipe text inside a paragraph.",
+      "- End with one useful next decision or investigation, not a generic handoff sentence.",
+      "",
+      `Required columns: ${functionRoute.columns}`,
+      "",
+      "Table / chart / graph contract:",
+      "- Put a blank line before the table.",
+      "- Put the table title on its own line, then the header row, separator row, and rows on separate lines.",
+      "- Include at least two rows when evidence supports it.",
+      "- If exact tenant row data is missing, emit a table of known related evidence plus a specific gap row. Do not emit the generic 'Evidence Required' fallback in prose.",
+      "- For chart requests, include numeric table columns that the renderer can chart: label plus exact numeric value where loaded, or Low estimate / High estimate / Unit for pattern-only planning ranges.",
+      "- For graph requests, include From | Relationship | To | Evidence | Confidence rows only when source-to-target edge evidence exists; otherwise say which edge family is missing.",
+      "",
+      "Quality gates:",
+      "- No raw internal IDs in prose.",
+      "- No orphan table fragments.",
+      "- No repeated labels like 'Read: Read:' or 'Evidence: Implication:'.",
+      "- No generic sentence: 'have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves.'",
+      "- Sound like a practical senior consultant, not a database report.",
+      "",
+      "Source inventory seen by this composer:",
+      `- Tenant evidence sources: ${sourceSummary.tenantEvidenceCount}`,
+      `- Corpus/pattern/worldview evidence sources: ${sourceSummary.corpusEvidenceCount}`,
+      `- Public/research/benchmark evidence sources: ${sourceSummary.publicEvidenceCount}`,
+      `- Graph evidence sources: ${sourceSummary.graphEvidenceCount}`,
+    ].join("\n"),
+  };
 }
 
 function summarizeSources(sources: AskSource[]): AdvisorComposerResult["selectedSourceSummary"] {

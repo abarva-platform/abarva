@@ -119,3 +119,38 @@ Additional validation:
 - Full TypeScript remains blocked by the existing repo baseline missing type
   packages (`js-yaml`, `@azure-rest/ai-document-intelligence`,
   `@axe-core/playwright`), not by this patch.
+
+## Follow-up Cross-Function Advisor Route
+
+The post-#3937 deployed browser crawl proved the airline IROPS path was fixed,
+but it also showed the generic Intelligence path was still too compressed for
+non-IROPS function questions. Five of thirteen live prompts fell into the
+generic `Evidence Required` fallback table, and four returned zero visible
+evidence on the canvas. This follow-up extends the advisor-composer seam beyond
+IROPS to enterprise function artifact questions:
+
+- finance / run-cost
+- vendor concentration
+- application modernization
+- integration topology
+- data products / analytics
+- workforce AI
+- risk and controls
+- initiatives
+- benefits realization
+- operations bottlenecks
+- enterprise architecture
+- customer/front-office AI
+
+For those routes, aVa now receives a function-specific artifact contract,
+required columns, citation discipline, gap wording, and enough token/word budget
+to produce a valid table/chart/graph-shaped response instead of a truncated
+paragraph. The route also contributes non-tenant pattern/worldview support
+citations where appropriate, while preserving the rule that tenant-specific
+claims must still be grounded in tenant sources.
+
+Additional validation:
+
+- Focused Jest for Golden IROPS composer + Intelligence ask route telemetry:
+  pass (`26 passed` across 2 suites).
+- Focused ESLint for changed files: pass.
