@@ -58,7 +58,7 @@ Revert this release commit and redeploy main through the repo-owned ACA deploy w
 
 ## Audit Evidence
 
-- PR URL: to be added after PR creation.
+- PR URL: https://github.com/abarva-platform/abarva/pull/3931
 - Local focused test/lint output from the release branch.
 - Post-merge ACA deploy evidence and signed-in browser screenshots.
 
