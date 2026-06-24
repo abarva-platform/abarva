@@ -13,9 +13,18 @@ import { HomeSurface } from "@/components/home/HomeSurface";
 import type { IntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
 
 const payload = {
-  tenant: { key: "apex-retail", displayName: "Apex Retail Group", industry: "retail" },
+  tenant: {
+    key: "apex-retail",
+    displayName: "Apex Retail Group",
+    industry: "retail",
+  },
   ask: { placeholder: "", contract: "" },
-  trustLine: { dimensionsLoaded: 8, evidencePoints: 17548, sources: 8, searchVerifiedPct: 97 },
+  trustLine: {
+    dimensionsLoaded: 8,
+    evidencePoints: 17548,
+    sources: 8,
+    searchVerifiedPct: 97,
+  },
   suggestedQuestions: [],
   signals: [
     {
@@ -46,7 +55,8 @@ const payload = {
     {
       patternName: "Omnichannel inventory truth before AI scale",
       domain: "retail_operations",
-      whenToApply: "Use when BOPIS and personalization depend on inventory accuracy.",
+      whenToApply:
+        "Use when BOPIS and personalization depend on inventory accuracy.",
     },
   ],
 } as unknown as IntelligenceBindingPayload;
@@ -59,17 +69,23 @@ describe("HomeSurface — real React Context Explorer", () => {
     expect(screen.queryByLabelText("Ask Ava")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Expand chat")).toBeInTheDocument();
     expect(screen.getByLabelText("Hide chat")).toBeInTheDocument();
-    expect(screen.getByLabelText("Lock chat left")).toBeInTheDocument();
-    expect(screen.getByLabelText("Lock chat right")).toBeInTheDocument();
-    expect(screen.getByLabelText("Lock chat top")).toBeInTheDocument();
-    expect(screen.getByLabelText("Lock chat bottom")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Lock chat left")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Lock chat right")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Lock chat top")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Lock chat bottom")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Context Explorer tabs")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Suggested Home KNOW questions")).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Suggested Home KNOW questions"),
+    ).not.toBeInTheDocument();
     // real per-tenant signal (not a fake row-dump)
     expect(
-      screen.getByText("Inventory truth is the gate before omnichannel AI scale."),
+      screen.getByText(
+        "Inventory truth is the gate before omnichannel AI scale.",
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByText(/33 evidence points · 2 sources/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/33 evidence points · 2 sources/),
+    ).toBeInTheDocument();
     // rail lists the loaded context dimension; detail not shown yet
     expect(screen.getByText("Loaded context · 1")).toBeInTheDocument();
     expect(screen.queryByText("Loaded context · 8")).not.toBeInTheDocument();
@@ -88,20 +104,17 @@ describe("HomeSurface — real React Context Explorer", () => {
     expect(screen.getByText("82%")).toBeInTheDocument();
   });
 
-  it("can hide, restore, expand, and redock the chat shell", () => {
+  it("can hide, restore, and expand the chat shell", () => {
     render(<HomeSurface clientKey="apexretail" payload={payload} />);
     fireEvent.click(screen.getByLabelText("Hide chat"));
-    expect(screen.queryByLabelText("Ava Home KNOW chat")).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Ava Home KNOW chat"),
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByLabelText("Show Ava chat"));
     expect(screen.getByLabelText("Ava Home KNOW chat")).toBeInTheDocument();
 
     fireEvent.click(screen.getByLabelText("Expand chat"));
     expect(screen.getByLabelText("Restore chat size")).toBeInTheDocument();
-    fireEvent.click(screen.getByLabelText("Lock chat right"));
-    expect(screen.getByLabelText("Lock chat right")).toHaveClass("on");
-    fireEvent.click(screen.getByLabelText("Lock chat top"));
-    expect(screen.getByLabelText("Lock chat top")).toHaveClass("on");
-    fireEvent.click(screen.getByLabelText("Lock chat bottom"));
-    expect(screen.getByLabelText("Lock chat bottom")).toHaveClass("on");
+    expect(screen.queryByLabelText("Lock chat right")).not.toBeInTheDocument();
   });
 });

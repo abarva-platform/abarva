@@ -88,7 +88,10 @@ function sanitizeHomeText(value: unknown): string {
   return cleaned || "—";
 }
 
-function formatValue(value: string | number | boolean | null | undefined, column?: HomeKnowTableColumn): string {
+function formatValue(
+  value: string | number | boolean | null | undefined,
+  column?: HomeKnowTableColumn,
+): string {
   if (value === null || value === undefined) return "—";
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (typeof value === "string") return sanitizeHomeText(value);
@@ -107,9 +110,13 @@ function formatValue(value: string | number | boolean | null | undefined, column
       }).format(normalized);
     }
     case "number":
-      return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value);
+      return new Intl.NumberFormat("en-US", {
+        maximumFractionDigits: 2,
+      }).format(value);
     case "date":
-      return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(value));
+      return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(
+        new Date(value),
+      );
     case "text":
     default:
       return String(value);
@@ -119,11 +126,19 @@ function formatValue(value: string | number | boolean | null | undefined, column
 function alignmentClass(column: HomeKnowTableColumn): string {
   if (column.align === "right") return "right";
   if (column.align === "center") return "center";
-  if (column.format === "number" || column.format === "currency" || column.format === "percent") return "right";
+  if (
+    column.format === "number" ||
+    column.format === "currency" ||
+    column.format === "percent"
+  )
+    return "right";
   return "";
 }
 
-function citationsFor(ids: string[] | undefined, citations: HomeKnowCitation[]): HomeKnowCitation[] {
+function citationsFor(
+  ids: string[] | undefined,
+  citations: HomeKnowCitation[],
+): HomeKnowCitation[] {
   if (!ids?.length) return [];
   const byId = new Map(citations.map((citation) => [citation.id, citation]));
   return ids.flatMap((id) => {
@@ -172,13 +187,19 @@ function HomeTableExhibit({
     <div className="hk-tableWrap">
       <div className="hk-exhibitHead">
         <div className="hk-exhibitTitle">{sanitizeHomeText(table.title)}</div>
-        <div className="hk-exhibitMeta">{sanitizeHomeText(table.dimensionId)}</div>
+        <div className="hk-exhibitMeta">
+          {sanitizeHomeText(table.dimensionId)}
+        </div>
       </div>
       <table>
         <thead>
           <tr>
             {table.columns.map((column) => (
-              <th className={alignmentClass(column)} key={column.key} scope="col">
+              <th
+                className={alignmentClass(column)}
+                key={column.key}
+                scope="col"
+              >
                 {sanitizeHomeText(column.label)}
               </th>
             ))}
@@ -196,7 +217,9 @@ function HomeTableExhibit({
           ))}
         </tbody>
       </table>
-      {table.note ? <div className="hk-note">{sanitizeHomeText(table.note)}</div> : null}
+      {table.note ? (
+        <div className="hk-note">{sanitizeHomeText(table.note)}</div>
+      ) : null}
       <CitationChips citations={citations} onSelect={onSelectCitation} />
     </div>
   );
@@ -232,7 +255,13 @@ function HomeChartExhibit({
                   style={{ width, background: point.color ?? undefined }}
                 />
               </div>
-              <div className="hk-value">{formatValue(point.value, { key: "value", label: "Value", format: "number" })}</div>
+              <div className="hk-value">
+                {formatValue(point.value, {
+                  key: "value",
+                  label: "Value",
+                  format: "number",
+                })}
+              </div>
             </div>
           );
         })}
@@ -260,7 +289,9 @@ function HomeGraphExhibit({
 }) {
   const nodes = graph.nodes.slice(0, 12);
   const nodeIds = new Set(nodes.map((node) => node.id));
-  const edges = graph.edges.filter((edge) => nodeIds.has(edge.from) && nodeIds.has(edge.to)).slice(0, 16);
+  const edges = graph.edges
+    .filter((edge) => nodeIds.has(edge.from) && nodeIds.has(edge.to))
+    .slice(0, 16);
   const width = 760;
   const height = Math.max(280, Math.ceil(nodes.length / 2) * 78 + 54);
   const positions = new Map(
@@ -280,7 +311,9 @@ function HomeGraphExhibit({
     <div className="hk-graph">
       <div className="hk-exhibitHead">
         <div className="hk-exhibitTitle">{sanitizeHomeText(graph.title)}</div>
-        <div className="hk-exhibitMeta">{nodes.length} nodes · {edges.length} links · {graph.confidence}</div>
+        <div className="hk-exhibitMeta">
+          {nodes.length} nodes · {edges.length} links · {graph.confidence}
+        </div>
       </div>
       <svg
         className="hk-graphSvg"
@@ -289,7 +322,14 @@ function HomeGraphExhibit({
         viewBox={`0 0 ${width} ${height}`}
       >
         <defs>
-          <marker id="hkArrow" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4">
+          <marker
+            id="hkArrow"
+            markerHeight="8"
+            markerWidth="8"
+            orient="auto"
+            refX="7"
+            refY="4"
+          >
             <path d="M0,0 L8,4 L0,8 Z" fill="#7A8793" />
           </marker>
         </defs>
@@ -301,8 +341,19 @@ function HomeGraphExhibit({
           const midY = (from.y + to.y) / 2 - 7;
           return (
             <g key={`${edge.from}-${edge.to}-${index}`}>
-              <line className="hk-edge" x1={from.x + 92} x2={to.x - 92} y1={from.y} y2={to.y} />
-              <text className="hk-edgeText" textAnchor="middle" x={midX} y={midY}>
+              <line
+                className="hk-edge"
+                x1={from.x + 92}
+                x2={to.x - 92}
+                y1={from.y}
+                y2={to.y}
+              />
+              <text
+                className="hk-edgeText"
+                textAnchor="middle"
+                x={midX}
+                y={midY}
+              >
                 {sanitizeHomeText(edge.label).slice(0, 42)}
               </text>
             </g>
@@ -313,8 +364,20 @@ function HomeGraphExhibit({
           if (!position) return null;
           return (
             <g key={node.id}>
-              <rect className="hk-node" height="42" rx="8" width="184" x={position.x - 92} y={position.y - 21} />
-              <text className="hk-nodeText" textAnchor="middle" x={position.x} y={position.y + 4}>
+              <rect
+                className="hk-node"
+                height="42"
+                rx="8"
+                width="184"
+                x={position.x - 92}
+                y={position.y - 21}
+              />
+              <text
+                className="hk-nodeText"
+                textAnchor="middle"
+                x={position.x}
+                y={position.y + 4}
+              >
                 {sanitizeHomeText(node.label).slice(0, 26)}
               </text>
             </g>
@@ -322,7 +385,9 @@ function HomeGraphExhibit({
         })}
       </svg>
       {graph.gaps.length > 0 ? (
-        <div className="hk-note">{graph.gaps.map(sanitizeHomeText).join(" · ")}</div>
+        <div className="hk-note">
+          {graph.gaps.map(sanitizeHomeText).join(" · ")}
+        </div>
       ) : null}
       <CitationChips citations={citations} onSelect={onSelectCitation} />
     </div>
@@ -336,7 +401,8 @@ function GapPanel({ gaps }: { gaps: HomeKnowGap[] }) {
       <div className="hk-title">Evidence gaps</div>
       {gaps.slice(0, 5).map((gap) => (
         <div className="hk-gap" key={gap.id}>
-          <strong>{sanitizeHomeText(gap.displayLabel)}</strong>: {sanitizeHomeText(gap.message)}
+          <strong>{sanitizeHomeText(gap.displayLabel)}</strong>:{" "}
+          {sanitizeHomeText(gap.message)}
         </div>
       ))}
     </div>
@@ -372,14 +438,18 @@ function SourceDrawer({ citation }: { citation: HomeKnowCitation | null }) {
   if (!citation) return null;
   return (
     <div className="hk-drawer" aria-label="Source evidence">
-      <div className="hk-title" style={{ marginBottom: 10 }}>Source evidence</div>
+      <div className="hk-title" style={{ marginBottom: 10 }}>
+        Source evidence
+      </div>
       <dl>
         <dt>Label</dt>
         <dd>{sanitizeHomeText(citation.label)}</dd>
         <dt>Class</dt>
         <dd>{citation.sourceClass}</dd>
         <dt>File</dt>
-        <dd>{sanitizeHomeText(citation.sourceFile ?? "Source file not provided")}</dd>
+        <dd>
+          {sanitizeHomeText(citation.sourceFile ?? "Source file not provided")}
+        </dd>
         <dt>Row</dt>
         <dd>{citation.sourceRowNumber ?? "—"}</dd>
         <dt>Confidence</dt>
@@ -393,12 +463,27 @@ function SourceDrawer({ citation }: { citation: HomeKnowCitation | null }) {
 
 function responseHasTripwire(response: HomeKnowResponse): boolean {
   if (response.safety.frontendTripwireShouldFire) return true;
-  return BLOCKED_HOME_TEXT.test(response.prose) || INTERNAL_CODE_RE.test(response.prose);
+  return (
+    BLOCKED_HOME_TEXT.test(response.prose) ||
+    INTERNAL_CODE_RE.test(response.prose)
+  );
 }
 
-function shouldOpenEvidence(response: HomeKnowResponse, compact: boolean): boolean {
+function shouldOpenEvidence(
+  _response: HomeKnowResponse,
+  compact: boolean,
+): boolean {
   if (compact) return false;
-  return response.intent === "table" || response.intent === "chart" || response.intent === "gap";
+  return false;
+}
+
+function statusLabel(response: HomeKnowResponse): string {
+  if (response.handoff) return "Needs another workspace";
+  if (response.answerStatus === "answered")
+    return "Answered from loaded context";
+  if (response.answerStatus === "partial") return "Partially answered";
+  if (response.answerStatus === "no_data") return "Evidence gap";
+  return "Review needed";
 }
 
 export function HomeKnowAnswerRenderer({
@@ -408,7 +493,8 @@ export function HomeKnowAnswerRenderer({
   compact?: boolean;
   response: HomeKnowResponse;
 }) {
-  const [selectedCitation, setSelectedCitation] = useState<HomeKnowCitation | null>(null);
+  const [selectedCitation, setSelectedCitation] =
+    useState<HomeKnowCitation | null>(null);
   const safeProse = useMemo(() => {
     if (responseHasTripwire(response)) {
       return "I do not see that in the loaded data.";
@@ -420,7 +506,10 @@ export function HomeKnowAnswerRenderer({
   const chartCount = response.charts.length;
   const graphCount = response.graphs.length;
 
-  const hasEvidence = tableCount + chartCount + graphCount > 0 || response.gaps.length > 0 || visibleCitations.length > 0;
+  const hasEvidence =
+    tableCount + chartCount + graphCount > 0 ||
+    response.gaps.length > 0 ||
+    visibleCitations.length > 0;
   const evidenceOpen = shouldOpenEvidence(response, compact);
   const exhibitLabel =
     tableCount + chartCount + graphCount > 0
@@ -428,18 +517,17 @@ export function HomeKnowAnswerRenderer({
       : "Evidence and citations";
 
   return (
-    <section className={`homeKnowAnswer${compact ? " compact" : ""}`} aria-label="Home KNOW answer">
+    <section
+      className={`homeKnowAnswer${compact ? " compact" : ""}`}
+      aria-label="Home KNOW answer"
+    >
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div className="hk-card">
         <header className="hk-head">
           <div>
-            <div className="hk-kicker">Ava · Home KNOW</div>
+            <div className="hk-kicker">aVa</div>
             <div className="hk-meta" aria-label="Answer metadata">
-              <span className="hk-pill good">{response.intent.replace(/_/g, " ")}</span>
-              <span className="hk-pill">{response.answerStatus.replace(/_/g, " ")}</span>
-              {!compact && response.dimensionsUsed.slice(0, 4).map((dimension) => (
-                <span className="hk-pill" key={dimension}>{sanitizeHomeText(dimension)}</span>
-              ))}
+              <span className="hk-pill good">{statusLabel(response)}</span>
             </div>
           </div>
         </header>
@@ -457,7 +545,10 @@ export function HomeKnowAnswerRenderer({
                   <div className="hk-title">Tables</div>
                   {response.tables.map((table) => (
                     <HomeTableExhibit
-                      citations={citationsFor(table.citationIds, visibleCitations)}
+                      citations={citationsFor(
+                        table.citationIds,
+                        visibleCitations,
+                      )}
                       key={table.id}
                       onSelectCitation={setSelectedCitation}
                       table={table}
@@ -472,7 +563,10 @@ export function HomeKnowAnswerRenderer({
                   {response.charts.map((chart) => (
                     <HomeChartExhibit
                       chart={chart}
-                      citations={citationsFor(chart.citationIds, visibleCitations)}
+                      citations={citationsFor(
+                        chart.citationIds,
+                        visibleCitations,
+                      )}
                       key={chart.id}
                       onSelectCitation={setSelectedCitation}
                     />
@@ -485,7 +579,10 @@ export function HomeKnowAnswerRenderer({
                   <div className="hk-title">Graphs</div>
                   {response.graphs.map((graph) => (
                     <HomeGraphExhibit
-                      citations={citationsFor(graph.citationIds, visibleCitations)}
+                      citations={citationsFor(
+                        graph.citationIds,
+                        visibleCitations,
+                      )}
                       graph={graph}
                       key={graph.id}
                       onSelectCitation={setSelectedCitation}
@@ -496,10 +593,14 @@ export function HomeKnowAnswerRenderer({
 
               <GapPanel gaps={response.gaps} />
 
-              {tableCount + chartCount + graphCount === 0 && visibleCitations.length > 0 ? (
+              {tableCount + chartCount + graphCount === 0 &&
+              visibleCitations.length > 0 ? (
                 <div className="hk-section">
                   <div className="hk-title">Sources</div>
-                  <CitationChips citations={visibleCitations} onSelect={setSelectedCitation} />
+                  <CitationChips
+                    citations={visibleCitations}
+                    onSelect={setSelectedCitation}
+                  />
                 </div>
               ) : null}
 

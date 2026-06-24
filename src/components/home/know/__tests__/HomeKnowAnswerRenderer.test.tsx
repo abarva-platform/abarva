@@ -41,7 +41,8 @@ const baseResponse: HomeKnowResponse = {
       expectedField: "executive_owner_person_name",
       displayLabel: "Named portfolio lead",
       severity: "medium",
-      message: "The loaded data provides owner roles, but named individuals are not loaded.",
+      message:
+        "The loaded data provides owner roles, but named individuals are not loaded.",
       citationIds: ["c1"],
     },
   ],
@@ -73,11 +74,16 @@ describe("HomeKnowAnswerRenderer", () => {
     const response = {
       ...baseResponse,
       contributingExperts: [{ id: "xp.retail", name: "Retail Expert" }],
-    } as HomeKnowResponse & { contributingExperts: Array<{ id: string; name: string }> };
+    } as HomeKnowResponse & {
+      contributingExperts: Array<{ id: string; name: string }>;
+    };
 
     render(<HomeKnowAnswerRenderer response={response} />);
 
-    expect(screen.getByText("Ava · Home KNOW")).toBeInTheDocument();
+    expect(screen.getByText("aVa")).toBeInTheDocument();
+    expect(
+      screen.getByText("Answered from loaded context"),
+    ).toBeInTheDocument();
     expect(screen.getByText("IT ownership")).toBeInTheDocument();
     expect(screen.getByText("Data & Analytics")).toBeInTheDocument();
     expect(screen.getByText("IT Org Ownership")).toBeInTheDocument();
@@ -124,8 +130,12 @@ describe("HomeKnowAnswerRenderer", () => {
       />,
     );
 
-    expect(screen.getByText("I do not see that in the loaded data.")).toBeInTheDocument();
-    expect(screen.queryByText(/org_topology unavailable/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByText("I do not see that in the loaded data."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/org_topology unavailable/i),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/APEXRETAIL-INIT-0017/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/the cited record/i)).not.toBeInTheDocument();
   });

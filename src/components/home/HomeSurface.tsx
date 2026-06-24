@@ -16,18 +16,9 @@ import type {
 const CSS = `
 .homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);min-height:100%;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
 .homex .hx-shell{display:grid;grid-template-columns:minmax(360px,440px) minmax(0,1fr);min-height:100%}
-.homex .hx-shell.dock-right{grid-template-columns:minmax(0,1fr) minmax(360px,440px)}
-.homex .hx-shell.dock-right .hx-chatPane{grid-column:2;border-right:none;border-left:1px solid var(--hl)}
-.homex .hx-shell.dock-right .hx-canvas{grid-column:1;grid-row:1}
-.homex .hx-shell.dock-top,.homex .hx-shell.dock-bottom{display:flex;flex-direction:column}
-.homex .hx-shell.dock-bottom .hx-chatPane{order:2;border-top:1px solid var(--hl);border-bottom:none}
-.homex .hx-shell.dock-top .hx-chatPane{border-right:none;border-bottom:1px solid var(--hl);height:320px}
-.homex .hx-shell.dock-bottom .hx-chatPane{border-right:none;height:320px}
-.homex .hx-shell.chat-expanded.dock-left,.homex .hx-shell.chat-expanded.dock-right{grid-template-columns:minmax(520px,680px) minmax(0,1fr)}
-.homex .hx-shell.chat-expanded.dock-right{grid-template-columns:minmax(0,1fr) minmax(520px,680px)}
-.homex .hx-shell.chat-expanded.dock-top .hx-chatPane,.homex .hx-shell.chat-expanded.dock-bottom .hx-chatPane{height:min(62vh,720px)}
+.homex .hx-shell.chat-expanded{grid-template-columns:minmax(520px,680px) minmax(0,1fr)}
 .homex .hx-shell.chat-hidden{display:block}
-@media(max-width:980px){.homex .hx-shell,.homex .hx-shell.dock-right,.homex .hx-shell.chat-expanded.dock-left,.homex .hx-shell.chat-expanded.dock-right{display:flex;flex-direction:column}.homex .hx-chatPane{position:relative;top:auto;height:58vh;border-right:none;border-bottom:1px solid var(--hl)}}
+@media(max-width:980px){.homex .hx-shell,.homex .hx-shell.chat-expanded{display:flex;flex-direction:column}.homex .hx-chatPane{position:relative;top:auto;height:58vh;border-right:none;border-bottom:1px solid var(--hl)}}
 .homex .hx-chatPane{background:#fff;border-right:1px solid var(--hl);padding:10px 10px 0;position:sticky;top:0;height:calc(100vh - 72px);overflow:hidden;display:flex;flex-direction:column;min-width:0}
 .homex .hx-chatTools{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 2px 8px;border-bottom:1px solid rgba(231,227,218,.72);flex:none}
 .homex .hx-toolGroup{display:flex;align-items:center;gap:4px}
@@ -80,12 +71,24 @@ const CONTEXT_BROWSER_QUESTIONS = [
 ];
 
 function contextBrowserQuestions(dimensions: BindingDimension[]): string[] {
-  const labels = dimensions.map((dimension) => dimension.dimension.toLowerCase());
+  const labels = dimensions.map((dimension) =>
+    dimension.dimension.toLowerCase(),
+  );
   const questions = [...CONTEXT_BROWSER_QUESTIONS];
-  if (labels.some((label) => label.includes("data") || label.includes("analytics"))) {
-    questions.push("Show our data products in a table with domain and owning team.");
+  if (
+    labels.some(
+      (label) => label.includes("data") || label.includes("analytics"),
+    )
+  ) {
+    questions.push(
+      "Show our data products in a table with domain and owning team.",
+    );
   }
-  if (labels.some((label) => label.includes("integration") || label.includes("interface"))) {
+  if (
+    labels.some(
+      (label) => label.includes("integration") || label.includes("interface"),
+    )
+  ) {
     questions.push("Map relationships between systems and integrations.");
   }
   return questions.slice(0, 6);
@@ -160,7 +163,9 @@ function DimensionView({
         </div>
       </div>
       {dim.flag ? (
-        <p style={{ color: "var(--ham)", fontSize: 13, marginTop: 14 }}>⚑ {dim.flag}</p>
+        <p style={{ color: "var(--ham)", fontSize: 13, marginTop: 14 }}>
+          ⚑ {dim.flag}
+        </p>
       ) : null}
       {related.length > 0 && (
         <div className="hx-sec">
@@ -241,13 +246,12 @@ function Overview({ payload }: { payload: IntelligenceBindingPayload | null }) {
 
       <div className="hx-hint">
         <span className="hx-dot" style={{ background: "var(--hb)" }} />
-        Pick a loaded dimension on the left, or ask a question above — both answer right here.
+        Pick a loaded dimension on the left, or ask a question above — both
+        answer right here.
       </div>
     </div>
   );
 }
-
-type ChatDock = "left" | "right" | "top" | "bottom";
 
 function ToolButton({
   active,
@@ -283,13 +287,13 @@ export function HomeSurface({
   const dims = payload?.context ?? [];
   const signals = payload?.signals ?? [];
   const [dimKey, setDimKey] = useState<string | null>(null);
-  const [chatDock, setChatDock] = useState<ChatDock>("left");
   const [chatExpanded, setChatExpanded] = useState(false);
   const [chatHidden, setChatHidden] = useState(false);
-  const selected = dimKey ? dims.find((d) => d.dimension === dimKey) ?? null : null;
+  const selected = dimKey
+    ? (dims.find((d) => d.dimension === dimKey) ?? null)
+    : null;
   const shellClass = [
     "hx-shell",
-    `dock-${chatDock}`,
     chatExpanded ? "chat-expanded" : "",
     chatHidden ? "chat-hidden" : "",
   ]
@@ -325,36 +329,11 @@ export function HomeSurface({
                 >
                   {chatExpanded ? "□" : "▣"}
                 </ToolButton>
-                <ToolButton label="Hide chat" onClick={() => setChatHidden(true)}>
+                <ToolButton
+                  label="Hide chat"
+                  onClick={() => setChatHidden(true)}
+                >
                   ×
-                </ToolButton>
-                <ToolButton
-                  active={chatDock === "left"}
-                  label="Lock chat left"
-                  onClick={() => setChatDock("left")}
-                >
-                  ←
-                </ToolButton>
-                <ToolButton
-                  active={chatDock === "right"}
-                  label="Lock chat right"
-                  onClick={() => setChatDock("right")}
-                >
-                  →
-                </ToolButton>
-                <ToolButton
-                  active={chatDock === "top"}
-                  label="Lock chat top"
-                  onClick={() => setChatDock("top")}
-                >
-                  ↑
-                </ToolButton>
-                <ToolButton
-                  active={chatDock === "bottom"}
-                  label="Lock chat bottom"
-                  onClick={() => setChatDock("bottom")}
-                >
-                  ↓
                 </ToolButton>
               </div>
             </div>
@@ -391,7 +370,10 @@ export function HomeSurface({
                   title={d.dimension}
                   aria-label={d.dimension}
                 >
-                  <span className="hx-dot" style={{ background: toneFor(d.trust) }} />
+                  <span
+                    className="hx-dot"
+                    style={{ background: toneFor(d.trust) }}
+                  />
                   <span className="hx-nav-l">{d.dimension}</span>
                   <span className="hx-tr">{d.trust}</span>
                 </button>
