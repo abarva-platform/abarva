@@ -28,7 +28,10 @@ import type { CanonicalTenant } from "@/lib/tenant/CanonicalTenant";
 import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
 import { routeQuestion } from "@/lib/intelligence/answer/router";
 import { expertIndustryForClientKey } from "@/lib/intelligence/answer/expert-grounding";
-import { expertRefsForAdvisorRoute } from "@/lib/intelligence/ask/advisor-composer";
+import {
+  expertRefsForAdvisorRoute,
+  withAdvisorSupportSources,
+} from "@/lib/intelligence/ask/advisor-composer";
 import {
   buildStructuredExhibits,
   hasRenderableStructuredExhibits,
@@ -340,10 +343,14 @@ async function handleAsk(payload: AskPayload) {
           const expertsUsed =
             advisorExperts.length > 0 ? advisorExperts : routing.experts;
           const answerRouting = { ...routing, experts: expertsUsed };
+          const sentinelSources = withAdvisorSupportSources(
+            query,
+            intelligenceSourcesFromCitations(sentinelCitations),
+          );
           const exhibits = buildStructuredExhibits({
             prose: assistantText,
             routing: answerRouting,
-            sources: intelligenceSourcesFromCitations(sentinelCitations),
+            sources: sentinelSources,
           });
           if (
             hasRenderableStructuredExhibits(exhibits) ||
@@ -455,11 +462,24 @@ async function handleAsk(payload: AskPayload) {
             classificationForMemory =
               event.classification ?? classificationForMemory;
           if (event.type === "sources") {
-            citationCount = event.sources?.length ?? 0;
+            const enrichedSources = withAdvisorSupportSources(
+              query,
+              (event.sources ?? []) as AskSource[],
+            );
+            citationCount = enrichedSources.length;
             patternId =
-              event.sources?.find((source) => source.type === "PATTERN")?.id ??
+              enrichedSources.find((source) => source.type === "PATTERN")?.id ??
               patternId;
-            traceSources = (event.sources ?? []) as RawAskSource[];
+            traceSources = enrichedSources as RawAskSource[];
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  ...event,
+                  sources: enrichedSources,
+                }) + "\n",
+              ),
+            );
+            continue;
           }
           if (event.type === "delta" && event.text) assistantText += event.text;
           if (event.type === "error") sawStreamError = true;
@@ -551,7 +571,10 @@ async function handleAsk(payload: AskPayload) {
           const exhibits = buildStructuredExhibits({
             prose: assistantText,
             routing: answerRouting,
-            sources: traceSources as AskSource[],
+            sources: withAdvisorSupportSources(
+              query,
+              traceSources as AskSource[],
+            ),
           });
           if (
             hasRenderableStructuredExhibits(exhibits) ||
