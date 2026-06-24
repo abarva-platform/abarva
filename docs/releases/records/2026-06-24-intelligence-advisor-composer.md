@@ -76,3 +76,19 @@ PR URL, CI checks, release check output, and signed-in SkyHarbor browser proof a
 This PR improves the aVa prompt packet and route-specific answer budget. It does not add public web browsing to the runtime. If public/current sources are absent from supplied sources, the composer instructs Claude to label that limitation instead of inventing examples.
 
 Legacy boundary: this PR removes retired labels from the live Intelligence/aVa prompt, telemetry, Source prompt, and visible Home badge paths. It does not perform a repo-wide historical rename of compatibility modules such as `sentinel-reasoning`; those remain internal implementation names until a separate low-risk migration retires them.
+
+## Follow-up Correction
+
+After the first deployment, live browser proof showed the airline IROPS advisor
+route improved the prose but still surfaced retail expert chips when the active
+tenant was Apex Retail. The follow-up patch makes the advisor route expose its
+own expert refs and lets the Intelligence API use those refs in the emitted
+`agent-answer`, so route-specific airline questions show airline experts instead
+of the active tenant's default vertical experts.
+
+Additional validation:
+
+- Focused Jest for Golden IROPS composer + Intelligence ask route telemetry:
+  pass (`14 passed` across 2 suites).
+- Focused ESLint for the changed route/composer/test files: pass.
+- `npm run release:check`: pass after this release-record update.
