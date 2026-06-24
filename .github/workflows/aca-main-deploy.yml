@@ -184,6 +184,32 @@ jobs:
           revision_suffix="$base_suffix"
           revision_name="$base_revision"
 
+          mode="$(az containerapp show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query properties.configuration.activeRevisionsMode \
+            --output tsv)"
+          if [[ "$mode" != "Multiple" ]]; then
+            echo "Switching ACA active revision mode to Multiple before deployment."
+            az containerapp revision set-mode \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --mode multiple
+          fi
+
+          restore_previous_traffic() {
+            local previous_revision
+            previous_revision="$(jq -r '.[]? | select((.weight // 0) == 100) | .revisionName' \
+              audit-artifacts/aca-main-deploy/traffic-before.json | head -n 1)"
+            if [[ -n "$previous_revision" && "$previous_revision" != "null" ]]; then
+              echo "Restoring previous 100% traffic revision: $previous_revision" >&2
+              az containerapp ingress traffic set \
+                --name "$CONTAINER_APP_NAME" \
+                --resource-group "$RESOURCE_GROUP" \
+                --revision-weight "${previous_revision}=100" || true
+            fi
+          }
+
           if revision_exists "$base_revision"; then
             existing_image="$(jq -r '.properties.template.containers[0].image // ""' /tmp/aca-existing-revision.json)"
             if [[ "$existing_image" == "$expected_image" ]]; then
@@ -199,27 +225,8 @@ jobs:
             echo "Base revision $base_revision already exists with a different image." >&2
             echo "existing=$existing_image" >&2
             echo "expected=$expected_image" >&2
-            echo "Using a rerun-safe revision suffix instead of failing on a duplicate suffix."
-            for candidate in "${base_suffix}r${GITHUB_RUN_ATTEMPT:-1}" "${base_suffix}r${GITHUB_RUN_ATTEMPT:-1}x2" "${base_suffix}r${GITHUB_RUN_ATTEMPT:-1}x3"; do
-              candidate_revision="${CONTAINER_APP_NAME}--${candidate}"
-              if revision_exists "$candidate_revision"; then
-                candidate_image="$(jq -r '.properties.template.containers[0].image // ""' /tmp/aca-existing-revision.json)"
-                if [[ "$candidate_image" == "$expected_image" ]]; then
-                  echo "Revision $candidate_revision already exists with the expected image; reusing it."
-                  cp /tmp/aca-existing-revision.json audit-artifacts/aca-main-deploy/revision.json
-                  printf '{"status":"reused","revision":"%s","image":"%s"}\n' "$candidate_revision" "$expected_image" \
-                    | tee audit-artifacts/aca-main-deploy/containerapp-update.json
-                  echo "revision_suffix=$candidate" >> "$GITHUB_OUTPUT"
-                  echo "revision_name=$candidate_revision" >> "$GITHUB_OUTPUT"
-                  exit 0
-                fi
-                continue
-              else
-                revision_suffix="$candidate"
-                revision_name="$candidate_revision"
-                break
-              fi
-            done
+            echo "Refusing to deploy a non-canonical rerun suffix to the shared ACA runtime." >&2
+            exit 1
           fi
 
           if revision_exists "$revision_name"; then
@@ -234,6 +241,20 @@ jobs:
               --image "$IMAGE" \
               --revision-suffix "$revision_suffix" \
               --output json | tee audit-artifacts/aca-main-deploy/containerapp-update.json; then
+              actual_latest="$(jq -r '.properties.latestRevisionName // ""' audit-artifacts/aca-main-deploy/containerapp-update.json)"
+              if [[ "$actual_latest" != "$revision_name" ]]; then
+                echo "ACA created an unexpected revision name during update." >&2
+                echo "expected=$revision_name" >&2
+                echo "actual=${actual_latest:-<empty>}" >&2
+                restore_previous_traffic
+                if [[ -n "$actual_latest" && "$actual_latest" != "null" ]]; then
+                  az containerapp revision deactivate \
+                    --name "$CONTAINER_APP_NAME" \
+                    --resource-group "$RESOURCE_GROUP" \
+                    --revision "$actual_latest" || true
+                fi
+                exit 1
+              fi
               echo "revision_suffix=$revision_suffix" >> "$GITHUB_OUTPUT"
               echo "revision_name=$revision_name" >> "$GITHUB_OUTPUT"
               exit 0
