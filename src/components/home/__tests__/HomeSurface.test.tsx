@@ -55,13 +55,16 @@ describe("HomeSurface — real React Context Explorer", () => {
   it("renders the two-pane Home KNOW chat + Context Explorer canvas", () => {
     render(<HomeSurface clientKey="apexretail" payload={payload} />);
     expect(screen.getByLabelText("Ava Home KNOW chat")).toBeInTheDocument();
-    expect(screen.getByText("Ask what is loaded.")).toBeInTheDocument();
     expect(screen.getByLabelText("Ask Home KNOW")).toBeInTheDocument();
     expect(screen.queryByLabelText("Ask Ava")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Expand chat")).toBeInTheDocument();
+    expect(screen.getByLabelText("Hide chat")).toBeInTheDocument();
+    expect(screen.getByLabelText("Lock chat left")).toBeInTheDocument();
+    expect(screen.getByLabelText("Lock chat right")).toBeInTheDocument();
+    expect(screen.getByLabelText("Lock chat top")).toBeInTheDocument();
+    expect(screen.getByLabelText("Lock chat bottom")).toBeInTheDocument();
     expect(screen.getByLabelText("Context Explorer tabs")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /How is our IT organization structured today/i }),
-    ).toBeInTheDocument();
+    expect(screen.queryByLabelText("Suggested Home KNOW questions")).not.toBeInTheDocument();
     // real per-tenant signal (not a fake row-dump)
     expect(
       screen.getByText("Inventory truth is the gate before omnichannel AI scale."),
@@ -83,5 +86,22 @@ describe("HomeSurface — real React Context Explorer", () => {
       screen.getByText("Applications, integrations, systems of record"),
     ).toBeInTheDocument();
     expect(screen.getByText("82%")).toBeInTheDocument();
+  });
+
+  it("can hide, restore, expand, and redock the chat shell", () => {
+    render(<HomeSurface clientKey="apexretail" payload={payload} />);
+    fireEvent.click(screen.getByLabelText("Hide chat"));
+    expect(screen.queryByLabelText("Ava Home KNOW chat")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("Show Ava chat"));
+    expect(screen.getByLabelText("Ava Home KNOW chat")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("Expand chat"));
+    expect(screen.getByLabelText("Restore chat size")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("Lock chat right"));
+    expect(screen.getByLabelText("Lock chat right")).toHaveClass("on");
+    fireEvent.click(screen.getByLabelText("Lock chat top"));
+    expect(screen.getByLabelText("Lock chat top")).toHaveClass("on");
+    fireEvent.click(screen.getByLabelText("Lock chat bottom"));
+    expect(screen.getByLabelText("Lock chat bottom")).toHaveClass("on");
   });
 });
