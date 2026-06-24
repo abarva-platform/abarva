@@ -3,6 +3,7 @@
 import type { CSSProperties } from 'react';
 import { useMemo, useState } from 'react';
 
+import { AvaAskMark } from '@/components/agent-answer/AvaAskMark';
 import type { AiControlTowerReadModel } from '@/lib/ai-control-tower/read-model';
 import type { EnterpriseContextOverview } from '@/lib/enterprise-context/intelligence-read-model';
 
@@ -340,6 +341,7 @@ export function ContextCorpusExplorerPage({
               submit(draft);
             }}
           >
+            <AvaAskMark style={styles.askMark} />
             <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Ask Ava..." aria-label="Ask Ava" />
             <button type="submit">Ask</button>
           </form>
@@ -617,8 +619,13 @@ const styles: Record<string, CSSProperties> = {
   },
   ask: {
     display: 'grid',
-    gridTemplateColumns: '1fr auto',
+    gridTemplateColumns: 'auto 1fr auto',
     gap: 8,
+    alignItems: 'center',
+  },
+  askMark: {
+    minWidth: 38,
+    fontSize: 22,
   },
   guardrail: {
     margin: 0,

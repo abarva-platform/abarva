@@ -56,6 +56,7 @@ import { CitationGapNotice } from "./CitationGapNotice";
 import { EvidenceBasis } from "./EvidenceBasis";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
+import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
@@ -959,6 +960,7 @@ export function AgentDock(props: AgentDockProps) {
               e.target.value = "";
             }}
           />
+          <AvaAskMark style={AVA_MARK_STYLE} />
           <textarea
             ref={inputRef}
             value={draft}
@@ -1956,6 +1958,12 @@ const ATTACH_BUTTON_STYLE: CSSProperties = {
   justifyContent: "center",
   cursor: "pointer",
   flexShrink: 0,
+};
+
+const AVA_MARK_STYLE: CSSProperties = {
+  minWidth: 36,
+  fontSize: 21,
+  alignSelf: "center",
 };
 
 const INPUT_STYLE: CSSProperties = {

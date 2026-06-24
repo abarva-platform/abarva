@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import {
   buildAiControlTowerContextPack,
   buildStructuredAnswerFromContextPack,
@@ -568,6 +569,7 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
               submitQuestion(draft);
             }}
           >
+            <AvaAskMark style={styles.askMark} />
             <input
               aria-label="Ask Ava"
               value={draft}
@@ -1423,8 +1425,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   askForm: {
     display: "grid",
-    gridTemplateColumns: "1fr auto",
+    gridTemplateColumns: "auto 1fr auto",
     gap: 8,
+    alignItems: "center",
+  },
+  askMark: {
+    minWidth: 38,
+    fontSize: 22,
   },
   askInput: {
     minWidth: 0,
