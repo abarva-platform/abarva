@@ -15,6 +15,7 @@ import type {
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { CHART } from "@/lib/programs/expert-kernel/exports/board-grade/svg-charts";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { repairHomeAnswerQuality } from "@/lib/home/know/home-answer-quality-gate";
 import { synthesizeHomeKnowProse } from "@/lib/home/know/home-know-synthesis";
 
 export interface HomeDimensionCoverageRow {
@@ -2105,7 +2106,7 @@ export function validateHomeKnowResponse(
     prose = "Here is what is loaded in Home context.";
     unsupportedClaimsRemoved += 1;
   }
-  return {
+  return repairHomeAnswerQuality({
     ...response,
     prose,
     safety: {
@@ -2119,7 +2120,7 @@ export function validateHomeKnowResponse(
         INTERNAL_CODE_RE.test(prose) ||
         lookupHasDecisionLanguage,
     },
-  };
+  });
 }
 
 function sanitizePublicHomeText(value: string): string {
