@@ -1,13 +1,13 @@
 "use client";
 
 import { useMemo, useState, type CSSProperties } from "react";
-import {
-  AgentDock,
-  type AttachmentRef,
-  type ChatMessage,
-  type SuggestedAction,
+import type {
+  AttachmentRef,
+  ChatMessage,
+  SuggestedAction,
 } from "@/components/agent/AgentDock";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
+import { AvaCanvas, AvaChatShell } from "@/components/ava-chat/AvaChatShell";
 import { EvidenceBasis } from "@/components/intelligence/EvidenceBasis";
 import { SHELL } from "@/lib/shell/shell-tokens";
 import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
@@ -43,7 +43,7 @@ type WorkspaceTab = "answer" | "evidence" | "experts" | "corpus" | "artifacts";
 const AVA_INTELLIGENCE_AGENT = {
   initials: "aVa",
   mark: "ava" as const,
-  name: "Ava",
+  name: "aVa",
   role: "Intelligence advisor",
 };
 
@@ -546,108 +546,29 @@ export function SentinelReasoningCards({
   })();
 
   const workspace = (
-    <section
-      data-testid="sentinel-reasoning-workspace"
-      style={{
-        minHeight: "min(760px, calc(100svh - 184px))",
-        background: SHELL.PAPER,
-        border: `1px solid ${SHELL.CARD_LINE}`,
-        borderRadius: 10,
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-      }}
+    <AvaCanvas
+      eyebrow="Intelligence canvas"
+      title="Explore the answer, evidence, experts, and corpus."
+      status={status === "streaming" ? "Working" : status}
+      tabs={tabItems}
+      activeTab={activeTab}
+      onTabChange={(tab) => setActiveTab(tab as WorkspaceTab)}
+      testId="sentinel-reasoning-workspace"
+      tabTestIdPrefix="intelligence-workspace-tab"
     >
-      <div
-        style={{
-          padding: "18px 20px",
-          borderBottom: `1px solid ${SHELL.CARD_LINE}`,
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 16,
-          alignItems: "flex-start",
-        }}
-      >
-        <div>
-          <div
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 10,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: SHELL.INK_MUTED,
-              marginBottom: 5,
-            }}
-          >
-            Intelligence canvas
-          </div>
-          <h2
-            style={{
-              margin: 0,
-              fontFamily: SHELL.SERIF,
-              fontSize: 24,
-              lineHeight: 1.15,
-              color: SHELL.INK,
-            }}
-          >
-            Explore the answer, evidence, experts, and corpus.
-          </h2>
-        </div>
-        <div
-          style={{
-            fontFamily: SHELL.MONO,
-            fontSize: 10,
-            color:
-              status === "error"
-                ? "#9F1D1D"
-                : status === "streaming"
-                  ? "#7A5A00"
-                  : SHELL.INK_MUTED,
-            textTransform: "uppercase",
-            letterSpacing: "0.12em",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {status === "streaming" ? "Working" : status}
-        </div>
-      </div>
-
-      <div style={TAB_ROW_STYLE} role="tablist" aria-label="Intelligence canvas tabs">
-        {tabItems.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={activeTab === tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            data-testid={`intelligence-workspace-tab-${tab.id}`}
-            style={{
-              ...TAB_BUTTON_STYLE,
-              ...(activeTab === tab.id ? TAB_BUTTON_ACTIVE_STYLE : null),
-            }}
-          >
-            {tab.label}
-            {typeof tab.count === "number" ? (
-              <span style={TAB_COUNT_STYLE}>{tab.count}</span>
-            ) : null}
-          </button>
-        ))}
-      </div>
-
-      <div style={WORKSPACE_BODY_STYLE} data-testid={`intelligence-workspace-panel-${activeTab}`}>
+      <div data-testid={`intelligence-workspace-panel-${activeTab}`}>
         {workspaceTabContent}
       </div>
-    </section>
+    </AvaCanvas>
   );
 
   return (
-    <AgentDock
-      agent={AVA_INTELLIGENCE_AGENT}
+    <AvaChatShell
       surface="intelligence"
-      variant="focused"
-      defaultMode="side-rail"
       defaultLeftPercent={32}
       minLeftPx={320}
+      agent={AVA_INTELLIGENCE_AGENT}
+      placeholder="Ask aVa about this enterprise context..."
       surfaceContext={{
         clientKey: initialClient,
         activeClient: initialClientDisplayName,
@@ -656,56 +577,11 @@ export function SentinelReasoningCards({
       suggestedActions={DEFAULT_SUGGESTIONS}
       thread={thread}
       onMessage={ask}
-      workspace={workspace}
-      isAgentBusy={status === "streaming"}
+      canvas={workspace}
+      isBusy={status === "streaming"}
     />
   );
 }
-
-const TAB_ROW_STYLE: CSSProperties = {
-  display: "flex",
-  gap: 8,
-  padding: "12px 20px",
-  borderBottom: `1px solid ${SHELL.CARD_LINE}`,
-  overflowX: "auto",
-  flexShrink: 0,
-};
-
-const TAB_BUTTON_STYLE: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 8,
-  border: `1px solid ${SHELL.CARD_LINE}`,
-  borderRadius: 999,
-  background: "#FFFFFF",
-  color: SHELL.INK_MUTED,
-  cursor: "pointer",
-  fontFamily: SHELL.SANS,
-  fontSize: 13,
-  fontWeight: 700,
-  padding: "8px 12px",
-  whiteSpace: "nowrap",
-};
-
-const TAB_BUTTON_ACTIVE_STYLE: CSSProperties = {
-  background: "#EAF5EE",
-  color: "#11613A",
-  borderColor: "rgba(17,97,58,0.18)",
-};
-
-const TAB_COUNT_STYLE: CSSProperties = {
-  fontFamily: SHELL.MONO,
-  fontSize: 10,
-  color: "inherit",
-  opacity: 0.72,
-};
-
-const WORKSPACE_BODY_STYLE: CSSProperties = {
-  padding: 20,
-  overflowY: "auto",
-  minHeight: 0,
-  flex: "1 1 auto",
-};
 
 const CANVAS_STACK_STYLE: CSSProperties = {
   display: "grid",
@@ -739,7 +615,7 @@ const INSIGHT_TILE_STYLE: CSSProperties = {
 const CARD_EYEBROW_STYLE: CSSProperties = {
   fontFamily: SHELL.MONO,
   fontSize: 10,
-  letterSpacing: "0.14em",
+  letterSpacing: 0,
   textTransform: "uppercase",
   color: "#14794C",
   marginBottom: 8,
@@ -791,7 +667,7 @@ const MONO_LABEL_STYLE: CSSProperties = {
   fontFamily: SHELL.MONO,
   fontSize: 10,
   color: SHELL.INK_MUTED,
-  letterSpacing: "0.12em",
+  letterSpacing: 0,
   textTransform: "uppercase",
 };
 
@@ -854,7 +730,7 @@ const PRIMARY_ACTION_STYLE: CSSProperties = {
   fontFamily: SHELL.MONO,
   fontSize: 11,
   fontWeight: 700,
-  letterSpacing: "0.08em",
+  letterSpacing: 0,
   textTransform: "uppercase",
   cursor: "pointer",
 };

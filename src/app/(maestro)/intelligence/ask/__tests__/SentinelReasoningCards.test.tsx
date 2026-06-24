@@ -75,7 +75,7 @@ describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
       "data-side",
       "left",
     );
-    expect(screen.getByText("Ava")).toBeInTheDocument();
+    expect(screen.getByText("aVa")).toBeInTheDocument();
     expect(screen.getAllByTestId("ava-ask-v-mark").length).toBeGreaterThan(0);
     expect(
       screen.getByText("Explore the answer, evidence, experts, and corpus."),
