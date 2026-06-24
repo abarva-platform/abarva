@@ -484,11 +484,11 @@ function shouldOpenEvidence(
 }
 
 function statusLabel(response: HomeKnowResponse): string {
-  if (response.handoff) return "Needs another workspace";
+  if (response.handoff) return "Best answered in Intelligence";
   if (response.answerStatus === "answered")
     return "Answered from loaded context";
-  if (response.answerStatus === "partial") return "Partially answered";
-  if (response.answerStatus === "no_data") return "Source gap";
+  if (response.answerStatus === "partial") return "Directional answer";
+  if (response.answerStatus === "no_data") return "Missing source detail";
   return "Review needed";
 }
 

@@ -32,14 +32,20 @@ This release replaces the old prose-first aVa answer shape with a governed `AvaA
 - Migrated Home KNOW conversion and Intelligence streamed answer events to emit `AvaAnswerPacket`.
 - Migrated the shared answer renderer to consume packet fields and typed artifacts.
 - Added answer-quality tests and docs under `docs/ava-answer-quality/`.
+- Hardened Home KNOW fallback prose and visible status labels after live crawl showed mechanical row-count language still leaking into the answer rail.
 
 ## QA / Validation
 
 - PASS: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`
 - PASS: focused Jest pack, 62 tests passed.
 - PASS: touched-file ESLint.
+- PASS: post-crawl language patch focused Jest, 29 tests passed.
+- PASS: post-crawl language patch TypeScript.
+- PASS: post-crawl language patch touched-file ESLint.
+- PASS: control-plane tenant-purity check.
 - Local browser check: confirmed localhost redirects to the one-time-code sign-in page because production Clerk auth states do not authenticate localhost.
-- Pending post-deploy: signed-in production browser crawl against `app.abarva.ai`.
+- Initial production crawl: signed-in SkyHarbor and Lakeshore sessions authenticated and showed no `Read:`, `Evidence:`, `Evidence and exhibits`, `home_know_lookup`, or raw semantic packet labels. Follow-up language hardening required and included in this release.
+- Pending post-deploy: rerun signed-in production browser crawl against `app.abarva.ai` after the post-crawl language patch deploys.
 
 ## Rollout Plan
 

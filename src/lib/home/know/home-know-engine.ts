@@ -1890,9 +1890,17 @@ function homeKnowProse(input: {
       : "Loaded IT portfolios and owner roles are available where present. Named individuals are only shown when the tenant supplied that field.";
   }
   const suffix = input.hasGaps
-    ? " The loaded data also has field gaps called out below."
+    ? " Some source fields are still incomplete, so the answer stays directional and calls out what needs confirmation."
     : "";
-  return `I found loaded context relevant to this question: ${orgCount} IT org row(s), ${appCount} application row(s), ${vendorCount} vendor row(s), and ${budgetCount} budget row(s).${suffix}`;
+  const support = readableList([
+    orgCount > 0 ? "IT organization" : "",
+    appCount > 0 ? "application landscape" : "",
+    vendorCount > 0 ? "vendor landscape" : "",
+    budgetCount > 0 ? "budget context" : "",
+  ]);
+  return support
+    ? `The enterprise context has enough ${support} detail to frame this answer.${suffix}`
+    : `The enterprise context has partial support for this question.${suffix}`;
 }
 
 function readableList(values: string[]): string | null {
