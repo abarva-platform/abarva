@@ -86,6 +86,7 @@ describe("AvaAsk — canonical ask reused across surfaces", () => {
 
     const askBox = screen.getByLabelText("Ask Ava");
     expect(askBox.tagName).toBe("TEXTAREA");
+    expect(screen.getByTestId("ava-ask-mark")).toHaveTextContent("aVa");
 
     fireEvent.change(askBox, {
       target: { value: "which AI investments\nbefore holiday readiness?" },
