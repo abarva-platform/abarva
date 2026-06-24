@@ -55,7 +55,7 @@ import { AgentResponseParts } from "./AgentResponseParts";
 import { CitationGapNotice } from "./CitationGapNotice";
 import { EvidenceBasis } from "./EvidenceBasis";
 import type { AskSource } from "@/lib/intelligence/ask/types";
-import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 
@@ -198,7 +198,7 @@ export interface ChatMessage {
    *  suppressed because the answer is visibly grounded. */
   citations?: AskSource[];
   /** Structured Ava answer channels (tables/charts/graphs) emitted by SCB surfaces. */
-  agentAnswer?: AgentAnswer;
+  agentAnswer?: AvaAnswerPacket;
 }
 
 export interface AttachmentRef {
@@ -884,7 +884,9 @@ export function AgentDock(props: AgentDockProps) {
                   <div style={FEEDBACK_ROW_STYLE}>
                     <SynthesisFeedbackWidget
                       synthesisId={turn.feedbackEventId}
-                      surface={surface === "intelligence" ? "sentinel" : "program"}
+                      surface={
+                        surface === "intelligence" ? "sentinel" : "program"
+                      }
                     />
                   </div>
                 ) : null}

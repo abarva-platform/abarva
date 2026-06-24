@@ -3,13 +3,13 @@
 // Canonical "Ask Ava" — the ONE ask component every surface should use.
 //
 // It posts to the shared engine (/api/intelligence/ask), streams the answer, and
-// renders it through the canonical AgentAnswerRenderer — prose + tables + charts +
-// citations + named experts. No surface-local answer assembly, no per-surface
+// renders it through the canonical Ava packet renderer — direct answer + exhibits +
+// citations + named experts where allowed. No surface-local answer assembly, no per-surface
 // renderer. Drop this into Home, Intelligence, Tower, Source, Moves and every
 // surface answers (and renders) identically. This is what retires the static
 // Home mock + its fake `answerForAsk`.
 //
-// Note on exhibits: this renders whatever AgentAnswer the engine emits. Exhibit
+// Note on exhibits: this renders whatever AvaAnswerPacket the engine emits. Exhibit
 // *quality* (e.g. not scraping figures out of prose) is the engine's job — fix it
 // once, in the engine, and every surface using AvaAsk benefits at once.
 
@@ -17,7 +17,7 @@ import { useCallback, useRef, useState } from "react";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
-import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import type { AskSurfaceContext } from "@/lib/intelligence/ask/types";
 
 const CSS = `
@@ -50,7 +50,7 @@ type Evt = {
   text?: string;
   contributingExperts?: { id: string; name: string }[];
   followups?: string[];
-  answer?: AgentAnswer;
+  answer?: AvaAnswerPacket;
 };
 
 type AvaTurn = {
@@ -59,7 +59,7 @@ type AvaTurn = {
   answer: string;
   experts: { id: string; name: string }[];
   followups: string[];
-  agentAnswer: AgentAnswer | null;
+  agentAnswer: AvaAnswerPacket | null;
   fetching: boolean;
 };
 
@@ -104,7 +104,9 @@ export function AvaAsk({
           : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const updateTurn = (patch: Partial<Omit<AvaTurn, "id" | "question">>) => {
         setTurns((current) =>
-          current.map((turn) => (turn.id === turnId ? { ...turn, ...patch } : turn)),
+          current.map((turn) =>
+            turn.id === turnId ? { ...turn, ...patch } : turn,
+          ),
         );
       };
       setQuery("");
@@ -269,7 +271,8 @@ export function AvaAsk({
                   <AgentAnswerRenderer
                     answer={{
                       ...turn.agentAnswer,
-                      prose: turn.agentAnswer.prose || turn.answer || "",
+                      directAnswer:
+                        turn.agentAnswer.directAnswer || turn.answer || "",
                     }}
                   />
                 ) : (

@@ -1,7 +1,7 @@
 // Shared Context Brain — answer engine spine (W1.2 + W1.3).
 //
 // One server-side flow: route → assemble context bundle → summon expert(s) →
-// synthesize → shape into the universal AgentAnswer. Grounding doctrine is
+// synthesize → shape into the universal AvaAnswerPacket. Grounding doctrine is
 // CONFIDENT SYNTHESIS — we answer from expertise even when tenant evidence is
 // thin, mark HOW we know via groundingMode, and only hard-block on cross-tenant
 // leakage. There is NO blocking evidence gate.
@@ -12,15 +12,23 @@
 // synthesizer without this file importing them.
 
 import type { ContextBundle } from "@/lib/knowledge/context-broker/types";
-import { routeQuestion, type RoutingDecision } from "@/lib/intelligence/answer/router";
+import {
+  routeQuestion,
+  type RoutingDecision,
+} from "@/lib/intelligence/answer/router";
+import { composeAvaAnswer } from "@/lib/ava-answer/composeAvaAnswer";
 import type {
-  AgentAnswer,
-  AgentSurface,
+  AvaAnswerPacket,
+  AnswerChart,
   AnswerCitation,
-  AnswerConfidence,
+  AvaConfidence,
+  AnswerGraph,
+  AnswerTable,
   CitationSourceClass,
-  GroundingMode,
-} from "@/lib/intelligence/answer/agent-answer";
+} from "@/lib/ava-answer/contract";
+import type { AvaNextStep, AvaSurface } from "@/lib/ava-answer/contract";
+
+type GroundingMode = "tenant-evidence" | "industry-pattern" | "mixed";
 
 /** Map the broker's provenance source-class to the answer citation taxonomy. */
 function mapSourceClass(
@@ -41,7 +49,7 @@ function mapSourceClass(
   }
 }
 
-function bandFromScore(score: number | undefined): AnswerConfidence | undefined {
+function bandFromScore(score: number | undefined): AvaConfidence | undefined {
   if (score === undefined) return undefined;
   if (score >= 0.66) return "high";
   if (score >= 0.33) return "medium";
@@ -65,19 +73,23 @@ export function groundingModeFromBundle(bundle: ContextBundle): GroundingMode {
   const hasTenant =
     (bundle.facts?.length ?? 0) > 0 ||
     (bundle.provenance ?? []).some(
-      (p) => p.sourceClass === "private_client_data" || p.sourceClass === "tenant_admin_upload",
+      (p) =>
+        p.sourceClass === "private_client_data" ||
+        p.sourceClass === "tenant_admin_upload",
     );
   const hasIndustry =
     (bundle.corpusPatterns?.length ?? 0) > 0 ||
     (bundle.worldviewChunks?.length ?? 0) > 0 ||
-    (bundle.provenance ?? []).some((p) => p.sourceClass === "corpus" || p.sourceClass === "pattern_catalog");
+    (bundle.provenance ?? []).some(
+      (p) => p.sourceClass === "corpus" || p.sourceClass === "pattern_catalog",
+    );
   if (hasTenant && hasIndustry) return "mixed";
   if (hasTenant) return "tenant-evidence";
   return "industry-pattern"; // confident synthesis fallback
 }
 
 export interface AssembleAgentAnswerArgs {
-  surface: AgentSurface;
+  surface: AvaSurface;
   routing: RoutingDecision;
   bundle: ContextBundle;
   /** The synthesized narrative (from the model, or empty when blocked). */
@@ -85,47 +97,102 @@ export interface AssembleAgentAnswerArgs {
   /** True only when the cross-tenant fence fired. */
   crossTenantBlocked?: boolean;
   /** Structured channels, when a renderer recipe produced them (later slices). */
-  tables?: AgentAnswer["tables"];
-  charts?: AgentAnswer["charts"];
-  graphs?: AgentAnswer["graphs"];
+  tables?: AnswerTable[];
+  charts?: AnswerChart[];
+  graphs?: AnswerGraph[];
   gaps?: string[];
-  recommendedActions?: AgentAnswer["recommendedActions"];
+  recommendedActions?: AvaNextStep[];
 }
 
 /**
  * Pure shaping step: turn (routing, bundle, prose) into the universal
- * AgentAnswer. Deterministic + side-effect-free so it is unit-testable.
+ * AvaAnswerPacket. Deterministic + side-effect-free so it is unit-testable.
  */
-export function assembleAgentAnswer(args: AssembleAgentAnswerArgs): AgentAnswer {
+export function assembleAgentAnswer(
+  args: AssembleAgentAnswerArgs,
+): AvaAnswerPacket {
   const { surface, routing, bundle, prose, crossTenantBlocked = false } = args;
   const groundingMode = groundingModeFromBundle(bundle);
   // Confident-synthesis confidence: tenant-grounded answers rate higher than
   // pure industry-pattern ones, but we never refuse on either.
-  const confidence: AnswerConfidence =
-    groundingMode === "tenant-evidence" ? "high" : groundingMode === "mixed" ? "medium" : "low";
+  const confidence: AvaConfidence =
+    groundingMode === "tenant-evidence"
+      ? "high"
+      : groundingMode === "mixed"
+        ? "medium"
+        : "low";
 
-  return {
-    engineVersion: "agent-answer/v1",
+  return composeAvaAnswer({
     surface,
-    expertId: routing.experts[0]?.id ?? null,
-    contributingExperts: routing.experts,
-    prose: crossTenantBlocked ? "" : prose,
-    tables: args.tables ?? [],
-    charts: args.charts ?? [],
-    graphs: args.graphs ?? [],
+    mode:
+      surface === "home"
+        ? "KNOW"
+        : surface === "moves"
+          ? "EXECUTE"
+          : surface === "source"
+            ? "SOURCE"
+            : surface === "tower"
+              ? "CONTROL"
+              : "ANALYZE",
+    tenantKey: bundle.tenantKey ?? "unknown",
+    question: bundle.query,
+    intent: routing.outputShape,
+    status: crossTenantBlocked ? "blocked" : "answered",
+    directAnswer: crossTenantBlocked ? "" : prose,
+    interpretation:
+      surface === "intelligence"
+        ? "This is an advisory interpretation; tenant claims still need source grounding before action."
+        : undefined,
+    artifacts: [
+      ...(args.tables ?? []).map((table) => ({
+        ...table,
+        artifact: "table" as const,
+      })),
+      ...(args.charts ?? []).map((chart) => ({
+        ...chart,
+        artifact: "chart" as const,
+      })),
+      ...(args.graphs ?? []).map((graph) => ({
+        ...graph,
+        artifact: "graph" as const,
+      })),
+    ],
     citations: crossTenantBlocked ? [] : citationsFromBundle(bundle),
-    gaps: args.gaps ?? [],
-    recommendedActions: args.recommendedActions ?? [],
-    groundingMode,
-    confidence,
-    limits: [],
-    crossTenantBlocked,
-  };
+    gaps: (args.gaps ?? []).map((gap, index) => ({
+      id: `gap-${index + 1}`,
+      label: "Gap",
+      detail: gap,
+    })),
+    nextSteps: args.recommendedActions ?? [],
+    expertsUsed: routing.experts,
+    corpusUsed:
+      groundingMode === "tenant-evidence"
+        ? []
+        : [
+            {
+              id: "corpus-grounding",
+              label:
+                groundingMode === "mixed"
+                  ? "Tenant context plus corpus grounding"
+                  : "Corpus grounding",
+              confidence,
+            },
+          ],
+    retrievalSummary: {
+      substrate:
+        groundingMode === "tenant-evidence" ? "module_read_model" : "corpus",
+      factCount: bundle.facts.length,
+      sourceCount: bundle.provenance.length,
+      hasTenantFacts: groundingMode !== "industry-pattern",
+      hasCorpus: groundingMode !== "tenant-evidence",
+      hasExperts: routing.experts.length > 0,
+    },
+  });
 }
 
 export interface SharedBrainInput {
   query: string;
-  surface: AgentSurface;
+  surface: AvaSurface;
   tenantKey?: string;
   /** Tenant industry, when known — improves expert routing. */
   industry?: string;
@@ -136,7 +203,10 @@ export interface SharedBrainInput {
  * and the Claude synthesizer; tests supply stubs.
  */
 export interface SharedBrainDeps {
-  assembleBundle: (input: { query: string; tenantKey?: string }) => Promise<ContextBundle>;
+  assembleBundle: (input: {
+    query: string;
+    tenantKey?: string;
+  }) => Promise<ContextBundle>;
   synthesize: (ctx: {
     query: string;
     routing: RoutingDecision;
@@ -153,10 +223,23 @@ export interface SharedBrainDeps {
 export async function answerWithSharedBrain(
   input: SharedBrainInput,
   deps: SharedBrainDeps,
-): Promise<AgentAnswer> {
-  const routing = routeQuestion({ query: input.query, industry: input.industry });
-  const bundle = await deps.assembleBundle({ query: input.query, tenantKey: input.tenantKey });
+): Promise<AvaAnswerPacket> {
+  const routing = routeQuestion({
+    query: input.query,
+    industry: input.industry,
+  });
+  const bundle = await deps.assembleBundle({
+    query: input.query,
+    tenantKey: input.tenantKey,
+  });
   const prose = await deps.synthesize({ query: input.query, routing, bundle });
-  const crossTenantBlocked = deps.detectCrossTenant?.(prose, input.tenantKey) ?? false;
-  return assembleAgentAnswer({ surface: input.surface, routing, bundle, prose, crossTenantBlocked });
+  const crossTenantBlocked =
+    deps.detectCrossTenant?.(prose, input.tenantKey) ?? false;
+  return assembleAgentAnswer({
+    surface: input.surface,
+    routing,
+    bundle,
+    prose,
+    crossTenantBlocked,
+  });
 }

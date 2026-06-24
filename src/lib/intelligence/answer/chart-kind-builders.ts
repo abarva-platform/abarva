@@ -14,7 +14,7 @@
 // (asserted by the W4.3 test). Where the board-grade kit has no exact generic
 // builder (bar, line), the closest honest stand-in is used and noted.
 
-import type { AnswerChartKind } from "@/lib/intelligence/answer/agent-answer";
+import type { AnswerChartKind } from "@/lib/ava-answer/contract";
 
 export const CHART_KIND_TO_BUILDER: Record<AnswerChartKind, string> = {
   bar: "opportunityRangeBar", // no generic categorical bar in the kit; ranked horizontal bars are the closest

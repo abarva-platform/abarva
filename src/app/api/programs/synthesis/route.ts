@@ -6,8 +6,11 @@ import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { getActiveClientRow } from "@/lib/active-client";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { summonExpertsForQuery } from "@/lib/intelligence/answer/expert-grounding";
-import type { ExpertRef } from "@/lib/intelligence/answer/agent-answer";
-import { APEX_RETAIL_PROGRAM_INSTANCES, APX_CDP_2026_INSTANCE } from "@/lib/programs/program-instances";
+import type { ExpertRef } from "@/lib/ava-answer/contract";
+import {
+  APEX_RETAIL_PROGRAM_INSTANCES,
+  APX_CDP_2026_INSTANCE,
+} from "@/lib/programs/program-instances";
 import {
   buildProgramSynthesisContext,
   programInstanceStateHash,
@@ -23,7 +26,7 @@ import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/
 // In production this would be Redis; for demo an in-process cache is sufficient.
 const synthesisCache = new Map<string, string>();
 const cacheCreatedAt = new Map<string, number>();
-registerSynthesisCache('programs', synthesisCache, cacheCreatedAt);
+registerSynthesisCache("programs", synthesisCache, cacheCreatedAt);
 
 const NEXUS_SYNTHESIS_VOICE_AND_TASK = `You are Ava, AbarVa's program orchestrator on the Programs surface.
 
@@ -48,7 +51,7 @@ function buildNexusSynthesisPrompt(userContextBlock: string): string {
     AGENT_DEMO_SYSTEM_BLOCK,
   ]
     .filter((s) => s && s.trim().length > 0)
-    .join('\n\n');
+    .join("\n\n");
 }
 
 export async function POST(request: Request) {
@@ -60,11 +63,11 @@ export async function POST(request: Request) {
   // unknown live DB UUID to APX_CDP_2026_INSTANCE; that contaminates
   // user-created programs with unrelated CDP/BAFO/Vendor C recommendations.
   const instance =
-    APEX_RETAIL_PROGRAM_INSTANCES.find(i => i.id === programId) ??
+    APEX_RETAIL_PROGRAM_INSTANCES.find((i) => i.id === programId) ??
     (body.programId ? null : APX_CDP_2026_INSTANCE);
   if (!instance) {
     return Response.json(
-      { error: 'program_synthesis_not_available' },
+      { error: "program_synthesis_not_available" },
       { status: 404 },
     );
   }
@@ -77,13 +80,13 @@ export async function POST(request: Request) {
   const stateHash = programInstanceStateHash(instance);
   const cacheKey = `${instance.id}:${stateHash}:${instance.patternVersion}:nexus`;
   const etag = computeSynthesisEtag(cacheKey);
-  const ifNoneMatch = request.headers.get('if-none-match');
+  const ifNoneMatch = request.headers.get("if-none-match");
   const cached = synthesisCache.get(cacheKey);
 
   // Conditional GET: client already has this exact synthesis cached.
   if (cached && ifNoneMatch && ifNoneMatch === etag) {
     const event = recordSynthesisEvent({
-      surface: 'programs',
+      surface: "programs",
       instanceId: instance.id,
       patternId: instance.patternId,
       cacheHit: true,
@@ -105,7 +108,7 @@ export async function POST(request: Request) {
 
   if (cached) {
     const event = recordSynthesisEvent({
-      surface: 'programs',
+      surface: "programs",
       instanceId: instance.id,
       patternId: instance.patternId,
       cacheHit: true,
@@ -141,21 +144,24 @@ export async function POST(request: Request) {
     `Gate status: ${snap.gateStatus}.`,
     `Evidence items on record: ${snap.evidenceCount}.`,
     snap.openBlockers.length > 0
-      ? `Open blockers: ${snap.openBlockers.join('; ')}.`
-      : 'No open blockers recorded.',
+      ? `Open blockers: ${snap.openBlockers.join("; ")}.`
+      : "No open blockers recorded.",
     snap.linkedSourceEvents.length > 0
       ? `Programme dependency: ${snap.linkedSourceEvents[0].name} — ${snap.linkedSourceEvents[0].type}.`
-      : '',
-    'Provide Nexus\'s 2–3 sentence next-move recommendation.',
+      : "",
+    "Provide Nexus's 2–3 sentence next-move recommendation.",
   ]
     .filter(Boolean)
-    .join('\n');
+    .join("\n");
 
   // F0.2 Layer 0
   const userContextBlock = await getUserContextPromptBlock();
   const activeClient = await getActiveClientRow();
   if (!activeClient) {
-    return Response.json({ error: 'no_client', detail: 'No active client for AI egress policy.' }, { status: 403 });
+    return Response.json(
+      { error: "no_client", detail: "No active client for AI egress policy." },
+      { status: 403 },
+    );
   }
 
   // Shared Context Brain (flag-gated, default OFF). When on for the tenant,
@@ -164,27 +170,30 @@ export async function POST(request: Request) {
   // identical to the prior path (groundedUserMessage === userMessage).
   const sharedMovesOn = isFeatureEnabled(
     { clientKey: activeClient.key },
-    'scb_shared_engine_moves',
+    "scb_shared_engine_moves",
   );
   const expertGrounding = sharedMovesOn
     ? summonExpertsForQuery({ query: snap.name, clientKey: activeClient.key })
-    : { experts: [] as ExpertRef[], groundingBlock: '' };
+    : { experts: [] as ExpertRef[], groundingBlock: "" };
   const groundedUserMessage = expertGrounding.groundingBlock
     ? `${expertGrounding.groundingBlock}\n\n${userMessage}`
     : userMessage;
 
   const preflight = await preflightAnthropicDirectClient({
     tenantId: activeClient.id,
-    workflow: 'programs-synthesis',
-    model: 'claude-sonnet-4-6',
-    prompt: [buildNexusSynthesisPrompt(userContextBlock), groundedUserMessage].join('\n\n'),
-    dataClass: 'confidential',
-    metadata: { programId: instance.id, surface: 'programs' },
+    workflow: "programs-synthesis",
+    model: "claude-sonnet-4-6",
+    prompt: [
+      buildNexusSynthesisPrompt(userContextBlock),
+      groundedUserMessage,
+    ].join("\n\n"),
+    dataClass: "confidential",
+    metadata: { programId: instance.id, surface: "programs" },
   });
   if (!preflight.ok) {
     return new Response(preflight.reason, {
       status: 403,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
   }
   const client = preflight.client;
@@ -197,10 +206,10 @@ export async function POST(request: Request) {
   });
 
   const encoder = new TextEncoder();
-  let accumulated = '';
+  let accumulated = "";
 
   const event = recordSynthesisEvent({
-    surface: 'programs',
+    surface: "programs",
     instanceId: instance.id,
     patternId: instance.patternId,
     cacheHit: false,

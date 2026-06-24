@@ -12,11 +12,19 @@ import React from "react";
 import { ReadableStream } from "node:stream/web";
 import { TextDecoder, TextEncoder } from "node:util";
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { AvaAsk } from "@/components/agent-answer/AvaAsk";
 
 jest.mock("@/lib/agent/markdownRenderer", () => ({
-  AgentMarkdown: ({ text }: { text: string }) => <div className="md">{text}</div>,
+  AgentMarkdown: ({ text }: { text: string }) => (
+    <div className="md">{text}</div>
+  ),
 }));
 
 function streamFromLines(lines: string[]): ReadableStream<Uint8Array> {
@@ -35,24 +43,34 @@ describe("AvaAsk — canonical ask reused across surfaces", () => {
     Object.assign(globalThis, { TextDecoder, TextEncoder });
   });
 
-  it("POSTs to the shared engine and renders the AgentAnswer table once (no double header)", async () => {
+  it("POSTs to the shared engine and renders the Ava answer table once (no double header)", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
       body: streamFromLines([
-        JSON.stringify({ type: "delta", text: "Inventory truth gates the holiday investments." }),
+        JSON.stringify({
+          type: "delta",
+          text: "Inventory truth gates the holiday investments.",
+        }),
         JSON.stringify({
           type: "agent-answer",
           answer: {
-            engineVersion: "agent-answer/v1",
             surface: "intelligence",
-            expertId: "xp.retail.operations",
-            contributingExperts: [
+            mode: "ANALYZE",
+            tenantKey: "apex-retail",
+            question: "Which bets?",
+            intent: "table",
+            status: "answered",
+            directAnswer: "",
+            factsUsed: [],
+            metricsUsed: [],
+            relationshipsUsed: [],
+            expertsUsed: [
               { id: "xp.retail.operations", name: "Retail Operations Expert" },
             ],
-            prose: "",
-            tables: [
+            artifacts: [
               {
+                artifact: "table",
                 id: "t1",
                 title: "AI bets",
                 columns: [
@@ -63,15 +81,28 @@ describe("AvaAsk — canonical ask reused across surfaces", () => {
                 citationIds: ["c1"],
               },
             ],
-            charts: [],
-            graphs: [],
-            citations: [{ id: "c1", label: "Enterprise context", sourceClass: "tenant-fact" }],
+            citations: [
+              {
+                id: "c1",
+                label: "Enterprise context",
+                sourceClass: "tenant-fact",
+              },
+            ],
             gaps: [],
-            recommendedActions: [],
-            groundingMode: "mixed",
-            confidence: "medium",
-            limits: [],
-            crossTenantBlocked: false,
+            caveats: [],
+            nextSteps: [],
+            quality: {
+              confidence: "medium",
+              evidenceStrength: "partial",
+              tenantGrounding: "partial",
+              answerCompleteness: "complete",
+            },
+            safety: {
+              tenantFencePassed: true,
+              rawIdsSuppressed: true,
+              forbiddenLanguagePassed: true,
+              unsupportedClaimsBlocked: true,
+            },
           },
         }),
         JSON.stringify({ type: "done" }),
@@ -81,7 +112,10 @@ describe("AvaAsk — canonical ask reused across surfaces", () => {
     global.fetch = fetchMock as typeof fetch;
 
     render(
-      <AvaAsk client="apex-retail" surfaceContext={{ activeTab: "home", clientKey: "apex-retail" }} />,
+      <AvaAsk
+        client="apex-retail"
+        surfaceContext={{ activeTab: "home", clientKey: "apex-retail" }}
+      />,
     );
 
     const askBox = screen.getByLabelText("Ask Ava");
@@ -111,7 +145,9 @@ describe("AvaAsk — canonical ask reused across surfaces", () => {
 
     // Canonical render: the table renders through the ONE renderer.
     await waitFor(() => expect(screen.getByRole("table")).toBeInTheDocument());
-    expect(within(screen.getByRole("table")).getByText("AI bet")).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("table")).getByText("AI bet"),
+    ).toBeInTheDocument();
     expect(screen.getByText("$14,000,000")).toBeInTheDocument();
 
     // Exactly one "Ava ·" header — no double-render.
@@ -125,7 +161,10 @@ describe("AvaAsk — canonical ask reused across surfaces", () => {
         ok: true,
         status: 200,
         body: streamFromLines([
-          JSON.stringify({ type: "delta", text: "First answer stays visible." }),
+          JSON.stringify({
+            type: "delta",
+            text: "First answer stays visible.",
+          }),
           JSON.stringify({ type: "done" }),
           "",
         ]),
@@ -134,7 +173,10 @@ describe("AvaAsk — canonical ask reused across surfaces", () => {
         ok: true,
         status: 200,
         body: streamFromLines([
-          JSON.stringify({ type: "delta", text: "Second answer appears below it." }),
+          JSON.stringify({
+            type: "delta",
+            text: "Second answer appears below it.",
+          }),
           JSON.stringify({ type: "done" }),
           "",
         ]),
@@ -142,20 +184,27 @@ describe("AvaAsk — canonical ask reused across surfaces", () => {
     global.fetch = fetchMock as typeof fetch;
 
     render(
-      <AvaAsk client="apex-retail" surfaceContext={{ activeTab: "home", clientKey: "apex-retail" }} />,
+      <AvaAsk
+        client="apex-retail"
+        surfaceContext={{ activeTab: "home", clientKey: "apex-retail" }}
+      />,
     );
 
     const askBox = screen.getByLabelText("Ask Ava");
     fireEvent.change(askBox, { target: { value: "first question" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 
-    expect(await screen.findByText("First answer stays visible.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("First answer stays visible."),
+    ).toBeInTheDocument();
     expect(askBox).toHaveValue("");
 
     fireEvent.change(askBox, { target: { value: "second question" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 
-    expect(await screen.findByText("Second answer appears below it.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Second answer appears below it."),
+    ).toBeInTheDocument();
     expect(screen.getByText("first question")).toBeInTheDocument();
     expect(screen.getByText("second question")).toBeInTheDocument();
     expect(screen.getByText("First answer stays visible.")).toBeInTheDocument();

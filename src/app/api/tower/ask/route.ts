@@ -19,7 +19,7 @@ import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { getActiveClientRow } from "@/lib/active-client";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { summonExpertsForQuery } from "@/lib/intelligence/answer/expert-grounding";
-import type { ExpertRef } from "@/lib/intelligence/answer/agent-answer";
+import type { ExpertRef } from "@/lib/ava-answer/contract";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
@@ -69,11 +69,17 @@ export async function POST(request: Request) {
     return tenancyErrorResponse(err);
   }
 
-  const body = (await request.json().catch(() => ({}))) as { question?: unknown };
-  const question = typeof body.question === "string" ? body.question.trim() : "";
+  const body = (await request.json().catch(() => ({}))) as {
+    question?: unknown;
+  };
+  const question =
+    typeof body.question === "string" ? body.question.trim() : "";
   if (!question) {
     return new Response(
-      JSON.stringify({ error: "missing_question", detail: "Body must include a non-empty 'question' string." }),
+      JSON.stringify({
+        error: "missing_question",
+        detail: "Body must include a non-empty 'question' string.",
+      }),
       { status: 400, headers: { "Content-Type": "application/json" } },
     );
   }

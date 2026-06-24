@@ -34,7 +34,7 @@ import {
 } from "@/components/agent/AgentDock";
 import type { ChatMessage } from "./types";
 import type { AskSource } from "@/lib/intelligence/ask/types";
-import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 
 const LEGACY_STORAGE_KEY = "abarva.intelligence.chat-mode";
 const LEGACY_MIGRATED_FLAG = "abarva.intelligence.chat-mode.migrated";
@@ -202,7 +202,7 @@ export function SentinelChat({
             error?: string;
             telemetryEventId?: string;
             sources?: AskSource[];
-            answer?: AgentAnswer;
+            answer?: AvaAnswerPacket;
           };
           const delta = event.delta ?? event.text;
           if (

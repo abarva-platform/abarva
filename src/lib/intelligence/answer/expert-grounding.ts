@@ -13,7 +13,7 @@
 import { routeQuestion } from "@/lib/intelligence/answer/router";
 import { getExpertById } from "@/lib/intelligence/expert-pack/registry";
 import type { ExpertPack } from "@/lib/intelligence/expert-pack/expert-pack";
-import type { ExpertRef } from "@/lib/intelligence/answer/agent-answer";
+import type { ExpertRef } from "@/lib/ava-answer/contract";
 import { CLIENT_KEY_TO_INDUSTRY_CODE } from "@/lib/client-config";
 import { appClientKeyForTenant } from "@/lib/tenant/aliases";
 

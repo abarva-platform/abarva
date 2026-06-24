@@ -6,13 +6,12 @@ import type {
 } from "@/lib/intelligence/ask/types";
 import type { RoutingDecision } from "@/lib/intelligence/answer/router";
 import type {
-  AgentAnswer,
   AnswerChart,
   AnswerCitation,
   AnswerGraph,
   AnswerTable,
   AnswerTableColumn,
-} from "@/lib/intelligence/answer/agent-answer";
+} from "@/lib/ava-answer/contract";
 import { CHART } from "@/lib/programs/expert-kernel/exports/board-grade/svg-charts";
 import { enforceDecisionGradeAnswer } from "@/lib/intelligence/ask/response-policy";
 
@@ -106,7 +105,9 @@ function compactEvidenceSignal(excerpt: string | undefined): string {
   return text.length > 180 ? `${text.slice(0, 177).trimEnd()}...` : text;
 }
 
-function decisionEvidenceTable(citations: AnswerCitation[]): AnswerTable | null {
+function decisionEvidenceTable(
+  citations: AnswerCitation[],
+): AnswerTable | null {
   if (citations.length === 0) return null;
   return {
     id: "answer-decision-evidence",
@@ -124,8 +125,7 @@ function decisionEvidenceTable(citations: AnswerCitation[]): AnswerTable | null 
       nextMove:
         "Validate this cited evidence before approving the decision or moving it into Source, Tower, or Moves.",
     })),
-    note:
-      "Rendered because the user asked for a table or visual and Ava did not emit a valid row/column exhibit. Rows are cited evidence signals, not inferred chart data.",
+    note: "Rendered because the user asked for a table or visual and Ava did not emit a valid row/column exhibit. Rows are cited evidence signals, not inferred chart data.",
     citationIds: citations.map((citation) => citation.id),
   };
 }
@@ -158,7 +158,11 @@ function keyForColumn(label: string, index: number): string {
 
 function formatForColumn(label: string): AnswerTableColumn["format"] {
   const normalized = label.toLowerCase();
-  if (/\b(cost|spend|investment|value|impact|exposure|benefit|amount|revenue|margin)\b/.test(normalized)) {
+  if (
+    /\b(cost|spend|investment|value|impact|exposure|benefit|amount|revenue|margin)\b/.test(
+      normalized,
+    )
+  ) {
     return "currency";
   }
   if (/%|percent|rate|pct/.test(normalized)) return "percent";
@@ -204,10 +208,7 @@ function markdownTablesFromProse(
         if (cells.length !== header.length) break;
         rows.push(
           Object.fromEntries(
-            columns.map((column, index) => [
-              column.key,
-              cells[index] ?? "",
-            ]),
+            columns.map((column, index) => [column.key, cells[index] ?? ""]),
           ),
         );
         cursor += 1;
@@ -215,11 +216,13 @@ function markdownTablesFromProse(
       if (rows.length > 0) {
         tables.push({
           id: `answer-markdown-table-${tables.length + 1}`,
-          title: tables.length === 0 ? "Answer Table" : `Answer Table ${tables.length + 1}`,
+          title:
+            tables.length === 0
+              ? "Answer Table"
+              : `Answer Table ${tables.length + 1}`,
           columns,
           rows,
-          note:
-            "Rendered from a Markdown table emitted in Ava's answer; values are not inferred from surrounding prose.",
+          note: "Rendered from a Markdown table emitted in Ava's answer; values are not inferred from surrounding prose.",
           citationIds,
         });
         i = cursor - 1;
@@ -230,7 +233,10 @@ function markdownTablesFromProse(
   }
 
   return {
-    prose: keep.join("\n").replace(/\n{3,}/g, "\n\n").trim(),
+    prose: keep
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim(),
     tables,
   };
 }
@@ -267,7 +273,10 @@ function readInlineTableRows(
 
   for (;;) {
     for (;;) {
-      while (cursor < textAfterSeparator.length && /\s/.test(textAfterSeparator[cursor] ?? "")) {
+      while (
+        cursor < textAfterSeparator.length &&
+        /\s/.test(textAfterSeparator[cursor] ?? "")
+      ) {
         cursor += 1;
       }
       if (textAfterSeparator[cursor] !== "|") break;
@@ -295,7 +304,10 @@ function readInlineTableRows(
       cursor = nextPipe + 1;
     }
 
-    if (cells.some((cell) => cell.length === 0) || isMarkdownSeparatorRow(cells)) {
+    if (
+      cells.some((cell) => cell.length === 0) ||
+      isMarkdownSeparatorRow(cells)
+    ) {
       cursor = rowStart - 1;
       break;
     }
@@ -354,11 +366,13 @@ function inlineMarkdownTablesFromProse(
     }
     tables.push({
       id: `answer-inline-table-${tables.length + 1}`,
-      title: tables.length === 0 ? "Answer Table" : `Answer Table ${tables.length + 1}`,
+      title:
+        tables.length === 0
+          ? "Answer Table"
+          : `Answer Table ${tables.length + 1}`,
       columns,
       rows,
-      note:
-        "Rendered from a table emitted by Ava's answer; values are row/column data, not inferred from surrounding prose.",
+      note: "Rendered from a table emitted by Ava's answer; values are row/column data, not inferred from surrounding prose.",
       citationIds,
     });
     cursor = match.index + match[0].length + consumed;
@@ -396,10 +410,15 @@ function exactCurrencyOrNumber(value: string | number | null): number | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
-  if (/[–-]\s*\d/.test(trimmed) || /~|approx|about|directional/i.test(trimmed)) {
+  if (
+    /[–-]\s*\d/.test(trimmed) ||
+    /~|approx|about|directional/i.test(trimmed)
+  ) {
     return null;
   }
-  const money = trimmed.match(/^\$?\s*([0-9]+(?:\.[0-9]+)?)\s*(k|m|b)?(?:\s*\/\s*(?:yr|year|annual))?$/i);
+  const money = trimmed.match(
+    /^\$?\s*([0-9]+(?:\.[0-9]+)?)\s*(k|m|b)?(?:\s*\/\s*(?:yr|year|annual))?$/i,
+  );
   if (!money) return null;
   const base = Number(money[1]);
   if (!Number.isFinite(base)) return null;
@@ -429,11 +448,12 @@ function chartFromExtractedTable(
         exactCurrencyOrNumber(row[column.key] ?? null),
       );
       const usable = values.filter((value): value is number => value !== null);
-      const labelScore = /\b(cost|spend|investment|value|impact|exposure|benefit|amount|revenue)\b/i.test(
-        column.label,
-      )
-        ? 2
-        : 0;
+      const labelScore =
+        /\b(cost|spend|investment|value|impact|exposure|benefit|amount|revenue)\b/i.test(
+          column.label,
+        )
+          ? 2
+          : 0;
       return {
         column,
         index,
@@ -447,8 +467,9 @@ function chartFromExtractedTable(
   const valueColumn = scoredColumns[0]?.column;
   if (!valueColumn) return null;
   const labelColumn =
-    table.columns.find((column) => column.key !== valueColumn.key && column.format === "text") ??
-    table.columns.find((column) => column.key !== valueColumn.key);
+    table.columns.find(
+      (column) => column.key !== valueColumn.key && column.format === "text",
+    ) ?? table.columns.find((column) => column.key !== valueColumn.key);
   if (!labelColumn) return null;
 
   const segments = table.rows
@@ -459,11 +480,13 @@ function chartFromExtractedTable(
       return {
         label: label.length > 32 ? `${label.slice(0, 29)}...` : label,
         value,
-        color: COST_STACK_COLORS[index % COST_STACK_COLORS.length] ?? CHART.accent,
+        color:
+          COST_STACK_COLORS[index % COST_STACK_COLORS.length] ?? CHART.accent,
       };
     })
-    .filter((segment): segment is { label: string; value: number; color: string } =>
-      Boolean(segment),
+    .filter(
+      (segment): segment is { label: string; value: number; color: string } =>
+        Boolean(segment),
     )
     .slice(0, 6);
 
@@ -486,7 +509,9 @@ function findColumnByLabel(
 }
 
 function textForCell(value: string | number | null | undefined): string {
-  return String(value ?? "").replace(/\s+/g, " ").trim();
+  return String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function graphFromExtractedTable(
@@ -494,10 +519,15 @@ function graphFromExtractedTable(
   citationIds: string[],
 ): AnswerGraph | null {
   const fromColumn =
-    findColumnByLabel(table, /\b(from|source|upstream|system|application|platform|vendor|capability|initiative)\b/i) ??
-    table.columns.find((column) => column.format === "text");
+    findColumnByLabel(
+      table,
+      /\b(from|source|upstream|system|application|platform|vendor|capability|initiative)\b/i,
+    ) ?? table.columns.find((column) => column.format === "text");
   const toColumn =
-    findColumnByLabel(table, /\b(to|target|downstream|depends?\s*on|dependency|consumer|owner|function|outcome)\b/i) ??
+    findColumnByLabel(
+      table,
+      /\b(to|target|downstream|depends?\s*on|dependency|consumer|owner|function|outcome)\b/i,
+    ) ??
     table.columns.find(
       (column) => column.key !== fromColumn?.key && column.format === "text",
     );
@@ -562,8 +592,12 @@ function chartFromStructuredTable(
   citationIds: string[],
 ): AnswerChart | null {
   if (!hint) return null;
-  const labelColumn = table.columns.find((column) => column.key === hint.labelKey);
-  const valueColumn = table.columns.find((column) => column.key === hint.valueKey);
+  const labelColumn = table.columns.find(
+    (column) => column.key === hint.labelKey,
+  );
+  const valueColumn = table.columns.find(
+    (column) => column.key === hint.valueKey,
+  );
   if (!labelColumn || !valueColumn) return null;
 
   const segments = table.rows
@@ -608,7 +642,8 @@ function graphFromStructuredTable(
     const from = textForCell(row[hint.fromKey]);
     const to = textForCell(row[hint.toKey]);
     if (!from || !to || from === to) continue;
-    if (!nodes.has(from)) nodes.set(from, { id: `n${nodes.size + 1}`, label: from });
+    if (!nodes.has(from))
+      nodes.set(from, { id: `n${nodes.size + 1}`, label: from });
     if (!nodes.has(to)) nodes.set(to, { id: `n${nodes.size + 1}`, label: to });
     const source = nodes.get(from);
     const target = nodes.get(to);
@@ -616,7 +651,9 @@ function graphFromStructuredTable(
     edges.push({
       from: source.id,
       to: target.id,
-      label: hint.labelKey ? textForCell(row[hint.labelKey]).slice(0, 80) : undefined,
+      label: hint.labelKey
+        ? textForCell(row[hint.labelKey]).slice(0, 80)
+        : undefined,
     });
   }
 
@@ -699,7 +736,11 @@ export function buildStructuredExhibits(
     );
     if (chart) charts.push(chart);
   }
-  if (graphs.length === 0 && tables.length > 0 && input.routing.outputShape === "graph") {
+  if (
+    graphs.length === 0 &&
+    tables.length > 0 &&
+    input.routing.outputShape === "graph"
+  ) {
     const graph = graphFromExtractedTable(
       tables[0],
       citations.map((citation) => citation.id),
@@ -707,11 +748,12 @@ export function buildStructuredExhibits(
     if (graph) graphs.push(graph);
   }
 
-  if (tables.length === 0 && (
-    input.routing.outputShape === "table" ||
-    input.routing.outputShape === "chart" ||
-    input.routing.outputShape === "graph"
-  )) {
+  if (
+    tables.length === 0 &&
+    (input.routing.outputShape === "table" ||
+      input.routing.outputShape === "chart" ||
+      input.routing.outputShape === "graph")
+  ) {
     const table =
       decisionEvidenceTable(citations) ?? evidenceRequiredTable(citations);
     if (table) tables.push(table);
@@ -729,7 +771,7 @@ export function buildStructuredExhibits(
 }
 
 export function hasRenderableStructuredExhibits(
-  exhibits: Pick<AgentAnswer, "tables" | "charts" | "graphs">,
+  exhibits: Pick<StructuredExhibits, "tables" | "charts" | "graphs">,
 ): boolean {
   return (
     exhibits.tables.length > 0 ||

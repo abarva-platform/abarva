@@ -2,22 +2,29 @@ import {
   containsUnsafePublicText,
   sanitizeAgentAnswerForRender,
 } from "@/lib/intelligence/answer/answer-safety";
-import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 
-const unsafeAnswer: AgentAnswer = {
-  engineVersion: "agent-answer/v1",
+const unsafeAnswer: AvaAnswerPacket = {
   surface: "intelligence",
-  expertId: "xp.retail.merchandising-pricing",
-  contributingExperts: [
+  mode: "ANALYZE",
+  tenantKey: "apex-retail",
+  question: "What is unsafe?",
+  intent: "prose",
+  status: "answered",
+  directAnswer:
+    "Read: Read: Apex has APX-IT-004 in the evidence. Evidence: clients[c7578e7a-545a-4b75-860e-465358f5e00b] structured profile supports it.",
+  expertsUsed: [
     {
       id: "xp.retail.merchandising-pricing",
       name: "Retail Merchandising & Pricing Expert",
     },
   ],
-  prose:
-    "Read: Read: Apex has APX-IT-004 in the evidence. Evidence: clients[c7578e7a-545a-4b75-860e-465358f5e00b] structured profile supports it.",
-  tables: [
+  factsUsed: [],
+  metricsUsed: [],
+  relationshipsUsed: [],
+  artifacts: [
     {
+      artifact: "table",
       id: "decision-evidence",
       title: "Decision Evidence",
       columns: [
@@ -33,8 +40,6 @@ const unsafeAnswer: AgentAnswer = {
       ],
     },
   ],
-  charts: [],
-  graphs: [],
   citations: [
     {
       id: "c1",
@@ -45,27 +50,36 @@ const unsafeAnswer: AgentAnswer = {
     },
   ],
   gaps: [],
-  recommendedActions: [],
-  groundingMode: "mixed",
-  confidence: "medium",
-  limits: [],
-  crossTenantBlocked: false,
+  caveats: [],
+  nextSteps: [],
+  quality: {
+    confidence: "medium",
+    evidenceStrength: "partial",
+    tenantGrounding: "partial",
+    answerCompleteness: "complete",
+  },
+  safety: {
+    tenantFencePassed: true,
+    rawIdsSuppressed: true,
+    forbiddenLanguagePassed: true,
+    unsupportedClaimsBlocked: true,
+  },
 };
 
 describe("sanitizeAgentAnswerForRender", () => {
   it("removes duplicated consultant section labels before rendering", () => {
     const safe = sanitizeAgentAnswerForRender(unsafeAnswer);
 
-    expect(safe.prose).toContain("Read: Apex has");
-    expect(safe.prose).not.toContain("Read: Read:");
+    expect(safe.directAnswer).toContain("Read: Apex has");
+    expect(safe.directAnswer).not.toContain("Read: Read:");
   });
 
   it("keeps raw internal identifiers out of prose, sources, and table cells", () => {
     const safe = sanitizeAgentAnswerForRender(unsafeAnswer);
     const renderedPayload = JSON.stringify({
-      prose: safe.prose,
+      directAnswer: safe.directAnswer,
       citations: safe.citations,
-      tables: safe.tables,
+      artifacts: safe.artifacts,
     });
 
     expect(renderedPayload).not.toMatch(/clients\[/);
@@ -75,11 +89,18 @@ describe("sanitizeAgentAnswerForRender", () => {
     expect(renderedPayload).not.toMatch(/\bAPX-IT-004\b/);
     expect(renderedPayload).not.toMatch(/\bclient_id\b/);
     expect(safe.citations[0]?.label).toBe("Loaded tenant evidence");
-    expect(safe.tables[0]?.rows[0]?.source).toBe("loaded tenant evidence");
+    const table = safe.artifacts.find(
+      (artifact) => artifact.artifact === "table",
+    );
+    expect(table?.rows[0]?.source).toBe("loaded tenant evidence");
   });
 
   it("detects unsafe public text patterns without regex state drift", () => {
-    expect(containsUnsafePublicText("clients[c7578e7a-545a-4b75-860e-465358f5e00b]")).toBe(true);
-    expect(containsUnsafePublicText("clients[c7578e7a-545a-4b75-860e-465358f5e00b]")).toBe(true);
+    expect(
+      containsUnsafePublicText("clients[c7578e7a-545a-4b75-860e-465358f5e00b]"),
+    ).toBe(true);
+    expect(
+      containsUnsafePublicText("clients[c7578e7a-545a-4b75-860e-465358f5e00b]"),
+    ).toBe(true);
   });
 });

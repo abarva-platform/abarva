@@ -10,7 +10,7 @@ import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRender
 import { AvaCanvas, AvaChatShell } from "@/components/ava-chat/AvaChatShell";
 import { EvidenceBasis } from "@/components/intelligence/EvidenceBasis";
 import { SHELL } from "@/lib/shell/shell-tokens";
-import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import type { SentinelReasoningStage } from "@/lib/agents/sentinel-reasoning";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import type { CoverageReport } from "@/lib/knowledge/coverage";
@@ -34,7 +34,7 @@ type StreamEvent =
   | { type: "sentinel-stage"; stage?: SentinelReasoningStage }
   | { type: "delta"; text?: string }
   | { type: "sources"; sources?: AskSource[]; coverageReport?: CoverageReport }
-  | { type: "agent-answer"; answer?: AgentAnswer }
+  | { type: "agent-answer"; answer?: AvaAnswerPacket }
   | { type: "done"; telemetryEventId?: string }
   | { type: "error"; error?: string };
 
@@ -73,9 +73,14 @@ function eventFromLine(line: string): StreamEvent | null {
   }
 }
 
-function messageWithAttachments(text: string, attachments: AttachmentRef[]): string {
+function messageWithAttachments(
+  text: string,
+  attachments: AttachmentRef[],
+): string {
   if (attachments.length === 0) return text;
-  const names = attachments.map((attachment) => attachment.file_name).join(", ");
+  const names = attachments
+    .map((attachment) => attachment.file_name)
+    .join(", ");
   const previews = attachments
     .filter((attachment) => attachment.extracted_text_preview?.trim())
     .map(
@@ -83,7 +88,9 @@ function messageWithAttachments(text: string, attachments: AttachmentRef[]): str
         `--- attachment: ${attachment.file_name} (${attachment.mime}) ---\n${attachment.extracted_text_preview}\n--- end attachment ---`,
     )
     .join("\n\n");
-  const visible = text ? `${text}\n\n[attached: ${names}]` : `[attached: ${names}]`;
+  const visible = text
+    ? `${text}\n\n[attached: ${names}]`
+    : `[attached: ${names}]`;
   return previews ? `${visible}\n\n${previews}` : visible;
 }
 
@@ -125,13 +132,15 @@ export function SentinelReasoningCards({
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [cards, setCards] = useState<SentinelReasoningStage[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
-  const [currentAnswer, setCurrentAnswer] = useState<AgentAnswer | null>(null);
+  const [currentAnswer, setCurrentAnswer] = useState<AvaAnswerPacket | null>(
+    null,
+  );
   const [currentNarrative, setCurrentNarrative] = useState("");
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("answer");
   const [evidenceSources, setEvidenceSources] = useState<AskSource[]>([]);
-  const [coverageReport, setCoverageReport] = useState<CoverageReport | undefined>(
-    undefined,
-  );
+  const [coverageReport, setCoverageReport] = useState<
+    CoverageReport | undefined
+  >(undefined);
   const [status, setStatus] = useState<"idle" | "streaming" | "done" | "error">(
     "idle",
   );
@@ -173,7 +182,9 @@ export function SentinelReasoningCards({
         body: JSON.stringify(finalAction.payload),
       });
       if (!response.ok) {
-        setActionState("DAG API pending; proposals are staged for Moves handoff.");
+        setActionState(
+          "DAG API pending; proposals are staged for Moves handoff.",
+        );
         return;
       }
       const body = await response.json().catch(() => ({}));
@@ -187,7 +198,9 @@ export function SentinelReasoningCards({
               : finalAction.payload.proposals.length;
       setActionState(`${count} Move proposals sent to the dependency DAG.`);
     } catch {
-      setActionState("DAG API pending; proposals are staged for Moves handoff.");
+      setActionState(
+        "DAG API pending; proposals are staged for Moves handoff.",
+      );
     }
   }
 
@@ -263,7 +276,7 @@ export function SentinelReasoningCards({
       if (event.type === "agent-answer" && event.answer) {
         sawRenderableAnswer = true;
         setCurrentAnswer(event.answer);
-        setCurrentNarrative(event.answer.prose);
+        setCurrentNarrative(event.answer.directAnswer);
         setAgentTurn(agentTurnId, { body: "Answer is ready on the canvas." });
         return;
       }
@@ -344,31 +357,46 @@ export function SentinelReasoningCards({
   }
 
   const sortedCards = [...cards].sort((a, b) => a.sequence - b.sequence);
-  const expertRefs = currentAnswer?.contributingExperts ?? [];
+  const expertRefs = currentAnswer?.expertsUsed ?? [];
   const answerCitations = currentAnswer?.citations ?? [];
   const corpusSources = evidenceSources.filter((source) =>
-    ["PATTERN", "RESEARCH", "REGULATION", "BENCHMARK", "INSIGHT", "WORLDVIEW"].includes(
-      source.type,
-    ),
+    [
+      "PATTERN",
+      "RESEARCH",
+      "REGULATION",
+      "BENCHMARK",
+      "INSIGHT",
+      "WORLDVIEW",
+    ].includes(source.type),
   );
-  const artifactCount =
-    (currentAnswer?.tables.length ?? 0) +
-    (currentAnswer?.charts.length ?? 0) +
-    (currentAnswer?.graphs.length ?? 0);
+  const artifactCount = currentAnswer?.artifacts.length ?? 0;
   const tabItems: Array<{
     id: WorkspaceTab;
     label: string;
     count?: number;
   }> = [
     { id: "answer", label: "Answer" },
-    { id: "evidence", label: "Evidence", count: evidenceSources.length + answerCitations.length },
-    { id: "experts", label: "Experts", count: expertRefs.length + sortedCards.length },
+    {
+      id: "evidence",
+      label: "Evidence",
+      count: evidenceSources.length + answerCitations.length,
+    },
+    {
+      id: "experts",
+      label: "Experts",
+      count: expertRefs.length + sortedCards.length,
+    },
     { id: "corpus", label: "Corpus", count: corpusSources.length },
     { id: "artifacts", label: "Artifacts", count: artifactCount },
   ];
 
   const workspaceTabContent = (() => {
-    if (!currentQuestion && !currentAnswer && !currentNarrative && sortedCards.length === 0) {
+    if (
+      !currentQuestion &&
+      !currentAnswer &&
+      !currentNarrative &&
+      sortedCards.length === 0
+    ) {
       return (
         <div style={EMPTY_CANVAS_STYLE}>
           <div style={INSIGHT_GRID_STYLE}>
@@ -429,7 +457,9 @@ export function SentinelReasoningCards({
               <h3 style={CARD_TITLE_STYLE}>Consilium experts</h3>
               <div style={PILL_GRID_STYLE}>
                 {expertRefs.map((expert) => (
-                  <span key={expert.id} style={PILL_STYLE}>{expert.name}</span>
+                  <span key={expert.id} style={PILL_STYLE}>
+                    {expert.name}
+                  </span>
                 ))}
               </div>
             </div>
@@ -444,7 +474,9 @@ export function SentinelReasoningCards({
                   style={CARD_STYLE}
                 >
                   <summary style={STAGE_SUMMARY_STYLE}>
-                    <span>{card.sequence}. {card.name}</span>
+                    <span>
+                      {card.sequence}. {card.name}
+                    </span>
                     <span style={STAGE_CONFIDENCE_STYLE}>
                       {Math.round(card.confidence * 100)}%
                     </span>
@@ -458,13 +490,16 @@ export function SentinelReasoningCards({
                       <div style={PILL_GRID_STYLE}>
                         {card.citations.map((citation) => (
                           <span key={citation.id} style={PILL_STYLE}>
-                            {citation.label || citation.id} · {citation.sourceType}
+                            {citation.label || citation.id} ·{" "}
+                            {citation.sourceType}
                           </span>
                         ))}
                       </div>
                     ) : null}
                     {card.oneClickAction ? (
-                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      <div
+                        style={{ display: "flex", gap: 10, flexWrap: "wrap" }}
+                      >
                         <button
                           type="button"
                           onClick={() => void shapeMoves()}
@@ -473,7 +508,9 @@ export function SentinelReasoningCards({
                           {card.oneClickAction.label}
                         </button>
                         {actionState ? (
-                          <span style={MUTED_BODY_TEXT_STYLE}>{actionState}</span>
+                          <span style={MUTED_BODY_TEXT_STYLE}>
+                            {actionState}
+                          </span>
                         ) : null}
                       </div>
                     ) : null}
@@ -494,8 +531,13 @@ export function SentinelReasoningCards({
         <div style={CANVAS_STACK_STYLE}>
           {corpusSources.length > 0 ? (
             corpusSources.map((source) => (
-              <div key={`${source.type}:${source.id ?? source.name}`} style={CARD_STYLE}>
-                <div style={CARD_EYEBROW_STYLE}>{source.type.toLowerCase()}</div>
+              <div
+                key={`${source.type}:${source.id ?? source.name}`}
+                style={CARD_STYLE}
+              >
+                <div style={CARD_EYEBROW_STYLE}>
+                  {source.type.toLowerCase()}
+                </div>
                 <h3 style={CARD_TITLE_STYLE}>{source.name}</h3>
                 <p style={BODY_TEXT_STYLE}>{source.detail}</p>
               </div>
@@ -524,7 +566,9 @@ export function SentinelReasoningCards({
           </div>
         ) : null}
         {error ? (
-          <div role="alert" style={ERROR_STYLE}>{error}</div>
+          <div role="alert" style={ERROR_STYLE}>
+            {error}
+          </div>
         ) : null}
         {currentAnswer ? (
           <AgentAnswerRenderer answer={currentAnswer} />
@@ -537,7 +581,8 @@ export function SentinelReasoningCards({
           <div style={CARD_STYLE}>
             <h3 style={CARD_TITLE_STYLE}>Working</h3>
             <p style={BODY_TEXT_STYLE}>
-              Ava is reading tenant evidence, corpus patterns, and expert context.
+              Ava is reading tenant evidence, corpus patterns, and expert
+              context.
             </p>
           </div>
         ) : null}

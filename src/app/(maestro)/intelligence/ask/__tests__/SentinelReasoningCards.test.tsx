@@ -80,9 +80,15 @@ describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
     expect(
       screen.getByText("Explore the answer, evidence, experts, and corpus."),
     ).toBeInTheDocument();
-    expect(screen.getByTestId("intelligence-workspace-tab-answer")).toBeInTheDocument();
-    expect(screen.getByTestId("intelligence-workspace-tab-evidence")).toBeInTheDocument();
-    expect(screen.getByTestId("intelligence-workspace-tab-experts")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("intelligence-workspace-tab-answer"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("intelligence-workspace-tab-evidence"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("intelligence-workspace-tab-experts"),
+    ).toBeInTheDocument();
   });
 
   it("submits multiline prompts and preserves the question and answer in history", async () => {
@@ -116,7 +122,9 @@ describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
         activeTab: "intelligence-advisor-chat",
       },
     });
-    expect(body.q).toContain("Why is agentic IROPS not ready?\nShow the evidence.");
+    expect(body.q).toContain(
+      "Why is agentic IROPS not ready?\nShow the evidence.",
+    );
     expect(screen.getByTestId("agent-dock-thread")).toHaveTextContent(
       "Why is agentic IROPS not ready? Show the evidence.",
     );
@@ -165,12 +173,12 @@ describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
     expect(thread).toHaveTextContent("Question two");
     expect(thread).toHaveTextContent("Answer is ready on the canvas.");
     expect(thread).not.toHaveTextContent("First advisor answer.");
-    expect(screen.getByTestId("intelligence-workspace-panel-answer")).toHaveTextContent(
-      "Second advisor answer.",
-    );
+    expect(
+      screen.getByTestId("intelligence-workspace-panel-answer"),
+    ).toHaveTextContent("Second advisor answer.");
   });
 
-  it("keeps AgentAnswer prose out of the chat rail and on the canvas", async () => {
+  it("keeps Ava answer prose out of the chat rail and on the canvas", async () => {
     const fullProse =
       "Board-grade answer belongs on the Intelligence canvas, not inside the chat rail.";
     const fetchMock = jest.fn().mockResolvedValue({
@@ -180,26 +188,39 @@ describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
         {
           type: "agent-answer",
           answer: {
-            engineVersion: "agent-answer/v1",
             surface: "intelligence",
-            expertId: "xp.airline.operations",
-            contributingExperts: [
+            mode: "ANALYZE",
+            tenantKey: "skyharbor",
+            question: "What should we do?",
+            intent: "prose",
+            status: "answered",
+            directAnswer: fullProse,
+            factsUsed: [],
+            metricsUsed: [],
+            relationshipsUsed: [],
+            expertsUsed: [
               {
                 id: "xp.airline.operations",
                 name: "Airline Ground & Airport Operations Expert",
               },
             ],
-            prose: fullProse,
-            tables: [],
-            charts: [],
-            graphs: [],
+            artifacts: [],
             citations: [],
             gaps: [],
-            recommendedActions: [],
-            groundingMode: "industry-pattern",
-            confidence: "low",
-            limits: [],
-            crossTenantBlocked: false,
+            caveats: [],
+            nextSteps: [],
+            quality: {
+              confidence: "low",
+              evidenceStrength: "thin",
+              tenantGrounding: "missing",
+              answerCompleteness: "complete",
+            },
+            safety: {
+              tenantFencePassed: true,
+              rawIdsSuppressed: true,
+              forbiddenLanguagePassed: true,
+              unsupportedClaimsBlocked: true,
+            },
           },
         },
         { type: "done", telemetryEventId: "tlm-agent-answer" },
@@ -220,9 +241,9 @@ describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
     expect(thread).toHaveTextContent("Question with structured answer");
     expect(thread).toHaveTextContent("Answer is ready on the canvas.");
     expect(thread).not.toHaveTextContent(fullProse);
-    expect(screen.getByTestId("intelligence-workspace-panel-answer")).toHaveTextContent(
-      fullProse,
-    );
+    expect(
+      screen.getByTestId("intelligence-workspace-panel-answer"),
+    ).toHaveTextContent(fullProse);
   });
 
   it("supports right, top, expanded, and hidden dock modes from the shared controls", () => {

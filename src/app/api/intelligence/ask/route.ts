@@ -32,10 +32,11 @@ import {
   buildStructuredExhibits,
   hasRenderableStructuredExhibits,
 } from "@/lib/intelligence/answer/structured-exhibits";
-import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
+import { composeAvaAnswer } from "@/lib/ava-answer/composeAvaAnswer";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import {
   buildHomeKnowAgentAnswer,
-  homeKnowResponseToAgentAnswer,
+  homeKnowResponseToAvaAnswer,
   shouldUseHomeKnowAgentAnswer,
 } from "@/lib/home/know/home-know-agent-answer";
 import { appClientKeyForTenant, tenantAliasesFor } from "@/lib/tenant/aliases";
@@ -191,7 +192,7 @@ async function handleAsk(payload: AskPayload) {
                 requestedOrSurfaceClient ??
                 "the signed-in tenant",
             });
-            assistantText = answer.prose;
+            assistantText = answer.directAnswer;
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
@@ -227,7 +228,7 @@ async function handleAsk(payload: AskPayload) {
             requestedOrSurfaceClient ??
             null;
           let response: HomeKnowResponse;
-          let answer: AgentAnswer;
+          let answer: AvaAnswerPacket;
           try {
             const built = await buildHomeKnowAgentAnswer({
               question: query,
@@ -246,14 +247,14 @@ async function handleAsk(payload: AskPayload) {
                 "unknown",
               question: query,
             });
-            answer = homeKnowResponseToAgentAnswer(response);
+            answer = homeKnowResponseToAvaAnswer(response);
           }
           classificationForMemory = {
             mode: "home-know",
             intent: response.intent,
             answerStatus: response.answerStatus,
           };
-          assistantText = answer.prose;
+          assistantText = answer.directAnswer;
           citationCount = answer.citations.length;
           controller.enqueue(
             encoder.encode(
@@ -344,29 +345,61 @@ async function handleAsk(payload: AskPayload) {
             exhibits.citations.length > 0 ||
             routing.experts.length > 0
           ) {
-            const agentAnswer: AgentAnswer = {
-              engineVersion: "agent-answer/v1",
+            const agentAnswer = composeAvaAnswer({
               surface: "intelligence",
-              expertId: routing.experts[0]?.id ?? null,
-              contributingExperts: routing.experts,
-              prose: exhibits.prose,
-              tables: exhibits.tables,
-              charts: exhibits.charts,
-              graphs: exhibits.graphs,
-              citations: exhibits.citations,
-              gaps: [],
-              recommendedActions: [],
-              groundingMode: exhibits.citations.some(
-                (citation) => citation.sourceClass === "tenant-fact",
-              )
-                ? "mixed"
-                : "industry-pattern",
-              confidence: exhibits.citations.length > 0 ? "medium" : "low",
-              limits: [
-                "Charts and tables are emitted only when Ava has validated structured data; citations and expert attribution remain visible otherwise.",
+              mode: "ANALYZE",
+              tenantKey:
+                tenantInventoryKey ??
+                tenantClientKey ??
+                requestedOrSurfaceClient ??
+                "unknown",
+              question: query,
+              intent: routing.outputShape,
+              status: "answered",
+              directAnswer: exhibits.prose,
+              interpretation:
+                "This is an advisory synthesis: use the cited tenant context for client-specific claims and treat corpus/expert context as pattern support.",
+              artifacts: [
+                ...exhibits.tables.map((table) => ({
+                  ...table,
+                  artifact: "table" as const,
+                })),
+                ...exhibits.charts.map((chart) => ({
+                  ...chart,
+                  artifact: "chart" as const,
+                })),
+                ...exhibits.graphs.map((graph) => ({
+                  ...graph,
+                  artifact: "graph" as const,
+                })),
               ],
-              crossTenantBlocked: false,
-            };
+              citations: exhibits.citations,
+              caveats: [
+                {
+                  id: "validated-structure-only",
+                  label: "Structured exhibits",
+                  detail:
+                    "Tables, charts, and graphs appear only when Ava has validated structured data.",
+                },
+              ],
+              expertsUsed: routing.experts,
+              corpusUsed: exhibits.citations.some(
+                (citation) => citation.sourceClass !== "tenant-fact",
+              )
+                ? [{ id: "corpus-support", label: "Corpus or pattern support" }]
+                : [],
+              retrievalSummary: {
+                substrate: "module_read_model",
+                sourceCount: exhibits.citations.length,
+                hasTenantFacts: exhibits.citations.some(
+                  (citation) => citation.sourceClass === "tenant-fact",
+                ),
+                hasCorpus: exhibits.citations.some(
+                  (citation) => citation.sourceClass !== "tenant-fact",
+                ),
+                hasExperts: routing.experts.length > 0,
+              },
+            });
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
@@ -516,29 +549,61 @@ async function handleAsk(payload: AskPayload) {
             exhibits.citations.length > 0 ||
             routing.experts.length > 0
           ) {
-            const agentAnswer: AgentAnswer = {
-              engineVersion: "agent-answer/v1",
+            const agentAnswer = composeAvaAnswer({
               surface: "intelligence",
-              expertId: routing.experts[0]?.id ?? null,
-              contributingExperts: routing.experts,
-              prose: exhibits.prose,
-              tables: exhibits.tables,
-              charts: exhibits.charts,
-              graphs: exhibits.graphs,
-              citations: exhibits.citations,
-              gaps: [],
-              recommendedActions: [],
-              groundingMode: exhibits.citations.some(
-                (citation) => citation.sourceClass === "tenant-fact",
-              )
-                ? "mixed"
-                : "industry-pattern",
-              confidence: exhibits.citations.length > 0 ? "medium" : "low",
-              limits: [
-                "Charts and tables are emitted only when Ava has validated structured data; citations and expert attribution remain visible otherwise.",
+              mode: "ANALYZE",
+              tenantKey:
+                tenantInventoryKey ??
+                tenantClientKey ??
+                requestedOrSurfaceClient ??
+                "unknown",
+              question: query,
+              intent: routing.outputShape,
+              status: "answered",
+              directAnswer: exhibits.prose,
+              interpretation:
+                "This is an advisory synthesis: use the cited tenant context for client-specific claims and treat corpus/expert context as pattern support.",
+              artifacts: [
+                ...exhibits.tables.map((table) => ({
+                  ...table,
+                  artifact: "table" as const,
+                })),
+                ...exhibits.charts.map((chart) => ({
+                  ...chart,
+                  artifact: "chart" as const,
+                })),
+                ...exhibits.graphs.map((graph) => ({
+                  ...graph,
+                  artifact: "graph" as const,
+                })),
               ],
-              crossTenantBlocked: false,
-            };
+              citations: exhibits.citations,
+              caveats: [
+                {
+                  id: "validated-structure-only",
+                  label: "Structured exhibits",
+                  detail:
+                    "Tables, charts, and graphs appear only when Ava has validated structured data.",
+                },
+              ],
+              expertsUsed: routing.experts,
+              corpusUsed: exhibits.citations.some(
+                (citation) => citation.sourceClass !== "tenant-fact",
+              )
+                ? [{ id: "corpus-support", label: "Corpus or pattern support" }]
+                : [],
+              retrievalSummary: {
+                substrate: "module_read_model",
+                sourceCount: exhibits.citations.length,
+                hasTenantFacts: exhibits.citations.some(
+                  (citation) => citation.sourceClass === "tenant-fact",
+                ),
+                hasCorpus: exhibits.citations.some(
+                  (citation) => citation.sourceClass !== "tenant-fact",
+                ),
+                hasExperts: routing.experts.length > 0,
+              },
+            });
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
@@ -704,24 +769,35 @@ function aliasesForClerkTenant(
 
 function buildHomeKnowTenantFenceAnswer(input: {
   activeTenantDisplayName: string;
-}): AgentAnswer {
-  return {
-    engineVersion: "agent-answer/v1",
+}): AvaAnswerPacket {
+  return composeAvaAnswer({
     surface: "home",
-    expertId: null,
-    contributingExperts: [],
-    prose: `I can't share or use another tenant's data from Home. Your signed-in session is fenced to ${input.activeTenantDisplayName}; ask from this tenant's loaded context only.`,
-    tables: [],
-    charts: [],
-    graphs: [],
+    mode: "KNOW",
+    tenantKey: "signed-in-tenant",
+    question: "cross-tenant request",
+    intent: "tenant_fence",
+    status: "blocked",
+    directAnswer: `I can't share or use another tenant's data from Home. Your signed-in session is fenced to ${input.activeTenantDisplayName}; ask from this tenant's loaded context only.`,
     citations: [],
-    gaps: ["Cross-tenant data is fenced by the signed-in session tenant."],
-    recommendedActions: [],
-    groundingMode: "tenant-evidence",
-    confidence: "high",
-    limits: ["Cross-tenant request blocked before retrieval."],
-    crossTenantBlocked: true,
-  };
+    gaps: [
+      {
+        id: "tenant-fence",
+        label: "Tenant fence",
+        detail: "Cross-tenant data is fenced by the signed-in session tenant.",
+      },
+    ],
+    caveats: [
+      {
+        id: "blocked-before-retrieval",
+        label: "Blocked before retrieval",
+        detail: "Cross-tenant request blocked before retrieval.",
+      },
+    ],
+    retrievalSummary: {
+      substrate: "none",
+      hasTenantFacts: false,
+    },
+  });
 }
 
 function buildHomeKnowRouteFallbackResponse(input: {

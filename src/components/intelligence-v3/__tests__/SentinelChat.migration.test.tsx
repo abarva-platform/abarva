@@ -195,7 +195,7 @@ describe("SentinelChat · legacy mode-key migration", () => {
     });
   });
 
-  it("renders structured AgentAnswer exhibits streamed by the Intelligence ask endpoint", async () => {
+  it("renders structured Ava answer exhibits streamed by the Intelligence ask endpoint", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -205,18 +205,25 @@ describe("SentinelChat · legacy mode-key migration", () => {
           JSON.stringify({
             type: "agent-answer",
             answer: {
-              engineVersion: "agent-answer/v1",
               surface: "intelligence",
-              expertId: "xp.healthcare.revenue-cycle",
-              contributingExperts: [
+              mode: "ANALYZE",
+              tenantKey: "meridian",
+              question: "show maintenance",
+              intent: "table",
+              status: "answered",
+              directAnswer: "",
+              factsUsed: [],
+              metricsUsed: [],
+              relationshipsUsed: [],
+              expertsUsed: [
                 {
                   id: "xp.healthcare.revenue-cycle",
                   name: "Healthcare Revenue Cycle Expert",
                 },
               ],
-              prose: "",
-              tables: [
+              artifacts: [
                 {
+                  artifact: "table",
                   id: "answer-figures",
                   title: "Figures Mentioned",
                   columns: [
@@ -227,8 +234,6 @@ describe("SentinelChat · legacy mode-key migration", () => {
                   citationIds: ["c1"],
                 },
               ],
-              charts: [],
-              graphs: [],
               citations: [
                 {
                   id: "c1",
@@ -237,11 +242,20 @@ describe("SentinelChat · legacy mode-key migration", () => {
                 },
               ],
               gaps: [],
-              recommendedActions: [],
-              groundingMode: "mixed",
-              confidence: "medium",
-              limits: [],
-              crossTenantBlocked: false,
+              caveats: [],
+              nextSteps: [],
+              quality: {
+                confidence: "medium",
+                evidenceStrength: "partial",
+                tenantGrounding: "partial",
+                answerCompleteness: "complete",
+              },
+              safety: {
+                tenantFencePassed: true,
+                rawIdsSuppressed: true,
+                forbiddenLanguagePassed: true,
+                unsupportedClaimsBlocked: true,
+              },
             },
           }),
           JSON.stringify({ type: "done" }),

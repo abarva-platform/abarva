@@ -26,10 +26,7 @@ import type {
   EvidenceAnchor,
   RegulatoryFrame,
 } from "@/lib/programs/expert-kernel/domain/function-pack-types";
-import type {
-  AnswerChartKind,
-  AnswerConfidence,
-} from "@/lib/intelligence/answer/agent-answer";
+import type { AnswerChartKind, AvaConfidence } from "@/lib/ava-answer/contract";
 
 /**
  * Two kinds of expert. Industry×function experts (e.g. "Healthcare Revenue
@@ -173,7 +170,7 @@ export interface ExpertProvenance {
   authoredBy: string;
   /** Founder decision 2026-06-20: AI gate only, no SME tier. */
   reviewTier: "ai-gate";
-  confidence: AnswerConfidence;
+  confidence: AvaConfidence;
   /** ISO date the pack content was last authored/reviewed. */
   asOf: string;
 }

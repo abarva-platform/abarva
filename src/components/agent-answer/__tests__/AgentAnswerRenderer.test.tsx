@@ -12,12 +12,12 @@ import {
   renderAnswerChartSvg,
 } from "@/components/agent-answer/AgentAnswerRenderer";
 import type {
-  AgentAnswer,
   AnswerChart,
   AnswerCitation,
   AnswerGraph,
   AnswerTable,
-} from "@/lib/intelligence/answer/agent-answer";
+  AvaAnswerPacket,
+} from "@/lib/ava-answer/contract";
 
 jest.mock("@/lib/agent/markdownRenderer", () => ({
   AgentMarkdown: ({ text }: { text: string }) => <div>{text}</div>,
@@ -51,10 +51,14 @@ describe("AgentAnswerRenderer", () => {
     expect(rendered.svg).toContain("<svg");
     expect(rendered.svg).toContain("Cost stack");
 
-    const { container } = render(<AnswerChartRenderer chart={chart} citations={citations} />);
+    const { container } = render(
+      <AnswerChartRenderer chart={chart} citations={citations} />,
+    );
     expect(screen.getByText("Run/change cost mix")).toBeInTheDocument();
     expect(screen.getByText("costStack")).toBeInTheDocument();
-    expect(container.querySelector("[data-chart-builder='costStack'] svg")).not.toBeNull();
+    expect(
+      container.querySelector("[data-chart-builder='costStack'] svg"),
+    ).not.toBeNull();
     expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
   });
 
@@ -81,7 +85,9 @@ describe("AgentAnswerRenderer", () => {
     expect(within(tableNode).getByText("Category")).toBeInTheDocument();
     expect(within(tableNode).getByText("$1,200,000")).toBeInTheDocument();
     expect(within(tableNode).getByText("42%")).toBeInTheDocument();
-    expect(screen.getByText("Includes run-cost categories only.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Includes run-cost categories only."),
+    ).toBeInTheDocument();
     expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
   });
 
@@ -96,22 +102,34 @@ describe("AgentAnswerRenderer", () => {
       edges: [{ from: "n1", to: "n2", label: "feeds" }],
       citationIds: ["c1"],
     };
-    const answer: AgentAnswer = {
-      engineVersion: "agent-answer/v1",
+    const answer: AvaAnswerPacket = {
       surface: "intelligence",
-      expertId: "xp.retail.merchandising-pricing",
-      contributingExperts: [],
-      prose: "Read: the dependency path is explicit.",
-      tables: [],
-      charts: [],
-      graphs: [graph],
+      mode: "ANALYZE",
+      tenantKey: "apex-retail",
+      question: "Show the dependency graph",
+      intent: "graph",
+      status: "answered",
+      directAnswer: "The dependency path is explicit.",
+      factsUsed: [],
+      metricsUsed: [],
+      relationshipsUsed: [],
+      artifacts: [{ ...graph, artifact: "graph" }],
       citations,
       gaps: [],
-      recommendedActions: [],
-      groundingMode: "mixed",
-      confidence: "medium",
-      limits: [],
-      crossTenantBlocked: false,
+      caveats: [],
+      nextSteps: [],
+      quality: {
+        confidence: "medium",
+        evidenceStrength: "partial",
+        tenantGrounding: "partial",
+        answerCompleteness: "complete",
+      },
+      safety: {
+        tenantFencePassed: true,
+        rawIdsSuppressed: true,
+        forbiddenLanguagePassed: true,
+        unsupportedClaimsBlocked: true,
+      },
     };
 
     render(<AgentAnswerRenderer answer={answer} />);
@@ -124,27 +142,40 @@ describe("AgentAnswerRenderer", () => {
   });
 
   it("renders attribution and sources without fallback when no typed exhibits are present", () => {
-    const answer: AgentAnswer = {
-      engineVersion: "agent-answer/v1",
+    const answer: AvaAnswerPacket = {
       surface: "intelligence",
-      expertId: "xp.retail.merchandising-pricing",
-      contributingExperts: [
+      mode: "ANALYZE",
+      tenantKey: "apex-retail",
+      question: "What does this mean?",
+      intent: "prose",
+      status: "answered",
+      directAnswer: "",
+      factsUsed: [],
+      metricsUsed: [],
+      relationshipsUsed: [],
+      artifacts: [],
+      expertsUsed: [
         {
           id: "xp.retail.merchandising-pricing",
           name: "Retail Merchandising & Pricing Expert",
         },
       ],
-      prose: "",
-      tables: [],
-      charts: [],
-      graphs: [],
       citations,
       gaps: [],
-      recommendedActions: [],
-      groundingMode: "mixed",
-      confidence: "medium",
-      limits: [],
-      crossTenantBlocked: false,
+      caveats: [],
+      nextSteps: [],
+      quality: {
+        confidence: "medium",
+        evidenceStrength: "partial",
+        tenantGrounding: "partial",
+        answerCompleteness: "complete",
+      },
+      safety: {
+        tenantFencePassed: true,
+        rawIdsSuppressed: true,
+        forbiddenLanguagePassed: true,
+        unsupportedClaimsBlocked: true,
+      },
     };
 
     render(<AgentAnswerRenderer answer={answer} />);

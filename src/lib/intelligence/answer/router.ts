@@ -9,7 +9,7 @@
 
 import type { ExpertPack } from "@/lib/intelligence/expert-pack/expert-pack";
 import { EXPERT_PACKS } from "@/lib/intelligence/expert-pack/registry";
-import type { ExpertRef } from "@/lib/intelligence/answer/agent-answer";
+import type { ExpertRef } from "@/lib/ava-answer/contract";
 
 /** Coarse shape the answer should lead with — biases the renderer, not a hard rule. */
 export type OutputShape = "prose" | "table" | "chart" | "graph";
@@ -47,7 +47,9 @@ const VERTICAL_CROSS_CUTTING_COMPATIBILITY: Record<string, string[]> = {
 };
 
 function tokens(s: string): Set<string> {
-  return new Set((s.toLowerCase().match(WORD) ?? []).filter((w) => w.length > 3));
+  return new Set(
+    (s.toLowerCase().match(WORD) ?? []).filter((w) => w.length > 3),
+  );
 }
 
 /**
@@ -72,16 +74,30 @@ function packKeywords(p: ExpertPack): Set<string> {
 
 function inferOutputShape(query: string): OutputShape {
   const q = query.toLowerCase();
-  if (/\b(relate|related|connect|connected|depend|dependenc|map of|network|upstream|downstream|impact of .* on)\b/.test(q)) {
+  if (
+    /\b(relate|related|connect|connected|depend|dependenc|map of|network|upstream|downstream|impact of .* on)\b/.test(
+      q,
+    )
+  ) {
     return "graph";
   }
-  if (/\b(chart|charts|visual|visually|visuali[sz]e|plot|graphically)\b/.test(q)) {
+  if (
+    /\b(chart|charts|visual|visually|visuali[sz]e|plot|graphically)\b/.test(q)
+  ) {
     return "chart";
   }
-  if (/\b(trend|over time|by month|by quarter|year over year|trajectory)\b/.test(q)) {
+  if (
+    /\b(trend|over time|by month|by quarter|year over year|trajectory)\b/.test(
+      q,
+    )
+  ) {
     return "chart";
   }
-  if (/\b(table|tables|tabular|matrix|break ?down|by vendor|by category|by function|by segment|compare|comparison|how much|spend|cost|budget|top \d|rank)\b/.test(q)) {
+  if (
+    /\b(table|tables|tabular|matrix|break ?down|by vendor|by category|by function|by segment|compare|comparison|how much|spend|cost|budget|top \d|rank)\b/.test(
+      q,
+    )
+  ) {
     return "table";
   }
   return "prose";
@@ -94,9 +110,7 @@ function isIndustryCompatibleCrossCuttingPack(
   const domain = p.identity.crossCuttingDomain;
   if (!domain) return true;
   const compatibleIndustries = VERTICAL_CROSS_CUTTING_COMPATIBILITY[domain];
-  return compatibleIndustries
-    ? compatibleIndustries.includes(industry)
-    : true;
+  return compatibleIndustries ? compatibleIndustries.includes(industry) : true;
 }
 
 /**

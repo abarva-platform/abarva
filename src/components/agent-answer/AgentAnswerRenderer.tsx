@@ -3,15 +3,15 @@
 import * as SvgCharts from "@/lib/programs/expert-kernel/exports/board-grade/svg-charts";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { builderForChartKind } from "@/lib/intelligence/answer/chart-kind-builders";
-import { sanitizeAgentAnswerForRender } from "@/lib/intelligence/answer/answer-safety";
+import { sanitizeAvaAnswerForRender } from "@/lib/intelligence/answer/answer-safety";
 import type {
-  AgentAnswer,
   AnswerChart,
   AnswerCitation,
   AnswerGraph,
   AnswerTable,
   AnswerTableColumn,
-} from "@/lib/intelligence/answer/agent-answer";
+  AvaAnswerPacket,
+} from "@/lib/ava-answer/contract";
 
 const CSS = `
 .agentAnswer{--aa-ink:#111827;--aa-muted:#6b7280;--aa-faint:#9ca3af;--aa-line:#e5e7eb;--aa-paper:#fff;--aa-soft:#f9fafb;--aa-green:#166534;--aa-green-bg:#eaf7ee;display:grid;gap:18px;color:var(--aa-ink)}
@@ -68,10 +68,13 @@ function firstNumber(value: unknown, fallback: number): number {
 }
 
 function invokeSvgBuilder(builderName: string, data: unknown): string {
-  const builder = SvgCharts[builderName as SvgBuilderName] as (...args: unknown[]) => string;
+  const builder = SvgCharts[builderName as SvgBuilderName] as (
+    ...args: unknown[]
+  ) => string;
 
   if (builderName === "valueBridge") {
-    if (!isRecord(data)) throw new Error("valueBridge data must include gross, steps, and net");
+    if (!isRecord(data))
+      throw new Error("valueBridge data must include gross, steps, and net");
     return builder(
       firstNumber(data.gross, 0),
       Array.isArray(data.steps) ? data.steps : [],
@@ -80,7 +83,10 @@ function invokeSvgBuilder(builderName: string, data: unknown): string {
   }
 
   if (builderName === "roadmapSwimlane") {
-    if (!isRecord(data)) throw new Error("roadmapSwimlane data must include phases and totalMonths");
+    if (!isRecord(data))
+      throw new Error(
+        "roadmapSwimlane data must include phases and totalMonths",
+      );
     return builder(
       Array.isArray(data.phases) ? data.phases : [],
       firstNumber(data.totalMonths, 12),
@@ -93,13 +99,21 @@ function invokeSvgBuilder(builderName: string, data: unknown): string {
 export function renderAnswerChartSvg(chart: AnswerChart): RenderedChartSvg {
   const builderName = builderForChartKind(chart.kind);
   if (!isSvgBuilderName(builderName)) {
-    return { builderName, svg: null, error: `No SVG builder named ${builderName}` };
+    return {
+      builderName,
+      svg: null,
+      error: `No SVG builder named ${builderName}`,
+    };
   }
 
   try {
     const svg = invokeSvgBuilder(builderName, chart.data);
     if (!svg.trimStart().startsWith("<svg")) {
-      return { builderName, svg: null, error: `${builderName} did not return SVG` };
+      return {
+        builderName,
+        svg: null,
+        error: `${builderName} did not return SVG`,
+      };
     }
     return { builderName, svg };
   } catch (err) {
@@ -111,7 +125,10 @@ export function renderAnswerChartSvg(chart: AnswerChart): RenderedChartSvg {
   }
 }
 
-function citationsFor(ids: string[] | undefined, citations: AnswerCitation[]): AnswerCitation[] {
+function citationsFor(
+  ids: string[] | undefined,
+  citations: AnswerCitation[],
+): AnswerCitation[] {
   if (!ids?.length) return [];
   const byId = new Map(citations.map((citation) => [citation.id, citation]));
   return ids.flatMap((id) => {
@@ -138,7 +155,11 @@ function CitationChips({ citations }: { citations: AnswerCitation[] }) {
             {content}
           </a>
         ) : (
-          <span className="aaCitation" key={citation.id} title={citation.excerpt}>
+          <span
+            className="aaCitation"
+            key={citation.id}
+            title={citation.excerpt}
+          >
             {content}
           </span>
         );
@@ -147,7 +168,10 @@ function CitationChips({ citations }: { citations: AnswerCitation[] }) {
   );
 }
 
-function formatCell(value: string | number | null, column: AnswerTableColumn): string {
+function formatCell(
+  value: string | number | null,
+  column: AnswerTableColumn,
+): string {
   if (value === null) return "—";
   if (typeof value === "string") return value;
 
@@ -166,9 +190,13 @@ function formatCell(value: string | number | null, column: AnswerTableColumn): s
       }).format(normalized);
     }
     case "number":
-      return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value);
+      return new Intl.NumberFormat("en-US", {
+        maximumFractionDigits: 2,
+      }).format(value);
     case "date":
-      return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(value));
+      return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(
+        new Date(value),
+      );
     case "text":
     default:
       return String(value);
@@ -178,7 +206,11 @@ function formatCell(value: string | number | null, column: AnswerTableColumn): s
 function alignmentClass(column: AnswerTableColumn): string {
   if (column.align === "right") return "aaRight";
   if (column.align === "center") return "aaCenter";
-  if (column.format === "number" || column.format === "currency" || column.format === "percent") {
+  if (
+    column.format === "number" ||
+    column.format === "currency" ||
+    column.format === "percent"
+  ) {
     return "aaRight";
   }
   return "";
@@ -203,7 +235,11 @@ export function DataTable({
         <thead>
           <tr>
             {table.columns.map((column) => (
-              <th className={alignmentClass(column)} key={column.key} scope="col">
+              <th
+                className={alignmentClass(column)}
+                key={column.key}
+                scope="col"
+              >
                 {column.label}
               </th>
             ))}
@@ -267,7 +303,9 @@ export function AnswerGraphRenderer({
 }) {
   const graphCitations = citationsFor(graph.citationIds, citations);
   const nodes = graph.nodes.slice(0, 10);
-  const nodeById = new Map(nodes.map((node, index) => [node.id, { node, index }]));
+  const nodeById = new Map(
+    nodes.map((node, index) => [node.id, { node, index }]),
+  );
   const width = 720;
   const height = Math.max(260, Math.ceil(nodes.length / 2) * 84 + 48);
   const positions = new Map(
@@ -289,8 +327,12 @@ export function AnswerGraphRenderer({
   return (
     <div className="aaGraph">
       <div className="aaGraphHead">
-        <div className="aaGraphTitle">{graph.title ?? "Relationship graph"}</div>
-        <div className="aaBuilder">{nodes.length} nodes · {edges.length} links</div>
+        <div className="aaGraphTitle">
+          {graph.title ?? "Relationship graph"}
+        </div>
+        <div className="aaBuilder">
+          {nodes.length} nodes · {edges.length} links
+        </div>
       </div>
       <svg
         className="aaGraphSvg"
@@ -299,7 +341,14 @@ export function AnswerGraphRenderer({
         viewBox={`0 0 ${width} ${height}`}
       >
         <defs>
-          <marker id="aaArrow" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4">
+          <marker
+            id="aaArrow"
+            markerHeight="8"
+            markerWidth="8"
+            orient="auto"
+            refX="7"
+            refY="4"
+          >
             <path d="M0,0 L8,4 L0,8 Z" fill="#77838f" />
           </marker>
         </defs>
@@ -311,10 +360,23 @@ export function AnswerGraphRenderer({
           const midY = (from.y + to.y) / 2 - 8;
           return (
             <g key={`${edge.from}-${edge.to}-${index}`}>
-              <line className="aaGraphEdge" x1={from.x + 92} x2={to.x - 92} y1={from.y} y2={to.y} />
+              <line
+                className="aaGraphEdge"
+                x1={from.x + 92}
+                x2={to.x - 92}
+                y1={from.y}
+                y2={to.y}
+              />
               {edge.label ? (
-                <text className="aaGraphEdgeLabel" textAnchor="middle" x={midX} y={midY}>
-                  {edge.label.length > 44 ? `${edge.label.slice(0, 41)}...` : edge.label}
+                <text
+                  className="aaGraphEdgeLabel"
+                  textAnchor="middle"
+                  x={midX}
+                  y={midY}
+                >
+                  {edge.label.length > 44
+                    ? `${edge.label.slice(0, 41)}...`
+                    : edge.label}
                 </text>
               ) : null}
             </g>
@@ -325,9 +387,23 @@ export function AnswerGraphRenderer({
           if (!position) return null;
           return (
             <g key={node.id}>
-              <rect className="aaGraphNode" height="42" rx="8" width="184" x={position.x - 92} y={position.y - 21} />
-              <text className="aaGraphLabel" textAnchor="middle" x={position.x} y={position.y + 4}>
-                {node.label.length > 25 ? `${node.label.slice(0, 22)}...` : node.label}
+              <rect
+                className="aaGraphNode"
+                height="42"
+                rx="8"
+                width="184"
+                x={position.x - 92}
+                y={position.y - 21}
+              />
+              <text
+                className="aaGraphLabel"
+                textAnchor="middle"
+                x={position.x}
+                y={position.y + 4}
+              >
+                {node.label.length > 25
+                  ? `${node.label.slice(0, 22)}...`
+                  : node.label}
               </text>
             </g>
           );
@@ -338,14 +414,25 @@ export function AnswerGraphRenderer({
   );
 }
 
-export function AgentAnswerRenderer({ answer }: { answer: AgentAnswer }) {
-  const displayAnswer = sanitizeAgentAnswerForRender(answer);
+export function AgentAnswerRenderer({ answer }: { answer: AvaAnswerPacket }) {
+  const displayAnswer = sanitizeAvaAnswerForRender(answer);
+  const tables = displayAnswer.artifacts.filter(
+    (artifact): artifact is AnswerTable & { artifact: "table" } =>
+      artifact.artifact === "table",
+  );
+  const charts = displayAnswer.artifacts.filter(
+    (artifact): artifact is AnswerChart & { artifact: "chart" } =>
+      artifact.artifact === "chart",
+  );
+  const graphs = displayAnswer.artifacts.filter(
+    (artifact): artifact is AnswerGraph & { artifact: "graph" } =>
+      artifact.artifact === "graph",
+  );
   const hasStructured =
-    displayAnswer.charts.length > 0 ||
-    displayAnswer.graphs.length > 0 ||
-    displayAnswer.tables.length > 0;
+    charts.length > 0 || graphs.length > 0 || tables.length > 0;
   const hasAttribution =
-    displayAnswer.contributingExperts.length > 0 || displayAnswer.citations.length > 0;
+    (displayAnswer.expertsUsed?.length ?? 0) > 0 ||
+    displayAnswer.citations.length > 0;
   return (
     <section className="agentAnswer" aria-label="Ava answer">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
@@ -353,10 +440,16 @@ export function AgentAnswerRenderer({ answer }: { answer: AgentAnswer }) {
         <div>
           <div className="aaKicker">Ava · {displayAnswer.surface}</div>
           <div className="aaMeta">
-            <span className="aaPill">{displayAnswer.groundingMode}</span>
-            <span className="aaPill">{displayAnswer.confidence} confidence</span>
-            {displayAnswer.contributingExperts.map((expert) => (
-              <span className="aaPill aaExpert" key={expert.id} title={expert.id}>
+            <span className="aaPill">{displayAnswer.status}</span>
+            <span className="aaPill">
+              {displayAnswer.quality.confidence} confidence
+            </span>
+            {(displayAnswer.expertsUsed ?? []).map((expert) => (
+              <span
+                className="aaPill aaExpert"
+                key={expert.id}
+                title={expert.id}
+              >
                 {expert.name}
               </span>
             ))}
@@ -364,35 +457,53 @@ export function AgentAnswerRenderer({ answer }: { answer: AgentAnswer }) {
         </div>
       </header>
 
-      {displayAnswer.prose ? (
+      {displayAnswer.directAnswer ? (
         <div className="aaProse">
-          <AgentMarkdown text={displayAnswer.prose} />
+          <AgentMarkdown text={displayAnswer.directAnswer} />
+          {displayAnswer.interpretation ? (
+            <AgentMarkdown text={displayAnswer.interpretation} />
+          ) : null}
+          {displayAnswer.businessImplication ? (
+            <AgentMarkdown text={displayAnswer.businessImplication} />
+          ) : null}
         </div>
       ) : null}
 
-      {displayAnswer.charts.length > 0 ? (
+      {charts.length > 0 ? (
         <div className="aaSection">
           <div className="aaTitle">Charts</div>
-          {displayAnswer.charts.map((chart) => (
-            <AnswerChartRenderer chart={chart} citations={displayAnswer.citations} key={chart.id} />
+          {charts.map((chart) => (
+            <AnswerChartRenderer
+              chart={chart}
+              citations={displayAnswer.citations}
+              key={chart.id}
+            />
           ))}
         </div>
       ) : null}
 
-      {displayAnswer.graphs.length > 0 ? (
+      {graphs.length > 0 ? (
         <div className="aaSection">
           <div className="aaTitle">Graphs</div>
-          {displayAnswer.graphs.map((graph) => (
-            <AnswerGraphRenderer graph={graph} citations={displayAnswer.citations} key={graph.id} />
+          {graphs.map((graph) => (
+            <AnswerGraphRenderer
+              graph={graph}
+              citations={displayAnswer.citations}
+              key={graph.id}
+            />
           ))}
         </div>
       ) : null}
 
-      {displayAnswer.tables.length > 0 ? (
+      {tables.length > 0 ? (
         <div className="aaSection">
           <div className="aaTitle">Tables</div>
-          {displayAnswer.tables.map((table) => (
-            <DataTable table={table} citations={displayAnswer.citations} key={table.id} />
+          {tables.map((table) => (
+            <DataTable
+              table={table}
+              citations={displayAnswer.citations}
+              key={table.id}
+            />
           ))}
         </div>
       ) : null}
@@ -404,7 +515,7 @@ export function AgentAnswerRenderer({ answer }: { answer: AgentAnswer }) {
         </div>
       ) : null}
 
-      {!displayAnswer.prose && !hasStructured && !hasAttribution ? (
+      {!displayAnswer.directAnswer && !hasStructured && !hasAttribution ? (
         <div className="aaFallback" role="status">
           Ava did not return a renderable answer.
         </div>

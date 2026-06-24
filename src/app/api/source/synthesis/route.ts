@@ -6,10 +6,13 @@ import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { getActiveClientRow } from "@/lib/active-client";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { summonExpertsForQuery } from "@/lib/intelligence/answer/expert-grounding";
-import type { ExpertRef } from "@/lib/intelligence/answer/agent-answer";
+import type { ExpertRef } from "@/lib/ava-answer/contract";
 import { SOURCE_EVENT_INSTANCES } from "@/lib/source/source-event-instances";
 import { PAT_SRC_AMS_001 } from "@/lib/intelligence/source-lifecycle-patterns";
-import { buildSourceSynthesisContext, instanceStateHash } from "@/lib/reasoning/synthesis-context-builder";
+import {
+  buildSourceSynthesisContext,
+  instanceStateHash,
+} from "@/lib/reasoning/synthesis-context-builder";
 import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
 import { computeSynthesisEtag } from "@/lib/reasoning/synthesis-etag";
 import { registerSynthesisCache } from "@/lib/reasoning/synthesis-cache-registry";
@@ -22,7 +25,7 @@ import { buildAgentContextContractBlock } from "@/lib/agent/module-context-contr
 // In production this would be Redis; for demo an in-process cache is sufficient.
 const synthesisCache = new Map<string, string>();
 const cacheCreatedAt = new Map<string, number>();
-registerSynthesisCache('source', synthesisCache, cacheCreatedAt);
+registerSynthesisCache("source", synthesisCache, cacheCreatedAt);
 
 const SENTINEL_SYNTHESIS_VOICE_AND_TASK = `You are Ava, AbarVa's intelligence validator on the Source surface.
 
@@ -39,14 +42,15 @@ Format: Plain prose, 40–60 words. No headers, no bullets, no markdown.`;
 
 function buildSentinelSynthesisPrompt(userContextBlock: string): string {
   const sourceContractBlock = buildAgentContextContractBlock({
-    agent: 'sentinel',
-    module: 'source',
+    agent: "sentinel",
+    module: "source",
     sources: [
       {
-        type: 'vendor',
-        id: 'source-synthesis-event',
-        name: 'Source sourcing event state',
-        detail: 'Vendor diligence, RFI/RFP, BAFO, contract terms, gates, missing artifacts, savings proof, adoption telemetry, and sourcing risk controls.',
+        type: "vendor",
+        id: "source-synthesis-event",
+        name: "Source sourcing event state",
+        detail:
+          "Vendor diligence, RFI/RFP, BAFO, contract terms, gates, missing artifacts, savings proof, adoption telemetry, and sourcing risk controls.",
       },
     ],
   });
@@ -59,17 +63,21 @@ function buildSentinelSynthesisPrompt(userContextBlock: string): string {
     AGENT_DEMO_SYSTEM_BLOCK,
   ]
     .filter((s) => s && s.trim().length > 0)
-    .join('\n\n');
+    .join("\n\n");
 }
 
 export async function POST(request: Request) {
   const startedAt = Date.now();
-  const body = (await request.json()) as { instanceId?: string; patternId?: string };
-  const instanceId = body.instanceId ?? 'ams-vendor-consolidation-2026';
+  const body = (await request.json()) as {
+    instanceId?: string;
+    patternId?: string;
+  };
+  const instanceId = body.instanceId ?? "ams-vendor-consolidation-2026";
 
   // Resolve instance (currently only AMS is typed; fallback gracefully)
-  const instance = SOURCE_EVENT_INSTANCES.find(i => i.id === instanceId)
-    ?? SOURCE_EVENT_INSTANCES[0];
+  const instance =
+    SOURCE_EVENT_INSTANCES.find((i) => i.id === instanceId) ??
+    SOURCE_EVENT_INSTANCES[0];
 
   if (!instance) {
     return new Response(JSON.stringify({ error: "instance not found" }), {
@@ -89,7 +97,7 @@ export async function POST(request: Request) {
   const stateHash = instanceStateHash(instance);
   const cacheKey = `${instance.id}:${stateHash}:${pattern.version}:sentinel`;
   const etag = computeSynthesisEtag(cacheKey);
-  const ifNoneMatch = request.headers.get('if-none-match');
+  const ifNoneMatch = request.headers.get("if-none-match");
   const cached = synthesisCache.get(cacheKey);
 
   // Conditional GET: client already has this exact synthesis cached.
@@ -97,7 +105,7 @@ export async function POST(request: Request) {
   // observability parity with the 200 path.
   if (cached && ifNoneMatch && ifNoneMatch === etag) {
     const event = recordSynthesisEvent({
-      surface: 'source',
+      surface: "source",
       instanceId: instance.id,
       patternId: pattern.patternId,
       cacheHit: true,
@@ -119,7 +127,7 @@ export async function POST(request: Request) {
 
   if (cached) {
     const event = recordSynthesisEvent({
-      surface: 'source',
+      surface: "source",
       instanceId: instance.id,
       patternId: pattern.patternId,
       cacheHit: true,
@@ -146,7 +154,10 @@ export async function POST(request: Request) {
   const userContextBlock = await getUserContextPromptBlock();
   const activeClient = await getActiveClientRow();
   if (!activeClient) {
-    return Response.json({ error: 'no_client', detail: 'No active client for AI egress policy.' }, { status: 403 });
+    return Response.json(
+      { error: "no_client", detail: "No active client for AI egress policy." },
+      { status: 403 },
+    );
   }
   const systemPrompt = buildSentinelSynthesisPrompt(userContextBlock);
 
@@ -156,27 +167,27 @@ export async function POST(request: Request) {
   // Flag off = byte-identical to the prior path (groundedUserMessage === userMessage).
   const sharedSourceOn = isFeatureEnabled(
     { clientKey: activeClient.key },
-    'scb_shared_engine_source',
+    "scb_shared_engine_source",
   );
   const expertGrounding = sharedSourceOn
     ? summonExpertsForQuery({ query: instance.name })
-    : { experts: [] as ExpertRef[], groundingBlock: '' };
+    : { experts: [] as ExpertRef[], groundingBlock: "" };
   const groundedUserMessage = expertGrounding.groundingBlock
     ? `${expertGrounding.groundingBlock}\n\n${userMessage}`
     : userMessage;
 
   const preflight = await preflightAnthropicDirectClient({
     tenantId: activeClient.id,
-    workflow: 'source-synthesis',
-    model: 'claude-sonnet-4-6',
-    prompt: [systemPrompt, groundedUserMessage].join('\n\n'),
-    dataClass: 'confidential',
-    metadata: { sourceInstanceId: instance.id, surface: 'source' },
+    workflow: "source-synthesis",
+    model: "claude-sonnet-4-6",
+    prompt: [systemPrompt, groundedUserMessage].join("\n\n"),
+    dataClass: "confidential",
+    metadata: { sourceInstanceId: instance.id, surface: "source" },
   });
   if (!preflight.ok) {
     return new Response(preflight.reason, {
       status: 403,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
   }
   const client = preflight.client;
@@ -189,10 +200,10 @@ export async function POST(request: Request) {
   });
 
   const encoder = new TextEncoder();
-  let accumulated = '';
+  let accumulated = "";
 
   const event = recordSynthesisEvent({
-    surface: 'source',
+    surface: "source",
     instanceId: instance.id,
     patternId: pattern.patternId,
     cacheHit: false,
@@ -206,7 +217,10 @@ export async function POST(request: Request) {
   const readable = new ReadableStream({
     async start(controller) {
       for await (const chunk of stream) {
-        if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
+        if (
+          chunk.type === "content_block_delta" &&
+          chunk.delta.type === "text_delta"
+        ) {
           accumulated += chunk.delta.text;
           controller.enqueue(encoder.encode(chunk.delta.text));
         }
@@ -231,37 +245,48 @@ export async function POST(request: Request) {
   });
 }
 
-function buildSynthesisUserMessage(ctx: ReturnType<typeof buildSourceSynthesisContext>): string {
+function buildSynthesisUserMessage(
+  ctx: ReturnType<typeof buildSourceSynthesisContext>,
+): string {
   const lines: string[] = [
-    `Synthesize the current state of sourcing event "${ctx.instanceSnapshot['name']}" at stage ${ctx.currentStage}.`,
-    '',
+    `Synthesize the current state of sourcing event "${ctx.instanceSnapshot["name"]}" at stage ${ctx.currentStage}.`,
+    "",
     `Gate status: ${ctx.gatesSummary.met} of ${ctx.gatesSummary.total} criteria met.`,
   ];
 
   if (ctx.gatesSummary.blocked.length > 0) {
-    lines.push(`Hard gate blockers: ${ctx.gatesSummary.blocked.map(b => b.description).join('; ')}.`);
+    lines.push(
+      `Hard gate blockers: ${ctx.gatesSummary.blocked.map((b) => b.description).join("; ")}.`,
+    );
   }
 
   if (ctx.missingArtifacts.length > 0) {
-    const hardMissing = ctx.missingArtifacts.filter(a => a.gateType === 'hard');
+    const hardMissing = ctx.missingArtifacts.filter(
+      (a) => a.gateType === "hard",
+    );
     if (hardMissing.length > 0) {
-      lines.push(`Missing required artifacts: ${hardMissing.map(a => a.label).join(', ')}.`);
+      lines.push(
+        `Missing required artifacts: ${hardMissing.map((a) => a.label).join(", ")}.`,
+      );
     }
   }
 
-  const riskFlags = ctx.instanceSnapshot['riskFlags'] as string[];
+  const riskFlags = ctx.instanceSnapshot["riskFlags"] as string[];
   if (riskFlags?.length > 0) {
-    lines.push(`Open risk flags: ${riskFlags.join('; ')}.`);
+    lines.push(`Open risk flags: ${riskFlags.join("; ")}.`);
   }
 
   if (ctx.cascadeContext.length > 0) {
-    const blocking = ctx.cascadeContext.find(c => c.severity === 'blocking');
+    const blocking = ctx.cascadeContext.find((c) => c.severity === "blocking");
     if (blocking) {
       lines.push(`Programme dependency: ${blocking.impact}.`);
     }
   }
 
-  lines.push('', 'Provide Sentinel\'s 2–3 sentence validator assessment of this state.');
+  lines.push(
+    "",
+    "Provide Sentinel's 2–3 sentence validator assessment of this state.",
+  );
 
-  return lines.join('\n');
+  return lines.join("\n");
 }

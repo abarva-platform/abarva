@@ -79,7 +79,7 @@ describe("Shared Context Brain exposure policy", () => {
     const report = buildSharedEngineParityGateReport({
       total: 1,
       passCount: 1,
-      results: [{ answer: { crossTenantBlocked: true } }],
+      results: [{ answer: { status: "blocked" } }],
     });
 
     expect(report.pass).toBe(false);

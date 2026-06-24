@@ -6,7 +6,13 @@ import React from "react";
 import { ReadableStream } from "node:stream/web";
 import { TextDecoder, TextEncoder } from "node:util";
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { IntelligenceV2Surface } from "@/components/intelligence-v2/IntelligenceV2Surface";
 import { ALL_CLIENTS } from "@/lib/client-config";
 import { getIntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
@@ -48,7 +54,8 @@ const apexPayload: IntelligenceBindingPayload = {
       id: "SIG-spend-01",
       domains: ["FINANCE & RUN COST", "AI INITIATIVES"],
       crossDomain: true,
-      headline: "Retail lakehouse and customer inventory graph has $95M committed and $12.0M realized.",
+      headline:
+        "Retail lakehouse and customer inventory graph has $95M committed and $12.0M realized.",
       body: "Blocker: identity and item-location data quality.",
       confidence: "MEDIUM CONFIDENCE",
       evidencePoints: 22,
@@ -75,7 +82,8 @@ const apexPayload: IntelligenceBindingPayload = {
     {
       patternName: "Omnichannel inventory truth before AI scale",
       domain: "retail_operations",
-      whenToApply: "Use when BOPIS and personalization depend on inventory accuracy.",
+      whenToApply:
+        "Use when BOPIS and personalization depend on inventory accuracy.",
     },
   ],
 };
@@ -89,7 +97,7 @@ describe("IntelligenceV2Surface Ask Ava", () => {
     });
   });
 
-  it("posts Apex v2 binding facts and renders streamed AgentAnswer tables", async () => {
+  it("posts Apex v2 binding facts and renders streamed Ava answer tables", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -101,15 +109,22 @@ describe("IntelligenceV2Surface Ask Ava", () => {
         JSON.stringify({
           type: "agent-answer",
           answer: {
-            engineVersion: "agent-answer/v1",
             surface: "intelligence",
-            expertId: "xp.retail.operations",
-            contributingExperts: [
+            mode: "ANALYZE",
+            tenantKey: "apex-retail",
+            question: "what should we do about apex ai spend?",
+            intent: "table",
+            status: "answered",
+            directAnswer: "",
+            factsUsed: [],
+            metricsUsed: [],
+            relationshipsUsed: [],
+            expertsUsed: [
               { id: "xp.retail.operations", name: "Retail Operations Expert" },
             ],
-            prose: "",
-            tables: [
+            artifacts: [
               {
+                artifact: "table",
                 id: "apex-ai-spend",
                 title: "Apex AI Spend Evidence",
                 columns: [
@@ -127,8 +142,6 @@ describe("IntelligenceV2Surface Ask Ava", () => {
                 citationIds: ["c1"],
               },
             ],
-            charts: [],
-            graphs: [],
             citations: [
               {
                 id: "c1",
@@ -137,11 +150,20 @@ describe("IntelligenceV2Surface Ask Ava", () => {
               },
             ],
             gaps: [],
-            recommendedActions: [],
-            groundingMode: "mixed",
-            confidence: "medium",
-            limits: [],
-            crossTenantBlocked: false,
+            caveats: [],
+            nextSteps: [],
+            quality: {
+              confidence: "medium",
+              evidenceStrength: "partial",
+              tenantGrounding: "partial",
+              answerCompleteness: "complete",
+            },
+            safety: {
+              tenantFencePassed: true,
+              rawIdsSuppressed: true,
+              forbiddenLanguagePassed: true,
+              unsupportedClaimsBlocked: true,
+            },
           },
         }),
         JSON.stringify({ type: "done" }),
@@ -150,7 +172,12 @@ describe("IntelligenceV2Surface Ask Ava", () => {
     });
     global.fetch = fetchMock as typeof fetch;
 
-    render(<IntelligenceV2Surface payload={apexPayload} tenantName="Apex Retail Group" />);
+    render(
+      <IntelligenceV2Surface
+        payload={apexPayload}
+        tenantName="Apex Retail Group"
+      />,
+    );
 
     const askBox = screen.getByLabelText("Ask Ava");
     expect(askBox.tagName).toBe("TEXTAREA");
@@ -183,12 +210,16 @@ describe("IntelligenceV2Surface Ask Ava", () => {
     );
     expect(body.surfaceContext.strategyFacts).toEqual(
       expect.arrayContaining([
-        expect.stringContaining("Retail lakehouse and customer inventory graph has $95M committed"),
+        expect.stringContaining(
+          "Retail lakehouse and customer inventory graph has $95M committed",
+        ),
       ]),
     );
 
     expect(
-      await screen.findByText("Apex should gate lakehouse scale on measured value."),
+      await screen.findByText(
+        "Apex should gate lakehouse scale on measured value.",
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText("Retail Operations Expert")).toBeInTheDocument();
     expect(screen.getByText("Apex AI Spend Evidence")).toBeInTheDocument();

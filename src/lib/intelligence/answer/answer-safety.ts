@@ -1,9 +1,9 @@
 import type {
-  AgentAnswer,
   AnswerCitation,
   AnswerGraph,
   AnswerTable,
-} from "@/lib/intelligence/answer/agent-answer";
+  AvaAnswerPacket,
+} from "@/lib/ava-answer/contract";
 
 const RAW_RECORD_ID_RE = /\b[A-Z]{2,8}-[A-Z0-9]{2,12}-\d{2,5}\b/g;
 const RAW_RECORD_ID_TEST_RE = /\b[A-Z]{2,8}-[A-Z0-9]{2,12}-\d{2,5}\b/;
@@ -49,10 +49,16 @@ export function containsUnsafePublicText(value: string): boolean {
 }
 
 export function dedupeConsultantLabels(value: string): string {
-  return value.replace(CONSULTANT_LABEL_RE, (_match, label: string) => `${label}: `);
+  return value.replace(
+    CONSULTANT_LABEL_RE,
+    (_match, label: string) => `${label}: `,
+  );
 }
 
-export function sanitizePublicText(value: string, fallback = "loaded evidence"): string {
+export function sanitizePublicText(
+  value: string,
+  fallback = "loaded evidence",
+): string {
   const cleaned = dedupeConsultantLabels(value)
     .replace(BRACKET_RECORD_RE, fallback)
     .replace(UUID_RE, fallback)
@@ -82,7 +88,7 @@ function sanitizeCell(value: string | number | null): string | number | null {
   return sanitizePublicText(value, "loaded tenant evidence");
 }
 
-function sanitizeTable(table: AnswerTable): AnswerTable {
+function sanitizeTable<T extends AnswerTable>(table: T): T {
   return {
     ...table,
     title: table.title
@@ -103,7 +109,7 @@ function sanitizeTable(table: AnswerTable): AnswerTable {
   };
 }
 
-function sanitizeGraph(graph: AnswerGraph): AnswerGraph {
+function sanitizeGraph<T extends AnswerGraph>(graph: T): T {
   return {
     ...graph,
     title: graph.title
@@ -122,31 +128,54 @@ function sanitizeGraph(graph: AnswerGraph): AnswerGraph {
   };
 }
 
-export function sanitizeAgentAnswerForRender(answer: AgentAnswer): AgentAnswer {
+export function sanitizeAvaAnswerForRender(
+  answer: AvaAnswerPacket,
+): AvaAnswerPacket {
   return {
     ...answer,
-    prose: sanitizePublicText(answer.prose, ""),
-    contributingExperts: answer.contributingExperts.map((expert) => ({
+    directAnswer: sanitizePublicText(answer.directAnswer, ""),
+    interpretation: answer.interpretation
+      ? sanitizePublicText(answer.interpretation, "")
+      : answer.interpretation,
+    businessImplication: answer.businessImplication
+      ? sanitizePublicText(answer.businessImplication, "")
+      : answer.businessImplication,
+    recommendation: answer.recommendation
+      ? sanitizePublicText(answer.recommendation, "")
+      : answer.recommendation,
+    expertsUsed: (answer.expertsUsed ?? []).map((expert) => ({
       ...expert,
       name: sanitizePublicText(expert.name, "Consilium expert"),
     })),
     citations: answer.citations.map(sanitizeCitation),
-    tables: answer.tables.map(sanitizeTable),
-    charts: answer.charts.map((chart) => ({
-      ...chart,
-      title: chart.title
-        ? sanitizePublicText(chart.title, "Answer chart")
-        : chart.title,
+    artifacts: answer.artifacts.map((artifact) => {
+      if (artifact.artifact === "table") return sanitizeTable(artifact);
+      if (artifact.artifact === "graph") return sanitizeGraph(artifact);
+      return {
+        ...artifact,
+        title: artifact.title
+          ? sanitizePublicText(artifact.title, "Answer chart")
+          : artifact.title,
+      };
+    }),
+    gaps: answer.gaps.map((gap) => ({
+      ...gap,
+      label: sanitizePublicText(gap.label, "Source gap"),
+      detail: sanitizePublicText(gap.detail, "Source gap"),
     })),
-    graphs: answer.graphs.map(sanitizeGraph),
-    gaps: answer.gaps.map((gap) => sanitizePublicText(gap, "Evidence gap")),
-    recommendedActions: answer.recommendedActions.map((action) => ({
+    caveats: answer.caveats.map((caveat) => ({
+      ...caveat,
+      label: sanitizePublicText(caveat.label, "Caveat"),
+      detail: sanitizePublicText(caveat.detail, "Caveat"),
+    })),
+    nextSteps: answer.nextSteps.map((action) => ({
       ...action,
-      label: sanitizePublicText(action.label, "Recommended action"),
+      label: sanitizePublicText(action.label, "Next step"),
       rationale: action.rationale
-        ? sanitizePublicText(action.rationale, "Action rationale")
+        ? sanitizePublicText(action.rationale, "Next step rationale")
         : action.rationale,
     })),
-    limits: answer.limits.map((limit) => sanitizePublicText(limit, "Answer limit")),
   };
 }
+
+export const sanitizeAgentAnswerForRender = sanitizeAvaAnswerForRender;
