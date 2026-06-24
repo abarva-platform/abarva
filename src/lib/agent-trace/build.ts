@@ -277,6 +277,16 @@ export function buildSentinelTrace(
     patternNamespace?: string | null;
   },
 ): AgentContextTrace {
+  return buildAvaTrace(input, 'sentinel');
+}
+
+export function buildAvaTrace(
+  input: BuildTraceCommon & {
+    sources: RawAskSource[];
+    patternNamespace?: string | null;
+  },
+  compatibilityAgent: 'ava' | 'sentinel' = 'ava',
+): AgentContextTrace {
   const tenant: TraceRetrievedObject[] = [];
   const patterns: TraceRetrievedObject[] = [];
   const artifacts: TraceRetrievedObject[] = [];
@@ -294,5 +304,5 @@ export function buildSentinelTrace(
     else if (b === 'artifact') artifacts.push(obj);
     else tenant.push(obj);
   }
-  return finalize('sentinel', input, { tenant, patterns, artifacts });
+  return finalize(compatibilityAgent, input, { tenant, patterns, artifacts });
 }

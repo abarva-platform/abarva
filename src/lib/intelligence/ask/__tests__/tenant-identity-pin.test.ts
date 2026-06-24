@@ -3,12 +3,12 @@
  *
  * Regression target: STRESS-P0-001 (2026-05-24 full-module stress test).
  * A Meridian Health CDIO authenticated session on /intelligence/ask
- * CROSS-CORPUS mode received a Sentinel response that asserted "you're
+ * CROSS-CORPUS mode received an aVa response that asserted "you're
  * Apex Retail, a multi-banner specialty retailer" — including Apex's
  * FY2026 capital plan and funding-authority matrix surfaced TO the
  * Meridian session.
  *
- * Root cause: hardcoded Apex pin in the Sentinel synthesizer system prompt.
+ * Root cause: hardcoded Apex pin in the aVa synthesizer system prompt.
  * Fix: dynamic buildTenantIdentityPin(clientKey) + post-response
  * detectCrossTenantIdentityLeak() guard.
  */

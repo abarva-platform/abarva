@@ -13,7 +13,7 @@
 // `redaction.ts`.
 
 /** Which governed agent produced the response. */
-export type TraceAgent = 'nexus' | 'sentinel';
+export type TraceAgent = 'ava' | 'nexus' | 'sentinel';
 
 /** Surface the response was served from. */
 export type TraceSurface =

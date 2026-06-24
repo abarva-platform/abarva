@@ -1,8 +1,7 @@
 // /intelligence/ask · INT-1.7
 //
-// Preserves the Sentinel chat surface that previously lived at
-// /intelligence (PR-INT-B / PR-INT-F). Reachable from the J0 page
-// header's "Open Sentinel →" affordance. The page is auth-gated by
+// Preserves the aVa Intelligence chat surface. Reachable from the J0 page
+// header's "Ask aVa" affordance. The page is auth-gated by
 // the proxy (src/proxy.ts authRequiredRoutes) because the chat
 // requires a Clerk session to call the agent route.
 //
@@ -13,7 +12,7 @@
 
 import { AppShell } from '@/components/shell/AppShell';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import { SentinelReasoningCards } from '@/app/(maestro)/intelligence/ask/SentinelReasoningCards';
+import { AvaReasoningCards } from '@/app/(maestro)/intelligence/ask/AvaReasoningCards';
 import { IntelligenceAskTabCookie } from './IntelligenceAskTabCookie';
 import { getActiveClientRow } from '@/lib/active-client';
 import { DEFAULT_CLIENT_KEY, getClientOption } from '@/lib/client-config';
@@ -27,9 +26,9 @@ export const metadata = {
 export default async function IntelligenceAskPage() {
   // STRESS-P0-002 fix: resolve the active tenant from the authenticated session
   // instead of hardcoding "Apex Retail Group" / "apexretail" in the topbar and
-  // in the SentinelReasoningCards initialClient prop. The 2026-05-24 full-
+  // in the AvaReasoningCards initialClient prop. The 2026-05-24 full-
   // module stress test on Meridian Health found that the page was hardcoded
-  // and therefore drove Sentinel's responses to assert "you're Apex Retail"
+  // and therefore drove aVa responses to assert "you're Apex Retail"
   // regardless of which tenant the user authenticated as.
   const activeClient = await getActiveClientRow(null).catch(() => null);
   const activeClientKey = activeClient?.key ?? DEFAULT_CLIENT_KEY;
@@ -72,7 +71,7 @@ export default async function IntelligenceAskPage() {
             minHeight: 0,
           }}
         >
-          <SentinelReasoningCards
+          <AvaReasoningCards
             initialClient={activeClientKey}
             initialClientDisplayName={activeClientDisplayName}
           />

@@ -143,6 +143,9 @@ export function enforceDecisionGradeAnswer(text: string): string {
 function sanitizeVisibleAnswerLanguage(text: string): string {
   return text
     .replace(/\bAva\b/g, "aVa")
+    .replace(/\bSentinel\b/g, "aVa")
+    .replace(/\bAtlas\b/g, "aVa")
+    .replace(/\bNexus\b/g, "Moves")
     .replace(
       /assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves/gi,
       "have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves",
@@ -413,6 +416,9 @@ function cleanFact(line: string): string {
   return line
     .replace(/^\s*-\s*/, "")
     .replace(/\s+/g, " ")
+    .replace(/\bSentinel\b/g, "aVa")
+    .replace(/\bAtlas\b/g, "aVa")
+    .replace(/\bNexus\b/g, "Moves")
     .trim();
 }
 

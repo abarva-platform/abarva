@@ -61,13 +61,13 @@ jest.mock("@/lib/intelligence/ask", () => ({
         { type: "PATTERN", id: "pattern-1", name: "Pattern", detail: "detail" },
       ],
     };
-    yield { type: "delta", text: "A useful Sentinel answer." };
+    yield { type: "delta", text: "A useful aVa answer." };
     yield { type: "done" };
   }),
 }));
 
 jest.mock("@/lib/reasoning/synthesis-telemetry", () => ({
-  recordSynthesisEvent: jest.fn(() => ({ id: "tlm_sentinel_1" })),
+  recordSynthesisEvent: jest.fn(() => ({ id: "tlm_intelligence_1" })),
 }));
 
 jest.mock("@/lib/reasoning/telemetry-init", () => ({}));
@@ -161,7 +161,7 @@ async function readResponseText(response: Response): Promise<string> {
 }
 
 describe("POST /api/intelligence/ask telemetry", () => {
-  it("records a sentinel telemetry event and emits its id on the done event", async () => {
+  it("records an Intelligence telemetry event and emits its id on the done event", async () => {
     const response = await POST(
       makeRequest({
         q: "What should we sequence?",
@@ -172,7 +172,7 @@ describe("POST /api/intelligence/ask telemetry", () => {
 
     expect(recordSynthesisEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        surface: "sentinel",
+        surface: "intelligence",
         tenantId: "client-1",
         instanceId: "ask-session-1",
         patternId: "pattern-1",
@@ -180,10 +180,10 @@ describe("POST /api/intelligence/ask telemetry", () => {
       }),
     );
     expect(text).toContain('"type":"done"');
-    expect(text).toContain('"telemetryEventId":"tlm_sentinel_1"');
+    expect(text).toContain('"telemetryEventId":"tlm_intelligence_1"');
   });
 
-  it("emits AgentAnswer attribution without inferring exhibits for the Sentinel reasoning path", async () => {
+  it("emits AgentAnswer attribution without inferring exhibits for the aVa reasoning path", async () => {
     jest.mocked(classifySentinelIntent).mockResolvedValueOnce({
       intent: "it_productivity",
       confidence: 0.91,
@@ -241,10 +241,13 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(agentAnswer).toBeTruthy();
     expect(tables).toEqual([
       expect.objectContaining({
-        id: "answer-decision-evidence",
-        title: "Decision Evidence",
+        id: "answer-evidence-required",
+        title: "Evidence Required",
       }),
     ]);
+    expect(tables?.[0].note).toContain(
+      "not have enough connected data to populate tenant-specific rows without fabrication",
+    );
     expect(tables?.[0].rows).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ value: "$590K" }),

@@ -18,17 +18,22 @@ import {
   detectCrossTenantIdentityLeak,
   detectOffTenantMention,
 } from "./tenant-identity-pin";
+import {
+  buildIntelligenceAdvisorComposerBlock,
+  chooseAdvisorTokenBudget,
+  chooseAdvisorWordCap,
+} from "./advisor-composer";
 import { buildAgentContextContractBlock } from "@/lib/agent/module-context-contract";
 import { buildHealthcareAnswerContract } from "@/lib/intelligence/synthesis/healthcareAnswerContract";
 
 export { chunkAskText, sanitizeAskSynthesis } from "./response-policy";
 
-// SYSTEM_PROMPT · Sentinel Ask Intelligence · INT-VOICE.STRAT-2026-05-10d
+// SYSTEM_PROMPT · aVa Ask Intelligence · INT-VOICE.STRAT-2026-05-10d
 //
 // Expert-posture canonical text from `docs/build/CURSOR_BRIEF_A_SENTINEL.md`
-// (founder-approved 2026-05-10 package). Sentinel is a senior AI-strategy
+// (founder-approved 2026-05-10 package). aVa is a senior AI-strategy
 // advisor across retail, healthcare, and financial services. The corpus and
-// tenant context are enriching inputs, not constraints. Sentinel never refuses
+// tenant context are enriching inputs, not constraints. aVa never refuses
 // a question on grounds of "not in the corpus."
 //
 // The role text + five few-shot examples below are taken VERBATIM from the
@@ -152,7 +157,7 @@ You're one of three agents. When the user's question is squarely in another agen
 
 For deep vendor evaluation (which specific vendor to pick, RFP construction, contract terms, vendor financial health) — that's Source. "For vendor evaluation specifically, Source has the depth on that. Want me to hand you off?"
 
-For shaping a candidate bet through the Move discipline (charter, scope, business case, sponsor structure) — that's Nexus / the Moves surface. "If you want to shape this as an actual Move with the failure modes built into the plan, I can hand off to Moves with what we've discussed."
+For shaping a candidate bet through the Move discipline (charter, scope, business case, sponsor structure) — that's the Moves surface. "If you want to shape this as an actual Move with the failure modes built into the plan, I can hand off to Moves with what we've discussed."
 
 You can still surface high-level vendor or shaping context as part of your strategic view. Hand off when the user wants depth in those areas.
 
@@ -283,7 +288,8 @@ function chooseModel(intent: AskIntent, query: string): string {
 }
 
 export function chooseSynthesisTokenBudget(query: string): number {
-  return isExplicitConciseAsk(query) ? 160 : 600;
+  const defaultBudget = isExplicitConciseAsk(query) ? 160 : 600;
+  return chooseAdvisorTokenBudget(query, defaultBudget);
 }
 
 function formatSourcesBlock(sources: AskSource[]): string {
@@ -353,7 +359,7 @@ export async function* synthesizeStream(args: {
     args.tenantClientKey ?? args.tenantId ?? null,
   );
   const contextContractBlock = buildAgentContextContractBlock({
-    agent: "sentinel",
+    agent: "ava",
     module: "intelligence",
     sources: args.sources,
   });
@@ -386,10 +392,19 @@ export async function* synthesizeStream(args: {
 
 VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually, plot, trend, dependency map, relationship map, upstream/downstream map, or network, you MUST emit a compact GitHub-flavored Markdown data table after the Read/Evidence/Implication/Next move prose if the retrieved evidence supports at least two comparable rows or two connected nodes. For charts, include one text label column and one exact numeric value column (for example "Initiative | Value"). For relationship graphs, include explicit edge rows with "From | Relationship | To | Evidence" or "Source | Relationship | Target | Evidence". Do not describe a visual only in prose when the data exists. If the data is not connected enough for a real chart or graph, say which evidence is missing and emit an Evidence Required table instead. Every other rule stands unchanged — same length discipline, tenant isolation, no fabricated numbers, no hollow openers.`
     : "";
+  const advisorComposer = buildIntelligenceAdvisorComposerBlock({
+    query: args.query,
+    tenantClientKey: args.tenantClientKey,
+    sources: args.sources,
+    richText: args.richText,
+  });
+  const advisorComposerAddendum = advisorComposer
+    ? `\n\n${advisorComposer.promptBlock}\n\nROUTE-SPECIFIC LENGTH OVERRIDE: For ${advisorComposer.route}, this case-team brief overrides the generic 200-word target. Write enough to satisfy the executive answer, trend synthesis, named examples, ROI/value pool table, SkyHarbor relevance, architecture prerequisites, and next analysis options. Keep it crisp and readable, but do not compress away the required artifacts.`
+    : "";
   const system =
     contextBlocks.length > 0
-      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}`
-      : `${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}`;
+      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${advisorComposerAddendum}`
+      : `${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${advisorComposerAddendum}`;
   const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? "\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present."
@@ -476,7 +491,10 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
     // cap to 240 gives the model headroom to land at 195-220 without clipping
     // and still fences off true runaway responses. The prompt remains the
     // primary length lever; this is a safety net.
-    const sanitized = sanitizeAskSynthesis(text, 240);
+    const sanitized = sanitizeAskSynthesis(
+      text,
+      chooseAdvisorWordCap(args.query, 240),
+    );
     const evidenceDisciplined = applyPartialEvidencePolicy(
       sanitized,
       args.sources,

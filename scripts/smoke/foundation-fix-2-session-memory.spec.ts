@@ -31,7 +31,7 @@ assert.match(synthesizer, /repeat, recap, continue/);
 
 const askRoute = read('src/app/api/intelligence/ask/route.ts');
 assert.match(askRoute, /prepareAskSessionMemory/);
-assert.match(askRoute, /type: 'session'/);
+assert.match(askRoute, /type:\s*["']session["']/);
 assert.match(askRoute, /appendAskSessionTurn/);
 assert.match(askRoute, /conversationContextBlock: memory\?\.contextBlock/);
 assert.match(askRoute, /ai-ask-tab-id/);
@@ -41,10 +41,10 @@ assert.match(tabCookie, /ai-ask-tab-id/);
 assert.match(tabCookie, /sessionStorage/);
 assert.match(tabCookie, /document\.cookie/);
 
-const sentinelCards = read('src/app/(maestro)/intelligence/ask/SentinelReasoningCards.tsx');
-assert.match(sentinelCards, /ensureIntelligenceAskTabId/);
-assert.match(sentinelCards, /sessionId/);
-assert.match(sentinelCards, /\/programs\/new\?fromIntelligence=1/);
+const avaCards = read('src/app/(maestro)/intelligence/ask/AvaReasoningCards.tsx');
+assert.match(avaCards, /ensureIntelligenceAskTabId/);
+assert.match(avaCards, /sessionId/);
+assert.match(avaCards, /\/programs\/new\?fromIntelligence=1/);
 
 const programsNew = read('src/app/programs/new/page.tsx');
 assert.match(programsNew, /originatingIntelligenceSessionId/);

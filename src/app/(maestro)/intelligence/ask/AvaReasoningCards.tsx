@@ -27,7 +27,7 @@ type StreamEvent =
         reason?: string;
       };
     }
-  | { type: "sentinel-stage"; stage?: SentinelReasoningStage }
+  | { type: "ava-stage" | "sentinel-stage"; stage?: SentinelReasoningStage }
   | { type: "delta"; text?: string }
   | { type: "sources"; sources?: AskSource[]; coverageReport?: CoverageReport }
   | { type: "agent-answer"; answer?: AvaAnswerPacket }
@@ -106,15 +106,15 @@ function answerForThread(answer: AvaAnswerPacket): AvaAnswerPacket {
   };
 }
 
-interface SentinelReasoningCardsProps {
+interface AvaReasoningCardsProps {
   initialClient: string;
   initialClientDisplayName: string;
 }
 
-export function SentinelReasoningCards({
+export function AvaReasoningCards({
   initialClient,
   initialClientDisplayName,
-}: SentinelReasoningCardsProps) {
+}: AvaReasoningCardsProps) {
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [cards, setCards] = useState<SentinelReasoningStage[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
@@ -228,7 +228,7 @@ export function SentinelReasoningCards({
         setSessionId(event.sessionId);
         return;
       }
-      if (event.type === "sentinel-stage" && event.stage) {
+      if ((event.type === "ava-stage" || event.type === "sentinel-stage") && event.stage) {
         sawRenderableAnswer = true;
         const stage = event.stage;
         setCards((prev) => {
@@ -461,7 +461,7 @@ export function SentinelReasoningCards({
                 <details
                   key={card.id}
                   open
-                  data-testid={`sentinel-stage-card-${card.id}`}
+                  data-testid={`ava-stage-card-${card.id}`}
                   style={CARD_STYLE}
                 >
                   <summary style={STAGE_SUMMARY_STYLE}>
@@ -589,7 +589,7 @@ export function SentinelReasoningCards({
       tabs={tabItems}
       activeTab={activeTab}
       onTabChange={(tab) => setActiveTab(tab as WorkspaceTab)}
-      testId="sentinel-reasoning-workspace"
+      testId="ava-reasoning-workspace"
       tabTestIdPrefix="intelligence-workspace-tab"
     >
       <div data-testid={`intelligence-workspace-panel-${activeTab}`}>

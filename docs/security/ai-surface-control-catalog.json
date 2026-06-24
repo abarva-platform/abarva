@@ -356,11 +356,11 @@
       ]
     },
     {
-      "id": "intelligence-sentinel-reasoning-cards",
-      "surface": "Sentinel reasoning cards",
+      "id": "intelligence-ava-reasoning-cards",
+      "surface": "aVa reasoning cards",
       "lane": "global-control-lane",
       "owner": "AbarVa",
-      "path": "src/app/(maestro)/intelligence/ask/SentinelReasoningCards.tsx",
+      "path": "src/app/(maestro)/intelligence/ask/AvaReasoningCards.tsx",
       "requiredControls": [
         {
           "kind": "citation",
@@ -610,15 +610,15 @@
       "controlKind": "human-approval-gate"
     },
     {
-      "key": "generated-ui|Intelligence|Sentinel reasoning cards|citation",
+      "key": "generated-ui|Intelligence|aVa reasoning cards|citation",
       "status": "covered",
-      "surfaceId": "intelligence-sentinel-reasoning-cards",
+      "surfaceId": "intelligence-ava-reasoning-cards",
       "controlKind": "citation"
     },
     {
-      "key": "generated-ui|Intelligence|Sentinel reasoning cards|confidence",
+      "key": "generated-ui|Intelligence|aVa reasoning cards|confidence",
       "status": "covered",
-      "surfaceId": "intelligence-sentinel-reasoning-cards",
+      "surfaceId": "intelligence-ava-reasoning-cards",
       "controlKind": "confidence"
     },
     {
