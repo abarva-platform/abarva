@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { HomeKnowAnswerRenderer } from "@/components/home/know/HomeKnowAnswerRenderer";
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
@@ -17,13 +17,21 @@ const CSS = `
 .homeKnowAsk .hka-bar button:disabled{opacity:.52;cursor:default}
 .homeKnowAsk .hka-suggestions{max-width:960px;margin:12px auto 0;display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .homeKnowAsk .hka-chip{display:inline-flex;align-items:center;border:1px solid var(--hka-line);border-radius:20px;padding:5px 13px;font-size:12px;color:#3a3a34;cursor:pointer;background:var(--hka-card)}
+.homeKnowAsk .hka-chip:disabled{opacity:.55;cursor:default}
 .homeKnowAsk .hka-chip:hover{border-color:#c6ded0;color:var(--hka-green)}
-.homeKnowAsk .hka-thread{max-width:960px;margin:16px auto 0;display:flex;flex-direction:column;gap:14px}
-.homeKnowAsk .hka-turn{display:flex;flex-direction:column;gap:8px}
-.homeKnowAsk .hka-user{align-self:flex-end;max-width:min(760px,90%);background:#F6F4EE;border:1px solid var(--hka-line);border-radius:12px;padding:9px 13px;font-size:13px;line-height:1.45;white-space:pre-wrap;color:#2b2b26}
+.homeKnowAsk .hka-thread{max-width:960px;margin:22px auto 0;display:flex;flex-direction:column;gap:16px}
+.homeKnowAsk .hka-threadHead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-bottom:1px solid var(--hka-line);padding-bottom:8px}
+.homeKnowAsk .hka-threadTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--hka-green);font-weight:750}
+.homeKnowAsk .hka-threadCount{font-size:12px;color:var(--hka-faint)}
+.homeKnowAsk .hka-turn{display:flex;flex-direction:column;gap:10px;scroll-margin-top:96px}
+.homeKnowAsk .hka-question{background:#F6F4EE;border:1px solid var(--hka-line);border-radius:12px;padding:10px 13px;display:grid;gap:4px;color:#2b2b26}
+.homeKnowAsk .hka-questionMeta{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--hka-faint);font-weight:750}
+.homeKnowAsk .hka-questionText{font-size:14px;line-height:1.5;white-space:pre-wrap}
 .homeKnowAsk .hka-loading,.homeKnowAsk .hka-error{background:#fff;border:1px solid var(--hka-line);border-radius:12px;padding:18px 22px;color:var(--hka-faint);font-size:13.5px}
 .homeKnowAsk .hka-error{color:#7f1d1d;background:#fff7f7}
 `;
+
+const MAX_STORED_TURNS = 12;
 
 type HomeKnowTurn = {
   id: string;
@@ -70,9 +78,66 @@ export function HomeKnowAsk({
 }) {
   const [query, setQuery] = useState("");
   const [turns, setTurns] = useState<HomeKnowTurn[]>([]);
-  const [fetching, setFetching] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const threadEndRef = useRef<HTMLDivElement | null>(null);
+  const storageKey = useMemo(
+    () => `abarva.homeKnow.thread.${tenantKey ?? client ?? "default"}`,
+    [client, tenantKey],
+  );
+
+  useEffect(() => {
+    try {
+      const raw = window.sessionStorage.getItem(storageKey);
+      if (!raw) {
+        setTurns([]);
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        setTurns([]);
+        return;
+      }
+      setTurns(
+        parsed
+          .filter((turn): turn is HomeKnowTurn => {
+            if (!turn || typeof turn !== "object" || Array.isArray(turn)) return false;
+            const candidate = turn as Partial<HomeKnowTurn>;
+            return (
+              typeof candidate.id === "string" &&
+              typeof candidate.question === "string" &&
+              (candidate.response === null || isHomeKnowResponse(candidate.response)) &&
+              typeof candidate.error !== "undefined"
+            );
+          })
+          .map((turn) => ({ ...turn, fetching: false }))
+          .slice(-MAX_STORED_TURNS),
+      );
+    } catch {
+      setTurns([]);
+    }
+  }, [storageKey]);
+
+  useEffect(() => {
+    const completedTurns = turns
+      .filter((turn) => !turn.fetching)
+      .map((turn) => ({ ...turn, fetching: false }))
+      .slice(-MAX_STORED_TURNS);
+    try {
+      if (completedTurns.length === 0) {
+        window.sessionStorage.removeItem(storageKey);
+      } else {
+        window.sessionStorage.setItem(storageKey, JSON.stringify(completedTurns));
+      }
+    } catch {
+      // Session history is helpful, but the chat must keep working if storage is blocked.
+    }
+  }, [storageKey, turns]);
+
+  useEffect(() => {
+    if (typeof threadEndRef.current?.scrollIntoView === "function") {
+      threadEndRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }, [turns.length]);
 
   const ask = useCallback(
     async (q: string) => {
@@ -87,12 +152,9 @@ export function HomeKnowAsk({
 
       setQuery("");
       resetAskTextarea(textareaRef.current);
-      abortRef.current?.abort();
       const ctrl = new AbortController();
-      abortRef.current = ctrl;
-      setFetching(true);
       setTurns((current) => [
-        ...current,
+        ...current.slice(-(MAX_STORED_TURNS - 1)),
         {
           id: turnId,
           question: trimmed,
@@ -138,7 +200,6 @@ export function HomeKnowAsk({
         }
       } finally {
         updateTurn({ fetching: false });
-        setFetching(false);
       }
     },
     [client, tenantKey],
@@ -152,7 +213,6 @@ export function HomeKnowAsk({
         <textarea
           ref={textareaRef}
           aria-label="Ask Home KNOW"
-          disabled={fetching}
           onChange={(event) => {
             setQuery(event.target.value);
             resizeAskTextarea(event.currentTarget);
@@ -168,11 +228,11 @@ export function HomeKnowAsk({
           value={query}
         />
         <button
-          disabled={fetching || !query.trim()}
+          disabled={!query.trim()}
           onClick={() => ask(query)}
           type="button"
         >
-          {fetching ? "…" : "Ask"}
+          Ask
         </button>
       </div>
 
@@ -181,7 +241,6 @@ export function HomeKnowAsk({
           {suggestedQuestions.map((suggestion) => (
             <button
               className="hka-chip"
-              disabled={fetching}
               key={suggestion}
               onClick={() => ask(suggestion)}
               title={suggestion}
@@ -195,9 +254,18 @@ export function HomeKnowAsk({
 
       {turns.length > 0 ? (
         <div aria-label="Home KNOW conversation" className="hka-thread">
-          {turns.map((turn) => (
+          <div className="hka-threadHead">
+            <div className="hka-threadTitle">Conversation history</div>
+            <div className="hka-threadCount">
+              {turns.length} {turns.length === 1 ? "question" : "questions"}
+            </div>
+          </div>
+          {turns.map((turn, index) => (
             <div className="hka-turn" key={turn.id}>
-              <div className="hka-user">{turn.question}</div>
+              <div className="hka-question">
+                <div className="hka-questionMeta">You asked · Question {index + 1}</div>
+                <div className="hka-questionText">{turn.question}</div>
+              </div>
               {turn.response ? (
                 <HomeKnowAnswerRenderer response={turn.response} />
               ) : turn.error ? (
@@ -211,6 +279,7 @@ export function HomeKnowAsk({
               ) : null}
             </div>
           ))}
+          <div ref={threadEndRef} />
         </div>
       ) : null}
     </div>
