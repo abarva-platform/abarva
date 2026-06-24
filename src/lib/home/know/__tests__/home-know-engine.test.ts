@@ -130,6 +130,19 @@ const apexPacket: HomeKnowPacket = {
         team_name: "Store Systems and POS",
       },
     },
+    {
+      tenant_key: "apex-retail",
+      canonical_record_id: "rec-business-store-ops",
+      source_record_id: "BU-STORE-OPS",
+      record_type: "business_function",
+      dimension: "business_org_functions",
+      payload: {
+        function_name: "Store Operations",
+        business_domain: "retail operations",
+        owner: "COO",
+        status: "active",
+      },
+    },
   ],
   gaps: [
     {
@@ -421,6 +434,36 @@ describe("Home KNOW contract engine", () => {
     );
     expect(response.prose).not.toMatch(/^Home can show/i);
     assertNoForbiddenHomeText(response);
+  });
+
+  it("binds business functions and IT ownership for cross-dimension org questions", () => {
+    const response = buildHomeKnowResponseFromPacket({
+      tenantKey: "apex-retail",
+      question:
+        "How is our IT and business organized today, and who are the technology leaders under our CIO?",
+      packet: apexPacket,
+    });
+
+    expect(response.dimensionsUsed).toEqual(
+      expect.arrayContaining(["business_org_functions", "it_org_ownership"]),
+    );
+    expect(response.tables.map((table) => table.id)).toEqual(
+      expect.arrayContaining(["home-business-functions", "home-it-org"]),
+    );
+    expect(response.tables[0]?.rows[0]).toMatchObject({
+      name: "Store Operations",
+      owner: "COO",
+    });
+    expect(response.prose).toMatch(/business/i);
+    expect(response.prose).not.toMatch(/cannot be characterized/i);
+    expect(response.prose).not.toMatch(/cannot be identified/i);
+    expect(response.prose).not.toMatch(/^I found/i);
+    expect(response.prose).not.toMatch(/^.*rows/i);
+    expect(response.prose).not.toMatch(/^missing source support/i);
+    expect(response.prose).not.toMatch(
+      /\b(Read|Evidence|Implication|Next move):/,
+    );
+    expect(response.prose).not.toMatch(/\b[A-Z]{2,}-[A-Z0-9-]+-\d+\b/);
   });
 
   it("hands decision questions off without generating a Home strategy memo", () => {

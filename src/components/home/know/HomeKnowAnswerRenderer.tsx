@@ -487,7 +487,7 @@ function statusLabel(response: HomeKnowResponse): string {
   if (response.handoff) return "Best answered in Intelligence";
   if (response.answerStatus === "answered")
     return "Answered from loaded context";
-  if (response.answerStatus === "partial") return "Directional answer";
+  if (response.answerStatus === "partial") return "Partial answer";
   if (response.answerStatus === "no_data") return "Missing source detail";
   return "Review needed";
 }
@@ -519,8 +519,8 @@ export function HomeKnowAnswerRenderer({
   const evidenceOpen = shouldOpenEvidence(response, compact);
   const exhibitLabel =
     tableCount + chartCount + graphCount > 0
-      ? `Sources and exhibits (${tableCount} table${tableCount === 1 ? "" : "s"}, ${chartCount} chart${chartCount === 1 ? "" : "s"}, ${graphCount} graph${graphCount === 1 ? "" : "s"})`
-      : "Sources and citations";
+      ? `Show source details (${tableCount} table${tableCount === 1 ? "" : "s"}, ${chartCount} chart${chartCount === 1 ? "" : "s"}, ${graphCount} graph${graphCount === 1 ? "" : "s"})`
+      : "Show source details";
 
   return (
     <section

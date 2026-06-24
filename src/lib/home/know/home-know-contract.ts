@@ -146,6 +146,23 @@ export interface HomeKnowSafety {
   blockedInternalCodes: boolean;
   unsupportedClaimsRemoved: number;
   frontendTripwireShouldFire: boolean;
+  composerTrace?: {
+    route: "/api/home/know/ask" | "home-know-engine";
+    composer:
+      | "golden_home_know_semantic_synthesis"
+      | "home_know_template_fallback"
+      | "home_know_decision_handoff"
+      | "home_know_blocked";
+    goldenComposerAttempted: boolean;
+    goldenComposerUsed: boolean;
+    fallbackUsed: boolean;
+    dimensionsUsed: string[];
+    factsBound: number;
+    tablesBound: number;
+    gapsBound: number;
+    answerStatus: HomeKnowAnswerStatus;
+    reason?: string;
+  };
 }
 
 export interface HomeKnowResponse {

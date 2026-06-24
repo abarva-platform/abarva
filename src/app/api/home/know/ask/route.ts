@@ -64,9 +64,36 @@ export async function POST(req: NextRequest) {
     });
   });
 
+  if (shouldLogHomeKnowTrace(req)) {
+    console.info("[home-know.trace]", {
+      route: "/api/home/know/ask",
+      tenantKey: response.tenantKey,
+      intent: response.intent,
+      answerStatus: response.answerStatus,
+      composerTrace: response.safety.composerTrace ?? null,
+      packetShape: {
+        facts: response.facts.length,
+        tables: response.tables.map((table) => ({
+          id: table.id,
+          rows: table.rows.length,
+        })),
+        charts: response.charts.length,
+        graphs: response.graphs.length,
+        gaps: response.gaps.length,
+      },
+    });
+  }
+
   return NextResponse.json(response, {
     status: response.answerStatus === "blocked" ? 503 : 200,
   });
+}
+
+function shouldLogHomeKnowTrace(req: NextRequest): boolean {
+  return (
+    process.env.ABARVA_HOME_KNOW_TRACE === "1" ||
+    req.headers.get("x-abarva-debug-home-know") === "1"
+  );
 }
 
 async function parsePayload(req: NextRequest): Promise<HomeKnowAskRequest> {

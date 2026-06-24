@@ -269,26 +269,82 @@ export async function buildHomeKnowResponse(
     question: input.question,
     packet,
   });
-  if (
-    response.intent === "decision_handoff" ||
-    !isFeatureEnabled(
-      { clientKey: input.client ?? tenantKey, clientId: tenantKey },
-      "home_know_llm_synthesis",
-    )
-  ) {
-    return response;
+  const traceBase = {
+    route: "/api/home/know/ask" as const,
+    dimensionsUsed: response.dimensionsUsed,
+    factsBound: response.facts.length,
+    tablesBound: response.tables.length,
+    gapsBound: response.gaps.length,
+    answerStatus: response.answerStatus,
+  };
+  if (response.intent === "decision_handoff") {
+    return withComposerTrace(response, {
+      ...traceBase,
+      composer: "home_know_decision_handoff",
+      goldenComposerAttempted: false,
+      goldenComposerUsed: false,
+      fallbackUsed: false,
+      reason: "Home KNOW handed a decision question to Intelligence.",
+    });
+  }
+  const synthesisEnabled = isFeatureEnabled(
+    { clientKey: input.client ?? tenantKey, clientId: tenantKey },
+    "home_know_llm_synthesis",
+  );
+  if (!synthesisEnabled) {
+    return withComposerTrace(response, {
+      ...traceBase,
+      composer: "home_know_template_fallback",
+      goldenComposerAttempted: false,
+      goldenComposerUsed: false,
+      fallbackUsed: true,
+      reason: "home_know_llm_synthesis feature flag is disabled.",
+    });
   }
   const synthesized = await synthesizeHomeKnowProse({
     tenantKey,
     question: response.question,
     intent: response.intent,
     facts: response.facts,
+    tables: response.tables,
     gaps: response.gaps,
   });
-  if (!synthesized) return response;
+  if (!synthesized) {
+    return withComposerTrace(response, {
+      ...traceBase,
+      composer: "home_know_template_fallback",
+      goldenComposerAttempted: true,
+      goldenComposerUsed: false,
+      fallbackUsed: true,
+      reason:
+        "Golden composer returned no valid prose; deterministic Home KNOW prose was used.",
+    });
+  }
+  return withComposerTrace(
+    {
+      ...response,
+      prose: synthesized,
+    },
+    {
+      ...traceBase,
+      composer: "golden_home_know_semantic_synthesis",
+      goldenComposerAttempted: true,
+      goldenComposerUsed: true,
+      fallbackUsed: false,
+    },
+  );
+}
+
+function withComposerTrace(
+  response: HomeKnowResponse,
+  trace: NonNullable<HomeKnowResponse["safety"]["composerTrace"]>,
+): HomeKnowResponse {
   return validateHomeKnowResponse({
     ...response,
-    prose: synthesized,
+    safety: {
+      ...response.safety,
+      composerTrace: trace,
+    },
   });
 }
 
@@ -629,7 +685,17 @@ function dimensionsForIntent(
     dims.add("it_budget_financials");
   }
   if (
-    /\b(org|team|portfolio|lead|owner|ownership|who leads)\b/.test(normalized)
+    /\b(business function|business functions|business org|operating model)\b|\bbusiness\b.*\b(organized|organization|org|function|functions|model)\b/.test(
+      normalized,
+    )
+  ) {
+    dims.add("business_org_functions");
+    dims.add("business_operating_model");
+  }
+  if (
+    /\b(org|team|portfolio|lead|leader|leaders|owner|ownership|who leads|cio)\b/.test(
+      normalized,
+    )
   )
     dims.add("it_org_ownership");
   if (/\b(app|application|system|platform|cmdb)\b/.test(normalized))
@@ -894,7 +960,40 @@ function buildTablesForIntent(
     ];
   }
   if (
-    /\b(org|team|portfolio|lead|owner|ownership|who leads)\b/.test(normalized)
+    /\b(business function|business functions|business org|operating model)\b|\bbusiness\b.*\b(organized|organization|org|function|functions|model)\b/.test(
+      normalized,
+    )
+  ) {
+    const businessRows = recordsForDimensions(packet.records, [
+      "business_org_functions",
+      "business_operating_model",
+    ]);
+    const tables: HomeKnowTable[] = [];
+    if (businessRows.length > 0) {
+      tables.push(
+        recordTable({
+          id: "home-business-functions",
+          title: "Business Functions and Operating Model",
+          dimensionId: "business_org_functions",
+          rows: businessRows,
+          citations,
+          note: "Shows loaded business-function and operating-model rows; named leader fields remain explicit gaps where the source did not provide them.",
+        }),
+      );
+    }
+    if (
+      /\b(it|cio|technology|tech|team|portfolio|lead|leader|owner|ownership|who leads)\b/.test(
+        normalized,
+      )
+    ) {
+      tables.push(orgTable(packet.org, citations));
+    }
+    return tables.length > 0 ? tables : [orgTable(packet.org, citations)];
+  }
+  if (
+    /\b(org|team|portfolio|lead|leader|leaders|owner|ownership|who leads|cio)\b/.test(
+      normalized,
+    )
   ) {
     return [orgTable(packet.org, citations)];
   }
@@ -1230,6 +1329,8 @@ function recordTable(input: {
               "name",
               "label",
               "title",
+              "function_name",
+              "business_function",
               "data_product_name",
               "product_name",
               "application_name",
@@ -1896,6 +1997,44 @@ function homeKnowProse(input: {
     return systems
       ? `The loaded application and systems inventory includes ${systems}. Ownership, criticality, and run-cost fields are shown where present; missing named technical owners remain explicit gaps.`
       : "The loaded application and system inventory includes ownership and lifecycle fields where those fields were supplied.";
+  }
+  if (
+    /\b(business function|business functions|business org|operating model)\b|\bbusiness\b.*\b(organized|organization|org|function|functions|model)\b/i.test(
+      input.question,
+    )
+  ) {
+    const businessRows = recordsForDimensions(input.packet.records, [
+      "business_org_functions",
+      "business_operating_model",
+    ]);
+    const functions = readableList(
+      businessRows
+        .map((row) =>
+          cleanLabel(
+            firstPayloadValue(row.payload ?? {}, [
+              "name",
+              "function_name",
+              "business_function",
+              "capability_name",
+              "title",
+            ]),
+          ),
+        )
+        .filter(isString)
+        .slice(0, 5),
+    );
+    const portfolios = readableList(
+      input.packet.org
+        .map((row) => row.team_name)
+        .filter(isString)
+        .slice(0, 4),
+    );
+    if (functions && portfolios) {
+      return `The loaded context describes the business through ${functions}, and the technology organization through portfolios such as ${portfolios}. It can show owner roles where supplied; named leaders under the CIO remain limited to the fields the tenant provided.`;
+    }
+    if (functions) {
+      return `The loaded context describes the business through ${functions}. Named technology leaders are only shown where the tenant supplied IT ownership fields.`;
+    }
   }
   if (
     /\b(org|team|portfolio|lead|owner|ownership|who leads)\b/i.test(
