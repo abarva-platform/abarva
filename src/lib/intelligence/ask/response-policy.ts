@@ -113,7 +113,9 @@ const MISSING_EVIDENCE_RE =
 
 export function enforceDecisionGradeAnswer(text: string): string {
   const paragraphDisciplined = splitLongParagraphs(
-    normalizeConsultantSectionBoundaries(shapeDenseConsultantAnswer(text)),
+    sanitizeVisibleAnswerLanguage(
+      normalizeConsultantSectionBoundaries(shapeDenseConsultantAnswer(text)),
+    ),
   );
   if (
     ACTION_CUE_RE.test(paragraphDisciplined) &&
@@ -128,11 +130,25 @@ export function enforceDecisionGradeAnswer(text: string): string {
 
   const nextMove = MISSING_EVIDENCE_RE.test(paragraphDisciplined)
     ? "Next move: assign the accountable data owner to validate the missing tenant evidence before approving a number or using it in a board artifact."
-    : "Next move: assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves.";
+    : "Next move: have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves.";
 
   return ensureReadableConsultantShape(
     `${paragraphDisciplined.replace(/\s+$/, "")}\n\n${nextMove}`,
   );
+}
+
+function sanitizeVisibleAnswerLanguage(text: string): string {
+  return text
+    .replace(/\bAva\b/g, "aVa")
+    .replace(
+      /assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves/gi,
+      "have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves",
+    )
+    .replace(
+      /validate this cited evidence before approving the decision or moving it into Source, Tower, or Moves/gi,
+      "review the listed sources before approving the decision or moving it into Source, Tower, or Moves",
+    )
+    .replace(/\bcited evidence\b/gi, "listed sources");
 }
 
 function normalizeConsultantSectionBoundaries(text: string): string {

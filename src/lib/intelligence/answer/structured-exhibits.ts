@@ -91,7 +91,7 @@ function evidenceRequiredTable(citations: AnswerCitation[]): AnswerTable {
           "Validate or load the source table before approving tenant-specific numbers.",
       },
     ],
-    note: "Rendered because the user asked for a table, but Ava did not have enough connected data to populate tenant-specific rows without fabrication.",
+    note: "Rendered because the user asked for a table, but aVa did not have enough connected data to populate tenant-specific rows without fabrication.",
     citationIds: citations.map((citation) => citation.id),
   };
 }
@@ -188,7 +188,7 @@ function markdownTablesFromProse(
               : `Answer Table ${tables.length + 1}`,
           columns,
           rows,
-          note: "Rendered from a Markdown table emitted in Ava's answer; values are not inferred from surrounding prose.",
+          note: "Rendered from a Markdown table emitted in aVa's answer; values are not inferred from surrounding prose.",
           citationIds,
         });
         i = cursor - 1;
@@ -338,7 +338,7 @@ function inlineMarkdownTablesFromProse(
           : `Answer Table ${tables.length + 1}`,
       columns,
       rows,
-      note: "Rendered from a table emitted by Ava's answer; values are row/column data, not inferred from surrounding prose.",
+      note: "Rendered from a table emitted by aVa's answer; values are row/column data, not inferred from surrounding prose.",
       citationIds,
     });
     cursor = match.index + match[0].length + consumed;

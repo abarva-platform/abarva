@@ -164,7 +164,7 @@ export function SentinelReasoningCards({
     const href =
       finalAction.href ??
       (sessionId
-        ? `/programs/new?fromIntelligence=1&intelligenceSessionId=${encodeURIComponent(sessionId)}&sourceTitle=${encodeURIComponent("Ava Intelligence Ask")}`
+        ? `/programs/new?fromIntelligence=1&intelligenceSessionId=${encodeURIComponent(sessionId)}&sourceTitle=${encodeURIComponent("aVa Intelligence Ask")}`
         : null);
     if (!finalAction.payload.parentMoveInstanceId) {
       if (href) {
@@ -285,7 +285,7 @@ export function SentinelReasoningCards({
         return;
       }
       if (event.type === "error") {
-        throw new Error(event.error ?? "Ava stream error");
+        throw new Error(event.error ?? "aVa stream error");
       }
     };
 
@@ -310,7 +310,7 @@ export function SentinelReasoningCards({
         }),
       });
       if (!response.ok || !response.body) {
-        throw new Error(`Ava request failed (${response.status})`);
+        throw new Error(`aVa request failed (${response.status})`);
       }
 
       const reader = response.body.getReader();
@@ -347,11 +347,11 @@ export function SentinelReasoningCards({
       const message =
         caught instanceof Error
           ? caught.message
-          : "Ava could not complete the request.";
+          : "aVa could not complete the request.";
       setError(message);
       setStatus("error");
       setAgentTurn(agentTurnId, {
-        body: `Ava could not complete that request: ${message}`,
+        body: `aVa could not complete that request: ${message}`,
       });
     }
   }
@@ -403,7 +403,7 @@ export function SentinelReasoningCards({
             <InsightTile
               eyebrow="Advisor read"
               title="Ask a business question."
-              body="Ava will keep the conversation on the left and build the analysis workspace here."
+              body="aVa will keep the conversation on the left and build the analysis workspace here."
             />
             <InsightTile
               eyebrow="Evidence"
@@ -581,7 +581,7 @@ export function SentinelReasoningCards({
           <div style={CARD_STYLE}>
             <h3 style={CARD_TITLE_STYLE}>Working</h3>
             <p style={BODY_TEXT_STYLE}>
-              Ava is reading tenant evidence, corpus patterns, and expert
+              aVa is reading tenant evidence, corpus patterns, and expert
               context.
             </p>
           </div>
