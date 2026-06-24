@@ -84,4 +84,34 @@ describe("synthesizeHomeKnowProse", () => {
       }),
     ).resolves.toBeNull();
   });
+
+  it("falls back when Claude says a topic cannot be characterized despite populated tables", async () => {
+    mockClaudeText(
+      "The organizational structure cannot be characterized from the available information.",
+    );
+
+    await expect(
+      synthesizeHomeKnowProse({
+        tenantKey: "skyharbor",
+        question:
+          "How is our IT and business organized today, and who are the technology leaders under our CIO?",
+        intent: "lookup",
+        facts: [],
+        tables: [
+          {
+            id: "home-business-functions",
+            title: "Business Functions and Operating Model",
+            dimensionId: "business_org_functions",
+            columns: [
+              { key: "name", label: "Name" },
+              { key: "owner", label: "Owner / Team" },
+            ],
+            rows: [{ name: "Store Operations", owner: "COO" }],
+            citationIds: [],
+          },
+        ],
+        gaps: [],
+      }),
+    ).resolves.toBeNull();
+  });
 });

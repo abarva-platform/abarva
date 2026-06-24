@@ -4,8 +4,7 @@
 // Home KNOW endpoint and renders the shared HomeKnowResponse contract. It does
 // not classify intent, retrieve data, or render Intelligence experts locally.
 
-import { useState, type ReactNode } from "react";
-import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
+import { useState } from "react";
 import { HomeKnowAsk } from "@/components/home/know/HomeKnowAsk";
 import type {
   IntelligenceBindingPayload,
@@ -15,18 +14,9 @@ import type {
 
 const CSS = `
 .homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);min-height:100%;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
-.homex .hx-shell{display:grid;grid-template-columns:minmax(360px,440px) minmax(0,1fr);min-height:100%}
-.homex .hx-shell.chat-expanded{grid-template-columns:minmax(520px,680px) minmax(0,1fr)}
-.homex .hx-shell.chat-hidden{display:block}
-@media(max-width:980px){.homex .hx-shell,.homex .hx-shell.chat-expanded{display:flex;flex-direction:column}.homex .hx-chatPane{position:relative;top:auto;height:58vh;border-right:none;border-bottom:1px solid var(--hl)}}
-.homex .hx-chatPane{background:#fff;border-right:1px solid var(--hl);padding:10px 10px 0;position:sticky;top:0;height:calc(100vh - 72px);overflow:hidden;display:flex;flex-direction:column;min-width:0}
-.homex .hx-chatTools{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 2px 8px;border-bottom:1px solid rgba(231,227,218,.72);flex:none}
-.homex .hx-toolGroup{display:flex;align-items:center;gap:4px}
-.homex .hx-tool{width:28px;height:28px;border:1px solid transparent;border-radius:8px;background:transparent;color:#4b4b44;font-size:13px;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
-.homex .hx-tool:hover,.homex .hx-tool.on{border-color:#DDEAD8;background:#EEF6E9;color:var(--hg)}
-.homex .hx-tool:focus-visible{outline:2px solid #22AEEA;outline-offset:2px}
-.homex .hx-restore{position:fixed;left:18px;bottom:18px;z-index:20;border:1px solid var(--hl);border-radius:16px;background:#fff;padding:10px 14px;box-shadow:0 14px 40px rgba(15,23,42,.16);cursor:pointer}
-.homex .hx-restore:focus-visible{outline:2px solid #22AEEA;outline-offset:2px}
+.homex .hx-shell{display:block;min-height:100%}
+.homex .hx-askBand{background:#fff;border-bottom:1px solid var(--hl);padding:14px 40px 16px}
+.homex .hx-askInner{max-width:980px}
 .homex .hx-rail{border-bottom:1px solid var(--hl);padding:12px 40px;background:#fff;position:sticky;top:0;z-index:2}
 .homex .hx-navWrap{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
 .homex .hx-nav{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid transparent;border-radius:50%;padding:0;cursor:pointer;font-family:inherit}
@@ -45,7 +35,7 @@ const CSS = `
 .homex .hx-sec{margin-top:26px}
 .homex .hx-sechead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
 .homex .hx-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:680px){.homex .hx-grid{grid-template-columns:1fr}}
+@media(max-width:680px){.homex .hx-grid{grid-template-columns:1fr}.homex .hx-askBand,.homex .hx-rail,.homex .hx-body{padding-left:18px;padding-right:18px}}
 .homex .hx-card{background:var(--hcard);border:1px solid var(--hl);border-radius:12px;padding:20px 22px}
 .homex .hx-tags{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--hm);margin-bottom:9px}
 .homex .hx-card h3{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:19px;line-height:1.22;margin:0 0 8px}
@@ -246,34 +236,9 @@ function Overview({ payload }: { payload: IntelligenceBindingPayload | null }) {
 
       <div className="hx-hint">
         <span className="hx-dot" style={{ background: "var(--hb)" }} />
-        Pick a loaded dimension on the left, or ask a question above — both
-        answer right here.
+        Pick a context dot above, or ask a question in the aVa bar.
       </div>
     </div>
-  );
-}
-
-function ToolButton({
-  active,
-  children,
-  label,
-  onClick,
-}: {
-  active?: boolean;
-  children: ReactNode;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      aria-label={label}
-      className={`hx-tool${active ? " on" : ""}`}
-      onClick={onClick}
-      title={label}
-      type="button"
-    >
-      {children}
-    </button>
   );
 }
 
@@ -287,67 +252,26 @@ export function HomeSurface({
   const dims = payload?.context ?? [];
   const signals = payload?.signals ?? [];
   const [dimKey, setDimKey] = useState<string | null>(null);
-  const [chatExpanded, setChatExpanded] = useState(false);
-  const [chatHidden, setChatHidden] = useState(false);
   const selected = dimKey
     ? (dims.find((d) => d.dimension === dimKey) ?? null)
     : null;
-  const shellClass = [
-    "hx-shell",
-    chatExpanded ? "chat-expanded" : "",
-    chatHidden ? "chat-hidden" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
 
   return (
     <div className="homex">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      {chatHidden ? (
-        <button
-          aria-label="Show Ava chat"
-          className="hx-restore"
-          onClick={() => setChatHidden(false)}
-          title="Show Ava chat"
-          type="button"
-        >
-          <AvaAskMark />
-        </button>
-      ) : null}
-      <div className={shellClass}>
-        {!chatHidden ? (
-          <aside className="hx-chatPane" aria-label="Ava Home KNOW chat">
-            <div className="hx-chatTools" aria-label="Chat layout controls">
-              <div className="hx-toolGroup">
-                <AvaAskMark />
-              </div>
-              <div className="hx-toolGroup">
-                <ToolButton
-                  active={chatExpanded}
-                  label={chatExpanded ? "Restore chat size" : "Expand chat"}
-                  onClick={() => setChatExpanded((value) => !value)}
-                >
-                  {chatExpanded ? "□" : "▣"}
-                </ToolButton>
-                <ToolButton
-                  label="Hide chat"
-                  onClick={() => setChatHidden(true)}
-                >
-                  ×
-                </ToolButton>
-              </div>
-            </div>
-            <HomeKnowAsk
-              client={clientKey}
-              placeholder="Ask about loaded context, systems, owners, vendors..."
-              showSuggestions={false}
-              suggestedQuestions={contextBrowserQuestions(dims)}
-              tenantKey={payload?.tenant.key ?? clientKey}
-            />
-          </aside>
-        ) : null}
-
+      <div className="hx-shell">
         <main className="hx-canvas">
+          <section className="hx-askBand" aria-label="Ask aVa">
+            <div className="hx-askInner">
+              <HomeKnowAsk
+                client={clientKey}
+                placeholder="Ask about loaded context, systems, owners, vendors..."
+                showSuggestions={false}
+                suggestedQuestions={contextBrowserQuestions(dims)}
+                tenantKey={payload?.tenant.key ?? clientKey}
+              />
+            </div>
+          </section>
           <div className="hx-rail" aria-label="Context Explorer tabs">
             <div className="hx-rail-h">Context Explorer</div>
             <div className="hx-navWrap">
