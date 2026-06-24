@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import {
   AgentDock,
   type AttachmentRef,
@@ -38,27 +38,30 @@ type StreamEvent =
   | { type: "done"; telemetryEventId?: string }
   | { type: "error"; error?: string };
 
+type WorkspaceTab = "answer" | "evidence" | "experts" | "corpus" | "artifacts";
+
 const AVA_INTELLIGENCE_AGENT = {
-  initials: "Av",
+  initials: "aVa",
+  mark: "ava" as const,
   name: "Ava",
   role: "Intelligence advisor",
 };
 
 const DEFAULT_SUGGESTIONS: SuggestedAction[] = [
   {
-    id: "portfolio-risk",
-    label: "Where is the portfolio risk concentrated?",
-    body: "Where is the portfolio risk concentrated, and what evidence supports that read?",
+    id: "advisor-read",
+    label: "Give me the executive read",
+    body: "Give me the executive read of the loaded enterprise context, with evidence and gaps.",
   },
   {
-    id: "scale-hold-kill",
-    label: "Which AI bets should we scale, hold, or stop?",
-    body: "Which AI investments should leadership scale, hold, or stop, and why?",
+    id: "relevant-experts",
+    label: "Which experts apply?",
+    body: "Which expert lenses and industry patterns are most relevant to this client right now?",
   },
   {
-    id: "board-read",
-    label: "Give me the board-level interpretation",
-    body: "Give me the board-level interpretation of the current enterprise context, with the tradeoffs and gaps called out.",
+    id: "patterns",
+    label: "Show matching patterns",
+    body: "Show the most relevant corpus patterns and where tenant evidence supports or gaps them.",
   },
 ];
 
@@ -68,14 +71,6 @@ function eventFromLine(line: string): StreamEvent | null {
   } catch {
     return null;
   }
-}
-
-function summarizeStagesForThread(stages: SentinelReasoningStage[]): string {
-  const ordered = [...stages].sort((a, b) => a.sequence - b.sequence);
-  if (ordered.length === 0) return "";
-  return ordered
-    .map((stage) => `${stage.name}: ${stage.content}`)
-    .join("\n\n");
 }
 
 function answerBodyForThread(answer: AgentAnswer): string {
@@ -106,6 +101,32 @@ function messageWithAttachments(text: string, attachments: AttachmentRef[]): str
   return previews ? `${visible}\n\n${previews}` : visible;
 }
 
+function InsightTile({
+  eyebrow,
+  title,
+  body,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div style={INSIGHT_TILE_STYLE}>
+      <div style={CARD_EYEBROW_STYLE}>{eyebrow}</div>
+      <h3 style={INSIGHT_TITLE_STYLE}>{title}</h3>
+      <p style={BODY_TEXT_STYLE}>{body}</p>
+    </div>
+  );
+}
+
+function EmptyTabMessage({ text }: { text: string }) {
+  return (
+    <div style={CARD_STYLE}>
+      <p style={MUTED_BODY_TEXT_STYLE}>{text}</p>
+    </div>
+  );
+}
+
 interface SentinelReasoningCardsProps {
   initialClient: string;
   initialClientDisplayName: string;
@@ -119,6 +140,8 @@ export function SentinelReasoningCards({
   const [cards, setCards] = useState<SentinelReasoningStage[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
   const [currentAnswer, setCurrentAnswer] = useState<AgentAnswer | null>(null);
+  const [currentNarrative, setCurrentNarrative] = useState("");
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>("answer");
   const [evidenceSources, setEvidenceSources] = useState<AskSource[]>([]);
   const [coverageReport, setCoverageReport] = useState<CoverageReport | undefined>(
     undefined,
@@ -194,6 +217,8 @@ export function SentinelReasoningCards({
 
     setCurrentQuestion(trimmed || "Attached context");
     setCurrentAnswer(null);
+    setCurrentNarrative("");
+    setActiveTab("answer");
     setCards([]);
     setEvidenceSources([]);
     setCoverageReport(undefined);
@@ -206,7 +231,7 @@ export function SentinelReasoningCards({
       {
         id: agentTurnId,
         role: "agent",
-        body: "Reading tenant evidence, corpus patterns, and expert context...",
+        body: "Reading the evidence and updating the canvas...",
       },
     ]);
 
@@ -226,7 +251,9 @@ export function SentinelReasoningCards({
             ...prev.filter((card) => card.id !== stage.id),
             stage,
           ].sort((a, b) => a.sequence - b.sequence);
-          setAgentTurn(agentTurnId, { body: summarizeStagesForThread(next) });
+          setAgentTurn(agentTurnId, {
+            body: "I found expert reasoning blocks. Review the canvas for details.",
+          });
           return next;
         });
         return;
@@ -234,7 +261,8 @@ export function SentinelReasoningCards({
       if (event.type === "delta" && event.text) {
         sawRenderableAnswer = true;
         accumulatedText += event.text;
-        setAgentTurn(agentTurnId, { body: accumulatedText });
+        setCurrentNarrative(accumulatedText);
+        setAgentTurn(agentTurnId, { body: "Answer is ready on the canvas." });
         return;
       }
       if (event.type === "sources") {
@@ -249,6 +277,7 @@ export function SentinelReasoningCards({
       if (event.type === "agent-answer" && event.answer) {
         sawRenderableAnswer = true;
         setCurrentAnswer(event.answer);
+        setCurrentNarrative(event.answer.prose);
         setAgentTurn(agentTurnId, { body: answerBodyForThread(event.answer) });
         return;
       }
@@ -328,6 +357,208 @@ export function SentinelReasoningCards({
     }
   }
 
+  const sortedCards = [...cards].sort((a, b) => a.sequence - b.sequence);
+  const expertRefs = currentAnswer?.contributingExperts ?? [];
+  const answerCitations = currentAnswer?.citations ?? [];
+  const corpusSources = evidenceSources.filter((source) =>
+    ["PATTERN", "RESEARCH", "REGULATION", "BENCHMARK", "INSIGHT", "WORLDVIEW"].includes(
+      source.type,
+    ),
+  );
+  const artifactCount =
+    (currentAnswer?.tables.length ?? 0) +
+    (currentAnswer?.charts.length ?? 0) +
+    (currentAnswer?.graphs.length ?? 0);
+  const tabItems: Array<{
+    id: WorkspaceTab;
+    label: string;
+    count?: number;
+  }> = [
+    { id: "answer", label: "Answer" },
+    { id: "evidence", label: "Evidence", count: evidenceSources.length + answerCitations.length },
+    { id: "experts", label: "Experts", count: expertRefs.length + sortedCards.length },
+    { id: "corpus", label: "Corpus", count: corpusSources.length },
+    { id: "artifacts", label: "Artifacts", count: artifactCount },
+  ];
+
+  const workspaceTabContent = (() => {
+    if (!currentQuestion && !currentAnswer && !currentNarrative && sortedCards.length === 0) {
+      return (
+        <div style={EMPTY_CANVAS_STYLE}>
+          <div style={INSIGHT_GRID_STYLE}>
+            <InsightTile
+              eyebrow="Advisor read"
+              title="Ask a business question."
+              body="Ava will keep the conversation on the left and build the analysis workspace here."
+            />
+            <InsightTile
+              eyebrow="Evidence"
+              title="Citations stay inspectable."
+              body="Tenant facts, corpus patterns, expert lenses, tables, charts, and graphs land in this canvas."
+            />
+            <InsightTile
+              eyebrow="Explore"
+              title="Browse what supports the answer."
+              body="Switch tabs to inspect sources, relevant experts, corpus patterns, and generated artifacts."
+            />
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === "evidence") {
+      return (
+        <div style={CANVAS_STACK_STYLE}>
+          {evidenceSources.length > 0 ? (
+            <EvidenceBasis
+              sources={evidenceSources}
+              coverageReport={coverageReport}
+              tone="light"
+            />
+          ) : null}
+          {answerCitations.length > 0 ? (
+            <div style={CARD_STYLE}>
+              <h3 style={CARD_TITLE_STYLE}>Answer citations</h3>
+              <div style={PILL_GRID_STYLE}>
+                {answerCitations.map((citation) => (
+                  <span key={citation.id} style={PILL_STYLE}>
+                    {citation.label || citation.id}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {evidenceSources.length === 0 && answerCitations.length === 0 ? (
+            <EmptyTabMessage text="No citations were attached to this answer yet." />
+          ) : null}
+        </div>
+      );
+    }
+
+    if (activeTab === "experts") {
+      return (
+        <div style={CANVAS_STACK_STYLE}>
+          {expertRefs.length > 0 ? (
+            <div style={CARD_STYLE}>
+              <h3 style={CARD_TITLE_STYLE}>Consilium experts</h3>
+              <div style={PILL_GRID_STYLE}>
+                {expertRefs.map((expert) => (
+                  <span key={expert.id} style={PILL_STYLE}>{expert.name}</span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {sortedCards.length > 0 ? (
+            <div style={CANVAS_STACK_STYLE}>
+              {sortedCards.map((card) => (
+                <details
+                  key={card.id}
+                  open
+                  data-testid={`sentinel-stage-card-${card.id}`}
+                  style={CARD_STYLE}
+                >
+                  <summary style={STAGE_SUMMARY_STYLE}>
+                    <span>{card.sequence}. {card.name}</span>
+                    <span style={STAGE_CONFIDENCE_STYLE}>
+                      {Math.round(card.confidence * 100)}%
+                    </span>
+                  </summary>
+                  <div style={STAGE_BODY_STYLE}>
+                    <p style={BODY_TEXT_STYLE}>{card.content}</p>
+                    {card.dissent ? (
+                      <p style={MUTED_BODY_TEXT_STYLE}>{card.dissent}</p>
+                    ) : null}
+                    {card.citations.length > 0 ? (
+                      <div style={PILL_GRID_STYLE}>
+                        {card.citations.map((citation) => (
+                          <span key={citation.id} style={PILL_STYLE}>
+                            {citation.label || citation.id} · {citation.sourceType}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                    {card.oneClickAction ? (
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                        <button
+                          type="button"
+                          onClick={() => void shapeMoves()}
+                          style={PRIMARY_ACTION_STYLE}
+                        >
+                          {card.oneClickAction.label}
+                        </button>
+                        {actionState ? (
+                          <span style={MUTED_BODY_TEXT_STYLE}>{actionState}</span>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                </details>
+              ))}
+            </div>
+          ) : null}
+          {expertRefs.length === 0 && sortedCards.length === 0 ? (
+            <EmptyTabMessage text="No named expert pack or reasoning block was attached yet." />
+          ) : null}
+        </div>
+      );
+    }
+
+    if (activeTab === "corpus") {
+      return (
+        <div style={CANVAS_STACK_STYLE}>
+          {corpusSources.length > 0 ? (
+            corpusSources.map((source) => (
+              <div key={`${source.type}:${source.id ?? source.name}`} style={CARD_STYLE}>
+                <div style={CARD_EYEBROW_STYLE}>{source.type.toLowerCase()}</div>
+                <h3 style={CARD_TITLE_STYLE}>{source.name}</h3>
+                <p style={BODY_TEXT_STYLE}>{source.detail}</p>
+              </div>
+            ))
+          ) : (
+            <EmptyTabMessage text="No corpus pattern or benchmark source was attached yet." />
+          )}
+        </div>
+      );
+    }
+
+    if (activeTab === "artifacts") {
+      return currentAnswer ? (
+        <AgentAnswerRenderer answer={currentAnswer} />
+      ) : (
+        <EmptyTabMessage text="No typed tables, charts, or graphs were attached yet." />
+      );
+    }
+
+    return (
+      <div style={CANVAS_STACK_STYLE}>
+        {currentQuestion ? (
+          <div style={QUESTION_CARD_STYLE}>
+            <strong style={MONO_LABEL_STYLE}>Current question</strong>
+            <div style={{ marginTop: 6 }}>{currentQuestion}</div>
+          </div>
+        ) : null}
+        {error ? (
+          <div role="alert" style={ERROR_STYLE}>{error}</div>
+        ) : null}
+        {currentAnswer ? (
+          <AgentAnswerRenderer answer={currentAnswer} />
+        ) : currentNarrative.trim() ? (
+          <div style={CARD_STYLE}>
+            <h3 style={CARD_TITLE_STYLE}>Advisor answer</h3>
+            <p style={ANSWER_TEXT_STYLE}>{currentNarrative}</p>
+          </div>
+        ) : status === "streaming" ? (
+          <div style={CARD_STYLE}>
+            <h3 style={CARD_TITLE_STYLE}>Working</h3>
+            <p style={BODY_TEXT_STYLE}>
+              Ava is reading tenant evidence, corpus patterns, and expert context.
+            </p>
+          </div>
+        ) : null}
+      </div>
+    );
+  })();
+
   const workspace = (
     <section
       data-testid="sentinel-reasoning-workspace"
@@ -337,6 +568,8 @@ export function SentinelReasoningCards({
         border: `1px solid ${SHELL.CARD_LINE}`,
         borderRadius: 10,
         overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <div
@@ -371,7 +604,7 @@ export function SentinelReasoningCards({
               color: SHELL.INK,
             }}
           >
-            Current answer, evidence, and exhibits.
+            Explore the answer, evidence, experts, and corpus.
           </h2>
         </div>
         <div
@@ -393,209 +626,30 @@ export function SentinelReasoningCards({
         </div>
       </div>
 
-      <div style={{ padding: 20, display: "grid", gap: 14 }}>
-        {currentQuestion ? (
-          <div
+      <div style={TAB_ROW_STYLE} role="tablist" aria-label="Intelligence canvas tabs">
+        {tabItems.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            data-testid={`intelligence-workspace-tab-${tab.id}`}
             style={{
-              border: `1px solid ${SHELL.CARD_LINE}`,
-              borderRadius: 8,
-              padding: "12px 14px",
-              background: "#FFFFFF",
-              color: SHELL.INK,
-              fontFamily: SHELL.SANS,
-              fontSize: 14,
-              lineHeight: 1.45,
+              ...TAB_BUTTON_STYLE,
+              ...(activeTab === tab.id ? TAB_BUTTON_ACTIVE_STYLE : null),
             }}
           >
-            <strong style={{ fontFamily: SHELL.MONO, fontSize: 10, color: SHELL.INK_MUTED }}>
-              CURRENT QUESTION
-            </strong>
-            <div style={{ marginTop: 6 }}>{currentQuestion}</div>
-          </div>
-        ) : null}
+            {tab.label}
+            {typeof tab.count === "number" ? (
+              <span style={TAB_COUNT_STYLE}>{tab.count}</span>
+            ) : null}
+          </button>
+        ))}
+      </div>
 
-        {error ? (
-          <div
-            role="alert"
-            style={{
-              border: "1px solid rgba(159,29,29,0.24)",
-              borderRadius: 8,
-              padding: 12,
-              color: "#9F1D1D",
-              background: "#FFF6F4",
-              fontFamily: SHELL.SANS,
-              fontSize: 14,
-            }}
-          >
-            {error}
-          </div>
-        ) : null}
-
-        {!currentQuestion && cards.length === 0 && !currentAnswer ? (
-          <div
-            style={{
-              border: `1px solid ${SHELL.CARD_LINE}`,
-              borderRadius: 8,
-              padding: 18,
-              background: "#FFFFFF",
-              color: SHELL.INK_MUTED,
-              fontFamily: SHELL.SANS,
-              fontSize: 14,
-              lineHeight: 1.55,
-            }}
-          >
-            Ask Ava for an advisor read. The conversation stays in the chat rail;
-            this canvas holds the answer evidence, expert reasoning blocks, tables,
-            charts, graphs, citations, and handoffs.
-          </div>
-        ) : null}
-
-        {currentAnswer ? <AgentAnswerRenderer answer={currentAnswer} /> : null}
-
-        {[...cards]
-          .sort((a, b) => a.sequence - b.sequence)
-          .map((card) => (
-            <details
-              key={card.id}
-              open
-              data-testid={`sentinel-stage-card-${card.id}`}
-              style={{
-                border: `1px solid ${SHELL.CARD_LINE}`,
-                borderRadius: 8,
-                background: "#FFFFFF",
-                overflow: "hidden",
-              }}
-            >
-              <summary
-                style={{
-                  listStyle: "none",
-                  cursor: "pointer",
-                  padding: "12px 14px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  borderBottom: `1px solid ${SHELL.CARD_LINE}`,
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: SHELL.SERIF,
-                    fontSize: 18,
-                    color: SHELL.INK,
-                  }}
-                >
-                  {card.sequence}. {card.name}
-                </span>
-                <span
-                  style={{
-                    fontFamily: SHELL.MONO,
-                    fontSize: 11,
-                    color: SHELL.GRAY_TEXT,
-                  }}
-                >
-                  {Math.round(card.confidence * 100)}%
-                </span>
-              </summary>
-              <div style={{ padding: 14, display: "grid", gap: 12 }}>
-                <p
-                  style={{
-                    margin: 0,
-                    fontFamily: SHELL.SANS,
-                    fontSize: 14,
-                    lineHeight: 1.55,
-                    color: SHELL.INK,
-                  }}
-                >
-                  {card.content}
-                </p>
-                {card.dissent ? (
-                  <p
-                    style={{
-                      margin: 0,
-                      fontFamily: SHELL.SANS,
-                      fontSize: 13,
-                      lineHeight: 1.5,
-                      color: SHELL.INK_MUTED,
-                    }}
-                  >
-                    {card.dissent}
-                  </p>
-                ) : null}
-                {card.citations.length > 0 ? (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {card.citations.map((citation) => (
-                      <a
-                        key={`${citation.sourceType}:${citation.id}:${citation.version ?? ""}`}
-                        href={citation.url ?? "#"}
-                        style={{
-                          border: `1px solid ${SHELL.CARD_LINE}`,
-                          borderRadius: 999,
-                          padding: "5px 8px",
-                          color: SHELL.INK,
-                          textDecoration: "none",
-                          fontFamily: SHELL.MONO,
-                          fontSize: 10,
-                          background: "#FFFFFF",
-                        }}
-                      >
-                        {citation.id}
-                        {citation.version ? ` v${citation.version}` : ""}
-                      </a>
-                    ))}
-                  </div>
-                ) : null}
-                {card.oneClickAction ? (
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 10,
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => void shapeMoves()}
-                      style={{
-                        border: `1px solid ${SHELL.INK}`,
-                        background: SHELL.INK,
-                        color: SHELL.PAPER,
-                        borderRadius: 8,
-                        padding: "8px 10px",
-                        fontFamily: SHELL.MONO,
-                        fontSize: 11,
-                        fontWeight: 700,
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {card.oneClickAction.label}
-                    </button>
-                    {actionState ? (
-                      <span
-                        style={{
-                          fontFamily: SHELL.SANS,
-                          fontSize: 12,
-                          color: SHELL.INK_MUTED,
-                        }}
-                      >
-                        {actionState}
-                      </span>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            </details>
-          ))}
-
-        {evidenceSources.length > 0 ? (
-          <EvidenceBasis
-            sources={evidenceSources}
-            coverageReport={coverageReport}
-            tone="light"
-          />
-        ) : null}
+      <div style={WORKSPACE_BODY_STYLE} data-testid={`intelligence-workspace-panel-${activeTab}`}>
+        {workspaceTabContent}
       </div>
     </section>
   );
@@ -604,6 +658,7 @@ export function SentinelReasoningCards({
     <AgentDock
       agent={AVA_INTELLIGENCE_AGENT}
       surface="intelligence"
+      variant="focused"
       defaultMode="side-rail"
       defaultLeftPercent={32}
       minLeftPx={320}
@@ -620,3 +675,200 @@ export function SentinelReasoningCards({
     />
   );
 }
+
+const TAB_ROW_STYLE: CSSProperties = {
+  display: "flex",
+  gap: 8,
+  padding: "12px 20px",
+  borderBottom: `1px solid ${SHELL.CARD_LINE}`,
+  overflowX: "auto",
+  flexShrink: 0,
+};
+
+const TAB_BUTTON_STYLE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 999,
+  background: "#FFFFFF",
+  color: SHELL.INK_MUTED,
+  cursor: "pointer",
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  fontWeight: 700,
+  padding: "8px 12px",
+  whiteSpace: "nowrap",
+};
+
+const TAB_BUTTON_ACTIVE_STYLE: CSSProperties = {
+  background: "#EAF5EE",
+  color: "#11613A",
+  borderColor: "rgba(17,97,58,0.18)",
+};
+
+const TAB_COUNT_STYLE: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 10,
+  color: "inherit",
+  opacity: 0.72,
+};
+
+const WORKSPACE_BODY_STYLE: CSSProperties = {
+  padding: 20,
+  overflowY: "auto",
+  minHeight: 0,
+  flex: "1 1 auto",
+};
+
+const CANVAS_STACK_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 14,
+};
+
+const EMPTY_CANVAS_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 16,
+};
+
+const INSIGHT_GRID_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: 14,
+};
+
+const CARD_STYLE: CSSProperties = {
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 8,
+  background: "#FFFFFF",
+  padding: 16,
+  overflow: "hidden",
+};
+
+const INSIGHT_TILE_STYLE: CSSProperties = {
+  ...CARD_STYLE,
+  minHeight: 158,
+};
+
+const CARD_EYEBROW_STYLE: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 10,
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  color: "#14794C",
+  marginBottom: 8,
+};
+
+const CARD_TITLE_STYLE: CSSProperties = {
+  margin: 0,
+  fontFamily: SHELL.SANS,
+  fontSize: 16,
+  lineHeight: 1.25,
+  color: SHELL.INK,
+};
+
+const INSIGHT_TITLE_STYLE: CSSProperties = {
+  margin: 0,
+  fontFamily: SHELL.SERIF,
+  fontSize: 22,
+  lineHeight: 1.12,
+  color: SHELL.INK,
+};
+
+const BODY_TEXT_STYLE: CSSProperties = {
+  margin: "8px 0 0",
+  fontFamily: SHELL.SANS,
+  fontSize: 14,
+  lineHeight: 1.55,
+  color: SHELL.INK,
+};
+
+const MUTED_BODY_TEXT_STYLE: CSSProperties = {
+  ...BODY_TEXT_STYLE,
+  color: SHELL.INK_MUTED,
+};
+
+const ANSWER_TEXT_STYLE: CSSProperties = {
+  ...BODY_TEXT_STYLE,
+  whiteSpace: "pre-wrap",
+};
+
+const QUESTION_CARD_STYLE: CSSProperties = {
+  ...CARD_STYLE,
+  color: SHELL.INK,
+  fontFamily: SHELL.SANS,
+  fontSize: 14,
+  lineHeight: 1.45,
+};
+
+const MONO_LABEL_STYLE: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 10,
+  color: SHELL.INK_MUTED,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+};
+
+const ERROR_STYLE: CSSProperties = {
+  border: "1px solid rgba(159,29,29,0.24)",
+  borderRadius: 8,
+  padding: 12,
+  color: "#9F1D1D",
+  background: "#FFF6F4",
+  fontFamily: SHELL.SANS,
+  fontSize: 14,
+};
+
+const PILL_GRID_STYLE: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 8,
+  marginTop: 12,
+};
+
+const PILL_STYLE: CSSProperties = {
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 999,
+  padding: "6px 9px",
+  background: "#FFFFFF",
+  color: SHELL.INK,
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+};
+
+const STAGE_SUMMARY_STYLE: CSSProperties = {
+  listStyle: "none",
+  cursor: "pointer",
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 12,
+  fontFamily: SHELL.SERIF,
+  fontSize: 18,
+  color: SHELL.INK,
+};
+
+const STAGE_CONFIDENCE_STYLE: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 11,
+  color: SHELL.GRAY_TEXT,
+};
+
+const STAGE_BODY_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 12,
+  paddingTop: 12,
+};
+
+const PRIMARY_ACTION_STYLE: CSSProperties = {
+  border: `1px solid ${SHELL.INK}`,
+  background: SHELL.INK,
+  color: SHELL.PAPER,
+  borderRadius: 8,
+  padding: "8px 10px",
+  fontFamily: SHELL.MONO,
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  cursor: "pointer",
+};
