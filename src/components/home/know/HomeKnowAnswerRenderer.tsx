@@ -82,6 +82,12 @@ function sanitizeHomeText(value: unknown): string {
   if (value === null || value === undefined) return "—";
   const text = String(value);
   const cleaned = text
+    .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move):\s*/gi, "$1")
+    .replace(/\bmissing evidence path\b/gi, "missing source path")
+    .replace(/\bevidence path\b/gi, "source path")
+    .replace(/\bsource citations\b/gi, "source rows")
+    .replace(/\bread-model\b/gi, "context model")
+    .replace(/\bevidence\b/gi, "source support")
     .replace(BLOCKED_HOME_TEXT_REPLACE, "loaded context")
     .replace(INTERNAL_CODE_REPLACE, "source reference")
     .trim();
@@ -398,7 +404,7 @@ function GapPanel({ gaps }: { gaps: HomeKnowGap[] }) {
   if (gaps.length === 0) return null;
   return (
     <div className="hk-gapBox">
-      <div className="hk-title">Evidence gaps</div>
+      <div className="hk-title">Source gaps</div>
       {gaps.slice(0, 5).map((gap) => (
         <div className="hk-gap" key={gap.id}>
           <strong>{sanitizeHomeText(gap.displayLabel)}</strong>:{" "}
@@ -437,9 +443,9 @@ function HandoffBanner({ response }: { response: HomeKnowResponse }) {
 function SourceDrawer({ citation }: { citation: HomeKnowCitation | null }) {
   if (!citation) return null;
   return (
-    <div className="hk-drawer" aria-label="Source evidence">
+    <div className="hk-drawer" aria-label="Source details">
       <div className="hk-title" style={{ marginBottom: 10 }}>
-        Source evidence
+        Source details
       </div>
       <dl>
         <dt>Label</dt>
@@ -482,7 +488,7 @@ function statusLabel(response: HomeKnowResponse): string {
   if (response.answerStatus === "answered")
     return "Answered from loaded context";
   if (response.answerStatus === "partial") return "Partially answered";
-  if (response.answerStatus === "no_data") return "Evidence gap";
+  if (response.answerStatus === "no_data") return "Source gap";
   return "Review needed";
 }
 
@@ -513,8 +519,8 @@ export function HomeKnowAnswerRenderer({
   const evidenceOpen = shouldOpenEvidence(response, compact);
   const exhibitLabel =
     tableCount + chartCount + graphCount > 0
-      ? `Evidence and exhibits (${tableCount} table${tableCount === 1 ? "" : "s"}, ${chartCount} chart${chartCount === 1 ? "" : "s"}, ${graphCount} graph${graphCount === 1 ? "" : "s"})`
-      : "Evidence and citations";
+      ? `Sources and exhibits (${tableCount} table${tableCount === 1 ? "" : "s"}, ${chartCount} chart${chartCount === 1 ? "" : "s"}, ${graphCount} graph${graphCount === 1 ? "" : "s"})`
+      : "Sources and citations";
 
   return (
     <section

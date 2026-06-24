@@ -84,7 +84,7 @@ describe("HomeSurface — real React Context Explorer", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/33 evidence points · 2 sources/),
+      screen.getByText(/33 source points · 2 sources/),
     ).toBeInTheDocument();
     // rail lists the loaded context dimension; detail not shown yet
     expect(screen.getByText("Loaded context · 1")).toBeInTheDocument();

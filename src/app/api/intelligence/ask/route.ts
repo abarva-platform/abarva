@@ -239,7 +239,11 @@ async function handleAsk(payload: AskPayload) {
           } catch (err) {
             console.warn("[home-know.blank-guard]", err);
             response = buildHomeKnowRouteFallbackResponse({
-              tenantKey: homeTenantKey ?? tenantClientKey ?? requestedOrSurfaceClient ?? "unknown",
+              tenantKey:
+                homeTenantKey ??
+                tenantClientKey ??
+                requestedOrSurfaceClient ??
+                "unknown",
               question: query,
             });
             answer = homeKnowResponseToAgentAnswer(response);
@@ -651,12 +655,26 @@ function mentionsForeignTenant(
   activeTenantAliases: Array<string | null | undefined>,
 ): boolean {
   const normalized = query.toLowerCase();
-  const current = new Set(activeTenantAliases.flatMap((value) => tenantAliasesFor(value)));
+  const current = new Set(
+    activeTenantAliases.flatMap((value) => tenantAliasesFor(value)),
+  );
   const tenants = [
-    { aliases: tenantAliasesFor("apexretail"), terms: ["apex retail", "apexretail"] },
-    { aliases: tenantAliasesFor("arcturus"), terms: ["first capital", "arcturus", "firstcapital"] },
-    { aliases: tenantAliasesFor("skyharbor"), terms: ["skyharbor", "skyharbor air"] },
-    { aliases: tenantAliasesFor("meridian"), terms: ["meridian", "meridian health"] },
+    {
+      aliases: tenantAliasesFor("apexretail"),
+      terms: ["apex retail", "apexretail"],
+    },
+    {
+      aliases: tenantAliasesFor("arcturus"),
+      terms: ["first capital", "arcturus", "firstcapital"],
+    },
+    {
+      aliases: tenantAliasesFor("skyharbor"),
+      terms: ["skyharbor", "skyharbor air"],
+    },
+    {
+      aliases: tenantAliasesFor("meridian"),
+      terms: ["meridian", "meridian health"],
+    },
     { aliases: tenantAliasesFor("lakeshore"), terms: ["lakeshore"] },
   ];
   for (const tenant of tenants) {
@@ -680,8 +698,7 @@ function aliasesForClerkTenant(
     user?.emailAddresses?.[0]?.emailAddress ??
     null;
   const appClientKey =
-    appClientKeyForTenant(metadataClient) ??
-    inferClientKeyFromEmail(email);
+    appClientKeyForTenant(metadataClient) ?? inferClientKeyFromEmail(email);
   return appClientKey ? tenantAliasesFor(appClientKey) : [];
 }
 
@@ -693,7 +710,7 @@ function buildHomeKnowTenantFenceAnswer(input: {
     surface: "home",
     expertId: null,
     contributingExperts: [],
-    prose: `Read: I can't share or use another tenant's data from Home. Your signed-in session is fenced to ${input.activeTenantDisplayName}; ask from this tenant's loaded context only.`,
+    prose: `I can't share or use another tenant's data from Home. Your signed-in session is fenced to ${input.activeTenantDisplayName}; ask from this tenant's loaded context only.`,
     tables: [],
     charts: [],
     graphs: [],
@@ -712,33 +729,55 @@ function buildHomeKnowRouteFallbackResponse(input: {
   question: string;
 }): HomeKnowResponse {
   const normalized = input.question.toLowerCase();
-  const wantsGraph = /\b(graph|map|topolog|dependency|dependencies|relationship|relationships|lineage|integration|interfaces?)\b/i.test(
+  const wantsGraph =
+    /\b(graph|map|topolog|dependency|dependencies|relationship|relationships|lineage|integration|interfaces?)\b/i.test(
+      input.question,
+    );
+  const wantsChart =
+    !wantsGraph &&
+    /\b(chart|visuali[sz]e|visual|plot|waterfall)\b/i.test(input.question);
+  const wantsTable = /\b(table|list|show|compare|comparing)\b/i.test(
     input.question,
   );
-  const wantsChart = !wantsGraph && /\b(chart|visuali[sz]e|visual|plot|waterfall)\b/i.test(input.question);
-  const wantsTable = /\b(table|list|show|compare|comparing)\b/i.test(input.question);
   const citation = {
     id: "c1",
-    label: `Home KNOW read model for ${input.tenantKey}`,
+    label: `Home KNOW context model for ${input.tenantKey}`,
     sourceClass: "tenant-fact" as const,
     sourceFile: null,
     sourceRowNumber: null,
-    excerpt: "Home KNOW fallback guard returned a specific artifact gap instead of a blank response.",
+    excerpt:
+      "Home KNOW fallback guard returned a specific artifact gap instead of a blank response.",
     confidence: "low" as const,
   };
   const gaps = [
     {
       id: "gap-home-know-blank-guard",
-      dimensionId: wantsGraph ? "relationship_graph" : wantsChart ? "chart_artifact" : "home_read_model",
-      objectType: wantsGraph ? "relationship edge" : wantsChart ? "numeric series" : "home read model",
-      expectedField: wantsGraph ? "source_to_target_edge_pair" : wantsChart ? "chart_value_series" : "query_result_rows",
-      displayLabel: wantsGraph ? "Graph edge pairs" : wantsChart ? "Chart value series" : "Home read-model rows",
+      dimensionId: wantsGraph
+        ? "relationship_graph"
+        : wantsChart
+          ? "chart_artifact"
+          : "home_read_model",
+      objectType: wantsGraph
+        ? "relationship edge"
+        : wantsChart
+          ? "numeric series"
+          : "home context model",
+      expectedField: wantsGraph
+        ? "source_to_target_edge_pair"
+        : wantsChart
+          ? "chart_value_series"
+          : "query_result_rows",
+      displayLabel: wantsGraph
+        ? "Graph edge pairs"
+        : wantsChart
+          ? "Chart value series"
+          : "Home context rows",
       severity: "high" as const,
       message: wantsGraph
         ? "source-to-target integration edge pairs did not return for this graph request"
         : wantsChart
           ? "the numeric value series needed for this chart did not return for this request"
-          : "Home read-model rows did not return for this request",
+          : "Home context rows did not return for this request",
       citationIds: [citation.id],
     },
   ];
@@ -748,13 +787,20 @@ function buildHomeKnowRouteFallbackResponse(input: {
     question: input.question,
     intent: wantsChart || wantsGraph ? "chart" : wantsTable ? "table" : "gap",
     answerStatus: "partial",
-    prose: "Read: I could not assemble a complete Home artifact for this request, so I am returning the specific evidence gap instead of a blank answer.",
-    dimensionsUsed: [wantsGraph ? "relationship_graph" : wantsChart ? "chart_artifact" : "home_read_model"],
+    prose:
+      "I could not assemble a complete Home artifact for this request, so I am returning the specific source gap instead of a blank answer.",
+    dimensionsUsed: [
+      wantsGraph
+        ? "relationship_graph"
+        : wantsChart
+          ? "chart_artifact"
+          : "home_read_model",
+    ],
     facts: [],
     tables: wantsTable
       ? [
           {
-            id: "home-read-model-gap-table",
+            id: "home-context-model-gap-table",
             title: "Home Artifact Gap",
             dimensionId: "home_read_model",
             columns: [
@@ -768,7 +814,9 @@ function buildHomeKnowRouteFallbackResponse(input: {
                   : normalized.includes("initiative")
                     ? "initiative comparison table"
                     : "requested Home table",
-                gap: gaps[0]?.message ?? "Home read-model rows did not return for this request",
+                gap:
+                  gaps[0]?.message ??
+                  "Home context rows did not return for this request",
               },
             ],
             citationIds: [citation.id],
@@ -803,7 +851,9 @@ function buildHomeKnowRouteFallbackResponse(input: {
             sourceIds: [],
             citationIds: [citation.id],
             confidence: "low",
-            gaps: [gaps[0]?.message ?? "source-to-target integration edges missing"],
+            gaps: [
+              gaps[0]?.message ?? "source-to-target integration edges missing",
+            ],
             inferredEdges: false,
             warning: gaps[0]?.message,
           },

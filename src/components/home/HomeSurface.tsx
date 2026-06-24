@@ -67,7 +67,7 @@ const CONTEXT_BROWSER_QUESTIONS = [
   "How is our IT organization structured today?",
   "Which systems of record are loaded?",
   "Show vendor and contract coverage.",
-  "What fields or evidence are missing?",
+  "What fields are missing?",
 ];
 
 function contextBrowserQuestions(dimensions: BindingDimension[]): string[] {
@@ -112,7 +112,7 @@ function SignalCard({ s }: { s: BindingSignal }) {
       <h3>{s.headline}</h3>
       <p>{s.body}</p>
       <div className="hx-evi">
-        {s.evidencePoints} evidence points · {s.sources} sources
+        {s.evidencePoints} source points · {s.sources} sources
       </div>
     </div>
   );
@@ -142,7 +142,7 @@ function DimensionView({
           </div>
         </div>
         <div className="hx-stat">
-          <div className="k">Evidence</div>
+          <div className="k">Source points</div>
           <div className="v">{dim.evidence.toLocaleString()}</div>
         </div>
         <div className="hx-stat">
@@ -190,7 +190,7 @@ function Overview({ payload }: { payload: IntelligenceBindingPayload | null }) {
   const dimensionCount = payload?.context.length ?? tl?.dimensionsLoaded ?? 0;
   return (
     <div className="hx-body">
-      <div className="hx-ey">Current-state read</div>
+      <div className="hx-ey">Current-state context</div>
       <h2 className="hx-h2">What we know about your enterprise.</h2>
       {tl ? (
         <div className="hx-stats">
@@ -199,7 +199,7 @@ function Overview({ payload }: { payload: IntelligenceBindingPayload | null }) {
             <div className="v">{dimensionCount}</div>
           </div>
           <div className="hx-stat">
-            <div className="k">Evidence points</div>
+            <div className="k">Source points</div>
             <div className="v">{tl.evidencePoints.toLocaleString()}</div>
           </div>
           <div className="hx-stat">

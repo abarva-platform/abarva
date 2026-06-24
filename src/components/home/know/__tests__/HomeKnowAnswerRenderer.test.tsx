@@ -139,4 +139,38 @@ describe("HomeKnowAnswerRenderer", () => {
     expect(screen.queryByText(/APEXRETAIL-INIT-0017/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/the cited record/i)).not.toBeInTheDocument();
   });
+
+  it("renders old answer scaffolds as clean client-facing copy", () => {
+    render(
+      <HomeKnowAnswerRenderer
+        response={{
+          ...baseResponse,
+          prose:
+            "Read: Data and analytics context exists.\nEvidence: The missing evidence path is the product registry.",
+          tables: [],
+          gaps: [
+            {
+              id: "g2",
+              dimensionId: "data_analytics_estate",
+              objectType: "home read model",
+              expectedField: "product_registry",
+              displayLabel: "Home read-model rows",
+              severity: "high",
+              message: "The missing evidence path did not return rows.",
+              citationIds: ["c1"],
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText(/Data and analytics context exists/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Source gaps/)).toBeInTheDocument();
+    expect(screen.queryByText(/\bRead:/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\bEvidence:/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\bread-model\b/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\bevidence\b/i)).not.toBeInTheDocument();
+  });
 });

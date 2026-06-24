@@ -154,16 +154,33 @@ export function classifyHomeKnowIntent(question: string): HomeKnowIntent {
   const normalized = question.trim().toLowerCase();
   if (!normalized) return "browse";
   if (EXACT_UNKNOWABLE_RE.test(normalized)) return "gap";
-  if (/\b(chart|visuali[sz]e|visual|plot|waterfall)\b/.test(normalized) || GRAPH_RE.test(normalized)) return "chart";
+  if (
+    /\b(chart|visuali[sz]e|visual|plot|waterfall)\b/.test(normalized) ||
+    GRAPH_RE.test(normalized)
+  )
+    return "chart";
   if (DECISION_RE.test(normalized)) return "decision_handoff";
-  if (/\b(missing|not loaded|absent|unknown|field|gap register|evidence gap)\b/.test(normalized)) return "gap";
-  if (/\b(which|what|show|list)\b.*\b(vendor|vendors|contract|contracts|app|apps|application|applications|system|systems|owner|owners|portfolio|portfolios)\b/.test(normalized)) return "table";
+  if (
+    /\b(missing|not loaded|absent|unknown|field|gap register|evidence gap)\b/.test(
+      normalized,
+    )
+  )
+    return "gap";
+  if (
+    /\b(which|what|show|list)\b.*\b(vendor|vendors|contract|contracts|app|apps|application|applications|system|systems|owner|owners|portfolio|portfolios)\b/.test(
+      normalized,
+    )
+  )
+    return "table";
   if (/\b(table|list|show|breakdown)\b/.test(normalized)) return "table";
-  if (/\b(browse|overview|loaded|coverage|dimensions)\b/.test(normalized)) return "browse";
+  if (/\b(browse|overview|loaded|coverage|dimensions)\b/.test(normalized))
+    return "browse";
   return "lookup";
 }
 
-export async function fetchHomeKnowPacket(tenantKey: string): Promise<HomeKnowPacket> {
+export async function fetchHomeKnowPacket(
+  tenantKey: string,
+): Promise<HomeKnowPacket> {
   // Home KNOW is a hot signed-in path. The views are small, but the reality
   // crawl runs multiple asks concurrently; parallelizing every view fetch per
   // ask can spike the ACA/Postgres connection pool and produce blank answers.
@@ -175,7 +192,11 @@ export async function fetchHomeKnowPacket(tenantKey: string): Promise<HomeKnowPa
     tenantKey,
     readErrors,
   );
-  const org = await fetchRowsOrEmpty<HomeItOrgViewRow>("mv_home_it_org_view", tenantKey, readErrors);
+  const org = await fetchRowsOrEmpty<HomeItOrgViewRow>(
+    "mv_home_it_org_view",
+    tenantKey,
+    readErrors,
+  );
   const applications = await fetchRowsOrEmpty<HomeApplicationOwnershipViewRow>(
     "mv_home_application_ownership_view",
     tenantKey,
@@ -213,11 +234,26 @@ export async function fetchHomeKnowPacket(tenantKey: string): Promise<HomeKnowPa
     tenantKey,
     readErrors,
   );
-  return { coverage, org, applications, vendors, budgets, relationships, records, gaps, conflicts, readErrors };
+  return {
+    coverage,
+    org,
+    applications,
+    vendors,
+    budgets,
+    relationships,
+    records,
+    gaps,
+    conflicts,
+    readErrors,
+  };
 }
 
-export async function buildHomeKnowResponse(input: HomeKnowAskRequest): Promise<HomeKnowResponse> {
-  const tenantKey = canonicalTenantKey((input.tenantKey ?? input.client ?? "").trim());
+export async function buildHomeKnowResponse(
+  input: HomeKnowAskRequest,
+): Promise<HomeKnowResponse> {
+  const tenantKey = canonicalTenantKey(
+    (input.tenantKey ?? input.client ?? "").trim(),
+  );
   if (!tenantKey) {
     return blockedHomeKnowResponse({
       tenantKey: "unknown",
@@ -247,11 +283,16 @@ export function buildHomeKnowResponseFromPacket(input: {
   const exactGap = exactUnknowableGap(question);
 
   if (exactGap) {
-    const dimensions = exactGap.dimensionIds.length > 0 ? exactGap.dimensionIds : dimensionsUsed;
+    const dimensions =
+      exactGap.dimensionIds.length > 0 ? exactGap.dimensionIds : dimensionsUsed;
     const exactCitations = buildCitations(input.packet, dimensions);
     const exactGaps = [
       exactGap.gap(exactCitations),
-      ...buildGaps(input.packet.gaps, exactCitations, input.packet.readErrors).slice(0, 3),
+      ...buildGaps(
+        input.packet.gaps,
+        exactCitations,
+        input.packet.readErrors,
+      ).slice(0, 3),
     ];
     return validateHomeKnowResponse({
       mode: "KNOW",
@@ -293,15 +334,31 @@ export function buildHomeKnowResponseFromPacket(input: {
       handoff: {
         target: "intelligence",
         label: "Analyze this in Intelligence",
-        reason: "The question asks for judgment or prioritization beyond Home's KNOW mode.",
+        reason:
+          "The question asks for judgment or prioritization beyond Home's KNOW mode.",
       },
       safety: defaultSafety(),
     });
   }
 
-  const tables = buildTablesForIntent(intent, question, input.packet, citations);
-  const charts = buildChartsForIntent(intent, question, input.packet, citations);
-  const graphs = buildGraphsForIntent(intent, question, input.packet, citations);
+  const tables = buildTablesForIntent(
+    intent,
+    question,
+    input.packet,
+    citations,
+  );
+  const charts = buildChartsForIntent(
+    intent,
+    question,
+    input.packet,
+    citations,
+  );
+  const graphs = buildGraphsForIntent(
+    intent,
+    question,
+    input.packet,
+    citations,
+  );
   const facts = buildFacts(input.packet, dimensionsUsed, citations);
   const hasData =
     facts.length > 0 ||
@@ -354,7 +411,7 @@ function exactUnknowableGap(question: string): null | {
   let dimensionIds = ["gap_register"];
   let displayLabel = "Exact source field";
   let expectedField = "exact_answer_source_field";
-  let objectType = "source evidence";
+  let objectType = "source support";
   let needed =
     "the specific source field that answers the exact value requested, with an effective date and source row";
 
@@ -363,7 +420,8 @@ function exactUnknowableGap(question: string): null | {
     displayLabel = "2027 cloud bill by account/provider";
     expectedField = "forecast_cloud_bill_2027_usd";
     objectType = "cloud cost forecast";
-    needed = "a dated 2027 cloud-cost forecast or committed budget line by provider/account";
+    needed =
+      "a dated 2027 cloud-cost forecast or committed budget line by provider/account";
   } else if (/\bheadcount|data engineering\b/.test(normalized)) {
     dimensionIds = ["it_org_ownership", "workforce_personas"];
     displayLabel = "Next-quarter data engineering headcount";
@@ -381,13 +439,17 @@ function exactUnknowableGap(question: string): null | {
     displayLabel = "Year-two realized ROI percentage";
     expectedField = "year_two_roi_percent";
     objectType = "initiative benefit";
-    needed = "a benefit-realization record with year-two ROI methodology and actual/forecast value";
-  } else if (/\bmigration completes|exact date|completion date\b/.test(normalized)) {
+    needed =
+      "a benefit-realization record with year-two ROI methodology and actual/forecast value";
+  } else if (
+    /\bmigration completes|exact date|completion date\b/.test(normalized)
+  ) {
     dimensionIds = ["initiatives_roadmap", "applications_core_systems"];
     displayLabel = "Migration completion date";
     expectedField = "migration_completion_date";
     objectType = "initiative milestone";
-    needed = "a milestone row containing the committed migration completion date";
+    needed =
+      "a milestone row containing the committed migration completion date";
   } else if (/\bnps\b/.test(normalized)) {
     dimensionIds = ["business_metrics", "initiatives_roadmap"];
     displayLabel = "Post-launch NPS target";
@@ -439,7 +501,9 @@ async function fetchRowsOrEmpty<T extends { tenant_key: string }>(
     return await fetchRows<T>(table, tenantKey, limit);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.warn(`[home-know.read-model] ${table} returned no usable rows for ${tenantKey}: ${message}`);
+    console.warn(
+      `[home-know.read-model] ${table} returned no usable rows for ${tenantKey}: ${message}`,
+    );
     readErrors.push(readModelGapMessage(table));
     return [];
   }
@@ -461,7 +525,7 @@ function readModelGapMessage(table: string): string {
   if (table.includes("record")) {
     return "source record rows did not return from the Home context record view for this request";
   }
-  return "Home read-model rows did not return for this request";
+  return "Home context rows did not return for this request";
 }
 
 function defaultSafety() {
@@ -514,7 +578,11 @@ function dimensionsForIntent(
     dims.add("relationship_graph");
     dims.add("applications_core_systems");
   }
-  if (/\b(data product|analytics|lineage|feed|feeds|source system)\b/.test(normalized)) {
+  if (
+    /\b(data product|analytics|lineage|feed|feeds|source system)\b/.test(
+      normalized,
+    )
+  ) {
     dims.add("data_analytics_estate");
   }
   if (/\b(cloud|infrastructure|platforms?|volumetrics)\b/.test(normalized)) {
@@ -523,15 +591,31 @@ function dimensionsForIntent(
   if (/\b(security|compliance|control|controls|posture)\b/.test(normalized)) {
     dims.add("security_compliance");
   }
-  if (/\b(vendor|vendors|contract|contracts|license|licenses|supplier|suppliers|renewal|renewals)\b/.test(normalized)) {
+  if (
+    /\b(vendor|vendors|contract|contracts|license|licenses|supplier|suppliers|renewal|renewals)\b/.test(
+      normalized,
+    )
+  ) {
     dims.add("vendors_contracts");
   }
-  if (/\b(budget|budgets|spend|cost|costs|financial|financials)\b/.test(normalized)) {
+  if (
+    /\b(budget|budgets|spend|cost|costs|financial|financials)\b/.test(
+      normalized,
+    )
+  ) {
     dims.add("it_budget_financials");
   }
-  if (/\b(org|team|portfolio|lead|owner|ownership|who leads)\b/.test(normalized)) dims.add("it_org_ownership");
-  if (/\b(app|application|system|platform|cmdb)\b/.test(normalized)) dims.add("applications_core_systems");
-  if (/\b(ai|automation|initiative|initiatives|portfolio|value|impact|effort)\b/.test(normalized)) {
+  if (
+    /\b(org|team|portfolio|lead|owner|ownership|who leads)\b/.test(normalized)
+  )
+    dims.add("it_org_ownership");
+  if (/\b(app|application|system|platform|cmdb)\b/.test(normalized))
+    dims.add("applications_core_systems");
+  if (
+    /\b(ai|automation|initiative|initiatives|portfolio|value|impact|effort)\b/.test(
+      normalized,
+    )
+  ) {
     dims.add("initiatives_roadmap");
     dims.add("ai_automation_footprint");
   }
@@ -544,17 +628,28 @@ function dimensionsForIntent(
   return [...dims];
 }
 
-function citationIdForDimension(dimensionId: string, citations: HomeKnowCitation[]): string[] {
+function citationIdForDimension(
+  dimensionId: string,
+  citations: HomeKnowCitation[],
+): string[] {
   const matches = citations
-    .filter((citation) =>
-      citation.label.toLowerCase().includes(dimensionId.replace(/_/g, "-")) ||
-      citation.sourceFile?.toLowerCase().includes(dimensionId.split("_")[0] ?? ""),
+    .filter(
+      (citation) =>
+        citation.label.toLowerCase().includes(dimensionId.replace(/_/g, "-")) ||
+        citation.sourceFile
+          ?.toLowerCase()
+          .includes(dimensionId.split("_")[0] ?? ""),
     )
     .map((citation) => citation.id);
-  return matches.length > 0 ? matches : citations.slice(0, 3).map((citation) => citation.id);
+  return matches.length > 0
+    ? matches
+    : citations.slice(0, 3).map((citation) => citation.id);
 }
 
-function buildCitations(packet: HomeKnowPacket, dimensionsUsed: string[]): HomeKnowCitation[] {
+function buildCitations(
+  packet: HomeKnowPacket,
+  dimensionsUsed: string[],
+): HomeKnowCitation[] {
   const raw: Array<{
     dimensionId: string;
     sourceFile: string | null;
@@ -675,7 +770,10 @@ function buildFacts(
         dimensionId: "applications_core_systems",
         label: "Loaded applications",
         value: packet.applications.length,
-        citationIds: citationIdForDimension("applications_core_systems", citations),
+        citationIds: citationIdForDimension(
+          "applications_core_systems",
+          citations,
+        ),
       });
     }
   }
@@ -691,7 +789,10 @@ function buildFacts(
     }
   }
   if (dimensionsUsed.includes("it_budget_financials")) {
-    const runBudget = packet.budgets.reduce((sum, row) => sum + number(row.run_budget_usd), 0);
+    const runBudget = packet.budgets.reduce(
+      (sum, row) => sum + number(row.run_budget_usd),
+      0,
+    );
     if (runBudget > 0) {
       facts.push({
         id: "budget-total",
@@ -714,7 +815,11 @@ function buildTablesForIntent(
   const normalized = question.toLowerCase();
   if (intent === "gap") return [gapTable(packet.gaps, citations)];
   if (intent === "browse") return [coverageTable(packet.coverage, citations)];
-  if (/\b(data product|analytics|data & analytics|data and analytics)\b/.test(normalized)) {
+  if (
+    /\b(data product|analytics|data & analytics|data and analytics)\b/.test(
+      normalized,
+    )
+  ) {
     return [
       recordTable({
         id: "home-data-products",
@@ -739,31 +844,52 @@ function buildTablesForIntent(
     ];
   }
   if (/\b(security|compliance|control|controls|posture)\b/.test(normalized)) {
-    const securityGaps = packet.gaps.filter((row) => row.dimension_id === "security_compliance");
-    return [gapTable(securityGaps.length > 0 ? securityGaps : packet.gaps, citations)];
+    const securityGaps = packet.gaps.filter(
+      (row) => row.dimension_id === "security_compliance",
+    );
+    return [
+      gapTable(securityGaps.length > 0 ? securityGaps : packet.gaps, citations),
+    ];
   }
-  if (/\b(ai|initiative|initiatives|portfolio|value|impact|effort)\b/.test(normalized)) {
+  if (
+    /\b(ai|initiative|initiatives|portfolio|value|impact|effort)\b/.test(
+      normalized,
+    )
+  ) {
     return [
       recordTable({
         id: "home-initiatives",
         title: "Initiatives by Impact, Risk, and Owner",
         dimensionId: "initiatives_roadmap",
-        rows: recordsForDimensions(packet.records, ["initiatives_roadmap", "ai_automation_footprint"]).slice(0, 3),
+        rows: recordsForDimensions(packet.records, [
+          "initiatives_roadmap",
+          "ai_automation_footprint",
+        ]).slice(0, 3),
         citations,
         note: "Shows loaded initiative rows; missing impact, effort, realized value, or owner fields remain gaps.",
       }),
     ];
   }
-  if (/\b(org|team|portfolio|lead|owner|ownership|who leads)\b/.test(normalized)) {
+  if (
+    /\b(org|team|portfolio|lead|owner|ownership|who leads)\b/.test(normalized)
+  ) {
     return [orgTable(packet.org, citations)];
   }
   if (/\b(app|application|system|platform|cmdb)\b/.test(normalized)) {
     return [applicationTable(packet.applications, citations)];
   }
-  if (/\b(vendor|vendors|contract|contracts|license|licenses|supplier|suppliers|renewal|renewals)\b/.test(normalized)) {
+  if (
+    /\b(vendor|vendors|contract|contracts|license|licenses|supplier|suppliers|renewal|renewals)\b/.test(
+      normalized,
+    )
+  ) {
     return [vendorTable(packet.vendors, citations)];
   }
-  if (/\b(budget|budgets|spend|cost|costs|financial|financials|chart|visual|graph)\b/.test(normalized)) {
+  if (
+    /\b(budget|budgets|spend|cost|costs|financial|financials|chart|visual|graph)\b/.test(
+      normalized,
+    )
+  ) {
     return [budgetTable(packet.budgets, citations)];
   }
   return [coverageTable(packet.coverage, citations)];
@@ -778,20 +904,60 @@ function buildChartsForIntent(
   if (intent !== "chart") return [];
   const normalized = question.toLowerCase();
   if (GRAPH_RE.test(normalized)) return [];
-  if (/\b(vendor|vendors|contract|contracts|license|licenses|supplier|suppliers|renewal|renewals)\b/.test(normalized)) {
+  if (
+    /\b(vendor|vendors|contract|contracts|license|licenses|supplier|suppliers|renewal|renewals)\b/.test(
+      normalized,
+    )
+  ) {
     const chart = vendorChart(packet.vendors, citations);
-    return [chart.data.length > 0 ? chart : recordDistributionChart(packet, citations, "Vendor and Contract Records")];
+    return [
+      chart.data.length > 0
+        ? chart
+        : recordDistributionChart(
+            packet,
+            citations,
+            "Vendor and Contract Records",
+          ),
+    ];
   }
   if (/\b(app|application|system|platform|domain|cmdb)\b/.test(normalized)) {
     const chart = applicationDomainChart(packet.applications, citations);
-    return [chart.data.length > 0 ? chart : recordDistributionChart(packet, citations, "Application and Platform Records")];
+    return [
+      chart.data.length > 0
+        ? chart
+        : recordDistributionChart(
+            packet,
+            citations,
+            "Application and Platform Records",
+          ),
+    ];
   }
-  if (/\b(ai|initiative|initiatives|value|impact|effort|portfolio|waterfall|commitment|realized)\b/.test(normalized)) {
+  if (
+    /\b(ai|initiative|initiatives|value|impact|effort|portfolio|waterfall|commitment|realized)\b/.test(
+      normalized,
+    )
+  ) {
     const chart = initiativePlanningChart(packet, citations);
-    return [chart.data.length > 0 ? chart : recordDistributionChart(packet, citations, "Initiative and AI Records")];
+    return [
+      chart.data.length > 0
+        ? chart
+        : recordDistributionChart(
+            packet,
+            citations,
+            "Initiative and AI Records",
+          ),
+    ];
   }
   const chart = budgetChart(packet.budgets, citations);
-  return [chart.data.length > 0 ? chart : recordDistributionChart(packet, citations, "Loaded Record Distribution")];
+  return [
+    chart.data.length > 0
+      ? chart
+      : recordDistributionChart(
+          packet,
+          citations,
+          "Loaded Record Distribution",
+        ),
+  ];
 }
 
 function buildGraphsForIntent(
@@ -805,16 +971,29 @@ function buildGraphsForIntent(
   return [graph];
 }
 
-function coverageTable(rows: HomeDimensionCoverageRow[], citations: HomeKnowCitation[]): HomeKnowTable {
+function coverageTable(
+  rows: HomeDimensionCoverageRow[],
+  citations: HomeKnowCitation[],
+): HomeKnowTable {
   return {
     id: "home-dimension-coverage",
     title: "Loaded Context Coverage",
     dimensionId: "dimension_coverage",
     columns: [
       { key: "dimension_label", label: "Dimension" },
-      { key: "record_count", label: "Records", align: "right", format: "number" },
+      {
+        key: "record_count",
+        label: "Records",
+        align: "right",
+        format: "number",
+      },
       { key: "fact_count", label: "Facts", align: "right", format: "number" },
-      { key: "relationship_count", label: "Relationships", align: "right", format: "number" },
+      {
+        key: "relationship_count",
+        label: "Relationships",
+        align: "right",
+        format: "number",
+      },
       { key: "gap_count", label: "Gaps", align: "right", format: "number" },
       { key: "trust_score", label: "Trust", align: "right", format: "number" },
     ],
@@ -830,7 +1009,10 @@ function coverageTable(rows: HomeDimensionCoverageRow[], citations: HomeKnowCita
   };
 }
 
-function orgTable(rows: HomeItOrgViewRow[], citations: HomeKnowCitation[]): HomeKnowTable {
+function orgTable(
+  rows: HomeItOrgViewRow[],
+  citations: HomeKnowCitation[],
+): HomeKnowTable {
   return {
     id: "home-it-org",
     title: "IT Portfolio Ownership",
@@ -840,7 +1022,12 @@ function orgTable(rows: HomeItOrgViewRow[], citations: HomeKnowCitation[]): Home
       { key: "executive_owner_role", label: "Owner Role" },
       { key: "domain", label: "Domain" },
       { key: "head_count_fte", label: "FTE", align: "right", format: "number" },
-      { key: "annual_budget_usd", label: "Annual Budget", align: "right", format: "currency" },
+      {
+        key: "annual_budget_usd",
+        label: "Annual Budget",
+        align: "right",
+        format: "currency",
+      },
     ],
     rows: rows.map((row) => ({
       team_name: row.team_name ?? "Not loaded",
@@ -853,7 +1040,10 @@ function orgTable(rows: HomeItOrgViewRow[], citations: HomeKnowCitation[]): Home
   };
 }
 
-function applicationTable(rows: HomeApplicationOwnershipViewRow[], citations: HomeKnowCitation[]): HomeKnowTable {
+function applicationTable(
+  rows: HomeApplicationOwnershipViewRow[],
+  citations: HomeKnowCitation[],
+): HomeKnowTable {
   return {
     id: "home-application-ownership",
     title: "Application Ownership",
@@ -865,7 +1055,12 @@ function applicationTable(rows: HomeApplicationOwnershipViewRow[], citations: Ho
       { key: "technical_owner_team", label: "Technical Owner Team" },
       { key: "technical_owner_role", label: "Technical Owner Role" },
       { key: "criticality", label: "Criticality" },
-      { key: "annual_run_cost_usd", label: "Annual Run Cost", align: "right", format: "currency" },
+      {
+        key: "annual_run_cost_usd",
+        label: "Annual Run Cost",
+        align: "right",
+        format: "currency",
+      },
     ],
     rows: rows.map((row) => ({
       application_name: row.application_name ?? "Not loaded",
@@ -880,7 +1075,10 @@ function applicationTable(rows: HomeApplicationOwnershipViewRow[], citations: Ho
   };
 }
 
-function vendorTable(rows: HomeVendorLandscapeViewRow[], citations: HomeKnowCitation[]): HomeKnowTable {
+function vendorTable(
+  rows: HomeVendorLandscapeViewRow[],
+  citations: HomeKnowCitation[],
+): HomeKnowTable {
   return {
     id: "home-vendor-landscape",
     title: "Vendor Landscape",
@@ -888,7 +1086,12 @@ function vendorTable(rows: HomeVendorLandscapeViewRow[], citations: HomeKnowCita
     columns: [
       { key: "vendor_name", label: "Vendor" },
       { key: "category", label: "Category" },
-      { key: "annual_spend_usd", label: "Annual Spend", align: "right", format: "currency" },
+      {
+        key: "annual_spend_usd",
+        label: "Annual Spend",
+        align: "right",
+        format: "currency",
+      },
       { key: "renewal_risk", label: "Renewal Risk" },
       { key: "business_owner", label: "Business Owner" },
       { key: "technology_owner", label: "Technology Owner" },
@@ -905,16 +1108,34 @@ function vendorTable(rows: HomeVendorLandscapeViewRow[], citations: HomeKnowCita
   };
 }
 
-function budgetTable(rows: HomeBudgetPortfolioViewRow[], citations: HomeKnowCitation[]): HomeKnowTable {
+function budgetTable(
+  rows: HomeBudgetPortfolioViewRow[],
+  citations: HomeKnowCitation[],
+): HomeKnowTable {
   return {
     id: "home-budget-by-portfolio",
     title: "Budget by Portfolio",
     dimensionId: "it_budget_financials",
     columns: [
       { key: "function_or_platform", label: "Function / Platform" },
-      { key: "run_budget_usd", label: "Run Budget", align: "right", format: "currency" },
-      { key: "change_budget_usd", label: "Change Budget", align: "right", format: "currency" },
-      { key: "ai_budget_usd", label: "AI Budget", align: "right", format: "currency" },
+      {
+        key: "run_budget_usd",
+        label: "Run Budget",
+        align: "right",
+        format: "currency",
+      },
+      {
+        key: "change_budget_usd",
+        label: "Change Budget",
+        align: "right",
+        format: "currency",
+      },
+      {
+        key: "ai_budget_usd",
+        label: "AI Budget",
+        align: "right",
+        format: "currency",
+      },
       { key: "owner_role", label: "Owner Role" },
     ],
     rows: rows.map((row) => ({
@@ -928,16 +1149,24 @@ function budgetTable(rows: HomeBudgetPortfolioViewRow[], citations: HomeKnowCita
   };
 }
 
-function gapTable(rows: HomeGapRegisterViewRow[], citations: HomeKnowCitation[]): HomeKnowTable {
+function gapTable(
+  rows: HomeGapRegisterViewRow[],
+  citations: HomeKnowCitation[],
+): HomeKnowTable {
   return {
     id: "home-gap-register",
-    title: "Home Evidence Gaps",
+    title: "Home Source Gaps",
     dimensionId: "gap_register",
     columns: [
       { key: "dimension_id", label: "Dimension" },
       { key: "display_label", label: "Missing Field" },
       { key: "severity", label: "Severity" },
-      { key: "missing_count", label: "Missing Rows", align: "right", format: "number" },
+      {
+        key: "missing_count",
+        label: "Missing Rows",
+        align: "right",
+        format: "number",
+      },
     ],
     rows: rows.map((row) => ({
       dimension_id: row.dimension_id,
@@ -1044,12 +1273,18 @@ function recordTable(input: {
   };
 }
 
-function recordsForDimensions(rows: HomeContextRecordRow[], dimensions: string[]): HomeContextRecordRow[] {
+function recordsForDimensions(
+  rows: HomeContextRecordRow[],
+  dimensions: string[],
+): HomeContextRecordRow[] {
   const wanted = new Set(dimensions);
   return rows.filter((row) => row.dimension && wanted.has(row.dimension));
 }
 
-function vendorChart(rows: HomeVendorLandscapeViewRow[], citations: HomeKnowCitation[]): HomeKnowChart {
+function vendorChart(
+  rows: HomeVendorLandscapeViewRow[],
+  citations: HomeKnowCitation[],
+): HomeKnowChart {
   return {
     id: "home-vendor-spend-chart",
     title: "Annual Vendor Spend",
@@ -1073,9 +1308,15 @@ function vendorChart(rows: HomeVendorLandscapeViewRow[], citations: HomeKnowCita
   };
 }
 
-function budgetChart(rows: HomeBudgetPortfolioViewRow[], citations: HomeKnowCitation[]): HomeKnowChart {
+function budgetChart(
+  rows: HomeBudgetPortfolioViewRow[],
+  citations: HomeKnowCitation[],
+): HomeKnowChart {
   const run = rows.reduce((sum, row) => sum + number(row.run_budget_usd), 0);
-  const change = rows.reduce((sum, row) => sum + number(row.change_budget_usd), 0);
+  const change = rows.reduce(
+    (sum, row) => sum + number(row.change_budget_usd),
+    0,
+  );
   const ai = rows.reduce((sum, row) => sum + number(row.ai_budget_usd), 0);
   return {
     id: "home-budget-mix-chart",
@@ -1094,7 +1335,9 @@ function budgetChart(rows: HomeBudgetPortfolioViewRow[], citations: HomeKnowCita
     citationIds: citationIdForDimension("it_budget_financials", citations),
     caveats:
       run > 0 && change === 0
-        ? ["Run budget exists, but change budget line-item split is missing in the loaded rows."]
+        ? [
+            "Run budget exists, but change budget line-item split is missing in the loaded rows.",
+          ]
         : [],
     status: "tenant-fact",
   };
@@ -1116,7 +1359,11 @@ function applicationDomainChart(
     type: "bar",
     dimensionId: "applications_core_systems",
     data: [...counts.entries()]
-      .map(([label, value], index) => ({ label, value, color: chartColor(index) }))
+      .map(([label, value], index) => ({
+        label,
+        value,
+        color: chartColor(index),
+      }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 12),
     sourceIds: rows
@@ -1155,14 +1402,15 @@ function recordDistributionChart(
   const counts = new Map<string, number>();
   for (const row of packet.records) {
     const label =
-      cleanLabel(row.dimension) ??
-      cleanLabel(row.record_type) ??
-      "Record";
+      cleanLabel(row.dimension) ?? cleanLabel(row.record_type) ?? "Record";
     counts.set(label, (counts.get(label) ?? 0) + 1);
   }
   if (counts.size === 0) {
     for (const row of packet.coverage) {
-      const label = cleanLabel(row.dimension_label) ?? cleanLabel(row.dimension_id) ?? "Loaded context";
+      const label =
+        cleanLabel(row.dimension_label) ??
+        cleanLabel(row.dimension_id) ??
+        "Loaded context";
       const value = number(row.record_count);
       if (value > 0) counts.set(label, value);
     }
@@ -1174,7 +1422,11 @@ function recordDistributionChart(
     type: "bar",
     dimensionId: "dimension_coverage",
     data: [...counts.entries()]
-      .map(([label, value], index) => ({ label, value, color: chartColor(index) }))
+      .map(([label, value], index) => ({
+        label,
+        value,
+        color: chartColor(index),
+      }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 12),
     sourceIds: [],
@@ -1205,7 +1457,10 @@ function relationshipGraph(
       : packet.relationships
           .filter((row) => row.from_external_id && row.to_external_id)
           .slice(0, 60);
-  const nodeMap = new Map<string, { id: string; label: string; type: string }>();
+  const nodeMap = new Map<
+    string,
+    { id: string; label: string; type: string }
+  >();
   const graphEdges = [];
   for (const row of edges) {
     const from = String(row.from_external_id);
@@ -1231,15 +1486,23 @@ function relationshipGraph(
     });
   }
   const sourceIds = edges
-    .map((row) => row.relationship_key ?? sourceId(row.source_file, row.source_row_number))
+    .map(
+      (row) =>
+        row.relationship_key ??
+        sourceId(row.source_file, row.source_row_number),
+    )
     .filter(isString);
   const gaps =
     packet.relationships.length > 0 && matchedEdges.length === 0
       ? [specificGraphGap(normalized)]
       : packet.relationships.length === 0
-        ? ["source-to-target integration edges missing in the loaded relationship rows"]
+        ? [
+            "source-to-target integration edges missing in the loaded relationship rows",
+          ]
         : [];
-  const nodeTypes = [...new Set([...nodeMap.values()].map((node) => node.type))].sort();
+  const nodeTypes = [
+    ...new Set([...nodeMap.values()].map((node) => node.type)),
+  ].sort();
   const edgeTypes = [...new Set(graphEdges.map((edge) => edge.type))].sort();
   return {
     id: "home-relationship-graph",
@@ -1250,7 +1513,12 @@ function relationshipGraph(
     edgeTypes,
     sourceIds,
     citationIds: citationIdForDimension("relationship_graph", citations),
-    confidence: matchedEdges.length > 0 ? "high" : graphEdges.length > 0 ? "medium" : "low",
+    confidence:
+      matchedEdges.length > 0
+        ? "high"
+        : graphEdges.length > 0
+          ? "medium"
+          : "low",
     gaps,
     inferredEdges: false,
     warning: gaps[0],
@@ -1262,7 +1530,9 @@ interface RecordLabelIndexEntry {
   type: string;
 }
 
-function buildRecordLabelIndex(rows: HomeContextRecordRow[]): Map<string, RecordLabelIndexEntry> {
+function buildRecordLabelIndex(
+  rows: HomeContextRecordRow[],
+): Map<string, RecordLabelIndexEntry> {
   const index = new Map<string, RecordLabelIndexEntry>();
   for (const row of rows) {
     const payload = row.payload ?? {};
@@ -1288,9 +1558,15 @@ function buildRecordLabelIndex(rows: HomeContextRecordRow[]): Map<string, Record
     );
     const type =
       cleanLabel(row.record_type) ??
-      cleanLabel(firstPayloadValue(payload, ["object_type", "type", "category"])) ??
+      cleanLabel(
+        firstPayloadValue(payload, ["object_type", "type", "category"]),
+      ) ??
       "record";
-    const entry = { label: label ?? readableId(row.source_record_id ?? row.canonical_record_id), type };
+    const entry = {
+      label:
+        label ?? readableId(row.source_record_id ?? row.canonical_record_id),
+      type,
+    };
     for (const key of recordIndexKeys(row)) {
       index.set(key, entry);
     }
@@ -1336,7 +1612,10 @@ function recordIndexKeys(row: HomeContextRecordRow): string[] {
   return [...keys];
 }
 
-function firstPayloadValue(payload: Record<string, unknown>, fields: string[]): string | null {
+function firstPayloadValue(
+  payload: Record<string, unknown>,
+  fields: string[],
+): string | null {
   for (const field of fields) {
     const value = payload[field];
     if (typeof value === "string" && value.trim()) return value.trim();
@@ -1344,12 +1623,24 @@ function firstPayloadValue(payload: Record<string, unknown>, fields: string[]): 
   return null;
 }
 
-function labelForRecordId(id: string, index: Map<string, RecordLabelIndexEntry>): string {
-  return index.get(id)?.label ?? index.get(id.toLowerCase())?.label ?? readableId(id);
+function labelForRecordId(
+  id: string,
+  index: Map<string, RecordLabelIndexEntry>,
+): string {
+  return (
+    index.get(id)?.label ?? index.get(id.toLowerCase())?.label ?? readableId(id)
+  );
 }
 
-function typeForRecordId(id: string, index: Map<string, RecordLabelIndexEntry>): string {
-  return index.get(id)?.type ?? index.get(id.toLowerCase())?.type ?? inferTypeFromId(id);
+function typeForRecordId(
+  id: string,
+  index: Map<string, RecordLabelIndexEntry>,
+): string {
+  return (
+    index.get(id)?.type ??
+    index.get(id.toLowerCase())?.type ??
+    inferTypeFromId(id)
+  );
 }
 
 function relationshipMatchesQuestion(
@@ -1369,16 +1660,26 @@ function relationshipMatchesQuestion(
     .join(" ")
     .toLowerCase();
   if (/\b(vendor|vendors|supplier|contract)\b/.test(normalizedQuestion)) {
-    return /\b(vendor|supplier|contract|supports?|owned_by|provided_by)\b/.test(haystack);
+    return /\b(vendor|supplier|contract|supports?|owned_by|provided_by)\b/.test(
+      haystack,
+    );
   }
-  if (/\b(data product|lineage|analytics|feed|feeds|source system)\b/.test(normalizedQuestion)) {
-    return /\b(data|lineage|feed|feeds|source|target|analytics|product)\b/.test(haystack);
+  if (
+    /\b(data product|lineage|analytics|feed|feeds|source system)\b/.test(
+      normalizedQuestion,
+    )
+  ) {
+    return /\b(data|lineage|feed|feeds|source|target|analytics|product)\b/.test(
+      haystack,
+    );
   }
   if (/\b(capabilit|business capability)\b/.test(normalizedQuestion)) {
     return /\b(capability|supports?|app|application|system)\b/.test(haystack);
   }
   if (/\b(platform|initiative|initiatives)\b/.test(normalizedQuestion)) {
-    return /\b(platform|initiative|depends|dependency|requires|enables)\b/.test(haystack);
+    return /\b(platform|initiative|depends|dependency|requires|enables)\b/.test(
+      haystack,
+    );
   }
   return true;
 }
@@ -1387,7 +1688,9 @@ function graphTitle(normalizedQuestion: string): string {
   if (/\b(vendor|supplier|contract)\b/.test(normalizedQuestion)) {
     return "Vendor-to-System Relationship Graph";
   }
-  if (/\b(data product|lineage|analytics|feed|feeds)\b/.test(normalizedQuestion)) {
+  if (
+    /\b(data product|lineage|analytics|feed|feeds)\b/.test(normalizedQuestion)
+  ) {
     return "Data Lineage Relationship Graph";
   }
   if (/\b(capabilit)\b/.test(normalizedQuestion)) {
@@ -1428,9 +1731,9 @@ function buildGaps(
     gaps.push({
       id: `gap-read-model-${index + 1}`,
       dimensionId: "home_read_model",
-      objectType: "home read model",
+      objectType: "home context model",
       expectedField: "query_result_rows",
-      displayLabel: "Home read-model rows",
+      displayLabel: "Home context rows",
       severity: "medium",
       message,
       citationIds: citations.map((citation) => citation.id).slice(0, 4),
@@ -1465,7 +1768,7 @@ function homeKnowProse(input: {
 }): string {
   if (!input.hasData) {
     if (input.packet.coverage.length > 0 || input.hasGaps) {
-      return "I found related tenant context, but not the exact field family needed to answer this cleanly. The specific missing evidence path is listed below, so the answer stays grounded instead of filling the gap with assumptions.";
+      return "I found related tenant context, but not the exact field family needed to answer this cleanly. The specific missing source path is listed below, so the answer stays grounded instead of filling the gap with assumptions.";
     }
     return "I do not see that in the loaded data.";
   }
@@ -1475,53 +1778,113 @@ function homeKnowProse(input: {
   const budgetCount = input.packet.budgets.length;
   if (input.intent === "gap") {
     return input.packet.gaps.length
-      ? `I found ${input.packet.gaps.length} Home evidence gap(s). The gap register lists the missing fields, affected object type, severity, and row count.`
-      : "I do not see Home evidence gaps in the loaded data. The Home gap register returned no rows for this tenant.";
+      ? `I found ${input.packet.gaps.length} Home source gap(s). The gap register lists the missing fields, affected object type, severity, and row count.`
+      : "I do not see Home source gaps in the loaded data. The Home gap register returned no rows for this tenant.";
   }
   if (input.intent === "chart") {
     if (GRAPH_RE.test(input.question)) {
       return input.hasGraph
-        ? "I assembled the relationship graph from loaded tenant edge rows and source citations. If the requested edge family is absent, Home reports that as a gap instead of inferring a dependency."
+        ? "I assembled the relationship graph from loaded tenant edge rows and source rows. If the requested edge family is absent, Home reports that as a gap instead of inferring a dependency."
         : "The loaded relationship rows do not contain the source-to-target edge pairs needed for that graph. I can see related context, but the specific edge family for this visual is missing.";
     }
-    return "Here is the visual cut from loaded Home context. The chart data is assembled from tenant read-model rows and cited source files, so missing numeric fields stay visible as gaps instead of becoming invented figures.";
+    return "Here is the visual cut from loaded Home context. The chart data is assembled from tenant context rows and cited source files, so missing numeric fields stay visible as gaps instead of becoming invented figures.";
   }
-  if (/\b(security|compliance|control|controls|posture)\b/i.test(input.question)) {
+  if (
+    /\b(security|compliance|control|controls|posture)\b/i.test(input.question)
+  ) {
     return "The security and compliance readout is limited to loaded coverage and source-backed fields. Control strength is not inferred; missing control fields are shown as gaps.";
   }
-  if (/\b(data product|analytics|data & analytics|data and analytics)\b/i.test(input.question)) {
-    const records = recordsForDimensions(input.packet.records, ["data_analytics_estate"]);
+  if (
+    /\b(data product|analytics|data & analytics|data and analytics)\b/i.test(
+      input.question,
+    )
+  ) {
+    const records = recordsForDimensions(input.packet.records, [
+      "data_analytics_estate",
+    ]);
     const sample = readableList(
       records
-        .map((row) => cleanLabel(firstPayloadValue(row.payload ?? {}, ["name", "label", "title", "data_product_name", "product_name", "platform_name"])))
+        .map((row) =>
+          cleanLabel(
+            firstPayloadValue(row.payload ?? {}, [
+              "name",
+              "label",
+              "title",
+              "data_product_name",
+              "product_name",
+              "platform_name",
+            ]),
+          ),
+        )
         .filter(isString)
         .slice(0, 4),
     );
     return sample
       ? `The loaded data and analytics estate includes ${sample}. Ownership and maturity fields are shown where they exist, with product-registry gaps called out separately.`
-      : "The loaded data and analytics estate is available at the read-model level. Ownership fields are shown where present; product-registry detail remains a gap when it is missing.";
+      : "The loaded data and analytics estate is available at the context-model level. Ownership fields are shown where present; product-registry detail remains a gap when it is missing.";
   }
-  if (/\b(vendor|vendors|contract|contracts|renewal|renewals)\b/i.test(input.question)) {
-    const topVendors = readableList(input.packet.vendors.map((row) => row.vendor_name).filter(isString).slice(0, 4));
+  if (
+    /\b(vendor|vendors|contract|contracts|renewal|renewals)\b/i.test(
+      input.question,
+    )
+  ) {
+    const topVendors = readableList(
+      input.packet.vendors
+        .map((row) => row.vendor_name)
+        .filter(isString)
+        .slice(0, 4),
+    );
     return topVendors
       ? `The loaded vendor landscape includes ${topVendors}. Spend, renewal risk, and ownership are shown where those fields exist; missing contract-owner fields remain gaps.`
       : "The loaded vendor and contract landscape is available where spend, renewal, or owner fields were supplied.";
   }
-  if (/\b(budget|budgets|spend|cost|costs|financial|financials|run vs change)\b/i.test(input.question)) {
-    const totalRun = input.packet.budgets.reduce((sum, row) => sum + number(row.run_budget_usd), 0);
-    const totalChange = input.packet.budgets.reduce((sum, row) => sum + number(row.change_budget_usd), 0);
-    const runText = totalRun > 0 ? ` I see ${formatUsd(totalRun)} in loaded run budget` : "";
-    const changeText = totalChange > 0 ? ` and ${formatUsd(totalChange)} in loaded change budget` : "";
+  if (
+    /\b(budget|budgets|spend|cost|costs|financial|financials|run vs change)\b/i.test(
+      input.question,
+    )
+  ) {
+    const totalRun = input.packet.budgets.reduce(
+      (sum, row) => sum + number(row.run_budget_usd),
+      0,
+    );
+    const totalChange = input.packet.budgets.reduce(
+      (sum, row) => sum + number(row.change_budget_usd),
+      0,
+    );
+    const runText =
+      totalRun > 0 ? ` I see ${formatUsd(totalRun)} in loaded run budget` : "";
+    const changeText =
+      totalChange > 0
+        ? ` and ${formatUsd(totalChange)} in loaded change budget`
+        : "";
     return `The loaded IT budget rows show run/change fields where they exist.${runText}${changeText}. Missing line-item splits are shown as gaps rather than inferred.`;
   }
-  if (/\b(app|application|system|platform|cmdb|systems of record)\b/i.test(input.question)) {
-    const systems = readableList(input.packet.applications.map((row) => row.application_name).filter(isString).slice(0, 4));
+  if (
+    /\b(app|application|system|platform|cmdb|systems of record)\b/i.test(
+      input.question,
+    )
+  ) {
+    const systems = readableList(
+      input.packet.applications
+        .map((row) => row.application_name)
+        .filter(isString)
+        .slice(0, 4),
+    );
     return systems
       ? `The loaded application and systems inventory includes ${systems}. Ownership, criticality, and run-cost fields are shown where present; missing named technical owners remain explicit gaps.`
       : "The loaded application and system inventory includes ownership and lifecycle fields where those fields were supplied.";
   }
-  if (/\b(org|team|portfolio|lead|owner|ownership|who leads)\b/i.test(input.question)) {
-    const portfolios = readableList(input.packet.org.map((row) => row.team_name).filter(isString).slice(0, 5));
+  if (
+    /\b(org|team|portfolio|lead|owner|ownership|who leads)\b/i.test(
+      input.question,
+    )
+  ) {
+    const portfolios = readableList(
+      input.packet.org
+        .map((row) => row.team_name)
+        .filter(isString)
+        .slice(0, 5),
+    );
     return portfolios
       ? `IT is loaded by portfolio/team: ${portfolios}. The data provides owner roles where available; named individuals are only shown when the tenant supplied that field, otherwise Home reports the named-owner gap.`
       : "Loaded IT portfolios and owner roles are available where present. Named individuals are only shown when the tenant supplied that field.";
@@ -1549,12 +1912,17 @@ function formatUsd(value: number): string {
   }).format(value);
 }
 
-export function validateHomeKnowResponse(response: HomeKnowResponse): HomeKnowResponse {
+export function validateHomeKnowResponse(
+  response: HomeKnowResponse,
+): HomeKnowResponse {
   let prose = response.prose;
   let unsupportedClaimsRemoved = response.safety.unsupportedClaimsRemoved;
   const templatePrefix = /\b(Read|Evidence|Implication|Next move):\s*/gi;
   if (templatePrefix.test(prose)) {
-    prose = prose.replace(templatePrefix, "").replace(/\s{2,}/g, " ").trim();
+    prose = prose
+      .replace(templatePrefix, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
     unsupportedClaimsRemoved += 1;
   }
   if (BLOCKED_PUBLIC_TEXT.test(prose) || INTERNAL_CODE_RE.test(prose)) {
@@ -1616,8 +1984,10 @@ function readableId(value: string | null | undefined): string {
 
 function inferTypeFromId(value: string): string {
   const normalized = value.toLowerCase();
-  if (normalized.includes("vendor") || normalized.includes("contract")) return "vendor";
-  if (normalized.includes("app") || normalized.includes("system")) return "application";
+  if (normalized.includes("vendor") || normalized.includes("contract"))
+    return "vendor";
+  if (normalized.includes("app") || normalized.includes("system"))
+    return "application";
   if (normalized.includes("platform")) return "platform";
   if (normalized.includes("capability")) return "capability";
   if (normalized.includes("data")) return "data-product";
@@ -1625,7 +1995,10 @@ function inferTypeFromId(value: string): string {
   return "record";
 }
 
-function sourceId(sourceFile: string | null | undefined, sourceRowNumber: number | string | null | undefined): string | null {
+function sourceId(
+  sourceFile: string | null | undefined,
+  sourceRowNumber: number | string | null | undefined,
+): string | null {
   if (!sourceFile) return null;
   return sourceRowNumber ? `${sourceFile}#${sourceRowNumber}` : sourceFile;
 }
@@ -1635,16 +2008,25 @@ function isString(value: unknown): value is string {
 }
 
 function number(value: number | string | null | undefined): number {
-  const parsed = typeof value === "number" ? value : typeof value === "string" ? Number(value) : 0;
+  const parsed =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value)
+        : 0;
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function numberOrNull(value: number | string | null | undefined): number | null {
+function numberOrNull(
+  value: number | string | null | undefined,
+): number | null {
   const parsed = number(value);
   return parsed > 0 ? parsed : null;
 }
 
-function confidence(value: number | string | null | undefined): "low" | "medium" | "high" | undefined {
+function confidence(
+  value: number | string | null | undefined,
+): "low" | "medium" | "high" | undefined {
   const parsed = number(value);
   if (parsed <= 0) return undefined;
   if (parsed >= 0.82) return "high";
@@ -1653,12 +2035,14 @@ function confidence(value: number | string | null | undefined): "low" | "medium"
 }
 
 function chartColor(index: number): string {
-  return [
-    CHART.accent,
-    CHART.good,
-    CHART.warn,
-    CHART.bad,
-    CHART.inkSoft,
-    CHART.accentSoft,
-  ][index % 6] ?? CHART.accent;
+  return (
+    [
+      CHART.accent,
+      CHART.good,
+      CHART.warn,
+      CHART.bad,
+      CHART.inkSoft,
+      CHART.accentSoft,
+    ][index % 6] ?? CHART.accent
+  );
 }

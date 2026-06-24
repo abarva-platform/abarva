@@ -28,10 +28,12 @@ export async function POST(req: NextRequest) {
 
   const response = await buildHomeKnowResponse({
     question: payload.question,
-    tenantKey: tenant?.canonicalKey ?? payload.tenantKey ?? payload.client ?? null,
+    tenantKey:
+      tenant?.canonicalKey ?? payload.tenantKey ?? payload.client ?? null,
     client: tenant?.appClientKey ?? payload.client ?? null,
   }).catch((error): HomeKnowResponse => {
-    const tenantKey = tenant?.canonicalKey ?? payload.tenantKey ?? payload.client ?? "unknown";
+    const tenantKey =
+      tenant?.canonicalKey ?? payload.tenantKey ?? payload.client ?? "unknown";
     return validateHomeKnowResponse({
       mode: "KNOW",
       tenantKey,
@@ -40,8 +42,8 @@ export async function POST(req: NextRequest) {
       answerStatus: "blocked",
       prose:
         error instanceof Error
-          ? "I could not read the Home context views for this tenant."
-          : "I could not read the Home context views for this tenant.",
+          ? "I could not use the Home context views for this tenant."
+          : "I could not use the Home context views for this tenant.",
       dimensionsUsed: [],
       facts: [],
       tables: [],

@@ -43,7 +43,7 @@ const CONTEXT_EXPLORER_SUGGESTIONS = [
   "How is our IT organization structured today?",
   "Which systems of record are loaded?",
   "Show vendor and contract coverage.",
-  "What fields or evidence are missing?",
+  "What fields are missing?",
 ];
 
 type HomeKnowTurn = {
@@ -99,9 +99,10 @@ export function HomeKnowAsk({
     () => `abarva.homeKnow.thread.${tenantKey ?? client ?? "default"}`,
     [client, tenantKey],
   );
-  const contextSuggestions = suggestedQuestions.length > 0
-    ? suggestedQuestions
-    : CONTEXT_EXPLORER_SUGGESTIONS;
+  const contextSuggestions =
+    suggestedQuestions.length > 0
+      ? suggestedQuestions
+      : CONTEXT_EXPLORER_SUGGESTIONS;
 
   useEffect(() => {
     try {
@@ -118,12 +119,14 @@ export function HomeKnowAsk({
       setTurns(
         parsed
           .filter((turn): turn is HomeKnowTurn => {
-            if (!turn || typeof turn !== "object" || Array.isArray(turn)) return false;
+            if (!turn || typeof turn !== "object" || Array.isArray(turn))
+              return false;
             const candidate = turn as Partial<HomeKnowTurn>;
             return (
               typeof candidate.id === "string" &&
               typeof candidate.question === "string" &&
-              (candidate.response === null || isHomeKnowResponse(candidate.response)) &&
+              (candidate.response === null ||
+                isHomeKnowResponse(candidate.response)) &&
               typeof candidate.error !== "undefined"
             );
           })
@@ -144,7 +147,10 @@ export function HomeKnowAsk({
       if (completedTurns.length === 0) {
         window.sessionStorage.removeItem(storageKey);
       } else {
-        window.sessionStorage.setItem(storageKey, JSON.stringify(completedTurns));
+        window.sessionStorage.setItem(
+          storageKey,
+          JSON.stringify(completedTurns),
+        );
       }
     } catch {
       // Session history is helpful, but the chat must keep working if storage is blocked.
@@ -153,7 +159,10 @@ export function HomeKnowAsk({
 
   useEffect(() => {
     if (typeof threadEndRef.current?.scrollIntoView === "function") {
-      threadEndRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      threadEndRef.current.scrollIntoView({
+        block: "nearest",
+        behavior: "smooth",
+      });
     }
   }, [turns.length]);
 
@@ -162,9 +171,13 @@ export function HomeKnowAsk({
       const trimmed = q.trim();
       if (!trimmed) return;
       const turnId = newTurnId();
-      const updateTurn = (patch: Partial<Omit<HomeKnowTurn, "id" | "question">>) => {
+      const updateTurn = (
+        patch: Partial<Omit<HomeKnowTurn, "id" | "question">>,
+      ) => {
         setTurns((current) =>
-          current.map((turn) => (turn.id === turnId ? { ...turn, ...patch } : turn)),
+          current.map((turn) =>
+            turn.id === turnId ? { ...turn, ...patch } : turn,
+          ),
         );
       };
 
@@ -206,7 +219,7 @@ export function HomeKnowAsk({
               !Array.isArray(payload) &&
               typeof (payload as { error?: unknown }).error === "string"
                 ? (payload as { error: string }).error
-                : "Ava could not read the loaded Home context.",
+                : "aVa could not use the loaded Home context yet.",
           });
           return;
         }
@@ -214,7 +227,9 @@ export function HomeKnowAsk({
         updateTurn({ response: payload });
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
-          updateTurn({ error: "Ava could not read the loaded Home context." });
+          updateTurn({
+            error: "aVa could not use the loaded Home context yet.",
+          });
         }
       } finally {
         updateTurn({ fetching: false });
@@ -237,39 +252,49 @@ export function HomeKnowAsk({
           {turns.map((turn, index) => {
             const isLatestTurn = index === turns.length - 1;
             return (
-            <div className="hka-turn" key={turn.id}>
-              <div className="hka-userRow">
-                <div className="hka-question">
-                  <div className="hka-questionMeta">You · Question {index + 1}</div>
-                  <div className="hka-questionText">{turn.question}</div>
+              <div className="hka-turn" key={turn.id}>
+                <div className="hka-userRow">
+                  <div className="hka-question">
+                    <div className="hka-questionMeta">
+                      You · Question {index + 1}
+                    </div>
+                    <div className="hka-questionText">{turn.question}</div>
+                  </div>
                 </div>
+                {turn.response ? (
+                  <div className="hka-assistantRow">
+                    <HomeKnowAnswerRenderer
+                      compact={!isLatestTurn}
+                      response={turn.response}
+                    />
+                  </div>
+                ) : turn.error ? (
+                  <div className="hka-assistantRow">
+                    <div className="hka-error" role="status">
+                      {turn.error}
+                    </div>
+                  </div>
+                ) : turn.fetching ? (
+                  <div className="hka-assistantRow">
+                    <div className="hka-loading" role="status">
+                      Checking loaded context…
+                    </div>
+                  </div>
+                ) : null}
               </div>
-              {turn.response ? (
-                <div className="hka-assistantRow">
-                  <HomeKnowAnswerRenderer compact={!isLatestTurn} response={turn.response} />
-                </div>
-              ) : turn.error ? (
-                <div className="hka-assistantRow">
-                  <div className="hka-error" role="status">
-                    {turn.error}
-                  </div>
-                </div>
-              ) : turn.fetching ? (
-                <div className="hka-assistantRow">
-                  <div className="hka-loading" role="status">
-                    Reading loaded context…
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          );
+            );
           })}
           <div ref={threadEndRef} />
         </div>
       ) : null}
 
-      {showSuggestions && turns.length === 0 && contextSuggestions.length > 0 ? (
-        <div aria-label="Suggested Home KNOW questions" className="hka-suggestions">
+      {showSuggestions &&
+      turns.length === 0 &&
+      contextSuggestions.length > 0 ? (
+        <div
+          aria-label="Suggested Home KNOW questions"
+          className="hka-suggestions"
+        >
           {contextSuggestions.map((suggestion) => (
             <button
               className="hka-chip"
