@@ -81,12 +81,18 @@ describe("Ask Intelligence response policy", () => {
 
   it("removes raw internal record ids from prose while preserving readable labels", () => {
     const answer = sanitizeAskSynthesis(
-      "Customer gold record (FC-DATA-001) is on Databricks. APX-IT-004 owns the inventory mart.",
+      "Customer gold record (FC-DATA-001) is on Databricks. APX-IT-004 owns the inventory mart. APP-00002 and APP-00003 carry 358 integrations.",
     );
 
     expect(answer).toContain("Customer gold record is on Databricks.");
-    expect(answer).toContain("the cited record owns the inventory mart.");
-    expect(answer).not.toMatch(/\b[A-Z]{2,6}-[A-Z0-9]{2,8}-\d{2,4}\b/);
+    expect(answer).toContain("the referenced evidence owns the inventory mart.");
+    expect(answer).toContain(
+      "the referenced evidence and the referenced evidence carry 358 integrations.",
+    );
+    expect(answer).not.toContain("the cited record");
+    expect(answer).not.toMatch(
+      /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\b/,
+    );
   });
 
   it("builds an advisor-style current-state answer instead of a metric dump", () => {

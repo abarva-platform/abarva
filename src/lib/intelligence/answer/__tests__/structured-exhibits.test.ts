@@ -34,14 +34,14 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
-    expect(exhibits.tables[0]?.title).toBe("Decision Evidence");
-    expect(exhibits.tables[0]?.rows[0]).toEqual(
-      expect.objectContaining({
-        source: "F12 IT budget",
-        signal: "Epic maintenance and integration spend records.",
-      }),
-    );
+    expect(exhibits.tables).toHaveLength(0);
     expect(exhibits.charts).toHaveLength(0);
+    expect(exhibits.prose).toContain(
+      "I do not see connected numeric row/column source data for a defensible chart.",
+    );
+    expect(exhibits.prose).toContain(
+      "I am not rendering a visual from prose-only figures.",
+    );
   });
 
   it("renders charts from structured retrieved source rows instead of prose", () => {
@@ -185,11 +185,11 @@ describe("buildStructuredExhibits", () => {
         "The right breakdown is denial reason category, AR days, and overturn rate. Next move: ask Revenue Cycle Operations to validate the category extract from the evidence ledger.",
     });
 
-    expect(exhibits.tables[0]?.title).toBe("Decision Evidence");
+    expect(exhibits.tables[0]?.title).toBe("Evidence Required");
     expect(exhibits.tables[0]?.rows).toEqual([
       expect.objectContaining({
-        source: "F12 IT budget",
-        signal: "Epic maintenance and integration spend records.",
+        evidence: "Tenant data extract for the requested comparison",
+        status: "Not present in the retrieved cited sources",
       }),
     ]);
     expect(exhibits.charts).toHaveLength(0);
@@ -214,15 +214,11 @@ describe("buildStructuredExhibits", () => {
 
     expect(exhibits.citations).toHaveLength(1);
     expect(exhibits.citations[0]?.sourceClass).toBe("tenant-fact");
-    expect(exhibits.tables[0]?.title).toBe("Decision Evidence");
-    expect(exhibits.tables[0]?.rows).toEqual([
-      expect.objectContaining({
-        source: "Revenue cycle denial chart support",
-        signal:
-          "Medical necessity leakage exposure is $1.2M. Prior authorization leakage exposure is $650K. Eligibility leakage exposure is $310K.",
-      }),
-    ]);
+    expect(exhibits.tables).toHaveLength(0);
     expect(exhibits.charts).toHaveLength(0);
+    expect(exhibits.prose).toContain(
+      "I do not see connected numeric row/column source data for a defensible chart.",
+    );
   });
 
   it("converts complete markdown tables from Ava prose into typed tables", () => {
@@ -376,7 +372,7 @@ describe("buildStructuredExhibits", () => {
         "Read: First Capital Financial has several live technology investments where the risk profile and ownership are clear enough to drive action now — the table below organizes them by urgency.\n2M run cost | Critical; restricted non-public data, vendor-hosted | Data residency and exit rights review — restricted classification + vendor-hosted is a red flag combination |\n| Marqeta Dispute Manager | Head of Cards & Payments | $4.\nNext move: assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves.",
     });
 
-    expect(exhibits.tables[0]?.title).toBe("Decision Evidence");
+    expect(exhibits.tables[0]?.title).toBe("Evidence Required");
     expect(exhibits.prose).toContain("Read:");
     expect(exhibits.prose).toContain("Next move:");
     expect(exhibits.prose).not.toContain("|");
@@ -461,8 +457,11 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
-    expect(exhibits.tables[0]?.title).toBe("Decision Evidence");
+    expect(exhibits.tables).toHaveLength(0);
     expect(exhibits.charts).toHaveLength(0);
+    expect(exhibits.prose).toContain(
+      "I do not see connected numeric row/column source data for a defensible chart.",
+    );
   });
 
   it("renders a truthful evidence-required table when a table is requested without enough cited rows", () => {

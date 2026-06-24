@@ -5,7 +5,8 @@ const HOLLOW_OPENER_RE =
 
 const BROAD_CURRENT_STATE_RE =
   /\b(current state|state of play|where are we|where do we stand|how are we doing|what is going on|what do you see|give me perspective|your perspective|executive read|simple question|our state)\b/i;
-const RAW_INTERNAL_ID_RE = /\b[A-Z]{2,6}-[A-Z0-9]{2,8}-\d{2,4}\b/g;
+const RAW_INTERNAL_ID_RE =
+  /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\b/g;
 const CONSULTANT_SECTION_RE =
   /^\s*(?:Read|Recommendation|Decision|Why|Evidence|Implication|Watchout|Watch-out|Next move|Owner|Action):/gim;
 const CONSULTANT_INLINE_SECTION_RE =
@@ -55,8 +56,8 @@ export function sanitizeAskSynthesis(text: string, maxWords = 120): string {
 
 export function stripInternalRecordIds(text: string): string {
   return text
-    .replace(/\s*\(\s*[A-Z]{2,6}-[A-Z0-9]{2,8}-\d{2,4}\s*\)/g, "")
-    .replace(RAW_INTERNAL_ID_RE, "the cited record")
+    .replace(/\s*\(\s*(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\s*\)/g, "")
+    .replace(RAW_INTERNAL_ID_RE, "the referenced evidence")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
 }
