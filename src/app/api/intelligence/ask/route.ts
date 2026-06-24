@@ -28,6 +28,7 @@ import type { CanonicalTenant } from "@/lib/tenant/CanonicalTenant";
 import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
 import { routeQuestion } from "@/lib/intelligence/answer/router";
 import { expertIndustryForClientKey } from "@/lib/intelligence/answer/expert-grounding";
+import { expertRefsForAdvisorRoute } from "@/lib/intelligence/ask/advisor-composer";
 import {
   buildStructuredExhibits,
   hasRenderableStructuredExhibits,
@@ -335,15 +336,19 @@ async function handleAsk(payload: AskPayload) {
             query,
             industry: expertIndustryForClientKey(tenantClientKey),
           });
+          const advisorExperts = expertRefsForAdvisorRoute(query);
+          const expertsUsed =
+            advisorExperts.length > 0 ? advisorExperts : routing.experts;
+          const answerRouting = { ...routing, experts: expertsUsed };
           const exhibits = buildStructuredExhibits({
             prose: assistantText,
-            routing,
+            routing: answerRouting,
             sources: intelligenceSourcesFromCitations(sentinelCitations),
           });
           if (
             hasRenderableStructuredExhibits(exhibits) ||
             exhibits.citations.length > 0 ||
-            routing.experts.length > 0
+            expertsUsed.length > 0
           ) {
             const agentAnswer = composeAvaAnswer({
               surface: "intelligence",
@@ -382,7 +387,7 @@ async function handleAsk(payload: AskPayload) {
                     "Tables, charts, and graphs appear only when Ava has validated structured data.",
                 },
               ],
-              expertsUsed: routing.experts,
+              expertsUsed,
               corpusUsed: exhibits.citations.some(
                 (citation) => citation.sourceClass !== "tenant-fact",
               )
@@ -397,7 +402,7 @@ async function handleAsk(payload: AskPayload) {
                 hasCorpus: exhibits.citations.some(
                   (citation) => citation.sourceClass !== "tenant-fact",
                 ),
-                hasExperts: routing.experts.length > 0,
+                hasExperts: expertsUsed.length > 0,
               },
             });
             controller.enqueue(
@@ -539,15 +544,19 @@ async function handleAsk(payload: AskPayload) {
             query,
             industry: expertIndustryForClientKey(tenantClientKey),
           });
+          const advisorExperts = expertRefsForAdvisorRoute(query);
+          const expertsUsed =
+            advisorExperts.length > 0 ? advisorExperts : routing.experts;
+          const answerRouting = { ...routing, experts: expertsUsed };
           const exhibits = buildStructuredExhibits({
             prose: assistantText,
-            routing,
+            routing: answerRouting,
             sources: traceSources as AskSource[],
           });
           if (
             hasRenderableStructuredExhibits(exhibits) ||
             exhibits.citations.length > 0 ||
-            routing.experts.length > 0
+            expertsUsed.length > 0
           ) {
             const agentAnswer = composeAvaAnswer({
               surface: "intelligence",
@@ -586,7 +595,7 @@ async function handleAsk(payload: AskPayload) {
                     "Tables, charts, and graphs appear only when Ava has validated structured data.",
                 },
               ],
-              expertsUsed: routing.experts,
+              expertsUsed,
               corpusUsed: exhibits.citations.some(
                 (citation) => citation.sourceClass !== "tenant-fact",
               )
@@ -601,7 +610,7 @@ async function handleAsk(payload: AskPayload) {
                 hasCorpus: exhibits.citations.some(
                   (citation) => citation.sourceClass !== "tenant-fact",
                 ),
-                hasExperts: routing.experts.length > 0,
+                hasExperts: expertsUsed.length > 0,
               },
             });
             controller.enqueue(

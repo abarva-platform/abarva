@@ -510,4 +510,63 @@ describe("POST /api/intelligence/ask telemetry", () => {
       ).toEqual([]);
     },
   );
+
+  it("lets the advisor route override visible expert chips for airline IROPS questions", async () => {
+    jest.mocked(resolveTenant).mockResolvedValueOnce({
+      clientId: "client-apexretail",
+      canonicalKey: "apex-retail",
+      appClientKey: "apexretail",
+      brokerKey: brokerTenantKey("apexretail") ?? "apex-retail",
+      displayName: "Apex Retail Group",
+      industryCode: tenantIndustryCode("apexretail"),
+      aliases: tenantAliasesFor("apexretail"),
+      source: "body",
+    });
+    jest.mocked(askIntelligence).mockImplementationOnce(async function* () {
+      yield {
+        type: "sources",
+        sources: [
+          {
+            type: "PATTERN",
+            id: "airline-irops-pattern",
+            name: "Airline IROPS recovery orchestration pattern",
+            detail:
+              "Airline AI value concentrates in disruption recovery, passenger reaccommodation, crew recovery, and operations-control workflows.",
+          },
+        ],
+      };
+      yield {
+        type: "delta",
+        text: "Airlines are moving IROPS AI from alerting toward recovery orchestration. Airline IROPS examples | Airline | Use case | Source type | Confidence | |---|---|---|---| | Delta | Reaccommodation | Corpus pattern | Medium |",
+      };
+      yield { type: "done" };
+    });
+
+    const response = await POST(
+      makeRequest({
+        q: "What are airlines doing with IROPS? Give me trends and ROI if such AI investments. Charts or tables will be nice.",
+        client: "apexretail",
+      }) as never,
+    );
+    const text = await readResponseText(response);
+    const events = text
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const agentAnswer = events.find(
+      (event) => event.type === "agent-answer",
+    )?.answer;
+    const expertIds = agentAnswer.expertsUsed.map(
+      (expert: { id: string }) => expert.id,
+    );
+
+    expect(expertIds).toEqual([
+      "xp.airline.operations-revenue-management",
+      "xp.airline.ground-airport-operations",
+      "xp.airline.network-schedule-planning",
+    ]);
+    expect(expertIds.some((id: string) => id.startsWith("xp.retail."))).toBe(
+      false,
+    );
+  });
 });

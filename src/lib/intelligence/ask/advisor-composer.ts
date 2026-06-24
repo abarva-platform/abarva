@@ -1,6 +1,7 @@
 import type { AskSource } from "./types";
 import { getExpertById } from "@/lib/intelligence/expert-pack/registry";
 import type { ExpertPack } from "@/lib/intelligence/expert-pack/expert-pack";
+import type { ExpertRef } from "@/lib/ava-answer/contract";
 
 export type IntelligenceAdvisorRoute = "airline_irops_ai_roi";
 
@@ -31,6 +32,7 @@ export interface AdvisorComposerResult {
   route: IntelligenceAdvisorRoute;
   promptBlock: string;
   expertNames: string[];
+  expertRefs: ExpertRef[];
   selectedSourceSummary: {
     tenantEvidenceCount: number;
     corpusEvidenceCount: number;
@@ -68,6 +70,7 @@ export function buildIntelligenceAdvisorComposerBlock(
   return {
     route,
     expertNames: experts.map((expert) => expert.identity.expertName),
+    expertRefs: advisorExpertRefs(experts),
     selectedSourceSummary: sourceSummary,
     promptBlock: [
       "INTELLIGENCE ADVISOR COMPOSER ROUTE",
@@ -111,6 +114,16 @@ export function buildIntelligenceAdvisorComposerBlock(
       `- Graph evidence sources: ${sourceSummary.graphEvidenceCount}`,
     ].join("\n"),
   };
+}
+
+export function expertRefsForAdvisorRoute(query: string): ExpertRef[] {
+  const route = routeIntelligenceAdvisorQuestion(query);
+  if (!route) return [];
+  return advisorExpertRefs(
+    AIRLINE_IROPS_EXPERT_IDS.map((id) => getExpertById(id)).filter(
+      (expert): expert is ExpertPack => Boolean(expert),
+    ),
+  );
 }
 
 export function chooseAdvisorTokenBudget(query: string, fallback: number): number {
@@ -161,4 +174,11 @@ function formatExpertLens(expert: ExpertPack): string {
     .map((useCase) => useCase.name)
     .join("; ");
   return `${expert.identity.expertName}: ${expert.identity.scopeNote} Focus metrics: ${metrics}. AI plays: ${useCases}.`;
+}
+
+function advisorExpertRefs(experts: ExpertPack[]): ExpertRef[] {
+  return experts.slice(0, 3).map((expert) => ({
+    id: expert.identity.id,
+    name: expert.identity.expertName,
+  }));
 }

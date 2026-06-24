@@ -88,6 +88,11 @@ describe("Golden IROPS Intelligence advisor composer", () => {
         "Enterprise Value Office & AI Enablement Expert",
       ]),
     );
+    expect(result?.expertRefs.map((expert) => expert.id)).toEqual([
+      "xp.airline.operations-revenue-management",
+      "xp.airline.ground-airport-operations",
+      "xp.airline.network-schedule-planning",
+    ]);
     expect(result?.selectedSourceSummary).toMatchObject({
       tenantEvidenceCount: 1,
       corpusEvidenceCount: 1,
