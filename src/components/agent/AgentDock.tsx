@@ -857,6 +857,8 @@ export function AgentDock(props: AgentDockProps) {
                 >
                   {turn.role === "agent" && turn.parts?.length ? (
                     <AgentResponseParts parts={turn.parts} />
+                  ) : turn.role === "agent" && focused && turn.agentAnswer ? (
+                    <AgentAnswerRenderer answer={turn.agentAnswer} />
                   ) : turn.role === "agent" ? (
                     shapeAgentResponseForSurface(surface, turn.body)
                   ) : (

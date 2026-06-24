@@ -89,6 +89,7 @@ describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
     expect(
       screen.getByTestId("intelligence-workspace-tab-experts"),
     ).toBeInTheDocument();
+    expect(screen.queryByText("Suggested questions")).not.toBeInTheDocument();
   });
 
   it("submits multiline prompts and preserves the question and answer in history", async () => {
@@ -107,8 +108,12 @@ describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
     });
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    await screen.findByText(
-      "SkyHarbor should sequence IROPS data quality before agentic operations.",
+    await waitFor(() =>
+      expect(
+        screen.getAllByText(
+          "SkyHarbor should sequence IROPS data quality before agentic operations.",
+        ).length,
+      ).toBeGreaterThanOrEqual(2),
     );
 
     const [, init] = fetchMock.mock.calls[0];
@@ -158,7 +163,11 @@ describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
     await act(async () => {
       fireEvent.submit(screen.getByTestId("agent-dock-form"));
     });
-    await screen.findByText("First advisor answer.");
+    await waitFor(() =>
+      expect(screen.getAllByText("First advisor answer.").length).toBeGreaterThanOrEqual(
+        2,
+      ),
+    );
 
     fireEvent.change(screen.getByTestId("agent-dock-input"), {
       target: { value: "Question two" },
@@ -166,19 +175,23 @@ describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
     await act(async () => {
       fireEvent.submit(screen.getByTestId("agent-dock-form"));
     });
-    await screen.findByText("Second advisor answer.");
+    await waitFor(() =>
+      expect(screen.getAllByText("Second advisor answer.").length).toBeGreaterThanOrEqual(
+        2,
+      ),
+    );
 
     const thread = screen.getByTestId("agent-dock-thread");
     expect(thread).toHaveTextContent("Question one");
     expect(thread).toHaveTextContent("Question two");
-    expect(thread).toHaveTextContent("Answer is ready on the canvas.");
-    expect(thread).not.toHaveTextContent("First advisor answer.");
+    expect(thread).toHaveTextContent("First advisor answer.");
+    expect(thread).toHaveTextContent("Second advisor answer.");
     expect(
       screen.getByTestId("intelligence-workspace-panel-answer"),
     ).toHaveTextContent("Second advisor answer.");
   });
 
-  it("keeps Ava answer prose out of the chat rail and on the canvas", async () => {
+  it("renders structured aVa answer prose in the chat rail and on the canvas", async () => {
     const fullProse =
       "Board-grade answer belongs on the Intelligence canvas, not inside the chat rail.";
     const fetchMock = jest.fn().mockResolvedValue({
@@ -236,11 +249,13 @@ describe("SentinelReasoningCards · Ava Intelligence chat shell", () => {
       fireEvent.submit(screen.getByTestId("agent-dock-form"));
     });
 
-    await screen.findByText(fullProse);
+    await waitFor(() =>
+      expect(screen.getAllByText(fullProse).length).toBeGreaterThanOrEqual(2),
+    );
     const thread = screen.getByTestId("agent-dock-thread");
     expect(thread).toHaveTextContent("Question with structured answer");
-    expect(thread).toHaveTextContent("Answer is ready on the canvas.");
-    expect(thread).not.toHaveTextContent(fullProse);
+    expect(thread).toHaveTextContent(fullProse);
+    expect(thread).not.toHaveTextContent("Answer is ready on the canvas.");
     expect(
       screen.getByTestId("intelligence-workspace-panel-answer"),
     ).toHaveTextContent(fullProse);

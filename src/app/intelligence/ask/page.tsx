@@ -11,10 +11,8 @@
 // At INT-1.7 we ship the existing chat preserved so the affordance
 // works.
 
-import Link from 'next/link';
 import { AppShell } from '@/components/shell/AppShell';
 import { SHELL } from '@/lib/shell/shell-tokens';
-import { IntelligenceReasoningModeStrip } from '@/components/intelligence/IntelligenceReasoningModeStrip';
 import { SentinelReasoningCards } from '@/app/(maestro)/intelligence/ask/SentinelReasoningCards';
 import { IntelligenceAskTabCookie } from './IntelligenceAskTabCookie';
 import { getActiveClientRow } from '@/lib/active-client';
@@ -26,13 +24,7 @@ export const metadata = {
     'aVa Intelligence — advisor-style analysis grounded in tenant evidence, corpus patterns, and citations.',
 };
 
-export default async function IntelligenceAskPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ mode?: string }>;
-}) {
-  const params = await searchParams;
-
+export default async function IntelligenceAskPage() {
   // STRESS-P0-002 fix: resolve the active tenant from the authenticated session
   // instead of hardcoding "Apex Retail Group" / "apexretail" in the topbar and
   // in the SentinelReasoningCards initialClient prop. The 2026-05-24 full-
@@ -57,7 +49,7 @@ export default async function IntelligenceAskPage({
       <style>{`
         @media (max-width: 640px) {
           [data-testid="intelligence-ask-page"] {
-            padding: 14px 12px 22px !important;
+            padding: 0 !important;
           }
         }
       `}</style>
@@ -74,66 +66,12 @@ export default async function IntelligenceAskPage({
           data-testid="intelligence-ask-page"
           style={{
             flex: 1,
-            overflowY: 'auto',
+            overflow: 'hidden',
             background: SHELL.PAPER,
-            padding: '24px 48px 32px',
+            padding: 0,
+            minHeight: 0,
           }}
         >
-          {/* Breadcrumb back to J0 */}
-          <nav
-            aria-label="Breadcrumb"
-            style={{
-              fontFamily: SHELL.MONO,
-              fontSize: 11,
-              color: SHELL.INK_MUTED,
-              marginBottom: 16,
-            }}
-          >
-            <Link
-              href="/intelligence"
-              style={{
-                color: SHELL.INK_SOFT,
-                textDecoration: 'none',
-              }}
-            >
-              ← Intelligence
-            </Link>
-            <span style={{ margin: '0 8px' }}>·</span>
-            <span style={{ color: SHELL.INK_MUTED }}>Ask aVa</span>
-          </nav>
-
-          {/* Page header */}
-          <div style={{ marginBottom: 18 }}>
-            <div
-              style={{
-                fontFamily: SHELL.MONO,
-                fontSize: 9,
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
-                color: SHELL.INK_MUTED,
-                marginBottom: 4,
-              }}
-            >
-              aVa Intelligence · advisor
-            </div>
-            <h1
-              style={{
-                fontFamily: SHELL.SERIF,
-                fontSize: 22,
-                fontWeight: 700,
-                color: SHELL.INK,
-                margin: 0,
-                lineHeight: 1.2,
-                letterSpacing: '-0.01em',
-              }}
-            >
-              Ask aVa
-            </h1>
-          </div>
-
-          {/* INT-5 · Reasoning mode strip — frames Ava's answer scope */}
-          <IntelligenceReasoningModeStrip searchParams={params} />
-
           <SentinelReasoningCards
             initialClient={activeClientKey}
             initialClientDisplayName={activeClientDisplayName}

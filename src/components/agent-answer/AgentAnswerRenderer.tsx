@@ -434,11 +434,11 @@ export function AgentAnswerRenderer({ answer }: { answer: AvaAnswerPacket }) {
     (displayAnswer.expertsUsed?.length ?? 0) > 0 ||
     displayAnswer.citations.length > 0;
   return (
-    <section className="agentAnswer" aria-label="Ava answer">
+    <section className="agentAnswer" aria-label="aVa answer">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <header className="aaHeader">
         <div>
-          <div className="aaKicker">Ava · {displayAnswer.surface}</div>
+          <div className="aaKicker">aVa · {displayAnswer.surface}</div>
           <div className="aaMeta">
             <span className="aaPill">{displayAnswer.status}</span>
             <span className="aaPill">
@@ -517,7 +517,7 @@ export function AgentAnswerRenderer({ answer }: { answer: AvaAnswerPacket }) {
 
       {!displayAnswer.directAnswer && !hasStructured && !hasAttribution ? (
         <div className="aaFallback" role="status">
-          Ava did not return a renderable answer.
+          aVa did not return a renderable answer.
         </div>
       ) : null}
     </section>

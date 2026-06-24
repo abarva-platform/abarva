@@ -194,8 +194,9 @@ describe("Ask Intelligence response policy", () => {
     const answer = enforceDecisionGradeAnswer(text);
 
     expect(answer).toContain(
-      "Next move: assign the accountable data owner to validate the missing tenant evidence",
+      "The next move is to assign the accountable data owner to validate the missing tenant evidence",
     );
+    expect(answer).not.toMatch(/^(Read|Evidence|Implication|Next move):/im);
     expect(
       answer
         .split(/\n{2,}/)
@@ -216,10 +217,13 @@ describe("Ask Intelligence response policy", () => {
 
     const answer = enforceDecisionGradeAnswer(text);
 
-    expect(answer).toContain("Read:");
-    expect(answer).toContain("Evidence:");
-    expect(answer).toContain("Implication:");
-    expect(answer).toContain("Next move:");
+    expect(answer).toContain(
+      "I don't have your IT landscape or data platform inventory loaded",
+    );
+    expect(answer).toContain("The supporting evidence is that");
+    expect(answer).toContain("That means");
+    expect(answer).toContain("The next move is to assign");
+    expect(answer).not.toMatch(/^(Read|Evidence|Implication|Next move):/im);
     expect(answer).not.toMatch(/Honest read first:/i);
     expect(
       answer
@@ -236,9 +240,9 @@ describe("Ask Intelligence response policy", () => {
 
     const answer = enforceDecisionGradeAnswer(text);
 
-    expect(answer).toContain("Read:");
-    expect(answer).toContain("Next move:");
-    expect([...answer.matchAll(/^(Read|Next move):/gim)]).toHaveLength(2);
+    expect(answer).toContain("The loaded sources give us two KPI families");
+    expect(answer).toContain("The next move is to assign");
+    expect(answer).not.toMatch(/^(Read|Evidence|Implication|Next move):/im);
   });
 
   it("does not duplicate consultant section labels when the model already supplied them", () => {
@@ -250,8 +254,9 @@ describe("Ask Intelligence response policy", () => {
 
     const answer = enforceDecisionGradeAnswer(text);
 
-    expect(answer).toContain("Read: The loaded evidence");
+    expect(answer).toContain("The loaded evidence");
     expect(answer).not.toMatch(/\bRead:\s*Read:/i);
+    expect(answer).not.toMatch(/^(Read|Evidence|Implication|Next move):/im);
   });
 
   it("preserves markdown tables while adding readable consultant framing", () => {
@@ -267,10 +272,10 @@ describe("Ask Intelligence response policy", () => {
 
     const answer = enforceDecisionGradeAnswer(text);
 
-    expect(answer).toContain("Read:");
     expect(answer).toContain("| Risk | Basis |");
     expect(answer).toContain("| Transition rights | Contract schedule |");
-    expect(answer).toContain("Next move:");
+    expect(answer).toContain("The next move is to validate");
+    expect(answer).not.toMatch(/^(Read|Evidence|Implication|Next move):/im);
   });
 
   it("normalizes live consultant section variants into readable paragraphs", () => {
@@ -282,13 +287,13 @@ describe("Ask Intelligence response policy", () => {
 
     const answer = enforceDecisionGradeAnswer(text);
 
-    expect(answer).toContain("Read:");
-    expect(answer).toContain("Evidence:");
-    expect(answer).toContain("Implication:");
-    expect(answer).toContain("Next move:");
+    expect(answer).toContain("Your loaded D&A estate shows eight data products");
+    expect(answer).toContain("The supporting evidence is that");
+    expect(answer).toContain("That means");
+    expect(answer).toContain("The next move is to have");
     expect(answer).not.toMatch(/Evidence\s+—/i);
     expect(answer).not.toContain("validate the cited evidence");
-    expect([...answer.matchAll(/^(Read|Evidence|Implication|Next move):/gim)]).toHaveLength(4);
+    expect([...answer.matchAll(/^(Read|Evidence|Implication|Next move):/gim)]).toHaveLength(0);
     expect(
       answer
         .split(/\n{2,}/)

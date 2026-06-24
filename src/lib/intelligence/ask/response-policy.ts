@@ -15,13 +15,12 @@ const MARKDOWN_TABLE_RE = /^\s*\|.+\|\s*$/m;
 
 export const CONSULTANT_ANSWER_SHAPE_CONTRACT = `CONSULTANT ANSWER SHAPE
 
-For Home, Intelligence, and Tower, answer like a senior expert consultant, not a transcript. Use this shape unless the user asks for a very short answer:
-- Read: the direct recommendation or judgment in 1-2 sentences.
-- Evidence: the specific tenant facts, corpus pattern, benchmark, system, vendor, program, dollar value, or cited constraint that supports the read.
-- Implication: what this means for the executive decision.
-- Next move: the owner, artifact, gate, Source/Tower/Moves handoff, or evidence to validate.
+For Home, Intelligence, and Tower, answer like a senior expert consultant in a GPT/Claude-style conversation, not a template transcript.
+- Open with the direct recommendation or judgment in 1-2 sentences.
+- Then explain the specific tenant facts, corpus pattern, benchmark, system, vendor, program, dollar value, or cited constraint that supports the view.
+- Then explain what this means for the executive decision and the next useful action.
 
-Keep each paragraph under roughly 55 words. If a table or chart is requested, still give the Read/Evidence/Implication/Next move prose, then emit the table/chart data separately.`;
+Keep each paragraph under roughly 55 words. Do not print visible section labels such as "Read:", "Evidence:", "Implication:", or "Next move:". If a table or chart is requested, give a short natural-language answer, then emit the table/chart data separately.`;
 
 export function isBroadCurrentStateQuestion(query: string): boolean {
   return BROAD_CURRENT_STATE_RE.test(query);
@@ -121,19 +120,23 @@ export function enforceDecisionGradeAnswer(text: string): string {
     ACTION_CUE_RE.test(paragraphDisciplined) &&
     consultantSectionCount(paragraphDisciplined) >= 2
   ) {
-    return paragraphDisciplined;
+    return naturalizeConsultantSections(paragraphDisciplined);
   }
 
   if (ACTION_CUE_RE.test(paragraphDisciplined)) {
-    return ensureReadableConsultantShape(paragraphDisciplined);
+    return naturalizeConsultantSections(
+      ensureReadableConsultantShape(paragraphDisciplined),
+    );
   }
 
   const nextMove = MISSING_EVIDENCE_RE.test(paragraphDisciplined)
     ? "Next move: assign the accountable data owner to validate the missing tenant evidence before approving a number or using it in a board artifact."
     : "Next move: have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves.";
 
-  return ensureReadableConsultantShape(
-    `${paragraphDisciplined.replace(/\s+$/, "")}\n\n${nextMove}`,
+  return naturalizeConsultantSections(
+    ensureReadableConsultantShape(
+      `${paragraphDisciplined.replace(/\s+$/, "")}\n\n${nextMove}`,
+    ),
   );
 }
 
@@ -240,6 +243,32 @@ function ensureReadableConsultantShape(text: string): string {
   if (body) sections.push(body);
   if (nextMove && !/\bNext move:/i.test(body)) sections.push(nextMove);
   return sections.join("\n\n");
+}
+
+function naturalizeConsultantSections(text: string): string {
+  const normalized = normalizeConsultantSectionBoundaries(text);
+  return normalized
+    .split(/\n{2,}/)
+    .map((paragraph) => naturalizeConsultantParagraph(paragraph.trim()))
+    .filter(Boolean)
+    .join("\n\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function naturalizeConsultantParagraph(paragraph: string): string {
+  return paragraph
+    .replace(/^Read:\s*/i, "")
+    .replace(/^Evidence:\s*/i, "The supporting evidence is that ")
+    .replace(/^Implication:\s*/i, "That means ")
+    .replace(/^Next move:\s*/i, "The next move is to ")
+    .replace(/^Recommendation:\s*/i, "")
+    .replace(/^Decision:\s*/i, "")
+    .replace(/^Action:\s*/i, "The next action is to ")
+    .replace(/^Owner:\s*/i, "The owner should be ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\bto\s+(have|assign|ask|open|review|validate|move|decide)\b/gi, "to $1")
+    .trim();
 }
 
 function consultantSectionCount(text: string): number {
