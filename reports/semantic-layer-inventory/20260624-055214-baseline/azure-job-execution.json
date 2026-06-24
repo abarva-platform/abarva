@@ -1,0 +1,54 @@
+{
+  "id": "/subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.App/jobs/job-abarva-private-operator-eus/executions/job-abarva-private-operator-eus-lv84nj6",
+  "name": "job-abarva-private-operator-eus-lv84nj6",
+  "properties": {
+    "endTime": "2026-06-24T05:52:14+00:00",
+    "startTime": "2026-06-24T05:51:51+00:00",
+    "status": "Succeeded",
+    "template": {
+      "containers": [
+        {
+          "args": [
+            "inventory.cjs"
+          ],
+          "command": [
+            "node"
+          ],
+          "env": [
+            {
+              "name": "DATABASE_URL",
+              "secretRef": "cappjob-job-abarva-private-operator-eus"
+            },
+            {
+              "name": "OPENAI_API_KEY",
+              "secretRef": "cappjob-job-abarva-private-operator-eus"
+            },
+            {
+              "name": "NODE_OPTIONS",
+              "value": "--conditions=react-server"
+            },
+            {
+              "name": "OPERATIONAL_EVIDENCE_TENANT",
+              "value": "morganstreet"
+            },
+            {
+              "name": "OPERATIONAL_EVIDENCE_VOLUME_PROFILE",
+              "value": "realistic_pilot"
+            }
+          ],
+          "image": "acrabarvalab001.azurecr.io/abarva/schema-inventory@sha256:60875d79040f256514761fed7e88af64ac1ed7e38fee284cea82be0ca9fbd45f",
+          "imageType": "ContainerImage",
+          "name": "private-operator-idle",
+          "resources": {
+            "cpu": 0.5,
+            "ephemeralStorage": "",
+            "memory": "1Gi"
+          }
+        }
+      ],
+      "initContainers": []
+    }
+  },
+  "resourceGroup": "rg-abarva-controlplane-lab-eastus",
+  "type": "Microsoft.App/jobs/executions"
+}

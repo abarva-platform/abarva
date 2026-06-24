@@ -1,0 +1,1312 @@
+[
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "ai_control_actions",
+    "dimension_key": "control_action",
+    "family_key": "ai_control_tower",
+    "evidence_type": "action",
+    "record_count": "5",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "ai_control_agent_outcomes",
+    "dimension_key": "agent_outcome",
+    "family_key": "ai_control_tower",
+    "evidence_type": "agent_metric",
+    "record_count": "12",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "ai_control_atlas_context_packs",
+    "dimension_key": "enterprise_context_record",
+    "family_key": "ai_control_tower",
+    "evidence_type": "context_pack",
+    "record_count": "1",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "ai_control_benefit_realization",
+    "dimension_key": "benefit_realization",
+    "family_key": "ai_control_tower",
+    "evidence_type": "value_metric",
+    "record_count": "30",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "ai_control_context_facts",
+    "dimension_key": "enterprise_context_fact",
+    "family_key": "ai_control_tower",
+    "evidence_type": "fact",
+    "record_count": "1106",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "ai_control_dora_metrics",
+    "dimension_key": "dora_metric",
+    "family_key": "ai_control_tower",
+    "evidence_type": "delivery_metric",
+    "record_count": "18",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "ai_control_evidence_items",
+    "dimension_key": "control_evidence_item",
+    "family_key": "ai_control_tower",
+    "evidence_type": "evidence_item",
+    "record_count": "80",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "ai_control_initiatives",
+    "dimension_key": "ai_control_initiative",
+    "family_key": "ai_control_tower",
+    "evidence_type": "initiative",
+    "record_count": "30",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "ai_control_persona_productivity",
+    "dimension_key": "persona_productivity",
+    "family_key": "ai_control_tower",
+    "evidence_type": "productivity_metric",
+    "record_count": "18",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "ai_control_refresh_runs",
+    "dimension_key": "ai_control_initiative",
+    "family_key": "ai_control_tower",
+    "evidence_type": "refresh_run",
+    "record_count": "1",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "ai_control_risk_governance",
+    "dimension_key": "risk_governance",
+    "family_key": "ai_control_tower",
+    "evidence_type": "risk_evidence",
+    "record_count": "150",
+    "synthetic_demo_flag": false,
+    "coverage_status": "sufficient"
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "ai_control_sources",
+    "dimension_key": "enterprise_context_source",
+    "family_key": "ai_control_tower",
+    "evidence_type": "source_registry",
+    "record_count": "14",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "ai_control_spend_contracts",
+    "dimension_key": "spend_contract",
+    "family_key": "ai_control_tower",
+    "evidence_type": "financial_evidence",
+    "record_count": "120",
+    "synthetic_demo_flag": false,
+    "coverage_status": "sufficient"
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "ai_control_tool_usage_monthly",
+    "dimension_key": "ai_tool_usage",
+    "family_key": "ai_control_tower",
+    "evidence_type": "usage_metric",
+    "record_count": "12",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "client_private_patterns",
+    "dimension_key": "private_pattern",
+    "family_key": "enterprise_context",
+    "evidence_type": "pattern",
+    "record_count": "9",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "source_type": "tower_cmdb_cis",
+    "dimension_key": "tower_cmdb_ci",
+    "family_key": "legacy_tower",
+    "evidence_type": "configuration_item",
+    "record_count": "4",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "ai_control_actions",
+    "dimension_key": "control_action",
+    "family_key": "ai_control_tower",
+    "evidence_type": "action",
+    "record_count": "10",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "ai_control_agent_outcomes",
+    "dimension_key": "agent_outcome",
+    "family_key": "ai_control_tower",
+    "evidence_type": "agent_metric",
+    "record_count": "14",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "ai_control_atlas_context_packs",
+    "dimension_key": "enterprise_context_record",
+    "family_key": "ai_control_tower",
+    "evidence_type": "context_pack",
+    "record_count": "1",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "ai_control_benefit_realization",
+    "dimension_key": "benefit_realization",
+    "family_key": "ai_control_tower",
+    "evidence_type": "value_metric",
+    "record_count": "14",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "ai_control_context_facts",
+    "dimension_key": "enterprise_context_fact",
+    "family_key": "ai_control_tower",
+    "evidence_type": "fact",
+    "record_count": "356",
+    "synthetic_demo_flag": false,
+    "coverage_status": "sufficient"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "ai_control_dora_metrics",
+    "dimension_key": "dora_metric",
+    "family_key": "ai_control_tower",
+    "evidence_type": "delivery_metric",
+    "record_count": "10",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "ai_control_evidence_items",
+    "dimension_key": "control_evidence_item",
+    "family_key": "ai_control_tower",
+    "evidence_type": "evidence_item",
+    "record_count": "14",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "ai_control_initiatives",
+    "dimension_key": "ai_control_initiative",
+    "family_key": "ai_control_tower",
+    "evidence_type": "initiative",
+    "record_count": "14",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "ai_control_persona_productivity",
+    "dimension_key": "persona_productivity",
+    "family_key": "ai_control_tower",
+    "evidence_type": "productivity_metric",
+    "record_count": "12",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "ai_control_refresh_runs",
+    "dimension_key": "ai_control_initiative",
+    "family_key": "ai_control_tower",
+    "evidence_type": "refresh_run",
+    "record_count": "1",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "ai_control_risk_governance",
+    "dimension_key": "risk_governance",
+    "family_key": "ai_control_tower",
+    "evidence_type": "risk_evidence",
+    "record_count": "14",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "ai_control_sources",
+    "dimension_key": "enterprise_context_source",
+    "family_key": "ai_control_tower",
+    "evidence_type": "source_registry",
+    "record_count": "14",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "ai_control_spend_contracts",
+    "dimension_key": "spend_contract",
+    "family_key": "ai_control_tower",
+    "evidence_type": "financial_evidence",
+    "record_count": "14",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "ai_control_tool_usage_monthly",
+    "dimension_key": "ai_tool_usage",
+    "family_key": "ai_control_tower",
+    "evidence_type": "usage_metric",
+    "record_count": "44",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "client_private_patterns",
+    "dimension_key": "private_pattern",
+    "family_key": "enterprise_context",
+    "evidence_type": "pattern",
+    "record_count": "6",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "enterprise_context_chunks",
+    "dimension_key": "enterprise_context_chunk",
+    "family_key": "enterprise_context",
+    "evidence_type": "search_chunk",
+    "record_count": "1656",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "enterprise_context_facts",
+    "dimension_key": "enterprise_context_fact",
+    "family_key": "enterprise_context",
+    "evidence_type": "fact",
+    "record_count": "17548",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "enterprise_context_records",
+    "dimension_key": "enterprise_context_record",
+    "family_key": "enterprise_context",
+    "evidence_type": "normalized_record",
+    "record_count": "1644",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "enterprise_context_relationships",
+    "dimension_key": "enterprise_context_relationship",
+    "family_key": "enterprise_context",
+    "evidence_type": "relationship",
+    "record_count": "1000",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "enterprise_context_source_files",
+    "dimension_key": "enterprise_context_file",
+    "family_key": "enterprise_context",
+    "evidence_type": "file_lineage",
+    "record_count": "31",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "apex-retail",
+    "source_type": "enterprise_context_sources",
+    "dimension_key": "enterprise_context_source",
+    "family_key": "enterprise_context",
+    "evidence_type": "source_registry",
+    "record_count": "1",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "ai_control_actions",
+    "dimension_key": "control_action",
+    "family_key": "ai_control_tower",
+    "evidence_type": "action",
+    "record_count": "24",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "ai_control_agent_outcomes",
+    "dimension_key": "agent_outcome",
+    "family_key": "ai_control_tower",
+    "evidence_type": "agent_metric",
+    "record_count": "42",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "ai_control_atlas_context_packs",
+    "dimension_key": "enterprise_context_record",
+    "family_key": "ai_control_tower",
+    "evidence_type": "context_pack",
+    "record_count": "1",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "ai_control_benefit_realization",
+    "dimension_key": "benefit_realization",
+    "family_key": "ai_control_tower",
+    "evidence_type": "value_metric",
+    "record_count": "126",
+    "synthetic_demo_flag": false,
+    "coverage_status": "sufficient"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "ai_control_context_facts",
+    "dimension_key": "enterprise_context_fact",
+    "family_key": "ai_control_tower",
+    "evidence_type": "fact",
+    "record_count": "1056",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "ai_control_dora_metrics",
+    "dimension_key": "dora_metric",
+    "family_key": "ai_control_tower",
+    "evidence_type": "delivery_metric",
+    "record_count": "12",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "ai_control_evidence_items",
+    "dimension_key": "control_evidence_item",
+    "family_key": "ai_control_tower",
+    "evidence_type": "evidence_item",
+    "record_count": "42",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "ai_control_initiatives",
+    "dimension_key": "ai_control_initiative",
+    "family_key": "ai_control_tower",
+    "evidence_type": "initiative",
+    "record_count": "42",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "ai_control_persona_productivity",
+    "dimension_key": "persona_productivity",
+    "family_key": "ai_control_tower",
+    "evidence_type": "productivity_metric",
+    "record_count": "16",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "ai_control_refresh_runs",
+    "dimension_key": "ai_control_initiative",
+    "family_key": "ai_control_tower",
+    "evidence_type": "refresh_run",
+    "record_count": "1",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "ai_control_risk_governance",
+    "dimension_key": "risk_governance",
+    "family_key": "ai_control_tower",
+    "evidence_type": "risk_evidence",
+    "record_count": "42",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "ai_control_sources",
+    "dimension_key": "enterprise_context_source",
+    "family_key": "ai_control_tower",
+    "evidence_type": "source_registry",
+    "record_count": "14",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "ai_control_spend_contracts",
+    "dimension_key": "spend_contract",
+    "family_key": "ai_control_tower",
+    "evidence_type": "financial_evidence",
+    "record_count": "42",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "ai_control_tool_usage_monthly",
+    "dimension_key": "ai_tool_usage",
+    "family_key": "ai_control_tower",
+    "evidence_type": "usage_metric",
+    "record_count": "35",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "client_private_patterns",
+    "dimension_key": "private_pattern",
+    "family_key": "enterprise_context",
+    "evidence_type": "pattern",
+    "record_count": "6",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "enterprise_context_chunks",
+    "dimension_key": "enterprise_context_chunk",
+    "family_key": "enterprise_context",
+    "evidence_type": "search_chunk",
+    "record_count": "2227",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "enterprise_context_facts",
+    "dimension_key": "enterprise_context_fact",
+    "family_key": "enterprise_context",
+    "evidence_type": "fact",
+    "record_count": "24474",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "enterprise_context_records",
+    "dimension_key": "enterprise_context_record",
+    "family_key": "enterprise_context",
+    "evidence_type": "normalized_record",
+    "record_count": "2227",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "enterprise_context_relationships",
+    "dimension_key": "enterprise_context_relationship",
+    "family_key": "enterprise_context",
+    "evidence_type": "relationship",
+    "record_count": "1800",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "enterprise_context_source_files",
+    "dimension_key": "enterprise_context_file",
+    "family_key": "enterprise_context",
+    "evidence_type": "file_lineage",
+    "record_count": "31",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "first-capital",
+    "source_type": "enterprise_context_sources",
+    "dimension_key": "enterprise_context_source",
+    "family_key": "enterprise_context",
+    "evidence_type": "source_registry",
+    "record_count": "1",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore",
+    "source_type": "enterprise_context_chunks",
+    "dimension_key": "enterprise_context_chunk",
+    "family_key": "enterprise_context",
+    "evidence_type": "search_chunk",
+    "record_count": "1348",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "lakeshore",
+    "source_type": "enterprise_context_facts",
+    "dimension_key": "enterprise_context_fact",
+    "family_key": "enterprise_context",
+    "evidence_type": "fact",
+    "record_count": "14619",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "lakeshore",
+    "source_type": "enterprise_context_records",
+    "dimension_key": "enterprise_context_record",
+    "family_key": "enterprise_context",
+    "evidence_type": "normalized_record",
+    "record_count": "1348",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "lakeshore",
+    "source_type": "enterprise_context_relationships",
+    "dimension_key": "enterprise_context_relationship",
+    "family_key": "enterprise_context",
+    "evidence_type": "relationship",
+    "record_count": "850",
+    "synthetic_demo_flag": false,
+    "coverage_status": "sufficient"
+  },
+  {
+    "tenant_key": "lakeshore",
+    "source_type": "enterprise_context_source_files",
+    "dimension_key": "enterprise_context_file",
+    "family_key": "enterprise_context",
+    "evidence_type": "file_lineage",
+    "record_count": "30",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore",
+    "source_type": "enterprise_context_sources",
+    "dimension_key": "enterprise_context_source",
+    "family_key": "enterprise_context",
+    "evidence_type": "source_registry",
+    "record_count": "1",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "ai_control_actions",
+    "dimension_key": "control_action",
+    "family_key": "ai_control_tower",
+    "evidence_type": "action",
+    "record_count": "10",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "ai_control_agent_outcomes",
+    "dimension_key": "agent_outcome",
+    "family_key": "ai_control_tower",
+    "evidence_type": "agent_metric",
+    "record_count": "10",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "ai_control_atlas_context_packs",
+    "dimension_key": "enterprise_context_record",
+    "family_key": "ai_control_tower",
+    "evidence_type": "context_pack",
+    "record_count": "1",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "ai_control_benefit_realization",
+    "dimension_key": "benefit_realization",
+    "family_key": "ai_control_tower",
+    "evidence_type": "value_metric",
+    "record_count": "10",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "ai_control_context_facts",
+    "dimension_key": "enterprise_context_fact",
+    "family_key": "ai_control_tower",
+    "evidence_type": "fact",
+    "record_count": "256",
+    "synthetic_demo_flag": false,
+    "coverage_status": "sufficient"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "ai_control_dora_metrics",
+    "dimension_key": "dora_metric",
+    "family_key": "ai_control_tower",
+    "evidence_type": "delivery_metric",
+    "record_count": "8",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "ai_control_evidence_items",
+    "dimension_key": "control_evidence_item",
+    "family_key": "ai_control_tower",
+    "evidence_type": "evidence_item",
+    "record_count": "10",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "ai_control_initiatives",
+    "dimension_key": "ai_control_initiative",
+    "family_key": "ai_control_tower",
+    "evidence_type": "initiative",
+    "record_count": "10",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "ai_control_persona_productivity",
+    "dimension_key": "persona_productivity",
+    "family_key": "ai_control_tower",
+    "evidence_type": "productivity_metric",
+    "record_count": "10",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "ai_control_refresh_runs",
+    "dimension_key": "ai_control_initiative",
+    "family_key": "ai_control_tower",
+    "evidence_type": "refresh_run",
+    "record_count": "1",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "ai_control_risk_governance",
+    "dimension_key": "risk_governance",
+    "family_key": "ai_control_tower",
+    "evidence_type": "risk_evidence",
+    "record_count": "10",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "ai_control_sources",
+    "dimension_key": "enterprise_context_source",
+    "family_key": "ai_control_tower",
+    "evidence_type": "source_registry",
+    "record_count": "14",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "ai_control_spend_contracts",
+    "dimension_key": "spend_contract",
+    "family_key": "ai_control_tower",
+    "evidence_type": "financial_evidence",
+    "record_count": "10",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "ai_control_tool_usage_monthly",
+    "dimension_key": "ai_tool_usage",
+    "family_key": "ai_control_tower",
+    "evidence_type": "usage_metric",
+    "record_count": "40",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "client_private_patterns",
+    "dimension_key": "private_pattern",
+    "family_key": "enterprise_context",
+    "evidence_type": "pattern",
+    "record_count": "5",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "enterprise_context_chunks",
+    "dimension_key": "enterprise_context_chunk",
+    "family_key": "enterprise_context",
+    "evidence_type": "search_chunk",
+    "record_count": "1032",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "enterprise_context_facts",
+    "dimension_key": "enterprise_context_fact",
+    "family_key": "enterprise_context",
+    "evidence_type": "fact",
+    "record_count": "11781",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "enterprise_context_records",
+    "dimension_key": "enterprise_context_record",
+    "family_key": "enterprise_context",
+    "evidence_type": "normalized_record",
+    "record_count": "1032",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "enterprise_context_relationships",
+    "dimension_key": "enterprise_context_relationship",
+    "family_key": "enterprise_context",
+    "evidence_type": "relationship",
+    "record_count": "382",
+    "synthetic_demo_flag": false,
+    "coverage_status": "sufficient"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "enterprise_context_source_files",
+    "dimension_key": "enterprise_context_file",
+    "family_key": "enterprise_context",
+    "evidence_type": "file_lineage",
+    "record_count": "24",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "source_type": "enterprise_context_sources",
+    "dimension_key": "enterprise_context_source",
+    "family_key": "enterprise_context",
+    "evidence_type": "source_registry",
+    "record_count": "24",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "ai_control_actions",
+    "dimension_key": "control_action",
+    "family_key": "ai_control_tower",
+    "evidence_type": "action",
+    "record_count": "10",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "ai_control_agent_outcomes",
+    "dimension_key": "agent_outcome",
+    "family_key": "ai_control_tower",
+    "evidence_type": "agent_metric",
+    "record_count": "14",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "ai_control_atlas_context_packs",
+    "dimension_key": "enterprise_context_record",
+    "family_key": "ai_control_tower",
+    "evidence_type": "context_pack",
+    "record_count": "1",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "ai_control_benefit_realization",
+    "dimension_key": "benefit_realization",
+    "family_key": "ai_control_tower",
+    "evidence_type": "value_metric",
+    "record_count": "14",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "ai_control_context_facts",
+    "dimension_key": "enterprise_context_fact",
+    "family_key": "ai_control_tower",
+    "evidence_type": "fact",
+    "record_count": "356",
+    "synthetic_demo_flag": false,
+    "coverage_status": "sufficient"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "ai_control_dora_metrics",
+    "dimension_key": "dora_metric",
+    "family_key": "ai_control_tower",
+    "evidence_type": "delivery_metric",
+    "record_count": "12",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "ai_control_evidence_items",
+    "dimension_key": "control_evidence_item",
+    "family_key": "ai_control_tower",
+    "evidence_type": "evidence_item",
+    "record_count": "14",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "ai_control_initiatives",
+    "dimension_key": "ai_control_initiative",
+    "family_key": "ai_control_tower",
+    "evidence_type": "initiative",
+    "record_count": "14",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "ai_control_persona_productivity",
+    "dimension_key": "persona_productivity",
+    "family_key": "ai_control_tower",
+    "evidence_type": "productivity_metric",
+    "record_count": "14",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "ai_control_refresh_runs",
+    "dimension_key": "ai_control_initiative",
+    "family_key": "ai_control_tower",
+    "evidence_type": "refresh_run",
+    "record_count": "1",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "ai_control_risk_governance",
+    "dimension_key": "risk_governance",
+    "family_key": "ai_control_tower",
+    "evidence_type": "risk_evidence",
+    "record_count": "14",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "ai_control_sources",
+    "dimension_key": "enterprise_context_source",
+    "family_key": "ai_control_tower",
+    "evidence_type": "source_registry",
+    "record_count": "14",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "ai_control_spend_contracts",
+    "dimension_key": "spend_contract",
+    "family_key": "ai_control_tower",
+    "evidence_type": "financial_evidence",
+    "record_count": "14",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "ai_control_tool_usage_monthly",
+    "dimension_key": "ai_tool_usage",
+    "family_key": "ai_control_tower",
+    "evidence_type": "usage_metric",
+    "record_count": "40",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "client_private_patterns",
+    "dimension_key": "private_pattern",
+    "family_key": "enterprise_context",
+    "evidence_type": "pattern",
+    "record_count": "6",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "enterprise_context_chunks",
+    "dimension_key": "enterprise_context_chunk",
+    "family_key": "enterprise_context",
+    "evidence_type": "search_chunk",
+    "record_count": "1538",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "enterprise_context_facts",
+    "dimension_key": "enterprise_context_fact",
+    "family_key": "enterprise_context",
+    "evidence_type": "fact",
+    "record_count": "16728",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "enterprise_context_records",
+    "dimension_key": "enterprise_context_record",
+    "family_key": "enterprise_context",
+    "evidence_type": "normalized_record",
+    "record_count": "1538",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "enterprise_context_relationships",
+    "dimension_key": "enterprise_context_relationship",
+    "family_key": "enterprise_context",
+    "evidence_type": "relationship",
+    "record_count": "1000",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "enterprise_context_source_files",
+    "dimension_key": "enterprise_context_file",
+    "family_key": "enterprise_context",
+    "evidence_type": "file_lineage",
+    "record_count": "30",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "meridian-health",
+    "source_type": "enterprise_context_sources",
+    "dimension_key": "enterprise_context_source",
+    "family_key": "enterprise_context",
+    "evidence_type": "source_registry",
+    "record_count": "1",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "morganstreet",
+    "source_type": "move_evidence_slot_coverage",
+    "dimension_key": "move_evidence_slot",
+    "family_key": "moves",
+    "evidence_type": "slot_coverage",
+    "record_count": "4",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "morganstreet",
+    "source_type": "operational_automation_opportunities",
+    "dimension_key": "automation_opportunity",
+    "family_key": "operational_evidence",
+    "evidence_type": "opportunity",
+    "record_count": "60",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "morganstreet",
+    "source_type": "operational_events",
+    "dimension_key": "operational_event",
+    "family_key": "operational_evidence",
+    "evidence_type": "event_summary",
+    "record_count": "720",
+    "synthetic_demo_flag": true,
+    "coverage_status": "sufficient"
+  },
+  {
+    "tenant_key": "morganstreet",
+    "source_type": "operational_evidence_file_manifests",
+    "dimension_key": "enterprise_context_file",
+    "family_key": "operational_evidence",
+    "evidence_type": "file_manifest",
+    "record_count": "8",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "morganstreet",
+    "source_type": "operational_evidence_insights",
+    "dimension_key": "operational_insight",
+    "family_key": "operational_evidence",
+    "evidence_type": "insight",
+    "record_count": "60",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "morganstreet",
+    "source_type": "operational_evidence_load_runs",
+    "dimension_key": "enterprise_context_file",
+    "family_key": "operational_evidence",
+    "evidence_type": "load_run",
+    "record_count": "1",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "morganstreet",
+    "source_type": "operational_evidence_relationships",
+    "dimension_key": "enterprise_context_relationship",
+    "family_key": "operational_evidence",
+    "evidence_type": "relationship",
+    "record_count": "6740",
+    "synthetic_demo_flag": true,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "morganstreet",
+    "source_type": "operational_evidence_sources",
+    "dimension_key": "enterprise_context_source",
+    "family_key": "operational_evidence",
+    "evidence_type": "source_registry",
+    "record_count": "1",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "morganstreet",
+    "source_type": "operational_human_agent_responsibilities",
+    "dimension_key": "human_agent_responsibility",
+    "family_key": "operational_evidence",
+    "evidence_type": "responsibility",
+    "record_count": "60",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "morganstreet",
+    "source_type": "operational_process_observations",
+    "dimension_key": "process_observation",
+    "family_key": "operational_evidence",
+    "evidence_type": "process_observation",
+    "record_count": "60",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "morganstreet",
+    "source_type": "operational_semantic_snapshots",
+    "dimension_key": "enterprise_context_record",
+    "family_key": "operational_evidence",
+    "evidence_type": "semantic_snapshot",
+    "record_count": "3",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "morganstreet",
+    "source_type": "operational_system_service_maps",
+    "dimension_key": "system_service_map",
+    "family_key": "operational_evidence",
+    "evidence_type": "application_service_map",
+    "record_count": "150",
+    "synthetic_demo_flag": true,
+    "coverage_status": "sufficient"
+  },
+  {
+    "tenant_key": "morganstreet",
+    "source_type": "operational_value_estimates",
+    "dimension_key": "value_estimate",
+    "family_key": "operational_evidence",
+    "evidence_type": "value_estimate",
+    "record_count": "60",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "morganstreet",
+    "source_type": "operational_work_items",
+    "dimension_key": "operational_work_item",
+    "family_key": "operational_evidence",
+    "evidence_type": "work_item",
+    "record_count": "6200",
+    "synthetic_demo_flag": true,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "morganstreet-other",
+    "source_type": "operational_evidence_sources",
+    "dimension_key": "enterprise_context_source",
+    "family_key": "operational_evidence",
+    "evidence_type": "source_registry",
+    "record_count": "1",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "northstar-clinical",
+    "source_type": "enterprise_context_chunks",
+    "dimension_key": "enterprise_context_chunk",
+    "family_key": "enterprise_context",
+    "evidence_type": "search_chunk",
+    "record_count": "878",
+    "synthetic_demo_flag": false,
+    "coverage_status": "sufficient"
+  },
+  {
+    "tenant_key": "northstar-clinical",
+    "source_type": "enterprise_context_records",
+    "dimension_key": "enterprise_context_record",
+    "family_key": "enterprise_context",
+    "evidence_type": "normalized_record",
+    "record_count": "55",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "skyharbor",
+    "source_type": "program_evidence_items",
+    "dimension_key": "program_evidence_item",
+    "family_key": "moves",
+    "evidence_type": "evidence_item",
+    "record_count": "17",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "source_type": "enterprise_context_chunks",
+    "dimension_key": "enterprise_context_chunk",
+    "family_key": "enterprise_context",
+    "evidence_type": "search_chunk",
+    "record_count": "6094",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "source_type": "enterprise_context_facts",
+    "dimension_key": "enterprise_context_fact",
+    "family_key": "enterprise_context",
+    "evidence_type": "fact",
+    "record_count": "55956",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "source_type": "enterprise_context_records",
+    "dimension_key": "enterprise_context_record",
+    "family_key": "enterprise_context",
+    "evidence_type": "normalized_record",
+    "record_count": "6094",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "source_type": "enterprise_context_relationships",
+    "dimension_key": "enterprise_context_relationship",
+    "family_key": "enterprise_context",
+    "evidence_type": "relationship",
+    "record_count": "5200",
+    "synthetic_demo_flag": false,
+    "coverage_status": "strong"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "source_type": "enterprise_context_source_files",
+    "dimension_key": "enterprise_context_file",
+    "family_key": "enterprise_context",
+    "evidence_type": "file_lineage",
+    "record_count": "35",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "source_type": "enterprise_context_sources",
+    "dimension_key": "enterprise_context_source",
+    "family_key": "enterprise_context",
+    "evidence_type": "source_registry",
+    "record_count": "1",
+    "synthetic_demo_flag": true,
+    "coverage_status": "partial"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "source_type": "program_evidence_items",
+    "dimension_key": "program_evidence_item",
+    "family_key": "moves",
+    "evidence_type": "evidence_item",
+    "record_count": "17",
+    "synthetic_demo_flag": false,
+    "coverage_status": "partial"
+  }
+]

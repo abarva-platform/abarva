@@ -1,49 +1,27 @@
-import { NextRequest } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
-import { askIntelligence } from "@/lib/intelligence/ask";
-import { inferClientKeyFromEmail } from "@/lib/client-config";
-import {
-  classifySentinelIntent,
-  runSentinelReasoning,
-} from "@/lib/agents/sentinel-reasoning";
-import type { SentinelCitation } from "@/lib/agents/sentinel-reasoning";
-import { getCurrentPerson } from "@/lib/auth/maestro";
-import { assembleUserContextBlock } from "@/lib/agent/prompts/_shared/user-context";
-import type { AskSource, AskSurfaceContext } from "@/lib/intelligence/ask";
-import {
-  buildSentinelTrace,
-  emitAgentContextTraceAsync,
-  hashModelInput,
-  type RawAskSource,
-} from "@/lib/agent-trace";
-import { randomUUID } from "node:crypto";
-import { validateClaimsAndCitations } from "@/lib/agent-claims";
+import { NextRequest } from 'next/server';
+import { currentUser } from '@clerk/nextjs/server';
+import { askIntelligence } from '@/lib/intelligence/ask';
+import { classifySentinelIntent, runSentinelReasoning } from '@/lib/agents/sentinel-reasoning';
+import { getCurrentPerson } from '@/lib/auth/maestro';
+import { assembleUserContextBlock } from '@/lib/agent/prompts/_shared/user-context';
+import type { AskSurfaceContext } from '@/lib/intelligence/ask';
 import {
   appendAskSessionTurn,
   normalizeAskTabId,
   prepareAskSessionMemory,
-} from "@/lib/intelligence/ask/session-memory";
-import { resolveTenant } from "@/lib/tenant/resolveTenant";
-import type { CanonicalTenant } from "@/lib/tenant/CanonicalTenant";
-import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
-import { routeQuestion } from "@/lib/intelligence/answer/router";
-import { expertIndustryForClientKey } from "@/lib/intelligence/answer/expert-grounding";
+} from '@/lib/intelligence/ask/session-memory';
+import { resolveTenant } from '@/lib/tenant/resolveTenant';
+import type { CanonicalTenant } from '@/lib/tenant/CanonicalTenant';
+import { recordSynthesisEvent } from '@/lib/reasoning/synthesis-telemetry';
 import {
-  buildStructuredExhibits,
-  hasRenderableStructuredExhibits,
-} from "@/lib/intelligence/answer/structured-exhibits";
-import type { AgentAnswer } from "@/lib/intelligence/answer/agent-answer";
-import {
-  buildHomeKnowAgentAnswer,
-  homeKnowResponseToAgentAnswer,
-  shouldUseHomeKnowAgentAnswer,
-} from "@/lib/home/know/home-know-agent-answer";
-import { appClientKeyForTenant, tenantAliasesFor } from "@/lib/tenant/aliases";
-import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
-import "@/lib/reasoning/telemetry-init";
+  answerEnterpriseSemanticQuestionFromAzure,
+  shouldUseEnterpriseSemanticLayer,
+  type SemanticRuntimeAnswer,
+} from '@/lib/enterprise-context/semantic-answer-runtime';
+import '@/lib/reasoning/telemetry-init';
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {
@@ -59,20 +37,18 @@ interface AskPayload {
   requestedClient: string | null;
   surfaceContext: AskSurfaceContext | null;
   tabId: string | null;
-  /** Caller surface renders Markdown — allow light formatting (tables/bold). Default false. */
-  richText: boolean;
 }
 
 async function handleAsk(payload: AskPayload) {
-  const { query, requestedClient, surfaceContext, richText } = payload;
+  const { query, requestedClient, surfaceContext } = payload;
   if (!query.trim()) {
-    return new Response(JSON.stringify({ error: "q required" }), {
+    return new Response(JSON.stringify({ error: 'q required' }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
-  let userContextBlock = "";
+  let userContextBlock = '';
   let tenantId: string | null = null;
   let userId: string | null = null;
   let tenantInventoryKey: string | null = null;
@@ -84,11 +60,10 @@ async function handleAsk(payload: AskPayload) {
     surfaceContext?.activeClient ??
     null;
   let sentinelClientId: string =
-    requestedOrSurfaceClient ?? "unknown-active-tenant";
+    requestedOrSurfaceClient ?? 'unknown-active-tenant';
   let sessionUserId: string | null = null;
   let activePersonGraphNodeId: string | null = null;
   let activePersonDisplayName: string | null = null;
-  let signedInTenantAliases: string[] = [];
   try {
     const [person, clerkUser, client] = await Promise.all([
       getCurrentPerson(),
@@ -103,16 +78,10 @@ async function handleAsk(payload: AskPayload) {
     tenant = client;
     sessionUserId = clerkUser?.id ?? null;
     const resolvedClient = client;
-    signedInTenantAliases = aliasesForClerkTenant(clerkUser);
     tenantInventoryKey = resolvedClient?.canonicalKey ?? null;
     tenantClientKey = resolvedClient?.appClientKey ?? null;
     tenantId = resolvedClient?.clientId ?? null;
-    sentinelClientId =
-      resolvedClient?.clientId ??
-      tenantInventoryKey ??
-      tenantClientKey ??
-      requestedOrSurfaceClient ??
-      "unknown-active-tenant";
+    sentinelClientId = resolvedClient?.clientId ?? tenantInventoryKey ?? tenantClientKey ?? requestedOrSurfaceClient ?? 'unknown-active-tenant';
     if (person) {
       userId = person.id;
       activePersonGraphNodeId = person.graph_node_id;
@@ -125,160 +94,85 @@ async function handleAsk(payload: AskPayload) {
     }
     userId = sessionUserId ?? userId;
   } catch (err) {
-    console.warn("[ask.user-context]", err);
+    console.warn('[ask.user-context]', err);
   }
 
   const memory = await prepareAskSessionMemory({
     tenantId,
     userId,
-    tabId:
-      tenantId && userId
-        ? normalizeAskTabId(payload.tabId, userId, tenantId)
-        : payload.tabId,
+    tabId: tenantId && userId ? normalizeAskTabId(payload.tabId, userId, tenantId) : payload.tabId,
     query,
   }).catch((err) => {
-    console.warn("[ask.session-memory.prepare]", err);
+    console.warn('[ask.session-memory.prepare]', err);
     return null;
   });
   await appendAskSessionTurn({
     sessionId: memory?.sessionId,
     tenantId,
     userId,
-    role: "user",
+    role: 'user',
     content: query,
     metadata: {
       client: requestedOrSurfaceClient,
       tabId: memory?.tabId ?? payload.tabId,
       surfaceContext,
     },
-  }).catch((err) => console.warn("[ask.session-memory.user-turn]", err));
+  }).catch((err) => console.warn('[ask.session-memory.user-turn]', err));
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
       const startedAt = Date.now();
-      let assistantText = "";
+      let assistantText = '';
       let classificationForMemory: unknown = null;
       let citationCount = 0;
       let patternId: string | null = null;
       let sawStreamError = false;
-      // Agent-trace capture (Sentinel intelligence path).
-      let traceSources: RawAskSource[] = [];
-      let traceModelInputHash: string | undefined;
       try {
         if (memory?.sessionId) {
-          controller.enqueue(
-            encoder.encode(
-              JSON.stringify({
-                type: "session",
-                sessionId: memory.sessionId,
-                tabId: memory.tabId,
-                priorTurnCount: memory.priorTurnCount,
-              }) + "\n",
-            ),
-          );
+          controller.enqueue(encoder.encode(JSON.stringify({
+            type: 'session',
+            sessionId: memory.sessionId,
+            tabId: memory.tabId,
+            priorTurnCount: memory.priorTurnCount,
+          }) + '\n'));
         }
-        if (shouldUseHomeKnowAgentAnswer({ query, surfaceContext })) {
-          const foreignTenantAliases =
-            signedInTenantAliases.length > 0
-              ? signedInTenantAliases
-              : [tenantInventoryKey, tenantClientKey].filter(Boolean);
-          if (mentionsForeignTenant(query, foreignTenantAliases)) {
-            const answer = buildHomeKnowTenantFenceAnswer({
-              activeTenantDisplayName:
-                tenant?.displayName ??
-                surfaceContext?.activeClient ??
-                requestedOrSurfaceClient ??
-                "the signed-in tenant",
+        const semanticTenantKey = tenant?.canonicalKey ?? tenantInventoryKey ?? tenantClientKey ?? requestedOrSurfaceClient;
+        if (semanticTenantKey && shouldUseEnterpriseSemanticLayer(query)) {
+          try {
+            const semanticAnswer = await answerEnterpriseSemanticQuestionFromAzure({
+              tenantKey: semanticTenantKey,
+              question: query,
+              module: 'intelligence',
+              userId,
             });
-            assistantText = answer.prose;
-            controller.enqueue(
-              encoder.encode(
-                JSON.stringify({
-                  type: "agent-answer",
-                  answer,
-                }) + "\n",
-              ),
-            );
+            const semanticText = formatSemanticAnswerForStream(semanticAnswer);
+            assistantText += semanticText;
+            citationCount = semanticAnswer.citations.length;
+            controller.enqueue(encoder.encode(JSON.stringify({
+              type: 'classified',
+              classification: {
+                intent: `enterprise_semantic:${semanticAnswer.intent}`,
+                confidence: semanticAnswer.confidence === 'high' ? 0.9 : semanticAnswer.confidence === 'medium' ? 0.7 : 0.45,
+                reason: 'Answered from the Enterprise Semantic Question Layer.',
+              },
+            }) + '\n'));
+            controller.enqueue(encoder.encode(JSON.stringify({ type: 'delta', text: semanticText }) + '\n'));
             const event = recordSentinelTelemetry({
               startedAt,
               tenantId,
-              instanceId:
-                memory?.sessionId ??
-                memory?.tabId ??
-                requestedOrSurfaceClient ??
-                "home-know-ask",
-              patternId: "home-know-fence",
-              citationCount: 0,
+              instanceId: memory?.sessionId ?? memory?.tabId ?? requestedOrSurfaceClient ?? 'sentinel-ask',
+              patternId: `enterprise-semantic:${semanticAnswer.intent}`,
+              citationCount,
             });
-            controller.enqueue(
-              encoder.encode(
-                JSON.stringify({
-                  type: "done",
-                  telemetryEventId: event.id,
-                }) + "\n",
-              ),
-            );
+            controller.enqueue(encoder.encode(JSON.stringify({
+              type: 'done',
+              telemetryEventId: event.id,
+            }) + '\n'));
             return;
-          }
-          const homeTenantKey =
-            tenantInventoryKey ??
-            tenantClientKey ??
-            requestedOrSurfaceClient ??
-            null;
-          let response: HomeKnowResponse;
-          let answer: AgentAnswer;
-          try {
-            const built = await buildHomeKnowAgentAnswer({
-              question: query,
-              tenantKey: homeTenantKey,
-              client: tenantClientKey ?? requestedOrSurfaceClient,
-            });
-            response = built.response;
-            answer = built.answer;
           } catch (err) {
-            console.warn("[home-know.blank-guard]", err);
-            response = buildHomeKnowRouteFallbackResponse({
-              tenantKey: homeTenantKey ?? tenantClientKey ?? requestedOrSurfaceClient ?? "unknown",
-              question: query,
-            });
-            answer = homeKnowResponseToAgentAnswer(response);
+            console.warn('[ask.enterprise-semantic]', err);
           }
-          classificationForMemory = {
-            mode: "home-know",
-            intent: response.intent,
-            answerStatus: response.answerStatus,
-          };
-          assistantText = answer.prose;
-          citationCount = answer.citations.length;
-          controller.enqueue(
-            encoder.encode(
-              JSON.stringify({
-                type: "agent-answer",
-                answer,
-              }) + "\n",
-            ),
-          );
-          const event = recordSentinelTelemetry({
-            startedAt,
-            tenantId,
-            instanceId:
-              memory?.sessionId ??
-              memory?.tabId ??
-              requestedOrSurfaceClient ??
-              "home-know-ask",
-            patternId: "home-know",
-            citationCount,
-          });
-          controller.enqueue(
-            encoder.encode(
-              JSON.stringify({
-                type: "done",
-                telemetryEventId: event.id,
-              }) + "\n",
-            ),
-          );
-          return;
         }
         const sentinelIntent = await classifySentinelIntent({
           query,
@@ -293,22 +187,17 @@ async function handleAsk(payload: AskPayload) {
           matchedPatternSlugs: sentinelIntent.matchedPatternSlugs,
         };
         patternId = sentinelIntent.matchedPatternSlugs[0] ?? null;
-        if (sentinelIntent.intent === "it_productivity") {
-          const sentinelCitations: SentinelCitation[] = [];
-          controller.enqueue(
-            encoder.encode(
-              JSON.stringify({
-                type: "classified",
-                classification: {
-                  intent: "it_productivity",
-                  entities: sentinelIntent.entities,
-                  confidence: sentinelIntent.confidence,
-                  matchedPatternSlugs: sentinelIntent.matchedPatternSlugs,
-                  reason: sentinelIntent.reason,
-                },
-              }) + "\n",
-            ),
-          );
+        if (sentinelIntent.intent === 'it_productivity') {
+          controller.enqueue(encoder.encode(JSON.stringify({
+            type: 'classified',
+            classification: {
+              intent: 'it_productivity',
+              entities: sentinelIntent.entities,
+              confidence: sentinelIntent.confidence,
+              matchedPatternSlugs: sentinelIntent.matchedPatternSlugs,
+              reason: sentinelIntent.reason,
+            },
+          }) + '\n'));
           for await (const stage of runSentinelReasoning({
             query,
             clientId: sentinelClientId,
@@ -319,78 +208,19 @@ async function handleAsk(payload: AskPayload) {
           })) {
             assistantText += `${stage.name}: ${stage.content}\n`;
             citationCount += stage.citations.length;
-            sentinelCitations.push(...stage.citations);
-            controller.enqueue(
-              encoder.encode(
-                JSON.stringify({ type: "sentinel-stage", stage }) + "\n",
-              ),
-            );
-          }
-          const routing = routeQuestion({
-            query,
-            industry: expertIndustryForClientKey(tenantClientKey),
-          });
-          const exhibits = buildStructuredExhibits({
-            prose: assistantText,
-            routing,
-            sources: sentinelSourcesFromCitations(sentinelCitations),
-          });
-          if (
-            hasRenderableStructuredExhibits(exhibits) ||
-            exhibits.citations.length > 0 ||
-            routing.experts.length > 0
-          ) {
-            const agentAnswer: AgentAnswer = {
-              engineVersion: "agent-answer/v1",
-              surface: "intelligence",
-              expertId: routing.experts[0]?.id ?? null,
-              contributingExperts: routing.experts,
-              prose: exhibits.prose,
-              tables: exhibits.tables,
-              charts: exhibits.charts,
-              graphs: exhibits.graphs,
-              citations: exhibits.citations,
-              gaps: [],
-              recommendedActions: [],
-              groundingMode: exhibits.citations.some(
-                (citation) => citation.sourceClass === "tenant-fact",
-              )
-                ? "mixed"
-                : "industry-pattern",
-              confidence: exhibits.citations.length > 0 ? "medium" : "low",
-              limits: [
-                "Charts and tables are emitted only when Ava has validated structured data; citations and expert attribution remain visible otherwise.",
-              ],
-              crossTenantBlocked: false,
-            };
-            controller.enqueue(
-              encoder.encode(
-                JSON.stringify({
-                  type: "agent-answer",
-                  answer: agentAnswer,
-                }) + "\n",
-              ),
-            );
+            controller.enqueue(encoder.encode(JSON.stringify({ type: 'sentinel-stage', stage }) + '\n'));
           }
           const event = recordSentinelTelemetry({
             startedAt,
             tenantId,
-            instanceId:
-              memory?.sessionId ??
-              memory?.tabId ??
-              requestedOrSurfaceClient ??
-              "sentinel-ask",
+            instanceId: memory?.sessionId ?? memory?.tabId ?? requestedOrSurfaceClient ?? 'sentinel-ask',
             patternId,
             citationCount,
           });
-          controller.enqueue(
-            encoder.encode(
-              JSON.stringify({
-                type: "done",
-                telemetryEventId: event.id,
-              }) + "\n",
-            ),
-          );
+          controller.enqueue(encoder.encode(JSON.stringify({
+            type: 'done',
+            telemetryEventId: event.id,
+          }) + '\n'));
           return;
         }
         for await (const event of askIntelligence(query, {
@@ -398,194 +228,52 @@ async function handleAsk(payload: AskPayload) {
           tenantId,
           tenantClientKey,
           tenant,
-          richText,
           userId,
           tenantInventoryKey,
           surfaceContext,
           conversationContextBlock: memory?.contextBlock,
           activePersonGraphNodeId,
           activePersonDisplayName,
-          onModelInput: (parts) => {
-            traceModelInputHash = hashModelInput(parts);
-          },
         })) {
-          if (event.type === "classified")
-            classificationForMemory =
-              event.classification ?? classificationForMemory;
-          if (event.type === "sources") {
+          if (event.type === 'classified') classificationForMemory = event.classification ?? classificationForMemory;
+          if (event.type === 'sources') {
             citationCount = event.sources?.length ?? 0;
-            patternId =
-              event.sources?.find((source) => source.type === "PATTERN")?.id ??
-              patternId;
-            traceSources = (event.sources ?? []) as RawAskSource[];
+            patternId = event.sources?.find((source) => source.type === 'PATTERN')?.id ?? patternId;
           }
-          if (event.type === "delta" && event.text) assistantText += event.text;
-          if (event.type === "error") sawStreamError = true;
-          if (event.type === "done") continue;
-          controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
+          if (event.type === 'delta' && event.text) assistantText += event.text;
+          if (event.type === 'error') sawStreamError = true;
+          if (event.type === 'done') continue;
+          controller.enqueue(encoder.encode(JSON.stringify(event) + '\n'));
         }
         if (!sawStreamError && assistantText.trim()) {
           const event = recordSentinelTelemetry({
             startedAt,
             tenantId,
-            instanceId:
-              memory?.sessionId ??
-              memory?.tabId ??
-              requestedOrSurfaceClient ??
-              "sentinel-ask",
+            instanceId: memory?.sessionId ?? memory?.tabId ?? requestedOrSurfaceClient ?? 'sentinel-ask',
             patternId,
             citationCount,
           });
-          // Observability · build the context-bundle trace, run post-response
-          // claim/citation + tenant-isolation validation against it, stamp the
-          // verdicts, then emit (non-blocking). IDs only; model input hashed.
-          const sentinelTrace = buildSentinelTrace({
-            questionId: randomUUID(),
-            tenantId,
-            tenantKey: tenantInventoryKey,
-            surface: "intelligence",
-            userIntent:
-              (classificationForMemory as { intent?: string } | null)?.intent ??
-              null,
-            modelInputHash: traceModelInputHash ?? "no_model_call",
-            responseId: event.id,
-            citationObjectsEmitted: traceSources
-              .map((s) => s.id)
-              .filter((id): id is string => Boolean(id)),
-            emittedAt: new Date().toISOString(),
-            sources: traceSources,
-          });
-          let validation: ReturnType<typeof validateClaimsAndCitations> | null =
-            null;
-          try {
-            validation = validateClaimsAndCitations({
-              trace: {
-                tenant_key: sentinelTrace.tenant_key,
-                retrieved_tenant_context:
-                  sentinelTrace.retrieved_tenant_context,
-                retrieved_corpus_patterns:
-                  sentinelTrace.retrieved_corpus_patterns,
-                retrieved_artifacts: sentinelTrace.retrieved_artifacts,
-                citation_objects_emitted:
-                  sentinelTrace.citation_objects_emitted,
-              },
-              answerText: assistantText,
-            });
-            sentinelTrace.claim_validation_status =
-              validation.claimValidationStatus;
-            sentinelTrace.tenant_isolation_status =
-              validation.tenantIsolationStatus;
-          } catch {
-            // Validation must never break the response path.
-          }
-          emitAgentContextTraceAsync(sentinelTrace);
-          if (
-            validation &&
-            (validation.unsupportedClaims.length > 0 ||
-              validation.namespaceFindings.length > 0 ||
-              validation.tenantLeakage.length > 0)
-          ) {
-            controller.enqueue(
-              encoder.encode(
-                JSON.stringify({
-                  type: "validation",
-                  claimValidationStatus: validation.claimValidationStatus,
-                  tenantIsolationStatus: validation.tenantIsolationStatus,
-                  unsupportedClaims: validation.unsupportedClaims,
-                  namespaceFindings: validation.namespaceFindings,
-                  tenantLeakage: validation.tenantLeakage,
-                }) + "\n",
-              ),
-            );
-          }
-          const routing = routeQuestion({
-            query,
-            industry: expertIndustryForClientKey(tenantClientKey),
-          });
-          const exhibits = buildStructuredExhibits({
-            prose: assistantText,
-            routing,
-            sources: traceSources as AskSource[],
-          });
-          if (
-            hasRenderableStructuredExhibits(exhibits) ||
-            exhibits.citations.length > 0 ||
-            routing.experts.length > 0
-          ) {
-            const agentAnswer: AgentAnswer = {
-              engineVersion: "agent-answer/v1",
-              surface: "intelligence",
-              expertId: routing.experts[0]?.id ?? null,
-              contributingExperts: routing.experts,
-              prose: exhibits.prose,
-              tables: exhibits.tables,
-              charts: exhibits.charts,
-              graphs: exhibits.graphs,
-              citations: exhibits.citations,
-              gaps: [],
-              recommendedActions: [],
-              groundingMode: exhibits.citations.some(
-                (citation) => citation.sourceClass === "tenant-fact",
-              )
-                ? "mixed"
-                : "industry-pattern",
-              confidence: exhibits.citations.length > 0 ? "medium" : "low",
-              limits: [
-                "Charts and tables are emitted only when Ava has validated structured data; citations and expert attribution remain visible otherwise.",
-              ],
-              crossTenantBlocked: false,
-            };
-            controller.enqueue(
-              encoder.encode(
-                JSON.stringify({
-                  type: "agent-answer",
-                  answer: agentAnswer,
-                }) + "\n",
-              ),
-            );
-          }
-          controller.enqueue(
-            encoder.encode(
-              JSON.stringify({
-                type: "done",
-                telemetryEventId: event.id,
-              }) + "\n",
-            ),
-          );
-        } else if (!sawStreamError) {
-          sawStreamError = true;
-          controller.enqueue(
-            encoder.encode(
-              JSON.stringify({
-                type: "error",
-                error: "ask_synthesis_empty",
-              }) + "\n",
-            ),
-          );
+          controller.enqueue(encoder.encode(JSON.stringify({
+            type: 'done',
+            telemetryEventId: event.id,
+          }) + '\n'));
         }
       } catch (err) {
         controller.enqueue(
-          encoder.encode(
-            JSON.stringify({
-              type: "error",
-              error: err instanceof Error ? err.message : "unknown",
-            }) + "\n",
-          ),
+          encoder.encode(JSON.stringify({ type: 'error', error: err instanceof Error ? err.message : 'unknown' }) + '\n'),
         );
       } finally {
         await appendAskSessionTurn({
           sessionId: memory?.sessionId,
           tenantId,
           userId,
-          role: "assistant",
+          role: 'assistant',
           content: assistantText,
           metadata: {
             client: requestedOrSurfaceClient,
             classification: classificationForMemory,
           },
-        }).catch((err) =>
-          console.warn("[ask.session-memory.assistant-turn]", err),
-        );
+        }).catch((err) => console.warn('[ask.session-memory.assistant-turn]', err));
         controller.close();
       }
     },
@@ -593,36 +281,40 @@ async function handleAsk(payload: AskPayload) {
 
   return new Response(stream, {
     headers: {
-      "Content-Type": "application/x-ndjson",
-      "Cache-Control": "no-cache",
+      'Content-Type': 'application/x-ndjson',
+      'Cache-Control': 'no-cache',
     },
   });
 }
 
-function sentinelSourcesFromCitations(
-  citations: SentinelCitation[],
-): AskSource[] {
-  const seen = new Set<string>();
-  const sources: AskSource[] = [];
-  for (const citation of citations) {
-    const key = citation.id || `${citation.label}:${citation.detail ?? ""}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    sources.push({
-      type:
-        citation.sourceType === "client_data"
-          ? "TENANT"
-          : citation.sourceType === "reasoning_trace"
-            ? "GRAPH"
-            : "PATTERN",
-      id: citation.id || null,
-      name: citation.label || citation.id || "Sentinel citation",
-      detail: citation.detail ?? "",
-      url: citation.url,
-      confidence: undefined,
-    });
+function formatSemanticAnswerForStream(answer: SemanticRuntimeAnswer): string {
+  const lines = [
+    answer.directAnswer,
+    '',
+    `Basis: ${answer.basis}`,
+    `Readiness: ${answer.readinessStatus}; confidence: ${answer.confidence}.`,
+  ];
+  if (answer.facts.length > 0) {
+    lines.push('', 'What the semantic layer says:');
+    for (const fact of answer.facts.slice(0, 8)) {
+      lines.push(`- ${fact.label}: ${fact.value}${fact.unit ? ` ${fact.unit}` : ''}`);
+    }
   }
-  return sources;
+  if (answer.citations.length > 0) {
+    lines.push('', 'Citations:');
+    for (const citation of answer.citations.slice(0, 6)) {
+      lines.push(`- ${citation.sourceTable} / ${citation.dimensionKey}: ${citation.recordCount.toLocaleString('en-US')} records${citation.syntheticDemo ? ' (synthetic demo evidence)' : ''}`);
+    }
+  }
+  if (answer.caveats.length > 0) {
+    lines.push('', 'Caveats:');
+    for (const caveat of answer.caveats.slice(0, 5)) lines.push(`- ${caveat}`);
+  }
+  if (answer.clientToComplete.length > 0) {
+    lines.push('', 'Client-to-complete:');
+    for (const action of answer.clientToComplete.slice(0, 5)) lines.push(`- ${action}`);
+  }
+  return `${lines.join('\n')}\n`;
 }
 
 function recordSentinelTelemetry(input: {
@@ -633,9 +325,9 @@ function recordSentinelTelemetry(input: {
   citationCount: number;
 }) {
   return recordSynthesisEvent({
-    surface: "sentinel",
+    surface: 'sentinel',
     tenantId: input.tenantId ?? undefined,
-    instanceId: input.instanceId ?? "sentinel-ask",
+    instanceId: input.instanceId ?? 'sentinel-ask',
     patternId: input.patternId,
     cacheHit: false,
     latencyMs: Math.max(0, Date.now() - input.startedAt),
@@ -646,195 +338,13 @@ function recordSentinelTelemetry(input: {
   });
 }
 
-function mentionsForeignTenant(
-  query: string,
-  activeTenantAliases: Array<string | null | undefined>,
-): boolean {
-  const normalized = query.toLowerCase();
-  const current = new Set(activeTenantAliases.flatMap((value) => tenantAliasesFor(value)));
-  const tenants = [
-    { aliases: tenantAliasesFor("apexretail"), terms: ["apex retail", "apexretail"] },
-    { aliases: tenantAliasesFor("arcturus"), terms: ["first capital", "arcturus", "firstcapital"] },
-    { aliases: tenantAliasesFor("skyharbor"), terms: ["skyharbor", "skyharbor air"] },
-    { aliases: tenantAliasesFor("meridian"), terms: ["meridian", "meridian health"] },
-    { aliases: tenantAliasesFor("lakeshore"), terms: ["lakeshore"] },
-  ];
-  for (const tenant of tenants) {
-    if (!tenant.terms.some((term) => normalized.includes(term))) continue;
-    if (tenant.aliases.some((alias) => current.has(alias))) continue;
-    return true;
-  }
-  return false;
-}
-
-function aliasesForClerkTenant(
-  user: Awaited<ReturnType<typeof currentUser>>,
-): string[] {
-  const metadata = user?.publicMetadata as Record<string, unknown> | undefined;
-  const metadataClient =
-    readString(metadata?.clientId) ??
-    readString(metadata?.defaultClientId) ??
-    readString(metadata?.tenantKey);
-  const email =
-    user?.primaryEmailAddress?.emailAddress ??
-    user?.emailAddresses?.[0]?.emailAddress ??
-    null;
-  const appClientKey =
-    appClientKeyForTenant(metadataClient) ??
-    inferClientKeyFromEmail(email);
-  return appClientKey ? tenantAliasesFor(appClientKey) : [];
-}
-
-function buildHomeKnowTenantFenceAnswer(input: {
-  activeTenantDisplayName: string;
-}): AgentAnswer {
-  return {
-    engineVersion: "agent-answer/v1",
-    surface: "home",
-    expertId: null,
-    contributingExperts: [],
-    prose: `Read: I can't share or use another tenant's data from Home. Your signed-in session is fenced to ${input.activeTenantDisplayName}; ask from this tenant's loaded context only.`,
-    tables: [],
-    charts: [],
-    graphs: [],
-    citations: [],
-    gaps: ["Cross-tenant data is fenced by the signed-in session tenant."],
-    recommendedActions: [],
-    groundingMode: "tenant-evidence",
-    confidence: "high",
-    limits: ["Cross-tenant request blocked before retrieval."],
-    crossTenantBlocked: true,
-  };
-}
-
-function buildHomeKnowRouteFallbackResponse(input: {
-  tenantKey: string;
-  question: string;
-}): HomeKnowResponse {
-  const normalized = input.question.toLowerCase();
-  const wantsGraph = /\b(graph|map|topolog|dependency|dependencies|relationship|relationships|lineage|integration|interfaces?)\b/i.test(
-    input.question,
-  );
-  const wantsChart = !wantsGraph && /\b(chart|visuali[sz]e|visual|plot|waterfall)\b/i.test(input.question);
-  const wantsTable = /\b(table|list|show|compare|comparing)\b/i.test(input.question);
-  const citation = {
-    id: "c1",
-    label: `Home KNOW read model for ${input.tenantKey}`,
-    sourceClass: "tenant-fact" as const,
-    sourceFile: null,
-    sourceRowNumber: null,
-    excerpt: "Home KNOW fallback guard returned a specific artifact gap instead of a blank response.",
-    confidence: "low" as const,
-  };
-  const gaps = [
-    {
-      id: "gap-home-know-blank-guard",
-      dimensionId: wantsGraph ? "relationship_graph" : wantsChart ? "chart_artifact" : "home_read_model",
-      objectType: wantsGraph ? "relationship edge" : wantsChart ? "numeric series" : "home read model",
-      expectedField: wantsGraph ? "source_to_target_edge_pair" : wantsChart ? "chart_value_series" : "query_result_rows",
-      displayLabel: wantsGraph ? "Graph edge pairs" : wantsChart ? "Chart value series" : "Home read-model rows",
-      severity: "high" as const,
-      message: wantsGraph
-        ? "source-to-target integration edge pairs did not return for this graph request"
-        : wantsChart
-          ? "the numeric value series needed for this chart did not return for this request"
-          : "Home read-model rows did not return for this request",
-      citationIds: [citation.id],
-    },
-  ];
-  return {
-    mode: "KNOW",
-    tenantKey: input.tenantKey,
-    question: input.question,
-    intent: wantsChart || wantsGraph ? "chart" : wantsTable ? "table" : "gap",
-    answerStatus: "partial",
-    prose: "Read: I could not assemble a complete Home artifact for this request, so I am returning the specific evidence gap instead of a blank answer.",
-    dimensionsUsed: [wantsGraph ? "relationship_graph" : wantsChart ? "chart_artifact" : "home_read_model"],
-    facts: [],
-    tables: wantsTable
-      ? [
-          {
-            id: "home-read-model-gap-table",
-            title: "Home Artifact Gap",
-            dimensionId: "home_read_model",
-            columns: [
-              { key: "request", label: "Request" },
-              { key: "gap", label: "Specific Gap" },
-            ],
-            rows: [
-              {
-                request: normalized.includes("security")
-                  ? "security/compliance table"
-                  : normalized.includes("initiative")
-                    ? "initiative comparison table"
-                    : "requested Home table",
-                gap: gaps[0]?.message ?? "Home read-model rows did not return for this request",
-              },
-            ],
-            citationIds: [citation.id],
-          },
-        ]
-      : [],
-    charts: wantsChart
-      ? [
-          {
-            id: "home-chart-gap",
-            title: "Chart Data Gap",
-            kind: "bar",
-            type: "bar",
-            dimensionId: "chart_artifact",
-            data: [],
-            sourceIds: [],
-            citationIds: [citation.id],
-            caveats: [gaps[0]?.message ?? "chart value series missing"],
-            status: "unavailable",
-          },
-        ]
-      : [],
-    graphs: wantsGraph
-      ? [
-          {
-            id: "home-graph-gap",
-            title: "Graph Edge Gap",
-            nodes: [],
-            edges: [],
-            nodeTypes: [],
-            edgeTypes: [],
-            sourceIds: [],
-            citationIds: [citation.id],
-            confidence: "low",
-            gaps: [gaps[0]?.message ?? "source-to-target integration edges missing"],
-            inferredEdges: false,
-            warning: gaps[0]?.message,
-          },
-        ]
-      : [],
-    gaps,
-    conflicts: [],
-    citations: [citation],
-    handoff: null,
-    safety: {
-      serverValidated: true,
-      blockedExperts: true,
-      blockedDecisionFrames: true,
-      blockedInternalCodes: true,
-      unsupportedClaimsRemoved: 0,
-      frontendTripwireShouldFire: false,
-    },
-  };
-}
-
 async function parseGetPayload(req: NextRequest): Promise<AskPayload> {
   const url = new URL(req.url);
   return {
-    query: url.searchParams.get("q") ?? "",
-    requestedClient: url.searchParams.get("client"),
-    surfaceContext: parseSurfaceContext(url.searchParams.get("surfaceContext")),
-    tabId:
-      url.searchParams.get("tabId") ??
-      req.cookies.get("ai-ask-tab-id")?.value ??
-      null,
-    richText: url.searchParams.get("format") === "rich",
+    query: url.searchParams.get('q') ?? '',
+    requestedClient: url.searchParams.get('client'),
+    surfaceContext: parseSurfaceContext(url.searchParams.get('surfaceContext')),
+    tabId: url.searchParams.get('tabId') ?? req.cookies.get('ai-ask-tab-id')?.value ?? null,
   };
 }
 
@@ -846,18 +356,12 @@ async function parsePostPayload(req: NextRequest): Promise<AskPayload> {
     body = null;
   }
 
-  const payload =
-    body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+  const payload = body && typeof body === 'object' ? body as Record<string, unknown> : {};
   return {
-    query: readString(payload.q) ?? readString(payload.query) ?? "",
+    query: readString(payload.q) ?? readString(payload.query) ?? '',
     requestedClient: readString(payload.client),
     surfaceContext: normalizeSurfaceContext(payload.surfaceContext),
-    tabId:
-      readString(payload.tabId) ??
-      req.cookies.get("ai-ask-tab-id")?.value ??
-      null,
-    richText:
-      readString(payload.format) === "rich" || payload.richText === true,
+    tabId: readString(payload.tabId) ?? req.cookies.get('ai-ask-tab-id')?.value ?? null,
   };
 }
 
@@ -871,7 +375,7 @@ function parseSurfaceContext(raw: string | null): AskSurfaceContext | null {
 }
 
 function normalizeSurfaceContext(value: unknown): AskSurfaceContext | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const record = value as Record<string, unknown>;
   return {
     activeTab: readString(record.activeTab),
@@ -893,15 +397,13 @@ function normalizeSurfaceContext(value: unknown): AskSurfaceContext | null {
 }
 
 function readString(value: unknown): string | null {
-  return typeof value === "string" && value.trim().length > 0
-    ? value.trim()
-    : null;
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
 
 function readStringArray(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) return undefined;
   return value
-    .filter((item): item is string => typeof item === "string")
+    .filter((item): item is string => typeof item === 'string')
     .map((item) => item.trim())
     .filter(Boolean)
     .slice(0, 40);

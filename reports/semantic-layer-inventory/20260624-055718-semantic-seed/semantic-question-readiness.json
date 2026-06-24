@@ -1,0 +1,596 @@
+[
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "question_pattern": "What data do we have for this tenant?",
+    "readiness_status": "answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "enterprise_context_record"
+    ],
+    "suggested_next_action": "Use deterministic query first, then narrative synthesis with citations."
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "question_pattern": "What value can we expect?",
+    "readiness_status": "partially_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "value_estimate",
+      "benefit_realization"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "question_pattern": "What work is repetitive?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "operational_work_item",
+      "automation_opportunity"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "question_pattern": "Where are the bottlenecks?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "process_observation",
+      "operational_event"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301",
+    "question_pattern": "Which apps create the most operational friction?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "system_service_map",
+      "operational_work_item"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "apex-retail",
+    "question_pattern": "What data do we have for this tenant?",
+    "readiness_status": "answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "enterprise_context_record"
+    ],
+    "suggested_next_action": "Use deterministic query first, then narrative synthesis with citations."
+  },
+  {
+    "tenant_key": "apex-retail",
+    "question_pattern": "What value can we expect?",
+    "readiness_status": "partially_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "value_estimate",
+      "benefit_realization"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "apex-retail",
+    "question_pattern": "What work is repetitive?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "operational_work_item",
+      "automation_opportunity"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "apex-retail",
+    "question_pattern": "Where are the bottlenecks?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "process_observation",
+      "operational_event"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "apex-retail",
+    "question_pattern": "Which apps create the most operational friction?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "system_service_map",
+      "operational_work_item"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "first-capital",
+    "question_pattern": "What data do we have for this tenant?",
+    "readiness_status": "answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "enterprise_context_record"
+    ],
+    "suggested_next_action": "Use deterministic query first, then narrative synthesis with citations."
+  },
+  {
+    "tenant_key": "first-capital",
+    "question_pattern": "What value can we expect?",
+    "readiness_status": "partially_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "value_estimate",
+      "benefit_realization"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "first-capital",
+    "question_pattern": "What work is repetitive?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "operational_work_item",
+      "automation_opportunity"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "first-capital",
+    "question_pattern": "Where are the bottlenecks?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "process_observation",
+      "operational_event"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "first-capital",
+    "question_pattern": "Which apps create the most operational friction?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "system_service_map",
+      "operational_work_item"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "lakeshore",
+    "question_pattern": "What data do we have for this tenant?",
+    "readiness_status": "answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "enterprise_context_record"
+    ],
+    "suggested_next_action": "Use deterministic query first, then narrative synthesis with citations."
+  },
+  {
+    "tenant_key": "lakeshore",
+    "question_pattern": "What value can we expect?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "value_estimate",
+      "benefit_realization"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "lakeshore",
+    "question_pattern": "What work is repetitive?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "operational_work_item",
+      "automation_opportunity"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "lakeshore",
+    "question_pattern": "Where are the bottlenecks?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "process_observation",
+      "operational_event"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "lakeshore",
+    "question_pattern": "Which apps create the most operational friction?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "system_service_map",
+      "operational_work_item"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "question_pattern": "What data do we have for this tenant?",
+    "readiness_status": "answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "enterprise_context_record"
+    ],
+    "suggested_next_action": "Use deterministic query first, then narrative synthesis with citations."
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "question_pattern": "What value can we expect?",
+    "readiness_status": "partially_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "value_estimate",
+      "benefit_realization"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "question_pattern": "What work is repetitive?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "operational_work_item",
+      "automation_opportunity"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "question_pattern": "Where are the bottlenecks?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "process_observation",
+      "operational_event"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "lakeshore-holdings",
+    "question_pattern": "Which apps create the most operational friction?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "system_service_map",
+      "operational_work_item"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "meridian-health",
+    "question_pattern": "What data do we have for this tenant?",
+    "readiness_status": "answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "enterprise_context_record"
+    ],
+    "suggested_next_action": "Use deterministic query first, then narrative synthesis with citations."
+  },
+  {
+    "tenant_key": "meridian-health",
+    "question_pattern": "What value can we expect?",
+    "readiness_status": "partially_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "value_estimate",
+      "benefit_realization"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "meridian-health",
+    "question_pattern": "What work is repetitive?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "operational_work_item",
+      "automation_opportunity"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "meridian-health",
+    "question_pattern": "Where are the bottlenecks?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "process_observation",
+      "operational_event"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "meridian-health",
+    "question_pattern": "Which apps create the most operational friction?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "system_service_map",
+      "operational_work_item"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "morganstreet",
+    "question_pattern": "What data do we have for this tenant?",
+    "readiness_status": "answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "enterprise_context_record"
+    ],
+    "suggested_next_action": "Use deterministic query first, then narrative synthesis with citations."
+  },
+  {
+    "tenant_key": "morganstreet",
+    "question_pattern": "What value can we expect?",
+    "readiness_status": "partially_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "value_estimate",
+      "benefit_realization"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "morganstreet",
+    "question_pattern": "What work is repetitive?",
+    "readiness_status": "answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "operational_work_item",
+      "automation_opportunity"
+    ],
+    "suggested_next_action": "Use deterministic query first, then narrative synthesis with citations."
+  },
+  {
+    "tenant_key": "morganstreet",
+    "question_pattern": "Where are the bottlenecks?",
+    "readiness_status": "answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "process_observation",
+      "operational_event"
+    ],
+    "suggested_next_action": "Use deterministic query first, then narrative synthesis with citations."
+  },
+  {
+    "tenant_key": "morganstreet",
+    "question_pattern": "Which apps create the most operational friction?",
+    "readiness_status": "answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "system_service_map",
+      "operational_work_item"
+    ],
+    "suggested_next_action": "Use deterministic query first, then narrative synthesis with citations."
+  },
+  {
+    "tenant_key": "morganstreet-other",
+    "question_pattern": "What data do we have for this tenant?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "enterprise_context_record"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "morganstreet-other",
+    "question_pattern": "What value can we expect?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "value_estimate",
+      "benefit_realization"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "morganstreet-other",
+    "question_pattern": "What work is repetitive?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "operational_work_item",
+      "automation_opportunity"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "morganstreet-other",
+    "question_pattern": "Where are the bottlenecks?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "process_observation",
+      "operational_event"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "morganstreet-other",
+    "question_pattern": "Which apps create the most operational friction?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "system_service_map",
+      "operational_work_item"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "northstar-clinical",
+    "question_pattern": "What data do we have for this tenant?",
+    "readiness_status": "answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "enterprise_context_record"
+    ],
+    "suggested_next_action": "Use deterministic query first, then narrative synthesis with citations."
+  },
+  {
+    "tenant_key": "northstar-clinical",
+    "question_pattern": "What value can we expect?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "value_estimate",
+      "benefit_realization"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "northstar-clinical",
+    "question_pattern": "What work is repetitive?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "operational_work_item",
+      "automation_opportunity"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "northstar-clinical",
+    "question_pattern": "Where are the bottlenecks?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "process_observation",
+      "operational_event"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "northstar-clinical",
+    "question_pattern": "Which apps create the most operational friction?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "system_service_map",
+      "operational_work_item"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "skyharbor",
+    "question_pattern": "What data do we have for this tenant?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "enterprise_context_record"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "skyharbor",
+    "question_pattern": "What value can we expect?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "value_estimate",
+      "benefit_realization"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "skyharbor",
+    "question_pattern": "What work is repetitive?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "operational_work_item",
+      "automation_opportunity"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "skyharbor",
+    "question_pattern": "Where are the bottlenecks?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "process_observation",
+      "operational_event"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "skyharbor",
+    "question_pattern": "Which apps create the most operational friction?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "system_service_map",
+      "operational_work_item"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "question_pattern": "What data do we have for this tenant?",
+    "readiness_status": "answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "enterprise_context_record"
+    ],
+    "suggested_next_action": "Use deterministic query first, then narrative synthesis with citations."
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "question_pattern": "What value can we expect?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "value_estimate",
+      "benefit_realization"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "question_pattern": "What work is repetitive?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "operational_work_item",
+      "automation_opportunity"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "question_pattern": "Where are the bottlenecks?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "process_observation",
+      "operational_event"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "question_pattern": "Which apps create the most operational friction?",
+    "readiness_status": "not_answerable",
+    "confidence_score": "0.760",
+    "missing_data": [
+      "system_service_map",
+      "operational_work_item"
+    ],
+    "suggested_next_action": "Load/approve missing dimensions before using as client-ready answer."
+  }
+]

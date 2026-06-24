@@ -1,0 +1,127 @@
+{
+  "proofType": "semantic_runtime_read_probe_compact",
+  "generatedAt": "2026-06-24T06:25:20.142Z",
+  "basis": "Read-only VNet query against live Azure/Postgres semantic-layer projection.",
+  "tenants": {
+    "morganstreet": {
+      "summary": {
+        "tenant_key": "morganstreet",
+        "volumetric_rows": 14,
+        "semantic_record_count": "14127",
+        "dimensions": 13,
+        "source_tables": 14,
+        "contains_synthetic_demo": true,
+        "has_finance_validated_evidence": false
+      },
+      "readinessSummary": [
+        {
+          "tenant_key": "morganstreet",
+          "intent_type": "business_case",
+          "readiness_status": "partially_answerable",
+          "question_count": 1,
+          "max_confidence": "0.760"
+        },
+        {
+          "tenant_key": "morganstreet",
+          "intent_type": "inventory",
+          "readiness_status": "answerable",
+          "question_count": 1,
+          "max_confidence": "0.760"
+        },
+        {
+          "tenant_key": "morganstreet",
+          "intent_type": "process_intelligence",
+          "readiness_status": "answerable",
+          "question_count": 3,
+          "max_confidence": "0.760"
+        }
+      ]
+    },
+    "lakeshore": {
+      "summary": {
+        "tenant_key": "lakeshore",
+        "volumetric_rows": 6,
+        "semantic_record_count": "18196",
+        "dimensions": 6,
+        "source_tables": 6,
+        "contains_synthetic_demo": true,
+        "has_finance_validated_evidence": false
+      },
+      "readinessSummary": [
+        {
+          "tenant_key": "lakeshore",
+          "intent_type": "business_case",
+          "readiness_status": "not_answerable",
+          "question_count": 1,
+          "max_confidence": "0.760"
+        },
+        {
+          "tenant_key": "lakeshore",
+          "intent_type": "inventory",
+          "readiness_status": "answerable",
+          "question_count": 1,
+          "max_confidence": "0.760"
+        },
+        {
+          "tenant_key": "lakeshore",
+          "intent_type": "process_intelligence",
+          "readiness_status": "not_answerable",
+          "question_count": 3,
+          "max_confidence": "0.760"
+        }
+      ]
+    },
+    "meridian-health": {
+      "summary": {
+        "tenant_key": "meridian-health",
+        "volumetric_rows": 21,
+        "semantic_record_count": "21373",
+        "dimensions": 17,
+        "source_tables": 21,
+        "contains_synthetic_demo": true,
+        "has_finance_validated_evidence": false
+      },
+      "readinessSummary": [
+        {
+          "tenant_key": "meridian-health",
+          "intent_type": "business_case",
+          "readiness_status": "partially_answerable",
+          "question_count": 1,
+          "max_confidence": "0.760"
+        },
+        {
+          "tenant_key": "meridian-health",
+          "intent_type": "inventory",
+          "readiness_status": "answerable",
+          "question_count": 1,
+          "max_confidence": "0.760"
+        },
+        {
+          "tenant_key": "meridian-health",
+          "intent_type": "process_intelligence",
+          "readiness_status": "not_answerable",
+          "question_count": 3,
+          "max_confidence": "0.760"
+        }
+      ]
+    }
+  },
+  "globalCounts": [
+    {
+      "table_name": "semantic_dimensions",
+      "rows": 30
+    },
+    {
+      "table_name": "tenant_data_volumetrics",
+      "rows": 131
+    },
+    {
+      "table_name": "tenant_dimension_coverage",
+      "rows": 113
+    },
+    {
+      "table_name": "tenant_question_readiness",
+      "rows": 55
+    }
+  ]
+}

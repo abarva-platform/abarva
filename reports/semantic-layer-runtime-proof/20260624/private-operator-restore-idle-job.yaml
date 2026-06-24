@@ -1,0 +1,41 @@
+name: job-abarva-private-operator-eus
+properties:
+  environmentId: /subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.App/managedEnvironments/cae-abarva-scale-lab-eastus
+  configuration:
+    triggerType: Manual
+    replicaRetryLimit: 0
+    replicaTimeout: 1800
+    manualTriggerConfig:
+      parallelism: 1
+      replicaCompletionCount: 1
+    registries:
+      - server: acrabarvalab001.azurecr.io
+        identity: /subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-abarva-scale-runtime-lab-eastus
+    secrets:
+      - name: azure-postgres-control-database-url
+        keyVaultUrl: https://kv-abarva-lab-001.vault.azure.net/secrets/azure-postgres-control-database-url
+        identity: /subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-abarva-scale-runtime-lab-eastus
+  template:
+    containers:
+      - name: private-operator-idle
+        image: acrabarvalab001.azurecr.io/abarva/semantic-apply-seed@sha256:fab36acf277fa3e1c6501ea340bb79b3440e48552f03a177ebf16fe8f0fe18be
+        imageType: ContainerImage
+        command:
+          - /bin/true
+        args:
+          - ''
+        env:
+          - name: DATABASE_URL
+            secretRef: azure-postgres-control-database-url
+          - name: NODE_OPTIONS
+            value: --conditions=react-server
+          - name: OPERATIONAL_EVIDENCE_TENANT
+            value: morganstreet
+          - name: OPERATIONAL_EVIDENCE_VOLUME_PROFILE
+            value: realistic_pilot
+        resources:
+          cpu: 0.5
+          memory: 1Gi
+    volumes: []
+  workloadProfileName: Consumption
+resourceGroup: rg-abarva-controlplane-lab-eastus

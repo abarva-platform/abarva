@@ -1,0 +1,96 @@
+name: job-abarva-private-operator-eus
+properties:
+  environmentId: /subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.App/managedEnvironments/cae-abarva-scale-lab-eastus
+  configuration:
+    triggerType: Manual
+    replicaRetryLimit: 0
+    replicaTimeout: 1800
+    manualTriggerConfig:
+      parallelism: 1
+      replicaCompletionCount: 1
+    registries:
+      - server: acrabarvalab001.azurecr.io
+        identity: /subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-abarva-scale-runtime-lab-eastus
+    secrets:
+      - name: azure-postgres-control-database-url
+        keyVaultUrl: https://kv-abarva-lab-001.vault.azure.net/secrets/azure-postgres-control-database-url
+        identity: /subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-abarva-scale-runtime-lab-eastus
+  template:
+    containers:
+      - name: private-operator-idle
+        image: acrabarvalab001.azurecr.io/abarva/semantic-apply-seed@sha256:fab36acf277fa3e1c6501ea340bb79b3440e48552f03a177ebf16fe8f0fe18be
+        imageType: ContainerImage
+        command:
+          - node
+        args:
+          - -e
+          - |
+            const { Client } = require('pg');
+            const tenants = ['morganstreet', 'lakeshore', 'meridian-health'];
+            const client = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: true } });
+            (async () => {
+              await client.connect();
+              const query = (sql, params = []) => client.query(sql, params).then((result) => result.rows);
+              const proof = {
+                proofType: 'semantic_runtime_read_probe_compact',
+                generatedAt: new Date().toISOString(),
+                basis: 'Read-only VNet query against live Azure/Postgres semantic-layer projection.',
+                tenants: {},
+              };
+              for (const tenant of tenants) {
+                const [summaryRows, readinessRows] = await Promise.all([
+                  query(`
+                    SELECT tenant_key,
+                           count(*)::int AS volumetric_rows,
+                           coalesce(sum(record_count), 0)::bigint::text AS semantic_record_count,
+                           count(DISTINCT dimension_key)::int AS dimensions,
+                           count(DISTINCT source_type)::int AS source_tables,
+                           bool_or(synthetic_demo_flag) AS contains_synthetic_demo,
+                           bool_or(finance_validated_flag) AS has_finance_validated_evidence
+                      FROM tenant_data_volumetrics
+                     WHERE tenant_key = $1
+                     GROUP BY tenant_key
+                  `, [tenant]),
+                  query(`
+                    SELECT tenant_key, intent_type, readiness_status, count(*)::int AS question_count,
+                           max(confidence_score)::text AS max_confidence
+                      FROM tenant_question_readiness
+                     WHERE tenant_key = $1
+                     GROUP BY tenant_key, intent_type, readiness_status
+                     ORDER BY intent_type, readiness_status
+                  `, [tenant]),
+                ]);
+                proof.tenants[tenant] = { summary: summaryRows[0] || null, readinessSummary: readinessRows };
+              }
+              proof.globalCounts = await query(`
+                SELECT 'tenant_data_volumetrics' AS table_name, count(*)::int AS rows FROM tenant_data_volumetrics
+                UNION ALL
+                SELECT 'tenant_dimension_coverage', count(*)::int FROM tenant_dimension_coverage
+                UNION ALL
+                SELECT 'tenant_question_readiness', count(*)::int FROM tenant_question_readiness
+                UNION ALL
+                SELECT 'semantic_dimensions', count(*)::int FROM semantic_dimensions
+                ORDER BY table_name
+              `);
+              console.log(`SEMANTIC_RUNTIME_PROOF ${JSON.stringify(proof)}`);
+              await client.end();
+            })().catch(async (error) => {
+              console.error(error);
+              try { await client.end(); } catch {}
+              process.exit(1);
+            });
+        env:
+          - name: DATABASE_URL
+            secretRef: azure-postgres-control-database-url
+          - name: NODE_OPTIONS
+            value: --conditions=react-server
+          - name: OPERATIONAL_EVIDENCE_TENANT
+            value: morganstreet
+          - name: OPERATIONAL_EVIDENCE_VOLUME_PROFILE
+            value: realistic_pilot
+        resources:
+          cpu: 0.5
+          memory: 1Gi
+    volumes: []
+  workloadProfileName: Consumption
+resourceGroup: rg-abarva-controlplane-lab-eastus

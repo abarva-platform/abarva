@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-06-24T05:52:11.082Z",
+  "migrations": [
+    {
+      "name": "20260624120000_operational_evidence_data_plane.sql",
+      "applied_at": "2026-06-24T05:43:18.312Z",
+      "sha256": "dc91f702943b645ecc0d9f35b63d9b2058ac490f9ed2e3ae2e4edfa6f3e2a34a"
+    }
+  ],
+  "groups": {
+    "enterprise_context": {
+      "existing": 8,
+      "total": 8,
+      "rowCount": 180291,
+      "missing": []
+    },
+    "ai_control_tower": {
+      "existing": 15,
+      "total": 15,
+      "rowCount": 4556,
+      "missing": []
+    },
+    "operational_evidence": {
+      "existing": 14,
+      "total": 14,
+      "rowCount": 14128,
+      "missing": []
+    },
+    "semantic_question_layer": {
+      "existing": 0,
+      "total": 25,
+      "rowCount": 0,
+      "missing": [
+        "semantic_dimensions",
+        "semantic_fields",
+        "semantic_entities",
+        "semantic_metrics",
+        "semantic_synonyms",
+        "semantic_metric_inputs",
+        "semantic_metric_weights",
+        "semantic_metric_versions",
+        "semantic_join_paths",
+        "semantic_views",
+        "semantic_questions",
+        "semantic_query_plans",
+        "semantic_query_results",
+        "semantic_evidence_refs",
+        "semantic_answers",
+        "semantic_answer_citations",
+        "semantic_evidence_quality",
+        "tenant_data_volumetrics",
+        "tenant_dimension_coverage",
+        "tenant_metric_coverage",
+        "tenant_question_readiness",
+        "semantic_answer_verification",
+        "semantic_feedback",
+        "semantic_catalog_change_requests",
+        "semantic_module_usage"
+      ]
+    },
+    "legacy_tower_operational": {
+      "existing": 9,
+      "total": 9,
+      "rowCount": 4,
+      "missing": []
+    },
+    "moves_projection": {
+      "existing": 2,
+      "total": 5,
+      "rowCount": 96,
+      "missing": [
+        "programs",
+        "deliverable_reviews",
+        "artifact_versions"
+      ]
+    }
+  }
+}
