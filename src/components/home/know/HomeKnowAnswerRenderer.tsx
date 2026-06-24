@@ -12,14 +12,16 @@ import type {
 } from "@/lib/home/know/home-know-contract";
 
 const CSS = `
-.homeKnowAnswer{--hk-ink:#171713;--hk-muted:#67675f;--hk-faint:#8f8d84;--hk-line:#E4DFD5;--hk-paper:#fff;--hk-soft:#F8F6F1;--hk-green:#17683B;--hk-blue:#0B5CAD;--hk-amber:#9A641D;--hk-amber-bg:#FFF7E6;display:grid;gap:16px;color:var(--hk-ink);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif}
-.homeKnowAnswer .hk-card{background:var(--hk-paper);border:1px solid var(--hk-line);border-radius:10px;padding:20px 22px;display:grid;gap:14px}
-.homeKnowAnswer .hk-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;border-bottom:1px solid var(--hk-line);padding-bottom:12px}
+.homeKnowAnswer{--hk-ink:#171713;--hk-muted:#67675f;--hk-faint:#8f8d84;--hk-line:#E4DFD5;--hk-paper:#fff;--hk-soft:#F8F6F1;--hk-green:#17683B;--hk-blue:#0B5CAD;--hk-amber:#9A641D;--hk-amber-bg:#FFF7E6;display:grid;gap:12px;color:var(--hk-ink);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;width:min(860px,94%)}
+.homeKnowAnswer .hk-card{background:var(--hk-paper);border:1px solid var(--hk-line);border-radius:18px 18px 18px 4px;padding:17px 19px;display:grid;gap:12px;box-shadow:0 1px 0 rgba(15,23,42,.02)}
+.homeKnowAnswer.compact .hk-card{padding:14px 16px}
+.homeKnowAnswer .hk-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
 .homeKnowAnswer .hk-kicker{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--hk-green);font-weight:700}
 .homeKnowAnswer .hk-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
 .homeKnowAnswer .hk-pill{display:inline-flex;align-items:center;border:1px solid var(--hk-line);border-radius:999px;background:#fff;padding:4px 9px;font-size:12px;color:var(--hk-muted)}
 .homeKnowAnswer .hk-pill.good{background:#E9F6ED;border-color:transparent;color:var(--hk-green);font-weight:650}
-.homeKnowAnswer .hk-prose{font-size:15px;line-height:1.75;white-space:pre-wrap;color:#20201b}
+.homeKnowAnswer .hk-prose{font-size:15px;line-height:1.68;white-space:pre-wrap;color:#20201b}
+.homeKnowAnswer.compact .hk-prose{font-size:14px;line-height:1.62}
 .homeKnowAnswer .hk-section{display:grid;gap:10px}
 .homeKnowAnswer .hk-title{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--hk-muted);font-weight:700}
 .homeKnowAnswer .hk-tableWrap,.homeKnowAnswer .hk-chart,.homeKnowAnswer .hk-graph,.homeKnowAnswer .hk-gapBox,.homeKnowAnswer .hk-handoff,.homeKnowAnswer .hk-drawer{border:1px solid var(--hk-line);border-radius:8px;background:#fff;overflow:hidden}
@@ -58,6 +60,12 @@ const CSS = `
 .homeKnowAnswer .hk-drawer dl{display:grid;grid-template-columns:110px 1fr;gap:8px 12px;margin:0;font-size:13px}
 .homeKnowAnswer .hk-drawer dt{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--hk-faint)}
 .homeKnowAnswer .hk-drawer dd{margin:0;color:#2f2f2a}
+.homeKnowAnswer .hk-evidenceToggle{border-top:1px solid var(--hk-line);padding-top:10px}
+.homeKnowAnswer .hk-evidenceToggle summary{cursor:pointer;color:var(--hk-green);font-weight:700;font-size:13px;list-style:none}
+.homeKnowAnswer .hk-evidenceToggle summary::-webkit-details-marker{display:none}
+.homeKnowAnswer .hk-evidenceToggle summary::after{content:"";display:inline-block;width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);margin-left:8px;margin-bottom:2px}
+.homeKnowAnswer .hk-evidenceToggle[open] summary::after{transform:rotate(225deg);margin-bottom:-1px}
+.homeKnowAnswer .hk-evidenceBody{display:grid;gap:12px;margin-top:12px}
 @media(max-width:720px){.homeKnowAnswer .hk-head{display:grid}.homeKnowAnswer .hk-barRow{grid-template-columns:1fr}.homeKnowAnswer .hk-value{text-align:left}.homeKnowAnswer .hk-drawer dl{grid-template-columns:1fr}}
 `;
 
@@ -388,7 +396,18 @@ function responseHasTripwire(response: HomeKnowResponse): boolean {
   return BLOCKED_HOME_TEXT.test(response.prose) || INTERNAL_CODE_RE.test(response.prose);
 }
 
-export function HomeKnowAnswerRenderer({ response }: { response: HomeKnowResponse }) {
+function shouldOpenEvidence(response: HomeKnowResponse, compact: boolean): boolean {
+  if (compact) return false;
+  return response.intent === "table" || response.intent === "chart" || response.intent === "gap";
+}
+
+export function HomeKnowAnswerRenderer({
+  compact = false,
+  response,
+}: {
+  compact?: boolean;
+  response: HomeKnowResponse;
+}) {
   const [selectedCitation, setSelectedCitation] = useState<HomeKnowCitation | null>(null);
   const safeProse = useMemo(() => {
     if (responseHasTripwire(response)) {
@@ -401,17 +420,24 @@ export function HomeKnowAnswerRenderer({ response }: { response: HomeKnowRespons
   const chartCount = response.charts.length;
   const graphCount = response.graphs.length;
 
+  const hasEvidence = tableCount + chartCount + graphCount > 0 || response.gaps.length > 0 || visibleCitations.length > 0;
+  const evidenceOpen = shouldOpenEvidence(response, compact);
+  const exhibitLabel =
+    tableCount + chartCount + graphCount > 0
+      ? `Evidence and exhibits (${tableCount} table${tableCount === 1 ? "" : "s"}, ${chartCount} chart${chartCount === 1 ? "" : "s"}, ${graphCount} graph${graphCount === 1 ? "" : "s"})`
+      : "Evidence and citations";
+
   return (
-    <section className="homeKnowAnswer" aria-label="Home KNOW answer">
+    <section className={`homeKnowAnswer${compact ? " compact" : ""}`} aria-label="Home KNOW answer">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div className="hk-card">
         <header className="hk-head">
           <div>
             <div className="hk-kicker">Ava · Home KNOW</div>
-            <div className="hk-meta">
+            <div className="hk-meta" aria-label="Answer metadata">
               <span className="hk-pill good">{response.intent.replace(/_/g, " ")}</span>
               <span className="hk-pill">{response.answerStatus.replace(/_/g, " ")}</span>
-              {response.dimensionsUsed.slice(0, 4).map((dimension) => (
+              {!compact && response.dimensionsUsed.slice(0, 4).map((dimension) => (
                 <span className="hk-pill" key={dimension}>{sanitizeHomeText(dimension)}</span>
               ))}
             </div>
@@ -422,58 +448,65 @@ export function HomeKnowAnswerRenderer({ response }: { response: HomeKnowRespons
 
         {safeProse ? <div className="hk-prose">{safeProse}</div> : null}
 
-        {tableCount > 0 ? (
-          <div className="hk-section">
-            <div className="hk-title">Tables</div>
-            {response.tables.map((table) => (
-              <HomeTableExhibit
-                citations={citationsFor(table.citationIds, visibleCitations)}
-                key={table.id}
-                onSelectCitation={setSelectedCitation}
-                table={table}
-              />
-            ))}
-          </div>
+        {hasEvidence ? (
+          <details className="hk-evidenceToggle" open={evidenceOpen}>
+            <summary>{exhibitLabel}</summary>
+            <div className="hk-evidenceBody">
+              {tableCount > 0 ? (
+                <div className="hk-section">
+                  <div className="hk-title">Tables</div>
+                  {response.tables.map((table) => (
+                    <HomeTableExhibit
+                      citations={citationsFor(table.citationIds, visibleCitations)}
+                      key={table.id}
+                      onSelectCitation={setSelectedCitation}
+                      table={table}
+                    />
+                  ))}
+                </div>
+              ) : null}
+
+              {chartCount > 0 ? (
+                <div className="hk-section">
+                  <div className="hk-title">Charts</div>
+                  {response.charts.map((chart) => (
+                    <HomeChartExhibit
+                      chart={chart}
+                      citations={citationsFor(chart.citationIds, visibleCitations)}
+                      key={chart.id}
+                      onSelectCitation={setSelectedCitation}
+                    />
+                  ))}
+                </div>
+              ) : null}
+
+              {graphCount > 0 ? (
+                <div className="hk-section">
+                  <div className="hk-title">Graphs</div>
+                  {response.graphs.map((graph) => (
+                    <HomeGraphExhibit
+                      citations={citationsFor(graph.citationIds, visibleCitations)}
+                      graph={graph}
+                      key={graph.id}
+                      onSelectCitation={setSelectedCitation}
+                    />
+                  ))}
+                </div>
+              ) : null}
+
+              <GapPanel gaps={response.gaps} />
+
+              {tableCount + chartCount + graphCount === 0 && visibleCitations.length > 0 ? (
+                <div className="hk-section">
+                  <div className="hk-title">Sources</div>
+                  <CitationChips citations={visibleCitations} onSelect={setSelectedCitation} />
+                </div>
+              ) : null}
+
+              <SourceDrawer citation={selectedCitation} />
+            </div>
+          </details>
         ) : null}
-
-        {chartCount > 0 ? (
-          <div className="hk-section">
-            <div className="hk-title">Charts</div>
-            {response.charts.map((chart) => (
-              <HomeChartExhibit
-                chart={chart}
-                citations={citationsFor(chart.citationIds, visibleCitations)}
-                key={chart.id}
-                onSelectCitation={setSelectedCitation}
-              />
-            ))}
-          </div>
-        ) : null}
-
-        {graphCount > 0 ? (
-          <div className="hk-section">
-            <div className="hk-title">Graphs</div>
-            {response.graphs.map((graph) => (
-              <HomeGraphExhibit
-                citations={citationsFor(graph.citationIds, visibleCitations)}
-                graph={graph}
-                key={graph.id}
-                onSelectCitation={setSelectedCitation}
-              />
-            ))}
-          </div>
-        ) : null}
-
-        <GapPanel gaps={response.gaps} />
-
-        {tableCount + chartCount + graphCount === 0 && visibleCitations.length > 0 ? (
-          <div className="hk-section">
-            <div className="hk-title">Sources</div>
-            <CitationChips citations={visibleCitations} onSelect={setSelectedCitation} />
-          </div>
-        ) : null}
-
-        <SourceDrawer citation={selectedCitation} />
       </div>
     </section>
   );

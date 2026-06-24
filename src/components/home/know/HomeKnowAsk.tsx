@@ -6,8 +6,9 @@ import { HomeKnowAnswerRenderer } from "@/components/home/know/HomeKnowAnswerRen
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
 
 const CSS = `
-.homeKnowAsk{--hka-line:#E7E3DA;--hka-ink:#1A1A18;--hka-muted:#6B6B63;--hka-faint:#9A998E;--hka-green:#1F6B3A;--hka-card:#fff;font-family:var(--font-geist-sans),Inter,system-ui,sans-serif}
-.homeKnowAsk .hka-bar{display:flex;align-items:flex-start;gap:10px;background:var(--hka-card);border:1px solid var(--hka-line);border-radius:14px;padding:10px 10px 10px 18px;max-width:760px;margin:0 auto;box-shadow:0 1px 0 rgba(15,23,42,.02)}
+.homeKnowAsk{--hka-line:#E7E3DA;--hka-ink:#1A1A18;--hka-muted:#6B6B63;--hka-faint:#9A998E;--hka-green:#1F6B3A;--hka-card:#fff;--hka-user:#F3F8F5;display:flex;flex-direction:column;gap:12px;min-height:calc(100vh - 220px);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif}
+.homeKnowAsk .hka-barShell{position:sticky;bottom:0;z-index:3;background:linear-gradient(180deg,rgba(255,255,255,0),#fff 22%);padding:18px 0 2px;margin-top:auto}
+.homeKnowAsk .hka-bar{display:flex;align-items:flex-start;gap:10px;background:var(--hka-card);border:1px solid var(--hka-line);border-radius:14px;padding:10px 10px 10px 18px;width:100%;box-shadow:0 10px 30px rgba(15,23,42,.08)}
 .homeKnowAsk .hka-bar:focus-within{border-color:#22AEEA;box-shadow:0 0 0 3px rgba(34,174,234,.12)}
 .homeKnowAsk .avaAskMark{flex:none;font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-weight:800;font-size:28px;line-height:1;letter-spacing:-.08em;color:#22AEEA;min-width:50px;text-align:center;margin-top:2px}
 .homeKnowAsk .avaAskMark-v{color:#12AFCB}
@@ -15,23 +16,35 @@ const CSS = `
 .homeKnowAsk .hka-bar textarea{flex:1;min-height:28px;max-height:150px;border:none;outline:none;font:inherit;font-size:14px;line-height:1.45;background:transparent;color:var(--hka-ink);resize:none;overflow:auto;padding:4px 0 0}
 .homeKnowAsk .hka-bar button{background:var(--hka-ink);color:#fff;border:none;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;min-width:64px}
 .homeKnowAsk .hka-bar button:disabled{opacity:.52;cursor:default}
-.homeKnowAsk .hka-suggestions{max-width:960px;margin:12px auto 0;display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.homeKnowAsk .hka-chip{display:inline-flex;align-items:center;border:1px solid var(--hka-line);border-radius:20px;padding:5px 13px;font-size:12px;color:#3a3a34;cursor:pointer;background:var(--hka-card)}
+.homeKnowAsk .hka-suggestions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
+.homeKnowAsk .hka-chip{display:inline-flex;align-items:center;border:1px solid var(--hka-line);border-radius:20px;padding:6px 13px;font-size:12px;color:#3a3a34;cursor:pointer;background:var(--hka-card);max-width:100%;white-space:normal;text-align:left}
 .homeKnowAsk .hka-chip:disabled{opacity:.55;cursor:default}
 .homeKnowAsk .hka-chip:hover{border-color:#c6ded0;color:var(--hka-green)}
-.homeKnowAsk .hka-thread{max-width:960px;margin:22px auto 0;display:flex;flex-direction:column;gap:16px}
+.homeKnowAsk .hka-thread{display:flex;flex:1;flex-direction:column;gap:18px;min-height:0}
 .homeKnowAsk .hka-threadHead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-bottom:1px solid var(--hka-line);padding-bottom:8px}
 .homeKnowAsk .hka-threadTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--hka-green);font-weight:750}
 .homeKnowAsk .hka-threadCount{font-size:12px;color:var(--hka-faint)}
 .homeKnowAsk .hka-turn{display:flex;flex-direction:column;gap:10px;scroll-margin-top:96px}
-.homeKnowAsk .hka-question{background:#F6F4EE;border:1px solid var(--hka-line);border-radius:12px;padding:10px 13px;display:grid;gap:4px;color:#2b2b26}
-.homeKnowAsk .hka-questionMeta{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--hka-faint);font-weight:750}
+.homeKnowAsk .hka-userRow,.homeKnowAsk .hka-assistantRow{display:flex;width:100%}
+.homeKnowAsk .hka-userRow{justify-content:flex-end}
+.homeKnowAsk .hka-assistantRow{justify-content:flex-start}
+.homeKnowAsk .hka-question{background:var(--hka-user);border:1px solid #D9ECDD;border-radius:18px 18px 4px 18px;padding:10px 14px;display:grid;gap:3px;color:#1f2b20;max-width:min(720px,86%);box-shadow:0 1px 0 rgba(15,23,42,.02)}
+.homeKnowAsk .hka-questionMeta{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#6b8b72;font-weight:750}
 .homeKnowAsk .hka-questionText{font-size:14px;line-height:1.5;white-space:pre-wrap}
-.homeKnowAsk .hka-loading,.homeKnowAsk .hka-error{background:#fff;border:1px solid var(--hka-line);border-radius:12px;padding:18px 22px;color:var(--hka-faint);font-size:13.5px}
+.homeKnowAsk .hka-loading,.homeKnowAsk .hka-error{background:#fff;border:1px solid var(--hka-line);border-radius:18px 18px 18px 4px;padding:16px 18px;color:var(--hka-faint);font-size:13.5px;max-width:min(760px,92%)}
 .homeKnowAsk .hka-error{color:#7f1d1d;background:#fff7f7}
+@media(max-width:720px){.homeKnowAsk .hka-bar{max-width:none}.homeKnowAsk .hka-question,.homeKnowAsk .hka-loading,.homeKnowAsk .hka-error{max-width:100%}.homeKnowAsk .hka-suggestions{justify-content:flex-start}}
 `;
 
 const MAX_STORED_TURNS = 12;
+const CONTEXT_EXPLORER_SUGGESTIONS = [
+  "What context is loaded for this tenant?",
+  "Show the loaded context dimensions in a table.",
+  "How is our IT organization structured today?",
+  "Which systems of record are loaded?",
+  "Show vendor and contract coverage.",
+  "What fields or evidence are missing?",
+];
 
 type HomeKnowTurn = {
   id: string;
@@ -84,6 +97,9 @@ export function HomeKnowAsk({
     () => `abarva.homeKnow.thread.${tenantKey ?? client ?? "default"}`,
     [client, tenantKey],
   );
+  const contextSuggestions = suggestedQuestions.length > 0
+    ? suggestedQuestions
+    : CONTEXT_EXPLORER_SUGGESTIONS;
 
   useEffect(() => {
     try {
@@ -208,37 +224,51 @@ export function HomeKnowAsk({
   return (
     <div className="homeKnowAsk">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      <div className="hka-bar">
-        <AvaAskMark />
-        <textarea
-          ref={textareaRef}
-          aria-label="Ask Home KNOW"
-          onChange={(event) => {
-            setQuery(event.target.value);
-            resizeAskTextarea(event.currentTarget);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              ask(query);
-            }
-          }}
-          placeholder={placeholder}
-          rows={1}
-          value={query}
-        />
-        <button
-          disabled={!query.trim()}
-          onClick={() => ask(query)}
-          type="button"
-        >
-          Ask
-        </button>
-      </div>
+      {turns.length > 0 ? (
+        <div aria-label="Home KNOW conversation" className="hka-thread">
+          <div className="hka-threadHead">
+            <div className="hka-threadTitle">Conversation history</div>
+            <div className="hka-threadCount">
+              {turns.length} {turns.length === 1 ? "question" : "questions"}
+            </div>
+          </div>
+          {turns.map((turn, index) => {
+            const isLatestTurn = index === turns.length - 1;
+            return (
+            <div className="hka-turn" key={turn.id}>
+              <div className="hka-userRow">
+                <div className="hka-question">
+                  <div className="hka-questionMeta">You · Question {index + 1}</div>
+                  <div className="hka-questionText">{turn.question}</div>
+                </div>
+              </div>
+              {turn.response ? (
+                <div className="hka-assistantRow">
+                  <HomeKnowAnswerRenderer compact={!isLatestTurn} response={turn.response} />
+                </div>
+              ) : turn.error ? (
+                <div className="hka-assistantRow">
+                  <div className="hka-error" role="status">
+                    {turn.error}
+                  </div>
+                </div>
+              ) : turn.fetching ? (
+                <div className="hka-assistantRow">
+                  <div className="hka-loading" role="status">
+                    Reading loaded context…
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          );
+          })}
+          <div ref={threadEndRef} />
+        </div>
+      ) : null}
 
-      {suggestedQuestions.length > 0 ? (
+      {contextSuggestions.length > 0 ? (
         <div aria-label="Suggested Home KNOW questions" className="hka-suggestions">
-          {suggestedQuestions.map((suggestion) => (
+          {contextSuggestions.map((suggestion) => (
             <button
               className="hka-chip"
               key={suggestion}
@@ -252,36 +282,35 @@ export function HomeKnowAsk({
         </div>
       ) : null}
 
-      {turns.length > 0 ? (
-        <div aria-label="Home KNOW conversation" className="hka-thread">
-          <div className="hka-threadHead">
-            <div className="hka-threadTitle">Conversation history</div>
-            <div className="hka-threadCount">
-              {turns.length} {turns.length === 1 ? "question" : "questions"}
-            </div>
-          </div>
-          {turns.map((turn, index) => (
-            <div className="hka-turn" key={turn.id}>
-              <div className="hka-question">
-                <div className="hka-questionMeta">You asked · Question {index + 1}</div>
-                <div className="hka-questionText">{turn.question}</div>
-              </div>
-              {turn.response ? (
-                <HomeKnowAnswerRenderer response={turn.response} />
-              ) : turn.error ? (
-                <div className="hka-error" role="status">
-                  {turn.error}
-                </div>
-              ) : turn.fetching ? (
-                <div className="hka-loading" role="status">
-                  Reading loaded context…
-                </div>
-              ) : null}
-            </div>
-          ))}
-          <div ref={threadEndRef} />
+      <div className="hka-barShell">
+        <div className="hka-bar">
+          <AvaAskMark />
+          <textarea
+            ref={textareaRef}
+            aria-label="Ask Home KNOW"
+            onChange={(event) => {
+              setQuery(event.target.value);
+              resizeAskTextarea(event.currentTarget);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                ask(query);
+              }
+            }}
+            placeholder={placeholder}
+            rows={1}
+            value={query}
+          />
+          <button
+            disabled={!query.trim()}
+            onClick={() => ask(query)}
+            type="button"
+          >
+            Ask
+          </button>
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }

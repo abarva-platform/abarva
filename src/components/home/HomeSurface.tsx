@@ -14,21 +14,24 @@ import type {
 
 const CSS = `
 .homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);min-height:100%;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
-.homex .hx-shell{display:grid;grid-template-columns:268px 1fr;min-height:100%}
-@media(max-width:860px){.homex .hx-shell{grid-template-columns:1fr}.homex .hx-rail{display:none}}
-.homex .hx-rail{border-right:1px solid var(--hl);padding:22px 14px;background:#fff}
+.homex .hx-shell{display:grid;grid-template-columns:minmax(360px,420px) minmax(0,1fr);min-height:100%}
+@media(max-width:980px){.homex .hx-shell{grid-template-columns:1fr}.homex .hx-chatPane{position:relative;top:auto;height:auto;border-right:none;border-bottom:1px solid var(--hl)}}
+.homex .hx-chatPane{background:#fff;border-right:1px solid var(--hl);padding:28px 22px 24px;position:sticky;top:0;height:calc(100vh - 72px);overflow:auto}
+.homex .hx-chatHead{display:grid;gap:8px;margin-bottom:22px}
+.homex .hx-chatEy{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--hg);font-weight:750}
+.homex .hx-chatTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:28px;line-height:1.08;font-weight:500;letter-spacing:-.015em;margin:0}
+.homex .hx-chatSub{color:var(--hm);font-size:13.5px;line-height:1.55;margin:0}
+.homex .hx-rail{border-bottom:1px solid var(--hl);padding:16px 40px 12px;background:#fff;position:sticky;top:0;z-index:2}
 .homex .hx-rail-h{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--hf);padding:0 8px 12px}
 .homex .hx-rail-g{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--hf);margin:16px 8px 6px}
-.homex .hx-nav{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:none;border-radius:8px;padding:8px 10px;font-size:13px;color:#33332e;cursor:pointer;font-family:inherit}
+.homex .hx-navWrap{display:flex;flex-wrap:wrap;gap:8px}
+.homex .hx-nav{display:flex;align-items:center;gap:9px;text-align:left;background:none;border:1px solid transparent;border-radius:999px;padding:7px 10px;font-size:12.5px;color:#33332e;cursor:pointer;font-family:inherit}
 .homex .hx-nav:hover{background:#F4F2EC}
-.homex .hx-nav.on{background:#EEF6E9;color:#1a1a18;font-weight:500}
+.homex .hx-nav.on{background:#EEF6E9;color:#1a1a18;font-weight:600;border-color:#DDEAD8}
 .homex .hx-dot{width:8px;height:8px;border-radius:50%;flex:none}
-.homex .hx-nav-l{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.homex .hx-nav-l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px}
 .homex .hx-tr{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;color:var(--hf)}
-.homex .hx-canvas{padding:0 0 80px;max-width:1080px}
-.homex .hx-ask{padding:34px 40px 8px}
-.homex .hx-ask h1{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:34px;line-height:1.08;letter-spacing:-.015em;margin:0 0 8px;text-align:center}
-.homex .hx-ask .hx-sub{color:var(--hm);font-size:14px;max-width:600px;margin:0 auto 22px;text-align:center}
+.homex .hx-canvas{padding:0 0 80px;max-width:none;min-width:0}
 .homex .hx-body{padding:14px 40px 0}
 .homex .hx-ey{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--hf)}
 .homex .hx-h2{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:26px;letter-spacing:-.01em;margin:8px 0 6px}
@@ -53,6 +56,27 @@ const CSS = `
 .homex .hx-badge{display:inline-flex;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.08em;background:#EEF6E9;color:var(--hg);padding:3px 9px;border-radius:4px}
 .homex .hx-hint{color:var(--hf);font-size:12.5px;margin-top:24px;display:flex;align-items:center;gap:8px}
 `;
+
+const CONTEXT_BROWSER_QUESTIONS = [
+  "What context is loaded for this tenant?",
+  "Show the loaded context dimensions in a table.",
+  "How is our IT organization structured today?",
+  "Which systems of record are loaded?",
+  "Show vendor and contract coverage.",
+  "What fields or evidence are missing?",
+];
+
+function contextBrowserQuestions(dimensions: BindingDimension[]): string[] {
+  const labels = dimensions.map((dimension) => dimension.dimension.toLowerCase());
+  const questions = [...CONTEXT_BROWSER_QUESTIONS];
+  if (labels.some((label) => label.includes("data") || label.includes("analytics"))) {
+    questions.push("Show our data products in a table with domain and owning team.");
+  }
+  if (labels.some((label) => label.includes("integration") || label.includes("interface"))) {
+    questions.push("Map relationships between systems and integrations.");
+  }
+  return questions.slice(0, 6);
+}
 
 function toneFor(trust: number): string {
   if (trust >= 75) return "var(--hg)";
@@ -226,45 +250,50 @@ export function HomeSurface({
     <div className="homex">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div className="hx-shell">
-        <aside className="hx-rail">
-          <div className="hx-rail-h">Context Explorer</div>
-          <button
-            type="button"
-            className={`hx-nav${dimKey ? "" : " on"}`}
-            onClick={() => setDimKey(null)}
-          >
-            <span className="hx-nav-l">Overview</span>
-          </button>
-          {dims.length > 0 && (
-            <div className="hx-rail-g">Loaded context · {dims.length}</div>
-          )}
-          {dims.map((d) => (
-            <button
-              type="button"
-              key={d.dimension}
-              className={`hx-nav${dimKey === d.dimension ? " on" : ""}`}
-              onClick={() => setDimKey(d.dimension)}
-            >
-              <span className="hx-dot" style={{ background: toneFor(d.trust) }} />
-              <span className="hx-nav-l">{d.dimension}</span>
-              <span className="hx-tr">{d.trust}</span>
-            </button>
-          ))}
+        <aside className="hx-chatPane" aria-label="Ava Home KNOW chat">
+          <div className="hx-chatHead">
+            <div className="hx-chatEy">Ava · Home KNOW</div>
+            <h1 className="hx-chatTitle">Ask what is loaded.</h1>
+            <p className="hx-chatSub">
+              Ask about your loaded enterprise context. Ava answers from tenant
+              read models, cites sources, and names gaps when evidence is missing.
+            </p>
+          </div>
+          <HomeKnowAsk
+            client={clientKey}
+            placeholder="Ask about loaded context, systems, owners, vendors..."
+            suggestedQuestions={contextBrowserQuestions(dims)}
+            tenantKey={payload?.tenant.key ?? clientKey}
+          />
         </aside>
 
         <main className="hx-canvas">
-          <div className="hx-ask">
-            <h1>Ask what is loaded in your enterprise context.</h1>
-            <p className="hx-sub">
-              Every answer is read from your loaded context and cited to its source — and
-              says so honestly when the evidence isn&rsquo;t there.
-            </p>
-            <HomeKnowAsk
-              client={clientKey}
-              placeholder="Ask what is loaded in your enterprise context…"
-              suggestedQuestions={payload?.suggestedQuestions ?? []}
-              tenantKey={payload?.tenant.key ?? clientKey}
-            />
+          <div className="hx-rail" aria-label="Context Explorer tabs">
+            <div className="hx-rail-h">Context Explorer</div>
+            <div className="hx-navWrap">
+              <button
+                type="button"
+                className={`hx-nav${dimKey ? "" : " on"}`}
+                onClick={() => setDimKey(null)}
+              >
+                <span className="hx-nav-l">Overview</span>
+              </button>
+              {dims.map((d) => (
+                <button
+                  type="button"
+                  key={d.dimension}
+                  className={`hx-nav${dimKey === d.dimension ? " on" : ""}`}
+                  onClick={() => setDimKey(d.dimension)}
+                >
+                  <span className="hx-dot" style={{ background: toneFor(d.trust) }} />
+                  <span className="hx-nav-l">{d.dimension}</span>
+                  <span className="hx-tr">{d.trust}</span>
+                </button>
+              ))}
+            </div>
+            {dims.length > 0 && (
+              <div className="hx-rail-g">Loaded context · {dims.length}</div>
+            )}
           </div>
           {selected ? (
             <DimensionView dim={selected} signals={signals} />

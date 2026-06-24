@@ -281,10 +281,10 @@ export function buildHomeKnowResponseFromPacket(input: {
       intent,
       answerStatus: "handoff",
       prose:
-        "Home can show what is loaded, but this question asks for a decision. Use Intelligence for analysis or Moves/Tower for action and proof.",
+        "This is a judgment question, so Home will not invent a recommendation. I can show the loaded context first, or hand this to Intelligence for analysis and Moves/Tower for action proof.",
       dimensionsUsed,
       facts: buildFacts(input.packet, dimensionsUsed, citations),
-      tables: [coverageTable(input.packet.coverage, citations)],
+      tables: [],
       charts: [],
       graphs: [],
       gaps,
@@ -1465,7 +1465,7 @@ function homeKnowProse(input: {
 }): string {
   if (!input.hasData) {
     if (input.packet.coverage.length > 0 || input.hasGaps) {
-      return "Read: Home found related tenant context, but the exact field family needed to answer this request did not return usable rows. Evidence: the response is grounded in the tenant read-model coverage and gap metadata below; Home is returning the specific missing evidence path rather than filling the gap with generated assumptions.";
+      return "I found related tenant context, but not the exact field family needed to answer this cleanly. I am returning the specific missing evidence path instead of filling the gap with assumptions.";
     }
     return "I do not see that in the loaded data.";
   }
@@ -1475,39 +1475,78 @@ function homeKnowProse(input: {
   const budgetCount = input.packet.budgets.length;
   if (input.intent === "gap") {
     return input.packet.gaps.length
-      ? `Read: I found ${input.packet.gaps.length} Home evidence gap(s) in the loaded data.\n\nEvidence: The gap register below lists the missing fields, affected object type, severity, and count from the Home read model.`
-      : "Read: I do not see Home evidence gaps in the loaded data.\n\nEvidence: The Home gap register returned no rows for this tenant.";
+      ? `I found ${input.packet.gaps.length} Home evidence gap(s). The gap register lists the missing fields, affected object type, severity, and row count.`
+      : "I do not see Home evidence gaps in the loaded data. The Home gap register returned no rows for this tenant.";
   }
   if (input.intent === "chart") {
     if (GRAPH_RE.test(input.question)) {
       return input.hasGraph
-        ? "Read: The relationship graph is assembled from loaded tenant edge rows and source citations.\n\nEvidence: The nodes and edges below come from the relationship read model; where a requested edge family is absent, Home reports that as a gap instead of inferring a dependency."
-        : "Read: The loaded relationship rows do not contain the source-to-target edge pairs needed for that graph.\n\nEvidence: Home can see related context, but the specific edge family needed for this visual is missing from the tenant relationship read model.";
+        ? "I assembled the relationship graph from loaded tenant edge rows and source citations. If the requested edge family is absent, Home reports that as a gap instead of inferring a dependency."
+        : "The loaded relationship rows do not contain the source-to-target edge pairs needed for that graph. I can see related context, but the specific edge family for this visual is missing.";
     }
-    return "Read: Here is the visual cut from loaded Home context.\n\nEvidence: The chart data is assembled from tenant read-model rows and cited source files, not from generated prose, so missing numeric fields remain gaps instead of becoming invented figures.";
+    return "Here is the visual cut from loaded Home context. The chart data is assembled from tenant read-model rows and cited source files, so missing numeric fields stay visible as gaps instead of becoming invented figures.";
   }
   if (/\b(security|compliance|control|controls|posture)\b/i.test(input.question)) {
-    return `Read: Home can show the loaded security and compliance coverage, but it will not infer control strength beyond the loaded rows.\n\nEvidence: The table below is assembled from Home read-model rows with tenant citations; missing control fields are shown as gaps.`;
+    return "Home can show the loaded security and compliance coverage, but it will not infer control strength beyond the loaded rows. Missing control fields are shown as gaps.";
   }
   if (/\b(data product|analytics|data & analytics|data and analytics)\b/i.test(input.question)) {
-    return `Read: Home can show the loaded data and analytics estate and ownership fields, with gaps where product registry detail is missing.\n\nEvidence: The table below is assembled from tenant read-model rows and citations, not from generated prose.`;
+    const records = recordsForDimensions(input.packet.records, ["data_analytics_estate"]);
+    const sample = readableList(
+      records
+        .map((row) => cleanLabel(firstPayloadValue(row.payload ?? {}, ["name", "label", "title", "data_product_name", "product_name", "platform_name"])))
+        .filter(isString)
+        .slice(0, 4),
+    );
+    return sample
+      ? `The loaded data and analytics estate includes ${sample}. I can show ownership and maturity fields where they exist, with product-registry gaps called out separately.`
+      : "Home can show the loaded data and analytics estate and ownership fields, with gaps where product registry detail is missing.";
   }
   if (/\b(vendor|vendors|contract|contracts|renewal|renewals)\b/i.test(input.question)) {
-    return `Read: Home can show the loaded vendor and contract landscape, including spend or renewal fields where they exist.\n\nEvidence: The table below is assembled from tenant read-model rows and citations; absent renewal or savings values remain gaps.`;
+    const topVendors = readableList(input.packet.vendors.map((row) => row.vendor_name).filter(isString).slice(0, 4));
+    return topVendors
+      ? `The loaded vendor landscape includes ${topVendors}. Spend, renewal risk, and ownership are shown where those fields exist; missing contract-owner fields remain gaps.`
+      : "Home can show the loaded vendor and contract landscape, including spend or renewal fields where they exist.";
   }
   if (/\b(budget|budgets|spend|cost|costs|financial|financials|run vs change)\b/i.test(input.question)) {
-    return `Read: Home can show the loaded IT budget rows and run/change fields where they exist.\n\nEvidence: The table below is assembled from tenant budget read-model rows and citations; missing line-item splits are shown as gaps rather than inferred.`;
+    const totalRun = input.packet.budgets.reduce((sum, row) => sum + number(row.run_budget_usd), 0);
+    const totalChange = input.packet.budgets.reduce((sum, row) => sum + number(row.change_budget_usd), 0);
+    const runText = totalRun > 0 ? ` I see ${formatUsd(totalRun)} in loaded run budget` : "";
+    const changeText = totalChange > 0 ? ` and ${formatUsd(totalChange)} in loaded change budget` : "";
+    return `Home can show the loaded IT budget rows and run/change fields where they exist.${runText}${changeText}. Missing line-item splits are shown as gaps rather than inferred.`;
   }
   if (/\b(app|application|system|platform|cmdb|systems of record)\b/i.test(input.question)) {
-    return `Read: Home can show the loaded application and system inventory with ownership and lifecycle fields where they exist.\n\nEvidence: The table below is assembled from tenant application read-model rows and citations.`;
+    const systems = readableList(input.packet.applications.map((row) => row.application_name).filter(isString).slice(0, 4));
+    return systems
+      ? `The loaded application and systems inventory includes ${systems}. Ownership, criticality, and run-cost fields are shown where present; missing named technical owners remain explicit gaps.`
+      : "Home can show the loaded application and system inventory with ownership and lifecycle fields where they exist.";
   }
   if (/\b(org|team|portfolio|lead|owner|ownership|who leads)\b/i.test(input.question)) {
-    return `Read: Home can show the loaded IT portfolios and owner roles. Evidence: named individuals are only shown when the tenant data includes that field; otherwise Home reports the named-owner gap.`;
+    const portfolios = readableList(input.packet.org.map((row) => row.team_name).filter(isString).slice(0, 5));
+    return portfolios
+      ? `IT is loaded by portfolio/team: ${portfolios}. The data provides owner roles where available; named individuals are only shown when the tenant supplied that field, otherwise Home reports the named-owner gap.`
+      : "Home can show loaded IT portfolios and owner roles where present. Named individuals are only shown when the tenant supplied that field.";
   }
   const suffix = input.hasGaps
     ? " The loaded data also has field gaps called out below."
     : "";
-  return `Read: Home found loaded rows relevant to this question.\n\nEvidence: The response uses ${orgCount} IT org row(s), ${appCount} application row(s), ${vendorCount} vendor row(s), and ${budgetCount} budget row(s) as supporting metadata; the table below carries the source citations.${suffix}`;
+  return `I found loaded context relevant to this question: ${orgCount} IT org row(s), ${appCount} application row(s), ${vendorCount} vendor row(s), and ${budgetCount} budget row(s).${suffix}`;
+}
+
+function readableList(values: string[]): string | null {
+  const cleaned = values.map(cleanLabel).filter(isString);
+  if (cleaned.length === 0) return null;
+  if (cleaned.length === 1) return cleaned[0];
+  if (cleaned.length === 2) return `${cleaned[0]} and ${cleaned[1]}`;
+  return `${cleaned.slice(0, -1).join(", ")}, and ${cleaned[cleaned.length - 1]}`;
+}
+
+function formatUsd(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    currency: "USD",
+    maximumFractionDigits: 0,
+    notation: Math.abs(value) >= 1_000_000 ? "compact" : "standard",
+    style: "currency",
+  }).format(value);
 }
 
 export function validateHomeKnowResponse(response: HomeKnowResponse): HomeKnowResponse {

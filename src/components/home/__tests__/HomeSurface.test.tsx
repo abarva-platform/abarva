@@ -52,11 +52,16 @@ const payload = {
 } as unknown as IntelligenceBindingPayload;
 
 describe("HomeSurface — real React Context Explorer", () => {
-  it("renders the overview: Home KNOW ask + real signals + the loaded-dimension rail", () => {
+  it("renders the two-pane Home KNOW chat + Context Explorer canvas", () => {
     render(<HomeSurface clientKey="apexretail" payload={payload} />);
-    expect(screen.getByText("Ask what is loaded in your enterprise context.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Ava Home KNOW chat")).toBeInTheDocument();
+    expect(screen.getByText("Ask what is loaded.")).toBeInTheDocument();
     expect(screen.getByLabelText("Ask Home KNOW")).toBeInTheDocument();
     expect(screen.queryByLabelText("Ask Ava")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Context Explorer tabs")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /How is our IT organization structured today/i }),
+    ).toBeInTheDocument();
     // real per-tenant signal (not a fake row-dump)
     expect(
       screen.getByText("Inventory truth is the gate before omnichannel AI scale."),

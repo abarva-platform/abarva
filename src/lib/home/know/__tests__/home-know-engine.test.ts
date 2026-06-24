@@ -406,7 +406,7 @@ describe("Home KNOW contract engine", () => {
     expect(response.intent).toBe("decision_handoff");
     expect(response.answerStatus).toBe("handoff");
     expect(response.handoff?.target).toBe("intelligence");
-    expect(response.prose).toContain("this question asks for a decision");
+    expect(response.prose).toContain("judgment question");
     expect(response.charts).toEqual([]);
     expect(response.safety.frontendTripwireShouldFire).toBe(false);
   });
