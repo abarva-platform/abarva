@@ -13,6 +13,22 @@ The live eval (`scripts/qa/eval-home-know-quality.mjs`, 8 SkyHarbor questions, 2
 - **Required (GOOD):** lead with what IS known — *"SkyHarbor's IT is portfolio-led under the Office of the CDTO, across 18 portfolios spanning Operations Control / IROPS, Flight Operations, Crew Operations, Airport Customer Service, and TechOps / MRO. The technology leaders under the CIO are identifiable by role (EVP CDTO, SVP Ops Technology, …); named individuals are not loaded — that is the gap, not a reason the org can't be described."*
 - This is the exact behaviour the new system-prompt rule (above) forbids: never refuse the whole answer because names are missing when structure/roles/portfolios/counts are present.
 
+## Production-path trace + deploy red flag (URGENT, 2026-06-24)
+Confirmed path from main's source: `HomeKnowAsk` → `POST /api/home/know/ask` → `buildHomeKnowResponse` (template engine, `home-know-engine.ts`) → `homeKnowResponseToAvaAnswer` (thin wrapper, `home-know-agent-answer.ts`) → rendered "Directional answer" (`answerStatus: partial`). **No LLM composer in the path.** The "Golden 5 composer" was a local spike, never deployed — "live isn't using it" is expected, not a regression.
+
+⚠️ **Verify the deploy FIRST.** The exact visible lead ("…cannot be characterized from the available information…") is **not a literal string in main's `home-know-engine.ts`** — it's either assembled from the gap register + counts, or the live ACA revision is a **different/older SHA than main HEAD**. Confirm with `az containerapp revision list -n ca-abarva-web-lab-eastus` and match the active revision's image SHA to main. Fixing main is moot if the live deploy is stale.
+
+## Dev logging (task 2)
+Behind a dev flag, log in `buildHomeKnowResponse`: route hit, classified intent, which prose path ran (template vs LLM graft), `answerStatus`, packet shape (counts of facts/tables/gaps), synthesis-flag state, and LLM success-vs-fallback. So the path is *proven*, not inferred.
+
+## Regression test (task 7)
+Add `src/lib/home/know/__tests__/home-know-synthesis.test.ts`. For the exact question *"how is our IT and business organized today? who are our technology leaders under our CIO?"* with the SkyHarbor packet, assert the produced `prose` does NOT contain: `cannot be characterized`, `cannot be identified`, `I found`, `\brows\b`, a lead starting with `missing source support`, raw IDs, or debug language — and DOES lead with the known structure (portfolio-led / role-level ownership). Flag-on (mock the LLM to the target) → gate passes; flag-off → document the template still fails (known baseline).
+
+## Acceptance question + target (tasks 5, 8) — do not deploy until this passes live
+Question: *"how is our IT and business organized today? who are our technology leaders under our CIO?"*
+Target lead style: *"SkyHarbor's loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible by executive role and domain — operations technology, enterprise platforms, cloud, data & analytics, security, shared services — but named individual leaders under the CIO are not loaded. aVa can explain the operating model and role-level accountability, but should not invent a people-org chart until leader-name data is added."*
+The live answer must START with the business synthesis, not the gap. Browser screenshot proof required after fix, in a DB-connected env.
+
 ## The graft point
 `src/lib/home/know/home-know-engine.ts`, in the response-assembly function that ends with `return validateHomeKnowResponse({ … prose: homeKnowProse({ … }) … })`. At that point `input.tenantKey`, `input.packet`, `intent`, `question`, the computed `facts` array, and the `gaps` array are all in scope. Replace **only** the `prose` value.
 
