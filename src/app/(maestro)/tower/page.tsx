@@ -1,17 +1,33 @@
-import { AppShell } from "@/components/shell/AppShell";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
-import { TowerIframeContainer } from "./TowerIframeContainer";
+import { TowerIndexPage, type TowerSubstrateCounts } from "@/components/tower/TowerIndexPage";
+import { buildAtlasTowerCurrentState } from "@/lib/atlas/tower-grounding";
+import { resolveTowerTab } from "@/lib/tower/tower-lens-tabs-view";
 
 export const metadata = { title: "IT Investment Tower · AbarVa" };
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function TowerPage() {
+function substrateCountsFromState(
+  state: Awaited<ReturnType<typeof buildAtlasTowerCurrentState>>,
+): TowerSubstrateCounts {
+  return {
+    initiatives: state.substrateCounts.initiatives,
+    vendors: state.substrateCounts.vendors,
+    kpis: state.substrateCounts.kpiSnapshots,
+    decisions: state.substrateCounts.decisions,
+    stakeholderNotes: state.substrateCounts.stakeholderNotes,
+    scenarios: state.substrateCounts.scenarios,
+  };
+}
+
+export default async function TowerPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const { tab } = await searchParams;
   const activeClient = await getActiveClientRow();
-  const frameSrc = activeClient?.key
-    ? `/api/tower/v2-frame?client=${encodeURIComponent(activeClient.key)}`
-    : "/api/tower/v2-frame";
   const activeTenantName =
     canonicalClientDisplayName({
       key: activeClient?.key,
@@ -19,27 +35,28 @@ export default async function TowerPage() {
     }) ??
     activeClient?.name ??
     "Your workspace";
+  const activeTab = resolveTowerTab(tab);
+
+  const towerState = activeClient?.id
+    ? await buildAtlasTowerCurrentState({
+        clientId: activeClient.id,
+        surfaceContext: { activeTowerLens: "value" },
+      }).catch(() => null)
+    : null;
 
   return (
-    <AppShell
-      surface="tower"
-      topBarProps={{
-        tenantName: activeTenantName,
-        showLocked: Boolean(activeClient?.key),
-        context: "Tower",
-      }}
-      hasTenantKey={Boolean(activeClient?.key)}
-    >
-      <main
-        style={{
-          flex: 1,
-          minHeight: 0,
-          overflow: "hidden",
-          background: "#f7f5ef",
-        }}
-      >
-        <TowerIframeContainer src={frameSrc} />
-      </main>
-    </AppShell>
+    <TowerIndexPage
+      tenantName={activeTenantName}
+      context="Tower"
+      clientId={activeClient?.id}
+      activeTab={activeTab}
+      towerToday={towerState?.todayIso}
+      initiatives={towerState?.initiatives}
+      vendors={towerState?.vendors}
+      bandMetrics={towerState?.bandMetrics}
+      pressuresView={towerState?.pressuresView}
+      atlasObservationsView={towerState?.atlasObservationsView}
+      substrateCounts={towerState ? substrateCountsFromState(towerState) : undefined}
+    />
   );
 }
