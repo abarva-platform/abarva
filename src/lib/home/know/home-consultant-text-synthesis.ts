@@ -82,6 +82,8 @@ Return only the final user-facing answer text.`;
 
 const FORBIDDEN_RE =
   /\b(cannot be characterized|cannot be identified|I found|missing source support|Current-state read|\bread\b|Evidence points|\bevidence\b|\brows\b|home_know|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|typed facts|relationship paths|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
+const INTERNAL_COUNT_RE =
+  /\b\d[\d,]*\s+(?:canonical\s+)?(?:entities|facts|relationships|citations)\b/i;
 const RAW_ID_RE =
   /\b(?:APP|DP|CON|NODE|EDGE)-\d{3,}\b|\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
 const RAW_ID_REPLACE =
@@ -412,6 +414,7 @@ export function validateHomeConsultantText(args: {
   const text = args.text.trim();
   if (!text) issues.push("empty_text");
   if (FORBIDDEN_RE.test(text)) issues.push("forbidden_language");
+  if (INTERNAL_COUNT_RE.test(text)) issues.push("internal_count_language");
   if (RAW_ID_RE.test(text)) issues.push("raw_id");
   if (
     !args.dossier.answerBoundary.handoffTarget &&

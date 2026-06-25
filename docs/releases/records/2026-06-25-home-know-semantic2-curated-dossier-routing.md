@@ -34,6 +34,7 @@ Home/aVa now attempts to answer from the curated Semantic2 dossier table before 
 - Follow-up hardening: broad `browse` answers now reject Claude output that collapses branch options into a wall of text, causing Home to fall back to the deterministic branch-first render while retaining prompt trace evidence.
 - Follow-up render fix: text normalization now preserves paragraph and branch-list line breaks instead of flattening the final branch-first answer.
 - Follow-up language guard: Claude output that exposes internal semantic/source mechanics such as "curated semantic," "typed facts," or "relationship paths" is rejected or normalized to client-facing language.
+- Follow-up branch summary fix: deterministic fallback branch options no longer expose internal entity/fact/relationship/citation counts; they render dimension-specific exploration choices instead.
 - `src/app/api/home/know/ask/route.ts`: debug-only trace payload includes the exact prompt snapshot.
 - `src/lib/home/know/home-know-contract.ts` and `src/lib/semantic-dossiers/types.ts`: typed trace/branch option fields.
 
