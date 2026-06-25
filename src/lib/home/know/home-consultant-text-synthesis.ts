@@ -427,6 +427,17 @@ export function validateHomeConsultantText(args: {
   ) {
     issues.push("false_absence_despite_partial_evidence");
   }
+  if (args.response.intent === "browse") {
+    const branchLineCount = text
+      .split(/\r?\n/)
+      .filter((line) => /^\s*[-*]\s+\S/.test(line)).length;
+    if (!/where do you want to go deeper/i.test(text) || branchLineCount < 2) {
+      issues.push("browse_branch_layout_missing");
+    }
+    if (text.split(/\n{2,}/).some((paragraph) => paragraph.length > 650)) {
+      issues.push("browse_paragraph_too_long");
+    }
+  }
   return [...new Set(issues)];
 }
 
