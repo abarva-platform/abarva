@@ -449,6 +449,8 @@ export function HomeSurface({
   const [dimKey, setDimKey] = useState<string | null>(null);
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [isBusy, setIsBusy] = useState(false);
+  const tenantKey = payload?.tenant.key ?? clientKey ?? null;
+  const tenantDisplayName = payload?.tenant.displayName ?? "Enterprise";
   const selected = dimKey
     ? (dims.find((d) => d.dimension === dimKey) ?? null)
     : null;
@@ -481,8 +483,8 @@ export function HomeSurface({
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             question,
-            client: clientKey ?? payload?.tenant.key ?? null,
-            tenantKey: payload?.tenant.key ?? clientKey ?? null,
+            client: clientKey ?? tenantKey,
+            tenantKey,
           }),
         });
         const json: unknown = await res.json();
@@ -522,7 +524,7 @@ export function HomeSurface({
         setIsBusy(false);
       }
     },
-    [clientKey, payload?.tenant.key],
+    [clientKey, tenantKey],
   );
 
   const suggestedActions = useMemo<SuggestedAction[]>(
@@ -599,7 +601,7 @@ export function HomeSurface({
     <AvaChatShell
       agent={{
         name: "aVa",
-        role: `${payload?.tenant.displayName ?? "Enterprise"} Home KNOW advisor`,
+        role: `${tenantDisplayName} Home KNOW advisor`,
       }}
       canvas={canvas}
       defaultLeftPercent={34}
@@ -611,7 +613,7 @@ export function HomeSurface({
       surface="home"
       surfaceContext={{
         clientKey,
-        tenantKey: payload?.tenant.key ?? clientKey,
+        tenantKey,
         tabs,
       }}
       thread={thread}
