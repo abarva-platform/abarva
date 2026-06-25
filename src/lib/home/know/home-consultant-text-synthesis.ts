@@ -1,5 +1,7 @@
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import {
+  ALL_CLIENTS,
+  CLIENT_KEY_TO_DB_NAME,
   CLIENT_KEY_TO_INDUSTRY_CODE,
   canonicalClientDisplayName,
 } from "@/lib/client-config";
@@ -634,15 +636,21 @@ function mentionsMissingCharacterization(text: string): boolean {
 }
 
 function detectCrossTenantLeak(text: string, tenantKey: string): string | null {
-  const normalized = tenantKey.toLowerCase();
-  const tenantAliases: Record<string, string[]> = {
-    skyharbor: ["Lakeshore", "Apex", "Meridian", `First ${"Capital"}`, "Morgan Street", "Northstar"],
-    "skyharbor-air": ["Lakeshore", "Apex", "Meridian", `First ${"Capital"}`, "Morgan Street", "Northstar"],
-    lakeshore: ["SkyHarbor", "Apex", "Meridian", `First ${"Capital"}`, "Morgan Street", "Northstar"],
-    "lakeshore-industries": ["SkyHarbor", "Apex", "Meridian", `First ${"Capital"}`, "Morgan Street", "Northstar"],
-  };
-  const leaks = tenantAliases[normalized] ?? [];
+  const normalized = normalizeClientKeyForLeakCheck(tenantKey);
+  const registryAliases = Object.entries(CLIENT_KEY_TO_DB_NAME)
+    .filter(([key]) => key !== normalized)
+    .flatMap(([, aliases]) => aliases);
+  const displayAliases = ALL_CLIENTS
+    .filter((client) => client.id !== normalized)
+    .flatMap((client) => [client.name, client.shortName]);
+  const leaks = [...new Set([...registryAliases, ...displayAliases])]
+    .map((alias) => alias.trim())
+    .filter((alias) => alias.length >= 8);
   return leaks.find((name) => new RegExp(`\\b${escapeRegExp(name)}\\b`, "i").test(text)) ?? null;
+}
+
+function normalizeClientKeyForLeakCheck(tenantKey: string): string {
+  return tenantKey.toLowerCase().replace(/-air$|-holdings$|-industries$/g, "");
 }
 
 function redactTextPreview(text: string): string {

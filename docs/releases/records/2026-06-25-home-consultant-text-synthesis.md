@@ -14,6 +14,8 @@ Home/aVa no longer requires Claude to return strict JSON for consultant synthesi
 
 Follow-up from live proof: the 25K default token budget must use Anthropic streaming. The text-first composer now calls the audited client with `messages.stream(...).finalMessage()` so Claude can produce the long-form plain-text answer instead of tripping the non-streaming long-request guard.
 
+Second live-proof hardening: cross-tenant validation now matches full tenant names, not ordinary standalone words such as `Apex`, so valid consultant prose is not discarded by an over-broad leakage tripwire.
+
 ## Layer Impact
 
 - `global-control-lane`: Changes the shared Home KNOW answer synthesis path and feature-flagged Claude behavior for opted-in tenants.
@@ -44,6 +46,7 @@ Follow-up from live proof: the 25K default token budget must use Anthropic strea
 
 - `npx jest src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts --runInBand`: pass, 12/12.
 - Follow-up test assertion: the 25K default budget uses `messages.stream`, not non-streaming `messages.create`.
+- Follow-up test assertion: `Apex Retail` is blocked as cross-tenant content, while ordinary `apex-level` wording is allowed.
 - `npx jest src/lib/home/know/__tests__/home-know-engine.test.ts --runInBand`: pass, 27/27.
 - `npx jest src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts src/lib/home/know/__tests__/home-know-engine.test.ts --runInBand`: pass, 39/39.
 - `npx eslint src/lib/home/know/home-consultant-text-synthesis.ts src/lib/home/know/home-know-engine.ts src/lib/home/know/evaluate-home-consultant-synthesis.ts src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts src/app/api/home/know/ask/route.ts src/lib/features/registry.ts`: pass.
