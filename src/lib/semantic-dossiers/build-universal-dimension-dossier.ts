@@ -53,7 +53,7 @@ function inferSourceDimensionFamily(sourceKey: string): DossierDimensionFamily {
 }
 
 function summarizeSource(sourceKey: string, rows: DossierRecord[]): string {
-  if (rows.length === 0) return `${sourceKey} is not loaded for this dossier.`;
+  if (rows.length === 0) return `Missing required source family for this dossier: ${sourceKey}.`;
   const columns = uniq(rows.flatMap((row) => Object.keys(row))).slice(0, 8);
   return `${sourceKey} contributes ${rows.length} evidence item${rows.length === 1 ? '' : 's'} across ${columns.join(', ')}.`;
 }
@@ -236,7 +236,7 @@ function buildOrganizationDossier(input: BuildUniversalDimensionDossierInput, do
     dossier.gaps.push(
       gap(
         'named_leadership_missing',
-        'Named individual leadership is not loaded in this dossier.',
+        'Missing field: named individual leadership / person-name mapping.',
         'The answer can describe role and team accountability, but must not invent a named org chart.',
         ['F18 leadership-org-chart', 'client-approved HR/org roster'],
       ),
@@ -258,7 +258,7 @@ function buildOrganizationDossier(input: BuildUniversalDimensionDossierInput, do
     dossier.gaps.push(
       gap(
         'team_application_join_missing',
-        'Application-to-team ownership joins are not loaded.',
+        'Missing relationship family: application-to-team ownership joins.',
         'Application accountability and org impact answers will be less precise.',
         ['F19 team-application-ownership', 'CMDB/application owner export'],
       ),
@@ -333,8 +333,8 @@ export function buildUniversalDimensionDossier(input: BuildUniversalDimensionDos
     dossier.gaps.push(
       gap(
         `${coverage.sourceKey}_missing`,
-        `${coverage.sourceKey} is not loaded.`,
-        `${coverage.purpose} cannot be deterministically answered until this source is loaded.`,
+        `Missing required source family: ${coverage.sourceKey}.`,
+        `${coverage.purpose} needs this source family before aVa can answer deterministically.`,
         [coverage.sourceKey],
       ),
     );

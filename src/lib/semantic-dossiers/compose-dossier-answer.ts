@@ -124,7 +124,7 @@ function composeGapAnswer(dossier: UniversalDimensionDossier): string {
       ? `${adjacentSections.length} adjacent source section${adjacentSections.length === 1 ? '' : 's'}`
       : 'few adjacent source sections';
 
-  return `${tenantBoundaryLead(dossier)}${possessive(label)} biggest Home context gaps are precision gaps, not a blank slate. The dossier attaches ${primaryPhrase} and ${adjacentPhrase}, so aVa can describe the current-state shape and supporting relationships, but it must stay careful where source families do not prove names, ownership joins, freshness, or control status. The specific gaps to close are ${gapLabels}. That means the next enrichment pass should target the missing source families directly instead of asking the model to infer them.`;
+  return `${tenantBoundaryLead(dossier)}${possessive(label)} biggest Home context gaps are precision gaps, not a blank slate. The dossier attaches ${primaryPhrase} and ${adjacentPhrase}, so aVa can describe the current-state shape and supporting relationships, while keeping names, ownership joins, freshness, and control status inside the evidence boundary. The specific gaps to close are ${gapLabels}. That means the next enrichment pass should target those evidence families directly instead of asking the model to infer them.`;
 }
 
 function composeGenericKnowAnswer(dossier: UniversalDimensionDossier): string {
@@ -157,7 +157,7 @@ function composeOrganizationAnswer(dossier: UniversalDimensionDossier): string {
           .filter((entry) => entry.includes('('))
           .slice(0, 8)
           .join(', ')}.`
-      : ' Named individual leaders are not fully loaded, so the answer should stay at role/domain level until client-approved people data is added.';
+      : ' Missing field: named individual leadership / person-name mapping. The answer should stay at role/domain level until client-approved people data is added.';
 
   const operatingModel =
     ` The operating model coverage includes ${functionCount} business-function areas, ${teamCount} IT/technology domains, and ${appOwnershipCount} application-to-team ownership links. ` +
