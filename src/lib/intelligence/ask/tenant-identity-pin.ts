@@ -247,14 +247,60 @@ export function detectOffTenantMention(args: {
   if (!profile) return { detected: false };
 
   const offLimits = [...profile.offLimitsTenantNames].sort((a, b) => b.length - a.length);
-  const response = args.response.toLowerCase();
   for (const term of offLimits) {
-    if (response.includes(term.toLowerCase())) {
+    if (hasTenantSpecificOffLimitMention(args.response, term)) {
       return { detected: true, term };
     }
   }
 
   return { detected: false };
+}
+
+function hasTenantSpecificOffLimitMention(
+  response: string,
+  offLimitTenantName: string,
+): boolean {
+  const escaped = offLimitTenantName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const mention = new RegExp(escaped, "gi");
+  let match: RegExpExecArray | null;
+  while ((match = mention.exec(response)) !== null) {
+    const before = response.slice(Math.max(0, match.index - 90), match.index);
+    const after = response.slice(
+      match.index + match[0].length,
+      match.index + match[0].length + 120,
+    );
+    const window = `${before}${match[0]}${after}`;
+    if (
+      /\b(active tenant|your organization|you(?:'re|\s+are)|session|authenticated|client)\b/i.test(
+        before,
+      )
+    ) {
+      return true;
+    }
+    if (
+      /\b(facts?|sources?|context|budget|capital plan|portfolio|initiatives?|applications?|vendors?|contracts?|roadmap|loaded|retrieved)\b/i.test(
+        after,
+      )
+    ) {
+      return true;
+    }
+    if (
+      /\b(use|using|from|based on|grounded in|loaded from|retrieved from)\b/i.test(
+        before,
+      ) &&
+      /\b(facts?|sources?|context|data|rows?|records?)\b/i.test(after)
+    ) {
+      return true;
+    }
+    if (
+      /\b(importing|avoid|unlike|compared with|comparison|peer|pattern|assumption)\b/i.test(
+        window,
+      )
+    ) {
+      continue;
+    }
+  }
+  return false;
 }
 
 function normalizeTenantPinClientKey(value: string | null | undefined): ClientKey | null {

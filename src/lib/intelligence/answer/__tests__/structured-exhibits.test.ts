@@ -34,7 +34,7 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
-    expect(exhibits.tables).toHaveLength(0);
+    expect(exhibits.tables[0]?.title).toBe("Chart Evidence Required");
     expect(exhibits.charts).toHaveLength(0);
     expect(exhibits.prose).toContain(
       "I do not see connected numeric row/column source data for a defensible chart.",
@@ -214,7 +214,7 @@ describe("buildStructuredExhibits", () => {
 
     expect(exhibits.citations).toHaveLength(1);
     expect(exhibits.citations[0]?.sourceClass).toBe("tenant-fact");
-    expect(exhibits.tables).toHaveLength(0);
+    expect(exhibits.tables[0]?.title).toBe("Chart Evidence Required");
     expect(exhibits.charts).toHaveLength(0);
     expect(exhibits.prose).toContain(
       "I do not see connected numeric row/column source data for a defensible chart.",
@@ -241,7 +241,7 @@ describe("buildStructuredExhibits", () => {
       "Here are planning ranges from the cited context.",
     );
     expect(exhibits.prose).toContain(
-      "Next move: validate tenant-specific numbers before board use.",
+      "The next move is to validate tenant-specific numbers before board use.",
     );
     expect(exhibits.prose).not.toContain("| Use case |");
     expect(exhibits.tables[0]).toEqual(
@@ -311,10 +311,9 @@ describe("buildStructuredExhibits", () => {
         "Honest read first: I don't have the full Apex IT landscape inventory loaded, so I cannot list every analytics vendor. What the loaded context does tell me is the strategic shape. Apex's Retail Lakehouse & Customer Inventory Graph has $95M committed and $12M realized. Analytics technology cut | Layer | Typical stack | |---|---| | Lakehouse / warehouse | Databricks or Snowflake | | Legacy marts | Teradata / Oracle / SQL Server | This is the consolidation bet meant to replace fragmented banner-level analytics. Inventory truth is the gating risk for any AI workload on top of it. Next move: assign the accountable data owner to validate the missing tenant evidence before approving a board number.",
     });
 
-    expect(exhibits.prose).toContain("Read:");
-    expect(exhibits.prose).toContain("Evidence:");
-    expect(exhibits.prose).toContain("Implication:");
-    expect(exhibits.prose).toContain("Next move:");
+    expect(exhibits.prose).toContain("The supporting evidence is that");
+    expect(exhibits.prose).toContain("That means");
+    expect(exhibits.prose).toContain("The next move is to");
     expect(exhibits.prose).not.toContain("| Layer |");
     expect(exhibits.tables[0]).toEqual(
       expect.objectContaining({
@@ -354,14 +353,11 @@ describe("buildStructuredExhibits", () => {
         owner_team: "Customer data team",
       }),
     ]);
-    expect(exhibits.prose).toContain("Read:");
-    expect(exhibits.prose).toContain("Evidence:");
-    expect(exhibits.prose).toContain("Implication:");
-    expect(exhibits.prose).toContain("Next move:");
+    expect(exhibits.prose).toContain("The supporting evidence is that");
+    expect(exhibits.prose).toContain("That means");
+    expect(exhibits.prose).toContain("The next move is to");
     expect(exhibits.prose).not.toContain("| Data Product |");
-    expect([
-      ...exhibits.prose.matchAll(/^(Read|Evidence|Implication|Next move):/gim),
-    ]).toHaveLength(4);
+    expect(exhibits.prose).not.toMatch(/^(Read|Evidence|Implication|Next move):/gim);
   });
 
   it("strips orphan table fragments when the model emits an incomplete visual table", () => {
@@ -373,8 +369,8 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.tables[0]?.title).toBe("Evidence Required");
-    expect(exhibits.prose).toContain("Read:");
-    expect(exhibits.prose).toContain("Next move:");
+    expect(exhibits.prose).toContain("First Capital Financial");
+    expect(exhibits.prose).toContain("The next move is to");
     expect(exhibits.prose).not.toContain("|");
     expect(exhibits.prose).not.toContain("Marqeta Dispute Manager");
   });
@@ -457,7 +453,7 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
-    expect(exhibits.tables).toHaveLength(0);
+    expect(exhibits.tables[0]?.title).toBe("Chart Evidence Required");
     expect(exhibits.charts).toHaveLength(0);
     expect(exhibits.prose).toContain(
       "I do not see connected numeric row/column source data for a defensible chart.",
@@ -476,6 +472,54 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.tables[0]?.rows[0]).toEqual(
       expect.objectContaining({
         status: "No cited source available for the requested rows",
+      }),
+    );
+  });
+
+  it("renders a cited chart gap table instead of bare prose when chart rows are not extractable", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: { ...routing, outputShape: "chart" },
+      sources,
+      prose:
+        "The strongest signal is ticket deflection, but the answer has no exact comparable chart rows. The retrieved evidence points to ServiceNow and finance support, but the monthly ticket baseline still needs validation.",
+    });
+
+    expect(exhibits.charts).toHaveLength(0);
+    expect(exhibits.tables[0]).toEqual(
+      expect.objectContaining({
+        title: "Chart Evidence Required",
+        rows: [
+          expect.objectContaining({
+            evidence:
+              "Connected numeric row/column source data for the requested chart",
+            status:
+              "No exact comparable numeric rows were present in the retrieved cited sources",
+          }),
+        ],
+      }),
+    );
+  });
+
+  it("renders a cited graph gap table instead of bare prose when edge rows are not extractable", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: { ...routing, outputShape: "graph" },
+      sources,
+      prose:
+        "The integration dependency picture is concentrated in a few platforms, but the answer did not include From / Relationship / To rows that can be safely rendered as a graph.",
+    });
+
+    expect(exhibits.graphs).toHaveLength(0);
+    expect(exhibits.tables[0]).toEqual(
+      expect.objectContaining({
+        title: "Graph Evidence Required",
+        rows: [
+          expect.objectContaining({
+            evidence:
+              "Source-to-target relationship edge pairs for the requested graph",
+            status:
+              "No defensible edge rows were present in the retrieved cited sources",
+          }),
+        ],
       }),
     );
   });

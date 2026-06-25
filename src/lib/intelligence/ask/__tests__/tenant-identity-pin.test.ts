@@ -125,10 +125,21 @@ describe('buildTenantIdentityPin', () => {
 });
 
 describe('detectOffTenantMention', () => {
-  it('detects any off-tenant name in a non-comparison SkyHarbor response', () => {
+  it('allows defensive off-tenant references that are not used as evidence', () => {
     const result = detectOffTenantMention({
       clientKey: 'skyharbor',
       response: 'SkyHarbor should avoid importing Apex Retail assumptions into the modernization readout.',
+      query: 'What is one sensible next action for the SkyHarbor CTO?',
+    });
+
+    expect(result.detected).toBe(false);
+  });
+
+  it('detects off-tenant names used as tenant evidence in a non-comparison SkyHarbor response', () => {
+    const result = detectOffTenantMention({
+      clientKey: 'skyharbor',
+      response:
+        'SkyHarbor should use the Apex Retail capital plan facts to size the modernization readout.',
       query: 'What is one sensible next action for the SkyHarbor CTO?',
     });
 
