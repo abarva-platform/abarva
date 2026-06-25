@@ -166,7 +166,8 @@ export interface HomeKnowSafety {
     route: "/api/home/know/ask" | "home-know-engine";
     composer:
       | "golden_home_know_semantic_synthesis"
-      | "home_consultant_claude_synthesis"
+      | "claude_text_synthesis"
+      | "deterministic_fallback"
       | "home_know_template_fallback"
       | "home_know_decision_handoff"
       | "home_know_blocked";

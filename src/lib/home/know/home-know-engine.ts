@@ -20,11 +20,11 @@ import { buildHomeKnowDimensionDossier } from "@/lib/home/know/build-universal-d
 import { buildHomeKnowResponseFromDossier } from "@/lib/home/know/compose-dossier-answer";
 import { hasUsableDossierEvidence } from "@/lib/home/know/has-usable-dossier-evidence";
 import {
-  applyHomeConsultantSynthesisFailureTrace,
-  applyHomeConsultantSynthesis,
-  isHomeConsultantSynthesisResult,
-  synthesizeHomeConsultantDossier,
-} from "@/lib/home/know/home-consultant-dossier-synthesis";
+  applyHomeConsultantTextSynthesis,
+  applyHomeConsultantTextSynthesisFailureTrace,
+  isHomeConsultantTextSynthesisResult,
+  synthesizeHomeConsultantText,
+} from "@/lib/home/know/home-consultant-text-synthesis";
 import { synthesizeHomeKnowProse } from "@/lib/home/know/home-know-synthesis";
 
 export interface HomeDimensionCoverageRow {
@@ -348,17 +348,17 @@ export async function buildHomeKnowResponse(
           "home_know_claude_synthesis",
         )
       ) {
-        const synthesis = await synthesizeHomeConsultantDossier({
+        const synthesis = await synthesizeHomeConsultantText({
           dossier,
           deterministicResponse: validated,
         });
-        if (isHomeConsultantSynthesisResult(synthesis)) {
+        if (isHomeConsultantTextSynthesisResult(synthesis)) {
           return validateHomeKnowResponse(
-            applyHomeConsultantSynthesis(validated, synthesis),
+            applyHomeConsultantTextSynthesis(validated, synthesis),
           );
         }
         if (synthesis?.attempted) {
-          return applyHomeConsultantSynthesisFailureTrace(validated, synthesis);
+          return applyHomeConsultantTextSynthesisFailureTrace(validated, synthesis);
         }
       }
       return validated;

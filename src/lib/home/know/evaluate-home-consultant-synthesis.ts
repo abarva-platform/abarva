@@ -1,12 +1,11 @@
 import { buildHomeKnowDimensionDossier } from "@/lib/home/know/build-universal-dimension-dossier";
 import { buildHomeKnowResponseFromDossier } from "@/lib/home/know/compose-dossier-answer";
 import {
-  buildHomeConsultantDossierPromptPacket,
-  isHomeConsultantSynthesisResult,
-  synthesizeHomeConsultantDossier,
-  type HomeConsultantDossierPromptPacket,
-  type HomeConsultantDossierSynthesisOutput,
-} from "@/lib/home/know/home-consultant-dossier-synthesis";
+  buildHomeConsultantTextPromptPacket,
+  isHomeConsultantTextSynthesisResult,
+  synthesizeHomeConsultantText,
+  type HomeConsultantTextPromptPacket,
+} from "@/lib/home/know/home-consultant-text-synthesis";
 import { validateHomeKnowResponse } from "@/lib/home/know/home-know-engine";
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
 import { validateHomeKnowAnswer } from "@/lib/home/know/home-answer-quality-gate";
@@ -28,9 +27,9 @@ export interface HomeConsultantSynthesisEvaluationResult {
     citationCount: number;
     gapCount: number;
   };
-  promptPacket: HomeConsultantDossierPromptPacket;
+  promptPacket: HomeConsultantTextPromptPacket;
   deterministicOutput: string;
-  claudeOutput: HomeConsultantDossierSynthesisOutput | null;
+  claudeOutput: string | null;
   finalRenderedAnswer: string;
   qualityGate: ReturnType<typeof validateHomeKnowAnswer>;
   differenceAnalysis: string;
@@ -52,26 +51,18 @@ export async function evaluateHomeConsultantSynthesisCase(
       dossier,
     }),
   );
-  const promptPacket = buildHomeConsultantDossierPromptPacket({
+  const promptPacket = buildHomeConsultantTextPromptPacket({
     dossier,
     response: deterministicResponse,
   });
-  const synthesis = await synthesizeHomeConsultantDossier({
+  const synthesis = await synthesizeHomeConsultantText({
     dossier,
     deterministicResponse,
   });
-  const successfulSynthesis = isHomeConsultantSynthesisResult(synthesis)
+  const successfulSynthesis = isHomeConsultantTextSynthesisResult(synthesis)
     ? synthesis
     : null;
-  const finalRenderedAnswer = successfulSynthesis
-    ? [
-        successfulSynthesis.output.directAnswer,
-        successfulSynthesis.output.currentStateSynthesis,
-        successfulSynthesis.output.businessImplication,
-      ]
-        .filter(Boolean)
-        .join("\n\n")
-    : deterministicResponse.prose;
+  const finalRenderedAnswer = successfulSynthesis ? successfulSynthesis.text : deterministicResponse.prose;
   const qualityGate = validateHomeKnowAnswer({
     answer: {
       directAnswer: finalRenderedAnswer,
@@ -96,14 +87,14 @@ export async function evaluateHomeConsultantSynthesisCase(
     },
     promptPacket,
     deterministicOutput: deterministicResponse.prose,
-    claudeOutput: successfulSynthesis?.output ?? null,
+    claudeOutput: successfulSynthesis?.text ?? null,
     finalRenderedAnswer,
     qualityGate,
-    differenceAnalysis: compareOutputs(deterministicResponse, successfulSynthesis?.output ?? null),
+    differenceAnalysis: compareOutputs(deterministicResponse, successfulSynthesis?.text ?? null),
     recommendation: recommendationFor(
       qualityGate,
       deterministicResponse,
-      successfulSynthesis?.output ?? null,
+      successfulSynthesis?.text ?? null,
     ),
   };
 }
@@ -120,32 +111,21 @@ export async function evaluateHomeConsultantSynthesisCases(
 
 function compareOutputs(
   deterministic: HomeKnowResponse,
-  claude: HomeConsultantDossierSynthesisOutput | null,
+  claude: string | null,
 ): string {
   if (!claude) {
     return "Claude synthesis was not used; deterministic dossier output remains the final answer.";
   }
   const deterministicLength = deterministic.prose.length;
-  const claudeLength =
-    claude.directAnswer.length +
-    claude.currentStateSynthesis.length +
-    claude.businessImplication.length;
-  const implication = claude.businessImplication.trim().length > 0
-    ? "Claude added a business implication section."
-    : "Claude did not add a business implication section.";
-  return `Deterministic prose length ${deterministicLength}; Claude synthesis length ${claudeLength}. ${implication}`;
+  return `Deterministic prose length ${deterministicLength}; Claude text synthesis length ${claude.length}.`;
 }
 
 function recommendationFor(
   gate: ReturnType<typeof validateHomeKnowAnswer>,
   deterministic: HomeKnowResponse,
-  claude: HomeConsultantDossierSynthesisOutput | null,
+  claude: string | null,
 ): HomeConsultantSynthesisEvaluationResult["recommendation"] {
   if (gate.critical) return "needs_fix";
   if (!claude) return "fallback";
-  const claudeLength =
-    claude.directAnswer.length +
-    claude.currentStateSynthesis.length +
-    claude.businessImplication.length;
-  return claudeLength > deterministic.prose.length ? "use_claude" : "fallback";
+  return claude.length >= deterministic.prose.length * 0.8 ? "use_claude" : "fallback";
 }
