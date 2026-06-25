@@ -162,6 +162,10 @@ const GRAPH_RE =
 const EXACT_UNKNOWABLE_RE =
   /\b(exact|precise|to the dollar|specific date|exact date|exactly what|precise headcount|precise nps|roi percentage|will .* deliver|will .* be in \d{4}|next quarter)\b/i;
 
+function shouldUsePacketBeforeDossier(question: string): boolean {
+  return EXACT_UNKNOWABLE_RE.test(question) || GRAPH_RE.test(question);
+}
+
 export function classifyHomeKnowIntent(question: string): HomeKnowIntent {
   const normalized = question.trim().toLowerCase();
   if (!normalized) return "browse";
@@ -271,6 +275,46 @@ export async function buildHomeKnowResponse(
       tenantKey: "unknown",
       question: input.question,
       prose: "I do not see an active tenant for this Home request.",
+    });
+  }
+  if (shouldUsePacketBeforeDossier(input.question)) {
+    const packet = await fetchHomeKnowPacket(tenantKey);
+    const response = buildHomeKnowResponseFromPacket({
+      tenantKey,
+      question: input.question,
+      packet,
+    });
+    const evidence = hasUsableDossierEvidence(response);
+    return withComposerTrace(response, {
+      route: "/api/home/know/ask",
+      composer: "home_know_template_fallback",
+      goldenComposerAttempted: false,
+      goldenComposerUsed: false,
+      fallbackUsed: true,
+      dimensionsUsed: response.dimensionsUsed,
+      factsBound: response.facts.length,
+      tablesBound: response.tables.length,
+      chartsBound: response.charts.length,
+      graphsBound: response.graphs.length,
+      citationsBound: response.citations.length,
+      sourceCoverageBound: response.citations.filter(
+        (citation) => citation.sourceClass === "tenant-source-file",
+      ).length,
+      sectionsBound: 0,
+      rollupsBound: 0,
+      relationshipPathsBound: response.graphs.reduce(
+        (sum, graph) => sum + graph.edges.length,
+        0,
+      ),
+      metricsBound: response.charts.reduce(
+        (sum, chart) => sum + chart.data.length,
+        0,
+      ),
+      gapsBound: response.gaps.length,
+      usableEvidence: evidence.usable,
+      evidenceChannels: evidence.evidenceChannels,
+      answerStatus: response.answerStatus,
+      reason: "Safety/artifact request handled by packet builder before broad dossier synthesis.",
     });
   }
   const dossierTenantKey = input.client?.trim() || tenantKey;

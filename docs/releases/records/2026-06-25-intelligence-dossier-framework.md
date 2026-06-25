@@ -59,6 +59,14 @@ Second follow-up validation after the deployed matrix exposed readable/visual ga
 - `npx eslint src/lib/ava-answer/composeAvaAnswer.ts src/lib/ava-answer/homeComposer.ts src/lib/ava-answer/__tests__/composeAvaAnswer.test.ts` passed.
 - `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false` passed.
 
+Third follow-up after the deep reality crawl exposed Home-bridged Intelligence defects:
+
+- Live crawl against `ca-abarva-web-lab-eastus--mf09887dd` passed the signed-in tenant matrix but only scored `206/290` on the deeper question bank.
+- Root cause: Home KNOW bridge requests could let a request-body `client` influence tenant resolution in fence probes, and exact/graph prompts could be answered by the broad dimension-dossier composer before the specialized safety/artifact packet builder ran.
+- Changed Home KNOW bridge resolution to prefer the signed-in/session tenant and block request-body tenant mismatches before retrieval.
+- Changed Home KNOW exact/graph questions to use the deterministic packet builder before broad dossier synthesis, preserving exact-value refusals and graph artifact/gap responses.
+- Validation pending on this follow-up PR.
+
 ## Rollout Plan
 
 Merge to main through PR, let the repo-owned Azure Container Apps main deployment build and deploy the approved image, then run signed-in Intelligence dossier crawl for SkyHarbor and Lakeshore before claiming live product completion.
