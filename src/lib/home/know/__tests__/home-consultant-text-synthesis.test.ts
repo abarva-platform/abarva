@@ -465,6 +465,23 @@ describe("home consultant text synthesis", () => {
     ).toEqual(expect.arrayContaining(["browse_branch_layout_missing"]));
   });
 
+  it("rejects and normalizes internal semantic wording from Claude", () => {
+    const raw =
+      "For SkyHarbor Air, the loaded context is backed by a curated semantic evidence source with typed facts and resolved relationship paths.";
+
+    expect(normalizeHomeConsultantUserFacingText(raw)).toBe(
+      "For SkyHarbor Air, the loaded context is backed by a loaded tenant context with loaded facts and loaded relationship maps.",
+    );
+
+    expect(
+      validateHomeConsultantText({
+        text: raw,
+        dossier,
+        response,
+      }),
+    ).toEqual(expect.arrayContaining(["forbidden_language"]));
+  });
+
   it("falls back cleanly on timeout", async () => {
     process.env.HOME_KNOW_CLAUDE_TIMEOUT_MS = "1";
     mockClaudeText(

@@ -74,12 +74,14 @@ Do not say "I found."
 Do not expose raw IDs, table names, route names, debug labels, source internals, or implementation details.
 Do not use user-facing wording like "Read," "Evidence," "Evidence points," "rows," or "Current-state read."
 Say "loaded context," "source context," "source support," or "loaded records" instead.
+Do not mention "semantic," "curated semantic," "typed facts," "relationship paths," or implementation/source mechanics in the final answer.
+Say "loaded tenant context," "loaded facts," or "relationship maps" when those ideas matter.
 Do not mention pattern family or experts in Home.
 
 Return only the final user-facing answer text.`;
 
 const FORBIDDEN_RE =
-  /\b(cannot be characterized|cannot be identified|I found|missing source support|Current-state read|\bread\b|Evidence points|\bevidence\b|\brows\b|home_know|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
+  /\b(cannot be characterized|cannot be identified|I found|missing source support|Current-state read|\bread\b|Evidence points|\bevidence\b|\brows\b|home_know|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|typed facts|relationship paths|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
 const RAW_ID_RE =
   /\b(?:APP|DP|CON|NODE|EDGE)-\d{3,}\b|\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
 const RAW_ID_REPLACE =
@@ -457,6 +459,18 @@ export function normalizeHomeConsultantUserFacingText(text: string): string {
     .replace(/^\s*here is\s+/i, "")
     .replace(/\bwhat the loaded context can say\b\s*:?\s*/gi, "")
     .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move):\s*/gi, "$1")
+    .replace(
+      /\bcurated semantic (?:evidence|source context)?\s*source\b/gi,
+      "loaded tenant context",
+    )
+    .replace(
+      /\bsemantic (?:evidence|source context)?\s*source\b/gi,
+      "loaded tenant context",
+    )
+    .replace(/\bcurated semantic context\b/gi, "loaded tenant context")
+    .replace(/\btyped facts\b/gi, "loaded facts")
+    .replace(/\brelationship paths\b/gi, "relationship maps")
+    .replace(/\bresolved relationship maps\b/gi, "loaded relationship maps")
     .replace(/\bcurrent-state read\b/gi, "current-state context")
     .replace(/\bmissing evidence path\b/gi, "missing source path")
     .replace(/\bevidence path\b/gi, "source path")

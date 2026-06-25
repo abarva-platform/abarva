@@ -33,12 +33,13 @@ Home/aVa now attempts to answer from the curated Semantic2 dossier table before 
 - `src/lib/home/know/home-consultant-text-synthesis.ts`: v2 branch-first prompt and prompt snapshot trace.
 - Follow-up hardening: broad `browse` answers now reject Claude output that collapses branch options into a wall of text, causing Home to fall back to the deterministic branch-first render while retaining prompt trace evidence.
 - Follow-up render fix: text normalization now preserves paragraph and branch-list line breaks instead of flattening the final branch-first answer.
+- Follow-up language guard: Claude output that exposes internal semantic/source mechanics such as "curated semantic," "typed facts," or "relationship paths" is rejected or normalized to client-facing language.
 - `src/app/api/home/know/ask/route.ts`: debug-only trace payload includes the exact prompt snapshot.
 - `src/lib/home/know/home-know-contract.ts` and `src/lib/semantic-dossiers/types.ts`: typed trace/branch option fields.
 
 ## QA / Validation
 
-- Focused Jest: `./node_modules/.bin/jest src/lib/home/know/__tests__/home-know-engine.test.ts src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts --runInBand` — Pass, 45 tests.
+- Focused Jest: `./node_modules/.bin/jest src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts --runInBand` — Pass, 20 tests for the final language-guard follow-up.
 - Touched-file ESLint: `./node_modules/.bin/eslint ...` — Pass.
 - Full TypeScript: `NODE_OPTIONS=--max-old-space-size=8192 ./node_modules/.bin/tsc --noEmit --pretty false --incremental false` — Pass.
 
@@ -62,7 +63,7 @@ Revert this commit or redeploy the prior ACA image. No data-plane migration or d
 
 ## Audit Evidence
 
-- Focused Jest output: 45 passing Home KNOW tests.
+- Focused Jest output: 20 passing Home consultant synthesis tests for the final language-guard follow-up.
 - Touched-file ESLint output: pass.
 - TypeScript output: pass.
 - Post-deploy evidence to add: signed-in screenshot, `/api/home/know/ask` trace payload with prompt snapshot, and answer comparison for the SkyHarbor loaded-context question.
