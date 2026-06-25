@@ -24,6 +24,7 @@ describe("Tower route invariants", () => {
     expect(towerIndexSource).toContain("surface=\"tower\"");
     expect(towerIndexSource).toContain('variant="focused"');
     expect(towerIndexSource).not.toContain("initialQuote=");
+    expect(towerIndexSource).not.toContain("<TowerAtlasDisclosurePanel");
     expect(towerIndexSource).toContain("defaultLeftPercent={35}");
     expect(towerIndexSource).toContain("minLeftPx={320}");
     expect(atlasChatPanelSource).toContain("AgentDock");
