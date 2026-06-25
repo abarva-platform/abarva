@@ -285,7 +285,7 @@ function enterpriseFunctionRouteForQuery(
   if (has(/\b(customer|front.?office|contact.?center|journey|loyalty|service recovery|agent assist)\b/)) {
     return routeByKey("customer");
   }
-  if (has(/\b(initiative|initiatives|roadmap|scale|hold|stop|prioriti[sz]e|top bets?)\b/)) {
+  if (has(/\b(initiative|initiatives|roadmap|scale|hold|stop|invest|investment|investments|where should|prioriti[sz]e|top bets?)\b/)) {
     return routeByKey("initiatives");
   }
   if (has(/\b(architecture|mainframe|platform|identity|api|apis|constraint|constraints|legacy|resilien(?:ce|cy))\b/)) {
