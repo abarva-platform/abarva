@@ -45,14 +45,14 @@ const GRAPH_RE = /\b(graph|map|topology|lineage|dependency|dependencies|relation
 const NO_BLOCKING_GAP = /\b(no blocking gap|no blocker|nothing blocking)\b/i;
 
 const DIMENSION_PATTERNS = [
+  ['risk_compliance', /\b(risks?|controls?|compliance|governance|security|audit|cyber)\b/i],
   ['organization_leadership', /\b(organi[sz]ation|organi[sz]ed|leader|leadership|cio|cto|ciso|cdao|cdto|owner|ownership|accountab|portfolio|team|function|workforce)\b/i],
   ['vendor_contracts', /\b(vendors?|contracts?|licenses?|renewals?|suppliers?|commercial|pricing|sourcing)\b/i],
-  ['data_analytics', /\b(data|analytics|warehouse|lakehouse|bi|tableau|power bi|databricks|lineage|data product|data products)\b/i],
-  ['operations_process', /\b(service now|servicenow|jira|ticket|incident|change|problem|bottleneck|handoff|process|operational friction|repetitive|operations|service)\b/i],
-  ['ai_value_governance', /\b(ai|agent|automation|automate|llm|model|value|benefit|roi|initiative|initiatives|adoption)\b/i],
+  ['data_analytics', /\b(data|analytics|warehouse|lakehouse|bi|tableau|power bi|databricks|lineage|data products?|analytics platforms?|analytics tools?)\b/i],
+  ['operations_process', /\b(service now|servicenow|jira|tickets?|incidents?|changes?|problems?|bottlenecks?|handoffs?|process|operational friction|repetitive|operations|service)\b/i],
+  ['ai_value_governance', /\b(ai|agents?|automation|automate|llm|ai model|machine learning model|value|benefit|roi|initiatives?|adoption)\b/i],
   ['budget_financials', /\b(cost|budget|spend|finance|financial|run|change|funding|dollars?|investment)\b/i],
-  ['risk_compliance', /\b(risk|control|compliance|governance|security|audit|cyber)\b/i],
-  ['application_systems', /\b(apps?|applications?|systems?|platform|technology|cmdb|integration|interface|dependency|lifecycle|end of life|unsupported|system of record)\b/i],
+  ['application_systems', /\b(apps?|applications?|systems?|platforms?|technology|cmdb|integrations?|interfaces?|dependencies?|dependency|lifecycle|end of life|unsupported|system of record|connected)\b/i],
 ];
 
 const JUDGE_PROMPT = (q, answer) => `You are grading an enterprise "Home" context assistant. It answers factual questions about a company's LOADED data ("what do we know?"). It must read like a senior advisor stating what the evidence shows — NOT like a database report.
@@ -147,11 +147,17 @@ function directlyAnswers(question, prose) {
     .filter((term) => term.length >= 4 && ![
       'what', 'which', 'where', 'when', 'does', 'about', 'today', 'tell',
       'from', 'with', 'show', 'give', 'table', 'chart', 'graph', 'loaded',
-      'context', 'current',
+      'context', 'current', 'most', 'near',
     ].includes(term));
   if (!terms.length) return true;
   const lower = String(prose || '').toLowerCase();
-  const matches = terms.filter((term) => lower.includes(term)).length;
+  const matches = terms.filter((term) => {
+    if (lower.includes(term)) return true;
+    if (term.endsWith('s') && lower.includes(term.slice(0, -1))) return true;
+    if (term.endsWith('ies') && lower.includes(`${term.slice(0, -3)}y`)) return true;
+    if (term.endsWith('ed') && lower.includes(term.slice(0, -2))) return true;
+    return false;
+  }).length;
   return matches >= Math.min(2, terms.length);
 }
 

@@ -385,6 +385,10 @@ export function validateHomeConsultantText(args: {
 
 export function normalizeHomeConsultantUserFacingText(text: string): string {
   return text
+    .replace(/\*\*/g, "")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/^\s*here is what (?:the )?(?:loaded )?context can (?:say|tell you)\s*:?\s*/i, "")
+    .replace(/^\s*here is\s+/i, "")
     .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move):\s*/gi, "$1")
     .replace(/\bcurrent-state read\b/gi, "current-state context")
     .replace(/\bmissing evidence path\b/gi, "missing source path")
@@ -407,7 +411,8 @@ export function normalizeHomeConsultantUserFacingText(text: string): string {
     .replace(/\bsource rows\b/gi, "source records")
     .replace(/\bno blocking gap\b/gi, "no specific source gap")
     .replace(/\bquality gate\b/gi, "answer check")
-    .replace(/\banswer boundary\b/gi, "safe answer boundary")
+    .replace(/\bsafe answer boundary\b/gi, "safe answer scope")
+    .replace(/\banswer boundary\b/gi, "safe answer scope")
     .replace(/\s+/g, " ")
     .trim();
 }
