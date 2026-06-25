@@ -27,6 +27,7 @@ import {
   synthesizeHomeConsultantText,
 } from "@/lib/home/know/home-consultant-text-synthesis";
 import { synthesizeHomeKnowProse } from "@/lib/home/know/home-know-synthesis";
+import { loadCuratedSemanticDossier } from "@/lib/semantic-dossiers";
 
 export interface HomeDimensionCoverageRow {
   tenant_key: string;
@@ -276,11 +277,11 @@ export async function buildHomeKnowResponse(
   }
   const dossierTenantKey = input.client?.trim() || tenantKey;
   try {
-    const { dossier, cacheHit, sourceSignature } = buildHomeKnowDimensionDossier({
+    const curated = await loadCuratedSemanticDossier({
       tenantKey: dossierTenantKey,
       question: input.question,
-      requestedSurface: "home",
     });
+    const dossier = curated.dossier;
     const exactGap = exactUnknowableGap(input.question);
     if (exactGap) {
       dossier.gaps.unshift({
@@ -309,9 +310,9 @@ export async function buildHomeKnowResponse(
           ...response.safety,
           composerTrace: response.safety.composerTrace
             ? {
-              ...response.safety.composerTrace,
-              reason: `dimension dossier attached; cacheHit=${cacheHit}; sourceSignature=${sourceSignature}`,
-            }
+                ...response.safety.composerTrace,
+                reason: `curated Semantic2 dossier attached; promptVersion=${curated.promptVersion}; dossierVersion=${curated.dossierVersion}; builtAt=${curated.builtAt}`,
+              }
             : response.safety.composerTrace,
         },
       });
@@ -331,14 +332,49 @@ export async function buildHomeKnowResponse(
           );
         }
         if (synthesis?.attempted) {
-          return applyHomeConsultantTextSynthesisFailureTrace(validated, synthesis);
+          return applyHomeConsultantTextSynthesisFailureTrace(
+            validated,
+            synthesis,
+          );
         }
       }
       return validated;
     }
   } catch (error) {
     console.warn(
-      `[home-know.dossier] Falling back to read-model packet for ${tenantKey}: ${
+      `[home-know.semantic2-dossier] Falling back to local dimension dossier for ${tenantKey}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+  try {
+    const { dossier, cacheHit, sourceSignature } =
+      buildHomeKnowDimensionDossier({
+        tenantKey: dossierTenantKey,
+        question: input.question,
+        requestedSurface: "home",
+      });
+    const response = buildHomeKnowResponseFromDossier({
+      tenantKey,
+      question: input.question.trim(),
+      dossier,
+    });
+    return validateHomeKnowResponse({
+      ...response,
+      safety: {
+        ...response.safety,
+        composerTrace: response.safety.composerTrace
+          ? {
+              ...response.safety.composerTrace,
+              fallbackUsed: true,
+              reason: `local dimension dossier fallback used; cacheHit=${cacheHit}; sourceSignature=${sourceSignature}`,
+            }
+          : response.safety.composerTrace,
+      },
+    });
+  } catch (error) {
+    console.warn(
+      `[home-know.local-dossier] Falling back to read-model packet for ${tenantKey}: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );
@@ -2215,7 +2251,8 @@ export function validateHomeKnowResponse(
       response.dimensionsUsed[0] ?? "organization_leadership",
     ) as never,
     relatedDimensions: response.dimensionsUsed.slice(1) as never,
-    targetSurface: response.intent === "decision_handoff" ? "intelligence" : "home",
+    targetSurface:
+      response.intent === "decision_handoff" ? "intelligence" : "home",
     handoffTarget: response.handoff?.target ?? null,
     tablesCount: response.tables.length,
     chartsCount: response.charts.length,
@@ -2272,7 +2309,10 @@ function sanitizePublicHomeText(value: string): string {
     .replace(BLOCKED_PUBLIC_TEXT_REPLACE, "loaded context")
     .replace(INTERNAL_CODE_REPLACE, "the source row")
     .replace(/\bthe cited record\b/gi, "the source row")
-    .replace(/\bas a current-state loaded context\b/gi, "from the current-state context")
+    .replace(
+      /\bas a current-state loaded context\b/gi,
+      "from the current-state context",
+    )
     .replace(/\bcurrent-state loaded context\b/gi, "current-state context")
     .replace(/\bprimary loaded context\b/gi, "primary source context")
     .replace(/\s{2,}/g, " ")

@@ -16,17 +16,15 @@ import type { DossierSection } from "@/lib/semantic-dossiers/types";
 const DEFAULT_MODEL = "claude-opus-4-8";
 const DEFAULT_TIMEOUT_MS = 60_000;
 const DEFAULT_MAX_TOKENS = 25_000;
-const PROMPT_VERSION = "home_consultant_text_synthesis_v1";
+const PROMPT_VERSION = "home_consultant_text_synthesis_v2_branch_first";
 
 export const HOME_CONSULTANT_TEXT_SYSTEM_PROMPT = `You are AbarVa's Home / Explorer consultant.
 
 Home answers: "What do we know about this enterprise from the loaded tenant context?"
 
-You are not a generic chatbot. You are not browsing. You are not retrieving. You are not inventing.
+Turn the supplied current-state context into a concise CIO-readable answer. Use only the supplied context.
 
-You will receive a structured enterprise dossier. Use only that dossier.
-
-The dossier may include:
+The context may include:
 
 * sections
 * source coverage
@@ -40,8 +38,15 @@ The dossier may include:
 * gaps
 * citations
 * answer boundaries
+* branch options
 
-Use all relevant dossier channels. Do not rely only on the facts array.
+Use all relevant context channels. Do not rely only on the facts array.
+
+For broad overview questions such as "what context is loaded" or "what do we know," answer in this pattern:
+
+1. One short executive summary of the strongest context areas.
+2. "Where do you want to go deeper?" followed by up to four branch options from the supplied branch options.
+3. One short caveat if a missing source changes how the user should read the answer.
 
 Write like a senior enterprise architect / consulting partner briefing a CIO.
 
@@ -53,7 +58,7 @@ If the user asks for a recommendation, investment decision, scale/hold/stop deci
 
 Do not make unsupported recommendations in Home.
 
-Never say the topic cannot be characterized if the dossier contains partial source context.
+Never say the topic cannot be characterized if the supplied context contains partial source context.
 Instead say what level of characterization is supported:
 
 * enterprise level
@@ -104,10 +109,13 @@ export interface HomeConsultantTextPromptPacket {
   graphsAndRelationshipsSummary: string;
   metricsSummary: string;
   gapsSummary: string;
+  branchOptionsSummary: string;
   sourceCoverageSummary: string;
   citationsSummary: string;
   answerBoundarySummary: string;
-  evidenceChannels: ReturnType<typeof hasUsableDossierEvidence>["evidenceChannels"];
+  evidenceChannels: ReturnType<
+    typeof hasUsableDossierEvidence
+  >["evidenceChannels"];
 }
 
 export interface HomeConsultantTextSynthesisResult {
@@ -138,12 +146,14 @@ export interface HomeConsultantTextSynthesisFailure {
   timeoutMs?: number;
   auditId?: string;
   rawTextPreview?: string;
+  prompt?: string;
   reason: string;
   validationIssues: string[];
 }
 
 export function isHomeConsultantClaudeSynthesisEnabled(): boolean {
-  const raw = process.env.HOME_KNOW_CLAUDE_SYNTHESIS_ENABLED?.trim().toLowerCase();
+  const raw =
+    process.env.HOME_KNOW_CLAUDE_SYNTHESIS_ENABLED?.trim().toLowerCase();
   if (raw === "false" || raw === "0" || raw === "off") return false;
   if (raw === "true" || raw === "1" || raw === "on") return true;
   return process.env.NODE_ENV === "production";
@@ -156,7 +166,9 @@ export function homeConsultantOutputMode(): "text" {
 export async function synthesizeHomeConsultantText(args: {
   dossier: UniversalDimensionDossier;
   deterministicResponse: HomeKnowResponse;
-}): Promise<HomeConsultantTextSynthesisResult | HomeConsultantTextSynthesisFailure | null> {
+}): Promise<
+  HomeConsultantTextSynthesisResult | HomeConsultantTextSynthesisFailure | null
+> {
   if (!isHomeConsultantClaudeSynthesisEnabled()) {
     return {
       attempted: true,
@@ -188,8 +200,14 @@ export async function synthesizeHomeConsultantText(args: {
   }
 
   const model = process.env.HOME_KNOW_CLAUDE_MODEL?.trim() || DEFAULT_MODEL;
-  const maxTokens = numberFromEnv("HOME_KNOW_CLAUDE_MAX_TOKENS", DEFAULT_MAX_TOKENS);
-  const timeoutMs = numberFromEnv("HOME_KNOW_CLAUDE_TIMEOUT_MS", DEFAULT_TIMEOUT_MS);
+  const maxTokens = numberFromEnv(
+    "HOME_KNOW_CLAUDE_MAX_TOKENS",
+    DEFAULT_MAX_TOKENS,
+  );
+  const timeoutMs = numberFromEnv(
+    "HOME_KNOW_CLAUDE_TIMEOUT_MS",
+    DEFAULT_TIMEOUT_MS,
+  );
   const promptPacket = buildHomeConsultantTextPromptPacket({
     dossier: args.dossier,
     response: args.deterministicResponse,
@@ -219,10 +237,7 @@ export async function synthesizeHomeConsultantText(args: {
       system: HOME_CONSULTANT_TEXT_SYSTEM_PROMPT,
       messages: [{ role: "user", content: user }],
     });
-    const message = await withTimeout(
-      stream.finalMessage(),
-      timeoutMs,
-    );
+    const message = await withTimeout(stream.finalMessage(), timeoutMs);
     const rawText = message.content
       .filter((item) => item.type === "text")
       .map((item) => item.text)
@@ -256,6 +271,7 @@ export async function synthesizeHomeConsultantText(args: {
         timeoutMs,
         auditId,
         rawTextPreview: redactTextPreview(rawText),
+        prompt,
         reason: "validation_failed",
         validationIssues,
       };
@@ -297,13 +313,17 @@ export async function synthesizeHomeConsultantText(args: {
       maxTokens,
       timeoutMs,
       reason,
+      prompt,
       validationIssues: [],
     };
   }
 }
 
 export function isHomeConsultantTextSynthesisResult(
-  value: HomeConsultantTextSynthesisResult | HomeConsultantTextSynthesisFailure | null,
+  value:
+    | HomeConsultantTextSynthesisResult
+    | HomeConsultantTextSynthesisFailure
+    | null,
 ): value is HomeConsultantTextSynthesisResult {
   return Boolean(value && "trace" in value && value.trace.used);
 }
@@ -333,6 +353,16 @@ export function applyHomeConsultantTextSynthesisFailureTrace(
             }${failure.timeoutMs ? `; timeoutMs=${failure.timeoutMs}` : ""}${
               failure.auditId ? `; auditId=${failure.auditId}` : ""
             }${failure.rawTextPreview ? `; rawTextPreview=${failure.rawTextPreview}` : ""}`,
+            promptSnapshot: failure.prompt
+              ? {
+                  system: HOME_CONSULTANT_TEXT_SYSTEM_PROMPT,
+                  user: failure.prompt.replace(
+                    `${HOME_CONSULTANT_TEXT_SYSTEM_PROMPT}\n\n`,
+                    "",
+                  ),
+                  full: failure.prompt,
+                }
+              : response.safety.composerTrace.promptSnapshot,
           }
         : response.safety.composerTrace,
     },
@@ -357,6 +387,14 @@ export function applyHomeConsultantTextSynthesis(
             goldenComposerUsed: true,
             fallbackUsed: false,
             reason: `Claude text synthesis selected; outputMode=text; promptVersion=${result.trace.promptVersion}; model=${result.trace.model}; maxTokens=${result.trace.maxTokens}; timeoutMs=${result.trace.timeoutMs}; auditId=${result.trace.auditId}; rawTextPreview=${result.trace.rawTextPreview}`,
+            promptSnapshot: {
+              system: HOME_CONSULTANT_TEXT_SYSTEM_PROMPT,
+              user: result.prompt.replace(
+                `${HOME_CONSULTANT_TEXT_SYSTEM_PROMPT}\n\n`,
+                "",
+              ),
+              full: result.prompt,
+            },
           }
         : response.safety.composerTrace,
     },
@@ -373,13 +411,20 @@ export function validateHomeConsultantText(args: {
   if (!text) issues.push("empty_text");
   if (FORBIDDEN_RE.test(text)) issues.push("forbidden_language");
   if (RAW_ID_RE.test(text)) issues.push("raw_id");
-  if (!args.dossier.answerBoundary.handoffTarget && RECOMMENDATION_RE.test(text)) {
+  if (
+    !args.dossier.answerBoundary.handoffTarget &&
+    RECOMMENDATION_RE.test(text)
+  ) {
     issues.push("home_recommendation_without_handoff");
   }
-  if (startsWithCountOrEvidenceLabel(text)) issues.push("starts_with_count_or_evidence_label");
+  if (startsWithCountOrEvidenceLabel(text))
+    issues.push("starts_with_count_or_evidence_label");
   const tenantLeak = detectCrossTenantLeak(text, args.dossier.tenantKey);
   if (tenantLeak) issues.push(`cross_tenant_content:${tenantLeak}`);
-  if (mentionsMissingCharacterization(text) && hasUsableDossierEvidence(args.dossier).usable) {
+  if (
+    mentionsMissingCharacterization(text) &&
+    hasUsableDossierEvidence(args.dossier).usable
+  ) {
     issues.push("false_absence_despite_partial_evidence");
   }
   return [...new Set(issues)];
@@ -390,8 +435,14 @@ export function normalizeHomeConsultantUserFacingText(text: string): string {
     .replace(/^\s*#{1,6}\s+.*(?:\r?\n|$)/gm, "")
     .replace(/\*\*/g, "")
     .replace(/`([^`]+)`/g, "$1")
-    .replace(/^\s*here is what (?:the )?(?:loaded )?context can (?:say|tell you) about\s+/i, "For ")
-    .replace(/^\s*here is what (?:the )?(?:loaded )?context can (?:say|tell you)\s*:?\s*/i, "")
+    .replace(
+      /^\s*here is what (?:the )?(?:loaded )?context can (?:say|tell you) about\s+/i,
+      "For ",
+    )
+    .replace(
+      /^\s*here is what (?:the )?(?:loaded )?context can (?:say|tell you)\s*:?\s*/i,
+      "",
+    )
     .replace(/^\s*here is\s+/i, "")
     .replace(/\bwhat the loaded context can say\b\s*:?\s*/gi, "")
     .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move):\s*/gi, "$1")
@@ -459,27 +510,58 @@ export function buildHomeConsultantTextPromptPacket(args: {
     sectionsSummary: summarizeSections(args.dossier.sections),
     rollupsSummary: summarizeRecord(args.dossier.rollups),
     tablesSummary: args.response.tables
-      .map((table) => `${table.title}: ${table.rows.length} records; columns ${table.columns.map((column) => column.label).join(", ")}`)
+      .map(
+        (table) =>
+          `${table.title}: ${table.rows.length} records; columns ${table.columns.map((column) => column.label).join(", ")}`,
+      )
       .join("\n"),
     chartsSummary: args.response.charts
-      .map((chart) => `${chart.title}: ${chart.data.length} points; ${chart.data.slice(0, 8).map((point) => `${point.label}=${point.value}`).join(", ")}`)
+      .map(
+        (chart) =>
+          `${chart.title}: ${chart.data.length} points; ${chart.data
+            .slice(0, 8)
+            .map((point) => `${point.label}=${point.value}`)
+            .join(", ")}`,
+      )
       .join("\n"),
-    graphsAndRelationshipsSummary: summarizeGraphsAndRelationships(args.dossier, args.response),
+    graphsAndRelationshipsSummary: summarizeGraphsAndRelationships(
+      args.dossier,
+      args.response,
+    ),
     metricsSummary: args.dossier.metrics
       .slice(0, 16)
-      .map((metric) => `${metric.label}: ${String(metric.value)}${metric.caveat ? ` (${metric.caveat})` : ""}`)
+      .map(
+        (metric) =>
+          `${metric.label}: ${String(metric.value)}${metric.caveat ? ` (${metric.caveat})` : ""}`,
+      )
       .join("\n"),
     gapsSummary: args.dossier.gaps
       .slice(0, 12)
-      .map((gap) => `${gap.label}: ${gap.impact}; needed source context: ${gap.neededEvidence.join(", ")}`)
+      .map(
+        (gap) =>
+          `${gap.label}: ${gap.impact}; needed source context: ${gap.neededEvidence.join(", ")}`,
+      )
+      .join("\n"),
+    branchOptionsSummary: (args.dossier.branchOptions ?? [])
+      .slice(0, 6)
+      .map(
+        (option) =>
+          `${option.label}: ${option.summary}; coverage ${Math.round(option.coverageScore * 100)}%; confidence ${Math.round(option.confidence * 100)}%`,
+      )
       .join("\n"),
     sourceCoverageSummary: args.dossier.sourceCoverage
-      .map((source) => `${source.sourceKey}: ${source.loaded ? source.count : 0} records; ${source.purpose}; ${source.binderRole ?? "context"}`)
+      .map(
+        (source) =>
+          `${source.sourceKey}: ${source.loaded ? source.count : 0} items; ${source.purpose}; ${source.binderRole ?? "context"}`,
+      )
       .join("\n"),
     citationsSummary: args.dossier.citations
       .filter((citation) => citation.count > 0)
       .slice(0, 30)
-      .map((citation) => `${citation.label} (${citation.sourceKey}, ${citation.count})`)
+      .map(
+        (citation) =>
+          `${citation.label} (${citation.sourceKey}, ${citation.count})`,
+      )
       .join("\n"),
     answerBoundarySummary: [
       `Can answer: ${args.dossier.answerBoundary.canAnswer.join("; ") || "not specified"}`,
@@ -495,7 +577,9 @@ export function buildHomeConsultantTextPromptPacket(args: {
   };
 }
 
-export function renderHomeConsultantTextUserPrompt(packet: HomeConsultantTextPromptPacket): string {
+export function renderHomeConsultantTextUserPrompt(
+  packet: HomeConsultantTextPromptPacket,
+): string {
   return `Question:
 ${packet.question}
 
@@ -508,7 +592,7 @@ ${packet.primaryDimension}
 Related dimensions:
 ${packet.relatedDimensions.join(", ") || "none"}
 
-Dossier summary:
+Context summary:
 ${packet.dimensionSummary}
 
 Source confidence:
@@ -517,7 +601,7 @@ ${packet.tenant.evidenceStrength}
 Relevant sections:
 ${packet.sectionsSummary || "None"}
 
-Deterministic rollups:
+Computed rollups:
 ${packet.rollupsSummary || "None"}
 
 Relevant tables:
@@ -535,20 +619,24 @@ ${packet.metricsSummary || "None"}
 Specific gaps:
 ${packet.gapsSummary || "None"}
 
+Branch options for overview questions:
+${packet.branchOptionsSummary || "None"}
+
 Source coverage:
 ${packet.sourceCoverageSummary || "None"}
 
 Citation labels available:
 ${packet.citationsSummary || "None"}
 
-Answer boundary:
+Safe answer scope:
 ${packet.answerBoundarySummary || "None"}
 
 Instructions:
-Write the best possible Home / Explorer answer from this dossier.
+Write the best possible Home / Explorer answer from this context.
 Use the loaded context and source support.
 Do not invent missing context.
 Do not overstate confidence.
+If the question is broad or asks what context is loaded, keep the first turn short and offer branch options instead of listing every detail.
 If named leaders are loaded, you may name them.
 If only roles are loaded, say roles are loaded but named people are missing.
 If the source context supports partial structure, describe the partial structure and the precise gap.
@@ -577,11 +665,17 @@ function summarizeGraphsAndRelationships(
   response: HomeKnowResponse,
 ): string {
   const graphs = response.graphs
-    .map((graph) => `${graph.title}: ${graph.nodes.length} nodes, ${graph.edges.length} edges`)
+    .map(
+      (graph) =>
+        `${graph.title}: ${graph.nodes.length} nodes, ${graph.edges.length} edges`,
+    )
     .join("\n");
   const paths = dossier.relationshipPaths
     .slice(0, 16)
-    .map((path) => `${path.label}: ${path.from} ${path.relationship} ${path.to}; confidence ${path.confidence}; sources ${path.sourceKeys.join(", ")}`)
+    .map(
+      (path) =>
+        `${path.label}: ${path.from} ${path.relationship} ${path.to}; confidence ${path.confidence}; sources ${path.sourceKeys.join(", ")}`,
+    )
     .join("\n");
   return [graphs, paths].filter(Boolean).join("\n");
 }
@@ -595,7 +689,11 @@ function summarizeRecord(record: Record<string, unknown>, limit = 16): string {
 
 function scalarPromptValue(value: unknown): string {
   if (value === null || value === undefined) return "";
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
     return String(value);
   }
   return JSON.stringify(value);
@@ -672,11 +770,15 @@ function evidenceStrength(
 }
 
 function startsWithCountOrEvidenceLabel(text: string): boolean {
-  return /^\s*(\d+|Read\b|Evidence\b|Current-state read\b|I found\b)/i.test(text);
+  return /^\s*(\d+|Read\b|Evidence\b|Current-state read\b|I found\b)/i.test(
+    text,
+  );
 }
 
 function mentionsMissingCharacterization(text: string): boolean {
-  return /\b(cannot be characterized|cannot be identified|not enough information to characterize)\b/i.test(text);
+  return /\b(cannot be characterized|cannot be identified|not enough information to characterize)\b/i.test(
+    text,
+  );
 }
 
 function detectCrossTenantLeak(text: string, tenantKey: string): string | null {
@@ -684,13 +786,17 @@ function detectCrossTenantLeak(text: string, tenantKey: string): string | null {
   const registryAliases = Object.entries(CLIENT_KEY_TO_DB_NAME)
     .filter(([key]) => key !== normalized)
     .flatMap(([, aliases]) => aliases);
-  const displayAliases = ALL_CLIENTS
-    .filter((client) => client.id !== normalized)
-    .flatMap((client) => [client.name, client.shortName]);
+  const displayAliases = ALL_CLIENTS.filter(
+    (client) => client.id !== normalized,
+  ).flatMap((client) => [client.name, client.shortName]);
   const leaks = [...new Set([...registryAliases, ...displayAliases])]
     .map((alias) => alias.trim())
     .filter((alias) => alias.length >= 8);
-  return leaks.find((name) => new RegExp(`\\b${escapeRegExp(name)}\\b`, "i").test(text)) ?? null;
+  return (
+    leaks.find((name) =>
+      new RegExp(`\\b${escapeRegExp(name)}\\b`, "i").test(text),
+    ) ?? null
+  );
 }
 
 function normalizeClientKeyForLeakCheck(tenantKey: string): string {
@@ -714,7 +820,10 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([

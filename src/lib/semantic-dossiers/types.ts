@@ -1,31 +1,43 @@
-export type DossierSurface = 'home' | 'intelligence' | 'moves' | 'source' | 'tower' | 'ava';
+export type DossierSurface =
+  | "home"
+  | "intelligence"
+  | "moves"
+  | "source"
+  | "tower"
+  | "ava";
 
 export type DossierDimensionFamily =
-  | 'organization_leadership'
-  | 'application_systems'
-  | 'vendor_contracts'
-  | 'data_analytics'
-  | 'operations_process'
-  | 'ai_value_governance'
-  | 'budget_financials'
-  | 'risk_compliance'
-  | 'source_moves_tower';
+  | "organization_leadership"
+  | "application_systems"
+  | "vendor_contracts"
+  | "data_analytics"
+  | "operations_process"
+  | "ai_value_governance"
+  | "budget_financials"
+  | "risk_compliance"
+  | "source_moves_tower";
 
-export type DossierArtifactType = 'prose' | 'table' | 'chart' | 'graph' | 'handoff' | 'gap';
+export type DossierArtifactType =
+  | "prose"
+  | "table"
+  | "chart"
+  | "graph"
+  | "handoff"
+  | "gap";
 
 export interface DossierSourceRequirement {
   sourceKey: string;
   required: boolean;
   purpose: string;
   dimensionFamily?: DossierDimensionFamily;
-  binderRole?: 'primary' | 'adjacent' | 'context';
+  binderRole?: "primary" | "adjacent" | "context";
 }
 
 export interface DimensionRoute {
   question: string;
   requestedSurface: DossierSurface;
   targetSurface: DossierSurface;
-  intent: 'know' | 'decide' | 'source' | 'execute' | 'control' | 'gap';
+  intent: "know" | "decide" | "source" | "execute" | "control" | "gap";
   primaryDimension: DossierDimensionFamily;
   relatedDimensions: DossierDimensionFamily[];
   requiredSources: DossierSourceRequirement[];
@@ -33,7 +45,10 @@ export interface DimensionRoute {
   handoffReason?: string;
 }
 
-export type DossierRecord = Record<string, string | number | boolean | null | undefined>;
+export type DossierRecord = Record<
+  string,
+  string | number | boolean | null | undefined
+>;
 
 export interface DossierSourceCoverage {
   sourceKey: string;
@@ -42,14 +57,14 @@ export interface DossierSourceCoverage {
   purpose: string;
   required: boolean;
   dimensionFamily?: DossierDimensionFamily;
-  binderRole?: 'primary' | 'adjacent' | 'context';
+  binderRole?: "primary" | "adjacent" | "context";
 }
 
 export interface DossierFact {
   label: string;
   value: string | number;
   sourceKey: string;
-  confidence: 'high' | 'medium' | 'low';
+  confidence: "high" | "medium" | "low";
 }
 
 export interface DossierSection {
@@ -69,7 +84,7 @@ export interface DossierRelationshipPath {
   relationship: string;
   to: string;
   sourceKeys: string[];
-  confidence: 'high' | 'medium' | 'low';
+  confidence: "high" | "medium" | "low";
 }
 
 export interface DossierMetric {
@@ -106,7 +121,7 @@ export interface DossierComposerPacket {
   relationshipPaths: DossierRelationshipPath[];
   metrics: DossierMetric[];
   gaps: DossierGap[];
-  citations: UniversalDimensionDossier['citations'];
+  citations: UniversalDimensionDossier["citations"];
   artifactPlan: DossierArtifactType[];
   answerBoundary: DossierAnswerBoundary;
 }
@@ -114,6 +129,18 @@ export interface DossierComposerPacket {
 export interface UniversalDimensionDossier {
   tenantKey: string;
   route: DimensionRoute;
+  branchOptions?: Array<{
+    id: string;
+    label: string;
+    dimensionKey: string;
+    summary: string;
+    coverageScore: number;
+    confidence: number;
+    entityCount: number;
+    factCount: number;
+    relationshipCount: number;
+    citationCount: number;
+  }>;
   sourceCoverage: DossierSourceCoverage[];
   dimensionSummary: string;
   sections: DossierSection[];
@@ -144,7 +171,7 @@ export interface DossierAnswer {
   directAnswer: string;
   composerPacket: DossierComposerPacket;
   artifactPlan: DossierArtifactType[];
-  citations: UniversalDimensionDossier['citations'];
+  citations: UniversalDimensionDossier["citations"];
   gaps: DossierGap[];
   quality: {
     passed: boolean;

@@ -1,0 +1,542 @@
+import { Pool, type PoolClient } from "pg";
+
+import { routeDimensionQuestion } from "./dimension-router";
+import type {
+  DossierArtifactType,
+  DossierComposerPacket,
+  DossierDimensionFamily,
+  DossierFact,
+  DossierGap,
+  DossierMetric,
+  DossierRelationshipPath,
+  DossierSection,
+  DossierSourceCoverage,
+  UniversalDimensionDossier,
+} from "./types";
+
+export const CURATED_DOSSIER_PROMPT_VERSION =
+  "semantic2-physical-dossier-consultant-v1";
+
+type JsonRecord = Record<string, unknown>;
+
+interface CuratedDossierRow {
+  tenant_key: string;
+  dimension_key: string;
+  family_key: string;
+  evidence_packet: JsonRecord;
+  artifacts: JsonRecord;
+  gaps: unknown[];
+  citations: unknown[];
+  supported_questions: unknown[];
+  source_tables: string[];
+  coverage_score: string | number;
+  confidence: string | number;
+  prompt_version: string;
+  dossier_version: string;
+  built_at: string;
+}
+
+export interface CuratedDossierLoadResult {
+  dossier: UniversalDimensionDossier;
+  promptVersion: string;
+  dossierVersion: string;
+  canonicalTenantKey: string;
+  builtAt: string;
+  branchOptions: CuratedDossierBranchOption[];
+}
+
+let pool: Pool | null = null;
+
+export interface CuratedDossierBranchOption {
+  id: string;
+  label: string;
+  dimensionKey: string;
+  summary: string;
+  coverageScore: number;
+  confidence: number;
+  entityCount: number;
+  factCount: number;
+  relationshipCount: number;
+  citationCount: number;
+}
+
+function connectionString(): string {
+  const value =
+    process.env.DATABASE_URL ??
+    process.env.ABARVA_AZURE_DATABASE_URL ??
+    process.env.AZURE_DATABASE_URL;
+  if (!value) {
+    throw new Error(
+      "DATABASE_URL is required for curated Semantic2 dossier reads.",
+    );
+  }
+  return value;
+}
+
+function shouldDisableSsl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    const sslMode = url.searchParams.get("sslmode")?.toLowerCase();
+    if (sslMode === "disable") return true;
+    return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function getPool(): Pool {
+  if (pool) return pool;
+  const url = connectionString();
+  pool = new Pool({
+    connectionString: url,
+    application_name: "home-know-curated-dossier",
+    ssl: shouldDisableSsl(url) ? false : { rejectUnauthorized: false },
+    max: 4,
+    idleTimeoutMillis: 15_000,
+  });
+  return pool;
+}
+
+function asRecord(value: unknown): JsonRecord {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as JsonRecord)
+    : {};
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+
+function asNumber(value: unknown, fallback: unknown = 0): number {
+  const parsed = typeof value === "number" ? value : Number(value);
+  const fallbackParsed =
+    typeof fallback === "number" ? fallback : Number(fallback);
+  return Number.isFinite(parsed)
+    ? parsed
+    : Number.isFinite(fallbackParsed)
+      ? fallbackParsed
+      : 0;
+}
+
+function confidence(value: unknown): "high" | "medium" | "low" {
+  const score = asNumber(value, 0.8);
+  if (score >= 0.82) return "high";
+  if (score >= 0.62) return "medium";
+  return "low";
+}
+
+function artifactPlan(artifacts: JsonRecord): DossierArtifactType[] {
+  const plan: DossierArtifactType[] = ["prose"];
+  if (asArray(artifacts.tables).length > 0) plan.push("table");
+  if (asArray(artifacts.charts).length > 0) plan.push("chart");
+  if (asArray(artifacts.graphs).length > 0) plan.push("graph");
+  return plan;
+}
+
+function makeSections(row: CuratedDossierRow): DossierSection[] {
+  const packet = asRecord(row.evidence_packet);
+  const dimension = asRecord(packet.dimension);
+  const counts = asRecord(packet.counts);
+  const entities = asArray(packet.entities).map(asRecord);
+  const facts = asArray(packet.facts).map(asRecord);
+  const relationships = asArray(packet.relationships).map(asRecord);
+  const dimensionFamily = row.dimension_key as DossierDimensionFamily;
+  const title = asString(
+    dimension.label,
+    row.dimension_key.replaceAll("_", " "),
+  );
+
+  return [
+    {
+      sectionKey: `${row.dimension_key}_entities`,
+      title: `${title} entities`,
+      dimensionFamily,
+      sourceKeys: row.source_tables,
+      summary: `${asNumber(counts.entities)} canonical entities are available for this topic.`,
+      recordCount: entities.length,
+      sample: entities.slice(0, 20).map((item) => ({
+        name: asString(
+          item.business_name,
+          asString(item.semantic_key, "Unnamed entity"),
+        ),
+        type: asString(item.entity_type, "entity"),
+        confidence: asNumber(item.confidence, row.confidence),
+        source: asString(item.source_table, ""),
+      })),
+    },
+    {
+      sectionKey: `${row.dimension_key}_facts`,
+      title: `${title} facts`,
+      dimensionFamily,
+      sourceKeys: row.source_tables,
+      summary: `${asNumber(counts.facts)} typed facts are available for this topic.`,
+      recordCount: facts.length,
+      sample: facts.slice(0, 40).map((item) => ({
+        subject: asString(item.subject_semantic_key, ""),
+        fact: asString(item.fact_key, asString(item.fact_type, "fact")),
+        value: String(
+          item.fact_value_text ??
+            item.fact_value_number ??
+            item.fact_value_bool ??
+            "",
+        ),
+        confidence: asNumber(item.confidence, row.confidence),
+        source: asString(item.source_table, ""),
+      })),
+    },
+    {
+      sectionKey: `${row.dimension_key}_relationships`,
+      title: `${title} relationships`,
+      dimensionFamily,
+      sourceKeys: row.source_tables,
+      summary: `${asNumber(counts.relationships)} relationship paths are available for this topic.`,
+      recordCount: relationships.length,
+      sample: relationships.slice(0, 30).map((item) => ({
+        from: asString(item.from_semantic_key, ""),
+        relationship: asString(
+          item.relationship_label,
+          asString(item.relationship_type, "relates to"),
+        ),
+        to: asString(item.to_semantic_key, ""),
+        confidence: asNumber(item.confidence, row.confidence),
+        source: asString(item.source_table, ""),
+      })),
+    },
+  ];
+}
+
+function makeFacts(row: CuratedDossierRow): DossierFact[] {
+  return asArray(asRecord(row.evidence_packet).facts)
+    .map(asRecord)
+    .slice(0, 80)
+    .map((item) => ({
+      label: asString(item.fact_key, asString(item.fact_type, "fact")),
+      value: String(
+        item.fact_value_text ??
+          item.fact_value_number ??
+          item.fact_value_bool ??
+          "",
+      ),
+      sourceKey: asString(item.source_table, "semantic2"),
+      confidence: confidence(item.confidence),
+    }));
+}
+
+function makeRelationships(row: CuratedDossierRow): DossierRelationshipPath[] {
+  return asArray(asRecord(row.evidence_packet).relationships)
+    .map(asRecord)
+    .slice(0, 60)
+    .map((item, index) => ({
+      pathKey: `${row.dimension_key}_relationship_${index + 1}`,
+      label: asString(
+        item.relationship_label,
+        asString(item.relationship_type, "related"),
+      ),
+      from: asString(item.from_semantic_key, ""),
+      relationship: asString(item.relationship_type, "relates_to"),
+      to: asString(item.to_semantic_key, ""),
+      sourceKeys: [asString(item.source_table, "semantic2")],
+      confidence: confidence(item.confidence),
+    }));
+}
+
+function makeMetrics(row: CuratedDossierRow): DossierMetric[] {
+  const counts = asRecord(asRecord(row.evidence_packet).counts);
+  return [
+    {
+      metricKey: "canonical_entities",
+      label: "Canonical entities",
+      value: asNumber(counts.entities),
+      unit: "count",
+      sourceKeys: row.source_tables,
+    },
+    {
+      metricKey: "typed_facts",
+      label: "Typed facts",
+      value: asNumber(counts.facts),
+      unit: "count",
+      sourceKeys: row.source_tables,
+    },
+    {
+      metricKey: "relationship_paths",
+      label: "Relationship paths",
+      value: asNumber(counts.relationships),
+      unit: "count",
+      sourceKeys: row.source_tables,
+    },
+    {
+      metricKey: "evidence_refs",
+      label: "Resolved citations",
+      value: asNumber(counts.evidenceRefs),
+      unit: "count",
+      sourceKeys: row.source_tables,
+    },
+  ];
+}
+
+function makeGaps(row: CuratedDossierRow): DossierGap[] {
+  return row.gaps.map(asRecord).map((item, index) => ({
+    gapKey: asString(item.gapKey, `${row.dimension_key}_gap_${index + 1}`),
+    label: asString(item.label, "Additional source confirmation is needed."),
+    impact: asString(
+      item.impact,
+      "The answer should disclose this limitation.",
+    ),
+    neededEvidence: asArray(item.neededEvidence).map(String),
+  }));
+}
+
+function makeCitations(
+  row: CuratedDossierRow,
+): UniversalDimensionDossier["citations"] {
+  const grouped = new Map<
+    string,
+    { label: string; sourceKey: string; count: number }
+  >();
+  for (const raw of row.citations.map(asRecord)) {
+    const label = asString(
+      raw.citation_label,
+      asString(
+        raw.citation_detail,
+        asString(raw.source_table, "Supporting source"),
+      ),
+    );
+    const sourceKey = asString(raw.source_table, "semantic2");
+    const key = `${label}::${sourceKey}`;
+    const existing = grouped.get(key);
+    if (existing) existing.count += 1;
+    else grouped.set(key, { label, sourceKey, count: 1 });
+  }
+  return [...grouped.values()].slice(0, 12);
+}
+
+function sourceCoverage(row: CuratedDossierRow): DossierSourceCoverage[] {
+  return row.source_tables.map((sourceKey) => ({
+    sourceKey,
+    loaded: true,
+    count: 1,
+    purpose: "Curated Semantic2 evidence source",
+    required: false,
+    dimensionFamily: row.dimension_key as DossierDimensionFamily,
+    binderRole: "primary",
+  }));
+}
+
+function dimensionSummary(row: CuratedDossierRow): string {
+  const dimension = asRecord(asRecord(row.evidence_packet).dimension);
+  const counts = asRecord(asRecord(row.evidence_packet).counts);
+  const label = asString(
+    dimension.label,
+    row.dimension_key.replaceAll("_", " "),
+  );
+  return `${label}: ${asNumber(counts.entities)} entities, ${asNumber(counts.facts)} facts, ${asNumber(counts.relationships)} relationships, and ${asNumber(counts.evidenceRefs)} resolved citations.`;
+}
+
+function buildUniversalDossier(
+  row: CuratedDossierRow,
+  question: string,
+): UniversalDimensionDossier {
+  const route = routeDimensionQuestion(question, "home");
+  route.primaryDimension = row.dimension_key as DossierDimensionFamily;
+  const sections = makeSections(row);
+  const facts = makeFacts(row);
+  const relationships = makeRelationships(row);
+  const metrics = makeMetrics(row);
+  const gaps = makeGaps(row);
+  const citations = makeCitations(row);
+  const artifacts = artifactPlan(row.artifacts);
+  const summary = dimensionSummary(row);
+  const answerBoundary = {
+    canAnswer: [
+      `Explain the loaded ${row.dimension_key.replaceAll("_", " ")} facts.`,
+      "Separate supported findings from missing evidence.",
+      "Show deterministic tables, charts, or relationship views when requested.",
+    ],
+    cannotAnswer: gaps.map((gap) => gap.label),
+    handoffTarget: route.targetSurface === "home" ? null : route.targetSurface,
+    handoffReason: route.handoffReason,
+  };
+  const composerPacket: DossierComposerPacket = {
+    question,
+    tenantKey: row.tenant_key,
+    primaryDimension: row.dimension_key as DossierDimensionFamily,
+    relatedDimensions: route.relatedDimensions,
+    dimensionSummary: summary,
+    sections,
+    rollups: {
+      coverageScore: asNumber(row.coverage_score),
+      confidence: asNumber(row.confidence),
+      factCount: facts.length,
+      citationCount: citations.reduce(
+        (sum, citation) => sum + citation.count,
+        0,
+      ),
+      sourceTables: row.source_tables,
+    },
+    relationshipPaths: relationships,
+    metrics,
+    gaps,
+    citations,
+    artifactPlan: artifacts,
+    answerBoundary,
+  };
+
+  return {
+    tenantKey: row.tenant_key,
+    route,
+    sourceCoverage: sourceCoverage(row),
+    dimensionSummary: summary,
+    sections,
+    facts,
+    rollups: composerPacket.rollups,
+    relationshipPaths: relationships,
+    metrics,
+    gaps,
+    citations,
+    artifactPlan: artifacts,
+    answerBoundary,
+    composerPacket,
+    qualityFlags: [],
+  };
+}
+
+async function canonicalTenantKey(
+  client: PoolClient,
+  tenantKey: string,
+): Promise<string> {
+  const result = await client.query<{ canonical_tenant_key: string }>(
+    "SELECT semantic2_canonical_tenant_key($1) AS canonical_tenant_key",
+    [tenantKey],
+  );
+  return result.rows[0]?.canonical_tenant_key ?? tenantKey;
+}
+
+function branchOptionFromRow(
+  row: Pick<
+    CuratedDossierRow,
+    | "dimension_key"
+    | "evidence_packet"
+    | "coverage_score"
+    | "confidence"
+    | "citations"
+  >,
+): CuratedDossierBranchOption {
+  const packet = asRecord(row.evidence_packet);
+  const dimension = asRecord(packet.dimension);
+  const counts = asRecord(packet.counts);
+  const label = asString(
+    dimension.label,
+    row.dimension_key.replaceAll("_", " "),
+  );
+  const entityCount = asNumber(counts.entities);
+  const factCount = asNumber(counts.facts);
+  const relationshipCount = asNumber(counts.relationships);
+  const citationCount = asNumber(
+    counts.evidenceRefs,
+    asArray(row.citations).length,
+  );
+  return {
+    id: row.dimension_key,
+    label,
+    dimensionKey: row.dimension_key,
+    summary: `${entityCount} entities, ${factCount} facts, ${relationshipCount} relationships, ${citationCount} citations`,
+    coverageScore: asNumber(row.coverage_score),
+    confidence: asNumber(row.confidence),
+    entityCount,
+    factCount,
+    relationshipCount,
+    citationCount,
+  };
+}
+
+export async function loadCuratedSemanticDossier(args: {
+  tenantKey: string;
+  question: string;
+  dimensionKey?: DossierDimensionFamily;
+  promptVersion?: string;
+}): Promise<CuratedDossierLoadResult> {
+  const client = await getPool().connect();
+  try {
+    const canonical = await canonicalTenantKey(client, args.tenantKey);
+    const route = routeDimensionQuestion(args.question, "home");
+    const dimensionKey = args.dimensionKey ?? route.primaryDimension;
+    await client.query("BEGIN");
+    await client.query("SELECT set_config($1, $2, true)", [
+      "app.tenant_key",
+      canonical,
+    ]);
+    await client.query("SELECT set_config($1, $2, true)", [
+      "app.client_key",
+      canonical,
+    ]);
+    const result = await client.query<CuratedDossierRow>(
+      `
+        SELECT tenant_key, dimension_key, family_key, evidence_packet, artifacts, gaps, citations,
+               supported_questions, source_tables, coverage_score, confidence, prompt_version,
+               dossier_version, built_at
+        FROM semantic2_dossiers
+        WHERE tenant_key = $1
+          AND dimension_key = $2
+          AND prompt_version = $3
+          AND invalidated_at IS NULL
+        ORDER BY built_at DESC
+        LIMIT 1
+      `,
+      [
+        canonical,
+        dimensionKey,
+        args.promptVersion ?? CURATED_DOSSIER_PROMPT_VERSION,
+      ],
+    );
+    const branchResult = await client.query<
+      Pick<
+        CuratedDossierRow,
+        | "dimension_key"
+        | "evidence_packet"
+        | "coverage_score"
+        | "confidence"
+        | "citations"
+      >
+    >(
+      `
+        SELECT dimension_key, evidence_packet, coverage_score, confidence, citations
+        FROM semantic2_dossiers
+        WHERE tenant_key = $1
+          AND prompt_version = $2
+          AND invalidated_at IS NULL
+        ORDER BY coverage_score DESC, built_at DESC
+      `,
+      [canonical, args.promptVersion ?? CURATED_DOSSIER_PROMPT_VERSION],
+    );
+    await client.query("COMMIT");
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error(
+        `No curated Semantic2 dossier found for ${canonical}/${dimensionKey}.`,
+      );
+    }
+    const dossier = buildUniversalDossier(row, args.question);
+    const branchOptions = branchResult.rows
+      .map(branchOptionFromRow)
+      .filter((option) => option.factCount > 0 || option.entityCount > 0)
+      .slice(0, 6);
+    dossier.branchOptions = branchOptions;
+    return {
+      dossier,
+      promptVersion: row.prompt_version,
+      dossierVersion: row.dossier_version,
+      canonicalTenantKey: canonical,
+      builtAt: row.built_at,
+      branchOptions,
+    };
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+}

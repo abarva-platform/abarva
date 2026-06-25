@@ -64,7 +64,8 @@ export async function POST(req: NextRequest) {
     });
   });
 
-  if (shouldLogHomeKnowTrace(req)) {
+  const includeTrace = shouldLogHomeKnowTrace(req);
+  if (includeTrace) {
     console.info("[home-know.trace]", {
       route: "/api/home/know/ask",
       tenantKey: response.tenantKey,
@@ -84,9 +85,20 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  return NextResponse.json(response, {
-    status: response.answerStatus === "blocked" ? 503 : 200,
-  });
+  return NextResponse.json(
+    includeTrace
+      ? {
+          ...response,
+          trace: {
+            composerTrace: response.safety.composerTrace ?? null,
+            finalPrompt: response.safety.composerTrace?.promptSnapshot ?? null,
+          },
+        }
+      : response,
+    {
+      status: response.answerStatus === "blocked" ? 503 : 200,
+    },
+  );
 }
 
 function shouldLogHomeKnowTrace(req: NextRequest): boolean {

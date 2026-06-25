@@ -34,6 +34,20 @@ const dossier = {
     requiredSources: [],
     artifactPlan: ["prose", "table", "chart", "graph"],
   },
+  branchOptions: [
+    {
+      id: "applications",
+      label: "Application and systems estate",
+      dimensionKey: "application_systems",
+      summary: "applications, ownership, and domain coverage",
+      coverageScore: 0.91,
+      confidence: 0.9,
+      entityCount: 2,
+      factCount: 12,
+      relationshipCount: 1,
+      citationCount: 1,
+    },
+  ],
   sourceCoverage: [
     {
       sourceKey: "F05_applications_systems",
@@ -70,7 +84,14 @@ const dossier = {
       confidence: "high",
     },
   ],
-  metrics: [{ metricKey: "apps", label: "Applications", value: 2, sourceKeys: ["F05_applications_systems"] }],
+  metrics: [
+    {
+      metricKey: "apps",
+      label: "Applications",
+      value: 2,
+      sourceKeys: ["F05_applications_systems"],
+    },
+  ],
   gaps: [
     {
       gapKey: "cmdb",
@@ -79,9 +100,15 @@ const dossier = {
       neededEvidence: ["CMDB service map"],
     },
   ],
-  citations: [{ label: "Applications", sourceKey: "F05_applications_systems", count: 2 }],
+  citations: [
+    { label: "Applications", sourceKey: "F05_applications_systems", count: 2 },
+  ],
   artifactPlan: ["prose", "table", "chart", "graph"],
-  answerBoundary: { canAnswer: ["application estate"], cannotAnswer: ["future investment"], handoffTarget: null },
+  answerBoundary: {
+    canAnswer: ["application estate"],
+    cannotAnswer: ["future investment"],
+    handoffTarget: null,
+  },
   composerPacket: {
     question: "Which systems and applications are loaded?",
     tenantKey: "skyharbor",
@@ -93,9 +120,19 @@ const dossier = {
     relationshipPaths: [],
     metrics: [],
     gaps: [],
-    citations: [{ label: "Applications", sourceKey: "F05_applications_systems", count: 2 }],
+    citations: [
+      {
+        label: "Applications",
+        sourceKey: "F05_applications_systems",
+        count: 2,
+      },
+    ],
     artifactPlan: ["prose", "table", "chart", "graph"],
-    answerBoundary: { canAnswer: ["application estate"], cannotAnswer: ["future investment"], handoffTarget: null },
+    answerBoundary: {
+      canAnswer: ["application estate"],
+      cannotAnswer: ["future investment"],
+      handoffTarget: null,
+    },
   },
   qualityFlags: [],
 } satisfies UniversalDimensionDossier;
@@ -136,7 +173,9 @@ const response: HomeKnowResponse = {
   graphs: [],
   gaps: [],
   conflicts: [],
-  citations: [{ id: "c1", label: "Applications", sourceClass: "tenant-source-file" }],
+  citations: [
+    { id: "c1", label: "Applications", sourceClass: "tenant-source-file" },
+  ],
   handoff: null,
   safety: {
     serverValidated: true,
@@ -165,7 +204,8 @@ const response: HomeKnowResponse = {
 
 function mockClaudeText(text: string, delayMs = 0) {
   const finalMessage = jest.fn(async () => {
-    if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
+    if (delayMs > 0)
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     return {
       content: [{ type: "text", text }],
     };
@@ -207,20 +247,26 @@ describe("home consultant text synthesis", () => {
 
     expect(packet.outputMode).toBe("text");
     expect(prompt).toContain("Relevant sections:");
-    expect(prompt).toContain("Deterministic rollups:");
+    expect(prompt).toContain("Computed rollups:");
     expect(prompt).toContain("Relevant tables:");
     expect(prompt).toContain("Relevant charts:");
     expect(prompt).toContain("Relevant graphs / relationship paths:");
+    expect(prompt).toContain("Branch options for overview questions:");
+    expect(prompt).toContain("Application and systems estate");
     expect(prompt).toContain("Citation labels available:");
     expect(prompt).toContain("Source confidence:");
+    expect(prompt).toContain("Safe answer scope:");
     expect(prompt).toContain("Return plain text only.");
     expect(prompt).not.toContain("Evidence strength:");
+    expect(prompt).not.toContain("Answer boundary:");
     expect(prompt).not.toContain(" rows;");
     expect(prompt).not.toContain("needed evidence:");
   });
 
   it("accepts Claude prose output", async () => {
-    mockClaudeText("SkyHarbor's loaded application estate supports a domain-led view of systems and ownership.\n\nHome can explain the current estate shape from application, domain, ownership, and citation evidence while noting that CMDB/service-map coverage remains incomplete.");
+    mockClaudeText(
+      "SkyHarbor's loaded application estate supports a domain-led view of systems and ownership.\n\nHome can explain the current estate shape from application, domain, ownership, and citation evidence while noting that CMDB/service-map coverage remains incomplete.",
+    );
 
     const result = await synthesizeHomeConsultantText({
       dossier,
@@ -228,12 +274,18 @@ describe("home consultant text synthesis", () => {
     });
 
     expect(isHomeConsultantTextSynthesisResult(result)).toBe(true);
-    expect(result && "text" in result ? result.text : "").toMatch(/domain-led view/i);
-    expect(result && "text" in result ? result.text : "").not.toMatch(/\bevidence\b/i);
+    expect(result && "text" in result ? result.text : "").toMatch(
+      /domain-led view/i,
+    );
+    expect(result && "text" in result ? result.text : "").not.toMatch(
+      /\bevidence\b/i,
+    );
   });
 
   it("selects Claude prose over deterministic fallback when valid", async () => {
-    mockClaudeText("SkyHarbor's loaded application evidence supports a domain-led view of the technology estate.\n\nThe practical implication is that Home can describe current application ownership and domain structure while keeping future investment decisions in Intelligence.");
+    mockClaudeText(
+      "SkyHarbor's loaded application evidence supports a domain-led view of the technology estate.\n\nThe practical implication is that Home can describe current application ownership and domain structure while keeping future investment decisions in Intelligence.",
+    );
 
     const result = await synthesizeHomeConsultantText({
       dossier,
@@ -241,19 +293,24 @@ describe("home consultant text synthesis", () => {
     });
 
     expect(isHomeConsultantTextSynthesisResult(result)).toBe(true);
-    if (!isHomeConsultantTextSynthesisResult(result)) throw new Error("expected synthesis");
+    if (!isHomeConsultantTextSynthesisResult(result))
+      throw new Error("expected synthesis");
     const selected = applyHomeConsultantTextSynthesis(response, result);
     expect(selected.prose).toContain("domain-led view");
     expect(selected.prose).toContain("source context supports");
     expect(selected.prose).not.toMatch(/\bevidence\b/i);
-    expect(selected.safety.composerTrace?.composer).toBe("claude_text_synthesis");
+    expect(selected.safety.composerTrace?.composer).toBe(
+      "claude_text_synthesis",
+    );
     expect(selected.tables).toHaveLength(1);
     expect(selected.charts).toHaveLength(1);
     expect(selected.citations).toHaveLength(1);
   });
 
   it("does not reject Claude output because it is not JSON", async () => {
-    mockClaudeText("SkyHarbor's loaded application context can be described from its domain, ownership, and source coverage evidence. This is plain prose, not JSON, and should still be selected.");
+    mockClaudeText(
+      "SkyHarbor's loaded application context can be described from its domain, ownership, and source coverage evidence. This is plain prose, not JSON, and should still be selected.",
+    );
 
     const result = await synthesizeHomeConsultantText({
       dossier,
@@ -367,7 +424,9 @@ describe("home consultant text synthesis", () => {
         dossier,
         response,
       }),
-    ).not.toEqual(expect.arrayContaining([expect.stringMatching(/^cross_tenant_content:/)]));
+    ).not.toEqual(
+      expect.arrayContaining([expect.stringMatching(/^cross_tenant_content:/)]),
+    );
 
     expect(
       validateHomeConsultantText({
@@ -380,10 +439,16 @@ describe("home consultant text synthesis", () => {
 
   it("falls back cleanly on timeout", async () => {
     process.env.HOME_KNOW_CLAUDE_TIMEOUT_MS = "1";
-    mockClaudeText("SkyHarbor's loaded application context supports a domain-led view.", 10);
+    mockClaudeText(
+      "SkyHarbor's loaded application context supports a domain-led view.",
+      10,
+    );
 
     await expect(
-      synthesizeHomeConsultantText({ dossier, deterministicResponse: response }),
+      synthesizeHomeConsultantText({
+        dossier,
+        deterministicResponse: response,
+      }),
     ).resolves.toMatchObject({
       attempted: true,
       used: false,
@@ -395,7 +460,10 @@ describe("home consultant text synthesis", () => {
     mockClaudeText("");
 
     await expect(
-      synthesizeHomeConsultantText({ dossier, deterministicResponse: response }),
+      synthesizeHomeConsultantText({
+        dossier,
+        deterministicResponse: response,
+      }),
     ).resolves.toMatchObject({
       attempted: true,
       used: false,
@@ -405,7 +473,9 @@ describe("home consultant text synthesis", () => {
   });
 
   it("uses the 25K default output budget", async () => {
-    mockClaudeText("SkyHarbor's loaded application context supports a domain-led view.");
+    mockClaudeText(
+      "SkyHarbor's loaded application context supports a domain-led view.",
+    );
 
     const result = await synthesizeHomeConsultantText({
       dossier,
@@ -425,7 +495,10 @@ describe("home consultant text synthesis", () => {
     process.env.HOME_KNOW_CLAUDE_SYNTHESIS_ENABLED = "false";
 
     await expect(
-      synthesizeHomeConsultantText({ dossier, deterministicResponse: response }),
+      synthesizeHomeConsultantText({
+        dossier,
+        deterministicResponse: response,
+      }),
     ).resolves.toMatchObject({
       attempted: true,
       used: false,
