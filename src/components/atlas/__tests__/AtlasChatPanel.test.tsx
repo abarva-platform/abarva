@@ -6,7 +6,7 @@
 //
 // Coverage:
 //   - Translates AtlasMessage[] → AgentDock thread (atlas → agent role).
-//   - Adds a transient "Atlas is thinking…" turn while pending=true.
+//   - Adds a transient "aVa is thinking…" turn while pending=true.
 //   - Routes suggestion clicks to the caller's onSuggestion (no compose).
 //   - Forwards composer submit (text + attachments) to onSubmit.
 //   - Renders the workspace pane in side-rail mode by default.
@@ -68,7 +68,7 @@ describe("AtlasChatPanel · adapter", () => {
     expect(screen.getByTestId("tower-body")).toBeInTheDocument();
   });
 
-  it("shows the default AI-assisted decision-support disclosure", () => {
+  it("renders the aVa product profile and keeps the default rail uncluttered", () => {
     render(
       <AtlasChatPanel
         messages={[]}
@@ -81,12 +81,32 @@ describe("AtlasChatPanel · adapter", () => {
       />,
     );
 
+    expect(screen.getByText("aVa")).toBeInTheDocument();
+    expect(screen.getAllByText("Tower advisor.").length).toBeGreaterThan(0);
+    expect(screen.queryByLabelText("Quoted context")).not.toBeInTheDocument();
+    expect(screen.queryByText("Atlas")).not.toBeInTheDocument();
+  });
+
+  it("still supports an explicit decision-support quote when a surface opts in", () => {
+    render(
+      <AtlasChatPanel
+        messages={[]}
+        pending={false}
+        onSubmit={jest.fn()}
+        suggestions={[]}
+        onSuggestion={jest.fn()}
+        workspace={<div>w</div>}
+        surface={SURFACE}
+        initialQuote={ATLAS_DECISION_SUPPORT_DISCLOSURE}
+      />,
+    );
+
     expect(screen.getByLabelText("Quoted context")).toHaveTextContent(
       ATLAS_DECISION_SUPPORT_DISCLOSURE,
     );
   });
 
-  it('appends a transient "Atlas is thinking…" turn while pending', () => {
+  it('appends a transient "aVa is thinking…" turn while pending', () => {
     render(
       <AtlasChatPanel
         messages={MESSAGES}
@@ -100,7 +120,7 @@ describe("AtlasChatPanel · adapter", () => {
     );
 
     const thread = screen.getByTestId("agent-dock-thread");
-    expect(thread).toHaveTextContent("Atlas is thinking…");
+    expect(thread).toHaveTextContent("aVa is thinking…");
   });
 
   it("renders in side-rail mode by default and persists per-surface", () => {
@@ -165,12 +185,12 @@ describe("AtlasChatPanel · adapter", () => {
     );
 
     const input = screen.getByTestId("agent-dock-input");
-    fireEvent.change(input, { target: { value: "hello atlas" } });
+    fireEvent.change(input, { target: { value: "hello ava" } });
     await act(async () => {
       fireEvent.submit(screen.getByTestId("agent-dock-form"));
     });
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
-    expect(onSubmit).toHaveBeenCalledWith("hello atlas", []);
+    expect(onSubmit).toHaveBeenCalledWith("hello ava", []);
   });
 });

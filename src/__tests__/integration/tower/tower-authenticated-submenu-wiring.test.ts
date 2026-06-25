@@ -24,6 +24,7 @@ describe("Tower authenticated route wiring", () => {
     expect(towerIndexSource).toContain("<AtlasChatPanel");
     expect(towerIndexSource).toContain("workspace={towerWorkspace}");
     expect(towerIndexSource).toContain("surface=\"tower\"");
+    expect(towerIndexSource).toContain('variant="focused"');
     expect(towerIndexSource).toContain("onSubmit={sendToAtlas}");
   });
 

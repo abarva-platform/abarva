@@ -3,7 +3,7 @@
 // AtlasChatPanel · Tower-flavored AgentDock preset.
 //
 // Migrated from a custom chat panel (with maxHeight: 360 thread + non-sticky
-// composer) to the shared `<AgentDock>` foundation. Tower Atlas surfaces now
+// composer) to the shared `<AgentDock>` foundation. Tower aVa surfaces now
 // inherit:
 //   - resizable side-rail (chat left, workspace right) with width persisted
 //   - 5-mode picker (side-rail / pin-bottom / pin-top / expand / collapsed)
@@ -14,7 +14,7 @@
 // Back-compat: callers continue to pass `messages`, `suggestions`, and a
 // submit handler. We translate to AgentDock's `thread` / `suggestedActions` /
 // `onMessage` shape internally. The pending flag synthesizes a transient
-// "Atlas is thinking…" agent turn at the tail of the thread so the user gets
+// "aVa is thinking…" agent turn at the tail of the thread so the user gets
 // the same affordance as before.
 //
 // Surface key defaults to "tower" — drives localStorage persistence
@@ -38,18 +38,19 @@ export interface AtlasMessage {
 }
 
 export const ATLAS_AGENT: AgentProfile = {
-  initials: "A",
-  name: "Atlas",
-  role: "Tower Conductor — observes portfolio pressure, drift, and signals.",
+  initials: "aV",
+  mark: "ava",
+  name: "aVa",
+  role: "Tower advisor.",
 };
 
 export const ATLAS_DECISION_SUPPORT_DISCLOSURE =
-  "AI-assisted decision support: Atlas outputs require human review of citations, assumptions, and missing data before action.";
+  "Review citations, assumptions, and missing data before acting on aVa output.";
 
 export interface AtlasChatPanelProps {
   /** Conversation thread. Atlas turns + user turns. */
   messages: AtlasMessage[];
-  /** When true a transient "Atlas is thinking…" turn appears at thread tail. */
+  /** When true a transient "aVa is thinking…" turn appears at thread tail. */
   pending: boolean;
   /**
    * Caller's send handler. AgentDock owns composer state and forwards both
@@ -78,6 +79,8 @@ export interface AtlasChatPanelProps {
   agent?: AgentProfile;
   /** Optional eyebrow above the thread. */
   initialQuote?: string;
+  /** Visual density. Tower uses focused to keep the chat rail quiet. */
+  variant?: "standard" | "focused";
   /** Side-rail splitter overrides. */
   defaultLeftPercent?: number;
   minLeftPx?: number;
@@ -86,6 +89,10 @@ export interface AtlasChatPanelProps {
 }
 
 const ATLAS_THINKING_ID = "atlas-thinking-transient";
+
+function visibleAvaCopy(value: string): string {
+  return value.replace(/\bAtlas\b/g, "aVa").replace(/\batlas\b/g, "aVa");
+}
 
 export function AtlasChatPanel({
   messages,
@@ -97,7 +104,8 @@ export function AtlasChatPanel({
   surface = "tower",
   surfaceContext,
   agent = ATLAS_AGENT,
-  initialQuote = ATLAS_DECISION_SUPPORT_DISCLOSURE,
+  initialQuote,
+  variant = "standard",
   defaultLeftPercent = 35,
   minLeftPx = 320,
   defaultMode = "side-rail",
@@ -109,13 +117,13 @@ export function AtlasChatPanel({
     const base: ChatMessage[] = messages.map((m) => ({
       id: m.id,
       role: m.role === "atlas" ? "agent" : "user",
-      body: m.content,
+      body: visibleAvaCopy(m.content),
     }));
     if (pending) {
       base.push({
         id: ATLAS_THINKING_ID,
         role: "agent",
-        body: "Atlas is thinking…",
+        body: "aVa is thinking…",
       });
     }
     return base;
@@ -129,7 +137,7 @@ export function AtlasChatPanel({
     () =>
       suggestions.map((s, i) => ({
         id: `${s.kind ?? "message"}-${i}`,
-        label: s.label,
+        label: visibleAvaCopy(s.label),
         body: s.value,
         onClick: () => onSuggestion(s),
       })),
@@ -144,6 +152,7 @@ export function AtlasChatPanel({
       defaultLeftPercent={defaultLeftPercent}
       minLeftPx={minLeftPx}
       surfaceContext={surfaceContext}
+      variant={variant}
       initialQuote={initialQuote}
       thread={thread}
       suggestedActions={suggestedActions}
