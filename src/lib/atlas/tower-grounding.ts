@@ -10,6 +10,7 @@ import { buildTowerBandMetrics, type TowerBandMetricsView, type TowerLens } from
 import { buildTowerPressuresView, type TowerPressuresView } from '@/lib/tower/pressure-cards-view';
 import { buildTowerAtlasObservationsView, type AtlasObservationsView } from '@/lib/tower/atlas-observations-view';
 import { buildStrategicAlignment2x2View, type StrategicAlignment2x2View } from '@/lib/tower/strategic-alignment-2x2-view';
+import { listProjectedTowerReadModelForClient } from '@/lib/tower/tower-semantic-projection';
 import { resolveTowerToday } from '@/lib/tower/today-resolution';
 
 type IndustryCode = 'HEALTHCARE_IDN' | 'FINSERV' | 'RETAIL' | 'GENERAL';
@@ -236,26 +237,35 @@ export async function buildAtlasTowerCurrentState(input: {
     listInitiativesForClient(input.clientId),
     listVendorsForClient(input.clientId),
   ]);
+  const projected =
+    initiatives.length === 0 && vendors.length === 0
+      ? await listProjectedTowerReadModelForClient({
+          clientId: input.clientId,
+          tenantKey: client.tenantKey,
+        }).catch(() => ({ source: 'empty' as const, initiatives: [], vendors: [] }))
+      : null;
+  const towerInitiatives = projected?.initiatives.length ? projected.initiatives : initiatives;
+  const towerVendors = projected?.vendors.length ? projected.vendors : vendors;
   const [supporting, bandMetrics, pressuresView] = await Promise.all([
     listSupportingRows(initiatives),
-    Promise.resolve(buildTowerBandMetrics(initiatives, vendors, todayIso, activeLens)),
-    Promise.resolve(buildTowerPressuresView(initiatives, vendors, todayIso, activeLens)),
+    Promise.resolve(buildTowerBandMetrics(towerInitiatives, towerVendors, todayIso, activeLens)),
+    Promise.resolve(buildTowerPressuresView(towerInitiatives, towerVendors, todayIso, activeLens)),
   ]);
   const atlasObservationsView = buildTowerAtlasObservationsView(
-    initiatives,
-    vendors,
+    towerInitiatives,
+    towerVendors,
     pressuresView,
     todayIso,
   );
-  const alignment2x2View = buildStrategicAlignment2x2View(initiatives);
+  const alignment2x2View = buildStrategicAlignment2x2View(towerInitiatives);
 
   return {
     client,
     todayIso,
     activeLens,
     substrateCounts: {
-      initiatives: initiatives.length,
-      vendors: vendors.length,
+      initiatives: towerInitiatives.length,
+      vendors: towerVendors.length,
       kpiSnapshots: supporting.kpiSnapshots.length,
       decisions: supporting.decisions.length,
       scenarios: supporting.scenarios.length,
@@ -268,8 +278,8 @@ export async function buildAtlasTowerCurrentState(input: {
     pressuresView,
     atlasObservationsView,
     alignment2x2View,
-    initiatives,
-    vendors,
+    initiatives: towerInitiatives,
+    vendors: towerVendors,
     ...supporting,
   };
 }
