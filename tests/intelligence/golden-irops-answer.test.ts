@@ -1,4 +1,5 @@
 import {
+  advisorRequiredArtifactForQuery,
   buildIntelligenceAdvisorComposerBlock,
   chooseAdvisorTokenBudget,
   chooseAdvisorWordCap,
@@ -130,16 +131,31 @@ describe("Golden IROPS Intelligence advisor composer", () => {
         query:
           "Show the architecture constraints across mainframe, identity, APIs, and integration risk.",
         expectedFunction: "Function: enterprise architecture constraints",
+        expectedArtifact: "table",
       },
       {
         query:
           "Which customer operations and front-office AI opportunities should leadership consider, with evidence and caveats?",
         expectedFunction: "Function: customer operations and front-office AI",
+        expectedArtifact: "table",
       },
       {
         query:
           "How should Lakeshore use AI for ITSM incident triage and back-office process reengineering?",
         expectedFunction: "Function: operations and process bottlenecks",
+        expectedArtifact: "table",
+      },
+      {
+        query:
+          "Show expected business impact of AI-assisted ITSM across MTTR, ticket deflection, change failure, and employee experience.",
+        expectedFunction: "Function: benefits realization and value leakage",
+        expectedArtifact: "chart",
+      },
+      {
+        query:
+          "Map ITSM process dependencies between incidents, changes, CMDB, service owners, business processes, and controls if the evidence exists.",
+        expectedFunction: "Function: integration topology and dependency graph",
+        expectedArtifact: "graph",
       },
     ];
 
@@ -154,6 +170,9 @@ describe("Golden IROPS Intelligence advisor composer", () => {
           sources,
         })?.promptBlock,
       ).toContain(fixture.expectedFunction);
+      expect(advisorRequiredArtifactForQuery(fixture.query)).toBe(
+        fixture.expectedArtifact ?? "table",
+      );
     }
   });
 });

@@ -182,3 +182,31 @@ Additional validation:
 
 - Focused Jest for Golden IROPS composer: pass (`4 passed`).
 - Focused ESLint for changed files: pass.
+
+## Follow-up Artifact Fallback + Function Coverage Correction
+
+The 25-question live crawl after #3941 proved the route-priority patch was live,
+but also separated false harness failures from real product gaps. After
+correcting the crawler to count the canonical `artifact` field, the deployed
+score was 17/25 clean across SkyHarbor and Lakeshore. The remaining failures
+were narrow:
+
+- one false SkyHarbor off-tenant guard response
+- graph/chart prompts returning bare prose when edge or numeric rows were thin
+- function prompts whose advisor route knew a table/chart/graph was required,
+  while the generic router still inferred prose or an incidental graph
+
+This patch makes the advisor route's required artifact authoritative for
+rendering, while preserving explicit user chart requests. It also emits cited
+`Chart Evidence Required` / `Graph Evidence Required` tables when aVa has
+related evidence but not enough exact numeric rows or source-to-target edge rows
+to render a defensible chart or graph. Finally, the off-tenant guard now blocks
+other tenants when they are used as evidence or identity, but does not erase an
+answer for defensive references such as "avoid importing Apex assumptions."
+
+Additional validation:
+
+- Corrected signed-in live crawl before this patch: 17/25 clean
+  (SkyHarbor 10/13, Lakeshore 7/12), against `app.abarva.ai`.
+- Focused Jest for Intelligence route, advisor composer, structured exhibits,
+  and tenant identity guard: pass (`73 passed` across 4 suites).

@@ -29,6 +29,7 @@ import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
 import { routeQuestion } from "@/lib/intelligence/answer/router";
 import { expertIndustryForClientKey } from "@/lib/intelligence/answer/expert-grounding";
 import {
+  advisorRequiredArtifactForQuery,
   expertRefsForAdvisorRoute,
   withAdvisorSupportSources,
 } from "@/lib/intelligence/ask/advisor-composer";
@@ -342,7 +343,15 @@ async function handleAsk(payload: AskPayload) {
           const advisorExperts = expertRefsForAdvisorRoute(query);
           const expertsUsed =
             advisorExperts.length > 0 ? advisorExperts : routing.experts;
-          const answerRouting = { ...routing, experts: expertsUsed };
+          const advisorOutputShape = advisorRequiredArtifactForQuery(query);
+          const answerRouting = {
+            ...routing,
+            outputShape:
+              routing.outputShape === "chart"
+                ? routing.outputShape
+                : advisorOutputShape ?? routing.outputShape,
+            experts: expertsUsed,
+          };
           const sentinelSources = withAdvisorSupportSources(
             query,
             intelligenceSourcesFromCitations(sentinelCitations),
@@ -366,7 +375,7 @@ async function handleAsk(payload: AskPayload) {
                 requestedOrSurfaceClient ??
                 "unknown",
               question: query,
-              intent: routing.outputShape,
+              intent: answerRouting.outputShape,
               status: "answered",
               directAnswer: exhibits.prose,
               interpretation:
@@ -567,7 +576,15 @@ async function handleAsk(payload: AskPayload) {
           const advisorExperts = expertRefsForAdvisorRoute(query);
           const expertsUsed =
             advisorExperts.length > 0 ? advisorExperts : routing.experts;
-          const answerRouting = { ...routing, experts: expertsUsed };
+          const advisorOutputShape = advisorRequiredArtifactForQuery(query);
+          const answerRouting = {
+            ...routing,
+            outputShape:
+              routing.outputShape === "chart"
+                ? routing.outputShape
+                : advisorOutputShape ?? routing.outputShape,
+            experts: expertsUsed,
+          };
           const exhibits = buildStructuredExhibits({
             prose: assistantText,
             routing: answerRouting,
@@ -590,7 +607,7 @@ async function handleAsk(payload: AskPayload) {
                 requestedOrSurfaceClient ??
                 "unknown",
               question: query,
-              intent: routing.outputShape,
+              intent: answerRouting.outputShape,
               status: "answered",
               directAnswer: exhibits.prose,
               interpretation:

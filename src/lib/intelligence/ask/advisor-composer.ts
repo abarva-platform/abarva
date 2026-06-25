@@ -309,6 +309,14 @@ function enterpriseFunctionRouteForQuery(
   if (has(/\b(vendor|contract|supplier|concentration|renewal)\b/)) {
     return routeByKey("vendors");
   }
+  if (
+    has(
+      /\b(business impact|mttr|ticket deflection|change failure|employee experience|benefit|benefits|realization|realized|value lever|leakage|at-risk|impact|roi)\b/,
+    ) &&
+    !has(/\b(workforce|persona|people|fte|labor|productivity)\b/)
+  ) {
+    return routeByKey("benefits");
+  }
   if (has(/\b(workforce|persona|people|fte|labor|productivity|function|employee|shared services?)\b/)) {
     return routeByKey("workforce");
   }
@@ -335,6 +343,15 @@ export function advisorSupportSourcesForRoute(query: string): AskSource[] {
   }
   const functionRoute = enterpriseFunctionRouteForQuery(query);
   return functionRoute ? [functionRoute.supportSource] : [];
+}
+
+export function advisorRequiredArtifactForQuery(
+  query: string,
+): EnterpriseFunctionRoute["requiredArtifact"] | null {
+  if (routeIntelligenceAdvisorQuestion(query) === "airline_irops_ai_roi") {
+    return "table";
+  }
+  return enterpriseFunctionRouteForQuery(query)?.requiredArtifact ?? null;
 }
 
 export function withAdvisorSupportSources(

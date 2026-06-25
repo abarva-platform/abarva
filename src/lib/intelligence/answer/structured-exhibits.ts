@@ -71,10 +71,38 @@ export function answerCitationsFromAskSources(
   }));
 }
 
-function evidenceRequiredTable(citations: AnswerCitation[]): AnswerTable {
+function evidenceRequiredTable(
+  citations: AnswerCitation[],
+  outputShape: RoutingDecision["outputShape"] = "table",
+): AnswerTable {
+  const requestedEvidence =
+    outputShape === "graph"
+      ? "Source-to-target relationship edge pairs for the requested graph"
+      : outputShape === "chart"
+        ? "Connected numeric row/column source data for the requested chart"
+        : "Tenant data extract for the requested comparison";
+  const missingStatus =
+    outputShape === "graph"
+      ? "No defensible edge rows were present in the retrieved cited sources"
+      : outputShape === "chart"
+        ? "No exact comparable numeric rows were present in the retrieved cited sources"
+        : citations.length > 0
+          ? "Not present in the retrieved cited sources"
+          : "No cited source available for the requested rows";
+  const nextMove =
+    outputShape === "graph"
+      ? "Load or validate From / Relationship / To evidence before rendering a dependency graph."
+      : outputShape === "chart"
+        ? "Validate source rows with exact comparable values before rendering a chart."
+        : "Validate or load the source table before approving tenant-specific numbers.";
   return {
     id: "answer-evidence-required",
-    title: "Evidence Required",
+    title:
+      outputShape === "graph"
+        ? "Graph Evidence Required"
+        : outputShape === "chart"
+          ? "Chart Evidence Required"
+          : "Evidence Required",
     columns: [
       { key: "evidence", label: "Evidence" },
       { key: "status", label: "Status" },
@@ -82,16 +110,17 @@ function evidenceRequiredTable(citations: AnswerCitation[]): AnswerTable {
     ],
     rows: [
       {
-        evidence: "Tenant data extract for the requested comparison",
-        status:
-          citations.length > 0
-            ? "Not present in the retrieved cited sources"
-            : "No cited source available for the requested rows",
-        nextMove:
-          "Validate or load the source table before approving tenant-specific numbers.",
+        evidence: requestedEvidence,
+        status: citations.length > 0 ? missingStatus : "No cited source available for the requested rows",
+        nextMove,
       },
     ],
-    note: "Rendered because the user asked for a table, but aVa did not have enough connected data to populate tenant-specific rows without fabrication.",
+    note:
+      outputShape === "graph"
+        ? "Rendered because the user asked for a graph, but aVa did not have enough connected edge data to populate a graph without fabrication."
+        : outputShape === "chart"
+          ? "Rendered because the user asked for a chart, but aVa did not have enough exact comparable values to populate a chart without fabrication."
+          : "Rendered because the user asked for a table, but aVa did not have enough connected data to populate tenant-specific rows without fabrication.",
     citationIds: citations.map((citation) => citation.id),
   };
 }
@@ -744,8 +773,13 @@ export function buildStructuredExhibits(
     if (graph) graphs.push(graph);
   }
 
-  if (tables.length === 0 && input.routing.outputShape === "table") {
-    tables.push(evidenceRequiredTable(citations));
+  if (
+    tables.length === 0 &&
+    (input.routing.outputShape === "table" ||
+      input.routing.outputShape === "chart" ||
+      input.routing.outputShape === "graph")
+  ) {
+    tables.push(evidenceRequiredTable(citations, input.routing.outputShape));
   }
 
   const artifactGap = artifactGapText(input.routing.outputShape, citations);
