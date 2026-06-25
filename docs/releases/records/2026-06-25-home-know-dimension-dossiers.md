@@ -21,12 +21,14 @@ were present. This release now includes a shared usable-dossier-evidence standar
 and evidence-channel trace so validators, frontend tripwires, and proof scripts
 do not rely on `factsBound` alone.
 
-Third follow-up adds the optional Home Consultant Dossier Claude synthesis layer.
-The dossier builder remains the source of truth; Claude receives a bounded
-structured dossier packet and returns structured JSON synthesis only. Validation
-rejects false refusals, raw IDs, internal labels, uncited references, and Home
-recommendations. Deterministic dossier composition remains the fallback whenever
-Claude is disabled, unavailable, times out, or fails validation.
+Third follow-up added the optional Home Consultant Claude synthesis layer. The
+first version required strict JSON output; live proof showed that good consultant
+prose could be discarded when Claude did not return a parseable JSON object. The
+current follow-up replaces that brittle JSON-only selection with text-first
+Claude synthesis: the dossier builder remains the source of truth, Claude writes
+only user-facing prose, and deterministic dossier composition remains the
+fallback whenever Claude is disabled, unavailable, times out, or fails text
+validation.
 
 ## Layer Impact
 
@@ -60,11 +62,11 @@ Claude is disabled, unavailable, times out, or fails validation.
 - `npx tsx scripts/qa/home-dossier-crawl.ts`: passed, 54/54 questions.
 - `npx jest src/lib/home/know/__tests__/home-know-engine.test.ts tests/home-know/home-org-answer-quality.test.ts tests/home-know/home-answer-forbidden-language.test.ts src/lib/semantic-dossiers/__tests__/universal-dimension-dossier.test.ts --runInBand`: passed, 39/39 after the live-quality fix.
 - Evidence-channel audit validation to run before merge: `npx jest src/lib/home/know/__tests__/has-usable-dossier-evidence.test.ts src/lib/home/know/__tests__/home-know-engine.test.ts src/components/home/know/__tests__/HomeKnowAnswerRenderer.test.tsx --runInBand`.
-- Home Consultant synthesis validation to run before merge: `npx jest src/lib/home/know/__tests__/home-consultant-dossier-synthesis.test.ts src/lib/features/__tests__/is-feature-enabled.test.ts --runInBand`.
-- Trace hardening validation after live proof exposed deterministic fallback: `npx jest src/lib/home/know/__tests__/home-consultant-dossier-synthesis.test.ts src/lib/home/know/__tests__/home-know-engine.test.ts --runInBand`: passed, 31/31.
+- Home Consultant text synthesis validation to run before merge: `npx jest src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts src/lib/features/__tests__/is-feature-enabled.test.ts --runInBand`.
+- Trace hardening validation after live proof exposed deterministic fallback: `npx jest src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts src/lib/home/know/__tests__/home-know-engine.test.ts --runInBand`.
 - `npx eslint scripts/qa/home-dossier-crawl.ts src/lib/semantic-dossiers src/lib/home/know src/app/api/home/know/ask/route.ts src/components/home/know src/components/home/HomeSurface.tsx`: passed.
 - `npx eslint src/lib/semantic-dossiers src/lib/home/know`: passed after the live-quality fix.
-- `npx eslint src/lib/home/know/home-consultant-dossier-synthesis.ts src/lib/home/know/home-know-engine.ts src/lib/home/know/evaluate-home-consultant-synthesis.ts src/lib/home/know/__tests__/home-consultant-dossier-synthesis.test.ts`: passed.
+- `npx eslint src/lib/home/know/home-consultant-text-synthesis.ts src/lib/home/know/home-know-engine.ts src/lib/home/know/evaluate-home-consultant-synthesis.ts src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts`: to run before merge.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false --skipLibCheck`: passed after the consultant synthesis trace patch.
 - `NODE_OPTIONS=--max-old-space-size=8192 node node_modules/typescript/lib/tsc.js --noEmit --pretty false --incremental false --skipLibCheck`: failed locally on unrelated cross-worktree Playwright type mismatch in `tests/accessibility/public-axe.spec.ts`; clean CI TypeScript is required before merge.
 - `npm run release:check`: passed.
@@ -105,7 +107,9 @@ Revert this release commit and redeploy the previous known-good ACA image. No de
 - `proof/home-consultant-live-20260625/signed-in-proof.json`
 - `proof/home-consultant-live-20260625/skyharbor-home.png`
 - `proof/home-consultant-live-20260625/lakeshore-home.png`
-- `docs/home-know/HOME_CONSULTANT_DOSSIER_PROMPT.md`
+- `docs/home-know/HOME_CONSULTANT_TEXT_SYNTHESIS_PROMPT.md`
+- `docs/home-know/HOME_CLAUDE_TEXT_OUTPUT_CONTRACT.md`
+- `docs/home-know/HOME_JSON_CONTRACT_DEPRECATION.md`
 - `docs/home-know/HOME_CONSULTANT_SYNTHESIS_EVALUATION.md`
 - `docs/home-know/HOME_CONSULTANT_DIMENSION_STYLE_GUIDE.md`
 

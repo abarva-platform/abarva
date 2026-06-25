@@ -90,7 +90,7 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "home_know_claude_synthesis",
     summary:
-      "Optional consultant-grade Claude synthesis for Home KNOW dimension dossiers. AbarVa still builds the bounded dossier, artifacts, citations, gaps, and tenant fence; Claude only phrases structured JSON synthesis and deterministic composer remains the fallback. Env controls: HOME_KNOW_CLAUDE_SYNTHESIS_ENABLED, HOME_KNOW_CLAUDE_MODEL, HOME_KNOW_CLAUDE_TIMEOUT_MS, HOME_KNOW_CLAUDE_MAX_TOKENS.",
+      "Optional consultant-grade Claude text synthesis for Home KNOW dimension dossiers. AbarVa still builds the bounded dossier, artifacts, citations, gaps, and tenant fence; Claude only writes the user-facing prose and deterministic composer remains the fallback. Env controls: HOME_KNOW_CLAUDE_SYNTHESIS_ENABLED, HOME_KNOW_CLAUDE_OUTPUT_MODE=text, HOME_KNOW_CLAUDE_MODEL, HOME_KNOW_CLAUDE_TIMEOUT_MS, HOME_KNOW_CLAUDE_MAX_TOKENS.",
     policy: "tenant",
     includeTenants: ["skyharbor", "lakeshore"],
   },
