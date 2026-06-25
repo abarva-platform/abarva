@@ -4,8 +4,20 @@
 // Home KNOW endpoint and renders the shared HomeKnowResponse contract. It does
 // not classify intent, retrieve data, or render Intelligence experts locally.
 
-import { useState } from "react";
-import { HomeKnowAsk } from "@/components/home/know/HomeKnowAsk";
+import { useCallback, useMemo, useState } from "react";
+import {
+  AvaChatShell,
+  type AvaCanvasTab,
+} from "@/components/ava-chat/AvaChatShell";
+import type {
+  ChatMessage,
+  SuggestedAction,
+} from "@/components/agent/AgentDock";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
+import type {
+  HomeKnowCitation,
+  HomeKnowResponse,
+} from "@/lib/home/know/home-know-contract";
 import type {
   IntelligenceBindingPayload,
   BindingDimension,
@@ -15,8 +27,6 @@ import type {
 const CSS = `
 .homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);min-height:100%;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
 .homex .hx-shell{display:block;min-height:100%}
-.homex .hx-askBand{background:#fff;border-bottom:1px solid var(--hl);padding:14px 40px 16px}
-.homex .hx-askInner{max-width:1120px;margin:0 auto}
 .homex .hx-rail{border-bottom:1px solid var(--hl);padding:10px 40px;background:#fff}
 .homex .hx-navWrap{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .homex .hx-railLabel{display:flex;align-items:center;gap:8px;color:var(--hm);font-size:12px}
@@ -24,7 +34,7 @@ const CSS = `
 .homex .hx-select{min-width:min(360px,100%);border:1px solid var(--hl);border-radius:8px;background:#fff;color:var(--hi);font:inherit;font-size:13px;padding:8px 32px 8px 10px}
 .homex .hx-select:focus{outline:2px solid rgba(34,174,234,.22);border-color:#22AEEA}
 .homex .hx-rail-h,.homex .hx-rail-g{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.homex .hx-canvas{padding:0 0 80px;max-width:none;min-width:0}
+.homex .hx-canvas{padding:0 0 80px;max-width:none;min-width:0;min-height:100%}
 .homex .hx-body{padding:14px 40px 0;max-width:1400px;margin:0 auto}
 .homex .hx-ey{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--hf)}
 .homex .hx-h2{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:26px;letter-spacing:-.01em;margin:8px 0 6px}
@@ -34,7 +44,7 @@ const CSS = `
 .homex .hx-sec{margin-top:26px}
 .homex .hx-sechead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
 .homex .hx-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:680px){.homex .hx-grid{grid-template-columns:1fr}.homex .hx-askBand,.homex .hx-rail,.homex .hx-body{padding-left:18px;padding-right:18px}.homex .hx-navWrap{display:grid}.homex .hx-select{width:100%;min-width:0}}
+@media(max-width:680px){.homex .hx-grid{grid-template-columns:1fr}.homex .hx-rail,.homex .hx-body{padding-left:18px;padding-right:18px}.homex .hx-navWrap{display:grid}.homex .hx-select{width:100%;min-width:0}}
 .homex .hx-card{background:var(--hcard);border:1px solid var(--hl);border-radius:12px;padding:20px 22px}
 .homex .hx-tags{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--hm);margin-bottom:9px}
 .homex .hx-card h3{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:19px;line-height:1.22;margin:0 0 8px}
@@ -58,6 +68,9 @@ const CONTEXT_BROWSER_QUESTIONS = [
   "Show vendor and contract coverage.",
   "What fields are missing?",
 ];
+
+const EMPTY_DIMS: BindingDimension[] = [];
+const EMPTY_SIGNALS: BindingSignal[] = [];
 
 function contextBrowserQuestions(dimensions: BindingDimension[]): string[] {
   const labels = dimensions.map((dimension) =>
@@ -235,10 +248,193 @@ function Overview({ payload }: { payload: IntelligenceBindingPayload | null }) {
 
       <div className="hx-hint">
         <span className="hx-dot" style={{ background: "var(--hb)" }} />
-        Pick a context dot above, or ask a question in the aVa bar.
+        Pick a context dot above, or ask in the aVa panel.
       </div>
     </div>
   );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isHomeKnowResponse(value: unknown): value is HomeKnowResponse {
+  return (
+    isRecord(value) &&
+    value.mode === "KNOW" &&
+    typeof value.tenantKey === "string" &&
+    typeof value.question === "string" &&
+    typeof value.prose === "string" &&
+    Array.isArray(value.tables) &&
+    Array.isArray(value.charts) &&
+    Array.isArray(value.graphs) &&
+    Array.isArray(value.citations)
+  );
+}
+
+function messageId(prefix: string): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function citationClass(citation: HomeKnowCitation) {
+  if (citation.sourceClass === "tenant-relationship") return "graph" as const;
+  if (citation.sourceClass === "tenant-source-file") return "tenant-chunk" as const;
+  return "tenant-fact" as const;
+}
+
+function toAvaAnswerPacket(response: HomeKnowResponse): AvaAnswerPacket {
+  const tables = response.tables.map((table) => ({
+    id: table.id,
+    title: table.title,
+    columns: table.columns,
+    rows: table.rows.map((row) => {
+      const normalized: Record<string, string | number | null> = {};
+      Object.entries(row).forEach(([key, value]) => {
+        normalized[key] =
+          typeof value === "boolean" ? String(value) : value;
+      });
+      return normalized;
+    }),
+    note: table.note,
+    citationIds: table.citationIds,
+  }));
+  const charts = response.charts.map((chart) => ({
+    id: chart.id,
+    kind: "cost-stack" as const,
+    title: chart.title,
+    data: chart.data.map((point, index) => ({
+      label: point.label,
+      value: point.value,
+      color:
+        point.color ??
+        ["#0f5ba7", "#1f6b3a", "#d8e4f2", "#7a8ca5"][index % 4],
+    })),
+    citationIds: chart.citationIds,
+  }));
+  const graphs = response.graphs.map((graph) => ({
+    id: graph.id,
+    title: graph.title,
+    nodes: graph.nodes.map((node) => ({
+      id: node.id,
+      label: node.label,
+      kind: node.type,
+    })),
+    edges: graph.edges.map((edge) => ({
+      from: edge.from,
+      to: edge.to,
+      label: edge.label,
+      kind: edge.type,
+    })),
+    citationIds: graph.citationIds,
+  }));
+
+  return {
+    surface: "home",
+    mode: "KNOW",
+    tenantKey: response.tenantKey,
+    question: response.question,
+    intent: response.intent,
+    status: response.answerStatus,
+    directAnswer: response.prose,
+    prose: response.prose,
+    factsUsed: response.facts.map((fact) => ({
+      id: fact.id,
+      label: fact.label,
+      value: fact.value,
+      citationIds: fact.citationIds,
+    })),
+    metricsUsed: [],
+    relationshipsUsed: [],
+    artifacts: [
+      ...tables.map((table) => ({ ...table, artifact: "table" as const })),
+      ...charts.map((chart) => ({ ...chart, artifact: "chart" as const })),
+      ...graphs.map((graph) => ({ ...graph, artifact: "graph" as const })),
+    ],
+    tables,
+    charts,
+    graphs,
+    citations: response.citations.map((citation) => ({
+      id: citation.id,
+      label: citation.label,
+      sourceClass: citationClass(citation),
+      recordId: citation.recordId ?? undefined,
+      excerpt: citation.excerpt ?? undefined,
+      confidence: citation.confidence,
+    })),
+    gaps: response.gaps.map((gap) => ({
+      id: gap.id,
+      label: gap.displayLabel,
+      detail: gap.message,
+      severity: gap.severity,
+      citationIds: gap.citationIds,
+    })),
+    caveats: [
+      ...response.conflicts.map((conflict) => ({
+        id: conflict.id,
+        label: conflict.label,
+        detail: conflict.description,
+      })),
+      ...response.charts.flatMap((chart) =>
+        chart.caveats.map((caveat, index) => ({
+          id: `${chart.id}-caveat-${index}`,
+          label: chart.title,
+          detail: caveat,
+        })),
+      ),
+    ],
+    nextSteps: response.handoff
+      ? [
+          {
+            id: "home-know-handoff",
+            label: response.handoff.label,
+            rationale: response.handoff.reason,
+            targetSurface: response.handoff.target ?? undefined,
+          },
+        ]
+      : [],
+    quality: {
+      confidence: response.answerStatus === "answered" ? "high" : "medium",
+      evidenceStrength:
+        response.answerStatus === "answered" ? "strong" : "partial",
+      tenantGrounding:
+        response.citations.length > 0 ? "complete" : "partial",
+      answerCompleteness:
+        response.answerStatus === "answered" ? "complete" : "partial",
+    },
+    safety: {
+      tenantFencePassed: true,
+      rawIdsSuppressed: true,
+      forbiddenLanguagePassed: !response.safety.frontendTripwireShouldFire,
+      unsupportedClaimsBlocked: true,
+    },
+  };
+}
+
+function textFallback(response: HomeKnowResponse): string {
+  const lines = [response.prose.trim()].filter(Boolean);
+  const exhibitParts = [
+    response.tables.length ? `${response.tables.length} table` : null,
+    response.charts.length ? `${response.charts.length} chart` : null,
+    response.graphs.length ? `${response.graphs.length} graph` : null,
+  ].filter(Boolean);
+  if (exhibitParts.length > 0) {
+    lines.push(`Evidence and exhibits: ${exhibitParts.join(", ")}.`);
+  }
+  if (response.gaps.length > 0) {
+    lines.push(
+      `Open gaps: ${response.gaps
+        .slice(0, 3)
+        .map((gap) => gap.message)
+        .join("; ")}.`,
+    );
+  }
+  if (response.handoff) {
+    lines.push(`${response.handoff.label}: ${response.handoff.reason}`);
+  }
+  return lines.join("\n\n") || "I do not see that in the loaded data.";
 }
 
 export function HomeSurface({
@@ -248,40 +444,133 @@ export function HomeSurface({
   payload: IntelligenceBindingPayload | null;
   clientKey?: string | null;
 }) {
-  const dims = payload?.context ?? [];
-  const signals = payload?.signals ?? [];
+  const dims = payload?.context ?? EMPTY_DIMS;
+  const signals = payload?.signals ?? EMPTY_SIGNALS;
   const [dimKey, setDimKey] = useState<string | null>(null);
+  const [thread, setThread] = useState<ChatMessage[]>([]);
+  const [isBusy, setIsBusy] = useState(false);
   const selected = dimKey
     ? (dims.find((d) => d.dimension === dimKey) ?? null)
     : null;
 
-  return (
+  const askHomeKnow = useCallback(
+    async (text: string) => {
+      const question = text.trim();
+      if (!question) return;
+
+      const userTurn: ChatMessage = {
+        id: messageId("home-user"),
+        role: "user",
+        body: question,
+        at: new Date().toISOString(),
+      };
+      const agentTurnId = messageId("home-ava");
+      const pendingTurn: ChatMessage = {
+        id: agentTurnId,
+        role: "agent",
+        body: "",
+        at: new Date().toISOString(),
+      };
+
+      setThread((current) => [...current, userTurn, pendingTurn]);
+      setIsBusy(true);
+
+      try {
+        const res = await fetch("/api/home/know/ask", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            question,
+            client: clientKey ?? payload?.tenant.key ?? null,
+            tenantKey: payload?.tenant.key ?? clientKey ?? null,
+          }),
+        });
+        const json: unknown = await res.json();
+        if (!res.ok || !isHomeKnowResponse(json)) {
+          throw new Error("Home KNOW returned an invalid response.");
+        }
+        const response = json;
+        const body = textFallback(response);
+        const agentAnswer = toAvaAnswerPacket(response);
+        setThread((current) =>
+          current.map((turn) =>
+            turn.id === agentTurnId
+              ? {
+                  ...turn,
+                  body,
+                  agentAnswer,
+                }
+              : turn,
+          ),
+        );
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Home KNOW could not answer that question.";
+        setThread((current) =>
+          current.map((turn) =>
+            turn.id === agentTurnId
+              ? {
+                  ...turn,
+                  body: message,
+                }
+              : turn,
+          ),
+        );
+      } finally {
+        setIsBusy(false);
+      }
+    },
+    [clientKey, payload?.tenant.key],
+  );
+
+  const suggestedActions = useMemo<SuggestedAction[]>(
+    () =>
+      contextBrowserQuestions(dims)
+        .slice(0, 3)
+        .map((question, index) => ({
+          id: `home-know-suggested-${index}`,
+          label: question,
+          body: question,
+          onClick: () => {
+            void askHomeKnow(question);
+          },
+        })),
+    [askHomeKnow, dims],
+  );
+
+  const tabs = useMemo<AvaCanvasTab[]>(
+    () => [
+      { id: "overview", label: "Overview" },
+      { id: "context", label: "Context", count: dims.length },
+      { id: "signals", label: "Signals", count: signals.length },
+    ],
+    [dims.length, signals.length],
+  );
+
+  const canvas = (
     <div className="homex">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div className="hx-shell">
         <main className="hx-canvas">
-          <section className="hx-askBand" aria-label="Ask aVa">
-            <div className="hx-askInner">
-              <HomeKnowAsk
-                client={clientKey}
-                placeholder="Ask about loaded context, systems, owners, vendors..."
-                showSuggestions={false}
-                suggestedQuestions={contextBrowserQuestions(dims)}
-                tenantKey={payload?.tenant.key ?? clientKey}
-              />
-            </div>
-          </section>
           <div className="hx-rail" aria-label="Context Explorer tabs">
             <div className="hx-rail-h">Context Explorer</div>
             <div className="hx-navWrap">
               <div className="hx-railLabel">
                 <span className="hx-dot" style={{ background: "var(--hb)" }} />
-                <span>{dims.length ? `${dims.length} context dimensions loaded` : "Context dimensions"}</span>
+                <span>
+                  {dims.length
+                    ? `${dims.length} context dimensions loaded`
+                    : "Context dimensions"}
+                </span>
               </div>
               <select
                 aria-label="Choose context dimension"
                 className="hx-select"
-                onChange={(event) => setDimKey(event.currentTarget.value || null)}
+                onChange={(event) =>
+                  setDimKey(event.currentTarget.value || null)
+                }
                 value={dimKey ?? ""}
               >
                 <option value="">Overview</option>
@@ -304,5 +593,28 @@ export function HomeSurface({
         </main>
       </div>
     </div>
+  );
+
+  return (
+    <AvaChatShell
+      agent={{
+        name: "aVa",
+        role: `${payload?.tenant.displayName ?? "Enterprise"} Home KNOW advisor`,
+      }}
+      canvas={canvas}
+      defaultLeftPercent={34}
+      isBusy={isBusy}
+      minLeftPx={360}
+      onMessage={askHomeKnow}
+      placeholder="Ask about loaded context, systems, owners, vendors..."
+      suggestedActions={suggestedActions}
+      surface="home"
+      surfaceContext={{
+        clientKey,
+        tenantKey: payload?.tenant.key ?? clientKey,
+        tabs,
+      }}
+      thread={thread}
+    />
   );
 }
