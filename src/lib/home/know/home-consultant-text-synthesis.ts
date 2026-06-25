@@ -76,7 +76,9 @@ Return only the final user-facing answer text.`;
 const FORBIDDEN_RE =
   /\b(cannot be characterized|cannot be identified|I found|missing source support|Current-state read|\bread\b|Evidence points|\bevidence\b|\brows\b|home_know|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
 const RAW_ID_RE =
-  /\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
+  /\b(?:APP|DP|CON|NODE|EDGE)-\d{3,}\b|\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
+const RAW_ID_REPLACE =
+  /\b(?:APP|DP|CON|NODE|EDGE)-\d{3,}\b|\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 const RECOMMENDATION_RE =
   /\b(we recommend|i recommend|you should|should invest|should prioritize|best option is|first automate|scale this|kill this|place the next \$?\d)/i;
 
@@ -416,6 +418,8 @@ export function normalizeHomeConsultantUserFacingText(text: string): string {
     .replace(/\bquality gate\b/gi, "answer check")
     .replace(/\bsafe answer boundary\b/gi, "safe answer scope")
     .replace(/\banswer boundary\b/gi, "safe answer scope")
+    .replace(/\bdeterministic\b/gi, "loaded")
+    .replace(RAW_ID_REPLACE, "source reference")
     .replace(/\s+/g, " ")
     .trim();
 }
