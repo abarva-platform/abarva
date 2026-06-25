@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Tower now presents the shared agent dock as aVa instead of Atlas, removes the top decision-support quote clutter from the Tower rail, and shows a clear tenant-data binding message when the Tower dashboard has no tenant-bound KPI/portfolio rows.
+Tower now presents the shared agent dock as aVa instead of Atlas, removes the top decision-support quote and masthead advisory clutter from Tower, and shows a clear tenant-data binding message when the Tower dashboard has no tenant-bound KPI/portfolio rows.
 
 ## Layer Impact
 
@@ -28,7 +28,7 @@ Tower now presents the shared agent dock as aVa instead of Atlas, removes the to
 ## Changes Included
 
 - `src/components/atlas/AtlasChatPanel.tsx`: product-facing Tower agent profile is aVa, not Atlas; visible Atlas text from legacy responses is rewritten before rendering; focused mode remains available for Tower.
-- `src/components/tower/TowerIndexPage.tsx`: Tower mounts the focused aVa dock and no longer passes the top disclosure quote; blank dashboard states now explain the missing Tower read model instead of appearing empty.
+- `src/components/tower/TowerIndexPage.tsx`: Tower mounts the focused aVa dock and no longer renders the top disclosure quote or masthead advisory disclosure; blank dashboard states now explain the missing Tower read model instead of appearing empty.
 - Focused tests assert the aVa product profile, focused Tower rail, and retired static Tower runtime invariants.
 
 ## QA / Validation

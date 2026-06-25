@@ -710,129 +710,6 @@ function TowerEmptyState({
   );
 }
 
-function atlasDecisionSupportDisclosure(view?: AtlasObservationsView): {
-  label: string;
-  boundary: string;
-  citations: string;
-  assumptions: string;
-  confidence: string;
-} {
-  const accountability =
-    view && "accountabilityDisclosure" in view
-      ? (view.accountabilityDisclosure as {
-          decisionSupportLabel?: string;
-          humanDecisionBoundary?: string;
-          citationSummary?: string;
-          assumptionDisclosure?: string;
-          confidenceDisclosure?: string;
-        })
-      : null;
-
-  return {
-    label:
-      accountability?.decisionSupportLabel ?? "AI-assisted decision support",
-    boundary:
-      accountability?.humanDecisionBoundary ??
-      "aVa supports executive review only; it does not approve spend, vendor actions, sequencing, or program status changes.",
-    citations:
-      accountability?.citationSummary ??
-      (view?.isEmpty
-        ? "No citations are available because Tower substrate is missing."
-        : "Citations are available in the supporting Tower evidence views."),
-    assumptions:
-      accountability?.assumptionDisclosure ??
-      "Assumes the visible Tower registry, vendor rows, pressure cards, and evidence map are the current substrate for this read.",
-    confidence:
-      accountability?.confidenceDisclosure ??
-      (view?.isEmpty
-        ? "Confidence is low until tenant-bound Tower substrate is loaded."
-        : "Confidence follows the visible Tower evidence and missing-data posture."),
-  };
-}
-
-function TowerAtlasDisclosurePanel({
-  view,
-  compact = false,
-}: {
-  view?: AtlasObservationsView;
-  compact?: boolean;
-}) {
-  const disclosure = atlasDecisionSupportDisclosure(view);
-  return (
-    <div
-      data-testid={
-        compact ? "tower-atlas-disclosure-compact" : "tower-atlas-disclosure"
-      }
-      style={{
-        border: `1px solid ${T.RULE}`,
-        borderRadius: 8,
-        background: compact ? "#ffffff" : "#fdfdfc",
-        padding: compact ? "9px 11px" : "13px 15px",
-        marginTop: compact ? 10 : 0,
-      }}
-    >
-      <div
-        style={{
-          fontFamily: T.MONO,
-          fontSize: compact ? 8.5 : 9,
-          letterSpacing: "1.4px",
-          textTransform: "uppercase",
-          color: T.GOLD,
-          fontWeight: 800,
-        }}
-      >
-        {disclosure.label} · human review required
-      </div>
-      <div
-        style={{
-          marginTop: 5,
-          color: T.INK_2,
-          fontSize: compact ? 11.5 : 12.5,
-          lineHeight: 1.45,
-        }}
-      >
-        {disclosure.boundary}
-      </div>
-      {!compact ? (
-        <div
-          style={{
-            display: "grid",
-            gap: 5,
-            marginTop: 9,
-            color: T.GRAY_DK,
-            fontSize: 12,
-            lineHeight: 1.45,
-          }}
-        >
-          <div>
-            <strong style={{ color: T.INK }}>Citations:</strong>{" "}
-            {disclosure.citations}
-          </div>
-          <div>
-            <strong style={{ color: T.INK }}>Assumptions:</strong>{" "}
-            {disclosure.assumptions}
-          </div>
-          <div>
-            <strong style={{ color: T.INK }}>Confidence:</strong>{" "}
-            {disclosure.confidence}
-          </div>
-        </div>
-      ) : (
-        <div
-          style={{
-            marginTop: 5,
-            color: T.GRAY_DK,
-            fontSize: 11.5,
-            lineHeight: 1.4,
-          }}
-        >
-          {disclosure.citations}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function formatMoney(usd: number | null | undefined): string {
   const value = Number(usd ?? 0);
   if (!value) return "$0";
@@ -3580,7 +3457,6 @@ export function TowerIndexPage({
               >
                 {workspaceQuestion(activeTab)}
               </div>
-              <TowerAtlasDisclosurePanel view={atlasObservationsView} compact />
             </div>
             {reportDownloadSlot ? (
               <div style={{ flex: "0 0 auto" }}>{reportDownloadSlot}</div>
@@ -3834,11 +3710,6 @@ export function TowerIndexPage({
         ) : (
           <>
             {kpiBand}
-            {activeTab === "executive_brief" ? (
-              <div style={{ padding: "16px 32px 0" }}>
-                <TowerAtlasDisclosurePanel view={atlasObservationsView} />
-              </div>
-            ) : null}
             <TowerWorkspaceTabPanel
               activeTab={activeTab}
               activeLens={activeLens}
