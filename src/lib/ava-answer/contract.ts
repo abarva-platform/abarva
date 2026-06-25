@@ -188,6 +188,8 @@ export interface AvaAnswerPacket {
   intent: string;
   status: AvaAnswerStatus;
   directAnswer: string;
+  /** Compatibility mirror for older AgentAnswer consumers. */
+  prose?: string;
   interpretation?: string;
   businessImplication?: string;
   recommendation?: string;
@@ -197,6 +199,16 @@ export interface AvaAnswerPacket {
   relationshipsUsed: AvaRelationshipRef[];
   corpusUsed?: AvaCorpusRef[];
   expertsUsed?: AvaExpertRef[];
+  /** Compatibility mirror for older AgentAnswer consumers. */
+  contributingExperts?: AvaExpertRef[];
+  /**
+   * Compatibility fields for older gates and consumers that still score typed
+   * exhibits directly on the answer object. `artifacts` remains canonical for
+   * rendering; these are derived mirrors and must not drift from it.
+   */
+  tables?: AnswerTable[];
+  charts?: AnswerChart[];
+  graphs?: AnswerGraph[];
   artifacts: AvaArtifact[];
   citations: AvaCitation[];
   gaps: AvaGap[];

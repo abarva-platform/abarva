@@ -39,6 +39,7 @@ import {
 } from "@/lib/intelligence/answer/structured-exhibits";
 import { composeAvaAnswer } from "@/lib/ava-answer/composeAvaAnswer";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
+import type { ExpertRef } from "@/lib/ava-answer/contract";
 import {
   buildHomeKnowAgentAnswer,
   homeKnowResponseToAvaAnswer,
@@ -46,6 +47,7 @@ import {
 } from "@/lib/home/know/home-know-agent-answer";
 import { appClientKeyForTenant, tenantAliasesFor } from "@/lib/tenant/aliases";
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
+import type { IntelligenceDossier } from "@/lib/intelligence/dossiers";
 import "@/lib/reasoning/telemetry-init";
 
 export const runtime = "nodejs";
@@ -168,6 +170,7 @@ async function handleAsk(payload: AskPayload) {
       let citationCount = 0;
       let patternId: string | null = null;
       let sawStreamError = false;
+      let latestIntelligenceDossier: IntelligenceDossier | null = null;
       // Agent-trace capture (aVa Intelligence path).
       let traceSources: RawAskSource[] = [];
       let traceModelInputHash: string | undefined;
@@ -470,6 +473,10 @@ async function handleAsk(payload: AskPayload) {
           if (event.type === "classified")
             classificationForMemory =
               event.classification ?? classificationForMemory;
+          if (event.type === "intelligence-dossier") {
+            latestIntelligenceDossier =
+              event.intelligenceDossier ?? latestIntelligenceDossier;
+          }
           if (event.type === "sources") {
             const enrichedSources = withAdvisorSupportSources(
               query,
@@ -575,7 +582,12 @@ async function handleAsk(payload: AskPayload) {
           });
           const advisorExperts = expertRefsForAdvisorRoute(query);
           const expertsUsed =
-            advisorExperts.length > 0 ? advisorExperts : routing.experts;
+            advisorExperts.length > 0
+              ? advisorExperts
+              : mergeExpertRefs(
+                  routing.experts,
+                  expertRefsFromDossier(latestIntelligenceDossier),
+                );
           const advisorOutputShape = advisorRequiredArtifactForQuery(query);
           const answerRouting = {
             ...routing,
@@ -715,6 +727,28 @@ async function handleAsk(payload: AskPayload) {
       "Cache-Control": "no-cache",
     },
   });
+}
+
+function expertRefsFromDossier(
+  dossier: IntelligenceDossier | null,
+): ExpertRef[] {
+  return (
+    dossier?.expertCouncilDossier.selectedExperts.map((expert) => ({
+      id: expert.expertId,
+      name: expert.nameOrRole,
+    })) ?? []
+  );
+}
+
+function mergeExpertRefs(...groups: ExpertRef[][]): ExpertRef[] {
+  const byId = new Map<string, ExpertRef>();
+  for (const group of groups) {
+    for (const expert of group) {
+      if (!expert.id || byId.has(expert.id)) continue;
+      byId.set(expert.id, expert);
+    }
+  }
+  return [...byId.values()].slice(0, 7);
 }
 
 function intelligenceSourcesFromCitations(
