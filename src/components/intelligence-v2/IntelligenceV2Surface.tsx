@@ -3,14 +3,24 @@
 // Intelligence v2 surface — the Lens. Renders the binding contract (signals /
 // context / corpus / suggested questions / trust line) for the active tenant.
 // Faithful to the Claude-Design v2 spec (Fraunces headlines, mono eyebrows,
-// hairline cards, cross-domain chips). Ask bar uses the canonical AvaAsk
-// component so Home and Intelligence keep the same visible thread behavior.
+// hairline cards, cross-domain chips). The advisor conversation uses the
+// shared AvaChatShell/AgentDock so Intelligence cannot fall back to the old
+// centered ask page.
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { IntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
-import { AvaAsk } from "@/components/agent-answer/AvaAsk";
+import {
+  AvaChatShell,
+  type AvaCanvasTab,
+} from "@/components/ava-chat/AvaChatShell";
+import type {
+  AttachmentRef,
+  ChatMessage,
+  SuggestedAction,
+} from "@/components/agent/AgentDock";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 
-type Tab = "signals" | "context" | "corpus";
+type Tab = "answer" | "signals" | "context" | "corpus";
 
 const CSS = `
 .iv2{--paper:#FBFAF7;--card:#FFFFFF;--ink:#1A1A18;--muted:#6B6B63;--faint:#9A998E;--line:#E7E3DA;--green:#1F6B3A;--greenbg:#E7F0E9;--amber:#A66A1F;
@@ -18,13 +28,9 @@ const CSS = `
 .iv2 .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
 .iv2 .serif{font-family:var(--font-fraunces),Georgia,serif}
 .iv2 .ey{font-family:var(--font-geist-mono),'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
-.iv2 .hero{text-align:center;padding:56px 0 8px}
+.iv2 .hero{text-align:left;padding:24px 0 8px}
 .iv2 .hero h1{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:44px;line-height:1.06;letter-spacing:-.015em;margin:14px 0 16px}
-.iv2 .hero .sub{color:var(--muted);font-size:15px;max-width:620px;margin:0 auto}
-.iv2 .ask{max-width:660px;margin:26px auto 0;display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 10px 10px 18px}
-.iv2 .ask textarea{flex:1;min-height:22px;max-height:140px;border:none;outline:none;font:inherit;font-size:14px;line-height:1.45;background:transparent;color:var(--ink);resize:none;overflow:auto;padding:0}
-.iv2 .ask .spark{color:var(--green)}
-.iv2 .ask button{background:var(--ink);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer}
+.iv2 .hero .sub{color:var(--muted);font-size:15px;max-width:720px;margin:0}
 .iv2 .chips{display:flex;flex-wrap:nowrap;gap:8px;justify-content:center;max-width:1080px;margin:16px auto 0;overflow:hidden}
 .iv2 .chips .chip{max-width:230px}
 @media(max-width:760px){.iv2 .chips{flex-wrap:wrap}.iv2 .chips .chip{max-width:340px}}
@@ -50,6 +56,10 @@ const CSS = `
 .iv2 .tab.active{color:var(--ink);border-bottom-color:var(--green)}
 .iv2 .tab .ct{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;color:var(--faint)}
 .iv2 .section{padding:26px 0 80px}
+.iv2 .answerPanel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:14px}
+.iv2 .answerPanel h3{font-family:var(--font-fraunces),Georgia,serif;font-size:24px;font-weight:500;margin:0}
+.iv2 .answerText{white-space:pre-wrap;font-size:15px;line-height:1.65;color:var(--ink)}
+.iv2 .emptyAnswer{border:1px dashed var(--line);border-radius:12px;padding:22px;color:var(--muted);background:rgba(255,255,255,.55)}
 .iv2 .sechead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}
 .iv2 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .iv2 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
@@ -117,6 +127,16 @@ function buildSurfaceContext(payload: IntelligenceBindingPayload) {
   };
 }
 
+function eventText(event: { delta?: unknown; text?: unknown }): string {
+  if (typeof event.delta === "string") return event.delta;
+  if (typeof event.text === "string") return event.text;
+  return "";
+}
+
+function newTurnId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export function IntelligenceV2Surface({
   payload,
   tenantName,
@@ -128,6 +148,9 @@ export function IntelligenceV2Surface({
   tenantName?: string;
 }) {
   const [tab, setTab] = useState<Tab>("signals");
+  const [thread, setThread] = useState<ChatMessage[]>([]);
+  const [latestAnswer, setLatestAnswer] = useState<ChatMessage | null>(null);
+  const [busy, setBusy] = useState(false);
   const t = payload;
   const tl = t.trustLine;
   const contextEvidence = t.context.reduce((a, c) => a + (c.evidence || 0), 0);
@@ -138,57 +161,252 @@ export function IntelligenceV2Surface({
       displayName: tenantName?.trim() || t.tenant.displayName,
     },
   });
+  const tabs = useMemo<AvaCanvasTab[]>(
+    () => [
+      { id: "answer", label: "Answer", count: latestAnswer ? 1 : 0 },
+      { id: "signals", label: "Signals", count: t.signals.length },
+      { id: "context", label: "Context", count: t.context.length },
+      { id: "corpus", label: "Corpus", count: t.corpus.length },
+    ],
+    [latestAnswer, t.context.length, t.corpus.length, t.signals.length],
+  );
+
+  async function askIntelligence(text: string, attachments: AttachmentRef[] = []) {
+    const q = text.trim();
+    if (!q && attachments.length === 0) return;
+
+    const userTurn: ChatMessage = {
+      id: newTurnId("intelligence-user"),
+      role: "user",
+      body: attachments.length > 0
+        ? `${q}${q ? "\n\n" : ""}[attached: ${attachments.map((a) => a.file_name).join(", ")}]`
+        : q,
+    };
+    const agentId = newTurnId("intelligence-ava");
+    const agentTurn: ChatMessage = {
+      id: agentId,
+      role: "agent",
+      body: "",
+    };
+
+    setThread((prev) => [...prev, userTurn, agentTurn]);
+    setLatestAnswer(agentTurn);
+    setTab("answer");
+    setBusy(true);
+
+    try {
+      const response = await fetch("/api/intelligence/ask", {
+        method: "POST",
+        headers: {
+          Accept: "application/x-ndjson",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          q,
+          client: t.tenant.key,
+          format: "rich",
+          surfaceContext,
+          attachmentIds: attachments.map((attachment) => attachment.id),
+        }),
+      });
+      if (!response.ok || !response.body) {
+        throw new Error(`Intelligence request failed (${response.status})`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let answerText = "";
+      let structuredAnswer: AvaAnswerPacket | null = null;
+
+      function updateAgentTurn(
+        body: string,
+        agentAnswer?: AvaAnswerPacket | null,
+      ) {
+        setThread((prev) =>
+          prev.map((turn) =>
+            turn.id === agentId
+              ? {
+                  ...turn,
+                  body,
+                  ...(agentAnswer ? { agentAnswer } : null),
+                }
+              : turn,
+          ),
+        );
+        setLatestAnswer((current) =>
+          current?.id === agentId
+            ? {
+                ...current,
+                body,
+                ...(agentAnswer ? { agentAnswer } : null),
+              }
+            : current,
+        );
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const event = JSON.parse(line) as {
+            type?: string;
+            delta?: string;
+            text?: string;
+            answer?: AvaAnswerPacket;
+            error?: string;
+            telemetryEventId?: string;
+          };
+          if (event.type === "error") {
+            throw new Error(event.error ?? "Intelligence stream error");
+          }
+          if (event.type === "agent-answer" && event.answer) {
+            structuredAnswer = {
+              ...event.answer,
+              directAnswer:
+                event.answer.directAnswer?.trim() || answerText.trim(),
+              prose:
+                event.answer.prose?.trim() ||
+                event.answer.directAnswer?.trim() ||
+                answerText.trim(),
+            };
+            updateAgentTurn(answerText, structuredAnswer);
+            continue;
+          }
+          const delta = eventText(event);
+          if (delta) {
+            answerText += delta;
+            updateAgentTurn(answerText, structuredAnswer);
+          }
+          if (event.type === "done" && event.telemetryEventId) {
+            setThread((prev) =>
+              prev.map((turn) =>
+                turn.id === agentId
+                  ? { ...turn, feedbackEventId: event.telemetryEventId }
+                  : turn,
+              ),
+            );
+          }
+        }
+      }
+
+      if (!answerText.trim() && !structuredAnswer) {
+        updateAgentTurn(
+          "I could not produce a grounded Intelligence answer for that request yet.",
+        );
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? `aVa could not complete that request: ${error.message}`
+          : "aVa could not complete that request.";
+      setThread((prev) =>
+        prev.map((turn) =>
+          turn.id === agentId ? { ...turn, body: message } : turn,
+        ),
+      );
+      setLatestAnswer((current) =>
+        current?.id === agentId ? { ...current, body: message } : current,
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const suggestedActions = useMemo<SuggestedAction[]>(
+    () =>
+      t.suggestedQuestions.slice(0, 3).map((question, index) => ({
+        id: `intelligence-suggested-${index}`,
+        label: question,
+        body: question,
+        onClick: () => {
+          void askIntelligence(question, []);
+        },
+      })),
+    // askIntelligence intentionally closes over current tenant payload.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t.suggestedQuestions, t.tenant.key],
+  );
 
   return (
-    <div className="iv2">
+    <>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      <div className="wrap">
-        <div className="hero">
-          <div className="ey" style={{ color: "var(--green)" }}>
-            INTELLIGENCE · RESEARCH &amp; ANALYSIS ENGINE
-          </div>
-          <h1>
-            Ask anything about
-            <br />
-            your enterprise.
-          </h1>
-          <p className="sub">{t.ask.contract}</p>
-          <AvaAsk
-            placeholder={t.ask.placeholder}
-            client={t.tenant.key}
-            surfaceContext={surfaceContext}
-            suggestedQuestions={t.suggestedQuestions}
-          />
-          <div className="trust">
-            <span className="mono">
-              <b>{tl.dimensionsLoaded}</b> dimensions loaded ·{" "}
-              <b>{tl.evidencePoints.toLocaleString()}</b> evidence points ·{" "}
-              <b>{tl.sources}</b> sources · <b>{tl.searchVerifiedPct}%</b>{" "}
-              search-verified
-            </span>
-          </div>
-        </div>
+      <AvaChatShell
+        surface="intelligence"
+        thread={thread}
+        onMessage={askIntelligence}
+        suggestedActions={suggestedActions}
+        surfaceContext={surfaceContext}
+        isBusy={busy}
+        defaultLeftPercent={34}
+        minLeftPx={360}
+        placeholder={t.ask.placeholder}
+        agent={{
+          role: `${t.tenant.displayName} Intelligence advisor`,
+        }}
+        canvas={
+          <div className="iv2">
+            <div className="wrap">
+              <div className="hero">
+                <div>
+                  <div className="ey" style={{ color: "var(--green)" }}>
+                    INTELLIGENCE · RESEARCH &amp; ANALYSIS ENGINE
+                  </div>
+                  <h1>Leadership intelligence canvas.</h1>
+                  <p className="sub">{t.ask.contract}</p>
+                </div>
+                <div className="trust" style={{ textAlign: "left", margin: 0 }}>
+                  <span className="mono">
+                    <b>{tl.dimensionsLoaded}</b> dimensions ·{" "}
+                    <b>{tl.evidencePoints.toLocaleString()}</b> evidence points ·{" "}
+                    <b>{tl.sources}</b> sources · <b>{tl.searchVerifiedPct}%</b>{" "}
+                    search-verified
+                  </span>
+                </div>
+              </div>
 
-        <div className="tabs">
-          {(
-            [
-              ["signals", "Signals", t.signals.length],
-              ["context", "Context", t.context.length],
-              ["corpus", "Corpus", t.corpus.length],
-            ] as Array<[Tab, string, number]>
-          ).map(([key, label, count]) => (
+              <div className="tabs">
+                {tabs.map((item) => {
+                  const key = item.id as Tab;
+                  return (
             <button
               key={key}
               type="button"
               className={`tab${tab === key ? " active" : ""}`}
               onClick={() => setTab(key)}
             >
-              {label} <span className="ct">{count}</span>
+                      {item.label} <span className="ct">{item.count ?? 0}</span>
             </button>
-          ))}
-        </div>
+                  );
+                })}
+              </div>
 
-        <div className="section">
+              <div className="section">
+                {tab === "answer" && (
+                  <div className="answerPanel">
+                    <div className="ey">AVA · LATEST ANSWER</div>
+                    {latestAnswer ? (
+                      <>
+                        <h3>Answer from the current conversation</h3>
+                        {latestAnswer.body.trim() ? (
+                          <div className="answerText">{latestAnswer.body}</div>
+                        ) : (
+                          <div className="ansfetching">aVa is forming the answer…</div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="emptyAnswer">
+                        Ask in the left rail. Answers, tables, charts, graphs, and
+                        citations stay in the conversation, while this canvas keeps
+                        the supporting Intelligence tabs visible.
+                      </div>
+                    )}
+                  </div>
+                )}
           {tab === "signals" && (
             <>
               <div className="sechead">
@@ -314,8 +532,11 @@ export function IntelligenceV2Surface({
               </div>
             </>
           )}
-        </div>
-      </div>
-    </div>
+              </div>
+            </div>
+          </div>
+        }
+      />
+    </>
   );
 }
