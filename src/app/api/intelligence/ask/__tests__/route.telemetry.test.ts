@@ -537,7 +537,11 @@ describe("POST /api/intelligence/ask telemetry", () => {
       };
       yield {
         type: "delta",
-        text: "Airlines are moving IROPS AI from alerting toward recovery orchestration. Airline IROPS examples | Airline | Use case | Source type | Confidence | |---|---|---|---| | Delta | Reaccommodation | Corpus pattern | Medium |",
+        text: "The supporting evidence is that For SkyHarbor, the AI pattern is useful. That means The market is moving from alerting into recovery orchestration. Airline IROPS examples | Carrier (pattern) | Use case | Mechanism | Value range | Basis | Confidence | |---|---|---|---|---|---| | network carrier (corpus pattern) | Integrated OCC recovery optimizer | aircraft+crew+pax in one loop | 10-20% IROPS cost/event reduction | corpus pattern - not public research | medium | That's the direction of travel. S. Decide whether this belongs in Source, Tower, or Moves.",
+      };
+      yield {
+        type: "followups",
+        followups: ["Old duplicate follow-up"],
       };
       yield { type: "done" };
     });
@@ -553,9 +557,11 @@ describe("POST /api/intelligence/ask telemetry", () => {
       .split("\n")
       .filter(Boolean)
       .map((line) => JSON.parse(line));
+    expect(events.some((event) => event.type === "delta")).toBe(false);
     const agentAnswer = events.find(
       (event) => event.type === "agent-answer",
     )?.answer;
+    const followups = events.filter((event) => event.type === "followups");
     const expertIds = agentAnswer.expertsUsed.map(
       (expert: { id: string }) => expert.id,
     );
@@ -570,6 +576,44 @@ describe("POST /api/intelligence/ask telemetry", () => {
     );
     expect(agentAnswer.corpusUsed).toEqual([
       expect.objectContaining({ id: "corpus-support" }),
+    ]);
+    expect(agentAnswer.directAnswer).not.toContain("is that For");
+    expect(agentAnswer.directAnswer).not.toContain("means The");
+    expect(agentAnswer.directAnswer).not.toContain("S.");
+    expect(agentAnswer.directAnswer).not.toContain("Source, Tower, or Moves");
+    expect(agentAnswer.interpretation).toBeUndefined();
+    expect(agentAnswer.artifacts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          artifact: "table",
+          id: "airline-irops-value-evidence",
+          title: "IROPS AI Value Evidence",
+          rows: expect.arrayContaining([
+            expect.objectContaining({
+              carrier_pattern: "Network carrier corpus pattern",
+              value_range: "10-20% IROPS cost/event reduction",
+            }),
+          ]),
+        }),
+        expect.objectContaining({
+          artifact: "chart",
+          id: "airline-irops-opportunity-readiness",
+        }),
+      ]),
+    );
+    expect(
+      agentAnswer.artifacts.some(
+        (artifact: { title?: string }) =>
+          artifact.title === "Chart Evidence Required",
+      ),
+    ).toBe(false);
+    expect(followups).toEqual([
+      {
+        type: "followups",
+        followups: [
+          "Want me to pressure-test the IROPS data-readiness gate, or sequence IROPS against the other AI bets?",
+        ],
+      },
     ]);
     expect(agentAnswer.citations).toEqual(
       expect.arrayContaining([
@@ -645,6 +689,14 @@ describe("POST /api/intelligence/ask telemetry", () => {
     {
       name: "initiatives",
       prompt: "Compare top initiatives by impact and owner",
+      source: "Initiatives roadmap",
+      columns: "Initiative | Impact | Owner | Next gate",
+      row1: "Lakehouse modernization | $95M | CDAO | data quality",
+      row2: "IROPS recovery | $30M | COO | integration readiness",
+    },
+    {
+      name: "investment allocation",
+      prompt: "Where should we invest $30M next?",
       source: "Initiatives roadmap",
       columns: "Initiative | Impact | Owner | Next gate",
       row1: "Lakehouse modernization | $95M | CDAO | data quality",

@@ -34,6 +34,10 @@ import {
   withAdvisorSupportSources,
 } from "@/lib/intelligence/ask/advisor-composer";
 import {
+  buildStructuredAdvisorAnswer,
+  shouldUseStructuredAdvisorAnswer,
+} from "@/lib/intelligence/ask/advisor-structured-answer";
+import {
   buildStructuredExhibits,
   hasRenderableStructuredExhibits,
 } from "@/lib/intelligence/answer/structured-exhibits";
@@ -174,6 +178,7 @@ async function handleAsk(payload: AskPayload) {
       let patternId: string | null = null;
       let sawStreamError = false;
       let latestIntelligenceDossier: IntelligenceDossier | null = null;
+      const useStructuredAdvisor = shouldUseStructuredAdvisorAnswer(query);
       // Agent-trace capture (aVa Intelligence path).
       let traceSources: RawAskSource[] = [];
       let traceModelInputHash: string | undefined;
@@ -403,8 +408,6 @@ async function handleAsk(payload: AskPayload) {
               intent: answerRouting.outputShape,
               status: "answered",
               directAnswer: exhibits.prose,
-              interpretation:
-                "This is an advisory synthesis: use the cited tenant context for client-specific claims and treat corpus/expert context as pattern support.",
               artifacts: [
                 ...exhibits.tables.map((table) => ({
                   ...table,
@@ -519,7 +522,13 @@ async function handleAsk(payload: AskPayload) {
             );
             continue;
           }
-          if (event.type === "delta" && event.text) assistantText += event.text;
+          if (event.type === "delta" && event.text) {
+            assistantText += event.text;
+            if (useStructuredAdvisor) continue;
+          }
+          if (useStructuredAdvisor && event.type === "followups") {
+            continue;
+          }
           if (event.type === "error") sawStreamError = true;
           if (event.type === "done") continue;
           controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
@@ -619,82 +628,119 @@ async function handleAsk(payload: AskPayload) {
                 : advisorOutputShape ?? routing.outputShape,
             experts: expertsUsed,
           };
-          const exhibits = buildStructuredExhibits({
-            prose: assistantText,
+          const advisorSources = withAdvisorSupportSources(
+            query,
+            traceSources as AskSource[],
+          );
+          const structuredAdvisor = buildStructuredAdvisorAnswer({
+            query,
+            tenantKey:
+              tenantInventoryKey ??
+              tenantClientKey ??
+              requestedOrSurfaceClient ??
+              "unknown",
+            assistantText,
             routing: answerRouting,
-            sources: withAdvisorSupportSources(
-              query,
-              traceSources as AskSource[],
-            ),
+            sources: advisorSources,
+            expertsUsed,
           });
-          if (
-            hasRenderableStructuredExhibits(exhibits) ||
-            exhibits.citations.length > 0 ||
-            expertsUsed.length > 0
-          ) {
-            const agentAnswer = composeAvaAnswer({
-              surface: "intelligence",
-              mode: "ANALYZE",
-              tenantKey:
-                tenantInventoryKey ??
-                tenantClientKey ??
-                requestedOrSurfaceClient ??
-                "unknown",
-              question: query,
-              intent: answerRouting.outputShape,
-              status: "answered",
-              directAnswer: exhibits.prose,
-              interpretation:
-                "This is an advisory synthesis: use the cited tenant context for client-specific claims and treat corpus/expert context as pattern support.",
-              artifacts: [
-                ...exhibits.tables.map((table) => ({
-                  ...table,
-                  artifact: "table" as const,
-                })),
-                ...exhibits.charts.map((chart) => ({
-                  ...chart,
-                  artifact: "chart" as const,
-                })),
-                ...exhibits.graphs.map((graph) => ({
-                  ...graph,
-                  artifact: "graph" as const,
-                })),
-              ],
-              citations: exhibits.citations,
-              caveats: [
-                {
-                  id: "validated-structure-only",
-                  label: "Structured exhibits",
-                  detail:
-                    "Tables, charts, and graphs appear only when Ava has validated structured data.",
-                },
-              ],
-              expertsUsed,
-              corpusUsed: exhibits.citations.some(
-                (citation) => citation.sourceClass !== "tenant-fact",
-              )
-                ? [{ id: "corpus-support", label: "Corpus or pattern support" }]
-                : [],
-              retrievalSummary: {
-                substrate: "module_read_model",
-                sourceCount: exhibits.citations.length,
-                hasTenantFacts: exhibits.citations.some(
-                  (citation) => citation.sourceClass === "tenant-fact",
-                ),
-                hasCorpus: exhibits.citations.some(
-                  (citation) => citation.sourceClass !== "tenant-fact",
-                ),
-                hasExperts: expertsUsed.length > 0,
-              },
-            });
+          if (structuredAdvisor) {
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
                   type: "agent-answer",
-                  answer: agentAnswer,
+                  answer: structuredAdvisor.answer,
                 }) + "\n",
               ),
             );
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "followups",
+                  followups: structuredAdvisor.followUpQuestion
+                    ? [structuredAdvisor.followUpQuestion]
+                    : [],
+                }) + "\n",
+              ),
+            );
+          } else {
+            const exhibits = buildStructuredExhibits({
+              prose: assistantText,
+              routing: answerRouting,
+              sources: advisorSources,
+            });
+            if (
+              hasRenderableStructuredExhibits(exhibits) ||
+              exhibits.citations.length > 0 ||
+              expertsUsed.length > 0
+            ) {
+              const agentAnswer = composeAvaAnswer({
+                surface: "intelligence",
+                mode: "ANALYZE",
+                tenantKey:
+                  tenantInventoryKey ??
+                  tenantClientKey ??
+                  requestedOrSurfaceClient ??
+                  "unknown",
+                question: query,
+                intent: answerRouting.outputShape,
+                status: "answered",
+                directAnswer: exhibits.prose,
+                artifacts: [
+                  ...exhibits.tables.map((table) => ({
+                    ...table,
+                    artifact: "table" as const,
+                  })),
+                  ...exhibits.charts.map((chart) => ({
+                    ...chart,
+                    artifact: "chart" as const,
+                  })),
+                  ...exhibits.graphs.map((graph) => ({
+                    ...graph,
+                    artifact: "graph" as const,
+                  })),
+                ],
+                citations: exhibits.citations,
+                caveats: [
+                  {
+                    id: "validated-structure-only",
+                    label: "Structured exhibits",
+                    detail:
+                      "Tables, charts, and graphs appear only when Ava has validated structured data.",
+                  },
+                ],
+                expertsUsed,
+                corpusUsed: exhibits.citations.some(
+                  (citation) => citation.sourceClass !== "tenant-fact",
+                )
+                  ? [
+                      {
+                        id: "corpus-support",
+                        label: "Corpus or pattern support",
+                      },
+                    ]
+                  : [],
+                retrievalSummary: {
+                  substrate: "module_read_model",
+                  sourceCount: exhibits.citations.length,
+                  hasTenantFacts: exhibits.citations.some(
+                    (citation) => citation.sourceClass === "tenant-fact",
+                  ),
+                  hasCorpus: exhibits.citations.some(
+                    (citation) => citation.sourceClass !== "tenant-fact",
+                  ),
+                  hasExperts: expertsUsed.length > 0,
+                },
+              });
+              controller.enqueue(
+                encoder.encode(
+                  JSON.stringify({
+                    type: "agent-answer",
+                    answer: agentAnswer,
+                  }) + "\n",
+                ),
+              );
+            }
           }
           controller.enqueue(
             encoder.encode(
