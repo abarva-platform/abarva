@@ -86,6 +86,7 @@ async function handleAsk(payload: AskPayload) {
   let tenantInventoryKey: string | null = null;
   let tenantClientKey: string | null = null;
   let tenant: CanonicalTenant | null = null;
+  let sessionTenant: CanonicalTenant | null = null;
   const requestedOrSurfaceClient =
     requestedClient ??
     surfaceContext?.clientKey ??
@@ -98,7 +99,7 @@ async function handleAsk(payload: AskPayload) {
   let activePersonDisplayName: string | null = null;
   let signedInTenantAliases: string[] = [];
   try {
-    const [person, clerkUser, client] = await Promise.all([
+    const [person, clerkUser, client, sessionClient] = await Promise.all([
       getCurrentPerson(),
       currentUser().catch(() => null),
       resolveTenant({
@@ -107,8 +108,10 @@ async function handleAsk(payload: AskPayload) {
         surfaceActiveClient: surfaceContext?.activeClient,
         allowFallback: false,
       }).catch(() => null),
+      resolveTenant({ allowFallback: false }).catch(() => null),
     ]);
     tenant = client;
+    sessionTenant = sessionClient;
     sessionUserId = clerkUser?.id ?? null;
     const resolvedClient = client;
     signedInTenantAliases = aliasesForClerkTenant(clerkUser);
@@ -188,13 +191,27 @@ async function handleAsk(payload: AskPayload) {
           );
         }
         if (shouldUseHomeKnowAgentAnswer({ query, surfaceContext })) {
-          const foreignTenantAliases =
+          const homeTenant = sessionTenant ?? tenant;
+          const homeTenantAliases =
             signedInTenantAliases.length > 0
               ? signedInTenantAliases
+              : homeTenant?.aliases ?? [];
+          const requestedHomeAliases = tenantAliasesFor(
+            tenantClientKey ?? requestedOrSurfaceClient,
+          );
+          const foreignTenantAliases =
+            homeTenantAliases.length > 0
+              ? homeTenantAliases
               : [tenantInventoryKey, tenantClientKey].filter(Boolean);
-          if (mentionsForeignTenant(query, foreignTenantAliases)) {
+          if (
+            (homeTenantAliases.length > 0 &&
+              requestedHomeAliases.length > 0 &&
+              !hasTenantAliasOverlap(homeTenantAliases, requestedHomeAliases)) ||
+            mentionsForeignTenant(query, foreignTenantAliases)
+          ) {
             const answer = buildHomeKnowTenantFenceAnswer({
               activeTenantDisplayName:
+                homeTenant?.displayName ??
                 tenant?.displayName ??
                 surfaceContext?.activeClient ??
                 requestedOrSurfaceClient ??
@@ -231,6 +248,8 @@ async function handleAsk(payload: AskPayload) {
             return;
           }
           const homeTenantKey =
+            homeTenant?.canonicalKey ??
+            homeTenant?.appClientKey ??
             tenantInventoryKey ??
             tenantClientKey ??
             requestedOrSurfaceClient ??
@@ -241,7 +260,10 @@ async function handleAsk(payload: AskPayload) {
             const built = await buildHomeKnowAgentAnswer({
               question: query,
               tenantKey: homeTenantKey,
-              client: tenantClientKey ?? requestedOrSurfaceClient,
+              client:
+                homeTenant?.appClientKey ??
+                tenantClientKey ??
+                requestedOrSurfaceClient,
             });
             response = built.response;
             answer = built.answer;
@@ -800,7 +822,7 @@ function recordIntelligenceTelemetry(input: {
 
 function mentionsForeignTenant(
   query: string,
-  activeTenantAliases: Array<string | null | undefined>,
+  activeTenantAliases: readonly (string | null | undefined)[],
 ): boolean {
   const normalized = query.toLowerCase();
   const current = new Set(
@@ -831,6 +853,18 @@ function mentionsForeignTenant(
     return true;
   }
   return false;
+}
+
+function hasTenantAliasOverlap(
+  left: readonly (string | null | undefined)[],
+  right: readonly (string | null | undefined)[],
+): boolean {
+  const leftAliases = new Set(
+    left.flatMap((value) => tenantAliasesFor(value)).map((value) => value.toLowerCase()),
+  );
+  return right
+    .flatMap((value) => tenantAliasesFor(value))
+    .some((value) => leftAliases.has(value.toLowerCase()));
 }
 
 function aliasesForClerkTenant(
