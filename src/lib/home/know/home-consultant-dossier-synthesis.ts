@@ -70,6 +70,15 @@ export interface HomeConsultantDossierSynthesisResult {
   };
 }
 
+export interface HomeConsultantDossierSynthesisFailure {
+  attempted: true;
+  used: false;
+  model?: string;
+  auditId?: string;
+  reason: string;
+  validationIssues: string[];
+}
+
 export interface HomeConsultantDossierPromptPacket {
   question: string;
   tenant: {
@@ -120,8 +129,15 @@ export function isHomeConsultantClaudeSynthesisEnabled(): boolean {
 export async function synthesizeHomeConsultantDossier(args: {
   dossier: UniversalDimensionDossier;
   deterministicResponse: HomeKnowResponse;
-}): Promise<HomeConsultantDossierSynthesisResult | null> {
-  if (!isHomeConsultantClaudeSynthesisEnabled()) return null;
+}): Promise<HomeConsultantDossierSynthesisResult | HomeConsultantDossierSynthesisFailure | null> {
+  if (!isHomeConsultantClaudeSynthesisEnabled()) {
+    return {
+      attempted: true,
+      used: false,
+      reason: "env_disabled",
+      validationIssues: [],
+    };
+  }
   if (args.deterministicResponse.intent === "decision_handoff") return null;
   const evidence = hasUsableDossierEvidence({
     ...args.dossier,
@@ -131,7 +147,14 @@ export async function synthesizeHomeConsultantDossier(args: {
     citations: args.deterministicResponse.citations,
     gaps: args.deterministicResponse.gaps,
   });
-  if (!evidence.usable) return null;
+  if (!evidence.usable) {
+    return {
+      attempted: true,
+      used: false,
+      reason: "no_usable_dossier_evidence",
+      validationIssues: [],
+    };
+  }
 
   const model = process.env.HOME_KNOW_CLAUDE_MODEL?.trim() || DEFAULT_MODEL;
   const maxTokens = numberFromEnv("HOME_KNOW_CLAUDE_MAX_TOKENS", DEFAULT_MAX_TOKENS);
@@ -171,13 +194,50 @@ export async function synthesizeHomeConsultantDossier(args: {
       .join("\n")
       .trim();
     const output = parseJsonObject(text);
-    if (!isSynthesisOutput(output)) return null;
+    if (!isSynthesisOutput(output)) {
+      console.warn(
+        "[home-consultant-synthesis] fallback: invalid_json_shape",
+        JSON.stringify({
+          tenantKey: args.dossier.tenantKey,
+          primaryDimension: args.dossier.route.primaryDimension,
+          model,
+          auditId,
+        }),
+      );
+      return {
+        attempted: true,
+        used: false,
+        model,
+        auditId,
+        reason: "invalid_json_shape",
+        validationIssues: [],
+      };
+    }
     const validationIssues = validateHomeConsultantSynthesis({
       output,
       dossier: args.dossier,
       response: args.deterministicResponse,
     });
-    if (validationIssues.length > 0) return null;
+    if (validationIssues.length > 0) {
+      console.warn(
+        "[home-consultant-synthesis] fallback: validation_failed",
+        JSON.stringify({
+          tenantKey: args.dossier.tenantKey,
+          primaryDimension: args.dossier.route.primaryDimension,
+          model,
+          auditId,
+          validationIssues,
+        }),
+      );
+      return {
+        attempted: true,
+        used: false,
+        model,
+        auditId,
+        reason: "validation_failed",
+        validationIssues,
+      };
+    }
     return {
       output,
       promptPacket,
@@ -189,9 +249,58 @@ export async function synthesizeHomeConsultantDossier(args: {
         validationIssues,
       },
     };
-  } catch {
-    return null;
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    console.warn(
+      "[home-consultant-synthesis] fallback: exception",
+      JSON.stringify({
+        tenantKey: args.dossier.tenantKey,
+        primaryDimension: args.dossier.route.primaryDimension,
+        model,
+        reason,
+      }),
+    );
+    return {
+      attempted: true,
+      used: false,
+      model,
+      reason,
+      validationIssues: [],
+    };
   }
+}
+
+export function isHomeConsultantSynthesisResult(
+  value: HomeConsultantDossierSynthesisResult | HomeConsultantDossierSynthesisFailure | null,
+): value is HomeConsultantDossierSynthesisResult {
+  return Boolean(value && "trace" in value && value.trace.used);
+}
+
+export function applyHomeConsultantSynthesisFailureTrace(
+  response: HomeKnowResponse,
+  failure: HomeConsultantDossierSynthesisFailure,
+): HomeKnowResponse {
+  return {
+    ...response,
+    safety: {
+      ...response.safety,
+      composerTrace: response.safety.composerTrace
+        ? {
+            ...response.safety.composerTrace,
+            goldenComposerAttempted: true,
+            goldenComposerUsed: true,
+            fallbackUsed: true,
+            reason: `${response.safety.composerTrace.reason}; Claude consultant synthesis fallback=${failure.reason}${
+              failure.validationIssues.length
+                ? `; validationIssues=${failure.validationIssues.join("|")}`
+                : ""
+            }${failure.model ? `; model=${failure.model}` : ""}${
+              failure.auditId ? `; auditId=${failure.auditId}` : ""
+            }`,
+          }
+        : response.safety.composerTrace,
+    },
+  };
 }
 
 export function applyHomeConsultantSynthesis(

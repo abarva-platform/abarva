@@ -5,6 +5,7 @@ import type { UniversalDimensionDossier } from "@/lib/semantic-dossiers";
 import {
   type HomeConsultantDossierSynthesisOutput,
   buildHomeConsultantDossierPromptPacket,
+  isHomeConsultantSynthesisResult,
   synthesizeHomeConsultantDossier,
   validateHomeConsultantSynthesis,
 } from "../home-consultant-dossier-synthesis";
@@ -206,8 +207,10 @@ describe("home consultant dossier synthesis", () => {
       deterministicResponse: response,
     });
 
-    expect(result?.output.directAnswer).toMatch(/domain-led view/i);
-    expect(result?.trace.used).toBe(true);
+    expect(isHomeConsultantSynthesisResult(result)).toBe(true);
+    expect(result && "output" in result ? result.output.directAnswer : "").toMatch(
+      /domain-led view/i,
+    );
   });
 
   it("falls back when Claude returns forbidden false-absence language", async () => {
@@ -232,7 +235,11 @@ describe("home consultant dossier synthesis", () => {
 
     await expect(
       synthesizeHomeConsultantDossier({ dossier, deterministicResponse: response }),
-    ).resolves.toBeNull();
+    ).resolves.toMatchObject({
+      attempted: true,
+      used: false,
+      reason: "env_disabled",
+    });
     expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();
   });
 });

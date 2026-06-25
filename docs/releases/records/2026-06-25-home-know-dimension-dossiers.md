@@ -61,12 +61,16 @@ Claude is disabled, unavailable, times out, or fails validation.
 - `npx jest src/lib/home/know/__tests__/home-know-engine.test.ts tests/home-know/home-org-answer-quality.test.ts tests/home-know/home-answer-forbidden-language.test.ts src/lib/semantic-dossiers/__tests__/universal-dimension-dossier.test.ts --runInBand`: passed, 39/39 after the live-quality fix.
 - Evidence-channel audit validation to run before merge: `npx jest src/lib/home/know/__tests__/has-usable-dossier-evidence.test.ts src/lib/home/know/__tests__/home-know-engine.test.ts src/components/home/know/__tests__/HomeKnowAnswerRenderer.test.tsx --runInBand`.
 - Home Consultant synthesis validation to run before merge: `npx jest src/lib/home/know/__tests__/home-consultant-dossier-synthesis.test.ts src/lib/features/__tests__/is-feature-enabled.test.ts --runInBand`.
+- Trace hardening validation after live proof exposed deterministic fallback: `npx jest src/lib/home/know/__tests__/home-consultant-dossier-synthesis.test.ts src/lib/home/know/__tests__/home-know-engine.test.ts --runInBand`: passed, 31/31.
 - `npx eslint scripts/qa/home-dossier-crawl.ts src/lib/semantic-dossiers src/lib/home/know src/app/api/home/know/ask/route.ts src/components/home/know src/components/home/HomeSurface.tsx`: passed.
 - `npx eslint src/lib/semantic-dossiers src/lib/home/know`: passed after the live-quality fix.
+- `npx eslint src/lib/home/know/home-consultant-dossier-synthesis.ts src/lib/home/know/home-know-engine.ts src/lib/home/know/evaluate-home-consultant-synthesis.ts src/lib/home/know/__tests__/home-consultant-dossier-synthesis.test.ts`: passed.
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false --skipLibCheck`: passed after the consultant synthesis trace patch.
 - `NODE_OPTIONS=--max-old-space-size=8192 node node_modules/typescript/lib/tsc.js --noEmit --pretty false --incremental false --skipLibCheck`: failed locally on unrelated cross-worktree Playwright type mismatch in `tests/accessibility/public-axe.spec.ts`; clean CI TypeScript is required before merge.
 - `npm run release:check`: passed.
 - `npm run audit:control-plane-purity:check`: passed.
 - Initial live ACA proof on digest `sha256:b430b7bc802dbd00c32475755ea8e4fe2646c55e3a28a116ec21f0834c7847ef`: SkyHarbor exact regression passed; Lakeshore endpoint/tenant fence passed but answer prose quality failed due to the validator regression above.
+- Deployed commit `8d4238c1c46fe86e0fa888afec8c9d7623f29d1f` to ACA revision `ca-abarva-web-lab-eastus--m8d4238c1`, 100% traffic. Signed-in Playwright proof passed for SkyHarbor and Lakeshore `/home`; the answer path returned usable dossier evidence, typed table/chart/graph exhibits, and no false no-data refusal. It also proved the Claude consultant path was attempted but fell back to deterministic synthesis, so this release adds safe fallback tracing to expose the exact reason in the response/logs.
 
 ## Rollout Plan
 
@@ -98,6 +102,9 @@ Revert this release commit and redeploy the previous known-good ACA image. No de
 - `proof/home-dossier-live-20260625/evidence-channel-report.json`
 - `proof/home-dossier-live-20260625/proof-criteria.md`
 - `proof/home-dossier-live-20260625/side-by-side-report.md`
+- `proof/home-consultant-live-20260625/signed-in-proof.json`
+- `proof/home-consultant-live-20260625/skyharbor-home.png`
+- `proof/home-consultant-live-20260625/lakeshore-home.png`
 - `docs/home-know/HOME_CONSULTANT_DOSSIER_PROMPT.md`
 - `docs/home-know/HOME_CONSULTANT_SYNTHESIS_EVALUATION.md`
 - `docs/home-know/HOME_CONSULTANT_DIMENSION_STYLE_GUIDE.md`

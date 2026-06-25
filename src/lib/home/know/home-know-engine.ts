@@ -20,7 +20,9 @@ import { buildHomeKnowDimensionDossier } from "@/lib/home/know/build-universal-d
 import { buildHomeKnowResponseFromDossier } from "@/lib/home/know/compose-dossier-answer";
 import { hasUsableDossierEvidence } from "@/lib/home/know/has-usable-dossier-evidence";
 import {
+  applyHomeConsultantSynthesisFailureTrace,
   applyHomeConsultantSynthesis,
+  isHomeConsultantSynthesisResult,
   synthesizeHomeConsultantDossier,
 } from "@/lib/home/know/home-consultant-dossier-synthesis";
 import { synthesizeHomeKnowProse } from "@/lib/home/know/home-know-synthesis";
@@ -306,10 +308,13 @@ export async function buildHomeKnowResponse(
           dossier,
           deterministicResponse: validated,
         });
-        if (synthesis) {
+        if (isHomeConsultantSynthesisResult(synthesis)) {
           return validateHomeKnowResponse(
             applyHomeConsultantSynthesis(validated, synthesis),
           );
+        }
+        if (synthesis?.attempted) {
+          return applyHomeConsultantSynthesisFailureTrace(validated, synthesis);
         }
       }
       return validated;

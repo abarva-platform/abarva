@@ -2,6 +2,7 @@ import { buildHomeKnowDimensionDossier } from "@/lib/home/know/build-universal-d
 import { buildHomeKnowResponseFromDossier } from "@/lib/home/know/compose-dossier-answer";
 import {
   buildHomeConsultantDossierPromptPacket,
+  isHomeConsultantSynthesisResult,
   synthesizeHomeConsultantDossier,
   type HomeConsultantDossierPromptPacket,
   type HomeConsultantDossierSynthesisOutput,
@@ -59,11 +60,14 @@ export async function evaluateHomeConsultantSynthesisCase(
     dossier,
     deterministicResponse,
   });
-  const finalRenderedAnswer = synthesis
+  const successfulSynthesis = isHomeConsultantSynthesisResult(synthesis)
+    ? synthesis
+    : null;
+  const finalRenderedAnswer = successfulSynthesis
     ? [
-        synthesis.output.directAnswer,
-        synthesis.output.currentStateSynthesis,
-        synthesis.output.businessImplication,
+        successfulSynthesis.output.directAnswer,
+        successfulSynthesis.output.currentStateSynthesis,
+        successfulSynthesis.output.businessImplication,
       ]
         .filter(Boolean)
         .join("\n\n")
@@ -92,11 +96,15 @@ export async function evaluateHomeConsultantSynthesisCase(
     },
     promptPacket,
     deterministicOutput: deterministicResponse.prose,
-    claudeOutput: synthesis?.output ?? null,
+    claudeOutput: successfulSynthesis?.output ?? null,
     finalRenderedAnswer,
     qualityGate,
-    differenceAnalysis: compareOutputs(deterministicResponse, synthesis?.output ?? null),
-    recommendation: recommendationFor(qualityGate, deterministicResponse, synthesis?.output ?? null),
+    differenceAnalysis: compareOutputs(deterministicResponse, successfulSynthesis?.output ?? null),
+    recommendation: recommendationFor(
+      qualityGate,
+      deterministicResponse,
+      successfulSynthesis?.output ?? null,
+    ),
   };
 }
 
