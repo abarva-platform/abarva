@@ -1,9 +1,9 @@
 /**
  * @jest-environment jsdom
  *
- * Home is a real React Context Explorer: HomeKnowAsk posts to the Home KNOW
- * endpoint and renders HomeKnowResponse only. No Intelligence ask path, no
- * experts, no static iframe, no fake `answerForAsk`, no single-tenant demo blob.
+ * Home is a real React Context Explorer behind the shared aVa chat shell.
+ * The surface must not fall back to the old top ask band, static iframe,
+ * fake `answerForAsk`, or single-tenant demo blob.
  */
 
 import React from "react";
@@ -62,20 +62,22 @@ const payload = {
 } as unknown as IntelligenceBindingPayload;
 
 describe("HomeSurface — real React Context Explorer", () => {
-  it("renders the two-pane Home KNOW chat + Context Explorer canvas", () => {
+  it("renders the shared aVa dock + Context Explorer canvas", () => {
     render(<HomeSurface clientKey="apexretail" payload={payload} />);
-    expect(screen.getByLabelText("Ava Home KNOW chat")).toBeInTheDocument();
-    expect(screen.getByLabelText("Ask Home KNOW")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Ask Ava")).not.toBeInTheDocument();
+    expect(screen.getByTestId("agent-dock-panel")).toBeInTheDocument();
+    expect(screen.getByTestId("agent-dock-input")).toBeInTheDocument();
+    expect(screen.getByLabelText("Ask aVa")).toBeInTheDocument();
+    expect(screen.getByLabelText("Dock mode")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Ask Home KNOW")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Ava Home KNOW chat")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Choose context dimension")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Lock chat left")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Lock chat right")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Lock chat top")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Lock chat bottom")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Lock chat to left")).toBeInTheDocument();
+    expect(screen.getByLabelText("Lock chat to right")).toBeInTheDocument();
+    expect(screen.getByLabelText("Lock chat to top")).toBeInTheDocument();
+    expect(screen.getByLabelText("Lock chat to bottom")).toBeInTheDocument();
+    expect(screen.getByLabelText("Expand to overlay")).toBeInTheDocument();
     expect(screen.getByLabelText("Context Explorer tabs")).toBeInTheDocument();
-    expect(
-      screen.queryByLabelText("Suggested Home KNOW questions"),
-    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Suggested actions")).toBeInTheDocument();
     // real per-tenant signal (not a fake row-dump)
     expect(
       screen.getByText(
