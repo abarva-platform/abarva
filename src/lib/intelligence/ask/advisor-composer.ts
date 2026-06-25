@@ -14,7 +14,7 @@ const AIRLINE_CONTEXT_RE =
 const VALUE_OR_VISUAL_RE =
   /\b(roi|return|value|benefit|benefits|trend|trends|investment|investments|chart|charts|table|tables|visual|visualize|graph)\b/i;
 const FUNCTION_ARTIFACT_RE =
-  /\b(table|tables|chart|charts|visuali[sz]e|visual|graph|map|compare|list|show|break\s?down|which|where should|how should|consider|opportunit(?:y|ies)|prioriti[sz]e|recommend)\b/i;
+  /\b(table|tables|chart|charts|visuali[sz]e|visual|graph|map|compare|list|show|break\s?down|what|why|which|where should|how should|consider|opportunit(?:y|ies)|prioriti[sz]e|recommend)\b/i;
 
 const AIRLINE_IROPS_EXPERT_IDS = [
   "xp.airline.operations-revenue-management",

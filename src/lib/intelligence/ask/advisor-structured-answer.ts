@@ -253,11 +253,13 @@ function cleanAdvisorProse(prose: string): string {
     .split(/\r?\n/)
     .filter((line) => (line.match(/\|/g) ?? []).length < 2)
     .join("\n");
-  return withoutTables
-    .replace(/\bThe supporting evidence is that\s+For\b/g, "For")
-    .replace(/\bThat means\s+The\b/g, "The")
+  const cleaned = withoutTables
+    .replace(/\bThe supporting evidence is that\s+/gi, "")
+    .replace(/\bThat means\s+/gi, "")
+    .replace(/\bMy\s+(?=with\b)/gi, "")
     .replace(/\b(Read|Evidence|Implication):\s*\1:\s*/gi, "$1: ")
     .replace(/\bS\.\s*$/g, "")
+    .replace(/\bThe next move is to\s*$/gi, "")
     .replace(
       /\b(?:have|ask)\s+the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves\.?/gi,
       "",
@@ -270,6 +272,22 @@ function cleanAdvisorProse(prose: string): string {
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+  return collapseRepeatedAdvisorParagraphs(cleaned);
+}
+
+function collapseRepeatedAdvisorParagraphs(prose: string): string {
+  const seen = new Set<string>();
+  const paragraphs = prose
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+  const deduped = paragraphs.filter((paragraph) => {
+    const key = paragraph.toLowerCase().replace(/\s+/g, " ").slice(0, 220);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return deduped.join("\n\n").trim();
 }
 
 function isGenericEvidenceRequired(table: AnswerTable | undefined): boolean {

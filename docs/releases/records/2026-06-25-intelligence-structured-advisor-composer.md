@@ -31,12 +31,14 @@ Intelligence advisor answers now assemble a structured answer packet instead of 
 - Updated `src/app/api/intelligence/ask/route.ts` to suppress draft deltas for advisor questions and emit one structured `agent-answer` plus one `followups` event.
 - Updated `src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts` with a regression for stitched IROPS prose, pipe-table-in-prose, orphan sign-off, duplicate follow-up, and hardcoded routing-tail leakage.
 - Follow-up polish: live browser proof caught awkward generic tenant wording (`a the tenant-specific return`, `the tenant tenant evidence`) after the tenant-purity fix; the structured IROPS composer now uses neutral labels (`this tenant`, `tenant-specific return`, `Tenant evidence`) without hardcoded client names.
+- Follow-up generic advisor hardening: deployed multi-question traces caught older connector language in non-IROPS advisor answers (`The supporting evidence is that...`, `That means...`, trailing `The next move is to`, and the hardcoded `Source, Tower, or Moves` tail). The generic advisor sanitizer now strips those phrases, collapses repeated paragraphs, and routes `what/why ... constraint` questions into the structured advisor path.
 
 ## QA / Validation
 
 - `npx jest src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts --runInBand --silent` passed: 24 tests passed.
 - Focused ESLint passed for `src/lib/intelligence/ask/advisor-structured-answer.ts`.
 - `npm run audit:control-plane-purity:check` passed; no new hardcoded tenant strings landed in control-plane code.
+- Follow-up local validation also passed focused ESLint for `src/lib/intelligence/ask/advisor-composer.ts`.
 - `npm run release:check` passed before the first deploy; rerun required after this follow-up release-record update.
 - First deployed browser proof on `ca-abarva-web-lab-eastus--mf07d02ac` proved the structured answer path but exposed the generic tenant wording defect addressed by this follow-up.
 
