@@ -35,6 +35,7 @@ Home/aVa now routes every Home question through the same dimension-context answe
 - Deleted stale Home subpages for decision, source, training, and AI initiatives, with proxy redirects to supported destinations.
 - Added prompt/response dump script for side-by-side inspection of the Home Claude prompt packet and response path.
 - Hardened Claude text synthesis normalization so strong Claude answers are sanitized and used instead of being discarded for fixable wording such as markdown, preamble text, or answer-scope labels.
+- Stripped markdown heading syntax and “Here is what…” preambles from Claude Home prose so chat answers render as clean advisor text.
 - Improved deterministic fallback focus for unsupported/end-of-life application questions and cybersecurity leadership/budget questions.
 
 ## QA / Validation
@@ -43,6 +44,7 @@ Home/aVa now routes every Home question through the same dimension-context answe
 - `NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' HOME_KNOW_CLAUDE_SYNTHESIS_ENABLED=false npx tsx scripts/qa/dump-home-claude-prompt-response.ts` — wrote prompt/response dump to Downloads for four representative questions.
 - `npx jest src/lib/home/know/__tests__/home-know-engine.test.ts src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts src/lib/semantic-dossiers/__tests__/universal-dimension-dossier.test.ts src/components/home/__tests__/HomeSurface.test.tsx src/components/home/know/__tests__/HomeKnowAsk.test.tsx src/components/home/know/__tests__/HomeKnowAnswerRenderer.test.tsx tests/home-know/home-answer-relevance-gate.test.ts --runInBand` — passed `67/67`.
 - `npx jest src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts src/lib/semantic-dossiers/__tests__/universal-dimension-dossier.test.ts tests/home-know/home-answer-relevance-gate.test.ts --runInBand` — passed `29/29` after the Claude normalization hardening.
+- `npx jest src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts --runInBand` — passed `17/17` after the markdown/preamble normalization hardening.
 - `npx eslint ...` on touched Home, semantic dossier, QA, proxy, and test files — passed.
 - `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit` — blocked by pre-existing missing dependency/type declarations outside this lane: `js-yaml`, `@azure-rest/ai-document-intelligence`, and `@axe-core/playwright`.
 

@@ -385,10 +385,13 @@ export function validateHomeConsultantText(args: {
 
 export function normalizeHomeConsultantUserFacingText(text: string): string {
   return text
+    .replace(/^\s*#{1,6}\s+.*(?:\r?\n|$)/gm, "")
     .replace(/\*\*/g, "")
     .replace(/`([^`]+)`/g, "$1")
+    .replace(/^\s*here is what (?:the )?(?:loaded )?context can (?:say|tell you) about\s+/i, "For ")
     .replace(/^\s*here is what (?:the )?(?:loaded )?context can (?:say|tell you)\s*:?\s*/i, "")
     .replace(/^\s*here is\s+/i, "")
+    .replace(/\bwhat the loaded context can say\b\s*:?\s*/gi, "")
     .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move):\s*/gi, "$1")
     .replace(/\bcurrent-state read\b/gi, "current-state context")
     .replace(/\bmissing evidence path\b/gi, "missing source path")

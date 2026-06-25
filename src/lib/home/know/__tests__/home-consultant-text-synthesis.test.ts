@@ -276,11 +276,11 @@ describe("home consultant text synthesis", () => {
 
   it("normalizes consultant preamble, markdown, and answer-boundary wording before validation", () => {
     const text = normalizeHomeConsultantUserFacingText(
-      "Here is what the loaded context can tell you: **Lifecycle posture** depends on `lifecycle_stage`; the safe answer boundary is role-level.",
+      "## SkyHarbor lifecycle view\nHere is what the loaded context can tell you about lifecycle posture: **Lifecycle posture** depends on `lifecycle_stage`; the safe answer boundary is role-level.",
     );
 
     expect(text).toBe(
-      "Lifecycle posture depends on lifecycle_stage; the safe answer scope is role-level.",
+      "For lifecycle posture: Lifecycle posture depends on lifecycle_stage; the safe answer scope is role-level.",
     );
     expect(
       validateHomeConsultantText({ text, dossier, response }),
