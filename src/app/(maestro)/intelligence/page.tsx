@@ -1,15 +1,12 @@
-// /intelligence · Context & Corpus Explorer inside the maestro app shell.
+// /intelligence · aVa Intelligence advisor inside the maestro app shell.
 
-import type { ReactNode } from "react";
+import { notFound } from "next/navigation";
 import { AppShell } from "@/components/shell/AppShell";
-import { ContextCorpusExplorerPage } from "@/components/intelligence-v4/ContextCorpusExplorerPage";
 import {
   getActiveClientRow,
   hasLockedTenantSession,
 } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
-import { getAiControlTowerReadModel } from "@/lib/ai-control-tower/read-model";
-import { getEnterpriseContextOverviewForTenant } from "@/lib/enterprise-context/intelligence-read-model";
 import { IntelligenceV2Surface } from "@/components/intelligence-v2/IntelligenceV2Surface";
 import { getIntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
 
@@ -57,34 +54,9 @@ export default async function IntelligencePage({
     canonicalClientDisplayName({ key: client?.key, name: client?.name }) ??
     client?.name ??
     "AbarVa Client";
-  // Intelligence v2 surface (the Lens) when a binding payload exists for the tenant;
-  // otherwise fall back to the Context & Corpus Explorer. v2 skips the heavier
-  // overview/tower fetches since it renders from the committed binding contract.
   const binding = getIntelligenceBindingPayload(contextTenantKey);
-
-  let inner: ReactNode;
-  if (binding) {
-    inner = <IntelligenceV2Surface payload={binding} tenantName={tenantName} />;
-  } else {
-    const overview = contextTenantKey
-      ? await getEnterpriseContextOverviewForTenant(
-          contextTenantKey,
-          tenantName,
-        ).catch(() => null)
-      : null;
-    const towerModel = await getAiControlTowerReadModel({
-      clientId: client?.id ?? null,
-      clientKey: client?.key ?? requestedClient,
-      tenantName,
-    });
-    inner = (
-      <ContextCorpusExplorerPage
-        tenantName={tenantName}
-        tenantKey={contextTenantKey}
-        overview={overview}
-        towerModel={towerModel}
-      />
-    );
+  if (!binding) {
+    notFound();
   }
 
   return (
@@ -97,7 +69,7 @@ export default async function IntelligencePage({
       }}
       hasTenantKey={Boolean(client?.key)}
     >
-      {inner}
+      <IntelligenceV2Surface payload={binding} tenantName={tenantName} />
     </AppShell>
   );
 }

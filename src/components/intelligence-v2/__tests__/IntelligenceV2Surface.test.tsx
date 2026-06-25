@@ -88,7 +88,7 @@ const apexPayload: IntelligenceBindingPayload = {
   ],
 };
 
-describe("IntelligenceV2Surface Ask Ava", () => {
+describe("IntelligenceV2Surface aVa chat shell", () => {
   beforeEach(() => {
     jest.restoreAllMocks();
     Object.assign(globalThis, {
@@ -115,7 +115,9 @@ describe("IntelligenceV2Surface Ask Ava", () => {
             question: "what should we do about apex ai spend?",
             intent: "table",
             status: "answered",
-            directAnswer: "",
+            directAnswer:
+              "Apex should gate lakehouse scale on measured value.",
+            prose: "Apex should gate lakehouse scale on measured value.",
             factsUsed: [],
             metricsUsed: [],
             relationshipsUsed: [],
@@ -179,13 +181,18 @@ describe("IntelligenceV2Surface Ask Ava", () => {
       />,
     );
 
-    const askBox = screen.getByLabelText("Ask Ava");
+    expect(screen.getByTestId("agent-dock-panel")).toBeInTheDocument();
+    expect(screen.getByText("Leadership intelligence canvas.")).toBeInTheDocument();
+    expect(screen.queryByText("Ask anything about")).not.toBeInTheDocument();
+
+    const askBox = screen.getByTestId("agent-dock-input");
     expect(askBox.tagName).toBe("TEXTAREA");
+    expect(askBox).toHaveAttribute("placeholder", "Ask about Apex");
 
     fireEvent.change(askBox, {
       target: { value: "what should we do about\napex ai spend?" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    fireEvent.click(screen.getByTestId("agent-dock-send"));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(askBox).toHaveValue("");
@@ -216,11 +223,14 @@ describe("IntelligenceV2Surface Ask Ava", () => {
       ]),
     );
 
+    expect(await screen.findAllByText(/what should we do about/i)).toHaveLength(
+      1,
+    );
     expect(
-      await screen.findByText(
+      await screen.findAllByText(
         "Apex should gate lakehouse scale on measured value.",
       ),
-    ).toBeInTheDocument();
+    ).not.toHaveLength(0);
     expect(screen.getByText("Retail Operations Expert")).toBeInTheDocument();
     expect(screen.getByText("Apex AI Spend Evidence")).toBeInTheDocument();
     const table = screen.getByRole("table");
@@ -230,7 +240,44 @@ describe("IntelligenceV2Surface Ask Ava", () => {
     expect(within(table).getByText("$95,000,000")).toBeInTheDocument();
     expect(within(table).getByText("$12,000,000")).toBeInTheDocument();
     expect(screen.queryByText("APX-INIT-001")).not.toBeInTheDocument();
-    expect(screen.getAllByText(/Ava ·/i)).toHaveLength(1);
+    expect(screen.getAllByTestId("agent-dock-turn-agent")).toHaveLength(1);
+    expect(screen.getAllByTestId("agent-dock-turn-user")).toHaveLength(1);
+    expect(screen.getByTestId("agent-dock-panel")).toHaveAttribute(
+      "data-mode",
+      "side-rail",
+    );
+  });
+
+  it("runs suggested questions through the same chat shell instead of an old centered ask lane", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: streamFromLines([
+        JSON.stringify({ type: "delta", text: "Suggested answer." }),
+        JSON.stringify({ type: "done" }),
+        "",
+      ]),
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(
+      <IntelligenceV2Surface
+        payload={apexPayload}
+        tenantName="Apex Retail Group"
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Which AI investments should Apex scale?"));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(await screen.findAllByText("Suggested answer.")).not.toHaveLength(0);
+    expect(screen.getAllByTestId("agent-dock-turn-user")).toHaveLength(1);
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toMatchObject({
+      q: "Which AI investments should Apex scale?",
+      client: "apex-retail",
+      format: "rich",
+    });
   });
 
   it("has an Intelligence v2 binding payload for every configured client tenant", () => {
