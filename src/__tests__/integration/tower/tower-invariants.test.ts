@@ -22,10 +22,14 @@ describe("Tower route invariants", () => {
   it("uses the shared AgentDock via the Tower Atlas adapter", () => {
     expect(towerIndexSource).toContain("AtlasChatPanel");
     expect(towerIndexSource).toContain("surface=\"tower\"");
+    expect(towerIndexSource).toContain('variant="focused"');
+    expect(towerIndexSource).not.toContain("initialQuote=");
     expect(towerIndexSource).toContain("defaultLeftPercent={35}");
     expect(towerIndexSource).toContain("minLeftPx={320}");
     expect(atlasChatPanelSource).toContain("AgentDock");
     expect(atlasChatPanelSource).toContain('defaultMode = "side-rail"');
+    expect(atlasChatPanelSource).toContain('name: "aVa"');
+    expect(atlasChatPanelSource).not.toContain('name: "Atlas"');
   });
 
   it("keeps Tower data tenant-bound through the active client id", () => {

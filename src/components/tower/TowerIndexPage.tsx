@@ -733,7 +733,7 @@ function atlasDecisionSupportDisclosure(view?: AtlasObservationsView): {
       accountability?.decisionSupportLabel ?? "AI-assisted decision support",
     boundary:
       accountability?.humanDecisionBoundary ??
-      "Ava supports executive review only; it does not approve spend, vendor actions, sequencing, or program status changes.",
+      "aVa supports executive review only; it does not approve spend, vendor actions, sequencing, or program status changes.",
     citations:
       accountability?.citationSummary ??
       (view?.isEmpty
@@ -1375,7 +1375,7 @@ function TowerInlineDetailPanel({
                 fontWeight: 800,
               }}
             >
-              Ava read · {labelize(initiative.statusFlag)} · confidence{" "}
+              aVa read · {labelize(initiative.statusFlag)} · confidence{" "}
               {initiative.confidenceLevel}
             </div>
             <p
@@ -2236,7 +2236,7 @@ function TowerDataDesignPanel({
       refreshNow: "Weekly",
       refreshFuture: "Daily API/export",
       dashboardUpdate:
-        "Refreshes adoption blockers and Ava citations after consent and theme checks.",
+        "Refreshes adoption blockers and aVa citations after consent and theme checks.",
       day1: "Interview notes, change-readiness survey, enablement feedback, workshop notes.",
     },
     {
@@ -3288,7 +3288,7 @@ export function TowerIndexPage({
     role: "atlas",
     content:
       atlasObservationsView?.headline ??
-      "Ava is waiting for tenant-bound Tower substrate before it can answer portfolio questions.",
+      "aVa is waiting for tenant-bound Tower substrate before it can answer portfolio questions.",
   };
   const [atlasMessages, setAtlasMessages] = useState<AtlasMessage[]>([
     initialOpener,
@@ -3337,7 +3337,7 @@ export function TowerIndexPage({
             id: `atlas-no-tenant-${Date.now()}`,
             role: "atlas",
             content:
-              "Ava needs an active tenant to answer. Sign in or pick a tenant from the top bar to wake up the live response path.",
+              "aVa needs an active tenant to answer. Sign in or pick a tenant from the top bar to wake up the live response path.",
           },
         ]);
         return;
@@ -3379,7 +3379,7 @@ export function TowerIndexPage({
               id: `atlas-error-${Date.now()}`,
               role: "atlas",
               content:
-                "Ava could not answer that right now. Honest read: the Tower summary is still valid, but the live response path needs a retry.",
+                "aVa could not answer that right now. Honest read: the Tower summary is still valid, but the live response path needs a retry.",
             },
           ]);
           return;
@@ -3398,8 +3398,8 @@ export function TowerIndexPage({
             role: "atlas",
             content:
               err instanceof DOMException && err.name === "AbortError"
-                ? "I could not complete the live Ava answer within this screen response window. The Tower facts below are still available. Next step: retry the same question or open the relevant program evidence view."
-                : "I could not complete the live Ava answer just now. The Tower facts below are still available. Next step: retry the same question or open the relevant program evidence view.",
+                ? "I could not complete the live aVa answer within this screen response window. The Tower facts below are still available. Next step: retry the same question or open the relevant program evidence view."
+                : "I could not complete the live aVa answer just now. The Tower facts below are still available. Next step: retry the same question or open the relevant program evidence view.",
           },
         ]);
       } finally {
@@ -3443,6 +3443,13 @@ export function TowerIndexPage({
     [router, sendToAtlas],
   );
 
+  const hasTowerSubstrate =
+    (substrateCounts?.initiatives ?? initiatives?.length ?? 0) > 0 ||
+    (substrateCounts?.vendors ?? vendors?.length ?? 0) > 0 ||
+    (substrateCounts?.kpis ?? 0) > 0 ||
+    (substrateCounts?.decisions ?? 0) > 0 ||
+    (substrateCounts?.scenarios ?? 0) > 0;
+
   const kpiBand = (
     <section
       data-testid="tower-kpi-band"
@@ -3471,9 +3478,9 @@ export function TowerIndexPage({
         </>
       ) : (
         <TowerEmptyState
-          eyebrow="DB substrate required"
-          title="No tenant-bound KPI data is available."
-          body="Tower will not substitute demo KPI values. Load initiatives and vendors for this client before using the executive band."
+          eyebrow="Tower data binding required"
+          title="Dashboard is waiting on tenant-bound Tower rows."
+          body="Home and Intelligence context may be loaded, but this Tower dashboard reads tenant-bound initiatives, vendors, KPIs, decisions, and scenarios. Tower will not substitute fixture values."
           style={{ gridColumn: "1 / -1" }}
         />
       )}
@@ -3560,7 +3567,7 @@ export function TowerIndexPage({
                   marginTop: 5,
                 }}
               >
-                Ava · {tenantName} · {timestamp} PT
+                aVa · {tenantName} · {timestamp} PT
               </div>
               <div
                 style={{
@@ -3686,7 +3693,15 @@ export function TowerIndexPage({
                 )}
 
                 {/* Strategic alignment matrix */}
-                {activeCanvasView === "alignment" && (
+                {activeCanvasView === "alignment" && !hasTowerSubstrate ? (
+                  <section style={{ padding: "18px 32px 34px" }}>
+                    <TowerEmptyState
+                      eyebrow="Tower read model empty"
+                      title="No portfolio dots can be drawn yet."
+                      body="Bind or load Tower rows for initiatives, vendor spend, KPI outcomes, and decision states before using the alignment dashboard. This is intentionally blank-safe: no legacy demo board will fill the gap."
+                    />
+                  </section>
+                ) : activeCanvasView === "alignment" ? (
                   <section style={{ padding: "10px 32px 34px" }}>
                     <div
                       style={{
@@ -3784,7 +3799,7 @@ export function TowerIndexPage({
                       </div>
                     </div>
                   </section>
-                )}
+                ) : null}
 
                 {activeCanvasView === "evidence" && (
                   <div style={{ padding: "24px 0 32px" }}>
@@ -3853,7 +3868,7 @@ export function TowerIndexPage({
         onSuggestion={handleAtlasSuggestion}
         workspace={towerWorkspace}
         surface="tower"
-        initialQuote="AI-assisted decision support: review citations, assumptions, and missing data before acting on Ava output."
+        variant="focused"
         surfaceContext={{
           clientId: clientId ?? null,
           tenantName,
