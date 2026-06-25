@@ -437,6 +437,24 @@ describe("home consultant text synthesis", () => {
     ).toEqual(expect.arrayContaining(["cross_tenant_content:Apex Retail"]));
   });
 
+  it("rejects browse overview output when Claude collapses branch options into a wall", () => {
+    const browseResponse: HomeKnowResponse = {
+      ...response,
+      intent: "browse",
+      tables: [],
+      charts: [],
+      graphs: [],
+    };
+
+    expect(
+      validateHomeConsultantText({
+        text: "For SkyHarbor Air, the loaded context is strongest around organization leadership. Adjacent areas also carry loaded records and can be characterized at the enterprise level. Where do you want to go deeper? - Budget and financials - Vendor contracts - Enterprise profile - Organization leadership One caveat: relationship paths are not yet established.",
+        dossier,
+        response: browseResponse,
+      }),
+    ).toEqual(expect.arrayContaining(["browse_branch_layout_missing"]));
+  });
+
   it("falls back cleanly on timeout", async () => {
     process.env.HOME_KNOW_CLAUDE_TIMEOUT_MS = "1";
     mockClaudeText(
