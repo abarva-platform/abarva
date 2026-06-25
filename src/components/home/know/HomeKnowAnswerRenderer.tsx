@@ -87,7 +87,7 @@ function sanitizeHomeText(value: unknown): string {
     .replace(/\bevidence path\b/gi, "source path")
     .replace(/\bsource citations\b/gi, "source rows")
     .replace(/\bread-model\b/gi, "context model")
-    .replace(/\bevidence\b/gi, "source support")
+    .replace(/\bevidence\b/gi, "source context")
     .replace(BLOCKED_HOME_TEXT_REPLACE, "loaded context")
     .replace(INTERNAL_CODE_REPLACE, "source reference")
     .trim();
