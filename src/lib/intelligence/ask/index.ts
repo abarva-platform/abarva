@@ -39,6 +39,9 @@ import {
   buildIntelligenceDossier,
   type IntelligenceDossier,
 } from "@/lib/intelligence/dossiers";
+import {
+  synthesizeIntelligenceConsultantText,
+} from "@/lib/intelligence/intelligence-consultant-text-synthesis";
 
 export type {
   AskIntent,
@@ -267,6 +270,30 @@ export async function* askIntelligence(
           "Show the evidence behind this tension",
         ],
       };
+      yield { type: "done" };
+      return;
+    }
+
+    const consultantText = await synthesizeIntelligenceConsultantText({
+      dossier: intelligenceDossier,
+      tenantId: opts.tenantId ?? opts.tenantInventoryKey ?? opts.tenantClientKey,
+      userId: opts.userId,
+      onModelInput: opts.onModelInput,
+    });
+    if (consultantText && consultantText.used) {
+      let answer = "";
+      for (const chunk of chunkAskText(consultantText.text)) {
+        answer += chunk;
+        yield { type: "delta", text: chunk };
+      }
+      const followups = await generateFollowups({
+        query: trimmed,
+        answer,
+        entities: classification.entities,
+        tenantId: opts.tenantId,
+        userId: opts.userId,
+      });
+      yield { type: "followups", followups };
       yield { type: "done" };
       return;
     }
