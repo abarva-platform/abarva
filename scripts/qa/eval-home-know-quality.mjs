@@ -92,6 +92,8 @@ async function main() {
     const { ok, status, body } = await askEngine(item.q);
     const prose = body?.prose ?? body?.answer ?? body?._raw ?? '';
     const answerStatus = body?.answerStatus ?? body?.status ?? (body?.handoff ? 'handoff' : '');
+    const evidenceChannels = body?.safety?.evidenceChannels ?? {};
+    const usableEvidence = body?.safety?.usableEvidence ?? null;
     const g = gate(prose);
     let verdict = '—';
     if (ok && prose && ANTHROPIC_KEY && !item.expectHandoff) {
@@ -99,8 +101,8 @@ async function main() {
       verdict = `${j.verdict} (e${j.executive_lead}/s${j.synthesis}/g${j.gap_specificity})`;
     }
     const handoffOk = item.expectHandoff ? (answerStatus === 'handoff' ? 'handoff ✓' : 'NOT handoff ✗') : '';
-    rows.push({ id: item.id, ok: ok ? status : `ERR ${status}`, gate: g, verdict: handoffOk || verdict, lead: (prose || '').slice(0, 90) });
-    console.log(`Q${item.id} [${ok ? status : 'ERR ' + status}] rcLead=${g.no_rowcount_lead} rawId=${g.no_raw_ids} debug=${g.no_debug_language} | ${handoffOk || verdict}`);
+    rows.push({ id: item.id, ok: ok ? status : `ERR ${status}`, gate: g, verdict: handoffOk || verdict, lead: (prose || '').slice(0, 90), usableEvidence, evidenceChannels });
+    console.log(`Q${item.id} [${ok ? status : 'ERR ' + status}] rcLead=${g.no_rowcount_lead} rawId=${g.no_raw_ids} debug=${g.no_debug_language} usableEvidence=${usableEvidence} channels=${JSON.stringify(evidenceChannels)} | ${handoffOk || verdict}`);
     console.log(`   ${(prose || JSON.stringify(body)).slice(0, 160)}\n`);
   }
   const hardFails = rows.filter((r) => r.gate && (!r.gate.no_rowcount_lead || !r.gate.no_raw_ids || !r.gate.no_debug_language));

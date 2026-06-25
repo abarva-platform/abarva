@@ -8,6 +8,7 @@ import type {
   HomeKnowResponse,
   HomeKnowTable,
 } from '@/lib/home/know/home-know-contract';
+import { hasUsableDossierEvidence } from '@/lib/home/know/has-usable-dossier-evidence';
 import { composeDossierAnswer, type UniversalDimensionDossier } from '@/lib/semantic-dossiers';
 
 function homeIntentForDossier(dossier: UniversalDimensionDossier): HomeKnowIntent {
@@ -158,6 +159,20 @@ export function buildHomeKnowResponseFromDossier(input: {
   const citations = citationsForDossier(input.dossier);
   const intent = homeIntentForDossier(input.dossier);
   const handoffTarget = input.dossier.answerBoundary.handoffTarget;
+  const facts = factsForDossier(input.dossier, citations);
+  const tables = tablesForDossier(input.dossier, citations);
+  const charts = chartsForDossier(input.dossier, citations);
+  const graphs = graphsForDossier(input.dossier, citations);
+  const gaps = gapsForDossier(input.dossier, citations);
+  const evidence = hasUsableDossierEvidence({
+    ...input.dossier,
+    facts,
+    tables,
+    charts,
+    graphs,
+    gaps,
+    citations,
+  });
   return {
     mode: 'KNOW',
     tenantKey: input.tenantKey,
@@ -166,11 +181,11 @@ export function buildHomeKnowResponseFromDossier(input: {
     answerStatus: handoffTarget && handoffTarget !== 'home' ? 'handoff' : input.dossier.gaps.length > 0 ? 'partial' : 'answered',
     prose: answer.directAnswer,
     dimensionsUsed: [input.dossier.route.primaryDimension, ...input.dossier.route.relatedDimensions],
-    facts: factsForDossier(input.dossier, citations),
-    tables: tablesForDossier(input.dossier, citations),
-    charts: chartsForDossier(input.dossier, citations),
-    graphs: graphsForDossier(input.dossier, citations),
-    gaps: gapsForDossier(input.dossier, citations),
+    facts,
+    tables,
+    charts,
+    graphs,
+    gaps,
     conflicts: [],
     citations,
     handoff:
@@ -188,6 +203,10 @@ export function buildHomeKnowResponseFromDossier(input: {
       blockedInternalCodes: true,
       unsupportedClaimsRemoved: answer.quality.issues.length,
       frontendTripwireShouldFire: false,
+      usableEvidence: evidence.usable,
+      evidenceStatus: evidence.usable ? 'usable_dossier' : 'empty_dossier',
+      evidenceReason: evidence.reason,
+      evidenceChannels: evidence.evidenceChannels,
       composerTrace: {
         route: '/api/home/know/ask',
         composer: handoffTarget && handoffTarget !== 'home' ? 'home_know_decision_handoff' : 'golden_home_know_semantic_synthesis',
@@ -195,9 +214,19 @@ export function buildHomeKnowResponseFromDossier(input: {
         goldenComposerUsed: true,
         fallbackUsed: false,
         dimensionsUsed: [input.dossier.route.primaryDimension, ...input.dossier.route.relatedDimensions],
-        factsBound: input.dossier.facts.length,
-        tablesBound: 1,
-        gapsBound: input.dossier.gaps.length,
+        factsBound: facts.length,
+        tablesBound: tables.filter((table) => table.rows.length > 0).length,
+        chartsBound: charts.filter((chart) => chart.data.length > 0).length,
+        graphsBound: graphs.filter((graph) => graph.nodes.length > 0 && graph.edges.length > 0).length,
+        citationsBound: citations.length,
+        sourceCoverageBound: input.dossier.sourceCoverage.filter((source) => source.loaded && source.count > 0).length,
+        sectionsBound: input.dossier.sections.filter((section) => section.recordCount > 0).length,
+        rollupsBound: Object.keys(input.dossier.rollups).length,
+        relationshipPathsBound: input.dossier.relationshipPaths.length,
+        metricsBound: input.dossier.metrics.length,
+        gapsBound: gaps.length,
+        usableEvidence: evidence.usable,
+        evidenceChannels: evidence.evidenceChannels,
         answerStatus: handoffTarget && handoffTarget !== 'home' ? 'handoff' : input.dossier.gaps.length > 0 ? 'partial' : 'answered',
       },
     },

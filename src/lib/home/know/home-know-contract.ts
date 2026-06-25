@@ -146,10 +146,27 @@ export interface HomeKnowSafety {
   blockedInternalCodes: boolean;
   unsupportedClaimsRemoved: number;
   frontendTripwireShouldFire: boolean;
+  usableEvidence?: boolean;
+  evidenceStatus?: "usable_dossier" | "empty_dossier";
+  evidenceReason?: string;
+  evidenceChannels?: {
+    facts: number;
+    tables: number;
+    charts: number;
+    graphs: number;
+    citations: number;
+    sourceCoverage: number;
+    sections: number;
+    rollups: number;
+    relationshipPaths: number;
+    metrics: number;
+    gaps: number;
+  };
   composerTrace?: {
     route: "/api/home/know/ask" | "home-know-engine";
     composer:
       | "golden_home_know_semantic_synthesis"
+      | "home_consultant_claude_synthesis"
       | "home_know_template_fallback"
       | "home_know_decision_handoff"
       | "home_know_blocked";
@@ -159,7 +176,17 @@ export interface HomeKnowSafety {
     dimensionsUsed: string[];
     factsBound: number;
     tablesBound: number;
+    chartsBound?: number;
+    graphsBound?: number;
+    citationsBound?: number;
+    sourceCoverageBound?: number;
+    sectionsBound?: number;
+    rollupsBound?: number;
+    relationshipPathsBound?: number;
+    metricsBound?: number;
     gapsBound: number;
+    usableEvidence?: boolean;
+    evidenceChannels?: HomeKnowSafety["evidenceChannels"];
     answerStatus: HomeKnowAnswerStatus;
     reason?: string;
   };

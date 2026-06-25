@@ -126,6 +126,44 @@ describe("HomeKnowAnswerRenderer", () => {
             "org_topology unavailable in local env for APEXRETAIL-INIT-0017 and the cited record.",
           tables: [],
           gaps: [],
+          safety: {
+            ...baseResponse.safety,
+            frontendTripwireShouldFire: true,
+            usableEvidence: true,
+            evidenceStatus: "usable_dossier",
+          },
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText("This Home answer needs validation before it can be shown."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/org_topology unavailable/i),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/APEXRETAIL-INIT-0017/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/the cited record/i)).not.toBeInTheDocument();
+  });
+
+  it("renders no-data text only for a structured empty dossier", () => {
+    render(
+      <HomeKnowAnswerRenderer
+        response={{
+          ...baseResponse,
+          answerStatus: "no_data",
+          prose: "No source data returned.",
+          facts: [],
+          tables: [],
+          charts: [],
+          graphs: [],
+          gaps: [],
+          citations: [],
+          safety: {
+            ...baseResponse.safety,
+            usableEvidence: false,
+            evidenceStatus: "empty_dossier",
+          },
         }}
       />,
     );
@@ -133,11 +171,30 @@ describe("HomeKnowAnswerRenderer", () => {
     expect(
       screen.getByText("I do not see that in the loaded data."),
     ).toBeInTheDocument();
+  });
+
+  it("does not convert usable evidence into no-data just because a backend tripwire fired", () => {
+    render(
+      <HomeKnowAnswerRenderer
+        response={{
+          ...baseResponse,
+          prose: "A short answer with source-backed table support.",
+          safety: {
+            ...baseResponse.safety,
+            frontendTripwireShouldFire: true,
+            usableEvidence: true,
+            evidenceStatus: "usable_dossier",
+          },
+        }}
+      />,
+    );
+
     expect(
-      screen.queryByText(/org_topology unavailable/i),
+      screen.queryByText("I do not see that in the loaded data."),
     ).not.toBeInTheDocument();
-    expect(screen.queryByText(/APEXRETAIL-INIT-0017/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/the cited record/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByText("This Home answer needs validation before it can be shown."),
+    ).toBeInTheDocument();
   });
 
   it("renders old answer scaffolds as clean client-facing copy", () => {

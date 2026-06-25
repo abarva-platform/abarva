@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { buildHomeKnowDimensionDossier } from '@/lib/home/know/build-universal-dimension-dossier';
+import { hasUsableDossierEvidence, type UsableDossierEvidenceResult } from '@/lib/home/know/has-usable-dossier-evidence';
 import { validateHomeKnowAnswer } from '@/lib/home/know/home-answer-quality-gate';
 import { composeDossierAnswer } from '@/lib/semantic-dossiers';
 
@@ -23,6 +24,7 @@ interface CrawlResult {
   handoffTarget: string | null;
   sectionCount: number;
   citationCount: number;
+  evidence: UsableDossierEvidenceResult;
   directAnswer: string;
   qualityGate: ReturnType<typeof validateHomeKnowAnswer>;
   score: {
@@ -120,8 +122,9 @@ function scoreResult(result: Omit<CrawlResult, 'score'>): CrawlResult['score'] {
     if (pattern.test(result.directAnswer)) critical.push(id);
   }
   if (!result.qualityGate.passed) critical.push(`quality_gate:${result.qualityGate.issues.join('|')}`);
+  if (!result.evidence.usable) critical.push('no_usable_dossier_evidence');
   if (result.sectionCount < 8) critical.push('dossier_too_thin');
-  if (result.citationCount < 1) critical.push('no_citations');
+  if (result.citationCount < 1 && result.evidence.evidenceChannels.sourceCoverage < 1) critical.push('no_source_channel');
   if ((result.id === 'S25' || result.id === 'L25') && result.handoffTarget !== 'intelligence') {
     critical.push('decision_not_handed_off');
   }
@@ -135,7 +138,7 @@ function scoreResult(result: Omit<CrawlResult, 'score'>): CrawlResult['score'] {
   const criteria = {
     correctness: critical.length ? 2 : 5,
     synthesis: result.directAnswer.length > 220 ? 5 : 3,
-    citationQuality: result.citationCount > 0 ? 4 : 0,
+    citationQuality: result.citationCount > 0 || result.evidence.evidenceChannels.sourceCoverage > 0 ? 4 : 0,
     gapSpecificity: result.qualityGate.issues.includes('missing_specific_gaps') ? 2 : 4,
     artifactQuality: result.sourceFamiliesIncluded.length >= 6 ? 4 : 2,
     executiveReadability: /\brows?\b|missing source support|I found/i.test(result.directAnswer) ? 1 : 5,
@@ -159,6 +162,7 @@ function runQuestion(item: CrawlQuestion): CrawlResult {
   });
   const answer = composeDossierAnswer(dossier);
   const qualityGate = validateHomeKnowAnswer({ answer, dossier });
+  const evidence = hasUsableDossierEvidence(dossier);
   const base = {
     tenant: item.tenant,
     id: item.id,
@@ -169,6 +173,7 @@ function runQuestion(item: CrawlQuestion): CrawlResult {
     handoffTarget: answer.composerPacket.answerBoundary.handoffTarget,
     sectionCount: answer.composerPacket.sections.length,
     citationCount: answer.composerPacket.citations.length,
+    evidence,
     directAnswer: answer.directAnswer,
     qualityGate,
   };
@@ -182,6 +187,7 @@ function writeMarkdownTranscript(outDir: string, tenant: TenantKey, results: Cra
     markdown += `Score: ${result.score.total}/35 - ${result.score.pass ? 'PASS' : 'FAIL'}\n\n`;
     markdown += `Primary dimension: ${result.primaryDimension}\n\n`;
     markdown += `Sections attached: ${result.sectionCount}; citations: ${result.citationCount}; handoff: ${result.handoffTarget ?? 'none'}\n\n`;
+    markdown += `Usable evidence: ${result.evidence.usable ? 'yes' : 'no'} (${result.evidence.reason})\n\n`;
     markdown += `${result.directAnswer}\n\n`;
     markdown += `Critical failures: ${result.score.critical.length ? result.score.critical.join(', ') : 'none'}\n\n`;
   }
@@ -225,6 +231,8 @@ function main() {
         sourceFamiliesIncluded: result.sourceFamiliesIncluded,
         sectionCount: result.sectionCount,
         citationCount: result.citationCount,
+        evidenceChannels: result.evidence.evidenceChannels,
+        usableEvidence: result.evidence.usable,
         qualityPassed: result.qualityGate.passed,
         criticalFailures: result.score.critical,
       })),

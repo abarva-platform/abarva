@@ -677,6 +677,105 @@ describe("Home KNOW contract engine", () => {
     expect(response.safety.frontendTripwireShouldFire).toBe(false);
   });
 
+  it("does not rewrite valid dossier prose when factsBound is zero but other evidence channels are populated", () => {
+    const response = validateHomeKnowResponse({
+      mode: "KNOW",
+      tenantKey: "lakeshore",
+      question: "Which systems and applications are loaded for Lakeshore?",
+      intent: "lookup",
+      answerStatus: "answered",
+      prose:
+        "Lakeshore Holdings' application systems context is strong enough to answer from a sourced dossier. The application table, domain chart, relationship graph, and source citations show how applications connect to business domains.",
+      dimensionsUsed: ["application_systems"],
+      facts: [],
+      tables: [
+        {
+          id: "dimension-dossier-source-coverage",
+          title: "Dimension dossier source coverage",
+          dimensionId: "application_systems",
+          columns: [{ key: "section", label: "Section" }],
+          rows: [{ section: "Applications and systems" }],
+          citationIds: ["c1"],
+        },
+      ],
+      charts: [
+        {
+          id: "apps-by-domain",
+          title: "Apps by domain",
+          kind: "bar",
+          type: "bar",
+          dimensionId: "application_systems",
+          data: [{ label: "Finance", value: 12 }],
+          sourceIds: ["F05"],
+          citationIds: ["c1"],
+          caveats: [],
+          status: "tenant-fact",
+        },
+      ],
+      graphs: [
+        {
+          id: "app-ownership",
+          title: "App ownership",
+          nodes: [
+            { id: "app", label: "ERP", type: "application" },
+            { id: "team", label: "Finance IT", type: "team" },
+          ],
+          edges: [{ from: "app", to: "team", label: "owned by", type: "owns" }],
+          nodeTypes: ["application", "team"],
+          edgeTypes: ["owns"],
+          sourceIds: ["F19"],
+          citationIds: ["c1"],
+          confidence: "high",
+          gaps: [],
+          inferredEdges: false,
+        },
+      ],
+      gaps: [],
+      conflicts: [],
+      citations: [
+        {
+          id: "c1",
+          label: "Applications and systems",
+          sourceClass: "tenant-source-file",
+        },
+      ],
+      handoff: null,
+      safety: {
+        serverValidated: false,
+        blockedExperts: false,
+        blockedDecisionFrames: false,
+        blockedInternalCodes: false,
+        unsupportedClaimsRemoved: 0,
+        frontendTripwireShouldFire: false,
+      },
+    });
+
+    expect(response.prose).toMatch(/application systems context/i);
+    expect(response.prose).not.toMatch(/Here is what is loaded|I do not see that in the loaded data/i);
+    expect(response.safety.usableEvidence).toBe(true);
+    expect(response.safety.evidenceChannels).toMatchObject({
+      facts: 0,
+      tables: 1,
+      charts: 1,
+      graphs: 1,
+      citations: 1,
+    });
+    expect(response.safety.frontendTripwireShouldFire).toBe(false);
+  });
+
+  it("hands recommendation questions to Intelligence rather than erasing the grounded Home answer path", () => {
+    const response = buildHomeKnowResponseFromPacket({
+      tenantKey: "skyharbor-air",
+      question: "Where should SkyHarbor invest next in AI?",
+      packet: skyharborPacket,
+    });
+
+    expect(response.intent).toBe("decision_handoff");
+    expect(response.answerStatus).toBe("handoff");
+    expect(response.handoff?.target).toBe("intelligence");
+    expect(response.prose).toMatch(/supporting facts|decision work/i);
+  });
+
   it.each([
     "Show our data products in a table with domain and owning team.",
     "Give me a table comparing our top three initiatives on impact, risk, and owner.",

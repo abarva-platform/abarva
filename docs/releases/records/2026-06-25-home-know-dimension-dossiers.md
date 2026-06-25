@@ -14,6 +14,20 @@ Home/aVa now has a dossier-first answer path for broad enterprise questions. Ins
 
 Follow-up live proof found that the first ACA deployment fixed the SkyHarbor false-refusal case but exposed a validator regression for Lakeshore: grounded dossier prose that contained harmless operating-decision wording was replaced with the generic fallback "Here is what is loaded in Home context." This release record now includes the live-quality fix that narrows that validator, improves gap synthesis, and adds explicit active-tenant boundary language when a Home question names another tenant.
 
+Second follow-up audit found a hidden proof/configuration failure mode: valid
+dossiers could be mis-scored when `factsBound = 0` even though tables, charts,
+graphs, citations, source coverage, rollups, relationship paths, or sourced gaps
+were present. This release now includes a shared usable-dossier-evidence standard
+and evidence-channel trace so validators, frontend tripwires, and proof scripts
+do not rely on `factsBound` alone.
+
+Third follow-up adds the optional Home Consultant Dossier Claude synthesis layer.
+The dossier builder remains the source of truth; Claude receives a bounded
+structured dossier packet and returns structured JSON synthesis only. Validation
+rejects false refusals, raw IDs, internal labels, uncited references, and Home
+recommendations. Deterministic dossier composition remains the fallback whenever
+Claude is disabled, unavailable, times out, or fails validation.
+
 ## Layer Impact
 
 - `global-control-lane`: Adds shared Home KNOW routing, quality gate, answer composition, and UI wiring.
@@ -31,15 +45,22 @@ Follow-up live proof found that the first ACA deployment fixed the SkyHarbor fal
 
 - `src/app/api/home/know/ask/route.ts`
 - `src/lib/home/know/*`
+- `src/lib/features/registry.ts`
 - `src/lib/semantic-dossiers/*`
 - `scripts/qa/home-dossier-crawl.ts`
+- `scripts/qa/eval-home-know-quality.mjs`
+- `scripts/qa/home-live-gate.mjs`
 - `proof/home-dossier-crawl-20260625/*`
+- `proof/home-dossier-live-20260625/*`
+- `proof/home-consultant-synthesis/*`
 - `docs/home-know/*`
 
 ## QA / Validation
 
 - `npx tsx scripts/qa/home-dossier-crawl.ts`: passed, 54/54 questions.
 - `npx jest src/lib/home/know/__tests__/home-know-engine.test.ts tests/home-know/home-org-answer-quality.test.ts tests/home-know/home-answer-forbidden-language.test.ts src/lib/semantic-dossiers/__tests__/universal-dimension-dossier.test.ts --runInBand`: passed, 39/39 after the live-quality fix.
+- Evidence-channel audit validation to run before merge: `npx jest src/lib/home/know/__tests__/has-usable-dossier-evidence.test.ts src/lib/home/know/__tests__/home-know-engine.test.ts src/components/home/know/__tests__/HomeKnowAnswerRenderer.test.tsx --runInBand`.
+- Home Consultant synthesis validation to run before merge: `npx jest src/lib/home/know/__tests__/home-consultant-dossier-synthesis.test.ts src/lib/features/__tests__/is-feature-enabled.test.ts --runInBand`.
 - `npx eslint scripts/qa/home-dossier-crawl.ts src/lib/semantic-dossiers src/lib/home/know src/app/api/home/know/ask/route.ts src/components/home/know src/components/home/HomeSurface.tsx`: passed.
 - `npx eslint src/lib/semantic-dossiers src/lib/home/know`: passed after the live-quality fix.
 - `NODE_OPTIONS=--max-old-space-size=8192 node node_modules/typescript/lib/tsc.js --noEmit --pretty false --incremental false --skipLibCheck`: failed locally on unrelated cross-worktree Playwright type mismatch in `tests/accessibility/public-axe.spec.ts`; clean CI TypeScript is required before merge.
@@ -74,6 +95,12 @@ Revert this release commit and redeploy the previous known-good ACA image. No de
 - `proof/home-dossier-crawl-20260625/transcripts/lakeshore.md`
 - `proof/home-dossier-crawl-20260625/screenshots/skyharbor/live-auth-smoke.png`
 - `proof/home-dossier-crawl-20260625/screenshots/lakeshore/live-auth-smoke.png`
+- `proof/home-dossier-live-20260625/evidence-channel-report.json`
+- `proof/home-dossier-live-20260625/proof-criteria.md`
+- `proof/home-dossier-live-20260625/side-by-side-report.md`
+- `docs/home-know/HOME_CONSULTANT_DOSSIER_PROMPT.md`
+- `docs/home-know/HOME_CONSULTANT_SYNTHESIS_EVALUATION.md`
+- `docs/home-know/HOME_CONSULTANT_DIMENSION_STYLE_GUIDE.md`
 
 ## Context Ingestion Evidence
 

@@ -18,6 +18,11 @@ import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { repairHomeAnswerQuality } from "@/lib/home/know/home-answer-quality-gate";
 import { buildHomeKnowDimensionDossier } from "@/lib/home/know/build-universal-dimension-dossier";
 import { buildHomeKnowResponseFromDossier } from "@/lib/home/know/compose-dossier-answer";
+import { hasUsableDossierEvidence } from "@/lib/home/know/has-usable-dossier-evidence";
+import {
+  applyHomeConsultantSynthesis,
+  synthesizeHomeConsultantDossier,
+} from "@/lib/home/know/home-consultant-dossier-synthesis";
 import { synthesizeHomeKnowProse } from "@/lib/home/know/home-know-synthesis";
 
 export interface HomeDimensionCoverageRow {
@@ -279,7 +284,7 @@ export async function buildHomeKnowResponse(
         question: input.question.trim(),
         dossier,
       });
-      return validateHomeKnowResponse({
+      const validated = validateHomeKnowResponse({
         ...response,
         safety: {
           ...response.safety,
@@ -291,6 +296,23 @@ export async function buildHomeKnowResponse(
             : response.safety.composerTrace,
         },
       });
+      if (
+        isFeatureEnabled(
+          { clientKey: input.client ?? tenantKey, clientId: tenantKey },
+          "home_know_claude_synthesis",
+        )
+      ) {
+        const synthesis = await synthesizeHomeConsultantDossier({
+          dossier,
+          deterministicResponse: validated,
+        });
+        if (synthesis) {
+          return validateHomeKnowResponse(
+            applyHomeConsultantSynthesis(validated, synthesis),
+          );
+        }
+      }
+      return validated;
     }
   } catch (error) {
     console.warn(
@@ -305,12 +327,31 @@ export async function buildHomeKnowResponse(
     question: input.question,
     packet,
   });
+  const evidence = hasUsableDossierEvidence(response);
   const traceBase = {
     route: "/api/home/know/ask" as const,
     dimensionsUsed: response.dimensionsUsed,
     factsBound: response.facts.length,
     tablesBound: response.tables.length,
+    chartsBound: response.charts.length,
+    graphsBound: response.graphs.length,
+    citationsBound: response.citations.length,
+    sourceCoverageBound: response.citations.filter(
+      (citation) => citation.sourceClass === "tenant-source-file",
+    ).length,
+    sectionsBound: 0,
+    rollupsBound: 0,
+    relationshipPathsBound: response.graphs.reduce(
+      (sum, graph) => sum + graph.edges.length,
+      0,
+    ),
+    metricsBound: response.charts.reduce(
+      (sum, chart) => sum + chart.data.length,
+      0,
+    ),
     gapsBound: response.gaps.length,
+    usableEvidence: evidence.usable,
+    evidenceChannels: evidence.evidenceChannels,
     answerStatus: response.answerStatus,
   };
   if (response.intent === "decision_handoff") {
@@ -644,6 +685,7 @@ function readModelGapMessage(table: string): string {
 }
 
 function defaultSafety() {
+  const evidence = hasUsableDossierEvidence({});
   return {
     serverValidated: true,
     blockedExperts: true,
@@ -651,6 +693,10 @@ function defaultSafety() {
     blockedInternalCodes: true,
     unsupportedClaimsRemoved: 0,
     frontendTripwireShouldFire: false,
+    usableEvidence: evidence.usable,
+    evidenceStatus: "empty_dossier" as const,
+    evidenceReason: evidence.reason,
+    evidenceChannels: evidence.evidenceChannels,
   };
 }
 
@@ -2123,6 +2169,7 @@ export function validateHomeKnowResponse(
 ): HomeKnowResponse {
   let prose = response.prose;
   let unsupportedClaimsRemoved = response.safety.unsupportedClaimsRemoved;
+  const evidence = hasUsableDossierEvidence(response);
   const templatePrefix = /\b(Read|Evidence|Implication|Next move):\s*/gi;
   if (templatePrefix.test(prose)) {
     prose = prose
@@ -2137,8 +2184,10 @@ export function validateHomeKnowResponse(
   }
   const lookupHasDecisionLanguage =
     response.intent !== "decision_handoff" && DECISION_RE.test(prose);
-  if (lookupHasDecisionLanguage) {
+  if (lookupHasDecisionLanguage && !evidence.usable) {
     prose = "Here is what is loaded in Home context.";
+    unsupportedClaimsRemoved += 1;
+  } else if (lookupHasDecisionLanguage) {
     unsupportedClaimsRemoved += 1;
   }
   return repairHomeAnswerQuality({
@@ -2151,10 +2200,15 @@ export function validateHomeKnowResponse(
       blockedDecisionFrames: true,
       blockedInternalCodes: true,
       unsupportedClaimsRemoved,
+      usableEvidence: evidence.usable,
+      evidenceStatus: evidence.usable ? "usable_dossier" : "empty_dossier",
+      evidenceReason: evidence.reason,
+      evidenceChannels: evidence.evidenceChannels,
       frontendTripwireShouldFire:
-        BLOCKED_PUBLIC_TEXT.test(prose) ||
-        INTERNAL_CODE_RE.test(prose) ||
-        lookupHasDecisionLanguage,
+        !evidence.usable &&
+        (BLOCKED_PUBLIC_TEXT.test(prose) ||
+          INTERNAL_CODE_RE.test(prose) ||
+          lookupHasDecisionLanguage),
     },
   });
 }

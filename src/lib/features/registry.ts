@@ -82,10 +82,18 @@ export type FeatureFlagKey =
   | "context_corpus_explorer_enabled"
   | "source_reasoning_spine"
   | "home_know_llm_synthesis"
+  | "home_know_claude_synthesis"
   | "deliverable_structured_exhibits"
   | "deliverable_quality_contract";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
+  {
+    key: "home_know_claude_synthesis",
+    summary:
+      "Optional consultant-grade Claude synthesis for Home KNOW dimension dossiers. AbarVa still builds the bounded dossier, artifacts, citations, gaps, and tenant fence; Claude only phrases structured JSON synthesis and deterministic composer remains the fallback. Env controls: HOME_KNOW_CLAUDE_SYNTHESIS_ENABLED, HOME_KNOW_CLAUDE_MODEL, HOME_KNOW_CLAUDE_TIMEOUT_MS, HOME_KNOW_CLAUDE_MAX_TOKENS.",
+    policy: "tenant",
+    includeTenants: ["skyharbor", "lakeshore"],
+  },
   {
     key: "home_know_llm_synthesis",
     summary:

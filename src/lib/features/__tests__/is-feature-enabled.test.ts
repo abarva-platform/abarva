@@ -195,6 +195,29 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
     });
   });
 
+  describe("Home KNOW consultant Claude synthesis flag", () => {
+    it("is enabled for SkyHarbor and Lakeshore, including the dashed SkyHarbor data-plane tenant key", () => {
+      expect(
+        isFeatureEnabled({ clientKey: "skyharbor" }, "home_know_claude_synthesis"),
+      ).toBe(true);
+      expect(
+        isFeatureEnabled(
+          { clientKey: "skyharbor-air" },
+          "home_know_claude_synthesis",
+        ),
+      ).toBe(true);
+      expect(
+        isFeatureEnabled({ clientKey: "lakeshore" }, "home_know_claude_synthesis"),
+      ).toBe(true);
+      expect(
+        isFeatureEnabled(
+          { clientKey: "apexretail" },
+          "home_know_claude_synthesis",
+        ),
+      ).toBe(false);
+    });
+  });
+
   describe("Workspace Explorer flags", () => {
     const SOURCE_ENV = "ABARVA_FEATURE_WORKSPACE_EXPLORER_SOURCE_TENANTS";
     const MOVES_ENV = "ABARVA_FEATURE_WORKSPACE_EXPLORER_MOVES_TENANTS";

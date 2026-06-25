@@ -1,4 +1,5 @@
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
+import { hasUsableDossierEvidence } from "@/lib/home/know/has-usable-dossier-evidence";
 import type { DossierAnswer, UniversalDimensionDossier } from "@/lib/semantic-dossiers";
 
 const FALSE_ABSENCE_RE =
@@ -30,9 +31,7 @@ export function homeAnswerQualityViolations(
 ): HomeAnswerQualityViolation[] {
   const violations: HomeAnswerQualityViolation[] = [];
   const lead = firstParagraph(response.prose);
-  const hasLoadedContext =
-    response.facts.length > 0 ||
-    response.tables.some((table) => table.rows.length > 0);
+  const hasLoadedContext = hasUsableDossierEvidence(response).usable;
 
   if (
     response.intent !== "decision_handoff" &&
@@ -90,14 +89,21 @@ export function validateHomeKnowAnswer(args: {
 }): { passed: boolean; critical: boolean; issues: string[] } {
   const issues = [...args.answer.quality.issues];
   const visible = args.answer.directAnswer;
+  const evidence = hasUsableDossierEvidence(args.dossier);
 
   if (FALSE_ABSENCE_RE.test(visible)) issues.push("false_absence");
   if (BAD_LEAD_RE.test(firstParagraph(visible)) || /\brows?\b/i.test(firstParagraph(visible))) issues.push("row_count_lead");
   if (MISSING_SUPPORT_LEAD_RE.test(firstParagraph(visible))) issues.push("missing_support_lead");
   if (RAW_ID_RE.test(visible)) issues.push("raw_id");
   if (DEBUG_RE.test(visible)) issues.push("debug_language");
+  if (!evidence.usable) issues.push("missing_usable_dossier_evidence");
   if (args.dossier.composerPacket.sections.length === 0) issues.push("missing_dossier_sections");
-  if (args.dossier.composerPacket.citations.length === 0) issues.push("missing_citations");
+  if (
+    args.dossier.composerPacket.citations.length === 0 &&
+    evidence.evidenceChannels.sourceCoverage === 0
+  ) {
+    issues.push("missing_citations");
+  }
   if (args.dossier.composerPacket.artifactPlan.length === 0) issues.push("missing_artifact_plan");
   if (args.dossier.route.targetSurface !== "home" && !args.dossier.answerBoundary.handoffTarget) {
     issues.push("missing_home_handoff_boundary");
@@ -108,6 +114,7 @@ export function validateHomeKnowAnswer(args: {
       "false_absence",
       "raw_id",
       "debug_language",
+      "missing_usable_dossier_evidence",
       "missing_dossier_sections",
       "missing_citations",
     ].includes(issue),

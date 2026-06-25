@@ -467,12 +467,20 @@ function SourceDrawer({ citation }: { citation: HomeKnowCitation | null }) {
   );
 }
 
-function responseHasTripwire(response: HomeKnowResponse): boolean {
-  if (response.safety.frontendTripwireShouldFire) return true;
-  return (
+function frontendFallbackProse(response: HomeKnowResponse): string | null {
+  const isEmptyDossier =
+    response.answerStatus === "no_data" &&
+    response.safety.evidenceStatus === "empty_dossier" &&
+    response.safety.usableEvidence === false;
+  if (isEmptyDossier) return "I do not see that in the loaded data.";
+  if (
+    response.safety.frontendTripwireShouldFire ||
     BLOCKED_HOME_TEXT.test(response.prose) ||
     INTERNAL_CODE_RE.test(response.prose)
-  );
+  ) {
+    return "This Home answer needs validation before it can be shown.";
+  }
+  return null;
 }
 
 function shouldOpenEvidence(
@@ -502,9 +510,8 @@ export function HomeKnowAnswerRenderer({
   const [selectedCitation, setSelectedCitation] =
     useState<HomeKnowCitation | null>(null);
   const safeProse = useMemo(() => {
-    if (responseHasTripwire(response)) {
-      return "I do not see that in the loaded data.";
-    }
+    const fallback = frontendFallbackProse(response);
+    if (fallback) return fallback;
     return sanitizeHomeText(response.prose);
   }, [response]);
   const visibleCitations = response.citations;

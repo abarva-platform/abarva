@@ -67,7 +67,9 @@ async function ask(query, requestedClient) {
   const answer = await res.json();
   const prose = answer?.prose ?? "";
   const hasExhibit = Boolean(answer?.tables?.length || answer?.charts?.length || answer?.graphs?.length);
-  return { prose, answer, experts: [], blocked: answer?.answerStatus === "blocked", hasExhibit };
+  const evidenceChannels = answer?.safety?.evidenceChannels ?? {};
+  const usableEvidence = answer?.safety?.usableEvidence ?? null;
+  return { prose, answer, experts: [], blocked: answer?.answerStatus === "blocked", hasExhibit, evidenceChannels, usableEvidence };
 }
 
 function isReadableConsultantAnswer(prose) {
@@ -133,6 +135,11 @@ async function run() {
           : r.hasExhibit
             ? "markdown table in prose"
             : "missing typed exhibit",
+    );
+    rec(
+      "usable evidence evaluated across all channels",
+      r.usableEvidence === true,
+      `usable=${r.usableEvidence}; channels=${JSON.stringify(r.evidenceChannels)}`,
     );
     rec(
       "readable consultant-shaped answer",
