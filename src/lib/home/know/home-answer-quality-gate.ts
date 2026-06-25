@@ -1,5 +1,6 @@
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
 import { hasUsableDossierEvidence } from "@/lib/home/know/has-usable-dossier-evidence";
+import { homePublicAnswerLeakIssues } from "@/lib/home/know/home-public-answer-scrub";
 import type { DossierAnswer, UniversalDimensionDossier } from "@/lib/semantic-dossiers";
 
 const FALSE_ABSENCE_RE =
@@ -52,6 +53,9 @@ export function homeAnswerQualityViolations(
   if (DEBUG_RE.test(response.prose)) {
     violations.push("debug_language");
   }
+  if (homePublicAnswerLeakIssues(response.prose).length > 0) {
+    violations.push("debug_language");
+  }
   if (ORG_QUESTION_RE.test(response.question) && CONTRACT_OWNER_RE.test(response.prose)) {
     violations.push("irrelevant_contract_owner");
   }
@@ -96,6 +100,7 @@ export function validateHomeKnowAnswer(args: {
   if (MISSING_SUPPORT_LEAD_RE.test(firstParagraph(visible))) issues.push("missing_support_lead");
   if (RAW_ID_RE.test(visible)) issues.push("raw_id");
   if (DEBUG_RE.test(visible)) issues.push("debug_language");
+  if (homePublicAnswerLeakIssues(visible).length > 0) issues.push("debug_language");
   if (!evidence.usable) issues.push("missing_usable_dossier_evidence");
   if (args.dossier.composerPacket.sections.length === 0) issues.push("missing_dossier_sections");
   if (

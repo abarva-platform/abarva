@@ -3,6 +3,7 @@ import type {
   DossierDimensionFamily,
   DossierSurface,
 } from "@/lib/semantic-dossiers";
+import { homePublicAnswerLeakIssues } from "@/lib/home/know/home-public-answer-scrub";
 
 export type HomeAnswerRelevanceIssue =
   | "wrong_dimension_binder"
@@ -51,7 +52,7 @@ const DIMENSION_KEYWORDS: Record<DossierDimensionFamily, RegExp[]> = {
     /\b(data|analytics|warehouse|lakehouse|bi|tableau|power bi|databricks|lineage|data product|data products)\b/i,
   ],
   operations_process: [
-    /\b(service now|servicenow|jira|ticket|incident|change|problem|bottleneck|handoff|process|operational friction|repetitive|operations|service)\b/i,
+    /\b(operational evidence|back[- ]office|back[- ]office services|service management|itsm|service now|servicenow|jira|ticket|request|incident|change|problem|service desk|queue|bottleneck|handoff|process|operational friction|repetitive|operations|service|automation candidate|shared it services?)\b/i,
   ],
   ai_value_governance: [
     /\b(ai|agent|automation|automate|llm|ai model|machine learning model|value|benefit|roi|initiative|initiatives|adoption)\b/i,
@@ -163,7 +164,10 @@ export function assessHomeAnswerRelevance(
   if (requestedArtifacts.includes("graph") && (input.graphsCount ?? 0) < 1) {
     issues.push("missing_requested_graph");
   }
-  if (INTERNAL_LANGUAGE_RE.test(answer)) {
+  if (
+    INTERNAL_LANGUAGE_RE.test(answer) ||
+    homePublicAnswerLeakIssues(answer).length > 0
+  ) {
     issues.push("internal_dossier_language");
   }
   if (COUNT_LEAD_RE.test(firstSentence(answer))) {
@@ -197,10 +201,10 @@ export function inferExpectedPrimaryDimension(
     return "risk_compliance";
   }
   const orderedDimensions: DossierDimensionFamily[] = [
+    "operations_process",
     "organization_leadership",
     "vendor_contracts",
     "data_analytics",
-    "operations_process",
     "ai_value_governance",
     "budget_financials",
     "risk_compliance",

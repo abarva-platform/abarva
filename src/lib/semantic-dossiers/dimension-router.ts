@@ -108,7 +108,7 @@ function inferPrimaryDimension(question: string): DossierDimensionFamily {
   if (/\b(risks?|controls?|compliance|governance|security|audit|cyber)\b/.test(q)) return 'risk_compliance';
   if (/\b(vendors?|contracts?|licenses?|renewals?|suppliers?|commercial|pricing|sourcing)\b/.test(q)) return 'vendor_contracts';
   if (/\b(data|analytics|warehouse|lakehouse|bi|tableau|power bi|databricks|lineage|data products?|analytics platforms?|analytics tools?)\b/.test(q)) return 'data_analytics';
-  if (/\b(service now|servicenow|jira|tickets?|incidents?|changes?|problems?|bottlenecks?|handoffs?|process|operational friction|repetitive)\b/.test(q)) {
+  if (/\b(operational evidence|back[- ]office|back[- ]office services|service management|itsm|service now|servicenow|jira|tickets?|requests?|incidents?|changes?|problems?|service desk|queues?|bottlenecks?|handoffs?|process|operational friction|repetitive|automation candidates?|shared it services?)\b/.test(q)) {
     return 'operations_process';
   }
   if (/\b(ai|agents?|automation|automate|llm|ai models?|machine learning models?|value|benefit|roi|initiatives?|adoption)\b/.test(q)) return 'ai_value_governance';

@@ -21,6 +21,10 @@ import { buildHomeKnowDimensionDossier } from "@/lib/home/know/build-universal-d
 import { buildHomeKnowResponseFromDossier } from "@/lib/home/know/compose-dossier-answer";
 import { hasUsableDossierEvidence } from "@/lib/home/know/has-usable-dossier-evidence";
 import {
+  homePublicAnswerLeakIssues,
+  scrubHomePublicAnswerText,
+} from "@/lib/home/know/home-public-answer-scrub";
+import {
   applyHomeConsultantTextSynthesis,
   applyHomeConsultantTextSynthesisFailureTrace,
   isHomeConsultantTextSynthesisResult,
@@ -2244,6 +2248,11 @@ export function validateHomeKnowResponse(
     prose = sanitizePublicHomeText(prose);
     unsupportedClaimsRemoved += 1;
   }
+  const scrubbedProse = sanitizePublicHomeText(prose);
+  if (scrubbedProse !== prose || homePublicAnswerLeakIssues(prose).length > 0) {
+    prose = scrubbedProse;
+    unsupportedClaimsRemoved += 1;
+  }
   const relevance = assessHomeAnswerRelevance({
     question: response.question,
     answerText: prose,
@@ -2305,7 +2314,7 @@ export function validateHomeKnowResponse(
 }
 
 function sanitizePublicHomeText(value: string): string {
-  return value
+  return scrubHomePublicAnswerText(value
     .replace(BLOCKED_PUBLIC_TEXT_REPLACE, "loaded context")
     .replace(INTERNAL_CODE_REPLACE, "the source row")
     .replace(/\bthe cited record\b/gi, "the source row")
@@ -2315,8 +2324,7 @@ function sanitizePublicHomeText(value: string): string {
     )
     .replace(/\bcurrent-state loaded context\b/gi, "current-state context")
     .replace(/\bprimary loaded context\b/gi, "primary source context")
-    .replace(/\s{2,}/g, " ")
-    .trim();
+    .replace(/\s{2,}/g, " "));
 }
 
 function cleanLabel(value: unknown): string | null {
