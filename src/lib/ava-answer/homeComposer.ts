@@ -60,7 +60,7 @@ export function composeHomeKnowAvaAnswer(
     })),
   ];
 
-  return composeAvaAnswer({
+  const answer = composeAvaAnswer({
     surface: "home",
     mode: "KNOW",
     tenantKey: response.tenantKey,
@@ -136,6 +136,69 @@ export function composeHomeKnowAvaAnswer(
         response.citations.length > 0 || response.facts.length > 0,
     },
   });
+  return {
+    ...answer,
+    prose: readableHomeKnowMirror(response.prose, answer.interpretation),
+  };
+}
+
+function readableHomeKnowMirror(
+  prose: string,
+  interpretation?: string,
+): string {
+  const cleaned = prose
+    .replace(/\s+/g, " ")
+    .replace(/\s+([,.;:!?])/g, "$1")
+    .trim();
+  if (!cleaned) return cleaned;
+
+  const existingParagraphs = cleaned
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+  if (existingParagraphs.length >= 3) return cleaned;
+
+  const paragraphs = splitReadableHomeKnowParagraphs(cleaned);
+  if (paragraphs.length < 3 && interpretation?.trim()) {
+    paragraphs.push(interpretation.replace(/\s+/g, " ").trim());
+  }
+  return paragraphs.length >= 2 ? paragraphs.join("\n\n") : cleaned;
+}
+
+function splitReadableHomeKnowParagraphs(text: string): string[] {
+  const sentences = text
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+  if (sentences.length >= 3) {
+    return [
+      sentences.slice(0, 2).join(" "),
+      sentences.slice(2, Math.max(3, sentences.length - 1)).join(" "),
+      sentences.slice(Math.max(3, sentences.length - 1)).join(" "),
+    ].filter(Boolean);
+  }
+
+  const clauseBreaks = text
+    .split(/(?<=;)\s+|(?<=:)\s+/)
+    .map((clause) => clause.trim())
+    .filter(Boolean);
+  if (clauseBreaks.length >= 3) {
+    const chunkSize = Math.ceil(clauseBreaks.length / 3);
+    return [
+      clauseBreaks.slice(0, chunkSize).join(" "),
+      clauseBreaks.slice(chunkSize, chunkSize * 2).join(" "),
+      clauseBreaks.slice(chunkSize * 2).join(" "),
+    ].filter(Boolean);
+  }
+
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length <= 90) return [text];
+  const chunkSize = Math.ceil(words.length / 3);
+  return [
+    words.slice(0, chunkSize).join(" "),
+    words.slice(chunkSize, chunkSize * 2).join(" "),
+    words.slice(chunkSize * 2).join(" "),
+  ].filter(Boolean);
 }
 
 function homeInterpretation(response: HomeKnowResponse): string | undefined {
