@@ -74,7 +74,7 @@ Do not mention pattern family or experts in Home.
 Return only the final user-facing answer text.`;
 
 const FORBIDDEN_RE =
-  /\b(cannot be characterized|cannot be identified|I found|missing source support|Current-state read|Evidence points|\bevidence\b|\brows\b|home_know|semantic packet|\bpacket\b|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
+  /\b(cannot be characterized|cannot be identified|I found|missing source support|Current-state read|\bread\b|Evidence points|\bevidence\b|\brows\b|home_know|semantic packet|\bpacket\b|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
 const RAW_ID_RE =
   /\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
 const RECOMMENDATION_RE =
@@ -385,6 +385,8 @@ export function validateHomeConsultantText(args: {
 
 export function normalizeHomeConsultantUserFacingText(text: string): string {
   return text
+    .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move):\s*/gi, "$1")
+    .replace(/\bcurrent-state read\b/gi, "current-state context")
     .replace(/\bmissing evidence path\b/gi, "missing source path")
     .replace(/\bevidence path\b/gi, "source path")
     .replace(/\bmissing evidence\b/gi, "missing source context")
@@ -395,6 +397,9 @@ export function normalizeHomeConsultantUserFacingText(text: string): string {
     .replace(/\bevidence\b/gi, "source context")
     .replace(/\brows\b/gi, "records")
     .replace(/\brow\b/gi, "record")
+    .replace(/\bread-models?\b/gi, "source views")
+    .replace(/\breads\b/gi, "reviews")
+    .replace(/\bread\b/gi, "review")
     .replace(/\s+/g, " ")
     .trim();
 }

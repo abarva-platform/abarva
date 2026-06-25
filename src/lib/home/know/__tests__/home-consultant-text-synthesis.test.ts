@@ -265,13 +265,13 @@ describe("home consultant text synthesis", () => {
 
   it("normalizes user-facing source language before validation and selection", () => {
     const text = normalizeHomeConsultantUserFacingText(
-      "The loaded evidence supports a strong answer across 42 rows, but needed evidence is missing for one leader.",
+      "Read: The loaded evidence supports a strong current-state read across 42 rows, but needed evidence is missing for one leader.",
     );
 
     expect(text).toBe(
-      "The loaded source context supports a strong answer across 42 records, but needed source context is missing for one leader.",
+      "The loaded source context supports a strong current-state context across 42 records, but needed source context is missing for one leader.",
     );
-    expect(text).not.toMatch(/\bevidence\b|\brows\b/i);
+    expect(text).not.toMatch(/\bread\b|\bevidence\b|\brows\b/i);
   });
 
   it("normalizes deterministic fallback prose when Claude synthesis is not selected", () => {
@@ -301,6 +301,16 @@ describe("home consultant text synthesis", () => {
     expect(
       validateHomeConsultantText({
         text: "The application estate cannot be characterized from the available data.",
+        dossier,
+        response,
+      }),
+    ).toEqual(expect.arrayContaining(["forbidden_language"]));
+  });
+
+  it("fails standalone read language before it reaches the Home API", () => {
+    expect(
+      validateHomeConsultantText({
+        text: "This current-state read explains the loaded organization.",
         dossier,
         response,
       }),

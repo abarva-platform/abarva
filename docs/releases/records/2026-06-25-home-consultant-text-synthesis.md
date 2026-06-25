@@ -22,6 +22,8 @@ Fourth live-proof hardening: the Home consultant composer now avoids and normali
 
 Fifth live-proof hardening: deterministic fallback prose now runs through the same user-facing normalization when Claude synthesis is not selected, so intermittent model fallback cannot reintroduce `evidence` / `rows` wording into the API response.
 
+Sixth live-proof hardening: standalone `Read` / `read` wording is now blocked and normalized in the shared API prose path, not only removed by the React renderer, so direct API and visible Home answers follow the same user-facing language contract.
+
 ## Layer Impact
 
 - `global-control-lane`: Changes the shared Home KNOW answer synthesis path and feature-flagged Claude behavior for opted-in tenants.
@@ -58,6 +60,7 @@ Fifth live-proof hardening: deterministic fallback prose now runs through the sa
 - Follow-up renderer assertion: `loaded evidence supports` renders as `loaded source context supports`, not `source support supports`.
 - Follow-up composer assertion: raw Claude prose containing `evidence` / `rows` is normalized before selection, and selected API prose cannot include those terms.
 - Follow-up fallback assertion: deterministic fallback prose containing `evidence` / `rows` is normalized before API return.
+- Follow-up API contract assertion: standalone `Read` / `read` wording is normalized before validation and rejected if it survives.
 - `npx jest src/lib/home/know/__tests__/home-know-engine.test.ts --runInBand`: pass, 27/27.
 - `npx jest src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts src/lib/home/know/__tests__/home-know-engine.test.ts --runInBand`: pass, 39/39.
 - `npx eslint src/lib/home/know/home-consultant-text-synthesis.ts src/lib/home/know/home-know-engine.ts src/lib/home/know/evaluate-home-consultant-synthesis.ts src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts src/app/api/home/know/ask/route.ts src/lib/features/registry.ts`: pass.
