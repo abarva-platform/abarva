@@ -16,6 +16,8 @@ import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { CHART } from "@/lib/programs/expert-kernel/exports/board-grade/svg-charts";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { repairHomeAnswerQuality } from "@/lib/home/know/home-answer-quality-gate";
+import { buildHomeKnowDimensionDossier } from "@/lib/home/know/build-universal-dimension-dossier";
+import { buildHomeKnowResponseFromDossier } from "@/lib/home/know/compose-dossier-answer";
 import { synthesizeHomeKnowProse } from "@/lib/home/know/home-know-synthesis";
 
 export interface HomeDimensionCoverageRow {
@@ -263,6 +265,39 @@ export async function buildHomeKnowResponse(
       question: input.question,
       prose: "I do not see an active tenant for this Home request.",
     });
+  }
+  const dossierTenantKey = input.client?.trim() || tenantKey;
+  try {
+    const { dossier, cacheHit, sourceSignature } = buildHomeKnowDimensionDossier({
+      tenantKey: dossierTenantKey,
+      question: input.question,
+      requestedSurface: "home",
+    });
+    if (dossier.sourceCoverage.some((source) => source.loaded && source.count > 0)) {
+      const response = buildHomeKnowResponseFromDossier({
+        tenantKey,
+        question: input.question.trim(),
+        dossier,
+      });
+      return validateHomeKnowResponse({
+        ...response,
+        safety: {
+          ...response.safety,
+          composerTrace: response.safety.composerTrace
+            ? {
+              ...response.safety.composerTrace,
+              reason: `dimension dossier attached; cacheHit=${cacheHit}; sourceSignature=${sourceSignature}`,
+            }
+            : response.safety.composerTrace,
+        },
+      });
+    }
+  } catch (error) {
+    console.warn(
+      `[home-know.dossier] Falling back to read-model packet for ${tenantKey}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
   }
   const packet = await fetchHomeKnowPacket(tenantKey);
   const response = buildHomeKnowResponseFromPacket({
@@ -2110,6 +2145,7 @@ export function validateHomeKnowResponse(
     ...response,
     prose,
     safety: {
+      ...response.safety,
       serverValidated: true,
       blockedExperts: true,
       blockedDecisionFrames: true,
