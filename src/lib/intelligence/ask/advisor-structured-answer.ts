@@ -52,15 +52,14 @@ function buildAirlineIropsAdvisorAnswer(
 ): StructuredAdvisorAnswer {
   const citations = answerCitationsFromAskSources(input.sources);
   const citationIds = citations.map((citation) => citation.id);
-  const tenantName = tenantLabelForAdvisor(input);
   const wantsChart = /\b(chart|charts|visual|visuali[sz]e|plot)\b/i.test(
     input.query,
   );
-  const table = airlineIropsEvidenceTable(citationIds, tenantName);
+  const table = airlineIropsEvidenceTable(citationIds);
   const artifacts: AvaArtifact[] = [{ ...table, artifact: "table" }];
   if (wantsChart) {
     artifacts.push({
-      ...airlineIropsReadinessChart(citationIds, tenantName),
+      ...airlineIropsReadinessChart(citationIds),
       artifact: "chart",
     });
   }
@@ -74,13 +73,14 @@ function buildAirlineIropsAdvisorAnswer(
     {
       id: "tenant-roi-gap",
       label: "Tenant ROI gap",
-      detail: `${tenantName} needs baseline IROPS cost per event, recovery-cycle time, customer impact, adoption, and realized-value evidence before claiming tenant-specific ROI.`,
+      detail:
+        "The tenant needs baseline IROPS cost per event, recovery-cycle time, customer impact, adoption, and realized-value evidence before claiming tenant-specific ROI.",
     },
   ];
   const directAnswer = [
     "Airlines are moving IROPS AI from alerting toward recovery orchestration: the value is not just predicting disruption, but recomputing aircraft, crew, gates, passenger reaccommodation, contact-center load, maintenance constraints, and operations-control tradeoffs fast enough to change the operating plan.",
-    `For ${tenantName}, the investable question is whether the operational data loop is certified enough to trust the recommendation. Real-time aircraft, crew, passenger, gate, maintenance, weather, and network events need lineage, freshness controls, crew-legality rules, recovery workflow data, and auditable write-back before scale funding is credible.`,
-    `The ROI case should stay as a planning range until tenant realized-value evidence is loaded. Corpus patterns point to lower disruption cost, faster recovery cycles, and reduced service load; they do not prove a ${tenantName}-specific return without the baseline and post-change telemetry.`,
+    "For this tenant, the investable question is whether the operational data loop is certified enough to trust the recommendation. Real-time aircraft, crew, passenger, gate, maintenance, weather, and network events need lineage, freshness controls, crew-legality rules, recovery workflow data, and auditable write-back before scale funding is credible.",
+    "The ROI case should stay as a planning range until tenant realized-value evidence is loaded. Corpus patterns point to lower disruption cost, faster recovery cycles, and reduced service load; they do not prove a tenant-specific return without the baseline and post-change telemetry.",
   ].join("\n\n");
   const followUpQuestion =
     "Want me to pressure-test the IROPS data-readiness gate, or sequence IROPS against the other AI bets?";
@@ -183,15 +183,7 @@ function buildEnterpriseFunctionAdvisorAnswer(
   return { answer, followUpQuestion };
 }
 
-function tenantLabelForAdvisor(input: StructuredAdvisorAnswerInput): string {
-  void input;
-  return "the tenant";
-}
-
-function airlineIropsEvidenceTable(
-  citationIds: string[],
-  tenantName: string,
-): AnswerTable {
+function airlineIropsEvidenceTable(citationIds: string[]): AnswerTable {
   return {
     id: "airline-irops-value-evidence",
     title: "IROPS AI Value Evidence",
@@ -221,7 +213,7 @@ function airlineIropsEvidenceTable(
         confidence: "medium",
       },
       {
-        carrier_pattern: `${tenantName} tenant evidence`,
+        carrier_pattern: "Tenant evidence",
         use_case: "Operational data-readiness gate",
         mechanism: "Lineage, freshness, legality rules, workflow telemetry, and write-back controls",
         value_range: "No tenant ROI claim until baseline and realized-value data are loaded",
@@ -235,10 +227,7 @@ function airlineIropsEvidenceTable(
   };
 }
 
-function airlineIropsReadinessChart(
-  citationIds: string[],
-  tenantName: string,
-): AnswerChart {
+function airlineIropsReadinessChart(citationIds: string[]): AnswerChart {
   return {
     id: "airline-irops-opportunity-readiness",
     kind: "range-bar",
@@ -251,7 +240,8 @@ function airlineIropsReadinessChart(
       baseLabel: "Bounded orchestration",
       highLabel: "Full recovery loop",
       directionalOnly: true,
-      caveat: `Directional corpus range only; tenant-specific ROI requires ${tenantName} baseline and realized-value evidence.`,
+      caveat:
+        "Directional corpus range only; tenant-specific ROI requires tenant baseline and realized-value evidence.",
     },
     builder: "opportunityRangeBar",
     citationIds,
