@@ -20,7 +20,7 @@ function homeIntentForDossier(dossier: UniversalDimensionDossier): HomeKnowInten
 }
 
 function citationId(index: number): string {
-  return `dossier-citation-${index + 1}`;
+  return `source-citation-${index + 1}`;
 }
 
 function citationsForDossier(dossier: UniversalDimensionDossier): HomeKnowCitation[] {
@@ -30,7 +30,7 @@ function citationsForDossier(dossier: UniversalDimensionDossier): HomeKnowCitati
     sourceClass: 'tenant-source-file',
     sourceFile: citation.sourceKey,
     sourceRowNumber: null,
-    excerpt: `${citation.count} source-backed item${citation.count === 1 ? '' : 's'} contributed to this dossier section.`,
+    excerpt: `${citation.count} source-backed item${citation.count === 1 ? '' : 's'} contributed to this answer context.`,
     confidence: citation.count > 0 ? 'high' : 'low',
   }));
 }
@@ -47,7 +47,7 @@ function factsForDossier(dossier: UniversalDimensionDossier, citations: HomeKnow
       .map((citation) => citation.id)
       .slice(0, 3);
     return {
-      id: `dossier-fact-${index + 1}`,
+      id: `source-fact-${index + 1}`,
       dimensionId: dossier.route.primaryDimension,
       label: fact.label,
       value: fact.value,
@@ -59,14 +59,14 @@ function factsForDossier(dossier: UniversalDimensionDossier, citations: HomeKnow
 function tablesForDossier(dossier: UniversalDimensionDossier, citations: HomeKnowCitation[]): HomeKnowTable[] {
   return [
     {
-      id: 'dimension-dossier-source-coverage',
-      title: 'Dimension dossier source coverage',
+      id: 'question-source-coverage',
+      title: 'Source coverage for this question',
       dimensionId: dossier.route.primaryDimension,
       columns: [
         { key: 'section', label: 'Section' },
         { key: 'dimension', label: 'Dimension' },
         { key: 'records', label: 'Records', align: 'right', format: 'number' },
-        { key: 'role', label: 'Binder role' },
+        { key: 'role', label: 'Answer role' },
       ],
       rows: dossier.sections.slice(0, 18).map((section) => ({
         section: section.title,
@@ -75,7 +75,7 @@ function tablesForDossier(dossier: UniversalDimensionDossier, citations: HomeKno
         role: section.dimensionFamily === dossier.route.primaryDimension ? 'primary' : 'adjacent',
       })),
       citationIds: allCitationIds(citations),
-      note: 'This table shows the source families attached to the Home answer dossier.',
+      note: 'This table shows the source areas attached to the Home answer.',
     },
   ];
 }
@@ -87,8 +87,8 @@ function chartsForDossier(dossier: UniversalDimensionDossier, citations: HomeKno
   if (numericMetrics.length === 0) return [];
   return [
     {
-      id: 'dimension-dossier-metrics',
-      title: 'Dossier metric rollups',
+      id: 'dimension-source-metrics',
+      title: 'Metric rollups from loaded sources',
       kind: 'bar',
       type: 'bar',
       dimensionId: dossier.route.primaryDimension,
@@ -122,7 +122,7 @@ function graphsForDossier(dossier: UniversalDimensionDossier, citations: HomeKno
   });
   return [
     {
-      id: 'dimension-dossier-relationship-paths',
+      id: 'question-relationship-paths',
       title: 'Relevant relationship paths',
       nodes: [...nodes.values()],
       edges,
@@ -139,9 +139,9 @@ function graphsForDossier(dossier: UniversalDimensionDossier, citations: HomeKno
 
 function gapsForDossier(dossier: UniversalDimensionDossier, citations: HomeKnowCitation[]): HomeKnowGap[] {
   return dossier.gaps.slice(0, 8).map((gap, index) => ({
-    id: `dossier-gap-${index + 1}`,
+    id: `source-gap-${index + 1}`,
     dimensionId: dossier.route.primaryDimension,
-    objectType: 'dimension dossier',
+    objectType: 'source context',
     expectedField: gap.neededEvidence.join('; '),
     displayLabel: gap.label,
     severity: 'medium',

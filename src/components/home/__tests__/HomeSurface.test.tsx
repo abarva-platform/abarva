@@ -67,8 +67,7 @@ describe("HomeSurface — real React Context Explorer", () => {
     expect(screen.getByLabelText("Ava Home KNOW chat")).toBeInTheDocument();
     expect(screen.getByLabelText("Ask Home KNOW")).toBeInTheDocument();
     expect(screen.queryByLabelText("Ask Ava")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Expand chat")).toBeInTheDocument();
-    expect(screen.getByLabelText("Hide chat")).toBeInTheDocument();
+    expect(screen.getByLabelText("Choose context dimension")).toBeInTheDocument();
     expect(screen.queryByLabelText("Lock chat left")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Lock chat right")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Lock chat top")).not.toBeInTheDocument();
@@ -87,9 +86,9 @@ describe("HomeSurface — real React Context Explorer", () => {
       screen.getByText(/33 source points · 2 sources/),
     ).toBeInTheDocument();
     // rail lists the loaded context dimension; detail not shown yet
-    expect(screen.getByText("Loaded context · 1")).toBeInTheDocument();
+    expect(screen.getByText("1 context dimensions loaded")).toBeInTheDocument();
     expect(screen.queryByText("Loaded context · 8")).not.toBeInTheDocument();
-    expect(screen.getByText("IT systems landscape")).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /IT systems landscape/ })).toBeInTheDocument();
     expect(
       screen.queryByText("Applications, integrations, systems of record"),
     ).not.toBeInTheDocument();
@@ -97,24 +96,12 @@ describe("HomeSurface — real React Context Explorer", () => {
 
   it("opens a loaded dimension's detail from the rail", () => {
     render(<HomeSurface clientKey="apexretail" payload={payload} />);
-    fireEvent.click(screen.getByText("IT systems landscape"));
+    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
+      target: { value: "IT systems landscape" },
+    });
     expect(
       screen.getByText("Applications, integrations, systems of record"),
     ).toBeInTheDocument();
     expect(screen.getByText("82%")).toBeInTheDocument();
-  });
-
-  it("can hide, restore, and expand the chat shell", () => {
-    render(<HomeSurface clientKey="apexretail" payload={payload} />);
-    fireEvent.click(screen.getByLabelText("Hide chat"));
-    expect(
-      screen.queryByLabelText("Ava Home KNOW chat"),
-    ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByLabelText("Show Ava chat"));
-    expect(screen.getByLabelText("Ava Home KNOW chat")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByLabelText("Expand chat"));
-    expect(screen.getByLabelText("Restore chat size")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Lock chat right")).not.toBeInTheDocument();
   });
 });

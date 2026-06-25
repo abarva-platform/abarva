@@ -105,30 +105,30 @@ function annotateSources(
 
 function inferPrimaryDimension(question: string): DossierDimensionFamily {
   const q = question.toLowerCase();
+  if (/\b(risks?|controls?|compliance|governance|security|audit|cyber)\b/.test(q)) return 'risk_compliance';
+  if (/\b(vendors?|contracts?|licenses?|renewals?|suppliers?|commercial|pricing|sourcing)\b/.test(q)) return 'vendor_contracts';
+  if (/\b(data|analytics|warehouse|lakehouse|bi|tableau|power bi|databricks|lineage|data products?|analytics platforms?|analytics tools?)\b/.test(q)) return 'data_analytics';
+  if (/\b(service now|servicenow|jira|tickets?|incidents?|changes?|problems?|bottlenecks?|handoffs?|process|operational friction|repetitive)\b/.test(q)) {
+    return 'operations_process';
+  }
+  if (/\b(ai|agents?|automation|automate|llm|ai models?|machine learning models?|value|benefit|roi|initiatives?|adoption)\b/.test(q)) return 'ai_value_governance';
+  if (/\b(cost|budget|spend|finance|financial|run|change|funding)\b/.test(q)) return 'budget_financials';
   if (/\b(org|organization|organised|organized|leader|leadership|cio|cto|ciso|cdao|cdto|owner|accountab)\b/.test(q)) {
     return 'organization_leadership';
   }
-  if (/\b(apps?|applications?|systems?|platform|technology|cmdb|integration|interface|dependency)\b/.test(q)) return 'application_systems';
-  if (/\b(vendor|contract|license|renewal|supplier|commercial|pricing|sourcing)\b/.test(q)) return 'vendor_contracts';
-  if (/\b(data|analytics|warehouse|lakehouse|bi|tableau|power bi|databricks|lineage)\b/.test(q)) return 'data_analytics';
-  if (/\b(service now|servicenow|jira|ticket|incident|change|problem|bottleneck|handoff|process|operational friction|repetitive)\b/.test(q)) {
-    return 'operations_process';
-  }
-  if (/\b(ai|agent|automation|automate|llm|model|value|benefit|roi)\b/.test(q)) return 'ai_value_governance';
-  if (/\b(cost|budget|spend|finance|run|change|funding)\b/.test(q)) return 'budget_financials';
-  if (/\b(risk|control|compliance|governance|security|audit)\b/.test(q)) return 'risk_compliance';
+  if (/\b(apps?|applications?|systems?|platforms?|technology|cmdb|integrations?|interfaces?|dependencies?|dependency|connected)\b/.test(q)) return 'application_systems';
   return 'organization_leadership';
 }
 
 function relatedFor(primary: DossierDimensionFamily): DossierDimensionFamily[] {
   const related: Record<DossierDimensionFamily, DossierDimensionFamily[]> = {
     organization_leadership: ['application_systems', 'budget_financials', 'operations_process', 'risk_compliance'],
-    application_systems: ['organization_leadership', 'vendor_contracts', 'data_analytics', 'operations_process'],
+    application_systems: ['organization_leadership', 'vendor_contracts', 'data_analytics', 'operations_process', 'budget_financials', 'risk_compliance'],
     vendor_contracts: ['application_systems', 'budget_financials', 'risk_compliance'],
-    data_analytics: ['application_systems', 'organization_leadership', 'ai_value_governance'],
+    data_analytics: ['application_systems', 'organization_leadership', 'ai_value_governance', 'operations_process'],
     operations_process: ['application_systems', 'organization_leadership', 'ai_value_governance'],
     ai_value_governance: ['data_analytics', 'operations_process', 'risk_compliance', 'budget_financials'],
-    budget_financials: ['vendor_contracts', 'application_systems', 'ai_value_governance'],
+    budget_financials: ['vendor_contracts', 'application_systems', 'organization_leadership', 'ai_value_governance'],
     risk_compliance: ['application_systems', 'ai_value_governance', 'vendor_contracts'],
     source_moves_tower: ['vendor_contracts', 'ai_value_governance', 'risk_compliance'],
   };

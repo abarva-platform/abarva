@@ -16,17 +16,16 @@ const CSS = `
 .homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);min-height:100%;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
 .homex .hx-shell{display:block;min-height:100%}
 .homex .hx-askBand{background:#fff;border-bottom:1px solid var(--hl);padding:14px 40px 16px}
-.homex .hx-askInner{max-width:980px}
-.homex .hx-rail{border-bottom:1px solid var(--hl);padding:12px 40px;background:#fff;position:sticky;top:0;z-index:2}
-.homex .hx-navWrap{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
-.homex .hx-nav{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid transparent;border-radius:50%;padding:0;cursor:pointer;font-family:inherit}
-.homex .hx-nav:hover{background:#F4F2EC}
-.homex .hx-nav.on{background:#EEF6E9;border-color:#DDEAD8}
+.homex .hx-askInner{max-width:1120px;margin:0 auto}
+.homex .hx-rail{border-bottom:1px solid var(--hl);padding:10px 40px;background:#fff}
+.homex .hx-navWrap{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.homex .hx-railLabel{display:flex;align-items:center;gap:8px;color:var(--hm);font-size:12px}
 .homex .hx-dot{width:8px;height:8px;border-radius:50%;flex:none}
-.homex .hx-nav.on .hx-dot{width:10px;height:10px}
-.homex .hx-nav-l,.homex .hx-tr,.homex .hx-rail-h,.homex .hx-rail-g{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.homex .hx-select{min-width:min(360px,100%);border:1px solid var(--hl);border-radius:8px;background:#fff;color:var(--hi);font:inherit;font-size:13px;padding:8px 32px 8px 10px}
+.homex .hx-select:focus{outline:2px solid rgba(34,174,234,.22);border-color:#22AEEA}
+.homex .hx-rail-h,.homex .hx-rail-g{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .homex .hx-canvas{padding:0 0 80px;max-width:none;min-width:0}
-.homex .hx-body{padding:14px 40px 0}
+.homex .hx-body{padding:14px 40px 0;max-width:1400px;margin:0 auto}
 .homex .hx-ey{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--hf)}
 .homex .hx-h2{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:26px;letter-spacing:-.01em;margin:8px 0 6px}
 .homex .hx-stats{display:flex;flex-wrap:wrap;gap:26px;margin:18px 0 6px;padding-bottom:18px;border-bottom:1px solid var(--hl)}
@@ -35,7 +34,7 @@ const CSS = `
 .homex .hx-sec{margin-top:26px}
 .homex .hx-sechead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
 .homex .hx-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:680px){.homex .hx-grid{grid-template-columns:1fr}.homex .hx-askBand,.homex .hx-rail,.homex .hx-body{padding-left:18px;padding-right:18px}}
+@media(max-width:680px){.homex .hx-grid{grid-template-columns:1fr}.homex .hx-askBand,.homex .hx-rail,.homex .hx-body{padding-left:18px;padding-right:18px}.homex .hx-navWrap{display:grid}.homex .hx-select{width:100%;min-width:0}}
 .homex .hx-card{background:var(--hcard);border:1px solid var(--hl);border-radius:12px;padding:20px 22px}
 .homex .hx-tags{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--hm);margin-bottom:9px}
 .homex .hx-card h3{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:19px;line-height:1.22;margin:0 0 8px}
@@ -275,33 +274,23 @@ export function HomeSurface({
           <div className="hx-rail" aria-label="Context Explorer tabs">
             <div className="hx-rail-h">Context Explorer</div>
             <div className="hx-navWrap">
-              <button
-                type="button"
-                className={`hx-nav${dimKey ? "" : " on"}`}
-                onClick={() => setDimKey(null)}
-                title="Overview"
-                aria-label="Overview"
-              >
+              <div className="hx-railLabel">
                 <span className="hx-dot" style={{ background: "var(--hb)" }} />
-                <span className="hx-nav-l">Overview</span>
-              </button>
-              {dims.map((d) => (
-                <button
-                  type="button"
-                  key={d.dimension}
-                  className={`hx-nav${dimKey === d.dimension ? " on" : ""}`}
-                  onClick={() => setDimKey(d.dimension)}
-                  title={d.dimension}
-                  aria-label={d.dimension}
-                >
-                  <span
-                    className="hx-dot"
-                    style={{ background: toneFor(d.trust) }}
-                  />
-                  <span className="hx-nav-l">{d.dimension}</span>
-                  <span className="hx-tr">{d.trust}</span>
-                </button>
-              ))}
+                <span>{dims.length ? `${dims.length} context dimensions loaded` : "Context dimensions"}</span>
+              </div>
+              <select
+                aria-label="Choose context dimension"
+                className="hx-select"
+                onChange={(event) => setDimKey(event.currentTarget.value || null)}
+                value={dimKey ?? ""}
+              >
+                <option value="">Overview</option>
+                {dims.map((d) => (
+                  <option key={d.dimension} value={d.dimension}>
+                    {d.dimension} · {d.trust}% trust
+                  </option>
+                ))}
+              </select>
             </div>
             {dims.length > 0 && (
               <div className="hx-rail-g">Loaded context · {dims.length}</div>

@@ -53,7 +53,7 @@ function inferSourceDimensionFamily(sourceKey: string): DossierDimensionFamily {
 }
 
 function summarizeSource(sourceKey: string, rows: DossierRecord[]): string {
-  if (rows.length === 0) return `Missing required source family for this dossier: ${sourceKey}.`;
+  if (rows.length === 0) return `Missing required source family for this question: ${sourceKey}.`;
   const columns = uniq(rows.flatMap((row) => Object.keys(row))).slice(0, 8);
   return `${sourceKey} contributes ${rows.length} evidence item${rows.length === 1 ? '' : 's'} across ${columns.join(', ')}.`;
 }
@@ -113,6 +113,32 @@ function buildGenericRelationshipPaths(input: BuildUniversalDimensionDossierInpu
       ),
     );
   }
+  if ((input.sources.F21_data_product_ownership_lineage ?? []).length > 0) {
+    paths.push(
+      relationshipPath(
+        'data_product_lineage',
+        'Source system feeds data product and owning domain',
+        'source_system/application',
+        'feeds',
+        'data_product/domain',
+        ['F21_data_product_ownership_lineage', 'F09_data_analytics_estate', 'F10_integrations_interfaces'],
+        'high',
+      ),
+    );
+  }
+  if ((input.sources.F10_integrations_interfaces ?? []).length > 0) {
+    paths.push(
+      relationshipPath(
+        'system_integration_path',
+        'System connects through integration/interface',
+        'application/system',
+        'integrates_with',
+        'application/system',
+        ['F10_integrations_interfaces', 'F05_applications_systems'],
+        'high',
+      ),
+    );
+  }
   if ((input.sources.F22_contract_system_service_map ?? []).length > 0) {
     paths.push(
       relationshipPath(
@@ -161,13 +187,13 @@ function buildGenericMetrics(input: BuildUniversalDimensionDossierInput) {
     const rows = input.sources[sourceKey] ?? [];
     if (rows.length > 0) metrics.push({ metricKey, label, value: rows.length, unit: 'count', sourceKeys: [sourceKey], caveat });
   };
-  sourceMetric('application_count', 'Applications/systems in dossier', 'F05_applications_systems');
-  sourceMetric('vendor_contract_count', 'Vendors/contracts in dossier', 'F11_vendors_contracts_licenses');
-  sourceMetric('integration_count', 'Integrations/interfaces in dossier', 'F10_integrations_interfaces');
-  sourceMetric('data_product_count', 'Data products/platform records in dossier', 'F09_data_analytics_estate');
-  sourceMetric('operations_signal_count', 'Operational/service signals in dossier', 'F14_operations_service_management');
-  sourceMetric('ai_asset_count', 'AI/automation assets in dossier', 'F17_ai_automation_footprint');
-  sourceMetric('risk_control_count', 'Risk/control records in dossier', 'F16_security_risk_compliance');
+  sourceMetric('application_count', 'Applications/systems in context', 'F05_applications_systems');
+  sourceMetric('vendor_contract_count', 'Vendors/contracts in context', 'F11_vendors_contracts_licenses');
+  sourceMetric('integration_count', 'Integrations/interfaces in context', 'F10_integrations_interfaces');
+  sourceMetric('data_product_count', 'Data products/platform records in context', 'F09_data_analytics_estate');
+  sourceMetric('operations_signal_count', 'Operational/service signals in context', 'F14_operations_service_management');
+  sourceMetric('ai_asset_count', 'AI/automation assets in context', 'F17_ai_automation_footprint');
+  sourceMetric('risk_control_count', 'Risk/control records in context', 'F16_security_risk_compliance');
   return metrics;
 }
 
@@ -198,7 +224,7 @@ function buildOrganizationDossier(input: BuildUniversalDimensionDossierInput, do
   dossier.rollups.budgetLineCount = budget.length;
   dossier.rollups.technologyLeadership = technologyRoles;
   dossier.dimensionSummary =
-    'Organization and leadership dossier assembled from enterprise profile, business functions, IT ownership, leadership/person/team data, workforce/persona context, application ownership, budget, and adjacent relationship evidence.';
+    'Organization and leadership context assembled from enterprise profile, business functions, IT ownership, leadership/person/team data, workforce/persona context, application ownership, budget, and adjacent relationship source support.';
 
   if (namedLeaders.length > 0) {
     dossier.facts.push(fact('Named leadership evidence loaded', namedLeaders.length, 'F18_leadership_org_chart', 'high'));
@@ -285,7 +311,7 @@ export function buildUniversalDimensionDossier(input: BuildUniversalDimensionDos
     tenantKey: input.tenantKey,
     route,
     sourceCoverage,
-    dimensionSummary: `Full ${route.primaryDimension.replaceAll('_', ' ')} dossier assembled with ${route.relatedDimensions.length} adjacent dimension binder${route.relatedDimensions.length === 1 ? '' : 's'}.`,
+    dimensionSummary: `Full ${route.primaryDimension.replaceAll('_', ' ')} answer context assembled with ${route.relatedDimensions.length} adjacent dimension context group${route.relatedDimensions.length === 1 ? '' : 's'}.`,
     sections: buildSections(input, sourceCoverage),
     facts: [],
     rollups: {},
@@ -368,7 +394,7 @@ export function buildUniversalDimensionDossier(input: BuildUniversalDimensionDos
   };
 
   if (dossier.facts.length === 0 && dossier.gaps.length === 0) {
-    dossier.qualityFlags.push('dossier_has_no_facts_or_gaps');
+    dossier.qualityFlags.push('answer_context_has_no_facts_or_gaps');
   }
 
   return dossier;

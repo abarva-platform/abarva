@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { buildHomeKnowDimensionDossier } from '@/lib/home/know/build-universal-dimension-dossier';
+import { assessHomeAnswerRelevance } from '@/lib/home/know/home-answer-relevance-gate';
 import { hasUsableDossierEvidence, type UsableDossierEvidenceResult } from '@/lib/home/know/has-usable-dossier-evidence';
 import { validateHomeKnowAnswer } from '@/lib/home/know/home-answer-quality-gate';
 import { composeDossierAnswer } from '@/lib/semantic-dossiers';
@@ -27,6 +28,7 @@ interface CrawlResult {
   evidence: UsableDossierEvidenceResult;
   directAnswer: string;
   qualityGate: ReturnType<typeof validateHomeKnowAnswer>;
+  relevanceGate: ReturnType<typeof assessHomeAnswerRelevance>;
   score: {
     total: number;
     pass: boolean;
@@ -122,6 +124,7 @@ function scoreResult(result: Omit<CrawlResult, 'score'>): CrawlResult['score'] {
     if (pattern.test(result.directAnswer)) critical.push(id);
   }
   if (!result.qualityGate.passed) critical.push(`quality_gate:${result.qualityGate.issues.join('|')}`);
+  if (!result.relevanceGate.passed) critical.push(`relevance_gate:${result.relevanceGate.issues.join('|')}`);
   if (!result.evidence.usable) critical.push('no_usable_dossier_evidence');
   if (result.sectionCount < 8) critical.push('dossier_too_thin');
   if (result.citationCount < 1 && result.evidence.evidenceChannels.sourceCoverage < 1) critical.push('no_source_channel');
@@ -137,11 +140,23 @@ function scoreResult(result: Omit<CrawlResult, 'score'>): CrawlResult['score'] {
 
   const criteria = {
     correctness: critical.length ? 2 : 5,
-    synthesis: result.directAnswer.length > 220 ? 5 : 3,
+    synthesis: result.relevanceGate.issues.includes('does_not_directly_answer_question')
+      ? 1
+      : result.directAnswer.length > 220
+        ? 5
+        : 3,
     citationQuality: result.citationCount > 0 || result.evidence.evidenceChannels.sourceCoverage > 0 ? 4 : 0,
     gapSpecificity: result.qualityGate.issues.includes('missing_specific_gaps') ? 2 : 4,
-    artifactQuality: result.sourceFamiliesIncluded.length >= 6 ? 4 : 2,
-    executiveReadability: /\brows?\b|missing source support|I found/i.test(result.directAnswer) ? 1 : 5,
+    artifactQuality: result.relevanceGate.issues.some((issue) => issue.startsWith('missing_requested_'))
+      ? 0
+      : result.sourceFamiliesIncluded.length >= 6
+        ? 4
+        : 2,
+    executiveReadability: /\brows?\b|missing source support|I found/i.test(result.directAnswer) ||
+      result.relevanceGate.issues.includes('internal_dossier_language') ||
+      result.relevanceGate.issues.includes('count_instead_of_insight')
+      ? 1
+      : 5,
     tenantSafety: critical.some((item) => item.startsWith('tenant_fence')) ? 0 : 5,
   };
 
@@ -163,6 +178,18 @@ function runQuestion(item: CrawlQuestion): CrawlResult {
   const answer = composeDossierAnswer(dossier);
   const qualityGate = validateHomeKnowAnswer({ answer, dossier });
   const evidence = hasUsableDossierEvidence(dossier);
+  const relevanceGate = assessHomeAnswerRelevance({
+    question: item.question,
+    answerText: answer.directAnswer,
+    primaryDimension: answer.composerPacket.primaryDimension,
+    relatedDimensions: answer.composerPacket.relatedDimensions,
+    targetSurface: dossier.route.targetSurface,
+    handoffTarget: dossier.answerBoundary.handoffTarget,
+    artifactPlan: answer.artifactPlan,
+    tablesCount: evidence.evidenceChannels.tables,
+    chartsCount: evidence.evidenceChannels.charts,
+    graphsCount: evidence.evidenceChannels.graphs,
+  });
   const base = {
     tenant: item.tenant,
     id: item.id,
@@ -176,6 +203,7 @@ function runQuestion(item: CrawlQuestion): CrawlResult {
     evidence,
     directAnswer: answer.directAnswer,
     qualityGate,
+    relevanceGate,
   };
   return { ...base, score: scoreResult(base) };
 }
@@ -186,6 +214,8 @@ function writeMarkdownTranscript(outDir: string, tenant: TenantKey, results: Cra
     markdown += `## ${result.id}. ${result.question}\n\n`;
     markdown += `Score: ${result.score.total}/35 - ${result.score.pass ? 'PASS' : 'FAIL'}\n\n`;
     markdown += `Primary dimension: ${result.primaryDimension}\n\n`;
+    markdown += `Expected primary dimension: ${result.relevanceGate.expectedPrimaryDimension}\n\n`;
+    markdown += `Relevance: ${result.relevanceGate.passed ? 'PASS' : `FAIL (${result.relevanceGate.issues.join(', ')})`}\n\n`;
     markdown += `Sections attached: ${result.sectionCount}; citations: ${result.citationCount}; handoff: ${result.handoffTarget ?? 'none'}\n\n`;
     markdown += `Usable evidence: ${result.evidence.usable ? 'yes' : 'no'} (${result.evidence.reason})\n\n`;
     markdown += `${result.directAnswer}\n\n`;
@@ -234,6 +264,11 @@ function main() {
         evidenceChannels: result.evidence.evidenceChannels,
         usableEvidence: result.evidence.usable,
         qualityPassed: result.qualityGate.passed,
+        relevancePassed: result.relevanceGate.passed,
+        relevanceIssues: result.relevanceGate.issues,
+        expectedPrimaryDimension: result.relevanceGate.expectedPrimaryDimension,
+        expectedTargetSurface: result.relevanceGate.expectedTargetSurface,
+        requestedArtifacts: result.relevanceGate.requestedArtifacts,
         criticalFailures: result.score.critical,
       })),
       null,
