@@ -4,8 +4,10 @@ import {
   validateHomeKnowResponse,
   type HomeKnowPacket,
 } from "../home-know-engine";
+import { buildHomeKnowResponseFromDossier } from "../compose-dossier-answer";
 import { shouldUseHomeKnowAgentAnswer } from "../home-know-agent-answer";
 import type { HomeKnowResponse } from "../home-know-contract";
+import type { UniversalDimensionDossier } from "@/lib/semantic-dossiers";
 
 const apexPacket: HomeKnowPacket = {
   coverage: [
@@ -356,6 +358,150 @@ const skyharborPacket: HomeKnowPacket = {
   conflicts: [],
 };
 
+const loadedContextOverviewDossier = {
+  tenantKey: "skyharbor-air",
+  route: {
+    question: "What context is loaded for this tenant?",
+    requestedSurface: "home",
+    targetSurface: "home",
+    intent: "know",
+    primaryDimension: "organization_leadership",
+    relatedDimensions: [
+      "application_systems",
+      "vendor_contracts",
+      "operations_process",
+    ],
+    requiredSources: [],
+    artifactPlan: ["prose", "table", "chart", "graph"],
+  },
+  branchOptions: [
+    {
+      id: "org",
+      label: "Leadership and org structure",
+      dimensionKey: "organization_leadership",
+      summary:
+        "named executives, business functions, IT teams, budgets, and headcount",
+      coverageScore: 0.92,
+      confidence: 0.9,
+      entityCount: 98,
+      factCount: 640,
+      relationshipCount: 140,
+      citationCount: 8,
+    },
+    {
+      id: "apps",
+      label: "Application and systems estate",
+      dimensionKey: "application_systems",
+      summary:
+        "applications, ownership joins, integrations, lifecycle, and criticality",
+      coverageScore: 0.88,
+      confidence: 0.86,
+      entityCount: 900,
+      factCount: 5400,
+      relationshipCount: 1800,
+      citationCount: 6,
+    },
+  ],
+  sourceCoverage: [
+    {
+      sourceKey: "F03_it_org_ownership",
+      loaded: true,
+      count: 18,
+      purpose: "IT organization and role accountability",
+      required: true,
+      dimensionFamily: "organization_leadership",
+      binderRole: "primary",
+    },
+  ],
+  dimensionSummary:
+    "Leadership, organization, systems, vendors, operations, risk, and AI context are loaded.",
+  sections: [
+    {
+      sectionKey: "it-org",
+      title: "IT organization and role accountability",
+      dimensionFamily: "organization_leadership",
+      sourceKeys: ["F03_it_org_ownership"],
+      summary: "Role-level leadership, teams, budget, and headcount.",
+      recordCount: 18,
+      sample: [],
+    },
+  ],
+  facts: [],
+  rollups: { namedExecutives: 12, itTeams: 18, applications: 900 },
+  relationshipPaths: [
+    {
+      pathKey: "team-app",
+      label: "Teams own applications",
+      from: "org_team",
+      relationship: "owns",
+      to: "application",
+      sourceKeys: ["context_relationships"],
+      confidence: "high",
+    },
+  ],
+  metrics: [
+    {
+      metricKey: "applications",
+      label: "Applications",
+      value: 900,
+      sourceKeys: ["F05_applications_systems"],
+    },
+  ],
+  gaps: [
+    {
+      gapKey: "role-person",
+      label:
+        "Some role-level technology accountabilities do not have named people attached.",
+      impact: "Keeps Home from asserting a final HR reporting tree.",
+      neededEvidence: ["Client-approved role-to-person mapping"],
+    },
+  ],
+  citations: [
+    {
+      label: "IT organization and role accountability",
+      sourceKey: "F03_it_org_ownership",
+      count: 18,
+    },
+  ],
+  artifactPlan: ["prose", "table", "chart", "graph"],
+  answerBoundary: {
+    canAnswer: ["what context is loaded", "role-level accountabilities"],
+    cannotAnswer: ["final HR reporting hierarchy"],
+    handoffTarget: null,
+  },
+  composerPacket: {
+    question: "What context is loaded for this tenant?",
+    tenantKey: "skyharbor-air",
+    primaryDimension: "organization_leadership",
+    relatedDimensions: [
+      "application_systems",
+      "vendor_contracts",
+      "operations_process",
+    ],
+    dimensionSummary:
+      "Leadership, organization, systems, vendors, operations, risk, and AI context are loaded.",
+    sections: [],
+    rollups: { namedExecutives: 12, itTeams: 18, applications: 900 },
+    relationshipPaths: [],
+    metrics: [],
+    gaps: [],
+    citations: [
+      {
+        label: "IT organization and role accountability",
+        sourceKey: "F03_it_org_ownership",
+        count: 18,
+      },
+    ],
+    artifactPlan: ["prose", "table", "chart", "graph"],
+    answerBoundary: {
+      canAnswer: ["what context is loaded", "role-level accountabilities"],
+      cannotAnswer: ["final HR reporting hierarchy"],
+      handoffTarget: null,
+    },
+  },
+  qualityFlags: [],
+} satisfies UniversalDimensionDossier;
+
 describe("Home KNOW contract engine", () => {
   it("keeps server intent authoritative", () => {
     expect(
@@ -633,7 +779,8 @@ describe("Home KNOW contract engine", () => {
     const response = validateHomeKnowResponse({
       mode: "KNOW",
       tenantKey: "lakeshore",
-      question: "What do we know about Lakeshore's IT and business organization today?",
+      question:
+        "What do we know about Lakeshore's IT and business organization today?",
       intent: "lookup",
       answerStatus: "partial",
       prose:
@@ -673,7 +820,9 @@ describe("Home KNOW contract engine", () => {
     });
 
     expect(response.prose).toMatch(/portfolio-led view/i);
-    expect(response.prose).not.toMatch(/Here is what is loaded|I do not see that in the loaded data|dossier|binder|no blocking gap/i);
+    expect(response.prose).not.toMatch(
+      /Here is what is loaded|I do not see that in the loaded data|dossier|binder|no blocking gap/i,
+    );
     expect(response.safety.frontendTripwireShouldFire).toBe(false);
   });
 
@@ -751,7 +900,9 @@ describe("Home KNOW contract engine", () => {
     });
 
     expect(response.prose).toMatch(/application systems context/i);
-    expect(response.prose).not.toMatch(/Here is what is loaded|I do not see that in the loaded data/i);
+    expect(response.prose).not.toMatch(
+      /Here is what is loaded|I do not see that in the loaded data/i,
+    );
     expect(response.safety.usableEvidence).toBe(true);
     expect(response.safety.evidenceChannels).toMatchObject({
       facts: 0,
@@ -761,6 +912,26 @@ describe("Home KNOW contract engine", () => {
       citations: 1,
     });
     expect(response.safety.frontendTripwireShouldFire).toBe(false);
+  });
+
+  it("renders loaded-context overview as branch-first navigation instead of an artifact dump", () => {
+    const response = buildHomeKnowResponseFromDossier({
+      tenantKey: "skyharbor-air",
+      question: "What context is loaded for this tenant?",
+      dossier: loadedContextOverviewDossier,
+    });
+
+    expect(response.intent).toBe("browse");
+    expect(response.prose).toMatch(/Where do you want to go deeper/i);
+    expect(response.prose).toMatch(/Leadership and org structure/i);
+    expect(response.prose).toMatch(/Application and systems estate/i);
+    expect(response.prose).toMatch(/Skyharbor Air|SkyHarbor Air/i);
+    expect(response.tables).toEqual([]);
+    expect(response.charts).toEqual([]);
+    expect(response.graphs).toEqual([]);
+    expect(response.prose).not.toMatch(
+      /Here is what is loaded|records can characterize|tenant-chunk|source rows|no blocking gap/i,
+    );
   });
 
   it("hands recommendation questions to Intelligence rather than erasing the grounded Home answer path", () => {

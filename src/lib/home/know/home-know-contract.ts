@@ -190,6 +190,11 @@ export interface HomeKnowSafety {
     evidenceChannels?: HomeKnowSafety["evidenceChannels"];
     answerStatus: HomeKnowAnswerStatus;
     reason?: string;
+    promptSnapshot?: {
+      system: string;
+      user: string;
+      full: string;
+    };
   };
 }
 
