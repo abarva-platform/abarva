@@ -50,6 +50,15 @@ Follow-up validation after deployed matrix exposed compatibility gaps:
 - `npx eslint src/lib/ava-answer/contract.ts src/lib/ava-answer/composeAvaAnswer.ts src/app/api/intelligence/ask/route.ts` passed.
 - `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false` passed.
 
+Second follow-up validation after the deployed matrix exposed readable/visual gate gaps:
+
+- Live matrix against `ca-abarva-web-lab-eastus--m5403aca4` passed render, Intelligence V2, dims19, synthesis, grounding, raw-ID, expert, and tenant-fence checks for all five tenants, but failed `readable` and `visual` because the compatibility `prose` mirror was one dense paragraph.
+- Added deterministic paragraph shaping for the non-Home compatibility `prose` mirror while leaving canonical `directAnswer` untouched and keeping Home KNOW prose unchanged.
+- Confirmed live visual probe already returned typed artifacts before this change (`tables=1`, `charts=1` for Apex Retail); the remaining visual failure was the readable-prose half of the gate.
+- `npx jest src/lib/ava-answer/__tests__/composeAvaAnswer.test.ts --runInBand` passed.
+- `npx eslint src/lib/ava-answer/composeAvaAnswer.ts src/lib/ava-answer/__tests__/composeAvaAnswer.test.ts` passed.
+- `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false` passed.
+
 ## Rollout Plan
 
 Merge to main through PR, let the repo-owned Azure Container Apps main deployment build and deploy the approved image, then run signed-in Intelligence dossier crawl for SkyHarbor and Lakeshore before claiming live product completion.

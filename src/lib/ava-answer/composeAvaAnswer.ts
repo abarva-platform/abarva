@@ -88,7 +88,14 @@ export function composeAvaAnswer(
     intent: input.intent,
     status: input.status,
     directAnswer,
-    prose: directAnswer,
+    prose: readableProseMirror({
+      directAnswer,
+      interpretation,
+      businessImplication: input.businessImplication,
+      recommendation:
+        input.surface === "home" ? undefined : input.recommendation,
+      surface: input.surface,
+    }),
     interpretation,
     businessImplication: input.businessImplication,
     recommendation: input.surface === "home" ? undefined : input.recommendation,
@@ -117,6 +124,80 @@ export function composeAvaAnswer(
     },
   };
   return validateAvaAnswerPacket(packet).packet;
+}
+
+function readableProseMirror(input: {
+  directAnswer: string;
+  interpretation?: string;
+  businessImplication?: string;
+  recommendation?: string;
+  surface: AvaSurface;
+}): string {
+  if (input.surface === "home") return input.directAnswer;
+
+  const cleaned = input.directAnswer
+    .replace(/\s+/g, " ")
+    .replace(/\s+([,.;:!?])/g, "$1")
+    .trim();
+  if (!cleaned) return cleaned;
+
+  const existingParagraphs = cleaned
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+  if (existingParagraphs.length >= 3) return cleaned;
+
+  const paragraphs = splitReadableParagraphs(cleaned);
+  if (paragraphs.length < 3) {
+    for (const extra of [
+      input.interpretation,
+      input.businessImplication,
+      input.recommendation,
+    ]) {
+      const normalized = extra?.replace(/\s+/g, " ").trim();
+      if (normalized) paragraphs.push(normalized);
+      if (paragraphs.length >= 3) break;
+    }
+  }
+
+  if (paragraphs.length >= 3) return paragraphs.join("\n\n");
+  if (paragraphs.length === 2) return paragraphs.join("\n\n");
+  return cleaned;
+}
+
+function splitReadableParagraphs(text: string): string[] {
+  const sentences = text
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+  if (sentences.length >= 3) {
+    const first = sentences.slice(0, 2).join(" ");
+    const middle = sentences.slice(2, Math.max(3, sentences.length - 1)).join(" ");
+    const last = sentences.slice(Math.max(3, sentences.length - 1)).join(" ");
+    return [first, middle, last].filter(Boolean);
+  }
+
+  const clauseBreaks = text
+    .split(/(?<=;)\s+|(?<=:)\s+/)
+    .map((clause) => clause.trim())
+    .filter(Boolean);
+  if (clauseBreaks.length >= 3) {
+    const chunkSize = Math.ceil(clauseBreaks.length / 3);
+    return [
+      clauseBreaks.slice(0, chunkSize).join(" "),
+      clauseBreaks.slice(chunkSize, chunkSize * 2).join(" "),
+      clauseBreaks.slice(chunkSize * 2).join(" "),
+    ].filter(Boolean);
+  }
+
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length <= 90) return [text];
+  const chunkSize = Math.ceil(words.length / 3);
+  return [
+    words.slice(0, chunkSize).join(" "),
+    words.slice(chunkSize, chunkSize * 2).join(" "),
+    words.slice(chunkSize * 2).join(" "),
+  ].filter(Boolean);
 }
 
 function defaultDirectAnswer(
