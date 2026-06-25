@@ -230,4 +230,24 @@ describe("HomeKnowAnswerRenderer", () => {
     expect(screen.queryByText(/\bread-model\b/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/\bevidence\b/i)).not.toBeInTheDocument();
   });
+
+  it("does not mangle consultant prose when replacing evidence language", () => {
+    render(
+      <HomeKnowAnswerRenderer
+        response={{
+          ...baseResponse,
+          prose:
+            "The loaded evidence supports a clear current-state picture of the organization.",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "The loaded source context supports a clear current-state picture of the organization.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/source support supports/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\bevidence\b/i)).not.toBeInTheDocument();
+  });
 });
