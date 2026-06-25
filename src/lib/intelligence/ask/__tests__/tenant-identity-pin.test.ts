@@ -135,6 +135,17 @@ describe('detectOffTenantMention', () => {
     expect(result.detected).toBe(false);
   });
 
+  it('allows explicit negation of off-tenant evidence use', () => {
+    const result = detectOffTenantMention({
+      clientKey: 'skyharbor',
+      response:
+        'This answer is not using Apex Retail facts; it is grounded in SkyHarbor budget and run-cost evidence only.',
+      query: 'Show SkyHarbor IT budget and run-cost facts by portfolio or category.',
+    });
+
+    expect(result.detected).toBe(false);
+  });
+
   it('detects off-tenant names used as tenant evidence in a non-comparison SkyHarbor response', () => {
     const result = detectOffTenantMention({
       clientKey: 'skyharbor',

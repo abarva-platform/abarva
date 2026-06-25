@@ -146,13 +146,16 @@ function sanitizeVisibleAnswerLanguage(text: string): string {
     .replace(/\bSentinel\b/g, "aVa")
     .replace(/\bAtlas\b/g, "aVa")
     .replace(/\bNexus\b/g, "Moves")
+    .replace(/\bDORA and SOX audit posture both require this\b/gi, "Audit and operational-resilience posture require this")
+    .replace(/\bDORA\b/g, "operational resilience")
+    .replace(/\bSOX\b/g, "financial controls")
     .replace(
       /assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves/gi,
-      "have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves",
+      "validate the listed source rows with the accountable owner before turning this into an execution packet",
     )
     .replace(
       /validate this cited evidence before approving the decision or moving it into Source, Tower, or Moves/gi,
-      "review the listed sources before approving the decision or moving it into Source, Tower, or Moves",
+      "review the listed sources before approving the decision",
     )
     .replace(/\bcited evidence\b/gi, "listed sources");
 }

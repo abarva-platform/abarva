@@ -271,6 +271,13 @@ function hasTenantSpecificOffLimitMention(
     );
     const window = `${before}${match[0]}${after}`;
     if (
+      /\b(importing|avoid|avoids?|not\s+(?:using|grounded|based|loaded|retrieved)|without\s+(?:using|importing)|unlike|compared with|comparison|peer|pattern|assumption)\b/i.test(
+        window,
+      )
+    ) {
+      continue;
+    }
+    if (
       /\b(active tenant|your organization|you(?:'re|\s+are)|session|authenticated|client)\b/i.test(
         before,
       )
@@ -291,13 +298,6 @@ function hasTenantSpecificOffLimitMention(
       /\b(facts?|sources?|context|data|rows?|records?)\b/i.test(after)
     ) {
       return true;
-    }
-    if (
-      /\b(importing|avoid|unlike|compared with|comparison|peer|pattern|assumption)\b/i.test(
-        window,
-      )
-    ) {
-      continue;
     }
   }
   return false;

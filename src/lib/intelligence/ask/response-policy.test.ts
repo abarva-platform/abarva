@@ -290,7 +290,7 @@ describe("Ask Intelligence response policy", () => {
     expect(answer).toContain("Your loaded D&A estate shows eight data products");
     expect(answer).toContain("The supporting evidence is that");
     expect(answer).toContain("That means");
-    expect(answer).toContain("The next move is to have");
+    expect(answer).toContain("The next move is to validate");
     expect(answer).not.toMatch(/Evidence\s+—/i);
     expect(answer).not.toContain("validate the cited evidence");
     expect([...answer.matchAll(/^(Read|Evidence|Implication|Next move):/gim)]).toHaveLength(0);
@@ -299,5 +299,20 @@ describe("Ask Intelligence response policy", () => {
         .split(/\n{2,}/)
         .every((paragraph) => paragraph.split(/\s+/).length <= 70),
     ).toBe(true);
+  });
+
+  it("removes broad control-framework leakage from advisor prose", () => {
+    const text = [
+      "Before AI can act in ITSM and back-office workflows, authorization, auditability, and rollback controls need to be explicit.",
+      "DORA and SOX audit posture both require this; field gap is whether the ITSM platform exposes a write API to an audit sink.",
+      "Next move: assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves.",
+    ].join(" ");
+
+    const answer = enforceDecisionGradeAnswer(text);
+
+    expect(answer).toContain("Audit and operational-resilience posture require this");
+    expect(answer).toContain("The next move is to validate");
+    expect(answer).not.toMatch(/\bDORA\b|\bSOX\b/);
+    expect(answer).not.toContain("validate the cited evidence");
   });
 });
