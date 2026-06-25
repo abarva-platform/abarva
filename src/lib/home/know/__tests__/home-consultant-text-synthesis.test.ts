@@ -6,6 +6,7 @@ import {
   applyHomeConsultantTextSynthesis,
   buildHomeConsultantTextPromptPacket,
   isHomeConsultantTextSynthesisResult,
+  normalizeHomeConsultantUserFacingText,
   renderHomeConsultantTextUserPrompt,
   synthesizeHomeConsultantText,
   validateHomeConsultantText,
@@ -210,7 +211,11 @@ describe("home consultant text synthesis", () => {
     expect(prompt).toContain("Relevant charts:");
     expect(prompt).toContain("Relevant graphs / relationship paths:");
     expect(prompt).toContain("Citation labels available:");
+    expect(prompt).toContain("Source confidence:");
     expect(prompt).toContain("Return plain text only.");
+    expect(prompt).not.toContain("Evidence strength:");
+    expect(prompt).not.toContain(" rows;");
+    expect(prompt).not.toContain("needed evidence:");
   });
 
   it("accepts Claude prose output", async () => {
@@ -223,6 +228,7 @@ describe("home consultant text synthesis", () => {
 
     expect(isHomeConsultantTextSynthesisResult(result)).toBe(true);
     expect(result && "text" in result ? result.text : "").toMatch(/domain-led view/i);
+    expect(result && "text" in result ? result.text : "").not.toMatch(/\bevidence\b/i);
   });
 
   it("selects Claude prose over deterministic fallback when valid", async () => {
@@ -237,6 +243,8 @@ describe("home consultant text synthesis", () => {
     if (!isHomeConsultantTextSynthesisResult(result)) throw new Error("expected synthesis");
     const selected = applyHomeConsultantTextSynthesis(response, result);
     expect(selected.prose).toContain("domain-led view");
+    expect(selected.prose).toContain("source context supports");
+    expect(selected.prose).not.toMatch(/\bevidence\b/i);
     expect(selected.safety.composerTrace?.composer).toBe("claude_text_synthesis");
     expect(selected.tables).toHaveLength(1);
     expect(selected.charts).toHaveLength(1);
@@ -252,6 +260,17 @@ describe("home consultant text synthesis", () => {
     });
 
     expect(isHomeConsultantTextSynthesisResult(result)).toBe(true);
+  });
+
+  it("normalizes user-facing source language before validation and selection", () => {
+    const text = normalizeHomeConsultantUserFacingText(
+      "The loaded evidence supports a strong answer across 42 rows, but needed evidence is missing for one leader.",
+    );
+
+    expect(text).toBe(
+      "The loaded source context supports a strong answer across 42 records, but needed source context is missing for one leader.",
+    );
+    expect(text).not.toMatch(/\bevidence\b|\brows\b/i);
   });
 
   it("fails Claude output with forbidden false-absence language", () => {

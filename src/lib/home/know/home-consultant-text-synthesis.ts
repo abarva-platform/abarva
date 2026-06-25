@@ -20,7 +20,7 @@ const PROMPT_VERSION = "home_consultant_text_synthesis_v1";
 
 export const HOME_CONSULTANT_TEXT_SYSTEM_PROMPT = `You are AbarVa's Home / Explorer consultant.
 
-Home answers: "What do we know about this enterprise from the loaded tenant evidence?"
+Home answers: "What do we know about this enterprise from the loaded tenant context?"
 
 You are not a generic chatbot. You are not browsing. You are not retrieving. You are not inventing.
 
@@ -41,19 +41,19 @@ The dossier may include:
 * citations
 * answer boundaries
 
-Use all relevant evidence channels. Do not rely only on the facts array.
+Use all relevant dossier channels. Do not rely only on the facts array.
 
 Write like a senior enterprise architect / consulting partner briefing a CIO.
 
 Lead with what the loaded context can say.
 Then explain what it means.
-Then identify the specific missing evidence.
+Then identify the specific missing context or source support.
 Then state the safe answer boundary.
-If the user asks for a recommendation, investment decision, scale/hold/stop decision, sourcing decision, or strategy memo, Home should show the evidence and hand off to Intelligence, Source, Moves, or Tower.
+If the user asks for a recommendation, investment decision, scale/hold/stop decision, sourcing decision, or strategy memo, Home should show what is loaded and hand off to Intelligence, Source, Moves, or Tower.
 
 Do not make unsupported recommendations in Home.
 
-Never say the topic cannot be characterized if the dossier contains partial evidence.
+Never say the topic cannot be characterized if the dossier contains partial source context.
 Instead say what level of characterization is supported:
 
 * enterprise level
@@ -67,13 +67,14 @@ Instead say what level of characterization is supported:
 Do not lead with counts.
 Do not say "I found."
 Do not expose raw IDs, table names, route names, debug labels, source internals, or implementation details.
-Do not use labels like "Read," "Evidence," "Evidence points," or "Current-state read."
+Do not use user-facing wording like "Read," "Evidence," "Evidence points," "rows," or "Current-state read."
+Say "loaded context," "source context," "source support," or "loaded records" instead.
 Do not mention pattern family or experts in Home.
 
 Return only the final user-facing answer text.`;
 
 const FORBIDDEN_RE =
-  /\b(cannot be characterized|cannot be identified|I found|missing source support|Current-state read|Evidence points|home_know|semantic packet|\bpacket\b|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
+  /\b(cannot be characterized|cannot be identified|I found|missing source support|Current-state read|Evidence points|\bevidence\b|\brows\b|home_know|semantic packet|\bpacket\b|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
 const RAW_ID_RE =
   /\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
 const RECOMMENDATION_RE =
@@ -220,11 +221,12 @@ export async function synthesizeHomeConsultantText(args: {
       stream.finalMessage(),
       timeoutMs,
     );
-    const text = message.content
+    const rawText = message.content
       .filter((item) => item.type === "text")
       .map((item) => item.text)
       .join("\n")
       .trim();
+    const text = normalizeHomeConsultantUserFacingText(rawText);
     const validationIssues = validateHomeConsultantText({
       text,
       dossier: args.dossier,
@@ -239,7 +241,7 @@ export async function synthesizeHomeConsultantText(args: {
           model,
           auditId,
           validationIssues,
-          rawTextPreview: redactTextPreview(text),
+          rawTextPreview: redactTextPreview(rawText),
         }),
       );
       return {
@@ -251,7 +253,7 @@ export async function synthesizeHomeConsultantText(args: {
         maxTokens,
         timeoutMs,
         auditId,
-        rawTextPreview: redactTextPreview(text),
+        rawTextPreview: redactTextPreview(rawText),
         reason: "validation_failed",
         validationIssues,
       };
@@ -269,7 +271,7 @@ export async function synthesizeHomeConsultantText(args: {
         maxTokens,
         timeoutMs,
         auditId,
-        rawTextPreview: redactTextPreview(text),
+        rawTextPreview: redactTextPreview(rawText),
         validationIssues,
       },
     };
@@ -380,6 +382,22 @@ export function validateHomeConsultantText(args: {
   return [...new Set(issues)];
 }
 
+export function normalizeHomeConsultantUserFacingText(text: string): string {
+  return text
+    .replace(/\bmissing evidence path\b/gi, "missing source path")
+    .replace(/\bevidence path\b/gi, "source path")
+    .replace(/\bmissing evidence\b/gi, "missing source context")
+    .replace(/\bneeded evidence\b/gi, "needed source context")
+    .replace(/\bevidence points\b/gi, "source points")
+    .replace(/\bevidence-backed\b/gi, "source-backed")
+    .replace(/\bevidence-based\b/gi, "source-backed")
+    .replace(/\bevidence\b/gi, "source context")
+    .replace(/\brows\b/gi, "records")
+    .replace(/\brow\b/gi, "record")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function buildHomeConsultantTextPromptPacket(args: {
   dossier: UniversalDimensionDossier;
   response: HomeKnowResponse;
@@ -415,7 +433,7 @@ export function buildHomeConsultantTextPromptPacket(args: {
     sectionsSummary: summarizeSections(args.dossier.sections),
     rollupsSummary: summarizeRecord(args.dossier.rollups),
     tablesSummary: args.response.tables
-      .map((table) => `${table.title}: ${table.rows.length} rows; columns ${table.columns.map((column) => column.label).join(", ")}`)
+      .map((table) => `${table.title}: ${table.rows.length} records; columns ${table.columns.map((column) => column.label).join(", ")}`)
       .join("\n"),
     chartsSummary: args.response.charts
       .map((chart) => `${chart.title}: ${chart.data.length} points; ${chart.data.slice(0, 8).map((point) => `${point.label}=${point.value}`).join(", ")}`)
@@ -427,7 +445,7 @@ export function buildHomeConsultantTextPromptPacket(args: {
       .join("\n"),
     gapsSummary: args.dossier.gaps
       .slice(0, 12)
-      .map((gap) => `${gap.label}: ${gap.impact}; needed evidence: ${gap.neededEvidence.join(", ")}`)
+      .map((gap) => `${gap.label}: ${gap.impact}; needed source context: ${gap.neededEvidence.join(", ")}`)
       .join("\n"),
     sourceCoverageSummary: args.dossier.sourceCoverage
       .map((source) => `${source.sourceKey}: ${source.loaded ? source.count : 0} records; ${source.purpose}; ${source.binderRole ?? "context"}`)
@@ -467,7 +485,7 @@ ${packet.relatedDimensions.join(", ") || "none"}
 Dossier summary:
 ${packet.dimensionSummary}
 
-Evidence strength:
+Source confidence:
 ${packet.tenant.evidenceStrength}
 
 Relevant sections:
@@ -502,12 +520,12 @@ ${packet.answerBoundarySummary || "None"}
 
 Instructions:
 Write the best possible Home / Explorer answer from this dossier.
-Use the loaded evidence.
-Do not invent missing evidence.
+Use the loaded context and source support.
+Do not invent missing context.
 Do not overstate confidence.
 If named leaders are loaded, you may name them.
 If only roles are loaded, say roles are loaded but named people are missing.
-If the evidence supports partial structure, describe the partial structure and the precise gap.
+If the source context supports partial structure, describe the partial structure and the precise gap.
 If the question asks what to do, explain what Home can show and hand off to the correct advisory surface.
 
 Return plain text only.`;
@@ -588,11 +606,11 @@ function dimensionStyle(dimension: DossierDimensionFamily): string[] {
       "distinguish loaded budget facts from missing run, change, or forecast views",
     ],
     operations_process: [
-      "lead with operational evidence pattern",
+      "lead with operational source pattern",
       "connect incidents, Jira, ServiceNow, CMDB, systems, and services where supported",
     ],
     ai_value_governance: [
-      "lead with AI footprint and value evidence",
+      "lead with AI footprint and value context",
       "state committed versus realized value",
       "hand off scale, hold, stop, or investment questions",
     ],
