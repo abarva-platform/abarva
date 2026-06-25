@@ -256,9 +256,8 @@ const clerkProtectedProxy = clerkMiddleware(
     // 301-redirect /home/<panel> → /admin/<panel> so any persisted links
     // continue to resolve.
     //
-    // /home, /home/queue, /home/learn, /home/ai-initiatives*,
-    // and /home/training stay as real /home pages and are NOT remapped
-    // here. Setup/admin surfaces such as configuration, connectors,
+    // /home, /home/queue, and /home/learn stay as real /home pages and
+    // are NOT remapped here. Setup/admin surfaces such as configuration, connectors,
     // data trust, agent readiness, and tenant profile stay canonical
     // under /admin.
     //
@@ -273,6 +272,10 @@ const clerkProtectedProxy = clerkMiddleware(
       "/home/connectors": "/admin",
       "/home/configuration": "/admin",
       "/home/tenant-profile": "/admin",
+      "/home/decision": "/intelligence",
+      "/home/source": "/source",
+      "/home/training": "/home/learn",
+      "/home/ai-initiatives": "/home",
     };
     const exactHomeMatch = homeToAdminMap[request.nextUrl.pathname];
     if (exactHomeMatch) {
@@ -304,6 +307,13 @@ const clerkProtectedProxy = clerkMiddleware(
     // /home/connectors/<id> → /admin/connectors/<id> (preserve detail-page links).
     if (request.nextUrl.pathname.startsWith("/home/connectors/")) {
       const url = new URL("/admin" + request.nextUrl.search, request.url);
+      return withProductionReadinessNoStoreHeaders(
+        request,
+        NextResponse.redirect(url, 301),
+      );
+    }
+    if (request.nextUrl.pathname.startsWith("/home/ai-initiatives/")) {
+      const url = new URL("/home" + request.nextUrl.search, request.url);
       return withProductionReadinessNoStoreHeaders(
         request,
         NextResponse.redirect(url, 301),

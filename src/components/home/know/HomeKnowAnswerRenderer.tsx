@@ -85,13 +85,38 @@ function sanitizeHomeText(value: unknown): string {
     .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move):\s*/gi, "$1")
     .replace(/\bmissing evidence path\b/gi, "missing source path")
     .replace(/\bevidence path\b/gi, "source path")
-    .replace(/\bsource citations\b/gi, "source rows")
+    .replace(/\bsource citations\b/gi, "source records")
+    .replace(/\bsource rows\b/gi, "source records")
+    .replace(/\bedge rows\b/gi, "relationship records")
+    .replace(/\bdossier\b/gi, "source context")
+    .replace(/\bbinder\b/gi, "source context")
+    .replace(/\bfragment lookup\b/gi, "narrow lookup")
+    .replace(/\bno blocking gap\b/gi, "no specific source gap")
     .replace(/\bread-model\b/gi, "context model")
     .replace(/\bevidence\b/gi, "source context")
     .replace(BLOCKED_HOME_TEXT_REPLACE, "loaded context")
     .replace(INTERNAL_CODE_REPLACE, "source reference")
     .trim();
   return cleaned || "—";
+}
+
+function displayIdentifier(value: unknown): string {
+  return sanitizeHomeText(String(value ?? ""))
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function sourceClassLabel(value: unknown): string {
+  const raw = String(value ?? "").toLowerCase();
+  if (raw.includes("relationship")) return "relationship";
+  if (raw.includes("chunk")) return "source excerpt";
+  if (raw.includes("file")) return "source file";
+  if (raw.includes("record")) return "source record";
+  if (raw.includes("fact")) return "source fact";
+  if (raw.includes("gap")) return "gap note";
+  if (raw.includes("conflict")) return "conflict note";
+  return displayIdentifier(value) || "source";
 }
 
 function formatValue(
@@ -173,7 +198,7 @@ function CitationChips({
         >
           <span>{sanitizeHomeText(citation.label)}</span>
           <span aria-hidden="true">·</span>
-          <span>{citation.sourceClass}</span>
+          <span>{sourceClassLabel(citation.sourceClass)}</span>
         </button>
       ))}
     </div>
@@ -194,7 +219,7 @@ function HomeTableExhibit({
       <div className="hk-exhibitHead">
         <div className="hk-exhibitTitle">{sanitizeHomeText(table.title)}</div>
         <div className="hk-exhibitMeta">
-          {sanitizeHomeText(table.dimensionId)}
+          {displayIdentifier(table.dimensionId)}
         </div>
       </div>
       <table>
@@ -245,7 +270,7 @@ function HomeChartExhibit({
     <div className="hk-chart">
       <div className="hk-exhibitHead">
         <div className="hk-exhibitTitle">{sanitizeHomeText(chart.title)}</div>
-        <div className="hk-exhibitMeta">{chart.status}</div>
+        <div className="hk-exhibitMeta">{sourceClassLabel(chart.status)}</div>
       </div>
       <div className="hk-bars" role="img" aria-label={chart.title}>
         {chart.data.map((point, index) => {
@@ -451,12 +476,12 @@ function SourceDrawer({ citation }: { citation: HomeKnowCitation | null }) {
         <dt>Label</dt>
         <dd>{sanitizeHomeText(citation.label)}</dd>
         <dt>Class</dt>
-        <dd>{citation.sourceClass}</dd>
+        <dd>{sourceClassLabel(citation.sourceClass)}</dd>
         <dt>File</dt>
         <dd>
           {sanitizeHomeText(citation.sourceFile ?? "Source file not provided")}
         </dd>
-        <dt>Row</dt>
+        <dt>Source ref</dt>
         <dd>{citation.sourceRowNumber ?? "—"}</dd>
         <dt>Confidence</dt>
         <dd>{citation.confidence ?? "—"}</dd>
@@ -494,8 +519,8 @@ function shouldOpenEvidence(
 function statusLabel(response: HomeKnowResponse): string {
   if (response.handoff) return "Best answered in Intelligence";
   if (response.answerStatus === "answered")
-    return "Answered from loaded context";
-  if (response.answerStatus === "partial") return "Partial answer";
+    return "Answered from source context";
+  if (response.answerStatus === "partial") return "Answered with caveat";
   if (response.answerStatus === "no_data") return "Missing source detail";
   return "Review needed";
 }

@@ -200,7 +200,7 @@ export function HomeKnowAsk({
   );
 
   return (
-    <div className="homeKnowAsk">
+    <div className="homeKnowAsk" aria-label="Ava Home KNOW chat">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       {turns.length > 0 ? (
         <div aria-label="Home KNOW conversation" className="hka-thread">

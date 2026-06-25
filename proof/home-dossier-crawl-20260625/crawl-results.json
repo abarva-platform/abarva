@@ -61,10 +61,40 @@
       "handoffTarget": null,
       "sectionCount": 29,
       "citationCount": 25,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 6,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 25,
+          "sourceCoverage": 25,
+          "sections": 29,
+          "rollups": 7,
+          "relationshipPaths": 6,
+          "metrics": 6,
+          "gaps": 1
+        },
+        "reason": "usable dossier evidence via facts:6, tables:1, charts:1, graphs:1, citations:25, sourceCoverage:25, sections:29, rollups:7, relationshipPaths:6, metrics:6, gaps:1"
+      },
       "directAnswer": "SkyHarbor Air's loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive/role-level leadership, which supports an operating-model synthesis before any caveats. Named technology and executive leaders are loaded where the evidence provides them, including Evan Kline (CTO), Amala Rao (CIO), Owen Mercer (CISO), Samir Nadeem (CDO), Priya Sethi (General Counsel). The operating model coverage includes 20 business-function areas, 18 IT/technology domains, and 900 application-to-team ownership links. That lets aVa explain who is accountable by domain, which portfolios the teams support, and where applications connect back to technology ownership. The main caveat is precision: Some role-level accountabilities are not tied to named people.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "organization_leadership",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "operations_process",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -127,10 +157,40 @@
       "handoffTarget": null,
       "sectionCount": 29,
       "citationCount": 25,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 6,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 25,
+          "sourceCoverage": 25,
+          "sections": 29,
+          "rollups": 7,
+          "relationshipPaths": 6,
+          "metrics": 6,
+          "gaps": 1
+        },
+        "reason": "usable dossier evidence via facts:6, tables:1, charts:1, graphs:1, citations:25, sourceCoverage:25, sections:29, rollups:7, relationshipPaths:6, metrics:6, gaps:1"
+      },
       "directAnswer": "SkyHarbor Air's loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive/role-level leadership, which supports an operating-model synthesis before any caveats. Named technology and executive leaders are loaded where the evidence provides them, including Evan Kline (CTO), Amala Rao (CIO), Owen Mercer (CISO), Samir Nadeem (CDO), Priya Sethi (General Counsel). The operating model coverage includes 20 business-function areas, 18 IT/technology domains, and 900 application-to-team ownership links. That lets aVa explain who is accountable by domain, which portfolios the teams support, and where applications connect back to technology ownership. The main caveat is precision: Some role-level accountabilities are not tied to named people.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "organization_leadership",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "operations_process",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -157,7 +217,9 @@
         "organization_leadership",
         "vendor_contracts",
         "data_analytics",
-        "operations_process"
+        "operations_process",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
         "F05_applications_systems",
@@ -192,15 +254,46 @@
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
-        "system_service_maps"
+        "system_service_maps",
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "SkyHarbor Air's loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 34,
+      "citationCount": 28,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 28,
+          "sourceCoverage": 28,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:28, sourceCoverage:28, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's application systems context supports a current-state answer from the loaded source context. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "organization_leadership",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "operations_process",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -222,27 +315,30 @@
       "tenant": "skyharbor",
       "id": "S04",
       "question": "Which applications support Finance, and who owns them?",
-      "primaryDimension": "application_systems",
+      "primaryDimension": "budget_financials",
       "relatedDimensions": [
-        "organization_leadership",
         "vendor_contracts",
-        "data_analytics",
-        "operations_process"
+        "application_systems",
+        "organization_leadership",
+        "ai_value_governance"
       ],
       "sourceFamiliesIncluded": [
+        "F12_it_budget_financials",
+        "F11_vendors_contracts_licenses",
         "F05_applications_systems",
         "F04_capabilities_value_streams",
+        "F16_security_risk_compliance",
+        "F22_contract_system_service_map",
+        "F23_operational_service_map",
+        "source_artifacts",
+        "source_pricing_components",
         "F06_system_function_mapping",
         "F07_infrastructure_cloud",
         "F08_platform_volumetrics",
         "F10_integrations_interfaces",
-        "F11_vendors_contracts_licenses",
-        "F12_it_budget_financials",
         "F14_operations_service_management",
         "F19_team_application_ownership",
         "F20_capability_system_dependency",
-        "F22_contract_system_service_map",
-        "F23_operational_service_map",
         "F25_context_node_dictionary",
         "F01_enterprise_profile",
         "F02_business_org_functions",
@@ -251,26 +347,50 @@
         "F18_leadership_org_chart",
         "F26_dimension_question_contracts",
         "F27_source_context_narratives",
-        "F16_security_risk_compliance",
-        "source_artifacts",
-        "source_pricing_components",
-        "F09_data_analytics_estate",
-        "F21_data_product_ownership_lineage",
         "F17_ai_automation_footprint",
         "F24_ai_use_case_system_value_map",
-        "O01_business_metrics",
-        "operational_work_items",
-        "operational_events",
-        "process_flow_observations",
-        "system_service_maps"
+        "F09_data_analytics_estate",
+        "O04_benefits_realization",
+        "O06_ai_governance",
+        "ai_control_tower"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
+      "sectionCount": 30,
       "citationCount": 27,
-      "directAnswer": "SkyHarbor Air's loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 27,
+          "sourceCoverage": 27,
+          "sections": 30,
+          "rollups": 0,
+          "relationshipPaths": 6,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:27, sourceCoverage:27, sections:30, relationshipPaths:6, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's budget financials context supports a current-state answer from the loaded source context. For budget questions, connect spend to portfolios, owners, applications, vendors, and run/change funding where those fields are loaded. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, system connects through integration/interface, vendor/contract supports system or service. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "budget_financials",
+        "expectedAdjacentDimensions": [
+          "vendor_contracts",
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -297,7 +417,9 @@
         "organization_leadership",
         "vendor_contracts",
         "data_analytics",
-        "operations_process"
+        "operations_process",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
         "F05_applications_systems",
@@ -332,15 +454,45 @@
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
-        "system_service_maps"
+        "system_service_maps",
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "SkyHarbor Air's loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 34,
+      "citationCount": 28,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 28,
+          "sourceCoverage": 28,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:28, sourceCoverage:28, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's application systems context supports a current-state answer from the loaded source context. For AI and automation initiatives, separate the loaded footprint from value evidence, governance gates, adoption signals, and scale-readiness gaps. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "operations_process",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -367,7 +519,9 @@
         "organization_leadership",
         "vendor_contracts",
         "data_analytics",
-        "operations_process"
+        "operations_process",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
         "F05_applications_systems",
@@ -402,15 +556,48 @@
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
-        "system_service_maps"
+        "system_service_maps",
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "SkyHarbor Air's loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 34,
+      "citationCount": 28,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 28,
+          "sourceCoverage": 28,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:28, sourceCoverage:28, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's application systems context supports a current-state answer from the loaded source context. For criticality, the safe read is to separate mission-critical assets from items where criticality, owner, or lifecycle fields still need confirmation. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "application_systems",
+        "expectedAdjacentDimensions": [
+          "organization_leadership",
+          "vendor_contracts",
+          "data_analytics",
+          "operations_process",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -437,7 +624,9 @@
         "organization_leadership",
         "vendor_contracts",
         "data_analytics",
-        "operations_process"
+        "operations_process",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
         "F05_applications_systems",
@@ -472,15 +661,48 @@
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
-        "system_service_maps"
+        "system_service_maps",
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "SkyHarbor Air's loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 34,
+      "citationCount": 28,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 28,
+          "sourceCoverage": 28,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:28, sourceCoverage:28, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's application systems context supports a current-state answer from the loaded source context. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "application_systems",
+        "expectedAdjacentDimensions": [
+          "organization_leadership",
+          "vendor_contracts",
+          "data_analytics",
+          "operations_process",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -507,7 +729,9 @@
         "organization_leadership",
         "vendor_contracts",
         "data_analytics",
-        "operations_process"
+        "operations_process",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
         "F05_applications_systems",
@@ -542,15 +766,48 @@
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
-        "system_service_maps"
+        "system_service_maps",
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "SkyHarbor Air's loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 34,
+      "citationCount": 28,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 28,
+          "sourceCoverage": 28,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:28, sourceCoverage:28, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's application systems context supports a current-state answer from the loaded source context. For the domain view, use the table/chart outputs to compare where applications, platforms, or data products concentrate by business domain. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "application_systems",
+        "expectedAdjacentDimensions": [
+          "organization_leadership",
+          "vendor_contracts",
+          "data_analytics",
+          "operations_process",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -572,14 +829,15 @@
       "tenant": "skyharbor",
       "id": "S09",
       "question": "Which applications have lifecycle or modernization risk?",
-      "primaryDimension": "application_systems",
+      "primaryDimension": "risk_compliance",
       "relatedDimensions": [
-        "organization_leadership",
-        "vendor_contracts",
-        "data_analytics",
-        "operations_process"
+        "application_systems",
+        "ai_value_governance",
+        "vendor_contracts"
       ],
       "sourceFamiliesIncluded": [
+        "F16_security_risk_compliance",
+        "O05_raid_log",
         "F05_applications_systems",
         "F04_capabilities_value_streams",
         "F06_system_function_mapping",
@@ -594,33 +852,51 @@
         "F22_contract_system_service_map",
         "F23_operational_service_map",
         "F25_context_node_dictionary",
-        "F01_enterprise_profile",
-        "F02_business_org_functions",
-        "F03_it_org_ownership",
-        "D19_personas_workforce",
-        "F18_leadership_org_chart",
-        "F26_dimension_question_contracts",
-        "F27_source_context_narratives",
-        "F16_security_risk_compliance",
-        "source_artifacts",
-        "source_pricing_components",
-        "F09_data_analytics_estate",
-        "F21_data_product_ownership_lineage",
         "F17_ai_automation_footprint",
         "F24_ai_use_case_system_value_map",
-        "O01_business_metrics",
-        "operational_work_items",
-        "operational_events",
-        "process_flow_observations",
-        "system_service_maps"
+        "F09_data_analytics_estate",
+        "O04_benefits_realization",
+        "O06_ai_governance",
+        "ai_control_tower",
+        "source_artifacts",
+        "source_pricing_components"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "SkyHarbor Air's loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 24,
+      "citationCount": 21,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 21,
+          "sourceCoverage": 21,
+          "sections": 24,
+          "rollups": 0,
+          "relationshipPaths": 6,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:21, sourceCoverage:21, sections:24, relationshipPaths:6, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's risk compliance context supports a current-state answer from the loaded source context. For lifecycle and modernization risk, the useful read is which applications connect to risk/control context, lifecycle status, vendor dependency, and modernization ownership. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, system connects through integration/interface, vendor/contract supports system or service. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "risk_compliance",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "ai_value_governance",
+          "vendor_contracts"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -647,7 +923,9 @@
         "organization_leadership",
         "vendor_contracts",
         "data_analytics",
-        "operations_process"
+        "operations_process",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
         "F05_applications_systems",
@@ -682,15 +960,46 @@
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
-        "system_service_maps"
+        "system_service_maps",
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "SkyHarbor Air's loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 34,
+      "citationCount": 28,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 28,
+          "sourceCoverage": 28,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:28, sourceCoverage:28, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's biggest Home context gaps are precision gaps, not a blank slate. The loaded sources include 7 primary application systems source sections and 21 adjacent source sections, so aVa can describe the current-state shape and supporting relationships while keeping names, ownership joins, freshness, and control status inside source-supported boundaries. The specific gaps to close are the loaded sources do not show a specific named-source gap for this question. That means the next enrichment pass should target those source areas directly instead of asking the model to infer them.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "organization_leadership",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "operations_process",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -716,7 +1025,8 @@
       "relatedDimensions": [
         "application_systems",
         "organization_leadership",
-        "ai_value_governance"
+        "ai_value_governance",
+        "operations_process"
       ],
       "sourceFamiliesIncluded": [
         "F09_data_analytics_estate",
@@ -748,15 +1058,49 @@
         "O04_benefits_realization",
         "O06_ai_governance",
         "F16_security_risk_compliance",
-        "ai_control_tower"
+        "ai_control_tower",
+        "operational_work_items",
+        "operational_events",
+        "process_flow_observations",
+        "system_service_maps"
       ],
       "handoffTarget": null,
-      "sectionCount": 30,
+      "sectionCount": 34,
       "citationCount": 29,
-      "directAnswer": "SkyHarbor Air's loaded data analytics dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 29,
+          "sourceCoverage": 29,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:29, sourceCoverage:29, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's data analytics context supports a current-state answer from the loaded source context. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "data_analytics",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance",
+          "operations_process"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -782,7 +1126,8 @@
       "relatedDimensions": [
         "application_systems",
         "organization_leadership",
-        "ai_value_governance"
+        "ai_value_governance",
+        "operations_process"
       ],
       "sourceFamiliesIncluded": [
         "F09_data_analytics_estate",
@@ -814,15 +1159,49 @@
         "O04_benefits_realization",
         "O06_ai_governance",
         "F16_security_risk_compliance",
-        "ai_control_tower"
+        "ai_control_tower",
+        "operational_work_items",
+        "operational_events",
+        "process_flow_observations",
+        "system_service_maps"
       ],
       "handoffTarget": null,
-      "sectionCount": 30,
+      "sectionCount": 34,
       "citationCount": 29,
-      "directAnswer": "SkyHarbor Air's loaded data analytics dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 29,
+          "sourceCoverage": 29,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:29, sourceCoverage:29, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's data analytics context supports a current-state answer from the loaded source context. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "data_analytics",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance",
+          "operations_process"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -848,7 +1227,8 @@
       "relatedDimensions": [
         "application_systems",
         "organization_leadership",
-        "ai_value_governance"
+        "ai_value_governance",
+        "operations_process"
       ],
       "sourceFamiliesIncluded": [
         "F09_data_analytics_estate",
@@ -880,15 +1260,49 @@
         "O04_benefits_realization",
         "O06_ai_governance",
         "F16_security_risk_compliance",
-        "ai_control_tower"
+        "ai_control_tower",
+        "operational_work_items",
+        "operational_events",
+        "process_flow_observations",
+        "system_service_maps"
       ],
       "handoffTarget": null,
-      "sectionCount": 30,
+      "sectionCount": 34,
       "citationCount": 29,
-      "directAnswer": "SkyHarbor Air's loaded data analytics dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 29,
+          "sourceCoverage": 29,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:29, sourceCoverage:29, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's data analytics context supports a current-state answer from the loaded source context. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "data_analytics",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance",
+          "operations_process"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -914,7 +1328,8 @@
       "relatedDimensions": [
         "application_systems",
         "organization_leadership",
-        "ai_value_governance"
+        "ai_value_governance",
+        "operations_process"
       ],
       "sourceFamiliesIncluded": [
         "F09_data_analytics_estate",
@@ -946,15 +1361,49 @@
         "O04_benefits_realization",
         "O06_ai_governance",
         "F16_security_risk_compliance",
-        "ai_control_tower"
+        "ai_control_tower",
+        "operational_work_items",
+        "operational_events",
+        "process_flow_observations",
+        "system_service_maps"
       ],
       "handoffTarget": null,
-      "sectionCount": 30,
+      "sectionCount": 34,
       "citationCount": 29,
-      "directAnswer": "SkyHarbor Air's loaded data analytics dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 29,
+          "sourceCoverage": 29,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:29, sourceCoverage:29, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's data analytics context supports a current-state answer from the loaded source context. For ownership gaps, focus on missing named owners, incomplete role-to-person mapping, and application-to-team joins rather than treating ownership as fully resolved. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "data_analytics",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance",
+          "operations_process"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -976,20 +1425,26 @@
       "tenant": "skyharbor",
       "id": "S15",
       "question": "What lineage is loaded between systems and analytics products?",
-      "primaryDimension": "application_systems",
+      "primaryDimension": "data_analytics",
       "relatedDimensions": [
+        "application_systems",
         "organization_leadership",
-        "vendor_contracts",
-        "data_analytics",
+        "ai_value_governance",
         "operations_process"
       ],
       "sourceFamiliesIncluded": [
+        "F09_data_analytics_estate",
+        "F21_data_product_ownership_lineage",
+        "F10_integrations_interfaces",
         "F05_applications_systems",
+        "F17_ai_automation_footprint",
+        "F24_ai_use_case_system_value_map",
+        "O01_business_metrics",
+        "F25_context_node_dictionary",
         "F04_capabilities_value_streams",
         "F06_system_function_mapping",
         "F07_infrastructure_cloud",
         "F08_platform_volumetrics",
-        "F10_integrations_interfaces",
         "F11_vendors_contracts_licenses",
         "F12_it_budget_financials",
         "F14_operations_service_management",
@@ -997,7 +1452,6 @@
         "F20_capability_system_dependency",
         "F22_contract_system_service_map",
         "F23_operational_service_map",
-        "F25_context_node_dictionary",
         "F01_enterprise_profile",
         "F02_business_org_functions",
         "F03_it_org_ownership",
@@ -1005,26 +1459,54 @@
         "F18_leadership_org_chart",
         "F26_dimension_question_contracts",
         "F27_source_context_narratives",
+        "O04_benefits_realization",
+        "O06_ai_governance",
         "F16_security_risk_compliance",
-        "source_artifacts",
-        "source_pricing_components",
-        "F09_data_analytics_estate",
-        "F21_data_product_ownership_lineage",
-        "F17_ai_automation_footprint",
-        "F24_ai_use_case_system_value_map",
-        "O01_business_metrics",
+        "ai_control_tower",
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
         "system_service_maps"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "SkyHarbor Air's loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 34,
+      "citationCount": 29,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 29,
+          "sourceCoverage": 29,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:29, sourceCoverage:29, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's data analytics context supports a current-state answer from the loaded source context. For lineage, the graph should show source systems, integrations, data products, owning domains, and the missing joins that limit traceability. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "data_analytics",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance",
+          "operations_process"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [
+          "graph"
+        ],
         "issues": []
       },
       "score": {
@@ -1051,7 +1533,9 @@
         "organization_leadership",
         "vendor_contracts",
         "data_analytics",
-        "operations_process"
+        "operations_process",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
         "F05_applications_systems",
@@ -1086,15 +1570,48 @@
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
-        "system_service_maps"
+        "system_service_maps",
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "SkyHarbor Air's loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 34,
+      "citationCount": 28,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 28,
+          "sourceCoverage": 28,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:28, sourceCoverage:28, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's application systems context supports a current-state answer from the loaded source context. For connectivity, use the relationship graph to identify the most connected systems and show system-to-system, system-to-capability, vendor-to-system, and owner-to-application paths. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "application_systems",
+        "expectedAdjacentDimensions": [
+          "organization_leadership",
+          "vendor_contracts",
+          "data_analytics",
+          "operations_process",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -1145,10 +1662,39 @@
       "handoffTarget": null,
       "sectionCount": 18,
       "citationCount": 16,
-      "directAnswer": "SkyHarbor Air's loaded vendor contracts dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Operational/service signals in dossier: 96; Risk/control records in dossier: 44. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 16,
+          "sourceCoverage": 16,
+          "sections": 18,
+          "rollups": 0,
+          "relationshipPaths": 5,
+          "metrics": 5,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:16, sourceCoverage:16, sections:18, relationshipPaths:5, metrics:5"
+      },
+      "directAnswer": "SkyHarbor Air's vendor contracts context supports a current-state answer from the loaded source context. For vendor and contract questions, connect suppliers to supported applications, capabilities, spend, renewal risk, owners, and operational dependency. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Operational/service signals in context: 96; Risk/control records in context: 44. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, system connects through integration/interface, vendor/contract supports system or service. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "vendor_contracts",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -1170,55 +1716,70 @@
       "tenant": "skyharbor",
       "id": "S18",
       "question": "Which vendors create the largest operational dependency footprint?",
-      "primaryDimension": "application_systems",
+      "primaryDimension": "vendor_contracts",
       "relatedDimensions": [
-        "organization_leadership",
-        "vendor_contracts",
-        "data_analytics",
-        "operations_process"
+        "application_systems",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
+        "F11_vendors_contracts_licenses",
         "F05_applications_systems",
         "F04_capabilities_value_streams",
+        "F12_it_budget_financials",
+        "F16_security_risk_compliance",
+        "F22_contract_system_service_map",
+        "F23_operational_service_map",
+        "source_artifacts",
+        "source_pricing_components",
         "F06_system_function_mapping",
         "F07_infrastructure_cloud",
         "F08_platform_volumetrics",
         "F10_integrations_interfaces",
-        "F11_vendors_contracts_licenses",
-        "F12_it_budget_financials",
         "F14_operations_service_management",
         "F19_team_application_ownership",
         "F20_capability_system_dependency",
-        "F22_contract_system_service_map",
-        "F23_operational_service_map",
         "F25_context_node_dictionary",
-        "F01_enterprise_profile",
-        "F02_business_org_functions",
-        "F03_it_org_ownership",
-        "D19_personas_workforce",
-        "F18_leadership_org_chart",
-        "F26_dimension_question_contracts",
-        "F27_source_context_narratives",
-        "F16_security_risk_compliance",
-        "source_artifacts",
-        "source_pricing_components",
-        "F09_data_analytics_estate",
-        "F21_data_product_ownership_lineage",
-        "F17_ai_automation_footprint",
-        "F24_ai_use_case_system_value_map",
-        "O01_business_metrics",
-        "operational_work_items",
-        "operational_events",
-        "process_flow_observations",
-        "system_service_maps"
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "SkyHarbor Air's loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 18,
+      "citationCount": 16,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 16,
+          "sourceCoverage": 16,
+          "sections": 18,
+          "rollups": 0,
+          "relationshipPaths": 5,
+          "metrics": 5,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:16, sourceCoverage:16, sections:18, relationshipPaths:5, metrics:5"
+      },
+      "directAnswer": "SkyHarbor Air's vendor contracts context supports a current-state answer from the loaded source context. For connectivity, use the relationship graph to identify the most connected systems and show system-to-system, system-to-capability, vendor-to-system, and owner-to-application paths. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Operational/service signals in context: 96; Risk/control records in context: 44. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, system connects through integration/interface, vendor/contract supports system or service. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "vendor_contracts",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [
+          "graph"
+        ],
         "issues": []
       },
       "score": {
@@ -1244,7 +1805,8 @@
       "relatedDimensions": [
         "application_systems",
         "organization_leadership",
-        "ai_value_governance"
+        "ai_value_governance",
+        "operations_process"
       ],
       "sourceFamiliesIncluded": [
         "F09_data_analytics_estate",
@@ -1276,15 +1838,49 @@
         "O04_benefits_realization",
         "O06_ai_governance",
         "F16_security_risk_compliance",
-        "ai_control_tower"
+        "ai_control_tower",
+        "operational_work_items",
+        "operational_events",
+        "process_flow_observations",
+        "system_service_maps"
       ],
       "handoffTarget": null,
-      "sectionCount": 30,
+      "sectionCount": 34,
       "citationCount": 29,
-      "directAnswer": "SkyHarbor Air's loaded data analytics dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 29,
+          "sourceCoverage": 29,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:29, sourceCoverage:29, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's data analytics context supports a current-state answer from the loaded source context. For budget questions, connect spend to portfolios, owners, applications, vendors, and run/change funding where those fields are loaded. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "data_analytics",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance",
+          "operations_process"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -1310,6 +1906,7 @@
       "relatedDimensions": [
         "vendor_contracts",
         "application_systems",
+        "organization_leadership",
         "ai_value_governance"
       ],
       "sourceFamiliesIncluded": [
@@ -1330,6 +1927,13 @@
         "F19_team_application_ownership",
         "F20_capability_system_dependency",
         "F25_context_node_dictionary",
+        "F01_enterprise_profile",
+        "F02_business_org_functions",
+        "F03_it_org_ownership",
+        "D19_personas_workforce",
+        "F18_leadership_org_chart",
+        "F26_dimension_question_contracts",
+        "F27_source_context_narratives",
         "F17_ai_automation_footprint",
         "F24_ai_use_case_system_value_map",
         "F09_data_analytics_estate",
@@ -1338,12 +1942,42 @@
         "ai_control_tower"
       ],
       "handoffTarget": null,
-      "sectionCount": 23,
-      "citationCount": 20,
-      "directAnswer": "SkyHarbor Air's loaded budget financials dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 30,
+      "citationCount": 27,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 27,
+          "sourceCoverage": 27,
+          "sections": 30,
+          "rollups": 0,
+          "relationshipPaths": 6,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:27, sourceCoverage:27, sections:30, relationshipPaths:6, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's budget financials context supports a current-state answer from the loaded source context. For budget questions, connect spend to portfolios, owners, applications, vendors, and run/change funding where those fields are loaded. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, system connects through integration/interface, vendor/contract supports system or service. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "budget_financials",
+        "expectedAdjacentDimensions": [
+          "vendor_contracts",
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -1399,10 +2033,40 @@
       "handoffTarget": null,
       "sectionCount": 22,
       "citationCount": 17,
-      "directAnswer": "SkyHarbor Air's loaded ai value governance dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, service signal ties to owner and system, ai use case ties to system, governance, and value. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 17,
+          "sourceCoverage": 17,
+          "sections": 22,
+          "rollups": 0,
+          "relationshipPaths": 5,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:17, sourceCoverage:17, sections:22, relationshipPaths:5, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's ai value governance context supports a current-state answer from the loaded source context. For AI and automation initiatives, separate the loaded footprint from value evidence, governance gates, adoption signals, and scale-readiness gaps. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, source system feeds data product and owning domain, system connects through integration/interface, service signal ties to owner and system. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "ai_value_governance",
+        "expectedAdjacentDimensions": [
+          "data_analytics",
+          "operations_process",
+          "risk_compliance",
+          "budget_financials"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -1458,10 +2122,40 @@
       "handoffTarget": null,
       "sectionCount": 22,
       "citationCount": 17,
-      "directAnswer": "SkyHarbor Air's loaded ai value governance dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, service signal ties to owner and system, ai use case ties to system, governance, and value. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 17,
+          "sourceCoverage": 17,
+          "sections": 22,
+          "rollups": 0,
+          "relationshipPaths": 5,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:17, sourceCoverage:17, sections:22, relationshipPaths:5, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's ai value governance context supports a current-state answer from the loaded source context. For AI and automation initiatives, separate the loaded footprint from value evidence, governance gates, adoption signals, and scale-readiness gaps. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, source system feeds data product and owning domain, system connects through integration/interface, service signal ties to owner and system. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "ai_value_governance",
+        "expectedAdjacentDimensions": [
+          "data_analytics",
+          "operations_process",
+          "risk_compliance",
+          "budget_financials"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -1483,14 +2177,15 @@
       "tenant": "skyharbor",
       "id": "S23",
       "question": "Which risks are connected to critical systems or AI initiatives?",
-      "primaryDimension": "application_systems",
+      "primaryDimension": "risk_compliance",
       "relatedDimensions": [
-        "organization_leadership",
-        "vendor_contracts",
-        "data_analytics",
-        "operations_process"
+        "application_systems",
+        "ai_value_governance",
+        "vendor_contracts"
       ],
       "sourceFamiliesIncluded": [
+        "F16_security_risk_compliance",
+        "O05_raid_log",
         "F05_applications_systems",
         "F04_capabilities_value_streams",
         "F06_system_function_mapping",
@@ -1505,33 +2200,51 @@
         "F22_contract_system_service_map",
         "F23_operational_service_map",
         "F25_context_node_dictionary",
-        "F01_enterprise_profile",
-        "F02_business_org_functions",
-        "F03_it_org_ownership",
-        "D19_personas_workforce",
-        "F18_leadership_org_chart",
-        "F26_dimension_question_contracts",
-        "F27_source_context_narratives",
-        "F16_security_risk_compliance",
-        "source_artifacts",
-        "source_pricing_components",
-        "F09_data_analytics_estate",
-        "F21_data_product_ownership_lineage",
         "F17_ai_automation_footprint",
         "F24_ai_use_case_system_value_map",
-        "O01_business_metrics",
-        "operational_work_items",
-        "operational_events",
-        "process_flow_observations",
-        "system_service_maps"
+        "F09_data_analytics_estate",
+        "O04_benefits_realization",
+        "O06_ai_governance",
+        "ai_control_tower",
+        "source_artifacts",
+        "source_pricing_components"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "SkyHarbor Air's loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 24,
+      "citationCount": 21,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 21,
+          "sourceCoverage": 21,
+          "sections": 24,
+          "rollups": 0,
+          "relationshipPaths": 6,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:21, sourceCoverage:21, sections:24, relationshipPaths:6, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's risk compliance context supports a current-state answer from the loaded source context. For criticality, the safe read is to separate mission-critical assets from items where criticality, owner, or lifecycle fields still need confirmation. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, system connects through integration/interface, vendor/contract supports system or service. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "risk_compliance",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "ai_value_governance",
+          "vendor_contracts"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -1594,10 +2307,40 @@
       "handoffTarget": null,
       "sectionCount": 29,
       "citationCount": 25,
-      "directAnswer": "SkyHarbor Air's loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive/role-level leadership, which supports an operating-model synthesis before any caveats. Named technology and executive leaders are loaded where the evidence provides them, including Evan Kline (CTO), Amala Rao (CIO), Owen Mercer (CISO), Samir Nadeem (CDO), Priya Sethi (General Counsel). The operating model coverage includes 20 business-function areas, 18 IT/technology domains, and 900 application-to-team ownership links. That lets aVa explain who is accountable by domain, which portfolios the teams support, and where applications connect back to technology ownership. The main caveat is precision: Some role-level accountabilities are not tied to named people.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 6,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 25,
+          "sourceCoverage": 25,
+          "sections": 29,
+          "rollups": 7,
+          "relationshipPaths": 6,
+          "metrics": 6,
+          "gaps": 1
+        },
+        "reason": "usable dossier evidence via facts:6, tables:1, charts:1, graphs:1, citations:25, sourceCoverage:25, sections:29, rollups:7, relationshipPaths:6, metrics:6, gaps:1"
+      },
+      "directAnswer": "SkyHarbor Air's biggest Home context gaps are precision gaps, not a blank slate. The loaded sources include 9 primary organization leadership source sections and 16 adjacent source sections, so aVa can describe the current-state shape and supporting relationships while keeping names, ownership joins, freshness, and control status inside source-supported boundaries. The specific gaps to close are some role-level accountabilities are not tied to named people. That means the next enrichment pass should target those source areas directly instead of asking the model to infer them.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "organization_leadership",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "operations_process",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -1653,10 +2396,40 @@
       "handoffTarget": "intelligence",
       "sectionCount": 22,
       "citationCount": 17,
-      "directAnswer": "SkyHarbor Air's loaded ai value governance dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, service signal ties to owner and system, ai use case ties to system, governance, and value. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation. Home can ground the facts and boundaries, but the investment or prioritization call should move to intelligence.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 17,
+          "sourceCoverage": 17,
+          "sections": 22,
+          "rollups": 0,
+          "relationshipPaths": 5,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:17, sourceCoverage:17, sections:22, relationshipPaths:5, metrics:7"
+      },
+      "directAnswer": "SkyHarbor Air's ai value governance context supports a current-state answer from the loaded source context. For AI and automation initiatives, separate the loaded footprint from value evidence, governance gates, adoption signals, and scale-readiness gaps. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, source system feeds data product and owning domain, system connects through integration/interface, service signal ties to owner and system. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation. Home can ground the facts and boundaries, but the investment or prioritization call should move to intelligence.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "ai_value_governance",
+        "expectedAdjacentDimensions": [
+          "data_analytics",
+          "operations_process",
+          "risk_compliance",
+          "budget_financials"
+        ],
+        "expectedTargetSurface": "intelligence",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -1707,10 +2480,39 @@
       "handoffTarget": null,
       "sectionCount": 18,
       "citationCount": 16,
-      "directAnswer": "SkyHarbor Air's loaded vendor contracts dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Operational/service signals in dossier: 96; Risk/control records in dossier: 44. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 16,
+          "sourceCoverage": 16,
+          "sections": 18,
+          "rollups": 0,
+          "relationshipPaths": 5,
+          "metrics": 5,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:16, sourceCoverage:16, sections:18, relationshipPaths:5, metrics:5"
+      },
+      "directAnswer": "This signed-in Home workspace is scoped to SkyHarbor Air, so aVa cannot expose another tenant's details here. Within SkyHarbor Air's loaded context, SkyHarbor Air's vendor contracts context supports a current-state answer from the loaded source context. For vendor and contract questions, connect suppliers to supported applications, capabilities, spend, renewal risk, owners, and operational dependency. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Operational/service signals in context: 96; Risk/control records in context: 44. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, system connects through integration/interface, vendor/contract supports system or service. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "vendor_contracts",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -1766,10 +2568,40 @@
       "handoffTarget": null,
       "sectionCount": 22,
       "citationCount": 17,
-      "directAnswer": "SkyHarbor Air's loaded ai value governance dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 900; Vendors/contracts in dossier: 320; Integrations/interfaces in dossier: 1800; Data products/platform records in dossier: 420; Operational/service signals in dossier: 96. The important relationship paths are technology team owns/supports application, service signal ties to owner and system, ai use case ties to system, governance, and value. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 17,
+          "sourceCoverage": 17,
+          "sections": 22,
+          "rollups": 0,
+          "relationshipPaths": 5,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:17, sourceCoverage:17, sections:22, relationshipPaths:5, metrics:7"
+      },
+      "directAnswer": "This signed-in Home workspace is scoped to SkyHarbor Air, so aVa cannot expose another tenant's details here. Within SkyHarbor Air's loaded context, SkyHarbor Air's ai value governance context supports a current-state answer from the loaded source context. For budget questions, connect spend to portfolios, owners, applications, vendors, and run/change funding where those fields are loaded. Applications/systems in context: 900; Vendors/contracts in context: 320; Integrations/interfaces in context: 1800; Data products/platform records in context: 420; Operational/service signals in context: 96. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, source system feeds data product and owning domain, system connects through integration/interface, service signal ties to owner and system. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "ai_value_governance",
+        "expectedAdjacentDimensions": [
+          "data_analytics",
+          "operations_process",
+          "risk_compliance",
+          "budget_financials"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -1832,10 +2664,40 @@
       "handoffTarget": null,
       "sectionCount": 29,
       "citationCount": 25,
-      "directAnswer": "Lakeshore Holdings' loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive/role-level leadership, which supports an operating-model synthesis before any caveats. Named individual leaders are not fully loaded, so the answer should stay at role/domain level until client-approved people data is added. The operating model coverage includes 10 business-function areas, 10 IT/technology domains, and 130 application-to-team ownership links. That lets aVa explain who is accountable by domain, which portfolios the teams support, and where applications connect back to technology ownership. The main caveat is precision: Named individual leadership is not loaded in this dossier.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 4,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 25,
+          "sourceCoverage": 25,
+          "sections": 29,
+          "rollups": 7,
+          "relationshipPaths": 6,
+          "metrics": 6,
+          "gaps": 1
+        },
+        "reason": "usable dossier evidence via facts:4, tables:1, charts:1, graphs:1, citations:25, sourceCoverage:25, sections:29, rollups:7, relationshipPaths:6, metrics:6, gaps:1"
+      },
+      "directAnswer": "Lakeshore Holdings' loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive/role-level leadership, which supports an operating-model synthesis before any caveats. Missing field: named individual leadership / person-name mapping. The answer should stay at role/domain level until client-approved people data is added. The operating model coverage includes 10 business-function areas, 10 IT/technology domains, and 130 application-to-team ownership links. That lets aVa explain who is accountable by domain, which portfolios the teams support, and where applications connect back to technology ownership. The main caveat is precision: Missing field: named individual leadership / person-name mapping.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "organization_leadership",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "operations_process",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -1862,7 +2724,9 @@
         "organization_leadership",
         "vendor_contracts",
         "data_analytics",
-        "operations_process"
+        "operations_process",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
         "F05_applications_systems",
@@ -1897,15 +2761,48 @@
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
-        "system_service_maps"
+        "system_service_maps",
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "Lakeshore Holdings' loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 34,
+      "citationCount": 28,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 28,
+          "sourceCoverage": 28,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:28, sourceCoverage:28, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' application systems context supports a current-state answer from the loaded source context. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "application_systems",
+        "expectedAdjacentDimensions": [
+          "organization_leadership",
+          "vendor_contracts",
+          "data_analytics",
+          "operations_process",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -1968,10 +2865,40 @@
       "handoffTarget": null,
       "sectionCount": 29,
       "citationCount": 25,
-      "directAnswer": "Lakeshore Holdings' loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive/role-level leadership, which supports an operating-model synthesis before any caveats. Named individual leaders are not fully loaded, so the answer should stay at role/domain level until client-approved people data is added. The operating model coverage includes 10 business-function areas, 10 IT/technology domains, and 130 application-to-team ownership links. That lets aVa explain who is accountable by domain, which portfolios the teams support, and where applications connect back to technology ownership. The main caveat is precision: Named individual leadership is not loaded in this dossier.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 4,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 25,
+          "sourceCoverage": 25,
+          "sections": 29,
+          "rollups": 7,
+          "relationshipPaths": 6,
+          "metrics": 6,
+          "gaps": 1
+        },
+        "reason": "usable dossier evidence via facts:4, tables:1, charts:1, graphs:1, citations:25, sourceCoverage:25, sections:29, rollups:7, relationshipPaths:6, metrics:6, gaps:1"
+      },
+      "directAnswer": "Lakeshore Holdings' loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive/role-level leadership, which supports an operating-model synthesis before any caveats. Missing field: named individual leadership / person-name mapping. The answer should stay at role/domain level until client-approved people data is added. The operating model coverage includes 10 business-function areas, 10 IT/technology domains, and 130 application-to-team ownership links. That lets aVa explain who is accountable by domain, which portfolios the teams support, and where applications connect back to technology ownership. The main caveat is precision: Missing field: named individual leadership / person-name mapping.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "organization_leadership",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "operations_process",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -1998,7 +2925,9 @@
         "organization_leadership",
         "vendor_contracts",
         "data_analytics",
-        "operations_process"
+        "operations_process",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
         "F05_applications_systems",
@@ -2033,15 +2962,48 @@
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
-        "system_service_maps"
+        "system_service_maps",
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "Lakeshore Holdings' loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 34,
+      "citationCount": 28,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 28,
+          "sourceCoverage": 28,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:28, sourceCoverage:28, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' application systems context supports a current-state answer from the loaded source context. For connectivity, use the relationship graph to identify the most connected systems and show system-to-system, system-to-capability, vendor-to-system, and owner-to-application paths. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "application_systems",
+        "expectedAdjacentDimensions": [
+          "organization_leadership",
+          "vendor_contracts",
+          "data_analytics",
+          "operations_process",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -2104,10 +3066,40 @@
       "handoffTarget": "intelligence",
       "sectionCount": 29,
       "citationCount": 25,
-      "directAnswer": "Lakeshore Holdings' loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive/role-level leadership, which supports an operating-model synthesis before any caveats. Named individual leaders are not fully loaded, so the answer should stay at role/domain level until client-approved people data is added. The operating model coverage includes 10 business-function areas, 10 IT/technology domains, and 130 application-to-team ownership links. That lets aVa explain who is accountable by domain, which portfolios the teams support, and where applications connect back to technology ownership. The main caveat is precision: Named individual leadership is not loaded in this dossier.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 4,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 25,
+          "sourceCoverage": 25,
+          "sections": 29,
+          "rollups": 7,
+          "relationshipPaths": 6,
+          "metrics": 6,
+          "gaps": 1
+        },
+        "reason": "usable dossier evidence via facts:4, tables:1, charts:1, graphs:1, citations:25, sourceCoverage:25, sections:29, rollups:7, relationshipPaths:6, metrics:6, gaps:1"
+      },
+      "directAnswer": "Lakeshore Holdings' biggest Home context gaps are precision gaps, not a blank slate. The loaded sources include 9 primary organization leadership source sections and 16 adjacent source sections, so aVa can describe the current-state shape and supporting relationships while keeping names, ownership joins, freshness, and control status inside source-supported boundaries. The specific gaps to close are missing field: named individual leadership / person-name mapping. That means the next enrichment pass should target those source areas directly instead of asking the model to infer them.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "organization_leadership",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "operations_process",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "intelligence",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -2134,7 +3126,9 @@
         "organization_leadership",
         "vendor_contracts",
         "data_analytics",
-        "operations_process"
+        "operations_process",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
         "F05_applications_systems",
@@ -2169,15 +3163,48 @@
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
-        "system_service_maps"
+        "system_service_maps",
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "Lakeshore Holdings' loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 34,
+      "citationCount": 28,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 28,
+          "sourceCoverage": 28,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:28, sourceCoverage:28, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' application systems context supports a current-state answer from the loaded source context. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "application_systems",
+        "expectedAdjacentDimensions": [
+          "organization_leadership",
+          "vendor_contracts",
+          "data_analytics",
+          "operations_process",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -2199,27 +3226,30 @@
       "tenant": "lakeshore",
       "id": "L07",
       "question": "Which applications support Finance?",
-      "primaryDimension": "application_systems",
+      "primaryDimension": "budget_financials",
       "relatedDimensions": [
-        "organization_leadership",
         "vendor_contracts",
-        "data_analytics",
-        "operations_process"
+        "application_systems",
+        "organization_leadership",
+        "ai_value_governance"
       ],
       "sourceFamiliesIncluded": [
+        "F12_it_budget_financials",
+        "F11_vendors_contracts_licenses",
         "F05_applications_systems",
         "F04_capabilities_value_streams",
+        "F16_security_risk_compliance",
+        "F22_contract_system_service_map",
+        "F23_operational_service_map",
+        "source_artifacts",
+        "source_pricing_components",
         "F06_system_function_mapping",
         "F07_infrastructure_cloud",
         "F08_platform_volumetrics",
         "F10_integrations_interfaces",
-        "F11_vendors_contracts_licenses",
-        "F12_it_budget_financials",
         "F14_operations_service_management",
         "F19_team_application_ownership",
         "F20_capability_system_dependency",
-        "F22_contract_system_service_map",
-        "F23_operational_service_map",
         "F25_context_node_dictionary",
         "F01_enterprise_profile",
         "F02_business_org_functions",
@@ -2228,26 +3258,50 @@
         "F18_leadership_org_chart",
         "F26_dimension_question_contracts",
         "F27_source_context_narratives",
-        "F16_security_risk_compliance",
-        "source_artifacts",
-        "source_pricing_components",
-        "F09_data_analytics_estate",
-        "F21_data_product_ownership_lineage",
         "F17_ai_automation_footprint",
         "F24_ai_use_case_system_value_map",
-        "O01_business_metrics",
-        "operational_work_items",
-        "operational_events",
-        "process_flow_observations",
-        "system_service_maps"
+        "F09_data_analytics_estate",
+        "O04_benefits_realization",
+        "O06_ai_governance",
+        "ai_control_tower"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
+      "sectionCount": 30,
       "citationCount": 27,
-      "directAnswer": "Lakeshore Holdings' loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 27,
+          "sourceCoverage": 27,
+          "sections": 30,
+          "rollups": 0,
+          "relationshipPaths": 6,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:27, sourceCoverage:27, sections:30, relationshipPaths:6, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' budget financials context supports a current-state answer from the loaded source context. For budget questions, connect spend to portfolios, owners, applications, vendors, and run/change funding where those fields are loaded. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, system connects through integration/interface, vendor/contract supports system or service. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "budget_financials",
+        "expectedAdjacentDimensions": [
+          "vendor_contracts",
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -2274,7 +3328,9 @@
         "organization_leadership",
         "vendor_contracts",
         "data_analytics",
-        "operations_process"
+        "operations_process",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
         "F05_applications_systems",
@@ -2309,15 +3365,45 @@
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
-        "system_service_maps"
+        "system_service_maps",
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "Lakeshore Holdings' loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 34,
+      "citationCount": 28,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 28,
+          "sourceCoverage": 28,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:28, sourceCoverage:28, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' application systems context supports a current-state answer from the loaded source context. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "operations_process",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -2344,7 +3430,9 @@
         "organization_leadership",
         "vendor_contracts",
         "data_analytics",
-        "operations_process"
+        "operations_process",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
         "F05_applications_systems",
@@ -2379,15 +3467,48 @@
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
-        "system_service_maps"
+        "system_service_maps",
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "Lakeshore Holdings' loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 34,
+      "citationCount": 28,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 28,
+          "sourceCoverage": 28,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:28, sourceCoverage:28, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' application systems context supports a current-state answer from the loaded source context. For criticality, the safe read is to separate mission-critical assets from items where criticality, owner, or lifecycle fields still need confirmation. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "application_systems",
+        "expectedAdjacentDimensions": [
+          "organization_leadership",
+          "vendor_contracts",
+          "data_analytics",
+          "operations_process",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -2450,10 +3571,40 @@
       "handoffTarget": null,
       "sectionCount": 29,
       "citationCount": 25,
-      "directAnswer": "Lakeshore Holdings' loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive/role-level leadership, which supports an operating-model synthesis before any caveats. Named individual leaders are not fully loaded, so the answer should stay at role/domain level until client-approved people data is added. The operating model coverage includes 10 business-function areas, 10 IT/technology domains, and 130 application-to-team ownership links. That lets aVa explain who is accountable by domain, which portfolios the teams support, and where applications connect back to technology ownership. The main caveat is precision: Named individual leadership is not loaded in this dossier.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 4,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 25,
+          "sourceCoverage": 25,
+          "sections": 29,
+          "rollups": 7,
+          "relationshipPaths": 6,
+          "metrics": 6,
+          "gaps": 1
+        },
+        "reason": "usable dossier evidence via facts:4, tables:1, charts:1, graphs:1, citations:25, sourceCoverage:25, sections:29, rollups:7, relationshipPaths:6, metrics:6, gaps:1"
+      },
+      "directAnswer": "Lakeshore Holdings' loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive/role-level leadership, which supports an operating-model synthesis before any caveats. Missing field: named individual leadership / person-name mapping. The answer should stay at role/domain level until client-approved people data is added. The operating model coverage includes 10 business-function areas, 10 IT/technology domains, and 130 application-to-team ownership links. That lets aVa explain who is accountable by domain, which portfolios the teams support, and where applications connect back to technology ownership. The main caveat is precision: Missing field: named individual leadership / person-name mapping.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "organization_leadership",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "operations_process",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -2480,7 +3631,9 @@
         "organization_leadership",
         "vendor_contracts",
         "data_analytics",
-        "operations_process"
+        "operations_process",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
         "F05_applications_systems",
@@ -2515,15 +3668,48 @@
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
-        "system_service_maps"
+        "system_service_maps",
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "Lakeshore Holdings' loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 34,
+      "citationCount": 28,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 28,
+          "sourceCoverage": 28,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:28, sourceCoverage:28, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' application systems context supports a current-state answer from the loaded source context. For the domain view, use the table/chart outputs to compare where applications, platforms, or data products concentrate by business domain. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "application_systems",
+        "expectedAdjacentDimensions": [
+          "organization_leadership",
+          "vendor_contracts",
+          "data_analytics",
+          "operations_process",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -2549,7 +3735,8 @@
       "relatedDimensions": [
         "application_systems",
         "organization_leadership",
-        "ai_value_governance"
+        "ai_value_governance",
+        "operations_process"
       ],
       "sourceFamiliesIncluded": [
         "F09_data_analytics_estate",
@@ -2581,15 +3768,49 @@
         "O04_benefits_realization",
         "O06_ai_governance",
         "F16_security_risk_compliance",
-        "ai_control_tower"
+        "ai_control_tower",
+        "operational_work_items",
+        "operational_events",
+        "process_flow_observations",
+        "system_service_maps"
       ],
       "handoffTarget": null,
-      "sectionCount": 30,
+      "sectionCount": 34,
       "citationCount": 29,
-      "directAnswer": "Lakeshore Holdings' loaded data analytics dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 29,
+          "sourceCoverage": 29,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:29, sourceCoverage:29, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' data analytics context supports a current-state answer from the loaded source context. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "data_analytics",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance",
+          "operations_process"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -2615,7 +3836,8 @@
       "relatedDimensions": [
         "application_systems",
         "organization_leadership",
-        "ai_value_governance"
+        "ai_value_governance",
+        "operations_process"
       ],
       "sourceFamiliesIncluded": [
         "F09_data_analytics_estate",
@@ -2647,15 +3869,49 @@
         "O04_benefits_realization",
         "O06_ai_governance",
         "F16_security_risk_compliance",
-        "ai_control_tower"
+        "ai_control_tower",
+        "operational_work_items",
+        "operational_events",
+        "process_flow_observations",
+        "system_service_maps"
       ],
       "handoffTarget": null,
-      "sectionCount": 30,
+      "sectionCount": 34,
       "citationCount": 29,
-      "directAnswer": "Lakeshore Holdings' loaded data analytics dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 29,
+          "sourceCoverage": 29,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:29, sourceCoverage:29, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' data analytics context supports a current-state answer from the loaded source context. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "data_analytics",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance",
+          "operations_process"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -2681,7 +3937,8 @@
       "relatedDimensions": [
         "application_systems",
         "organization_leadership",
-        "ai_value_governance"
+        "ai_value_governance",
+        "operations_process"
       ],
       "sourceFamiliesIncluded": [
         "F09_data_analytics_estate",
@@ -2713,15 +3970,49 @@
         "O04_benefits_realization",
         "O06_ai_governance",
         "F16_security_risk_compliance",
-        "ai_control_tower"
+        "ai_control_tower",
+        "operational_work_items",
+        "operational_events",
+        "process_flow_observations",
+        "system_service_maps"
       ],
       "handoffTarget": null,
-      "sectionCount": 30,
+      "sectionCount": 34,
       "citationCount": 29,
-      "directAnswer": "Lakeshore Holdings' loaded data analytics dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 29,
+          "sourceCoverage": 29,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:29, sourceCoverage:29, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' data analytics context supports a current-state answer from the loaded source context. For analytics platforms and tools, separate named platforms from data products, BI/warehouse capabilities, ownership, consumers, and maturity signals. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "data_analytics",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance",
+          "operations_process"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -2743,12 +4034,117 @@
       "tenant": "lakeshore",
       "id": "L15",
       "question": "What lineage is loaded between source systems and data products?",
+      "primaryDimension": "data_analytics",
+      "relatedDimensions": [
+        "application_systems",
+        "organization_leadership",
+        "ai_value_governance",
+        "operations_process"
+      ],
+      "sourceFamiliesIncluded": [
+        "F09_data_analytics_estate",
+        "F21_data_product_ownership_lineage",
+        "F10_integrations_interfaces",
+        "F05_applications_systems",
+        "F17_ai_automation_footprint",
+        "F24_ai_use_case_system_value_map",
+        "O01_business_metrics",
+        "F25_context_node_dictionary",
+        "F04_capabilities_value_streams",
+        "F06_system_function_mapping",
+        "F07_infrastructure_cloud",
+        "F08_platform_volumetrics",
+        "F11_vendors_contracts_licenses",
+        "F12_it_budget_financials",
+        "F14_operations_service_management",
+        "F19_team_application_ownership",
+        "F20_capability_system_dependency",
+        "F22_contract_system_service_map",
+        "F23_operational_service_map",
+        "F01_enterprise_profile",
+        "F02_business_org_functions",
+        "F03_it_org_ownership",
+        "D19_personas_workforce",
+        "F18_leadership_org_chart",
+        "F26_dimension_question_contracts",
+        "F27_source_context_narratives",
+        "O04_benefits_realization",
+        "O06_ai_governance",
+        "F16_security_risk_compliance",
+        "ai_control_tower",
+        "operational_work_items",
+        "operational_events",
+        "process_flow_observations",
+        "system_service_maps"
+      ],
+      "handoffTarget": "source",
+      "sectionCount": 34,
+      "citationCount": 29,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 29,
+          "sourceCoverage": 29,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:29, sourceCoverage:29, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' data analytics context supports a current-state answer from the loaded source context. For lineage, the graph should show source systems, integrations, data products, owning domains, and the missing joins that limit traceability. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation. Home can ground the facts and boundaries, but the investment or prioritization call should move to source.",
+      "qualityGate": {
+        "passed": true,
+        "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "data_analytics",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance",
+          "operations_process"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [
+          "graph"
+        ],
+        "issues": []
+      },
+      "score": {
+        "criteria": {
+          "correctness": 5,
+          "synthesis": 5,
+          "citationQuality": 4,
+          "gapSpecificity": 4,
+          "artifactQuality": 4,
+          "executiveReadability": 5,
+          "tenantSafety": 5
+        },
+        "total": 32,
+        "critical": [],
+        "pass": true
+      }
+    },
+    {
+      "tenant": "lakeshore",
+      "id": "L16",
+      "question": "What integrations and interfaces are loaded?",
       "primaryDimension": "application_systems",
       "relatedDimensions": [
         "organization_leadership",
         "vendor_contracts",
         "data_analytics",
-        "operations_process"
+        "operations_process",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
         "F05_applications_systems",
@@ -2783,81 +4179,48 @@
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
-        "system_service_maps"
+        "system_service_maps",
+        "O05_raid_log"
       ],
-      "handoffTarget": "source",
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "Lakeshore Holdings' loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation. Home can ground the facts and boundaries, but the investment or prioritization call should move to source.",
+      "handoffTarget": null,
+      "sectionCount": 34,
+      "citationCount": 28,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 28,
+          "sourceCoverage": 28,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:28, sourceCoverage:28, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' application systems context supports a current-state answer from the loaded source context. For connectivity, use the relationship graph to identify the most connected systems and show system-to-system, system-to-capability, vendor-to-system, and owner-to-application paths. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
         "issues": []
       },
-      "score": {
-        "criteria": {
-          "correctness": 5,
-          "synthesis": 5,
-          "citationQuality": 4,
-          "gapSpecificity": 4,
-          "artifactQuality": 4,
-          "executiveReadability": 5,
-          "tenantSafety": 5
-        },
-        "total": 32,
-        "critical": [],
-        "pass": true
-      }
-    },
-    {
-      "tenant": "lakeshore",
-      "id": "L16",
-      "question": "What integrations and interfaces are loaded?",
-      "primaryDimension": "organization_leadership",
-      "relatedDimensions": [
-        "application_systems",
-        "budget_financials",
-        "operations_process",
-        "risk_compliance"
-      ],
-      "sourceFamiliesIncluded": [
-        "F01_enterprise_profile",
-        "F02_business_org_functions",
-        "F03_it_org_ownership",
-        "F04_capabilities_value_streams",
-        "F05_applications_systems",
-        "F12_it_budget_financials",
-        "D19_personas_workforce",
-        "F18_leadership_org_chart",
-        "F19_team_application_ownership",
-        "F25_context_node_dictionary",
-        "F26_dimension_question_contracts",
-        "F27_source_context_narratives",
-        "F06_system_function_mapping",
-        "F07_infrastructure_cloud",
-        "F08_platform_volumetrics",
-        "F10_integrations_interfaces",
-        "F11_vendors_contracts_licenses",
-        "F14_operations_service_management",
-        "F20_capability_system_dependency",
-        "F22_contract_system_service_map",
-        "F23_operational_service_map",
-        "F16_security_risk_compliance",
-        "F17_ai_automation_footprint",
-        "F24_ai_use_case_system_value_map",
-        "operational_work_items",
-        "operational_events",
-        "process_flow_observations",
-        "system_service_maps",
-        "O05_raid_log"
-      ],
-      "handoffTarget": null,
-      "sectionCount": 29,
-      "citationCount": 25,
-      "directAnswer": "Lakeshore Holdings' loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive/role-level leadership, which supports an operating-model synthesis before any caveats. Named individual leaders are not fully loaded, so the answer should stay at role/domain level until client-approved people data is added. The operating model coverage includes 10 business-function areas, 10 IT/technology domains, and 130 application-to-team ownership links. That lets aVa explain who is accountable by domain, which portfolios the teams support, and where applications connect back to technology ownership. The main caveat is precision: Named individual leadership is not loaded in this dossier.",
-      "qualityGate": {
+      "relevanceGate": {
         "passed": true,
-        "critical": false,
+        "expectedPrimaryDimension": "application_systems",
+        "expectedAdjacentDimensions": [
+          "organization_leadership",
+          "vendor_contracts",
+          "data_analytics",
+          "operations_process",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -2884,7 +4247,9 @@
         "organization_leadership",
         "vendor_contracts",
         "data_analytics",
-        "operations_process"
+        "operations_process",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
         "F05_applications_systems",
@@ -2919,15 +4284,48 @@
         "operational_work_items",
         "operational_events",
         "process_flow_observations",
-        "system_service_maps"
+        "system_service_maps",
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "Lakeshore Holdings' loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 34,
+      "citationCount": 28,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 28,
+          "sourceCoverage": 28,
+          "sections": 34,
+          "rollups": 0,
+          "relationshipPaths": 7,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:28, sourceCoverage:28, sections:34, relationshipPaths:7, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' application systems context supports a current-state answer from the loaded source context. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, source system feeds data product and owning domain, system connects through integration/interface. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "application_systems",
+        "expectedAdjacentDimensions": [
+          "organization_leadership",
+          "vendor_contracts",
+          "data_analytics",
+          "operations_process",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -2949,51 +4347,68 @@
       "tenant": "lakeshore",
       "id": "L18",
       "question": "Which vendors are loaded for Lakeshore?",
-      "primaryDimension": "organization_leadership",
+      "primaryDimension": "vendor_contracts",
       "relatedDimensions": [
         "application_systems",
         "budget_financials",
-        "operations_process",
         "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
-        "F01_enterprise_profile",
-        "F02_business_org_functions",
-        "F03_it_org_ownership",
-        "F04_capabilities_value_streams",
+        "F11_vendors_contracts_licenses",
         "F05_applications_systems",
+        "F04_capabilities_value_streams",
         "F12_it_budget_financials",
-        "D19_personas_workforce",
-        "F18_leadership_org_chart",
-        "F19_team_application_ownership",
-        "F25_context_node_dictionary",
-        "F26_dimension_question_contracts",
-        "F27_source_context_narratives",
+        "F16_security_risk_compliance",
+        "F22_contract_system_service_map",
+        "F23_operational_service_map",
+        "source_artifacts",
+        "source_pricing_components",
         "F06_system_function_mapping",
         "F07_infrastructure_cloud",
         "F08_platform_volumetrics",
         "F10_integrations_interfaces",
-        "F11_vendors_contracts_licenses",
         "F14_operations_service_management",
+        "F19_team_application_ownership",
         "F20_capability_system_dependency",
-        "F22_contract_system_service_map",
-        "F23_operational_service_map",
-        "F16_security_risk_compliance",
-        "F17_ai_automation_footprint",
-        "F24_ai_use_case_system_value_map",
-        "operational_work_items",
-        "operational_events",
-        "process_flow_observations",
-        "system_service_maps",
+        "F25_context_node_dictionary",
         "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 29,
-      "citationCount": 25,
-      "directAnswer": "Lakeshore Holdings' loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive/role-level leadership, which supports an operating-model synthesis before any caveats. Named individual leaders are not fully loaded, so the answer should stay at role/domain level until client-approved people data is added. The operating model coverage includes 10 business-function areas, 10 IT/technology domains, and 130 application-to-team ownership links. That lets aVa explain who is accountable by domain, which portfolios the teams support, and where applications connect back to technology ownership. The main caveat is precision: Named individual leadership is not loaded in this dossier.",
+      "sectionCount": 18,
+      "citationCount": 16,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 16,
+          "sourceCoverage": 16,
+          "sections": 18,
+          "rollups": 0,
+          "relationshipPaths": 5,
+          "metrics": 5,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:16, sourceCoverage:16, sections:18, relationshipPaths:5, metrics:5"
+      },
+      "directAnswer": "Lakeshore Holdings' vendor contracts context supports a current-state answer from the loaded source context. For vendor and contract questions, connect suppliers to supported applications, capabilities, spend, renewal risk, owners, and operational dependency. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Operational/service signals in context: 10; Risk/control records in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, system connects through integration/interface, vendor/contract supports system or service. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "vendor_contracts",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -3015,51 +4430,68 @@
       "tenant": "lakeshore",
       "id": "L19",
       "question": "Which contracts are loaded for Lakeshore?",
-      "primaryDimension": "organization_leadership",
+      "primaryDimension": "vendor_contracts",
       "relatedDimensions": [
         "application_systems",
         "budget_financials",
-        "operations_process",
         "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
-        "F01_enterprise_profile",
-        "F02_business_org_functions",
-        "F03_it_org_ownership",
-        "F04_capabilities_value_streams",
+        "F11_vendors_contracts_licenses",
         "F05_applications_systems",
+        "F04_capabilities_value_streams",
         "F12_it_budget_financials",
-        "D19_personas_workforce",
-        "F18_leadership_org_chart",
-        "F19_team_application_ownership",
-        "F25_context_node_dictionary",
-        "F26_dimension_question_contracts",
-        "F27_source_context_narratives",
+        "F16_security_risk_compliance",
+        "F22_contract_system_service_map",
+        "F23_operational_service_map",
+        "source_artifacts",
+        "source_pricing_components",
         "F06_system_function_mapping",
         "F07_infrastructure_cloud",
         "F08_platform_volumetrics",
         "F10_integrations_interfaces",
-        "F11_vendors_contracts_licenses",
         "F14_operations_service_management",
+        "F19_team_application_ownership",
         "F20_capability_system_dependency",
-        "F22_contract_system_service_map",
-        "F23_operational_service_map",
-        "F16_security_risk_compliance",
-        "F17_ai_automation_footprint",
-        "F24_ai_use_case_system_value_map",
-        "operational_work_items",
-        "operational_events",
-        "process_flow_observations",
-        "system_service_maps",
+        "F25_context_node_dictionary",
         "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 29,
-      "citationCount": 25,
-      "directAnswer": "Lakeshore Holdings' loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive/role-level leadership, which supports an operating-model synthesis before any caveats. Named individual leaders are not fully loaded, so the answer should stay at role/domain level until client-approved people data is added. The operating model coverage includes 10 business-function areas, 10 IT/technology domains, and 130 application-to-team ownership links. That lets aVa explain who is accountable by domain, which portfolios the teams support, and where applications connect back to technology ownership. The main caveat is precision: Named individual leadership is not loaded in this dossier.",
+      "sectionCount": 18,
+      "citationCount": 16,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 16,
+          "sourceCoverage": 16,
+          "sections": 18,
+          "rollups": 0,
+          "relationshipPaths": 5,
+          "metrics": 5,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:16, sourceCoverage:16, sections:18, relationshipPaths:5, metrics:5"
+      },
+      "directAnswer": "Lakeshore Holdings' vendor contracts context supports a current-state answer from the loaded source context. For vendor and contract questions, connect suppliers to supported applications, capabilities, spend, renewal risk, owners, and operational dependency. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Operational/service signals in context: 10; Risk/control records in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, system connects through integration/interface, vendor/contract supports system or service. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "vendor_contracts",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -3081,55 +4513,68 @@
       "tenant": "lakeshore",
       "id": "L20",
       "question": "Which vendors support critical systems?",
-      "primaryDimension": "application_systems",
+      "primaryDimension": "vendor_contracts",
       "relatedDimensions": [
-        "organization_leadership",
-        "vendor_contracts",
-        "data_analytics",
-        "operations_process"
+        "application_systems",
+        "budget_financials",
+        "risk_compliance"
       ],
       "sourceFamiliesIncluded": [
+        "F11_vendors_contracts_licenses",
         "F05_applications_systems",
         "F04_capabilities_value_streams",
+        "F12_it_budget_financials",
+        "F16_security_risk_compliance",
+        "F22_contract_system_service_map",
+        "F23_operational_service_map",
+        "source_artifacts",
+        "source_pricing_components",
         "F06_system_function_mapping",
         "F07_infrastructure_cloud",
         "F08_platform_volumetrics",
         "F10_integrations_interfaces",
-        "F11_vendors_contracts_licenses",
-        "F12_it_budget_financials",
         "F14_operations_service_management",
         "F19_team_application_ownership",
         "F20_capability_system_dependency",
-        "F22_contract_system_service_map",
-        "F23_operational_service_map",
         "F25_context_node_dictionary",
-        "F01_enterprise_profile",
-        "F02_business_org_functions",
-        "F03_it_org_ownership",
-        "D19_personas_workforce",
-        "F18_leadership_org_chart",
-        "F26_dimension_question_contracts",
-        "F27_source_context_narratives",
-        "F16_security_risk_compliance",
-        "source_artifacts",
-        "source_pricing_components",
-        "F09_data_analytics_estate",
-        "F21_data_product_ownership_lineage",
-        "F17_ai_automation_footprint",
-        "F24_ai_use_case_system_value_map",
-        "O01_business_metrics",
-        "operational_work_items",
-        "operational_events",
-        "process_flow_observations",
-        "system_service_maps"
+        "O05_raid_log"
       ],
       "handoffTarget": null,
-      "sectionCount": 33,
-      "citationCount": 27,
-      "directAnswer": "Lakeshore Holdings' loaded application systems dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 18,
+      "citationCount": 16,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 16,
+          "sourceCoverage": 16,
+          "sections": 18,
+          "rollups": 0,
+          "relationshipPaths": 5,
+          "metrics": 5,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:16, sourceCoverage:16, sections:18, relationshipPaths:5, metrics:5"
+      },
+      "directAnswer": "Lakeshore Holdings' vendor contracts context supports a current-state answer from the loaded source context. For criticality, the safe read is to separate mission-critical assets from items where criticality, owner, or lifecycle fields still need confirmation. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Operational/service signals in context: 10; Risk/control records in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, system connects through integration/interface, vendor/contract supports system or service. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "vendor_contracts",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -3155,6 +4600,7 @@
       "relatedDimensions": [
         "vendor_contracts",
         "application_systems",
+        "organization_leadership",
         "ai_value_governance"
       ],
       "sourceFamiliesIncluded": [
@@ -3175,6 +4621,13 @@
         "F19_team_application_ownership",
         "F20_capability_system_dependency",
         "F25_context_node_dictionary",
+        "F01_enterprise_profile",
+        "F02_business_org_functions",
+        "F03_it_org_ownership",
+        "D19_personas_workforce",
+        "F18_leadership_org_chart",
+        "F26_dimension_question_contracts",
+        "F27_source_context_narratives",
         "F17_ai_automation_footprint",
         "F24_ai_use_case_system_value_map",
         "F09_data_analytics_estate",
@@ -3183,12 +4636,42 @@
         "ai_control_tower"
       ],
       "handoffTarget": null,
-      "sectionCount": 23,
-      "citationCount": 20,
-      "directAnswer": "Lakeshore Holdings' loaded budget financials dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "sectionCount": 30,
+      "citationCount": 27,
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 27,
+          "sourceCoverage": 27,
+          "sections": 30,
+          "rollups": 0,
+          "relationshipPaths": 6,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:27, sourceCoverage:27, sections:30, relationshipPaths:6, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' budget financials context supports a current-state answer from the loaded source context. For budget questions, connect spend to portfolios, owners, applications, vendors, and run/change funding where those fields are loaded. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, system connects through integration/interface, vendor/contract supports system or service. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "budget_financials",
+        "expectedAdjacentDimensions": [
+          "vendor_contracts",
+          "application_systems",
+          "organization_leadership",
+          "ai_value_governance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -3244,10 +4727,40 @@
       "handoffTarget": null,
       "sectionCount": 22,
       "citationCount": 17,
-      "directAnswer": "Lakeshore Holdings' loaded ai value governance dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, service signal ties to owner and system, ai use case ties to system, governance, and value. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 17,
+          "sourceCoverage": 17,
+          "sections": 22,
+          "rollups": 0,
+          "relationshipPaths": 5,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:17, sourceCoverage:17, sections:22, relationshipPaths:5, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' ai value governance context supports a current-state answer from the loaded source context. For AI and automation initiatives, separate the loaded footprint from value evidence, governance gates, adoption signals, and scale-readiness gaps. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, source system feeds data product and owning domain, system connects through integration/interface, service signal ties to owner and system. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "ai_value_governance",
+        "expectedAdjacentDimensions": [
+          "data_analytics",
+          "operations_process",
+          "risk_compliance",
+          "budget_financials"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -3303,10 +4816,40 @@
       "handoffTarget": null,
       "sectionCount": 22,
       "citationCount": 17,
-      "directAnswer": "Lakeshore Holdings' loaded ai value governance dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, service signal ties to owner and system, ai use case ties to system, governance, and value. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 17,
+          "sourceCoverage": 17,
+          "sections": 22,
+          "rollups": 0,
+          "relationshipPaths": 5,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:17, sourceCoverage:17, sections:22, relationshipPaths:5, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' ai value governance context supports a current-state answer from the loaded source context. For AI and automation initiatives, separate the loaded footprint from value evidence, governance gates, adoption signals, and scale-readiness gaps. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, source system feeds data product and owning domain, system connects through integration/interface, service signal ties to owner and system. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "ai_value_governance",
+        "expectedAdjacentDimensions": [
+          "data_analytics",
+          "operations_process",
+          "risk_compliance",
+          "budget_financials"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -3369,10 +4912,40 @@
       "handoffTarget": null,
       "sectionCount": 29,
       "citationCount": 25,
-      "directAnswer": "Lakeshore Holdings' loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive/role-level leadership, which supports an operating-model synthesis before any caveats. Named individual leaders are not fully loaded, so the answer should stay at role/domain level until client-approved people data is added. The operating model coverage includes 10 business-function areas, 10 IT/technology domains, and 130 application-to-team ownership links. That lets aVa explain who is accountable by domain, which portfolios the teams support, and where applications connect back to technology ownership. The main caveat is precision: Named individual leadership is not loaded in this dossier.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 4,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 25,
+          "sourceCoverage": 25,
+          "sections": 29,
+          "rollups": 7,
+          "relationshipPaths": 6,
+          "metrics": 6,
+          "gaps": 1
+        },
+        "reason": "usable dossier evidence via facts:4, tables:1, charts:1, graphs:1, citations:25, sourceCoverage:25, sections:29, rollups:7, relationshipPaths:6, metrics:6, gaps:1"
+      },
+      "directAnswer": "Lakeshore Holdings' biggest Home context gaps are precision gaps, not a blank slate. The loaded sources include 9 primary organization leadership source sections and 16 adjacent source sections, so aVa can describe the current-state shape and supporting relationships while keeping names, ownership joins, freshness, and control status inside source-supported boundaries. The specific gaps to close are missing field: named individual leadership / person-name mapping. That means the next enrichment pass should target those source areas directly instead of asking the model to infer them.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "organization_leadership",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "operations_process",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -3428,10 +5001,40 @@
       "handoffTarget": "intelligence",
       "sectionCount": 22,
       "citationCount": 17,
-      "directAnswer": "Lakeshore Holdings' loaded ai value governance dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, service signal ties to owner and system, ai use case ties to system, governance, and value. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation. Home can ground the facts and boundaries, but the investment or prioritization call should move to intelligence.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 17,
+          "sourceCoverage": 17,
+          "sections": 22,
+          "rollups": 0,
+          "relationshipPaths": 5,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:17, sourceCoverage:17, sections:22, relationshipPaths:5, metrics:7"
+      },
+      "directAnswer": "Lakeshore Holdings' ai value governance context supports a current-state answer from the loaded source context. For AI and automation initiatives, separate the loaded footprint from value evidence, governance gates, adoption signals, and scale-readiness gaps. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, source system feeds data product and owning domain, system connects through integration/interface, service signal ties to owner and system. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation. Home can ground the facts and boundaries, but the investment or prioritization call should move to intelligence.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "ai_value_governance",
+        "expectedAdjacentDimensions": [
+          "data_analytics",
+          "operations_process",
+          "risk_compliance",
+          "budget_financials"
+        ],
+        "expectedTargetSurface": "intelligence",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -3482,10 +5085,39 @@
       "handoffTarget": null,
       "sectionCount": 18,
       "citationCount": 16,
-      "directAnswer": "Lakeshore Holdings' loaded vendor contracts dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Operational/service signals in dossier: 10; Risk/control records in dossier: 10. The important relationship paths are technology team owns/supports application, capability depends on system, vendor/contract supports system or service, service signal ties to owner and system. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 16,
+          "sourceCoverage": 16,
+          "sections": 18,
+          "rollups": 0,
+          "relationshipPaths": 5,
+          "metrics": 5,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:16, sourceCoverage:16, sections:18, relationshipPaths:5, metrics:5"
+      },
+      "directAnswer": "This signed-in Home workspace is scoped to Lakeshore Holdings, so aVa cannot expose another tenant's details here. Within Lakeshore Holdings' loaded context, Lakeshore Holdings' vendor contracts context supports a current-state answer from the loaded source context. For vendor and contract questions, connect suppliers to supported applications, capabilities, spend, renewal risk, owners, and operational dependency. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Operational/service signals in context: 10; Risk/control records in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, capability depends on system, system connects through integration/interface, vendor/contract supports system or service. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "vendor_contracts",
+        "expectedAdjacentDimensions": [
+          "application_systems",
+          "budget_financials",
+          "risk_compliance"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {
@@ -3541,10 +5173,40 @@
       "handoffTarget": null,
       "sectionCount": 22,
       "citationCount": 17,
-      "directAnswer": "Lakeshore Holdings' loaded ai value governance dossier gives a current-state view across the primary binder and adjacent context. Applications/systems in dossier: 130; Vendors/contracts in dossier: 90; Integrations/interfaces in dossier: 200; Data products/platform records in dossier: 105; Operational/service signals in dossier: 10. The important relationship paths are technology team owns/supports application, service signal ties to owner and system, ai use case ties to system, governance, and value. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      "evidence": {
+        "usable": true,
+        "evidenceChannels": {
+          "facts": 0,
+          "tables": 1,
+          "charts": 1,
+          "graphs": 1,
+          "citations": 17,
+          "sourceCoverage": 17,
+          "sections": 22,
+          "rollups": 0,
+          "relationshipPaths": 5,
+          "metrics": 7,
+          "gaps": 0
+        },
+        "reason": "usable dossier evidence via tables:1, charts:1, graphs:1, citations:17, sourceCoverage:17, sections:22, relationshipPaths:5, metrics:7"
+      },
+      "directAnswer": "This signed-in Home workspace is scoped to Lakeshore Holdings, so aVa cannot expose another tenant's details here. Within Lakeshore Holdings' loaded context, Lakeshore Holdings' ai value governance context supports a current-state answer from the loaded source context. For budget questions, connect spend to portfolios, owners, applications, vendors, and run/change funding where those fields are loaded. Applications/systems in context: 130; Vendors/contracts in context: 90; Integrations/interfaces in context: 200; Data products/platform records in context: 105; Operational/service signals in context: 10. Operationally, the useful signal is how this dimension connects to adjacent dimensions: The important relationship paths are technology team owns/supports application, source system feeds data product and owning domain, system connects through integration/interface, service signal ties to owner and system. The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.",
       "qualityGate": {
         "passed": true,
         "critical": false,
+        "issues": []
+      },
+      "relevanceGate": {
+        "passed": true,
+        "expectedPrimaryDimension": "ai_value_governance",
+        "expectedAdjacentDimensions": [
+          "data_analytics",
+          "operations_process",
+          "risk_compliance",
+          "budget_financials"
+        ],
+        "expectedTargetSurface": "home",
+        "requestedArtifacts": [],
         "issues": []
       },
       "score": {

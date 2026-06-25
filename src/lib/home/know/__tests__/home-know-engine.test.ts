@@ -637,13 +637,13 @@ describe("Home KNOW contract engine", () => {
       intent: "lookup",
       answerStatus: "partial",
       prose:
-        "Lakeshore Holdings' loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive role-level leadership. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+        "Lakeshore Holdings' loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive role-level leadership. The loaded sources do not show a specific gap for this question, though final operating decisions still need client validation.",
       dimensionsUsed: ["organization_leadership"],
       facts: [],
       tables: [
         {
-          id: "dimension-dossier-source-coverage",
-          title: "Dimension dossier source coverage",
+          id: "question-source-coverage",
+          title: "Source coverage for this question",
           dimensionId: "organization_leadership",
           columns: [{ key: "section", label: "Section" }],
           rows: [{ section: "IT organization and role accountability" }],
@@ -673,11 +673,11 @@ describe("Home KNOW contract engine", () => {
     });
 
     expect(response.prose).toMatch(/portfolio-led view/i);
-    expect(response.prose).not.toMatch(/Here is what is loaded|I do not see that in the loaded data/i);
+    expect(response.prose).not.toMatch(/Here is what is loaded|I do not see that in the loaded data|dossier|binder|no blocking gap/i);
     expect(response.safety.frontendTripwireShouldFire).toBe(false);
   });
 
-  it("does not rewrite valid dossier prose when factsBound is zero but other evidence channels are populated", () => {
+  it("does not rewrite valid source-context prose when factsBound is zero but other evidence channels are populated", () => {
     const response = validateHomeKnowResponse({
       mode: "KNOW",
       tenantKey: "lakeshore",
@@ -685,13 +685,13 @@ describe("Home KNOW contract engine", () => {
       intent: "lookup",
       answerStatus: "answered",
       prose:
-        "Lakeshore Holdings' application systems context is strong enough to answer from a sourced dossier. The application table, domain chart, relationship graph, and source citations show how applications connect to business domains.",
+        "Lakeshore Holdings' application systems context is strong enough to answer from loaded source context. The application table, domain chart, relationship graph, and source records show how applications connect to business domains.",
       dimensionsUsed: ["application_systems"],
       facts: [],
       tables: [
         {
-          id: "dimension-dossier-source-coverage",
-          title: "Dimension dossier source coverage",
+          id: "question-source-coverage",
+          title: "Source coverage for this question",
           dimensionId: "application_systems",
           columns: [{ key: "section", label: "Section" }],
           rows: [{ section: "Applications and systems" }],

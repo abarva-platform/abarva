@@ -30,8 +30,8 @@ function validateAnswer(answer: string, dossier: UniversalDimensionDossier): str
     issues.push('answer_contradicts_loaded_named_leadership');
   }
   if (packet.sections.length === 0) issues.push('composer_packet_missing_sections');
-  if (primaryLoadedSections.length === 0) issues.push('composer_packet_missing_primary_dimension_binder');
-  if (adjacentLoadedSections.length === 0) issues.push('composer_packet_missing_adjacent_dimension_binder');
+  if (primaryLoadedSections.length === 0) issues.push('composer_packet_missing_primary_dimension_context');
+  if (adjacentLoadedSections.length === 0) issues.push('composer_packet_missing_adjacent_dimension_context');
   if (packet.citations.length === 0) issues.push('composer_packet_missing_citations');
   if (packet.artifactPlan.length === 0) issues.push('composer_packet_missing_artifact_plan');
   if (!packet.answerBoundary.canAnswer.length) issues.push('composer_packet_missing_answer_boundary');
@@ -52,7 +52,7 @@ function possessive(label: string): string {
 
 function topMetricPhrase(dossier: UniversalDimensionDossier): string {
   const metrics = dossier.composerPacket.metrics.slice(0, 5);
-  if (metrics.length === 0) return 'The assembled dossier has source-backed context, but no deterministic metric rollup for this question yet.';
+  if (metrics.length === 0) return 'The loaded source context has enough support for a directional answer, but no deterministic metric rollup for this question yet.';
   return metrics.map((metric) => `${metric.label}: ${metric.value}${metric.unit && metric.unit !== 'count' ? ` ${metric.unit}` : ''}`).join('; ');
 }
 
@@ -63,8 +63,46 @@ function relationshipPhrase(dossier: UniversalDimensionDossier): string {
 }
 
 function gapPhrase(dossier: UniversalDimensionDossier): string {
-  if (dossier.gaps.length === 0) return 'No blocking gap is visible in the assembled dossier, though final operating choices still need client validation.';
+  if (dossier.gaps.length === 0) return 'The loaded sources do not show a specific gap for this question, though final operating choices still need client validation.';
   return `The main missing pieces are ${dossier.gaps.slice(0, 3).map((gap) => gap.label.toLowerCase()).join('; ')}.`;
+}
+
+function questionFocusPhrase(dossier: UniversalDimensionDossier): string {
+  const q = dossier.route.question.toLowerCase();
+  if (/\bdomain\b/.test(q)) {
+    return 'For the domain view, use the table/chart outputs to compare where applications, platforms, or data products concentrate by business domain.';
+  }
+  if (/\bmission-critical|criticality|critical\b/.test(q)) {
+    return 'For criticality, the safe read is to separate mission-critical assets from items where criticality, owner, or lifecycle fields still need confirmation.';
+  }
+  if (/\blifecycle|modernization|risk\b/.test(q)) {
+    return 'For lifecycle and modernization risk, the useful read is which applications connect to risk/control context, lifecycle status, vendor dependency, and modernization ownership.';
+  }
+  if (/\bownership gap|owner gap|ownership gaps|lack.*owner|missing.*owner\b/.test(q)) {
+    return 'For ownership gaps, focus on missing named owners, incomplete role-to-person mapping, and application-to-team joins rather than treating ownership as fully resolved.';
+  }
+  if (/\blineage|feed|feeds|source system|data product\b/.test(q)) {
+    return 'For lineage, the graph should show source systems, integrations, data products, owning domains, and the missing joins that limit traceability.';
+  }
+  if (/\bintegration|interface|connected|most connected|relationship|dependency|dependencies\b/.test(q)) {
+    return 'For connectivity, use the relationship graph to identify the most connected systems and show system-to-system, system-to-capability, vendor-to-system, and owner-to-application paths.';
+  }
+  if (/\bvendor|contract|supplier|renewal\b/.test(q)) {
+    return 'For vendor and contract questions, connect suppliers to supported applications, capabilities, spend, renewal risk, owners, and operational dependency.';
+  }
+  if (/\bbudget|spend|cost|finance|financial\b/.test(q)) {
+    return 'For budget questions, connect spend to portfolios, owners, applications, vendors, and run/change funding where those fields are loaded.';
+  }
+  if (/\bai|automation|initiative|value evidence|benefit|roi\b/.test(q)) {
+    return 'For AI and automation initiatives, separate the loaded footprint from value evidence, governance gates, adoption signals, and scale-readiness gaps.';
+  }
+  if (/\banalytics platform|analytics platforms|analytics tool|analytics tools|tools\b/.test(q)) {
+    return 'For analytics platforms and tools, separate named platforms from data products, BI/warehouse capabilities, ownership, consumers, and maturity signals.';
+  }
+  if (/\bgap|missing|incomplete|coverage\b/.test(q)) {
+    return 'For gap questions, name the exact source areas or fields to add next, not a generic “more data” request.';
+  }
+  return '';
 }
 
 function externalTenantMention(dossier: UniversalDimensionDossier): string | null {
@@ -99,7 +137,7 @@ function tenantBoundaryLead(dossier: UniversalDimensionDossier): string {
   const requestedTenant = externalTenantMention(dossier);
   if (!requestedTenant) return '';
   const label = tenantLabel(dossier.tenantKey);
-  return `This signed-in Home workspace is scoped to ${label}, so aVa cannot expose ${requestedTenant} tenant details here. Within ${possessive(label)} loaded context, `;
+  return `This signed-in Home workspace is scoped to ${label}, so aVa cannot expose another tenant's details here. Within ${possessive(label)} loaded context, `;
 }
 
 function isGapQuestion(dossier: UniversalDimensionDossier): boolean {
@@ -114,17 +152,17 @@ function composeGapAnswer(dossier: UniversalDimensionDossier): string {
   const gapText = dossier.gaps.slice(0, 4).map((gap) => gap.label.toLowerCase().replace(/[.]+$/g, ''));
   const gapLabels = dossier.gaps.length > 0
     ? gapText.join('; ')
-    : 'no blocking source-family gap is visible in this assembled dossier';
+    : 'the loaded sources do not show a specific named-source gap for this question';
   const primaryPhrase =
     primarySections.length > 0
       ? `${primarySections.length} primary ${dimensionLabel(dossier.route.primaryDimension)} source section${primarySections.length === 1 ? '' : 's'}`
-      : `the primary ${dimensionLabel(dossier.route.primaryDimension)} binder is thin`;
+      : `the primary ${dimensionLabel(dossier.route.primaryDimension)} source context is thin`;
   const adjacentPhrase =
     adjacentSections.length > 0
       ? `${adjacentSections.length} adjacent source section${adjacentSections.length === 1 ? '' : 's'}`
       : 'few adjacent source sections';
 
-  return `${tenantBoundaryLead(dossier)}${possessive(label)} biggest Home context gaps are precision gaps, not a blank slate. The dossier attaches ${primaryPhrase} and ${adjacentPhrase}, so aVa can describe the current-state shape and supporting relationships, while keeping names, ownership joins, freshness, and control status inside the evidence boundary. The specific gaps to close are ${gapLabels}. That means the next enrichment pass should target those evidence families directly instead of asking the model to infer them.`;
+  return `${tenantBoundaryLead(dossier)}${possessive(label)} biggest Home context gaps are precision gaps, not a blank slate. The loaded sources include ${primaryPhrase} and ${adjacentPhrase}, so aVa can describe the current-state shape and supporting relationships while keeping names, ownership joins, freshness, and control status inside source-supported boundaries. The specific gaps to close are ${gapLabels}. That means the next enrichment pass should target those source areas directly instead of asking the model to infer them.`;
 }
 
 function composeGenericKnowAnswer(dossier: UniversalDimensionDossier): string {
@@ -136,7 +174,8 @@ function composeGenericKnowAnswer(dossier: UniversalDimensionDossier): string {
       ? ` Home can ground the facts and boundaries, but the investment or prioritization call should move to ${dossier.answerBoundary.handoffTarget}.`
       : '';
 
-  return `${boundaryLead}${possessive(label)} ${dimension} context is strong enough to answer as a current-state dossier, not a fragment lookup. ${topMetricPhrase(dossier)}. Operationally, the useful signal is how the primary binder connects to adjacent dimensions: ${relationshipPhrase(dossier)} ${gapPhrase(dossier)}${handoff}`;
+  const focus = questionFocusPhrase(dossier);
+  return `${boundaryLead}${possessive(label)} ${dimension} context supports a current-state answer from the loaded source context. ${focus ? `${focus} ` : ''}${topMetricPhrase(dossier)}. Operationally, the useful signal is how this dimension connects to adjacent dimensions: ${relationshipPhrase(dossier)} ${gapPhrase(dossier)}${handoff}`;
 }
 
 function composeOrganizationAnswer(dossier: UniversalDimensionDossier): string {

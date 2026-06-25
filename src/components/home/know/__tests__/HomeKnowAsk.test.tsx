@@ -14,7 +14,7 @@ const response: HomeKnowResponse = {
   question: "Show apps owned by Finance",
   intent: "table",
   answerStatus: "answered",
-  prose: "Finance applications are loaded with owners and source rows.",
+  prose: "Finance applications are loaded with owners and source records.",
   dimensionsUsed: ["applications_systems"],
   facts: [],
   tables: [

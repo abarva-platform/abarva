@@ -16,6 +16,7 @@ import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import { CHART } from "@/lib/programs/expert-kernel/exports/board-grade/svg-charts";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { repairHomeAnswerQuality } from "@/lib/home/know/home-answer-quality-gate";
+import { assessHomeAnswerRelevance } from "@/lib/home/know/home-answer-relevance-gate";
 import { buildHomeKnowDimensionDossier } from "@/lib/home/know/build-universal-dimension-dossier";
 import { buildHomeKnowResponseFromDossier } from "@/lib/home/know/compose-dossier-answer";
 import { hasUsableDossierEvidence } from "@/lib/home/know/has-usable-dossier-evidence";
@@ -148,9 +149,9 @@ export interface HomeKnowPacket {
 }
 
 const BLOCKED_PUBLIC_TEXT =
-  /\b(experts?_consulted|DORA|Wave-?0|P11|kill criteria|TIME x AI-fit|90-day pilot|local env|org_topology unavailable|roles_inventory unavailable|productivity (frame|lift)|clinical process expert|decision frame|portfolio segmentation|AI Platform owner|Knowledge Engineer|Fluency Coach|current visible run-cost basis is \$0|the cited record)\b/i;
+  /\b(experts?_consulted|DORA|Wave-?0|P11|kill criteria|TIME x AI-fit|90-day pilot|local env|org_topology unavailable|roles_inventory unavailable|productivity (frame|lift)|clinical process expert|decision frame|portfolio segmentation|AI Platform owner|Knowledge Engineer|Fluency Coach|current visible run-cost basis is \$0|the cited record|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|semantic packet|composer packet|quality gate|answer boundary)\b/i;
 const BLOCKED_PUBLIC_TEXT_REPLACE =
-  /\b(experts?_consulted|DORA|Wave-?0|P11|kill criteria|TIME x AI-fit|90-day pilot|local env|org_topology unavailable|roles_inventory unavailable|productivity (frame|lift)|clinical process expert|decision frame|portfolio segmentation|AI Platform owner|Knowledge Engineer|Fluency Coach|current visible run-cost basis is \$0|the cited record)\b/gi;
+  /\b(experts?_consulted|DORA|Wave-?0|P11|kill criteria|TIME x AI-fit|90-day pilot|local env|org_topology unavailable|roles_inventory unavailable|productivity (frame|lift)|clinical process expert|decision frame|portfolio segmentation|AI Platform owner|Knowledge Engineer|Fluency Coach|current visible run-cost basis is \$0|the cited record|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|semantic packet|composer packet|quality gate|answer boundary)\b/gi;
 const INTERNAL_CODE_RE =
   /\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
 const INTERNAL_CODE_REPLACE =
@@ -161,10 +162,6 @@ const GRAPH_RE =
   /\b(graph|map|topolog|dependency|dependencies|relationship|relationships|lineage|blast radius|depends on|integration|interfaces?)\b/i;
 const EXACT_UNKNOWABLE_RE =
   /\b(exact|precise|to the dollar|specific date|exact date|exactly what|precise headcount|precise nps|roi percentage|will .* deliver|will .* be in \d{4}|next quarter)\b/i;
-
-function shouldUsePacketBeforeDossier(question: string): boolean {
-  return EXACT_UNKNOWABLE_RE.test(question) || GRAPH_RE.test(question);
-}
 
 export function classifyHomeKnowIntent(question: string): HomeKnowIntent {
   const normalized = question.trim().toLowerCase();
@@ -277,46 +274,6 @@ export async function buildHomeKnowResponse(
       prose: "I do not see an active tenant for this Home request.",
     });
   }
-  if (shouldUsePacketBeforeDossier(input.question)) {
-    const packet = await fetchHomeKnowPacket(tenantKey);
-    const response = buildHomeKnowResponseFromPacket({
-      tenantKey,
-      question: input.question,
-      packet,
-    });
-    const evidence = hasUsableDossierEvidence(response);
-    return withComposerTrace(response, {
-      route: "/api/home/know/ask",
-      composer: "home_know_template_fallback",
-      goldenComposerAttempted: false,
-      goldenComposerUsed: false,
-      fallbackUsed: true,
-      dimensionsUsed: response.dimensionsUsed,
-      factsBound: response.facts.length,
-      tablesBound: response.tables.length,
-      chartsBound: response.charts.length,
-      graphsBound: response.graphs.length,
-      citationsBound: response.citations.length,
-      sourceCoverageBound: response.citations.filter(
-        (citation) => citation.sourceClass === "tenant-source-file",
-      ).length,
-      sectionsBound: 0,
-      rollupsBound: 0,
-      relationshipPathsBound: response.graphs.reduce(
-        (sum, graph) => sum + graph.edges.length,
-        0,
-      ),
-      metricsBound: response.charts.reduce(
-        (sum, chart) => sum + chart.data.length,
-        0,
-      ),
-      gapsBound: response.gaps.length,
-      usableEvidence: evidence.usable,
-      evidenceChannels: evidence.evidenceChannels,
-      answerStatus: response.answerStatus,
-      reason: "Safety/artifact request handled by packet builder before broad dossier synthesis.",
-    });
-  }
   const dossierTenantKey = input.client?.trim() || tenantKey;
   try {
     const { dossier, cacheHit, sourceSignature } = buildHomeKnowDimensionDossier({
@@ -324,7 +281,23 @@ export async function buildHomeKnowResponse(
       question: input.question,
       requestedSurface: "home",
     });
-    if (dossier.sourceCoverage.some((source) => source.loaded && source.count > 0)) {
+    const exactGap = exactUnknowableGap(input.question);
+    if (exactGap) {
+      dossier.gaps.unshift({
+        gapKey: "exact_value_source_field_missing",
+        label: `Missing exact source field: ${exactGap.displayLabel}.`,
+        impact: `Home can describe nearby loaded context, but the exact answer requires ${exactGap.needed}.`,
+        neededEvidence: [exactGap.needed],
+      });
+      dossier.answerBoundary.cannotAnswer.unshift(
+        `Exact value for ${exactGap.displayLabel}`,
+      );
+      dossier.composerPacket.gaps = dossier.gaps;
+      dossier.composerPacket.answerBoundary = dossier.answerBoundary;
+    }
+    if (
+      dossier.sourceCoverage.some((source) => source.loaded && source.count > 0)
+    ) {
       const response = buildHomeKnowResponseFromDossier({
         tenantKey,
         question: input.question.trim(),
@@ -608,6 +581,8 @@ export function buildHomeKnowResponseFromPacket(input: {
 
 function exactUnknowableGap(question: string): null | {
   dimensionIds: string[];
+  displayLabel: string;
+  needed: string;
   prose: string;
   gap: (gapCitations: HomeKnowCitation[]) => HomeKnowGap;
 } {
@@ -665,7 +640,9 @@ function exactUnknowableGap(question: string): null | {
 
   return {
     dimensionIds,
-    prose: `I can't give that exact value from the loaded Home data. The related context may show nearby rows, but the exact answer requires ${needed}. Without that source field, Home treats this as a gap rather than a precise number.`,
+    displayLabel,
+    needed,
+    prose: `I can't give that exact value from the loaded Home data. The related context may show nearby records, but the exact answer requires ${needed}. Without that source field, Home treats this as a gap rather than a precise number.`,
     gap: (gapCitations) => ({
       id: "gap-exact-request",
       dimensionId: dimensionIds[0] ?? "gap_register",
@@ -2039,7 +2016,7 @@ function homeKnowProse(input: {
   if (input.intent === "chart") {
     if (GRAPH_RE.test(input.question)) {
       return input.hasGraph
-        ? "I assembled the relationship graph from loaded tenant edge rows and source rows. If the requested edge family is absent, Home reports that as a gap instead of inferring a dependency."
+        ? "The relationship graph is built from loaded relationship and source records. If the requested relationship family is absent, Home reports that as a gap instead of inferring a dependency."
         : "The loaded relationship rows do not contain the source-to-target edge pairs needed for that graph. I can see related context, but the specific edge family for this visual is missing.";
     }
     return "Here is the visual cut from loaded Home context. The chart data is assembled from tenant context rows and cited source files, so missing numeric fields stay visible as gaps instead of becoming invented figures.";
@@ -2231,6 +2208,30 @@ export function validateHomeKnowResponse(
     prose = sanitizePublicHomeText(prose);
     unsupportedClaimsRemoved += 1;
   }
+  const relevance = assessHomeAnswerRelevance({
+    question: response.question,
+    answerText: prose,
+    primaryDimension: String(
+      response.dimensionsUsed[0] ?? "organization_leadership",
+    ) as never,
+    relatedDimensions: response.dimensionsUsed.slice(1) as never,
+    targetSurface: response.intent === "decision_handoff" ? "intelligence" : "home",
+    handoffTarget: response.handoff?.target ?? null,
+    tablesCount: response.tables.length,
+    chartsCount: response.charts.length,
+    graphsCount: response.graphs.length,
+  });
+  const userFacingLanguageIssue = relevance.issues.some((issue) =>
+    [
+      "internal_dossier_language",
+      "count_instead_of_insight",
+      "misleading_no_blocking_gap",
+    ].includes(issue),
+  );
+  if (userFacingLanguageIssue) {
+    prose = sanitizePublicHomeText(prose);
+    unsupportedClaimsRemoved += relevance.issues.length;
+  }
   const lookupHasDecisionLanguage =
     response.intent !== "decision_handoff" && DECISION_RE.test(prose);
   if (lookupHasDecisionLanguage && !evidence.usable) {
@@ -2257,7 +2258,11 @@ export function validateHomeKnowResponse(
         !evidence.usable &&
         (BLOCKED_PUBLIC_TEXT.test(prose) ||
           INTERNAL_CODE_RE.test(prose) ||
-          lookupHasDecisionLanguage),
+          lookupHasDecisionLanguage ||
+          relevance.issues.includes("wrong_dimension_binder") ||
+          relevance.issues.includes("missing_requested_table") ||
+          relevance.issues.includes("missing_requested_chart") ||
+          relevance.issues.includes("missing_requested_graph")),
     },
   });
 }
@@ -2267,6 +2272,9 @@ function sanitizePublicHomeText(value: string): string {
     .replace(BLOCKED_PUBLIC_TEXT_REPLACE, "loaded context")
     .replace(INTERNAL_CODE_REPLACE, "the source row")
     .replace(/\bthe cited record\b/gi, "the source row")
+    .replace(/\bas a current-state loaded context\b/gi, "from the current-state context")
+    .replace(/\bcurrent-state loaded context\b/gi, "current-state context")
+    .replace(/\bprimary loaded context\b/gi, "primary source context")
     .replace(/\s{2,}/g, " ")
     .trim();
 }

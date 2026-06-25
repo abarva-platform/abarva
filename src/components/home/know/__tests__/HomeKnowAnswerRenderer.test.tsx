@@ -15,7 +15,7 @@ const baseResponse: HomeKnowResponse = {
   intent: "lookup",
   answerStatus: "answered",
   prose:
-    "IT ownership is loaded by portfolio role. The loaded data provides owner roles and source rows.",
+    "IT ownership is loaded by portfolio role. The loaded data provides owner roles and source records.",
   dimensionsUsed: ["it_org_ownership"],
   facts: [],
   tables: [
@@ -82,7 +82,7 @@ describe("HomeKnowAnswerRenderer", () => {
 
     expect(screen.getByText("aVa")).toBeInTheDocument();
     expect(
-      screen.getByText("Answered from loaded context"),
+      screen.getByText("Answered from source context"),
     ).toBeInTheDocument();
     expect(screen.getByText("IT ownership")).toBeInTheDocument();
     expect(screen.getByText("Data & Analytics")).toBeInTheDocument();

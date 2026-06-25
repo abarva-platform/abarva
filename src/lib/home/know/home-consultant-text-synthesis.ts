@@ -74,7 +74,7 @@ Do not mention pattern family or experts in Home.
 Return only the final user-facing answer text.`;
 
 const FORBIDDEN_RE =
-  /\b(cannot be characterized|cannot be identified|I found|missing source support|Current-state read|\bread\b|Evidence points|\bevidence\b|\brows\b|home_know|semantic packet|\bpacket\b|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
+  /\b(cannot be characterized|cannot be identified|I found|missing source support|Current-state read|\bread\b|Evidence points|\bevidence\b|\brows\b|home_know|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
 const RAW_ID_RE =
   /\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
 const RECOMMENDATION_RE =
@@ -400,6 +400,14 @@ export function normalizeHomeConsultantUserFacingText(text: string): string {
     .replace(/\bread-models?\b/gi, "source views")
     .replace(/\breads\b/gi, "reviews")
     .replace(/\bread\b/gi, "review")
+    .replace(/\bdossier\b/gi, "source context")
+    .replace(/\bbinder\b/gi, "source context")
+    .replace(/\bfragment lookup\b/gi, "narrow lookup")
+    .replace(/\bedge rows\b/gi, "relationship records")
+    .replace(/\bsource rows\b/gi, "source records")
+    .replace(/\bno blocking gap\b/gi, "no specific source gap")
+    .replace(/\bquality gate\b/gi, "answer check")
+    .replace(/\banswer boundary\b/gi, "safe answer boundary")
     .replace(/\s+/g, " ")
     .trim();
 }
