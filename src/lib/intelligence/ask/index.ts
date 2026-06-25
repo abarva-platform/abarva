@@ -35,6 +35,10 @@ import {
   isBroadCurrentStateQuestion,
   sanitizeAskSynthesis,
 } from "./response-policy";
+import {
+  buildIntelligenceDossier,
+  type IntelligenceDossier,
+} from "@/lib/intelligence/dossiers";
 
 export type {
   AskIntent,
@@ -51,7 +55,8 @@ export interface AskEvent {
     | "followups"
     | "done"
     | "error"
-    | "contributing-experts";
+    | "contributing-experts"
+    | "intelligence-dossier";
   classification?: IntentClassification;
   sources?: AskSource[];
   coverageReport?: CoverageReport;
@@ -60,6 +65,8 @@ export interface AskEvent {
   error?: string;
   /** Consilium experts grounding the answer (Shared Context Brain, flag-gated). */
   contributingExperts?: ExpertRef[];
+  /** Question-specific advisory packet passed into the Intelligence synthesizer. */
+  intelligenceDossier?: IntelligenceDossier;
 }
 
 export interface AskOptions {
@@ -238,6 +245,15 @@ export async function* askIntelligence(
         contributingExperts: expertGrounding.experts,
       };
     }
+    const intelligenceDossier = buildIntelligenceDossier({
+      tenantKey: opts.tenantClientKey ?? opts.tenantInventoryKey ?? opts.tenantId,
+      tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient ?? opts.tenantClientKey ?? undefined,
+      question: trimmed,
+      classification,
+      sources,
+      contributingExperts: expertGrounding.experts,
+    });
+    yield { type: "intelligence-dossier", intelligenceDossier };
 
     const handoff = atlasStakeholderConflictHandoff(trimmed);
     if (handoff) {
@@ -300,6 +316,7 @@ export async function* askIntelligence(
       conversationContextBlock: opts.conversationContextBlock,
       factAvailabilityBlock: groundedFactBlock,
       coverageReportBlock: formatCoverageReportForPrompt(coverageReport),
+      intelligenceDossier,
       averageConfidence,
       onModelInput: opts.onModelInput,
     })) {
