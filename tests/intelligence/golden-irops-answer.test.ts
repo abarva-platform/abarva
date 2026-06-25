@@ -147,6 +147,24 @@ describe("Golden IROPS Intelligence advisor composer", () => {
       },
       {
         query:
+          "What data gaps block AI-enabled process mining for Lakeshore back-office functions?",
+        expectedFunction: "Function: operations and process bottlenecks",
+        expectedArtifact: "table",
+      },
+      {
+        query:
+          "Which controls are needed before AI can act in ITSM and back-office workflows?",
+        expectedFunction: "Function: risk, governance, and controls",
+        expectedArtifact: "table",
+      },
+      {
+        query:
+          "What operating-model changes are required if AI is embedded in shared-services and ITSM workflows?",
+        expectedFunction: "Function: operations and process bottlenecks",
+        expectedArtifact: "table",
+      },
+      {
+        query:
           "Show expected business impact of AI-assisted ITSM across MTTR, ticket deflection, change failure, and employee experience.",
         expectedFunction: "Function: benefits realization and value leakage",
         expectedArtifact: "chart",

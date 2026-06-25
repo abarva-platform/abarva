@@ -276,11 +276,17 @@ function enterpriseFunctionRouteForQuery(
   query: string,
 ): EnterpriseFunctionRoute | null {
   const normalized = query.trim().toLowerCase();
-  if (!FUNCTION_ARTIFACT_RE.test(normalized)) return null;
-
   const routeByKey = (key: EnterpriseFunctionRoute["key"]) =>
     ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === key) ?? null;
   const has = (pattern: RegExp) => pattern.test(normalized);
+  const isExplicitSubjectQuestion =
+    /^\s*(?:what|where|how)\b/.test(normalized) &&
+    has(
+      /\b(data gaps?|field gaps?|process mining|operating.?model|service management|itsm|back office|back-office|bpr|reengineering)\b/,
+    );
+  if (!FUNCTION_ARTIFACT_RE.test(normalized) && !isExplicitSubjectQuestion) {
+    return null;
+  }
 
   if (has(/\b(customer|front.?office|contact.?center|journey|loyalty|service recovery|agent assist)\b/)) {
     return routeByKey("customer");
@@ -317,9 +323,6 @@ function enterpriseFunctionRouteForQuery(
   ) {
     return routeByKey("benefits");
   }
-  if (has(/\b(workforce|persona|people|fte|labor|productivity|function|employee|shared services?)\b/)) {
-    return routeByKey("workforce");
-  }
   if (has(/\b(risk|risks|control|controls|governance|severity|compliance|audit)\b/)) {
     return routeByKey("risk_controls");
   }
@@ -328,6 +331,12 @@ function enterpriseFunctionRouteForQuery(
   }
   if (has(/\b(operations|operational|process|bottleneck|root cause|itsm|incident|problem|change|cmdb|back office|back-office|bpr|reengineering)\b/)) {
     return routeByKey("operations");
+  }
+  if (has(/\b(operating.?model|shared services?|service management|workflow|workflows|process mining|process redesign)\b/)) {
+    return routeByKey("operations");
+  }
+  if (has(/\b(workforce|persona|people|fte|labor|productivity|function|employee|shared services?)\b/)) {
+    return routeByKey("workforce");
   }
   return null;
 }

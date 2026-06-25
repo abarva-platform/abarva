@@ -210,3 +210,38 @@ Additional validation:
   (SkyHarbor 10/13, Lakeshore 7/12), against `app.abarva.ai`.
 - Focused Jest for Intelligence route, advisor composer, structured exhibits,
   and tenant identity guard: pass (`73 passed` across 4 suites).
+
+## Follow-up Lakeshore ITSM / Back-Office Quality Correction
+
+The post-#3942 deployed live crawl improved the function matrix from 17/25 to
+21/25 clean across SkyHarbor and Lakeshore, proving the required-artifact seam
+was live on ACA revision `ca-abarva-web-lab-eastus--m5b5f911a`. The remaining
+failures were no longer broad architecture issues; they were narrow quality
+gaps:
+
+- one SkyHarbor finance answer tripped the tenant guard on a defensive
+  off-tenant reference
+- Lakeshore process-mining and operating-model questions did not consistently
+  force table-shaped advisor output
+- Lakeshore controls could still surface generic DORA/SOX-style control
+  language from the model instead of neutral enterprise-control wording
+
+This patch keeps the same backend/renderer architecture and tightens only those
+seams. ITSM, process-mining, controls, operating-model, and back-office process
+redesign questions now take priority over generic workforce/shared-services
+routing. The tenant guard now permits explicit negation such as "not using Apex
+Retail facts" while still blocking other tenants used as evidence. The response
+policy neutralizes broad DORA/SOX control-language leakage and replaces generic
+Source/Tower/Moves handoff boilerplate with a cleaner evidence-validation
+sentence.
+
+Additional validation:
+
+- Signed-in deployed crawl before this patch: 21/25 clean
+  (SkyHarbor 12/13, Lakeshore 9/12), with screenshots saved under
+  `reports/intelligence-function-live-crawl-post3942-20260624/shots/`.
+- Focused Jest for Golden IROPS/function routing, tenant guard, structured
+  exhibits, and response policy: pass (`66 passed` across 4 suites before branch
+  refresh; `49 passed` across 3 suites after branch refresh).
+- Focused ESLint for changed files: pass.
+- `npm run release:check`: pass after this release-record update.
