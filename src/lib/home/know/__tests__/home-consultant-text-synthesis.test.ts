@@ -482,6 +482,16 @@ describe("home consultant text synthesis", () => {
     ).toEqual(expect.arrayContaining(["forbidden_language"]));
   });
 
+  it("rejects internal numeric entity/fact/citation inventory language", () => {
+    expect(
+      validateHomeConsultantText({
+        text: "Where do you want to go deeper?\n- budget financials: 160 entities, 160 facts, 0 relationships, 160 citations",
+        dossier,
+        response: { ...response, intent: "browse" },
+      }),
+    ).toEqual(expect.arrayContaining(["internal_count_language"]));
+  });
+
   it("falls back cleanly on timeout", async () => {
     process.env.HOME_KNOW_CLAUDE_TIMEOUT_MS = "1";
     mockClaudeText(

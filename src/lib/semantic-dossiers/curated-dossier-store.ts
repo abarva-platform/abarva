@@ -173,7 +173,7 @@ function makeSections(row: CuratedDossierRow): DossierSection[] {
       title: `${title} facts`,
       dimensionFamily,
       sourceKeys: row.source_tables,
-      summary: `${asNumber(counts.facts)} typed facts are available for this topic.`,
+      summary: `${asNumber(counts.facts)} loaded facts are available for this topic.`,
       recordCount: facts.length,
       sample: facts.slice(0, 40).map((item) => ({
         subject: asString(item.subject_semantic_key, ""),
@@ -193,7 +193,7 @@ function makeSections(row: CuratedDossierRow): DossierSection[] {
       title: `${title} relationships`,
       dimensionFamily,
       sourceKeys: row.source_tables,
-      summary: `${asNumber(counts.relationships)} relationship paths are available for this topic.`,
+      summary: `${asNumber(counts.relationships)} relationship maps are available for this topic.`,
       recordCount: relationships.length,
       sample: relationships.slice(0, 30).map((item) => ({
         from: asString(item.from_semantic_key, ""),
@@ -256,21 +256,21 @@ function makeMetrics(row: CuratedDossierRow): DossierMetric[] {
     },
     {
       metricKey: "typed_facts",
-      label: "Typed facts",
+      label: "Loaded facts",
       value: asNumber(counts.facts),
       unit: "count",
       sourceKeys: row.source_tables,
     },
     {
       metricKey: "relationship_paths",
-      label: "Relationship paths",
+      label: "Relationship maps",
       value: asNumber(counts.relationships),
       unit: "count",
       sourceKeys: row.source_tables,
     },
     {
       metricKey: "evidence_refs",
-      label: "Resolved citations",
+      label: "Source references",
       value: asNumber(counts.evidenceRefs),
       unit: "count",
       sourceKeys: row.source_tables,
@@ -319,7 +319,7 @@ function sourceCoverage(row: CuratedDossierRow): DossierSourceCoverage[] {
     sourceKey,
     loaded: true,
     count: 1,
-    purpose: "Curated Semantic2 evidence source",
+    purpose: "Loaded tenant context for this topic",
     required: false,
     dimensionFamily: row.dimension_key as DossierDimensionFamily,
     binderRole: "primary",
@@ -333,7 +333,10 @@ function dimensionSummary(row: CuratedDossierRow): string {
     dimension.label,
     row.dimension_key.replaceAll("_", " "),
   );
-  return `${label}: ${asNumber(counts.entities)} entities, ${asNumber(counts.facts)} facts, ${asNumber(counts.relationships)} relationships, and ${asNumber(counts.evidenceRefs)} resolved citations.`;
+  const relationshipCount = asNumber(counts.relationships);
+  return `${label}: loaded current-state context is available for this topic with source-supported facts${
+    relationshipCount > 0 ? " and relationship maps" : ""
+  }.`;
 }
 
 function buildUniversalDossier(
@@ -443,7 +446,11 @@ function branchOptionFromRow(
     id: row.dimension_key,
     label,
     dimensionKey: row.dimension_key,
-    summary: `${entityCount} entities, ${factCount} facts, ${relationshipCount} relationships, ${citationCount} citations`,
+    summary: branchSummaryForDimension(
+      row.dimension_key as DossierDimensionFamily,
+      asNumber(row.coverage_score),
+      relationshipCount,
+    ),
     coverageScore: asNumber(row.coverage_score),
     confidence: asNumber(row.confidence),
     entityCount,
@@ -451,6 +458,46 @@ function branchOptionFromRow(
     relationshipCount,
     citationCount,
   };
+}
+
+function branchSummaryForDimension(
+  dimension: string,
+  coverageScore: number,
+  relationshipCount: number,
+): string {
+  const coverage =
+    coverageScore >= 0.75
+      ? "strong loaded context"
+      : coverageScore >= 0.45
+        ? "usable loaded context"
+        : "early loaded context";
+  const relationshipPhrase =
+    relationshipCount > 0 ? " with relationship maps" : "";
+  const base: Record<string, string> = {
+    organization_leadership:
+      "explore leadership, business functions, IT teams, ownership, and accountability",
+    application_systems:
+      "explore applications, systems, domains, lifecycle, ownership, and dependencies",
+    data_analytics:
+      "explore data platforms, analytics estate, ownership, trust, and AI data dependencies",
+    vendor_contracts:
+      "explore vendor footprint, contracts, commercial dependency, renewals, and supported systems",
+    budget_financials:
+      "explore portfolio spend, funding shape, run/change context, and finance ownership",
+    operations_process:
+      "explore service signals, work patterns, process friction, ownership, and automation candidates",
+    ai_value_governance:
+      "explore AI initiatives, governance posture, value signals, adoption, and controls",
+    risk_compliance:
+      "explore risks, controls, compliance coverage, ownership, and affected systems",
+    source_moves_tower:
+      "explore connected Source, Moves, and Tower context with handoff-ready proof",
+    enterprise_profile:
+      "explore enterprise scale, operating model, business context, and strategic footprint",
+    industry_market:
+      "explore industry benchmarks, market context, and relevant external comparison points",
+  };
+  return `${base[dimension] ?? "explore the loaded context for this topic"}; ${coverage}${relationshipPhrase}`;
 }
 
 export async function loadCuratedSemanticDossier(args: {
