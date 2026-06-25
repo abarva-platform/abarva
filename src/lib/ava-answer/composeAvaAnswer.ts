@@ -58,6 +58,28 @@ export function composeAvaAnswer(
       retrievalSummary: input.retrievalSummary,
     });
   const quality = qualityFrom(input);
+  const artifacts = input.artifacts ?? [];
+  const tables = artifacts
+    .filter((artifact) => artifact.artifact === "table")
+    .map((artifact) => {
+      const { artifact: _artifact, ...table } = artifact;
+      void _artifact;
+      return table;
+    });
+  const charts = artifacts
+    .filter((artifact) => artifact.artifact === "chart")
+    .map((artifact) => {
+      const { artifact: _artifact, ...chart } = artifact;
+      void _artifact;
+      return chart;
+    });
+  const graphs = artifacts
+    .filter((artifact) => artifact.artifact === "graph")
+    .map((artifact) => {
+      const { artifact: _artifact, ...graph } = artifact;
+      void _artifact;
+      return graph;
+    });
   const packet: AvaAnswerPacket = {
     surface: input.surface,
     mode: input.mode,
@@ -66,6 +88,7 @@ export function composeAvaAnswer(
     intent: input.intent,
     status: input.status,
     directAnswer,
+    prose: directAnswer,
     interpretation,
     businessImplication: input.businessImplication,
     recommendation: input.surface === "home" ? undefined : input.recommendation,
@@ -75,7 +98,12 @@ export function composeAvaAnswer(
     relationshipsUsed: input.relationshipsUsed ?? [],
     corpusUsed: input.corpusUsed ?? [],
     expertsUsed: input.surface === "home" ? [] : (input.expertsUsed ?? []),
-    artifacts: input.artifacts ?? [],
+    contributingExperts:
+      input.surface === "home" ? [] : (input.expertsUsed ?? []),
+    tables,
+    charts,
+    graphs,
+    artifacts,
     citations: input.citations ?? [],
     gaps: input.gaps ?? [],
     caveats: input.caveats ?? [],

@@ -41,6 +41,15 @@ Adds a first-class Intelligence Dossier layer so Ava Intelligence receives a bou
 - `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false` passed.
 - Initial `npx tsc --noEmit --pretty false` without heap override failed by Node heap OOM, not by TypeScript diagnostics.
 
+Follow-up validation after deployed matrix exposed compatibility gaps:
+
+- Live matrix against `ca-abarva-web-lab-eastus--m43157a58` passed render, Intelligence V2, dims19, grounding, raw-ID, and tenant-fence checks, but failed the legacy `prose` / `tables` / `charts` / `contributingExperts` shape columns for all five tenants.
+- Added derived compatibility mirrors (`prose`, `tables`, `charts`, `graphs`, `contributingExperts`) from canonical `directAnswer` / `artifacts` / `expertsUsed`; renderer still uses canonical `artifacts`.
+- Final Intelligence answers now use the dossier-selected expert council as metadata fallback when no advisor-specific override is active.
+- `npx jest src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts src/lib/intelligence/dossiers/__tests__/intelligence-dossier.test.ts --runInBand` passed.
+- `npx eslint src/lib/ava-answer/contract.ts src/lib/ava-answer/composeAvaAnswer.ts src/app/api/intelligence/ask/route.ts` passed.
+- `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false` passed.
+
 ## Rollout Plan
 
 Merge to main through PR, let the repo-owned Azure Container Apps main deployment build and deploy the approved image, then run signed-in Intelligence dossier crawl for SkyHarbor and Lakeshore before claiming live product completion.
