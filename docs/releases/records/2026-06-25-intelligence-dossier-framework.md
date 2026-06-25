@@ -67,6 +67,20 @@ Third follow-up after the deep reality crawl exposed Home-bridged Intelligence d
 - Changed Home KNOW exact/graph questions to use the deterministic packet builder before broad dossier synthesis, preserving exact-value refusals and graph artifact/gap responses.
 - Validation pending on this follow-up PR.
 
+Fourth follow-up after prompt/response audit:
+
+- Root cause: the Intelligence route had a dossier object, but the model call still blended the dossier into the legacy advisor prompt as supporting context instead of making it the primary briefing book.
+- Added `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`, a text-first Claude synthesis path that sends a bounded Intelligence advisory packet and asks for user-facing executive prose, not brittle JSON.
+- The packet separates tenant evidence, corpus patterns, selected expert lenses, benchmarks, options/tradeoffs, risks/caveats, missing evidence, and the evidence boundary.
+- The new path is production-default enabled and env-controllable through `INTELLIGENCE_CLAUDE_SYNTHESIS_ENABLED`; it falls back to the existing synthesizer if disabled, missing Anthropic config, or validation fails.
+- Increased `/api/intelligence/ask` max duration to support larger Intelligence synthesis calls.
+- Added validation to reject old `Read:` / `Evidence:` / `Implication:` / `Next move:` transcript labels, raw IDs, internal language, unsupported overconfidence, and missing tradeoff/gap handling.
+- `npx jest src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts src/lib/intelligence/dossiers/__tests__/intelligence-dossier.test.ts --runInBand` passed.
+- `npx eslint src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts src/lib/intelligence/ask/index.ts src/app/api/intelligence/ask/route.ts` passed.
+- `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false` passed.
+- `npm run release:check` passed.
+- Deployed proof and side-by-side live packet/Claude/final report are pending on this follow-up PR.
+
 ## Rollout Plan
 
 Merge to main through PR, let the repo-owned Azure Container Apps main deployment build and deploy the approved image, then run signed-in Intelligence dossier crawl for SkyHarbor and Lakeshore before claiming live product completion.
