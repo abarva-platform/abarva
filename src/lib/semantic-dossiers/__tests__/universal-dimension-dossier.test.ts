@@ -64,6 +64,25 @@ describe('universal dimension dossiers', () => {
     expect(route.artifactPlan).toEqual(expect.arrayContaining(['table', 'chart', 'graph']));
   });
 
+  it('routes operational/back-office questions to the operational process dossier', () => {
+    expect(
+      routeDimensionQuestion(
+        'What operational evidence is loaded for back-office services?',
+        'home',
+      ).primaryDimension,
+    ).toBe('operations_process');
+    expect(
+      routeDimensionQuestion(
+        'What should we automate first in Shared IT Services?',
+        'home',
+      ).primaryDimension,
+    ).toBe('operations_process');
+    expect(
+      routeDimensionQuestion('Where are the service-management bottlenecks?', 'home')
+        .primaryDimension,
+    ).toBe('operations_process');
+  });
+
   it('uses loaded SkyHarbor leadership evidence before stating gaps', () => {
     const sources = {
       F18_leadership_org_chart: loadCsv('datasets/skyharbor-air-synthetic-v4/family-8-semantic-enrichment/F18_leadership-org-chart.csv'),

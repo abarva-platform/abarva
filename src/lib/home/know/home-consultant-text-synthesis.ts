@@ -6,6 +6,11 @@ import {
   canonicalClientDisplayName,
 } from "@/lib/client-config";
 import { hasUsableDossierEvidence } from "@/lib/home/know/has-usable-dossier-evidence";
+import {
+  homePublicAnswerLeakIssues,
+  operationalEvidenceInsufficiencyLead,
+  scrubHomePublicAnswerText,
+} from "@/lib/home/know/home-public-answer-scrub";
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
 import type {
   DossierDimensionFamily,
@@ -28,12 +33,12 @@ The context may include:
 
 * sections
 * source coverage
-* facts
+* source support
 * tables
 * charts
 * graphs
 * rollups
-* relationship paths
+* source-supported operating connections
 * metrics
 * gaps
 * citations
@@ -74,14 +79,15 @@ Do not say "I found."
 Do not expose raw IDs, table names, route names, debug labels, source internals, or implementation details.
 Do not use user-facing wording like "Read," "Evidence," "Evidence points," "rows," or "Current-state read."
 Say "loaded context," "source context," "source support," or "loaded records" instead.
-Do not mention "semantic," "curated semantic," "typed facts," "relationship paths," or implementation/source mechanics in the final answer.
-Say "loaded tenant context," "loaded facts," or "relationship maps" when those ideas matter.
+Do not mention "semantic," "curated semantic," "typed facts," "loaded facts," "facts," "canonical entities," "entities," "relationship paths," "relationship maps," or implementation/source mechanics in the final answer.
+Say "loaded context," "source support," "loaded records," "operational patterns," or "source-supported operating connections" when those ideas matter.
+For finance close, Treasury, Kyriba, HR, Legal, or other context-only functions, lead with operational-process evidence insufficiency when the supplied context does not include function-specific work-item/process evidence.
 Do not mention pattern family or experts in Home.
 
 Return only the final user-facing answer text.`;
 
 const FORBIDDEN_RE =
-  /\b(cannot be characterized|cannot be identified|I found|missing source support|Current-state read|\bread\b|Evidence points|\bevidence\b|\brows\b|home_know|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|typed facts|relationship paths|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
+  /\b(cannot be characterized|cannot be identified|I found|missing source support|Current-state read|\bread\b|Evidence points|\bevidence\b|\brows\b|home_know|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|semantic|typed facts|loaded facts|\bfacts?\b|canonical entities|\bentities\b|relationship maps?|relationship paths?|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
 const INTERNAL_COUNT_RE =
   /\b\d[\d,]*\s+(?:canonical\s+)?(?:entities|facts|relationships|citations)\b/i;
 const RAW_ID_RE =
@@ -413,7 +419,9 @@ export function validateHomeConsultantText(args: {
   const issues: string[] = [];
   const text = args.text.trim();
   if (!text) issues.push("empty_text");
-  if (FORBIDDEN_RE.test(text)) issues.push("forbidden_language");
+  if (FORBIDDEN_RE.test(text) || homePublicAnswerLeakIssues(text).length > 0) {
+    issues.push("forbidden_language");
+  }
   if (INTERNAL_COUNT_RE.test(text)) issues.push("internal_count_language");
   if (RAW_ID_RE.test(text)) issues.push("raw_id");
   if (
@@ -424,6 +432,17 @@ export function validateHomeConsultantText(args: {
   }
   if (startsWithCountOrEvidenceLabel(text))
     issues.push("starts_with_count_or_evidence_label");
+  const requiredOperationalLead = operationalEvidenceInsufficiencyLead(
+    args.dossier.route.question,
+  );
+  if (
+    requiredOperationalLead &&
+    !/\b(does not yet support|not yet support|insufficient|not enough|not yet available|source gap)\b/i.test(
+      text.slice(0, 450),
+    )
+  ) {
+    issues.push("missing_operational_evidence_insufficiency_lead");
+  }
   const tenantLeak = detectCrossTenantLeak(text, args.dossier.tenantKey);
   if (tenantLeak) issues.push(`cross_tenant_content:${tenantLeak}`);
   if (
@@ -447,7 +466,7 @@ export function validateHomeConsultantText(args: {
 }
 
 export function normalizeHomeConsultantUserFacingText(text: string): string {
-  return text
+  return scrubHomePublicAnswerText(text
     .replace(/^\s*#{1,6}\s+.*(?:\r?\n|$)/gm, "")
     .replace(/\*\*/g, "")
     .replace(/`([^`]+)`/g, "$1")
@@ -471,15 +490,18 @@ export function normalizeHomeConsultantUserFacingText(text: string): string {
       "loaded tenant context",
     )
     .replace(/\bcurated semantic context\b/gi, "loaded tenant context")
-    .replace(/\btyped facts\b/gi, "loaded facts")
-    .replace(/\brelationship paths\b/gi, "relationship maps")
-    .replace(/\bresolved relationship maps\b/gi, "loaded relationship maps")
+    .replace(/\btyped facts\b/gi, "source support")
+    .replace(/\bloaded facts\b/gi, "loaded context")
+    .replace(/\bfacts?\b/gi, "source support")
+    .replace(/\brelationship paths\b/gi, "source-supported connections")
+    .replace(/\brelationship maps\b/gi, "source-supported connections")
+    .replace(/\bresolved relationship maps\b/gi, "source-supported connections")
     .replace(/\bcurrent-state read\b/gi, "current-state context")
     .replace(/\bmissing evidence path\b/gi, "missing source path")
     .replace(/\bevidence path\b/gi, "source path")
     .replace(/\bmissing evidence\b/gi, "missing source context")
     .replace(/\bneeded evidence\b/gi, "needed source context")
-    .replace(/\bevidence points\b/gi, "source points")
+    .replace(/\bevidence points?\b/gi, "source signals")
     .replace(/\bevidence-backed\b/gi, "source-backed")
     .replace(/\bevidence-based\b/gi, "source-backed")
     .replace(/\bevidence\b/gi, "source context")
@@ -498,12 +520,7 @@ export function normalizeHomeConsultantUserFacingText(text: string): string {
     .replace(/\bsafe answer boundary\b/gi, "safe answer scope")
     .replace(/\banswer boundary\b/gi, "safe answer scope")
     .replace(/\bdeterministic\b/gi, "loaded")
-    .replace(RAW_ID_REPLACE, "source reference")
-    .replace(/[ \t]+/g, " ")
-    .replace(/\n[ \t]+/g, "\n")
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+    .replace(RAW_ID_REPLACE, "source reference"));
 }
 
 export function buildHomeConsultantTextPromptPacket(args: {
@@ -641,7 +658,7 @@ ${packet.tablesSummary || "None"}
 Relevant charts:
 ${packet.chartsSummary || "None"}
 
-Relevant graphs / relationship paths:
+Relevant graphs / operating connections:
 ${packet.graphsAndRelationshipsSummary || "None"}
 
 Metrics:
@@ -672,6 +689,7 @@ If named leaders are loaded, you may name them.
 If only roles are loaded, say roles are loaded but named people are missing.
 If the source context supports partial structure, describe the partial structure and the precise gap.
 If the question asks what to do, explain what Home can show and hand off to the correct advisory surface.
+If the question asks about finance close, Treasury, Kyriba, HR, Legal, or another function where operational process evidence is missing, lead with that operational-process evidence insufficiency before discussing adjacent context.
 
 Return plain text only.`;
 }

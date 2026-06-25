@@ -58,8 +58,8 @@ function topMetricPhrase(dossier: UniversalDimensionDossier): string {
 
 function relationshipPhrase(dossier: UniversalDimensionDossier): string {
   const paths = dossier.composerPacket.relationshipPaths.slice(0, 4);
-  if (paths.length === 0) return 'Relationship paths are thin, so the safe answer should emphasize loaded facts and call out the missing joins.';
-  return `The important relationship paths are ${paths.map((path) => path.label.toLowerCase()).join(', ')}.`;
+  if (paths.length === 0) return 'Source-supported operating connections are thin, so the safe answer should emphasize loaded context and call out the missing joins.';
+  return `The important operating connections are ${paths.map((path) => path.label.toLowerCase()).join(', ')}.`;
 }
 
 function gapPhrase(dossier: UniversalDimensionDossier): string {

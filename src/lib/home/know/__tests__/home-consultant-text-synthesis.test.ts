@@ -250,7 +250,7 @@ describe("home consultant text synthesis", () => {
     expect(prompt).toContain("Computed rollups:");
     expect(prompt).toContain("Relevant tables:");
     expect(prompt).toContain("Relevant charts:");
-    expect(prompt).toContain("Relevant graphs / relationship paths:");
+    expect(prompt).toContain("Relevant graphs / operating connections:");
     expect(prompt).toContain("Branch options for overview questions:");
     expect(prompt).toContain("Application and systems estate");
     expect(prompt).toContain("Citation labels available:");
@@ -458,7 +458,7 @@ describe("home consultant text synthesis", () => {
 
     expect(
       validateHomeConsultantText({
-        text: "For SkyHarbor Air, the loaded context is strongest around organization leadership. Adjacent areas also carry loaded records and can be characterized at the enterprise level. Where do you want to go deeper? - Budget and financials - Vendor contracts - Enterprise profile - Organization leadership One caveat: relationship paths are not yet established.",
+        text: "For SkyHarbor Air, the loaded context is strongest around organization leadership. Adjacent areas also carry loaded records and can be characterized at the enterprise level. Where do you want to go deeper? - Budget and financials - Vendor contracts - Enterprise profile - Organization leadership One caveat: source-supported connections are not yet established.",
         dossier,
         response: browseResponse,
       }),
@@ -470,7 +470,7 @@ describe("home consultant text synthesis", () => {
       "For SkyHarbor Air, the loaded context is backed by a curated semantic evidence source with typed facts and resolved relationship paths.";
 
     expect(normalizeHomeConsultantUserFacingText(raw)).toBe(
-      "For SkyHarbor Air, the loaded context is backed by a loaded tenant context with loaded facts and loaded relationship maps.",
+      "For SkyHarbor Air, the loaded context is backed by a loaded tenant context with source support and resolved source-supported connections.",
     );
 
     expect(

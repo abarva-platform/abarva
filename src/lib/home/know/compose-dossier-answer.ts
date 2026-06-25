@@ -10,6 +10,10 @@ import type {
 } from "@/lib/home/know/home-know-contract";
 import { hasUsableDossierEvidence } from "@/lib/home/know/has-usable-dossier-evidence";
 import {
+  operationalEvidenceInsufficiencyLead,
+  scrubHomePublicAnswerText,
+} from "@/lib/home/know/home-public-answer-scrub";
+import {
   composeDossierAnswer,
   type UniversalDimensionDossier,
 } from "@/lib/semantic-dossiers";
@@ -167,7 +171,7 @@ function graphsForDossier(
   return [
     {
       id: "question-relationship-paths",
-      title: "Relevant relationship paths",
+      title: "Relevant operating connections",
       nodes: [...nodes.values()],
       edges,
       nodeTypes: [...new Set([...nodes.values()].map((node) => node.type))],
@@ -221,6 +225,17 @@ export function buildHomeKnowResponseFromDossier(input: {
     gaps,
     citations,
   });
+  const contextOnlyFunctionLead = operationalEvidenceInsufficiencyLead(
+    input.question,
+  );
+  const baseProse = overview
+    ? composeBranchOverview(input.dossier, answer.directAnswer)
+    : answer.directAnswer;
+  const prose = scrubHomePublicAnswerText(
+    contextOnlyFunctionLead
+      ? `${contextOnlyFunctionLead}\n\n${baseProse}`
+      : baseProse,
+  );
   return {
     mode: "KNOW",
     tenantKey: input.tenantKey,
@@ -232,9 +247,7 @@ export function buildHomeKnowResponseFromDossier(input: {
         : input.dossier.gaps.length > 0
           ? "partial"
           : "answered",
-    prose: overview
-      ? composeBranchOverview(input.dossier, answer.directAnswer)
-      : answer.directAnswer,
+    prose,
     dimensionsUsed: [
       input.dossier.route.primaryDimension,
       ...input.dossier.route.relatedDimensions,
