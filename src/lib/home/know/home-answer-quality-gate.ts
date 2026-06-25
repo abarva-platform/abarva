@@ -74,7 +74,7 @@ export function repairHomeAnswerQuality(
   return {
     ...response,
     prose:
-      "The loaded Home context supports a portfolio-led view of IT and business organization. Technology accountability is visible by role, domain, and portfolio where the tenant supplied those fields, while named individual leaders under the CIO are not loaded. That means aVa can explain the operating model and role-level accountability, but should not invent a people-org chart until leader-name data is added.",
+      "The loaded Home context supports a portfolio-led view of IT and business organization. Technology accountability is visible by role, domain, and portfolio where the tenant supplied those fields. Missing field: named individual leaders under the CIO. That means aVa can explain the operating model and role-level accountability, but should not invent a people-org chart until leader-name data is added.",
     safety: {
       ...response.safety,
       unsupportedClaimsRemoved:

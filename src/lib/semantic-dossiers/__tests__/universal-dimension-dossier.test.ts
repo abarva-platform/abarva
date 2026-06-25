@@ -147,7 +147,7 @@ describe('universal dimension dossiers', () => {
     const answer = composeDossierAnswer(dossier);
 
     expect(answer.directAnswer).toMatch(/precision gaps, not a blank slate/i);
-    expect(answer.directAnswer).toMatch(/source families do not prove/i);
+    expect(answer.directAnswer).toMatch(/inside the evidence boundary/i);
     expect(answer.directAnswer).not.toMatch(/Here is what is loaded|I do not see that in the loaded data|cannot be characterized/i);
     expect(answer.quality.passed).toBe(true);
   });
