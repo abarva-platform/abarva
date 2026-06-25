@@ -239,7 +239,7 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "scb_shared_engine_tower",
     summary:
-      "Shared Context Brain on Tower (placeholder hook). Default OFF. Tower currently answers in the browser (public/tower-v2/app.js answerFor); making Tower consume the shared engine requires a server-side answer endpoint (Codex W1.4) before this flag has a consumer.",
+      "Shared Context Brain on Tower. Default OFF. Tower now renders through the shared aVa/Atlas AgentDock shell and posts live portfolio questions to the server answer path; this flag controls expert grounding on that server path.",
     policy: "tenant",
     includeTenants: [],
   },

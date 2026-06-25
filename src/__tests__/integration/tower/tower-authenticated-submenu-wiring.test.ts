@@ -1,67 +1,36 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from "node:fs";
 
-describe('IT Investment Tower v2 route wiring', () => {
-  const pageSource = readFileSync('src/app/(maestro)/tower/page.tsx', 'utf8');
-  const frameRoute = readFileSync('src/app/api/tower/v2-frame/route.ts', 'utf8');
-  const towerHtml = readFileSync('public/tower-v2/index.html', 'utf8');
-  const towerApp = readFileSync('public/tower-v2/app.js', 'utf8');
+describe("Tower authenticated route wiring", () => {
+  const pageSource = readFileSync("src/app/(maestro)/tower/page.tsx", "utf8");
+  const towerIndexSource = readFileSync("src/components/tower/TowerIndexPage.tsx", "utf8");
 
-  it('renders the approved standalone v2 Tower in the authenticated /tower route', () => {
-    expect(pageSource).toContain('<AppShell');
-    expect(pageSource).toContain('surface="tower"');
-    expect(pageSource).toContain('<iframe');
-    expect(pageSource).toContain('/api/tower/v2-frame?client=');
-    expect(pageSource).toContain('AbarVa IT Investment Tower');
-    expect(pageSource).not.toContain('<AiControlTowerPage');
+  it("resolves the authenticated tenant once and passes that tenant into Tower state", () => {
+    expect(pageSource).toContain("getActiveClientRow()");
+    expect(pageSource).toContain("canonicalClientDisplayName");
+    expect(pageSource).toContain("buildAtlasTowerCurrentState");
+    expect(pageSource).toContain("clientId: activeClient.id");
+    expect(pageSource).toContain("clientId={activeClient?.id}");
   });
 
-  it('threads the server-resolved tenant into the Tower frame without bypassing locked-session enforcement', () => {
-    expect(pageSource).toContain('getActiveClientRow()');
-    expect(frameRoute).toContain('request.nextUrl.searchParams.get');
-    expect(frameRoute).toContain('getActiveClientRow(requestedClient)');
-    expect(frameRoute).not.toContain('hasLockedTenantSession');
-    expect(frameRoute).not.toContain('catch(() => null)');
+  it("preserves Tower tabs through the React page instead of iframe query wiring", () => {
+    expect(pageSource).toContain("searchParams");
+    expect(pageSource).toContain("resolveTowerTab(tab)");
+    expect(pageSource).toContain("activeTab={activeTab}");
+    expect(pageSource).not.toContain("frameSrc");
+    expect(pageSource).not.toContain("requestedClient");
   });
 
-  it('keeps canonical product navigation on the route shell and hides standalone iframe chrome', () => {
-    expect(pageSource).toContain('AppShell');
-    expect(frameRoute).toContain('abarva-tower-v2-embed-css');
-    expect(frameRoute).toContain('.topbar { display: none !important; }');
-    for (const label of ['Home', 'Intelligence', 'Moves', 'Source', 'Tower']) {
-      expect(towerHtml).toContain(label);
-    }
-    expect(towerHtml).toContain('First Capital Financial');
-    expect(towerHtml).toContain('tb-nav');
+  it("mounts the shared aVa dock around the Tower workspace", () => {
+    expect(towerIndexSource).toContain("<AtlasChatPanel");
+    expect(towerIndexSource).toContain("workspace={towerWorkspace}");
+    expect(towerIndexSource).toContain("surface=\"tower\"");
+    expect(towerIndexSource).toContain("onSubmit={sendToAtlas}");
   });
 
-  it('keeps the v2 Tower lenses and Ask Ava in one canvas', () => {
-    for (const label of ['Programs', 'Spend', 'Vendors', 'By Function', 'Actions']) {
-      expect(towerApp).toContain(label);
-    }
-    expect(towerHtml).toContain('Ask Ava about the IT portfolio');
-    expect(towerApp).toContain('answerFor(q)');
-    expect(towerApp).toContain('renderDock');
-  });
-
-  it('removes legacy Tower subroutes so the old portfolio board cannot reappear by URL', () => {
-    const removedRoutes = [
-      'src/app/(maestro)/tower/activity/page.tsx',
-      'src/app/(maestro)/tower/lens/page.tsx',
-      'src/app/(maestro)/tower/onboard/page.tsx',
-      'src/app/(maestro)/tower/outcomes/page.tsx',
-      'src/app/(maestro)/tower/portfolio/page.tsx',
-      'src/app/(maestro)/tower/portfolio-dag/page.tsx',
-      'src/app/(maestro)/tower/pressures/page.tsx',
-      'src/app/(maestro)/tower/preview/page.tsx',
-      'src/app/(maestro)/tower/programs/page.tsx',
-      'src/app/(maestro)/tower/projects/page.tsx',
-      'src/app/(maestro)/tower/source-portfolio-value/page.tsx',
-      'src/app/(maestro)/tower/staff-aug/page.tsx',
-      'src/app/(maestro)/tower/tech-stack/page.tsx',
-      'src/app/(maestro)/tower/volumetrics/page.tsx',
-    ];
-    for (const route of removedRoutes) {
-      expect(existsSync(route)).toBe(false);
-    }
+  it("keeps retired static Tower endpoints and assets out of the runtime tree", () => {
+    expect(existsSync("src/app/api/tower/v2-frame/route.ts")).toBe(false);
+    expect(existsSync("src/app/api/tower/v2-data/route.ts")).toBe(false);
+    expect(existsSync("public/tower-v2/index.html")).toBe(false);
+    expect(existsSync("src/lib/tower-v2/v4-data.ts")).toBe(false);
   });
 });

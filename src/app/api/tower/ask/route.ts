@@ -2,18 +2,11 @@
 // Body: { question: string }
 // Response: streaming plain text — Ava's Tower answer to a free-text question.
 //
-// W1.4 — the Tower server answer endpoint. Today Tower answers entirely in the
-// browser (public/tower-v2/app.js `answerFor`), so a question never reaches the
-// shared engine. This route is the server-side seam: it answers a Tower question
-// through the SAME Anthropic egress/auth path the Tower synthesis route uses
-// (requireTenancy → getActiveClientRow → preflightAnthropicDirectClient →
-// client.messages.stream), and — when the `scb_shared_engine_tower` flag is ON
-// for the tenant — grounds the answer in the Consilium expert faculty via
-// `summonExpertsForQuery`, prepending the grounding block to the user message.
-//
-// Dormant by default: the flag is OFF for every tenant (registry default), so
-// the answer is byte-identical to an ungrounded Tower answer. Wiring the browser
-// `answerFor` to POST here is a separate, intentionally-not-done follow-on.
+// Server-side Tower answer endpoint. Tower's visible route now uses the shared
+// React aVa/Atlas AgentDock shell; this endpoint remains the lightweight
+// streaming seam for Tower questions that use the legacy `/api/tower/ask`
+// contract. When the `scb_shared_engine_tower` flag is ON for the tenant, it
+// grounds the answer in the Consilium expert faculty via `summonExpertsForQuery`.
 
 import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { getActiveClientRow } from "@/lib/active-client";
