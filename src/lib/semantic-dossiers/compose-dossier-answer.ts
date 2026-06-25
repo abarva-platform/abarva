@@ -75,6 +75,9 @@ function questionFocusPhrase(dossier: UniversalDimensionDossier): string {
   if (/\bmission-critical|criticality|critical\b/.test(q)) {
     return 'For criticality, the safe read is to separate mission-critical assets from items where criticality, owner, or lifecycle fields still need confirmation.';
   }
+  if (/\bunsupported|end of life|eol|near end|lifecycle\b/.test(q)) {
+    return 'For unsupported or end-of-life applications, use lifecycle fields to identify applications with retirement, unsupported, N-1, or modernization risk signals, then tie them back to owners, domains, and affected capabilities.';
+  }
   if (/\blifecycle|modernization|risk\b/.test(q)) {
     return 'For lifecycle and modernization risk, the useful read is which applications connect to risk/control context, lifecycle status, vendor dependency, and modernization ownership.';
   }
@@ -89,6 +92,9 @@ function questionFocusPhrase(dossier: UniversalDimensionDossier): string {
   }
   if (/\bvendor|contract|supplier|renewal\b/.test(q)) {
     return 'For vendor and contract questions, connect suppliers to supported applications, capabilities, spend, renewal risk, owners, and operational dependency.';
+  }
+  if (/\bcybersecurity|cyber|security\b/.test(q) && /\bwho|lead|leader|budget|spend|cost\b/.test(q)) {
+    return 'For cybersecurity leadership and budget, connect the CISO/security owner role to risk and control coverage, then separate loaded security-budget support from any missing named-person or portfolio-budget field.';
   }
   if (/\bbudget|spend|cost|finance|financial\b/.test(q)) {
     return 'For budget questions, connect spend to portfolios, owners, applications, vendors, and run/change funding where those fields are loaded.';

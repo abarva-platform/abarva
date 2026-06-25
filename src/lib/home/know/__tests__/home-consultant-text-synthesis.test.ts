@@ -274,6 +274,19 @@ describe("home consultant text synthesis", () => {
     expect(text).not.toMatch(/\bread\b|\bevidence\b|\brows\b/i);
   });
 
+  it("normalizes consultant preamble, markdown, and answer-boundary wording before validation", () => {
+    const text = normalizeHomeConsultantUserFacingText(
+      "Here is what the loaded context can tell you: **Lifecycle posture** depends on `lifecycle_stage`; the safe answer boundary is role-level.",
+    );
+
+    expect(text).toBe(
+      "Lifecycle posture depends on lifecycle_stage; the safe answer scope is role-level.",
+    );
+    expect(
+      validateHomeConsultantText({ text, dossier, response }),
+    ).not.toContain("forbidden_language");
+  });
+
   it("normalizes deterministic fallback prose when Claude synthesis is not selected", () => {
     const selected = applyHomeConsultantTextSynthesisFailureTrace(
       {
