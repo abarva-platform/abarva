@@ -294,6 +294,24 @@ describe("home consultant text synthesis", () => {
     ).toEqual(expect.arrayContaining(["cross_tenant_content:Lakeshore"]));
   });
 
+  it("fails full cross-tenant names but not ordinary apex wording", () => {
+    expect(
+      validateHomeConsultantText({
+        text: "SkyHarbor has apex-level operational complexity across the airline estate.",
+        dossier,
+        response,
+      }),
+    ).not.toEqual(expect.arrayContaining([expect.stringMatching(/^cross_tenant_content:/)]));
+
+    expect(
+      validateHomeConsultantText({
+        text: "Apex Retail's application estate is relevant here.",
+        dossier,
+        response,
+      }),
+    ).toEqual(expect.arrayContaining(["cross_tenant_content:Apex Retail"]));
+  });
+
   it("falls back cleanly on timeout", async () => {
     process.env.HOME_KNOW_CLAUDE_TIMEOUT_MS = "1";
     mockClaudeText("SkyHarbor's loaded application context supports a domain-led view.", 10);
