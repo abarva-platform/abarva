@@ -2,6 +2,24 @@
 
 **Self-contained.** Execute on a clean branch off `origin/main`. Surgical: add an LLM phrase-only step to the existing Home KNOW engine. Do **not** change retrieval, the read-model views, the contract, tables/charts/gaps/citations, or the UI. Phrase-only.
 
+## ⛔ CORRECTION — 2026-06-24 (supersedes the "phrase-only" framing and the "names not loaded" target below)
+The live answer to *"who are our technology leaders under our CIO?"* asserted a **FALSE gap**: *"named individual leaders under the CIO are not loaded."* SkyHarbor's C-suite **is** loaded (per `executive_stakeholder_map.csv`): CIO **Amala Rao**, CTO **Evan Kline**, CISO **Owen Mercer**, CDO **Samir Nadeem**. The earlier GO (and this brief's earlier "names not loaded" target) was wrong.
+
+**Root cause:** the Home org/leadership read-model binds `F02/F03` (role-level ownership) but **does not bind the executive stakeholder map** → it reports "no named leaders" when the names exist. **This is therefore NOT prose-only.** Two parts:
+1. **Bind the executive stakeholder evidence** into the org/leadership retrieval/read-model so the packet carries the named C-suite (then the prose — template or graft — can name them).
+2. Prose leads with **both** the named executive layer **and** the role/portfolio operating model.
+
+**VERIFY FIRST — do not assume (this is the lesson):** `executive_stakeholder_map.csv` and these names are **NOT** in the repo's committed SkyHarbor v4 dataset (family-1 = `F01`–`F04`; `F03` = roles only). Confirm where the stakeholder map lives in the **live substrate**: if it's in the tenant DB, bind it into the org read-model; if it's not in the substrate the engine reads, **load it first**. Query the live data; don't infer.
+
+**Corrected target answer:**
+> SkyHarbor's loaded context supports both a named executive leadership view and a role/domain-level IT operating model. The executive stakeholder map names **Amala Rao as CIO, Evan Kline as CTO, Owen Mercer as CISO, and Samir Nadeem as CDO**. The IT ownership data then maps technology accountability by portfolio and domain — operations systems, crew/flight platforms, airport tech, enterprise platforms, cloud, data/BI, integration, cybersecurity, AI governance. What is genuinely thinner is **person-level ownership for every application and every portfolio row** — not the C-suite leadership layer.
+
+**Corrected gate / regression (supersedes the phrase-only checks alone):** verify **grounding**, not just hygiene.
+- For the SkyHarbor org/leadership question, the answer **MUST contain** Amala Rao, Evan Kline, Owen Mercer, Samir Nadeem (when loaded), and **MUST NOT** say leaders are "not loaded" / "cannot be identified."
+- General rule: a gate must fail when the answer **omits or contradicts known-loaded evidence** — phrase hygiene alone is insufficient (it passed a false gap). The eval/regression must assert known facts appear, not only that bad phrases are absent.
+
+The sections below remain valid for the *prose-quality* layer, but the binding fix above is the primary defect.
+
 ## Why (proven, not speculative)
 The live eval (`scripts/qa/eval-home-know-quality.mjs`, 8 SkyHarbor questions, 2026-06-24) returned **0/8 consultant-grade**: every answer `mechanical` or `blocked`, with a hard fail on Q3 (`"I found 3 Home source gap(s)."` — a literal row-count lead). Root cause: `/api/home/know/ask` → `buildHomeKnowResponse()` builds prose from `homeKnowProse(...)` **templates — no Claude call**. The retrieval/substrate is fine (live `mv_home_*` views); only the prose is mechanical. Sample bad leads:
 - Q1: *"IT is loaded by portfolio/team: …"* (lists, doesn't synthesize)
