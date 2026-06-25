@@ -629,6 +629,54 @@ describe("Home KNOW contract engine", () => {
     );
   });
 
+  it("does not replace grounded Home prose just because it mentions operating decisions", () => {
+    const response = validateHomeKnowResponse({
+      mode: "KNOW",
+      tenantKey: "lakeshore",
+      question: "What do we know about Lakeshore's IT and business organization today?",
+      intent: "lookup",
+      answerStatus: "partial",
+      prose:
+        "Lakeshore Holdings' loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive role-level leadership. No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.",
+      dimensionsUsed: ["organization_leadership"],
+      facts: [],
+      tables: [
+        {
+          id: "dimension-dossier-source-coverage",
+          title: "Dimension dossier source coverage",
+          dimensionId: "organization_leadership",
+          columns: [{ key: "section", label: "Section" }],
+          rows: [{ section: "IT organization and role accountability" }],
+          citationIds: ["c1"],
+        },
+      ],
+      charts: [],
+      graphs: [],
+      gaps: [],
+      conflicts: [],
+      citations: [
+        {
+          id: "c1",
+          label: "IT organization and role accountability",
+          sourceClass: "tenant-source-file",
+        },
+      ],
+      handoff: null,
+      safety: {
+        serverValidated: false,
+        blockedExperts: false,
+        blockedDecisionFrames: false,
+        blockedInternalCodes: false,
+        unsupportedClaimsRemoved: 0,
+        frontendTripwireShouldFire: false,
+      },
+    });
+
+    expect(response.prose).toMatch(/portfolio-led view/i);
+    expect(response.prose).not.toMatch(/Here is what is loaded|I do not see that in the loaded data/i);
+    expect(response.safety.frontendTripwireShouldFire).toBe(false);
+  });
+
   it.each([
     "Show our data products in a table with domain and owning team.",
     "Give me a table comparing our top three initiatives on impact, risk, and owner.",

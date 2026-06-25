@@ -149,7 +149,7 @@ const INTERNAL_CODE_RE =
 const INTERNAL_CODE_REPLACE =
   /\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 const DECISION_RE =
-  /\b(should|recommend|prioriti[sz]e|approve|kill|scale|invest|decision|what do we do|next move|where should)\b/i;
+  /\b(should\s+(we|i|the\s+(company|client|team|board)|skyharbor|lakeshore)|recommend|prioriti[sz]e|approve|kill|scale\s+(up|down|this|it)|invest|what do we do|next move|where should)\b/i;
 const GRAPH_RE =
   /\b(graph|map|topolog|dependency|dependencies|relationship|relationships|lineage|blast radius|depends on|integration|interfaces?)\b/i;
 const EXACT_UNKNOWABLE_RE =

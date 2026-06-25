@@ -132,6 +132,46 @@ describe('universal dimension dossiers', () => {
     expect(answer.quality.passed).toBe(true);
   });
 
+  it('answers gap questions as precision gaps, not no-data failures', () => {
+    const dossier = buildUniversalDimensionDossier({
+      tenantKey: 'lakeshore',
+      question: "What are Lakeshore's biggest context gaps?",
+      requestedSurface: 'home',
+      sources: {
+        F02_business_org_functions: loadCsv('datasets/lakeshore-industries-synthetic-v4/family-1-enterprise-operating-model/F02_business-org-functions.csv'),
+        F03_it_org_ownership: loadCsv('datasets/lakeshore-industries-synthetic-v4/family-1-enterprise-operating-model/F03_it-org-ownership.csv'),
+        F05_applications_systems: loadCsv('datasets/lakeshore-industries-synthetic-v4/family-2-technology-estate/F05_applications-systems.csv'),
+        F19_team_application_ownership: loadCsv('datasets/lakeshore-industries-synthetic-v4/family-8-semantic-enrichment/F19_team-application-ownership.csv'),
+      },
+    });
+    const answer = composeDossierAnswer(dossier);
+
+    expect(answer.directAnswer).toMatch(/precision gaps, not a blank slate/i);
+    expect(answer.directAnswer).toMatch(/source families do not prove/i);
+    expect(answer.directAnswer).not.toMatch(/Here is what is loaded|I do not see that in the loaded data|cannot be characterized/i);
+    expect(answer.quality.passed).toBe(true);
+  });
+
+  it('explains tenant boundary when a question names another loaded client', () => {
+    const dossier = buildUniversalDimensionDossier({
+      tenantKey: 'lakeshore',
+      question: "Show me SkyHarbor's vendor contracts.",
+      requestedSurface: 'home',
+      sources: {
+        F11_vendors_contracts_licenses: loadCsv('datasets/lakeshore-industries-synthetic-v4/family-4-financial-commercial/F11_vendors-contracts-licenses.csv'),
+        F05_applications_systems: loadCsv('datasets/lakeshore-industries-synthetic-v4/family-2-technology-estate/F05_applications-systems.csv'),
+        F10_integrations_interfaces: loadCsv('datasets/lakeshore-industries-synthetic-v4/family-3-data-connectivity/F10_integrations-interfaces.csv'),
+        F22_contract_system_service_map: loadCsv('datasets/lakeshore-industries-synthetic-v4/family-8-semantic-enrichment/F22_contract-system-service-map.csv'),
+      },
+    });
+    const answer = composeDossierAnswer(dossier);
+
+    expect(answer.directAnswer).toMatch(/scoped to Lakeshore Holdings/i);
+    expect(answer.directAnswer).toMatch(/cannot expose SkyHarbor Air tenant details/i);
+    expect(answer.directAnswer).toMatch(/Within Lakeshore Holdings' loaded context/i);
+    expect(answer.quality.passed).toBe(true);
+  });
+
   it('builds full relevant binder for application questions instead of fragment retrieval', () => {
     const dossier = buildUniversalDimensionDossier({
       tenantKey: 'skyharbor-air',

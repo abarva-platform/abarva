@@ -1,5 +1,5 @@
 import type { DossierAnswer, UniversalDimensionDossier } from './types';
-import { canonicalClientDisplayName } from '@/lib/client-config';
+import { ALL_CLIENTS, CLIENT_KEY_TO_DB_NAME, canonicalClientDisplayName } from '@/lib/client-config';
 
 function asList(value: unknown): string[] {
   return Array.isArray(value) ? value.map(String).filter(Boolean) : [];
@@ -63,19 +63,80 @@ function relationshipPhrase(dossier: UniversalDimensionDossier): string {
 }
 
 function gapPhrase(dossier: UniversalDimensionDossier): string {
-  if (dossier.gaps.length === 0) return 'No blocking gap is visible in the assembled dossier, though final operating decisions still need client validation.';
+  if (dossier.gaps.length === 0) return 'No blocking gap is visible in the assembled dossier, though final operating choices still need client validation.';
   return `The main missing pieces are ${dossier.gaps.slice(0, 3).map((gap) => gap.label.toLowerCase()).join('; ')}.`;
+}
+
+function externalTenantMention(dossier: UniversalDimensionDossier): string | null {
+  const question = dossier.route.question.toLowerCase();
+  const currentLabel = tenantLabel(dossier.tenantKey);
+  const currentKey = dossier.tenantKey.toLowerCase();
+  const currentClient = ALL_CLIENTS.find((client) => {
+    const aliases = [client.id, client.name, client.shortName, ...(CLIENT_KEY_TO_DB_NAME[client.id] ?? [])]
+      .map((alias) => alias.toLowerCase())
+      .filter(Boolean);
+    return aliases.includes(currentKey) || aliases.includes(currentLabel.toLowerCase());
+  });
+  const currentAliases = currentClient
+    ? [currentClient.id, currentClient.name, currentClient.shortName, ...(CLIENT_KEY_TO_DB_NAME[currentClient.id] ?? [])]
+        .map((alias) => alias.toLowerCase())
+        .filter(Boolean)
+    : [currentKey, currentLabel.toLowerCase()];
+
+  for (const client of ALL_CLIENTS) {
+    const label = canonicalClientDisplayName({ key: client.id }) ?? client.name;
+    const aliases = [client.id, client.name, client.shortName, ...(CLIENT_KEY_TO_DB_NAME[client.id] ?? [])]
+      .map((alias) => alias.toLowerCase())
+      .filter(Boolean);
+    const isCurrent = aliases.some((alias) => currentAliases.includes(alias));
+    if (isCurrent) continue;
+    if (aliases.some((alias) => question.includes(alias))) return label;
+  }
+  return null;
+}
+
+function tenantBoundaryLead(dossier: UniversalDimensionDossier): string {
+  const requestedTenant = externalTenantMention(dossier);
+  if (!requestedTenant) return '';
+  const label = tenantLabel(dossier.tenantKey);
+  return `This signed-in Home workspace is scoped to ${label}, so aVa cannot expose ${requestedTenant} tenant details here. Within ${possessive(label)} loaded context, `;
+}
+
+function isGapQuestion(dossier: UniversalDimensionDossier): boolean {
+  return /\b(gap|gaps|missing|not loaded|thin|incomplete|coverage)\b/i.test(dossier.route.question);
+}
+
+function composeGapAnswer(dossier: UniversalDimensionDossier): string {
+  const label = tenantLabel(dossier.tenantKey);
+  const loadedSections = dossier.sections.filter((section) => section.recordCount > 0);
+  const primarySections = loadedSections.filter((section) => section.dimensionFamily === dossier.route.primaryDimension);
+  const adjacentSections = loadedSections.filter((section) => section.dimensionFamily !== dossier.route.primaryDimension);
+  const gapText = dossier.gaps.slice(0, 4).map((gap) => gap.label.toLowerCase().replace(/[.]+$/g, ''));
+  const gapLabels = dossier.gaps.length > 0
+    ? gapText.join('; ')
+    : 'no blocking source-family gap is visible in this assembled dossier';
+  const primaryPhrase =
+    primarySections.length > 0
+      ? `${primarySections.length} primary ${dimensionLabel(dossier.route.primaryDimension)} source section${primarySections.length === 1 ? '' : 's'}`
+      : `the primary ${dimensionLabel(dossier.route.primaryDimension)} binder is thin`;
+  const adjacentPhrase =
+    adjacentSections.length > 0
+      ? `${adjacentSections.length} adjacent source section${adjacentSections.length === 1 ? '' : 's'}`
+      : 'few adjacent source sections';
+
+  return `${tenantBoundaryLead(dossier)}${possessive(label)} biggest Home context gaps are precision gaps, not a blank slate. The dossier attaches ${primaryPhrase} and ${adjacentPhrase}, so aVa can describe the current-state shape and supporting relationships, but it must stay careful where source families do not prove names, ownership joins, freshness, or control status. The specific gaps to close are ${gapLabels}. That means the next enrichment pass should target the missing source families directly instead of asking the model to infer them.`;
 }
 
 function composeGenericKnowAnswer(dossier: UniversalDimensionDossier): string {
   const label = tenantLabel(dossier.tenantKey);
   const dimension = dimensionLabel(dossier.route.primaryDimension);
+  const boundaryLead = tenantBoundaryLead(dossier);
   const handoff =
     dossier.answerBoundary.handoffTarget && dossier.answerBoundary.handoffTarget !== 'home'
       ? ` Home can ground the facts and boundaries, but the investment or prioritization call should move to ${dossier.answerBoundary.handoffTarget}.`
       : '';
 
-  return `${possessive(label)} loaded ${dimension} dossier gives a current-state view across the primary binder and adjacent context. ${topMetricPhrase(dossier)}. ${relationshipPhrase(dossier)} ${gapPhrase(dossier)}${handoff}`;
+  return `${boundaryLead}${possessive(label)} ${dimension} context is strong enough to answer as a current-state dossier, not a fragment lookup. ${topMetricPhrase(dossier)}. Operationally, the useful signal is how the primary binder connects to adjacent dimensions: ${relationshipPhrase(dossier)} ${gapPhrase(dossier)}${handoff}`;
 }
 
 function composeOrganizationAnswer(dossier: UniversalDimensionDossier): string {
@@ -87,7 +148,7 @@ function composeOrganizationAnswer(dossier: UniversalDimensionDossier): string {
   const technologyLeadership = asList(dossier.rollups.technologyLeadership);
 
   const lead =
-    `${possessive(label)} loaded context supports a portfolio-led view of IT and business organization. ` +
+    `${tenantBoundaryLead(dossier)}${possessive(label)} loaded context supports a portfolio-led view of IT and business organization. ` +
     `Technology accountability is visible across business functions, IT domains, application ownership, and executive/role-level leadership, which supports an operating-model synthesis before any caveats.`;
 
   const named =
@@ -111,7 +172,9 @@ function composeOrganizationAnswer(dossier: UniversalDimensionDossier): string {
 
 export function composeDossierAnswer(dossier: UniversalDimensionDossier): DossierAnswer {
   const directAnswer =
-    dossier.route.primaryDimension === 'organization_leadership'
+    isGapQuestion(dossier)
+      ? composeGapAnswer(dossier)
+      : dossier.route.primaryDimension === 'organization_leadership'
       ? composeOrganizationAnswer(dossier)
       : composeGenericKnowAnswer(dossier);
 
