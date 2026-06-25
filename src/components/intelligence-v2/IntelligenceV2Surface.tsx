@@ -137,6 +137,14 @@ function newTurnId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function answerBodyFromPacket(answer: AvaAnswerPacket): string {
+  return (
+    answer.directAnswer?.trim() ||
+    answer.prose?.trim() ||
+    ""
+  );
+}
+
 export function IntelligenceV2Surface({
   payload,
   tenantName,
@@ -265,6 +273,7 @@ export function IntelligenceV2Surface({
             throw new Error(event.error ?? "Intelligence stream error");
           }
           if (event.type === "agent-answer" && event.answer) {
+            const packetBody = answerBodyFromPacket(event.answer);
             structuredAnswer = {
               ...event.answer,
               directAnswer:
@@ -274,7 +283,7 @@ export function IntelligenceV2Surface({
                 event.answer.directAnswer?.trim() ||
                 answerText.trim(),
             };
-            updateAgentTurn(answerText, structuredAnswer);
+            updateAgentTurn(answerText.trim() || packetBody, structuredAnswer);
             continue;
           }
           const delta = eventText(event);
@@ -294,7 +303,9 @@ export function IntelligenceV2Surface({
         }
       }
 
-      if (!answerText.trim() && !structuredAnswer) {
+      if (!answerText.trim() && structuredAnswer) {
+        updateAgentTurn(answerBodyFromPacket(structuredAnswer), structuredAnswer);
+      } else if (!answerText.trim() && !structuredAnswer) {
         updateAgentTurn(
           "I could not produce a grounded Intelligence answer for that request yet.",
         );
