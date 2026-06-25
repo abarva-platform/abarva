@@ -32,6 +32,7 @@ Home/aVa now attempts to answer from the curated Semantic2 dossier table before 
 - `src/lib/home/know/compose-dossier-answer.ts`: branch-first overview contract and first-turn artifact suppression for broad loaded-context questions.
 - `src/lib/home/know/home-consultant-text-synthesis.ts`: v2 branch-first prompt and prompt snapshot trace.
 - Follow-up hardening: broad `browse` answers now reject Claude output that collapses branch options into a wall of text, causing Home to fall back to the deterministic branch-first render while retaining prompt trace evidence.
+- Follow-up render fix: text normalization now preserves paragraph and branch-list line breaks instead of flattening the final branch-first answer.
 - `src/app/api/home/know/ask/route.ts`: debug-only trace payload includes the exact prompt snapshot.
 - `src/lib/home/know/home-know-contract.ts` and `src/lib/semantic-dossiers/types.ts`: typed trace/branch option fields.
 

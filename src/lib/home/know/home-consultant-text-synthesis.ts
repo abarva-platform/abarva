@@ -482,7 +482,10 @@ export function normalizeHomeConsultantUserFacingText(text: string): string {
     .replace(/\banswer boundary\b/gi, "safe answer scope")
     .replace(/\bdeterministic\b/gi, "loaded")
     .replace(RAW_ID_REPLACE, "source reference")
-    .replace(/\s+/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 

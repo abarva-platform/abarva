@@ -367,6 +367,16 @@ describe("home consultant text synthesis", () => {
     expect(selected.safety.composerTrace?.fallbackUsed).toBe(true);
   });
 
+  it("preserves branch list line breaks while normalizing fallback prose", () => {
+    const text = normalizeHomeConsultantUserFacingText(
+      "SkyHarbor Air has enough current-state context.\n\nWhere do you want to go deeper?\n- budget financials: 160 rows\n- vendor contracts: 160 rows",
+    );
+
+    expect(text).toContain("\n- budget financials: 160 records");
+    expect(text).toContain("\n- vendor contracts: 160 records");
+    expect(text).not.toContain("? - budget");
+  });
+
   it("fails Claude output with forbidden false-absence language", () => {
     expect(
       validateHomeConsultantText({
