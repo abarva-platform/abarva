@@ -25,6 +25,8 @@ import {
 } from "./advisor-composer";
 import { buildAgentContextContractBlock } from "@/lib/agent/module-context-contract";
 import { buildHealthcareAnswerContract } from "@/lib/intelligence/synthesis/healthcareAnswerContract";
+import { formatIntelligenceDossierForPrompt } from "@/lib/intelligence/compose-intelligence-answer";
+import type { IntelligenceDossier } from "@/lib/intelligence/dossiers";
 
 export { chunkAskText, sanitizeAskSynthesis } from "./response-policy";
 
@@ -316,6 +318,7 @@ export async function* synthesizeStream(args: {
   conversationContextBlock?: string;
   factAvailabilityBlock?: string;
   coverageReportBlock?: string;
+  intelligenceDossier?: IntelligenceDossier;
   /**
    * Average source confidence. The synthesizer used to lead with a "Limited
    * indexed data — confidence is moderate" prefix when this dropped below
@@ -376,6 +379,9 @@ export async function* synthesizeStream(args: {
     tenantIdentityPin,
     contextContractBlock,
     healthcareAnswerContract,
+    args.intelligenceDossier
+      ? formatIntelligenceDossierForPrompt(args.intelligenceDossier)
+      : "",
     args.factAvailabilityBlock?.trim() ?? "",
     args.coverageReportBlock?.trim() ?? "",
     args.userContextBlock?.trim() ?? "",
