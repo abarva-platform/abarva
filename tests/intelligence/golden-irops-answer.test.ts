@@ -113,4 +113,47 @@ describe("Golden IROPS Intelligence advisor composer", () => {
     expect(chooseAdvisorWordCap(ordinary, 240)).toBe(240);
     expect(chooseSynthesisTokenBudget(ordinary)).toBe(600);
   });
+
+  it("routes broad function questions by business subject before incidental terms", () => {
+    const fixtures = [
+      {
+        query:
+          "List SkyHarbor core applications with owner, modernization posture, risk, and run cost.",
+        expectedFunction: "Function: application portfolio and modernization",
+      },
+      {
+        query:
+          "Compare SkyHarbor initiatives by impact, dependency risk, owner, and scale-hold-stop posture.",
+        expectedFunction: "Function: initiative portfolio and prioritization",
+      },
+      {
+        query:
+          "Show the architecture constraints across mainframe, identity, APIs, and integration risk.",
+        expectedFunction: "Function: enterprise architecture constraints",
+      },
+      {
+        query:
+          "Which customer operations and front-office AI opportunities should leadership consider, with evidence and caveats?",
+        expectedFunction: "Function: customer operations and front-office AI",
+      },
+      {
+        query:
+          "How should Lakeshore use AI for ITSM incident triage and back-office process reengineering?",
+        expectedFunction: "Function: operations and process bottlenecks",
+      },
+    ];
+
+    for (const fixture of fixtures) {
+      expect(routeIntelligenceAdvisorQuestion(fixture.query)).toBe(
+        "enterprise_function_artifact",
+      );
+      expect(
+        buildIntelligenceAdvisorComposerBlock({
+          query: fixture.query,
+          tenantClientKey: "skyharbor-air",
+          sources,
+        })?.promptBlock,
+      ).toContain(fixture.expectedFunction);
+    }
+  });
 });

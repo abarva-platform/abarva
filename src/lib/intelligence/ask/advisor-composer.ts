@@ -14,7 +14,7 @@ const AIRLINE_CONTEXT_RE =
 const VALUE_OR_VISUAL_RE =
   /\b(roi|return|value|benefit|benefits|trend|trends|investment|investments|chart|charts|table|tables|visual|visualize|graph)\b/i;
 const FUNCTION_ARTIFACT_RE =
-  /\b(table|tables|chart|charts|visuali[sz]e|visual|graph|map|compare|list|show|break\s?down)\b/i;
+  /\b(table|tables|chart|charts|visuali[sz]e|visual|graph|map|compare|list|show|break\s?down|which|where should|how should|consider|opportunit(?:y|ies)|prioriti[sz]e|recommend)\b/i;
 
 const AIRLINE_IROPS_EXPERT_IDS = [
   "xp.airline.operations-revenue-management",
@@ -277,41 +277,49 @@ function enterpriseFunctionRouteForQuery(
 ): EnterpriseFunctionRoute | null {
   const normalized = query.trim().toLowerCase();
   if (!FUNCTION_ARTIFACT_RE.test(normalized)) return null;
-  if (/\b(integration|dependency|dependencies|topolog|graph|edge|edges|relationship|relationships)\b/.test(normalized)) {
-    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "integrations") ?? null;
+
+  const routeByKey = (key: EnterpriseFunctionRoute["key"]) =>
+    ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === key) ?? null;
+  const has = (pattern: RegExp) => pattern.test(normalized);
+
+  if (has(/\b(customer|front.?office|contact.?center|journey|loyalty|service recovery|agent assist)\b/)) {
+    return routeByKey("customer");
   }
-  if (/\b(budget|run.?cost|finance|spend|cost|portfolio or category)\b/.test(normalized)) {
-    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "finance") ?? null;
+  if (has(/\b(initiative|initiatives|roadmap|scale|hold|stop|prioriti[sz]e|top bets?)\b/)) {
+    return routeByKey("initiatives");
   }
-  if (/\b(vendor|contract|supplier|concentration|renewal)\b/.test(normalized)) {
-    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "vendors") ?? null;
+  if (has(/\b(architecture|mainframe|platform|identity|api|apis|constraint|constraints|legacy|resilien(?:ce|cy))\b/)) {
+    return routeByKey("architecture");
   }
-  if (/\b(application|applications|system|systems|modernization|lifecycle)\b/.test(normalized)) {
-    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "applications") ?? null;
+  if (
+    has(/\b(application|applications|app portfolio|core systems?|systems of record|modernization|lifecycle)\b/) &&
+    !has(/\b(vendor|supplier|contract|concentration|renewal)\b/)
+  ) {
+    return routeByKey("applications");
   }
-  if (/\b(data product|data products|analytics|maturity|ai readiness)\b/.test(normalized)) {
-    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "data_products") ?? null;
+  if (has(/\b(data product|data products|analytics|maturity|ai readiness|lineage|registry)\b/)) {
+    return routeByKey("data_products");
   }
-  if (/\b(workforce|persona|people|fte|labor|productivity|function)\b/.test(normalized)) {
-    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "workforce") ?? null;
+  if (has(/\b(integration|dependency|dependencies|topolog|graph|edge|edges|relationship|relationships|feeds?|upstream|downstream)\b/)) {
+    return routeByKey("integrations");
   }
-  if (/\b(risk|risks|control|controls|governance|severity|compliance)\b/.test(normalized)) {
-    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "risk_controls") ?? null;
+  if (has(/\b(budget|run.?cost|finance|spend|cost|portfolio or category|capex|opex)\b/)) {
+    return routeByKey("finance");
   }
-  if (/\b(initiative|initiatives|roadmap|scale|hold|stop|dependency)\b/.test(normalized)) {
-    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "initiatives") ?? null;
+  if (has(/\b(vendor|contract|supplier|concentration|renewal)\b/)) {
+    return routeByKey("vendors");
   }
-  if (/\b(benefit|benefits|realization|realized|value lever|leakage|at-risk)\b/.test(normalized)) {
-    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "benefits") ?? null;
+  if (has(/\b(workforce|persona|people|fte|labor|productivity|function|employee|shared services?)\b/)) {
+    return routeByKey("workforce");
   }
-  if (/\b(operations|operational|process|bottleneck|root cause)\b/.test(normalized)) {
-    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "operations") ?? null;
+  if (has(/\b(risk|risks|control|controls|governance|severity|compliance|audit)\b/)) {
+    return routeByKey("risk_controls");
   }
-  if (/\b(architecture|mainframe|platform|identity|api|apis|constraint|constraints)\b/.test(normalized)) {
-    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "architecture") ?? null;
+  if (has(/\b(benefit|benefits|realization|realized|value lever|leakage|at-risk|impact|roi)\b/)) {
+    return routeByKey("benefits");
   }
-  if (/\b(customer|front.?office|contact.?center|journey|service|loyalty)\b/.test(normalized)) {
-    return ENTERPRISE_FUNCTION_ROUTES.find((route) => route.key === "customer") ?? null;
+  if (has(/\b(operations|operational|process|bottleneck|root cause|itsm|incident|problem|change|cmdb|back office|back-office|bpr|reengineering)\b/)) {
+    return routeByKey("operations");
   }
   return null;
 }

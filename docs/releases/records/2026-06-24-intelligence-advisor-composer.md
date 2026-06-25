@@ -154,3 +154,31 @@ Additional validation:
 - Focused Jest for Golden IROPS composer + Intelligence ask route telemetry:
   pass (`26 passed` across 2 suites).
 - Focused ESLint for changed files: pass.
+
+## Follow-up Function Route Priority Correction
+
+The post-#3939 deployed browser crawl improved SkyHarbor from 5/13 to 8/13
+clean, with no raw-ID leaks, no `the cited record` leaks, no inline table
+residue, and no chat-input recovery failures. The remaining failures were
+route-priority and trigger gaps rather than broad architecture problems:
+
+- application questions that mentioned run cost could route as finance
+- initiative questions that mentioned dependency could route as integration
+- architecture questions that mentioned integration could route as topology
+- customer/front-office opportunity questions did not trigger the function
+  artifact route unless they also used explicit table/chart words
+- Lakeshore ITSM / back-office process reengineering questions needed to enter
+  the operations function path instead of the generic advisor path
+
+This patch tightens the subject-first classifier. It treats customer,
+initiatives, architecture, applications, data-products, integrations, finance,
+vendors, workforce, risk, benefits, and operations as ordered semantic subjects,
+not a flat keyword race. It also recognizes advisory trigger shapes such as
+`which`, `where should`, `how should`, `consider`, `opportunities`,
+`prioritize`, and `recommend`, without routing plain factual questions like
+`what do we know` into the artifact path.
+
+Additional validation:
+
+- Focused Jest for Golden IROPS composer: pass (`4 passed`).
+- Focused ESLint for changed files: pass.
