@@ -205,15 +205,17 @@ export async function synthesizeHomeConsultantText(args: {
         primaryDimension: args.dossier.route.primaryDimension,
         relatedDimensions: args.dossier.route.relatedDimensions,
         evidenceChannels: evidence.evidenceChannels,
+        streaming: true,
       },
     });
+    const stream = client.messages.stream({
+      model,
+      max_tokens: maxTokens,
+      system: HOME_CONSULTANT_TEXT_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: user }],
+    });
     const message = await withTimeout(
-      client.messages.create({
-        model,
-        max_tokens: maxTokens,
-        system: HOME_CONSULTANT_TEXT_SYSTEM_PROMPT,
-        messages: [{ role: "user", content: user }],
-      }),
+      stream.finalMessage(),
       timeoutMs,
     );
     const text = message.content

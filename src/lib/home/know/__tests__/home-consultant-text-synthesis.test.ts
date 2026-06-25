@@ -162,17 +162,18 @@ const response: HomeKnowResponse = {
 };
 
 function mockClaudeText(text: string, delayMs = 0) {
+  const finalMessage = jest.fn(async () => {
+    if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
+    return {
+      content: [{ type: "text", text }],
+    };
+  });
   mockGetAuditedAnthropicClient.mockResolvedValue({
     auditId: "audit-1",
     dataClass: "confidential",
     client: {
       messages: {
-        create: jest.fn(async () => {
-          if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
-          return {
-            content: [{ type: "text", text }],
-          };
-        }),
+        stream: jest.fn(() => ({ finalMessage })),
       },
     },
   } as never);
@@ -331,7 +332,7 @@ describe("home consultant text synthesis", () => {
     const call = mockGetAuditedAnthropicClient.mock.results[0];
     expect(call).toBeDefined();
     const client = await call.value;
-    expect(client.client.messages.create).toHaveBeenCalledWith(
+    expect(client.client.messages.stream).toHaveBeenCalledWith(
       expect.objectContaining({ max_tokens: 25_000 }),
     );
   });
