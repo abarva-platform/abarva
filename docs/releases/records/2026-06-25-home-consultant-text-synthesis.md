@@ -20,6 +20,8 @@ Third live-proof hardening: the Home answer renderer no longer rewrites `evidenc
 
 Fourth live-proof hardening: the Home consultant composer now avoids and normalizes user-facing `evidence` / `rows` wording before the API response is selected, so the clean answer contract no longer depends on the React renderer to polish raw Claude prose.
 
+Fifth live-proof hardening: deterministic fallback prose now runs through the same user-facing normalization when Claude synthesis is not selected, so intermittent model fallback cannot reintroduce `evidence` / `rows` wording into the API response.
+
 ## Layer Impact
 
 - `global-control-lane`: Changes the shared Home KNOW answer synthesis path and feature-flagged Claude behavior for opted-in tenants.
@@ -55,6 +57,7 @@ Fourth live-proof hardening: the Home consultant composer now avoids and normali
 - Follow-up test assertion: `Apex Retail` is blocked as cross-tenant content, while ordinary `apex-level` wording is allowed.
 - Follow-up renderer assertion: `loaded evidence supports` renders as `loaded source context supports`, not `source support supports`.
 - Follow-up composer assertion: raw Claude prose containing `evidence` / `rows` is normalized before selection, and selected API prose cannot include those terms.
+- Follow-up fallback assertion: deterministic fallback prose containing `evidence` / `rows` is normalized before API return.
 - `npx jest src/lib/home/know/__tests__/home-know-engine.test.ts --runInBand`: pass, 27/27.
 - `npx jest src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts src/lib/home/know/__tests__/home-know-engine.test.ts --runInBand`: pass, 39/39.
 - `npx eslint src/lib/home/know/home-consultant-text-synthesis.ts src/lib/home/know/home-know-engine.ts src/lib/home/know/evaluate-home-consultant-synthesis.ts src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts src/app/api/home/know/ask/route.ts src/lib/features/registry.ts`: pass.

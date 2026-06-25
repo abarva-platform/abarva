@@ -4,6 +4,7 @@ import type { UniversalDimensionDossier } from "@/lib/semantic-dossiers";
 
 import {
   applyHomeConsultantTextSynthesis,
+  applyHomeConsultantTextSynthesisFailureTrace,
   buildHomeConsultantTextPromptPacket,
   isHomeConsultantTextSynthesisResult,
   normalizeHomeConsultantUserFacingText,
@@ -271,6 +272,29 @@ describe("home consultant text synthesis", () => {
       "The loaded source context supports a strong answer across 42 records, but needed source context is missing for one leader.",
     );
     expect(text).not.toMatch(/\bevidence\b|\brows\b/i);
+  });
+
+  it("normalizes deterministic fallback prose when Claude synthesis is not selected", () => {
+    const selected = applyHomeConsultantTextSynthesisFailureTrace(
+      {
+        ...response,
+        prose:
+          "The loaded evidence supports this view across 42 rows, but named leaders are loaded only where the evidence provides them.",
+      },
+      {
+        attempted: true,
+        used: false,
+        outputMode: "text",
+        promptVersion: "home_consultant_text_synthesis_v1",
+        reason: "validation_failed",
+        validationIssues: ["forbidden_language"],
+      },
+    );
+
+    expect(selected.prose).toContain("loaded source context supports");
+    expect(selected.prose).toContain("42 records");
+    expect(selected.prose).not.toMatch(/\bevidence\b|\brows\b/i);
+    expect(selected.safety.composerTrace?.fallbackUsed).toBe(true);
   });
 
   it("fails Claude output with forbidden false-absence language", () => {

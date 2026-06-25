@@ -312,6 +312,7 @@ export function applyHomeConsultantTextSynthesisFailureTrace(
 ): HomeKnowResponse {
   return {
     ...response,
+    prose: normalizeHomeConsultantUserFacingText(response.prose),
     safety: {
       ...response.safety,
       composerTrace: response.safety.composerTrace
