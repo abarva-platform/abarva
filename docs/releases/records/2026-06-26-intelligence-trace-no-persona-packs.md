@@ -34,6 +34,7 @@ Intelligence answers now use a simpler contract: tenant evidence, corpus/pattern
 - `src/lib/ava-answer/composeAvaAnswer.ts`: Accepts legacy expert inputs for compatibility but emits no expert metadata.
 - `src/components/agent-answer/AgentAnswerRenderer.tsx` and `src/components/agent-answer/AvaAsk.tsx`: Remove visible consulted-expert UI controls and stale expert event rendering.
 - `src/lib/intelligence/answer/structured-exhibits.ts`: Replaces generic evidence-required fallback blocks with a neutral available-context table.
+- `src/lib/intelligence/ask/response-policy.ts`: Removes the remaining section-label stitch rewrites that converted good model text into phrases such as `The supporting evidence is that ...` and `That means ...`.
 
 ## QA / Validation
 
@@ -43,6 +44,8 @@ Intelligence answers now use a simpler contract: tenant evidence, corpus/pattern
 - Follow-up trace-gate validation: `npx eslint src/app/api/intelligence/ask/route.ts` — passed.
 - Follow-up trace-gate validation: `npm test -- --runTestsByPath src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts` — passed, 2 suites / 7 tests.
 - Follow-up trace-gate validation: `npm run audit:control-plane-purity:check` — passed.
+- Render-policy stitch validation: `npm test -- --runTestsByPath src/lib/intelligence/ask/response-policy.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts` — passed, 3 suites / 21 tests.
+- Render-policy stitch validation: `npx eslint src/app/api/intelligence/ask/route.ts src/lib/intelligence/ask/response-policy.ts src/lib/intelligence/ask/response-policy.test.ts` — passed.
 
 ## Rollout Plan
 

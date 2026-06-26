@@ -262,15 +262,15 @@ function naturalizeConsultantSections(text: string): string {
 function naturalizeConsultantParagraph(paragraph: string): string {
   return paragraph
     .replace(/^Read:\s*/i, "")
-    .replace(/^Evidence:\s*/i, "The supporting evidence is that ")
-    .replace(/^Implication:\s*/i, "That means ")
-    .replace(/^Next move:\s*/i, "The next move is to ")
+    .replace(/^Evidence:\s*/i, "")
+    .replace(/^Implication:\s*/i, "")
+    .replace(/^Next move:\s*/i, "Next, ")
     .replace(/^Recommendation:\s*/i, "")
     .replace(/^Decision:\s*/i, "")
-    .replace(/^Action:\s*/i, "The next action is to ")
-    .replace(/^Owner:\s*/i, "The owner should be ")
+    .replace(/^Action:\s*/i, "Next, ")
+    .replace(/^Owner:\s*/i, "The accountable owner is ")
     .replace(/\s{2,}/g, " ")
-    .replace(/\bto\s+(have|assign|ask|open|review|validate|move|decide)\b/gi, "to $1")
+    .replace(/\bNext,\s+to\s+/gi, "Next, ")
     .trim();
 }
 
