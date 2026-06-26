@@ -116,7 +116,7 @@ function splitParagraphBySentenceCap(
 ): string[] {
   const trimmed = paragraph.trim();
   if (!trimmed) return [];
-  if (isTableOrListBlock(trimmed)) return [trimmed];
+  if (isTableBlock(trimmed)) return [trimmed];
 
   const sentences = trimmed
     .split(/(?<=[.!?])\s+(?=(?:["'(\[])?[A-Z0-9])/)
@@ -131,10 +131,6 @@ function splitParagraphBySentenceCap(
   return chunks;
 }
 
-function isTableOrListBlock(value: string): boolean {
-  return (
-    /^\s*[-*]\s+\S/m.test(value) ||
-    /^\s*\d+\.\s+\S/m.test(value) ||
-    /^\s*\|.+\|\s*$/m.test(value)
-  );
+function isTableBlock(value: string): boolean {
+  return /^\s*\|.+\|\s*$/m.test(value);
 }
