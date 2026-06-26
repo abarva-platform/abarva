@@ -172,6 +172,19 @@ function truncateBusinessLine(value: string, max = 180): string {
   return `${normalized.slice(0, max).replace(/\s+\S*$/, "")}.`;
 }
 
+function stripInternalReferences(value: string): string {
+  return value
+    .replace(
+      /\bTied to [A-Z]{2,}(?:-[A-Z0-9]+)+-\d{3,} ownership review\.?/gi,
+      "Owner review required.",
+    )
+    .replace(/\b[A-Z]{2,}(?:-[A-Z0-9]+)+-\d{3,}\b/g, "the referenced program")
+    .replace(
+      /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi,
+      "the referenced item",
+    );
+}
+
 function formatCleanTowerContext(towerState: AtlasTowerCurrentState): string {
   const budgetRollups = towerState.budgetRollups.slice(0, 8).map((rollup) => {
     const parts = [
@@ -237,7 +250,7 @@ function formatCleanTowerContext(towerState: AtlasTowerCurrentState): string {
         ? `confidence ${card.magnitudeConfidence}`
         : null,
       card.nextAction
-        ? `next ${truncateBusinessLine(card.nextAction, 120)}`
+        ? `next ${truncateBusinessLine(stripInternalReferences(card.nextAction), 120)}`
         : null,
     ].filter(Boolean);
     return `- ${parts.join("; ")}`;
@@ -405,7 +418,7 @@ export async function runAtlasLlm(
   });
   toolResults.valueGrounding = valueGrounding;
   const dossierLoad = await tryLoadTowerDossier({
-    tenantKey: towerState.client.tenantKey,
+    tenantKey: towerState.client.tenantKey ?? ctx.clientKey ?? null,
     question: message,
   });
 

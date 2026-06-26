@@ -97,6 +97,29 @@ function tableToCompactLines(text: string): string[] {
   return bodyRows.map((cells) => `- ${cells.slice(0, 3).join(" — ")}`);
 }
 
+function removeMarkdownTables(text: string): string {
+  return text
+    .split("\n")
+    .filter((line) => !/^\s*\|.+\|\s*$/.test(line))
+    .join("\n");
+}
+
+function cleanLeadLine(text: string): string {
+  return text
+    .replace(
+      /^(?:My read|Read|Answer|Evidence|Implication|Why|What I would do next)\s*:\s*/i,
+      "",
+    )
+    .replace(/^[-·]\s*/, "")
+    .trim();
+}
+
+function isUsefulSupport(sentence: string): boolean {
+  return /\$|\d|value|budget|vendor|renewal|run|change|proof|gap|risk|owner|portfolio|program|spend|CIO|board/i.test(
+    sentence,
+  );
+}
+
 function compactForChat(
   text: string,
   targetChars: number,
@@ -111,59 +134,64 @@ function compactForChat(
     return normalized;
   }
 
-  const sentences = sentenceSplit(
-    normalized.replace(/\|---[\s\S]*?(?=\n\n|$)/g, " "),
-  );
+  const proseOnly = removeMarkdownTables(normalized);
+  const sentences = sentenceSplit(proseOnly);
+  const paragraphs = paragraphSplit(proseOnly);
   const lead = trimWords(
-    sentences.find((sentence) =>
-      /\b(read|answer|recommend|pause|inspect|compare|outlier|risk|value|budget|vendor|renewal|proof)\b/i.test(
-        sentence,
-      ),
-    ) ??
-      sentences[0] ??
-      normalized,
+    cleanLeadLine(
+      sentences.find((sentence) =>
+        /\b(read|answer|recommend|pause|inspect|compare|outlier|risk|value|budget|vendor|renewal|proof)\b/i.test(
+          sentence,
+        ),
+      ) ??
+        paragraphs.find(
+          (paragraph) =>
+            !/^(?:Inspect in this order|Spend comparison|Outliers worth flagging|Evidence gaps)\b/i.test(
+              paragraph,
+            ),
+        ) ??
+        sentences[0] ??
+        normalized,
+    ),
     34,
   );
   const tableLines = tableToCompactLines(normalized);
   const support = sentences
-    .filter((sentence) => sentence !== lead)
-    .filter((sentence) =>
-      /\$|\d|value|budget|vendor|renewal|run|change|proof|gap|risk|owner|portfolio/i.test(
-        sentence,
-      ),
-    )
+    .filter((sentence) => cleanLeadLine(sentence) !== lead)
+    .filter(isUsefulSupport)
     .slice(0, tableLines.length > 0 ? 1 : 3)
-    .map((sentence) => `- ${trimWords(sentence, 24)}`);
+    .map((sentence) => `- ${trimWords(cleanLeadLine(sentence), 24)}`);
   const next =
     sentences.find((sentence) =>
       /\b(next|ask|inspect|open|review|validate|challenge|compare|decide|pause|fund|assign)\b/i.test(
         sentence,
       ),
     ) ?? nextStepFallback;
-  const compact = normalizeWhitespace(
+  const lines = [
+    lead,
+    ...tableLines.slice(0, 3),
+    ...support,
+    `Next: ${trimWords(next.replace(/^[-·]?\s*Next:\s*/i, ""), 22)}`,
+  ].filter(Boolean);
+  let compact = normalizeWhitespace(lines.slice(0, maxParagraphs).join("\n"));
+  if (compact.length <= targetChars) return compact;
+
+  compact = normalizeWhitespace(
     [
       lead,
-      ...tableLines.slice(0, 3),
-      ...support,
-      `Next: ${trimWords(next.replace(/^[-·]?\s*Next:\s*/i, ""), 22)}`,
+      ...support.slice(0, Math.max(1, maxParagraphs - 2)),
+      `Next: ${trimWords(nextStepFallback, 18)}`,
     ]
       .filter(Boolean)
       .join("\n"),
   );
-  return compact.length <= targetChars
-    ? compact
-    : normalizeWhitespace(
-        [
-          lead,
-          ...support.slice(0, 2),
-          `Next: ${trimWords(nextStepFallback, 18)}`,
-        ]
-          .filter(Boolean)
-          .join("\n"),
-      )
-        .slice(0, targetChars)
-        .replace(/\s+\S*$/, ".")
-        .trim();
+  if (compact.length <= targetChars) return compact;
+
+  return normalizeWhitespace(
+    [trimWords(lead, 26), `Next: ${trimWords(nextStepFallback, 18)}`].join(
+      "\n",
+    ),
+  );
 }
 
 function buildLabelMap(

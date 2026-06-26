@@ -29,6 +29,11 @@ import {
 } from "@/lib/tower/tower-budget-rollups";
 import { listMaterializedTowerReadModelForClient } from "@/lib/tower/tower-materialized-read-model";
 import { resolveTowerToday } from "@/lib/tower/today-resolution";
+import {
+  canonicalTenantDisplayName,
+  canonicalTenantKey,
+  tenantIndustryCode,
+} from "@/lib/tenant/aliases";
 
 type IndustryCode = "HEALTHCARE_IDN" | "FINSERV" | "RETAIL" | "GENERAL";
 
@@ -136,7 +141,10 @@ function toStringArray(value: unknown): string[] {
     : [];
 }
 
-async function getClientProfile(clientId: string): Promise<ClientProfile> {
+async function getClientProfile(
+  clientId: string,
+  clientKey?: string | null,
+): Promise<ClientProfile> {
   const { data } = await getAzureReadFluentClient()
     .from("clients")
     .select("id, name, tenant_key, slug, industry_code, industry")
@@ -152,11 +160,19 @@ async function getClientProfile(clientId: string): Promise<ClientProfile> {
     industry?: string | null;
   } | null;
 
+  const fallbackTenantKey = clientKey ? canonicalTenantKey(clientKey) : null;
+  const fallbackName = clientKey
+    ? canonicalTenantDisplayName(clientKey, row?.name)
+    : "Active client";
+  const fallbackIndustry = clientKey ? tenantIndustryCode(clientKey) : null;
+
   return {
     clientId,
-    clientName: row?.name ?? "Active client",
-    tenantKey: row?.tenant_key ?? row?.slug ?? null,
-    industryCode: normalizeIndustryCode(row?.industry_code ?? row?.industry),
+    clientName: row?.name ?? fallbackName,
+    tenantKey: row?.tenant_key ?? row?.slug ?? fallbackTenantKey,
+    industryCode: normalizeIndustryCode(
+      row?.industry_code ?? row?.industry ?? fallbackIndustry,
+    ),
   };
 }
 
@@ -285,12 +301,13 @@ async function listSupportingRows(
 
 export async function buildAtlasTowerCurrentState(input: {
   clientId: string;
+  clientKey?: string | null;
   surfaceContext?: Record<string, unknown>;
 }): Promise<AtlasTowerCurrentState> {
   const todayIso = resolveTowerToday();
   const activeLens = resolveLens(input.surfaceContext?.activeTowerLens);
   const [client, initiatives, vendors] = await Promise.all([
-    getClientProfile(input.clientId),
+    getClientProfile(input.clientId, input.clientKey),
     listInitiativesForClient(input.clientId),
     listVendorsForClient(input.clientId),
   ]);
