@@ -282,6 +282,43 @@ describe("home consultant text synthesis", () => {
     );
   });
 
+  it("captures the verbatim Anthropic boundary when operator trace is enabled", async () => {
+    mockClaudeText(
+      "SkyHarbor's application estate supports a domain-led view of systems and ownership.\n\nHome can explain the current estate shape from application, domain, ownership, and source support while noting that service-map coverage remains incomplete.",
+    );
+
+    const result = await synthesizeHomeConsultantText({
+      dossier,
+      deterministicResponse: response,
+      operatorTrace: true,
+    });
+
+    expect(isHomeConsultantTextSynthesisResult(result)).toBe(true);
+    if (!isHomeConsultantTextSynthesisResult(result))
+      throw new Error("expected synthesis");
+    expect(result.trace.anthropicTrace).toMatchObject({
+      model: expect.any(String),
+      params: {
+        max_tokens: 25_000,
+        timeoutMs: expect.any(Number),
+      },
+      finalPrompt: {
+        requestJson: expect.any(String),
+        promptByteLength: expect.any(Number),
+        promptSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      },
+      claudeRaw: {
+        text: expect.stringContaining("domain-led view"),
+      },
+    });
+    expect(result.trace.anthropicTrace?.finalPrompt.messages).toEqual([
+      expect.objectContaining({ role: "user", content: expect.any(String) }),
+    ]);
+    expect(result.trace.anthropicTrace?.finalPrompt.requestJson).toContain(
+      '"messages"',
+    );
+  });
+
   it("selects Claude prose over deterministic fallback when valid", async () => {
     mockClaudeText(
       "SkyHarbor's loaded application evidence supports a domain-led view of the technology estate.\n\nThe practical implication is that Home can describe current application ownership and domain structure while keeping future investment decisions in Intelligence.",
