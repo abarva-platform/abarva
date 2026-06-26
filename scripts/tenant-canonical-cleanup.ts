@@ -187,12 +187,83 @@ function duplicateWhereClause(column: TenantColumn, uniqueKeys: UniqueKey[]): st
   return `lower(replace(alias_row.${tenantColumn}::text, '_', '-')) = $1 AND (${clauses.join(' OR ')})`;
 }
 
+function isRelationshipTenantColumn(column: TenantColumn): boolean {
+  return (
+    column.schema === 'public' &&
+    column.table === 'enterprise_context_relationships' &&
+    column.column === 'tenant_key'
+  );
+}
+
+async function countRelationshipAliasCollisionRows(
+  client: Client,
+  alias: string,
+  canonical: string,
+): Promise<number> {
+  const result = await client.query<{ count: string }>(
+    `WITH ranked_alias_rows AS (
+       SELECT alias_row.ctid,
+              alias_row."relationship_key",
+              row_number() OVER (PARTITION BY alias_row."relationship_key" ORDER BY alias_row.ctid) AS alias_rank,
+              EXISTS (
+                SELECT 1
+                  FROM public.enterprise_context_relationships canonical_row
+                 WHERE canonical_row."tenant_key" = $2
+                   AND canonical_row."relationship_key" IS NOT DISTINCT FROM alias_row."relationship_key"
+              ) AS canonical_exists
+         FROM public.enterprise_context_relationships alias_row
+        WHERE lower(replace(alias_row."tenant_key"::text, '_', '-')) = $1
+     )
+     SELECT COUNT(*)::text AS count
+       FROM ranked_alias_rows
+      WHERE canonical_exists OR alias_rank > 1`,
+    [alias, canonical],
+  );
+  return Number.parseInt(result.rows[0]?.count ?? '0', 10);
+}
+
+async function deleteRelationshipAliasCollisionRows(
+  client: Client,
+  alias: string,
+  canonical: string,
+): Promise<number> {
+  const result = await client.query(
+    `WITH ranked_alias_rows AS (
+       SELECT alias_row.ctid,
+              alias_row."relationship_key",
+              row_number() OVER (PARTITION BY alias_row."relationship_key" ORDER BY alias_row.ctid) AS alias_rank,
+              EXISTS (
+                SELECT 1
+                  FROM public.enterprise_context_relationships canonical_row
+                 WHERE canonical_row."tenant_key" = $2
+                   AND canonical_row."relationship_key" IS NOT DISTINCT FROM alias_row."relationship_key"
+              ) AS canonical_exists
+         FROM public.enterprise_context_relationships alias_row
+        WHERE lower(replace(alias_row."tenant_key"::text, '_', '-')) = $1
+     ),
+     victim_rows AS (
+       SELECT ctid
+         FROM ranked_alias_rows
+        WHERE canonical_exists OR alias_rank > 1
+     )
+     DELETE FROM public.enterprise_context_relationships target
+      USING victim_rows
+      WHERE target.ctid = victim_rows.ctid`,
+    [alias, canonical],
+  );
+  return result.rowCount ?? 0;
+}
+
 async function countDuplicateAliasRows(
   client: Client,
   column: TenantColumn,
   alias: string,
   canonical: string,
 ): Promise<number> {
+  if (isRelationshipTenantColumn(column)) {
+    return countRelationshipAliasCollisionRows(client, alias, canonical);
+  }
+
   const uniqueKeys = await discoverUniqueKeys(client, column);
   const whereClause = duplicateWhereClause(column, uniqueKeys);
   if (!whereClause) return 0;
@@ -212,6 +283,10 @@ async function deleteDuplicateAliasRows(
   alias: string,
   canonical: string,
 ): Promise<number> {
+  if (isRelationshipTenantColumn(column)) {
+    return deleteRelationshipAliasCollisionRows(client, alias, canonical);
+  }
+
   const uniqueKeys = await discoverUniqueKeys(client, column);
   const whereClause = duplicateWhereClause(column, uniqueKeys);
   if (!whereClause) return 0;
