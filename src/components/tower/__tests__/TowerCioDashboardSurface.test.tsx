@@ -140,6 +140,18 @@ const VENDORS: AIInitiativeVendorRow[] = [
   },
 ];
 
+const ZERO_AMOUNT_INITIATIVES: AIInitiative[] = INITIATIVES.map((initiative) => ({
+  ...initiative,
+  committedAnnualUsd: 0,
+  committedTotalUsd: 0,
+  measuredValueUsd: null,
+}));
+
+const ZERO_AMOUNT_VENDORS: AIInitiativeVendorRow[] = VENDORS.map((vendor) => ({
+  ...vendor,
+  contractValueUsd: 0,
+}));
+
 describe("TowerIndexPage · CIO dashboard surface", () => {
   beforeEach(() => {
     query = new URLSearchParams();
@@ -186,6 +198,51 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getByText("ServiceNow AI Service Desk")).toBeInTheDocument();
     expect(screen.getAllByText("aVa").length).toBeGreaterThan(0);
     expect(screen.queryByText("Atlas")).not.toBeInTheDocument();
+    expect(screen.queryByText("LH-IT-001")).not.toBeInTheDocument();
+    expect(screen.queryByText("LH-IT-002")).not.toBeInTheDocument();
+  });
+
+  it("does not present zero loaded amounts as real spend when Tower values are missing", () => {
+    render(
+      <TowerIndexPage
+        tenantName="SkyHarbor Air"
+        context="Tower"
+        towerToday="2026-06-25"
+        clientId="client-skyharbor"
+        initiatives={ZERO_AMOUNT_INITIATIVES}
+        vendors={ZERO_AMOUNT_VENDORS}
+        activeTab="portfolio"
+      />,
+    );
+
+    expect(screen.getAllByText(/budget amounts are not loaded/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("gap").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/\$0 of loaded portfolio spend/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("LH-IT-001")).not.toBeInTheDocument();
+  });
+
+  it("marks large unmeasured program budgets as review-required instead of board-grade ROI", () => {
+    const unmeasured = INITIATIVES.map((initiative) => ({
+      ...initiative,
+      measuredValueUsd: null,
+    }));
+
+    render(
+      <TowerIndexPage
+        tenantName="Lakeshore Holdings"
+        context="Tower"
+        towerToday="2026-06-25"
+        clientId="client-lakeshore"
+        initiatives={unmeasured}
+        vendors={VENDORS}
+        activeTab="portfolio"
+      />,
+    );
+
+    expect(screen.getByText(/no measured value rows are loaded/i)).toBeInTheDocument();
+    expect(screen.getAllByText("review").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("gap").length).toBeGreaterThan(0);
+    expect(screen.queryByText("0.00x")).not.toBeInTheDocument();
   });
 
   it("shows the AI ROI view from loaded evidence and names missing ROI data as a gap", () => {

@@ -100,7 +100,7 @@ export interface FollowUpAction {
  * `context_carried` to open coherently (§12.3).
  */
 export interface HandoffAffordance {
-  to_agent: 'nexus' | 'sentinel' | 'atlas' | 'steward';
+  to_agent: 'nexus' | 'sentinel' | 'atlas' | 'steward' | 'intelligence';
   reason: string;
   /** Short prose describing what context travels (e.g. "last 3 turns + program anchor"). */
   context_carried: string;

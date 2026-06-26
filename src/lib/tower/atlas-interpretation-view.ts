@@ -42,7 +42,7 @@ export interface AtlasInterpretiveObservation {
 
 export interface AtlasInterpretationDisclosure {
   decisionSupportLabel: "AI-assisted decision support";
-  generatedBy: "Atlas";
+  generatedBy: "aVa";
   humanDecisionBoundary: string;
   citationSummary: string;
   assumptionDisclosure: string;
@@ -162,7 +162,7 @@ function composeVendorClock(
   return {
     number,
     topic: "Vendor clock",
-    body: `${vendor.vendorName} renewal is ${days} days out on ${initiative.displayId} ${initiative.name}; contract value is ${value}. The calendar is the forcing function: settle the ${initiative.statusFlag} posture before Source negotiates terms.`,
+    body: `${vendor.vendorName} renewal is ${days} days out on ${initiative.name}; contract value is ${value}. The calendar is the forcing function: settle the ${initiative.statusFlag} posture before Source negotiates terms.`,
     actions: [
       {
         label: "Open the renewal brief in Source",
@@ -220,7 +220,7 @@ function composeTopPressure(
           : pressure.type === "cost"
             ? "Cost overrun"
             : "Value lag",
-    body: `${initiative.displayId} ${initiative.name} is ${initiative.statusFlag}: ${initiative.statusSummary}. Committed annual value is ${committed}; measured value is ${measured}.${thinEvidence} ${pressure.nextAction}`,
+    body: `${initiative.name} is ${initiative.statusFlag}: ${initiative.statusSummary}. Committed annual value is ${committed}; measured value is ${measured}.${thinEvidence} ${pressure.nextAction}`,
     actions:
       pressure.type === "dupl"
         ? [
@@ -294,8 +294,8 @@ function composeSharedRoot(
     selection.sharedRoot?.initiativeIds.includes(initiative.initiativeId),
   );
   if (initiatives.length < 2) return null;
-  const ids = initiatives.map((initiative) => initiative.displayId).join(", ");
-  const body = `${ids} share ${selection.sharedRoot.label}. Treat them as one portfolio posture before treating them as separate fixes; otherwise Tower will re-baseline symptoms while the shared root stays unresolved.`;
+  const names = initiatives.map((initiative) => initiative.name).join(" and ");
+  const body = `${names} share ${selection.sharedRoot.label}. Treat them as one portfolio posture before treating them as separate fixes; otherwise Tower will re-baseline symptoms while the shared root stays unresolved.`;
   return {
     number,
     topic: "Portfolio pattern",
@@ -323,7 +323,7 @@ function composeDefend(
   if (aligned.length === 0) return null;
   const head = aligned.slice(0, 2);
   const names = head
-    .map((initiative) => `${initiative.displayId} ${initiative.name}`)
+    .map((initiative) => initiative.name)
     .join(" and ");
   const measured = head
     .map((initiative) => formatUsdCompact(initiative.measuredValueUsd))
@@ -365,7 +365,7 @@ function composeLookAhead(
     return {
       number,
       topic: "Look-ahead",
-      body: `${initiative.displayId} ${initiative.name} is the look-ahead: ${initiative.stageDetail ?? "multi-year strategic bet"}, ${formatUsdCompact(initiative.committedTotalUsd ?? initiative.committedAnnualUsd)} committed, and no measured value yet by design. Watch milestone cadence before making it a value-lag story.`,
+      body: `${initiative.name} is the look-ahead: ${initiative.stageDetail ?? "multi-year strategic bet"}, ${formatUsdCompact(initiative.committedTotalUsd ?? initiative.committedAnnualUsd)} committed, and no measured value yet by design. Watch milestone cadence before making it a value-lag story.`,
       actions: [
         {
           label: "Open foundation plan",
@@ -440,7 +440,7 @@ function composeHealthy(
     .filter((initiative) => initiative.alignedCallout)
     .slice(0, 2);
   const names = aligned
-    .map((initiative) => `${initiative.displayId} ${initiative.name}`)
+    .map((initiative) => initiative.name)
     .join(" and ");
   return {
     number,
@@ -502,9 +502,9 @@ function buildInterpretationDisclosure(params: {
 
   return {
     decisionSupportLabel: "AI-assisted decision support",
-    generatedBy: "Atlas",
+    generatedBy: "aVa",
     humanDecisionBoundary:
-      "Atlas proposes next-step decision support only. It does not approve spending, vendor action, sequencing, or program status changes.",
+      "aVa proposes next-step decision support only. It does not approve spending, vendor action, sequencing, or program status changes.",
     citationSummary,
     assumptionDisclosure: `Assumes the current Tower registry, vendor rows, pressure cards, and 2x2 are the complete substrate for this read; ${params.deferredMetricsCount} metric${params.deferredMetricsCount === 1 ? "" : "s"} remain deferred.`,
     confidenceDisclosure,
@@ -517,15 +517,15 @@ export function buildAtlasInterpretation(
   if (input.initiatives.length === 0 && input.vendors.length === 0) {
     return {
       headline:
-        "Atlas needs substrate before it can synthesize Tower observations.",
+        "aVa needs substrate before it can synthesize Tower observations.",
       metaSuffix: "0 observations · substrate missing",
       observations: [],
       ifYouOnlyDoOneToday:
-        "Load AI Initiatives in Setup before asking Atlas to synthesize this Tower view.",
+        "Load AI Initiatives in Setup before asking aVa to synthesize this Tower view.",
       suggestedPrompts: ["Load AI Initiatives substrate"],
       isEmpty: true,
       emptyHint:
-        "Atlas needs substrate to synthesize observations. Load via Setup -> AI Initiatives.",
+        "aVa needs substrate to synthesize observations. Load via Setup -> AI Initiatives.",
       deterministicSeed: true,
       interpretationConfidence: "low",
       citations: [],
@@ -588,7 +588,7 @@ export function buildAtlasInterpretation(
   ];
 
   return {
-    headline: `Atlas read: ${observations.length === 1 ? "one grounded pressure" : `${observations.length} grounded threads`} in ${input.tenant.name}.`,
+    headline: `aVa read: ${observations.length === 1 ? "one grounded pressure" : `${observations.length} grounded threads`} in ${input.tenant.name}.`,
     metaSuffix: `${observations.length} observation${observations.length === 1 ? "" : "s"} · ${patternsFired.length} pattern${patternsFired.length === 1 ? "" : "s"} · ${deferredMetrics.length} deferred metrics`,
     observations,
     ifYouOnlyDoOneToday: observations[0]?.actions[0]?.label
@@ -598,7 +598,7 @@ export function buildAtlasInterpretation(
     isEmpty: observations.length === 0,
     emptyHint:
       observations.length === 0
-        ? "Atlas could not compose a cited observation."
+        ? "aVa could not compose a cited observation."
         : null,
     deterministicSeed: true,
     interpretationConfidence: confidence,

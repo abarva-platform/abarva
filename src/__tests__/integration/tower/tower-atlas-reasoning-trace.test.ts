@@ -115,7 +115,7 @@ describe("Atlas reasoning traces", () => {
     expect(interpretation.accountabilityDisclosure).toEqual(
       expect.objectContaining({
         decisionSupportLabel: "AI-assisted decision support",
-        generatedBy: "Atlas",
+        generatedBy: "aVa",
       }),
     );
     expect(

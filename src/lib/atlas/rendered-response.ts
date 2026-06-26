@@ -75,7 +75,7 @@ function inferHandoff(args: AtlasRenderedArgs): HandoffAffordance | null {
     return {
       to_agent: 'sentinel',
       reason: 'This question needs evidence and pattern context beyond Tower pressure state.',
-      context_carried: `Last Atlas turn for ${args.clientName} plus the user question about clinical or evidence support.`,
+      context_carried: `Last aVa Tower turn for ${args.clientName} plus the user question about clinical or evidence support.`,
       target_href: '/preview/intelligence',
     };
   }
@@ -84,16 +84,16 @@ function inferHandoff(args: AtlasRenderedArgs): HandoffAffordance | null {
     return {
       to_agent: 'nexus',
       reason: 'This question needs program and deliverable context, not just Tower pressure state.',
-      context_carried: `Last Atlas turn for ${args.clientName} plus the user question about program execution or decision artifacts.`,
+      context_carried: `Last aVa Tower turn for ${args.clientName} plus the user question about program execution or decision artifacts.`,
       target_href: '/engagements',
     };
   }
 
   if (args.result.intent === 'strategy_refusal') {
     return {
-      to_agent: 'sentinel',
-      reason: 'Atlas can summarize portfolio pressure, but strategy trade-offs belong in pattern and evidence context.',
-      context_carried: `Last Atlas turn for ${args.clientName} plus the strategy question that triggered the refusal.`,
+      to_agent: 'intelligence',
+      reason: 'Tower can summarize portfolio pressure, but strategy trade-offs belong in Intelligence pattern and evidence context.',
+      context_carried: `Last aVa Tower turn for ${args.clientName} plus the strategy question that triggered the refusal.`,
       target_href: '/preview/intelligence',
     };
   }

@@ -22,8 +22,9 @@ import type { HandoffAffordance as HandoffShape } from '@/lib/agent/renderedResp
 const AGENT_LABELS: Record<HandoffShape['to_agent'], { name: string; glyph: string; accent: string }> = {
   nexus: { name: 'Nexus', glyph: '\u2731', accent: '#0E9F8C' },
   sentinel: { name: 'Sentinel', glyph: '\u25C8', accent: '#9B6DFF' },
-  atlas: { name: 'Atlas', glyph: '\u25B2', accent: '#F59E0B' },
+  atlas: { name: 'aVa', glyph: '\u2726', accent: '#23B8E6' },
   steward: { name: 'Steward', glyph: '\u25C6', accent: '#3B82F6' },
+  intelligence: { name: 'Intelligence', glyph: '\u2726', accent: '#168A5C' },
 };
 
 const SESSION_KEY = (agent: string) => `abarva.handoff.${agent}`;

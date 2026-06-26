@@ -49,7 +49,7 @@ function severityColor(severity: string | null | undefined): string {
 }
 
 function topSummary(payload: AtlasRailPayload | null): string {
-  if (!payload) return 'Atlas will load portfolio context once Tower data is available.';
+  if (!payload) return 'aVa will load portfolio context once Tower data is available.';
   if (payload.observations[0]?.summary) return payload.observations[0].summary;
   const { activeUseCaseCount, criticalSignalCount, warningSignalCount, shadowAiSpendUsd } = payload.portfolio;
   const pieces: string[] = [];
@@ -58,7 +58,7 @@ function topSummary(payload: AtlasRailPayload | null): string {
   else if (warningSignalCount > 0) pieces.push(`${warningSignalCount} warning signal${warningSignalCount === 1 ? '' : 's'}`);
   else pieces.push('no critical signals open');
   if (shadowAiSpendUsd > 0) pieces.push(`${dollars(shadowAiSpendUsd)} shadow AI tracked`);
-  return `Atlas is reading ${pieces.join(' · ')}.`;
+  return `aVa is reading ${pieces.join(' · ')}.`;
 }
 
 type LoadState =
@@ -111,7 +111,7 @@ export function AtlasRail({
         const json = (await res.json().catch(() => ({}))) as Partial<AtlasRailPayload> & { error?: string; detail?: string };
         if (cancelled) return;
         if (!res.ok) {
-          const msg = json.detail || json.error || `Atlas API returned ${res.status}`;
+          const msg = json.detail || json.error || `aVa API returned ${res.status}`;
           setState({ kind: 'error', message: msg });
           return;
         }
@@ -120,7 +120,7 @@ export function AtlasRail({
         // be empty arrays for quiet tenants — treat them as optional, not
         // blocking.
         if (!json.portfolio) {
-          setState({ kind: 'error', message: 'Atlas observations endpoint returned no portfolio summary' });
+          setState({ kind: 'error', message: 'aVa observations endpoint returned no portfolio summary' });
           return;
         }
         const data: AtlasRailPayload = {
@@ -144,7 +144,7 @@ export function AtlasRail({
         ]);
       } catch (err) {
         if (!cancelled) {
-          setState({ kind: 'error', message: (err as Error).message ?? 'Atlas request failed' });
+          setState({ kind: 'error', message: (err as Error).message ?? 'aVa request failed' });
         }
       }
     }
@@ -184,7 +184,7 @@ export function AtlasRail({
           {
             id: `atlas-error-${Date.now()}`,
             role: 'atlas',
-            content: 'Atlas could not answer that right now. Honest read: the Tower summary is still valid, but the live response path needs a retry.',
+            content: 'aVa could not answer that right now. Honest read: the Tower summary is still valid, but the live response path needs a retry.',
           },
         ]);
         return;
@@ -211,8 +211,8 @@ export function AtlasRail({
           id: `atlas-error-${Date.now()}`,
           role: 'atlas',
           content: err instanceof DOMException && err.name === 'AbortError'
-            ? 'I could not complete the live Atlas answer within this screen response window. The Tower facts below are still available. Next step: retry the same question or open the relevant evidence view.'
-            : 'I could not complete the live Atlas answer just now. The Tower facts below are still available. Next step: retry the same question or open the relevant evidence view.',
+            ? 'I could not complete the live aVa answer within this screen response window. The Tower facts below are still available. Next step: retry the same question or open the relevant evidence view.'
+            : 'I could not complete the live aVa answer just now. The Tower facts below are still available. Next step: retry the same question or open the relevant evidence view.',
         },
       ]);
     } finally {
@@ -265,14 +265,14 @@ export function AtlasRail({
                 color: ATLAS,
               }}
             >
-              Atlas · Tower
+              aVa · Tower
             </div>
             <div style={{ marginTop: 6, fontSize: 20, fontWeight: 700, color: INK }}>{clientName}</div>
             <div style={{ marginTop: 2, fontSize: 12, color: state.kind === 'error' ? CRITICAL : SOFT }}>
               {state.kind === 'ready'
                 ? `${state.payload.portfolio.activeUseCaseCount} active use cases`
                 : state.kind === 'error'
-                  ? 'Atlas unavailable'
+                  ? 'aVa unavailable'
                   : 'Loading portfolio context…'}
             </div>
           </div>
@@ -290,7 +290,7 @@ export function AtlasRail({
         >
           <div style={{ fontSize: 14, lineHeight: 1.6, color: INK }}>
             {state.kind === 'error'
-              ? `Atlas can't reach the observations endpoint right now · ${state.message}. Tower tiles on the left are server-rendered and still accurate.`
+              ? `aVa can't reach the observations endpoint right now · ${state.message}. Tower tiles on the left are server-rendered and still accurate.`
               : topSummary(payload)}
           </div>
           {payload?.signals[0] && (
