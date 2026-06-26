@@ -36,6 +36,7 @@ import type {
   TowerPressuresView,
 } from "@/lib/tower/pressure-cards-view";
 import type { AtlasObservationsView } from "@/lib/tower/atlas-observations-view";
+import type { TowerBudgetRollup } from "@/lib/tower/tower-budget-rollups";
 import type { TowerTabKey } from "@/lib/tower/tower-lens-tabs-view";
 
 export interface TowerSubstrateCounts {
@@ -436,7 +437,9 @@ const CIO_DASHBOARD_VIEWS: Array<{
   },
 ];
 
-function parseCioDashboardView(raw: string | null | undefined): CioDashboardView {
+function parseCioDashboardView(
+  raw: string | null | undefined,
+): CioDashboardView {
   return (
     CIO_DASHBOARD_VIEWS.find((view) => view.key === raw)?.key ?? "overview"
   );
@@ -451,7 +454,12 @@ type CioGroupRow = {
 };
 
 type CioAiSpendRow = CioGroupRow & {
-  category: "Copilot / productivity" | "Vendor AI agent" | "AI platform" | "True AI initiative" | "Unclassified AI";
+  category:
+    | "Copilot / productivity"
+    | "Vendor AI agent"
+    | "AI platform"
+    | "True AI initiative"
+    | "Unclassified AI";
   measured: number;
 };
 
@@ -471,9 +479,11 @@ type CioDashboardModel = {
   committedTotal: number;
   measuredTotal: number;
   measuredCoverageCount: number;
+  budgetRollupCount: number;
   pressureCount: number;
   spendAtRisk: number;
   vendorContractTotal: number;
+  namedVendorExposureTotal: number;
   spendQuality: "empty" | "missing_values" | "unmeasured" | "usable";
   topPrograms: ReadonlyArray<AIInitiative>;
   spendByFunction: ReadonlyArray<CioGroupRow>;
@@ -508,7 +518,12 @@ function groupMoney(
     const label = labelFor(initiative)?.trim() || "Unassigned";
     const current =
       grouped.get(label) ??
-      ({ key: label.toLowerCase(), label, amount: 0, count: 0 } satisfies CioGroupRow);
+      ({
+        key: label.toLowerCase(),
+        label,
+        amount: 0,
+        count: 0,
+      } satisfies CioGroupRow);
     current.amount += initiativeBudget(initiative);
     current.count += 1;
     grouped.set(label, current);
@@ -524,12 +539,31 @@ function groupVendorMoney(
     const label = vendor.vendorName?.trim() || "Unassigned vendor";
     const current =
       grouped.get(label) ??
-      ({ key: label.toLowerCase(), label, amount: 0, count: 0 } satisfies CioGroupRow);
+      ({
+        key: label.toLowerCase(),
+        label,
+        amount: 0,
+        count: 0,
+      } satisfies CioGroupRow);
     current.amount += Number(vendor.contractValueUsd ?? 0);
     current.count += 1;
     grouped.set(label, current);
   }
   return [...grouped.values()].sort((a, b) => b.amount - a.amount);
+}
+
+function groupBudgetRollups(
+  rows: ReadonlyArray<TowerBudgetRollup>,
+  amountFor: (row: TowerBudgetRollup) => number,
+): CioGroupRow[] {
+  return rows
+    .map((row) => ({
+      key: row.portfolioCompany.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      label: row.portfolioCompany,
+      amount: amountFor(row),
+      count: 1,
+    }))
+    .sort((a, b) => b.amount - a.amount);
 }
 
 function aiSpendCategory(
@@ -552,7 +586,11 @@ function aiSpendCategory(
     .join(" ")
     .toLowerCase();
 
-  if (!/(ai|agent|automation|copilot|genai|machine learning|ml|predictive)/.test(text))
+  if (
+    !/(ai|agent|automation|copilot|genai|machine learning|ml|predictive)/.test(
+      text,
+    )
+  )
     return null;
   if (/copilot|m365|github|cursor|productivity/.test(text))
     return "Copilot / productivity";
@@ -560,7 +598,9 @@ function aiSpendCategory(
     return "Vendor AI agent";
   if (/platform|lakehouse|data product|mlops|model|foundation/.test(text))
     return "AI platform";
-  if (/initiative|decision|predictive|forecast|optimization|automation/.test(text))
+  if (
+    /initiative|decision|predictive|forecast|optimization|automation/.test(text)
+  )
     return "True AI initiative";
   return "Unclassified AI";
 }
@@ -569,11 +609,18 @@ function buildCioDashboardModel(
   initiatives: ReadonlyArray<AIInitiative>,
   vendors: ReadonlyArray<AIInitiativeVendorRow>,
   todayIso: string,
+  budgetRollups: ReadonlyArray<TowerBudgetRollup> = [],
 ): CioDashboardModel {
-  const committedTotal = initiatives.reduce(
+  const budgetRollupTotal = budgetRollups.reduce(
+    (sum, row) => sum + row.totalItBudgetUsd,
+    0,
+  );
+  const committedTotalFromInitiatives = initiatives.reduce(
     (sum, initiative) => sum + initiativeBudget(initiative),
     0,
   );
+  const committedTotal =
+    budgetRollupTotal > 0 ? budgetRollupTotal : committedTotalFromInitiatives;
   const measuredTotal = initiatives.reduce(
     (sum, initiative) => sum + initiativeValue(initiative),
     0,
@@ -625,13 +672,24 @@ function buildCioDashboardModel(
   if (committedTotal === 0)
     gaps.push("Program budget rows are not loaded for Tower slicing.");
   if (committedTotal > 0 && committedTotal >= 1_000_000_000)
-    gaps.push("Loaded program budget magnitude needs client validation before using it as a CIO headline.");
+    gaps.push(
+      "Loaded program budget magnitude needs client validation before using it as a CIO headline.",
+    );
   if (vendors.length === 0)
-    gaps.push("Vendor contract rows are not loaded for concentration and renewal views.");
-  if (vendors.length > 0 && vendors.every((vendor) => Number(vendor.contractValueUsd ?? 0) === 0))
-    gaps.push("Vendor names and renewals are loaded, but contract values are missing.");
+    gaps.push(
+      "Vendor contract rows are not loaded for concentration and renewal views.",
+    );
+  if (
+    vendors.length > 0 &&
+    vendors.every((vendor) => Number(vendor.contractValueUsd ?? 0) === 0)
+  )
+    gaps.push(
+      "Vendor names and renewals are loaded, but contract values are missing.",
+    );
   if (initiatives.every((initiative) => initiative.measuredValueUsd === null))
-    gaps.push("Measured value rows are not loaded, so ROI is a gap rather than a claim.");
+    gaps.push(
+      "Measured value rows are not loaded, so ROI is a gap rather than a claim.",
+    );
   if (
     initiatives.every(
       (initiative) =>
@@ -642,9 +700,14 @@ function buildCioDashboardModel(
   )
     gaps.push("Run/change or CapEx/OpEx line-item split is not loaded.");
 
-  const spendByFunction = groupMoney(
-    initiatives,
-    (initiative) => initiative.ownerFunction ?? initiative.primaryCategoryName,
+  const spendByFunction = (
+    budgetRollups.length > 0
+      ? groupBudgetRollups(budgetRollups, (row) => row.totalItBudgetUsd)
+      : groupMoney(
+          initiatives,
+          (initiative) =>
+            initiative.ownerFunction ?? initiative.primaryCategoryName,
+        )
   ).slice(0, 8);
   const spendByVendor = groupVendorMoney(vendors).slice(0, 8);
   const aiSpendRows = [...aiSpendByCategory.values()].sort(
@@ -653,21 +716,34 @@ function buildCioDashboardModel(
   const measuredCoverageCount = initiatives.filter(
     (initiative) => initiative.measuredValueUsd !== null,
   ).length;
-  const budgetRowsWithAmount = initiatives.filter(
-    (initiative) => initiativeBudget(initiative) > 0,
-  ).length;
-  const vendorContractTotal = spendByVendor.reduce((sum, row) => sum + row.amount, 0);
+  const budgetRowsWithAmount =
+    budgetRollups.length > 0
+      ? budgetRollups.filter((row) => row.totalItBudgetUsd > 0).length
+      : initiatives.filter((initiative) => initiativeBudget(initiative) > 0)
+          .length;
+  const budgetVendorTotal = budgetRollups.reduce(
+    (sum, row) => sum + row.vendorAmountUsd,
+    0,
+  );
+  const namedVendorExposureTotal = spendByVendor.reduce(
+    (sum, row) => sum + row.amount,
+    0,
+  );
+  const vendorContractTotal =
+    budgetVendorTotal > 0 ? budgetVendorTotal : namedVendorExposureTotal;
   const vendorRowsWithAmount = vendors.filter(
     (vendor) => Number(vendor.contractValueUsd ?? 0) > 0,
   ).length;
   const spendQuality: CioDashboardModel["spendQuality"] =
-    initiatives.length === 0
+    initiatives.length === 0 && budgetRollups.length === 0
       ? "empty"
       : committedTotal === 0
         ? "missing_values"
-        : measuredCoverageCount === 0
-          ? "unmeasured"
-          : "usable";
+        : budgetRollups.length > 0
+          ? "usable"
+          : measuredCoverageCount === 0
+            ? "unmeasured"
+            : "usable";
   const topProgram = topPrograms[0] ?? null;
   const topFunction = spendByFunction[0] ?? null;
   const topVendor = spendByVendor[0] ?? null;
@@ -677,26 +753,28 @@ function buildCioDashboardModel(
       ? `${measuredCoverageCount} of ${initiatives.length} programs carry measured value rows`
       : "no loaded program carries a measured value row";
   const executiveNarrative =
-    initiatives.length === 0
+    initiatives.length === 0 && budgetRollups.length === 0
       ? "Tower has the CIO canvas ready, but the tenant-bound program rows are not loaded yet."
-      : committedTotal === 0
-        ? `Tower has ${initiatives.length} loaded program rows, but budget amounts are not loaded. Use this as a portfolio coverage view, not a spend dashboard, until program budget fields are supplied.`
-        : measuredCoverageCount === 0
-          ? `${formatMoney(committedTotal)} is loaded as program budget rows across ${initiatives.length} programs, but no measured value rows are loaded. Treat budget concentration as review-required and do not use the ROI tiles until value proof is supplied.`
-          : `${formatMoney(spendAtRisk)} of loaded portfolio spend is under pressure across ${riskRows.length} program${riskRows.length === 1 ? "" : "s"}. ${valueCoverageText}, so the next CIO move is to separate budget concentration from value proof before funding more work.`;
+      : budgetRollups.length > 0
+        ? `${formatMoney(committedTotal)} of FY26 IT budget is loaded across ${budgetRollups.length} portfolio-company rollup${budgetRollups.length === 1 ? "" : "s"}. Tower is separating enterprise budget concentration from ${initiatives.length} initiative row${initiatives.length === 1 ? "" : "s"} and value proof.`
+        : committedTotal === 0
+          ? `Tower has ${initiatives.length} loaded program rows, but budget amounts are not loaded. Use this as a portfolio coverage view, not a spend dashboard, until program budget fields are supplied.`
+          : measuredCoverageCount === 0
+            ? `${formatMoney(committedTotal)} is loaded as program budget rows across ${initiatives.length} programs, but no measured value rows are loaded. Treat budget concentration as review-required and do not use the ROI tiles until value proof is supplied.`
+            : `${formatMoney(spendAtRisk)} of loaded portfolio spend is under pressure across ${riskRows.length} program${riskRows.length === 1 ? "" : "s"}. ${valueCoverageText}, so the next CIO move is to separate budget concentration from value proof before funding more work.`;
   const commandBullets = [
-    topProgram && committedTotal > 0
+    topProgram && committedTotalFromInitiatives > 0
       ? `Largest loaded program: ${topProgram.name} at ${formatMoney(initiativeBudget(topProgram))}.`
       : initiatives.length > 0
         ? "Program rows are loaded, but budget amounts are missing or review-required."
         : "No loaded program can be ranked by budget yet.",
     topFunction && committedTotal > 0
-      ? `Largest loaded function slice: ${topFunction.label} at ${formatMoney(topFunction.amount)} (${percentOf(topFunction.amount, committedTotal)} of the loaded envelope).`
+      ? `Largest loaded portfolio slice: ${topFunction.label} at ${formatMoney(topFunction.amount)} (${percentOf(topFunction.amount, committedTotal)} of the loaded envelope).`
       : spendByFunction.length > 0
         ? "Owner/function slices are loaded, but spend amounts are missing."
         : "No owner/function slice is available yet.",
-    topVendor && vendorContractTotal > 0
-      ? `Largest loaded vendor exposure: ${topVendor.label} at ${formatMoney(topVendor.amount)}.`
+    topVendor && namedVendorExposureTotal > 0
+      ? `Largest named contract exposure: ${topVendor.label} at ${formatMoney(topVendor.amount)}.`
       : vendors.length > 0
         ? "Vendor names are loaded; contract values are missing for concentration analysis."
         : "Vendor exposure is not yet available from loaded contract rows.",
@@ -740,7 +818,8 @@ function buildCioDashboardModel(
   if (aiSpendRows.length > 0) {
     decisionActions.push({
       label: "Benchmark AI mix",
-      title: "Separate Copilot, vendor agents, platform spend, and true AI bets.",
+      title:
+        "Separate Copilot, vendor agents, platform spend, and true AI bets.",
       body: `${formatMoney(aiSpendRows.reduce((sum, row) => sum + row.amount, 0))} is tagged into AI spend families; value proof is shown only where loaded.`,
       ask: "Compare Copilot, vendor AI agents, platforms, and true AI initiatives by spend and value proof.",
       tone: "green",
@@ -761,9 +840,11 @@ function buildCioDashboardModel(
     committedTotal,
     measuredTotal,
     measuredCoverageCount,
+    budgetRollupCount: budgetRollups.length,
     pressureCount: riskRows.length,
     spendAtRisk,
     vendorContractTotal,
+    namedVendorExposureTotal,
     spendQuality,
     topPrograms,
     spendByFunction,
@@ -831,14 +912,19 @@ function CioDashboardTabs({
             CIO dashboard view
           </div>
           <div style={{ marginTop: 5, color: T.INK_2, fontSize: 13.5 }}>
-            {CIO_DASHBOARD_VIEWS.find((view) => view.key === active)?.description}
+            {
+              CIO_DASHBOARD_VIEWS.find((view) => view.key === active)
+                ?.description
+            }
           </div>
         </div>
         <select
           aria-label="CIO dashboard view"
           value={active}
           onChange={(event) => {
-            window.location.href = hrefFor(event.currentTarget.value as CioDashboardView);
+            window.location.href = hrefFor(
+              event.currentTarget.value as CioDashboardView,
+            );
           }}
           style={{
             minWidth: 180,
@@ -938,18 +1024,12 @@ function CioMetricCard({
       >
         {value}
       </div>
-      <div style={{ marginTop: 7, color: T.INK_2, fontSize: 12.5 }}>
-        {note}
-      </div>
+      <div style={{ marginTop: 7, color: T.INK_2, fontSize: 12.5 }}>{note}</div>
     </div>
   );
 }
 
-function CioDailyRead({
-  model,
-}: {
-  model: CioDashboardModel;
-}) {
+function CioDailyRead({ model }: { model: CioDashboardModel }) {
   return (
     <section
       style={{
@@ -1025,7 +1105,10 @@ function CioDecisionCards({
     green: { border: "#86efac", background: "#f0fdf4", color: T.GREEN },
     amber: { border: T.AMBER, background: T.AMBER_BG, color: "#8a5400" },
     red: { border: "#fecaca", background: "#fef2f2", color: T.RED },
-  } satisfies Record<CioDecisionAction["tone"], { border: string; background: string; color: string }>;
+  } satisfies Record<
+    CioDecisionAction["tone"],
+    { border: string; background: string; color: string }
+  >;
   return (
     <section
       style={{
@@ -1072,7 +1155,14 @@ function CioDecisionCards({
             >
               {action.title}
             </div>
-            <div style={{ marginTop: 9, color: T.INK_2, fontSize: 12.5, lineHeight: 1.4 }}>
+            <div
+              style={{
+                marginTop: 9,
+                color: T.INK_2,
+                fontSize: 12.5,
+                lineHeight: 1.4,
+              }}
+            >
               {action.body}
             </div>
           </div>
@@ -1166,7 +1256,9 @@ function CioBarList({
             }}
           >
             <span>{row.label}</span>
-            <span>{hasAmounts ? formatMoney(row.amount) : "amount missing"}</span>
+            <span>
+              {hasAmounts ? formatMoney(row.amount) : "amount missing"}
+            </span>
           </div>
           <div
             style={{
@@ -1188,7 +1280,9 @@ function CioBarList({
           </div>
           <div style={{ marginTop: 4, color: T.GRAY_DK, fontSize: 12 }}>
             {row.count} row{row.count === 1 ? "" : "s"} ·{" "}
-            {hasAmounts ? `${percentOf(row.amount, total)} of loaded envelope` : "spend values not loaded"}
+            {hasAmounts
+              ? `${percentOf(row.amount, total)} of loaded envelope`
+              : "spend values not loaded"}
           </div>
         </div>
       ))}
@@ -1262,32 +1356,43 @@ function CioProgramTable({
   }
   return (
     <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+      <table
+        style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+      >
         <thead>
           <tr>
-            {["Program", "Function", "Owner", "Budget", "Measured", "Status"].map(
-              (head) => (
-                <th
-                  key={head}
-                  style={{
-                    textAlign: head === "Budget" || head === "Measured" ? "right" : "left",
-                    padding: "0 10px 10px",
-                    fontFamily: T.MONO,
-                    fontSize: 9,
-                    letterSpacing: "1.2px",
-                    color: T.GRAY_DK,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {head}
-                </th>
-              ),
-            )}
+            {[
+              "Program",
+              "Function",
+              "Owner",
+              "Budget",
+              "Measured",
+              "Status",
+            ].map((head) => (
+              <th
+                key={head}
+                style={{
+                  textAlign:
+                    head === "Budget" || head === "Measured" ? "right" : "left",
+                  padding: "0 10px 10px",
+                  fontFamily: T.MONO,
+                  fontSize: 9,
+                  letterSpacing: "1.2px",
+                  color: T.GRAY_DK,
+                  textTransform: "uppercase",
+                }}
+              >
+                {head}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
           {rows.map((initiative) => (
-            <tr key={initiative.displayId} style={{ borderTop: `1px solid ${T.RULE}` }}>
+            <tr
+              key={initiative.displayId}
+              style={{ borderTop: `1px solid ${T.RULE}` }}
+            >
               <td style={{ padding: "12px 10px", minWidth: 220 }}>
                 <Link
                   href={detailHrefFor(initiative.displayId) ?? "#"}
@@ -1310,10 +1415,24 @@ function CioProgramTable({
               <td style={{ padding: "12px 10px", color: T.INK_2 }}>
                 {initiative.ownerName}
               </td>
-              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
-                {initiativeBudget(initiative) > 0 ? formatMoney(initiativeBudget(initiative)) : "gap"}
+              <td
+                style={{
+                  padding: "12px 10px",
+                  textAlign: "right",
+                  fontWeight: 850,
+                }}
+              >
+                {initiativeBudget(initiative) > 0
+                  ? formatMoney(initiativeBudget(initiative))
+                  : "gap"}
               </td>
-              <td style={{ padding: "12px 10px", textAlign: "right", color: T.INK_2 }}>
+              <td
+                style={{
+                  padding: "12px 10px",
+                  textAlign: "right",
+                  color: T.INK_2,
+                }}
+              >
                 {initiative.measuredValueUsd === null
                   ? "gap"
                   : formatMoney(initiativeValue(initiative))}
@@ -1345,33 +1464,50 @@ function CioVendorTable({
   }
   return (
     <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+      <table
+        style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+      >
         <thead>
           <tr>
-            {["Vendor", "Program", "Contract", "Renewal", "Health"].map((head) => (
-              <th
-                key={head}
-                style={{
-                  textAlign: head === "Contract" ? "right" : "left",
-                  padding: "0 10px 10px",
-                  fontFamily: T.MONO,
-                  fontSize: 9,
-                  letterSpacing: "1.2px",
-                  color: T.GRAY_DK,
-                  textTransform: "uppercase",
-                }}
-              >
-                {head}
-              </th>
-            ))}
+            {["Vendor", "Program", "Contract", "Renewal", "Health"].map(
+              (head) => (
+                <th
+                  key={head}
+                  style={{
+                    textAlign: head === "Contract" ? "right" : "left",
+                    padding: "0 10px 10px",
+                    fontFamily: T.MONO,
+                    fontSize: 9,
+                    letterSpacing: "1.2px",
+                    color: T.GRAY_DK,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {head}
+                </th>
+              ),
+            )}
           </tr>
         </thead>
         <tbody>
           {rows.slice(0, 10).map((vendor) => (
-            <tr key={`${vendor.vendorId}-${vendor.initiativeDisplayId}`} style={{ borderTop: `1px solid ${T.RULE}` }}>
-              <td style={{ padding: "12px 10px", fontWeight: 900 }}>{vendor.vendorName}</td>
-              <td style={{ padding: "12px 10px", color: T.INK_2 }}>{vendor.initiativeName}</td>
-              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+            <tr
+              key={`${vendor.vendorId}-${vendor.initiativeDisplayId}`}
+              style={{ borderTop: `1px solid ${T.RULE}` }}
+            >
+              <td style={{ padding: "12px 10px", fontWeight: 900 }}>
+                {vendor.vendorName}
+              </td>
+              <td style={{ padding: "12px 10px", color: T.INK_2 }}>
+                {vendor.initiativeName}
+              </td>
+              <td
+                style={{
+                  padding: "12px 10px",
+                  textAlign: "right",
+                  fontWeight: 850,
+                }}
+              >
                 {formatMoney(vendor.contractValueUsd)}
               </td>
               <td style={{ padding: "12px 10px", color: T.INK_2 }}>
@@ -1405,15 +1541,15 @@ function CioDashboardPanel({
   const portfolioValue =
     model.spendQuality === "empty" || model.spendQuality === "missing_values"
       ? "gap"
-      : model.spendQuality === "unmeasured"
-        ? "review"
-        : formatMoney(model.committedTotal);
+      : formatMoney(model.committedTotal);
   const portfolioNote =
     model.spendQuality === "missing_values"
       ? `${model.initiativeCount} programs loaded; budget amounts missing`
-      : model.spendQuality === "unmeasured"
-        ? `${formatMoney(model.committedTotal)} loaded; validate before CIO headline`
-        : `${model.initiativeCount} top programs in the Tower read model`;
+      : model.budgetRollupCount > 0
+        ? `${model.budgetRollupCount} portfolio-company budget rollups; ${model.initiativeCount} initiatives tracked`
+        : model.spendQuality === "unmeasured"
+          ? `${formatMoney(model.committedTotal)} loaded; validate before CIO headline`
+          : `${model.initiativeCount} top programs in the Tower read model`;
   const roiValue =
     model.measuredCoverageCount > 0
       ? ratioText(model.measuredTotal, model.committedTotal)
@@ -1425,7 +1561,10 @@ function CioDashboardPanel({
   const vendorNote =
     model.vendorCount > 0 && model.vendorContractTotal === 0
       ? `${model.vendorCount} vendors loaded; contract values missing`
-      : `${model.vendorCount} vendors in contract rows`;
+      : model.namedVendorExposureTotal > 0 &&
+          model.vendorContractTotal > model.namedVendorExposureTotal
+        ? `${formatMoney(model.namedVendorExposureTotal)} named contracts; ${formatMoney(model.vendorContractTotal)} vendor budget`
+        : `${model.vendorCount} vendors in contract rows`;
   const pressureValue =
     model.pressureCount > 0 && model.spendAtRisk === 0
       ? "gap"
@@ -1473,7 +1612,11 @@ function CioDashboardPanel({
           label="Vendor exposure"
           value={vendorValue}
           note={vendorNote}
-          tone={model.vendorCount > 0 && model.vendorContractTotal === 0 ? "amber" : "neutral"}
+          tone={
+            model.vendorCount > 0 && model.vendorContractTotal === 0
+              ? "amber"
+              : "neutral"
+          }
         />
         <CioMetricCard
           label="Pressure spend"
@@ -1513,20 +1656,32 @@ function CioDashboardPanel({
             eyebrow="Top IT initiatives"
             title="Where the loaded portfolio money is concentrated."
           >
-            <CioProgramTable rows={model.topPrograms.slice(0, 5)} detailHrefFor={detailHrefFor} />
+            <CioProgramTable
+              rows={model.topPrograms.slice(0, 5)}
+              detailHrefFor={detailHrefFor}
+            />
           </CioPanel>
           <div style={{ display: "grid", gap: 18 }}>
-            <CioPanel eyebrow="Budget by function" title="Loaded functional slice.">
+            <CioPanel
+              eyebrow="Budget by function"
+              title="Loaded functional slice."
+            >
               <CioBarList
                 rows={model.spendByFunction.slice(0, 5)}
                 total={model.committedTotal}
                 empty="Owner function or portfolio labels are missing from the Tower rows."
               />
             </CioPanel>
-            <CioPanel eyebrow="Vendor concentration" title="Who holds the contract exposure.">
+            <CioPanel
+              eyebrow="Vendor concentration"
+              title="Who holds the contract exposure."
+            >
               <CioBarList
                 rows={model.spendByVendor.slice(0, 5)}
-                total={model.spendByVendor.reduce((sum, row) => sum + row.amount, 0)}
+                total={model.spendByVendor.reduce(
+                  (sum, row) => sum + row.amount,
+                  0,
+                )}
                 empty="Vendor contract values are not loaded."
               />
             </CioPanel>
@@ -1544,15 +1699,23 @@ function CioDashboardPanel({
       ) : null}
 
       {active === "budget" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
-          <CioPanel eyebrow="Function slice" title="Budget by loaded owner/function.">
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}
+        >
+          <CioPanel
+            eyebrow="Function slice"
+            title="Budget by loaded owner/function."
+          >
             <CioBarList
               rows={model.spendByFunction}
               total={model.committedTotal}
               empty="No function or portfolio ownership rows are available."
             />
           </CioPanel>
-          <CioPanel eyebrow="Run/change integrity" title="What is missing before spend can be benchmarked.">
+          <CioPanel
+            eyebrow="Run/change integrity"
+            title="What is missing before spend can be benchmarked."
+          >
             <TowerEmptyState
               eyebrow="Gap, not zero"
               title="Run/change line-item split is not yet loaded."
@@ -1563,30 +1726,56 @@ function CioDashboardPanel({
       ) : null}
 
       {active === "vendors" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "0.9fr 1.2fr", gap: 18 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "0.9fr 1.2fr",
+            gap: 18,
+          }}
+        >
           <CioPanel eyebrow="Concentration" title="Vendor spend concentration.">
             <CioBarList
               rows={model.spendByVendor}
-              total={model.spendByVendor.reduce((sum, row) => sum + row.amount, 0)}
+              total={model.spendByVendor.reduce(
+                (sum, row) => sum + row.amount,
+                0,
+              )}
               empty="No vendor contract values are loaded."
             />
           </CioPanel>
           <CioPanel eyebrow="Renewal clock" title="Contracts Tower can watch.">
-            <CioVendorTable rows={model.renewalRows.length > 0 ? model.renewalRows : vendors} />
+            <CioVendorTable
+              rows={model.renewalRows.length > 0 ? model.renewalRows : vendors}
+            />
           </CioPanel>
         </div>
       ) : null}
 
       {active === "ai_roi" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "0.95fr 1.15fr", gap: 18 }}>
-          <CioPanel eyebrow="AI spend families" title="Copilot, SaaS agents, platforms, and true AI bets.">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "0.95fr 1.15fr",
+            gap: 18,
+          }}
+        >
+          <CioPanel
+            eyebrow="AI spend families"
+            title="Copilot, SaaS agents, platforms, and true AI bets."
+          >
             <CioBarList
               rows={model.aiSpendRows}
-              total={model.aiSpendRows.reduce((sum, row) => sum + row.amount, 0)}
+              total={model.aiSpendRows.reduce(
+                (sum, row) => sum + row.amount,
+                0,
+              )}
               empty="No AI-tagged spend rows are loaded under the Tower initiative evidence."
             />
           </CioPanel>
-          <CioPanel eyebrow="ROI proof" title="Spend-to-outcome proof by AI family.">
+          <CioPanel
+            eyebrow="ROI proof"
+            title="Spend-to-outcome proof by AI family."
+          >
             {model.aiSpendRows.length > 0 ? (
               <div style={{ display: "grid", gap: 10 }}>
                 {model.aiSpendRows.map((row) => (
@@ -1603,8 +1792,12 @@ function CioDashboardPanel({
                   >
                     <strong>{row.label}</strong>
                     <span>{formatMoney(row.amount)} spend</span>
-                    <span style={{ color: row.measured > 0 ? T.GREEN : T.AMBER }}>
-                      {row.measured > 0 ? `${formatMoney(row.measured)} measured` : "value gap"}
+                    <span
+                      style={{ color: row.measured > 0 ? T.GREEN : T.AMBER }}
+                    >
+                      {row.measured > 0
+                        ? `${formatMoney(row.measured)} measured`
+                        : "value gap"}
                     </span>
                   </div>
                 ))}
@@ -1625,19 +1818,36 @@ function CioDashboardPanel({
           eyebrow="Value realization"
           title="Measured value rows versus budgeted programs."
         >
-          <CioProgramTable rows={model.outcomeRows} detailHrefFor={detailHrefFor} />
+          <CioProgramTable
+            rows={model.outcomeRows}
+            detailHrefFor={detailHrefFor}
+          />
         </CioPanel>
       ) : null}
 
       {active === "risks" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
-          <CioPanel eyebrow="Pressure programs" title="Loaded programs requiring owner attention.">
-            <CioProgramTable rows={model.riskRows} detailHrefFor={detailHrefFor} />
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}
+        >
+          <CioPanel
+            eyebrow="Pressure programs"
+            title="Loaded programs requiring owner attention."
+          >
+            <CioProgramTable
+              rows={model.riskRows}
+              detailHrefFor={detailHrefFor}
+            />
           </CioPanel>
-          <CioPanel eyebrow="Pressure meaning" title="How Tower interprets the flags.">
+          <CioPanel
+            eyebrow="Pressure meaning"
+            title="How Tower interprets the flags."
+          >
             <div style={{ display: "grid", gap: 10 }}>
               {model.riskRows.slice(0, 6).map((initiative) => (
-                <div key={initiative.displayId} style={{ borderTop: `1px solid ${T.RULE}`, paddingTop: 10 }}>
+                <div
+                  key={initiative.displayId}
+                  style={{ borderTop: `1px solid ${T.RULE}`, paddingTop: 10 }}
+                >
                   <strong>{labelize(initiative.statusFlag)}</strong>
                   <div style={{ color: T.INK_2, marginTop: 4, fontSize: 13 }}>
                     {initiative.name}: {statusMeaning(initiative.statusFlag)}
@@ -1664,11 +1874,25 @@ function CioDashboardPanel({
             gap: 18,
           }}
         >
-          <CioPanel eyebrow="Board brief" title="The decision read for leadership.">
-            <div style={{ display: "grid", gap: 13, color: T.INK_2, fontSize: 14, lineHeight: 1.5 }}>
+          <CioPanel
+            eyebrow="Board brief"
+            title="The decision read for leadership."
+          >
+            <div
+              style={{
+                display: "grid",
+                gap: 13,
+                color: T.INK_2,
+                fontSize: 14,
+                lineHeight: 1.5,
+              }}
+            >
               <p style={{ margin: 0 }}>{model.executiveNarrative}</p>
               {model.commandBullets.map((bullet) => (
-                <div key={bullet} style={{ borderTop: `1px solid ${T.RULE}`, paddingTop: 10 }}>
+                <div
+                  key={bullet}
+                  style={{ borderTop: `1px solid ${T.RULE}`, paddingTop: 10 }}
+                >
                   {bullet}
                 </div>
               ))}
@@ -1678,7 +1902,10 @@ function CioDashboardPanel({
             <CioPanel eyebrow="Decisions" title="What should be acted on next.">
               <div style={{ display: "grid", gap: 10 }}>
                 {model.decisionActions.map((action) => (
-                  <div key={action.label} style={{ borderTop: `1px solid ${T.RULE}`, paddingTop: 10 }}>
+                  <div
+                    key={action.label}
+                    style={{ borderTop: `1px solid ${T.RULE}`, paddingTop: 10 }}
+                  >
                     <strong>{action.label}</strong>
                     <div style={{ marginTop: 4, color: T.INK_2, fontSize: 13 }}>
                       {action.ask}
@@ -1687,9 +1914,24 @@ function CioDashboardPanel({
                 ))}
               </div>
             </CioPanel>
-            <CioPanel eyebrow="Data asks" title="What would make the read stronger.">
-              <div style={{ display: "grid", gap: 8, color: T.INK_2, fontSize: 13.5 }}>
-                {(model.gaps.length > 0 ? model.gaps : ["No critical loaded-data gaps are currently flagged by the Tower read model."]).map((gap) => (
+            <CioPanel
+              eyebrow="Data asks"
+              title="What would make the read stronger."
+            >
+              <div
+                style={{
+                  display: "grid",
+                  gap: 8,
+                  color: T.INK_2,
+                  fontSize: 13.5,
+                }}
+              >
+                {(model.gaps.length > 0
+                  ? model.gaps
+                  : [
+                      "No critical loaded-data gaps are currently flagged by the Tower read model.",
+                    ]
+                ).map((gap) => (
                   <div key={gap}>• {gap}</div>
                 ))}
               </div>
@@ -3208,8 +3450,7 @@ function initiativeLensMeta(initiative: AIInitiative, lens: TowerLens): string {
     return `Risk posture · ${labelize(initiative.statusFlag)}`;
   if (lens === "contract")
     return `Vendor exposure · ${initiative.confidenceLevel}`;
-  if (lens === "adopt")
-    return `Adoption path · ${labelize(initiative.stage)}`;
+  if (lens === "adopt") return `Adoption path · ${labelize(initiative.stage)}`;
   return `Value realization · ${initiative.confidenceLevel}`;
 }
 
@@ -4297,6 +4538,8 @@ interface TowerIndexPageProps {
   initiatives?: ReadonlyArray<AIInitiative>;
   /** Tenant vendor rows used for Atlas metric explainability drill-downs. */
   vendors?: ReadonlyArray<AIInitiativeVendorRow>;
+  /** CIO budget rollups from the governed Tower budget read model. */
+  budgetRollups?: ReadonlyArray<TowerBudgetRollup>;
   /**
    * T-5 (Bind 1): pre-computed band tile aggregations from DB substrate.
    */
@@ -4367,6 +4610,7 @@ export function TowerIndexPage({
   clientId,
   initiatives,
   vendors,
+  budgetRollups,
   bandMetrics,
   pressuresView,
   atlasObservationsView,
@@ -4432,12 +4676,7 @@ export function TowerIndexPage({
       const query = params.toString();
       return query ? `/tower?${query}` : "/tower";
     },
-    [
-      activeCioDashboardView,
-      activeDetailId,
-      activePressureId,
-      activeTab,
-    ],
+    [activeCioDashboardView, activeDetailId, activePressureId, activeTab],
   );
 
   const detailHrefFor = useCallback<DetailHrefBuilder>(
@@ -4458,11 +4697,7 @@ export function TowerIndexPage({
   useEffect(() => {
     if (activeDetailId || activeTab !== "portfolio") return;
     towerCanvasRef.current?.scrollTo({ top: 0, behavior: "auto" });
-  }, [
-    activeCioDashboardView,
-    activeDetailId,
-    activeTab,
-  ]);
+  }, [activeCioDashboardView, activeDetailId, activeTab]);
 
   // Keep this label deterministic across SSR and hydration. Live wall-clock
   // rendering causes React text mismatches when the server and browser resolve
@@ -4473,6 +4708,7 @@ export function TowerIndexPage({
     initiatives ?? [],
     vendors ?? [],
     towerToday,
+    budgetRollups ?? [],
   );
 
   // ─── Atlas chat state · wired to /api/v1/atlas/chat via the shared
@@ -4487,8 +4723,8 @@ export function TowerIndexPage({
     content:
       cioDashboardModel.initiativeCount > 0
         ? `${cioDashboardModel.executiveNarrative}\n\nAsk me to inspect pressure spend, benchmark AI ROI, challenge vendor renewals, or shape this into a board readout.`
-        : atlasObservationsView?.headline ??
-          "aVa is waiting for tenant-bound Tower substrate before it can answer portfolio questions.",
+        : (atlasObservationsView?.headline ??
+          "aVa is waiting for tenant-bound Tower substrate before it can answer portfolio questions."),
   };
   const [atlasMessages, setAtlasMessages] = useState<AtlasMessage[]>([
     initialOpener,
@@ -4501,12 +4737,12 @@ export function TowerIndexPage({
           ...cioDashboardModel.scenarioQuestions,
           ...cioDashboardModel.decisionActions.map((action) => action.ask),
         ].slice(0, 7)
-      : atlasObservationsView?.suggestedPrompts.slice() ?? [
+      : (atlasObservationsView?.suggestedPrompts.slice() ?? [
           "What tenant data is loaded?",
           "Which programs have pressure signals?",
           "Show renewal windows from the DB",
           "Explain missing Tower substrate",
-        ];
+        ]);
   const [atlasSuggestions, setAtlasSuggestions] = useState<AtlasSuggestion[]>(
     initialPrompts.map((label) => ({
       label,

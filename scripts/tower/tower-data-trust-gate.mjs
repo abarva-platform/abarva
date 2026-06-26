@@ -22,7 +22,13 @@ const TENANTS = [
   {
     tenantKey: "lakeshore-holdings",
     label: "Lakeshore Holdings",
-    dir: "datasets/lakeshore-industries-synthetic-v4/ai-control-tower",
+    dir: "datasets/lakeshore-holdings-synthetic-v4/ai-control-tower",
+    extraFiles: [
+      "../family-4-financial-commercial/F11_vendors-contracts-licenses.csv",
+      "../family-4-financial-commercial/F12_it-budget-financials.csv",
+      "../derived-tower-read-model/portfolio-company-spend.csv",
+      "../derived-tower-read-model/vendor-exposure.csv",
+    ],
   },
   {
     tenantKey: "meridian-health",
@@ -56,6 +62,14 @@ const AMOUNT_COLUMNS = [
   ["actual_ytd_usd", "annual_run_rate", "actual YTD spend evidence"],
   ["annual_budget_usd", "annual_run_rate", "annual budget/spend line"],
   ["fy26_budget_usd", "annual_run_rate", "FY26 budget/spend line"],
+  ["total_it_budget_usd", "annual_run_rate", "F12 total IT budget"],
+  ["total_it_spend", "annual_run_rate", "derived portfolio-company IT spend"],
+  ["actual_spend_ytd_usd", "annual_run_rate", "F12 actual spend YTD"],
+  ["opex_amount_usd", "annual_run_rate", "F12 OpEx amount"],
+  ["capex_amount_usd", "annual_run_rate", "F12 CapEx amount"],
+  ["run_amount_usd", "annual_run_rate", "F12 run amount"],
+  ["change_amount_usd", "annual_run_rate", "F12 change amount"],
+  ["annual_spend_usd", "contract_value", "contract/vendor exposure"],
   ["contract_value_usd", "contract_value", "contract value"],
 ];
 
@@ -202,12 +216,21 @@ function collectRows(tenant) {
   for (const file of files) {
     byFile.set(file, readCsv(path.join(base, file)));
   }
+  for (const extraFile of tenant.extraFiles ?? []) {
+    const key = path.normalize(extraFile).replaceAll(path.sep, "/");
+    byFile.set(key, readCsv(path.normalize(path.join(base, extraFile))));
+    files.push(key);
+  }
   return {
     files,
     byFile,
     initiatives: byFile.get("T01_initiative-registry.csv") ?? [],
     benefits: byFile.get("T07_benefit-realization.csv") ?? [],
     spend: byFile.get("T08_spend-contracts.csv") ?? [],
+    budget: byFile.get("../family-4-financial-commercial/F12_it-budget-financials.csv") ?? [],
+    budgetRollups: byFile.get("../derived-tower-read-model/portfolio-company-spend.csv") ?? [],
+    contractRows: byFile.get("../family-4-financial-commercial/F11_vendors-contracts-licenses.csv") ?? [],
+    vendorExposure: byFile.get("../derived-tower-read-model/vendor-exposure.csv") ?? [],
     risks: byFile.get("T09_risk-governance.csv") ?? [],
     evidence: byFile.get("T10_evidence-items.csv") ?? [],
     toolUsage: byFile.get("T03_tool-usage-monthly.csv") ?? [],
@@ -245,7 +268,18 @@ function makeAmountAudit(tenant, rows) {
 }
 
 function makeGapRows(tenant, rows, gates) {
-  const allRows = [...rows.initiatives, ...rows.benefits, ...rows.spend, ...rows.risks, ...rows.evidence, ...rows.toolUsage];
+  const allRows = [
+    ...rows.initiatives,
+    ...rows.benefits,
+    ...rows.spend,
+    ...rows.budget,
+    ...rows.budgetRollups,
+    ...rows.contractRows,
+    ...rows.vendorExposure,
+    ...rows.risks,
+    ...rows.evidence,
+    ...rows.toolUsage,
+  ];
   const availableFields = new Set(allRows.flatMap((row) => Object.keys(row)).filter((key) => !key.startsWith("__")));
   const gaps = [];
 
@@ -364,6 +398,11 @@ function canonicalValueTotal(rows, fields) {
 }
 
 function canonicalTowerAmounts(rows) {
+  const budgetRollupSpend = canonicalValueTotal(rows.budgetRollups, ["total_it_spend"]);
+  const budgetSpend = canonicalValueTotal(rows.budget, ["total_it_budget_usd"]);
+  const budgetYtd = canonicalValueTotal(rows.budget, ["actual_spend_ytd_usd"]);
+  const contractExposure = canonicalValueTotal(rows.contractRows, ["annual_spend_usd"]) ||
+    canonicalValueTotal(rows.vendorExposure, ["annual_spend_usd"]);
   return {
     committed: canonicalValueTotal(rows.benefits, [
       "committed_value_usd",
@@ -375,15 +414,15 @@ function canonicalTowerAmounts(rows) {
       "measured_value_usd",
       "measured_value_ytd_usd",
     ]),
-    spend: canonicalValueTotal(rows.spend, [
+    spend: budgetRollupSpend || budgetSpend || canonicalValueTotal(rows.spend, [
       "annual_budget_usd",
       "fy26_budget_usd",
     ]),
-    ytdSpend: canonicalValueTotal(rows.spend, [
+    ytdSpend: budgetYtd || canonicalValueTotal(rows.spend, [
       "actual_ytd_usd",
       "ytd_spend_usd",
     ]),
-    contractExposure: canonicalValueTotal(rows.spend, [
+    contractExposure: contractExposure || canonicalValueTotal(rows.spend, [
       "contract_value_usd",
     ]),
   };
@@ -403,7 +442,9 @@ function analyzeTenant(tenant) {
   const gaps = makeGapRows(tenant, rows, gates);
   const canonicalAmounts = canonicalTowerAmounts(rows);
   const initiativeCount = countDistinct(rows.initiatives, initiativeId);
-  const vendorCount = countDistinct(rows.spend, (row) => logicalVendorKey(vendorName(row)));
+  const vendorCount = countDistinct([...rows.spend, ...rows.contractRows, ...rows.vendorExposure], (row) =>
+    logicalVendorKey(vendorName(row) || row.vendor),
+  );
   const rowCount = [...rows.byFile.values()].reduce((acc, fileRows) => acc + fileRows.length, 0);
 
   return {

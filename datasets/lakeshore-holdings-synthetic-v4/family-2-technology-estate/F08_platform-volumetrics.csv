@@ -1,0 +1,13 @@
+metric_id,platform_or_system,metric_name,monthly_volume,peak_volume,growth_rate_pct,sla_target,observed_issue
+LAK-VOL-001,SAP ECC Central Finance,daily bank balance records,18000,32000,4,intraday,manual reconciliation
+LAK-VOL-002,SAP S/4 pilot instance,payments per month,85000,124000,6,close day 2,format mapping defect
+LAK-VOL-003,SAP FI/CO,cash forecast lines,152000,216000,8,daily,control evidence gap
+LAK-VOL-004,SAP MM,FX exposure records,219000,308000,10,intraday,baseline stable
+LAK-VOL-005,SAP SD,GL journal lines,286000,400000,12,close day 2,manual reconciliation
+LAK-VOL-006,SAP BW,close reconciliations,353000,492000,14,daily,format mapping defect
+LAK-VOL-007,SAP GRC,supplier invoices,420000,584000,16,intraday,control evidence gap
+LAK-VOL-008,SAP PI/PO,purchase orders,487000,676000,4,close day 2,baseline stable
+LAK-VOL-009,SAP BPC,plant production events,554000,768000,6,daily,manual reconciliation
+LAK-VOL-010,SAP Ariba network connector,finance support tickets,621000,860000,8,intraday,format mapping defect
+LAK-VOL-011,Kyriba implementation tenant,management report refreshes,688000,952000,10,close day 2,control evidence gap
+LAK-VOL-012,Quantum legacy TMS,Kyriba test defects,755000,1044000,12,daily,baseline stable
