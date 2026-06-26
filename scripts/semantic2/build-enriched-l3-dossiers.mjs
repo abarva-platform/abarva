@@ -650,8 +650,10 @@ function insightPrompt(skeleton) {
 }
 
 async function deriveInsightsWithClaude(skeleton) {
+  if (skeleton.facts.length === 0) {
+    return insufficientInsight(skeleton, "No source-backed facts were available for this tenant and dimension.");
+  }
   if (!process.env.ANTHROPIC_API_KEY) {
-    if (skeleton.facts.length === 0) return insufficientInsight(skeleton, "Anthropic key unavailable and no evidence was present.");
     return [];
   }
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -666,7 +668,7 @@ async function deriveInsightsWithClaude(skeleton) {
         max_tokens: 900,
         messages: [{ role: "user", content: prompt }],
       },
-      { signal: controller.signal },
+      { signal: controller.signal, timeout: CLAUDE_TIMEOUT_MS },
     );
   } catch (error) {
     const label = error?.name === "AbortError" ? `Claude call exceeded ${CLAUDE_TIMEOUT_MS}ms` : `Claude call failed: ${error?.message || error}`;
