@@ -36,6 +36,7 @@ const MAX_FACTS = Number(process.env.L3_DOSSIER_MAX_FACTS || 120);
 const MAX_ENTITIES = Number(process.env.L3_DOSSIER_MAX_ENTITIES || 80);
 const MAX_RELATIONSHIPS = Number(process.env.L3_DOSSIER_MAX_RELATIONSHIPS || 80);
 const MAX_INSIGHTS = Number(process.env.L3_DOSSIER_MAX_INSIGHTS || 4);
+const CLAUDE_TIMEOUT_MS = Number(process.env.L3_DOSSIER_CLAUDE_TIMEOUT_MS || 45000);
 
 const MACHINE_VALUE_PATTERNS = [
   /\bsemantic\b/i,
@@ -611,11 +612,35 @@ async function deriveInsightsWithClaude(skeleton) {
   }
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const prompt = insightPrompt(skeleton);
-  const response = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 900,
-    messages: [{ role: "user", content: prompt }],
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), CLAUDE_TIMEOUT_MS);
+  let response;
+  try {
+    response = await anthropic.messages.create(
+      {
+        model: MODEL,
+        max_tokens: 900,
+        messages: [{ role: "user", content: prompt }],
+      },
+      { signal: controller.signal },
+    );
+  } catch (error) {
+    const label = error?.name === "AbortError" ? `Claude call exceeded ${CLAUDE_TIMEOUT_MS}ms` : `Claude call failed: ${error?.message || error}`;
+    console.error(`[l3-dossiers] ${skeleton.tenantKey}/${skeleton.dimensionKey}: ${label}; storing grounded fallback insight.`);
+    return validateInsights(
+      [
+        {
+          insight: `${skeleton.business_labels.dimension} has source support, but additional build-time synthesis did not complete within the operator bound.`,
+          why_it_matters: "The dossier keeps deterministic evidence and avoids storing an unsupported advisory claim.",
+          supporting_fact_ids: skeleton.facts[0]?.fact_id ? [skeleton.facts[0].fact_id] : [],
+          confidence: "low",
+        },
+      ],
+      skeleton,
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
   const text = response.content
     .filter((block) => block.type === "text")
     .map((block) => block.text)
@@ -960,10 +985,15 @@ async function buildAll(args) {
     }
     for (const tenantKey of tenants) {
       for (const dimension of dimensions) {
+        console.error(`[l3-dossiers] ${tenantKey}/${dimension.dimension_key}: building skeleton`);
         const { skeleton, rawCounts } = await buildSkeleton(client, tenantKey, dimension);
+        console.error(`[l3-dossiers] ${tenantKey}/${dimension.dimension_key}: deriving insights`);
         skeleton.derived_insights = await deriveInsightsWithClaude(skeleton);
         const validation = validateDossier(skeleton);
         if (args.apply && validation.passed) await writeDossier(client, tenantKey, dimension, skeleton);
+        console.error(
+          `[l3-dossiers] ${tenantKey}/${dimension.dimension_key}: ${validation.passed ? "stored" : "failed validation"} facts=${skeleton.facts.length} relationships=${skeleton.relationships.length} insights=${skeleton.derived_insights.length}`,
+        );
         dossiers.push({ skeleton, rawCounts, validation });
         rows.push({
           tenant_key: tenantKey,
