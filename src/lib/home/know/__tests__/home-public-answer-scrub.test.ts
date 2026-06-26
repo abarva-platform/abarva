@@ -52,4 +52,16 @@ describe("home public answer scrub", () => {
 
     expect(sentenceCounts).toEqual([3, 3, 1]);
   });
+
+  it("does not exempt long bullet items from the paragraph cap", () => {
+    const capped = enforceHomePublicParagraphCap(
+      "- Application systems — the applications behind these processes. One caveat on scope: finance functions do not yet have ticket-pattern depth. For those areas there are no work-item extracts. If you want an investment view, use an advisory surface.",
+    );
+
+    const sentenceCounts = capped
+      .split(/\n{2,}/)
+      .map((paragraph) => (paragraph.match(/[.!?](?:\s|$)/g) ?? []).length);
+
+    expect(sentenceCounts).toEqual([3, 1]);
+  });
 });
