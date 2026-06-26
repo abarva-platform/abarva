@@ -709,7 +709,8 @@ function buildCioDashboardModel(
             initiative.ownerFunction ?? initiative.primaryCategoryName,
         )
   ).slice(0, 8);
-  const spendByVendor = groupVendorMoney(vendors).slice(0, 8);
+  const allSpendByVendor = groupVendorMoney(vendors);
+  const spendByVendor = allSpendByVendor.slice(0, 8);
   const aiSpendRows = [...aiSpendByCategory.values()].sort(
     (a, b) => b.amount - a.amount,
   );
@@ -725,7 +726,7 @@ function buildCioDashboardModel(
     (sum, row) => sum + row.vendorAmountUsd,
     0,
   );
-  const namedVendorExposureTotal = spendByVendor.reduce(
+  const namedVendorExposureTotal = allSpendByVendor.reduce(
     (sum, row) => sum + row.amount,
     0,
   );
