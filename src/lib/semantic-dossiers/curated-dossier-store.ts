@@ -140,7 +140,6 @@ function artifactPlan(artifacts: JsonRecord): DossierArtifactType[] {
 function makeSections(row: CuratedDossierRow): DossierSection[] {
   const packet = asRecord(row.evidence_packet);
   const dimension = asRecord(packet.dimension);
-  const counts = asRecord(packet.counts);
   const entities = asArray(packet.entities).map(asRecord);
   const facts = asArray(packet.facts).map(asRecord);
   const relationships = asArray(packet.relationships).map(asRecord);
@@ -153,31 +152,31 @@ function makeSections(row: CuratedDossierRow): DossierSection[] {
   return [
     {
       sectionKey: `${row.dimension_key}_entities`,
-      title: `${title} entities`,
+      title: `${title} business objects`,
       dimensionFamily,
       sourceKeys: row.source_tables,
-      summary: `${asNumber(counts.entities)} canonical entities are available for this topic.`,
+      summary: `Business objects are available for this topic.`,
       recordCount: entities.length,
       sample: entities.slice(0, 20).map((item) => ({
         name: asString(
           item.business_name,
           asString(item.semantic_key, "Unnamed entity"),
         ),
-        type: asString(item.entity_type, "entity"),
+        type: asString(item.entity_type, "business object"),
         confidence: asNumber(item.confidence, row.confidence),
         source: asString(item.source_table, ""),
       })),
     },
     {
       sectionKey: `${row.dimension_key}_facts`,
-      title: `${title} facts`,
+      title: `${title} source support`,
       dimensionFamily,
       sourceKeys: row.source_tables,
-      summary: `${asNumber(counts.facts)} loaded facts are available for this topic.`,
+      summary: `Source support is available for this topic.`,
       recordCount: facts.length,
       sample: facts.slice(0, 40).map((item) => ({
         subject: asString(item.subject_semantic_key, ""),
-        fact: asString(item.fact_key, asString(item.fact_type, "fact")),
+        fact: asString(item.fact_key, asString(item.fact_type, "source support")),
         value: String(
           item.fact_value_text ??
             item.fact_value_number ??
@@ -190,10 +189,10 @@ function makeSections(row: CuratedDossierRow): DossierSection[] {
     },
     {
       sectionKey: `${row.dimension_key}_relationships`,
-      title: `${title} relationships`,
+      title: `${title} operating connections`,
       dimensionFamily,
       sourceKeys: row.source_tables,
-      summary: `${asNumber(counts.relationships)} relationship maps are available for this topic.`,
+      summary: `Source-supported operating connections are available for this topic.`,
       recordCount: relationships.length,
       sample: relationships.slice(0, 30).map((item) => ({
         from: asString(item.from_semantic_key, ""),
@@ -248,22 +247,22 @@ function makeMetrics(row: CuratedDossierRow): DossierMetric[] {
   const counts = asRecord(asRecord(row.evidence_packet).counts);
   return [
     {
-      metricKey: "canonical_entities",
-      label: "Canonical entities",
+      metricKey: "business_objects",
+      label: "Business objects in context",
       value: asNumber(counts.entities),
       unit: "count",
       sourceKeys: row.source_tables,
     },
     {
-      metricKey: "typed_facts",
-      label: "Loaded facts",
+      metricKey: "source_support",
+      label: "Source support items",
       value: asNumber(counts.facts),
       unit: "count",
       sourceKeys: row.source_tables,
     },
     {
-      metricKey: "relationship_paths",
-      label: "Relationship maps",
+      metricKey: "operating_connections",
+      label: "Operating connections",
       value: asNumber(counts.relationships),
       unit: "count",
       sourceKeys: row.source_tables,
@@ -334,8 +333,8 @@ function dimensionSummary(row: CuratedDossierRow): string {
     row.dimension_key.replaceAll("_", " "),
   );
   const relationshipCount = asNumber(counts.relationships);
-  return `${label}: loaded current-state context is available for this topic with source-supported facts${
-    relationshipCount > 0 ? " and relationship maps" : ""
+  return `${label}: loaded current-state context is available for this topic with source support${
+    relationshipCount > 0 ? " and source-supported operating connections" : ""
   }.`;
 }
 
@@ -472,7 +471,7 @@ function branchSummaryForDimension(
         ? "usable loaded context"
         : "early loaded context";
   const relationshipPhrase =
-    relationshipCount > 0 ? " with relationship maps" : "";
+    relationshipCount > 0 ? " with source-supported operating connections" : "";
   const base: Record<string, string> = {
     organization_leadership:
       "explore leadership, business functions, IT teams, ownership, and accountability",
