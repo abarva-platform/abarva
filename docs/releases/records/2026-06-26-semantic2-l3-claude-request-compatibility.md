@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release fixes the build-time Semantic2 L3 dossier generator so it can call the current Claude model successfully. The previous request included a deprecated sampling parameter that the selected model rejects before generating derived insights.
+This release fixes the build-time Semantic2 L3 dossier generator so it can call the current Claude model successfully. The previous request included a deprecated sampling parameter that the selected model rejects before generating derived insights, and the Stage 2 prompt now sends bounded evidence cards instead of large raw fact payloads.
 
 ## Layer Impact
 
@@ -28,6 +28,7 @@ This release fixes the build-time Semantic2 L3 dossier generator so it can call 
 ## Changes Included
 
 - `scripts/semantic2/build-enriched-l3-dossiers.mjs`: removes the deprecated `temperature` request parameter from the build-time Anthropic call.
+- `scripts/semantic2/build-enriched-l3-dossiers.mjs`: bounds the Stage 2 Claude prompt projection to compact fact and relationship cards while keeping local `fact_id` support for derived insights.
 
 ## QA / Validation
 

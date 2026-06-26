@@ -202,6 +202,33 @@ function valueOfFact(row) {
   return "Not specified";
 }
 
+function trimForPrompt(value, maxLength = 240) {
+  const text = cleanBusinessText(value, "");
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength - 1).trim()}…`;
+}
+
+function compactFactForPrompt(fact) {
+  return {
+    fact_id: fact.fact_id,
+    entity: trimForPrompt(fact.entity, 120),
+    entityType: trimForPrompt(fact.entityType, 80),
+    label: trimForPrompt(fact.label, 100),
+    value: trimForPrompt(fact.value, 240),
+    confidence: fact.confidence,
+  };
+}
+
+function compactRelationshipForPrompt(relationship) {
+  return {
+    relationship_id: relationship.relationship_id,
+    from: trimForPrompt(relationship.from, 120),
+    relationship: trimForPrompt(relationship.relationship, 80),
+    to: trimForPrompt(relationship.to, 120),
+    confidence: relationship.confidence,
+  };
+}
+
 function verdictFor(factCount, coverageScore) {
   if (factCount <= 0) return "EMPTY";
   if (coverageScore < 0.25 || factCount < 5) return "THIN";
@@ -550,10 +577,20 @@ function insightPrompt(skeleton) {
   const compact = {
     tenant: skeleton.business_labels.tenant,
     dimension: skeleton.business_labels.dimension,
-    coverage: skeleton.coverage,
-    facts: skeleton.facts.slice(0, 80),
-    relationships: skeleton.relationships.slice(0, 40),
-    gaps: skeleton.gaps,
+    coverage: {
+      score: skeleton.coverage.score,
+      confidence: skeleton.coverage.confidence,
+      verdict: skeleton.coverage.verdict,
+      expectedSourceAreas: skeleton.coverage.expectedSourceAreas.slice(0, 8),
+      supportedSourceAreas: skeleton.coverage.supportedSourceAreas.slice(0, 8),
+    },
+    facts: skeleton.facts.slice(0, 60).map(compactFactForPrompt),
+    relationships: skeleton.relationships.slice(0, 30).map(compactRelationshipForPrompt),
+    gaps: skeleton.gaps.slice(0, 12).map((gap) => ({
+      area: trimForPrompt(gap.area, 120),
+      gap: trimForPrompt(gap.gap, 220),
+      impact: trimForPrompt(gap.impact, 220),
+    })),
   };
   return [
     "You are producing build-time derived insights for an enterprise dossier.",
