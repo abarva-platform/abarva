@@ -31,6 +31,7 @@ This release closes the tenant-key drift gap that allowed aliases such as `skyha
 - `src/lib/tenant/aliases.ts` adds retired Morgan/Mona aliases under the Lakeshore canonical tenant.
 - `src/lib/azure-search/tenant-context-backfill.ts` normalizes Lakeshore/Morgan/Mona aliases before search document writes.
 - `scripts/tenant-canonical-cleanup.ts` adds dry-run/apply cleanup with a manifest under `verification/tenant-canonical-cleanup/`.
+- Follow-up: `scripts/tenant-canonical-cleanup.ts` also supports `TENANT_CLEANUP_OUT_DIR` so private operator runs can write manifests to `/tmp` inside the non-root runtime image.
 - `scripts/verify-tenant-key-canonical.ts` now discovers active tenant columns dynamically and fails on aliases in product/runtime/read-model tables.
 - `package.json` adds `npm run db:cleanup:tenant-keys`.
 
@@ -39,6 +40,7 @@ This release closes the tenant-key drift gap that allowed aliases such as `skyha
 - pass: focused tenant-key and Azure Search normalization tests passed locally (`17 passed`).
 - pass: ESLint passed locally for the changed tenant helpers, tests, and cleanup/verifier scripts.
 - pass: cleanup and verifier scripts load through `tsx` and stop only at the expected missing-`DATABASE_URL` local boundary.
+- pass: cleanup script supports `TENANT_CLEANUP_OUT_DIR=/tmp/...` for private operator manifest output.
 - blocked: full repo TypeScript check reaches the existing dependency baseline failures for missing `js-yaml`, Azure Document Intelligence, and axe Playwright type packages before this PR can be isolated.
 - blocked: live data-plane cleanup requires the private VNet operator run after PR merge: dry-run, manifest review, `--apply`, then verifier.
 

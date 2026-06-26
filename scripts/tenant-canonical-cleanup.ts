@@ -49,7 +49,10 @@ const ROOT = process.cwd();
 const APPLY = process.argv.includes('--apply');
 const NOW = new Date().toISOString();
 const STAMP = NOW.replace(/[:.]/g, '-');
-const OUT_DIR = path.join(ROOT, 'verification/tenant-canonical-cleanup', STAMP);
+const OUT_ROOT = process.env.TENANT_CLEANUP_OUT_DIR?.trim()
+  ? path.resolve(process.env.TENANT_CLEANUP_OUT_DIR)
+  : path.join(ROOT, 'verification/tenant-canonical-cleanup');
+const OUT_DIR = path.join(OUT_ROOT, STAMP);
 
 function normalizeAlias(value: string): string {
   return value.trim().toLowerCase().replace(/_/g, '-');
@@ -154,7 +157,7 @@ async function main(): Promise<void> {
   console.log(`tenant-canonical-cleanup: mode=${report.mode}`);
   console.log(`tenant-canonical-cleanup: active_columns=${report.activeColumnsAudited}`);
   console.log(`tenant-canonical-cleanup: alias_rows=${report.totalAliasRows}`);
-  console.log(`tenant-canonical-cleanup: report=${path.relative(ROOT, reportPath)}`);
+  console.log(`tenant-canonical-cleanup: report=${reportPath}`);
   if (!APPLY && report.totalAliasRows > 0) {
     console.log('tenant-canonical-cleanup: dry-run only. Re-run with --apply to rewrite active aliases.');
   }
