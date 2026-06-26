@@ -198,7 +198,6 @@ export async function synthesizeHomeConsultantText(args: {
       validationIssues: [],
     };
   }
-  if (args.deterministicResponse.intent === "decision_handoff") return null;
   const evidence = hasUsableDossierEvidence({
     ...args.dossier,
     tables: args.deterministicResponse.tables,
