@@ -477,14 +477,25 @@ type CioDashboardModel = {
   budgetRowsWithAmount: number;
   vendorRowsWithAmount: number;
   committedTotal: number;
+  initiativeBudgetTotal: number;
   measuredTotal: number;
   measuredCoverageCount: number;
   budgetRollupCount: number;
+  actualSpendYtdTotal: number;
+  forecastSpendTotal: number;
+  runTotal: number;
+  changeTotal: number;
+  opexTotal: number;
+  capexTotal: number;
+  laborTotal: number;
+  revenueTotal: number;
   pressureCount: number;
   spendAtRisk: number;
   vendorContractTotal: number;
   namedVendorExposureTotal: number;
+  aiSpendTotal: number;
   spendQuality: "empty" | "missing_values" | "unmeasured" | "usable";
+  budgetRollups: ReadonlyArray<TowerBudgetRollup>;
   topPrograms: ReadonlyArray<AIInitiative>;
   spendByFunction: ReadonlyArray<CioGroupRow>;
   spendByVendor: ReadonlyArray<CioGroupRow>;
@@ -621,6 +632,38 @@ function buildCioDashboardModel(
   );
   const committedTotal =
     budgetRollupTotal > 0 ? budgetRollupTotal : committedTotalFromInitiatives;
+  const actualSpendYtdTotal = budgetRollups.reduce(
+    (sum, row) => sum + row.actualSpendYtdUsd,
+    0,
+  );
+  const forecastSpendTotal = budgetRollups.reduce(
+    (sum, row) => sum + Number(row.forecastSpendUsd ?? 0),
+    0,
+  );
+  const runTotal = budgetRollups.reduce(
+    (sum, row) => sum + row.runAmountUsd,
+    0,
+  );
+  const changeTotal = budgetRollups.reduce(
+    (sum, row) => sum + row.changeAmountUsd,
+    0,
+  );
+  const opexTotal = budgetRollups.reduce(
+    (sum, row) => sum + row.opexAmountUsd,
+    0,
+  );
+  const capexTotal = budgetRollups.reduce(
+    (sum, row) => sum + row.capexAmountUsd,
+    0,
+  );
+  const laborTotal = budgetRollups.reduce(
+    (sum, row) => sum + row.laborAmountUsd,
+    0,
+  );
+  const revenueTotal = budgetRollups.reduce(
+    (sum, row) => sum + Number(row.revenueUsd ?? 0),
+    0,
+  );
   const measuredTotal = initiatives.reduce(
     (sum, initiative) => sum + initiativeValue(initiative),
     0,
@@ -714,6 +757,7 @@ function buildCioDashboardModel(
   const aiSpendRows = [...aiSpendByCategory.values()].sort(
     (a, b) => b.amount - a.amount,
   );
+  const aiSpendTotal = aiSpendRows.reduce((sum, row) => sum + row.amount, 0);
   const measuredCoverageCount = initiatives.filter(
     (initiative) => initiative.measuredValueUsd !== null,
   ).length;
@@ -839,14 +883,25 @@ function buildCioDashboardModel(
     budgetRowsWithAmount,
     vendorRowsWithAmount,
     committedTotal,
+    initiativeBudgetTotal: committedTotalFromInitiatives,
     measuredTotal,
     measuredCoverageCount,
     budgetRollupCount: budgetRollups.length,
+    actualSpendYtdTotal,
+    forecastSpendTotal,
+    runTotal,
+    changeTotal,
+    opexTotal,
+    capexTotal,
+    laborTotal,
+    revenueTotal,
     pressureCount: riskRows.length,
     spendAtRisk,
     vendorContractTotal,
     namedVendorExposureTotal,
+    aiSpendTotal,
     spendQuality,
+    budgetRollups,
     topPrograms,
     spendByFunction,
     spendByVendor,
@@ -867,12 +922,6 @@ function buildCioDashboardModel(
 function percentOf(value: number, total: number): string {
   if (!total) return "0%";
   return `${Math.round((value / total) * 100)}%`;
-}
-
-function ratioText(numerator: number, denominator: number): string {
-  if (!denominator) return "not proven";
-  if (!numerator) return "not proven";
-  return `${(numerator / denominator).toFixed(2)}x`;
 }
 
 function CioDashboardTabs({
@@ -1030,16 +1079,112 @@ function CioMetricCard({
   );
 }
 
-function CioDailyRead({ model }: { model: CioDashboardModel }) {
+function CioKpiStrip({ model }: { model: CioDashboardModel }) {
+  const valueGap = Math.max(
+    model.initiativeBudgetTotal - model.measuredTotal,
+    0,
+  );
+  const renewalTotal = model.renewalRows.reduce(
+    (sum, row) => sum + Number(row.contractValueUsd ?? 0),
+    0,
+  );
+  const kpis = [
+    {
+      label: "IT budget",
+      value: formatMoney(model.committedTotal),
+      note:
+        model.budgetRollupCount > 0
+          ? `${model.budgetRollupCount} portfolio-company rollups`
+          : `${model.initiativeCount} initiative rows`,
+      tone: "neutral" as const,
+    },
+    {
+      label: "Spent YTD",
+      value:
+        model.actualSpendYtdTotal > 0
+          ? formatMoney(model.actualSpendYtdTotal)
+          : "gap",
+      note:
+        model.actualSpendYtdTotal > 0
+          ? "actual spend from Tower rollups"
+          : "actual spend field not loaded",
+      tone:
+        model.actualSpendYtdTotal > 0
+          ? ("neutral" as const)
+          : ("amber" as const),
+    },
+    {
+      label: "Measured value",
+      value: model.measuredTotal > 0 ? formatMoney(model.measuredTotal) : "gap",
+      note: `${model.measuredCoverageCount} programs with value rows`,
+      tone: model.measuredTotal > 0 ? ("green" as const) : ("amber" as const),
+    },
+    {
+      label: "Value gap",
+      value: valueGap > 0 ? formatMoney(valueGap) : "none",
+      note:
+        model.initiativeBudgetTotal > 0
+          ? "initiative funding minus measured value"
+          : "needs initiative business-case rows",
+      tone: valueGap > 0 ? ("amber" as const) : ("green" as const),
+    },
+    {
+      label: "Renewals · 180d",
+      value: renewalTotal > 0 ? formatMoney(renewalTotal) : "gap",
+      note: `${model.renewalRows.length} contracts in watch window`,
+      tone:
+        model.renewalRows.length > 0 ? ("red" as const) : ("neutral" as const),
+    },
+  ];
+
   return (
     <section
       style={{
-        border: `1px solid ${T.RULE_STRONG}`,
-        borderRadius: 12,
+        display: "grid",
+        gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+        gap: 12,
+        marginBottom: 10,
+      }}
+    >
+      {kpis.map((kpi) => (
+        <CioMetricCard
+          key={kpi.label}
+          label={kpi.label}
+          value={kpi.value}
+          note={kpi.note}
+          tone={kpi.tone}
+        />
+      ))}
+    </section>
+  );
+}
+
+function CioValueBand({ model }: { model: CioDashboardModel }) {
+  const committedValue = model.initiativeBudgetTotal;
+  const valueGap = Math.max(committedValue - model.measuredTotal, 0);
+  const realizedPct =
+    committedValue > 0
+      ? Math.max(
+          0,
+          Math.min(
+            100,
+            Math.round((model.measuredTotal / committedValue) * 100),
+          ),
+        )
+      : 0;
+  const topRisk = model.riskRows[0] ?? null;
+  const bandTitle =
+    committedValue > 0
+      ? `The loaded initiatives commit ${formatMoney(committedValue)} and prove ${formatMoney(model.measuredTotal)} so far.`
+      : model.executiveNarrative;
+  return (
+    <section
+      style={{
         background: "#111827",
-        color: "#fff",
-        padding: "20px 22px",
-        marginBottom: 18,
+        color: "#f8f3e8",
+        borderRadius: 16,
+        padding: "24px 26px",
+        margin: "10px 0 22px",
         boxShadow: "0 22px 42px rgba(15, 23, 42, 0.16)",
       }}
     >
@@ -1060,35 +1205,435 @@ function CioDailyRead({ model }: { model: CioDashboardModel }) {
           marginTop: 10,
           fontFamily: T.SERIF,
           fontSize: 28,
-          lineHeight: 1.14,
+          lineHeight: 1.18,
           fontWeight: 900,
-          maxWidth: 1020,
+          maxWidth: 980,
         }}
       >
-        {model.executiveNarrative}
+        {bandTitle}
       </div>
+      {committedValue > 0 ? (
+        <>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              gap: 12,
+              flexWrap: "wrap",
+              marginTop: 15,
+            }}
+          >
+            <span
+              style={{
+                color: valueGap > 0 ? "#e3b46a" : "#86efac",
+                fontSize: 30,
+                fontWeight: 900,
+              }}
+            >
+              {valueGap > 0
+                ? `${formatMoney(valueGap)} unproven`
+                : "value proof current"}
+            </span>
+            <span style={{ color: "rgba(248,243,232,0.72)", fontSize: 14 }}>
+              {realizedPct}% of committed initiative value realized
+            </span>
+          </div>
+          <div
+            style={{
+              height: 13,
+              borderRadius: 999,
+              background: "rgba(255,255,255,0.18)",
+              overflow: "hidden",
+              marginTop: 8,
+            }}
+          >
+            <div
+              style={{
+                width: `${realizedPct}%`,
+                minWidth: realizedPct > 0 ? 12 : 0,
+                height: "100%",
+                background: "#7fb38f",
+              }}
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              color: "rgba(248,243,232,0.66)",
+              fontSize: 12,
+              marginTop: 6,
+            }}
+          >
+            <span>{formatMoney(model.measuredTotal)} proven</span>
+            <span>{formatMoney(valueGap)} not yet proven</span>
+          </div>
+        </>
+      ) : null}
+      {topRisk ? (
+        <div
+          style={{
+            marginTop: 18,
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.14)",
+            borderRadius: 12,
+            padding: "13px 15px",
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <strong style={{ fontWeight: 900 }}>{topRisk.name}</strong>
+            <span
+              style={{
+                marginLeft: 10,
+                borderRadius: 999,
+                background: "rgba(227,180,106,0.16)",
+                color: "#e3b46a",
+                padding: "3px 9px",
+                fontFamily: T.MONO,
+                fontSize: 10,
+                letterSpacing: "1px",
+                textTransform: "uppercase",
+              }}
+            >
+              {labelize(topRisk.statusFlag)}
+            </span>
+            <div
+              style={{
+                color: "rgba(248,243,232,0.7)",
+                marginTop: 4,
+                fontSize: 13,
+              }}
+            >
+              {formatMoney(initiativeBudget(topRisk))} loaded budget ·{" "}
+              {topRisk.measuredValueUsd === null
+                ? "measured value gap"
+                : `${formatMoney(initiativeValue(topRisk))} measured`}
+            </div>
+          </div>
+          <div style={{ color: "#d8c8a5", fontSize: 13 }}>
+            inspect evidence →
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function CioSplitBar({
+  leftLabel,
+  leftValue,
+  rightLabel,
+  rightValue,
+}: {
+  leftLabel: string;
+  leftValue: number;
+  rightLabel: string;
+  rightValue: number;
+}) {
+  const total = leftValue + rightValue;
+  const leftPct = total > 0 ? Math.round((leftValue / total) * 100) : 0;
+  const rightPct = total > 0 ? 100 - leftPct : 0;
+  return (
+    <div>
+      <div
+        style={{
+          display: "flex",
+          height: 30,
+          borderRadius: 8,
+          overflow: "hidden",
+          background: T.CREAM_DEEP,
+        }}
+      >
+        <div
+          style={{
+            width: `${leftPct}%`,
+            background: T.GREEN,
+            color: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 12,
+            fontWeight: 850,
+          }}
+        >
+          {leftPct > 12 ? `${leftLabel} ${leftPct}%` : ""}
+        </div>
+        <div
+          style={{
+            width: `${rightPct}%`,
+            background: T.INK,
+            color: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 12,
+            fontWeight: 850,
+          }}
+        >
+          {rightPct > 12 ? `${rightLabel} ${rightPct}%` : ""}
+        </div>
+      </div>
+      <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 7 }}>
+        {leftLabel}: {formatMoney(leftValue)} · {rightLabel}:{" "}
+        {formatMoney(rightValue)}
+      </div>
+    </div>
+  );
+}
+
+function CioPortfolioCompanyComparison({
+  rows,
+}: {
+  rows: ReadonlyArray<TowerBudgetRollup>;
+}) {
+  if (rows.length === 0) {
+    return (
+      <CioPanel
+        eyebrow="Tower · L2 portfolio comparison"
+        title="Portfolio-company budget rollups are not loaded."
+      >
+        <TowerEmptyState
+          eyebrow="Rollup gap"
+          title="No operating-company IT intensity rows are available."
+          body="Load portfolio-company revenue, IT budget, run/change, vendor, and labor fields before Tower can show holding-company comparisons."
+        />
+      </CioPanel>
+    );
+  }
+  const maxPct = Math.max(
+    ...rows.map((row) => Number(row.itSpendAsPctRevenue ?? 0)),
+    0.01,
+  );
+  return (
+    <CioPanel
+      eyebrow="Tower · L2 portfolio comparison"
+      title="IT intensity across the portfolio."
+    >
+      <div style={{ color: T.INK_2, fontSize: 13.5, marginBottom: 12 }}>
+        Spend as a share of revenue, the holding-company view a single-entity
+        dashboard cannot show.
+      </div>
+      <div style={{ display: "grid", gap: 0 }}>
+        {rows.map((row) => {
+          const pct = Number(row.itSpendAsPctRevenue ?? 0);
+          const width = Math.max(4, Math.round((pct / maxPct) * 100));
+          return (
+            <div
+              key={row.portfolioCompany}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "190px 1fr 150px",
+                alignItems: "center",
+                gap: 14,
+                padding: "12px 0",
+                borderTop: `1px solid ${T.RULE}`,
+              }}
+            >
+              <div>
+                <strong>{row.portfolioCompany}</strong>
+                <div style={{ color: T.GRAY_DK, fontSize: 12 }}>
+                  {row.revenueUsd
+                    ? `${formatMoney(row.revenueUsd)} revenue`
+                    : "revenue gap"}{" "}
+                  ·{" "}
+                  {row.employees
+                    ? `${Math.round(row.employees).toLocaleString()} staff`
+                    : "staff gap"}
+                </div>
+              </div>
+              <div
+                style={{
+                  height: 13,
+                  borderRadius: 999,
+                  background: T.CREAM_DEEP,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    width: `${width}%`,
+                    height: "100%",
+                    background: pct === maxPct ? T.AMBER : "#5a6b86",
+                  }}
+                />
+              </div>
+              <div style={{ textAlign: "right", fontSize: 13 }}>
+                <strong>{formatMoney(row.totalItBudgetUsd)}</strong> IT
+                <div style={{ color: T.GRAY_DK }}>
+                  {pct > 0 ? `${pct.toFixed(1)}% of revenue` : "intensity gap"}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </CioPanel>
+  );
+}
+
+function CioDashboardViewLead({
+  active,
+  model,
+}: {
+  active: Exclude<CioDashboardView, "overview">;
+  model: CioDashboardModel;
+}) {
+  const valueGap = Math.max(
+    model.initiativeBudgetTotal - model.measuredTotal,
+    0,
+  );
+  const lead: Record<
+    Exclude<CioDashboardView, "overview">,
+    { eyebrow: string; title: string; body: string; stats: string[] }
+  > = {
+    portfolio: {
+      eyebrow: "Tower · portfolio view",
+      title: "Rank the loaded IT programs by money, owner, and proof posture.",
+      body: "This view is for program accountability: which initiatives carry budget, which owners are attached, and which rows still need measured value before the CIO treats them as fundable.",
+      stats: [
+        `${model.initiativeCount} loaded programs`,
+        `${model.measuredCoverageCount} with value proof`,
+        `${model.pressureCount} under pressure`,
+      ],
+    },
+    budget: {
+      eyebrow: "Tower · budget view",
+      title:
+        "Separate enterprise budget, run/change, and portfolio-company intensity.",
+      body: "This view uses the Tower budget rollups first. It keeps spend, value, vendor exposure, and pressure separate so the dashboard does not add unlike measures into one headline.",
+      stats: [
+        `${formatMoney(model.committedTotal)} IT budget`,
+        `${formatMoney(model.runTotal)} run`,
+        `${formatMoney(model.changeTotal)} change`,
+      ],
+    },
+    vendors: {
+      eyebrow: "Tower · vendor view",
+      title: "Use vendor concentration and renewals as leverage.",
+      body: "This view shows named contract exposure, renewal timing, and vendor health from loaded contract rows. It is not a generic spend tile; it is the negotiation and simplification lens.",
+      stats: [
+        `${model.vendorCount} vendors`,
+        `${formatMoney(model.vendorContractTotal)} vendor exposure`,
+        `${model.renewalRows.length} renewals in watch`,
+      ],
+    },
+    ai_roi: {
+      eyebrow: "Tower · AI ROI view",
+      title: "Compare Copilot, vendor agents, platforms, and true AI bets.",
+      body: "This view separates AI spend families and shows measured value only where it is loaded. Missing value evidence remains a gap, not a zero-ROI claim.",
+      stats: [
+        `${formatMoney(model.aiSpendTotal)} AI-tagged spend`,
+        `${formatMoney(model.measuredTotal)} measured value`,
+        `${valueGap > 0 ? formatMoney(valueGap) : "no"} value gap`,
+      ],
+    },
+    outcomes: {
+      eyebrow: "Tower · outcomes view",
+      title: "Turn business cases into measured-value evidence.",
+      body: "This view focuses on realization rows: which programs have measured outcomes, which remain unsupported, and where the next proof request belongs.",
+      stats: [
+        `${model.measuredCoverageCount} measured rows`,
+        `${formatMoney(model.measuredTotal)} proven`,
+        `${model.initiativeCount - model.measuredCoverageCount} proof gaps`,
+      ],
+    },
+    risks: {
+      eyebrow: "Tower · risks view",
+      title: "Find the pressure spend before more work is funded.",
+      body: "This view isolates value lag, adoption gaps, renewal risk, cost pressure, and unhealthy delivery flags from the Tower read model.",
+      stats: [
+        `${model.pressureCount} pressure programs`,
+        `${formatMoney(model.spendAtRisk)} pressure spend`,
+        `${model.gaps.length} data gaps`,
+      ],
+    },
+    board: {
+      eyebrow: "Tower · board view",
+      title:
+        "Create the executive readout without losing the evidence boundary.",
+      body: "This view turns the Tower read model into a board-ready narrative: what is known, what decision is next, and what evidence would strengthen the conclusion.",
+      stats: [
+        `${model.decisionActions.length} decision asks`,
+        `${model.scenarioQuestions.length} scenario prompts`,
+        `${model.gaps.length} data asks`,
+      ],
+    },
+  };
+  const view = lead[active];
+  return (
+    <section
+      style={{
+        border: `1px solid ${T.RULE_STRONG}`,
+        borderRadius: 16,
+        background: "#fff",
+        padding: "24px 26px",
+        marginBottom: 18,
+        boxShadow: "0 18px 38px rgba(15, 23, 42, 0.08)",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 10,
+          letterSpacing: "1.8px",
+          textTransform: "uppercase",
+          color: T.GOLD,
+          fontWeight: 900,
+        }}
+      >
+        {view.eyebrow}
+      </div>
+      <h2
+        style={{
+          margin: "9px 0 0",
+          fontFamily: T.SERIF,
+          fontSize: 30,
+          lineHeight: 1.08,
+          letterSpacing: "-0.4px",
+          color: T.INK,
+          maxWidth: 880,
+        }}
+      >
+        {view.title}
+      </h2>
+      <p
+        style={{
+          margin: "10px 0 0",
+          color: T.INK_2,
+          maxWidth: 900,
+          fontSize: 14.5,
+          lineHeight: 1.5,
+        }}
+      >
+        {view.body}
+      </p>
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-          gap: 12,
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: 10,
           marginTop: 18,
         }}
       >
-        {model.commandBullets.map((bullet, index) => (
+        {view.stats.map((stat) => (
           <div
-            key={`${bullet}-${index}`}
+            key={stat}
             style={{
-              border: "1px solid rgba(255,255,255,0.16)",
-              borderRadius: 9,
-              background: "rgba(255,255,255,0.06)",
+              border: `1px solid ${T.RULE}`,
+              borderRadius: 10,
+              background: T.PAGE_BG,
               padding: "12px 13px",
-              color: "rgba(255,255,255,0.86)",
+              color: T.INK,
+              fontWeight: 850,
               fontSize: 13,
-              lineHeight: 1.42,
             }}
           >
-            {bullet}
+            {stat}
           </div>
         ))}
       </div>
@@ -1538,96 +2083,26 @@ function CioDashboardPanel({
   vendors: ReadonlyArray<AIInitiativeVendorRow>;
   detailHrefFor: DetailHrefBuilder;
 }) {
-  const measuredTone = model.measuredTotal > 0 ? "green" : "amber";
-  const portfolioValue =
-    model.spendQuality === "empty" || model.spendQuality === "missing_values"
-      ? "gap"
-      : formatMoney(model.committedTotal);
-  const portfolioNote =
-    model.spendQuality === "missing_values"
-      ? `${model.initiativeCount} programs loaded; budget amounts missing`
-      : model.budgetRollupCount > 0
-        ? `${model.budgetRollupCount} portfolio-company budget rollups; ${model.initiativeCount} initiatives tracked`
-        : model.spendQuality === "unmeasured"
-          ? `${formatMoney(model.committedTotal)} loaded; validate before CIO headline`
-          : `${model.initiativeCount} top programs in the Tower read model`;
-  const roiValue =
-    model.measuredCoverageCount > 0
-      ? ratioText(model.measuredTotal, model.committedTotal)
-      : "gap";
-  const vendorValue =
-    model.vendorCount > 0 && model.vendorContractTotal === 0
-      ? "gap"
-      : formatMoney(model.vendorContractTotal);
-  const vendorNote =
-    model.vendorCount > 0 && model.vendorContractTotal === 0
-      ? `${model.vendorCount} vendors loaded; contract values missing`
-      : model.namedVendorExposureTotal > 0 &&
-          model.vendorContractTotal > model.namedVendorExposureTotal
-        ? `${formatMoney(model.namedVendorExposureTotal)} named contracts; ${formatMoney(model.vendorContractTotal)} vendor budget`
-        : `${model.vendorCount} vendors in contract rows`;
-  const pressureValue =
-    model.pressureCount > 0 && model.spendAtRisk === 0
-      ? "gap"
-      : model.pressureCount > 0 && model.measuredCoverageCount === 0
-        ? "review"
-        : formatMoney(model.spendAtRisk);
-  const pressureNote =
-    model.pressureCount > 0 && model.spendAtRisk === 0
-      ? `${model.pressureCount} pressure programs; budget amounts missing`
-      : model.pressureCount > 0 && model.measuredCoverageCount === 0
-        ? `${formatMoney(model.spendAtRisk)} loaded, value proof missing`
-        : `${model.pressureCount} programs not marked healthy`;
   return (
     <div style={{ padding: "22px 32px 36px" }}>
-      <CioDailyRead model={model} />
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-          gap: 12,
-          marginBottom: 18,
-        }}
-      >
-        <CioMetricCard
-          label="Loaded IT portfolio"
-          value={portfolioValue}
-          note={portfolioNote}
-          tone={model.spendQuality === "usable" ? "neutral" : "amber"}
-        />
-        <CioMetricCard
-          label="Measured value"
-          value={
-            model.measuredTotal > 0 ? formatMoney(model.measuredTotal) : "gap"
-          }
-          note={`${model.measuredCoverageCount} programs with measured value rows`}
-          tone={measuredTone}
-        />
-        <CioMetricCard
-          label="ROI signal"
-          value={roiValue}
-          note="Calculated only from loaded measured-value rows"
-          tone={model.measuredTotal > 0 ? "green" : "amber"}
-        />
-        <CioMetricCard
-          label="Vendor exposure"
-          value={vendorValue}
-          note={vendorNote}
-          tone={
-            model.vendorCount > 0 && model.vendorContractTotal === 0
-              ? "amber"
-              : "neutral"
-          }
-        />
-        <CioMetricCard
-          label="Pressure spend"
-          value={pressureValue}
-          note={pressureNote}
-          tone={model.pressureCount > 0 ? "red" : "green"}
-        />
-      </div>
-
-      <CioDecisionCards actions={model.decisionActions} />
+      {active === "overview" ? (
+        <>
+          <CioKpiStrip model={model} />
+          <div
+            style={{ color: T.GRAY_DK, fontSize: 12, margin: "-2px 0 16px" }}
+          >
+            Spend, value, vendor exposure, and pressure are separate measures;
+            Tower does not sum unlike numbers into one headline.
+          </div>
+          <CioValueBand model={model} />
+          <CioDecisionCards actions={model.decisionActions} />
+        </>
+      ) : (
+        <>
+          <CioDashboardViewLead active={active} model={model} />
+          <CioKpiStrip model={model} />
+        </>
+      )}
 
       {model.gaps.length > 0 ? (
         <div
@@ -1646,48 +2121,83 @@ function CioDashboardPanel({
       ) : null}
 
       {active === "overview" ? (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1.35fr) minmax(300px, 0.9fr)",
-            gap: 18,
-          }}
-        >
-          <CioPanel
-            eyebrow="Top IT initiatives"
-            title="Where the loaded portfolio money is concentrated."
+        <>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1.35fr) minmax(300px, 0.9fr)",
+              gap: 18,
+              marginBottom: 18,
+            }}
           >
-            <CioProgramTable
-              rows={model.topPrograms.slice(0, 5)}
-              detailHrefFor={detailHrefFor}
-            />
-          </CioPanel>
-          <div style={{ display: "grid", gap: 18 }}>
             <CioPanel
-              eyebrow="Budget by function"
-              title="Loaded functional slice."
+              eyebrow="Top IT initiatives"
+              title="Where the loaded portfolio money is concentrated."
             >
-              <CioBarList
-                rows={model.spendByFunction.slice(0, 5)}
-                total={model.committedTotal}
-                empty="Owner function or portfolio labels are missing from the Tower rows."
+              <CioProgramTable
+                rows={model.topPrograms.slice(0, 5)}
+                detailHrefFor={detailHrefFor}
+              />
+            </CioPanel>
+            <div style={{ display: "grid", gap: 18 }}>
+              <CioPanel
+                eyebrow="Budget by function"
+                title="Loaded functional slice."
+              >
+                <CioBarList
+                  rows={model.spendByFunction.slice(0, 5)}
+                  total={model.committedTotal}
+                  empty="Owner function or portfolio labels are missing from the Tower rows."
+                />
+              </CioPanel>
+              <CioPanel
+                eyebrow="Vendor concentration"
+                title="Who holds the contract exposure."
+              >
+                <CioBarList
+                  rows={model.spendByVendor.slice(0, 5)}
+                  total={model.spendByVendor.reduce(
+                    (sum, row) => sum + row.amount,
+                    0,
+                  )}
+                  empty="Vendor contract values are not loaded."
+                />
+              </CioPanel>
+            </div>
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gap: 18,
+              marginBottom: 18,
+            }}
+          >
+            <CioPanel
+              eyebrow="Run/change mix"
+              title="How much budget keeps the lights on versus changes the business."
+            >
+              <CioSplitBar
+                leftLabel="Run"
+                leftValue={model.runTotal}
+                rightLabel="Change"
+                rightValue={model.changeTotal}
               />
             </CioPanel>
             <CioPanel
-              eyebrow="Vendor concentration"
-              title="Who holds the contract exposure."
+              eyebrow="OpEx/CapEx mix"
+              title="Whether Tower is seeing operating cost or capitalized change."
             >
-              <CioBarList
-                rows={model.spendByVendor.slice(0, 5)}
-                total={model.spendByVendor.reduce(
-                  (sum, row) => sum + row.amount,
-                  0,
-                )}
-                empty="Vendor contract values are not loaded."
+              <CioSplitBar
+                leftLabel="OpEx"
+                leftValue={model.opexTotal}
+                rightLabel="CapEx"
+                rightValue={model.capexTotal}
               />
             </CioPanel>
           </div>
-        </div>
+          <CioPortfolioCompanyComparison rows={model.budgetRollups} />
+        </>
       ) : null}
 
       {active === "portfolio" ? (

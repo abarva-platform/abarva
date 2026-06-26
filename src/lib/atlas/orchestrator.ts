@@ -1,116 +1,253 @@
-import { classifyAtlasIntent } from '@/lib/atlas/classifier';
-import { runAtlasLlm } from '@/lib/atlas/llm';
-import { buildAtlasSystemPrompt, ATLAS_PROMPT_VERSION } from '@/lib/atlas/prompt';
+import { classifyAtlasIntent } from "@/lib/atlas/classifier";
+import { runAtlasLlm } from "@/lib/atlas/llm";
+import {
+  buildAtlasSystemPrompt,
+  ATLAS_PROMPT_VERSION,
+} from "@/lib/atlas/prompt";
 import {
   appendAtlasTrace,
   appendAtlasReasoningTrace,
   createAtlasObservation,
   getOrCreateAtlasThread,
   touchAtlasThread,
-} from '@/lib/atlas/repository';
-import { makeScriptedChatResponse, runScriptedAtlasIntent } from '@/lib/atlas/scripted-engine';
-import { listInitiativesForClient, listVendorsForClient } from '@/lib/admin/ai-initiatives/queries';
-import { buildTowerBandMetrics, type TowerLens } from '@/lib/tower/band-metrics-view';
-import { buildMetricExplanation, renderMetricExplanationForAtlas } from '@/lib/tower/metric-explanation-view';
-import { buildAtlasGroundingDisclosure } from '@/lib/atlas/value-grounding';
+} from "@/lib/atlas/repository";
+import {
+  makeScriptedChatResponse,
+  runScriptedAtlasIntent,
+} from "@/lib/atlas/scripted-engine";
+import {
+  listInitiativesForClient,
+  listVendorsForClient,
+} from "@/lib/admin/ai-initiatives/queries";
+import {
+  buildTowerBandMetrics,
+  type TowerLens,
+} from "@/lib/tower/band-metrics-view";
+import {
+  buildMetricExplanation,
+  renderMetricExplanationForAtlas,
+} from "@/lib/tower/metric-explanation-view";
+import { buildAtlasGroundingDisclosure } from "@/lib/atlas/value-grounding";
 import {
   ATLAS_REASONING_MODEL,
   ATLAS_TRAINING_PACKAGE_VERSION,
-} from '@/lib/tower/atlas-reasoning-trace';
-import { resolveTowerToday } from '@/lib/tower/today-resolution';
-import { selectAtlasPatterns } from '@/lib/tower/atlas-pattern-selectors';
-import { shapeAgentResponseForSurface } from '@/lib/agent/response-shape';
+} from "@/lib/tower/atlas-reasoning-trace";
+import { resolveTowerToday } from "@/lib/tower/today-resolution";
+import { selectAtlasPatterns } from "@/lib/tower/atlas-pattern-selectors";
+import { shapeAgentResponseForSurface } from "@/lib/agent/response-shape";
+import type {
+  SharedResponseLabel,
+  SharedResponseShapeIssue,
+} from "@/lib/answer/shared-response-shaper";
 import type {
   AtlasChatResponse,
+  AtlasDebugTrace,
   AtlasMetricExplanationRequest,
   AtlasObservation,
   AtlasTenancyCtx,
   AtlasToolResultMap,
   AtlasTurnResult,
-} from '@/lib/atlas/types';
+} from "@/lib/atlas/types";
 
 const METRIC_KEYS = new Set([
-  'portfolio_roi',
-  'active_pressures',
-  'spend_at_risk',
-  'renewals_90d',
-  'adoption_rate',
+  "portfolio_roi",
+  "active_pressures",
+  "spend_at_risk",
+  "renewals_90d",
+  "adoption_rate",
 ]);
 
-const PRESSURE_FLAGS = new Set(['cost_overrun', 'value_lag', 'stalled', 'duplication_risk', 'adoption_gap']);
+const PRESSURE_FLAGS = new Set([
+  "cost_overrun",
+  "value_lag",
+  "stalled",
+  "duplication_risk",
+  "adoption_gap",
+]);
 
-function guessObservationKind(intent: AtlasChatResponse['intent']): AtlasObservation['observationKind'] {
-  if (intent === 'morning_summary' || intent === 'portfolio_status') return 'summary';
-  if (intent === 'shadow_ai_detail' || intent === 'signal_detail') return 'anomaly';
-  if (intent === 'cohort_position') return 'cohort_context';
-  if (intent === 'strategy_refusal') return 'recommendation';
-  return 'summary';
+function guessObservationKind(
+  intent: AtlasChatResponse["intent"],
+): AtlasObservation["observationKind"] {
+  if (intent === "morning_summary" || intent === "portfolio_status")
+    return "summary";
+  if (intent === "shadow_ai_detail" || intent === "signal_detail")
+    return "anomaly";
+  if (intent === "cohort_position") return "cohort_context";
+  if (intent === "strategy_refusal") return "recommendation";
+  return "summary";
 }
 
-function extractSeverity(text: string): AtlasObservation['severity'] {
+function extractSeverity(text: string): AtlasObservation["severity"] {
   const normalized = text.toLowerCase();
-  if (normalized.includes('critical') || normalized.includes('loudest issue')) return 'critical';
-  if (normalized.includes('warning') || normalized.includes('lag')) return 'warning';
-  return 'info';
+  if (normalized.includes("critical") || normalized.includes("loudest issue"))
+    return "critical";
+  if (normalized.includes("warning") || normalized.includes("lag"))
+    return "warning";
+  return "info";
 }
 
 function resolveLens(value: unknown): TowerLens {
-  if (value === 'risk' || value === 'contract' || value === 'adopt') return value;
-  return 'value';
+  if (value === "risk" || value === "contract" || value === "adopt")
+    return value;
+  return "value";
 }
 
 function confidenceFloorFromBand(
   bandMetrics: ReturnType<typeof buildTowerBandMetrics>,
-): 'high' | 'med' | 'low' | 'none' {
+): "high" | "med" | "low" | "none" {
   const values = bandMetrics.metrics.map((metric) => metric.confidence);
-  if (values.includes('low')) return 'low';
-  if (values.includes('med')) return 'med';
-  if (values.includes('none')) return 'none';
-  return 'high';
+  if (values.includes("low")) return "low";
+  if (values.includes("med")) return "med";
+  if (values.includes("none")) return "none";
+  return "high";
 }
 
-function lowerConfidence(value: 'HIGH' | 'MED' | 'LOW'): 'high' | 'med' | 'low' {
-  if (value === 'HIGH') return 'high';
-  if (value === 'MED') return 'med';
-  return 'low';
+function lowerConfidence(
+  value: "HIGH" | "MED" | "LOW",
+): "high" | "med" | "low" {
+  if (value === "HIGH") return "high";
+  if (value === "MED") return "med";
+  return "low";
 }
 
 function confidenceFloorFromTowerState(
-  towerState: NonNullable<AtlasToolResultMap['towerState']>,
-): 'high' | 'med' | 'low' | 'none' {
-  const values = towerState.bandMetrics.metrics.map((metric) => metric.confidence);
-  if (values.includes('low')) return 'low';
-  if (values.includes('med')) return 'med';
-  if (values.includes('none')) return 'none';
-  return 'high';
+  towerState: NonNullable<AtlasToolResultMap["towerState"]>,
+): "high" | "med" | "low" | "none" {
+  const values = towerState.bandMetrics.metrics.map(
+    (metric) => metric.confidence,
+  );
+  if (values.includes("low")) return "low";
+  if (values.includes("med")) return "med";
+  if (values.includes("none")) return "none";
+  return "high";
 }
 
-function traceConfidenceFloor(value: 'high' | 'med' | 'low' | 'none'): 'HIGH' | 'MED' | 'LOW' {
-  if (value === 'high') return 'HIGH';
-  if (value === 'med') return 'MED';
-  return 'LOW';
+function traceConfidenceFloor(
+  value: "high" | "med" | "low" | "none",
+): "HIGH" | "MED" | "LOW" {
+  if (value === "high") return "HIGH";
+  if (value === "med") return "MED";
+  return "LOW";
 }
 
 function readMetricExplanationRequest(
   surfaceContext: Record<string, unknown> | undefined,
 ): AtlasMetricExplanationRequest | null {
   const raw = surfaceContext?.metricExplanationRequest;
-  if (!raw || typeof raw !== 'object') return null;
+  if (!raw || typeof raw !== "object") return null;
   const request = raw as Partial<AtlasMetricExplanationRequest>;
-  if (request.source !== 'tower_metric_provenance') return null;
-  if (typeof request.metricKey !== 'string' || !METRIC_KEYS.has(request.metricKey)) return null;
+  if (request.source !== "tower_metric_provenance") return null;
+  if (
+    typeof request.metricKey !== "string" ||
+    !METRIC_KEYS.has(request.metricKey)
+  )
+    return null;
   return {
-    source: 'tower_metric_provenance',
+    source: "tower_metric_provenance",
     metricKey: request.metricKey,
-    displayValue: typeof request.displayValue === 'string' ? request.displayValue : undefined,
+    displayValue:
+      typeof request.displayValue === "string"
+        ? request.displayValue
+        : undefined,
     displayConfidence:
-      request.displayConfidence === 'high' ||
-      request.displayConfidence === 'med' ||
-      request.displayConfidence === 'low' ||
-      request.displayConfidence === 'none'
+      request.displayConfidence === "high" ||
+      request.displayConfidence === "med" ||
+      request.displayConfidence === "low" ||
+      request.displayConfidence === "none"
         ? request.displayConfidence
         : undefined,
-    mode: request.mode === 'levers' ? 'levers' : 'why',
+    mode: request.mode === "levers" ? "levers" : "why",
+  };
+}
+
+function wantsDebugTrace(
+  surfaceContext: Record<string, unknown> | undefined,
+): boolean {
+  return (
+    surfaceContext?.traceMode === true || surfaceContext?.auditTrace === true
+  );
+}
+
+function pushLabel(
+  labels: SharedResponseLabel[],
+  id: string | null | undefined,
+  label: string | null | undefined,
+): void {
+  const cleanId = typeof id === "string" ? id.trim() : "";
+  const cleanLabel = typeof label === "string" ? label.trim() : "";
+  if (!cleanId || !cleanLabel || cleanId === cleanLabel) return;
+  labels.push({ id: cleanId, label: cleanLabel });
+}
+
+function buildTowerResponseLabels(
+  toolResults: AtlasToolResultMap,
+): SharedResponseLabel[] {
+  const labels: SharedResponseLabel[] = [];
+  for (const initiative of toolResults.towerState?.initiatives ?? []) {
+    pushLabel(labels, initiative.initiativeId, initiative.name);
+    pushLabel(labels, initiative.displayId, initiative.name);
+  }
+  for (const vendor of toolResults.towerState?.vendors ?? []) {
+    pushLabel(labels, vendor.vendorId, vendor.vendorName);
+    pushLabel(labels, vendor.initiativeId, vendor.initiativeName);
+    pushLabel(labels, vendor.initiativeDisplayId, vendor.initiativeName);
+  }
+  for (const signal of toolResults.signals ?? []) {
+    pushLabel(labels, signal.id, signal.signalTitle || signal.headline);
+    pushLabel(
+      labels,
+      `signal:${signal.id}`,
+      signal.signalTitle || signal.headline,
+    );
+    pushLabel(labels, signal.signalKey, signal.signalTitle || signal.headline);
+  }
+  if (toolResults.signalDetail) {
+    pushLabel(
+      labels,
+      toolResults.signalDetail.id,
+      toolResults.signalDetail.signalTitle || toolResults.signalDetail.headline,
+    );
+    pushLabel(
+      labels,
+      `signal:${toolResults.signalDetail.id}`,
+      toolResults.signalDetail.signalTitle || toolResults.signalDetail.headline,
+    );
+    pushLabel(
+      labels,
+      toolResults.signalDetail.signalKey,
+      toolResults.signalDetail.signalTitle || toolResults.signalDetail.headline,
+    );
+  }
+  for (const program of toolResults.programs ?? []) {
+    pushLabel(labels, program.id, program.name);
+  }
+  for (const useCase of toolResults.useCases ?? []) {
+    pushLabel(labels, useCase.id, useCase.name);
+  }
+  return labels;
+}
+
+function makeFallbackDebugTrace(input: {
+  enabled: boolean;
+  routeType: AtlasChatResponse["routeType"];
+  intent: AtlasChatResponse["intent"];
+  rawResponse: string;
+}): AtlasDebugTrace | undefined {
+  if (!input.enabled) return undefined;
+  return {
+    routing: {
+      promptVersion: ATLAS_PROMPT_VERSION,
+      dossierId: null,
+      dossierVersion: null,
+      dossierBuiltAt: null,
+      fallbackUsed: true,
+      fallbackReason: `${input.routeType}:${input.intent}`,
+      shapeIssues: [],
+    },
+    finalPrompt: null,
+    rawModelResponse: input.rawResponse,
+    renderedResponse: "",
+    replacements: [],
   };
 }
 
@@ -126,10 +263,18 @@ async function runMetricExplanationTurn(input: {
   ]);
   const todayIso = resolveTowerToday();
   const lens = resolveLens(input.surfaceContext?.activeTowerLens);
-  const bandMetrics = buildTowerBandMetrics(initiatives, vendors, todayIso, lens);
+  const bandMetrics = buildTowerBandMetrics(
+    initiatives,
+    vendors,
+    todayIso,
+    lens,
+  );
   const explanation = buildMetricExplanation({
     tenant: {
-      name: typeof input.surfaceContext?.tenantName === 'string' ? input.surfaceContext.tenantName : 'Active client',
+      name:
+        typeof input.surfaceContext?.tenantName === "string"
+          ? input.surfaceContext.tenantName
+          : "Active client",
       clientId: input.ctx.clientId,
     },
     metricKey: input.request.metricKey,
@@ -144,11 +289,13 @@ async function runMetricExplanationTurn(input: {
     threadId: input.threadId,
     tenantId: input.ctx.clientId,
     userId: input.ctx.userId,
-    trigger: 'metric_explanation',
+    trigger: "metric_explanation",
     inputSummary: {
       initiativesCount: initiatives.length,
       vendorsCount: vendors.length,
-      pressuresCount: initiatives.filter((initiative) => PRESSURE_FLAGS.has(initiative.statusFlag)).length,
+      pressuresCount: initiatives.filter((initiative) =>
+        PRESSURE_FLAGS.has(initiative.statusFlag),
+      ).length,
       bandConfidenceFloor: confidenceFloorFromBand(bandMetrics),
       lens,
       todayIso,
@@ -168,7 +315,9 @@ async function runMetricExplanationTurn(input: {
     ],
     ifYouOnlyDoOneToday: explanation.levers[0]?.action ?? null,
     citations: explanation.citations,
-    interpretationConfidence: lowerConfidence(explanation.confidenceFloor.level),
+    interpretationConfidence: lowerConfidence(
+      explanation.confidenceFloor.level,
+    ),
     fallbackUsed: false,
     fallbackReason: null,
     model: ATLAS_REASONING_MODEL,
@@ -180,25 +329,25 @@ async function runMetricExplanationTurn(input: {
     toolResults: { metricExplanation: explanation },
     response: {
       threadId: input.threadId,
-      routeType: 'tool_augmented',
-      intent: 'metric_explanation',
+      routeType: "tool_augmented",
+      intent: "metric_explanation",
       response: renderMetricExplanationForAtlas(explanation),
       suggestions: [
         {
-          label: 'Show levers',
+          label: "Show levers",
           value: `Show the lever map for ${explanation.metricKey}`,
-          kind: 'message',
+          kind: "message",
         },
         {
-          label: 'Audit confidence',
+          label: "Audit confidence",
           value: `Why is confidence ${explanation.confidenceFloor.level} for ${explanation.metricKey}?`,
-          kind: 'message',
+          kind: "message",
         },
       ],
       signalId: null,
       observationId: null,
-      toolsUsed: ['tower_metric_explanation'],
-      atlasMode: 'live',
+      toolsUsed: ["tower_metric_explanation"],
+      atlasMode: "live",
       fallbackReason: null,
       metricExplanation: explanation,
     },
@@ -212,7 +361,7 @@ async function appendChatReasoningTrace(input: {
   toolResults: AtlasToolResultMap;
   latencyMs: number;
   modelName: string | null;
-  atlasMode: AtlasChatResponse['atlasMode'];
+  atlasMode: AtlasChatResponse["atlasMode"];
   fallbackReason: string | null;
 }): Promise<void> {
   const towerState = input.toolResults.towerState;
@@ -228,18 +377,33 @@ async function appendChatReasoningTrace(input: {
   const patternsFired = [patterns.leadPattern, ...patterns.secondaryPatterns];
   const bandFloor = confidenceFloorFromTowerState(towerState);
   const citations = [
-    { field: 'tower_view.initiative_count', value: towerState.substrateCounts.initiatives },
-    { field: 'tower_view.vendor_count', value: towerState.substrateCounts.vendors },
-    { field: 'tower_view.kpi_snapshot_count', value: towerState.substrateCounts.kpiSnapshots },
-    { field: 'tower_view.pressure_count', value: towerState.substrateCounts.pressures },
-    { field: 'tower_view.observation_count', value: towerState.substrateCounts.observations },
+    {
+      field: "tower_view.initiative_count",
+      value: towerState.substrateCounts.initiatives,
+    },
+    {
+      field: "tower_view.vendor_count",
+      value: towerState.substrateCounts.vendors,
+    },
+    {
+      field: "tower_view.kpi_snapshot_count",
+      value: towerState.substrateCounts.kpiSnapshots,
+    },
+    {
+      field: "tower_view.pressure_count",
+      value: towerState.substrateCounts.pressures,
+    },
+    {
+      field: "tower_view.observation_count",
+      value: towerState.substrateCounts.observations,
+    },
   ];
 
   await appendAtlasReasoningTrace({
     threadId: input.threadId,
     tenantId: input.ctx.clientId,
     userId: input.ctx.userId,
-    trigger: 'atlas_chat_turn',
+    trigger: "atlas_chat_turn",
     inputSummary: {
       initiativesCount: towerState.substrateCounts.initiatives,
       vendorsCount: towerState.substrateCounts.vendors,
@@ -264,11 +428,11 @@ async function appendChatReasoningTrace(input: {
     citations,
     interpretationConfidence:
       towerState.substrateCounts.initiatives === 0
-        ? 'low'
-        : bandFloor === 'low' || bandFloor === 'none'
-          ? 'med'
-          : 'high',
-    fallbackUsed: input.atlasMode === 'fallback',
+        ? "low"
+        : bandFloor === "low" || bandFloor === "none"
+          ? "med"
+          : "high",
+    fallbackUsed: input.atlasMode === "fallback",
     fallbackReason: input.fallbackReason,
     latencyMs: input.latencyMs,
     model: input.modelName ?? ATLAS_REASONING_MODEL,
@@ -297,6 +461,7 @@ export async function runAtlasTurn(input: {
     atlasMode: detailed.atlasMode,
     fallbackReason: detailed.fallbackReason ?? null,
     groundingDisclosure: detailed.groundingDisclosure,
+    debugTrace: detailed.debugTrace,
   };
 }
 
@@ -317,7 +482,7 @@ export async function runAtlasTurnDetailed(input: {
 
   await appendAtlasTrace({
     threadId: thread.id,
-    role: 'user',
+    role: "user",
     routeType: classification.routeType,
     content: {
       message: input.message,
@@ -330,7 +495,9 @@ export async function runAtlasTurnDetailed(input: {
   let response: AtlasChatResponse;
   let toolResults: AtlasToolResultMap = {};
   let modelName: string | null = null;
-  const metricExplanationRequest = readMetricExplanationRequest(input.surfaceContext);
+  const metricExplanationRequest = readMetricExplanationRequest(
+    input.surfaceContext,
+  );
 
   if (metricExplanationRequest) {
     const metricTurn = await runMetricExplanationTurn({
@@ -341,7 +508,16 @@ export async function runAtlasTurnDetailed(input: {
     });
     response = metricTurn.response;
     toolResults = metricTurn.toolResults;
-  } else if (classification.routeType === 'scripted' || classification.routeType === 'hybrid') {
+    response.debugTrace = makeFallbackDebugTrace({
+      enabled: wantsDebugTrace(input.surfaceContext),
+      routeType: response.routeType,
+      intent: response.intent,
+      rawResponse: response.response,
+    });
+  } else if (
+    classification.routeType === "scripted" ||
+    classification.routeType === "hybrid"
+  ) {
     const scripted = await runScriptedAtlasIntent(
       input.ctx,
       classification.intent,
@@ -357,34 +533,81 @@ export async function runAtlasTurnDetailed(input: {
       classification.intent,
       scripted,
     );
+    response.debugTrace = makeFallbackDebugTrace({
+      enabled: wantsDebugTrace(input.surfaceContext),
+      routeType: response.routeType,
+      intent: response.intent,
+      rawResponse: response.response,
+    });
   } else {
-    const llm = await runAtlasLlm(input.ctx, input.message, input.surfaceContext);
+    const llm = await runAtlasLlm(
+      input.ctx,
+      input.message,
+      input.surfaceContext,
+    );
     modelName = llm.modelName;
     toolResults = llm.toolResults;
-      response = {
+    response = {
       threadId: thread.id,
-      routeType: 'llm',
-      intent: 'llm',
+      routeType: "llm",
+      intent: "llm",
       response: llm.response,
       suggestions: llm.suggestions,
       toolsUsed: llm.toolsUsed,
       atlasMode: llm.atlasMode,
       fallbackReason: llm.fallbackReason,
-      signalId: llm.toolResults.signalDetail?.id ?? llm.toolResults.signals?.[0]?.id ?? null,
+      signalId:
+        llm.toolResults.signalDetail?.id ??
+        llm.toolResults.signals?.[0]?.id ??
+        null,
       observationId: null,
+      debugTrace: llm.debugTrace,
     };
   }
 
-  const groundingDisclosure = buildAtlasGroundingDisclosure(toolResults.valueGrounding);
+  const groundingDisclosure = buildAtlasGroundingDisclosure(
+    toolResults.valueGrounding,
+  );
   if (groundingDisclosure) {
     response = {
       ...response,
       groundingDisclosure,
     };
   }
+  const shapeIssues: SharedResponseShapeIssue[] = [];
+  const replacements: Array<{ from: string; to: string }> = [];
+  const labels = buildTowerResponseLabels(toolResults);
+  const shapedResponse = shapeAgentResponseForSurface(
+    "/tower",
+    response.response,
+    {
+      labels,
+      targetChars: 900,
+      hardMaxChars: 1100,
+      maxParagraphs: 5,
+      requireNextStep: true,
+      nextStepFallback:
+        "ask aVa to inspect the supporting evidence, compare options, or shape the next CIO action.",
+      issues: shapeIssues,
+      replacements,
+    },
+  );
   response = {
     ...response,
-    response: shapeAgentResponseForSurface('/tower', response.response),
+    response: shapedResponse,
+    debugTrace: response.debugTrace
+      ? {
+          ...response.debugTrace,
+          routing: {
+            ...response.debugTrace.routing,
+            shapeIssues: shapeIssues.map(
+              (issue) => `${issue.code}: ${issue.detail}`,
+            ),
+          },
+          renderedResponse: shapedResponse,
+          replacements,
+        }
+      : undefined,
   };
 
   const observationId = await createAtlasObservation({
@@ -395,7 +618,9 @@ export async function runAtlasTurnDetailed(input: {
     details: {
       source_message: input.message,
       system_prompt: buildAtlasSystemPrompt(
-        toolResults.towerState?.client.clientName ?? toolResults.portfolio?.clientName ?? 'Active client',
+        toolResults.towerState?.client.clientName ??
+          toolResults.portfolio?.clientName ??
+          "Active client",
       ),
       suggestions: response.suggestions,
       surface_context: input.surfaceContext ?? null,
@@ -410,7 +635,7 @@ export async function runAtlasTurnDetailed(input: {
 
   await appendAtlasTrace({
     threadId: thread.id,
-    role: 'atlas',
+    role: "atlas",
     routeType: response.routeType,
     content: {
       response: response.response,
