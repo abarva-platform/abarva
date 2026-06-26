@@ -201,22 +201,34 @@ async function countRelationshipAliasCollisionRows(
   canonical: string,
 ): Promise<number> {
   const result = await client.query<{ count: string }>(
-    `WITH ranked_alias_rows AS (
-       SELECT alias_row.ctid,
-              alias_row."relationship_key",
-              row_number() OVER (PARTITION BY alias_row."relationship_key" ORDER BY alias_row.ctid) AS alias_rank,
+    `WITH alias_groups AS (
+       SELECT alias_row."relationship_key",
+              COUNT(*)::integer AS alias_count
+         FROM public.enterprise_context_relationships alias_row
+        WHERE lower(replace(alias_row."tenant_key"::text, '_', '-')) = $1
+        GROUP BY alias_row."relationship_key"
+     ),
+     collision_groups AS (
+       SELECT alias_groups.alias_count,
               EXISTS (
                 SELECT 1
                   FROM public.enterprise_context_relationships canonical_row
                  WHERE canonical_row."tenant_key" = $2
-                   AND canonical_row."relationship_key" IS NOT DISTINCT FROM alias_row."relationship_key"
+                   AND canonical_row."relationship_key" IS NOT DISTINCT FROM alias_groups."relationship_key"
               ) AS canonical_exists
-         FROM public.enterprise_context_relationships alias_row
-        WHERE lower(replace(alias_row."tenant_key"::text, '_', '-')) = $1
+         FROM alias_groups
      )
-     SELECT COUNT(*)::text AS count
-       FROM ranked_alias_rows
-      WHERE canonical_exists OR alias_rank > 1`,
+     SELECT COALESCE(
+              SUM(
+                CASE
+                  WHEN canonical_exists THEN alias_count
+                  WHEN alias_count > 1 THEN alias_count - 1
+                  ELSE 0
+                END
+              ),
+              0
+            )::text AS count
+       FROM collision_groups`,
     [alias, canonical],
   );
   return Number.parseInt(result.rows[0]?.count ?? '0', 10);
@@ -228,10 +240,9 @@ async function deleteRelationshipAliasCollisionRows(
   canonical: string,
 ): Promise<number> {
   const result = await client.query(
-    `WITH ranked_alias_rows AS (
-       SELECT alias_row.ctid,
-              alias_row."relationship_key",
-              row_number() OVER (PARTITION BY alias_row."relationship_key" ORDER BY alias_row.ctid) AS alias_rank,
+    `WITH alias_groups AS (
+       SELECT alias_row."relationship_key",
+              COUNT(*)::integer AS alias_count,
               EXISTS (
                 SELECT 1
                   FROM public.enterprise_context_relationships canonical_row
@@ -240,11 +251,21 @@ async function deleteRelationshipAliasCollisionRows(
               ) AS canonical_exists
          FROM public.enterprise_context_relationships alias_row
         WHERE lower(replace(alias_row."tenant_key"::text, '_', '-')) = $1
+        GROUP BY alias_row."relationship_key"
+     ),
+     ranked_alias_rows AS (
+       SELECT alias_row.ctid,
+              alias_row."relationship_key",
+              row_number() OVER (PARTITION BY alias_row."relationship_key" ORDER BY alias_row.ctid) AS alias_rank
+         FROM public.enterprise_context_relationships alias_row
+        WHERE lower(replace(alias_row."tenant_key"::text, '_', '-')) = $1
      ),
      victim_rows AS (
-       SELECT ctid
+       SELECT ranked_alias_rows.ctid
          FROM ranked_alias_rows
-        WHERE canonical_exists OR alias_rank > 1
+         JOIN alias_groups
+           ON alias_groups."relationship_key" IS NOT DISTINCT FROM ranked_alias_rows."relationship_key"
+        WHERE alias_groups.canonical_exists OR ranked_alias_rows.alias_rank > 1
      )
      DELETE FROM public.enterprise_context_relationships target
       USING victim_rows
