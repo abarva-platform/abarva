@@ -162,6 +162,9 @@ describe('tower materialization planner', () => {
       'tower_spend_realism_audit',
       'tower_forbidden_identifiers',
     ]);
+    expect(calls.find((call) => call.table === 'tower_forbidden_identifiers')?.onConflict).toBe(
+      'tenant_key,identifier',
+    );
     expect(calls.every((call) => call.table.startsWith('tower_'))).toBe(true);
   });
 
