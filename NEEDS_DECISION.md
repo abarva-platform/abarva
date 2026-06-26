@@ -14,6 +14,13 @@ Clean-main audit found active Tower code paths that read non-`tower_*` sources. 
 
 Per the runbook, these are stop conditions before canonical-key normalization, leak-guard work, evidence-bridge repair, vendor deduplication, spend realism repair, portfolio hierarchy modeling, or answer composer changes.
 
+## Decision
+
+Approved by Anand on 2026-06-26:
+
+- Runtime isolation option 2: upstream context reads are allowed only inside a server-side materialization job; runtime Tower surfaces and aVa answer paths must read the materialized `tower_*` output.
+- Lakeshore portfolio Path A: schema-ready holding-company hierarchy with consolidated Level 1 populated; Level 2/Level 3 operating-company comparisons remain named gaps until operating-company data is explicitly approved.
+
 ## Evidence
 
 ### 1. Visible `/tower` route calls the current-state builder
@@ -23,12 +30,13 @@ File: `src/app/(maestro)/tower/page.tsx`
 - Imports `buildAtlasTowerCurrentState` from `@/lib/atlas/tower-grounding`.
 - Calls `buildAtlasTowerCurrentState(...)` for the signed-in client before rendering `TowerIndexPage`.
 
-### 2. Current-state builder falls back to an enterprise-context projection
+### 2. Current-state builder fell back to an enterprise-context projection before this PR
 
 File: `src/lib/atlas/tower-grounding.ts`
 
-- Line 13 imports `listProjectedTowerReadModelForClient` from `@/lib/tower/tower-semantic-projection`.
-- Lines 240-245 call that projection when Tower admin initiatives/vendors are empty.
+- Previous clean-main behavior imported `listProjectedTowerReadModelForClient` from `@/lib/tower/tower-semantic-projection`.
+- Previous clean-main behavior called that projection when Tower admin initiatives/vendors were empty.
+- This PR replaces that runtime fallback with `listMaterializedTowerReadModelForClient` from `@/lib/tower/tower-materialized-read-model`.
 
 ### 3. Projection reads `enterprise_context_records`
 
@@ -121,8 +129,9 @@ That preserves traceability, fixes the runtime ambiguity, avoids inventing opcos
 
 ## Current Status
 
-- Snapshot/repair tasks: not started.
-- Gates A-F: not started.
+- Snapshot/repair tasks: first reversible isolation slice implemented.
+- Gates A-F: not fully proven yet; Gate A runtime-isolation unit coverage added.
 - Data mutations: none.
 - Destructive actions: none.
-- Files changed: this stop artifact only.
+- Runtime change: Tower fallback now reads `tower_read_model_*` only.
+- Schema change: additive `tower_*` materialized read-model tables added for later live migration.

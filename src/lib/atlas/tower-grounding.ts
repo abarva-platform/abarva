@@ -10,7 +10,7 @@ import { buildTowerBandMetrics, type TowerBandMetricsView, type TowerLens } from
 import { buildTowerPressuresView, type TowerPressuresView } from '@/lib/tower/pressure-cards-view';
 import { buildTowerAtlasObservationsView, type AtlasObservationsView } from '@/lib/tower/atlas-observations-view';
 import { buildStrategicAlignment2x2View, type StrategicAlignment2x2View } from '@/lib/tower/strategic-alignment-2x2-view';
-import { listProjectedTowerReadModelForClient } from '@/lib/tower/tower-semantic-projection';
+import { listMaterializedTowerReadModelForClient } from '@/lib/tower/tower-materialized-read-model';
 import { resolveTowerToday } from '@/lib/tower/today-resolution';
 
 type IndustryCode = 'HEALTHCARE_IDN' | 'FINSERV' | 'RETAIL' | 'GENERAL';
@@ -239,7 +239,7 @@ export async function buildAtlasTowerCurrentState(input: {
   ]);
   const projected =
     initiatives.length === 0 && vendors.length === 0
-      ? await listProjectedTowerReadModelForClient({
+      ? await listMaterializedTowerReadModelForClient({
           clientId: input.clientId,
           tenantKey: client.tenantKey,
         }).catch(() => ({ source: 'empty' as const, initiatives: [], vendors: [] }))
