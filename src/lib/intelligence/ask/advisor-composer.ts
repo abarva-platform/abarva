@@ -1,6 +1,4 @@
 import type { AskSource } from "./types";
-import { getExpertById } from "@/lib/intelligence/expert-pack/registry";
-import type { ExpertPack } from "@/lib/intelligence/expert-pack/expert-pack";
 import type { ExpertRef } from "@/lib/ava-answer/contract";
 
 export type IntelligenceAdvisorRoute =
@@ -15,15 +13,6 @@ const VALUE_OR_VISUAL_RE =
   /\b(roi|return|value|benefit|benefits|trend|trends|investment|investments|chart|charts|table|tables|visual|visualize|graph)\b/i;
 const FUNCTION_ARTIFACT_RE =
   /\b(table|tables|chart|charts|visuali[sz]e|visual|graph|map|compare|list|show|break\s?down|what|why|which|where should|how should|consider|opportunit(?:y|ies)|prioriti[sz]e|recommend)\b/i;
-
-const AIRLINE_IROPS_EXPERT_IDS = [
-  "xp.airline.operations-revenue-management",
-  "xp.airline.ground-airport-operations",
-  "xp.airline.network-schedule-planning",
-  "xp.x.enterprise-architecture",
-  "xp.x.ai-governance",
-  "xp.x.value-office-ai-enablement",
-] as const;
 
 export interface AdvisorComposerInput {
   query: string;
@@ -382,15 +371,12 @@ export function buildIntelligenceAdvisorComposerBlock(
     return buildEnterpriseFunctionComposerBlock(input);
   }
 
-  const experts = AIRLINE_IROPS_EXPERT_IDS.map((id) => getExpertById(id)).filter(
-    (expert): expert is ExpertPack => Boolean(expert),
-  );
   const sourceSummary = summarizeSources(input.sources);
 
   return {
     route,
-    expertNames: experts.map((expert) => expert.identity.expertName),
-    expertRefs: advisorExpertRefs(experts),
+    expertNames: [],
+    expertRefs: [],
     selectedSourceSummary: sourceSummary,
     promptBlock: [
       "INTELLIGENCE ADVISOR COMPOSER ROUTE",
@@ -401,11 +387,8 @@ export function buildIntelligenceAdvisorComposerBlock(
       "Evidence order is binding:",
       "1. Use SkyHarbor / tenant read-model facts first for tenant-specific claims.",
       "2. Use airline corpus / genome patterns for industry pattern claims.",
-      "3. Use expert-pack benchmarks and operating metrics as planning ranges only.",
+      "3. Use corpus/pattern benchmarks and operating metrics as planning ranges only.",
       "4. Use public/current research only if it appears in the supplied sources. If it is not supplied, say public live research is not available in this answer and do not invent named public facts.",
-      "",
-      "Required expert lenses:",
-      ...experts.map((expert) => `- ${formatExpertLens(expert)}`),
       "",
       "Required answer agenda:",
       "1. Open with a direct 2-4 sentence executive answer: what airlines are doing with IROPS AI, why ROI exists, and what SkyHarbor should understand before investing.",
@@ -432,7 +415,7 @@ export function buildIntelligenceAdvisorComposerBlock(
       "Quality gates you must satisfy:",
       "- Do not start with row counts, retrieval mechanics, or 'I found X records'.",
       "- Do not expose raw internal IDs.",
-      "- Do not treat corpus, expert benchmarks, vendor claims, or public examples as SkyHarbor facts.",
+      "- Do not treat corpus benchmarks, vendor claims, or public examples as SkyHarbor facts.",
       "- Do not fabricate tenant ROI. If SkyHarbor lacks realized-value evidence, say the tenant-specific ROI case is not loaded and give planning ranges separately.",
       "- Do not sound like a database report. Sound like a senior consultant with source discipline.",
       "",
@@ -446,13 +429,8 @@ export function buildIntelligenceAdvisorComposerBlock(
 }
 
 export function expertRefsForAdvisorRoute(query: string): ExpertRef[] {
-  const route = routeIntelligenceAdvisorQuestion(query);
-  if (route !== "airline_irops_ai_roi") return [];
-  return advisorExpertRefs(
-    AIRLINE_IROPS_EXPERT_IDS.map((id) => getExpertById(id)).filter(
-      (expert): expert is ExpertPack => Boolean(expert),
-    ),
-  );
+  void query;
+  return [];
 }
 
 export function chooseAdvisorTokenBudget(query: string, fallback: number): number {
@@ -489,7 +467,7 @@ function buildEnterpriseFunctionComposerBlock(
       "",
       "Evidence order is binding:",
       "1. Tenant read-model facts first for any client-specific claim.",
-      "2. Corpus / pattern / expert support second for industry or operating-model claims.",
+      "2. Corpus / pattern support second for industry or operating-model claims.",
       "3. Planning ranges are allowed only when labeled pattern-only.",
       "4. If a tenant-specific field is missing, name the exact field gap instead of saying the whole context is not loaded.",
       "",
@@ -553,23 +531,4 @@ function summarizeSources(sources: AskSource[]): AdvisorComposerResult["selected
       graphEvidenceCount: 0,
     },
   );
-}
-
-function formatExpertLens(expert: ExpertPack): string {
-  const metrics = expert.domain.operatingMetrics
-    .slice(0, 3)
-    .map((metric) => metric.name)
-    .join("; ");
-  const useCases = expert.domain.aiUseCaseArchetypes
-    .slice(0, 3)
-    .map((useCase) => useCase.name)
-    .join("; ");
-  return `${expert.identity.expertName}: ${expert.identity.scopeNote} Focus metrics: ${metrics}. AI plays: ${useCases}.`;
-}
-
-function advisorExpertRefs(experts: ExpertPack[]): ExpertRef[] {
-  return experts.slice(0, 3).map((expert) => ({
-    id: expert.identity.id,
-    name: expert.identity.expertName,
-  }));
 }

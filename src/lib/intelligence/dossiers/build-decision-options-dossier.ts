@@ -32,9 +32,7 @@ export function buildDecisionOptionsDossier(input: {
     .map((section) => section.label)
     .slice(0, 4);
   const corpusSupport = input.corpusPatternDossier.patternFamilies.slice(0, 3);
-  const expertSupport = input.expertCouncilDossier.selectedExperts
-    .map((expert) => expert.nameOrRole)
-    .slice(0, 3);
+  const advisorySupport = input.route.expertLensesRequired.slice(0, 3);
   const missingEvidence = input.tenantEvidenceDossier.gaps.map((gap) => gap.label).slice(0, 3);
 
   const options = optionTitles(input.route).map((title, index) => ({
@@ -43,7 +41,7 @@ export function buildDecisionOptionsDossier(input: {
     description: `${title} using the loaded ${input.route.primaryDimension.replaceAll("_", " ")} evidence as the decision anchor.`,
     tenantEvidenceSupport: tenantFacts,
     corpusSupport,
-    expertSupport,
+    expertSupport: advisorySupport,
     expectedValue: index === 0 ? "highest near-term value if prerequisites hold" : index === 1 ? "medium value with lower sequencing risk" : "risk control and option preservation",
     executionComplexity: (index === 0 ? "medium" : index === 1 ? "high" : "low") as "low" | "medium" | "high",
     riskLevel: (index === 0 ? "medium" : index === 1 ? "high" : "low") as "low" | "medium" | "high",
@@ -60,7 +58,7 @@ export function buildDecisionOptionsDossier(input: {
       "Holding unsupported bets preserves capital but may miss timing if prerequisites are already in place.",
     ],
     recommendedDecisionFrame: input.route.decisionFrameRequired
-      ? "Separate proven tenant facts, corpus precedent, expert interpretation, and missing evidence before recommending scale, hold, or sequence."
+      ? "Separate proven tenant facts, corpus precedent, advisory lens concerns, and missing evidence before recommending scale, hold, or sequence."
       : "Answer as interpretation first; do not force a decision frame unless the question asks for one.",
     confidence:
       input.tenantEvidenceDossier.confidence === "strong"

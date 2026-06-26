@@ -71,58 +71,57 @@ export function answerCitationsFromAskSources(
   }));
 }
 
-function evidenceRequiredTable(
+function availableContextTable(
   citations: AnswerCitation[],
-  outputShape: RoutingDecision["outputShape"] = "table",
 ): AnswerTable {
-  const requestedEvidence =
-    outputShape === "graph"
-      ? "Source-to-target relationship edge pairs for the requested graph"
-      : outputShape === "chart"
-        ? "Connected numeric row/column source data for the requested chart"
-        : "Tenant data extract for the requested comparison";
-  const missingStatus =
-    outputShape === "graph"
-      ? "No defensible edge rows were present in the retrieved cited sources"
-      : outputShape === "chart"
-        ? "No exact comparable numeric rows were present in the retrieved cited sources"
-        : citations.length > 0
-          ? "Not present in the retrieved cited sources"
-          : "No cited source available for the requested rows";
-  const nextMove =
-    outputShape === "graph"
-      ? "Load or validate From / Relationship / To evidence before rendering a dependency graph."
-      : outputShape === "chart"
-        ? "Validate source rows with exact comparable values before rendering a chart."
-        : "Validate or load the source table before approving tenant-specific numbers.";
+  const rows =
+    citations.length > 0
+      ? citations.map((citation) => ({
+          source: citation.label,
+          type: sourceClassDisplay(citation.sourceClass),
+          confidence: citation.confidence ?? "not rated",
+          use: citation.excerpt || "Supports the advisory answer above.",
+        }))
+      : [
+          {
+            source: "No cited source returned",
+            type: "context",
+            confidence: "low",
+            use: "The answer is limited to the available advisory context.",
+          },
+        ];
   return {
-    id: "answer-evidence-required",
-    title:
-      outputShape === "graph"
-        ? "Graph Evidence Required"
-        : outputShape === "chart"
-          ? "Chart Evidence Required"
-          : "Evidence Required",
+    id: "answer-available-context",
+    title: "Available Context",
     columns: [
-      { key: "evidence", label: "Evidence" },
-      { key: "status", label: "Status" },
-      { key: "nextMove", label: "Next Move" },
+      { key: "source", label: "Source" },
+      { key: "type", label: "Type" },
+      { key: "confidence", label: "Confidence" },
+      { key: "use", label: "How it supports the answer" },
     ],
-    rows: [
-      {
-        evidence: requestedEvidence,
-        status: citations.length > 0 ? missingStatus : "No cited source available for the requested rows",
-        nextMove,
-      },
-    ],
-    note:
-      outputShape === "graph"
-        ? "Rendered because the user asked for a graph, but aVa did not have enough connected edge data to populate a graph without fabrication."
-        : outputShape === "chart"
-          ? "Rendered because the user asked for a chart, but aVa did not have enough exact comparable values to populate a chart without fabrication."
-          : "Rendered because the user asked for a table, but aVa did not have enough connected data to populate tenant-specific rows without fabrication.",
+    rows,
+    note: "This panel lists the context used for the answer. It does not invent missing rows, values, or relationships.",
     citationIds: citations.map((citation) => citation.id),
   };
+}
+
+function sourceClassDisplay(sourceClass: AnswerCitation["sourceClass"]): string {
+  switch (sourceClass) {
+    case "tenant-fact":
+      return "tenant evidence";
+    case "tenant-chunk":
+      return "tenant excerpt";
+    case "graph":
+      return "relationship";
+    case "corpus-pattern":
+      return "pattern";
+    case "worldview":
+      return "benchmark";
+    case "expert-pack":
+      return "pattern";
+    default:
+      return "source";
+  }
 }
 
 function splitMarkdownTableRow(line: string): string[] {
@@ -406,23 +405,6 @@ function stripResidualTableFragments(prose: string): string {
     )
     .replace(/\n{3,}/g, "\n\n")
     .trim();
-}
-
-function artifactGapText(
-  outputShape: RoutingDecision["outputShape"],
-  citations: AnswerCitation[],
-): string {
-  const citedContext =
-    citations.length > 0
-      ? " The retrieved citations are still attached for source inspection."
-      : "";
-  if (outputShape === "chart") {
-    return `Evidence gap: I do not see connected numeric row/column source data for a defensible chart.${citedContext} I am not rendering a visual from prose-only figures.`;
-  }
-  if (outputShape === "graph") {
-    return `Evidence gap: I do not see source-to-target relationship edge pairs for a defensible graph.${citedContext} I am not rendering a graph from integration counts alone.`;
-  }
-  return "";
 }
 
 function exactCurrencyOrNumber(value: string | number | null): number | null {
@@ -779,16 +761,15 @@ export function buildStructuredExhibits(
       input.routing.outputShape === "chart" ||
       input.routing.outputShape === "graph")
   ) {
-    tables.push(evidenceRequiredTable(citations, input.routing.outputShape));
+    tables.push(availableContextTable(citations));
   }
 
-  const artifactGap = artifactGapText(input.routing.outputShape, citations);
   const cleanedProse = inline.prose
     ? enforceDecisionGradeAnswer(stripResidualTableFragments(inline.prose))
     : "";
 
   return {
-    prose: [cleanedProse, artifactGap].filter(Boolean).join("\n\n"),
+    prose: cleanedProse,
     citations,
     tables,
     charts,

@@ -30,20 +30,14 @@ import { routeQuestion } from "@/lib/intelligence/answer/router";
 import { expertIndustryForClientKey } from "@/lib/intelligence/answer/expert-grounding";
 import {
   advisorRequiredArtifactForQuery,
-  expertRefsForAdvisorRoute,
   withAdvisorSupportSources,
 } from "@/lib/intelligence/ask/advisor-composer";
-import {
-  buildStructuredAdvisorAnswer,
-  shouldUseStructuredAdvisorAnswer,
-} from "@/lib/intelligence/ask/advisor-structured-answer";
 import {
   buildStructuredExhibits,
   hasRenderableStructuredExhibits,
 } from "@/lib/intelligence/answer/structured-exhibits";
 import { composeAvaAnswer } from "@/lib/ava-answer/composeAvaAnswer";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
-import type { ExpertRef } from "@/lib/ava-answer/contract";
 import {
   buildHomeKnowAgentAnswer,
   homeKnowResponseToAvaAnswer,
@@ -51,7 +45,6 @@ import {
 } from "@/lib/home/know/home-know-agent-answer";
 import { appClientKeyForTenant, tenantAliasesFor } from "@/lib/tenant/aliases";
 import type { HomeKnowResponse } from "@/lib/home/know/home-know-contract";
-import type { IntelligenceDossier } from "@/lib/intelligence/dossiers";
 import "@/lib/reasoning/telemetry-init";
 
 export const runtime = "nodejs";
@@ -59,11 +52,11 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 export async function GET(req: NextRequest) {
-  return handleAsk(await parseGetPayload(req));
+  return handleAsk(await parseGetPayload(req), req);
 }
 
 export async function POST(req: NextRequest) {
-  return handleAsk(await parsePostPayload(req));
+  return handleAsk(await parsePostPayload(req), req);
 }
 
 interface AskPayload {
@@ -75,7 +68,7 @@ interface AskPayload {
   richText: boolean;
 }
 
-async function handleAsk(payload: AskPayload) {
+async function handleAsk(payload: AskPayload, req: NextRequest) {
   const { query, requestedClient, surfaceContext, richText } = payload;
   if (!query.trim()) {
     return new Response(JSON.stringify({ error: "q required" }), {
@@ -102,6 +95,7 @@ async function handleAsk(payload: AskPayload) {
   let activePersonGraphNodeId: string | null = null;
   let activePersonDisplayName: string | null = null;
   let signedInTenantAliases: string[] = [];
+  let includeTrace = false;
   try {
     const [person, clerkUser, client, sessionClient] = await Promise.all([
       getCurrentPerson(),
@@ -117,6 +111,7 @@ async function handleAsk(payload: AskPayload) {
     tenant = client;
     sessionTenant = sessionClient;
     sessionUserId = clerkUser?.id ?? null;
+    includeTrace = shouldIncludeIntelligenceTrace(req, clerkUser);
     const resolvedClient = client;
     signedInTenantAliases = aliasesForClerkTenant(clerkUser);
     tenantInventoryKey = resolvedClient?.canonicalKey ?? null;
@@ -177,8 +172,6 @@ async function handleAsk(payload: AskPayload) {
       let citationCount = 0;
       let patternId: string | null = null;
       let sawStreamError = false;
-      let latestIntelligenceDossier: IntelligenceDossier | null = null;
-      const useStructuredAdvisor = shouldUseStructuredAdvisorAnswer(query);
       // Agent-trace capture (aVa Intelligence path).
       let traceSources: RawAskSource[] = [];
       let traceModelInputHash: string | undefined;
@@ -370,9 +363,6 @@ async function handleAsk(payload: AskPayload) {
             query,
             industry: expertIndustryForClientKey(tenantClientKey),
           });
-          const advisorExperts = expertRefsForAdvisorRoute(query);
-          const expertsUsed =
-            advisorExperts.length > 0 ? advisorExperts : routing.experts;
           const advisorOutputShape = advisorRequiredArtifactForQuery(query);
           const answerRouting = {
             ...routing,
@@ -380,7 +370,7 @@ async function handleAsk(payload: AskPayload) {
               routing.outputShape === "chart"
                 ? routing.outputShape
                 : advisorOutputShape ?? routing.outputShape,
-            experts: expertsUsed,
+            experts: [],
           };
           const sentinelSources = withAdvisorSupportSources(
             query,
@@ -393,8 +383,7 @@ async function handleAsk(payload: AskPayload) {
           });
           if (
             hasRenderableStructuredExhibits(exhibits) ||
-            exhibits.citations.length > 0 ||
-            expertsUsed.length > 0
+            exhibits.citations.length > 0
           ) {
             const agentAnswer = composeAvaAnswer({
               surface: "intelligence",
@@ -431,7 +420,6 @@ async function handleAsk(payload: AskPayload) {
                     "Tables, charts, and graphs appear only when Ava has validated structured data.",
                 },
               ],
-              expertsUsed,
               corpusUsed: exhibits.citations.some(
                 (citation) => citation.sourceClass !== "tenant-fact",
               )
@@ -446,7 +434,7 @@ async function handleAsk(payload: AskPayload) {
                 hasCorpus: exhibits.citations.some(
                   (citation) => citation.sourceClass !== "tenant-fact",
                 ),
-                hasExperts: expertsUsed.length > 0,
+                hasExperts: false,
               },
             });
             controller.enqueue(
@@ -493,15 +481,40 @@ async function handleAsk(payload: AskPayload) {
           activePersonDisplayName,
           onModelInput: (parts) => {
             traceModelInputHash = hashModelInput(parts);
+            if (includeTrace) {
+              controller.enqueue(
+                encoder.encode(
+                  JSON.stringify({
+                    type: "trace-model-input",
+                    finalPrompt: {
+                      system: parts.system,
+                      user: parts.user,
+                      full: [parts.system, parts.user].join("\n\n"),
+                    },
+                  }) + "\n",
+                ),
+              );
+            }
+          },
+          onModelOutput: (parts) => {
+            if (!includeTrace) return;
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "trace-model-output",
+                  route: parts.route,
+                  model: parts.model ?? null,
+                  auditId: parts.auditId ?? null,
+                  rawText: parts.rawText,
+                  text: parts.text,
+                }) + "\n",
+              ),
+            );
           },
         })) {
           if (event.type === "classified")
             classificationForMemory =
               event.classification ?? classificationForMemory;
-          if (event.type === "intelligence-dossier") {
-            latestIntelligenceDossier =
-              event.intelligenceDossier ?? latestIntelligenceDossier;
-          }
           if (event.type === "sources") {
             const enrichedSources = withAdvisorSupportSources(
               query,
@@ -524,10 +537,6 @@ async function handleAsk(payload: AskPayload) {
           }
           if (event.type === "delta" && event.text) {
             assistantText += event.text;
-            if (useStructuredAdvisor) continue;
-          }
-          if (useStructuredAdvisor && event.type === "followups") {
-            continue;
           }
           if (event.type === "error") sawStreamError = true;
           if (event.type === "done") continue;
@@ -611,14 +620,6 @@ async function handleAsk(payload: AskPayload) {
             query,
             industry: expertIndustryForClientKey(tenantClientKey),
           });
-          const advisorExperts = expertRefsForAdvisorRoute(query);
-          const expertsUsed =
-            advisorExperts.length > 0
-              ? advisorExperts
-              : mergeExpertRefs(
-                  routing.experts,
-                  expertRefsFromDossier(latestIntelligenceDossier),
-                );
           const advisorOutputShape = advisorRequiredArtifactForQuery(query);
           const answerRouting = {
             ...routing,
@@ -626,121 +627,86 @@ async function handleAsk(payload: AskPayload) {
               routing.outputShape === "chart"
                 ? routing.outputShape
                 : advisorOutputShape ?? routing.outputShape,
-            experts: expertsUsed,
+            experts: [],
           };
           const advisorSources = withAdvisorSupportSources(
             query,
             traceSources as AskSource[],
           );
-          const structuredAdvisor = buildStructuredAdvisorAnswer({
-            query,
-            tenantKey:
-              tenantInventoryKey ??
-              tenantClientKey ??
-              requestedOrSurfaceClient ??
-              "unknown",
-            assistantText,
+          const exhibits = buildStructuredExhibits({
+            prose: assistantText,
             routing: answerRouting,
             sources: advisorSources,
-            expertsUsed,
           });
-          if (structuredAdvisor) {
+          if (
+            hasRenderableStructuredExhibits(exhibits) ||
+            exhibits.citations.length > 0
+          ) {
+            const agentAnswer = composeAvaAnswer({
+              surface: "intelligence",
+              mode: "ANALYZE",
+              tenantKey:
+                tenantInventoryKey ??
+                tenantClientKey ??
+                requestedOrSurfaceClient ??
+                "unknown",
+              question: query,
+              intent: answerRouting.outputShape,
+              status: "answered",
+              directAnswer: exhibits.prose,
+              artifacts: [
+                ...exhibits.tables.map((table) => ({
+                  ...table,
+                  artifact: "table" as const,
+                })),
+                ...exhibits.charts.map((chart) => ({
+                  ...chart,
+                  artifact: "chart" as const,
+                })),
+                ...exhibits.graphs.map((graph) => ({
+                  ...graph,
+                  artifact: "graph" as const,
+                })),
+              ],
+              citations: exhibits.citations,
+              caveats: [
+                {
+                  id: "validated-structure-only",
+                  label: "Structured exhibits",
+                  detail:
+                    "Tables, charts, and graphs appear only when aVa has validated structured data.",
+                },
+              ],
+              corpusUsed: exhibits.citations.some(
+                (citation) => citation.sourceClass !== "tenant-fact",
+              )
+                ? [
+                    {
+                      id: "corpus-support",
+                      label: "Corpus or pattern support",
+                    },
+                  ]
+                : [],
+              retrievalSummary: {
+                substrate: "module_read_model",
+                sourceCount: exhibits.citations.length,
+                hasTenantFacts: exhibits.citations.some(
+                  (citation) => citation.sourceClass === "tenant-fact",
+                ),
+                hasCorpus: exhibits.citations.some(
+                  (citation) => citation.sourceClass !== "tenant-fact",
+                ),
+                hasExperts: false,
+              },
+            });
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
                   type: "agent-answer",
-                  answer: structuredAdvisor.answer,
+                  answer: agentAnswer,
                 }) + "\n",
               ),
             );
-            controller.enqueue(
-              encoder.encode(
-                JSON.stringify({
-                  type: "followups",
-                  followups: structuredAdvisor.followUpQuestion
-                    ? [structuredAdvisor.followUpQuestion]
-                    : [],
-                }) + "\n",
-              ),
-            );
-          } else {
-            const exhibits = buildStructuredExhibits({
-              prose: assistantText,
-              routing: answerRouting,
-              sources: advisorSources,
-            });
-            if (
-              hasRenderableStructuredExhibits(exhibits) ||
-              exhibits.citations.length > 0 ||
-              expertsUsed.length > 0
-            ) {
-              const agentAnswer = composeAvaAnswer({
-                surface: "intelligence",
-                mode: "ANALYZE",
-                tenantKey:
-                  tenantInventoryKey ??
-                  tenantClientKey ??
-                  requestedOrSurfaceClient ??
-                  "unknown",
-                question: query,
-                intent: answerRouting.outputShape,
-                status: "answered",
-                directAnswer: exhibits.prose,
-                artifacts: [
-                  ...exhibits.tables.map((table) => ({
-                    ...table,
-                    artifact: "table" as const,
-                  })),
-                  ...exhibits.charts.map((chart) => ({
-                    ...chart,
-                    artifact: "chart" as const,
-                  })),
-                  ...exhibits.graphs.map((graph) => ({
-                    ...graph,
-                    artifact: "graph" as const,
-                  })),
-                ],
-                citations: exhibits.citations,
-                caveats: [
-                  {
-                    id: "validated-structure-only",
-                    label: "Structured exhibits",
-                    detail:
-                      "Tables, charts, and graphs appear only when Ava has validated structured data.",
-                  },
-                ],
-                expertsUsed,
-                corpusUsed: exhibits.citations.some(
-                  (citation) => citation.sourceClass !== "tenant-fact",
-                )
-                  ? [
-                      {
-                        id: "corpus-support",
-                        label: "Corpus or pattern support",
-                      },
-                    ]
-                  : [],
-                retrievalSummary: {
-                  substrate: "module_read_model",
-                  sourceCount: exhibits.citations.length,
-                  hasTenantFacts: exhibits.citations.some(
-                    (citation) => citation.sourceClass === "tenant-fact",
-                  ),
-                  hasCorpus: exhibits.citations.some(
-                    (citation) => citation.sourceClass !== "tenant-fact",
-                  ),
-                  hasExperts: expertsUsed.length > 0,
-                },
-              });
-              controller.enqueue(
-                encoder.encode(
-                  JSON.stringify({
-                    type: "agent-answer",
-                    answer: agentAnswer,
-                  }) + "\n",
-                ),
-              );
-            }
           }
           controller.enqueue(
             encoder.encode(
@@ -795,28 +761,6 @@ async function handleAsk(payload: AskPayload) {
       "Cache-Control": "no-cache",
     },
   });
-}
-
-function expertRefsFromDossier(
-  dossier: IntelligenceDossier | null,
-): ExpertRef[] {
-  return (
-    dossier?.expertCouncilDossier.selectedExperts.map((expert) => ({
-      id: expert.expertId,
-      name: expert.nameOrRole,
-    })) ?? []
-  );
-}
-
-function mergeExpertRefs(...groups: ExpertRef[][]): ExpertRef[] {
-  const byId = new Map<string, ExpertRef>();
-  for (const group of groups) {
-    for (const expert of group) {
-      if (!expert.id || byId.has(expert.id)) continue;
-      byId.set(expert.id, expert);
-    }
-  }
-  return [...byId.values()].slice(0, 7);
 }
 
 function intelligenceSourcesFromCitations(
@@ -928,6 +872,29 @@ function aliasesForClerkTenant(
   const appClientKey =
     appClientKeyForTenant(metadataClient) ?? inferClientKeyFromEmail(email);
   return appClientKey ? tenantAliasesFor(appClientKey) : [];
+}
+
+function shouldIncludeIntelligenceTrace(
+  req: NextRequest,
+  user: Awaited<ReturnType<typeof currentUser>>,
+): boolean {
+  if (req.headers.get("x-abarva-debug-intel") !== "1") return false;
+  const email =
+    user?.primaryEmailAddress?.emailAddress ??
+    user?.emailAddresses?.[0]?.emailAddress ??
+    "";
+  const metadata = user?.publicMetadata as Record<string, unknown> | undefined;
+  const role = readString(metadata?.role)?.toLowerCase() ?? "";
+  const roles = Array.isArray(metadata?.roles)
+    ? metadata.roles
+        .map((value) => (typeof value === "string" ? value.toLowerCase() : ""))
+        .filter(Boolean)
+    : [];
+  const allowedRole =
+    ["admin", "operator", "agent", "qa"].includes(role) ||
+    roles.some((value) => ["admin", "operator", "agent", "qa"].includes(value));
+  const allowedEmail = /@abarva\.(ai|example\.com)$/i.test(email);
+  return Boolean(user?.id) && (allowedEmail || allowedRole);
 }
 
 function buildHomeKnowTenantFenceAnswer(input: {

@@ -33,17 +33,11 @@ describe("composeAvaAnswer", () => {
           sourceClass: "tenant-fact",
         },
       ],
-      expertsUsed: [
-        {
-          id: "retail-merchandising",
-          name: "Retail Merchandising & Pricing Expert",
-        },
-      ],
       retrievalSummary: {
         substrate: "module_read_model",
         sourceCount: 1,
         hasTenantFacts: true,
-        hasExperts: true,
+        hasExperts: false,
       },
     });
 
@@ -51,7 +45,8 @@ describe("composeAvaAnswer", () => {
     expect(answer.prose?.split(/\n{2,}/).length).toBeGreaterThanOrEqual(3);
     expect(answer.charts).toHaveLength(1);
     expect(answer.artifacts).toHaveLength(1);
-    expect(answer.contributingExperts).toHaveLength(1);
+    expect(answer.expertsUsed).toEqual([]);
+    expect(answer.contributingExperts).toEqual([]);
   });
 
   it("does not paragraph-shape Home KNOW prose", () => {

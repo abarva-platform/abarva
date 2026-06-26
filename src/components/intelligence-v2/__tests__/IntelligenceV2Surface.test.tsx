@@ -231,9 +231,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
         "Apex should gate lakehouse scale on measured value.",
       ),
     ).not.toHaveLength(0);
-    expect(screen.getAllByText("Consulted experts (1)").length).toBeGreaterThan(
-      0,
-    );
+    expect(screen.queryByText(/Consulted experts/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/17,548 evidence points/i)).not.toBeInTheDocument();
     expect(
       screen.getAllByText(/Apex AI Spend source support/i).length,

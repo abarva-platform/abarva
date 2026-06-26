@@ -255,7 +255,7 @@ describe("Intelligence consultant text synthesis", () => {
     }
   });
 
-  it("builds a bounded advisory packet with tenant, corpus, expert, option, and gap sections", () => {
+  it("builds a bounded advisory packet with tenant, corpus, advisory lens, option, and gap sections", () => {
     const packet = buildIntelligenceConsultantPromptPacket(dossier);
 
     expect(packet.tenantBrief.tenantName).toBe("SkyHarbor Air");
@@ -263,7 +263,7 @@ describe("Intelligence consultant text synthesis", () => {
     expect(packet.corpusPatternBrief.patternSummaries.join(" ")).toContain(
       "bounded loops",
     );
-    expect(packet.expertCouncilBrief.selectedExperts).toHaveLength(2);
+    expect(packet.advisoryLensBrief.lenses.length).toBeGreaterThan(0);
     expect(packet.optionsBrief.options.join(" ")).toContain("Scale MRO");
     expect(packet.riskCaveatBrief.tenantEvidenceGaps).toContain(
       "Realized value baseline is missing.",
@@ -274,10 +274,11 @@ describe("Intelligence consultant text synthesis", () => {
     const packet = buildIntelligenceConsultantPromptPacket(dossier);
     const prompt = buildIntelligenceConsultantUserPrompt(packet);
 
-    expect(prompt).toContain("Return plain text only.");
+    expect(prompt).toContain("Return final user-facing text only.");
     expect(prompt).toContain("Tenant evidence:");
     expect(prompt).toContain("Corpus patterns:");
-    expect(prompt).toContain("Expert council:");
+    expect(prompt).toContain("Advisory lenses:");
+    expect(prompt).not.toContain("Expert council:");
     expect(prompt).not.toContain("Return structured JSON");
   });
 

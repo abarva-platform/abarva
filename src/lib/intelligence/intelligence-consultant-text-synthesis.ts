@@ -18,22 +18,28 @@ You advise CIO, CFO, COO, CDO, transformation, and executive sponsor audiences.
 
 You are not a generic chatbot. You are not retrieving data. You are not inventing facts.
 
-You will receive an Intelligence advisory packet containing tenant evidence, corpus patterns, expert lenses, benchmarks, options, tradeoffs, risks, caveats, missing evidence, and citations.
+You will receive an Intelligence advisory packet containing tenant evidence, corpus patterns, benchmarks, options, tradeoffs, risks, caveats, missing evidence, and citations.
 
 Use only the provided packet.
 
 Tenant facts prove.
 Corpus patterns compare.
-Experts interpret.
 Benchmarks calibrate.
 You synthesize.
 AbarVa verifies, cites, and renders supporting panels.
 
-Clearly separate tenant facts, corpus patterns, expert interpretation, benchmarks, options/tradeoffs, and missing evidence.
+Your answer must have a clear advisory shape:
+1. Lead with the executive answer in the first paragraph.
+2. Explain the evidence spine in business language.
+3. Give options, tradeoffs, and sequencing when the question asks what to do.
+4. State caveats and missing evidence after the useful answer, not before it.
+5. Use a compact Markdown table when comparing initiatives, options, workstreams, costs, or value.
+6. Keep paragraphs short: no paragraph should exceed three sentences.
+
+Clearly separate tenant facts, corpus patterns, benchmarks, options/tradeoffs, and missing evidence in natural prose.
 
 Tenant facts are the source of truth for this enterprise.
 Corpus patterns are precedent, not proof.
-Experts are lenses, not evidence.
 Benchmarks calibrate, but must be caveated.
 Recommendations must be proportional to the evidence.
 
@@ -44,6 +50,7 @@ Do not claim exact ROI unless the packet provides support.
 Do not say a recommendation is high confidence if tenant evidence is thin.
 Do not mix another tenant's actual data into this tenant's answer.
 Do not use the old transcript labels "Read:", "Evidence:", "Implication:", or "Next move:".
+Do not mention expert packs, binders, dossiers, semantic layers, prompt packets, source rows, edge rows, debug traces, or route decisions.
 Do not return JSON. Return final user-facing text only.`;
 
 export interface IntelligenceConsultantTextResult {
@@ -94,9 +101,8 @@ export interface IntelligenceConsultantPromptPacket {
     patternSummaries: string[];
     excludedPatterns: string[];
   };
-  expertCouncilBrief: {
-    selectedExperts: string[];
-    whySelected: string[];
+  advisoryLensBrief: {
+    lenses: string[];
     pressureTestQuestions: string[];
     likelyConcerns: string[];
   };
@@ -164,17 +170,17 @@ export function buildIntelligenceConsultantPromptPacket(
         .map((pattern) => `${pattern.patternName}: ${pattern.reasonExcluded}`)
         .slice(0, 5),
     },
-    expertCouncilBrief: {
-      selectedExperts: dossier.expertCouncilDossier.selectedExperts
-        .map((expert) => expert.nameOrRole)
-        .slice(0, 7),
-      whySelected: dossier.expertCouncilDossier.selectedExperts
-        .map((expert) => `${expert.nameOrRole}: ${expert.whySelected}`)
-        .slice(0, 7),
-      pressureTestQuestions: dossier.expertCouncilDossier.selectedExperts
-        .flatMap((expert) => expert.questionsThisExpertShouldPressureTest)
-        .slice(0, 10),
-      likelyConcerns: dossier.evidenceBoundary.expertInterpretations.slice(0, 7),
+    advisoryLensBrief: {
+      lenses: dossier.relatedDimensions.slice(0, 6),
+      pressureTestQuestions: [
+        `What tenant evidence proves or weakens the ${dossier.primaryDimension} answer?`,
+        "Which claims are tenant facts versus corpus/pattern-only guidance?",
+        "What must be validated before a scale, hold, or investment decision?",
+      ],
+      likelyConcerns: [
+        ...dossier.riskCaveatDossier.dataReadinessGaps,
+        ...dossier.riskCaveatDossier.measurementRisks,
+      ].slice(0, 7),
     },
     benchmarkBrief: {
       benchmarkClaims: dossier.evidenceBoundary.benchmarkClaims.slice(0, 8),
@@ -230,8 +236,8 @@ export function buildIntelligenceConsultantUserPrompt(
     "Corpus patterns:",
     JSON.stringify(packet.corpusPatternBrief, null, 2),
     "",
-    "Expert council:",
-    JSON.stringify(packet.expertCouncilBrief, null, 2),
+    "Advisory lenses:",
+    JSON.stringify(packet.advisoryLensBrief, null, 2),
     "",
     "Benchmarks:",
     JSON.stringify(packet.benchmarkBrief, null, 2),
@@ -247,12 +253,14 @@ export function buildIntelligenceConsultantUserPrompt(
     "",
     "Instructions:",
     "Write the best possible Intelligence answer from this packet.",
-    "Start with the executive answer.",
-    "Separate tenant evidence from corpus, expert, and benchmark content in natural executive prose.",
-    "Provide options and tradeoffs when the question is advisory.",
-    "State confidence and missing evidence.",
+    "Start with the executive answer in one short paragraph.",
+    "Then explain the evidence spine: what the tenant facts support, what corpus/pattern content adds, and what benchmark context calibrates.",
+    "When the user asks what to prioritize, kill, sequence, compare, fund, or investigate, include options and tradeoffs.",
+    "When comparing multiple items, include a compact Markdown table with business-friendly columns.",
+    "State confidence and missing evidence after the useful synthesis, not as the opening.",
     "Suggest the appropriate handoff to Moves, Source, or Tower when relevant.",
-    "Return plain text only.",
+    "Keep every paragraph to three sentences or fewer.",
+    "Return final user-facing text only.",
   ].join("\n");
 }
 
@@ -261,6 +269,13 @@ export async function synthesizeIntelligenceConsultantText(args: {
   tenantId: string | null | undefined;
   userId?: string | null;
   onModelInput?: (parts: { system: string; user: string }) => void;
+  onModelOutput?: (parts: {
+    rawText: string;
+    text: string;
+    model?: string;
+    auditId?: string;
+    route: string;
+  }) => void;
 }): Promise<IntelligenceConsultantTextResult | IntelligenceConsultantTextFailure | null> {
   if (!isIntelligenceConsultantTextSynthesisEnabled()) {
     return {
@@ -318,7 +333,7 @@ export async function synthesizeIntelligenceConsultantText(args: {
         intelligenceIntent: args.dossier.intelligenceIntent,
         primaryDimension: args.dossier.primaryDimension,
         tenantEvidenceStrength: args.dossier.tenantEvidenceDossier.confidence,
-        expertCount: args.dossier.expertCouncilDossier.selectedExperts.length,
+        advisoryLensCount: args.dossier.relatedDimensions.length,
         corpusPatternFamilyCount: args.dossier.corpusPatternDossier.patternFamilies.length,
       },
     });
@@ -337,6 +352,13 @@ export async function synthesizeIntelligenceConsultantText(args: {
       .join("\n")
       .trim();
     const text = normalizeConsultantText(rawText);
+    args.onModelOutput?.({
+      rawText,
+      text,
+      model,
+      auditId,
+      route: "intelligence-consultant-text-synthesis",
+    });
     const validationIssues = validateIntelligenceConsultantText({
       text,
       dossier: args.dossier,

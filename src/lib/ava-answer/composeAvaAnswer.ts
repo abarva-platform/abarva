@@ -33,6 +33,7 @@ export interface ComposeAvaAnswerInput {
   metricsUsed?: AvaMetricRef[];
   relationshipsUsed?: AvaRelationshipRef[];
   corpusUsed?: AvaCorpusRef[];
+  /** Accepted for legacy callers; persona-pack metadata is intentionally not emitted. */
   expertsUsed?: AvaExpertRef[];
   artifacts?: AvaArtifact[];
   citations?: AvaCitation[];
@@ -104,9 +105,8 @@ export function composeAvaAnswer(
     metricsUsed: input.metricsUsed ?? [],
     relationshipsUsed: input.relationshipsUsed ?? [],
     corpusUsed: input.corpusUsed ?? [],
-    expertsUsed: input.surface === "home" ? [] : (input.expertsUsed ?? []),
-    contributingExperts:
-      input.surface === "home" ? [] : (input.expertsUsed ?? []),
+    expertsUsed: [],
+    contributingExperts: [],
     tables,
     charts,
     graphs,
