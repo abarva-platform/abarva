@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
   if (!payload.question.trim()) {
     return NextResponse.json({ error: "question required" }, { status: 400 });
   }
+  const includeTrace = shouldLogHomeKnowTrace(req);
 
   const tenant = await resolveTenant({
     requestedClient: payload.tenantKey ?? payload.client ?? null,
@@ -31,6 +32,7 @@ export async function POST(req: NextRequest) {
     tenantKey:
       tenant?.canonicalKey ?? payload.tenantKey ?? payload.client ?? null,
     client: tenant?.appClientKey ?? payload.client ?? null,
+    operatorTrace: includeTrace,
   }).catch((error): HomeKnowResponse => {
     const tenantKey =
       tenant?.canonicalKey ?? payload.tenantKey ?? payload.client ?? "unknown";
@@ -64,7 +66,6 @@ export async function POST(req: NextRequest) {
     });
   });
 
-  const includeTrace = shouldLogHomeKnowTrace(req);
   if (includeTrace) {
     console.info("[home-know.trace]", {
       route: "/api/home/know/ask",
@@ -91,7 +92,16 @@ export async function POST(req: NextRequest) {
           ...response,
           trace: {
             composerTrace: response.safety.composerTrace ?? null,
-            finalPrompt: response.safety.composerTrace?.promptSnapshot ?? null,
+            finalPrompt:
+              response.safety.composerTrace?.anthropicTrace?.finalPrompt ??
+              response.safety.composerTrace?.promptSnapshot ??
+              null,
+            claudeRaw:
+              response.safety.composerTrace?.anthropicTrace?.claudeRaw ?? null,
+            model:
+              response.safety.composerTrace?.anthropicTrace?.model ?? null,
+            params:
+              response.safety.composerTrace?.anthropicTrace?.params ?? null,
           },
         }
       : response,

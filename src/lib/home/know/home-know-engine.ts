@@ -329,6 +329,7 @@ export async function buildHomeKnowResponse(
         const synthesis = await synthesizeHomeConsultantText({
           dossier,
           deterministicResponse: validated,
+          operatorTrace: input.operatorTrace === true,
         });
         if (isHomeConsultantTextSynthesisResult(synthesis)) {
           return validateHomeKnowResponse(

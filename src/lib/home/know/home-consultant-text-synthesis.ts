@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import {
   ALL_CLIENTS,
@@ -143,6 +145,9 @@ export interface HomeConsultantTextSynthesisResult {
     auditId: string;
     rawTextPreview: string;
     validationIssues: string[];
+    anthropicTrace?: NonNullable<
+      NonNullable<HomeKnowResponse["safety"]["composerTrace"]>["anthropicTrace"]
+    >;
   };
 }
 
@@ -157,6 +162,9 @@ export interface HomeConsultantTextSynthesisFailure {
   auditId?: string;
   rawTextPreview?: string;
   prompt?: string;
+  anthropicTrace?: NonNullable<
+    NonNullable<HomeKnowResponse["safety"]["composerTrace"]>["anthropicTrace"]
+  >;
   reason: string;
   validationIssues: string[];
 }
@@ -176,6 +184,7 @@ export function homeConsultantOutputMode(): "text" {
 export async function synthesizeHomeConsultantText(args: {
   dossier: UniversalDimensionDossier;
   deterministicResponse: HomeKnowResponse;
+  operatorTrace?: boolean;
 }): Promise<
   HomeConsultantTextSynthesisResult | HomeConsultantTextSynthesisFailure | null
 > {
@@ -241,18 +250,38 @@ export async function synthesizeHomeConsultantText(args: {
         streaming: true,
       },
     });
-    const stream = client.messages.stream({
+    const requestPayload = {
       model,
       max_tokens: maxTokens,
       system: HOME_CONSULTANT_TEXT_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: user }],
+      messages: [{ role: "user" as const, content: user }],
+    };
+    const promptBoundary = buildHomeAnthropicPromptBoundary({
+      requestPayload,
+      system: HOME_CONSULTANT_TEXT_SYSTEM_PROMPT,
+      user,
     });
-    const message = await withTimeout(stream.finalMessage(), timeoutMs);
-    const rawText = message.content
-      .filter((item) => item.type === "text")
-      .map((item) => item.text)
-      .join("\n")
-      .trim();
+    const stream = client.messages.stream(requestPayload);
+    const collected = await withTimeout(
+      collectHomeAnthropicStream(stream),
+      timeoutMs,
+    );
+    const rawText = collected.text.trim();
+    const anthropicTrace = args.operatorTrace
+      ? {
+          finalPrompt: promptBoundary.finalPrompt,
+          model,
+          params: {
+            max_tokens: maxTokens,
+            timeoutMs,
+          },
+          claudeRaw: {
+            events: collected.events,
+            message: collected.message,
+            text: rawText,
+          },
+        }
+      : undefined;
     const text = normalizeHomeConsultantUserFacingText(rawText);
     const validationIssues = validateHomeConsultantText({
       text,
@@ -282,6 +311,7 @@ export async function synthesizeHomeConsultantText(args: {
         auditId,
         rawTextPreview: redactTextPreview(rawText),
         prompt,
+        anthropicTrace,
         reason: "validation_failed",
         validationIssues,
       };
@@ -301,6 +331,7 @@ export async function synthesizeHomeConsultantText(args: {
         auditId,
         rawTextPreview: redactTextPreview(rawText),
         validationIssues,
+        anthropicTrace,
       },
     };
   } catch (error) {
@@ -373,6 +404,7 @@ export function applyHomeConsultantTextSynthesisFailureTrace(
                   full: failure.prompt,
                 }
               : response.safety.composerTrace.promptSnapshot,
+            anthropicTrace: failure.anthropicTrace,
           }
         : response.safety.composerTrace,
     },
@@ -405,6 +437,7 @@ export function applyHomeConsultantTextSynthesis(
               ),
               full: result.prompt,
             },
+            anthropicTrace: result.trace.anthropicTrace,
           }
         : response.safety.composerTrace,
     },
@@ -830,6 +863,107 @@ function numberFromEnv(key: string, fallback: number): number {
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildHomeAnthropicPromptBoundary(args: {
+  requestPayload: {
+    model: string;
+    max_tokens: number;
+    system: string;
+    messages: ReadonlyArray<{ role: "user"; content: string }>;
+  };
+  system: string;
+  user: string;
+}): Pick<
+  NonNullable<
+    NonNullable<HomeKnowResponse["safety"]["composerTrace"]>["anthropicTrace"]
+  >,
+  "finalPrompt"
+> {
+  const requestJson = JSON.stringify(args.requestPayload);
+  return {
+    finalPrompt: {
+      request: args.requestPayload,
+      requestJson,
+      system: args.system,
+      messages: args.requestPayload.messages.map((message) => ({
+        role: message.role,
+        content: message.content,
+      })),
+      full: [args.system, args.user].join("\n\n"),
+      promptByteLength: Buffer.byteLength(requestJson, "utf8"),
+      promptSha256: createHash("sha256").update(requestJson).digest("hex"),
+    },
+  };
+}
+
+async function collectHomeAnthropicStream(
+  stream: unknown,
+): Promise<{ events: unknown[]; message: unknown; text: string }> {
+  const events: unknown[] = [];
+  let text = "";
+  if (isAsyncIterable(stream)) {
+    for await (const event of stream) {
+      events.push(event);
+      text += extractAnthropicStreamTextDelta(event);
+    }
+    const message = await readFinalMessage(stream).catch(() => null);
+    if (!text.trim()) text = extractAnthropicMessageText(message);
+    return { events, message, text };
+  }
+  const message = await readFinalMessage(stream);
+  return {
+    events: [{ type: "final_message_only", message }],
+    message,
+    text: extractAnthropicMessageText(message),
+  };
+}
+
+function isAsyncIterable(value: unknown): value is AsyncIterable<unknown> {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      Symbol.asyncIterator in value &&
+      typeof (value as AsyncIterable<unknown>)[Symbol.asyncIterator] ===
+        "function",
+  );
+}
+
+async function readFinalMessage(stream: unknown): Promise<unknown> {
+  const maybe = stream as { finalMessage?: unknown };
+  if (typeof maybe.finalMessage === "function") {
+    return await maybe.finalMessage();
+  }
+  return null;
+}
+
+function extractAnthropicStreamTextDelta(event: unknown): string {
+  if (!event || typeof event !== "object") return "";
+  const record = event as Record<string, unknown>;
+  if (record.type !== "content_block_delta") return "";
+  const delta = record.delta;
+  if (!delta || typeof delta !== "object") return "";
+  const deltaRecord = delta as Record<string, unknown>;
+  return deltaRecord.type === "text_delta" &&
+    typeof deltaRecord.text === "string"
+    ? deltaRecord.text
+    : "";
+}
+
+function extractAnthropicMessageText(message: unknown): string {
+  if (!message || typeof message !== "object") return "";
+  const content = (message as { content?: unknown }).content;
+  if (!Array.isArray(content)) return "";
+  return content
+    .map((item) => {
+      if (!item || typeof item !== "object") return "";
+      const record = item as Record<string, unknown>;
+      return record.type === "text" && typeof record.text === "string"
+        ? record.text
+        : "";
+    })
+    .filter(Boolean)
+    .join("\n");
 }
 
 async function withTimeout<T>(

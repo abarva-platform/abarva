@@ -195,6 +195,28 @@ export interface HomeKnowSafety {
       user: string;
       full: string;
     };
+    anthropicTrace?: {
+      finalPrompt: {
+        request: unknown;
+        requestJson: string;
+        system: string;
+        messages: Array<{ role: string; content: unknown }>;
+        full: string;
+        promptByteLength: number;
+        promptSha256: string;
+      };
+      model: string;
+      params: {
+        max_tokens: number;
+        temperature?: number | null;
+        timeoutMs: number;
+      };
+      claudeRaw: {
+        events: unknown[];
+        message: unknown;
+        text: string;
+      };
+    };
   };
 }
 
@@ -221,6 +243,7 @@ export interface HomeKnowAskRequest {
   question: string;
   tenantKey?: string | null;
   client?: string | null;
+  operatorTrace?: boolean;
 }
 
 export const HOME_KNOW_INTENTS = [
