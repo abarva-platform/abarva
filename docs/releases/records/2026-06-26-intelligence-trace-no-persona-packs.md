@@ -21,13 +21,14 @@ Intelligence answers now use a simpler contract: tenant evidence, corpus/pattern
 
 - All clients: Shared Intelligence/aVa answer rendering and packet composition.
 - Specific clients: None.
-- Internal only: Operator trace mode is gated by `x-abarva-debug-intel: 1` plus an AbarVa/operator-style Clerk user.
+- Internal only: Operator trace mode is gated by `x-abarva-debug-intel: 1` plus an AbarVa/operator-style Clerk user. Signed-in synthetic lab personas on `.example.com` are also allowed to request trace output with the debug header so the existing Clerk automation users can prove prompt/raw behavior; real client domains are not granted trace access by this allowance.
 - Public/demo only: None.
 - Feature flag: Existing synthesis environment flags still govern Claude synthesis; this release does not add a new default exposure flag.
 
 ## Changes Included
 
 - `src/app/api/intelligence/ask/route.ts`: Adds operator trace events for final prompt/raw output and removes the old structured advisor stitch path from the main response path.
+- `src/app/api/intelligence/ask/route.ts`: Follow-up hardens trace proof by allowing signed-in synthetic `.example.com` lab personas to receive trace events only when the debug header is present.
 - `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`: Tightens the Claude contract around executive answer shape, short paragraphs, comparative tables, and no internal implementation language.
 - `src/lib/intelligence/ask/advisor-composer.ts`: Removes persona-pack prompt injection from the special advisor composer.
 - `src/lib/ava-answer/composeAvaAnswer.ts`: Accepts legacy expert inputs for compatibility but emits no expert metadata.
@@ -39,10 +40,13 @@ Intelligence answers now use a simpler contract: tenant evidence, corpus/pattern
 - `npx eslint src/app/api/intelligence/ask/route.ts src/components/agent-answer/AgentAnswerRenderer.tsx src/components/agent-answer/AvaAsk.tsx src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/ava-answer/composeAvaAnswer.ts src/lib/ava-answer/__tests__/composeAvaAnswer.test.ts src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts src/lib/intelligence/answer/structured-exhibits.ts src/lib/intelligence/ask/advisor-composer.ts src/lib/intelligence/ask/index.ts src/lib/intelligence/ask/synthesizer.ts src/lib/intelligence/compose-intelligence-answer.ts src/lib/intelligence/dossiers/__tests__/intelligence-dossier.test.ts src/lib/intelligence/dossiers/build-decision-options-dossier.ts src/lib/intelligence/dossiers/build-intelligence-dossier.ts src/lib/intelligence/dossiers/select-expert-council.ts` — passed.
 - `npm test -- --runTestsByPath src/lib/ava-answer/__tests__/composeAvaAnswer.test.ts src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx src/components/agent-answer/__tests__/AvaAsk.test.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/dossiers/__tests__/intelligence-dossier.test.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts` — passed, 6 suites / 21 tests.
 - `npx tsc --noEmit` — attempted, but the process produced no output after roughly five minutes and was interrupted; targeted eslint and Jest are the current local proof.
+- Follow-up trace-gate validation: `npx eslint src/app/api/intelligence/ask/route.ts` — passed.
+- Follow-up trace-gate validation: `npm test -- --runTestsByPath src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts` — passed, 2 suites / 7 tests.
+- Follow-up trace-gate validation: `npm run audit:control-plane-purity:check` — passed.
 
 ## Rollout Plan
 
-Merge to main, build an ACA image from the exact git SHA, deploy through the approved Azure Container Apps lane, and run signed-in Intelligence trace/browser proof against `https://app.abarva.ai`.
+Merge to main, build an ACA image from the exact git SHA, deploy through the approved Azure Container Apps lane, and run signed-in Intelligence trace/browser proof against `https://app.abarva.ai`. PR #3995 has deployed the main simplification release; the follow-up trace-gate candidate must deploy before claiming verbatim prompt/raw proof with the existing Clerk lab personas.
 
 ## Deployment Authority
 
@@ -60,12 +64,12 @@ Rollback by redeploying the previous ACA revision or reverting this app-code rel
 
 ## Audit Evidence
 
-- PR URL: To be added after PR creation.
-- CI run: To be added after PR checks.
+- PR URL: https://github.com/abarva-platform/abarva/pull/3995
+- CI run: PR checks passed on PR #3995; follow-up trace-gate checks to be recorded on the follow-up PR.
 - Deployment URL: `https://app.abarva.ai` after ACA rollout.
-- Smoke output: To be added after signed-in trace/browser proof.
+- Smoke output: ACA deploy run `28218080279` passed for PR #3995 and `/api/health` returned `ok: true` with Postgres checks green. Signed-in Lakeshore CIO proof after that deploy confirmed public output no longer rendered consulted experts, expert-pack labels, or evidence-required fallback blocks, but trace events were withheld because the synthetic Clerk persona was not yet authorized for trace mode.
 
 ## Known Gaps
 
-- Full TypeScript check did not complete locally before interruption.
-- Live signed-in trace/browser proof and ACA deployment are still pending.
+- Full TypeScript check did not complete locally before interruption; GitHub CI typecheck passed for PR #3995.
+- Live signed-in prompt/raw trace proof with existing Clerk lab personas is pending the follow-up trace-gate deploy.
