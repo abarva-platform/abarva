@@ -288,6 +288,33 @@ CREATE INDEX IF NOT EXISTS idx_tower_answer_trace_tenant
 CREATE INDEX IF NOT EXISTS idx_tower_answer_trace_client
   ON public.tower_answer_trace(client_id, created_at DESC);
 
+CREATE TABLE IF NOT EXISTS public.tower_l3_answer_dossiers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  tenant_key TEXT NOT NULL,
+  scope_key TEXT NOT NULL,
+  scope_type TEXT NOT NULL CHECK (scope_type IN ('l1_consolidated', 'l2_company_comparison', 'l3_operating_company', 'tenant')),
+  scope_label TEXT NOT NULL,
+  view_key TEXT NOT NULL,
+  prompt_version TEXT NOT NULL,
+  dossier_version TEXT NOT NULL,
+  stage1_status TEXT NOT NULL CHECK (stage1_status IN ('built', 'empty', 'failed')),
+  stage2_status TEXT NOT NULL CHECK (stage2_status IN ('enriched', 'unavailable', 'failed')),
+  coverage_score NUMERIC(5,4) NOT NULL DEFAULT 0 CHECK (coverage_score >= 0 AND coverage_score <= 1),
+  verdict TEXT NOT NULL CHECK (verdict IN ('DEEP', 'PARTIAL', 'THIN', 'EMPTY', 'FAILED')),
+  dossier JSONB NOT NULL,
+  validation_result JSONB NOT NULL DEFAULT '{}'::jsonb,
+  lineage JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT tower_l3_answer_dossiers_key
+    UNIQUE (client_id, tenant_key, scope_key, view_key, prompt_version, dossier_version)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tower_l3_answer_dossiers_tenant
+  ON public.tower_l3_answer_dossiers(tenant_key, scope_key, view_key, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tower_l3_answer_dossiers_client
+  ON public.tower_l3_answer_dossiers(client_id, view_key, created_at DESC);
+
 ALTER TABLE public.tower_materialization_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tower_read_model_initiatives ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tower_read_model_vendors ENABLE ROW LEVEL SECURITY;
@@ -295,6 +322,7 @@ ALTER TABLE public.tower_gap_register ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tower_spend_realism_audit ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tower_forbidden_identifiers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tower_answer_trace ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tower_l3_answer_dossiers ENABLE ROW LEVEL SECURITY;
 
 DO $$
 DECLARE
@@ -306,7 +334,8 @@ BEGIN
     'tower_read_model_vendors',
     'tower_gap_register',
     'tower_spend_realism_audit',
-    'tower_answer_trace'
+    'tower_answer_trace',
+    'tower_l3_answer_dossiers'
   ]
   LOOP
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', table_name || '_service_role', table_name);

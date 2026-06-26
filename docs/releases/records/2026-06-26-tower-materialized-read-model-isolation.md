@@ -12,10 +12,12 @@
 
 Tower now has an additive `tower_*` materialized read-model contract for demo-readiness work. The visible Tower runtime fallback no longer reaches directly into the enterprise context projection; it reads only the Tower read-model tables when the existing AI initiatives registry is empty.
 
+Pass B also adds the Tower L3 answer-dossier store and deterministic dossier builder. This creates governed, business-language Tower packets by tenant/scope/CIO view for human review before any surface wiring.
+
 ## Layer Impact
 
 - `global-control-lane`: changes shared Tower runtime fallback behavior for all clients once deployed.
-- `client-data-lane`: adds additive `tower_*` schema for materialized Tower read models, gaps, spend realism audit, forbidden identifiers, and answer traces.
+- `client-data-lane`: adds additive `tower_*` schema for materialized Tower read models, gaps, spend realism audit, forbidden identifiers, answer traces, and versioned L3 answer dossiers.
 
 ## Client Applicability
 
@@ -31,17 +33,24 @@ Tower now has an additive `tower_*` materialized read-model contract for demo-re
 - Runtime reader: `src/lib/tower/tower-materialized-read-model.ts`
 - Materialization planner: `src/lib/tower/tower-materialization.ts`
 - Materialization CLI: `src/scripts/tower/materialize-read-model.ts`
+- L3 dossier builder: `src/lib/tower/tower-l3-dossiers.ts`
+- L3 dossier report CLI: `src/scripts/tower/build-l3-dossiers.ts`
 - Runtime refactor: `src/lib/atlas/tower-grounding.ts`
-- Tests: `src/lib/tower/__tests__/tower-materialized-read-model.test.ts`, `src/lib/tower/__tests__/tower-materialization.test.ts`
+- Tests: `src/lib/tower/__tests__/tower-materialized-read-model.test.ts`, `src/lib/tower/__tests__/tower-materialization.test.ts`, `src/lib/tower/__tests__/tower-l3-dossiers.test.ts`
 - Decision record: `NEEDS_DECISION.md`
 
 ## QA / Validation
 
 - Targeted Jest: pass — `npx jest src/lib/tower/__tests__/tower-materialized-read-model.test.ts src/lib/tower/__tests__/tower-materialization.test.ts --runInBand` (7 tests passed).
+- Targeted Jest: pass — `npx jest src/lib/tower/__tests__/tower-l3-dossiers.test.ts --runInBand` (3 tests passed).
 - ESLint: pass — `npx eslint src/lib/tower/tower-materialized-read-model.ts src/lib/tower/tower-materialization.ts src/lib/tower/__tests__/tower-materialized-read-model.test.ts src/lib/tower/__tests__/tower-materialization.test.ts src/lib/atlas/tower-grounding.ts src/scripts/tower/materialize-read-model.ts`.
+- ESLint: pass — `npx eslint src/lib/tower/tower-l3-dossiers.ts src/lib/tower/__tests__/tower-l3-dossiers.test.ts src/scripts/tower/build-l3-dossiers.ts`.
+- Local L3 dossier build: pass — `npx tsx src/scripts/tower/build-l3-dossiers.ts --source-dir=/tmp/abarva-lakeshore-portfolio-reference` generated `63` Lakeshore dossiers, `63` validation pass, `0` fail, verdict distribution `57 DEEP / 6 PARTIAL`.
+- Human-review bundle: `/Users/anand/Downloads/abarva-tower-dossier-build-2026-06-26T14-52-35-358Z/`.
 - TypeScript: blocked — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` now runs past the heap issue, but full-repo typecheck is blocked by pre-existing missing dependency/type declarations for `js-yaml`, `@azure-rest/ai-document-intelligence`, and `@axe-core/playwright`.
 - Release check: pass — `npm run release:check`.
 - Live Azure/Postgres migration apply: not-run in this PR.
+- Live L3 dossier store population: not-run in this PR.
 - Signed-in browser proof: not-run in this PR.
 
 ## Rollout Plan
@@ -49,8 +58,9 @@ Tower now has an additive `tower_*` materialized read-model contract for demo-re
 1. Merge to main.
 2. Apply the additive migration in Azure/Postgres.
 3. Run the approved Tower materialization job to populate `tower_read_model_*` from governed upstream sources.
-4. Deploy through the repo-owned Azure Container Apps path.
-5. Browser-prove Lakeshore and SkyHarbor Tower surfaces with the proof bundle.
+4. Run the approved Tower L3 dossier job to populate `tower_l3_answer_dossiers`.
+5. Deploy through the repo-owned Azure Container Apps path.
+6. Browser-prove Lakeshore and SkyHarbor Tower surfaces with the proof bundle.
 
 ## Deployment Authority
 
@@ -77,5 +87,7 @@ Data rollback: migration is additive. Leave tables in place if rollback is urgen
 ## Known Gaps
 
 - Materialization job is scaffolded and test-covered, but not yet run against live Azure/Postgres.
+- L3 dossier builder is scaffolded, test-covered, and locally report-proven against the supplied Lakeshore portfolio reference pack; it is not live-populated yet.
+- Build-time Claude enrichment did not run in the local shell because `ANTHROPIC_API_KEY` was not present. The report marks Stage 2 as unavailable rather than fabricating derived CIO insights.
 - Gates A-F are not all proven yet.
-- Lakeshore Level 2/Level 3 portfolio-company views remain Path A named gaps until operating-company data is explicitly approved.
+- Lakeshore Level 2/Level 3 portfolio-company views can now be built from the supplied reference pack after explicit approval to use the Path B portfolio-company input.
