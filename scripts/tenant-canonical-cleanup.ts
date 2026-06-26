@@ -32,6 +32,7 @@ type CleanupRow = {
   schema: string;
   table: string;
   column: string;
+  relationKind: string;
   alias: string;
   canonical: string;
   storedAliasValues: string[];
@@ -52,6 +53,7 @@ type TenantColumn = {
   schema: string;
   table: string;
   column: string;
+  relationKind: string;
 };
 
 type UniqueKey = {
@@ -84,6 +86,24 @@ function quoteIdentifier(value: string): string {
 
 function qualifiedTable(column: TenantColumn): string {
   return `${quoteIdentifier(column.schema)}.${quoteIdentifier(column.table)}`;
+}
+
+function relationMutationOrder(column: TenantColumn): number {
+  if (column.relationKind === 'r' || column.relationKind === 'p' || column.relationKind === 'f') return 0;
+  if (column.relationKind === 'm') return 1;
+  return 2;
+}
+
+function isOrdinaryView(column: TenantColumn): boolean {
+  return column.relationKind === 'v';
+}
+
+function isMaterializedView(column: TenantColumn): boolean {
+  return column.relationKind === 'm';
+}
+
+function materializedViewKey(column: TenantColumn): string {
+  return `${column.schema}.${column.table}`;
 }
 
 async function writeJson(filePath: string, value: unknown): Promise<string> {
@@ -371,7 +391,12 @@ async function main(): Promise<void> {
   }
 
   const rows: CleanupRow[] = [];
-  const columns = await discoverTenantColumns(client);
+  const materializedViewsToRefresh = new Map<string, TenantColumn>();
+  const columns = (await discoverTenantColumns(client)).sort((left, right) => {
+    const orderDelta = relationMutationOrder(left) - relationMutationOrder(right);
+    if (orderDelta !== 0) return orderDelta;
+    return `${left.schema}.${left.table}.${left.column}`.localeCompare(`${right.schema}.${right.table}.${right.column}`);
+  });
 
   try {
     await client.query('BEGIN');
@@ -397,7 +422,10 @@ async function main(): Promise<void> {
 	        console.log(
 	          `tenant-canonical-cleanup: alias_rows ${column.schema}.${column.table}.${column.column} alias=${alias} canonical=${canonical} count=${count}`,
 	        );
-	        const duplicateRows = await countDuplicateAliasRows(client, column, alias, canonical, storedAliasValues);
+	        const shouldMutateColumn = !isOrdinaryView(column) && !isMaterializedView(column);
+	        const duplicateRows = shouldMutateColumn
+	          ? await countDuplicateAliasRows(client, column, alias, canonical, storedAliasValues)
+	          : 0;
 	        if (duplicateRows > 0) {
 	          console.log(
 	            `tenant-canonical-cleanup: duplicate_alias_rows ${column.schema}.${column.table}.${column.column} alias=${alias} canonical=${canonical} count=${duplicateRows}`,
@@ -413,7 +441,7 @@ async function main(): Promise<void> {
 	          duplicateRows,
 	        });
 
-	        if (APPLY) {
+	        if (APPLY && shouldMutateColumn) {
 	          await deleteDuplicateAliasRows(client, column, alias, canonical, storedAliasValues);
 	          await client.query(
 	            `UPDATE "${column.schema}"."${column.table}"
@@ -421,11 +449,17 @@ async function main(): Promise<void> {
               WHERE lower(replace("${column.column}"::text, '_', '-')) = $1`,
             [alias, canonical],
           );
+        } else if (APPLY && isMaterializedView(column)) {
+          materializedViewsToRefresh.set(materializedViewKey(column), column);
         }
       }
     }
 
     if (APPLY) {
+      for (const materializedView of materializedViewsToRefresh.values()) {
+        console.log(`tenant-canonical-cleanup: refresh_materialized_view=${materializedView.schema}.${materializedView.table}`);
+        await client.query(`REFRESH MATERIALIZED VIEW ${qualifiedTable(materializedView)}`);
+      }
       await client.query('COMMIT');
     } else {
       await client.query('ROLLBACK');

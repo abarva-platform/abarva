@@ -26,6 +26,7 @@ type TenantColumn = {
   schema: string;
   table: string;
   column: string;
+  relationKind: string;
 };
 
 type Finding = TenantColumn & {
@@ -59,12 +60,21 @@ function normalizeAlias(value: string): string {
 async function discoverTenantColumns(client: Client): Promise<TenantColumn[]> {
   const result = await client.query<TenantColumn>(
     `
-      SELECT table_schema AS schema, table_name AS table, column_name AS column
-      FROM information_schema.columns
-      WHERE table_schema = 'public'
-        AND column_name = ANY($1::text[])
-        AND data_type IN ('text', 'character varying', 'character')
-      ORDER BY table_schema, table_name, column_name
+      SELECT namespace.nspname AS schema,
+             relation.relname AS table,
+             attribute.attname AS column,
+             relation.relkind::text AS "relationKind"
+      FROM pg_attribute attribute
+      JOIN pg_class relation
+        ON relation.oid = attribute.attrelid
+      JOIN pg_namespace namespace
+        ON namespace.oid = relation.relnamespace
+      WHERE namespace.nspname = 'public'
+        AND attribute.attname = ANY($1::text[])
+        AND NOT attribute.attisdropped
+        AND relation.relkind IN ('r', 'p', 'v', 'm', 'f')
+        AND attribute.atttypid IN ('text'::regtype, 'varchar'::regtype, 'bpchar'::regtype)
+      ORDER BY namespace.nspname, relation.relname, attribute.attname
     `,
     [TENANT_COLUMN_NAMES],
   );
@@ -94,7 +104,7 @@ async function main(): Promise<number> {
   const findings: Finding[] = [];
   const columns = await discoverTenantColumns(client);
 
-  for (const { schema, table, column } of columns) {
+  for (const { schema, table, column, relationKind } of columns) {
     let rows: { v: string | null; c: string }[] = [];
     try {
       const res = await client.query<{ v: string | null; c: string }>(
@@ -116,7 +126,7 @@ async function main(): Promise<number> {
     for (const row of rows) {
       const count = Number.parseInt(row.c, 10);
       if (row.v && count > 0) {
-        findings.push({ schema, table, column, alias: row.v, count });
+        findings.push({ schema, table, column, relationKind, alias: row.v, count });
       }
     }
   }

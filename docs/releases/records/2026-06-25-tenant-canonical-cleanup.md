@@ -44,6 +44,8 @@ This release closes the tenant-key drift gap that allowed aliases such as `skyha
 - Follow-up: `scripts/tenant-canonical-cleanup.ts` adds bounded statement timeout and per-column/alias progress logs for private-VNet operator runs so slow live cleanup scans fail visibly instead of spinning silently.
 - Follow-up: `scripts/tenant-canonical-cleanup.ts` carries actual stored alias values into generic duplicate detection so large fact tables can use exact tenant-key joins instead of re-normalizing every row during canonical collision checks.
 - Follow-up: `scripts/tenant-canonical-cleanup.ts` matches normal Postgres unique-index semantics for generic duplicate detection by using equality on non-null key columns, making large semantic source-row collision checks index-friendly.
+- Follow-up: `scripts/tenant-canonical-cleanup.ts` orders base-table cleanup before view verification, skips direct ordinary-view mutation, and refreshes materialized views after base-table alias rewrites so apply cannot trip base-table unique constraints through an updatable view.
+- Follow-up: `scripts/verify-tenant-key-canonical.ts` records relation kind for each discovered tenant column so cleanup can distinguish base tables, ordinary views, and materialized views while keeping verifier coverage strict.
 - `scripts/verify-tenant-key-canonical.ts` now discovers active tenant columns dynamically and fails on aliases in product/runtime/read-model tables.
 - `package.json` adds `npm run db:cleanup:tenant-keys`.
 
@@ -60,6 +62,8 @@ This release closes the tenant-key drift gap that allowed aliases such as `skyha
 - pass: third dry-run was stopped before apply because it remained silent too long; the cleanup now emits scan progress and sets a 60s default statement timeout to identify the exact slow table/alias if it recurs.
 - pass: fourth dry-run failed safely before apply on `enterprise_context_facts.tenant_key` duplicate detection; the cleanup now uses stored alias values and key-based victim CTEs for large fact-table duplicate checks.
 - pass: fifth dry-run progressed through prior fact/entity blockers and failed safely before apply on `semantic2_source_rows.tenant_key`; metadata proved a `(tenant_key, source_table, source_primary_key)` unique key, so duplicate detection now uses equality on non-null key columns for normal unique-index behavior.
+- pass: sixth dry-run succeeded inside the private VNet against image digest `sha256:8b356aab1f1347179215fa8dacbfd41017bc354f9de14896d5e111ed9107037c`, auditing 211 active tenant columns and reporting 132,351 alias rows plus 456 duplicate alias rows before apply.
+- pass: first apply attempt failed safely inside a transaction before commit when an updatable view (`ai_control_graph_view`) attempted to rewrite `enterprise_context_relationships` before the base-table duplicate cleanup; the cleanup now mutates base relations first and treats views as verification surfaces rather than primary mutation targets.
 - blocked: full repo TypeScript check reaches the existing dependency baseline failures for missing `js-yaml`, Azure Document Intelligence, and axe Playwright type packages before this PR can be isolated.
 - blocked: live data-plane cleanup requires the private VNet operator run after PR merge: dry-run, manifest review, `--apply`, then verifier.
 
