@@ -66,6 +66,12 @@ type TriggerOverride = {
   deleteTrigger: string;
 };
 
+type RuntimeTrigger = {
+  schema: string;
+  table: string;
+  trigger: string;
+};
+
 const ROOT = process.cwd();
 const APPLY =
   process.argv.includes('--apply') ||
@@ -157,6 +163,43 @@ async function setMaintenanceTriggers(
     `ALTER TABLE ${qualifiedTable(column)}
        ${action} TRIGGER ${quoteIdentifier(override.deleteTrigger)}`,
   );
+}
+
+async function discoverSemantic2InvalidationTriggers(client: Client): Promise<RuntimeTrigger[]> {
+  const result = await client.query<RuntimeTrigger>(
+    `SELECT namespace.nspname AS schema,
+            relation.relname AS table,
+            trigger_def.tgname AS trigger
+       FROM pg_trigger trigger_def
+       JOIN pg_proc procedure_def
+         ON procedure_def.oid = trigger_def.tgfoid
+       JOIN pg_class relation
+         ON relation.oid = trigger_def.tgrelid
+       JOIN pg_namespace namespace
+         ON namespace.oid = relation.relnamespace
+      WHERE namespace.nspname = 'public'
+        AND procedure_def.proname = 'semantic2_mark_dossiers_invalidated'
+        AND NOT trigger_def.tgisinternal
+      ORDER BY namespace.nspname, relation.relname, trigger_def.tgname`,
+  );
+  return result.rows;
+}
+
+async function setRuntimeTriggers(
+  client: Client,
+  triggers: readonly RuntimeTrigger[],
+  enabled: boolean,
+): Promise<void> {
+  const action = enabled ? 'ENABLE' : 'DISABLE';
+  for (const trigger of triggers) {
+    console.log(
+      `tenant-canonical-cleanup: ${action.toLowerCase()}_runtime_trigger=${trigger.schema}.${trigger.table}.${trigger.trigger}`,
+    );
+    await client.query(
+      `ALTER TABLE ${quoteIdentifier(trigger.schema)}.${quoteIdentifier(trigger.table)}
+         ${action} TRIGGER ${quoteIdentifier(trigger.trigger)}`,
+    );
+  }
 }
 
 async function writeJson(filePath: string, value: unknown): Promise<string> {
@@ -445,6 +488,7 @@ async function main(): Promise<void> {
 
   const rows: CleanupRow[] = [];
   const materializedViewsToRefresh = new Map<string, TenantColumn>();
+  const affectedCanonicalTenants = new Set<string>();
   const columns = (await discoverTenantColumns(client)).sort((left, right) => {
     const orderDelta = relationMutationOrder(left) - relationMutationOrder(right);
     if (orderDelta !== 0) return orderDelta;
@@ -453,6 +497,11 @@ async function main(): Promise<void> {
 
   try {
     await client.query('BEGIN');
+    const semantic2InvalidationTriggers = APPLY ? await discoverSemantic2InvalidationTriggers(client) : [];
+    if (semantic2InvalidationTriggers.length > 0) {
+      console.log(`tenant-canonical-cleanup: semantic2_invalidation_triggers=${semantic2InvalidationTriggers.length}`);
+      await setRuntimeTriggers(client, semantic2InvalidationTriggers, false);
+    }
 
     for (const [columnIndex, column] of columns.entries()) {
       console.log(
@@ -495,6 +544,7 @@ async function main(): Promise<void> {
 	        });
 
 	        if (APPLY && shouldMutateColumn) {
+	          affectedCanonicalTenants.add(canonical);
 	          await setMaintenanceTriggers(client, column, false);
 	          try {
 	            await deleteDuplicateAliasRows(client, column, alias, canonical, storedAliasValues);
@@ -517,6 +567,20 @@ async function main(): Promise<void> {
       for (const materializedView of materializedViewsToRefresh.values()) {
         console.log(`tenant-canonical-cleanup: refresh_materialized_view=${materializedView.schema}.${materializedView.table}`);
         await client.query(`REFRESH MATERIALIZED VIEW ${qualifiedTable(materializedView)}`);
+      }
+      if (affectedCanonicalTenants.size > 0) {
+        const affectedTenants = Array.from(affectedCanonicalTenants).sort();
+        console.log(`tenant-canonical-cleanup: invalidate_semantic2_dossiers=${affectedTenants.join(',')}`);
+        await client.query(
+          `UPDATE public.semantic2_dossiers
+              SET invalidated_at = now(),
+                  updated_at = now()
+            WHERE tenant_key = ANY($1::text[])`,
+          [affectedTenants],
+        );
+      }
+      if (semantic2InvalidationTriggers.length > 0) {
+        await setRuntimeTriggers(client, semantic2InvalidationTriggers, true);
       }
       await client.query('COMMIT');
     } else {
