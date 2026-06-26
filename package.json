@@ -115,6 +115,8 @@
     "ingest": "npx tsx scripts/ingest-knowledge.ts",
     "neo4j:migrate": "npx tsx src/scripts/migrate-graph.ts",
     "tower:seed": "npx tsx src/scripts/tower-seed.ts",
+    "tower:data-trust:gate": "node scripts/tower/tower-data-trust-gate.mjs",
+    "tower:data-trust:gate:downloads": "node scripts/tower/tower-data-trust-gate.mjs --downloads",
     "tower:ingest:azure-cost": "npx tsx src/scripts/tower/ingest-azure-cost.ts",
     "tower:ingest:workday-hcm": "npx tsx src/scripts/tower/ingest-workday-hcm.ts",
     "tower:templates:workday-hcm": "npx tsx src/scripts/tower/generate-workday-hcm-templates.ts",

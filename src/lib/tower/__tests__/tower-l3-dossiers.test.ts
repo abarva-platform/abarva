@@ -135,6 +135,14 @@ describe('Tower L3 dossiers', () => {
     expect(JSON.stringify(dossiers)).not.toMatch(/Morgan Street/);
   });
 
+  it('labels each tenant from its canonical tenant key instead of hardcoding Lakeshore', () => {
+    const dossiers = buildTowerL3Dossiers(input({ tenantKey: 'skyharbor-air' }));
+    const sample = dossiers.find((d) => d.scopeKey === 'l1-consolidated' && d.viewKey === 'spend');
+    expect(sample?.businessLabels.tenant).toBe('SkyHarbor Air');
+    expect(sample?.businessBody.labels.tenant).toBe('SkyHarbor Air');
+    expect(JSON.stringify(sample?.businessBody)).not.toMatch(/Lakeshore Holdings/);
+  });
+
   it('marks thin scopes with explicit named gaps instead of confident empty claims', () => {
     const dossiers = buildTowerL3Dossiers(input({ benefitRows: [] }));
     const value = dossiers.find((d) => d.scopeKey === 'l1-consolidated' && d.viewKey === 'value_realization');
