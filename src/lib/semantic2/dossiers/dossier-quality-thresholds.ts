@@ -33,7 +33,9 @@ export const DOSSIER_DIMENSION_THRESHOLDS: Record<
       ],
       [
         "function_supported_by_system",
+        "function supported by system",
         "team_supports_capability",
+        "team supports capability",
         "is supported by",
         "depends on",
       ],

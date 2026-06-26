@@ -16,7 +16,7 @@ import type {
 } from "./types";
 
 export const CURATED_DOSSIER_PROMPT_VERSION =
-  "semantic2-physical-dossier-consultant-v1";
+  "semantic2-l3-enriched-buildtime-claude-v2";
 
 type JsonRecord = Record<string, unknown>;
 

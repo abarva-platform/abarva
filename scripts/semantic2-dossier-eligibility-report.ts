@@ -5,6 +5,10 @@ import { Client } from "pg";
 
 import { evaluateDossierSurfaceEligibility } from "@/lib/semantic2/dossiers";
 
+const ACTIVE_PROMPT_VERSION =
+  process.env.SEMANTIC2_ACTIVE_DOSSIER_PROMPT_VERSION ??
+  "semantic2-l3-enriched-buildtime-claude-v2";
+
 interface DossierRow {
   id: string;
   tenant_key: string;
@@ -57,8 +61,10 @@ async function queryRows(): Promise<DossierRow[]> {
                confidence, evidence_packet
         FROM semantic2_dossiers
         WHERE invalidated_at IS NULL
+          AND prompt_version = $1
         ORDER BY tenant_key, dimension_key, built_at DESC
       `,
+      [ACTIVE_PROMPT_VERSION],
     );
     return result.rows;
   } finally {
@@ -196,7 +202,19 @@ async function main() {
     path.join(outDir, "quality-threshold-summary.md"),
     markdown("Quality Threshold Summary", rows, () => true),
   );
-  console.log(JSON.stringify({ ok: true, outDir, rows: rows.length, ready: rows.filter((row) => row.surface_eligible).length }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        ok: true,
+        outDir,
+        activePromptVersion: ACTIVE_PROMPT_VERSION,
+        rows: rows.length,
+        ready: rows.filter((row) => row.surface_eligible).length,
+      },
+      null,
+      2,
+    ),
+  );
 }
 
 main().catch((error) => {

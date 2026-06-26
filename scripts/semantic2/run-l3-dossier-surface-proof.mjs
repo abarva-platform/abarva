@@ -33,24 +33,140 @@ function runCaptureBoth(command, args, logFile) {
   }
 }
 
-const rootName = `semantic2-dossier-surface-eligibility-${stamp()}`;
+function readJson(file) {
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+function levelCounts(rows) {
+  return rows.reduce((acc, row) => {
+    acc[row.eligibility_level] = (acc[row.eligibility_level] || 0) + 1;
+    return acc;
+  }, {});
+}
+
+function relationshipBeforeAfter(beforeRows, afterRows) {
+  const beforeByKey = new Map(beforeRows.map((row) => [`${row.tenant_key}:${row.dimension_key}`, row]));
+  const afterByKey = new Map(afterRows.map((row) => [`${row.tenant_key}:${row.dimension_key}`, row]));
+  const keys = [...new Set([...beforeByKey.keys(), ...afterByKey.keys()])].sort();
+  return [
+    "# Relationships Before / After",
+    "",
+    "| Tenant | Dimension | Before relationships | After relationships | Delta | After level | Remaining blocker |",
+    "|---|---|---:|---:|---:|---|---|",
+    ...keys.map((key) => {
+      const before = beforeByKey.get(key);
+      const after = afterByKey.get(key);
+      const [tenant, dimension] = key.split(":");
+      const beforeCount = Number(before?.relationships || 0);
+      const afterCount = Number(after?.relationships || 0);
+      return `| ${tenant} | ${dimension} | ${beforeCount} | ${afterCount} | ${afterCount - beforeCount} | ${after?.eligibility_level || "not active"} | ${after?.reasons || ""} |`;
+    }),
+    "",
+  ].join("\n");
+}
+
+function supersededRelationshipComparison(summary, afterRows) {
+  const details = Array.isArray(summary?.supersede?.supersededRowDetails)
+    ? summary.supersede.supersededRowDetails
+    : [];
+  const afterByKey = new Map(afterRows.map((row) => [`${row.tenant_key}:${row.dimension_key}`, row]));
+  const comparable = details
+    .map((row) => {
+      const after = afterByKey.get(`${row.tenant_key}:${row.dimension_key}`);
+      if (!after) return null;
+      const oldCount = Number(row.relationship_count || 0);
+      const activeCount = Number(after.relationships || 0);
+      return { ...row, activeCount, delta: activeCount - oldCount, level: after.eligibility_level, blockers: after.reasons || "" };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.delta - a.delta || String(a.tenant_key).localeCompare(String(b.tenant_key)));
+
+  const positive = comparable.filter((row) => row.delta > 0);
+  return [
+    "# Superseded Generation vs Active v2",
+    "",
+    "This section compares the recoverably invalidated older generation to the active v2 row for the same tenant/dimension. It stays meaningful even when a rerun is idempotent and the active-before/active-after delta is zero.",
+    "",
+    `Comparable superseded rows: ${comparable.length}`,
+    `Rows with relationship increase: ${positive.length}`,
+    "",
+    "| Tenant | Dimension | Superseded prompt | Old relationships | Active v2 relationships | Delta | Active level | Remaining blocker |",
+    "|---|---|---|---:|---:|---:|---|---|",
+    ...(comparable.length
+      ? comparable.map(
+          (row) =>
+            `| ${row.tenant_key} | ${row.dimension_key} | ${row.prompt_version} | ${row.relationship_count || 0} | ${row.activeCount} | ${row.delta} | ${row.level || ""} | ${row.blockers} |`,
+        )
+      : ["| n/a | n/a | n/a | 0 | 0 | 0 | n/a | No comparable superseded active rows in this run. |"]),
+    "",
+  ].join("\n");
+}
+
+function activeEligibilityMarkdown(rows) {
+  const counts = levelCounts(rows);
+  return [
+    "# Active Eligibility Report",
+    "",
+    `Rows evaluated: ${rows.length}`,
+    `Ready: ${counts.ready || 0}`,
+    `Partial: ${counts.partial || 0}`,
+    `Blocked: ${counts.blocked || 0}`,
+    `Operator-only: ${counts.operator_only || 0}`,
+    "",
+    "| Tenant | Dimension | Level | Coverage | Confidence | Facts | Entities | Relationships | Usable citations | Reasons | Required fixes |",
+    "|---|---|---|---:|---:|---:|---:|---:|---:|---|---|",
+    ...rows.map((row) => `| ${row.tenant_key} | ${row.dimension_key} | ${row.eligibility_level} | ${row.coverage} | ${row.confidence} | ${row.facts} | ${row.entities} | ${row.relationships} | ${row.usable_citations} | ${row.reasons || "Ready"} | ${row.required_fixes || ""} |`),
+    "",
+  ].join("\n");
+}
+
+function edgeProvenanceMarkdown(sample) {
+  const citations = new Map((sample.citations || []).map((citation) => [citation.citation_id, citation]));
+  const relationships = (sample.relationships || []).slice(0, 10);
+  return [
+    "# Edge Provenance",
+    "",
+    "Sampled relationships are derived only from grouped structured source fields. The citation column points back to the business-readable source area retained in the dossier.",
+    "",
+    "| From | Relationship | To | Citation | Source area | Confidence |",
+    "|---|---|---|---|---|---:|",
+    ...relationships.map((relationship) => {
+      const citationId = relationship.citation_ids?.[0] || "";
+      const citation = citations.get(citationId) || {};
+      return `| ${relationship.from} | ${relationship.relationship} | ${relationship.to} | ${citationId} | ${citation.source_area || citation.label || ""} | ${relationship.confidence ?? ""} |`;
+    }),
+    "",
+  ].join("\n");
+}
+
+const rootName = `semantic2-dossier-active-eligibility-${stamp()}`;
 const root = path.join("/tmp", rootName);
 fs.mkdirSync(root, { recursive: true });
 
 runCaptureBoth("npm", ["run", "semantic2:l3-dossiers:self-test"], path.join(root, "self-test.log"));
+
+runCaptureBoth(
+  "npx",
+  ["tsx", "scripts/semantic2-dossier-eligibility-report.ts", "--out-dir", path.join(root, "eligibility-before")],
+  path.join(root, "eligibility-before.log"),
+);
+
+const buildArgs = [
+  "scripts/semantic2/build-enriched-l3-dossiers.mjs",
+  "--apply",
+  "--supersede-old-generations",
+  "--out-dir",
+  path.join(root, "build"),
+  "--sample-tenant",
+  "lakeshore-holdings",
+  "--sample-dimension",
+  "organization_leadership",
+];
+if (process.env.L3_DOSSIER_ONLY_SAMPLE === "1") buildArgs.push("--only-sample");
+
 runCaptureBoth(
   "node",
-  [
-    "scripts/semantic2/build-enriched-l3-dossiers.mjs",
-    "--apply",
-    "--out-dir",
-    path.join(root, "build"),
-    "--sample-tenant",
-    "lakeshore-holdings",
-    "--sample-dimension",
-    "organization_leadership",
-    "--only-sample",
-  ],
+  buildArgs,
   path.join(root, "build.log"),
 );
 runCaptureBoth(
@@ -76,6 +192,18 @@ if (fs.existsSync(releaseRecordPath)) {
 }
 
 const after = JSON.parse(fs.readFileSync(path.join(root, "build", "SAMPLE_DOSSIER.json"), "utf8"));
+const buildSummary = JSON.parse(fs.readFileSync(path.join(root, "build", "summary.json"), "utf8"));
+const beforeEligibilityRows = readJson(path.join(root, "eligibility-before", "eligibility-report.json"));
+const afterEligibilityRows = readJson(path.join(root, "eligibility", "eligibility-report.json"));
+fs.copyFileSync(path.join(root, "eligibility", "eligibility-report.csv"), path.join(root, "ACTIVE_ELIGIBILITY_REPORT.csv"));
+fs.writeFileSync(path.join(root, "ACTIVE_ELIGIBILITY_REPORT.md"), activeEligibilityMarkdown(afterEligibilityRows));
+fs.writeFileSync(
+  path.join(root, "RELATIONSHIPS_BEFORE_AFTER.md"),
+  [relationshipBeforeAfter(beforeEligibilityRows, afterEligibilityRows), supersededRelationshipComparison(buildSummary, afterEligibilityRows)].join("\n"),
+);
+fs.writeFileSync(path.join(root, "EDGE_PROVENANCE.md"), edgeProvenanceMarkdown(after));
+fs.copyFileSync(path.join(root, "build", "SUPERSEDE_RECORD.md"), path.join(root, "SUPERSEDE_RECORD.md"));
+
 const before =
   'Before: prior reviewed sample had 120 facts, entities=0, relationships=0, and first fact entity="enterprise source material:source reference", entityType="Evidence item", value="required".';
 const beforeAfter = [

@@ -32,10 +32,10 @@ const DEFAULT_TENANTS = [
 const PROMPT_VERSION = "semantic2-l3-enriched-buildtime-claude-v2";
 const DOSSIER_VERSION = `semantic2-l3-enriched-${new Date().toISOString().slice(0, 10)}`;
 const MODEL = process.env.L3_DOSSIER_CLAUDE_MODEL || "claude-opus-4-8";
-const MAX_FACTS = Number(process.env.L3_DOSSIER_MAX_FACTS || 120);
+const MAX_FACTS = Number(process.env.L3_DOSSIER_MAX_FACTS || 240);
 const RAW_FACT_LIMIT = Math.max(MAX_FACTS * 6, MAX_FACTS);
 const MAX_ENTITIES = Number(process.env.L3_DOSSIER_MAX_ENTITIES || 80);
-const MAX_RELATIONSHIPS = Number(process.env.L3_DOSSIER_MAX_RELATIONSHIPS || 80);
+const MAX_RELATIONSHIPS = Number(process.env.L3_DOSSIER_MAX_RELATIONSHIPS || 120);
 const MAX_INSIGHTS = Number(process.env.L3_DOSSIER_MAX_INSIGHTS || 4);
 const CLAUDE_TIMEOUT_MS = Number(process.env.L3_DOSSIER_CLAUDE_TIMEOUT_MS || 45000);
 
@@ -133,6 +133,7 @@ function parseArgs() {
     selfTest: args.has("--self-test"),
     emitFileBundle: args.has("--emit-file-bundle"),
     onlySample: args.has("--only-sample"),
+    supersedeOldGenerations: args.has("--supersede-old-generations") || process.env.L3_DOSSIER_SUPERSEDE_OLD === "1",
     outDir:
       get("--out-dir") ||
       process.env.OUT_DIR ||
@@ -369,6 +370,111 @@ function factBusinessScore(row) {
   return score;
 }
 
+const DIMENSION_RELEVANCE_PATTERNS = {
+  ai_value_governance: {
+    positive: [
+      /ai|automation|agent|model|tool|use[_ ]?case|initiative|benefit|value|realization|adoption/i,
+      /governance|responsible[_ ]?ai|risk|control|approval|gate|policy/i,
+    ],
+    negative: [/ticket|incident|change|vendor|contract|budget/i],
+  },
+  application_systems: {
+    positive: [
+      /application|app[_ ]?name|system|platform|hosting|cloud|integration|interface|cmdb|service/i,
+      /criticality|lifecycle|technical[_ ]?owner|business[_ ]?owner/i,
+    ],
+    negative: [/responsible[_ ]?ai|approval[_ ]?gate|benefit[_ ]?realization/i],
+  },
+  budget_financials: {
+    positive: [/budget|spend|cost|run[_ ]?cost|change[_ ]?cost|amount|funding|portfolio|capex|opex|finance/i],
+    negative: [/incident|ticket|responsible[_ ]?ai[_ ]?gate/i],
+  },
+  data_analytics: {
+    positive: [/data|analytics|dataset|data[_ ]?product|warehouse|lakehouse|report|dashboard|lineage|refresh|quality/i],
+    negative: [/incident|ticket|contract[_ ]?renewal/i],
+  },
+  enterprise_profile: {
+    positive: [/enterprise|profile|revenue|employee|headcount|industry|hq|scale|business[_ ]?model/i],
+    negative: [/ticket|incident|responsible[_ ]?ai[_ ]?gate/i],
+  },
+  moves_evidence: {
+    positive: [/move|program|phase|gate|deliverable|artifact|charter|roadmap|business[_ ]?case|approval/i],
+    negative: [/incident|ticket|cmdb/i],
+  },
+  operations_process: {
+    positive: [/operation|process|ticket|incident|problem|change|request|queue|workflow|servicenow|jira|sla|cycle/i],
+    negative: [/enterprise[_ ]?profile|revenue|contract[_ ]?renewal/i],
+  },
+  organization_leadership: {
+    positive: [
+      /organization|leadership|leader|executive|cio|cto|cfo|ciso|cdao|cdto/i,
+      /business[_ ]?function|function[_ ]?name|org[_ ]?team|team[_ ]?name|role|persona|workforce|headcount/i,
+      /owner|ownership|accountability|reports[_ ]?to|portfolio[_ ]?owner|business[_ ]?owner|technical[_ ]?owner/i,
+    ],
+    negative: [
+      /responsible[_ ]?ai|ai[_ -]?gov|aigov|approval[_ ]?gate|gate[_ ]?status|model[_ ]?risk|prompt|llm/i,
+      /ticket|incident|service[_ ]?request|contract[_ ]?renewal|pricing/i,
+    ],
+  },
+  risk_compliance: {
+    positive: [/risk|control|compliance|policy|security|privacy|audit|sox|hipaa|mitigation|severity/i],
+    negative: [/budget|contract[_ ]?value|ticket[_ ]?volume/i],
+  },
+  vendor_contracts: {
+    positive: [/vendor|supplier|contract|license|renewal|term|run[_ ]?rate|commercial|sow|pricing|bafo/i],
+    negative: [/responsible[_ ]?ai|ticket|incident/i],
+  },
+};
+
+function rowSearchText(row) {
+  const parsed = structuredFact(row);
+  const payload = sourcePayload(row);
+  return [
+    row.source_table,
+    row.source_dimension,
+    row.subject_semantic_key,
+    row.subject_name,
+    row.subject_type,
+    row.fact_type,
+    row.fact_key,
+    fieldFromFact(row),
+    valueOfFact(row),
+    parsed?.fact_text,
+    parsed?.source_file,
+    parsed?.source_record_id,
+    payload?.source_file,
+    payload?.source_dimension,
+    payload?.file_family,
+    payload?.dimension,
+    payload?.business_name,
+    payload?.business_function,
+    payload?.team_name,
+    payload?.org_team,
+    payload?.role_name,
+    payload?.leader_name,
+  ]
+    .filter((value) => value !== undefined && value !== null)
+    .map((value) => (typeof value === "object" ? JSON.stringify(value) : String(value)))
+    .join(" ");
+}
+
+function dimensionFactRelevanceScore(dimensionKey, row) {
+  const config = DIMENSION_RELEVANCE_PATTERNS[dimensionKey];
+  if (!config) return 0;
+  const text = rowSearchText(row);
+  let score = 0;
+  for (const pattern of config.positive || []) {
+    if (pattern.test(text)) score += 40;
+  }
+  for (const pattern of config.negative || []) {
+    if (pattern.test(text)) score -= 45;
+  }
+  const field = fieldFromFact(row);
+  if (field && (config.positive || []).some((pattern) => pattern.test(field))) score += 25;
+  if (field && (config.negative || []).some((pattern) => pattern.test(field))) score -= 35;
+  return score;
+}
+
 function isUsableFact(row) {
   const label = readableFactLabel(row);
   const value = valueOfFact(row);
@@ -437,6 +543,14 @@ function entityTypeFromRowFields(fields, row, dimensionKey) {
   if (fields.risk_name || fields.control_name) return "Risk or control";
   if (!isGenericSubject(row) && row.subject_type) return sentenceCase(row.subject_type);
   return sentenceCase(dimensionKey);
+}
+
+function firstField(fields, names) {
+  for (const name of names) {
+    const value = fields[name];
+    if (value !== undefined && value !== null && String(value).trim()) return value;
+  }
+  return "";
 }
 
 function groupFactRowsBySource(facts) {
@@ -534,24 +648,86 @@ function deriveRelationshipCandidates(factGroups, citationFor) {
   };
   for (const group of factGroups) {
     const f = group.fields;
-    const persona = f.persona_name || f.role_name || f.subject_name;
-    const team = f.team_name || f.org_team || f.technical_owner_team;
-    const businessOwner = f.primary_business_owner || f.business_owner || f.owner_role;
-    const functionName = f.business_function || f.business_area;
-    const app = f.application_name || f.system_name || f.platform_name;
-    const capability = f.capability_name || f.value_stream;
-    const vendor = f.vendor_name || f.contract_name;
-    const process = f.process_name || f.work_item_type || f.service_name;
+    const subject = firstField(f, ["subject_name"]);
+    const subjectType = group.rows.map((row) => row.subject_type).filter(Boolean).join(" ");
+    const subjectLooksLikeSystem = /application|system|platform|tool|service/i.test(subjectType);
+    const subjectLooksLikeTeam = /team|organization|org/i.test(subjectType);
+    const persona = firstField(f, ["persona_name", "role_name", "role", "job_role"]);
+    const leader = firstField(f, [
+      "leader_name",
+      "executive_name",
+      "technology_leader",
+      "cio_report",
+      "owner_name",
+      "executive_owner",
+      "executive_owner_role",
+      "portfolio_owner",
+    ]);
+    const team = firstField(f, ["team_name", "org_team", "technical_owner_team", "support_team", "owner_team", "delivery_team"]);
+    const inferredTeam = team || (subjectLooksLikeTeam ? subject : "");
+    const businessOwner = firstField(f, [
+      "primary_business_owner",
+      "business_owner",
+      "owner_role",
+      "executive_owner",
+      "executive_owner_role",
+      "portfolio_owner",
+    ]);
+    const functionName = firstField(f, ["business_function", "business_area", "function_name", "domain", "portfolio", "operating_area"]);
+    const app = firstField(f, ["application_name", "system_name", "platform_name", "service_name", "system", "application"]) || (subjectLooksLikeSystem ? subject : "");
+    const capability = firstField(f, ["capability_name", "business_capability", "value_stream", "capability", "process_capability"]);
+    const vendor = firstField(f, ["vendor_name", "supplier_name", "provider_name"]);
+    const contract = firstField(f, ["contract_name", "contract_id", "agreement_name", "license_name"]);
+    const platform = firstField(f, ["platform_name", "cloud_platform", "hosting_platform", "hosting_model", "environment"]);
+    const integration = firstField(f, ["integration_name", "interface_name", "feed_name", "source_system", "target_system"]);
+    const dataProduct = firstField(f, ["data_product_name", "data_domain", "analytics_product", "report_name", "dataset_name"]);
+    const metric = firstField(f, ["metric_name", "kpi_name", "outcome_name", "benefit_name"]);
+    const initiative = firstField(f, ["ai_initiative_name", "initiative_name", "use_case_name", "automation_name"]);
+    const tool = firstField(f, ["ai_tool_name", "tool_name", "agent_name", "model_name", "automation_tool"]);
+    const control = firstField(f, ["control_name", "policy_name", "governance_gate", "approval_gate"]);
+    const risk = firstField(f, ["risk_name", "risk_id", "issue_name", "blocker_name"]);
+    const process = firstField(f, ["process_name", "work_item_type", "queue_name", "workflow_name", "service_name"]);
+    const workItem = firstField(f, ["ticket_type", "issue_type", "incident_type", "request_type", "work_item_type"]);
+    const budgetLine = firstField(f, ["budget_line", "cost_center", "portfolio_name", "spend_category", "funding_lane"]);
+    const amount = firstField(f, ["amount", "annual_spend", "run_cost", "budget", "contract_value", "value_estimate"]);
     if (persona && functionName) add(persona, "works in", functionName, group);
     if (persona && process) add(persona, "performs", process, group);
-    if (team && functionName) add(team, "supports", functionName, group);
-    if (team && app) add(team, "owns", app, group);
+    if (leader && functionName) add(leader, "leader owns function", functionName, group);
+    if (leader && inferredTeam) add(leader, "leader owns team", inferredTeam, group);
+    if (inferredTeam && functionName) add(inferredTeam, "supports", functionName, group);
+    if (inferredTeam && app) add(inferredTeam, "team owns system", app, group);
+    if (inferredTeam && capability) add(inferredTeam, "team supports capability", capability, group);
     if (businessOwner && app) add(businessOwner, "owns", app, group);
     if (businessOwner && functionName) add(businessOwner, "works in", functionName, group);
-    if (functionName && app) add(functionName, "is supported by", app, group);
+    if (functionName && app) add(functionName, "function supported by system", app, group);
+    if (app && capability) add(app, "application supports capability", capability, group);
+    if (app && team) add(app, "application owned by team", team, group);
+    if (app && vendor) add(app, "application supported by vendor", vendor, group);
+    if (app && platform) add(app, "runs on platform", platform, group);
+    if (app && integration) add(app, "integrates with", integration, group);
     if (capability && app) add(capability, "depends on", app, group);
+    if (vendor && contract) add(vendor, "vendor supplies contract", contract, group);
+    if (contract && app) add(contract, "contract supports system", app, group);
+    if (contract && functionName) add(contract, "contract owned by function", functionName, group);
     if (vendor && app) add(vendor, "supports", app, group);
+    if (initiative && tool) add(initiative, "ai initiative uses tool", tool, group);
+    if (initiative && metric) add(initiative, "ai initiative impacts outcome", metric, group);
+    if (initiative && control) add(initiative, "ai initiative governed by control", control, group);
+    if (initiative && risk) add(initiative, "ai initiative blocked by risk", risk, group);
     if (process && app) add(process, "uses", app, group);
+    if (process && team) add(process, "owned by", team, group);
+    if (workItem && team) add(workItem, "assigned to", team, group);
+    if (process && initiative) add(process, "automates", initiative, group);
+    if (process && capability) add(process, "supports", capability, group);
+    if (risk && control) add(control, "mitigates", risk, group);
+    if (risk && app) add(risk, "impacts", app, group);
+    if (control && app) add(control, "governs", app, group);
+    if (dataProduct && app) add(dataProduct, "feeds", app, group);
+    if (dataProduct && functionName) add(dataProduct, "consumed by", functionName, group);
+    if (dataProduct && metric) add(dataProduct, "measured by", metric, group);
+    if (budgetLine && app) add(budgetLine, "funds", app, group);
+    if (budgetLine && functionName) add(budgetLine, "funds", functionName, group);
+    if (amount && budgetLine) add(budgetLine, "has amount", amount, group);
   }
   return relationships;
 }
@@ -746,7 +922,7 @@ async function buildSkeleton(client, tenantKey, tenantAliases, dimension) {
              COALESCE(e.entity_type, '') AS subject_type, f.fact_type, f.fact_key, f.fact_value_text,
              f.fact_value_number, f.fact_value_bool, f.fact_value_json, f.value_type, f.unit,
              f.confidence, f.freshness_at, f.source_row_id::text, f.source_table, f.source_primary_key,
-             f.derived_flag, sr.source_dimension, sr.sanitized_payload AS source_payload
+             f.derived_flag, f.created_at, sr.source_dimension, sr.sanitized_payload AS source_payload
       FROM semantic2_facts f
       LEFT JOIN semantic2_entities e ON e.id = f.subject_entity_id
       LEFT JOIN semantic2_source_rows sr ON sr.id = f.source_row_id
@@ -770,15 +946,39 @@ async function buildSkeleton(client, tenantKey, tenantAliases, dimension) {
         f.derived_flag ASC,
         f.confidence DESC,
         f.created_at DESC,
-        f.fact_key
+        f.fact_key,
+        f.source_table,
+        f.source_primary_key,
+        f.id
       LIMIT $5
     `,
     [tenantAliases, expectedTables, entityTypes, requiredFactKeys, RAW_FACT_LIMIT],
   );
   const facts = factCandidates
     .filter(isUsableFact)
-    .sort((a, b) => factBusinessScore(b) - factBusinessScore(a))
+    .sort(
+      (a, b) =>
+        dimensionFactRelevanceScore(dimension.dimension_key, b) - dimensionFactRelevanceScore(dimension.dimension_key, a) ||
+        factBusinessScore(b) - factBusinessScore(a) ||
+        new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime() ||
+        String(a.fact_key || "").localeCompare(String(b.fact_key || "")) ||
+        String(a.source_table || "").localeCompare(String(b.source_table || "")) ||
+        String(a.source_primary_key || "").localeCompare(String(b.source_primary_key || "")) ||
+        String(a.id || "").localeCompare(String(b.id || "")),
+    )
     .slice(0, MAX_FACTS);
+  const relationshipFactRows = factCandidates
+    .filter(isUsableFact)
+    .filter((row) => dimensionFactRelevanceScore(dimension.dimension_key, row) > 0)
+    .sort(
+      (a, b) =>
+        dimensionFactRelevanceScore(dimension.dimension_key, b) - dimensionFactRelevanceScore(dimension.dimension_key, a) ||
+        new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime() ||
+        String(a.source_table || "").localeCompare(String(b.source_table || "")) ||
+        String(a.source_primary_key || "").localeCompare(String(b.source_primary_key || "")) ||
+        String(a.id || "").localeCompare(String(b.id || "")),
+    )
+    .slice(0, Math.max(MAX_FACTS * 3, MAX_FACTS));
 
   const factEntityKeys = facts.map((fact) => fact.subject_semantic_key).filter(Boolean);
   const relationshipKeys = [...new Set([...entityKeys, ...factEntityKeys])].slice(0, 200);
@@ -799,7 +999,7 @@ async function buildSkeleton(client, tenantKey, tenantAliases, dimension) {
           ($2::text[] <> '{}'::text[] AND source_table = ANY($2::text[]))
           OR ($3::text[] <> '{}'::text[] AND (from_semantic_key = ANY($3::text[]) OR to_semantic_key = ANY($3::text[])))
         )
-      ORDER BY confidence DESC, created_at DESC
+      ORDER BY confidence DESC, created_at DESC, relationship_type, from_semantic_key, to_semantic_key, id
       LIMIT $4
     `,
     [tenantAliases, [...new Set(relationshipSourceTables)], relationshipKeys, MAX_RELATIONSHIPS],
@@ -821,6 +1021,7 @@ async function buildSkeleton(client, tenantKey, tenantAliases, dimension) {
     ...new Set([
       ...facts.map((fact) => fact.source_row_id).filter(Boolean),
       ...relationships.map((relationship) => relationship.source_row_id).filter(Boolean),
+      ...relationshipFactRows.map((fact) => fact.source_row_id).filter(Boolean),
     ]),
   ].slice(0, 80);
   const sourceRows = selectedSourceRowIds.length
@@ -841,12 +1042,6 @@ async function buildSkeleton(client, tenantKey, tenantAliases, dimension) {
     : facts.length > 0
       ? 1
       : 0;
-  const entityCoverage = entityTypes.length
-    ? entityTypes.filter((type) => entities.some((entity) => entity.entity_type === type)).length / entityTypes.length
-    : facts.length > 0
-      ? 1
-      : 0;
-  const coverageScore = Number(((sourceTableCoverage + entityCoverage) / 2).toFixed(4));
 
   const citations = [];
   const citationKeyToId = new Map();
@@ -868,6 +1063,7 @@ async function buildSkeleton(client, tenantKey, tenantAliases, dimension) {
   };
 
   const factGroups = groupFactRowsBySource(facts);
+  const relationshipFactGroups = groupFactRowsBySource(relationshipFactRows);
 
   const businessFacts = facts.map((fact, index) => {
     const group = factGroups.find((candidate) => candidate.rows.some((row) => row.id === fact.id));
@@ -901,7 +1097,13 @@ async function buildSkeleton(client, tenantKey, tenantAliases, dimension) {
       ...relationship,
     }));
 
-  const derivedRelationships = deriveRelationshipCandidates(factGroups, citationFor)
+  const derivedRelationships = deriveRelationshipCandidates(relationshipFactGroups, citationFor)
+    .sort(
+      (a, b) =>
+        String(a.from || "").localeCompare(String(b.from || "")) ||
+        String(a.relationship || "").localeCompare(String(b.relationship || "")) ||
+        String(a.to || "").localeCompare(String(b.to || "")),
+    )
     .slice(0, Math.max(0, MAX_RELATIONSHIPS - businessRelationships.length))
     .map((relationship, index) => ({
       relationship_id: `R${String(businessRelationships.length + index + 1).padStart(3, "0")}`,
@@ -911,6 +1113,17 @@ async function buildSkeleton(client, tenantKey, tenantAliases, dimension) {
   businessRelationships.push(...derivedRelationships);
 
   const businessEntities = deriveEntities(entities, factGroups, dimension.dimension_key);
+  const entityCoverage = entityTypes.length
+    ? entityTypes.filter((type) =>
+        businessEntities.some(
+          (entity) => String(entity.type || "").toLowerCase() === sentenceCase(type).toLowerCase(),
+        ),
+      ).length / entityTypes.length
+    : businessFacts.length > 0
+      ? 1
+      : 0;
+  const relationshipCoverage = businessRelationships.length > 0 ? 1 : businessFacts.length > 0 ? 0.5 : 0;
+  const coverageScore = Number(((sourceTableCoverage + entityCoverage + relationshipCoverage) / 3).toFixed(4));
   const gaps = buildCoverageGaps(
     dimension,
     expectedTables,
@@ -1216,6 +1429,74 @@ async function writeDossier(client, tenantKey, dimension, skeleton) {
   );
 }
 
+async function supersedeOldGenerations(client) {
+  const beforeRows = await queryRows(
+    client,
+    `
+      SELECT prompt_version, count(*)::int AS count
+      FROM semantic2_dossiers
+      WHERE invalidated_at IS NULL
+      GROUP BY prompt_version
+      ORDER BY prompt_version
+    `,
+    [],
+  );
+  const newlySupersededRows = await queryRows(
+    client,
+    `
+      WITH updated AS (
+        UPDATE semantic2_dossiers d
+           SET invalidated_at = now(),
+               updated_at = now()
+         WHERE d.prompt_version <> $1
+           AND d.invalidated_at IS NULL
+         RETURNING d.tenant_key, d.dimension_key, d.prompt_version, d.dossier_version,
+                   jsonb_array_length(COALESCE(d.evidence_packet->'relationships', '[]'::jsonb))::int AS relationship_count,
+                   jsonb_array_length(COALESCE(d.evidence_packet->'entities', '[]'::jsonb))::int AS entity_count,
+                   jsonb_array_length(COALESCE(d.evidence_packet->'facts', '[]'::jsonb))::int AS fact_count
+      )
+      SELECT tenant_key, dimension_key, prompt_version, dossier_version, relationship_count, entity_count, fact_count
+      FROM updated
+      ORDER BY tenant_key, dimension_key, prompt_version
+    `,
+    [PROMPT_VERSION],
+  );
+  const supersededRows = await queryRows(
+    client,
+    `
+      SELECT d.tenant_key, d.dimension_key, d.prompt_version, d.dossier_version,
+             jsonb_array_length(COALESCE(d.evidence_packet->'relationships', '[]'::jsonb))::int AS relationship_count,
+             jsonb_array_length(COALESCE(d.evidence_packet->'entities', '[]'::jsonb))::int AS entity_count,
+             jsonb_array_length(COALESCE(d.evidence_packet->'facts', '[]'::jsonb))::int AS fact_count
+      FROM semantic2_dossiers d
+      WHERE d.prompt_version <> $1
+        AND d.invalidated_at IS NOT NULL
+        AND EXISTS (
+          SELECT 1
+          FROM semantic2_dossiers active
+          WHERE active.tenant_key = d.tenant_key
+            AND active.dimension_key = d.dimension_key
+            AND active.prompt_version = $1
+            AND active.invalidated_at IS NULL
+        )
+      ORDER BY d.tenant_key, d.dimension_key, d.prompt_version
+    `,
+    [PROMPT_VERSION],
+  );
+  const afterRows = await queryRows(
+    client,
+    `
+      SELECT prompt_version, count(*)::int AS count
+      FROM semantic2_dossiers
+      WHERE invalidated_at IS NULL
+      GROUP BY prompt_version
+      ORDER BY prompt_version
+    `,
+    [],
+  );
+  return { activePromptVersion: PROMPT_VERSION, beforeRows, newlySupersededRows, supersededRows, afterRows };
+}
+
 function csvEscape(value) {
   const text = String(value ?? "");
   return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
@@ -1379,6 +1660,7 @@ async function buildAll(args) {
   await client.connect();
   const rows = [];
   const dossiers = [];
+  let supersedeRecord = null;
   try {
     const tenantScopes = await loadTenantScopes(client);
     const dimensions = await loadDimensions(client);
@@ -1422,6 +1704,9 @@ async function buildAll(args) {
         });
       }
     }
+    if (args.apply && args.supersedeOldGenerations) {
+      supersedeRecord = await supersedeOldGenerations(client);
+    }
   } finally {
     await client.end();
   }
@@ -1437,6 +1722,36 @@ async function buildAll(args) {
     "insights-catalog.md": insightsCatalog(dossiers),
     "OUTCOME_REPORT.md": outcomeReport(rows, args),
     "validation-summary.csv": validationCsv(rows),
+    "SUPERSEDE_RECORD.md": supersedeRecord
+      ? [
+          "# Supersede Record",
+          "",
+          `Active prompt version: ${supersedeRecord.activePromptVersion}`,
+          "",
+          "Rows were not deleted. Active non-current dossier generations were marked with `invalidated_at` so the only active generation is the clean v2 prompt version. The listed rows can be restored by setting `invalidated_at = NULL` for a controlled rollback.",
+          "",
+          "## Active Prompt Counts Before",
+          "",
+          ...supersedeRecord.beforeRows.map((row) => `- ${row.prompt_version}: ${row.count}`),
+          "",
+          `Newly superseded this run: ${supersedeRecord.newlySupersededRows.length}`,
+          `Recoverable non-current rows listed: ${supersedeRecord.supersededRows.length}`,
+          "",
+          "## Superseded Rows",
+          "",
+          ...(supersedeRecord.supersededRows.length
+            ? supersedeRecord.supersededRows.map(
+                (row) =>
+                  `- ${row.tenant_key}/${row.dimension_key}: ${row.prompt_version} (${row.dossier_version}); facts=${row.fact_count}, entities=${row.entity_count}, relationships=${row.relationship_count}`,
+              )
+            : ["- No older active rows required supersession."]),
+          "",
+          "## Active Prompt Counts After",
+          "",
+          ...supersedeRecord.afterRows.map((row) => `- ${row.prompt_version}: ${row.count}`),
+          "",
+        ].join("\n")
+      : "# Supersede Record\n\nSupersede step was not requested for this run.\n",
     "summary.json": JSON.stringify(
       {
         generatedAt: new Date().toISOString(),
@@ -1446,6 +1761,10 @@ async function buildAll(args) {
         totalDossiers: rows.length,
         validationPassed: rows.filter((row) => row.validation_passed).length,
         validationFailed: rows.filter((row) => !row.validation_passed).length,
+        supersedeOldGenerations: Boolean(args.supersedeOldGenerations),
+        supersededRows: supersedeRecord?.supersededRows?.length ?? 0,
+        newlySupersededRows: supersedeRecord?.newlySupersededRows?.length ?? 0,
+        supersededRowDetails: supersedeRecord?.supersededRows ?? [],
       },
       null,
       2,
