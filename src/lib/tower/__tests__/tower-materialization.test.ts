@@ -48,7 +48,7 @@ function vendor(name: string, id: string, value: number): AIInitiativeVendorRow 
 
 function makeDb() {
   const calls: Array<{ table: string; rows: unknown[]; onConflict: string }> = [];
-  const db: PostgresCompatClient = {
+  const db = {
     from(table: string) {
       return {
         upsert(rows: unknown[], options: { onConflict?: string }) {
@@ -69,7 +69,7 @@ function makeDb() {
         throw new Error('storage_not_used');
       },
     },
-  };
+  } as unknown as PostgresCompatClient;
   return { db, calls };
 }
 

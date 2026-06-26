@@ -485,10 +485,10 @@ export function buildTowerMaterializationPlan(args: {
   };
 }
 
-async function upsertRows(
+async function upsertRows<T extends object>(
   db: PostgresCompatClient,
   table: string,
-  rows: readonly JsonRecord[],
+  rows: readonly T[],
   onConflict: string,
 ): Promise<number> {
   if (rows.length === 0) return 0;
