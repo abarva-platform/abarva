@@ -130,7 +130,6 @@ async function discoverUniqueKeys(client: Client, column: TenantColumn): Promise
       WHERE namespace.nspname = $1
         AND table_class.relname = $2
         AND index_def.indisunique = true
-        AND index_def.indpred IS NULL
       GROUP BY index_class.relname
      HAVING bool_or(attribute.attname = $3)`,
     [column.schema, column.table, column.column],
