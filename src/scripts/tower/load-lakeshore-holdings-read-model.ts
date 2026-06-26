@@ -378,19 +378,57 @@ function buildVendorRows(
   clientId: string,
   rows: CsvRow[],
 ): Array<Record<string, unknown>> {
-  return rows.map((row, index) => {
+  const byConflictKey = new Map<string, Record<string, unknown>>();
+
+  for (const [index, row] of rows.entries()) {
     const vendor = text(row.vendor, `Vendor ${index + 1}`);
-    return {
+    const portfolio = text(row.portfolio_company);
+    const logicalVendorKey = slug(vendor);
+    const conflictKey = `${clientId}|${logicalVendorKey}|current`;
+    const amount = num(row.annual_spend_usd) ?? 0;
+    const rawRowCount = Math.max(1, num(row.contract_count) ?? 1);
+    const existing = byConflictKey.get(conflictKey);
+
+    if (existing) {
+      existing.contract_value_usd =
+        Number(existing.contract_value_usd ?? 0) + amount;
+      existing.duplicate_raw_row_count =
+        Number(existing.duplicate_raw_row_count ?? 0) + rawRowCount;
+      existing.is_duplicate_rollup = true;
+      existing.duplicate_group_key = logicalVendorKey;
+      existing.initiative_display_id = [
+        text(existing.initiative_display_id),
+        portfolio,
+      ]
+        .filter(Boolean)
+        .join(" + ");
+      existing.initiative_name = existing.initiative_display_id;
+      existing.evidence_ids = [
+        ...((existing.evidence_ids as string[] | undefined) ?? []),
+        `vendor-exposure:${vendor}:${portfolio}`,
+      ];
+      existing.citations = JSON.stringify([
+        ...JSON.parse(String(existing.citations ?? "[]")),
+        {
+          source_file: "derived-tower-read-model/vendor-exposure.csv",
+          vendor,
+          portfolio_company: portfolio,
+        },
+      ]);
+      continue;
+    }
+
+    byConflictKey.set(conflictKey, {
       client_id: clientId,
       tenant_key: TENANT_KEY,
       period_label: "current",
-      vendor_id: `lak-vendor-${slug(text(row.portfolio_company))}-${slug(vendor)}`,
+      vendor_id: `lak-vendor-${slug(portfolio)}-${logicalVendorKey}`,
       vendor_name: vendor,
-      logical_vendor_key: slug(vendor),
+      logical_vendor_key: logicalVendorKey,
       initiative_id: null,
-      initiative_display_id: text(row.portfolio_company),
-      initiative_name: text(row.portfolio_company),
-      contract_value_usd: num(row.annual_spend_usd),
+      initiative_display_id: portfolio,
+      initiative_name: portfolio,
+      contract_value_usd: amount,
       renewal_date: null,
       financial_health:
         text(row.max_criticality).toLowerCase() === "high"
@@ -400,23 +438,29 @@ function buildVendorRows(
       accounting_treatment: "opex",
       spend_posture: "run",
       scope_type:
-        text(row.portfolio_company) === "Lakeshore Shared Services"
+        portfolio === "Lakeshore Shared Services"
           ? "enterprise_shared_platform"
           : "portfolio_company_specific",
       allocation_method: "manual_allocation",
       is_duplicate_rollup: false,
       duplicate_group_key: null,
-      duplicate_raw_row_count: Math.max(1, num(row.contract_count) ?? 1),
+      duplicate_raw_row_count: rawRowCount,
       is_synthetic: true,
       is_outlier: false,
-      evidence_ids: [`vendor-exposure:${vendor}`],
+      evidence_ids: [`vendor-exposure:${vendor}:${portfolio}`],
       citations: JSON.stringify([
-        { source_file: "derived-tower-read-model/vendor-exposure.csv", vendor },
+        {
+          source_file: "derived-tower-read-model/vendor-exposure.csv",
+          vendor,
+          portfolio_company: portfolio,
+        },
       ]),
       lineage: JSON.stringify({ source: "lakeshore_enriched_tower_package" }),
       gaps: JSON.stringify([]),
-    };
-  });
+    });
+  }
+
+  return [...byConflictKey.values()];
 }
 
 async function main(): Promise<void> {
