@@ -34,12 +34,14 @@ Home/aVa now routes Lakeshore operational and back-office questions to the opera
 - Applied scrub to deterministic Home responses, Claude synthesis, fallback traces, and quality/relevance validation.
 - Added finance/Treasury/Kyriba operational-evidence insufficiency lead rules.
 - Added focused regression tests for routing, scrub behavior, and context-only automation honesty.
+- Narrowed the Home Claude recommendation validator so broad browse/overview answers can offer KNOW-safe branch options without forcing a deterministic fallback.
 
 ## QA / Validation
 
 - `npx jest src/lib/semantic-dossiers/__tests__/universal-dimension-dossier.test.ts src/lib/home/know/__tests__/home-consultant-text-synthesis.test.ts src/lib/home/know/__tests__/home-public-answer-scrub.test.ts src/lib/home/know/__tests__/home-know-engine.test.ts --runInBand` — passed, 4 suites / 58 tests.
 - `npx eslint <touched files>` — passed.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` — blocked by pre-existing unrelated missing declaration/package errors in `js-yaml`, `@azure-rest/ai-document-intelligence`, and `@axe-core/playwright`; no diagnostics were emitted for touched Home answer files.
+- Signed-in Lakeshore proof after the second deploy passed Q2-Q5; Q1 routed to `operations_process` but still marked Claude fallback because the overview answer was misread as recommendation-like, which this final validator patch addresses.
 - Signed-in Lakeshore live proof is required before marking released.
 
 ## Rollout Plan
@@ -66,6 +68,7 @@ Roll back the ACA revision to the previous digest, or revert this release commit
 - Touched-file ESLint output.
 - Full TypeScript blocker log documenting unrelated pre-existing dependency declaration failures.
 - Post-deploy signed-in proof bundle under `~/Downloads/abarva-home-answer-fix-<timestamp>/`.
+- Final five-question proof bundle after validator deploy.
 
 ## Known Gaps
 
