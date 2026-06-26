@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release fixes the build-time Semantic2 L3 dossier generator so it can call the current Claude model successfully and remain operable in the ACA/VNet proof lane. The previous request included a deprecated sampling parameter that the selected model rejects before generating derived insights, the Stage 2 prompt now sends bounded evidence cards instead of large raw fact payloads, and live operator runs now emit per-dossier progress with bounded Claude call timeouts.
+This release fixes the build-time Semantic2 L3 dossier generator so it can call the current Claude model successfully and remain operable in the ACA/VNet proof lane. The previous request included a deprecated sampling parameter that the selected model rejects before generating derived insights, the Stage 2 prompt now sends bounded evidence cards instead of large raw fact payloads, live operator runs now emit per-dossier progress with bounded Claude call timeouts, and tenant discovery now resolves canonical tenant keys while querying any client-id aliases.
 
 ## Layer Impact
 
@@ -30,6 +30,7 @@ This release fixes the build-time Semantic2 L3 dossier generator so it can call 
 - `scripts/semantic2/build-enriched-l3-dossiers.mjs`: removes the deprecated `temperature` request parameter from the build-time Anthropic call.
 - `scripts/semantic2/build-enriched-l3-dossiers.mjs`: bounds the Stage 2 Claude prompt projection to compact fact and relationship cards while keeping local `fact_id` support for derived insights.
 - `scripts/semantic2/build-enriched-l3-dossiers.mjs`: adds per-dossier progress logging and a bounded Claude timeout with grounded fallback insight handling so ACA/VNet operator runs cannot hang silently.
+- `scripts/semantic2/build-enriched-l3-dossiers.mjs`: canonicalizes tenant scopes from `clients` and source tables so UUID client identifiers can be queried as aliases but L3 dossiers are written under business tenant keys.
 
 ## QA / Validation
 

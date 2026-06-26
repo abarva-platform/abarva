@@ -310,8 +310,27 @@ async function queryRows(client, sql, params) {
   return result.rows;
 }
 
-async function loadTenants(client) {
-  const rows = await queryRows(
+function isUuidLike(value) {
+  return /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(String(value ?? ""));
+}
+
+function isExcludedTenantKey(value) {
+  const text = String(value ?? "");
+  return !text || text.startsWith("morgan");
+}
+
+function addTenantScope(scopes, tenantKey, aliases = []) {
+  if (isExcludedTenantKey(tenantKey) || isUuidLike(tenantKey)) return;
+  const current = scopes.get(tenantKey) || new Set();
+  current.add(tenantKey);
+  for (const alias of aliases) {
+    if (alias && !isExcludedTenantKey(alias)) current.add(String(alias));
+  }
+  scopes.set(tenantKey, current);
+}
+
+async function loadTenantScopes(client) {
+  const sourceRows = await queryRows(
     client,
     `
       SELECT DISTINCT tenant_key FROM (
@@ -325,9 +344,34 @@ async function loadTenants(client) {
     `,
     [],
   );
-  return [...new Set([...DEFAULT_TENANTS, ...rows.map((row) => row.tenant_key)])]
-    .filter((tenant) => tenant && !tenant.startsWith("morgan"))
-    .sort();
+  const clientRows = await queryRows(
+    client,
+    "SELECT id::text, tenant_key, slug FROM clients WHERE COALESCE(tenant_key, slug, id::text) IS NOT NULL",
+    [],
+  );
+  const byId = new Map(clientRows.map((row) => [row.id, row]));
+  const scopes = new Map();
+
+  for (const tenantKey of DEFAULT_TENANTS) addTenantScope(scopes, tenantKey);
+  for (const row of clientRows) {
+    const canonical = !isUuidLike(row.tenant_key) && row.tenant_key ? row.tenant_key : row.slug;
+    addTenantScope(scopes, canonical, [row.id, row.tenant_key, row.slug]);
+  }
+  for (const row of sourceRows) {
+    const raw = row.tenant_key;
+    if (!raw) continue;
+    if (isUuidLike(raw)) {
+      const clientRow = byId.get(raw);
+      const canonical = clientRow && !isUuidLike(clientRow.tenant_key) ? clientRow.tenant_key : clientRow?.slug;
+      addTenantScope(scopes, canonical, [raw, clientRow?.tenant_key, clientRow?.slug]);
+    } else {
+      addTenantScope(scopes, raw);
+    }
+  }
+
+  return [...scopes.entries()]
+    .map(([tenantKey, aliases]) => ({ tenantKey, aliases: [...aliases].sort() }))
+    .sort((a, b) => a.tenantKey.localeCompare(b.tenantKey));
 }
 
 async function loadDimensions(client) {
@@ -349,7 +393,7 @@ async function clientIdForTenant(client, tenantKey) {
   return rows[0]?.id ?? null;
 }
 
-async function buildSkeleton(client, tenantKey, dimension) {
+async function buildSkeleton(client, tenantKey, tenantAliases, dimension) {
   const entityTypes = dimension.canonical_entity_types || [];
   const expectedTables = dimension.expected_source_tables || [];
   const requiredFactKeys = dimension.required_fact_keys || [];
@@ -359,13 +403,13 @@ async function buildSkeleton(client, tenantKey, dimension) {
     `
       SELECT id::text, entity_type, semantic_key, business_name, description, source_table, source_primary_key, confidence
       FROM semantic2_entities
-      WHERE tenant_key = $1
+      WHERE tenant_key = ANY($1::text[])
         AND lifecycle_status = 'active'
         AND ($2::text[] = '{}'::text[] OR entity_type = ANY($2::text[]))
       ORDER BY confidence DESC, updated_at DESC, business_name
       LIMIT $3
     `,
-    [tenantKey, entityTypes, MAX_ENTITIES],
+    [tenantAliases, entityTypes, MAX_ENTITIES],
   );
 
   const entityKeys = entities.map((entity) => entity.semantic_key).filter(Boolean);
@@ -380,7 +424,7 @@ async function buildSkeleton(client, tenantKey, dimension) {
       FROM semantic2_facts f
       LEFT JOIN semantic2_entities e ON e.id = f.subject_entity_id
       LEFT JOIN semantic2_source_rows sr ON sr.id = f.source_row_id
-      WHERE f.tenant_key = $1
+      WHERE f.tenant_key = ANY($1::text[])
         AND f.valid_to IS NULL
         AND (
           ($2::text[] <> '{}'::text[] AND f.source_table = ANY($2::text[]))
@@ -390,7 +434,7 @@ async function buildSkeleton(client, tenantKey, dimension) {
       ORDER BY f.derived_flag ASC, f.confidence DESC, f.created_at DESC, f.fact_key
       LIMIT $5
     `,
-    [tenantKey, expectedTables, entityTypes, requiredFactKeys, MAX_FACTS],
+    [tenantAliases, expectedTables, entityTypes, requiredFactKeys, MAX_FACTS],
   );
 
   const factEntityKeys = facts.map((fact) => fact.subject_semantic_key).filter(Boolean);
@@ -401,7 +445,7 @@ async function buildSkeleton(client, tenantKey, dimension) {
       SELECT id::text, from_semantic_key, to_semantic_key, relationship_type, relationship_label,
              confidence, source_row_id::text, source_table, source_primary_key, evidence_basis
       FROM semantic2_relationships
-      WHERE tenant_key = $1
+      WHERE tenant_key = ANY($1::text[])
         AND valid_to IS NULL
         AND (
           ($2::text[] <> '{}'::text[] AND source_table = ANY($2::text[]))
@@ -410,7 +454,7 @@ async function buildSkeleton(client, tenantKey, dimension) {
       ORDER BY confidence DESC, created_at DESC
       LIMIT $4
     `,
-    [tenantKey, expectedTables, relationshipKeys, MAX_RELATIONSHIPS],
+    [tenantAliases, expectedTables, relationshipKeys, MAX_RELATIONSHIPS],
   );
 
   const sourceCounts = await queryRows(
@@ -418,11 +462,11 @@ async function buildSkeleton(client, tenantKey, dimension) {
     `
       SELECT source_table, source_dimension, count(*)::int AS count
       FROM semantic2_source_rows
-      WHERE tenant_key = $1 AND ($2::text[] = '{}'::text[] OR source_table = ANY($2::text[]))
+      WHERE tenant_key = ANY($1::text[]) AND ($2::text[] = '{}'::text[] OR source_table = ANY($2::text[]))
       GROUP BY source_table, source_dimension
       ORDER BY count DESC
     `,
-    [tenantKey, expectedTables],
+    [tenantAliases, expectedTables],
   );
 
   const selectedSourceRowIds = [
@@ -978,15 +1022,15 @@ async function buildAll(args) {
   const rows = [];
   const dossiers = [];
   try {
-    const tenants = await loadTenants(client);
+    const tenantScopes = await loadTenantScopes(client);
     const dimensions = await loadDimensions(client);
     if (dimensions.length !== DIMENSION_KEYS.length) {
       throw new Error(`Expected ${DIMENSION_KEYS.length} dimensions, found ${dimensions.length}.`);
     }
-    for (const tenantKey of tenants) {
+    for (const { tenantKey, aliases } of tenantScopes) {
       for (const dimension of dimensions) {
-        console.error(`[l3-dossiers] ${tenantKey}/${dimension.dimension_key}: building skeleton`);
-        const { skeleton, rawCounts } = await buildSkeleton(client, tenantKey, dimension);
+        console.error(`[l3-dossiers] ${tenantKey}/${dimension.dimension_key}: building skeleton aliases=${aliases.length}`);
+        const { skeleton, rawCounts } = await buildSkeleton(client, tenantKey, aliases, dimension);
         console.error(`[l3-dossiers] ${tenantKey}/${dimension.dimension_key}: deriving insights`);
         skeleton.derived_insights = await deriveInsightsWithClaude(skeleton);
         const validation = validateDossier(skeleton);
