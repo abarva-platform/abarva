@@ -25,6 +25,15 @@ describe("canonicalTenantKey", () => {
       "heliara health": "meridian-health",
       lakeshore: "lakeshore-holdings",
       "lakeshore holdings": "lakeshore-holdings",
+      "lakeshore industries": "lakeshore-holdings",
+      "lakeshore-industries": "lakeshore-holdings",
+      "mona street": "lakeshore-holdings",
+      "mona-street": "lakeshore-holdings",
+      "morgan street": "lakeshore-holdings",
+      "morgan-street": "lakeshore-holdings",
+      "morgan-street-holdings": "lakeshore-holdings",
+      morganstreet: "lakeshore-holdings",
+      "morganstreet-other": "lakeshore-holdings",
       meridian: "meridian-health",
       "meridian health": "meridian-health",
       "meridian health system": "meridian-health",
@@ -43,6 +52,8 @@ describe("canonicalTenantKey", () => {
     expect(canonicalTenantKey("northstar-clinical")).toBe("northstar-clinical");
     expect(canonicalTenantKey("skyharbor")).toBe("skyharbor-air");
     expect(canonicalTenantKey("lakeshore")).toBe("lakeshore-holdings");
+    expect(canonicalTenantKey("morganstreet")).toBe("lakeshore-holdings");
+    expect(canonicalTenantKey("mona-street")).toBe("lakeshore-holdings");
   });
 
   it("is idempotent — canonical values pass through unchanged", () => {
