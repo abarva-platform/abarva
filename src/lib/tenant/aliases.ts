@@ -99,6 +99,13 @@ const TENANT_ALIAS_PROFILES: readonly TenantAliasProfile[] = [
       "lakeshore holdings",
       "lakeshore-industries",
       "lakeshore industries",
+      "morganstreet",
+      "morganstreet-other",
+      "morgan-street",
+      "morgan street",
+      "morgan-street-holdings",
+      "mona-street",
+      "mona street",
     ],
   },
 ] as const;

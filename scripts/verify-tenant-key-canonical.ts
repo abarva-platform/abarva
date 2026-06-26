@@ -1,29 +1,19 @@
 /**
- * Tenant-key canonicalization regression watch.
+ * Active tenant-key canonicalization regression watch.
  *
- * Connects to the live Postgres via DATABASE_URL and asserts that no
- * historical aliases (apexretail / meridian / arcturus) remain in any
- * mutable substrate column that was canonicalized in migration
- * `20260515120000_tenant_key_canonicalization.sql`.
+ * This verifier discovers active tenant columns dynamically instead of relying
+ * on a hand-maintained table list. That matters because Home/Tower/semantic2
+ * tables are added frequently; a static list can pass while new tables keep
+ * stale aliases such as `skyharbor`, `morganstreet`, or `lakeshore`.
  *
- * Historical `program_audit_log` rows are intentionally excluded: that table
- * is append-only, so canonicalization must preserve prior audit entries exactly
- * as written while future writes/read predicates normalize tenant keys.
- *
- * Usage:
- *   npx tsx scripts/verify-tenant-key-canonical.ts
- *
- * Exit codes:
- *   0  — every audited column is clean.
- *   1  — at least one alias remains. Stderr lists the offending tables.
- *   2  — connection error / missing DATABASE_URL.
- *
- * Designed for CI: cheap, reads-only, returns within seconds.
+ * Append-only audit/history rows are intentionally excluded. Product runtime,
+ * retrieval, read-model, semantic, source, moves, and Tower rows are not.
  */
 
-import { Client } from 'pg';
-import { config as loadEnv } from 'dotenv';
 import path from 'node:path';
+
+import { config as loadEnv } from 'dotenv';
+import { Client } from 'pg';
 
 import { LEGACY_TENANT_ALIASES } from '../src/lib/tenant-keys';
 
@@ -32,46 +22,58 @@ loadEnv({ path: '/Users/anand/Projects/nexus/.env', quiet: true });
 loadEnv({ path: path.resolve(process.cwd(), '.env.local'), quiet: true });
 loadEnv({ path: path.resolve(process.cwd(), '.env'), quiet: true });
 
-type TableCheck = {
+type TenantColumn = {
   schema: string;
   table: string;
-  column: 'tenant_key' | 'client_key';
+  column: string;
 };
 
-// Every column the canonicalization migration touched. Keep in lockstep
-// with `supabase/migrations/20260515120000_tenant_key_canonicalization.sql`.
-const TABLES: readonly TableCheck[] = [
-  { schema: 'public', table: 'clients', column: 'tenant_key' },
-  { schema: 'public', table: 'enterprise_context_chunks', column: 'tenant_key' },
-  { schema: 'public', table: 'enterprise_context_chunk_queue', column: 'tenant_key' },
-  { schema: 'public', table: 'enterprise_context_evidence', column: 'tenant_key' },
-  { schema: 'public', table: 'enterprise_context_facts', column: 'tenant_key' },
-  { schema: 'public', table: 'enterprise_context_quality_issues', column: 'tenant_key' },
-  { schema: 'public', table: 'enterprise_context_records', column: 'tenant_key' },
-  { schema: 'public', table: 'enterprise_context_relationships', column: 'tenant_key' },
-  { schema: 'public', table: 'enterprise_context_snapshots', column: 'tenant_key' },
-  { schema: 'public', table: 'enterprise_context_source_files', column: 'tenant_key' },
-  { schema: 'public', table: 'enterprise_context_sources', column: 'tenant_key' },
-  { schema: 'public', table: 'enterprise_context_stewardship_tasks', column: 'tenant_key' },
-  { schema: 'public', table: 'enterprise_context_template_runs', column: 'tenant_key' },
-  { schema: 'public', table: 'program_approval_requests', column: 'tenant_key' },
-  { schema: 'public', table: 'program_attachments', column: 'tenant_key' },
-  { schema: 'public', table: 'program_evidence_items', column: 'tenant_key' },
-  { schema: 'public', table: 'source_artifacts', column: 'tenant_key' },
-  { schema: 'public', table: 'source_event_artifact_states', column: 'tenant_key' },
-  { schema: 'public', table: 'source_event_evidence_states', column: 'tenant_key' },
-  { schema: 'public', table: 'source_event_gate_criterion_states', column: 'tenant_key' },
-  { schema: 'public', table: 'source_event_participants', column: 'client_key' },
-  { schema: 'public', table: 'source_events', column: 'client_key' },
-  { schema: 'public', table: 'foundational_pattern_variants', column: 'tenant_key' },
-];
-
-type Finding = {
-  table: string;
-  column: string;
+type Finding = TenantColumn & {
   alias: string;
   count: number;
 };
+
+const TENANT_COLUMN_NAMES = ['tenant_key', 'client_key', 'tenant_client_key'] as const;
+
+const EXCLUDED_TABLE_PATTERNS = [
+  /(^|_)audit(_|$)/i,
+  /(^|_)history$/i,
+  /(^|_)log$/i,
+  /^schema_migrations$/i,
+  /^program_audit_log$/i,
+  /^admin_audit_log$/i,
+];
+
+const NON_TENANT_TABLE_COLUMNS = new Set([
+  'public.foundational_pattern_variants.tenant_key',
+]);
+
+function isExcluded(table: string): boolean {
+  return EXCLUDED_TABLE_PATTERNS.some((pattern) => pattern.test(table));
+}
+
+function normalizeAlias(value: string): string {
+  return value.trim().toLowerCase().replace(/_/g, '-');
+}
+
+async function discoverTenantColumns(client: Client): Promise<TenantColumn[]> {
+  const result = await client.query<TenantColumn>(
+    `
+      SELECT table_schema AS schema, table_name AS table, column_name AS column
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND column_name = ANY($1::text[])
+        AND data_type IN ('text', 'character varying', 'character')
+      ORDER BY table_schema, table_name, column_name
+    `,
+    [TENANT_COLUMN_NAMES],
+  );
+
+  return result.rows.filter((row) => {
+    if (isExcluded(row.table)) return false;
+    return !NON_TENANT_TABLE_COLUMNS.has(`${row.schema}.${row.table}.${row.column}`);
+  });
+}
 
 async function main(): Promise<number> {
   const url = process.env.DATABASE_URL;
@@ -84,41 +86,37 @@ async function main(): Promise<number> {
   try {
     await client.connect();
   } catch (err) {
-    console.error(`verify-tenant-key-canonical: could not connect — ${err instanceof Error ? err.message : err}`);
+    console.error(`verify-tenant-key-canonical: could not connect - ${err instanceof Error ? err.message : err}`);
     return 2;
   }
 
+  const aliasesToCheck = Array.from(new Set(LEGACY_TENANT_ALIASES.map(normalizeAlias)));
   const findings: Finding[] = [];
+  const columns = await discoverTenantColumns(client);
 
-  // The `foundational_pattern_variants` table reuses 'apex' / 'first_capital'
-  // / 'keystone' as a separate underscore-cased taxonomy that is NOT a
-  // tenant alias. Only flag the literal 'meridian' value.
-  for (const { schema, table, column } of TABLES) {
-    const aliasesToCheck =
-      table === 'foundational_pattern_variants' ? ['meridian'] : LEGACY_TENANT_ALIASES;
-
+  for (const { schema, table, column } of columns) {
     let rows: { v: string | null; c: string }[] = [];
     try {
       const res = await client.query<{ v: string | null; c: string }>(
         `SELECT "${column}" AS v, COUNT(*)::text AS c
            FROM "${schema}"."${table}"
-          WHERE "${column}" = ANY($1::text[])
+          WHERE lower(replace("${column}"::text, '_', '-')) = ANY($1::text[])
           GROUP BY 1`,
         [aliasesToCheck],
       );
       rows = res.rows;
     } catch (err) {
       console.error(
-        `verify-tenant-key-canonical: query failed for ${schema}.${table} — ${err instanceof Error ? err.message : err}`,
+        `verify-tenant-key-canonical: query failed for ${schema}.${table} - ${err instanceof Error ? err.message : err}`,
       );
       await client.end();
       return 2;
     }
 
     for (const row of rows) {
-      const count = parseInt(row.c, 10);
+      const count = Number.parseInt(row.c, 10);
       if (row.v && count > 0) {
-        findings.push({ table: `${schema}.${table}`, column, alias: row.v, count });
+        findings.push({ schema, table, column, alias: row.v, count });
       }
     }
   }
@@ -126,22 +124,19 @@ async function main(): Promise<number> {
   await client.end();
 
   if (findings.length === 0) {
-    console.log(`verify-tenant-key-canonical: clean (${TABLES.length} tables audited).`);
+    console.log(`verify-tenant-key-canonical: clean (${columns.length} active tenant columns audited).`);
     return 0;
   }
 
-  console.error(`verify-tenant-key-canonical: FOUND ${findings.length} non-canonical alias(es):`);
+  console.error(`verify-tenant-key-canonical: FOUND ${findings.length} persisted alias group(s):`);
   for (const f of findings) {
-    console.error(`  ${f.table}.${f.column}: alias=${f.alias} count=${f.count}`);
+    console.error(`  ${f.schema}.${f.table}.${f.column}: alias=${f.alias} count=${f.count}`);
   }
   console.error('');
-  console.error(
-    'Re-run `npm run db:migrate` to re-apply the canonicalization migration, then re-run this check.',
-  );
+  console.error('Run `npx tsx scripts/tenant-canonical-cleanup.ts --apply`, then rerun this verifier.');
   return 1;
 }
 
-// Only execute when invoked as a script (not when imported by tests).
 const invokedAsScript = (() => {
   if (!process.argv[1]) return false;
   try {
@@ -158,4 +153,4 @@ if (invokedAsScript) {
   });
 }
 
-export { main, TABLES };
+export { discoverTenantColumns, main };
