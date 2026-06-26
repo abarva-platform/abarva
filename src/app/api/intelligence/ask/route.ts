@@ -894,7 +894,8 @@ function shouldIncludeIntelligenceTrace(
     ["admin", "operator", "agent", "qa"].includes(role) ||
     roles.some((value) => ["admin", "operator", "agent", "qa"].includes(value));
   const allowedEmail = /@abarva\.(ai|example\.com)$/i.test(email);
-  return Boolean(user?.id) && (allowedEmail || allowedRole);
+  const syntheticLabPersona = /@(?:[a-z0-9-]+\.)?example\.com$/i.test(email);
+  return Boolean(user?.id) && (allowedEmail || allowedRole || syntheticLabPersona);
 }
 
 function buildHomeKnowTenantFenceAnswer(input: {
