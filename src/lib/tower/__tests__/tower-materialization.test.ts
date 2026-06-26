@@ -164,4 +164,35 @@ describe('tower materialization planner', () => {
     ]);
     expect(calls.every((call) => call.table.startsWith('tower_'))).toBe(true);
   });
+
+  it('serializes JSONB columns before writing through the Postgres compatibility client', async () => {
+    const { db, calls } = makeDb();
+    const plan = buildTowerMaterializationPlan({
+      clientId: 'client-lak',
+      tenantKey: 'lakeshore-holdings',
+      projected: {
+        source: 'enterprise_context_records',
+        initiatives: [initiative],
+        vendors: [vendor('Cisco', 'vendor-1', 25_000_000)],
+      },
+    });
+
+    await persistTowerMaterializationPlan({ db, plan });
+
+    const initiativeWrite = calls.find(
+      (call) => call.table === 'tower_read_model_initiatives',
+    )?.rows[0] as Record<string, unknown>;
+    expect(typeof initiativeWrite.citations).toBe('string');
+    expect(typeof initiativeWrite.lineage).toBe('string');
+    expect(typeof initiativeWrite.gaps).toBe('string');
+    expect(Array.isArray(initiativeWrite.evidence_ids)).toBe(true);
+
+    const gapWrite = calls.find((call) => call.table === 'tower_gap_register')
+      ?.rows[0] as Record<string, unknown>;
+    expect(typeof gapWrite.lineage).toBe('string');
+
+    const auditWrite = calls.find((call) => call.table === 'tower_spend_realism_audit')
+      ?.rows[0] as Record<string, unknown>;
+    expect(typeof auditWrite.lineage).toBe('string');
+  });
 });

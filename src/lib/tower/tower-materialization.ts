@@ -492,9 +492,34 @@ async function upsertRows<T extends object>(
   onConflict: string,
 ): Promise<number> {
   if (rows.length === 0) return 0;
-  const { error, count } = await db.from(table).upsert([...rows], { onConflict }).select('id');
+  const { error, count } = await db
+    .from(table)
+    .upsert(serializeJsonbColumnsForTowerWrite(table, rows), { onConflict })
+    .select('id');
   if (error) throw new Error(`${table} upsert failed: ${error.message}`);
   return count ?? rows.length;
+}
+
+const JSONB_COLUMNS_BY_TABLE: Readonly<Record<string, readonly string[]>> = {
+  tower_read_model_initiatives: ['citations', 'lineage', 'gaps'],
+  tower_read_model_vendors: ['citations', 'lineage', 'gaps'],
+  tower_gap_register: ['lineage'],
+  tower_spend_realism_audit: ['lineage'],
+};
+
+function serializeJsonbColumnsForTowerWrite<T extends object>(
+  table: string,
+  rows: readonly T[],
+): Array<Record<string, unknown>> {
+  const jsonbColumns = JSONB_COLUMNS_BY_TABLE[table] ?? [];
+
+  return rows.map((row) => {
+    const next: Record<string, unknown> = Object.fromEntries(Object.entries(row));
+    for (const column of jsonbColumns) {
+      next[column] = JSON.stringify(next[column] ?? null);
+    }
+    return next;
+  });
 }
 
 export async function persistTowerMaterializationPlan(args: {
