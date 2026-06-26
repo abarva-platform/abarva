@@ -35,6 +35,7 @@ This release closes the tenant-key drift gap that allowed aliases such as `skyha
 - Follow-up: `scripts/tenant-canonical-cleanup.ts` also supports `TENANT_CLEANUP_APPLY=1` so ACA jobs can enter apply mode without forwarding fragile `--apply` CLI args.
 - Follow-up: `scripts/tenant-canonical-cleanup.ts` detects alias rows that would collide with existing canonical unique keys and deletes the duplicate alias-side row before rewriting the remaining rows.
 - Follow-up: `scripts/tenant-canonical-cleanup.ts` uses an explicit tenant-column script type so the production image TypeScript build remains predictable.
+- Follow-up: `scripts/tenant-canonical-cleanup.ts` reads unique-index columns as `string_agg` so the ACA runtime parses duplicate-key metadata deterministically.
 - `scripts/verify-tenant-key-canonical.ts` now discovers active tenant columns dynamically and fails on aliases in product/runtime/read-model tables.
 - `package.json` adds `npm run db:cleanup:tenant-keys`.
 
