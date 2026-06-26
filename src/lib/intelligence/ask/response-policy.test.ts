@@ -194,7 +194,7 @@ describe("Ask Intelligence response policy", () => {
     const answer = enforceDecisionGradeAnswer(text);
 
     expect(answer).toContain(
-      "The next move is to assign the accountable data owner to validate the missing tenant evidence",
+      "Next, assign the accountable data owner to validate the missing tenant evidence",
     );
     expect(answer).not.toMatch(/^(Read|Evidence|Implication|Next move):/im);
     expect(
@@ -220,9 +220,11 @@ describe("Ask Intelligence response policy", () => {
     expect(answer).toContain(
       "I don't have your IT landscape or data platform inventory loaded",
     );
-    expect(answer).toContain("The supporting evidence is that");
-    expect(answer).toContain("That means");
-    expect(answer).toContain("The next move is to assign");
+    expect(answer).toContain("Retail Lakehouse & Customer Inventory Graph");
+    expect(answer).toContain("This is the consolidation bet");
+    expect(answer).toContain("Next, assign");
+    expect(answer).not.toContain("The supporting evidence is that");
+    expect(answer).not.toContain("That means");
     expect(answer).not.toMatch(/^(Read|Evidence|Implication|Next move):/im);
     expect(answer).not.toMatch(/Honest read first:/i);
     expect(
@@ -241,7 +243,7 @@ describe("Ask Intelligence response policy", () => {
     const answer = enforceDecisionGradeAnswer(text);
 
     expect(answer).toContain("The loaded sources give us two KPI families");
-    expect(answer).toContain("The next move is to assign");
+    expect(answer).toContain("Next, assign");
     expect(answer).not.toMatch(/^(Read|Evidence|Implication|Next move):/im);
   });
 
@@ -274,7 +276,7 @@ describe("Ask Intelligence response policy", () => {
 
     expect(answer).toContain("| Risk | Basis |");
     expect(answer).toContain("| Transition rights | Contract schedule |");
-    expect(answer).toContain("The next move is to validate");
+    expect(answer).toContain("Next, validate");
     expect(answer).not.toMatch(/^(Read|Evidence|Implication|Next move):/im);
   });
 
@@ -288,9 +290,10 @@ describe("Ask Intelligence response policy", () => {
     const answer = enforceDecisionGradeAnswer(text);
 
     expect(answer).toContain("Your loaded D&A estate shows eight data products");
-    expect(answer).toContain("The supporting evidence is that");
-    expect(answer).toContain("That means");
-    expect(answer).toContain("The next move is to have");
+    expect(answer).toContain("Merch planning is your only gold-grade asset");
+    expect(answer).toContain("Next, have");
+    expect(answer).not.toContain("The supporting evidence is that");
+    expect(answer).not.toContain("That means");
     expect(answer).not.toMatch(/Evidence\s+—/i);
     expect(answer).not.toContain("validate the cited evidence");
     expect([...answer.matchAll(/^(Read|Evidence|Implication|Next move):/gim)]).toHaveLength(0);
