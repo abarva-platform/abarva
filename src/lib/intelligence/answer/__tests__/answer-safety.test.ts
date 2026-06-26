@@ -89,11 +89,11 @@ describe("sanitizeAgentAnswerForRender", () => {
     );
     expect(renderedPayload).not.toMatch(/\bAPX-IT-004\b/);
     expect(renderedPayload).not.toMatch(/\bclient_id\b/);
-    expect(safe.citations[0]?.label).toBe("Tenant source support");
+    expect(safe.citations[0]?.label).toBe("Tenant material");
     const table = safe.artifacts.find(
       (artifact) => artifact.artifact === "table",
     );
-    expect(table?.rows[0]?.source).toBe("tenant source support");
+    expect(table?.rows[0]?.source).toBe("supporting material");
   });
 
   it("detects unsafe public text patterns without regex state drift", () => {

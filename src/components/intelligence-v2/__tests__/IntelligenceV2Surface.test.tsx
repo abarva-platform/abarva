@@ -234,7 +234,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     expect(screen.queryByText(/Consulted experts/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/17,548 evidence points/i)).not.toBeInTheDocument();
     expect(
-      screen.getAllByText(/Apex AI Spend source support/i).length,
+      screen.getAllByText(/Apex AI Spend supporting material/i).length,
     ).toBeGreaterThan(0);
     const table = screen.getAllByRole("table")[0];
     expect(

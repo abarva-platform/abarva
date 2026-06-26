@@ -26,7 +26,7 @@ const CONSULTANT_LABEL_RE =
 function fallbackCitationLabel(citation: AnswerCitation): string {
   switch (citation.sourceClass) {
     case "tenant-fact":
-      return "Tenant source support";
+      return "Tenant material";
     case "tenant-chunk":
       return "Tenant source excerpt";
     case "graph":
@@ -38,7 +38,7 @@ function fallbackCitationLabel(citation: AnswerCitation): string {
     case "expert-pack":
       return "Advisor pattern";
     default:
-      return "Source support";
+      return "Supporting material";
   }
 }
 
@@ -60,7 +60,7 @@ export function dedupeConsultantLabels(value: string): string {
 
 export function sanitizePublicText(
   value: string,
-  fallback = "source support",
+  fallback = "supporting material",
 ): string {
   const withoutUnsafeIds = dedupeConsultantLabels(value)
     .replace(BRACKET_RECORD_RE, fallback)
@@ -89,7 +89,7 @@ function sanitizeCitation(citation: AnswerCitation): AnswerCitation {
 
 function sanitizeCell(value: string | number | null): string | number | null {
   if (typeof value !== "string") return value;
-  return sanitizePublicText(value, "tenant source support");
+  return sanitizePublicText(value, "supporting material");
 }
 
 function sanitizeTable<T extends AnswerTable>(table: T): T {
