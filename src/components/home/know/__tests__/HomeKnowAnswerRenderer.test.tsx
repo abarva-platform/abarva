@@ -82,7 +82,7 @@ describe("HomeKnowAnswerRenderer", () => {
 
     expect(screen.getByText("aVa")).toBeInTheDocument();
     expect(
-      screen.getByText("Answered from source context"),
+      screen.getByText("Answered from available sources"),
     ).toBeInTheDocument();
     expect(screen.getByText("IT ownership")).toBeInTheDocument();
     expect(screen.getByText("Data & Analytics")).toBeInTheDocument();
@@ -169,7 +169,7 @@ describe("HomeKnowAnswerRenderer", () => {
     );
 
     expect(
-      screen.getByText("I do not see that in the loaded data."),
+      screen.getByText("I do not see that in the available data."),
     ).toBeInTheDocument();
   });
 
@@ -190,7 +190,7 @@ describe("HomeKnowAnswerRenderer", () => {
     );
 
     expect(
-      screen.queryByText("I do not see that in the loaded data."),
+      screen.queryByText("I do not see that in the available data."),
     ).not.toBeInTheDocument();
     expect(
       screen.getByText("This Home answer needs validation before it can be shown."),
@@ -244,7 +244,7 @@ describe("HomeKnowAnswerRenderer", () => {
 
     expect(
       screen.getByText(
-        "The loaded source context supports a clear current-state picture of the organization.",
+        "The loaded source support gives a clear current-state picture of the organization.",
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText(/source support supports/i)).not.toBeInTheDocument();
