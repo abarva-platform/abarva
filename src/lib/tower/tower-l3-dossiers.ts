@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 
+import { canonicalClientDisplayName } from '@/lib/client-config';
 import type { PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
 
 export const TOWER_L3_PROMPT_VERSION = 'tower-l3-dossier-v2';
@@ -448,6 +449,31 @@ function labelForMetric(key: string): string {
   return key.replace(/_/g, ' ');
 }
 
+function tenantLabelFor(tenantKey: string): string {
+  const key = slug(tenantKey);
+  const canonicalKey =
+    key === 'apex-retail'
+      ? 'apexretail'
+      : key === 'first-capital' || key === 'first-capital-financial'
+        ? 'arcturus'
+        : key === 'meridian-health'
+          ? 'meridian'
+          : key === 'skyharbor-air'
+            ? 'skyharbor'
+            : key === 'lakeshore-industries' || key === 'lakeshore-holdings'
+              ? 'lakeshore'
+              : key;
+
+  return (
+    canonicalClientDisplayName({ key: canonicalKey, name: tenantKey }) ??
+    cleanText(tenantKey)
+      .split(/[-_\s]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ')
+  );
+}
+
 function branchOptionsFor(view: TowerCioView): string[] {
   switch (view) {
     case 'spend':
@@ -709,7 +735,7 @@ export function buildTowerL3Dossiers(input: TowerL3Input): TowerAnswerDossier[] 
           : skeletonVerdictFor(score, metrics.length)),
       };
       const businessLabels = {
-        tenant: 'Lakeshore Holdings',
+        tenant: tenantLabelFor(input.tenantKey),
         scope: scope.label,
         view: view.replace(/_/g, ' '),
       };
