@@ -161,12 +161,18 @@ function duplicateVictimSelects(column: TenantColumn, uniqueKeys: UniqueKey[]): 
       otherColumns.length > 0
         ? otherColumns.map((uniqueColumn) => `alias_row.${quoteIdentifier(uniqueColumn)}`).join(', ')
         : '1';
+    const nonNullFilter =
+      otherColumns.length > 0
+        ? ` AND ${otherColumns
+            .map((uniqueColumn) => `alias_row.${quoteIdentifier(uniqueColumn)} IS NOT NULL`)
+            .join(' AND ')}`
+        : '';
     const comparisons =
       otherColumns.length > 0
         ? otherColumns
             .map((uniqueColumn) => {
               const quoted = quoteIdentifier(uniqueColumn);
-              return `canonical_row.${quoted} IS NOT DISTINCT FROM alias_row.${quoted}`;
+              return `canonical_row.${quoted} = alias_row.${quoted}`;
             })
             .join(' AND ')
         : 'true';
@@ -175,6 +181,7 @@ function duplicateVictimSelects(column: TenantColumn, uniqueKeys: UniqueKey[]): 
       `SELECT alias_row.ctid
          FROM ${tableName} alias_row
         WHERE ${aliasValuesWhereClause(column)}
+          ${nonNullFilter}
           AND EXISTS (
             SELECT 1
               FROM ${tableName} canonical_row
@@ -187,6 +194,7 @@ function duplicateVictimSelects(column: TenantColumn, uniqueKeys: UniqueKey[]): 
                   row_number() OVER (PARTITION BY ${partitionBy} ORDER BY alias_row.ctid) AS alias_rank
              FROM ${tableName} alias_row
             WHERE ${aliasValuesWhereClause(column)}
+              ${nonNullFilter}
          ) ranked_alias_rows
         WHERE ranked_alias_rows.alias_rank > 1`,
     ];
