@@ -11,14 +11,13 @@ function sentence(value: string): string {
 export function formatIntelligenceDossierForPrompt(dossier: IntelligenceDossier): string {
   const tenantFacts = dossier.evidenceBoundary.tenantFacts.map(sentence).slice(0, 8);
   const corpusPatterns = dossier.evidenceBoundary.corpusPatterns.map(sentence).slice(0, 8);
-  const experts = dossier.expertCouncilDossier.selectedExperts.slice(0, 7);
   const options = dossier.decisionOptionsDossier.options.slice(0, 5);
   const gaps = dossier.evidenceBoundary.missingTenantEvidence.map(sentence);
 
   return [
     "INTELLIGENCE DOSSIER — AUTHORITATIVE ADVISORY PACKET",
     "",
-    "Use this packet as the primary briefing book. Tenant facts prove. Corpus patterns compare. Experts interpret. Benchmarks calibrate. You synthesize. AbarVa verifies and cites.",
+    "Use this packet as the primary briefing book. Tenant facts prove. Corpus patterns compare. Benchmarks calibrate. You synthesize. AbarVa verifies and cites.",
     "",
     `Tenant: ${dossier.tenantName} (${dossier.tenantKey})`,
     `Question: ${dossier.question}`,
@@ -33,16 +32,6 @@ export function formatIntelligenceDossierForPrompt(dossier: IntelligenceDossier)
     "",
     "Corpus patterns — use as precedent/comparison, not tenant fact:",
     list(corpusPatterns, "No corpus pattern retrieved; do not claim peer precedent."),
-    "",
-    "Expert council — synthesize these lenses; do not present experts as proof:",
-    experts.length > 0
-      ? experts
-          .map((expert) => {
-            const questions = expert.questionsThisExpertShouldPressureTest.slice(0, 3).join("; ");
-            return `- ${expert.nameOrRole}: lens=${expert.lens}; why=${expert.whySelected}; pressure-test=${questions}`;
-          })
-          .join("\n")
-      : "- No expert lens selected; answer should be conservative.",
     "",
     "Options and tradeoffs — include for decision questions:",
     options.length > 0
@@ -67,9 +56,8 @@ export function formatIntelligenceDossierForPrompt(dossier: IntelligenceDossier)
     "",
     "Answer structure required:",
     "- Start with the executive answer in plain language.",
-    "- Then separate: tenant evidence, corpus pattern, expert interpretation, options/tradeoffs, risks/missing evidence.",
+    "- Then separate: tenant evidence, corpus/pattern context, options/tradeoffs, risks/missing evidence.",
     "- Do not say corpus evidence is tenant fact.",
-    "- Do not say expert interpretation is evidence.",
     "- Do not invent exact ROI, dates, dollar values, vendors, owners, or relationships.",
     "- If tenant evidence is thin, say what tenant evidence is missing and still provide a pattern-based view with caveats.",
   ].join("\n");

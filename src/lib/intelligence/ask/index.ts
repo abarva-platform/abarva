@@ -20,9 +20,6 @@ import type {
   AskSurfaceContext,
 } from "./types";
 import type { CanonicalTenant } from "@/lib/tenant/CanonicalTenant";
-import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
-import { summonExpertsForQuery } from "@/lib/intelligence/answer/expert-grounding";
-import type { ExpertRef } from "@/lib/ava-answer/contract";
 import {
   assertCoverage,
   classifyQuestionCategory,
@@ -58,7 +55,6 @@ export interface AskEvent {
     | "followups"
     | "done"
     | "error"
-    | "contributing-experts"
     | "intelligence-dossier";
   classification?: IntentClassification;
   sources?: AskSource[];
@@ -66,8 +62,6 @@ export interface AskEvent {
   text?: string;
   followups?: string[];
   error?: string;
-  /** Consilium experts grounding the answer (Shared Context Brain, flag-gated). */
-  contributingExperts?: ExpertRef[];
   /** Question-specific advisory packet passed into the Intelligence synthesizer. */
   intelligenceDossier?: IntelligenceDossier;
 }
@@ -90,6 +84,14 @@ export interface AskOptions {
    * system + user content sent to the model. Used by the agent-trace spine.
    */
   onModelInput?: (parts: { system: string; user: string }) => void;
+  /** Operator-only trace hook for the exact raw model output. */
+  onModelOutput?: (parts: {
+    rawText: string;
+    text: string;
+    model?: string;
+    auditId?: string;
+    route: string;
+  }) => void;
 }
 
 function compactSourceDetailsForConciseAsk(sources: AskSource[]): AskSource[] {
@@ -203,24 +205,10 @@ export async function* askIntelligence(
     const factAvailabilityBlock =
       formatTenantFactAvailabilityBlock(factFingerprint);
 
-    // Shared Context Brain (W1.2/W1.3) — flag-gated, default OFF. When on for
-    // the tenant, summon the Consilium expert(s) for this question and inject
-    // their authored grounding (benchmarks, AI plays, honest odds, hedges) into
-    // the synthesizer so Ava answers AS the expert. Dormant until the flag is
-    // flipped per tenant; the existing path is byte-identical when off.
-    const sharedEngineOn = isFeatureEnabled(
-      { clientKey: opts.tenantClientKey },
-      "scb_shared_engine_intelligence",
-    );
-    const expertGrounding = sharedEngineOn
-      ? summonExpertsForQuery({
-          query: trimmed,
-          clientKey: opts.tenantClientKey,
-        })
-      : { experts: [] as ExpertRef[], groundingBlock: "" };
-    const groundedFactBlock = expertGrounding.groundingBlock
-      ? `${expertGrounding.groundingBlock}\n\n${factAvailabilityBlock}`
-      : factAvailabilityBlock;
+    // Persona expert packs are intentionally not summoned here. Intelligence
+    // grounding comes from tenant substrate, structured context, corpus
+    // patterns, and benchmarks; lightweight routing/lens decisions stay hidden.
+    const groundedFactBlock = factAvailabilityBlock;
 
     const conciseAsk = isExplicitConciseAsk(trimmed);
     const sourceLimit = conciseAsk ? 8 : 16;
@@ -242,19 +230,12 @@ export async function* askIntelligence(
         : 0;
     const coverageReport = assertCoverage(questionCategory, sources);
     yield { type: "sources", sources, coverageReport };
-    if (expertGrounding.experts.length > 0) {
-      yield {
-        type: "contributing-experts",
-        contributingExperts: expertGrounding.experts,
-      };
-    }
     const intelligenceDossier = buildIntelligenceDossier({
       tenantKey: opts.tenantClientKey ?? opts.tenantInventoryKey ?? opts.tenantId,
       tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient ?? opts.tenantClientKey ?? undefined,
       question: trimmed,
       classification,
       sources,
-      contributingExperts: expertGrounding.experts,
     });
     yield { type: "intelligence-dossier", intelligenceDossier };
 
@@ -279,6 +260,7 @@ export async function* askIntelligence(
       tenantId: opts.tenantId ?? opts.tenantInventoryKey ?? opts.tenantClientKey,
       userId: opts.userId,
       onModelInput: opts.onModelInput,
+      onModelOutput: opts.onModelOutput,
     });
     if (consultantText && consultantText.used) {
       let answer = "";
@@ -346,6 +328,7 @@ export async function* askIntelligence(
       intelligenceDossier,
       averageConfidence,
       onModelInput: opts.onModelInput,
+      onModelOutput: opts.onModelOutput,
     })) {
       answer += delta;
       yield { type: "delta", text: delta };

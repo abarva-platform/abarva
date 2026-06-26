@@ -341,6 +341,13 @@ export async function* synthesizeStream(args: {
    * to prove Claude is downstream of retrieval. Must not mutate the args.
    */
   onModelInput?: (parts: { system: string; user: string }) => void;
+  onModelOutput?: (parts: {
+    rawText: string;
+    text: string;
+    model?: string;
+    auditId?: string;
+    route: string;
+  }) => void;
 }): AsyncGenerator<string> {
   if (!process.env.ANTHROPIC_API_KEY || !args.tenantId) {
     yield "Ava synthesis is not configured in this environment. Set ANTHROPIC_API_KEY to enable advisor-quality answers.";
@@ -396,7 +403,7 @@ export async function* synthesizeStream(args: {
   const richTextAddendum = args.richText
     ? `\n\nRICH-TEXT SURFACE OVERRIDE: This answer is rendered as Markdown — this overrides the "plain text only" convention above. You MAY use: a blank line between paragraphs; **bold** on the single most decision-relevant figure or verb in a paragraph (sparingly — not every line); a compact GitHub-flavored Markdown table when the user asks for a table, chart, visual, comparison, ranked list, spend/cost/budget breakdown, owner/risk/next-move matrix, or three or more comparable rows; and short "- " bullet lists where they genuinely aid scanning. Do NOT use Markdown headings (#). If you emit a table, it MUST be a valid GitHub-flavored Markdown table with the header row, separator row, and every data row on separate lines. Never emit inline pipe-table fragments inside a paragraph. Keep the table to roughly 3-5 columns and 2-6 rows, and include only cited tenant/corpus values or clearly labeled planning ranges.
 
-VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually, plot, trend, dependency map, relationship map, upstream/downstream map, or network, you MUST emit a compact GitHub-flavored Markdown data table after the Read/Evidence/Implication/Next move prose if the retrieved evidence supports at least two comparable rows or two connected nodes. For charts, include one text label column and one exact numeric value column (for example "Initiative | Value"). For relationship graphs, include explicit edge rows with "From | Relationship | To | Evidence" or "Source | Relationship | Target | Evidence". Do not describe a visual only in prose when the data exists. If the data is not connected enough for a real chart or graph, say which evidence is missing and emit an Evidence Required table instead. Every other rule stands unchanged — same length discipline, tenant isolation, no fabricated numbers, no hollow openers.`
+VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually, plot, trend, dependency map, relationship map, upstream/downstream map, or network, emit a compact GitHub-flavored Markdown data table when the retrieved evidence supports at least two comparable rows or two connected nodes. For charts, include one text label column and one exact numeric value column (for example "Initiative | Value"). For relationship graphs, include explicit edge rows with "From | Relationship | To | Evidence" or "Source | Relationship | Target | Evidence". Do not describe a visual only in prose when the data exists. If the data is not connected enough for a real chart or graph, say the specific missing evidence in one short caveat and do not fabricate a visual. Every other rule stands unchanged — same length discipline, tenant isolation, no fabricated numbers, no hollow openers.`
     : "";
   const advisorComposer = buildIntelligenceAdvisorComposerBlock({
     query: args.query,
@@ -422,7 +429,7 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
       system: `${system}${continuityInstruction}`,
       user: prompt,
     });
-    const { client } = await getAuditedAnthropicClient({
+    const { client, auditId } = await getAuditedAnthropicClient({
       tenantId: args.tenantId,
       userId: args.userId ?? undefined,
       workflow: "intelligence-ask-synthesis",
@@ -451,6 +458,13 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
         text += event.delta.text;
       }
     }
+    args.onModelOutput?.({
+      rawText: text,
+      text,
+      model,
+      auditId,
+      route: "intelligence-ask-synthesis",
+    });
 
     // STRESS-P0-001 fix (2026-05-24): post-response cross-tenant identity
     // guard. If despite the dynamic tenant pin the model still asserts a

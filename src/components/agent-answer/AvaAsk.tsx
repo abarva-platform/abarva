@@ -4,7 +4,7 @@
 //
 // It posts to the shared engine (/api/intelligence/ask), streams the answer, and
 // renders it through the canonical Ava packet renderer — direct answer + exhibits +
-// citations + named experts where allowed. No surface-local answer assembly, no per-surface
+// citations where allowed. No surface-local answer assembly, no per-surface
 // renderer. Drop this into Home, Intelligence, Tower, Source, Moves and every
 // surface answers (and renders) identically. This is what retires the static
 // Home mock + its fake `answerForAsk`.
@@ -40,10 +40,6 @@ const CSS = `
 .avaask .aa-label{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--aa-green);margin-bottom:8px}
 .avaask .aa-prose{font-size:14px;line-height:1.65;color:var(--aa-ink)}
 .avaask .aa-think{color:var(--aa-faint);font-style:italic;font-size:13.5px}
-.avaask .aa-exps{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px;padding-top:13px;border-top:1px solid var(--aa-line)}
-.avaask .aa-exps-summary{display:inline-flex;align-items:center;border:1px solid var(--aa-line);border-radius:999px;padding:3px 9px;font-size:12px;color:var(--aa-muted);background:var(--aa-card);cursor:pointer}
-.avaask .aa-exps-panel{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
-.avaask .aa-exp{display:inline-flex;align-items:center;background:#E7F0E9;color:var(--aa-green);border-radius:20px;padding:3px 11px;font-size:11.5px;font-weight:500}
 .avaask .aa-fu{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
 .avaask .aa-chip{display:inline-flex;align-items:center;border:1px solid var(--aa-line);border-radius:20px;padding:5px 13px;font-size:12px;color:#3a3a34;cursor:pointer;background:var(--aa-card)}
 `;
@@ -51,7 +47,6 @@ const CSS = `
 type Evt = {
   type?: string;
   text?: string;
-  contributingExperts?: { id: string; name: string }[];
   followups?: string[];
   answer?: AvaAnswerPacket;
 };
@@ -60,7 +55,6 @@ type AvaTurn = {
   id: string;
   question: string;
   answer: string;
-  experts: { id: string; name: string }[];
   followups: string[];
   agentAnswer: AvaAnswerPacket | null;
   fetching: boolean;
@@ -124,7 +118,6 @@ export function AvaAsk({
           id: turnId,
           question: trimmed,
           answer: "",
-          experts: [],
           followups: [],
           agentAnswer: null,
           fetching: true,
@@ -171,11 +164,6 @@ export function AvaAsk({
           if (evt.type === "delta" && typeof evt.text === "string") {
             prose += evt.text;
             updateTurn({ answer: scrubPublicAvaAnswerText(prose) });
-          } else if (
-            evt.type === "contributing-experts" &&
-            Array.isArray(evt.contributingExperts)
-          ) {
-            updateTurn({ experts: evt.contributingExperts });
           } else if (evt.type === "followups" && Array.isArray(evt.followups)) {
             updateTurn({ followups: evt.followups });
           } else if (evt.type === "agent-answer" && evt.answer) {
@@ -268,7 +256,7 @@ export function AvaAsk({
               <div className="aa-user">{turn.question}</div>
               <div className="aa-box">
                 {turn.agentAnswer ? (
-                  // Canonical render: one renderer, prose + exhibits + citations + experts.
+                  // Canonical render: one renderer, prose + exhibits + citations.
                   // Prose streams on its own channel, so merge it onto the structured
                   // answer — this avoids the double-header seen when both are rendered.
                   <AgentAnswerRenderer
@@ -288,20 +276,6 @@ export function AvaAsk({
                         <AgentMarkdown text={scrubPublicAvaAnswerText(turn.answer)} />
                       </div>
                     ) : null}
-                    {turn.experts.length > 0 && (
-                      <details className="aa-exps">
-                        <summary className="aa-exps-summary">
-                          Consulted experts ({turn.experts.length})
-                        </summary>
-                        <div className="aa-exps-panel">
-                          {turn.experts.map((e) => (
-                            <span className="aa-exp" key={e.id} title={e.id}>
-                              {e.name}
-                            </span>
-                          ))}
-                        </div>
-                      </details>
-                    )}
                   </>
                 )}
                 {turn.followups.length > 0 && (

@@ -68,7 +68,7 @@ describe("Intelligence dossier framework", () => {
     expect(route.handoffTargets).toContain("moves");
   });
 
-  it("builds a bounded advisory packet with separated tenant, corpus, and expert sections", () => {
+  it("builds a bounded advisory packet with separated tenant, corpus, and advisory lens sections", () => {
     const dossier = buildIntelligenceDossier({
       tenantKey: "skyharbor-air",
       tenantName: "SkyHarbor Air",
@@ -80,8 +80,8 @@ describe("Intelligence dossier framework", () => {
     expect(dossier.tenantEvidenceDossier.confidence).toBe("partial");
     expect(dossier.tenantEvidenceDossier.sections.length).toBeGreaterThan(0);
     expect(dossier.corpusPatternDossier.patternsIncluded.length).toBe(1);
-    expect(dossier.expertCouncilDossier.selectedExperts.length).toBeGreaterThan(0);
-    expect(dossier.expertCouncilDossier.selectedExperts.length).toBeLessThanOrEqual(7);
+    expect(dossier.expertCouncilDossier.selectedExperts).toEqual([]);
+    expect(dossier.expertCouncilDossier.expertLensSummary).toContain("hidden advisory lenses");
     expect(dossier.decisionOptionsDossier.options.length).toBeGreaterThanOrEqual(3);
     expect(dossier.evidenceBoundary.tenantFacts.join(" ")).toContain("Loaded tenant evidence");
     expect(dossier.evidenceBoundary.corpusPatterns.join(" ")).toContain("Airline operations pattern");
@@ -100,7 +100,7 @@ describe("Intelligence dossier framework", () => {
     expect(prompt).toContain("INTELLIGENCE DOSSIER");
     expect(prompt).toContain("Tenant evidence — use as proof");
     expect(prompt).toContain("Corpus patterns — use as precedent/comparison");
-    expect(prompt).toContain("Expert council — synthesize these lenses");
+    expect(prompt).not.toContain("Expert council");
     expect(prompt).toContain("Do not say corpus evidence is tenant fact.");
     expect(prompt).not.toContain("all 200");
   });

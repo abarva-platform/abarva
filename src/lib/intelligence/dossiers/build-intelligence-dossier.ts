@@ -128,9 +128,7 @@ function buildEvidenceBoundary(input: {
     corpusPatterns: input.corpusPatternDossier.patternsIncluded
       .flatMap((family) => family.patterns.map((pattern) => `${pattern.title}: ${pattern.summary}`))
       .slice(0, 8),
-    expertInterpretations: input.expertCouncilDossier.selectedExperts
-      .map((expert) => `${expert.nameOrRole}: ${expert.expectedContribution}`)
-      .slice(0, 7),
+    expertInterpretations: [],
     benchmarkClaims: input.benchmarkDossier.benchmarkSources.map((source) => source.claim).slice(0, 6),
     missingTenantEvidence: input.tenantEvidenceDossier.gaps.map((gap) => gap.label),
     cannotConclude: [
@@ -247,7 +245,6 @@ export function evaluateIntelligenceDossierQuality(dossier: IntelligenceDossier)
   const issues: string[] = [];
   if (dossier.tenantEvidenceDossier.sections.length === 0) issues.push("no_tenant_evidence");
   if (dossier.corpusPatternDossier.patternsIncluded.length === 0) issues.push("no_corpus_pattern_context");
-  if (dossier.expertCouncilDossier.selectedExperts.length === 0) issues.push("no_expert_lenses");
   if (dossier.expertCouncilDossier.selectedExperts.length > 7) issues.push("too_many_experts");
   if (dossier.decisionOptionsDossier.options.length === 0 && dossier.artifactPlan.includes("option_matrix")) {
     issues.push("no_decision_options");
@@ -256,7 +253,7 @@ export function evaluateIntelligenceDossierQuality(dossier: IntelligenceDossier)
     issues.push("thin_evidence_without_named_gap");
   }
   return {
-    passed: !issues.includes("too_many_experts") && !issues.includes("no_expert_lenses"),
+    passed: !issues.includes("too_many_experts"),
     critical: issues.includes("too_many_experts"),
     issues,
   };

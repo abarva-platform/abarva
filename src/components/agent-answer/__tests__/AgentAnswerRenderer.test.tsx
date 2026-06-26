@@ -141,7 +141,7 @@ describe("AgentAnswerRenderer", () => {
     expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
   });
 
-  it("renders attribution and sources without fallback when no typed exhibits are present", () => {
+  it("renders attribution and sources without persona-pack controls when no typed exhibits are present", () => {
     const answer: AvaAnswerPacket = {
       surface: "intelligence",
       mode: "ANALYZE",
@@ -180,7 +180,7 @@ describe("AgentAnswerRenderer", () => {
 
     render(<AgentAnswerRenderer answer={answer} />);
 
-    expect(screen.getByText("Consulted experts (1)")).toBeInTheDocument();
+    expect(screen.queryByText(/Consulted experts/i)).not.toBeInTheDocument();
     expect(screen.getByText("Sources")).toBeInTheDocument();
     expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
     expect(
@@ -188,7 +188,7 @@ describe("AgentAnswerRenderer", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("scrubs public prose and keeps experts collapsed by default", () => {
+  it("scrubs public prose and suppresses persona-pack controls", () => {
     const answer: AvaAnswerPacket = {
       surface: "intelligence",
       mode: "ANALYZE",
@@ -226,7 +226,7 @@ describe("AgentAnswerRenderer", () => {
 
     const { container } = render(<AgentAnswerRenderer answer={answer} />);
 
-    expect(screen.getByText("Consulted experts (2)")).toBeInTheDocument();
+    expect(screen.queryByText(/Consulted experts/i)).not.toBeInTheDocument();
     const visibleText = container.textContent ?? "";
     expect(visibleText).not.toMatch(/context dimensions|evidence points|That means The|The supporting evidence is that/i);
     expect(visibleText).toContain("business areas");
