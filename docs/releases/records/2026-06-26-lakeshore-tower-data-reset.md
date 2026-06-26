@@ -37,7 +37,8 @@ This release replaces the stale Lakeshore Tower dashboard inputs with a governed
 ## QA / Validation
 
 - `npm run tower:data-trust:gate:downloads` passed and wrote `/Users/anand/Downloads/tower-data-trust-gate-2026-06-26T20-27-33-867Z`.
-- `npx tsx src/scripts/tower/load-lakeshore-holdings-read-model.ts` dry-run passed with 5 budget rollups, 8 initiatives, 22 vendor rows, `$157.5M` IT budget, `$75.601M` YTD spend, `$90.657M` vendor budget, and `$56.1M` named vendor exposure.
+- `npx tsx src/scripts/tower/load-lakeshore-holdings-read-model.ts` dry-run passed with 5 budget rollups, 8 initiatives, 20 deduped vendor rows, `$157.5M` IT budget, `$75.601M` YTD spend, `$90.657M` vendor budget, and `$56.1M` named vendor exposure.
+- Private VNet loader first attempt failed because duplicate vendor conflict keys caused Postgres to reject the bulk upsert; the loader now dedupes vendor rows by `client_id + logical_vendor_key + period_label`, preserves summed exposure, and keeps source citations for each contributing portfolio-company row.
 - Targeted tests and release check must pass before merge.
 - Signed-in ACA browser proof is required after migration/load/deploy.
 
