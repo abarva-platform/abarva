@@ -577,7 +577,6 @@ async function deriveInsightsWithClaude(skeleton) {
   const response = await anthropic.messages.create({
     model: MODEL,
     max_tokens: 900,
-    temperature: 0,
     messages: [{ role: "user", content: prompt }],
   });
   const text = response.content
