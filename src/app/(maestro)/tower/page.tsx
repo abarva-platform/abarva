@@ -1,6 +1,9 @@
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
-import { TowerIndexPage, type TowerSubstrateCounts } from "@/components/tower/TowerIndexPage";
+import {
+  TowerIndexPage,
+  type TowerSubstrateCounts,
+} from "@/components/tower/TowerIndexPage";
 import { buildAtlasTowerCurrentState } from "@/lib/atlas/tower-grounding";
 import { resolveTowerTab } from "@/lib/tower/tower-lens-tabs-view";
 
@@ -53,10 +56,13 @@ export default async function TowerPage({
       towerToday={towerState?.todayIso}
       initiatives={towerState?.initiatives}
       vendors={towerState?.vendors}
+      budgetRollups={towerState?.budgetRollups}
       bandMetrics={towerState?.bandMetrics}
       pressuresView={towerState?.pressuresView}
       atlasObservationsView={towerState?.atlasObservationsView}
-      substrateCounts={towerState ? substrateCountsFromState(towerState) : undefined}
+      substrateCounts={
+        towerState ? substrateCountsFromState(towerState) : undefined
+      }
     />
   );
 }

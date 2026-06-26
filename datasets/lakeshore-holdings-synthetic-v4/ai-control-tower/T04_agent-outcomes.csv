@@ -1,0 +1,9 @@
+tenant_key,outcome_id,initiative_id,portfolio_company,kpi_name,baseline_value,target_value,actual_value,period,confidence,source_template,is_synthetic
+lakeshore-holdings,OUT-001,LAK-AI-001,Lakeshore Shared Services,realized_value_usd,0,8000000,2000000.0,FY2026,medium,T04_agent-outcomes,True
+lakeshore-holdings,OUT-002,LAK-AI-002,Northline Logistics Group,realized_value_usd,0,6500000,780000.0,FY2026,medium,T04_agent-outcomes,True
+lakeshore-holdings,OUT-003,LAK-AI-003,Lakeshore Shared Services,realized_value_usd,0,5400000,972000.0,FY2026,medium,T04_agent-outcomes,True
+lakeshore-holdings,OUT-004,LAK-AI-004,Northline Logistics Group,realized_value_usd,0,9800000,2450000.0,FY2026,medium,T04_agent-outcomes,True
+lakeshore-holdings,OUT-005,LAK-AI-005,Crestpoint Marketing Services,realized_value_usd,0,2200000,264000.0,FY2026,medium,T04_agent-outcomes,True
+lakeshore-holdings,OUT-006,LAK-AI-006,Riverton Consumer Products,realized_value_usd,0,4500000,540000.0,FY2026,medium,T04_agent-outcomes,True
+lakeshore-holdings,OUT-007,LAK-AI-007,Arborfield Workplace Services,realized_value_usd,0,1400000,168000.0,FY2026,medium,T04_agent-outcomes,True
+lakeshore-holdings,OUT-008,LAK-AI-008,Lakeshore Shared Services,realized_value_usd,0,3000000,360000.0,FY2026,medium,T04_agent-outcomes,True

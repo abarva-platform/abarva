@@ -1,0 +1,25 @@
+tenant_key,initiative_id,milestone_id,milestone_name,due_date,status,owner,source_template,is_synthetic
+lakeshore-holdings,LAK-AI-001,LAK-AI-001-MS-1,scope and owner gate,2026-07-15,planned,CIO,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-001,LAK-AI-001-MS-2,data/control readiness gate,2026-09-15,not_started,CIO,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-001,LAK-AI-001-MS-3,value proof review,2026-12-15,not_started,CIO,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-002,LAK-AI-002-MS-1,scope and owner gate,2026-07-15,planned,Treasurer,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-002,LAK-AI-002-MS-2,data/control readiness gate,2026-09-15,not_started,Treasurer,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-002,LAK-AI-002-MS-3,value proof review,2026-12-15,not_started,Treasurer,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-003,LAK-AI-003-MS-1,scope and owner gate,2026-07-15,planned,CPO,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-003,LAK-AI-003-MS-2,data/control readiness gate,2026-09-15,not_started,CPO,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-003,LAK-AI-003-MS-3,value proof review,2026-12-15,not_started,CPO,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-004,LAK-AI-004-MS-1,scope and owner gate,2026-07-15,planned,COO,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-004,LAK-AI-004-MS-2,data/control readiness gate,2026-09-15,not_started,COO,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-004,LAK-AI-004-MS-3,value proof review,2026-12-15,not_started,COO,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-005,LAK-AI-005-MS-1,scope and owner gate,2026-07-15,planned,Head of Sourcing,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-005,LAK-AI-005-MS-2,data/control readiness gate,2026-09-15,not_started,Head of Sourcing,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-005,LAK-AI-005-MS-3,value proof review,2026-12-15,not_started,Head of Sourcing,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-006,LAK-AI-006-MS-1,scope and owner gate,2026-07-15,planned,Chief Digital Officer,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-006,LAK-AI-006-MS-2,data/control readiness gate,2026-09-15,not_started,Chief Digital Officer,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-006,LAK-AI-006-MS-3,value proof review,2026-12-15,not_started,Chief Digital Officer,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-007,LAK-AI-007-MS-1,scope and owner gate,2026-07-15,planned,VP Operations,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-007,LAK-AI-007-MS-2,data/control readiness gate,2026-09-15,not_started,VP Operations,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-007,LAK-AI-007-MS-3,value proof review,2026-12-15,not_started,VP Operations,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-008,LAK-AI-008-MS-1,scope and owner gate,2026-07-15,planned,CIO,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-008,LAK-AI-008-MS-2,data/control readiness gate,2026-09-15,not_started,CIO,T02_project-milestones,True
+lakeshore-holdings,LAK-AI-008,LAK-AI-008-MS-3,value proof review,2026-12-15,not_started,CIO,T02_project-milestones,True

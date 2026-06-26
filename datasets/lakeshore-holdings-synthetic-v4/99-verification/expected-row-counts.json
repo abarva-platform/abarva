@@ -1,0 +1,19 @@
+{
+  "client": "lakeshore",
+  "name": "Lakeshore Holdings",
+  "density": "medium",
+  "root": "datasets/lakeshore-industries-synthetic-v4",
+  "file_count": 52,
+  "context_rows": 1342,
+  "tower_rows": 201,
+  "source_docs": 7,
+  "source_doc_words": 2996,
+  "relationship_edges": 850,
+  "corpus_patterns": 5,
+  "applications": 130,
+  "integrations": 200,
+  "vendors": 90,
+  "data_products": 105,
+  "initiatives": 62,
+  "source_note": "Expanded for Kyriba treasury, finance current state, ERP/TMS dependencies, and manufacturing systems."
+}
