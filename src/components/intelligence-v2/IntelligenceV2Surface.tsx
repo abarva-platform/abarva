@@ -19,6 +19,8 @@ import type {
   SuggestedAction,
 } from "@/components/agent/AgentDock";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
+import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
+import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 
 type Tab = "answer" | "signals" | "context" | "corpus";
 
@@ -96,17 +98,17 @@ const CSS = `
 function buildSurfaceContext(payload: IntelligenceBindingPayload) {
   const tenantFacts = [
     `Active tenant is ${payload.tenant.displayName} (${payload.tenant.key}), industry ${payload.tenant.industry}.`,
-    `${payload.trustLine.dimensionsLoaded} context dimensions loaded with ${payload.trustLine.evidencePoints.toLocaleString()} evidence points across ${payload.trustLine.sources} sources at ${payload.trustLine.searchVerifiedPct}% search verification.`,
+    `The current enterprise view spans ${payload.trustLine.dimensionsLoaded} business areas across ${payload.trustLine.sources} source families, with ${payload.trustLine.searchVerifiedPct}% search verification.`,
     ...payload.context.map(
       (dimension) =>
-        `${dimension.dimension}: ${dimension.status.toLowerCase()} with ${dimension.evidence.toLocaleString()} evidence points, ${dimension.sources} sources, trust ${dimension.trust}. ${dimension.description}.`,
+        `${dimension.dimension}: ${dimension.description}. Source depth: ${sourceDepthLabel(dimension.evidence)} across ${dimension.sources} source families; confidence tier: ${confidenceTierLabel(dimension.trust)}.`,
     ),
   ];
   const strategyFacts = payload.signals.map((signal) => {
     const move = signal.move
       ? ` Recommended move: ${signal.move.title}; owner ${signal.move.owner ?? "unassigned"}; impact ${signal.move.impact ?? "not quantified"}.`
       : "";
-    return `${signal.headline} ${signal.body} Confidence ${signal.confidence}; evidence refs ${signal.evidenceRefs.join(", ")}.${move}`;
+    return `${signal.headline} ${signal.body} Confidence ${signal.confidence}; source references available.${move}`;
   });
   const qualityFacts = payload.corpus.map(
     (pattern) =>
@@ -114,17 +116,31 @@ function buildSurfaceContext(payload: IntelligenceBindingPayload) {
   );
 
   return {
-    activeTab: "intelligence-v2",
+    activeTab: "intelligence",
     activeClient: payload.tenant.displayName,
     clientKey: payload.tenant.key,
     pageFacts: [
-      "This is the Intelligence v2 Lens surface. Prefer tenant-specific loaded context over generic examples.",
+      "This is the Intelligence advisory surface. Prefer tenant-specific business material over generic examples.",
       ...payload.suggestedQuestions.map((question) => `Suggested executive question: ${question}`),
     ],
     tenantFacts,
     strategyFacts,
     qualityFacts,
   };
+}
+
+function sourceDepthLabel(count: number): string {
+  if (count >= 1000) return "broad";
+  if (count >= 100) return "moderate";
+  if (count > 0) return "thin";
+  return "not yet represented";
+}
+
+function confidenceTierLabel(score: number): string {
+  if (score >= 85) return "high";
+  if (score >= 65) return "medium";
+  if (score > 0) return "low";
+  return "not assessed";
 }
 
 function eventText(event: { delta?: unknown; text?: unknown }): string {
@@ -289,7 +305,7 @@ export function IntelligenceV2Surface({
           const delta = eventText(event);
           if (delta) {
             answerText += delta;
-            updateAgentTurn(answerText, structuredAnswer);
+            updateAgentTurn(scrubPublicAvaAnswerText(answerText), structuredAnswer);
           }
           if (event.type === "done" && event.telemetryEventId) {
             setThread((prev) =>
@@ -304,7 +320,10 @@ export function IntelligenceV2Surface({
       }
 
       if (!answerText.trim() && structuredAnswer) {
-        updateAgentTurn(answerBodyFromPacket(structuredAnswer), structuredAnswer);
+        updateAgentTurn(
+          scrubPublicAvaAnswerText(answerBodyFromPacket(structuredAnswer)),
+          structuredAnswer,
+        );
       } else if (!answerText.trim() && !structuredAnswer) {
         updateAgentTurn(
           "I could not produce a grounded Intelligence answer for that request yet.",
@@ -373,7 +392,7 @@ export function IntelligenceV2Surface({
                 <div className="trust" style={{ textAlign: "left", margin: 0 }}>
                   <span className="mono">
                     <b>{tl.dimensionsLoaded}</b> dimensions ·{" "}
-                    <b>{tl.evidencePoints.toLocaleString()}</b> evidence points ·{" "}
+                      <b>{tl.evidencePoints.toLocaleString()}</b> source signals ·{" "}
                     <b>{tl.sources}</b> sources · <b>{tl.searchVerifiedPct}%</b>{" "}
                     search-verified
                   </span>
@@ -403,8 +422,12 @@ export function IntelligenceV2Surface({
                     {latestAnswer ? (
                       <>
                         <h3>Answer from the current conversation</h3>
-                        {latestAnswer.body.trim() ? (
-                          <div className="answerText">{latestAnswer.body}</div>
+                        {latestAnswer.agentAnswer ? (
+                          <AgentAnswerRenderer answer={latestAnswer.agentAnswer} />
+                        ) : latestAnswer.body.trim() ? (
+                          <div className="answerText">
+                            {scrubPublicAvaAnswerText(latestAnswer.body)}
+                          </div>
                         ) : (
                           <div className="ansfetching">aVa is forming the answer…</div>
                         )}
@@ -453,10 +476,10 @@ export function IntelligenceV2Surface({
                       </span>
                       <span className="evi">
                         <span className="dot" />
-                        {s.evidencePoints} evidence points · {s.sources} sources
+                        {s.evidencePoints} source signals · {s.sources} sources
                       </span>
                       <span className="act">
-                        <a>Trace evidence →</a>
+                        <a>Trace sources →</a>
                         {s.move && (
                           <a
                             className="move"
@@ -476,10 +499,10 @@ export function IntelligenceV2Surface({
           {tab === "context" && (
             <>
               <div className="sechead">
-                <span className="ey">LOADED CONTEXT · BROWSE BY DIMENSION</span>
+                <span className="ey">AVAILABLE MATERIAL · BROWSE BY BUSINESS AREA</span>
                 <span className="ey">
                   {t.context.length} CONNECTED ·{" "}
-                  {contextEvidence.toLocaleString()} EVIDENCE POINTS
+                  {contextEvidence.toLocaleString()} SOURCE SIGNALS
                 </span>
               </div>
               <div className="grid3">
@@ -492,7 +515,7 @@ export function IntelligenceV2Surface({
                     <div className="desc">{c.description}</div>
                     <div className="stats">
                       <div className="stat">
-                        <div className="k">Evidence</div>
+                        <div className="k">Source depth</div>
                         <div className="v">{c.evidence.toLocaleString()}</div>
                       </div>
                       <div className="stat">
@@ -500,7 +523,7 @@ export function IntelligenceV2Surface({
                         <div className="v">{c.sources}</div>
                       </div>
                       <div className="stat">
-                        <div className="k">Trust</div>
+                        <div className="k">Confidence</div>
                         <div className="v">{c.trust}%</div>
                       </div>
                     </div>

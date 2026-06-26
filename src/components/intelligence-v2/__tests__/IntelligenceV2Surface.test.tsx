@@ -204,14 +204,14 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       client: "apex-retail",
       format: "rich",
       surfaceContext: {
-        activeTab: "intelligence-v2",
+        activeTab: "intelligence",
         activeClient: "Apex Retail Group",
         clientKey: "apex-retail",
       },
     });
     expect(body.surfaceContext.tenantFacts).toEqual(
       expect.arrayContaining([
-        expect.stringContaining("17,548 evidence points"),
+        expect.stringContaining("8 business areas"),
         expect.stringContaining("Finance & run cost"),
       ]),
     );
@@ -231,9 +231,14 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
         "Apex should gate lakehouse scale on measured value.",
       ),
     ).not.toHaveLength(0);
-    expect(screen.getByText("Retail Operations Expert")).toBeInTheDocument();
-    expect(screen.getByText("Apex AI Spend Evidence")).toBeInTheDocument();
-    const table = screen.getByRole("table");
+    expect(screen.getAllByText("Consulted experts (1)").length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.queryByText(/17,548 evidence points/i)).not.toBeInTheDocument();
+    expect(
+      screen.getAllByText(/Apex AI Spend source support/i).length,
+    ).toBeGreaterThan(0);
+    const table = screen.getAllByRole("table")[0];
     expect(
       within(table).getByText("Retail lakehouse and customer inventory graph"),
     ).toBeInTheDocument();

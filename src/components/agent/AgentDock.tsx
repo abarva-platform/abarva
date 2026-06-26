@@ -58,6 +58,7 @@ import type { AskSource } from "@/lib/intelligence/ask/types";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
+import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
 // real values in the browser, so fall back to the no-op effect on the
@@ -860,7 +861,10 @@ export function AgentDock(props: AgentDockProps) {
                   ) : turn.role === "agent" && focused && turn.agentAnswer ? (
                     <AgentAnswerRenderer answer={turn.agentAnswer} />
                   ) : turn.role === "agent" ? (
-                    shapeAgentResponseForSurface(surface, turn.body)
+                    shapeAgentResponseForSurface(
+                      surface,
+                      scrubPublicAvaAnswerText(turn.body),
+                    )
                   ) : (
                     turn.body
                   )}
