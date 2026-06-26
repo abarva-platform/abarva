@@ -34,6 +34,7 @@ type CleanupRow = {
   column: string;
   alias: string;
   canonical: string;
+  storedAliasValues: string[];
   count: number;
   duplicateRows: number;
 };
@@ -146,26 +147,20 @@ async function discoverUniqueKeys(client: Client, column: TenantColumn): Promise
   return keys;
 }
 
-function duplicateWhereClause(column: TenantColumn, uniqueKeys: UniqueKey[]): string | null {
+function aliasValuesWhereClause(column: TenantColumn): string {
+  return `alias_row.${quoteIdentifier(column.column)} = ANY($1::text[])`;
+}
+
+function duplicateVictimSelects(column: TenantColumn, uniqueKeys: UniqueKey[]): string[] {
   const tenantColumn = quoteIdentifier(column.column);
   const tableName = qualifiedTable(column);
-  const clauses: string[] = [];
 
-  if (
-    column.schema === 'public' &&
-    column.table === 'enterprise_context_relationships' &&
-    column.column === 'tenant_key'
-  ) {
-    clauses.push(`EXISTS (
-      SELECT 1
-        FROM ${tableName} canonical_row
-       WHERE canonical_row.${tenantColumn} = $2
-         AND canonical_row."relationship_key" IS NOT DISTINCT FROM alias_row."relationship_key"
-    )`);
-  }
-
-  clauses.push(...uniqueKeys.map((key) => {
+  return uniqueKeys.flatMap((key) => {
     const otherColumns = key.columns.filter((uniqueColumn) => uniqueColumn !== column.column);
+    const partitionBy =
+      otherColumns.length > 0
+        ? otherColumns.map((uniqueColumn) => `alias_row.${quoteIdentifier(uniqueColumn)}`).join(', ')
+        : '1';
     const comparisons =
       otherColumns.length > 0
         ? otherColumns
@@ -176,16 +171,34 @@ function duplicateWhereClause(column: TenantColumn, uniqueKeys: UniqueKey[]): st
             .join(' AND ')
         : 'true';
 
-    return `EXISTS (
-      SELECT 1
-        FROM ${tableName} canonical_row
-       WHERE canonical_row.${tenantColumn} = $2
-         AND ${comparisons}
-    )`;
-  }));
+    return [
+      `SELECT alias_row.ctid
+         FROM ${tableName} alias_row
+        WHERE ${aliasValuesWhereClause(column)}
+          AND EXISTS (
+            SELECT 1
+              FROM ${tableName} canonical_row
+             WHERE canonical_row.${tenantColumn} = $2
+               AND ${comparisons}
+          )`,
+      `SELECT ranked_alias_rows.ctid
+         FROM (
+           SELECT alias_row.ctid,
+                  row_number() OVER (PARTITION BY ${partitionBy} ORDER BY alias_row.ctid) AS alias_rank
+             FROM ${tableName} alias_row
+            WHERE ${aliasValuesWhereClause(column)}
+         ) ranked_alias_rows
+        WHERE ranked_alias_rows.alias_rank > 1`,
+    ];
+  });
+}
 
-  if (clauses.length === 0) return null;
-  return `lower(replace(alias_row.${tenantColumn}::text, '_', '-')) = $1 AND (${clauses.join(' OR ')})`;
+function duplicateVictimCte(column: TenantColumn, uniqueKeys: UniqueKey[]): string | null {
+  const victimSelects = duplicateVictimSelects(column, uniqueKeys);
+  if (victimSelects.length === 0) return null;
+  return `WITH victim_rows AS (
+    ${victimSelects.join('\nUNION ALL\n')}
+  )`;
 }
 
 function isRelationshipTenantColumn(column: TenantColumn): boolean {
@@ -292,20 +305,21 @@ async function countDuplicateAliasRows(
   column: TenantColumn,
   alias: string,
   canonical: string,
+  storedAliasValues: readonly string[],
 ): Promise<number> {
   if (isRelationshipTenantColumn(column)) {
     return countRelationshipAliasCollisionRows(client, alias, canonical);
   }
 
   const uniqueKeys = await discoverUniqueKeys(client, column);
-  const whereClause = duplicateWhereClause(column, uniqueKeys);
-  if (!whereClause) return 0;
+  const victimCte = duplicateVictimCte(column, uniqueKeys);
+  if (!victimCte) return 0;
 
   const result = await client.query<{ count: string }>(
-    `SELECT COUNT(*)::text AS count
-       FROM ${qualifiedTable(column)} alias_row
-      WHERE ${whereClause}`,
-    [alias, canonical],
+    `${victimCte}
+     SELECT COUNT(DISTINCT ctid)::text AS count
+       FROM victim_rows`,
+    [storedAliasValues, canonical],
   );
   return Number.parseInt(result.rows[0]?.count ?? '0', 10);
 }
@@ -315,19 +329,22 @@ async function deleteDuplicateAliasRows(
   column: TenantColumn,
   alias: string,
   canonical: string,
+  storedAliasValues: readonly string[],
 ): Promise<number> {
   if (isRelationshipTenantColumn(column)) {
     return deleteRelationshipAliasCollisionRows(client, alias, canonical);
   }
 
   const uniqueKeys = await discoverUniqueKeys(client, column);
-  const whereClause = duplicateWhereClause(column, uniqueKeys);
-  if (!whereClause) return 0;
+  const victimCte = duplicateVictimCte(column, uniqueKeys);
+  if (!victimCte) return 0;
 
   const result = await client.query(
-    `DELETE FROM ${qualifiedTable(column)} alias_row
-      WHERE ${whereClause}`,
-    [alias, canonical],
+    `${victimCte}
+     DELETE FROM ${qualifiedTable(column)} target
+      USING victim_rows
+      WHERE target.ctid = victim_rows.ctid`,
+    [storedAliasValues, canonical],
   );
   return result.rowCount ?? 0;
 }
@@ -356,18 +373,23 @@ async function main(): Promise<void> {
         `tenant-canonical-cleanup: scan_column=${columnIndex + 1}/${columns.length} ${column.schema}.${column.table}.${column.column}`,
       );
       for (const [alias, canonical] of aliasEntries) {
-        const countResult = await client.query<{ count: string }>(
-          `SELECT COUNT(*)::text AS count
+        const countResult = await client.query<{ value: string | null; count: string }>(
+          `SELECT "${column.column}"::text AS value,
+                  COUNT(*)::text AS count
              FROM "${column.schema}"."${column.table}"
-            WHERE lower(replace("${column.column}"::text, '_', '-')) = $1`,
+            WHERE lower(replace("${column.column}"::text, '_', '-')) = $1
+            GROUP BY "${column.column}"::text`,
           [alias],
         );
-	        const count = Number.parseInt(countResult.rows[0]?.count ?? '0', 10);
+	        const count = countResult.rows.reduce((sum, row) => sum + Number.parseInt(row.count ?? '0', 10), 0);
 	        if (count === 0) continue;
+	        const storedAliasValues = countResult.rows
+	          .map((row) => row.value)
+	          .filter((value): value is string => Boolean(value));
 	        console.log(
 	          `tenant-canonical-cleanup: alias_rows ${column.schema}.${column.table}.${column.column} alias=${alias} canonical=${canonical} count=${count}`,
 	        );
-	        const duplicateRows = await countDuplicateAliasRows(client, column, alias, canonical);
+	        const duplicateRows = await countDuplicateAliasRows(client, column, alias, canonical, storedAliasValues);
 	        if (duplicateRows > 0) {
 	          console.log(
 	            `tenant-canonical-cleanup: duplicate_alias_rows ${column.schema}.${column.table}.${column.column} alias=${alias} canonical=${canonical} count=${duplicateRows}`,
@@ -378,12 +400,13 @@ async function main(): Promise<void> {
 	          ...column,
 	          alias,
 	          canonical,
+	          storedAliasValues,
 	          count,
 	          duplicateRows,
 	        });
 
 	        if (APPLY) {
-	          await deleteDuplicateAliasRows(client, column, alias, canonical);
+	          await deleteDuplicateAliasRows(client, column, alias, canonical, storedAliasValues);
 	          await client.query(
 	            `UPDATE "${column.schema}"."${column.table}"
 	                SET "${column.column}" = $2

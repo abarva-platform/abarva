@@ -42,6 +42,7 @@ This release closes the tenant-key drift gap that allowed aliases such as `skyha
 - Follow-up: `scripts/tenant-canonical-cleanup.ts` groups alias relationship keys before canonical collision checks so private-VNet dry-runs do not perform a per-row canonical lookup across the relationship table.
 - Follow-up: `scripts/tenant-canonical-cleanup.ts` materializes canonical relationship keys once and joins them to alias groups so the private-VNet collision scan avoids correlated lookups entirely.
 - Follow-up: `scripts/tenant-canonical-cleanup.ts` adds bounded statement timeout and per-column/alias progress logs for private-VNet operator runs so slow live cleanup scans fail visibly instead of spinning silently.
+- Follow-up: `scripts/tenant-canonical-cleanup.ts` carries actual stored alias values into generic duplicate detection so large fact tables can use exact tenant-key joins instead of re-normalizing every row during canonical collision checks.
 - `scripts/verify-tenant-key-canonical.ts` now discovers active tenant columns dynamically and fails on aliases in product/runtime/read-model tables.
 - `package.json` adds `npm run db:cleanup:tenant-keys`.
 
@@ -56,6 +57,7 @@ This release closes the tenant-key drift gap that allowed aliases such as `skyha
 - pass: first relationship alias dedup dry-run was stopped before apply because the per-row collision scan was too slow; the cleanup now uses grouped relationship-key collision detection before the next private-VNet run.
 - pass: second relationship alias dry-run was stopped before apply because the grouped query still used a correlated canonical-key existence check; the cleanup now uses a join between alias relationship groups and distinct canonical relationship keys.
 - pass: third dry-run was stopped before apply because it remained silent too long; the cleanup now emits scan progress and sets a 60s default statement timeout to identify the exact slow table/alias if it recurs.
+- pass: fourth dry-run failed safely before apply on `enterprise_context_facts.tenant_key` duplicate detection; the cleanup now uses stored alias values and key-based victim CTEs for large fact-table duplicate checks.
 - blocked: full repo TypeScript check reaches the existing dependency baseline failures for missing `js-yaml`, Azure Document Intelligence, and axe Playwright type packages before this PR can be isolated.
 - blocked: live data-plane cleanup requires the private VNet operator run after PR merge: dry-run, manifest review, `--apply`, then verifier.
 
