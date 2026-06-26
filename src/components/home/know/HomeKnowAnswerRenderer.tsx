@@ -10,6 +10,7 @@ import type {
   HomeKnowTable,
   HomeKnowTableColumn,
 } from "@/lib/home/know/home-know-contract";
+import { scrubHomePublicAnswerText } from "@/lib/home/know/home-public-answer-scrub";
 
 const CSS = `
 .homeKnowAnswer{--hk-ink:#171713;--hk-muted:#67675f;--hk-faint:#8f8d84;--hk-line:#E4DFD5;--hk-paper:#fff;--hk-soft:#F8F6F1;--hk-green:#17683B;--hk-blue:#0B5CAD;--hk-amber:#9A641D;--hk-amber-bg:#FFF7E6;display:grid;gap:12px;color:var(--hk-ink);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;width:min(860px,94%)}
@@ -81,22 +82,22 @@ const INTERNAL_CODE_REPLACE =
 function sanitizeHomeText(value: unknown): string {
   if (value === null || value === undefined) return "—";
   const text = String(value);
-  const cleaned = text
+  const cleaned = scrubHomePublicAnswerText(text
     .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move):\s*/gi, "$1")
     .replace(/\bmissing evidence path\b/gi, "missing source path")
     .replace(/\bevidence path\b/gi, "source path")
     .replace(/\bsource citations\b/gi, "source records")
     .replace(/\bsource rows\b/gi, "source records")
     .replace(/\bedge rows\b/gi, "relationship records")
-    .replace(/\bdossier\b/gi, "source context")
-    .replace(/\bbinder\b/gi, "source context")
+    .replace(/\bdossier\b/gi, "business material")
+    .replace(/\bbinder\b/gi, "business material")
     .replace(/\bfragment lookup\b/gi, "narrow lookup")
     .replace(/\bno blocking gap\b/gi, "no specific source gap")
     .replace(/\bread-model\b/gi, "context model")
-    .replace(/\bevidence\b/gi, "source context")
-    .replace(BLOCKED_HOME_TEXT_REPLACE, "loaded context")
+    .replace(/\bevidence\b/gi, "source support")
+    .replace(BLOCKED_HOME_TEXT_REPLACE, "available business material")
     .replace(INTERNAL_CODE_REPLACE, "source reference")
-    .trim();
+    .trim());
   return cleaned || "—";
 }
 
@@ -113,7 +114,7 @@ function sourceClassLabel(value: unknown): string {
   if (raw.includes("chunk")) return "source excerpt";
   if (raw.includes("file")) return "source file";
   if (raw.includes("record")) return "source record";
-  if (raw.includes("fact")) return "source fact";
+  if (raw.includes("fact")) return "source support";
   if (raw.includes("gap")) return "gap note";
   if (raw.includes("conflict")) return "conflict note";
   return displayIdentifier(value) || "source";
@@ -497,7 +498,7 @@ function frontendFallbackProse(response: HomeKnowResponse): string | null {
     response.answerStatus === "no_data" &&
     response.safety.evidenceStatus === "empty_dossier" &&
     response.safety.usableEvidence === false;
-  if (isEmptyDossier) return "I do not see that in the loaded data.";
+  if (isEmptyDossier) return "I do not see that in the available data.";
   if (
     response.safety.frontendTripwireShouldFire ||
     BLOCKED_HOME_TEXT.test(response.prose) ||
@@ -519,7 +520,7 @@ function shouldOpenEvidence(
 function statusLabel(response: HomeKnowResponse): string {
   if (response.handoff) return "Best answered in Intelligence";
   if (response.answerStatus === "answered")
-    return "Answered from source context";
+    return "Answered from available sources";
   if (response.answerStatus === "partial") return "Answered with caveat";
   if (response.answerStatus === "no_data") return "Missing source detail";
   return "Review needed";

@@ -2286,7 +2286,7 @@ export function validateHomeKnowResponse(
   } else if (lookupHasDecisionLanguage) {
     unsupportedClaimsRemoved += 1;
   }
-  return repairHomeAnswerQuality({
+  const repaired = repairHomeAnswerQuality({
     ...response,
     prose,
     safety: {
@@ -2311,6 +2311,17 @@ export function validateHomeKnowResponse(
           relevance.issues.includes("missing_requested_graph")),
     },
   });
+  const finalProse = sanitizePublicHomeText(repaired.prose);
+  if (finalProse === repaired.prose) return repaired;
+  return {
+    ...repaired,
+    prose: finalProse,
+    safety: {
+      ...repaired.safety,
+      unsupportedClaimsRemoved:
+        repaired.safety.unsupportedClaimsRemoved + 1,
+    },
+  };
 }
 
 function sanitizePublicHomeText(value: string): string {
