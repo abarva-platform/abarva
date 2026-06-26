@@ -29,14 +29,16 @@ Tower now has an additive `tower_*` materialized read-model contract for demo-re
 
 - Migration: `supabase/migrations/20260626130000_tower_demo_readiness_materialized_plane.sql`
 - Runtime reader: `src/lib/tower/tower-materialized-read-model.ts`
+- Materialization planner: `src/lib/tower/tower-materialization.ts`
+- Materialization CLI: `src/scripts/tower/materialize-read-model.ts`
 - Runtime refactor: `src/lib/atlas/tower-grounding.ts`
-- Tests: `src/lib/tower/__tests__/tower-materialized-read-model.test.ts`
+- Tests: `src/lib/tower/__tests__/tower-materialized-read-model.test.ts`, `src/lib/tower/__tests__/tower-materialization.test.ts`
 - Decision record: `NEEDS_DECISION.md`
 
 ## QA / Validation
 
-- Targeted Jest: pass — `npx jest src/lib/tower/__tests__/tower-materialized-read-model.test.ts --runInBand` (3 tests passed).
-- ESLint: pass — `npx eslint src/lib/tower/tower-materialized-read-model.ts src/lib/tower/__tests__/tower-materialized-read-model.test.ts src/lib/atlas/tower-grounding.ts`.
+- Targeted Jest: pass — `npx jest src/lib/tower/__tests__/tower-materialized-read-model.test.ts src/lib/tower/__tests__/tower-materialization.test.ts --runInBand` (7 tests passed).
+- ESLint: pass — `npx eslint src/lib/tower/tower-materialized-read-model.ts src/lib/tower/tower-materialization.ts src/lib/tower/__tests__/tower-materialized-read-model.test.ts src/lib/tower/__tests__/tower-materialization.test.ts src/lib/atlas/tower-grounding.ts src/scripts/tower/materialize-read-model.ts`.
 - TypeScript: blocked — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` now runs past the heap issue, but full-repo typecheck is blocked by pre-existing missing dependency/type declarations for `js-yaml`, `@azure-rest/ai-document-intelligence`, and `@axe-core/playwright`.
 - Release check: pass — `npm run release:check`.
 - Live Azure/Postgres migration apply: not-run in this PR.
@@ -74,6 +76,6 @@ Data rollback: migration is additive. Leave tables in place if rollback is urgen
 
 ## Known Gaps
 
-- Materialization job is not implemented in this first slice.
+- Materialization job is scaffolded and test-covered, but not yet run against live Azure/Postgres.
 - Gates A-F are not all proven yet.
 - Lakeshore Level 2/Level 3 portfolio-company views remain Path A named gaps until operating-company data is explicitly approved.
