@@ -208,15 +208,18 @@ async function countRelationshipAliasCollisionRows(
         WHERE lower(replace(alias_row."tenant_key"::text, '_', '-')) = $1
         GROUP BY alias_row."relationship_key"
      ),
+     canonical_keys AS (
+       SELECT DISTINCT canonical_row."relationship_key",
+              true AS canonical_exists
+         FROM public.enterprise_context_relationships canonical_row
+        WHERE canonical_row."tenant_key" = $2
+     ),
      collision_groups AS (
        SELECT alias_groups.alias_count,
-              EXISTS (
-                SELECT 1
-                  FROM public.enterprise_context_relationships canonical_row
-                 WHERE canonical_row."tenant_key" = $2
-                   AND canonical_row."relationship_key" IS NOT DISTINCT FROM alias_groups."relationship_key"
-              ) AS canonical_exists
+              COALESCE(canonical_keys.canonical_exists, false) AS canonical_exists
          FROM alias_groups
+         LEFT JOIN canonical_keys
+           ON canonical_keys."relationship_key" IS NOT DISTINCT FROM alias_groups."relationship_key"
      )
      SELECT COALESCE(
               SUM(
@@ -242,16 +245,24 @@ async function deleteRelationshipAliasCollisionRows(
   const result = await client.query(
     `WITH alias_groups AS (
        SELECT alias_row."relationship_key",
-              COUNT(*)::integer AS alias_count,
-              EXISTS (
-                SELECT 1
-                  FROM public.enterprise_context_relationships canonical_row
-                 WHERE canonical_row."tenant_key" = $2
-                   AND canonical_row."relationship_key" IS NOT DISTINCT FROM alias_row."relationship_key"
-              ) AS canonical_exists
+              COUNT(*)::integer AS alias_count
          FROM public.enterprise_context_relationships alias_row
         WHERE lower(replace(alias_row."tenant_key"::text, '_', '-')) = $1
         GROUP BY alias_row."relationship_key"
+     ),
+     canonical_keys AS (
+       SELECT DISTINCT canonical_row."relationship_key",
+              true AS canonical_exists
+         FROM public.enterprise_context_relationships canonical_row
+        WHERE canonical_row."tenant_key" = $2
+     ),
+     collision_groups AS (
+       SELECT alias_groups."relationship_key",
+              alias_groups.alias_count,
+              COALESCE(canonical_keys.canonical_exists, false) AS canonical_exists
+         FROM alias_groups
+         LEFT JOIN canonical_keys
+           ON canonical_keys."relationship_key" IS NOT DISTINCT FROM alias_groups."relationship_key"
      ),
      ranked_alias_rows AS (
        SELECT alias_row.ctid,
@@ -263,9 +274,9 @@ async function deleteRelationshipAliasCollisionRows(
      victim_rows AS (
        SELECT ranked_alias_rows.ctid
          FROM ranked_alias_rows
-         JOIN alias_groups
-           ON alias_groups."relationship_key" IS NOT DISTINCT FROM ranked_alias_rows."relationship_key"
-        WHERE alias_groups.canonical_exists OR ranked_alias_rows.alias_rank > 1
+         JOIN collision_groups
+           ON collision_groups."relationship_key" IS NOT DISTINCT FROM ranked_alias_rows."relationship_key"
+        WHERE collision_groups.canonical_exists OR ranked_alias_rows.alias_rank > 1
      )
      DELETE FROM public.enterprise_context_relationships target
       USING victim_rows
