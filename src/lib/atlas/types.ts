@@ -60,6 +60,7 @@ export interface AtlasMetricExplanationRequest {
 
 export interface AtlasTenancyCtx {
   clientId: string;
+  clientKey?: string | null;
   userId: string | null;
 }
 
