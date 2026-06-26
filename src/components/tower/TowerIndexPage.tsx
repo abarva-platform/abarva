@@ -379,6 +379,918 @@ function CanvasViewTabs({
   );
 }
 
+type CioDashboardView =
+  | "overview"
+  | "portfolio"
+  | "budget"
+  | "vendors"
+  | "ai_roi"
+  | "outcomes"
+  | "risks";
+
+const CIO_DASHBOARD_VIEWS: Array<{
+  key: CioDashboardView;
+  label: string;
+  description: string;
+}> = [
+  {
+    key: "overview",
+    label: "Overview",
+    description: "CIO operating read across money, programs, risk, and value.",
+  },
+  {
+    key: "portfolio",
+    label: "Portfolio",
+    description: "Top IT programs and ownership posture.",
+  },
+  {
+    key: "budget",
+    label: "Budget",
+    description: "Budget by function and loaded run/change gaps.",
+  },
+  {
+    key: "vendors",
+    label: "Vendors",
+    description: "Vendor exposure, concentration, and renewal clocks.",
+  },
+  {
+    key: "ai_roi",
+    label: "AI ROI",
+    description: "Copilot, SaaS-agent, platform, and true-AI spend posture.",
+  },
+  {
+    key: "outcomes",
+    label: "Outcomes",
+    description: "Measured value evidence and realization gaps.",
+  },
+  {
+    key: "risks",
+    label: "Risks",
+    description: "Owner-facing pressure signals from Tower evidence.",
+  },
+];
+
+function parseCioDashboardView(raw: string | null | undefined): CioDashboardView {
+  return (
+    CIO_DASHBOARD_VIEWS.find((view) => view.key === raw)?.key ?? "overview"
+  );
+}
+
+type CioGroupRow = {
+  key: string;
+  label: string;
+  amount: number;
+  count: number;
+  note?: string;
+};
+
+type CioAiSpendRow = CioGroupRow & {
+  category: "Copilot / productivity" | "Vendor AI agent" | "AI platform" | "True AI initiative" | "Unclassified AI";
+  measured: number;
+};
+
+type CioDashboardModel = {
+  initiativeCount: number;
+  vendorCount: number;
+  committedTotal: number;
+  measuredTotal: number;
+  measuredCoverageCount: number;
+  pressureCount: number;
+  spendAtRisk: number;
+  topPrograms: ReadonlyArray<AIInitiative>;
+  spendByFunction: ReadonlyArray<CioGroupRow>;
+  spendByVendor: ReadonlyArray<CioGroupRow>;
+  aiSpendRows: ReadonlyArray<CioAiSpendRow>;
+  outcomeRows: ReadonlyArray<AIInitiative>;
+  riskRows: ReadonlyArray<AIInitiative>;
+  renewalRows: ReadonlyArray<AIInitiativeVendorRow>;
+  gaps: ReadonlyArray<string>;
+};
+
+function initiativeBudget(initiative: AIInitiative): number {
+  return Number(
+    initiative.committedAnnualUsd ?? initiative.committedTotalUsd ?? 0,
+  );
+}
+
+function initiativeValue(initiative: AIInitiative): number {
+  return Number(initiative.measuredValueUsd ?? 0);
+}
+
+function groupMoney(
+  rows: ReadonlyArray<AIInitiative>,
+  labelFor: (initiative: AIInitiative) => string | null | undefined,
+): CioGroupRow[] {
+  const grouped = new Map<string, CioGroupRow>();
+  for (const initiative of rows) {
+    const label = labelFor(initiative)?.trim() || "Unassigned";
+    const current =
+      grouped.get(label) ??
+      ({ key: label.toLowerCase(), label, amount: 0, count: 0 } satisfies CioGroupRow);
+    current.amount += initiativeBudget(initiative);
+    current.count += 1;
+    grouped.set(label, current);
+  }
+  return [...grouped.values()].sort((a, b) => b.amount - a.amount);
+}
+
+function groupVendorMoney(
+  rows: ReadonlyArray<AIInitiativeVendorRow>,
+): CioGroupRow[] {
+  const grouped = new Map<string, CioGroupRow>();
+  for (const vendor of rows) {
+    const label = vendor.vendorName?.trim() || "Unassigned vendor";
+    const current =
+      grouped.get(label) ??
+      ({ key: label.toLowerCase(), label, amount: 0, count: 0 } satisfies CioGroupRow);
+    current.amount += Number(vendor.contractValueUsd ?? 0);
+    current.count += 1;
+    grouped.set(label, current);
+  }
+  return [...grouped.values()].sort((a, b) => b.amount - a.amount);
+}
+
+function aiSpendCategory(
+  initiative: AIInitiative,
+  vendors: ReadonlyArray<AIInitiativeVendorRow>,
+): CioAiSpendRow["category"] | null {
+  const vendorNames = vendors
+    .filter((vendor) => vendor.initiativeDisplayId === initiative.displayId)
+    .map((vendor) => vendor.vendorName)
+    .join(" ");
+  const text = [
+    initiative.name,
+    initiative.description,
+    initiative.primaryCategoryName,
+    initiative.secondaryCategoryName,
+    initiative.primaryGoalName,
+    vendorNames,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (!/(ai|agent|automation|copilot|genai|machine learning|ml|predictive)/.test(text))
+    return null;
+  if (/copilot|m365|github|cursor|productivity/.test(text))
+    return "Copilot / productivity";
+  if (/servicenow|workday|salesforce|now assist|einstein|vendor/.test(text))
+    return "Vendor AI agent";
+  if (/platform|lakehouse|data product|mlops|model|foundation/.test(text))
+    return "AI platform";
+  if (/initiative|decision|predictive|forecast|optimization|automation/.test(text))
+    return "True AI initiative";
+  return "Unclassified AI";
+}
+
+function buildCioDashboardModel(
+  initiatives: ReadonlyArray<AIInitiative>,
+  vendors: ReadonlyArray<AIInitiativeVendorRow>,
+  todayIso: string,
+): CioDashboardModel {
+  const committedTotal = initiatives.reduce(
+    (sum, initiative) => sum + initiativeBudget(initiative),
+    0,
+  );
+  const measuredTotal = initiatives.reduce(
+    (sum, initiative) => sum + initiativeValue(initiative),
+    0,
+  );
+  const riskRows = initiatives
+    .filter((initiative) => initiative.statusFlag !== "healthy")
+    .sort((a, b) => initiativeBudget(b) - initiativeBudget(a));
+  const spendAtRisk = riskRows.reduce(
+    (sum, initiative) => sum + initiativeBudget(initiative),
+    0,
+  );
+  const topPrograms = [...initiatives]
+    .sort((a, b) => initiativeBudget(b) - initiativeBudget(a))
+    .slice(0, 8);
+  const renewalRows = vendors
+    .filter((vendor) => {
+      const iso = dateValueToIso(vendor.renewalDate);
+      if (!iso) return false;
+      const delta = Date.parse(iso) - Date.parse(todayIso);
+      if (!Number.isFinite(delta)) return false;
+      const days = delta / (1000 * 60 * 60 * 24);
+      return days >= 0 && days <= 180;
+    })
+    .sort((a, b) =>
+      String(a.renewalDate ?? "").localeCompare(String(b.renewalDate ?? "")),
+    );
+
+  const aiSpendByCategory = new Map<CioAiSpendRow["category"], CioAiSpendRow>();
+  for (const initiative of initiatives) {
+    const category = aiSpendCategory(initiative, vendors);
+    if (!category) continue;
+    const current =
+      aiSpendByCategory.get(category) ??
+      ({
+        key: category.toLowerCase(),
+        label: category,
+        category,
+        amount: 0,
+        measured: 0,
+        count: 0,
+      } satisfies CioAiSpendRow);
+    current.amount += initiativeBudget(initiative);
+    current.measured += initiativeValue(initiative);
+    current.count += 1;
+    aiSpendByCategory.set(category, current);
+  }
+
+  const gaps: string[] = [];
+  if (committedTotal === 0)
+    gaps.push("Program budget rows are not loaded for Tower slicing.");
+  if (vendors.length === 0)
+    gaps.push("Vendor contract rows are not loaded for concentration and renewal views.");
+  if (initiatives.every((initiative) => initiative.measuredValueUsd === null))
+    gaps.push("Measured value rows are not loaded, so ROI is a gap rather than a claim.");
+  if (
+    initiatives.every(
+      (initiative) =>
+        !/run|change|opex|capex/i.test(
+          `${initiative.primaryCategoryName} ${initiative.primaryGoalName} ${initiative.description}`,
+        ),
+    )
+  )
+    gaps.push("Run/change or CapEx/OpEx line-item split is not loaded.");
+
+  return {
+    initiativeCount: initiatives.length,
+    vendorCount: new Set(vendors.map((vendor) => vendor.vendorName)).size,
+    committedTotal,
+    measuredTotal,
+    measuredCoverageCount: initiatives.filter(
+      (initiative) => initiative.measuredValueUsd !== null,
+    ).length,
+    pressureCount: riskRows.length,
+    spendAtRisk,
+    topPrograms,
+    spendByFunction: groupMoney(
+      initiatives,
+      (initiative) => initiative.ownerFunction ?? initiative.primaryCategoryName,
+    ).slice(0, 8),
+    spendByVendor: groupVendorMoney(vendors).slice(0, 8),
+    aiSpendRows: [...aiSpendByCategory.values()].sort(
+      (a, b) => b.amount - a.amount,
+    ),
+    outcomeRows: [...initiatives]
+      .sort((a, b) => initiativeValue(b) - initiativeValue(a))
+      .slice(0, 8),
+    riskRows: riskRows.slice(0, 8),
+    renewalRows: renewalRows.slice(0, 8),
+    gaps,
+  };
+}
+
+function percentOf(value: number, total: number): string {
+  if (!total) return "0%";
+  return `${Math.round((value / total) * 100)}%`;
+}
+
+function ratioText(numerator: number, denominator: number): string {
+  if (!denominator) return "not proven";
+  return `${(numerator / denominator).toFixed(2)}x`;
+}
+
+function CioDashboardTabs({
+  active,
+  hrefFor,
+}: {
+  active: CioDashboardView;
+  hrefFor: (view: CioDashboardView) => string;
+}) {
+  return (
+    <section
+      style={{
+        padding: "18px 32px 16px",
+        borderBottom: `1px solid ${T.RULE_STRONG}`,
+        background: "#fff",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 18,
+          flexWrap: "wrap",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontFamily: T.MONO,
+              fontSize: 10,
+              letterSpacing: "1.8px",
+              textTransform: "uppercase",
+              color: T.GOLD,
+              fontWeight: 800,
+            }}
+          >
+            CIO dashboard view
+          </div>
+          <div style={{ marginTop: 5, color: T.INK_2, fontSize: 13.5 }}>
+            {CIO_DASHBOARD_VIEWS.find((view) => view.key === active)?.description}
+          </div>
+        </div>
+        <select
+          aria-label="CIO dashboard view"
+          value={active}
+          onChange={(event) => {
+            window.location.href = hrefFor(event.currentTarget.value as CioDashboardView);
+          }}
+          style={{
+            minWidth: 180,
+            border: `1px solid ${T.RULE_STRONG}`,
+            borderRadius: 8,
+            padding: "9px 12px",
+            fontWeight: 800,
+            color: T.INK,
+            background: "#fff",
+          }}
+        >
+          {CIO_DASHBOARD_VIEWS.map((view) => (
+            <option key={view.key} value={view.key}>
+              {view.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
+        {CIO_DASHBOARD_VIEWS.map((view) => {
+          const current = view.key === active;
+          return (
+            <Link
+              key={view.key}
+              href={hrefFor(view.key)}
+              scroll={false}
+              style={{
+                border: `1px solid ${current ? T.INK : T.RULE_STRONG}`,
+                borderRadius: 999,
+                background: current ? T.INK : "#fff",
+                color: current ? "#fff" : T.INK_2,
+                padding: "8px 14px",
+                fontSize: 12,
+                fontWeight: 850,
+                textDecoration: "none",
+              }}
+            >
+              {view.label}
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function CioMetricCard({
+  label,
+  value,
+  note,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  note: string;
+  tone?: "neutral" | "green" | "amber" | "red";
+}) {
+  const color =
+    tone === "green"
+      ? T.GREEN
+      : tone === "amber"
+        ? T.AMBER
+        : tone === "red"
+          ? T.RED
+          : T.INK;
+  return (
+    <div
+      style={{
+        border: `1px solid ${T.RULE_STRONG}`,
+        borderRadius: 8,
+        background: "#fff",
+        padding: "14px 15px",
+        minHeight: 112,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 9,
+          letterSpacing: "1.4px",
+          textTransform: "uppercase",
+          color: T.GRAY_DK,
+          fontWeight: 850,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: T.SERIF,
+          fontSize: 31,
+          lineHeight: 1.05,
+          color,
+          fontWeight: 900,
+          marginTop: 10,
+        }}
+      >
+        {value}
+      </div>
+      <div style={{ marginTop: 7, color: T.INK_2, fontSize: 12.5 }}>
+        {note}
+      </div>
+    </div>
+  );
+}
+
+function CioBarList({
+  rows,
+  total,
+  empty,
+}: {
+  rows: ReadonlyArray<CioGroupRow>;
+  total: number;
+  empty: string;
+}) {
+  if (rows.length === 0) {
+    return (
+      <TowerEmptyState
+        eyebrow="Slice unavailable"
+        title="No rows returned for this cut."
+        body={empty}
+      />
+    );
+  }
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      {rows.map((row) => (
+        <div key={row.key}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+              color: T.INK,
+              fontWeight: 850,
+              fontSize: 13.5,
+            }}
+          >
+            <span>{row.label}</span>
+            <span>{formatMoney(row.amount)}</span>
+          </div>
+          <div
+            style={{
+              height: 9,
+              borderRadius: 999,
+              background: T.CREAM_DEEP,
+              marginTop: 7,
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: percentOf(row.amount, total),
+                minWidth: row.amount > 0 ? 10 : 0,
+                height: "100%",
+                background: T.GREEN,
+              }}
+            />
+          </div>
+          <div style={{ marginTop: 4, color: T.GRAY_DK, fontSize: 12 }}>
+            {row.count} row{row.count === 1 ? "" : "s"} ·{" "}
+            {percentOf(row.amount, total)} of loaded envelope
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CioPanel({
+  title,
+  eyebrow,
+  children,
+}: {
+  title: string;
+  eyebrow: string;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      style={{
+        border: `1px solid ${T.RULE_STRONG}`,
+        borderRadius: 10,
+        background: "#fff",
+        padding: 18,
+        boxShadow: "0 12px 26px rgba(15, 23, 42, 0.04)",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 9,
+          letterSpacing: "1.5px",
+          textTransform: "uppercase",
+          color: T.GOLD,
+          fontWeight: 850,
+          marginBottom: 8,
+        }}
+      >
+        {eyebrow}
+      </div>
+      <h3
+        style={{
+          margin: 0,
+          fontFamily: T.SERIF,
+          fontSize: 23,
+          lineHeight: 1.1,
+          color: T.INK,
+        }}
+      >
+        {title}
+      </h3>
+      <div style={{ marginTop: 15 }}>{children}</div>
+    </section>
+  );
+}
+
+function CioProgramTable({
+  rows,
+  detailHrefFor,
+}: {
+  rows: ReadonlyArray<AIInitiative>;
+  detailHrefFor: DetailHrefBuilder;
+}) {
+  if (rows.length === 0) {
+    return (
+      <TowerEmptyState
+        eyebrow="No programs"
+        title="No Tower program rows are loaded."
+        body="Load or bind IT initiative rows before Tower can rank the CIO portfolio."
+      />
+    );
+  }
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+        <thead>
+          <tr>
+            {["Program", "Function", "Owner", "Budget", "Measured", "Status"].map(
+              (head) => (
+                <th
+                  key={head}
+                  style={{
+                    textAlign: head === "Budget" || head === "Measured" ? "right" : "left",
+                    padding: "0 10px 10px",
+                    fontFamily: T.MONO,
+                    fontSize: 9,
+                    letterSpacing: "1.2px",
+                    color: T.GRAY_DK,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {head}
+                </th>
+              ),
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((initiative) => (
+            <tr key={initiative.displayId} style={{ borderTop: `1px solid ${T.RULE}` }}>
+              <td style={{ padding: "12px 10px", minWidth: 220 }}>
+                <Link
+                  href={detailHrefFor(initiative.displayId) ?? "#"}
+                  scroll={false}
+                  style={{
+                    color: T.INK,
+                    fontWeight: 900,
+                    textDecoration: "none",
+                  }}
+                >
+                  {initiative.name}
+                </Link>
+                <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 3 }}>
+                  {initiative.displayId}
+                </div>
+              </td>
+              <td style={{ padding: "12px 10px", color: T.INK_2 }}>
+                {initiative.ownerFunction ?? initiative.primaryCategoryName}
+              </td>
+              <td style={{ padding: "12px 10px", color: T.INK_2 }}>
+                {initiative.ownerName}
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+                {formatMoney(initiativeBudget(initiative))}
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "right", color: T.INK_2 }}>
+                {initiative.measuredValueUsd === null
+                  ? "gap"
+                  : formatMoney(initiativeValue(initiative))}
+              </td>
+              <td style={{ padding: "12px 10px", color: T.INK_2 }}>
+                {labelize(initiative.statusFlag)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function CioVendorTable({
+  rows,
+}: {
+  rows: ReadonlyArray<AIInitiativeVendorRow>;
+}) {
+  if (rows.length === 0) {
+    return (
+      <TowerEmptyState
+        eyebrow="No vendor rows"
+        title="Vendor concentration is a data gap."
+        body="Tower has program evidence, but vendor contract rows are missing for this slice."
+      />
+    );
+  }
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+        <thead>
+          <tr>
+            {["Vendor", "Program", "Contract", "Renewal", "Health"].map((head) => (
+              <th
+                key={head}
+                style={{
+                  textAlign: head === "Contract" ? "right" : "left",
+                  padding: "0 10px 10px",
+                  fontFamily: T.MONO,
+                  fontSize: 9,
+                  letterSpacing: "1.2px",
+                  color: T.GRAY_DK,
+                  textTransform: "uppercase",
+                }}
+              >
+                {head}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.slice(0, 10).map((vendor) => (
+            <tr key={`${vendor.vendorId}-${vendor.initiativeDisplayId}`} style={{ borderTop: `1px solid ${T.RULE}` }}>
+              <td style={{ padding: "12px 10px", fontWeight: 900 }}>{vendor.vendorName}</td>
+              <td style={{ padding: "12px 10px", color: T.INK_2 }}>{vendor.initiativeName}</td>
+              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+                {formatMoney(vendor.contractValueUsd)}
+              </td>
+              <td style={{ padding: "12px 10px", color: T.INK_2 }}>
+                {formatDateLabel(vendor.renewalDate, "not loaded")}
+              </td>
+              <td style={{ padding: "12px 10px", color: T.INK_2 }}>
+                {labelize(vendor.financialHealth)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function CioDashboardPanel({
+  active,
+  model,
+  initiatives,
+  vendors,
+  detailHrefFor,
+}: {
+  active: CioDashboardView;
+  model: CioDashboardModel;
+  initiatives: ReadonlyArray<AIInitiative>;
+  vendors: ReadonlyArray<AIInitiativeVendorRow>;
+  detailHrefFor: DetailHrefBuilder;
+}) {
+  const measuredTone = model.measuredTotal > 0 ? "green" : "amber";
+  return (
+    <div style={{ padding: "22px 32px 36px" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+          gap: 12,
+          marginBottom: 18,
+        }}
+      >
+        <CioMetricCard
+          label="Loaded IT portfolio"
+          value={formatMoney(model.committedTotal)}
+          note={`${model.initiativeCount} top programs in the Tower read model`}
+        />
+        <CioMetricCard
+          label="Measured value"
+          value={
+            model.measuredTotal > 0 ? formatMoney(model.measuredTotal) : "gap"
+          }
+          note={`${model.measuredCoverageCount} programs with measured value rows`}
+          tone={measuredTone}
+        />
+        <CioMetricCard
+          label="ROI signal"
+          value={ratioText(model.measuredTotal, model.committedTotal)}
+          note="Calculated only from loaded measured-value rows"
+          tone={model.measuredTotal > 0 ? "green" : "amber"}
+        />
+        <CioMetricCard
+          label="Vendor exposure"
+          value={formatMoney(model.spendByVendor.reduce((sum, row) => sum + row.amount, 0))}
+          note={`${model.vendorCount} vendors in contract rows`}
+        />
+        <CioMetricCard
+          label="Pressure spend"
+          value={formatMoney(model.spendAtRisk)}
+          note={`${model.pressureCount} programs not marked healthy`}
+          tone={model.pressureCount > 0 ? "red" : "green"}
+        />
+      </div>
+
+      {model.gaps.length > 0 ? (
+        <div
+          style={{
+            border: `1px solid ${T.AMBER}`,
+            background: T.AMBER_BG,
+            borderRadius: 8,
+            padding: "12px 14px",
+            marginBottom: 18,
+            color: T.INK,
+            fontSize: 13.5,
+          }}
+        >
+          <strong>Loaded-data gaps:</strong> {model.gaps.join(" ")}
+        </div>
+      ) : null}
+
+      {active === "overview" ? (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1.35fr) minmax(300px, 0.9fr)",
+            gap: 18,
+          }}
+        >
+          <CioPanel
+            eyebrow="Top IT initiatives"
+            title="Where the loaded portfolio money is concentrated."
+          >
+            <CioProgramTable rows={model.topPrograms.slice(0, 5)} detailHrefFor={detailHrefFor} />
+          </CioPanel>
+          <div style={{ display: "grid", gap: 18 }}>
+            <CioPanel eyebrow="Budget by function" title="Loaded functional slice.">
+              <CioBarList
+                rows={model.spendByFunction.slice(0, 5)}
+                total={model.committedTotal}
+                empty="Owner function or portfolio labels are missing from the Tower rows."
+              />
+            </CioPanel>
+            <CioPanel eyebrow="Vendor concentration" title="Who holds the contract exposure.">
+              <CioBarList
+                rows={model.spendByVendor.slice(0, 5)}
+                total={model.spendByVendor.reduce((sum, row) => sum + row.amount, 0)}
+                empty="Vendor contract values are not loaded."
+              />
+            </CioPanel>
+          </div>
+        </div>
+      ) : null}
+
+      {active === "portfolio" ? (
+        <CioPanel
+          eyebrow="Ranked portfolio"
+          title="All loaded IT initiatives by budget and proof posture."
+        >
+          <CioProgramTable rows={initiatives} detailHrefFor={detailHrefFor} />
+        </CioPanel>
+      ) : null}
+
+      {active === "budget" ? (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+          <CioPanel eyebrow="Function slice" title="Budget by loaded owner/function.">
+            <CioBarList
+              rows={model.spendByFunction}
+              total={model.committedTotal}
+              empty="No function or portfolio ownership rows are available."
+            />
+          </CioPanel>
+          <CioPanel eyebrow="Run/change integrity" title="What is missing before spend can be benchmarked.">
+            <TowerEmptyState
+              eyebrow="Gap, not zero"
+              title="Run/change line-item split is not yet loaded."
+              body="Tower can rank loaded programs today. A CIO-grade run/change benchmark needs explicit run, change, CapEx, and OpEx fields rather than inferring them from initiative names."
+            />
+          </CioPanel>
+        </div>
+      ) : null}
+
+      {active === "vendors" ? (
+        <div style={{ display: "grid", gridTemplateColumns: "0.9fr 1.2fr", gap: 18 }}>
+          <CioPanel eyebrow="Concentration" title="Vendor spend concentration.">
+            <CioBarList
+              rows={model.spendByVendor}
+              total={model.spendByVendor.reduce((sum, row) => sum + row.amount, 0)}
+              empty="No vendor contract values are loaded."
+            />
+          </CioPanel>
+          <CioPanel eyebrow="Renewal clock" title="Contracts Tower can watch.">
+            <CioVendorTable rows={model.renewalRows.length > 0 ? model.renewalRows : vendors} />
+          </CioPanel>
+        </div>
+      ) : null}
+
+      {active === "ai_roi" ? (
+        <div style={{ display: "grid", gridTemplateColumns: "0.95fr 1.15fr", gap: 18 }}>
+          <CioPanel eyebrow="AI spend families" title="Copilot, SaaS agents, platforms, and true AI bets.">
+            <CioBarList
+              rows={model.aiSpendRows}
+              total={model.aiSpendRows.reduce((sum, row) => sum + row.amount, 0)}
+              empty="No AI-tagged spend rows are loaded under the Tower initiative evidence."
+            />
+          </CioPanel>
+          <CioPanel eyebrow="ROI proof" title="Spend-to-outcome proof by AI family.">
+            {model.aiSpendRows.length > 0 ? (
+              <div style={{ display: "grid", gap: 10 }}>
+                {model.aiSpendRows.map((row) => (
+                  <div
+                    key={row.key}
+                    style={{
+                      borderTop: `1px solid ${T.RULE}`,
+                      paddingTop: 10,
+                      display: "grid",
+                      gridTemplateColumns: "1fr auto auto",
+                      gap: 14,
+                      alignItems: "baseline",
+                    }}
+                  >
+                    <strong>{row.label}</strong>
+                    <span>{formatMoney(row.amount)} spend</span>
+                    <span style={{ color: row.measured > 0 ? T.GREEN : T.AMBER }}>
+                      {row.measured > 0 ? `${formatMoney(row.measured)} measured` : "value gap"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <TowerEmptyState
+                eyebrow="AI ROI gap"
+                title="No AI spend family can be benchmarked yet."
+                body="Load explicit Copilot, vendor-agent, platform, and initiative spend/outcome fields to compare ROI by AI investment type."
+              />
+            )}
+          </CioPanel>
+        </div>
+      ) : null}
+
+      {active === "outcomes" ? (
+        <CioPanel
+          eyebrow="Value realization"
+          title="Measured value rows versus budgeted programs."
+        >
+          <CioProgramTable rows={model.outcomeRows} detailHrefFor={detailHrefFor} />
+        </CioPanel>
+      ) : null}
+
+      {active === "risks" ? (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+          <CioPanel eyebrow="Pressure programs" title="Loaded programs requiring owner attention.">
+            <CioProgramTable rows={model.riskRows} detailHrefFor={detailHrefFor} />
+          </CioPanel>
+          <CioPanel eyebrow="Pressure meaning" title="How Tower interprets the flags.">
+            <div style={{ display: "grid", gap: 10 }}>
+              {model.riskRows.slice(0, 6).map((initiative) => (
+                <div key={initiative.displayId} style={{ borderTop: `1px solid ${T.RULE}`, paddingTop: 10 }}>
+                  <strong>{labelize(initiative.statusFlag)}</strong>
+                  <div style={{ color: T.INK_2, marginTop: 4, fontSize: 13 }}>
+                    {initiative.name}: {statusMeaning(initiative.statusFlag)}
+                  </div>
+                </div>
+              ))}
+              {model.riskRows.length === 0 ? (
+                <TowerEmptyState
+                  eyebrow="No active pressure"
+                  title="No non-healthy status flags are loaded."
+                  body="Tower will keep this empty until risk, value-lag, adoption, duplication, or cost flags arrive from the read model."
+                />
+              ) : null}
+            </div>
+          </CioPanel>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 // ─── T-6 (Bind 2): Substrate-bound pressure card ─────────────────────────────
 //
 // Renders a Pressure card from a pre-composed `PressureCardView`. Maps the
@@ -3074,25 +3986,11 @@ export function TowerIndexPage({
   // The dashboard band is fixed in the cleaned-up Tower model. Keep the
   // internal lens at value so stale ?lens= URLs cannot silently re-rank data.
   const activeLens: TowerLens = "value";
-  const rawCanvasView = searchParams?.get("view");
-  const activeCanvasView: PortfolioCanvasView =
-    rawCanvasView === "pressures" ||
-    rawCanvasView === "alignment" ||
-    rawCanvasView === "contract" ||
-    rawCanvasView === "adoption" ||
-    rawCanvasView === "evidence"
-      ? rawCanvasView
-      : defaultPortfolioCanvasView(activeLens);
+  const activeCioDashboardView = parseCioDashboardView(
+    searchParams?.get("dashboard"),
+  );
   const activeDetailId = searchParams?.get("detail") ?? null;
   const activePressureId = searchParams?.get("pressure") ?? null;
-  const visiblePressureCards = portfolioPressureCardsForCanvas(
-    pressuresView?.cards ?? [],
-    activeCanvasView,
-  );
-  const visiblePressureNarrative = portfolioCanvasNarrative(
-    activeCanvasView,
-    visiblePressureCards.length,
-  );
   const detailInitiative = findInitiativeDetail(
     initiatives ?? [],
     activeDetailId,
@@ -3106,17 +4004,16 @@ export function TowerIndexPage({
   const buildTowerHref = useCallback(
     (
       next: {
-        view?: PortfolioCanvasView;
+        dashboard?: CioDashboardView;
         detail?: string | null;
         pressure?: string | null;
       } = {},
     ) => {
       const params = new URLSearchParams();
       if (activeTab !== "portfolio") params.set("tab", activeTab);
-      const defaultView = defaultPortfolioCanvasView(activeLens);
-      const view = next.view ?? activeCanvasView;
-      if (activeTab === "portfolio" && view !== defaultView)
-        params.set("view", view);
+      const dashboard = next.dashboard ?? activeCioDashboardView;
+      if (activeTab === "portfolio" && dashboard !== "overview")
+        params.set("dashboard", dashboard);
       const detail = next.detail === undefined ? activeDetailId : next.detail;
       if (detail) params.set("detail", detail);
       const pressure =
@@ -3125,7 +4022,12 @@ export function TowerIndexPage({
       const query = params.toString();
       return query ? `/tower?${query}` : "/tower";
     },
-    [activeCanvasView, activeDetailId, activeLens, activePressureId, activeTab],
+    [
+      activeCioDashboardView,
+      activeDetailId,
+      activePressureId,
+      activeTab,
+    ],
   );
 
   const detailHrefFor = useCallback<DetailHrefBuilder>(
@@ -3146,13 +4048,22 @@ export function TowerIndexPage({
   useEffect(() => {
     if (activeDetailId || activeTab !== "portfolio") return;
     towerCanvasRef.current?.scrollTo({ top: 0, behavior: "auto" });
-  }, [activeCanvasView, activeDetailId, activeLens, activeTab]);
+  }, [
+    activeCioDashboardView,
+    activeDetailId,
+    activeTab,
+  ]);
 
   // Keep this label deterministic across SSR and hydration. Live wall-clock
   // rendering causes React text mismatches when the server and browser resolve
   // the minute or time zone differently.
   const { dayName, monthDay } = formatTowerDateLabel(towerToday);
   const timestamp = "12:00 AM";
+  const cioDashboardModel = buildCioDashboardModel(
+    initiatives ?? [],
+    vendors ?? [],
+    towerToday,
+  );
 
   // ─── Atlas chat state · wired to /api/v1/atlas/chat via the shared
   // <AgentDock> mounted around the workspace below. The dock owns the
@@ -3240,6 +4151,7 @@ export function TowerIndexPage({
               clientId,
               tenantName,
               activeTowerLens: activeLens,
+              activeTowerDashboardView: activeCioDashboardView,
               context,
               ...surfaceContextPatch,
             },
@@ -3284,7 +4196,14 @@ export function TowerIndexPage({
         setAtlasPending(false);
       }
     },
-    [activeLens, clientId, atlasThreadId, context, tenantName],
+    [
+      activeCioDashboardView,
+      activeLens,
+      clientId,
+      atlasThreadId,
+      context,
+      tenantName,
+    ],
   );
 
   const handleMetricAsk = useCallback<MetricAskHandler>(
@@ -3319,13 +4238,6 @@ export function TowerIndexPage({
     },
     [router, sendToAtlas],
   );
-
-  const hasTowerSubstrate =
-    (substrateCounts?.initiatives ?? initiatives?.length ?? 0) > 0 ||
-    (substrateCounts?.vendors ?? vendors?.length ?? 0) > 0 ||
-    (substrateCounts?.kpis ?? 0) > 0 ||
-    (substrateCounts?.decisions ?? 0) > 0 ||
-    (substrateCounts?.scenarios ?? 0) > 0;
 
   const kpiBand = (
     <section
@@ -3405,8 +4317,8 @@ export function TowerIndexPage({
                   marginBottom: 5,
                 }}
               >
-                Tower · {workspaceTitle(activeTab)} · TWR-IDX-
-                {activeTab.replace(/_/g, "-").toUpperCase()}
+                Tower · CIO command center · TWR-CIO-
+                {activeCioDashboardView.replace(/_/g, "-").toUpperCase()}
               </div>
               <h1
                 style={{
@@ -3420,7 +4332,7 @@ export function TowerIndexPage({
                   color: T.INK,
                 }}
               >
-                {workspaceTitle(activeTab)}{" "}
+                CIO portfolio command center{" "}
                 <span
                   style={{
                     fontSize: 19,
@@ -3455,7 +4367,8 @@ export function TowerIndexPage({
                   lineHeight: 1.35,
                 }}
               >
-                {workspaceQuestion(activeTab)}
+                Budget, top programs, vendors, AI spend, outcomes, and risk
+                slices from loaded Tower evidence.
               </div>
             </div>
             {reportDownloadSlot ? (
@@ -3469,13 +4382,6 @@ export function TowerIndexPage({
             {kpiBand}
             {portfolioSequenceSlot}
 
-            <CanvasViewTabs
-              active={activeCanvasView}
-              hrefFor={(view) =>
-                buildTowerHref({ view, detail: null, pressure: null })
-              }
-            />
-
             {activeDetailId ? (
               <TowerInlineDetailPanel
                 detailId={activeDetailId}
@@ -3486,213 +4392,23 @@ export function TowerIndexPage({
               />
             ) : (
               <>
-                {/* Section headline */}
-                {(activeCanvasView === "pressures" ||
-                  activeCanvasView === "contract" ||
-                  activeCanvasView === "adoption") && (
-                  <>
-                    <div style={{ padding: "16px 32px 10px" }}>
-                      <div
-                        style={{
-                          fontFamily: T.MONO,
-                          fontSize: 10,
-                          letterSpacing: "2px",
-                          fontWeight: 700,
-                          color: T.GOLD,
-                          textTransform: "uppercase",
-                          marginBottom: 8,
-                        }}
-                      >
-                        {useSubstratePressures && pressuresView
-                          ? visiblePressureNarrative.eyebrow
-                          : "Today's pressures · DB substrate required"}
-                      </div>
-                      <h2
-                        style={{
-                          fontFamily: T.SERIF,
-                          fontSize: 27,
-                          fontWeight: 800,
-                          letterSpacing: "-0.5px",
-                          lineHeight: 1.1,
-                          maxWidth: "32ch",
-                          margin: 0,
-                          color: T.INK,
-                        }}
-                      >
-                        {useSubstratePressures && pressuresView
-                          ? visiblePressureNarrative.headline
-                          : "Tower needs tenant-bound data before it can rank portfolio pressures."}
-                      </h2>
-                      <p
-                        style={{
-                          fontSize: 13.5,
-                          color: T.GRAY_DK,
-                          marginTop: 6,
-                          maxWidth: "64ch",
-                          lineHeight: 1.55,
-                        }}
-                      >
-                        {visiblePressureNarrative.body}
-                      </p>
-                    </div>
-
-                    {/* Pressures list — T-6: substrate-bound only. */}
-                    <div
-                      style={{
-                        padding: "0 32px 24px",
-                        display: "flex",
-                        flexDirection: "column",
-                      }}
-                    >
-                      {useSubstratePressures &&
-                      pressuresView &&
-                      visiblePressureCards.length > 0 ? (
-                        visiblePressureCards.map((card) => (
-                          <SubstratePressure
-                            key={card.key}
-                            card={card}
-                            detailHref={detailHrefFor(card.displayId, card.id)}
-                          />
-                        ))
-                      ) : (
-                        <TowerEmptyState
-                          eyebrow="No pressure cards"
-                          title="No matching pressure cards are loaded for this canvas."
-                          body={
-                            pressuresView?.emptyHint ??
-                            "The data is present, but this canvas has no matching pressure rows. Switch canvas views or load additional source rows."
-                          }
-                        />
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {/* Strategic alignment matrix */}
-                {activeCanvasView === "alignment" && !hasTowerSubstrate ? (
-                  <section style={{ padding: "18px 32px 34px" }}>
-                    <TowerEmptyState
-                      eyebrow="Tower read model empty"
-                      title="No portfolio dots can be drawn yet."
-                      body="Bind or load Tower rows for initiatives, vendor spend, KPI outcomes, and decision states before using the alignment dashboard. This is intentionally blank-safe: no legacy demo board will fill the gap."
-                    />
-                  </section>
-                ) : activeCanvasView === "alignment" ? (
-                  <section style={{ padding: "10px 32px 34px" }}>
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "54px minmax(0, 1fr) minmax(0, 1fr)",
-                        gridTemplateRows:
-                          "minmax(214px, 1fr) minmax(214px, 1fr) 40px",
-                        gap: 0,
-                        width: "100%",
-                        minHeight: "min(58vh, 560px)",
-                        borderRadius: 10,
-                        overflow: "hidden",
-                        boxShadow: PANEL_SHADOW,
-                      }}
-                    >
-                      {/* Y axis */}
-                      <div
-                        style={{
-                          gridColumn: 1,
-                          gridRow: "1 / 3",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <span
-                          style={{
-                            writingMode: "vertical-rl",
-                            transform: "rotate(180deg)",
-                            fontFamily: T.MONO,
-                            fontSize: 9.5,
-                            letterSpacing: "1.6px",
-                            fontWeight: 700,
-                            color: T.GRAY_DK,
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          Strategic alignment →
-                        </span>
-                      </div>
-
-                      <Quadrant
-                        position="tl"
-                        qlabel="High value · Low alignment"
-                        qhead="Useful but off-strategy. Sustain or rationalize."
-                        dots={resolveQuadrantDots(alignment2x2View, "tl")}
-                        detailHrefFor={detailHrefFor}
-                      />
-                      <Quadrant
-                        position="tr"
-                        qlabel="High value · High alignment · the prize"
-                        qhead="Defend, scale, lock baselines."
-                        dots={resolveQuadrantDots(alignment2x2View, "tr")}
-                        detailHrefFor={detailHrefFor}
-                      />
-                      <Quadrant
-                        position="bl"
-                        qlabel="Low value · Low alignment"
-                        qhead={<>Sunset candidates.</>}
-                        dots={resolveQuadrantDots(alignment2x2View, "bl")}
-                        detailHrefFor={detailHrefFor}
-                      />
-                      <Quadrant
-                        position="br"
-                        qlabel="Low value · High alignment"
-                        qhead="Strategic but not yet earning. Watch closely."
-                        dots={resolveQuadrantDots(alignment2x2View, "br")}
-                        detailHrefFor={detailHrefFor}
-                      />
-
-                      {/* X axis */}
-                      <div
-                        style={{
-                          gridColumn: "2 / 4",
-                          gridRow: 3,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          paddingTop: 6,
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontFamily: T.MONO,
-                            fontSize: 9.5,
-                            letterSpacing: "1.6px",
-                            fontWeight: 700,
-                            color: T.GRAY_DK,
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          Realized portfolio value →
-                        </span>
-                      </div>
-                    </div>
-                  </section>
-                ) : null}
-
-                {activeCanvasView === "evidence" && (
-                  <div style={{ padding: "24px 0 32px" }}>
-                    <div style={{ marginBottom: 24 }}>
-                      <ExecutiveActionQueuePanel />
-                    </div>
-                    <div style={{ padding: "0 32px" }}>
-                      <TowerDataDesignPanel
-                        activeTab={activeTab}
-                        activeLens={activeLens}
-                        initiatives={initiatives ?? []}
-                        vendors={vendors ?? []}
-                        substrateCounts={substrateCounts}
-                      />
-                    </div>
-                  </div>
-                )}
+                <CioDashboardTabs
+                  active={activeCioDashboardView}
+                  hrefFor={(dashboard) =>
+                    buildTowerHref({
+                      dashboard,
+                      detail: null,
+                      pressure: null,
+                    })
+                  }
+                />
+                <CioDashboardPanel
+                  active={activeCioDashboardView}
+                  model={cioDashboardModel}
+                  initiatives={initiatives ?? []}
+                  vendors={vendors ?? []}
+                  detailHrefFor={detailHrefFor}
+                />
               </>
             )}
           </>
