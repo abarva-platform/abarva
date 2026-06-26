@@ -34,14 +34,9 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
-    expect(exhibits.tables[0]?.title).toBe("Chart Evidence Required");
+    expect(exhibits.tables[0]?.title).toBe("Supporting Material");
     expect(exhibits.charts).toHaveLength(0);
-    expect(exhibits.prose).toContain(
-      "I do not see connected numeric row/column source data for a defensible chart.",
-    );
-    expect(exhibits.prose).toContain(
-      "I am not rendering a visual from prose-only figures.",
-    );
+    expect(exhibits.prose).toContain("Epic integration work is $350K");
   });
 
   it("renders charts from structured retrieved source rows instead of prose", () => {
@@ -185,11 +180,11 @@ describe("buildStructuredExhibits", () => {
         "The right breakdown is denial reason category, AR days, and overturn rate. Next move: ask Revenue Cycle Operations to validate the category extract from the evidence ledger.",
     });
 
-    expect(exhibits.tables[0]?.title).toBe("Evidence Required");
+    expect(exhibits.tables[0]?.title).toBe("Supporting Material");
     expect(exhibits.tables[0]?.rows).toEqual([
       expect.objectContaining({
-        evidence: "Tenant data extract for the requested comparison",
-        status: "Not present in the retrieved cited sources",
+        source: "F12 IT budget",
+        type: "tenant material",
       }),
     ]);
     expect(exhibits.charts).toHaveLength(0);
@@ -214,11 +209,9 @@ describe("buildStructuredExhibits", () => {
 
     expect(exhibits.citations).toHaveLength(1);
     expect(exhibits.citations[0]?.sourceClass).toBe("tenant-fact");
-    expect(exhibits.tables[0]?.title).toBe("Chart Evidence Required");
+    expect(exhibits.tables[0]?.title).toBe("Supporting Material");
     expect(exhibits.charts).toHaveLength(0);
-    expect(exhibits.prose).toContain(
-      "I do not see connected numeric row/column source data for a defensible chart.",
-    );
+    expect(exhibits.prose).toContain("Medical Necessity is the highest-priority");
   });
 
   it("converts complete markdown tables from Ava prose into typed tables", () => {
@@ -241,7 +234,7 @@ describe("buildStructuredExhibits", () => {
       "Here are planning ranges from the cited context.",
     );
     expect(exhibits.prose).toContain(
-      "The next move is to validate tenant-specific numbers before board use.",
+      "Next, validate tenant-specific numbers before board use.",
     );
     expect(exhibits.prose).not.toContain("| Use case |");
     expect(exhibits.tables[0]).toEqual(
@@ -311,9 +304,11 @@ describe("buildStructuredExhibits", () => {
         "Honest read first: I don't have the full Apex IT landscape inventory loaded, so I cannot list every analytics vendor. What the loaded context does tell me is the strategic shape. Apex's Retail Lakehouse & Customer Inventory Graph has $95M committed and $12M realized. Analytics technology cut | Layer | Typical stack | |---|---| | Lakehouse / warehouse | Databricks or Snowflake | | Legacy marts | Teradata / Oracle / SQL Server | This is the consolidation bet meant to replace fragmented banner-level analytics. Inventory truth is the gating risk for any AI workload on top of it. Next move: assign the accountable data owner to validate the missing tenant evidence before approving a board number.",
     });
 
-    expect(exhibits.prose).toContain("The supporting evidence is that");
-    expect(exhibits.prose).toContain("That means");
-    expect(exhibits.prose).toContain("The next move is to");
+    expect(exhibits.prose).toContain("Retail Lakehouse & Customer Inventory Graph");
+    expect(exhibits.prose).toContain("This is the consolidation bet");
+    expect(exhibits.prose).toContain("Next, assign");
+    expect(exhibits.prose).not.toContain("The supporting evidence is that");
+    expect(exhibits.prose).not.toContain("That means");
     expect(exhibits.prose).not.toContain("| Layer |");
     expect(exhibits.tables[0]).toEqual(
       expect.objectContaining({
@@ -353,9 +348,10 @@ describe("buildStructuredExhibits", () => {
         owner_team: "Customer data team",
       }),
     ]);
-    expect(exhibits.prose).toContain("The supporting evidence is that");
-    expect(exhibits.prose).toContain("That means");
-    expect(exhibits.prose).toContain("The next move is to");
+    expect(exhibits.prose).toContain("Merch planning is your only gold-grade asset");
+    expect(exhibits.prose).toContain("Next, have");
+    expect(exhibits.prose).not.toContain("The supporting evidence is that");
+    expect(exhibits.prose).not.toContain("That means");
     expect(exhibits.prose).not.toContain("| Data Product |");
     expect(exhibits.prose).not.toMatch(/^(Read|Evidence|Implication|Next move):/gim);
   });
@@ -368,9 +364,9 @@ describe("buildStructuredExhibits", () => {
         "Read: First Capital Financial has several live technology investments where the risk profile and ownership are clear enough to drive action now — the table below organizes them by urgency.\n2M run cost | Critical; restricted non-public data, vendor-hosted | Data residency and exit rights review — restricted classification + vendor-hosted is a red flag combination |\n| Marqeta Dispute Manager | Head of Cards & Payments | $4.\nNext move: assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves.",
     });
 
-    expect(exhibits.tables[0]?.title).toBe("Evidence Required");
+    expect(exhibits.tables[0]?.title).toBe("Supporting Material");
     expect(exhibits.prose).toContain("First Capital Financial");
-    expect(exhibits.prose).toContain("The next move is to");
+    expect(exhibits.prose).toContain("Next, have");
     expect(exhibits.prose).not.toContain("|");
     expect(exhibits.prose).not.toContain("Marqeta Dispute Manager");
   });
@@ -453,11 +449,9 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
-    expect(exhibits.tables[0]?.title).toBe("Chart Evidence Required");
+    expect(exhibits.tables[0]?.title).toBe("Supporting Material");
     expect(exhibits.charts).toHaveLength(0);
-    expect(exhibits.prose).toContain(
-      "I do not see connected numeric row/column source data for a defensible chart.",
-    );
+    expect(exhibits.prose).toContain("Medical necessity is the highest-priority");
   });
 
   it("renders a truthful evidence-required table when a table is requested without enough cited rows", () => {
@@ -468,10 +462,10 @@ describe("buildStructuredExhibits", () => {
         "The requested denial-category table is not in the connected tenant evidence. Next move: validate the source extract before approving numbers.",
     });
 
-    expect(exhibits.tables[0]?.title).toBe("Evidence Required");
+    expect(exhibits.tables[0]?.title).toBe("Supporting Material");
     expect(exhibits.tables[0]?.rows[0]).toEqual(
       expect.objectContaining({
-        status: "No cited source available for the requested rows",
+        source: "No cited source returned",
       }),
     );
   });
@@ -487,13 +481,11 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.charts).toHaveLength(0);
     expect(exhibits.tables[0]).toEqual(
       expect.objectContaining({
-        title: "Chart Evidence Required",
+        title: "Supporting Material",
         rows: [
           expect.objectContaining({
-            evidence:
-              "Connected numeric row/column source data for the requested chart",
-            status:
-              "No exact comparable numeric rows were present in the retrieved cited sources",
+            source: "F12 IT budget",
+            type: "tenant material",
           }),
         ],
       }),
@@ -511,13 +503,11 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.graphs).toHaveLength(0);
     expect(exhibits.tables[0]).toEqual(
       expect.objectContaining({
-        title: "Graph Evidence Required",
+        title: "Supporting Material",
         rows: [
           expect.objectContaining({
-            evidence:
-              "Source-to-target relationship edge pairs for the requested graph",
-            status:
-              "No defensible edge rows were present in the retrieved cited sources",
+            source: "F12 IT budget",
+            type: "tenant material",
           }),
         ],
       }),

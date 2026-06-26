@@ -35,6 +35,7 @@ Intelligence answers now use a simpler contract: tenant evidence, corpus/pattern
 - `src/components/agent-answer/AgentAnswerRenderer.tsx` and `src/components/agent-answer/AvaAsk.tsx`: Remove visible consulted-expert UI controls and stale expert event rendering.
 - `src/lib/intelligence/answer/structured-exhibits.ts`: Replaces generic evidence-required fallback blocks with a neutral available-context table.
 - `src/lib/intelligence/ask/response-policy.ts`: Removes the remaining section-label stitch rewrites that converted good model text into phrases such as `The supporting evidence is that ...` and `That means ...`.
+- `src/lib/ava-answer/public-answer-scrub.ts`, `src/lib/intelligence/answer/answer-safety.ts`, and `src/lib/intelligence/answer/structured-exhibits.ts`: Remove `source support` and `Available Context` as public UI language, replacing them with business-readable supporting-material wording.
 
 ## QA / Validation
 
@@ -46,6 +47,8 @@ Intelligence answers now use a simpler contract: tenant evidence, corpus/pattern
 - Follow-up trace-gate validation: `npm run audit:control-plane-purity:check` — passed.
 - Render-policy stitch validation: `npm test -- --runTestsByPath src/lib/intelligence/ask/response-policy.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts` — passed, 3 suites / 21 tests.
 - Render-policy stitch validation: `npx eslint src/app/api/intelligence/ask/route.ts src/lib/intelligence/ask/response-policy.ts src/lib/intelligence/ask/response-policy.test.ts` — passed.
+- Public UI language validation: `npm test -- --runTestsByPath src/lib/intelligence/answer/__tests__/answer-safety.test.ts src/lib/intelligence/answer/__tests__/structured-exhibits.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/ask/response-policy.test.ts` — passed, 4 suites / 37 tests.
+- Public UI language validation: `npx eslint src/lib/ava-answer/public-answer-scrub.ts src/lib/intelligence/answer/answer-safety.ts src/lib/intelligence/answer/structured-exhibits.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/answer/__tests__/answer-safety.test.ts src/lib/intelligence/answer/__tests__/structured-exhibits.test.ts` — passed.
 
 ## Rollout Plan
 

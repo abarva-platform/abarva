@@ -85,14 +85,14 @@ function availableContextTable(
       : [
           {
             source: "No cited source returned",
-            type: "context",
+            type: "material",
             confidence: "low",
-            use: "The answer is limited to the available advisory context.",
+            use: "The answer is limited to the available advisory material.",
           },
         ];
   return {
     id: "answer-available-context",
-    title: "Available Context",
+    title: "Supporting Material",
     columns: [
       { key: "source", label: "Source" },
       { key: "type", label: "Type" },
@@ -100,7 +100,7 @@ function availableContextTable(
       { key: "use", label: "How it supports the answer" },
     ],
     rows,
-    note: "This panel lists the context used for the answer. It does not invent missing rows, values, or relationships.",
+    note: "This panel lists the material used for the answer. It does not invent missing values or relationships.",
     citationIds: citations.map((citation) => citation.id),
   };
 }
@@ -108,7 +108,7 @@ function availableContextTable(
 function sourceClassDisplay(sourceClass: AnswerCitation["sourceClass"]): string {
   switch (sourceClass) {
     case "tenant-fact":
-      return "tenant evidence";
+      return "tenant material";
     case "tenant-chunk":
       return "tenant excerpt";
     case "graph":
