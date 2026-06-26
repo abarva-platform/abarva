@@ -562,7 +562,7 @@ describe("Home KNOW contract engine", () => {
       annual_budget_usd: 210000000,
     });
     expect(response.citations[0]?.label).toContain(
-      "F03_it-org-ownership.csv row 2",
+      "F03_it-org-ownership.csv line 2",
     );
     expect(response.gaps[0]).toMatchObject({
       expectedField: "executive_owner_person_name",
@@ -784,7 +784,7 @@ describe("Home KNOW contract engine", () => {
       intent: "lookup",
       answerStatus: "partial",
       prose:
-        "Lakeshore Holdings' loaded context supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive role-level leadership. The loaded sources do not show a specific gap for this question, though final operating decisions still need client validation.",
+        "Lakeshore Holdings' available material supports a portfolio-led view of IT and business organization. Technology accountability is visible across business functions, IT domains, application ownership, and executive role-level leadership. The available sources do not show a specific gap for this question, though final operating decisions still need client validation.",
       dimensionsUsed: ["organization_leadership"],
       facts: [],
       tables: [
@@ -834,7 +834,7 @@ describe("Home KNOW contract engine", () => {
       intent: "lookup",
       answerStatus: "answered",
       prose:
-        "Lakeshore Holdings' application systems context is strong enough to answer from loaded source context. The application table, domain chart, relationship graph, and source records show how applications connect to business domains.",
+        "Lakeshore Holdings' application systems material is strong enough to answer from source support. The application table, domain chart, relationship graph, and source records show how applications connect to business domains.",
       dimensionsUsed: ["application_systems"],
       facts: [],
       tables: [
@@ -899,7 +899,7 @@ describe("Home KNOW contract engine", () => {
       },
     });
 
-    expect(response.prose).toMatch(/application systems context/i);
+    expect(response.prose).toMatch(/application systems material/i);
     expect(response.prose).not.toMatch(
       /Here is what is loaded|I do not see that in the loaded data/i,
     );

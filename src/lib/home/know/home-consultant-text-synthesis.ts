@@ -25,9 +25,9 @@ const PROMPT_VERSION = "home_consultant_text_synthesis_v2_branch_first";
 
 export const HOME_CONSULTANT_TEXT_SYSTEM_PROMPT = `You are AbarVa's Home / Explorer consultant.
 
-Home answers: "What do we know about this enterprise from the loaded tenant context?"
+Home answers: "What do we know about this enterprise from the available tenant materials?"
 
-Turn the supplied current-state context into a concise CIO-readable answer. Use only the supplied context.
+Turn the supplied current picture into a concise CIO-readable answer. Use only the supplied material.
 
 The context may include:
 
@@ -45,7 +45,7 @@ The context may include:
 * answer boundaries
 * branch options
 
-Use all relevant context channels. Do not rely only on the facts array.
+Use all relevant material channels. Do not rely only on one field list.
 
 For broad overview questions such as "what context is loaded" or "what do we know," answer in this pattern:
 
@@ -55,15 +55,15 @@ For broad overview questions such as "what context is loaded" or "what do we kno
 
 Write like a senior enterprise architect / consulting partner briefing a CIO.
 
-Lead with what the loaded context can say.
+Lead with what the available materials can say.
 Then explain what it means.
-Then identify the specific missing context or source support.
+Then identify the specific missing material or source support.
 Then state the safe answer boundary.
-If the user asks for a recommendation, investment decision, scale/hold/stop decision, sourcing decision, or strategy memo, Home should show what is loaded and hand off to Intelligence, Source, Moves, or Tower.
+If the user asks for a recommendation, investment decision, scale/hold/stop decision, sourcing decision, or strategy memo, Home should show what is available and hand off to Intelligence, Source, Moves, or Tower.
 
 Do not make unsupported recommendations in Home.
 
-Never say the topic cannot be characterized if the supplied context contains partial source context.
+Never say the topic cannot be characterized if the supplied material contains partial source support.
 Instead say what level of characterization is supported:
 
 * enterprise level
@@ -77,17 +77,17 @@ Instead say what level of characterization is supported:
 Do not lead with counts.
 Do not say "I found."
 Do not expose raw IDs, table names, route names, debug labels, source internals, or implementation details.
-Do not use user-facing wording like "Read," "Evidence," "Evidence points," "rows," or "Current-state read."
-Say "loaded context," "source context," "source support," or "loaded records" instead.
+Do not use user-facing wording like "Read," "Evidence points," "rows," "Current-state read," "current-state context," "loaded context," or "source context."
+Say "available materials," "source support," "available records," or "the current picture" instead.
 Do not mention "semantic," "curated semantic," "typed facts," "loaded facts," "facts," "canonical entities," "entities," "relationship paths," "relationship maps," or implementation/source mechanics in the final answer.
-Say "loaded context," "source support," "loaded records," "operational patterns," or "source-supported operating connections" when those ideas matter.
-For finance close, Treasury, Kyriba, HR, Legal, or other context-only functions, lead with operational-process evidence insufficiency when the supplied context does not include function-specific work-item/process evidence.
+Say "available materials," "source support," "available records," "operational patterns," or "source-supported operating connections" when those ideas matter.
+For finance close, Treasury, Kyriba, HR, Legal, or other adjacent functions, lead with operational-process source-support insufficiency when the supplied material does not include function-specific work-item/process material.
 Do not mention pattern family or experts in Home.
 
 Return only the final user-facing answer text.`;
 
 const FORBIDDEN_RE =
-  /\b(cannot be characterized|cannot be identified|I found|missing source support|Current-state read|\bread\b|Evidence points|\bevidence\b|\brows\b|home_know|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|semantic|typed facts|loaded facts|\bfacts?\b|canonical entities|\bentities\b|relationship maps?|relationship paths?|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
+  /\b(cannot be characterized|cannot be identified|I found|missing source support|Current-state read|current-state context|loaded context|source context|loaded source context|\bread\b|Evidence points|\brows\b|home_know|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|semantic|typed facts|loaded facts|\bfacts?\b|canonical entities|\bentities\b|relationship maps?|relationship paths?|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
 const INTERNAL_COUNT_RE =
   /\b\d[\d,]*\s+(?:canonical\s+)?(?:entities|facts|relationships|citations)\b/i;
 const RAW_ID_RE =
@@ -482,45 +482,7 @@ export function normalizeHomeConsultantUserFacingText(text: string): string {
     .replace(/^\s*here is\s+/i, "")
     .replace(/\bwhat the loaded context can say\b\s*:?\s*/gi, "")
     .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move):\s*/gi, "$1")
-    .replace(
-      /\bcurated semantic (?:evidence|source context)?\s*source\b/gi,
-      "loaded tenant context",
-    )
-    .replace(
-      /\bsemantic (?:evidence|source context)?\s*source\b/gi,
-      "loaded tenant context",
-    )
-    .replace(/\bcurated semantic context\b/gi, "loaded tenant context")
-    .replace(/\btyped facts\b/gi, "source support")
-    .replace(/\bloaded facts\b/gi, "loaded context")
-    .replace(/\bfacts?\b/gi, "source support")
-    .replace(/\brelationship paths\b/gi, "source-supported connections")
-    .replace(/\brelationship maps\b/gi, "source-supported connections")
-    .replace(/\bresolved relationship maps\b/gi, "source-supported connections")
-    .replace(/\bcurrent-state read\b/gi, "current-state context")
-    .replace(/\bmissing evidence path\b/gi, "missing source path")
-    .replace(/\bevidence path\b/gi, "source path")
-    .replace(/\bmissing evidence\b/gi, "missing source context")
-    .replace(/\bneeded evidence\b/gi, "needed source context")
-    .replace(/\bevidence points?\b/gi, "source signals")
-    .replace(/\bevidence-backed\b/gi, "source-backed")
-    .replace(/\bevidence-based\b/gi, "source-backed")
-    .replace(/\bevidence\b/gi, "source context")
-    .replace(/\brows\b/gi, "records")
-    .replace(/\brow\b/gi, "record")
-    .replace(/\bread-models?\b/gi, "source views")
-    .replace(/\breads\b/gi, "reviews")
-    .replace(/\bread\b/gi, "review")
-    .replace(/\bdossier\b/gi, "source context")
-    .replace(/\bbinder\b/gi, "source context")
-    .replace(/\bfragment lookup\b/gi, "narrow lookup")
-    .replace(/\bedge rows\b/gi, "relationship records")
-    .replace(/\bsource rows\b/gi, "source records")
-    .replace(/\bno blocking gap\b/gi, "no specific source gap")
-    .replace(/\bquality gate\b/gi, "answer check")
-    .replace(/\bsafe answer boundary\b/gi, "safe answer scope")
-    .replace(/\banswer boundary\b/gi, "safe answer scope")
-    .replace(/\bdeterministic\b/gi, "loaded")
+    .replace(/\bdeterministic\b/gi, "available")
     .replace(RAW_ID_REPLACE, "source reference"));
 }
 
@@ -588,7 +550,7 @@ export function buildHomeConsultantTextPromptPacket(args: {
       .slice(0, 12)
       .map(
         (gap) =>
-          `${gap.label}: ${gap.impact}; needed source context: ${gap.neededEvidence.join(", ")}`,
+          `${gap.label}: ${gap.impact}; needed source support: ${gap.neededEvidence.join(", ")}`,
       )
       .join("\n"),
     branchOptionsSummary: (args.dossier.branchOptions ?? [])
@@ -682,13 +644,13 @@ ${packet.answerBoundarySummary || "None"}
 
 Instructions:
 Write the best possible Home / Explorer answer from this context.
-Use the loaded context and source support.
+Use the available materials and source support.
 Do not invent missing context.
 Do not overstate confidence.
 If the question is broad or asks what context is loaded, keep the first turn short and offer branch options instead of listing every detail.
 If named leaders are loaded, you may name them.
 If only roles are loaded, say roles are loaded but named people are missing.
-If the source context supports partial structure, describe the partial structure and the precise gap.
+If the source support allows partial structure, describe that structure and the precise gap.
 If the question asks what to do, explain what Home can show and hand off to the correct advisory surface.
 If the question asks about finance close, Treasury, Kyriba, HR, Legal, or another function where operational process evidence is missing, lead with that operational-process evidence insufficiency before discussing adjacent context.
 
@@ -777,7 +739,7 @@ function dimensionStyle(dimension: DossierDimensionFamily): string[] {
     ],
     budget_financials: [
       "lead with spend shape and portfolio accountability",
-      "distinguish loaded budget facts from missing run, change, or forecast views",
+      "distinguish available budget support from missing run, change, or forecast views",
     ],
     operations_process: [
       "lead with operational source pattern",
@@ -794,7 +756,7 @@ function dimensionStyle(dimension: DossierDimensionFamily): string[] {
     ],
     source_moves_tower: [
       "lead with module context and handoff boundary",
-      "separate Home facts from Source, Moves, or Tower execution decisions",
+      "separate Home source support from Source, Moves, or Tower execution decisions",
     ],
   };
   return [...shared, ...(byDimension[dimension] ?? [])];

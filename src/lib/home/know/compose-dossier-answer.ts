@@ -192,7 +192,7 @@ function gapsForDossier(
   return dossier.gaps.slice(0, 8).map((gap, index) => ({
     id: `source-gap-${index + 1}`,
     dimensionId: dossier.route.primaryDimension,
-    objectType: "source context",
+    objectType: "source support",
     expectedField: gap.neededEvidence.join("; "),
     displayLabel: gap.label,
     severity: "medium",
@@ -341,7 +341,7 @@ function composeBranchOverview(
     ? `One caveat up front: ${dossier.gaps[0].label}`
     : null;
   return [
-    `${tenantName} has enough current-state context to orient a Home conversation across ${options.map((option) => option.label).join(", ")}.`,
+    `${tenantName} has enough current picture material to orient a Home conversation across ${options.map((option) => option.label).join(", ")}.`,
     `There is more here than belongs in one answer. Where do you want to go deeper?\n${options.map((option) => `- ${option.label}: ${option.summary}`).join("\n")}`,
     caveat,
   ]

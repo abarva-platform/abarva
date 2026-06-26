@@ -179,7 +179,7 @@ export function classifyHomeKnowIntent(question: string): HomeKnowIntent {
     return "chart";
   if (DECISION_RE.test(normalized)) return "decision_handoff";
   if (
-    /\b(missing|not loaded|absent|unknown|field|gap register|evidence gap)\b/.test(
+    /\b(missing|not available|not loaded|absent|unknown|field|gap register|evidence gap)\b/.test(
       normalized,
     )
   )
@@ -291,7 +291,7 @@ export async function buildHomeKnowResponse(
       dossier.gaps.unshift({
         gapKey: "exact_value_source_field_missing",
         label: `Missing exact source field: ${exactGap.displayLabel}.`,
-        impact: `Home can describe nearby loaded context, but the exact answer requires ${exactGap.needed}.`,
+        impact: `Home can describe nearby available material, but the exact answer requires ${exactGap.needed}.`,
         neededEvidence: [exactGap.needed],
       });
       dossier.answerBoundary.cannotAnswer.unshift(
@@ -944,7 +944,7 @@ function buildCitations(
       labelPrefix: `Home coverage · ${row.dimension_label}`,
       sourceClass: "tenant-fact" as const,
       confidence: row.trust_score,
-      excerpt: `${row.dimension_label}: ${number(row.record_count)} records, ${number(row.fact_count)} facts, ${number(row.relationship_count)} relationships`,
+      excerpt: `${row.dimension_label}: ${number(row.record_count)} records, ${number(row.fact_count)} source details, ${number(row.relationship_count)} relationships`,
     })),
   ];
   const wanted = new Set(dimensionsUsed);
@@ -957,7 +957,7 @@ function buildCitations(
     seen.add(key);
     citations.push({
       id: `c${citations.length + 1}`,
-      label: `${item.labelPrefix}${item.sourceFile ? ` · ${item.sourceFile.split("/").pop()}` : ""}${item.sourceRowNumber ? ` row ${item.sourceRowNumber}` : ""}`,
+      label: `${item.labelPrefix}${item.sourceFile ? ` · ${item.sourceFile.split("/").pop()}` : ""}${item.sourceRowNumber ? ` line ${item.sourceRowNumber}` : ""}`,
       sourceClass: item.sourceClass ?? "tenant-source-file",
       sourceFile: item.sourceFile,
       sourceRowNumber: numberOrNull(item.sourceRowNumber),
@@ -971,7 +971,7 @@ function buildCitations(
     for (const item of fallback) {
       citations.push({
         id: `c${citations.length + 1}`,
-        label: `${item.labelPrefix}${item.sourceFile ? ` · ${item.sourceFile.split("/").pop()}` : ""}${item.sourceRowNumber ? ` row ${item.sourceRowNumber}` : ""}`,
+        label: `${item.labelPrefix}${item.sourceFile ? ` · ${item.sourceFile.split("/").pop()}` : ""}${item.sourceRowNumber ? ` line ${item.sourceRowNumber}` : ""}`,
         sourceClass: item.sourceClass ?? "tenant-source-file",
         sourceFile: item.sourceFile,
         sourceRowNumber: numberOrNull(item.sourceRowNumber),
@@ -1064,7 +1064,7 @@ function buildTablesForIntent(
         dimensionId: "data_analytics_estate",
         rows: recordsForDimensions(packet.records, ["data_analytics_estate"]),
         citations,
-        note: "Shows loaded data-product rows where present; missing domain or owning-team fields are explicit field gaps.",
+        note: "Shows available data-product records where present; missing domain or owning-team fields are explicit field gaps.",
       }),
     ];
   }
@@ -1076,7 +1076,7 @@ function buildTablesForIntent(
         dimensionId: "infrastructure_cloud",
         rows: recordsForDimensions(packet.records, ["infrastructure_cloud"]),
         citations,
-        note: "Shows loaded cloud/infrastructure rows where present; missing provider, volume, or cost fields remain gaps.",
+        note: "Shows available cloud/infrastructure records where present; missing provider, volume, or cost fields remain gaps.",
       }),
     ];
   }
@@ -1103,7 +1103,7 @@ function buildTablesForIntent(
           "ai_automation_footprint",
         ]).slice(0, 3),
         citations,
-        note: "Shows loaded initiative rows; missing impact, effort, realized value, or owner fields remain gaps.",
+        note: "Shows available initiative records; missing impact, effort, realized value, or owner fields remain gaps.",
       }),
     ];
   }
@@ -1125,7 +1125,7 @@ function buildTablesForIntent(
           dimensionId: "business_org_functions",
           rows: businessRows,
           citations,
-          note: "Shows loaded business-function and operating-model rows; named leader fields remain explicit gaps where the source did not provide them.",
+          note: "Shows available business-function and operating-model records; named leader fields remain explicit gaps where the source did not provide them.",
         }),
       );
     }
@@ -1247,7 +1247,7 @@ function coverageTable(
 ): HomeKnowTable {
   return {
     id: "home-dimension-coverage",
-    title: "Loaded Context Coverage",
+    title: "Available Context Coverage",
     dimensionId: "dimension_coverage",
     columns: [
       { key: "dimension_label", label: "Dimension" },
@@ -1257,7 +1257,7 @@ function coverageTable(
         align: "right",
         format: "number",
       },
-      { key: "fact_count", label: "Facts", align: "right", format: "number" },
+      { key: "fact_count", label: "Source support", align: "right", format: "number" },
       {
         key: "relationship_count",
         label: "Relationships",
@@ -1300,9 +1300,9 @@ function orgTable(
       },
     ],
     rows: rows.map((row) => ({
-      team_name: row.team_name ?? "Not loaded",
-      executive_owner_role: row.executive_owner_role ?? "Not loaded",
-      domain: row.domain ?? "Not loaded",
+      team_name: row.team_name ?? "Not yet available",
+      executive_owner_role: row.executive_owner_role ?? "Not yet available",
+      domain: row.domain ?? "Not yet available",
       head_count_fte: numberOrNull(row.head_count_fte),
       annual_budget_usd: numberOrNull(row.annual_budget_usd),
     })),
@@ -1333,12 +1333,12 @@ function applicationTable(
       },
     ],
     rows: rows.map((row) => ({
-      application_name: row.application_name ?? "Not loaded",
-      domain: row.domain ?? "Not loaded",
-      primary_business_owner: row.primary_business_owner ?? "Not loaded",
-      technical_owner_team: row.technical_owner_team ?? "Not loaded",
-      technical_owner_role: row.technical_owner_role ?? "Not loaded",
-      criticality: row.criticality ?? "Not loaded",
+      application_name: row.application_name ?? "Not yet available",
+      domain: row.domain ?? "Not yet available",
+      primary_business_owner: row.primary_business_owner ?? "Not yet available",
+      technical_owner_team: row.technical_owner_team ?? "Not yet available",
+      technical_owner_role: row.technical_owner_role ?? "Not yet available",
+      criticality: row.criticality ?? "Not yet available",
       annual_run_cost_usd: numberOrNull(row.annual_run_cost_usd),
     })),
     citationIds: citationIdForDimension("applications_core_systems", citations),
@@ -1367,12 +1367,12 @@ function vendorTable(
       { key: "technology_owner", label: "Technology Owner" },
     ],
     rows: rows.map((row) => ({
-      vendor_name: row.vendor_name ?? "Not loaded",
-      category: row.category ?? "Not loaded",
+      vendor_name: row.vendor_name ?? "Not yet available",
+      category: row.category ?? "Not yet available",
       annual_spend_usd: numberOrNull(row.annual_spend_usd),
-      renewal_risk: row.renewal_risk ?? "Not loaded",
-      business_owner: row.business_owner ?? "Not loaded",
-      technology_owner: row.technology_owner ?? "Not loaded",
+      renewal_risk: row.renewal_risk ?? "Not yet available",
+      business_owner: row.business_owner ?? "Not yet available",
+      technology_owner: row.technology_owner ?? "Not yet available",
     })),
     citationIds: citationIdForDimension("vendors_contracts", citations),
   };
@@ -1409,11 +1409,11 @@ function budgetTable(
       { key: "owner_role", label: "Owner Role" },
     ],
     rows: rows.map((row) => ({
-      function_or_platform: row.function_or_platform ?? "Not loaded",
+      function_or_platform: row.function_or_platform ?? "Not yet available",
       run_budget_usd: numberOrNull(row.run_budget_usd),
       change_budget_usd: numberOrNull(row.change_budget_usd),
       ai_budget_usd: numberOrNull(row.ai_budget_usd),
-      owner_role: row.owner_role ?? "Not loaded",
+      owner_role: row.owner_role ?? "Not yet available",
     })),
     citationIds: citationIdForDimension("it_budget_financials", citations),
   };
@@ -1608,7 +1608,7 @@ function budgetChart(
     caveats:
       run > 0 && change === 0
         ? [
-            "Run budget exists, but change budget line-item split is missing in the loaded rows.",
+            "Run budget exists, but change budget line-item split is missing in the available records.",
           ]
         : [],
     status: "tenant-fact",
@@ -1657,10 +1657,10 @@ function initiativePlanningChart(
   return {
     ...budget,
     id: "home-portfolio-investment-chart",
-    title: "Loaded Budget Mix for Portfolio Planning",
+    title: "Available Budget Mix for Portfolio Planning",
     caveats: [
       ...budget.caveats,
-      "Home KNOW can chart loaded budget rows, but initiative impact and effort require initiative-level fields before a board-grade AI bet chart is available.",
+      "Home KNOW can chart available budget records, but initiative impact and effort require initiative-level fields before a board-grade AI bet chart is available.",
     ],
     status: "tenant-fact",
   };
@@ -1682,7 +1682,7 @@ function recordDistributionChart(
       const label =
         cleanLabel(row.dimension_label) ??
         cleanLabel(row.dimension_id) ??
-        "Loaded context";
+        "Available material";
       const value = number(row.record_count);
       if (value > 0) counts.set(label, value);
     }
@@ -1996,7 +1996,7 @@ function buildGaps(
     expectedField: row.expected_field,
     displayLabel: row.display_label,
     severity: row.severity,
-    message: `${row.display_label} is not loaded for ${number(row.missing_count)} ${row.object_type} row(s).`,
+    message: `${row.display_label} is not yet available for ${number(row.missing_count)} ${row.object_type} record(s).`,
     citationIds: citations.map((citation) => citation.id),
   }));
   for (const [index, message] of readErrors.entries()) {
@@ -2042,7 +2042,7 @@ function homeKnowProse(input: {
     if (input.packet.coverage.length > 0 || input.hasGaps) {
       return "The available enterprise context is adjacent to the question, but the specific source fields needed for a clean answer are not complete yet. The answer stays grounded by showing the missing evidence path instead of filling the gap with assumptions.";
     }
-    return "I do not see that in the loaded data.";
+    return "That specific item is not visible in the available tenant material.";
   }
   const orgCount = input.packet.org.length;
   const appCount = input.packet.applications.length;
@@ -2050,21 +2050,21 @@ function homeKnowProse(input: {
   const budgetCount = input.packet.budgets.length;
   if (input.intent === "gap") {
     return input.packet.gaps.length
-      ? `I found ${input.packet.gaps.length} Home source gap(s). The gap register lists the missing fields, affected object type, severity, and row count.`
-      : "I do not see Home source gaps in the loaded data. The Home gap register returned no rows for this tenant.";
+      ? `${input.packet.gaps.length} Home source gap(s) are visible. The gap register lists the missing fields, affected object type, severity, and record count.`
+      : "Home does not show source gaps for this tenant in the available records.";
   }
   if (input.intent === "chart") {
     if (GRAPH_RE.test(input.question)) {
       return input.hasGraph
-        ? "The relationship graph is built from loaded relationship and source records. If the requested relationship family is absent, Home reports that as a gap instead of inferring a dependency."
-        : "The loaded relationship rows do not contain the source-to-target edge pairs needed for that graph. I can see related context, but the specific edge family for this visual is missing.";
+        ? "The relationship graph is built from available relationship and source records. If the requested relationship family is absent, Home reports that as a gap instead of inferring a dependency."
+        : "The available relationship records do not contain the source-to-target edge pairs needed for that graph. Related material is available, but the specific edge family for this visual is missing.";
     }
-    return "Here is the visual cut from loaded Home context. The chart data is assembled from tenant context rows and cited source files, so missing numeric fields stay visible as gaps instead of becoming invented figures.";
+    return "Here is the visual cut from Home. The chart data is assembled from tenant records and cited source files, so missing numeric fields stay visible as gaps instead of becoming invented figures.";
   }
   if (
     /\b(security|compliance|control|controls|posture)\b/i.test(input.question)
   ) {
-    return "The security and compliance readout is limited to loaded coverage and source-backed fields. Control strength is not inferred; missing control fields are shown as gaps.";
+    return "The security and compliance readout is limited to available coverage and source-supported fields. Control strength is not inferred; missing control fields are shown as gaps.";
   }
   if (
     /\b(data product|analytics|data & analytics|data and analytics)\b/i.test(
@@ -2127,9 +2127,9 @@ function homeKnowProse(input: {
       totalRun > 0 ? ` I see ${formatUsd(totalRun)} in loaded run budget` : "";
     const changeText =
       totalChange > 0
-        ? ` and ${formatUsd(totalChange)} in loaded change budget`
+        ? ` and ${formatUsd(totalChange)} in available change budget`
         : "";
-    return `The loaded IT budget rows show run/change fields where they exist.${runText}${changeText}. Missing line-item splits are shown as gaps rather than inferred.`;
+    return `The available IT budget records show run/change fields where they exist.${runText}${changeText}. Missing line-item splits are shown as gaps rather than inferred.`;
   }
   if (
     /\b(app|application|system|platform|cmdb|systems of record)\b/i.test(
@@ -2178,10 +2178,10 @@ function homeKnowProse(input: {
         .slice(0, 4),
     );
     if (functions && portfolios) {
-      return `The loaded context describes the business through ${functions}, and the technology organization through portfolios such as ${portfolios}. It can show owner roles where supplied; named leaders under the CIO remain limited to the fields the tenant provided.`;
+      return `The available material describes the business through ${functions}, and the technology organization through portfolios such as ${portfolios}. It can show owner roles where supplied; named leaders under the CIO remain limited to the fields the tenant provided.`;
     }
     if (functions) {
-      return `The loaded context describes the business through ${functions}. Named technology leaders are only shown where the tenant supplied IT ownership fields.`;
+      return `The available material describes the business through ${functions}. Named technology leaders are only shown where the tenant supplied IT ownership fields.`;
     }
   }
   if (
@@ -2315,15 +2315,15 @@ export function validateHomeKnowResponse(
 
 function sanitizePublicHomeText(value: string): string {
   return scrubHomePublicAnswerText(value
-    .replace(BLOCKED_PUBLIC_TEXT_REPLACE, "loaded context")
-    .replace(INTERNAL_CODE_REPLACE, "the source row")
-    .replace(/\bthe cited record\b/gi, "the source row")
+    .replace(BLOCKED_PUBLIC_TEXT_REPLACE, "available business material")
+    .replace(INTERNAL_CODE_REPLACE, "the source reference")
+    .replace(/\bthe cited record\b/gi, "the source reference")
     .replace(
       /\bas a current-state loaded context\b/gi,
-      "from the current-state context",
+      "from the current picture",
     )
-    .replace(/\bcurrent-state loaded context\b/gi, "current-state context")
-    .replace(/\bprimary loaded context\b/gi, "primary source context")
+    .replace(/\bcurrent-state loaded context\b/gi, "current picture")
+    .replace(/\bprimary loaded context\b/gi, "primary source support")
     .replace(/\s{2,}/g, " "));
 }
 
@@ -2339,10 +2339,10 @@ function cleanLabel(value: unknown): string | null {
 }
 
 function readableId(value: string | null | undefined): string {
-  if (!value) return "Source row";
+  if (!value) return "Source reference";
   const tail = value.split("/").pop() ?? value;
   return tail
-    .replace(/^[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}$/i, "Source row")
+    .replace(/^[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}$/i, "Source reference")
     .replace(/[_-]+/g, " ")
     .replace(/\s{2,}/g, " ")
     .trim();

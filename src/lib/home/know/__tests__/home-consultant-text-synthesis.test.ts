@@ -297,8 +297,9 @@ describe("home consultant text synthesis", () => {
       throw new Error("expected synthesis");
     const selected = applyHomeConsultantTextSynthesis(response, result);
     expect(selected.prose).toContain("domain-led view");
-    expect(selected.prose).toContain("source context supports");
+    expect(selected.prose).toContain("source support gives");
     expect(selected.prose).not.toMatch(/\bevidence\b/i);
+    expect(selected.prose).not.toMatch(/semantic|loaded context|source context|rows/i);
     expect(selected.safety.composerTrace?.composer).toBe(
       "claude_text_synthesis",
     );
@@ -326,9 +327,9 @@ describe("home consultant text synthesis", () => {
     );
 
     expect(text).toBe(
-      "The loaded source context supports a strong current-state context across 42 records, but needed source context is missing for one leader.",
+      "The loaded source support gives a strong current picture across 42 records, but needed source support is missing for one leader.",
     );
-    expect(text).not.toMatch(/\bread\b|\bevidence\b|\brows\b/i);
+    expect(text).not.toMatch(/\bread\b|\bevidence\b|\brows\b|source context|current-state context/i);
   });
 
   it("normalizes consultant preamble, markdown, and answer-boundary wording before validation", () => {
@@ -361,9 +362,9 @@ describe("home consultant text synthesis", () => {
       },
     );
 
-    expect(selected.prose).toContain("loaded source context supports");
+    expect(selected.prose).toContain("loaded source support gives");
     expect(selected.prose).toContain("42 records");
-    expect(selected.prose).not.toMatch(/\bevidence\b|\brows\b/i);
+    expect(selected.prose).not.toMatch(/\bevidence\b|\brows\b|source context/i);
     expect(selected.safety.composerTrace?.fallbackUsed).toBe(true);
   });
 
@@ -458,7 +459,7 @@ describe("home consultant text synthesis", () => {
 
     expect(
       validateHomeConsultantText({
-        text: "For SkyHarbor Air, the loaded context is strongest around organization leadership. Adjacent areas also carry loaded records and can be characterized at the enterprise level. Where do you want to go deeper? - Budget and financials - Vendor contracts - Enterprise profile - Organization leadership One caveat: source-supported connections are not yet established.",
+        text: "For SkyHarbor Air, the available material is strongest around organization leadership. Adjacent areas also carry available records and can be characterized at the enterprise level. Where do you want to go deeper? - Budget and financials - Vendor contracts - Enterprise profile - Organization leadership One caveat: source-supported connections are not yet established.",
         dossier,
         response: browseResponse,
       }),
@@ -470,7 +471,7 @@ describe("home consultant text synthesis", () => {
       "For SkyHarbor Air, the loaded context is backed by a curated semantic evidence source with typed facts and resolved relationship paths.";
 
     expect(normalizeHomeConsultantUserFacingText(raw)).toBe(
-      "For SkyHarbor Air, the loaded context is backed by a loaded tenant context with source support and resolved source-supported connections.",
+      "For SkyHarbor Air, the available business material is backed by an available business material with source support and resolved source-supported connections.",
     );
 
     expect(
