@@ -61,6 +61,11 @@ type UniqueKey = {
   columns: string[];
 };
 
+type TriggerOverride = {
+  updateTrigger: string;
+  deleteTrigger: string;
+};
+
 const ROOT = process.cwd();
 const APPLY =
   process.argv.includes('--apply') ||
@@ -75,6 +80,29 @@ const OUT_DIR = path.join(OUT_ROOT, STAMP);
 const STATEMENT_TIMEOUT_MS = Number.parseInt(process.env.TENANT_CLEANUP_STATEMENT_TIMEOUT_MS ?? '60000', 10);
 
 const uniqueKeyCache = new Map<string, UniqueKey[]>();
+const MAINTENANCE_TRIGGER_OVERRIDES = new Map<string, TriggerOverride>([
+  [
+    'public.responsible_ai_acknowledgments',
+    {
+      updateTrigger: 'responsible_ai_acknowledgments_no_update',
+      deleteTrigger: 'responsible_ai_acknowledgments_no_delete',
+    },
+  ],
+  [
+    'public.responsible_ai_training_completions',
+    {
+      updateTrigger: 'responsible_ai_training_completions_no_update',
+      deleteTrigger: 'responsible_ai_training_completions_no_delete',
+    },
+  ],
+  [
+    'public.responsible_ai_system_role_acknowledgments',
+    {
+      updateTrigger: 'system_role_acknowledgments_no_update',
+      deleteTrigger: 'system_role_acknowledgments_no_delete',
+    },
+  ],
+]);
 
 function normalizeAlias(value: string): string {
   return value.trim().toLowerCase().replace(/_/g, '-');
@@ -104,6 +132,31 @@ function isMaterializedView(column: TenantColumn): boolean {
 
 function materializedViewKey(column: TenantColumn): string {
   return `${column.schema}.${column.table}`;
+}
+
+function triggerOverrideFor(column: TenantColumn): TriggerOverride | undefined {
+  return MAINTENANCE_TRIGGER_OVERRIDES.get(`${column.schema}.${column.table}`);
+}
+
+async function setMaintenanceTriggers(
+  client: Client,
+  column: TenantColumn,
+  enabled: boolean,
+): Promise<void> {
+  const override = triggerOverrideFor(column);
+  if (!override) return;
+  const action = enabled ? 'ENABLE' : 'DISABLE';
+  console.log(
+    `tenant-canonical-cleanup: ${action.toLowerCase()}_maintenance_triggers=${column.schema}.${column.table}`,
+  );
+  await client.query(
+    `ALTER TABLE ${qualifiedTable(column)}
+       ${action} TRIGGER ${quoteIdentifier(override.updateTrigger)}`,
+  );
+  await client.query(
+    `ALTER TABLE ${qualifiedTable(column)}
+       ${action} TRIGGER ${quoteIdentifier(override.deleteTrigger)}`,
+  );
 }
 
 async function writeJson(filePath: string, value: unknown): Promise<string> {
@@ -442,13 +495,18 @@ async function main(): Promise<void> {
 	        });
 
 	        if (APPLY && shouldMutateColumn) {
-	          await deleteDuplicateAliasRows(client, column, alias, canonical, storedAliasValues);
-	          await client.query(
-	            `UPDATE "${column.schema}"."${column.table}"
-	                SET "${column.column}" = $2
-              WHERE lower(replace("${column.column}"::text, '_', '-')) = $1`,
-            [alias, canonical],
-          );
+	          await setMaintenanceTriggers(client, column, false);
+	          try {
+	            await deleteDuplicateAliasRows(client, column, alias, canonical, storedAliasValues);
+	            await client.query(
+	              `UPDATE "${column.schema}"."${column.table}"
+	                  SET "${column.column}" = $2
+                WHERE lower(replace("${column.column}"::text, '_', '-')) = $1`,
+              [alias, canonical],
+            );
+	          } finally {
+	            await setMaintenanceTriggers(client, column, true);
+	          }
         } else if (APPLY && isMaterializedView(column)) {
           materializedViewsToRefresh.set(materializedViewKey(column), column);
         }
