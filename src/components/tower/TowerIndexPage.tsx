@@ -386,7 +386,8 @@ type CioDashboardView =
   | "vendors"
   | "ai_roi"
   | "outcomes"
-  | "risks";
+  | "risks"
+  | "board";
 
 const CIO_DASHBOARD_VIEWS: Array<{
   key: CioDashboardView;
@@ -428,6 +429,11 @@ const CIO_DASHBOARD_VIEWS: Array<{
     label: "Risks",
     description: "Owner-facing pressure signals from Tower evidence.",
   },
+  {
+    key: "board",
+    label: "Board",
+    description: "Executive readout, decisions, and evidence questions.",
+  },
 ];
 
 function parseCioDashboardView(raw: string | null | undefined): CioDashboardView {
@@ -449,6 +455,14 @@ type CioAiSpendRow = CioGroupRow & {
   measured: number;
 };
 
+type CioDecisionAction = {
+  label: string;
+  title: string;
+  body: string;
+  ask: string;
+  tone: "green" | "amber" | "red";
+};
+
 type CioDashboardModel = {
   initiativeCount: number;
   vendorCount: number;
@@ -465,6 +479,10 @@ type CioDashboardModel = {
   riskRows: ReadonlyArray<AIInitiative>;
   renewalRows: ReadonlyArray<AIInitiativeVendorRow>;
   gaps: ReadonlyArray<string>;
+  executiveNarrative: string;
+  commandBullets: ReadonlyArray<string>;
+  decisionActions: ReadonlyArray<CioDecisionAction>;
+  scenarioQuestions: ReadonlyArray<string>;
 };
 
 function initiativeBudget(initiative: AIInitiative): number {
@@ -616,31 +634,109 @@ function buildCioDashboardModel(
   )
     gaps.push("Run/change or CapEx/OpEx line-item split is not loaded.");
 
+  const spendByFunction = groupMoney(
+    initiatives,
+    (initiative) => initiative.ownerFunction ?? initiative.primaryCategoryName,
+  ).slice(0, 8);
+  const spendByVendor = groupVendorMoney(vendors).slice(0, 8);
+  const aiSpendRows = [...aiSpendByCategory.values()].sort(
+    (a, b) => b.amount - a.amount,
+  );
+  const measuredCoverageCount = initiatives.filter(
+    (initiative) => initiative.measuredValueUsd !== null,
+  ).length;
+  const topProgram = topPrograms[0] ?? null;
+  const topFunction = spendByFunction[0] ?? null;
+  const topVendor = spendByVendor[0] ?? null;
+  const topAiFamily = aiSpendRows[0] ?? null;
+  const valueCoverageText =
+    measuredCoverageCount > 0
+      ? `${measuredCoverageCount} of ${initiatives.length} programs carry measured value rows`
+      : "no loaded program carries a measured value row";
+  const executiveNarrative =
+    initiatives.length === 0
+      ? "Tower has the CIO canvas ready, but the tenant-bound program rows are not loaded yet."
+      : `${formatMoney(spendAtRisk)} of loaded portfolio spend is under pressure across ${riskRows.length} program${riskRows.length === 1 ? "" : "s"}. ${valueCoverageText}, so the next CIO move is to separate budget concentration from value proof before funding more work.`;
+  const commandBullets = [
+    topProgram
+      ? `Largest loaded program: ${topProgram.name} at ${formatMoney(initiativeBudget(topProgram))}.`
+      : "No loaded program can be ranked by budget yet.",
+    topFunction
+      ? `Largest loaded function slice: ${topFunction.label} at ${formatMoney(topFunction.amount)} (${percentOf(topFunction.amount, committedTotal)} of the loaded envelope).`
+      : "No owner/function slice is available yet.",
+    topVendor
+      ? `Largest loaded vendor exposure: ${topVendor.label} at ${formatMoney(topVendor.amount)}.`
+      : "Vendor exposure is not yet available from loaded contract rows.",
+    topAiFamily
+      ? `Largest AI spend family: ${topAiFamily.label} at ${formatMoney(topAiFamily.amount)}; measured value is ${topAiFamily.measured > 0 ? formatMoney(topAiFamily.measured) : "still a gap"}.`
+      : "AI spend family classification needs AI-tagged initiative rows.",
+  ];
+  const decisionActions: CioDecisionAction[] = [];
+  if (riskRows.length > 0) {
+    decisionActions.push({
+      label: "Inspect pressure spend",
+      title: "Open the highest-pressure programs before approving new money.",
+      body: `${riskRows.length} program${riskRows.length === 1 ? "" : "s"} are not marked healthy, representing ${formatMoney(spendAtRisk)} of loaded budget.`,
+      ask: "Which pressure programs should the CIO inspect first, and why?",
+      tone: "red",
+    });
+  }
+  if (measuredCoverageCount < initiatives.length) {
+    decisionActions.push({
+      label: "Demand value proof",
+      title: "Force measured outcomes onto the top programs.",
+      body: `${initiatives.length - measuredCoverageCount} loaded program${initiatives.length - measuredCoverageCount === 1 ? "" : "s"} still lack measured value rows.`,
+      ask: "Which top programs lack measured value proof, and what evidence is needed?",
+      tone: "amber",
+    });
+  }
+  if (renewalRows.length > 0) {
+    decisionActions.push({
+      label: "Review renewal clock",
+      title: "Use renewals as leverage for value and simplification.",
+      body: `${renewalRows.length} loaded contract row${renewalRows.length === 1 ? "" : "s"} land inside the renewal watch window.`,
+      ask: "Which renewal windows should we use to reduce spend or improve value proof?",
+      tone: "amber",
+    });
+  }
+  if (aiSpendRows.length > 0) {
+    decisionActions.push({
+      label: "Benchmark AI mix",
+      title: "Separate Copilot, vendor agents, platform spend, and true AI bets.",
+      body: `${formatMoney(aiSpendRows.reduce((sum, row) => sum + row.amount, 0))} is tagged into AI spend families; value proof is shown only where loaded.`,
+      ask: "Compare Copilot, vendor AI agents, platforms, and true AI initiatives by spend and value proof.",
+      tone: "green",
+    });
+  }
+  const scenarioQuestions = [
+    "What would I hold if I required measured value before the next funding gate?",
+    "Which vendors should I challenge in the next renewal window?",
+    "Where is AI spend real value versus platform or vendor-embedded cost?",
+    "What three facts would change the CIO decision tomorrow?",
+  ];
+
   return {
     initiativeCount: initiatives.length,
     vendorCount: new Set(vendors.map((vendor) => vendor.vendorName)).size,
     committedTotal,
     measuredTotal,
-    measuredCoverageCount: initiatives.filter(
-      (initiative) => initiative.measuredValueUsd !== null,
-    ).length,
+    measuredCoverageCount,
     pressureCount: riskRows.length,
     spendAtRisk,
     topPrograms,
-    spendByFunction: groupMoney(
-      initiatives,
-      (initiative) => initiative.ownerFunction ?? initiative.primaryCategoryName,
-    ).slice(0, 8),
-    spendByVendor: groupVendorMoney(vendors).slice(0, 8),
-    aiSpendRows: [...aiSpendByCategory.values()].sort(
-      (a, b) => b.amount - a.amount,
-    ),
+    spendByFunction,
+    spendByVendor,
+    aiSpendRows,
     outcomeRows: [...initiatives]
       .sort((a, b) => initiativeValue(b) - initiativeValue(a))
       .slice(0, 8),
     riskRows: riskRows.slice(0, 8),
     renewalRows: renewalRows.slice(0, 8),
     gaps,
+    executiveNarrative,
+    commandBullets,
+    decisionActions,
+    scenarioQuestions,
   };
 }
 
@@ -803,6 +899,193 @@ function CioMetricCard({
         {note}
       </div>
     </div>
+  );
+}
+
+function CioDailyRead({
+  model,
+}: {
+  model: CioDashboardModel;
+}) {
+  return (
+    <section
+      style={{
+        border: `1px solid ${T.RULE_STRONG}`,
+        borderRadius: 12,
+        background: "#111827",
+        color: "#fff",
+        padding: "20px 22px",
+        marginBottom: 18,
+        boxShadow: "0 22px 42px rgba(15, 23, 42, 0.16)",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 10,
+          letterSpacing: "1.8px",
+          textTransform: "uppercase",
+          color: "#86efac",
+          fontWeight: 850,
+        }}
+      >
+        CIO daily read
+      </div>
+      <div
+        style={{
+          marginTop: 10,
+          fontFamily: T.SERIF,
+          fontSize: 28,
+          lineHeight: 1.14,
+          fontWeight: 900,
+          maxWidth: 1020,
+        }}
+      >
+        {model.executiveNarrative}
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+          gap: 12,
+          marginTop: 18,
+        }}
+      >
+        {model.commandBullets.map((bullet, index) => (
+          <div
+            key={`${bullet}-${index}`}
+            style={{
+              border: "1px solid rgba(255,255,255,0.16)",
+              borderRadius: 9,
+              background: "rgba(255,255,255,0.06)",
+              padding: "12px 13px",
+              color: "rgba(255,255,255,0.86)",
+              fontSize: 13,
+              lineHeight: 1.42,
+            }}
+          >
+            {bullet}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CioDecisionCards({
+  actions,
+}: {
+  actions: ReadonlyArray<CioDecisionAction>;
+}) {
+  if (actions.length === 0) return null;
+  const toneStyle = {
+    green: { border: "#86efac", background: "#f0fdf4", color: T.GREEN },
+    amber: { border: T.AMBER, background: T.AMBER_BG, color: "#8a5400" },
+    red: { border: "#fecaca", background: "#fef2f2", color: T.RED },
+  } satisfies Record<CioDecisionAction["tone"], { border: string; background: string; color: string }>;
+  return (
+    <section
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+        gap: 12,
+        marginBottom: 18,
+      }}
+    >
+      {actions.slice(0, 4).map((action) => {
+        const tone = toneStyle[action.tone];
+        return (
+          <div
+            key={action.label}
+            style={{
+              border: `1px solid ${tone.border}`,
+              borderRadius: 10,
+              background: tone.background,
+              padding: "14px 15px",
+              minHeight: 145,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: T.MONO,
+                fontSize: 9,
+                letterSpacing: "1.3px",
+                textTransform: "uppercase",
+                color: tone.color,
+                fontWeight: 900,
+              }}
+            >
+              {action.label}
+            </div>
+            <div
+              style={{
+                marginTop: 8,
+                fontFamily: T.SERIF,
+                fontSize: 19,
+                lineHeight: 1.12,
+                fontWeight: 900,
+                color: T.INK,
+              }}
+            >
+              {action.title}
+            </div>
+            <div style={{ marginTop: 9, color: T.INK_2, fontSize: 12.5, lineHeight: 1.4 }}>
+              {action.body}
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+function CioScenarioPrompts({
+  questions,
+}: {
+  questions: ReadonlyArray<string>;
+}) {
+  return (
+    <section
+      style={{
+        border: `1px solid ${T.RULE_STRONG}`,
+        borderRadius: 10,
+        background: "#fff",
+        padding: "14px 16px",
+        marginTop: 18,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 9,
+          letterSpacing: "1.5px",
+          textTransform: "uppercase",
+          color: T.GOLD,
+          fontWeight: 850,
+          marginBottom: 10,
+        }}
+      >
+        Scenario questions a CIO can ask next
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {questions.map((question) => (
+          <span
+            key={question}
+            style={{
+              border: `1px solid ${T.RULE_STRONG}`,
+              borderRadius: 999,
+              background: T.PAGE_BG,
+              padding: "8px 12px",
+              color: T.INK,
+              fontSize: 12.5,
+              fontWeight: 750,
+            }}
+          >
+            {question}
+          </span>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -1077,6 +1360,7 @@ function CioDashboardPanel({
   const measuredTone = model.measuredTotal > 0 ? "green" : "amber";
   return (
     <div style={{ padding: "22px 32px 36px" }}>
+      <CioDailyRead model={model} />
       <div
         style={{
           display: "grid",
@@ -1116,6 +1400,8 @@ function CioDashboardPanel({
           tone={model.pressureCount > 0 ? "red" : "green"}
         />
       </div>
+
+      <CioDecisionCards actions={model.decisionActions} />
 
       {model.gaps.length > 0 ? (
         <div
@@ -1287,6 +1573,50 @@ function CioDashboardPanel({
           </CioPanel>
         </div>
       ) : null}
+
+      {active === "board" ? (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 0.85fr)",
+            gap: 18,
+          }}
+        >
+          <CioPanel eyebrow="Board brief" title="The decision read for leadership.">
+            <div style={{ display: "grid", gap: 13, color: T.INK_2, fontSize: 14, lineHeight: 1.5 }}>
+              <p style={{ margin: 0 }}>{model.executiveNarrative}</p>
+              {model.commandBullets.map((bullet) => (
+                <div key={bullet} style={{ borderTop: `1px solid ${T.RULE}`, paddingTop: 10 }}>
+                  {bullet}
+                </div>
+              ))}
+            </div>
+          </CioPanel>
+          <div style={{ display: "grid", gap: 18 }}>
+            <CioPanel eyebrow="Decisions" title="What should be acted on next.">
+              <div style={{ display: "grid", gap: 10 }}>
+                {model.decisionActions.map((action) => (
+                  <div key={action.label} style={{ borderTop: `1px solid ${T.RULE}`, paddingTop: 10 }}>
+                    <strong>{action.label}</strong>
+                    <div style={{ marginTop: 4, color: T.INK_2, fontSize: 13 }}>
+                      {action.ask}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CioPanel>
+            <CioPanel eyebrow="Data asks" title="What would make the read stronger.">
+              <div style={{ display: "grid", gap: 8, color: T.INK_2, fontSize: 13.5 }}>
+                {(model.gaps.length > 0 ? model.gaps : ["No critical loaded-data gaps are currently flagged by the Tower read model."]).map((gap) => (
+                  <div key={gap}>• {gap}</div>
+                ))}
+              </div>
+            </CioPanel>
+          </div>
+        </div>
+      ) : null}
+
+      <CioScenarioPrompts questions={model.scenarioQuestions} />
     </div>
   );
 }
@@ -4075,8 +4405,10 @@ export function TowerIndexPage({
     id: "atlas-opener",
     role: "atlas",
     content:
-      atlasObservationsView?.headline ??
-      "aVa is waiting for tenant-bound Tower substrate before it can answer portfolio questions.",
+      cioDashboardModel.initiativeCount > 0
+        ? `${cioDashboardModel.executiveNarrative}\n\nAsk me to inspect pressure spend, benchmark AI ROI, challenge vendor renewals, or shape this into a board readout.`
+        : atlasObservationsView?.headline ??
+          "aVa is waiting for tenant-bound Tower substrate before it can answer portfolio questions.",
   };
   const [atlasMessages, setAtlasMessages] = useState<AtlasMessage[]>([
     initialOpener,
@@ -4084,12 +4416,17 @@ export function TowerIndexPage({
   const [atlasPending, setAtlasPending] = useState(false);
   const [atlasThreadId, setAtlasThreadId] = useState<string | null>(null);
   const initialPrompts: string[] =
-    atlasObservationsView?.suggestedPrompts.slice() ?? [
-      "What tenant data is loaded?",
-      "Which programs have pressure signals?",
-      "Show renewal windows from the DB",
-      "Explain missing Tower substrate",
-    ];
+    cioDashboardModel.initiativeCount > 0
+      ? [
+          ...cioDashboardModel.scenarioQuestions,
+          ...cioDashboardModel.decisionActions.map((action) => action.ask),
+        ].slice(0, 7)
+      : atlasObservationsView?.suggestedPrompts.slice() ?? [
+          "What tenant data is loaded?",
+          "Which programs have pressure signals?",
+          "Show renewal windows from the DB",
+          "Explain missing Tower substrate",
+        ];
   const [atlasSuggestions, setAtlasSuggestions] = useState<AtlasSuggestion[]>(
     initialPrompts.map((label) => ({
       label,
