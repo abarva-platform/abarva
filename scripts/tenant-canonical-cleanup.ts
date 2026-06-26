@@ -47,7 +47,11 @@ type CleanupReport = {
   rows: CleanupRow[];
 };
 
-type TenantColumn = Awaited<ReturnType<typeof discoverTenantColumns>>[number];
+type TenantColumn = {
+  schema: string;
+  table: string;
+  column: string;
+};
 
 type UniqueKey = {
   indexName: string;
