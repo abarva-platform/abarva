@@ -69,6 +69,7 @@ const OUT_ROOT = process.env.TENANT_CLEANUP_OUT_DIR?.trim()
   ? path.resolve(process.env.TENANT_CLEANUP_OUT_DIR)
   : path.join(ROOT, 'verification/tenant-canonical-cleanup');
 const OUT_DIR = path.join(OUT_ROOT, STAMP);
+const STATEMENT_TIMEOUT_MS = Number.parseInt(process.env.TENANT_CLEANUP_STATEMENT_TIMEOUT_MS ?? '60000', 10);
 
 const uniqueKeyCache = new Map<string, UniqueKey[]>();
 
@@ -340,6 +341,9 @@ async function main(): Promise<void> {
 
   const client = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   await client.connect();
+  if (Number.isFinite(STATEMENT_TIMEOUT_MS) && STATEMENT_TIMEOUT_MS > 0) {
+    await client.query(`SET statement_timeout = ${Math.trunc(STATEMENT_TIMEOUT_MS)}`);
+  }
 
   const rows: CleanupRow[] = [];
   const columns = await discoverTenantColumns(client);
@@ -347,7 +351,10 @@ async function main(): Promise<void> {
   try {
     await client.query('BEGIN');
 
-    for (const column of columns) {
+    for (const [columnIndex, column] of columns.entries()) {
+      console.log(
+        `tenant-canonical-cleanup: scan_column=${columnIndex + 1}/${columns.length} ${column.schema}.${column.table}.${column.column}`,
+      );
       for (const [alias, canonical] of aliasEntries) {
         const countResult = await client.query<{ count: string }>(
           `SELECT COUNT(*)::text AS count
@@ -357,7 +364,15 @@ async function main(): Promise<void> {
         );
 	        const count = Number.parseInt(countResult.rows[0]?.count ?? '0', 10);
 	        if (count === 0) continue;
+	        console.log(
+	          `tenant-canonical-cleanup: alias_rows ${column.schema}.${column.table}.${column.column} alias=${alias} canonical=${canonical} count=${count}`,
+	        );
 	        const duplicateRows = await countDuplicateAliasRows(client, column, alias, canonical);
+	        if (duplicateRows > 0) {
+	          console.log(
+	            `tenant-canonical-cleanup: duplicate_alias_rows ${column.schema}.${column.table}.${column.column} alias=${alias} canonical=${canonical} count=${duplicateRows}`,
+	          );
+	        }
 
 	        rows.push({
 	          ...column,
