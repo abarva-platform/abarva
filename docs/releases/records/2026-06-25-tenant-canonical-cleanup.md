@@ -37,6 +37,7 @@ This release closes the tenant-key drift gap that allowed aliases such as `skyha
 - Follow-up: `scripts/tenant-canonical-cleanup.ts` uses an explicit tenant-column script type so the production image TypeScript build remains predictable.
 - Follow-up: `scripts/tenant-canonical-cleanup.ts` reads unique-index columns as `string_agg` so the ACA runtime parses duplicate-key metadata deterministically.
 - Follow-up: `scripts/tenant-canonical-cleanup.ts` includes partial unique indexes in duplicate detection so apply deletes alias-side collisions before rewriting tenant keys.
+- Follow-up: `scripts/tenant-canonical-cleanup.ts` adds an explicit relationship-key collision rule for `enterprise_context_relationships` so Lakeshore alias edges merge cleanly into the canonical parent tenant.
 - `scripts/verify-tenant-key-canonical.ts` now discovers active tenant columns dynamically and fails on aliases in product/runtime/read-model tables.
 - `package.json` adds `npm run db:cleanup:tenant-keys`.
 
