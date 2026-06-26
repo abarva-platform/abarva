@@ -313,7 +313,7 @@ export function formatTowerCurrentStateForPrompt(state: AtlasTowerCurrentState):
         )
       : [`- None displayed. ${state.pressuresView.emptyHint ?? 'No DB-derived pressure cards.'}`]),
     '',
-    'Displayed Atlas observations:',
+    'Displayed aVa observations:',
     ...(state.atlasObservationsView.observations.length > 0
       ? state.atlasObservationsView.observations.map(
           (obs) => `- ${String(obs.number).padStart(2, '0')} ${obs.topic}: ${obs.body}`,
@@ -323,14 +323,14 @@ export function formatTowerCurrentStateForPrompt(state: AtlasTowerCurrentState):
     'Initiatives visible to Tower:',
     ...state.initiatives.slice(0, 10).map(
       (initiative) =>
-        `- ${initiative.displayId} ${initiative.name}: stage=${initiative.stage}/${initiative.stageDetail ?? 'n/a'}; flag=${initiative.statusFlag}; committed=${money(initiative.committedAnnualUsd)} annual; measured=${money(initiative.measuredValueUsd)}; confidence=${initiative.confidenceLevel}. ${initiative.statusSummary}`,
+        `- ${initiative.name}: stage=${initiative.stage}/${initiative.stageDetail ?? 'n/a'}; flag=${initiative.statusFlag}; committed=${money(initiative.committedAnnualUsd)} annual; measured=${money(initiative.measuredValueUsd)}; confidence=${initiative.confidenceLevel}. ${initiative.statusSummary}`,
     ),
     '',
     'Vendor renewal context:',
     ...(state.vendors.length > 0
       ? state.vendors.slice(0, 8).map(
           (vendor) =>
-            `- ${vendor.vendorName} for ${vendor.initiativeDisplayId}: renewal=${vendor.renewalDate ?? 'n/a'}; contract=${money(vendor.contractValueUsd)}; health=${vendor.financialHealth ?? 'n/a'}`,
+            `- ${vendor.vendorName} for ${vendor.initiativeName || 'linked program'}: renewal=${vendor.renewalDate ?? 'n/a'}; contract=${money(vendor.contractValueUsd)}; health=${vendor.financialHealth ?? 'n/a'}`,
         )
       : ['- No vendors loaded.']),
     '',
@@ -338,7 +338,7 @@ export function formatTowerCurrentStateForPrompt(state: AtlasTowerCurrentState):
     ...(state.decisions.length > 0
       ? state.decisions.slice(0, 8).map(
           (decision) =>
-            `- ${decision.initiativeDisplayId}: ${decision.decisionName}; status=${decision.decisionStatus ?? 'n/a'}; dissent=${decision.dissentRecorded ? 'yes' : 'no'}${decision.dissentSummary ? ` (${decision.dissentSummary})` : ''}; outcome=${decision.outcomeStatus ?? 'n/a'}`,
+            `- ${decision.initiativeName}: ${decision.decisionName}; status=${decision.decisionStatus ?? 'n/a'}; dissent=${decision.dissentRecorded ? 'yes' : 'no'}${decision.dissentSummary ? ` (${decision.dissentSummary})` : ''}; outcome=${decision.outcomeStatus ?? 'n/a'}`,
         )
       : ['- No decision history loaded.']),
     '',
@@ -346,7 +346,7 @@ export function formatTowerCurrentStateForPrompt(state: AtlasTowerCurrentState):
     ...(state.scenarios.length > 0
       ? state.scenarios.slice(0, 6).map(
           (scenario) =>
-            `- ${scenario.initiativeDisplayId}: ${scenario.scenarioName}; probability=${scenario.probabilityPct ?? 'n/a'}%; horizon=${scenario.timeHorizonMonths ?? 'n/a'} months; ${scenario.impactSummary ?? 'No impact summary.'}`,
+            `- ${scenario.initiativeName}: ${scenario.scenarioName}; probability=${scenario.probabilityPct ?? 'n/a'}%; horizon=${scenario.timeHorizonMonths ?? 'n/a'} months; ${scenario.impactSummary ?? 'No impact summary.'}`,
         )
       : ['- No scenarios loaded.']),
     '',
@@ -354,7 +354,7 @@ export function formatTowerCurrentStateForPrompt(state: AtlasTowerCurrentState):
     ...(state.stakeholderNotes.length > 0
       ? state.stakeholderNotes.slice(0, 6).map(
           (note) =>
-            `- ${note.initiativeDisplayId}: ${note.stakeholderTitle ?? 'Stakeholder'}; consent=${note.attributionConsent ?? 'n/a'}; themes=${note.themes.join(', ') || 'n/a'}`,
+            `- ${note.initiativeName}: ${note.stakeholderTitle ?? 'Stakeholder'}; consent=${note.attributionConsent ?? 'n/a'}; themes=${note.themes.join(', ') || 'n/a'}`,
         )
       : ['- No stakeholder notes loaded.']),
     '',
@@ -362,7 +362,7 @@ export function formatTowerCurrentStateForPrompt(state: AtlasTowerCurrentState):
     ...(state.alignment2x2View.dots.length > 0
       ? state.alignment2x2View.dots.slice(0, 8).map(
           (dot) =>
-            `- ${dot.displayId} ${dot.name}: quadrant=${dot.quadrant}; amount=${dot.amount}; confidence=${dot.confidenceLevel}${dot.alignedCallout ? '; aligned callout' : ''}`,
+            `- ${dot.name}: quadrant=${dot.quadrant}; amount=${dot.amount}; confidence=${dot.confidenceLevel}${dot.alignedCallout ? '; aligned callout' : ''}`,
         )
       : [`- No plotted initiatives. ${state.alignment2x2View.emptyHint ?? 'No alignment dots displayed.'}`]),
     ...(state.alignment2x2View.strategicBets.length > 0
@@ -370,7 +370,7 @@ export function formatTowerCurrentStateForPrompt(state: AtlasTowerCurrentState):
           'Strategic bets:',
           ...state.alignment2x2View.strategicBets.slice(0, 4).map(
             (bet) =>
-              `- ${bet.displayId} ${bet.name}: ${bet.stageDetail}; amount=${bet.amount}; confidence=${bet.confidenceLevel}`,
+              `- ${bet.name}: ${bet.stageDetail}; amount=${bet.amount}; confidence=${bet.confidenceLevel}`,
           ),
         ]
       : []),

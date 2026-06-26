@@ -290,7 +290,7 @@ export async function runAtlasLlm(
     '',
     AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
     '',
-    'Answer from the current Tower state first. Then use retrieved corpus / industry context when present. For financial or value advice, keep projected, tracked, and verified value separate and ground recommendations in the canonical pattern confidence, KPIs, baseline requirements, and measurement method. If any baseline, measurement, or provenance field is missing, say so instead of quantifying an outcome. If the ask is strategic, explain the implications but route the actual choice to Sentinel or a Program charter.',
+    'Answer from the current Tower state first. Then use retrieved corpus / industry context when present. For financial or value advice, keep projected, tracked, and verified value separate and ground recommendations in the canonical pattern confidence, KPIs, baseline requirements, and measurement method. If any baseline, measurement, or provenance field is missing, say so instead of quantifying an outcome. If the ask is strategic, explain the implications but route the actual choice to Intelligence or a Program charter.',
     '',
     towerContext,
     '',

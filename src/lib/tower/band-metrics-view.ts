@@ -186,35 +186,44 @@ function computePortfolioRoi(initiatives: ReadonlyArray<AIInitiative>): BandMetr
   let totalCommitted = 0;
   let totalMeasured = 0;
   let measuredCount = 0;
+  let rowsWithMeasuredField = 0;
 
   for (const i of initiatives) {
     if (i.committedAnnualUsd && i.committedAnnualUsd > 0) {
       totalCommitted += i.committedAnnualUsd;
     }
     if (i.measuredValueUsd !== null) {
+      rowsWithMeasuredField += 1;
       totalMeasured += Math.max(i.measuredValueUsd, 0);
       if (i.measuredValueUsd > 0) measuredCount += 1;
     }
   }
 
   const ratio = totalCommitted > 0 ? totalMeasured / totalCommitted : 0;
-  const value = totalCommitted > 0 ? `${ratio.toFixed(1)}×` : '—';
+  const hasMeasuredEvidence = rowsWithMeasuredField > 0;
+  const value = totalCommitted === 0 ? '—' : hasMeasuredEvidence ? `${ratio.toFixed(1)}×` : 'gap';
   const confidence: BandConfidence =
     totalCommitted === 0
       ? 'none'
+      : !hasMeasuredEvidence
+        ? 'none'
       : deriveConfidenceFromCoverage(measuredCount, initiatives.length);
 
   const gap = ratio - PORTFOLIO_TARGET_ROI;
   const subtext =
     totalCommitted === 0
       ? 'no committed spend'
+      : !hasMeasuredEvidence
+        ? 'measured value missing'
       : gap >= 0
         ? `target ${PORTFOLIO_TARGET_ROI}× · ▲${gap.toFixed(1)}× over`
         : `target ${PORTFOLIO_TARGET_ROI}× · ▼${Math.abs(gap).toFixed(1)}× under`;
 
   const tooltip =
-    totalCommitted > 0
+    totalCommitted > 0 && hasMeasuredEvidence
       ? `Sum of measured value (${formatUsdCompact(totalMeasured)}) ÷ sum of committed annual (${formatUsdCompact(totalCommitted)}) across ${initiatives.length} initiative${initiatives.length === 1 ? '' : 's'}. ${measuredCount} of ${initiatives.length} have measured values loaded.`
+      : totalCommitted > 0
+        ? `Committed annual spend totals ${formatUsdCompact(totalCommitted)}, but no measured-value fields are loaded. ROI is a gap, not 0.0x.`
       : 'No committed annual spend loaded for this tenant. Surface ROI once initiatives carry committed_annual_usd.';
 
   return {
@@ -286,7 +295,7 @@ function computeSpendAtRisk(initiatives: ReadonlyArray<AIInitiative>): BandMetri
   const tooltip =
     pressuring.length === 0
       ? 'No initiatives in pressure-bearing status flags. Spend at risk is $0.'
-      : `Sum of committed_annual_usd over ${pressuring.length} initiatives in pressure-bearing status flags: ${pressuring.map((i) => i.displayId).join(', ')}.`;
+      : `Sum of committed_annual_usd over ${pressuring.length} initiatives in pressure-bearing status flags: ${pressuring.map((i) => i.name).join('; ')}.`;
 
   return {
     key: 'spend_at_risk',
@@ -328,7 +337,7 @@ function computeRenewals(
     inWindow.length === 0
       ? 'none in 90d'
       : soonest
-        ? `${soonest.initiativeDisplayId} ${daysUntil(soonest.renewalDate ?? '', todayIso)}d · ${formatUsdCompact(totalContractValue)}`
+        ? `${soonest.vendorName} ${daysUntil(soonest.renewalDate ?? '', todayIso)}d · ${formatUsdCompact(totalContractValue)}`
         : `${formatUsdCompact(totalContractValue)} total`;
 
   const confidence: BandConfidence =
@@ -343,7 +352,7 @@ function computeRenewals(
       ? 'No vendors loaded for this tenant. Renewals counter requires vendor records with renewal_date.'
       : inWindow.length === 0
         ? `${vendors.length} vendors loaded; none have renewal_date within the next ${RENEWALS_WINDOW_DAYS} days from ${todayIso}.`
-        : `${inWindow.length} vendor renewal${inWindow.length === 1 ? '' : 's'} within ${RENEWALS_WINDOW_DAYS} days of ${todayIso}: ${inWindow.map((v) => `${v.vendorName} (${v.initiativeDisplayId}, ${daysUntil(v.renewalDate ?? '', todayIso)}d)`).join('; ')}.`;
+        : `${inWindow.length} vendor renewal${inWindow.length === 1 ? '' : 's'} within ${RENEWALS_WINDOW_DAYS} days of ${todayIso}: ${inWindow.map((v) => `${v.vendorName} (${v.initiativeName || 'linked program'}, ${daysUntil(v.renewalDate ?? '', todayIso)}d)`).join('; ')}.`;
 
   return {
     key: 'renewals_90d',

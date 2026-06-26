@@ -67,7 +67,7 @@ function buildMorningSummary(
     ? sentence(topPressure.headline)
     : primary
       ? sentence(primary.signalTitle)
-      : 'The portfolio is active, but Atlas does not see a single dominant pressure in the current Tower state.';
+      : 'The portfolio is active, but aVa does not see a single dominant pressure in the current Tower state.';
   const technicalDepth = tower
     ? `The technical substrate is usable: Tower has initiative, vendor, KPI, decision, scenario, stakeholder, pressure, and observation coverage for this tenant.`
     : `The technical substrate is thinner than I want, so I would keep this as a directional read rather than a board-ready conclusion.`;
@@ -268,7 +268,7 @@ function buildCopilotUsageValueSummary(
 }
 
 function buildStrategyRefusal(): string {
-  return "That crosses from portfolio state into strategy. I can show you the concentration facts, evidence chains, program load, and peer context, but the actual choice belongs in Sentinel or a Program charter.";
+  return "That crosses from portfolio state into strategy. I can show you the concentration facts, evidence chains, program load, and peer context, but the actual choice belongs in Intelligence or a Program charter.";
 }
 
 function buildFederatedVisibilityBoundary(
@@ -433,7 +433,7 @@ function buildPeerAdoptionCompare(
 
 function buildIndustryLeaders(portfolio: AtlasPortfolioSummary): string {
   return [
-    `${portfolio.clientName}'s industry-leader read is an external-corpus question — Atlas does not assert leader behavior from the portfolio aggregate alone.`,
+    `${portfolio.clientName}'s industry-leader read is an external-corpus question — Tower does not assert leader behavior from the portfolio aggregate alone.`,
     `What I can ground from this tenant: ${portfolio.activeUseCaseCount} active use cases, ${portfolio.criticalSignalCount} critical signals, ${portfolio.warningSignalCount} warning signals.`,
     'Industry-leader patterns live in the knowledge corpus. To answer well I need a corpus retrieval pass scoped to this industry — ask "what are others doing in retail on AI governance" and I will run the LLM path with industry corpus context.',
     'Honesty line: I do not have a curated "industry leaders" intent backed by a verified peer panel. The LLM path with corpus context is the closest honest read until that lands.',
@@ -465,8 +465,8 @@ function buildCohortLagging(
 function buildAiSpendVsBudget(portfolio: AtlasPortfolioSummary): string {
   return [
     `${portfolio.clientName} governed AI spend is running at ${dollars(portfolio.governedAiSpendUsd)} on the latest portfolio aggregate; shadow AI exposure adds ${dollars(portfolio.shadowAiSpendUsd)}.`,
-    'AI budget for the fiscal period is not exposed on the portfolio aggregate — Atlas cannot quote a run-rate-vs-budget number without that input.',
-    'What Atlas can ground today is the governed-spend total plus the shadow exposure. To answer "run-rate vs budget" properly, the FY budget figure has to be loaded into the Tower evidence set.',
+    'AI budget for the fiscal period is not exposed on the portfolio aggregate — Tower cannot quote a run-rate-vs-budget number without that input.',
+    'What Tower can ground today is the governed-spend total plus the shadow exposure. To answer "run-rate vs budget" properly, the FY budget figure has to be loaded into the Tower evidence set.',
     'Next step: pull the FY budget from Finance or the Tower today resolver, then re-ask — the answer is a one-line computation once the budget is grounded.',
   ].join(' ');
 }
@@ -504,7 +504,7 @@ function buildCostOverruns(
   return [
     `${portfolio.clientName} carries ${programList.length} programs in flight; per-program cost-overrun status is not exposed on the listAtlasPrograms shape today.`,
     `Portfolio-wide governed AI spend is ${dollars(portfolio.governedAiSpendUsd)}.`,
-    'Atlas cannot rank programs by overrun magnitude from this surface. Treat this as a coverage gap, not a "no overruns" finding.',
+    'Tower cannot rank programs by overrun magnitude from this surface. Treat this as a coverage gap, not a "no overruns" finding.',
     'Next step: pull the Programs ledger view directly; that is where budget-to-actual evidence belongs today.',
   ].join(' ');
 }
@@ -525,7 +525,7 @@ function buildGovernanceCoverageGaps(
       ? `Risk and cross-pillar signals that map to governance coverage: ${signalLine}.`
       : 'No risk-pillar signals returned in the top sample — the coverage view requires a wider signal pull.',
     `Stale integrations: ${portfolio.staleIntegrationCount} (these are the most common evidence-of-control gaps).`,
-    'A formal governance-coverage ranking by policy area is not exposed in this surface; Atlas is using risk signals and stale integrations as the bounded proxy.',
+    'A formal governance-coverage ranking by policy area is not exposed in this surface; aVa is using risk signals and stale integrations as the bounded proxy.',
     'Next step: triage the highest-severity risk signal first and walk the attestation evidence in Programs.',
   ].join(' ');
 }
@@ -543,7 +543,7 @@ function buildRegulatoryOpenItems(
     regulatorySignals.length > 0
       ? `Top items: ${regulatorySignals.slice(0, 3).map((s) => `${s.signalTitle} (${s.severity}, ${s.pillar} pillar)`).join('; ')}.`
       : 'No regulatory-pillar signals surfaced in the top sample.',
-    'Open regulatory items as a canonical register are not exposed in this surface; Atlas is inferring from the signal pillar here, not reading a register.',
+    'Open regulatory items as a canonical register are not exposed in this surface; aVa is inferring from the signal pillar here, not reading a register.',
     'Next step: pull the Source compliance ledger directly; that is the audit-bearing list.',
   ].join(' ');
 }
@@ -551,27 +551,27 @@ function buildRegulatoryOpenItems(
 function buildFundNextWhy(portfolio: AtlasPortfolioSummary, programs: AtlasToolResultMap['programs']): string {
   const programList = programs ?? [];
   return [
-    `Atlas does not recommend "fund next" — that is a Sentinel decision. What Atlas can show: ${programList.length} active programs on ${portfolio.clientName}, ${portfolio.criticalSignalCount} critical signals, ${dollars(portfolio.estimatedValueUsd)} projected value, ${dollars(portfolio.realizedValueUsd)} verified realized.`,
-    'For a "fund X why" answer, Sentinel runs the pattern + alignment + commitment-to-capacity check against the active substrate. Hand off to Sentinel with the program shortlist and Sentinel will return a recommendation with evidence chain.',
-    'Next step: open Sentinel with this portfolio context — Atlas\'s honest contribution stops at naming the facts; the choice belongs there.',
+    `aVa does not recommend "fund next" from Tower alone. What Tower can show: ${programList.length} active programs on ${portfolio.clientName}, ${portfolio.criticalSignalCount} critical signals, ${dollars(portfolio.estimatedValueUsd)} projected value, ${dollars(portfolio.realizedValueUsd)} verified realized.`,
+    'For a "fund X why" answer, Intelligence should run the pattern + alignment + commitment-to-capacity check against the active substrate and return a recommendation with evidence chain.',
+    "Next step: open Intelligence with this portfolio context. Tower's honest contribution stops at naming the facts; the choice belongs there.",
   ].join(' ');
 }
 
 function buildKillNextWhy(portfolio: AtlasPortfolioSummary, programs: AtlasToolResultMap['programs']): string {
   const programList = programs ?? [];
   return [
-    `Atlas does not recommend "kill next" — that is a Sentinel decision. What Atlas can show: ${programList.length} active programs on ${portfolio.clientName}; ranking by lagging value attainment is the canonical input.`,
-    'The clean input to a Sentinel kill decision is: (a) measured-value-to-commit by program, (b) gate confidence, and (c) cohort percentile on value attainment. Atlas can now ground the measured-value-to-commit part from loaded Tower initiative facts; gate confidence and cohort percentile belong in the Sentinel/cohort surfaces.',
-    'Next step: hand off to Sentinel with the lagging-by-value program shortlist; the decision returns there with evidence.',
+    `aVa does not recommend "kill next" from Tower alone. What Tower can show: ${programList.length} active programs on ${portfolio.clientName}; ranking by lagging value attainment is the canonical input.`,
+    'The clean input to a kill decision is: (a) measured-value-to-commit by program, (b) gate confidence, and (c) cohort percentile on value attainment. Tower can ground the measured-value-to-commit part from loaded initiative facts; gate confidence and cohort percentile belong in Intelligence.',
+    'Next step: hand off to Intelligence with the lagging-by-value program shortlist; the decision returns there with evidence.',
   ].join(' ');
 }
 
 function buildReshapeNextWhy(portfolio: AtlasPortfolioSummary, programs: AtlasToolResultMap['programs']): string {
   const programList = programs ?? [];
   return [
-    `Atlas does not recommend "reshape next" — that is a Sentinel decision. What Atlas can show: ${programList.length} active programs on ${portfolio.clientName} and the signals fired against them.`,
-    'A reshape decision is anchored on the gap between intended pattern and observed evidence chain. Sentinel runs that comparison; Atlas surfaces the signals that triggered the question.',
-    'Next step: open the candidate program in Sentinel and run "reshape why" with the active pressure signal as the anchor.',
+    `aVa does not recommend "reshape next" from Tower alone. What Tower can show: ${programList.length} active programs on ${portfolio.clientName} and the signals fired against them.`,
+    'A reshape decision is anchored on the gap between intended pattern and observed evidence chain. Intelligence runs that comparison; Tower surfaces the signals that triggered the question.',
+    'Next step: open the candidate program in Intelligence and run "reshape why" with the active pressure signal as the anchor.',
   ].join(' ');
 }
 
@@ -581,18 +581,18 @@ function buildCutProgramImpact(
 ): string {
   const programList = programs ?? [];
   return [
-    `Atlas does not run counterfactuals — "if I cut program X" is a Sentinel scenario. What Atlas grounds: ${programList.length} active programs on ${portfolio.clientName}, ${dollars(portfolio.estimatedValueUsd)} projected portfolio value.`,
-    'A clean cut-impact analysis needs (a) the program\'s commitment, (b) its value at stake under the active pattern, (c) downstream dependencies in the scenario graph. Sentinel runs that; Atlas does not.',
-    'Next step: open the target program in Sentinel and request the cut-scenario explicitly — the answer comes back with evidence and dependency map.',
+    `Tower does not run counterfactuals — "if I cut program X" is an Intelligence scenario. What Tower grounds: ${programList.length} active programs on ${portfolio.clientName}, ${dollars(portfolio.estimatedValueUsd)} projected portfolio value.`,
+    "A clean cut-impact analysis needs (a) the program's commitment, (b) its value at stake under the active pattern, and (c) downstream dependencies in the scenario graph. Intelligence runs that; Tower does not.",
+    'Next step: open the target program in Intelligence and request the cut-scenario explicitly. The answer comes back with evidence and dependency map.',
   ].join(' ');
 }
 
 function buildFundXVsY(portfolio: AtlasPortfolioSummary, programs: AtlasToolResultMap['programs']): string {
   const programList = programs ?? [];
   return [
-    `Atlas does not rank "X vs Y" — that is a Sentinel comparison. What Atlas grounds: ${programList.length} active programs on ${portfolio.clientName} and their basic shape (name, phase, status).`,
-    'Sentinel runs the comparison on pattern fit + value evidence + capacity to deliver. Atlas can list the two programs side by side but cannot pick.',
-    'Next step: hand off to Sentinel with both program IDs — the recommendation returns there with evidence per side.',
+    `Tower does not rank "X vs Y" by itself. What Tower grounds: ${programList.length} active programs on ${portfolio.clientName} and their basic shape (name, phase, status).`,
+    'Intelligence runs the comparison on pattern fit + value evidence + capacity to deliver. Tower can list the two programs side by side but cannot pick.',
+    'Next step: hand off to Intelligence with both programs. The recommendation returns there with evidence per side.',
   ].join(' ');
 }
 
@@ -619,7 +619,7 @@ function buildProgramDrilldown(
   return [
     `${portfolio.clientName} has ${programList.length} active programs; the message did not match a specific program ID or name.`,
     programList.length > 0 ? `Candidates from the active set: ${sample}.` : 'No active programs returned for this tenant.',
-    'Next step: re-ask with a specific program code (for example "tell me about APX-CDP-2026") and Atlas can drill down.',
+    'Next step: re-ask with a specific program name and aVa can drill down.',
   ].join(' ');
 }
 
@@ -645,7 +645,7 @@ function buildVendorDrilldown(
   }
   return [
     `${portfolio.clientName} carries ${portfolio.distinctAiVendorsCount ?? 'n/a'} distinct AI vendors; the message did not match a specific vendor name in the active use-case sample.`,
-    'Next step: re-ask with a specific vendor name and Atlas will drill down against the use-case + signal coverage.',
+    'Next step: re-ask with a specific vendor name and aVa will drill down against the use-case + signal coverage.',
   ].join(' ');
 }
 
@@ -936,7 +936,7 @@ export async function runScriptedAtlasIntent(
     return {
       response,
       suggestions: [
-        { label: 'Open Sentinel', value: 'Open in Sentinel', kind: 'link', href: '/intelligence' },
+        { label: 'Open Intelligence', value: 'Open in Intelligence', kind: 'link', href: '/intelligence' },
         { label: 'Lagging programs', value: 'Show me lagging programs by realized value', kind: 'message' },
       ],
       toolsUsed: ['query_tower_current_state', 'query_portfolio_aggregates', 'query_programs'],
@@ -956,7 +956,7 @@ export async function runScriptedAtlasIntent(
         ? buildCutProgramImpact(portfolio, programs)
         : buildFundXVsY(portfolio, programs),
       suggestions: [
-        { label: 'Open Sentinel', value: 'Open in Sentinel', kind: 'link', href: '/intelligence' },
+        { label: 'Open Intelligence', value: 'Open in Intelligence', kind: 'link', href: '/intelligence' },
         { label: 'Program drilldown', value: 'Tell me more about a program', kind: 'message' },
       ],
       toolsUsed: ['query_tower_current_state', 'query_portfolio_aggregates', 'query_programs'],
@@ -1061,7 +1061,7 @@ export async function runScriptedAtlasIntent(
     return {
       response: buildStrategyRefusal(),
       suggestions: [
-        { label: 'Open Sentinel', value: 'Open in Sentinel', kind: 'link', href: '/intelligence' },
+        { label: 'Open Intelligence', value: 'Open in Intelligence', kind: 'link', href: '/intelligence' },
         { label: 'Originate program', value: 'Originate program', kind: 'link', href: '/programs/new?source=tower_signal' },
       ],
       toolsUsed: ['query_tower_current_state', 'query_programs', 'query_portfolio_aggregates'],

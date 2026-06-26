@@ -144,7 +144,7 @@ function fallbackExplanation(input: MetricExplanationInput): MetricExplanation {
     metricKey: input.metricKey,
     displayValue: displayValue(input),
     displayConfidence: displayConfidence(input),
-    headline: 'Atlas needs loaded initiatives before it can explain this metric beyond the static provenance panel.',
+    headline: 'aVa needs loaded initiatives before it can explain this metric beyond the static provenance panel.',
     composition: {
       formula: 'No substrate rows loaded',
       inputs: [],

@@ -104,7 +104,7 @@ describe('Tower today resolution wiring', () => {
 
     expect(todayIso).toBe('2026-05-12');
     expect(renewals.value).toBe('1');
-    expect(renewals.subtext).toContain('AR-01 90d');
+    expect(renewals.subtext).toContain('Pilot Vendor 90d');
     expect(vendorPressure.magnitudeValue).toBe('90');
     expect(atlasObservations.observations[0]?.topic).toBe('Vendor clock');
   });

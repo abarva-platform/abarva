@@ -466,11 +466,15 @@ type CioDecisionAction = {
 type CioDashboardModel = {
   initiativeCount: number;
   vendorCount: number;
+  budgetRowsWithAmount: number;
+  vendorRowsWithAmount: number;
   committedTotal: number;
   measuredTotal: number;
   measuredCoverageCount: number;
   pressureCount: number;
   spendAtRisk: number;
+  vendorContractTotal: number;
+  spendQuality: "empty" | "missing_values" | "unmeasured" | "usable";
   topPrograms: ReadonlyArray<AIInitiative>;
   spendByFunction: ReadonlyArray<CioGroupRow>;
   spendByVendor: ReadonlyArray<CioGroupRow>;
@@ -620,8 +624,12 @@ function buildCioDashboardModel(
   const gaps: string[] = [];
   if (committedTotal === 0)
     gaps.push("Program budget rows are not loaded for Tower slicing.");
+  if (committedTotal > 0 && committedTotal >= 1_000_000_000)
+    gaps.push("Loaded program budget magnitude needs client validation before using it as a CIO headline.");
   if (vendors.length === 0)
     gaps.push("Vendor contract rows are not loaded for concentration and renewal views.");
+  if (vendors.length > 0 && vendors.every((vendor) => Number(vendor.contractValueUsd ?? 0) === 0))
+    gaps.push("Vendor names and renewals are loaded, but contract values are missing.");
   if (initiatives.every((initiative) => initiative.measuredValueUsd === null))
     gaps.push("Measured value rows are not loaded, so ROI is a gap rather than a claim.");
   if (
@@ -645,6 +653,21 @@ function buildCioDashboardModel(
   const measuredCoverageCount = initiatives.filter(
     (initiative) => initiative.measuredValueUsd !== null,
   ).length;
+  const budgetRowsWithAmount = initiatives.filter(
+    (initiative) => initiativeBudget(initiative) > 0,
+  ).length;
+  const vendorContractTotal = spendByVendor.reduce((sum, row) => sum + row.amount, 0);
+  const vendorRowsWithAmount = vendors.filter(
+    (vendor) => Number(vendor.contractValueUsd ?? 0) > 0,
+  ).length;
+  const spendQuality: CioDashboardModel["spendQuality"] =
+    initiatives.length === 0
+      ? "empty"
+      : committedTotal === 0
+        ? "missing_values"
+        : measuredCoverageCount === 0
+          ? "unmeasured"
+          : "usable";
   const topProgram = topPrograms[0] ?? null;
   const topFunction = spendByFunction[0] ?? null;
   const topVendor = spendByVendor[0] ?? null;
@@ -656,27 +679,42 @@ function buildCioDashboardModel(
   const executiveNarrative =
     initiatives.length === 0
       ? "Tower has the CIO canvas ready, but the tenant-bound program rows are not loaded yet."
-      : `${formatMoney(spendAtRisk)} of loaded portfolio spend is under pressure across ${riskRows.length} program${riskRows.length === 1 ? "" : "s"}. ${valueCoverageText}, so the next CIO move is to separate budget concentration from value proof before funding more work.`;
+      : committedTotal === 0
+        ? `Tower has ${initiatives.length} loaded program rows, but budget amounts are not loaded. Use this as a portfolio coverage view, not a spend dashboard, until program budget fields are supplied.`
+        : measuredCoverageCount === 0
+          ? `${formatMoney(committedTotal)} is loaded as program budget rows across ${initiatives.length} programs, but no measured value rows are loaded. Treat budget concentration as review-required and do not use the ROI tiles until value proof is supplied.`
+          : `${formatMoney(spendAtRisk)} of loaded portfolio spend is under pressure across ${riskRows.length} program${riskRows.length === 1 ? "" : "s"}. ${valueCoverageText}, so the next CIO move is to separate budget concentration from value proof before funding more work.`;
   const commandBullets = [
-    topProgram
+    topProgram && committedTotal > 0
       ? `Largest loaded program: ${topProgram.name} at ${formatMoney(initiativeBudget(topProgram))}.`
-      : "No loaded program can be ranked by budget yet.",
-    topFunction
+      : initiatives.length > 0
+        ? "Program rows are loaded, but budget amounts are missing or review-required."
+        : "No loaded program can be ranked by budget yet.",
+    topFunction && committedTotal > 0
       ? `Largest loaded function slice: ${topFunction.label} at ${formatMoney(topFunction.amount)} (${percentOf(topFunction.amount, committedTotal)} of the loaded envelope).`
-      : "No owner/function slice is available yet.",
-    topVendor
+      : spendByFunction.length > 0
+        ? "Owner/function slices are loaded, but spend amounts are missing."
+        : "No owner/function slice is available yet.",
+    topVendor && vendorContractTotal > 0
       ? `Largest loaded vendor exposure: ${topVendor.label} at ${formatMoney(topVendor.amount)}.`
-      : "Vendor exposure is not yet available from loaded contract rows.",
-    topAiFamily
+      : vendors.length > 0
+        ? "Vendor names are loaded; contract values are missing for concentration analysis."
+        : "Vendor exposure is not yet available from loaded contract rows.",
+    topAiFamily && topAiFamily.amount > 0
       ? `Largest AI spend family: ${topAiFamily.label} at ${formatMoney(topAiFamily.amount)}; measured value is ${topAiFamily.measured > 0 ? formatMoney(topAiFamily.measured) : "still a gap"}.`
-      : "AI spend family classification needs AI-tagged initiative rows.",
+      : aiSpendRows.length > 0
+        ? "AI-tagged initiatives exist, but spend/value amounts are not loaded enough to benchmark."
+        : "AI spend family classification needs AI-tagged initiative rows.",
   ];
   const decisionActions: CioDecisionAction[] = [];
   if (riskRows.length > 0) {
     decisionActions.push({
       label: "Inspect pressure spend",
       title: "Open the highest-pressure programs before approving new money.",
-      body: `${riskRows.length} program${riskRows.length === 1 ? "" : "s"} are not marked healthy, representing ${formatMoney(spendAtRisk)} of loaded budget.`,
+      body:
+        spendAtRisk > 0
+          ? `${riskRows.length} program${riskRows.length === 1 ? "" : "s"} are not marked healthy. Their loaded budgets total ${formatMoney(spendAtRisk)}; validate value proof before treating this as fundable spend.`
+          : `${riskRows.length} program${riskRows.length === 1 ? "" : "s"} are not marked healthy, but their budget amounts are not loaded.`,
       ask: "Which pressure programs should the CIO inspect first, and why?",
       tone: "red",
     });
@@ -718,11 +756,15 @@ function buildCioDashboardModel(
   return {
     initiativeCount: initiatives.length,
     vendorCount: new Set(vendors.map((vendor) => vendor.vendorName)).size,
+    budgetRowsWithAmount,
+    vendorRowsWithAmount,
     committedTotal,
     measuredTotal,
     measuredCoverageCount,
     pressureCount: riskRows.length,
     spendAtRisk,
+    vendorContractTotal,
+    spendQuality,
     topPrograms,
     spendByFunction,
     spendByVendor,
@@ -747,6 +789,7 @@ function percentOf(value: number, total: number): string {
 
 function ratioText(numerator: number, denominator: number): string {
   if (!denominator) return "not proven";
+  if (!numerator) return "not proven";
   return `${(numerator / denominator).toFixed(2)}x`;
 }
 
@@ -1107,6 +1150,7 @@ function CioBarList({
       />
     );
   }
+  const hasAmounts = total > 0;
   return (
     <div style={{ display: "grid", gap: 12 }}>
       {rows.map((row) => (
@@ -1122,7 +1166,7 @@ function CioBarList({
             }}
           >
             <span>{row.label}</span>
-            <span>{formatMoney(row.amount)}</span>
+            <span>{hasAmounts ? formatMoney(row.amount) : "amount missing"}</span>
           </div>
           <div
             style={{
@@ -1144,7 +1188,7 @@ function CioBarList({
           </div>
           <div style={{ marginTop: 4, color: T.GRAY_DK, fontSize: 12 }}>
             {row.count} row{row.count === 1 ? "" : "s"} ·{" "}
-            {percentOf(row.amount, total)} of loaded envelope
+            {hasAmounts ? `${percentOf(row.amount, total)} of loaded envelope` : "spend values not loaded"}
           </div>
         </div>
       ))}
@@ -1257,7 +1301,7 @@ function CioProgramTable({
                   {initiative.name}
                 </Link>
                 <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 3 }}>
-                  {initiative.displayId}
+                  {initiative.primaryCategoryName}
                 </div>
               </td>
               <td style={{ padding: "12px 10px", color: T.INK_2 }}>
@@ -1267,7 +1311,7 @@ function CioProgramTable({
                 {initiative.ownerName}
               </td>
               <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
-                {formatMoney(initiativeBudget(initiative))}
+                {initiativeBudget(initiative) > 0 ? formatMoney(initiativeBudget(initiative)) : "gap"}
               </td>
               <td style={{ padding: "12px 10px", textAlign: "right", color: T.INK_2 }}>
                 {initiative.measuredValueUsd === null
@@ -1358,6 +1402,42 @@ function CioDashboardPanel({
   detailHrefFor: DetailHrefBuilder;
 }) {
   const measuredTone = model.measuredTotal > 0 ? "green" : "amber";
+  const portfolioValue =
+    model.spendQuality === "empty" || model.spendQuality === "missing_values"
+      ? "gap"
+      : model.spendQuality === "unmeasured"
+        ? "review"
+        : formatMoney(model.committedTotal);
+  const portfolioNote =
+    model.spendQuality === "missing_values"
+      ? `${model.initiativeCount} programs loaded; budget amounts missing`
+      : model.spendQuality === "unmeasured"
+        ? `${formatMoney(model.committedTotal)} loaded; validate before CIO headline`
+        : `${model.initiativeCount} top programs in the Tower read model`;
+  const roiValue =
+    model.measuredCoverageCount > 0
+      ? ratioText(model.measuredTotal, model.committedTotal)
+      : "gap";
+  const vendorValue =
+    model.vendorCount > 0 && model.vendorContractTotal === 0
+      ? "gap"
+      : formatMoney(model.vendorContractTotal);
+  const vendorNote =
+    model.vendorCount > 0 && model.vendorContractTotal === 0
+      ? `${model.vendorCount} vendors loaded; contract values missing`
+      : `${model.vendorCount} vendors in contract rows`;
+  const pressureValue =
+    model.pressureCount > 0 && model.spendAtRisk === 0
+      ? "gap"
+      : model.pressureCount > 0 && model.measuredCoverageCount === 0
+        ? "review"
+        : formatMoney(model.spendAtRisk);
+  const pressureNote =
+    model.pressureCount > 0 && model.spendAtRisk === 0
+      ? `${model.pressureCount} pressure programs; budget amounts missing`
+      : model.pressureCount > 0 && model.measuredCoverageCount === 0
+        ? `${formatMoney(model.spendAtRisk)} loaded, value proof missing`
+        : `${model.pressureCount} programs not marked healthy`;
   return (
     <div style={{ padding: "22px 32px 36px" }}>
       <CioDailyRead model={model} />
@@ -1371,8 +1451,9 @@ function CioDashboardPanel({
       >
         <CioMetricCard
           label="Loaded IT portfolio"
-          value={formatMoney(model.committedTotal)}
-          note={`${model.initiativeCount} top programs in the Tower read model`}
+          value={portfolioValue}
+          note={portfolioNote}
+          tone={model.spendQuality === "usable" ? "neutral" : "amber"}
         />
         <CioMetricCard
           label="Measured value"
@@ -1384,19 +1465,20 @@ function CioDashboardPanel({
         />
         <CioMetricCard
           label="ROI signal"
-          value={ratioText(model.measuredTotal, model.committedTotal)}
+          value={roiValue}
           note="Calculated only from loaded measured-value rows"
           tone={model.measuredTotal > 0 ? "green" : "amber"}
         />
         <CioMetricCard
           label="Vendor exposure"
-          value={formatMoney(model.spendByVendor.reduce((sum, row) => sum + row.amount, 0))}
-          note={`${model.vendorCount} vendors in contract rows`}
+          value={vendorValue}
+          note={vendorNote}
+          tone={model.vendorCount > 0 && model.vendorContractTotal === 0 ? "amber" : "neutral"}
         />
         <CioMetricCard
           label="Pressure spend"
-          value={formatMoney(model.spendAtRisk)}
-          note={`${model.pressureCount} programs not marked healthy`}
+          value={pressureValue}
+          note={pressureNote}
           tone={model.pressureCount > 0 ? "red" : "green"}
         />
       </div>
@@ -2330,8 +2412,7 @@ function TowerInlineDetailPanel({
               fontWeight: 800,
             }}
           >
-            Detail canvas · {initiative.displayId} ·{" "}
-            {labelize(initiative.stage)}
+            Detail canvas · {labelize(initiative.stage)}
           </div>
           <h2
             style={{
@@ -2410,7 +2491,7 @@ function TowerInlineDetailPanel({
                 fontWeight: 800,
               }}
             >
-              Selected pressure · {pressure.id}
+              Selected pressure
             </div>
             <div
               style={{
@@ -3124,12 +3205,12 @@ function lensAccent(lens: TowerLens): string {
 
 function initiativeLensMeta(initiative: AIInitiative, lens: TowerLens): string {
   if (lens === "risk")
-    return `${initiative.displayId} · risk posture · ${labelize(initiative.statusFlag)}`;
+    return `Risk posture · ${labelize(initiative.statusFlag)}`;
   if (lens === "contract")
-    return `${initiative.displayId} · vendor exposure · ${initiative.confidenceLevel}`;
+    return `Vendor exposure · ${initiative.confidenceLevel}`;
   if (lens === "adopt")
-    return `${initiative.displayId} · adoption path · ${labelize(initiative.stage)}`;
-  return `${initiative.displayId} · value realization · ${initiative.confidenceLevel}`;
+    return `Adoption path · ${labelize(initiative.stage)}`;
+  return `Value realization · ${initiative.confidenceLevel}`;
 }
 
 function initiativeLensDetail(
@@ -3464,7 +3545,7 @@ function TowerDataDesignPanel({
                     textAlign: "left",
                   }}
                 >
-                  <th style={{ padding: "0 8px 8px 0" }}>ID</th>
+                  <th style={{ padding: "0 8px 8px 0" }}>Category</th>
                   <th style={{ padding: "0 8px 8px" }}>Initiative</th>
                   <th style={{ padding: "0 8px 8px" }}>State</th>
                   <th style={{ padding: "0 8px 8px" }}>Meaning</th>
@@ -3488,7 +3569,7 @@ function TowerDataDesignPanel({
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {initiative.displayId}
+                      {initiative.primaryCategoryName}
                     </td>
                     <td
                       style={{
@@ -3957,7 +4038,7 @@ function TowerWorkspaceTabPanel({
                 key={vendor.vendorId}
                 href={detailHrefFor(vendor.initiativeDisplayId)}
                 title={vendor.vendorName}
-                meta={`${vendor.initiativeDisplayId} · ${activeLens === "contract" ? daysUntilLabel(vendor.renewalDate) : lensLabel(activeLens)}`}
+                meta={`${vendor.initiativeName || "Linked program"} · ${activeLens === "contract" ? daysUntilLabel(vendor.renewalDate) : lensLabel(activeLens)}`}
                 detail={vendorLensDetail(
                   vendor,
                   initiativeById.get(vendor.initiativeId),
@@ -4018,7 +4099,7 @@ function TowerWorkspaceTabPanel({
               key={card.key}
               href={detailHrefFor(card.displayId, card.id)}
               title={card.headline}
-              meta={`${card.id} · ${card.magnitudeLabel}`}
+              meta={card.magnitudeLabel}
               detail={card.nextAction}
               accent={pressureColor(card.type)}
             />
@@ -4110,8 +4191,7 @@ function Quadrant({
           const conf = dot.confidenceLevel ?? "HIGH";
           const borderStyle =
             conf === "HIGH" ? "solid" : conf === "MED" ? "dashed" : "dotted";
-          const dotNumber = dot.displayId?.replace(/^[A-Z]+-0*/, "") ?? "";
-          const markerTitle = `${dot.displayId ?? dot.name} · ${dot.name} · ${dot.amount}${dot.alignedCallout ? " · aligned callout" : ""}`;
+          const markerTitle = `${dot.name} · ${dot.amount}${dot.alignedCallout ? " · aligned callout" : ""}`;
           const dotStyle: CSSProperties = {
             position: "absolute",
             left: dot.left,
@@ -4136,7 +4216,7 @@ function Quadrant({
           };
           const dotBody = (
             <>
-              <span aria-hidden="true">{dotNumber || "•"}</span>
+              <span aria-hidden="true">•</span>
               {dot.alignedCallout && (
                 <span
                   aria-hidden="true"
@@ -4654,8 +4734,7 @@ export function TowerIndexPage({
                   marginBottom: 5,
                 }}
               >
-                Tower · CIO command center · TWR-CIO-
-                {activeCioDashboardView.replace(/_/g, "-").toUpperCase()}
+                Tower · CIO command center
               </div>
               <h1
                 style={{
