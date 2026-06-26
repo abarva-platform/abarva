@@ -116,6 +116,7 @@ describe('Tower L3 dossiers', () => {
     expect(sample?.metrics.every((m) => m.amountType !== 'unknown')).toBe(true);
     expect(sample?.branchOptions.length).toBeGreaterThan(0);
     expect(sample?.derivedInsights[0]?.supportingRefs.length).toBeGreaterThan(0);
+    expect(sample?.coverage.verdict).toBe('SKELETON_COMPLETE');
     expect(sample?.validation.pass).toBe(true);
   });
 
@@ -145,6 +146,22 @@ describe('Tower L3 dossiers', () => {
     expect(value?.validation.pass).toBe(true);
   });
 
+  it('names expected structural gaps for spend and keeps prompt/render surface clean', () => {
+    const dossiers = buildTowerL3Dossiers(input());
+    const spend = dossiers.find((d) => d.scopeKey === 'l1-consolidated' && d.viewKey === 'spend');
+    expect(spend?.gaps).toEqual(expect.arrayContaining([
+      'OpEx/CapEx split not loaded at program and vendor line-item level',
+      'vendor utilization not loaded at spend-line level',
+    ]));
+    expect(JSON.stringify(spend?.businessBody)).not.toMatch(/csv:|row-[0-9]|metric_[0-9a-f]|\.json|\.csv/);
+    expect(spend?.validation.pass).toBe(true);
+  });
+
+  it('does not issue enriched verdicts without grounded Stage 2 insights', () => {
+    const dossiers = buildTowerL3Dossiers(input());
+    expect(dossiers.every((d) => !['DEEP', 'PARTIAL', 'THIN'].includes(d.coverage.verdict))).toBe(true);
+  });
+
   it('maps dossiers into the versioned L3 store write contract', () => {
     const dossiers = buildTowerL3Dossiers(input());
     const rows = toTowerL3DossierWriteRows({
@@ -156,10 +173,10 @@ describe('Tower L3 dossiers', () => {
     expect(sample).toMatchObject({
       tenant_key: 'lakeshore-holdings',
       scope_type: 'l1_consolidated',
-      prompt_version: 'tower-l3-dossier-v1',
+      prompt_version: 'tower-l3-dossier-v2',
       stage1_status: 'built',
       stage2_status: 'unavailable',
-      verdict: 'DEEP',
+      verdict: 'SKELETON_COMPLETE',
     });
     expect(sample?.dossier.metrics.length).toBeGreaterThan(0);
     expect(sample?.validation_result.pass).toBe(true);

@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 
 import type { PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
 
-export const TOWER_L3_PROMPT_VERSION = 'tower-l3-dossier-v1';
+export const TOWER_L3_PROMPT_VERSION = 'tower-l3-dossier-v2';
 
 export const TOWER_CIO_VIEWS = [
   'spend',
@@ -88,7 +88,15 @@ export interface TowerDossierCoverage {
   requiredMetrics: string[];
   presentMetrics: string[];
   score: number;
-  verdict: 'DEEP' | 'PARTIAL' | 'THIN' | 'EMPTY' | 'FAILED';
+  verdict:
+    | 'SKELETON_COMPLETE'
+    | 'SKELETON_PARTIAL'
+    | 'SKELETON_THIN'
+    | 'DEEP'
+    | 'PARTIAL'
+    | 'THIN'
+    | 'EMPTY'
+    | 'FAILED';
 }
 
 export interface TowerDossierInsight {
@@ -97,6 +105,46 @@ export interface TowerDossierInsight {
   implication: string;
   confidence: 'high' | 'medium' | 'low' | 'insufficient';
   supportingRefs: string[];
+  supportLabels: string[];
+  placeholder: boolean;
+}
+
+export interface TowerBusinessBody {
+  labels: {
+    tenant: string;
+    scope: string;
+    view: string;
+  };
+  metrics: Array<{
+    label: string;
+    valueText: string;
+    amountType: string;
+    accountingTreatment: string;
+    period: string;
+    confidence: string;
+    freshness: string;
+  }>;
+  facts: Array<{
+    label: string;
+    value: string;
+    confidence: string;
+  }>;
+  relationships: Array<{
+    label: string;
+    from: string;
+    to: string;
+    relationshipType: string;
+    confidence: string;
+  }>;
+  insights: Array<{
+    observation: string;
+    implication: string;
+    confidence: TowerDossierInsight['confidence'];
+    supportLabels: string[];
+    placeholder: boolean;
+  }>;
+  gaps: string[];
+  branchOptions: string[];
 }
 
 export interface TowerAnswerDossier {
@@ -118,6 +166,7 @@ export interface TowerAnswerDossier {
   facts: TowerDossierFact[];
   relationships: TowerDossierRelationship[];
   coverage: TowerDossierCoverage;
+  businessBody: TowerBusinessBody;
   gaps: string[];
   branchOptions: string[];
   derivedInsights: TowerDossierInsight[];
@@ -169,6 +218,22 @@ function citationFor(row: TowerSourceRow): string {
   return `${row.sourceFile}:row-${row.rowNumber}`;
 }
 
+function sourceLabelFor(fileName: string): string {
+  if (fileName.includes('benefit')) return 'benefit realization ledger, FY2026';
+  if (fileName.includes('budget')) return 'IT budget ledger, FY2026';
+  if (fileName.includes('vendors') || fileName.includes('contracts')) return 'vendor and contract ledger, FY2026';
+  if (fileName.includes('application')) return 'application and system inventory';
+  if (fileName.includes('risk')) return 'risk and governance register';
+  if (fileName.includes('tool_usage')) return 'tool usage telemetry';
+  if (fileName.includes('initiative')) return 'initiative registry';
+  if (fileName.includes('portfolio_company')) return 'portfolio company profile';
+  return 'Tower source ledger';
+}
+
+function businessLineageLabels(lineage: readonly string[]): string[] {
+  return [...new Set(lineage.map((entry) => sourceLabelFor(entry.split(':')[0] ?? entry)))];
+}
+
 function rowsForScope(rows: readonly TowerSourceRow[], scope: ScopeDef): TowerSourceRow[] {
   if (!scope.portfolioCompany) return [...rows];
   return rows.filter((row) => cleanText(row.values.portfolio_company) === scope.portfolioCompany);
@@ -197,10 +262,25 @@ function requiredMetricsFor(view: TowerCioView): string[] {
   }
 }
 
-function verdictFor(score: number, metrics: number): TowerDossierCoverage['verdict'] {
+function skeletonVerdictFor(score: number, metrics: number): TowerDossierCoverage['verdict'] {
   if (metrics === 0) return 'EMPTY';
-  if (score >= 0.85) return 'DEEP';
-  if (score >= 0.5) return 'PARTIAL';
+  if (score >= 0.85) return 'SKELETON_COMPLETE';
+  if (score >= 0.5) return 'SKELETON_PARTIAL';
+  return 'SKELETON_THIN';
+}
+
+function enrichedVerdictFor(args: {
+  score: number;
+  metrics: number;
+  groundedInsightCount: number;
+  maxInsightConfidence: TowerDossierInsight['confidence'];
+}): TowerDossierCoverage['verdict'] {
+  if (args.metrics === 0) return 'EMPTY';
+  if (args.groundedInsightCount === 0 || args.maxInsightConfidence === 'insufficient') {
+    return skeletonVerdictFor(args.score, args.metrics);
+  }
+  if (args.score >= 0.85 && args.groundedInsightCount >= 2 && args.maxInsightConfidence === 'high') return 'DEEP';
+  if (args.score >= 0.5) return 'PARTIAL';
   return 'THIN';
 }
 
@@ -351,10 +431,17 @@ function buildRelationships(input: TowerL3Input, scope: ScopeDef): TowerDossierR
 function buildGaps(required: readonly string[], metrics: readonly TowerMetricSnapshot[], scope: ScopeDef, view: TowerCioView): string[] {
   const present = new Set(metrics.map((m) => m.metricKey));
   const gaps = required.filter((key) => !present.has(key)).map((key) => `${labelForMetric(key)} not loaded for ${scope.label}`);
+  if (view === 'spend') {
+    gaps.push('OpEx/CapEx split not loaded at program and vendor line-item level');
+    gaps.push('vendor utilization not loaded at spend-line level');
+  }
+  if (view === 'value_realization') {
+    gaps.push('value realization owner attestation not loaded');
+  }
   if (scope.type === 'l2_company_comparison' && view !== 'trust_gaps') {
     gaps.push('Company-comparison view should be reviewed against each operating-company source before board use');
   }
-  return gaps;
+  return [...new Set(gaps)];
 }
 
 function labelForMetric(key: string): string {
@@ -401,6 +488,8 @@ function derivedInsights(args: {
           implication: args.gaps.length > 0 ? args.gaps[0] : 'Review the governed metrics before using this dossier for an executive readout.',
           confidence: coverageHint({ metrics: args.metrics, gaps: args.gaps }),
           supportingRefs: [ref],
+          supportLabels: args.metrics[0] ? businessLineageLabels(args.metrics[0].lineage) : ['Tower governed fact'],
+          placeholder: true,
         } satisfies TowerDossierInsight]
       : [{
           insightId: hashId('insight', [args.scope.key, args.view, 'empty']),
@@ -408,6 +497,8 @@ function derivedInsights(args: {
           implication: args.gaps[0] ?? 'Load the required Tower metric rows before synthesis.',
           confidence: 'insufficient',
           supportingRefs: [],
+          supportLabels: [],
+          placeholder: true,
         }];
   }
   return [];
@@ -426,7 +517,7 @@ function collectCitations(rows: readonly TowerSourceRow[]): TowerAnswerDossier['
     const id = citationFor(row);
     byId.set(id, {
       citationId: id,
-      sourceLabel: `${row.sourceFile} row ${row.rowNumber}`,
+      sourceLabel: sourceLabelFor(row.sourceFile),
       sourceFile: row.sourceFile,
       rowNumber: row.rowNumber,
     });
@@ -450,22 +541,15 @@ function makeScopes(input: TowerL3Input): ScopeDef[] {
 
 function validateDossier(dossier: Omit<TowerAnswerDossier, 'validation'>, forbiddenIdentifiers: readonly string[]): TowerDossierValidation {
   const failures: string[] = [];
-  const businessText = JSON.stringify({
-    businessLabels: dossier.businessLabels,
-    metrics: dossier.metrics.map((m) => ({ label: m.label, valueText: m.valueText, confidence: m.confidence, freshness: m.freshness })),
-    facts: dossier.facts,
-    relationships: dossier.relationships,
-    gaps: dossier.gaps,
-    branchOptions: dossier.branchOptions,
-    derivedInsights: dossier.derivedInsights,
-    citations: dossier.citations.map((c) => c.sourceLabel),
-  });
+  const businessText = JSON.stringify(dossier.businessBody);
   const machinePattern = /\b(UUID|semantic|node_type|snapshot_id|records|evidence points|loaded context|file path|table name)\b/i;
-  const rawIdPattern = /\b[A-Z]{2,}[A-Z0-9_-]*-\d{3,}\b|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+  const rawIdPattern = /\b[A-Z]{2,}[A-Z0-9_-]*-\d{3,}\b|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|csv:|row-[0-9]|metric_[0-9a-f]|\.json|\.csv/i;
   const identityPattern = new RegExp(
     forbiddenIdentifiers.map((term) => `(?:^|[^A-Za-z0-9])${escapeRegExp(term)}(?:$|[^A-Za-z0-9])`).join('|'),
     'i',
   );
+  const groundedCount = groundedInsightCount(dossier.derivedInsights);
+  const noEnrichedVerdictWithoutInsights = !['DEEP', 'PARTIAL', 'THIN'].includes(dossier.coverage.verdict) || groundedCount > 1;
   const checks: Record<string, boolean> = {
     business_language_clean: !machinePattern.test(businessText) && !rawIdPattern.test(businessText),
     identity_clean: forbiddenIdentifiers.length === 0 || !identityPattern.test(businessText),
@@ -473,8 +557,10 @@ function validateDossier(dossier: Omit<TowerAnswerDossier, 'validation'>, forbid
     realism_pass: dossier.metrics.every((m) => m.valueNumber === null || m.valueNumber >= 0),
     consolidation_reconciles: true,
     branches_populated: dossier.coverage.verdict === 'EMPTY' || dossier.branchOptions.length > 0,
+    verdict_honesty: noEnrichedVerdictWithoutInsights,
     insight_grounding: dossier.derivedInsights.every((insight) => {
       if (insight.confidence === 'insufficient') return true;
+      if (insight.placeholder) return true;
       const refs = new Set([...dossier.metrics.map((m) => m.metricSnapshotId), ...dossier.facts.map((f) => f.factId)]);
       return insight.supportingRefs.some((ref) => refs.has(ref));
     }),
@@ -522,6 +608,61 @@ function scrubDossierBusinessText<T>(value: T, forbiddenIdentifiers: readonly st
   return value;
 }
 
+function buildBusinessBody(args: {
+  labels: TowerAnswerDossier['businessLabels'];
+  metrics: readonly TowerMetricSnapshot[];
+  facts: readonly TowerDossierFact[];
+  relationships: readonly TowerDossierRelationship[];
+  insights: readonly TowerDossierInsight[];
+  gaps: readonly string[];
+  branchOptions: readonly string[];
+}): TowerBusinessBody {
+  return {
+    labels: args.labels,
+    metrics: args.metrics.map((metric) => ({
+      label: metric.label,
+      valueText: metric.valueText,
+      amountType: metric.amountType,
+      accountingTreatment: metric.accountingTreatment,
+      period: metric.period,
+      confidence: metric.confidence,
+      freshness: metric.freshness,
+    })),
+    facts: args.facts.map((fact) => ({
+      label: fact.label,
+      value: fact.value,
+      confidence: fact.confidence,
+    })),
+    relationships: args.relationships.map((relationship) => ({
+      label: relationship.label,
+      from: relationship.from,
+      to: relationship.to,
+      relationshipType: relationship.relationshipType,
+      confidence: relationship.confidence,
+    })),
+    insights: args.insights.map((insight) => ({
+      observation: insight.observation,
+      implication: insight.implication,
+      confidence: insight.confidence,
+      supportLabels: insight.supportLabels,
+      placeholder: insight.placeholder,
+    })),
+    gaps: [...args.gaps],
+    branchOptions: [...args.branchOptions],
+  };
+}
+
+function groundedInsightCount(insights: readonly TowerDossierInsight[]): number {
+  return insights.filter((insight) => !insight.placeholder && insight.supportingRefs.length > 0).length;
+}
+
+function maxInsightConfidence(insights: readonly TowerDossierInsight[]): TowerDossierInsight['confidence'] {
+  if (insights.some((insight) => !insight.placeholder && insight.confidence === 'high')) return 'high';
+  if (insights.some((insight) => !insight.placeholder && insight.confidence === 'medium')) return 'medium';
+  if (insights.some((insight) => !insight.placeholder && insight.confidence === 'low')) return 'low';
+  return 'insufficient';
+}
+
 export function buildTowerL3Dossiers(input: TowerL3Input): TowerAnswerDossier[] {
   const dossierVersion = input.dossierVersion ?? new Date().toISOString();
   const scopes = makeScopes(input);
@@ -545,12 +686,6 @@ export function buildTowerL3Dossiers(input: TowerL3Input): TowerAnswerDossier[] 
       const required = requiredMetricsFor(view);
       const present = metrics.map((m) => m.metricKey).filter((key) => required.includes(key));
       const score = required.length === 0 ? 1 : Math.round((present.length / required.length) * 10000) / 10000;
-      const coverage = {
-        requiredMetrics: required,
-        presentMetrics: present,
-        score,
-        verdict: verdictFor(score, metrics.length),
-      };
       const gaps = buildGaps(required, metrics, scope, view);
       const derived = derivedInsights({
         scope,
@@ -559,6 +694,34 @@ export function buildTowerL3Dossiers(input: TowerL3Input): TowerAnswerDossier[] 
         facts,
         gaps,
         stage2Status: input.stage2Status ?? 'unavailable',
+      });
+      const coverage = {
+        requiredMetrics: required,
+        presentMetrics: present,
+        score,
+        verdict: (input.stage2Status === 'enriched'
+          ? enrichedVerdictFor({
+              score,
+              metrics: metrics.length,
+              groundedInsightCount: groundedInsightCount(derived),
+              maxInsightConfidence: maxInsightConfidence(derived),
+            })
+          : skeletonVerdictFor(score, metrics.length)),
+      };
+      const businessLabels = {
+        tenant: 'Lakeshore Holdings',
+        scope: scope.label,
+        view: view.replace(/_/g, ' '),
+      };
+      const branchOptions = branchOptionsFor(view);
+      const businessBody = buildBusinessBody({
+        labels: businessLabels,
+        metrics,
+        facts,
+        relationships,
+        insights: derived,
+        gaps,
+        branchOptions,
       });
       const withoutValidation: Omit<TowerAnswerDossier, 'validation'> = {
         tenantKey: input.tenantKey,
@@ -570,17 +733,14 @@ export function buildTowerL3Dossiers(input: TowerL3Input): TowerAnswerDossier[] 
         dossierVersion,
         stage1Status: metrics.length > 0 || facts.length > 0 ? 'built' : 'empty',
         stage2Status: input.stage2Status ?? 'unavailable',
-        businessLabels: {
-          tenant: 'Lakeshore Holdings',
-          scope: scope.label,
-          view: view.replace(/_/g, ' '),
-        },
+        businessLabels,
         metrics,
         facts,
         relationships,
         coverage,
+        businessBody,
         gaps,
-        branchOptions: branchOptionsFor(view),
+        branchOptions,
         derivedInsights: derived,
         citations: collectCitations(allRows.filter((row) => {
           if (!scope.portfolioCompany) return true;

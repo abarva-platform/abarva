@@ -301,7 +301,7 @@ CREATE TABLE IF NOT EXISTS public.tower_l3_answer_dossiers (
   stage1_status TEXT NOT NULL CHECK (stage1_status IN ('built', 'empty', 'failed')),
   stage2_status TEXT NOT NULL CHECK (stage2_status IN ('enriched', 'unavailable', 'failed')),
   coverage_score NUMERIC(5,4) NOT NULL DEFAULT 0 CHECK (coverage_score >= 0 AND coverage_score <= 1),
-  verdict TEXT NOT NULL CHECK (verdict IN ('DEEP', 'PARTIAL', 'THIN', 'EMPTY', 'FAILED')),
+  verdict TEXT NOT NULL CHECK (verdict IN ('SKELETON_COMPLETE', 'SKELETON_PARTIAL', 'SKELETON_THIN', 'DEEP', 'PARTIAL', 'THIN', 'EMPTY', 'FAILED')),
   dossier JSONB NOT NULL,
   validation_result JSONB NOT NULL DEFAULT '{}'::jsonb,
   lineage JSONB NOT NULL DEFAULT '{}'::jsonb,
