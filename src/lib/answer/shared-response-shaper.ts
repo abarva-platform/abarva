@@ -106,6 +106,7 @@ function removeMarkdownTables(text: string): string {
 
 function cleanLeadLine(text: string): string {
   return text
+    .replace(/\n+/g, " ")
     .replace(
       /^(?:My read|Read|Answer|Evidence|Implication|Why|What I would do next)\s*:\s*/i,
       "",
@@ -114,7 +115,26 @@ function cleanLeadLine(text: string): string {
     .trim();
 }
 
+function removeSectionHeadings(text: string): string {
+  return text
+    .split("\n")
+    .filter(
+      (line) =>
+        !/^\s*(?:My read|Why|Evidence|Evidence gaps|Decision fork|What I would do next|Spend comparison|Inspect in this order|Outliers worth flagging|Top concentrations by contract value|Two patterns worth flagging)\s*:?\s*$/i.test(
+          line,
+        ),
+    )
+    .join("\n");
+}
+
 function isUsefulSupport(sentence: string): boolean {
+  if (
+    /^\s*(?:why|evidence|my read|next|what i would do next)\s*:?\s*$/i.test(
+      sentence,
+    )
+  ) {
+    return false;
+  }
   return /\$|\d|value|budget|vendor|renewal|run|change|proof|gap|risk|owner|portfolio|program|spend|CIO|board/i.test(
     sentence,
   );
@@ -134,8 +154,8 @@ function compactForChat(
     return normalized;
   }
 
-  const proseOnly = removeMarkdownTables(normalized);
-  const sentences = sentenceSplit(proseOnly);
+  const proseOnly = removeSectionHeadings(removeMarkdownTables(normalized));
+  const sentences = sentenceSplit(proseOnly.replace(/\n+/g, " "));
   const paragraphs = paragraphSplit(proseOnly);
   const lead = trimWords(
     cleanLeadLine(
@@ -163,9 +183,7 @@ function compactForChat(
     .map((sentence) => `- ${trimWords(cleanLeadLine(sentence), 24)}`);
   const next =
     sentences.find((sentence) =>
-      /\b(next|ask|inspect|open|review|validate|challenge|compare|decide|pause|fund|assign)\b/i.test(
-        sentence,
-      ),
+      /^\s*(?:next|what i would do next)\b/i.test(sentence),
     ) ?? nextStepFallback;
   const lines = [
     lead,
