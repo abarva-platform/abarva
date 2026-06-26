@@ -46,7 +46,10 @@ type CleanupReport = {
 };
 
 const ROOT = process.cwd();
-const APPLY = process.argv.includes('--apply');
+const APPLY =
+  process.argv.includes('--apply') ||
+  process.env.TENANT_CLEANUP_APPLY === '1' ||
+  process.env.TENANT_CLEANUP_APPLY === 'true';
 const NOW = new Date().toISOString();
 const STAMP = NOW.replace(/[:.]/g, '-');
 const OUT_ROOT = process.env.TENANT_CLEANUP_OUT_DIR?.trim()
