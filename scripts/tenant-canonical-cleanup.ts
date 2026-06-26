@@ -148,7 +148,22 @@ async function discoverUniqueKeys(client: Client, column: TenantColumn): Promise
 function duplicateWhereClause(column: TenantColumn, uniqueKeys: UniqueKey[]): string | null {
   const tenantColumn = quoteIdentifier(column.column);
   const tableName = qualifiedTable(column);
-  const clauses = uniqueKeys.map((key) => {
+  const clauses: string[] = [];
+
+  if (
+    column.schema === 'public' &&
+    column.table === 'enterprise_context_relationships' &&
+    column.column === 'tenant_key'
+  ) {
+    clauses.push(`EXISTS (
+      SELECT 1
+        FROM ${tableName} canonical_row
+       WHERE canonical_row.${tenantColumn} = $2
+         AND canonical_row."relationship_key" IS NOT DISTINCT FROM alias_row."relationship_key"
+    )`);
+  }
+
+  clauses.push(...uniqueKeys.map((key) => {
     const otherColumns = key.columns.filter((uniqueColumn) => uniqueColumn !== column.column);
     const comparisons =
       otherColumns.length > 0
@@ -166,7 +181,7 @@ function duplicateWhereClause(column: TenantColumn, uniqueKeys: UniqueKey[]): st
        WHERE canonical_row.${tenantColumn} = $2
          AND ${comparisons}
     )`;
-  });
+  }));
 
   if (clauses.length === 0) return null;
   return `lower(replace(alias_row.${tenantColumn}::text, '_', '-')) = $1 AND (${clauses.join(' OR ')})`;
