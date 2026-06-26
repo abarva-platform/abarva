@@ -177,6 +177,11 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getAllByText("AI ROI").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Outcomes").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Risks").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Board").length).toBeGreaterThan(0);
+    expect(screen.getByText("CIO daily read")).toBeInTheDocument();
+    expect(screen.getByText("Inspect pressure spend")).toBeInTheDocument();
+    expect(screen.getByText("Demand value proof")).toBeInTheDocument();
+    expect(screen.getByText("Scenario questions a CIO can ask next")).toBeInTheDocument();
     expect(screen.getByText("AI Platform Foundation")).toBeInTheDocument();
     expect(screen.getByText("ServiceNow AI Service Desk")).toBeInTheDocument();
     expect(screen.getAllByText("aVa").length).toBeGreaterThan(0);
@@ -202,6 +207,29 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getAllByText("Vendor AI agent").length).toBeGreaterThan(0);
     expect(screen.getAllByText("AI platform").length).toBeGreaterThan(0);
     expect(screen.getAllByText("value gap").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Atlas")).not.toBeInTheDocument();
+  });
+
+  it("renders a board-ready readout from the same Tower model", () => {
+    query = new URLSearchParams("dashboard=board");
+
+    render(
+      <TowerIndexPage
+        tenantName="Lakeshore Holdings"
+        context="Tower"
+        towerToday="2026-06-25"
+        clientId="client-lakeshore"
+        initiatives={INITIATIVES}
+        vendors={VENDORS}
+        activeTab="portfolio"
+      />,
+    );
+
+    expect(screen.getByText("Board brief")).toBeInTheDocument();
+    expect(screen.getByText("The decision read for leadership.")).toBeInTheDocument();
+    expect(screen.getByText("Decisions")).toBeInTheDocument();
+    expect(screen.getByText("Data asks")).toBeInTheDocument();
+    expect(screen.getByText(/Which pressure programs should the CIO inspect first/i)).toBeInTheDocument();
     expect(screen.queryByText("Atlas")).not.toBeInTheDocument();
   });
 });
