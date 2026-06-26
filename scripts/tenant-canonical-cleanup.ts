@@ -116,9 +116,9 @@ async function discoverUniqueKeys(client: Client, column: TenantColumn): Promise
   const cached = uniqueKeyCache.get(cacheKey);
   if (cached) return cached;
 
-  const result = await client.query<{ indexName: string; columns: string[] }>(
+  const result = await client.query<{ indexName: string; columns: string }>(
     `SELECT index_class.relname AS "indexName",
-            array_agg(attribute.attname ORDER BY index_key.ordinality) AS columns
+            string_agg(attribute.attname, ',' ORDER BY index_key.ordinality) AS columns
        FROM pg_index index_def
        JOIN pg_class table_class ON table_class.oid = index_def.indrelid
        JOIN pg_namespace namespace ON namespace.oid = table_class.relnamespace
@@ -139,7 +139,7 @@ async function discoverUniqueKeys(client: Client, column: TenantColumn): Promise
   const keys = result.rows
     .map((row) => ({
       indexName: row.indexName,
-      columns: row.columns,
+      columns: row.columns.split(',').filter(Boolean),
     }))
     .filter((key) => key.columns.length > 0);
   uniqueKeyCache.set(cacheKey, keys);
