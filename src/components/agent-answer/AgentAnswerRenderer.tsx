@@ -19,6 +19,10 @@ const CSS = `
 .agentAnswer .aaKicker{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;letter-spacing:.08em;color:var(--aa-green);font-weight:700}
 .agentAnswer .aaMeta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .agentAnswer .aaPill{display:inline-flex;align-items:center;border:1px solid var(--aa-line);border-radius:999px;padding:3px 9px;font-size:12px;color:var(--aa-muted);background:var(--aa-paper)}
+.agentAnswer .aaExperts{position:relative}
+.agentAnswer .aaExperts summary{list-style:none;cursor:pointer}
+.agentAnswer .aaExperts summary::-webkit-details-marker{display:none}
+.agentAnswer .aaExpertPanel{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;padding:8px;border:1px solid var(--aa-line);border-radius:8px;background:var(--aa-soft)}
 .agentAnswer .aaExpert{background:var(--aa-green-bg);border-color:transparent;color:var(--aa-green);font-weight:600}
 .agentAnswer .aaProse{font-size:14px;line-height:1.65}
 .agentAnswer .aaSection{display:grid;gap:12px}
@@ -147,7 +151,7 @@ function CitationChips({ citations }: { citations: AnswerCitation[] }) {
           <>
             <span>{label}</span>
             <span aria-hidden="true">·</span>
-            <span>{citation.sourceClass}</span>
+            <span>{sourceClassLabel(citation.sourceClass)}</span>
           </>
         );
         return citation.url ? (
@@ -166,6 +170,25 @@ function CitationChips({ citations }: { citations: AnswerCitation[] }) {
       })}
     </div>
   );
+}
+
+function sourceClassLabel(sourceClass: AnswerCitation["sourceClass"]): string {
+  switch (sourceClass) {
+    case "tenant-fact":
+      return "tenant support";
+    case "tenant-chunk":
+      return "tenant excerpt";
+    case "graph":
+      return "enterprise connection";
+    case "corpus-pattern":
+      return "industry pattern";
+    case "worldview":
+      return "strategic pattern";
+    case "expert-pack":
+      return "advisor pattern";
+    default:
+      return "source support";
+  }
 }
 
 function formatCell(
@@ -444,15 +467,24 @@ export function AgentAnswerRenderer({ answer }: { answer: AvaAnswerPacket }) {
             <span className="aaPill">
               {displayAnswer.quality.confidence} confidence
             </span>
-            {(displayAnswer.expertsUsed ?? []).map((expert) => (
-              <span
-                className="aaPill aaExpert"
-                key={expert.id}
-                title={expert.id}
-              >
-                {expert.name}
-              </span>
-            ))}
+            {(displayAnswer.expertsUsed?.length ?? 0) > 0 ? (
+              <details className="aaExperts">
+                <summary className="aaPill">
+                  Consulted experts ({displayAnswer.expertsUsed?.length ?? 0})
+                </summary>
+                <div className="aaExpertPanel">
+                  {(displayAnswer.expertsUsed ?? []).map((expert) => (
+                    <span
+                      className="aaPill aaExpert"
+                      key={expert.id}
+                      title={expert.id}
+                    >
+                      {expert.name}
+                    </span>
+                  ))}
+                </div>
+              </details>
+            ) : null}
           </div>
         </div>
       </header>

@@ -4,6 +4,7 @@ import type {
   AnswerTable,
   AvaAnswerPacket,
 } from "@/lib/ava-answer/contract";
+import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 
 const RAW_RECORD_ID_RE =
   /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\b/g;
@@ -25,19 +26,19 @@ const CONSULTANT_LABEL_RE =
 function fallbackCitationLabel(citation: AnswerCitation): string {
   switch (citation.sourceClass) {
     case "tenant-fact":
-      return "Loaded tenant evidence";
+      return "Tenant source support";
     case "tenant-chunk":
-      return "Loaded context excerpt";
+      return "Tenant source excerpt";
     case "graph":
-      return "Enterprise relationship graph";
+      return "Enterprise connection";
     case "corpus-pattern":
       return "Industry corpus pattern";
     case "worldview":
-      return "Worldview corpus";
+      return "Strategic pattern";
     case "expert-pack":
-      return "Consilium expert pack";
+      return "Advisor pattern";
     default:
-      return "Cited evidence";
+      return "Source support";
   }
 }
 
@@ -59,13 +60,14 @@ export function dedupeConsultantLabels(value: string): string {
 
 export function sanitizePublicText(
   value: string,
-  fallback = "loaded evidence",
+  fallback = "source support",
 ): string {
-  const cleaned = dedupeConsultantLabels(value)
+  const withoutUnsafeIds = dedupeConsultantLabels(value)
     .replace(BRACKET_RECORD_RE, fallback)
     .replace(UUID_RE, fallback)
     .replace(RAW_RECORD_ID_RE, fallback)
-    .replace(INTERNAL_FIELD_RE, "source field")
+    .replace(INTERNAL_FIELD_RE, "source field");
+  const cleaned = scrubPublicAvaAnswerText(withoutUnsafeIds)
     .replace(/[ \t]{2,}/g, " ")
     .trim();
   return cleaned || fallback;
@@ -87,7 +89,7 @@ function sanitizeCitation(citation: AnswerCitation): AnswerCitation {
 
 function sanitizeCell(value: string | number | null): string | number | null {
   if (typeof value !== "string") return value;
-  return sanitizePublicText(value, "loaded tenant evidence");
+  return sanitizePublicText(value, "tenant source support");
 }
 
 function sanitizeTable<T extends AnswerTable>(table: T): T {
@@ -97,7 +99,7 @@ function sanitizeTable<T extends AnswerTable>(table: T): T {
       ? sanitizePublicText(table.title, "Answer table")
       : table.title,
     note: table.note
-      ? sanitizePublicText(table.note, "Evidence-backed table")
+      ? sanitizePublicText(table.note, "Source-supported table")
       : table.note,
     columns: table.columns.map((column) => ({
       ...column,
@@ -147,7 +149,7 @@ export function sanitizeAvaAnswerForRender(
       : answer.recommendation,
     expertsUsed: (answer.expertsUsed ?? []).map((expert) => ({
       ...expert,
-      name: sanitizePublicText(expert.name, "Consilium expert"),
+      name: sanitizePublicText(expert.name, "Advisor"),
     })),
     citations: answer.citations.map(sanitizeCitation),
     artifacts: answer.artifacts.map((artifact) => {

@@ -19,6 +19,7 @@ import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import type { AskSurfaceContext } from "@/lib/intelligence/ask/types";
+import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 
 const CSS = `
 .avaask{--aa-line:#E7E3DA;--aa-ink:#1A1A18;--aa-muted:#6B6B63;--aa-faint:#9A998E;--aa-green:#1F6B3A;--aa-card:#fff;font-family:var(--font-geist-sans),Inter,system-ui,sans-serif}
@@ -40,6 +41,8 @@ const CSS = `
 .avaask .aa-prose{font-size:14px;line-height:1.65;color:var(--aa-ink)}
 .avaask .aa-think{color:var(--aa-faint);font-style:italic;font-size:13.5px}
 .avaask .aa-exps{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px;padding-top:13px;border-top:1px solid var(--aa-line)}
+.avaask .aa-exps-summary{display:inline-flex;align-items:center;border:1px solid var(--aa-line);border-radius:999px;padding:3px 9px;font-size:12px;color:var(--aa-muted);background:var(--aa-card);cursor:pointer}
+.avaask .aa-exps-panel{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
 .avaask .aa-exp{display:inline-flex;align-items:center;background:#E7F0E9;color:var(--aa-green);border-radius:20px;padding:3px 11px;font-size:11.5px;font-weight:500}
 .avaask .aa-fu{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
 .avaask .aa-chip{display:inline-flex;align-items:center;border:1px solid var(--aa-line);border-radius:20px;padding:5px 13px;font-size:12px;color:#3a3a34;cursor:pointer;background:var(--aa-card)}
@@ -148,7 +151,7 @@ export function AvaAsk({
         }
         const reader = res.body?.getReader();
         if (!reader) {
-          updateTurn({ answer: await res.text() });
+          updateTurn({ answer: scrubPublicAvaAnswerText(await res.text()) });
           return;
         }
         const dec = new TextDecoder();
@@ -162,12 +165,12 @@ export function AvaAsk({
             evt = JSON.parse(s);
           } catch {
             prose += prose ? `\n${s}` : s;
-            updateTurn({ answer: prose });
+            updateTurn({ answer: scrubPublicAvaAnswerText(prose) });
             return;
           }
           if (evt.type === "delta" && typeof evt.text === "string") {
             prose += evt.text;
-            updateTurn({ answer: prose });
+            updateTurn({ answer: scrubPublicAvaAnswerText(prose) });
           } else if (
             evt.type === "contributing-experts" &&
             Array.isArray(evt.contributingExperts)
@@ -282,17 +285,22 @@ export function AvaAsk({
                       <div className="aa-think">Thinking…</div>
                     ) : turn.answer ? (
                       <div className="aa-prose">
-                        <AgentMarkdown text={turn.answer} />
+                        <AgentMarkdown text={scrubPublicAvaAnswerText(turn.answer)} />
                       </div>
                     ) : null}
                     {turn.experts.length > 0 && (
-                      <div className="aa-exps">
-                        {turn.experts.map((e) => (
-                          <span className="aa-exp" key={e.id} title={e.id}>
-                            {e.name}
-                          </span>
-                        ))}
-                      </div>
+                      <details className="aa-exps">
+                        <summary className="aa-exps-summary">
+                          Consulted experts ({turn.experts.length})
+                        </summary>
+                        <div className="aa-exps-panel">
+                          {turn.experts.map((e) => (
+                            <span className="aa-exp" key={e.id} title={e.id}>
+                              {e.name}
+                            </span>
+                          ))}
+                        </div>
+                      </details>
                     )}
                   </>
                 )}

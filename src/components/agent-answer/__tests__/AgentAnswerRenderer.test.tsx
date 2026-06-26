@@ -180,13 +180,56 @@ describe("AgentAnswerRenderer", () => {
 
     render(<AgentAnswerRenderer answer={answer} />);
 
-    expect(
-      screen.getByText("Retail Merchandising & Pricing Expert"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Consulted experts (1)")).toBeInTheDocument();
     expect(screen.getByText("Sources")).toBeInTheDocument();
     expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
     expect(
       screen.queryByText("aVa did not return a renderable answer."),
     ).not.toBeInTheDocument();
+  });
+
+  it("scrubs public prose and keeps experts collapsed by default", () => {
+    const answer: AvaAnswerPacket = {
+      surface: "intelligence",
+      mode: "ANALYZE",
+      tenantKey: "lakeshore-holdings",
+      question: "Where is finance AI spend committed but value not yet realized?",
+      intent: "table",
+      status: "partial",
+      directAnswer:
+        "The supporting evidence is that 19 context dimensions loaded with 14,620 evidence points. That means The scale stage is not proven.",
+      factsUsed: [],
+      metricsUsed: [],
+      relationshipsUsed: [],
+      expertsUsed: [
+        { id: "xp.finance.ai", name: "Finance AI Expert" },
+        { id: "xp.erp.value", name: "ERP Value Expert" },
+      ],
+      artifacts: [],
+      citations: [],
+      gaps: [],
+      caveats: [],
+      nextSteps: [],
+      quality: {
+        confidence: "medium",
+        evidenceStrength: "partial",
+        tenantGrounding: "partial",
+        answerCompleteness: "partial",
+      },
+      safety: {
+        tenantFencePassed: true,
+        rawIdsSuppressed: true,
+        forbiddenLanguagePassed: true,
+        unsupportedClaimsBlocked: true,
+      },
+    };
+
+    const { container } = render(<AgentAnswerRenderer answer={answer} />);
+
+    expect(screen.getByText("Consulted experts (2)")).toBeInTheDocument();
+    const visibleText = container.textContent ?? "";
+    expect(visibleText).not.toMatch(/context dimensions|evidence points|That means The|The supporting evidence is that/i);
+    expect(visibleText).toContain("business areas");
+    expect(visibleText).toContain("source signals");
   });
 });
