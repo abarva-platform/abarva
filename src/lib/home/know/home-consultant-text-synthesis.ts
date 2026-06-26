@@ -425,6 +425,7 @@ export function validateHomeConsultantText(args: {
   if (INTERNAL_COUNT_RE.test(text)) issues.push("internal_count_language");
   if (RAW_ID_RE.test(text)) issues.push("raw_id");
   if (
+    args.response.intent !== "browse" &&
     !args.dossier.answerBoundary.handoffTarget &&
     RECOMMENDATION_RE.test(text)
   ) {
