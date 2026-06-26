@@ -364,7 +364,7 @@ export async function buildHomeKnowResponse(
       question: input.question.trim(),
       dossier,
     });
-    return validateHomeKnowResponse({
+    const validated = validateHomeKnowResponse({
       ...response,
       safety: {
         ...response.safety,
@@ -377,6 +377,30 @@ export async function buildHomeKnowResponse(
           : response.safety.composerTrace,
       },
     });
+    if (
+      isFeatureEnabled(
+        { clientKey: input.client ?? tenantKey, clientId: tenantKey },
+        "home_know_claude_synthesis",
+      )
+    ) {
+      const synthesis = await synthesizeHomeConsultantText({
+        dossier,
+        deterministicResponse: validated,
+        operatorTrace: input.operatorTrace === true,
+      });
+      if (isHomeConsultantTextSynthesisResult(synthesis)) {
+        return validateHomeKnowResponse(
+          applyHomeConsultantTextSynthesis(validated, synthesis),
+        );
+      }
+      if (synthesis?.attempted) {
+        return applyHomeConsultantTextSynthesisFailureTrace(
+          validated,
+          synthesis,
+        );
+      }
+    }
+    return validated;
   } catch (error) {
     console.warn(
       `[home-know.local-dossier] Falling back to read-model packet for ${tenantKey}: ${
