@@ -51,9 +51,14 @@ function possessive(label: string): string {
 }
 
 function topMetricPhrase(dossier: UniversalDimensionDossier): string {
-  const metrics = dossier.composerPacket.metrics.slice(0, 5);
-  if (metrics.length === 0) return 'The loaded source context has enough support for a directional answer, but no deterministic metric rollup for this question yet.';
-  return metrics.map((metric) => `${metric.label}: ${metric.value}${metric.unit && metric.unit !== 'count' ? ` ${metric.unit}` : ''}`).join('; ');
+  const primarySections = dossier.composerPacket.sections
+    .filter((section) => section.dimensionFamily === dossier.route.primaryDimension && section.recordCount > 0)
+    .slice(0, 3)
+    .map((section) => section.title.toLowerCase());
+  if (primarySections.length === 0) {
+    return 'The loaded source context has enough support for a directional answer, but the primary source area is still thin.';
+  }
+  return `The strongest source support is in ${primarySections.join(', ')}, with adjacent context used only to explain dependencies and boundaries`;
 }
 
 function relationshipPhrase(dossier: UniversalDimensionDossier): string {
