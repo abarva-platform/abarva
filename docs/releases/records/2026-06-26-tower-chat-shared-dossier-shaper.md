@@ -12,7 +12,7 @@
 
 Tower chat now sends Claude a clean business-language prompt instead of raw Tower substrate JSON, and every Tower answer route passes through the shared aVa response shaper. The shaper replaces raw IDs with display names, blocks stale Atlas/Sentinel/Nexus branding, compacts long evidence dumps for chat, and preserves a next-step affordance.
 
-Follow-up audit finding: the first deployed proof showed the API route resolving Tower state but not carrying the canonical tenant key into the L3 dossier lookup, causing `missing_tenant_key` fallback and `Active client` prompt labels. This release record also covers the tenant-binding correction and prompt-cleanliness repair.
+Follow-up audit finding: the first deployed proof showed the API route resolving Tower state but not carrying the canonical tenant key into the L3 dossier lookup, causing `missing_tenant_key` fallback and `Active client` prompt labels. This release record also covers the tenant-binding correction and prompt-cleanliness repair. The second deployed audit showed prompt cleanliness fixed, with remaining failures caused by the shared shaper preserving section-heading noise and too many visible chat lines; this record also covers that line-count polish.
 
 ## Layer Impact
 
@@ -49,7 +49,8 @@ Follow-up audit finding: the first deployed proof showed the API route resolving
 - Pass: `npx tsc --noEmit --pretty false`
 - Pass: `npx jest src/lib/answer/__tests__/shared-response-shaper.test.ts --runInBand`
 - Pre-fix deployed audit: `1/10`, with prompt-clean failures caused by missing tenant key and raw `LAK-AI-*` references in the prompt.
-- Not-run until follow-up deploy: `node scripts/qa/tower-chat-shared-fix-audit.mjs` against `https://app.abarva.ai/tower`.
+- Tenant-binding deployed audit: `2/10`, with prompt-clean passing on every row but length/visible-line failures remaining in the shared shaper.
+- Not-run until shaper-line follow-up deploy: `node scripts/qa/tower-chat-shared-fix-audit.mjs` against `https://app.abarva.ai/tower`.
 
 ## Rollout Plan
 
