@@ -246,6 +246,34 @@ describe("program access policy", () => {
     expect(fromMock).not.toHaveBeenCalled();
   });
 
+  it("keeps canonical client-admin emails as all-program Moves admins after JIT person provisioning resolves a UUID user id", async () => {
+    setupRows({});
+    const { loadUserProgramAccessPolicy, canReadProgram } =
+      await import("../program-access-policy");
+    const ctx = {
+      clientId: "client-lakeshore",
+      clientKey: "lakeshore",
+      userId: "00000000-0000-4000-8000-00000000c10a",
+      clerkUserId: "user_lakeshore_cio",
+      role: "client_viewer",
+      email: "cio@lakeshore-holdings.example.com",
+    };
+
+    const policy = await loadUserProgramAccessPolicy(ctx);
+
+    expect(policy.accessLevel).toBe("client_admin");
+    expect(policy.programScope).toBe("all_client_programs");
+    expect(policy.programIdsAllowed).toBeNull();
+    expect(policy.canCreatePrograms).toBe(true);
+    expect(policy.canApproveGates).toBe(true);
+    expect(policy.canGenerateDeliverables).toBe(true);
+    expect(policy.canViewFinancialData).toBe(false);
+    await expect(canReadProgram(ctx, "lakeshore-move-any")).resolves.toBe(
+      true,
+    );
+    expect(fromMock).not.toHaveBeenCalled();
+  });
+
   it("does not grant an automation agent access to a different active tenant", async () => {
     setupRows({
       persons: null,
