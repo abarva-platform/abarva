@@ -219,7 +219,14 @@ async function submitQuestion(page, question, index) {
   const agentTurns = page.getByTestId("agent-dock-turn-agent");
   const beforeCount = await agentTurns.count().catch(() => 0);
   const input = page.getByTestId("agent-dock-input");
-  await input.fill(question.text);
+  await input.click();
+  await input.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
+  await input.pressSequentially(question.text, { delay: 2 });
+  await page.waitForFunction(
+    () => !document.querySelector('[data-testid="agent-dock-send"]')?.disabled,
+    null,
+    { timeout: 10_000 },
+  );
   await page.getByTestId("agent-dock-send").click();
   await page.waitForFunction(
     ({ before }) => {
