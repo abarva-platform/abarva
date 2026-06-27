@@ -4,6 +4,7 @@ import { atlasStakeholderConflictHandoff } from '../index';
 import { retrieveSurfaceContextSources } from '../retrievers/surface-context';
 import {
   chunkAskText,
+  addDepthChoicePrompt,
   chooseSynthesisTokenBudget,
   chooseSynthesisWordBudget,
   preserveFixedCountAnswerCompleteness,
@@ -41,13 +42,29 @@ describe('Ask Intelligence guardrails', () => {
   it('uses a tighter model budget only for explicit concise Ask requests', () => {
     expect(chooseSynthesisTokenBudget('Summarize the IBM dependency in one short executive paragraph.')).toBe(160);
     expect(chooseSynthesisTokenBudget('Name one risk. Keep it concise.')).toBe(160);
-    expect(chooseSynthesisTokenBudget('Build the full modernization case for the CTO, CFO, and COO.')).toBe(600);
+    expect(chooseSynthesisTokenBudget('Build the full modernization case for the CTO, CFO, and COO.')).toBe(420);
   });
 
   it('uses larger budgets for fixed-count multi-part Ask requests', () => {
     expect(chooseSynthesisTokenBudget('Build us a 3-move sequence for the next 90 days.')).toBeGreaterThan(600);
     expect(chooseSynthesisWordBudget('Build us a 3-move sequence for the next 90 days.')).toBeGreaterThan(240);
-    expect(chooseSynthesisWordBudget('Name one risk. Keep it concise.')).toBe(120);
+    expect(chooseSynthesisWordBudget('Name one risk. Keep it concise.')).toBe(90);
+  });
+
+  it('adds a short choice question when aVa has more depth behind a concise answer', () => {
+    const answer = [
+      'Approve a guarded Kyriba pilot, not a broad go-live.',
+      'The loaded evidence points to bank-connectivity certification, payment-format defects, and SOX signer controls as the three control gates that matter most this week.',
+      'The value case is still real, but only if the Treasurer owns remediation and the Controller signs off the audit package before expansion.',
+    ].join(' ');
+
+    const shaped = addDepthChoicePrompt(
+      'Should we approve Kyriba readiness?',
+      answer,
+    );
+
+    expect(shaped).toContain('Want the deeper path: evidence, risks, or next actions?');
+    expect(addDepthChoicePrompt('Name one risk.', 'Delay the rollout.')).toBe('Delay the rollout.');
   });
 
   it('does not let final answer shaping drop a promised fixed-count part', () => {

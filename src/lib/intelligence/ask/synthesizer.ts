@@ -242,7 +242,9 @@ OUTPUT CONVENTIONS — surface scaffolding, preserved separately from the role.
 
   The chat surface renders plain text only. Do NOT use Markdown headings, **bold** markers, or formal bullet lists in the response body. Inline em-dashes, "(1) … (2) …" markers, and brief lead-line lists like the EXAMPLE 1 / EXAMPLE 4 shape above are fine.
 
-  Length: single-issue answers 100–120 words; multi-item answers up to ~180 words; never over 200.
+  Length: default to a concise senior-advisor answer. Simple answers should be 60–100 words. Decision or multi-part answers should be 120–160 words unless the user explicitly asks for a memo, detailed analysis, table, chart, or full readout. Never write a long essay in the chat answer.
+
+  When there is more useful depth behind the answer, do not dump it. End with one short choice question, for example: "Want the deeper path: evidence, risks, or next actions?" Keep that question short and do not add more explanation after it.
 
   Do not output source citations inline as bracketed IDs — the UI renders sources separately. Cite evidence in prose ("three peer specialty retailers in the corpus") not as "[PAT-XXX-001]".
 
@@ -266,10 +268,11 @@ Tenant isolation is binding. Use the TENANT IDENTITY block and supplied sources 
 
 For explicit concise requests:
 - Answer directly in one short executive paragraph.
-- Keep the answer under 120 words.
+- Keep the answer under 90 words.
 - Use plain text only; no markdown headings or formal report structure.
 - Lead with a recommendation or judgment, not a summary.
 - Use tenant evidence when supplied. If one detail is missing, state only that remaining field briefly after the useful facts.
+- If there is more depth available, end with one short choice question such as: "Want the deeper path: evidence, risks, or next actions?"
 - Do not invent tenant facts, peer statistics, dates, dollars, vendors, or rankings.
 - Never start with hollow acknowledgements ("Good question", "Great question", "Happy to", "Let me").`;
 
@@ -294,23 +297,23 @@ function chooseModel(intent: AskIntent, query: string): string {
 }
 
 export function chooseSynthesisTokenBudget(query: string): number {
-  const defaultBudget = isExplicitConciseAsk(query) ? 160 : 600;
+  const defaultBudget = isExplicitConciseAsk(query) ? 160 : 420;
   const advisorBudget = chooseAdvisorTokenBudget(query, defaultBudget);
   const fixedCount = validateMultipartCompleteness({ question: query, answer: "" });
   if (fixedCount.requiredCount && fixedCount.requiredCount >= 3) {
     return Math.min(
-      1800,
-      Math.max(advisorBudget, 260 * fixedCount.requiredCount + 120),
+      1100,
+      Math.max(advisorBudget, 180 * fixedCount.requiredCount + 120),
     );
   }
   return advisorBudget;
 }
 
 export function chooseSynthesisWordBudget(query: string): number {
-  const advisorCap = chooseAdvisorWordCap(query, isExplicitConciseAsk(query) ? 120 : 240);
+  const advisorCap = chooseAdvisorWordCap(query, isExplicitConciseAsk(query) ? 90 : 160);
   const fixedCount = validateMultipartCompleteness({ question: query, answer: "" });
   if (fixedCount.requiredCount && fixedCount.requiredCount >= 3) {
-    return Math.min(700, Math.max(advisorCap, 115 * fixedCount.requiredCount + 120));
+    return Math.min(360, Math.max(advisorCap, 75 * fixedCount.requiredCount + 45));
   }
   return advisorCap;
 }
@@ -351,6 +354,27 @@ export function preserveFixedCountAnswerCompleteness(
       .join(", ")}.`,
     "Please retry the question so I can regenerate the complete sequence.",
   ].join("\n");
+}
+
+function shouldOfferDepthChoices(question: string, answer: string): boolean {
+  if (/\bWant the deeper path\b|\bChoose one\b|\bWhich view\b/i.test(answer)) {
+    return false;
+  }
+  if (/incomplete fixed-count answer|will not present it as complete/i.test(answer)) {
+    return false;
+  }
+  const wordTotal = answer.trim().split(/\s+/).filter(Boolean).length;
+  if (wordTotal < 25) return false;
+  if (wordTotal < 70 && !/\b(why|recommend|compare|risk|risks|readiness|decision|approve|prioriti[sz]e|strategy|sequence|score|tco|vendor)\b/i.test(question)) {
+    return false;
+  }
+  return true;
+}
+
+export function addDepthChoicePrompt(question: string, answer: string): string {
+  const trimmed = answer.trim();
+  if (!trimmed || !shouldOfferDepthChoices(question, trimmed)) return trimmed;
+  return `${trimmed}\n\nWant the deeper path: evidence, risks, or next actions?`;
 }
 
 function formatSourcesBlock(sources: AskSource[]): string {
@@ -665,7 +689,8 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
       enforceDecisionGradeAnswer(evidenceDisciplined),
       evidenceDisciplined,
     );
-    for (const chunk of chunkAskText(decisionGrade)) {
+    const conciseDecisionGrade = addDepthChoicePrompt(args.query, decisionGrade);
+    for (const chunk of chunkAskText(conciseDecisionGrade)) {
       yield chunk;
     }
   } catch (err) {

@@ -14,6 +14,8 @@ This release candidate hardens the Intelligence/aVa response path after the Lake
 
 2026-06-27 follow-up: a live user review found that the answer bubble still exposed evidence/scaffold labels such as `Evidence trail`, `Evidence drill-down`, `supporting material`, and `Next: ask aVa...`. This record now also covers the scoped answer-bubble cleanup that keeps evidence available in the evidence UI while removing evidence/debug labels from the advisor prose.
 
+2026-06-27 follow-up 2: live demo review found that aVa answers were still too long for executive demo flow. This record now also covers concise-by-default answer caps plus a short choice question for optional drill-down instead of dumping the full explanation in the first response.
+
 ## Layer Impact
 
 - `global-control-lane`: Shared agent response rendering and Intelligence Ask synthesis behavior change for all clients using the shared AgentDock/Ask path.
@@ -35,14 +37,17 @@ Approved by Anand in-thread on 2026-06-27 with the explicit instruction: `deploy
 
 - `src/lib/agent/response-shape.ts`: cleans generic routing footers, raw evidence labels, raw evidence table dumps, and high-confidence currency shorthand in shared streamed/final response shaping.
 - `src/lib/ava-answer/public-answer-scrub.ts`: stops converting ordinary evidence language into `supporting material` and preserves natural advisor wording.
-- `src/lib/answer/shared-response-shaper.ts`: normalizes canned `Next: ask aVa...` instructions into a plain next step.
+- `src/lib/answer/shared-response-shaper.ts`: normalizes canned `Next: ask aVa...` instructions into a plain next step and tightens default chat-bubble compaction.
 - `src/lib/agent/multipart-completeness.ts`: adds fixed-count request detection, observed/missing part validation, and repair-instruction formatting.
+- `src/lib/intelligence/ask/advisor-composer.ts`: reduces special advisor-route token and word caps so demo answers do not become mini-memos.
+- `src/lib/intelligence/ask/synthesizer.ts`: changes aVa's default answer contract to 60-100 words for simple answers and 120-160 words for decision answers, then appends a short choice question when more depth is available.
 - `src/lib/intelligence/ask/synthesizer.ts`: increases token/word budgets for fixed-count asks, adds a fixed-count system instruction, validates the final draft, and performs one repair pass before streaming.
 - `src/lib/agent/__tests__/multipart-completeness.test.ts`: regression tests for missing multi-part answers.
 - `src/lib/agent/__tests__/response-shape.test.ts`: regression tests for raw evidence dump cleanup and currency preservation.
 - `src/lib/answer/__tests__/shared-response-shaper.test.ts`: regression test that the answer bubble does not tell the user to `ask aVa`.
 - `src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx`: regression test that public prose does not expose `supporting material`.
 - `src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts`: budget guardrails for fixed-count requests.
+- `src/lib/intelligence/ask/__tests__/ask-guardrails.test.ts`: regression for shorter default budgets and the optional depth-choice question.
 
 ## QA / Validation
 
@@ -52,6 +57,7 @@ Approved by Anand in-thread on 2026-06-27 with the explicit instruction: `deploy
 - Pass: shared response shaper Jest regressions for answer-bubble cleanup.
 - Pass: AgentAnswerRenderer public prose scrub regression.
 - Pass: Ask guardrail Jest regressions for concise and fixed-count budgets.
+- Pass: Ask guardrail Jest regression for concise depth-choice prompt.
 - Pass: ACR Docker/Next production build for the base completeness fix.
 - Pass: ACA deployment of the base completeness fix to `ca-abarva-web-lab-eastus--0000163`.
 - Pass: signed-in browser proof for the fixed-count 3-step Kyriba answer on revision `0000163`.

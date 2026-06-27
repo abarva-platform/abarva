@@ -435,15 +435,15 @@ export function expertRefsForAdvisorRoute(query: string): ExpertRef[] {
 
 export function chooseAdvisorTokenBudget(query: string, fallback: number): number {
   const route = routeIntelligenceAdvisorQuestion(query);
-  if (route === "airline_irops_ai_roi") return 1800;
-  if (route === "enterprise_function_artifact") return Math.max(fallback, 1300);
+  if (route === "airline_irops_ai_roi") return Math.max(fallback, 900);
+  if (route === "enterprise_function_artifact") return Math.max(fallback, 780);
   return fallback;
 }
 
 export function chooseAdvisorWordCap(query: string, fallback: number): number {
   const route = routeIntelligenceAdvisorQuestion(query);
-  if (route === "airline_irops_ai_roi") return 950;
-  if (route === "enterprise_function_artifact") return Math.max(fallback, 620);
+  if (route === "airline_irops_ai_roi") return Math.max(fallback, 260);
+  if (route === "enterprise_function_artifact") return Math.max(fallback, 220);
   return fallback;
 }
 

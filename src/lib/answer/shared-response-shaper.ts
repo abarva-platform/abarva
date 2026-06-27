@@ -427,12 +427,12 @@ export function findSharedResponseShapeIssues(
 export function shapeSharedAdvisorResponse(
   input: SharedResponseShapeInput,
 ): SharedResponseShapeResult {
-  const targetChars = input.targetChars ?? 900;
-  const hardMaxChars = input.hardMaxChars ?? 1100;
-  const maxParagraphs = input.maxParagraphs ?? 5;
+  const targetChars = input.targetChars ?? 720;
+  const hardMaxChars = input.hardMaxChars ?? 900;
+  const maxParagraphs = input.maxParagraphs ?? 4;
   const nextStepFallback =
     input.nextStepFallback ??
-    "ask aVa to inspect the supporting evidence, compare options, or shape the next action.";
+    "choose evidence, risks, or next actions.";
   const labeled = replaceLabels(
     normalizeWhitespace(normalizeAssemblyArtifacts(input.text)),
     input.labels ?? [],
