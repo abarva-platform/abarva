@@ -73,4 +73,27 @@ describe("shapeSharedAdvisorResponse", () => {
     expect(result.text).toMatch(/\bNext:/);
     expect(result.issues).toEqual([]);
   });
+
+  it("removes duplicate budget rows, delimiter artifacts, and dangling next-step trims", () => {
+    const result = shapeSharedAdvisorResponse({
+      text: [
+        "Breakdown:; Northline Logistics Group: $62.0M; Crestpoint Marketing Services: $38.0M; Northline Logistics Group — $62.0M.",
+        "- Northline Logistics Group: $62.0M; Crestpoint Marketing Services: $38.0M; Breakdown: - Northline Logistics Group — $62.0M.",
+        "Next: Next move: do you want me to frame this for a governance re-baseline which initiatives need a value supporting supporting material gate before.",
+      ].join("\n"),
+      targetChars: 900,
+      hardMaxChars: 1100,
+      maxParagraphs: 5,
+      requireNextStep: true,
+    });
+
+    expect(result.text).toContain("Northline Logistics Group: $62.0M");
+    expect(
+      result.text.match(/Northline Logistics Group(?:\:| —) \$62\.0M/g) ?? [],
+    ).toHaveLength(1);
+    expect(result.text).not.toContain("Breakdown:;");
+    expect(result.text).not.toContain("Next: Next");
+    expect(result.text).not.toContain("supporting supporting");
+    expect(result.text).not.toMatch(/\b(before|with|and|or|to)\.$/m);
+  });
 });

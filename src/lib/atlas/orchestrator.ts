@@ -1,6 +1,11 @@
 import { classifyAtlasIntent } from "@/lib/atlas/classifier";
 import { runAtlasLlm } from "@/lib/atlas/llm";
 import {
+  buildTowerFactualSpineAnswer,
+  isTowerFactualSpineCandidate,
+} from "@/lib/atlas/tower-factual-spine";
+import { query_tower_current_state } from "@/lib/atlas/tool-belt";
+import {
   buildAtlasSystemPrompt,
   ATLAS_PROMPT_VERSION,
 } from "@/lib/atlas/prompt";
@@ -498,8 +503,41 @@ export async function runAtlasTurnDetailed(input: {
   const metricExplanationRequest = readMetricExplanationRequest(
     input.surfaceContext,
   );
+  const factualSpineState = isTowerFactualSpineCandidate(input.message)
+    ? await query_tower_current_state(input.ctx, input.surfaceContext).catch(
+        () => null,
+      )
+    : null;
+  const factualSpine = factualSpineState
+    ? buildTowerFactualSpineAnswer(input.message, factualSpineState)
+    : null;
 
-  if (metricExplanationRequest) {
+  if (factualSpine && factualSpineState) {
+    toolResults = { towerState: factualSpineState };
+    modelName = "tower-factual-spine-deterministic";
+    response = {
+      threadId: thread.id,
+      routeType: "tool_augmented",
+      intent: "llm",
+      response: factualSpine.response,
+      suggestions: factualSpine.suggestions,
+      signalId: null,
+      observationId: null,
+      toolsUsed: ["query_tower_current_state", "build_tower_factual_spine"],
+      atlasMode: "live",
+      fallbackReason: null,
+      debugTrace: makeFallbackDebugTrace({
+        enabled: wantsDebugTrace(input.surfaceContext),
+        routeType: "tool_augmented",
+        intent: "llm",
+        rawResponse: [
+          "DETERMINISTIC_TOWER_FACTUAL_SPINE",
+          `Intent: ${factualSpine.matchedIntent}`,
+          factualSpine.response,
+        ].join("\n"),
+      }),
+    };
+  } else if (metricExplanationRequest) {
     const metricTurn = await runMetricExplanationTurn({
       ctx: input.ctx,
       threadId: thread.id,
