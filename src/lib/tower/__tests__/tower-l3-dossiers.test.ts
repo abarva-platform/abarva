@@ -143,6 +143,23 @@ describe('Tower L3 dossiers', () => {
     expect(JSON.stringify(sample?.businessBody)).not.toMatch(/Lakeshore Holdings/);
   });
 
+  it('persists canonical tenant keys instead of alias tenant buckets', () => {
+    const dossiers = buildTowerL3Dossiers(input({ tenantKey: 'lakeshore' }));
+    expect(dossiers.every((d) => d.tenantKey === 'lakeshore-holdings')).toBe(true);
+    const rows = toTowerL3DossierWriteRows({
+      clientId: '00000000-0000-0000-0000-000000000001',
+      dossiers,
+      sourceSet: ['lakeshore-reference-pack'],
+    });
+    expect(rows.every((row) => row.tenant_key === 'lakeshore-holdings')).toBe(true);
+  });
+
+  it('blocks Tower dossiers for non-runtime tenant buckets', () => {
+    expect(() => buildTowerL3Dossiers(input({ tenantKey: 'unknown' }))).toThrow(
+      /not eligible for runtime answers/,
+    );
+  });
+
   it('marks thin scopes with explicit named gaps instead of confident empty claims', () => {
     const dossiers = buildTowerL3Dossiers(input({ benefitRows: [] }));
     const value = dossiers.find((d) => d.scopeKey === 'l1-consolidated' && d.viewKey === 'value_realization');

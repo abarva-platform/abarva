@@ -1,3 +1,5 @@
+import { canonicalTenantKey } from "@/lib/tenant/aliases";
+
 export type TenantScopeType =
   | "runtime_client"
   | "demo_client"
@@ -16,24 +18,20 @@ export interface TenantScopePolicyResult {
   reason: string;
 }
 
-const RUNTIME_TENANTS = new Set([
+export const SEMANTIC2_RUNTIME_TENANT_KEYS = [
   "apex-retail",
   "first-capital",
   "lakeshore-holdings",
   "meridian-health",
   "skyharbor-air",
-]);
+] as const;
+
+export type Semantic2RuntimeTenantKey =
+  (typeof SEMANTIC2_RUNTIME_TENANT_KEYS)[number];
+
+const RUNTIME_TENANTS = new Set<string>(SEMANTIC2_RUNTIME_TENANT_KEYS);
 
 const APPROVED_DEMO_TENANTS = new Set<string>([]);
-
-const TENANT_ALIASES: Record<string, string> = {
-  apexretail: "apex-retail",
-  apex: "apex-retail",
-  firstcapital: "first-capital",
-  lakeshore: "lakeshore-holdings",
-  meridian: "meridian-health",
-  skyharbor: "skyharbor-air",
-};
 
 function isUuidLike(value: string): boolean {
   return /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
@@ -48,7 +46,7 @@ export function canonicalSemantic2TenantKey(
     .trim()
     .toLowerCase();
   if (!raw) return "unknown";
-  return TENANT_ALIASES[raw] ?? raw;
+  return canonicalTenantKey(raw);
 }
 
 export function classifyTenantScope(

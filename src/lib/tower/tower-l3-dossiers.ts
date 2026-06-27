@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 
 import { canonicalClientDisplayName } from '@/lib/client-config';
 import type { PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
+import { normalizeSemantic2RuntimeTenantKey } from '@/lib/semantic2/runtime-contract';
 
 export const TOWER_L3_PROMPT_VERSION = 'tower-l3-dossier-v2';
 
@@ -690,6 +691,10 @@ function maxInsightConfidence(insights: readonly TowerDossierInsight[]): TowerDo
 }
 
 export function buildTowerL3Dossiers(input: TowerL3Input): TowerAnswerDossier[] {
+  const tenantKey = normalizeSemantic2RuntimeTenantKey(
+    input.tenantKey,
+    'tower-l3-dossier-build',
+  );
   const dossierVersion = input.dossierVersion ?? new Date().toISOString();
   const scopes = makeScopes(input);
   const allRows = [
@@ -735,7 +740,7 @@ export function buildTowerL3Dossiers(input: TowerL3Input): TowerAnswerDossier[] 
           : skeletonVerdictFor(score, metrics.length)),
       };
       const businessLabels = {
-        tenant: tenantLabelFor(input.tenantKey),
+        tenant: tenantLabelFor(tenantKey),
         scope: scope.label,
         view: view.replace(/_/g, ' '),
       };
@@ -750,7 +755,7 @@ export function buildTowerL3Dossiers(input: TowerL3Input): TowerAnswerDossier[] 
         branchOptions,
       });
       const withoutValidation: Omit<TowerAnswerDossier, 'validation'> = {
-        tenantKey: input.tenantKey,
+        tenantKey,
         scopeKey: scope.key,
         scopeType: scope.type,
         scopeLabel: scope.label,

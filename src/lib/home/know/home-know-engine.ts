@@ -32,7 +32,10 @@ import {
   synthesizeHomeConsultantText,
 } from "@/lib/home/know/home-consultant-text-synthesis";
 import { synthesizeHomeKnowProse } from "@/lib/home/know/home-know-synthesis";
-import { loadCuratedSemanticDossier } from "@/lib/semantic-dossiers";
+import {
+  isCuratedDossierNonFallbackError,
+  loadCuratedSemanticDossier,
+} from "@/lib/semantic-dossiers";
 
 export interface HomeDimensionCoverageRow {
   tenant_key: string;
@@ -347,6 +350,14 @@ export async function buildHomeKnowResponse(
       return validated;
     }
   } catch (error) {
+    if (isCuratedDossierNonFallbackError(error)) {
+      return blockedHomeKnowResponse({
+        tenantKey,
+        question: input.question,
+        prose:
+          "I cannot answer this from the current governed context yet. The active context for this tenant or topic needs to be refreshed before Home should use it.",
+      });
+    }
     console.warn(
       `[home-know.semantic2-dossier] Falling back to local dimension dossier for ${tenantKey}: ${
         error instanceof Error ? error.message : String(error)
