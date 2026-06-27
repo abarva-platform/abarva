@@ -149,7 +149,9 @@ function stripGenericDecisionFooter(text: string): string {
 
 function humanizeEvidenceLanguage(text: string): string {
   return text
-    .replace(/^SOURCES\s*$/gim, "Evidence trail")
+    .replace(/^SOURCES\s*$/gim, "")
+    .replace(/^\s*Evidence\s+(?:trail|drill-down)\s*:.*$/gim, "")
+    .replace(/^\s*Evidence\s+(?:trail|drill-down)\s*$/gim, "")
     .replace(/\bcontrol-supporting material\b/gi, "control evidence")
     .replace(/\bSOX signer supporting material\b/gi, "SOX signer evidence")
     .replace(/\bsupporting material\b/gi, "evidence")
@@ -159,10 +161,15 @@ function humanizeEvidenceLanguage(text: string): string {
 }
 
 function collapseRawEvidenceDump(text: string): string {
-  return text.replace(
-    /\n+TABLES\s*\n\s*(?:Supporting Material|Evidence)\s*\n\s*SOURCE\s+TYPE\s+CONFIDENCE\s+HOW\s+IT\s+SUPPORTS\s+THE\s+ANSWER[\s\S]*$/i,
-    "\n\nEvidence drill-down: open the evidence trail for source, confidence, finding, and buyer implication.",
-  );
+  return text
+    .replace(
+      /\n+TABLES\s*\n\s*(?:Supporting Material|Evidence)\s*\n\s*SOURCE\s+TYPE\s+CONFIDENCE\s+HOW\s+IT\s+SUPPORTS\s+THE\s+ANSWER[\s\S]*$/i,
+      "",
+    )
+    .replace(
+      /\n+(?:SOURCES|Evidence\s+trail)\s*\n[\s\S]*?(?=\n{2,}[A-Z][^\n]+\n|\n{2,}(?:Next|Decision|Recommendation|Risk|Owner)\b|$)/gi,
+      "",
+    );
 }
 
 function shapeSharedRenderDefects(text: string): string {

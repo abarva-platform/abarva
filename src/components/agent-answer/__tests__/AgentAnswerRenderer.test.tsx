@@ -229,6 +229,7 @@ describe("AgentAnswerRenderer", () => {
     expect(screen.queryByText(/Consulted experts/i)).not.toBeInTheDocument();
     const visibleText = container.textContent ?? "";
     expect(visibleText).not.toMatch(/context dimensions|evidence points|That means The|The supporting evidence is that/i);
+    expect(visibleText).not.toMatch(/\bsupporting material\b/i);
     expect(visibleText).toContain("business areas");
     expect(visibleText).toContain("source signals");
   });

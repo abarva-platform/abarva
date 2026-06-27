@@ -71,6 +71,7 @@ describe("shapeSharedAdvisorResponse", () => {
     ).toBeLessThanOrEqual(5);
     expect(result.text).toContain("SAP: $8.2M");
     expect(result.text).toMatch(/\bNext:/);
+    expect(result.text).not.toMatch(/\bask aVa\b/i);
     expect(result.issues).toEqual([]);
   });
 

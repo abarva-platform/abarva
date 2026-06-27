@@ -282,8 +282,8 @@ describe('agent response shape', () => {
       const shaped = shapeAgentResponseForSurface('/intelligence', raw);
 
       expect(shaped).toContain('AI is not the first tool here');
-      expect(shaped).toContain('Evidence trail');
-      expect(shaped).toContain('Evidence drill-down');
+      expect(shaped).not.toMatch(/\bEvidence trail\b/i);
+      expect(shaped).not.toMatch(/\bEvidence drill-down\b/i);
       expect(shaped).not.toMatch(/\btenant support\b/i);
       expect(shaped).not.toMatch(/\bsupporting material\b/i);
       expect(shaped).not.toMatch(/belongs in Source,\s*Tower,\s*or Moves/i);

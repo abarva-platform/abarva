@@ -214,6 +214,7 @@ function normalizeAssemblyArtifacts(text: string): string {
   return dedupeVisibleLines(
     text
       .replace(/\b(supporting)\s+\1\b/gi, "$1")
+      .replace(/\bNext\s*:\s*ask\s+aVa\s+to\s+/gi, "Next: ")
       .replace(
         /\b(Read|Evidence|Implication|Next(?: move)?)\s*:\s*\1\s*:/gi,
         "$1:",
