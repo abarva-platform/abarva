@@ -352,7 +352,7 @@ export async function synthesizeIntelligenceConsultantText(args: {
     );
     let rawText = extractAnthropicText(message);
     let text = normalizeConsultantText(rawText);
-    if (explicitVisualAsk && !hasMarkdownDecisionTable(text)) {
+    if (explicitVisualAsk && !hasMarkdownDecisionTable(text, 2)) {
       const repairUser = [
         user,
         "",
@@ -377,14 +377,15 @@ export async function synthesizeIntelligenceConsultantText(args: {
         timeoutMs,
       );
       const repairedText = normalizeConsultantText(extractAnthropicText(repaired));
-      if (hasMarkdownDecisionTable(repairedText)) {
+      if (hasMarkdownDecisionTable(repairedText, 2)) {
         rawText = repairedText;
         text = repairedText;
       } else {
         const fallbackTable = fallbackVisualTableFromPacket(promptPacket);
         if (fallbackTable) {
-          rawText = `${rawText}\n\n${fallbackTable}`;
-          text = normalizeConsultantText(`${text}\n\n${fallbackTable}`);
+          const fallbackBase = stripMarkdownTablesFromText(repairedText || text);
+          rawText = `${fallbackBase}\n\n${fallbackTable}`;
+          text = normalizeConsultantText(`${fallbackBase}\n\n${fallbackTable}`);
         }
       }
     }
@@ -488,8 +489,55 @@ function isExplicitVisualAsk(query: string): boolean {
   );
 }
 
-function hasMarkdownDecisionTable(text: string): boolean {
-  return MARKDOWN_TABLE_SEPARATOR_RE.test(text);
+function hasMarkdownDecisionTable(text: string, minRows = 1): boolean {
+  return markdownDecisionTableRowCount(text) >= minRows;
+}
+
+function markdownDecisionTableRowCount(text: string): number {
+  const lines = text.split(/\r?\n/);
+  for (let index = 0; index < lines.length - 1; index += 1) {
+    if (
+      !splitMarkdownTableLine(lines[index]).length ||
+      !MARKDOWN_TABLE_SEPARATOR_RE.test(lines[index + 1] ?? "")
+    ) {
+      continue;
+    }
+    let rows = 0;
+    for (let rowIndex = index + 2; rowIndex < lines.length; rowIndex += 1) {
+      const cells = splitMarkdownTableLine(lines[rowIndex] ?? "");
+      if (cells.length < 2) break;
+      rows += 1;
+    }
+    if (rows > 0) return rows;
+  }
+  return 0;
+}
+
+function stripMarkdownTablesFromText(text: string): string {
+  const lines = text.split(/\r?\n/);
+  const keep: string[] = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const header = splitMarkdownTableLine(lines[index] ?? "");
+    if (header.length >= 2 && MARKDOWN_TABLE_SEPARATOR_RE.test(lines[index + 1] ?? "")) {
+      index += 2;
+      while (index < lines.length && splitMarkdownTableLine(lines[index] ?? "").length >= 2) {
+        index += 1;
+      }
+      index -= 1;
+      continue;
+    }
+    keep.push(lines[index] ?? "");
+  }
+  return normalizeConsultantText(keep.join("\n"));
+}
+
+function splitMarkdownTableLine(line: string): string[] {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return [];
+  return trimmed
+    .slice(1, -1)
+    .split("|")
+    .map((cell) => cell.trim());
 }
 
 function extractAnthropicText(message: {

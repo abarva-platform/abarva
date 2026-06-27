@@ -286,6 +286,7 @@ describe("buildStructuredExhibits", () => {
         ],
       }),
     );
+    expect(exhibits.tables[0]?.note).toBeUndefined();
     expect(exhibits.charts).toHaveLength(0);
   });
 
@@ -324,6 +325,7 @@ describe("buildStructuredExhibits", () => {
         ],
       }),
     );
+    expect(exhibits.tables[0]?.note).toBeUndefined();
     expect(exhibits.charts).toHaveLength(0);
   });
 
