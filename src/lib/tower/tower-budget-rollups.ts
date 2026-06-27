@@ -34,6 +34,13 @@ interface TowerBudgetRollupRow {
   it_spend_as_pct_revenue: string | number | null;
 }
 
+interface ContextBudgetRecordRow {
+  id: string;
+  source_file: string | null;
+  source_row_number: number | null;
+  payload: Record<string, unknown> | null;
+}
+
 function num(value: unknown): number {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {
@@ -52,6 +59,134 @@ function nullableNum(value: unknown): number | null {
 
 function text(value: unknown, fallback = ""): string {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+
+function firstValue(
+  payload: Record<string, unknown>,
+  keys: readonly string[],
+): unknown {
+  for (const key of keys) {
+    const value = payload[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim()) return value;
+  }
+  return null;
+}
+
+function firstText(
+  payload: Record<string, unknown>,
+  keys: readonly string[],
+  fallback = "",
+): string {
+  return text(firstValue(payload, keys), fallback);
+}
+
+function firstNum(
+  payload: Record<string, unknown>,
+  keys: readonly string[],
+): number {
+  for (const key of keys) {
+    const parsed = num(payload[key]);
+    if (parsed !== 0 || payload[key] === 0 || payload[key] === "0") return parsed;
+  }
+  return 0;
+}
+
+function addRollupValue(
+  target: TowerBudgetRollupRow,
+  key: keyof Pick<
+    TowerBudgetRollupRow,
+    | "total_it_budget_usd"
+    | "actual_spend_ytd_usd"
+    | "forecast_spend_usd"
+    | "opex_amount_usd"
+    | "capex_amount_usd"
+    | "run_amount_usd"
+    | "change_amount_usd"
+    | "vendor_amount_usd"
+    | "labor_amount_usd"
+  >,
+  value: number,
+): void {
+  target[key] = num(target[key]) + value;
+}
+
+function shapeBudgetRollupsFromContextRecords(
+  records: readonly ContextBudgetRecordRow[],
+): TowerBudgetRollup[] {
+  const byKey = new Map<string, TowerBudgetRollupRow>();
+
+  for (const record of records) {
+    const payload = record.payload ?? {};
+    const total = firstNum(payload, [
+      "total_it_budget_usd",
+      "fy26_budget_usd",
+      "annual_budget_usd",
+      "budget_usd",
+      "spend_amount_usd",
+    ]);
+    if (total <= 0) continue;
+
+    const fiscalYear = firstText(payload, ["fiscal_year", "period"], "FY2026");
+    const portfolioCompany = firstText(
+      payload,
+      ["portfolio_company", "budget_area", "business_function", "owner_team_id"],
+      "Enterprise IT portfolio",
+    );
+    const mapKey = `${portfolioCompany}::${fiscalYear}`;
+    const row = byKey.get(mapKey) ?? {
+      portfolio_company: portfolioCompany,
+      fiscal_year: fiscalYear,
+      total_it_budget_usd: 0,
+      actual_spend_ytd_usd: 0,
+      forecast_spend_usd: null,
+      opex_amount_usd: 0,
+      capex_amount_usd: 0,
+      run_amount_usd: 0,
+      change_amount_usd: 0,
+      vendor_amount_usd: 0,
+      labor_amount_usd: 0,
+      revenue_usd: null,
+      employees: null,
+      it_spend_as_pct_revenue: null,
+    };
+
+    addRollupValue(row, "total_it_budget_usd", total);
+    addRollupValue(
+      row,
+      "actual_spend_ytd_usd",
+      firstNum(payload, ["actual_spend_ytd_usd", "actual_ytd_usd", "ytd_spend_usd"]),
+    );
+    addRollupValue(row, "forecast_spend_usd", firstNum(payload, ["forecast_spend_usd"]));
+    addRollupValue(row, "opex_amount_usd", firstNum(payload, ["opex_amount_usd"]));
+    addRollupValue(row, "capex_amount_usd", firstNum(payload, ["capex_amount_usd"]));
+    addRollupValue(row, "run_amount_usd", firstNum(payload, ["run_amount_usd"]));
+    addRollupValue(row, "change_amount_usd", firstNum(payload, ["change_amount_usd"]));
+    addRollupValue(row, "vendor_amount_usd", firstNum(payload, ["vendor_amount_usd"]));
+    addRollupValue(row, "labor_amount_usd", firstNum(payload, ["labor_amount_usd"]));
+
+    const spendType = `${firstText(payload, ["spend_type"])} ${firstText(payload, ["spend_posture"])}`.toLowerCase();
+    const accountingTreatment = firstText(payload, ["accounting_treatment"]).toLowerCase();
+    if (!num(row.run_amount_usd) && /\brun\b/.test(spendType) && !/change/.test(spendType)) {
+      addRollupValue(row, "run_amount_usd", total);
+    }
+    if (!num(row.change_amount_usd) && /\bchange\b/.test(spendType) && !/run/.test(spendType)) {
+      addRollupValue(row, "change_amount_usd", total);
+    }
+    if (!num(row.opex_amount_usd) && accountingTreatment === "opex") {
+      addRollupValue(row, "opex_amount_usd", total);
+    }
+    if (!num(row.capex_amount_usd) && accountingTreatment === "capex") {
+      addRollupValue(row, "capex_amount_usd", total);
+    }
+
+    row.revenue_usd = row.revenue_usd ?? firstValue(payload, ["revenue_usd"]) as string | number | null;
+    row.employees = row.employees ?? firstValue(payload, ["employees"]) as string | number | null;
+    row.it_spend_as_pct_revenue = row.it_spend_as_pct_revenue ?? firstValue(payload, ["it_spend_as_pct_revenue"]) as string | number | null;
+    byKey.set(mapKey, row);
+  }
+
+  return shapeTowerBudgetRollups([...byKey.values()]);
 }
 
 export function shapeTowerBudgetRollups(
@@ -109,5 +244,27 @@ export async function listTowerBudgetRollupsForClient(args: {
     missingTable: "empty",
     limit: 100,
   });
-  return shapeTowerBudgetRollups(rows);
+  if (rows.length > 0) return shapeTowerBudgetRollups(rows);
+
+  const tenantAliases = [
+    args.tenantKey,
+    args.tenantKey?.replace(/-/g, ""),
+    args.tenantKey === "lakeshore" ? "lakeshore-holdings" : null,
+    args.tenantKey === "lakeshore" ? "lakeshore-industries" : null,
+  ].filter((value): value is string => Boolean(value));
+
+  const sourceRows = await db.query<ContextBudgetRecordRow>(
+    `SELECT id, source_file, source_row_number, payload
+       FROM enterprise_context_records
+      WHERE (client_id = $1 OR lower(tenant_key) = ANY($2::text[]))
+        AND (record_type = 'it_budget_financials'
+          OR record_subtype = 'it-budget-financials'
+          OR source_file ILIKE '%F12_it-budget-financials%')
+      ORDER BY source_row_number NULLS LAST
+      LIMIT 500`,
+    [args.clientId, tenantAliases.map((alias) => alias.toLowerCase())],
+    { missingTable: "empty" },
+  );
+
+  return shapeBudgetRollupsFromContextRecords(sourceRows);
 }
