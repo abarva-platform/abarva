@@ -25,7 +25,11 @@ describe("AvaChatShell shared components", () => {
     );
 
     expect(screen.getByTestId("agent-dock-panel")).toBeInTheDocument();
-    expect(screen.getAllByTestId("ava-ask-v-mark").length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId("ava-ask-wordmark").length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId("ava-ask-wordmark")[0]).toHaveAttribute(
+      "src",
+      "/brand/ava/ava-wordmark-2tone-dark.svg",
+    );
     expect(
       screen.getByPlaceholderText("Ask aVa about this enterprise context..."),
     ).toBeInTheDocument();

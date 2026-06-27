@@ -121,12 +121,10 @@ describe("AvaAsk — canonical ask reused across surfaces", () => {
     const askBox = screen.getByLabelText("Ask Ava");
     expect(askBox.tagName).toBe("TEXTAREA");
     expect(screen.getByTestId("ava-ask-mark")).toBeInTheDocument();
-    expect(screen.getByTestId("ava-ask-wordmark")).toBeInTheDocument();
-    expect(screen.getByTestId("ava-ask-leading-a")).toHaveAttribute(
-      "fill",
-      "#111827",
+    expect(screen.getByTestId("ava-ask-wordmark")).toHaveAttribute(
+      "src",
+      "/brand/ava/ava-wordmark-2tone-dark.svg",
     );
-    expect(screen.getByTestId("ava-ask-v-mark")).toBeInTheDocument();
 
     fireEvent.change(askBox, {
       target: { value: "which AI investments\nbefore holiday readiness?" },
@@ -151,7 +149,7 @@ describe("AvaAsk — canonical ask reused across surfaces", () => {
     // Canonical render: the table renders through the ONE renderer.
     await waitFor(() => expect(screen.getByRole("table")).toBeInTheDocument());
     expect(
-      within(screen.getByRole("table")).getByText("AI bet"),
+      within(screen.getByRole("table")).getByText(/AI bet/i),
     ).toBeInTheDocument();
     expect(screen.getByText("$14,000,000")).toBeInTheDocument();
 

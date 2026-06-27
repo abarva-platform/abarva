@@ -76,7 +76,10 @@ describe("HomeKnowAsk", () => {
 
     const input = screen.getByLabelText("Ask Home KNOW");
     expect(screen.getByTestId("ava-ask-mark")).toBeInTheDocument();
-    expect(screen.getByTestId("ava-ask-v-mark")).toBeInTheDocument();
+    expect(screen.getByTestId("ava-ask-wordmark")).toHaveAttribute(
+      "src",
+      "/brand/ava/ava-wordmark-2tone-dark.svg",
+    );
     fireEvent.change(input, {
       target: { value: "Show apps owned by Finance" },
     });
