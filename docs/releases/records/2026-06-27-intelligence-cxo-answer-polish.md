@@ -80,7 +80,11 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - Post-deploy signed-in Lakeshore proof on revision `ca-abarva-web-lab-eastus--mc2517f4c` confirmed the label/evidence cleanup still held in the likely answer surface, but the same explicit table prompt still returned prose-only (`tableCount: 0`). Root cause: production used the newer consultant-text synthesis lane before reaching the older synthesizer repair pass.
 - `npx eslint src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts` passed after moving visual repair into the active consultant-synthesis lane.
 - `npx jest src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts --runInBand` passed, 5 tests. Jest still prints pre-existing duplicate manual-mock warnings.
-- Final post-consultant-lane deployment and signed-in browser proof pending.
+- ACA proof for current-main candidate `48648ac3`: revision `ca-abarva-web-lab-eastus--m48648ac3`, digest `sha256:3828f676e4c5bc700aa40700dd3205bc260a5feee26b23036208d3393c7dc6d1`, 100% traffic, runtime invariant passed.
+- Post-deploy signed-in Lakeshore proof on revision `ca-abarva-web-lab-eastus--m48648ac3` confirmed the label/evidence cleanup still held and no generic closer returned, but the explicit table prompt still returned prose-only (`tableCount: 0`). Root cause: the deterministic consultant-lane fallback only rendered from formal decision-option rows; this Lakeshore finance/treasury question had metric/initiative evidence but insufficient option rows for the fallback table.
+- `npx eslint src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts` passed after adding metric-evidence fallback table rendering.
+- `npx jest src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts --runInBand` passed, 6 tests. Jest still prints pre-existing duplicate manual-mock warnings.
+- Final post-metric-fallback deployment and signed-in browser proof pending.
 
 ## Rollout Plan
 
@@ -90,7 +94,7 @@ Build an Azure Container Apps image from the exact git SHA, deploy to `ca-abarva
 
 - Repo-owned deploy workflow: Azure Container Apps release path in `docs/runbooks/azure-container-apps-deploy.md`.
 - Shared runtime mutators: `az acr build`, `az containerapp update`, and ACA ingress traffic assignment.
-- Approved image digest: first candidate `sha256:6765cd1489a6ba4618a4a3943cfadb4914d1074d5f96c4c505695afd456c8576`; latest proven-but-incomplete candidate `sha256:81790f937cf6fa077ac392722e2dc58caab2ca54bc692c591809634465f4bdf2`; consultant-lane visual repair digest pending.
+- Approved image digest: first candidate `sha256:6765cd1489a6ba4618a4a3943cfadb4914d1074d5f96c4c505695afd456c8576`; latest proven-but-incomplete candidate `sha256:3828f676e4c5bc700aa40700dd3205bc260a5feee26b23036208d3393c7dc6d1`; metric-fallback visual repair digest pending.
 - ACA runtime invariant: `app.abarva.ai` is ACA-only; Vercel is not used as release evidence.
 - Worker image invariant: Not applicable.
 - Feature/env flag update path: None.
@@ -109,7 +113,8 @@ Rollback by assigning 100% ACA ingress traffic to the previous healthy revision 
 - Canvas-cleanup ACA proof: revision `ca-abarva-web-lab-eastus--0000172`, digest `sha256:8e4838111877d8413917f8fb57ab8689398bd6384305bff645292c65fdd69644`, 100% traffic; one-prompt signed-in proof passed for `Which AI initiatives should we kill?`, but Anand's later 50-question crawl still found eight evidence-table leak cases.
 - Left-dock/right-canvas candidate ACA proof: revision `ca-abarva-web-lab-eastus--madd51e40`, digest `sha256:4017dfb821a71aa1770412ae2fc10ba9e78649d040793847b3de49b7b057ed22`, 100% traffic; runtime invariant passed; signed-in Lakeshore proof found the remaining explicit-table and generic-closer issues fixed by the next candidate.
 - Runtime-repair candidate ACA proof: revision `ca-abarva-web-lab-eastus--mc2517f4c`, digest `sha256:81790f937cf6fa077ac392722e2dc58caab2ca54bc692c591809634465f4bdf2`, 100% traffic; runtime invariant passed; signed-in Lakeshore proof found the remaining active-lane visual issue fixed by the consultant-synthesis follow-up.
-- Post-deploy revision, digest, screenshots, and crawl output for the final consultant-lane visual fix to be added after production proof.
+- Consultant-lane candidate ACA proof: revision `ca-abarva-web-lab-eastus--m48648ac3`, digest `sha256:3828f676e4c5bc700aa40700dd3205bc260a5feee26b23036208d3393c7dc6d1`, 100% traffic; runtime invariant passed; signed-in Lakeshore proof found the remaining metric-fallback issue fixed by the next candidate.
+- Post-deploy revision, digest, screenshots, and crawl output for the final metric-fallback visual fix to be added after production proof.
 
 ## Known Gaps
 

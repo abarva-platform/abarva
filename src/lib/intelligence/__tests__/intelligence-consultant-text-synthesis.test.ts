@@ -363,6 +363,64 @@ describe("Intelligence consultant text synthesis", () => {
     });
   });
 
+  it("falls back to metric evidence when explicit visual answers have no option rows", async () => {
+    const create = mockClaudeTexts([
+      [
+        "The finance AI portfolio has value, but scale should wait for evidence on measurement and controls.",
+        "",
+        "The missing evidence is the realized-value baseline and readiness dates, so hold scale funding until those are confirmed.",
+      ].join("\n"),
+      [
+        "The finance AI portfolio has value, but scale should wait for evidence on measurement and controls.",
+        "",
+        "The missing evidence is the realized-value baseline and readiness dates, so hold scale funding until those are confirmed.",
+      ].join("\n"),
+    ]);
+
+    const result = await synthesizeIntelligenceConsultantText({
+      dossier: {
+        ...dossier,
+        question:
+          "Compare the top finance and treasury AI initiatives in a table with value, readiness, risk, and next action.",
+        tenantEvidenceDossier: {
+          ...dossier.tenantEvidenceDossier,
+          metrics: [
+            {
+              id: "metric-1",
+              label: "Kyriba global cash and payments rollout",
+              value: "$86M promised benefit",
+              basis: "loaded initiative evidence",
+              citationIds: ["tenant-1"],
+            },
+            {
+              id: "metric-2",
+              label: "M365 Copilot finance automation",
+              value: "$83M committed-versus-realized gap",
+              basis: "loaded initiative evidence",
+              citationIds: ["tenant-1"],
+            },
+          ],
+        },
+        decisionOptionsDossier: {
+          ...dossier.decisionOptionsDossier,
+          options: [],
+          recommendedDecisionFrame:
+            "Close bank-connectivity and measurement evidence before scale.",
+        },
+      },
+      tenantId: "tenant-skyharbor",
+    });
+
+    expect(create).toHaveBeenCalledTimes(2);
+    const text = result && "text" in result ? result.text : "";
+    expect(text).toContain("| Initiative | Value | Readiness | Risk | Next action |");
+    expect(text).toContain("| Kyriba global cash and payments rollout |");
+    expect(text).toContain("| M365 Copilot finance automation |");
+    expect(result).toMatchObject({
+      trace: { used: true, model: expect.any(String) },
+    });
+  });
+
   it("rejects old transcript labels and raw ids", () => {
     expect(
       validateIntelligenceConsultantText({

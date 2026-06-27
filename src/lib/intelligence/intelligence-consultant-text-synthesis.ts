@@ -381,7 +381,7 @@ export async function synthesizeIntelligenceConsultantText(args: {
         rawText = repairedText;
         text = repairedText;
       } else {
-        const fallbackTable = fallbackDecisionTableFromPacket(promptPacket);
+        const fallbackTable = fallbackVisualTableFromPacket(promptPacket);
         if (fallbackTable) {
           rawText = `${rawText}\n\n${fallbackTable}`;
           text = normalizeConsultantText(`${text}\n\n${fallbackTable}`);
@@ -527,8 +527,46 @@ function parseOptionBrief(option: string): {
   };
 }
 
+function parseMetricBrief(metric: string): { label: string; value: string } | null {
+  const [labelPart, rest = ""] = metric.split(/:\s*/, 2);
+  const label = labelPart.trim();
+  if (!label || !rest.trim()) return null;
+  const value = rest.replace(/\s*\([^)]*\)\s*$/, "").trim();
+  return {
+    label,
+    value: value || "not shown in loaded sources",
+  };
+}
+
 function markdownEscapeCell(value: string): string {
   return value.replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
+}
+
+function fallbackMetricTableFromPacket(
+  packet: IntelligenceConsultantPromptPacket,
+): string | null {
+  const rows = packet.tenantEvidenceBrief.metricsThatMatter
+    .map(parseMetricBrief)
+    .filter((metric): metric is NonNullable<typeof metric> => metric !== null)
+    .slice(0, 6);
+  if (rows.length < 2) return null;
+
+  const risk =
+    packet.riskCaveatBrief.dataReadinessGaps[0] ??
+    packet.riskCaveatBrief.governanceRisks[0] ??
+    packet.riskCaveatBrief.executionRisks[0] ??
+    "not shown in loaded sources";
+  const nextAction =
+    packet.optionsBrief.decisionCriteria[0] ??
+    "confirm owner, baseline, and control evidence before scale";
+
+  return [
+    "| Initiative | Value | Readiness | Risk | Next action |",
+    "|---|---:|---|---|---|",
+    ...rows.map((row) => {
+      return `| ${markdownEscapeCell(row.label)} | ${markdownEscapeCell(row.value)} | not shown in loaded sources | ${markdownEscapeCell(risk)} | ${markdownEscapeCell(nextAction)} |`;
+    }),
+  ].join("\n");
 }
 
 function fallbackDecisionTableFromPacket(
@@ -551,6 +589,15 @@ function fallbackDecisionTableFromPacket(
       return `| ${markdownEscapeCell(row.title)} | ${markdownEscapeCell(row.value)} | ${markdownEscapeCell(readiness)} | ${markdownEscapeCell(row.risk)} | ${markdownEscapeCell(row.action)} |`;
     }),
   ].join("\n");
+}
+
+function fallbackVisualTableFromPacket(
+  packet: IntelligenceConsultantPromptPacket,
+): string | null {
+  return (
+    fallbackDecisionTableFromPacket(packet) ??
+    fallbackMetricTableFromPacket(packet)
+  );
 }
 
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
