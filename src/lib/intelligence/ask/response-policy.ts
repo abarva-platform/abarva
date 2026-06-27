@@ -131,7 +131,7 @@ export function enforceDecisionGradeAnswer(text: string): string {
 
   const nextMove = MISSING_EVIDENCE_RE.test(paragraphDisciplined)
     ? "Next move: assign the accountable data owner to validate the missing tenant evidence before approving a number or using it in a board artifact."
-    : "Next move: have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves.";
+    : "Want the deeper path: evidence, risks, or next actions?";
 
   return naturalizeConsultantSections(
     ensureReadableConsultantShape(
@@ -148,11 +148,11 @@ function sanitizeVisibleAnswerLanguage(text: string): string {
     .replace(/\bNexus\b/g, "Moves")
     .replace(
       /assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves/gi,
-      "have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves",
+      "choose the evidence, risks, or next actions to inspect",
     )
     .replace(
       /validate this cited evidence before approving the decision or moving it into Source, Tower, or Moves/gi,
-      "review the listed sources before approving the decision or moving it into Source, Tower, or Moves",
+      "review the listed sources before approving the decision",
     )
     .replace(/\bcited evidence\b/gi, "listed sources");
 }

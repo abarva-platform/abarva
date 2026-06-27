@@ -161,6 +161,19 @@ function answerBodyFromPacket(answer: AvaAnswerPacket): string {
   );
 }
 
+function hasRenderableAvaArtifacts(
+  answer?: AvaAnswerPacket | null,
+): answer is AvaAnswerPacket {
+  return (
+    answer?.artifacts?.some(
+      (artifact) =>
+        artifact.artifact === "table" ||
+        artifact.artifact === "chart" ||
+        artifact.artifact === "graph",
+    ) ?? false
+  );
+}
+
 export function IntelligenceV2Surface({
   payload,
   tenantName,
@@ -422,7 +435,7 @@ export function IntelligenceV2Surface({
                     {latestAnswer ? (
                       <>
                         <h3>Answer from the current conversation</h3>
-                        {latestAnswer.agentAnswer ? (
+                        {hasRenderableAvaArtifacts(latestAnswer.agentAnswer) ? (
                           <AgentAnswerRenderer answer={latestAnswer.agentAnswer} />
                         ) : latestAnswer.body.trim() ? (
                           <div className="answerText">

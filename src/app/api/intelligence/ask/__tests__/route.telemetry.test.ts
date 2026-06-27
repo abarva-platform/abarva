@@ -183,6 +183,70 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(text).toContain('"telemetryEventId":"tlm_intelligence_1"');
   });
 
+  it("does not emit evidence-only artifact packets for plain advisory answers", async () => {
+    jest.mocked(askIntelligence).mockImplementationOnce(async function* () {
+      yield {
+        type: "sources",
+        sources: [
+          {
+            type: "TENANT",
+            id: "LSH-FIN-001",
+            name: "Lakeshore finance AI evidence register",
+            detail:
+              "Finance and treasury AI evidence rows with owner, gate, and risk posture.",
+            structured: {
+              tables: [
+                {
+                  id: "evidence",
+                  title: "Evidence",
+                  columns: [
+                    { key: "source", label: "Source" },
+                    { key: "confidence", label: "Confidence" },
+                    { key: "support", label: "How it supports the answer" },
+                  ],
+                  rows: [
+                    {
+                      source: "Kyriba rollout register",
+                      confidence: "high",
+                      support:
+                        "Critical banks and payment formats still need control evidence.",
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+      };
+      yield {
+        type: "delta",
+        text: "Scale nothing freely yet. Kyriba is closest, but it needs bank connectivity and payment-format gates before broad rollout. Want the deeper path: evidence, risks, or next actions?",
+      };
+      yield { type: "done" };
+    });
+
+    const response = await POST(
+      makeRequest({
+        q: "Which finance and treasury AI initiatives are proven enough to scale versus still need evidence?",
+        client: "lakeshore",
+      }) as never,
+    );
+    const text = await readResponseText(response);
+    const events = text
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+
+    const agentAnswer = events.find(
+      (event) => event.type === "agent-answer",
+    )?.answer;
+
+    expect(agentAnswer).toBeTruthy();
+    expect(agentAnswer.directAnswer).toContain("Scale nothing freely yet.");
+    expect(agentAnswer.artifacts).toEqual([]);
+    expect(text).not.toContain("HOW IT SUPPORTS THE ANSWER");
+  });
+
   it("emits AgentAnswer attribution without inferring exhibits for the aVa reasoning path", async () => {
     jest.mocked(classifySentinelIntent).mockResolvedValueOnce({
       intent: "it_productivity",

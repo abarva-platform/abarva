@@ -846,6 +846,69 @@ describe("AgentDock · thread render", () => {
     );
   });
 
+  it("renders evidence-only Ava packets as concise prose", () => {
+    render(
+      <AgentDock
+        agent={{ ...AGENT, name: "aVa" }}
+        surface="intelligence"
+        thread={[
+          {
+            id: "a",
+            role: "agent",
+            body: "Scale nothing freely yet. Kyriba is closest, but control gates need to close first. Want the deeper path: evidence, risks, or next actions?",
+            agentAnswer: {
+              surface: "intelligence",
+              mode: "ANALYZE",
+              tenantKey: "lakeshore",
+              question: "Which initiatives are proven enough to scale?",
+              intent: "table",
+              status: "answered",
+              directAnswer:
+                "Scale nothing freely yet. Kyriba is closest, but control gates need to close first.",
+              artifacts: [],
+              citations: [
+                {
+                  id: "c1",
+                  label: "Lakeshore finance AI evidence register",
+                  sourceClass: "tenant-fact",
+                  confidence: "high",
+                },
+              ],
+              factsUsed: [],
+              metricsUsed: [],
+              relationshipsUsed: [],
+              quality: {
+                confidence: "high",
+                evidenceStrength: "partial",
+                tenantGrounding: "partial",
+                answerCompleteness: "complete",
+              },
+              safety: {
+                tenantFencePassed: true,
+                rawIdsSuppressed: true,
+                forbiddenLanguagePassed: true,
+                unsupportedClaimsBlocked: true,
+              },
+              nextSteps: [],
+              gaps: [],
+              caveats: [],
+            } as never,
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const turn = screen.getByTestId("agent-dock-turn-agent");
+    expect(turn).toHaveTextContent("Scale nothing freely yet.");
+    expect(turn).toHaveTextContent(
+      "Want the deeper path: evidence, risks, or next actions?",
+    );
+    expect(turn).not.toHaveTextContent("Sources");
+    expect(turn).not.toHaveTextContent("high confidence");
+  });
+
   it("keeps auto-scroll inside the thread pane when new turns arrive", async () => {
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
     const scrollIntoView = jest.fn();

@@ -92,6 +92,14 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\bnot loaded\b/gi, "not yet available")
     .replace(/\bintelligence-v2\b/gi, "Intelligence")
     .replace(/\bThe supporting evidence is that\s+/gi, "")
+    .replace(
+      /\bNext,\s*have\s+the\s+accountable\s+owner\s+review\s+the\s+listed\s+sources\s+and\s+decide\s+whether\s+this\s+belongs\s+in\s+Source,\s*Tower,\s*or\s+Moves\.?\s*/gi,
+      "",
+    )
+    .replace(
+      /\b(?:Next move:\s*)?(?:have\s+the\s+accountable\s+owner\s+)?(?:review|decide)\s+(?:the\s+listed\s+sources\s+and\s+)?whether\s+this\s+belongs\s+in\s+Source,\s*Tower,\s*or\s+Moves\.?\s*/gi,
+      "",
+    )
     .replace(/\bThat means\s+The\b/g, "That means the")
     .replace(/\bThat means\s+/gi, "")
     .replace(/\bS\.\s*$/gm, "")

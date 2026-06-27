@@ -46,7 +46,9 @@ describe("shapeSharedAdvisorResponse", () => {
     });
 
     expect(result.text.length).toBeLessThanOrEqual(800);
-    expect(result.text).toMatch(/\bNext:/);
+    expect(result.text).toContain(
+      "Want the deeper path: evidence, risks, or next actions?",
+    );
     expect(result.issues).toEqual([]);
   });
 
@@ -72,6 +74,78 @@ describe("shapeSharedAdvisorResponse", () => {
     expect(result.text).toContain("SAP: $8.2M");
     expect(result.text).toMatch(/\bNext:/);
     expect(result.text).not.toMatch(/\bask aVa\b/i);
+    expect(result.issues).toEqual([]);
+  });
+
+  it("compacts markdown tables in plain advisory answers", () => {
+    const result = shapeSharedAdvisorResponse({
+      text: [
+        "Nothing in the portfolio is clean enough for unconstrained scale right now — but the initiatives split clearly into three postures based on the loaded evidence.",
+        "| Initiative | Committed Budget | Promised Benefit | Stage | Owner | Scale / Hold / Gate | Blocking Dependency |",
+        "|---|---|---|---|---|---|---|",
+        "| Kyriba global cash and payments rollout | $42M | $86M | Build | Treasurer | Gate before scale — critical risk | Bank connectivity uncertified; payment format defects; SOX signer evidence incomplete |",
+        "| Treasury bank connectivity control evidence | $12M | $28M | Mobilize | Treasurer | Must close first — this is the unlock | ISO20022/BAI2 mapping signoff outstanding |",
+        "| Automated close and finance reporting business layer | $18M | $46M | Build | Controller | Hold — depends on certified GL/metric ownership | Source citations, metric ownership, SAP/BlackLine/Hyperion reconciliation not complete |",
+        "Want the deeper path: evidence, risks, or next actions?",
+      ].join("\n"),
+      targetChars: 720,
+      hardMaxChars: 900,
+      maxParagraphs: 4,
+      requireNextStep: true,
+    });
+
+    expect(result.text).toContain("Nothing in the portfolio");
+    expect(result.text).toContain("Kyriba global cash and payments rollout: $42M");
+    expect(result.text).toContain(
+      "Want the deeper path: evidence, risks, or next actions?",
+    );
+    expect(result.text).not.toContain("| Initiative |");
+    expect(result.text).not.toContain("|---|");
+    expect(result.text).not.toContain("- Want the deeper path");
+    expect(result.issues).toEqual([]);
+  });
+
+  it("removes internal product-routing next steps from executive answers", () => {
+    const result = shapeSharedAdvisorResponse({
+      text: [
+        "The Kyriba rollout is the right direction, but it cannot scale freely yet.",
+        "Bank connectivity and signer evidence have to close first.",
+        "Next, have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves.",
+        "Want the deeper path: evidence, risks, or next actions?",
+      ].join("\n\n"),
+      targetChars: 720,
+      hardMaxChars: 900,
+      maxParagraphs: 4,
+      requireNextStep: true,
+    });
+
+    expect(result.text).toContain("Kyriba rollout");
+    expect(result.text).toContain(
+      "Want the deeper path: evidence, risks, or next actions?",
+    );
+    expect(result.text).not.toMatch(/\bSource,\s+Tower,\s+or\s+Moves\b/i);
+    expect(result.text).not.toMatch(/\breview the listed sources\b/i);
+    expect(result.issues).toEqual([]);
+  });
+
+  it("removes inline internal product-routing next steps", () => {
+    const result = shapeSharedAdvisorResponse({
+      text: [
+        "The lowest raw-price vendor wins the invoice, not the outcome.",
+        "Reason 2: Control gaps become your audit risk. Next, have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves. Want the deeper path: evidence, risks, or next actions?",
+      ].join("\n\n"),
+      targetChars: 720,
+      hardMaxChars: 900,
+      maxParagraphs: 4,
+      requireNextStep: true,
+    });
+
+    expect(result.text).toContain("lowest raw-price vendor");
+    expect(result.text).toContain(
+      "Want the deeper path: evidence, risks, or next actions?",
+    );
+    expect(result.text).not.toMatch(/\bSource,\s+Tower,\s+or\s+Moves\b/i);
+    expect(result.text).not.toMatch(/\breview the listed sources\b/i);
     expect(result.issues).toEqual([]);
   });
 

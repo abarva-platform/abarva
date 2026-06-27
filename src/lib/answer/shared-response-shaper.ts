@@ -93,7 +93,7 @@ function stripDanglingTrimTail(text: string): string {
 }
 
 function hasNextStep(text: string): boolean {
-  return /\b(next|ask|inspect|open|review|validate|challenge|compare|decide|pause|fund|shape|assign)\b/i.test(
+  return /\b(next|ask|want|choose|inspect|open|review|validate|challenge|compare|decide|pause|fund|shape|assign)\b/i.test(
     text,
   );
 }
@@ -122,6 +122,15 @@ function tableToCompactLines(text: string): string[] {
   return bodyRows.map((cells) => `- ${cells.slice(0, 3).join(" — ")}`);
 }
 
+function hasMarkdownTable(text: string): boolean {
+  const lines = text.split("\n").map((line) => line.trim());
+  return lines.some((line, index) => {
+    if (!/^\|.+\|$/.test(line)) return false;
+    const next = lines[index + 1] ?? "";
+    return /^\|(?:\s*:?-{3,}:?\s*\|)+\s*$/.test(next);
+  });
+}
+
 function removeMarkdownTables(text: string): string {
   return text
     .split("\n")
@@ -133,7 +142,7 @@ function cleanLeadLine(text: string): string {
   return text
     .replace(/\n+/g, " ")
     .replace(
-      /^(?:My read|Read|Answer|Evidence|Implication|Why|What I would do next)\s*:\s*/i,
+      /^(?:My read|Read|Answer|Evidence|Implication|Why|What I would do next|The honest answer is|The honest answer|The honest read is)\s*:?\s*/i,
       "",
     )
     .replace(/^[-·]\s*/, "")
@@ -222,6 +231,14 @@ function normalizeAssemblyArtifacts(text: string): string {
       .replace(/\bNext\s*:\s*Next(?: move)?\s*:/gi, "Next:")
       .replace(/\bNext\s*:\s*-\s*Next\s*:/gi, "Next:")
       .replace(/\bBreakdown\s*:\s*;\s*/gi, "Breakdown: ")
+      .replace(
+        /\bNext,\s+have\s+the\s+accountable\s+owner\s+review\s+the\s+listed\s+sources\s+and\s+decide\s+whether\s+this\s+belongs\s+in\s+Source,\s+Tower,\s+or\s+Moves\.?/gi,
+        "",
+      )
+      .replace(
+        /\b(?:decide|review)\s+whether\s+this\s+belongs\s+in\s+Source,\s+Tower,\s+or\s+Moves\.?/gi,
+        "",
+      )
       .replace(/\s*;\s*[-–—]\s*/g, "; ")
       .replace(/\s+[-–—]\s+Breakdown\s*:\s*[-–—]?\s*/gi, "\nBreakdown: ")
       .replace(
@@ -245,6 +262,27 @@ function isUsefulSupport(sentence: string): boolean {
   );
 }
 
+function isChoiceNextStep(sentence: string): boolean {
+  return /\b(?:want|choose|which)\b[\s\S]{0,90}\b(?:evidence|risks?|next actions?|actions?)\b/i.test(
+    sentence,
+  );
+}
+
+function choiceNextStep(sentences: string[], fallback: string): string {
+  const choice =
+    sentences.find((sentence) => isChoiceNextStep(sentence)) ??
+    sentences.find((sentence) =>
+      /\bevidence\s*,\s*risks?\s*,\s*or\s*next actions?\b/i.test(sentence),
+    );
+  if (choice) {
+    const cleaned = trimWords(cleanLeadLine(choice), 22).replace(/\.$/, "?");
+    return /\?$/.test(cleaned) ? cleaned : `${cleaned}?`;
+  }
+  return `Want the deeper path: ${fallback
+    .replace(/\.$/, "")
+    .replace(/^(?:choose|pick)\s+/i, "")}?`;
+}
+
 function compactForChat(
   text: string,
   targetChars: number,
@@ -253,6 +291,7 @@ function compactForChat(
 ): string {
   const normalized = normalizeWhitespace(text);
   if (
+    !hasMarkdownTable(normalized) &&
     normalized.length <= targetChars &&
     paragraphSplit(normalized).length <= maxParagraphs
   ) {
@@ -292,12 +331,15 @@ function compactForChat(
     .filter((sentence) => cleanLeadLine(sentence) !== lead)
     .filter(isUsefulSupport)
     .filter((sentence) => !isBulletLine(sentence))
+    .filter((sentence) => !isChoiceNextStep(sentence))
     .slice(0, tableLines.length > 0 || bulletSummary ? 1 : 3)
     .map((sentence) => `- ${trimWords(cleanLeadLine(sentence), 24)}`);
   const next =
+    choiceNextStep(sentences, nextStepFallback) ??
     sentences.find((sentence) =>
       /^\s*(?:next|what i would do next)\b/i.test(sentence),
-    ) ?? nextStepFallback;
+    ) ??
+    `Next: ${nextStepFallback}`;
   const lines = [
     lead,
     tableLines.length > 0
@@ -307,7 +349,7 @@ function compactForChat(
           .join("; ")
       : bulletSummary,
     ...support,
-    `Next: ${trimWords(next.replace(/^[-·]?\s*Next:\s*/i, ""), 22)}`,
+    trimWords(next.replace(/^[-·]?\s*Next:\s*/i, "Next: "), 22),
   ].filter(Boolean);
   let compact = normalizeWhitespace(
     normalizeAssemblyArtifacts(lines.slice(0, maxParagraphs).join("\n")),
