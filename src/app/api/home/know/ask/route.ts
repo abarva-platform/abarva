@@ -8,6 +8,7 @@ import type {
   HomeKnowAskRequest,
   HomeKnowResponse,
 } from "@/lib/home/know/home-know-contract";
+import { assertVisibleAnswerContract } from "@/lib/agent/visible-answer-contract";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
 export const runtime = "nodejs";
@@ -86,6 +87,20 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  const visibleContract = assertVisibleAnswerContract(response.prose);
+  if (!visibleContract.passed) {
+    return NextResponse.json(
+      {
+        error: "visible_answer_contract_failed",
+        detail:
+          "aVa blocked this answer before display because it exposed non-user-facing answer language.",
+        version: visibleContract.version,
+        violations: visibleContract.violations,
+      },
+      { status: 422 },
+    );
+  }
+
   return NextResponse.json(
     includeTrace
       ? {
@@ -98,8 +113,7 @@ export async function POST(req: NextRequest) {
               null,
             claudeRaw:
               response.safety.composerTrace?.anthropicTrace?.claudeRaw ?? null,
-            model:
-              response.safety.composerTrace?.anthropicTrace?.model ?? null,
+            model: response.safety.composerTrace?.anthropicTrace?.model ?? null,
             params:
               response.safety.composerTrace?.anthropicTrace?.params ?? null,
           },
