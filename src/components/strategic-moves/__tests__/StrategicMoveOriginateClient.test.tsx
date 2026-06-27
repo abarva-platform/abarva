@@ -111,7 +111,7 @@ describe("StrategicMoveOriginateClient", () => {
     const avaWordmark = screen.getByTestId("ava-ask-wordmark");
     expect(avaWordmark).toHaveAttribute(
       "src",
-      "/brand/ava/ava-wordmark-2tone-dark.svg",
+      "/brand/ava/ava-wordmark-2tone-light.svg",
     );
 
     const promoteButton = screen.getByRole("button", {
