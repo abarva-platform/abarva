@@ -204,7 +204,7 @@ export function AvaComposer({
         onSubmit();
       }}
     >
-      <AvaAskMark style={{ minWidth: 46, fontSize: 24 }} />
+      <AvaAskMark style={{ minWidth: 41, fontSize: 22 }} />
       <textarea
         ref={textareaRef}
         value={value}

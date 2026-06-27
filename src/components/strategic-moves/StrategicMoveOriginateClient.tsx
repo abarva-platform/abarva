@@ -538,11 +538,10 @@ export function StrategicMoveOriginateClient({
           <div className={styles.chatHead}>
             <div className={styles.agentRow}>
               <AvaAskMark
-                variant="wordmark-light"
-                style={{ width: 58, minWidth: 58 }}
+                variant="avatar-dark"
+                style={{ width: 52, minWidth: 52 }}
               />
               <div>
-                <div className={styles.agentName}>Ava</div>
                 <div className={styles.agentStatus}>
                   <span className={styles.agentStatusDot} aria-hidden />
                   NEW MOVE &middot; P0 ORIGINATE

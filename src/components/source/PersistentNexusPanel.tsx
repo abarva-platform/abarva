@@ -408,7 +408,7 @@ export function PersistentNexusPanel({
             alignItems: 'center',
           }}
         >
-          <AvaAskMark style={{ minWidth: 34, fontSize: 20 }} />
+          <AvaAskMark style={{ minWidth: 31, fontSize: 18 }} />
           <input
             type="text"
             placeholder={`Or ask ${agentName}…`}

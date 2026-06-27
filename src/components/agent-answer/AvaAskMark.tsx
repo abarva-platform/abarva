@@ -21,9 +21,9 @@ const MARK_STYLE: CSSProperties = {
   justifyContent: "center",
   flexShrink: 0,
   lineHeight: 1,
-  minWidth: 54,
-  width: "3.05em",
-  maxWidth: 90,
+  minWidth: 49,
+  width: "2.75em",
+  maxWidth: 81,
   textAlign: "center",
 };
 

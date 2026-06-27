@@ -108,11 +108,12 @@ describe("StrategicMoveOriginateClient", () => {
 
     render(<StrategicMoveOriginateClient tenantName="Apex Retail" />);
 
-    const avaWordmark = screen.getByTestId("ava-ask-wordmark");
-    expect(avaWordmark).toHaveAttribute(
+    const [headerMark] = screen.getAllByTestId("ava-ask-wordmark");
+    expect(headerMark).toHaveAttribute(
       "src",
-      "/brand/ava/ava-wordmark-2tone-light.svg",
+      "/brand/ava/ava-avatar-dark.svg",
     );
+    expect(screen.queryByText(/^Ava$/)).not.toBeInTheDocument();
 
     const promoteButton = screen.getByRole("button", {
       name: /promote to p1 charter/i,
