@@ -232,6 +232,25 @@ function mockClaudeText(text: string) {
   } as never);
 }
 
+function mockClaudeTexts(texts: string[]) {
+  const create = jest.fn();
+  for (const text of texts) {
+    create.mockResolvedValueOnce({
+      content: [{ type: "text", text }],
+    });
+  }
+  mockGetAuditedAnthropicClient.mockResolvedValue({
+    auditId: "audit-1",
+    dataClass: "confidential",
+    client: {
+      messages: {
+        create,
+      },
+    },
+  } as never);
+  return create;
+}
+
 describe("Intelligence consultant text synthesis", () => {
   const oldEnabled = process.env.INTELLIGENCE_CLAUDE_SYNTHESIS_ENABLED;
   const oldKey = process.env.ANTHROPIC_API_KEY;
@@ -304,6 +323,44 @@ describe("Intelligence consultant text synthesis", () => {
     expect(result && "text" in result ? result.text : "").toContain(
       "MRO predictive maintenance",
     );
+  });
+
+  it("repairs prose-only explicit visual answers with a grounded decision table", async () => {
+    const create = mockClaudeTexts([
+      [
+        "SkyHarbor should sequence the next AI tranche toward bounded operational loops first, with MRO predictive maintenance as the scale candidate and IROPS recovery held behind integration gates.",
+        "",
+        "The tenant evidence supports that split: MRO has a bounded loop, while IROPS depends on mainframe API exposure and customer identity readiness.",
+        "",
+        "The missing evidence is the realized-value baseline and readiness dates, so hold scale funding until those are confirmed.",
+      ].join("\n"),
+      [
+        "SkyHarbor should sequence the next AI tranche toward bounded operational loops first, with MRO predictive maintenance as the scale candidate and IROPS recovery held behind integration gates.",
+        "",
+        "The tenant evidence supports that split: MRO has a bounded loop, while IROPS depends on mainframe API exposure and customer identity readiness.",
+        "",
+        "The missing evidence is the realized-value baseline and readiness dates, so hold scale funding until those are confirmed.",
+      ].join("\n"),
+    ]);
+
+    const result = await synthesizeIntelligenceConsultantText({
+      dossier: {
+        ...dossier,
+        question:
+          "Compare the top finance and treasury AI initiatives in a table with value, readiness, risk, and next action.",
+      },
+      tenantId: "tenant-skyharbor",
+    });
+
+    expect(create).toHaveBeenCalledTimes(2);
+    const text = result && "text" in result ? result.text : "";
+    expect(text).toContain("| Initiative | Value | Readiness | Risk | Next action |");
+    expect(text).toContain("| Scale MRO predictive maintenance |");
+    expect(text).toContain("| Hold IROPS recovery orchestration |");
+    expect(text).not.toContain("Supporting Material");
+    expect(result).toMatchObject({
+      trace: { used: true, model: expect.any(String) },
+    });
   });
 
   it("rejects old transcript labels and raw ids", () => {
