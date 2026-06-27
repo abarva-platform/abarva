@@ -344,6 +344,8 @@
     "semantic2:l3-dossiers:build": "node scripts/semantic2/build-enriched-l3-dossiers.mjs",
     "semantic2:l3-dossiers:eligibility": "npx tsx scripts/semantic2-dossier-eligibility-report.ts",
     "semantic2:l3-dossiers:proof-job": "node scripts/semantic2/run-l3-dossier-surface-proof.mjs",
+    "context:v4:load": "npx tsx scripts/jobs/load-first-capital-v2.ts",
+    "context:v4:verify-live": "node scripts/context-packs/verify-v4-live-counts.cjs",
     "ops:aca-job": "node scripts/ops/submit-aca-operator-job.mjs",
     "ops:semantic2:l3-dossiers:proof": "node scripts/ops/submit-aca-operator-job.mjs --script semantic2:l3-dossiers:proof-job"
   },
