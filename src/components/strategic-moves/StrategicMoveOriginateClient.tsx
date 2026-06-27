@@ -537,7 +537,10 @@ export function StrategicMoveOriginateClient({
         <aside id="orig-chat" className={styles.chatPane}>
           <div className={styles.chatHead}>
             <div className={styles.agentRow}>
-              <AvaAskMark style={{ width: 58, minWidth: 58 }} />
+              <AvaAskMark
+                variant="wordmark-light"
+                style={{ width: 58, minWidth: 58 }}
+              />
               <div>
                 <div className={styles.agentName}>Ava</div>
                 <div className={styles.agentStatus}>
