@@ -43,6 +43,7 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - `src/components/agent/AgentDock.tsx`: keeps Intelligence chat turns prose-only even when the aVa dock is expanded; tables, charts, graphs, and other advanced visuals belong in the right-side Intelligence canvas.
 - `src/lib/intelligence/ask/response-policy.ts`: removes the remaining app-authored generic fallback closer that told users to route the answer to Source, Tower, or Moves.
 - `src/lib/intelligence/ask/synthesizer.ts`: changes explicit visual/table instructions so Claude emits compact Markdown rows that the runtime can lift into the right-side Intelligence canvas.
+- `src/lib/intelligence/ask/synthesizer.ts`: tightens the explicit visual contract so direct user requests for a table, chart, graph, visual, comparison grid, ranking, breakdown, or "show me" structure must produce one compact decision table unless the necessary values or rows are genuinely unavailable.
 - Follow-up regression coverage now uses the eight 50-question SkyHarbor crawl failures that exposed raw `Supporting Material` / `How it supports the answer` tables.
 - Focused regression tests updated to forbid the generic closer and assert context-specific alternatives.
 
@@ -69,6 +70,8 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - Partial signed-in Lakeshore proof on `madd51e40`: left aVa dock stayed prose-only, but an explicit table request did not render a right-canvas table and still surfaced the old generic Source/Tower/Moves closer. This triggered the visual-prompt and fallback-closer follow-up fix.
 - `npx eslint src/lib/intelligence/ask/response-policy.ts src/lib/intelligence/ask/synthesizer.ts src/lib/intelligence/ask/response-policy.test.ts src/lib/intelligence/answer/structured-exhibits.ts src/lib/intelligence/answer/__tests__/structured-exhibits.test.ts src/components/intelligence-v2/IntelligenceV2Surface.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/components/agent/AgentDock.tsx src/components/agent/__tests__/AgentDock.test.tsx src/components/agent-answer/AgentAnswerRenderer.tsx src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx` passed after the visual-prompt and fallback-closer follow-up fix.
 - `npx jest src/lib/intelligence/ask/response-policy.test.ts src/lib/intelligence/answer/__tests__/structured-exhibits.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx src/components/agent/__tests__/AgentDock.test.tsx --runInBand` passed, 90 tests. Jest still prints pre-existing duplicate manual-mock warnings.
+- Live post-`a05440f3` Lakeshore proof confirmed the label/evidence cleanup held (`aVa · intelligence`, `answered`, `high confidence`, `Tenant evidence`, `How IT Supports The Answer`, and the generic Source/Tower/Moves closer were absent), but the explicit table prompt still returned prose-only. This follow-up strengthens the visual emission contract before final deploy proof.
+- `npx eslint src/lib/intelligence/ask/synthesizer.ts` passed after the explicit visual contract tightening.
 - Final post-fix deployment and signed-in browser proof pending.
 
 ## Rollout Plan
