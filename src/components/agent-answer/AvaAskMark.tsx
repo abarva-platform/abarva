@@ -2,6 +2,19 @@
 
 import type { CSSProperties } from "react";
 
+export type AvaAskMarkVariant =
+  | "wordmark-dark"
+  | "wordmark-light"
+  | "avatar-dark"
+  | "avatar-light";
+
+const AVA_MARK_ASSETS: Record<AvaAskMarkVariant, string> = {
+  "wordmark-dark": "/brand/ava/ava-wordmark-2tone-dark.svg",
+  "wordmark-light": "/brand/ava/ava-wordmark-2tone-light.svg",
+  "avatar-dark": "/brand/ava/ava-avatar-dark.svg",
+  "avatar-light": "/brand/ava/ava-avatar-light.svg",
+};
+
 const MARK_STYLE: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -9,83 +22,45 @@ const MARK_STYLE: CSSProperties = {
   flexShrink: 0,
   lineHeight: 1,
   minWidth: 54,
+  width: "3.05em",
+  maxWidth: 90,
   textAlign: "center",
+};
+
+const IMAGE_STYLE: CSSProperties = {
+  display: "block",
+  width: "100%",
+  height: "auto",
+  objectFit: "contain",
 };
 
 export function AvaAskMark({
   className = "",
   style,
+  variant = "wordmark-dark",
 }: {
   className?: string;
   style?: CSSProperties;
+  variant?: AvaAskMarkVariant;
 }) {
   return (
     <span
       aria-hidden="true"
       className={`avaAskMark ${className}`.trim()}
+      data-ava-mark-variant={variant}
       data-testid="ava-ask-mark"
       style={{ ...MARK_STYLE, ...style }}
     >
-      <svg
+      {/* Keep the aVa wordmark as a repo-stored asset so every surface shares one mark. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        alt=""
         aria-hidden="true"
-        className="avaAskMark-svg"
         data-testid="ava-ask-wordmark"
-        focusable="false"
-        viewBox="0 0 180 72"
-        style={{
-          display: "block",
-          width: "100%",
-          maxWidth: "3.2em",
-          height: "auto",
-          overflow: "visible",
-        }}
-      >
-        <text
-          data-testid="ava-ask-leading-a"
-          x="2"
-          y="53"
-          fill="#111827"
-          fontFamily="var(--font-geist-sans), Inter, Arial Black, Arial, sans-serif"
-          fontSize="58"
-          fontWeight="900"
-          letterSpacing="-5"
-        >
-          a
-        </text>
-        <g
-          data-testid="ava-ask-v-mark"
-          transform="translate(53 5) scale(0.62)"
-          fill="none"
-          strokeLinecap="butt"
-          strokeLinejoin="miter"
-        >
-          <path d="M18 80 L50 20 L82 80" stroke="#111827" strokeWidth="14" />
-          <path d="M62 55 L82 80 L110 20" stroke="#22AEEA" strokeWidth="14" />
-          <path
-            d="M48 52 L74 52 L83 61 L57 61 Z"
-            fill="#22AEEA"
-            opacity="0.58"
-            stroke="none"
-          />
-          <path
-            d="M62 55 L74 52 L83 61 L70 65 Z"
-            fill="#0A76D8"
-            opacity="0.38"
-            stroke="none"
-          />
-        </g>
-        <text
-          x="128"
-          y="53"
-          fill="#111827"
-          fontFamily="var(--font-geist-sans), Inter, Arial Black, Arial, sans-serif"
-          fontSize="58"
-          fontWeight="900"
-          letterSpacing="-5"
-        >
-          a
-        </text>
-      </svg>
+        draggable={false}
+        src={AVA_MARK_ASSETS[variant]}
+        style={IMAGE_STYLE}
+      />
     </span>
   );
 }
