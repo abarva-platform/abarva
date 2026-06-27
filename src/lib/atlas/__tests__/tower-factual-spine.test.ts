@@ -361,4 +361,40 @@ describe("buildTowerFactualSpineAnswer", () => {
     expect(adoption?.response).toContain("low-confidence proxy");
     expect(adoption?.response).toContain("active-user adoption");
   });
+
+  it("does not promote complete measured-value rows into board-grade portfolio ROI", () => {
+    const completeMeasuredValueState = {
+      ...towerState,
+      initiatives: towerState.initiatives.map((initiative, index) => ({
+        ...initiative,
+        measuredValueUsd:
+          initiative.measuredValueUsd ??
+          Math.max(100_000, (index + 1) * 250_000),
+      })),
+      bandMetrics: {
+        ...towerState.bandMetrics,
+        metrics: towerState.bandMetrics.metrics.map((metric) =>
+          metric.key === "portfolio_roi"
+            ? {
+                ...metric,
+                value: "0.6x",
+                subtext: "target 3.5x · 2.9x under",
+                confidence: "low",
+                tooltip:
+                  "Sum of measured value ($7.5M) divided by sum of committed annual ($11.9M) across 8 initiatives. 8 of 8 have measured values loaded.",
+              }
+            : metric,
+        ),
+      },
+    } satisfies AtlasTowerCurrentState;
+
+    const roi = buildTowerFactualSpineAnswer(
+      "What is the portfolio ROI?",
+      completeMeasuredValueState,
+    );
+
+    expect(roi?.response).toContain("cannot state a board-grade portfolio ROI");
+    expect(roi?.response).toContain("directional initiative-value proxy");
+    expect(roi?.response).toContain("not a true portfolio ROI");
+  });
 });

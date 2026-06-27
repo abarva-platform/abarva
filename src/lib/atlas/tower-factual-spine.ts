@@ -325,9 +325,9 @@ function buildRoiAnswer(
     response: [
       metric.value === "gap" || metric.confidence === "none"
         ? "Tower cannot state a board-grade portfolio ROI from the loaded data."
-        : `Tower's loaded portfolio ROI signal is ${metric.value}.`,
+        : `Tower cannot state a board-grade portfolio ROI from the loaded data. The current ${metric.value} is a directional initiative-value proxy, not a true portfolio ROI.`,
       `${metric.subtext}. ${metric.tooltip}`,
-      "Next: ask aVa to inspect which initiatives have measured value rows before using ROI in a board readout.",
+      "Next: ask aVa to inspect the measured-value rows, actual spend basis, and benefit period before using ROI in a board readout.",
     ].join("\n"),
     suggestions: suggestions(),
   };
