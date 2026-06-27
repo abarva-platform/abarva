@@ -21,6 +21,7 @@ import {
   shapeAgentResponseForSurface,
   shapeStreamingAgentTextForSurface,
 } from "@/lib/agent/response-shape";
+import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import styles from "./StrategicMoves.module.css";
 import { PhaseRail } from "./PhaseRail";
 import { DiscoveryCapturePanel } from "../programs/discovery/DiscoveryCapturePanel";
@@ -536,9 +537,7 @@ export function StrategicMoveOriginateClient({
         <aside id="orig-chat" className={styles.chatPane}>
           <div className={styles.chatHead}>
             <div className={styles.agentRow}>
-              <div className={styles.agentAvatar} aria-hidden>
-                &#10022;
-              </div>
+              <AvaAskMark style={{ width: 58, minWidth: 58 }} />
               <div>
                 <div className={styles.agentName}>Ava</div>
                 <div className={styles.agentStatus}>
