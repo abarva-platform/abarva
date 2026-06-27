@@ -23,6 +23,7 @@ import {
   MOVES_AI_DRAFT_LABEL,
   MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT,
 } from "@/lib/programs/deliverable-canvas-polish-view";
+import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 
 const NAVY = "#1B2B5C";
 const INK = "#1A1A18";
@@ -80,6 +81,8 @@ interface Props {
   clientDisplayName: string;
   /** Optional readiness signal — number of Move-specific inputs uploaded for the phase. */
   inputCount?: number;
+  /** Evidence gaps that determine whether this is final-ready or preliminary only. */
+  evidenceNeedPackets?: MoveEvidenceNeedPacket[];
 }
 
 const POLL_MS = 4000;
@@ -113,6 +116,7 @@ export function PhaseApproveAndBuild({
   moveName,
   clientDisplayName,
   inputCount,
+  evidenceNeedPackets = [],
 }: Props) {
   const specs = (PHASE_CANONICAL_KEYS[phaseNum] ?? [])
     .map((key) => DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key))
@@ -246,6 +250,15 @@ export function PhaseApproveAndBuild({
   const anyRunning = rows.some((r) => r.status === "queued" || r.status === "running");
   const builtCount = rows.filter((r) => r.status === "succeeded").length;
   const gateCount = specs.filter((s) => s.gateArtifact).length;
+  const requiredGaps = evidenceNeedPackets.filter(
+    (packet) => packet.priority === "required" && packet.status !== "covered",
+  );
+  const hasRequiredGaps = requiredGaps.length > 0;
+  const buildLabel = hasRequiredGaps
+    ? "Generate preliminary draft with caveats"
+    : builtCount > 0
+      ? `Re-run & Build ${phaseLabel} →`
+      : `Approve & Build ${phaseLabel} →`;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -274,7 +287,20 @@ export function PhaseApproveAndBuild({
           <span>{specs.length} deliverables ({gateCount} gate)</span>
           {typeof inputCount === "number" && <span>{inputCount} input{inputCount === 1 ? "" : "s"} uploaded</span>}
           <span>{builtCount}/{specs.length} built</span>
+          {hasRequiredGaps && (
+            <span style={{ color: ATTENTION }}>
+              {requiredGaps.length} required evidence gap
+              {requiredGaps.length === 1 ? "" : "s"} before final
+            </span>
+          )}
         </div>
+        {hasRequiredGaps && (
+          <div style={{ marginTop: 6, color: ATTENTION }}>
+            This action creates a preliminary draft only. Final or board-ready
+            output remains blocked until the missing evidence is uploaded or
+            explicitly waived.
+          </div>
+        )}
       </div>
 
       {/* The single phase action */}
@@ -295,11 +321,7 @@ export function PhaseApproveAndBuild({
           fontFamily: "Fraunces, Georgia, serif",
         }}
       >
-        {anyRunning
-          ? `Building ${phaseLabel}…`
-          : builtCount > 0
-            ? `Re-run & Build ${phaseLabel} →`
-            : `Approve & Build ${phaseLabel} →`}
+        {anyRunning ? `Building ${phaseLabel}…` : buildLabel}
       </button>
 
       {error && (

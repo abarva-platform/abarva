@@ -14,6 +14,11 @@ import {
   resolveCurrentStateReadiness,
   type ReadinessReport,
 } from "@/lib/programs/current-state-readiness";
+import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
+import {
+  buildMoveEvidenceNeedPackets,
+  type MoveEvidenceNeedPacket,
+} from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import {
   buildCurrentStateRecommendation,
   type CurrentStateRecommendation,
@@ -67,6 +72,7 @@ export default async function StrategicMovePhaseWorkspacePage({
   let readiness: ReadinessReport | null = null;
   let recommendation: CurrentStateRecommendation | null = null;
   let plan: CurrentStatePlan | null = null;
+  let evidenceNeedPackets: MoveEvidenceNeedPacket[] = [];
   try {
     const tctx = await requireTenancy();
     // Archetype resolved from the Move's own row — never a hardcoded default.
@@ -86,10 +92,18 @@ export default async function StrategicMovePhaseWorkspacePage({
     );
     recommendation = await buildCurrentStateRecommendation(tctx, profile);
     plan = buildCurrentStatePlan(recommendation, { moveName: move.name });
+    const evidenceReadiness = await loadDiscoveryEvidenceReadiness(tctx, moveId);
+    evidenceNeedPackets = buildMoveEvidenceNeedPackets({
+      moveId,
+      moveName: move.name,
+      currentPhase: parsedPhase,
+      readiness: evidenceReadiness,
+    });
   } catch {
     readiness = null;
     recommendation = null;
     plan = null;
+    evidenceNeedPackets = [];
   }
 
   return (
@@ -100,6 +114,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         readiness={readiness}
         recommendation={recommendation}
         plan={plan}
+        evidenceNeedPackets={evidenceNeedPackets}
       />
     </AppShell>
   );

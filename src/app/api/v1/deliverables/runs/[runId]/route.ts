@@ -29,6 +29,26 @@ export async function GET(_req: NextRequest, ctxParam: { params: Promise<{ runId
       status: run.status, // 'queued' | 'running' | 'succeeded' | 'blocked' | 'failed'
       artifactId: run.artifactId,
       blobUrl: run.artifactId ? `/api/v1/artifacts/${run.artifactId}` : null,
+      quality: {
+        contextReadiness: run.status === 'queued' || run.status === 'running' ? 'checking' : 'checked',
+        gateReadiness: run.status === 'blocked' ? 'blocked' : run.status === 'failed' ? 'not_available' : 'ready',
+        goldenBarStatus:
+          run.status === 'succeeded'
+            ? 'Passed quality check'
+            : run.status === 'blocked'
+              ? 'Failed quality check'
+              : run.status === 'failed'
+                ? 'Blocked before quality check'
+                : 'Not run',
+        artifactStatus:
+          run.status === 'succeeded'
+            ? 'generated'
+            : run.status === 'blocked'
+              ? 'blocked'
+              : run.status,
+        evidenceCaveats: run.warnings,
+        blockers: run.blockers,
+      },
       sectionCount: run.sectionCount,
       retrievedEvidence: run.retrievedEvidence,
       blockers: run.blockers,

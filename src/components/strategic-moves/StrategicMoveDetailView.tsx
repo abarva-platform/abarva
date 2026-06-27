@@ -10,6 +10,7 @@ import { PhaseDocumentsPanel } from "./PhaseDocumentsPanel";
 import { FileCabinetPanel } from "./FileCabinetPanel";
 import { SessionPlaybookPanel } from "./SessionPlaybookPanel";
 import { BoardArtifactsPanel } from "./BoardArtifactsPanel";
+import { boardArtifactsForMove } from "@/lib/programs/board-artifacts/board-artifacts-registry";
 import { MovesExplorer, type ExplorerModel } from "./MovesExplorer";
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { getActiveClientRow } from "@/lib/active-client";
@@ -414,6 +415,7 @@ function ActivityContent({
 // ── Documents tab content ─────────────────────────────────────────────────────
 
 function DocumentsContent({ move }: { move: StrategicMove }) {
+  const boardArtifactCount = boardArtifactsForMove(move).length;
   return (
     <div style={{ padding: "0 4px" }}>
       {/* Board-grade artifact decks anchored to this Move, when any exist.
@@ -440,6 +442,7 @@ function DocumentsContent({ move }: { move: StrategicMove }) {
           archetype={move.archetype}
           moveName={move.name}
           clientDisplayName={move.tenant.name}
+          boardArtifactCount={boardArtifactCount}
         />
       </Suspense>
     </div>

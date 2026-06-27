@@ -7,9 +7,8 @@
 // Covers:
 //   - Renders the "Board artifacts" panel listing each deck when the Move has
 //     anchored board-grade artifacts (the Apex reference Move → 8 decks).
-//   - A real, non-reference Move with a resolvable Function-Pack identity
-//     surfaces the generic, kernel-derived Costed Business-Case deck with a
-//     `?moveId=` link.
+//   - A real, non-reference Move with a resolvable function identity surfaces
+//     the generated board-grade deck set with `?moveId=` links.
 //   - Renders nothing for a Move with no resolvable function (honest gap).
 
 import '@testing-library/jest-dom';
@@ -70,7 +69,7 @@ describe('BoardArtifactsPanel — Apex reference Move', () => {
 });
 
 describe('BoardArtifactsPanel — real Move via the key-driven path', () => {
-  it('surfaces the generic Costed Business-Case deck with a ?moveId= link', () => {
+  it('surfaces the generated board-grade deck set with move-scoped links and client-safe wording', () => {
     const move = makeMove({
       id: 'real-move-42',
       name: 'Reduce contact-centre handle time',
@@ -81,14 +80,18 @@ describe('BoardArtifactsPanel — real Move via the key-driven path', () => {
 
     expect(screen.getByTestId('board-artifacts-panel')).toBeInTheDocument();
     const rows = screen.getAllByTestId('board-artifact-row');
-    expect(rows).toHaveLength(1);
+    expect(rows).toHaveLength(8);
     expect(screen.getByText('Costed Business-Case Pack')).toBeInTheDocument();
 
-    const view = screen.getByRole('link', { name: /View/ });
-    expect(view).toHaveAttribute(
-      'href',
-      '/api/v1/moves/board-grade-business-case?moveId=real-move-42',
-    );
+    expect(
+      screen
+        .getAllByRole('link', { name: /View/ })
+        .some((link) =>
+          link.getAttribute('href') ===
+          '/api/v1/moves/board-grade-business-case?moveId=real-move-42',
+        ),
+    ).toBe(true);
+    expect(screen.queryByText(/kernel|Function-Pack|seed gaps/i)).not.toBeInTheDocument();
   });
 });
 

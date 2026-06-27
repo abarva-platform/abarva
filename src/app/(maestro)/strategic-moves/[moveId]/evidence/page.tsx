@@ -13,7 +13,9 @@ import { getStrategicMoveById } from "@/lib/programs/queries";
 import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
 import { AppShell } from "@/components/shell/AppShell";
 import { PhaseDocumentsPanel } from "@/components/strategic-moves/PhaseDocumentsPanel";
+import { BoardArtifactsPanel } from "@/components/strategic-moves/BoardArtifactsPanel";
 import { isStrategicMoveRouteId } from "@/lib/programs/strategic-move-route-params";
+import { boardArtifactsForMove } from "@/lib/programs/board-artifacts/board-artifacts-registry";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +35,7 @@ export default async function PhaseEvidenceHubPage({ params }: Props) {
 
   const move = await getStrategicMoveById(ctx, moveId);
   if (!move) notFound();
+  const boardArtifactCount = boardArtifactsForMove(move).length;
 
   return (
     <AppShell surface="programs-detail">
@@ -133,6 +136,7 @@ export default async function PhaseEvidenceHubPage({ params }: Props) {
         </div>
 
         {/* Document panel */}
+        <BoardArtifactsPanel move={move} />
         <Suspense
           fallback={
             <div
@@ -154,6 +158,7 @@ export default async function PhaseEvidenceHubPage({ params }: Props) {
             archetype={move.archetype}
             moveName={move.name}
             clientDisplayName={move.tenant.name}
+            boardArtifactCount={boardArtifactCount}
           />
         </Suspense>
       </div>
