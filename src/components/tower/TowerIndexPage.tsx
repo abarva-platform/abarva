@@ -1545,7 +1545,7 @@ function CioDashboardViewLead({
     risks: {
       eyebrow: "Tower · risks view",
       title: "Find the pressure spend before more work is funded.",
-      body: "This view isolates value lag, adoption gaps, renewal risk, cost pressure, and unhealthy delivery flags from the Tower read model.",
+      body: "This view isolates value lag, adoption gaps, renewal risk, cost pressure, and unhealthy delivery flags from the Tower portfolio data.",
       stats: [
         `${model.pressureCount} pressure programs`,
         `${formatMoney(model.spendAtRisk)} pressure spend`,
@@ -1556,7 +1556,7 @@ function CioDashboardViewLead({
       eyebrow: "Tower · board view",
       title:
         "Create the executive readout without losing the evidence boundary.",
-      body: "This view turns the Tower read model into a board-ready narrative: what is known, what decision is next, and what evidence would strengthen the conclusion.",
+      body: "This view turns the Tower portfolio data into a board-ready narrative: what is known, what decision is next, and what would strengthen the conclusion.",
       stats: [
         `${model.decisionActions.length} decision asks`,
         `${model.scenarioQuestions.length} scenario prompts`,
@@ -2369,7 +2369,7 @@ function CioDashboardPanel({
                 <TowerEmptyState
                   eyebrow="No active pressure"
                   title="No non-healthy status flags are loaded."
-                  body="Tower will keep this empty until risk, value-lag, adoption, duplication, or cost flags arrive from the read model."
+                  body="Tower will keep this empty until risk, value-lag, adoption, duplication, or cost flags arrive in the portfolio data."
                 />
               ) : null}
             </div>
@@ -2439,9 +2439,7 @@ function CioDashboardPanel({
               >
                 {(model.gaps.length > 0
                   ? model.gaps
-                  : [
-                      "No critical loaded-data gaps are currently flagged by the Tower read model.",
-                    ]
+                  : ["No critical data gaps are currently flagged in Tower."]
                 ).map((gap) => (
                   <div key={gap}>• {gap}</div>
                 ))}
@@ -5233,7 +5231,7 @@ export function TowerIndexPage({
     role: "atlas",
     content:
       cioDashboardModel.initiativeCount > 0
-        ? `${cioDashboardModel.executiveNarrative}\n\nAsk me to inspect pressure spend, benchmark AI ROI, challenge vendor renewals, or shape this into a board readout.`
+        ? cioDashboardModel.executiveNarrative
         : (atlasObservationsView?.headline ??
           "aVa is waiting for tenant-bound Tower substrate before it can answer portfolio questions."),
   };

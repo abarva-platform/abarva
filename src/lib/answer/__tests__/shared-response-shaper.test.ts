@@ -24,7 +24,7 @@ describe("shapeSharedAdvisorResponse", () => {
     expect(result.issues).toEqual([]);
   });
 
-  it("compacts long evidence dumps while preserving a next step", () => {
+  it("compacts long evidence dumps without visible scaffolding or stock endings", () => {
     const longAnswer = [
       "Read: The budget pressure is concentrated in platform modernization, vendor renewals, and value proof.",
       "Evidence: The portfolio shows multiple programs with budget, renewal, owner, and status signals that need CIO attention.",
@@ -46,7 +46,10 @@ describe("shapeSharedAdvisorResponse", () => {
     });
 
     expect(result.text.length).toBeLessThanOrEqual(800);
-    expect(result.text).toMatch(/\bNext:/);
+    expect(result.text).not.toMatch(/\b(?:Read|Evidence|Implication|Next)\s*:/);
+    expect(result.text).not.toMatch(
+      /supporting evidence, compare options, or shape/i,
+    );
     expect(result.issues).toEqual([]);
   });
 
@@ -70,7 +73,10 @@ describe("shapeSharedAdvisorResponse", () => {
       result.text.split(/\n\s*\n|\n/).filter(Boolean).length,
     ).toBeLessThanOrEqual(5);
     expect(result.text).toContain("SAP: $8.2M");
-    expect(result.text).toMatch(/\bNext:/);
+    expect(result.text).not.toMatch(/\bNext\s*:/);
+    expect(result.text).not.toMatch(
+      /supporting evidence, compare options, or shape/i,
+    );
     expect(result.issues).toEqual([]);
   });
 

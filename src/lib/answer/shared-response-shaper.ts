@@ -4,11 +4,7 @@ export interface SharedResponseLabel {
 }
 
 export interface SharedResponseShapeIssue {
-  code:
-    | "raw_id_leak"
-    | "banned_brand_leak"
-    | "length_over_target"
-    | "missing_next_step";
+  code: "raw_id_leak" | "banned_brand_leak" | "length_over_target";
   detail: string;
 }
 
@@ -92,8 +88,8 @@ function stripDanglingTrimTail(text: string): string {
   return cleaned || original.replace(/[,:;.\s—-]+$/, "").trim();
 }
 
-function hasNextStep(text: string): boolean {
-  return /\b(next|ask|inspect|open|review|validate|challenge|compare|decide|pause|fund|shape|assign)\b/i.test(
+function isStockInstruction(text: string): boolean {
+  return /(?:ask (?:me|aVa) to inspect .*?(?:compare options|shape this|shape the next)|supporting (?:material|evidence),\s*compare options,\s*or shape|evidence,\s*risks?,\s*or\s*next actions?)/i.test(
     text,
   );
 }
@@ -136,6 +132,7 @@ function cleanLeadLine(text: string): string {
       /^(?:My read|Read|Answer|Evidence|Implication|Why|What I would do next)\s*:\s*/i,
       "",
     )
+    .replace(/^(?:Next|Next move)\s*:\s*/i, "")
     .replace(/^[-·]\s*/, "")
     .trim();
 }
@@ -248,7 +245,6 @@ function compactForChat(
   text: string,
   targetChars: number,
   maxParagraphs: number,
-  nextStepFallback: string,
 ): string {
   const normalized = normalizeWhitespace(text);
   if (
@@ -290,13 +286,16 @@ function compactForChat(
   const support = sentences
     .filter((sentence) => cleanLeadLine(sentence) !== lead)
     .filter(isUsefulSupport)
+    .filter((sentence) => !isStockInstruction(sentence))
     .filter((sentence) => !isBulletLine(sentence))
     .slice(0, tableLines.length > 0 || bulletSummary ? 1 : 3)
     .map((sentence) => `- ${trimWords(cleanLeadLine(sentence), 24)}`);
   const next =
-    sentences.find((sentence) =>
-      /^\s*(?:next|what i would do next)\b/i.test(sentence),
-    ) ?? nextStepFallback;
+    sentences.find(
+      (sentence) =>
+        /^\s*(?:next|what i would do next)\b/i.test(sentence) &&
+        !isStockInstruction(sentence),
+    ) ?? null;
   const lines = [
     lead,
     tableLines.length > 0
@@ -306,7 +305,7 @@ function compactForChat(
           .join("; ")
       : bulletSummary,
     ...support,
-    `Next: ${trimWords(next.replace(/^[-·]?\s*Next:\s*/i, ""), 22)}`,
+    next ? trimWords(cleanLeadLine(next), 22) : null,
   ].filter(Boolean);
   let compact = normalizeWhitespace(
     normalizeAssemblyArtifacts(lines.slice(0, maxParagraphs).join("\n")),
@@ -323,7 +322,7 @@ function compactForChat(
       [
         lead,
         bulletSummary ?? support[0],
-        `Next: ${trimWords(nextStepFallback, 18)}`,
+        next ? trimWords(cleanLeadLine(next), 18) : null,
       ]
         .filter(Boolean)
         .join("\n"),
@@ -333,9 +332,9 @@ function compactForChat(
 
   return normalizeWhitespace(
     normalizeAssemblyArtifacts(
-      [trimWords(lead, 26), `Next: ${trimWords(nextStepFallback, 18)}`].join(
-        "\n",
-      ),
+      [trimWords(lead, 26), next ? trimWords(cleanLeadLine(next), 18) : null]
+        .filter(Boolean)
+        .join("\n"),
     ),
   );
 }
@@ -414,12 +413,6 @@ export function findSharedResponseShapeIssues(
       detail: `${text.length} chars, ${paragraphSplit(text).length} paragraphs`,
     });
   }
-  if (args.requireNextStep && !hasNextStep(text)) {
-    issues.push({
-      code: "missing_next_step",
-      detail: "No next-step affordance found.",
-    });
-  }
   return issues;
 }
 
@@ -429,28 +422,16 @@ export function shapeSharedAdvisorResponse(
   const targetChars = input.targetChars ?? 900;
   const hardMaxChars = input.hardMaxChars ?? 1100;
   const maxParagraphs = input.maxParagraphs ?? 5;
-  const nextStepFallback =
-    input.nextStepFallback ??
-    "ask aVa to inspect the supporting evidence, compare options, or shape the next action.";
   const labeled = replaceLabels(
     normalizeWhitespace(normalizeAssemblyArtifacts(input.text)),
     input.labels ?? [],
   );
   const brandClean = labeled.text.replace(BANNED_BRAND_RE, "aVa");
   const idClean = stripUnmappedRawIds(brandClean);
-  const compacted = compactForChat(
-    idClean,
-    targetChars,
-    maxParagraphs,
-    nextStepFallback,
-  );
-  const withNext =
-    input.requireNextStep && !hasNextStep(compacted)
-      ? normalizeWhitespace(`${compacted}\n\nNext: ${nextStepFallback}`)
-      : compacted;
+  const compacted = compactForChat(idClean, targetChars, maxParagraphs);
   const finalText = normalizeWhitespace(
     normalizeAssemblyArtifacts(
-      stripUnmappedRawIds(withNext).replace(BANNED_BRAND_RE, "aVa"),
+      stripUnmappedRawIds(compacted).replace(BANNED_BRAND_RE, "aVa"),
     ),
   );
   return {

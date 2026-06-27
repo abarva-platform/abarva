@@ -623,9 +623,7 @@ export async function runAtlasTurnDetailed(input: {
       targetChars: 900,
       hardMaxChars: 1100,
       maxParagraphs: 5,
-      requireNextStep: true,
-      nextStepFallback:
-        "ask aVa to inspect the supporting evidence, compare options, or shape the next CIO action.",
+      requireNextStep: false,
       issues: shapeIssues,
       replacements,
     },
