@@ -334,7 +334,7 @@ describe("home consultant text synthesis", () => {
       throw new Error("expected synthesis");
     const selected = applyHomeConsultantTextSynthesis(response, result);
     expect(selected.prose).toContain("domain-led view");
-    expect(selected.prose).toContain("source support gives");
+    expect(selected.prose).toContain("supporting material");
     expect(selected.prose).not.toMatch(/\bevidence\b/i);
     expect(selected.prose).not.toMatch(/semantic|loaded context|source context|rows/i);
     expect(selected.safety.composerTrace?.composer).toBe(
@@ -364,7 +364,7 @@ describe("home consultant text synthesis", () => {
     );
 
     expect(text).toBe(
-      "The loaded source support gives a strong current picture across 42 records, but needed source support is missing for one leader.",
+      "The loaded supporting material shows a strong current picture across 42 records, but needed material is missing for one leader.",
     );
     expect(text).not.toMatch(/\bread\b|\bevidence\b|\brows\b|source context|current-state context/i);
   });
@@ -399,7 +399,7 @@ describe("home consultant text synthesis", () => {
       },
     );
 
-    expect(selected.prose).toContain("loaded source support gives");
+    expect(selected.prose).toContain("loaded supporting material shows");
     expect(selected.prose).toContain("42 records");
     expect(selected.prose).not.toMatch(/\bevidence\b|\brows\b|source context/i);
     expect(selected.safety.composerTrace?.fallbackUsed).toBe(true);
@@ -508,7 +508,7 @@ describe("home consultant text synthesis", () => {
       "For SkyHarbor Air, the loaded context is backed by a curated semantic evidence source with typed facts and resolved relationship paths.";
 
     expect(normalizeHomeConsultantUserFacingText(raw)).toBe(
-      "For SkyHarbor Air, the available business material is backed by an available business material with source support and resolved source-supported connections.",
+      "For SkyHarbor Air, the available business material is backed by an available business material with available details and resolved source-supported connections.",
     );
 
     expect(

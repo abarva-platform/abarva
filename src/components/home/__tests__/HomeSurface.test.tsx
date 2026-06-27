@@ -85,11 +85,11 @@ describe("HomeSurface — real React Context Explorer", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/33 source points · 2 sources/),
+      screen.getByText(/33 supporting signals · 2 sources/),
     ).toBeInTheDocument();
     // rail lists the loaded context dimension; detail not shown yet
-    expect(screen.getByText("1 context dimensions loaded")).toBeInTheDocument();
-    expect(screen.queryByText("Loaded context · 8")).not.toBeInTheDocument();
+    expect(screen.getByText("1 business areas loaded")).toBeInTheDocument();
+    expect(screen.queryByText("Business areas · 8")).not.toBeInTheDocument();
     expect(screen.getByRole("option", { name: /IT systems landscape/ })).toBeInTheDocument();
     expect(
       screen.queryByText("Applications, integrations, systems of record"),

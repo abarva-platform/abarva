@@ -11,6 +11,11 @@ import type {
   HomeKnowTableColumn,
 } from "@/lib/home/know/home-know-contract";
 import { scrubHomePublicAnswerText } from "@/lib/home/know/home-public-answer-scrub";
+import {
+  shapePublicText,
+  sourceClassDisplayLabel,
+} from "@/lib/ava-answer/render-layer-shaper";
+import { shapeHomeKnowResponseForRender } from "@/lib/home/know/home-render-layer-shaper";
 
 const CSS = `
 .homeKnowAnswer{--hk-ink:#171713;--hk-muted:#67675f;--hk-faint:#8f8d84;--hk-line:#E4DFD5;--hk-paper:#fff;--hk-soft:#F8F6F1;--hk-green:#17683B;--hk-blue:#0B5CAD;--hk-amber:#9A641D;--hk-amber-bg:#FFF7E6;display:grid;gap:12px;color:var(--hk-ink);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;width:min(860px,94%)}
@@ -82,7 +87,7 @@ const INTERNAL_CODE_REPLACE =
 function sanitizeHomeText(value: unknown): string {
   if (value === null || value === undefined) return "—";
   const text = String(value);
-  const cleaned = scrubHomePublicAnswerText(text
+  const cleaned = shapePublicText(scrubHomePublicAnswerText(text
     .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move):\s*/gi, "$1")
     .replace(/\bmissing evidence path\b/gi, "missing source path")
     .replace(/\bevidence path\b/gi, "source path")
@@ -94,10 +99,9 @@ function sanitizeHomeText(value: unknown): string {
     .replace(/\bfragment lookup\b/gi, "narrow lookup")
     .replace(/\bno blocking gap\b/gi, "no specific source gap")
     .replace(/\bread-model\b/gi, "context model")
-    .replace(/\bevidence\b/gi, "source support")
     .replace(BLOCKED_HOME_TEXT_REPLACE, "available business material")
     .replace(INTERNAL_CODE_REPLACE, "source reference")
-    .trim());
+    .trim()));
   return cleaned || "—";
 }
 
@@ -110,14 +114,14 @@ function displayIdentifier(value: unknown): string {
 
 function sourceClassLabel(value: unknown): string {
   const raw = String(value ?? "").toLowerCase();
-  if (raw.includes("relationship")) return "relationship";
-  if (raw.includes("chunk")) return "source excerpt";
-  if (raw.includes("file")) return "source file";
-  if (raw.includes("record")) return "source record";
-  if (raw.includes("fact")) return "source support";
+  if (raw.includes("relationship")) return "Operating connection";
+  if (raw.includes("chunk")) return "";
+  if (raw.includes("file")) return "Tenant evidence";
+  if (raw.includes("record")) return "Tenant evidence";
+  if (raw.includes("fact")) return "Tenant evidence";
   if (raw.includes("gap")) return "gap note";
   if (raw.includes("conflict")) return "conflict note";
-  return displayIdentifier(value) || "source";
+  return sourceClassDisplayLabel(String(value)) || displayIdentifier(value) || "Source";
 }
 
 function formatValue(
@@ -476,14 +480,14 @@ function SourceDrawer({ citation }: { citation: HomeKnowCitation | null }) {
       <dl>
         <dt>Label</dt>
         <dd>{sanitizeHomeText(citation.label)}</dd>
-        <dt>Class</dt>
+        <dt>Type</dt>
         <dd>{sourceClassLabel(citation.sourceClass)}</dd>
         <dt>File</dt>
         <dd>
           {sanitizeHomeText(citation.sourceFile ?? "Source file not provided")}
         </dd>
-        <dt>Source ref</dt>
-        <dd>{citation.sourceRowNumber ?? "—"}</dd>
+        <dt>Location</dt>
+        <dd>{citation.sourceRowNumber ? `Line ${citation.sourceRowNumber}` : "—"}</dd>
         <dt>Confidence</dt>
         <dd>{citation.confidence ?? "—"}</dd>
         <dt>Excerpt</dt>
@@ -535,21 +539,25 @@ export function HomeKnowAnswerRenderer({
 }) {
   const [selectedCitation, setSelectedCitation] =
     useState<HomeKnowCitation | null>(null);
+  const displayResponse = useMemo(
+    () => shapeHomeKnowResponseForRender(response),
+    [response],
+  );
   const safeProse = useMemo(() => {
-    const fallback = frontendFallbackProse(response);
+    const fallback = frontendFallbackProse(displayResponse);
     if (fallback) return fallback;
-    return sanitizeHomeText(response.prose);
-  }, [response]);
-  const visibleCitations = response.citations;
-  const tableCount = response.tables.length;
-  const chartCount = response.charts.length;
-  const graphCount = response.graphs.length;
+    return sanitizeHomeText(displayResponse.prose);
+  }, [displayResponse]);
+  const visibleCitations = displayResponse.citations;
+  const tableCount = displayResponse.tables.length;
+  const chartCount = displayResponse.charts.length;
+  const graphCount = displayResponse.graphs.length;
 
   const hasEvidence =
     tableCount + chartCount + graphCount > 0 ||
-    response.gaps.length > 0 ||
+    displayResponse.gaps.length > 0 ||
     visibleCitations.length > 0;
-  const evidenceOpen = shouldOpenEvidence(response, compact);
+  const evidenceOpen = shouldOpenEvidence(displayResponse, compact);
   const exhibitLabel =
     tableCount + chartCount + graphCount > 0
       ? `Show source details (${tableCount} table${tableCount === 1 ? "" : "s"}, ${chartCount} chart${chartCount === 1 ? "" : "s"}, ${graphCount} graph${graphCount === 1 ? "" : "s"})`
@@ -566,12 +574,12 @@ export function HomeKnowAnswerRenderer({
           <div>
             <div className="hk-kicker">aVa</div>
             <div className="hk-meta" aria-label="Answer metadata">
-              <span className="hk-pill good">{statusLabel(response)}</span>
+              <span className="hk-pill good">{statusLabel(displayResponse)}</span>
             </div>
           </div>
         </header>
 
-        <HandoffBanner response={response} />
+        <HandoffBanner response={displayResponse} />
 
         {safeProse ? <div className="hk-prose">{safeProse}</div> : null}
 
@@ -582,7 +590,7 @@ export function HomeKnowAnswerRenderer({
               {tableCount > 0 ? (
                 <div className="hk-section">
                   <div className="hk-title">Tables</div>
-                  {response.tables.map((table) => (
+                  {displayResponse.tables.map((table) => (
                     <HomeTableExhibit
                       citations={citationsFor(
                         table.citationIds,
@@ -599,7 +607,7 @@ export function HomeKnowAnswerRenderer({
               {chartCount > 0 ? (
                 <div className="hk-section">
                   <div className="hk-title">Charts</div>
-                  {response.charts.map((chart) => (
+                  {displayResponse.charts.map((chart) => (
                     <HomeChartExhibit
                       chart={chart}
                       citations={citationsFor(
@@ -616,7 +624,7 @@ export function HomeKnowAnswerRenderer({
               {graphCount > 0 ? (
                 <div className="hk-section">
                   <div className="hk-title">Graphs</div>
-                  {response.graphs.map((graph) => (
+                  {displayResponse.graphs.map((graph) => (
                     <HomeGraphExhibit
                       citations={citationsFor(
                         graph.citationIds,
@@ -630,7 +638,7 @@ export function HomeKnowAnswerRenderer({
                 </div>
               ) : null}
 
-              <GapPanel gaps={response.gaps} />
+              <GapPanel gaps={displayResponse.gaps} />
 
               {tableCount + chartCount + graphCount === 0 &&
               visibleCitations.length > 0 ? (

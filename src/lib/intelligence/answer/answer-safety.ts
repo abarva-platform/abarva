@@ -5,6 +5,10 @@ import type {
   AvaAnswerPacket,
 } from "@/lib/ava-answer/contract";
 import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
+import {
+  shapeAvaAnswerPacket,
+  shapePublicText,
+} from "@/lib/ava-answer/render-layer-shaper";
 
 const RAW_RECORD_ID_RE =
   /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\b/g;
@@ -26,9 +30,9 @@ const CONSULTANT_LABEL_RE =
 function fallbackCitationLabel(citation: AnswerCitation): string {
   switch (citation.sourceClass) {
     case "tenant-fact":
-      return "Tenant material";
+      return "Tenant evidence";
     case "tenant-chunk":
-      return "Tenant source excerpt";
+      return "Tenant evidence";
     case "graph":
       return "Enterprise connection";
     case "corpus-pattern":
@@ -38,7 +42,7 @@ function fallbackCitationLabel(citation: AnswerCitation): string {
     case "expert-pack":
       return "Advisor pattern";
     default:
-      return "Supporting material";
+      return "Source";
   }
 }
 
@@ -60,14 +64,14 @@ export function dedupeConsultantLabels(value: string): string {
 
 export function sanitizePublicText(
   value: string,
-  fallback = "supporting material",
+  fallback = "evidence",
 ): string {
   const withoutUnsafeIds = dedupeConsultantLabels(value)
     .replace(BRACKET_RECORD_RE, fallback)
     .replace(UUID_RE, fallback)
     .replace(RAW_RECORD_ID_RE, fallback)
     .replace(INTERNAL_FIELD_RE, "source field");
-  const cleaned = scrubPublicAvaAnswerText(withoutUnsafeIds)
+  const cleaned = shapePublicText(scrubPublicAvaAnswerText(withoutUnsafeIds), fallback)
     .replace(/[ \t]{2,}/g, " ")
     .trim();
   return cleaned || fallback;
@@ -89,7 +93,7 @@ function sanitizeCitation(citation: AnswerCitation): AnswerCitation {
 
 function sanitizeCell(value: string | number | null): string | number | null {
   if (typeof value !== "string") return value;
-  return sanitizePublicText(value, "supporting material");
+  return sanitizePublicText(value, "evidence");
 }
 
 function sanitizeTable<T extends AnswerTable>(table: T): T {
@@ -135,7 +139,7 @@ function sanitizeGraph<T extends AnswerGraph>(graph: T): T {
 export function sanitizeAvaAnswerForRender(
   answer: AvaAnswerPacket,
 ): AvaAnswerPacket {
-  return {
+  return shapeAvaAnswerPacket({
     ...answer,
     directAnswer: sanitizePublicText(answer.directAnswer, ""),
     interpretation: answer.interpretation
@@ -179,7 +183,7 @@ export function sanitizeAvaAnswerForRender(
         ? sanitizePublicText(action.rationale, "Next step rationale")
         : action.rationale,
     })),
-  };
+  });
 }
 
 export const sanitizeAgentAnswerForRender = sanitizeAvaAnswerForRender;
