@@ -36,18 +36,51 @@ Every mutating data build job must record:
 ## Minimum Execution Flow
 
 1. Build or reuse the approved ACA image.
-2. Submit an ACA Job for the data build.
+2. Submit an ACA Job for the data build using the shared operator wrapper:
+   `npm run ops:aca-job -- --image <acr-image>@sha256:<digest> --script <npm-script>`.
 3. Pass tenant scope, build version, input source version, and idempotency key as explicit env/args.
 4. Write progress to a DB status table or a Blob progress object.
 5. Write final proof outputs to Blob and, when requested for review, copy a ZIP to the operator Downloads folder.
 6. Fail the job if validation fails.
 7. Do not wire a product surface until the quality gate and human review pass.
 
+## Standard Operator Wrapper
+
+The canonical wrapper is `scripts/ops/submit-aca-operator-job.mjs`.
+
+It standardizes the pieces that were previously handled manually:
+
+- requires digest-pinned images unless `ALLOW_MUTABLE_ACA_IMAGE=true` is explicitly set for a documented exception
+- submits the existing private ACA operator job with start-time image, command, args, CPU, memory, and env overrides
+- records request metadata, execution id, poll status, logs, proof-bundle extraction, and idle-restore evidence in a local output folder
+- extracts proof bundles emitted between `__SEMANTIC2_PROOF_TGZ_BEGIN__` and `__SEMANTIC2_PROOF_TGZ_END__`
+- restores the private operator job to the idle image/command after the run, unless `--no-restore-idle` is intentionally set
+- redacts sensitive env values from request summaries
+
+Example:
+
+```bash
+npm run ops:aca-job -- \
+  --image acrabarvalab001.azurecr.io/abarva/web@sha256:<digest> \
+  --script semantic2:l3-dossiers:proof-job \
+  --env NODE_OPTIONS=--conditions=react-server \
+  --out-dir /tmp/abarva-l3-proof-$(date -u +%Y%m%dT%H%M%SZ)
+```
+
+For the L3 dossier proof lane, the shortcut is:
+
+```bash
+npm run ops:semantic2:l3-dossiers:proof -- \
+  --image acrabarvalab001.azurecr.io/abarva/web@sha256:<digest> \
+  --out-dir /tmp/abarva-l3-proof-$(date -u +%Y%m%dT%H%M%SZ)
+```
+
 ## Forbidden Paths
 
 - Mutating DB writes from a Next.js route handler for operator builds.
 - Long-running builds in the production web request path.
 - Manual `az containerapp exec` for mutating builds except break-glass.
+- Hand-written `az containerapp job update/start/logs` sequences when the shared wrapper can run the job.
 - Repeated web deploys solely to run an operator data-build script.
 - Surface wiring before the gate report says the data is eligible.
 

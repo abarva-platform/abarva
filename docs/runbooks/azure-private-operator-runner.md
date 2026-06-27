@@ -6,16 +6,16 @@ The Azure Postgres hostname `pg-abarva-context-lab-001.postgres.database.azure.c
 
 ## Current Lab Runner
 
-| Setting | Value |
-| --- | --- |
-| Subscription | `abarva-lab-sub` |
-| Resource group | `rg-abarva-controlplane-lab-eastus` |
-| Container Apps job | `job-abarva-private-operator-eus` |
-| Container Apps environment | `cae-abarva-scale-lab-eastus` |
-| Managed identity | `id-abarva-scale-runtime-lab-eastus` |
-| Key Vault | `kv-abarva-lab-001` |
-| Database secret reference | `azure-postgres-control-database-url` |
-| Parameter file | `infra/azure/parameters/private-operator.lab.bicepparam` |
+| Setting                    | Value                                                    |
+| -------------------------- | -------------------------------------------------------- |
+| Subscription               | `abarva-lab-sub`                                         |
+| Resource group             | `rg-abarva-controlplane-lab-eastus`                      |
+| Container Apps job         | `job-abarva-private-operator-eus`                        |
+| Container Apps environment | `cae-abarva-scale-lab-eastus`                            |
+| Managed identity           | `id-abarva-scale-runtime-lab-eastus`                     |
+| Key Vault                  | `kv-abarva-lab-001`                                      |
+| Database secret reference  | `azure-postgres-control-database-url`                    |
+| Parameter file             | `infra/azure/parameters/private-operator.lab.bicepparam` |
 
 ## Deploy Or Refresh The Runner
 
@@ -30,6 +30,27 @@ az deployment sub create \
 The committed parameter file uses a read-only smoke command. It proves private DNS, Key Vault secret projection, managed identity access, and Azure Postgres connectivity without mutating data.
 
 ## Start A Run
+
+Use the shared wrapper for application-backed operator jobs. It submits the ACA Job with start-time container overrides, polls the execution, captures logs, extracts proof bundles, and restores the runner to an idle command after completion.
+
+```bash
+npm run ops:aca-job -- \
+  --image acrabarvalab001.azurecr.io/abarva/web@sha256:<digest> \
+  --script semantic2:l3-dossiers:self-test \
+  --out-dir /tmp/abarva-operator-selftest-$(date -u +%Y%m%dT%H%M%SZ)
+```
+
+For the Semantic2 L3 proof lane:
+
+```bash
+npm run ops:semantic2:l3-dossiers:proof -- \
+  --image acrabarvalab001.azurecr.io/abarva/web@sha256:<digest> \
+  --out-dir /tmp/abarva-l3-dossier-proof-$(date -u +%Y%m%dT%H%M%SZ)
+```
+
+The wrapper refuses mutable image tags by default. Use `ALLOW_MUTABLE_ACA_IMAGE=true` only for a documented non-production exception.
+
+The raw Azure CLI path remains useful for read-only smoke runs and break-glass investigation:
 
 ```bash
 az containerapp job start \
@@ -83,10 +104,11 @@ It proved:
 Cursor and Claude Code should use this runner for private Azure Postgres work:
 
 1. Do not use local `psql`, Prisma, or Node clients against the private Azure Postgres hostname from a public network.
-2. Do use `az containerapp job start` and `az containerapp job logs show` with the job above for smoke checks.
-3. For data-copy, corpus-drain, migration, or destructive commands, create a separate reviewed parameter file or one-time command and record the run as release evidence.
-4. Do not print connection strings or Key Vault secret values in logs.
-5. Keep `DATABASE_URL` compatibility only inside the job container. Runtime corpus code should prefer `ABARVA_AZURE_DATABASE_URL` and fail closed on legacy Supabase unless `ALLOW_LEGACY_SUPABASE_CORPUS=1` is intentionally set.
+2. Do use `npm run ops:aca-job -- --image <digest-pinned-image> --script <npm-script>` for application-backed data-build, proof, and reconciliation jobs.
+3. Use direct `az containerapp job start` and `az containerapp job logs show` only for the static read-only smoke command or a documented break-glass case.
+4. For data-copy, corpus-drain, migration, or destructive commands, create a separate reviewed parameter file or one-time command and record the run as release evidence.
+5. Do not print connection strings or Key Vault secret values in logs.
+6. Keep `DATABASE_URL` compatibility only inside the job container. Runtime corpus code should prefer `ABARVA_AZURE_DATABASE_URL` and fail closed on legacy Supabase unless `ALLOW_LEGACY_SUPABASE_CORPUS=1` is intentionally set.
 
 ## Why This Exists
 
