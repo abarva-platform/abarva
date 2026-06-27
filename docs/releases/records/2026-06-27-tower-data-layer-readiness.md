@@ -14,7 +14,9 @@ Tower was showing empty or misleading values, especially `$0` budget for
 SkyHarbor, even though source files contained budget, spend, value, and risk
 fields. This change makes Tower recognize the field names used across all
 canonical tenant source datasets and recover budget rollups from source-backed
-F12 rows when the materialized rollup table is missing.
+F12 rows when the materialized rollup table is missing. It also adds a
+repo-owned all-tenant Tower materialization command so the deployed image can
+refresh every canonical tenant through the approved private ACA operator path.
 
 ## Layer Impact
 
@@ -38,12 +40,17 @@ F12 rows when the materialized rollup table is missing.
 - `src/lib/tower/tower-budget-rollups.ts`
 - `src/lib/tower/__tests__/tower-semantic-projection.test.ts`
 - `src/lib/tower/__tests__/tower-materialized-read-model.test.ts`
+- `src/scripts/tower/materialize-all-tenants.ts`
+- `package.json` (`tower:materialize:all`, `tower:materialize:all:dry-run`)
 - `docs/audits/TOWER-DATA-LAYER-RECONCILIATION-2026-06-27.md`
 
 ## QA / Validation
 
 - Targeted Jest passed: `8/8`.
 - Targeted ESLint passed on touched Tower files.
+- Targeted ESLint passed on `src/scripts/tower/materialize-all-tenants.ts`.
+- Materialization CLI smoke passed:
+  `npm run tower:materialize:all:dry-run -- --help`.
 - Repo-wide TypeScript was attempted with `NODE_OPTIONS=--max-old-space-size=8192`;
   it is blocked by existing missing dependency declarations unrelated to this
   release (`js-yaml`, `@azure-rest/ai-document-intelligence`,
@@ -52,8 +59,8 @@ F12 rows when the materialized rollup table is missing.
 ## Rollout Plan
 
 Merge to `main`, deploy through the Azure Container Apps release path, then run
-Tower materialization/refresh and signed-in browser crawl for all canonical
-tenants.
+`npm run tower:materialize:all` through the digest-pinned private ACA operator
+job, then run signed-in browser crawl for all canonical tenants.
 
 ## Deployment Authority
 
@@ -81,4 +88,3 @@ data migration rollback is required.
 - Live Azure/Postgres materialization refresh still has to be run and proven.
 - Browser-visible Tower crawl still has to prove the deployed dashboard and chat
   use the corrected source-field contract.
-

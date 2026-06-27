@@ -119,6 +119,8 @@
     "tower:data-trust:gate:downloads": "node scripts/tower/tower-data-trust-gate.mjs --downloads",
     "tower:ingest:azure-cost": "npx tsx src/scripts/tower/ingest-azure-cost.ts",
     "tower:ingest:workday-hcm": "npx tsx src/scripts/tower/ingest-workday-hcm.ts",
+    "tower:materialize:all": "npx tsx src/scripts/tower/materialize-all-tenants.ts --apply",
+    "tower:materialize:all:dry-run": "npx tsx src/scripts/tower/materialize-all-tenants.ts --dry-run",
     "tower:templates:workday-hcm": "npx tsx src/scripts/tower/generate-workday-hcm-templates.ts",
     "ingest:verify": "npx tsx -e \"const {Pinecone}=require('@pinecone-database/pinecone');const fs=require('fs'),path=require('path');const lines=fs.readFileSync(path.join(process.cwd(),'.env.local'),'utf-8').split('\\n');const env={};for(const l of lines){const[k,...v]=l.split('=');if(k&&v.length)env[k.trim()]=v.join('=').trim();}const pc=new Pinecone({apiKey:env.PINECONE_API_KEY});pc.index(env.PINECONE_INDEX||'nexus-knowledge').describeIndexStats().then(s=>console.log('Vectors in nexus-knowledge:',s.totalRecordCount));\"",
     "seed:enterprise": "npx tsx src/scripts/seed/run-enterprise-packj.ts",
