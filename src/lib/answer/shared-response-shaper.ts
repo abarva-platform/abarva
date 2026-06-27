@@ -77,6 +77,10 @@ function hasNextStep(text: string): boolean {
   );
 }
 
+function countVisibleParagraphs(text: string): number {
+  return paragraphSplit(text).length;
+}
+
 function tableToCompactLines(text: string): string[] {
   const rows = text
     .split("\n")
@@ -113,6 +117,18 @@ function cleanLeadLine(text: string): string {
     )
     .replace(/^[-·]\s*/, "")
     .trim();
+}
+
+function isBulletLine(text: string): boolean {
+  return /^\s*[-·]\s+/.test(text);
+}
+
+function compactBulletLines(lines: string[]): string | null {
+  const bulletLines = lines
+    .filter(isBulletLine)
+    .map((line) => cleanLeadLine(line).replace(/\s+—\s+/g, ": "));
+  if (bulletLines.length === 0) return null;
+  return bulletLines.slice(0, 4).join("; ");
 }
 
 function removeSectionHeadings(text: string): string {
@@ -176,10 +192,16 @@ function compactForChat(
     34,
   );
   const tableLines = tableToCompactLines(normalized);
+  const sourceLines = proseOnly
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const bulletSummary = compactBulletLines(sourceLines);
   const support = sentences
     .filter((sentence) => cleanLeadLine(sentence) !== lead)
     .filter(isUsefulSupport)
-    .slice(0, tableLines.length > 0 ? 1 : 3)
+    .filter((sentence) => !isBulletLine(sentence))
+    .slice(0, tableLines.length > 0 || bulletSummary ? 1 : 3)
     .map((sentence) => `- ${trimWords(cleanLeadLine(sentence), 24)}`);
   const next =
     sentences.find((sentence) =>
@@ -187,17 +209,27 @@ function compactForChat(
     ) ?? nextStepFallback;
   const lines = [
     lead,
-    ...tableLines.slice(0, 3),
+    tableLines.length > 0
+      ? tableLines
+          .slice(0, 3)
+          .map((line) => cleanLeadLine(line).replace(/\s+—\s+/g, ": "))
+          .join("; ")
+      : bulletSummary,
     ...support,
     `Next: ${trimWords(next.replace(/^[-·]?\s*Next:\s*/i, ""), 22)}`,
   ].filter(Boolean);
   let compact = normalizeWhitespace(lines.slice(0, maxParagraphs).join("\n"));
-  if (compact.length <= targetChars) return compact;
+  if (
+    compact.length <= targetChars &&
+    countVisibleParagraphs(compact) <= maxParagraphs
+  ) {
+    return compact;
+  }
 
   compact = normalizeWhitespace(
     [
       lead,
-      ...support.slice(0, Math.max(1, maxParagraphs - 2)),
+      bulletSummary ?? support[0],
       `Next: ${trimWords(nextStepFallback, 18)}`,
     ]
       .filter(Boolean)
