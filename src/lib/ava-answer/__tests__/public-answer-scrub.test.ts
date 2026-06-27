@@ -27,4 +27,13 @@ Tenant evidence`);
     expect(cleaned).not.toContain("How IT Supports The Answer");
     expect(cleaned).not.toContain("Tenant evidence");
   });
+
+  it("removes internal supporting-material ledger wording from advisor prose", () => {
+    const cleaned = scrubPublicAvaAnswerText(
+      "Here's the logic: the supporting material ledger shows three distinct value pools — IROPS agentic recovery ($270M), customer AI/Digital Concierge ($180M), and data estate rationalization ($122M).",
+    );
+
+    expect(cleaned).toContain("business context shows three distinct value pools");
+    expect(cleaned).not.toMatch(/supporting material|evidence ledger|source signals/i);
+  });
 });
