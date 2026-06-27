@@ -133,6 +133,48 @@ function scrubInternalAdvisorText(text: string): string {
   return normalizeVisibleWhitespace(scrubbed);
 }
 
+function repairCurrencyFragments(text: string): string {
+  return text.replace(
+    /(?<![$\w])(\d+(?:\.\d+)?)M\b(?=\s+(?:measured|realized|committed|booked|forecast|budgeted|spend|cost|value|benefit|savings|impact|in\s+(?:benefit|value|impact|savings))\b)/gi,
+    "$$$1M",
+  );
+}
+
+function stripGenericDecisionFooter(text: string): string {
+  return text.replace(
+    /\s*Next,\s+have\s+the\s+accountable\s+owner\s+review\s+the\s+listed\s+sources\s+and\s+decide\s+whether\s+this\s+belongs\s+in\s+Source,\s*Tower,\s*or\s+Moves\.?/gi,
+    "",
+  );
+}
+
+function humanizeEvidenceLanguage(text: string): string {
+  return text
+    .replace(/^SOURCES\s*$/gim, "Evidence trail")
+    .replace(/\bcontrol-supporting material\b/gi, "control evidence")
+    .replace(/\bSOX signer supporting material\b/gi, "SOX signer evidence")
+    .replace(/\bsupporting material\b/gi, "evidence")
+    .replace(/\n\s*·\s*\n\s*tenant support\b/gi, " (tenant evidence)")
+    .replace(/\s+·\s+tenant support\b/gi, " (tenant evidence)")
+    .replace(/\btenant support\b/gi, "tenant evidence");
+}
+
+function collapseRawEvidenceDump(text: string): string {
+  return text.replace(
+    /\n+TABLES\s*\n\s*(?:Supporting Material|Evidence)\s*\n\s*SOURCE\s+TYPE\s+CONFIDENCE\s+HOW\s+IT\s+SUPPORTS\s+THE\s+ANSWER[\s\S]*$/i,
+    "\n\nEvidence drill-down: open the evidence trail for source, confidence, finding, and buyer implication.",
+  );
+}
+
+function shapeSharedRenderDefects(text: string): string {
+  return normalizeVisibleWhitespace(
+    repairCurrencyFragments(
+      collapseRawEvidenceDump(
+        humanizeEvidenceLanguage(stripGenericDecisionFooter(text)),
+      ),
+    ),
+  );
+}
+
 function normalizeCompactLine(text: string): string {
   return text
     .replace(/\s+/g, " ")
@@ -930,9 +972,11 @@ export function shapeStreamingAgentTextForSurface(
   _surface: string,
   text: string,
 ): string {
-  const cleaned = repairMalformedComparisonTables(
-    scrubInternalAdvisorText(
-      stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)),
+  const cleaned = shapeSharedRenderDefects(
+    repairMalformedComparisonTables(
+      scrubInternalAdvisorText(
+        stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)),
+      ),
     ),
   );
   return repairAgentOutputContractText(cleaned).text;
@@ -1036,9 +1080,11 @@ export function shapeAgentResponseForSurface(
   // bypass class as compactConsultantChatText (different shape, same Brief
   // violation by construction). Surfaces correctly compacted now flow
   // through the single shouldCompactSurface gate.
-  const cleaned = repairMalformedComparisonTables(
-    scrubInternalAdvisorText(
-      stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)),
+  const cleaned = shapeSharedRenderDefects(
+    repairMalformedComparisonTables(
+      scrubInternalAdvisorText(
+        stripChatMarkdownFormatting(normalizeAgentMarkupForPlainText(text)),
+      ),
     ),
   );
   // ATLAS-HI-3-2026-05-30 — bypass the compactor when the LLM already
@@ -1058,5 +1104,5 @@ export function shapeAgentResponseForSurface(
   });
   if (options.issues) options.issues.push(...shared.issues);
   if (options.replacements) options.replacements.push(...shared.replacements);
-  return repairAgentOutputContractText(shared.text).text;
+  return repairAgentOutputContractText(shapeSharedRenderDefects(shared.text)).text;
 }

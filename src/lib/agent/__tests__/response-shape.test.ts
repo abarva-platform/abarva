@@ -260,6 +260,47 @@ describe('agent response shape', () => {
       expect(shaped).not.toContain('artifact');
       expect(shaped).not.toContain('patternId');
     });
+
+    it('removes raw evidence dumps and internal routing footer from Intelligence answers', () => {
+      const raw = [
+        'AI is not the first tool here. Deterministic feed certification and ownership routing should come first.',
+        'SOURCES',
+        'Lakeshore Holdings live Intelligence surface',
+        '·',
+        'tenant support',
+        'Lakeshore Holdings 360 Intelligence substrate',
+        '·',
+        'tenant support',
+        '',
+        'TABLES',
+        'Supporting Material',
+        'SOURCE TYPE CONFIDENCE HOW IT SUPPORTS THE ANSWER',
+        'Live surface tenant support 0.99 Active client evidence',
+        'Next, have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves.',
+      ].join('\n');
+
+      const shaped = shapeAgentResponseForSurface('/intelligence', raw);
+
+      expect(shaped).toContain('AI is not the first tool here');
+      expect(shaped).toContain('Evidence trail');
+      expect(shaped).toContain('Evidence drill-down');
+      expect(shaped).not.toMatch(/\btenant support\b/i);
+      expect(shaped).not.toMatch(/\bsupporting material\b/i);
+      expect(shaped).not.toMatch(/belongs in Source,\s*Tower,\s*or Moves/i);
+      expect(shaped).not.toContain('SOURCE TYPE CONFIDENCE HOW IT SUPPORTS THE ANSWER');
+    });
+
+    it('repairs high-confidence currency shorthand without corrupting operating counts', () => {
+      const raw =
+        'The loaded sources show 86M measured value and 9M realized value; the payments lane still runs 85,000 payments/month at 60/100 control maturity.';
+
+      const shaped = shapeAgentResponseForSurface('/intelligence', raw);
+
+      expect(shaped).toContain('$86M measured value');
+      expect(shaped).toContain('$9M realized value');
+      expect(shaped).toContain('85,000 payments/month');
+      expect(shaped).toContain('60/100 control maturity');
+    });
   });
 
   it('preserves sequential steps when the answer explains a path (Tower surface)', () => {

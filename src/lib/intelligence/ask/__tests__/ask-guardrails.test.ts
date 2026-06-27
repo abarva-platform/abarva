@@ -2,7 +2,13 @@ jest.mock('server-only', () => ({}));
 
 import { atlasStakeholderConflictHandoff } from '../index';
 import { retrieveSurfaceContextSources } from '../retrievers/surface-context';
-import { chunkAskText, chooseSynthesisTokenBudget, sanitizeAskSynthesis } from '../synthesizer';
+import {
+  chunkAskText,
+  chooseSynthesisTokenBudget,
+  chooseSynthesisWordBudget,
+  preserveFixedCountAnswerCompleteness,
+  sanitizeAskSynthesis,
+} from '../synthesizer';
 import { buildDeterministicConciseFollowups } from '../followups';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -34,8 +40,32 @@ describe('Ask Intelligence guardrails', () => {
 
   it('uses a tighter model budget only for explicit concise Ask requests', () => {
     expect(chooseSynthesisTokenBudget('Summarize the IBM dependency in one short executive paragraph.')).toBe(160);
-    expect(chooseSynthesisTokenBudget('What evidence would change your view? Keep it concise.')).toBe(160);
+    expect(chooseSynthesisTokenBudget('Name one risk. Keep it concise.')).toBe(160);
     expect(chooseSynthesisTokenBudget('Build the full modernization case for the CTO, CFO, and COO.')).toBe(600);
+  });
+
+  it('uses larger budgets for fixed-count multi-part Ask requests', () => {
+    expect(chooseSynthesisTokenBudget('Build us a 3-move sequence for the next 90 days.')).toBeGreaterThan(600);
+    expect(chooseSynthesisWordBudget('Build us a 3-move sequence for the next 90 days.')).toBeGreaterThan(240);
+    expect(chooseSynthesisWordBudget('Name one risk. Keep it concise.')).toBe(120);
+  });
+
+  it('does not let final answer shaping drop a promised fixed-count part', () => {
+    const question = 'Build us a 3-move sequence for Kyriba go-live readiness.';
+    const truncated = [
+      'Move 1: Resolve bank connectivity certification.',
+      'Move 2: Certify SOX payment-approval controls.',
+    ].join('\n');
+    const complete = [
+      'Move 1: Resolve bank connectivity certification.',
+      'Move 2: Certify SOX payment-approval controls.',
+      'Move 3: Run a guarded go-live with exception monitoring.',
+    ].join('\n');
+
+    expect(preserveFixedCountAnswerCompleteness(question, truncated, complete)).toBe(complete);
+    expect(preserveFixedCountAnswerCompleteness(question, truncated, truncated)).toContain(
+      'will not present it as complete',
+    );
   });
 
   it('uses deterministic followups only for explicit concise Ask requests', () => {

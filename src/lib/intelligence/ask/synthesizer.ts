@@ -5,6 +5,10 @@
  * or expose outside the tenant boundary. Access requires NDA + IP assignment (T075).
  */
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
+import {
+  formatCompletenessRepairInstruction,
+  validateMultipartCompleteness,
+} from "@/lib/agent/multipart-completeness";
 import type { AskSource, AskIntent } from "./types";
 import {
   applyPartialEvidencePolicy,
@@ -291,7 +295,62 @@ function chooseModel(intent: AskIntent, query: string): string {
 
 export function chooseSynthesisTokenBudget(query: string): number {
   const defaultBudget = isExplicitConciseAsk(query) ? 160 : 600;
-  return chooseAdvisorTokenBudget(query, defaultBudget);
+  const advisorBudget = chooseAdvisorTokenBudget(query, defaultBudget);
+  const fixedCount = validateMultipartCompleteness({ question: query, answer: "" });
+  if (fixedCount.requiredCount && fixedCount.requiredCount >= 3) {
+    return Math.min(
+      1800,
+      Math.max(advisorBudget, 260 * fixedCount.requiredCount + 120),
+    );
+  }
+  return advisorBudget;
+}
+
+export function chooseSynthesisWordBudget(query: string): number {
+  const advisorCap = chooseAdvisorWordCap(query, isExplicitConciseAsk(query) ? 120 : 240);
+  const fixedCount = validateMultipartCompleteness({ question: query, answer: "" });
+  if (fixedCount.requiredCount && fixedCount.requiredCount >= 3) {
+    return Math.min(700, Math.max(advisorCap, 115 * fixedCount.requiredCount + 120));
+  }
+  return advisorCap;
+}
+
+function extractMessageText(response: unknown): string {
+  const content = (response as { content?: unknown }).content;
+  if (!Array.isArray(content)) return "";
+  return content
+    .map((block) => {
+      if (!block || typeof block !== "object") return "";
+      const maybeText = (block as { text?: unknown }).text;
+      return typeof maybeText === "string" ? maybeText : "";
+    })
+    .join("");
+}
+
+export function preserveFixedCountAnswerCompleteness(
+  question: string,
+  candidate: string,
+  fallback: string,
+): string {
+  const candidateCompleteness = validateMultipartCompleteness({
+    question,
+    answer: candidate,
+  });
+  if (candidateCompleteness.complete) return candidate;
+
+  const fallbackCompleteness = validateMultipartCompleteness({
+    question,
+    answer: fallback,
+  });
+  if (fallbackCompleteness.complete) return fallback;
+
+  return [
+    "I generated an incomplete fixed-count answer and will not present it as complete.",
+    `Missing parts: ${candidateCompleteness.missingParts
+      .map((part) => `${candidateCompleteness.requestedSubject ?? "part"} ${part}`)
+      .join(", ")}.`,
+    "Please retry the question so I can regenerate the complete sequence.",
+  ].join("\n");
 }
 
 function formatSourcesBlock(sources: AskSource[]): string {
@@ -414,10 +473,17 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
   const advisorComposerAddendum = advisorComposer
     ? `\n\n${advisorComposer.promptBlock}\n\nROUTE-SPECIFIC LENGTH OVERRIDE: For ${advisorComposer.route}, this case-team brief overrides the generic 200-word target. Write enough to satisfy the executive answer, trend synthesis, named examples, ROI/value pool table, SkyHarbor relevance, architecture prerequisites, and next analysis options. Keep it crisp and readable, but do not compress away the required artifacts.`
     : "";
+  const fixedCountRequest = validateMultipartCompleteness({
+    question: args.query,
+    answer: "",
+  });
+  const fixedCountInstruction = fixedCountRequest.requiredCount
+    ? `\n\nFIXED-COUNT COMPLETENESS: The user requested ${fixedCountRequest.requiredCount} ${fixedCountRequest.requestedSubject ?? "parts"}. Render every requested part in the final answer. Do not promise a numbered sequence and stop after the first item.`
+    : "";
   const system =
     contextBlocks.length > 0
-      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${advisorComposerAddendum}`
-      : `${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${advisorComposerAddendum}`;
+      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${fixedCountInstruction}${confidenceHint}${richTextAddendum}${advisorComposerAddendum}`
+      : `${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${fixedCountInstruction}${confidenceHint}${richTextAddendum}${advisorComposerAddendum}`;
   const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? "\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present."
@@ -513,13 +579,92 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
     // primary length lever; this is a safety net.
     const sanitized = sanitizeAskSynthesis(
       text,
-      chooseAdvisorWordCap(args.query, 240),
+      chooseSynthesisWordBudget(args.query),
     );
-    const evidenceDisciplined = applyPartialEvidencePolicy(
+    let evidenceDisciplined = applyPartialEvidencePolicy(
       sanitized,
       args.sources,
     );
-    const decisionGrade = enforceDecisionGradeAnswer(evidenceDisciplined);
+
+    const completeness = validateMultipartCompleteness({
+      question: args.query,
+      answer: evidenceDisciplined,
+    });
+    if (!completeness.complete) {
+      const repairInstruction = formatCompletenessRepairInstruction(completeness);
+      const repair = await client.messages.create({
+        model,
+        max_tokens: chooseSynthesisTokenBudget(args.query),
+        system: `${system}${continuityInstruction}`,
+        messages: [
+          {
+            role: "user",
+            content: [
+              prompt,
+              "",
+              "DRAFT TO REPAIR:",
+              evidenceDisciplined,
+              "",
+              repairInstruction,
+              "Return only the complete final answer.",
+            ].join("\n"),
+          },
+        ],
+      });
+      const repairedText = extractMessageText(repair);
+      const repaired = applyPartialEvidencePolicy(
+        sanitizeAskSynthesis(repairedText, chooseSynthesisWordBudget(args.query)),
+        args.sources,
+      );
+      const repairedCompleteness = validateMultipartCompleteness({
+        question: args.query,
+        answer: repaired,
+      });
+      evidenceDisciplined = repairedCompleteness.complete
+        ? repaired
+        : [
+            "I generated an incomplete fixed-count answer and will not present it as complete.",
+            `Missing parts: ${repairedCompleteness.missingParts
+              .map((part) => `${repairedCompleteness.requestedSubject ?? "part"} ${part}`)
+              .join(", ")}.`,
+            "Please retry the question so I can regenerate the complete sequence.",
+          ].join("\n");
+    }
+
+    const finalLeakCheck = detectCrossTenantIdentityLeak({
+      clientKey: args.tenantClientKey ?? args.tenantId ?? null,
+      response: evidenceDisciplined,
+    });
+    if (finalLeakCheck.leaked) {
+      yield [
+        `I almost generated a response that misattributed your organization. The retrieved context and/or session memory referenced "${finalLeakCheck.assertedTenant}" but your authenticated session is for a different organization.`,
+        "",
+        "I will not surface mixed-tenant content. Please re-ask, or refresh the page — if this persists, your tenant administrator should review the session-memory state for this client.",
+        "",
+        "[STRESS-P0-001 guard fired: cross-tenant identity assertion blocked]",
+      ].join("\n");
+      return;
+    }
+
+    const finalOffTenantMention = detectOffTenantMention({
+      clientKey: args.tenantClientKey ?? args.tenantId ?? null,
+      response: evidenceDisciplined,
+      query: args.query,
+    });
+    if (finalOffTenantMention.detected) {
+      yield [
+        "I detected mixed-tenant language in the draft answer, so I am not going to surface it.",
+        "Your session remains pinned to the active tenant. Re-ask the question and I will answer from the active tenant context only.",
+        "[tenant-isolation guard fired: off-tenant mention blocked]",
+      ].join("\n");
+      return;
+    }
+
+    const decisionGrade = preserveFixedCountAnswerCompleteness(
+      args.query,
+      enforceDecisionGradeAnswer(evidenceDisciplined),
+      evidenceDisciplined,
+    );
     for (const chunk of chunkAskText(decisionGrade)) {
       yield chunk;
     }
