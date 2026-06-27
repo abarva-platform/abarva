@@ -295,6 +295,39 @@ export function chooseSynthesisTokenBudget(query: string): number {
   return chooseAdvisorTokenBudget(query, defaultBudget);
 }
 
+function isExplicitVisualAsk(query: string): boolean {
+  return /\b(table|tables|chart|charts|graph|graphs|visual|visuals|visually|visuali[sz]e|plot|comparison grid|matrix|ranking|ranked|breakdown|show me)\b/i.test(
+    query,
+  );
+}
+
+function hasMarkdownDecisionTable(text: string): boolean {
+  const lines = text.split(/\r?\n/).map((line) => line.trim());
+  for (let index = 0; index < lines.length - 1; index += 1) {
+    const header = lines[index] ?? "";
+    const separator = lines[index + 1] ?? "";
+    if (
+      header.includes("|") &&
+      /\|\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?/.test(separator)
+    ) {
+      return true;
+    }
+  }
+  return /\|\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|/.test(text);
+}
+
+function extractMessageText(response: unknown): string {
+  const content = (response as { content?: unknown }).content;
+  if (!Array.isArray(content)) return "";
+  return content
+    .map((block) => {
+      if (!block || typeof block !== "object") return "";
+      const maybeText = (block as { text?: unknown }).text;
+      return typeof maybeText === "string" ? maybeText : "";
+    })
+    .join("");
+}
+
 function formatSourcesBlock(sources: AskSource[]): string {
   if (sources.length === 0) {
     // INT-VOICE.STRAT-2026-05-10 — Empty SOURCES PROVIDED is now an explicit
@@ -457,6 +490,34 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
         event.delta.type === "text_delta"
       ) {
         text += event.delta.text;
+      }
+    }
+    if (
+      args.richText &&
+      isExplicitVisualAsk(args.query) &&
+      !hasMarkdownDecisionTable(text)
+    ) {
+      const visualRepair = await client.messages.create({
+        model,
+        max_tokens: Math.max(chooseSynthesisTokenBudget(args.query), 900),
+        system: `${system}${continuityInstruction}`,
+        messages: [
+          {
+            role: "user",
+            content: [
+              prompt,
+              "",
+              "DRAFT TO REPAIR:",
+              text,
+              "",
+              "VISUAL CONTRACT REPAIR: The user explicitly asked for a table, chart, graph, visual, ranking, matrix, breakdown, or show-me structure. Keep the senior-advisor answer concise, then add exactly one compact GitHub-flavored Markdown decision table with a header row, separator row, and 2-6 evidence-backed rows. Use the columns the user requested where possible. Do not add source-support or evidence-register tables. If a requested value is not in the sources, write \"not shown in loaded sources\" in that cell rather than inventing it. Return only the final answer.",
+            ].join("\n"),
+          },
+        ],
+      });
+      const repairedText = extractMessageText(visualRepair);
+      if (hasMarkdownDecisionTable(repairedText)) {
+        text = repairedText;
       }
     }
     args.onModelOutput?.({
