@@ -347,7 +347,7 @@ describe("Intelligence consultant text synthesis", () => {
       dossier: {
         ...dossier,
         question:
-          "Compare the top finance and treasury AI initiatives in a table with value, readiness, risk, and next action.",
+          "Compare MRO and IROPS in a table with value, readiness, risk, and next action.",
       },
       tenantId: "tenant-skyharbor",
     });
@@ -399,6 +399,13 @@ describe("Intelligence consultant text synthesis", () => {
               basis: "loaded initiative evidence",
               citationIds: ["tenant-1"],
             },
+            {
+              id: "metric-3",
+              label: "Finance semantic layer",
+              value: "$28M reporting control value",
+              basis: "loaded initiative evidence",
+              citationIds: ["tenant-1"],
+            },
           ],
         },
         decisionOptionsDossier: {
@@ -416,6 +423,7 @@ describe("Intelligence consultant text synthesis", () => {
     expect(text).toContain("| Initiative | Value | Readiness | Risk | Next action |");
     expect(text).toContain("| Kyriba global cash and payments rollout |");
     expect(text).toContain("| M365 Copilot finance automation |");
+    expect(text).toContain("| Finance semantic layer |");
     expect(result).toMatchObject({
       trace: { used: true, model: expect.any(String) },
     });
@@ -455,6 +463,13 @@ describe("Intelligence consultant text synthesis", () => {
               basis: "loaded initiative evidence",
               citationIds: ["tenant-1"],
             },
+            {
+              id: "metric-3",
+              label: "Finance semantic layer",
+              value: "$28M reporting control value",
+              basis: "loaded initiative evidence",
+              citationIds: ["tenant-1"],
+            },
           ],
         },
         decisionOptionsDossier: {
@@ -472,6 +487,7 @@ describe("Intelligence consultant text synthesis", () => {
     expect(text).toContain("| Initiative | Value | Readiness | Risk | Next action |");
     expect(text).toContain("| Kyriba global cash and payments rollout |");
     expect(text).toContain("| M365 Copilot finance automation |");
+    expect(text).toContain("| Finance semantic layer |");
     expect(text).not.toContain("| Initiative | Budget | Promised benefit |");
   });
 

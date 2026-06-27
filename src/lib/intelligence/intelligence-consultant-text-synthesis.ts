@@ -352,7 +352,8 @@ export async function synthesizeIntelligenceConsultantText(args: {
     );
     let rawText = extractAnthropicText(message);
     let text = normalizeConsultantText(rawText);
-    if (explicitVisualAsk && !hasMarkdownDecisionTable(text, 2)) {
+    const requiredVisualRows = requiredVisualTableRows(args.dossier.question);
+    if (explicitVisualAsk && !hasMarkdownDecisionTable(text, requiredVisualRows)) {
       const repairUser = [
         user,
         "",
@@ -362,7 +363,7 @@ export async function synthesizeIntelligenceConsultantText(args: {
         "Repair instruction:",
         "The user explicitly asked for a table, chart, graph, visual, ranking, comparison, matrix, breakdown, or show-me structure.",
         "Return the same senior-advisor answer, but add exactly one compact GitHub-flavored Markdown decision table.",
-        "Use business-friendly columns aligned to the user's ask. Include 2-6 rows only.",
+        `Use business-friendly columns aligned to the user's ask. Include ${requiredVisualRows}-6 rows only.`,
         "Use only the provided packet. If a value is not shown, write \"not shown in loaded sources\" instead of inventing it.",
         "Do not add source-support, evidence-register, citation, or material-used tables.",
         "Return final user-facing text only.",
@@ -377,7 +378,7 @@ export async function synthesizeIntelligenceConsultantText(args: {
         timeoutMs,
       );
       const repairedText = normalizeConsultantText(extractAnthropicText(repaired));
-      if (hasMarkdownDecisionTable(repairedText, 2)) {
+      if (hasMarkdownDecisionTable(repairedText, requiredVisualRows)) {
         rawText = repairedText;
         text = repairedText;
       } else {
@@ -385,6 +386,7 @@ export async function synthesizeIntelligenceConsultantText(args: {
         const fallbackTable = fallbackVisualTableFromPacket(
           promptPacket,
           fallbackSourceText,
+          requiredVisualRows,
         );
         if (fallbackTable) {
           const fallbackBase = stripMarkdownTablesFromText(fallbackSourceText);
@@ -491,6 +493,14 @@ function isExplicitVisualAsk(query: string): boolean {
   return /\b(table|tables|tabular|matrix|chart|charts|graph|graphs|visual|visually|visualize|plot|ranking|ranked|compare|comparison|break ?down|show me)\b/i.test(
     query,
   );
+}
+
+function requiredVisualTableRows(query: string): number {
+  return /\b(top|portfolio|initiatives|investments|rank|ranking|ranked|list)\b/i.test(
+    query,
+  )
+    ? 3
+    : 2;
 }
 
 function hasMarkdownDecisionTable(text: string, minRows = 1): boolean {
@@ -611,12 +621,13 @@ function titleCaseNarrativeLabel(label: string): string {
 
 function fallbackMetricTableFromPacket(
   packet: IntelligenceConsultantPromptPacket,
+  minRows = 2,
 ): string | null {
   const rows = packet.tenantEvidenceBrief.metricsThatMatter
     .map(parseMetricBrief)
     .filter((metric): metric is NonNullable<typeof metric> => metric !== null)
     .slice(0, 6);
-  if (rows.length < 2) return null;
+  if (rows.length < minRows) return null;
 
   const risk =
     packet.riskCaveatBrief.dataReadinessGaps[0] ??
@@ -638,12 +649,13 @@ function fallbackMetricTableFromPacket(
 
 function fallbackDecisionTableFromPacket(
   packet: IntelligenceConsultantPromptPacket,
+  minRows = 2,
 ): string | null {
   const rows = packet.optionsBrief.options
     .map(parseOptionBrief)
     .filter((option): option is NonNullable<typeof option> => option !== null)
     .slice(0, 6);
-  if (rows.length < 2) return null;
+  if (rows.length < minRows) return null;
 
   return [
     "| Initiative | Value | Readiness | Risk | Next action |",
@@ -661,6 +673,7 @@ function fallbackDecisionTableFromPacket(
 function fallbackNarrativeTableFromText(
   packet: IntelligenceConsultantPromptPacket,
   narrative: string,
+  minRows = 2,
 ): string | null {
   const rows = new Map<string, { label: string; value: string }>();
   const addRow = (label: string, value: string) => {
@@ -684,8 +697,20 @@ function fallbackNarrativeTableFromText(
     addRow(match[1] ?? "", match[2] ?? "");
   }
 
+  const valueInLabelPattern =
+    /(\$[\d,.]+[KMBT]?\b(?:\s+(?:promise|gap|benefit|value|budget))?)\s+in\s+([A-Za-z][A-Za-z0-9&/().,\-\s]{2,80}?)(?:[,.]|;|\band\b|\bwith\b|$)/g;
+  for (const match of narrative.matchAll(valueInLabelPattern)) {
+    addRow(match[2] ?? "", match[1] ?? "");
+  }
+
+  const valueLabelPattern =
+    /(?:protects|validates|unlocks|gates|funds|covers|represents)\s+(\$[\d,.]+[KMBT]?\b(?:\s+(?:promise|gap|benefit|value|budget))?)\s+(?:in\s+)?([A-Za-z][A-Za-z0-9&/().,\-\s]{2,80}?)(?:[,.]|;|\band\b|\bwith\b|$)/g;
+  for (const match of narrative.matchAll(valueLabelPattern)) {
+    addRow(match[2] ?? "", match[1] ?? "");
+  }
+
   const tableRows = Array.from(rows.values()).slice(0, 6);
-  if (tableRows.length < 2) return null;
+  if (tableRows.length < minRows) return null;
 
   const readiness =
     packet.riskCaveatBrief.dataReadinessGaps[0] ??
@@ -712,11 +737,12 @@ function fallbackNarrativeTableFromText(
 function fallbackVisualTableFromPacket(
   packet: IntelligenceConsultantPromptPacket,
   narrative?: string,
+  minRows = 2,
 ): string | null {
   return (
-    fallbackDecisionTableFromPacket(packet) ??
-    fallbackMetricTableFromPacket(packet) ??
-    (narrative ? fallbackNarrativeTableFromText(packet, narrative) : null)
+    fallbackMetricTableFromPacket(packet, minRows) ??
+    (narrative ? fallbackNarrativeTableFromText(packet, narrative, minRows) : null) ??
+    fallbackDecisionTableFromPacket(packet, minRows)
   );
 }
 
