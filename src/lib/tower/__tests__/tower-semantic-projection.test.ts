@@ -69,6 +69,123 @@ describe('tower semantic projection', () => {
     });
   });
 
+  it('preserves SkyHarbor Tower budget, spend, and value fields from v4 source variants', () => {
+    const projected = projectContextRecordsToTowerReadModel({
+      initiativeRows: [
+        {
+          id: 'sha-f13-1',
+          canonical_record_id: 'skyharbor:initiatives:INIT-0001',
+          record_type: 'initiatives_portfolio',
+          record_subtype: 'initiatives-portfolio',
+          source_file: 'family-5-execution-operations/F13_initiatives-portfolio.csv',
+          title: 'Fleet Renewal Program',
+          source_record_id: 'INIT-0001',
+          source_row_number: 2,
+          payload: {
+            initiative_id: 'INIT-0001',
+            initiative_name: 'Fleet Renewal Program',
+            business_function: 'Transformation',
+            owning_team: 'CIO',
+            stage: 'Scaling',
+            fy26_budget_usd: '8650000',
+            target_value_usd: '21900000',
+            primary_blocker: 'rag=Red; sponsor=Board Technology Committee; ai=N',
+          },
+        },
+      ],
+      vendorRows: [],
+      aiControlInitiativeRows: [
+        {
+          id: 'sha-t01-1',
+          canonical_record_id: 'skyharbor:tower:SHA-INIT-001',
+          record_type: 'ai_control_initiative',
+          record_subtype: 'initiative-registry',
+          source_file: 'ai-control-tower/T01_initiative-registry.csv',
+          title: 'IROPS Agentic Recovery Cockpit',
+          source_record_id: 'SHA-INIT-001',
+          source_row_number: 2,
+          payload: {
+            initiative_id: 'SHA-INIT-001',
+            initiative_name: 'IROPS Agentic Recovery Cockpit',
+            portfolio_segment: 'operations_ai',
+            owner_role: 'EVP CDTO',
+            stage: 'scale_pilot',
+            promised_value_usd: '270000000',
+            measured_value_ytd_usd: '91800000',
+            evidence_status: 'source_cited',
+            scale_decision: 'scale',
+          },
+        },
+      ],
+      benefitRows: [
+        {
+          id: 'sha-t07-1',
+          canonical_record_id: 'skyharbor:benefit:SHA-INIT-001',
+          record_type: 'ai_control_benefit',
+          record_subtype: 'benefit-realization',
+          source_file: 'ai-control-tower/T07_benefit-realization.csv',
+          title: 'IROPS value realization',
+          source_record_id: 'SHA-INIT-001',
+          source_row_number: 2,
+          payload: {
+            initiative_id: 'SHA-INIT-001',
+            committed_value_usd: '270000000',
+            realized_value_ytd_usd: '91800000',
+            confidence: 'high',
+          },
+        },
+      ],
+      spendRows: [
+        {
+          id: 'sha-t08-1',
+          canonical_record_id: 'skyharbor:spend:SHA-SPEND-001-1',
+          record_type: 'ai_control_spend',
+          record_subtype: 'spend-contracts',
+          source_file: 'ai-control-tower/T08_spend-contracts.csv',
+          title: 'IROPS labor spend',
+          source_record_id: 'SHA-SPEND-001-1',
+          source_row_number: 2,
+          payload: {
+            spend_id: 'SHA-SPEND-001-1',
+            initiative_id: 'SHA-INIT-001',
+            vendor_or_internal: 'internal',
+            spend_category: 'labor',
+            fy26_budget_usd: '900000',
+            actual_ytd_usd: '420000',
+            renewal_or_gate_date: '2026-01-28',
+          },
+        },
+      ],
+      riskRows: [],
+    });
+
+    expect(projected.initiatives).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          displayId: 'INIT-0001',
+          committedAnnualUsd: 8_650_000,
+          measuredValueUsd: null,
+        }),
+        expect.objectContaining({
+          displayId: 'SHA-INIT-001',
+          committedAnnualUsd: 900_000,
+          measuredValueUsd: 91_800_000,
+          loadedViaTemplate: 'ai_control_tower_context',
+        }),
+      ]),
+    );
+    expect(projected.vendors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          vendorName: 'internal',
+          initiativeDisplayId: 'SHA-INIT-001',
+          contractValueUsd: 900_000,
+          renewalDate: '2026-01-28',
+        }),
+      ]),
+    );
+  });
+
   it('projects AI-control rows when legacy ai_initiatives is empty', () => {
     const projected = projectAiControlRowsToTowerReadModel({
       initiativeRows: [

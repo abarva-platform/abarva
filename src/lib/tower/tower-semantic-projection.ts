@@ -14,6 +14,7 @@ interface ContextRecordRow {
   canonical_record_id: string | null;
   record_type: string | null;
   record_subtype: string | null;
+  source_file?: string | null;
   title: string | null;
   source_record_id: string | null;
   source_row_number: number | null;
@@ -83,6 +84,35 @@ function num(value: unknown): number | null {
     return Number.isFinite(parsed) ? parsed : null;
   }
   return null;
+}
+
+function firstValue(payload: JsonRecord, keys: readonly string[]): unknown {
+  for (const key of keys) {
+    const value = payload[key];
+    if (value !== null && value !== undefined && text(value)) return value;
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+  }
+  return null;
+}
+
+function firstText(payload: JsonRecord, keys: readonly string[], fallback = ''): string {
+  return displayText(firstValue(payload, keys), fallback);
+}
+
+function firstNum(payload: JsonRecord, keys: readonly string[]): number | null {
+  for (const key of keys) {
+    const value = num(payload[key]);
+    if (value !== null) return value;
+  }
+  return null;
+}
+
+function recordKey(row: ContextRecordRow, keys: readonly string[], fallbackPrefix: string, index: number): string {
+  return firstText(row.payload ?? {}, keys, row.source_record_id ?? `${fallbackPrefix}-${index + 1}`);
+}
+
+function sourceKind(row: ContextRecordRow): string {
+  return `${row.source_file ?? ''} ${row.record_type ?? ''} ${row.record_subtype ?? ''}`.toLowerCase();
 }
 
 function isoDate(value: unknown): string | null {
@@ -196,18 +226,60 @@ function asInitiative(args: {
 export function projectContextRecordsToTowerReadModel(args: {
   initiativeRows: readonly ContextRecordRow[];
   vendorRows: readonly ContextRecordRow[];
+  aiControlInitiativeRows?: readonly ContextRecordRow[];
+  benefitRows?: readonly ContextRecordRow[];
+  spendRows?: readonly ContextRecordRow[];
+  riskRows?: readonly ContextRecordRow[];
 }): ProjectedTowerReadModel {
-  const initiatives = args.initiativeRows.map((row, index) => {
+  const benefitRealized = sumByKey(
+    args.benefitRows ?? [],
+    (row) => firstText(row.payload ?? {}, ['initiative_id', 'initiative_key']),
+    (row) => firstNum(row.payload ?? {}, ['realized_value_ytd_usd', 'realized_value_usd', 'measured_value_ytd_usd', 'measured_value_usd']),
+  );
+  const spendBudget = sumByKey(
+    args.spendRows ?? [],
+    (row) => firstText(row.payload ?? {}, ['initiative_id', 'initiative_key']),
+    (row) => firstNum(row.payload ?? {}, ['fy26_budget_usd', 'annual_budget_usd', 'spend_amount_usd', 'annualized_spend_usd', 'contract_value_usd']),
+  );
+  const spendActual = sumByKey(
+    args.spendRows ?? [],
+    (row) => firstText(row.payload ?? {}, ['initiative_id', 'initiative_key']),
+    (row) => firstNum(row.payload ?? {}, ['actual_ytd_usd', 'ytd_spend_usd', 'realized_spend_usd']),
+  );
+  const riskByInitiative = firstByKey(
+    args.riskRows ?? [],
+    (row) => firstText(row.payload ?? {}, ['initiative_id', 'initiative_key']),
+  );
+
+  const seenInitiatives = new Set<string>();
+  const sourceRows = [...args.initiativeRows, ...(args.aiControlInitiativeRows ?? [])];
+  const initiatives = sourceRows.map((row, index) => {
     const payload = row.payload ?? {};
-    const key = displayText(payload.initiative_id, row.source_record_id ?? `IT-INIT-${index + 1}`);
-    const name = displayText(payload.initiative_name, row.title ?? key);
-    const risk = payload.risk_status;
-    const dependency = displayText(payload.dependency);
+    const key = recordKey(row, ['initiative_id', 'initiative_key', 'program_id'], 'IT-INIT', index);
+    if (seenInitiatives.has(key)) return null;
+    seenInitiatives.add(key);
+
+    const name = firstText(payload, ['initiative_name', 'program_name', 'name'], row.title ?? key);
+    const riskRow = riskByInitiative.get(key);
+    const riskPayload = riskRow?.payload ?? {};
+    const risk = firstValue(payload, ['risk_status', 'primary_blocker', 'status_flag', 'evidence_status', 'scale_decision'])
+      ?? firstValue(riskPayload, ['severity', 'status', 'risk_description', 'governance_gate']);
+    const dependency = firstText(payload, ['dependency', 'primary_blocker', 'blocker']);
+    const committedUsd =
+      firstNum(payload, ['budget_usd', 'fy26_budget_usd', 'annual_budget_usd', 'program_budget_usd', 'spend_amount_usd'])
+      ?? spendBudget.get(key)
+      ?? null;
+    const measuredUsd =
+      firstNum(payload, ['measured_value_usd', 'measured_value_ytd_usd', 'realized_value_usd', 'realized_value_ytd_usd'])
+      ?? benefitRealized.get(key)
+      ?? null;
+    const actualYtd = spendActual.get(key);
     const statusFlag = normalizeStatus(risk, risk);
     const statusSummary = [
       dependency ? `Dependency: ${dependency}.` : '',
       risk ? `Risk status: ${String(risk)}.` : '',
       payload.move_relevance ? `Move relevance: ${String(payload.move_relevance)}.` : '',
+      actualYtd ? `Actual YTD spend is ${actualYtd}.` : '',
     ].filter(Boolean).join(' ') || 'Loaded from the tenant IT initiatives portfolio.';
 
     return asInitiative({
@@ -215,36 +287,42 @@ export function projectContextRecordsToTowerReadModel(args: {
       displayId: key,
       name,
       description: statusSummary,
-      category: displayText(payload.business_area, 'IT portfolio'),
-      stage: normalizeStage(payload.stage),
-      stageDetail: displayText(payload.stage) || null,
-      ownerRole: displayText(payload.owner_role, 'Portfolio owner role'),
-      committedUsd: num(payload.budget_usd),
-      measuredUsd: null,
+      category: firstText(payload, ['business_area', 'business_function', 'portfolio_segment', 'category'], 'IT portfolio'),
+      stage: normalizeStage(firstValue(payload, ['stage', 'lifecycle_stage', 'scale_decision'])),
+      stageDetail: firstText(payload, ['stage', 'lifecycle_stage', 'scale_decision']) || null,
+      ownerRole: firstText(payload, ['owner_role', 'owning_team', 'business_owner_role', 'business_sponsor_role', 'owner'], 'Portfolio owner role'),
+      committedUsd,
+      measuredUsd,
       statusFlag,
       statusSummary,
       confidenceLevel: confidenceFromRisk(risk),
-      loadedViaTemplate: 'enterprise_context_initiatives_portfolio',
+      loadedViaTemplate: sourceKind(row).includes('t01') ? 'ai_control_tower_context' : 'enterprise_context_initiatives_portfolio',
     });
-  });
+  }).filter((initiative): initiative is AIInitiative => Boolean(initiative));
 
   const fallbackInitiative = initiatives[0] ?? null;
-  const vendors = args.vendorRows.map((row, index): AIInitiativeVendorRow => {
+  const vendors = [...args.vendorRows, ...(args.spendRows ?? [])].map((row, index): AIInitiativeVendorRow => {
     const payload = row.payload ?? {};
-    const initiative = fallbackInitiative;
-    const risk = text(payload.commercial_risk).toLowerCase();
+    const initiativeKey = firstText(payload, ['initiative_id', 'initiative_key']);
+    const initiative = initiatives.find((candidate) => candidate.displayId === initiativeKey) ?? fallbackInitiative;
+    const risk = firstText(payload, ['commercial_risk', 'evidence_state', 'spend_posture']).toLowerCase();
     const health: AIInitiativeVendorRow['financialHealth'] =
       risk.includes('high') || risk.includes('implementation') || risk.includes('risk')
         ? 'watch'
         : 'moderate';
+    const vendorName = firstText(
+      payload,
+      ['vendor_name', 'vendor', 'vendor_or_internal', 'product_or_service'],
+      row.title ?? `Vendor ${index + 1}`,
+    );
     return {
-      vendorId: displayText(payload.vendor_id, row.source_record_id ?? `vendor-${index + 1}`),
+      vendorId: firstText(payload, ['vendor_id', 'spend_id', 'contract_id'], row.source_record_id ?? `vendor-${index + 1}`),
       initiativeId: initiative?.initiativeId ?? 'enterprise_context:portfolio',
       initiativeDisplayId: initiative?.displayId ?? 'IT-PORTFOLIO',
       initiativeName: initiative?.name ?? 'IT portfolio',
-      vendorName: displayText(payload.vendor_name, row.title ?? `Vendor ${index + 1}`),
-      contractValueUsd: num(payload.annual_contract_value_usd),
-      renewalDate: isoDate(payload.renewal_date),
+      vendorName,
+      contractValueUsd: firstNum(payload, ['annual_contract_value_usd', 'contract_value_usd', 'annual_budget_usd', 'fy26_budget_usd', 'spend_amount_usd', 'annualized_spend_usd']),
+      renewalDate: isoDate(firstValue(payload, ['renewal_date', 'renewal_or_gate_date', 'gate_date'])),
       financialHealth: health,
     };
   });
@@ -338,34 +416,81 @@ export async function listProjectedTowerReadModelForClient(args: {
     args.tenantKey === 'lakeshore' ? 'lakeshore-holdings' : null,
   ].filter((value): value is string => Boolean(value));
 
-  const [initiativeRows, vendorRows] = await Promise.all([
+  const [initiativeRows, vendorRows, aiControlInitiativeRows, benefitRows, spendRows, riskRows] = await Promise.all([
     azureRead.query<ContextRecordRow>(
-      `SELECT id, canonical_record_id, record_type, record_subtype, title, source_record_id, source_row_number, payload
+      `SELECT id, canonical_record_id, record_type, record_subtype, source_file, title, source_record_id, source_row_number, payload
          FROM enterprise_context_records
         WHERE (client_id = $1 OR lower(tenant_key) = ANY($2::text[]))
           AND (record_type = 'initiatives_portfolio'
             OR record_subtype = 'initiatives-portfolio'
             OR source_file ILIKE '%F13_initiatives-portfolio%')
         ORDER BY source_row_number NULLS LAST, title
-        LIMIT 100`,
+        LIMIT 300`,
       [args.clientId, tenantAliases.map((alias) => alias.toLowerCase())],
       { missingTable: 'empty' },
     ),
     azureRead.query<ContextRecordRow>(
-      `SELECT id, canonical_record_id, record_type, record_subtype, title, source_record_id, source_row_number, payload
+      `SELECT id, canonical_record_id, record_type, record_subtype, source_file, title, source_record_id, source_row_number, payload
          FROM enterprise_context_records
         WHERE (client_id = $1 OR lower(tenant_key) = ANY($2::text[]))
           AND (record_type = 'vendors_contracts_licenses'
             OR record_subtype = 'vendors-contracts-licenses'
             OR source_file ILIKE '%F11_vendors-contracts-licenses%')
         ORDER BY source_row_number NULLS LAST, title
-        LIMIT 100`,
+        LIMIT 300`,
+      [args.clientId, tenantAliases.map((alias) => alias.toLowerCase())],
+      { missingTable: 'empty' },
+    ),
+    azureRead.query<ContextRecordRow>(
+      `SELECT id, canonical_record_id, record_type, record_subtype, source_file, title, source_record_id, source_row_number, payload
+         FROM enterprise_context_records
+        WHERE (client_id = $1 OR lower(tenant_key) = ANY($2::text[]))
+          AND source_file ILIKE '%T01_initiative%'
+        ORDER BY source_row_number NULLS LAST, title
+        LIMIT 300`,
+      [args.clientId, tenantAliases.map((alias) => alias.toLowerCase())],
+      { missingTable: 'empty' },
+    ),
+    azureRead.query<ContextRecordRow>(
+      `SELECT id, canonical_record_id, record_type, record_subtype, source_file, title, source_record_id, source_row_number, payload
+         FROM enterprise_context_records
+        WHERE (client_id = $1 OR lower(tenant_key) = ANY($2::text[]))
+          AND source_file ILIKE '%T07_benefit%'
+        ORDER BY source_row_number NULLS LAST, title
+        LIMIT 300`,
+      [args.clientId, tenantAliases.map((alias) => alias.toLowerCase())],
+      { missingTable: 'empty' },
+    ),
+    azureRead.query<ContextRecordRow>(
+      `SELECT id, canonical_record_id, record_type, record_subtype, source_file, title, source_record_id, source_row_number, payload
+         FROM enterprise_context_records
+        WHERE (client_id = $1 OR lower(tenant_key) = ANY($2::text[]))
+          AND source_file ILIKE '%T08_spend%'
+        ORDER BY source_row_number NULLS LAST, title
+        LIMIT 600`,
+      [args.clientId, tenantAliases.map((alias) => alias.toLowerCase())],
+      { missingTable: 'empty' },
+    ),
+    azureRead.query<ContextRecordRow>(
+      `SELECT id, canonical_record_id, record_type, record_subtype, source_file, title, source_record_id, source_row_number, payload
+         FROM enterprise_context_records
+        WHERE (client_id = $1 OR lower(tenant_key) = ANY($2::text[]))
+          AND source_file ILIKE '%T09_risk%'
+        ORDER BY source_row_number NULLS LAST, title
+        LIMIT 300`,
       [args.clientId, tenantAliases.map((alias) => alias.toLowerCase())],
       { missingTable: 'empty' },
     ),
   ]);
 
-  const contextProjection = projectContextRecordsToTowerReadModel({ initiativeRows, vendorRows });
+  const contextProjection = projectContextRecordsToTowerReadModel({
+    initiativeRows,
+    vendorRows,
+    aiControlInitiativeRows,
+    benefitRows,
+    spendRows,
+    riskRows,
+  });
   if (contextProjection.initiatives.length > 0 || contextProjection.vendors.length > 0) {
     return contextProjection;
   }

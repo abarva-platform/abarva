@@ -5,7 +5,10 @@ import {
   listMaterializedTowerReadModelForClient,
   shapeTowerMaterializedReadModel,
 } from "@/lib/tower/tower-materialized-read-model";
-import { shapeTowerBudgetRollups } from "@/lib/tower/tower-budget-rollups";
+import {
+  listTowerBudgetRollupsForClient,
+  shapeTowerBudgetRollups,
+} from "@/lib/tower/tower-budget-rollups";
 import type {
   AzureReadClient,
   AzureReadSelect,
@@ -133,6 +136,75 @@ describe("tower materialized read model", () => {
       employees: 7_500,
       itSpendAsPctRevenue: 0.02,
     });
+  });
+
+  it("falls back to F12 source evidence when materialized budget rollups are absent", async () => {
+    const db: AzureReadClient = {
+      async query<R = Record<string, unknown>>() {
+        return [
+          {
+            id: "sha-f12-1",
+            source_file: "family-4-financial-commercial/F12_it-budget-financials.csv",
+            source_row_number: 2,
+            payload: {
+              budget_line_id: "BUD-001",
+              budget_area: "IBM Z / mainframe run",
+              spend_type: "run",
+              fy26_budget_usd: "386000000",
+              owner_team_id: "SHA-IT-009",
+            },
+          },
+          {
+            id: "sha-f12-2",
+            source_file: "family-4-financial-commercial/F12_it-budget-financials.csv",
+            source_row_number: 3,
+            payload: {
+              budget_line_id: "BUD-002",
+              budget_area: "AWS lake and event streams",
+              spend_type: "change",
+              fy26_budget_usd: "74000000",
+              owner_team_id: "SHA-IT-011",
+            },
+          },
+        ] as R[];
+      },
+      async select<R = Record<string, unknown>>(request: AzureReadSelect) {
+        expect(request.table).toBe("tower_budget_rollups");
+        return [] as R[];
+      },
+      async maybeSingle() {
+        return null;
+      },
+      async count() {
+        return 0;
+      },
+      async withSession(fn) {
+        return fn(async () => []);
+      },
+    };
+
+    const rollups = await listTowerBudgetRollupsForClient({
+      clientId: "client-skyharbor",
+      tenantKey: "skyharbor",
+      db,
+    });
+
+    expect(rollups).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          portfolioCompany: "IBM Z / mainframe run",
+          totalItBudgetUsd: 386_000_000,
+          runAmountUsd: 386_000_000,
+          changeAmountUsd: 0,
+        }),
+        expect.objectContaining({
+          portfolioCompany: "AWS lake and event streams",
+          totalItBudgetUsd: 74_000_000,
+          runAmountUsd: 0,
+          changeAmountUsd: 74_000_000,
+        }),
+      ]),
+    );
   });
 
   it("reads only tower read-model tables and budget rollups at runtime", async () => {
