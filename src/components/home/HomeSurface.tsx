@@ -18,6 +18,7 @@ import type {
   HomeKnowCitation,
   HomeKnowResponse,
 } from "@/lib/home/know/home-know-contract";
+import { shapeHomeKnowResponseForRender } from "@/lib/home/know/home-render-layer-shaper";
 import type {
   IntelligenceBindingPayload,
   BindingDimension,
@@ -61,8 +62,8 @@ const CSS = `
 `;
 
 const CONTEXT_BROWSER_QUESTIONS = [
-  "What context is loaded for this tenant?",
-  "Show the loaded context dimensions in a table.",
+  "What business context is available for this tenant?",
+  "Show the available business areas in a table.",
   "How is our IT organization structured today?",
   "Which systems of record are loaded?",
   "Show vendor and contract coverage.",
@@ -114,7 +115,7 @@ function SignalCard({ s }: { s: BindingSignal }) {
       <h3>{s.headline}</h3>
       <p>{s.body}</p>
       <div className="hx-evi">
-        {s.evidencePoints} source points · {s.sources} sources
+        {s.evidencePoints} supporting signals · {s.sources} sources
       </div>
     </div>
   );
@@ -144,7 +145,7 @@ function DimensionView({
           </div>
         </div>
         <div className="hx-stat">
-          <div className="k">Source points</div>
+          <div className="k">Signals</div>
           <div className="v">{dim.evidence.toLocaleString()}</div>
         </div>
         <div className="hx-stat">
@@ -152,7 +153,7 @@ function DimensionView({
           <div className="v">{dim.sources}</div>
         </div>
         <div className="hx-stat" style={{ minWidth: 140 }}>
-          <div className="k">Trust</div>
+          <div className="k">Confidence</div>
           <div className="v">{dim.trust}%</div>
           <div className="hx-meter">
             <span
@@ -197,11 +198,11 @@ function Overview({ payload }: { payload: IntelligenceBindingPayload | null }) {
       {tl ? (
         <div className="hx-stats">
           <div className="hx-stat">
-            <div className="k">Dimensions</div>
+            <div className="k">Business areas</div>
             <div className="v">{dimensionCount}</div>
           </div>
           <div className="hx-stat">
-            <div className="k">Source points</div>
+            <div className="k">Signals</div>
             <div className="v">{tl.evidencePoints.toLocaleString()}</div>
           </div>
           <div className="hx-stat">
@@ -421,7 +422,7 @@ function textFallback(response: HomeKnowResponse): string {
     response.graphs.length ? `${response.graphs.length} graph` : null,
   ].filter(Boolean);
   if (exhibitParts.length > 0) {
-    lines.push(`Evidence and exhibits: ${exhibitParts.join(", ")}.`);
+    lines.push(`Details available: ${exhibitParts.join(", ")}.`);
   }
   if (response.gaps.length > 0) {
     lines.push(
@@ -491,7 +492,7 @@ export function HomeSurface({
         if (!res.ok || !isHomeKnowResponse(json)) {
           throw new Error("Home KNOW returned an invalid response.");
         }
-        const response = json;
+        const response = shapeHomeKnowResponseForRender(json);
         const body = textFallback(response);
         const agentAnswer = toAvaAnswerPacket(response);
         setThread((current) =>
@@ -563,8 +564,8 @@ export function HomeSurface({
                 <span className="hx-dot" style={{ background: "var(--hb)" }} />
                 <span>
                   {dims.length
-                    ? `${dims.length} context dimensions loaded`
-                    : "Context dimensions"}
+                    ? `${dims.length} business areas loaded`
+                    : "Business areas"}
                 </span>
               </div>
               <select
@@ -578,13 +579,13 @@ export function HomeSurface({
                 <option value="">Overview</option>
                 {dims.map((d) => (
                   <option key={d.dimension} value={d.dimension}>
-                    {d.dimension} · {d.trust}% trust
+                    {d.dimension} · {d.trust}% confidence
                   </option>
                 ))}
               </select>
             </div>
             {dims.length > 0 && (
-              <div className="hx-rail-g">Loaded context · {dims.length}</div>
+              <div className="hx-rail-g">Business areas · {dims.length}</div>
             )}
           </div>
           {selected ? (
@@ -608,7 +609,7 @@ export function HomeSurface({
       isBusy={isBusy}
       minLeftPx={360}
       onMessage={askHomeKnow}
-      placeholder="Ask about loaded context, systems, owners, vendors..."
+      placeholder="Ask about available context, systems, owners, vendors..."
       suggestedActions={suggestedActions}
       surface="home"
       surfaceContext={{

@@ -24,6 +24,17 @@ const DEFAULT_MODEL = "claude-opus-4-8";
 const DEFAULT_TIMEOUT_MS = 60_000;
 const DEFAULT_MAX_TOKENS = 25_000;
 const PROMPT_VERSION = "home_consultant_text_synthesis_v2_branch_first";
+const HOME_SYNTHESIS_CACHE_MAX_ENTRIES = 250;
+const HOME_SYNTHESIS_CACHE_TTL_MS = 1000 * 60 * 60 * 6;
+
+interface CachedHomeSynthesis {
+  text: string;
+  rawText: string;
+  rawTextPreview: string;
+  createdAt: number;
+}
+
+const homeSynthesisCache = new Map<string, CachedHomeSynthesis>();
 
 export const HOME_CONSULTANT_TEXT_SYSTEM_PROMPT = `You are AbarVa's Home / Explorer consultant.
 
@@ -177,6 +188,13 @@ export function isHomeConsultantClaudeSynthesisEnabled(): boolean {
   return process.env.NODE_ENV === "production";
 }
 
+export function isHomeSynthesisCacheEnabled(): boolean {
+  const raw = process.env.HOME_KNOW_SYNTHESIS_CACHE_ENABLED?.trim().toLowerCase();
+  if (raw === "false" || raw === "0" || raw === "off") return false;
+  if (raw === "true" || raw === "1" || raw === "on") return true;
+  return process.env.NODE_ENV === "production";
+}
+
 export function homeConsultantOutputMode(): "text" {
   return "text";
 }
@@ -232,6 +250,59 @@ export async function synthesizeHomeConsultantText(args: {
   });
   const user = renderHomeConsultantTextUserPrompt(promptPacket);
   const prompt = [HOME_CONSULTANT_TEXT_SYSTEM_PROMPT, user].join("\n\n");
+  const requestPayload = {
+    model,
+    max_tokens: maxTokens,
+    system: HOME_CONSULTANT_TEXT_SYSTEM_PROMPT,
+    messages: [{ role: "user" as const, content: user }],
+  };
+  const promptBoundary = buildHomeAnthropicPromptBoundary({
+    requestPayload,
+    system: HOME_CONSULTANT_TEXT_SYSTEM_PROMPT,
+    user,
+  });
+  const cacheKey = homeSynthesisCacheKey({
+    tenantKey: args.dossier.tenantKey,
+    question: args.dossier.route.question,
+    promptSha256: promptBoundary.finalPrompt.promptSha256,
+    model,
+  });
+  const cacheEnabled = isHomeSynthesisCacheEnabled();
+  const cached = cacheEnabled ? readHomeSynthesisCache(cacheKey) : null;
+  if (cached) {
+    return {
+      text: cached.text,
+      prompt,
+      promptPacket,
+      trace: {
+        attempted: true,
+        used: true,
+        outputMode: "text",
+        promptVersion: PROMPT_VERSION,
+        model,
+        maxTokens,
+        timeoutMs,
+        auditId: "home-synthesis-cache-hit",
+        rawTextPreview: cached.rawTextPreview,
+        validationIssues: [],
+        anthropicTrace: args.operatorTrace
+          ? {
+              finalPrompt: promptBoundary.finalPrompt,
+              model,
+              params: {
+                max_tokens: maxTokens,
+                timeoutMs,
+              },
+              claudeRaw: {
+                events: [],
+                message: null,
+                text: cached.rawText,
+              },
+            }
+          : undefined,
+      },
+    };
+  }
 
   try {
     const { client, auditId } = await getAuditedAnthropicClient({
@@ -248,17 +319,6 @@ export async function synthesizeHomeConsultantText(args: {
         evidenceChannels: evidence.evidenceChannels,
         streaming: true,
       },
-    });
-    const requestPayload = {
-      model,
-      max_tokens: maxTokens,
-      system: HOME_CONSULTANT_TEXT_SYSTEM_PROMPT,
-      messages: [{ role: "user" as const, content: user }],
-    };
-    const promptBoundary = buildHomeAnthropicPromptBoundary({
-      requestPayload,
-      system: HOME_CONSULTANT_TEXT_SYSTEM_PROMPT,
-      user,
     });
     const stream = client.messages.stream(requestPayload);
     const collected = await withTimeout(
@@ -314,6 +374,14 @@ export async function synthesizeHomeConsultantText(args: {
         reason: "validation_failed",
         validationIssues,
       };
+    }
+    if (cacheEnabled) {
+      writeHomeSynthesisCache(cacheKey, {
+        text,
+        rawText,
+        rawTextPreview: redactTextPreview(rawText),
+        createdAt: Date.now(),
+      });
     }
     return {
       text,
@@ -858,6 +926,54 @@ function redactTextPreview(text: string): string {
 function numberFromEnv(key: string, fallback: number): number {
   const value = Number(process.env[key]);
   return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function homeSynthesisCacheKey(args: {
+  tenantKey: string;
+  question: string;
+  promptSha256: string;
+  model: string;
+}): string {
+  const normalizedQuestion = args.question
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+  return createHash("sha256")
+    .update(
+      [
+        "home-consultant-text-synthesis",
+        PROMPT_VERSION,
+        args.model,
+        args.tenantKey.toLowerCase(),
+        normalizedQuestion,
+        args.promptSha256,
+      ].join("|"),
+    )
+    .digest("hex");
+}
+
+function readHomeSynthesisCache(cacheKey: string): CachedHomeSynthesis | null {
+  const cached = homeSynthesisCache.get(cacheKey);
+  if (!cached) return null;
+  if (Date.now() - cached.createdAt > HOME_SYNTHESIS_CACHE_TTL_MS) {
+    homeSynthesisCache.delete(cacheKey);
+    return null;
+  }
+  homeSynthesisCache.delete(cacheKey);
+  homeSynthesisCache.set(cacheKey, cached);
+  return cached;
+}
+
+function writeHomeSynthesisCache(
+  cacheKey: string,
+  value: CachedHomeSynthesis,
+): void {
+  homeSynthesisCache.set(cacheKey, value);
+  while (homeSynthesisCache.size > HOME_SYNTHESIS_CACHE_MAX_ENTRIES) {
+    const oldestKey = homeSynthesisCache.keys().next().value;
+    if (!oldestKey) break;
+    homeSynthesisCache.delete(oldestKey);
+  }
 }
 
 function escapeRegExp(value: string): string {

@@ -4,6 +4,12 @@ import * as SvgCharts from "@/lib/programs/expert-kernel/exports/board-grade/svg
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { builderForChartKind } from "@/lib/intelligence/answer/chart-kind-builders";
 import { sanitizeAvaAnswerForRender } from "@/lib/intelligence/answer/answer-safety";
+import {
+  compactCitations,
+  shapeCitationLabel,
+  shapePublicText,
+  sourceClassDisplayLabel,
+} from "@/lib/ava-answer/render-layer-shaper";
 import type {
   AnswerChart,
   AnswerCitation,
@@ -137,16 +143,22 @@ function citationsFor(
 }
 
 function CitationChips({ citations }: { citations: AnswerCitation[] }) {
-  if (citations.length === 0) return null;
+  const visible = compactCitations(citations);
+  if (visible.length === 0) return null;
   return (
     <div className="aaCitations" aria-label="Sources">
-      {citations.map((citation) => {
-        const label = citation.label || citation.id;
+      {visible.map((citation) => {
+        const label = shapeCitationLabel(citation);
+        const classLabel = sourceClassLabel(citation.sourceClass);
         const content = (
           <>
             <span>{label}</span>
-            <span aria-hidden="true">·</span>
-            <span>{sourceClassLabel(citation.sourceClass)}</span>
+            {classLabel ? (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>{classLabel}</span>
+              </>
+            ) : null}
           </>
         );
         return citation.url ? (
@@ -157,7 +169,7 @@ function CitationChips({ citations }: { citations: AnswerCitation[] }) {
           <span
             className="aaCitation"
             key={citation.id}
-            title={citation.excerpt}
+            title={citation.excerpt ? shapePublicText(citation.excerpt, "") : undefined}
           >
             {content}
           </span>
@@ -168,22 +180,7 @@ function CitationChips({ citations }: { citations: AnswerCitation[] }) {
 }
 
 function sourceClassLabel(sourceClass: AnswerCitation["sourceClass"]): string {
-  switch (sourceClass) {
-    case "tenant-fact":
-      return "tenant support";
-    case "tenant-chunk":
-      return "tenant excerpt";
-    case "graph":
-      return "enterprise connection";
-    case "corpus-pattern":
-      return "industry pattern";
-    case "worldview":
-      return "strategic pattern";
-    case "expert-pack":
-      return "pattern";
-    default:
-      return "source";
-  }
+  return sourceClassDisplayLabel(sourceClass);
 }
 
 function formatCell(

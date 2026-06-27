@@ -24,6 +24,7 @@ import {
   homePublicAnswerLeakIssues,
   scrubHomePublicAnswerText,
 } from "@/lib/home/know/home-public-answer-scrub";
+import { shapeHomeKnowResponseForRender } from "@/lib/home/know/home-render-layer-shaper";
 import {
   applyHomeConsultantTextSynthesis,
   applyHomeConsultantTextSynthesisFailureTrace,
@@ -2337,8 +2338,10 @@ export function validateHomeKnowResponse(
     },
   });
   const finalProse = sanitizePublicHomeText(repaired.prose);
-  if (finalProse === repaired.prose) return repaired;
-  return {
+  if (finalProse === repaired.prose) {
+    return shapeHomeKnowResponseForRender(repaired);
+  }
+  return shapeHomeKnowResponseForRender({
     ...repaired,
     prose: finalProse,
     safety: {
@@ -2346,7 +2349,7 @@ export function validateHomeKnowResponse(
       unsupportedClaimsRemoved:
         repaired.safety.unsupportedClaimsRemoved + 1,
     },
-  };
+  });
 }
 
 function sanitizePublicHomeText(value: string): string {

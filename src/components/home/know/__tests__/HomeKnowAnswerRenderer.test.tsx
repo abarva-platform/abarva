@@ -228,10 +228,11 @@ describe("HomeKnowAnswerRenderer", () => {
     expect(screen.queryByText(/\bRead:/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/\bEvidence:/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/\bread-model\b/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/\bevidence\b/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\bsource support\b/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\bsupporting material\b/i)).not.toBeInTheDocument();
   });
 
-  it("does not mangle consultant prose when replacing evidence language", () => {
+  it("keeps consultant prose natural when shaping evidence language", () => {
     render(
       <HomeKnowAnswerRenderer
         response={{
@@ -244,10 +245,54 @@ describe("HomeKnowAnswerRenderer", () => {
 
     expect(
       screen.getByText(
-        "The loaded source support gives a clear current-state picture of the organization.",
+        "The loaded evidence shows a clear current-state picture of the organization.",
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText(/source support supports/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/\bevidence\b/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\bsupporting material\b/i)).not.toBeInTheDocument();
+  });
+
+  it("shapes citation and coverage-table labels before rendering", () => {
+    const response: HomeKnowResponse = {
+      ...baseResponse,
+      prose: "The source-supported business objects are in operations_process.",
+      tables: [
+        {
+          id: "coverage",
+          title: "Source coverage",
+          dimensionId: "operations_process",
+          columns: [
+            { key: "dimension", label: "Dimension" },
+            { key: "records", label: "Records", format: "number" },
+          ],
+          rows: [
+            { dimension: "operations_process", records: 12 },
+            { dimension: "ticket_work_items", records: 0 },
+          ],
+          citationIds: ["c1", "c2"],
+        },
+      ],
+      citations: [
+        {
+          id: "c1",
+          label: "operational signals",
+          sourceClass: "tenant-source-file",
+          excerpt: "tenant excerpt",
+        },
+        {
+          id: "c2",
+          label: "operational signals",
+          sourceClass: "tenant-source-file",
+          excerpt: "tenant excerpt",
+        },
+      ],
+    };
+
+    const { container } = render(<HomeKnowAnswerRenderer response={response} />);
+    const visibleText = container.textContent ?? "";
+
+    expect(visibleText).toContain("Operations & Process");
+    expect(visibleText).toContain("Operational Signals");
+    expect(visibleText).not.toMatch(/tenant excerpt|operations_process|ticket_work_items|source-supported|business objects/i);
   });
 });
