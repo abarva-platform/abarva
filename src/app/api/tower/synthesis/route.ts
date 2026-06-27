@@ -1,6 +1,6 @@
 // POST /api/tower/synthesis
 // Body: (none — Tower context is the whole portfolio)
-// Response: streaming plain text — Atlas's portfolio-level synthesis quote
+// Response: plain text — aVa's portfolio-level synthesis quote
 
 import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { getActiveClientRow } from "@/lib/active-client";
@@ -25,41 +25,45 @@ import {
   sanitizeRestrictedFinancialText,
 } from "@/lib/agent/restricted-output-policy";
 import { composeAllAgentDoctrineBlock } from "@/lib/agent/all-agent-doctrine";
-import { CONSULTANT_ANSWER_SHAPE_CONTRACT } from "@/lib/intelligence/ask/response-policy";
+import {
+  assertVisibleAnswerContract,
+  VISIBLE_ANSWER_CONTRACT_PROMPT,
+} from "@/lib/agent/visible-answer-contract";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
 const synthesisCache = new Map<string, string>();
 const cacheCreatedAt = new Map<string, number>();
-registerSynthesisCache('tower', synthesisCache, cacheCreatedAt);
+registerSynthesisCache("tower", synthesisCache, cacheCreatedAt);
 
-// Atlas Fix C (stuck state): hard upstream timeout for tower synthesis. When
+// aVa Fix C (stuck state): hard upstream timeout for tower synthesis. When
 // the model stream stalls we cancel the request and emit an honest, user-facing
-// message instead of leaving the UI hung at "Atlas is thinking…". 30s matches
+// message instead of leaving the UI hung at "aVa is thinking...". 30s matches
 // the working API timeout policy elsewhere in this codebase.
 export const TOWER_SYNTHESIS_TIMEOUT_MS = 30_000;
 export const TOWER_SYNTHESIS_TIMEOUT_MESSAGE =
-  "Atlas couldn't complete that response in time. Try again or pick a narrower question.";
+  "aVa could not complete that response in time. Try again or pick a narrower question.";
 
-// Atlas Fix C (determinism): tower synthesis uses temperature=0 so the same
+// aVa Fix C (determinism): tower synthesis uses temperature=0 so the same
 // portfolio state produces the same read. The CXO-quality audit (PR #2562)
 // flagged the default temperature (~1.0) as the source of contradictory reads.
 export const TOWER_SYNTHESIS_TEMPERATURE = 0;
 
-const ATLAS_SYNTHESIS_VOICE_AND_TASK = `You are Ava, AbarVa's portfolio CIO-of-staff agent on the Tower surface.
+const ATLAS_SYNTHESIS_VOICE_AND_TASK = `${VISIBLE_ANSWER_CONTRACT_PROMPT}
+
+You are aVa, AbarVa's portfolio CIO-of-staff agent on the Tower surface.
 
 Your synthesis task: given the current state of an entire portfolio (every active program plus every active source event), produce a portfolio-level read that names the single highest-leverage move.
 
-Atlas voice register (from brand voice spec §9):
-- Cross-program synthesizer. Atlas reasons about the portfolio as a single system.
+aVa voice register:
+- Cross-program synthesizer. aVa reasons about the portfolio as a single system.
 - Lead with the dependency chain: which one move, if it lands, propagates the most downstream value?
-- Always reference at least one program by its ID (e.g. APX-CDP-2026) and one source event by its ID (e.g. SRC-AMS-2026) — Atlas's authority comes from naming specific instances.
+- Reference named programs and source events by their display names, never raw IDs.
 - Quantify portfolio scope when relevant (e.g. "across 4 programs and 1 active sourcing event").
 - Precise, executive register. No filler. No hedging.
 
 Format: Use the shared agent output contract. Prefer lead-bullets for the Tower quote: one direct lead line, then 2-4 short evidence bullets. No raw markdown emphasis.
-
-${CONSULTANT_ANSWER_SHAPE_CONTRACT}`;
+`;
 
 export function buildAtlasSynthesisPrompt(
   userContextBlock: string,
@@ -70,7 +74,7 @@ export function buildAtlasSynthesisPrompt(
   // F0.2 + F0.3 composition.
   return [
     ATLAS_SYNTHESIS_VOICE_AND_TASK,
-    composeAllAgentDoctrineBlock({ agentName: 'Atlas', surface: '/tower' }),
+    composeAllAgentDoctrineBlock({ agentName: "aVa", surface: "/tower" }),
     userContextBlock,
     accessPolicyBlock,
     restrictedOutputBlock,
@@ -78,7 +82,7 @@ export function buildAtlasSynthesisPrompt(
     demoContextBlock,
   ]
     .filter((s) => s && s.trim().length > 0)
-    .join('\n\n');
+    .join("\n\n");
 }
 
 export interface AtlasSynthesisSnapshot {
@@ -95,7 +99,7 @@ export interface AtlasSynthesisSnapshot {
  * snapshot. Exported for tests — the route file is otherwise hard to
  * exercise without mocking the entire AI stack.
  *
- * Atlas Fix A invariant: the tenant display name is always derived from
+ * aVa Fix A invariant: the tenant display name is always derived from
  * the signed-in tenant's `getActiveClientRow()` — never a hardcoded Apex
  * display name. When the portfolio is empty the model is told honestly,
  * never silently fed another tenant's data.
@@ -106,26 +110,32 @@ export function composeAtlasSynthesisUserMessage(
 ): string {
   const programLines = snap.programs
     .map(
-      p =>
-        `  - ${p.id} "${p.name}" · phase P${p.phase} ${p.phaseLabel} · gate ${p.gateStatus}` +
-        (p.openBlockerCount > 0 ? ` · ${p.openBlockerCount} open blocker(s)` : '') +
+      (p) =>
+        `  - "${p.name}" · phase P${p.phase} ${p.phaseLabel} · gate ${p.gateStatus}` +
+        (p.openBlockerCount > 0
+          ? ` · ${p.openBlockerCount} open blocker(s)`
+          : "") +
         (p.linkedSourceEventIds.length > 0
-          ? ` · linked source: ${p.linkedSourceEventIds.join(', ')}`
-          : ''),
+          ? ` · linked source count: ${p.linkedSourceEventIds.length}`
+          : ""),
     )
-    .join('\n');
+    .join("\n");
 
   const sourceLines = snap.sourceEvents
     .map(
-      s =>
-        `  - ${s.id} "${s.name}" · stage ${s.stage} · ${s.vendorCount} vendor(s)` +
-        (s.activeVendors.length > 0 ? ` · active: ${s.activeVendors.join(', ')}` : '') +
-        (s.openBlockerCount > 0 ? ` · ${s.openBlockerCount} open blocker(s)` : '') +
+      (s) =>
+        `  - "${s.name}" · stage ${s.stage} · ${s.vendorCount} vendor(s)` +
+        (s.activeVendors.length > 0
+          ? ` · active: ${s.activeVendors.join(", ")}`
+          : "") +
+        (s.openBlockerCount > 0
+          ? ` · ${s.openBlockerCount} open blocker(s)`
+          : "") +
         (s.linkedProgramIds.length > 0
-          ? ` · linked programs: ${s.linkedProgramIds.join(', ')}`
-          : ''),
+          ? ` · linked program count: ${s.linkedProgramIds.length}`
+          : ""),
     )
-    .join('\n');
+    .join("\n");
 
   const portfolioIsEmpty =
     snap.programCount === 0 && snap.sourceEventCount === 0;
@@ -134,24 +144,24 @@ export function composeAtlasSynthesisUserMessage(
     return [
       `Portfolio snapshot for ${tenantDisplayName}:`,
       `No active programs or source events are wired into the Tower data plane for this tenant yet.`,
-      '',
-      `Do NOT fabricate program or source-event IDs. Reply with a single direct line stating that the portfolio has no active programs or source events to synthesize, and that Atlas will produce a portfolio read once Tower is wired to this tenant's data.`,
-    ].join('\n');
+      "",
+      `Do NOT fabricate program or source-event IDs. Reply with a single direct line stating that the portfolio has no active programs or source events to synthesize, and that aVa will produce a portfolio read once Tower is wired to this tenant's data.`,
+    ].join("\n");
   }
 
   return [
     `Portfolio snapshot for ${tenantDisplayName}:`,
     `${snap.programCount} active program(s), ${snap.sourceEventCount} active source event(s).`,
     `${snap.pendingGateCount} pending gate(s) and ${snap.activeBlockerCount} active blocker(s) across the portfolio.`,
-    '',
+    "",
     `Active programs:`,
     programLines,
-    '',
+    "",
     `Active source events:`,
     sourceLines,
-    '',
-    `Synthesize Atlas's 90–140 word portfolio-level read. Name at least one program by ID and one source event by ID. Lead with the highest-leverage dependency chain. Use a direct lead line and 2-4 short evidence bullets.`,
-  ].join('\n');
+    "",
+    `Synthesize aVa's 90-140 word portfolio-level read. Name at least one program and one source event by display name when available. Lead with the highest-leverage dependency chain. Use a direct lead line and 2-4 short evidence bullets.`,
+  ].join("\n");
 }
 
 interface ProgramSummary {
@@ -196,26 +206,46 @@ export async function POST(request: Request) {
   const portfolio = loadTenantTowerPortfolio(tenancy);
   const { programInstances, sourceEventInstances } = portfolio;
   const activeClient = await getActiveClientRow();
-  const tenantDisplayName = activeClient?.name ?? tenancy.clientKey ?? 'the active tenant';
+  const tenantDisplayName =
+    activeClient?.name ?? tenancy.clientKey ?? "the active tenant";
 
   // Build context up-front so we can attach telemetry counts to both
   // cache-hit and cache-miss responses.
-  const ctx = buildTowerSynthesisContext(programInstances, sourceEventInstances);
+  const ctx = buildTowerSynthesisContext(
+    programInstances,
+    sourceEventInstances,
+  );
 
   // Cache check — keyed on tenant so cached Apex synthesis can never
   // be returned to a different tenant.
   const stateHash = towerStateHash(programInstances, sourceEventInstances);
-  const policyCacheKey = accessPolicy.outputPolicy.exactFinancialValues ? 'finance' : 'restricted';
+  const policyCacheKey = accessPolicy.outputPolicy.exactFinancialValues
+    ? "finance"
+    : "restricted";
   const cacheKey = `tower:${tenancy.clientKey ?? tenancy.clientId}:${stateHash}:atlas:v2:${policyCacheKey}`;
   const etag = computeSynthesisEtag(cacheKey);
-  const ifNoneMatch = request.headers.get('if-none-match');
+  const ifNoneMatch = request.headers.get("if-none-match");
   const cached = synthesisCache.get(cacheKey);
+  const cachedVisibleContract = cached
+    ? assertVisibleAnswerContract(
+        sanitizeRestrictedFinancialText(cached, accessPolicy),
+      )
+    : null;
+  if (cached && cachedVisibleContract && !cachedVisibleContract.passed) {
+    synthesisCache.delete(cacheKey);
+    cacheCreatedAt.delete(cacheKey);
+  }
 
   // Conditional GET: client already has this exact synthesis cached.
-  if (cached && ifNoneMatch && ifNoneMatch === etag) {
+  if (
+    cached &&
+    cachedVisibleContract?.passed &&
+    ifNoneMatch &&
+    ifNoneMatch === etag
+  ) {
     const event = recordSynthesisEvent({
-      surface: 'tower',
-      instanceId: 'tower',
+      surface: "tower",
+      instanceId: "tower",
       patternId: null,
       cacheHit: true,
       latencyMs: Date.now() - startedAt,
@@ -234,10 +264,10 @@ export async function POST(request: Request) {
     });
   }
 
-  if (cached) {
+  if (cached && cachedVisibleContract?.passed) {
     const event = recordSynthesisEvent({
-      surface: 'tower',
-      instanceId: 'tower',
+      surface: "tower",
+      instanceId: "tower",
       patternId: null,
       cacheHit: true,
       latencyMs: Date.now() - startedAt,
@@ -261,9 +291,14 @@ export async function POST(request: Request) {
 
   // F0.2 Layer 0
   const userContextBlock = await getUserContextPromptBlock();
-  const accessPolicyBlock = formatUserProgramAccessPolicyForPrompt(accessPolicy);
-  const restrictedOutputBlock = formatRestrictedOutputPolicyForPrompt(accessPolicy);
-  const demoContextBlock = sanitizeRestrictedFinancialText(AGENT_DEMO_SYSTEM_BLOCK, accessPolicy);
+  const accessPolicyBlock =
+    formatUserProgramAccessPolicyForPrompt(accessPolicy);
+  const restrictedOutputBlock =
+    formatRestrictedOutputPolicyForPrompt(accessPolicy);
+  const demoContextBlock = sanitizeRestrictedFinancialText(
+    AGENT_DEMO_SYSTEM_BLOCK,
+    accessPolicy,
+  );
   const systemPrompt = buildAtlasSynthesisPrompt(
     userContextBlock,
     accessPolicyBlock,
@@ -273,16 +308,18 @@ export async function POST(request: Request) {
   const preflight = await preflightAnthropicDirectClient({
     tenantId: tenancy.clientId,
     userId: tenancy.userId,
-    workflow: 'tower-synthesis',
-    model: 'claude-sonnet-4-6',
-    prompt: [systemPrompt, userMessage].join('\n\n'),
-    dataClass: accessPolicy.outputPolicy.exactFinancialValues ? 'confidential' : 'internal',
-    metadata: { surface: 'tower' },
+    workflow: "tower-synthesis",
+    model: "claude-sonnet-4-6",
+    prompt: [systemPrompt, userMessage].join("\n\n"),
+    dataClass: accessPolicy.outputPolicy.exactFinancialValues
+      ? "confidential"
+      : "internal",
+    metadata: { surface: "tower" },
   });
   if (!preflight.ok) {
     return new Response(preflight.reason, {
       status: 403,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
   }
   const client = preflight.client;
@@ -307,12 +344,11 @@ export async function POST(request: Request) {
     { signal: abortController.signal },
   );
 
-  const encoder = new TextEncoder();
-  let accumulated = '';
+  let accumulated = "";
 
   const event = recordSynthesisEvent({
-    surface: 'tower',
-    instanceId: 'tower',
+    surface: "tower",
+    instanceId: "tower",
     patternId: null,
     cacheHit: false,
     latencyMs: Date.now() - startedAt,
@@ -322,103 +358,69 @@ export async function POST(request: Request) {
     gateCount: ctx.gatesSummary.total,
   });
 
-  if (!accessPolicy.outputPolicy.exactFinancialValues) {
-    let timedOut = false;
-    try {
-      for await (const chunk of stream) {
-        if (
-          chunk.type === "content_block_delta" &&
-          chunk.delta.type === "text_delta"
-        ) {
-          accumulated += chunk.delta.text;
-        }
+  let timedOut = false;
+  try {
+    for await (const chunk of stream) {
+      if (
+        chunk.type === "content_block_delta" &&
+        chunk.delta.type === "text_delta"
+      ) {
+        accumulated += chunk.delta.text;
       }
-    } catch (err) {
-      // Atlas Fix C: on abort/timeout, surface an honest message rather than a
-      // raw 5xx or — worse — silence. The caller's "thinking…" indicator should
-      // clear when this body arrives.
-      if (abortController.signal.aborted) {
-        timedOut = true;
-      } else {
-        clearTimeout(timeoutHandle);
-        throw err;
-      }
-    } finally {
+    }
+  } catch (err) {
+    // aVa Fix C: on abort/timeout, surface an honest message rather than a
+    // raw 5xx or silence. The caller's "thinking..." indicator should clear
+    // when this body arrives.
+    if (abortController.signal.aborted) {
+      timedOut = true;
+    } else {
       clearTimeout(timeoutHandle);
+      throw err;
     }
-    if (timedOut) {
-      return new Response(TOWER_SYNTHESIS_TIMEOUT_MESSAGE, {
-        status: 504,
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-          "X-Cache": "MISS",
-          "X-Synthesis-Event-Id": event.id,
-          "X-Synthesis-Timeout": "true",
-        },
-      });
-    }
-    const safeText = sanitizeRestrictedFinancialText(accumulated, accessPolicy);
-    if (safeText) {
-      synthesisCache.set(cacheKey, safeText);
-      cacheCreatedAt.set(cacheKey, Date.now());
-    }
-    return new Response(safeText, {
+  } finally {
+    clearTimeout(timeoutHandle);
+  }
+  if (timedOut) {
+    return new Response(TOWER_SYNTHESIS_TIMEOUT_MESSAGE, {
+      status: 504,
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
-        ETag: etag,
         "X-Cache": "MISS",
         "X-Synthesis-Event-Id": event.id,
-        "X-Restricted-Output": "financial-values-redacted",
+        "X-Synthesis-Timeout": "true",
       },
     });
   }
 
-  const readable = new ReadableStream({
-    async start(controller) {
-      try {
-        for await (const chunk of stream) {
-          if (
-            chunk.type === "content_block_delta" &&
-            chunk.delta.type === "text_delta"
-          ) {
-            accumulated += chunk.delta.text;
-            controller.enqueue(encoder.encode(chunk.delta.text));
-          }
-        }
-      } catch (err) {
-        // Atlas Fix C: if the upstream times out / aborts, append an honest
-        // user-facing message so the chat surface shows a real failure instead
-        // of a silent hang. Then close cleanly.
-        if (abortController.signal.aborted) {
-          const suffix = accumulated.length > 0 ? '\n\n' : '';
-          controller.enqueue(
-            encoder.encode(`${suffix}${TOWER_SYNTHESIS_TIMEOUT_MESSAGE}`),
-          );
-          controller.close();
-          return;
-        }
-        clearTimeout(timeoutHandle);
-        controller.error(err);
-        return;
-      } finally {
-        clearTimeout(timeoutHandle);
-      }
-      // Cache the full response after streaming completes
-      if (accumulated) {
-        synthesisCache.set(cacheKey, sanitizeRestrictedFinancialText(accumulated, accessPolicy));
-        cacheCreatedAt.set(cacheKey, Date.now());
-      }
-      controller.close();
-    },
-  });
+  const safeText = sanitizeRestrictedFinancialText(accumulated, accessPolicy);
+  const visibleContract = assertVisibleAnswerContract(safeText);
+  if (!visibleContract.passed) {
+    return Response.json(
+      {
+        error: "visible_answer_contract_failed",
+        detail:
+          "aVa blocked this answer before display because it exposed non-user-facing answer language.",
+        version: visibleContract.version,
+        violations: visibleContract.violations,
+      },
+      { status: 422 },
+    );
+  }
+  if (safeText) {
+    synthesisCache.set(cacheKey, safeText);
+    cacheCreatedAt.set(cacheKey, Date.now());
+  }
 
-  return new Response(readable, {
+  return new Response(safeText, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
-      "Transfer-Encoding": "chunked",
       ETag: etag,
       "X-Cache": "MISS",
       "X-Synthesis-Event-Id": event.id,
+      ...(accessPolicy.outputPolicy.exactFinancialValues
+        ? {}
+        : { "X-Restricted-Output": "financial-values-redacted" }),
     },
   });
 }
