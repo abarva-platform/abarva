@@ -29,13 +29,15 @@ Tower aVa now treats portfolio ROI as a directional initiative-value proxy unles
 
 - `src/lib/atlas/tower-factual-spine.ts`
 - `src/lib/atlas/__tests__/tower-factual-spine.test.ts`
+- `scripts/qa/tower-chat-quality-fix-crawl.mjs`
 
 ## QA / Validation
 
 - `npx eslint src/lib/atlas/tower-factual-spine.ts src/lib/atlas/__tests__/tower-factual-spine.test.ts` — pass.
-- `npx jest src/lib/atlas/__tests__/tower-factual-spine.test.ts --runInBand` — pending rerun after this release record update.
-- `npm run release:check` — pending rerun after this release record update.
-- Live Tower crawl target: `scripts/qa/tower-chat-quality-fix-crawl.mjs`.
+- `npx jest src/lib/atlas/__tests__/tower-factual-spine.test.ts --runInBand` — pass.
+- `npm run release:check` — pass.
+- `npx eslint scripts/qa/tower-chat-quality-fix-crawl.mjs` — pass.
+- Live Tower crawl via `scripts/qa/tower-chat-quality-fix-crawl.mjs` — pass, 13/13 after the deployed ROI fix.
 
 ## Rollout Plan
 
@@ -59,6 +61,7 @@ Revert this commit and redeploy the prior approved ACA digest. No database rollb
 
 - Previous live crawl report: `/Users/anand/Downloads/tower-chat-quality-fix-2026-06-27T04-33-46-017Z`.
 - Previous failure: `q09-portfolio-roi` failed because the answer was not honest enough about loaded-evidence limits.
+- Passing live crawl report: `/Users/anand/Downloads/tower-chat-quality-fix-2026-06-27T05-02-41-848Z`.
 
 ## Known Gaps
 
