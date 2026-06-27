@@ -187,6 +187,12 @@ function stripInternalReferences(value: string): string {
 }
 
 function formatCleanTowerContext(towerState: AtlasTowerCurrentState): string {
+  const formatSpendRatio = (value: number | null | undefined): string => {
+    const ratio = Number(value ?? 0);
+    if (!Number.isFinite(ratio) || ratio <= 0) return "";
+    const pct = ratio <= 1 ? ratio * 100 : ratio;
+    return `${pct.toFixed(1)}% of revenue`;
+  };
   const budgetRollups = towerState.budgetRollups.slice(0, 8).map((rollup) => {
     const parts = [
       rollup.portfolioCompany,
@@ -202,9 +208,7 @@ function formatCleanTowerContext(towerState: AtlasTowerCurrentState): string {
       formatMoney(rollup.changeAmountUsd)
         ? `change ${formatMoney(rollup.changeAmountUsd)}`
         : null,
-      typeof rollup.itSpendAsPctRevenue === "number"
-        ? `${rollup.itSpendAsPctRevenue.toFixed(1)}% of revenue`
-        : null,
+      formatSpendRatio(rollup.itSpendAsPctRevenue) || null,
     ].filter(Boolean);
     return `- ${parts.join("; ")}`;
   });

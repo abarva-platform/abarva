@@ -240,7 +240,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     );
 
     expect(screen.getByText(/no measured value rows are loaded/i)).toBeInTheDocument();
-    expect(screen.getAllByText("review").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/review-required/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText("gap").length).toBeGreaterThan(0);
     expect(screen.queryByText("0.00x")).not.toBeInTheDocument();
   });
