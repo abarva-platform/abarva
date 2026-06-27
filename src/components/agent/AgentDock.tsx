@@ -59,12 +59,26 @@ import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
+import { hasVisibleAvaArtifacts } from "@/lib/ava-answer/renderable-artifacts";
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
 // real values in the browser, so fall back to the no-op effect on the
 // server. This keeps the API call-site simple and SSR-safe.
 const useIsoLayoutEffect =
   typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+function hasRenderableAvaArtifacts(
+  answer?: AvaAnswerPacket | null,
+): answer is AvaAnswerPacket {
+  return hasVisibleAvaArtifacts(answer);
+}
+
+function shouldRenderAvaArtifactsInDock(
+  surface: string,
+  answer?: AvaAnswerPacket | null,
+): answer is AvaAnswerPacket {
+  return surface !== "intelligence" && hasRenderableAvaArtifacts(answer);
+}
 
 /**
  * Auto-measure the dock's distance from the top of the viewport.
@@ -365,8 +379,7 @@ export interface UploadParsedPreview {
   tableSignal: string;
   hasExtractedText: boolean;
   rawModeEscape:
-    | NonNullable<AttachmentRef["parse_metadata"]>["raw_mode_escape"]
-    | null;
+    NonNullable<AttachmentRef["parse_metadata"]>["raw_mode_escape"] | null;
   rawModeRequested: boolean;
 }
 
@@ -858,7 +871,12 @@ export function AgentDock(props: AgentDockProps) {
                 >
                   {turn.role === "agent" && turn.parts?.length ? (
                     <AgentResponseParts parts={turn.parts} />
-                  ) : turn.role === "agent" && focused && turn.agentAnswer ? (
+                  ) : turn.role === "agent" &&
+                    focused &&
+                    shouldRenderAvaArtifactsInDock(
+                      surface,
+                      turn.agentAnswer,
+                    ) ? (
                     <AgentAnswerRenderer answer={turn.agentAnswer} />
                   ) : turn.role === "agent" ? (
                     shapeAgentResponseForSurface(
@@ -877,11 +895,14 @@ export function AgentDock(props: AgentDockProps) {
                 </div>
                 {!focused &&
                 turn.role === "agent" &&
+                surface !== "intelligence" &&
                 turn.citations &&
                 turn.citations.length > 0 ? (
                   <EvidenceBasis citations={turn.citations} />
                 ) : null}
-                {!focused && turn.role === "agent" && turn.agentAnswer ? (
+                {!focused &&
+                turn.role === "agent" &&
+                shouldRenderAvaArtifactsInDock(surface, turn.agentAnswer) ? (
                   <div style={{ marginTop: 12 }}>
                     <AgentAnswerRenderer answer={turn.agentAnswer} />
                   </div>

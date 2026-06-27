@@ -115,8 +115,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
             question: "what should we do about apex ai spend?",
             intent: "table",
             status: "answered",
-            directAnswer:
-              "Apex should gate lakehouse scale on measured value.",
+            directAnswer: "Apex should gate lakehouse scale on measured value.",
             prose: "Apex should gate lakehouse scale on measured value.",
             factsUsed: [],
             metricsUsed: [],
@@ -182,7 +181,9 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     );
 
     expect(screen.getByTestId("agent-dock-panel")).toBeInTheDocument();
-    expect(screen.getByText("Leadership intelligence canvas.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Leadership intelligence canvas."),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Ask anything about")).not.toBeInTheDocument();
 
     const askBox = screen.getByTestId("agent-dock-input");
@@ -232,10 +233,17 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       ),
     ).not.toHaveLength(0);
     expect(screen.queryByText(/Consulted experts/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/17,548 evidence points/i)).not.toBeInTheDocument();
     expect(
-      screen.getAllByText(/Apex AI Spend supporting material/i).length,
+      screen.queryByText(/17,548 evidence points/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getAllByText(/Apex AI Spend evidence/i).length,
     ).toBeGreaterThan(0);
+    const agentTurn = screen.getByTestId("agent-dock-turn-agent");
+    expect(within(agentTurn).queryByRole("table")).not.toBeInTheDocument();
+    expect(
+      within(agentTurn).queryByText(/Apex AI Spend evidence/i),
+    ).not.toBeInTheDocument();
     const table = screen.getAllByRole("table")[0];
     expect(
       within(table).getByText("Retail lakehouse and customer inventory graph"),
@@ -270,7 +278,9 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("Which AI investments should Apex scale?"));
+    fireEvent.click(
+      screen.getByText("Which AI investments should Apex scale?"),
+    );
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(await screen.findAllByText("Suggested answer.")).not.toHaveLength(0);
@@ -280,6 +290,199 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       q: "Which AI investments should Apex scale?",
       client: "apex-retail",
       format: "rich",
+    });
+  });
+
+  it("uses cleaned agent-answer prose in the latest-answer canvas", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: streamFromLines([
+        JSON.stringify({
+          type: "delta",
+          text: "Raw table leak | Initiative | Posture | |---|---| | Loyalty | Stop |",
+        }),
+        JSON.stringify({
+          type: "agent-answer",
+          answer: {
+            surface: "intelligence",
+            mode: "ANALYZE",
+            tenantKey: "apex-retail",
+            question: "Which AI initiatives should we kill?",
+            intent: "table",
+            status: "answered",
+            directAnswer:
+              "No initiative is a clean kill, but Loyalty should stop at current scope until identity foundations exist.",
+            factsUsed: [],
+            metricsUsed: [],
+            relationshipsUsed: [],
+            artifacts: [],
+            citations: [
+              {
+                id: "c1",
+                label: "Tenant evidence",
+                sourceClass: "tenant-fact",
+              },
+            ],
+            gaps: [],
+            caveats: [],
+            nextSteps: [],
+            quality: {
+              confidence: "high",
+              evidenceStrength: "strong",
+              tenantGrounding: "strong",
+              answerCompleteness: "complete",
+            },
+            safety: {
+              tenantFencePassed: true,
+              rawIdsSuppressed: true,
+              forbiddenLanguagePassed: true,
+              unsupportedClaimsBlocked: true,
+            },
+          },
+        }),
+        JSON.stringify({ type: "done" }),
+        "",
+      ]),
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(
+      <IntelligenceV2Surface
+        payload={apexPayload}
+        tenantName="Apex Retail Group"
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("agent-dock-input"), {
+      target: { value: "Which AI initiatives should we kill?" },
+    });
+    fireEvent.click(screen.getByTestId("agent-dock-send"));
+
+    expect(
+      await screen.findAllByText(
+        "No initiative is a clean kill, but Loyalty should stop at current scope until identity foundations exist.",
+      ),
+    ).not.toHaveLength(0);
+    await waitFor(() => {
+      expect(document.body.textContent).not.toContain("| Initiative |");
+      expect(document.body.textContent).not.toContain("Tenant evidence");
+    });
+  });
+
+  it("keeps source-support tables out of the visible advisor answer", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: streamFromLines([
+        JSON.stringify({
+          type: "delta",
+          text: "Raw stream should be superseded by the cleaned packet.",
+        }),
+        JSON.stringify({
+          type: "agent-answer",
+          answer: {
+            surface: "intelligence",
+            mode: "ANALYZE",
+            tenantKey: "skyharbor",
+            question:
+              "What is the single best AI investment SkyHarbor should make next?",
+            intent: "table",
+            status: "answered",
+            directAnswer:
+              "Fund IROPS recovery automation next, but only behind the operational-data readiness gate.\n\nNext, have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves.\n\nTables\nevidence\nSource\tType\tConfidence\tHow IT Supports The Answer\nSkyHarbor Air live Intelligence surface\ttenant material\thigh\tActive Intelligence surface for SkyHarbor Air.\nThis panel lists the material used for the answer. It does not invent missing values or relationships.\nSkyHarbor Air live Intelligence surface\n·\nTenant evidence",
+            prose:
+              "Fund IROPS recovery automation next, but only behind the operational-data readiness gate.",
+            factsUsed: [],
+            metricsUsed: [],
+            relationshipsUsed: [],
+            artifacts: [
+              {
+                artifact: "table",
+                id: "skyharbor-evidence-register",
+                title: "evidence",
+                columns: [
+                  { key: "source", label: "Source" },
+                  { key: "type", label: "Type" },
+                  { key: "confidence", label: "Confidence" },
+                  {
+                    key: "use",
+                    label: "How IT Supports The Answer",
+                  },
+                ],
+                rows: [
+                  {
+                    source: "SkyHarbor Air live Intelligence surface",
+                    type: "tenant material",
+                    confidence: "high",
+                    use: "Active Intelligence surface for SkyHarbor Air.",
+                  },
+                ],
+                citationIds: ["c1"],
+              },
+            ],
+            citations: [
+              {
+                id: "c1",
+                label: "SkyHarbor Air live Intelligence surface",
+                sourceClass: "tenant-fact",
+              },
+            ],
+            gaps: [],
+            caveats: [],
+            nextSteps: [],
+            quality: {
+              confidence: "high",
+              evidenceStrength: "strong",
+              tenantGrounding: "strong",
+              answerCompleteness: "complete",
+            },
+            safety: {
+              tenantFencePassed: true,
+              rawIdsSuppressed: true,
+              forbiddenLanguagePassed: true,
+              unsupportedClaimsBlocked: true,
+            },
+          },
+        }),
+        JSON.stringify({ type: "done" }),
+        "",
+      ]),
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(
+      <IntelligenceV2Surface
+        payload={apexPayload}
+        tenantName="SkyHarbor Air"
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("agent-dock-input"), {
+      target: {
+        value:
+          "What is the single best AI investment SkyHarbor should make next?",
+      },
+    });
+    fireEvent.click(screen.getByTestId("agent-dock-send"));
+
+    expect(
+      await screen.findAllByText(
+        "Fund IROPS recovery automation next, but only behind the operational-data readiness gate.",
+      ),
+    ).not.toHaveLength(0);
+    await waitFor(() => {
+      expect(document.body.textContent).not.toContain("aVa · intelligence");
+      expect(document.body.textContent).not.toContain("high confidence");
+      expect(document.body.textContent).not.toContain("Source, Tower, or Moves");
+      expect(document.body.textContent).not.toContain("Tables");
+      expect(document.body.textContent).not.toContain("evidence");
+      expect(document.body.textContent).not.toContain(
+        "How IT Supports The Answer",
+      );
+      expect(document.body.textContent).not.toContain("tenant material");
+      expect(document.body.textContent).not.toContain("Tenant evidence");
+      expect(document.body.textContent).not.toContain("Evidence basis");
     });
   });
 

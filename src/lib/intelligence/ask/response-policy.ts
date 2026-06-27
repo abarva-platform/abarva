@@ -20,7 +20,13 @@ For Home, Intelligence, and Tower, answer like a senior expert consultant in a G
 - Then explain the specific tenant facts, corpus pattern, benchmark, system, vendor, program, dollar value, or cited constraint that supports the view.
 - Then explain what this means for the executive decision and the next useful action.
 
-Keep each paragraph under roughly 55 words. Do not print visible section labels such as "Read:", "Evidence:", "Implication:", or "Next move:". If a table or chart is requested, give a short natural-language answer, then emit the table/chart data separately.`;
+Keep each paragraph under roughly 55 words. Do not print visible section labels such as "Read:", "Evidence:", "Implication:", or "Next move:".
+
+If the user explicitly asks for a table, chart, graph, matrix, scorecard, or visual, answer in two parts:
+1. A short natural-language advisory answer.
+2. A compact Markdown table with human-readable columns and rows that the UI can lift into the right-side canvas.
+
+Do not include Markdown tables unless the user asks for a visual/table-style output.`;
 
 export function isBroadCurrentStateQuestion(query: string): boolean {
   return BROAD_CURRENT_STATE_RE.test(query);
@@ -55,7 +61,10 @@ export function sanitizeAskSynthesis(text: string, maxWords = 120): string {
 
 export function stripInternalRecordIds(text: string): string {
   return text
-    .replace(/\s*\(\s*(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\s*\)/g, "")
+    .replace(
+      /\s*\(\s*(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\s*\)/g,
+      "",
+    )
     .replace(RAW_INTERNAL_ID_RE, "the referenced evidence")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
@@ -107,9 +116,6 @@ export function applyPartialEvidencePolicy(
 
 const ACTION_CUE_RE =
   /\b(next (?:step|move)|recommend(?:ation)?|assign|escalate|decide|validate|open|owner)\b/i;
-const MISSING_EVIDENCE_RE =
-  /\b(don't have|do not have|won't fabricate|not in the loaded sources|remaining field to confirm|missing|before committing|before approving)\b/i;
-
 export function enforceDecisionGradeAnswer(text: string): string {
   const paragraphDisciplined = splitLongParagraphs(
     sanitizeVisibleAnswerLanguage(
@@ -129,14 +135,8 @@ export function enforceDecisionGradeAnswer(text: string): string {
     );
   }
 
-  const nextMove = MISSING_EVIDENCE_RE.test(paragraphDisciplined)
-    ? "Next move: assign the accountable data owner to validate the missing tenant evidence before approving a number or using it in a board artifact."
-    : "Next move: have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves.";
-
   return naturalizeConsultantSections(
-    ensureReadableConsultantShape(
-      `${paragraphDisciplined.replace(/\s+$/, "")}\n\n${nextMove}`,
-    ),
+    ensureReadableConsultantShape(paragraphDisciplined),
   );
 }
 
@@ -147,12 +147,12 @@ function sanitizeVisibleAnswerLanguage(text: string): string {
     .replace(/\bAtlas\b/g, "aVa")
     .replace(/\bNexus\b/g, "Moves")
     .replace(
-      /assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves/gi,
-      "have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves",
+      /validate this cited evidence before approving the decision or moving it into Source, Tower, or Moves/gi,
+      "review the material before approving the decision",
     )
     .replace(
-      /validate this cited evidence before approving the decision or moving it into Source, Tower, or Moves/gi,
-      "review the listed sources before approving the decision or moving it into Source, Tower, or Moves",
+      /have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves\.?/gi,
+      "",
     )
     .replace(/\bcited evidence\b/gi, "listed sources");
 }
@@ -174,7 +174,10 @@ function normalizeConsultantSectionBoundaries(text: string): string {
 }
 
 function normalizeSectionLabel(label: string): string {
-  const normalized = label.toLowerCase().replace(/[-\s]+/g, " ").trim();
+  const normalized = label
+    .toLowerCase()
+    .replace(/[-\s]+/g, " ")
+    .trim();
   if (normalized === "next move") return "Next move";
   if (normalized === "watchout" || normalized === "watch out") {
     return "Watchout";
@@ -361,9 +364,7 @@ function splitParagraphIfLong(paragraph: string): string {
 }
 
 function splitSentences(text: string): string[] {
-  return (
-    text.match(/[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$/g) ?? [text]
-  )
+  return (text.match(/[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$/g) ?? [text])
     .map((sentence) => sentence.trim())
     .filter(Boolean);
 }
