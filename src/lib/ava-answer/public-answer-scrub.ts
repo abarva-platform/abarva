@@ -2,7 +2,7 @@ const RAW_ID_REPLACE =
   /\b(?:APP|DP|CON|NODE|EDGE)-\d{3,}\b|\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 
 export const PUBLIC_ANSWER_FORBIDDEN_LANGUAGE_RE =
-  /\b(cannot be characterized|cannot be identified|I found|source support|missing source support|Current-state read|current-state context|loaded context|source context|loaded source context|\bread\b|Evidence points|\bevidence points?\b|\bcontext dimensions?\b|\bdimensions loaded\b|\bloaded with \d[\d,]*\b|\btrust\s+\d{1,3}\b|\btrust\s+\d{1,3}%\b|\bevidence\s+refs?\b|\brows?\b|home_know|intelligence-v2|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|\bsemantic\b|typed facts?|loaded facts?|\bfacts?\b|canonical entities|\bentities\b|relationship maps?|relationship paths?|debug|session memory|earlier turns|previous conversation|not loaded|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
+  /\b(cannot be characterized|cannot be identified|I found|source support|missing source support|supporting material|evidence ledger|supporting material ledger|Current-state read|current-state context|loaded context|source context|loaded source context|\bread\b|Evidence points|\bevidence points?\b|\bsource signals?\b|\bcontext dimensions?\b|\bdimensions loaded\b|\bloaded with \d[\d,]*\b|\btrust\s+\d{1,3}\b|\btrust\s+\d{1,3}%\b|\bevidence\s+refs?\b|\brows?\b|home_know|intelligence-v2|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|\bsemantic\b|typed facts?|loaded facts?|\bfacts?\b|canonical entities|\bentities\b|relationship maps?|relationship paths?|debug|session memory|earlier turns|previous conversation|not loaded|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
 
 export const PUBLIC_ANSWER_INTERNAL_COUNT_RE =
   /\b\d[\d,]*\s+(?:canonical\s+)?(?:entities|facts|relationships|citations|rows|evidence points?|context dimensions?)\b/i;
@@ -65,7 +65,7 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\bcurrent-state context\b/gi, "current picture")
     .replace(/\bloaded source context\b/gi, "available source material")
     .replace(/\bloaded context\b/gi, "available business material")
-    .replace(/\bsource context\b/gi, "supporting material")
+    .replace(/\bsource context\b/gi, "business context")
     .replace(/\btyped facts?\b/gi, "available details")
     .replace(/\bloaded facts?\b/gi, "available details")
     .replace(/\bfacts?\b/gi, "available details")
@@ -75,16 +75,19 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\brelationship maps?\b/gi, "source-supported connections")
     .replace(/\brelationship paths?\b/gi, "source-supported connections")
     .replace(/\bcurrent-state read\b/gi, "current picture")
-    .replace(/\bmissing source support\b/gi, "specific source gap")
-    .replace(/\bsource support\b/gi, "supporting material")
+    .replace(/\bmissing source support\b/gi, "specific business-context gap")
+    .replace(/\bsource support\b/gi, "business context")
     .replace(/\bmissing evidence path\b/gi, "missing source path")
     .replace(/\bevidence path\b/gi, "source path")
     .replace(/\bmissing evidence\b/gi, "specific source gap")
     .replace(/\bneeded evidence\b/gi, "needed material")
-    .replace(/\bevidence points?\b/gi, "source signals")
-    .replace(/\bevidence-backed\b/gi, "material-backed")
-    .replace(/\bevidence-based\b/gi, "material-backed")
-    .replace(/\bevidence\b/gi, "supporting material")
+    .replace(/\bevidence points?\b/gi, "business signals")
+    .replace(/\bevidence-backed\b/gi, "business-context-backed")
+    .replace(/\bevidence-based\b/gi, "business-context-backed")
+    .replace(/\bsupporting material ledger\b/gi, "business context")
+    .replace(/\bevidence ledger\b/gi, "business context")
+    .replace(/\bsupporting material\b/gi, "business context")
+    .replace(/\bevidence\b/gi, "business context")
     .replace(/\bsource rows?\b/gi, "source records")
     .replace(/\bedge rows?\b/gi, "connection records")
     .replace(/\brows\b/gi, "records")
@@ -111,7 +114,7 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\bS\.\s*$/gm, "")
     .replace(/\s+-\s+(?=[A-Z0-9])/g, "\n\n- ")
     .replace(RAW_ID_REPLACE, "source reference")
-    .replace(/\bsupporting material supports\b/gi, "supporting material shows")
+    .replace(/\bbusiness context supports\b/gi, "business context shows")
     .replace(/\ba available\b/gi, "an available")
     .replace(/[ \t]+/g, " ")
     .replace(/\n[ \t]+/g, "\n")
