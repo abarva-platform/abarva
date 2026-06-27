@@ -851,9 +851,16 @@ function Exhibits({ live }: { live: LivingMoveCase }) {
 
 export function LivingMoveView({
   caseId = 'apexretail',
+  allowCaseSwitching = true,
 }: {
   /** The kernel-anchored case to open on. Defaults to the proven Apex case. */
   caseId?: LivingMoveCaseId;
+  /**
+   * Tenant-scoped production sessions must not let one client switch into
+   * another client's reference case. Internal reference/demo surfaces may keep
+   * the switcher enabled.
+   */
+  allowCaseSwitching?: boolean;
 }) {
   const [activeId, setActiveId] = useState<LivingMoveCaseId>(caseId);
   const entry = resolveLivingMoveCase(activeId);
@@ -924,7 +931,9 @@ export function LivingMoveView({
             {entry.provenance}
           </span>
         </div>
-        <CaseSwitcher activeId={activeId} onSelect={selectCase} />
+        {allowCaseSwitching ? (
+          <CaseSwitcher activeId={activeId} onSelect={selectCase} />
+        ) : null}
       </div>
 
       {/* The answer — first, and it moves. */}

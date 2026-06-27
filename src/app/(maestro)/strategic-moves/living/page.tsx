@@ -34,12 +34,83 @@ import {
   resolveLivingMoveCase,
   isLivingMoveCaseId,
   DEFAULT_LIVING_MOVE_CASE_ID,
+  type LivingMoveCaseId,
 } from '@/lib/programs/expert-kernel/living-move-cases';
 
 export const metadata: Metadata = {
   title: 'The Living Move · AbarVa',
 };
 export const dynamic = 'force-dynamic';
+
+function livingCaseIdForClientKey(
+  clientKey: string | null | undefined,
+): LivingMoveCaseId | null {
+  if (clientKey === 'apexretail' || clientKey === 'apex-retail') {
+    return 'apexretail';
+  }
+  if (clientKey === 'meridian' || clientKey === 'meridian-health') {
+    return 'meridian';
+  }
+  if (
+    clientKey === 'arcturus' ||
+    clientKey === 'firstcapital' ||
+    clientKey === 'first-capital'
+  ) {
+    return 'arcturus';
+  }
+  return null;
+}
+
+function LivingMoveUnavailable({ tenantName }: { tenantName: string }) {
+  return (
+    <div
+      style={{
+        maxWidth: 780,
+        margin: '0 auto',
+        padding: '72px 0',
+        color: '#111827',
+        fontFamily:
+          'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      }}
+    >
+      <p
+        style={{
+          margin: '0 0 12px',
+          fontSize: 11,
+          letterSpacing: '0.16em',
+          textTransform: 'uppercase',
+          color: '#6b7280',
+          fontWeight: 700,
+        }}
+      >
+        Living Move
+      </p>
+      <h1
+        style={{
+          margin: '0 0 16px',
+          fontSize: 34,
+          lineHeight: 1.1,
+          letterSpacing: 0,
+          fontWeight: 800,
+        }}
+      >
+        No tenant-scoped living case is configured for {tenantName}.
+      </h1>
+      <p
+        style={{
+          margin: 0,
+          fontSize: 16,
+          lineHeight: 1.65,
+          color: '#374151',
+        }}
+      >
+        This reference surface is only enabled when the signed-in tenant has a
+        configured living business-case kernel. Use the Strategic Moves
+        portfolio for this tenant&apos;s active Moves.
+      </p>
+    </div>
+  );
+}
 
 /**
  * The living Move — the interactive costed business case for one of the three
@@ -56,29 +127,23 @@ export default async function LivingMovePage({
   searchParams: Promise<{ case?: string }>;
 }) {
   const { case: caseParam } = await searchParams;
-  // The typed case id — an unknown / absent selector falls back to Apex.
-  const caseId = isLivingMoveCaseId(caseParam)
-    ? caseParam
-    : DEFAULT_LIVING_MOVE_CASE_ID;
-  const caseEntry = resolveLivingMoveCase(caseId);
-
   const activeClient = await getActiveClientRow().catch(() => null);
+  const activeTenantCaseId = livingCaseIdForClientKey(activeClient?.key);
+  const requestedCaseId = isLivingMoveCaseId(caseParam) ? caseParam : null;
+  const caseId =
+    activeTenantCaseId ?? requestedCaseId ?? DEFAULT_LIVING_MOVE_CASE_ID;
+  const caseEntry = resolveLivingMoveCase(caseId);
 
   // Resolve the tenant display name. The app ClientKey may carry a dashed or
   // un-dashed alias; match the resolved case's tenant against either form so
   // the canonical name resolves whichever the active client carries. The
   // case's own tenant label is the always-correct fallback.
-  const dashed = caseId === 'apexretail' ? 'apex-retail' : caseId;
-  const undashed = caseId === 'apexretail' ? 'apexretail' : caseId;
-  const isActiveTenant =
-    activeClient?.key === dashed || activeClient?.key === undashed;
   const tenantName =
-    (isActiveTenant
-      ? canonicalClientDisplayName({
-          key: activeClient?.key,
-          name: activeClient?.name,
-        })
-      : null) ?? caseEntry.tenantLabel;
+    canonicalClientDisplayName({
+      key: activeClient?.key,
+      name: activeClient?.name,
+    }) ?? caseEntry.tenantLabel;
+  const tenantHasLivingCase = !activeClient || Boolean(activeTenantCaseId);
 
   return (
     <AppShell
@@ -101,7 +166,14 @@ export default async function LivingMovePage({
           padding: '32px 40px',
         }}
       >
-        <LivingMoveView caseId={caseId} />
+        {tenantHasLivingCase ? (
+          <LivingMoveView
+            allowCaseSwitching={!activeClient}
+            caseId={caseId}
+          />
+        ) : (
+          <LivingMoveUnavailable tenantName={tenantName} />
+        )}
       </div>
     </AppShell>
   );

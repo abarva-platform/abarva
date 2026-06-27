@@ -318,11 +318,14 @@ export async function loadUserProgramAccessPolicy(
     });
   }
 
-  if (!isUuidLike(ctx.userId) && isCanonicalClientAdminEmail(ctx.email)) {
+  if (isCanonicalClientAdminEmail(ctx.email)) {
     // Mirror Source's client-admin fallback for demo/test Clerk accounts that
-    // are pinned by canonical email but do not yet carry a persons UUID in
-    // Clerk metadata. The inferred key must match the active client, so this
-    // never grants cross-client Moves visibility.
+    // are pinned by canonical email. This must apply even after
+    // requireTenancy() JIT-provisions a real persons UUID; otherwise a
+    // canonical tenant admin can silently fall through to stale
+    // assigned-program-only DB membership and see an empty Moves portfolio.
+    // The inferred key must match the active client, so this never grants
+    // cross-client Moves visibility.
     const inferredAdminClientKey = inferCanonicalClientKeyFromEmail(ctx.email);
     if (inferredAdminClientKey && ctx.clientKey === inferredAdminClientKey) {
       return buildPolicy({
