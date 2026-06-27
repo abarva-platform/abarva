@@ -45,7 +45,9 @@ Approved by Anand in-thread on 2026-06-27 with the explicit instruction: `deploy
 
 - `src/lib/agent/response-shape.ts`: cleans generic routing footers, raw evidence labels, raw evidence table dumps, and high-confidence currency shorthand in shared streamed/final response shaping.
 - `src/lib/ava-answer/public-answer-scrub.ts`: stops converting ordinary evidence language into `supporting material` and preserves natural advisor wording.
+- `src/lib/ava-answer/public-answer-scrub.ts`: removes legacy internal Source/Tower/Moves routing copy if it reaches a public answer surface.
 - `src/lib/answer/shared-response-shaper.ts`: normalizes canned `Next: ask aVa...` instructions into a plain next step, tightens default chat-bubble compaction, compacts inline markdown tables in plain advisory answers, prefers a choice-style close for deeper drill-down, and removes internal Source/Tower/Moves routing language.
+- `src/lib/intelligence/ask/response-policy.ts`: replaces the generic internal product-routing fallback with a choice-style executive follow-up.
 - `src/lib/agent/multipart-completeness.ts`: adds fixed-count request detection, observed/missing part validation, and repair-instruction formatting.
 - `src/lib/intelligence/ask/advisor-composer.ts`: reduces special advisor-route token and word caps so demo answers do not become mini-memos.
 - `src/lib/intelligence/ask/synthesizer.ts`: changes aVa's default answer contract to 60-100 words for simple answers and 120-160 words for decision answers, then appends a short choice question when more depth is available.
@@ -74,6 +76,7 @@ Approved by Anand in-thread on 2026-06-27 with the explicit instruction: `deploy
 - Pass: shared response shaper regression proving a plain advisory answer with a markdown initiative table compacts into concise prose.
 - Pass: shared response shaper regression proving choice-style close replaces generic next-step scaffolding.
 - Pass: shared response shaper regression proving internal Source/Tower/Moves routing language is removed from executive answers.
+- Pass: shared response shaper regression proving inline internal Source/Tower/Moves routing language is removed when embedded mid-paragraph.
 - Pass: release control check after the evidence-exhaust fix.
 - Pass: ACR Docker/Next production build for the base completeness fix.
 - Pass: ACA deployment of the base completeness fix to `ca-abarva-web-lab-eastus--0000163`.
@@ -86,7 +89,10 @@ Approved by Anand in-thread on 2026-06-27 with the explicit instruction: `deploy
 - Partial: signed-in browser proof on `0000166` confirmed no visible `TABLES`, `HOW IT SUPPORTS THE ANSWER`, `SOURCE TYPE CONFIDENCE`, or markdown table rows, but found a generic routing-style close instead of the intended choice-style drill-down close.
 - Pass: ACA deployment of choice-close fix to `ca-abarva-web-lab-eastus--0000167`.
 - Partial: signed-in browser proof on `0000167` confirmed no visible evidence table, no markdown table, and the choice-style close, but found internal `Source, Tower, or Moves` product-routing language.
-- Pending: ACA image build/deploy and signed-in browser proof for the internal-language cleanup follow-up fix.
+- Pass: ACA deployment of first internal-language cleanup to `ca-abarva-web-lab-eastus--0000168`; follow-up browser proof still found the internal routing sentence because the response policy could append it after shaping.
+- Pass: ACA deployment of final internal-language cleanup to `ca-abarva-web-lab-eastus--0000169`.
+- Pass: signed-in browser proof on `0000169` for a fresh Lakeshore Intelligence prompt confirmed no visible evidence table, no markdown table, no `Source Type Confidence`/`How It Supports` labels, no `Source, Tower, or Moves` routing sentence, and a concise 691-character answer with the choice-style close.
+- Pass: second-tenant smoke on `0000169`; the signed-in Lakeshore session opening `/tenant/skyharbor-air/intelligence` returned the tenant-isolation 403 page and did not render SkyHarbor data.
 - Known unrelated current-main gap: the full `response-shape.test.ts` file has two pre-existing Tower expectation failures against current `origin/main`; they are not introduced by this Intelligence slice.
 - Known unrelated route-test gap: the full Intelligence Ask route telemetry file currently has older broad-suite expectation failures around mocked request headers/tenantId and expert-chip routing. Focused regressions for this render fix pass.
 
@@ -110,8 +116,12 @@ Revert this release candidate's code/test changes and redeploy the prior healthy
 - Markdown-table compaction signed-in proof: Lakeshore Intelligence rendered `aVa`; the same finance/treasury advisory prompt no longer showed visible evidence blocks or markdown table rows, but still used a generic routing-style close and therefore required follow-up.
 - Choice-close deployment proof: ACR build `cawf`, image digest `sha256:cbd3cdcbad0dad8a166fb62e8a764a617f8a1796ebfec573a601d2e0c900c6e3`, ACA revision `ca-abarva-web-lab-eastus--0000167`, 100% traffic.
 - Choice-close signed-in proof: Lakeshore Intelligence rendered `aVa`; the same finance/treasury advisory prompt no longer showed visible evidence blocks, markdown table rows, or generic non-choice close, but still exposed internal `Source, Tower, or Moves` routing language and therefore required follow-up.
-- Pending: signed-in browser re-crawl on `https://app.abarva.ai/intelligence` after the internal-language cleanup follow-up deployment.
-- Pending: proof artifact showing answers render without raw evidence labels/scaffolding in the main response bubble.
+- First internal-language cleanup deployment proof: ACR build `cawg`, image digest `sha256:eee385c920d3b65a01cf24c16cd2b32346b80353729ba92ffa00fe273f73e02b`, ACA revision `ca-abarva-web-lab-eastus--0000168`, 100% traffic.
+- First internal-language cleanup signed-in proof: Lakeshore Intelligence removed the old evidence/table leaks but still showed an internal product-routing sentence from the response-policy fallback.
+- Final internal-language cleanup deployment proof: ACR build `cawh`, image digest `sha256:1f189335e1394cfbb98f2da59e91fccc74f455b0932312b899570376556b23f7`, ACA revision `ca-abarva-web-lab-eastus--0000169`, 100% traffic.
+- Final signed-in proof: `https://app.abarva.ai/intelligence` under the Lakeshore signed-in session generated a fresh 691-character answer for "Executive answer only: why should the lowest raw-price vendor not automatically win? Keep it concise and do not show tables." Checks passed for no visible evidence table, no markdown table, no raw evidence/source labels, no internal product-routing sentence, and the choice close `Want the deeper path: evidence, risks, or next actions?`.
+- Second-tenant isolation proof: the same signed-in Lakeshore session opening `https://app.abarva.ai/tenant/skyharbor-air/intelligence` returned the tenant-isolation 403 page and did not render SkyHarbor Intelligence data.
+- Proof artifacts: `/Users/anand/Downloads/intelligence-render-proof-20260627-0000169/browser-proof.json`, `/Users/anand/Downloads/intelligence-render-proof-20260627-0000169/aca-state.json`, `/Users/anand/Downloads/intelligence-render-proof-20260627-0000169/lakeshore-intelligence-proof.png`, and `/Users/anand/Downloads/intelligence-render-proof-20260627-0000169/skyharbor-tenant-isolation-403.png`.
 
 ## Context Ingestion Evidence
 
@@ -119,4 +129,4 @@ Not applicable. This release does not touch Admin Data Loads, setup/admin loader
 
 ## Known Gaps
 
-- Internal-language cleanup follow-up fix is locally validated but not yet deployed to ACA.
+- A SkyHarbor-specific answer was not generated in this proof because the available signed-in browser session was Lakeshore and the SkyHarbor tenant route correctly returned tenant-isolation 403. This is recorded as an auth/session limitation, not as product proof for SkyHarbor answer content.
