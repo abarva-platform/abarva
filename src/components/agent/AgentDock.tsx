@@ -804,7 +804,10 @@ export function AgentDock(props: AgentDockProps) {
         <div style={HEADER_STYLE}>
           <div style={AGENT_ROW_STYLE}>
             {agent.mark === "ava" ? (
-              <AvaAskMark style={AVATAR_AVA_MARK_STYLE} />
+              <AvaAskMark
+                variant="avatar-dark"
+                style={AVATAR_AVA_MARK_STYLE}
+              />
             ) : (
               <span style={AVATAR_STYLE}>{agent.initials}</span>
             )}
@@ -1113,7 +1116,10 @@ export function AgentDock(props: AgentDockProps) {
           style={COLLAPSED_CHIP_STYLE}
         >
           {agent.mark === "ava" ? (
-            <AvaAskMark style={COLLAPSED_CHIP_AVA_MARK_STYLE} />
+            <AvaAskMark
+              variant="avatar-dark"
+              style={COLLAPSED_CHIP_AVA_MARK_STYLE}
+            />
           ) : (
             <span style={COLLAPSED_CHIP_INITIALS_STYLE}>{agent.initials}</span>
           )}
@@ -1691,8 +1697,9 @@ const AVATAR_STYLE: CSSProperties = {
 };
 
 const AVATAR_AVA_MARK_STYLE: CSSProperties = {
-  minWidth: 52,
-  fontSize: 27,
+  minWidth: 47,
+  width: 47,
+  fontSize: 24,
   alignSelf: "center",
 };
 
@@ -2074,8 +2081,8 @@ const ATTACH_BUTTON_STYLE: CSSProperties = {
 };
 
 const AVA_MARK_STYLE: CSSProperties = {
-  minWidth: 36,
-  fontSize: 21,
+  minWidth: 32,
+  fontSize: 19,
   alignSelf: "center",
 };
 
@@ -2205,8 +2212,9 @@ const COLLAPSED_CHIP_INITIALS_STYLE: CSSProperties = {
 };
 
 const COLLAPSED_CHIP_AVA_MARK_STYLE: CSSProperties = {
-  minWidth: 46,
-  fontSize: 24,
+  minWidth: 41,
+  width: 41,
+  fontSize: 22,
 };
 
 const COLLAPSED_CHIP_LABEL_STYLE: CSSProperties = {

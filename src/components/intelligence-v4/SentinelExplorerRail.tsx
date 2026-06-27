@@ -456,8 +456,8 @@ export function SentinelExplorerRail({ tenantKey }: SentinelExplorerRailProps) {
         >
           <AvaAskMark
             style={{
-              minWidth: 34,
-              fontSize: 20,
+              minWidth: 31,
+              fontSize: 18,
               alignSelf: "center",
             }}
           />
