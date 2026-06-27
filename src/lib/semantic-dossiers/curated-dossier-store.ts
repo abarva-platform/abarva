@@ -1,6 +1,11 @@
 import { Pool, type PoolClient } from "pg";
 
 import { evaluateDossierSurfaceEligibility } from "../semantic2/dossiers";
+import {
+  normalizeSemantic2RuntimeTenantKey,
+  SEMANTIC2_CROWN_JEWEL_PROMPT_VERSION,
+  Semantic2RuntimeContractError,
+} from "../semantic2/runtime-contract";
 import { routeDimensionQuestion } from "./dimension-router";
 import type {
   DossierArtifactType,
@@ -16,7 +21,7 @@ import type {
 } from "./types";
 
 export const CURATED_DOSSIER_PROMPT_VERSION =
-  "semantic2-l3-enriched-buildtime-claude-v2";
+  SEMANTIC2_CROWN_JEWEL_PROMPT_VERSION;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -35,6 +40,15 @@ interface CuratedDossierRow {
   prompt_version: string;
   dossier_version: string;
   built_at: string;
+}
+
+interface CuratedDossierStatusRow {
+  tenant_key: string;
+  dimension_key: string;
+  prompt_version: string;
+  dossier_version: string;
+  built_at: string;
+  invalidated_at: string | null;
 }
 
 export interface CuratedDossierLoadResult {
@@ -56,6 +70,29 @@ export class CuratedDossierNotSurfaceEligibleError extends Error {
     super(message);
     this.name = "CuratedDossierNotSurfaceEligibleError";
   }
+}
+
+export class CuratedDossierUnavailableError extends Error {
+  constructor(
+    message: string,
+    public readonly code:
+      | "stale_dossier"
+      | "missing_active_dossier"
+      | "noncanonical_tenant",
+    public readonly details: Record<string, unknown> = {},
+  ) {
+    super(message);
+    this.name = "CuratedDossierUnavailableError";
+  }
+}
+
+export function isCuratedDossierNonFallbackError(
+  error: unknown,
+): error is CuratedDossierUnavailableError | Semantic2RuntimeContractError {
+  return (
+    error instanceof CuratedDossierUnavailableError ||
+    error instanceof Semantic2RuntimeContractError
+  );
 }
 
 let pool: Pool | null = null;
@@ -523,9 +560,14 @@ export async function loadCuratedSemanticDossier(args: {
 }): Promise<CuratedDossierLoadResult> {
   const client = await getPool().connect();
   try {
-    const canonical = await canonicalTenantKey(client, args.tenantKey);
+    const databaseCanonical = await canonicalTenantKey(client, args.tenantKey);
+    const canonical = normalizeSemantic2RuntimeTenantKey(
+      databaseCanonical,
+      "curated-semantic-dossier-load",
+    );
     const route = routeDimensionQuestion(args.question, "home");
     const dimensionKey = args.dimensionKey ?? route.primaryDimension;
+    const promptVersion = args.promptVersion ?? CURATED_DOSSIER_PROMPT_VERSION;
     await client.query("BEGIN");
     await client.query("SELECT set_config($1, $2, true)", [
       "app.tenant_key",
@@ -548,11 +590,7 @@ export async function loadCuratedSemanticDossier(args: {
         ORDER BY built_at DESC
         LIMIT 1
       `,
-      [
-        canonical,
-        dimensionKey,
-        args.promptVersion ?? CURATED_DOSSIER_PROMPT_VERSION,
-      ],
+      [canonical, dimensionKey, promptVersion],
     );
     const branchResult = await client.query<
       Pick<
@@ -572,13 +610,44 @@ export async function loadCuratedSemanticDossier(args: {
           AND invalidated_at IS NULL
         ORDER BY coverage_score DESC, built_at DESC
       `,
-      [canonical, args.promptVersion ?? CURATED_DOSSIER_PROMPT_VERSION],
+      [canonical, promptVersion],
     );
+    const statusResult = result.rows[0]
+      ? null
+      : await client.query<CuratedDossierStatusRow>(
+          `
+            SELECT tenant_key, dimension_key, prompt_version, dossier_version, built_at, invalidated_at
+            FROM semantic2_dossiers
+            WHERE tenant_key = $1
+              AND dimension_key = $2
+              AND prompt_version = $3
+            ORDER BY built_at DESC
+            LIMIT 1
+          `,
+          [canonical, dimensionKey, promptVersion],
+        );
     await client.query("COMMIT");
     const row = result.rows[0];
     if (!row) {
-      throw new Error(
-        `No curated Semantic2 dossier found for ${canonical}/${dimensionKey}.`,
+      const latest = statusResult?.rows[0];
+      if (latest?.invalidated_at) {
+        throw new CuratedDossierUnavailableError(
+          `Curated Semantic2 dossier for ${canonical}/${dimensionKey} is invalidated; refresh the active dossier before answering from fallback layers.`,
+          "stale_dossier",
+          {
+            tenantKey: canonical,
+            dimensionKey,
+            promptVersion,
+            dossierVersion: latest.dossier_version,
+            builtAt: latest.built_at,
+            invalidatedAt: latest.invalidated_at,
+          },
+        );
+      }
+      throw new CuratedDossierUnavailableError(
+        `No active curated Semantic2 dossier found for ${canonical}/${dimensionKey}.`,
+        "missing_active_dossier",
+        { tenantKey: canonical, dimensionKey, promptVersion },
       );
     }
     const eligibility = evaluateDossierSurfaceEligibility({

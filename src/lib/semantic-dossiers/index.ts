@@ -3,6 +3,8 @@ export { buildUniversalDimensionDossier } from "./build-universal-dimension-doss
 export { composeDossierAnswer } from "./compose-dossier-answer";
 export {
   CURATED_DOSSIER_PROMPT_VERSION,
+  CuratedDossierUnavailableError,
+  isCuratedDossierNonFallbackError,
   loadCuratedSemanticDossier,
   type CuratedDossierBranchOption,
   type CuratedDossierLoadResult,
