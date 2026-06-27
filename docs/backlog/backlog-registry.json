@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "updatedAt": "2026-04-26",
-  "updatedBy": "wave-28 orchestration agent",
+  "updatedAt": "2026-06-27",
+  "updatedBy": "codex intelligence discovery audit update",
   "description": "AbarVa Master Backlog Registry \u2014 all tracks, waves, and slices",
   "tracks": [
     {
@@ -37,7 +37,7 @@
     {
       "id": "05",
       "name": "Intelligence + Control Tower",
-      "sliceCount": 10,
+      "sliceCount": 11,
       "file": "tracks/05-intelligence-control-tower/BACKLOG.md"
     },
     {
@@ -341,6 +341,13 @@
       "status": "completed",
       "wave": "wave-21",
       "title": "Sentinel Evidence Brief"
+    },
+    {
+      "id": "INTELQA1",
+      "track": "05",
+      "status": "backlog",
+      "wave": "wave-25",
+      "title": "Intelligence Discovery Audit"
     },
     {
       "id": "TOWER1",
