@@ -475,6 +475,44 @@ describe("Intelligence consultant text synthesis", () => {
     expect(text).not.toContain("| Initiative | Budget | Promised benefit |");
   });
 
+  it("builds a visual fallback from grounded narrative when packet rows are sparse", async () => {
+    const narrative = [
+      "The portfolio carries $292M in promised benefit against $132M in combined budget across six initiatives, but readiness is uneven.",
+      "",
+      "The decisive sequencing call: bank connectivity ($12M, October 2026) is the gate for the entire stack. Kyriba's $86M promise, the business layer's $46M promise, and the variance explainer's $17M all run downstream of clean bank feeds and certified SAP mapping.",
+      "",
+      "The single number demanding CFO attention: $83M gap between committed and realized value on M365 Copilot finance alone, with no certified measurement framework in place.",
+    ].join("\n");
+    const create = mockClaudeTexts([narrative, narrative]);
+
+    const result = await synthesizeIntelligenceConsultantText({
+      dossier: {
+        ...dossier,
+        question:
+          "Compare the top finance and treasury AI initiatives in a table with value, readiness, risk, and next action.",
+        tenantEvidenceDossier: {
+          ...dossier.tenantEvidenceDossier,
+          metrics: [],
+        },
+        decisionOptionsDossier: {
+          ...dossier.decisionOptionsDossier,
+          options: [],
+          recommendedDecisionFrame:
+            "Close bank-connectivity and measurement evidence before scale.",
+        },
+      },
+      tenantId: "tenant-lakeshore",
+    });
+
+    expect(create).toHaveBeenCalledTimes(2);
+    const text = result && "text" in result ? result.text : "";
+    expect(text).toContain("| Initiative | Value | Readiness | Risk | Next action |");
+    expect(text).toContain("| Bank connectivity | $12M, October 2026 |");
+    expect(text).toContain("| Kyriba | $86M promise |");
+    expect(text).toContain("| Business layer | $46M promise |");
+    expect(text).toContain("| Variance explainer | $17M |");
+  });
+
   it("rejects old transcript labels and raw ids", () => {
     expect(
       validateIntelligenceConsultantText({
