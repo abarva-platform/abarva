@@ -375,7 +375,7 @@ describe("home consultant text synthesis", () => {
     );
 
     expect(text).toBe(
-      "For lifecycle posture: Lifecycle posture depends on lifecycle_stage; SAP maps to source reference; the safe answer scope is role-level.",
+      "For lifecycle posture: Lifecycle posture depends on lifecycle_stage; SAP maps to source reference; the supported scope is role-level.",
     );
     expect(
       validateHomeConsultantText({ text, dossier, response }),

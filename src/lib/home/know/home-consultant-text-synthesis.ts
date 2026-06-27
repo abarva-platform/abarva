@@ -23,7 +23,7 @@ import type { DossierSection } from "@/lib/semantic-dossiers/types";
 const DEFAULT_MODEL = "claude-opus-4-8";
 const DEFAULT_TIMEOUT_MS = 60_000;
 const DEFAULT_MAX_TOKENS = 25_000;
-const PROMPT_VERSION = "home_consultant_text_synthesis_v2_branch_first";
+const PROMPT_VERSION = "home_consultant_text_synthesis_v3_label_free";
 const HOME_SYNTHESIS_CACHE_MAX_ENTRIES = 250;
 const HOME_SYNTHESIS_CACHE_TTL_MS = 1000 * 60 * 60 * 6;
 
@@ -60,9 +60,9 @@ The context may include:
 
 Use all relevant material channels. Do not rely only on one field list.
 
-For broad overview questions such as "what context is loaded" or "what do we know," answer in this pattern:
+For broad overview questions such as "what context is loaded" or "what do we know," answer in this shape without visible labels:
 
-1. One short executive summary of the strongest context areas.
+1. One short opening paragraph with the strongest context areas.
 2. "Where do you want to go deeper?" followed by up to four branch options from the supplied branch options.
 3. One short caveat if a missing source changes how the user should read the answer.
 
@@ -71,7 +71,7 @@ Write like a senior enterprise architect / consulting partner briefing a CIO.
 Lead with what the available materials can say.
 Then explain what it means.
 Then identify the specific missing material or source support.
-Then state the safe answer boundary.
+Then state the supported scope naturally, without labeling it as an answer boundary.
 If the user asks for a recommendation, investment decision, scale/hold/stop decision, sourcing decision, or strategy memo, Home should show what is available and hand off to Intelligence, Source, Moves, or Tower.
 
 Do not make unsupported recommendations in Home.
@@ -90,17 +90,18 @@ Instead say what level of characterization is supported:
 Do not lead with counts.
 Do not say "I found."
 Do not expose raw IDs, table names, route names, debug labels, source internals, or implementation details.
-Do not use user-facing wording like "Read," "Evidence points," "rows," "Current-state read," "current-state context," "loaded context," or "source context."
+Do not use visible section labels, markdown headings, or bold headings.
+Do not write phrases like "Executive summary," "What this means," "The precise gap," "Safe answer boundary," "Safe answer scope," "Caveat," "Read," "Evidence," "Evidence points," "Implication," "Next move," "rows," "Current-state read," "current-state context," "loaded context," or "source context."
 Say "available materials," "source support," "available records," or "the current picture" instead.
 Do not mention "semantic," "curated semantic," "typed facts," "loaded facts," "facts," "canonical entities," "entities," "relationship paths," "relationship maps," or implementation/source mechanics in the final answer.
 Say "available materials," "source support," "available records," "operational patterns," or "source-supported operating connections" when those ideas matter.
 For finance close, Treasury, Kyriba, HR, Legal, or other adjacent functions, lead with operational-process source-support insufficiency when the supplied material does not include function-specific work-item/process material.
 Do not mention pattern family or experts in Home.
 
-Return only the final user-facing answer text.`;
+Return only the final user-facing answer text. Use short paragraphs. No markdown headings. No bullets unless the question asks for a list.`;
 
 const FORBIDDEN_RE =
-  /\b(cannot be characterized|cannot be identified|I found|missing source support|Current-state read|current-state context|loaded context|source context|loaded source context|\bread\b|Evidence points|\brows\b|home_know|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|semantic|typed facts|loaded facts|\bfacts?\b|canonical entities|\bentities\b|relationship maps?|relationship paths?|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
+  /\b(cannot be characterized|cannot be identified|I found|missing source support|Executive summary|What this means|The precise gap|Safe answer boundary|Safe answer scope|Caveat|Current-state read|current-state context|loaded context|source context|loaded source context|\bread\b|Evidence points|\brows\b|home_know|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|semantic|typed facts|loaded facts|\bfacts?\b|canonical entities|\bentities\b|relationship maps?|relationship paths?|debug|\/Users\/|localhost)\b|^\s*(Read|Evidence|Implication|Next move|Next):/i;
 const INTERNAL_COUNT_RE =
   /\b\d[\d,]*\s+(?:canonical\s+)?(?:entities|facts|relationships|citations)\b/i;
 const RAW_ID_RE =
@@ -571,6 +572,7 @@ export function normalizeHomeConsultantUserFacingText(text: string): string {
     .replace(/^\s*#{1,6}\s+.*(?:\r?\n|$)/gm, "")
     .replace(/\*\*/g, "")
     .replace(/`([^`]+)`/g, "$1")
+    .replace(/(^|\n)\s*(Executive summary|What this means|The precise gap|Safe answer boundary|Safe answer scope|Caveat)\s*:?\s*/gi, "$1")
     .replace(
       /^\s*here is what (?:the )?(?:loaded )?context can (?:say|tell you) about\s+/i,
       "For ",
@@ -581,7 +583,7 @@ export function normalizeHomeConsultantUserFacingText(text: string): string {
     )
     .replace(/^\s*here is\s+/i, "")
     .replace(/\bwhat the loaded context can say\b\s*:?\s*/gi, "")
-    .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move):\s*/gi, "$1")
+    .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move|Next):\s*/gi, "$1")
     .replace(/\bdeterministic\b/gi, "available")
     .replace(RAW_ID_REPLACE, "source reference"));
 }
