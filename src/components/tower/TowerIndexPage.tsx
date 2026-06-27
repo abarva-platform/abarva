@@ -520,6 +520,29 @@ function initiativeValue(initiative: AIInitiative): number {
   return Number(initiative.measuredValueUsd ?? 0);
 }
 
+function normalizedProgramKey(initiative: AIInitiative): string {
+  return initiative.name
+    .toLowerCase()
+    .replace(/\s*\/\s*(?:phase|wave|expansion|rollout)\s+\d+\b/g, "")
+    .replace(/\s+#?\d+\b/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function uniqueProgramsByName(
+  rows: ReadonlyArray<AIInitiative>,
+): AIInitiative[] {
+  const byKey = new Map<string, AIInitiative>();
+  for (const row of rows) {
+    const key = normalizedProgramKey(row) || row.displayId;
+    const current = byKey.get(key);
+    if (!current || initiativeBudget(row) > initiativeBudget(current)) {
+      byKey.set(key, row);
+    }
+  }
+  return [...byKey.values()];
+}
+
 function groupMoney(
   rows: ReadonlyArray<AIInitiative>,
   labelFor: (initiative: AIInitiative) => string | null | undefined,
@@ -675,7 +698,8 @@ function buildCioDashboardModel(
     (sum, initiative) => sum + initiativeBudget(initiative),
     0,
   );
-  const topPrograms = [...initiatives]
+  const displayPrograms = uniqueProgramsByName(initiatives);
+  const topPrograms = [...displayPrograms]
     .sort((a, b) => initiativeBudget(b) - initiativeBudget(a))
     .slice(0, 8);
   const renewalRows = vendors
@@ -731,7 +755,7 @@ function buildCioDashboardModel(
     );
   if (initiatives.every((initiative) => initiative.measuredValueUsd === null))
     gaps.push(
-      "Measured value rows are not loaded, so ROI is a gap rather than a claim.",
+      "No measured value rows are loaded, so ROI is a gap rather than a claim.",
     );
   if (
     initiatives.every(
@@ -793,20 +817,16 @@ function buildCioDashboardModel(
   const topFunction = spendByFunction[0] ?? null;
   const topVendor = spendByVendor[0] ?? null;
   const topAiFamily = aiSpendRows[0] ?? null;
-  const valueCoverageText =
-    measuredCoverageCount > 0
-      ? `${measuredCoverageCount} of ${initiatives.length} programs carry measured value rows`
-      : "no loaded program carries a measured value row";
   const executiveNarrative =
     initiatives.length === 0 && budgetRollups.length === 0
       ? "Tower has the CIO canvas ready, but the tenant-bound program rows are not loaded yet."
+      : measuredCoverageCount === 0
+        ? `${formatMoney(committedTotal)} is loaded as budget evidence across ${budgetRollups.length > 0 ? `${budgetRollups.length} portfolio-company rollup${budgetRollups.length === 1 ? "" : "s"}` : `${initiatives.length} program row${initiatives.length === 1 ? "" : "s"}`}, but no measured value rows are loaded. Treat budget concentration as review-required and do not use the ROI tiles until value proof is supplied.`
       : budgetRollups.length > 0
         ? `${formatMoney(committedTotal)} of FY26 IT budget is loaded across ${budgetRollups.length} portfolio-company rollup${budgetRollups.length === 1 ? "" : "s"}. Tower is separating enterprise budget concentration from ${initiatives.length} initiative row${initiatives.length === 1 ? "" : "s"} and value proof.`
         : committedTotal === 0
           ? `Tower has ${initiatives.length} loaded program rows, but budget amounts are not loaded. Use this as a portfolio coverage view, not a spend dashboard, until program budget fields are supplied.`
-          : measuredCoverageCount === 0
-            ? `${formatMoney(committedTotal)} is loaded as program budget rows across ${initiatives.length} programs, but no measured value rows are loaded. Treat budget concentration as review-required and do not use the ROI tiles until value proof is supplied.`
-            : `${formatMoney(spendAtRisk)} of loaded portfolio spend is under pressure across ${riskRows.length} program${riskRows.length === 1 ? "" : "s"}. ${valueCoverageText}, so the next CIO move is to separate budget concentration from value proof before funding more work.`;
+          : `${formatMoney(committedTotal)} of loaded IT budget is visible; ${formatMoney(measuredTotal)} is backed by measured value rows. Tower is showing budget, pressure, vendor exposure, and value proof as separate slices.`;
   const commandBullets = [
     topProgram && committedTotalFromInitiatives > 0
       ? `Largest loaded program: ${topProgram.name} at ${formatMoney(initiativeBudget(topProgram))}.`
@@ -1081,7 +1101,7 @@ function CioMetricCard({
 
 function CioKpiStrip({ model }: { model: CioDashboardModel }) {
   const valueGap = Math.max(
-    model.initiativeBudgetTotal - model.measuredTotal,
+    model.committedTotal - model.measuredTotal,
     0,
   );
   const renewalTotal = model.renewalRows.reduce(
@@ -1123,8 +1143,8 @@ function CioKpiStrip({ model }: { model: CioDashboardModel }) {
       label: "Value gap",
       value: valueGap > 0 ? formatMoney(valueGap) : "none",
       note:
-        model.initiativeBudgetTotal > 0
-          ? "initiative funding minus measured value"
+        model.committedTotal > 0
+          ? "loaded budget minus measured value proof"
           : "needs initiative business-case rows",
       tone: valueGap > 0 ? ("amber" as const) : ("green" as const),
     },
@@ -1160,7 +1180,7 @@ function CioKpiStrip({ model }: { model: CioDashboardModel }) {
 }
 
 function CioValueBand({ model }: { model: CioDashboardModel }) {
-  const committedValue = model.initiativeBudgetTotal;
+  const committedValue = model.committedTotal;
   const valueGap = Math.max(committedValue - model.measuredTotal, 0);
   const realizedPct =
     committedValue > 0
@@ -1175,7 +1195,7 @@ function CioValueBand({ model }: { model: CioDashboardModel }) {
   const topRisk = model.riskRows[0] ?? null;
   const bandTitle =
     committedValue > 0
-      ? `The loaded initiatives commit ${formatMoney(committedValue)} and prove ${formatMoney(model.measuredTotal)} so far.`
+      ? `${formatMoney(committedValue)} of loaded IT budget is visible; ${formatMoney(model.measuredTotal)} has measured value proof.`
       : model.executiveNarrative;
   return (
     <section
@@ -1465,7 +1485,7 @@ function CioPortfolioCompanyComparison({
               <div style={{ textAlign: "right", fontSize: 13 }}>
                 <strong>{formatMoney(row.totalItBudgetUsd)}</strong> IT
                 <div style={{ color: T.GRAY_DK }}>
-                  {pct > 0 ? `${pct.toFixed(1)}% of revenue` : "intensity gap"}
+                  {formatRatioPercent(pct)}
                 </div>
               </div>
             </div>
@@ -2794,6 +2814,13 @@ function formatMoney(usd: number | null | undefined): string {
     return `$${(value / 1_000_000).toFixed(1)}M`;
   if (Math.abs(value) >= 1_000) return `$${Math.round(value / 1_000)}K`;
   return `$${Math.round(value)}`;
+}
+
+function formatRatioPercent(value: number | null | undefined): string {
+  const ratio = Number(value ?? 0);
+  if (!Number.isFinite(ratio) || ratio <= 0) return "intensity gap";
+  const pct = ratio <= 1 ? ratio * 100 : ratio;
+  return `${pct.toFixed(1)}% of revenue`;
 }
 
 function labelize(value: string | null | undefined): string {
