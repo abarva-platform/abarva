@@ -161,8 +161,7 @@ describe("AgentDock · default mode", () => {
           {
             id: "a1",
             role: "agent",
-            body:
-              "The tenant is ready for a board-grade decision. The accountable owner should review the program evidence before committing the next phase.",
+            body: "The tenant is ready for a board-grade decision. The accountable owner should review the program evidence before committing the next phase.",
           },
         ]}
         onMessage={jest.fn()}
@@ -200,8 +199,7 @@ describe("AgentDock · default mode", () => {
           {
             id: "a1",
             role: "agent",
-            body:
-              "Meridian Health System has a loaded Enterprise Context layer. Sentinel should answer current-state questions from that internal context before generic healthcare patterns.",
+            body: "Meridian Health System has a loaded Enterprise Context layer. Sentinel should answer current-state questions from that internal context before generic healthcare patterns.",
           },
         ]}
         onMessage={jest.fn()}
@@ -846,6 +844,142 @@ describe("AgentDock · thread render", () => {
     );
   });
 
+  it("renders evidence-only Ava packets as concise prose", () => {
+    render(
+      <AgentDock
+        agent={{ ...AGENT, name: "aVa" }}
+        surface="intelligence"
+        thread={[
+          {
+            id: "a",
+            role: "agent",
+            body: "Scale nothing freely yet. Kyriba is closest, but control gates need to close first. Want the deeper path: evidence, risks, or next actions?",
+            agentAnswer: {
+              surface: "intelligence",
+              mode: "ANALYZE",
+              tenantKey: "lakeshore",
+              question: "Which initiatives are proven enough to scale?",
+              intent: "table",
+              status: "answered",
+              directAnswer:
+                "Scale nothing freely yet. Kyriba is closest, but control gates need to close first.",
+              artifacts: [],
+              citations: [
+                {
+                  id: "c1",
+                  label: "Lakeshore finance AI evidence register",
+                  sourceClass: "tenant-fact",
+                  confidence: "high",
+                },
+              ],
+              factsUsed: [],
+              metricsUsed: [],
+              relationshipsUsed: [],
+              quality: {
+                confidence: "high",
+                evidenceStrength: "partial",
+                tenantGrounding: "partial",
+                answerCompleteness: "complete",
+              },
+              safety: {
+                tenantFencePassed: true,
+                rawIdsSuppressed: true,
+                forbiddenLanguagePassed: true,
+                unsupportedClaimsBlocked: true,
+              },
+              nextSteps: [],
+              gaps: [],
+              caveats: [],
+            } as never,
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const turn = screen.getByTestId("agent-dock-turn-agent");
+    expect(turn).toHaveTextContent("Scale nothing freely yet.");
+    expect(turn).not.toHaveTextContent(
+      "Want the deeper path: evidence, risks, or next actions?",
+    );
+    expect(turn).not.toHaveTextContent("Sources");
+    expect(turn).not.toHaveTextContent("high confidence");
+    expect(screen.queryByTestId("evidence-basis")).not.toBeInTheDocument();
+  });
+
+  it("keeps Intelligence structured artifacts out of the left dock even when expanded", () => {
+    render(
+      <AgentDock
+        agent={{ ...AGENT, name: "aVa" }}
+        surface="intelligence"
+        defaultMode="expand"
+        thread={[
+          {
+            id: "a",
+            role: "agent",
+            body: "Fund IROPS recovery automation next, but only behind the readiness gate.",
+            agentAnswer: {
+              surface: "intelligence",
+              mode: "ANALYZE",
+              tenantKey: "skyharbor",
+              question: "Which AI investments should SkyHarbor scale?",
+              intent: "table",
+              status: "answered",
+              directAnswer:
+                "Fund IROPS recovery automation next, but only behind the readiness gate.",
+              artifacts: [
+                {
+                  artifact: "table",
+                  id: "skyharbor-investment-table",
+                  title: "SkyHarbor AI investment posture",
+                  columns: [
+                    { key: "initiative", label: "Initiative" },
+                    { key: "posture", label: "Posture" },
+                  ],
+                  rows: [
+                    {
+                      initiative: "IROPS agentic recovery",
+                      posture: "Gate scale on operational data readiness",
+                    },
+                  ],
+                },
+              ],
+              citations: [],
+              factsUsed: [],
+              metricsUsed: [],
+              relationshipsUsed: [],
+              quality: {
+                confidence: "high",
+                evidenceStrength: "partial",
+                tenantGrounding: "partial",
+                answerCompleteness: "complete",
+              },
+              safety: {
+                tenantFencePassed: true,
+                rawIdsSuppressed: true,
+                forbiddenLanguagePassed: true,
+                unsupportedClaimsBlocked: true,
+              },
+              nextSteps: [],
+              gaps: [],
+              caveats: [],
+            } as never,
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const turn = screen.getByTestId("agent-dock-turn-agent");
+    expect(turn).toHaveTextContent("Fund IROPS recovery automation");
+    expect(turn).not.toHaveTextContent("Tables");
+    expect(turn).not.toHaveTextContent("SkyHarbor AI investment posture");
+    expect(turn).not.toHaveTextContent("IROPS agentic recovery");
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
   it("keeps auto-scroll inside the thread pane when new turns arrive", async () => {
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
     const scrollIntoView = jest.fn();
@@ -886,30 +1020,35 @@ describe("AgentDock · thread render", () => {
     }
   });
 
-  it('renders structured response parts with tables and charts', () => {
+  it("renders structured response parts with tables and charts", () => {
     render(
       <AgentDock
         agent={AGENT}
         surface="source/events/canvas"
         thread={[
           {
-            id: 'a',
-            role: 'agent',
-            body: 'fallback prose',
+            id: "a",
+            role: "agent",
+            body: "fallback prose",
             parts: [
               {
-                type: 'table',
-                title: 'Current state to sourcing implication',
-                columns: ['Fact', 'Implication'],
-                rows: [['Identity match rate is 71%', 'Gate CDP shortlist on data quality lift.']],
+                type: "table",
+                title: "Current state to sourcing implication",
+                columns: ["Fact", "Implication"],
+                rows: [
+                  [
+                    "Identity match rate is 71%",
+                    "Gate CDP shortlist on data quality lift.",
+                  ],
+                ],
               },
               {
-                type: 'barChart',
-                title: 'TCO iceberg',
-                unit: 'USD',
+                type: "barChart",
+                title: "TCO iceberg",
+                unit: "USD",
                 bars: [
-                  { label: 'Quoted', value: 2_400_000 },
-                  { label: 'Run support', value: 840_000 },
+                  { label: "Quoted", value: 2_400_000 },
+                  { label: "Run support", value: 840_000 },
                 ],
               },
             ],
@@ -920,9 +1059,13 @@ describe("AgentDock · thread render", () => {
       />,
     );
 
-    expect(screen.getByTestId('agent-response-table')).toHaveTextContent('Current state');
-    expect(screen.getByTestId('agent-response-bar-chart')).toHaveTextContent('TCO iceberg');
-    expect(screen.queryByText('fallback prose')).not.toBeInTheDocument();
+    expect(screen.getByTestId("agent-response-table")).toHaveTextContent(
+      "Current state",
+    );
+    expect(screen.getByTestId("agent-response-bar-chart")).toHaveTextContent(
+      "TCO iceberg",
+    );
+    expect(screen.queryByText("fallback prose")).not.toBeInTheDocument();
   });
 });
 

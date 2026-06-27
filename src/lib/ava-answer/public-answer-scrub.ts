@@ -35,7 +35,19 @@ export function operationalEvidenceInsufficiencyLead(
 }
 
 export function scrubPublicAvaAnswerText(value: string): string {
-  const scrubbed = value
+  const scrubbed = stripInternalEvidenceAppendix(value)
+    .replace(
+      /\n?\s*Next,\s+have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves\.?/gi,
+      "",
+    )
+    .replace(
+      /\n?\s*Next move:\s*assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves\.?/gi,
+      "",
+    )
+    .replace(
+      /^\s*aVa\s*·\s*(?:home|intelligence|moves|source|tower)\s*\n\s*(?:answered|partial|no_data|handoff|blocked)\s*\n\s*(?:high|medium|low)\s+confidence\s*\n?/gim,
+      "",
+    )
     .replace(/^\s*#{1,6}\s+.*(?:\r?\n|$)/gm, "")
     .replace(/\*\*/g, "")
     .replace(/`([^`]+)`/g, "$1")
@@ -108,6 +120,44 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .trim();
 
   return enforcePublicAvaParagraphCap(scrubbed);
+}
+
+function stripInternalEvidenceAppendix(value: string): string {
+  const lines = value.replace(/\r\n/g, "\n").split("\n");
+  const kept: string[] = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index]?.trim() ?? "";
+    const nextWindow = lines
+      .slice(index, index + 6)
+      .map((item) => item.trim().toLowerCase())
+      .join(" ");
+    const previousWindow = lines
+      .slice(Math.max(0, index - 2), index + 1)
+      .map((item) => item.trim().toLowerCase())
+      .join(" ");
+
+    const startsEvidenceTable =
+      /^tables?$/i.test(line) &&
+      /\b(evidence|supporting material|source support)\b/.test(nextWindow) &&
+      /\bsource\b/.test(nextWindow) &&
+      /\bconfidence\b/.test(nextWindow);
+    const startsEvidenceHeader =
+      /^source\s+type\s+confidence\s+how\s+(?:it\s+)?supports\s+the\s+answer$/i.test(
+        line.replace(/\s+/g, " "),
+      ) &&
+      /\b(evidence|tables?|supporting material)\b/.test(previousWindow);
+    const startsSourcePanel =
+      /^this panel lists the material used for the answer/i.test(line);
+
+    if (startsEvidenceTable || startsEvidenceHeader || startsSourcePanel) {
+      break;
+    }
+
+    kept.push(lines[index]);
+  }
+
+  return kept.join("\n");
 }
 
 export function enforcePublicAvaParagraphCap(

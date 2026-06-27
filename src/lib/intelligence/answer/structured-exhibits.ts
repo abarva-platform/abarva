@@ -71,9 +71,7 @@ export function answerCitationsFromAskSources(
   }));
 }
 
-function availableContextTable(
-  citations: AnswerCitation[],
-): AnswerTable {
+function availableContextTable(citations: AnswerCitation[]): AnswerTable {
   const rows =
     citations.length > 0
       ? citations.map((citation) => ({
@@ -105,7 +103,9 @@ function availableContextTable(
   };
 }
 
-function sourceClassDisplay(sourceClass: AnswerCitation["sourceClass"]): string {
+function sourceClassDisplay(
+  sourceClass: AnswerCitation["sourceClass"],
+): string {
   switch (sourceClass) {
     case "tenant-fact":
       return "tenant material";
@@ -681,10 +681,13 @@ function structuredSourceExhibits(
   const tables: AnswerTable[] = [];
   const charts: AnswerChart[] = [];
   const graphs: AnswerGraph[] = [];
+  const shouldRenderSourceTables =
+    hasExplicitStructuredArtifactRequest(routing);
 
   sources.forEach((source, sourceIndex) => {
     const citationIds = [`c${sourceIndex + 1}`];
     for (const sourceTable of source.structured?.tables ?? []) {
+      if (!shouldRenderSourceTables) continue;
       if (sourceTable.rows.length === 0) continue;
       const table = tableFromStructuredSource(sourceTable, citationIds);
       tables.push(table);
@@ -710,10 +713,33 @@ function structuredSourceExhibits(
   return { tables, charts, graphs };
 }
 
+function hasExplicitStructuredArtifactRequest(
+  routing: RoutingDecision,
+): boolean {
+  const q = routing.query.toLowerCase();
+  if (routing.outputShape === "graph") {
+    return /\b(graph|map|network|relationship|relationships|dependenc|upstream|downstream)\b/.test(
+      q,
+    );
+  }
+  if (routing.outputShape === "chart") {
+    return /\b(chart|charts|visual|visually|visuali[sz]e|plot|graphically|trend|trends|over time|by month|by quarter|year over year|trajectory)\b/.test(
+      q,
+    );
+  }
+  if (routing.outputShape === "table") {
+    return /\b(table|tables|tabular|matrix|scorecard|workbook)\b/.test(q);
+  }
+  return false;
+}
+
 export function buildStructuredExhibits(
   input: StructuredExhibitsInput,
 ): StructuredExhibits {
   const citations = answerCitationsFromAskSources(input.sources);
+  const shouldRenderStructured = hasExplicitStructuredArtifactRequest(
+    input.routing,
+  );
   const sourceExhibits = structuredSourceExhibits(input.sources, input.routing);
   const markdown = markdownTablesFromProse(
     input.prose,
@@ -729,10 +755,13 @@ export function buildStructuredExhibits(
   tables.push(...sourceExhibits.tables);
   charts.push(...sourceExhibits.charts);
   graphs.push(...sourceExhibits.graphs);
-  tables.push(...markdown.tables);
-  tables.push(...inline.tables);
+  if (shouldRenderStructured) {
+    tables.push(...markdown.tables);
+    tables.push(...inline.tables);
+  }
 
   if (
+    shouldRenderStructured &&
     charts.length === 0 &&
     tables.length > 0 &&
     input.routing.outputShape === "chart"
@@ -744,6 +773,7 @@ export function buildStructuredExhibits(
     if (chart) charts.push(chart);
   }
   if (
+    shouldRenderStructured &&
     graphs.length === 0 &&
     tables.length > 0 &&
     input.routing.outputShape === "graph"
@@ -757,6 +787,7 @@ export function buildStructuredExhibits(
 
   if (
     tables.length === 0 &&
+    hasExplicitStructuredArtifactRequest(input.routing) &&
     (input.routing.outputShape === "table" ||
       input.routing.outputShape === "chart" ||
       input.routing.outputShape === "graph")

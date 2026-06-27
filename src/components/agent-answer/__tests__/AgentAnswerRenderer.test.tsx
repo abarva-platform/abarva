@@ -138,7 +138,7 @@ describe("AgentAnswerRenderer", () => {
     expect(screen.getByText("Dependency graph")).toBeInTheDocument();
     expect(screen.getByText("2 nodes · 1 links")).toBeInTheDocument();
     expect(screen.getByLabelText("Dependency graph")).toBeInTheDocument();
-    expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
+    expect(screen.queryByText("F12 IT budget")).not.toBeInTheDocument();
   });
 
   it("renders attribution and sources without persona-pack controls when no typed exhibits are present", () => {
@@ -181,11 +181,77 @@ describe("AgentAnswerRenderer", () => {
     render(<AgentAnswerRenderer answer={answer} />);
 
     expect(screen.queryByText(/Consulted experts/i)).not.toBeInTheDocument();
-    expect(screen.getByText("Sources")).toBeInTheDocument();
-    expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
+    expect(screen.queryByText("Sources")).not.toBeInTheDocument();
+    expect(screen.queryByText("F12 IT budget")).not.toBeInTheDocument();
     expect(
-      screen.queryByText("aVa did not return a renderable answer."),
+      screen.getByText("aVa did not return a renderable answer."),
+    ).toBeInTheDocument();
+  });
+
+  it("does not render source-support tables as executive answer content", () => {
+    const answer: AvaAnswerPacket = {
+      surface: "intelligence",
+      mode: "ANALYZE",
+      tenantKey: "skyharbor",
+      question: "What is the single best AI investment?",
+      intent: "table",
+      status: "answered",
+      directAnswer:
+        "Fund IROPS recovery automation, but only behind the operational-data readiness gate.",
+      factsUsed: [],
+      metricsUsed: [],
+      relationshipsUsed: [],
+      artifacts: [
+        {
+          artifact: "table",
+          id: "skyharbor-evidence-register",
+          title: "evidence",
+          columns: [
+            { key: "source", label: "Source" },
+            { key: "type", label: "Type" },
+            { key: "confidence", label: "Confidence" },
+            { key: "use", label: "How IT Supports The Answer" },
+          ],
+          rows: [
+            {
+              source: "SkyHarbor Air live Intelligence surface",
+              type: "tenant material",
+              confidence: "high",
+              use: "Active Intelligence surface for SkyHarbor Air.",
+            },
+          ],
+          citationIds: ["c1"],
+        },
+      ],
+      citations,
+      gaps: [],
+      caveats: [],
+      nextSteps: [],
+      quality: {
+        confidence: "high",
+        evidenceStrength: "strong",
+        tenantGrounding: "complete",
+        answerCompleteness: "complete",
+      },
+      safety: {
+        tenantFencePassed: true,
+        rawIdsSuppressed: true,
+        forbiddenLanguagePassed: true,
+        unsupportedClaimsBlocked: true,
+      },
+    };
+
+    render(<AgentAnswerRenderer answer={answer} />);
+
+    expect(
+      screen.getByText(/Fund IROPS recovery automation/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Tables")).not.toBeInTheDocument();
+    expect(screen.queryByText("evidence")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("How IT Supports The Answer"),
     ).not.toBeInTheDocument();
+    expect(screen.queryByText("tenant material")).not.toBeInTheDocument();
   });
 
   it("scrubs public prose and suppresses persona-pack controls", () => {
@@ -193,7 +259,8 @@ describe("AgentAnswerRenderer", () => {
       surface: "intelligence",
       mode: "ANALYZE",
       tenantKey: "lakeshore-holdings",
-      question: "Where is finance AI spend committed but value not yet realized?",
+      question:
+        "Where is finance AI spend committed but value not yet realized?",
       intent: "table",
       status: "partial",
       directAnswer:
@@ -228,7 +295,10 @@ describe("AgentAnswerRenderer", () => {
 
     expect(screen.queryByText(/Consulted experts/i)).not.toBeInTheDocument();
     const visibleText = container.textContent ?? "";
-    expect(visibleText).not.toMatch(/context dimensions|evidence points|That means The|The supporting evidence is that/i);
+    expect(visibleText).not.toMatch(
+      /context dimensions|evidence points|That means The|The supporting evidence is that/i,
+    );
+    expect(visibleText).not.toMatch(/\bsupporting material\b/i);
     expect(visibleText).toContain("business areas");
     expect(visibleText).toContain("source signals");
   });

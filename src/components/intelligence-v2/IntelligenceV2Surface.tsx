@@ -21,6 +21,7 @@ import type {
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
+import { hasVisibleAvaArtifacts } from "@/lib/ava-answer/renderable-artifacts";
 
 type Tab = "answer" | "signals" | "context" | "corpus";
 
@@ -121,7 +122,9 @@ function buildSurfaceContext(payload: IntelligenceBindingPayload) {
     clientKey: payload.tenant.key,
     pageFacts: [
       "This is the Intelligence advisory surface. Prefer tenant-specific business material over generic examples.",
-      ...payload.suggestedQuestions.map((question) => `Suggested executive question: ${question}`),
+      ...payload.suggestedQuestions.map(
+        (question) => `Suggested executive question: ${question}`,
+      ),
     ],
     tenantFacts,
     strategyFacts,
@@ -155,10 +158,26 @@ function newTurnId(prefix: string): string {
 
 function answerBodyFromPacket(answer: AvaAnswerPacket): string {
   return (
-    answer.directAnswer?.trim() ||
+    [answer.directAnswer, answer.interpretation, answer.businessImplication]
+      .filter((part): part is string => Boolean(part?.trim()))
+      .join("\n\n")
+      .trim() ||
     answer.prose?.trim() ||
     ""
   );
+}
+
+function hasRenderableAvaArtifacts(
+  answer?: AvaAnswerPacket | null,
+): answer is AvaAnswerPacket {
+  return hasVisibleAvaArtifacts(answer);
+}
+
+function visibleLatestAnswerText(message: ChatMessage): string {
+  const packetText = message.agentAnswer
+    ? answerBodyFromPacket(message.agentAnswer)
+    : "";
+  return scrubPublicAvaAnswerText(packetText || message.body);
 }
 
 export function IntelligenceV2Surface({
@@ -195,16 +214,20 @@ export function IntelligenceV2Surface({
     [latestAnswer, t.context.length, t.corpus.length, t.signals.length],
   );
 
-  async function askIntelligence(text: string, attachments: AttachmentRef[] = []) {
+  async function askIntelligence(
+    text: string,
+    attachments: AttachmentRef[] = [],
+  ) {
     const q = text.trim();
     if (!q && attachments.length === 0) return;
 
     const userTurn: ChatMessage = {
       id: newTurnId("intelligence-user"),
       role: "user",
-      body: attachments.length > 0
-        ? `${q}${q ? "\n\n" : ""}[attached: ${attachments.map((a) => a.file_name).join(", ")}]`
-        : q,
+      body:
+        attachments.length > 0
+          ? `${q}${q ? "\n\n" : ""}[attached: ${attachments.map((a) => a.file_name).join(", ")}]`
+          : q,
     };
     const agentId = newTurnId("intelligence-ava");
     const agentTurn: ChatMessage = {
@@ -299,13 +322,19 @@ export function IntelligenceV2Surface({
                 event.answer.directAnswer?.trim() ||
                 answerText.trim(),
             };
-            updateAgentTurn(answerText.trim() || packetBody, structuredAnswer);
+            updateAgentTurn(
+              scrubPublicAvaAnswerText(packetBody || answerText.trim()),
+              structuredAnswer,
+            );
             continue;
           }
           const delta = eventText(event);
           if (delta) {
             answerText += delta;
-            updateAgentTurn(scrubPublicAvaAnswerText(answerText), structuredAnswer);
+            updateAgentTurn(
+              scrubPublicAvaAnswerText(answerText),
+              structuredAnswer,
+            );
           }
           if (event.type === "done" && event.telemetryEventId) {
             setThread((prev) =>
@@ -392,7 +421,7 @@ export function IntelligenceV2Surface({
                 <div className="trust" style={{ textAlign: "left", margin: 0 }}>
                   <span className="mono">
                     <b>{tl.dimensionsLoaded}</b> dimensions ·{" "}
-                      <b>{tl.evidencePoints.toLocaleString()}</b> source signals ·{" "}
+                    <b>{tl.evidencePoints.toLocaleString()}</b> source signals ·{" "}
                     <b>{tl.sources}</b> sources · <b>{tl.searchVerifiedPct}%</b>{" "}
                     search-verified
                   </span>
@@ -403,14 +432,14 @@ export function IntelligenceV2Surface({
                 {tabs.map((item) => {
                   const key = item.id as Tab;
                   return (
-            <button
-              key={key}
-              type="button"
-              className={`tab${tab === key ? " active" : ""}`}
-              onClick={() => setTab(key)}
-            >
+                    <button
+                      key={key}
+                      type="button"
+                      className={`tab${tab === key ? " active" : ""}`}
+                      onClick={() => setTab(key)}
+                    >
                       {item.label} <span className="ct">{item.count ?? 0}</span>
-            </button>
+                    </button>
                   );
                 })}
               </div>
@@ -422,150 +451,165 @@ export function IntelligenceV2Surface({
                     {latestAnswer ? (
                       <>
                         <h3>Answer from the current conversation</h3>
-                        {latestAnswer.agentAnswer ? (
-                          <AgentAnswerRenderer answer={latestAnswer.agentAnswer} />
-                        ) : latestAnswer.body.trim() ? (
+                        {visibleLatestAnswerText(latestAnswer) ? (
                           <div className="answerText">
-                            {scrubPublicAvaAnswerText(latestAnswer.body)}
+                            {visibleLatestAnswerText(latestAnswer)}
                           </div>
                         ) : (
-                          <div className="ansfetching">aVa is forming the answer…</div>
+                          <div className="ansfetching">
+                            aVa is forming the answer…
+                          </div>
                         )}
+                        {hasRenderableAvaArtifacts(latestAnswer.agentAnswer) ? (
+                          <AgentAnswerRenderer
+                            answer={latestAnswer.agentAnswer}
+                            showChrome={false}
+                            showProse={false}
+                          />
+                        ) : null}
                       </>
                     ) : (
                       <div className="emptyAnswer">
-                        Ask in the left rail. Answers, tables, charts, graphs, and
-                        citations stay in the conversation, while this canvas keeps
-                        the supporting Intelligence tabs visible.
+                        Ask in the left rail. Answers, tables, charts, graphs,
+                        and citations stay in the conversation, while this
+                        canvas keeps the supporting Intelligence tabs visible.
                       </div>
                     )}
                   </div>
                 )}
-          {tab === "signals" && (
-            <>
-              <div className="sechead">
-                <span className="ey">
-                  EXECUTIVE SIGNALS · WHAT THE CONTEXT IS TELLING US
-                </span>
-                <span className="ey">
-                  {t.signals.length} ACTIVE · CROSS-DOMAIN
-                </span>
-              </div>
-              <div className="grid2">
-                {t.signals.map((s) => (
-                  <div className="card" key={s.id}>
-                    <div className="tags">
-                      {s.domains.map((d, i) => (
-                        <span key={d}>
-                          {i > 0 && <span className="tag sep">·&nbsp;</span>}
-                          <span className="tag">{d}</span>
-                        </span>
+                {tab === "signals" && (
+                  <>
+                    <div className="sechead">
+                      <span className="ey">
+                        EXECUTIVE SIGNALS · WHAT THE CONTEXT IS TELLING US
+                      </span>
+                      <span className="ey">
+                        {t.signals.length} ACTIVE · CROSS-DOMAIN
+                      </span>
+                    </div>
+                    <div className="grid2">
+                      {t.signals.map((s) => (
+                        <div className="card" key={s.id}>
+                          <div className="tags">
+                            {s.domains.map((d, i) => (
+                              <span key={d}>
+                                {i > 0 && (
+                                  <span className="tag sep">·&nbsp;</span>
+                                )}
+                                <span className="tag">{d}</span>
+                              </span>
+                            ))}
+                            {s.crossDomain && (
+                              <span className="tag cross">CROSS-DOMAIN</span>
+                            )}
+                          </div>
+                          <h3>{s.headline}</h3>
+                          <p className="body">{s.body}</p>
+                          <div className="rule" />
+                          <div className="cardfoot">
+                            <span
+                              className={`conf${s.confidence.toUpperCase().includes("HIGH") ? "" : " med"}`}
+                            >
+                              {s.confidence}
+                            </span>
+                            <span className="evi">
+                              <span className="dot" />
+                              {s.evidencePoints} source signals · {s.sources}{" "}
+                              sources
+                            </span>
+                            <span className="act">
+                              <a>Trace sources →</a>
+                              {s.move && (
+                                <a
+                                  className="move"
+                                  title={`${s.move.title} · ${s.move.owner ?? ""} · ${s.move.impact ?? ""}`}
+                                >
+                                  Shape into Move →
+                                </a>
+                              )}
+                            </span>
+                          </div>
+                        </div>
                       ))}
-                      {s.crossDomain && (
-                        <span className="tag cross">CROSS-DOMAIN</span>
+                    </div>
+                  </>
+                )}
+
+                {tab === "context" && (
+                  <>
+                    <div className="sechead">
+                      <span className="ey">
+                        AVAILABLE MATERIAL · BROWSE BY BUSINESS AREA
+                      </span>
+                      <span className="ey">
+                        {t.context.length} CONNECTED ·{" "}
+                        {contextEvidence.toLocaleString()} SOURCE SIGNALS
+                      </span>
+                    </div>
+                    <div className="grid3">
+                      {t.context.map((c) => (
+                        <div className="dimcard" key={c.dimension}>
+                          <div className="dimhead">
+                            <h4>{c.dimension}</h4>
+                            <span className="loaded">{c.status}</span>
+                          </div>
+                          <div className="desc">{c.description}</div>
+                          <div className="stats">
+                            <div className="stat">
+                              <div className="k">Source depth</div>
+                              <div className="v">
+                                {c.evidence.toLocaleString()}
+                              </div>
+                            </div>
+                            <div className="stat">
+                              <div className="k">Sources</div>
+                              <div className="v">{c.sources}</div>
+                            </div>
+                            <div className="stat">
+                              <div className="k">Confidence</div>
+                              <div className="v">{c.trust}%</div>
+                            </div>
+                          </div>
+                          {c.flag && <div className="flag">{c.flag}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {tab === "corpus" && (
+                  <>
+                    <div className="sechead">
+                      <span className="ey">
+                        CORPUS · PATTERNS MATCHED TO THIS CONTEXT
+                      </span>
+                      <span className="ey">{t.corpus.length} PATTERNS</span>
+                    </div>
+                    <div className="grid3">
+                      {t.corpus.length === 0 ? (
+                        <p className="ey">No corpus patterns loaded.</p>
+                      ) : (
+                        t.corpus.map((c) => (
+                          <div className="dimcard cpat" key={c.patternName}>
+                            <div className="dom">{c.domain || "pattern"}</div>
+                            <h4
+                              style={{
+                                fontFamily:
+                                  "var(--font-fraunces),Georgia,serif",
+                                fontWeight: 500,
+                                fontSize: 17,
+                                marginBottom: 6,
+                              }}
+                            >
+                              {c.patternName}
+                            </h4>
+                            <p>{c.whenToApply}</p>
+                          </div>
+                        ))
                       )}
                     </div>
-                    <h3>{s.headline}</h3>
-                    <p className="body">{s.body}</p>
-                    <div className="rule" />
-                    <div className="cardfoot">
-                      <span
-                        className={`conf${s.confidence.toUpperCase().includes("HIGH") ? "" : " med"}`}
-                      >
-                        {s.confidence}
-                      </span>
-                      <span className="evi">
-                        <span className="dot" />
-                        {s.evidencePoints} source signals · {s.sources} sources
-                      </span>
-                      <span className="act">
-                        <a>Trace sources →</a>
-                        {s.move && (
-                          <a
-                            className="move"
-                            title={`${s.move.title} · ${s.move.owner ?? ""} · ${s.move.impact ?? ""}`}
-                          >
-                            Shape into Move →
-                          </a>
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {tab === "context" && (
-            <>
-              <div className="sechead">
-                <span className="ey">AVAILABLE MATERIAL · BROWSE BY BUSINESS AREA</span>
-                <span className="ey">
-                  {t.context.length} CONNECTED ·{" "}
-                  {contextEvidence.toLocaleString()} SOURCE SIGNALS
-                </span>
-              </div>
-              <div className="grid3">
-                {t.context.map((c) => (
-                  <div className="dimcard" key={c.dimension}>
-                    <div className="dimhead">
-                      <h4>{c.dimension}</h4>
-                      <span className="loaded">{c.status}</span>
-                    </div>
-                    <div className="desc">{c.description}</div>
-                    <div className="stats">
-                      <div className="stat">
-                        <div className="k">Source depth</div>
-                        <div className="v">{c.evidence.toLocaleString()}</div>
-                      </div>
-                      <div className="stat">
-                        <div className="k">Sources</div>
-                        <div className="v">{c.sources}</div>
-                      </div>
-                      <div className="stat">
-                        <div className="k">Confidence</div>
-                        <div className="v">{c.trust}%</div>
-                      </div>
-                    </div>
-                    {c.flag && <div className="flag">{c.flag}</div>}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {tab === "corpus" && (
-            <>
-              <div className="sechead">
-                <span className="ey">
-                  CORPUS · PATTERNS MATCHED TO THIS CONTEXT
-                </span>
-                <span className="ey">{t.corpus.length} PATTERNS</span>
-              </div>
-              <div className="grid3">
-                {t.corpus.length === 0 ? (
-                  <p className="ey">No corpus patterns loaded.</p>
-                ) : (
-                  t.corpus.map((c) => (
-                    <div className="dimcard cpat" key={c.patternName}>
-                      <div className="dom">{c.domain || "pattern"}</div>
-                      <h4
-                        style={{
-                          fontFamily: "var(--font-fraunces),Georgia,serif",
-                          fontWeight: 500,
-                          fontSize: 17,
-                          marginBottom: 6,
-                        }}
-                      >
-                        {c.patternName}
-                      </h4>
-                      <p>{c.whenToApply}</p>
-                    </div>
-                  ))
+                  </>
                 )}
-              </div>
-            </>
-          )}
               </div>
             </div>
           </div>

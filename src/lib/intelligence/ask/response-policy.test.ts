@@ -68,9 +68,7 @@ describe("Ask Intelligence response policy", () => {
       24,
     );
 
-    expect(answer).toContain(
-      "\n| Use case | Primary benefit |\n|---|---|\n",
-    );
+    expect(answer).toContain("\n| Use case | Primary benefit |\n|---|---|\n");
     expect(answer).toContain(
       "| Demand forecasting | Inventory turn and lost-sale reduction |",
     );
@@ -85,7 +83,9 @@ describe("Ask Intelligence response policy", () => {
     );
 
     expect(answer).toContain("Customer gold record is on Databricks.");
-    expect(answer).toContain("the referenced evidence owns the inventory mart.");
+    expect(answer).toContain(
+      "the referenced evidence owns the inventory mart.",
+    );
     expect(answer).toContain(
       "the referenced evidence and the referenced evidence carry 358 integrations.",
     );
@@ -99,9 +99,7 @@ describe("Ask Intelligence response policy", () => {
     const answer = buildCurrentStateAdvisory(surfaceSources);
 
     expect(answer).toContain("My read: Apex Retail is not short on AI ideas.");
-    expect(answer).toContain(
-      "Business lens: aVa sees Apex Retail priorities",
-    );
+    expect(answer).toContain("Business lens: aVa sees Apex Retail priorities");
     expect(answer).toContain("Technical lens: resolve customer identity");
     expect(answer).toContain("CFO value lens");
     expect(answer).not.toContain("3 ranked bets");
@@ -184,7 +182,7 @@ describe("Ask Intelligence response policy", () => {
     expect(applyPartialEvidencePolicy(text, [])).toBe(text);
   });
 
-  it("splits long prose and appends a non-fabricating next move when actionability is missing", () => {
+  it("splits long prose without appending app-authored next moves", () => {
     const text = [
       "The loaded tenant sources confirm the active context but do not include the denial-rate extract, overturn-rate table, or specialty-level operating baseline that would be required to approve a tenant-specific number.",
       "I will not fabricate those numbers because they would become a board anchor without evidence.",
@@ -193,9 +191,9 @@ describe("Ask Intelligence response policy", () => {
 
     const answer = enforceDecisionGradeAnswer(text);
 
-    expect(answer).toContain(
-      "Next, assign the accountable data owner to validate the missing tenant evidence",
-    );
+    expect(answer).not.toContain("Next, assign");
+    expect(answer).not.toContain("accountable data owner");
+    expect(answer).not.toContain("Source, Tower, or Moves");
     expect(answer).not.toMatch(/^(Read|Evidence|Implication|Next move):/im);
     expect(
       answer
@@ -289,14 +287,18 @@ describe("Ask Intelligence response policy", () => {
 
     const answer = enforceDecisionGradeAnswer(text);
 
-    expect(answer).toContain("Your loaded D&A estate shows eight data products");
+    expect(answer).toContain(
+      "Your loaded D&A estate shows eight data products",
+    );
     expect(answer).toContain("Merch planning is your only gold-grade asset");
-    expect(answer).toContain("Next, have");
+    expect(answer).toContain("Next, assign");
     expect(answer).not.toContain("The supporting evidence is that");
     expect(answer).not.toContain("That means");
     expect(answer).not.toMatch(/Evidence\s+—/i);
     expect(answer).not.toContain("validate the cited evidence");
-    expect([...answer.matchAll(/^(Read|Evidence|Implication|Next move):/gim)]).toHaveLength(0);
+    expect([
+      ...answer.matchAll(/^(Read|Evidence|Implication|Next move):/gim),
+    ]).toHaveLength(0);
     expect(
       answer
         .split(/\n{2,}/)

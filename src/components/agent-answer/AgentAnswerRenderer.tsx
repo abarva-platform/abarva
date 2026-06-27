@@ -18,6 +18,7 @@ import type {
   AnswerTableColumn,
   AvaAnswerPacket,
 } from "@/lib/ava-answer/contract";
+import { isVisibleAvaArtifact } from "@/lib/ava-answer/renderable-artifacts";
 
 const CSS = `
 .agentAnswer{--aa-ink:#111827;--aa-muted:#6b7280;--aa-faint:#9ca3af;--aa-line:#e5e7eb;--aa-paper:#fff;--aa-soft:#f9fafb;--aa-green:#166534;--aa-green-bg:#eaf7ee;display:grid;gap:18px;color:var(--aa-ink)}
@@ -169,7 +170,11 @@ function CitationChips({ citations }: { citations: AnswerCitation[] }) {
           <span
             className="aaCitation"
             key={citation.id}
-            title={citation.excerpt ? shapePublicText(citation.excerpt, "") : undefined}
+            title={
+              citation.excerpt
+                ? shapePublicText(citation.excerpt, "")
+                : undefined
+            }
           >
             {content}
           </span>
@@ -429,39 +434,50 @@ export function AnswerGraphRenderer({
   );
 }
 
-export function AgentAnswerRenderer({ answer }: { answer: AvaAnswerPacket }) {
+export function AgentAnswerRenderer({
+  answer,
+  showChrome = true,
+  showProse = true,
+}: {
+  answer: AvaAnswerPacket;
+  showChrome?: boolean;
+  showProse?: boolean;
+}) {
   const displayAnswer = sanitizeAvaAnswerForRender(answer);
-  const tables = displayAnswer.artifacts.filter(
+  const visibleArtifacts = displayAnswer.artifacts.filter(isVisibleAvaArtifact);
+  const tables = visibleArtifacts.filter(
     (artifact): artifact is AnswerTable & { artifact: "table" } =>
       artifact.artifact === "table",
   );
-  const charts = displayAnswer.artifacts.filter(
+  const charts = visibleArtifacts.filter(
     (artifact): artifact is AnswerChart & { artifact: "chart" } =>
       artifact.artifact === "chart",
   );
-  const graphs = displayAnswer.artifacts.filter(
+  const graphs = visibleArtifacts.filter(
     (artifact): artifact is AnswerGraph & { artifact: "graph" } =>
       artifact.artifact === "graph",
   );
   const hasStructured =
     charts.length > 0 || graphs.length > 0 || tables.length > 0;
-  const hasAttribution = displayAnswer.citations.length > 0;
+  const hasAttribution = false;
   return (
     <section className="agentAnswer" aria-label="aVa answer">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      <header className="aaHeader">
-        <div>
-          <div className="aaKicker">aVa · {displayAnswer.surface}</div>
-          <div className="aaMeta">
-            <span className="aaPill">{displayAnswer.status}</span>
-            <span className="aaPill">
-              {displayAnswer.quality.confidence} confidence
-            </span>
+      {showChrome ? (
+        <header className="aaHeader">
+          <div>
+            <div className="aaKicker">aVa · {displayAnswer.surface}</div>
+            <div className="aaMeta">
+              <span className="aaPill">{displayAnswer.status}</span>
+              <span className="aaPill">
+                {displayAnswer.quality.confidence} confidence
+              </span>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      ) : null}
 
-      {displayAnswer.directAnswer ? (
+      {showProse && displayAnswer.directAnswer ? (
         <div className="aaProse">
           <AgentMarkdown text={displayAnswer.directAnswer} />
           {displayAnswer.interpretation ? (
@@ -477,11 +493,7 @@ export function AgentAnswerRenderer({ answer }: { answer: AvaAnswerPacket }) {
         <div className="aaSection">
           <div className="aaTitle">Charts</div>
           {charts.map((chart) => (
-            <AnswerChartRenderer
-              chart={chart}
-              citations={displayAnswer.citations}
-              key={chart.id}
-            />
+            <AnswerChartRenderer chart={chart} key={chart.id} />
           ))}
         </div>
       ) : null}
@@ -490,11 +502,7 @@ export function AgentAnswerRenderer({ answer }: { answer: AvaAnswerPacket }) {
         <div className="aaSection">
           <div className="aaTitle">Graphs</div>
           {graphs.map((graph) => (
-            <AnswerGraphRenderer
-              graph={graph}
-              citations={displayAnswer.citations}
-              key={graph.id}
-            />
+            <AnswerGraphRenderer graph={graph} key={graph.id} />
           ))}
         </div>
       ) : null}
@@ -503,19 +511,8 @@ export function AgentAnswerRenderer({ answer }: { answer: AvaAnswerPacket }) {
         <div className="aaSection">
           <div className="aaTitle">Tables</div>
           {tables.map((table) => (
-            <DataTable
-              table={table}
-              citations={displayAnswer.citations}
-              key={table.id}
-            />
+            <DataTable table={table} key={table.id} />
           ))}
-        </div>
-      ) : null}
-
-      {!hasStructured && displayAnswer.citations.length > 0 ? (
-        <div className="aaSection">
-          <div className="aaTitle">Sources</div>
-          <CitationChips citations={displayAnswer.citations} />
         </div>
       ) : null}
 

@@ -1,4 +1,6 @@
 import { buildStructuredExhibits } from "@/lib/intelligence/answer/structured-exhibits";
+import { routeQuestion } from "@/lib/intelligence/answer/router";
+import { advisorRequiredArtifactForQuery } from "@/lib/intelligence/ask/advisor-composer";
 import type { RoutingDecision } from "@/lib/intelligence/answer/router";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 
@@ -23,6 +25,16 @@ const sources: AskSource[] = [
     confidence: 0.8,
   },
 ];
+
+function tableRouting(
+  query = "Show me a table of the answer",
+): RoutingDecision {
+  return { ...routing, query, outputShape: "table" };
+}
+
+function graphRouting(query = "Show me a dependency graph"): RoutingDecision {
+  return { ...routing, query, outputShape: "graph" };
+}
 
 describe("buildStructuredExhibits", () => {
   it("does not infer chart data from figures mentioned in prose", () => {
@@ -87,9 +99,18 @@ describe("buildStructuredExhibits", () => {
         id: "source-apex-vendor-contracts",
         title: "Vendor Contracts",
         rows: [
-          expect.objectContaining({ vendor: "Retail Lakehouse", annualValue: 95_000_000 }),
-          expect.objectContaining({ vendor: "Toshiba POS", annualValue: 23_000_000 }),
-          expect.objectContaining({ vendor: "IBM Sterling OMS", annualValue: 22_000_000 }),
+          expect.objectContaining({
+            vendor: "Retail Lakehouse",
+            annualValue: 95_000_000,
+          }),
+          expect.objectContaining({
+            vendor: "Toshiba POS",
+            annualValue: 23_000_000,
+          }),
+          expect.objectContaining({
+            vendor: "IBM Sterling OMS",
+            annualValue: 22_000_000,
+          }),
         ],
       }),
     );
@@ -99,9 +120,15 @@ describe("buildStructuredExhibits", () => {
         kind: "cost-stack",
         title: "Annual Contract Value by Vendor",
         data: [
-          expect.objectContaining({ label: "Retail Lakehouse", value: 95_000_000 }),
+          expect.objectContaining({
+            label: "Retail Lakehouse",
+            value: 95_000_000,
+          }),
           expect.objectContaining({ label: "Toshiba POS", value: 23_000_000 }),
-          expect.objectContaining({ label: "IBM Sterling OMS", value: 22_000_000 }),
+          expect.objectContaining({
+            label: "IBM Sterling OMS",
+            value: 22_000_000,
+          }),
         ],
       }),
     ]);
@@ -109,7 +136,9 @@ describe("buildStructuredExhibits", () => {
 
   it("renders graphs from structured retrieved source relationships", () => {
     const exhibits = buildStructuredExhibits({
-      routing: { ...routing, outputShape: "graph" },
+      routing: graphRouting(
+        "Show me a dependency graph of applications to functions",
+      ),
       sources: [
         {
           id: "apex:structured:applications",
@@ -174,7 +203,7 @@ describe("buildStructuredExhibits", () => {
 
   it("renders an evidence table for table-shaped questions with cited sources even without extractable figures", () => {
     const exhibits = buildStructuredExhibits({
-      routing: { ...routing, outputShape: "table" },
+      routing: tableRouting("Show me a denial-category table"),
       sources,
       prose:
         "The right breakdown is denial reason category, AR days, and overturn rate. Next move: ask Revenue Cycle Operations to validate the category extract from the evidence ledger.",
@@ -211,7 +240,9 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.citations[0]?.sourceClass).toBe("tenant-fact");
     expect(exhibits.tables[0]?.title).toBe("Supporting Material");
     expect(exhibits.charts).toHaveLength(0);
-    expect(exhibits.prose).toContain("Medical Necessity is the highest-priority");
+    expect(exhibits.prose).toContain(
+      "Medical Necessity is the highest-priority",
+    );
   });
 
   it("converts complete markdown tables from Ava prose into typed tables", () => {
@@ -260,7 +291,7 @@ describe("buildStructuredExhibits", () => {
 
   it("converts collapsed inline markdown tables from live Ava prose into typed tables", () => {
     const exhibits = buildStructuredExhibits({
-      routing: { ...routing, outputShape: "table" },
+      routing: tableRouting("Show me an omnichannel dependency risk table"),
       sources,
       prose:
         "Here's the visual cut. Omnichannel dependency risk — ranked | System | Annual cost | Integrations | Posture | Risk driver | |---|---|---|---|---| | IBM Sterling OMS | $22M/yr | 10 | Contain | Routing ship-from-store | | Toshiba POS | $23M/yr | 11 | Replace | Store-edge transition | The single chart that matters is dependency concentration.",
@@ -298,13 +329,15 @@ describe("buildStructuredExhibits", () => {
 
   it("formats dense prose after extracting typed tables", () => {
     const exhibits = buildStructuredExhibits({
-      routing: { ...routing, outputShape: "table" },
+      routing: tableRouting("Show me an analytics technology table"),
       sources,
       prose:
         "Honest read first: I don't have the full Apex IT landscape inventory loaded, so I cannot list every analytics vendor. What the loaded context does tell me is the strategic shape. Apex's Retail Lakehouse & Customer Inventory Graph has $95M committed and $12M realized. Analytics technology cut | Layer | Typical stack | |---|---| | Lakehouse / warehouse | Databricks or Snowflake | | Legacy marts | Teradata / Oracle / SQL Server | This is the consolidation bet meant to replace fragmented banner-level analytics. Inventory truth is the gating risk for any AI workload on top of it. Next move: assign the accountable data owner to validate the missing tenant evidence before approving a board number.",
     });
 
-    expect(exhibits.prose).toContain("Retail Lakehouse & Customer Inventory Graph");
+    expect(exhibits.prose).toContain(
+      "Retail Lakehouse & Customer Inventory Graph",
+    );
     expect(exhibits.prose).toContain("This is the consolidation bet");
     expect(exhibits.prose).toContain("Next, assign");
     expect(exhibits.prose).not.toContain("The supporting evidence is that");
@@ -329,7 +362,9 @@ describe("buildStructuredExhibits", () => {
 
   it("keeps Apex-style inline tables out of prose and preserves readable sections", () => {
     const exhibits = buildStructuredExhibits({
-      routing: { ...routing, outputShape: "table" },
+      routing: tableRouting(
+        "Show me a table of technology investments by urgency",
+      ),
       sources,
       prose:
         "Read: Your loaded D&A estate shows eight data products spanning sales, customer, inventory, digital, loss prevention, supply chain, merchandising, and workforce — but the maturity profile is uneven, and the customer/digital domains are your weakest links. Evidence — what's actually in your estate: | Data Product | Domain | Owner Team | Cadence | Maturity | Known Gap | |---|---|---|---|---|---| | POS transaction lake | Sales | Analytics platform | Daily | Silver | Partial lineage | | Customer 360 / loyalty graph | Customer | Customer data team | Near real-time | Bronze | Identity gaps | Implication: Merch planning is your only gold-grade asset, and it is leaking trust through manual overrides. Next move: assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves.",
@@ -348,17 +383,23 @@ describe("buildStructuredExhibits", () => {
         owner_team: "Customer data team",
       }),
     ]);
-    expect(exhibits.prose).toContain("Merch planning is your only gold-grade asset");
-    expect(exhibits.prose).toContain("Next, have");
+    expect(exhibits.prose).toContain(
+      "Merch planning is your only gold-grade asset",
+    );
+    expect(exhibits.prose).toContain("assign the accountable owner");
     expect(exhibits.prose).not.toContain("The supporting evidence is that");
     expect(exhibits.prose).not.toContain("That means");
     expect(exhibits.prose).not.toContain("| Data Product |");
-    expect(exhibits.prose).not.toMatch(/^(Read|Evidence|Implication|Next move):/gim);
+    expect(exhibits.prose).not.toMatch(
+      /^(Read|Evidence|Implication|Next move):/gim,
+    );
   });
 
   it("strips orphan table fragments when the model emits an incomplete visual table", () => {
     const exhibits = buildStructuredExhibits({
-      routing: { ...routing, outputShape: "table" },
+      routing: tableRouting(
+        "Show me a table of technology investments by urgency",
+      ),
       sources,
       prose:
         "Read: First Capital Financial has several live technology investments where the risk profile and ownership are clear enough to drive action now — the table below organizes them by urgency.\n2M run cost | Critical; restricted non-public data, vendor-hosted | Data residency and exit rights review — restricted classification + vendor-hosted is a red flag combination |\n| Marqeta Dispute Manager | Head of Cards & Payments | $4.\nNext move: assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves.",
@@ -366,7 +407,7 @@ describe("buildStructuredExhibits", () => {
 
     expect(exhibits.tables[0]?.title).toBe("Supporting Material");
     expect(exhibits.prose).toContain("First Capital Financial");
-    expect(exhibits.prose).toContain("Next, have");
+    expect(exhibits.prose).toContain("Next, assign");
     expect(exhibits.prose).not.toContain("|");
     expect(exhibits.prose).not.toContain("Marqeta Dispute Manager");
   });
@@ -386,9 +427,15 @@ describe("buildStructuredExhibits", () => {
         kind: "cost-stack",
         title: "Annual cost by System",
         data: [
-          expect.objectContaining({ label: "IBM Sterling OMS", value: 22_000_000 }),
+          expect.objectContaining({
+            label: "IBM Sterling OMS",
+            value: 22_000_000,
+          }),
           expect.objectContaining({ label: "Toshiba POS", value: 23_000_000 }),
-          expect.objectContaining({ label: "Salesforce Commerce", value: 12_000_000 }),
+          expect.objectContaining({
+            label: "Salesforce Commerce",
+            value: 12_000_000,
+          }),
         ],
       }),
     ]);
@@ -408,7 +455,9 @@ describe("buildStructuredExhibits", () => {
 
   it("converts relationship tables into typed graphs for graph-shaped questions", () => {
     const exhibits = buildStructuredExhibits({
-      routing: { ...routing, outputShape: "graph" },
+      routing: graphRouting(
+        "Show me a dependency graph of platform relationships",
+      ),
       sources,
       prose:
         "Dependency graph | From | Relationship | To | Evidence | |---|---|---|---| | Retail Lakehouse | feeds | Demand Forecasting | Inventory history | | Toshiba POS | sends transactions to | Retail Lakehouse | Store sales feed | Next move: validate the integration owner.",
@@ -451,12 +500,14 @@ describe("buildStructuredExhibits", () => {
     expect(exhibits.citations).toHaveLength(1);
     expect(exhibits.tables[0]?.title).toBe("Supporting Material");
     expect(exhibits.charts).toHaveLength(0);
-    expect(exhibits.prose).toContain("Medical necessity is the highest-priority");
+    expect(exhibits.prose).toContain(
+      "Medical necessity is the highest-priority",
+    );
   });
 
   it("renders a truthful evidence-required table when a table is requested without enough cited rows", () => {
     const exhibits = buildStructuredExhibits({
-      routing: { ...routing, outputShape: "table" },
+      routing: tableRouting("Show me a denial-category table"),
       sources: [],
       prose:
         "The requested denial-category table is not in the connected tenant evidence. Next move: validate the source extract before approving numbers.",
@@ -494,7 +545,7 @@ describe("buildStructuredExhibits", () => {
 
   it("renders a cited graph gap table instead of bare prose when edge rows are not extractable", () => {
     const exhibits = buildStructuredExhibits({
-      routing: { ...routing, outputShape: "graph" },
+      routing: graphRouting("Show me an integration dependency graph"),
       sources,
       prose:
         "The integration dependency picture is concentrated in a few platforms, but the answer did not include From / Relationship / To rows that can be safely rendered as a graph.",
@@ -513,4 +564,36 @@ describe("buildStructuredExhibits", () => {
       }),
     );
   });
+
+  it.each([
+    "What is the single best AI investment SkyHarbor should make next?",
+    "Where is AI spend most likely being wasted?",
+    "What must be true before agentic IROPS can safely scale?",
+    "What are the top three operational risks in scaling IROPS AI?",
+    "Which AI product-development bets should SkyHarbor prioritize?",
+    "How should product, data, operations, and risk work together on AI releases?",
+    "Which customer experience AI investments are likely to improve NPS fastest?",
+    "What governance decision would unlock the most AI value?",
+  ])(
+    "does not auto-render evidence support tables for advisory prompt: %s",
+    (query) => {
+      const routed = routeQuestion({ query, industry: "airline" });
+      const forcedShape = advisorRequiredArtifactForQuery(query);
+      const exhibits = buildStructuredExhibits({
+        routing: {
+          ...routed,
+          outputShape: forcedShape ?? routed.outputShape,
+        },
+        sources,
+        prose:
+          "SkyHarbor should hold broad scale-up until operational data readiness and model-risk gates are signed. The better decision is to fund the recovery workflow with strict release gates, not spread capital across every AI idea.",
+      });
+
+      expect(exhibits.citations).toHaveLength(1);
+      expect(exhibits.tables).toHaveLength(0);
+      expect(exhibits.charts).toHaveLength(0);
+      expect(exhibits.graphs).toHaveLength(0);
+      expect(exhibits.prose).not.toContain("Supporting Material");
+    },
+  );
 });
