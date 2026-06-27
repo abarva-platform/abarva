@@ -65,10 +65,31 @@ function paragraphSplit(text: string): string[] {
 function trimWords(text: string, maxWords: number): string {
   const words = text.trim().split(/\s+/).filter(Boolean);
   if (words.length <= maxWords) return text.trim();
-  return `${words
-    .slice(0, maxWords)
-    .join(" ")
-    .replace(/[,;:—-]+$/, "")}.`;
+  return `${stripDanglingTrimTail(words.slice(0, maxWords).join(" "))}.`;
+}
+
+function stripDanglingTrimTail(text: string): string {
+  const original = text.trim();
+  let cleaned = original.replace(/[,:;.\s—-]+$/, "").trim();
+
+  const lastOpenParen = cleaned.lastIndexOf("(");
+  const lastCloseParen = cleaned.lastIndexOf(")");
+  if (lastOpenParen > lastCloseParen) {
+    cleaned = cleaned.slice(0, lastOpenParen).trim();
+  }
+
+  cleaned = cleaned
+    .replace(
+      /\s+\b(?:and|or|but|with|to|of|for|from|against|into|about|on|at|by|as|than|while|because|before|after|if|then)\b$/i,
+      "",
+    )
+    .replace(
+      /\s+(?:ask|open|inspect|review|validate|compare|shape|assign|fund|pause|decide|route)\s+(?:the|a|an|this|that|first|next|cited|supporting){0,2}$/i,
+      "",
+    )
+    .trim();
+
+  return cleaned || original.replace(/[,:;.\s—-]+$/, "").trim();
 }
 
 function hasNextStep(text: string): boolean {
@@ -143,6 +164,73 @@ function removeSectionHeadings(text: string): string {
     .join("\n");
 }
 
+function segmentKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/^[-·]\s*/, "")
+    .replace(/^(?:breakdown|evidence|read|implication|next(?: move)?):\s*/i, "")
+    .replace(/[—–-]/g, " ")
+    .replace(/[$,.:;()[\]]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function dedupeSemicolonSegments(line: string): string {
+  const segments = line
+    .split(/\s*;\s*/)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+  if (segments.length < 3) return line;
+
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+  for (const segment of segments) {
+    const key = segmentKey(segment);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(segment);
+  }
+  return deduped.join("; ");
+}
+
+function dedupeVisibleLines(text: string): string {
+  const seen = new Set<string>();
+  const lines: string[] = [];
+  for (const rawLine of text.split("\n")) {
+    const line = dedupeSemicolonSegments(rawLine.trim());
+    if (!line) {
+      if (lines.at(-1) !== "") lines.push("");
+      continue;
+    }
+    const key = segmentKey(line);
+    if (key && seen.has(key)) continue;
+    if (key) seen.add(key);
+    lines.push(line);
+  }
+  return lines.join("\n");
+}
+
+function normalizeAssemblyArtifacts(text: string): string {
+  return dedupeVisibleLines(
+    text
+      .replace(/\b(supporting)\s+\1\b/gi, "$1")
+      .replace(
+        /\b(Read|Evidence|Implication|Next(?: move)?)\s*:\s*\1\s*:/gi,
+        "$1:",
+      )
+      .replace(/\bNext\s*:\s*Next(?: move)?\s*:/gi, "Next:")
+      .replace(/\bNext\s*:\s*-\s*Next\s*:/gi, "Next:")
+      .replace(/\bBreakdown\s*:\s*;\s*/gi, "Breakdown: ")
+      .replace(/\s*;\s*[-–—]\s*/g, "; ")
+      .replace(/\s+[-–—]\s+Breakdown\s*:\s*[-–—]?\s*/gi, "\nBreakdown: ")
+      .replace(
+        /\b(?:and|or|but|with|to|of|for|from|against|into|about|on|at|by|as|than|while|because|before|after|if|then)\.(?=\s*(?:\n|$))/gi,
+        "",
+      )
+      .replace(/\s+([,.;:!?])/g, "$1"),
+  );
+}
+
 function isUsefulSupport(sentence: string): boolean {
   if (
     /^\s*(?:why|evidence|my read|next|what i would do next)\s*:?\s*$/i.test(
@@ -170,7 +258,9 @@ function compactForChat(
     return normalized;
   }
 
-  const proseOnly = removeSectionHeadings(removeMarkdownTables(normalized));
+  const proseOnly = removeSectionHeadings(
+    removeMarkdownTables(normalizeAssemblyArtifacts(normalized)),
+  );
   const sentences = sentenceSplit(proseOnly.replace(/\n+/g, " "));
   const paragraphs = paragraphSplit(proseOnly);
   const lead = trimWords(
@@ -218,7 +308,9 @@ function compactForChat(
     ...support,
     `Next: ${trimWords(next.replace(/^[-·]?\s*Next:\s*/i, ""), 22)}`,
   ].filter(Boolean);
-  let compact = normalizeWhitespace(lines.slice(0, maxParagraphs).join("\n"));
+  let compact = normalizeWhitespace(
+    normalizeAssemblyArtifacts(lines.slice(0, maxParagraphs).join("\n")),
+  );
   if (
     compact.length <= targetChars &&
     countVisibleParagraphs(compact) <= maxParagraphs
@@ -227,19 +319,23 @@ function compactForChat(
   }
 
   compact = normalizeWhitespace(
-    [
-      lead,
-      bulletSummary ?? support[0],
-      `Next: ${trimWords(nextStepFallback, 18)}`,
-    ]
-      .filter(Boolean)
-      .join("\n"),
+    normalizeAssemblyArtifacts(
+      [
+        lead,
+        bulletSummary ?? support[0],
+        `Next: ${trimWords(nextStepFallback, 18)}`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    ),
   );
   if (compact.length <= targetChars) return compact;
 
   return normalizeWhitespace(
-    [trimWords(lead, 26), `Next: ${trimWords(nextStepFallback, 18)}`].join(
-      "\n",
+    normalizeAssemblyArtifacts(
+      [trimWords(lead, 26), `Next: ${trimWords(nextStepFallback, 18)}`].join(
+        "\n",
+      ),
     ),
   );
 }
@@ -337,7 +433,7 @@ export function shapeSharedAdvisorResponse(
     input.nextStepFallback ??
     "ask aVa to inspect the supporting evidence, compare options, or shape the next action.";
   const labeled = replaceLabels(
-    normalizeWhitespace(input.text),
+    normalizeWhitespace(normalizeAssemblyArtifacts(input.text)),
     input.labels ?? [],
   );
   const brandClean = labeled.text.replace(BANNED_BRAND_RE, "aVa");
@@ -353,7 +449,9 @@ export function shapeSharedAdvisorResponse(
       ? normalizeWhitespace(`${compacted}\n\nNext: ${nextStepFallback}`)
       : compacted;
   const finalText = normalizeWhitespace(
-    stripUnmappedRawIds(withNext).replace(BANNED_BRAND_RE, "aVa"),
+    normalizeAssemblyArtifacts(
+      stripUnmappedRawIds(withNext).replace(BANNED_BRAND_RE, "aVa"),
+    ),
   );
   return {
     text: finalText,

@@ -29,6 +29,9 @@ describe("Tower semantic question bank", () => {
     expect(summary.byIntent.chart).toBeGreaterThan(0);
     expect(summary.byIntent.graph).toBeGreaterThan(0);
     expect(summary.byIntent.advisory).toBeGreaterThan(0);
+    expect(summary.byIntent.handoff).toBeGreaterThan(0);
+    expect(summary.byCategory.handoff).toBeGreaterThanOrEqual(20);
+    expect(summary.byCategory.safety).toBeGreaterThanOrEqual(20);
   });
 
   it("routes factual metric questions through deterministic read models", () => {

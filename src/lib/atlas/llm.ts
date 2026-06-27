@@ -29,6 +29,7 @@ import type {
   AtlasTenancyCtx,
   AtlasToolResultMap,
 } from "@/lib/atlas/types";
+import { buildTowerFactualSpineAnswer } from "@/lib/atlas/tower-factual-spine";
 import {
   AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
   sanitizeAutonomousDecisionLanguage,
@@ -441,6 +442,52 @@ export async function runAtlasLlm(
   ) {
     toolResults.signalDetail = await query_signal_evidence(ctx, topSignal.id);
     toolsUsed.push("query_signal_evidence");
+  }
+
+  const factualSpine = buildTowerFactualSpineAnswer(message, towerState);
+  if (factualSpine) {
+    const response = sanitizeAutonomousDecisionLanguage(factualSpine.response);
+    logAtlasMode({
+      tenantId: ctx.clientId,
+      mode: "live",
+      reason: null,
+      model: "tower-factual-spine-deterministic",
+      workflow: "atlas-llm",
+    });
+    return {
+      response,
+      toolsUsed: [...toolsUsed, "build_tower_factual_spine"],
+      suggestions: factualSpine.suggestions,
+      toolResults,
+      modelName: "tower-factual-spine-deterministic",
+      atlasMode: "live",
+      fallbackReason: null,
+      promptVersion: ATLAS_PROMPT_VERSION,
+      debugTrace: wantsDebugTrace(surfaceContext)
+        ? ({
+            routing: {
+              promptVersion: ATLAS_PROMPT_VERSION,
+              dossierId: dossierLoad.result
+                ? `${dossierLoad.result.canonicalTenantKey}/${dossierLoad.result.dossier.route.primaryDimension}`
+                : null,
+              dossierVersion: dossierLoad.result?.dossierVersion ?? null,
+              dossierBuiltAt: dossierLoad.result?.builtAt ?? null,
+              fallbackUsed: false,
+              fallbackReason: null,
+              shapeIssues: [],
+            },
+            finalPrompt: [
+              "DETERMINISTIC_TOWER_FACTUAL_SPINE",
+              `Intent: ${factualSpine.matchedIntent}`,
+              `Question: ${message}`,
+              "Source: buildAtlasTowerCurrentState dashboard read-model.",
+            ].join("\n"),
+            rawModelResponse: null,
+            renderedResponse: "",
+            replacements: [],
+          } satisfies AtlasDebugTrace)
+        : undefined,
+    };
   }
 
   // ATLAS-RUNLLM-COMPOSITION 2026-05-31 — short-circuit to the deterministic
