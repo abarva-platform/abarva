@@ -44,6 +44,8 @@ import { PhaseRail } from "./PhaseRail";
 import { PhaseApproveAndBuild } from "./PhaseApproveAndBuild";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
+import { MoveEvidenceNeedsPanel } from "./MoveEvidenceNeedsPanel";
+import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -60,6 +62,7 @@ interface PendingAttachment {
   name: string;
   status: AttachmentStatus;
   attachmentId?: string;
+  feedbackCount?: number;
   errorMsg?: string;
 }
 
@@ -1125,6 +1128,7 @@ interface Props {
   readiness?: CurrentStateReadinessReport | null;
   recommendation?: CurrentStateRecommendation | null;
   plan?: CurrentStatePlan | null;
+  evidenceNeedPackets?: MoveEvidenceNeedPacket[];
 }
 
 export function StrategicMovePhaseClient({
@@ -1133,6 +1137,7 @@ export function StrategicMovePhaseClient({
   readiness,
   recommendation,
   plan,
+  evidenceNeedPackets = [],
 }: Props) {
   const config = PHASE_CONFIGS[phaseNum];
   const canvasSections = PHASE_CANVAS_SECTIONS[phaseNum] ?? [];
@@ -1162,6 +1167,10 @@ export function StrategicMovePhaseClient({
   turnsRef.current = turns;
   const threadRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const reviewFeedbackCount = attachments.reduce(
+    (sum, attachment) => sum + (attachment.feedbackCount ?? 0),
+    0,
+  );
 
   // Auto-scroll thread
   useEffect(() => {
@@ -1213,14 +1222,19 @@ export function StrategicMovePhaseClient({
           attachmentId: string;
           review?: { extractedFeedback?: Array<{ requestedChange: string }> };
         };
+        const feedbackCount = data.review?.extractedFeedback?.length ?? 0;
         setAttachments((prev) =>
           prev.map((a) =>
             a.id === pendingId
-              ? { ...a, status: "done", attachmentId: data.attachmentId }
+              ? {
+                  ...a,
+                  status: "done",
+                  attachmentId: data.attachmentId,
+                  feedbackCount,
+                }
               : a,
           ),
         );
-        const feedbackCount = data.review?.extractedFeedback?.length ?? 0;
         if (feedbackCount > 0) {
           updateTurns((prev) => [
             ...prev,
@@ -2031,6 +2045,31 @@ export function StrategicMovePhaseClient({
                   {config.label} deliverable in one governed batch. Saves to the
                   Evidence Hub.
                 </div>
+                <MoveEvidenceNeedsPanel
+                  packets={evidenceNeedPackets}
+                  title="What We Need Before This Package Is Final"
+                  compact
+                />
+                <div
+                  data-testid="moves-review-feedback-loop"
+                  style={{
+                    marginBottom: 10,
+                    padding: "9px 12px",
+                    borderRadius: 8,
+                    border: "1px solid rgba(27,43,92,0.14)",
+                    background: "rgba(27,43,92,0.04)",
+                    fontSize: 12,
+                    color: "var(--abarva-slate)",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <strong>Review feedback loop:</strong>{" "}
+                  {reviewFeedbackCount > 0
+                    ? `${reviewFeedbackCount} requested edit${
+                        reviewFeedbackCount === 1 ? "" : "s"
+                      } parsed from uploaded review files. Re-run this phase to create the next artifact version with the approved changes.`
+                    : "Upload client comments or review notes with the paperclip. AbarVa will extract requested edits, show them here, and the next phase run becomes the regenerated version."}
+                </div>
                 <PhaseApproveAndBuild
                   moveId={move.id}
                   phaseNum={phaseNum}
@@ -2038,6 +2077,7 @@ export function StrategicMovePhaseClient({
                   archetype={move.archetype}
                   moveName={move.name}
                   clientDisplayName={move.tenant.name}
+                  evidenceNeedPackets={evidenceNeedPackets}
                 />
               </section>
             </CollapsePanel>

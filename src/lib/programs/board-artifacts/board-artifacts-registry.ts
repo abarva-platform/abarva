@@ -16,14 +16,14 @@
 //      shipped reference artifact set.
 //
 //   2. The KEY-DRIVEN path — for EVERY OTHER Move, the registry resolves the
-//      Move's `(industryKey, functionKey)` Function-Pack identity (via
+//      Move's `(industryKey, functionKey)` function context identity (via
 //      `resolveMoveFunctionIdentity`). When that resolves, the Move gets the
-//      generic, kernel-derived board-grade decks — the Discover Brief, the
+//      generic generated board-grade decks — the Discover Brief, the
 //      Charter Business-Case Skeleton, the Costed Business-Case deck, the
 //      Solution Architecture deck, the Estimate & Financial Model, the
 //      Mobilize & Go-Decision Packet, the CFO Pack, and the Master Move
 //      Dossier — each `htmlHref` carrying `?moveId=<id>` so the route renders
-//      THAT Move's kernel-derived deck. The hardcoded Apex Move-name match is
+//      THAT Move's generated artifact deck. The hardcoded Apex Move-name match is
 //      no longer the gate: any Move with a resolvable function gets the
 //      artifacts.
 //
@@ -185,11 +185,11 @@ const BOARD_ARTIFACT_ENTRIES: readonly BoardArtifactEntry[] = [
 ];
 
 /**
- * Build the generic, kernel-derived board-grade artifacts for a Move whose
+ * Build the generic generated board-grade artifacts for a Move whose
  * `(industryKey, functionKey)` identity resolved. Each artifact's `htmlHref`
- * carries `?moveId=<id>` so the route renders THAT Move's kernel-derived deck.
+ * carries `?moveId=<id>` so the route renders THAT Move's generated artifact deck.
  *
- * The key-driven path serves the eight generic kernel-derived decks: the
+ * The key-driven path serves the eight generic generated artifact decks: the
  * Discover Brief, the Charter Business-Case Skeleton, the Costed
  * Business-Case Pack, the Solution Architecture Pack, the Estimate &
  * Financial Model, the Mobilize & Go-Decision Packet, the CFO Pack, and the
@@ -203,9 +203,9 @@ function genericBoardArtifacts(moveId: string): BoardArtifact[] {
       label: 'Discover Brief',
       phase: 'Discover',
       blurb:
-        'The board-grade Discover Brief — kernel-derived for this Move, with ' +
-        'the curated Function-Pack Discover outline, the recorded baseline, ' +
-        'the framed opportunity, the named seed gaps, and the go/no-go ' +
+        'The board-grade Discover Brief — evidence-backed for this Move, with ' +
+        'the function-specific Discover outline, the recorded baseline, ' +
+        'the framed opportunity, the named missing evidence, and the go/no-go ' +
         'verdict.',
       htmlHref: `/api/v1/moves/board-grade-discover-brief${q}`,
     },
@@ -214,8 +214,8 @@ function genericBoardArtifacts(moveId: string): BoardArtifact[] {
       label: 'Charter Business-Case Skeleton',
       phase: 'Charter',
       blurb:
-        'The board-grade Charter skeleton — kernel-derived for this Move, ' +
-        'with the curated Function-Pack Charter outline, the shaping ' +
+        'The board-grade Charter skeleton — evidence-backed for this Move, ' +
+        'with the function-specific Charter outline, the shaping ' +
         'verdict, the falsifiable value hypothesis, the early cost/effort ' +
         'range, the owned assumptions, and the named evidence asks before ' +
         'funding.',
@@ -226,9 +226,9 @@ function genericBoardArtifacts(moveId: string): BoardArtifact[] {
       label: 'Costed Business-Case Pack',
       phase: 'Design & Plan',
       blurb:
-        'The board-grade costed business case — kernel-derived for this ' +
-        'Move, with the curated Function-Pack outline, value forecast, ' +
-        'costed investment range, and the kernel verdict.',
+        'The board-grade costed business case — evidence-backed for this ' +
+        'Move, with the function-specific outline, value forecast, ' +
+        'costed investment range, and the readiness verdict.',
       htmlHref: `/api/v1/moves/board-grade-business-case${q}`,
     },
     genericSolutionArchitectureArtifact(moveId),
@@ -240,9 +240,9 @@ function genericBoardArtifacts(moveId: string): BoardArtifact[] {
 }
 
 /**
- * Build the generic, kernel-derived board-grade Master Move Dossier for a Move
+ * Build the generic generated board-grade Master Move Dossier for a Move
  * whose `(industryKey, functionKey)` identity resolved. The `htmlHref` carries
- * `?moveId=<id>` so the route renders THAT Move's kernel-derived deck via
+ * `?moveId=<id>` so the route renders THAT Move's generated artifact deck via
  * `renderMoveMasterDossierHtml` — the assembled book that pulls the whole Move
  * into one CEO/CFO/CIO read and links every other generic board-grade deck for
  * the Move. The verdict is the kernel's real recommendation.
@@ -254,7 +254,7 @@ function genericMasterDossierArtifact(moveId: string): BoardArtifact {
     label: 'Master Move Dossier',
     phase: 'All phases',
     blurb:
-      'The board-grade Master Move Dossier — kernel-derived for this Move, ' +
+      'The board-grade Master Move Dossier — evidence-backed for this Move, ' +
       'the assembled book: the whole Move pulled into one CEO/CFO/CIO read, ' +
       'with the executive answer, decision timeline, economics, roadmap, ' +
       'Tower handoff, and links to every other generic artifact deck.',
@@ -263,9 +263,9 @@ function genericMasterDossierArtifact(moveId: string): BoardArtifact {
 }
 
 /**
- * Build the generic, kernel-derived board-grade Estimate & Financial Model for
+ * Build the generic generated board-grade Estimate & Financial Model for
  * a Move whose `(industryKey, functionKey)` identity resolved. The `htmlHref`
- * carries `?moveId=<id>` so the route renders THAT Move's kernel-derived deck
+ * carries `?moveId=<id>` so the route renders THAT Move's generated artifact deck
  * via `buildMoveEstimateModel` — the effort decomposition, role-mix cost
  * build-up, rate card, value forecast and haircuts, every figure a labelled
  * planning estimate or range, never a quote.
@@ -277,7 +277,7 @@ function genericEstimateModelArtifact(moveId: string): BoardArtifact {
     label: 'Estimate & Financial Model',
     phase: 'Design & Plan',
     blurb:
-      'The board-grade estimate — kernel-derived for this Move, with the ' +
+      'The board-grade estimate — evidence-backed for this Move, with the ' +
       'workstream cost build-up, role-mix lanes, rate card, value forecast, ' +
       'sensitivity, and the staged cash-flow shape. Every figure is a ' +
       'labelled planning estimate or range, never a quote.',
@@ -286,9 +286,9 @@ function genericEstimateModelArtifact(moveId: string): BoardArtifact {
 }
 
 /**
- * Build the generic, kernel-derived board-grade CFO Pack for a Move whose
+ * Build the generic generated board-grade CFO Pack for a Move whose
  * `(industryKey, functionKey)` identity resolved. The `htmlHref` carries
- * `?moveId=<id>` so the route renders THAT Move's kernel-derived deck via
+ * `?moveId=<id>` so the route renders THAT Move's generated artifact deck via
  * `renderMoveCfoPackHtml` — the financial-challenge deck with the funding ask,
  * the downside, the do-not-fund holdbacks, the Tower measurement, and the
  * evidence/gap audit; the verdict is the kernel's real recommendation.
@@ -300,19 +300,19 @@ function genericCfoPackArtifact(moveId: string): BoardArtifact {
     label: 'CFO Pack',
     phase: 'Design & Plan',
     blurb:
-      'The board-grade CFO Pack — kernel-derived for this Move, a financial ' +
+      'The board-grade CFO Pack — evidence-backed for this Move, a financial ' +
       'challenge: the funding ask, the downside, the do-not-fund holdbacks, ' +
       'what Tower will measure, and the evidence/gap audit. The verdict is ' +
-      'the kernel’s real recommendation.',
+      'the readiness recommendation.',
     htmlHref: `/api/v1/moves/board-grade-cfo-pack${q}`,
   };
 }
 
 /**
- * Build the generic, kernel-derived board-grade Solution Architecture artifact
+ * Build the generic generated board-grade Solution Architecture artifact
  * for a Move whose `(industryKey, functionKey)` identity resolved. The
  * `htmlHref` carries `?moveId=<id>` so the route renders THAT Move's
- * pack-bound, kernel-derived target-state architecture deck via
+ * pack-bound, generated target-state architecture deck via
  * `buildMoveSolutionArchitecture`.
  */
 function genericSolutionArchitectureArtifact(moveId: string): BoardArtifact {
@@ -322,8 +322,8 @@ function genericSolutionArchitectureArtifact(moveId: string): BoardArtifact {
     label: 'Solution Architecture Pack',
     phase: 'Design & Plan',
     blurb:
-      'The board-grade solution architecture — pack-bound for this Move, ' +
-      'with the curated Function-Pack outline, the curated reference ' +
+      'The board-grade solution architecture — evidence-bound for this Move, ' +
+      'with the function-specific outline, the curated reference ' +
       'solution patterns, the AI use-case archetypes, and the control ' +
       'posture.',
     htmlHref: `/api/v1/moves/board-grade-solution-architecture${q}`,
@@ -331,12 +331,12 @@ function genericSolutionArchitectureArtifact(moveId: string): BoardArtifact {
 }
 
 /**
- * Build the generic, kernel-derived board-grade Mobilize & Go-Decision Packet
+ * Build the generic generated board-grade Mobilize & Go-Decision Packet
  * for a Move whose `(industryKey, functionKey)` identity resolved. The
  * `htmlHref` carries `?moveId=<id>` so the route renders THAT Move's
- * kernel-derived packet via `buildMoveMobilizePacket` — the mobilization-plan
+ * generated packet via `buildMoveMobilizePacket` — the mobilization-plan
  * structure inherited from the curated Function Pack, the go-decision the
- * kernel's real verdict.
+ * readiness verdict.
  */
 function genericMobilizePacketArtifact(moveId: string): BoardArtifact {
   const q = `?moveId=${encodeURIComponent(moveId)}`;
@@ -345,9 +345,9 @@ function genericMobilizePacketArtifact(moveId: string): BoardArtifact {
     label: 'Mobilize & Go-Decision Packet',
     phase: 'Mobilize',
     blurb:
-      'The board-grade Mobilize packet — kernel-derived for this Move, with ' +
-      'the curated Function-Pack mobilization outline, readiness gates, ' +
-      'Tower handoff, and the kernel’s real go-decision verdict.',
+      'The board-grade Mobilize packet — evidence-backed for this Move, with ' +
+      'the function-specific mobilization outline, readiness gates, ' +
+      'Tower handoff, and the readiness go-decision verdict.',
     htmlHref: `/api/v1/moves/board-grade-mobilize-packet${q}`,
   };
 }
@@ -360,9 +360,9 @@ function genericMobilizePacketArtifact(moveId: string): BoardArtifact {
  *     identity. When it matches, the Move gets the full eight-deck reference
  *     set.
  *  2. The key-driven path — for every other Move, the Move's
- *     `(industryKey, functionKey)` Function-Pack identity is resolved from its
+ *     `(industryKey, functionKey)` function context identity is resolved from its
  *     `tenant.industryCode` + `charter`. When it resolves, the Move gets the
- *     eight generic, kernel-derived board-grade decks (the Discover Brief, the
+ *     eight generic generated board-grade decks (the Discover Brief, the
  *     Charter Business-Case Skeleton, the Costed Business-Case Pack, the
  *     Solution Architecture Pack, the Estimate & Financial Model, the Mobilize
  *     & Go-Decision Packet, the CFO Pack, and the Master Move Dossier), each
@@ -385,9 +385,9 @@ export function boardArtifactsForMove(move: StrategicMove): BoardArtifact[] {
     return [...referenceEntry.artifacts];
   }
 
-  // (2) The key-driven path — any Move with a resolvable Function-Pack
-  // identity gets the five generic, kernel-derived board-grade decks, each
-  // carrying `?moveId=` so its route renders THAT Move's kernel-derived deck.
+  // (2) The key-driven path — any Move with a resolvable function context
+  // identity gets the five generic generated board-grade decks, each
+  // carrying `?moveId=` so its route renders THAT Move's generated artifact deck.
   const identity = resolveMoveFunctionIdentity({
     industryCode: move.tenant.industryCode,
     functionPackKey: move.functionPackKey,

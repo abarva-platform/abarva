@@ -10,6 +10,7 @@ import {
   tenancyErrorResponse,
 } from "@/app/api/v1/programs/_auth";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
+import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getProgramById } from "@/lib/programs/queries";
 
 export const runtime = "nodejs";
@@ -29,11 +30,18 @@ export async function GET(
     }
 
     const readiness = await loadDiscoveryEvidenceReadiness(ctx, moveId);
+    const needPackets = buildMoveEvidenceNeedPackets({
+      moveId,
+      moveName: program.name,
+      currentPhase: program.currentPhase,
+      readiness,
+    });
     return Response.json({
       moveId,
       clientId: ctx.clientId,
       clientKey: ctx.clientKey,
       readiness,
+      whatWeNeedNext: needPackets,
       groups: {
         minimumRequiredForDraft: readiness.families.filter(
           (family) => family.required,

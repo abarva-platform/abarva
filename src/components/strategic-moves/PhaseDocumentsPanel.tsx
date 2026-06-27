@@ -15,6 +15,8 @@ import { getActiveClientRow } from "@/lib/active-client";
 import { listSucceededRunsForMove } from "@/lib/deliverables/orchestrator/runs-repository";
 import { orchestratorDeliverableType } from "@/lib/programs/orchestrated-deliverable-map";
 import { listAttachmentsForProgram } from "@/lib/programs/attachments";
+import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
 import {
   DELIVERABLE_REGISTRY,
   PHASE_CANONICAL_KEYS,
@@ -28,6 +30,7 @@ import {
   MOVES_AI_DRAFT_LABEL,
   MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT,
 } from "@/lib/programs/deliverable-canvas-polish-view";
+import { MoveEvidenceNeedsPanel } from "./MoveEvidenceNeedsPanel";
 
 interface Props {
   moveId: string;
@@ -39,6 +42,8 @@ interface Props {
   moveName?: string;
   /** Tenant cover name — clientDisplayName for the orchestrated artifact. */
   clientDisplayName?: string;
+  /** Board-grade decks shown alongside the canonical phase documents. */
+  boardArtifactCount?: number;
 }
 
 interface DbDeliverable {
@@ -400,6 +405,17 @@ function DocumentRow({
             not generated
           </span>
         )}
+        <span
+          style={{
+            fontSize: 9,
+            color: builtViaRun || hasContent ? "#3F7A5B" : "#9AA3B2",
+            fontFamily: "JetBrains Mono, monospace",
+            textTransform: "uppercase",
+            marginLeft: 6,
+          }}
+        >
+          {builtViaRun || hasContent ? "Quality: available" : "Quality: not run"}
+        </span>
       </div>
 
       {/* Right: actions */}
@@ -533,6 +549,8 @@ export async function PhaseDocumentsPanel({
   moveId,
   currentPhase,
   compact,
+  moveName,
+  boardArtifactCount = 0,
 }: Props) {
   // The Documents tab is read-only browse/download — generation happens via the
   // phase workspace's Approve & Build, so the archetype/moveName/clientDisplayName
@@ -541,6 +559,21 @@ export async function PhaseDocumentsPanel({
     fetchDeliverablesByKey(moveId),
     listAttachmentsForProgram(moveId).catch(() => [] as AttachmentRecord[]),
   ]);
+  const evidenceNeedPackets = await getStrategicMovesTenancy()
+    .then(async (ctx) => {
+      if (!ctx) return [];
+      const { loadDiscoveryEvidenceReadiness } = await import(
+        "@/lib/programs/discovery/evidence-readiness"
+      );
+      const readiness = await loadDiscoveryEvidenceReadiness(ctx, moveId);
+      return buildMoveEvidenceNeedPackets({
+        moveId,
+        moveName: moveName ?? "Strategic Move",
+        currentPhase,
+        readiness,
+      });
+    })
+    .catch(() => []);
 
   // Approve & Build / orchestrator output lands in generated_artifacts (via a
   // succeeded deliverable_run), NOT deliverables_v2 — so without this a built
@@ -590,12 +623,18 @@ export async function PhaseDocumentsPanel({
   const builtKeys = new Set(contentKeys);
   for (const k of runByKey.keys()) builtKeys.add(k);
   const withContent = builtKeys.size;
+  const availableArtifacts = withContent + boardArtifactCount;
   const totalCanonical = DELIVERABLE_REGISTRY.filter(
     (d) => !d.deprecated,
   ).length;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      <MoveEvidenceNeedsPanel
+        packets={evidenceNeedPackets}
+        compact={Boolean(compact)}
+      />
+
       {/* KPI strip — hidden in compact mode */}
       {!compact && (
         <div
@@ -608,7 +647,7 @@ export async function PhaseDocumentsPanel({
         >
           {[
             { label: "Expected", value: String(totalCanonical) },
-            { label: "Generated", value: String(withContent) },
+            { label: "Available", value: String(availableArtifacts) },
             { label: "Uploads", value: String(attachments.length) },
           ].map((kpi) => (
             <div
@@ -644,6 +683,27 @@ export async function PhaseDocumentsPanel({
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {boardArtifactCount > 0 && (
+        <div
+          style={{
+            marginBottom: 14,
+            padding: "9px 12px",
+            border: "1px solid rgba(27,43,92,0.14)",
+            borderRadius: 6,
+            backgroundColor: "rgba(27,43,92,0.04)",
+            color: "#525866",
+            fontSize: 11.5,
+            lineHeight: 1.45,
+          }}
+        >
+          This inventory combines phase documents with {boardArtifactCount}{" "}
+          board-grade artifact{boardArtifactCount === 1 ? "" : "s"} available
+          for this Move. Phase documents are the governed P1-P5 working record;
+          board-grade artifacts are executive decision packets generated from the
+          same Move context.
         </div>
       )}
 
