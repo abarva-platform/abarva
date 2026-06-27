@@ -127,6 +127,7 @@ function chartsForDossier(
     )
     .slice(0, 8);
   if (numericMetrics.length === 0) return [];
+  if (!numericMetrics.some((metric) => Number(metric.value) !== 0)) return [];
   return [
     {
       id: "dimension-source-metrics",
@@ -154,8 +155,17 @@ function graphsForDossier(
 ): HomeKnowGraph[] {
   if (isLoadedContextOverview(dossier.route.question)) return [];
   if (dossier.relationshipPaths.length === 0) return [];
+  const usablePaths = dossier.relationshipPaths
+    .filter(
+      (path) =>
+        hasDisplayLabel(path.from) &&
+        hasDisplayLabel(path.to) &&
+        path.from.trim().toLowerCase() !== path.to.trim().toLowerCase(),
+    )
+    .slice(0, 8);
+  if (usablePaths.length === 0) return [];
   const nodes = new Map<string, { id: string; label: string; type: string }>();
-  const edges = dossier.relationshipPaths.slice(0, 8).map((path, index) => {
+  const edges = usablePaths.map((path, index) => {
     const fromId = `node-from-${index + 1}`;
     const toId = `node-to-${index + 1}`;
     nodes.set(fromId, { id: fromId, label: path.from, type: path.from });
@@ -176,13 +186,21 @@ function graphsForDossier(
       edges,
       nodeTypes: [...new Set([...nodes.values()].map((node) => node.type))],
       edgeTypes: [...new Set(edges.map((edge) => edge.type))],
-      sourceIds: dossier.relationshipPaths.flatMap((path) => path.sourceKeys),
+      sourceIds: usablePaths.flatMap((path) => path.sourceKeys),
       citationIds: allCitationIds(citations),
       confidence: "medium",
       gaps: dossier.gaps.slice(0, 4).map((gap) => gap.label),
       inferredEdges: false,
     },
   ];
+}
+
+function hasDisplayLabel(value: string): boolean {
+  const label = value.trim();
+  if (!label) return false;
+  if (/^(unnamed entity|business area|related|unknown|n\/a)$/i.test(label))
+    return false;
+  return true;
 }
 
 function gapsForDossier(
