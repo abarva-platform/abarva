@@ -202,7 +202,7 @@ describe("Ask Intelligence response policy", () => {
     ).toBe(true);
   });
 
-  it("reshapes dense consultant prose into readable executive sections", () => {
+  it("preserves model-authored consultant prose without synthetic reshaping", () => {
     const text = [
       "Honest read first: I don't have your IT landscape or data platform inventory loaded in this session, so I can't list the actual vendors, versions, owners, and costs for Apex's analytics stack.",
       "What the loaded context does tell me is the strategic shape, and that's worth being direct about.",
@@ -221,6 +221,9 @@ describe("Ask Intelligence response policy", () => {
     expect(answer).toContain("Retail Lakehouse & Customer Inventory Graph");
     expect(answer).toContain("This is the consolidation bet");
     expect(answer).toContain("Next, assign");
+    expect(answer).toContain(
+      "What the loaded context does tell me is the strategic shape",
+    );
     expect(answer).not.toContain("The supporting evidence is that");
     expect(answer).not.toContain("That means");
     expect(answer).not.toMatch(/^(Read|Evidence|Implication|Next move):/im);
@@ -245,7 +248,7 @@ describe("Ask Intelligence response policy", () => {
     expect(answer).not.toMatch(/^(Read|Evidence|Implication|Next move):/im);
   });
 
-  it("does not duplicate consultant section labels when the model already supplied them", () => {
+  it("naturalizes consultant section labels only when the model supplied them", () => {
     const text = [
       "Read: The loaded evidence points to inventory truth as the gating issue.",
       "Evidence: Retail Lakehouse is committed but not fully realized.",
@@ -304,5 +307,21 @@ describe("Ask Intelligence response policy", () => {
         .split(/\n{2,}/)
         .every((paragraph) => paragraph.split(/\s+/).length <= 70),
     ).toBe(true);
+  });
+
+  it("does not invent read evidence implication sections for a SkyHarbor answer", () => {
+    const text = [
+      "My answer is IROPS agentic recovery, but only after the operational data readiness gate is funded and owned.",
+      "The three value pools in the SkyHarbor context are IROPS recovery at $270M, Customer AI / Digital Concierge at $180M, and data estate rationalization at $122M.",
+      "The reason I would not put customer AI first is that the identity and consent substrate is still fragmented, while IROPS has the clearest operational leverage once certified crew, aircraft, and disruption feeds are in place.",
+      "For the investment committee, frame the decision as an AI-enablement bet with a hard readiness gate, not as a generic data project.",
+    ].join(" ");
+
+    const answer = enforceDecisionGradeAnswer(text);
+
+    expect(answer).toContain("My answer is IROPS agentic recovery");
+    expect(answer).toContain("For the investment committee");
+    expect(answer).not.toContain("Here's the logic");
+    expect(answer).not.toMatch(/^(Read|Evidence|Implication|Next move):/im);
   });
 });

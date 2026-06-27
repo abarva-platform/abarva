@@ -7,11 +7,8 @@ const BROAD_CURRENT_STATE_RE =
   /\b(current state|state of play|where are we|where do we stand|how are we doing|what is going on|what do you see|give me perspective|your perspective|executive read|simple question|our state)\b/i;
 const RAW_INTERNAL_ID_RE =
   /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\b/g;
-const CONSULTANT_SECTION_RE =
-  /^\s*(?:Read|Recommendation|Decision|Why|Evidence|Implication|Watchout|Watch-out|Next move|Owner|Action):/gim;
 const CONSULTANT_INLINE_SECTION_RE =
   /\s*\b(Read|Recommendation|Decision|Why|Evidence|Implication|Watchout|Watch-out|Next move|Owner|Action)\s*(?:[-—]\s*[^:\n]{1,96})?:\s*/gi;
-const MARKDOWN_TABLE_RE = /^\s*\|.+\|\s*$/m;
 
 export const CONSULTANT_ANSWER_SHAPE_CONTRACT = `CONSULTANT ANSWER SHAPE
 
@@ -114,34 +111,18 @@ export function applyPartialEvidencePolicy(
   return rewritten.replace(/\s{2,}/g, " ").trim();
 }
 
-const ACTION_CUE_RE =
-  /\b(next (?:step|move)|recommend(?:ation)?|assign|escalate|decide|validate|open|owner)\b/i;
 export function enforceDecisionGradeAnswer(text: string): string {
-  const paragraphDisciplined = splitLongParagraphs(
-    sanitizeVisibleAnswerLanguage(
-      normalizeConsultantSectionBoundaries(shapeDenseConsultantAnswer(text)),
+  return splitLongParagraphs(
+    naturalizeConsultantSections(
+      sanitizeVisibleAnswerLanguage(normalizeConsultantSectionBoundaries(text)),
     ),
-  );
-  if (
-    ACTION_CUE_RE.test(paragraphDisciplined) &&
-    consultantSectionCount(paragraphDisciplined) >= 2
-  ) {
-    return naturalizeConsultantSections(paragraphDisciplined);
-  }
-
-  if (ACTION_CUE_RE.test(paragraphDisciplined)) {
-    return naturalizeConsultantSections(
-      ensureReadableConsultantShape(paragraphDisciplined),
-    );
-  }
-
-  return naturalizeConsultantSections(
-    ensureReadableConsultantShape(paragraphDisciplined),
   );
 }
 
 function sanitizeVisibleAnswerLanguage(text: string): string {
   return text
+    .replace(/^\s*Honest\s+(?:read|answer)\s+(?:up\s+front|first)\s*:\s*/i, "")
+    .replace(/\n\s*Honest\s+(?:read|answer)\s+(?:up\s+front|first)\s*:\s*/gi, "\n")
     .replace(/\bAva\b/g, "aVa")
     .replace(/\bSentinel\b/g, "aVa")
     .replace(/\bAtlas\b/g, "aVa")
@@ -185,72 +166,6 @@ function normalizeSectionLabel(label: string): string {
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
-function shapeDenseConsultantAnswer(text: string): string {
-  const normalized = text.replace(/\r\n/g, "\n").trim();
-  if (!normalized) return normalized;
-  if (consultantSectionCount(normalized) >= 2) return normalized;
-  if (wordCount(normalized) < 75) return normalized;
-
-  const paragraphs = normalized.split(/\n{2,}/).filter((p) => p.trim());
-  if (paragraphs.length > 2) return normalized;
-
-  const sentences = splitSentences(normalized);
-  if (sentences.length < 4) return normalized;
-
-  const nextMoveSentences = sentences.filter((sentence) =>
-    /^Next move\b/i.test(sentence),
-  );
-  const bodySentences = sentences.filter(
-    (sentence) => !/^Next move\b/i.test(sentence),
-  );
-  if (bodySentences.length < 3) return normalized;
-
-  const read = normalizeConsultantLead(bodySentences[0] ?? "");
-  const rest = bodySentences.slice(1);
-  const evidence = takeSentences(rest, (sentence) =>
-    /\b(loaded|source|context|evidence|corpus|benchmark|ledger|row|system|vendor|program|initiative|budget|cost|spend|committed|realized)\b|[$%]\d|\d+[$%]?/i.test(
-      sentence,
-    ),
-  );
-  const evidenceSet = new Set(evidence);
-  const remaining = rest.filter((sentence) => !evidenceSet.has(sentence));
-  const implication =
-    remaining.length > 0
-      ? remaining
-      : rest.filter((sentence) => !evidenceSet.has(sentence));
-
-  const sections: string[] = [];
-  if (read) sections.push(`Read: ${read}`);
-  if (evidence.length > 0) {
-    sections.push(`Evidence: ${evidence.slice(0, 3).join(" ")}`);
-  }
-  if (implication.length > 0) {
-    sections.push(`Implication: ${implication.slice(0, 3).join(" ")}`);
-  }
-  if (nextMoveSentences.length > 0) {
-    sections.push(nextMoveSentences.join(" "));
-  }
-
-  return sections.length >= 3 ? sections.join("\n\n") : normalized;
-}
-
-function ensureReadableConsultantShape(text: string): string {
-  const normalized = text.trim();
-  if (!normalized || consultantSectionCount(normalized) >= 2) {
-    return normalized;
-  }
-
-  const nextMove = extractNextMove(normalized);
-  const lead = extractLeadSentence(normalized);
-  if (!lead) return normalized;
-
-  const body = removeFirstOccurrence(normalized, lead).trim();
-  const sections = [`Read: ${normalizeConsultantLead(lead)}`];
-  if (body) sections.push(body);
-  if (nextMove && !/\bNext move:/i.test(body)) sections.push(nextMove);
-  return sections.join("\n\n");
-}
-
 function naturalizeConsultantSections(text: string): string {
   const normalized = normalizeConsultantSectionBoundaries(text);
   return normalized
@@ -275,58 +190,6 @@ function naturalizeConsultantParagraph(paragraph: string): string {
     .replace(/\s{2,}/g, " ")
     .replace(/\bNext,\s+to\s+/gi, "Next, ")
     .trim();
-}
-
-function consultantSectionCount(text: string): number {
-  return [...text.matchAll(CONSULTANT_SECTION_RE)].length;
-}
-
-function extractNextMove(text: string): string | null {
-  return (
-    text
-      .split(/\n{1,}/)
-      .map((line) => line.trim())
-      .find((line) => /^Next move:/i.test(line)) ?? null
-  );
-}
-
-function extractLeadSentence(text: string): string | null {
-  const tableStart = text.search(MARKDOWN_TABLE_RE);
-  const prose = (tableStart >= 0 ? text.slice(0, tableStart) : text)
-    .split(/\n{1,}/)
-    .filter((line) => !MARKDOWN_TABLE_RE.test(line))
-    .join(" ")
-    .replace(/^Next move:[^.?!]*(?:[.?!]|$)/i, "")
-    .trim();
-  return splitSentences(prose).find((sentence) => sentence.trim()) ?? null;
-}
-
-function removeFirstOccurrence(text: string, value: string): string {
-  const index = text.indexOf(value);
-  if (index < 0) return text;
-  return `${text.slice(0, index)}${text.slice(index + value.length)}`;
-}
-
-function normalizeConsultantLead(sentence: string): string {
-  return sentence
-    .replace(
-      /^\s*(?:Read|Evidence|Implication|Next move|Recommendation|Decision|Owner|Action)\s*:\s*/i,
-      "",
-    )
-    .replace(/^\s*Honest\s+(?:read|answer)\s+(?:up\s+front|first)\s*:\s*/i, "")
-    .trim();
-}
-
-function takeSentences(
-  sentences: string[],
-  predicate: (sentence: string) => boolean,
-): string[] {
-  const picked: string[] = [];
-  for (const sentence of sentences) {
-    if (predicate(sentence)) picked.push(sentence);
-    if (picked.length >= 3) break;
-  }
-  return picked;
 }
 
 export function chunkAskText(text: string): string[] {
@@ -361,12 +224,6 @@ function splitParagraphIfLong(paragraph: string): string {
   }
   if (current.length > 0) groups.push(current.join(" "));
   return groups.join("\n\n");
-}
-
-function splitSentences(text: string): string[] {
-  return (text.match(/[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$/g) ?? [text])
-    .map((sentence) => sentence.trim())
-    .filter(Boolean);
 }
 
 function wordCount(text: string): number {
