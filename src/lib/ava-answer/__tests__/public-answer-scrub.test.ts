@@ -36,4 +36,42 @@ Tenant evidence`);
     expect(cleaned).toContain("business context shows three distinct value pools");
     expect(cleaned).not.toMatch(/supporting material|evidence ledger|source signals/i);
   });
+
+  it("does not rewrite normal executive evidence or fact language", () => {
+    const cleaned = scrubPublicAvaAnswerText(
+      "The evidence is strong enough to make a decision, but the facts do not support scaling every AI pilot at once.",
+    );
+
+    expect(cleaned).toBe(
+      "The evidence is strong enough to make a decision, but the facts do not support scaling every AI pilot at once.",
+    );
+    expect(cleaned).toContain("evidence");
+    expect(cleaned).toContain("facts");
+    expect(cleaned).not.toContain("business context is strong enough");
+  });
+
+  it("preserves natural read language", () => {
+    const cleaned = scrubPublicAvaAnswerText(
+      "My read is simple: scale the IROPS bet only after the data gate is owned.",
+    );
+
+    expect(cleaned).toBe(
+      "My read is simple: scale the IROPS bet only after the data gate is owned.",
+    );
+  });
+
+  it("cleans live SkyHarbor orphan fragments without changing the answer", () => {
+    const cleaned = scrubPublicAvaAnswerText(
+      [
+        'The single best AI investment SkyHarbor should make next is certified operational data products.',
+        '" Here\'s why this is the right answer: the business context shows three distinct value pools. The $270M IROPS pool is the largest single bet, and the explicit loaded constraint is uncertified operational data, not model capability or vendor availability. 6 vs.',
+      ].join("\n\n"),
+    );
+
+    expect(cleaned).toContain("Here's why this is the right answer");
+    expect(cleaned).toContain("the explicit constraint is uncertified operational data");
+    expect(cleaned).not.toContain('" Here');
+    expect(cleaned).not.toContain("6 vs.");
+    expect(cleaned).not.toContain("explicit loaded constraint");
+  });
 });

@@ -2,7 +2,7 @@ const RAW_ID_REPLACE =
   /\b(?:APP|DP|CON|NODE|EDGE)-\d{3,}\b|\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 
 export const PUBLIC_ANSWER_FORBIDDEN_LANGUAGE_RE =
-  /\b(cannot be characterized|cannot be identified|I found|source support|missing source support|supporting material|evidence ledger|supporting material ledger|Current-state read|current-state context|loaded context|source context|loaded source context|\bread\b|Evidence points|\bevidence points?\b|\bsource signals?\b|\bcontext dimensions?\b|\bdimensions loaded\b|\bloaded with \d[\d,]*\b|\btrust\s+\d{1,3}\b|\btrust\s+\d{1,3}%\b|\bevidence\s+refs?\b|\brows?\b|home_know|intelligence-v2|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|\bsemantic\b|typed facts?|loaded facts?|\bfacts?\b|canonical entities|\bentities\b|relationship maps?|relationship paths?|debug|session memory|earlier turns|previous conversation|not loaded|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
+  /\b(cannot be characterized|cannot be identified|I found|source support|missing source support|supporting material|evidence ledger|supporting material ledger|Current-state read|current-state context|loaded context|source context|loaded source context|Evidence points|\bevidence points?\b|\bsource signals?\b|\bcontext dimensions?\b|\bdimensions loaded\b|\bloaded with \d[\d,]*\b|\btrust\s+\d{1,3}\b|\btrust\s+\d{1,3}%\b|\bevidence\s+refs?\b|\brows?\b|home_know|intelligence-v2|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|\bsemantic\b|typed facts?|loaded facts?|canonical entities|relationship maps?|relationship paths?|debug|session memory|earlier turns|previous conversation|not loaded|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
 
 export const PUBLIC_ANSWER_INTERNAL_COUNT_RE =
   /\b\d[\d,]*\s+(?:canonical\s+)?(?:entities|facts|relationships|citations|rows|evidence points?|context dimensions?)\b/i;
@@ -51,6 +51,7 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/^\s*#{1,6}\s+.*(?:\r?\n|$)/gm, "")
     .replace(/\*\*/g, "")
     .replace(/`([^`]+)`/g, "$1")
+    .replace(/(^|\n)\s*["'“”]\s+(?=Here(?:'|’)s\b)/g, "$1")
     .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move):\s*/gi, "$1")
     .replace(/\bcurated semantic (?:evidence|source context)?\s*source\b/gi, "available business material")
     .replace(/\bsemantic (?:evidence|source context)?\s*source\b/gi, "available business material")
@@ -68,9 +69,7 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\bsource context\b/gi, "business context")
     .replace(/\btyped facts?\b/gi, "available details")
     .replace(/\bloaded facts?\b/gi, "available details")
-    .replace(/\bfacts?\b/gi, "available details")
     .replace(/\bcanonical entities\b/gi, "business objects")
-    .replace(/\bentities\b/gi, "business objects")
     .replace(/\bresolved relationship maps\b/gi, "source-supported connections")
     .replace(/\brelationship maps?\b/gi, "source-supported connections")
     .replace(/\brelationship paths?\b/gi, "source-supported connections")
@@ -87,14 +86,9 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\bsupporting material ledger\b/gi, "business context")
     .replace(/\bevidence ledger\b/gi, "business context")
     .replace(/\bsupporting material\b/gi, "business context")
-    .replace(/\bevidence\b/gi, "business context")
     .replace(/\bsource rows?\b/gi, "source records")
     .replace(/\bedge rows?\b/gi, "connection records")
-    .replace(/\brows\b/gi, "records")
-    .replace(/\brow\b/gi, "record")
     .replace(/\bread-models?\b/gi, "source views")
-    .replace(/\breads\b/gi, "reviews")
-    .replace(/\bread\b/gi, "review")
     .replace(/\bdossier\b/gi, "business file")
     .replace(/\bbinder\b/gi, "business file")
     .replace(/\bfragment lookup\b/gi, "narrow lookup")
@@ -103,6 +97,8 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\bsafe answer boundary\b/gi, "supported scope")
     .replace(/\bsafe answer scope\b/gi, "supported scope")
     .replace(/\banswer boundary\b/gi, "supported scope")
+    .replace(/\bexplicit loaded constraint\b/gi, "explicit constraint")
+    .replace(/\bloaded constraint\b/gi, "known constraint")
     .replace(/\bsession memory\b/gi, "available business material")
     .replace(/\bearlier turns\b/gi, "available business material")
     .replace(/\bprevious conversation\b/gi, "available business material")
@@ -111,6 +107,7 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\bThe supporting evidence is that\s+/gi, "")
     .replace(/\bThat means\s+The\b/g, "That means the")
     .replace(/\bThat means\s+/gi, "")
+    .replace(/\s+\d+\s+vs\.(?=\s|$)/gi, ".")
     .replace(/\bS\.\s*$/gm, "")
     .replace(/\s+-\s+(?=[A-Z0-9])/g, "\n\n- ")
     .replace(RAW_ID_REPLACE, "source reference")

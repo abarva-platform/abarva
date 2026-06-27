@@ -104,7 +104,11 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - Post-deploy signed-in SkyHarbor Chrome proof on revision `ca-abarva-web-lab-eastus--mccf82aaf`: the generic Source/Tower/Moves closer was absent and no evidence/support table rendered for `What is the single best AI investment SkyHarbor should make next?`; however the answer still included internal-ish phrase `supporting material ledger`, which triggered this final public wording scrub follow-up.
 - `npx eslint src/lib/ava-answer/public-answer-scrub.ts src/lib/ava-answer/render-layer-shaper.ts src/lib/ava-answer/__tests__/public-answer-scrub.test.ts src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx` passed after the SkyHarbor wording scrub follow-up.
 - `npx jest src/lib/ava-answer/__tests__/public-answer-scrub.test.ts src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx --runInBand` passed, 8 tests. Jest still prints pre-existing duplicate manual-mock warnings.
-- Final post-SkyHarbor-wording deployment and signed-in browser proof pending.
+- ACA proof for the SkyHarbor wording scrub carried forward by main candidate `c21ec379`: revision `ca-abarva-web-lab-eastus--mc21ec379`, digest `sha256:5be3844df2e2f1b80fd842a959d138209b33b0e96cf201deccabb5e87d839ce4`, 100% traffic, production health endpoint returned OK.
+- Post-deploy signed-in SkyHarbor Chrome proof on revision `ca-abarva-web-lab-eastus--mc21ec379`: the old `supporting material ledger` phrase, generic Source/Tower/Moves closer, `answered high confidence` label, and evidence/support table were absent on a fresh ask. However the answer still contained a stray leading quote before `Here's why` and an orphan fragment `6 vs.`. This failed the CXO-quality bar and triggered the deeper post-model shaper simplification.
+- `npx eslint src/lib/intelligence/ask/response-policy.ts src/lib/intelligence/ask/response-policy.test.ts src/lib/ava-answer/public-answer-scrub.ts src/lib/ava-answer/__tests__/public-answer-scrub.test.ts` passed after the deeper shaper simplification.
+- `npx jest src/lib/intelligence/ask/response-policy.test.ts src/lib/ava-answer/__tests__/public-answer-scrub.test.ts --runInBand` passed, 20 tests. Jest still prints pre-existing duplicate manual-mock warnings.
+- Final post-deeper-shaper deployment and signed-in SkyHarbor browser proof pending.
 
 ## Rollout Plan
 
@@ -114,7 +118,7 @@ Build an Azure Container Apps image from the exact git SHA, deploy to `ca-abarva
 
 - Repo-owned deploy workflow: Azure Container Apps release path in `docs/runbooks/azure-container-apps-deploy.md`.
 - Shared runtime mutators: `az acr build`, `az containerapp update`, and ACA ingress traffic assignment.
-- Approved image digest: first candidate `sha256:6765cd1489a6ba4618a4a3943cfadb4914d1074d5f96c4c505695afd456c8576`; latest proven-but-wording-incomplete row-count candidate `sha256:5e9281246419c358ea3503fdc6b2268aa813fe474f25fd69efc275769deb6238`; SkyHarbor wording scrub digest pending.
+- Approved image digest: first candidate `sha256:6765cd1489a6ba4618a4a3943cfadb4914d1074d5f96c4c505695afd456c8576`; latest proven-but-wording-incomplete row-count candidate `sha256:5e9281246419c358ea3503fdc6b2268aa813fe474f25fd69efc275769deb6238`; SkyHarbor wording scrub carried forward on main digest `sha256:5be3844df2e2f1b80fd842a959d138209b33b0e96cf201deccabb5e87d839ce4`; deeper shaper digest pending.
 - ACA runtime invariant: `app.abarva.ai` is ACA-only; Vercel is not used as release evidence.
 - Worker image invariant: Not applicable.
 - Feature/env flag update path: None.
@@ -138,8 +142,9 @@ Rollback by assigning 100% ACA ingress traffic to the previous healthy revision 
 - Undersized-table candidate ACA proof: revision `ca-abarva-web-lab-eastus--m9c30dc7c`, digest `sha256:91e480c83c65edf1131ac2f93dcbb98c4ff8a87cc42b8309a3d6208dd4216aa8`, 100% traffic; runtime invariant passed; signed-in Lakeshore proof found the remaining sparse-packet fallback issue fixed by the next candidate.
 - Narrative-fallback candidate ACA proof: revision `ca-abarva-web-lab-eastus--mb348f581`, digest `sha256:bc7d92259e5248908db8e1bfd3254e84fdccb6a8319f6fd5eade6a8a2c7ebb8a`, 100% traffic; production health endpoint returned OK; signed-in Lakeshore proof found the remaining one-row comparison-table quality issue fixed by the row-count gate candidate.
 - Row-count-gate candidate ACA proof: revision `ca-abarva-web-lab-eastus--mccf82aaf`, digest `sha256:5e9281246419c358ea3503fdc6b2268aa813fe474f25fd69efc275769deb6238`, 100% traffic; signed-in Lakeshore proof passed the explicit comparison-table quality check; signed-in SkyHarbor Chrome proof found the remaining `supporting material ledger` wording issue fixed by the next candidate.
-- Post-deploy revision, digest, screenshots, and crawl output for the final SkyHarbor wording scrub fix to be added after production proof.
+- SkyHarbor wording-scrub main candidate ACA proof: revision `ca-abarva-web-lab-eastus--mc21ec379`, digest `sha256:5be3844df2e2f1b80fd842a959d138209b33b0e96cf201deccabb5e87d839ce4`, 100% traffic; signed-in SkyHarbor proof found the remaining stray quote and `6 vs.` fragment issue fixed by the deeper shaper candidate.
+- Post-deploy revision, digest, screenshots, and crawl output for the final deeper shaper fix to be added after production proof.
 
 ## Known Gaps
 
-Post-deploy signed-in browser proof is pending until the SkyHarbor wording scrub candidate is built and released through ACA.
+Post-deploy signed-in browser proof is pending until the deeper shaper candidate is built and released through ACA.
