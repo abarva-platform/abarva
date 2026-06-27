@@ -49,4 +49,28 @@ describe("shapeSharedAdvisorResponse", () => {
     expect(result.text).toMatch(/\bNext:/);
     expect(result.issues).toEqual([]);
   });
+
+  it("collapses compact ranked lists into chat-sized evidence lines", () => {
+    const result = shapeSharedAdvisorResponse({
+      text: [
+        "Across the visible portfolio, the heaviest single-vendor exposures are SAP, AWS, and Microsoft.",
+        "- SAP — $8.2M — Northline only",
+        "- AWS — $7.3M — Northline + Arborfield",
+        "- Microsoft — $5.1M — Shared Services",
+        "- AWS is also the only vendor spanning more than one portfolio company.",
+        "Next: ask aVa to inspect the supporting evidence, compare options, or shape the next CIO action.",
+      ].join("\n"),
+      targetChars: 900,
+      hardMaxChars: 1100,
+      maxParagraphs: 5,
+      requireNextStep: true,
+    });
+
+    expect(
+      result.text.split(/\n\s*\n|\n/).filter(Boolean).length,
+    ).toBeLessThanOrEqual(5);
+    expect(result.text).toContain("SAP: $8.2M");
+    expect(result.text).toMatch(/\bNext:/);
+    expect(result.issues).toEqual([]);
+  });
 });
