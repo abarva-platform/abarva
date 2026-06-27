@@ -46,6 +46,8 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - `src/lib/intelligence/ask/synthesizer.ts`: tightens the explicit visual contract so direct user requests for a table, chart, graph, visual, comparison grid, ranking, breakdown, or "show me" structure must produce one compact decision table unless the necessary values or rows are genuinely unavailable.
 - `src/lib/intelligence/ask/synthesizer.ts`: adds a runtime visual-contract repair pass for rich-text Intelligence answers: when the user explicitly asks for a visual/table and the first Claude draft has no renderable Markdown table, the runtime asks Claude to repair the same evidence-backed answer with exactly one compact decision table.
 - `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`: moves the visual-contract repair into the active consultant-synthesis lane used in production and adds a conservative grounded fallback table from the existing decision-option packet if Claude still returns prose-only for an explicit visual/table ask.
+- `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`: tightens the active consultant-lane visual gate so one-row repaired tables are not accepted for comparison/table prompts; undersized model tables are stripped and replaced by the multi-row metric/decision fallback.
+- `src/lib/intelligence/answer/structured-exhibits.ts`: removes renderer/provenance notes from user-visible extracted tables so the right-side canvas shows the decision artifact without implementation/debug language.
 - Follow-up regression coverage now uses the eight 50-question SkyHarbor crawl failures that exposed raw `Supporting Material` / `How it supports the answer` tables.
 - Focused regression tests updated to forbid the generic closer and assert context-specific alternatives.
 
@@ -84,7 +86,11 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - Post-deploy signed-in Lakeshore proof on revision `ca-abarva-web-lab-eastus--m48648ac3` confirmed the label/evidence cleanup still held and no generic closer returned, but the explicit table prompt still returned prose-only (`tableCount: 0`). Root cause: the deterministic consultant-lane fallback only rendered from formal decision-option rows; this Lakeshore finance/treasury question had metric/initiative evidence but insufficient option rows for the fallback table.
 - `npx eslint src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts` passed after adding metric-evidence fallback table rendering.
 - `npx jest src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts --runInBand` passed, 6 tests. Jest still prints pre-existing duplicate manual-mock warnings.
-- Final post-metric-fallback deployment and signed-in browser proof pending.
+- ACA proof for metric-fallback candidate `230c0bfa`: revision `ca-abarva-web-lab-eastus--m230c0bfa`, digest `sha256:9bf1586f59e97ac123b447e20e1fa3b8b3f70e021056ab6507281f2c8c948bb1`, 100% traffic, runtime invariant passed, production health endpoint returned OK.
+- Partial post-deploy signed-in Lakeshore proof on revision `ca-abarva-web-lab-eastus--m230c0bfa`: the explicit table prompt rendered a real right-canvas table (`tableCount: 1`) and label/evidence cleanup still held, but the table was only one row and showed renderer/provenance text (`Rendered from a Markdown table...`). This triggered the undersized-table and renderer-note follow-up fix.
+- `npx eslint src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts src/lib/intelligence/answer/structured-exhibits.ts src/lib/intelligence/answer/__tests__/structured-exhibits.test.ts` passed after the undersized-table and renderer-note follow-up fix.
+- `npx jest src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts src/lib/intelligence/answer/__tests__/structured-exhibits.test.ts --runInBand` passed, 32 tests. Jest still prints pre-existing duplicate manual-mock warnings.
+- Final post-undersized-table deployment and signed-in browser proof pending.
 
 ## Rollout Plan
 
@@ -94,7 +100,7 @@ Build an Azure Container Apps image from the exact git SHA, deploy to `ca-abarva
 
 - Repo-owned deploy workflow: Azure Container Apps release path in `docs/runbooks/azure-container-apps-deploy.md`.
 - Shared runtime mutators: `az acr build`, `az containerapp update`, and ACA ingress traffic assignment.
-- Approved image digest: first candidate `sha256:6765cd1489a6ba4618a4a3943cfadb4914d1074d5f96c4c505695afd456c8576`; latest proven-but-incomplete candidate `sha256:3828f676e4c5bc700aa40700dd3205bc260a5feee26b23036208d3393c7dc6d1`; metric-fallback visual repair digest pending.
+- Approved image digest: first candidate `sha256:6765cd1489a6ba4618a4a3943cfadb4914d1074d5f96c4c505695afd456c8576`; latest proven-but-incomplete metric-fallback candidate `sha256:9bf1586f59e97ac123b447e20e1fa3b8b3f70e021056ab6507281f2c8c948bb1`; undersized-table visual repair digest pending.
 - ACA runtime invariant: `app.abarva.ai` is ACA-only; Vercel is not used as release evidence.
 - Worker image invariant: Not applicable.
 - Feature/env flag update path: None.
@@ -114,7 +120,8 @@ Rollback by assigning 100% ACA ingress traffic to the previous healthy revision 
 - Left-dock/right-canvas candidate ACA proof: revision `ca-abarva-web-lab-eastus--madd51e40`, digest `sha256:4017dfb821a71aa1770412ae2fc10ba9e78649d040793847b3de49b7b057ed22`, 100% traffic; runtime invariant passed; signed-in Lakeshore proof found the remaining explicit-table and generic-closer issues fixed by the next candidate.
 - Runtime-repair candidate ACA proof: revision `ca-abarva-web-lab-eastus--mc2517f4c`, digest `sha256:81790f937cf6fa077ac392722e2dc58caab2ca54bc692c591809634465f4bdf2`, 100% traffic; runtime invariant passed; signed-in Lakeshore proof found the remaining active-lane visual issue fixed by the consultant-synthesis follow-up.
 - Consultant-lane candidate ACA proof: revision `ca-abarva-web-lab-eastus--m48648ac3`, digest `sha256:3828f676e4c5bc700aa40700dd3205bc260a5feee26b23036208d3393c7dc6d1`, 100% traffic; runtime invariant passed; signed-in Lakeshore proof found the remaining metric-fallback issue fixed by the next candidate.
-- Post-deploy revision, digest, screenshots, and crawl output for the final metric-fallback visual fix to be added after production proof.
+- Metric-fallback candidate ACA proof: revision `ca-abarva-web-lab-eastus--m230c0bfa`, digest `sha256:9bf1586f59e97ac123b447e20e1fa3b8b3f70e021056ab6507281f2c8c948bb1`, 100% traffic; runtime invariant passed; signed-in Lakeshore proof found the remaining undersized-table and renderer-note issues fixed by the next candidate.
+- Post-deploy revision, digest, screenshots, and crawl output for the final undersized-table visual fix to be added after production proof.
 
 ## Known Gaps
 

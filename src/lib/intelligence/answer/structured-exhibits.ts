@@ -216,7 +216,6 @@ function markdownTablesFromProse(
               : `Answer Table ${tables.length + 1}`,
           columns,
           rows,
-          note: "Rendered from a Markdown table emitted in aVa's answer; values are not inferred from surrounding prose.",
           citationIds,
         });
         i = cursor - 1;
@@ -366,7 +365,6 @@ function inlineMarkdownTablesFromProse(
           : `Answer Table ${tables.length + 1}`,
       columns,
       rows,
-      note: "Rendered from a table emitted by aVa's answer; values are row/column data, not inferred from surrounding prose.",
       citationIds,
     });
     cursor = match.index + match[0].length + consumed;
