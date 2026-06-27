@@ -29,12 +29,13 @@ const DEFAULT_TENANTS = [
   "skyharbor-air",
 ];
 
-const PROMPT_VERSION = "semantic2-l3-enriched-buildtime-claude-v1";
+const PROMPT_VERSION = "semantic2-l3-enriched-buildtime-claude-v2";
 const DOSSIER_VERSION = `semantic2-l3-enriched-${new Date().toISOString().slice(0, 10)}`;
 const MODEL = process.env.L3_DOSSIER_CLAUDE_MODEL || "claude-opus-4-8";
-const MAX_FACTS = Number(process.env.L3_DOSSIER_MAX_FACTS || 120);
+const MAX_FACTS = Number(process.env.L3_DOSSIER_MAX_FACTS || 240);
+const RAW_FACT_LIMIT = Math.max(MAX_FACTS * 6, MAX_FACTS);
 const MAX_ENTITIES = Number(process.env.L3_DOSSIER_MAX_ENTITIES || 80);
-const MAX_RELATIONSHIPS = Number(process.env.L3_DOSSIER_MAX_RELATIONSHIPS || 80);
+const MAX_RELATIONSHIPS = Number(process.env.L3_DOSSIER_MAX_RELATIONSHIPS || 120);
 const MAX_INSIGHTS = Number(process.env.L3_DOSSIER_MAX_INSIGHTS || 4);
 const CLAUDE_TIMEOUT_MS = Number(process.env.L3_DOSSIER_CLAUDE_TIMEOUT_MS || 45000);
 
@@ -50,13 +51,17 @@ const MACHINE_VALUE_PATTERNS = [
   /\benterprise_context_/i,
   /\bsemantic2_/i,
   /\bmv_home_/i,
+  /\bsource reference\b/i,
+  /\benterprise source material\b/i,
+  /\bevidence item\b/i,
+  /^\s*[{[]/,
   /\b[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\b/i,
   /\/Users\//i,
   /postgres(?:ql)?:\/\//i,
 ];
 
 const SOURCE_LABELS = new Map([
-  ["enterprise_context", "Enterprise source material"],
+  ["enterprise_context", "Enterprise profile and context evidence"],
   ["ai_control_tower", "AI value and control evidence"],
   ["moves_source", "Moves and sourcing evidence"],
   ["operational_evidence", "Operational process evidence"],
@@ -127,6 +132,8 @@ function parseArgs() {
     dryRun: args.has("--dry-run") || !args.has("--apply"),
     selfTest: args.has("--self-test"),
     emitFileBundle: args.has("--emit-file-bundle"),
+    onlySample: args.has("--only-sample"),
+    supersedeOldGenerations: args.has("--supersede-old-generations") || process.env.L3_DOSSIER_SUPERSEDE_OLD === "1",
     outDir:
       get("--out-dir") ||
       process.env.OUT_DIR ||
@@ -159,7 +166,7 @@ function cleanBusinessText(value, fallback = "Not specified") {
   if (!text) return fallback;
   return text
     .replace(/\bsemantic2[_a-z0-9]*\b/gi, "source-backed")
-    .replace(/\benterprise_context[_a-z0-9]*\b/gi, "enterprise source material")
+    .replace(/\benterprise_context[_a-z0-9]*\b/gi, "enterprise profile evidence")
     .replace(/\bmv_home[_a-z0-9]*\b/gi, "Home source view")
     .replace(/\bsource rows?\b/gi, "source items")
     .replace(/\brecords?\b/gi, "items")
@@ -168,6 +175,11 @@ function cleanBusinessText(value, fallback = "Not specified") {
     .replace(/\bclient_id\b/gi, "client")
     .replace(/\bnode_type\b/gi, "business object type")
     .replace(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi, "source reference");
+}
+
+function hasMachineLeak(value) {
+  const text = String(value ?? "");
+  return MACHINE_VALUE_PATTERNS.some((pattern) => pattern.test(text));
 }
 
 function sourceAreaLabel(sourceTable, sourceDimension, dimension) {
@@ -181,7 +193,7 @@ function sourceAreaLabel(sourceTable, sourceDimension, dimension) {
   if (/risk|control|govern/i.test(text)) return "Risk and governance evidence";
   if (/vendor/i.test(text)) return "Vendor and contract evidence";
   if (/application|system|platform|integration/i.test(text)) return "Technology estate evidence";
-  if (/enterprise/i.test(text)) return "Enterprise source material";
+  if (/enterprise/i.test(text)) return "Enterprise profile and context evidence";
   return `${sentenceCase(dimension.business_label)} evidence`;
 }
 
@@ -193,12 +205,13 @@ function sourceFamilyLabels(dimension) {
 }
 
 function valueOfFact(row) {
+  const parsed = parseStructuredFactValue(row.fact_value_json);
+  if (parsed && parsed.value !== undefined && parsed.value !== null && parsed.value !== "") return parsed.value;
   if (row.fact_value_text !== null && row.fact_value_text !== undefined) return row.fact_value_text;
   if (row.fact_value_number !== null && row.fact_value_number !== undefined) return Number(row.fact_value_number);
   if (row.fact_value_bool !== null && row.fact_value_bool !== undefined) return Boolean(row.fact_value_bool);
   if (row.fact_value_json !== null && row.fact_value_json !== undefined) {
-    const json = typeof row.fact_value_json === "string" ? row.fact_value_json : JSON.stringify(row.fact_value_json);
-    return cleanBusinessText(json.slice(0, 280), "Structured source value");
+    return "Structured source value";
   }
   return "Not specified";
 }
@@ -288,6 +301,437 @@ function parseJsonObject(text) {
   }
 }
 
+function parseStructuredFactValue(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "object" && !Array.isArray(value)) return value;
+  if (typeof value !== "string") return null;
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function sourcePayload(row) {
+  return parseStructuredFactValue(row?.source_payload) || {};
+}
+
+function structuredFact(row) {
+  return parseStructuredFactValue(row?.fact_value_json) || {};
+}
+
+function fieldFromFact(row) {
+  const parsed = structuredFact(row);
+  const column = typeof parsed?.column === "string" ? parsed.column : "";
+  if (column) return column;
+  if (typeof parsed?.fact_key === "string" && parsed.fact_key) return parsed.fact_key;
+  const key = String(row.fact_key || row.fact_type || "");
+  const uploadMatch = key.match(/\b([a-z][a-z0-9_]+)\s*$/i);
+  return uploadMatch?.[1] || key;
+}
+
+function readableFactLabel(row) {
+  const column = fieldFromFact(row);
+  const label = sentenceCase(column || row.fact_key || row.fact_type || "Source support");
+  return label || "Source support";
+}
+
+function isPlaceholderValue(value) {
+  return /^(required|defined|present|available|yes|no|true|false)$/i.test(String(value ?? "").trim());
+}
+
+function isGenericSubject(row) {
+  const subject = String(row.subject_name || row.subject_semantic_key || "").toLowerCase();
+  const type = String(row.subject_type || "").toLowerCase();
+  return (
+    !subject ||
+    subject.includes("source reference") ||
+    subject.includes("enterprise source material") ||
+    type === "evidence_item" ||
+    type === "evidence item"
+  );
+}
+
+function factBusinessScore(row) {
+  const parsed = structuredFact(row);
+  const value = valueOfFact(row);
+  const field = fieldFromFact(row);
+  let score = Number(row.confidence ?? 0.5) * 10;
+  if (parsed?.column || parsed?.fact_key) score += 25;
+  if (parsed?.fact_text) score += 15;
+  if (parsed?.source_state) score += 5;
+  if (value !== "Structured source value" && !isPlaceholderValue(value)) score += 18;
+  if (isGenericSubject(row)) score -= 18;
+  if (!field || /source[_ ]?(state|reference|support|required|defined)/i.test(field)) score -= 12;
+  if (/(^|_)id$/i.test(field) || /^mapping_id$/i.test(field)) score -= 18;
+  if (/id$/i.test(field) && isUuidLike(value)) score -= 20;
+  if (String(value).startsWith("{") || String(value).startsWith("[")) score -= 40;
+  return score;
+}
+
+const DIMENSION_RELEVANCE_PATTERNS = {
+  ai_value_governance: {
+    positive: [
+      /ai|automation|agent|model|tool|use[_ ]?case|initiative|benefit|value|realization|adoption/i,
+      /governance|responsible[_ ]?ai|risk|control|approval|gate|policy/i,
+    ],
+    negative: [/ticket|incident|change|vendor|contract|budget/i],
+  },
+  application_systems: {
+    positive: [
+      /application|app[_ ]?name|system|platform|hosting|cloud|integration|interface|cmdb|service/i,
+      /criticality|lifecycle|technical[_ ]?owner|business[_ ]?owner/i,
+    ],
+    negative: [/responsible[_ ]?ai|approval[_ ]?gate|benefit[_ ]?realization/i],
+  },
+  budget_financials: {
+    positive: [/budget|spend|cost|run[_ ]?cost|change[_ ]?cost|amount|funding|portfolio|capex|opex|finance/i],
+    negative: [/incident|ticket|responsible[_ ]?ai[_ ]?gate/i],
+  },
+  data_analytics: {
+    positive: [/data|analytics|dataset|data[_ ]?product|warehouse|lakehouse|report|dashboard|lineage|refresh|quality/i],
+    negative: [/incident|ticket|contract[_ ]?renewal/i],
+  },
+  enterprise_profile: {
+    positive: [/enterprise|profile|revenue|employee|headcount|industry|hq|scale|business[_ ]?model/i],
+    negative: [/ticket|incident|responsible[_ ]?ai[_ ]?gate/i],
+  },
+  moves_evidence: {
+    positive: [/move|program|phase|gate|deliverable|artifact|charter|roadmap|business[_ ]?case|approval/i],
+    negative: [/incident|ticket|cmdb/i],
+  },
+  operations_process: {
+    positive: [/operation|process|ticket|incident|problem|change|request|queue|workflow|servicenow|jira|sla|cycle/i],
+    negative: [/enterprise[_ ]?profile|revenue|contract[_ ]?renewal/i],
+  },
+  organization_leadership: {
+    positive: [
+      /organization|leadership|leader|executive|cio|cto|cfo|ciso|cdao|cdto/i,
+      /business[_ ]?function|function[_ ]?name|org[_ ]?team|team[_ ]?name|role|persona|workforce|headcount/i,
+      /owner|ownership|accountability|reports[_ ]?to|portfolio[_ ]?owner|business[_ ]?owner|technical[_ ]?owner/i,
+    ],
+    negative: [
+      /responsible[_ ]?ai|ai[_ -]?gov|aigov|approval[_ ]?gate|gate[_ ]?status|model[_ ]?risk|prompt|llm/i,
+      /ticket|incident|service[_ ]?request|contract[_ ]?renewal|pricing/i,
+    ],
+  },
+  risk_compliance: {
+    positive: [/risk|control|compliance|policy|security|privacy|audit|sox|hipaa|mitigation|severity/i],
+    negative: [/budget|contract[_ ]?value|ticket[_ ]?volume/i],
+  },
+  vendor_contracts: {
+    positive: [/vendor|supplier|contract|license|renewal|term|run[_ ]?rate|commercial|sow|pricing|bafo/i],
+    negative: [/responsible[_ ]?ai|ticket|incident/i],
+  },
+};
+
+function rowSearchText(row) {
+  const parsed = structuredFact(row);
+  const payload = sourcePayload(row);
+  return [
+    row.source_table,
+    row.source_dimension,
+    row.subject_semantic_key,
+    row.subject_name,
+    row.subject_type,
+    row.fact_type,
+    row.fact_key,
+    fieldFromFact(row),
+    valueOfFact(row),
+    parsed?.fact_text,
+    parsed?.source_file,
+    parsed?.source_record_id,
+    payload?.source_file,
+    payload?.source_dimension,
+    payload?.file_family,
+    payload?.dimension,
+    payload?.business_name,
+    payload?.business_function,
+    payload?.team_name,
+    payload?.org_team,
+    payload?.role_name,
+    payload?.leader_name,
+  ]
+    .filter((value) => value !== undefined && value !== null)
+    .map((value) => (typeof value === "object" ? JSON.stringify(value) : String(value)))
+    .join(" ");
+}
+
+function dimensionFactRelevanceScore(dimensionKey, row) {
+  const config = DIMENSION_RELEVANCE_PATTERNS[dimensionKey];
+  if (!config) return 0;
+  const text = rowSearchText(row);
+  let score = 0;
+  for (const pattern of config.positive || []) {
+    if (pattern.test(text)) score += 40;
+  }
+  for (const pattern of config.negative || []) {
+    if (pattern.test(text)) score -= 45;
+  }
+  const field = fieldFromFact(row);
+  if (field && (config.positive || []).some((pattern) => pattern.test(field))) score += 25;
+  if (field && (config.negative || []).some((pattern) => pattern.test(field))) score -= 35;
+  return score;
+}
+
+function isUsableFact(row) {
+  const label = readableFactLabel(row);
+  const value = valueOfFact(row);
+  if (!label || label === "Source support") return false;
+  if (String(value).startsWith("{") || String(value).startsWith("[")) return false;
+  if (isPlaceholderValue(value) && isGenericSubject(row)) return false;
+  if (/source reference|enterprise source material|evidence item/i.test(`${label} ${value}`)) return false;
+  return factBusinessScore(row) > 0;
+}
+
+function entityNameFromRowFields(fields, row) {
+  const parsed = structuredFact(row);
+  const factKey = fieldFromFact(row);
+  const factText = typeof parsed.fact_text === "string" ? parsed.fact_text : "";
+  const subjectFromFactText = factKey && factText.includes(`${factKey}:`)
+    ? factText.slice(0, factText.indexOf(`${factKey}:`)).trim()
+    : "";
+  const candidates = [
+    fields.persona_name,
+    fields.role_name,
+    fields.team_name,
+    fields.org_team,
+    fields.business_function,
+    fields.application_name,
+    fields.system_name,
+    fields.platform_name,
+    fields.vendor_name,
+    fields.contract_name,
+    fields.capability_name,
+    fields.metric_name,
+    fields.kpi_name,
+    fields.process_name,
+    fields.work_item_type,
+    fields.service_name,
+    fields.initiative_name,
+    fields.ai_initiative_name,
+    fields.risk_name,
+    fields.control_name,
+    subjectFromFactText,
+  ];
+  const candidate = candidates.find((item) => item !== undefined && item !== null && String(item).trim());
+  if (candidate) return cleanBusinessText(candidate);
+  if (!isGenericSubject(row)) return cleanBusinessText(row.subject_name || row.subject_semantic_key);
+  return "";
+}
+
+function subjectNameFromFactText(row) {
+  const parsed = structuredFact(row);
+  const factKey = fieldFromFact(row);
+  const factText = typeof parsed.fact_text === "string" ? parsed.fact_text : "";
+  if (!factKey || !factText.includes(`${factKey}:`)) return "";
+  const subject = factText.slice(0, factText.indexOf(`${factKey}:`)).trim();
+  if (!subject || hasMachineLeak(subject)) return "";
+  return cleanBusinessText(subject, "");
+}
+
+function entityTypeFromRowFields(fields, row, dimensionKey) {
+  if (fields.persona_name) return "Persona";
+  if (fields.role_name) return "Role";
+  if (fields.team_name || fields.org_team) return "Org team";
+  if (fields.business_function) return "Business function";
+  if (fields.application_name || fields.system_name) return "Application or system";
+  if (fields.vendor_name || fields.contract_name) return "Vendor or contract";
+  if (fields.process_name || fields.work_item_type) return "Operational process";
+  if (fields.initiative_name || fields.ai_initiative_name) return "Initiative";
+  if (fields.risk_name || fields.control_name) return "Risk or control";
+  if (!isGenericSubject(row) && row.subject_type) return sentenceCase(row.subject_type);
+  return sentenceCase(dimensionKey);
+}
+
+function firstField(fields, names) {
+  for (const name of names) {
+    const value = fields[name];
+    if (value !== undefined && value !== null && String(value).trim()) return value;
+  }
+  return "";
+}
+
+function groupFactRowsBySource(facts) {
+  const groups = new Map();
+  for (const row of facts) {
+    const parsed = structuredFact(row);
+    const key = parsed.record_id || parsed.source_record_id || row.source_row_id || `${row.source_table}:${row.source_primary_key || row.id}`;
+    const group = groups.get(key) || {
+      key,
+      source_row_id: row.source_row_id,
+      source_table: row.source_table,
+      source_dimension: row.source_dimension,
+      source_payload: sourcePayload(row),
+      rows: [],
+      fields: {},
+      confidence: 0,
+    };
+    const field = fieldFromFact(row);
+    const value = valueOfFact(row);
+    if (field && value !== "Structured source value" && !String(value).startsWith("{")) {
+      group.fields[field] = value;
+    }
+    const subjectName = subjectNameFromFactText(row);
+    if (subjectName) group.fields.subject_name = subjectName;
+    if (parsed.source_record_id) group.fields.source_record_id = parsed.source_record_id;
+    if (parsed.source_file) group.fields.source_file = parsed.source_file;
+    group.confidence = Math.max(group.confidence, Number(row.confidence ?? 0.6));
+    group.rows.push(row);
+    groups.set(key, group);
+  }
+  return [...groups.values()].map((group) => ({
+    ...group,
+    fields: { ...group.source_payload, ...group.fields },
+  }));
+}
+
+function addUniqueEntity(map, name, type, confidence, description = "") {
+  const cleanName = cleanBusinessText(name, "");
+  if (!cleanName || hasMachineLeak(cleanName)) return;
+  const key = `${cleanName.toLowerCase()}::${type.toLowerCase()}`;
+  const existing = map.get(key);
+  if (existing) {
+    existing.confidence = Math.max(existing.confidence, Number(confidence ?? 0.7));
+    return;
+  }
+  map.set(key, {
+    name: cleanName,
+    type: sentenceCase(type || "business object"),
+    description: cleanBusinessText(description || "", ""),
+    confidence: Number(confidence ?? 0.7),
+  });
+}
+
+function deriveEntities(entities, factGroups, dimensionKey) {
+  const map = new Map();
+  for (const entity of entities) {
+    addUniqueEntity(map, entity.business_name || entity.semantic_key, entity.entity_type, entity.confidence, entity.description || "");
+  }
+  for (const group of factGroups) {
+    const fields = group.fields;
+    addUniqueEntity(map, entityNameFromRowFields(fields, group.rows[0]), entityTypeFromRowFields(fields, group.rows[0], dimensionKey), group.confidence);
+    addUniqueEntity(map, fields.business_function, "Business function", group.confidence);
+    addUniqueEntity(map, fields.business_area, "Business area", group.confidence);
+    addUniqueEntity(map, fields.team_name || fields.org_team, "Org team", group.confidence);
+    addUniqueEntity(map, fields.application_name || fields.system_name, "Application or system", group.confidence);
+    addUniqueEntity(map, fields.vendor_name, "Vendor", group.confidence);
+    addUniqueEntity(map, fields.capability_name, "Capability", group.confidence);
+    addUniqueEntity(map, fields.process_name, "Operational process", group.confidence);
+  }
+  return [...map.values()].slice(0, MAX_ENTITIES).map((entity, index) => ({
+    entity_id: `E${String(index + 1).padStart(3, "0")}`,
+    ...entity,
+  }));
+}
+
+function deriveRelationshipCandidates(factGroups, citationFor) {
+  const relationships = [];
+  const seen = new Set();
+  const add = (from, relationship, to, group, confidence = group.confidence) => {
+    const cleanFrom = cleanBusinessText(from, "");
+    const cleanTo = cleanBusinessText(to, "");
+    if (!cleanFrom || !cleanTo || cleanFrom === cleanTo) return;
+    if (hasMachineLeak(`${cleanFrom} ${relationship} ${cleanTo}`)) return;
+    const key = `${cleanFrom.toLowerCase()}::${relationship}::${cleanTo.toLowerCase()}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    relationships.push({
+      from: cleanFrom,
+      relationship: cleanBusinessText(relationship),
+      to: cleanTo,
+      confidence: Number(confidence ?? 0.65),
+      citation_ids: [citationFor(group.source_row_id, group.source_table, group.source_dimension)],
+      derivedFrom: "structured evidence fields",
+    });
+  };
+  for (const group of factGroups) {
+    const f = group.fields;
+    const subject = firstField(f, ["subject_name"]);
+    const subjectType = group.rows.map((row) => row.subject_type).filter(Boolean).join(" ");
+    const subjectLooksLikeSystem = /application|system|platform|tool|service/i.test(subjectType);
+    const subjectLooksLikeTeam = /team|organization|org/i.test(subjectType);
+    const persona = firstField(f, ["persona_name", "role_name", "role", "job_role"]);
+    const leader = firstField(f, [
+      "leader_name",
+      "executive_name",
+      "technology_leader",
+      "cio_report",
+      "owner_name",
+      "executive_owner",
+      "executive_owner_role",
+      "portfolio_owner",
+    ]);
+    const team = firstField(f, ["team_name", "org_team", "technical_owner_team", "support_team", "owner_team", "delivery_team"]);
+    const inferredTeam = team || (subjectLooksLikeTeam ? subject : "");
+    const businessOwner = firstField(f, [
+      "primary_business_owner",
+      "business_owner",
+      "owner_role",
+      "executive_owner",
+      "executive_owner_role",
+      "portfolio_owner",
+    ]);
+    const functionName = firstField(f, ["business_function", "business_area", "function_name", "domain", "portfolio", "operating_area"]);
+    const app = firstField(f, ["application_name", "system_name", "platform_name", "service_name", "system", "application"]) || (subjectLooksLikeSystem ? subject : "");
+    const capability = firstField(f, ["capability_name", "business_capability", "value_stream", "capability", "process_capability"]);
+    const vendor = firstField(f, ["vendor_name", "supplier_name", "provider_name"]);
+    const contract = firstField(f, ["contract_name", "contract_id", "agreement_name", "license_name"]);
+    const platform = firstField(f, ["platform_name", "cloud_platform", "hosting_platform", "hosting_model", "environment"]);
+    const integration = firstField(f, ["integration_name", "interface_name", "feed_name", "source_system", "target_system"]);
+    const dataProduct = firstField(f, ["data_product_name", "data_domain", "analytics_product", "report_name", "dataset_name"]);
+    const metric = firstField(f, ["metric_name", "kpi_name", "outcome_name", "benefit_name"]);
+    const initiative = firstField(f, ["ai_initiative_name", "initiative_name", "use_case_name", "automation_name"]);
+    const tool = firstField(f, ["ai_tool_name", "tool_name", "agent_name", "model_name", "automation_tool"]);
+    const control = firstField(f, ["control_name", "policy_name", "governance_gate", "approval_gate"]);
+    const risk = firstField(f, ["risk_name", "risk_id", "issue_name", "blocker_name"]);
+    const process = firstField(f, ["process_name", "work_item_type", "queue_name", "workflow_name", "service_name"]);
+    const workItem = firstField(f, ["ticket_type", "issue_type", "incident_type", "request_type", "work_item_type"]);
+    const budgetLine = firstField(f, ["budget_line", "cost_center", "portfolio_name", "spend_category", "funding_lane"]);
+    const amount = firstField(f, ["amount", "annual_spend", "run_cost", "budget", "contract_value", "value_estimate"]);
+    if (persona && functionName) add(persona, "works in", functionName, group);
+    if (persona && process) add(persona, "performs", process, group);
+    if (leader && functionName) add(leader, "leader owns function", functionName, group);
+    if (leader && inferredTeam) add(leader, "leader owns team", inferredTeam, group);
+    if (inferredTeam && functionName) add(inferredTeam, "supports", functionName, group);
+    if (inferredTeam && app) add(inferredTeam, "team owns system", app, group);
+    if (inferredTeam && capability) add(inferredTeam, "team supports capability", capability, group);
+    if (businessOwner && app) add(businessOwner, "owns", app, group);
+    if (businessOwner && functionName) add(businessOwner, "works in", functionName, group);
+    if (functionName && app) add(functionName, "function supported by system", app, group);
+    if (app && capability) add(app, "application supports capability", capability, group);
+    if (app && team) add(app, "application owned by team", team, group);
+    if (app && vendor) add(app, "application supported by vendor", vendor, group);
+    if (app && platform) add(app, "runs on platform", platform, group);
+    if (app && integration) add(app, "integrates with", integration, group);
+    if (capability && app) add(capability, "depends on", app, group);
+    if (vendor && contract) add(vendor, "vendor supplies contract", contract, group);
+    if (contract && app) add(contract, "contract supports system", app, group);
+    if (contract && functionName) add(contract, "contract owned by function", functionName, group);
+    if (vendor && app) add(vendor, "supports", app, group);
+    if (initiative && tool) add(initiative, "ai initiative uses tool", tool, group);
+    if (initiative && metric) add(initiative, "ai initiative impacts outcome", metric, group);
+    if (initiative && control) add(initiative, "ai initiative governed by control", control, group);
+    if (initiative && risk) add(initiative, "ai initiative blocked by risk", risk, group);
+    if (process && app) add(process, "uses", app, group);
+    if (process && team) add(process, "owned by", team, group);
+    if (workItem && team) add(workItem, "assigned to", team, group);
+    if (process && initiative) add(process, "automates", initiative, group);
+    if (process && capability) add(process, "supports", capability, group);
+    if (risk && control) add(control, "mitigates", risk, group);
+    if (risk && app) add(risk, "impacts", app, group);
+    if (control && app) add(control, "governs", app, group);
+    if (dataProduct && app) add(dataProduct, "feeds", app, group);
+    if (dataProduct && functionName) add(dataProduct, "consumed by", functionName, group);
+    if (dataProduct && metric) add(dataProduct, "measured by", metric, group);
+    if (budgetLine && app) add(budgetLine, "funds", app, group);
+    if (budgetLine && functionName) add(budgetLine, "funds", functionName, group);
+    if (amount && budgetLine) add(budgetLine, "has amount", amount, group);
+  }
+  return relationships;
+}
+
 function buildBranches(dimension, coverageScore, hasEvidence) {
   const labels = DIMENSION_BRANCHES[dimension.dimension_key] || [
     `${sentenceCase(dimension.business_label)} overview`,
@@ -303,6 +747,64 @@ function buildBranches(dimension, coverageScore, hasEvidence) {
       : `Evidence is insufficient; use this branch to identify what must be loaded for ${label.toLowerCase()}.`,
     coverageScore: branchCoverage,
   }));
+}
+
+function buildCoverageGaps(dimension, expectedTables, sourceCounts, entityTypes, businessEntities, businessFacts, businessRelationships) {
+  const gaps = [];
+  const hasAnyEvidence = businessFacts.length > 0 || businessEntities.length > 0 || businessRelationships.length > 0;
+  const supportedTables = new Set(sourceCounts.map((row) => row.source_table));
+  const supportedAreas = new Set(sourceCounts.map((row) => sourceAreaLabel(row.source_table, row.source_dimension, dimension)));
+
+  if (!hasAnyEvidence) {
+    gaps.push({
+      gap_id: `G${String(gaps.length + 1).padStart(2, "0")}`,
+      label: `${sentenceCase(dimension.business_label)} evidence is not present for this topic.`,
+      neededEvidence: [`Load source-backed ${sentenceCase(dimension.business_label).toLowerCase()} evidence before enabling this dossier on user surfaces.`],
+    });
+    return gaps;
+  }
+
+  if (expectedTables.length) {
+    const dimensionLabel = sentenceCase(dimension.business_label).toLowerCase();
+    const missingAreas = expectedTables
+      .filter((table) => !supportedTables.has(table))
+      .map((table) => sourceAreaLabel(table, "", dimension))
+      .filter((label) => {
+        const normalized = label.toLowerCase();
+        return normalized !== dimensionLabel && normalized !== `${dimensionLabel} evidence`;
+      })
+      .filter((label) => !supportedAreas.has(label));
+    for (const label of [...new Set(missingAreas)].slice(0, 3)) {
+      gaps.push({
+        gap_id: `G${String(gaps.length + 1).padStart(2, "0")}`,
+        label: `${label} is not yet represented in the current ${sentenceCase(dimension.business_label).toLowerCase()} picture.`,
+        neededEvidence: [`Add ${label.toLowerCase()} if this question must cover that adjacent source area.`],
+      });
+    }
+  }
+
+  const entityNames = new Set(businessEntities.map((entity) => String(entity.type || "").toLowerCase()));
+  for (const type of entityTypes) {
+    const label = sentenceCase(type);
+    if (!label) continue;
+    if (!entityNames.has(label.toLowerCase())) {
+      gaps.push({
+        gap_id: `G${String(gaps.length + 1).padStart(2, "0")}`,
+        label: `${label} coverage is incomplete in the current ${sentenceCase(dimension.business_label).toLowerCase()} picture.`,
+        neededEvidence: [`Load ${label.toLowerCase()} ownership and source support if named ${label.toLowerCase()} analysis is required.`],
+      });
+    }
+  }
+
+  if (!businessRelationships.length) {
+    gaps.push({
+      gap_id: `G${String(gaps.length + 1).padStart(2, "0")}`,
+      label: `Relationship coverage is incomplete for ${sentenceCase(dimension.business_label).toLowerCase()}.`,
+      neededEvidence: ["Load or derive source-backed ownership, support, dependency, or workflow links before rendering graph-style answers."],
+    });
+  }
+
+  return gaps.slice(0, 8);
 }
 
 async function queryRows(client, sql, params) {
@@ -413,32 +915,78 @@ async function buildSkeleton(client, tenantKey, tenantAliases, dimension) {
   );
 
   const entityKeys = entities.map((entity) => entity.semantic_key).filter(Boolean);
-  const facts = await queryRows(
+  const factCandidates = await queryRows(
     client,
     `
       SELECT f.id::text, f.subject_semantic_key, COALESCE(e.business_name, f.subject_semantic_key, '') AS subject_name,
              COALESCE(e.entity_type, '') AS subject_type, f.fact_type, f.fact_key, f.fact_value_text,
              f.fact_value_number, f.fact_value_bool, f.fact_value_json, f.value_type, f.unit,
              f.confidence, f.freshness_at, f.source_row_id::text, f.source_table, f.source_primary_key,
-             sr.source_dimension
+             f.derived_flag, f.created_at, sr.source_dimension, sr.sanitized_payload AS source_payload
       FROM semantic2_facts f
       LEFT JOIN semantic2_entities e ON e.id = f.subject_entity_id
       LEFT JOIN semantic2_source_rows sr ON sr.id = f.source_row_id
       WHERE f.tenant_key = ANY($1::text[])
         AND f.valid_to IS NULL
+        AND COALESCE(f.fact_key, '') !~* 'source[_ ]?(state|reference|support|required|defined)'
+        AND COALESCE(f.subject_semantic_key, '') !~* 'source[_ -]?reference|enterprise[_ -]?source[_ -]?material'
         AND (
           ($2::text[] <> '{}'::text[] AND f.source_table = ANY($2::text[]))
           OR ($3::text[] <> '{}'::text[] AND e.entity_type = ANY($3::text[]))
           OR ($4::text[] <> '{}'::text[] AND f.fact_key = ANY($4::text[]))
         )
-      ORDER BY f.derived_flag ASC, f.confidence DESC, f.created_at DESC, f.fact_key
+      ORDER BY
+        CASE
+          WHEN f.fact_type = 'ownership_accountability' THEN 0
+          WHEN e.entity_type = ANY($3::text[]) THEN 1
+          WHEN f.fact_value_json IS NOT NULL THEN 2
+          WHEN f.fact_value_text IS NOT NULL OR f.fact_value_number IS NOT NULL OR f.fact_value_bool IS NOT NULL THEN 3
+          ELSE 4
+        END,
+        f.derived_flag ASC,
+        f.confidence DESC,
+        f.created_at DESC,
+        f.fact_key,
+        f.source_table,
+        f.source_primary_key,
+        f.id
       LIMIT $5
     `,
-    [tenantAliases, expectedTables, entityTypes, requiredFactKeys, MAX_FACTS],
+    [tenantAliases, expectedTables, entityTypes, requiredFactKeys, RAW_FACT_LIMIT],
   );
+  const facts = factCandidates
+    .filter(isUsableFact)
+    .sort(
+      (a, b) =>
+        dimensionFactRelevanceScore(dimension.dimension_key, b) - dimensionFactRelevanceScore(dimension.dimension_key, a) ||
+        factBusinessScore(b) - factBusinessScore(a) ||
+        new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime() ||
+        String(a.fact_key || "").localeCompare(String(b.fact_key || "")) ||
+        String(a.source_table || "").localeCompare(String(b.source_table || "")) ||
+        String(a.source_primary_key || "").localeCompare(String(b.source_primary_key || "")) ||
+        String(a.id || "").localeCompare(String(b.id || "")),
+    )
+    .slice(0, MAX_FACTS);
+  const relationshipFactRows = factCandidates
+    .filter(isUsableFact)
+    .filter((row) => dimensionFactRelevanceScore(dimension.dimension_key, row) > 0)
+    .sort(
+      (a, b) =>
+        dimensionFactRelevanceScore(dimension.dimension_key, b) - dimensionFactRelevanceScore(dimension.dimension_key, a) ||
+        new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime() ||
+        String(a.source_table || "").localeCompare(String(b.source_table || "")) ||
+        String(a.source_primary_key || "").localeCompare(String(b.source_primary_key || "")) ||
+        String(a.id || "").localeCompare(String(b.id || "")),
+    )
+    .slice(0, Math.max(MAX_FACTS * 3, MAX_FACTS));
 
   const factEntityKeys = facts.map((fact) => fact.subject_semantic_key).filter(Boolean);
   const relationshipKeys = [...new Set([...entityKeys, ...factEntityKeys])].slice(0, 200);
+  const relationshipSourceTables = [
+    ...expectedTables,
+    ...(expectedTables.some((table) => table.startsWith("enterprise_context_")) ? ["enterprise_context_relationships"] : []),
+    ...(expectedTables.some((table) => table.startsWith("ai_control_")) ? ["ai_control_graph_view"] : []),
+  ];
   const relationships = await queryRows(
     client,
     `
@@ -451,10 +999,10 @@ async function buildSkeleton(client, tenantKey, tenantAliases, dimension) {
           ($2::text[] <> '{}'::text[] AND source_table = ANY($2::text[]))
           OR ($3::text[] <> '{}'::text[] AND (from_semantic_key = ANY($3::text[]) OR to_semantic_key = ANY($3::text[])))
         )
-      ORDER BY confidence DESC, created_at DESC
+      ORDER BY confidence DESC, created_at DESC, relationship_type, from_semantic_key, to_semantic_key, id
       LIMIT $4
     `,
-    [tenantAliases, expectedTables, relationshipKeys, MAX_RELATIONSHIPS],
+    [tenantAliases, [...new Set(relationshipSourceTables)], relationshipKeys, MAX_RELATIONSHIPS],
   );
 
   const sourceCounts = await queryRows(
@@ -473,6 +1021,7 @@ async function buildSkeleton(client, tenantKey, tenantAliases, dimension) {
     ...new Set([
       ...facts.map((fact) => fact.source_row_id).filter(Boolean),
       ...relationships.map((relationship) => relationship.source_row_id).filter(Boolean),
+      ...relationshipFactRows.map((fact) => fact.source_row_id).filter(Boolean),
     ]),
   ].slice(0, 80);
   const sourceRows = selectedSourceRowIds.length
@@ -493,31 +1042,6 @@ async function buildSkeleton(client, tenantKey, tenantAliases, dimension) {
     : facts.length > 0
       ? 1
       : 0;
-  const entityCoverage = entityTypes.length
-    ? entityTypes.filter((type) => entities.some((entity) => entity.entity_type === type)).length / entityTypes.length
-    : facts.length > 0
-      ? 1
-      : 0;
-  const coverageScore = Number(((sourceTableCoverage + entityCoverage) / 2).toFixed(4));
-  const gaps = [];
-  for (const table of expectedTables) {
-    if (!sourceCounts.some((row) => row.source_table === table)) {
-      gaps.push({
-        gap_id: `G${String(gaps.length + 1).padStart(2, "0")}`,
-        label: `${sourceAreaLabel(table, "", dimension)} is not present for this topic.`,
-        neededEvidence: [`Load ${sourceAreaLabel(table, "", dimension).toLowerCase()} for ${sentenceCase(dimension.business_label).toLowerCase()}.`],
-      });
-    }
-  }
-  for (const type of entityTypes) {
-    if (!entities.some((entity) => entity.entity_type === type)) {
-      gaps.push({
-        gap_id: `G${String(gaps.length + 1).padStart(2, "0")}`,
-        label: `${sentenceCase(type)} coverage is missing.`,
-        neededEvidence: [`Load ${sentenceCase(type).toLowerCase()} ownership and source support.`],
-      });
-    }
-  }
 
   const citations = [];
   const citationKeyToId = new Map();
@@ -538,34 +1062,77 @@ async function buildSkeleton(client, tenantKey, tenantAliases, dimension) {
     return citation.citation_id;
   };
 
-  const businessFacts = facts.map((fact, index) => ({
-    fact_id: `F${String(index + 1).padStart(3, "0")}`,
-    entity: cleanBusinessText(fact.subject_name || fact.subject_semantic_key || "Unspecified business object"),
-    entityType: sentenceCase(fact.subject_type || "business object"),
-    dimension: dimension.business_label,
-    label: sentenceCase(fact.fact_key || fact.fact_type || "source support"),
-    value: cleanBusinessText(valueOfFact(fact)),
-    unit: fact.unit || undefined,
-    confidence: Number(fact.confidence ?? 0.7),
-    citation_ids: [citationFor(fact.source_row_id, fact.source_table, fact.source_dimension)],
-  }));
+  const factGroups = groupFactRowsBySource(facts);
+  const relationshipFactGroups = groupFactRowsBySource(relationshipFactRows);
 
-  const businessRelationships = relationships.map((relationship, index) => ({
-    relationship_id: `R${String(index + 1).padStart(3, "0")}`,
-    from: cleanBusinessText(relationship.from_semantic_key || "Unspecified source"),
-    relationship: cleanBusinessText(relationship.relationship_label || relationship.relationship_type || "relates to"),
-    to: cleanBusinessText(relationship.to_semantic_key || "Unspecified target"),
-    confidence: Number(relationship.confidence ?? 0.65),
-    citation_ids: [citationFor(relationship.source_row_id, relationship.source_table, "")],
-  }));
+  const businessFacts = facts.map((fact, index) => {
+    const group = factGroups.find((candidate) => candidate.rows.some((row) => row.id === fact.id));
+    const fields = group?.fields || sourcePayload(fact);
+    const entity = entityNameFromRowFields(fields, fact) || readableFactLabel(fact);
+    return {
+      fact_id: `F${String(index + 1).padStart(3, "0")}`,
+      entity,
+      entityType: entityTypeFromRowFields(fields, fact, dimension.dimension_key),
+      dimension: dimension.business_label,
+      label: readableFactLabel(fact),
+      value: cleanBusinessText(valueOfFact(fact)),
+      unit: fact.unit || undefined,
+      confidence: Number(fact.confidence ?? 0.7),
+      citation_ids: [citationFor(fact.source_row_id, fact.source_table, fact.source_dimension)],
+    };
+  });
 
-  const businessEntities = entities.map((entity, index) => ({
-    entity_id: `E${String(index + 1).padStart(3, "0")}`,
-    name: cleanBusinessText(entity.business_name || entity.semantic_key || "Unnamed business object"),
-    type: sentenceCase(entity.entity_type),
-    description: cleanBusinessText(entity.description || "", ""),
-    confidence: Number(entity.confidence ?? 0.7),
-  }));
+  const businessRelationships = relationships
+    .map((relationship) => ({
+      from: cleanBusinessText(relationship.from_semantic_key || "", ""),
+      relationship: cleanBusinessText(relationship.relationship_label || relationship.relationship_type || "relates to"),
+      to: cleanBusinessText(relationship.to_semantic_key || "", ""),
+      confidence: Number(relationship.confidence ?? 0.65),
+      citation_ids: [citationFor(relationship.source_row_id, relationship.source_table, "")],
+    }))
+    .filter((relationship) => relationship.from && relationship.to && !hasMachineLeak(`${relationship.from} ${relationship.relationship} ${relationship.to}`))
+    .slice(0, MAX_RELATIONSHIPS)
+    .map((relationship, index) => ({
+      relationship_id: `R${String(index + 1).padStart(3, "0")}`,
+      ...relationship,
+    }));
+
+  const derivedRelationships = deriveRelationshipCandidates(relationshipFactGroups, citationFor)
+    .sort(
+      (a, b) =>
+        String(a.from || "").localeCompare(String(b.from || "")) ||
+        String(a.relationship || "").localeCompare(String(b.relationship || "")) ||
+        String(a.to || "").localeCompare(String(b.to || "")),
+    )
+    .slice(0, Math.max(0, MAX_RELATIONSHIPS - businessRelationships.length))
+    .map((relationship, index) => ({
+      relationship_id: `R${String(businessRelationships.length + index + 1).padStart(3, "0")}`,
+      ...relationship,
+    }));
+
+  businessRelationships.push(...derivedRelationships);
+
+  const businessEntities = deriveEntities(entities, factGroups, dimension.dimension_key);
+  const entityCoverage = entityTypes.length
+    ? entityTypes.filter((type) =>
+        businessEntities.some(
+          (entity) => String(entity.type || "").toLowerCase() === sentenceCase(type).toLowerCase(),
+        ),
+      ).length / entityTypes.length
+    : businessFacts.length > 0
+      ? 1
+      : 0;
+  const relationshipCoverage = businessRelationships.length > 0 ? 1 : businessFacts.length > 0 ? 0.5 : 0;
+  const coverageScore = Number(((sourceTableCoverage + entityCoverage + relationshipCoverage) / 3).toFixed(4));
+  const gaps = buildCoverageGaps(
+    dimension,
+    expectedTables,
+    sourceCounts,
+    entityTypes,
+    businessEntities,
+    businessFacts,
+    businessRelationships,
+  );
 
   const hasEvidence = businessFacts.length > 0 || businessEntities.length > 0 || businessRelationships.length > 0;
   const confidence = confidenceFor(coverageScore, businessFacts.length);
@@ -614,6 +1181,8 @@ async function buildSkeleton(client, tenantKey, tenantAliases, dimension) {
       relationships: businessRelationships.length,
       citations: citations.length,
       sourceAreas: sourceCounts.length,
+      factCandidates: factCandidates.length,
+      discardedFactCandidates: factCandidates.length - facts.length,
     },
   };
 }
@@ -860,6 +1429,74 @@ async function writeDossier(client, tenantKey, dimension, skeleton) {
   );
 }
 
+async function supersedeOldGenerations(client) {
+  const beforeRows = await queryRows(
+    client,
+    `
+      SELECT prompt_version, count(*)::int AS count
+      FROM semantic2_dossiers
+      WHERE invalidated_at IS NULL
+      GROUP BY prompt_version
+      ORDER BY prompt_version
+    `,
+    [],
+  );
+  const newlySupersededRows = await queryRows(
+    client,
+    `
+      WITH updated AS (
+        UPDATE semantic2_dossiers d
+           SET invalidated_at = now(),
+               updated_at = now()
+         WHERE d.prompt_version <> $1
+           AND d.invalidated_at IS NULL
+         RETURNING d.tenant_key, d.dimension_key, d.prompt_version, d.dossier_version,
+                   jsonb_array_length(COALESCE(d.evidence_packet->'relationships', '[]'::jsonb))::int AS relationship_count,
+                   jsonb_array_length(COALESCE(d.evidence_packet->'entities', '[]'::jsonb))::int AS entity_count,
+                   jsonb_array_length(COALESCE(d.evidence_packet->'facts', '[]'::jsonb))::int AS fact_count
+      )
+      SELECT tenant_key, dimension_key, prompt_version, dossier_version, relationship_count, entity_count, fact_count
+      FROM updated
+      ORDER BY tenant_key, dimension_key, prompt_version
+    `,
+    [PROMPT_VERSION],
+  );
+  const supersededRows = await queryRows(
+    client,
+    `
+      SELECT d.tenant_key, d.dimension_key, d.prompt_version, d.dossier_version,
+             jsonb_array_length(COALESCE(d.evidence_packet->'relationships', '[]'::jsonb))::int AS relationship_count,
+             jsonb_array_length(COALESCE(d.evidence_packet->'entities', '[]'::jsonb))::int AS entity_count,
+             jsonb_array_length(COALESCE(d.evidence_packet->'facts', '[]'::jsonb))::int AS fact_count
+      FROM semantic2_dossiers d
+      WHERE d.prompt_version <> $1
+        AND d.invalidated_at IS NOT NULL
+        AND EXISTS (
+          SELECT 1
+          FROM semantic2_dossiers active
+          WHERE active.tenant_key = d.tenant_key
+            AND active.dimension_key = d.dimension_key
+            AND active.prompt_version = $1
+            AND active.invalidated_at IS NULL
+        )
+      ORDER BY d.tenant_key, d.dimension_key, d.prompt_version
+    `,
+    [PROMPT_VERSION],
+  );
+  const afterRows = await queryRows(
+    client,
+    `
+      SELECT prompt_version, count(*)::int AS count
+      FROM semantic2_dossiers
+      WHERE invalidated_at IS NULL
+      GROUP BY prompt_version
+      ORDER BY prompt_version
+    `,
+    [],
+  );
+  return { activePromptVersion: PROMPT_VERSION, beforeRows, newlySupersededRows, supersededRows, afterRows };
+}
+
 function csvEscape(value) {
   const text = String(value ?? "");
   return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
@@ -1023,14 +1660,24 @@ async function buildAll(args) {
   await client.connect();
   const rows = [];
   const dossiers = [];
+  let supersedeRecord = null;
   try {
     const tenantScopes = await loadTenantScopes(client);
     const dimensions = await loadDimensions(client);
     if (dimensions.length !== DIMENSION_KEYS.length) {
       throw new Error(`Expected ${DIMENSION_KEYS.length} dimensions, found ${dimensions.length}.`);
     }
-    for (const { tenantKey, aliases } of tenantScopes) {
-      for (const dimension of dimensions) {
+    const scopesToBuild = args.onlySample
+      ? tenantScopes.filter(({ tenantKey }) => tenantKey === args.sampleTenant)
+      : tenantScopes;
+    const dimensionsToBuild = args.onlySample
+      ? dimensions.filter((dimension) => dimension.dimension_key === args.sampleDimension)
+      : dimensions;
+    if (args.onlySample && (scopesToBuild.length === 0 || dimensionsToBuild.length === 0)) {
+      throw new Error(`Sample scope not found: ${args.sampleTenant}/${args.sampleDimension}`);
+    }
+    for (const { tenantKey, aliases } of scopesToBuild) {
+      for (const dimension of dimensionsToBuild) {
         console.error(`[l3-dossiers] ${tenantKey}/${dimension.dimension_key}: building skeleton aliases=${aliases.length}`);
         const { skeleton, rawCounts } = await buildSkeleton(client, tenantKey, aliases, dimension);
         console.error(`[l3-dossiers] ${tenantKey}/${dimension.dimension_key}: deriving insights`);
@@ -1057,6 +1704,9 @@ async function buildAll(args) {
         });
       }
     }
+    if (args.apply && args.supersedeOldGenerations) {
+      supersedeRecord = await supersedeOldGenerations(client);
+    }
   } finally {
     await client.end();
   }
@@ -1072,6 +1722,36 @@ async function buildAll(args) {
     "insights-catalog.md": insightsCatalog(dossiers),
     "OUTCOME_REPORT.md": outcomeReport(rows, args),
     "validation-summary.csv": validationCsv(rows),
+    "SUPERSEDE_RECORD.md": supersedeRecord
+      ? [
+          "# Supersede Record",
+          "",
+          `Active prompt version: ${supersedeRecord.activePromptVersion}`,
+          "",
+          "Rows were not deleted. Active non-current dossier generations were marked with `invalidated_at` so the only active generation is the clean v2 prompt version. The listed rows can be restored by setting `invalidated_at = NULL` for a controlled rollback.",
+          "",
+          "## Active Prompt Counts Before",
+          "",
+          ...supersedeRecord.beforeRows.map((row) => `- ${row.prompt_version}: ${row.count}`),
+          "",
+          `Newly superseded this run: ${supersedeRecord.newlySupersededRows.length}`,
+          `Recoverable non-current rows listed: ${supersedeRecord.supersededRows.length}`,
+          "",
+          "## Superseded Rows",
+          "",
+          ...(supersedeRecord.supersededRows.length
+            ? supersedeRecord.supersededRows.map(
+                (row) =>
+                  `- ${row.tenant_key}/${row.dimension_key}: ${row.prompt_version} (${row.dossier_version}); facts=${row.fact_count}, entities=${row.entity_count}, relationships=${row.relationship_count}`,
+              )
+            : ["- No older active rows required supersession."]),
+          "",
+          "## Active Prompt Counts After",
+          "",
+          ...supersedeRecord.afterRows.map((row) => `- ${row.prompt_version}: ${row.count}`),
+          "",
+        ].join("\n")
+      : "# Supersede Record\n\nSupersede step was not requested for this run.\n",
     "summary.json": JSON.stringify(
       {
         generatedAt: new Date().toISOString(),
@@ -1081,6 +1761,10 @@ async function buildAll(args) {
         totalDossiers: rows.length,
         validationPassed: rows.filter((row) => row.validation_passed).length,
         validationFailed: rows.filter((row) => !row.validation_passed).length,
+        supersedeOldGenerations: Boolean(args.supersedeOldGenerations),
+        supersededRows: supersedeRecord?.supersededRows?.length ?? 0,
+        newlySupersededRows: supersedeRecord?.newlySupersededRows?.length ?? 0,
+        supersededRowDetails: supersedeRecord?.supersededRows ?? [],
       },
       null,
       2,
@@ -1121,6 +1805,40 @@ function selfTest() {
   );
   if (insights.length !== 1 || !insights[0].insight.includes("$42M")) {
     throw new Error("insight grounding self-test failed");
+  }
+  const oldBrokenSkeleton = {
+    tenantKey: "lakeshore-holdings",
+    dimensionKey: "organization_leadership",
+    business_labels: { tenant: "Lakeshore Holdings", dimension: "Organization and Leadership", sourceAreas: ["Enterprise profile evidence"] },
+    coverage: { score: 0.38, confidence: 0.4, verdict: "PARTIAL" },
+    facts: [
+      {
+        fact_id: "F001",
+        entity: "enterprise source material:source reference",
+        entityType: "Evidence item",
+        label: "",
+        value: "required",
+        citation_ids: ["C001"],
+      },
+      {
+        fact_id: "F002",
+        entity: "enterprise source material:source reference",
+        entityType: "Evidence item",
+        label: "Persona name",
+        value: "{\"raw\":\"Treasury analyst\",\"value\":\"Treasury analyst\",\"column\":\"persona_name\"}",
+        citation_ids: ["C002"],
+      },
+    ],
+    entities: [],
+    relationships: [],
+    gaps: [],
+    branch_options: [],
+    citations: [{ label: "Enterprise context source support", source_area: "Enterprise profile evidence" }],
+    derived_insights: [],
+  };
+  const oldBrokenValidation = validateDossier(oldBrokenSkeleton);
+  if (oldBrokenValidation.passed || !oldBrokenValidation.issues.some((issue) => issue.startsWith("business_language_clean"))) {
+    throw new Error("old source-reference skeleton regression was not caught");
   }
   console.log(JSON.stringify({ ok: true, selfTest: "build-enriched-l3-dossiers" }, null, 2));
 }

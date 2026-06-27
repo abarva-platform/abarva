@@ -1,5 +1,6 @@
 import { Pool, type PoolClient } from "pg";
 
+import { evaluateDossierSurfaceEligibility } from "../semantic2/dossiers";
 import { routeDimensionQuestion } from "./dimension-router";
 import type {
   DossierArtifactType,
@@ -15,7 +16,7 @@ import type {
 } from "./types";
 
 export const CURATED_DOSSIER_PROMPT_VERSION =
-  "semantic2-physical-dossier-consultant-v1";
+  "semantic2-l3-enriched-buildtime-claude-v2";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -43,6 +44,18 @@ export interface CuratedDossierLoadResult {
   canonicalTenantKey: string;
   builtAt: string;
   branchOptions: CuratedDossierBranchOption[];
+}
+
+export class CuratedDossierNotSurfaceEligibleError extends Error {
+  constructor(
+    message: string,
+    public readonly eligibility: ReturnType<
+      typeof evaluateDossierSurfaceEligibility
+    >,
+  ) {
+    super(message);
+    this.name = "CuratedDossierNotSurfaceEligibleError";
+  }
 }
 
 let pool: Pool | null = null;
@@ -176,7 +189,10 @@ function makeSections(row: CuratedDossierRow): DossierSection[] {
       recordCount: facts.length,
       sample: facts.slice(0, 40).map((item) => ({
         subject: asString(item.subject_semantic_key, ""),
-        fact: asString(item.fact_key, asString(item.fact_type, "source support")),
+        fact: asString(
+          item.fact_key,
+          asString(item.fact_type, "source support"),
+        ),
         value: String(
           item.fact_value_text ??
             item.fact_value_number ??
@@ -563,6 +579,18 @@ export async function loadCuratedSemanticDossier(args: {
     if (!row) {
       throw new Error(
         `No curated Semantic2 dossier found for ${canonical}/${dimensionKey}.`,
+      );
+    }
+    const eligibility = evaluateDossierSurfaceEligibility({
+      dossier: row.evidence_packet,
+      dossierId: `${canonical}:${dimensionKey}:${row.prompt_version}`,
+      tenantKey: row.tenant_key,
+      dimensionKey: row.dimension_key,
+    });
+    if (!eligibility.surfaceEligible) {
+      throw new CuratedDossierNotSurfaceEligibleError(
+        `Curated Semantic2 dossier for ${canonical}/${dimensionKey} is ${eligibility.eligibilityLevel}: ${eligibility.reasons.join("; ")}`,
+        eligibility,
       );
     }
     const dossier = buildUniversalDossier(row, args.question);

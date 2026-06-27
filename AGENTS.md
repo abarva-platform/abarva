@@ -101,6 +101,10 @@ ACA web and worker runtimes must use digest-pinned images (`@sha256:...`) for ru
 
 After any deploy or flag/env update, prove the ACA runtime invariant before claiming the change is live: the Container App template image, the 100% traffic revision image, and all required worker job images must match the approved digest. Then run the required live signed-in client proof for affected clients. A PR or release record may say `merged`, `deployed`, or `flagged`; it may not say `live-proven` until those checks are captured.
 
+### ACA data-build job rule
+
+Mutating operator data builds must run as Azure Container Apps Jobs, not through production web requests and not as long-running manual `az containerapp exec` sessions. Use `docs/ops/aca-data-build-job-rule.md` for the required job contract: job name, run id, tenant scope, build version, input source version, idempotency key, progress/status output, Blob proof bundle, validation output, quality-gate output, and release record. Break-glass `az containerapp exec` is allowed only for read-only inspection or a documented exception. Do not wire product surfaces to new data-plane builds until the job output, quality gate, and human review pass.
+
 ## Context & corpus governance (MANDATORY — all agents, all tenants)
 
 Every context/corpus object (tenant facts, enterprise chunks, uploaded evidence, artifacts,
