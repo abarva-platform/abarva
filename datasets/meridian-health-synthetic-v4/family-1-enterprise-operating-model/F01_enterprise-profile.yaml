@@ -6,8 +6,8 @@ hospitals: 29
 ambulatory_sites: 415
 annual_unique_patients: 4800000
 health_plan_members: 2100000
-annual_technology_budget_usd: 1280000000
-annual_ai_and_data_budget_usd: 162000000
+annual_technology_budget_usd: 1600000000
+annual_ai_and_data_budget_usd: 48000000
 current_cloud_data_capability: immature_no_enterprise_cloud_lakehouse
 target_data_platform: Databricks on AWS
 primary_ehr: Epic

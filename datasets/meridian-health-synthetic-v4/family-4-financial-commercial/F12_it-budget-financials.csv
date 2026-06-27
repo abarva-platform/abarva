@@ -1,13 +1,13 @@
-budget_id,budget_area,owner_role,run_budget_usd,change_budget_usd,ai_or_data_budget_usd,labor_pct,vendor_pct,cloud_or_infra_pct,budget_pressure
-MER-BUD-001,Office of CDIO,Chief Digital & Information Officer,25420000,12710000,3280000,32,38,18,run cost crowding out change
-MER-BUD-002,Epic and Clinical Systems,VP Clinical Platforms,116560000,58280000,20680000,36,43,22,within plan
-MER-BUD-003,Health Plan Core and Claims Platforms,VP Health Plan Technology,88040000,44020000,19880000,40,48,26,within plan
-MER-BUD-004,Data Platform Migration Office,Chief Data Officer,78120000,39060000,52920000,44,53,30,Databricks migration spend must show phased value
-MER-BUD-005,Integration and Interoperability,VP Integration,48360000,24180000,8580000,48,38,18,run cost crowding out change
-MER-BUD-006,Contact Center and CRM Platforms,VP Patient Experience Tech,42780000,21390000,9660000,32,43,22,within plan
-MER-BUD-007,"Finance, ERP and Reporting",VP Corporate Systems,38440000,19220000,4960000,36,48,26,within plan
-MER-BUD-008,"Security, Privacy and Resilience",CISO,95480000,47740000,16940000,40,53,30,within plan
-MER-BUD-009,Cloud and Infrastructure,VP Infrastructure,102920000,51460000,23240000,44,38,18,run cost crowding out change
-MER-BUD-010,ServiceNow and IT Operations,VP IT Operations,32240000,16120000,4160000,48,43,22,within plan
-MER-BUD-011,AI Governance and Automation Office,Chief Data Officer,23560000,11780000,4180000,32,48,26,within plan
-MER-BUD-012,Developer Experience and DevSecOps,VP Engineering,21080000,10540000,4760000,36,53,30,within plan
+budget_id,budget_area,owner_role,run_budget_usd,change_budget_usd,ai_or_data_budget_usd,labor_pct,vendor_pct,cloud_or_infra_pct,budget_pressure,capex_pct,opex_pct
+MER-BUD-001,Office of CDIO,Chief Digital & Information Officer,25420000,12710000,3280000,32,38,18,run cost crowding out change,25,75
+MER-BUD-002,Epic and Clinical Systems,VP Clinical Platforms,116560000,58280000,20680000,36,43,22,within plan,25,75
+MER-BUD-003,Health Plan Core and Claims Platforms,VP Health Plan Technology,88040000,44020000,19880000,40,48,26,within plan,25,75
+MER-BUD-004,Data Platform Migration Office,Chief Data Officer,78120000,39060000,52920000,44,53,30,Databricks migration spend must show phased value,25,75
+MER-BUD-005,Integration and Interoperability,VP Integration,48360000,24180000,8580000,48,38,18,run cost crowding out change,25,75
+MER-BUD-006,Contact Center and CRM Platforms,VP Patient Experience Tech,42780000,21390000,9660000,32,43,22,within plan,25,75
+MER-BUD-007,"Finance, ERP and Reporting",VP Corporate Systems,38440000,19220000,4960000,36,48,26,within plan,25,75
+MER-BUD-008,"Security, Privacy and Resilience",CISO,95480000,47740000,16940000,40,53,30,within plan,25,75
+MER-BUD-009,Cloud and Infrastructure,VP Infrastructure,102920000,51460000,23240000,44,38,18,run cost crowding out change,38,62
+MER-BUD-010,ServiceNow and IT Operations,VP IT Operations,32240000,16120000,4160000,48,43,22,within plan,25,75
+MER-BUD-011,AI Governance and Automation Office,Chief Data Officer,23560000,11780000,4180000,32,48,26,within plan,25,75
+MER-BUD-012,Developer Experience and DevSecOps,VP Engineering,21080000,10540000,4760000,36,53,30,within plan,25,75

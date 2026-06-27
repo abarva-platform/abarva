@@ -1,14 +1,14 @@
-budget_line_id,budget_area,spend_type,fy26_budget_usd,owner_team_id
-BUD-001,IBM Z / mainframe run,run,386000000,SHA-IT-009
-BUD-002,AWS cloud platform and modern apps,run_change,278000000,SHA-IT-010
-BUD-003,Data platforms EDW lake BI SAS,run_change,244000000,SHA-IT-011
-BUD-004,Digital commerce mobile customer platforms,change,192000000,SHA-IT-008
-BUD-005,Airline operations systems,run_change,214000000,SHA-IT-002
-BUD-006,Crew flight airport MRO platforms,run_change,422000000,SHA-IT-003
-BUD-007,Cybersecurity and resilience,run_change,196000000,SHA-IT-015
-BUD-008,SAP and corporate systems,run_change,126000000,SHA-IT-013
-BUD-009,AI and agentic portfolio,change,248000000,SHA-IT-016
-BUD-010,Integration API eventing,run_change,108000000,SHA-IT-012
-BUD-011,ServiceNow SRE observability,run_change,82000000,SHA-IT-014
-BUD-012,Developer productivity and tools,change,58000000,SHA-IT-017
-BUD-013,Architecture strategy governance,run,24000000,SHA-IT-018
+budget_line_id,budget_area,spend_type,fy26_budget_usd,owner_team_id,capex_pct,opex_pct,run_budget_usd,change_budget_usd
+BUD-001,IBM Z / mainframe run,run,386000000,SHA-IT-009,38,62,386000000,0
+BUD-002,AWS cloud platform and modern apps,run_change,278000000,SHA-IT-010,38,62,172360000,105640000
+BUD-003,Data platforms EDW lake BI SAS,run_change,244000000,SHA-IT-011,25,75,151280000,92720000
+BUD-004,Digital commerce mobile customer platforms,change,192000000,SHA-IT-008,25,75,0,192000000
+BUD-005,Airline operations systems,run_change,214000000,SHA-IT-002,25,75,132680000,81320000
+BUD-006,Crew flight airport MRO platforms,run_change,422000000,SHA-IT-003,25,75,261640000,160360000
+BUD-007,Cybersecurity and resilience,run_change,196000000,SHA-IT-015,25,75,121520000,74480000
+BUD-008,SAP and corporate systems,run_change,126000000,SHA-IT-013,25,75,78120000,47880000
+BUD-009,AI and agentic portfolio,change,248000000,SHA-IT-016,25,75,0,248000000
+BUD-010,Integration API eventing,run_change,108000000,SHA-IT-012,25,75,66960000,41040000
+BUD-011,ServiceNow SRE observability,run_change,82000000,SHA-IT-014,25,75,50840000,31160000
+BUD-012,Developer productivity and tools,change,58000000,SHA-IT-017,25,75,0,58000000
+BUD-013,Architecture strategy governance,run,24000000,SHA-IT-018,12,88,24000000,0
