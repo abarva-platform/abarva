@@ -56,6 +56,7 @@ const VISIBLE_ANSWER_BANNED_PATTERNS: Array<{ id: string; pattern: RegExp }> = [
   { id: "scaffolding_label_read", pattern: /(^|\n)\s*Read\s*:/i },
   { id: "scaffolding_label_evidence", pattern: /(^|\n)\s*Evidence\s*:/i },
   { id: "scaffolding_label_implication", pattern: /(^|\n)\s*Implication\s*:/i },
+  { id: "scaffolding_label_next", pattern: /(^|\n)\s*Next\s*:/i },
   { id: "scaffolding_label_next_move", pattern: /(^|\n)\s*Next move\s*:/i },
   { id: "implementation_loaded_evidence", pattern: /\bloaded evidence\b/i },
   { id: "implementation_tenant_evidence", pattern: /\btenant evidence\b/i },
@@ -67,12 +68,12 @@ const VISIBLE_ANSWER_BANNED_PATTERNS: Array<{ id: string; pattern: RegExp }> = [
   {
     id: "internal_dossier_terms",
     pattern:
-      /\b(?:binder|dossier|packet|source key|record type|dimension key|artifact id|citation id)\b/i,
+      /\b(?:binder|dossier|packet|read[- ]model|source key|record type|dimension key|artifact id|citation id)\b/i,
   },
   {
     id: "stock_generic_closing",
     pattern:
-      /(?:evidence,\s*risks?,\s*or\s*next actions?|supporting material,\s*compare options,\s*or shape the next)/i,
+      /(?:evidence,\s*risks?,\s*or\s*next actions?|supporting (?:material|evidence),\s*compare options,\s*or shape|ask (?:me|aVa) to inspect .*?(?:compare options|shape this|shape the next))/i,
   },
   { id: "atlas_branding", pattern: /\bAtlas\b/ },
 ];

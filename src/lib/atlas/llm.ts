@@ -480,7 +480,7 @@ export async function runAtlasLlm(
               "DETERMINISTIC_TOWER_FACTUAL_SPINE",
               `Intent: ${factualSpine.matchedIntent}`,
               `Question: ${message}`,
-              "Source: buildAtlasTowerCurrentState dashboard read-model.",
+              "Source: Tower portfolio facts.",
             ].join("\n"),
             rawModelResponse: null,
             renderedResponse: "",

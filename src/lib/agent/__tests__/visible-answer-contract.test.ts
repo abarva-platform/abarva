@@ -50,6 +50,37 @@ describe("visible answer contract", () => {
     );
   });
 
+  it("blocks Tower stock endings and generic next-step scaffolding", () => {
+    const gate = assertVisibleAnswerContract(
+      [
+        "Start with the four value-lag programs.",
+        "Next: ask aVa to inspect the supporting evidence, compare options, or shape the next CIO action.",
+      ].join("\n"),
+    );
+
+    expect(gate.passed).toBe(false);
+    expect(gate.violations.map((violation) => violation.id)).toEqual(
+      expect.arrayContaining([
+        "scaffolding_label_next",
+        "stock_generic_closing",
+      ]),
+    );
+  });
+
+  it("blocks dashboard stock prompts and read-model jargon", () => {
+    const gate = assertVisibleAnswerContract(
+      "Ask me to inspect pressure spend, benchmark AI ROI, challenge vendor renewals, or shape this into a board readout from the Tower read-model.",
+    );
+
+    expect(gate.passed).toBe(false);
+    expect(gate.violations.map((violation) => violation.id)).toEqual(
+      expect.arrayContaining([
+        "stock_generic_closing",
+        "internal_dossier_terms",
+      ]),
+    );
+  });
+
   it("blocks legacy Atlas branding in visible answers", () => {
     const gate = assertVisibleAnswerContract(
       "Atlas needs the portfolio evidence base to synthesize observations.",

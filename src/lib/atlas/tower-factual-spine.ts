@@ -149,7 +149,7 @@ function buildTotalBudgetAnswer(
     response: [
       `The loaded Tower IT budget is ${formatMoney(total)} across ${state.budgetRollups.length} portfolio-company rollups.`,
       `Breakdown: ${compactList(state.budgetRollups.map(budgetRollupLine), 8)}.`,
-      "Next: ask aVa to compare this budget against measured value, vendor exposure, or pressure flags.",
+      "The useful comparison is whether that budget is matched by measured value, vendor exposure, and pressure flags.",
     ].join("\n"),
     suggestions: suggestions(),
   };
@@ -164,7 +164,7 @@ function buildBudgetByPortfolioAnswer(
     response: [
       `Tower has ${state.budgetRollups.length} loaded portfolio-company budget rollups.`,
       `Breakdown: ${compactList(state.budgetRollups.map(budgetRollupLine), 8)}.`,
-      "Next: ask aVa to rank these by value proof or pressure exposure.",
+      "The next useful cut is ranking those companies by value proof and pressure exposure.",
     ].join("\n"),
     suggestions: suggestions(),
   };
@@ -187,7 +187,7 @@ function buildSingleCompanyBudgetAnswer(
     response: [
       `${match.portfolioCompany} has ${formatMoney(match.totalItBudgetUsd)} of loaded FY Tower IT budget.`,
       `Spend shape: ${formatMoney(match.actualSpendYtdUsd)} YTD, ${formatMoney(match.runAmountUsd)} run, ${formatMoney(match.changeAmountUsd)} change, ${formatMoney(match.vendorAmountUsd)} vendor, ${formatMoney(match.laborAmountUsd)} labor.`,
-      "Next: ask aVa to compare this company against the rest of the portfolio.",
+      "The right follow-up is comparing this company against the rest of the portfolio.",
     ].join("\n"),
     suggestions: suggestions(),
   };
@@ -202,9 +202,9 @@ function buildInitiativeBudgetAnswer(
   return {
     matchedIntent: "tower_initiative_budget",
     response: [
-      `${initiative.name} has ${formatMoney(initiative.committedAnnualUsd)} of loaded annual budget in the Tower read-model.`,
+      `${initiative.name} has ${formatMoney(initiative.committedAnnualUsd)} of annual budget in Tower.`,
       `Measured value is ${formatMoney(initiative.measuredValueUsd)}; owner is ${initiative.ownerName || "not loaded"}; status is ${labelize(initiative.statusFlag) || "not loaded"}.`,
-      "Next: ask aVa to compare this initiative with the dashboard's top program list or value proof.",
+      "Judge it against the dashboard's top program list and the available value proof before funding more work.",
     ].join("\n"),
     suggestions: suggestions(),
   };
@@ -224,8 +224,8 @@ function buildTopVendorsAnswer(
         ),
         5,
       )}.`,
-      `This is the same vendor-exposure rollup Tower uses for the dashboard; split vendor rows are aggregated by vendor name.`,
-      "Next: ask aVa to inspect renewals, concentration risk, or the initiatives each vendor supports.",
+      "This is the same vendor-exposure rollup Tower uses for the dashboard; split vendor entries are aggregated by vendor name.",
+      "The decision lens is renewal timing, concentration risk, and which initiatives each vendor supports.",
     ].join("\n"),
     suggestions: suggestions(),
   };
@@ -246,9 +246,9 @@ function buildMeasuredValueAnswer(
     response: [
       `The loaded measured value across Tower initiatives is ${formatMoney(totalMeasured)} across ${withMeasured.length} of ${state.initiatives.length} initiatives.`,
       withMeasured.length < state.initiatives.length
-        ? `${state.initiatives.length - withMeasured.length} initiatives still lack measured-value rows, so this is a loaded-evidence total, not a full realized-value claim.`
-        : "Every loaded initiative has a measured-value row.",
-      "Next: ask aVa to rank the initiatives with measured value against the pressure list.",
+        ? `${state.initiatives.length - withMeasured.length} initiatives still lack measured-value inputs, so this is an available total, not a full realized-value claim.`
+        : "Every loaded initiative has a measured-value input.",
+      "Rank the initiatives with measured value against the pressure list before treating this as portfolio performance.",
     ].join("\n"),
     suggestions: suggestions(),
   };
@@ -276,7 +276,7 @@ function buildPressureAnswer(
       breakdown.length
         ? `Breakdown: ${compactList(breakdown, 6)}.`
         : "Breakdown: none of the loaded initiatives are in pressure-bearing status.",
-      "Next: ask aVa to list the affected programs and the budget attached to them.",
+      "The management view should name the affected programs and the budget attached to them.",
     ].join("\n"),
     suggestions: suggestions(),
   };
@@ -307,7 +307,7 @@ function buildNotHealthyAnswer(
             6,
           )}.`
         : "No loaded programs are in a non-healthy status.",
-      "Next: ask aVa to separate true delivery risk from missing value-proof fields.",
+      "Separate true delivery risk from missing value proof before escalating this as a funding problem.",
     ].join("\n"),
     suggestions: suggestions(),
   };
@@ -327,7 +327,7 @@ function buildRoiAnswer(
         ? "Tower cannot state a board-grade portfolio ROI from the loaded data."
         : `Tower cannot state a board-grade portfolio ROI from the loaded data. The current ${metric.value} is a directional initiative-value proxy, not a true portfolio ROI.`,
       `${metric.subtext}. ${metric.tooltip}`,
-      "Next: ask aVa to inspect the measured-value rows, actual spend basis, and benefit period before using ROI in a board readout.",
+      "Do not use ROI in a board readout until measured value, actual spend basis, and benefit period are all explicit.",
     ].join("\n"),
     suggestions: suggestions(),
   };
@@ -347,7 +347,7 @@ function buildAdoptionAnswer(
         ? `Tower shows ${metric.value} adoption as a low-confidence proxy, not true active-user adoption.`
         : `Tower shows ${metric.value} adoption from the loaded Tower metric.`,
       `${metric.subtext}. ${metric.tooltip}`,
-      "Next: ask aVa which telemetry source would be needed to convert this from proxy to measured adoption.",
+      "The missing telemetry source determines whether this can move from proxy to measured adoption.",
     ].join("\n"),
     suggestions: suggestions(),
   };
