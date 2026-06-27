@@ -12,6 +12,9 @@ const INTERNAL_RE =
 const OLD_SECTION_RE =
   /^\s*(?:Read|Evidence|Implication|Next move)\s*:/gim;
 
+const MARKDOWN_TABLE_SEPARATOR_RE =
+  /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/m;
+
 export const INTELLIGENCE_CONSULTANT_TEXT_SYSTEM_PROMPT = `You are AbarVa's Intelligence advisor.
 
 You advise CIO, CFO, COO, CDO, transformation, and executive sponsor audiences.
@@ -315,6 +318,7 @@ export async function synthesizeIntelligenceConsultantText(args: {
   const promptPacket = buildIntelligenceConsultantPromptPacket(args.dossier);
   const user = buildIntelligenceConsultantUserPrompt(promptPacket);
   const prompt = [INTELLIGENCE_CONSULTANT_TEXT_SYSTEM_PROMPT, user].join("\n\n");
+  const explicitVisualAsk = isExplicitVisualAsk(args.dossier.question);
 
   args.onModelInput?.({
     system: INTELLIGENCE_CONSULTANT_TEXT_SYSTEM_PROMPT,
@@ -346,12 +350,44 @@ export async function synthesizeIntelligenceConsultantText(args: {
       }),
       timeoutMs,
     );
-    const rawText = message.content
-      .filter((item) => item.type === "text")
-      .map((item) => item.text)
-      .join("\n")
-      .trim();
-    const text = normalizeConsultantText(rawText);
+    let rawText = extractAnthropicText(message);
+    let text = normalizeConsultantText(rawText);
+    if (explicitVisualAsk && !hasMarkdownDecisionTable(text)) {
+      const repairUser = [
+        user,
+        "",
+        "Draft answer that missed the visual contract:",
+        text,
+        "",
+        "Repair instruction:",
+        "The user explicitly asked for a table, chart, graph, visual, ranking, comparison, matrix, breakdown, or show-me structure.",
+        "Return the same senior-advisor answer, but add exactly one compact GitHub-flavored Markdown decision table.",
+        "Use business-friendly columns aligned to the user's ask. Include 2-6 rows only.",
+        "Use only the provided packet. If a value is not shown, write \"not shown in loaded sources\" instead of inventing it.",
+        "Do not add source-support, evidence-register, citation, or material-used tables.",
+        "Return final user-facing text only.",
+      ].join("\n");
+      const repaired = await withTimeout(
+        client.messages.create({
+          model,
+          max_tokens: Math.max(maxTokens, 1200),
+          system: INTELLIGENCE_CONSULTANT_TEXT_SYSTEM_PROMPT,
+          messages: [{ role: "user", content: repairUser }],
+        }),
+        timeoutMs,
+      );
+      const repairedText = normalizeConsultantText(extractAnthropicText(repaired));
+      if (hasMarkdownDecisionTable(repairedText)) {
+        rawText = repairedText;
+        text = repairedText;
+      } else {
+        const fallbackTable = fallbackDecisionTableFromPacket(promptPacket);
+        if (fallbackTable) {
+          rawText = `${rawText}\n\n${fallbackTable}`;
+          text = normalizeConsultantText(`${text}\n\n${fallbackTable}`);
+        }
+      }
+    }
     args.onModelOutput?.({
       rawText,
       text,
@@ -444,6 +480,77 @@ function numberFromEnv(key: string, fallback: number): number {
   if (!raw) return fallback;
   const value = Number(raw);
   return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function isExplicitVisualAsk(query: string): boolean {
+  return /\b(table|tables|tabular|matrix|chart|charts|graph|graphs|visual|visually|visualize|plot|ranking|ranked|compare|comparison|break ?down|show me)\b/i.test(
+    query,
+  );
+}
+
+function hasMarkdownDecisionTable(text: string): boolean {
+  return MARKDOWN_TABLE_SEPARATOR_RE.test(text);
+}
+
+function extractAnthropicText(message: {
+  content?: Array<{ type?: string; text?: string }>;
+}): string {
+  return (message.content ?? [])
+    .filter((item) => item.type === "text" && typeof item.text === "string")
+    .map((item) => item.text)
+    .join("\n")
+    .trim();
+}
+
+function parseOptionBrief(option: string): {
+  title: string;
+  action: string;
+  value: string;
+  complexity: string;
+  risk: string;
+  missing: string;
+} | null {
+  const [titlePart, rest = ""] = option.split(/:\s*/, 2);
+  const title = titlePart.trim();
+  if (!title) return null;
+  return {
+    title,
+    action: rest.split(";")[0]?.trim() || "assess with accountable owner",
+    value: rest.match(/(?:^|;\s*)value=([^;]+)/)?.[1]?.trim() || "not shown in loaded sources",
+    complexity:
+      rest.match(/(?:^|;\s*)complexity=([^;]+)/)?.[1]?.trim() ||
+      "not shown in loaded sources",
+    risk:
+      rest.match(/(?:^|;\s*)risk=([^;]+)/)?.[1]?.trim() ||
+      "not shown in loaded sources",
+    missing: rest.match(/(?:^|;\s*)missing=([^;]+)/)?.[1]?.trim() || "none named",
+  };
+}
+
+function markdownEscapeCell(value: string): string {
+  return value.replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
+}
+
+function fallbackDecisionTableFromPacket(
+  packet: IntelligenceConsultantPromptPacket,
+): string | null {
+  const rows = packet.optionsBrief.options
+    .map(parseOptionBrief)
+    .filter((option): option is NonNullable<typeof option> => option !== null)
+    .slice(0, 6);
+  if (rows.length < 2) return null;
+
+  return [
+    "| Initiative | Value | Readiness | Risk | Next action |",
+    "|---|---:|---|---|---|",
+    ...rows.map((row) => {
+      const readiness =
+        row.missing && row.missing.toLowerCase() !== "none named"
+          ? `blocked by ${row.missing}`
+          : `complexity ${row.complexity}`;
+      return `| ${markdownEscapeCell(row.title)} | ${markdownEscapeCell(row.value)} | ${markdownEscapeCell(readiness)} | ${markdownEscapeCell(row.risk)} | ${markdownEscapeCell(row.action)} |`;
+    }),
+  ].join("\n");
 }
 
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {

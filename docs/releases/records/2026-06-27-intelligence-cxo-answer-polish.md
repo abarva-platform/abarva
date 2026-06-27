@@ -45,6 +45,7 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - `src/lib/intelligence/ask/synthesizer.ts`: changes explicit visual/table instructions so Claude emits compact Markdown rows that the runtime can lift into the right-side Intelligence canvas.
 - `src/lib/intelligence/ask/synthesizer.ts`: tightens the explicit visual contract so direct user requests for a table, chart, graph, visual, comparison grid, ranking, breakdown, or "show me" structure must produce one compact decision table unless the necessary values or rows are genuinely unavailable.
 - `src/lib/intelligence/ask/synthesizer.ts`: adds a runtime visual-contract repair pass for rich-text Intelligence answers: when the user explicitly asks for a visual/table and the first Claude draft has no renderable Markdown table, the runtime asks Claude to repair the same evidence-backed answer with exactly one compact decision table.
+- `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`: moves the visual-contract repair into the active consultant-synthesis lane used in production and adds a conservative grounded fallback table from the existing decision-option packet if Claude still returns prose-only for an explicit visual/table ask.
 - Follow-up regression coverage now uses the eight 50-question SkyHarbor crawl failures that exposed raw `Supporting Material` / `How it supports the answer` tables.
 - Focused regression tests updated to forbid the generic closer and assert context-specific alternatives.
 
@@ -75,7 +76,11 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - `npx eslint src/lib/intelligence/ask/synthesizer.ts` passed after the explicit visual contract tightening.
 - Post-deploy signed-in Lakeshore proof on revision `ca-abarva-web-lab-eastus--m9c2918e9` confirmed the label/evidence cleanup still held, but the same explicit table prompt again returned prose-only (`tableCount: 0`). This proved prompt-only enforcement is insufficient and triggered the runtime visual-contract repair pass.
 - `npx eslint src/lib/intelligence/ask/synthesizer.ts` passed after the runtime visual-contract repair pass.
-- Final post-fix deployment and signed-in browser proof pending.
+- ACA proof for candidate `c2517f4c`: revision `ca-abarva-web-lab-eastus--mc2517f4c`, digest `sha256:81790f937cf6fa077ac392722e2dc58caab2ca54bc692c591809634465f4bdf2`, 100% traffic, runtime invariant passed.
+- Post-deploy signed-in Lakeshore proof on revision `ca-abarva-web-lab-eastus--mc2517f4c` confirmed the label/evidence cleanup still held in the likely answer surface, but the same explicit table prompt still returned prose-only (`tableCount: 0`). Root cause: production used the newer consultant-text synthesis lane before reaching the older synthesizer repair pass.
+- `npx eslint src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts` passed after moving visual repair into the active consultant-synthesis lane.
+- `npx jest src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts --runInBand` passed, 5 tests. Jest still prints pre-existing duplicate manual-mock warnings.
+- Final post-consultant-lane deployment and signed-in browser proof pending.
 
 ## Rollout Plan
 
@@ -85,7 +90,7 @@ Build an Azure Container Apps image from the exact git SHA, deploy to `ca-abarva
 
 - Repo-owned deploy workflow: Azure Container Apps release path in `docs/runbooks/azure-container-apps-deploy.md`.
 - Shared runtime mutators: `az acr build`, `az containerapp update`, and ACA ingress traffic assignment.
-- Approved image digest: first candidate `sha256:6765cd1489a6ba4618a4a3943cfadb4914d1074d5f96c4c505695afd456c8576`; latest proven-but-incomplete candidate `sha256:4017dfb821a71aa1770412ae2fc10ba9e78649d040793847b3de49b7b057ed22`; visual-prompt follow-up digest pending.
+- Approved image digest: first candidate `sha256:6765cd1489a6ba4618a4a3943cfadb4914d1074d5f96c4c505695afd456c8576`; latest proven-but-incomplete candidate `sha256:81790f937cf6fa077ac392722e2dc58caab2ca54bc692c591809634465f4bdf2`; consultant-lane visual repair digest pending.
 - ACA runtime invariant: `app.abarva.ai` is ACA-only; Vercel is not used as release evidence.
 - Worker image invariant: Not applicable.
 - Feature/env flag update path: None.
@@ -103,7 +108,8 @@ Rollback by assigning 100% ACA ingress traffic to the previous healthy revision 
 - Renderer-leak follow-up ACA proof: revision `ca-abarva-web-lab-eastus--0000171`, digest `sha256:5ccda7b17bfc92f1ab42459b24a9b8a62f0f98bbc2b1f1db2eed07b3b1b0be36`, 100% traffic; partial proof showed canvas still needed cleanup.
 - Canvas-cleanup ACA proof: revision `ca-abarva-web-lab-eastus--0000172`, digest `sha256:8e4838111877d8413917f8fb57ab8689398bd6384305bff645292c65fdd69644`, 100% traffic; one-prompt signed-in proof passed for `Which AI initiatives should we kill?`, but Anand's later 50-question crawl still found eight evidence-table leak cases.
 - Left-dock/right-canvas candidate ACA proof: revision `ca-abarva-web-lab-eastus--madd51e40`, digest `sha256:4017dfb821a71aa1770412ae2fc10ba9e78649d040793847b3de49b7b057ed22`, 100% traffic; runtime invariant passed; signed-in Lakeshore proof found the remaining explicit-table and generic-closer issues fixed by the next candidate.
-- Post-deploy revision, digest, screenshots, and crawl output for the final visual-prompt fix to be added after production proof.
+- Runtime-repair candidate ACA proof: revision `ca-abarva-web-lab-eastus--mc2517f4c`, digest `sha256:81790f937cf6fa077ac392722e2dc58caab2ca54bc692c591809634465f4bdf2`, 100% traffic; runtime invariant passed; signed-in Lakeshore proof found the remaining active-lane visual issue fixed by the consultant-synthesis follow-up.
+- Post-deploy revision, digest, screenshots, and crawl output for the final consultant-lane visual fix to be added after production proof.
 
 ## Known Gaps
 
