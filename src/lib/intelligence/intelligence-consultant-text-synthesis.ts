@@ -381,9 +381,13 @@ export async function synthesizeIntelligenceConsultantText(args: {
         rawText = repairedText;
         text = repairedText;
       } else {
-        const fallbackTable = fallbackVisualTableFromPacket(promptPacket);
+        const fallbackSourceText = repairedText || text;
+        const fallbackTable = fallbackVisualTableFromPacket(
+          promptPacket,
+          fallbackSourceText,
+        );
         if (fallbackTable) {
-          const fallbackBase = stripMarkdownTablesFromText(repairedText || text);
+          const fallbackBase = stripMarkdownTablesFromText(fallbackSourceText);
           rawText = `${fallbackBase}\n\n${fallbackTable}`;
           text = normalizeConsultantText(`${fallbackBase}\n\n${fallbackTable}`);
         }
@@ -590,6 +594,21 @@ function markdownEscapeCell(value: string): string {
   return value.replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
 }
 
+function titleCaseNarrativeLabel(label: string): string {
+  const cleaned = label
+    .split(/[.!?;:]/)
+    .at(-1)
+    ?.replace(/^(?:and\s+)?(?:the|a|an)\s+/i, "")
+    .replace(/^and\s+/i, "")
+    .replace(/\s+/g, " ")
+    .trim() ?? "";
+  if (!cleaned) return "";
+  if (/\b[A-Z]{2,}\b/.test(cleaned) || /^[A-Z]/.test(cleaned)) {
+    return cleaned;
+  }
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}
+
 function fallbackMetricTableFromPacket(
   packet: IntelligenceConsultantPromptPacket,
 ): string | null {
@@ -639,12 +658,65 @@ function fallbackDecisionTableFromPacket(
   ].join("\n");
 }
 
+function fallbackNarrativeTableFromText(
+  packet: IntelligenceConsultantPromptPacket,
+  narrative: string,
+): string | null {
+  const rows = new Map<string, { label: string; value: string }>();
+  const addRow = (label: string, value: string) => {
+    const normalizedLabel = titleCaseNarrativeLabel(label);
+    if (!normalizedLabel || normalizedLabel.length > 90) return;
+    const normalizedValue = value.trim();
+    if (!/^\$[\d,.]+[KMBT]?\b/i.test(normalizedValue)) return;
+    const key = normalizedLabel.toLowerCase();
+    if (!rows.has(key)) rows.set(key, { label: normalizedLabel, value: normalizedValue });
+  };
+
+  const possessivePattern =
+    /(?:the\s+)?([A-Za-z][A-Za-z0-9&/().,\-\s]{2,80}?)['’]s\s+(\$[\d,.]+[KMBT]?\b(?:\s+(?:promise|gap|benefit|value|budget))?)/g;
+  for (const match of narrative.matchAll(possessivePattern)) {
+    addRow(match[1] ?? "", match[2] ?? "");
+  }
+
+  const parentheticalPattern =
+    /([A-Za-z][A-Za-z0-9&/().,\-\s]{2,80}?)\s+\((\$[\d,.]+[KMBT]?\b[^)]{0,40})\)/g;
+  for (const match of narrative.matchAll(parentheticalPattern)) {
+    addRow(match[1] ?? "", match[2] ?? "");
+  }
+
+  const tableRows = Array.from(rows.values()).slice(0, 6);
+  if (tableRows.length < 2) return null;
+
+  const readiness =
+    packet.riskCaveatBrief.dataReadinessGaps[0] ??
+    packet.riskCaveatBrief.measurementRisks[0] ??
+    "requires evidence gate before scale";
+  const risk =
+    packet.riskCaveatBrief.governanceRisks[0] ??
+    packet.riskCaveatBrief.executionRisks[0] ??
+    packet.riskCaveatBrief.measurementRisks[0] ??
+    "value depends on confirmed controls and owner signoff";
+  const nextAction =
+    packet.optionsBrief.decisionCriteria[0] ??
+    "confirm owner, baseline, and control evidence before scale";
+
+  return [
+    "| Initiative | Value | Readiness | Risk | Next action |",
+    "|---|---:|---|---|---|",
+    ...tableRows.map((row) => {
+      return `| ${markdownEscapeCell(row.label)} | ${markdownEscapeCell(row.value)} | ${markdownEscapeCell(readiness)} | ${markdownEscapeCell(risk)} | ${markdownEscapeCell(nextAction)} |`;
+    }),
+  ].join("\n");
+}
+
 function fallbackVisualTableFromPacket(
   packet: IntelligenceConsultantPromptPacket,
+  narrative?: string,
 ): string | null {
   return (
     fallbackDecisionTableFromPacket(packet) ??
-    fallbackMetricTableFromPacket(packet)
+    fallbackMetricTableFromPacket(packet) ??
+    (narrative ? fallbackNarrativeTableFromText(packet, narrative) : null)
   );
 }
 
