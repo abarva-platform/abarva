@@ -44,6 +44,7 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - `src/lib/intelligence/ask/response-policy.ts`: removes the remaining app-authored generic fallback closer that told users to route the answer to Source, Tower, or Moves.
 - `src/lib/intelligence/ask/synthesizer.ts`: changes explicit visual/table instructions so Claude emits compact Markdown rows that the runtime can lift into the right-side Intelligence canvas.
 - `src/lib/intelligence/ask/synthesizer.ts`: tightens the explicit visual contract so direct user requests for a table, chart, graph, visual, comparison grid, ranking, breakdown, or "show me" structure must produce one compact decision table unless the necessary values or rows are genuinely unavailable.
+- `src/lib/intelligence/ask/synthesizer.ts`: adds a runtime visual-contract repair pass for rich-text Intelligence answers: when the user explicitly asks for a visual/table and the first Claude draft has no renderable Markdown table, the runtime asks Claude to repair the same evidence-backed answer with exactly one compact decision table.
 - Follow-up regression coverage now uses the eight 50-question SkyHarbor crawl failures that exposed raw `Supporting Material` / `How it supports the answer` tables.
 - Focused regression tests updated to forbid the generic closer and assert context-specific alternatives.
 
@@ -72,6 +73,8 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - `npx jest src/lib/intelligence/ask/response-policy.test.ts src/lib/intelligence/answer/__tests__/structured-exhibits.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx src/components/agent/__tests__/AgentDock.test.tsx --runInBand` passed, 90 tests. Jest still prints pre-existing duplicate manual-mock warnings.
 - Live post-`a05440f3` Lakeshore proof confirmed the label/evidence cleanup held (`aVa · intelligence`, `answered`, `high confidence`, `Tenant evidence`, `How IT Supports The Answer`, and the generic Source/Tower/Moves closer were absent), but the explicit table prompt still returned prose-only. This follow-up strengthens the visual emission contract before final deploy proof.
 - `npx eslint src/lib/intelligence/ask/synthesizer.ts` passed after the explicit visual contract tightening.
+- Post-deploy signed-in Lakeshore proof on revision `ca-abarva-web-lab-eastus--m9c2918e9` confirmed the label/evidence cleanup still held, but the same explicit table prompt again returned prose-only (`tableCount: 0`). This proved prompt-only enforcement is insufficient and triggered the runtime visual-contract repair pass.
+- `npx eslint src/lib/intelligence/ask/synthesizer.ts` passed after the runtime visual-contract repair pass.
 - Final post-fix deployment and signed-in browser proof pending.
 
 ## Rollout Plan
