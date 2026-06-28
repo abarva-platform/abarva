@@ -66,8 +66,9 @@ async function main() {
       measure_key,
       period,
       value_numeric::numeric::text as value_numeric,
-      value_unit,
-      synthetic_flag
+      formula_version,
+      coalesce(array_length(source_fact_keys, 1), 0)::int as source_fact_count,
+      value_json
     from cio_tower.measure_results
     where measure_key in ('total_it_budget_fy25_baseline', 'total_it_budget_fy26')
     order by tenant_key, period, measure_key
