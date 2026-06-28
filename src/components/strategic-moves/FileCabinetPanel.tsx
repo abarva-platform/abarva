@@ -27,6 +27,15 @@ interface Artifact {
   fileSize: number | null;
   stored: string | null;
   openItems: string[];
+  reviewStatus?: string | null;
+  feedbackStatus?: string | null;
+  feedbackItemCount?: number | null;
+  regeneratedFromArtifactId?: string | null;
+  qualityStatus?: string | null;
+  goldenBarStatus?: string | null;
+  artifactStatus?: string | null;
+  preliminaryCaveat?: string | null;
+  clientFacingVersionLabel?: string | null;
   downloadUrl: string;
 }
 
@@ -95,6 +104,10 @@ function StatusChip({ status }: { status: string }) {
   );
 }
 
+function metaLabel(value: string | null | undefined): string {
+  return value ? value.replace(/_/g, " ") : "";
+}
+
 // Fetch an artifact with a short retry on 503 (transient tenant-lookup outage). A bare
 // <a href> top-level navigation that hit a one-off 503 previously dead-ended Open/Download;
 // fetching the bytes here lets us retry, then open/save via an object URL so the file is
@@ -110,9 +123,20 @@ async function fetchArtifact(url: string): Promise<Blob> {
   return res.blob();
 }
 
-function ArtifactRow({ a }: { a: Artifact }) {
+function ArtifactRow({
+  a,
+  moveId,
+  onChanged,
+}: {
+  a: Artifact;
+  moveId: string;
+  onChanged: () => Promise<void>;
+}) {
   const stored = a.stored === "azure_blob";
   const [busy, setBusy] = useState<null | "open" | "download">(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [reviewBusy, setReviewBusy] = useState(false);
   const [actionErr, setActionErr] = useState<string | null>(null);
 
   const openArtifact = useCallback(async () => {
@@ -155,19 +179,67 @@ function ArtifactRow({ a }: { a: Artifact }) {
       setBusy(null);
     }
   }, [a.downloadUrl, a.fileName, a.title, a.fileFormat]);
+
+  const submitReviewFeedback = useCallback(async () => {
+    const text = feedbackText.trim();
+    if (!text || reviewBusy) return;
+    setReviewBusy(true);
+    setActionErr(null);
+    try {
+      const res = await fetch(
+        `/api/v1/programs/${moveId}/artifacts/${a.artifactId}/review-regenerate`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ feedbackText: text }),
+        },
+      );
+      const json = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        detail?: string;
+      };
+      if (!res.ok || !json.ok) {
+        throw new Error(json.detail || json.error || `HTTP ${res.status}`);
+      }
+      setFeedbackText("");
+      setReviewOpen(false);
+      await onChanged();
+    } catch (e) {
+      setActionErr(e instanceof Error ? e.message : "review update failed");
+    } finally {
+      setReviewBusy(false);
+    }
+  }, [a.artifactId, feedbackText, moveId, onChanged, reviewBusy]);
+
+  const hasReviewSignals =
+    Boolean(a.regeneratedFromArtifactId) ||
+    Boolean(a.reviewStatus) ||
+    Boolean(a.feedbackItemCount) ||
+    Boolean(a.qualityStatus) ||
+    Boolean(a.goldenBarStatus);
+
   return (
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "1fr auto",
-        gap: 12,
-        alignItems: "center",
+        gridTemplateColumns: "1fr",
+        gap: 8,
         padding: "11px 14px",
         borderBottom: "1px solid #EEF0F3",
         opacity: a.lifecycleState === "current" ? 1 : 0.62,
       }}
     >
-      <div style={{ minWidth: 0 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) auto",
+          gap: 12,
+          alignItems: "center",
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
         <div
           style={{
             display: "flex",
@@ -201,6 +273,20 @@ function ArtifactRow({ a }: { a: Artifact }) {
             {a.fileFormat}
           </span>
           <span style={{ fontSize: 11, color: "#9AA3B2" }}>v{a.version}</span>
+          {a.regeneratedFromArtifactId && (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: "#1B2B5C",
+                background: "#E6F0FB",
+                padding: "1px 6px",
+                borderRadius: 4,
+              }}
+            >
+              Regenerated from feedback
+            </span>
+          )}
           <StatusChip status={a.status} />
         </div>
         <div
@@ -244,6 +330,27 @@ function ArtifactRow({ a }: { a: Artifact }) {
           </span>
         )}
         <button
+          onClick={() => setReviewOpen((open) => !open)}
+          disabled={a.lifecycleState !== "current" || reviewBusy}
+          style={{
+            fontSize: 11.5,
+            fontWeight: 600,
+            color: "#1B2B5C",
+            background: "transparent",
+            border: "1px solid #D5DAE2",
+            borderRadius: 5,
+            padding: "5px 11px",
+            whiteSpace: "nowrap",
+            cursor:
+              a.lifecycleState !== "current" || reviewBusy
+                ? "default"
+                : "pointer",
+            opacity: a.lifecycleState !== "current" ? 0.5 : 1,
+          }}
+        >
+          Review feedback
+        </button>
+        <button
           onClick={openArtifact}
           disabled={busy !== null}
           style={{
@@ -278,6 +385,110 @@ function ArtifactRow({ a }: { a: Artifact }) {
           {busy === "download" ? "Downloading…" : "Download"}
         </button>
       </div>
+      </div>
+      {hasReviewSignals && (
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            flexWrap: "wrap",
+            fontSize: 11.5,
+            color: "#5A6472",
+            lineHeight: 1.45,
+          }}
+        >
+          {a.feedbackItemCount != null && (
+            <span>{a.feedbackItemCount} feedback item(s) applied</span>
+          )}
+          {a.reviewStatus && <span>Review: {metaLabel(a.reviewStatus)}</span>}
+          {a.qualityStatus && <span>Quality: {a.qualityStatus}</span>}
+          {a.goldenBarStatus && (
+            <span>Golden-bar check: {a.goldenBarStatus}</span>
+          )}
+          {a.preliminaryCaveat && (
+            <span style={{ color: "#B26A00" }}>{a.preliminaryCaveat}</span>
+          )}
+        </div>
+      )}
+      {reviewOpen && (
+        <div
+          style={{
+            border: "1px solid #D5DAE2",
+            borderRadius: 8,
+            background: "#FAFAF9",
+            padding: 10,
+          }}
+        >
+          <label
+            style={{
+              display: "block",
+              fontSize: 11.5,
+              fontWeight: 700,
+              color: "#5A6472",
+              marginBottom: 6,
+            }}
+          >
+            Paste review notes to create the next version
+          </label>
+          <textarea
+            value={feedbackText}
+            onChange={(e) => setFeedbackText(e.target.value)}
+            rows={4}
+            placeholder="Example: Add the missing AP exception aging caveat, keep this preliminary, and show what the client must upload before final approval."
+            style={{
+              width: "100%",
+              resize: "vertical",
+              border: "1px solid #D5DAE2",
+              borderRadius: 6,
+              padding: 8,
+              fontSize: 12,
+              lineHeight: 1.45,
+              color: "#1A1A18",
+              background: "#fff",
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 6,
+              marginTop: 8,
+            }}
+          >
+            <button
+              onClick={() => setReviewOpen(false)}
+              disabled={reviewBusy}
+              style={{
+                fontSize: 11.5,
+                fontWeight: 600,
+                color: "#5A6472",
+                background: "transparent",
+                border: "1px solid #D5DAE2",
+                borderRadius: 5,
+                padding: "5px 11px",
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={submitReviewFeedback}
+              disabled={!feedbackText.trim() || reviewBusy}
+              style={{
+                fontSize: 11.5,
+                fontWeight: 600,
+                color: "#fff",
+                background:
+                  !feedbackText.trim() || reviewBusy ? "#9AA3B2" : "#1B2B5C",
+                border: "none",
+                borderRadius: 5,
+                padding: "5px 11px",
+              }}
+            >
+              {reviewBusy ? "Creating version…" : "Create next version"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -405,8 +616,8 @@ export function FileCabinetPanel({
             File Cabinet
           </h2>
           <p style={{ fontSize: 12, color: "#9AA3B2", margin: "3px 0 0" }}>
-            Every artifact for this Move — durably stored in Azure Blob,
-            versioned, governed. {totalCurrent} current.
+            Every artifact for this Move — stored, versioned, and ready for
+            review. {totalCurrent} current.
           </p>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
@@ -569,7 +780,12 @@ export function FileCabinetPanel({
                 }}
               >
                 {rows.map((a) => (
-                  <ArtifactRow key={a.artifactId} a={a} />
+                  <ArtifactRow
+                    key={a.artifactId}
+                    a={a}
+                    moveId={moveId}
+                    onChanged={load}
+                  />
                 ))}
               </div>
             </section>

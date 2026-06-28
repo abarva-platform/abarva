@@ -31,6 +31,15 @@ interface CabinetArtifact {
   fileSize?: number | null;
   stored?: string | null;
   openItems?: string[];
+  reviewStatus?: string | null;
+  feedbackStatus?: string | null;
+  feedbackItemCount?: number | null;
+  regeneratedFromArtifactId?: string | null;
+  qualityStatus?: string | null;
+  goldenBarStatus?: string | null;
+  artifactStatus?: string | null;
+  preliminaryCaveat?: string | null;
+  clientFacingVersionLabel?: string | null;
   downloadUrl: string;
 }
 
@@ -50,26 +59,50 @@ export async function GET(
       currentOnly,
     });
 
-    const moveArtifacts: CabinetArtifact[] = rows.map((r) => ({
-      artifactId: r.artifact_id,
-      artifactType: r.artifact_type,
-      family: r.artifact_family,
-      title: r.title,
-      phase: r.phase,
-      fileFormat: r.file_format,
-      fileName: r.file_name,
-      version: r.version,
-      status: r.status,
-      lifecycleState: r.lifecycle_state,
-      qualityScore: r.quality_score,
-      unsupportedClaims: r.unsupported_claims_count,
-      generatedBy: r.generated_by,
-      createdAt: r.created_at,
-      fileSize: r.file_size,
-      stored: (r.metadata as { storage?: string })?.storage ?? null,
-      openItems: (r.metadata as { openItems?: string[] })?.openItems ?? [],
-      downloadUrl: `/api/v1/programs/${programId}/artifacts/${r.artifact_id}/download`,
-    }));
+    const moveArtifacts: CabinetArtifact[] = rows.map((r) => {
+      const meta = r.metadata as {
+        storage?: string;
+        openItems?: string[];
+        reviewStatus?: string;
+        feedbackStatus?: string;
+        feedbackItemCount?: number;
+        regeneratedFromArtifactId?: string;
+        qualityStatus?: string;
+        goldenBarStatus?: string;
+        artifactStatus?: string;
+        preliminaryCaveat?: string;
+        clientFacingVersionLabel?: string;
+      };
+      return {
+        artifactId: r.artifact_id,
+        artifactType: r.artifact_type,
+        family: r.artifact_family,
+        title: r.title,
+        phase: r.phase,
+        fileFormat: r.file_format,
+        fileName: r.file_name,
+        version: r.version,
+        status: r.status,
+        lifecycleState: r.lifecycle_state,
+        qualityScore: r.quality_score,
+        unsupportedClaims: r.unsupported_claims_count,
+        generatedBy: r.generated_by,
+        createdAt: r.created_at,
+        fileSize: r.file_size,
+        stored: meta?.storage ?? null,
+        openItems: meta?.openItems ?? [],
+        reviewStatus: meta?.reviewStatus ?? null,
+        feedbackStatus: meta?.feedbackStatus ?? null,
+        feedbackItemCount: meta?.feedbackItemCount ?? null,
+        regeneratedFromArtifactId: meta?.regeneratedFromArtifactId ?? null,
+        qualityStatus: meta?.qualityStatus ?? null,
+        goldenBarStatus: meta?.goldenBarStatus ?? null,
+        artifactStatus: meta?.artifactStatus ?? null,
+        preliminaryCaveat: meta?.preliminaryCaveat ?? null,
+        clientFacingVersionLabel: meta?.clientFacingVersionLabel ?? null,
+        downloadUrl: `/api/v1/programs/${programId}/artifacts/${r.artifact_id}/download`,
+      };
+    });
 
     // Also surface the governed generated_artifacts (the real output of Approve &
     // Build / the orchestrator) — the durable move_artifacts vault often does not
@@ -89,6 +122,9 @@ export async function GET(
           .map((rec) => {
             const meta = rec.metadata as {
               renderableDoc?: { title?: string };
+              qualityStatus?: string;
+              goldenBarStatus?: string;
+              artifactStatus?: string;
             } | null;
             return {
               artifactId: rec.id,
@@ -113,6 +149,9 @@ export async function GET(
                   : rec.qualityScore <= 1
                     ? Math.round(rec.qualityScore * 100)
                     : Math.round(rec.qualityScore),
+              qualityStatus: meta?.qualityStatus ?? null,
+              goldenBarStatus: meta?.goldenBarStatus ?? null,
+              artifactStatus: meta?.artifactStatus ?? null,
               generatedBy: rec.renderedBy,
               createdAt: rec.renderedAt,
               downloadUrl: `/api/v1/artifacts/${rec.id}`,
