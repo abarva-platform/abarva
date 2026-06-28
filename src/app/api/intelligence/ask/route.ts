@@ -915,6 +915,7 @@ function shouldIncludeIntelligenceTrace(
   const founderOperatorEmail = new Set([
     "anandshp@gmail.com",
     "anand.sundaram@gmail.com",
+    "anand.sundaram+skyharbor@thesundaram.com",
   ]);
   const founderOperatorName =
     personName === "anand sundaram" || clerkName === "anand sundaram";
