@@ -108,7 +108,11 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - Post-deploy signed-in SkyHarbor Chrome proof on revision `ca-abarva-web-lab-eastus--mc21ec379`: the old `supporting material ledger` phrase, generic Source/Tower/Moves closer, `answered high confidence` label, and evidence/support table were absent on a fresh ask. However the answer still contained a stray leading quote before `Here's why` and an orphan fragment `6 vs.`. This failed the CXO-quality bar and triggered the deeper post-model shaper simplification.
 - `npx eslint src/lib/intelligence/ask/response-policy.ts src/lib/intelligence/ask/response-policy.test.ts src/lib/ava-answer/public-answer-scrub.ts src/lib/ava-answer/__tests__/public-answer-scrub.test.ts` passed after the deeper shaper simplification.
 - `npx jest src/lib/intelligence/ask/response-policy.test.ts src/lib/ava-answer/__tests__/public-answer-scrub.test.ts --runInBand` passed, 20 tests. Jest still prints pre-existing duplicate manual-mock warnings.
-- Final post-deeper-shaper deployment and signed-in SkyHarbor browser proof pending.
+- ACA proof for deeper shaper candidate `40ecdce0`: revision `ca-abarva-web-lab-eastus--m40ecdce0`, digest `sha256:906b8ac832763a5268066eb63ac49ced3b7b5ff505c1f4914840491495da2ccb`, 100% traffic, production health endpoint returned OK.
+- Post-deploy signed-in SkyHarbor Chrome proof on revision `ca-abarva-web-lab-eastus--m40ecdce0`: the stray leading quote and `6 vs.` fragment were absent, but the right canvas still included `Here's the logic` / `loaded tenant evidence`, and the left aVa dock showed a duplicated/truncated compact summary instead of the full advisor answer. Root cause: Intelligence dock rendering still flowed through the shared chat compactor and streaming deltas could overwrite the structured answer body.
+- `npx eslint src/components/agent/AgentDock.tsx src/components/agent/__tests__/AgentDock.test.tsx src/components/intelligence-v2/IntelligenceV2Surface.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/ava-answer/public-answer-scrub.ts src/lib/ava-answer/__tests__/public-answer-scrub.test.ts` passed after the left-dock/right-canvas follow-up fix.
+- `npx jest src/components/agent/__tests__/AgentDock.test.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/ava-answer/__tests__/public-answer-scrub.test.ts --runInBand` passed, 51 tests. Jest still prints pre-existing duplicate manual-mock warnings.
+- Final post-left-dock/right-canvas deployment and signed-in SkyHarbor browser proof pending.
 
 ## Rollout Plan
 
@@ -118,7 +122,7 @@ Build an Azure Container Apps image from the exact git SHA, deploy to `ca-abarva
 
 - Repo-owned deploy workflow: Azure Container Apps release path in `docs/runbooks/azure-container-apps-deploy.md`.
 - Shared runtime mutators: `az acr build`, `az containerapp update`, and ACA ingress traffic assignment.
-- Approved image digest: first candidate `sha256:6765cd1489a6ba4618a4a3943cfadb4914d1074d5f96c4c505695afd456c8576`; latest proven-but-wording-incomplete row-count candidate `sha256:5e9281246419c358ea3503fdc6b2268aa813fe474f25fd69efc275769deb6238`; SkyHarbor wording scrub carried forward on main digest `sha256:5be3844df2e2f1b80fd842a959d138209b33b0e96cf201deccabb5e87d839ce4`; deeper shaper digest pending.
+- Approved image digest: first candidate `sha256:6765cd1489a6ba4618a4a3943cfadb4914d1074d5f96c4c505695afd456c8576`; latest proven-but-wording-incomplete row-count candidate `sha256:5e9281246419c358ea3503fdc6b2268aa813fe474f25fd69efc275769deb6238`; SkyHarbor wording scrub carried forward on main digest `sha256:5be3844df2e2f1b80fd842a959d138209b33b0e96cf201deccabb5e87d839ce4`; deeper shaper digest `sha256:906b8ac832763a5268066eb63ac49ced3b7b5ff505c1f4914840491495da2ccb`; left-dock/right-canvas digest pending.
 - ACA runtime invariant: `app.abarva.ai` is ACA-only; Vercel is not used as release evidence.
 - Worker image invariant: Not applicable.
 - Feature/env flag update path: None.
@@ -143,8 +147,9 @@ Rollback by assigning 100% ACA ingress traffic to the previous healthy revision 
 - Narrative-fallback candidate ACA proof: revision `ca-abarva-web-lab-eastus--mb348f581`, digest `sha256:bc7d92259e5248908db8e1bfd3254e84fdccb6a8319f6fd5eade6a8a2c7ebb8a`, 100% traffic; production health endpoint returned OK; signed-in Lakeshore proof found the remaining one-row comparison-table quality issue fixed by the row-count gate candidate.
 - Row-count-gate candidate ACA proof: revision `ca-abarva-web-lab-eastus--mccf82aaf`, digest `sha256:5e9281246419c358ea3503fdc6b2268aa813fe474f25fd69efc275769deb6238`, 100% traffic; signed-in Lakeshore proof passed the explicit comparison-table quality check; signed-in SkyHarbor Chrome proof found the remaining `supporting material ledger` wording issue fixed by the next candidate.
 - SkyHarbor wording-scrub main candidate ACA proof: revision `ca-abarva-web-lab-eastus--mc21ec379`, digest `sha256:5be3844df2e2f1b80fd842a959d138209b33b0e96cf201deccabb5e87d839ce4`, 100% traffic; signed-in SkyHarbor proof found the remaining stray quote and `6 vs.` fragment issue fixed by the deeper shaper candidate.
-- Post-deploy revision, digest, screenshots, and crawl output for the final deeper shaper fix to be added after production proof.
+- Deeper shaper candidate ACA proof: revision `ca-abarva-web-lab-eastus--m40ecdce0`, digest `sha256:906b8ac832763a5268066eb63ac49ced3b7b5ff505c1f4914840491495da2ccb`, 100% traffic; signed-in SkyHarbor proof found the remaining `Here's the logic` / compact left-dock issue fixed by the left-dock/right-canvas candidate.
+- Post-deploy revision, digest, screenshots, and crawl output for the final left-dock/right-canvas fix to be added after production proof.
 
 ## Known Gaps
 
-Post-deploy signed-in browser proof is pending until the deeper shaper candidate is built and released through ACA.
+Post-deploy signed-in browser proof is pending until the left-dock/right-canvas candidate is built and released through ACA.

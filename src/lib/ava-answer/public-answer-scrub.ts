@@ -52,7 +52,13 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\*\*/g, "")
     .replace(/`([^`]+)`/g, "$1")
     .replace(/(^|\n)\s*["'“”]\s+(?=Here(?:'|’)s\b)/g, "$1")
-    .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move):\s*/gi, "$1")
+    .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move|Why):\s*/gi, "$1")
+    .replace(
+      /\bThe answer hasn'?t changed from the last\s+\w+\s+turns?,?\s+and\s+I\s+want\s+to\s+be\s+direct\s+about\s*/gi,
+      "",
+    )
+    .replace(/\bWhy:\s+(?=[a-z])/g, "")
+    .replace(/\bHere(?:'|’)s the logic(?: in plain terms)?\.?\s*/gi, "")
     .replace(/\bcurated semantic (?:evidence|source context)?\s*source\b/gi, "available business material")
     .replace(/\bsemantic (?:evidence|source context)?\s*source\b/gi, "available business material")
     .replace(/\bcurated semantic context\b/gi, "available business material")
@@ -80,6 +86,9 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\bevidence path\b/gi, "source path")
     .replace(/\bmissing evidence\b/gi, "specific source gap")
     .replace(/\bneeded evidence\b/gi, "needed material")
+    .replace(/\bloaded tenant evidence\b/gi, "business context")
+    .replace(/\bevidence base gap\b/gi, "operational-data gap")
+    .replace(/\bdata evidence base\b/gi, "operational-data base")
     .replace(/\bevidence points?\b/gi, "business signals")
     .replace(/\bevidence-backed\b/gi, "business-context-backed")
     .replace(/\bevidence-based\b/gi, "business-context-backed")

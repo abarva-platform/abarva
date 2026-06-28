@@ -80,6 +80,31 @@ function shouldRenderAvaArtifactsInDock(
   return surface !== "intelligence" && hasRenderableAvaArtifacts(answer);
 }
 
+function avaAnswerTextForDock(answer?: AvaAnswerPacket | null): string {
+  if (!answer) return "";
+  return (
+    answer.prose?.trim() ||
+    answer.directAnswer?.trim() ||
+    [answer.interpretation, answer.businessImplication, answer.recommendation]
+      .filter((part): part is string => Boolean(part?.trim()))
+      .join("\n\n")
+      .trim()
+  );
+}
+
+function visibleAgentDockBody(
+  surface: string,
+  body: string,
+  agentAnswer?: AvaAnswerPacket | null,
+): string {
+  const cleaned = scrubPublicAvaAnswerText(
+    avaAnswerTextForDock(agentAnswer) || body,
+  );
+  return surface === "intelligence"
+    ? cleaned
+    : shapeAgentResponseForSurface(surface, cleaned);
+}
+
 /**
  * Auto-measure the dock's distance from the top of the viewport.
  *
@@ -882,10 +907,7 @@ export function AgentDock(props: AgentDockProps) {
                     ) ? (
                     <AgentAnswerRenderer answer={turn.agentAnswer} />
                   ) : turn.role === "agent" ? (
-                    shapeAgentResponseForSurface(
-                      surface,
-                      scrubPublicAvaAnswerText(turn.body),
-                    )
+                    visibleAgentDockBody(surface, turn.body, turn.agentAnswer)
                   ) : (
                     turn.body
                   )}
