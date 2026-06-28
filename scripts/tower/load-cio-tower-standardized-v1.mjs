@@ -249,6 +249,7 @@ function collectPackage() {
     entityNaturalKeys: new Map(),
     facts: [],
     relationships: new Map(),
+    relationshipNaturalKeys: new Map(),
     measureResults: [],
     tenants: {},
   };
@@ -332,6 +333,30 @@ function resolveEntityKey(out, entityKey) {
 
 function addRelationship(out, relationship) {
   if (!relationship.from_entity_key || !relationship.to_entity_key) return;
+  const naturalKey = key(
+    relationship.tenant_key,
+    relationship.from_entity_key,
+    relationship.to_entity_key,
+    relationship.relationship_type,
+  );
+  const existingKey = out.relationshipNaturalKeys.get(naturalKey);
+  if (existingKey) {
+    const existing = out.relationships.get(existingKey);
+    out.relationships.set(existingKey, {
+      ...existing,
+      confidence: Math.max(Number(existing.confidence ?? 0), Number(relationship.confidence ?? 0)),
+      source_key: existing.source_key || relationship.source_key || null,
+      source_row: existing.source_row || relationship.source_row || null,
+      attributes: {
+        ...(existing.attributes ?? {}),
+        ...(relationship.attributes ?? {}),
+        aliases: [...new Set([...(existing.attributes?.aliases ?? []), relationship.relationship_key])],
+        source_rows: [...new Set([...(existing.attributes?.source_rows ?? []), relationship.source_row].filter(Boolean))],
+      },
+    });
+    return;
+  }
+  out.relationshipNaturalKeys.set(naturalKey, relationship.relationship_key);
   out.relationships.set(relationship.relationship_key, relationship);
 }
 
@@ -608,7 +633,8 @@ async function upsertRelationships(client, rows) {
     await client.query(
       `INSERT INTO cio_tower.relationships (relationship_key, tenant_key, from_entity_key, to_entity_key, relationship_type, confidence, source_key, source_row, attributes)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-       ON CONFLICT (relationship_key) DO UPDATE SET confidence=EXCLUDED.confidence, attributes=EXCLUDED.attributes`,
+       ON CONFLICT (tenant_key, from_entity_key, to_entity_key, relationship_type)
+       DO UPDATE SET confidence=EXCLUDED.confidence, source_key=EXCLUDED.source_key, source_row=EXCLUDED.source_row, attributes=EXCLUDED.attributes, updated_at=now()`,
       [row.relationship_key, row.tenant_key, row.from_entity_key, row.to_entity_key, row.relationship_type, row.confidence, row.source_key ?? null, row.source_row ?? null, row.attributes ?? {}],
     );
   }
