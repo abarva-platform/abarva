@@ -34,6 +34,14 @@
 - Feature/env update included digest-pinned `--image`: <yes / n/a / not applicable>
 - Live signed-in client proof: <client matrix, routes, artifact/run ids, or not run with reason>
 
+## ACR / Build Policy If Applicable
+
+- ACR Premium policy preserved for `acrabarvalab001`: <yes / n/a / explain>
+- Shared web image built only by repo-owned `aca-main-deploy`: <yes / n/a / explain>
+- Docker Buildx GitHub cache preserved (`cache-from: type=gha`, `cache-to: type=gha,mode=max`): <yes / n/a / explain>
+- ACR prune dry-run evidence before deletion: <yes / n/a / not applicable>
+- No `acr purge --untagged` without named break-glass approval: <yes / n/a / explain>
+
 ## Rollout
 
 <flag? phased? immediate?>

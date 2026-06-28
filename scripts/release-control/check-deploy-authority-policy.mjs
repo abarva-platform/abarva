@@ -11,6 +11,10 @@ const REQUIRED_MARKERS = [
       'Deployment authority and runtime invariant',
       'Only the repo-owned ACA main deploy workflow may shift shared Product/Lab web traffic',
       'ACA web and worker runtimes must use digest-pinned images',
+      'ACR build and registry policy',
+      'acrabarvalab001',
+      'cache-from: type=gha',
+      'cache-to: type=gha,mode=max',
     ],
   },
   {
@@ -19,6 +23,8 @@ const REQUIRED_MARKERS = [
       'Deployment Authority If Applicable',
       'ACA template image',
       'Live signed-in client proof',
+      'ACR / Build Policy If Applicable',
+      'ACR Premium',
     ],
   },
   {
@@ -36,12 +42,20 @@ const REQUIRED_MARKERS = [
       'Allowed Shared-Runtime Mutator',
       'Forbidden Pattern',
       'Proof Bundle',
+      'ACR Build And Registry Policy',
+      'GitHub Actions cache',
+      'Prune Safety',
     ],
   },
   {
     file: '.github/workflows/aca-main-deploy.yml',
     markers: [
       'Assert main deploy authority',
+      'Assert ACR registry policy',
+      'docker/setup-buildx-action@v3',
+      'docker/build-push-action@v6',
+      'cache-from: type=gha',
+      'cache-to: type=gha,mode=max',
       'Verify ACA runtime invariant',
       'Refusing to shift shared runtime traffic to non-main revision name',
       'origin/main HEAD only',
@@ -82,6 +96,8 @@ const SCANNED_CHANGED_PATHS = [
 
 const RELEASE_RECORD_PATTERN = /^docs\/releases\/records\/[^/]+\.md$/;
 const EXCEPTION_MARKER = 'deploy-authority-exception:';
+const ACR_PRUNE_APPROVAL_MARKER = 'acr-prune-approved:';
+const ACR_PRUNE_UNTAGGED_APPROVAL_MARKER = 'acr-prune-untagged-approved:';
 const PATH_ALLOWLIST = new Set([
   'scripts/release-control/check-deploy-authority-policy.mjs',
   'scripts/deploy/check-aca-runtime-invariant.mjs',
@@ -121,6 +137,10 @@ function fileText(file) {
 function lineHasException(lines, index) {
   const window = lines.slice(Math.max(0, index - 2), Math.min(lines.length, index + 3));
   return window.some((line) => line.includes(EXCEPTION_MARKER));
+}
+
+function nearbyText(lines, index, before = 3, after = 8) {
+  return lines.slice(Math.max(0, index - before), Math.min(lines.length, index + after)).join('\n');
 }
 
 function scanAzContainerAppUpdate(file, text) {
@@ -175,10 +195,9 @@ function scanAzAcrBuild(file, text) {
     const line = lines[index];
     if (!/\baz\s+acr\s+build\b/.test(line)) continue;
     if (lineHasException(lines, index)) continue;
-    if (file === '.github/workflows/aca-main-deploy.yml') continue;
 
     errors.push(
-      `${file}:${index + 1}: shared ACR web images must be built by .github/workflows/aca-main-deploy.yml.`,
+      `${file}:${index + 1}: shared web images must use the repo-owned Docker Buildx cache workflow, not ad-hoc az acr build.`,
     );
   }
 
@@ -202,13 +221,65 @@ function scanMutableAbarvaRuntimeImages(file, text) {
   return errors;
 }
 
+function scanDockerBuildxCache(file, text) {
+  const errors = [];
+  if (!/^\.github\/workflows\/.+\.ya?ml$/.test(file)) return errors;
+  if (!text.includes('docker/build-push-action')) return errors;
+
+  const buildsAbarvaWeb =
+    text.includes('IMAGE_REPOSITORY') ||
+    text.includes('abarva/web') ||
+    text.includes('acrabarvalab001.azurecr.io');
+  if (!buildsAbarvaWeb) return errors;
+
+  if (!text.includes('cache-from: type=gha')) {
+    errors.push(`${file}: Docker Buildx AbarVa web builds must include cache-from: type=gha.`);
+  }
+  if (!text.includes('cache-to: type=gha,mode=max')) {
+    errors.push(`${file}: Docker Buildx AbarVa web builds must include cache-to: type=gha,mode=max.`);
+  }
+
+  return errors;
+}
+
+function scanAcrPrune(file, text) {
+  const errors = [];
+  if (PATH_ALLOWLIST.has(file)) return errors;
+  const lines = text.split('\n');
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!/\bacr\s+purge\b/.test(line)) continue;
+    if (lineHasException(lines, index)) continue;
+
+    const window = nearbyText(lines, index);
+    if (window.includes('--untagged') && !window.includes(ACR_PRUNE_UNTAGGED_APPROVAL_MARKER)) {
+      errors.push(
+        `${file}:${index + 1}: acr purge --untagged can delete digest-pinned rollback images; add a named ${ACR_PRUNE_UNTAGGED_APPROVAL_MARKER} approval or remove --untagged.`,
+      );
+    }
+
+    const hasDryRun = window.includes('--dry-run');
+    const hasApproval =
+      window.includes(ACR_PRUNE_APPROVAL_MARKER) || window.includes('ACR_PURGE_APPROVED=true');
+    if (!hasDryRun && !hasApproval) {
+      errors.push(
+        `${file}:${index + 1}: acr purge must be dry-run first or carry ACR_PURGE_APPROVED=true with a documented ${ACR_PRUNE_APPROVAL_MARKER} note.`,
+      );
+    }
+  }
+
+  return errors;
+}
+
 function releaseRecordMentionsDeployAuthority(records) {
   return records.some((record) => {
     const text = fileText(record).toLowerCase();
     return (
       text.includes('deployment authority') &&
       text.includes('aca runtime invariant') &&
-      text.includes('repo-owned deploy workflow')
+      text.includes('repo-owned deploy workflow') &&
+      text.includes('acr build')
     );
   });
 }
@@ -246,6 +317,8 @@ for (const file of changedPolicyFiles) {
   errors.push(...scanAzContainerAppTrafficSet(file, text));
   errors.push(...scanAzAcrBuild(file, text));
   errors.push(...scanMutableAbarvaRuntimeImages(file, text));
+  errors.push(...scanDockerBuildxCache(file, text));
+  errors.push(...scanAcrPrune(file, text));
 }
 
 const touchesRuntimeDeploy = changedPolicyFiles.some((file) =>
@@ -254,7 +327,7 @@ const touchesRuntimeDeploy = changedPolicyFiles.some((file) =>
 
 if (touchesRuntimeDeploy && !releaseRecordMentionsDeployAuthority(records)) {
   errors.push(
-    'Runtime/deploy surfaces changed, but no release record documents Deployment Authority, ACA runtime invariant, and repo-owned deploy workflow.',
+    'Runtime/deploy surfaces changed, but no release record documents Deployment Authority, ACA runtime invariant, repo-owned deploy workflow, and ACR build policy.',
   );
 }
 
