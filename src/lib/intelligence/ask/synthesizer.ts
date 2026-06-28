@@ -27,6 +27,11 @@ import { buildAgentContextContractBlock } from "@/lib/agent/module-context-contr
 import { buildHealthcareAnswerContract } from "@/lib/intelligence/synthesis/healthcareAnswerContract";
 import { formatIntelligenceDossierForPrompt } from "@/lib/intelligence/compose-intelligence-answer";
 import type { IntelligenceDossier } from "@/lib/intelligence/dossiers";
+import { cleanIntelligenceModelInputText } from "@/lib/intelligence/model-input-cleaner";
+import {
+  INTELLIGENCE_TABBED_OUTPUT_CONTRACT,
+  parseIntelligenceTabbedResponse,
+} from "@/lib/intelligence/tabbed-response";
 
 export { chunkAskText, sanitizeAskSynthesis } from "./response-policy";
 
@@ -439,6 +444,15 @@ export async function* synthesizeStream(args: {
 
 VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually, plot, trend, dependency map, relationship map, upstream/downstream map, or network, emit a compact GitHub-flavored Markdown data table when the retrieved evidence supports at least two comparable rows or two connected nodes. For charts, include one text label column and one exact numeric value column (for example "Initiative | Value"). For relationship graphs, include explicit edge rows with "From | Relationship | To | Evidence" or "Source | Relationship | Target | Evidence". Do not describe a visual only in prose when the data exists. If the data is not connected enough for a real chart or graph, say the specific missing evidence in one short caveat and do not fabricate a visual. Every other rule stands unchanged — same length discipline, tenant isolation, no fabricated numbers, no hollow openers.`
     : "";
+  const decisionCanvasAddendum = args.richText
+    ? `\n\n${INTELLIGENCE_TABBED_OUTPUT_CONTRACT}
+
+ACTIVE INTELLIGENCE CANVAS RULES
+- When the question asks for a decision, investment choice, prioritization, risks, negotiation/next moves, table, chart, trend, visual, evidence, or industry context, use the tab markers above.
+- Put only concise advisory prose in the main answer. Put any Markdown table or chart-ready numeric table inside a Table or Chart tab, not in the main answer.
+- If the user asks for industry insight, place it in the Industry Insights tab and label it as industry context or benchmark context unless tenant evidence proves it directly.
+- Use business names and executive labels. Do not expose data-product IDs, application IDs, row labels, raw field names, file names, debug labels, or implementation terms.`
+    : "";
   const advisorComposer = buildIntelligenceAdvisorComposerBlock({
     query: args.query,
     tenantClientKey: args.tenantClientKey,
@@ -448,19 +462,23 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
   const advisorComposerAddendum = advisorComposer
     ? `\n\n${advisorComposer.promptBlock}\n\nROUTE-SPECIFIC LENGTH OVERRIDE: For ${advisorComposer.route}, this case-team brief overrides the generic 200-word target. Write enough to satisfy the executive answer, trend synthesis, named examples, ROI/value pool table, SkyHarbor relevance, architecture prerequisites, and next analysis options. Keep it crisp and readable, but do not compress away the required artifacts.`
     : "";
-  const system =
+  const rawSystem =
     contextBlocks.length > 0
-      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${advisorComposerAddendum}`
-      : `${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${advisorComposerAddendum}`;
-  const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
+      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}`
+      : `${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}`;
+  const rawPrompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? "\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present."
     : "";
+  const prompt = cleanIntelligenceModelInputText(rawPrompt);
+  const systemWithContinuity = cleanIntelligenceModelInputText(
+    `${rawSystem}${continuityInstruction}`,
+  );
 
   try {
     const model = chooseModel(args.intent, args.query);
     args.onModelInput?.({
-      system: `${system}${continuityInstruction}`,
+      system: systemWithContinuity,
       user: prompt,
     });
     const { client, auditId } = await getAuditedAnthropicClient({
@@ -468,7 +486,7 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
       userId: args.userId ?? undefined,
       workflow: "intelligence-ask-synthesis",
       model,
-      prompt: [system, prompt].join("\n\n"),
+      prompt: [systemWithContinuity, prompt].join("\n\n"),
       dataClass: "confidential",
       metadata: { intent: args.intent },
     });
@@ -478,7 +496,7 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
       // shapes (3–6 use cases, 3–5 failure modes). 400 was hitting the cap
       // mid-list on the new MANDATORY ANSWER SHAPES.
       max_tokens: chooseSynthesisTokenBudget(args.query),
-      system: `${system}${continuityInstruction}`,
+      system: systemWithContinuity,
       messages: [{ role: "user", content: prompt }],
       stream: true,
     });
@@ -500,7 +518,7 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
       const visualRepair = await client.messages.create({
         model,
         max_tokens: Math.max(chooseSynthesisTokenBudget(args.query), 900),
-        system: `${system}${continuityInstruction}`,
+        system: systemWithContinuity,
         messages: [
           {
             role: "user",
@@ -510,7 +528,7 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
               "DRAFT TO REPAIR:",
               text,
               "",
-              "VISUAL CONTRACT REPAIR: The user explicitly asked for a table, chart, graph, visual, ranking, matrix, breakdown, or show-me structure. Keep the senior-advisor answer concise, then add exactly one compact GitHub-flavored Markdown decision table with a header row, separator row, and 2-6 evidence-backed rows. Use the columns the user requested where possible. Do not add source-support or evidence-register tables. If a requested value is not in the sources, write \"not shown in loaded sources\" in that cell rather than inventing it. Return only the final answer.",
+              "VISUAL CONTRACT REPAIR: The user explicitly asked for a table, chart, graph, visual, ranking, matrix, breakdown, or show-me structure. Keep the senior-advisor answer concise, then use the Intelligence decision-canvas tab markers from the system prompt. Put exactly one compact GitHub-flavored Markdown decision table with a header row, separator row, and 2-6 evidence-backed rows inside a Table or Chart tab. Use the columns the user requested where possible. Do not add source-support or evidence-register tables. If a requested value is not in the sources, write \"not shown in loaded sources\" in that cell rather than inventing it. Return only the final answer.",
             ].join("\n"),
           },
         ],
@@ -561,6 +579,12 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
         "Your session remains pinned to the active tenant. Re-ask the question and I will answer from the active tenant context only.",
         "[tenant-isolation guard fired: off-tenant mention blocked]",
       ].join("\n");
+      return;
+    }
+
+    const tabbedResponse = parseIntelligenceTabbedResponse(text);
+    if (tabbedResponse.tabs.length > 0 && tabbedResponse.mainAnswer.trim()) {
+      yield text;
       return;
     }
 
