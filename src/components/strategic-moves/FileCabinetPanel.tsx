@@ -50,6 +50,12 @@ type SponsorReviewDecision =
   | "hold_for_evidence";
 
 interface SponsorReviewState {
+  reviewPackage: {
+    reviewedArtifactId: string;
+    htmlVisualCompanionArtifactId: string | null;
+    docxEditableArtifactId: string | null;
+    reviewedArtifactIds: string[];
+  };
   packet: {
     headline: string;
     diagnosticThesis: string;
@@ -318,6 +324,7 @@ function ArtifactRow({
         throw new Error(json.error || `HTTP ${res.status}`);
       }
       setSponsorReview({
+        reviewPackage: json.reviewPackage,
         packet: json.packet,
         latestDecision: json.latestDecision,
         readiness: json.readiness,
@@ -376,6 +383,7 @@ function ArtifactRow({
           throw new Error(json.detail || json.error || `HTTP ${res.status}`);
         }
         setSponsorReview({
+          reviewPackage: json.reviewPackage,
           packet: json.packet,
           latestDecision: json.decision
             ? {
@@ -670,8 +678,8 @@ function ArtifactRow({
                 >
                   P2 diagnostic is review-ready. You can approve it for P3
                   draft shaping, request revisions, or hold for missing
-                  evidence. Final phase approval still requires
-                  sponsor/signoff gates.
+                  evidence. Approval for P3 draft shaping does not mark P2
+                  final and does not bypass sponsor/signoff gates.
                 </p>
               </div>
               {packetLoading && (
@@ -709,6 +717,33 @@ function ArtifactRow({
                   <strong style={{ color: "#0F172A" }}>P3 implication</strong>
                   <p style={{ margin: "6px 0 0", color: "#334155" }}>
                     {sponsorReview.packet.p3Implication}
+                  </p>
+                </div>
+                <div>
+                  <strong style={{ color: "#0F172A" }}>Review package</strong>
+                  <p style={{ margin: "6px 0 0", color: "#334155" }}>
+                    HTML companion:{" "}
+                    {sponsorReview.reviewPackage.htmlVisualCompanionArtifactId
+                      ? "linked"
+                      : "not linked"}
+                    <br />
+                    Editable Word record:{" "}
+                    {sponsorReview.reviewPackage.docxEditableArtifactId
+                      ? "linked"
+                      : "not linked"}
+                  </p>
+                </div>
+                <div>
+                  <strong style={{ color: "#0F172A" }}>Gate status</strong>
+                  <p style={{ margin: "6px 0 0", color: "#334155" }}>
+                    P3 draft readiness:{" "}
+                    {sponsorReview.readiness.readyForP3Draft ? "ready" : "blocked"}
+                    <br />
+                    P3 final readiness:{" "}
+                    {sponsorReview.readiness.readyForP3Final ? "ready" : "blocked"}
+                    <br />
+                    P2 final approval:{" "}
+                    {sponsorReview.readiness.p2FinalApproved ? "approved" : "not final"}
                   </p>
                 </div>
               </div>

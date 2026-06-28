@@ -7,12 +7,15 @@ import {
   getMoveArtifactForTenant,
 } from "@/lib/programs/deliverables/move-artifacts";
 import {
+  buildReviewPackageFromArtifacts,
   buildP2ReviewPacket,
   createArtifactReviewDecision,
   getLatestArtifactReviewDecision,
   normalizeDecision,
   readinessForDecision,
 } from "@/lib/programs/deliverables/artifact-review-decisions";
+import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import type { MoveArtifactRow } from "@/lib/programs/deliverables/move-artifacts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,6 +38,54 @@ async function loadArtifactHtml(
   return artifact.bytes.toString("utf-8");
 }
 
+async function findPairedReviewArtifact(
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+  programId: string,
+  artifact: MoveArtifactRow,
+): Promise<MoveArtifactRow | null> {
+  const meta = artifact.metadata ?? {};
+  const outputRole =
+    typeof meta.outputRole === "string" ? meta.outputRole : null;
+  const pairedVisualCompanionArtifactId =
+    typeof meta.pairedVisualCompanionArtifactId === "string"
+      ? meta.pairedVisualCompanionArtifactId
+      : null;
+
+  if (outputRole === "docx_editable_phase_record" && pairedVisualCompanionArtifactId) {
+    const paired = await getMoveArtifactForTenant(
+      ctx,
+      pairedVisualCompanionArtifactId,
+    );
+    return paired?.move_id === programId ? paired : null;
+  }
+
+  if (
+    outputRole !== "html_visual_review_companion" &&
+    artifact.file_format !== "html"
+  ) {
+    return null;
+  }
+
+  try {
+    const sb = getAzureWriteFluentClient();
+    const { data, error } = await sb
+      .from("move_artifacts")
+      .select("*")
+      .eq("tenant_key", ctx.clientKey ?? "")
+      .eq("move_id", programId)
+      .eq("metadata->>pairedVisualCompanionArtifactId", artifact.artifact_id)
+      .eq("metadata->>outputRole", "docx_editable_phase_record")
+      .eq("lifecycle_state", "current")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error || !data) return null;
+    return data as MoveArtifactRow;
+  } catch {
+    return null;
+  }
+}
+
 async function loadReviewState(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
   programId: string,
@@ -42,15 +93,26 @@ async function loadReviewState(
 ) {
   const artifact = await getMoveArtifactForTenant(ctx, artifactId);
   if (!artifact || artifact.move_id !== programId) return null;
-  const artifactHtml = await loadArtifactHtml(ctx, artifactId);
-  const latestDecision = await getLatestArtifactReviewDecision(ctx, {
-    moveId: programId,
-    phase: artifact.phase ?? undefined,
-    artifactId,
+  const pairedArtifact = await findPairedReviewArtifact(ctx, programId, artifact);
+  const reviewPackage = buildReviewPackageFromArtifacts({
+    artifact,
+    pairedArtifact,
   });
+  const artifactHtml = await loadArtifactHtml(ctx, artifactId);
+  const latestDecision =
+    (await getLatestArtifactReviewDecision(ctx, {
+      moveId: programId,
+      phase: artifact.phase ?? undefined,
+      artifactId,
+    })) ??
+    (await getLatestArtifactReviewDecision(ctx, {
+      moveId: programId,
+      phase: artifact.phase ?? undefined,
+    }));
   const readiness = readinessForDecision(latestDecision?.decision);
   return {
     artifact,
+    reviewPackage,
     packet: buildP2ReviewPacket({ artifact, artifactHtml }),
     latestDecision,
     readiness,
@@ -77,6 +139,7 @@ export async function GET(
         status: state.artifact.status,
         title: state.artifact.title,
       },
+      reviewPackage: state.reviewPackage,
       packet: state.packet,
       latestDecision: state.latestDecision,
       readiness: state.readiness,
@@ -115,11 +178,13 @@ export async function POST(
       rationale,
       carriedForwardCaveats: cleanStringArray(body?.carriedForwardCaveats),
       missingEvidence: cleanStringArray(body?.missingEvidence),
+      reviewPackage: state.reviewPackage,
     });
 
     return Response.json({
       ok: true,
       decision: persisted,
+      reviewPackage: state.reviewPackage,
       packet: state.packet,
       readiness: readinessForDecision(persisted.decision),
     });
