@@ -172,6 +172,8 @@ describe('Ask Intelligence guardrails', () => {
     it('sends the tabbed canvas contract through the active ask synthesis model path', () => {
       expect(synthesizerCode).toContain('INTELLIGENCE_TABBED_OUTPUT_CONTRACT');
       expect(synthesizerCode).toContain('ACTIVE INTELLIGENCE CANVAS RULES');
+      expect(synthesizerCode).toContain('the Evidence tab is mandatory');
+      expect(synthesizerCode).toContain('Target 120-180 words before the first tab marker');
       expect(synthesizerCode).toContain('cleanIntelligenceModelInputText');
       expect(synthesizerCode).toMatch(
         /args\.onModelInput\?\.\(\{\s*system:\s*systemWithContinuity,\s*user:\s*prompt,/,
