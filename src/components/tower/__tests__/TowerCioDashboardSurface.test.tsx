@@ -10,6 +10,7 @@ import type {
   AIInitiative,
   AIInitiativeVendorRow,
 } from "@/lib/admin/ai-initiatives/queries";
+import type { TowerBudgetRollup } from "@/lib/tower/tower-budget-rollups";
 
 let query = new URLSearchParams();
 const push = jest.fn();
@@ -140,12 +141,49 @@ const VENDORS: AIInitiativeVendorRow[] = [
   },
 ];
 
-const ZERO_AMOUNT_INITIATIVES: AIInitiative[] = INITIATIVES.map((initiative) => ({
-  ...initiative,
-  committedAnnualUsd: 0,
-  committedTotalUsd: 0,
-  measuredValueUsd: null,
-}));
+const BUDGET_ROLLUPS: TowerBudgetRollup[] = [
+  {
+    portfolioCompany: "Lakeshore Shared Services",
+    fiscalYear: "FY2026",
+    totalItBudgetUsd: 180_000_000,
+    actualSpendYtdUsd: 72_000_000,
+    forecastSpendUsd: 182_000_000,
+    opexAmountUsd: 110_000_000,
+    capexAmountUsd: 70_000_000,
+    runAmountUsd: 104_000_000,
+    changeAmountUsd: 76_000_000,
+    vendorAmountUsd: 58_000_000,
+    laborAmountUsd: 52_000_000,
+    revenueUsd: 4_800_000_000,
+    employees: 14_000,
+    itSpendAsPctRevenue: 0.0375,
+  },
+  {
+    portfolioCompany: "Northline Logistics Group",
+    fiscalYear: "FY2026",
+    totalItBudgetUsd: 144_800_000,
+    actualSpendYtdUsd: 57_000_000,
+    forecastSpendUsd: 146_000_000,
+    opexAmountUsd: 82_000_000,
+    capexAmountUsd: 62_800_000,
+    runAmountUsd: 91_000_000,
+    changeAmountUsd: 53_800_000,
+    vendorAmountUsd: 43_000_000,
+    laborAmountUsd: 39_000_000,
+    revenueUsd: 3_900_000_000,
+    employees: 9_100,
+    itSpendAsPctRevenue: 0.0371,
+  },
+];
+
+const ZERO_AMOUNT_INITIATIVES: AIInitiative[] = INITIATIVES.map(
+  (initiative) => ({
+    ...initiative,
+    committedAnnualUsd: 0,
+    committedTotalUsd: 0,
+    measuredValueUsd: null,
+  }),
+);
 
 const ZERO_AMOUNT_VENDORS: AIInitiativeVendorRow[] = VENDORS.map((vendor) => ({
   ...vendor,
@@ -178,10 +216,13 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
           stakeholderNotes: 0,
           scenarios: 0,
         }}
+        budgetRollups={BUDGET_ROLLUPS}
       />,
     );
 
-    expect(screen.getByText("CIO portfolio command center")).toBeInTheDocument();
+    expect(
+      screen.getByText("CIO portfolio command center"),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("CIO dashboard view")).toBeInTheDocument();
     expect(screen.getAllByText("Portfolio").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Budget").length).toBeGreaterThan(0);
@@ -190,14 +231,25 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getAllByText("Outcomes").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Risks").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Board").length).toBeGreaterThan(0);
-    expect(screen.getByText("CIO daily read")).toBeInTheDocument();
+    expect(screen.getByLabelText("CIO and CFO story")).toBeInTheDocument();
+    expect(screen.getByText(/still needs value proof/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Spend is visible enough to manage/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("Inspect pressure spend")).toBeInTheDocument();
     expect(screen.getByText("Demand value proof")).toBeInTheDocument();
-    expect(screen.getByText("Scenario questions a CIO can ask next")).toBeInTheDocument();
+    expect(
+      screen.getByText("Scenario questions a CIO can ask next"),
+    ).toBeInTheDocument();
     expect(screen.getByText("AI Platform Foundation")).toBeInTheDocument();
     expect(screen.getByText("ServiceNow AI Service Desk")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Budget" })).toHaveAttribute(
+      "href",
+      "/tower?dashboard=budget",
+    );
     expect(screen.getAllByText("aVa").length).toBeGreaterThan(0);
     expect(screen.queryByText("Atlas")).not.toBeInTheDocument();
+    expect(screen.queryByText("CIO daily read")).not.toBeInTheDocument();
     expect(screen.queryByText("LH-IT-001")).not.toBeInTheDocument();
     expect(screen.queryByText("LH-IT-002")).not.toBeInTheDocument();
   });
@@ -215,9 +267,13 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       />,
     );
 
-    expect(screen.getAllByText(/budget amounts are not loaded/i).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/budget amounts are not loaded/i).length,
+    ).toBeGreaterThan(0);
     expect(screen.getAllByText("gap").length).toBeGreaterThan(0);
-    expect(screen.queryByText(/\$0 of loaded portfolio spend/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/\$0 of loaded portfolio spend/i),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("LH-IT-001")).not.toBeInTheDocument();
   });
 
@@ -239,7 +295,9 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       />,
     );
 
-    expect(screen.getByText(/no measured value rows are loaded/i)).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/no measured value rows are loaded/i).length,
+    ).toBeGreaterThan(0);
     expect(screen.getAllByText(/review-required/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText("gap").length).toBeGreaterThan(0);
     expect(screen.queryByText("0.00x")).not.toBeInTheDocument();
@@ -283,10 +341,14 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     );
 
     expect(screen.getByText("Board brief")).toBeInTheDocument();
-    expect(screen.getByText("The decision read for leadership.")).toBeInTheDocument();
+    expect(
+      screen.getByText("The decision read for leadership."),
+    ).toBeInTheDocument();
     expect(screen.getByText("Decisions")).toBeInTheDocument();
     expect(screen.getByText("Data asks")).toBeInTheDocument();
-    expect(screen.getByText(/Which pressure programs should the CIO inspect first/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Which pressure programs should the CIO inspect first/i),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Atlas")).not.toBeInTheDocument();
   });
 });
