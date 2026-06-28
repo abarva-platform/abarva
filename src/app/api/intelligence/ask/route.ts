@@ -893,9 +893,33 @@ function shouldIncludeIntelligenceTrace(
   const allowedRole =
     ["admin", "operator", "agent", "qa"].includes(role) ||
     roles.some((value) => ["admin", "operator", "agent", "qa"].includes(value));
+  const operatorTraceFlag =
+    metadata?.operatorTrace === true ||
+    metadata?.debugIntelTrace === true ||
+    metadata?.intelligenceTrace === true;
   const allowedEmail = /@abarva\.(ai|example\.com)$/i.test(email);
+  const configuredOperatorEmails = new Set(
+    (process.env.ABARVA_INTELLIGENCE_TRACE_OPERATOR_EMAILS ?? "")
+      .split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean),
+  );
+  const founderOperatorEmail = new Set([
+    "anandshp@gmail.com",
+    "anand.sundaram@gmail.com",
+  ]);
+  const allowedOperatorEmail =
+    configuredOperatorEmails.has(email.toLowerCase()) ||
+    founderOperatorEmail.has(email.toLowerCase());
   const syntheticLabPersona = /@(?:[a-z0-9-]+\.)?example\.com$/i.test(email);
-  return Boolean(user?.id) && (allowedEmail || allowedRole || syntheticLabPersona);
+  return (
+    Boolean(user?.id) &&
+    (allowedEmail ||
+      allowedRole ||
+      operatorTraceFlag ||
+      allowedOperatorEmail ||
+      syntheticLabPersona)
+  );
 }
 
 function buildHomeKnowTenantFenceAnswer(input: {
