@@ -86,7 +86,7 @@ describe("visible answer contract", () => {
 
   it("blocks session-history language in visible answers", () => {
     const gate = assertVisibleAnswerContract(
-      "The answer is the same one I've given the last three times this session: fix certified operational data first.",
+      "Same answer as the last four turns: fix certified operational data first.",
     );
 
     expect(gate.passed).toBe(false);
