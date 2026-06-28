@@ -49,6 +49,123 @@ function maxTokensForReview(requested: number): number {
   return Math.max(Number.isFinite(envTokens) ? envTokens : 0, requested);
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function isEditablePackagingRequest(feedbackText: string): boolean {
+  const text = feedbackText.toLowerCase();
+  const asksForEditableRecord =
+    /(editable|word[-\s]?equivalent|docx|phase[-\s]?end|sponsor review|review package|package for sponsor)/.test(
+      text,
+    );
+  const asksForSubstantiveRewrite =
+    /(rewrite|redo|rework|replace|add diagram|add chart|add table|change section|new analysis|new recommendation|revise architecture|revise roadmap|revise business case)/.test(
+      text,
+    );
+  return asksForEditableRecord && !asksForSubstantiveRewrite;
+}
+
+function renderDeterministicReviewCompanionHtml(args: {
+  title: string;
+  feedbackText: string;
+  feedbackItems: Array<{
+    id: string;
+    area: string;
+    priority: string;
+    requestedChange: string;
+  }>;
+  artifactTitle: string;
+  artifactType: string;
+  phase: number;
+  qualityStatus: string;
+  goldenBarStatus: string;
+  preliminaryCaveat: string;
+}): string {
+  const feedbackRows =
+    args.feedbackItems.length > 0
+      ? args.feedbackItems
+          .map(
+            (item) => `<tr>
+              <td>${escapeHtml(item.id)}</td>
+              <td>${escapeHtml(item.area)}</td>
+              <td>${escapeHtml(item.priority)}</td>
+              <td>${escapeHtml(item.requestedChange)}</td>
+            </tr>`,
+          )
+          .join("")
+      : `<tr><td colspan="4">No parseable feedback items were found.</td></tr>`;
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>${escapeHtml(args.title)}</title>
+    <style>
+      body { font-family: Inter, Arial, sans-serif; color: #17202a; margin: 40px; line-height: 1.5; }
+      h1, h2 { font-family: Georgia, serif; color: #111827; }
+      .status { display: inline-block; border: 1px solid #b45309; color: #92400e; background: #fffbeb; padding: 6px 10px; border-radius: 999px; font-weight: 700; }
+      .note { border-left: 4px solid #0ea5e9; background: #f0f9ff; padding: 12px 16px; margin: 16px 0; }
+      table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; }
+      th, td { border: 1px solid #d1d5db; padding: 10px; text-align: left; vertical-align: top; }
+      th { background: #f3f4f6; }
+    </style>
+  </head>
+  <body>
+    <p class="status">Review required</p>
+    <h1>${escapeHtml(args.title)}</h1>
+    <p class="note">This review companion records sponsor-review packaging feedback and creates the paired editable phase record. It does not mark the deliverable final, approved, or board-ready.</p>
+
+    <h2>Executive Summary</h2>
+    <p>The prior phase artifact remains the source visual review companion. This version records client review feedback, preserves the evidence caveats, and creates the paired Word-equivalent deliverable for sponsor review.</p>
+
+    <h2>Table of Contents</h2>
+    <ol>
+      <li>Executive Summary</li>
+      <li>Review Status</li>
+      <li>Feedback Applied</li>
+      <li>Client-To-Complete Fields</li>
+      <li>Lineage</li>
+    </ol>
+
+    <h2>Review Status</h2>
+    <table>
+      <tr><th>Field</th><th>Status</th></tr>
+      <tr><td>Phase</td><td>P${args.phase}</td></tr>
+      <tr><td>Artifact type</td><td>${escapeHtml(args.artifactType)}</td></tr>
+      <tr><td>Prior artifact</td><td>${escapeHtml(args.artifactTitle)}</td></tr>
+      <tr><td>Quality check</td><td>${escapeHtml(args.qualityStatus)}</td></tr>
+      <tr><td>Golden-bar check</td><td>${escapeHtml(args.goldenBarStatus)}</td></tr>
+      <tr><td>Evidence caveat</td><td>${escapeHtml(args.preliminaryCaveat)}</td></tr>
+    </table>
+
+    <h2>Feedback Applied</h2>
+    <table>
+      <tr><th>Item</th><th>Area</th><th>Priority</th><th>Requested change</th></tr>
+      ${feedbackRows}
+    </table>
+
+    <h2>Original Feedback</h2>
+    <p>${escapeHtml(args.feedbackText)}</p>
+
+    <h2>Client-To-Complete Fields</h2>
+    <table>
+      <tr><th>Field</th><th>Why it matters</th></tr>
+      <tr><td>Evidence owner</td><td>Confirms who will provide or approve the missing support.</td></tr>
+      <tr><td>Source file or meeting note</td><td>Provides traceable backing for the requested change.</td></tr>
+      <tr><td>Final approval decision</td><td>Determines whether this version can move from review required to approved.</td></tr>
+    </table>
+
+    <h2>Lineage</h2>
+    <p>This review companion was generated from the prior artifact version and review feedback. It is paired with an editable Word-equivalent deliverable and remains review-required until a named sponsor approves it.</p>
+  </body>
+</html>`;
+}
+
 function normalizeReviewArtifactKey(
   artifactType: string | undefined,
   phase: number,
@@ -126,43 +243,59 @@ export async function POST(
       artifact.phase ?? 0,
       artifact.title,
     );
-    const prompt = buildReviewRegenerationPrompt({
-      artifact,
-      artifactKey,
-      feedbackText,
-      feedbackItems: plan.feedbackItems,
-      originalArtifactBody,
-      phase: artifact.phase ?? 0,
-      contextSummary:
-        typeof artifact.metadata?.solutionContextDigest === "string"
-          ? artifact.metadata.solutionContextDigest
-          : undefined,
-    });
+    let regenerationMode = "complete_artifact";
     let regeneratedHtml = "";
-    for await (const chunk of streamAgentTurn({
-      system: prompt.system,
-      messages: [{ role: "user", content: prompt.user }],
-      model: process.env.NEXUS_COMPOSER_MODEL ?? "claude-opus-4-7",
-      maxTokens: maxTokensForReview(prompt.maxTokens),
-      aiEgress: {
-        tenantId: ctx.clientId,
-        userId: /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(ctx.userId ?? "")
-          ? ctx.userId
-          : undefined,
-        workflow: "moves-review-regenerate-complete-artifact",
-        dataClass: "confidential",
-        artifactType: "program",
-        metadata: {
-          output_format: "html",
-          artifact: artifactKey,
-          phase: artifact.phase ?? 0,
-          regeneratedFromArtifactId: artifact.artifact_id,
+    if (isEditablePackagingRequest(feedbackText)) {
+      regenerationMode = "deterministic_editable_review_package";
+      regeneratedHtml = renderDeterministicReviewCompanionHtml({
+        title: plan.title,
+        feedbackText,
+        feedbackItems: plan.feedbackItems,
+        artifactTitle: artifact.title,
+        artifactType: artifactKey,
+        phase: artifact.phase ?? 0,
+        qualityStatus: plan.qualityStatus,
+        goldenBarStatus: plan.goldenBarStatus,
+        preliminaryCaveat: plan.preliminaryCaveat,
+      });
+    } else {
+      const prompt = buildReviewRegenerationPrompt({
+        artifact,
+        artifactKey,
+        feedbackText,
+        feedbackItems: plan.feedbackItems,
+        originalArtifactBody,
+        phase: artifact.phase ?? 0,
+        contextSummary:
+          typeof artifact.metadata?.solutionContextDigest === "string"
+            ? artifact.metadata.solutionContextDigest
+            : undefined,
+      });
+      for await (const chunk of streamAgentTurn({
+        system: prompt.system,
+        messages: [{ role: "user", content: prompt.user }],
+        model: process.env.NEXUS_COMPOSER_MODEL ?? "claude-opus-4-7",
+        maxTokens: maxTokensForReview(prompt.maxTokens),
+        aiEgress: {
+          tenantId: ctx.clientId,
+          userId: /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(ctx.userId ?? "")
+            ? ctx.userId
+            : undefined,
+          workflow: "moves-review-regenerate-complete-artifact",
+          dataClass: "confidential",
+          artifactType: "program",
+          metadata: {
+            output_format: "html",
+            artifact: artifactKey,
+            phase: artifact.phase ?? 0,
+            regeneratedFromArtifactId: artifact.artifact_id,
+          },
         },
-      },
-    })) {
-      regeneratedHtml += chunk;
+      })) {
+        regeneratedHtml += chunk;
+      }
+      regeneratedHtml = stripHtmlFences(regeneratedHtml);
     }
-    regeneratedHtml = stripHtmlFences(regeneratedHtml);
     if (!regeneratedHtml.trim()) {
       regeneratedHtml = plan.body;
     }
@@ -189,7 +322,7 @@ export async function POST(
         ...(artifact.metadata ?? {}),
         ...plan.metadata,
         sourceArtifactTitle: artifact.title,
-        regenerationMode: "complete_artifact",
+        regenerationMode,
         originalArtifactBodyRetrieved: Boolean(original),
       },
     });
@@ -251,7 +384,7 @@ export async function POST(
           deliverablePackageContract.requiredWorkshopEvidence,
         provenanceRules: deliverablePackageContract.provenanceRules,
         sourceArtifactTitle: artifact.title,
-        regenerationMode: "complete_artifact",
+        regenerationMode,
         originalArtifactBodyRetrieved: Boolean(original),
         regeneratedFromArtifactId: artifact.artifact_id,
         reviewStatus: "review_required",

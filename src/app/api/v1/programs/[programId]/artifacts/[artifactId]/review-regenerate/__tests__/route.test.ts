@@ -171,4 +171,55 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/review-regene
       }),
     );
   });
+
+  it("uses the deterministic fast lane for editable Word-equivalent packaging feedback", async () => {
+    const res = await POST(
+      req({
+        feedbackText:
+          "Create the editable phase-end Word-equivalent record for sponsor review. Keep this review required and do not mark final.",
+      }),
+      params(),
+    );
+    const json = (await res.json()) as {
+      ok: boolean;
+      regeneratedArtifact: {
+        artifactId: string;
+        editableArtifactId: string;
+      };
+    };
+
+    expect(res.status).toBe(200);
+    expect(json.ok).toBe(true);
+    expect(json.regeneratedArtifact.artifactId).toBe("artifact-v2");
+    expect(json.regeneratedArtifact.editableArtifactId).toBe("artifact-v2");
+    expect(mockStreamAgentTurn).not.toHaveBeenCalled();
+    expect(saveMoveArtifact).toHaveBeenCalledWith(
+      tenancy,
+      expect.objectContaining({
+        moveId: "move-1",
+        artifactType: "session_artifact",
+        status: "review_required",
+        fileFormat: "html",
+        body: expect.stringContaining("Executive Summary"),
+        metadata: expect.objectContaining({
+          regenerationMode: "deterministic_editable_review_package",
+          originalArtifactBodyRetrieved: true,
+        }),
+      }),
+    );
+    expect(saveMoveArtifact).toHaveBeenCalledWith(
+      tenancy,
+      expect.objectContaining({
+        moveId: "move-1",
+        artifactType: "session_artifact_editable_docx",
+        status: "review_required",
+        fileFormat: "docx",
+        body: expect.any(Buffer),
+        metadata: expect.objectContaining({
+          outputRole: "docx_editable_phase_record",
+          regenerationMode: "deterministic_editable_review_package",
+        }),
+      }),
+    );
+  });
 });
