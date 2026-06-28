@@ -453,7 +453,7 @@ export function buildIntelligenceConsultantUserPrompt(
     "When comparing multiple items, include a compact Markdown table with business-friendly columns.",
     "Use the decision-canvas tab markers when the answer benefits from drill-downs.",
     "For AI investment, IROPS, prioritization, scale/hold/kill, and portfolio questions, include Decision, Industry Insights, Evidence, and a Table or Chart tab when the packet contains chart-ready or table-ready data.",
-    "Do not place Markdown tables in the main answer. Put them inside the Table or Chart tab.",
+    "Do not place Markdown tables in the main answer or inside Decision, Industry Insights, or Evidence tabs. Put every Markdown table inside a separate Table or Chart tab.",
     "State confidence and missing evidence after the useful synthesis, not as the opening.",
     "Suggest the appropriate handoff to Moves, Source, or Tower when relevant.",
     "Keep every paragraph to three sentences or fewer.",

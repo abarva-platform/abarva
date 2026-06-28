@@ -1,5 +1,6 @@
 import {
   hasChartReadyMarkdownData,
+  INTELLIGENCE_TABBED_OUTPUT_CONTRACT,
   parseIntelligenceTabbedResponse,
 } from "@/lib/intelligence/tabbed-response";
 
@@ -33,6 +34,15 @@ const skyharborIropsRaw = [
 ].join("\n");
 
 describe("Intelligence tabbed response parser", () => {
+  it("requires Markdown tables to live in Table or Chart tabs", () => {
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
+      "If you emit any Markdown table, it must appear inside the Table tab or Chart tab",
+    );
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
+      "never inside the main answer, Decision tab, Industry Insights tab, or Evidence tab",
+    );
+  });
+
   it("keeps Claude main answer and tab content exactly while placing tabs", () => {
     const parsed = parseIntelligenceTabbedResponse(skyharborIropsRaw);
 

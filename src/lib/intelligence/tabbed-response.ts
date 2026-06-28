@@ -51,6 +51,8 @@ Tabs:
 - Industry Insights must be explicitly labeled as industry context or benchmark context, not tenant proof. Never say the tenant "has" an industry fact unless it is in tenant evidence.
 - Chart should appear only when you can provide chart-ready data in a compact Markdown table with numeric values. If the data is not chart-ready, omit the Chart tab.
 - Table should preserve a compact Markdown table when it helps the decision.
+- If you emit any Markdown table, it must appear inside the Table tab or Chart tab, never inside the main answer, Decision tab, Industry Insights tab, or Evidence tab.
+- If the answer includes a decision plus a comparison table, put the choice and tradeoff in Decision, then start a separate <<<TAB: Table | grounding: tenant-evidence>>> marker before the table.
 - Evidence should separate tenant facts, industry/pattern context, benchmarks, planning assumptions, and missing evidence.
 
 Grounding:
