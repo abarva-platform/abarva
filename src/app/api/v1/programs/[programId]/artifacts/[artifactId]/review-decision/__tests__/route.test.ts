@@ -176,12 +176,14 @@ describe("artifact review decision route", () => {
       artifact_version: 10,
       html_visual_companion_artifact_id: "html-artifact",
       docx_editable_artifact_id: "docx-artifact",
-      reviewed_artifact_ids: ["html-artifact", "docx-artifact"],
+      reviewed_artifact_ids: JSON.stringify(["html-artifact", "docx-artifact"]),
       allowed_next_action: "generate_p3_draft",
       ready_for_p3_draft: true,
       ready_for_p3_final: false,
       p2_final_approved: false,
     });
+    expect(insertedDecision?.carried_forward_caveats).toBe("[]");
+    expect(insertedDecision?.missing_evidence).toBe("[]");
   });
 
   it("keeps P3 draft blocked when reviewer requests revisions", async () => {
