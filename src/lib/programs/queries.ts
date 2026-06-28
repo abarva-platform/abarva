@@ -87,6 +87,13 @@ interface EngagementRow {
   gates_passed: unknown[] | null;
 }
 
+function normalizeProgramName(value: unknown, fallbackId: string): string {
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+  return `Untitled Strategic Move ${fallbackId.slice(0, 8)}`;
+}
+
 function rowToProgram(r: EngagementRow): ProgramCore {
   const legacyProjected = extractProjectedValueFromLegacyBaseline(
     r.baseline_metrics,
@@ -98,7 +105,7 @@ function rowToProgram(r: EngagementRow): ProgramCore {
   return {
     id: r.id,
     clientId: r.client_id,
-    name: r.name,
+    name: normalizeProgramName(r.name, r.id),
     sponsorPersonId: r.sponsor_person_id,
     problemStatement: r.problem_statement,
     targetOutcome: r.target_outcome,

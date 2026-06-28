@@ -34,7 +34,13 @@ const ATTENTION = "#B5852A"; // blocked / below gate
 const STALE = "#B4513C"; // error / failed
 const RUNNING = "#1D4ED8"; // queued / running
 
-type RunStatus = "queued" | "running" | "succeeded" | "blocked" | "failed" | "error";
+type RunStatus =
+  | "queued"
+  | "running"
+  | "succeeded"
+  | "blocked"
+  | "failed"
+  | "error";
 
 interface DeliverableRow {
   deliverableTypeKey: string;
@@ -119,7 +125,9 @@ export function PhaseApproveAndBuild({
   evidenceNeedPackets = [],
 }: Props) {
   const specs = (PHASE_CANONICAL_KEYS[phaseNum] ?? [])
-    .map((key) => DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key))
+    .map((key) =>
+      DELIVERABLE_REGISTRY.find((d) => d.deliverableTypeKey === key),
+    )
     .filter(Boolean) as DeliverableSpec[];
 
   const [rows, setRows] = useState<DeliverableRow[]>(() =>
@@ -147,17 +155,24 @@ export function PhaseApproveAndBuild({
     };
   }, []);
 
-  const patchRow = useCallback((key: string, patch: Partial<DeliverableRow>) => {
-    setRows((prev) =>
-      prev.map((r) => (r.deliverableTypeKey === key ? { ...r, ...patch } : r)),
-    );
-  }, []);
+  const patchRow = useCallback(
+    (key: string, patch: Partial<DeliverableRow>) => {
+      setRows((prev) =>
+        prev.map((r) =>
+          r.deliverableTypeKey === key ? { ...r, ...patch } : r,
+        ),
+      );
+    },
+    [],
+  );
 
   const poll = useCallback(
     async (key: string, runId: string) => {
       try {
         const res = await fetch(`/api/v1/deliverables/runs/${runId}`);
-        const data = (await res.json()) as RunStatusResponse & { error?: string };
+        const data = (await res.json()) as RunStatusResponse & {
+          error?: string;
+        };
         if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
         if (data.status === "queued" || data.status === "running") {
           patchRow(key, {
@@ -166,7 +181,10 @@ export function PhaseApproveAndBuild({
             progressLabel: data.progressLabel ?? null,
           });
           if (Date.now() - startedAt.current < MAX_MS) {
-            timers.current[key] = setTimeout(() => void poll(key, runId), POLL_MS);
+            timers.current[key] = setTimeout(
+              () => void poll(key, runId),
+              POLL_MS,
+            );
           }
           return;
         }
@@ -180,7 +198,10 @@ export function PhaseApproveAndBuild({
       } catch {
         // transient — back off and retry within the window
         if (Date.now() - startedAt.current < MAX_MS) {
-          timers.current[key] = setTimeout(() => void poll(key, runId), POLL_MS * 2);
+          timers.current[key] = setTimeout(
+            () => void poll(key, runId),
+            POLL_MS * 2,
+          );
         }
       }
     },
@@ -216,7 +237,10 @@ export function PhaseApproveAndBuild({
           clientDisplayName,
         }),
       });
-      const data = (await res.json()) as EnqueueResponse & { detail?: string; error?: string };
+      const data = (await res.json()) as EnqueueResponse & {
+        detail?: string;
+        error?: string;
+      };
       if (!res.ok || !Array.isArray(data.deliverables)) {
         throw new Error(data.detail ?? data.error ?? `HTTP ${res.status}`);
       }
@@ -237,7 +261,15 @@ export function PhaseApproveAndBuild({
     } finally {
       setBuilding(false);
     }
-  }, [moveId, phaseNum, archetype, moveName, clientDisplayName, patchRow, poll]);
+  }, [
+    moveId,
+    phaseNum,
+    archetype,
+    moveName,
+    clientDisplayName,
+    patchRow,
+    poll,
+  ]);
 
   if (specs.length === 0) {
     return (
@@ -247,7 +279,9 @@ export function PhaseApproveAndBuild({
     );
   }
 
-  const anyRunning = rows.some((r) => r.status === "queued" || r.status === "running");
+  const anyRunning = rows.some(
+    (r) => r.status === "queued" || r.status === "running",
+  );
   const builtCount = rows.filter((r) => r.status === "succeeded").length;
   const gateCount = specs.filter((s) => s.gateArtifact).length;
   const requiredGaps = evidenceNeedPackets.filter(
@@ -255,7 +289,7 @@ export function PhaseApproveAndBuild({
   );
   const hasRequiredGaps = requiredGaps.length > 0;
   const buildLabel = hasRequiredGaps
-    ? "Generate preliminary draft with caveats"
+    ? "Final build blocked by required evidence"
     : builtCount > 0
       ? `Re-run & Build ${phaseLabel} →`
       : `Approve & Build ${phaseLabel} →`;
@@ -278,15 +312,33 @@ export function PhaseApproveAndBuild({
         <div>{MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT}</div>
         <div style={{ marginTop: 4, color: "#525866" }}>
           Approve &amp; Build generates every {phaseLabel} deliverable in one
-          governed batch — planning the structure, writing each document section by
-          section, then assembling and quality-checking it. Documents below the
-          board-grade bar are held back, not shipped. There is no per-document
-          regenerate: if an input changes, re-run the phase and re-approve.
+          governed batch — planning the structure, writing each document section
+          by section, then assembling and quality-checking it. Documents below
+          the board-grade bar are held back, not shipped. There is no
+          per-document regenerate: if an input changes, re-run the phase and
+          re-approve.
         </div>
-        <div style={{ marginTop: 6, display: "flex", gap: 14, flexWrap: "wrap", fontSize: 11, color: "#525866" }}>
-          <span>{specs.length} deliverables ({gateCount} gate)</span>
-          {typeof inputCount === "number" && <span>{inputCount} input{inputCount === 1 ? "" : "s"} uploaded</span>}
-          <span>{builtCount}/{specs.length} built</span>
+        <div
+          style={{
+            marginTop: 6,
+            display: "flex",
+            gap: 14,
+            flexWrap: "wrap",
+            fontSize: 11,
+            color: "#525866",
+          }}
+        >
+          <span>
+            {specs.length} deliverables ({gateCount} gate)
+          </span>
+          {typeof inputCount === "number" && (
+            <span>
+              {inputCount} input{inputCount === 1 ? "" : "s"} uploaded
+            </span>
+          )}
+          <span>
+            {builtCount}/{specs.length} built
+          </span>
           {hasRequiredGaps && (
             <span style={{ color: ATTENTION }}>
               {requiredGaps.length} required evidence gap
@@ -296,9 +348,10 @@ export function PhaseApproveAndBuild({
         </div>
         {hasRequiredGaps && (
           <div style={{ marginTop: 6, color: ATTENTION }}>
-            This action creates a preliminary draft only. Final or board-ready
-            output remains blocked until the missing evidence is uploaded or
-            explicitly waived.
+            Final or board-ready output remains blocked until the missing
+            evidence is uploaded or explicitly waived. This phase does not have
+            an active preliminary-generation lane yet, so AbarVa will not imply
+            a draft can be generated when the governed API would reject it.
           </div>
         )}
       </div>
@@ -307,26 +360,26 @@ export function PhaseApproveAndBuild({
       <button
         type="button"
         onClick={() => void approveAndBuild()}
-        disabled={building || anyRunning}
+        disabled={building || anyRunning || hasRequiredGaps}
         style={{
           alignSelf: "flex-start",
           padding: "9px 16px",
-          background: building || anyRunning ? "#C9C7BE" : NAVY,
+          background:
+            building || anyRunning || hasRequiredGaps ? "#C9C7BE" : NAVY,
           color: "#FFFFFF",
           border: "none",
           borderRadius: 8,
           fontSize: 13,
           fontWeight: 600,
-          cursor: building || anyRunning ? "default" : "pointer",
+          cursor:
+            building || anyRunning || hasRequiredGaps ? "default" : "pointer",
           fontFamily: "Fraunces, Georgia, serif",
         }}
       >
         {anyRunning ? `Building ${phaseLabel}…` : buildLabel}
       </button>
 
-      {error && (
-        <div style={{ fontSize: 12, color: STALE }}>{error}</div>
-      )}
+      {error && <div style={{ fontSize: 12, color: STALE }}>{error}</div>}
 
       {/* Read-only per-deliverable status — no isolated generate buttons */}
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -384,10 +437,18 @@ export function PhaseApproveAndBuild({
                 </div>
               )}
               {r.status === "error" && r.error && (
-                <div style={{ fontSize: 10.5, color: STALE, marginTop: 2 }}>{r.error}</div>
+                <div style={{ fontSize: 10.5, color: STALE, marginTop: 2 }}>
+                  {r.error}
+                </div>
               )}
             </div>
-            <span style={{ fontSize: 11, fontWeight: 600, color: STATUS_COLOR[r.status] }}>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: STATUS_COLOR[r.status],
+              }}
+            >
               {STATUS_LABEL[r.status]}
             </span>
             {r.status === "succeeded" && r.blobUrl && (
@@ -404,8 +465,8 @@ export function PhaseApproveAndBuild({
       </div>
 
       <div style={{ fontSize: 10.5, color: MUTED }}>
-        <span>{MOVES_AI_DRAFT_LABEL}</span> — review and edit every document before
-        it informs a decision.
+        <span>{MOVES_AI_DRAFT_LABEL}</span> — review and edit every document
+        before it informs a decision.
       </div>
     </div>
   );

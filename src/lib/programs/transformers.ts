@@ -76,17 +76,26 @@ function canonicalProgramClientName(args: {
   );
 }
 
+function displayText(value: unknown, fallback = "—"): string {
+  if (typeof value === "string" && value.trim()) return value;
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return fallback;
+}
+
 function sanitizeRetiredTenantText(
-  value: string,
+  value: string | null | undefined,
   clientName?: ProgramSummary["clientName"] | null,
 ): string {
+  const text = displayText(value);
   const firstCapitalReplacement =
     clientName === "First Capital Financial"
       ? "First Capital"
       : "First Capital";
   const meridianReplacement =
     clientName === "Meridian Health System" ? "Meridian" : "Meridian";
-  return value
+  return text
     .replace(/\bBrindlemark Financial Group\b/g, "First Capital Financial")
     .replace(/\bBrindlemark Financial\b/g, "First Capital Financial")
     .replace(/\bBRINDLEMARK\b/g, "FIRSTCAP")
@@ -636,42 +645,53 @@ export async function buildProgramFullState(
     threadRows,
     patternMatchRow,
   ] = await Promise.all([
-    resolveSponsorAndLead(program.id),
-    resolveClientName(program.clientId),
-    resolveTeam(program.id),
-    getModuleState(ctx, program.id),
-    getWorkItems(ctx, program.id),
-    getMilestones(ctx, program.id),
-    getRisks(ctx, program.id),
-    azureRead.query<{
-      id: string;
-      module_key: string | null;
-      status: string;
-      current_version: number;
-      title: string;
-      updated_at: string;
-      created_by: string | null;
-    }>(
-      "SELECT id, deliverable_type_key AS module_key, status, current_version, title, updated_at, created_by FROM deliverables_v2 WHERE engagement_id = $1 ORDER BY updated_at DESC",
-      [program.id],
+    resolveSponsorAndLead(program.id).catch(() => ({
+      sponsor: placeholderPerson("sponsor_missing"),
+      lead: placeholderPerson("lead_missing"),
+    })),
+    resolveClientName(program.clientId).catch(() =>
+      canonicalProgramClientName({ clientId: program.clientId }),
     ),
-    azureRead.select<{
-      id: string;
-      title: string | null;
-      metadata_jsonb: Record<string, unknown> | null;
-      last_turn_at: string | null;
-    }>({
-      table: "program_threads",
-      columns: ["id", "title", "metadata_jsonb", "last_turn_at"],
-      where: { engagement_id: program.id, archived_at: null },
-      orderBy: { column: "last_turn_at", direction: "desc" },
-    }),
-    azureRead.maybeSingle<{ pattern_key: string }>({
-      table: "pattern_match_logs",
-      columns: ["pattern_key"],
-      where: { engagement_id: program.id, acted_upon: true },
-      orderBy: { column: "acted_upon_at", direction: "desc" },
-    }),
+    resolveTeam(program.id).catch(() => []),
+    getModuleState(ctx, program.id).catch(() => []),
+    getWorkItems(ctx, program.id).catch(() => []),
+    getMilestones(ctx, program.id).catch(() => []),
+    getRisks(ctx, program.id).catch(() => []),
+    azureRead
+      .query<{
+        id: string;
+        module_key: string | null;
+        status: string;
+        current_version: number;
+        title: string;
+        updated_at: string;
+        created_by: string | null;
+      }>(
+        "SELECT id, deliverable_type_key AS module_key, status, current_version, title, updated_at, created_by FROM deliverables_v2 WHERE engagement_id = $1 ORDER BY updated_at DESC",
+        [program.id],
+      )
+      .catch(() => []),
+    azureRead
+      .select<{
+        id: string;
+        title: string | null;
+        metadata_jsonb: Record<string, unknown> | null;
+        last_turn_at: string | null;
+      }>({
+        table: "program_threads",
+        columns: ["id", "title", "metadata_jsonb", "last_turn_at"],
+        where: { engagement_id: program.id, archived_at: null },
+        orderBy: { column: "last_turn_at", direction: "desc" },
+      })
+      .catch(() => []),
+    azureRead
+      .maybeSingle<{ pattern_key: string }>({
+        table: "pattern_match_logs",
+        columns: ["pattern_key"],
+        where: { engagement_id: program.id, acted_upon: true },
+        orderBy: { column: "acted_upon_at", direction: "desc" },
+      })
+      .catch(() => null),
   ]);
 
   const delivRows = deliverables;
@@ -1070,13 +1090,13 @@ export function deriveDisplayCode(
     client.slug?.toUpperCase().replace(/-/g, "") ||
     "MOVE"
   ).toUpperCase();
-  const segment = firstSegment(move.name);
+  const segment = firstSegment(displayText(move.name, "Move"));
   const year = new Date(move.createdAt).getUTCFullYear();
   return `${prefix}-${segment}-${year}`;
 }
 
 export function deriveMapLabel(move: Pick<ProgramCore, "name">): string {
-  const tokens = move.name
+  const tokens = displayText(move.name, "Move")
     .split(/[^A-Za-z0-9]+/)
     .map((token) => token.trim())
     .filter(Boolean)
@@ -1361,54 +1381,73 @@ export async function buildStrategicMove(
       columns: ["id", "name", "industry_code", "slug"],
       where: { id: move.clientId },
     }),
-    azureRead.select<{
-      person_id: string | null;
-      user_id: string;
-      role: string | null;
-      approval_authority: string | null;
-    }>({
-      table: "engagement_participants",
-      columns: ["person_id", "user_id", "role", "approval_authority"],
-      where: { engagement_id: move.id },
-    }),
-    azureRead.select<{
-      created_at: string;
-      action: string;
-      rationale: string | null;
-      actor_id: string | null;
-    }>({
-      table: "program_audit_log",
-      columns: ["created_at", "action", "rationale", "actor_id"],
-      where: { engagement_id: move.id },
-      orderBy: { column: "created_at", direction: "desc" },
-      limit: 8,
-    }),
-    azureRead.select<{
-      created_at: string;
-      module_key: string;
-      new_state: string;
-      changed_by_user_id: string | null;
-    }>({
-      table: "module_state_log",
-      columns: ["created_at", "module_key", "new_state", "changed_by_user_id"],
-      where: { engagement_id: move.id },
-      orderBy: { column: "created_at", direction: "desc" },
-      limit: 8,
-    }),
-    azureRead.select<{
-      created_at: string;
-      phase_number: number;
-      approval_status: string;
-    }>({
-      table: "phase_snapshots",
-      columns: ["created_at", "phase_number", "approval_status"],
-      where: { engagement_id: move.id },
-      orderBy: { column: "created_at", direction: "desc" },
-      limit: 8,
-    }),
-    fetchLinkedEvidence(move.id),
-    fetchMoveDeliverables(move.id),
-    getMoveStatus(ctx, move),
+    azureRead
+      .select<{
+        person_id: string | null;
+        user_id: string;
+        role: string | null;
+        approval_authority: string | null;
+      }>({
+        table: "engagement_participants",
+        columns: ["person_id", "user_id", "role", "approval_authority"],
+        where: { engagement_id: move.id },
+      })
+      .catch(() => []),
+    azureRead
+      .select<{
+        created_at: string;
+        action: string;
+        rationale: string | null;
+        actor_id: string | null;
+      }>({
+        table: "program_audit_log",
+        columns: ["created_at", "action", "rationale", "actor_id"],
+        where: { engagement_id: move.id },
+        orderBy: { column: "created_at", direction: "desc" },
+        limit: 8,
+      })
+      .catch(() => []),
+    azureRead
+      .select<{
+        created_at: string;
+        module_key: string;
+        new_state: string;
+        changed_by_user_id: string | null;
+      }>({
+        table: "module_state_log",
+        columns: [
+          "created_at",
+          "module_key",
+          "new_state",
+          "changed_by_user_id",
+        ],
+        where: { engagement_id: move.id },
+        orderBy: { column: "created_at", direction: "desc" },
+        limit: 8,
+      })
+      .catch(() => []),
+    azureRead
+      .select<{
+        created_at: string;
+        phase_number: number;
+        approval_status: string;
+      }>({
+        table: "phase_snapshots",
+        columns: ["created_at", "phase_number", "approval_status"],
+        where: { engagement_id: move.id },
+        orderBy: { column: "created_at", direction: "desc" },
+        limit: 8,
+      })
+      .catch(() => []),
+    fetchLinkedEvidence(move.id).catch(() => []),
+    fetchMoveDeliverables(move.id).catch(() => []),
+    getMoveStatus(ctx, move).catch(() => ({
+      statusKey: "idle",
+      statusText: "Needs setup",
+      statusDescription:
+        "This Move is incomplete. Capture the missing inputs before final generation or gate approval.",
+      statusColor: "amber" as const,
+    })),
   ]);
 
   const participantRows = peopleRows;
@@ -1420,15 +1459,17 @@ export async function buildStrategicMove(
     ),
   );
   const personData = personIds.length
-    ? await azureRead.select<{
-        id: string;
-        name: string | null;
-        role: string | null;
-      }>({
-        table: "persons",
-        columns: ["id", "name", "role"],
-        where: { id: { op: "in", value: personIds } },
-      })
+    ? await azureRead
+        .select<{
+          id: string;
+          name: string | null;
+          role: string | null;
+        }>({
+          table: "persons",
+          columns: ["id", "name", "role"],
+          where: { id: { op: "in", value: personIds } },
+        })
+        .catch(() => [])
     : [];
   const personMap = new Map<string, { name: string; role: string }>(
     personData.map((row) => [

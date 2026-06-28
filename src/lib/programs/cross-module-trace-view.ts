@@ -275,7 +275,7 @@ function sourceStep(input: CrossModuleTraceInput): TraceStep {
     linkState: "not_yet_linked",
     title: "No Source event is linked to this Move",
     detail:
-      "The Move names a sourcing-strategy deliverable, but no Source event carries this Move as its linked program. The Move-to-Source trigger is not yet wired.",
+      "Source brief preparation can be tracked in the Move, but sourcing workflow activation is not configured for this demo Move. No Source event carries this Move as its linked program.",
     joinId: null,
     href: null,
     gapRef: "GAP-2 / GAP-3",
@@ -311,7 +311,7 @@ function towerStep(input: CrossModuleTraceInput): TraceStep {
     linkState: "not_yet_linked",
     title: "No outcome-ledger entry records this Move",
     detail:
-      "The Tower outcome ledger has no projected -> tracked -> verified entry for this Move, so the Source-to-Tower and Tower-to-Context hand-offs cannot be traced.",
+      "Tower handoff package preparation can be tracked in the Move, but live Tower tracking activation is not configured for this demo Move. The Tower outcome ledger has no projected -> tracked -> verified entry for this Move.",
     joinId: null,
     href: null,
     gapRef: "GAP-4 / GAP-5",

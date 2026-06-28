@@ -68,12 +68,13 @@ const needPacket: MoveEvidenceNeedPacket = {
   ],
   canDraftBoundary: {
     canDraft: false,
-    canDraftLabel: "Only a preliminary draft with evidence caveats is appropriate.",
+    canDraftLabel:
+      "Final generation is blocked until this evidence is uploaded or formally waived.",
     cannotDraftLabel:
       "Do not present final or board-ready output until this evidence is covered or waived.",
   },
   preliminaryGenerationCaveat:
-    "Any draft must state that current-state process / operating documentation is missing and that final sign-off is blocked until the evidence is uploaded or waived.",
+    "A preliminary draft lane is not active for this phase. Final generation must wait until current-state process / operating documentation is uploaded or formally waived.",
   waiverOption:
     "A sponsor or accountable owner may record a waiver, but final artifacts must carry the waiver caveat.",
   nextAction:

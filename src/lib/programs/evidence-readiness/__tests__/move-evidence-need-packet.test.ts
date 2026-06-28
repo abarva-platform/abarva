@@ -62,12 +62,18 @@ describe("buildMoveEvidenceNeedPackets", () => {
 
     expect(packets).toHaveLength(2);
     expect(packets[0]?.nextAction).toMatch(/AP workflow notes/i);
-    expect(packets[0]?.blockedArtifacts.map((artifact) => artifact.artifactType)).toContain(
-      "discovery_report",
-    );
+    expect(
+      packets[0]?.blockedArtifacts.map((artifact) => artifact.artifactType),
+    ).toContain("discovery_report");
     expect(packets[0]?.canDraftBoundary.canDraft).toBe(false);
-    expect(packets[0]?.preliminaryGenerationCaveat).toMatch(/final sign-off is blocked/i);
-    expect(packets[1]?.exampleContent.join(" ")).toMatch(/duplicate payment rate/i);
+    expect(packets[0]?.canDraftBoundary.canDraftLabel).toMatch(
+      /Final generation is blocked/i,
+    );
+    expect(packets[0]?.preliminaryGenerationCaveat).toMatch(
+      /preliminary draft lane is not active/i,
+    );
+    expect(packets[1]?.exampleContent.join(" ")).toMatch(
+      /duplicate payment rate/i,
+    );
   });
 });
-
