@@ -74,4 +74,15 @@ Tenant evidence`);
     expect(cleaned).not.toContain("6 vs.");
     expect(cleaned).not.toContain("explicit loaded constraint");
   });
+
+  it("cleans live SkyHarbor session-memory and logic preambles", () => {
+    const cleaned = scrubPublicAvaAnswerText(
+      "The answer hasn't changed from the last two turns, and I want to be direct about Why: certified operational data products. Here's the logic in plain terms. The loaded tenant evidence shows an evidence base gap.",
+    );
+
+    expect(cleaned).toBe(
+      "certified operational data products. The business context shows an operational-data gap.",
+    );
+    expect(cleaned).not.toMatch(/last two turns|Here's the logic|loaded tenant evidence|evidence base gap/i);
+  });
 });

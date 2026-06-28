@@ -158,12 +158,16 @@ function newTurnId(prefix: string): string {
 
 function answerBodyFromPacket(answer: AvaAnswerPacket): string {
   return (
-    [answer.directAnswer, answer.interpretation, answer.businessImplication]
+    [
+      answer.prose,
+      answer.directAnswer,
+      answer.interpretation,
+      answer.businessImplication,
+      answer.recommendation,
+    ]
       .filter((part): part is string => Boolean(part?.trim()))
       .join("\n\n")
-      .trim() ||
-    answer.prose?.trim() ||
-    ""
+      .trim()
   );
 }
 
@@ -331,10 +335,10 @@ export function IntelligenceV2Surface({
           const delta = eventText(event);
           if (delta) {
             answerText += delta;
-            updateAgentTurn(
-              scrubPublicAvaAnswerText(answerText),
-              structuredAnswer,
-            );
+            const displayText = structuredAnswer
+              ? answerBodyFromPacket(structuredAnswer)
+              : answerText;
+            updateAgentTurn(scrubPublicAvaAnswerText(displayText), structuredAnswer);
           }
           if (event.type === "done" && event.telemetryEventId) {
             setThread((prev) =>
