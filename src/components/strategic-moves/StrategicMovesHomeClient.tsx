@@ -23,6 +23,7 @@ import {
   searchMoves,
   summaryStats,
 } from "./move-list-format";
+import { sponsorDisplayName } from "./sponsor-display";
 
 /* Scatter ("Map") view needs enough captured value data to be meaningful. */
 const SCATTER_VALUE_COVERAGE_THRESHOLD = 0.3;
@@ -315,7 +316,7 @@ export function StrategicMovesHomeClient({
                 <div className={styles.cardMeta}>
                   <span>
                     Sponsor:{" "}
-                    <strong>{move.sponsor?.name ?? "Unassigned"}</strong>
+                    <strong>{sponsorDisplayName(move.sponsor)}</strong>
                   </span>
                   <span>
                     Value:{" "}

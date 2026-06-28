@@ -104,4 +104,18 @@ describe("StrategicMovePhaseClient operating layer", () => {
       screen.getByTestId("moves-phase-review-feedback-loop"),
     ).toHaveTextContent("Upload client comments or review notes");
   });
+
+  it("renders sponsor pending copy instead of raw unassigned language", () => {
+    render(
+      <StrategicMovePhaseClient
+        move={makeMove()}
+        phaseNum={2}
+        evidenceNeedPackets={[needPacket]}
+      />,
+    );
+
+    expect(screen.getAllByText(/Sponsor: To be assigned/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Sponsor: Unassigned/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/SPONSOR: UNASSIGNED/i)).not.toBeInTheDocument();
+  });
 });

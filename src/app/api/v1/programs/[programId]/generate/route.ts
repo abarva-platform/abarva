@@ -18,6 +18,7 @@ import {
 } from "@/lib/deliverables/moves-generate-deps";
 import { getDeliverableProfile } from "@/lib/deliverables/profiles/registry";
 import { draftModuleDeliverable } from "@/lib/programs/nexus";
+import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,6 +32,16 @@ const PHASE_LABEL: Record<number, string> = {
   4: "P4 Roadmap & Business Case",
   5: "P5 Mobilize & Handoff",
 };
+
+function safeArtifactFileName(title: string, artifact: string): string {
+  const base = (title || artifact)
+    .replace(/[^\w\s.-]+/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .toLowerCase();
+  return `${base || artifact}.html`;
+}
 
 export async function POST(
   req: Request,
@@ -160,9 +171,44 @@ export async function POST(
     },
   });
 
+  const savedArtifact = await saveMoveArtifact(ctx, {
+    moveId: programId,
+    phase: targetPhase,
+    artifactType: artifact,
+    artifactFamily: "generated_deliverable",
+    title: body.title ?? profile.title,
+    description:
+      "Generated through the governed Moves artifact generation path. Review before final client use.",
+    fileName: safeArtifactFileName(body.title ?? profile.title, artifact),
+    fileFormat: "html",
+    body: result.html,
+    status: "draft",
+    generatedBy: ctx.email ?? ctx.userId ?? "moves-generate",
+    qualityScore: result.goldenBar.pass ? 96 : null,
+    unsupportedClaimsCount: 0,
+    sourceBasis: "moves_solution_context",
+    confidence: result.goldenBar.hasDataGap ? "medium" : "high",
+    citationReady: !result.goldenBar.hasDataGap,
+    metadata: {
+      deliverableId,
+      versionId,
+      phaseLabel,
+      outputFormat: "html",
+      qualityStatus: result.goldenBar.pass ? "Passed" : "Needs review",
+      goldenBarStatus: result.goldenBar.pass ? "Passed" : "Failed",
+      artifactStatus: "Draft",
+      openItems: [],
+      reviewStatus: "not_reviewed",
+      clientFacingVersionLabel: "Version 1",
+    },
+  });
+
   return Response.json({
     deliverableId,
     versionId,
+    artifactId: savedArtifact.artifactId,
+    artifactVersion: savedArtifact.version,
+    artifactBlobStored: savedArtifact.blobStored,
     content: result.html,
     phase: targetPhase,
     deliverableKey: artifact,

@@ -45,6 +45,7 @@ import { PhaseApproveAndBuild } from "./PhaseApproveAndBuild";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { MoveEvidenceNeedsPanel } from "./MoveEvidenceNeedsPanel";
+import { sponsorDisplayName } from "./sponsor-display";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -1502,7 +1503,7 @@ export function StrategicMovePhaseClient({
   ).length;
   const knownSoFarItems = [
     `Use case: ${move.name}`,
-    `Sponsor: ${move.sponsor?.name ?? "Unassigned"}`,
+    `Sponsor: ${sponsorDisplayName(move.sponsor)}`,
     `Capture: ${filledCount} of ${canvasSections.length} inputs saved`,
     `Artifacts: ${phaseArtifactCount} phase artifact${phaseArtifactCount === 1 ? "" : "s"} on file`,
     gateItemsWithStatus.length > 0
@@ -1699,7 +1700,7 @@ export function StrategicMovePhaseClient({
                 <h1 className={styles.detailTitle}>{move.name}</h1>
                 <div className={styles.detailId}>
                   {move.archetype} &middot; {config.label} &middot; Sponsor:{" "}
-                  {(move.sponsor?.name ?? "Unassigned").toUpperCase()}
+                  {sponsorDisplayName(move.sponsor).toUpperCase()}
                 </div>
               </div>
             </div>

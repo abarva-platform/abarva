@@ -9,6 +9,7 @@ import {
   moveValue,
   relativeTime,
 } from "./move-list-format";
+import { sponsorDisplayName } from "./sponsor-display";
 
 function statusDotClass(color: StrategicMove["statusColor"]): string {
   if (color === "red") return styles.legendRed;
@@ -161,7 +162,7 @@ export function MoveListTable({
                 className={`${styles.tblCol} ${styles.colSponsor}`}
                 role="cell"
               >
-                {move.sponsor?.name ?? "Unassigned"}
+                {sponsorDisplayName(move.sponsor)}
               </span>
 
               <span
