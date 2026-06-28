@@ -13,6 +13,10 @@ import {
   modelTokenBudgetForArtifact,
   STRATEGIC_MOVES_DRAFT_CAVEAT,
 } from "../strategic-moves-artifact-standard";
+import {
+  getPhaseDeliverablePackageContract,
+  renderPhaseDeliverablePackagePrompt,
+} from "@/lib/programs/phase-deliverable-package-contract";
 
 describe("VisualArtifactContract — richness as a contract", () => {
   it("the architecture artifact requires conceptual/logical/physical + pattern visuals", () => {
@@ -113,6 +117,59 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(p.user).toContain("Current-State Handoff Map");
     expect(p.user).toContain("Evidence Coverage table");
     expect(p.user).toContain("Process vs Data vs Policy vs Ownership vs AI Matrix");
+    expect(p.user).toContain("Word-ready Current State Process Document structure");
+    expect(p.user).toContain("Workshop Agenda and Session Notes appendix");
+    expect(p.user).toContain("leadership, teams, decision rights, locations");
+  });
+
+  it("P2 package contract makes Word the editable phase record and HTML the visual companion", () => {
+    const contract = getPhaseDeliverablePackageContract({
+      artifact: "discovery_report",
+      phase: 2,
+    });
+    expect(contract.formalEditableRecordRequired).toBe(true);
+    expect(contract.primaryEditableRecordLabel).toBe(
+      "Current State Process and Diagnostic Word Document",
+    );
+    expect(contract.outputs.map((output) => output.kind)).toEqual(
+      expect.arrayContaining([
+        "docx_editable_phase_record",
+        "html_visual_review_companion",
+        "evidence_provenance_manifest",
+        "workshop_evidence_pack",
+        "derived_visualization_inventory",
+      ]),
+    );
+    expect(contract.wordDocumentSections.join(" ")).toContain(
+      "Current-state business process narrative before diagrams",
+    );
+    expect(contract.wordDocumentSections.join(" ")).toContain(
+      "Storyline and narrative arc",
+    );
+    expect(contract.wordDocumentSections.join(" ")).toContain(
+      "Change, adoption, culture, and readiness observations",
+    );
+    expect(contract.requiredWorkshopEvidence).toContain(
+      "Business process discovery workshop agenda",
+    );
+    expect(contract.requiredWorkshopEvidence).toContain(
+      "Client-confirmed process corrections",
+    );
+  });
+
+  it("phase package prompt labels AbarVa-derived visuals separately from client evidence", () => {
+    const prompt = renderPhaseDeliverablePackagePrompt({
+      artifact: "discovery_report",
+      phase: 2,
+    });
+    expect(prompt).toContain("The HTML artifact is the visual review companion");
+    expect(prompt).toContain("executive summary, storyline, narrative arc");
+    expect(prompt).toContain("Required workshop/session evidence");
+    expect(prompt).toContain(
+      "AbarVa-generated visualization derived from client-loaded evidence",
+    );
+    expect(prompt).toContain("client-loaded evidence");
+    expect(prompt).toContain("operator proof");
   });
 
   it("P2 diagnostic prompt foregrounds metricsThatMatter and evidence taxonomy when available", () => {

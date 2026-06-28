@@ -5,6 +5,7 @@ import type { GenerateArtifactResult } from "@/lib/deliverables/generate-artifac
 import { getDeliverableProfile } from "@/lib/deliverables/profiles/registry";
 import { buildGeneratedPhaseDigest } from "@/lib/deliverables/generated-phase-digest";
 import { draftModuleDeliverable } from "@/lib/programs/nexus";
+import { getPhaseDeliverablePackageContract } from "@/lib/programs/phase-deliverable-package-contract";
 import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
 import type { ProgramCore, TenancyCtx } from "@/lib/programs/types.db";
 
@@ -67,6 +68,7 @@ export async function persistMoveGeneratedArtifact({
   result,
 }: PersistMoveGeneratedArtifactInput): Promise<PersistMoveGeneratedArtifactResult> {
   const profile = getDeliverableProfile(artifact);
+  const deliverablePackageContract = getPhaseDeliverablePackageContract({ artifact, phase });
   const phaseLabel = PHASE_LABEL[phase] ?? `P${phase}`;
   const artifactTitle = title ?? profile.title;
   const solutionContextDigest = buildGeneratedPhaseDigest({
@@ -115,6 +117,12 @@ export async function persistMoveGeneratedArtifact({
       phase,
       artifact,
       output_format: "html",
+      output_role: "html_visual_review_companion",
+      editable_word_equivalent_required:
+        deliverablePackageContract.formalEditableRecordRequired,
+      primary_editable_record_label:
+        deliverablePackageContract.primaryEditableRecordLabel,
+      deliverablePackageContract,
       mode: "program_generate",
       solutionContextDigest,
       solution_context: result.context,
@@ -130,6 +138,13 @@ export async function persistMoveGeneratedArtifact({
       phase_label: phaseLabel,
       artifact,
       output_format: "html",
+      output_role: "html_visual_review_companion",
+      provenance_category: "abarva_generated_deliverable",
+      editable_word_equivalent_required:
+        deliverablePackageContract.formalEditableRecordRequired,
+      required_companion_outputs: deliverablePackageContract.outputs.map(
+        (output) => output.kind,
+      ),
       generation_mode: result.generationMode,
     },
   });
@@ -158,6 +173,17 @@ export async function persistMoveGeneratedArtifact({
       versionId,
       phaseLabel,
       outputFormat: "html",
+      outputRole: "html_visual_review_companion",
+      provenanceCategory: "abarva_generated_deliverable",
+      editableWordEquivalentRequired:
+        deliverablePackageContract.formalEditableRecordRequired,
+      primaryEditableRecordLabel:
+        deliverablePackageContract.primaryEditableRecordLabel,
+      requiredCompanionOutputs: deliverablePackageContract.outputs,
+      wordEquivalentSections: deliverablePackageContract.wordDocumentSections,
+      requiredWorkshopEvidence:
+        deliverablePackageContract.requiredWorkshopEvidence,
+      provenanceRules: deliverablePackageContract.provenanceRules,
       generationMode: result.generationMode,
       draftOnly: result.draftOnly,
       draftCaveats: result.draftCaveats,
