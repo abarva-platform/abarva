@@ -500,6 +500,7 @@ function sectionCapturedContent(
 
 type PanelKey =
   | "gate"
+  | "needs"
   | "readiness"
   | "start"
   | "plan"
@@ -1440,6 +1441,7 @@ export function StrategicMovePhaseClient({
     canvasSections.length > 0 && filledCount < canvasSections.length;
   const hardGapCount =
     isCurrentPhase && readiness ? readiness.hardGaps.length : 0;
+  const hasEvidenceNeedPackets = evidenceNeedPackets.length > 0;
 
   // One state machine drives both the next-action strip and the auto-expand:
   // captures incomplete → CAPTURE; else hard gaps → READINESS; else GENERATE.
@@ -1458,7 +1460,10 @@ export function StrategicMovePhaseClient({
 
   const [openPanels, setOpenPanels] = useState<
     Partial<Record<PanelKey, boolean>>
-  >(() => ({ [autoOpenPanel]: true }));
+  >(() => ({
+    [autoOpenPanel]: true,
+    needs: hasEvidenceNeedPackets,
+  }));
   const isPanelOpen = (key: PanelKey) => openPanels[key] ?? false;
   const setPanelOpen = useCallback(
     (key: PanelKey, open: boolean) =>
@@ -1860,6 +1865,43 @@ export function StrategicMovePhaseClient({
                 )}
               </section>
             </CollapsePanel>
+
+            {/* Phase operating layer: missing evidence, draft boundary, blockers */}
+            {hasEvidenceNeedPackets && (
+              <CollapsePanel
+                id={`ws-canvas-p${phaseNum}-needs-collapse`}
+                title="What We Need Before This Phase Is Final"
+                meta={`— ${evidenceNeedPackets.length} item${evidenceNeedPackets.length === 1 ? "" : "s"}`}
+                open={isPanelOpen("needs")}
+                onOpenChange={(open) => setPanelOpen("needs", open)}
+              >
+                <MoveEvidenceNeedsPanel
+                  packets={evidenceNeedPackets}
+                  title="What We Need Next"
+                  compact
+                />
+                <div
+                  data-testid="moves-phase-review-feedback-loop"
+                  style={{
+                    marginTop: 10,
+                    padding: "9px 12px",
+                    borderRadius: 8,
+                    border: "1px solid rgba(27,43,92,0.14)",
+                    background: "rgba(27,43,92,0.04)",
+                    fontSize: 12,
+                    color: "var(--abarva-slate)",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <strong>Review feedback loop:</strong>{" "}
+                  {reviewFeedbackCount > 0
+                    ? `${reviewFeedbackCount} requested edit${
+                        reviewFeedbackCount === 1 ? "" : "s"
+                      } parsed from uploaded review files. Re-run this phase to create the next artifact version with the approved changes.`
+                    : "Upload client comments or review notes with the paperclip. AbarVa will extract requested edits, show them here, and the next phase run becomes the regenerated version."}
+                </div>
+              </CollapsePanel>
+            )}
 
             {/* Current-state readiness panel (estate-derived instruments) */}
             {isCurrentPhase &&
