@@ -82,7 +82,8 @@ function workerCtxForRun(run: DeliverableRunRecord): TenancyCtx {
     clientId: run.clientId,
     clientKey: run.tenantKey,
     userId: run.userId,
-    role: "operator",
+    tenantRole: "tenant_admin",
+    role: "client_admin",
     email: null,
   };
 }
