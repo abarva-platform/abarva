@@ -1,0 +1,93 @@
+mapping_id,application_id,capability_id,support_type,process_area,user_count,module,source_file,source_row,value_source
+APX-SFM-001,APX-APP-001,APX-CAP-001,primary,Store selling and clienteling,350,merchandising,family-2-technology-estate/F06_system-function-mapping.csv,2,tenant_file
+APX-SFM-002,APX-APP-002,APX-CAP-002,secondary,POS checkout and payments,570,warehouse,family-2-technology-estate/F06_system-function-mapping.csv,3,tenant_file
+APX-SFM-003,APX-APP-003,APX-CAP-003,secondary,Omnichannel order management,790,order_management,family-2-technology-estate/F06_system-function-mapping.csv,4,tenant_file
+APX-SFM-004,APX-APP-004,APX-CAP-004,primary,Inventory availability and ATP,1010,pos,family-2-technology-estate/F06_system-function-mapping.csv,5,tenant_file
+APX-SFM-005,APX-APP-005,APX-CAP-005,secondary,Demand forecasting and replenishment,1230,ecommerce,family-2-technology-estate/F06_system-function-mapping.csv,6,tenant_file
+APX-SFM-006,APX-APP-006,APX-CAP-006,secondary,Merchandise planning and allocation,1450,personalization,family-2-technology-estate/F06_system-function-mapping.csv,7,tenant_file
+APX-SFM-007,APX-APP-007,APX-CAP-007,primary,Pricing and markdown optimization,1670,forecasting,family-2-technology-estate/F06_system-function-mapping.csv,8,tenant_file
+APX-SFM-008,APX-APP-008,APX-CAP-008,secondary,Loyalty personalization,1890,erp_finance,family-2-technology-estate/F06_system-function-mapping.csv,9,tenant_file
+APX-SFM-009,APX-APP-009,APX-CAP-009,secondary,Retail media activation,2110,itsm,family-2-technology-estate/F06_system-function-mapping.csv,10,tenant_file
+APX-SFM-010,APX-APP-010,APX-CAP-010,primary,Supply chain visibility,2330,data_platform,family-2-technology-estate/F06_system-function-mapping.csv,11,tenant_file
+APX-SFM-011,APX-APP-011,APX-CAP-011,secondary,Labor scheduling,2550,analytics,family-2-technology-estate/F06_system-function-mapping.csv,12,tenant_file
+APX-SFM-012,APX-APP-012,APX-CAP-012,secondary,Shrink and fraud prevention,2770,workforce,family-2-technology-estate/F06_system-function-mapping.csv,13,tenant_file
+APX-SFM-013,APX-APP-013,APX-CAP-013,primary,Returns and reverse logistics,2990,merchandising,family-2-technology-estate/F06_system-function-mapping.csv,14,tenant_file
+APX-SFM-014,APX-APP-014,APX-CAP-014,secondary,Customer service and contact center,3210,warehouse,family-2-technology-estate/F06_system-function-mapping.csv,15,tenant_file
+APX-SFM-015,APX-APP-015,APX-CAP-001,secondary,Store selling and clienteling,3430,order_management,family-2-technology-estate/F06_system-function-mapping.csv,16,tenant_file
+APX-SFM-016,APX-APP-016,APX-CAP-002,primary,POS checkout and payments,3650,pos,family-2-technology-estate/F06_system-function-mapping.csv,17,tenant_file
+APX-SFM-017,APX-APP-017,APX-CAP-003,secondary,Omnichannel order management,3870,ecommerce,family-2-technology-estate/F06_system-function-mapping.csv,18,tenant_file
+APX-SFM-018,APX-APP-018,APX-CAP-004,secondary,Inventory availability and ATP,4090,personalization,family-2-technology-estate/F06_system-function-mapping.csv,19,tenant_file
+APX-SFM-019,APX-APP-019,APX-CAP-005,primary,Demand forecasting and replenishment,4310,forecasting,family-2-technology-estate/F06_system-function-mapping.csv,20,tenant_file
+APX-SFM-020,APX-APP-020,APX-CAP-006,secondary,Merchandise planning and allocation,4530,erp_finance,family-2-technology-estate/F06_system-function-mapping.csv,21,tenant_file
+APX-SFM-021,APX-APP-021,APX-CAP-007,secondary,Pricing and markdown optimization,4750,itsm,family-2-technology-estate/F06_system-function-mapping.csv,22,tenant_file
+APX-SFM-022,APX-APP-022,APX-CAP-008,primary,Loyalty personalization,4970,data_platform,family-2-technology-estate/F06_system-function-mapping.csv,23,tenant_file
+APX-SFM-023,APX-APP-023,APX-CAP-009,secondary,Retail media activation,5190,analytics,family-2-technology-estate/F06_system-function-mapping.csv,24,tenant_file
+APX-SFM-024,APX-APP-024,APX-CAP-010,secondary,Supply chain visibility,5410,workforce,family-2-technology-estate/F06_system-function-mapping.csv,25,tenant_file
+APX-SFM-025,APX-APP-025,APX-CAP-011,primary,Labor scheduling,5630,merchandising,family-2-technology-estate/F06_system-function-mapping.csv,26,tenant_file
+APX-SFM-026,APX-APP-026,APX-CAP-012,secondary,Shrink and fraud prevention,5850,warehouse,family-2-technology-estate/F06_system-function-mapping.csv,27,tenant_file
+APX-SFM-027,APX-APP-027,APX-CAP-013,secondary,Returns and reverse logistics,6070,order_management,family-2-technology-estate/F06_system-function-mapping.csv,28,tenant_file
+APX-SFM-028,APX-APP-028,APX-CAP-014,primary,Customer service and contact center,6290,pos,family-2-technology-estate/F06_system-function-mapping.csv,29,tenant_file
+APX-SFM-029,APX-APP-029,APX-CAP-001,secondary,Store selling and clienteling,6510,ecommerce,family-2-technology-estate/F06_system-function-mapping.csv,30,tenant_file
+APX-SFM-030,APX-APP-030,APX-CAP-002,secondary,POS checkout and payments,6730,personalization,family-2-technology-estate/F06_system-function-mapping.csv,31,tenant_file
+APX-SFM-031,APX-APP-031,APX-CAP-003,primary,Omnichannel order management,6950,forecasting,family-2-technology-estate/F06_system-function-mapping.csv,32,tenant_file
+APX-SFM-032,APX-APP-032,APX-CAP-004,secondary,Inventory availability and ATP,7170,erp_finance,family-2-technology-estate/F06_system-function-mapping.csv,33,tenant_file
+APX-SFM-033,APX-APP-033,APX-CAP-005,secondary,Demand forecasting and replenishment,7390,itsm,family-2-technology-estate/F06_system-function-mapping.csv,34,tenant_file
+APX-SFM-034,APX-APP-034,APX-CAP-006,primary,Merchandise planning and allocation,7610,data_platform,family-2-technology-estate/F06_system-function-mapping.csv,35,tenant_file
+APX-SFM-035,APX-APP-035,APX-CAP-007,secondary,Pricing and markdown optimization,7830,analytics,family-2-technology-estate/F06_system-function-mapping.csv,36,tenant_file
+APX-SFM-036,APX-APP-036,APX-CAP-008,secondary,Loyalty personalization,8050,workforce,family-2-technology-estate/F06_system-function-mapping.csv,37,tenant_file
+APX-SFM-037,APX-APP-037,APX-CAP-009,primary,Retail media activation,8270,merchandising,family-2-technology-estate/F06_system-function-mapping.csv,38,tenant_file
+APX-SFM-038,APX-APP-038,APX-CAP-010,secondary,Supply chain visibility,8490,warehouse,family-2-technology-estate/F06_system-function-mapping.csv,39,tenant_file
+APX-SFM-039,APX-APP-039,APX-CAP-011,secondary,Labor scheduling,8710,order_management,family-2-technology-estate/F06_system-function-mapping.csv,40,tenant_file
+APX-SFM-040,APX-APP-040,APX-CAP-012,primary,Shrink and fraud prevention,8930,pos,family-2-technology-estate/F06_system-function-mapping.csv,41,tenant_file
+APX-SFM-041,APX-APP-041,APX-CAP-013,secondary,Returns and reverse logistics,9150,ecommerce,family-2-technology-estate/F06_system-function-mapping.csv,42,tenant_file
+APX-SFM-042,APX-APP-042,APX-CAP-014,secondary,Customer service and contact center,9370,personalization,family-2-technology-estate/F06_system-function-mapping.csv,43,tenant_file
+APX-SFM-043,APX-APP-043,APX-CAP-001,primary,Store selling and clienteling,9590,forecasting,family-2-technology-estate/F06_system-function-mapping.csv,44,tenant_file
+APX-SFM-044,APX-APP-044,APX-CAP-002,secondary,POS checkout and payments,9810,erp_finance,family-2-technology-estate/F06_system-function-mapping.csv,45,tenant_file
+APX-SFM-045,APX-APP-045,APX-CAP-003,secondary,Omnichannel order management,10030,itsm,family-2-technology-estate/F06_system-function-mapping.csv,46,tenant_file
+APX-SFM-046,APX-APP-046,APX-CAP-004,primary,Inventory availability and ATP,10250,data_platform,family-2-technology-estate/F06_system-function-mapping.csv,47,tenant_file
+APX-SFM-047,APX-APP-047,APX-CAP-005,secondary,Demand forecasting and replenishment,10470,analytics,family-2-technology-estate/F06_system-function-mapping.csv,48,tenant_file
+APX-SFM-048,APX-APP-048,APX-CAP-006,secondary,Merchandise planning and allocation,10690,workforce,family-2-technology-estate/F06_system-function-mapping.csv,49,tenant_file
+APX-SFM-049,APX-APP-049,APX-CAP-007,primary,Pricing and markdown optimization,10910,merchandising,family-2-technology-estate/F06_system-function-mapping.csv,50,tenant_file
+APX-SFM-050,APX-APP-050,APX-CAP-008,secondary,Loyalty personalization,11130,warehouse,family-2-technology-estate/F06_system-function-mapping.csv,51,tenant_file
+APX-SFM-051,APX-APP-051,APX-CAP-009,secondary,Retail media activation,11350,order_management,family-2-technology-estate/F06_system-function-mapping.csv,52,tenant_file
+APX-SFM-052,APX-APP-052,APX-CAP-010,primary,Supply chain visibility,11570,pos,family-2-technology-estate/F06_system-function-mapping.csv,53,tenant_file
+APX-SFM-053,APX-APP-053,APX-CAP-011,secondary,Labor scheduling,11790,ecommerce,family-2-technology-estate/F06_system-function-mapping.csv,54,tenant_file
+APX-SFM-054,APX-APP-054,APX-CAP-012,secondary,Shrink and fraud prevention,12010,personalization,family-2-technology-estate/F06_system-function-mapping.csv,55,tenant_file
+APX-SFM-055,APX-APP-055,APX-CAP-013,primary,Returns and reverse logistics,12230,forecasting,family-2-technology-estate/F06_system-function-mapping.csv,56,tenant_file
+APX-SFM-056,APX-APP-056,APX-CAP-014,secondary,Customer service and contact center,12450,erp_finance,family-2-technology-estate/F06_system-function-mapping.csv,57,tenant_file
+APX-SFM-057,APX-APP-057,APX-CAP-001,secondary,Store selling and clienteling,12670,itsm,family-2-technology-estate/F06_system-function-mapping.csv,58,tenant_file
+APX-SFM-058,APX-APP-058,APX-CAP-002,primary,POS checkout and payments,12890,data_platform,family-2-technology-estate/F06_system-function-mapping.csv,59,tenant_file
+APX-SFM-059,APX-APP-059,APX-CAP-003,secondary,Omnichannel order management,13110,analytics,family-2-technology-estate/F06_system-function-mapping.csv,60,tenant_file
+APX-SFM-060,APX-APP-060,APX-CAP-004,secondary,Inventory availability and ATP,13330,workforce,family-2-technology-estate/F06_system-function-mapping.csv,61,tenant_file
+APX-SFM-061,APX-APP-061,APX-CAP-005,primary,Demand forecasting and replenishment,13550,merchandising,family-2-technology-estate/F06_system-function-mapping.csv,62,tenant_file
+APX-SFM-062,APX-APP-062,APX-CAP-006,secondary,Merchandise planning and allocation,13770,warehouse,family-2-technology-estate/F06_system-function-mapping.csv,63,tenant_file
+APX-SFM-063,APX-APP-063,APX-CAP-007,secondary,Pricing and markdown optimization,13990,order_management,family-2-technology-estate/F06_system-function-mapping.csv,64,tenant_file
+APX-SFM-064,APX-APP-064,APX-CAP-008,primary,Loyalty personalization,14210,pos,family-2-technology-estate/F06_system-function-mapping.csv,65,tenant_file
+APX-SFM-065,APX-APP-065,APX-CAP-009,secondary,Retail media activation,14430,ecommerce,family-2-technology-estate/F06_system-function-mapping.csv,66,tenant_file
+APX-SFM-066,APX-APP-066,APX-CAP-010,secondary,Supply chain visibility,14650,personalization,family-2-technology-estate/F06_system-function-mapping.csv,67,tenant_file
+APX-SFM-067,APX-APP-067,APX-CAP-011,primary,Labor scheduling,14870,forecasting,family-2-technology-estate/F06_system-function-mapping.csv,68,tenant_file
+APX-SFM-068,APX-APP-068,APX-CAP-012,secondary,Shrink and fraud prevention,15090,erp_finance,family-2-technology-estate/F06_system-function-mapping.csv,69,tenant_file
+APX-SFM-069,APX-APP-069,APX-CAP-013,secondary,Returns and reverse logistics,15310,itsm,family-2-technology-estate/F06_system-function-mapping.csv,70,tenant_file
+APX-SFM-070,APX-APP-070,APX-CAP-014,primary,Customer service and contact center,15530,data_platform,family-2-technology-estate/F06_system-function-mapping.csv,71,tenant_file
+APX-SFM-071,APX-APP-071,APX-CAP-001,secondary,Store selling and clienteling,15750,analytics,family-2-technology-estate/F06_system-function-mapping.csv,72,tenant_file
+APX-SFM-072,APX-APP-072,APX-CAP-002,secondary,POS checkout and payments,15970,workforce,family-2-technology-estate/F06_system-function-mapping.csv,73,tenant_file
+APX-SFM-073,APX-APP-073,APX-CAP-003,primary,Omnichannel order management,16190,merchandising,family-2-technology-estate/F06_system-function-mapping.csv,74,tenant_file
+APX-SFM-074,APX-APP-074,APX-CAP-004,secondary,Inventory availability and ATP,16410,warehouse,family-2-technology-estate/F06_system-function-mapping.csv,75,tenant_file
+APX-SFM-075,APX-APP-075,APX-CAP-005,secondary,Demand forecasting and replenishment,16630,order_management,family-2-technology-estate/F06_system-function-mapping.csv,76,tenant_file
+APX-SFM-076,APX-APP-076,APX-CAP-006,primary,Merchandise planning and allocation,16850,pos,family-2-technology-estate/F06_system-function-mapping.csv,77,tenant_file
+APX-SFM-077,APX-APP-077,APX-CAP-007,secondary,Pricing and markdown optimization,17070,ecommerce,family-2-technology-estate/F06_system-function-mapping.csv,78,tenant_file
+APX-SFM-078,APX-APP-078,APX-CAP-008,secondary,Loyalty personalization,17290,personalization,family-2-technology-estate/F06_system-function-mapping.csv,79,tenant_file
+APX-SFM-079,APX-APP-079,APX-CAP-009,primary,Retail media activation,17510,forecasting,family-2-technology-estate/F06_system-function-mapping.csv,80,tenant_file
+APX-SFM-080,APX-APP-080,APX-CAP-010,secondary,Supply chain visibility,17730,erp_finance,family-2-technology-estate/F06_system-function-mapping.csv,81,tenant_file
+APX-SFM-081,APX-APP-081,APX-CAP-011,secondary,Labor scheduling,17950,itsm,family-2-technology-estate/F06_system-function-mapping.csv,82,tenant_file
+APX-SFM-082,APX-APP-082,APX-CAP-012,primary,Shrink and fraud prevention,18170,data_platform,family-2-technology-estate/F06_system-function-mapping.csv,83,tenant_file
+APX-SFM-083,APX-APP-083,APX-CAP-013,secondary,Returns and reverse logistics,18390,analytics,family-2-technology-estate/F06_system-function-mapping.csv,84,tenant_file
+APX-SFM-084,APX-APP-084,APX-CAP-014,secondary,Customer service and contact center,18610,workforce,family-2-technology-estate/F06_system-function-mapping.csv,85,tenant_file
+APX-SFM-085,APX-APP-085,APX-CAP-001,primary,Store selling and clienteling,18830,merchandising,family-2-technology-estate/F06_system-function-mapping.csv,86,tenant_file
+APX-SFM-086,APX-APP-086,APX-CAP-002,secondary,POS checkout and payments,19050,warehouse,family-2-technology-estate/F06_system-function-mapping.csv,87,tenant_file
+APX-SFM-087,APX-APP-087,APX-CAP-003,secondary,Omnichannel order management,19270,order_management,family-2-technology-estate/F06_system-function-mapping.csv,88,tenant_file
+APX-SFM-088,APX-APP-088,APX-CAP-004,primary,Inventory availability and ATP,19490,pos,family-2-technology-estate/F06_system-function-mapping.csv,89,tenant_file
+APX-SFM-089,APX-APP-089,APX-CAP-005,secondary,Demand forecasting and replenishment,19710,ecommerce,family-2-technology-estate/F06_system-function-mapping.csv,90,tenant_file
+APX-SFM-090,APX-APP-090,APX-CAP-006,secondary,Merchandise planning and allocation,19930,personalization,family-2-technology-estate/F06_system-function-mapping.csv,91,tenant_file
+APX-SFM-091,APX-APP-091,APX-CAP-007,primary,Pricing and markdown optimization,20150,forecasting,family-2-technology-estate/F06_system-function-mapping.csv,92,tenant_file
+APX-SFM-092,APX-APP-092,APX-CAP-008,secondary,Loyalty personalization,20370,erp_finance,family-2-technology-estate/F06_system-function-mapping.csv,93,tenant_file

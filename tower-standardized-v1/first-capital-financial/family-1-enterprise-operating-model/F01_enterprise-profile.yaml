@@ -1,0 +1,31 @@
+company_name: First Capital Financial
+synthetic_peer_anchor: Money-center / large commercial bank with US Bancorp / PNC-scale consumer + commercial + cards + wealth complexity
+revenue_fy25_usd: 52000000000
+total_assets_usd: 650000000000
+employees_fte: 65000
+branches: 2400
+retail_customers: 28000000
+commercial_clients: 410000
+cards_in_force: 41000000
+assets_under_management_usd: 540000000000
+annual_technology_budget_usd: 2400000000
+annual_ai_and_data_budget_usd: 72000000
+efficiency_ratio_pct: 61.4
+net_interest_margin_pct: 2.78
+cost_of_risk_bps: 48
+digital_active_adoption_pct: 74
+fraud_loss_bps: 5.2
+current_cloud_data_capability: partial_lakehouse_core_still_on_mainframe
+target_data_platform: Databricks on AWS with Snowflake finance mart
+primary_core_banking: FIS IST/Profile on mainframe
+cards_platform: TSYS with Mastercard/Visa rails
+aml_fraud_core: NICE Actimize plus Feedzai real-time scoring
+total_applications_estate: 1850
+core_materialized_applications: 200
+regulatory_anchors: OCC; Federal Reserve; FDIC; CFPB; SR 11-7; BSA/AML; PCI-DSS; SOX
+tenant_key: first-capital
+client_id: 09d9a267-e89c-4fe1-831f-337a62787ec5
+generated_at: 2026-06-18T00:00:00Z
+total_revenue_fy25_usd: 52000000000
+it_budget_fy25_usd: 2400000000
+ai_spend_fy25_usd: 72000000

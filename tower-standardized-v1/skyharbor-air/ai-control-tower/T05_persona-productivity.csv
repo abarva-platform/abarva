@@ -1,0 +1,19 @@
+persona_id,persona_name,ai_tool_or_agent,baseline_metric,baseline_value,current_value,quality_guardrail,quality_status,annualized_value_usd,evidence_id,source_file,source_row,value_source
+SHA-PER-001,IROPS duty manager,M365 Copilot,cycle_time_minutes,100,82,CSAT unchanged,green,1200000,EVID-SHA-0001,ai-control-tower/T05_persona-productivity.csv,2,tenant_file
+SHA-PER-002,Dispatcher,GitHub Copilot,cases_per_shift,107,87,audit pass,amber,2050000,EVID-SHA-0002,ai-control-tower/T05_persona-productivity.csv,3,tenant_file
+SHA-PER-003,Crew scheduler,Codex,deflection_pct,114,92,safety no-regression,red,2900000,EVID-SHA-0003,ai-control-tower/T05_persona-productivity.csv,4,tenant_file
+SHA-PER-004,Gate agent,Claude Code,incident_mttr_hours,121,97,human approval required,green,3750000,EVID-SHA-0004,ai-control-tower/T05_persona-productivity.csv,5,tenant_file
+SHA-PER-005,Ramp supervisor,Cursor,cycle_time_minutes,128,102,CSAT unchanged,amber,4600000,EVID-SHA-0005,ai-control-tower/T05_persona-productivity.csv,6,tenant_file
+SHA-PER-006,Aircraft maintenance controller,AWS Bedrock,cases_per_shift,135,107,audit pass,red,5450000,EVID-SHA-0006,ai-control-tower/T05_persona-productivity.csv,7,tenant_file
+SHA-PER-007,Contact center agent,ServiceNow Now Assist,deflection_pct,142,112,safety no-regression,green,6300000,EVID-SHA-0007,ai-control-tower/T05_persona-productivity.csv,8,tenant_file
+SHA-PER-008,Revenue analyst,SAP Joule,incident_mttr_hours,149,117,human approval required,amber,7150000,EVID-SHA-0008,ai-control-tower/T05_persona-productivity.csv,9,tenant_file
+SHA-PER-009,Loyalty marketing manager,Salesforce Einstein,cycle_time_minutes,156,122,CSAT unchanged,red,8000000,EVID-SHA-0001,ai-control-tower/T05_persona-productivity.csv,10,tenant_file
+SHA-PER-010,Data engineer,Adobe Sensei/Firefly,cases_per_shift,163,127,audit pass,green,8850000,EVID-SHA-0002,ai-control-tower/T05_persona-productivity.csv,11,tenant_file
+SHA-PER-011,BI analyst,SAS Viya AI,deflection_pct,170,132,safety no-regression,amber,9700000,EVID-SHA-0003,ai-control-tower/T05_persona-productivity.csv,12,tenant_file
+SHA-PER-012,Mainframe engineer,Teradata Vantage AI,incident_mttr_hours,177,137,human approval required,red,10550000,EVID-SHA-0004,ai-control-tower/T05_persona-productivity.csv,13,tenant_file
+SHA-PER-013,Cloud platform engineer,M365 Copilot,cycle_time_minutes,184,142,CSAT unchanged,green,11400000,EVID-SHA-0005,ai-control-tower/T05_persona-productivity.csv,14,tenant_file
+SHA-PER-014,SAP finance analyst,GitHub Copilot,cases_per_shift,191,147,audit pass,amber,12250000,EVID-SHA-0006,ai-control-tower/T05_persona-productivity.csv,15,tenant_file
+SHA-PER-015,Security analyst,Codex,deflection_pct,198,152,safety no-regression,red,13100000,EVID-SHA-0007,ai-control-tower/T05_persona-productivity.csv,16,tenant_file
+SHA-PER-016,Product manager digital app,Claude Code,incident_mttr_hours,205,157,human approval required,green,13950000,EVID-SHA-0008,ai-control-tower/T05_persona-productivity.csv,17,tenant_file
+SHA-PER-017,Vendor manager,Cursor,cycle_time_minutes,212,162,CSAT unchanged,amber,14800000,EVID-SHA-0001,ai-control-tower/T05_persona-productivity.csv,18,tenant_file
+SHA-PER-018,Executive decision owner,AWS Bedrock,cases_per_shift,219,167,audit pass,red,15650000,EVID-SHA-0002,ai-control-tower/T05_persona-productivity.csv,19,tenant_file

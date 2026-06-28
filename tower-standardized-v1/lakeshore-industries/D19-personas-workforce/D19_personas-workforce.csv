@@ -1,0 +1,11 @@
+persona_id,persona_name,business_area,population_count,ai_relevance,work_context,source_file,source_row,value_source
+LAK-PER-001,Treasury analyst,Treasury,96,High,"Cash positioning, bank portals, payments, liquidity forecast",D19-personas-workforce/D19_personas-workforce.csv,2,tenant_file
+LAK-PER-002,Cash manager,Treasury,42,High,"Daily cash, debt draw, bank fees, exception approval",D19-personas-workforce/D19_personas-workforce.csv,3,tenant_file
+LAK-PER-003,FX risk manager,Treasury,24,Medium,"Exposure capture, hedge accounting, scenario analysis",D19-personas-workforce/D19_personas-workforce.csv,4,tenant_file
+LAK-PER-004,Controller analyst,Finance,420,High,"Close, reconciliations, journal evidence, management packs",D19-personas-workforce/D19_personas-workforce.csv,5,tenant_file
+LAK-PER-005,FP&A analyst,Finance,560,High,"Forecasting, working capital, segment margin",D19-personas-workforce/D19_personas-workforce.csv,6,tenant_file
+LAK-PER-006,Plant finance manager,Manufacturing,180,Medium,"Plant P&L, inventory, production variances",D19-personas-workforce/D19_personas-workforce.csv,7,tenant_file
+LAK-PER-007,Procurement category manager,Procurement,240,High,"Contracts, supplier risk, spend analytics",D19-personas-workforce/D19_personas-workforce.csv,8,tenant_file
+LAK-PER-008,SAP functional analyst,ERP,320,High,"FI/CO/MM/SD issues, interfaces, close support",D19-personas-workforce/D19_personas-workforce.csv,9,tenant_file
+LAK-PER-009,Data engineer,Data Platform,210,High,"SAP, bank, treasury, procurement, BI pipelines",D19-personas-workforce/D19_personas-workforce.csv,10,tenant_file
+LAK-PER-010,Service desk analyst,IT Operations,220,Medium,"Finance app tickets, ERP incidents, knowledge articles",D19-personas-workforce/D19_personas-workforce.csv,11,tenant_file

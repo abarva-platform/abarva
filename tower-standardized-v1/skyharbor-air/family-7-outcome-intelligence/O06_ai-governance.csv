@@ -1,0 +1,38 @@
+gov_id,initiative_id,model_count,model_risk_tier,hitl,bias_monitoring,drift_monitoring,reg_regime,responsible_ai_gate_status,source_file,source_row,value_source
+GOV-0001,INIT-0006,5,2,Y,Periodic,Periodic,NIST RMF,In Review,family-7-outcome-intelligence/O06_ai-governance.csv,2,tenant_file
+GOV-0002,INIT-0007,11,1,Y,Periodic,Not Yet,Internal,In Review,family-7-outcome-intelligence/O06_ai-governance.csv,3,tenant_file
+GOV-0003,INIT-0008,11,2,N,Active,Not Yet,Internal,Passed,family-7-outcome-intelligence/O06_ai-governance.csv,4,tenant_file
+GOV-0004,INIT-0010,3,4,Y,Not Yet,Active,EU AI Act,Conditional,family-7-outcome-intelligence/O06_ai-governance.csv,5,tenant_file
+GOV-0005,INIT-0011,9,4,N,Periodic,Not Yet,Internal,Passed,family-7-outcome-intelligence/O06_ai-governance.csv,6,tenant_file
+GOV-0006,INIT-0012,5,4,Y,Not Yet,Periodic,NIST RMF,In Review,family-7-outcome-intelligence/O06_ai-governance.csv,7,tenant_file
+GOV-0007,INIT-0014,3,2,N,Not Yet,Periodic,NIST RMF,Passed,family-7-outcome-intelligence/O06_ai-governance.csv,8,tenant_file
+GOV-0008,INIT-0019,12,4,Y,Periodic,Not Yet,EU AI Act,In Review,family-7-outcome-intelligence/O06_ai-governance.csv,9,tenant_file
+GOV-0009,INIT-0020,3,2,N,Periodic,Periodic,NIST RMF,In Review,family-7-outcome-intelligence/O06_ai-governance.csv,10,tenant_file
+GOV-0010,INIT-0022,5,1,N,Active,Periodic,NIST RMF,Not Started,family-7-outcome-intelligence/O06_ai-governance.csv,11,tenant_file
+GOV-0011,INIT-0024,2,4,N,Periodic,Not Yet,Internal,Not Started,family-7-outcome-intelligence/O06_ai-governance.csv,12,tenant_file
+GOV-0012,INIT-0025,5,1,N,Active,Active,EU AI Act,Conditional,family-7-outcome-intelligence/O06_ai-governance.csv,13,tenant_file
+GOV-0013,INIT-0026,9,2,Y,Active,Periodic,NIST RMF,In Review,family-7-outcome-intelligence/O06_ai-governance.csv,14,tenant_file
+GOV-0014,INIT-0028,8,2,Y,Not Yet,Active,EU AI Act,In Review,family-7-outcome-intelligence/O06_ai-governance.csv,15,tenant_file
+GOV-0015,INIT-0029,6,1,N,Periodic,Periodic,EU AI Act,Passed,family-7-outcome-intelligence/O06_ai-governance.csv,16,tenant_file
+GOV-0016,INIT-0031,4,1,N,Active,Periodic,NIST RMF,Passed,family-7-outcome-intelligence/O06_ai-governance.csv,17,tenant_file
+GOV-0017,INIT-0032,9,2,N,Active,Not Yet,NIST RMF,Passed,family-7-outcome-intelligence/O06_ai-governance.csv,18,tenant_file
+GOV-0018,INIT-0037,12,2,Y,Periodic,Active,EU AI Act,Passed,family-7-outcome-intelligence/O06_ai-governance.csv,19,tenant_file
+GOV-0019,INIT-0039,5,3,N,Not Yet,Active,Internal,Conditional,family-7-outcome-intelligence/O06_ai-governance.csv,20,tenant_file
+GOV-0020,INIT-0041,12,3,Y,Active,Not Yet,NIST RMF,Conditional,family-7-outcome-intelligence/O06_ai-governance.csv,21,tenant_file
+GOV-0021,INIT-0045,10,4,Y,Not Yet,Periodic,NIST RMF,In Review,family-7-outcome-intelligence/O06_ai-governance.csv,22,tenant_file
+GOV-0022,INIT-0048,6,4,N,Active,Periodic,Internal,In Review,family-7-outcome-intelligence/O06_ai-governance.csv,23,tenant_file
+GOV-0023,INIT-0050,12,2,N,Periodic,Periodic,EU AI Act,Not Started,family-7-outcome-intelligence/O06_ai-governance.csv,24,tenant_file
+GOV-0024,INIT-0051,2,1,Y,Not Yet,Active,NIST RMF,Conditional,family-7-outcome-intelligence/O06_ai-governance.csv,25,tenant_file
+GOV-0025,INIT-0052,1,3,N,Periodic,Periodic,NIST RMF,Conditional,family-7-outcome-intelligence/O06_ai-governance.csv,26,tenant_file
+GOV-0026,INIT-0053,8,3,Y,Not Yet,Not Yet,Internal,Passed,family-7-outcome-intelligence/O06_ai-governance.csv,27,tenant_file
+GOV-0027,INIT-0056,10,3,N,Periodic,Not Yet,NIST RMF,In Review,family-7-outcome-intelligence/O06_ai-governance.csv,28,tenant_file
+GOV-0028,INIT-0058,6,2,N,Periodic,Not Yet,NIST RMF,Conditional,family-7-outcome-intelligence/O06_ai-governance.csv,29,tenant_file
+GOV-0029,INIT-0059,1,3,N,Not Yet,Not Yet,NIST RMF,Conditional,family-7-outcome-intelligence/O06_ai-governance.csv,30,tenant_file
+GOV-0030,INIT-0060,11,4,Y,Active,Not Yet,Internal,Passed,family-7-outcome-intelligence/O06_ai-governance.csv,31,tenant_file
+GOV-0031,INIT-0063,5,3,Y,Periodic,Not Yet,EU AI Act,Not Started,family-7-outcome-intelligence/O06_ai-governance.csv,32,tenant_file
+GOV-0032,INIT-0064,6,2,Y,Active,Periodic,Internal,Not Started,family-7-outcome-intelligence/O06_ai-governance.csv,33,tenant_file
+GOV-0033,INIT-0065,7,2,N,Active,Not Yet,NIST RMF,In Review,family-7-outcome-intelligence/O06_ai-governance.csv,34,tenant_file
+GOV-0034,INIT-0074,8,2,Y,Not Yet,Not Yet,EU AI Act,Conditional,family-7-outcome-intelligence/O06_ai-governance.csv,35,tenant_file
+GOV-0035,INIT-0100,9,4,N,Not Yet,Not Yet,NIST RMF,In Review,family-7-outcome-intelligence/O06_ai-governance.csv,36,tenant_file
+GOV-0036,INIT-0105,7,3,Y,Periodic,Periodic,Internal,Passed,family-7-outcome-intelligence/O06_ai-governance.csv,37,tenant_file
+GOV-0037,INIT-0119,9,3,N,Not Yet,Not Yet,NIST RMF,Conditional,family-7-outcome-intelligence/O06_ai-governance.csv,38,tenant_file

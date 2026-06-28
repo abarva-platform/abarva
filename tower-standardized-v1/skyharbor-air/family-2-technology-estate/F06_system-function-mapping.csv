@@ -1,0 +1,96 @@
+mapping_id,app_id,capability_id,support_type,process_area,user_count,operational_risk,source_file,source_row,value_source
+SHA-SFM-0001,SHA-APP-001,SHA-CAP-001,system_of_record,IROPS recovery decisioning,340,high,family-2-technology-estate/F06_system-function-mapping.csv,2,tenant_file
+SHA-SFM-0002,SHA-APP-002,SHA-CAP-002,supporting,Crew recovery and legality,930,medium,family-2-technology-estate/F06_system-function-mapping.csv,3,tenant_file
+SHA-SFM-0003,SHA-APP-003,SHA-CAP-003,supporting,Flight planning and dispatch,6200,medium,family-2-technology-estate/F06_system-function-mapping.csv,4,tenant_file
+SHA-SFM-0004,SHA-APP-004,SHA-CAP-004,primary,Airport turn management,18500,medium,family-2-technology-estate/F06_system-function-mapping.csv,5,tenant_file
+SHA-SFM-0005,SHA-APP-005,SHA-CAP-005,supporting,Baggage tracking and recovery,780,medium,family-2-technology-estate/F06_system-function-mapping.csv,6,tenant_file
+SHA-SFM-0006,SHA-APP-006,SHA-CAP-006,system_of_record,MRO predictive maintenance,132000,medium,family-2-technology-estate/F06_system-function-mapping.csv,7,tenant_file
+SHA-SFM-0007,SHA-APP-007,SHA-CAP-007,primary,Revenue management and pricing,340,medium,family-2-technology-estate/F06_system-function-mapping.csv,8,tenant_file
+SHA-SFM-0008,SHA-APP-008,SHA-CAP-008,supporting,NDC offer/order retailing,930,high,family-2-technology-estate/F06_system-function-mapping.csv,9,tenant_file
+SHA-SFM-0009,SHA-APP-009,SHA-CAP-009,supporting,Loyalty personalization,6200,medium,family-2-technology-estate/F06_system-function-mapping.csv,10,tenant_file
+SHA-SFM-0010,SHA-APP-010,SHA-CAP-010,primary,Digital concierge and journey orchestration,18500,medium,family-2-technology-estate/F06_system-function-mapping.csv,11,tenant_file
+SHA-SFM-0011,SHA-APP-011,SHA-CAP-011,system_of_record,Contact center service recovery,780,medium,family-2-technology-estate/F06_system-function-mapping.csv,12,tenant_file
+SHA-SFM-0012,SHA-APP-012,SHA-CAP-012,supporting,Cargo capacity optimization,132000,medium,family-2-technology-estate/F06_system-function-mapping.csv,13,tenant_file
+SHA-SFM-0013,SHA-APP-013,SHA-CAP-013,primary,Fuel optimization and sustainability,340,medium,family-2-technology-estate/F06_system-function-mapping.csv,14,tenant_file
+SHA-SFM-0014,SHA-APP-014,SHA-CAP-014,supporting,Revenue accounting and settlement,930,medium,family-2-technology-estate/F06_system-function-mapping.csv,15,tenant_file
+SHA-SFM-0015,SHA-APP-015,SHA-CAP-015,supporting,SAP finance close and procurement,6200,high,family-2-technology-estate/F06_system-function-mapping.csv,16,tenant_file
+SHA-SFM-0016,SHA-APP-016,SHA-CAP-016,system_of_record,Mainframe transaction processing,18500,medium,family-2-technology-estate/F06_system-function-mapping.csv,17,tenant_file
+SHA-SFM-0017,SHA-APP-017,SHA-CAP-017,supporting,Cloud-native digital engineering,780,medium,family-2-technology-estate/F06_system-function-mapping.csv,18,tenant_file
+SHA-SFM-0018,SHA-APP-018,SHA-CAP-018,supporting,Enterprise integration and eventing,132000,medium,family-2-technology-estate/F06_system-function-mapping.csv,19,tenant_file
+SHA-SFM-0019,SHA-APP-019,SHA-CAP-019,primary,EDW and certified BI,340,medium,family-2-technology-estate/F06_system-function-mapping.csv,20,tenant_file
+SHA-SFM-0020,SHA-APP-020,SHA-CAP-020,supporting,Data lake ingestion and lineage,930,medium,family-2-technology-estate/F06_system-function-mapping.csv,21,tenant_file
+SHA-SFM-0021,SHA-APP-021,SHA-CAP-021,system_of_record,Customer identity and consent,6200,medium,family-2-technology-estate/F06_system-function-mapping.csv,22,tenant_file
+SHA-SFM-0022,SHA-APP-022,SHA-CAP-022,primary,Cybersecurity and zero trust,18500,high,family-2-technology-estate/F06_system-function-mapping.csv,23,tenant_file
+SHA-SFM-0023,SHA-APP-100,SHA-CAP-023,supporting,ServiceNow workflow automation,780,medium,family-2-technology-estate/F06_system-function-mapping.csv,24,tenant_file
+SHA-SFM-0024,SHA-APP-101,SHA-CAP-024,supporting,Engineering productivity,132000,medium,family-2-technology-estate/F06_system-function-mapping.csv,25,tenant_file
+SHA-SFM-0025,SHA-APP-102,SHA-CAP-025,primary,AI governance and model risk,340,medium,family-2-technology-estate/F06_system-function-mapping.csv,26,tenant_file
+SHA-SFM-0026,SHA-APP-103,SHA-CAP-026,system_of_record,Vendor and contract governance,930,medium,family-2-technology-estate/F06_system-function-mapping.csv,27,tenant_file
+SHA-SFM-0027,SHA-APP-104,SHA-CAP-027,supporting,Safety management system,6200,medium,family-2-technology-estate/F06_system-function-mapping.csv,28,tenant_file
+SHA-SFM-0028,SHA-APP-105,SHA-CAP-028,primary,DOT consumer obligations,18500,medium,family-2-technology-estate/F06_system-function-mapping.csv,29,tenant_file
+SHA-SFM-0029,SHA-APP-106,SHA-CAP-029,supporting,Airport biometrics and identity,780,high,family-2-technology-estate/F06_system-function-mapping.csv,30,tenant_file
+SHA-SFM-0030,SHA-APP-107,SHA-CAP-030,supporting,Premium lounge experience,132000,medium,family-2-technology-estate/F06_system-function-mapping.csv,31,tenant_file
+SHA-SFM-0031,SHA-APP-108,SHA-CAP-031,system_of_record,Onboard retail and connectivity,340,medium,family-2-technology-estate/F06_system-function-mapping.csv,32,tenant_file
+SHA-SFM-0032,SHA-APP-109,SHA-CAP-032,supporting,Catering provisioning,930,medium,family-2-technology-estate/F06_system-function-mapping.csv,33,tenant_file
+SHA-SFM-0033,SHA-APP-110,SHA-CAP-033,supporting,Training and simulation,6200,medium,family-2-technology-estate/F06_system-function-mapping.csv,34,tenant_file
+SHA-SFM-0034,SHA-APP-111,SHA-CAP-034,primary,Treasury fuel hedging,18500,medium,family-2-technology-estate/F06_system-function-mapping.csv,35,tenant_file
+SHA-SFM-0035,SHA-APP-112,SHA-CAP-035,supporting,Executive portfolio value management,780,medium,family-2-technology-estate/F06_system-function-mapping.csv,36,tenant_file
+SHA-SFM-0036,SHA-APP-113,SHA-CAP-001,system_of_record,IROPS recovery decisioning,132000,high,family-2-technology-estate/F06_system-function-mapping.csv,37,tenant_file
+SHA-SFM-0037,SHA-APP-114,SHA-CAP-002,primary,Crew recovery and legality,340,medium,family-2-technology-estate/F06_system-function-mapping.csv,38,tenant_file
+SHA-SFM-0038,SHA-APP-115,SHA-CAP-003,supporting,Flight planning and dispatch,930,medium,family-2-technology-estate/F06_system-function-mapping.csv,39,tenant_file
+SHA-SFM-0039,SHA-APP-116,SHA-CAP-004,supporting,Airport turn management,6200,medium,family-2-technology-estate/F06_system-function-mapping.csv,40,tenant_file
+SHA-SFM-0040,SHA-APP-117,SHA-CAP-005,primary,Baggage tracking and recovery,18500,medium,family-2-technology-estate/F06_system-function-mapping.csv,41,tenant_file
+SHA-SFM-0041,SHA-APP-118,SHA-CAP-006,system_of_record,MRO predictive maintenance,780,medium,family-2-technology-estate/F06_system-function-mapping.csv,42,tenant_file
+SHA-SFM-0042,SHA-APP-119,SHA-CAP-007,supporting,Revenue management and pricing,132000,medium,family-2-technology-estate/F06_system-function-mapping.csv,43,tenant_file
+SHA-SFM-0043,SHA-APP-120,SHA-CAP-008,primary,NDC offer/order retailing,340,high,family-2-technology-estate/F06_system-function-mapping.csv,44,tenant_file
+SHA-SFM-0044,SHA-APP-121,SHA-CAP-009,supporting,Loyalty personalization,930,medium,family-2-technology-estate/F06_system-function-mapping.csv,45,tenant_file
+SHA-SFM-0045,SHA-APP-122,SHA-CAP-010,supporting,Digital concierge and journey orchestration,6200,medium,family-2-technology-estate/F06_system-function-mapping.csv,46,tenant_file
+SHA-SFM-0046,SHA-APP-123,SHA-CAP-011,system_of_record,Contact center service recovery,18500,medium,family-2-technology-estate/F06_system-function-mapping.csv,47,tenant_file
+SHA-SFM-0047,SHA-APP-124,SHA-CAP-012,supporting,Cargo capacity optimization,780,medium,family-2-technology-estate/F06_system-function-mapping.csv,48,tenant_file
+SHA-SFM-0048,SHA-APP-125,SHA-CAP-013,supporting,Fuel optimization and sustainability,132000,medium,family-2-technology-estate/F06_system-function-mapping.csv,49,tenant_file
+SHA-SFM-0049,SHA-APP-126,SHA-CAP-014,primary,Revenue accounting and settlement,340,medium,family-2-technology-estate/F06_system-function-mapping.csv,50,tenant_file
+SHA-SFM-0050,SHA-APP-127,SHA-CAP-015,supporting,SAP finance close and procurement,930,high,family-2-technology-estate/F06_system-function-mapping.csv,51,tenant_file
+SHA-SFM-0051,SHA-APP-128,SHA-CAP-016,system_of_record,Mainframe transaction processing,6200,medium,family-2-technology-estate/F06_system-function-mapping.csv,52,tenant_file
+SHA-SFM-0052,SHA-APP-129,SHA-CAP-017,primary,Cloud-native digital engineering,18500,medium,family-2-technology-estate/F06_system-function-mapping.csv,53,tenant_file
+SHA-SFM-0053,SHA-APP-130,SHA-CAP-018,supporting,Enterprise integration and eventing,780,medium,family-2-technology-estate/F06_system-function-mapping.csv,54,tenant_file
+SHA-SFM-0054,SHA-APP-131,SHA-CAP-019,supporting,EDW and certified BI,132000,medium,family-2-technology-estate/F06_system-function-mapping.csv,55,tenant_file
+SHA-SFM-0055,SHA-APP-132,SHA-CAP-020,primary,Data lake ingestion and lineage,340,medium,family-2-technology-estate/F06_system-function-mapping.csv,56,tenant_file
+SHA-SFM-0056,SHA-APP-133,SHA-CAP-021,system_of_record,Customer identity and consent,930,medium,family-2-technology-estate/F06_system-function-mapping.csv,57,tenant_file
+SHA-SFM-0057,SHA-APP-134,SHA-CAP-022,supporting,Cybersecurity and zero trust,6200,high,family-2-technology-estate/F06_system-function-mapping.csv,58,tenant_file
+SHA-SFM-0058,SHA-APP-135,SHA-CAP-023,primary,ServiceNow workflow automation,18500,medium,family-2-technology-estate/F06_system-function-mapping.csv,59,tenant_file
+SHA-SFM-0059,SHA-APP-136,SHA-CAP-024,supporting,Engineering productivity,780,medium,family-2-technology-estate/F06_system-function-mapping.csv,60,tenant_file
+SHA-SFM-0060,SHA-APP-137,SHA-CAP-025,supporting,AI governance and model risk,132000,medium,family-2-technology-estate/F06_system-function-mapping.csv,61,tenant_file
+SHA-SFM-0061,SHA-APP-138,SHA-CAP-026,system_of_record,Vendor and contract governance,340,medium,family-2-technology-estate/F06_system-function-mapping.csv,62,tenant_file
+SHA-SFM-0062,SHA-APP-139,SHA-CAP-027,supporting,Safety management system,930,medium,family-2-technology-estate/F06_system-function-mapping.csv,63,tenant_file
+SHA-SFM-0063,SHA-APP-140,SHA-CAP-028,supporting,DOT consumer obligations,6200,medium,family-2-technology-estate/F06_system-function-mapping.csv,64,tenant_file
+SHA-SFM-0064,SHA-APP-141,SHA-CAP-029,primary,Airport biometrics and identity,18500,high,family-2-technology-estate/F06_system-function-mapping.csv,65,tenant_file
+SHA-SFM-0065,SHA-APP-142,SHA-CAP-030,supporting,Premium lounge experience,780,medium,family-2-technology-estate/F06_system-function-mapping.csv,66,tenant_file
+SHA-SFM-0066,SHA-APP-143,SHA-CAP-031,system_of_record,Onboard retail and connectivity,132000,medium,family-2-technology-estate/F06_system-function-mapping.csv,67,tenant_file
+SHA-SFM-0067,SHA-APP-144,SHA-CAP-032,primary,Catering provisioning,340,medium,family-2-technology-estate/F06_system-function-mapping.csv,68,tenant_file
+SHA-SFM-0068,SHA-APP-145,SHA-CAP-033,supporting,Training and simulation,930,medium,family-2-technology-estate/F06_system-function-mapping.csv,69,tenant_file
+SHA-SFM-0069,SHA-APP-146,SHA-CAP-034,supporting,Treasury fuel hedging,6200,medium,family-2-technology-estate/F06_system-function-mapping.csv,70,tenant_file
+SHA-SFM-0070,SHA-APP-147,SHA-CAP-035,primary,Executive portfolio value management,18500,medium,family-2-technology-estate/F06_system-function-mapping.csv,71,tenant_file
+SHA-SFM-0071,SHA-APP-148,SHA-CAP-001,system_of_record,IROPS recovery decisioning,780,high,family-2-technology-estate/F06_system-function-mapping.csv,72,tenant_file
+SHA-SFM-0072,SHA-APP-149,SHA-CAP-002,supporting,Crew recovery and legality,132000,medium,family-2-technology-estate/F06_system-function-mapping.csv,73,tenant_file
+SHA-SFM-0073,SHA-APP-150,SHA-CAP-003,primary,Flight planning and dispatch,340,medium,family-2-technology-estate/F06_system-function-mapping.csv,74,tenant_file
+SHA-SFM-0074,SHA-APP-151,SHA-CAP-004,supporting,Airport turn management,930,medium,family-2-technology-estate/F06_system-function-mapping.csv,75,tenant_file
+SHA-SFM-0075,SHA-APP-152,SHA-CAP-005,supporting,Baggage tracking and recovery,6200,medium,family-2-technology-estate/F06_system-function-mapping.csv,76,tenant_file
+SHA-SFM-0076,SHA-APP-153,SHA-CAP-006,system_of_record,MRO predictive maintenance,18500,medium,family-2-technology-estate/F06_system-function-mapping.csv,77,tenant_file
+SHA-SFM-0077,SHA-APP-154,SHA-CAP-007,supporting,Revenue management and pricing,780,medium,family-2-technology-estate/F06_system-function-mapping.csv,78,tenant_file
+SHA-SFM-0078,SHA-APP-155,SHA-CAP-008,supporting,NDC offer/order retailing,132000,high,family-2-technology-estate/F06_system-function-mapping.csv,79,tenant_file
+SHA-SFM-0079,SHA-APP-156,SHA-CAP-009,primary,Loyalty personalization,340,medium,family-2-technology-estate/F06_system-function-mapping.csv,80,tenant_file
+SHA-SFM-0080,SHA-APP-157,SHA-CAP-010,supporting,Digital concierge and journey orchestration,930,medium,family-2-technology-estate/F06_system-function-mapping.csv,81,tenant_file
+SHA-SFM-0081,SHA-APP-158,SHA-CAP-011,system_of_record,Contact center service recovery,6200,medium,family-2-technology-estate/F06_system-function-mapping.csv,82,tenant_file
+SHA-SFM-0082,SHA-APP-159,SHA-CAP-012,primary,Cargo capacity optimization,18500,medium,family-2-technology-estate/F06_system-function-mapping.csv,83,tenant_file
+SHA-SFM-0083,SHA-APP-160,SHA-CAP-013,supporting,Fuel optimization and sustainability,780,medium,family-2-technology-estate/F06_system-function-mapping.csv,84,tenant_file
+SHA-SFM-0084,SHA-APP-161,SHA-CAP-014,supporting,Revenue accounting and settlement,132000,medium,family-2-technology-estate/F06_system-function-mapping.csv,85,tenant_file
+SHA-SFM-0085,SHA-APP-162,SHA-CAP-015,primary,SAP finance close and procurement,340,high,family-2-technology-estate/F06_system-function-mapping.csv,86,tenant_file
+SHA-SFM-0086,SHA-APP-163,SHA-CAP-016,system_of_record,Mainframe transaction processing,930,medium,family-2-technology-estate/F06_system-function-mapping.csv,87,tenant_file
+SHA-SFM-0087,SHA-APP-164,SHA-CAP-017,supporting,Cloud-native digital engineering,6200,medium,family-2-technology-estate/F06_system-function-mapping.csv,88,tenant_file
+SHA-SFM-0088,SHA-APP-165,SHA-CAP-018,primary,Enterprise integration and eventing,18500,medium,family-2-technology-estate/F06_system-function-mapping.csv,89,tenant_file
+SHA-SFM-0089,SHA-APP-166,SHA-CAP-019,supporting,EDW and certified BI,780,medium,family-2-technology-estate/F06_system-function-mapping.csv,90,tenant_file
+SHA-SFM-0090,SHA-APP-167,SHA-CAP-020,supporting,Data lake ingestion and lineage,132000,medium,family-2-technology-estate/F06_system-function-mapping.csv,91,tenant_file
+SHA-SFM-0091,SHA-APP-168,SHA-CAP-021,system_of_record,Customer identity and consent,340,medium,family-2-technology-estate/F06_system-function-mapping.csv,92,tenant_file
+SHA-SFM-0092,SHA-APP-169,SHA-CAP-022,supporting,Cybersecurity and zero trust,930,high,family-2-technology-estate/F06_system-function-mapping.csv,93,tenant_file
+SHA-SFM-0093,SHA-APP-170,SHA-CAP-023,supporting,ServiceNow workflow automation,6200,medium,family-2-technology-estate/F06_system-function-mapping.csv,94,tenant_file
+SHA-SFM-0094,SHA-APP-171,SHA-CAP-024,primary,Engineering productivity,18500,medium,family-2-technology-estate/F06_system-function-mapping.csv,95,tenant_file
+SHA-SFM-0095,SHA-APP-172,SHA-CAP-025,supporting,AI governance and model risk,780,medium,family-2-technology-estate/F06_system-function-mapping.csv,96,tenant_file

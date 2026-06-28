@@ -1,0 +1,80 @@
+metric_id,platform_id,period,metric_name,value,unit,capacity_pct,notes,source_file,source_row,value_source
+SHA-VOL-001,SHA-APP-001,2026-05,daily_pnr_transactions,28600000,txn/day,78,PSS transaction volume remains mainframe-centered,family-2-technology-estate/F08_platform-volumetrics.csv,2,tenant_file
+SHA-VOL-002,SHA-APP-016,2026-05,active_edw_tables,4800,tables,64,Teradata Vantage on AWS current state,family-2-technology-estate/F08_platform-volumetrics.csv,3,tenant_file
+SHA-VOL-003,SHA-APP-016,2026-05,monthly_scheduled_workloads,92000,jobs/month,72,"Includes ELT, regulatory, loyalty, revenue management",family-2-technology-estate/F08_platform-volumetrics.csv,4,tenant_file
+SHA-VOL-004,SHA-APP-017,2026-05,production_sas_flows,380,flows,81,SAS footprint remains large,family-2-technology-estate/F08_platform-volumetrics.csv,5,tenant_file
+SHA-VOL-005,SHA-APP-020,2026-05,tableau_dashboards,740,dashboards,69,Certified content coverage only 54%,family-2-technology-estate/F08_platform-volumetrics.csv,6,tenant_file
+SHA-VOL-006,SHA-APP-010,2026-05,digital_sessions_monthly,184000000,sessions/month,76,Mobile/web commerce,family-2-technology-estate/F08_platform-volumetrics.csv,7,tenant_file
+SHA-VOL-007,SHA-APP-005,2026-05,irops_recovery_decisions,128000,decisions/month,92,Manual recovery decisions during disruption peaks,family-2-technology-estate/F08_platform-volumetrics.csv,8,tenant_file
+SHA-VOL-100,SHA-APP-001,2026-05,monthly_users,2370,users,30,Volumetric baseline for SHARES-like Passenger Service System,family-2-technology-estate/F08_platform-volumetrics.csv,9,tenant_file
+SHA-VOL-101,SHA-APP-002,2026-05,daily_transactions,3740,txn/day,31,Volumetric baseline for Departure Control Mainframe,family-2-technology-estate/F08_platform-volumetrics.csv,10,tenant_file
+SHA-VOL-102,SHA-APP-003,2026-05,batch_jobs,5110,jobs/month,32,Volumetric baseline for Revenue Accounting Settlement,family-2-technology-estate/F08_platform-volumetrics.csv,11,tenant_file
+SHA-VOL-103,SHA-APP-004,2026-05,api_calls,6480,calls/day,33,Volumetric baseline for Crew Legality and Pairing,family-2-technology-estate/F08_platform-volumetrics.csv,12,tenant_file
+SHA-VOL-104,SHA-APP-005,2026-05,incidents,7850,incidents/month,34,Volumetric baseline for Operations Control Center Recovery,family-2-technology-estate/F08_platform-volumetrics.csv,13,tenant_file
+SHA-VOL-105,SHA-APP-006,2026-05,monthly_users,9220,users,35,Volumetric baseline for Flight Planning and Dispatch,family-2-technology-estate/F08_platform-volumetrics.csv,14,tenant_file
+SHA-VOL-106,SHA-APP-007,2026-05,daily_transactions,10590,txn/day,36,Volumetric baseline for Aircraft Maintenance System,family-2-technology-estate/F08_platform-volumetrics.csv,15,tenant_file
+SHA-VOL-107,SHA-APP-008,2026-05,batch_jobs,11960,jobs/month,37,Volumetric baseline for Baggage Reconciliation and Tracking,family-2-technology-estate/F08_platform-volumetrics.csv,16,tenant_file
+SHA-VOL-108,SHA-APP-009,2026-05,api_calls,13330,calls/day,38,Volumetric baseline for Fly SkyHarbor Mobile App,family-2-technology-estate/F08_platform-volumetrics.csv,17,tenant_file
+SHA-VOL-109,SHA-APP-010,2026-05,incidents,14700,incidents/month,39,Volumetric baseline for Digital Commerce Platform,family-2-technology-estate/F08_platform-volumetrics.csv,18,tenant_file
+SHA-VOL-110,SHA-APP-011,2026-05,monthly_users,16070,users,40,Volumetric baseline for Loyalty Member Platform,family-2-technology-estate/F08_platform-volumetrics.csv,19,tenant_file
+SHA-VOL-111,SHA-APP-012,2026-05,daily_transactions,17440,txn/day,41,Volumetric baseline for Salesforce Service Cloud,family-2-technology-estate/F08_platform-volumetrics.csv,20,tenant_file
+SHA-VOL-112,SHA-APP-013,2026-05,batch_jobs,18810,jobs/month,42,Volumetric baseline for Salesforce Marketing Cloud,family-2-technology-estate/F08_platform-volumetrics.csv,21,tenant_file
+SHA-VOL-113,SHA-APP-014,2026-05,api_calls,20180,calls/day,43,Volumetric baseline for Adobe Experience Manager / Analytics,family-2-technology-estate/F08_platform-volumetrics.csv,22,tenant_file
+SHA-VOL-114,SHA-APP-015,2026-05,incidents,21550,incidents/month,44,Volumetric baseline for Enterprise CDP,family-2-technology-estate/F08_platform-volumetrics.csv,23,tenant_file
+SHA-VOL-115,SHA-APP-016,2026-05,monthly_users,22920,users,45,Volumetric baseline for Teradata Vantage on AWS EDW,family-2-technology-estate/F08_platform-volumetrics.csv,24,tenant_file
+SHA-VOL-116,SHA-APP-017,2026-05,daily_transactions,24290,txn/day,46,Volumetric baseline for SAS Grid Analytics,family-2-technology-estate/F08_platform-volumetrics.csv,25,tenant_file
+SHA-VOL-117,SHA-APP-018,2026-05,batch_jobs,25660,jobs/month,47,Volumetric baseline for IBM DataStage,family-2-technology-estate/F08_platform-volumetrics.csv,26,tenant_file
+SHA-VOL-118,SHA-APP-019,2026-05,api_calls,27030,calls/day,48,Volumetric baseline for Informatica PowerCenter / IDMC,family-2-technology-estate/F08_platform-volumetrics.csv,27,tenant_file
+SHA-VOL-119,SHA-APP-020,2026-05,incidents,28400,incidents/month,49,Volumetric baseline for Tableau Enterprise,family-2-technology-estate/F08_platform-volumetrics.csv,28,tenant_file
+SHA-VOL-120,SHA-APP-021,2026-05,monthly_users,29770,users,50,Volumetric baseline for SAP ERP ECC / S4 Transition,family-2-technology-estate/F08_platform-volumetrics.csv,29,tenant_file
+SHA-VOL-121,SHA-APP-022,2026-05,daily_transactions,31140,txn/day,51,Volumetric baseline for ServiceNow ITSM / GRC / HRSD,family-2-technology-estate/F08_platform-volumetrics.csv,30,tenant_file
+SHA-VOL-122,SHA-APP-100,2026-05,batch_jobs,32510,jobs/month,52,Volumetric baseline for SkyHarbor airport ops service 001,family-2-technology-estate/F08_platform-volumetrics.csv,31,tenant_file
+SHA-VOL-123,SHA-APP-101,2026-05,api_calls,33880,calls/day,53,Volumetric baseline for SkyHarbor cargo service 002,family-2-technology-estate/F08_platform-volumetrics.csv,32,tenant_file
+SHA-VOL-124,SHA-APP-102,2026-05,incidents,35250,incidents/month,54,Volumetric baseline for SkyHarbor premium lounge service 003,family-2-technology-estate/F08_platform-volumetrics.csv,33,tenant_file
+SHA-VOL-125,SHA-APP-103,2026-05,monthly_users,36620,users,55,Volumetric baseline for SkyHarbor deicing service 004,family-2-technology-estate/F08_platform-volumetrics.csv,34,tenant_file
+SHA-VOL-126,SHA-APP-104,2026-05,daily_transactions,37990,txn/day,56,Volumetric baseline for SkyHarbor gate planning service 005,family-2-technology-estate/F08_platform-volumetrics.csv,35,tenant_file
+SHA-VOL-127,SHA-APP-105,2026-05,batch_jobs,39360,jobs/month,57,Volumetric baseline for SkyHarbor refunds service 006,family-2-technology-estate/F08_platform-volumetrics.csv,36,tenant_file
+SHA-VOL-128,SHA-APP-106,2026-05,api_calls,40730,calls/day,58,Volumetric baseline for SkyHarbor vouchers service 007,family-2-technology-estate/F08_platform-volumetrics.csv,37,tenant_file
+SHA-VOL-129,SHA-APP-107,2026-05,incidents,42100,incidents/month,59,Volumetric baseline for SkyHarbor travel docs service 008,family-2-technology-estate/F08_platform-volumetrics.csv,38,tenant_file
+SHA-VOL-130,SHA-APP-108,2026-05,monthly_users,43470,users,60,Volumetric baseline for SkyHarbor corporate sales service 009,family-2-technology-estate/F08_platform-volumetrics.csv,39,tenant_file
+SHA-VOL-131,SHA-APP-109,2026-05,daily_transactions,44840,txn/day,61,Volumetric baseline for SkyHarbor interline service 010,family-2-technology-estate/F08_platform-volumetrics.csv,40,tenant_file
+SHA-VOL-132,SHA-APP-110,2026-05,batch_jobs,46210,jobs/month,62,Volumetric baseline for SkyHarbor alliance service 011,family-2-technology-estate/F08_platform-volumetrics.csv,41,tenant_file
+SHA-VOL-133,SHA-APP-111,2026-05,api_calls,47580,calls/day,63,Volumetric baseline for SkyHarbor regional ops service 012,family-2-technology-estate/F08_platform-volumetrics.csv,42,tenant_file
+SHA-VOL-134,SHA-APP-112,2026-05,incidents,48950,incidents/month,64,Volumetric baseline for SkyHarbor catering service 013,family-2-technology-estate/F08_platform-volumetrics.csv,43,tenant_file
+SHA-VOL-135,SHA-APP-113,2026-05,monthly_users,50320,users,65,Volumetric baseline for SkyHarbor fuel service 014,family-2-technology-estate/F08_platform-volumetrics.csv,44,tenant_file
+SHA-VOL-136,SHA-APP-114,2026-05,daily_transactions,51690,txn/day,66,Volumetric baseline for SkyHarbor safety service 015,family-2-technology-estate/F08_platform-volumetrics.csv,45,tenant_file
+SHA-VOL-137,SHA-APP-115,2026-05,batch_jobs,53060,jobs/month,67,Volumetric baseline for SkyHarbor training service 016,family-2-technology-estate/F08_platform-volumetrics.csv,46,tenant_file
+SHA-VOL-138,SHA-APP-116,2026-05,api_calls,54430,calls/day,68,Volumetric baseline for SkyHarbor identity service 017,family-2-technology-estate/F08_platform-volumetrics.csv,47,tenant_file
+SHA-VOL-139,SHA-APP-117,2026-05,incidents,55800,incidents/month,69,Volumetric baseline for SkyHarbor payments fraud service 018,family-2-technology-estate/F08_platform-volumetrics.csv,48,tenant_file
+SHA-VOL-140,SHA-APP-118,2026-05,monthly_users,57170,users,70,Volumetric baseline for SkyHarbor retail media service 019,family-2-technology-estate/F08_platform-volumetrics.csv,49,tenant_file
+SHA-VOL-141,SHA-APP-119,2026-05,daily_transactions,58540,txn/day,71,Volumetric baseline for SkyHarbor wifi connectivity service 020,family-2-technology-estate/F08_platform-volumetrics.csv,50,tenant_file
+SHA-VOL-142,SHA-APP-120,2026-05,batch_jobs,59910,jobs/month,72,Volumetric baseline for SkyHarbor airport ops service 021,family-2-technology-estate/F08_platform-volumetrics.csv,51,tenant_file
+SHA-VOL-143,SHA-APP-121,2026-05,api_calls,61280,calls/day,73,Volumetric baseline for SkyHarbor cargo service 022,family-2-technology-estate/F08_platform-volumetrics.csv,52,tenant_file
+SHA-VOL-144,SHA-APP-122,2026-05,incidents,62650,incidents/month,74,Volumetric baseline for SkyHarbor premium lounge service 023,family-2-technology-estate/F08_platform-volumetrics.csv,53,tenant_file
+SHA-VOL-145,SHA-APP-123,2026-05,monthly_users,64020,users,75,Volumetric baseline for SkyHarbor deicing service 024,family-2-technology-estate/F08_platform-volumetrics.csv,54,tenant_file
+SHA-VOL-146,SHA-APP-124,2026-05,daily_transactions,65390,txn/day,76,Volumetric baseline for SkyHarbor gate planning service 025,family-2-technology-estate/F08_platform-volumetrics.csv,55,tenant_file
+SHA-VOL-147,SHA-APP-125,2026-05,batch_jobs,66760,jobs/month,77,Volumetric baseline for SkyHarbor refunds service 026,family-2-technology-estate/F08_platform-volumetrics.csv,56,tenant_file
+SHA-VOL-148,SHA-APP-126,2026-05,api_calls,68130,calls/day,78,Volumetric baseline for SkyHarbor vouchers service 027,family-2-technology-estate/F08_platform-volumetrics.csv,57,tenant_file
+SHA-VOL-149,SHA-APP-127,2026-05,incidents,69500,incidents/month,79,Volumetric baseline for SkyHarbor travel docs service 028,family-2-technology-estate/F08_platform-volumetrics.csv,58,tenant_file
+SHA-VOL-150,SHA-APP-128,2026-05,monthly_users,70870,users,80,Volumetric baseline for SkyHarbor corporate sales service 029,family-2-technology-estate/F08_platform-volumetrics.csv,59,tenant_file
+SHA-VOL-151,SHA-APP-129,2026-05,daily_transactions,72240,txn/day,81,Volumetric baseline for SkyHarbor interline service 030,family-2-technology-estate/F08_platform-volumetrics.csv,60,tenant_file
+SHA-VOL-152,SHA-APP-130,2026-05,batch_jobs,73610,jobs/month,82,Volumetric baseline for SkyHarbor alliance service 031,family-2-technology-estate/F08_platform-volumetrics.csv,61,tenant_file
+SHA-VOL-153,SHA-APP-131,2026-05,api_calls,74980,calls/day,83,Volumetric baseline for SkyHarbor regional ops service 032,family-2-technology-estate/F08_platform-volumetrics.csv,62,tenant_file
+SHA-VOL-154,SHA-APP-132,2026-05,incidents,76350,incidents/month,84,Volumetric baseline for SkyHarbor catering service 033,family-2-technology-estate/F08_platform-volumetrics.csv,63,tenant_file
+SHA-VOL-155,SHA-APP-133,2026-05,monthly_users,77720,users,85,Volumetric baseline for SkyHarbor fuel service 034,family-2-technology-estate/F08_platform-volumetrics.csv,64,tenant_file
+SHA-VOL-156,SHA-APP-134,2026-05,daily_transactions,79090,txn/day,86,Volumetric baseline for SkyHarbor safety service 035,family-2-technology-estate/F08_platform-volumetrics.csv,65,tenant_file
+SHA-VOL-157,SHA-APP-135,2026-05,batch_jobs,80460,jobs/month,87,Volumetric baseline for SkyHarbor training service 036,family-2-technology-estate/F08_platform-volumetrics.csv,66,tenant_file
+SHA-VOL-158,SHA-APP-136,2026-05,api_calls,81830,calls/day,88,Volumetric baseline for SkyHarbor identity service 037,family-2-technology-estate/F08_platform-volumetrics.csv,67,tenant_file
+SHA-VOL-159,SHA-APP-137,2026-05,incidents,83200,incidents/month,89,Volumetric baseline for SkyHarbor payments fraud service 038,family-2-technology-estate/F08_platform-volumetrics.csv,68,tenant_file
+SHA-VOL-160,SHA-APP-138,2026-05,monthly_users,84570,users,30,Volumetric baseline for SkyHarbor retail media service 039,family-2-technology-estate/F08_platform-volumetrics.csv,69,tenant_file
+SHA-VOL-161,SHA-APP-139,2026-05,daily_transactions,85940,txn/day,31,Volumetric baseline for SkyHarbor wifi connectivity service 040,family-2-technology-estate/F08_platform-volumetrics.csv,70,tenant_file
+SHA-VOL-162,SHA-APP-140,2026-05,batch_jobs,87310,jobs/month,32,Volumetric baseline for SkyHarbor airport ops service 041,family-2-technology-estate/F08_platform-volumetrics.csv,71,tenant_file
+SHA-VOL-163,SHA-APP-141,2026-05,api_calls,88680,calls/day,33,Volumetric baseline for SkyHarbor cargo service 042,family-2-technology-estate/F08_platform-volumetrics.csv,72,tenant_file
+SHA-VOL-164,SHA-APP-142,2026-05,incidents,90050,incidents/month,34,Volumetric baseline for SkyHarbor premium lounge service 043,family-2-technology-estate/F08_platform-volumetrics.csv,73,tenant_file
+SHA-VOL-165,SHA-APP-143,2026-05,monthly_users,91420,users,35,Volumetric baseline for SkyHarbor deicing service 044,family-2-technology-estate/F08_platform-volumetrics.csv,74,tenant_file
+SHA-VOL-166,SHA-APP-144,2026-05,daily_transactions,92790,txn/day,36,Volumetric baseline for SkyHarbor gate planning service 045,family-2-technology-estate/F08_platform-volumetrics.csv,75,tenant_file
+SHA-VOL-167,SHA-APP-145,2026-05,batch_jobs,94160,jobs/month,37,Volumetric baseline for SkyHarbor refunds service 046,family-2-technology-estate/F08_platform-volumetrics.csv,76,tenant_file
+SHA-VOL-168,SHA-APP-146,2026-05,api_calls,95530,calls/day,38,Volumetric baseline for SkyHarbor vouchers service 047,family-2-technology-estate/F08_platform-volumetrics.csv,77,tenant_file
+SHA-VOL-169,SHA-APP-147,2026-05,incidents,96900,incidents/month,39,Volumetric baseline for SkyHarbor travel docs service 048,family-2-technology-estate/F08_platform-volumetrics.csv,78,tenant_file
+SHA-VOL-170,SHA-APP-148,2026-05,monthly_users,98270,users,40,Volumetric baseline for SkyHarbor corporate sales service 049,family-2-technology-estate/F08_platform-volumetrics.csv,79,tenant_file
+SHA-VOL-171,SHA-APP-149,2026-05,daily_transactions,99640,txn/day,41,Volumetric baseline for SkyHarbor interline service 050,family-2-technology-estate/F08_platform-volumetrics.csv,80,tenant_file

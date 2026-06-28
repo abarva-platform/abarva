@@ -1,0 +1,13 @@
+team_or_product,deployment_frequency_before,deployment_frequency_after,lead_time_before_days,lead_time_after_days,change_failure_before_pct,change_failure_after_pct,mttr_before_hours,mttr_after_hours,source_file,source_row,value_source
+Core Banking,2/month,7/month,32,17,16,10,15,9,ai-control-tower/T06_dora-delivery-metrics.csv,2,tenant_file
+Cards & Payments,1/month,7/month,38,20,19,8,20,10,ai-control-tower/T06_dora-delivery-metrics.csv,3,tenant_file
+Channels & Digital,3/month,6/month,35,18,18,11,15,9,ai-control-tower/T06_dora-delivery-metrics.csv,4,tenant_file
+Data Platform,2/month,4/month,38,18,21,13,14,6,ai-control-tower/T06_dora-delivery-metrics.csv,5,tenant_file
+Risk & Finance Systems,3/month,4/month,34,17,18,13,14,6,ai-control-tower/T06_dora-delivery-metrics.csv,6,tenant_file
+Financial Crimes,1/month,8/month,26,15,18,9,16,7,ai-control-tower/T06_dora-delivery-metrics.csv,7,tenant_file
+Integration & API,1/month,9/month,26,12,17,10,16,7,ai-control-tower/T06_dora-delivery-metrics.csv,8,tenant_file
+Cyber & Resilience,3/month,6/month,37,22,19,13,23,10,ai-control-tower/T06_dora-delivery-metrics.csv,9,tenant_file
+ServiceNow & IT Ops,3/month,9/month,30,18,24,12,15,9,ai-control-tower/T06_dora-delivery-metrics.csv,10,tenant_file
+Developer Experience,1/month,9/month,21,11,21,8,13,8,ai-control-tower/T06_dora-delivery-metrics.csv,11,tenant_file
+Wealth Technology,1/month,5/month,31,14,22,9,19,11,ai-control-tower/T06_dora-delivery-metrics.csv,12,tenant_file
+Treasury Systems,2/month,4/month,28,17,17,12,24,16,ai-control-tower/T06_dora-delivery-metrics.csv,13,tenant_file

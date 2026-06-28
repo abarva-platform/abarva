@@ -1,0 +1,21 @@
+function_id,function_name,executive_owner_role,head_count,description,source_file,source_row,value_source
+SHA-BF-001,Operations Control Center / IROPS,EVP Operations,2200,"Disruption recovery, day-of-ops command, weather playbooks",family-1-enterprise-operating-model/F02_business-org-functions.csv,2,tenant_file
+SHA-BF-002,Flight Operations,SVP Flight Operations,18200,"Pilots, dispatch, flight planning, flight following",family-1-enterprise-operating-model/F02_business-org-functions.csv,3,tenant_file
+SHA-BF-003,Crew Operations,SVP Crew Resources,8400,"Crew planning, pairing, recovery, legality, hotel transport",family-1-enterprise-operating-model/F02_business-org-functions.csv,4,tenant_file
+SHA-BF-004,Airport Customer Service,SVP Airport Operations,43000,"Stations, gates, baggage, ramp, deicing, turnarounds",family-1-enterprise-operating-model/F02_business-org-functions.csv,5,tenant_file
+SHA-BF-005,TechOps / MRO,President TechOps,13200,"Line maintenance, heavy checks, engine MRO, parts supply chain",family-1-enterprise-operating-model/F02_business-org-functions.csv,6,tenant_file
+SHA-BF-006,Customer Experience,Chief Customer Experience Officer,7200,"Contact center, care, service recovery, premium experience",family-1-enterprise-operating-model/F02_business-org-functions.csv,7,tenant_file
+SHA-BF-007,Digital Commerce,SVP Digital Products,2100,"Mobile, web, commerce, subscriptions, offer/order experiences",family-1-enterprise-operating-model/F02_business-org-functions.csv,8,tenant_file
+SHA-BF-008,Loyalty and Co-brand,President Loyalty,1800,"SkyHarbor Miles, co-brand economics, member engagement",family-1-enterprise-operating-model/F02_business-org-functions.csv,9,tenant_file
+SHA-BF-009,Revenue Management,EVP Commercial,1450,"Pricing, inventory, forecasting, ancillary optimization",family-1-enterprise-operating-model/F02_business-org-functions.csv,10,tenant_file
+SHA-BF-010,Network Planning,SVP Network,920,"Schedules, hubs, joint ventures, fleet assignment",family-1-enterprise-operating-model/F02_business-org-functions.csv,11,tenant_file
+SHA-BF-011,Cargo,President Cargo,3900,"Cargo booking, capacity, warehouse operations, pharma chain",family-1-enterprise-operating-model/F02_business-org-functions.csv,12,tenant_file
+SHA-BF-012,Finance and Treasury,CFO,2400,"FP&A, accounting, treasury, fuel hedging, revenue accounting",family-1-enterprise-operating-model/F02_business-org-functions.csv,13,tenant_file
+SHA-BF-013,Procurement and Vendor Management,Chief Procurement Officer,860,"Sourcing, contracts, renewals, SI and AMS",family-1-enterprise-operating-model/F02_business-org-functions.csv,14,tenant_file
+SHA-BF-014,People / HR,Chief People Officer,1650,"Workforce planning, labor, learning, payroll",family-1-enterprise-operating-model/F02_business-org-functions.csv,15,tenant_file
+SHA-BF-015,"Legal, Regulatory, DOT Consumer",Chief Legal Officer,780,"DOT, FAA, TSA, privacy, consumer obligations",family-1-enterprise-operating-model/F02_business-org-functions.csv,16,tenant_file
+SHA-BF-016,Safety and Compliance,Chief Safety Officer,920,"SMS, FAA compliance, audit, operational safety",family-1-enterprise-operating-model/F02_business-org-functions.csv,17,tenant_file
+SHA-BF-017,Digital and Technology,EVP Chief Digital & Technology Officer,11800,"Enterprise technology, digital, data, cyber, AI",family-1-enterprise-operating-model/F02_business-org-functions.csv,18,tenant_file
+SHA-BF-018,"Data, Analytics and AI",Chief Data and AI Officer,1550,"EDW, BI, data lake, ML, AI governance",family-1-enterprise-operating-model/F02_business-org-functions.csv,19,tenant_file
+SHA-BF-019,Cybersecurity and Resilience,CISO,780,"SOC, IAM, zero trust, resilience, third-party risk",family-1-enterprise-operating-model/F02_business-org-functions.csv,20,tenant_file
+SHA-BF-020,Corporate Strategy and Transformation,Chief Strategy Officer,520,"Enterprise portfolio, board transformation, value office",family-1-enterprise-operating-model/F02_business-org-functions.csv,21,tenant_file

@@ -1,0 +1,19 @@
+team_id,team_name,executive_owner_role,domain,head_count_fte,offshore_pct,annual_budget_usd,source_file,source_row,value_source
+SHA-IT-001,Office of Chief Digital & Technology Officer,EVP CDTO,enterprise_technology,180,0,2280000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,2,tenant_file
+SHA-IT-002,Airline Operations Systems,SVP Ops Technology,ops_systems,920,5,214000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,3,tenant_file
+SHA-IT-003,Crew and Flight Operations Platforms,VP Crew/Flight Tech,crew_flight,620,8,168000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,4,tenant_file
+SHA-IT-004,"Airport, Baggage and Turnaround Systems",VP Airport Tech,airport_ops,710,10,156000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,5,tenant_file
+SHA-IT-005,TechOps and MRO Systems,VP MRO Technology,mro,430,5,98000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,6,tenant_file
+SHA-IT-006,Revenue Management and Pricing Technology,VP Commercial Tech,revenue_management,360,15,122000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,7,tenant_file
+SHA-IT-007,Loyalty and Customer Platforms,VP Loyalty Tech,loyalty_customer,520,12,146000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,8,tenant_file
+SHA-IT-008,Digital Commerce and Mobile,VP Digital Engineering,digital,780,18,192000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,9,tenant_file
+SHA-IT-009,Enterprise Platforms / IBM Z,VP Enterprise Platforms,mainframe,640,4,386000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,10,tenant_file
+SHA-IT-010,AWS Cloud Platform Engineering,VP Cloud Platform,cloud,520,20,218000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,11,tenant_file
+SHA-IT-011,Data Platforms and BI,VP Data Platforms,data,590,18,244000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,12,tenant_file
+SHA-IT-012,"Enterprise Integration, APIs and Eventing",VP Integration,integration,410,15,108000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,13,tenant_file
+SHA-IT-013,SAP and Corporate Systems,VP Corporate Platforms,erp,330,20,126000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,14,tenant_file
+SHA-IT-014,ServiceNow / ITSM / SRE,VP Technology Service Mgmt,itsm_sre,290,8,82000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,15,tenant_file
+SHA-IT-015,Cybersecurity and Resilience Engineering,CISO,cyber,780,4,196000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,16,tenant_file
+SHA-IT-016,AI Governance and Agentic Platform Office,Chief Data and AI Officer,ai_governance,160,5,52000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,17,tenant_file
+SHA-IT-017,Developer Experience and SDLC Tooling,VP Engineering Productivity,devex,230,15,58000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,18,tenant_file
+SHA-IT-018,Architecture and Technology Strategy,Chief Architect,architecture,120,0,24000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,19,tenant_file
