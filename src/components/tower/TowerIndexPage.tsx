@@ -1546,7 +1546,7 @@ function CioPortfolioCompanyComparison({
               }}
             >
               <div>
-                <strong>{row.portfolioCompany}</strong>
+                <strong>{labelize(row.portfolioCompany)}</strong>
                 <div style={{ color: T.GRAY_DK, fontSize: 12 }}>
                   {row.revenueUsd
                     ? `${formatMoney(row.revenueUsd)} revenue`
