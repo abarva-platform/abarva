@@ -5,7 +5,7 @@
 // keystone. That keystone owns phase gates, cumulative SolutionContext binding,
 // dynamic prompt construction, Claude invocation, and the visual golden bar.
 //
-// Body (back-compat): { phase?: number, deliverableTypeKey?: string, title?: string }
+// Body (back-compat): { phase?: number, deliverableTypeKey?: string, title?: string, generationMode?: "final" | "draft" }
 
 import "server-only";
 import { requireTenancy, tenancyErrorResponse } from "../../_auth";
@@ -43,6 +43,18 @@ function safeArtifactFileName(title: string, artifact: string): string {
   return `${base || artifact}.html`;
 }
 
+function gateCaveatReasons(result: {
+  draftCaveats?: Array<{ reason: string }>;
+  contextCaveats?: string[];
+}): string[] {
+  return [
+    ...(result.draftCaveats ?? []).map((caveat) => caveat.reason),
+    ...(result.contextCaveats ?? []).map(
+      (missing) => `${missing} is not yet captured or approved for final use.`,
+    ),
+  ];
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ programId: string }> },
@@ -74,7 +86,12 @@ export async function POST(
   const program = await getProgramById(ctx, programId);
   if (!program) return Response.json({ error: "not_found" }, { status: 404 });
 
-  let body: { phase?: number; deliverableTypeKey?: string; title?: string };
+  let body: {
+    phase?: number;
+    deliverableTypeKey?: string;
+    title?: string;
+    generationMode?: "final" | "draft";
+  };
   try {
     body = await req.json();
   } catch {
@@ -83,6 +100,7 @@ export async function POST(
 
   const targetPhase = body.phase ?? program.currentPhase ?? 1;
   const registryKey = body.deliverableTypeKey ?? `p${targetPhase}_package`;
+  const generationMode = body.generationMode === "draft" ? "draft" : "final";
 
   const phaseLabel = PHASE_LABEL[targetPhase] ?? `P${targetPhase}`;
   const artifact = normalizeMovesDeliverableKey(
@@ -98,6 +116,7 @@ export async function POST(
       phase: targetPhase,
       artifact,
       allowApprovedRetry: true,
+      generationMode,
       useCaseQuery:
         program.problemStatement ?? program.targetOutcome ?? program.name,
     },
@@ -146,6 +165,35 @@ export async function POST(
     html: result.html,
     context: result.context,
   });
+  const isPreGateDraft = result.generationMode === "draft";
+  const draftStatusLabel = isPreGateDraft
+    ? "Pre-gate draft — review required"
+    : "Draft";
+  const qualityStatus = isPreGateDraft
+    ? result.goldenBar.pass
+      ? "Draft quality passed"
+      : "Needs review"
+    : result.goldenBar.pass
+      ? "Passed"
+      : "Needs review";
+  const goldenBarStatus = isPreGateDraft
+    ? result.goldenBar.pass
+      ? "Passed with caveats"
+      : "Needs review"
+    : result.goldenBar.pass
+      ? "Passed"
+      : "Failed";
+  const draftCaveat =
+    "Draft status: This artifact was generated before formal phase approval. It reflects available evidence and is intended for sponsor review, workshop preparation, and refinement. It is not final or board-ready until sponsor assignment, charter signoff, and phase gate approval are completed.";
+  const openItems = isPreGateDraft
+    ? [
+        "Sponsor assignment required before final approval.",
+        "Charter signoff required before final approval.",
+        "Phase gate approval required before final generation.",
+        "Baseline capture may require sponsor ratification before final approval.",
+        ...gateCaveatReasons(result),
+      ]
+    : [];
 
   const { deliverableId, versionId } = await draftModuleDeliverable(ctx, {
     programId,
@@ -161,6 +209,10 @@ export async function POST(
       solutionContextDigest,
       solution_context: result.context,
       golden_bar: result.goldenBar,
+      generationMode: result.generationMode,
+      draftOnly: result.draftOnly,
+      draftCaveats: result.draftCaveats,
+      contextCaveats: result.contextCaveats,
     },
     provenanceMap: {
       program: program.name,
@@ -168,6 +220,7 @@ export async function POST(
       phase_label: phaseLabel,
       artifact,
       output_format: "html",
+      generation_mode: result.generationMode,
     },
   });
 
@@ -178,11 +231,13 @@ export async function POST(
     artifactFamily: "generated_deliverable",
     title: body.title ?? profile.title,
     description:
-      "Generated through the governed Moves artifact generation path. Review before final client use.",
+      isPreGateDraft
+        ? "Pre-gate review draft generated through the governed Moves artifact path. It does not satisfy phase approval and is not final."
+        : "Generated through the governed Moves artifact generation path. Review before final client use.",
     fileName: safeArtifactFileName(body.title ?? profile.title, artifact),
     fileFormat: "html",
     body: result.html,
-    status: "draft",
+    status: isPreGateDraft ? "review_required" : "draft",
     generatedBy: ctx.email ?? ctx.userId ?? "moves-generate",
     qualityScore: result.goldenBar.pass ? 96 : null,
     unsupportedClaimsCount: 0,
@@ -194,11 +249,16 @@ export async function POST(
       versionId,
       phaseLabel,
       outputFormat: "html",
-      qualityStatus: result.goldenBar.pass ? "Passed" : "Needs review",
-      goldenBarStatus: result.goldenBar.pass ? "Passed" : "Failed",
-      artifactStatus: "Draft",
-      openItems: [],
-      reviewStatus: "not_reviewed",
+      generationMode: result.generationMode,
+      draftOnly: result.draftOnly,
+      draftCaveats: result.draftCaveats,
+      contextCaveats: result.contextCaveats,
+      qualityStatus,
+      goldenBarStatus,
+      artifactStatus: draftStatusLabel,
+      preliminaryCaveat: isPreGateDraft ? draftCaveat : null,
+      openItems,
+      reviewStatus: isPreGateDraft ? "pre_gate_review_required" : "not_reviewed",
       clientFacingVersionLabel: "Version 1",
     },
   });
@@ -212,6 +272,11 @@ export async function POST(
     content: result.html,
     phase: targetPhase,
     deliverableKey: artifact,
+    generationMode: result.generationMode,
+    draftOnly: result.draftOnly,
+    draftCaveats: result.draftCaveats,
+    contextCaveats: result.contextCaveats,
+    artifactStatus: draftStatusLabel,
     outputFormat: "html",
     goldenBar: result.goldenBar,
   });
