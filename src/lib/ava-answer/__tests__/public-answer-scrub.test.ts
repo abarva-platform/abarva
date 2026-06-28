@@ -162,4 +162,17 @@ Tenant evidence`);
       /answer is the same|all session|loaded tenant sources|If it's the latter/i,
     );
   });
+
+  it("cleans answer-has-not-moved session wording from live SkyHarbor answers", () => {
+    const cleaned = scrubPublicAvaAnswerText(
+      "The answer hasn't moved across this session, and the evidence keeps making it cleanly: certified operational data products — real-time crew, aircraft, and gate feeds with governed freshness and lineage — is the single best AI investment SkyHarbor can make next. The business context shows three value pools.",
+    );
+
+    expect(cleaned).toBe(
+      "certified operational data products — real-time crew, aircraft, and gate feeds with governed freshness and lineage — is the single best AI investment SkyHarbor can make next. The business context shows three value pools.",
+    );
+    expect(cleaned).not.toMatch(
+      /answer hasn't moved|this session|evidence keeps making it cleanly/i,
+    );
+  });
 });
