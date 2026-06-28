@@ -25,6 +25,7 @@ import {
 } from "@/lib/tower/strategic-alignment-2x2-view";
 import {
   listTowerBudgetRollupsForClient,
+  shapeTowerBudgetRollupsFromInitiatives,
   type TowerBudgetRollup,
 } from "@/lib/tower/tower-budget-rollups";
 import { listMaterializedTowerReadModelForClient } from "@/lib/tower/tower-materialized-read-model";
@@ -311,7 +312,7 @@ export async function buildAtlasTowerCurrentState(input: {
     listInitiativesForClient(input.clientId),
     listVendorsForClient(input.clientId),
   ]);
-  const [materialized, budgetRollups] = await Promise.all([
+  const [materialized, loadedBudgetRollups] = await Promise.all([
     listMaterializedTowerReadModelForClient({
       clientId: input.clientId,
       tenantKey: client.tenantKey,
@@ -331,6 +332,9 @@ export async function buildAtlasTowerCurrentState(input: {
   const towerVendors = materialized.vendors.length
     ? materialized.vendors
     : vendors;
+  const budgetRollups = materialized.initiatives.length
+    ? shapeTowerBudgetRollupsFromInitiatives(towerInitiatives)
+    : loadedBudgetRollups;
   const [supporting, bandMetrics, pressuresView] = await Promise.all([
     listSupportingRows(initiatives),
     Promise.resolve(

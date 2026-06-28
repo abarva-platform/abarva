@@ -62,6 +62,11 @@ export interface AIInitiative {
   alignedCallout: boolean;
   alignedRationale: string | null;
   loadedViaTemplate: string;
+  portfolioCompany?: string | null;
+  operatingCompany?: string | null;
+  legalEntity?: string | null;
+  businessUnit?: string | null;
+  businessFunction?: string | null;
 }
 
 interface InitiativeRow {
