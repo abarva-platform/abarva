@@ -15,6 +15,9 @@ describe("visible answer contract", () => {
     expect(VISIBLE_ANSWER_CONTRACT_PROMPT).toContain(
       "No visible scaffolding labels",
     );
+    expect(VISIBLE_ANSWER_CONTRACT_PROMPT).toContain(
+      "No session-history phrases",
+    );
   });
 
   it("accepts concise advisor prose", () => {
@@ -78,6 +81,17 @@ describe("visible answer contract", () => {
         "stock_generic_closing",
         "internal_dossier_terms",
       ]),
+    );
+  });
+
+  it("blocks session-history language in visible answers", () => {
+    const gate = assertVisibleAnswerContract(
+      "The answer is the same one I've given the last three times this session: fix certified operational data first.",
+    );
+
+    expect(gate.passed).toBe(false);
+    expect(gate.violations.map((violation) => violation.id)).toContain(
+      "session_history_language",
     );
   });
 

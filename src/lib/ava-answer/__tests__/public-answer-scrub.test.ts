@@ -85,4 +85,18 @@ Tenant evidence`);
     );
     expect(cleaned).not.toMatch(/last two turns|Here's the logic|loaded tenant evidence|evidence base gap/i);
   });
+
+  it("cleans repeated-session evidence phrasing from production SkyHarbor answers", () => {
+    const cleaned = scrubPublicAvaAnswerText(
+      "The answer is the same one I've given the last three times this session, and the tenant evidence keeps supporting it: certified operational data products — real-time crew, aircraft, and gate feeds with governed freshness and lineage — is the single best AI investment SkyHarbor can make next. Here's why this keeps being the right answer.\n\nThe loaded evidence shows three value pools: IROPS agentic recovery at $270M, customer AI / Digital Concierge at $180M, and data estate rationalization at $122M (all from the business context). Every one of those pools is gated on the same substrate gap.\n\nIf it's the latter, that's the single thing to change before any other AI conversation is worth the meeting time.",
+    );
+
+    expect(cleaned).toContain(
+      "certified operational data products — real-time crew, aircraft, and gate feeds with governed freshness and lineage — is the single best AI investment SkyHarbor can make next.",
+    );
+    expect(cleaned).toContain("The business context shows three value pools");
+    expect(cleaned).not.toMatch(
+      /last three times|this session|tenant evidence|loaded evidence|keeps being the right answer|If it's the latter/i,
+    );
+  });
 });
