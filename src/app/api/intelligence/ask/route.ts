@@ -111,7 +111,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
     tenant = client;
     sessionTenant = sessionClient;
     sessionUserId = clerkUser?.id ?? null;
-    includeTrace = shouldIncludeIntelligenceTrace(req, clerkUser);
+    includeTrace = shouldIncludeIntelligenceTrace(req, clerkUser, person);
     const resolvedClient = client;
     signedInTenantAliases = aliasesForClerkTenant(clerkUser);
     tenantInventoryKey = resolvedClient?.canonicalKey ?? null;
@@ -877,12 +877,14 @@ function aliasesForClerkTenant(
 function shouldIncludeIntelligenceTrace(
   req: NextRequest,
   user: Awaited<ReturnType<typeof currentUser>>,
+  person: Awaited<ReturnType<typeof getCurrentPerson>>,
 ): boolean {
   if (req.headers.get("x-abarva-debug-intel") !== "1") return false;
   const email =
     user?.primaryEmailAddress?.emailAddress ??
     user?.emailAddresses?.[0]?.emailAddress ??
     "";
+  const personName = (person?.name ?? "").trim().toLowerCase();
   const metadata = user?.publicMetadata as Record<string, unknown> | undefined;
   const role = readString(metadata?.role)?.toLowerCase() ?? "";
   const roles = Array.isArray(metadata?.roles)
@@ -908,16 +910,18 @@ function shouldIncludeIntelligenceTrace(
     "anandshp@gmail.com",
     "anand.sundaram@gmail.com",
   ]);
+  const founderOperatorName = personName === "anand sundaram";
   const allowedOperatorEmail =
     configuredOperatorEmails.has(email.toLowerCase()) ||
     founderOperatorEmail.has(email.toLowerCase());
   const syntheticLabPersona = /@(?:[a-z0-9-]+\.)?example\.com$/i.test(email);
   return (
-    Boolean(user?.id) &&
+    Boolean(user?.id || person?.id) &&
     (allowedEmail ||
       allowedRole ||
       operatorTraceFlag ||
       allowedOperatorEmail ||
+      founderOperatorName ||
       syntheticLabPersona)
   );
 }

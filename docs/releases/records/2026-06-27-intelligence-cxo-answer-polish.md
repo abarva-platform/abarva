@@ -35,6 +35,7 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - `src/lib/atlas/orchestrator.ts`: stops forcing an app-authored Tower next-step fallback.
 - `src/lib/answer/shared-response-shaper.ts`: prevents the shared shaper from reintroducing the generic closer and uses context-aware drill-down choices.
 - `src/lib/ava-answer/public-answer-scrub.ts`: flags and scrubs additional internal answer language.
+- `src/app/api/intelligence/ask/route.ts`: keeps operator trace behind the explicit debug header and adds the signed-in Anand operator profile as an allowed trace principal for Chrome proof capture.
 - `src/lib/intelligence/answer/structured-exhibits.ts`: suppresses model-authored markdown table rendering for plain advisory questions, removes renderer/debug notes, and keeps explicit table/chart/graph rendering for explicit artifact requests.
 - `src/components/agent-answer/AgentAnswerRenderer.tsx`: stops appending visible source/citation chips inside the conversational aVa answer renderer.
 - `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: makes the `AVA · LATEST ANSWER` canvas prefer the cleaned `agent-answer` prose over the raw streamed body, so the canvas cannot retain a raw markdown table after the chat bubble is cleaned.
@@ -131,6 +132,7 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - ACA proof for answer-has-not-moved candidate `5b4c5bc9`: revision `ca-abarva-web-lab-eastus--m5b4c5bc9`, digest `sha256:d27fabe683a6d9cf955697602b8bf38f9eba962117baecbedf3cbf103683d971`, 100% traffic; production health endpoint returned OK.
 - Post-deploy signed-in SkyHarbor Chrome proof on revision `ca-abarva-web-lab-eastus--m5b4c5bc9`: the previous `evidence keeps making it cleanly` variant was improved, but live proof still exposed `business context keeps making it airtight` and the dangling `If it's the latter ... earns meeting time` closer. This failed the CXO-quality bar and triggered the airtight/earns-meeting-time follow-up.
 - Operator prompt-trace gate follow-up: `/api/intelligence/ask` now allows exact prompt/output trace only when the signed-in user sends `x-abarva-debug-intel: 1` and matches an operator role, operator metadata flag, AbarVa domain, configured operator email allowlist, synthetic lab persona, or the founder operator email allowlist. This supports prompt-vs-Claude-vs-rendered proof without exposing trace to ordinary users.
+- Post-deploy Chrome trace smoke on revision `ca-abarva-web-lab-eastus--m3e3b2be1`, digest `sha256:6fbd0e42879a26464b0ebc59d8c1b6c93877724150e1c5795e9e1ce123736251`, confirmed the production answer stream worked but did not emit `trace-model-input`; root cause was the current signed-in Chrome operator profile not satisfying the trace gate. The follow-up keeps the debug header requirement and adds the signed-in Anand operator profile to the allow gate.
 - Final post-airtight-closer deployment and signed-in SkyHarbor browser proof pending.
 
 ## Rollout Plan
