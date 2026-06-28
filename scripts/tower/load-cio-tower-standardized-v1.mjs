@@ -659,15 +659,15 @@ async function upsertMeasures(client) {
   for (const measure of measureDefinitions) {
     await client.query(
       `INSERT INTO cio_tower.measures (measure_key, label, description, default_scope, grain_filter, group_by, aggregation, honesty_rule, artifact_default, formula, formula_version, active)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,true)
+       VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8,$9,$10,$11,true)
        ON CONFLICT (measure_key) DO UPDATE SET label=EXCLUDED.label, description=EXCLUDED.description, grain_filter=EXCLUDED.grain_filter, artifact_default=EXCLUDED.artifact_default, formula=EXCLUDED.formula, updated_at=now(), active=true`,
       [
         measure.measure_key,
         measure.label,
         measure.description,
         measure.default_scope,
-        measure.grain_filter,
-        [],
+        JSON.stringify(measure.grain_filter),
+        JSON.stringify([]),
         measure.aggregation,
         'return_not_loaded_when_no_matching_facts',
         measure.artifact_default,
@@ -682,7 +682,7 @@ async function upsertQuestionContracts(client) {
   for (const contract of questionContracts) {
     await client.query(
       `INSERT INTO cio_tower.question_contracts (contract_key, surface, intent, question_family, measure_key, default_scope, dimensions, filters_schema, required_fields, artifact_type, outside_scope_rule, prompt_policy_key, examples, active)
-       VALUES ($1,'tower',$2,$3,$4,$5,$6,$7,$8,$9,$10,'cio_tower_visible_answer_v1',$11,true)
+       VALUES ($1,'tower',$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8::jsonb,$9,$10,'cio_tower_visible_answer_v1',$11::jsonb,true)
        ON CONFLICT (contract_key) DO UPDATE SET intent=EXCLUDED.intent, question_family=EXCLUDED.question_family, measure_key=EXCLUDED.measure_key, dimensions=EXCLUDED.dimensions, required_fields=EXCLUDED.required_fields, artifact_type=EXCLUDED.artifact_type, examples=EXCLUDED.examples, active=true`,
       [
         contract.contract_key,
@@ -690,12 +690,12 @@ async function upsertQuestionContracts(client) {
         contract.question_family,
         contract.measure_key,
         contract.default_scope,
-        contract.dimensions,
-        {},
-        contract.required_fields,
+        JSON.stringify(contract.dimensions),
+        JSON.stringify({}),
+        JSON.stringify(contract.required_fields),
         contract.artifact_type,
         'refuse_and_offer_tower_scope',
-        contract.examples,
+        JSON.stringify(contract.examples),
       ],
     );
   }
