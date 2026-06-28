@@ -102,6 +102,7 @@ COPY --from=build --chown=node:node /app/next.config.ts ./next.config.ts
 # so schema/bootstrap scripts and SQL migrations must be present.
 COPY --from=build --chown=node:node /app/tsconfig.json ./tsconfig.json
 COPY --from=build --chown=node:node /app/src/config ./src/config
+COPY --from=build --chown=node:node /app/src/content ./src/content
 COPY --from=build --chown=node:node /app/src/data ./src/data
 COPY --from=build --chown=node:node /app/src/lib ./src/lib
 COPY --from=build --chown=node:node /app/src/scripts ./src/scripts
