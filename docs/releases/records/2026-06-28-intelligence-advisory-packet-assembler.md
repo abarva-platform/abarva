@@ -20,6 +20,8 @@ Third follow-up hardening clarifies that the right-side decision canvas should a
 
 Fourth follow-up hardening makes the right-side tab strip dynamic and contentful after signed-in browser proof showed tabs with real content displaying misleading `0` badges. Per-answer tabs now hide count badges unless a real count exists, blank Claude tabs are omitted, and function/category context groundings render as CXO-readable labels instead of a fallback badge. The tab contract also now explicitly allows Chart tabs to show industry trend data, directional benchmarks, peer-pattern maps, and function/category opportunity maps when those are more useful than tenant metrics, provided the grounding label and first line make clear that the chart is not tenant proof.
 
+Fifth follow-up hardening fixes the explicit visual repair path after signed-in Lakeshore proof showed an industry trend chart request still answered in prose without creating a right-canvas Chart/Table tab. Explicit chart/graph/trend requests now require a chart-ready Chart tab during model repair; table/comparison requests require a Table tab. If repair still misses the contract, deterministic fallback places the compact visual in the right canvas instead of the left answer and only labels it as tenant evidence when the fallback is built from the loaded packet.
+
 ## Layer Impact
 
 - `global-control-lane`: changes shared Intelligence answer preparation, prompt evidence boundaries, and operator trace behavior for all clients using the Intelligence Ask path.
@@ -63,6 +65,8 @@ Fourth follow-up hardening makes the right-side tab strip dynamic and contentful
 - Fourth follow-up: `npx jest src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/__tests__/tabbed-response.test.ts --runInBand` passed, 11 tests.
 - Fourth follow-up: `npx eslint src/components/intelligence-v2/IntelligenceV2Surface.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/tabbed-response.ts src/lib/intelligence/__tests__/tabbed-response.test.ts src/lib/intelligence/intelligence-consultant-text-synthesis.ts` passed.
 - Fourth follow-up: `npm run release:check` passed.
+- Fifth follow-up: `npx jest src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts src/lib/intelligence/__tests__/tabbed-response.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx --runInBand` passed, 22 tests.
+- Fifth follow-up: `npx eslint src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts src/lib/intelligence/tabbed-response.ts src/lib/intelligence/__tests__/tabbed-response.test.ts src/components/intelligence-v2/IntelligenceV2Surface.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx` passed.
 - `npx tsx scripts/intelligence/generate-top-100-advisory-packet-audit.ts` generated 100 prompt JSON, 100 prompt Markdown, 100 summary Markdown artifacts, plus the Top 100 rollup.
 - Top 100 rollup: 100 / 100 packets reached richness >= 4, 100 / 100 passed raw leakage scan, Q001 richness = 5, six sampled answer-quality checks averaged 5.00.
 
@@ -94,7 +98,8 @@ Rollback by reverting this release candidate or deploying the previous ACA image
 - Post-table-tab signed-in Q001 trace on `ca-abarva-web-lab-eastus--m6bbfc5da` showed the full right-canvas tab set: Decision, Industry Insights, Table, Chart, and Evidence. Renderer proof passed: left answer equaled Claude's main answer, tabs equaled parsed Claude tabs, Markdown tables were preserved in Table/Chart, and raw leakage scan passed.
 - Third follow-up adds the adjacent-visual rule so future right-canvas tabs can surface useful related function/category/pattern visuals instead of repeating the answer text.
 - Post-adjacent-visual signed-in Q001 browser proof on `ca-abarva-web-lab-eastus--me8c4c46c` showed the right-side canvas can render Decision, Chart, Table, and Evidence tab content, but exposed misleading `0` tab badges and a fallback `Grounding noted` label for function/category context. Fourth follow-up addresses that UI defect.
+- Post-fourth-follow-up signed-in Lakeshore browser proof showed the right-side badges and context labels fixed, but an explicit industry trend chart request still produced a prose-only response without a Chart/Table tab. Fifth follow-up addresses that model-repair defect before live-safe signoff.
 
 ## Known Gaps
 
-- Fourth follow-up deploy and signed-in regression are pending.
+- Fifth follow-up deploy and signed-in regression are pending.
