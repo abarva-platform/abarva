@@ -39,11 +39,6 @@ import {
 } from "@/lib/tower/atlas-reasoning-trace";
 import { resolveTowerToday } from "@/lib/tower/today-resolution";
 import { selectAtlasPatterns } from "@/lib/tower/atlas-pattern-selectors";
-import { shapeAgentResponseForSurface } from "@/lib/agent/response-shape";
-import type {
-  SharedResponseLabel,
-  SharedResponseShapeIssue,
-} from "@/lib/answer/shared-response-shaper";
 import type {
   AtlasChatResponse,
   AtlasDebugTrace,
@@ -171,65 +166,6 @@ function wantsDebugTrace(
   return (
     surfaceContext?.traceMode === true || surfaceContext?.auditTrace === true
   );
-}
-
-function pushLabel(
-  labels: SharedResponseLabel[],
-  id: string | null | undefined,
-  label: string | null | undefined,
-): void {
-  const cleanId = typeof id === "string" ? id.trim() : "";
-  const cleanLabel = typeof label === "string" ? label.trim() : "";
-  if (!cleanId || !cleanLabel || cleanId === cleanLabel) return;
-  labels.push({ id: cleanId, label: cleanLabel });
-}
-
-function buildTowerResponseLabels(
-  toolResults: AtlasToolResultMap,
-): SharedResponseLabel[] {
-  const labels: SharedResponseLabel[] = [];
-  for (const initiative of toolResults.towerState?.initiatives ?? []) {
-    pushLabel(labels, initiative.initiativeId, initiative.name);
-    pushLabel(labels, initiative.displayId, initiative.name);
-  }
-  for (const vendor of toolResults.towerState?.vendors ?? []) {
-    pushLabel(labels, vendor.vendorId, vendor.vendorName);
-    pushLabel(labels, vendor.initiativeId, vendor.initiativeName);
-    pushLabel(labels, vendor.initiativeDisplayId, vendor.initiativeName);
-  }
-  for (const signal of toolResults.signals ?? []) {
-    pushLabel(labels, signal.id, signal.signalTitle || signal.headline);
-    pushLabel(
-      labels,
-      `signal:${signal.id}`,
-      signal.signalTitle || signal.headline,
-    );
-    pushLabel(labels, signal.signalKey, signal.signalTitle || signal.headline);
-  }
-  if (toolResults.signalDetail) {
-    pushLabel(
-      labels,
-      toolResults.signalDetail.id,
-      toolResults.signalDetail.signalTitle || toolResults.signalDetail.headline,
-    );
-    pushLabel(
-      labels,
-      `signal:${toolResults.signalDetail.id}`,
-      toolResults.signalDetail.signalTitle || toolResults.signalDetail.headline,
-    );
-    pushLabel(
-      labels,
-      toolResults.signalDetail.signalKey,
-      toolResults.signalDetail.signalTitle || toolResults.signalDetail.headline,
-    );
-  }
-  for (const program of toolResults.programs ?? []) {
-    pushLabel(labels, program.id, program.name);
-  }
-  for (const useCase of toolResults.useCases ?? []) {
-    pushLabel(labels, useCase.id, useCase.name);
-  }
-  return labels;
 }
 
 function makeFallbackDebugTrace(input: {
@@ -612,36 +548,17 @@ export async function runAtlasTurnDetailed(input: {
       groundingDisclosure,
     };
   }
-  const shapeIssues: SharedResponseShapeIssue[] = [];
-  const replacements: Array<{ from: string; to: string }> = [];
-  const labels = buildTowerResponseLabels(toolResults);
-  const shapedResponse = shapeAgentResponseForSurface(
-    "/tower",
-    response.response,
-    {
-      labels,
-      targetChars: 900,
-      hardMaxChars: 1100,
-      maxParagraphs: 5,
-      requireNextStep: false,
-      issues: shapeIssues,
-      replacements,
-    },
-  );
   response = {
     ...response,
-    response: shapedResponse,
     debugTrace: response.debugTrace
       ? {
           ...response.debugTrace,
           routing: {
             ...response.debugTrace.routing,
-            shapeIssues: shapeIssues.map(
-              (issue) => `${issue.code}: ${issue.detail}`,
-            ),
+            shapeIssues: [],
           },
-          renderedResponse: shapedResponse,
-          replacements,
+          renderedResponse: response.response,
+          replacements: [],
         }
       : undefined,
   };

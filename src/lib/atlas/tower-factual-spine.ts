@@ -68,6 +68,46 @@ function moneySort<T>(
   return [...items].sort((a, b) => (accessor(b) ?? 0) - (accessor(a) ?? 0));
 }
 
+function requestedCount(question: string, fallback = 10): number {
+  const match = question.match(/\btop\s+(\d{1,2})\b/i);
+  if (!match) return fallback;
+  return Math.max(1, Math.min(25, Number(match[1])));
+}
+
+function valueLabel(value: number | null | undefined): string {
+  return typeof value === "number" && Number.isFinite(value)
+    ? formatMoney(value)
+    : "not tracked";
+}
+
+function statusLabel(value: string | null | undefined): string {
+  const label = labelize(value);
+  return label || "not loaded";
+}
+
+function ownerLabel(initiative: AIInitiative): string {
+  return initiative.ownerName || initiative.ownerTitle || "owner not loaded";
+}
+
+function isAiProgram(initiative: AIInitiative): boolean {
+  const text = [
+    initiative.name,
+    initiative.description,
+    initiative.primaryCategoryId,
+    initiative.primaryCategoryName,
+    initiative.secondaryCategoryId,
+    initiative.secondaryCategoryName,
+    initiative.primaryGoalId,
+    initiative.primaryGoalName,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return /\b(ai|agentic|automation|automated|copilot|genai|machine learning|ml|predictive|forecast|optimization|decisioning|intelligence)\b/.test(
+    text,
+  );
+}
+
 function sum(values: Iterable<number | null | undefined>): number {
   let total = 0;
   for (const value of values) {
@@ -247,6 +287,89 @@ function buildTopVendorsAnswer(
   };
 }
 
+function buildTopProgramsAnswer(
+  state: AtlasTowerCurrentState,
+  question: string,
+): TowerFactualSpineResult | null {
+  if (state.initiatives.length === 0) return null;
+  const count = requestedCount(question, 10);
+  const top = moneySort(
+    state.initiatives.filter(
+      (initiative) =>
+        typeof initiative.committedAnnualUsd === "number" &&
+        initiative.committedAnnualUsd > 0,
+    ),
+    (initiative) => initiative.committedAnnualUsd,
+  ).slice(0, count);
+  if (top.length === 0) return null;
+  const valueLagCount = top.filter(
+    (initiative) => initiative.statusFlag === "value_lag",
+  ).length;
+  const lines = top.map((initiative, index) => {
+    const measured = valueLabel(initiative.measuredValueUsd);
+    const measuredClause =
+      measured === "not tracked" ? "measured value not tracked" : `${measured} measured value`;
+    return `${index + 1}. ${initiative.name} — ${formatMoney(
+      initiative.committedAnnualUsd,
+    )} budget; ${measuredClause}; ${ownerLabel(initiative)}; ${statusLabel(
+      initiative.statusFlag,
+    )}.`;
+  });
+  return {
+    matchedIntent: "tower_top_it_programs",
+    response: [
+      `Top ${top.length} IT programs at ${state.client.clientName}, ranked by annual budget commitment.`,
+      valueLagCount > 0
+        ? `${valueLagCount} of these ${top.length} sit in value lag, so the CIO question is not just spend concentration; it is proof of value.`
+        : "The largest programs do not show value-lag status in the current Tower view.",
+      ...lines,
+    ].join("\n"),
+    suggestions: suggestions(),
+  };
+}
+
+function buildTopAiProgramsAnswer(
+  state: AtlasTowerCurrentState,
+  question: string,
+): TowerFactualSpineResult | null {
+  if (state.initiatives.length === 0) return null;
+  const count = requestedCount(question, 5);
+  const candidates = state.initiatives.filter(isAiProgram);
+  const top = moneySort(
+    candidates.filter(
+      (initiative) =>
+        typeof initiative.committedAnnualUsd === "number" &&
+        initiative.committedAnnualUsd > 0,
+    ),
+    (initiative) => initiative.committedAnnualUsd,
+  ).slice(0, count);
+  if (top.length === 0) return null;
+  const lines = top.map((initiative, index) => {
+    const measured = valueLabel(initiative.measuredValueUsd);
+    const measuredClause =
+      measured === "not tracked" ? "measured value not tracked" : `${measured} measured value`;
+    return `${index + 1}. ${initiative.name} — ${formatMoney(
+      initiative.committedAnnualUsd,
+    )} budget; ${measuredClause}; ${ownerLabel(initiative)}; ${statusLabel(
+      initiative.statusFlag,
+    )}.`;
+  });
+  const unmeasured = top.filter(
+    (initiative) => initiative.measuredValueUsd === null,
+  ).length;
+  return {
+    matchedIntent: "tower_top_ai_programs",
+    response: [
+      `Top ${top.length} AI programs at ${state.client.clientName}, ranked by annual budget commitment with measured value shown separately.`,
+      unmeasured > 0
+        ? `${unmeasured} of these ${top.length} do not yet have measured value, so do not treat budget size as ROI.`
+        : "Every program in this cut has a measured-value field, but Tower still separates measured value from realized ROI.",
+      ...lines,
+    ].join("\n"),
+    suggestions: suggestions(),
+  };
+}
+
 function buildMeasuredValueAnswer(
   state: AtlasTowerCurrentState,
 ): TowerFactualSpineResult | null {
@@ -384,6 +507,15 @@ export function buildTowerFactualSpineAnswer(
       q,
     );
 
+  if (/\b(top|largest|biggest)\b/.test(q) && /\b(ai|agentic)\b/.test(q)) {
+    return buildTopAiProgramsAnswer(state, question);
+  }
+  if (
+    /\b(top|largest|biggest|list)\b/.test(q) &&
+    /\b(programs?|initiatives?)\b/.test(q)
+  ) {
+    return buildTopProgramsAnswer(state, question);
+  }
   if (asksBudget && /\b(warehouse automation|initiative|program)\b/.test(q)) {
     return buildInitiativeBudgetAnswer(state, question);
   }
@@ -393,6 +525,9 @@ export function buildTowerFactualSpineAnswer(
       /\b(total|loaded|overall)\b/.test(q) &&
       /\b(it|tower)\b/.test(q))
   ) {
+    return buildTotalBudgetAnswer(state);
+  }
+  if (asksBudget && /\b(my|our|it|tower)\b/.test(q)) {
     return buildTotalBudgetAnswer(state);
   }
   if (asksBudget && asksBreakdown) {
@@ -436,6 +571,8 @@ export function isTowerFactualSpineCandidate(question: string): boolean {
   const q = normalize(question);
   return (
     /\b(budget|spend|money|cost)\b/.test(q) ||
+    (/\b(top|largest|biggest|list)\b/.test(q) &&
+      /\b(programs?|initiatives?)\b/.test(q)) ||
     (/\b(top|largest|biggest)\b/.test(q) && /\bvendor|contract\b/.test(q)) ||
     (/\b(measured value|value proof|realized value)\b/.test(q) &&
       /\b(total|across|all)\b/.test(q)) ||
