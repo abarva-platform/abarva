@@ -33,6 +33,7 @@ Moves phase-end artifacts now carry a formal package standard and runtime output
 - Updated `src/lib/deliverables/persist-move-generated-artifact.ts` so generated artifacts persist both the HTML visual review companion and a separate DOCX editable phase record, with output role, provenance category, required companion outputs, Word sections, and workshop evidence.
 - Updated the review/regenerate route so client feedback creates both the regenerated HTML companion and a Word-equivalent review draft.
 - Added a deterministic fast lane for packaging-only sponsor-review feedback that asks for an editable Word-equivalent phase record. This creates the review-required HTML companion plus DOCX without waiting on a full Claude rewrite, while leaving substantive rewrite feedback on the existing model-backed regeneration path.
+- Marked review-regenerated HTML artifacts with the visual companion output role so the File Cabinet labels them as visual review companions instead of generic review views.
 - Updated the File Cabinet API and UI labels to distinguish `Editable deliverable`, `Visual review companion`, `Word-equivalent`, and `HTML review view` without exposing storage internals.
 - Added `docs/design/strategic-moves/EDITABLE_PHASE_DELIVERABLE_STANDARD.md`.
 - Updated `docs/strategy/MOVES-ARTIFACT-GOLD-STANDARD.md` to replace the old HTML-only master wording with editable Word plus HTML companion language.
