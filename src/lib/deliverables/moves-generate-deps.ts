@@ -12,6 +12,10 @@ import {
   getProgramById,
 } from "@/lib/programs/queries";
 import {
+  formatProgramEvidenceForPrompt,
+  listProgramEvidenceForPrompt,
+} from "@/lib/programs/evidence-context";
+import {
   buildProgramsContextBundleAsync,
   formatProgramsBrokerBundleForPrompt,
 } from "@/lib/programs/programs-broker-adapter";
@@ -152,7 +156,12 @@ export function createMovesGenerateArtifactDeps(
           requestedDomains: [...BROKER_DOMAINS],
         });
         const promptBlock = formatProgramsBrokerBundleForPrompt(bundle).trim();
-        return promptBlock;
+        const evidenceBlock = moveId
+          ? await listProgramEvidenceForPrompt(ctx, moveId, 20)
+              .then(formatProgramEvidenceForPrompt)
+              .catch(() => "")
+          : "";
+        return [promptBlock, evidenceBlock].filter(Boolean).join("\n\n");
       },
       async loadPriorDigests(moveId) {
         const rows = await azureRead.query<{
