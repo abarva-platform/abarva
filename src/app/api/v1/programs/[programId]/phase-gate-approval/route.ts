@@ -1,0 +1,282 @@
+// GET/POST /api/v1/programs/:programId/phase-gate-approval
+//
+// Signed-in phase gate approval path for real Strategic Moves. This does not
+// bypass gates: it first verifies durable phase capture, then uses the existing
+// P0 close helper or governed advancePhase path to create approved phase
+// snapshots and advance the Move.
+
+import { NextRequest } from "next/server";
+import { requireTenancy, tenancyErrorResponse } from "@/app/api/v1/programs/_auth";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
+import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { getModuleState, getPhaseSnapshots, getProgramById } from "@/lib/programs/queries";
+import { evaluateGate } from "@/lib/programs/governance";
+import { advancePhase } from "@/lib/programs/mutations";
+import { closeP0OnApproval } from "@/lib/programs/origination-close";
+import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
+import { saveGateDecisionArtifact } from "@/lib/programs/deliverables/gate-override-artifact";
+import {
+  getPhaseCaptureSections,
+  phaseCaptureModuleKey,
+} from "@/lib/programs/phase-capture-contract";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function parsePhase(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return 0;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 5) return null;
+  return parsed;
+}
+
+async function captureCompletion(
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+  programId: string,
+  phase: number,
+): Promise<{ complete: boolean; missing: string[] }> {
+  const modules = await getModuleState(ctx, programId);
+  const missing: string[] = [];
+  for (const section of getPhaseCaptureSections(phase)) {
+    const capturedModule = modules.find(
+      (entry) => entry.moduleKey === phaseCaptureModuleKey(phase, section.key),
+    );
+    if (!capturedModule || !["completed", "skipped"].includes(capturedModule.status)) {
+      missing.push(section.label);
+    }
+  }
+  return { complete: missing.length === 0, missing };
+}
+
+async function isPhaseApproved(
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+  programId: string,
+  phase: number,
+): Promise<boolean> {
+  const program = await getProgramById(ctx, programId);
+  const gatesPassed = Array.isArray(program?.gatesPassed) ? program.gatesPassed : [];
+  if (
+    gatesPassed.some(
+      (entry) => entry === phase || entry === String(phase) || entry === `P${phase}`,
+    )
+  ) {
+    return true;
+  }
+  const snapshots = await getPhaseSnapshots(ctx, programId, phase).catch(() => []);
+  return snapshots.some((snapshot) => snapshot.approvalStatus === "approved");
+}
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ programId: string }> },
+) {
+  try {
+    const ctx = await requireTenancy();
+    const { programId } = await params;
+    const phase = parsePhase(req.nextUrl.searchParams.get("phase"));
+    if (phase === null) {
+      return Response.json(
+        { error: "bad_request", detail: "phase must be an integer in [0,5]" },
+        { status: 400 },
+      );
+    }
+    const program = await getProgramById(ctx, programId);
+    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+    const [capture, approved] = await Promise.all([
+      captureCompletion(ctx, programId, phase),
+      isPhaseApproved(ctx, programId, phase),
+    ]);
+    return Response.json({
+      ok: true,
+      programId,
+      phase,
+      currentPhase: program.currentPhase,
+      capture,
+      approved,
+      canApprove: capture.complete && !approved,
+      approvePath: `/api/v1/programs/${programId}/phase-gate-approval`,
+    });
+  } catch (err) {
+    try {
+      return tenancyErrorResponse(err);
+    } catch {
+      /* not a tenancy error */
+    }
+    console.error("[GET /api/v1/programs/:programId/phase-gate-approval]", err);
+    return Response.json({ error: "internal_error" }, { status: 500 });
+  }
+}
+
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ programId: string }> },
+) {
+  try {
+    const ctx = await requireTenancy();
+    const { programId } = await params;
+    const program = await getProgramById(ctx, programId);
+    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
+
+    const body = (await req.json().catch(() => ({}))) as {
+      phase?: number;
+      rationale?: string;
+    };
+    const phase = parsePhase(body.phase ?? program.currentPhase ?? 0);
+    if (phase === null || phase >= 5) {
+      return Response.json(
+        { error: "bad_request", detail: "phase must be an integer in [0,4]" },
+        { status: 400 },
+      );
+    }
+
+    const policy = await loadUserProgramAccessPolicy(ctx, { programId });
+    if (!policy.canApproveGates) {
+      return Response.json(
+        {
+          error: "forbidden",
+          detail:
+            "Approving a phase gate requires gate-approval permission for this Move.",
+        },
+        { status: 403 },
+      );
+    }
+
+    const capture = await captureCompletion(ctx, programId, phase);
+    if (!capture.complete) {
+      return Response.json(
+        {
+          error: "capture_incomplete",
+          phase,
+          missing: capture.missing,
+          detail: `P${phase} capture is incomplete.`,
+        },
+        { status: 409 },
+      );
+    }
+
+    if (await isPhaseApproved(ctx, programId, phase)) {
+      return Response.json({
+        ok: true,
+        programId,
+        phase,
+        approved: true,
+        alreadyApproved: true,
+      });
+    }
+
+    const rationale =
+      body.rationale?.trim() ||
+      `P${phase} capture reviewed and approved through the signed-in phase gate path.`;
+
+    if (phase === 0) {
+      const closed = await closeP0OnApproval({
+        programId,
+        tenantKey: ctx.clientKey ?? ctx.clientId,
+        deciderUserId: ctx.userId,
+        rationale,
+        actorTenancy: ctx,
+      });
+      if (!closed.advanced) {
+        return Response.json(
+          {
+            error: "gate_blocked",
+            phase,
+            blockedBy: closed.blockedBy,
+            closeResult: closed,
+            detail: closed.blockedBy.length
+              ? `P0 gate remains blocked by: ${closed.blockedBy.join(", ")}.`
+              : "P0 gate approval could not advance the Move. Check server logs for the phase close helper.",
+          },
+          { status: 409 },
+        );
+      }
+      return Response.json({
+        ok: true,
+        programId,
+        phase,
+        approved: true,
+        newPhase: closed.newPhase,
+        closeResult: closed,
+      });
+    }
+
+    const sb = getAzureWriteFluentClient();
+    const toPhase = phase + 1;
+    const gate = await evaluateGate(ctx, programId, phase, toPhase, { supabase: sb });
+    const hardFails = gate.failedChecks.filter((check) => check.severity === "hard");
+    if (hardFails.length > 0) {
+      return Response.json(
+        {
+          error: "gate_blocked",
+          phase,
+          gate,
+          detail: `Hard-gate checks must pass before approval: ${hardFails
+            .map((check) => check.reason || check.check)
+            .join("; ")}`,
+        },
+        { status: 409 },
+      );
+    }
+
+    const advanced = await advancePhase(
+      ctx,
+      {
+        programId,
+        fromPhase: phase,
+        toPhase,
+        snapshot: {
+          humanRationale: rationale,
+          signed_in_phase_gate_approval: true,
+          capture_path: `/api/v1/programs/${programId}/phase-capture`,
+        },
+        approvedByUserId: ctx.userId,
+      },
+      { supabase: sb },
+    );
+    const carried = gate.failedChecks.filter((check) => check.severity === "soft");
+    await saveGateDecisionArtifact(ctx, {
+      moveId: programId,
+      moveName: program.name ?? undefined,
+      fromPhase: phase,
+      toPhase,
+      approverName: ctx.email ?? ctx.userId,
+      approverRole: ctx.role ?? "gate approver",
+      rationale,
+      override: carried.length > 0,
+      carriedGaps: carried.map((check) => ({
+        check: check.check,
+        reason: check.reason ?? null,
+        severity: check.severity,
+      })),
+    }).catch(() => null);
+    await writeProgramAuditLogBestEffort(ctx, {
+      programId,
+      engagementId: programId,
+      action: "phase_gate_approved",
+      fromState: `P${phase}`,
+      toState: `P${toPhase}`,
+      rationale,
+    });
+
+    return Response.json({
+      ok: true,
+      programId,
+      phase,
+      approved: true,
+      newPhase: advanced.newPhase,
+      snapshotId: advanced.snapshotId,
+      carriedGaps: carried.map((check) => check.check),
+    });
+  } catch (err) {
+    try {
+      return tenancyErrorResponse(err);
+    } catch {
+      /* not a tenancy error */
+    }
+    console.error("[POST /api/v1/programs/:programId/phase-gate-approval]", err);
+    return Response.json(
+      { error: "internal_error", message: (err as Error).message },
+      { status: 500 },
+    );
+  }
+}
