@@ -136,6 +136,10 @@ function unique(values: string[]): string[] {
   return Array.from(new Set(values.filter(Boolean)));
 }
 
+function jsonb(value: unknown): string {
+  return JSON.stringify(value ?? []);
+}
+
 function metaString(meta: Record<string, unknown>, key: string): string | null {
   const value = meta[key];
   return typeof value === "string" && value.trim() ? value.trim() : null;
@@ -325,13 +329,13 @@ export async function createArtifactReviewDecision(
       html_visual_companion_artifact_id:
         reviewPackage.htmlVisualCompanionArtifactId,
       docx_editable_artifact_id: reviewPackage.docxEditableArtifactId,
-      reviewed_artifact_ids: reviewPackage.reviewedArtifactIds,
+      reviewed_artifact_ids: jsonb(reviewPackage.reviewedArtifactIds),
       reviewer_user_id: ctx.userId ?? null,
       reviewer_email: ctx.email ?? null,
       decision: input.decision,
       rationale: input.rationale.trim(),
-      carried_forward_caveats: input.carriedForwardCaveats ?? [],
-      missing_evidence: input.missingEvidence ?? [],
+      carried_forward_caveats: jsonb(input.carriedForwardCaveats ?? []),
+      missing_evidence: jsonb(input.missingEvidence ?? []),
       allowed_next_action: config.allowedNextAction,
       ready_for_p3_draft: config.readyForP3Draft,
       ready_for_p3_final: config.readyForP3Final,
