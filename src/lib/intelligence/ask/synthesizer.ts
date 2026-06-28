@@ -572,6 +572,27 @@ ACTIVE INTELLIGENCE CANVAS RULES
       : [];
     if (missingTabs.length > 0) {
       const requiredTabs = requiredCanvasTabsForQuery(args.query);
+      const repairPrompt = [
+        prompt,
+        "",
+        "DRAFT TO REPAIR:",
+        text,
+        "",
+        "MANDATORY INTELLIGENCE CANVAS TAB REPAIR:",
+        `The user explicitly asked for these right-canvas tabs: ${requiredTabs.join(", ")}.`,
+        `The draft is missing: ${missingTabs.join(", ")}.`,
+        "Return the final answer only, using the exact Intelligence decision-canvas tab markers from the system prompt.",
+        "Keep the main answer to 120-180 words before the first tab marker.",
+        "Include every required tab listed above. Do not merge required tabs together.",
+        "If Chart is required, include chart-ready Markdown numeric data in the Chart tab.",
+        "If Table is required, include a compact Markdown table in the Table tab.",
+        "If Evidence is required, include a concise Evidence tab that separates tenant facts, industry context, planning assumptions, and missing evidence.",
+        "Do not expose raw IDs, raw field names, file names, row labels, debug labels, or product-mechanics phrases like loaded sources/context.",
+      ].join("\n");
+      args.onModelInput?.({
+        system: systemWithContinuity,
+        user: repairPrompt,
+      });
       const tabRepair = await client.messages.create({
         model,
         max_tokens: Math.max(chooseSynthesisTokenBudget(args.query), 1600),
@@ -579,23 +600,7 @@ ACTIVE INTELLIGENCE CANVAS RULES
         messages: [
           {
             role: "user",
-            content: [
-              prompt,
-              "",
-              "DRAFT TO REPAIR:",
-              text,
-              "",
-              "MANDATORY INTELLIGENCE CANVAS TAB REPAIR:",
-              `The user explicitly asked for these right-canvas tabs: ${requiredTabs.join(", ")}.`,
-              `The draft is missing: ${missingTabs.join(", ")}.`,
-              "Return the final answer only, using the exact Intelligence decision-canvas tab markers from the system prompt.",
-              "Keep the main answer to 120-180 words before the first tab marker.",
-              "Include every required tab listed above. Do not merge required tabs together.",
-              "If Chart is required, include chart-ready Markdown numeric data in the Chart tab.",
-              "If Table is required, include a compact Markdown table in the Table tab.",
-              "If Evidence is required, include a concise Evidence tab that separates tenant facts, industry context, planning assumptions, and missing evidence.",
-              "Do not expose raw IDs, raw field names, file names, row labels, debug labels, or product-mechanics phrases like loaded sources/context.",
-            ].join("\n"),
+            content: repairPrompt,
           },
         ],
       });
@@ -606,6 +611,47 @@ ACTIVE INTELLIGENCE CANVAS RULES
       );
       if (repairedText.trim() && repairedMissingTabs.length === 0) {
         text = repairedText;
+      } else if (repairedText.trim()) {
+        const bestDraft =
+          repairedMissingTabs.length < missingTabs.length ? repairedText : text;
+        const stillMissing = missingRequiredCanvasTabs(bestDraft, args.query);
+        if (stillMissing.length > 0) {
+          const missingOnlyPrompt = [
+            prompt,
+            "",
+            "CURRENT FINAL DRAFT:",
+            bestDraft,
+            "",
+            "MISSING-TAB ONLY REPAIR:",
+            `Return only the missing tab blocks for: ${stillMissing.join(", ")}.`,
+            "Use the exact Intelligence decision-canvas tab markers from the system prompt.",
+            "Do not repeat the main answer or existing tabs.",
+            "Each missing tab must be model-authored, concise, and grounded.",
+            "If Table is missing, include a compact Markdown table.",
+            "If Evidence is missing, separate tenant facts, industry context, planning assumptions, and missing evidence.",
+            "Do not expose raw IDs, raw field names, file names, row labels, debug labels, or product-mechanics phrases like loaded sources/context.",
+          ].join("\n");
+          args.onModelInput?.({
+            system: systemWithContinuity,
+            user: missingOnlyPrompt,
+          });
+          const missingOnlyRepair = await client.messages.create({
+            model,
+            max_tokens: 900,
+            system: systemWithContinuity,
+            messages: [{ role: "user", content: missingOnlyPrompt }],
+          });
+          const missingOnlyText = extractMessageText(missingOnlyRepair);
+          const combinedText = [bestDraft.trim(), missingOnlyText.trim()]
+            .filter(Boolean)
+            .join("\n\n");
+          if (
+            missingOnlyText.trim() &&
+            missingRequiredCanvasTabs(combinedText, args.query).length === 0
+          ) {
+            text = combinedText;
+          }
+        }
       }
     }
     args.onModelOutput?.({
