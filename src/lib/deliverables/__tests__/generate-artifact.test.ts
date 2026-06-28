@@ -103,4 +103,60 @@ describe("generateArtifact — the integration keystone", () => {
       expect(r.html.match(/<table/g)?.length).toBeGreaterThanOrEqual(2);
     }
   });
+
+  it("completes P2 evidence baseline when Claude omits first-class metrics and taxonomy", async () => {
+    const enoughWords = Array.from({ length: 2600 }, (_, i) => `word${i}`).join(" ");
+    const p2HtmlWithoutEvidence = `<html><body>
+      <h1>Discovery & Diagnostic Readout</h1>
+      <svg><text>Current-state architecture diagram</text></svg>
+      <svg><text>Current-state data-flow diagram</text></svg>
+      <svg><text>Current-state process map</text></svg>
+      <svg><text>Root-cause map</text></svg>
+      <h2>Gap Matrix</h2><table><tr><td>gap</td></tr></table>
+      <h2>KPI Baseline Table</h2><table><tr><td>baseline pending</td></tr></table>
+      <h2>Evidence Source Table</h2><table><tr><td>evidence</td></tr></table>
+      <p>The process has exception volume and manual effort, but this draft fails to use the exact evidence.</p>
+      <p>${enoughWords}</p>
+    </body></html>`;
+
+    const r = await generateArtifact(
+      {
+        moveId: "m",
+        tenantKey: "lakeshore",
+        phase: 2,
+        artifact: "discovery_report",
+        generationMode: "draft",
+      },
+      deps({
+        contextSources: {
+          retrieveCurrentState: async () => `
+            Average monthly invoice exceptions, 1872
+            Manual touch hours per month, 2345
+            Average resolution days, 7.4
+            "Missing PO","420","22.4","6.8","510","Medium","Accounts Payable"
+            "Payment hold / control review","27","1.4","12.5","58","High","Finance Control"
+          `,
+          loadPriorDigests: async () => [
+            {
+              useCase: "Vendor Invoice Exception Handling Redesign",
+              valueHypothesis: "Reduce manual touch, cycle time, and control risk.",
+            },
+          ],
+          loadDecisions: async () => [],
+        },
+        callModel: async () => p2HtmlWithoutEvidence,
+      }),
+    );
+
+    expect(r.status).toBe("generated");
+    if (r.status === "generated") {
+      expect(r.goldenBar.pass).toBe(true);
+      expect(r.html).toContain("Evidence Baseline Completion Exhibit");
+      expect(r.html).toContain("1,872");
+      expect(r.html).toContain("2,345");
+      expect(r.html).toContain("7.4");
+      expect(r.html).toContain("Missing PO");
+      expect(r.html).toContain("Payment hold / control review");
+    }
+  });
 });
