@@ -344,7 +344,7 @@ function addRelationship(out, relationship) {
     const existing = out.relationships.get(existingKey);
     out.relationships.set(existingKey, {
       ...existing,
-      confidence: Math.max(Number(existing.confidence ?? 0), Number(relationship.confidence ?? 0)),
+      confidence: strongerConfidence(existing.confidence, relationship.confidence),
       source_key: existing.source_key || relationship.source_key || null,
       source_row: existing.source_row || relationship.source_row || null,
       attributes: {
@@ -540,6 +540,21 @@ function confidence(value) {
   if (n >= 0.75) return 'high';
   if (n < 0.55) return 'low';
   return 'medium';
+}
+
+function strongerConfidence(left, right) {
+  const rank = { low: 1, medium: 2, high: 3 };
+  const l = confidenceRank(left, rank);
+  const r = confidenceRank(right, rank);
+  return l >= r ? confidenceLabel(left) : confidenceLabel(right);
+}
+
+function confidenceRank(value, rank) {
+  return rank[confidenceLabel(value)] ?? rank.medium;
+}
+
+function confidenceLabel(value) {
+  return value === 'high' || value === 'medium' || value === 'low' ? value : confidence(value);
 }
 
 function computeMeasureResults(out, tenantKey) {
