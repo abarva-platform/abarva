@@ -189,6 +189,13 @@ describe('Ask Intelligence guardrails', () => {
       );
     });
 
+    it('repairs explicit tab requests before rendering when Claude omits a required tab', () => {
+      expect(synthesizerCode).toContain('requiredCanvasTabsForQuery');
+      expect(synthesizerCode).toContain('missingRequiredCanvasTabs');
+      expect(synthesizerCode).toContain('MANDATORY INTELLIGENCE CANVAS TAB REPAIR');
+      expect(synthesizerCode).toContain('Include every required tab listed above');
+    });
+
     it('keeps repaired visuals inside Claude-owned canvas tabs', () => {
       expect(synthesizerCode).toContain(
         'inside a Table or Chart tab',
