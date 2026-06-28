@@ -43,6 +43,8 @@ traces, and validation results.
   `scripts/tower/generate-fy2025-trend-synthetic.mjs`
 - CIO Tower standardized loader:
   `scripts/tower/load-cio-tower-standardized-v1.mjs`
+- CIO Tower quality/reconciliation harness:
+  `scripts/tower/validate-cio-tower-quality.mjs`
 - CIO Tower chat answer service:
   `src/lib/cio-tower/answer.ts`
 - CIO Tower chat endpoint:
@@ -146,6 +148,11 @@ a high-context Claude prompt, and records prompt packages plus answer traces.
 Pass: Tower chat no longer falls back to the old `/api/v1/atlas/chat` path or a
 browser-side generated answer when the model path fails.
 
+Pass: Local CIO Tower known-question contract harness generated 300 question
+checks across five tenants and six question families, with 300/300 routing to
+the expected contract:
+`node scripts/tower/validate-cio-tower-quality.mjs`.
+
 Pass: The Claude prompt now requires an explicit
 `cio_tower_visible_answer_v1` JSON contract. Claude owns every user-visible
 string, including main prose, table titles, table columns, table cells, tab
@@ -160,6 +167,7 @@ artifact metadata.
 Pass: Focused local validation passed:
 - `npx eslint src/lib/cio-tower/answer.ts src/lib/cio-tower/__tests__/answer.test.ts src/app/api/tower/cio-chat/route.ts src/components/tower/AiControlTowerPage.tsx`
 - `npx jest src/lib/cio-tower/__tests__/answer.test.ts --runInBand`
+- `node scripts/tower/validate-cio-tower-quality.mjs`
 
 Note: a full clean-worktree TypeScript run was attempted after rebasing and was
 blocked by existing repository dependency/type resolution gaps unrelated to this

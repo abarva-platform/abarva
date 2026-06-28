@@ -112,24 +112,24 @@ export interface CioTowerVisibleAnswerContract {
 
 const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
   {
-    key: 'tower_top_it_programs_by_budget',
-    patterns: [/top\s+\d+\s+(it\s+)?(program|initiative)/i, /largest\s+(it\s+)?(program|initiative)/i, /rank.*(program|initiative).*budget/i],
+    key: 'tower_trend_it_budget',
+    patterns: [/trend/i, /fy25.*fy26/i, /fy2025.*fy2026/i, /last year/i, /year over year/i, /growing from FY25/i, /FY25.*FY26/i],
   },
   {
-    key: 'tower_total_it_spend',
-    patterns: [/what.*(it\s+)?spend/i, /total.*(it\s+)?budget/i, /fy26.*(it\s+)?budget/i],
+    key: 'tower_top_it_programs_by_budget',
+    patterns: [/top\s+\d+\s+(it\s+)?(program|initiative)/i, /largest\s+(it\s+)?(program|initiative)/i, /rank.*(program|initiative).*budget/i],
   },
   {
     key: 'tower_run_change_split',
     patterns: [/run.*change/i, /change.*run/i, /capex.*opex/i, /opex.*capex/i],
   },
   {
-    key: 'tower_value_realization',
-    patterns: [/measured value/i, /value.*lag/i, /realized value/i, /where.*value/i],
+    key: 'tower_total_it_spend',
+    patterns: [/what.*(it\s+)?spend/i, /total.*(it\s+)?budget/i, /fy26.*(it\s+)?budget/i, /how much.*(it\s+)?spend/i, /how much.*budget/i, /budget envelope/i, /technology budget/i, /cio budget/i],
   },
   {
-    key: 'tower_trend_it_budget',
-    patterns: [/trend/i, /fy25.*fy26/i, /last year/i, /year over year/i],
+    key: 'tower_value_realization',
+    patterns: [/measured value/i, /value.*lag/i, /realized value/i, /where.*value/i],
   },
   {
     key: 'tower_outside_scope',
