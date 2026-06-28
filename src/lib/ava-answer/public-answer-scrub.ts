@@ -2,7 +2,7 @@ const RAW_ID_REPLACE =
   /\b(?:APP|DP|CON|NODE|EDGE)-\d{3,}\b|\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 
 export const PUBLIC_ANSWER_FORBIDDEN_LANGUAGE_RE =
-  /\b(cannot be characterized|cannot be identified|I found|source support|missing source support|supporting material|evidence ledger|supporting material ledger|Current-state read|current-state context|loaded context|source context|loaded source context|Evidence points|\bevidence points?\b|\bsource signals?\b|\bcontext dimensions?\b|\bdimensions loaded\b|\bloaded with \d[\d,]*\b|\btrust\s+\d{1,3}\b|\btrust\s+\d{1,3}%\b|\bevidence\s+refs?\b|\brows?\b|home_know|intelligence-v2|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|\bsemantic\b|typed facts?|loaded facts?|canonical entities|relationship maps?|relationship paths?|debug|session memory|earlier turns|previous conversation|not loaded|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
+  /\b(cannot be characterized|cannot be identified|I found|source support|missing source support|supporting material|evidence ledger|supporting material ledger|Current-state read|current-state context|loaded context|source context|loaded source context|loaded evidence|tenant evidence|Evidence points|\bevidence points?\b|\bsource signals?\b|\bcontext dimensions?\b|\bdimensions loaded\b|\bloaded with \d[\d,]*\b|\btrust\s+\d{1,3}\b|\btrust\s+\d{1,3}%\b|\bevidence\s+refs?\b|\brows?\b|home_know|intelligence-v2|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|\bsemantic\b|typed facts?|loaded facts?|canonical entities|relationship maps?|relationship paths?|debug|session memory|earlier turns|previous conversation|last\s+\w+\s+(?:turns?|times)|not loaded|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
 
 export const PUBLIC_ANSWER_INTERNAL_COUNT_RE =
   /\b\d[\d,]*\s+(?:canonical\s+)?(?:entities|facts|relationships|citations|rows|evidence points?|context dimensions?)\b/i;
@@ -57,6 +57,14 @@ export function scrubPublicAvaAnswerText(value: string): string {
       /\bThe answer hasn'?t changed from the last\s+\w+\s+turns?,?\s+and\s+I\s+want\s+to\s+be\s+direct\s+about\s*/gi,
       "",
     )
+    .replace(
+      /\bThe answer is the same one I(?:'|’)ve given the last\s+\w+\s+times?\s+this\s+session,?\s+and\s+(?:the\s+)?(?:tenant evidence|business context|available business material)\s+(?:keeps\s+)?supporting\s+it:\s*/gi,
+      "",
+    )
+    .replace(
+      /\bHere(?:'|’)s why this keeps being the right answer\.?\s*/gi,
+      "",
+    )
     .replace(/\bWhy:\s+(?=[a-z])/g, "")
     .replace(/\bHere(?:'|’)s the logic(?: in plain terms)?\.?\s*/gi, "")
     .replace(/\bcurated semantic (?:evidence|source context)?\s*source\b/gi, "available business material")
@@ -72,6 +80,7 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\bcurrent-state context\b/gi, "current picture")
     .replace(/\bloaded source context\b/gi, "available source material")
     .replace(/\bloaded context\b/gi, "available business material")
+    .replace(/\bloaded evidence\b/gi, "business context")
     .replace(/\bsource context\b/gi, "business context")
     .replace(/\btyped facts?\b/gi, "available details")
     .replace(/\bloaded facts?\b/gi, "available details")
@@ -87,6 +96,7 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\bmissing evidence\b/gi, "specific source gap")
     .replace(/\bneeded evidence\b/gi, "needed material")
     .replace(/\bloaded tenant evidence\b/gi, "business context")
+    .replace(/\btenant evidence\b/gi, "business context")
     .replace(/\bevidence base gap\b/gi, "operational-data gap")
     .replace(/\bdata evidence base\b/gi, "operational-data base")
     .replace(/\bevidence points?\b/gi, "business signals")
@@ -116,6 +126,10 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\bThe supporting evidence is that\s+/gi, "")
     .replace(/\bThat means\s+The\b/g, "That means the")
     .replace(/\bThat means\s+/gi, "")
+    .replace(
+      /\n?\s*If it(?:'|’)s the latter,?\s+that(?:'|’)s the single thing to change before any other AI conversation is worth the meeting time\.?\s*$/gi,
+      "",
+    )
     .replace(/\s+\d+\s+vs\.(?=\s|$)/gi, ".")
     .replace(/\bS\.\s*$/gm, "")
     .replace(/\s+-\s+(?=[A-Z0-9])/g, "\n\n- ")

@@ -13,6 +13,7 @@ export const VISIBLE_ANSWER_CONTRACT_PROMPT = [
   "- No raw record IDs, artifact IDs, UUIDs, source keys, table names, JSON, debug terms, or internal field names.",
   '- No visible scaffolding labels such as "Read:", "Evidence:", "Implication:", or "Next move:".',
   '- No implementation phrases such as "loaded evidence", "tenant evidence", "evidence ledger", "source signals", "semantic packet", "rows", or "retrieved context".',
+  '- No session-history phrases such as "same answer as before", "last three times", "earlier turns", or "this session"; answer the current question as if it stands alone.',
   "- No repeated stock closing line.",
   "",
   "End naturally based on the question:",
@@ -69,6 +70,11 @@ const VISIBLE_ANSWER_BANNED_PATTERNS: Array<{ id: string; pattern: RegExp }> = [
     id: "internal_dossier_terms",
     pattern:
       /\b(?:binder|dossier|packet|read[- ]model|source key|record type|dimension key|artifact id|citation id)\b/i,
+  },
+  {
+    id: "session_history_language",
+    pattern:
+      /\b(?:same answer as before|answer (?:is|hasn'?t changed).*last\s+\w+\s+(?:turns?|times)|last\s+\w+\s+(?:turns?|times)|earlier turns|previous conversation|this session)\b/i,
   },
   {
     id: "stock_generic_closing",
