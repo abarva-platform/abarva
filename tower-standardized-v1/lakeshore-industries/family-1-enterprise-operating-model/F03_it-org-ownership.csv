@@ -1,0 +1,11 @@
+team_id,team_name,executive_owner_role,domain,head_count_fte,offshore_pct,annual_budget_usd,source_file,source_row,value_source
+LAK-IT-001,Office of CIO,CIO,technology_leadership,70,0,31000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,2,tenant_file
+LAK-IT-002,SAP and ERP Platforms,VP ERP,erp,520,18,156000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,3,tenant_file
+LAK-IT-003,Treasury and Finance Systems,VP Finance Technology,treasury_finance,210,12,62000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,4,tenant_file
+LAK-IT-004,Integration and Middleware,VP Integration,api_edi_batch,240,18,48000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,5,tenant_file
+LAK-IT-005,Data Platform and BI,Chief Data Officer,data_analytics,460,22,98000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,6,tenant_file
+LAK-IT-006,Manufacturing and OT Systems,VP Manufacturing Tech,mes_ot,780,8,174000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,7,tenant_file
+LAK-IT-007,Cloud and Infrastructure,VP Infrastructure,cloud_datacenter,630,12,188000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,8,tenant_file
+LAK-IT-008,ServiceNow and IT Operations,VP IT Operations,itsm,180,15,43000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,9,tenant_file
+LAK-IT-009,Cybersecurity and Identity,CISO,cyber,390,5,116000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,10,tenant_file
+LAK-IT-010,AI Automation Office,Chief Data Officer,ai_governance,95,5,28000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,11,tenant_file

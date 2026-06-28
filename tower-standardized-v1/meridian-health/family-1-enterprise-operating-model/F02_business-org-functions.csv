@@ -1,0 +1,16 @@
+function_id,function_name,executive_owner_role,head_count,description,source_file,source_row,value_source
+MER-BF-001,Ambulatory and Primary Care,Chief Medical Officer,18500,"Primary care, clinics, care-team workflows, MyChart adoption",family-1-enterprise-operating-model/F02_business-org-functions.csv,2,tenant_file
+MER-BF-002,Hospital Operations,Chief Operating Officer,22200,"Acute facilities, perioperative, bed management, transfer center",family-1-enterprise-operating-model/F02_business-org-functions.csv,3,tenant_file
+MER-BF-003,Health Plan Operations,Chief Health Plan Officer,6200,"Membership, claims, prior auth, utilization management, provider network",family-1-enterprise-operating-model/F02_business-org-functions.csv,4,tenant_file
+MER-BF-004,Pharmacy Services,Chief Pharmacy Officer,3700,"Retail/specialty pharmacy, PBM interfaces, medication adherence",family-1-enterprise-operating-model/F02_business-org-functions.csv,5,tenant_file
+MER-BF-005,Revenue Cycle and Coding,VP Revenue Cycle,5100,"Registration, charge capture, coding, denials, payment posting",family-1-enterprise-operating-model/F02_business-org-functions.csv,6,tenant_file
+MER-BF-006,Member and Patient Contact Center,Chief Customer Experience Officer,4200,"Scheduling, claims questions, benefits, care navigation",family-1-enterprise-operating-model/F02_business-org-functions.csv,7,tenant_file
+MER-BF-007,"Quality, STAR and HEDIS",Chief Quality Officer,1250,"Clinical quality, HEDIS, STAR, attribution, provider performance",family-1-enterprise-operating-model/F02_business-org-functions.csv,8,tenant_file
+MER-BF-008,Finance and Actuarial,CFO,1800,"GL, FP&A, capitation, cost-of-care, product margin",family-1-enterprise-operating-model/F02_business-org-functions.csv,9,tenant_file
+MER-BF-009,Population Health and VBC,SVP Population Health,1600,"Risk stratification, care gaps, chronic disease panels",family-1-enterprise-operating-model/F02_business-org-functions.csv,10,tenant_file
+MER-BF-010,"Data, Analytics and AI",Chief Data Officer,980,"Enterprise analytics, ML, semantic layer, data governance",family-1-enterprise-operating-model/F02_business-org-functions.csv,11,tenant_file
+MER-BF-011,"Cybersecurity, Privacy and Compliance",CISO,760,"HIPAA, HITRUST, SOC, third-party risk, model governance",family-1-enterprise-operating-model/F02_business-org-functions.csv,12,tenant_file
+MER-BF-012,Digital and IT,Chief Digital & Information Officer,6100,"EHR, payer core, cloud migration, applications, service management",family-1-enterprise-operating-model/F02_business-org-functions.csv,13,tenant_file
+MER-BF-013,Provider Network Management,Chief Network Officer,910,"Contracts, credentialing, network adequacy, provider benchmarking",family-1-enterprise-operating-model/F02_business-org-functions.csv,14,tenant_file
+MER-BF-014,Clinical Informatics,Chief Clinical Informatics Officer,640,"Epic optimization, clinical decision support, safety review",family-1-enterprise-operating-model/F02_business-org-functions.csv,15,tenant_file
+MER-BF-015,Enterprise Transformation Office,Chief Strategy Officer,430,"Databricks on AWS migration, automation portfolio, value office",family-1-enterprise-operating-model/F02_business-org-functions.csv,16,tenant_file

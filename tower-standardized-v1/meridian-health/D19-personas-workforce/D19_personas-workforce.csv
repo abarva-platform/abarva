@@ -1,0 +1,15 @@
+persona_id,persona_name,business_area,population_count,ai_relevance,work_context,source_file,source_row,value_source
+MER-PER-001,Primary care physician,Ambulatory,6700,High,"Clinical documentation, inbox, care gaps, longitudinal patient history",D19-personas-workforce/D19_personas-workforce.csv,2,tenant_file
+MER-PER-002,Care manager,Population Health,2100,High,"Care gaps, risk panels, patient outreach, chronic condition programs",D19-personas-workforce/D19_personas-workforce.csv,3,tenant_file
+MER-PER-003,Utilization management nurse,Health Plan,890,High,"Prior authorization, medical necessity, policy evidence, appeals",D19-personas-workforce/D19_personas-workforce.csv,4,tenant_file
+MER-PER-004,Claims examiner,Claims,1450,High,"Adjudication exceptions, payment integrity, edits, provider disputes",D19-personas-workforce/D19_personas-workforce.csv,5,tenant_file
+MER-PER-005,Contact center agent,Member Services,3300,High,"Intent detection, benefits, claims status, next-best-action",D19-personas-workforce/D19_personas-workforce.csv,6,tenant_file
+MER-PER-006,Provider quality analyst,Quality,520,High,"HEDIS, STAR, attribution, provider benchmarking, measure closure",D19-personas-workforce/D19_personas-workforce.csv,7,tenant_file
+MER-PER-007,Revenue cycle coder,Revenue Cycle,1250,High,"Charge capture, CDI, denials, coding audit, compliance",D19-personas-workforce/D19_personas-workforce.csv,8,tenant_file
+MER-PER-008,Actuary,Finance,210,Medium,"Product margin, capitation, risk adjustment, cost-of-care",D19-personas-workforce/D19_personas-workforce.csv,9,tenant_file
+MER-PER-009,Financial analyst,Finance,640,Medium,"GL, close, provider contract accruals, reconciliation",D19-personas-workforce/D19_personas-workforce.csv,10,tenant_file
+MER-PER-010,Data engineer,Data Platform,310,High,"FHIR, EDI, claims, clinical, pharmacy pipelines, quality rules",D19-personas-workforce/D19_personas-workforce.csv,11,tenant_file
+MER-PER-011,Clinical informaticist,Clinical Informatics,380,High,"Epic workflows, order sets, CDS safety, physician adoption",D19-personas-workforce/D19_personas-workforce.csv,12,tenant_file
+MER-PER-012,Privacy analyst,Compliance,160,High,"HIPAA, minimum necessary, PHI approvals, model review",D19-personas-workforce/D19_personas-workforce.csv,13,tenant_file
+MER-PER-013,Cloud platform engineer,AWS Lakehouse,220,High,"Databricks on AWS, Unity Catalog, jobs, networking, FinOps",D19-personas-workforce/D19_personas-workforce.csv,14,tenant_file
+MER-PER-014,Provider contracting manager,Network,260,Medium,"Contract terms, attribution, leakage, provider scorecards",D19-personas-workforce/D19_personas-workforce.csv,15,tenant_file

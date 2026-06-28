@@ -1,0 +1,11 @@
+action_id,action_title,priority,derived_from,decision_owner,next_decision_date,expected_impact_usd,source_file,source_row,value_source
+LAK-AI-001-ACT,Approve guarded pilot for Kyriba global cash and payments rollout,P0,LAK-AI-001;LAK-EVID-001,Treasurer,2026-07-08,67080000,ai-control-tower/T12_derived-actions.csv,2,tenant_file
+LAK-AI-002-ACT,Close evidence gap for Treasury bank connectivity control evidence,P0,LAK-AI-002;LAK-EVID-002,Treasurer,2026-07-09,19600000,ai-control-tower/T12_derived-actions.csv,3,tenant_file
+LAK-AI-003-ACT,Sequence dependency before scaling Liquidity forecasting automation,P0,LAK-AI-003;LAK-EVID-003,CFO,2026-07-10,24180000,ai-control-tower/T12_derived-actions.csv,4,tenant_file
+LAK-AI-004-ACT,Approve guarded pilot for Automated close and finance reporting semantic layer,P1,LAK-AI-004;LAK-EVID-004,Controller,2026-07-11,24840000,ai-control-tower/T12_derived-actions.csv,5,tenant_file
+LAK-AI-005-ACT,Close evidence gap for ServiceNow finance support agent,P1,LAK-AI-005;LAK-EVID-005,VP IT Operations,2026-07-12,10920000,ai-control-tower/T12_derived-actions.csv,6,tenant_file
+LAK-AI-006-ACT,Sequence dependency before scaling Finance AI narrative and variance explainer,P1,LAK-AI-006;LAK-EVID-006,CFO,2026-07-13,11900000,ai-control-tower/T12_derived-actions.csv,7,tenant_file
+LAK-AI-007-ACT,Approve guarded pilot for Supplier working-capital analytics,P1,LAK-AI-007;LAK-EVID-007,Chief Procurement Officer,2026-07-14,16120000,ai-control-tower/T12_derived-actions.csv,8,tenant_file
+LAK-AI-008-ACT,Close evidence gap for Kyriba rollout assistant and defect triage,P2,LAK-AI-008;LAK-EVID-008,Treasurer,2026-07-15,5940000,ai-control-tower/T12_derived-actions.csv,9,tenant_file
+LAK-AI-009-ACT,Sequence dependency before scaling M365 Copilot finance rollout,P2,LAK-AI-009;LAK-EVID-009,Treasurer,2026-07-16,83140000,ai-control-tower/T12_derived-actions.csv,10,tenant_file
+LAK-AI-010-ACT,Approve guarded pilot for Codex/Claude developer productivity for finance integrations,P2,LAK-AI-010;LAK-EVID-010,Treasurer,2026-07-17,25600000,ai-control-tower/T12_derived-actions.csv,11,tenant_file

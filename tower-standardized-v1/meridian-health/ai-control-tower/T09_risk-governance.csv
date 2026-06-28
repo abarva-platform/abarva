@@ -1,0 +1,15 @@
+initiative_id,risk_id,risk_domain,severity,control_status,exception_or_gap,owner_role,source_file,source_row,value_source
+MER-AI-001,MER-AI-001-RISK,privacy_security,critical,blocked,,Chief Data Officer,ai-control-tower/T09_risk-governance.csv,2,tenant_file
+MER-AI-002,MER-AI-002-RISK,model_risk,medium,approved_with_conditions,,Chief Data Officer,ai-control-tower/T09_risk-governance.csv,3,tenant_file
+MER-AI-003,MER-AI-003-RISK,clinical_or_operational_safety,medium,approved_with_conditions,,Chief Health Plan Officer,ai-control-tower/T09_risk-governance.csv,4,tenant_file
+MER-AI-004,MER-AI-004-RISK,financial_control,high,review_required,,Chief Customer Experience Officer,ai-control-tower/T09_risk-governance.csv,5,tenant_file
+MER-AI-005,MER-AI-005-RISK,privacy_security,medium,approved_with_conditions,,Chief Quality Officer,ai-control-tower/T09_risk-governance.csv,6,tenant_file
+MER-AI-006,MER-AI-006-RISK,model_risk,critical,blocked,,CFO,ai-control-tower/T09_risk-governance.csv,7,tenant_file
+MER-AI-007,MER-AI-007-RISK,clinical_or_operational_safety,high,review_required,,VP Payment Integrity,ai-control-tower/T09_risk-governance.csv,8,tenant_file
+MER-AI-008,MER-AI-008-RISK,financial_control,medium,approved_with_conditions,,Controller,ai-control-tower/T09_risk-governance.csv,9,tenant_file
+MER-AI-009,MER-AI-009-RISK,privacy_security,medium,approved_with_conditions,,Chief Medical Officer,ai-control-tower/T09_risk-governance.csv,10,tenant_file
+MER-AI-010,MER-AI-010-RISK,model_risk,high,review_required,,VP Integration,ai-control-tower/T09_risk-governance.csv,11,tenant_file
+MER-AI-011,MER-AI-011-RISK,clinical_or_operational_safety,critical,blocked,,Chief Network Officer,ai-control-tower/T09_risk-governance.csv,12,tenant_file
+MER-AI-012,MER-AI-012-RISK,financial_control,medium,approved_with_conditions,,Chief Compliance Officer,ai-control-tower/T09_risk-governance.csv,13,tenant_file
+MER-AI-013,MER-AI-013-RISK,privacy_security,high,review_required,,Chief Data Officer,ai-control-tower/T09_risk-governance.csv,14,tenant_file
+MER-AI-014,MER-AI-014-RISK,model_risk,medium,approved_with_conditions,,Chief Data Officer,ai-control-tower/T09_risk-governance.csv,15,tenant_file

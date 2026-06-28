@@ -1,0 +1,14 @@
+company_name: Lakeshore Industries
+synthetic_peer_anchor: large private global industrial manufacturer
+revenue_fy25_usd: 54200000000
+employees_fte: 72000
+manufacturing_plants: 89
+countries: 34
+annual_technology_budget_usd: 1160000000
+annual_ai_and_data_budget_usd: 96000000
+primary_erp: SAP ECC with S/4 pilot
+treasury_target_platform: Kyriba
+data_platform_state: fragmented SQL/BI with semantic layer target
+tenant_key: lakeshore
+client_id: 3b83d8ad-2db1-4c0a-a3b3-0a19c2e5a667
+generated_at: 2026-06-18T00:00:00Z

@@ -1,0 +1,41 @@
+period,tool_name,licensed_users,active_users,prompts_or_actions,estimated_hours_saved,quality_or_control_flag,source_file,source_row,value_source
+2026-03,M365 Copilot,120,45,8000,260,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,2,tenant_file
+2026-04,M365 Copilot,120,52,11100,340,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,3,tenant_file
+2026-05,M365 Copilot,120,60,14200,420,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,4,tenant_file
+2026-06,M365 Copilot,120,67,17300,500,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,5,tenant_file
+2026-03,Claude Code,330,125,12200,315,normal,ai-control-tower/T03_tool-usage-monthly.csv,6,tenant_file
+2026-04,Claude Code,330,145,15300,395,normal,ai-control-tower/T03_tool-usage-monthly.csv,7,tenant_file
+2026-05,Claude Code,330,165,18400,475,normal,ai-control-tower/T03_tool-usage-monthly.csv,8,tenant_file
+2026-06,Claude Code,330,184,21500,555,normal,ai-control-tower/T03_tool-usage-monthly.csv,9,tenant_file
+2026-03,Codex,540,205,16400,370,normal,ai-control-tower/T03_tool-usage-monthly.csv,10,tenant_file
+2026-04,Codex,540,237,19500,450,normal,ai-control-tower/T03_tool-usage-monthly.csv,11,tenant_file
+2026-05,Codex,540,270,22600,530,normal,ai-control-tower/T03_tool-usage-monthly.csv,12,tenant_file
+2026-06,Codex,540,302,25700,610,normal,ai-control-tower/T03_tool-usage-monthly.csv,13,tenant_file
+2026-03,Cursor,750,285,20600,425,normal,ai-control-tower/T03_tool-usage-monthly.csv,14,tenant_file
+2026-04,Cursor,750,330,23700,505,normal,ai-control-tower/T03_tool-usage-monthly.csv,15,tenant_file
+2026-05,Cursor,750,375,26800,585,normal,ai-control-tower/T03_tool-usage-monthly.csv,16,tenant_file
+2026-06,Cursor,750,420,29900,665,normal,ai-control-tower/T03_tool-usage-monthly.csv,17,tenant_file
+2026-03,ServiceNow Now Assist,960,364,24800,480,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,18,tenant_file
+2026-04,ServiceNow Now Assist,960,422,27900,560,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,19,tenant_file
+2026-05,ServiceNow Now Assist,960,480,31000,640,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,20,tenant_file
+2026-06,ServiceNow Now Assist,960,537,34100,720,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,21,tenant_file
+2026-03,Databricks Assistant,1170,444,29000,535,normal,ai-control-tower/T03_tool-usage-monthly.csv,22,tenant_file
+2026-04,Databricks Assistant,1170,514,32100,615,normal,ai-control-tower/T03_tool-usage-monthly.csv,23,tenant_file
+2026-05,Databricks Assistant,1170,585,35200,695,normal,ai-control-tower/T03_tool-usage-monthly.csv,24,tenant_file
+2026-06,Databricks Assistant,1170,655,38300,775,normal,ai-control-tower/T03_tool-usage-monthly.csv,25,tenant_file
+2026-03,AWS Bedrock,1380,524,33200,590,normal,ai-control-tower/T03_tool-usage-monthly.csv,26,tenant_file
+2026-04,AWS Bedrock,1380,607,36300,670,normal,ai-control-tower/T03_tool-usage-monthly.csv,27,tenant_file
+2026-05,AWS Bedrock,1380,690,39400,750,normal,ai-control-tower/T03_tool-usage-monthly.csv,28,tenant_file
+2026-06,AWS Bedrock,1380,772,42500,830,normal,ai-control-tower/T03_tool-usage-monthly.csv,29,tenant_file
+2026-03,Tableau Pulse,1590,604,37400,645,normal,ai-control-tower/T03_tool-usage-monthly.csv,30,tenant_file
+2026-04,Tableau Pulse,1590,699,40500,725,normal,ai-control-tower/T03_tool-usage-monthly.csv,31,tenant_file
+2026-05,Tableau Pulse,1590,795,43600,805,normal,ai-control-tower/T03_tool-usage-monthly.csv,32,tenant_file
+2026-06,Tableau Pulse,1590,890,46700,885,normal,ai-control-tower/T03_tool-usage-monthly.csv,33,tenant_file
+2026-03,Epic AI,1800,684,41600,700,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,34,tenant_file
+2026-04,Epic AI,1800,792,44700,780,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,35,tenant_file
+2026-05,Epic AI,1800,900,47800,860,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,36,tenant_file
+2026-06,Epic AI,1800,1008,50900,940,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,37,tenant_file
+2026-03,Kyriba AI,2010,763,45800,755,normal,ai-control-tower/T03_tool-usage-monthly.csv,38,tenant_file
+2026-04,Kyriba AI,2010,884,48900,835,normal,ai-control-tower/T03_tool-usage-monthly.csv,39,tenant_file
+2026-05,Kyriba AI,2010,1005,52000,915,normal,ai-control-tower/T03_tool-usage-monthly.csv,40,tenant_file
+2026-06,Kyriba AI,2010,1125,55100,995,normal,ai-control-tower/T03_tool-usage-monthly.csv,41,tenant_file

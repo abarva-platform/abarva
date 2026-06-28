@@ -1,0 +1,11 @@
+tenant_key,initiative_id,metric_basis,value_basis,promised_benefit_usd,measured_value_usd,unrealized_or_blocked_value_usd,confidence,evidence_status,measurement_method,finance_attested,evidence_id,amount_type,view,is_rollup_of,basis,period,formula,formula_version,source_file,source_row,value_source,notes
+lakeshore-industries,LAK-AI-001,cost_takeout,,86000000,18920000,67080000,medium,review_required,,,,none,value,,actual,ytd,,tower_standardized_v1,ai-control-tower/T07_benefit-realization.csv,2,tenant_file,
+lakeshore-industries,LAK-AI-002,cycle_time,,28000000,8400000,19600000,high,source_backed,,,,none,value,,actual,ytd,,tower_standardized_v1,ai-control-tower/T07_benefit-realization.csv,3,tenant_file,
+lakeshore-industries,LAK-AI-003,risk_reduction,,39000000,14820000,24180000,high,source_backed,,,,none,value,,actual,ytd,,tower_standardized_v1,ai-control-tower/T07_benefit-realization.csv,4,tenant_file,
+lakeshore-industries,LAK-AI-004,cost_takeout,,46000000,21160000,24840000,medium,source_backed,,,,none,value,,actual,ytd,,tower_standardized_v1,ai-control-tower/T07_benefit-realization.csv,5,tenant_file,
+lakeshore-industries,LAK-AI-005,cycle_time,,14000000,3080000,10920000,high,source_backed,,,,none,value,,actual,ytd,,tower_standardized_v1,ai-control-tower/T07_benefit-realization.csv,6,tenant_file,
+lakeshore-industries,LAK-AI-006,risk_reduction,,17000000,5100000,11900000,high,review_required,,,,none,value,,actual,ytd,,tower_standardized_v1,ai-control-tower/T07_benefit-realization.csv,7,tenant_file,
+lakeshore-industries,LAK-AI-007,cost_takeout,,26000000,9880000,16120000,medium,source_backed,,,,none,value,,actual,ytd,,tower_standardized_v1,ai-control-tower/T07_benefit-realization.csv,8,tenant_file,
+lakeshore-industries,LAK-AI-008,cycle_time,,11000000,5060000,5940000,high,source_backed,,,,none,value,,actual,ytd,,tower_standardized_v1,ai-control-tower/T07_benefit-realization.csv,9,tenant_file,
+lakeshore-industries,LAK-AI-009,risk_reduction,,86000000,2860000,83140000,high,source_backed,,,,none,value,,actual,ytd,,tower_standardized_v1,ai-control-tower/T07_benefit-realization.csv,10,tenant_file,
+lakeshore-industries,LAK-AI-010,cost_takeout,,28000000,2400000,25600000,medium,source_backed,,,,none,value,,actual,ytd,,tower_standardized_v1,ai-control-tower/T07_benefit-realization.csv,11,tenant_file,

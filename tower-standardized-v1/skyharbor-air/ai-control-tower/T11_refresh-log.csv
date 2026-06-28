@@ -1,0 +1,10 @@
+refresh_id,period,dataset,source_system,row_count,parser_status,approval_status,loaded_at,source_file,source_row,value_source
+SHA-REFRESH-2026-05-1,2026-05,initiative_registry,PMO,30,passed,review_required,2026-06-18T00:00:00Z,ai-control-tower/T11_refresh-log.csv,2,tenant_file
+SHA-REFRESH-2026-05-2,2026-05,tool_usage,M365,144,passed,approved,2026-06-18T00:00:00Z,ai-control-tower/T11_refresh-log.csv,3,tenant_file
+SHA-REFRESH-2026-05-3,2026-05,agent_outcomes,GitHub,12,passed,approved,2026-06-18T00:00:00Z,ai-control-tower/T11_refresh-log.csv,4,tenant_file
+SHA-REFRESH-2026-05-4,2026-05,persona_productivity,ServiceNow,18,passed,approved,2026-06-18T00:00:00Z,ai-control-tower/T11_refresh-log.csv,5,tenant_file
+SHA-REFRESH-2026-05-5,2026-05,dora_metrics,Jira,54,passed,approved,2026-06-18T00:00:00Z,ai-control-tower/T11_refresh-log.csv,6,tenant_file
+SHA-REFRESH-2026-05-6,2026-05,benefit_realization,Finance,30,passed,review_required,2026-06-18T00:00:00Z,ai-control-tower/T11_refresh-log.csv,7,tenant_file
+SHA-REFRESH-2026-05-7,2026-05,spend_contracts,GRC,120,passed,approved,2026-06-18T00:00:00Z,ai-control-tower/T11_refresh-log.csv,8,tenant_file
+SHA-REFRESH-2026-05-8,2026-05,risk_governance,Evidence Register,150,passed,approved,2026-06-18T00:00:00Z,ai-control-tower/T11_refresh-log.csv,9,tenant_file
+SHA-REFRESH-2026-05-9,2026-05,evidence_items,PMO,80,passed,approved,2026-06-18T00:00:00Z,ai-control-tower/T11_refresh-log.csv,10,tenant_file

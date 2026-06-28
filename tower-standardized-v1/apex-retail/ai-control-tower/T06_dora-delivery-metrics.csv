@@ -1,0 +1,13 @@
+team_or_product,deployment_frequency_before,deployment_frequency_after,lead_time_before_days,lead_time_after_days,change_failure_before_pct,change_failure_after_pct,mttr_before_hours,mttr_after_hours,source_file,source_row,value_source
+Data and AI,2/month,4/month,28,16,18,10,12,6,ai-control-tower/T06_dora-delivery-metrics.csv,2,tenant_file
+Merchandising,3/month,5/month,27,15,19,11,13,7,ai-control-tower/T06_dora-delivery-metrics.csv,3,tenant_file
+Store Operations,4/month,6/month,26,14,20,12,14,8,ai-control-tower/T06_dora-delivery-metrics.csv,4,tenant_file
+Loss Prevention,5/month,7/month,25,13,21,13,15,9,ai-control-tower/T06_dora-delivery-metrics.csv,5,tenant_file
+Digital Commerce,2/month,8/month,24,12,22,10,16,10,ai-control-tower/T06_dora-delivery-metrics.csv,6,tenant_file
+Marketing,3/month,9/month,23,16,23,11,17,6,ai-control-tower/T06_dora-delivery-metrics.csv,7,tenant_file
+Omnichannel Fulfillment,4/month,4/month,22,15,18,12,18,7,ai-control-tower/T06_dora-delivery-metrics.csv,8,tenant_file
+Risk,5/month,5/month,21,14,19,13,19,8,ai-control-tower/T06_dora-delivery-metrics.csv,9,tenant_file
+Finance,2/month,6/month,28,13,20,10,20,9,ai-control-tower/T06_dora-delivery-metrics.csv,10,tenant_file
+IT Operations,3/month,7/month,27,12,21,11,21,10,ai-control-tower/T06_dora-delivery-metrics.csv,11,tenant_file
+Merchandising,4/month,8/month,26,16,22,12,22,6,ai-control-tower/T06_dora-delivery-metrics.csv,12,tenant_file
+Store Operations,5/month,9/month,25,15,23,13,23,7,ai-control-tower/T06_dora-delivery-metrics.csv,13,tenant_file

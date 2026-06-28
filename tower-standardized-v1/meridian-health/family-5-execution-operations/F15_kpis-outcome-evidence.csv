@@ -1,0 +1,13 @@
+kpi_id,kpi_name,domain,baseline_value,current_value,target_value,measurement_period,evidence_id,decision_relevance,source_file,source_row,value_source
+MER-KPI-001,member first call resolution,operations,72%,75%,84%,2026-Q2,MER-EVID-001,Unified clinical + claims data,family-5-execution-operations/F15_kpis-outcome-evidence.csv,2,tenant_file
+MER-KPI-002,prior auth turnaround hours,clinical,49 hrs,45 hrs,29 hrs,2026-Q2,MER-EVID-002,Data foundation for automation,family-5-execution-operations/F15_kpis-outcome-evidence.csv,3,tenant_file
+MER-KPI-003,claims auto-adjudication rate,finance,$14M,$18M,$30M,2026-Q2,MER-EVID-003,Prior auth automation,family-5-execution-operations/F15_kpis-outcome-evidence.csv,4,tenant_file
+MER-KPI-004,HEDIS gap closure rate,data,69%,72%,83%,2026-Q2,MER-EVID-004,Call center optimization,family-5-execution-operations/F15_kpis-outcome-evidence.csv,5,tenant_file
+MER-KPI-005,STAR weighted measure score,operations,52 hrs,48 hrs,32 hrs,2026-Q2,MER-EVID-005,Provider quality performance,family-5-execution-operations/F15_kpis-outcome-evidence.csv,6,tenant_file
+MER-KPI-006,cost-of-care PMPM variance,clinical,$17M,$21M,$33M,2026-Q2,MER-EVID-006,End-to-end cost transparency,family-5-execution-operations/F15_kpis-outcome-evidence.csv,7,tenant_file
+MER-KPI-007,payment integrity recoveries,finance,66%,69%,81%,2026-Q2,MER-EVID-007,Payment integrity,family-5-execution-operations/F15_kpis-outcome-evidence.csv,8,tenant_file
+MER-KPI-008,close cycle days,data,55 hrs,51 hrs,35 hrs,2026-Q2,MER-EVID-008,Automated close,family-5-execution-operations/F15_kpis-outcome-evidence.csv,9,tenant_file
+MER-KPI-009,manual reconciliation hours,operations,$20M,$24M,$36M,2026-Q2,MER-EVID-009,Clinical productivity,family-5-execution-operations/F15_kpis-outcome-evidence.csv,10,tenant_file
+MER-KPI-010,clinical inbox time saved,clinical,63%,66%,80%,2026-Q2,MER-EVID-010,Lakehouse migration dependency,family-5-execution-operations/F15_kpis-outcome-evidence.csv,11,tenant_file
+MER-KPI-011,lakehouse certified data products,finance,58 hrs,54 hrs,38 hrs,2026-Q2,MER-EVID-011,Cost and quality benchmarking,family-5-execution-operations/F15_kpis-outcome-evidence.csv,12,tenant_file
+MER-KPI-012,provider quality benchmark adoption,data,$23M,$27M,$39M,2026-Q2,MER-EVID-012,AI governance foundation,family-5-execution-operations/F15_kpis-outcome-evidence.csv,13,tenant_file

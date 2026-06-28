@@ -1,0 +1,15 @@
+evidence_item_id,initiative_id,source_file,source_locator,source_timestamp,review_state,confidence,source_file,source_row,value_source
+APX-EVID-001,APX-INIT-001,ai-control-tower/T10_evidence-items.csv,section-1,2026-06-18,review_required,0.72,ai-control-tower/T10_evidence-items.csv,2,tenant_file
+APX-EVID-002,APX-INIT-002,ai-control-tower/T10_evidence-items.csv,section-2,2026-06-18,approved,0.73,ai-control-tower/T10_evidence-items.csv,3,tenant_file
+APX-EVID-003,APX-INIT-003,ai-control-tower/T10_evidence-items.csv,section-3,2026-06-18,approved,0.74,ai-control-tower/T10_evidence-items.csv,4,tenant_file
+APX-EVID-004,APX-INIT-004,ai-control-tower/T10_evidence-items.csv,section-4,2026-06-18,approved,0.75,ai-control-tower/T10_evidence-items.csv,5,tenant_file
+APX-EVID-005,APX-INIT-005,ai-control-tower/T10_evidence-items.csv,section-5,2026-06-18,approved,0.76,ai-control-tower/T10_evidence-items.csv,6,tenant_file
+APX-EVID-006,APX-INIT-006,ai-control-tower/T10_evidence-items.csv,section-6,2026-06-18,review_required,0.77,ai-control-tower/T10_evidence-items.csv,7,tenant_file
+APX-EVID-007,APX-INIT-007,ai-control-tower/T10_evidence-items.csv,section-7,2026-06-18,approved,0.78,ai-control-tower/T10_evidence-items.csv,8,tenant_file
+APX-EVID-008,APX-INIT-008,ai-control-tower/T10_evidence-items.csv,section-8,2026-06-18,approved,0.79,ai-control-tower/T10_evidence-items.csv,9,tenant_file
+APX-EVID-009,APX-INIT-009,ai-control-tower/T10_evidence-items.csv,section-9,2026-06-18,approved,0.72,ai-control-tower/T10_evidence-items.csv,10,tenant_file
+APX-EVID-010,APX-INIT-010,ai-control-tower/T10_evidence-items.csv,section-10,2026-06-18,approved,0.73,ai-control-tower/T10_evidence-items.csv,11,tenant_file
+APX-EVID-011,APX-INIT-011,ai-control-tower/T10_evidence-items.csv,section-11,2026-06-18,review_required,0.74,ai-control-tower/T10_evidence-items.csv,12,tenant_file
+APX-EVID-012,APX-INIT-012,ai-control-tower/T10_evidence-items.csv,section-12,2026-06-18,approved,0.75,ai-control-tower/T10_evidence-items.csv,13,tenant_file
+APX-EVID-013,APX-INIT-013,ai-control-tower/T10_evidence-items.csv,section-13,2026-06-18,approved,0.76,ai-control-tower/T10_evidence-items.csv,14,tenant_file
+APX-EVID-014,APX-INIT-014,ai-control-tower/T10_evidence-items.csv,section-14,2026-06-18,approved,0.77,ai-control-tower/T10_evidence-items.csv,15,tenant_file

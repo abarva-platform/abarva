@@ -1,0 +1,13 @@
+persona_id,persona_name,baseline_cycle_time_minutes,current_cycle_time_minutes,quality_metric,quality_before_pct,quality_after_pct,confidence,source_file,source_row,value_source
+APX-PER-001,Store manager,40,32,first_pass_accuracy,81,85,medium,ai-control-tower/T05_persona-productivity.csv,2,tenant_file
+APX-PER-002,Department lead,47,37,task_completion,82,86,high,ai-control-tower/T05_persona-productivity.csv,3,tenant_file
+APX-PER-003,Merchandise planner,54,42,first_pass_accuracy,83,87,high,ai-control-tower/T05_persona-productivity.csv,4,tenant_file
+APX-PER-004,Supply chain planner,61,47,task_completion,84,88,high,ai-control-tower/T05_persona-productivity.csv,5,tenant_file
+APX-PER-005,Ecommerce product manager,68,52,first_pass_accuracy,85,89,medium,ai-control-tower/T05_persona-productivity.csv,6,tenant_file
+APX-PER-006,Loyalty marketer,75,57,task_completion,86,90,high,ai-control-tower/T05_persona-productivity.csv,7,tenant_file
+APX-PER-007,Loss prevention analyst,82,62,first_pass_accuracy,87,91,high,ai-control-tower/T05_persona-productivity.csv,8,tenant_file
+APX-PER-008,Finance analyst,89,67,task_completion,88,92,high,ai-control-tower/T05_persona-productivity.csv,9,tenant_file
+APX-PER-009,Data engineer,96,72,first_pass_accuracy,81,93,medium,ai-control-tower/T05_persona-productivity.csv,10,tenant_file
+APX-PER-010,Contact center agent,103,77,task_completion,82,85,high,ai-control-tower/T05_persona-productivity.csv,11,tenant_file
+APX-PER-011,Store associate,110,82,first_pass_accuracy,83,86,high,ai-control-tower/T05_persona-productivity.csv,12,tenant_file
+APX-PER-012,SRE engineer,117,87,task_completion,84,87,high,ai-control-tower/T05_persona-productivity.csv,13,tenant_file

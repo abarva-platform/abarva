@@ -1,0 +1,15 @@
+initiative_id,risk_id,risk_domain,severity,control_status,exception_or_gap,owner_role,source_file,source_row,value_source
+APX-INIT-001,APX-RISK-001,privacy,high,blocked,identity and item-location data quality,Chief Data Officer,ai-control-tower/T09_risk-governance.csv,2,tenant_file
+APX-INIT-002,APX-RISK-002,model_risk,medium,approved_with_conditions,forecast explainability by category,Chief Merchandising Officer,ai-control-tower/T09_risk-governance.csv,3,tenant_file
+APX-INIT-003,APX-RISK-003,operations,medium,approved_with_conditions,labor-rule integration and manager adoption,COO,ai-control-tower/T09_risk-governance.csv,4,tenant_file
+APX-INIT-004,APX-RISK-004,cyber,medium,review_required,camera/POS evidence linkage,Chief Risk Officer,ai-control-tower/T09_risk-governance.csv,5,tenant_file
+APX-INIT-005,APX-RISK-005,financial_control,high,approved_with_conditions,consent and customer identity gaps,Chief Digital Officer,ai-control-tower/T09_risk-governance.csv,6,tenant_file
+APX-INIT-006,APX-RISK-006,privacy,medium,blocked,incrementality proof missing,Chief Marketing Officer,ai-control-tower/T09_risk-governance.csv,7,tenant_file
+APX-INIT-007,APX-RISK-007,model_risk,medium,review_required,store inventory accuracy,Chief Supply Chain Officer,ai-control-tower/T09_risk-governance.csv,8,tenant_file
+APX-INIT-008,APX-RISK-008,operations,medium,approved_with_conditions,fairness and customer friction review,Chief Risk Officer,ai-control-tower/T09_risk-governance.csv,9,tenant_file
+APX-INIT-009,APX-RISK-009,cyber,high,approved_with_conditions,vendor funding lineage,CFO,ai-control-tower/T09_risk-governance.csv,10,tenant_file
+APX-INIT-010,APX-RISK-010,financial_control,medium,review_required,knowledge base quality,VP IT Operations,ai-control-tower/T09_risk-governance.csv,11,tenant_file
+APX-INIT-011,APX-RISK-011,privacy,medium,blocked,planner workflow fit,Chief Merchandising Officer,ai-control-tower/T09_risk-governance.csv,12,tenant_file
+APX-INIT-012,APX-RISK-012,model_risk,medium,approved_with_conditions,mobile device and policy readiness,COO,ai-control-tower/T09_risk-governance.csv,13,tenant_file
+APX-INIT-013,APX-RISK-013,operations,high,review_required,carrier API latency,Chief Supply Chain Officer,ai-control-tower/T09_risk-governance.csv,14,tenant_file
+APX-INIT-014,APX-RISK-014,cyber,medium,approved_with_conditions,measurement by product team incomplete,CIO,ai-control-tower/T09_risk-governance.csv,15,tenant_file

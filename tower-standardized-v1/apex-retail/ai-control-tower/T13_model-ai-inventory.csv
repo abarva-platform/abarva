@@ -1,0 +1,15 @@
+model_id,model_name,model_type,use_case,risk_tier,validation_status,pii_phi_financial_data,owner_role,source_file,source_row,value_source
+APX-MODEL-001,Retail lakehouse and customer inventory graph model,forecasting,Retail lakehouse and customer inventory graph,high,overdue,yes,Chief Data Officer,ai-control-tower/T13_model-ai-inventory.csv,2,tenant_file
+APX-MODEL-002,AI demand forecasting and replenishment model,classification,AI demand forecasting and replenishment,medium,validated_with_conditions,no,Chief Merchandising Officer,ai-control-tower/T13_model-ai-inventory.csv,3,tenant_file
+APX-MODEL-003,Store labor scheduling optimization model,LLM workflow,Store labor scheduling optimization,medium,validated_with_conditions,no,COO,ai-control-tower/T13_model-ai-inventory.csv,4,tenant_file
+APX-MODEL-004,Shrink anomaly detection model,optimization,Shrink anomaly detection,medium,validated_with_conditions,yes,Chief Risk Officer,ai-control-tower/T13_model-ai-inventory.csv,5,tenant_file
+APX-MODEL-005,Search and personalization AI model,forecasting,Search and personalization AI,high,validated_with_conditions,no,Chief Digital Officer,ai-control-tower/T13_model-ai-inventory.csv,6,tenant_file
+APX-MODEL-006,Retail media measurement clean room model,classification,Retail media measurement clean room,medium,overdue,no,Chief Marketing Officer,ai-control-tower/T13_model-ai-inventory.csv,7,tenant_file
+APX-MODEL-007,BOPIS exception prediction model,LLM workflow,BOPIS exception prediction,medium,validated_with_conditions,yes,Chief Supply Chain Officer,ai-control-tower/T13_model-ai-inventory.csv,8,tenant_file
+APX-MODEL-008,Returns fraud triage model,optimization,Returns fraud triage,medium,validated_with_conditions,no,Chief Risk Officer,ai-control-tower/T13_model-ai-inventory.csv,9,tenant_file
+APX-MODEL-009,Finance margin bridge automation model,forecasting,Finance margin bridge automation,high,validated_with_conditions,no,CFO,ai-control-tower/T13_model-ai-inventory.csv,10,tenant_file
+APX-MODEL-010,ServiceNow store support agent model,classification,ServiceNow store support agent,medium,validated_with_conditions,yes,VP IT Operations,ai-control-tower/T13_model-ai-inventory.csv,11,tenant_file
+APX-MODEL-011,Assortment localization copilot model,LLM workflow,Assortment localization copilot,medium,overdue,no,Chief Merchandising Officer,ai-control-tower/T13_model-ai-inventory.csv,12,tenant_file
+APX-MODEL-012,Store associate task assistant model,optimization,Store associate task assistant,medium,validated_with_conditions,no,COO,ai-control-tower/T13_model-ai-inventory.csv,13,tenant_file
+APX-MODEL-013,Supply chain ETA and carrier exception AI model,forecasting,Supply chain ETA and carrier exception AI,high,validated_with_conditions,yes,Chief Supply Chain Officer,ai-control-tower/T13_model-ai-inventory.csv,14,tenant_file
+APX-MODEL-014,AI code productivity program model,classification,AI code productivity program,medium,validated_with_conditions,no,CIO,ai-control-tower/T13_model-ai-inventory.csv,15,tenant_file

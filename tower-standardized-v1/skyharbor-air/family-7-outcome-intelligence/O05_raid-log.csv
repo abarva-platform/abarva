@@ -1,0 +1,901 @@
+item_id,initiative_id,type,description,severity,likelihood,status,owner,due_date,mitigation,source_file,source_row,value_source
+RAID-000001,INIT-0001,Issue,Issue: Scope creep from stakeholders,Critical,Medium,In Progress,Data Lead,2026-01-12,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,2,tenant_file
+RAID-000002,INIT-0001,Dependency,Dependency: Third-party SLA risk,Critical,Medium,Closed,Security,2026-02-20,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,3,tenant_file
+RAID-000003,INIT-0001,Decision,Decision: Scope creep from stakeholders,Critical,High,Escalated,Security,2027-02-13,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,4,tenant_file
+RAID-000004,INIT-0001,Dependency,Dependency: Security finding to remediate,Low,Low,Mitigated,PMO,2027-08-30,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,5,tenant_file
+RAID-000005,INIT-0001,Action,Action: Budget overrun risk,Critical,High,Open,PMO,2026-05-25,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,6,tenant_file
+RAID-000006,INIT-0001,Action,Action: Scope creep from stakeholders,High,High,Escalated,Security,2026-08-08,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,7,tenant_file
+RAID-000007,INIT-0001,Dependency,Dependency: Third-party SLA risk,Critical,High,Open,Architecture,2027-07-16,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,8,tenant_file
+RAID-000008,INIT-0001,Dependency,Dependency: Skill gap in delivery team,High,High,Mitigated,Data Lead,2026-12-25,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,9,tenant_file
+RAID-000009,INIT-0001,Dependency,Dependency: Security finding to remediate,Low,Low,Closed,Data Lead,2027-12-22,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,10,tenant_file
+RAID-000010,INIT-0002,Dependency,Dependency: Change-adoption resistance,Critical,Low,In Progress,Vendor Manager,2026-04-14,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,11,tenant_file
+RAID-000011,INIT-0002,Action,Action: Scope creep from stakeholders,Critical,High,In Progress,Architecture,2026-11-26,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,12,tenant_file
+RAID-000012,INIT-0002,Dependency,Dependency: Security finding to remediate,High,Medium,Closed,PMO,2027-04-05,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,13,tenant_file
+RAID-000013,INIT-0002,Decision,Decision: Scope creep from stakeholders,Critical,Low,Closed,PMO,2027-03-12,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,14,tenant_file
+RAID-000014,INIT-0002,Risk,Risk: Integration test environment delay,Critical,Medium,Mitigated,Security,2026-03-07,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,15,tenant_file
+RAID-000015,INIT-0002,Action,Action: Security finding to remediate,Critical,High,Mitigated,Business Owner,2027-04-10,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,16,tenant_file
+RAID-000016,INIT-0002,Risk,Risk: Regulatory approval pending,Medium,Medium,Escalated,Business Owner,2027-09-24,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,17,tenant_file
+RAID-000017,INIT-0002,Dependency,Dependency: Regulatory approval pending,High,Medium,In Progress,Delivery Lead,2026-04-25,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,18,tenant_file
+RAID-000018,INIT-0002,Risk,Risk: Third-party SLA risk,Low,High,Closed,Security,2026-06-17,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,19,tenant_file
+RAID-000019,INIT-0002,Issue,Issue: Key vendor resource availability,High,Medium,Open,Vendor Manager,2026-06-16,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,20,tenant_file
+RAID-000020,INIT-0002,Decision,Decision: Dependency on platform team,High,Low,Mitigated,Delivery Lead,2027-11-01,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,21,tenant_file
+RAID-000021,INIT-0002,Dependency,Dependency: Legacy interface instability,Critical,Low,Mitigated,PMO,2026-01-29,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,22,tenant_file
+RAID-000022,INIT-0002,Issue,Issue: Scope creep from stakeholders,Low,Medium,Closed,Business Owner,2026-11-22,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,23,tenant_file
+RAID-000023,INIT-0003,Issue,Issue: Key vendor resource availability,Critical,High,Mitigated,Security,2027-11-06,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,24,tenant_file
+RAID-000024,INIT-0003,Risk,Risk: Data quality below threshold,High,Low,Mitigated,Business Owner,2026-01-25,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,25,tenant_file
+RAID-000025,INIT-0003,Risk,Risk: Budget overrun risk,Critical,Medium,In Progress,Data Lead,2027-08-23,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,26,tenant_file
+RAID-000026,INIT-0003,Issue,Issue: Skill gap in delivery team,High,High,Escalated,Delivery Lead,2027-12-21,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,27,tenant_file
+RAID-000027,INIT-0003,Action,Action: Data quality below threshold,High,High,In Progress,Business Owner,2026-10-20,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,28,tenant_file
+RAID-000028,INIT-0003,Action,Action: Key vendor resource availability,Medium,Medium,In Progress,Security,2027-12-09,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,29,tenant_file
+RAID-000029,INIT-0003,Issue,Issue: Scope creep from stakeholders,Critical,High,In Progress,Delivery Lead,2026-11-18,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,30,tenant_file
+RAID-000030,INIT-0003,Risk,Risk: Regulatory approval pending,Low,Low,Open,Architecture,2026-07-15,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,31,tenant_file
+RAID-000031,INIT-0003,Action,Action: Data quality below threshold,Medium,Medium,Escalated,Vendor Manager,2027-09-20,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,32,tenant_file
+RAID-000032,INIT-0003,Dependency,Dependency: Dependency on platform team,Medium,Low,Open,Delivery Lead,2027-05-21,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,33,tenant_file
+RAID-000033,INIT-0003,Risk,Risk: Key vendor resource availability,Low,High,Mitigated,Vendor Manager,2027-01-15,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,34,tenant_file
+RAID-000034,INIT-0003,Action,Action: Change-adoption resistance,High,Medium,Mitigated,Business Owner,2026-04-16,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,35,tenant_file
+RAID-000035,INIT-0004,Issue,Issue: Dependency on platform team,Medium,Medium,Closed,PMO,2027-04-14,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,36,tenant_file
+RAID-000036,INIT-0004,Risk,Risk: Regulatory approval pending,Critical,Low,Escalated,Delivery Lead,2027-12-31,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,37,tenant_file
+RAID-000037,INIT-0004,Risk,Risk: Third-party SLA risk,High,Low,In Progress,Delivery Lead,2027-03-19,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,38,tenant_file
+RAID-000038,INIT-0004,Risk,Risk: Security finding to remediate,Critical,High,Closed,PMO,2026-01-02,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,39,tenant_file
+RAID-000039,INIT-0004,Risk,Risk: Key vendor resource availability,Critical,High,In Progress,Security,2027-01-12,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,40,tenant_file
+RAID-000040,INIT-0004,Decision,Decision: Regulatory approval pending,Low,Low,In Progress,Architecture,2027-02-20,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,41,tenant_file
+RAID-000041,INIT-0004,Dependency,Dependency: Third-party SLA risk,High,High,Open,Business Owner,2026-10-25,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,42,tenant_file
+RAID-000042,INIT-0004,Decision,Decision: Security finding to remediate,High,High,Open,Vendor Manager,2026-06-29,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,43,tenant_file
+RAID-000043,INIT-0004,Action,Action: Integration test environment delay,Critical,High,Closed,Security,2026-03-07,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,44,tenant_file
+RAID-000044,INIT-0004,Risk,Risk: Legacy interface instability,Medium,Medium,Escalated,Delivery Lead,2027-02-12,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,45,tenant_file
+RAID-000045,INIT-0004,Action,Action: Budget overrun risk,Low,High,Mitigated,PMO,2027-08-31,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,46,tenant_file
+RAID-000046,INIT-0004,Dependency,Dependency: Security finding to remediate,High,Low,Mitigated,Vendor Manager,2026-06-04,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,47,tenant_file
+RAID-000047,INIT-0004,Dependency,Dependency: Third-party SLA risk,Medium,High,Mitigated,Data Lead,2027-08-03,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,48,tenant_file
+RAID-000048,INIT-0004,Dependency,Dependency: Third-party SLA risk,High,Medium,Open,Business Owner,2027-02-12,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,49,tenant_file
+RAID-000049,INIT-0005,Risk,Risk: Security finding to remediate,Critical,Low,In Progress,Security,2026-11-30,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,50,tenant_file
+RAID-000050,INIT-0005,Issue,Issue: Skill gap in delivery team,High,Medium,In Progress,Business Owner,2026-03-26,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,51,tenant_file
+RAID-000051,INIT-0005,Risk,Risk: Integration test environment delay,Critical,Low,Open,Security,2027-06-12,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,52,tenant_file
+RAID-000052,INIT-0005,Risk,Risk: Dependency on platform team,Medium,Medium,Mitigated,Data Lead,2027-12-06,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,53,tenant_file
+RAID-000053,INIT-0005,Decision,Decision: Regulatory approval pending,Low,High,Open,Architecture,2027-09-21,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,54,tenant_file
+RAID-000054,INIT-0005,Action,Action: Third-party SLA risk,Low,Medium,Mitigated,Architecture,2026-03-18,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,55,tenant_file
+RAID-000055,INIT-0005,Dependency,Dependency: Legacy interface instability,Medium,Medium,Mitigated,Security,2026-10-19,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,56,tenant_file
+RAID-000056,INIT-0005,Action,Action: Data quality below threshold,Critical,Low,Mitigated,Vendor Manager,2026-02-13,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,57,tenant_file
+RAID-000057,INIT-0005,Action,Action: Integration test environment delay,Critical,Low,Escalated,PMO,2027-11-26,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,58,tenant_file
+RAID-000058,INIT-0005,Action,Action: Regulatory approval pending,Critical,High,Closed,PMO,2026-12-03,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,59,tenant_file
+RAID-000059,INIT-0005,Risk,Risk: Integration test environment delay,Critical,Low,Open,PMO,2026-07-31,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,60,tenant_file
+RAID-000060,INIT-0006,Risk,Risk: Integration test environment delay,Medium,High,Closed,Data Lead,2027-12-07,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,61,tenant_file
+RAID-000061,INIT-0006,Action,Action: Regulatory approval pending,Critical,High,In Progress,Architecture,2027-07-15,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,62,tenant_file
+RAID-000062,INIT-0006,Decision,Decision: Third-party SLA risk,Medium,Medium,In Progress,Delivery Lead,2027-02-27,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,63,tenant_file
+RAID-000063,INIT-0006,Risk,Risk: Third-party SLA risk,Critical,Medium,Closed,Data Lead,2027-04-11,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,64,tenant_file
+RAID-000064,INIT-0006,Issue,Issue: Integration test environment delay,High,Medium,In Progress,Delivery Lead,2027-10-27,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,65,tenant_file
+RAID-000065,INIT-0006,Decision,Decision: Key vendor resource availability,Critical,Low,Mitigated,Security,2026-09-01,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,66,tenant_file
+RAID-000066,INIT-0006,Decision,Decision: Integration test environment delay,Low,Medium,In Progress,Architecture,2027-12-11,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,67,tenant_file
+RAID-000067,INIT-0006,Decision,Decision: Change-adoption resistance,Low,Medium,Escalated,Architecture,2026-09-01,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,68,tenant_file
+RAID-000068,INIT-0006,Issue,Issue: Third-party SLA risk,Low,Medium,Escalated,PMO,2026-06-02,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,69,tenant_file
+RAID-000069,INIT-0007,Dependency,Dependency: Security finding to remediate,Low,High,Mitigated,Data Lead,2026-05-24,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,70,tenant_file
+RAID-000070,INIT-0007,Risk,Risk: Budget overrun risk,Low,Medium,Escalated,Data Lead,2026-08-27,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,71,tenant_file
+RAID-000071,INIT-0007,Issue,Issue: Integration test environment delay,Low,Medium,Open,PMO,2026-12-11,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,72,tenant_file
+RAID-000072,INIT-0007,Issue,Issue: Scope creep from stakeholders,Medium,High,Mitigated,Security,2027-02-02,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,73,tenant_file
+RAID-000073,INIT-0007,Risk,Risk: Skill gap in delivery team,Medium,Medium,In Progress,Vendor Manager,2026-09-07,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,74,tenant_file
+RAID-000074,INIT-0007,Action,Action: Scope creep from stakeholders,Low,Low,Open,PMO,2026-01-10,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,75,tenant_file
+RAID-000075,INIT-0007,Dependency,Dependency: Scope creep from stakeholders,High,Medium,Escalated,Data Lead,2027-06-02,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,76,tenant_file
+RAID-000076,INIT-0007,Action,Action: Third-party SLA risk,Critical,High,In Progress,Security,2026-05-18,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,77,tenant_file
+RAID-000077,INIT-0007,Risk,Risk: Scope creep from stakeholders,High,Medium,In Progress,Security,2026-06-21,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,78,tenant_file
+RAID-000078,INIT-0007,Decision,Decision: Skill gap in delivery team,Medium,Low,Open,Delivery Lead,2026-02-23,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,79,tenant_file
+RAID-000079,INIT-0007,Decision,Decision: Integration test environment delay,Medium,Medium,Closed,PMO,2027-10-02,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,80,tenant_file
+RAID-000080,INIT-0007,Issue,Issue: Budget overrun risk,Critical,Medium,Open,Security,2027-08-19,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,81,tenant_file
+RAID-000081,INIT-0007,Dependency,Dependency: Scope creep from stakeholders,Critical,High,In Progress,Vendor Manager,2026-11-19,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,82,tenant_file
+RAID-000082,INIT-0007,Decision,Decision: Skill gap in delivery team,Critical,Medium,In Progress,Business Owner,2027-12-29,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,83,tenant_file
+RAID-000083,INIT-0007,Issue,Issue: Change-adoption resistance,Critical,Medium,In Progress,Data Lead,2026-12-02,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,84,tenant_file
+RAID-000084,INIT-0008,Dependency,Dependency: Dependency on platform team,High,Low,Mitigated,Security,2027-06-19,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,85,tenant_file
+RAID-000085,INIT-0008,Dependency,Dependency: Dependency on platform team,Medium,Medium,Closed,PMO,2027-03-18,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,86,tenant_file
+RAID-000086,INIT-0008,Risk,Risk: Dependency on platform team,Medium,Low,Closed,Architecture,2027-03-19,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,87,tenant_file
+RAID-000087,INIT-0008,Dependency,Dependency: Skill gap in delivery team,Low,Medium,Escalated,Business Owner,2026-04-08,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,88,tenant_file
+RAID-000088,INIT-0008,Issue,Issue: Legacy interface instability,Low,Low,Open,PMO,2026-04-09,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,89,tenant_file
+RAID-000089,INIT-0008,Dependency,Dependency: Skill gap in delivery team,High,Medium,Closed,Data Lead,2027-04-19,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,90,tenant_file
+RAID-000090,INIT-0008,Issue,Issue: Change-adoption resistance,High,High,Open,Business Owner,2026-07-15,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,91,tenant_file
+RAID-000091,INIT-0008,Dependency,Dependency: Third-party SLA risk,High,High,In Progress,Business Owner,2027-03-16,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,92,tenant_file
+RAID-000092,INIT-0008,Risk,Risk: Budget overrun risk,Critical,Low,In Progress,Vendor Manager,2026-12-07,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,93,tenant_file
+RAID-000093,INIT-0008,Dependency,Dependency: Key vendor resource availability,Critical,Medium,Escalated,Architecture,2026-05-18,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,94,tenant_file
+RAID-000094,INIT-0008,Dependency,Dependency: Scope creep from stakeholders,Medium,High,Open,Delivery Lead,2026-03-28,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,95,tenant_file
+RAID-000095,INIT-0008,Decision,Decision: Budget overrun risk,Low,High,Mitigated,Business Owner,2027-09-18,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,96,tenant_file
+RAID-000096,INIT-0009,Decision,Decision: Key vendor resource availability,Low,Low,Open,Delivery Lead,2027-04-09,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,97,tenant_file
+RAID-000097,INIT-0009,Issue,Issue: Scope creep from stakeholders,Medium,High,Escalated,Delivery Lead,2027-01-31,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,98,tenant_file
+RAID-000098,INIT-0009,Decision,Decision: Regulatory approval pending,High,High,In Progress,Business Owner,2026-05-02,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,99,tenant_file
+RAID-000099,INIT-0009,Dependency,Dependency: Dependency on platform team,Critical,Medium,Mitigated,Business Owner,2026-04-06,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,100,tenant_file
+RAID-000100,INIT-0009,Dependency,Dependency: Third-party SLA risk,Critical,Low,Escalated,Delivery Lead,2026-12-30,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,101,tenant_file
+RAID-000101,INIT-0009,Issue,Issue: Regulatory approval pending,High,Medium,Open,Security,2027-06-24,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,102,tenant_file
+RAID-000102,INIT-0009,Action,Action: Regulatory approval pending,Low,Medium,Closed,Data Lead,2027-06-24,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,103,tenant_file
+RAID-000103,INIT-0009,Dependency,Dependency: Change-adoption resistance,Low,Low,In Progress,Delivery Lead,2026-10-20,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,104,tenant_file
+RAID-000104,INIT-0009,Action,Action: Dependency on platform team,Medium,High,Closed,Architecture,2026-03-25,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,105,tenant_file
+RAID-000105,INIT-0009,Dependency,Dependency: Integration test environment delay,Low,Low,Escalated,Delivery Lead,2026-05-10,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,106,tenant_file
+RAID-000106,INIT-0009,Risk,Risk: Key vendor resource availability,Medium,Low,Escalated,Security,2026-01-07,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,107,tenant_file
+RAID-000107,INIT-0009,Issue,Issue: Key vendor resource availability,High,Medium,Mitigated,Data Lead,2027-04-04,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,108,tenant_file
+RAID-000108,INIT-0009,Dependency,Dependency: Scope creep from stakeholders,Low,High,Closed,Security,2026-04-28,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,109,tenant_file
+RAID-000109,INIT-0009,Action,Action: Key vendor resource availability,Low,Medium,Open,Vendor Manager,2027-06-25,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,110,tenant_file
+RAID-000110,INIT-0009,Issue,Issue: Integration test environment delay,Critical,High,Open,PMO,2026-03-23,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,111,tenant_file
+RAID-000111,INIT-0010,Issue,Issue: Integration test environment delay,Medium,Medium,Mitigated,Delivery Lead,2027-07-23,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,112,tenant_file
+RAID-000112,INIT-0010,Issue,Issue: Skill gap in delivery team,Critical,Medium,Escalated,Data Lead,2027-05-26,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,113,tenant_file
+RAID-000113,INIT-0010,Dependency,Dependency: Dependency on platform team,Low,Medium,Escalated,Delivery Lead,2027-04-09,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,114,tenant_file
+RAID-000114,INIT-0010,Action,Action: Regulatory approval pending,Low,Low,Mitigated,Delivery Lead,2027-09-14,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,115,tenant_file
+RAID-000115,INIT-0010,Decision,Decision: Skill gap in delivery team,High,Low,Mitigated,Data Lead,2027-05-24,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,116,tenant_file
+RAID-000116,INIT-0010,Action,Action: Integration test environment delay,Critical,Low,Escalated,Security,2027-10-19,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,117,tenant_file
+RAID-000117,INIT-0010,Decision,Decision: Security finding to remediate,Low,Medium,Open,Data Lead,2027-08-31,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,118,tenant_file
+RAID-000118,INIT-0010,Dependency,Dependency: Budget overrun risk,Critical,Low,Closed,Vendor Manager,2026-05-08,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,119,tenant_file
+RAID-000119,INIT-0011,Decision,Decision: Integration test environment delay,Low,Medium,In Progress,Security,2026-08-05,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,120,tenant_file
+RAID-000120,INIT-0011,Issue,Issue: Legacy interface instability,High,Medium,Escalated,Delivery Lead,2026-06-26,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,121,tenant_file
+RAID-000121,INIT-0011,Risk,Risk: Key vendor resource availability,Critical,High,Mitigated,Data Lead,2026-08-31,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,122,tenant_file
+RAID-000122,INIT-0011,Action,Action: Integration test environment delay,Critical,High,Mitigated,Business Owner,2027-04-12,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,123,tenant_file
+RAID-000123,INIT-0011,Issue,Issue: Third-party SLA risk,Low,High,In Progress,PMO,2026-07-18,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,124,tenant_file
+RAID-000124,INIT-0011,Action,Action: Data quality below threshold,Critical,High,In Progress,PMO,2027-09-19,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,125,tenant_file
+RAID-000125,INIT-0011,Risk,Risk: Third-party SLA risk,Critical,Medium,Escalated,Delivery Lead,2026-08-15,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,126,tenant_file
+RAID-000126,INIT-0011,Issue,Issue: Legacy interface instability,High,Medium,Closed,Business Owner,2026-03-01,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,127,tenant_file
+RAID-000127,INIT-0011,Risk,Risk: Change-adoption resistance,Critical,Medium,Open,Security,2027-04-25,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,128,tenant_file
+RAID-000128,INIT-0011,Decision,Decision: Regulatory approval pending,High,Low,Mitigated,Delivery Lead,2027-07-23,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,129,tenant_file
+RAID-000129,INIT-0011,Decision,Decision: Change-adoption resistance,Low,High,Mitigated,Architecture,2026-02-24,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,130,tenant_file
+RAID-000130,INIT-0011,Risk,Risk: Budget overrun risk,High,High,Open,Delivery Lead,2027-08-22,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,131,tenant_file
+RAID-000131,INIT-0011,Risk,Risk: Data quality below threshold,Low,Medium,Open,Data Lead,2027-09-21,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,132,tenant_file
+RAID-000132,INIT-0011,Decision,Decision: Scope creep from stakeholders,High,High,Closed,Business Owner,2026-11-18,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,133,tenant_file
+RAID-000133,INIT-0012,Decision,Decision: Key vendor resource availability,Low,High,Open,Architecture,2026-04-05,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,134,tenant_file
+RAID-000134,INIT-0012,Dependency,Dependency: Regulatory approval pending,Critical,Low,In Progress,Business Owner,2026-03-30,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,135,tenant_file
+RAID-000135,INIT-0012,Action,Action: Third-party SLA risk,Critical,Low,Closed,Delivery Lead,2027-03-04,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,136,tenant_file
+RAID-000136,INIT-0012,Risk,Risk: Security finding to remediate,Medium,High,Open,Delivery Lead,2026-02-25,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,137,tenant_file
+RAID-000137,INIT-0012,Action,Action: Dependency on platform team,Low,Low,In Progress,Business Owner,2026-05-26,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,138,tenant_file
+RAID-000138,INIT-0012,Issue,Issue: Legacy interface instability,Critical,Medium,In Progress,Delivery Lead,2027-08-09,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,139,tenant_file
+RAID-000139,INIT-0012,Issue,Issue: Third-party SLA risk,Critical,Low,In Progress,Business Owner,2026-03-04,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,140,tenant_file
+RAID-000140,INIT-0012,Action,Action: Skill gap in delivery team,Medium,Medium,Closed,Architecture,2027-07-13,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,141,tenant_file
+RAID-000141,INIT-0012,Action,Action: Integration test environment delay,High,High,Closed,Delivery Lead,2027-05-25,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,142,tenant_file
+RAID-000142,INIT-0012,Decision,Decision: Third-party SLA risk,Low,Medium,Closed,Data Lead,2026-12-30,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,143,tenant_file
+RAID-000143,INIT-0012,Dependency,Dependency: Scope creep from stakeholders,Critical,Low,In Progress,PMO,2026-04-04,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,144,tenant_file
+RAID-000144,INIT-0013,Dependency,Dependency: Legacy interface instability,Low,High,Closed,Data Lead,2027-09-21,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,145,tenant_file
+RAID-000145,INIT-0013,Decision,Decision: Change-adoption resistance,Low,High,Open,Vendor Manager,2027-09-25,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,146,tenant_file
+RAID-000146,INIT-0013,Decision,Decision: Skill gap in delivery team,Low,High,Open,Delivery Lead,2027-10-12,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,147,tenant_file
+RAID-000147,INIT-0013,Decision,Decision: Third-party SLA risk,Critical,Low,In Progress,Vendor Manager,2026-06-05,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,148,tenant_file
+RAID-000148,INIT-0013,Risk,Risk: Dependency on platform team,Medium,Medium,Open,Vendor Manager,2027-11-21,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,149,tenant_file
+RAID-000149,INIT-0013,Issue,Issue: Security finding to remediate,Low,Medium,Escalated,Data Lead,2027-08-10,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,150,tenant_file
+RAID-000150,INIT-0013,Action,Action: Dependency on platform team,High,High,In Progress,Data Lead,2027-05-02,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,151,tenant_file
+RAID-000151,INIT-0013,Decision,Decision: Budget overrun risk,Low,Low,Closed,Data Lead,2027-04-21,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,152,tenant_file
+RAID-000152,INIT-0013,Risk,Risk: Skill gap in delivery team,Low,Low,Open,Architecture,2027-02-20,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,153,tenant_file
+RAID-000153,INIT-0013,Dependency,Dependency: Legacy interface instability,Medium,Low,Closed,Delivery Lead,2027-10-02,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,154,tenant_file
+RAID-000154,INIT-0013,Action,Action: Scope creep from stakeholders,Critical,High,Escalated,Vendor Manager,2026-01-09,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,155,tenant_file
+RAID-000155,INIT-0013,Issue,Issue: Regulatory approval pending,Critical,Low,In Progress,Vendor Manager,2026-11-15,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,156,tenant_file
+RAID-000156,INIT-0014,Dependency,Dependency: Regulatory approval pending,High,High,In Progress,Security,2026-09-15,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,157,tenant_file
+RAID-000157,INIT-0014,Issue,Issue: Skill gap in delivery team,High,Low,Open,Vendor Manager,2026-05-08,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,158,tenant_file
+RAID-000158,INIT-0014,Dependency,Dependency: Skill gap in delivery team,Medium,High,Escalated,Architecture,2026-10-24,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,159,tenant_file
+RAID-000159,INIT-0014,Decision,Decision: Key vendor resource availability,Medium,Medium,Mitigated,Data Lead,2027-06-30,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,160,tenant_file
+RAID-000160,INIT-0014,Dependency,Dependency: Third-party SLA risk,Medium,Low,In Progress,Architecture,2026-02-02,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,161,tenant_file
+RAID-000161,INIT-0014,Risk,Risk: Scope creep from stakeholders,High,High,Mitigated,Vendor Manager,2026-04-03,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,162,tenant_file
+RAID-000162,INIT-0014,Issue,Issue: Budget overrun risk,Low,Medium,Mitigated,Delivery Lead,2026-05-09,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,163,tenant_file
+RAID-000163,INIT-0014,Issue,Issue: Regulatory approval pending,Critical,Low,Closed,Vendor Manager,2026-06-15,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,164,tenant_file
+RAID-000164,INIT-0014,Issue,Issue: Dependency on platform team,High,Low,Mitigated,Data Lead,2027-03-05,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,165,tenant_file
+RAID-000165,INIT-0014,Issue,Issue: Budget overrun risk,Critical,Medium,Mitigated,Security,2027-02-20,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,166,tenant_file
+RAID-000166,INIT-0014,Risk,Risk: Budget overrun risk,Low,High,In Progress,Data Lead,2026-01-26,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,167,tenant_file
+RAID-000167,INIT-0014,Dependency,Dependency: Third-party SLA risk,Critical,Medium,Mitigated,Security,2027-12-31,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,168,tenant_file
+RAID-000168,INIT-0014,Risk,Risk: Change-adoption resistance,Low,Low,Closed,Architecture,2027-12-01,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,169,tenant_file
+RAID-000169,INIT-0014,Decision,Decision: Scope creep from stakeholders,High,Medium,Closed,Architecture,2027-01-19,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,170,tenant_file
+RAID-000170,INIT-0014,Issue,Issue: Third-party SLA risk,Critical,High,In Progress,Security,2026-04-10,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,171,tenant_file
+RAID-000171,INIT-0014,Dependency,Dependency: Regulatory approval pending,Low,Medium,Open,Data Lead,2027-06-20,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,172,tenant_file
+RAID-000172,INIT-0015,Risk,Risk: Scope creep from stakeholders,Critical,Low,In Progress,Data Lead,2027-12-28,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,173,tenant_file
+RAID-000173,INIT-0015,Dependency,Dependency: Regulatory approval pending,Low,Low,Open,PMO,2026-01-06,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,174,tenant_file
+RAID-000174,INIT-0015,Dependency,Dependency: Change-adoption resistance,High,High,Closed,Security,2026-09-09,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,175,tenant_file
+RAID-000175,INIT-0015,Risk,Risk: Key vendor resource availability,Critical,Medium,Open,Security,2026-10-09,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,176,tenant_file
+RAID-000176,INIT-0015,Issue,Issue: Skill gap in delivery team,Low,High,Closed,Vendor Manager,2027-02-08,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,177,tenant_file
+RAID-000177,INIT-0015,Risk,Risk: Change-adoption resistance,Critical,Medium,Open,Vendor Manager,2026-01-22,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,178,tenant_file
+RAID-000178,INIT-0015,Issue,Issue: Security finding to remediate,Critical,Medium,In Progress,Vendor Manager,2026-08-09,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,179,tenant_file
+RAID-000179,INIT-0015,Dependency,Dependency: Data quality below threshold,Low,Low,In Progress,Vendor Manager,2026-01-13,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,180,tenant_file
+RAID-000180,INIT-0015,Risk,Risk: Integration test environment delay,Low,High,Open,Security,2027-09-04,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,181,tenant_file
+RAID-000181,INIT-0015,Decision,Decision: Data quality below threshold,High,Low,Mitigated,Security,2027-01-20,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,182,tenant_file
+RAID-000182,INIT-0015,Dependency,Dependency: Budget overrun risk,Low,High,In Progress,Data Lead,2026-03-28,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,183,tenant_file
+RAID-000183,INIT-0015,Risk,Risk: Integration test environment delay,Critical,Low,Mitigated,Security,2027-01-14,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,184,tenant_file
+RAID-000184,INIT-0016,Risk,Risk: Skill gap in delivery team,Medium,Medium,In Progress,Delivery Lead,2027-10-07,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,185,tenant_file
+RAID-000185,INIT-0016,Issue,Issue: Third-party SLA risk,Medium,Medium,Escalated,Architecture,2026-12-17,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,186,tenant_file
+RAID-000186,INIT-0016,Action,Action: Data quality below threshold,High,High,Mitigated,PMO,2027-10-07,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,187,tenant_file
+RAID-000187,INIT-0016,Risk,Risk: Dependency on platform team,Medium,Medium,Mitigated,Delivery Lead,2026-01-29,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,188,tenant_file
+RAID-000188,INIT-0016,Dependency,Dependency: Dependency on platform team,Medium,High,In Progress,Architecture,2026-05-19,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,189,tenant_file
+RAID-000189,INIT-0016,Risk,Risk: Budget overrun risk,Critical,Low,Open,Vendor Manager,2026-09-12,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,190,tenant_file
+RAID-000190,INIT-0016,Dependency,Dependency: Security finding to remediate,High,Medium,Open,Security,2026-07-05,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,191,tenant_file
+RAID-000191,INIT-0016,Dependency,Dependency: Data quality below threshold,High,Medium,Closed,Architecture,2027-02-17,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,192,tenant_file
+RAID-000192,INIT-0017,Issue,Issue: Budget overrun risk,Low,Medium,Closed,Architecture,2027-08-09,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,193,tenant_file
+RAID-000193,INIT-0017,Decision,Decision: Scope creep from stakeholders,Medium,Low,Closed,Data Lead,2026-06-30,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,194,tenant_file
+RAID-000194,INIT-0017,Dependency,Dependency: Budget overrun risk,Medium,High,Mitigated,Security,2026-10-23,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,195,tenant_file
+RAID-000195,INIT-0017,Dependency,Dependency: Legacy interface instability,Critical,High,Open,Data Lead,2026-05-22,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,196,tenant_file
+RAID-000196,INIT-0017,Decision,Decision: Scope creep from stakeholders,Critical,Medium,Mitigated,Business Owner,2026-05-11,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,197,tenant_file
+RAID-000197,INIT-0017,Decision,Decision: Legacy interface instability,Critical,Low,Mitigated,Vendor Manager,2026-04-08,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,198,tenant_file
+RAID-000198,INIT-0017,Decision,Decision: Key vendor resource availability,Low,High,Escalated,Architecture,2027-02-03,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,199,tenant_file
+RAID-000199,INIT-0017,Risk,Risk: Legacy interface instability,High,High,In Progress,PMO,2027-06-03,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,200,tenant_file
+RAID-000200,INIT-0017,Issue,Issue: Scope creep from stakeholders,Medium,Low,Escalated,Architecture,2027-04-13,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,201,tenant_file
+RAID-000201,INIT-0018,Dependency,Dependency: Third-party SLA risk,Low,Medium,Open,Vendor Manager,2027-09-10,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,202,tenant_file
+RAID-000202,INIT-0018,Dependency,Dependency: Third-party SLA risk,High,Medium,Open,Data Lead,2027-06-10,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,203,tenant_file
+RAID-000203,INIT-0018,Action,Action: Third-party SLA risk,High,High,Closed,Delivery Lead,2027-01-01,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,204,tenant_file
+RAID-000204,INIT-0018,Decision,Decision: Data quality below threshold,High,Medium,Open,Business Owner,2027-03-26,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,205,tenant_file
+RAID-000205,INIT-0018,Issue,Issue: Scope creep from stakeholders,Low,Low,Closed,Architecture,2027-06-04,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,206,tenant_file
+RAID-000206,INIT-0018,Dependency,Dependency: Legacy interface instability,Critical,High,Escalated,PMO,2026-05-12,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,207,tenant_file
+RAID-000207,INIT-0018,Action,Action: Budget overrun risk,Low,High,Closed,Security,2027-10-08,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,208,tenant_file
+RAID-000208,INIT-0018,Dependency,Dependency: Legacy interface instability,High,Medium,In Progress,Delivery Lead,2027-07-30,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,209,tenant_file
+RAID-000209,INIT-0018,Issue,Issue: Skill gap in delivery team,Critical,High,Mitigated,Vendor Manager,2026-11-21,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,210,tenant_file
+RAID-000210,INIT-0019,Issue,Issue: Regulatory approval pending,High,High,Escalated,Business Owner,2027-07-21,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,211,tenant_file
+RAID-000211,INIT-0019,Risk,Risk: Third-party SLA risk,Medium,High,Open,Business Owner,2027-02-11,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,212,tenant_file
+RAID-000212,INIT-0019,Dependency,Dependency: Regulatory approval pending,Critical,Low,Mitigated,Security,2027-08-09,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,213,tenant_file
+RAID-000213,INIT-0019,Action,Action: Change-adoption resistance,High,High,In Progress,Delivery Lead,2027-01-21,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,214,tenant_file
+RAID-000214,INIT-0019,Action,Action: Budget overrun risk,Medium,Medium,Open,PMO,2026-12-06,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,215,tenant_file
+RAID-000215,INIT-0019,Issue,Issue: Integration test environment delay,Low,Low,Escalated,Vendor Manager,2027-08-16,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,216,tenant_file
+RAID-000216,INIT-0019,Dependency,Dependency: Dependency on platform team,Critical,High,Mitigated,Data Lead,2027-02-16,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,217,tenant_file
+RAID-000217,INIT-0019,Issue,Issue: Security finding to remediate,High,High,Open,Vendor Manager,2026-05-18,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,218,tenant_file
+RAID-000218,INIT-0019,Risk,Risk: Change-adoption resistance,Medium,Medium,Escalated,Security,2027-12-19,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,219,tenant_file
+RAID-000219,INIT-0019,Issue,Issue: Budget overrun risk,Low,Medium,In Progress,Data Lead,2026-12-13,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,220,tenant_file
+RAID-000220,INIT-0019,Action,Action: Change-adoption resistance,Critical,Low,Closed,Architecture,2027-10-22,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,221,tenant_file
+RAID-000221,INIT-0019,Issue,Issue: Integration test environment delay,Critical,Low,Closed,Delivery Lead,2026-01-17,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,222,tenant_file
+RAID-000222,INIT-0019,Dependency,Dependency: Dependency on platform team,High,High,Escalated,PMO,2026-01-20,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,223,tenant_file
+RAID-000223,INIT-0019,Action,Action: Legacy interface instability,Critical,Low,Closed,Vendor Manager,2026-06-07,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,224,tenant_file
+RAID-000224,INIT-0019,Decision,Decision: Security finding to remediate,Critical,Low,Escalated,Security,2027-02-19,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,225,tenant_file
+RAID-000225,INIT-0019,Dependency,Dependency: Integration test environment delay,High,Medium,In Progress,Data Lead,2026-09-21,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,226,tenant_file
+RAID-000226,INIT-0020,Risk,Risk: Integration test environment delay,Medium,High,Mitigated,PMO,2027-02-09,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,227,tenant_file
+RAID-000227,INIT-0020,Risk,Risk: Scope creep from stakeholders,High,Low,Mitigated,Data Lead,2026-11-19,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,228,tenant_file
+RAID-000228,INIT-0020,Dependency,Dependency: Regulatory approval pending,Medium,Low,Open,Architecture,2027-06-16,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,229,tenant_file
+RAID-000229,INIT-0020,Risk,Risk: Security finding to remediate,Low,Low,In Progress,Business Owner,2026-06-19,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,230,tenant_file
+RAID-000230,INIT-0020,Dependency,Dependency: Regulatory approval pending,Medium,High,Escalated,Architecture,2026-08-20,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,231,tenant_file
+RAID-000231,INIT-0020,Action,Action: Key vendor resource availability,Low,High,Escalated,Business Owner,2026-10-14,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,232,tenant_file
+RAID-000232,INIT-0020,Dependency,Dependency: Scope creep from stakeholders,Critical,Low,Mitigated,Business Owner,2026-09-04,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,233,tenant_file
+RAID-000233,INIT-0020,Decision,Decision: Skill gap in delivery team,High,Low,Mitigated,Security,2027-05-18,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,234,tenant_file
+RAID-000234,INIT-0020,Dependency,Dependency: Security finding to remediate,Medium,Low,Mitigated,Delivery Lead,2027-09-05,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,235,tenant_file
+RAID-000235,INIT-0020,Risk,Risk: Third-party SLA risk,Low,Low,In Progress,Data Lead,2026-03-26,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,236,tenant_file
+RAID-000236,INIT-0020,Decision,Decision: Integration test environment delay,Critical,Low,Closed,Security,2027-06-18,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,237,tenant_file
+RAID-000237,INIT-0020,Action,Action: Dependency on platform team,Medium,Low,Open,PMO,2026-08-03,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,238,tenant_file
+RAID-000238,INIT-0020,Action,Action: Data quality below threshold,High,Medium,Open,Architecture,2026-04-06,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,239,tenant_file
+RAID-000239,INIT-0021,Risk,Risk: Regulatory approval pending,Medium,High,Mitigated,Security,2026-09-10,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,240,tenant_file
+RAID-000240,INIT-0021,Decision,Decision: Legacy interface instability,Low,High,Mitigated,Architecture,2026-01-15,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,241,tenant_file
+RAID-000241,INIT-0021,Action,Action: Security finding to remediate,Critical,Low,Mitigated,Data Lead,2027-11-20,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,242,tenant_file
+RAID-000242,INIT-0021,Risk,Risk: Integration test environment delay,Critical,High,Escalated,PMO,2027-06-30,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,243,tenant_file
+RAID-000243,INIT-0021,Risk,Risk: Third-party SLA risk,Low,Low,Escalated,PMO,2026-03-06,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,244,tenant_file
+RAID-000244,INIT-0021,Dependency,Dependency: Key vendor resource availability,Critical,High,In Progress,PMO,2027-06-30,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,245,tenant_file
+RAID-000245,INIT-0021,Decision,Decision: Budget overrun risk,Low,High,Open,Security,2026-02-06,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,246,tenant_file
+RAID-000246,INIT-0021,Dependency,Dependency: Skill gap in delivery team,Critical,Medium,In Progress,Security,2026-01-19,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,247,tenant_file
+RAID-000247,INIT-0021,Dependency,Dependency: Data quality below threshold,Low,Low,Mitigated,PMO,2026-01-01,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,248,tenant_file
+RAID-000248,INIT-0022,Risk,Risk: Budget overrun risk,Low,Low,Closed,Business Owner,2026-04-05,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,249,tenant_file
+RAID-000249,INIT-0022,Dependency,Dependency: Legacy interface instability,High,Medium,Closed,PMO,2026-10-24,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,250,tenant_file
+RAID-000250,INIT-0022,Risk,Risk: Data quality below threshold,Low,Low,Open,Data Lead,2027-05-20,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,251,tenant_file
+RAID-000251,INIT-0022,Decision,Decision: Data quality below threshold,High,Medium,Mitigated,Data Lead,2027-08-04,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,252,tenant_file
+RAID-000252,INIT-0022,Dependency,Dependency: Security finding to remediate,High,Medium,Mitigated,Security,2026-07-10,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,253,tenant_file
+RAID-000253,INIT-0022,Decision,Decision: Key vendor resource availability,High,High,In Progress,Delivery Lead,2026-11-19,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,254,tenant_file
+RAID-000254,INIT-0022,Risk,Risk: Security finding to remediate,High,Medium,Escalated,Vendor Manager,2026-04-15,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,255,tenant_file
+RAID-000255,INIT-0022,Action,Action: Integration test environment delay,Critical,Low,Closed,Architecture,2027-04-10,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,256,tenant_file
+RAID-000256,INIT-0022,Decision,Decision: Data quality below threshold,Medium,Low,Escalated,PMO,2026-02-12,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,257,tenant_file
+RAID-000257,INIT-0022,Decision,Decision: Regulatory approval pending,Medium,High,Open,Architecture,2027-03-28,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,258,tenant_file
+RAID-000258,INIT-0022,Dependency,Dependency: Third-party SLA risk,Low,Medium,Open,Delivery Lead,2027-11-21,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,259,tenant_file
+RAID-000259,INIT-0022,Decision,Decision: Skill gap in delivery team,Medium,High,In Progress,Data Lead,2027-01-02,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,260,tenant_file
+RAID-000260,INIT-0022,Dependency,Dependency: Skill gap in delivery team,Medium,Medium,Mitigated,PMO,2027-09-01,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,261,tenant_file
+RAID-000261,INIT-0022,Dependency,Dependency: Change-adoption resistance,Low,High,Mitigated,Delivery Lead,2026-01-01,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,262,tenant_file
+RAID-000262,INIT-0022,Dependency,Dependency: Regulatory approval pending,Low,High,Escalated,Delivery Lead,2026-07-05,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,263,tenant_file
+RAID-000263,INIT-0023,Risk,Risk: Scope creep from stakeholders,Medium,Medium,Mitigated,Delivery Lead,2026-09-20,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,264,tenant_file
+RAID-000264,INIT-0023,Decision,Decision: Regulatory approval pending,High,Medium,Escalated,Business Owner,2027-06-17,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,265,tenant_file
+RAID-000265,INIT-0023,Issue,Issue: Key vendor resource availability,Critical,High,Mitigated,Security,2026-07-21,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,266,tenant_file
+RAID-000266,INIT-0023,Dependency,Dependency: Change-adoption resistance,Medium,High,Open,Security,2027-10-27,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,267,tenant_file
+RAID-000267,INIT-0023,Decision,Decision: Regulatory approval pending,Low,High,Escalated,Vendor Manager,2027-09-06,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,268,tenant_file
+RAID-000268,INIT-0023,Risk,Risk: Legacy interface instability,Low,Medium,Mitigated,Security,2027-04-01,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,269,tenant_file
+RAID-000269,INIT-0023,Action,Action: Regulatory approval pending,Medium,High,Open,Delivery Lead,2026-11-15,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,270,tenant_file
+RAID-000270,INIT-0023,Issue,Issue: Dependency on platform team,High,Medium,Open,Security,2026-05-03,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,271,tenant_file
+RAID-000271,INIT-0023,Decision,Decision: Legacy interface instability,Critical,Low,Escalated,Vendor Manager,2026-02-08,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,272,tenant_file
+RAID-000272,INIT-0023,Action,Action: Legacy interface instability,Low,Low,Open,PMO,2026-01-20,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,273,tenant_file
+RAID-000273,INIT-0023,Risk,Risk: Legacy interface instability,High,High,Open,Delivery Lead,2026-09-22,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,274,tenant_file
+RAID-000274,INIT-0023,Action,Action: Legacy interface instability,High,Low,Open,Data Lead,2026-05-24,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,275,tenant_file
+RAID-000275,INIT-0023,Risk,Risk: Key vendor resource availability,Critical,Medium,Escalated,Delivery Lead,2027-06-01,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,276,tenant_file
+RAID-000276,INIT-0023,Decision,Decision: Skill gap in delivery team,Low,Medium,Mitigated,Vendor Manager,2027-11-12,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,277,tenant_file
+RAID-000277,INIT-0024,Issue,Issue: Integration test environment delay,High,High,In Progress,Business Owner,2027-10-08,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,278,tenant_file
+RAID-000278,INIT-0024,Dependency,Dependency: Dependency on platform team,Low,Low,Open,PMO,2027-08-03,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,279,tenant_file
+RAID-000279,INIT-0024,Risk,Risk: Key vendor resource availability,High,High,In Progress,Vendor Manager,2026-10-04,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,280,tenant_file
+RAID-000280,INIT-0024,Dependency,Dependency: Skill gap in delivery team,Medium,Medium,Closed,Delivery Lead,2027-06-10,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,281,tenant_file
+RAID-000281,INIT-0024,Decision,Decision: Key vendor resource availability,Medium,High,Escalated,PMO,2026-06-29,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,282,tenant_file
+RAID-000282,INIT-0024,Risk,Risk: Scope creep from stakeholders,Medium,High,Closed,Business Owner,2026-04-17,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,283,tenant_file
+RAID-000283,INIT-0024,Dependency,Dependency: Integration test environment delay,High,Medium,In Progress,Data Lead,2027-01-23,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,284,tenant_file
+RAID-000284,INIT-0024,Dependency,Dependency: Dependency on platform team,Medium,Medium,Mitigated,Architecture,2026-02-07,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,285,tenant_file
+RAID-000285,INIT-0024,Decision,Decision: Skill gap in delivery team,Low,Medium,Escalated,Data Lead,2026-12-25,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,286,tenant_file
+RAID-000286,INIT-0024,Decision,Decision: Integration test environment delay,Low,High,Closed,Data Lead,2027-12-03,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,287,tenant_file
+RAID-000287,INIT-0024,Action,Action: Third-party SLA risk,Low,Medium,Open,PMO,2026-10-20,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,288,tenant_file
+RAID-000288,INIT-0024,Decision,Decision: Skill gap in delivery team,High,Medium,Escalated,Data Lead,2027-09-18,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,289,tenant_file
+RAID-000289,INIT-0024,Issue,Issue: Budget overrun risk,Medium,Medium,Escalated,Delivery Lead,2027-12-10,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,290,tenant_file
+RAID-000290,INIT-0024,Action,Action: Data quality below threshold,Medium,Medium,Mitigated,Data Lead,2026-04-13,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,291,tenant_file
+RAID-000291,INIT-0025,Risk,Risk: Key vendor resource availability,Critical,High,Mitigated,Business Owner,2027-02-02,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,292,tenant_file
+RAID-000292,INIT-0025,Action,Action: Key vendor resource availability,Medium,High,Mitigated,Security,2027-03-03,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,293,tenant_file
+RAID-000293,INIT-0025,Dependency,Dependency: Scope creep from stakeholders,High,Low,Escalated,PMO,2027-10-13,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,294,tenant_file
+RAID-000294,INIT-0025,Decision,Decision: Key vendor resource availability,Critical,Medium,Open,Delivery Lead,2026-07-05,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,295,tenant_file
+RAID-000295,INIT-0025,Issue,Issue: Third-party SLA risk,Low,Low,Closed,Vendor Manager,2027-12-08,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,296,tenant_file
+RAID-000296,INIT-0025,Action,Action: Budget overrun risk,High,High,Open,Delivery Lead,2026-03-16,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,297,tenant_file
+RAID-000297,INIT-0025,Decision,Decision: Data quality below threshold,High,Low,Open,PMO,2026-08-02,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,298,tenant_file
+RAID-000298,INIT-0025,Dependency,Dependency: Budget overrun risk,Low,Low,Escalated,Vendor Manager,2027-01-23,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,299,tenant_file
+RAID-000299,INIT-0025,Risk,Risk: Dependency on platform team,Low,Medium,Open,Vendor Manager,2026-11-15,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,300,tenant_file
+RAID-000300,INIT-0025,Action,Action: Skill gap in delivery team,Low,Low,In Progress,Architecture,2026-06-10,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,301,tenant_file
+RAID-000301,INIT-0025,Decision,Decision: Key vendor resource availability,Low,Medium,Mitigated,Vendor Manager,2026-10-16,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,302,tenant_file
+RAID-000302,INIT-0025,Decision,Decision: Security finding to remediate,High,High,Closed,Business Owner,2027-08-13,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,303,tenant_file
+RAID-000303,INIT-0025,Issue,Issue: Security finding to remediate,High,Medium,Open,PMO,2027-11-09,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,304,tenant_file
+RAID-000304,INIT-0025,Decision,Decision: Key vendor resource availability,Low,Low,In Progress,Business Owner,2026-01-28,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,305,tenant_file
+RAID-000305,INIT-0025,Issue,Issue: Change-adoption resistance,Low,High,Open,Security,2026-07-03,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,306,tenant_file
+RAID-000306,INIT-0026,Risk,Risk: Dependency on platform team,High,High,Closed,Architecture,2027-12-31,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,307,tenant_file
+RAID-000307,INIT-0026,Decision,Decision: Key vendor resource availability,Low,Medium,Open,Business Owner,2026-04-07,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,308,tenant_file
+RAID-000308,INIT-0026,Decision,Decision: Change-adoption resistance,Critical,High,Escalated,PMO,2027-02-10,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,309,tenant_file
+RAID-000309,INIT-0026,Dependency,Dependency: Data quality below threshold,Low,Medium,Closed,Data Lead,2027-08-12,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,310,tenant_file
+RAID-000310,INIT-0026,Action,Action: Data quality below threshold,High,Low,Mitigated,PMO,2027-03-09,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,311,tenant_file
+RAID-000311,INIT-0026,Decision,Decision: Budget overrun risk,Medium,Medium,Closed,Vendor Manager,2027-09-25,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,312,tenant_file
+RAID-000312,INIT-0026,Risk,Risk: Security finding to remediate,Critical,High,Closed,Business Owner,2027-08-23,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,313,tenant_file
+RAID-000313,INIT-0026,Decision,Decision: Third-party SLA risk,Medium,Low,Closed,PMO,2027-08-02,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,314,tenant_file
+RAID-000314,INIT-0026,Dependency,Dependency: Data quality below threshold,Medium,High,Open,Delivery Lead,2027-08-01,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,315,tenant_file
+RAID-000315,INIT-0026,Dependency,Dependency: Budget overrun risk,Medium,High,Closed,Vendor Manager,2026-10-26,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,316,tenant_file
+RAID-000316,INIT-0026,Action,Action: Scope creep from stakeholders,Low,Medium,Escalated,Vendor Manager,2026-12-03,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,317,tenant_file
+RAID-000317,INIT-0026,Dependency,Dependency: Dependency on platform team,Critical,Low,Open,PMO,2026-01-28,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,318,tenant_file
+RAID-000318,INIT-0026,Issue,Issue: Security finding to remediate,Critical,High,Closed,Vendor Manager,2027-08-09,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,319,tenant_file
+RAID-000319,INIT-0026,Risk,Risk: Security finding to remediate,High,Medium,Escalated,Delivery Lead,2027-05-02,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,320,tenant_file
+RAID-000320,INIT-0027,Issue,Issue: Regulatory approval pending,Medium,Low,In Progress,Business Owner,2027-09-01,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,321,tenant_file
+RAID-000321,INIT-0027,Dependency,Dependency: Third-party SLA risk,Critical,High,Mitigated,Business Owner,2026-09-14,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,322,tenant_file
+RAID-000322,INIT-0027,Action,Action: Legacy interface instability,High,Medium,Mitigated,Security,2027-04-15,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,323,tenant_file
+RAID-000323,INIT-0027,Decision,Decision: Key vendor resource availability,Low,Low,Closed,Business Owner,2026-03-31,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,324,tenant_file
+RAID-000324,INIT-0027,Action,Action: Integration test environment delay,Critical,High,Open,Architecture,2027-09-24,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,325,tenant_file
+RAID-000325,INIT-0027,Decision,Decision: Budget overrun risk,High,Medium,Closed,Data Lead,2026-03-04,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,326,tenant_file
+RAID-000326,INIT-0027,Decision,Decision: Budget overrun risk,Critical,Low,Closed,Business Owner,2026-07-25,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,327,tenant_file
+RAID-000327,INIT-0027,Dependency,Dependency: Legacy interface instability,Low,Medium,Mitigated,Security,2027-03-10,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,328,tenant_file
+RAID-000328,INIT-0027,Issue,Issue: Scope creep from stakeholders,Critical,Medium,Mitigated,Vendor Manager,2027-10-30,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,329,tenant_file
+RAID-000329,INIT-0028,Risk,Risk: Dependency on platform team,Low,High,Escalated,Delivery Lead,2026-06-07,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,330,tenant_file
+RAID-000330,INIT-0028,Risk,Risk: Key vendor resource availability,Low,Low,Escalated,PMO,2027-05-23,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,331,tenant_file
+RAID-000331,INIT-0028,Issue,Issue: Key vendor resource availability,Low,Medium,In Progress,Vendor Manager,2027-06-24,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,332,tenant_file
+RAID-000332,INIT-0028,Action,Action: Budget overrun risk,Medium,Low,Open,Vendor Manager,2027-09-11,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,333,tenant_file
+RAID-000333,INIT-0028,Issue,Issue: Skill gap in delivery team,Low,Low,In Progress,Vendor Manager,2026-03-01,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,334,tenant_file
+RAID-000334,INIT-0028,Risk,Risk: Key vendor resource availability,High,Medium,Mitigated,Data Lead,2026-01-11,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,335,tenant_file
+RAID-000335,INIT-0028,Dependency,Dependency: Data quality below threshold,Low,High,Closed,Business Owner,2027-10-11,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,336,tenant_file
+RAID-000336,INIT-0028,Dependency,Dependency: Security finding to remediate,Low,High,Escalated,Business Owner,2026-05-07,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,337,tenant_file
+RAID-000337,INIT-0028,Decision,Decision: Data quality below threshold,Low,High,Open,Data Lead,2027-01-22,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,338,tenant_file
+RAID-000338,INIT-0028,Action,Action: Scope creep from stakeholders,Medium,High,Open,PMO,2026-09-21,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,339,tenant_file
+RAID-000339,INIT-0028,Action,Action: Regulatory approval pending,Low,Low,Escalated,Delivery Lead,2027-04-29,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,340,tenant_file
+RAID-000340,INIT-0028,Risk,Risk: Security finding to remediate,Low,Low,Mitigated,Security,2027-03-02,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,341,tenant_file
+RAID-000341,INIT-0029,Dependency,Dependency: Skill gap in delivery team,Medium,Medium,Open,PMO,2026-10-17,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,342,tenant_file
+RAID-000342,INIT-0029,Decision,Decision: Scope creep from stakeholders,Medium,Medium,Escalated,Data Lead,2026-07-27,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,343,tenant_file
+RAID-000343,INIT-0029,Issue,Issue: Scope creep from stakeholders,Medium,Low,Open,Business Owner,2026-08-04,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,344,tenant_file
+RAID-000344,INIT-0029,Action,Action: Change-adoption resistance,Low,High,Closed,Business Owner,2026-04-27,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,345,tenant_file
+RAID-000345,INIT-0029,Issue,Issue: Data quality below threshold,High,High,Closed,Data Lead,2027-07-15,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,346,tenant_file
+RAID-000346,INIT-0029,Risk,Risk: Key vendor resource availability,High,Low,Closed,Data Lead,2027-11-23,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,347,tenant_file
+RAID-000347,INIT-0029,Decision,Decision: Scope creep from stakeholders,Medium,Medium,In Progress,PMO,2027-03-12,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,348,tenant_file
+RAID-000348,INIT-0029,Action,Action: Key vendor resource availability,Low,Medium,Escalated,Business Owner,2026-08-11,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,349,tenant_file
+RAID-000349,INIT-0030,Decision,Decision: Key vendor resource availability,High,High,In Progress,Business Owner,2027-06-01,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,350,tenant_file
+RAID-000350,INIT-0030,Dependency,Dependency: Security finding to remediate,Medium,High,Open,Business Owner,2027-05-02,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,351,tenant_file
+RAID-000351,INIT-0030,Dependency,Dependency: Security finding to remediate,Critical,High,Mitigated,Delivery Lead,2026-07-23,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,352,tenant_file
+RAID-000352,INIT-0030,Dependency,Dependency: Key vendor resource availability,Low,Low,Mitigated,Security,2027-09-13,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,353,tenant_file
+RAID-000353,INIT-0030,Risk,Risk: Key vendor resource availability,High,High,Closed,Vendor Manager,2026-09-24,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,354,tenant_file
+RAID-000354,INIT-0030,Dependency,Dependency: Legacy interface instability,Low,High,In Progress,PMO,2026-07-23,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,355,tenant_file
+RAID-000355,INIT-0030,Risk,Risk: Integration test environment delay,Critical,Medium,In Progress,Architecture,2027-09-15,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,356,tenant_file
+RAID-000356,INIT-0030,Issue,Issue: Skill gap in delivery team,Medium,Medium,In Progress,Architecture,2026-01-23,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,357,tenant_file
+RAID-000357,INIT-0030,Risk,Risk: Key vendor resource availability,High,High,Closed,PMO,2026-03-18,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,358,tenant_file
+RAID-000358,INIT-0030,Risk,Risk: Scope creep from stakeholders,High,Low,Mitigated,Security,2027-02-26,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,359,tenant_file
+RAID-000359,INIT-0030,Risk,Risk: Third-party SLA risk,High,High,Open,Architecture,2027-02-28,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,360,tenant_file
+RAID-000360,INIT-0030,Action,Action: Key vendor resource availability,High,Medium,Open,Vendor Manager,2027-03-22,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,361,tenant_file
+RAID-000361,INIT-0030,Issue,Issue: Third-party SLA risk,Low,Medium,Mitigated,Security,2026-11-08,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,362,tenant_file
+RAID-000362,INIT-0031,Action,Action: Integration test environment delay,Medium,Medium,Mitigated,Security,2026-05-04,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,363,tenant_file
+RAID-000363,INIT-0031,Action,Action: Scope creep from stakeholders,Critical,High,Closed,Data Lead,2026-03-31,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,364,tenant_file
+RAID-000364,INIT-0031,Action,Action: Budget overrun risk,Medium,Medium,In Progress,Architecture,2026-02-02,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,365,tenant_file
+RAID-000365,INIT-0031,Decision,Decision: Budget overrun risk,Critical,High,Escalated,Delivery Lead,2027-11-20,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,366,tenant_file
+RAID-000366,INIT-0031,Issue,Issue: Regulatory approval pending,Low,High,In Progress,Delivery Lead,2026-09-06,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,367,tenant_file
+RAID-000367,INIT-0031,Issue,Issue: Regulatory approval pending,High,Medium,Mitigated,Security,2027-07-19,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,368,tenant_file
+RAID-000368,INIT-0031,Action,Action: Change-adoption resistance,High,High,Mitigated,Architecture,2027-01-21,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,369,tenant_file
+RAID-000369,INIT-0031,Dependency,Dependency: Regulatory approval pending,High,Low,Open,Architecture,2026-05-18,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,370,tenant_file
+RAID-000370,INIT-0031,Decision,Decision: Legacy interface instability,Critical,High,Mitigated,Business Owner,2027-07-09,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,371,tenant_file
+RAID-000371,INIT-0031,Dependency,Dependency: Third-party SLA risk,Low,Low,Escalated,Architecture,2027-09-13,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,372,tenant_file
+RAID-000372,INIT-0031,Dependency,Dependency: Dependency on platform team,Low,Medium,In Progress,Architecture,2027-01-05,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,373,tenant_file
+RAID-000373,INIT-0031,Action,Action: Skill gap in delivery team,Low,Low,Open,Security,2026-12-11,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,374,tenant_file
+RAID-000374,INIT-0031,Decision,Decision: Integration test environment delay,High,High,Closed,Vendor Manager,2026-05-30,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,375,tenant_file
+RAID-000375,INIT-0031,Dependency,Dependency: Regulatory approval pending,Low,High,Closed,PMO,2027-08-23,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,376,tenant_file
+RAID-000376,INIT-0031,Issue,Issue: Integration test environment delay,High,Low,In Progress,PMO,2027-10-09,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,377,tenant_file
+RAID-000377,INIT-0031,Risk,Risk: Skill gap in delivery team,Medium,Medium,In Progress,Architecture,2027-01-12,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,378,tenant_file
+RAID-000378,INIT-0032,Issue,Issue: Key vendor resource availability,Critical,High,Mitigated,Vendor Manager,2027-09-05,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,379,tenant_file
+RAID-000379,INIT-0032,Issue,Issue: Skill gap in delivery team,Critical,Medium,Open,Architecture,2026-08-22,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,380,tenant_file
+RAID-000380,INIT-0032,Issue,Issue: Regulatory approval pending,Critical,Medium,Closed,Architecture,2027-07-16,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,381,tenant_file
+RAID-000381,INIT-0032,Action,Action: Data quality below threshold,Critical,Low,Escalated,PMO,2027-03-06,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,382,tenant_file
+RAID-000382,INIT-0032,Action,Action: Security finding to remediate,Critical,Low,Closed,PMO,2027-09-27,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,383,tenant_file
+RAID-000383,INIT-0032,Decision,Decision: Data quality below threshold,Medium,Low,Open,Delivery Lead,2027-07-26,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,384,tenant_file
+RAID-000384,INIT-0032,Issue,Issue: Dependency on platform team,Critical,Medium,Closed,Vendor Manager,2027-06-04,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,385,tenant_file
+RAID-000385,INIT-0032,Risk,Risk: Third-party SLA risk,High,High,In Progress,Business Owner,2027-09-20,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,386,tenant_file
+RAID-000386,INIT-0033,Decision,Decision: Scope creep from stakeholders,High,High,In Progress,Business Owner,2027-06-02,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,387,tenant_file
+RAID-000387,INIT-0033,Decision,Decision: Change-adoption resistance,Critical,Low,In Progress,Business Owner,2026-01-09,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,388,tenant_file
+RAID-000388,INIT-0033,Decision,Decision: Integration test environment delay,High,Low,Open,Security,2027-01-19,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,389,tenant_file
+RAID-000389,INIT-0033,Action,Action: Legacy interface instability,Critical,Medium,Closed,Architecture,2026-01-19,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,390,tenant_file
+RAID-000390,INIT-0033,Risk,Risk: Third-party SLA risk,Critical,Low,Closed,Business Owner,2026-06-26,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,391,tenant_file
+RAID-000391,INIT-0033,Issue,Issue: Security finding to remediate,Critical,Medium,In Progress,Vendor Manager,2026-03-10,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,392,tenant_file
+RAID-000392,INIT-0033,Decision,Decision: Change-adoption resistance,Low,Low,In Progress,Security,2027-01-22,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,393,tenant_file
+RAID-000393,INIT-0033,Risk,Risk: Scope creep from stakeholders,Critical,High,Mitigated,Business Owner,2026-06-20,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,394,tenant_file
+RAID-000394,INIT-0033,Issue,Issue: Regulatory approval pending,Critical,Low,Open,PMO,2027-07-27,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,395,tenant_file
+RAID-000395,INIT-0033,Decision,Decision: Scope creep from stakeholders,Critical,Medium,Closed,Business Owner,2026-04-12,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,396,tenant_file
+RAID-000396,INIT-0033,Dependency,Dependency: Key vendor resource availability,Critical,Medium,Open,Vendor Manager,2027-10-22,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,397,tenant_file
+RAID-000397,INIT-0033,Action,Action: Dependency on platform team,Medium,Low,Open,Security,2027-06-21,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,398,tenant_file
+RAID-000398,INIT-0033,Action,Action: Key vendor resource availability,Critical,Medium,Mitigated,Delivery Lead,2026-12-31,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,399,tenant_file
+RAID-000399,INIT-0033,Decision,Decision: Key vendor resource availability,Medium,High,In Progress,Business Owner,2027-02-18,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,400,tenant_file
+RAID-000400,INIT-0034,Decision,Decision: Security finding to remediate,Critical,Medium,In Progress,Architecture,2026-04-21,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,401,tenant_file
+RAID-000401,INIT-0034,Issue,Issue: Legacy interface instability,High,Low,Mitigated,Data Lead,2026-05-16,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,402,tenant_file
+RAID-000402,INIT-0034,Risk,Risk: Budget overrun risk,Low,Low,Open,Architecture,2027-07-12,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,403,tenant_file
+RAID-000403,INIT-0034,Dependency,Dependency: Security finding to remediate,Medium,Low,Closed,Delivery Lead,2026-02-17,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,404,tenant_file
+RAID-000404,INIT-0034,Issue,Issue: Change-adoption resistance,Critical,High,Escalated,Architecture,2027-01-20,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,405,tenant_file
+RAID-000405,INIT-0034,Risk,Risk: Regulatory approval pending,Low,Low,Mitigated,Business Owner,2026-04-26,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,406,tenant_file
+RAID-000406,INIT-0034,Risk,Risk: Third-party SLA risk,Low,Low,Open,Delivery Lead,2026-09-12,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,407,tenant_file
+RAID-000407,INIT-0034,Action,Action: Key vendor resource availability,High,Medium,In Progress,Vendor Manager,2027-04-20,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,408,tenant_file
+RAID-000408,INIT-0034,Action,Action: Security finding to remediate,Medium,Medium,Closed,Delivery Lead,2027-01-25,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,409,tenant_file
+RAID-000409,INIT-0034,Action,Action: Budget overrun risk,High,Medium,Mitigated,Security,2027-12-07,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,410,tenant_file
+RAID-000410,INIT-0035,Dependency,Dependency: Scope creep from stakeholders,Low,High,Open,PMO,2026-02-25,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,411,tenant_file
+RAID-000411,INIT-0035,Action,Action: Change-adoption resistance,Low,Low,Closed,PMO,2027-07-13,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,412,tenant_file
+RAID-000412,INIT-0035,Action,Action: Scope creep from stakeholders,High,High,Open,Vendor Manager,2026-08-01,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,413,tenant_file
+RAID-000413,INIT-0035,Action,Action: Skill gap in delivery team,High,Low,Closed,Data Lead,2027-11-14,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,414,tenant_file
+RAID-000414,INIT-0035,Action,Action: Third-party SLA risk,Medium,High,In Progress,Business Owner,2026-05-30,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,415,tenant_file
+RAID-000415,INIT-0035,Risk,Risk: Data quality below threshold,Low,High,Closed,Business Owner,2027-12-06,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,416,tenant_file
+RAID-000416,INIT-0035,Dependency,Dependency: Data quality below threshold,Medium,Low,Escalated,Vendor Manager,2026-05-26,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,417,tenant_file
+RAID-000417,INIT-0035,Dependency,Dependency: Key vendor resource availability,Critical,High,Escalated,PMO,2027-08-20,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,418,tenant_file
+RAID-000418,INIT-0035,Issue,Issue: Change-adoption resistance,Low,High,Closed,PMO,2027-02-27,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,419,tenant_file
+RAID-000419,INIT-0035,Decision,Decision: Security finding to remediate,Critical,Medium,In Progress,Business Owner,2027-09-25,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,420,tenant_file
+RAID-000420,INIT-0035,Action,Action: Integration test environment delay,High,High,Open,PMO,2027-05-25,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,421,tenant_file
+RAID-000421,INIT-0036,Risk,Risk: Budget overrun risk,Critical,Medium,Escalated,Business Owner,2026-12-06,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,422,tenant_file
+RAID-000422,INIT-0036,Dependency,Dependency: Third-party SLA risk,Low,High,Escalated,Architecture,2027-02-25,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,423,tenant_file
+RAID-000423,INIT-0036,Issue,Issue: Security finding to remediate,Medium,Low,Escalated,Delivery Lead,2027-01-02,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,424,tenant_file
+RAID-000424,INIT-0036,Issue,Issue: Key vendor resource availability,Low,Low,Escalated,Business Owner,2026-10-19,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,425,tenant_file
+RAID-000425,INIT-0036,Action,Action: Security finding to remediate,Medium,Medium,Mitigated,Delivery Lead,2027-08-11,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,426,tenant_file
+RAID-000426,INIT-0036,Action,Action: Skill gap in delivery team,Medium,Low,Mitigated,Delivery Lead,2027-02-09,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,427,tenant_file
+RAID-000427,INIT-0036,Risk,Risk: Integration test environment delay,Critical,High,In Progress,Vendor Manager,2027-08-23,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,428,tenant_file
+RAID-000428,INIT-0036,Risk,Risk: Skill gap in delivery team,Critical,Medium,Open,Delivery Lead,2026-02-07,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,429,tenant_file
+RAID-000429,INIT-0036,Issue,Issue: Integration test environment delay,High,Medium,In Progress,Data Lead,2027-06-10,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,430,tenant_file
+RAID-000430,INIT-0036,Risk,Risk: Regulatory approval pending,High,High,Open,PMO,2027-06-27,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,431,tenant_file
+RAID-000431,INIT-0036,Decision,Decision: Legacy interface instability,Critical,Low,Escalated,Data Lead,2027-10-04,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,432,tenant_file
+RAID-000432,INIT-0036,Dependency,Dependency: Regulatory approval pending,Critical,High,Escalated,Security,2027-01-18,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,433,tenant_file
+RAID-000433,INIT-0036,Decision,Decision: Key vendor resource availability,Critical,High,In Progress,Vendor Manager,2027-08-01,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,434,tenant_file
+RAID-000434,INIT-0036,Action,Action: Budget overrun risk,Medium,Low,Escalated,Security,2026-02-14,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,435,tenant_file
+RAID-000435,INIT-0036,Issue,Issue: Legacy interface instability,High,Low,Mitigated,Delivery Lead,2027-02-14,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,436,tenant_file
+RAID-000436,INIT-0036,Issue,Issue: Data quality below threshold,Low,Medium,In Progress,Delivery Lead,2026-01-02,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,437,tenant_file
+RAID-000437,INIT-0037,Decision,Decision: Scope creep from stakeholders,Medium,Medium,Mitigated,Architecture,2026-01-31,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,438,tenant_file
+RAID-000438,INIT-0037,Dependency,Dependency: Legacy interface instability,High,High,In Progress,Data Lead,2027-12-22,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,439,tenant_file
+RAID-000439,INIT-0037,Decision,Decision: Third-party SLA risk,Medium,Medium,Mitigated,Business Owner,2027-06-19,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,440,tenant_file
+RAID-000440,INIT-0037,Dependency,Dependency: Key vendor resource availability,High,High,In Progress,Vendor Manager,2026-01-21,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,441,tenant_file
+RAID-000441,INIT-0037,Dependency,Dependency: Key vendor resource availability,Critical,High,Escalated,Business Owner,2027-06-23,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,442,tenant_file
+RAID-000442,INIT-0037,Dependency,Dependency: Security finding to remediate,High,Medium,Escalated,Business Owner,2027-03-12,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,443,tenant_file
+RAID-000443,INIT-0037,Issue,Issue: Data quality below threshold,High,Medium,Closed,Architecture,2026-11-29,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,444,tenant_file
+RAID-000444,INIT-0037,Issue,Issue: Legacy interface instability,Medium,High,Escalated,Security,2027-04-15,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,445,tenant_file
+RAID-000445,INIT-0037,Action,Action: Regulatory approval pending,High,Medium,In Progress,PMO,2027-01-09,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,446,tenant_file
+RAID-000446,INIT-0037,Issue,Issue: Third-party SLA risk,Critical,Medium,Mitigated,Architecture,2027-06-30,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,447,tenant_file
+RAID-000447,INIT-0037,Dependency,Dependency: Integration test environment delay,High,Low,Open,Business Owner,2027-11-24,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,448,tenant_file
+RAID-000448,INIT-0037,Risk,Risk: Change-adoption resistance,High,High,Mitigated,Delivery Lead,2026-07-25,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,449,tenant_file
+RAID-000449,INIT-0037,Decision,Decision: Third-party SLA risk,Medium,Medium,Closed,Vendor Manager,2027-05-30,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,450,tenant_file
+RAID-000450,INIT-0037,Dependency,Dependency: Legacy interface instability,High,High,Open,PMO,2026-04-14,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,451,tenant_file
+RAID-000451,INIT-0037,Risk,Risk: Legacy interface instability,Low,Medium,Closed,Delivery Lead,2027-01-08,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,452,tenant_file
+RAID-000452,INIT-0038,Issue,Issue: Budget overrun risk,Critical,Medium,Mitigated,Delivery Lead,2027-10-04,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,453,tenant_file
+RAID-000453,INIT-0038,Dependency,Dependency: Key vendor resource availability,High,Medium,Mitigated,PMO,2026-10-16,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,454,tenant_file
+RAID-000454,INIT-0038,Action,Action: Scope creep from stakeholders,Low,Medium,Closed,Data Lead,2027-07-04,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,455,tenant_file
+RAID-000455,INIT-0038,Action,Action: Integration test environment delay,Low,Medium,Closed,Data Lead,2026-07-25,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,456,tenant_file
+RAID-000456,INIT-0038,Decision,Decision: Budget overrun risk,Critical,High,Mitigated,PMO,2026-05-24,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,457,tenant_file
+RAID-000457,INIT-0038,Risk,Risk: Integration test environment delay,Medium,Low,Escalated,Vendor Manager,2026-06-06,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,458,tenant_file
+RAID-000458,INIT-0038,Risk,Risk: Legacy interface instability,Low,High,Escalated,Data Lead,2027-06-27,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,459,tenant_file
+RAID-000459,INIT-0038,Issue,Issue: Integration test environment delay,Medium,High,Mitigated,Security,2026-11-13,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,460,tenant_file
+RAID-000460,INIT-0038,Issue,Issue: Budget overrun risk,Low,Low,Escalated,Data Lead,2027-07-24,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,461,tenant_file
+RAID-000461,INIT-0038,Action,Action: Legacy interface instability,Medium,High,Escalated,Vendor Manager,2026-08-27,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,462,tenant_file
+RAID-000462,INIT-0038,Decision,Decision: Budget overrun risk,Medium,Low,Mitigated,Architecture,2027-06-14,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,463,tenant_file
+RAID-000463,INIT-0038,Action,Action: Budget overrun risk,Critical,High,Escalated,Architecture,2027-05-12,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,464,tenant_file
+RAID-000464,INIT-0039,Issue,Issue: Security finding to remediate,High,High,Escalated,PMO,2027-07-10,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,465,tenant_file
+RAID-000465,INIT-0039,Action,Action: Key vendor resource availability,Critical,Low,Closed,Architecture,2027-05-02,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,466,tenant_file
+RAID-000466,INIT-0039,Action,Action: Integration test environment delay,High,Low,Open,PMO,2026-08-30,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,467,tenant_file
+RAID-000467,INIT-0039,Dependency,Dependency: Skill gap in delivery team,Low,High,In Progress,Business Owner,2026-08-07,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,468,tenant_file
+RAID-000468,INIT-0039,Dependency,Dependency: Legacy interface instability,Critical,High,Closed,Security,2026-06-21,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,469,tenant_file
+RAID-000469,INIT-0039,Issue,Issue: Skill gap in delivery team,Medium,Medium,Open,Delivery Lead,2026-05-01,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,470,tenant_file
+RAID-000470,INIT-0039,Dependency,Dependency: Data quality below threshold,High,Low,Escalated,Vendor Manager,2026-06-06,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,471,tenant_file
+RAID-000471,INIT-0039,Issue,Issue: Legacy interface instability,Medium,Medium,Escalated,Delivery Lead,2026-09-04,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,472,tenant_file
+RAID-000472,INIT-0039,Issue,Issue: Regulatory approval pending,Medium,High,Escalated,PMO,2026-01-28,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,473,tenant_file
+RAID-000473,INIT-0039,Dependency,Dependency: Third-party SLA risk,Low,Low,In Progress,Delivery Lead,2027-03-09,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,474,tenant_file
+RAID-000474,INIT-0039,Decision,Decision: Third-party SLA risk,High,High,Closed,Data Lead,2027-06-02,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,475,tenant_file
+RAID-000475,INIT-0039,Issue,Issue: Scope creep from stakeholders,High,Low,In Progress,PMO,2027-11-24,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,476,tenant_file
+RAID-000476,INIT-0039,Action,Action: Security finding to remediate,Critical,High,Mitigated,Security,2027-05-10,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,477,tenant_file
+RAID-000477,INIT-0040,Risk,Risk: Budget overrun risk,Low,High,Closed,Architecture,2026-04-11,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,478,tenant_file
+RAID-000478,INIT-0040,Risk,Risk: Skill gap in delivery team,Low,Low,Mitigated,Delivery Lead,2027-02-25,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,479,tenant_file
+RAID-000479,INIT-0040,Dependency,Dependency: Third-party SLA risk,High,Medium,In Progress,Delivery Lead,2026-03-20,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,480,tenant_file
+RAID-000480,INIT-0040,Action,Action: Skill gap in delivery team,Medium,High,Closed,Delivery Lead,2026-03-04,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,481,tenant_file
+RAID-000481,INIT-0040,Dependency,Dependency: Security finding to remediate,High,Low,Mitigated,Architecture,2027-12-19,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,482,tenant_file
+RAID-000482,INIT-0040,Action,Action: Key vendor resource availability,Medium,Medium,Closed,Security,2026-12-22,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,483,tenant_file
+RAID-000483,INIT-0040,Dependency,Dependency: Third-party SLA risk,Medium,Low,Closed,Business Owner,2027-06-13,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,484,tenant_file
+RAID-000484,INIT-0040,Action,Action: Budget overrun risk,Medium,Low,Escalated,Delivery Lead,2027-10-07,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,485,tenant_file
+RAID-000485,INIT-0040,Issue,Issue: Legacy interface instability,Low,Medium,Closed,Business Owner,2026-11-02,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,486,tenant_file
+RAID-000486,INIT-0040,Issue,Issue: Budget overrun risk,Medium,Medium,Mitigated,Business Owner,2026-12-03,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,487,tenant_file
+RAID-000487,INIT-0040,Issue,Issue: Security finding to remediate,Low,Medium,Mitigated,PMO,2027-02-21,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,488,tenant_file
+RAID-000488,INIT-0040,Issue,Issue: Dependency on platform team,Medium,Medium,Closed,Business Owner,2027-01-30,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,489,tenant_file
+RAID-000489,INIT-0041,Decision,Decision: Regulatory approval pending,Critical,High,Mitigated,Architecture,2027-02-07,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,490,tenant_file
+RAID-000490,INIT-0041,Risk,Risk: Skill gap in delivery team,Low,High,Closed,Security,2026-03-27,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,491,tenant_file
+RAID-000491,INIT-0041,Dependency,Dependency: Skill gap in delivery team,Critical,Low,Mitigated,Vendor Manager,2027-02-20,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,492,tenant_file
+RAID-000492,INIT-0041,Risk,Risk: Third-party SLA risk,Low,Medium,Closed,PMO,2026-02-19,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,493,tenant_file
+RAID-000493,INIT-0041,Action,Action: Legacy interface instability,Critical,Medium,Open,Data Lead,2026-07-02,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,494,tenant_file
+RAID-000494,INIT-0041,Risk,Risk: Legacy interface instability,Medium,Low,Mitigated,Data Lead,2027-05-12,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,495,tenant_file
+RAID-000495,INIT-0041,Risk,Risk: Dependency on platform team,Critical,Low,In Progress,PMO,2027-09-18,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,496,tenant_file
+RAID-000496,INIT-0041,Dependency,Dependency: Dependency on platform team,High,Medium,Mitigated,Business Owner,2027-10-19,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,497,tenant_file
+RAID-000497,INIT-0041,Issue,Issue: Skill gap in delivery team,High,Low,Escalated,PMO,2026-12-23,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,498,tenant_file
+RAID-000498,INIT-0041,Dependency,Dependency: Security finding to remediate,Low,High,Closed,Security,2027-06-27,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,499,tenant_file
+RAID-000499,INIT-0041,Dependency,Dependency: Third-party SLA risk,Low,High,Closed,PMO,2027-09-27,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,500,tenant_file
+RAID-000500,INIT-0041,Dependency,Dependency: Budget overrun risk,Low,Medium,Open,Delivery Lead,2026-10-03,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,501,tenant_file
+RAID-000501,INIT-0041,Issue,Issue: Dependency on platform team,Critical,Low,In Progress,Data Lead,2026-07-10,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,502,tenant_file
+RAID-000502,INIT-0041,Action,Action: Data quality below threshold,High,Medium,Mitigated,PMO,2026-12-26,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,503,tenant_file
+RAID-000503,INIT-0042,Dependency,Dependency: Regulatory approval pending,High,Low,In Progress,Business Owner,2027-03-09,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,504,tenant_file
+RAID-000504,INIT-0042,Decision,Decision: Budget overrun risk,High,Low,Closed,PMO,2027-08-07,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,505,tenant_file
+RAID-000505,INIT-0042,Issue,Issue: Integration test environment delay,High,High,In Progress,Architecture,2027-07-07,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,506,tenant_file
+RAID-000506,INIT-0042,Action,Action: Third-party SLA risk,Medium,High,In Progress,Architecture,2027-07-03,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,507,tenant_file
+RAID-000507,INIT-0042,Dependency,Dependency: Integration test environment delay,Low,High,Escalated,Business Owner,2027-02-17,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,508,tenant_file
+RAID-000508,INIT-0042,Dependency,Dependency: Legacy interface instability,High,High,Mitigated,Security,2027-11-23,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,509,tenant_file
+RAID-000509,INIT-0042,Dependency,Dependency: Change-adoption resistance,Critical,High,In Progress,Data Lead,2027-05-12,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,510,tenant_file
+RAID-000510,INIT-0042,Risk,Risk: Integration test environment delay,Medium,Medium,Escalated,PMO,2027-10-03,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,511,tenant_file
+RAID-000511,INIT-0042,Action,Action: Third-party SLA risk,Low,High,Escalated,Delivery Lead,2026-08-06,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,512,tenant_file
+RAID-000512,INIT-0042,Risk,Risk: Legacy interface instability,High,Medium,Mitigated,Delivery Lead,2026-12-14,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,513,tenant_file
+RAID-000513,INIT-0042,Risk,Risk: Dependency on platform team,Critical,Low,Mitigated,Delivery Lead,2026-03-14,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,514,tenant_file
+RAID-000514,INIT-0042,Risk,Risk: Key vendor resource availability,Low,High,In Progress,Security,2026-06-18,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,515,tenant_file
+RAID-000515,INIT-0042,Dependency,Dependency: Data quality below threshold,High,Low,Escalated,Data Lead,2027-04-13,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,516,tenant_file
+RAID-000516,INIT-0042,Issue,Issue: Legacy interface instability,Medium,High,Escalated,PMO,2027-01-06,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,517,tenant_file
+RAID-000517,INIT-0043,Action,Action: Budget overrun risk,Critical,Low,Open,PMO,2026-02-04,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,518,tenant_file
+RAID-000518,INIT-0043,Risk,Risk: Legacy interface instability,Medium,Low,In Progress,Data Lead,2027-05-02,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,519,tenant_file
+RAID-000519,INIT-0043,Dependency,Dependency: Legacy interface instability,Medium,High,In Progress,Business Owner,2026-04-18,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,520,tenant_file
+RAID-000520,INIT-0043,Issue,Issue: Data quality below threshold,Critical,High,Open,Business Owner,2027-11-05,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,521,tenant_file
+RAID-000521,INIT-0043,Decision,Decision: Budget overrun risk,High,High,Closed,PMO,2027-01-08,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,522,tenant_file
+RAID-000522,INIT-0043,Dependency,Dependency: Integration test environment delay,High,Medium,Open,Vendor Manager,2026-06-21,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,523,tenant_file
+RAID-000523,INIT-0043,Risk,Risk: Security finding to remediate,Medium,Medium,Closed,Delivery Lead,2027-09-17,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,524,tenant_file
+RAID-000524,INIT-0043,Issue,Issue: Change-adoption resistance,Low,Medium,Open,Delivery Lead,2026-12-07,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,525,tenant_file
+RAID-000525,INIT-0043,Dependency,Dependency: Third-party SLA risk,Low,Medium,Mitigated,Data Lead,2027-04-06,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,526,tenant_file
+RAID-000526,INIT-0043,Issue,Issue: Dependency on platform team,Medium,Medium,Open,Business Owner,2026-04-22,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,527,tenant_file
+RAID-000527,INIT-0043,Dependency,Dependency: Regulatory approval pending,High,Low,Closed,Business Owner,2027-07-23,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,528,tenant_file
+RAID-000528,INIT-0043,Dependency,Dependency: Integration test environment delay,High,Low,Mitigated,Delivery Lead,2026-05-30,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,529,tenant_file
+RAID-000529,INIT-0044,Risk,Risk: Integration test environment delay,Low,High,Mitigated,Business Owner,2027-08-18,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,530,tenant_file
+RAID-000530,INIT-0044,Dependency,Dependency: Data quality below threshold,Medium,High,Mitigated,Vendor Manager,2027-07-29,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,531,tenant_file
+RAID-000531,INIT-0044,Action,Action: Third-party SLA risk,Low,Medium,Open,Vendor Manager,2027-04-04,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,532,tenant_file
+RAID-000532,INIT-0044,Issue,Issue: Dependency on platform team,Medium,High,Closed,Architecture,2026-08-09,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,533,tenant_file
+RAID-000533,INIT-0044,Decision,Decision: Scope creep from stakeholders,Critical,High,Escalated,Architecture,2026-07-11,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,534,tenant_file
+RAID-000534,INIT-0044,Risk,Risk: Regulatory approval pending,Low,High,Escalated,Security,2026-12-29,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,535,tenant_file
+RAID-000535,INIT-0044,Issue,Issue: Security finding to remediate,Medium,Low,Mitigated,Vendor Manager,2027-06-29,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,536,tenant_file
+RAID-000536,INIT-0044,Decision,Decision: Dependency on platform team,Critical,Medium,Closed,PMO,2027-03-06,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,537,tenant_file
+RAID-000537,INIT-0044,Issue,Issue: Dependency on platform team,Low,High,Escalated,Architecture,2027-08-19,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,538,tenant_file
+RAID-000538,INIT-0044,Issue,Issue: Security finding to remediate,Low,Medium,Closed,Vendor Manager,2027-06-23,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,539,tenant_file
+RAID-000539,INIT-0044,Decision,Decision: Dependency on platform team,High,Low,Escalated,Data Lead,2026-06-29,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,540,tenant_file
+RAID-000540,INIT-0044,Issue,Issue: Scope creep from stakeholders,Critical,Medium,Mitigated,Data Lead,2027-04-19,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,541,tenant_file
+RAID-000541,INIT-0044,Decision,Decision: Change-adoption resistance,Medium,Low,Open,Business Owner,2026-05-11,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,542,tenant_file
+RAID-000542,INIT-0044,Decision,Decision: Regulatory approval pending,Low,Low,Escalated,PMO,2026-03-05,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,543,tenant_file
+RAID-000543,INIT-0045,Dependency,Dependency: Key vendor resource availability,High,Medium,Escalated,Architecture,2027-06-18,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,544,tenant_file
+RAID-000544,INIT-0045,Decision,Decision: Third-party SLA risk,Critical,Low,Closed,Vendor Manager,2027-08-11,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,545,tenant_file
+RAID-000545,INIT-0045,Decision,Decision: Security finding to remediate,Low,High,Escalated,PMO,2026-06-04,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,546,tenant_file
+RAID-000546,INIT-0045,Action,Action: Legacy interface instability,High,High,Open,Data Lead,2026-06-29,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,547,tenant_file
+RAID-000547,INIT-0045,Dependency,Dependency: Dependency on platform team,Low,Medium,In Progress,Business Owner,2027-08-12,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,548,tenant_file
+RAID-000548,INIT-0045,Action,Action: Scope creep from stakeholders,Critical,Low,Mitigated,Architecture,2026-02-06,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,549,tenant_file
+RAID-000549,INIT-0045,Risk,Risk: Third-party SLA risk,Critical,Low,In Progress,Vendor Manager,2027-02-05,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,550,tenant_file
+RAID-000550,INIT-0045,Decision,Decision: Scope creep from stakeholders,Critical,Medium,Mitigated,Data Lead,2027-09-02,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,551,tenant_file
+RAID-000551,INIT-0046,Action,Action: Key vendor resource availability,Medium,High,Escalated,Security,2027-12-28,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,552,tenant_file
+RAID-000552,INIT-0046,Decision,Decision: Scope creep from stakeholders,Critical,Medium,Mitigated,Security,2027-04-29,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,553,tenant_file
+RAID-000553,INIT-0046,Risk,Risk: Key vendor resource availability,Low,Medium,Closed,PMO,2027-01-25,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,554,tenant_file
+RAID-000554,INIT-0046,Issue,Issue: Change-adoption resistance,High,Medium,In Progress,Data Lead,2026-05-24,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,555,tenant_file
+RAID-000555,INIT-0046,Dependency,Dependency: Dependency on platform team,Medium,Medium,Closed,Security,2027-02-10,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,556,tenant_file
+RAID-000556,INIT-0046,Dependency,Dependency: Key vendor resource availability,Low,Medium,In Progress,Security,2026-02-24,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,557,tenant_file
+RAID-000557,INIT-0046,Decision,Decision: Third-party SLA risk,Critical,Low,Open,Delivery Lead,2027-03-21,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,558,tenant_file
+RAID-000558,INIT-0046,Dependency,Dependency: Scope creep from stakeholders,High,Low,In Progress,Vendor Manager,2026-04-29,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,559,tenant_file
+RAID-000559,INIT-0047,Decision,Decision: Integration test environment delay,Low,Low,Open,Delivery Lead,2027-02-02,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,560,tenant_file
+RAID-000560,INIT-0047,Action,Action: Data quality below threshold,Critical,High,Escalated,Vendor Manager,2026-08-15,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,561,tenant_file
+RAID-000561,INIT-0047,Issue,Issue: Scope creep from stakeholders,Critical,Medium,Mitigated,PMO,2027-06-19,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,562,tenant_file
+RAID-000562,INIT-0047,Risk,Risk: Key vendor resource availability,Low,Low,Escalated,Data Lead,2026-09-17,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,563,tenant_file
+RAID-000563,INIT-0047,Dependency,Dependency: Data quality below threshold,Low,High,Closed,Business Owner,2027-05-12,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,564,tenant_file
+RAID-000564,INIT-0047,Dependency,Dependency: Security finding to remediate,Critical,High,Closed,Business Owner,2027-08-13,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,565,tenant_file
+RAID-000565,INIT-0047,Issue,Issue: Budget overrun risk,Critical,High,Open,Data Lead,2027-04-02,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,566,tenant_file
+RAID-000566,INIT-0047,Dependency,Dependency: Third-party SLA risk,Medium,Low,In Progress,Business Owner,2027-12-28,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,567,tenant_file
+RAID-000567,INIT-0047,Risk,Risk: Legacy interface instability,Medium,High,Mitigated,Business Owner,2027-01-19,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,568,tenant_file
+RAID-000568,INIT-0047,Decision,Decision: Change-adoption resistance,Critical,Medium,Open,PMO,2026-01-16,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,569,tenant_file
+RAID-000569,INIT-0047,Issue,Issue: Change-adoption resistance,Critical,High,Mitigated,Delivery Lead,2026-03-27,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,570,tenant_file
+RAID-000570,INIT-0047,Action,Action: Scope creep from stakeholders,Low,Low,Open,Business Owner,2027-04-26,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,571,tenant_file
+RAID-000571,INIT-0047,Decision,Decision: Skill gap in delivery team,Low,Low,Open,Security,2027-11-25,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,572,tenant_file
+RAID-000572,INIT-0047,Decision,Decision: Security finding to remediate,Medium,Low,Closed,Business Owner,2026-10-10,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,573,tenant_file
+RAID-000573,INIT-0047,Issue,Issue: Skill gap in delivery team,High,Low,Closed,Business Owner,2027-08-13,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,574,tenant_file
+RAID-000574,INIT-0048,Decision,Decision: Security finding to remediate,Low,Low,In Progress,Security,2026-05-13,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,575,tenant_file
+RAID-000575,INIT-0048,Issue,Issue: Budget overrun risk,Critical,Medium,Escalated,Delivery Lead,2027-10-04,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,576,tenant_file
+RAID-000576,INIT-0048,Action,Action: Security finding to remediate,High,Low,Open,Security,2027-11-25,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,577,tenant_file
+RAID-000577,INIT-0048,Issue,Issue: Change-adoption resistance,Critical,Low,Closed,PMO,2026-05-22,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,578,tenant_file
+RAID-000578,INIT-0048,Decision,Decision: Integration test environment delay,High,Medium,Closed,PMO,2026-02-18,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,579,tenant_file
+RAID-000579,INIT-0048,Risk,Risk: Scope creep from stakeholders,Critical,Low,Escalated,Business Owner,2027-11-26,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,580,tenant_file
+RAID-000580,INIT-0048,Issue,Issue: Scope creep from stakeholders,High,Low,Closed,Vendor Manager,2027-02-03,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,581,tenant_file
+RAID-000581,INIT-0048,Dependency,Dependency: Integration test environment delay,Medium,Medium,Mitigated,Security,2027-09-13,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,582,tenant_file
+RAID-000582,INIT-0048,Dependency,Dependency: Security finding to remediate,Critical,High,Closed,Security,2027-12-04,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,583,tenant_file
+RAID-000583,INIT-0048,Dependency,Dependency: Regulatory approval pending,Low,Medium,Mitigated,Business Owner,2026-09-04,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,584,tenant_file
+RAID-000584,INIT-0049,Dependency,Dependency: Regulatory approval pending,Critical,Low,Escalated,Data Lead,2027-10-02,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,585,tenant_file
+RAID-000585,INIT-0049,Dependency,Dependency: Regulatory approval pending,High,Medium,Escalated,Data Lead,2026-02-26,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,586,tenant_file
+RAID-000586,INIT-0049,Dependency,Dependency: Scope creep from stakeholders,High,High,Escalated,Architecture,2027-07-03,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,587,tenant_file
+RAID-000587,INIT-0049,Action,Action: Integration test environment delay,Critical,Medium,Closed,Delivery Lead,2027-06-07,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,588,tenant_file
+RAID-000588,INIT-0049,Action,Action: Data quality below threshold,High,Medium,Escalated,Security,2026-01-12,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,589,tenant_file
+RAID-000589,INIT-0049,Risk,Risk: Skill gap in delivery team,Low,Low,Open,Data Lead,2026-10-19,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,590,tenant_file
+RAID-000590,INIT-0049,Risk,Risk: Data quality below threshold,Low,Low,Escalated,Delivery Lead,2027-03-25,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,591,tenant_file
+RAID-000591,INIT-0049,Risk,Risk: Data quality below threshold,Medium,Medium,In Progress,Data Lead,2027-02-17,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,592,tenant_file
+RAID-000592,INIT-0050,Issue,Issue: Legacy interface instability,Low,Medium,Mitigated,Data Lead,2027-04-20,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,593,tenant_file
+RAID-000593,INIT-0050,Decision,Decision: Third-party SLA risk,High,Medium,Open,PMO,2026-10-18,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,594,tenant_file
+RAID-000594,INIT-0050,Risk,Risk: Key vendor resource availability,Medium,High,In Progress,Data Lead,2027-10-27,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,595,tenant_file
+RAID-000595,INIT-0050,Dependency,Dependency: Security finding to remediate,Critical,Medium,Escalated,Vendor Manager,2026-08-11,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,596,tenant_file
+RAID-000596,INIT-0050,Risk,Risk: Third-party SLA risk,Medium,Medium,Closed,Security,2026-04-28,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,597,tenant_file
+RAID-000597,INIT-0050,Risk,Risk: Regulatory approval pending,High,Medium,Mitigated,PMO,2027-03-11,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,598,tenant_file
+RAID-000598,INIT-0050,Action,Action: Data quality below threshold,High,Medium,Closed,Data Lead,2027-09-10,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,599,tenant_file
+RAID-000599,INIT-0050,Decision,Decision: Dependency on platform team,High,High,Escalated,Architecture,2026-05-12,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,600,tenant_file
+RAID-000600,INIT-0050,Issue,Issue: Third-party SLA risk,Critical,Medium,Closed,Delivery Lead,2026-09-24,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,601,tenant_file
+RAID-000601,INIT-0050,Dependency,Dependency: Third-party SLA risk,Low,High,Escalated,Security,2027-03-07,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,602,tenant_file
+RAID-000602,INIT-0051,Action,Action: Key vendor resource availability,High,High,In Progress,Architecture,2027-10-16,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,603,tenant_file
+RAID-000603,INIT-0051,Risk,Risk: Data quality below threshold,Low,Low,In Progress,Architecture,2027-11-07,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,604,tenant_file
+RAID-000604,INIT-0051,Decision,Decision: Scope creep from stakeholders,Critical,Medium,Mitigated,PMO,2027-08-04,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,605,tenant_file
+RAID-000605,INIT-0051,Dependency,Dependency: Budget overrun risk,Medium,High,Mitigated,Data Lead,2026-03-04,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,606,tenant_file
+RAID-000606,INIT-0051,Risk,Risk: Skill gap in delivery team,Critical,High,Closed,PMO,2027-10-04,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,607,tenant_file
+RAID-000607,INIT-0051,Issue,Issue: Scope creep from stakeholders,Low,Low,In Progress,Data Lead,2027-11-05,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,608,tenant_file
+RAID-000608,INIT-0051,Risk,Risk: Key vendor resource availability,High,High,In Progress,Business Owner,2026-08-26,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,609,tenant_file
+RAID-000609,INIT-0051,Action,Action: Change-adoption resistance,Critical,Low,Mitigated,PMO,2027-03-15,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,610,tenant_file
+RAID-000610,INIT-0051,Risk,Risk: Data quality below threshold,Critical,Low,Escalated,Architecture,2027-02-10,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,611,tenant_file
+RAID-000611,INIT-0051,Action,Action: Key vendor resource availability,High,High,In Progress,PMO,2026-05-21,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,612,tenant_file
+RAID-000612,INIT-0051,Dependency,Dependency: Scope creep from stakeholders,Medium,Medium,Mitigated,PMO,2026-05-14,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,613,tenant_file
+RAID-000613,INIT-0051,Risk,Risk: Security finding to remediate,High,Low,Open,Delivery Lead,2027-04-08,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,614,tenant_file
+RAID-000614,INIT-0052,Issue,Issue: Security finding to remediate,Medium,Medium,Mitigated,PMO,2027-07-03,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,615,tenant_file
+RAID-000615,INIT-0052,Dependency,Dependency: Budget overrun risk,Critical,Low,Mitigated,Vendor Manager,2027-11-06,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,616,tenant_file
+RAID-000616,INIT-0052,Decision,Decision: Regulatory approval pending,Medium,Low,In Progress,Vendor Manager,2026-10-13,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,617,tenant_file
+RAID-000617,INIT-0052,Decision,Decision: Scope creep from stakeholders,Medium,Low,Open,Business Owner,2027-09-29,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,618,tenant_file
+RAID-000618,INIT-0052,Risk,Risk: Data quality below threshold,Critical,Low,In Progress,Business Owner,2027-06-01,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,619,tenant_file
+RAID-000619,INIT-0052,Action,Action: Budget overrun risk,Low,Low,Escalated,Security,2027-10-15,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,620,tenant_file
+RAID-000620,INIT-0052,Risk,Risk: Dependency on platform team,Low,Low,Escalated,Data Lead,2026-07-31,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,621,tenant_file
+RAID-000621,INIT-0052,Issue,Issue: Skill gap in delivery team,Low,Low,Closed,Vendor Manager,2027-01-04,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,622,tenant_file
+RAID-000622,INIT-0052,Action,Action: Regulatory approval pending,High,Low,Escalated,Delivery Lead,2027-04-09,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,623,tenant_file
+RAID-000623,INIT-0052,Issue,Issue: Integration test environment delay,High,Medium,Open,Data Lead,2027-03-04,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,624,tenant_file
+RAID-000624,INIT-0052,Issue,Issue: Third-party SLA risk,Medium,Medium,In Progress,PMO,2026-08-09,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,625,tenant_file
+RAID-000625,INIT-0052,Issue,Issue: Regulatory approval pending,Low,High,Open,PMO,2027-08-17,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,626,tenant_file
+RAID-000626,INIT-0052,Decision,Decision: Change-adoption resistance,Low,Low,Open,Delivery Lead,2026-08-11,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,627,tenant_file
+RAID-000627,INIT-0053,Dependency,Dependency: Security finding to remediate,Low,Medium,Escalated,Security,2027-02-06,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,628,tenant_file
+RAID-000628,INIT-0053,Issue,Issue: Change-adoption resistance,Low,Medium,Mitigated,Business Owner,2027-11-04,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,629,tenant_file
+RAID-000629,INIT-0053,Dependency,Dependency: Data quality below threshold,High,Medium,In Progress,PMO,2027-03-24,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,630,tenant_file
+RAID-000630,INIT-0053,Decision,Decision: Dependency on platform team,Critical,Low,Escalated,Business Owner,2026-10-07,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,631,tenant_file
+RAID-000631,INIT-0053,Dependency,Dependency: Scope creep from stakeholders,Low,High,Mitigated,Delivery Lead,2027-01-30,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,632,tenant_file
+RAID-000632,INIT-0053,Issue,Issue: Dependency on platform team,High,Low,Escalated,Security,2026-02-04,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,633,tenant_file
+RAID-000633,INIT-0053,Dependency,Dependency: Key vendor resource availability,Low,High,In Progress,Business Owner,2027-07-21,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,634,tenant_file
+RAID-000634,INIT-0053,Action,Action: Legacy interface instability,Low,High,Closed,Architecture,2026-03-06,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,635,tenant_file
+RAID-000635,INIT-0053,Action,Action: Regulatory approval pending,Medium,Medium,Mitigated,Architecture,2026-06-15,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,636,tenant_file
+RAID-000636,INIT-0053,Risk,Risk: Integration test environment delay,Critical,Low,In Progress,Architecture,2026-10-28,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,637,tenant_file
+RAID-000637,INIT-0053,Dependency,Dependency: Legacy interface instability,Critical,Medium,Escalated,Architecture,2027-10-11,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,638,tenant_file
+RAID-000638,INIT-0053,Dependency,Dependency: Third-party SLA risk,Low,High,Open,Data Lead,2026-06-01,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,639,tenant_file
+RAID-000639,INIT-0053,Action,Action: Budget overrun risk,Low,Low,Mitigated,Security,2026-12-23,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,640,tenant_file
+RAID-000640,INIT-0053,Dependency,Dependency: Regulatory approval pending,Critical,High,In Progress,PMO,2026-03-03,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,641,tenant_file
+RAID-000641,INIT-0054,Decision,Decision: Dependency on platform team,Critical,Low,Closed,Security,2026-09-05,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,642,tenant_file
+RAID-000642,INIT-0054,Dependency,Dependency: Third-party SLA risk,Low,High,In Progress,Business Owner,2027-07-19,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,643,tenant_file
+RAID-000643,INIT-0054,Dependency,Dependency: Key vendor resource availability,High,Low,In Progress,Delivery Lead,2026-03-28,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,644,tenant_file
+RAID-000644,INIT-0054,Dependency,Dependency: Budget overrun risk,Critical,Medium,Mitigated,Business Owner,2027-04-23,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,645,tenant_file
+RAID-000645,INIT-0054,Action,Action: Regulatory approval pending,Low,High,In Progress,Vendor Manager,2026-02-05,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,646,tenant_file
+RAID-000646,INIT-0054,Action,Action: Budget overrun risk,High,High,Mitigated,Data Lead,2026-11-02,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,647,tenant_file
+RAID-000647,INIT-0054,Dependency,Dependency: Third-party SLA risk,Low,Low,Open,Vendor Manager,2026-02-05,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,648,tenant_file
+RAID-000648,INIT-0054,Risk,Risk: Security finding to remediate,Low,High,Closed,Data Lead,2026-08-04,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,649,tenant_file
+RAID-000649,INIT-0054,Issue,Issue: Change-adoption resistance,Medium,Low,Closed,Business Owner,2026-07-16,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,650,tenant_file
+RAID-000650,INIT-0055,Risk,Risk: Skill gap in delivery team,Medium,High,Open,Security,2026-04-05,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,651,tenant_file
+RAID-000651,INIT-0055,Issue,Issue: Budget overrun risk,High,High,In Progress,Business Owner,2026-04-04,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,652,tenant_file
+RAID-000652,INIT-0055,Action,Action: Key vendor resource availability,Low,High,Closed,Security,2026-06-10,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,653,tenant_file
+RAID-000653,INIT-0055,Decision,Decision: Data quality below threshold,High,Low,Open,PMO,2027-02-03,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,654,tenant_file
+RAID-000654,INIT-0055,Risk,Risk: Data quality below threshold,Critical,Medium,Open,Business Owner,2026-04-23,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,655,tenant_file
+RAID-000655,INIT-0055,Dependency,Dependency: Change-adoption resistance,Critical,Medium,Escalated,Delivery Lead,2026-03-20,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,656,tenant_file
+RAID-000656,INIT-0055,Decision,Decision: Scope creep from stakeholders,Medium,High,Escalated,Business Owner,2026-08-06,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,657,tenant_file
+RAID-000657,INIT-0055,Action,Action: Skill gap in delivery team,Medium,Low,Mitigated,Vendor Manager,2026-08-28,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,658,tenant_file
+RAID-000658,INIT-0055,Decision,Decision: Key vendor resource availability,Critical,Medium,Mitigated,Business Owner,2027-07-28,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,659,tenant_file
+RAID-000659,INIT-0056,Dependency,Dependency: Key vendor resource availability,Medium,Low,Open,PMO,2027-05-15,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,660,tenant_file
+RAID-000660,INIT-0056,Issue,Issue: Change-adoption resistance,High,Medium,Open,PMO,2027-04-23,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,661,tenant_file
+RAID-000661,INIT-0056,Action,Action: Change-adoption resistance,Low,Low,Escalated,Delivery Lead,2026-11-12,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,662,tenant_file
+RAID-000662,INIT-0056,Decision,Decision: Key vendor resource availability,Medium,Low,Open,Security,2027-07-28,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,663,tenant_file
+RAID-000663,INIT-0056,Action,Action: Third-party SLA risk,Critical,High,In Progress,Architecture,2027-11-18,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,664,tenant_file
+RAID-000664,INIT-0056,Risk,Risk: Third-party SLA risk,High,High,Mitigated,Security,2026-05-18,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,665,tenant_file
+RAID-000665,INIT-0056,Risk,Risk: Change-adoption resistance,Critical,Low,Escalated,Architecture,2027-02-01,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,666,tenant_file
+RAID-000666,INIT-0056,Risk,Risk: Legacy interface instability,Low,Low,Open,PMO,2026-07-27,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,667,tenant_file
+RAID-000667,INIT-0056,Decision,Decision: Data quality below threshold,High,Medium,Open,Security,2026-07-02,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,668,tenant_file
+RAID-000668,INIT-0057,Dependency,Dependency: Data quality below threshold,High,Medium,Closed,PMO,2026-06-04,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,669,tenant_file
+RAID-000669,INIT-0057,Dependency,Dependency: Legacy interface instability,High,Low,Closed,PMO,2026-01-14,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,670,tenant_file
+RAID-000670,INIT-0057,Risk,Risk: Security finding to remediate,Low,Medium,Mitigated,Delivery Lead,2026-12-22,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,671,tenant_file
+RAID-000671,INIT-0057,Risk,Risk: Dependency on platform team,Critical,Medium,Open,Delivery Lead,2026-03-05,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,672,tenant_file
+RAID-000672,INIT-0057,Risk,Risk: Dependency on platform team,Low,High,Escalated,Business Owner,2027-05-22,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,673,tenant_file
+RAID-000673,INIT-0057,Issue,Issue: Data quality below threshold,High,High,Mitigated,Data Lead,2027-04-16,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,674,tenant_file
+RAID-000674,INIT-0057,Decision,Decision: Key vendor resource availability,Medium,Low,Mitigated,Delivery Lead,2026-04-26,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,675,tenant_file
+RAID-000675,INIT-0057,Risk,Risk: Security finding to remediate,Medium,Low,Open,Business Owner,2026-05-15,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,676,tenant_file
+RAID-000676,INIT-0057,Decision,Decision: Legacy interface instability,Low,Low,Closed,Data Lead,2027-05-28,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,677,tenant_file
+RAID-000677,INIT-0057,Action,Action: Budget overrun risk,Critical,Medium,In Progress,PMO,2026-07-25,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,678,tenant_file
+RAID-000678,INIT-0057,Risk,Risk: Third-party SLA risk,Medium,Medium,Closed,Vendor Manager,2027-08-11,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,679,tenant_file
+RAID-000679,INIT-0057,Decision,Decision: Change-adoption resistance,High,Medium,In Progress,Vendor Manager,2026-02-20,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,680,tenant_file
+RAID-000680,INIT-0058,Action,Action: Skill gap in delivery team,Low,Medium,In Progress,PMO,2026-08-23,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,681,tenant_file
+RAID-000681,INIT-0058,Risk,Risk: Legacy interface instability,Critical,Low,Open,Security,2027-08-23,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,682,tenant_file
+RAID-000682,INIT-0058,Issue,Issue: Third-party SLA risk,Medium,High,Open,Data Lead,2026-07-16,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,683,tenant_file
+RAID-000683,INIT-0058,Action,Action: Data quality below threshold,Low,High,Escalated,Delivery Lead,2026-10-09,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,684,tenant_file
+RAID-000684,INIT-0058,Decision,Decision: Third-party SLA risk,Critical,Medium,Mitigated,Architecture,2027-01-10,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,685,tenant_file
+RAID-000685,INIT-0058,Issue,Issue: Data quality below threshold,High,Low,Mitigated,Architecture,2027-11-09,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,686,tenant_file
+RAID-000686,INIT-0058,Issue,Issue: Budget overrun risk,Medium,High,Mitigated,PMO,2026-05-02,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,687,tenant_file
+RAID-000687,INIT-0058,Risk,Risk: Security finding to remediate,Critical,High,Mitigated,Architecture,2026-02-19,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,688,tenant_file
+RAID-000688,INIT-0058,Dependency,Dependency: Security finding to remediate,Critical,Low,Mitigated,Vendor Manager,2027-07-15,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,689,tenant_file
+RAID-000689,INIT-0059,Issue,Issue: Change-adoption resistance,High,Medium,In Progress,Architecture,2027-05-01,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,690,tenant_file
+RAID-000690,INIT-0059,Decision,Decision: Legacy interface instability,Critical,Medium,Escalated,Delivery Lead,2027-01-05,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,691,tenant_file
+RAID-000691,INIT-0059,Decision,Decision: Skill gap in delivery team,Low,High,Mitigated,Vendor Manager,2027-10-10,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,692,tenant_file
+RAID-000692,INIT-0059,Decision,Decision: Data quality below threshold,High,Low,In Progress,Business Owner,2026-07-25,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,693,tenant_file
+RAID-000693,INIT-0059,Risk,Risk: Regulatory approval pending,High,High,In Progress,Security,2027-02-26,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,694,tenant_file
+RAID-000694,INIT-0059,Decision,Decision: Key vendor resource availability,High,High,Mitigated,Business Owner,2026-12-30,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,695,tenant_file
+RAID-000695,INIT-0059,Issue,Issue: Data quality below threshold,High,High,Open,PMO,2026-05-26,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,696,tenant_file
+RAID-000696,INIT-0059,Action,Action: Security finding to remediate,Critical,High,Mitigated,Business Owner,2027-08-29,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,697,tenant_file
+RAID-000697,INIT-0059,Decision,Decision: Dependency on platform team,Medium,Medium,Closed,Business Owner,2027-12-01,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,698,tenant_file
+RAID-000698,INIT-0059,Dependency,Dependency: Third-party SLA risk,Medium,Low,Mitigated,Data Lead,2026-02-21,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,699,tenant_file
+RAID-000699,INIT-0059,Issue,Issue: Security finding to remediate,High,Low,In Progress,Vendor Manager,2027-04-25,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,700,tenant_file
+RAID-000700,INIT-0059,Issue,Issue: Change-adoption resistance,High,Low,Closed,Architecture,2026-06-14,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,701,tenant_file
+RAID-000701,INIT-0060,Issue,Issue: Third-party SLA risk,Critical,High,In Progress,Business Owner,2026-07-10,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,702,tenant_file
+RAID-000702,INIT-0060,Action,Action: Data quality below threshold,Medium,Medium,Open,Security,2027-03-16,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,703,tenant_file
+RAID-000703,INIT-0060,Decision,Decision: Regulatory approval pending,Critical,Medium,Escalated,PMO,2027-03-15,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,704,tenant_file
+RAID-000704,INIT-0060,Issue,Issue: Key vendor resource availability,Critical,Medium,Escalated,Security,2026-08-24,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,705,tenant_file
+RAID-000705,INIT-0060,Dependency,Dependency: Dependency on platform team,High,Low,In Progress,Data Lead,2026-05-13,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,706,tenant_file
+RAID-000706,INIT-0060,Issue,Issue: Regulatory approval pending,Medium,High,Closed,Delivery Lead,2026-01-13,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,707,tenant_file
+RAID-000707,INIT-0060,Action,Action: Budget overrun risk,Medium,Medium,Escalated,Business Owner,2026-04-24,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,708,tenant_file
+RAID-000708,INIT-0060,Issue,Issue: Security finding to remediate,High,Low,Open,PMO,2026-07-15,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,709,tenant_file
+RAID-000709,INIT-0061,Decision,Decision: Skill gap in delivery team,Critical,Medium,Open,Vendor Manager,2026-12-19,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,710,tenant_file
+RAID-000710,INIT-0061,Decision,Decision: Key vendor resource availability,Low,High,Open,Data Lead,2027-09-21,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,711,tenant_file
+RAID-000711,INIT-0061,Dependency,Dependency: Legacy interface instability,High,Medium,In Progress,Vendor Manager,2027-08-16,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,712,tenant_file
+RAID-000712,INIT-0061,Dependency,Dependency: Budget overrun risk,Medium,Low,Closed,Vendor Manager,2027-02-23,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,713,tenant_file
+RAID-000713,INIT-0061,Decision,Decision: Integration test environment delay,Critical,High,Escalated,PMO,2026-10-06,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,714,tenant_file
+RAID-000714,INIT-0061,Action,Action: Third-party SLA risk,Low,Low,Open,Architecture,2026-06-17,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,715,tenant_file
+RAID-000715,INIT-0061,Decision,Decision: Security finding to remediate,Low,Medium,Mitigated,Security,2027-10-18,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,716,tenant_file
+RAID-000716,INIT-0061,Action,Action: Change-adoption resistance,Critical,High,Mitigated,Data Lead,2027-12-01,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,717,tenant_file
+RAID-000717,INIT-0061,Dependency,Dependency: Key vendor resource availability,Medium,Medium,Open,Data Lead,2027-07-25,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,718,tenant_file
+RAID-000718,INIT-0061,Risk,Risk: Integration test environment delay,High,Low,Open,PMO,2027-02-17,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,719,tenant_file
+RAID-000719,INIT-0061,Risk,Risk: Budget overrun risk,Low,Medium,In Progress,Delivery Lead,2026-08-11,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,720,tenant_file
+RAID-000720,INIT-0061,Issue,Issue: Dependency on platform team,Low,Low,Open,Delivery Lead,2026-05-25,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,721,tenant_file
+RAID-000721,INIT-0061,Dependency,Dependency: Scope creep from stakeholders,High,High,Escalated,Delivery Lead,2026-12-27,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,722,tenant_file
+RAID-000722,INIT-0061,Risk,Risk: Scope creep from stakeholders,Critical,High,Closed,Vendor Manager,2027-07-03,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,723,tenant_file
+RAID-000723,INIT-0062,Action,Action: Regulatory approval pending,Critical,High,In Progress,Business Owner,2026-09-26,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,724,tenant_file
+RAID-000724,INIT-0062,Decision,Decision: Data quality below threshold,Medium,High,Open,Business Owner,2026-06-09,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,725,tenant_file
+RAID-000725,INIT-0062,Dependency,Dependency: Skill gap in delivery team,Medium,High,Open,Delivery Lead,2026-09-13,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,726,tenant_file
+RAID-000726,INIT-0062,Risk,Risk: Data quality below threshold,High,Medium,Open,PMO,2027-01-09,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,727,tenant_file
+RAID-000727,INIT-0062,Decision,Decision: Data quality below threshold,Medium,Low,In Progress,Security,2027-03-20,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,728,tenant_file
+RAID-000728,INIT-0062,Decision,Decision: Budget overrun risk,Low,High,Escalated,Delivery Lead,2026-01-02,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,729,tenant_file
+RAID-000729,INIT-0062,Action,Action: Regulatory approval pending,Low,High,In Progress,Security,2027-09-30,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,730,tenant_file
+RAID-000730,INIT-0062,Dependency,Dependency: Integration test environment delay,High,Medium,Escalated,Architecture,2027-02-25,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,731,tenant_file
+RAID-000731,INIT-0062,Action,Action: Data quality below threshold,High,Medium,In Progress,Architecture,2027-12-04,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,732,tenant_file
+RAID-000732,INIT-0063,Issue,Issue: Skill gap in delivery team,Medium,Low,Closed,Architecture,2027-04-18,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,733,tenant_file
+RAID-000733,INIT-0063,Risk,Risk: Third-party SLA risk,Critical,Medium,Mitigated,Business Owner,2027-01-24,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,734,tenant_file
+RAID-000734,INIT-0063,Decision,Decision: Budget overrun risk,Critical,High,Mitigated,Security,2027-08-10,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,735,tenant_file
+RAID-000735,INIT-0063,Dependency,Dependency: Dependency on platform team,High,Low,Escalated,Delivery Lead,2026-06-11,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,736,tenant_file
+RAID-000736,INIT-0063,Action,Action: Legacy interface instability,Critical,Low,Closed,PMO,2027-10-25,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,737,tenant_file
+RAID-000737,INIT-0063,Issue,Issue: Change-adoption resistance,Low,Medium,Mitigated,Business Owner,2026-10-06,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,738,tenant_file
+RAID-000738,INIT-0063,Action,Action: Integration test environment delay,Low,Low,Open,Security,2027-11-30,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,739,tenant_file
+RAID-000739,INIT-0063,Decision,Decision: Regulatory approval pending,Medium,High,Mitigated,Business Owner,2027-01-18,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,740,tenant_file
+RAID-000740,INIT-0063,Issue,Issue: Dependency on platform team,Low,Medium,Escalated,Architecture,2026-10-19,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,741,tenant_file
+RAID-000741,INIT-0064,Action,Action: Change-adoption resistance,Medium,Medium,Escalated,Delivery Lead,2026-04-10,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,742,tenant_file
+RAID-000742,INIT-0064,Dependency,Dependency: Key vendor resource availability,High,High,Closed,PMO,2027-02-06,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,743,tenant_file
+RAID-000743,INIT-0064,Decision,Decision: Skill gap in delivery team,High,Medium,Open,Business Owner,2026-08-29,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,744,tenant_file
+RAID-000744,INIT-0064,Dependency,Dependency: Key vendor resource availability,Medium,Low,Escalated,Architecture,2026-02-28,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,745,tenant_file
+RAID-000745,INIT-0064,Decision,Decision: Regulatory approval pending,Low,Medium,Open,PMO,2026-03-01,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,746,tenant_file
+RAID-000746,INIT-0064,Action,Action: Legacy interface instability,Medium,Low,Escalated,Architecture,2027-03-24,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,747,tenant_file
+RAID-000747,INIT-0064,Dependency,Dependency: Budget overrun risk,High,Low,In Progress,Delivery Lead,2026-04-04,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,748,tenant_file
+RAID-000748,INIT-0064,Issue,Issue: Skill gap in delivery team,Medium,High,Open,PMO,2027-07-28,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,749,tenant_file
+RAID-000749,INIT-0064,Issue,Issue: Scope creep from stakeholders,Medium,Medium,Closed,Security,2027-05-28,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,750,tenant_file
+RAID-000750,INIT-0064,Risk,Risk: Dependency on platform team,High,Low,Closed,PMO,2026-03-07,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,751,tenant_file
+RAID-000751,INIT-0065,Action,Action: Key vendor resource availability,Critical,High,In Progress,Delivery Lead,2027-12-09,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,752,tenant_file
+RAID-000752,INIT-0065,Risk,Risk: Change-adoption resistance,High,High,Closed,Data Lead,2026-03-08,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,753,tenant_file
+RAID-000753,INIT-0065,Action,Action: Security finding to remediate,High,Low,Mitigated,PMO,2027-11-10,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,754,tenant_file
+RAID-000754,INIT-0065,Risk,Risk: Third-party SLA risk,Critical,Medium,In Progress,Architecture,2027-08-30,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,755,tenant_file
+RAID-000755,INIT-0065,Dependency,Dependency: Budget overrun risk,Medium,High,In Progress,Vendor Manager,2027-06-09,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,756,tenant_file
+RAID-000756,INIT-0065,Issue,Issue: Budget overrun risk,Medium,Low,In Progress,Data Lead,2027-05-05,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,757,tenant_file
+RAID-000757,INIT-0065,Risk,Risk: Legacy interface instability,Critical,High,Mitigated,Delivery Lead,2027-11-12,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,758,tenant_file
+RAID-000758,INIT-0065,Decision,Decision: Scope creep from stakeholders,High,Medium,Closed,Vendor Manager,2026-08-23,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,759,tenant_file
+RAID-000759,INIT-0065,Dependency,Dependency: Change-adoption resistance,Low,Low,Escalated,Data Lead,2027-06-14,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,760,tenant_file
+RAID-000760,INIT-0065,Dependency,Dependency: Data quality below threshold,Low,High,Closed,PMO,2027-10-01,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,761,tenant_file
+RAID-000761,INIT-0065,Issue,Issue: Key vendor resource availability,High,High,Closed,Security,2026-07-11,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,762,tenant_file
+RAID-000762,INIT-0066,Action,Action: Change-adoption resistance,Critical,Medium,Closed,Vendor Manager,2027-11-27,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,763,tenant_file
+RAID-000763,INIT-0066,Issue,Issue: Data quality below threshold,Medium,Low,Closed,Architecture,2027-12-02,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,764,tenant_file
+RAID-000764,INIT-0066,Risk,Risk: Change-adoption resistance,Critical,High,Closed,Business Owner,2026-12-21,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,765,tenant_file
+RAID-000765,INIT-0066,Issue,Issue: Data quality below threshold,Critical,Medium,Open,Vendor Manager,2026-04-29,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,766,tenant_file
+RAID-000766,INIT-0066,Action,Action: Budget overrun risk,Critical,Medium,Closed,Delivery Lead,2027-10-13,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,767,tenant_file
+RAID-000767,INIT-0066,Risk,Risk: Skill gap in delivery team,High,High,In Progress,Business Owner,2026-09-02,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,768,tenant_file
+RAID-000768,INIT-0066,Risk,Risk: Integration test environment delay,Medium,High,In Progress,Data Lead,2027-09-08,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,769,tenant_file
+RAID-000769,INIT-0066,Decision,Decision: Key vendor resource availability,Medium,High,Mitigated,Architecture,2026-09-19,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,770,tenant_file
+RAID-000770,INIT-0067,Decision,Decision: Legacy interface instability,Medium,High,Open,PMO,2026-06-20,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,771,tenant_file
+RAID-000771,INIT-0067,Action,Action: Integration test environment delay,High,Low,Escalated,Security,2027-10-12,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,772,tenant_file
+RAID-000772,INIT-0067,Decision,Decision: Budget overrun risk,Medium,High,Escalated,PMO,2026-05-12,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,773,tenant_file
+RAID-000773,INIT-0067,Dependency,Dependency: Skill gap in delivery team,Medium,High,In Progress,Vendor Manager,2027-07-18,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,774,tenant_file
+RAID-000774,INIT-0067,Action,Action: Dependency on platform team,High,Low,Mitigated,Security,2027-06-19,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,775,tenant_file
+RAID-000775,INIT-0067,Risk,Risk: Budget overrun risk,Critical,Low,Open,Vendor Manager,2026-03-30,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,776,tenant_file
+RAID-000776,INIT-0067,Dependency,Dependency: Security finding to remediate,High,Low,Mitigated,PMO,2026-02-14,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,777,tenant_file
+RAID-000777,INIT-0067,Decision,Decision: Regulatory approval pending,Critical,High,Mitigated,Business Owner,2027-08-14,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,778,tenant_file
+RAID-000778,INIT-0067,Action,Action: Budget overrun risk,High,High,Escalated,Vendor Manager,2027-10-30,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,779,tenant_file
+RAID-000779,INIT-0067,Dependency,Dependency: Skill gap in delivery team,Critical,Low,In Progress,Architecture,2027-12-05,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,780,tenant_file
+RAID-000780,INIT-0067,Issue,Issue: Regulatory approval pending,Low,High,Escalated,Business Owner,2026-07-02,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,781,tenant_file
+RAID-000781,INIT-0067,Dependency,Dependency: Dependency on platform team,Medium,Medium,Escalated,PMO,2027-05-14,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,782,tenant_file
+RAID-000782,INIT-0067,Risk,Risk: Integration test environment delay,Medium,Medium,In Progress,Vendor Manager,2026-03-27,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,783,tenant_file
+RAID-000783,INIT-0067,Action,Action: Data quality below threshold,High,High,Escalated,Vendor Manager,2026-12-24,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,784,tenant_file
+RAID-000784,INIT-0068,Risk,Risk: Regulatory approval pending,Medium,Medium,Closed,Delivery Lead,2026-10-15,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,785,tenant_file
+RAID-000785,INIT-0068,Dependency,Dependency: Third-party SLA risk,Medium,Low,Closed,Vendor Manager,2027-09-23,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,786,tenant_file
+RAID-000786,INIT-0068,Decision,Decision: Key vendor resource availability,High,Medium,Closed,Architecture,2027-05-21,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,787,tenant_file
+RAID-000787,INIT-0068,Decision,Decision: Integration test environment delay,Critical,Low,Closed,Architecture,2026-10-09,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,788,tenant_file
+RAID-000788,INIT-0068,Dependency,Dependency: Data quality below threshold,High,High,Escalated,Data Lead,2026-04-07,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,789,tenant_file
+RAID-000789,INIT-0068,Action,Action: Integration test environment delay,High,Medium,Closed,Business Owner,2027-03-30,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,790,tenant_file
+RAID-000790,INIT-0068,Issue,Issue: Legacy interface instability,Critical,High,Open,Vendor Manager,2027-07-14,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,791,tenant_file
+RAID-000791,INIT-0068,Issue,Issue: Scope creep from stakeholders,Medium,Medium,Escalated,Data Lead,2026-09-09,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,792,tenant_file
+RAID-000792,INIT-0068,Issue,Issue: Key vendor resource availability,Low,High,Open,PMO,2027-08-23,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,793,tenant_file
+RAID-000793,INIT-0068,Risk,Risk: Dependency on platform team,Critical,Medium,In Progress,Architecture,2026-02-06,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,794,tenant_file
+RAID-000794,INIT-0068,Risk,Risk: Legacy interface instability,Critical,Medium,Escalated,PMO,2026-09-16,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,795,tenant_file
+RAID-000795,INIT-0068,Risk,Risk: Legacy interface instability,Critical,Low,Mitigated,Data Lead,2026-02-19,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,796,tenant_file
+RAID-000796,INIT-0068,Issue,Issue: Integration test environment delay,Low,Medium,Mitigated,Architecture,2027-11-16,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,797,tenant_file
+RAID-000797,INIT-0068,Risk,Risk: Skill gap in delivery team,Critical,High,In Progress,Security,2027-06-12,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,798,tenant_file
+RAID-000798,INIT-0068,Decision,Decision: Scope creep from stakeholders,Critical,High,Mitigated,Data Lead,2026-08-10,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,799,tenant_file
+RAID-000799,INIT-0069,Risk,Risk: Budget overrun risk,Medium,High,Closed,Security,2027-12-10,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,800,tenant_file
+RAID-000800,INIT-0069,Dependency,Dependency: Change-adoption resistance,Critical,Low,Escalated,Vendor Manager,2027-11-19,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,801,tenant_file
+RAID-000801,INIT-0069,Risk,Risk: Scope creep from stakeholders,Medium,Low,Open,Business Owner,2026-02-23,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,802,tenant_file
+RAID-000802,INIT-0069,Risk,Risk: Legacy interface instability,Critical,Low,Mitigated,PMO,2027-08-24,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,803,tenant_file
+RAID-000803,INIT-0069,Risk,Risk: Skill gap in delivery team,Low,Low,Mitigated,Security,2026-04-16,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,804,tenant_file
+RAID-000804,INIT-0069,Decision,Decision: Change-adoption resistance,Low,Low,Open,Architecture,2027-01-31,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,805,tenant_file
+RAID-000805,INIT-0069,Decision,Decision: Key vendor resource availability,Critical,Low,Escalated,PMO,2026-06-12,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,806,tenant_file
+RAID-000806,INIT-0069,Action,Action: Legacy interface instability,Critical,Low,Mitigated,Delivery Lead,2027-07-14,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,807,tenant_file
+RAID-000807,INIT-0069,Decision,Decision: Data quality below threshold,Medium,High,Mitigated,Delivery Lead,2026-11-16,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,808,tenant_file
+RAID-000808,INIT-0069,Decision,Decision: Skill gap in delivery team,Low,High,Mitigated,PMO,2027-08-15,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,809,tenant_file
+RAID-000809,INIT-0069,Issue,Issue: Data quality below threshold,Critical,Low,Closed,Business Owner,2027-02-25,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,810,tenant_file
+RAID-000810,INIT-0069,Risk,Risk: Integration test environment delay,High,High,Open,PMO,2027-02-02,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,811,tenant_file
+RAID-000811,INIT-0069,Dependency,Dependency: Key vendor resource availability,High,Low,Open,Delivery Lead,2027-03-01,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,812,tenant_file
+RAID-000812,INIT-0069,Dependency,Dependency: Legacy interface instability,Medium,Low,Mitigated,Security,2026-09-25,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,813,tenant_file
+RAID-000813,INIT-0070,Issue,Issue: Scope creep from stakeholders,High,High,Escalated,Security,2027-12-31,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,814,tenant_file
+RAID-000814,INIT-0070,Dependency,Dependency: Dependency on platform team,High,Medium,Closed,PMO,2027-06-03,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,815,tenant_file
+RAID-000815,INIT-0070,Dependency,Dependency: Third-party SLA risk,High,Medium,Escalated,Data Lead,2026-01-19,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,816,tenant_file
+RAID-000816,INIT-0070,Issue,Issue: Security finding to remediate,High,Low,Closed,Business Owner,2027-05-13,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,817,tenant_file
+RAID-000817,INIT-0070,Action,Action: Data quality below threshold,Medium,High,Escalated,Business Owner,2027-03-19,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,818,tenant_file
+RAID-000818,INIT-0070,Action,Action: Change-adoption resistance,Low,Medium,Escalated,Architecture,2027-05-19,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,819,tenant_file
+RAID-000819,INIT-0070,Risk,Risk: Security finding to remediate,Low,High,Escalated,Delivery Lead,2027-11-09,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,820,tenant_file
+RAID-000820,INIT-0070,Risk,Risk: Key vendor resource availability,Low,Medium,Closed,Security,2027-09-07,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,821,tenant_file
+RAID-000821,INIT-0070,Risk,Risk: Budget overrun risk,Medium,Medium,Escalated,Architecture,2027-06-15,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,822,tenant_file
+RAID-000822,INIT-0070,Decision,Decision: Change-adoption resistance,Medium,Medium,In Progress,Security,2026-08-31,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,823,tenant_file
+RAID-000823,INIT-0070,Issue,Issue: Security finding to remediate,Low,High,Open,Vendor Manager,2027-01-01,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,824,tenant_file
+RAID-000824,INIT-0070,Issue,Issue: Regulatory approval pending,Low,High,Open,Vendor Manager,2026-09-26,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,825,tenant_file
+RAID-000825,INIT-0070,Decision,Decision: Regulatory approval pending,Low,Low,Mitigated,Architecture,2027-07-29,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,826,tenant_file
+RAID-000826,INIT-0070,Decision,Decision: Scope creep from stakeholders,High,Medium,Escalated,Architecture,2026-12-14,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,827,tenant_file
+RAID-000827,INIT-0070,Action,Action: Integration test environment delay,Low,Medium,Escalated,Delivery Lead,2026-07-08,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,828,tenant_file
+RAID-000828,INIT-0071,Decision,Decision: Security finding to remediate,Critical,Medium,Open,PMO,2027-03-21,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,829,tenant_file
+RAID-000829,INIT-0071,Issue,Issue: Budget overrun risk,Medium,High,Closed,Delivery Lead,2026-03-29,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,830,tenant_file
+RAID-000830,INIT-0071,Issue,Issue: Integration test environment delay,Critical,Medium,In Progress,Business Owner,2026-08-31,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,831,tenant_file
+RAID-000831,INIT-0071,Action,Action: Key vendor resource availability,Critical,Low,Escalated,Vendor Manager,2027-05-06,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,832,tenant_file
+RAID-000832,INIT-0071,Decision,Decision: Change-adoption resistance,High,Medium,Mitigated,Security,2027-03-29,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,833,tenant_file
+RAID-000833,INIT-0071,Decision,Decision: Skill gap in delivery team,Critical,Medium,Mitigated,Delivery Lead,2026-10-14,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,834,tenant_file
+RAID-000834,INIT-0071,Decision,Decision: Regulatory approval pending,Medium,Medium,Open,PMO,2027-06-24,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,835,tenant_file
+RAID-000835,INIT-0071,Decision,Decision: Dependency on platform team,Critical,Low,Mitigated,Data Lead,2026-03-15,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,836,tenant_file
+RAID-000836,INIT-0071,Decision,Decision: Key vendor resource availability,Critical,Low,Escalated,Vendor Manager,2026-09-05,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,837,tenant_file
+RAID-000837,INIT-0071,Dependency,Dependency: Legacy interface instability,Medium,Low,Closed,Delivery Lead,2026-07-21,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,838,tenant_file
+RAID-000838,INIT-0071,Risk,Risk: Integration test environment delay,Medium,Medium,In Progress,Business Owner,2027-09-02,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,839,tenant_file
+RAID-000839,INIT-0071,Dependency,Dependency: Security finding to remediate,High,High,Closed,Vendor Manager,2026-07-25,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,840,tenant_file
+RAID-000840,INIT-0072,Issue,Issue: Dependency on platform team,Medium,Medium,Mitigated,Architecture,2026-11-14,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,841,tenant_file
+RAID-000841,INIT-0072,Issue,Issue: Dependency on platform team,Medium,High,Closed,Business Owner,2027-10-16,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,842,tenant_file
+RAID-000842,INIT-0072,Decision,Decision: Skill gap in delivery team,Low,High,In Progress,Vendor Manager,2027-07-03,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,843,tenant_file
+RAID-000843,INIT-0072,Decision,Decision: Dependency on platform team,Medium,Medium,Open,Data Lead,2026-03-22,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,844,tenant_file
+RAID-000844,INIT-0072,Issue,Issue: Dependency on platform team,Low,Medium,Mitigated,Data Lead,2026-11-13,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,845,tenant_file
+RAID-000845,INIT-0072,Decision,Decision: Regulatory approval pending,Medium,High,Open,Business Owner,2026-10-15,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,846,tenant_file
+RAID-000846,INIT-0072,Risk,Risk: Data quality below threshold,Low,Medium,Closed,Security,2026-09-01,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,847,tenant_file
+RAID-000847,INIT-0072,Risk,Risk: Integration test environment delay,High,Low,Mitigated,Security,2027-10-10,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,848,tenant_file
+RAID-000848,INIT-0072,Dependency,Dependency: Security finding to remediate,Critical,High,In Progress,PMO,2026-12-23,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,849,tenant_file
+RAID-000849,INIT-0072,Decision,Decision: Third-party SLA risk,High,High,Open,Vendor Manager,2027-08-05,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,850,tenant_file
+RAID-000850,INIT-0072,Dependency,Dependency: Data quality below threshold,Medium,Low,Open,Vendor Manager,2026-09-27,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,851,tenant_file
+RAID-000851,INIT-0072,Dependency,Dependency: Security finding to remediate,Medium,High,Mitigated,Delivery Lead,2026-11-02,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,852,tenant_file
+RAID-000852,INIT-0072,Risk,Risk: Security finding to remediate,Low,Low,Mitigated,Security,2026-09-06,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,853,tenant_file
+RAID-000853,INIT-0072,Risk,Risk: Budget overrun risk,Low,Medium,Mitigated,PMO,2027-12-13,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,854,tenant_file
+RAID-000854,INIT-0073,Dependency,Dependency: Regulatory approval pending,Low,Low,Open,Business Owner,2026-07-06,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,855,tenant_file
+RAID-000855,INIT-0073,Action,Action: Skill gap in delivery team,High,Medium,Open,Vendor Manager,2027-08-23,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,856,tenant_file
+RAID-000856,INIT-0073,Action,Action: Skill gap in delivery team,Medium,Medium,Open,Data Lead,2027-05-02,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,857,tenant_file
+RAID-000857,INIT-0073,Dependency,Dependency: Change-adoption resistance,Low,Low,Escalated,Data Lead,2026-11-09,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,858,tenant_file
+RAID-000858,INIT-0073,Dependency,Dependency: Scope creep from stakeholders,High,Low,Mitigated,Vendor Manager,2027-12-23,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,859,tenant_file
+RAID-000859,INIT-0073,Risk,Risk: Skill gap in delivery team,Critical,High,Mitigated,Vendor Manager,2027-08-17,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,860,tenant_file
+RAID-000860,INIT-0073,Issue,Issue: Regulatory approval pending,Low,Low,Mitigated,Vendor Manager,2026-09-26,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,861,tenant_file
+RAID-000861,INIT-0073,Issue,Issue: Dependency on platform team,Critical,High,Mitigated,Delivery Lead,2026-03-16,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,862,tenant_file
+RAID-000862,INIT-0073,Decision,Decision: Third-party SLA risk,Medium,Medium,Closed,Vendor Manager,2027-12-24,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,863,tenant_file
+RAID-000863,INIT-0073,Risk,Risk: Key vendor resource availability,Low,High,In Progress,Vendor Manager,2027-08-26,Mitigation: add resource.,family-7-outcome-intelligence/O05_raid-log.csv,864,tenant_file
+RAID-000864,INIT-0074,Decision,Decision: Change-adoption resistance,Low,Low,Escalated,Data Lead,2027-09-28,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,865,tenant_file
+RAID-000865,INIT-0074,Dependency,Dependency: Scope creep from stakeholders,High,Medium,Mitigated,Data Lead,2027-12-06,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,866,tenant_file
+RAID-000866,INIT-0074,Decision,Decision: Budget overrun risk,Critical,Low,Escalated,Data Lead,2026-10-14,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,867,tenant_file
+RAID-000867,INIT-0074,Dependency,Dependency: Skill gap in delivery team,Medium,Low,In Progress,Architecture,2026-01-16,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,868,tenant_file
+RAID-000868,INIT-0074,Decision,Decision: Dependency on platform team,Low,High,Mitigated,Delivery Lead,2026-11-13,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,869,tenant_file
+RAID-000869,INIT-0074,Issue,Issue: Skill gap in delivery team,Medium,Low,Closed,PMO,2026-10-16,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,870,tenant_file
+RAID-000870,INIT-0074,Decision,Decision: Security finding to remediate,Critical,High,Mitigated,Data Lead,2026-10-22,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,871,tenant_file
+RAID-000871,INIT-0074,Risk,Risk: Budget overrun risk,Low,High,Escalated,Vendor Manager,2026-02-04,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,872,tenant_file
+RAID-000872,INIT-0074,Action,Action: Dependency on platform team,Critical,High,Open,Vendor Manager,2026-12-03,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,873,tenant_file
+RAID-000873,INIT-0074,Risk,Risk: Scope creep from stakeholders,Critical,High,Mitigated,Architecture,2027-05-18,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,874,tenant_file
+RAID-000874,INIT-0075,Issue,Issue: Dependency on platform team,Critical,Low,Open,Data Lead,2027-06-12,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,875,tenant_file
+RAID-000875,INIT-0075,Dependency,Dependency: Data quality below threshold,High,High,Mitigated,Business Owner,2027-06-15,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,876,tenant_file
+RAID-000876,INIT-0075,Issue,Issue: Key vendor resource availability,Critical,High,Escalated,Business Owner,2026-11-15,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,877,tenant_file
+RAID-000877,INIT-0075,Action,Action: Key vendor resource availability,Low,Medium,Mitigated,Architecture,2027-01-19,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,878,tenant_file
+RAID-000878,INIT-0075,Decision,Decision: Skill gap in delivery team,Critical,High,In Progress,Architecture,2026-11-03,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,879,tenant_file
+RAID-000879,INIT-0075,Issue,Issue: Skill gap in delivery team,High,High,Escalated,Architecture,2027-12-22,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,880,tenant_file
+RAID-000880,INIT-0075,Risk,Risk: Scope creep from stakeholders,Medium,Low,In Progress,Architecture,2027-04-08,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,881,tenant_file
+RAID-000881,INIT-0075,Dependency,Dependency: Regulatory approval pending,Critical,Medium,In Progress,Vendor Manager,2026-12-24,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,882,tenant_file
+RAID-000882,INIT-0075,Risk,Risk: Data quality below threshold,Low,High,Open,Delivery Lead,2027-06-01,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,883,tenant_file
+RAID-000883,INIT-0075,Risk,Risk: Integration test environment delay,Low,High,Mitigated,Security,2026-05-07,Mitigation: add controls.,family-7-outcome-intelligence/O05_raid-log.csv,884,tenant_file
+RAID-000884,INIT-0075,Action,Action: Integration test environment delay,Critical,Low,Escalated,Security,2026-02-23,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,885,tenant_file
+RAID-000885,INIT-0075,Action,Action: Dependency on platform team,Medium,High,Escalated,Security,2027-02-08,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,886,tenant_file
+RAID-000886,INIT-0075,Issue,Issue: Dependency on platform team,Low,Medium,Closed,Delivery Lead,2027-02-13,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,887,tenant_file
+RAID-000887,INIT-0075,Action,Action: Integration test environment delay,High,Medium,Mitigated,Vendor Manager,2026-06-29,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,888,tenant_file
+RAID-000888,INIT-0075,Decision,Decision: Security finding to remediate,Low,High,Open,Vendor Manager,2027-09-25,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,889,tenant_file
+RAID-000889,INIT-0075,Risk,Risk: Budget overrun risk,Critical,High,Mitigated,Delivery Lead,2027-07-04,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,890,tenant_file
+RAID-000890,INIT-0076,Issue,Issue: Key vendor resource availability,Medium,Low,Closed,Vendor Manager,2026-12-05,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,891,tenant_file
+RAID-000891,INIT-0076,Decision,Decision: Integration test environment delay,Medium,Medium,Mitigated,Security,2026-05-05,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,892,tenant_file
+RAID-000892,INIT-0076,Issue,Issue: Security finding to remediate,Medium,Medium,Open,PMO,2026-04-14,Mitigation: remediate.,family-7-outcome-intelligence/O05_raid-log.csv,893,tenant_file
+RAID-000893,INIT-0076,Issue,Issue: Integration test environment delay,High,High,Closed,Data Lead,2026-07-28,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,894,tenant_file
+RAID-000894,INIT-0076,Risk,Risk: Dependency on platform team,High,Medium,In Progress,Business Owner,2027-06-12,Mitigation: risk-accept.,family-7-outcome-intelligence/O05_raid-log.csv,895,tenant_file
+RAID-000895,INIT-0076,Issue,Issue: Security finding to remediate,Medium,High,Closed,Vendor Manager,2026-05-06,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,896,tenant_file
+RAID-000896,INIT-0076,Action,Action: Scope creep from stakeholders,Medium,Medium,In Progress,Business Owner,2026-05-19,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,897,tenant_file
+RAID-000897,INIT-0076,Decision,Decision: Data quality below threshold,High,High,In Progress,Architecture,2027-12-28,Mitigation: escalate.,family-7-outcome-intelligence/O05_raid-log.csv,898,tenant_file
+RAID-000898,INIT-0076,Dependency,Dependency: Legacy interface instability,Critical,Medium,Escalated,Delivery Lead,2027-04-30,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,899,tenant_file
+RAID-000899,INIT-0077,Risk,Risk: Budget overrun risk,Critical,High,Closed,Data Lead,2027-05-14,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,900,tenant_file
+RAID-000900,INIT-0077,Risk,Risk: Budget overrun risk,High,Medium,In Progress,Business Owner,2027-07-13,Mitigation: rebaseline.,family-7-outcome-intelligence/O05_raid-log.csv,901,tenant_file
