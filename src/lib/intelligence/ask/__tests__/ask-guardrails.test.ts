@@ -194,6 +194,8 @@ describe('Ask Intelligence guardrails', () => {
       expect(synthesizerCode).toContain('missingRequiredCanvasTabs');
       expect(synthesizerCode).toContain('MANDATORY INTELLIGENCE CANVAS TAB REPAIR');
       expect(synthesizerCode).toContain('Include every required tab listed above');
+      expect(synthesizerCode).toContain('MISSING-TAB ONLY REPAIR');
+      expect(synthesizerCode).toContain('Return only the missing tab blocks');
     });
 
     it('keeps repaired visuals inside Claude-owned canvas tabs', () => {
