@@ -79,6 +79,46 @@ describe("assertPhaseReadyForGeneration (Slice 6 — no approved gate, no genera
     ]);
   });
 
+  it("allows P3 draft shaping when prior phase review approved it, without marking the gate approved", async () => {
+    const r = await assertPhaseReadyForGeneration(
+      { moveId: "m", phase: 3, generationMode: "draft" },
+      sources({
+        gateApproved: async () => false,
+        captureComplete: async () => ({ complete: false, missing: ["P3 modules"] }),
+        priorPhaseDraftApproval: async () => ({
+          approved: true,
+          caveats: ["P2 is approved only for P3 draft shaping."],
+        }),
+      }),
+    );
+    expect(r.ready).toBe(true);
+    expect(statusForReadiness(r)).toBe(200);
+    expect(r.gateApproved).toBe(false);
+    expect(r.draftOnly).toBe(true);
+    expect(r.draftCaveats.map((caveat) => caveat.reason)).toContain(
+      "P2 is approved only for P3 draft shaping.",
+    );
+  });
+
+  it("does not allow final generation from prior phase draft approval", async () => {
+    const r = await assertPhaseReadyForGeneration(
+      { moveId: "m", phase: 3, generationMode: "final" },
+      sources({
+        gateApproved: async () => false,
+        captureComplete: async () => ({ complete: true, missing: [] }),
+        priorPhaseDraftApproval: async () => ({
+          approved: true,
+          caveats: ["P2 is approved only for P3 draft shaping."],
+        }),
+      }),
+    );
+    expect(r.ready).toBe(false);
+    expect(statusForReadiness(r)).toBe(409);
+    expect(r.blockers.map((blocker) => blocker.code)).toEqual([
+      "gate_not_approved",
+    ]);
+  });
+
   it("allows retry on an already-approved phase, but never bypasses an unapproved gate", async () => {
     const approvedRetry = await assertPhaseReadyForGeneration(
       { moveId: "m", phase: 3, allowApprovedRetry: true },

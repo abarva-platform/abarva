@@ -39,6 +39,48 @@ interface Artifact {
   downloadUrl: string;
 }
 
+type SponsorReviewDecision =
+  | "approve_for_p3_draft"
+  | "request_revisions"
+  | "hold_for_evidence";
+
+interface SponsorReviewState {
+  packet: {
+    headline: string;
+    diagnosticThesis: string;
+    strongestEvidence: string[];
+    quantifiedFacts: string[];
+    knownLimitations: string[];
+    missingEvidence: string[];
+    decisionsRequired: string[];
+    recommendedNextAction: string;
+    p3Implication: string;
+  };
+  latestDecision: {
+    decision: SponsorReviewDecision;
+    rationale: string;
+    created_at: string;
+  } | null;
+  readiness: {
+    readyForP3Draft: boolean;
+    readyForP3Final: boolean;
+    p2FinalApproved: boolean;
+    allowedNextAction: string;
+    reason: string;
+  };
+}
+
+interface SponsorReviewPostResponse extends SponsorReviewState {
+  ok?: boolean;
+  error?: string;
+  detail?: string;
+  decision?: {
+    decision: SponsorReviewDecision;
+    rationale: string;
+    created_at: string;
+  };
+}
+
 const FAMILIES: { key: string; label: string }[] = [
   { key: "generated_deliverable", label: "Deliverables" },
   { key: "session_artifact", label: "Session Artifacts" },
@@ -108,6 +150,19 @@ function metaLabel(value: string | null | undefined): string {
   return value ? value.replace(/_/g, " ") : "";
 }
 
+function BulletList({ items }: { items: string[] }) {
+  if (!items.length) return null;
+  return (
+    <ul style={{ margin: "6px 0 0", paddingLeft: 18, color: "#334155" }}>
+      {items.slice(0, 6).map((item) => (
+        <li key={item} style={{ marginBottom: 3 }}>
+          {item}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 // Fetch an artifact with a short retry on 503 (transient tenant-lookup outage). A bare
 // <a href> top-level navigation that hit a one-off 503 previously dead-ended Open/Download;
 // fetching the bytes here lets us retry, then open/save via an object URL so the file is
@@ -137,6 +192,12 @@ function ArtifactRow({
   const [reviewOpen, setReviewOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [reviewBusy, setReviewBusy] = useState(false);
+  const [packetLoading, setPacketLoading] = useState(false);
+  const [sponsorReview, setSponsorReview] = useState<SponsorReviewState | null>(
+    null,
+  );
+  const [decisionRationale, setDecisionRationale] = useState("");
+  const [missingEvidenceText, setMissingEvidenceText] = useState("");
   const [actionErr, setActionErr] = useState<string | null>(null);
 
   const openArtifact = useCallback(async () => {
@@ -212,6 +273,110 @@ function ArtifactRow({
       setReviewBusy(false);
     }
   }, [a.artifactId, feedbackText, moveId, onChanged, reviewBusy]);
+
+  const loadSponsorReview = useCallback(async () => {
+    if (!reviewOpen || a.lifecycleState !== "current") return;
+    setPacketLoading(true);
+    setActionErr(null);
+    try {
+      const res = await fetch(
+        `/api/v1/programs/${moveId}/artifacts/${a.artifactId}/review-decision`,
+        { credentials: "include" },
+      );
+      const json = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      } & SponsorReviewState;
+      if (!res.ok || !json.ok) {
+        throw new Error(json.error || `HTTP ${res.status}`);
+      }
+      setSponsorReview({
+        packet: json.packet,
+        latestDecision: json.latestDecision,
+        readiness: json.readiness,
+      });
+    } catch (e) {
+      setActionErr(e instanceof Error ? e.message : "review packet failed");
+      setSponsorReview(null);
+    } finally {
+      setPacketLoading(false);
+    }
+  }, [a.artifactId, a.lifecycleState, moveId, reviewOpen]);
+
+  useEffect(() => {
+    void loadSponsorReview();
+  }, [loadSponsorReview]);
+
+  const submitSponsorDecision = useCallback(
+    async (decision: SponsorReviewDecision) => {
+      if (reviewBusy) return;
+      const defaultRationale =
+        decision === "approve_for_p3_draft"
+          ? "P2 diagnostic accepted as sufficient to begin P3 draft shaping; final sponsor/signoff gates remain required."
+          : decision === "request_revisions"
+            ? "Reviewer requested changes before proceeding to P3."
+            : "Reviewer requires missing evidence before proceeding to P3.";
+      const rationale = (decisionRationale.trim() || defaultRationale).trim();
+      setReviewBusy(true);
+      setActionErr(null);
+      try {
+        const missingEvidence = missingEvidenceText
+          .split(/\n|;/)
+          .map((item) => item.trim())
+          .filter(Boolean);
+        const res = await fetch(
+          `/api/v1/programs/${moveId}/artifacts/${a.artifactId}/review-decision`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              decision,
+              rationale,
+              carriedForwardCaveats:
+                sponsorReview?.packet.knownLimitations ?? [],
+              missingEvidence:
+                missingEvidence.length > 0
+                  ? missingEvidence
+                  : sponsorReview?.packet.missingEvidence ?? [],
+            }),
+          },
+        );
+        const json = (await res.json().catch(
+          () => ({}),
+        )) as SponsorReviewPostResponse;
+        if (!res.ok || !json.ok) {
+          throw new Error(json.detail || json.error || `HTTP ${res.status}`);
+        }
+        setSponsorReview({
+          packet: json.packet,
+          latestDecision: json.decision
+            ? {
+                decision: json.decision.decision,
+                rationale: json.decision.rationale,
+                created_at: json.decision.created_at,
+              }
+            : null,
+          readiness: json.readiness,
+        });
+        await onChanged();
+      } catch (e) {
+        setActionErr(e instanceof Error ? e.message : "review decision failed");
+      } finally {
+        setReviewBusy(false);
+      }
+    },
+    [
+      a.artifactId,
+      decisionRationale,
+      missingEvidenceText,
+      moveId,
+      onChanged,
+      reviewBusy,
+      sponsorReview?.packet.knownLimitations,
+      sponsorReview?.packet.missingEvidence,
+    ],
+  );
 
   const hasReviewSignals =
     Boolean(a.regeneratedFromArtifactId) ||
@@ -348,7 +513,7 @@ function ArtifactRow({
             opacity: a.lifecycleState !== "current" ? 0.5 : 1,
           }}
         >
-          Review feedback
+          Sponsor review
         </button>
         <button
           onClick={openArtifact}
@@ -419,6 +584,203 @@ function ArtifactRow({
             padding: 10,
           }}
         >
+          <div
+            style={{
+              border: "1px solid #E2E8F0",
+              borderRadius: 8,
+              background: "#fff",
+              padding: 12,
+              marginBottom: 10,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 10,
+                alignItems: "flex-start",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    color: "#1B2B5C",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  P2 sponsor review packet
+                </div>
+                <p
+                  style={{
+                    margin: "6px 0 0",
+                    fontSize: 12.5,
+                    lineHeight: 1.45,
+                    color: "#334155",
+                  }}
+                >
+                  P2 diagnostic is review-ready. You can approve it for P3
+                  draft shaping, request revisions, or hold for missing
+                  evidence. Final phase approval still requires
+                  sponsor/signoff gates.
+                </p>
+              </div>
+              {packetLoading && (
+                <span style={{ fontSize: 11, color: "#64748B" }}>
+                  Loading packet…
+                </span>
+              )}
+            </div>
+            {sponsorReview && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                  gap: 10,
+                  marginTop: 12,
+                  fontSize: 12,
+                  lineHeight: 1.45,
+                }}
+              >
+                <div>
+                  <strong style={{ color: "#0F172A" }}>Diagnostic thesis</strong>
+                  <p style={{ margin: "6px 0 0", color: "#334155" }}>
+                    {sponsorReview.packet.diagnosticThesis}
+                  </p>
+                </div>
+                <div>
+                  <strong style={{ color: "#0F172A" }}>Quantified facts</strong>
+                  <BulletList items={sponsorReview.packet.quantifiedFacts} />
+                </div>
+                <div>
+                  <strong style={{ color: "#0F172A" }}>Known limitations</strong>
+                  <BulletList items={sponsorReview.packet.knownLimitations} />
+                </div>
+                <div>
+                  <strong style={{ color: "#0F172A" }}>P3 implication</strong>
+                  <p style={{ margin: "6px 0 0", color: "#334155" }}>
+                    {sponsorReview.packet.p3Implication}
+                  </p>
+                </div>
+              </div>
+            )}
+            {sponsorReview?.latestDecision && (
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: 10,
+                  borderRadius: 7,
+                  background: "#F0FDF4",
+                  color: "#166534",
+                  fontSize: 12,
+                  lineHeight: 1.45,
+                }}
+              >
+                Latest decision:{" "}
+                <strong>{metaLabel(sponsorReview.latestDecision.decision)}</strong>
+                . {sponsorReview.readiness.reason}
+              </div>
+            )}
+            {sponsorReview && (
+              <>
+                <textarea
+                  value={decisionRationale}
+                  onChange={(e) => setDecisionRationale(e.target.value)}
+                  rows={3}
+                  placeholder="Optional rationale. If blank, AbarVa records the standard rationale for the selected decision."
+                  style={{
+                    width: "100%",
+                    resize: "vertical",
+                    border: "1px solid #D5DAE2",
+                    borderRadius: 6,
+                    padding: 8,
+                    marginTop: 12,
+                    fontSize: 12,
+                    lineHeight: 1.45,
+                    color: "#1A1A18",
+                    background: "#fff",
+                  }}
+                />
+                <textarea
+                  value={missingEvidenceText}
+                  onChange={(e) => setMissingEvidenceText(e.target.value)}
+                  rows={2}
+                  placeholder="Missing evidence to accept or require, one per line. Defaults to packet gaps if blank."
+                  style={{
+                    width: "100%",
+                    resize: "vertical",
+                    border: "1px solid #D5DAE2",
+                    borderRadius: 6,
+                    padding: 8,
+                    marginTop: 8,
+                    fontSize: 12,
+                    lineHeight: 1.45,
+                    color: "#1A1A18",
+                    background: "#fff",
+                  }}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 6,
+                    justifyContent: "flex-end",
+                    marginTop: 10,
+                  }}
+                >
+                  <button
+                    onClick={() => void submitSponsorDecision("hold_for_evidence")}
+                    disabled={reviewBusy}
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      color: "#92400E",
+                      background: "#FFFBEB",
+                      border: "1px solid #FCD34D",
+                      borderRadius: 5,
+                      padding: "6px 11px",
+                    }}
+                  >
+                    Hold for evidence
+                  </button>
+                  <button
+                    onClick={() => void submitSponsorDecision("request_revisions")}
+                    disabled={reviewBusy}
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      color: "#1B2B5C",
+                      background: "#EFF6FF",
+                      border: "1px solid #BFDBFE",
+                      borderRadius: 5,
+                      padding: "6px 11px",
+                    }}
+                  >
+                    Request revisions
+                  </button>
+                  <button
+                    onClick={() =>
+                      void submitSponsorDecision("approve_for_p3_draft")
+                    }
+                    disabled={reviewBusy}
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      color: "#fff",
+                      background: reviewBusy ? "#9AA3B2" : "#166534",
+                      border: "none",
+                      borderRadius: 5,
+                      padding: "6px 11px",
+                    }}
+                  >
+                    {reviewBusy ? "Saving…" : "Approve for P3 draft"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           <label
             style={{
               display: "block",
