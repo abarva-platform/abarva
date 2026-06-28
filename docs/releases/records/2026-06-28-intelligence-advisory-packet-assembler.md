@@ -18,6 +18,8 @@ Second follow-up hardening tightens the Intelligence decision-canvas contract af
 
 Third follow-up hardening clarifies that the right-side decision canvas should add relevant decision support, not duplicate the left-side answer. Table and Chart tabs may use directly related tenant metrics or adjacent function/category/pattern context when that is more useful for a CXO, but the tab grounding and first line must clearly distinguish tenant evidence from function, category, industry, corpus-pattern, benchmark, or planning-assumption context.
 
+Fourth follow-up hardening makes the right-side tab strip dynamic and contentful after signed-in browser proof showed tabs with real content displaying misleading `0` badges. Per-answer tabs now hide count badges unless a real count exists, blank Claude tabs are omitted, and function/category context groundings render as CXO-readable labels instead of a fallback badge. The tab contract also now explicitly allows Chart tabs to show industry trend data, directional benchmarks, peer-pattern maps, and function/category opportunity maps when those are more useful than tenant metrics, provided the grounding label and first line make clear that the chart is not tenant proof.
+
 ## Layer Impact
 
 - `global-control-lane`: changes shared Intelligence answer preparation, prompt evidence boundaries, and operator trace behavior for all clients using the Intelligence Ask path.
@@ -38,9 +40,12 @@ Third follow-up hardening clarifies that the right-side decision canvas should a
 - `src/lib/intelligence/advisory-packet/top-100-audit.ts`
 - `src/lib/intelligence/model-input-cleaner.ts`
 - `src/lib/intelligence/tabbed-response.ts`
+- `src/lib/intelligence/__tests__/tabbed-response.test.ts`
 - `src/lib/intelligence/ask/index.ts`
 - `src/app/api/intelligence/ask/route.ts`
 - `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`
+- `src/components/intelligence-v2/IntelligenceV2Surface.tsx`
+- `src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx`
 - `scripts/intelligence/generate-top-100-advisory-packet-audit.ts`
 - `docs/intelligence/prompt_audit/top_100/20260628/`
 - `docs/intelligence/TOP_100_PROMPT_AUDIT_SUMMARY_20260628.md`
@@ -55,6 +60,9 @@ Third follow-up hardening clarifies that the right-side decision canvas should a
 - Third follow-up: `npx jest src/lib/intelligence/__tests__/tabbed-response.test.ts --runInBand` passed, 4 tests.
 - Third follow-up: `npx eslint src/lib/intelligence/tabbed-response.ts src/lib/intelligence/ask/synthesizer.ts src/lib/intelligence/__tests__/tabbed-response.test.ts` passed.
 - Third follow-up: `npm run release:check` passed.
+- Fourth follow-up: `npx jest src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/__tests__/tabbed-response.test.ts --runInBand` passed, 11 tests.
+- Fourth follow-up: `npx eslint src/components/intelligence-v2/IntelligenceV2Surface.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/tabbed-response.ts src/lib/intelligence/__tests__/tabbed-response.test.ts src/lib/intelligence/intelligence-consultant-text-synthesis.ts` passed.
+- Fourth follow-up: `npm run release:check` passed.
 - `npx tsx scripts/intelligence/generate-top-100-advisory-packet-audit.ts` generated 100 prompt JSON, 100 prompt Markdown, 100 summary Markdown artifacts, plus the Top 100 rollup.
 - Top 100 rollup: 100 / 100 packets reached richness >= 4, 100 / 100 passed raw leakage scan, Q001 richness = 5, six sampled answer-quality checks averaged 5.00.
 
@@ -85,7 +93,8 @@ Rollback by reverting this release candidate or deploying the previous ACA image
 - Post-cleaner signed-in Q001 trace showed model/renderer raw leakage fixed, but the Markdown table landed inside the Decision tab instead of a dedicated Table tab; this was treated as a renderer-placement proof failure and patched before live-safe signoff.
 - Post-table-tab signed-in Q001 trace on `ca-abarva-web-lab-eastus--m6bbfc5da` showed the full right-canvas tab set: Decision, Industry Insights, Table, Chart, and Evidence. Renderer proof passed: left answer equaled Claude's main answer, tabs equaled parsed Claude tabs, Markdown tables were preserved in Table/Chart, and raw leakage scan passed.
 - Third follow-up adds the adjacent-visual rule so future right-canvas tabs can surface useful related function/category/pattern visuals instead of repeating the answer text.
+- Post-adjacent-visual signed-in Q001 browser proof on `ca-abarva-web-lab-eastus--me8c4c46c` showed the right-side canvas can render Decision, Chart, Table, and Evidence tab content, but exposed misleading `0` tab badges and a fallback `Grounding noted` label for function/category context. Fourth follow-up addresses that UI defect.
 
 ## Known Gaps
 
-- Third follow-up deploy and signed-in regression are pending.
+- Fourth follow-up deploy and signed-in regression are pending.

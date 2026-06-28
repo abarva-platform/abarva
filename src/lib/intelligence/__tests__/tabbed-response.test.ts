@@ -48,7 +48,7 @@ describe("Intelligence tabbed response parser", () => {
       "The right canvas should add decision support, not duplicate the main answer",
     );
     expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
-      "function/category/pattern data",
+      "function/category opportunity map",
     );
 
     const parsed = parseIntelligenceTabbedResponse(
@@ -77,6 +77,40 @@ describe("Intelligence tabbed response parser", () => {
       ["Table", "function-context"],
       ["Chart", "category-context"],
     ]);
+  });
+
+  it("allows industry trend and benchmark charts when they are clearly not tenant proof", () => {
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
+      "industry trend, directional benchmark, peer-pattern map",
+    );
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
+      "If the chart is not tenant evidence",
+    );
+
+    const parsed = parseIntelligenceTabbedResponse(
+      [
+        "Fund recovery decision support first, but treat the industry trend as context.",
+        "",
+        "<<<TAB: Chart | grounding: benchmark>>>",
+        "Directional benchmark, not tenant proof: illustrative airline AI opportunity map.",
+        "",
+        "| Opportunity | Value score | Readiness score |",
+        "|---|---:|---:|",
+        "| IROPS recovery | 9 | 7 |",
+        "| Predictive maintenance | 7 | 6 |",
+        "| Chatbot everywhere | 4 | 8 |",
+      ].join("\n"),
+    );
+
+    expect(parsed.tabs).toHaveLength(1);
+    expect(parsed.tabs[0]).toMatchObject({
+      id: "chart",
+      label: "Chart",
+      grounding: "benchmark",
+    });
+    expect(parsed.tabs[0]?.content).toContain(
+      "Directional benchmark, not tenant proof",
+    );
   });
 
   it("keeps Claude main answer and tab content exactly while placing tabs", () => {

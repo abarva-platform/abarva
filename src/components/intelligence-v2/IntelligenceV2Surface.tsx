@@ -224,6 +224,10 @@ function groundingLabel(grounding: ParsedIntelligenceTab["grounding"]): string {
   switch (grounding) {
     case "tenant-evidence":
       return "Tenant evidence";
+    case "function-context":
+      return "Function context";
+    case "category-context":
+      return "Category context";
     case "industry-context":
       return "Industry context";
     case "corpus-pattern":
@@ -270,10 +274,12 @@ export function IntelligenceV2Surface({
     if (latestIntelligenceTabs.length > 0) {
       return [
         { id: "answer", label: "Answer", count: 1 },
-        ...latestIntelligenceTabs.map((item) => ({
-          id: item.id,
-          label: item.label,
-        })),
+        ...latestIntelligenceTabs
+          .filter((item) => item.content.trim())
+          .map((item) => ({
+            id: item.id,
+            label: item.label,
+          })),
       ];
     }
     return [
@@ -514,7 +520,10 @@ export function IntelligenceV2Surface({
                       className={`tab${tab === key ? " active" : ""}`}
                       onClick={() => setTab(key)}
                     >
-                      {item.label} <span className="ct">{item.count ?? 0}</span>
+                      {item.label}
+                      {typeof item.count === "number" ? (
+                        <span className="ct">{item.count}</span>
+                      ) : null}
                     </button>
                   );
                 })}

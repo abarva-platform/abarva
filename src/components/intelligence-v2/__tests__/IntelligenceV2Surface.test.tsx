@@ -540,7 +540,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
                 {
                   id: "chart",
                   label: "Chart",
-                  grounding: "tenant-evidence",
+                  grounding: "function-context",
                   content: [
                     "| Value pool | Annual value |",
                     "|---|---:|",
@@ -616,6 +616,12 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     expect(screen.getByRole("button", { name: /Chart/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Table/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Evidence/ })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Decision 0/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Chart 0/ }),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Industry Insights/ }));
     expect(screen.getByText("Industry context")).toBeInTheDocument();
@@ -624,6 +630,9 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
         "Industry context: airlines usually start with dispatch decision support. This is not tenant proof.",
       ),
     ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Chart/ }));
+    expect(screen.getByText("Function context")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Table/ }));
     expect(screen.getByText("Tenant evidence")).toBeInTheDocument();
