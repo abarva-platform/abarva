@@ -223,24 +223,29 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(
       screen.getByText("CIO portfolio command center"),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("CIO dashboard view")).toBeInTheDocument();
     expect(screen.getAllByText("Portfolio").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Budget").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Vendors").length).toBeGreaterThan(0);
     expect(screen.getAllByText("AI ROI").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Outcomes").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Risks").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Board").length).toBeGreaterThan(0);
-    expect(screen.getByLabelText("CIO and CFO story")).toBeInTheDocument();
-    expect(screen.getByText(/still needs value proof/i)).toBeInTheDocument();
+    expect(screen.queryByText("Outcomes")).not.toBeInTheDocument();
+    expect(screen.queryByText("Risks")).not.toBeInTheDocument();
     expect(
-      screen.getByText(/Spend is visible enough to manage/i),
-    ).toBeInTheDocument();
+      screen.queryByRole("link", { name: "Board" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("CIO and CFO story")).toBeInTheDocument();
+    expect(screen.getByText("IT spend")).toBeInTheDocument();
+    expect(screen.getByText("Committed value")).toBeInTheDocument();
+    expect(screen.getByText("Proven value")).toBeInTheDocument();
+    expect(screen.getByText("Value gap")).toBeInTheDocument();
+    expect(screen.getByText("Renewals · 90d")).toBeInTheDocument();
+    expect(screen.getByText("CIO daily read")).toBeInTheDocument();
+    expect(screen.getByText(/We've committed/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/unproven/i).length).toBeGreaterThan(0);
     expect(screen.getByText("Inspect pressure spend")).toBeInTheDocument();
     expect(screen.getByText("Demand value proof")).toBeInTheDocument();
     expect(
-      screen.getByText("Scenario questions a CIO can ask next"),
-    ).toBeInTheDocument();
+      screen.queryByText("Scenario questions a CIO can ask next"),
+    ).not.toBeInTheDocument();
     expect(screen.getByText("AI Platform Foundation")).toBeInTheDocument();
     expect(screen.getByText("ServiceNow AI Service Desk")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Budget" })).toHaveAttribute(
@@ -249,7 +254,6 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     );
     expect(screen.getAllByText("aVa").length).toBeGreaterThan(0);
     expect(screen.queryByText("Atlas")).not.toBeInTheDocument();
-    expect(screen.queryByText("CIO daily read")).not.toBeInTheDocument();
     expect(screen.queryByText("LH-IT-001")).not.toBeInTheDocument();
     expect(screen.queryByText("LH-IT-002")).not.toBeInTheDocument();
   });
@@ -325,7 +329,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.queryByText("Atlas")).not.toBeInTheDocument();
   });
 
-  it("renders a board-ready readout from the same Tower model", () => {
+  it("falls unknown dashboard routes back to the overview wireframe", () => {
     query = new URLSearchParams("dashboard=board");
 
     render(
@@ -340,15 +344,41 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       />,
     );
 
-    expect(screen.getByText("Board brief")).toBeInTheDocument();
+    expect(screen.getByText("CIO daily read")).toBeInTheDocument();
+    expect(screen.getByText("IT spend")).toBeInTheDocument();
+    expect(screen.queryByText("Board brief")).not.toBeInTheDocument();
     expect(
-      screen.getByText("The decision read for leadership."),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Decisions")).toBeInTheDocument();
-    expect(screen.getByText("Data asks")).toBeInTheDocument();
+      screen.queryByRole("link", { name: "Board" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Atlas")).not.toBeInTheDocument();
+  });
+
+  it("uses budget rollups for the budget view and does not fake missing split data", () => {
+    query = new URLSearchParams("dashboard=budget");
+
+    render(
+      <TowerIndexPage
+        tenantName="Lakeshore Holdings"
+        context="Tower"
+        towerToday="2026-06-25"
+        clientId="client-lakeshore"
+        initiatives={INITIATIVES}
+        vendors={VENDORS}
+        activeTab="portfolio"
+        budgetRollups={BUDGET_ROLLUPS}
+      />,
+    );
+
+    expect(screen.getByText("Spending structure.")).toBeInTheDocument();
+    expect(screen.getByText("Run vs change")).toBeInTheDocument();
+    expect(screen.getByText("OpEx vs CapEx")).toBeInTheDocument();
+    expect(screen.getByText("Spend by function.")).toBeInTheDocument();
     expect(
-      screen.getByText(/Which pressure programs should the CIO inspect first/i),
-    ).toBeInTheDocument();
+      screen.queryByText(/Run\/Change split is not loaded/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/OpEx\/CapEx split is not loaded/i),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Atlas")).not.toBeInTheDocument();
   });
 });
