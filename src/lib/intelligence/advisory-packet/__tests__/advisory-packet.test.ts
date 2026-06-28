@@ -128,7 +128,7 @@ describe("AdvisoryPacket assembler", () => {
           name: "Raw source label",
           id: "SHA-CAP-123",
           detail:
-            "Loaded from datasets/enterprise-reads.json Row: 14 APP-OPS-999 ai_maturity: 1. Business fact: IROPS readiness is missing lineage.",
+            "Loaded from datasets/enterprise-reads.json Row: 14 APP-OPS-999 ai_maturity: 1. Business fact: IROPS readiness is missing lineage. app id: Weight-SAP-Hub-0687 and Slot-Sabre-Service-0685 are operational dependencies.",
           confidence: 0.9,
         },
       ],
@@ -136,8 +136,10 @@ describe("AdvisoryPacket assembler", () => {
     const modelVisible = advisoryPacketModelVisibleJson(packet);
 
     expect(modelVisible).not.toMatch(
-      /\.csv|Row:|SHA-CAP|APP-|datasets\/|enterprise-reads\.json|ai_maturity:/i,
+      /\.csv|Row:|SHA-CAP|APP-|datasets\/|enterprise-reads\.json|ai_maturity:|Weight-SAP-Hub-0687|Slot-Sabre-Service-0685/i,
     );
+    expect(modelVisible).toContain("Weight SAP Hub");
+    expect(modelVisible).toContain("Slot Sabre Service");
     expect(packet.auditLineage.hiddenRawRefs).toEqual(
       expect.arrayContaining([expect.objectContaining({ id: "SHA-CAP-123" })]),
     );
