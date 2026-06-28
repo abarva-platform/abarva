@@ -181,6 +181,16 @@ describe('processDeliverableQueue', () => {
 
     expect(runDeliverableForTenant).not.toHaveBeenCalled();
     expect(validateDeliverableTenantInvariant).not.toHaveBeenCalled();
+    expect(getProgramById).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: 'client-lake',
+        clientKey: 'lakeshore-holdings',
+        userId: 'u1',
+        tenantRole: 'tenant_admin',
+        role: 'client_admin',
+      }),
+      'move-1',
+    );
     expect(generateArtifact).toHaveBeenCalledWith(
       expect.objectContaining({
         moveId: 'move-1',
