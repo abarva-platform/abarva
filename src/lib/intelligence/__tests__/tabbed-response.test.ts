@@ -43,6 +43,42 @@ describe("Intelligence tabbed response parser", () => {
     );
   });
 
+  it("allows adjacent function and category visuals when they are honestly grounded", () => {
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
+      "The right canvas should add decision support, not duplicate the main answer",
+    );
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
+      "function/category/pattern data",
+    );
+
+    const parsed = parseIntelligenceTabbedResponse(
+      [
+        "Hold the rollout until the operating data gate is clear.",
+        "",
+        "<<<TAB: Table | grounding: function-context>>>",
+        "Function context, not direct tenant proof: use this to compare the broader operating function.",
+        "",
+        "| Function | Typical AI control point | Decision use |",
+        "|---|---|---|",
+        "| IROPS | Crew and aircraft recovery data freshness | Gate scale funding |",
+        "| MRO | Maintenance history and sensor lineage | Gate predictive use cases |",
+        "",
+        "<<<TAB: Chart | grounding: category-context>>>",
+        "Category view from tenant evidence.",
+        "",
+        "| Category | Readiness score |",
+        "|---|---:|",
+        "| Operational AI | 2 |",
+        "| Customer AI | 3 |",
+      ].join("\n"),
+    );
+
+    expect(parsed.tabs.map((tab) => [tab.label, tab.grounding])).toEqual([
+      ["Table", "function-context"],
+      ["Chart", "category-context"],
+    ]);
+  });
+
   it("keeps Claude main answer and tab content exactly while placing tabs", () => {
     const parsed = parseIntelligenceTabbedResponse(skyharborIropsRaw);
 

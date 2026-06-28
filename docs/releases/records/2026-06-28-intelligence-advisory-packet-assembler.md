@@ -16,6 +16,8 @@ Follow-up hardening adds a shared model-input cleaner guard for generated system
 
 Second follow-up hardening tightens the Intelligence decision-canvas contract after live proof showed Claude preserved the Markdown table but placed it inside the Decision tab instead of a dedicated Table/Chart tab. The contract now states that every Markdown table must appear inside a Table or Chart tab.
 
+Third follow-up hardening clarifies that the right-side decision canvas should add relevant decision support, not duplicate the left-side answer. Table and Chart tabs may use directly related tenant metrics or adjacent function/category/pattern context when that is more useful for a CXO, but the tab grounding and first line must clearly distinguish tenant evidence from function, category, industry, corpus-pattern, benchmark, or planning-assumption context.
+
 ## Layer Impact
 
 - `global-control-lane`: changes shared Intelligence answer preparation, prompt evidence boundaries, and operator trace behavior for all clients using the Intelligence Ask path.
@@ -50,6 +52,9 @@ Second follow-up hardening tightens the Intelligence decision-canvas contract af
 - `npx eslint src/lib/intelligence/advisory-packet src/lib/intelligence/ask/index.ts src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/app/api/intelligence/ask/route.ts scripts/intelligence/generate-top-100-advisory-packet-audit.ts` passed.
 - `npx eslint src/lib/intelligence/model-input-cleaner.ts src/lib/intelligence/__tests__/model-input-cleaner.test.ts src/lib/intelligence/advisory-packet/__tests__/advisory-packet.test.ts` passed.
 - `npx eslint src/lib/intelligence/tabbed-response.ts src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/lib/intelligence/__tests__/tabbed-response.test.ts` passed.
+- Third follow-up: `npx jest src/lib/intelligence/__tests__/tabbed-response.test.ts --runInBand` passed, 4 tests.
+- Third follow-up: `npx eslint src/lib/intelligence/tabbed-response.ts src/lib/intelligence/ask/synthesizer.ts src/lib/intelligence/__tests__/tabbed-response.test.ts` passed.
+- Third follow-up: `npm run release:check` passed.
 - `npx tsx scripts/intelligence/generate-top-100-advisory-packet-audit.ts` generated 100 prompt JSON, 100 prompt Markdown, 100 summary Markdown artifacts, plus the Top 100 rollup.
 - Top 100 rollup: 100 / 100 packets reached richness >= 4, 100 / 100 passed raw leakage scan, Q001 richness = 5, six sampled answer-quality checks averaged 5.00.
 
@@ -78,9 +83,9 @@ Rollback by reverting this release candidate or deploying the previous ACA image
 - Focused Jest and ESLint command output from this candidate branch.
 - Pre-fix signed-in Q001 trace showed the API/browser proof lane working but exposed generated system-code labels; this was treated as a failed proof and patched before live-safe signoff.
 - Post-cleaner signed-in Q001 trace showed model/renderer raw leakage fixed, but the Markdown table landed inside the Decision tab instead of a dedicated Table tab; this was treated as a renderer-placement proof failure and patched before live-safe signoff.
+- Post-table-tab signed-in Q001 trace on `ca-abarva-web-lab-eastus--m6bbfc5da` showed the full right-canvas tab set: Decision, Industry Insights, Table, Chart, and Evidence. Renderer proof passed: left answer equaled Claude's main answer, tabs equaled parsed Claude tabs, Markdown tables were preserved in Table/Chart, and raw leakage scan passed.
+- Third follow-up adds the adjacent-visual rule so future right-canvas tabs can surface useful related function/category/pattern visuals instead of repeating the answer text.
 
 ## Known Gaps
 
-- Live signed-in Q001 trace artifacts are not yet captured.
-- Local-vs-live Q001 packet diff is not yet saved.
-- Renderer preservation is unit-tested locally, but live browser renderer proof is still pending.
+- Third follow-up deploy and signed-in regression are pending.
