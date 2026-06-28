@@ -884,6 +884,12 @@ function shouldIncludeIntelligenceTrace(
     user?.primaryEmailAddress?.emailAddress ??
     user?.emailAddresses?.[0]?.emailAddress ??
     "";
+  const clerkName = (
+    user?.fullName ??
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ")
+  )
+    .trim()
+    .toLowerCase();
   const personName = (person?.name ?? "").trim().toLowerCase();
   const metadata = user?.publicMetadata as Record<string, unknown> | undefined;
   const role = readString(metadata?.role)?.toLowerCase() ?? "";
@@ -910,7 +916,8 @@ function shouldIncludeIntelligenceTrace(
     "anandshp@gmail.com",
     "anand.sundaram@gmail.com",
   ]);
-  const founderOperatorName = personName === "anand sundaram";
+  const founderOperatorName =
+    personName === "anand sundaram" || clerkName === "anand sundaram";
   const allowedOperatorEmail =
     configuredOperatorEmails.has(email.toLowerCase()) ||
     founderOperatorEmail.has(email.toLowerCase());
