@@ -38,6 +38,9 @@ const saveMoveArtifact = jest.fn(async (...args: [unknown, unknown]) => {
     blobStored: true,
   };
 });
+const mockStreamAgentTurn = jest.fn(async function* () {
+  yield "<html><body><svg>Current-State Handoff Map</svg><table>Process vs Data vs Policy vs Ownership vs AI Matrix</table><p>Complete regenerated draft.</p></body></html>";
+});
 
 jest.mock("../../../../../_auth", () => ({
   requireTenancy: jest.fn(async () => tenancy),
@@ -48,8 +51,18 @@ jest.mock("../../../../../_auth", () => ({
 
 jest.mock("@/lib/programs/deliverables/move-artifacts", () => ({
   getMoveArtifactForTenant: jest.fn(async () => currentArtifact),
+  downloadArtifactBytes: jest.fn(async () => ({
+    bytes: Buffer.from("<html><body><h1>Original artifact</h1></body></html>"),
+    fileName: "original.html",
+    fileFormat: "html",
+  })),
   saveMoveArtifact: (ctx: unknown, input: unknown) =>
     saveMoveArtifact(ctx, input),
+}));
+
+jest.mock("@/lib/agent/stream", () => ({
+  streamAgentTurn: (...args: Parameters<typeof mockStreamAgentTurn>) =>
+    mockStreamAgentTurn(...args),
 }));
 
 import { POST } from "../route";
@@ -67,6 +80,7 @@ function params(programId = "move-1", artifactId = "artifact-v1") {
 beforeEach(() => {
   currentArtifact = artifact;
   saveMoveArtifact.mockClear();
+  mockStreamAgentTurn.mockClear();
 });
 
 describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/review-regenerate", () => {
@@ -108,6 +122,14 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/review-regene
     expect(json.feedbackItemCount).toBe(1);
     expect(json.regeneratedArtifact.artifactId).toBe("artifact-v2");
     expect(json.regeneratedArtifact.qualityStatus).toBe("Passed with caveats");
+    expect(mockStreamAgentTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        maxTokens: expect.any(Number),
+        aiEgress: expect.objectContaining({
+          workflow: "moves-review-regenerate-complete-artifact",
+        }),
+      }),
+    );
     expect(saveMoveArtifact).toHaveBeenCalledWith(
       tenancy,
       expect.objectContaining({
@@ -116,10 +138,14 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/review-regene
         status: "review_required",
         qualityScore: 88,
         sourceBasis: "client_review_feedback",
+        fileFormat: "html",
+        body: expect.stringContaining("Complete regenerated draft"),
         metadata: expect.objectContaining({
           feedbackItemCount: 1,
           regeneratedFromArtifactId: "artifact-v1",
           goldenBarStatus: "Passed with caveats",
+          regenerationMode: "complete_artifact",
+          originalArtifactBodyRetrieved: true,
         }),
       }),
     );

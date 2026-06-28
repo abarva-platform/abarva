@@ -1,4 +1,5 @@
 import {
+  buildReviewRegenerationPrompt,
   buildReviewRegenerationPlan,
   parseReviewFeedbackText,
 } from "../review-regeneration";
@@ -59,5 +60,31 @@ describe("Moves review regeneration helpers", () => {
     expect(plan.metadata.feedbackItemCount).toBe(1);
     expect(plan.body).toContain("This is a safe regenerated draft");
     expect(plan.body).toContain("Client-To-Complete Fields");
+  });
+
+  it("builds a complete-artifact Claude regeneration prompt, not a patch prompt", () => {
+    const plan = buildReviewRegenerationPlan({
+      artifact,
+      feedbackText:
+        "Make current-state handoffs more explicit and distinguish process issues from AI opportunities.",
+      now: new Date("2026-06-27T12:00:00Z"),
+    });
+    const prompt = buildReviewRegenerationPrompt({
+      artifact,
+      artifactKey: "discovery_report",
+      phase: 2,
+      feedbackText:
+        "Make current-state handoffs more explicit and distinguish process issues from AI opportunities.",
+      feedbackItems: plan.feedbackItems,
+      originalArtifactBody: "<html><body><h1>Original diagnostic</h1></body></html>",
+    });
+
+    expect(prompt.outputFormat).toBe("html");
+    expect(prompt.maxTokens).toBeGreaterThan(30000);
+    expect(prompt.user).toContain("COMPLETE UPDATED ARTIFACT");
+    expect(prompt.user).toContain("Original artifact to revise");
+    expect(prompt.user).toContain("Current-State Handoff Map");
+    expect(prompt.user).toContain("Process vs Data vs Policy vs Ownership vs AI Matrix");
+    expect(prompt.user).toContain("not a short delta note");
   });
 });

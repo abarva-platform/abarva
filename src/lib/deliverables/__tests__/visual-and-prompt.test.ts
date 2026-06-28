@@ -9,6 +9,10 @@ import {
   applyPhaseDigest,
   type SolutionContext,
 } from "@/lib/programs/solution-context";
+import {
+  modelTokenBudgetForArtifact,
+  STRATEGIC_MOVES_DRAFT_CAVEAT,
+} from "../strategic-moves-artifact-standard";
 
 describe("VisualArtifactContract — richness as a contract", () => {
   it("the architecture artifact requires conceptual/logical/physical + pattern visuals", () => {
@@ -84,5 +88,47 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     const p = buildArtifactPrompt({ artifact: "discovery_report", phase: 2, context: ctx });
     expect(p.user).toMatch(/\[MISSING/);
     expect(p.user).toMatch(/Do not invent facts/);
+  });
+
+  it("P1 charter prompt carries the premium charter assignment and target depth", () => {
+    const p = buildArtifactPrompt({
+      artifact: "charter",
+      phase: 1,
+      context: richContext(),
+    });
+    expect(p.user).toContain("STRATEGIC MOVES PREMIUM ARTIFACT BRIEF");
+    expect(p.user).toContain("PHASE-SPECIFIC ASSIGNMENT — P1 MOVE CHARTER");
+    expect(p.user).toContain("Scope In / Out / Adjacent table");
+    expect(p.user).toContain("Stakeholder and Decision Rights table");
+    expect(p.user).toContain("Target depth: 2,000-3,500 words");
+  });
+
+  it("P2 diagnostic prompt requires handoffs, evidence matrix, and process-vs-AI analysis", () => {
+    const p = buildArtifactPrompt({
+      artifact: "discovery_report",
+      phase: 2,
+      context: richContext(),
+    });
+    expect(p.user).toContain("PHASE-SPECIFIC ASSIGNMENT — P2 CURRENT WORK DIAGNOSTIC");
+    expect(p.user).toContain("Current-State Handoff Map");
+    expect(p.user).toContain("Evidence Coverage table");
+    expect(p.user).toContain("Process vs Data vs Policy vs Ownership vs AI Matrix");
+  });
+
+  it("draft prompt uses the standard pre-gate caveat", () => {
+    const p = buildArtifactPrompt({
+      artifact: "charter",
+      phase: 1,
+      context: richContext(),
+      generationMode: "draft",
+    });
+    expect(p.user).toContain(STRATEGIC_MOVES_DRAFT_CAVEAT);
+  });
+
+  it("uses artifact-specific model token budgets", () => {
+    expect(modelTokenBudgetForArtifact("discovery_report")).toBeGreaterThan(
+      modelTokenBudgetForArtifact("charter"),
+    );
+    expect(modelTokenBudgetForArtifact("charter")).toBeGreaterThan(20000);
   });
 });

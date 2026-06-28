@@ -127,6 +127,15 @@ function stripHtmlFences(value: string): string {
     .trim();
 }
 
+function maxTokensForRequest(requested?: number): number {
+  const envTokens = Number(process.env.NEXUS_MOVES_ARTIFACT_MAX_TOKENS ?? 0);
+  const requestedTokens = requested ?? 25000;
+  return Math.max(
+    Number.isFinite(envTokens) ? envTokens : 0,
+    requestedTokens,
+  );
+}
+
 export function createMovesGenerateArtifactDeps(
   ctx: TenancyCtx,
 ): GenerateArtifactDeps {
@@ -211,13 +220,13 @@ export function createMovesGenerateArtifactDeps(
         );
       },
     },
-    async callModel(system, user) {
+    async callModel(system, user, options) {
       let content = "";
       for await (const chunk of streamAgentTurn({
         system,
         messages: [{ role: "user", content: user }],
         model: process.env.NEXUS_COMPOSER_MODEL ?? "claude-opus-4-7",
-        maxTokens: Number(process.env.NEXUS_MOVES_ARTIFACT_MAX_TOKENS ?? 20000),
+        maxTokens: maxTokensForRequest(options?.maxTokens),
         aiEgress: {
           tenantId: ctx.clientId,
           userId: /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(ctx.userId ?? "")
@@ -226,7 +235,12 @@ export function createMovesGenerateArtifactDeps(
           workflow: "moves-deliverable-redo-generate-artifact",
           dataClass: "confidential",
           artifactType: "program",
-          metadata: { output_format: "html" },
+          metadata: {
+            output_format: "html",
+            artifact: options?.artifact,
+            phase: options?.phase,
+            generationMode: options?.generationMode,
+          },
         },
       })) {
         content += chunk;
