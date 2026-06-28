@@ -10,6 +10,7 @@ export interface ProgramEvidencePromptItem {
   evidenceType: string;
   summary: string | null;
   parseMethod: string | null;
+  structuredSignals: string[];
   extractedText: string | null;
   createdAt: string;
 }
@@ -21,6 +22,34 @@ function asString(value: unknown): string | null {
 function readParseMethod(value: unknown): string | null {
   if (!value || typeof value !== 'object') return null;
   return asString((value as { parse_method?: unknown }).parse_method);
+}
+
+function readStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => asString(item))
+    .filter((item): item is string => item !== null)
+    .slice(0, 12);
+}
+
+function readStructuredSignals(value: unknown): string[] {
+  if (!value || typeof value !== 'object') return [];
+  const structured = value as Record<string, unknown>;
+  const candidates = [
+    ...readStringList(structured.baseline_candidates),
+    ...readStringList(structured.decisions),
+    ...readStringList(structured.action_items),
+    ...readStringList(structured.risks),
+  ];
+  const seen = new Set<string>();
+  return candidates
+    .filter((item) => {
+      const key = item.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 20);
 }
 
 function compactLine(value: string | null | undefined, limit = 420): string {
@@ -48,6 +77,7 @@ export async function listProgramEvidenceForPrompt(
     evidenceType: asString(row.evidence_type) ?? 'evidence',
     summary: asString(row.summary),
     parseMethod: readParseMethod(row.extracted_structured),
+    structuredSignals: readStructuredSignals(row.extracted_structured),
     extractedText: asString(row.extracted_text),
     createdAt: asString(row.created_at) ?? '',
   }));
@@ -62,6 +92,11 @@ export function formatProgramEvidenceForPrompt(
     lines.push(
       `- ${item.title} (${item.evidenceType}; ${item.parseMethod ?? 'parser unknown'}; ${item.createdAt})`,
       `  Summary: ${compactLine(item.summary)}`,
+      item.structuredSignals.length
+        ? `  Structured signals: ${item.structuredSignals
+            .map((signal) => compactLine(signal, 240))
+            .join(' | ')}`
+        : '  Structured signals: none captured.',
       `  Text preview: ${compactLine(item.extractedText)}`,
     );
   }
