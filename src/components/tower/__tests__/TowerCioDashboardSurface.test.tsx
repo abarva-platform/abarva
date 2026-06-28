@@ -190,6 +190,15 @@ const ZERO_AMOUNT_VENDORS: AIInitiativeVendorRow[] = VENDORS.map((vendor) => ({
   contractValueUsd: 0,
 }));
 
+const OVER_PROVEN_INITIATIVES: AIInitiative[] = INITIATIVES.map(
+  (initiative, index) => ({
+    ...initiative,
+    committedAnnualUsd: index === 0 ? 40_000_000 : 0,
+    committedTotalUsd: index === 0 ? 40_000_000 : 0,
+    measuredValueUsd: index === 0 ? 55_000_000 : null,
+  }),
+);
+
 describe("TowerIndexPage · CIO dashboard surface", () => {
   beforeEach(() => {
     query = new URLSearchParams();
@@ -380,5 +389,28 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       screen.queryByText(/OpEx\/CapEx split is not loaded/i),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Atlas")).not.toBeInTheDocument();
+  });
+
+  it("does not call proven value above the committed business case unproven", () => {
+    render(
+      <TowerIndexPage
+        tenantName="Lakeshore Holdings"
+        context="Tower"
+        towerToday="2026-06-25"
+        clientId="client-lakeshore"
+        initiatives={OVER_PROVEN_INITIATIVES}
+        vendors={VENDORS}
+        activeTab="portfolio"
+        budgetRollups={BUDGET_ROLLUPS}
+      />,
+    );
+
+    expect(screen.getByText("Value gap")).toBeInTheDocument();
+    expect(screen.getByText("none")).toBeInTheDocument();
+    expect(
+      screen.getByText(/\$15\.0M above committed value/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/\$15\.0M unproven/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\$178\.9M unproven/i)).not.toBeInTheDocument();
   });
 });
