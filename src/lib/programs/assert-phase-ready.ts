@@ -28,6 +28,15 @@ export interface GateReadinessSources {
   captureComplete: (moveId: string, phase: number) => Promise<{ complete: boolean; missing: string[] }>;
   /** Has the phase gate been approved? */
   gateApproved: (moveId: string, phase: number) => Promise<boolean>;
+  /**
+   * Optional next-phase draft exception. Used for governed handoffs such as:
+   * P2 sponsor review explicitly approved for P3 draft shaping. This is not
+   * final approval and must return caveats that are carried into the draft.
+   */
+  priorPhaseDraftApproval?: (
+    moveId: string,
+    phase: number,
+  ) => Promise<{ approved: boolean; caveats: string[] }>;
 }
 
 /**
@@ -50,6 +59,12 @@ export async function assertPhaseReadyForGeneration(
   const blockers: GenerationBlocker[] = [];
 
   const approved = await sources.gateApproved(moveId, phase);
+  const gateBlocker: GenerationBlocker = {
+    code: "gate_not_approved",
+    phase,
+    reason: `Phase ${phase} gate is not approved — no generation until the gate is approved.`,
+    severity: "hard",
+  };
 
   // Retry of an already-approved phase is allowed without re-checking capture.
   if (approved && args.allowApprovedRetry) {
@@ -64,6 +79,31 @@ export async function assertPhaseReadyForGeneration(
     };
   }
 
+  if (!approved && generationMode === "draft" && sources.priorPhaseDraftApproval) {
+    const priorDraftApproval = await sources.priorPhaseDraftApproval(moveId, phase);
+    if (priorDraftApproval.approved) {
+      return {
+        ready: true,
+        phase,
+        blockers: [],
+        generationMode,
+        gateApproved: false,
+        draftOnly: true,
+        draftCaveats: [
+          gateBlocker,
+          ...priorDraftApproval.caveats.map(
+            (reason): GenerationBlocker => ({
+              code: "gate_not_approved",
+              phase,
+              reason,
+              severity: "hard",
+            }),
+          ),
+        ],
+      };
+    }
+  }
+
   const capture = await sources.captureComplete(moveId, phase);
   if (!capture.complete) {
     blockers.push({
@@ -75,12 +115,6 @@ export async function assertPhaseReadyForGeneration(
   }
 
   if (!approved) {
-    const gateBlocker: GenerationBlocker = {
-      code: "gate_not_approved",
-      phase,
-      reason: `Phase ${phase} gate is not approved — no generation until the gate is approved.`,
-      severity: "hard",
-    };
     if (generationMode === "draft" && capture.complete) {
       return {
         ready: true,

@@ -19,6 +19,7 @@ import {
   buildProgramsContextBundleAsync,
   formatProgramsBrokerBundleForPrompt,
 } from "@/lib/programs/programs-broker-adapter";
+import { hasPriorPhaseDraftApproval } from "@/lib/programs/deliverables/artifact-review-decisions";
 import type {
   PhaseDigest,
   SolutionDecision,
@@ -227,6 +228,13 @@ export function createMovesGenerateArtifactDeps(
         return snapshots.some(
           (snapshot) => snapshot.approvalStatus === "approved",
         );
+      },
+      async priorPhaseDraftApproval(moveId, phase) {
+        const result = await hasPriorPhaseDraftApproval(ctx, {
+          moveId,
+          targetPhase: phase,
+        });
+        return { approved: result.approved, caveats: result.caveats };
       },
     },
     async callModel(system, user, options) {
