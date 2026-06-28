@@ -1,12 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { AvaWordmark } from '@/components/brand/AvaWordmark';
 
-import {
-  buildAiControlTowerContextPack,
-  buildStructuredAnswerFromContextPack,
-} from '@/lib/ai-control-tower/atlas-context-pack';
-import { lensForAiControlIntent, classifyAiControlTowerIntent, type AiControlTowerLens } from '@/lib/ai-control-tower/contracts';
 import type {
   AiControlTowerActionRead,
   AiControlTowerAgentRead,
@@ -42,10 +38,39 @@ interface AtlasAnswer {
   disclosure: string | null;
   columns: string[];
   rows: string[][];
+  modelTables?: VisibleTable[];
+  modelTabs?: VisibleTab[];
   choices: Array<{ label: string; tab: TowerTab }>;
   /** Engine-suggested follow-up questions (re-ask on click). */
   followUps?: Array<{ label: string; value: string }>;
   citations: string[];
+}
+
+interface VisibleTable {
+  id: string;
+  title: string;
+  columns: string[];
+  rows: string[][];
+}
+
+interface VisibleTab {
+  id: string;
+  label: string;
+  prose: string;
+  tables?: VisibleTable[];
+}
+
+interface CioTowerChatResponse {
+  response?: string;
+  modelOutput?: {
+    version: 'cio_tower_visible_answer_v1';
+    answer: string;
+    tables?: VisibleTable[];
+    tabs?: VisibleTab[];
+    followUpQuestion?: string | null;
+  };
+  validationStatus?: 'passed' | 'failed';
+  validationErrors?: string[];
 }
 
 const TABS: Array<{ key: TowerTab; kicker: string; label: string; question: string }> = [
@@ -66,6 +91,15 @@ const SUGGESTED_QUESTIONS = [
   'Which function has the biggest adoption gap?',
   'What should go to the next steering meeting?',
 ];
+
+const TOWER_ASK_TEXTAREA_MAX_HEIGHT = 156;
+
+function resizeTowerAskTextarea(el: HTMLTextAreaElement) {
+  el.style.height = 'auto';
+  const nextHeight = Math.min(el.scrollHeight, TOWER_ASK_TEXTAREA_MAX_HEIGHT);
+  el.style.height = `${nextHeight}px`;
+  el.style.overflowY = el.scrollHeight > TOWER_ASK_TEXTAREA_MAX_HEIGHT ? 'auto' : 'hidden';
+}
 
 const COLORS = {
   bg: '#f8f7f2',
@@ -104,21 +138,6 @@ function toneColor(tone: string): string {
   return COLORS.muted;
 }
 
-function lensForTab(tab: TowerTab): AiControlTowerLens {
-  if (tab === 'productivity') return 'productivity';
-  if (tab === 'agents') return 'agents';
-  if (tab === 'spend') return 'spend';
-  if (tab === 'risk') return 'risk';
-  if (tab === 'evidence') return 'evidence';
-  if (tab === 'actions') return 'actions';
-  return 'value_adoption';
-}
-
-function tabForLens(lens: AiControlTowerLens): TowerTab {
-  if (lens === 'value_adoption') return 'value';
-  return lens;
-}
-
 function rowFunction(row: { functionName?: string }): string {
   return row.functionName || 'Unassigned';
 }
@@ -134,85 +153,18 @@ function topInitiatives(model: AiControlTowerReadModel, selectedFunction: string
     .slice(0, 8);
 }
 
-function findCitations(model: AiControlTowerReadModel, recordKey: string): string[] {
-  const fromEvidence = model.evidence
-    .filter((item) => item.recordKey === recordKey)
-    .map((item) => item.citationLabel || item.id)
-    .filter(Boolean);
-  const fromFacts = model.facts
-    .filter((fact) => fact.recordKey === recordKey)
-    .flatMap((fact) => fact.evidenceIds);
-  return [...new Set([...fromEvidence, ...fromFacts])].slice(0, 4);
-}
-
-function buildAtlasAnswer(model: AiControlTowerReadModel, question: string, activeTab: TowerTab): {
-  answer: AtlasAnswer;
-  nextTab: TowerTab;
-} {
-  const intent = classifyAiControlTowerIntent(question);
-  const pack = buildAiControlTowerContextPack({
-    clientId: model.clientId ?? 'unknown-client',
-    refreshRunId: model.refreshRunId,
-    snapshotMonth: model.reportingPeriodEnd,
-    question,
-    surfaceContext: { activeLens: lensForTab(activeTab) },
-    facts: model.facts,
-  });
-  const structured = buildStructuredAnswerFromContextPack(pack);
-  const lensTab = tabForLens(lensForAiControlIntent(intent));
-
-  // Local degraded fallback only — used when the grounded Atlas engine
-  // (/api/v1/atlas/chat) is unreachable. The primary path is the engine, which
-  // reasons over the question predicate rather than keyword-routing to a lens.
-  if (structured.table?.rows?.length) {
-    return {
-      nextTab: lensTab,
-      answer: {
-        headline: structured.summary.headline,
-        disclosure: structured.summary.disclosure ?? model.sourceDisclosure,
-        columns: structured.table.columns.map((column) => column.label),
-        rows: structured.table.rows.map((row) => structured.table!.columns.map((column) => String(row[column.key] ?? ''))),
-        choices: structured.choices.map((choice) => ({
-          label: choice.label,
-          tab: tabForLens(choice.target as AiControlTowerLens),
-        })),
-        citations: structured.citations.map((citation) => citation.evidenceId),
-      },
-    };
-  }
-
-  const rows = topInitiatives(model, 'All').slice(0, 5);
-  return {
-    nextTab: lensTab,
-    answer: {
-      headline: rows.length
-        ? `${rows[0].title} is the highest realized-value initiative in the loaded Tower view.`
-        : 'The Tower substrate is not loaded deeply enough to answer that yet.',
-      disclosure: model.sourceDisclosure,
-      columns: ['Initiative', 'Function', 'Realized', 'Promised', 'State'],
-      rows: rows.map((row) => [row.title, row.functionName, money(row.realizedUsd), money(row.promisedUsd), row.status]),
-      choices: [
-        { label: 'Open initiatives', tab: 'initiatives' },
-        { label: 'Open evidence', tab: 'evidence' },
-        { label: 'Prepare actions', tab: 'actions' },
-      ],
-      citations: rows.flatMap((row) => findCitations(model, row.id)),
-    },
-  };
-}
-
 export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
   const enterpriseRead = model.derivedEnterpriseRead ?? null;
   const [activeTab, setActiveTab] = useState<TowerTab>('value');
   const [selectedFunction, setSelectedFunction] = useState('All');
   const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | null>(model.initiatives[0]?.id ?? null);
   const [draft, setDraft] = useState('');
-  const [threadId, setThreadId] = useState<string | null>(null);
+  const draftRef = useRef<HTMLTextAreaElement | null>(null);
   const [pending, setPending] = useState(false);
   const [answer, setAnswer] = useState<AtlasAnswer | null>(() => ({
     headline: enterpriseRead?.headline ?? (model.initiatives.length
       ? `I am watching ${model.tenantName}'s AI portfolio across ${model.functions.length} functions, ${model.initiatives.length} initiatives, ${model.spend.length} spend rows, and ${model.evidence.length} evidence links.`
-      : 'Atlas is ready, but this tenant does not yet have committed AI Control Tower rows.'),
+      : 'aVa is ready, but this tenant does not yet have committed AI Control Tower rows.'),
     body: enterpriseRead
       ? `${enterpriseRead.executiveSummary}\n\nTower implication: AI portfolio decisions should be read against this enterprise context before scaling, holding, or funding initiatives.`
       : undefined,
@@ -243,47 +195,46 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
     const trimmed = message.trim();
     if (!trimmed || pending) return;
     setDraft('');
+    if (draftRef.current) {
+      draftRef.current.style.height = 'auto';
+      draftRef.current.style.overflowY = 'hidden';
+    }
     setPending(true);
     try {
-      const res = await fetch('/api/v1/atlas/chat', {
+      const res = await fetch('/api/tower/cio-chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           message: trimmed,
-          clientId: model.clientId ?? null,
-          threadId,
-          surfaceContext: { surface: 'ai_control_tower', activeLens: lensForTab(activeTab) },
         }),
       });
-      if (!res.ok) throw new Error(`atlas_http_${res.status}`);
-      const data = (await res.json()) as {
-        threadId?: string;
-        response?: string;
-        suggestions?: Array<{ label: string; value: string; kind?: string }>;
-      };
-      if (data.threadId) setThreadId(data.threadId);
+      const data = (await res.json().catch(() => ({}))) as CioTowerChatResponse & { detail?: string };
+      if (!res.ok || !data.modelOutput) {
+        throw new Error(data.detail || `cio_tower_chat_http_${res.status}`);
+      }
       setAnswer({
         headline: '',
-        body: data.response?.trim() || 'Atlas returned no answer for that question.',
+        body: data.modelOutput.answer,
         disclosure: model.sourceDisclosure,
         columns: [],
         rows: [],
+        modelTables: data.modelOutput.tables ?? [],
+        modelTabs: data.modelOutput.tabs ?? [],
         choices: [],
-        followUps: (data.suggestions ?? [])
-          .filter((s) => s.kind !== 'link' && s.value)
-          .slice(0, 3)
-          .map((s) => ({ label: s.label, value: s.value })),
+        followUps: data.modelOutput.followUpQuestion
+          ? [{ label: data.modelOutput.followUpQuestion, value: data.modelOutput.followUpQuestion }]
+          : [],
         citations: [],
       });
-    } catch {
-      // Grounded engine unreachable — degrade to the local structured read, clearly marked.
-      const built = buildAtlasAnswer(model, trimmed, activeTab);
-      setActiveTab(built.nextTab);
+    } catch (error) {
       setAnswer({
-        ...built.answer,
-        disclosure: built.answer.disclosure
-          ? `${built.answer.disclosure} (offline read — Atlas engine unreachable)`
-          : 'Offline read — Atlas engine unreachable.',
+        headline: '',
+        body: `aVa could not produce a valid Tower answer contract. ${error instanceof Error ? error.message : 'Try again after the prompt contract is corrected.'}`,
+        disclosure: 'No fallback answer was generated.',
+        columns: [],
+        rows: [],
+        choices: [],
+        citations: [],
       });
     } finally {
       setPending(false);
@@ -370,7 +321,7 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
               boxShadow: activeTab === tab.key ? 'inset 0 0 0 2px #006cff' : 'none',
             }}
           >
-            <span>{tab.kicker}</span>
+            {tab.kicker !== tab.label ? <span>{tab.kicker}</span> : null}
             <strong>{tab.label}</strong>
           </button>
         ))}
@@ -378,12 +329,15 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
 
       <section style={styles.workspace}>
         <aside style={styles.atlas}>
-          <p style={styles.kicker}>ATLAS</p>
-          <h2 style={styles.asideTitle}>Ask about the portfolio.</h2>
+          <p style={styles.kicker}>aVa · Tower</p>
+          <div style={styles.agentIdentity}>
+            <AvaWordmark tone="light" style={{ width: 58 }} />
+            <h2 style={styles.asideTitle}>Ask about the portfolio.</h2>
+          </div>
           <div style={styles.answerBox}>
             {pending ? (
               <p style={{ color: COLORS.muted, fontStyle: 'italic', margin: 0 }}>
-                Atlas is reading the committed context…
+                aVa is reading the committed context…
               </p>
             ) : answer ? (
               <>
@@ -391,6 +345,12 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
                 {answer.body ? <p style={{ whiteSpace: 'pre-wrap', margin: '0 0 8px' }}>{answer.body}</p> : null}
                 {answer.disclosure ? <p>{answer.disclosure}</p> : null}
                 {answer.rows.length > 0 ? <MiniTable columns={answer.columns} rows={answer.rows} /> : null}
+                {answer.modelTables?.map((table) => (
+                  <VisibleAnswerTable key={table.id} table={table} />
+                ))}
+                {answer.modelTabs?.map((tab) => (
+                  <VisibleAnswerTab key={tab.id} tab={tab} />
+                ))}
                 {answer.citations.length > 0 ? (
                   <div style={styles.citationRow}>
                     {answer.citations.slice(0, 4).map((citation) => <span key={citation}>{citation}</span>)}
@@ -431,17 +391,29 @@ export function AiControlTowerPage({ model }: AiControlTowerPageProps) {
               submitQuestion(draft);
             }}
           >
-            <input
-              aria-label="Ask Atlas"
+            <textarea
+              ref={draftRef}
+              aria-label="Ask aVa"
+              rows={1}
               value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder="Ask Atlas..."
+              onChange={(event) => {
+                setDraft(event.target.value);
+                resizeTowerAskTextarea(event.target);
+              }}
+              onFocus={(event) => resizeTowerAskTextarea(event.target)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault();
+                  submitQuestion(draft);
+                }
+              }}
+              placeholder="Ask aVa..."
               style={styles.askInput}
               disabled={pending}
             />
             <button type="submit" style={styles.askButton} disabled={pending}>{pending ? '…' : 'Ask'}</button>
           </form>
-          <p style={styles.guardrail}>Human approval required: Atlas proposes; named leaders approve writes, submissions, and external actions.</p>
+          <p style={styles.guardrail}>Human approval required: aVa proposes; named leaders approve writes, submissions, and external actions.</p>
         </aside>
 
         <section style={styles.canvas}>
@@ -496,6 +468,25 @@ function MiniTable({ columns, rows }: { columns: string[]; rows: string[][] }) {
         </tbody>
       </table>
     </div>
+  );
+}
+
+function VisibleAnswerTable({ table }: { table: VisibleTable }) {
+  return (
+    <section style={styles.visibleTableSection}>
+      <h3 style={styles.visibleTableTitle}>{table.title}</h3>
+      <MiniTable columns={table.columns} rows={table.rows} />
+    </section>
+  );
+}
+
+function VisibleAnswerTab({ tab }: { tab: VisibleTab }) {
+  return (
+    <section style={styles.visibleTabSection}>
+      <h3 style={styles.visibleTableTitle}>{tab.label}</h3>
+      <p style={{ whiteSpace: 'pre-wrap', margin: '0 0 8px' }}>{tab.prose}</p>
+      {tab.tables?.map((table) => <VisibleAnswerTable key={table.id} table={table} />)}
+    </section>
   );
 }
 
@@ -705,7 +696,7 @@ function RiskTable({ rows }: { rows: AiControlTowerRiskRead[] }) {
 }
 
 function EvidenceTable({ rows, facts }: { rows: AiControlTowerEvidenceRead[]; facts: number }) {
-  if (rows.length === 0) return <EmptyState message={`No committed evidence rows are available. Atlas has ${facts} context facts but cannot cite source rows until evidence is committed.`} />;
+  if (rows.length === 0) return <EmptyState message={`No committed evidence rows are available. aVa has ${facts} context facts but cannot cite source rows until evidence is committed.`} />;
   return (
     <TableShell>
       <thead><tr><th>Evidence</th><th>Record</th><th>Type</th><th>Pointer</th><th>State</th><th>Confidence</th></tr></thead>
@@ -1001,6 +992,11 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 24,
     letterSpacing: 0,
   },
+  agentIdentity: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+  },
   answerBox: {
     display: 'grid',
     gap: 10,
@@ -1032,11 +1028,17 @@ const styles: Record<string, React.CSSProperties> = {
   },
   askInput: {
     minWidth: 0,
+    minHeight: 42,
+    maxHeight: TOWER_ASK_TEXTAREA_MAX_HEIGHT,
     border: `1px solid ${COLORS.line}`,
     borderRadius: 7,
     padding: '10px',
     background: COLORS.panel,
     color: COLORS.ink,
+    font: 'inherit',
+    lineHeight: 1.45,
+    resize: 'none',
+    overflowY: 'hidden',
   },
   askButton: {
     border: 'none',
@@ -1122,6 +1124,26 @@ const styles: Record<string, React.CSSProperties> = {
   miniTableWrap: {
     overflowX: 'auto',
     maxHeight: 260,
+  },
+  visibleTableSection: {
+    display: 'grid',
+    gap: 6,
+    borderTop: `1px solid ${COLORS.line}`,
+    paddingTop: 8,
+  },
+  visibleTabSection: {
+    display: 'grid',
+    gap: 7,
+    borderTop: `1px solid ${COLORS.line}`,
+    paddingTop: 8,
+  },
+  visibleTableTitle: {
+    margin: 0,
+    color: COLORS.ink,
+    fontFamily: COLORS.serif,
+    fontSize: 18,
+    lineHeight: 1.15,
+    letterSpacing: 0,
   },
   table: {
     width: '100%',

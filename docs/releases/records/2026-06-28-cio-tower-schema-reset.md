@@ -43,6 +43,12 @@ traces, and validation results.
   `scripts/tower/generate-fy2025-trend-synthetic.mjs`
 - CIO Tower standardized loader:
   `scripts/tower/load-cio-tower-standardized-v1.mjs`
+- CIO Tower chat answer service:
+  `src/lib/cio-tower/answer.ts`
+- CIO Tower chat endpoint:
+  `src/app/api/tower/cio-chat/route.ts`
+- Tower page chat wiring:
+  `src/components/tower/AiControlTowerPage.tsx`
 - Azure operation: dropped old `public.tower_*`, `public.ai_control_*`, and
   `public.semantic2_tower_*` tables/views/materialized views.
 - Azure operation: applied the new `cio_tower` schema with 11 tables.
@@ -133,6 +139,29 @@ Pass: Independent read-back confirmed both `total_it_budget_fy25_baseline` and
 `total_it_budget_fy26` are persisted for all five tenants, with non-zero source
 fact counts for both years.
 
+Pass: Tower chat now has a dedicated `/api/tower/cio-chat` server route that
+loads `cio_tower` facts, measures, relationships, and question contracts, builds
+a high-context Claude prompt, and records prompt packages plus answer traces.
+
+Pass: Tower chat no longer falls back to the old `/api/v1/atlas/chat` path or a
+browser-side generated answer when the model path fails.
+
+Pass: The Claude prompt now requires an explicit
+`cio_tower_visible_answer_v1` JSON contract. Claude owns every user-visible
+string, including main prose, table titles, table columns, table cells, tab
+labels, tab prose, and follow-up question. The renderer is a pure placement
+layer and must not rewrite, summarize, scrub, relabel, infer, or improve the
+model output.
+
+Pass: `cio_tower.answer_traces` stores the raw model response and rendered
+response identically for this route; visible-section parity is recorded in the
+artifact metadata.
+
+Pass: Focused local validation passed:
+- `npx eslint src/lib/cio-tower/answer.ts src/lib/cio-tower/__tests__/answer.test.ts src/app/api/tower/cio-chat/route.ts src/components/tower/AiControlTowerPage.tsx`
+- `npx jest src/lib/cio-tower/__tests__/answer.test.ts --runInBand`
+- `npx tsc --noEmit --pretty false --incremental false`
+
 ## Rollout Plan
 
 1. Keep old Tower-named Azure objects deleted.
@@ -140,9 +169,10 @@ fact counts for both years.
 3. Load the standardized Tower files into `cio_tower.source_registry`,
    `cio_tower.entities`, `cio_tower.facts`, and `cio_tower.relationships`.
 4. Seed `cio_tower.measures` and `cio_tower.question_contracts`.
-5. Rebuild Tower dashboard and chat from `cio_tower.measure_results`,
-   `cio_tower.prompt_packages`, and `cio_tower.answer_traces`.
-6. Browser-prove the rebuilt Tower only after the new load, metric, prompt, and
+5. Rebuild Tower dashboard from `cio_tower.measure_results`.
+6. Route Tower chat through `/api/tower/cio-chat`, with Claude returning the
+   visible-answer contract and the renderer placing it unchanged.
+7. Browser-prove the rebuilt Tower only after the new load, metric, prompt, and
    trace layers are populated.
 
 ## Rollback Plan
@@ -182,8 +212,9 @@ measure, question-contract, and FY2025/FY2026 trend measure rows in
 
 ## Known Gaps
 
-The new `cio_tower` schema is applied and loaded in Azure/Postgres. The next
-work is wiring the Tower dashboard/chat exclusively to `cio_tower`,
-capturing prompt/response/render traces, and signed-in Tower dashboard/chat
-proof. The current work did not deploy a new web revision or browser-prove Tower
-against the new schema.
+The new `cio_tower` schema is applied and loaded in Azure/Postgres, and the
+Tower chat path is now wired to the new prompt/trace service in code. The next
+work is wiring the Tower dashboard exclusively to `cio_tower.measure_results`,
+deploying the web revision, and signed-in browser proving prompt package, raw
+Claude response, rendered response, dashboard KPI, and chat/dashboard parity for
+all tenants.
