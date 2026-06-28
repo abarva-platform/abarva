@@ -8,7 +8,15 @@ export type IntelligenceTabId =
 export interface ParsedIntelligenceTab {
   id: IntelligenceTabId;
   label: string;
-  grounding: "tenant-evidence" | "industry-context" | "corpus-pattern" | "benchmark" | "mixed" | "unknown";
+  grounding:
+    | "tenant-evidence"
+    | "function-context"
+    | "category-context"
+    | "industry-context"
+    | "corpus-pattern"
+    | "benchmark"
+    | "mixed"
+    | "unknown";
   content: string;
 }
 
@@ -47,17 +55,19 @@ Tabs:
   <<<TAB: Evidence | grounding: tenant-evidence>>>
 - End each tab by starting the next tab marker or the end of the response.
 - The renderer will only use the markers to place content into tabs. It will not rewrite your prose, tables, or chart data.
+- The right canvas should add decision support, not duplicate the main answer. Bring the most useful adjacent view: exact tenant metric when available; otherwise a relevant function, category, industry, corpus-pattern, benchmark, or planning-assumption view with honest grounding.
 - Decision should state the choice, tradeoff, and decision required.
 - Industry Insights must be explicitly labeled as industry context or benchmark context, not tenant proof. Never say the tenant "has" an industry fact unless it is in tenant evidence.
-- Chart should appear only when you can provide chart-ready data in a compact Markdown table with numeric values. If the data is not chart-ready, omit the Chart tab.
-- Table should preserve a compact Markdown table when it helps the decision.
+- Chart should appear only when you can provide chart-ready data in a compact Markdown table with numeric values. The chart can be exact-answer data or relevant function/category/pattern data, but the tab grounding and first line must make the boundary clear. If no chart-ready data exists, omit the Chart tab.
+- Table should preserve a compact Markdown table when it helps the decision. The table can be directly about the answer or an adjacent function/category/pattern view that helps the CXO reason about the question.
 - If you emit any Markdown table, it must appear inside the Table tab or Chart tab, never inside the main answer, Decision tab, Industry Insights tab, or Evidence tab.
 - If the answer includes a decision plus a comparison table, put the choice and tradeoff in Decision, then start a separate <<<TAB: Table | grounding: tenant-evidence>>> marker before the table.
 - Evidence should separate tenant facts, industry/pattern context, benchmarks, planning assumptions, and missing evidence.
 
 Grounding:
 - Clearly distinguish tenant facts, industry context, corpus/pattern context, benchmarks, planning assumptions, and missing evidence.
-- Chart and Table default to tenant evidence. If using industry/pattern context, say so in the tab marker grounding and in the first line of the tab.`;
+- Chart and Table default to tenant evidence. If using function/category/industry/pattern context, say so in the tab marker grounding and in the first line of the tab.
+- Accepted grounding labels include tenant-evidence, function-context, category-context, industry-context, corpus-pattern, benchmark, and mixed.`;
 
 function normalizeTabId(label: string): IntelligenceTabId | null {
   const normalized = label.trim().toLowerCase();
@@ -75,6 +85,12 @@ function normalizeGrounding(
   const normalized = (value ?? "").trim().toLowerCase();
   if (normalized === "tenant-evidence" || normalized === "tenant evidence") {
     return "tenant-evidence";
+  }
+  if (normalized === "function-context" || normalized === "function context") {
+    return "function-context";
+  }
+  if (normalized === "category-context" || normalized === "category context") {
+    return "category-context";
   }
   if (normalized === "industry-context" || normalized === "industry context") {
     return "industry-context";

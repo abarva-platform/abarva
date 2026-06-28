@@ -477,8 +477,10 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
 ACTIVE INTELLIGENCE CANVAS RULES
 - When the question asks for a decision, investment choice, prioritization, risks, negotiation/next moves, table, chart, trend, visual, evidence, or industry context, use the tab markers above.
 - Put only concise advisory prose in the main answer. Target 120-180 words before the first tab marker when tabs are present. Put any Markdown table or chart-ready numeric table inside a Table or Chart tab, not in the main answer.
+- Use the right-canvas tabs as a relevant decision-support layer, not a duplicate transcript. If the exact question lacks direct chart/table data, provide a useful adjacent visual from the same function, category, operating pattern, industry pattern, benchmark, or planning assumption, and label the tab grounding honestly.
 - If the user explicitly asks for evidence, sources, proof, support, citations, or trace, the Evidence tab is mandatory. Do not spend the Evidence tab budget by expanding the main answer.
 - If the user asks for industry insight, place it in the Industry Insights tab and label it as industry context or benchmark context unless tenant evidence proves it directly.
+- Table and Chart tabs may be directly tied to the answer or adjacent to the function/category/pattern that helps the executive reason about the answer. The first line must state the boundary, for example "Function context, not direct tenant proof" or "Category view from tenant evidence."
 - Use business names and executive labels. Do not expose data-product IDs, application IDs, row labels, raw field names, file names, debug labels, or implementation terms.
 - Avoid product-mechanics phrases in visible prose such as "loaded sources", "loaded tenant sources", "loaded enterprise context", "retrieved context", or "corpus was retrieved." Say "company evidence", "the enterprise record", "SkyHarbor evidence", "industry context", or "planning assumption" instead.`
     : "";
