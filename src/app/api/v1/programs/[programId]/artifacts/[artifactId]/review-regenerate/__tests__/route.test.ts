@@ -146,6 +146,8 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/review-regene
         fileFormat: "html",
         body: expect.stringContaining("Complete regenerated draft"),
         metadata: expect.objectContaining({
+          outputRole: "html_visual_review_companion",
+          provenanceCategory: "abarva_generated_deliverable",
           feedbackItemCount: 1,
           regeneratedFromArtifactId: "artifact-v1",
           goldenBarStatus: "Passed with caveats",
@@ -202,6 +204,8 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/review-regene
         fileFormat: "html",
         body: expect.stringContaining("Executive Summary"),
         metadata: expect.objectContaining({
+          outputRole: "html_visual_review_companion",
+          provenanceCategory: "abarva_generated_deliverable",
           regenerationMode: "deterministic_editable_review_package",
           originalArtifactBodyRetrieved: true,
         }),

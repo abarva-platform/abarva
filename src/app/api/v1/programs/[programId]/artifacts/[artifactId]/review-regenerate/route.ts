@@ -323,6 +323,8 @@ export async function POST(
         ...plan.metadata,
         sourceArtifactTitle: artifact.title,
         regenerationMode,
+        outputRole: "html_visual_review_companion",
+        provenanceCategory: "abarva_generated_deliverable",
         originalArtifactBodyRetrieved: Boolean(original),
       },
     });
