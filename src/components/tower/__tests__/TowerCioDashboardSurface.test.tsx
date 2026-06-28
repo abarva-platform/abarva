@@ -199,6 +199,25 @@ const OVER_PROVEN_INITIATIVES: AIInitiative[] = INITIATIVES.map(
   }),
 );
 
+const RAW_LABEL_INITIATIVES: AIInitiative[] = INITIATIVES.map(
+  (initiative, index) => ({
+    ...initiative,
+    primaryCategoryName:
+      index === 0 ? "model_governance" : initiative.primaryCategoryName,
+    primaryGoalName:
+      index === 0 ? "run_resilience" : initiative.primaryGoalName,
+    ownerFunction: index === 0 ? "model_governance" : initiative.ownerFunction,
+  }),
+);
+
+const RAW_LABEL_BUDGET_ROLLUPS: TowerBudgetRollup[] = [
+  {
+    ...BUDGET_ROLLUPS[0],
+    portfolioCompany: "model_governance",
+  },
+  BUDGET_ROLLUPS[1],
+];
+
 describe("TowerIndexPage · CIO dashboard surface", () => {
   beforeEach(() => {
     query = new URLSearchParams();
@@ -412,5 +431,26 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText(/\$15\.0M unproven/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/\$178\.9M unproven/i)).not.toBeInTheDocument();
+  });
+
+  it("normalizes raw dimension slugs before showing Tower labels", () => {
+    query = new URLSearchParams("dashboard=budget");
+
+    render(
+      <TowerIndexPage
+        tenantName="SkyHarbor Air"
+        context="Tower"
+        towerToday="2026-06-25"
+        clientId="client-skyharbor"
+        initiatives={RAW_LABEL_INITIATIVES}
+        vendors={VENDORS}
+        activeTab="portfolio"
+        budgetRollups={RAW_LABEL_BUDGET_ROLLUPS}
+      />,
+    );
+
+    expect(screen.queryByText("model_governance")).not.toBeInTheDocument();
+    expect(screen.queryByText("run_resilience")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Model Governance").length).toBeGreaterThan(0);
   });
 });
