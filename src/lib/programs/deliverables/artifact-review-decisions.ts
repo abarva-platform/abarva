@@ -17,6 +17,9 @@ export interface ArtifactReviewDecisionRow {
   phase: number;
   artifact_id: string;
   artifact_version: number;
+  html_visual_companion_artifact_id: string | null;
+  docx_editable_artifact_id: string | null;
+  reviewed_artifact_ids: string[];
   reviewer_user_id: string | null;
   reviewer_email: string | null;
   decision: ArtifactReviewDecision;
@@ -36,6 +39,13 @@ export interface ArtifactReviewReadiness {
   p2FinalApproved: boolean;
   allowedNextAction: string;
   reason: string;
+}
+
+export interface ArtifactReviewPackage {
+  reviewedArtifactId: string;
+  htmlVisualCompanionArtifactId: string | null;
+  docxEditableArtifactId: string | null;
+  reviewedArtifactIds: string[];
 }
 
 export interface P2ReviewPacket {
@@ -61,6 +71,7 @@ export interface CreateArtifactReviewDecisionInput {
   rationale: string;
   carriedForwardCaveats?: string[];
   missingEvidence?: string[];
+  reviewPackage?: ArtifactReviewPackage;
 }
 
 const DECISION_CONFIG: Record<
@@ -123,6 +134,54 @@ function hasText(text: string, pattern: RegExp): boolean {
 
 function unique(values: string[]): string[] {
   return Array.from(new Set(values.filter(Boolean)));
+}
+
+function metaString(meta: Record<string, unknown>, key: string): string | null {
+  const value = meta[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+export function buildReviewPackageFromArtifacts(args: {
+  artifact: MoveArtifactRow;
+  pairedArtifact?: MoveArtifactRow | null;
+}): ArtifactReviewPackage {
+  const artifact = args.artifact;
+  const artifactMeta = artifact.metadata ?? {};
+  const paired = args.pairedArtifact ?? null;
+  const pairedMeta = paired?.metadata ?? {};
+
+  const artifactOutputRole = metaString(artifactMeta, "outputRole");
+  const pairedOutputRole = paired ? metaString(pairedMeta, "outputRole") : null;
+
+  const htmlVisualCompanionArtifactId =
+    artifactOutputRole === "html_visual_review_companion" ||
+    artifact.file_format === "html"
+      ? artifact.artifact_id
+      : pairedOutputRole === "html_visual_review_companion" ||
+          paired?.file_format === "html"
+        ? paired?.artifact_id ?? null
+        : metaString(artifactMeta, "pairedVisualCompanionArtifactId") ??
+          metaString(pairedMeta, "pairedVisualCompanionArtifactId");
+
+  const docxEditableArtifactId =
+    artifactOutputRole === "docx_editable_phase_record" ||
+    artifact.file_format === "docx"
+      ? artifact.artifact_id
+      : pairedOutputRole === "docx_editable_phase_record" ||
+          paired?.file_format === "docx"
+        ? paired?.artifact_id ?? null
+        : null;
+
+  return {
+    reviewedArtifactId: artifact.artifact_id,
+    htmlVisualCompanionArtifactId,
+    docxEditableArtifactId,
+    reviewedArtifactIds: unique([
+      artifact.artifact_id,
+      htmlVisualCompanionArtifactId ?? "",
+      docxEditableArtifactId ?? "",
+    ]),
+  };
 }
 
 export function readinessForDecision(
@@ -250,6 +309,9 @@ export async function createArtifactReviewDecision(
 ): Promise<ArtifactReviewDecisionRow> {
   const tenantKey = ctx.clientKey ?? "";
   const config = DECISION_CONFIG[input.decision];
+  const reviewPackage =
+    input.reviewPackage ??
+    buildReviewPackageFromArtifacts({ artifact: input.artifact });
   const sb = getAzureWriteFluentClient();
   const { data, error } = await sb
     .from("move_artifact_review_decisions")
@@ -260,6 +322,10 @@ export async function createArtifactReviewDecision(
       phase: input.artifact.phase ?? 0,
       artifact_id: input.artifact.artifact_id,
       artifact_version: input.artifact.version,
+      html_visual_companion_artifact_id:
+        reviewPackage.htmlVisualCompanionArtifactId,
+      docx_editable_artifact_id: reviewPackage.docxEditableArtifactId,
+      reviewed_artifact_ids: reviewPackage.reviewedArtifactIds,
       reviewer_user_id: ctx.userId ?? null,
       reviewer_email: ctx.email ?? null,
       decision: input.decision,

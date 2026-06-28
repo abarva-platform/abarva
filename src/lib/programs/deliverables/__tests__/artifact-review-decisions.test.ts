@@ -1,4 +1,5 @@
 import {
+  buildReviewPackageFromArtifacts,
   buildP2ReviewPacket,
   readinessForDecision,
 } from "../artifact-review-decisions";
@@ -30,6 +31,31 @@ const artifact: MoveArtifactRow = {
 };
 
 describe("artifact review decisions", () => {
+  it("binds both HTML visual companion and DOCX editable record to a review package", () => {
+    const docxArtifact: MoveArtifactRow = {
+      ...artifact,
+      artifact_id: "docx-artifact",
+      file_format: "docx",
+      artifact_type: "discovery_report_editable_docx",
+      metadata: {
+        outputRole: "docx_editable_phase_record",
+        pairedVisualCompanionArtifactId: artifact.artifact_id,
+      },
+    };
+
+    expect(
+      buildReviewPackageFromArtifacts({
+        artifact,
+        pairedArtifact: docxArtifact,
+      }),
+    ).toEqual({
+      reviewedArtifactId: artifact.artifact_id,
+      htmlVisualCompanionArtifactId: artifact.artifact_id,
+      docxEditableArtifactId: "docx-artifact",
+      reviewedArtifactIds: [artifact.artifact_id, "docx-artifact"],
+    });
+  });
+
   it("extracts a P2 sponsor-review packet from evidence-bound artifact text", () => {
     const packet = buildP2ReviewPacket({
       artifact,
