@@ -8,7 +8,7 @@
       },
       "ask": {
         "placeholder": "e.g. Which AI initiatives should we kill, and why?",
-        "contract": "Every answer is read from the loaded enterprise context and cited to its source — and says so honestly when the evidence isn't there."
+        "contract": "Every answer is grounded in enterprise evidence, industry context, and clear caveats when facts are missing."
       },
       "trustLine": {
         "dimensionsLoaded": 19,
@@ -338,7 +338,7 @@
       },
       "ask": {
         "placeholder": "e.g. Which AI initiatives should we kill, and why?",
-        "contract": "Every answer is read from the loaded enterprise context and cited to its source — and says so honestly when the evidence isn't there."
+        "contract": "Every answer is grounded in enterprise evidence, industry context, and clear caveats when facts are missing."
       },
       "trustLine": {
         "dimensionsLoaded": 19,
@@ -648,7 +648,7 @@
       },
       "ask": {
         "placeholder": "e.g. Which AI initiatives should we kill, and why?",
-        "contract": "Every answer is read from the loaded enterprise context and cited to its source — and says so honestly when the evidence isn't there."
+        "contract": "Every answer is grounded in enterprise evidence, industry context, and clear caveats when facts are missing."
       },
       "trustLine": {
         "dimensionsLoaded": 19,
@@ -978,7 +978,7 @@
       },
       "ask": {
         "placeholder": "e.g. Which AI initiatives should we kill, and why?",
-        "contract": "Every answer is read from the loaded enterprise context and cited to its source — and says so honestly when the evidence isn't there."
+        "contract": "Every answer is grounded in enterprise evidence, industry context, and clear caveats when facts are missing."
       },
       "trustLine": {
         "dimensionsLoaded": 19,
@@ -1452,7 +1452,7 @@
       },
       "ask": {
         "placeholder": "e.g. Which AI initiatives should we kill, and why?",
-        "contract": "Every answer is read from the loaded enterprise context and cited to its source — and says so honestly when the evidence isn't there."
+        "contract": "Every answer is grounded in enterprise evidence, industry context, and clear caveats when facts are missing."
       },
       "trustLine": {
         "dimensionsLoaded": 19,
@@ -1784,7 +1784,7 @@
       },
       "ask": {
         "placeholder": "e.g. Which ERP, QMS, vendor, and clinical-coding AI moves should we accelerate or hold?",
-        "contract": "Every answer is read from the committed Northstar enterprise context and cited to its source - and says so honestly when the evidence isn't there."
+        "contract": "Every answer is grounded in enterprise evidence, industry context, and clear caveats when facts are missing."
       },
       "trustLine": {
         "dimensionsLoaded": 19,
