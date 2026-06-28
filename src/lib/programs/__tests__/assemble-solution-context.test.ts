@@ -57,4 +57,42 @@ describe("assembleMoveSolutionContext (Slice 1)", () => {
     );
     expect(seenQuery).toBe("unify clinical + claims");
   });
+
+  it("promotes concrete P2 evidence metrics and taxonomy from broker text", async () => {
+    const out = await assembleMoveSolutionContext(
+      { moveId: "m1", tenantKey: "lakeshore", targetPhase: 2 },
+      sources({
+        retrieveCurrentState: async () => `
+          Average monthly invoice exceptions, 1872
+          Manual touch hours per month, 2345
+          Average resolution days, 7.4
+          Finance validation required before funding approval
+          "exception_category","monthly_volume","percent_of_exceptions","average_resolution_days","manual_touch_hours_estimate","risk_level","primary_owner"
+          "Missing PO","420","22.4","6.8","510","Medium","Accounts Payable"
+          "Payment hold / control review","27","1.4","12.5","58","High","Finance Control"
+          Systems landscape missing. Case-level ERP/AP exception export with timestamps needed.
+        `,
+      }),
+    );
+    expect(out.context.metricsThatMatter).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: "Monthly invoice exceptions", value: "1,872" }),
+        expect.objectContaining({ label: "Manual touch hours per month", value: "2,345" }),
+        expect.objectContaining({ label: "Average resolution days", value: "7.4" }),
+        expect.objectContaining({ label: "Finance validation status", value: "Required before funding approval" }),
+      ]),
+    );
+    expect(out.context.evidenceTaxonomy).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ category: "Missing PO", owner: "Accounts Payable", riskLevel: "Medium" }),
+        expect.objectContaining({ category: "Payment hold / control review", owner: "Finance Control", riskLevel: "High" }),
+      ]),
+    );
+    expect(out.context.clientActionableMissingInputs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ needed: "AP/procurement systems landscape" }),
+        expect.objectContaining({ needed: "Case-level ERP/AP exception export with timestamps" }),
+      ]),
+    );
+  });
 });
