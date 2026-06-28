@@ -23,6 +23,7 @@ import {
   type DeliverableSpec,
 } from "@/lib/programs/deliverable-registry";
 import { MoveToSourceHandoffCta } from "./MoveToSourceHandoffCta";
+import { sponsorDisplayName, sponsorDisplayWithRole } from "./sponsor-display";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 import type { MoveToSourceHandoffResult } from "@/lib/programs/source-trigger/move-to-source-handoff";
 
@@ -259,9 +260,7 @@ function OverviewContent({
           <div className={styles.kvPair}>
             <span className={styles.kvK}>Sponsor</span>
             <span className={styles.kvV}>
-              {move.sponsor
-                ? `${move.sponsor.name} · ${formatRole(move.sponsor.role)}`
-                : "Unassigned"}
+              {sponsorDisplayWithRole(move.sponsor, formatRole)}
             </span>
           </div>
           <div className={styles.kvPair}>
@@ -698,7 +697,7 @@ function RightPane({
             <h1 className={styles.detailTitle}>{move.name}</h1>
             <div className={styles.detailId}>
               {move.archetype} &middot; Sponsor:{" "}
-              {(move.sponsor?.name ?? "Unassigned").toUpperCase()}
+              {sponsorDisplayName(move.sponsor).toUpperCase()}
             </div>
           </div>
           <div className={styles.detailHeadActions}>

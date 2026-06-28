@@ -10,6 +10,7 @@ const getProgramById = jest.fn();
 const generateArtifact = jest.fn();
 const createMovesGenerateArtifactDeps = jest.fn();
 const draftModuleDeliverable = jest.fn();
+const saveMoveArtifact = jest.fn();
 
 jest.mock("@/app/api/v1/programs/_auth", () => ({
   requireTenancy,
@@ -50,6 +51,10 @@ jest.mock("@/lib/deliverables/generated-phase-digest", () => ({
 
 jest.mock("@/lib/programs/nexus", () => ({
   draftModuleDeliverable,
+}));
+
+jest.mock("@/lib/programs/deliverables/move-artifacts", () => ({
+  saveMoveArtifact,
 }));
 
 function makeRequest(body: unknown): Request {
@@ -104,6 +109,11 @@ describe("POST /api/v1/programs/[programId]/generate delegates to generateArtifa
       deliverableId: "deliverable_1",
       versionId: "version_1",
     });
+    saveMoveArtifact.mockResolvedValue({
+      artifactId: "artifact_1",
+      version: 1,
+      blobStored: true,
+    });
   });
 
   it("calls generateArtifact with injected deps and persists the HTML artifact", async () => {
@@ -120,6 +130,9 @@ describe("POST /api/v1/programs/[programId]/generate delegates to generateArtifa
     await expect(res.json()).resolves.toMatchObject({
       deliverableId: "deliverable_1",
       versionId: "version_1",
+      artifactId: "artifact_1",
+      artifactVersion: 1,
+      artifactBlobStored: true,
       phase: 2,
       deliverableKey: "discovery_report",
       outputFormat: "html",
@@ -160,6 +173,29 @@ describe("POST /api/v1/programs/[programId]/generate delegates to generateArtifa
         }),
       }),
     );
+    expect(saveMoveArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({ clientKey: "apex-retail" }),
+      expect.objectContaining({
+        moveId: "program_1",
+        phase: 2,
+        artifactType: "discovery_report",
+        artifactFamily: "generated_deliverable",
+        title: "Discovery & Diagnosis Report",
+        fileFormat: "html",
+        body: expect.stringContaining("<svg"),
+        status: "draft",
+        qualityScore: 96,
+        sourceBasis: "moves_solution_context",
+        confidence: "high",
+        citationReady: true,
+        metadata: expect.objectContaining({
+          deliverableId: "deliverable_1",
+          versionId: "version_1",
+          goldenBarStatus: "Passed",
+          reviewStatus: "not_reviewed",
+        }),
+      }),
+    );
   });
 
   it("returns a structured 409 when the phase gate blocks generation", async () => {
@@ -192,6 +228,7 @@ describe("POST /api/v1/programs/[programId]/generate delegates to generateArtifa
       deliverableKey: "discovery_report",
     });
     expect(draftModuleDeliverable).not.toHaveBeenCalled();
+    expect(saveMoveArtifact).not.toHaveBeenCalled();
   });
 
   it("returns 404 when the program is not found", async () => {
@@ -204,6 +241,7 @@ describe("POST /api/v1/programs/[programId]/generate delegates to generateArtifa
     expect(res.status).toBe(404);
     expect(generateArtifact).not.toHaveBeenCalled();
     expect(draftModuleDeliverable).not.toHaveBeenCalled();
+    expect(saveMoveArtifact).not.toHaveBeenCalled();
   });
 });
 
