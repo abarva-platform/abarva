@@ -32,6 +32,11 @@ interface TowerReadModelInitiativeRow {
   aligned_callout: boolean | null;
   aligned_rationale: string | null;
   loaded_via_template: string | null;
+  portfolio_company?: string | null;
+  operating_company?: string | null;
+  legal_entity?: string | null;
+  business_unit?: string | null;
+  business_function?: string | null;
   gaps: JsonRecord[] | null;
 }
 
@@ -156,6 +161,11 @@ export function shapeTowerMaterializedReadModel(args: {
     alignedCallout: row.aligned_callout === true,
     alignedRationale: text(row.aligned_rationale) || null,
     loadedViaTemplate: text(row.loaded_via_template, 'tower_materialized_read_model'),
+    portfolioCompany: text(row.portfolio_company) || null,
+    operatingCompany: text(row.operating_company) || null,
+    legalEntity: text(row.legal_entity) || null,
+    businessUnit: text(row.business_unit) || null,
+    businessFunction: text(row.business_function) || null,
   }));
 
   const fallbackInitiative = initiatives[0] ?? null;
@@ -210,6 +220,11 @@ export async function listMaterializedTowerReadModelForClient(args: {
         'aligned_callout',
         'aligned_rationale',
         'loaded_via_template',
+        'portfolio_company',
+        'operating_company',
+        'legal_entity',
+        'business_unit',
+        'business_function',
         'gaps',
       ],
       where: tenantWhere ?? { client_id: args.clientId },
@@ -238,4 +253,3 @@ export async function listMaterializedTowerReadModelForClient(args: {
 
   return shapeTowerMaterializedReadModel({ initiativeRows, vendorRows });
 }
-

@@ -1,4 +1,5 @@
 import { azureRead, type AzureReadClient } from "@/lib/data-plane/azureRead";
+import type { AIInitiative } from "@/lib/admin/ai-initiatives/queries";
 
 export interface TowerBudgetRollup {
   portfolioCompany: string;
@@ -211,6 +212,51 @@ export function shapeTowerBudgetRollups(
     employees: nullableNum(row.employees),
     itSpendAsPctRevenue: nullableNum(row.it_spend_as_pct_revenue),
   }));
+}
+
+export function shapeTowerBudgetRollupsFromInitiatives(
+  initiatives: ReadonlyArray<AIInitiative>,
+): TowerBudgetRollup[] {
+  const rows = new Map<string, TowerBudgetRollupRow>();
+
+  for (const initiative of initiatives) {
+    const committed = initiative.committedAnnualUsd ?? 0;
+    if (committed <= 0) continue;
+    const portfolioCompany =
+      initiative.portfolioCompany ||
+      initiative.operatingCompany ||
+      initiative.businessFunction ||
+      initiative.ownerFunction ||
+      initiative.primaryCategoryName ||
+      "Enterprise IT portfolio";
+    const fiscalYear = "FY2026";
+    const key = `${portfolioCompany}::${fiscalYear}`;
+    const row =
+      rows.get(key) ??
+      ({
+        portfolio_company: portfolioCompany,
+        fiscal_year: fiscalYear,
+        total_it_budget_usd: 0,
+        actual_spend_ytd_usd: 0,
+        forecast_spend_usd: null,
+        opex_amount_usd: 0,
+        capex_amount_usd: 0,
+        run_amount_usd: 0,
+        change_amount_usd: 0,
+        vendor_amount_usd: 0,
+        labor_amount_usd: 0,
+        revenue_usd: null,
+        employees: null,
+        it_spend_as_pct_revenue: null,
+      } satisfies TowerBudgetRollupRow);
+
+    addRollupValue(row, "total_it_budget_usd", committed);
+    rows.set(key, row);
+  }
+
+  return shapeTowerBudgetRollups([...rows.values()]).sort(
+    (a, b) => b.totalItBudgetUsd - a.totalItBudgetUsd,
+  );
 }
 
 export async function listTowerBudgetRollupsForClient(args: {
