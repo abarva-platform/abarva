@@ -21,12 +21,26 @@ import {
 import { architectureMayProceed, type SolutionContext } from "@/lib/programs/solution-context";
 import { buildArtifactPrompt } from "./solution-prompt-factory";
 import { meetsGoldenBar, type GoldenBarResult } from "./golden-bar";
+import {
+  modelTokenBudgetForArtifact,
+  premiumGoldenBarOptionsForArtifact,
+  STRATEGIC_MOVES_DRAFT_CAVEAT,
+} from "./strategic-moves-artifact-standard";
 
 export interface GenerateArtifactDeps {
   contextSources: SolutionContextSources;
   gateSources: GateReadinessSources;
   /** The GOVERNED model call (egress-audited). Returns the artifact HTML. */
-  callModel: (system: string, user: string) => Promise<string>;
+  callModel: (
+    system: string,
+    user: string,
+    options?: {
+      artifact?: DeliverableKey;
+      phase?: number;
+      generationMode?: GenerationMode;
+      maxTokens?: number;
+    },
+  ) => Promise<string>;
 }
 
 export type GenerateArtifactResult =
@@ -164,7 +178,7 @@ function formatDraftCaveatText(args: {
     ...gateReasons,
     ...contextReasons,
   ];
-  return `Draft status: This artifact was generated before formal phase approval. It reflects available evidence and is intended for sponsor review, workshop preparation, and refinement. It is not final or board-ready until sponsor assignment, charter signoff, and phase gate approval are completed. Open gate items: ${required.join("; ")}.`;
+  return `${STRATEGIC_MOVES_DRAFT_CAVEAT} Open gate items: ${required.join("; ")}.`;
 }
 
 function renderDraftCaveatHtml(caveat: string): string {
@@ -271,12 +285,21 @@ export async function generateArtifact(
   });
 
   // 5) Governed model call → artifact HTML.
-  const modelHtml = await deps.callModel(prompt.system, prompt.user);
+  const modelHtml = await deps.callModel(prompt.system, prompt.user, {
+    artifact: args.artifact,
+    phase: args.phase,
+    generationMode,
+    maxTokens: modelTokenBudgetForArtifact(args.artifact),
+  });
   const draftCaveatHtml = draftCaveatText ? renderDraftCaveatHtml(draftCaveatText) : undefined;
   const html = draftCaveatHtml ? insertAfterBodyOpen(modelHtml, draftCaveatHtml) : modelHtml;
 
   // 6) Quality bar — must be a real visual artifact, no [DATA GAP], required exhibits present.
-  const goldenBar = meetsGoldenBar(html, args.artifact);
+  const goldenBar = meetsGoldenBar(
+    html,
+    args.artifact,
+    premiumGoldenBarOptionsForArtifact(args.artifact),
+  );
   if (!goldenBar.pass) {
     const completedHtml = completeMandatoryExhibits({
       artifact: args.artifact,
@@ -285,7 +308,11 @@ export async function generateArtifact(
       context: ctx,
     });
     if (completedHtml) {
-      const completedGoldenBar = meetsGoldenBar(completedHtml, args.artifact);
+      const completedGoldenBar = meetsGoldenBar(
+        completedHtml,
+        args.artifact,
+        premiumGoldenBarOptionsForArtifact(args.artifact),
+      );
       if (completedGoldenBar.pass) {
         return {
           status: "generated",

@@ -18,7 +18,14 @@ export interface GoldenBarResult {
   proseOnly: boolean;
   missingVisuals: string[];
   missingTables: string[];
+  wordCount: number;
+  forbiddenLanguageHits: string[];
   reasons: string[];
+}
+
+export interface GoldenBarOptions {
+  minimumWordCount?: number;
+  forbiddenLanguage?: readonly string[];
 }
 
 /** Extract the visual/table "kinds" present in a rendered HTML artifact (heuristic). */
@@ -110,6 +117,7 @@ function extractExhibitKinds(
 export function meetsGoldenBar(
   html: string,
   artifactKey?: DeliverableKey,
+  options: GoldenBarOptions = {},
 ): GoldenBarResult {
   const reasons: string[] = [];
   const svgCount = (html.match(/<svg/gi) ?? []).length;
@@ -131,6 +139,28 @@ export function meetsGoldenBar(
   if (hasDataGap) reasons.push("contains [DATA GAP] — context was not bound");
   if (proseOnly) reasons.push("prose-only — no visuals or tables");
 
+  const text = html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const wordCount = text ? text.split(/\s+/).length : 0;
+  if (options.minimumWordCount && wordCount < options.minimumWordCount) {
+    reasons.push(
+      `needs depth: artifact has ${wordCount} words; minimum is ${options.minimumWordCount}`,
+    );
+  }
+  const lowerText = text.toLowerCase();
+  const forbiddenLanguageHits = (options.forbiddenLanguage ?? []).filter(
+    (term) => lowerText.includes(term.toLowerCase()),
+  );
+  if (forbiddenLanguageHits.length) {
+    reasons.push(
+      `contains internal language: ${forbiddenLanguageHits.join(", ")}`,
+    );
+  }
+
   let missingVisuals: string[] = [];
   let missingTables: string[] = [];
   if (artifactKey && visualContractFor(artifactKey)) {
@@ -148,6 +178,8 @@ export function meetsGoldenBar(
     hasVisuals &&
     !hasDataGap &&
     !proseOnly &&
+    (!options.minimumWordCount || wordCount >= options.minimumWordCount) &&
+    forbiddenLanguageHits.length === 0 &&
     missingVisuals.length === 0 &&
     missingTables.length === 0;
 
@@ -158,6 +190,8 @@ export function meetsGoldenBar(
     proseOnly,
     missingVisuals,
     missingTables,
+    wordCount,
+    forbiddenLanguageHits,
     reasons,
   };
 }

@@ -13,6 +13,10 @@ import {
   renderVisualContractPrompt,
   visualContractFor,
 } from "./visual-artifact-contract";
+import {
+  renderStrategicMovesArtifactBrief,
+  STRATEGIC_MOVES_DRAFT_CAVEAT,
+} from "./strategic-moves-artifact-standard";
 
 const SYSTEM_PROMPT = `You are a senior consulting principal — strategist, solution architect, and
 presentation designer at a top-tier firm. You produce board-grade, decision-oriented, VISUAL
@@ -77,6 +81,13 @@ export function buildArtifactPrompt(args: {
   const visualBlock = contract
     ? renderVisualContractPrompt(contract)
     : "Produce a visual-first artifact with the exhibits the content warrants.";
+  const standardBrief = renderStrategicMovesArtifactBrief({
+    artifact,
+    phase,
+    context: ctx,
+    generationMode,
+    draftCaveat: args.draftCaveat,
+  });
 
   const archRule =
     profile.renderer === "html_architecture" && artifact !== "solution_approach_options"
@@ -90,6 +101,9 @@ export function buildArtifactPrompt(args: {
 
   const user = `You are generating "${profile.title}" for phase P${phase}.
 
+${standardBrief}
+
+BOUND SOLUTION CONTEXT
 ${contextBlock}
 
 ${draftBlock}
@@ -106,7 +120,10 @@ RULES:
 - Do not invent facts. If a required context field is marked [MISSING], call it out as a blocking
   input in a single "Open Inputs Required" exhibit — do not fabricate around it.
 - Every recommendation must trace to a KPI, a gap, an evidence item, or an approved decision.
-- Lead with judgment and the decision; hide the machinery; visuals carry the story.${archRule}`;
+- Lead with judgment and the decision; hide the machinery; visuals carry the story.
+- For drafts, use this exact status language where visible: "${args.draftCaveat ?? STRATEGIC_MOVES_DRAFT_CAVEAT}"
+- For P1/P2, include every required structure named in the Strategic Moves Premium Artifact Brief.
+- Return the complete artifact, not an outline, summary, short patch, or placeholder.${archRule}`;
 
   return { system: SYSTEM_PROMPT, user, outputFormat: "html" };
 }

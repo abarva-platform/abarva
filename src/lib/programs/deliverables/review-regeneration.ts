@@ -1,4 +1,11 @@
 import type { MoveArtifactRow } from "./move-artifacts";
+import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
+import {
+  depthStandardForArtifact,
+  phaseAssignmentForArtifact,
+  STRATEGIC_MOVES_ARTIFACT_STANDARD_DOC,
+  STRATEGIC_MOVES_DRAFT_CAVEAT,
+} from "@/lib/deliverables/strategic-moves-artifact-standard";
 
 export interface ReviewFeedbackItem {
   id: string;
@@ -19,6 +26,13 @@ export interface ReviewRegenerationPlan {
   fileName: string;
   body: string;
   metadata: Record<string, unknown>;
+}
+
+export interface ReviewRegenerationPrompt {
+  system: string;
+  user: string;
+  outputFormat: "html";
+  maxTokens: number;
 }
 
 const MAX_ITEM_LENGTH = 360;
@@ -193,5 +207,77 @@ Regenerated from artifact ${args.artifact.artifact_id}, version ${args.artifact.
         "Final approval decision",
       ],
     },
+  };
+}
+
+export function buildReviewRegenerationPrompt(args: {
+  artifact: MoveArtifactRow;
+  artifactKey: DeliverableKey;
+  feedbackText: string;
+  feedbackItems: ReviewFeedbackItem[];
+  originalArtifactBody: string;
+  phase: number;
+  contextSummary?: string;
+}): ReviewRegenerationPrompt {
+  const depth = depthStandardForArtifact(args.artifactKey);
+  const feedbackItems =
+    args.feedbackItems.length > 0
+      ? args.feedbackItems
+          .map(
+            (item) =>
+              `- ${item.id} (${item.priority}, ${item.area}): ${item.requestedChange}`,
+          )
+          .join("\n")
+      : "- No parsed feedback items; use the raw feedback text.";
+
+  return {
+    outputFormat: "html",
+    maxTokens: depth.maxTokens,
+    system:
+      "You are a senior consulting principal revising a Strategic Moves client artifact. Produce a complete, evidence-bound, executive-ready HTML artifact. Regeneration is not a patch.",
+    user: `Regenerate the Strategic Moves artifact as a COMPLETE UPDATED ARTIFACT.
+
+Standard: ${STRATEGIC_MOVES_ARTIFACT_STANDARD_DOC}
+
+Artifact identity:
+- Prior artifact title: ${args.artifact.title}
+- Prior artifact id: ${args.artifact.artifact_id}
+- Prior version: ${args.artifact.version}
+- Phase: P${args.phase}
+- Artifact type: ${args.artifactKey}
+- Output: complete self-contained HTML
+- Target depth: ${depth.targetWords} words; minimum acceptable depth: ${depth.minWords} words
+
+Phase assignment:
+${phaseAssignmentForArtifact({ artifact: args.artifactKey, phase: args.phase })}
+
+Draft/final status:
+${STRATEGIC_MOVES_DRAFT_CAVEAT}
+
+Client review feedback:
+${args.feedbackText}
+
+Parsed feedback items:
+${feedbackItems}
+
+Available phase/context summary:
+${args.contextSummary?.trim() || "[MISSING — no additional phase context was available to the regeneration route]"}
+
+Original artifact to revise:
+<<<ORIGINAL_ARTIFACT_START
+${args.originalArtifactBody}
+ORIGINAL_ARTIFACT_END>>>
+
+Regeneration requirements:
+- Return the full revised artifact, not a short delta note.
+- Preserve the strongest parts of the prior artifact.
+- Apply feedback substantively and rewrite affected sections.
+- Improve structure where needed.
+- Add required diagrams, tables, and matrices if missing.
+- Preserve evidence caveats and client-to-complete items.
+- Keep draft/review status visible.
+- Do not mark the artifact final or board-ready.
+- Do not invent evidence, owner names, approval, ROI, or operational readiness.
+- Do not expose internal language such as source row, blob path, tenant key, prompt, model call, JSON, debug, or implementation details.`,
   };
 }

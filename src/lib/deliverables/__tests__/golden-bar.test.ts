@@ -86,4 +86,40 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
     expect(r.missingTables).toEqual([]);
     expect(r.pass).toBe(true);
   });
+
+  it("flags shallow premium P2 artifacts even when visuals are present", () => {
+    const r = meetsGoldenBar(
+      `<html><body>
+        <svg><text>Current-state architecture diagram</text></svg>
+        <svg><text>Current-state data-flow diagram</text></svg>
+        <svg><text>Current-state process map</text></svg>
+        <svg><text>Root-cause map</text></svg>
+        <h2>Gap Matrix</h2><table><tr><td>gap</td></tr></table>
+        <h2>KPI Baseline Table</h2><table><tr><td>kpi</td></tr></table>
+        <h2>Evidence Source Table</h2><table><tr><td>evidence</td></tr></table>
+        <p>Too thin.</p>
+      </body></html>`,
+      "discovery_report",
+      { minimumWordCount: 2500 },
+    );
+    expect(r.pass).toBe(false);
+    expect(r.reasons.join(" ")).toMatch(/needs depth/i);
+  });
+
+  it("blocks forbidden internal language when premium options are enabled", () => {
+    const r = meetsGoldenBar(
+      `<html><body>
+        <svg><text>Value Tree</text></svg>
+        <svg><text>KPI Scorecard</text></svg>
+        <svg><text>Stakeholder Map</text></svg>
+        <h2>Scope Boundary Table</h2><table><tr><td>scope</td></tr></table>
+        <h2>Proceed Hold Stop Gate</h2><table><tr><td>go</td></tr></table>
+        <p>This mentions a blob path and source row.</p>
+      </body></html>`,
+      "charter",
+      { forbiddenLanguage: ["blob path", "source row"] },
+    );
+    expect(r.pass).toBe(false);
+    expect(r.forbiddenLanguageHits).toEqual(["blob path", "source row"]);
+  });
 });
