@@ -1,5 +1,11 @@
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
-import type { IntelligenceDossier } from "@/lib/intelligence/dossiers";
+import type { AdvisoryPacket } from "@/lib/intelligence/advisory-packet";
+import type {
+  IntelligenceArtifactType,
+  IntelligenceDimension,
+  IntelligenceDossier,
+  IntelligenceIntent,
+} from "@/lib/intelligence/dossiers";
 import { cleanIntelligenceModelInput } from "@/lib/intelligence/model-input-cleaner";
 import { INTELLIGENCE_TABBED_OUTPUT_CONTRACT } from "@/lib/intelligence/tabbed-response";
 
@@ -11,8 +17,7 @@ const RAW_ID_RE =
   /\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
 const INTERNAL_RE =
   /\b(home_know|read-model|route used|localhost|\/Users\/|debug|packet json|source_record_id)\b/i;
-const OLD_SECTION_RE =
-  /^\s*(?:Read|Evidence|Implication|Next move)\s*:/gim;
+const OLD_SECTION_RE = /^\s*(?:Read|Evidence|Implication|Next move)\s*:/gim;
 
 const MARKDOWN_TABLE_SEPARATOR_RE =
   /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/m;
@@ -135,7 +140,8 @@ export interface IntelligenceConsultantPromptPacket {
 }
 
 export function isIntelligenceConsultantTextSynthesisEnabled(): boolean {
-  const raw = process.env.INTELLIGENCE_CLAUDE_SYNTHESIS_ENABLED?.trim().toLowerCase();
+  const raw =
+    process.env.INTELLIGENCE_CLAUDE_SYNTHESIS_ENABLED?.trim().toLowerCase();
   if (raw === "false" || raw === "0" || raw === "off") return false;
   if (raw === "true" || raw === "1" || raw === "on") return true;
   return process.env.NODE_ENV === "production";
@@ -162,16 +168,24 @@ export function buildIntelligenceConsultantPromptPacket(
       metricsThatMatter: dossier.tenantEvidenceDossier.metrics
         .map((metric) => `${metric.label}: ${metric.value} (${metric.basis})`)
         .slice(0, 8),
-      relationshipPathsThatMatter: dossier.tenantEvidenceDossier.relationshipPaths
-        .map((path) => `${path.from} ${path.relationship} ${path.to}: ${path.label}`)
-        .slice(0, 8),
-      missingEvidence: dossier.evidenceBoundary.missingTenantEvidence.slice(0, 10),
+      relationshipPathsThatMatter:
+        dossier.tenantEvidenceDossier.relationshipPaths
+          .map(
+            (path) =>
+              `${path.from} ${path.relationship} ${path.to}: ${path.label}`,
+          )
+          .slice(0, 8),
+      missingEvidence: dossier.evidenceBoundary.missingTenantEvidence.slice(
+        0,
+        10,
+      ),
       citations: dossier.tenantEvidenceDossier.citations
         .map((citation) => citation.label)
         .slice(0, 10),
     },
     corpusPatternBrief: {
-      selectedPatternFamilies: dossier.corpusPatternDossier.patternFamilies.slice(0, 8),
+      selectedPatternFamilies:
+        dossier.corpusPatternDossier.patternFamilies.slice(0, 8),
       patternSummaries: dossier.evidenceBoundary.corpusPatterns.slice(0, 10),
       excludedPatterns: dossier.corpusPatternDossier.patternsExcluded
         .map((pattern) => `${pattern.patternName}: ${pattern.reasonExcluded}`)
@@ -194,7 +208,8 @@ export function buildIntelligenceConsultantPromptPacket(
       roiRanges: dossier.benchmarkDossier.roiRanges
         .map((range) => `${range.range}: ${range.basis}; ${range.caveat}`)
         .slice(0, 6),
-      implementationCaveats: dossier.benchmarkDossier.implementationCaveats.slice(0, 8),
+      implementationCaveats:
+        dossier.benchmarkDossier.implementationCaveats.slice(0, 8),
     },
     optionsBrief: {
       options: dossier.decisionOptionsDossier.options
@@ -206,21 +221,193 @@ export function buildIntelligenceConsultantPromptPacket(
       tradeoffs: dossier.decisionOptionsDossier.tradeoffs.slice(0, 8),
       decisionCriteria: [
         dossier.decisionOptionsDossier.recommendedDecisionFrame,
-        ...dossier.decisionOptionsDossier.options.flatMap((option) => option.prerequisites),
+        ...dossier.decisionOptionsDossier.options.flatMap(
+          (option) => option.prerequisites,
+        ),
       ]
         .filter(Boolean)
         .slice(0, 8),
     },
     riskCaveatBrief: {
-      tenantEvidenceGaps: dossier.riskCaveatDossier.tenantEvidenceGaps.slice(0, 8),
-      dataReadinessGaps: dossier.riskCaveatDossier.dataReadinessGaps.slice(0, 8),
-      operatingModelRisks: dossier.riskCaveatDossier.operatingModelRisks.slice(0, 8),
+      tenantEvidenceGaps: dossier.riskCaveatDossier.tenantEvidenceGaps.slice(
+        0,
+        8,
+      ),
+      dataReadinessGaps: dossier.riskCaveatDossier.dataReadinessGaps.slice(
+        0,
+        8,
+      ),
+      operatingModelRisks: dossier.riskCaveatDossier.operatingModelRisks.slice(
+        0,
+        8,
+      ),
       governanceRisks: dossier.riskCaveatDossier.governanceRisks.slice(0, 8),
       executionRisks: dossier.riskCaveatDossier.executionRisks.slice(0, 8),
       measurementRisks: dossier.riskCaveatDossier.measurementRisks.slice(0, 8),
     },
     evidenceBoundary: dossier.evidenceBoundary,
   });
+}
+
+export function buildIntelligenceConsultantPromptPacketFromAdvisoryPacket(
+  packet: AdvisoryPacket,
+): IntelligenceConsultantPromptPacket {
+  const model = packet.modelVisiblePacket;
+  const primaryDimension =
+    (packet.questionIntent.selectedDimensions[0] as
+      IntelligenceDimension | undefined) ?? "enterprise_strategy";
+  const expectedArtifacts = (
+    model.outputInstructions.some((instruction) =>
+      /table|chart/i.test(instruction),
+    )
+      ? ["executive_answer", "table"]
+      : ["executive_answer"]
+  ) as IntelligenceArtifactType[];
+  return cleanIntelligenceModelInput({
+    tenantBrief: {
+      tenantKey: packet.tenantIdentity.tenantKey,
+      tenantName: packet.tenantIdentity.tenantName,
+      evidenceStrength:
+        packet.retrievalDiagnostics.evidenceIntegrityScore >= 4
+          ? "strong"
+          : packet.retrievalDiagnostics.evidenceIntegrityScore >= 3
+            ? "partial"
+            : "thin",
+    },
+    questionBrief: {
+      originalQuestion: packet.questionIntent.originalQuestion,
+      intelligenceIntent: packet.questionIntent.intent as IntelligenceIntent,
+      primaryDimension,
+      relatedDimensions: packet.questionIntent.selectedDimensions.slice(
+        1,
+      ) as IntelligenceDimension[],
+      expectedArtifacts,
+    },
+    tenantEvidenceBrief: {
+      factsThatMatter: model.tenantFacts
+        .map((fact) => fact.statement)
+        .slice(0, 12),
+      metricsThatMatter: model.metrics
+        .map((metric) => `${metric.label}: ${metric.value} (${metric.basis})`)
+        .slice(0, 10),
+      relationshipPathsThatMatter: model.relationships
+        .map(
+          (relationship) =>
+            `${relationship.from} ${relationship.relationship} ${relationship.to}: ${relationship.implication}`,
+        )
+        .slice(0, 10),
+      missingEvidence: model.gaps
+        .map(
+          (gap) => `${gap.statement} Implication: ${gap.decisionImplication}`,
+        )
+        .slice(0, 10),
+      citations: [],
+    },
+    corpusPatternBrief: {
+      selectedPatternFamilies: model.corpusContext
+        .map((context) => context.label)
+        .slice(0, 8),
+      patternSummaries: model.corpusContext
+        .map((context) => `${context.label}: ${context.summary}`)
+        .slice(0, 10),
+      excludedPatterns:
+        packet.retrievalDiagnostics.corpusRole === "MISSING"
+          ? ["Corpus context is needed but not available for this question."]
+          : [],
+    },
+    advisoryLensBrief: {
+      lenses: model.expertLenses
+        .map((lens) => `${lens.lens}: ${lens.role}`)
+        .slice(0, 8),
+      pressureTestQuestions: model.expertLenses
+        .map((lens) => lens.pressureTest)
+        .slice(0, 10),
+      likelyConcerns: model.gaps
+        .map((gap) => gap.decisionImplication)
+        .slice(0, 8),
+    },
+    benchmarkBrief: {
+      benchmarkClaims: (model.benchmarkContext ?? [])
+        .map(
+          (benchmark) =>
+            `${benchmark.claim} Basis: ${benchmark.basis}. Caveat: ${benchmark.caveat}`,
+        )
+        .slice(0, 8),
+      roiRanges: [],
+      implementationCaveats: [
+        "Benchmarks and industry context calibrate the answer; they are not tenant facts unless the packet labels them as tenant evidence.",
+      ],
+    },
+    optionsBrief: {
+      options: model.entities
+        .filter((entity) =>
+          ["initiative", "capability", "system", "data-product"].includes(
+            entity.kind,
+          ),
+        )
+        .slice(0, 6)
+        .map(
+          (entity) =>
+            `${entity.name}: assess; value=see tenant facts; complexity=not shown in loaded sources; risk=validate readiness; missing=${model.gaps[0]?.statement ?? "none named"}`,
+        ),
+      tradeoffs: model.relationships
+        .map((relationship) => relationship.implication)
+        .slice(0, 8),
+      decisionCriteria: [
+        ...model.expertLenses.map((lens) => lens.pressureTest),
+        ...model.gaps.map((gap) => gap.decisionImplication),
+      ].slice(0, 10),
+    },
+    riskCaveatBrief: {
+      tenantEvidenceGaps: model.gaps.map((gap) => gap.statement).slice(0, 8),
+      dataReadinessGaps: model.gaps
+        .filter((gap) =>
+          /data|lineage|freshness|readiness|baseline/i.test(gap.statement),
+        )
+        .map((gap) => gap.statement)
+        .slice(0, 8),
+      operatingModelRisks: model.gaps
+        .filter((gap) =>
+          /owner|accountable|workflow|operating/i.test(gap.statement),
+        )
+        .map((gap) => gap.statement)
+        .slice(0, 8),
+      governanceRisks: model.gaps
+        .filter((gap) =>
+          /risk|control|guardrail|audit|compliance|legal/i.test(gap.statement),
+        )
+        .map((gap) => gap.statement)
+        .slice(0, 8),
+      executionRisks: model.relationships
+        .map((relationship) => relationship.implication)
+        .slice(0, 8),
+      measurementRisks: model.gaps
+        .filter((gap) =>
+          /value|benefit|baseline|roi|measure/i.test(gap.statement),
+        )
+        .map((gap) => gap.statement)
+        .slice(0, 8),
+    },
+    evidenceBoundary: {
+      tenantFacts: model.tenantFacts.map((fact) => fact.statement).slice(0, 12),
+      corpusPatterns: model.corpusContext
+        .map((context) => context.summary)
+        .slice(0, 10),
+      expertInterpretations: model.expertLenses
+        .map((lens) => `${lens.lens}: ${lens.whySelected}`)
+        .slice(0, 8),
+      benchmarkClaims: (model.benchmarkContext ?? [])
+        .map((benchmark) => benchmark.claim)
+        .slice(0, 8),
+      missingTenantEvidence: model.gaps
+        .map((gap) => gap.statement)
+        .slice(0, 10),
+      cannotConclude: [
+        "Industry context as tenant fact.",
+        "Exact ROI, dollars, dates, owner accountability, or readiness without model-visible tenant support.",
+      ],
+    },
+  } satisfies IntelligenceConsultantPromptPacket);
 }
 
 export function buildIntelligenceConsultantUserPrompt(
@@ -276,6 +463,7 @@ export function buildIntelligenceConsultantUserPrompt(
 
 export async function synthesizeIntelligenceConsultantText(args: {
   dossier: IntelligenceDossier;
+  advisoryPacket?: AdvisoryPacket;
   tenantId: string | null | undefined;
   userId?: string | null;
   onModelInput?: (parts: { system: string; user: string }) => void;
@@ -286,7 +474,9 @@ export async function synthesizeIntelligenceConsultantText(args: {
     auditId?: string;
     route: string;
   }) => void;
-}): Promise<IntelligenceConsultantTextResult | IntelligenceConsultantTextFailure | null> {
+}): Promise<
+  IntelligenceConsultantTextResult | IntelligenceConsultantTextFailure | null
+> {
   if (!isIntelligenceConsultantTextSynthesisEnabled()) {
     return {
       attempted: true,
@@ -322,9 +512,15 @@ export async function synthesizeIntelligenceConsultantText(args: {
     "INTELLIGENCE_CLAUDE_TIMEOUT_MS",
     DEFAULT_TIMEOUT_MS,
   );
-  const promptPacket = buildIntelligenceConsultantPromptPacket(args.dossier);
+  const promptPacket = args.advisoryPacket
+    ? buildIntelligenceConsultantPromptPacketFromAdvisoryPacket(
+        args.advisoryPacket,
+      )
+    : buildIntelligenceConsultantPromptPacket(args.dossier);
   const user = buildIntelligenceConsultantUserPrompt(promptPacket);
-  const prompt = [INTELLIGENCE_CONSULTANT_TEXT_SYSTEM_PROMPT, user].join("\n\n");
+  const prompt = [INTELLIGENCE_CONSULTANT_TEXT_SYSTEM_PROMPT, user].join(
+    "\n\n",
+  );
   const explicitVisualAsk = isExplicitVisualAsk(args.dossier.question);
 
   args.onModelInput?.({
@@ -345,7 +541,8 @@ export async function synthesizeIntelligenceConsultantText(args: {
         primaryDimension: args.dossier.primaryDimension,
         tenantEvidenceStrength: args.dossier.tenantEvidenceDossier.confidence,
         advisoryLensCount: args.dossier.relatedDimensions.length,
-        corpusPatternFamilyCount: args.dossier.corpusPatternDossier.patternFamilies.length,
+        corpusPatternFamilyCount:
+          args.dossier.corpusPatternDossier.patternFamilies.length,
       },
     });
     const message = await withTimeout(
@@ -360,7 +557,10 @@ export async function synthesizeIntelligenceConsultantText(args: {
     let rawText = extractAnthropicText(message);
     let text = normalizeConsultantText(rawText);
     const requiredVisualRows = requiredVisualTableRows(args.dossier.question);
-    if (explicitVisualAsk && !hasMarkdownDecisionTable(text, requiredVisualRows)) {
+    if (
+      explicitVisualAsk &&
+      !hasMarkdownDecisionTable(text, requiredVisualRows)
+    ) {
       const repairUser = [
         user,
         "",
@@ -371,7 +571,7 @@ export async function synthesizeIntelligenceConsultantText(args: {
         "The user explicitly asked for a table, chart, graph, visual, ranking, comparison, matrix, breakdown, or show-me structure.",
         "Return the same senior-advisor answer, but add exactly one compact GitHub-flavored Markdown decision table.",
         `Use business-friendly columns aligned to the user's ask. Include ${requiredVisualRows}-6 rows only.`,
-        "Use only the provided packet. If a value is not shown, write \"not shown in loaded sources\" instead of inventing it.",
+        'Use only the provided packet. If a value is not shown, write "not shown in loaded sources" instead of inventing it.',
         "Do not add source-support, evidence-register, citation, or material-used tables.",
         "Return final user-facing text only.",
       ].join("\n");
@@ -384,7 +584,9 @@ export async function synthesizeIntelligenceConsultantText(args: {
         }),
         timeoutMs,
       );
-      const repairedText = normalizeConsultantText(extractAnthropicText(repaired));
+      const repairedText = normalizeConsultantText(
+        extractAnthropicText(repaired),
+      );
       if (hasMarkdownDecisionTable(repairedText, requiredVisualRows)) {
         rawText = repairedText;
         text = repairedText;
@@ -466,13 +668,17 @@ export function validateIntelligenceConsultantText(args: {
   }
   if (
     args.dossier.decisionOptionsDossier.options.length > 0 &&
-    !/\b(option|tradeoff|trade-off|sequence|hold|scale|pilot|investigate)\b/i.test(text)
+    !/\b(option|tradeoff|trade-off|sequence|hold|scale|pilot|investigate)\b/i.test(
+      text,
+    )
   ) {
     issues.push("missing_options_or_tradeoffs");
   }
   if (
     args.dossier.evidenceBoundary.missingTenantEvidence.length > 0 &&
-    !/\b(missing|gap|confirm|not loaded|not provided|thin|partial)\b/i.test(text)
+    !/\b(missing|gap|confirm|not loaded|not provided|thin|partial)\b/i.test(
+      text,
+    )
   ) {
     issues.push("missing_evidence_not_named");
   }
@@ -536,9 +742,15 @@ function stripMarkdownTablesFromText(text: string): string {
   const keep: string[] = [];
   for (let index = 0; index < lines.length; index += 1) {
     const header = splitMarkdownTableLine(lines[index] ?? "");
-    if (header.length >= 2 && MARKDOWN_TABLE_SEPARATOR_RE.test(lines[index + 1] ?? "")) {
+    if (
+      header.length >= 2 &&
+      MARKDOWN_TABLE_SEPARATOR_RE.test(lines[index + 1] ?? "")
+    ) {
       index += 2;
-      while (index < lines.length && splitMarkdownTableLine(lines[index] ?? "").length >= 2) {
+      while (
+        index < lines.length &&
+        splitMarkdownTableLine(lines[index] ?? "").length >= 2
+      ) {
         index += 1;
       }
       index -= 1;
@@ -582,18 +794,23 @@ function parseOptionBrief(option: string): {
   return {
     title,
     action: rest.split(";")[0]?.trim() || "assess with accountable owner",
-    value: rest.match(/(?:^|;\s*)value=([^;]+)/)?.[1]?.trim() || "not shown in loaded sources",
+    value:
+      rest.match(/(?:^|;\s*)value=([^;]+)/)?.[1]?.trim() ||
+      "not shown in loaded sources",
     complexity:
       rest.match(/(?:^|;\s*)complexity=([^;]+)/)?.[1]?.trim() ||
       "not shown in loaded sources",
     risk:
       rest.match(/(?:^|;\s*)risk=([^;]+)/)?.[1]?.trim() ||
       "not shown in loaded sources",
-    missing: rest.match(/(?:^|;\s*)missing=([^;]+)/)?.[1]?.trim() || "none named",
+    missing:
+      rest.match(/(?:^|;\s*)missing=([^;]+)/)?.[1]?.trim() || "none named",
   };
 }
 
-function parseMetricBrief(metric: string): { label: string; value: string } | null {
+function parseMetricBrief(
+  metric: string,
+): { label: string; value: string } | null {
   const [labelPart, rest = ""] = metric.split(/:\s*/, 2);
   const label = labelPart.trim();
   if (!label || !rest.trim()) return null;
@@ -609,13 +826,14 @@ function markdownEscapeCell(value: string): string {
 }
 
 function titleCaseNarrativeLabel(label: string): string {
-  const cleaned = label
-    .split(/[.!?;:]/)
-    .at(-1)
-    ?.replace(/^(?:and\s+)?(?:the|a|an)\s+/i, "")
-    .replace(/^and\s+/i, "")
-    .replace(/\s+/g, " ")
-    .trim() ?? "";
+  const cleaned =
+    label
+      .split(/[.!?;:]/)
+      .at(-1)
+      ?.replace(/^(?:and\s+)?(?:the|a|an)\s+/i, "")
+      .replace(/^and\s+/i, "")
+      .replace(/\s+/g, " ")
+      .trim() ?? "";
   if (!cleaned) return "";
   if (/\b[A-Z]{2,}\b/.test(cleaned) || /^[A-Z]/.test(cleaned)) {
     return cleaned;
@@ -686,7 +904,8 @@ function fallbackNarrativeTableFromText(
     const normalizedValue = value.trim();
     if (!/^\$[\d,.]+[KMBT]?\b/i.test(normalizedValue)) return;
     const key = normalizedLabel.toLowerCase();
-    if (!rows.has(key)) rows.set(key, { label: normalizedLabel, value: normalizedValue });
+    if (!rows.has(key))
+      rows.set(key, { label: normalizedLabel, value: normalizedValue });
   };
 
   const possessivePattern =
@@ -745,12 +964,17 @@ function fallbackVisualTableFromPacket(
 ): string | null {
   return (
     fallbackMetricTableFromPacket(packet, minRows) ??
-    (narrative ? fallbackNarrativeTableFromText(packet, narrative, minRows) : null) ??
+    (narrative
+      ? fallbackNarrativeTableFromText(packet, narrative, minRows)
+      : null) ??
     fallbackDecisionTableFromPacket(packet, minRows)
   );
 }
 
-async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+): Promise<T> {
   let timeout: NodeJS.Timeout | null = null;
   try {
     return await Promise.race([
