@@ -14,6 +14,8 @@ Intelligence now has a reusable AdvisoryPacket assembler that separates the cont
 
 Follow-up hardening adds a shared model-input cleaner guard for generated system-code labels discovered during signed-in Q001 proof. Business labels such as operational system names are preserved, while generated suffixes and raw key labels are removed before the packet reaches Claude.
 
+Second follow-up hardening tightens the Intelligence decision-canvas contract after live proof showed Claude preserved the Markdown table but placed it inside the Decision tab instead of a dedicated Table/Chart tab. The contract now states that every Markdown table must appear inside a Table or Chart tab.
+
 ## Layer Impact
 
 - `global-control-lane`: changes shared Intelligence answer preparation, prompt evidence boundaries, and operator trace behavior for all clients using the Intelligence Ask path.
@@ -33,6 +35,7 @@ Follow-up hardening adds a shared model-input cleaner guard for generated system
 - `src/lib/intelligence/advisory-packet/assemble-advisory-packet.ts`
 - `src/lib/intelligence/advisory-packet/top-100-audit.ts`
 - `src/lib/intelligence/model-input-cleaner.ts`
+- `src/lib/intelligence/tabbed-response.ts`
 - `src/lib/intelligence/ask/index.ts`
 - `src/app/api/intelligence/ask/route.ts`
 - `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`
@@ -43,8 +46,10 @@ Follow-up hardening adds a shared model-input cleaner guard for generated system
 ## QA / Validation
 
 - `npx jest src/lib/intelligence/__tests__/model-input-cleaner.test.ts src/lib/intelligence/advisory-packet/__tests__/advisory-packet.test.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts --runInBand` passed, 22 tests.
+- `npx jest src/lib/intelligence/__tests__/tabbed-response.test.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts src/lib/intelligence/__tests__/model-input-cleaner.test.ts src/lib/intelligence/advisory-packet/__tests__/advisory-packet.test.ts --runInBand` passed, 25 tests.
 - `npx eslint src/lib/intelligence/advisory-packet src/lib/intelligence/ask/index.ts src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/app/api/intelligence/ask/route.ts scripts/intelligence/generate-top-100-advisory-packet-audit.ts` passed.
 - `npx eslint src/lib/intelligence/model-input-cleaner.ts src/lib/intelligence/__tests__/model-input-cleaner.test.ts src/lib/intelligence/advisory-packet/__tests__/advisory-packet.test.ts` passed.
+- `npx eslint src/lib/intelligence/tabbed-response.ts src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/lib/intelligence/__tests__/tabbed-response.test.ts` passed.
 - `npx tsx scripts/intelligence/generate-top-100-advisory-packet-audit.ts` generated 100 prompt JSON, 100 prompt Markdown, 100 summary Markdown artifacts, plus the Top 100 rollup.
 - Top 100 rollup: 100 / 100 packets reached richness >= 4, 100 / 100 passed raw leakage scan, Q001 richness = 5, six sampled answer-quality checks averaged 5.00.
 
@@ -72,6 +77,7 @@ Rollback by reverting this release candidate or deploying the previous ACA image
 - Q001 prompt audit artifacts under `docs/intelligence/prompt_audit/top_100/20260628/`
 - Focused Jest and ESLint command output from this candidate branch.
 - Pre-fix signed-in Q001 trace showed the API/browser proof lane working but exposed generated system-code labels; this was treated as a failed proof and patched before live-safe signoff.
+- Post-cleaner signed-in Q001 trace showed model/renderer raw leakage fixed, but the Markdown table landed inside the Decision tab instead of a dedicated Table tab; this was treated as a renderer-placement proof failure and patched before live-safe signoff.
 
 ## Known Gaps
 
