@@ -486,6 +486,152 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     });
   });
 
+  it("renders Claude-owned decision tabs on the right canvas without leaking markers into the left answer", async () => {
+    const mainAnswer =
+      "SkyHarbor should fund IROPS recovery decisioning only through a governed readiness gate.";
+    const tableContent = [
+      "| Option | Value | Readiness | Decision |",
+      "|---|---:|---|---|",
+      "| IROPS recovery decisioning | $270M | Gate required | Fund gated tranche |",
+      "| Customer AI concierge | $180M | Identity dependency | Hold scale |",
+    ].join("\n");
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: streamFromLines([
+        JSON.stringify({
+          type: "agent-answer",
+          answer: {
+            surface: "intelligence",
+            mode: "ANALYZE",
+            tenantKey: "skyharbor-air",
+            question: "What AI investment should SkyHarbor make next?",
+            intent: "decision_canvas",
+            status: "answered",
+            directAnswer: mainAnswer,
+            prose: mainAnswer,
+            factsUsed: [],
+            metricsUsed: [],
+            relationshipsUsed: [],
+            expertsUsed: [],
+            artifacts: [],
+            citations: [],
+            gaps: [],
+            caveats: [],
+            nextSteps: [],
+            corpusUsed: [{ id: "industry-context", label: "Industry context" }],
+            decisionFrame: {
+              rendererMode: "display-only",
+              intelligenceTabs: [
+                {
+                  id: "decision",
+                  label: "Decision",
+                  grounding: "tenant-evidence",
+                  content:
+                    "Approve a gated IROPS decisioning tranche before autonomous write-back.",
+                },
+                {
+                  id: "industry_insights",
+                  label: "Industry Insights",
+                  grounding: "industry-context",
+                  content:
+                    "Industry context: airlines usually start with dispatch decision support. This is not tenant proof.",
+                },
+                {
+                  id: "chart",
+                  label: "Chart",
+                  grounding: "tenant-evidence",
+                  content: [
+                    "| Value pool | Annual value |",
+                    "|---|---:|",
+                    "| IROPS recovery decisioning | $270M |",
+                  ].join("\n"),
+                },
+                {
+                  id: "table",
+                  label: "Table",
+                  grounding: "tenant-evidence",
+                  content: tableContent,
+                },
+                {
+                  id: "evidence",
+                  label: "Evidence",
+                  grounding: "mixed",
+                  content:
+                    "- Tenant facts: named value pools.\n- Missing evidence: signed freshness SLA.",
+                },
+              ],
+            },
+            quality: {
+              confidence: "medium",
+              evidenceStrength: "partial",
+              tenantGrounding: "partial",
+              answerCompleteness: "complete",
+            },
+            safety: {
+              tenantFencePassed: true,
+              rawIdsSuppressed: true,
+              forbiddenLanguagePassed: true,
+              unsupportedClaimsBlocked: true,
+            },
+          },
+        }),
+        JSON.stringify({ type: "done" }),
+        "",
+      ]),
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(
+      <IntelligenceV2Surface
+        payload={{
+          ...apexPayload,
+          tenant: {
+            key: "skyharbor-air",
+            displayName: "SkyHarbor Air",
+            industry: "Airline",
+          },
+          ask: {
+            placeholder: "Ask about SkyHarbor",
+            contract: "Answers are grounded in the loaded context.",
+          },
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("agent-dock-input"), {
+      target: { value: "What AI investment should SkyHarbor make next?" },
+    });
+    fireEvent.click(screen.getByTestId("agent-dock-send"));
+
+    expect(await screen.findAllByText(mainAnswer)).not.toHaveLength(0);
+    const agentTurn = screen.getByTestId("agent-dock-turn-agent");
+    expect(within(agentTurn).getByText(mainAnswer)).toBeInTheDocument();
+    expect(within(agentTurn).queryByText(/<<<TAB:/)).not.toBeInTheDocument();
+
+    expect(screen.getByRole("button", { name: /Decision/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Industry Insights/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Chart/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Table/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Evidence/ })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Industry Insights/ }));
+    expect(screen.getByText("Industry context")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Industry context: airlines usually start with dispatch decision support. This is not tenant proof.",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Table/ }));
+    expect(screen.getByText("Tenant evidence")).toBeInTheDocument();
+    expect(
+      screen.getAllByText((_, node) => node?.textContent === tableContent).length,
+    ).toBeGreaterThan(0);
+  });
+
   it("has an Intelligence v2 binding payload for every configured client tenant", () => {
     for (const client of ALL_CLIENTS) {
       expect(getIntelligenceBindingPayload(client.id)).toBeTruthy();

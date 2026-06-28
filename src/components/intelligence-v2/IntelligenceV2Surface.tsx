@@ -22,8 +22,10 @@ import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 import { hasVisibleAvaArtifacts } from "@/lib/ava-answer/renderable-artifacts";
+import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
+import type { ParsedIntelligenceTab } from "@/lib/intelligence/tabbed-response";
 
-type Tab = "answer" | "signals" | "context" | "corpus";
+type Tab = string;
 
 const CSS = `
 .iv2{--paper:#FBFAF7;--card:#FFFFFF;--ink:#1A1A18;--muted:#6B6B63;--faint:#9A998E;--line:#E7E3DA;--green:#1F6B3A;--greenbg:#E7F0E9;--amber:#A66A1F;
@@ -62,6 +64,14 @@ const CSS = `
 .iv2 .answerPanel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:14px}
 .iv2 .answerPanel h3{font-family:var(--font-fraunces),Georgia,serif;font-size:24px;font-weight:500;margin:0}
 .iv2 .answerText{white-space:pre-wrap;font-size:15px;line-height:1.65;color:var(--ink)}
+.iv2 .decisionTabPanel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:12px}
+.iv2 .decisionTabHead{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.iv2 .decisionTabTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:24px;font-weight:500}
+.iv2 .groundingBadge{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:4px 9px;color:var(--muted);background:#fff}
+.iv2 .tabMarkdown{font-size:14px;line-height:1.65}
+.iv2 .tabMarkdown table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0 2px}
+.iv2 .tabMarkdown th,.iv2 .tabMarkdown td{border:1px solid var(--line);padding:9px 10px;vertical-align:top}
+.iv2 .tabMarkdown th{background:#F7F6F2;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 .iv2 .emptyAnswer{border:1px dashed var(--line);border-radius:12px;padding:22px;color:var(--muted);background:rgba(255,255,255,.55)}
 .iv2 .sechead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}
 .iv2 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -157,18 +167,23 @@ function newTurnId(prefix: string): string {
 }
 
 function answerBodyFromPacket(answer: AvaAnswerPacket): string {
-  return (
-    [
-      answer.prose,
-      answer.directAnswer,
-      answer.interpretation,
-      answer.businessImplication,
-      answer.recommendation,
-    ]
-      .filter((part): part is string => Boolean(part?.trim()))
-      .join("\n\n")
-      .trim()
-  );
+  const seen = new Set<string>();
+  return [
+    answer.prose,
+    answer.directAnswer,
+    answer.interpretation,
+    answer.businessImplication,
+    answer.recommendation,
+  ]
+    .filter((part): part is string => Boolean(part?.trim()))
+    .filter((part) => {
+      const normalized = part.replace(/\s+/g, " ").trim();
+      if (seen.has(normalized)) return false;
+      seen.add(normalized);
+      return true;
+    })
+    .join("\n\n")
+    .trim();
 }
 
 function hasRenderableAvaArtifacts(
@@ -184,6 +199,45 @@ function visibleLatestAnswerText(message: ChatMessage): string {
   return scrubPublicAvaAnswerText(packetText || message.body);
 }
 
+function intelligenceTabsFromAnswer(
+  answer?: AvaAnswerPacket | null,
+): ParsedIntelligenceTab[] {
+  const frame = answer?.decisionFrame;
+  if (!frame || typeof frame !== "object") return [];
+  const tabs = (frame as { intelligenceTabs?: unknown }).intelligenceTabs;
+  if (!Array.isArray(tabs)) return [];
+  return tabs.filter(isParsedIntelligenceTab);
+}
+
+function isParsedIntelligenceTab(value: unknown): value is ParsedIntelligenceTab {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<ParsedIntelligenceTab>;
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.label === "string" &&
+    typeof candidate.content === "string" &&
+    typeof candidate.grounding === "string"
+  );
+}
+
+function groundingLabel(grounding: ParsedIntelligenceTab["grounding"]): string {
+  switch (grounding) {
+    case "tenant-evidence":
+      return "Tenant evidence";
+    case "industry-context":
+      return "Industry context";
+    case "corpus-pattern":
+      return "Pattern context";
+    case "benchmark":
+      return "Benchmark context";
+    case "mixed":
+      return "Mixed grounding";
+    case "unknown":
+    default:
+      return "Grounding noted";
+  }
+}
+
 export function IntelligenceV2Surface({
   payload,
   tenantName,
@@ -194,7 +248,7 @@ export function IntelligenceV2Surface({
   // it never surfaces a client/tenant name. Re-bind here to restore personalization.
   tenantName?: string;
 }) {
-  const [tab, setTab] = useState<Tab>("signals");
+  const [tab, setTab] = useState<Tab>("decision-signals");
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [latestAnswer, setLatestAnswer] = useState<ChatMessage | null>(null);
   const [busy, setBusy] = useState(false);
@@ -208,15 +262,33 @@ export function IntelligenceV2Surface({
       displayName: tenantName?.trim() || t.tenant.displayName,
     },
   });
-  const tabs = useMemo<AvaCanvasTab[]>(
-    () => [
-      { id: "answer", label: "Answer", count: latestAnswer ? 1 : 0 },
-      { id: "signals", label: "Signals", count: t.signals.length },
-      { id: "context", label: "Context", count: t.context.length },
-      { id: "corpus", label: "Corpus", count: t.corpus.length },
-    ],
-    [latestAnswer, t.context.length, t.corpus.length, t.signals.length],
+  const latestIntelligenceTabs = useMemo(
+    () => intelligenceTabsFromAnswer(latestAnswer?.agentAnswer),
+    [latestAnswer?.agentAnswer],
   );
+  const tabs = useMemo<AvaCanvasTab[]>(() => {
+    if (latestIntelligenceTabs.length > 0) {
+      return [
+        { id: "answer", label: "Answer", count: 1 },
+        ...latestIntelligenceTabs.map((item) => ({
+          id: item.id,
+          label: item.label,
+        })),
+      ];
+    }
+    return [
+      { id: "answer", label: "Answer", count: latestAnswer ? 1 : 0 },
+      { id: "decision-signals", label: "Decision Signals", count: t.signals.length },
+      { id: "business-context", label: "Business Context", count: t.context.length },
+      { id: "industry-context", label: "Industry Context", count: t.corpus.length },
+    ];
+  }, [
+    latestAnswer,
+    latestIntelligenceTabs,
+    t.context.length,
+    t.corpus.length,
+    t.signals.length,
+  ]);
 
   async function askIntelligence(
     text: string,
@@ -434,7 +506,7 @@ export function IntelligenceV2Surface({
 
               <div className="tabs">
                 {tabs.map((item) => {
-                  const key = item.id as Tab;
+                  const key = item.id;
                   return (
                     <button
                       key={key}
@@ -481,7 +553,22 @@ export function IntelligenceV2Surface({
                     )}
                   </div>
                 )}
-                {tab === "signals" && (
+                {latestIntelligenceTabs.map((item) =>
+                  tab === item.id ? (
+                    <div className="decisionTabPanel" key={item.id}>
+                      <div className="decisionTabHead">
+                        <div className="decisionTabTitle">{item.label}</div>
+                        <span className="groundingBadge">
+                          {groundingLabel(item.grounding)}
+                        </span>
+                      </div>
+                      <div className="tabMarkdown">
+                        <AgentMarkdown text={item.content} />
+                      </div>
+                    </div>
+                  ) : null,
+                )}
+                {tab === "decision-signals" && latestIntelligenceTabs.length === 0 && (
                   <>
                     <div className="sechead">
                       <span className="ey">
@@ -539,7 +626,7 @@ export function IntelligenceV2Surface({
                   </>
                 )}
 
-                {tab === "context" && (
+                {tab === "business-context" && latestIntelligenceTabs.length === 0 && (
                   <>
                     <div className="sechead">
                       <span className="ey">
@@ -581,13 +668,13 @@ export function IntelligenceV2Surface({
                   </>
                 )}
 
-                {tab === "corpus" && (
+                {tab === "industry-context" && latestIntelligenceTabs.length === 0 && (
                   <>
                     <div className="sechead">
                       <span className="ey">
-                        CORPUS · PATTERNS MATCHED TO THIS CONTEXT
+                        INDUSTRY CONTEXT · PATTERNS MATCHED TO THIS QUESTION
                       </span>
-                      <span className="ey">{t.corpus.length} PATTERNS</span>
+                      <span className="ey">{t.corpus.length} CONTEXT ITEMS</span>
                     </div>
                     <div className="grid3">
                       {t.corpus.length === 0 ? (

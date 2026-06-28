@@ -8,6 +8,8 @@ import {
   synthesizeIntelligenceConsultantText,
   validateIntelligenceConsultantText,
 } from "../intelligence-consultant-text-synthesis";
+import { findRawModelInputLeaks } from "../model-input-cleaner";
+import { parseIntelligenceTabbedResponse } from "../tabbed-response";
 
 jest.mock("@/lib/agent/stream", () => ({
   getAuditedAnthropicClient: jest.fn(),
@@ -294,11 +296,55 @@ describe("Intelligence consultant text synthesis", () => {
     const prompt = buildIntelligenceConsultantUserPrompt(packet);
 
     expect(prompt).toContain("Return final user-facing text only.");
+    expect(prompt).toContain("Use the decision-canvas tab markers");
     expect(prompt).toContain("Tenant evidence:");
     expect(prompt).toContain("Corpus patterns:");
     expect(prompt).toContain("Advisory lenses:");
     expect(prompt).not.toContain("Expert council:");
     expect(prompt).not.toContain("Return structured JSON");
+  });
+
+  it("cleans raw substrate fields before building Claude model input", () => {
+    const packet = buildIntelligenceConsultantPromptPacket({
+      ...dossier,
+      tenantEvidenceDossier: {
+        ...dossier.tenantEvidenceDossier,
+        metrics: [
+          {
+            id: "SHA-CAP-001",
+            label: "IROPS agentic recovery",
+            value: "$270M ai_maturity: 1",
+            basis: "skyharbor_ai_portfolio.csv Row: 7 APP-00002",
+            citationIds: ["SHA-BF-001"],
+          },
+        ],
+        citations: [
+          {
+            id: "SHA-BF-001",
+            label: "skyharbor_ai_portfolio.csv Row: 7 ai_maturity: 1",
+            sourceClass: "tenant-fact",
+            confidence: "high",
+          },
+        ],
+      },
+      evidenceBoundary: {
+        ...dossier.evidenceBoundary,
+        tenantFacts: [
+          "SHA-CAP-001 IROPS recovery has ai_maturity: 1 in skyharbor_ai_portfolio.csv Row: 7.",
+        ],
+      },
+    });
+    const prompt = buildIntelligenceConsultantUserPrompt(packet);
+
+    expect(prompt).toContain("IROPS recovery");
+    expect(prompt).toContain("AI maturity is early-stage");
+    expect(prompt).not.toContain("SHA-CAP");
+    expect(prompt).not.toContain("SHA-BF");
+    expect(prompt).not.toContain("APP-");
+    expect(prompt).not.toContain(".csv");
+    expect(prompt).not.toContain("Row:");
+    expect(prompt).not.toContain("ai_maturity:");
+    expect(findRawModelInputLeaks(prompt)).toEqual([]);
   });
 
   it("returns Claude text when it stays inside the consultant contract", async () => {
@@ -323,6 +369,95 @@ describe("Intelligence consultant text synthesis", () => {
     expect(result && "text" in result ? result.text : "").toContain(
       "MRO predictive maintenance",
     );
+  });
+
+  it("preserves SkyHarbor IROPS tabbed Claude output without prose or table rewrites", async () => {
+    const claudeOutput = [
+      "SkyHarbor should make IROPS recovery decisioning the next AI investment, but only through a governed readiness gate. It is the largest operational value pool in the packet, and the decision is not to buy autonomy; it is to fund decision support where certified operating data, crew legality, and passenger reaccommodation controls are already clear.",
+      "",
+      "<<<TAB: Decision | grounding: tenant-evidence>>>",
+      "Approve a gated IROPS decisioning tranche. The executive choice is to fund recovery option ranking and human dispatch support before autonomous write-back.",
+      "",
+      "<<<TAB: Industry Insights | grounding: industry-context>>>",
+      "Industry context: airlines that improve disruption recovery usually start with decision support around crew, aircraft, and passenger recovery. This is not tenant proof; it is context for why the SkyHarbor operating problem is worth prioritizing.",
+      "",
+      "<<<TAB: Chart | grounding: tenant-evidence>>>",
+      "| Value pool | Annual value | Readiness score |",
+      "|---|---:|---:|",
+      "| IROPS recovery decisioning | $270M | 2 |",
+      "| Customer AI concierge | $180M | 2 |",
+      "| Data estate rationalization | $122M | 3 |",
+      "",
+      "<<<TAB: Table | grounding: tenant-evidence>>>",
+      "| Option | Value | Readiness | Risk | Decision |",
+      "|---|---:|---|---|---|",
+      "| IROPS recovery decisioning | $270M | Gate required | Operational data freshness | Fund gated tranche |",
+      "| Customer AI concierge | $180M | Identity dependency | Consent fragmentation | Hold scale |",
+      "| Data estate rationalization | $122M | Foundation work | Benefit timing | Start as enabler |",
+      "",
+      "<<<TAB: Evidence | grounding: mixed>>>",
+      "- Tenant facts: IROPS recovery, customer AI, and data rationalization are named value pools in the packet.",
+      "- Industry context: disruption recovery decisioning is a known airline AI pattern, but not tenant proof.",
+      "- Missing evidence: signed data freshness SLA, crew legality owner, and recovery write-back control.",
+    ].join("\n");
+    mockClaudeText(claudeOutput);
+
+    const result = await synthesizeIntelligenceConsultantText({
+      dossier: {
+        ...dossier,
+        question:
+          "What is the single best AI investment SkyHarbor should make next, and why?",
+        tenantEvidenceDossier: {
+          ...dossier.tenantEvidenceDossier,
+          metrics: [
+            {
+              id: "value-pool-irops",
+              label: "IROPS recovery decisioning",
+              value: "$270M",
+              basis: "business-named value pool",
+              citationIds: ["tenant-1"],
+            },
+            {
+              id: "value-pool-customer-ai",
+              label: "Customer AI concierge",
+              value: "$180M",
+              basis: "business-named value pool",
+              citationIds: ["tenant-1"],
+            },
+          ],
+        },
+      },
+      tenantId: "tenant-skyharbor",
+    });
+
+    const text = result && "text" in result ? result.text : "";
+    expect(text).toBe(claudeOutput);
+    expect(text).not.toContain("the referenced evidence");
+    expect(text).not.toContain("ai_maturity: 1");
+
+    const parsed = parseIntelligenceTabbedResponse(text);
+    expect(parsed.mainAnswer).toBe(
+      "SkyHarbor should make IROPS recovery decisioning the next AI investment, but only through a governed readiness gate. It is the largest operational value pool in the packet, and the decision is not to buy autonomy; it is to fund decision support where certified operating data, crew legality, and passenger reaccommodation controls are already clear.",
+    );
+    expect(parsed.tabs.map((tab) => tab.label)).toEqual([
+      "Decision",
+      "Industry Insights",
+      "Chart",
+      "Table",
+      "Evidence",
+    ]);
+    expect(parsed.tabs.find((tab) => tab.id === "table")?.content).toBe(
+      [
+        "| Option | Value | Readiness | Risk | Decision |",
+        "|---|---:|---|---|---|",
+        "| IROPS recovery decisioning | $270M | Gate required | Operational data freshness | Fund gated tranche |",
+        "| Customer AI concierge | $180M | Identity dependency | Consent fragmentation | Hold scale |",
+        "| Data estate rationalization | $122M | Foundation work | Benefit timing | Start as enabler |",
+      ].join("\n"),
+    );
+    expect(parsed.tabs.find((tab) => tab.id === "industry_insights")).toMatchObject({
+      grounding: "industry-context",
+    });
   });
 
   it("repairs prose-only explicit visual answers with a grounded decision table", async () => {

@@ -83,12 +83,9 @@ describe("Ask Intelligence response policy", () => {
     );
 
     expect(answer).toContain("Customer gold record is on Databricks.");
-    expect(answer).toContain(
-      "the referenced evidence owns the inventory mart.",
-    );
-    expect(answer).toContain(
-      "the referenced evidence and the referenced evidence carry 358 integrations.",
-    );
+    expect(answer).toContain("owns the inventory mart.");
+    expect(answer).toContain("and carry 358 integrations.");
+    expect(answer).not.toContain("the referenced evidence");
     expect(answer).not.toContain("the cited record");
     expect(answer).not.toMatch(
       /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\b/,

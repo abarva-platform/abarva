@@ -1,5 +1,7 @@
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import type { IntelligenceDossier } from "@/lib/intelligence/dossiers";
+import { cleanIntelligenceModelInput } from "@/lib/intelligence/model-input-cleaner";
+import { INTELLIGENCE_TABBED_OUTPUT_CONTRACT } from "@/lib/intelligence/tabbed-response";
 
 const DEFAULT_MODEL = "claude-opus-4-7";
 const DEFAULT_MAX_TOKENS = 25_000;
@@ -54,7 +56,9 @@ Do not say a recommendation is high confidence if tenant evidence is thin.
 Do not mix another tenant's actual data into this tenant's answer.
 Do not use the old transcript labels "Read:", "Evidence:", "Implication:", or "Next move:".
 Do not mention expert packs, binders, dossiers, semantic layers, prompt packets, source rows, edge rows, debug traces, or route decisions.
-Do not return JSON. Return final user-facing text only.`;
+Do not return JSON. Return final user-facing text only.
+
+${INTELLIGENCE_TABBED_OUTPUT_CONTRACT}`;
 
 export interface IntelligenceConsultantTextResult {
   used: true;
@@ -140,7 +144,7 @@ export function isIntelligenceConsultantTextSynthesisEnabled(): boolean {
 export function buildIntelligenceConsultantPromptPacket(
   dossier: IntelligenceDossier,
 ): IntelligenceConsultantPromptPacket {
-  return {
+  return cleanIntelligenceModelInput({
     tenantBrief: {
       tenantKey: dossier.tenantKey,
       tenantName: dossier.tenantName,
@@ -216,7 +220,7 @@ export function buildIntelligenceConsultantPromptPacket(
       measurementRisks: dossier.riskCaveatDossier.measurementRisks.slice(0, 8),
     },
     evidenceBoundary: dossier.evidenceBoundary,
-  };
+  });
 }
 
 export function buildIntelligenceConsultantUserPrompt(
@@ -260,6 +264,9 @@ export function buildIntelligenceConsultantUserPrompt(
     "Then explain the evidence spine: what the tenant facts support, what corpus/pattern content adds, and what benchmark context calibrates.",
     "When the user asks what to prioritize, kill, sequence, compare, fund, or investigate, include options and tradeoffs.",
     "When comparing multiple items, include a compact Markdown table with business-friendly columns.",
+    "Use the decision-canvas tab markers when the answer benefits from drill-downs.",
+    "For AI investment, IROPS, prioritization, scale/hold/kill, and portfolio questions, include Decision, Industry Insights, Evidence, and a Table or Chart tab when the packet contains chart-ready or table-ready data.",
+    "Do not place Markdown tables in the main answer. Put them inside the Table or Chart tab.",
     "State confidence and missing evidence after the useful synthesis, not as the opening.",
     "Suggest the appropriate handoff to Moves, Source, or Tower when relevant.",
     "Keep every paragraph to three sentences or fewer.",
@@ -475,9 +482,6 @@ export function validateIntelligenceConsultantText(args: {
 function normalizeConsultantText(text: string): string {
   return text
     .replace(/\r\n/g, "\n")
-    .replace(/\bSentinel\b/g, "aVa")
-    .replace(/\bAtlas\b/g, "aVa")
-    .replace(/\bNexus\b/g, "Moves")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }

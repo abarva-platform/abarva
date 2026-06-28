@@ -62,7 +62,7 @@ export function stripInternalRecordIds(text: string): string {
       /\s*\(\s*(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\s*\)/g,
       "",
     )
-    .replace(RAW_INTERNAL_ID_RE, "the referenced evidence")
+    .replace(RAW_INTERNAL_ID_RE, "")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
 }

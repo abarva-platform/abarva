@@ -36,6 +36,7 @@ import {
   buildStructuredExhibits,
   hasRenderableStructuredExhibits,
 } from "@/lib/intelligence/answer/structured-exhibits";
+import { parseIntelligenceTabbedResponse } from "@/lib/intelligence/tabbed-response";
 import { composeAvaAnswer } from "@/lib/ava-answer/composeAvaAnswer";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import {
@@ -633,6 +634,88 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             query,
             traceSources as AskSource[],
           );
+          const tabbedResponse = parseIntelligenceTabbedResponse(assistantText);
+          if (tabbedResponse.tabs.length > 0 && tabbedResponse.mainAnswer.trim()) {
+            const agentAnswer = composeAvaAnswer({
+              surface: "intelligence",
+              mode: "ANALYZE",
+              tenantKey:
+                tenantInventoryKey ??
+                tenantClientKey ??
+                requestedOrSurfaceClient ??
+                "unknown",
+              question: query,
+              intent: "decision_canvas",
+              status: "answered",
+              directAnswer: tabbedResponse.mainAnswer,
+              artifacts: [],
+              citations: advisorSources.map((source, index) => ({
+                id: source.id ?? `intelligence-source-${index}`,
+                label: source.name || source.id || `Source ${index + 1}`,
+                sourceClass:
+                  source.type === "TENANT"
+                    ? ("tenant-fact" as const)
+                    : source.type === "PATTERN"
+                      ? ("corpus-pattern" as const)
+                      : ("graph" as const),
+                confidence:
+                  typeof source.confidence === "number" && source.confidence >= 0.8
+                    ? "high"
+                    : typeof source.confidence === "number" && source.confidence >= 0.55
+                      ? "medium"
+                      : "low",
+              })),
+              corpusUsed: tabbedResponse.tabs.some(
+                (tab) =>
+                  tab.grounding === "industry-context" ||
+                  tab.grounding === "corpus-pattern" ||
+                  tab.grounding === "benchmark",
+              )
+                ? [
+                    {
+                      id: "industry-context",
+                      label: "Industry or pattern context",
+                    },
+                  ]
+                : [],
+              decisionFrame: {
+                intelligenceTabs: tabbedResponse.tabs,
+                rendererMode: "display-only",
+                rawModelOutput: tabbedResponse.rawText,
+              },
+              retrievalSummary: {
+                substrate: "module_read_model",
+                sourceCount: advisorSources.length,
+                hasTenantFacts: advisorSources.some(
+                  (source) => source.type === "TENANT",
+                ),
+                hasCorpus: advisorSources.some(
+                  (source) => source.type !== "TENANT",
+                ),
+                hasExperts: false,
+              },
+            });
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "agent-answer",
+                  answer: {
+                    ...agentAnswer,
+                    prose: tabbedResponse.mainAnswer,
+                  },
+                }) + "\n",
+              ),
+            );
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: "done",
+                  telemetryEventId: event.id,
+                }) + "\n",
+              ),
+            );
+            return;
+          }
           const exhibits = buildStructuredExhibits({
             prose: assistantText,
             routing: answerRouting,
