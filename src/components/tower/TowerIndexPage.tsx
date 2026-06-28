@@ -527,7 +527,7 @@ function groupMoney(
 ): CioGroupRow[] {
   const grouped = new Map<string, CioGroupRow>();
   for (const initiative of rows) {
-    const label = labelFor(initiative)?.trim() || "Unassigned";
+    const label = labelize(labelFor(initiative));
     const current =
       grouped.get(label) ??
       ({
@@ -571,7 +571,7 @@ function groupBudgetRollups(
   return rows
     .map((row) => ({
       key: row.portfolioCompany.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-      label: row.portfolioCompany,
+      label: labelize(row.portfolioCompany),
       amount: amountFor(row),
       count: 1,
     }))
@@ -1984,11 +1984,13 @@ function CioProgramTable({
                   {initiative.name}
                 </Link>
                 <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 3 }}>
-                  {initiative.primaryCategoryName}
+                  {labelize(initiative.primaryCategoryName)}
                 </div>
               </td>
               <td style={{ padding: "12px 10px", color: T.INK_2 }}>
-                {initiative.ownerFunction ?? initiative.primaryCategoryName}
+                {labelize(
+                  initiative.ownerFunction ?? initiative.primaryCategoryName,
+                )}
               </td>
               <td style={{ padding: "12px 10px", color: T.INK_2 }}>
                 {initiative.ownerName}
@@ -3325,7 +3327,7 @@ function TowerInlineDetailPanel({
               }}
             >
               {initiative.ownerTitle} ·{" "}
-              {initiative.ownerFunction ?? "Unassigned function"}
+              {labelize(initiative.ownerFunction ?? "Unassigned function")}
             </div>
             <div
               style={{
@@ -3335,7 +3337,8 @@ function TowerInlineDetailPanel({
                 lineHeight: 1.5,
               }}
             >
-              {initiative.primaryGoalName} · {initiative.primaryCategoryName}
+              {labelize(initiative.primaryGoalName)} ·{" "}
+              {labelize(initiative.primaryCategoryName)}
             </div>
             <div
               style={{
