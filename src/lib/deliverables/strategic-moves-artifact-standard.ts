@@ -1,6 +1,10 @@
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 import type { GenerationMode } from "@/lib/programs/assert-phase-ready";
 import type { SolutionContext } from "@/lib/programs/solution-context";
+import {
+  exactEvidenceTermsForGoldenBar,
+  taxonomyTermsForGoldenBar,
+} from "./evidence-specificity";
 
 export const STRATEGIC_MOVES_ARTIFACT_STANDARD_DOC =
   "docs/design/strategic-moves/ARTIFACT_GENERATION_STANDARD.md";
@@ -59,14 +63,25 @@ export function modelTokenBudgetForArtifact(artifact: DeliverableKey): number {
 
 export function premiumGoldenBarOptionsForArtifact(
   artifact: DeliverableKey,
+  context?: SolutionContext,
 ): {
   minimumWordCount?: number;
   forbiddenLanguage?: readonly string[];
+  requiredExactEvidenceTerms?: readonly string[];
+  requiredTaxonomyTerms?: readonly string[];
+  forbidClientFacingRawIds?: boolean;
 } {
   if (artifact === "charter" || artifact === "discovery_report") {
     return {
       minimumWordCount: depthStandardForArtifact(artifact).minWords,
       forbiddenLanguage: STRATEGIC_MOVES_FORBIDDEN_ARTIFACT_TERMS,
+      ...(artifact === "discovery_report" && context
+        ? {
+            requiredExactEvidenceTerms: exactEvidenceTermsForGoldenBar(context),
+            requiredTaxonomyTerms: taxonomyTermsForGoldenBar(context),
+            forbidClientFacingRawIds: true,
+          }
+        : {}),
     };
   }
   return {};
@@ -89,6 +104,69 @@ Classify substantive claims naturally in the artifact:
 Use client-facing language such as "current evidence supports", "stakeholder notes suggest",
 "this remains an assumption until", and "this cannot be finalized until". Do not invent values,
 ROI, named owners, sponsor approval, or control readiness.`;
+}
+
+function evidencePriorityRuleBlock(): string {
+  return `EVIDENCE PRIORITY RULE
+Concrete extracted evidence must be surfaced before advisory interpretation. Prioritize evidence in this order:
+1. exact extracted metrics from uploaded evidence
+2. structured CSV/XLSX summaries
+3. stakeholder/process notes
+4. policy/control evidence
+5. systems landscape evidence
+6. inferred observations
+7. assumptions for review
+8. general advisory pattern
+
+If exact metrics, exception categories, owners, risk levels, or baseline figures are available,
+use them in the executive summary, diagnostic tables, evidence matrix, and missing-input table.
+Do not write a polished consulting document that fails to use the strongest available evidence.`;
+}
+
+function metricsThatMatterBlock(ctx: SolutionContext): string {
+  if (!ctx.metricsThatMatter?.length) return "- [none extracted as first-class metrics]";
+  return ctx.metricsThatMatter
+    .map((metric) => {
+      const parts = [
+        `${metric.label}: ${metric.value}`,
+        metric.source ? `source=${metric.source}` : undefined,
+        metric.caveat ? `caveat=${metric.caveat}` : undefined,
+      ].filter(Boolean);
+      return `- ${parts.join(" | ")}`;
+    })
+    .join("\n");
+}
+
+function evidenceTaxonomyBlock(ctx: SolutionContext): string {
+  if (!ctx.evidenceTaxonomy?.length) return "- [none extracted as first-class taxonomy]";
+  return ctx.evidenceTaxonomy
+    .map((item) => {
+      const parts = [
+        item.category,
+        item.volume ? `volume=${item.volume}` : undefined,
+        item.rate ? `rate=${item.rate}` : undefined,
+        item.averageResolutionDays ? `avg_resolution_days=${item.averageResolutionDays}` : undefined,
+        item.manualTouchHours ? `manual_touch_hours=${item.manualTouchHours}` : undefined,
+        item.riskLevel ? `risk=${item.riskLevel}` : undefined,
+        item.owner ? `owner=${item.owner}` : undefined,
+      ].filter(Boolean);
+      return `- ${parts.join(" | ")}`;
+    })
+    .join("\n");
+}
+
+function missingInputsActionBlock(ctx: SolutionContext): string {
+  if (!ctx.clientActionableMissingInputs?.length) return "- [none promoted as client-actionable inputs]";
+  return ctx.clientActionableMissingInputs
+    .map(
+      (input) =>
+        `- Needed: ${input.needed} | why=${input.whyItMatters} | owner=${input.owner} | use=${input.howItWillBeUsed} | gate=${input.gateImpact}`,
+    )
+    .join("\n");
+}
+
+function clientMoveReference(ctx: SolutionContext): string {
+  return ctx.useCase ?? ctx.useCaseCandidate ?? ctx.problemSeed ?? "client move";
 }
 
 function p1Assignment(): string {
@@ -131,6 +209,7 @@ The artifact must answer:
 - what evidence is still needed before finalizing
 
 Required structures:
+- Metrics-backed Executive Diagnostic Summary
 - Current-State Handoff Map
 - Exception Taxonomy
 - Pain Point / Root Cause Matrix
@@ -138,7 +217,20 @@ Required structures:
 - Control Implications table
 - Evidence Coverage table
 - Next Evidence Request table
-- Owner / Action Matrix`;
+- Owner / Action Matrix
+
+P2 evidence-specific requirements:
+- Start with a metrics-backed diagnostic thesis. If the evidence packet contains exact metrics,
+  do not describe the issue generically; use the exact numbers and explain what they imply.
+- Include exact available metrics in the executive summary and evidence matrix.
+- Use the exception taxonomy from uploaded evidence; include owners and risk levels when available.
+- Distinguish validated metrics from finance-validation caveats.
+- Build the handoff map from process notes.
+- Build the control section from payment-control checklist evidence when present; otherwise mark it
+  as a client-actionable missing input.
+- Build the systems/data section from systems landscape evidence when present; otherwise mark it
+  as a client-actionable missing input.
+- Keep draft/final gates honest; do not mark P2 final or ready for P3 if readiness remains partial.`;
 }
 
 function genericPhaseAssignment(phase: number): string {
@@ -181,7 +273,8 @@ Standard: ${STRATEGIC_MOVES_ARTIFACT_STANDARD_DOC}
 
 1. Artifact identity
 - Tenant/client key: ${ctx.tenantKey}
-- Move id: ${ctx.moveId}
+- Client-facing move reference: ${clientMoveReference(ctx)}
+- Internal move id, audit only, do NOT display in the client-facing artifact body: ${ctx.moveId}
 - Phase: P${args.phase}
 - Artifact type: ${args.artifact}
 - Generation mode: ${args.generationMode}
@@ -198,6 +291,12 @@ Standard: ${STRATEGIC_MOVES_ARTIFACT_STANDARD_DOC}
 3. Evidence base
 - Evidence binding status: ${evidenceSignals.length ? evidenceSignals.join("; ") : "[MISSING — no evidence signals captured]"}
 - Current state, extracted context, and structured summaries must be used when present below; do not treat file names or metadata as a substitute for extracted evidence.
+- Metrics that must be foregrounded when available:
+${metricsThatMatterBlock(ctx)}
+- Exception taxonomy / risk-owner signals that must be used when available:
+${evidenceTaxonomyBlock(ctx)}
+- Client-actionable missing inputs:
+${missingInputsActionBlock(ctx)}
 - Missing evidence: ${list(ctx.evidenceNeeds, "evidence request list not captured")}
 - Assumptions / kill criteria for review: ${list(ctx.killCriteria, "assumptions or kill criteria not captured")}
 
@@ -215,6 +314,8 @@ ${phaseAssignmentForArtifact({ artifact: args.artifact, phase: args.phase })}
 - Make every section useful for a client discussion.
 - State what is known, what it means, what is missing, what decision is needed, and what happens next.
 - No generic AI filler, no fake certainty, no internal language, no unsupported value claims.
+
+${evidencePriorityRuleBlock()}
 
 ${claimClassificationBlock()}`;
 }

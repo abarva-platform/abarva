@@ -298,7 +298,7 @@ export async function generateArtifact(
   const goldenBar = meetsGoldenBar(
     html,
     args.artifact,
-    premiumGoldenBarOptionsForArtifact(args.artifact),
+    premiumGoldenBarOptionsForArtifact(args.artifact, ctx),
   );
   if (!goldenBar.pass) {
     const completedHtml = completeMandatoryExhibits({
@@ -311,7 +311,7 @@ export async function generateArtifact(
       const completedGoldenBar = meetsGoldenBar(
         completedHtml,
         args.artifact,
-        premiumGoldenBarOptionsForArtifact(args.artifact),
+        premiumGoldenBarOptionsForArtifact(args.artifact, ctx),
       );
       if (completedGoldenBar.pass) {
         return {

@@ -31,7 +31,8 @@ Every Strategic Moves prompt must be assembled from the same structured brief.
 ### 1. Artifact Identity
 
 - tenant/client name or key
-- move name and move id when available
+- client-facing move name/reference when available
+- raw move/system identifiers only in trace or audit metadata, never in the client-facing artifact body
 - phase and artifact type
 - draft/final mode
 - intended audience
@@ -265,6 +266,35 @@ Avoid:
 - "fully automated" without control analysis
 - "will deliver" unless value is proven
 
+### Evidence Priority Rule
+
+Concrete extracted evidence must be surfaced before advisory interpretation.
+Premium artifacts must prioritize evidence in this order:
+
+1. exact extracted metrics from uploaded evidence
+2. structured CSV/XLSX summaries
+3. stakeholder/process notes
+4. policy/control evidence
+5. systems landscape evidence
+6. inferred observations
+7. assumptions for review
+8. general advisory pattern
+
+If exact metrics, exception categories, owners, risk levels, or baseline figures are available, the artifact must use them in the executive summary, diagnostic tables, and evidence matrix. Claude must not produce a polished consulting document that fails to use the strongest available evidence.
+
+For P2 Current Work Diagnostic artifacts specifically:
+
+- start with a metrics-backed diagnostic thesis
+- include exact available metrics in the executive summary
+- use the exception taxonomy from uploaded evidence
+- cite owners and risk levels when available
+- distinguish validated metrics from finance-validation caveats
+- build handoff maps from process notes
+- build control sections from payment/control evidence when present
+- build systems/data sections from systems landscape evidence when present
+- make missing evidence client-actionable with owner, use, and gate impact
+- keep draft/final gates honest when readiness is partial
+
 ## Regeneration Standard
 
 Regeneration is not a patch.
@@ -360,4 +390,3 @@ Use client-facing language instead:
 - Save new artifacts as draft/review-required unless final gate rules are met.
 - Regeneration must produce a complete revised artifact.
 - Tests must fail shallow P1/P2 artifacts, missing required P2 exhibits, and internal language leakage.
-

@@ -122,4 +122,107 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
     expect(r.pass).toBe(false);
     expect(r.forbiddenLanguageHits).toEqual(["blob path", "source row"]);
   });
+
+  it("fails premium P2 when exact metrics exist but are not used", () => {
+    const enoughWords = Array.from({ length: 2550 }, (_, i) => `word${i}`).join(" ");
+    const r = meetsGoldenBar(
+      `<html><body>
+        <svg><text>Current-state architecture diagram</text></svg>
+        <svg><text>Current-state data-flow diagram</text></svg>
+        <svg><text>Current-state process map</text></svg>
+        <svg><text>Root-cause map</text></svg>
+        <h2>Gap Matrix</h2><table><tr><td>gap</td></tr></table>
+        <h2>KPI Baseline Table</h2><table><tr><td>baseline</td></tr></table>
+        <h2>Evidence Source Table</h2><table><tr><td>evidence</td></tr></table>
+        <p>The AP exception process has meaningful volume and manual effort.</p>
+        <p>${enoughWords}</p>
+      </body></html>`,
+      "discovery_report",
+      {
+        minimumWordCount: 2500,
+        requiredExactEvidenceTerms: ["1,872", "2,345", "7.4"],
+      },
+    );
+    expect(r.pass).toBe(false);
+    expect(r.missingExactEvidenceTerms).toEqual(["1,872", "2,345", "7.4"]);
+    expect(r.reasons.join(" ")).toMatch(/missing exact evidence terms/i);
+  });
+
+  it("fails premium P2 when exception taxonomy exists but is ignored", () => {
+    const enoughWords = Array.from({ length: 2550 }, (_, i) => `word${i}`).join(" ");
+    const r = meetsGoldenBar(
+      `<html><body>
+        <svg><text>Current-state architecture diagram</text></svg>
+        <svg><text>Current-state data-flow diagram</text></svg>
+        <svg><text>Current-state process map</text></svg>
+        <svg><text>Root-cause map</text></svg>
+        <h2>Gap Matrix</h2><table><tr><td>gap</td></tr></table>
+        <h2>KPI Baseline Table</h2><table><tr><td>baseline</td></tr></table>
+        <h2>Evidence Source Table</h2><table><tr><td>evidence</td></tr></table>
+        <p>Exceptions should be categorized and routed.</p>
+        <p>${enoughWords}</p>
+      </body></html>`,
+      "discovery_report",
+      {
+        minimumWordCount: 2500,
+        requiredTaxonomyTerms: ["Missing PO", "Price mismatch", "Payment hold / control review"],
+      },
+    );
+    expect(r.pass).toBe(false);
+    expect(r.missingTaxonomyTerms).toEqual([
+      "Missing PO",
+      "Price mismatch",
+      "Payment hold / control review",
+    ]);
+  });
+
+  it("fails premium P2 when the client-facing body exposes a raw Move ID label", () => {
+    const enoughWords = Array.from({ length: 2550 }, (_, i) => `word${i}`).join(" ");
+    const r = meetsGoldenBar(
+      `<html><body>
+        <p>Move ID: 6f91c9a9</p>
+        <svg><text>Current-state architecture diagram</text></svg>
+        <svg><text>Current-state data-flow diagram</text></svg>
+        <svg><text>Current-state process map</text></svg>
+        <svg><text>Root-cause map</text></svg>
+        <h2>Gap Matrix</h2><table><tr><td>gap</td></tr></table>
+        <h2>KPI Baseline Table</h2><table><tr><td>baseline</td></tr></table>
+        <h2>Evidence Source Table</h2><table><tr><td>evidence</td></tr></table>
+        <p>${enoughWords}</p>
+      </body></html>`,
+      "discovery_report",
+      {
+        minimumWordCount: 2500,
+        forbidClientFacingRawIds: true,
+      },
+    );
+    expect(r.pass).toBe(false);
+    expect(r.rawClientFacingIdHits).toEqual(["Move ID:"]);
+  });
+
+  it("passes evidence-specific premium P2 when exact evidence and taxonomy are used", () => {
+    const enoughWords = Array.from({ length: 2550 }, (_, i) => `word${i}`).join(" ");
+    const r = meetsGoldenBar(
+      `<html><body>
+        <p>Workstream: Vendor Invoice Exception Handling Redesign</p>
+        <p>The diagnostic uses 1,872 monthly exceptions, 2,345 manual touch hours, and 7.4 average resolution days.</p>
+        <svg><text>Current-state architecture diagram</text></svg>
+        <svg><text>Current-state data-flow diagram</text></svg>
+        <svg><text>Current-state process map</text></svg>
+        <svg><text>Root-cause map</text></svg>
+        <h2>Gap Matrix</h2><table><tr><td>gap</td></tr></table>
+        <h2>KPI Baseline Table</h2><table><tr><td>baseline</td></tr></table>
+        <h2>Evidence Source Table</h2><table><tr><td>Missing PO</td><td>Price mismatch</td><td>Payment hold / control review</td></tr></table>
+        <p>${enoughWords}</p>
+      </body></html>`,
+      "discovery_report",
+      {
+        minimumWordCount: 2500,
+        requiredExactEvidenceTerms: ["1,872", "2,345", "7.4"],
+        requiredTaxonomyTerms: ["Missing PO", "Price mismatch", "Payment hold / control review"],
+        forbidClientFacingRawIds: true,
+      },
+    );
+    expect(r.pass).toBe(true);
+  });
 });

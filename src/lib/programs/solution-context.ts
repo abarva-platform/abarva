@@ -33,6 +33,31 @@ export interface SolutionDecision {
   approvedAt?: string;
 }
 
+export interface SolutionEvidenceMetric {
+  label: string;
+  value: string;
+  source?: string;
+  caveat?: string;
+}
+
+export interface SolutionEvidenceTaxonomyItem {
+  category: string;
+  owner?: string;
+  riskLevel?: string;
+  volume?: string;
+  rate?: string;
+  averageResolutionDays?: string;
+  manualTouchHours?: string;
+}
+
+export interface SolutionMissingInputAction {
+  needed: string;
+  whyItMatters: string;
+  owner: string;
+  howItWillBeUsed: string;
+  gateImpact: string;
+}
+
 /** The cumulative knowledge object, populated phase by phase. */
 export interface SolutionContext {
   moveId: string;
@@ -52,10 +77,13 @@ export interface SolutionContext {
   // P2
   currentState?: string;
   baselineMetrics?: Record<string, string>;
+  metricsThatMatter?: SolutionEvidenceMetric[];
+  evidenceTaxonomy?: SolutionEvidenceTaxonomyItem[];
   gaps?: string[];
   rootCauses?: string[];
   constraints?: string[];
   evidenceMap?: Array<{ claim: string; source: string }>;
+  clientActionableMissingInputs?: SolutionMissingInputAction[];
   // P3a
   approach?: string;
   options?: SolutionOption[];

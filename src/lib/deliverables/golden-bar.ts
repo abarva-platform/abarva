@@ -20,12 +20,18 @@ export interface GoldenBarResult {
   missingTables: string[];
   wordCount: number;
   forbiddenLanguageHits: string[];
+  missingExactEvidenceTerms: string[];
+  missingTaxonomyTerms: string[];
+  rawClientFacingIdHits: string[];
   reasons: string[];
 }
 
 export interface GoldenBarOptions {
   minimumWordCount?: number;
   forbiddenLanguage?: readonly string[];
+  requiredExactEvidenceTerms?: readonly string[];
+  requiredTaxonomyTerms?: readonly string[];
+  forbidClientFacingRawIds?: boolean;
 }
 
 /** Extract the visual/table "kinds" present in a rendered HTML artifact (heuristic). */
@@ -160,6 +166,37 @@ export function meetsGoldenBar(
       `contains internal language: ${forbiddenLanguageHits.join(", ")}`,
     );
   }
+  const lowerHtml = html.toLowerCase();
+  const missingExactEvidenceTerms = (options.requiredExactEvidenceTerms ?? [])
+    .filter((term) => term.trim().length > 0)
+    .filter((term) => !lowerHtml.includes(term.toLowerCase()));
+  if (missingExactEvidenceTerms.length) {
+    reasons.push(
+      `missing exact evidence terms: ${missingExactEvidenceTerms.join(", ")}`,
+    );
+  }
+  const missingTaxonomyTerms = (options.requiredTaxonomyTerms ?? [])
+    .filter((term) => term.trim().length > 0)
+    .filter((term) => !lowerHtml.includes(term.toLowerCase()));
+  if (missingTaxonomyTerms.length) {
+    reasons.push(
+      `missing evidence taxonomy terms: ${missingTaxonomyTerms.join(", ")}`,
+    );
+  }
+  const rawClientFacingIdHits =
+    options.forbidClientFacingRawIds === true
+      ? [
+          /\bmove\s+id\s*:/i.test(text) ? "Move ID:" : undefined,
+          /\bmove\s*id\b/i.test(text) && /[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}/i.test(text)
+            ? "Move UUID"
+            : undefined,
+        ].filter((value): value is string => Boolean(value))
+      : [];
+  if (rawClientFacingIdHits.length) {
+    reasons.push(
+      `contains client-facing raw/system id label: ${rawClientFacingIdHits.join(", ")}`,
+    );
+  }
 
   let missingVisuals: string[] = [];
   let missingTables: string[] = [];
@@ -180,6 +217,9 @@ export function meetsGoldenBar(
     !proseOnly &&
     (!options.minimumWordCount || wordCount >= options.minimumWordCount) &&
     forbiddenLanguageHits.length === 0 &&
+    missingExactEvidenceTerms.length === 0 &&
+    missingTaxonomyTerms.length === 0 &&
+    rawClientFacingIdHits.length === 0 &&
     missingVisuals.length === 0 &&
     missingTables.length === 0;
 
@@ -192,6 +232,9 @@ export function meetsGoldenBar(
     missingTables,
     wordCount,
     forbiddenLanguageHits,
+    missingExactEvidenceTerms,
+    missingTaxonomyTerms,
+    rawClientFacingIdHits,
     reasons,
   };
 }

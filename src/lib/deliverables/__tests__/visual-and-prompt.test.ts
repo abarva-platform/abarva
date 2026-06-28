@@ -115,6 +115,55 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(p.user).toContain("Process vs Data vs Policy vs Ownership vs AI Matrix");
   });
 
+  it("P2 diagnostic prompt foregrounds metricsThatMatter and evidence taxonomy when available", () => {
+    const ctx = applyPhaseDigest(richContext(), {
+      metricsThatMatter: [
+        {
+          label: "Monthly invoice exceptions",
+          value: "1,872",
+          source: "LSH_AP_Exception_Category_Report_Q2_2026.csv",
+        },
+        {
+          label: "Manual touch hours per month",
+          value: "2,345",
+          source: "LSH_AP_Value_Baseline_Worksheet.xlsx",
+          caveat: "Finance validation required before funding approval",
+        },
+      ],
+      evidenceTaxonomy: [
+        {
+          category: "Missing PO",
+          volume: "420",
+          riskLevel: "Medium",
+          owner: "Accounts Payable",
+        },
+      ],
+      clientActionableMissingInputs: [
+        {
+          needed: "AP/procurement systems landscape",
+          whyItMatters: "Confirms systems of record.",
+          owner: "Enterprise Architecture",
+          howItWillBeUsed: "P3 target architecture",
+          gateImpact: "Blocks final P3 architecture",
+        },
+      ],
+    });
+    const p = buildArtifactPrompt({
+      artifact: "discovery_report",
+      phase: 2,
+      context: ctx,
+    });
+    expect(p.user).toContain("Metrics that must be foregrounded when available");
+    expect(p.user).toContain("Client-facing move reference:");
+    expect(p.user).toContain("Internal move id, audit only, do NOT display in the client-facing artifact body");
+    expect(p.user).toContain("Monthly invoice exceptions: 1,872");
+    expect(p.user).toContain("Manual touch hours per month: 2,345");
+    expect(p.user).toContain("Finance validation required before funding approval");
+    expect(p.user).toContain("Missing PO | volume=420 | risk=Medium | owner=Accounts Payable");
+    expect(p.user).toContain("Needed: AP/procurement systems landscape");
+    expect(p.user).toMatch(/If the evidence packet contains exact metrics/);
+  });
+
   it("draft prompt uses the standard pre-gate caveat", () => {
     const p = buildArtifactPrompt({
       artifact: "charter",

@@ -13,6 +13,7 @@ import {
   type SolutionDecision,
   type ContextReadiness,
 } from "./solution-context";
+import { inferP2EvidenceSpecificity } from "@/lib/deliverables/evidence-specificity";
 
 export interface SolutionContextSources {
   /** Retrieve the tenant's real current-state estate (AgentContextBroker / enterprise_context). */
@@ -75,6 +76,14 @@ export async function assembleMoveSolutionContext(
   const currentStateBound =
     currentState.length > 0 && !currentState.startsWith("[MISSING");
   if (currentStateBound) ctx = applyPhaseDigest(ctx, { currentState });
+
+  // Promote concrete P2 evidence into first-class prompt fields so the model does
+  // not have to hunt through raw CSV/XLSX excerpts for the facts that should drive
+  // the diagnostic thesis.
+  if (currentStateBound && args.targetPhase === 2) {
+    const specificity = inferP2EvidenceSpecificity(ctx);
+    ctx = applyPhaseDigest(ctx, specificity);
+  }
 
   // 3) fold approved gate decisions.
   const decisions = await sources.loadDecisions(args.moveId);
