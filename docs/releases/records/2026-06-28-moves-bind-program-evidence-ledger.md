@@ -12,6 +12,8 @@
 
 Moves deliverable generation now binds the Move's uploaded/captured evidence ledger into the same current-state context used for artifact prompts. This prevents P2/P3/P4 artifacts from relying only on broad broker context when users uploaded specific workshop notes, baselines, or evidence files.
 
+Update: the shared artifact generation path also sanitizes client-facing HTML before the golden bar and persistence so model-echoed implementation terms do not appear in sponsor-visible deliverables.
+
 ## Layer Impact
 
 - `global-control-lane`: updates shared Moves artifact prompt context assembly for all clients.
@@ -28,13 +30,18 @@ Moves deliverable generation now binds the Move's uploaded/captured evidence led
 ## Changes Included
 
 - `src/lib/deliverables/moves-generate-deps.ts`: appends the tenant-scoped program evidence ledger to the broker current-state prompt block.
+- `src/lib/deliverables/client-facing-artifact-sanitize.ts`: normalizes internal implementation language in generated artifact HTML before the quality gate and persistence.
+- `src/lib/deliverables/generate-artifact.ts`: applies the shared sanitizer to model output and auto-completed exhibit output before golden-bar evaluation.
 - `src/lib/programs/evidence-context.ts`: includes structured evidence signals such as baseline candidates, decisions, actions, and risks in the prompt-safe ledger.
 - `src/lib/programs/__tests__/evidence-context.test.ts`: verifies structured baseline metrics remain visible in the ledger.
 - `src/lib/deliverables/__tests__/moves-generate-deps.test.ts`: verifies artifact generation receives both broker context and uploaded evidence context.
+- `src/lib/deliverables/__tests__/generate-artifact.test.ts`: verifies internal words such as `source row` and `prompt` are scrubbed while exact AP metrics and taxonomy survive.
 
 ## QA / Validation
 
 - `npm test -- --runTestsByPath src/lib/programs/__tests__/evidence-context.test.ts src/lib/deliverables/__tests__/moves-generate-deps.test.ts --runInBand` passed.
+- `npx jest src/lib/deliverables/__tests__/generate-artifact.test.ts src/lib/deliverables/__tests__/golden-bar.test.ts --runInBand` passed.
+- `npx eslint src/lib/deliverables/generate-artifact.ts src/lib/deliverables/client-facing-artifact-sanitize.ts src/lib/deliverables/__tests__/generate-artifact.test.ts` passed.
 - Full release validation and live artifact regeneration are required before marking released.
 
 ## Rollout Plan

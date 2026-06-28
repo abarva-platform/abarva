@@ -159,4 +159,62 @@ describe("generateArtifact — the integration keystone", () => {
       expect(r.html).toContain("Payment hold / control review");
     }
   });
+
+  it("sanitizes internal implementation language before the golden bar and persistence", async () => {
+    const enoughWords = Array.from({ length: 2550 }, (_, i) => `word${i}`).join(" ");
+    const p2HtmlWithInternalTerms = `<html><body>
+      <h1>Discovery & Diagnostic Readout</h1>
+      <p>This request uses 1,872 monthly exceptions, 2,345 manual touch hours, and 7.4 average resolution days.</p>
+      <svg><text>Current-state architecture diagram</text></svg>
+      <svg><text>Current-state data-flow diagram</text></svg>
+      <svg><text>Current-state process map</text></svg>
+      <svg><text>Root-cause map</text></svg>
+      <h2>Gap Matrix</h2><table><tr><td>gap</td></tr></table>
+      <h2>KPI Baseline Table</h2><table><tr><td>baseline</td></tr></table>
+      <h2>Evidence Source Table</h2><table><tr><td>Missing PO</td><td>Price mismatch</td><td>Payment hold / control review</td></tr></table>
+      <p>The source row confirms the control-risk branch, and the prompt should never be visible to a client.</p>
+      <p>${enoughWords}</p>
+    </body></html>`;
+
+    const r = await generateArtifact(
+      {
+        moveId: "m",
+        tenantKey: "lakeshore",
+        phase: 2,
+        artifact: "discovery_report",
+        generationMode: "draft",
+      },
+      deps({
+        contextSources: {
+          retrieveCurrentState: async () => `
+            Average monthly invoice exceptions, 1872
+            Manual touch hours per month, 2345
+            Average resolution days, 7.4
+            "Missing PO","420","22.4","6.8","510","Medium","Accounts Payable"
+            "Payment hold / control review","27","1.4","12.5","58","High","Finance Control"
+          `,
+          loadPriorDigests: async () => [
+            {
+              useCase: "Vendor Invoice Exception Handling Redesign",
+              valueHypothesis: "Reduce manual touch, cycle time, and control risk.",
+            },
+          ],
+          loadDecisions: async () => [],
+        },
+        callModel: async () => p2HtmlWithInternalTerms,
+      }),
+    );
+
+    expect(r.status).toBe("generated");
+    if (r.status === "generated") {
+      expect(r.goldenBar.pass).toBe(true);
+      expect(r.goldenBar.forbiddenLanguageHits).toEqual([]);
+      expect(r.html.toLowerCase()).not.toContain("source row");
+      expect(r.html.toLowerCase()).not.toContain("prompt");
+      expect(r.html).toContain("1,872");
+      expect(r.html).toContain("2,345");
+      expect(r.html).toContain("7.4");
+      expect(r.html).toContain("Payment hold / control review");
+    }
+  });
 });

@@ -19,6 +19,7 @@ import {
   type SolutionContextSources,
 } from "@/lib/programs/assemble-solution-context";
 import { architectureMayProceed, type SolutionContext } from "@/lib/programs/solution-context";
+import { sanitizeClientFacingArtifactHtml } from "./client-facing-artifact-sanitize";
 import { buildArtifactPrompt } from "./solution-prompt-factory";
 import { meetsGoldenBar, type GoldenBarResult } from "./golden-bar";
 import {
@@ -395,7 +396,9 @@ export async function generateArtifact(
     maxTokens: modelTokenBudgetForArtifact(args.artifact),
   });
   const draftCaveatHtml = draftCaveatText ? renderDraftCaveatHtml(draftCaveatText) : undefined;
-  const html = draftCaveatHtml ? insertAfterBodyOpen(modelHtml, draftCaveatHtml) : modelHtml;
+  const html = sanitizeClientFacingArtifactHtml(
+    draftCaveatHtml ? insertAfterBodyOpen(modelHtml, draftCaveatHtml) : modelHtml,
+  );
 
   // 6) Quality bar — must be a real visual artifact, no [DATA GAP], required exhibits present.
   const goldenBar = meetsGoldenBar(
@@ -411,15 +414,16 @@ export async function generateArtifact(
       context: ctx,
     });
     if (completedHtml) {
+      const sanitizedCompletedHtml = sanitizeClientFacingArtifactHtml(completedHtml);
       const completedGoldenBar = meetsGoldenBar(
-        completedHtml,
+        sanitizedCompletedHtml,
         args.artifact,
         premiumGoldenBarOptionsForArtifact(args.artifact, ctx),
       );
       if (completedGoldenBar.pass) {
         return {
           status: "generated",
-          html: completedHtml,
+          html: sanitizedCompletedHtml,
           context: ctx,
           goldenBar: completedGoldenBar,
           generationMode,
