@@ -634,7 +634,7 @@ async function upsertRelationships(client, rows) {
       `INSERT INTO cio_tower.relationships (relationship_key, tenant_key, from_entity_key, to_entity_key, relationship_type, confidence, source_key, source_row, attributes)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
        ON CONFLICT (tenant_key, from_entity_key, to_entity_key, relationship_type)
-       DO UPDATE SET confidence=EXCLUDED.confidence, source_key=EXCLUDED.source_key, source_row=EXCLUDED.source_row, attributes=EXCLUDED.attributes, updated_at=now()`,
+       DO UPDATE SET confidence=EXCLUDED.confidence, source_key=EXCLUDED.source_key, source_row=EXCLUDED.source_row, attributes=EXCLUDED.attributes`,
       [row.relationship_key, row.tenant_key, row.from_entity_key, row.to_entity_key, row.relationship_type, row.confidence, row.source_key ?? null, row.source_row ?? null, row.attributes ?? {}],
     );
   }
