@@ -142,6 +142,19 @@ describe("Moves signed-in phase capture/gate routes", () => {
       },
     });
     expect(getAzureWriteFluentClient().from).toHaveBeenCalledWith("program_modules");
+    const updateCalls = (getAzureWriteFluentClient().__builder.update as jest.Mock).mock.calls;
+    expect(updateCalls).toEqual(
+      expect.arrayContaining([
+        [
+          expect.objectContaining({
+            charter: expect.objectContaining({
+              evidence_family: sections.known_evidence,
+              known_evidence: sections.known_evidence,
+            }),
+          }),
+        ],
+      ]),
+    );
   });
 
   it("blocks capture completion when required sections are missing", async () => {

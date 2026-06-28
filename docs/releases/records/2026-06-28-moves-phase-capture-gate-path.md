@@ -31,20 +31,34 @@ Adds a supported signed-in path for Strategic Moves users to complete phase capt
 - Added `GET/POST /api/v1/programs/[programId]/phase-capture`.
 - Added `GET/POST /api/v1/programs/[programId]/phase-gate-approval`.
 - Added unit coverage for the phase capture contract.
+- Added compatibility mapping from the new P0 `known_evidence` capture section
+  to the legacy `engagements.charter.evidence_family` key so the existing phase
+  UI and the new generation guard read the same completed capture state.
 
 ## QA / Validation
 
-- Pending local validation before deployment:
-  - `npx jest src/lib/programs/__tests__/phase-capture-contract.test.ts --runInBand`
-  - scoped ESLint on new files
-  - `npx tsc --noEmit`
+- Passed local validation:
+  - `npx jest src/lib/programs/__tests__/phase-capture-contract.test.ts src/__tests__/integration/programs/phase-capture-gate-routes.test.ts --runInBand`
+  - scoped ESLint on changed route/test files
   - `npm run release:check`
-- Required live proof after deployment:
-  - Signed-in Lakeshore capture before/after.
-  - Signed-in gate approval before/after.
-  - Generation guard response before/after.
-  - At least one artifact generated only after approval.
-  - Wrong-tenant negative proof remains blocked.
+- Passed production image build:
+  - ACR build `cayb`
+  - production Next compile and TypeScript succeeded inside the image build
+- Passed live signed-in proof on Lakeshore:
+  - P0 capture before: incomplete
+  - Gate approval before capture: blocked
+  - Generation before capture/gate: `409 generation_gate_blocked`
+  - P0 capture after save: complete
+  - Gate approval: `200`, P0 advanced to P1
+  - Generation after approval: `200`, HTML artifact created
+  - Golden bar: pass, two inline SVGs, no `[DATA GAP]`, not prose-only
+  - Review/regenerate: `200`, regenerated review-required artifact created
+  - Wrong-tenant SkyHarbor API attempts: `404`, no Lakeshore data surfaced
+- Full local `tsc --noEmit` in the side worktree was blocked before image build
+  by unrelated missing optional package declarations/modules (`js-yaml`,
+  `@azure-rest/ai-document-intelligence`, `@axe-core/playwright`). The
+  production ACR image build subsequently passed TypeScript with the complete
+  production dependency graph.
 
 ## Rollout Plan
 
@@ -55,6 +69,9 @@ Merge to main and deploy through the approved Azure Container Apps main lane. No
 - Repo-owned deploy workflow: Azure Container Apps main lane.
 - Shared runtime mutators: None outside the app routes.
 - Approved image digest: To be recorded after ACA build.
+- Deployed image digest:
+  `sha256:110d35562159cfadb6930ded80b1adfe97b94ada33db1c38a653c3f54f159abf`
+- ACA revision: `ca-abarva-web-lab-eastus--m12ce9276`
 - ACA runtime invariant: `app.abarva.ai` must serve the deployed git SHA.
 - Worker image invariant: No worker image change required.
 - Feature/env flag update path: None.
@@ -75,4 +92,5 @@ Revert the commit and redeploy the prior ACA image. No destructive data rollback
 ## Known Gaps
 
 - Preliminary draft lane is intentionally not included in this first pass.
-- UI affordance may still be minimal; the API path is the supported signed-in path for this release.
+- UI affordance may still be minimal; this release ensures the API path is
+  supported and the legacy P0 phase tracker receives the same capture keys.
