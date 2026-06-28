@@ -4,7 +4,12 @@ import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 import type { GenerateArtifactResult } from "@/lib/deliverables/generate-artifact";
 import { getDeliverableProfile } from "@/lib/deliverables/profiles/registry";
 import { buildGeneratedPhaseDigest } from "@/lib/deliverables/generated-phase-digest";
+import {
+  buildPhaseWordEquivalentDocx,
+  phaseWordEquivalentFileName,
+} from "@/lib/deliverables/phase-word-equivalent";
 import { draftModuleDeliverable } from "@/lib/programs/nexus";
+import { getPhaseDeliverablePackageContract } from "@/lib/programs/phase-deliverable-package-contract";
 import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
 import type { ProgramCore, TenancyCtx } from "@/lib/programs/types.db";
 
@@ -56,6 +61,9 @@ export interface PersistMoveGeneratedArtifactResult {
   artifactId: string;
   artifactVersion: number;
   artifactBlobStored: boolean;
+  editableArtifactId: string;
+  editableArtifactVersion: number;
+  editableArtifactBlobStored: boolean;
 }
 
 export async function persistMoveGeneratedArtifact({
@@ -67,6 +75,7 @@ export async function persistMoveGeneratedArtifact({
   result,
 }: PersistMoveGeneratedArtifactInput): Promise<PersistMoveGeneratedArtifactResult> {
   const profile = getDeliverableProfile(artifact);
+  const deliverablePackageContract = getPhaseDeliverablePackageContract({ artifact, phase });
   const phaseLabel = PHASE_LABEL[phase] ?? `P${phase}`;
   const artifactTitle = title ?? profile.title;
   const solutionContextDigest = buildGeneratedPhaseDigest({
@@ -115,6 +124,12 @@ export async function persistMoveGeneratedArtifact({
       phase,
       artifact,
       output_format: "html",
+      output_role: "html_visual_review_companion",
+      editable_word_equivalent_required:
+        deliverablePackageContract.formalEditableRecordRequired,
+      primary_editable_record_label:
+        deliverablePackageContract.primaryEditableRecordLabel,
+      deliverablePackageContract,
       mode: "program_generate",
       solutionContextDigest,
       solution_context: result.context,
@@ -130,6 +145,13 @@ export async function persistMoveGeneratedArtifact({
       phase_label: phaseLabel,
       artifact,
       output_format: "html",
+      output_role: "html_visual_review_companion",
+      provenance_category: "abarva_generated_deliverable",
+      editable_word_equivalent_required:
+        deliverablePackageContract.formalEditableRecordRequired,
+      required_companion_outputs: deliverablePackageContract.outputs.map(
+        (output) => output.kind,
+      ),
       generation_mode: result.generationMode,
     },
   });
@@ -158,6 +180,82 @@ export async function persistMoveGeneratedArtifact({
       versionId,
       phaseLabel,
       outputFormat: "html",
+      outputRole: "html_visual_review_companion",
+      provenanceCategory: "abarva_generated_deliverable",
+      editableWordEquivalentRequired:
+        deliverablePackageContract.formalEditableRecordRequired,
+      primaryEditableRecordLabel:
+        deliverablePackageContract.primaryEditableRecordLabel,
+      requiredCompanionOutputs: deliverablePackageContract.outputs,
+      wordEquivalentSections: deliverablePackageContract.wordDocumentSections,
+      requiredWorkshopEvidence:
+        deliverablePackageContract.requiredWorkshopEvidence,
+      provenanceRules: deliverablePackageContract.provenanceRules,
+      generationMode: result.generationMode,
+      draftOnly: result.draftOnly,
+      draftCaveats: result.draftCaveats,
+      contextCaveats: result.contextCaveats,
+      qualityStatus,
+      goldenBarStatus,
+      artifactStatus: draftStatusLabel,
+      preliminaryCaveat: isPreGateDraft ? draftCaveat : null,
+      openItems,
+      reviewStatus: isPreGateDraft ? "pre_gate_review_required" : "not_reviewed",
+      clientFacingVersionLabel: "Version 1",
+    },
+  });
+
+  const editableDocx = await buildPhaseWordEquivalentDocx({
+    artifact,
+    phase,
+    moveName: program.name,
+    title: artifactTitle,
+    html: result.html,
+    context: result.context,
+    generationMode: result.generationMode,
+    reviewStatus: isPreGateDraft ? "review_required" : "draft",
+    qualityStatus,
+    goldenBarStatus,
+    contract: deliverablePackageContract,
+  });
+
+  const editableArtifact = await saveMoveArtifact(ctx, {
+    moveId: program.id,
+    phase,
+    artifactType: `${artifact}_editable_docx`,
+    artifactFamily: "generated_deliverable",
+    title: `${artifactTitle} — Editable Deliverable`,
+    description: isPreGateDraft
+      ? "Editable Word-equivalent phase deliverable for sponsor review, redlines, and client comments. It is not final until phase approval is recorded."
+      : "Editable Word-equivalent phase deliverable for client review, redlines, and approval workflow.",
+    fileName: phaseWordEquivalentFileName({ title: artifactTitle, artifact }),
+    fileFormat: "docx",
+    body: editableDocx,
+    status: isPreGateDraft ? "review_required" : "draft",
+    generatedBy: ctx.email ?? ctx.userId ?? "moves-generate",
+    qualityScore: result.goldenBar.pass ? 96 : null,
+    unsupportedClaimsCount: 0,
+    sourceBasis: "moves_solution_context",
+    confidence: result.goldenBar.hasDataGap ? "medium" : "high",
+    citationReady: !result.goldenBar.hasDataGap,
+    metadata: {
+      deliverableId,
+      versionId,
+      phaseLabel,
+      outputFormat: "docx",
+      outputRole: "docx_editable_phase_record",
+      provenanceCategory: "abarva_generated_deliverable",
+      pairedVisualCompanionArtifactId: savedArtifact.artifactId,
+      visualCompanionArtifactType: artifact,
+      editableWordEquivalentRequired:
+        deliverablePackageContract.formalEditableRecordRequired,
+      primaryEditableRecordLabel:
+        deliverablePackageContract.primaryEditableRecordLabel,
+      requiredCompanionOutputs: deliverablePackageContract.outputs,
+      wordEquivalentSections: deliverablePackageContract.wordDocumentSections,
+      requiredWorkshopEvidence:
+        deliverablePackageContract.requiredWorkshopEvidence,
+      provenanceRules: deliverablePackageContract.provenanceRules,
       generationMode: result.generationMode,
       draftOnly: result.draftOnly,
       draftCaveats: result.draftCaveats,
@@ -178,5 +276,8 @@ export async function persistMoveGeneratedArtifact({
     artifactId: savedArtifact.artifactId,
     artifactVersion: savedArtifact.version,
     artifactBlobStored: savedArtifact.blobStored,
+    editableArtifactId: editableArtifact.artifactId,
+    editableArtifactVersion: editableArtifact.version,
+    editableArtifactBlobStored: editableArtifact.blobStored,
   };
 }

@@ -14,6 +14,11 @@ import {
   buildReviewRegenerationPlan,
   buildReviewRegenerationPrompt,
 } from "@/lib/programs/deliverables/review-regeneration";
+import {
+  buildPhaseWordEquivalentDocx,
+  phaseWordEquivalentFileName,
+} from "@/lib/deliverables/phase-word-equivalent";
+import { getPhaseDeliverablePackageContract } from "@/lib/programs/phase-deliverable-package-contract";
 import { streamAgentTurn } from "@/lib/agent/stream";
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 
@@ -189,6 +194,71 @@ export async function POST(
       },
     });
 
+    const deliverablePackageContract = getPhaseDeliverablePackageContract({
+      artifact: artifactKey,
+      phase: artifact.phase ?? 0,
+    });
+    const editableDocx = await buildPhaseWordEquivalentDocx({
+      artifact: artifactKey,
+      phase: artifact.phase ?? 0,
+      moveName: artifact.title,
+      title: plan.title,
+      html: regeneratedHtml,
+      generationMode: "draft",
+      reviewStatus: "review_required",
+      qualityStatus: plan.qualityStatus,
+      goldenBarStatus: plan.goldenBarStatus,
+      contract: deliverablePackageContract,
+      feedbackSummary: plan.feedbackItems.map((item) => item.requestedChange),
+    });
+    const editableSaved = await saveMoveArtifact(ctx, {
+      moveId: programId,
+      phase: artifact.phase ?? 0,
+      artifactType: `${artifact.artifact_type}_editable_docx`,
+      artifactFamily: artifact.artifact_family as ArtifactFamily,
+      title: `${plan.title} — Editable Deliverable`,
+      description:
+        "Editable Word-equivalent regenerated from client review feedback. Requires review before final use.",
+      fileName: phaseWordEquivalentFileName({
+        title: plan.title,
+        artifact: artifact.artifact_type,
+        version: saved.version,
+      }),
+      fileFormat: "docx",
+      body: editableDocx,
+      status: "review_required",
+      generatedBy: ctx.email ?? ctx.userId ?? "review-regenerate",
+      qualityScore: plan.qualityScore,
+      unsupportedClaimsCount: 0,
+      sourceBasis: "client_review_feedback",
+      confidence: "medium",
+      citationReady: false,
+      metadata: {
+        ...(artifact.metadata ?? {}),
+        ...plan.metadata,
+        outputFormat: "docx",
+        outputRole: "docx_editable_phase_record",
+        provenanceCategory: "abarva_generated_deliverable",
+        pairedVisualCompanionArtifactId: saved.artifactId,
+        visualCompanionArtifactType: artifact.artifact_type,
+        editableWordEquivalentRequired:
+          deliverablePackageContract.formalEditableRecordRequired,
+        primaryEditableRecordLabel:
+          deliverablePackageContract.primaryEditableRecordLabel,
+        requiredCompanionOutputs: deliverablePackageContract.outputs,
+        wordEquivalentSections: deliverablePackageContract.wordDocumentSections,
+        requiredWorkshopEvidence:
+          deliverablePackageContract.requiredWorkshopEvidence,
+        provenanceRules: deliverablePackageContract.provenanceRules,
+        sourceArtifactTitle: artifact.title,
+        regenerationMode: "complete_artifact",
+        originalArtifactBodyRetrieved: Boolean(original),
+        regeneratedFromArtifactId: artifact.artifact_id,
+        reviewStatus: "review_required",
+        clientFacingVersionLabel: `Version ${saved.version}`,
+      },
+    });
+
     return Response.json({
       ok: true,
       feedbackItems: plan.feedbackItems,
@@ -203,6 +273,9 @@ export async function POST(
         goldenBarStatus: plan.goldenBarStatus,
         regeneratedFromArtifactId: artifact.artifact_id,
         blobStored: saved.blobStored,
+        editableArtifactId: editableSaved.artifactId,
+        editableArtifactVersion: editableSaved.version,
+        editableBlobStored: editableSaved.blobStored,
       },
     });
   } catch (err) {

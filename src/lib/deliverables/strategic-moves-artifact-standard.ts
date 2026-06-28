@@ -1,5 +1,6 @@
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 import type { GenerationMode } from "@/lib/programs/assert-phase-ready";
+import { renderPhaseDeliverablePackagePrompt } from "@/lib/programs/phase-deliverable-package-contract";
 import type { SolutionContext } from "@/lib/programs/solution-context";
 import {
   exactEvidenceTermsForGoldenBar,
@@ -207,9 +208,15 @@ The artifact must answer:
 - whether the issue is process, data, policy, control, ownership, AI-fit, or a mix
 - what evidence supports the diagnosis
 - what evidence is still needed before finalizing
+- how the client organization works today: leadership, teams, decision rights, locations,
+  workforce shape, ways of working, culture/adoption signals, and system/tool landscape
+- what workshop/interview/session evidence supports the process narrative
 
 Required structures:
 - Metrics-backed Executive Diagnostic Summary
+- Word-ready Current State Process Document structure with table of contents
+- Organization / leadership / teams / ways-of-working narrative
+- Workforce location and adoption/culture observations
 - Current-State Handoff Map
 - Exception Taxonomy
 - Pain Point / Root Cause Matrix
@@ -218,6 +225,9 @@ Required structures:
 - Evidence Coverage table
 - Next Evidence Request table
 - Owner / Action Matrix
+- Workshop Agenda and Session Notes appendix
+- Derived Visualization Inventory that labels every AbarVa-generated process flow, diagram, chart,
+  and table as derived from client-loaded evidence
 
 P2 evidence-specific requirements:
 - Start with a metrics-backed diagnostic thesis. If the evidence packet contains exact metrics,
@@ -230,6 +240,12 @@ P2 evidence-specific requirements:
   as a client-actionable missing input.
 - Build the systems/data section from systems landscape evidence when present; otherwise mark it
   as a client-actionable missing input.
+- Process flows should be introduced by a human-readable operating narrative before the diagram:
+  how work starts, who touches it, what systems are used, where decisions happen, how exceptions
+  are resolved, and what changes would affect people/adoption.
+- Treat workshop agendas, business/IT interviews, process walkthrough notes, and client corrections
+  as first-class evidence; if they are missing, list them as client-to-complete evidence rather than
+  pretending the process narrative is final.
 - Keep draft/final gates honest; do not mark P2 final or ready for P3 if readiness remains partial.`;
 }
 
@@ -308,7 +324,10 @@ ${missingInputsActionBlock(ctx)}
 5. Phase-specific assignment
 ${phaseAssignmentForArtifact({ artifact: args.artifact, phase: args.phase })}
 
-6. Quality bar
+6. Deliverable package standard
+${renderPhaseDeliverablePackagePrompt({ artifact: args.artifact, phase: args.phase })}
+
+7. Quality bar
 - Lead with judgment and a clear executive answer.
 - Use diagrams, tables, matrices, and charts where they clarify flow, comparison, ownership, dependencies, controls, value, or gates.
 - Make every section useful for a client discussion.

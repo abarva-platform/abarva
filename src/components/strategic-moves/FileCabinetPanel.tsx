@@ -36,6 +36,11 @@ interface Artifact {
   artifactStatus?: string | null;
   preliminaryCaveat?: string | null;
   clientFacingVersionLabel?: string | null;
+  outputRole?: string | null;
+  provenanceCategory?: string | null;
+  primaryEditableRecordLabel?: string | null;
+  pairedVisualCompanionArtifactId?: string | null;
+  visualCompanionArtifactType?: string | null;
   downloadUrl: string;
 }
 
@@ -150,6 +155,27 @@ function metaLabel(value: string | null | undefined): string {
   return value ? value.replace(/_/g, " ") : "";
 }
 
+export function artifactOutputRoleLabel(a: {
+  outputRole?: string | null;
+  fileFormat?: string | null;
+}): string {
+  if (a.outputRole === "docx_editable_phase_record") return "Editable deliverable";
+  if (a.outputRole === "html_visual_review_companion") {
+    return "Visual review companion";
+  }
+  if (a.fileFormat === "docx") return "Word-equivalent";
+  if (a.fileFormat === "html") return "Review view";
+  return "";
+}
+
+export function artifactFormatLabel(format: string | null | undefined): string {
+  if (format === "docx") return "Word-equivalent";
+  if (format === "html") return "HTML review view";
+  if (format === "xlsx") return "Excel model";
+  if (format === "pdf") return "PDF snapshot";
+  return format ? format.toUpperCase() : "File";
+}
+
 function BulletList({ items }: { items: string[] }) {
   if (!items.length) return null;
   return (
@@ -199,6 +225,7 @@ function ArtifactRow({
   const [decisionRationale, setDecisionRationale] = useState("");
   const [missingEvidenceText, setMissingEvidenceText] = useState("");
   const [actionErr, setActionErr] = useState<string | null>(null);
+  const roleLabel = artifactOutputRoleLabel(a);
 
   const openArtifact = useCallback(async () => {
     setBusy("open");
@@ -373,8 +400,7 @@ function ArtifactRow({
       moveId,
       onChanged,
       reviewBusy,
-      sponsorReview?.packet.knownLimitations,
-      sponsorReview?.packet.missingEvidence,
+      sponsorReview,
     ],
   );
 
@@ -435,8 +461,29 @@ function ArtifactRow({
               borderRadius: 4,
             }}
           >
-            {a.fileFormat}
+            {artifactFormatLabel(a.fileFormat)}
           </span>
+          {roleLabel && (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color:
+                  a.outputRole === "docx_editable_phase_record"
+                    ? "#166534"
+                    : "#1B2B5C",
+                textTransform: "uppercase",
+                background:
+                  a.outputRole === "docx_editable_phase_record"
+                    ? "#E6F4EA"
+                    : "#E6F0FB",
+                padding: "1px 6px",
+                borderRadius: 4,
+              }}
+            >
+              {roleLabel}
+            </span>
+          )}
           <span style={{ fontSize: 11, color: "#9AA3B2" }}>v{a.version}</span>
           {a.regeneratedFromArtifactId && (
             <span
@@ -476,12 +523,12 @@ function ArtifactRow({
           <span
             title={
               stored
-                ? "Stored in Azure Blob"
-                : "Storage unconfigured — registry only"
+                ? "Stored in the secure artifact vault"
+                : "Storage pending"
             }
             style={{ color: stored ? "#1E7E34" : "#B71C1C", fontWeight: 600 }}
           >
-            {stored ? "● Blob" : "○ no blob"}
+            {stored ? "Stored securely" : "Storage pending"}
           </span>
         </div>
       </div>
