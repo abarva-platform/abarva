@@ -43,4 +43,22 @@ describe("Intelligence model input cleaner", () => {
     expect(serialized).not.toContain("supporting_material.csv");
     expect(serialized).not.toContain("Row:");
   });
+
+  it("converts generated system-code labels into business labels", () => {
+    const cleaned = cleanIntelligenceModelInputText(
+      [
+        "The enterprise IT record shows a high-criticality SAP hub (Weight-SAP-Hub-0687).",
+        "A Sabre slot service (Slot-Sabre-Service-0685) is EOL Approaching.",
+        "app id: Legal-Oracle-Engine-0684 capability_id: SHA-CAP-123",
+      ].join("\n"),
+    );
+
+    expect(cleaned).toContain("Weight SAP Hub");
+    expect(cleaned).toContain("Slot Sabre Service");
+    expect(cleaned).toContain("application: Legal Oracle Engine");
+    expect(cleaned).not.toMatch(
+      /Weight-SAP-Hub-0687|Slot-Sabre-Service-0685|Legal-Oracle-Engine-0684|SHA-CAP/i,
+    );
+    expect(findRawModelInputLeaks(cleaned)).toEqual([]);
+  });
 });
