@@ -7,7 +7,11 @@ import type {
   IntelligenceIntent,
 } from "@/lib/intelligence/dossiers";
 import { cleanIntelligenceModelInput } from "@/lib/intelligence/model-input-cleaner";
-import { INTELLIGENCE_TABBED_OUTPUT_CONTRACT } from "@/lib/intelligence/tabbed-response";
+import {
+  hasChartReadyMarkdownData,
+  INTELLIGENCE_TABBED_OUTPUT_CONTRACT,
+  parseIntelligenceTabbedResponse,
+} from "@/lib/intelligence/tabbed-response";
 
 const DEFAULT_MODEL = "claude-opus-4-7";
 const DEFAULT_MAX_TOKENS = 25_000;
@@ -558,9 +562,10 @@ export async function synthesizeIntelligenceConsultantText(args: {
     let rawText = extractAnthropicText(message);
     let text = normalizeConsultantText(rawText);
     const requiredVisualRows = requiredVisualTableRows(args.dossier.question);
+    const expectedVisualTab = expectedVisualTabId(args.dossier.question);
     if (
       explicitVisualAsk &&
-      !hasMarkdownDecisionTable(text, requiredVisualRows)
+      !hasCanvasVisualTable(text, requiredVisualRows, expectedVisualTab)
     ) {
       const repairUser = [
         user,
@@ -570,9 +575,12 @@ export async function synthesizeIntelligenceConsultantText(args: {
         "",
         "Repair instruction:",
         "The user explicitly asked for a table, chart, graph, visual, ranking, comparison, matrix, breakdown, or show-me structure.",
-        "Return the same senior-advisor answer, but add exactly one compact GitHub-flavored Markdown decision table.",
+        "Return the same senior-advisor answer, but add exactly one right-canvas visual tab using the exact tab markers.",
+        "For chart, graph, trend, visual, visualize, plot, or benchmark asks, use <<<TAB: Chart | grounding: tenant-evidence>>> unless the visual is industry, benchmark, corpus, function, or category context; then use the matching grounding label.",
+        "For table, matrix, comparison-grid, ranking, breakdown, or show-me asks, use <<<TAB: Table | grounding: tenant-evidence>>> unless the table is context rather than tenant proof.",
         `Use business-friendly columns aligned to the user's ask. Include ${requiredVisualRows}-6 rows only.`,
         'Use only the provided packet. If a value is not shown, write "not shown in loaded sources" instead of inventing it.',
+        "Do not put the Markdown table in the main answer. It must be inside the Chart or Table tab.",
         "Do not add source-support, evidence-register, citation, or material-used tables.",
         "Return final user-facing text only.",
       ].join("\n");
@@ -588,7 +596,13 @@ export async function synthesizeIntelligenceConsultantText(args: {
       const repairedText = normalizeConsultantText(
         extractAnthropicText(repaired),
       );
-      if (hasMarkdownDecisionTable(repairedText, requiredVisualRows)) {
+      if (
+        hasCanvasVisualTable(
+          repairedText,
+          requiredVisualRows,
+          expectedVisualTab,
+        )
+      ) {
         rawText = repairedText;
         text = repairedText;
       } else {
@@ -600,8 +614,21 @@ export async function synthesizeIntelligenceConsultantText(args: {
         );
         if (fallbackTable) {
           const fallbackBase = stripMarkdownTablesFromText(fallbackSourceText);
-          rawText = `${fallbackBase}\n\n${fallbackTable}`;
-          text = normalizeConsultantText(`${fallbackBase}\n\n${fallbackTable}`);
+          const visualTab = visualTabForFallback(
+            args.dossier.question,
+            fallbackTable,
+          );
+          rawText = [
+            fallbackBase,
+            "",
+            visualTab.marker,
+            visualTab.intro,
+            "",
+            fallbackTable,
+          ]
+            .join("\n")
+            .trim();
+          text = normalizeConsultantText(rawText);
         }
       }
     }
@@ -736,6 +763,92 @@ function markdownDecisionTableRowCount(text: string): number {
     if (rows > 0) return rows;
   }
   return 0;
+}
+
+function hasCanvasVisualTable(
+  text: string,
+  minRows = 1,
+  expectedId?: "chart" | "table",
+): boolean {
+  const parsed = parseIntelligenceTabbedResponse(text);
+  return parsed.tabs.some(
+    (tab) =>
+      (tab.id === "chart" || tab.id === "table") &&
+      (!expectedId || tab.id === expectedId) &&
+      hasMarkdownDecisionTable(tab.content, minRows),
+  );
+}
+
+function expectedVisualTabId(question: string): "chart" | "table" | undefined {
+  if (
+    /\b(chart|charts|graph|graphs|visual|visuals|visuali[sz]e|plot|trend|benchmark)\b/i.test(
+      question,
+    )
+  ) {
+    return "chart";
+  }
+  if (
+    /\b(table|tables|tabular|matrix|ranking|ranked|compare|comparison|break ?down|show me)\b/i.test(
+      question,
+    )
+  ) {
+    return "table";
+  }
+  return undefined;
+}
+
+function visualTabForFallback(
+  question: string,
+  table: string,
+): { marker: string; intro: string } {
+  if (
+    expectedVisualTabId(question) === "chart" &&
+    hasChartReadyMarkdownData(table)
+  ) {
+    return {
+      marker: visualTabMarkerForQuestion(question, "Chart"),
+      intro: visualTabIntroForQuestion(question),
+    };
+  }
+  return {
+    marker: "<<<TAB: Table | grounding: tenant-evidence>>>",
+    intro: "Tenant evidence: compact decision view from the loaded packet. Use this as a fallback because chart-ready industry data was not available in the model output.",
+  };
+}
+
+function visualTabMarkerForQuestion(
+  question: string,
+  tab: "Chart" | "Table",
+): string {
+  if (/\bindustry\b/i.test(question)) {
+    return `<<<TAB: ${tab} | grounding: industry-context>>>`;
+  }
+  if (/\bbenchmark|trend|peer|market\b/i.test(question)) {
+    return `<<<TAB: ${tab} | grounding: benchmark>>>`;
+  }
+  if (/\bfunction\b/i.test(question)) {
+    return `<<<TAB: ${tab} | grounding: function-context>>>`;
+  }
+  if (/\bcategory\b/i.test(question)) {
+    return `<<<TAB: ${tab} | grounding: category-context>>>`;
+  }
+  return `<<<TAB: ${tab} | grounding: tenant-evidence>>>`;
+}
+
+function visualTabIntroForQuestion(question: string): string {
+  if (/\bindustry\b/i.test(question)) {
+    return "Industry context, not tenant proof: use this as a directional companion view when tenant-specific chart data is not available.";
+  }
+  if (/\bbenchmark|trend|peer|market\b/i.test(question)) {
+    return "Directional benchmark context, not tenant proof: use this as a planning view unless tenant evidence is cited in the row.";
+  }
+  if (/\bfunction\b/i.test(question)) {
+    return "Function context: use this to reason about the broader operating function, not as standalone tenant proof.";
+  }
+  if (/\bcategory\b/i.test(question)) {
+    return "Category context: use this to reason about the broader category, not as standalone tenant proof.";
+  }
+  return "Tenant evidence: compact decision view from the loaded packet.";
 }
 
 function stripMarkdownTablesFromText(text: string): string {

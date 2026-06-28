@@ -492,6 +492,11 @@ describe("Intelligence consultant text synthesis", () => {
     expect(text).toContain("| Initiative | Value | Readiness | Risk | Next action |");
     expect(text).toContain("| Scale MRO predictive maintenance |");
     expect(text).toContain("| Hold IROPS recovery orchestration |");
+    const parsed = parseIntelligenceTabbedResponse(text);
+    expect(parsed.mainAnswer).not.toContain("| Initiative |");
+    expect(parsed.tabs.find((tab) => tab.id === "table")?.content).toContain(
+      "| Initiative | Value | Readiness | Risk | Next action |",
+    );
     expect(text).not.toContain("Supporting Material");
     expect(result).toMatchObject({
       trace: { used: true, model: expect.any(String) },
@@ -559,8 +564,51 @@ describe("Intelligence consultant text synthesis", () => {
     expect(text).toContain("| Kyriba global cash and payments rollout |");
     expect(text).toContain("| M365 Copilot finance automation |");
     expect(text).toContain("| Finance semantic layer |");
+    const parsed = parseIntelligenceTabbedResponse(text);
+    expect(parsed.mainAnswer).not.toContain("| Initiative |");
+    expect(parsed.tabs.find((tab) => tab.id === "table")?.content).toContain(
+      "| Initiative | Value | Readiness | Risk | Next action |",
+    );
     expect(result).toMatchObject({
       trace: { used: true, model: expect.any(String) },
+    });
+  });
+
+  it("uses a Chart tab marker for explicit trend or benchmark chart fallbacks", async () => {
+    const advisoryAnswer =
+      "Use the industry trend as context, not tenant proof: sequence bounded operational AI options first, then hold broader recovery automation until the missing readiness evidence is closed. The tradeoff is speed versus control, so the chart should guide where to investigate, not approve scale funding by itself.";
+    const create = mockClaudeTexts([
+      advisoryAnswer,
+      [
+        advisoryAnswer,
+        "",
+        "<<<TAB: Chart | grounding: industry-context>>>",
+        "Industry context, not tenant proof: directional opportunity map for airline AI investment sequencing.",
+        "",
+        "| Opportunity | Value score | Readiness score |",
+        "|---|---:|---:|",
+        "| IROPS recovery | 9 | 6 |",
+        "| Predictive maintenance | 7 | 7 |",
+        "| Customer concierge | 6 | 5 |",
+      ].join("\n"),
+    ]);
+
+    const result = await synthesizeIntelligenceConsultantText({
+      dossier: {
+        ...dossier,
+        question:
+          "Show me an industry trend chart for AI opportunities in this function.",
+      },
+      tenantId: "tenant-skyharbor",
+    });
+
+    expect(create).toHaveBeenCalledTimes(2);
+    const text = result && "text" in result ? result.text : "";
+    const parsed = parseIntelligenceTabbedResponse(text);
+    expect(parsed.mainAnswer).toBe(advisoryAnswer);
+    expect(parsed.tabs.find((tab) => tab.id === "chart")).toMatchObject({
+      grounding: "industry-context",
+      content: expect.stringContaining("| Opportunity | Value score | Readiness score |"),
     });
   });
 
@@ -624,6 +672,11 @@ describe("Intelligence consultant text synthesis", () => {
     expect(text).toContain("| M365 Copilot finance automation |");
     expect(text).toContain("| Finance semantic layer |");
     expect(text).not.toContain("| Initiative | Budget | Promised benefit |");
+    const parsed = parseIntelligenceTabbedResponse(text);
+    expect(parsed.mainAnswer).not.toContain("| Initiative |");
+    expect(parsed.tabs.find((tab) => tab.id === "table")?.content).toContain(
+      "| Initiative | Value | Readiness | Risk | Next action |",
+    );
   });
 
   it("builds a visual fallback from grounded narrative when packet rows are sparse", async () => {
@@ -662,6 +715,11 @@ describe("Intelligence consultant text synthesis", () => {
     expect(text).toContain("| Kyriba | $86M promise |");
     expect(text).toContain("| Business layer | $46M promise |");
     expect(text).toContain("| Variance explainer | $17M |");
+    const parsed = parseIntelligenceTabbedResponse(text);
+    expect(parsed.mainAnswer).not.toContain("| Initiative |");
+    expect(parsed.tabs.find((tab) => tab.id === "table")?.content).toContain(
+      "| Initiative | Value | Readiness | Risk | Next action |",
+    );
   });
 
   it("rejects old transcript labels and raw ids", () => {
