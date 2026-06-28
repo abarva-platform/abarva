@@ -40,6 +40,11 @@ interface CabinetArtifact {
   artifactStatus?: string | null;
   preliminaryCaveat?: string | null;
   clientFacingVersionLabel?: string | null;
+  outputRole?: string | null;
+  provenanceCategory?: string | null;
+  primaryEditableRecordLabel?: string | null;
+  pairedVisualCompanionArtifactId?: string | null;
+  visualCompanionArtifactType?: string | null;
   downloadUrl: string;
 }
 
@@ -72,6 +77,11 @@ export async function GET(
         artifactStatus?: string;
         preliminaryCaveat?: string;
         clientFacingVersionLabel?: string;
+        outputRole?: string;
+        provenanceCategory?: string;
+        primaryEditableRecordLabel?: string;
+        pairedVisualCompanionArtifactId?: string;
+        visualCompanionArtifactType?: string;
       };
       return {
         artifactId: r.artifact_id,
@@ -100,6 +110,12 @@ export async function GET(
         artifactStatus: meta?.artifactStatus ?? null,
         preliminaryCaveat: meta?.preliminaryCaveat ?? null,
         clientFacingVersionLabel: meta?.clientFacingVersionLabel ?? null,
+        outputRole: meta?.outputRole ?? null,
+        provenanceCategory: meta?.provenanceCategory ?? null,
+        primaryEditableRecordLabel: meta?.primaryEditableRecordLabel ?? null,
+        pairedVisualCompanionArtifactId:
+          meta?.pairedVisualCompanionArtifactId ?? null,
+        visualCompanionArtifactType: meta?.visualCompanionArtifactType ?? null,
         downloadUrl: `/api/v1/programs/${programId}/artifacts/${r.artifact_id}/download`,
       };
     });
@@ -125,6 +141,8 @@ export async function GET(
               qualityStatus?: string;
               goldenBarStatus?: string;
               artifactStatus?: string;
+              outputRole?: string;
+              provenanceCategory?: string;
             } | null;
             return {
               artifactId: rec.id,
@@ -152,6 +170,8 @@ export async function GET(
               qualityStatus: meta?.qualityStatus ?? null,
               goldenBarStatus: meta?.goldenBarStatus ?? null,
               artifactStatus: meta?.artifactStatus ?? null,
+              outputRole: meta?.outputRole ?? null,
+              provenanceCategory: meta?.provenanceCategory ?? null,
               generatedBy: rec.renderedBy,
               createdAt: rec.renderedAt,
               downloadUrl: `/api/v1/artifacts/${rec.id}`,

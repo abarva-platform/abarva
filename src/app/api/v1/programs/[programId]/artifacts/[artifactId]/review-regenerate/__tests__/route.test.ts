@@ -114,13 +114,18 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/review-regene
     const json = (await res.json()) as {
       ok: boolean;
       feedbackItemCount: number;
-      regeneratedArtifact: { artifactId: string; qualityStatus: string };
+      regeneratedArtifact: {
+        artifactId: string;
+        qualityStatus: string;
+        editableArtifactId: string;
+      };
     };
 
     expect(res.status).toBe(200);
     expect(json.ok).toBe(true);
     expect(json.feedbackItemCount).toBe(1);
     expect(json.regeneratedArtifact.artifactId).toBe("artifact-v2");
+    expect(json.regeneratedArtifact.editableArtifactId).toBe("artifact-v2");
     expect(json.regeneratedArtifact.qualityStatus).toBe("Passed with caveats");
     expect(mockStreamAgentTurn).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -146,6 +151,22 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/review-regene
           goldenBarStatus: "Passed with caveats",
           regenerationMode: "complete_artifact",
           originalArtifactBodyRetrieved: true,
+        }),
+      }),
+    );
+    expect(saveMoveArtifact).toHaveBeenCalledWith(
+      tenancy,
+      expect.objectContaining({
+        moveId: "move-1",
+        artifactType: "session_artifact_editable_docx",
+        status: "review_required",
+        sourceBasis: "client_review_feedback",
+        fileFormat: "docx",
+        body: expect.any(Buffer),
+        metadata: expect.objectContaining({
+          outputRole: "docx_editable_phase_record",
+          pairedVisualCompanionArtifactId: "artifact-v2",
+          regeneratedFromArtifactId: "artifact-v1",
         }),
       }),
     );
