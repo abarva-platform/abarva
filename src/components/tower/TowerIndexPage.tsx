@@ -1047,7 +1047,10 @@ function CioMetricCard({
 }
 
 function CioOverviewKpiStrip({ model }: { model: CioDashboardModel }) {
-  const valueGap = Math.max(model.committedTotal - model.measuredTotal, 0);
+  const valueGap =
+    model.initiativeBudgetTotal > 0
+      ? Math.max(model.initiativeBudgetTotal - model.measuredTotal, 0)
+      : 0;
   const renewalTotal = model.renewalRows.reduce(
     (sum, row) => sum + Number(row.contractValueUsd ?? 0),
     0,
@@ -1085,12 +1088,20 @@ function CioOverviewKpiStrip({ model }: { model: CioDashboardModel }) {
     },
     {
       label: "Value gap",
-      value: valueGap > 0 ? formatMoney(valueGap) : "none",
+      value:
+        model.initiativeBudgetTotal > 0
+          ? valueGap > 0
+            ? formatMoney(valueGap)
+            : "none"
+          : "gap",
       note:
-        model.committedTotal > 0
-          ? "loaded budget minus measured value proof"
+        model.initiativeBudgetTotal > 0
+          ? "committed value minus proven value"
           : "needs initiative business-case rows",
-      tone: valueGap > 0 ? ("amber" as const) : ("green" as const),
+      tone:
+        model.initiativeBudgetTotal <= 0 || valueGap > 0
+          ? ("amber" as const)
+          : ("green" as const),
     },
     {
       label: "Renewals · 90d",
@@ -1206,19 +1217,44 @@ function CioDetailKpiStrip({ model }: { model: CioDashboardModel }) {
 }
 
 function CioStoryBoard({ model }: { model: CioDashboardModel }) {
-  const valueGap = Math.max(model.committedTotal - model.measuredTotal, 0);
-  const realizedPct =
-    model.initiativeBudgetTotal > 0
-      ? Math.round((model.measuredTotal / model.initiativeBudgetTotal) * 100)
-      : 0;
-  const proofWidth =
-    model.initiativeBudgetTotal > 0
-      ? Math.max(2, Math.min(100, realizedPct))
-      : 0;
+  const hasCommittedValue = model.initiativeBudgetTotal > 0;
+  const hasMeasuredValue = model.measuredTotal > 0;
+  const valueGap = hasCommittedValue
+    ? Math.max(model.initiativeBudgetTotal - model.measuredTotal, 0)
+    : 0;
+  const valueSurplus = hasCommittedValue
+    ? Math.max(model.measuredTotal - model.initiativeBudgetTotal, 0)
+    : 0;
+  const realizedPct = hasCommittedValue
+    ? Math.round((model.measuredTotal / model.initiativeBudgetTotal) * 100)
+    : 0;
+  const proofWidth = hasCommittedValue
+    ? Math.max(2, Math.min(100, realizedPct))
+    : 0;
   const valueThesis =
-    model.measuredTotal > 0
+    hasCommittedValue && hasMeasuredValue
       ? `We've committed ${formatMoney(model.initiativeBudgetTotal)} in technology value and proven ${formatMoney(model.measuredTotal)} of it.`
-      : "The portfolio budget is visible, but value proof is not loaded yet.";
+      : hasCommittedValue
+        ? "The portfolio business case is visible, but value proof is not loaded yet."
+        : "The portfolio budget is visible, but committed-value business cases are not loaded yet.";
+  const proofHeadline = !hasMeasuredValue
+    ? "value proof gap"
+    : !hasCommittedValue
+      ? `${formatMoney(model.measuredTotal)} proven value`
+      : valueGap > 0
+        ? `${formatMoney(valueGap)} unproven`
+        : valueSurplus > 0
+          ? `${formatMoney(valueSurplus)} above committed value`
+          : "value proof complete";
+  const proofContext = !hasMeasuredValue
+    ? "finance-attested outcomes are required before ROI is claimed"
+    : !hasCommittedValue
+      ? "committed-value business cases are required before realization can be scored"
+      : valueGap > 0
+        ? `${realizedPct}% realized — the gap is the funding gate`
+        : valueSurplus > 0
+          ? `${realizedPct}% realized — proven value exceeds the committed business case`
+          : "100% realized — committed value is fully proven";
 
   return (
     <section
@@ -1277,14 +1313,10 @@ function CioStoryBoard({ model }: { model: CioDashboardModel }) {
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            {model.measuredTotal > 0
-              ? `${formatMoney(valueGap)} unproven`
-              : "value proof gap"}
+            {proofHeadline}
           </span>
           <span style={{ color: "rgba(248,243,232,0.72)", fontSize: 13.5 }}>
-            {model.measuredTotal > 0
-              ? `${realizedPct}% realized — the gap is the funding gate`
-              : "finance-attested outcomes are required before ROI is claimed"}
+            {proofContext}
           </span>
         </div>
         <div
@@ -1317,7 +1349,11 @@ function CioStoryBoard({ model }: { model: CioDashboardModel }) {
           }}
         >
           <span>proven {formatMoney(model.measuredTotal)}</span>
-          <span>unproven {formatMoney(valueGap)}</span>
+          <span>
+            {hasCommittedValue
+              ? `unproven ${formatMoney(valueGap)}`
+              : "committed value gap"}
+          </span>
         </div>
       </article>
 
