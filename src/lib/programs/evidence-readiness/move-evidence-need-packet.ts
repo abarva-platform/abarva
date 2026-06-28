@@ -86,8 +86,16 @@ const FAMILY_TO_ARTIFACTS: Record<string, string[]> = {
   ],
   cost_baseline: ["business_case", "financial_model", "cfo_pack"],
   cost_pools: ["business_case", "financial_model"],
-  org_workforce: ["operating_model_design", "execution_roadmap", "handoff_package"],
-  workforce_model: ["operating_model_design", "execution_roadmap", "handoff_package"],
+  org_workforce: [
+    "operating_model_design",
+    "execution_roadmap",
+    "handoff_package",
+  ],
+  workforce_model: [
+    "operating_model_design",
+    "execution_roadmap",
+    "handoff_package",
+  ],
 };
 
 const GENERIC_EXAMPLES: Record<
@@ -269,7 +277,8 @@ function familyGuidance(
       ],
       whyItMatters:
         "This input anchors the artifact in client evidence instead of unsupported assumptions.",
-      nextAction: "Upload the source file or record a human waiver with rationale.",
+      nextAction:
+        "Upload the source file or record a human waiver with rationale.",
     }
   );
 }
@@ -327,7 +336,7 @@ export function buildMoveEvidenceNeedPackets(
         canDraft,
         canDraftLabel: canDraft
           ? "Can draft with current evidence."
-          : "Only a preliminary draft with evidence caveats is appropriate.",
+          : "Final generation is blocked until this evidence is uploaded or formally waived.",
         cannotDraftLabel:
           family.status === "covered"
             ? "No current block from this evidence slot."
@@ -336,7 +345,7 @@ export function buildMoveEvidenceNeedPackets(
       preliminaryGenerationCaveat:
         family.status === "covered"
           ? null
-          : `Any draft must state that ${family.label.toLowerCase()} is missing and that final sign-off is blocked until the evidence is uploaded or waived.`,
+          : `A preliminary draft lane is not active for this phase. Final generation must wait until ${family.label.toLowerCase()} is uploaded or formally waived.`,
       waiverOption: required
         ? "A sponsor or accountable owner may record a waiver, but final artifacts must carry the waiver caveat."
         : "Optional input; waive only if the team accepts a lower-readiness artifact.",
@@ -346,4 +355,3 @@ export function buildMoveEvidenceNeedPackets(
     };
   });
 }
-

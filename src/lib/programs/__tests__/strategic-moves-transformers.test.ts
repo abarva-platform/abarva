@@ -1,12 +1,13 @@
 import {
+  buildStrategicMove,
   buildStrategicMovePortfolio,
   deriveDisplayCode,
   deriveMapLabel,
-} from '@/lib/programs/transformers';
-import { azureRead } from '@/lib/data-plane/azureRead';
-import { evaluateGate } from '@/lib/programs/governance';
+} from "@/lib/programs/transformers";
+import { azureRead } from "@/lib/data-plane/azureRead";
+import { evaluateGate } from "@/lib/programs/governance";
 
-jest.mock('@/lib/data-plane/azureRead', () => ({
+jest.mock("@/lib/data-plane/azureRead", () => ({
   azureRead: {
     maybeSingle: jest.fn(),
     select: jest.fn(),
@@ -14,19 +15,31 @@ jest.mock('@/lib/data-plane/azureRead', () => ({
   },
 }));
 
-jest.mock('@/lib/programs/governance', () => ({
+jest.mock("@/lib/programs/governance", () => ({
   evaluateGate: jest.fn(),
   gateCriteriaForPhase: jest.fn(() => [
-    { key: 'charter_signed_off', describe: 'Charter signed off', severity: 'hard' },
+    {
+      key: "charter_signed_off",
+      describe: "Charter signed off",
+      severity: "hard",
+    },
   ]),
 }));
 
-const maybeSingleMock = azureRead.maybeSingle as jest.MockedFunction<typeof azureRead.maybeSingle>;
-const selectMock = azureRead.select as jest.MockedFunction<typeof azureRead.select>;
-const queryMock = azureRead.query as jest.MockedFunction<typeof azureRead.query>;
-const evaluateGateMock = evaluateGate as jest.MockedFunction<typeof evaluateGate>;
+const maybeSingleMock = azureRead.maybeSingle as jest.MockedFunction<
+  typeof azureRead.maybeSingle
+>;
+const selectMock = azureRead.select as jest.MockedFunction<
+  typeof azureRead.select
+>;
+const queryMock = azureRead.query as jest.MockedFunction<
+  typeof azureRead.query
+>;
+const evaluateGateMock = evaluateGate as jest.MockedFunction<
+  typeof evaluateGate
+>;
 
-describe('strategic move transformer helpers', () => {
+describe("strategic move transformer helpers", () => {
   beforeEach(() => {
     maybeSingleMock.mockReset();
     selectMock.mockReset();
@@ -34,12 +47,12 @@ describe('strategic move transformer helpers', () => {
     evaluateGateMock.mockReset();
 
     maybeSingleMock.mockImplementation(async (request) => {
-      if (request.table === 'clients') {
+      if (request.table === "clients") {
         return {
-          id: 'client-1',
-          name: 'Apex Retail Group',
-          industry_code: 'RETAIL',
-          slug: 'apex-retail',
+          id: "client-1",
+          name: "Apex Retail Group",
+          industry_code: "RETAIL",
+          slug: "apex-retail",
         } as never;
       }
       return null;
@@ -48,25 +61,30 @@ describe('strategic move transformer helpers', () => {
     queryMock.mockResolvedValue([]);
   });
 
-  it('derives display code from industry code, name, and year', () => {
+  it("derives display code from industry code, name, and year", () => {
     const code = deriveDisplayCode(
-      { name: 'Healthcare Data Analytics Modernization', createdAt: '2026-05-01T00:00:00.000Z' },
-      { industryCode: 'MH', slug: 'meridian-health' },
+      {
+        name: "Healthcare Data Analytics Modernization",
+        createdAt: "2026-05-01T00:00:00.000Z",
+      },
+      { industryCode: "MH", slug: "meridian-health" },
     );
-    expect(code).toBe('MH-HEALTHCARE-2026');
+    expect(code).toBe("MH-HEALTHCARE-2026");
   });
 
-  it('derives compact map labels', () => {
+  it("derives compact map labels", () => {
     expect(
-      deriveMapLabel({ name: 'Healthcare Data Analytics Modernization for Agentic Care' }),
-    ).toBe('HDAM');
+      deriveMapLabel({
+        name: "Healthcare Data Analytics Modernization for Agentic Care",
+      }),
+    ).toBe("HDAM");
   });
 
-  it('keeps portfolio list hydration from running expensive gate evaluation by default', async () => {
+  it("keeps portfolio list hydration from running expensive gate evaluation by default", async () => {
     const move = {
-      id: 'move-1',
-      clientId: 'client-1',
-      name: 'FedNow modernization',
+      id: "move-1",
+      clientId: "client-1",
+      name: "FedNow modernization",
       sponsorPersonId: null,
       problemStatement: null,
       targetOutcome: null,
@@ -80,8 +98,8 @@ describe('strategic move transformer helpers', () => {
       archetype: null,
       originSource: null,
       originSourceRef: null,
-      status: 'active',
-      lifecycleState: 'active',
+      status: "active",
+      lifecycleState: "active",
       currentPhase: 1,
       currentModuleKey: null,
       maestroOversightLevel: null,
@@ -92,7 +110,7 @@ describe('strategic move transformer helpers', () => {
       retentionPolicyYears: null,
       archivedAt: null,
       deletedAt: null,
-      createdAt: '2026-05-01T00:00:00.000Z',
+      createdAt: "2026-05-01T00:00:00.000Z",
       updatedAt: null,
       charter: null,
       functionPackKey: null,
@@ -101,19 +119,84 @@ describe('strategic move transformer helpers', () => {
     } as never;
 
     const portfolio = await buildStrategicMovePortfolio(
-      { clientId: 'client-1', userId: 'user-1' },
+      { clientId: "client-1", userId: "user-1" },
       [move],
     );
 
     expect(evaluateGateMock).not.toHaveBeenCalled();
     expect(portfolio.moves[0]?.gateCriteria).toEqual([
       {
-        id: 'charter_signed_off',
-        label: 'Charter signed off',
-        severity: 'hard',
+        id: "charter_signed_off",
+        label: "Charter signed off",
+        severity: "hard",
         verified: false,
         completed: false,
       },
     ]);
+  });
+
+  it("renders a sparse newly-created Move instead of throwing on missing optional state", async () => {
+    maybeSingleMock.mockImplementation(async (request) => {
+      if (request.table === "clients") {
+        return {
+          id: "client-1",
+          name: "Lakeshore Holdings",
+          industry_code: "RETAIL",
+          slug: "lakeshore",
+        } as never;
+      }
+      return null;
+    });
+    selectMock.mockImplementation(async (request) => {
+      if (request.table === "program_audit_log") {
+        throw new Error("optional activity table unavailable");
+      }
+      return [];
+    });
+
+    const move = await buildStrategicMove(
+      { clientId: "client-1", userId: "user-1" },
+      {
+        id: "4df724ce-d4d4-48cf-8329-49eeae5eb66a",
+        clientId: "client-1",
+        name: "" as never,
+        sponsorPersonId: null,
+        problemStatement: null,
+        targetOutcome: null,
+        timelineHorizon: null,
+        valueProjectedLowUsd: null,
+        valueProjectedHighUsd: null,
+        valueVerifiedUsd: null,
+        valueVerifiedStatus: null,
+        valueCurrency: null,
+        valueAssumptions: null,
+        archetype: null,
+        originSource: null,
+        originSourceRef: null,
+        status: null,
+        lifecycleState: "draft",
+        currentPhase: 2,
+        currentModuleKey: null,
+        maestroOversightLevel: null,
+        founderApprovalRequired: false,
+        phaseLockedAt: null,
+        phaseLockedByUserId: null,
+        dataResidencyRegion: null,
+        retentionPolicyYears: null,
+        archivedAt: null,
+        deletedAt: null,
+        createdAt: "2026-06-27T00:00:00.000Z",
+        updatedAt: null,
+        charter: null,
+        functionPackKey: null,
+        functionPackConfidence: null,
+        gatesPassed: [],
+      } as never,
+    );
+
+    expect(move.name).toBe("—");
+    expect(move.displayCode).toMatch(/RETAIL-MOVE-2026/);
+    expect(move.status.text).toBeTruthy();
+    expect(move.recentActivity).toEqual([]);
   });
 });
