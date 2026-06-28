@@ -22,7 +22,10 @@
 
 import "server-only";
 
+import { generateArtifact } from "@/lib/deliverables/generate-artifact";
+import { createMovesGenerateArtifactDeps } from "@/lib/deliverables/moves-generate-deps";
 import { runDeliverableForTenant } from "@/lib/deliverables/orchestrator/generate-service";
+import { persistMoveGeneratedArtifact } from "@/lib/deliverables/persist-move-generated-artifact";
 import { validateDeliverableTenantInvariant } from "@/lib/deliverables/orchestrator/tenant-invariant";
 import {
   claimNextDeliverableRun,
@@ -30,7 +33,11 @@ import {
   sweepStaleDeliverableRuns,
   updateDeliverableRunProgress,
   type DeliverableRunRecord,
+  type MovesPremiumArtifactRunJobPayload,
+  type OrchestratorDeliverableRunJobPayload,
 } from "@/lib/deliverables/orchestrator/runs-repository";
+import { getProgramById } from "@/lib/programs/queries";
+import type { TenancyCtx } from "@/lib/programs/types.db";
 import type {
   AudienceRole,
   DeliverableModule,
@@ -64,6 +71,134 @@ function resolveBatchSize(): number {
   return Math.min(parsed, 50);
 }
 
+function isMovesPremiumArtifactPayload(
+  payload: DeliverableRunRecord["jobPayload"],
+): payload is MovesPremiumArtifactRunJobPayload {
+  return payload?.kind === "moves_premium_artifact";
+}
+
+function workerCtxForRun(run: DeliverableRunRecord): TenancyCtx {
+  return {
+    clientId: run.clientId,
+    clientKey: run.tenantKey,
+    userId: run.userId,
+    role: "operator",
+    email: null,
+  };
+}
+
+async function runMovesPremiumArtifact(
+  run: DeliverableRunRecord,
+  payload: MovesPremiumArtifactRunJobPayload,
+  workerId: string,
+): Promise<void> {
+  const ctx = workerCtxForRun(run);
+  try {
+    await updateDeliverableRunProgress(run.id, {
+      pct: 5,
+      label: "Claimed by private operator",
+      pass: "claim",
+      workerId,
+    }).catch(() => {});
+
+    const program = await getProgramById(ctx, payload.sourceArtifactRef);
+    if (!program) {
+      await completeDeliverableRun(run.id, {
+        status: "failed",
+        error: "move not found for queued tenant",
+      }).catch(() => {});
+      return;
+    }
+
+    await updateDeliverableRunProgress(run.id, {
+      pct: 12,
+      label: "Assembling premium Move context",
+      pass: "context",
+      workerId,
+    }).catch(() => {});
+
+    const result = await generateArtifact(
+      {
+        moveId: payload.sourceArtifactRef,
+        tenantKey: run.tenantKey,
+        phase: payload.phase,
+        artifact: payload.artifact,
+        allowApprovedRetry: true,
+        generationMode: payload.generationMode,
+        useCaseQuery: payload.useCaseQuery,
+      },
+      createMovesGenerateArtifactDeps(ctx),
+    );
+
+    if (result.status === "blocked_gate") {
+      await completeDeliverableRun(run.id, {
+        status: "blocked",
+        blockers: result.blockers.map((blocker) => blocker.reason),
+        error: "generation gate blocked",
+      }).catch(() => {});
+      return;
+    }
+    if (result.status === "blocked_context") {
+      await completeDeliverableRun(run.id, {
+        status: "blocked",
+        blockers: result.missing,
+        error: "generation context blocked",
+      }).catch(() => {});
+      return;
+    }
+    if (result.status === "blocked_quality") {
+      await completeDeliverableRun(run.id, {
+        status: "blocked",
+        blockers: result.goldenBar.reasons,
+        warnings: [
+          `golden_bar_pass=false`,
+          `word_count=${result.goldenBar.wordCount}`,
+          `svg_count=${result.goldenBar.svgCount}`,
+        ],
+        sectionCount: result.goldenBar.wordCount,
+        error: "golden bar failed",
+      }).catch(() => {});
+      return;
+    }
+
+    await updateDeliverableRunProgress(run.id, {
+      pct: 90,
+      label: "Persisting artifact and quality record",
+      pass: "persist",
+      workerId,
+    }).catch(() => {});
+
+    const persisted = await persistMoveGeneratedArtifact({
+      ctx,
+      program,
+      phase: payload.phase,
+      artifact: payload.artifact,
+      title: payload.title,
+      result,
+    });
+
+    await completeDeliverableRun(run.id, {
+      status: "succeeded",
+      artifactId: persisted.artifactId,
+      sectionCount: result.goldenBar.wordCount,
+      retrievedEvidence: result.goldenBar.svgCount,
+      warnings: [
+        `golden_bar_pass=${result.goldenBar.pass}`,
+        `word_count=${result.goldenBar.wordCount}`,
+        `svg_count=${result.goldenBar.svgCount}`,
+        `artifact_version=${persisted.artifactVersion}`,
+        `artifact_blob_stored=${persisted.artifactBlobStored}`,
+        ...(result.draftOnly ? ["draft_only=true"] : []),
+      ],
+    });
+  } catch (err) {
+    await completeDeliverableRun(run.id, {
+      status: "failed",
+      error: (err instanceof Error ? err.message : String(err)).slice(0, 600),
+    }).catch(() => {});
+  }
+}
+
 /** Run one claimed row to terminal state. Errors are caught and recorded as 'failed'. */
 async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<void> {
   const payload = run.jobPayload;
@@ -74,11 +209,17 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
     }).catch(() => {});
     return;
   }
+  if (isMovesPremiumArtifactPayload(payload)) {
+    await runMovesPremiumArtifact(run, payload, workerId);
+    return;
+  }
+
+  const orchestratorPayload = payload as OrchestratorDeliverableRunJobPayload;
 
   try {
     const tenantInvariant = await validateDeliverableTenantInvariant({
-      module: payload.module as DeliverableModule,
-      sourceArtifactRef: payload.sourceArtifactRef,
+      module: orchestratorPayload.module as DeliverableModule,
+      sourceArtifactRef: orchestratorPayload.sourceArtifactRef,
       clientId: run.clientId,
       tenantKey: run.tenantKey,
     });
@@ -94,17 +235,17 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
     }
 
     const result = await runDeliverableForTenant({
-      module: payload.module as DeliverableModule,
-      useCaseArchetype: payload.useCaseArchetype,
-      deliverableType: payload.deliverableType,
-      audience: payload.audience as AudienceRole[] | undefined,
-      decisionContext: payload.decisionContext,
-      clientDisplayName: payload.clientDisplayName || "Client",
-      initiativeDisplayName: payload.initiativeDisplayName || payload.useCaseArchetype,
-      sourceArtifactRef: payload.sourceArtifactRef,
-      evidenceQuery: payload.evidenceQuery,
-      outputFormats: payload.outputFormats as OutputFormat[] | undefined,
-      ...(payload.model ? { model: payload.model } : {}),
+      module: orchestratorPayload.module as DeliverableModule,
+      useCaseArchetype: orchestratorPayload.useCaseArchetype,
+      deliverableType: orchestratorPayload.deliverableType,
+      audience: orchestratorPayload.audience as AudienceRole[] | undefined,
+      decisionContext: orchestratorPayload.decisionContext,
+      clientDisplayName: orchestratorPayload.clientDisplayName || "Client",
+      initiativeDisplayName: orchestratorPayload.initiativeDisplayName || orchestratorPayload.useCaseArchetype,
+      sourceArtifactRef: orchestratorPayload.sourceArtifactRef,
+      evidenceQuery: orchestratorPayload.evidenceQuery,
+      outputFormats: orchestratorPayload.outputFormats as OutputFormat[] | undefined,
+      ...(orchestratorPayload.model ? { model: orchestratorPayload.model } : {}),
       tenantClientKey: run.tenantKey,
       clientId: run.clientId,
       userId: run.userId,

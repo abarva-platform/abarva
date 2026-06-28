@@ -12,6 +12,18 @@ jest.mock('@/lib/deliverables/orchestrator/runs-repository', () => ({
 jest.mock('@/lib/deliverables/orchestrator/generate-service', () => ({
   runDeliverableForTenant: jest.fn(),
 }));
+jest.mock('@/lib/deliverables/generate-artifact', () => ({
+  generateArtifact: jest.fn(),
+}));
+jest.mock('@/lib/deliverables/moves-generate-deps', () => ({
+  createMovesGenerateArtifactDeps: jest.fn(() => ({})),
+}));
+jest.mock('@/lib/deliverables/persist-move-generated-artifact', () => ({
+  persistMoveGeneratedArtifact: jest.fn(),
+}));
+jest.mock('@/lib/programs/queries', () => ({
+  getProgramById: jest.fn(),
+}));
 jest.mock('@/lib/deliverables/orchestrator/tenant-invariant', () => ({
   validateDeliverableTenantInvariant: jest.fn(async () => ({ ok: true, sourceKind: 'move', sourceId: 'evt-1' })),
 }));
@@ -28,11 +40,23 @@ const repo = jest.requireMock('@/lib/deliverables/orchestrator/runs-repository')
 const svc = jest.requireMock('@/lib/deliverables/orchestrator/generate-service') as {
   runDeliverableForTenant: jest.Mock;
 };
+const premium = jest.requireMock('@/lib/deliverables/generate-artifact') as {
+  generateArtifact: jest.Mock;
+};
+const premiumPersist = jest.requireMock('@/lib/deliverables/persist-move-generated-artifact') as {
+  persistMoveGeneratedArtifact: jest.Mock;
+};
+const programQueries = jest.requireMock('@/lib/programs/queries') as {
+  getProgramById: jest.Mock;
+};
 const invariant = jest.requireMock('@/lib/deliverables/orchestrator/tenant-invariant') as {
   validateDeliverableTenantInvariant: jest.Mock;
 };
 const { sweepStaleDeliverableRuns, claimNextDeliverableRun, completeDeliverableRun } = repo;
 const { runDeliverableForTenant } = svc;
+const { generateArtifact } = premium;
+const { persistMoveGeneratedArtifact } = premiumPersist;
+const { getProgramById } = programQueries;
 const { validateDeliverableTenantInvariant } = invariant;
 
 const jobPayload = {
@@ -59,6 +83,24 @@ beforeEach(() => {
   jest.clearAllMocks();
   sweepStaleDeliverableRuns.mockResolvedValue([]);
   validateDeliverableTenantInvariant.mockResolvedValue({ ok: true, sourceKind: 'move', sourceId: 'evt-1' });
+  getProgramById.mockResolvedValue({ id: 'move-1', name: 'Move One' });
+  generateArtifact.mockResolvedValue({
+    status: 'generated',
+    html: '<html><body><svg></svg><table></table>Diagnostic</body></html>',
+    context: {},
+    goldenBar: { pass: true, wordCount: 2200, svgCount: 2, hasDataGap: false },
+    generationMode: 'draft',
+    draftOnly: true,
+    draftCaveats: [],
+    contextCaveats: [],
+  });
+  persistMoveGeneratedArtifact.mockResolvedValue({
+    deliverableId: 'deliv-1',
+    versionId: 'ver-1',
+    artifactId: 'move-artifact-1',
+    artifactVersion: 1,
+    artifactBlobStored: true,
+  });
 });
 
 describe('processDeliverableQueue', () => {
@@ -107,6 +149,66 @@ describe('processDeliverableQueue', () => {
     expect(completeDeliverableRun).toHaveBeenCalledWith(
       'run-2',
       expect.objectContaining({ status: 'blocked', blockers: ['no register'] }),
+    );
+  });
+
+  it('processes premium Moves artifact jobs through generateArtifact and move_artifacts persistence', async () => {
+    const premiumRun = {
+      ...claimedRow('run-premium-p2'),
+      clientId: 'client-lake',
+      tenantKey: 'lakeshore-holdings',
+      module: 'moves',
+      deliverableType: 'discovery_report',
+      jobPayload: {
+        kind: 'moves_premium_artifact',
+        module: 'moves',
+        useCaseArchetype: 'ai_opportunity_discovery',
+        deliverableType: 'discovery_report',
+        decisionContext: 'P2 diagnostic',
+        clientDisplayName: 'Lakeshore Holdings',
+        initiativeDisplayName: 'Back-office Automation',
+        sourceArtifactRef: 'move-1',
+        phase: 2,
+        artifact: 'discovery_report',
+        generationMode: 'draft',
+        title: 'Current Work Diagnostic',
+        useCaseQuery: 'Reduce AP exceptions',
+      },
+    };
+    claimNextDeliverableRun.mockResolvedValueOnce(premiumRun).mockResolvedValueOnce(null);
+
+    await processDeliverableQueue({ workerId: 'worker-p2', batchSize: 5 });
+
+    expect(runDeliverableForTenant).not.toHaveBeenCalled();
+    expect(validateDeliverableTenantInvariant).not.toHaveBeenCalled();
+    expect(generateArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        moveId: 'move-1',
+        tenantKey: 'lakeshore-holdings',
+        phase: 2,
+        artifact: 'discovery_report',
+        generationMode: 'draft',
+      }),
+      expect.anything(),
+    );
+    expect(persistMoveGeneratedArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phase: 2,
+        artifact: 'discovery_report',
+        title: 'Current Work Diagnostic',
+      }),
+    );
+    expect(completeDeliverableRun).toHaveBeenCalledWith(
+      'run-premium-p2',
+      expect.objectContaining({
+        status: 'succeeded',
+        artifactId: 'move-artifact-1',
+        warnings: expect.arrayContaining([
+          'golden_bar_pass=true',
+          'word_count=2200',
+          'svg_count=2',
+        ]),
+      }),
     );
   });
 

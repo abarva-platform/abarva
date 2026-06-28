@@ -8,6 +8,8 @@ import 'server-only';
 
 import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { createTxSession, type SqlRunner } from '@/lib/data-plane/read-adapters/azureSession';
+import type { DeliverableKey } from '@/lib/deliverables/profiles/types';
+import type { GenerationMode } from '@/lib/programs/assert-phase-ready';
 
 export type DeliverableRunStatus = 'queued' | 'running' | 'succeeded' | 'blocked' | 'failed';
 
@@ -17,7 +19,8 @@ export type DeliverableRunStatus = 'queued' | 'running' | 'succeeded' | 'blocked
  * Mirrors the non-identity fields of GenerateDeliverableServiceInput; clientId/tenantKey/
  * userId live in dedicated columns.
  */
-export interface DeliverableRunJobPayload {
+export interface OrchestratorDeliverableRunJobPayload {
+  kind?: 'orchestrator_deliverable';
   module: string;
   useCaseArchetype: string;
   deliverableType: string;
@@ -30,6 +33,27 @@ export interface DeliverableRunJobPayload {
   outputFormats?: string[];
   model?: string;
 }
+
+export interface MovesPremiumArtifactRunJobPayload {
+  kind: 'moves_premium_artifact';
+  module: 'moves';
+  useCaseArchetype: string;
+  deliverableType: string;
+  decisionContext: string;
+  clientDisplayName: string;
+  initiativeDisplayName: string;
+  sourceArtifactRef: string;
+  phase: number;
+  artifact: DeliverableKey;
+  generationMode: GenerationMode;
+  title?: string;
+  useCaseQuery?: string;
+  model?: string;
+}
+
+export type DeliverableRunJobPayload =
+  | OrchestratorDeliverableRunJobPayload
+  | MovesPremiumArtifactRunJobPayload;
 
 export interface DeliverableRunRecord {
   id: string;

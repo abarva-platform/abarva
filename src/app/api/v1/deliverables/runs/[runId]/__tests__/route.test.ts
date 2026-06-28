@@ -38,6 +38,29 @@ describe('GET /api/v1/deliverables/runs/[runId]', () => {
     expect(json.sectionCount).toBe(12);
   });
 
+  it('returns a Move File Cabinet download url for premium Moves artifact runs', async () => {
+    runRow = {
+      id: 'run-premium',
+      status: 'succeeded',
+      artifactId: 'move-art-9',
+      sectionCount: 2200,
+      retrievedEvidence: 3,
+      blockers: [],
+      warnings: [],
+      error: null,
+      updatedAt: 't',
+      jobPayload: {
+        kind: 'moves_premium_artifact',
+        sourceArtifactRef: 'move-123',
+      },
+    };
+    const res = await GET({} as never, params('run-premium'));
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as Record<string, unknown>;
+    expect(json.artifactScope).toBe('move_file_cabinet');
+    expect(json.blobUrl).toBe('/api/v1/programs/move-123/artifacts/move-art-9/download');
+  });
+
   it('returns queued status at 0% with a waiting label (before the worker claims it)', async () => {
     runRow = { id: 'run-q', status: 'queued', artifactId: null, blockers: [], warnings: [], error: null, progressPct: null, progressLabel: null, updatedAt: 't' };
     const res = await GET({} as never, params('run-q'));
