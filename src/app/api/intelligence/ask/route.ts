@@ -194,7 +194,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           const homeTenantAliases =
             signedInTenantAliases.length > 0
               ? signedInTenantAliases
-              : homeTenant?.aliases ?? [];
+              : (homeTenant?.aliases ?? []);
           const requestedHomeAliases = tenantAliasesFor(
             tenantClientKey ?? requestedOrSurfaceClient,
           );
@@ -205,7 +205,10 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           if (
             (homeTenantAliases.length > 0 &&
               requestedHomeAliases.length > 0 &&
-              !hasTenantAliasOverlap(homeTenantAliases, requestedHomeAliases)) ||
+              !hasTenantAliasOverlap(
+                homeTenantAliases,
+                requestedHomeAliases,
+              )) ||
             mentionsForeignTenant(query, foreignTenantAliases)
           ) {
             const answer = buildHomeKnowTenantFenceAnswer({
@@ -370,7 +373,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             outputShape:
               routing.outputShape === "chart"
                 ? routing.outputShape
-                : advisorOutputShape ?? routing.outputShape,
+                : (advisorOutputShape ?? routing.outputShape),
             experts: [],
           };
           const sentinelSources = withAdvisorSupportSources(
@@ -512,6 +515,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               ),
             );
           },
+          includeAdvisoryPacketAudit: includeTrace,
         })) {
           if (event.type === "classified")
             classificationForMemory =
@@ -580,20 +584,15 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             validation = validateClaimsAndCitations({
               trace: {
                 tenant_key: avaTrace.tenant_key,
-                retrieved_tenant_context:
-                  avaTrace.retrieved_tenant_context,
-                retrieved_corpus_patterns:
-                  avaTrace.retrieved_corpus_patterns,
+                retrieved_tenant_context: avaTrace.retrieved_tenant_context,
+                retrieved_corpus_patterns: avaTrace.retrieved_corpus_patterns,
                 retrieved_artifacts: avaTrace.retrieved_artifacts,
-                citation_objects_emitted:
-                  avaTrace.citation_objects_emitted,
+                citation_objects_emitted: avaTrace.citation_objects_emitted,
               },
               answerText: assistantText,
             });
-            avaTrace.claim_validation_status =
-              validation.claimValidationStatus;
-            avaTrace.tenant_isolation_status =
-              validation.tenantIsolationStatus;
+            avaTrace.claim_validation_status = validation.claimValidationStatus;
+            avaTrace.tenant_isolation_status = validation.tenantIsolationStatus;
           } catch {
             // Validation must never break the response path.
           }
@@ -627,7 +626,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             outputShape:
               routing.outputShape === "chart"
                 ? routing.outputShape
-                : advisorOutputShape ?? routing.outputShape,
+                : (advisorOutputShape ?? routing.outputShape),
             experts: [],
           };
           const advisorSources = withAdvisorSupportSources(
@@ -635,7 +634,10 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             traceSources as AskSource[],
           );
           const tabbedResponse = parseIntelligenceTabbedResponse(assistantText);
-          if (tabbedResponse.tabs.length > 0 && tabbedResponse.mainAnswer.trim()) {
+          if (
+            tabbedResponse.tabs.length > 0 &&
+            tabbedResponse.mainAnswer.trim()
+          ) {
             const agentAnswer = composeAvaAnswer({
               surface: "intelligence",
               mode: "ANALYZE",
@@ -659,9 +661,11 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                       ? ("corpus-pattern" as const)
                       : ("graph" as const),
                 confidence:
-                  typeof source.confidence === "number" && source.confidence >= 0.8
+                  typeof source.confidence === "number" &&
+                  source.confidence >= 0.8
                     ? "high"
-                    : typeof source.confidence === "number" && source.confidence >= 0.55
+                    : typeof source.confidence === "number" &&
+                        source.confidence >= 0.55
                       ? "medium"
                       : "low",
               })),
@@ -933,7 +937,9 @@ function hasTenantAliasOverlap(
   right: readonly (string | null | undefined)[],
 ): boolean {
   const leftAliases = new Set(
-    left.flatMap((value) => tenantAliasesFor(value)).map((value) => value.toLowerCase()),
+    left
+      .flatMap((value) => tenantAliasesFor(value))
+      .map((value) => value.toLowerCase()),
   );
   return right
     .flatMap((value) => tenantAliasesFor(value))

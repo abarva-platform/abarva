@@ -37,8 +37,11 @@ import {
   type IntelligenceDossier,
 } from "@/lib/intelligence/dossiers";
 import {
-  synthesizeIntelligenceConsultantText,
-} from "@/lib/intelligence/intelligence-consultant-text-synthesis";
+  advisoryPacketForClientEvent,
+  assembleAdvisoryPacket,
+  type AdvisoryPacket,
+} from "@/lib/intelligence/advisory-packet";
+import { synthesizeIntelligenceConsultantText } from "@/lib/intelligence/intelligence-consultant-text-synthesis";
 
 export type {
   AskIntent,
@@ -55,7 +58,8 @@ export interface AskEvent {
     | "followups"
     | "done"
     | "error"
-    | "intelligence-dossier";
+    | "intelligence-dossier"
+    | "advisory-packet";
   classification?: IntentClassification;
   sources?: AskSource[];
   coverageReport?: CoverageReport;
@@ -64,6 +68,7 @@ export interface AskEvent {
   error?: string;
   /** Question-specific advisory packet passed into the Intelligence synthesizer. */
   intelligenceDossier?: IntelligenceDossier;
+  advisoryPacket?: AdvisoryPacket;
 }
 
 export interface AskOptions {
@@ -92,6 +97,8 @@ export interface AskOptions {
     auditId?: string;
     route: string;
   }) => void;
+  /** Operator proof mode may stream full AdvisoryPacket audit lineage. Default streams only safe labels. */
+  includeAdvisoryPacketAudit?: boolean;
 }
 
 function compactSourceDetailsForConciseAsk(sources: AskSource[]): AskSource[] {
@@ -230,14 +237,42 @@ export async function* askIntelligence(
         : 0;
     const coverageReport = assertCoverage(questionCategory, sources);
     yield { type: "sources", sources, coverageReport };
-    const intelligenceDossier = buildIntelligenceDossier({
-      tenantKey: opts.tenantClientKey ?? opts.tenantInventoryKey ?? opts.tenantId,
-      tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient ?? opts.tenantClientKey ?? undefined,
+    const advisoryPacket = assembleAdvisoryPacket({
+      tenantKey:
+        opts.tenantClientKey ?? opts.tenantInventoryKey ?? opts.tenantId,
+      tenantName:
+        opts.tenant?.displayName ??
+        opts.surfaceContext?.activeClient ??
+        opts.tenantClientKey ??
+        undefined,
       question: trimmed,
       classification,
       sources,
+      aliases: opts.tenant?.aliases ? Array.from(opts.tenant.aliases) : [],
+      industry: opts.tenant?.industryCode,
     });
+    const intelligenceDossier =
+      advisoryPacket.auditLineage.sourceDossier ??
+      buildIntelligenceDossier({
+        tenantKey:
+          opts.tenantClientKey ?? opts.tenantInventoryKey ?? opts.tenantId,
+        tenantName:
+          opts.tenant?.displayName ??
+          opts.surfaceContext?.activeClient ??
+          opts.tenantClientKey ??
+          undefined,
+        question: trimmed,
+        classification,
+        sources,
+      });
     yield { type: "intelligence-dossier", intelligenceDossier };
+    yield {
+      type: "advisory-packet",
+      advisoryPacket: advisoryPacketForClientEvent(
+        advisoryPacket,
+        opts.includeAdvisoryPacketAudit === true,
+      ),
+    };
 
     const handoff = atlasStakeholderConflictHandoff(trimmed);
     if (handoff) {
@@ -257,7 +292,9 @@ export async function* askIntelligence(
 
     const consultantText = await synthesizeIntelligenceConsultantText({
       dossier: intelligenceDossier,
-      tenantId: opts.tenantId ?? opts.tenantInventoryKey ?? opts.tenantClientKey,
+      advisoryPacket,
+      tenantId:
+        opts.tenantId ?? opts.tenantInventoryKey ?? opts.tenantClientKey,
       userId: opts.userId,
       onModelInput: opts.onModelInput,
       onModelOutput: opts.onModelOutput,
