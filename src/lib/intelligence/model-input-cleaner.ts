@@ -1,5 +1,5 @@
 const RAW_RECORD_ID_RE =
-  /\b(?:SHA|APP|APX|FC|LSH|MER|DORA|INIT|CAP|BF|MOD|VEND|SYS)-[A-Z0-9]{2,24}(?:-\d{1,8})?\b/g;
+  /\b(?:SHA|APP|APX|FC|LSH|MER|DORA|INIT|CAP|BF|MOD|VEND|SYS|DP)-[A-Z0-9]{2,24}(?:-\d{1,8})?\b/g;
 const UUID_RE =
   /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 const RAW_FILE_RE = /\b[\w.-]+\.(?:csv|jsonl|json|yaml|yml|xlsx|pdf|docx)\b/gi;

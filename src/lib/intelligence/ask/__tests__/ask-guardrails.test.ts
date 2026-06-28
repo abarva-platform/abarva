@@ -34,7 +34,8 @@ describe('Ask Intelligence guardrails', () => {
 
   it('uses a tighter model budget only for explicit concise Ask requests', () => {
     expect(chooseSynthesisTokenBudget('Summarize the IBM dependency in one short executive paragraph.')).toBe(160);
-    expect(chooseSynthesisTokenBudget('What evidence would change your view? Keep it concise.')).toBe(160);
+    expect(chooseSynthesisTokenBudget('Summarize this in one short executive paragraph.')).toBe(160);
+    expect(chooseSynthesisTokenBudget('What evidence would change your view? Keep it concise.')).toBe(1300);
     expect(chooseSynthesisTokenBudget('Build the full modernization case for the CTO, CFO, and COO.')).toBe(600);
   });
 
@@ -158,6 +159,40 @@ describe('Ask Intelligence guardrails', () => {
       );
       expect(indexCode).toMatch(
         /for\s+await\s*\(\s*const\s+delta\s+of\s+synthesizeStream[\s\S]*?yield\s*\{\s*type:\s*['"]delta['"]\s*,\s*text:\s*delta\s*\}/,
+      );
+    });
+  });
+
+  describe('Active synthesis decision-canvas contract', () => {
+    const synthesizerCode = readFileSync(
+      join(__dirname, '..', 'synthesizer.ts'),
+      'utf8',
+    );
+
+    it('sends the tabbed canvas contract through the active ask synthesis model path', () => {
+      expect(synthesizerCode).toContain('INTELLIGENCE_TABBED_OUTPUT_CONTRACT');
+      expect(synthesizerCode).toContain('ACTIVE INTELLIGENCE CANVAS RULES');
+      expect(synthesizerCode).toContain('cleanIntelligenceModelInputText');
+      expect(synthesizerCode).toMatch(
+        /args\.onModelInput\?\.\(\{\s*system:\s*systemWithContinuity,\s*user:\s*prompt,/,
+      );
+    });
+
+    it('preserves tabbed Claude output for the display-only route renderer', () => {
+      expect(synthesizerCode).toMatch(
+        /const\s+tabbedResponse\s*=\s*parseIntelligenceTabbedResponse\(text\);/,
+      );
+      expect(synthesizerCode).toMatch(
+        /if\s*\(\s*tabbedResponse\.tabs\.length\s*>\s*0[\s\S]*?yield\s+text;\s*return;/,
+      );
+    });
+
+    it('keeps repaired visuals inside Claude-owned canvas tabs', () => {
+      expect(synthesizerCode).toContain(
+        'inside a Table or Chart tab',
+      );
+      expect(synthesizerCode).not.toContain(
+        'add exactly one compact GitHub-flavored Markdown decision table with a header row, separator row, and 2-6 evidence-backed rows. Use the columns the user requested where possible.',
       );
     });
   });
