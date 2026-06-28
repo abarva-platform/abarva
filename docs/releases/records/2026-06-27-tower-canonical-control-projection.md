@@ -12,6 +12,8 @@
 
 Tower now prefers the governed AI Control Tower substrate when building the materialized Tower read model. This prevents generic enterprise context rows from inflating dashboard totals or contradicting aVa chat answers. The materialized Tower refresh also replaces each tenant's existing Tower rows before writing fresh rows, so stale rows cannot survive a corrected refresh. Tower dashboard budget rollups now derive from the same materialized/control initiative rows when those rows exist, preventing the older `tower_budget_rollups` / F12 fallback path from overriding the canonical Tower numbers.
 
+Follow-up hardening keeps the deterministic Tower factual spine aligned with the dashboard totals: billion-scale budget answers preserve enough precision, repeated total-budget prompt variants route to the same deterministic total, and functional/classification rollup keys are rendered as readable labels instead of raw internal tokens.
+
 ## Layer Impact
 
 - `global-control-lane`: shared Tower projection and materialization behavior changes for every tenant.
@@ -32,7 +34,9 @@ Tower now prefers the governed AI Control Tower substrate when building the mate
 - `src/lib/tower/tower-materialized-read-model.ts`: carry portfolio/company/function metadata from materialized initiative rows.
 - `src/lib/tower/tower-budget-rollups.ts`: derive Tower budget rollups from materialized initiatives when the canonical read model is available.
 - `src/lib/atlas/tower-grounding.ts`: use materialized-derived budget rollups for dashboard and aVa factual spine.
+- `src/lib/atlas/tower-factual-spine.ts`: preserve billion-scale budget precision, route total-budget variants deterministically, and hide raw rollup keys from visible prose.
 - `src/lib/tower/__tests__/tower-materialization.test.ts`: assert delete-before-upsert behavior.
+- `src/lib/atlas/__tests__/tower-factual-spine.test.ts`: assert SkyHarbor-style billion totals do not collapse to `$1.0B` or expose raw slice keys.
 - `docs/releases/records/2026-06-27-tower-canonical-control-projection.md`: release record.
 
 ## QA / Validation
@@ -40,7 +44,10 @@ Tower now prefers the governed AI Control Tower substrate when building the mate
 - Pass: `npx jest src/lib/tower/__tests__/tower-materialized-read-model.test.ts src/lib/tower/__tests__/tower-materialization.test.ts src/lib/tower/__tests__/tower-question-bank.test.ts src/lib/atlas/__tests__/tower-factual-spine.test.ts --runInBand` — 4 suites / 22 tests passed.
 - Pass: `npx eslint src/lib/tower/tower-semantic-projection.ts src/lib/tower/tower-materialization.ts src/lib/tower/__tests__/tower-materialization.test.ts src/scripts/tower/materialize-read-model.ts scripts/qa/tower-live-scorer.ts`.
 - Pass: `npx eslint src/lib/admin/ai-initiatives/queries.ts src/lib/tower/tower-materialized-read-model.ts src/lib/tower/tower-budget-rollups.ts src/lib/atlas/tower-grounding.ts`.
+- Pass: `npx jest src/lib/atlas/__tests__/tower-factual-spine.test.ts --runInBand` — 1 suite / 7 tests passed.
+- Pass: `npx eslint src/lib/atlas/tower-factual-spine.ts src/lib/atlas/__tests__/tower-factual-spine.test.ts`.
 - Live data proof after first deploy: all five tenants' materialized initiative counts and committed annual spend matched governed `ai_control_*` rows. Remaining issue found: dashboard/chat factual spine still read stale `tower_budget_rollups`; this follow-up fixes that path.
+- Live browser proof before follow-up: Lakeshore Tower KPI prompts passed; SkyHarbor returned the correct source total too coarsely as `$1.0B` and exposed `model_governance` / `data_quality` labels. This follow-up adds the regression coverage for that defect.
 - Pending: VNet rematerialization and signed-in browser/scorer proof after deployment.
 
 ## Rollout Plan

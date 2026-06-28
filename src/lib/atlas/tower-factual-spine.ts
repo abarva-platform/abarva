@@ -27,11 +27,18 @@ function normalize(value: string): string {
 function formatMoney(value: number | null | undefined): string {
   if (typeof value !== "number" || !Number.isFinite(value)) return "not loaded";
   if (Math.abs(value) >= 1_000_000_000)
-    return `$${(value / 1_000_000_000).toFixed(1)}B`;
+    return `$${trimFixed(value / 1_000_000_000, 3)}B`;
   if (Math.abs(value) >= 1_000_000)
     return `$${(value / 1_000_000).toFixed(1)}M`;
   if (Math.abs(value) >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
   return `$${value.toFixed(0)}`;
+}
+
+function trimFixed(value: number, digits: number): string {
+  return value
+    .toFixed(digits)
+    .replace(/(\.\d*?)0+$/, "$1")
+    .replace(/\.$/, "");
 }
 
 function labelize(value: string | null | undefined): string {
@@ -39,6 +46,15 @@ function labelize(value: string | null | undefined): string {
     .replace(/[_-]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function displayLabel(value: string | null | undefined): string {
+  const label = labelize(value);
+  if (!label) return "";
+  if (!/[_-]/.test(String(value ?? "")) && /[A-Z]/.test(label.slice(1))) {
+    return label;
+  }
+  return label.charAt(0).toUpperCase() + label.slice(1).toLowerCase();
 }
 
 function compactList(items: string[], limit = 6): string {
@@ -62,7 +78,7 @@ function sum(values: Iterable<number | null | undefined>): number {
 
 function budgetRollupLine(rollup: TowerBudgetRollup): string {
   const details = [
-    `${rollup.portfolioCompany}: ${formatMoney(rollup.totalItBudgetUsd)}`,
+    `${displayLabel(rollup.portfolioCompany)}: ${formatMoney(rollup.totalItBudgetUsd)}`,
     rollup.actualSpendYtdUsd > 0
       ? `${formatMoney(rollup.actualSpendYtdUsd)} YTD`
       : null,
@@ -147,7 +163,7 @@ function buildTotalBudgetAnswer(
   return {
     matchedIntent: "tower_total_it_budget",
     response: [
-      `The loaded Tower IT budget is ${formatMoney(total)} across ${state.budgetRollups.length} portfolio-company rollups.`,
+      `The loaded Tower IT budget is ${formatMoney(total)} across ${state.budgetRollups.length} budget rollups.`,
       `Breakdown: ${compactList(state.budgetRollups.map(budgetRollupLine), 8)}.`,
       "The useful comparison is whether that budget is matched by measured value, vendor exposure, and pressure flags.",
     ].join("\n"),
@@ -162,9 +178,9 @@ function buildBudgetByPortfolioAnswer(
   return {
     matchedIntent: "tower_budget_by_portfolio_company",
     response: [
-      `Tower has ${state.budgetRollups.length} loaded portfolio-company budget rollups.`,
+      `Tower has ${state.budgetRollups.length} loaded budget rollups.`,
       `Breakdown: ${compactList(state.budgetRollups.map(budgetRollupLine), 8)}.`,
-      "The next useful cut is ranking those companies by value proof and pressure exposure.",
+      "The next useful cut is ranking those rollups by value proof and pressure exposure.",
     ].join("\n"),
     suggestions: suggestions(),
   };
@@ -185,7 +201,7 @@ function buildSingleCompanyBudgetAnswer(
   return {
     matchedIntent: "tower_single_company_budget",
     response: [
-      `${match.portfolioCompany} has ${formatMoney(match.totalItBudgetUsd)} of loaded FY Tower IT budget.`,
+      `${displayLabel(match.portfolioCompany)} has ${formatMoney(match.totalItBudgetUsd)} of loaded FY Tower IT budget.`,
       `Spend shape: ${formatMoney(match.actualSpendYtdUsd)} YTD, ${formatMoney(match.runAmountUsd)} run, ${formatMoney(match.changeAmountUsd)} change, ${formatMoney(match.vendorAmountUsd)} vendor, ${formatMoney(match.laborAmountUsd)} labor.`,
       "The right follow-up is comparing this company against the rest of the portfolio.",
     ].join("\n"),
@@ -361,14 +377,21 @@ export function buildTowerFactualSpineAnswer(
   const asksBudget = /\b(budget|spend|money|cost)\b/.test(q);
   const asksBreakdown =
     /\b(break down|breakdown|by portfolio|portfolio company|company)\b/.test(q);
+  const asksTotalBudget =
+    asksBudget &&
+    /\b(total|loaded|overall|portfolio|tower|annual|committed)\b/.test(q) &&
+    !/\b(vendor|vendors|contract|contracts|renewal|renewals|initiative|program|top|largest|biggest|by)\b/.test(
+      q,
+    );
 
   if (asksBudget && /\b(warehouse automation|initiative|program)\b/.test(q)) {
     return buildInitiativeBudgetAnswer(state, question);
   }
   if (
-    asksBudget &&
-    /\b(total|loaded|overall)\b/.test(q) &&
-    /\b(it|tower)\b/.test(q)
+    asksTotalBudget ||
+    (asksBudget &&
+      /\b(total|loaded|overall)\b/.test(q) &&
+      /\b(it|tower)\b/.test(q))
   ) {
     return buildTotalBudgetAnswer(state);
   }

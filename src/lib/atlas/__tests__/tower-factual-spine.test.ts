@@ -397,4 +397,47 @@ describe("buildTowerFactualSpineAnswer", () => {
     expect(roi?.response).toContain("directional initiative-value proxy");
     expect(roi?.response).toContain("not a true portfolio ROI");
   });
+
+  it("keeps billion-scale total budget answers precise and hides raw slice keys", () => {
+    const skyharborLikeState = {
+      ...towerState,
+      budgetRollups: [
+        {
+          ...towerState.budgetRollups[0],
+          portfolioCompany: "model_governance",
+          totalItBudgetUsd: 1_018_750_000,
+          actualSpendYtdUsd: 0,
+          runAmountUsd: 0,
+          changeAmountUsd: 0,
+        },
+        {
+          ...towerState.budgetRollups[1],
+          portfolioCompany: "data_quality",
+          totalItBudgetUsd: 12_500_000,
+          actualSpendYtdUsd: 0,
+          runAmountUsd: 0,
+          changeAmountUsd: 0,
+        },
+      ],
+    } satisfies AtlasTowerCurrentState;
+
+    const prompts = [
+      "What is our loaded IT budget?",
+      "How much loaded portfolio spend do we have?",
+      "What budget amount is Tower using for the portfolio?",
+      "What is the Tower committed annual spend total?",
+    ];
+
+    for (const prompt of prompts) {
+      const answer = buildTowerFactualSpineAnswer(prompt, skyharborLikeState);
+      expect(answer?.matchedIntent).toBe("tower_total_it_budget");
+      expect(answer?.response).toContain("$1.031B");
+      expect(answer?.response).not.toContain("$1.0B");
+      expect(answer?.response).not.toContain("model_governance");
+      expect(answer?.response).not.toContain("data_quality");
+      expect(answer?.response).not.toContain("portfolio-company rollups");
+      expect(answer?.response).toContain("Model governance");
+      expect(answer?.response).toContain("Data quality");
+    }
+  });
 });
