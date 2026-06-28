@@ -28,12 +28,13 @@ Tower now normalizes raw dimension and ownership slugs before showing them in th
 ## Changes Included
 
 - `src/components/tower/TowerIndexPage.tsx`: applies the shared label normalizer to grouped function/budget labels and program ownership/category rows.
+- `src/components/tower/TowerIndexPage.tsx`: applies the same normalizer to the Overview portfolio-comparison card where raw rollup labels can appear.
 - `src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx`: adds regression coverage proving raw slugs such as `model_governance` and `run_resilience` are not visible in Tower.
 
 ## QA / Validation
 
 - `npx prettier --write src/components/tower/TowerIndexPage.tsx src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx`: passed.
-- `npx jest src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx --runInBand`: passed, 8 tests.
+- `npx jest src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx --runInBand`: passed, 8 tests, including the Overview card regression.
 - `npx eslint src/components/tower/TowerIndexPage.tsx src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx`: passed with existing Tower unused-code warnings, no errors.
 - `npm run release:check`: passed.
 

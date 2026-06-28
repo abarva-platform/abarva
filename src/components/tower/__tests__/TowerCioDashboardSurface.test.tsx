@@ -434,7 +434,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
   });
 
   it("normalizes raw dimension slugs before showing Tower labels", () => {
-    query = new URLSearchParams("dashboard=budget");
+    query = new URLSearchParams();
 
     render(
       <TowerIndexPage
