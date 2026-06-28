@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-27T22:59:40.420Z",
+  "generatedAt": "2026-06-28T00:19:04.495Z",
   "note": "Source-file validation only. Azure refresh and browser retrieval proof are separate gates.",
   "results": [
     {
@@ -7,8 +7,8 @@
       "label": "Apex Retail",
       "folder": "apex-retail-synthetic-v4",
       "score": 100,
-      "passed": 13,
-      "total": 13,
+      "passed": 14,
+      "total": 14,
       "checks": [
         {
           "name": "profile.revenue_fy25_usd",
@@ -78,6 +78,11 @@
           "name": "contract-system.relationships_resolve",
           "status": "pass",
           "rows": 100
+        },
+        {
+          "name": "graph.edges_resolve_to_loaded_keys",
+          "status": "pass",
+          "rows": 475
         }
       ]
     },
@@ -86,8 +91,8 @@
       "label": "First Capital",
       "folder": "first-capital-financial-synthetic-v4",
       "score": 100,
-      "passed": 13,
-      "total": 13,
+      "passed": 14,
+      "total": 14,
       "checks": [
         {
           "name": "profile.revenue_fy25_usd",
@@ -157,6 +162,11 @@
           "name": "contract-system.relationships_resolve",
           "status": "pass",
           "rows": 120
+        },
+        {
+          "name": "graph.edges_resolve_to_loaded_keys",
+          "status": "pass",
+          "rows": 444
         }
       ]
     },
@@ -165,8 +175,8 @@
       "label": "Lakeshore Industries",
       "folder": "lakeshore-industries-synthetic-v4",
       "score": 100,
-      "passed": 13,
-      "total": 13,
+      "passed": 14,
+      "total": 14,
       "checks": [
         {
           "name": "profile.revenue_fy25_usd",
@@ -236,6 +246,11 @@
           "name": "contract-system.relationships_resolve",
           "status": "pass",
           "rows": 90
+        },
+        {
+          "name": "graph.edges_resolve_to_loaded_keys",
+          "status": "pass",
+          "rows": 267
         }
       ]
     },
@@ -244,8 +259,8 @@
       "label": "Meridian Health",
       "folder": "meridian-health-synthetic-v4",
       "score": 100,
-      "passed": 13,
-      "total": 13,
+      "passed": 14,
+      "total": 14,
       "checks": [
         {
           "name": "profile.revenue_fy25_usd",
@@ -315,6 +330,11 @@
           "name": "contract-system.relationships_resolve",
           "status": "pass",
           "rows": 95
+        },
+        {
+          "name": "graph.edges_resolve_to_loaded_keys",
+          "status": "pass",
+          "rows": 300
         }
       ]
     },
@@ -323,8 +343,8 @@
       "label": "SkyHarbor Air",
       "folder": "skyharbor-air-synthetic-v4",
       "score": 100,
-      "passed": 13,
-      "total": 13,
+      "passed": 14,
+      "total": 14,
       "checks": [
         {
           "name": "profile.revenue_fy25_usd",
@@ -394,6 +414,11 @@
           "name": "contract-system.relationships_resolve",
           "status": "pass",
           "rows": 320
+        },
+        {
+          "name": "graph.edges_resolve_to_loaded_keys",
+          "status": "pass",
+          "rows": 1361
         }
       ]
     }
