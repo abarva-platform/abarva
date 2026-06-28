@@ -38,6 +38,11 @@ traces, and validation results.
 - Migration: `supabase/migrations/20260628202000_cio_tower_schema_v1.sql`
 - Architecture doc: `docs/architecture/tower/CIO_TOWER_SCHEMA_V1.md`
 - Release record: `docs/releases/records/2026-06-28-cio-tower-schema-reset.md`
+- Standardized Tower source package: `tower-standardized-v1/`
+- FY2025 synthetic trend generator:
+  `scripts/tower/generate-fy2025-trend-synthetic.mjs`
+- CIO Tower standardized loader:
+  `scripts/tower/load-cio-tower-standardized-v1.mjs`
 - Azure operation: dropped old `public.tower_*`, `public.ai_control_*`, and
   `public.semantic2_tower_*` tables/views/materialized views.
 - Azure operation: applied the new `cio_tower` schema with 11 tables.
@@ -69,11 +74,32 @@ Pass: Azure Container Apps private operator job template remains inert with
 `/bin/true`; the one-off execution overrides did not mutate the standing job
 template.
 
+Pass: FY2025 synthetic trend baseline generated for all five Tower tenants.
+Each FY2025 row is explicitly marked `period=fy25`,
+`value_source=synthetic`, and
+`formula_version=tower_synthetic_fy2025_trend_v1`.
+
+Pass: FY2025/FY2026 reconciliation validation confirmed each tenant has a
+non-zero FY2025 headline IT-budget baseline that is below the FY2026 headline
+IT-budget value:
+
+| Tenant | FY2025 headline IT budget | FY2026 headline IT budget | FY25/FY26 |
+|---|---:|---:|---:|
+| apex-retail | $1,418.2M | $1,516.8M | 0.935 |
+| first-capital-financial | $2,014.7M | $2,132.0M | 0.945 |
+| lakeshore-industries | $812.1M | $877.9M | 0.925 |
+| meridian-health | $1,005.3M | $1,069.5M | 0.940 |
+| skyharbor-air | $2,358.9M | $2,578.0M | 0.915 |
+
+Pass: CIO Tower standardized loader dry-run reported 245 source files, 5,527
+entities, 1,793 facts, 309 relationships, 8 measures, 6 question contracts, and
+40 tenant measure results across the five canonical tenants.
+
 ## Rollout Plan
 
 1. Keep old Tower-named Azure objects deleted.
 2. Use the new `cio_tower` schema as the only Tower data-plane contract.
-3. Load standardized Tower files into `cio_tower.source_registry`,
+3. Load the standardized Tower files into `cio_tower.source_registry`,
    `cio_tower.entities`, `cio_tower.facts`, and `cio_tower.relationships`.
 4. Seed `cio_tower.measures` and `cio_tower.question_contracts`.
 5. Rebuild Tower dashboard and chat from `cio_tower.measure_results`,
@@ -103,13 +129,16 @@ for audit until the replacement data path is corrected.
 
 ## Context Ingestion Evidence
 
-Not applicable. This release changes the Tower schema contract and deletes stale
-Tower database structures. It does not load client files, commit new tenant
-facts, refresh embeddings, or prove live answer retrieval.
+Local standardized Tower package generated and loader dry-run validated for all
+five canonical tenants. Azure/Postgres schema is live, but the standardized file
+package has not yet been committed into live Azure/Postgres rows in this release
+record. The next proof must run the loader from the private VNet and then report
+source, entity, fact, relationship, measure, and question-contract counts from
+the `cio_tower` schema.
 
 ## Known Gaps
 
-The new `cio_tower` schema is empty by design after reset. The next work is the
-controlled Tower load: standardized source files, entity/fact/relationship
-materialization, metric-result computation, question-contract seeding, prompt
-trace capture, and signed-in Tower dashboard/chat proof.
+The new `cio_tower` schema is applied and the standardized Tower package is
+locally validated, but the Azure row-load step is still pending. The next work
+is the controlled Tower load from the private VNet, metric-result verification,
+prompt trace capture, and signed-in Tower dashboard/chat proof.

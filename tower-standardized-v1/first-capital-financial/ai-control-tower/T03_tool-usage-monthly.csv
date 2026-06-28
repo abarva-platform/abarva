@@ -1,0 +1,36 @@
+period,tool_name,licensed_users,active_users,prompts_or_actions,estimated_hours_saved,quality_or_control_flag,source_file,source_row,value_source
+2026-02,M365 Copilot,614,232,29928,158,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,2,tenant_file
+2026-03,M365 Copilot,614,285,59565,204,normal,ai-control-tower/T03_tool-usage-monthly.csv,3,tenant_file
+2026-04,M365 Copilot,614,307,38989,325,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,4,tenant_file
+2026-05,M365 Copilot,614,377,72007,322,normal,ai-control-tower/T03_tool-usage-monthly.csv,5,tenant_file
+2026-06,M365 Copilot,614,466,24232,271,normal,ai-control-tower/T03_tool-usage-monthly.csv,6,tenant_file
+2026-02,GitHub Copilot,4473,1627,283098,1660,normal,ai-control-tower/T03_tool-usage-monthly.csv,7,tenant_file
+2026-03,GitHub Copilot,4473,2087,446618,2189,normal,ai-control-tower/T03_tool-usage-monthly.csv,8,tenant_file
+2026-04,GitHub Copilot,4473,2402,170542,2532,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,9,tenant_file
+2026-05,GitHub Copilot,4473,2803,249467,1849,normal,ai-control-tower/T03_tool-usage-monthly.csv,10,tenant_file
+2026-06,GitHub Copilot,4473,3227,667989,3220,normal,ai-control-tower/T03_tool-usage-monthly.csv,11,tenant_file
+2026-02,AWS Bedrock / Claude,4422,1453,130770,940,normal,ai-control-tower/T03_tool-usage-monthly.csv,12,tenant_file
+2026-03,AWS Bedrock / Claude,4422,2121,345723,1559,normal,ai-control-tower/T03_tool-usage-monthly.csv,13,tenant_file
+2026-04,AWS Bedrock / Claude,4422,2408,370832,1848,normal,ai-control-tower/T03_tool-usage-monthly.csv,14,tenant_file
+2026-05,AWS Bedrock / Claude,4422,2800,408800,2111,normal,ai-control-tower/T03_tool-usage-monthly.csv,15,tenant_file
+2026-06,AWS Bedrock / Claude,4422,3197,617021,2507,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,16,tenant_file
+2026-02,Azure OpenAI,4154,1650,244200,1792,normal,ai-control-tower/T03_tool-usage-monthly.csv,17,tenant_file
+2026-03,Azure OpenAI,4154,2012,152912,1129,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,18,tenant_file
+2026-04,Azure OpenAI,4154,2401,156065,1910,normal,ai-control-tower/T03_tool-usage-monthly.csv,19,tenant_file
+2026-05,Azure OpenAI,4154,2446,359562,1493,normal,ai-control-tower/T03_tool-usage-monthly.csv,20,tenant_file
+2026-06,Azure OpenAI,4154,2959,331408,3080,normal,ai-control-tower/T03_tool-usage-monthly.csv,21,tenant_file
+2026-02,Glean Enterprise Search,7071,2743,460824,1367,normal,ai-control-tower/T03_tool-usage-monthly.csv,22,tenant_file
+2026-03,Glean Enterprise Search,7071,3164,300580,1912,normal,ai-control-tower/T03_tool-usage-monthly.csv,23,tenant_file
+2026-04,Glean Enterprise Search,7071,3802,661548,2155,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,24,tenant_file
+2026-05,Glean Enterprise Search,7071,4519,393153,4112,normal,ai-control-tower/T03_tool-usage-monthly.csv,25,tenant_file
+2026-06,Glean Enterprise Search,7071,5229,256221,4734,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,26,tenant_file
+2026-02,NICE Actimize Copilot,6087,2358,233442,2697,normal,ai-control-tower/T03_tool-usage-monthly.csv,27,tenant_file
+2026-03,NICE Actimize Copilot,6087,2782,292110,1596,normal,ai-control-tower/T03_tool-usage-monthly.csv,28,tenant_file
+2026-04,NICE Actimize Copilot,6087,3497,587496,2620,normal,ai-control-tower/T03_tool-usage-monthly.csv,29,tenant_file
+2026-05,NICE Actimize Copilot,6087,3757,315588,2458,normal,ai-control-tower/T03_tool-usage-monthly.csv,30,tenant_file
+2026-06,NICE Actimize Copilot,6087,4308,633276,1819,normal,ai-control-tower/T03_tool-usage-monthly.csv,31,tenant_file
+2026-02,Salesforce Einstein,7082,2498,132394,2377,normal,ai-control-tower/T03_tool-usage-monthly.csv,32,tenant_file
+2026-03,Salesforce Einstein,7082,2902,281494,2837,normal,ai-control-tower/T03_tool-usage-monthly.csv,33,tenant_file
+2026-04,Salesforce Einstein,7082,3895,377815,2032,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,34,tenant_file
+2026-05,Salesforce Einstein,7082,4594,353738,2530,needs_evidence_review,ai-control-tower/T03_tool-usage-monthly.csv,35,tenant_file
+2026-06,Salesforce Einstein,7082,4676,930524,5537,normal,ai-control-tower/T03_tool-usage-monthly.csv,36,tenant_file

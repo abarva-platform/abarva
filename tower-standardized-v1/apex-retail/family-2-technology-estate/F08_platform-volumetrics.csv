@@ -1,0 +1,13 @@
+platform_id,metric_name,period,value,unit,capacity,capacity_pct,notes,source_file,source_row,value_source
+APX-APP-004,store_transactions_daily,2026-05,11400000,txn/day,16000000,71,Peak holiday capacity risk at store edge,family-2-technology-estate/F08_platform-volumetrics.csv,2,tenant_file
+APX-APP-005,ecommerce_sessions_monthly,2026-05,210000000,sessions,300000000,70,Search latency drives conversion,family-2-technology-estate/F08_platform-volumetrics.csv,3,tenant_file
+APX-APP-003,orders_monthly,2026-05,18200000,orders,26000000,70,BOPIS and ship-from-store load,family-2-technology-estate/F08_platform-volumetrics.csv,4,tenant_file
+APX-APP-002,warehouse_tasks_monthly,2026-05,64000000,tasks,90000000,71,Labor planning and slotting constraints,family-2-technology-estate/F08_platform-volumetrics.csv,5,tenant_file
+APX-APP-010,lakehouse_jobs_monthly,2026-05,420000,jobs,700000,60,POS and clickstream pipelines,family-2-technology-estate/F08_platform-volumetrics.csv,6,tenant_file
+APX-APP-007,forecast_skus_weekly,2026-05,4200000,sku-location,5800000,72,Forecast accuracy varies by category,family-2-technology-estate/F08_platform-volumetrics.csv,7,tenant_file
+APX-APP-012,labor_schedules_weekly,2026-05,1840000,shifts,2200000,84,Store labor optimization target,family-2-technology-estate/F08_platform-volumetrics.csv,8,tenant_file
+APX-APP-001,item_location_records,2026-05,76000000,records,110000000,69,Inventory accuracy gap,family-2-technology-estate/F08_platform-volumetrics.csv,9,tenant_file
+APX-APP-006,personalization_events_daily,2026-05,89000000,events,150000000,59,Identity fragmentation,family-2-technology-estate/F08_platform-volumetrics.csv,10,tenant_file
+APX-APP-009,incidents_monthly,2026-05,18800,tickets,26000,72,Store device incidents,family-2-technology-estate/F08_platform-volumetrics.csv,11,tenant_file
+APX-APP-011,marketing_segments,2026-05,1240,segments,2000,62,Retail media activation,family-2-technology-estate/F08_platform-volumetrics.csv,12,tenant_file
+APX-APP-008,close_journal_lines_monthly,2026-05,2100000,lines,3200000,66,Finance automation candidate,family-2-technology-estate/F08_platform-volumetrics.csv,13,tenant_file

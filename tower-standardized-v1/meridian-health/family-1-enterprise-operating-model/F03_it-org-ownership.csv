@@ -1,0 +1,13 @@
+team_id,team_name,executive_owner_role,domain,head_count_fte,offshore_pct,annual_budget_usd,source_file,source_row,value_source
+MER-IT-001,Office of CDIO,Chief Digital & Information Officer,technology_leadership,90,0,41000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,2,tenant_file
+MER-IT-002,Epic and Clinical Systems,VP Clinical Platforms,ehr,820,8,188000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,3,tenant_file
+MER-IT-003,Health Plan Core and Claims Platforms,VP Health Plan Technology,payer_core,590,12,142000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,4,tenant_file
+MER-IT-004,Data Platform Migration Office,Chief Data Officer,databricks_aws_lakehouse,310,15,126000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,5,tenant_file
+MER-IT-005,Integration and Interoperability,VP Integration,hl7_fhir_edi_api,340,10,78000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,6,tenant_file
+MER-IT-006,Contact Center and CRM Platforms,VP Patient Experience Tech,contact_center_crm,260,18,69000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,7,tenant_file
+MER-IT-007,"Finance, ERP and Reporting",VP Corporate Systems,erp_finance,240,20,62000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,8,tenant_file
+MER-IT-008,"Security, Privacy and Resilience",CISO,cyber_privacy,760,6,154000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,9,tenant_file
+MER-IT-009,Cloud and Infrastructure,VP Infrastructure,aws_network_datacenter,510,14,166000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,10,tenant_file
+MER-IT-010,ServiceNow and IT Operations,VP IT Operations,itsm_observability,220,12,52000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,11,tenant_file
+MER-IT-011,AI Governance and Automation Office,Chief Data Officer,ai_governance,115,5,38000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,12,tenant_file
+MER-IT-012,Developer Experience and DevSecOps,VP Engineering,devex,180,20,34000000,family-1-enterprise-operating-model/F03_it-org-ownership.csv,13,tenant_file

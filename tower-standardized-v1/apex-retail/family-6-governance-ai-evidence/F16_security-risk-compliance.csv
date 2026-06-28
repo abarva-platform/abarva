@@ -1,0 +1,13 @@
+control_id,control_name,domain,owner_role,status,severity,evidence_id,notes,source_file,source_row,value_source
+APX-CTRL-001,PCI tokenization,PCI,CISO,blocked,high,APX-EVID-001,Synthetic retail control evidence for AI/data pilot.,family-6-governance-ai-evidence/F16_security-risk-compliance.csv,2,tenant_file
+APX-CTRL-002,PII consent,privacy,Chief Privacy Officer,approved,medium,APX-EVID-002,Synthetic retail control evidence for AI/data pilot.,family-6-governance-ai-evidence/F16_security-risk-compliance.csv,3,tenant_file
+APX-CTRL-003,model review,AI governance,Chief Data Officer,approved,medium,APX-EVID-003,Synthetic retail control evidence for AI/data pilot.,family-6-governance-ai-evidence/F16_security-risk-compliance.csv,4,tenant_file
+APX-CTRL-004,store device hardening,cyber,VP Store Tech,review_required,medium,APX-EVID-004,Synthetic retail control evidence for AI/data pilot.,family-6-governance-ai-evidence/F16_security-risk-compliance.csv,5,tenant_file
+APX-CTRL-005,vendor AI clause,vendor risk,Chief Procurement Officer,blocked,high,APX-EVID-005,Synthetic retail control evidence for AI/data pilot.,family-6-governance-ai-evidence/F16_security-risk-compliance.csv,6,tenant_file
+APX-CTRL-006,access recertification,SOX,Controller,approved,medium,APX-EVID-006,Synthetic retail control evidence for AI/data pilot.,family-6-governance-ai-evidence/F16_security-risk-compliance.csv,7,tenant_file
+APX-CTRL-007,PCI tokenization,PCI,CISO,review_required,medium,APX-EVID-007,Synthetic retail control evidence for AI/data pilot.,family-6-governance-ai-evidence/F16_security-risk-compliance.csv,8,tenant_file
+APX-CTRL-008,PII consent,privacy,Chief Privacy Officer,approved,medium,APX-EVID-008,Synthetic retail control evidence for AI/data pilot.,family-6-governance-ai-evidence/F16_security-risk-compliance.csv,9,tenant_file
+APX-CTRL-009,model review,AI governance,Chief Data Officer,blocked,high,APX-EVID-009,Synthetic retail control evidence for AI/data pilot.,family-6-governance-ai-evidence/F16_security-risk-compliance.csv,10,tenant_file
+APX-CTRL-010,store device hardening,cyber,VP Store Tech,review_required,medium,APX-EVID-010,Synthetic retail control evidence for AI/data pilot.,family-6-governance-ai-evidence/F16_security-risk-compliance.csv,11,tenant_file
+APX-CTRL-011,vendor AI clause,vendor risk,Chief Procurement Officer,approved,medium,APX-EVID-011,Synthetic retail control evidence for AI/data pilot.,family-6-governance-ai-evidence/F16_security-risk-compliance.csv,12,tenant_file
+APX-CTRL-012,access recertification,SOX,Controller,approved,medium,APX-EVID-012,Synthetic retail control evidence for AI/data pilot.,family-6-governance-ai-evidence/F16_security-risk-compliance.csv,13,tenant_file

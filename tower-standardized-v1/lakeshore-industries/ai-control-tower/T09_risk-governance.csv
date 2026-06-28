@@ -1,0 +1,11 @@
+initiative_id,risk_id,risk_domain,severity,control_status,exception_or_gap,owner_role,source_file,source_row,value_source
+LAK-AI-001,LAK-AI-001-RISK,privacy_security,critical,blocked,,Treasurer,ai-control-tower/T09_risk-governance.csv,2,tenant_file
+LAK-AI-002,LAK-AI-002-RISK,model_risk,medium,approved_with_conditions,,Treasurer,ai-control-tower/T09_risk-governance.csv,3,tenant_file
+LAK-AI-003,LAK-AI-003-RISK,clinical_or_operational_safety,medium,approved_with_conditions,,CFO,ai-control-tower/T09_risk-governance.csv,4,tenant_file
+LAK-AI-004,LAK-AI-004-RISK,financial_control,high,review_required,,Controller,ai-control-tower/T09_risk-governance.csv,5,tenant_file
+LAK-AI-005,LAK-AI-005-RISK,privacy_security,medium,approved_with_conditions,,VP IT Operations,ai-control-tower/T09_risk-governance.csv,6,tenant_file
+LAK-AI-006,LAK-AI-006-RISK,model_risk,critical,blocked,,CFO,ai-control-tower/T09_risk-governance.csv,7,tenant_file
+LAK-AI-007,LAK-AI-007-RISK,clinical_or_operational_safety,high,review_required,,Chief Procurement Officer,ai-control-tower/T09_risk-governance.csv,8,tenant_file
+LAK-AI-008,LAK-AI-008-RISK,financial_control,medium,approved_with_conditions,,Treasurer,ai-control-tower/T09_risk-governance.csv,9,tenant_file
+LAK-AI-009,LAK-AI-009-RISK,privacy_security,medium,approved_with_conditions,,Treasurer,ai-control-tower/T09_risk-governance.csv,10,tenant_file
+LAK-AI-010,LAK-AI-010-RISK,model_risk,high,review_required,,Treasurer,ai-control-tower/T09_risk-governance.csv,11,tenant_file

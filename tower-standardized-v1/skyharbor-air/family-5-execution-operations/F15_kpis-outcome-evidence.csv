@@ -1,0 +1,73 @@
+kpi_id,kpi_name,business_area,period,value,unit,target,evidence_id,status,source_file,source_row,value_source
+SHA-KPI-001,completion factor,Operations Control Center / IROPS,2026-01,70,pct,82,EVID-SHA-0001,attention,family-5-execution-operations/F15_kpis-outcome-evidence.csv,2,tenant_file
+SHA-KPI-002,on-time arrival,Flight Operations,2026-02,71.1,bps,83,EVID-SHA-0002,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,3,tenant_file
+SHA-KPI-003,misconnect rate,Crew Operations,2026-03,72.2,count,84,EVID-SHA-0003,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,4,tenant_file
+SHA-KPI-004,bag mishandling rate,Airport Customer Service,2026-04,73.3,usd_m,85,EVID-SHA-0004,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,5,tenant_file
+SHA-KPI-005,call containment,TechOps / MRO,2026-05,74.4,pct,86,EVID-SHA-0005,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,6,tenant_file
+SHA-KPI-006,digital self-service,Customer Experience,2026-06,75.5,bps,87,EVID-SHA-0006,attention,family-5-execution-operations/F15_kpis-outcome-evidence.csv,7,tenant_file
+SHA-KPI-007,premium retention,Digital Commerce,2026-07,76.6,count,88,EVID-SHA-0007,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,8,tenant_file
+SHA-KPI-008,loyalty engagement,Loyalty and Co-brand,2026-08,77,usd_m,89,EVID-SHA-0008,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,9,tenant_file
+SHA-KPI-009,aircraft out-of-service,Revenue Management,2026-09,78.1,pct,90,EVID-SHA-0001,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,10,tenant_file
+SHA-KPI-010,EDW freshness,Network Planning,2026-10,79.2,bps,91,EVID-SHA-0002,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,11,tenant_file
+SHA-KPI-011,cloud cost variance,Cargo,2026-11,80.3,count,92,EVID-SHA-0003,attention,family-5-execution-operations/F15_kpis-outcome-evidence.csv,12,tenant_file
+SHA-KPI-012,AI value proof,Finance and Treasury,2026-12,81.4,usd_m,93,EVID-SHA-0004,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,13,tenant_file
+SHA-KPI-013,completion factor,Procurement and Vendor Management,2026-01,82.5,pct,94,EVID-SHA-0005,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,14,tenant_file
+SHA-KPI-014,on-time arrival,People / HR,2026-02,83.6,bps,95,EVID-SHA-0006,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,15,tenant_file
+SHA-KPI-015,misconnect rate,"Legal, Regulatory, DOT Consumer",2026-03,84,count,96,EVID-SHA-0007,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,16,tenant_file
+SHA-KPI-016,bag mishandling rate,Safety and Compliance,2026-04,85.1,usd_m,82,EVID-SHA-0008,attention,family-5-execution-operations/F15_kpis-outcome-evidence.csv,17,tenant_file
+SHA-KPI-017,call containment,Digital and Technology,2026-05,86.2,pct,83,EVID-SHA-0001,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,18,tenant_file
+SHA-KPI-018,digital self-service,"Data, Analytics and AI",2026-06,87.3,bps,84,EVID-SHA-0002,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,19,tenant_file
+SHA-KPI-019,premium retention,Cybersecurity and Resilience,2026-07,88.4,count,85,EVID-SHA-0003,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,20,tenant_file
+SHA-KPI-020,loyalty engagement,Corporate Strategy and Transformation,2026-08,89.5,usd_m,86,EVID-SHA-0004,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,21,tenant_file
+SHA-KPI-021,aircraft out-of-service,Operations Control Center / IROPS,2026-09,90.6,pct,87,EVID-SHA-0005,attention,family-5-execution-operations/F15_kpis-outcome-evidence.csv,22,tenant_file
+SHA-KPI-022,EDW freshness,Flight Operations,2026-10,91,bps,88,EVID-SHA-0006,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,23,tenant_file
+SHA-KPI-023,cloud cost variance,Crew Operations,2026-11,92.1,count,89,EVID-SHA-0007,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,24,tenant_file
+SHA-KPI-024,AI value proof,Airport Customer Service,2026-12,93.2,usd_m,90,EVID-SHA-0008,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,25,tenant_file
+SHA-KPI-025,completion factor,TechOps / MRO,2026-01,94.3,pct,91,EVID-SHA-0001,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,26,tenant_file
+SHA-KPI-026,on-time arrival,Customer Experience,2026-02,95.4,bps,92,EVID-SHA-0002,attention,family-5-execution-operations/F15_kpis-outcome-evidence.csv,27,tenant_file
+SHA-KPI-027,misconnect rate,Digital Commerce,2026-03,96.5,count,93,EVID-SHA-0003,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,28,tenant_file
+SHA-KPI-028,bag mishandling rate,Loyalty and Co-brand,2026-04,97.6,usd_m,94,EVID-SHA-0004,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,29,tenant_file
+SHA-KPI-029,call containment,Revenue Management,2026-05,98,pct,95,EVID-SHA-0005,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,30,tenant_file
+SHA-KPI-030,digital self-service,Network Planning,2026-06,99.1,bps,96,EVID-SHA-0006,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,31,tenant_file
+SHA-KPI-031,premium retention,Cargo,2026-07,70.2,count,82,EVID-SHA-0007,attention,family-5-execution-operations/F15_kpis-outcome-evidence.csv,32,tenant_file
+SHA-KPI-032,loyalty engagement,Finance and Treasury,2026-08,71.3,usd_m,83,EVID-SHA-0008,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,33,tenant_file
+SHA-KPI-033,aircraft out-of-service,Procurement and Vendor Management,2026-09,72.4,pct,84,EVID-SHA-0001,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,34,tenant_file
+SHA-KPI-034,EDW freshness,People / HR,2026-10,73.5,bps,85,EVID-SHA-0002,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,35,tenant_file
+SHA-KPI-035,cloud cost variance,"Legal, Regulatory, DOT Consumer",2026-11,74.6,count,86,EVID-SHA-0003,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,36,tenant_file
+SHA-KPI-036,AI value proof,Safety and Compliance,2026-12,75,usd_m,87,EVID-SHA-0004,attention,family-5-execution-operations/F15_kpis-outcome-evidence.csv,37,tenant_file
+SHA-KPI-037,completion factor,Digital and Technology,2026-01,76.1,pct,88,EVID-SHA-0005,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,38,tenant_file
+SHA-KPI-038,on-time arrival,"Data, Analytics and AI",2026-02,77.2,bps,89,EVID-SHA-0006,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,39,tenant_file
+SHA-KPI-039,misconnect rate,Cybersecurity and Resilience,2026-03,78.3,count,90,EVID-SHA-0007,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,40,tenant_file
+SHA-KPI-040,bag mishandling rate,Corporate Strategy and Transformation,2026-04,79.4,usd_m,91,EVID-SHA-0008,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,41,tenant_file
+SHA-KPI-041,call containment,Operations Control Center / IROPS,2026-05,80.5,pct,92,EVID-SHA-0001,attention,family-5-execution-operations/F15_kpis-outcome-evidence.csv,42,tenant_file
+SHA-KPI-042,digital self-service,Flight Operations,2026-06,81.6,bps,93,EVID-SHA-0002,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,43,tenant_file
+SHA-KPI-043,premium retention,Crew Operations,2026-07,82,count,94,EVID-SHA-0003,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,44,tenant_file
+SHA-KPI-044,loyalty engagement,Airport Customer Service,2026-08,83.1,usd_m,95,EVID-SHA-0004,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,45,tenant_file
+SHA-KPI-045,aircraft out-of-service,TechOps / MRO,2026-09,84.2,pct,96,EVID-SHA-0005,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,46,tenant_file
+SHA-KPI-046,EDW freshness,Customer Experience,2026-10,85.3,bps,82,EVID-SHA-0006,attention,family-5-execution-operations/F15_kpis-outcome-evidence.csv,47,tenant_file
+SHA-KPI-047,cloud cost variance,Digital Commerce,2026-11,86.4,count,83,EVID-SHA-0007,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,48,tenant_file
+SHA-KPI-048,AI value proof,Loyalty and Co-brand,2026-12,87.5,usd_m,84,EVID-SHA-0008,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,49,tenant_file
+SHA-KPI-049,completion factor,Revenue Management,2026-01,88.6,pct,85,EVID-SHA-0001,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,50,tenant_file
+SHA-KPI-050,on-time arrival,Network Planning,2026-02,89,bps,86,EVID-SHA-0002,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,51,tenant_file
+SHA-KPI-051,misconnect rate,Cargo,2026-03,90.1,count,87,EVID-SHA-0003,attention,family-5-execution-operations/F15_kpis-outcome-evidence.csv,52,tenant_file
+SHA-KPI-052,bag mishandling rate,Finance and Treasury,2026-04,91.2,usd_m,88,EVID-SHA-0004,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,53,tenant_file
+SHA-KPI-053,call containment,Procurement and Vendor Management,2026-05,92.3,pct,89,EVID-SHA-0005,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,54,tenant_file
+SHA-KPI-054,digital self-service,People / HR,2026-06,93.4,bps,90,EVID-SHA-0006,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,55,tenant_file
+SHA-KPI-055,premium retention,"Legal, Regulatory, DOT Consumer",2026-07,94.5,count,91,EVID-SHA-0007,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,56,tenant_file
+SHA-KPI-056,loyalty engagement,Safety and Compliance,2026-08,95.6,usd_m,92,EVID-SHA-0008,attention,family-5-execution-operations/F15_kpis-outcome-evidence.csv,57,tenant_file
+SHA-KPI-057,aircraft out-of-service,Digital and Technology,2026-09,96,pct,93,EVID-SHA-0001,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,58,tenant_file
+SHA-KPI-058,EDW freshness,"Data, Analytics and AI",2026-10,97.1,bps,94,EVID-SHA-0002,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,59,tenant_file
+SHA-KPI-059,cloud cost variance,Cybersecurity and Resilience,2026-11,98.2,count,95,EVID-SHA-0003,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,60,tenant_file
+SHA-KPI-060,AI value proof,Corporate Strategy and Transformation,2026-12,99.3,usd_m,96,EVID-SHA-0004,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,61,tenant_file
+SHA-KPI-061,completion factor,Operations Control Center / IROPS,2026-01,70.4,pct,82,EVID-SHA-0005,attention,family-5-execution-operations/F15_kpis-outcome-evidence.csv,62,tenant_file
+SHA-KPI-062,on-time arrival,Flight Operations,2026-02,71.5,bps,83,EVID-SHA-0006,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,63,tenant_file
+SHA-KPI-063,misconnect rate,Crew Operations,2026-03,72.6,count,84,EVID-SHA-0007,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,64,tenant_file
+SHA-KPI-064,bag mishandling rate,Airport Customer Service,2026-04,73,usd_m,85,EVID-SHA-0008,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,65,tenant_file
+SHA-KPI-065,call containment,TechOps / MRO,2026-05,74.1,pct,86,EVID-SHA-0001,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,66,tenant_file
+SHA-KPI-066,digital self-service,Customer Experience,2026-06,75.2,bps,87,EVID-SHA-0002,attention,family-5-execution-operations/F15_kpis-outcome-evidence.csv,67,tenant_file
+SHA-KPI-067,premium retention,Digital Commerce,2026-07,76.3,count,88,EVID-SHA-0003,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,68,tenant_file
+SHA-KPI-068,loyalty engagement,Loyalty and Co-brand,2026-08,77.4,usd_m,89,EVID-SHA-0004,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,69,tenant_file
+SHA-KPI-069,aircraft out-of-service,Revenue Management,2026-09,78.5,pct,90,EVID-SHA-0005,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,70,tenant_file
+SHA-KPI-070,EDW freshness,Network Planning,2026-10,79.6,bps,91,EVID-SHA-0006,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,71,tenant_file
+SHA-KPI-071,cloud cost variance,Cargo,2026-11,80,count,92,EVID-SHA-0007,attention,family-5-execution-operations/F15_kpis-outcome-evidence.csv,72,tenant_file
+SHA-KPI-072,AI value proof,Finance and Treasury,2026-12,81.1,usd_m,93,EVID-SHA-0008,usable,family-5-execution-operations/F15_kpis-outcome-evidence.csv,73,tenant_file

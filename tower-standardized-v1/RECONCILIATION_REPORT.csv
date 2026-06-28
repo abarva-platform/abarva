@@ -1,0 +1,6 @@
+tenant_key,it_budget_envelope_fy26_usd,run_budget_fy26_usd,change_budget_fy26_usd,run_plus_change_usd,run_change_reconciles,capex_budget_fy26_usd,opex_budget_fy26_usd,capex_plus_opex_usd,capex_opex_reconciles,initiative_budget_fy26_usd,initiative_budget_within_it_budget_envelope,status
+apex-retail,1516800000,979600000,537200000,1516800000,pass,518515200,998284800,1516800000,pass,111160000,pass,pass
+first-capital-financial,2132000000,1321840000,810160000,2132000000,pass,693100000,1438900000,2132000000,pass,139700000,pass,pass
+lakeshore-industries,877920000,604160000,273760000,877920000,pass,261664800,616255200,877920000,pass,76434000,pass,pass
+meridian-health,1069500000,713000000,356500000,1069500000,pass,319064400,750435600,1069500000,pass,151116000,pass,pass
+skyharbor-air,2578000000,1445400000,1132600000,2578000000,pass,950260000,1627740000,2578000000,pass,1031250000,pass,pass

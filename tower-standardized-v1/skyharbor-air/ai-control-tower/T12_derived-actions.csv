@@ -1,0 +1,6 @@
+action_id,action_title,priority,derived_from,owner_role,decision_needed,expected_value_usd,approval_status,source_file,source_row,value_source
+SHA-ACT-001,Sequence IROPS agent after crew legality and DOT guardrails,P0,SHA-INIT-001;SHA-RISK-001-3,EVP Operations,Approve controlled scale gate,270000000,pending,ai-control-tower/T12_derived-actions.csv,2,tenant_file
+SHA-ACT-002,Treat CDP as prerequisite to customer AI scale,P0,SHA-INIT-002;SHA-INIT-003,President Loyalty,Approve CDP selection and identity graph funding,210000000,pending,ai-control-tower/T12_derived-actions.csv,3,tenant_file
+SHA-ACT-003,Create Teradata/SAS/BI rationalization move,P1,SHA-INIT-005,CDAO,Approve data simplification workstream,122000000,pending,ai-control-tower/T12_derived-actions.csv,4,tenant_file
+SHA-ACT-004,Tie IBM renewal to API/event bridge milestones,P1,SHA-INIT-004;SHA-VND-001,VP Enterprise Platforms,Renegotiate IBM modernization milestones,310000000,pending,ai-control-tower/T12_derived-actions.csv,5,tenant_file
+SHA-ACT-005,Hold autonomous customer-service actions until evidence passes,P0,SHA-RISK-*,Chief Legal Officer,Approve human-in-loop policy,92000000,pending,ai-control-tower/T12_derived-actions.csv,6,tenant_file

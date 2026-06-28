@@ -1,0 +1,11 @@
+action_id,action_title,priority,derived_from,decision_owner,next_decision_date,expected_impact_usd,source_file,source_row,value_source
+MER-AI-001-ACT,Approve guarded pilot for Databricks AWS clinical + claims lakehouse foundation,P0,MER-AI-001;MER-EVID-001,Chief Data Officer,2026-07-08,76260000,ai-control-tower/T12_derived-actions.csv,2,tenant_file
+MER-AI-002-ACT,Close evidence gap for Unified semantic layer for automation-ready data products,P0,MER-AI-002;MER-EVID-002,Chief Data Officer,2026-07-09,30660000,ai-control-tower/T12_derived-actions.csv,3,tenant_file
+MER-AI-003-ACT,Sequence dependency before scaling Prior authorization automation evidence cockpit,P0,MER-AI-003;MER-EVID-003,Chief Health Plan Officer,2026-07-10,39040000,ai-control-tower/T12_derived-actions.csv,4,tenant_file
+MER-AI-004-ACT,Approve guarded pilot for Call center agent assist and next-best-action,P1,MER-AI-004;MER-EVID-004,Chief Customer Experience Officer,2026-07-11,37400000,ai-control-tower/T12_derived-actions.csv,5,tenant_file
+MER-AI-005-ACT,Close evidence gap for HEDIS/STAR provider quality performance mart,P1,MER-AI-005;MER-EVID-005,Chief Quality Officer,2026-07-12,42640000,ai-control-tower/T12_derived-actions.csv,6,tenant_file
+MER-AI-006-ACT,Sequence dependency before scaling Cost-of-care and margin transparency by population,P1,MER-AI-006;MER-EVID-006,CFO,2026-07-13,55480000,ai-control-tower/T12_derived-actions.csv,7,tenant_file
+MER-AI-007-ACT,Approve guarded pilot for Payment integrity leakage reduction analytics,P1,MER-AI-007;MER-EVID-007,VP Payment Integrity,2026-07-14,35200000,ai-control-tower/T12_derived-actions.csv,8,tenant_file
+MER-AI-008-ACT,Close evidence gap for Automated close and management reporting pipelines,P2,MER-AI-008;MER-EVID-008,Controller,2026-07-15,17050000,ai-control-tower/T12_derived-actions.csv,9,tenant_file
+MER-AI-009-ACT,Sequence dependency before scaling Ambient documentation scale with safety review,P2,MER-AI-009;MER-EVID-009,Chief Medical Officer,2026-07-16,38540000,ai-control-tower/T12_derived-actions.csv,10,tenant_file
+MER-AI-010-ACT,Approve guarded pilot for Epic to lakehouse FHIR/HL7 modernization,P2,MER-AI-010;MER-EVID-010,VP Integration,2026-07-17,26280000,ai-control-tower/T12_derived-actions.csv,11,tenant_file

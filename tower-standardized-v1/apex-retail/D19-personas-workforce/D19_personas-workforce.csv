@@ -1,0 +1,13 @@
+persona_id,persona_name,business_area,population_count,work_context,source_file,source_row,value_source
+APX-PER-001,Store manager,Store Operations,1840,"labor, inventory, shrink, service",D19-personas-workforce/D19_personas-workforce.csv,2,tenant_file
+APX-PER-002,Department lead,Store Operations,14800,"tasking, replenishment, service",D19-personas-workforce/D19_personas-workforce.csv,3,tenant_file
+APX-PER-003,Merchandise planner,Merchandising,940,"assortment, demand, markdowns",D19-personas-workforce/D19_personas-workforce.csv,4,tenant_file
+APX-PER-004,Supply chain planner,Supply Chain,720,"forecasting, allocation, constraints",D19-personas-workforce/D19_personas-workforce.csv,5,tenant_file
+APX-PER-005,Ecommerce product manager,Digital,410,"conversion, search, checkout",D19-personas-workforce/D19_personas-workforce.csv,6,tenant_file
+APX-PER-006,Loyalty marketer,Marketing,360,"segments, offers, retail media",D19-personas-workforce/D19_personas-workforce.csv,7,tenant_file
+APX-PER-007,Loss prevention analyst,Risk,520,"shrink, fraud, exception reporting",D19-personas-workforce/D19_personas-workforce.csv,8,tenant_file
+APX-PER-008,Finance analyst,Finance,680,"margin, close, vendor funding",D19-personas-workforce/D19_personas-workforce.csv,9,tenant_file
+APX-PER-009,Data engineer,Data and AI,520,"lakehouse, POS, clickstream, inventory",D19-personas-workforce/D19_personas-workforce.csv,10,tenant_file
+APX-PER-010,Contact center agent,Customer Care,2100,"order status, returns, loyalty",D19-personas-workforce/D19_personas-workforce.csv,11,tenant_file
+APX-PER-011,Store associate,Store Operations,128000,"selling, service, fulfillment",D19-personas-workforce/D19_personas-workforce.csv,12,tenant_file
+APX-PER-012,SRE engineer,Cloud/SRE,260,"availability, incident response",D19-personas-workforce/D19_personas-workforce.csv,13,tenant_file

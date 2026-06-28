@@ -1,0 +1,16 @@
+function_id,function_name,executive_owner_role,head_count,description,source_file,source_row,value_source
+FC-BF-001,Consumer Banking & Deposits,Head of Consumer Banking,14800,"Branches, deposits, retail lending, digital banking, customer onboarding",family-1-enterprise-operating-model/F02_business-org-functions.csv,2,tenant_file
+FC-BF-002,Commercial & Corporate Banking,Head of Commercial Banking,6200,"Middle-market, large corporate, treasury services, commercial lending",family-1-enterprise-operating-model/F02_business-org-functions.csv,3,tenant_file
+FC-BF-003,Cards & Payments,Head of Cards & Payments,5400,"Credit/debit cards, authorization, payment rails, merchant acquiring",family-1-enterprise-operating-model/F02_business-org-functions.csv,4,tenant_file
+FC-BF-004,Wealth & Asset Management,Head of Wealth Management,4100,"Private bank, advisory, brokerage, trust, investment management",family-1-enterprise-operating-model/F02_business-org-functions.csv,5,tenant_file
+FC-BF-005,Treasury & Capital Markets,Treasurer,1900,"ALM, liquidity, funding, FX, rates, securities, capital markets",family-1-enterprise-operating-model/F02_business-org-functions.csv,6,tenant_file
+FC-BF-006,Risk Management,Chief Risk Officer,3800,"Credit, market, operational, model risk, stress testing, CCAR",family-1-enterprise-operating-model/F02_business-org-functions.csv,7,tenant_file
+FC-BF-007,Financial Crimes & AML,BSA/AML Officer,2600,"AML, sanctions, KYC, fraud strategy, transaction monitoring, SAR",family-1-enterprise-operating-model/F02_business-org-functions.csv,8,tenant_file
+FC-BF-008,Compliance & Regulatory,Chief Compliance Officer,2200,"Reg reporting, OCC/Fed exams, CFPB, fair lending, surveillance",family-1-enterprise-operating-model/F02_business-org-functions.csv,9,tenant_file
+FC-BF-009,Finance & Controllership,Chief Financial Officer,2400,"GL, close, FP&A, regulatory reporting, capital, SOX, treasury accounting",family-1-enterprise-operating-model/F02_business-org-functions.csv,10,tenant_file
+FC-BF-010,Operations & Servicing,Chief Operating Officer,9100,"Payment ops, loan servicing, disputes, back-office, reconciliation",family-1-enterprise-operating-model/F02_business-org-functions.csv,11,tenant_file
+FC-BF-011,Contact Center & Customer Care,Head of Customer Experience,6800,"Inbound servicing, disputes, fraud calls, collections, next-best-action",family-1-enterprise-operating-model/F02_business-org-functions.csv,12,tenant_file
+FC-BF-012,"Data, Analytics & AI",Chief Data & Analytics Officer,1100,"Enterprise analytics, ML, semantic layer, data governance, AI platform",family-1-enterprise-operating-model/F02_business-org-functions.csv,13,tenant_file
+FC-BF-013,"Cyber, Privacy & Resilience",Chief Information Security Officer,1400,"Cybersecurity, privacy, third-party risk, model security, resilience",family-1-enterprise-operating-model/F02_business-org-functions.csv,14,tenant_file
+FC-BF-014,Technology & Engineering,Chief Information Officer,7200,"Core banking, cards, channels, cloud, integration, service management",family-1-enterprise-operating-model/F02_business-org-functions.csv,15,tenant_file
+FC-BF-015,Enterprise Transformation Office,Chief Strategy Officer,600,"Cloud migration, AI portfolio, value office, operating model change",family-1-enterprise-operating-model/F02_business-org-functions.csv,16,tenant_file

@@ -1,0 +1,11 @@
+evidence_item_id,initiative_id,source_file,source_locator,source_timestamp,review_state,confidence,source_file,source_row,value_source
+LAK-AI-001-EV-1,LAK-AI-001,ai-control-tower/T10_evidence-items.csv,section 2.1,2026-06-01,review_required,0.63,ai-control-tower/T10_evidence-items.csv,2,tenant_file
+LAK-AI-002-EV-2,LAK-AI-002,ai-control-tower/T10_evidence-items.csv,section 3.2,2026-06-02,approved,0.86,ai-control-tower/T10_evidence-items.csv,3,tenant_file
+LAK-AI-003-EV-3,LAK-AI-003,ai-control-tower/T10_evidence-items.csv,section 4.3,2026-06-03,approved,0.86,ai-control-tower/T10_evidence-items.csv,4,tenant_file
+LAK-AI-004-EV-4,LAK-AI-004,ai-control-tower/T10_evidence-items.csv,section 5.4,2026-06-04,approved,0.86,ai-control-tower/T10_evidence-items.csv,5,tenant_file
+LAK-AI-005-EV-5,LAK-AI-005,ai-control-tower/T10_evidence-items.csv,section 6.1,2026-06-05,approved,0.86,ai-control-tower/T10_evidence-items.csv,6,tenant_file
+LAK-AI-006-EV-6,LAK-AI-006,ai-control-tower/T10_evidence-items.csv,section 7.2,2026-06-06,review_required,0.63,ai-control-tower/T10_evidence-items.csv,7,tenant_file
+LAK-AI-007-EV-7,LAK-AI-007,ai-control-tower/T10_evidence-items.csv,section 8.3,2026-06-07,approved,0.86,ai-control-tower/T10_evidence-items.csv,8,tenant_file
+LAK-AI-008-EV-8,LAK-AI-008,ai-control-tower/T10_evidence-items.csv,section 2.4,2026-06-08,approved,0.86,ai-control-tower/T10_evidence-items.csv,9,tenant_file
+LAK-AI-009-EV-9,LAK-AI-009,ai-control-tower/T10_evidence-items.csv,section 3.1,2026-06-09,approved,0.86,ai-control-tower/T10_evidence-items.csv,10,tenant_file
+LAK-AI-010-EV-10,LAK-AI-010,ai-control-tower/T10_evidence-items.csv,section 4.2,2026-06-10,approved,0.86,ai-control-tower/T10_evidence-items.csv,11,tenant_file

@@ -1,0 +1,89 @@
+-
+  tenant_key: skyharbor-air
+  dimension_family: organization_leadership
+  supported_questions:
+    - How is IT organized?
+    - Who owns this capability?
+    - Which leadership roles are accountable?
+  unsupported_questions:
+    - Final HR reporting hierarchy without client-approved HR data
+    - Named leaders where no F18 or adjacent leadership evidence exists
+  required_sources:
+    - F01
+    - F02
+    - F03
+    - D19
+    - F18
+    - F19
+    - F12
+  deterministic_artifacts:
+    - leadership table
+    - team-to-domain chart
+    - ownership graph
+  citation_rule: Cite role/team ownership and named leadership separately.
+  gap_rule: Lead with loaded operating-model synthesis, then state exact missing people-org evidence.
+-
+  tenant_key: skyharbor-air
+  dimension_family: application_systems
+  supported_questions:
+    - What systems support this domain?
+    - Which applications are critical or costly?
+    - Where are lifecycle risks?
+  unsupported_questions:
+    - Definitive CMDB dependency without CMDB/service-map evidence
+  required_sources:
+    - F05
+    - F06
+    - F10
+    - F11
+    - F19
+    - F20
+    - F22
+  deterministic_artifacts:
+    - application table
+    - criticality chart
+    - dependency graph
+  citation_rule: Cite application inventory and dependency map rows.
+  gap_rule: Do not infer app ownership if F19 confidence is low.
+-
+  tenant_key: skyharbor-air
+  dimension_family: operations_process_intelligence
+  supported_questions:
+    - Where are bottlenecks?
+    - What work repeats?
+    - What should we automate first?
+  unsupported_questions:
+    - Ticket-level root cause without ServiceNow/Jira/log evidence
+  required_sources:
+    - F14
+    - F23
+    - operational_work_items
+    - operational_events
+    - automation_opportunities
+  deterministic_artifacts:
+    - process map
+    - bottleneck table
+    - automation-priority chart
+  citation_rule: Separate V4 monthly signals from event-level operational evidence.
+  gap_rule: Mark synthetic/demo operational evidence clearly.
+-
+  tenant_key: skyharbor-air
+  dimension_family: ai_value_governance
+  supported_questions:
+    - Which AI opportunities have value?
+    - What stays human-approved?
+    - Where are AI risks?
+  unsupported_questions:
+    - Finance-approved ROI without rate-card and finance validation
+  required_sources:
+    - F17
+    - F24
+    - O04
+    - O06
+    - F15
+  deterministic_artifacts:
+    - AI portfolio table
+    - value/risk chart
+    - human-agent responsibility matrix
+  citation_rule: Cite AI footprint, value basis, and governance status.
+  gap_rule: Use ROM/range language when rates or finance validation are missing.

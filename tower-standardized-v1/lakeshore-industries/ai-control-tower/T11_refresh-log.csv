@@ -1,0 +1,2 @@
+refresh_id,period,source_freshness,parser_status,approval_state,notes,source_file,source_row,value_source
+LAK-REFRESH-2026-06,2026-06,local_artifact_generated_not_loaded,not_run,awaiting_backend_refresh,Synthetic context/corpus/Tower files assembled locally for backend refresh rehearsal.,ai-control-tower/T11_refresh-log.csv,2,tenant_file

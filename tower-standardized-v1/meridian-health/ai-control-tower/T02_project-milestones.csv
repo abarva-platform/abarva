@@ -1,0 +1,71 @@
+initiative_id,milestone_id,milestone_name,due_date,status,blocker_or_condition,source_file,source_row,value_source
+MER-AI-001,MER-AI-001-MS-1,charter_approved,2026-07-08,complete,,ai-control-tower/T02_project-milestones.csv,2,tenant_file
+MER-AI-001,MER-AI-001-MS-2,data_ready,2026-08-09,at_risk,PHI/model governance and source evidence missing,ai-control-tower/T02_project-milestones.csv,3,tenant_file
+MER-AI-001,MER-AI-001-MS-3,control_ready,2026-09-10,not_started,,ai-control-tower/T02_project-milestones.csv,4,tenant_file
+MER-AI-001,MER-AI-001-MS-4,pilot_exit,2026-10-11,not_started,,ai-control-tower/T02_project-milestones.csv,5,tenant_file
+MER-AI-001,MER-AI-001-MS-5,scale_decision,2026-11-12,not_started,,ai-control-tower/T02_project-milestones.csv,6,tenant_file
+MER-AI-002,MER-AI-002-MS-1,charter_approved,2026-08-09,complete,,ai-control-tower/T02_project-milestones.csv,7,tenant_file
+MER-AI-002,MER-AI-002-MS-2,data_ready,2026-09-10,complete,,ai-control-tower/T02_project-milestones.csv,8,tenant_file
+MER-AI-002,MER-AI-002-MS-3,control_ready,2026-10-11,at_risk,data quality and semantic ownership not certified,ai-control-tower/T02_project-milestones.csv,9,tenant_file
+MER-AI-002,MER-AI-002-MS-4,pilot_exit,2026-11-12,not_started,,ai-control-tower/T02_project-milestones.csv,10,tenant_file
+MER-AI-002,MER-AI-002-MS-5,scale_decision,2026-07-13,not_started,,ai-control-tower/T02_project-milestones.csv,11,tenant_file
+MER-AI-003,MER-AI-003-MS-1,charter_approved,2026-09-10,complete,,ai-control-tower/T02_project-milestones.csv,12,tenant_file
+MER-AI-003,MER-AI-003-MS-2,data_ready,2026-10-11,complete,,ai-control-tower/T02_project-milestones.csv,13,tenant_file
+MER-AI-003,MER-AI-003-MS-3,control_ready,2026-11-12,complete,,ai-control-tower/T02_project-milestones.csv,14,tenant_file
+MER-AI-003,MER-AI-003-MS-4,pilot_exit,2026-07-13,at_risk,workflow integration not proven,ai-control-tower/T02_project-milestones.csv,15,tenant_file
+MER-AI-003,MER-AI-003-MS-5,scale_decision,2026-08-14,not_started,,ai-control-tower/T02_project-milestones.csv,16,tenant_file
+MER-AI-004,MER-AI-004-MS-1,charter_approved,2026-10-11,complete,,ai-control-tower/T02_project-milestones.csv,17,tenant_file
+MER-AI-004,MER-AI-004-MS-2,data_ready,2026-11-12,complete,,ai-control-tower/T02_project-milestones.csv,18,tenant_file
+MER-AI-004,MER-AI-004-MS-3,control_ready,2026-07-13,complete,,ai-control-tower/T02_project-milestones.csv,19,tenant_file
+MER-AI-004,MER-AI-004-MS-4,pilot_exit,2026-08-14,complete,,ai-control-tower/T02_project-milestones.csv,20,tenant_file
+MER-AI-004,MER-AI-004-MS-5,scale_decision,2026-09-15,at_risk,value measurement needs CFO signoff,ai-control-tower/T02_project-milestones.csv,21,tenant_file
+MER-AI-005,MER-AI-005-MS-1,charter_approved,2026-11-12,complete,,ai-control-tower/T02_project-milestones.csv,22,tenant_file
+MER-AI-005,MER-AI-005-MS-2,data_ready,2026-07-13,at_risk,PHI/model governance and source evidence missing,ai-control-tower/T02_project-milestones.csv,23,tenant_file
+MER-AI-005,MER-AI-005-MS-3,control_ready,2026-08-14,not_started,,ai-control-tower/T02_project-milestones.csv,24,tenant_file
+MER-AI-005,MER-AI-005-MS-4,pilot_exit,2026-09-15,not_started,,ai-control-tower/T02_project-milestones.csv,25,tenant_file
+MER-AI-005,MER-AI-005-MS-5,scale_decision,2026-10-16,not_started,,ai-control-tower/T02_project-milestones.csv,26,tenant_file
+MER-AI-006,MER-AI-006-MS-1,charter_approved,2026-07-13,complete,,ai-control-tower/T02_project-milestones.csv,27,tenant_file
+MER-AI-006,MER-AI-006-MS-2,data_ready,2026-08-14,complete,,ai-control-tower/T02_project-milestones.csv,28,tenant_file
+MER-AI-006,MER-AI-006-MS-3,control_ready,2026-09-15,at_risk,data quality and semantic ownership not certified,ai-control-tower/T02_project-milestones.csv,29,tenant_file
+MER-AI-006,MER-AI-006-MS-4,pilot_exit,2026-10-16,not_started,,ai-control-tower/T02_project-milestones.csv,30,tenant_file
+MER-AI-006,MER-AI-006-MS-5,scale_decision,2026-11-17,not_started,,ai-control-tower/T02_project-milestones.csv,31,tenant_file
+MER-AI-007,MER-AI-007-MS-1,charter_approved,2026-08-14,complete,,ai-control-tower/T02_project-milestones.csv,32,tenant_file
+MER-AI-007,MER-AI-007-MS-2,data_ready,2026-09-15,complete,,ai-control-tower/T02_project-milestones.csv,33,tenant_file
+MER-AI-007,MER-AI-007-MS-3,control_ready,2026-10-16,complete,,ai-control-tower/T02_project-milestones.csv,34,tenant_file
+MER-AI-007,MER-AI-007-MS-4,pilot_exit,2026-11-17,at_risk,workflow integration not proven,ai-control-tower/T02_project-milestones.csv,35,tenant_file
+MER-AI-007,MER-AI-007-MS-5,scale_decision,2026-07-18,not_started,,ai-control-tower/T02_project-milestones.csv,36,tenant_file
+MER-AI-008,MER-AI-008-MS-1,charter_approved,2026-09-15,complete,,ai-control-tower/T02_project-milestones.csv,37,tenant_file
+MER-AI-008,MER-AI-008-MS-2,data_ready,2026-10-16,complete,,ai-control-tower/T02_project-milestones.csv,38,tenant_file
+MER-AI-008,MER-AI-008-MS-3,control_ready,2026-11-17,complete,,ai-control-tower/T02_project-milestones.csv,39,tenant_file
+MER-AI-008,MER-AI-008-MS-4,pilot_exit,2026-07-18,complete,,ai-control-tower/T02_project-milestones.csv,40,tenant_file
+MER-AI-008,MER-AI-008-MS-5,scale_decision,2026-08-19,at_risk,value measurement needs CFO signoff,ai-control-tower/T02_project-milestones.csv,41,tenant_file
+MER-AI-009,MER-AI-009-MS-1,charter_approved,2026-10-16,complete,,ai-control-tower/T02_project-milestones.csv,42,tenant_file
+MER-AI-009,MER-AI-009-MS-2,data_ready,2026-11-17,at_risk,PHI/model governance and source evidence missing,ai-control-tower/T02_project-milestones.csv,43,tenant_file
+MER-AI-009,MER-AI-009-MS-3,control_ready,2026-07-18,not_started,,ai-control-tower/T02_project-milestones.csv,44,tenant_file
+MER-AI-009,MER-AI-009-MS-4,pilot_exit,2026-08-19,not_started,,ai-control-tower/T02_project-milestones.csv,45,tenant_file
+MER-AI-009,MER-AI-009-MS-5,scale_decision,2026-09-20,not_started,,ai-control-tower/T02_project-milestones.csv,46,tenant_file
+MER-AI-010,MER-AI-010-MS-1,charter_approved,2026-11-17,complete,,ai-control-tower/T02_project-milestones.csv,47,tenant_file
+MER-AI-010,MER-AI-010-MS-2,data_ready,2026-07-18,complete,,ai-control-tower/T02_project-milestones.csv,48,tenant_file
+MER-AI-010,MER-AI-010-MS-3,control_ready,2026-08-19,at_risk,data quality and semantic ownership not certified,ai-control-tower/T02_project-milestones.csv,49,tenant_file
+MER-AI-010,MER-AI-010-MS-4,pilot_exit,2026-09-20,not_started,,ai-control-tower/T02_project-milestones.csv,50,tenant_file
+MER-AI-010,MER-AI-010-MS-5,scale_decision,2026-10-21,not_started,,ai-control-tower/T02_project-milestones.csv,51,tenant_file
+MER-AI-011,MER-AI-011-MS-1,charter_approved,2026-07-18,complete,,ai-control-tower/T02_project-milestones.csv,52,tenant_file
+MER-AI-011,MER-AI-011-MS-2,data_ready,2026-08-19,complete,,ai-control-tower/T02_project-milestones.csv,53,tenant_file
+MER-AI-011,MER-AI-011-MS-3,control_ready,2026-09-20,complete,,ai-control-tower/T02_project-milestones.csv,54,tenant_file
+MER-AI-011,MER-AI-011-MS-4,pilot_exit,2026-10-21,at_risk,workflow integration not proven,ai-control-tower/T02_project-milestones.csv,55,tenant_file
+MER-AI-011,MER-AI-011-MS-5,scale_decision,2026-11-22,not_started,,ai-control-tower/T02_project-milestones.csv,56,tenant_file
+MER-AI-012,MER-AI-012-MS-1,charter_approved,2026-08-19,complete,,ai-control-tower/T02_project-milestones.csv,57,tenant_file
+MER-AI-012,MER-AI-012-MS-2,data_ready,2026-09-20,complete,,ai-control-tower/T02_project-milestones.csv,58,tenant_file
+MER-AI-012,MER-AI-012-MS-3,control_ready,2026-10-21,complete,,ai-control-tower/T02_project-milestones.csv,59,tenant_file
+MER-AI-012,MER-AI-012-MS-4,pilot_exit,2026-11-22,complete,,ai-control-tower/T02_project-milestones.csv,60,tenant_file
+MER-AI-012,MER-AI-012-MS-5,scale_decision,2026-07-23,at_risk,value measurement needs CFO signoff,ai-control-tower/T02_project-milestones.csv,61,tenant_file
+MER-AI-013,MER-AI-013-MS-1,charter_approved,2026-09-20,complete,,ai-control-tower/T02_project-milestones.csv,62,tenant_file
+MER-AI-013,MER-AI-013-MS-2,data_ready,2026-10-21,at_risk,PHI/model governance and source evidence missing,ai-control-tower/T02_project-milestones.csv,63,tenant_file
+MER-AI-013,MER-AI-013-MS-3,control_ready,2026-11-22,not_started,,ai-control-tower/T02_project-milestones.csv,64,tenant_file
+MER-AI-013,MER-AI-013-MS-4,pilot_exit,2026-07-23,not_started,,ai-control-tower/T02_project-milestones.csv,65,tenant_file
+MER-AI-013,MER-AI-013-MS-5,scale_decision,2026-08-24,not_started,,ai-control-tower/T02_project-milestones.csv,66,tenant_file
+MER-AI-014,MER-AI-014-MS-1,charter_approved,2026-10-21,complete,,ai-control-tower/T02_project-milestones.csv,67,tenant_file
+MER-AI-014,MER-AI-014-MS-2,data_ready,2026-11-22,complete,,ai-control-tower/T02_project-milestones.csv,68,tenant_file
+MER-AI-014,MER-AI-014-MS-3,control_ready,2026-07-23,at_risk,data quality and semantic ownership not certified,ai-control-tower/T02_project-milestones.csv,69,tenant_file
+MER-AI-014,MER-AI-014-MS-4,pilot_exit,2026-08-24,not_started,,ai-control-tower/T02_project-milestones.csv,70,tenant_file
+MER-AI-014,MER-AI-014-MS-5,scale_decision,2026-09-25,not_started,,ai-control-tower/T02_project-milestones.csv,71,tenant_file

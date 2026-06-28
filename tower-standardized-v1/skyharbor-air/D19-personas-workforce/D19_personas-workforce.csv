@@ -1,0 +1,19 @@
+persona_id,persona_name,business_area,population_count,ai_relevance,work_context,source_file,source_row,value_source
+SHA-PER-001,IROPS duty manager,OCC,340,High,"Recovery decision latency, passenger reaccommodation, crew legality",D19-personas-workforce/D19_personas-workforce.csv,2,tenant_file
+SHA-PER-002,Dispatcher,Flight Operations,1150,Medium,"Flight plan changes, weather routing, release amendments",D19-personas-workforce/D19_personas-workforce.csv,3,tenant_file
+SHA-PER-003,Crew scheduler,Crew Operations,930,High,"Crew legality, reserve assignment, hotel transport",D19-personas-workforce/D19_personas-workforce.csv,4,tenant_file
+SHA-PER-004,Gate agent,Airport Ops,18500,High,"Misconnects, rebooking, upgrades, bag exceptions",D19-personas-workforce/D19_personas-workforce.csv,5,tenant_file
+SHA-PER-005,Ramp supervisor,Airport Ops,4200,Medium,"Turnaround timing, equipment, deicing, bags",D19-personas-workforce/D19_personas-workforce.csv,6,tenant_file
+SHA-PER-006,Aircraft maintenance controller,TechOps,880,High,"AOG, MEL/CDL, parts availability, deferral decisions",D19-personas-workforce/D19_personas-workforce.csv,7,tenant_file
+SHA-PER-007,Contact center agent,Customer Experience,6200,High,"Refunds, vouchers, disruption recovery, loyalty exceptions",D19-personas-workforce/D19_personas-workforce.csv,8,tenant_file
+SHA-PER-008,Revenue analyst,Revenue Management,740,Medium,"Pricing, inventory, demand shocks, competitor moves",D19-personas-workforce/D19_personas-workforce.csv,9,tenant_file
+SHA-PER-009,Loyalty marketing manager,Loyalty,410,Medium,"Offers, segmentation, partner economics",D19-personas-workforce/D19_personas-workforce.csv,10,tenant_file
+SHA-PER-010,Data engineer,Data & AI,620,High,"Teradata, lake, DataStage, Informatica, lineage",D19-personas-workforce/D19_personas-workforce.csv,11,tenant_file
+SHA-PER-011,BI analyst,Data & AI,780,Medium,"Tableau, BusinessObjects, SAS, certified metrics",D19-personas-workforce/D19_personas-workforce.csv,12,tenant_file
+SHA-PER-012,Mainframe engineer,Enterprise Platforms,410,High,"COBOL, CICS, DB2, MQ, batch windows",D19-personas-workforce/D19_personas-workforce.csv,13,tenant_file
+SHA-PER-013,Cloud platform engineer,AWS Platform,520,High,"EKS, Lambda, Kafka/MSK, resilience, FinOps",D19-personas-workforce/D19_personas-workforce.csv,14,tenant_file
+SHA-PER-014,SAP finance analyst,Finance,850,Medium,"Close, revenue accounting, procurement, controls",D19-personas-workforce/D19_personas-workforce.csv,15,tenant_file
+SHA-PER-015,Security analyst,Cyber,420,High,"SOC triage, IAM, endpoint, fraud, privacy incident response",D19-personas-workforce/D19_personas-workforce.csv,16,tenant_file
+SHA-PER-016,Product manager digital app,Digital,360,High,"Mobile app, personalization, self-service, journey orchestration",D19-personas-workforce/D19_personas-workforce.csv,17,tenant_file
+SHA-PER-017,Vendor manager,Procurement,280,Medium,"AWS, IBM, Teradata, SAS, SAP, Adobe, Salesforce renewals",D19-personas-workforce/D19_personas-workforce.csv,18,tenant_file
+SHA-PER-018,Executive decision owner,Transformation Office,90,High,"Portfolio, value proof, board reporting, dependencies",D19-personas-workforce/D19_personas-workforce.csv,19,tenant_file
