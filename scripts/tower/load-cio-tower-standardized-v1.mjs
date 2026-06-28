@@ -245,6 +245,8 @@ function collectPackage() {
   const out = {
     sources: [],
     entities: new Map(),
+    entityAliases: new Map(),
+    entityNaturalKeys: new Map(),
     facts: [],
     relationships: new Map(),
     measureResults: [],
@@ -296,12 +298,36 @@ function walk(dir) {
 
 function addEntity(out, entity) {
   if (!entity.entity_key || !entity.display_name) return;
+  const naturalKey = key(entity.tenant_key, entity.entity_type, String(entity.display_name).trim().toLowerCase());
+  const existingKey = out.entityNaturalKeys.get(naturalKey);
+  if (existingKey) {
+    out.entityAliases.set(entity.entity_key, existingKey);
+    const existing = out.entities.get(existingKey);
+    out.entities.set(existingKey, {
+      ...existing,
+      source_key: existing.source_key || entity.source_key || null,
+      source_row: existing.source_row || entity.source_row || null,
+      attributes: {
+        ...(existing.attributes ?? {}),
+        aliases: [...new Set([...(existing.attributes?.aliases ?? []), entity.entity_key])],
+        source_rows: [...new Set([...(existing.attributes?.source_rows ?? []), entity.source_row].filter(Boolean))],
+      },
+    });
+    return;
+  }
+  out.entityNaturalKeys.set(naturalKey, entity.entity_key);
+  out.entityAliases.set(entity.entity_key, entity.entity_key);
   out.entities.set(entity.entity_key, {
     source_key: null,
     source_row: null,
     attributes: {},
     ...entity,
   });
+}
+
+function resolveEntityKey(out, entityKey) {
+  if (!entityKey) return null;
+  return out.entityAliases.get(entityKey) ?? entityKey;
 }
 
 function addRelationship(out, relationship) {
@@ -379,7 +405,8 @@ function loadFacts(out, tenantKey, tenantDir) {
     for (const row of readCsv(filePath)) {
       const value = numberOrNull(row.amount_usd);
       if (value === null) continue;
-      const entityKey = row.source_record_id ? key(tenantKey, String(row.source_record_id).replace(/-FY2025-.+$/, '')) : null;
+      const rawEntityKey = row.source_record_id ? key(tenantKey, String(row.source_record_id).replace(/-FY2025-.+$/, '')) : null;
+      const entityKey = resolveEntityKey(out, rawEntityKey);
       out.facts.push({
         fact_key: key(tenantKey, rel, row.source_record_id, row.view, row.amount_type, row.basis, row.period, row.source_row),
         tenant_key: tenantKey,
@@ -421,8 +448,8 @@ function loadRelationships(out, tenantKey, tenantDir) {
   const spend = path.join(tenantDir, 'ai-control-tower', 'T08_spend-contracts.csv');
   if (fs.existsSync(spend)) {
     for (const row of readCsv(spend)) {
-      const initiativeKey = key(tenantKey, row.initiative_id);
-      const vendorKey = key(tenantKey, 'vendor', row.vendor_or_tool);
+      const initiativeKey = resolveEntityKey(out, key(tenantKey, row.initiative_id));
+      const vendorKey = resolveEntityKey(out, key(tenantKey, 'vendor', row.vendor_or_tool));
       if (out.entities.has(initiativeKey) && out.entities.has(vendorKey)) {
         addRelationship(out, {
           relationship_key: key(tenantKey, row.line_id, 'supplies'),
@@ -442,8 +469,8 @@ function loadRelationships(out, tenantKey, tenantDir) {
   const vendorSystem = path.join(tenantDir, 'family-8-semantic-enrichment', 'F22_contract-system-service-map.csv');
   if (fs.existsSync(vendorSystem)) {
     for (const row of readCsv(vendorSystem)) {
-      const vendorKey = key(tenantKey, 'vendor', row.vendor_name);
-      const systemKey = key(tenantKey, row.supported_system_id);
+      const vendorKey = resolveEntityKey(out, key(tenantKey, 'vendor', row.vendor_name));
+      const systemKey = resolveEntityKey(out, key(tenantKey, row.supported_system_id));
       if (out.entities.has(vendorKey) && out.entities.has(systemKey)) {
         addRelationship(out, {
           relationship_key: key(tenantKey, row.map_id, 'supports'),
@@ -463,8 +490,8 @@ function loadRelationships(out, tenantKey, tenantDir) {
   const capSystem = path.join(tenantDir, 'family-8-semantic-enrichment', 'F20_capability-system-dependency.csv');
   if (fs.existsSync(capSystem)) {
     for (const row of readCsv(capSystem)) {
-      const capabilityKey = key(tenantKey, row.capability_id);
-      const systemKey = key(tenantKey, row.system_id);
+      const capabilityKey = resolveEntityKey(out, key(tenantKey, row.capability_id));
+      const systemKey = resolveEntityKey(out, key(tenantKey, row.system_id));
       if (out.entities.has(capabilityKey) && out.entities.has(systemKey)) {
         addRelationship(out, {
           relationship_key: key(tenantKey, row.dependency_id, 'depends_on'),
