@@ -104,6 +104,10 @@ describe("POST /api/v1/programs/[programId]/generate delegates to generateArtifa
         hasDataGap: false,
         proseOnly: false,
       },
+      generationMode: "final",
+      draftOnly: false,
+      draftCaveats: [],
+      contextCaveats: [],
     });
     draftModuleDeliverable.mockResolvedValue({
       deliverableId: "deliverable_1",
@@ -148,6 +152,7 @@ describe("POST /api/v1/programs/[programId]/generate delegates to generateArtifa
         phase: 2,
         artifact: "discovery_report",
         allowApprovedRetry: true,
+        generationMode: "final",
         useCaseQuery: "Improve margin leakage using current-state evidence.",
       }),
       expect.objectContaining({
@@ -193,6 +198,97 @@ describe("POST /api/v1/programs/[programId]/generate delegates to generateArtifa
           versionId: "version_1",
           goldenBarStatus: "Passed",
           reviewStatus: "not_reviewed",
+        }),
+      }),
+    );
+  });
+
+  it("persists pre-gate draft generation as review_required with gate caveats", async () => {
+    generateArtifact.mockResolvedValueOnce({
+      status: "generated",
+      html: "<html><body><section>Pre-gate draft — for review, not final</section><svg></svg><table><tr><td>Charter</td></tr></table></body></html>",
+      context: {
+        moveId: "program_1",
+        tenantKey: "apex-retail",
+        targetPhase: 1,
+      },
+      goldenBar: {
+        pass: true,
+        reasons: [],
+        hasDataGap: false,
+        proseOnly: false,
+      },
+      generationMode: "draft",
+      draftOnly: true,
+      draftCaveats: [
+        {
+          code: "gate_not_approved",
+          phase: 1,
+          severity: "hard",
+          reason: "Phase 1 gate is not approved — no generation until the gate is approved.",
+        },
+      ],
+      contextCaveats: ["kpis"],
+    });
+
+    const { POST } =
+      await import("@/app/api/v1/programs/[programId]/generate/route");
+    const res = await POST(
+      makeRequest({
+        phase: 1,
+        deliverableTypeKey: "charter",
+        generationMode: "draft",
+      }),
+      {
+        params: Promise.resolve({ programId: "program_1" }),
+      },
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      deliverableId: "deliverable_1",
+      versionId: "version_1",
+      artifactId: "artifact_1",
+      phase: 1,
+      deliverableKey: "charter",
+      generationMode: "draft",
+      draftOnly: true,
+      artifactStatus: "Pre-gate draft — review required",
+      goldenBar: expect.objectContaining({ pass: true }),
+    });
+
+    expect(generateArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        moveId: "program_1",
+        tenantKey: "apex-retail",
+        phase: 1,
+        artifact: "charter",
+        allowApprovedRetry: true,
+        generationMode: "draft",
+      }),
+      expect.any(Object),
+    );
+    expect(saveMoveArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({ clientKey: "apex-retail" }),
+      expect.objectContaining({
+        moveId: "program_1",
+        phase: 1,
+        artifactType: "charter",
+        body: expect.stringContaining("Pre-gate draft"),
+        status: "review_required",
+        metadata: expect.objectContaining({
+          generationMode: "draft",
+          draftOnly: true,
+          qualityStatus: "Draft quality passed",
+          goldenBarStatus: "Passed with caveats",
+          artifactStatus: "Pre-gate draft — review required",
+          reviewStatus: "pre_gate_review_required",
+          preliminaryCaveat: expect.stringContaining("not final or board-ready"),
+          openItems: expect.arrayContaining([
+            "Sponsor assignment required before final approval.",
+            "Charter signoff required before final approval.",
+            "Phase gate approval required before final generation.",
+          ]),
         }),
       }),
     );

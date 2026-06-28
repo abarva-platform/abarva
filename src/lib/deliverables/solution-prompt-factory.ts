@@ -6,6 +6,7 @@
 
 import type { DeliverableKey } from "@/lib/deliverables/profiles/types";
 import { getDeliverableProfile } from "@/lib/deliverables/profiles/registry";
+import type { GenerationMode } from "@/lib/programs/assert-phase-ready";
 import type { SolutionContext } from "@/lib/programs/solution-context";
 import {
   VISUAL_ARTIFACT_STANDARD,
@@ -53,8 +54,11 @@ export function buildArtifactPrompt(args: {
   artifact: DeliverableKey;
   phase: number;
   context: SolutionContext;
+  generationMode?: GenerationMode;
+  draftCaveat?: string;
 }): BuiltPrompt {
   const { artifact, phase, context: ctx } = args;
+  const generationMode = args.generationMode ?? "final";
   const profile = getDeliverableProfile(artifact);
   const contract = visualContractFor(artifact);
 
@@ -79,9 +83,16 @@ export function buildArtifactPrompt(args: {
       ? `\nARCHITECTURE RULE:\n- Do NOT choose the solution approach here — use the already-approved chosenOption: ${ctx.chosenOption ? `"${ctx.chosenOption}"` : "[MISSING — STOP and request P3a approval]"}.\n- The architecture must be built to that decision.`
       : "";
 
+  const draftBlock =
+    generationMode === "draft"
+      ? `\nDRAFT STATUS REQUIREMENT:\n- This is a pre-gate review draft, not a final or board-ready artifact.\n- Include this visible caveat near the top of the artifact: "${args.draftCaveat ?? "Draft status: This artifact was generated before formal phase approval and is intended for review only."}"\n- Write for sponsor review, workshop preparation, and refinement.\n- Do not imply phase approval, sponsor signoff, final acceptance, or board-ready quality.\n- Include a concise "Client to Complete Before Final" exhibit listing the open gate items and missing evidence.\n- The artifact may be visually strong, but every recommendation must be phrased as draft/review-ready until the gate is approved.`
+      : "";
+
   const user = `You are generating "${profile.title}" for phase P${phase}.
 
 ${contextBlock}
+
+${draftBlock}
 
 ${VISUAL_ARTIFACT_STANDARD}
 

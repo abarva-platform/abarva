@@ -14,6 +14,10 @@ describe("assertPhaseReadyForGeneration (Slice 6 — no approved gate, no genera
   it("ready when capture complete AND gate approved", async () => {
     const r = await assertPhaseReadyForGeneration({ moveId: "m", phase: 3 }, sources());
     expect(r.ready).toBe(true);
+    expect(r.generationMode).toBe("final");
+    expect(r.gateApproved).toBe(true);
+    expect(r.draftOnly).toBe(false);
+    expect(r.draftCaveats).toEqual([]);
     expect(statusForReadiness(r)).toBe(200);
   });
 
@@ -25,6 +29,7 @@ describe("assertPhaseReadyForGeneration (Slice 6 — no approved gate, no genera
     expect(r.ready).toBe(false);
     expect(statusForReadiness(r)).toBe(409);
     expect(r.blockers.some((b) => b.code === "capture_incomplete")).toBe(true);
+    expect(r.draftOnly).toBe(false);
   });
 
   it("blocks when the gate is not approved", async () => {
@@ -34,6 +39,44 @@ describe("assertPhaseReadyForGeneration (Slice 6 — no approved gate, no genera
     );
     expect(r.ready).toBe(false);
     expect(r.blockers.some((b) => b.code === "gate_not_approved")).toBe(true);
+    expect(r.draftOnly).toBe(false);
+  });
+
+  it("allows a pre-gate draft when capture is complete but the gate is not approved", async () => {
+    const r = await assertPhaseReadyForGeneration(
+      { moveId: "m", phase: 1, generationMode: "draft" },
+      sources({ gateApproved: async () => false }),
+    );
+    expect(r.ready).toBe(true);
+    expect(statusForReadiness(r)).toBe(200);
+    expect(r.generationMode).toBe("draft");
+    expect(r.gateApproved).toBe(false);
+    expect(r.draftOnly).toBe(true);
+    expect(r.blockers).toEqual([]);
+    expect(r.draftCaveats).toEqual([
+      expect.objectContaining({
+        code: "gate_not_approved",
+        phase: 1,
+        severity: "hard",
+      }),
+    ]);
+  });
+
+  it("does not allow a pre-gate draft when capture itself is incomplete", async () => {
+    const r = await assertPhaseReadyForGeneration(
+      { moveId: "m", phase: 1, generationMode: "draft" },
+      sources({
+        gateApproved: async () => false,
+        captureComplete: async () => ({ complete: false, missing: ["Sponsor review module"] }),
+      }),
+    );
+    expect(r.ready).toBe(false);
+    expect(statusForReadiness(r)).toBe(409);
+    expect(r.draftOnly).toBe(false);
+    expect(r.blockers.map((b) => b.code)).toEqual([
+      "capture_incomplete",
+      "gate_not_approved",
+    ]);
   });
 
   it("allows retry on an already-approved phase, but never bypasses an unapproved gate", async () => {

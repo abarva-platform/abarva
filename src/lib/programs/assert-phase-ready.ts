@@ -11,10 +11,16 @@ export interface GenerationBlocker {
   severity: "hard";
 }
 
+export type GenerationMode = "final" | "draft";
+
 export interface PhaseGenerationReadiness {
   ready: boolean;
   phase: number;
   blockers: GenerationBlocker[];
+  generationMode: GenerationMode;
+  gateApproved: boolean;
+  draftOnly: boolean;
+  draftCaveats: GenerationBlocker[];
 }
 
 export interface GateReadinessSources {
@@ -31,17 +37,31 @@ export interface GateReadinessSources {
  * an unapproved gate.
  */
 export async function assertPhaseReadyForGeneration(
-  args: { moveId: string; phase: number; allowApprovedRetry?: boolean },
+  args: {
+    moveId: string;
+    phase: number;
+    allowApprovedRetry?: boolean;
+    generationMode?: GenerationMode;
+  },
   sources: GateReadinessSources,
 ): Promise<PhaseGenerationReadiness> {
   const { moveId, phase } = args;
+  const generationMode = args.generationMode ?? "final";
   const blockers: GenerationBlocker[] = [];
 
   const approved = await sources.gateApproved(moveId, phase);
 
   // Retry of an already-approved phase is allowed without re-checking capture.
   if (approved && args.allowApprovedRetry) {
-    return { ready: true, phase, blockers: [] };
+    return {
+      ready: true,
+      phase,
+      blockers: [],
+      generationMode,
+      gateApproved: true,
+      draftOnly: false,
+      draftCaveats: [],
+    };
   }
 
   const capture = await sources.captureComplete(moveId, phase);
@@ -53,16 +73,37 @@ export async function assertPhaseReadyForGeneration(
       severity: "hard",
     });
   }
+
   if (!approved) {
-    blockers.push({
+    const gateBlocker: GenerationBlocker = {
       code: "gate_not_approved",
       phase,
       reason: `Phase ${phase} gate is not approved — no generation until the gate is approved.`,
       severity: "hard",
-    });
+    };
+    if (generationMode === "draft" && capture.complete) {
+      return {
+        ready: true,
+        phase,
+        blockers: [],
+        generationMode,
+        gateApproved: false,
+        draftOnly: true,
+        draftCaveats: [gateBlocker],
+      };
+    }
+    blockers.push(gateBlocker);
   }
 
-  return { ready: blockers.length === 0, phase, blockers };
+  return {
+    ready: blockers.length === 0,
+    phase,
+    blockers,
+    generationMode,
+    gateApproved: approved,
+    draftOnly: false,
+    draftCaveats: [],
+  };
 }
 
 /** HTTP status for a not-ready result (routes return this instead of generating). */

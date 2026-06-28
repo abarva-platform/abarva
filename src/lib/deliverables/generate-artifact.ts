@@ -12,6 +12,7 @@ import {
   assertPhaseReadyForGeneration,
   type GateReadinessSources,
   type GenerationBlocker,
+  type GenerationMode,
 } from "@/lib/programs/assert-phase-ready";
 import {
   assembleMoveSolutionContext,
@@ -29,7 +30,17 @@ export interface GenerateArtifactDeps {
 }
 
 export type GenerateArtifactResult =
-  | { status: "generated"; html: string; context: SolutionContext; goldenBar: GoldenBarResult }
+  | {
+      status: "generated";
+      html: string;
+      context: SolutionContext;
+      goldenBar: GoldenBarResult;
+      generationMode: GenerationMode;
+      draftOnly: boolean;
+      draftCaveats: GenerationBlocker[];
+      contextCaveats: string[];
+      draftCaveatHtml?: string;
+    }
   | { status: "blocked_gate"; httpStatus: 409; blockers: GenerationBlocker[] }
   | { status: "blocked_context"; missing: string[] }
   | { status: "blocked_quality"; html: string; goldenBar: GoldenBarResult; context: SolutionContext };
@@ -132,6 +143,49 @@ function insertBeforeBodyClose(html: string, addition: string): string {
   return `${html}${addition}`;
 }
 
+function insertAfterBodyOpen(html: string, addition: string): string {
+  if (/<body[^>]*>/i.test(html)) return html.replace(/<body[^>]*>/i, (match) => `${match}${addition}`);
+  return `${addition}${html}`;
+}
+
+function formatDraftCaveatText(args: {
+  draftCaveats: readonly GenerationBlocker[];
+  contextCaveats: readonly string[];
+}): string {
+  const gateReasons = args.draftCaveats.map((caveat) => caveat.reason);
+  const contextReasons = args.contextCaveats.map(
+    (missing) => `${missing} is not yet captured or approved for final use.`,
+  );
+  const required = [
+    "sponsor assignment is still required",
+    "charter signoff is still required",
+    "phase gate approval is still required",
+    "baseline capture may still require sponsor ratification if the gate review marks it incomplete",
+    ...gateReasons,
+    ...contextReasons,
+  ];
+  return `Draft status: This artifact was generated before formal phase approval. It reflects available evidence and is intended for sponsor review, workshop preparation, and refinement. It is not final or board-ready until sponsor assignment, charter signoff, and phase gate approval are completed. Open gate items: ${required.join("; ")}.`;
+}
+
+function renderDraftCaveatHtml(caveat: string): string {
+  return `<section class="abarva-pre-gate-draft-caveat" style="margin:20px auto 24px;max-width:1120px;padding:18px 20px;border:2px solid #f59e0b;border-radius:14px;background:#fffbeb;color:#3f2f05;font-family:Inter,Arial,sans-serif">
+  <div style="font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#92400e;margin-bottom:6px">Pre-gate draft — for review, not final</div>
+  <p style="margin:0;font-size:14px;line-height:1.55">${escapeHtml(caveat)}</p>
+</section>`;
+}
+
+function hasEnoughDraftContext(ctx: SolutionContext): boolean {
+  return Boolean(
+    ctx.useCase ||
+      ctx.useCaseCandidate ||
+      ctx.problemSeed ||
+      ctx.currentState ||
+      ctx.scope ||
+      ctx.valueHypothesis ||
+      ctx.evidenceNeeds?.length,
+  );
+}
+
 function completeMandatoryExhibits(args: {
   artifact: DeliverableKey;
   html: string;
@@ -160,13 +214,21 @@ export async function generateArtifact(
     phase: number;
     artifact: DeliverableKey;
     allowApprovedRetry?: boolean;
+    generationMode?: GenerationMode;
     useCaseQuery?: string;
   },
   deps: GenerateArtifactDeps,
 ): Promise<GenerateArtifactResult> {
+  const generationMode = args.generationMode ?? "final";
+
   // 1) Gate — no approved gate, no generation.
   const gate = await assertPhaseReadyForGeneration(
-    { moveId: args.moveId, phase: args.phase, allowApprovedRetry: args.allowApprovedRetry },
+    {
+      moveId: args.moveId,
+      phase: args.phase,
+      allowApprovedRetry: args.allowApprovedRetry,
+      generationMode,
+    },
     deps.gateSources,
   );
   if (!gate.ready) return { status: "blocked_gate", httpStatus: 409, blockers: gate.blockers };
@@ -179,8 +241,11 @@ export async function generateArtifact(
   const ctx = assembled.context;
 
   // 3) Readiness — phase inputs present; architecture needs an approved option.
+  const contextCaveats = assembled.readiness.ready ? [] : assembled.readiness.missing;
   if (!assembled.readiness.ready) {
-    return { status: "blocked_context", missing: assembled.readiness.missing };
+    if (generationMode !== "draft" || !hasEnoughDraftContext(ctx)) {
+      return { status: "blocked_context", missing: assembled.readiness.missing };
+    }
   }
   const profile = getDeliverableProfile(args.artifact);
   if (profile.renderer === "html_architecture" && args.artifact !== "solution_approach_options") {
@@ -188,11 +253,27 @@ export async function generateArtifact(
     if (!archOk.ready) return { status: "blocked_context", missing: archOk.missing };
   }
 
+  const draftCaveatText =
+    generationMode === "draft"
+      ? formatDraftCaveatText({
+          draftCaveats: gate.draftCaveats,
+          contextCaveats,
+        })
+      : undefined;
+
   // 4) Dynamic, context-rich prompt.
-  const prompt = buildArtifactPrompt({ artifact: args.artifact, phase: args.phase, context: ctx });
+  const prompt = buildArtifactPrompt({
+    artifact: args.artifact,
+    phase: args.phase,
+    context: ctx,
+    generationMode,
+    draftCaveat: draftCaveatText,
+  });
 
   // 5) Governed model call → artifact HTML.
-  const html = await deps.callModel(prompt.system, prompt.user);
+  const modelHtml = await deps.callModel(prompt.system, prompt.user);
+  const draftCaveatHtml = draftCaveatText ? renderDraftCaveatHtml(draftCaveatText) : undefined;
+  const html = draftCaveatHtml ? insertAfterBodyOpen(modelHtml, draftCaveatHtml) : modelHtml;
 
   // 6) Quality bar — must be a real visual artifact, no [DATA GAP], required exhibits present.
   const goldenBar = meetsGoldenBar(html, args.artifact);
@@ -211,11 +292,26 @@ export async function generateArtifact(
           html: completedHtml,
           context: ctx,
           goldenBar: completedGoldenBar,
+          generationMode,
+          draftOnly: gate.draftOnly,
+          draftCaveats: gate.draftCaveats,
+          contextCaveats,
+          draftCaveatHtml,
         };
       }
     }
     return { status: "blocked_quality", html, goldenBar, context: ctx };
   }
 
-  return { status: "generated", html, context: ctx, goldenBar };
+  return {
+    status: "generated",
+    html,
+    context: ctx,
+    goldenBar,
+    generationMode,
+    draftOnly: gate.draftOnly,
+    draftCaveats: gate.draftCaveats,
+    contextCaveats,
+    draftCaveatHtml,
+  };
 }
