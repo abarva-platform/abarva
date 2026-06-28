@@ -122,7 +122,9 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - Post-deploy signed-in SkyHarbor Chrome proof on revision `ca-abarva-web-lab-eastus--mcf80e72d`: `same answer as`, `tenant evidence`, `loaded evidence`, `substrate`, `priority table`, evidence tables, and generic closers were absent, but the answer still exposed another session-history variant, `The answer hasn't changed across this session`, plus a mid-answer dangling conditional closer and a clipped `5M events daily...` sentence. This failed the CXO-quality bar and triggered the broader session-history/dangling-closer follow-up.
 - `npx eslint src/lib/ava-answer/public-answer-scrub.ts src/lib/ava-answer/__tests__/public-answer-scrub.test.ts src/lib/agent/visible-answer-contract.ts src/lib/agent/__tests__/visible-answer-contract.test.ts` passed after the session-history/dangling-closer follow-up.
 - `npx jest src/lib/ava-answer/__tests__/public-answer-scrub.test.ts src/lib/agent/__tests__/visible-answer-contract.test.ts --runInBand` passed, 16 tests. Jest still prints pre-existing duplicate manual-mock warnings.
-- Final post-session-history/dangling-closer deployment and signed-in SkyHarbor browser proof pending.
+- ACA proof for session-history/dangling-closer candidate `f29280d7`: revision `ca-abarva-web-lab-eastus--mf29280d7`, digest `sha256:1738d69181d16108228e60f0a209cd6cc6b0e09940480e27ff847d6bbc21f69e`, 100% traffic; production health endpoint returned OK.
+- Post-deploy signed-in SkyHarbor Chrome proof on revision `ca-abarva-web-lab-eastus--mf29280d7`: the expanded scan passed for prior leaks, but manual inspection still found the answer opening with bare session-history wording, `Same answer, and the business context...`. This failed the CXO-quality bar and triggered the bare same-answer follow-up.
+- Final post-bare-same-answer deployment and signed-in SkyHarbor browser proof pending.
 
 ## Rollout Plan
 
@@ -132,7 +134,7 @@ Build an Azure Container Apps image from the exact git SHA, deploy to `ca-abarva
 
 - Repo-owned deploy workflow: Azure Container Apps release path in `docs/runbooks/azure-container-apps-deploy.md`.
 - Shared runtime mutators: `az acr build`, `az containerapp update`, and ACA ingress traffic assignment.
-- Approved image digest: first candidate `sha256:6765cd1489a6ba4618a4a3943cfadb4914d1074d5f96c4c505695afd456c8576`; latest proven-but-wording-incomplete row-count candidate `sha256:5e9281246419c358ea3503fdc6b2268aa813fe474f25fd69efc275769deb6238`; SkyHarbor wording scrub carried forward on main digest `sha256:5be3844df2e2f1b80fd842a959d138209b33b0e96cf201deccabb5e87d839ce4`; deeper shaper digest `sha256:906b8ac832763a5268066eb63ac49ced3b7b5ff505c1f4914840491495da2ccb`; left-dock/right-canvas digest `sha256:5e44138eafba2a74aa04340fbafb4b34a494986499e9dd0609e69b35cdc53f5e`; session/evidence-language digest `sha256:de27d069fe1f1f921f9813909855206835f40806fd485b54c8a508536f7200e6`; session-history/substrate digest `sha256:18a6974040a123a428e6dee24f4a0002ad2c21a08c3a6d9db58df7f742cd286c`; session-history/dangling-closer digest pending.
+- Approved image digest: first candidate `sha256:6765cd1489a6ba4618a4a3943cfadb4914d1074d5f96c4c505695afd456c8576`; latest proven-but-wording-incomplete row-count candidate `sha256:5e9281246419c358ea3503fdc6b2268aa813fe474f25fd69efc275769deb6238`; SkyHarbor wording scrub carried forward on main digest `sha256:5be3844df2e2f1b80fd842a959d138209b33b0e96cf201deccabb5e87d839ce4`; deeper shaper digest `sha256:906b8ac832763a5268066eb63ac49ced3b7b5ff505c1f4914840491495da2ccb`; left-dock/right-canvas digest `sha256:5e44138eafba2a74aa04340fbafb4b34a494986499e9dd0609e69b35cdc53f5e`; session/evidence-language digest `sha256:de27d069fe1f1f921f9813909855206835f40806fd485b54c8a508536f7200e6`; session-history/substrate digest `sha256:18a6974040a123a428e6dee24f4a0002ad2c21a08c3a6d9db58df7f742cd286c`; session-history/dangling-closer digest `sha256:1738d69181d16108228e60f0a209cd6cc6b0e09940480e27ff847d6bbc21f69e`; bare-same-answer digest pending.
 - ACA runtime invariant: `app.abarva.ai` is ACA-only; Vercel is not used as release evidence.
 - Worker image invariant: Not applicable.
 - Feature/env flag update path: None.
@@ -161,8 +163,9 @@ Rollback by assigning 100% ACA ingress traffic to the previous healthy revision 
 - Left-dock/right-canvas candidate ACA proof: revision `ca-abarva-web-lab-eastus--m6afb0744`, digest `sha256:5e44138eafba2a74aa04340fbafb4b34a494986499e9dd0609e69b35cdc53f5e`, 100% traffic; signed-in SkyHarbor proof found the remaining `last three times this session` / `tenant evidence` / `loaded evidence` issue fixed by the session/evidence-language candidate.
 - Session/evidence-language candidate ACA proof: revision `ca-abarva-web-lab-eastus--md9237a77`, digest `sha256:de27d069fe1f1f921f9813909855206835f40806fd485b54c8a508536f7200e6`, 100% traffic; signed-in SkyHarbor proof found the remaining `Same answer as the last four turns` and `substrate` issue fixed by the session-history/substrate candidate.
 - Session-history/substrate candidate ACA proof: revision `ca-abarva-web-lab-eastus--mcf80e72d`, digest `sha256:18a6974040a123a428e6dee24f4a0002ad2c21a08c3a6d9db58df7f742cd286c`, 100% traffic; signed-in SkyHarbor proof found the remaining `The answer hasn't changed across this session` / dangling conditional closer issue fixed by the session-history/dangling-closer candidate.
-- Post-deploy revision, digest, screenshots, and crawl output for the final session-history/dangling-closer fix to be added after production proof.
+- Session-history/dangling-closer candidate ACA proof: revision `ca-abarva-web-lab-eastus--mf29280d7`, digest `sha256:1738d69181d16108228e60f0a209cd6cc6b0e09940480e27ff847d6bbc21f69e`, 100% traffic; signed-in SkyHarbor proof found the remaining bare `Same answer` issue fixed by the bare-same-answer candidate.
+- Post-deploy revision, digest, screenshots, and crawl output for the final bare-same-answer fix to be added after production proof.
 
 ## Known Gaps
 
-Post-deploy signed-in browser proof is pending until the session-history/dangling-closer candidate is built and released through ACA.
+Post-deploy signed-in browser proof is pending until the bare-same-answer candidate is built and released through ACA.
