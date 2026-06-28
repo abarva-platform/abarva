@@ -91,9 +91,47 @@ IT-budget value:
 | meridian-health | $1,005.3M | $1,069.5M | 0.940 |
 | skyharbor-air | $2,358.9M | $2,578.0M | 0.915 |
 
-Pass: CIO Tower standardized loader dry-run reported 245 source files, 5,527
-entities, 1,793 facts, 309 relationships, 8 measures, 6 question contracts, and
-40 tenant measure results across the five canonical tenants.
+Pass: CIO Tower standardized loader dry-run reported 245 source files, 5,138
+canonicalized entities, 1,793 facts, 234 canonicalized relationships, 8
+measures, 6 question contracts, and 40 tenant measure results across the five
+canonical tenants.
+
+Pass: CIO Tower standardized loader wrote the package to Azure/Postgres from the
+private VNet using image digest
+`sha256:dd3dbd0c01aa19330a9b8063861ed28d11b833d96da59aaaa42382dbc227f5ae`.
+Execution `job-abarva-private-operator-eus-z9phbcg` reported
+`status=written` with 245 sources, 5,138 entities, 1,793 facts, 234
+relationships, 8 measures, 6 question contracts, and 40 measure results.
+
+Pass: Independent Azure/Postgres read-back from the private VNet using proof
+image digest
+`sha256:d4754f43cff8e6149a39f42cebd14f73c2d44769d2a7a42cf86da3d2e9c502b9`
+confirmed the persisted `cio_tower` row counts:
+
+| Table | Rows |
+|---|---:|
+| `cio_tower.source_registry` | 245 |
+| `cio_tower.entities` | 5,138 |
+| `cio_tower.facts` | 1,793 |
+| `cio_tower.relationships` | 234 |
+| `cio_tower.measures` | 8 |
+| `cio_tower.measure_results` | 40 |
+| `cio_tower.question_contracts` | 6 |
+
+Pass: Independent read-back confirmed every canonical tenant has 49 source rows
+and 8 measure results:
+
+| Tenant | Source rows | Entity rows | Fact rows | Relationship rows | Measure results |
+|---|---:|---:|---:|---:|---:|
+| apex-retail | 49 | 833 | 210 | 19 | 8 |
+| first-capital-financial | 49 | 954 | 460 | 47 | 8 |
+| lakeshore-industries | 49 | 745 | 180 | 18 | 8 |
+| meridian-health | 49 | 795 | 232 | 24 | 8 |
+| skyharbor-air | 49 | 1,811 | 711 | 126 | 8 |
+
+Pass: Independent read-back confirmed both `total_it_budget_fy25_baseline` and
+`total_it_budget_fy26` are persisted for all five tenants, with non-zero source
+fact counts for both years.
 
 ## Rollout Plan
 
@@ -126,19 +164,26 @@ for audit until the replacement data path is corrected.
 - Old-object verification execution: `job-abarva-private-operator-eus-0boeu1w`
 - New schema apply execution: `job-abarva-private-operator-eus-qu8lxxh`
 - New schema verification execution: `job-abarva-private-operator-eus-oe5fnt4`
+- Loader write image digest:
+  `sha256:dd3dbd0c01aa19330a9b8063861ed28d11b833d96da59aaaa42382dbc227f5ae`
+- Loader write execution: `job-abarva-private-operator-eus-z9phbcg`
+- Independent read-back image digest:
+  `sha256:d4754f43cff8e6149a39f42cebd14f73c2d44769d2a7a42cf86da3d2e9c502b9`
+- Independent read-back execution: `job-abarva-private-operator-eus-k4s7sx9`
 
 ## Context Ingestion Evidence
 
-Local standardized Tower package generated and loader dry-run validated for all
-five canonical tenants. Azure/Postgres schema is live, but the standardized file
-package has not yet been committed into live Azure/Postgres rows in this release
-record. The next proof must run the loader from the private VNet and then report
-source, entity, fact, relationship, measure, and question-contract counts from
-the `cio_tower` schema.
+Local standardized Tower package generated, loader dry-run validated for all
+five canonical tenants, Azure/Postgres schema applied, and the standardized file
+package committed into live Azure/Postgres rows from the private VNet. The
+independent read-back confirmed persisted source, entity, fact, relationship,
+measure, question-contract, and FY2025/FY2026 trend measure rows in
+`cio_tower`.
 
 ## Known Gaps
 
-The new `cio_tower` schema is applied and the standardized Tower package is
-locally validated, but the Azure row-load step is still pending. The next work
-is the controlled Tower load from the private VNet, metric-result verification,
-prompt trace capture, and signed-in Tower dashboard/chat proof.
+The new `cio_tower` schema is applied and loaded in Azure/Postgres. The next
+work is wiring the Tower dashboard/chat exclusively to `cio_tower`,
+capturing prompt/response/render traces, and signed-in Tower dashboard/chat
+proof. The current work did not deploy a new web revision or browser-prove Tower
+against the new schema.
