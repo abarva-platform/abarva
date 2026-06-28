@@ -306,6 +306,33 @@ function isExplicitVisualAsk(query: string): boolean {
   );
 }
 
+function requiredCanvasTabsForQuery(query: string): string[] {
+  const required: string[] = [];
+  if (/\b(decision|recommend|recommendation|choice|choose|prioriti[sz]e|investment|invest)\b/i.test(query)) {
+    required.push("Decision");
+  }
+  if (/\b(industry|benchmark|benchmarks|market|peer|peers|case stud(?:y|ies)|examples?)\b/i.test(query)) {
+    required.push("Industry Insights");
+  }
+  if (/\b(chart|charts|graph|graphs|visual|visuals|visuali[sz]e|plot|trend)\b/i.test(query)) {
+    required.push("Chart");
+  }
+  if (/\b(table|tables|matrix|comparison grid|scorecard|breakdown)\b/i.test(query)) {
+    required.push("Table");
+  }
+  if (/\b(evidence|proof|source|sources|support|citation|citations|trace)\b/i.test(query)) {
+    required.push("Evidence");
+  }
+  return Array.from(new Set(required));
+}
+
+function missingRequiredCanvasTabs(text: string, query: string): string[] {
+  const parsed = parseIntelligenceTabbedResponse(text);
+  if (parsed.tabs.length === 0) return [];
+  const present = new Set(parsed.tabs.map((tab) => tab.label));
+  return requiredCanvasTabsForQuery(query).filter((label) => !present.has(label));
+}
+
 function hasMarkdownDecisionTable(text: string): boolean {
   const lines = text.split(/\r?\n/).map((line) => line.trim());
   for (let index = 0; index < lines.length - 1; index += 1) {
@@ -537,6 +564,47 @@ ACTIVE INTELLIGENCE CANVAS RULES
       });
       const repairedText = extractMessageText(visualRepair);
       if (hasMarkdownDecisionTable(repairedText)) {
+        text = repairedText;
+      }
+    }
+    const missingTabs = args.richText
+      ? missingRequiredCanvasTabs(text, args.query)
+      : [];
+    if (missingTabs.length > 0) {
+      const requiredTabs = requiredCanvasTabsForQuery(args.query);
+      const tabRepair = await client.messages.create({
+        model,
+        max_tokens: Math.max(chooseSynthesisTokenBudget(args.query), 1600),
+        system: systemWithContinuity,
+        messages: [
+          {
+            role: "user",
+            content: [
+              prompt,
+              "",
+              "DRAFT TO REPAIR:",
+              text,
+              "",
+              "MANDATORY INTELLIGENCE CANVAS TAB REPAIR:",
+              `The user explicitly asked for these right-canvas tabs: ${requiredTabs.join(", ")}.`,
+              `The draft is missing: ${missingTabs.join(", ")}.`,
+              "Return the final answer only, using the exact Intelligence decision-canvas tab markers from the system prompt.",
+              "Keep the main answer to 120-180 words before the first tab marker.",
+              "Include every required tab listed above. Do not merge required tabs together.",
+              "If Chart is required, include chart-ready Markdown numeric data in the Chart tab.",
+              "If Table is required, include a compact Markdown table in the Table tab.",
+              "If Evidence is required, include a concise Evidence tab that separates tenant facts, industry context, planning assumptions, and missing evidence.",
+              "Do not expose raw IDs, raw field names, file names, row labels, debug labels, or product-mechanics phrases like loaded sources/context.",
+            ].join("\n"),
+          },
+        ],
+      });
+      const repairedText = extractMessageText(tabRepair);
+      const repairedMissingTabs = missingRequiredCanvasTabs(
+        repairedText,
+        args.query,
+      );
+      if (repairedText.trim() && repairedMissingTabs.length === 0) {
         text = repairedText;
       }
     }
