@@ -66,6 +66,10 @@ export function scrubPublicAvaAnswerText(value: string): string {
       "",
     )
     .replace(
+      /\bThe answer hasn'?t (?:changed|moved)(?:\s+across\s+this\s+session|\s+from\s+the\s+last\s+\w+\s+(?:turns?|times))?,?\s+and\s+(?:the\s+)?(?:evidence|tenant evidence|business context|available business material)\s+(?:keeps\s+)?(?:making it airtight|making the case airtight):\s*/gi,
+      "",
+    )
+    .replace(
       /\bThe answer is the same one I(?:'|’)ve given the last\s+\w+\s+times?\s+this\s+session,?\s+and\s+(?:the\s+)?(?:tenant evidence|business context|available business material)\s+(?:keeps\s+)?supporting\s+it:\s*/gi,
       "",
     )
@@ -166,6 +170,10 @@ export function scrubPublicAvaAnswerText(value: string): string {
     )
     .replace(
       /\n?\s*If it(?:'|’)s the latter,?\s+that single gap is the only thing worth fixing before any other AI conversation is worth the meeting time\.?\s*/gi,
+      "",
+    )
+    .replace(
+      /\n?\s*If it(?:'|’)s the latter,?\s+that(?:'|’)?s the only gap worth closing before any other AI (?:investment )?conversation earns meeting time\.?\s*/gi,
       "",
     )
     .replace(

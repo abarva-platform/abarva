@@ -175,4 +175,17 @@ Tenant evidence`);
       /answer hasn't moved|this session|evidence keeps making it cleanly/i,
     );
   });
+
+  it("cleans airtight session wording and earns-meeting-time closer", () => {
+    const cleaned = scrubPublicAvaAnswerText(
+      "The answer hasn't moved across this session, and the business context keeps making it airtight: certified operational data products is the single best AI investment SkyHarbor can make next.\n\nIf it's the latter, that's the only gap worth closing before any other AI investment conversation earns meeting time.",
+    );
+
+    expect(cleaned).toBe(
+      "certified operational data products is the single best AI investment SkyHarbor can make next.",
+    );
+    expect(cleaned).not.toMatch(
+      /answer hasn't moved|this session|keeps making it airtight|If it's the latter|earns meeting time/i,
+    );
+  });
 });
