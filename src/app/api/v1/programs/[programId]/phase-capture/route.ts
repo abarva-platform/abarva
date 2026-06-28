@@ -195,6 +195,8 @@ export async function POST(
     }
 
     if (phase === 0) {
+      const knownEvidence =
+        evaluation.sections.find((s) => s.key === "known_evidence")?.value ?? "";
       const charter = {
         ...(program.charter ?? {}),
         business_trigger: evaluation.sections.find((s) => s.key === "business_trigger")?.value ?? "",
@@ -203,7 +205,8 @@ export async function POST(
         value_hypothesis: evaluation.sections.find((s) => s.key === "initial_value_hypothesis")?.value ?? "",
         sponsor_candidate: evaluation.sections.find((s) => s.key === "stakeholder_owner_view")?.value ?? "",
         scope_boundary: evaluation.sections.find((s) => s.key === "affected_function_process")?.value ?? "",
-        known_evidence: evaluation.sections.find((s) => s.key === "known_evidence")?.value ?? "",
+        evidence_family: knownEvidence,
+        known_evidence: knownEvidence,
         missing_evidence_open_questions:
           evaluation.sections.find((s) => s.key === "missing_evidence_open_questions")?.value ?? "",
         recommendation_to_advance:
