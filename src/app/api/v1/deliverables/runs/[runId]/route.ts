@@ -23,12 +23,22 @@ export async function GET(_req: NextRequest, ctxParam: { params: Promise<{ runId
     if (!run) {
       return Response.json({ error: 'not_found', detail: 'Run not found for this tenant.' }, { status: 404 });
     }
+    const movePremiumArtifact =
+      run.jobPayload?.kind === 'moves_premium_artifact' && run.jobPayload.sourceArtifactRef
+        ? run.jobPayload
+        : null;
+    const blobUrl = run.artifactId
+      ? movePremiumArtifact
+        ? `/api/v1/programs/${movePremiumArtifact.sourceArtifactRef}/artifacts/${run.artifactId}/download`
+        : `/api/v1/artifacts/${run.artifactId}`
+      : null;
 
     return Response.json({
       runId: run.id,
       status: run.status, // 'queued' | 'running' | 'succeeded' | 'blocked' | 'failed'
       artifactId: run.artifactId,
-      blobUrl: run.artifactId ? `/api/v1/artifacts/${run.artifactId}` : null,
+      blobUrl,
+      artifactScope: movePremiumArtifact ? 'move_file_cabinet' : 'generated_artifacts',
       quality: {
         contextReadiness: run.status === 'queued' || run.status === 'running' ? 'checking' : 'checked',
         gateReadiness: run.status === 'blocked' ? 'blocked' : run.status === 'failed' ? 'not_available' : 'ready',

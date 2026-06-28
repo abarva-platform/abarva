@@ -749,6 +749,96 @@ function CharterWorkflow({
     setGen({ status: "generating", pct: 0, label: "Queued…" });
     const gateKey = workflow?.deliverableTypeKey;
     try {
+      const pollRun = async (runId: string): Promise<void> => {
+        const POLL_MS = 4000;
+        const MAX_MS = 20 * 60 * 1000;
+        const startedAt = Date.now();
+        while (true) {
+          if (!genMounted.current) return;
+          if (Date.now() - startedAt > MAX_MS) {
+            throw new Error("Generation timed out after 20 minutes.");
+          }
+          await new Promise((r) => setTimeout(r, POLL_MS));
+          if (!genMounted.current) return;
+          let poll: {
+            status?: string;
+            progressPct?: number;
+            progressLabel?: string | null;
+            blockers?: string[];
+            error?: string;
+          } = {};
+          try {
+            const pollRes = await fetch(`/api/v1/deliverables/runs/${runId}`, {
+              credentials: "include",
+            });
+            poll = (await pollRes.json().catch(() => ({}))) as typeof poll;
+            if (!pollRes.ok) continue; // transient (e.g. 503) — keep polling
+          } catch {
+            continue; // network blip — keep polling
+          }
+          if (poll.status === "queued" || poll.status === "running") {
+            setGen({
+              status: "generating",
+              pct: poll.progressPct ?? 0,
+              label: poll.progressLabel ?? undefined,
+            });
+            continue;
+          }
+          if (poll.status === "succeeded") {
+            setGen({ status: "done", qualityScore: null, pass: true });
+            return;
+          }
+          if (poll.status === "blocked") {
+            setGen({
+              status: "done",
+              qualityScore: null,
+              pass: false,
+              blockers: Array.isArray(poll.blockers)
+                ? poll.blockers
+                : undefined,
+            });
+            return;
+          }
+          throw new Error(poll.error || "Generation failed.");
+        }
+      };
+
+      if (phaseNum === 2 && gateKey === "discovery_report") {
+        const enqueueRes = await fetch(`/api/v1/programs/${move.id}/generate`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phase: phaseNum,
+            deliverableTypeKey: gateKey,
+            title: "Current Work Diagnostic",
+            generationMode: "draft",
+          }),
+        });
+        const enqueue = (await enqueueRes.json().catch(() => ({}))) as {
+          runId?: string;
+          error?: string;
+          detail?: string;
+          blockers?: Array<{ reason?: string }>;
+        };
+        if (!enqueueRes.ok || !enqueue.runId) {
+          const blockerReasons = Array.isArray(enqueue.blockers)
+            ? enqueue.blockers
+                .map((blocker) => blocker.reason)
+                .filter(Boolean)
+                .join("; ")
+            : "";
+          throw new Error(
+            blockerReasons ||
+              enqueue.detail ||
+              enqueue.error ||
+              `Generate failed (HTTP ${enqueueRes.status})`,
+          );
+        }
+        await pollRun(enqueue.runId);
+        return;
+      }
+
       const enqueueRes = await fetch("/api/v1/deliverables/generate-phase", {
         method: "POST",
         credentials: "include",
@@ -790,61 +880,7 @@ function CharterWorkflow({
         );
       }
       const runId = target.runId;
-
-      // Poll until terminal (succeeded/blocked/failed) or the 15-min ceiling.
-      const POLL_MS = 4000;
-      const MAX_MS = 15 * 60 * 1000;
-      const startedAt = Date.now();
-      while (true) {
-        if (!genMounted.current) return;
-        if (Date.now() - startedAt > MAX_MS) {
-          throw new Error("Generation timed out after 15 minutes.");
-        }
-        await new Promise((r) => setTimeout(r, POLL_MS));
-        if (!genMounted.current) return;
-        let poll: {
-          status?: string;
-          progressPct?: number;
-          progressLabel?: string | null;
-          blockers?: string[];
-          error?: string;
-        } = {};
-        try {
-          const pollRes = await fetch(`/api/v1/deliverables/runs/${runId}`, {
-            credentials: "include",
-          });
-          poll = (await pollRes.json().catch(() => ({}))) as typeof poll;
-          if (!pollRes.ok) continue; // transient (e.g. 503) — keep polling
-        } catch {
-          continue; // network blip — keep polling
-        }
-        if (poll.status === "queued" || poll.status === "running") {
-          setGen({
-            status: "generating",
-            pct: poll.progressPct ?? 0,
-            label: poll.progressLabel ?? undefined,
-          });
-          continue;
-        }
-        if (poll.status === "succeeded") {
-          setGen({ status: "done", qualityScore: null, pass: true });
-          return;
-        }
-        if (poll.status === "blocked") {
-          // The build completed but was held below the board-grade quality gate.
-          // Surface the specific blockers so the user understands WHY and can
-          // act (fix inputs / context) and re-run. The gate stays enforced — we
-          // never bypass it; "Regenerate" just runs another board-grade pass.
-          setGen({
-            status: "done",
-            qualityScore: null,
-            pass: false,
-            blockers: Array.isArray(poll.blockers) ? poll.blockers : undefined,
-          });
-          return;
-        }
-        throw new Error(poll.error || "Generation failed.");
-      }
+      await pollRun(runId);
     } catch (err) {
       if (!genMounted.current) return;
       setGen({

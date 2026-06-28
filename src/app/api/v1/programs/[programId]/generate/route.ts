@@ -11,14 +11,14 @@ import "server-only";
 import { requireTenancy, tenancyErrorResponse } from "../../_auth";
 import { getProgramById } from "@/lib/programs/queries";
 import { generateArtifact } from "@/lib/deliverables/generate-artifact";
-import { buildGeneratedPhaseDigest } from "@/lib/deliverables/generated-phase-digest";
 import {
   createMovesGenerateArtifactDeps,
   normalizeMovesDeliverableKey,
 } from "@/lib/deliverables/moves-generate-deps";
 import { getDeliverableProfile } from "@/lib/deliverables/profiles/registry";
-import { draftModuleDeliverable } from "@/lib/programs/nexus";
-import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
+import { createDeliverableRun, type DeliverableRunJobPayload } from "@/lib/deliverables/orchestrator/runs-repository";
+import { assertPhaseReadyForGeneration } from "@/lib/programs/assert-phase-ready";
+import { persistMoveGeneratedArtifact } from "@/lib/deliverables/persist-move-generated-artifact";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,26 +33,16 @@ const PHASE_LABEL: Record<number, string> = {
   5: "P5 Mobilize & Handoff",
 };
 
-function safeArtifactFileName(title: string, artifact: string): string {
-  const base = (title || artifact)
-    .replace(/[^\w\s.-]+/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .toLowerCase();
-  return `${base || artifact}.html`;
-}
-
-function gateCaveatReasons(result: {
-  draftCaveats?: Array<{ reason: string }>;
-  contextCaveats?: string[];
-}): string[] {
-  return [
-    ...(result.draftCaveats ?? []).map((caveat) => caveat.reason),
-    ...(result.contextCaveats ?? []).map(
-      (missing) => `${missing} is not yet captured or approved for final use.`,
-    ),
-  ];
+function shouldEnqueuePremiumArtifact(args: {
+  phase: number;
+  artifact: string;
+  generationMode: "final" | "draft";
+}): boolean {
+  return (
+    args.phase === 2 &&
+    args.artifact === "discovery_report" &&
+    args.generationMode === "draft"
+  );
 }
 
 export async function POST(
@@ -109,6 +99,69 @@ export async function POST(
     body.title,
   );
   const profile = getDeliverableProfile(artifact);
+  const deps = createMovesGenerateArtifactDeps(ctx);
+
+  if (shouldEnqueuePremiumArtifact({ phase: targetPhase, artifact, generationMode })) {
+    const gate = await assertPhaseReadyForGeneration(
+      {
+        moveId: programId,
+        phase: targetPhase,
+        allowApprovedRetry: true,
+        generationMode,
+      },
+      deps.gateSources,
+    );
+    if (!gate.ready) {
+      return Response.json(
+        {
+          error: "generation_gate_blocked",
+          blockers: gate.blockers,
+          phase: targetPhase,
+          deliverableKey: artifact,
+        },
+        { status: 409 },
+      );
+    }
+
+    const jobPayload: DeliverableRunJobPayload = {
+      kind: "moves_premium_artifact",
+      module: "moves",
+      useCaseArchetype: program.archetype ?? "strategic_move",
+      deliverableType: artifact,
+      decisionContext: `${program.name} — ${phaseLabel}: ${profile.decisionPurpose}`,
+      clientDisplayName: "Client",
+      initiativeDisplayName: program.name,
+      sourceArtifactRef: programId,
+      phase: targetPhase,
+      artifact,
+      generationMode,
+      title: body.title ?? profile.title,
+      useCaseQuery:
+        program.problemStatement ?? program.targetOutcome ?? program.name,
+    };
+    const run = await createDeliverableRun({
+      clientId: ctx.clientId,
+      tenantKey: clientKey,
+      userId: ctx.userId,
+      module: "moves",
+      archetype: program.archetype ?? "strategic_move",
+      deliverableType: artifact,
+      jobPayload,
+    });
+    return Response.json(
+      {
+        runId: run.id,
+        status: "queued",
+        async: true,
+        phase: targetPhase,
+        deliverableKey: artifact,
+        generationMode,
+        statusUrl: `/api/v1/deliverables/runs/${run.id}`,
+      },
+      { status: 202 },
+    );
+  }
+
   const result = await generateArtifact(
     {
       moveId: programId,
@@ -120,7 +173,7 @@ export async function POST(
       useCaseQuery:
         program.problemStatement ?? program.targetOutcome ?? program.name,
     },
-    createMovesGenerateArtifactDeps(ctx),
+    deps,
   );
 
   if (result.status === "blocked_gate") {
@@ -159,116 +212,21 @@ export async function POST(
     );
   }
 
-  const solutionContextDigest = buildGeneratedPhaseDigest({
+  const persisted = await persistMoveGeneratedArtifact({
+    ctx,
+    program,
+    phase: targetPhase,
     artifact,
-    phase: targetPhase,
-    html: result.html,
-    context: result.context,
-  });
-  const isPreGateDraft = result.generationMode === "draft";
-  const draftStatusLabel = isPreGateDraft
-    ? "Pre-gate draft — review required"
-    : "Draft";
-  const qualityStatus = isPreGateDraft
-    ? result.goldenBar.pass
-      ? "Draft quality passed"
-      : "Needs review"
-    : result.goldenBar.pass
-      ? "Passed"
-      : "Needs review";
-  const goldenBarStatus = isPreGateDraft
-    ? result.goldenBar.pass
-      ? "Passed with caveats"
-      : "Needs review"
-    : result.goldenBar.pass
-      ? "Passed"
-      : "Failed";
-  const draftCaveat =
-    "Draft status: This artifact was generated before formal phase approval. It reflects available evidence and is intended for sponsor review, workshop preparation, and refinement. It is not final or board-ready until sponsor assignment, charter signoff, and phase gate approval are completed.";
-  const openItems = isPreGateDraft
-    ? [
-        "Sponsor assignment required before final approval.",
-        "Charter signoff required before final approval.",
-        "Phase gate approval required before final generation.",
-        "Baseline capture may require sponsor ratification before final approval.",
-        ...gateCaveatReasons(result),
-      ]
-    : [];
-
-  const { deliverableId, versionId } = await draftModuleDeliverable(ctx, {
-    programId,
-    moduleKey: artifact,
-    deliverableTypeKey: artifact,
     title: body.title ?? profile.title,
-    draftContent: result.html,
-    structuredData: {
-      phase: targetPhase,
-      artifact,
-      output_format: "html",
-      mode: "program_generate",
-      solutionContextDigest,
-      solution_context: result.context,
-      golden_bar: result.goldenBar,
-      generationMode: result.generationMode,
-      draftOnly: result.draftOnly,
-      draftCaveats: result.draftCaveats,
-      contextCaveats: result.contextCaveats,
-    },
-    provenanceMap: {
-      program: program.name,
-      phase: targetPhase,
-      phase_label: phaseLabel,
-      artifact,
-      output_format: "html",
-      generation_mode: result.generationMode,
-    },
-  });
-
-  const savedArtifact = await saveMoveArtifact(ctx, {
-    moveId: programId,
-    phase: targetPhase,
-    artifactType: artifact,
-    artifactFamily: "generated_deliverable",
-    title: body.title ?? profile.title,
-    description:
-      isPreGateDraft
-        ? "Pre-gate review draft generated through the governed Moves artifact path. It does not satisfy phase approval and is not final."
-        : "Generated through the governed Moves artifact generation path. Review before final client use.",
-    fileName: safeArtifactFileName(body.title ?? profile.title, artifact),
-    fileFormat: "html",
-    body: result.html,
-    status: isPreGateDraft ? "review_required" : "draft",
-    generatedBy: ctx.email ?? ctx.userId ?? "moves-generate",
-    qualityScore: result.goldenBar.pass ? 96 : null,
-    unsupportedClaimsCount: 0,
-    sourceBasis: "moves_solution_context",
-    confidence: result.goldenBar.hasDataGap ? "medium" : "high",
-    citationReady: !result.goldenBar.hasDataGap,
-    metadata: {
-      deliverableId,
-      versionId,
-      phaseLabel,
-      outputFormat: "html",
-      generationMode: result.generationMode,
-      draftOnly: result.draftOnly,
-      draftCaveats: result.draftCaveats,
-      contextCaveats: result.contextCaveats,
-      qualityStatus,
-      goldenBarStatus,
-      artifactStatus: draftStatusLabel,
-      preliminaryCaveat: isPreGateDraft ? draftCaveat : null,
-      openItems,
-      reviewStatus: isPreGateDraft ? "pre_gate_review_required" : "not_reviewed",
-      clientFacingVersionLabel: "Version 1",
-    },
+    result,
   });
 
   return Response.json({
-    deliverableId,
-    versionId,
-    artifactId: savedArtifact.artifactId,
-    artifactVersion: savedArtifact.version,
-    artifactBlobStored: savedArtifact.blobStored,
+    deliverableId: persisted.deliverableId,
+    versionId: persisted.versionId,
+    artifactId: persisted.artifactId,
+    artifactVersion: persisted.artifactVersion,
+    artifactBlobStored: persisted.artifactBlobStored,
     content: result.html,
     phase: targetPhase,
     deliverableKey: artifact,
@@ -276,7 +234,10 @@ export async function POST(
     draftOnly: result.draftOnly,
     draftCaveats: result.draftCaveats,
     contextCaveats: result.contextCaveats,
-    artifactStatus: draftStatusLabel,
+    artifactStatus:
+      result.generationMode === "draft"
+        ? "Pre-gate draft — review required"
+        : "Draft",
     outputFormat: "html",
     goldenBar: result.goldenBar,
   });
