@@ -322,6 +322,97 @@ describe("buildTowerFactualSpineAnswer", () => {
     expect(answer?.response).not.toContain("$9.8M");
   });
 
+  it("answers top-N IT program list questions with the requested number of ranked programs", () => {
+    const manyProgramsState = {
+      ...towerState,
+      client: {
+        ...towerState.client,
+        clientName: "SkyHarbor Air",
+      },
+      initiatives: Array.from({ length: 12 }, (_, index) => ({
+        ...towerState.initiatives[index % towerState.initiatives.length],
+        initiativeId: `init-${index + 1}`,
+        displayId: `PROGRAM-${index + 1}`,
+        name: `Program ${String(index + 1).padStart(2, "0")}`,
+        committedAnnualUsd: (12 - index) * 1_000_000,
+        measuredValueUsd: index % 3 === 0 ? null : (12 - index) * 400_000,
+        statusFlag: index % 4 === 0 ? "value_lag" : "healthy",
+      })),
+    } satisfies AtlasTowerCurrentState;
+
+    const answer = buildTowerFactualSpineAnswer(
+      "give me the list of top 10 IT programs",
+      manyProgramsState,
+    );
+
+    expect(answer?.matchedIntent).toBe("tower_top_it_programs");
+    expect(answer?.response).toContain(
+      "Top 10 IT programs at SkyHarbor Air",
+    );
+    expect(answer?.response).toContain("1. Program 01");
+    expect(answer?.response).toContain("10. Program 10");
+    expect(answer?.response).not.toContain("11. Program 11");
+  });
+
+  it("answers top-N AI program list questions with budget and measured value separated", () => {
+    const aiProgramsState = {
+      ...towerState,
+      client: {
+        ...towerState.client,
+        clientName: "SkyHarbor Air",
+      },
+      initiatives: [
+        ...Array.from({ length: 6 }, (_, index) => ({
+          ...towerState.initiatives[index % towerState.initiatives.length],
+          initiativeId: `ai-${index + 1}`,
+          displayId: `AI-${index + 1}`,
+          name: `AI Program ${String(index + 1).padStart(2, "0")}`,
+          description: "AI modernization",
+          primaryCategoryId: "ai_portfolio",
+          primaryCategoryName: "AI portfolio",
+          committedAnnualUsd: (6 - index) * 2_000_000,
+          measuredValueUsd: index === 0 ? null : (6 - index) * 500_000,
+        })),
+        {
+          ...towerState.initiatives[0],
+          initiativeId: "non-ai-1",
+          displayId: "NON-AI-1",
+          name: "Network refresh",
+          description: "Network refresh",
+          primaryCategoryId: "infrastructure",
+          primaryCategoryName: "Infrastructure",
+          committedAnnualUsd: 30_000_000,
+          measuredValueUsd: 10_000_000,
+        },
+      ],
+    } satisfies AtlasTowerCurrentState;
+
+    const answer = buildTowerFactualSpineAnswer(
+      "give me the list of top 5 AI programs by spend and value",
+      aiProgramsState,
+    );
+
+    expect(answer?.matchedIntent).toBe("tower_top_ai_programs");
+    expect(answer?.response).toContain("Top 5 AI programs at SkyHarbor Air");
+    expect(answer?.response).toContain("1. AI Program 01");
+    expect(answer?.response).toContain("5. AI Program 05");
+    expect(answer?.response).toContain("measured value not tracked");
+    expect(answer?.response).not.toContain("Network refresh");
+  });
+
+  it("answers plain IT spend questions with the total Tower budget", () => {
+    const answer = buildTowerFactualSpineAnswer(
+      "what is my IT spend?",
+      towerState,
+    );
+
+    expect(answer?.matchedIntent).toBe("tower_total_it_budget");
+    expect(answer?.response).toContain(
+      "The loaded Tower IT budget is $157.5M",
+    );
+    expect(answer?.response).toContain("across 5 budget rollups");
+  });
+
   it("aggregates split vendor rows by vendor name", () => {
     const answer = buildTowerFactualSpineAnswer(
       "Who are the top 5 vendors by contract value?",
