@@ -32,6 +32,7 @@ Moves phase-end artifacts now carry a formal package standard and runtime output
 - Updated `src/lib/deliverables/strategic-moves-artifact-standard.ts` so prompts require Word-equivalent phase records, executive summary, TOC, storyline/narration, workshop evidence, and provenance labels.
 - Updated `src/lib/deliverables/persist-move-generated-artifact.ts` so generated artifacts persist both the HTML visual review companion and a separate DOCX editable phase record, with output role, provenance category, required companion outputs, Word sections, and workshop evidence.
 - Updated the review/regenerate route so client feedback creates both the regenerated HTML companion and a Word-equivalent review draft.
+- Added a deterministic fast lane for packaging-only sponsor-review feedback that asks for an editable Word-equivalent phase record. This creates the review-required HTML companion plus DOCX without waiting on a full Claude rewrite, while leaving substantive rewrite feedback on the existing model-backed regeneration path.
 - Updated the File Cabinet API and UI labels to distinguish `Editable deliverable`, `Visual review companion`, `Word-equivalent`, and `HTML review view` without exposing storage internals.
 - Added `docs/design/strategic-moves/EDITABLE_PHASE_DELIVERABLE_STANDARD.md`.
 - Updated `docs/strategy/MOVES-ARTIFACT-GOLD-STANDARD.md` to replace the old HTML-only master wording with editable Word plus HTML companion language.
@@ -42,6 +43,7 @@ Moves phase-end artifacts now carry a formal package standard and runtime output
 - Pass: `npx jest src/lib/deliverables/__tests__/visual-and-prompt.test.ts --runInBand`
 - Pass: `npx jest src/lib/deliverables/__tests__/phase-word-equivalent.test.ts src/lib/deliverables/__tests__/persist-move-generated-artifact.test.ts 'src/app/api/v1/programs/[programId]/artifacts/[artifactId]/review-regenerate/__tests__/route.test.ts' --runInBand`
 - Pass: `npx jest src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts --runInBand`
+- Pass: focused review/regenerate regression covers the deterministic editable Word-equivalent fast lane and proves it skips the model call while saving both HTML and DOCX artifacts.
 - Pass: scoped ESLint on touched source and test files.
 - Pass with pre-existing unrelated blockers only: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` reports the known missing `js-yaml`, Azure Document Intelligence, and `@axe-core/playwright` declarations/modules; no new errors from this release.
 - Pending: `npm run release:check` after final validation.
@@ -75,3 +77,5 @@ Roll back ACA traffic to the prior healthy revision if artifact generation or Fi
 ## Known Gaps
 
 This release does not automatically backfill every historical HTML artifact. Existing records receive the editable companion when regenerated or repackaged through the product path. Live P2 sponsor-review proof remains required before P2 can be treated as final or before P3/P4/P5 generation proceeds.
+
+During live proof on the first deployed candidate, the packaging review request returned `504 stream timeout` because the route waited on a full model-backed HTML regeneration before saving the DOCX. The follow-up fast lane is the corrective action: packaging/editable-record requests are deterministic and should complete as a normal browser action; substantive rewrite requests still use the full regeneration path.
