@@ -115,4 +115,24 @@ Tenant evidence`);
       /Same answer|last four turns|evidence keeps pointing here|substrate|priority table/i,
     );
   });
+
+  it("cleans across-session answer history and dangling conditional closers", () => {
+    const cleaned = scrubPublicAvaAnswerText(
+      "The answer hasn't changed across this session, and the business context keeps making it concrete: certified operational data products is the single best AI investment SkyHarbor can make next. Here's why the evidence is this clean.\n\nThe loaded sources show three distinct value pools. 5M events daily and is flagged for migration.\n\nIf it's the latter, that's the single thing to fix before any other AI investment conversation is worth having.\n\nThe CDAO and EVP Operations need to own this jointly.",
+    );
+
+    expect(cleaned).toContain(
+      "certified operational data products is the single best AI investment SkyHarbor can make next.",
+    );
+    expect(cleaned).toContain("The business context shows three distinct value pools");
+    expect(cleaned).toContain(
+      "The integration handles 5M daily events and is flagged for migration.",
+    );
+    expect(cleaned).toContain(
+      "The CDAO and EVP Operations need to own this jointly.",
+    );
+    expect(cleaned).not.toMatch(
+      /answer hasn't changed|this session|loaded sources|evidence is this clean|If it's the latter/i,
+    );
+  });
 });
