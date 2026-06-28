@@ -50,6 +50,12 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`: tightens the active consultant-lane visual gate so one-row repaired tables are not accepted for comparison/table prompts; undersized model tables are stripped and replaced by the multi-row metric/decision fallback.
 - `src/lib/intelligence/answer/structured-exhibits.ts`: removes renderer/provenance notes from user-visible extracted tables so the right-side canvas shows the decision artifact without implementation/debug language.
 - `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`: adds a final narrative-grounded visual fallback so explicit comparison/table asks can be rendered from the already-grounded advisor answer when normalized decision/metric packet rows are sparse.
+- `src/lib/intelligence/model-input-cleaner.ts`: adds the model-input boundary cleaner so raw record IDs, source file names, row labels, and raw fields such as `ai_maturity: 1` are removed or translated before Claude receives the prompt packet.
+- `src/lib/intelligence/tabbed-response.ts`: adds the Intelligence decision-canvas tab marker contract and parser. Claude owns tab content; the parser only places complete tabs and drops malformed/non-chart-ready chart tabs.
+- `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`: appends the decision-canvas tab contract to the active consultant prompt and cleans the bounded prompt packet before building the model input.
+- `src/app/api/intelligence/ask/route.ts`: maps tabbed Claude output into an aVa `decision_canvas` answer packet with `decisionFrame.intelligenceTabs`, preserves the raw model output for trace proof, and exits before the legacy structured-exhibit path can rewrite Markdown tables.
+- `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: changes the right-side canvas defaults to CXO-facing labels and renders Claude-owned tabs (`Decision`, `Industry Insights`, `Chart`, `Table`, `Evidence`) with grounding badges while keeping the left aVa dock prose-only.
+- `src/lib/intelligence/ask/response-policy.ts`: removes the remaining placeholder substitution that produced `the referenced evidence`; raw IDs are suppressed instead of replaced with awkward prose.
 - Follow-up regression coverage now uses the eight 50-question SkyHarbor crawl failures that exposed raw `Supporting Material` / `How it supports the answer` tables.
 - Focused regression tests updated to forbid the generic closer and assert context-specific alternatives.
 
@@ -135,6 +141,8 @@ SkyHarbor live testing showed aVa repeatedly ended answers with the same generic
 - Post-deploy Chrome trace smoke on revision `ca-abarva-web-lab-eastus--m3e3b2be1`, digest `sha256:6fbd0e42879a26464b0ebc59d8c1b6c93877724150e1c5795e9e1ce123736251`, confirmed the production answer stream worked but did not emit `trace-model-input`; root cause was the current signed-in Chrome operator profile not satisfying the trace gate. The follow-up keeps the debug header requirement and adds the signed-in Anand operator profile to the allow gate.
 - Post-deploy Chrome trace smoke on revision `ca-abarva-web-lab-eastus--m0485f9d1`, digest `sha256:4a6bf1a1462316b2548f963d272c12731499f8515e21f13ecda7d1bb7a953d93`, again answered normally but still did not emit `trace-model-input`; the visible Chrome profile showed `Anand Sundaram · SkyHarbor Air`, so the follow-up also recognizes the signed-in Anand operator name from Clerk's server user profile.
 - Chrome identity diagnostics via `/api/debug/vip` showed the signed-in SkyHarbor operator email as `anand.sundaram+skyharbor@thesundaram.com`; the trace allowlist now includes that exact operator account behind the same `x-abarva-debug-intel: 1` header.
+- Tabbed decision-canvas hardening local validation passed: `npx jest src/lib/intelligence/__tests__/model-input-cleaner.test.ts src/lib/intelligence/__tests__/tabbed-response.test.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts src/lib/intelligence/ask/response-policy.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx --runInBand`, 5 suites / 35 tests. Jest still prints pre-existing duplicate manual-mock warnings.
+- Tabbed decision-canvas hardening scoped ESLint passed for the touched cleaner, tab parser, consultant synthesis, response policy, Intelligence ask route, Intelligence v2 surface, and related tests.
 - Final post-airtight-closer deployment and signed-in SkyHarbor browser proof pending.
 
 ## Rollout Plan
@@ -179,7 +187,8 @@ Rollback by assigning 100% ACA ingress traffic to the previous healthy revision 
 - All-session/loaded-tenant-sources candidate ACA proof: revision `ca-abarva-web-lab-eastus--m77678fd5`, digest `sha256:68a61a7c3c44b21917ec84feee549464036c5c3a3ff165d36d1c5a06feba1f97`, 100% traffic; signed-in SkyHarbor proof found the remaining `answer hasn't moved across this session` wording issue fixed by the answer-has-not-moved candidate.
 - Answer-has-not-moved candidate ACA proof: revision `ca-abarva-web-lab-eastus--m5b4c5bc9`, digest `sha256:d27fabe683a6d9cf955697602b8bf38f9eba962117baecbedf3cbf103683d971`, 100% traffic; signed-in SkyHarbor proof found the remaining `business context keeps making it airtight` and `If it's the latter ... earns meeting time` issue fixed by the airtight-closer candidate.
 - Post-deploy revision, digest, screenshots, and crawl output for the final airtight-closer fix to be added after production proof.
+- Post-deploy revision, digest, trace packet, rendered tab screenshots, and SkyHarbor IROPS prompt/output/render proof for the decision-canvas tabbed hardening to be added after ACA production proof.
 
 ## Known Gaps
 
-Post-deploy signed-in browser proof is pending until the airtight-closer candidate is built and released through ACA.
+Post-deploy signed-in browser proof is pending until the current candidate is built and released through ACA. The required proof must include clean SkyHarbor model input, tabbed Claude model output, display-only rendered tabs, no table loss, no placeholder substitution, and no raw `ai_maturity: 1` leakage.
