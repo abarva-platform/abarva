@@ -133,6 +133,15 @@ function countMissing(rows, key, validIds) {
   return rows.filter((row) => row[key] && !validIds.has(row[key])).length;
 }
 
+function graphRows(file) {
+  if (!exists(file)) return [];
+  return read(file)
+    .trim()
+    .split(/\n/)
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+}
+
 function hasColumns(rows, columns) {
   if (rows.length === 0) return false;
   return columns.every((column) => Object.hasOwn(rows[0], column));
@@ -242,6 +251,39 @@ function validateTenant(tenant) {
           missingContracts: badContract,
           missingSystems: badContractSystem,
           rows: contractMap.length,
+        }),
+  );
+
+  const teams = csv(fileFor(tenant.folder, "family-1-enterprise-operating-model/F03_it-org-ownership.csv"));
+  const teamIds = ids(teams, firstColumn(teams, ["team_id", "function_id"]));
+  const capabilities = csv(fileFor(tenant.folder, "family-1-enterprise-operating-model/F04_capabilities-value-streams.csv"));
+  const capabilityIds = ids(capabilities, "capability_id");
+  const aiAssets = csv(fileFor(tenant.folder, "family-6-governance-ai-evidence/F17_ai-automation-footprint.csv"));
+  const aiAssetIds = ids(aiAssets, firstColumn(aiAssets, ["ai_asset_id", "tool_id"]));
+  const kpis = csv(fileFor(tenant.folder, "family-5-execution-operations/F15_kpis-outcome-evidence.csv"));
+  const kpiIds = ids(kpis, "kpi_id");
+  const graphResolvableIds = new Set([
+    ...appIds,
+    ...teamIds,
+    ...capabilityIds,
+    ...contractIds,
+    ...dataIds,
+    ...aiAssetIds,
+    ...kpiIds,
+  ]);
+  const graph = graphRows(fileFor(tenant.folder, "graph/context-relationships.jsonl"));
+  const unresolvedGraphEdges = graph.filter((row) => {
+    const from = row.from_record_key ?? row.from;
+    const to = row.to_record_key ?? row.to;
+    return !from || !to || !graphResolvableIds.has(from) || !graphResolvableIds.has(to);
+  });
+  checks.push(
+    graph.length > 0 && unresolvedGraphEdges.length === 0
+      ? pass("graph.edges_resolve_to_loaded_keys", { rows: graph.length })
+      : fail("graph.edges_resolve_to_loaded_keys", {
+          rows: graph.length,
+          unresolved: unresolvedGraphEdges.length,
+          sample: unresolvedGraphEdges.slice(0, 5),
         }),
   );
 
