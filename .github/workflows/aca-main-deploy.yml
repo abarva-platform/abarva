@@ -155,7 +155,36 @@ jobs:
             --resource-group "$RESOURCE_GROUP" \
             --output json | tee audit-artifacts/aca-main-deploy/traffic-before.json
 
+      - name: Resolve existing canonical revision
+        id: existing_revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          revision="${CONTAINER_APP_NAME}--${{ steps.release.outputs.revision_suffix }}"
+          if az containerapp revision show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --revision "$revision" \
+            --output json > audit-artifacts/aca-main-deploy/existing-canonical-revision.json 2>/tmp/aca-existing-revision.err; then
+            image="$(jq -r '.properties.template.containers[0].image // ""' audit-artifacts/aca-main-deploy/existing-canonical-revision.json)"
+            if [[ -z "$image" || "$image" == "null" ]]; then
+              echo "Existing canonical revision $revision has no image; refusing to continue." >&2
+              exit 1
+            fi
+            echo "Reusing existing canonical main revision $revision with image $image."
+            echo "reuse=true" >> "$GITHUB_OUTPUT"
+            echo "revision=$revision" >> "$GITHUB_OUTPUT"
+            echo "image=$image" >> "$GITHUB_OUTPUT"
+          else
+            cat /tmp/aca-existing-revision.err || true
+            echo "No existing canonical main revision $revision; building a new image."
+            echo "reuse=false" >> "$GITHUB_OUTPUT"
+            echo "revision=$revision" >> "$GITHUB_OUTPUT"
+            echo "image=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build and push image with Docker Buildx cache
+        if: steps.existing_revision.outputs.reuse != 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -166,6 +195,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Refresh Azure login after image build
+        if: steps.existing_revision.outputs.reuse != 'true'
         uses: azure/login@v3
         with:
           client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
@@ -177,6 +207,25 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if [[ "${{ steps.existing_revision.outputs.reuse }}" == "true" ]]; then
+            image="${{ steps.existing_revision.outputs.image }}"
+            digest="${image##*@}"
+            if [[ "$digest" == "$image" || -z "$digest" ]]; then
+              echo "Existing canonical revision image is not digest-pinned: $image" >&2
+              exit 1
+            fi
+            echo "digest=$digest" >> "$GITHUB_OUTPUT"
+            echo "image=$image" >> "$GITHUB_OUTPUT"
+            {
+              echo "sha=${{ steps.release.outputs.sha }}"
+              echo "tag=${{ steps.release.outputs.tag }}"
+              echo "digest=$digest"
+              echo "image=$image"
+              echo "source=existing-canonical-revision"
+            } | tee audit-artifacts/aca-main-deploy/image.txt
+            exit 0
+          fi
+
           digest="$(az acr manifest show-metadata \
             --registry "$ACR_NAME" \
             --name "${IMAGE_REPOSITORY}:${{ steps.release.outputs.tag }}" \
