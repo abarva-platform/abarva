@@ -416,6 +416,54 @@ export async function listProjectedTowerReadModelForClient(args: {
     args.tenantKey === 'lakeshore' ? 'lakeshore-holdings' : null,
   ].filter((value): value is string => Boolean(value));
 
+  const refreshRun = await azureRead.maybeSingle<{ id: string }>({
+    table: 'ai_control_refresh_runs',
+    columns: ['id'],
+    where: { client_id: args.clientId },
+    orderBy: { column: 'reporting_period_end', direction: 'desc', nulls: 'last' },
+    missingTable: 'empty',
+  }).catch(() => null);
+
+  if (refreshRun?.id) {
+    const [aiControlInitiatives, benefits, spend, risks] = await Promise.all([
+      azureRead.select<AiControlInitiativeRow>({
+        table: 'ai_control_initiatives',
+        columns: ['id', 'initiative_key', 'initiative_name', 'category', 'stage', 'business_owner_role', 'executive_sponsor_role', 'promised_benefit', 'status_flag', 'payload'],
+        where: { refresh_run_id: refreshRun.id },
+        missingTable: 'empty',
+      }),
+      azureRead.select<AiControlBenefitRow>({
+        table: 'ai_control_benefit_realization',
+        columns: ['initiative_key', 'promised_annual_value_usd', 'realized_annual_value_usd', 'readiness_state', 'evidence_state'],
+        where: { refresh_run_id: refreshRun.id },
+        missingTable: 'empty',
+      }),
+      azureRead.select<AiControlSpendRow>({
+        table: 'ai_control_spend_contracts',
+        columns: ['id', 'initiative_key', 'vendor', 'product_or_service', 'annualized_spend_usd', 'renewal_date', 'evidence_state'],
+        where: { refresh_run_id: refreshRun.id },
+        missingTable: 'empty',
+      }),
+      azureRead.select<AiControlRiskRow>({
+        table: 'ai_control_risk_governance',
+        columns: ['initiative_key', 'dimension', 'severity', 'status', 'risk_description', 'owner_role', 'governance_gate'],
+        where: { refresh_run_id: refreshRun.id },
+        missingTable: 'empty',
+      }),
+    ]);
+
+    const aiControlProjection = projectAiControlRowsToTowerReadModel({
+      initiativeRows: aiControlInitiatives,
+      benefitRows: benefits,
+      spendRows: spend,
+      riskRows: risks,
+    });
+
+    if (aiControlProjection.initiatives.length > 0 || aiControlProjection.vendors.length > 0) {
+      return aiControlProjection;
+    }
+  }
+
   const [initiativeRows, vendorRows, aiControlInitiativeRows, benefitRows, spendRows, riskRows] = await Promise.all([
     azureRead.query<ContextRecordRow>(
       `SELECT id, canonical_record_id, record_type, record_subtype, source_file, title, source_record_id, source_row_number, payload
@@ -495,47 +543,5 @@ export async function listProjectedTowerReadModelForClient(args: {
     return contextProjection;
   }
 
-  const refreshRun = await azureRead.maybeSingle<{ id: string }>({
-    table: 'ai_control_refresh_runs',
-    columns: ['id'],
-    where: { client_id: args.clientId },
-    orderBy: { column: 'reporting_period_end', direction: 'desc', nulls: 'last' },
-    missingTable: 'empty',
-  }).catch(() => null);
-
-  if (!refreshRun?.id) return { source: 'empty', initiatives: [], vendors: [] };
-
-  const [aiControlInitiatives, benefits, spend, risks] = await Promise.all([
-    azureRead.select<AiControlInitiativeRow>({
-      table: 'ai_control_initiatives',
-      columns: ['id', 'initiative_key', 'initiative_name', 'category', 'stage', 'business_owner_role', 'executive_sponsor_role', 'promised_benefit', 'status_flag', 'payload'],
-      where: { refresh_run_id: refreshRun.id },
-      missingTable: 'empty',
-    }),
-    azureRead.select<AiControlBenefitRow>({
-      table: 'ai_control_benefit_realization',
-      columns: ['initiative_key', 'promised_annual_value_usd', 'realized_annual_value_usd', 'readiness_state', 'evidence_state'],
-      where: { refresh_run_id: refreshRun.id },
-      missingTable: 'empty',
-    }),
-    azureRead.select<AiControlSpendRow>({
-      table: 'ai_control_spend_contracts',
-      columns: ['id', 'initiative_key', 'vendor', 'product_or_service', 'annualized_spend_usd', 'renewal_date', 'evidence_state'],
-      where: { refresh_run_id: refreshRun.id },
-      missingTable: 'empty',
-    }),
-    azureRead.select<AiControlRiskRow>({
-      table: 'ai_control_risk_governance',
-      columns: ['initiative_key', 'dimension', 'severity', 'status', 'risk_description', 'owner_role', 'governance_gate'],
-      where: { refresh_run_id: refreshRun.id },
-      missingTable: 'empty',
-    }),
-  ]);
-
-  return projectAiControlRowsToTowerReadModel({
-    initiativeRows: aiControlInitiatives,
-    benefitRows: benefits,
-    spendRows: spend,
-    riskRows: risks,
-  });
+  return { source: 'empty', initiatives: [], vendors: [] };
 }

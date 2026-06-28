@@ -47,12 +47,32 @@ function vendor(name: string, id: string, value: number): AIInitiativeVendorRow 
 }
 
 function makeDb() {
-  const calls: Array<{ table: string; rows: unknown[]; onConflict: string }> = [];
+  const calls: Array<{
+    operation: 'delete' | 'upsert';
+    table: string;
+    rows?: unknown[];
+    onConflict?: string;
+    tenantKey?: string;
+  }> = [];
   const db = {
     from(table: string) {
       return {
+        delete() {
+          return {
+            eq(column: string, value: string) {
+              if (column !== 'tenant_key') throw new Error(`unexpected delete column ${column}`);
+              calls.push({ operation: 'delete', table, tenantKey: value });
+              return Promise.resolve({ data: null, error: null, count: 1 });
+            },
+          };
+        },
         upsert(rows: unknown[], options: { onConflict?: string }) {
-          calls.push({ table, rows, onConflict: options.onConflict ?? '' });
+          calls.push({
+            operation: 'upsert',
+            table,
+            rows,
+            onConflict: options.onConflict ?? '',
+          });
           return {
             select() {
               return Promise.resolve({ data: rows, error: null, count: rows.length });
@@ -155,14 +175,26 @@ describe('tower materialization planner', () => {
 
     await persistTowerMaterializationPlan({ db, plan });
 
-    expect(calls.map((call) => call.table)).toEqual([
+    const deletes = calls.filter((call) => call.operation === 'delete');
+    const upserts = calls.filter((call) => call.operation === 'upsert');
+
+    expect(deletes.map((call) => call.table)).toEqual([
       'tower_read_model_initiatives',
       'tower_read_model_vendors',
       'tower_gap_register',
       'tower_spend_realism_audit',
       'tower_forbidden_identifiers',
     ]);
-    expect(calls.find((call) => call.table === 'tower_forbidden_identifiers')?.onConflict).toBe(
+    expect(deletes.every((call) => call.tenantKey === 'lakeshore-holdings')).toBe(true);
+
+    expect(upserts.map((call) => call.table)).toEqual([
+      'tower_read_model_initiatives',
+      'tower_read_model_vendors',
+      'tower_gap_register',
+      'tower_spend_realism_audit',
+      'tower_forbidden_identifiers',
+    ]);
+    expect(upserts.find((call) => call.table === 'tower_forbidden_identifiers')?.onConflict).toBe(
       'tenant_key,identifier',
     );
     expect(calls.every((call) => call.table.startsWith('tower_'))).toBe(true);
@@ -183,19 +215,23 @@ describe('tower materialization planner', () => {
     await persistTowerMaterializationPlan({ db, plan });
 
     const initiativeWrite = calls.find(
-      (call) => call.table === 'tower_read_model_initiatives',
-    )?.rows[0] as Record<string, unknown>;
+      (call) => call.operation === 'upsert' && call.table === 'tower_read_model_initiatives',
+    )?.rows?.[0] as Record<string, unknown>;
     expect(typeof initiativeWrite.citations).toBe('string');
     expect(typeof initiativeWrite.lineage).toBe('string');
     expect(typeof initiativeWrite.gaps).toBe('string');
     expect(Array.isArray(initiativeWrite.evidence_ids)).toBe(true);
 
-    const gapWrite = calls.find((call) => call.table === 'tower_gap_register')
-      ?.rows[0] as Record<string, unknown>;
+    const gapWrite = calls.find(
+      (call) => call.operation === 'upsert' && call.table === 'tower_gap_register',
+    )
+      ?.rows?.[0] as Record<string, unknown>;
     expect(typeof gapWrite.lineage).toBe('string');
 
-    const auditWrite = calls.find((call) => call.table === 'tower_spend_realism_audit')
-      ?.rows[0] as Record<string, unknown>;
+    const auditWrite = calls.find(
+      (call) => call.operation === 'upsert' && call.table === 'tower_spend_realism_audit',
+    )
+      ?.rows?.[0] as Record<string, unknown>;
     expect(typeof auditWrite.lineage).toBe('string');
   });
 });
