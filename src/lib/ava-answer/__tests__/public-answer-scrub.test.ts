@@ -146,4 +146,20 @@ Tenant evidence`);
     );
     expect(cleaned).not.toMatch(/same answer|keeps making it airtight/i);
   });
+
+  it("cleans all-session answer history and loaded tenant source phrasing", () => {
+    const cleaned = scrubPublicAvaAnswerText(
+      "The answer is the same one the evidence has supported all session: certified operational data products is the single best AI investment SkyHarbor can make next.\n\nThe loaded tenant sources show three distinct value pools.\n\nIf it's the latter, that single gap is the only thing worth fixing before any other AI conversation is worth the meeting time.",
+    );
+
+    expect(cleaned).toContain(
+      "certified operational data products is the single best AI investment SkyHarbor can make next.",
+    );
+    expect(cleaned).toContain(
+      "The business context shows three distinct value pools.",
+    );
+    expect(cleaned).not.toMatch(
+      /answer is the same|all session|loaded tenant sources|If it's the latter/i,
+    );
+  });
 });

@@ -88,9 +88,16 @@ describe("visible answer contract", () => {
     const gate = assertVisibleAnswerContract(
       "Same answer as the last four turns: fix certified operational data first.",
     );
+    const allSessionGate = assertVisibleAnswerContract(
+      "The answer is the same one the evidence has supported all session: fix certified operational data first.",
+    );
 
     expect(gate.passed).toBe(false);
     expect(gate.violations.map((violation) => violation.id)).toContain(
+      "session_history_language",
+    );
+    expect(allSessionGate.passed).toBe(false);
+    expect(allSessionGate.violations.map((violation) => violation.id)).toContain(
       "session_history_language",
     );
   });
