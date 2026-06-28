@@ -101,6 +101,16 @@ ACA web and worker runtimes must use digest-pinned images (`@sha256:...`) for ru
 
 After any deploy or flag/env update, prove the ACA runtime invariant before claiming the change is live: the Container App template image, the 100% traffic revision image, and all required worker job images must match the approved digest. Then run the required live signed-in client proof for affected clients. A PR or release record may say `merged`, `deployed`, or `flagged`; it may not say `live-proven` until those checks are captured.
 
+### ACR build and registry policy
+
+The shared Product/Lab web image registry is `acrabarvalab001` and must remain on the Premium SKU. Every agent and workload that touches ACR, Docker builds, image retention, or ACA deployment must preserve this policy:
+
+- Shared web images are built only by `.github/workflows/aca-main-deploy.yml`; agents must not run ad-hoc `az acr build`, local `docker push`, or branch workflows against `acrabarvalab001/abarva/web`.
+- The main deploy workflow must use Docker Buildx with GitHub Actions cache (`cache-from: type=gha`, `cache-to: type=gha,mode=max`) before pushing the `main-<sha>` tag to ACR.
+- The workflow must assert `acrabarvalab001` is Premium before building. If the SKU is not Premium, the deploy stops instead of silently falling back to the slower/older registry contract.
+- Image pruning is dry-run first. Keep the active ACA digest, keep a rollback window, and do not use `acr purge --untagged` unless a named break-glass approval explains why digest-pinned pulls cannot be affected.
+- `npm run release:check` enforces these markers and blocks unsafe ACR build/prune/cache drift.
+
 ### ACA data-build job rule
 
 Mutating operator data builds must run as Azure Container Apps Jobs, not through production web requests and not as long-running manual `az containerapp exec` sessions. Use `docs/ops/aca-data-build-job-rule.md` for the required job contract: job name, run id, tenant scope, build version, input source version, idempotency key, progress/status output, Blob proof bundle, validation output, quality-gate output, and release record. Break-glass `az containerapp exec` is allowed only for read-only inspection or a documented exception. Do not wire product surfaces to new data-plane builds until the job output, quality gate, and human review pass.

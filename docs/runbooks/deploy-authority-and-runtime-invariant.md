@@ -22,6 +22,66 @@ For every shared ACA web app update:
 - The 100 percent traffic revision image equals the same approved digest-pinned image.
 - Worker jobs that execute code for the same release use the same approved digest-pinned image.
 
+## ACR Build And Registry Policy
+
+The shared Product/Lab web registry is `acrabarvalab001`. It must stay on the Premium SKU, and the repo-owned `ACA main deploy` workflow must stop before building if the live registry is not Premium.
+
+Shared web images are built and pushed by `.github/workflows/aca-main-deploy.yml` only. The approved build path is Docker Buildx in GitHub Actions with GitHub Actions cache:
+
+```yaml
+cache-from: type=gha
+cache-to: type=gha,mode=max
+```
+
+Do not run ad-hoc ACR remote builds, local `docker push`, branch deploy workflow pushes, or agent-specific build scripts against `acrabarvalab001/abarva/web`. If a preview or client-preprod environment needs an image, use its own registry/repository or an explicitly documented environment lane.
+
+The deploy workflow captures:
+
+- ACR name and SKU.
+- ACR usage JSON.
+- Git commit, `main-<sha>` tag, resolved digest, and digest-pinned runtime image.
+- ACA template image and 100 percent traffic revision image.
+
+## Prune Safety
+
+Pruning is storage hygiene, not a deploy mechanism. The rule is dry-run first, then approved delete.
+
+Always identify the active image digest before considering deletion:
+
+```bash
+az containerapp show \
+  --name ca-abarva-web-lab-eastus \
+  --resource-group rg-abarva-controlplane-lab-eastus \
+  --query properties.template.containers[0].image \
+  --output tsv
+```
+
+Safe dry run for old `main-*` tags:
+
+```bash
+az acr run \
+  --registry acrabarvalab001 \
+  --cmd "acr purge --filter 'abarva/web:main-.*' --ago 14d --dry-run" \
+  /dev/null
+```
+
+Approved deletion must reference the reviewed dry-run output and keep the active ACA digest plus the rollback window:
+
+```bash
+# acr-prune-approved: reviewed dry-run output, active ACA digest retained, rollback window retained.
+ACR_PURGE_APPROVED=true \
+az acr run \
+  --registry acrabarvalab001 \
+  --cmd "acr purge --filter 'abarva/web:main-.*' --ago 14d" \
+  /dev/null
+```
+
+Do not purge untagged manifests by default. Digest-pinned runtimes and rollback references can depend on manifests that no longer have a friendly tag. Untagged-manifest deletion requires a named break-glass note:
+
+```bash
+# acr-prune-untagged-approved: <approver>, <date>, <active digest checked>, <rollback digests retained>.
+```
+
 For env/feature-flag changes, never run an image-less update against a shared runtime. Azure creates a new revision from the current Container App template. If that template still points at an old mutable tag, the env-only update reintroduces stale code.
 
 ## Forbidden Pattern
