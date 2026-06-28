@@ -3,7 +3,7 @@
  */
 
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 import { TowerIndexPage } from "../TowerIndexPage";
 import type {
@@ -276,10 +276,9 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByText("AI Platform Foundation")).toBeInTheDocument();
     expect(screen.getByText("ServiceNow AI Service Desk")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Budget" })).toHaveAttribute(
-      "href",
-      "/tower?dashboard=budget",
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Budget" }));
+    expect(push).toHaveBeenCalledWith("/tower?dashboard=budget");
+    expect(screen.getByText("Spending structure.")).toBeInTheDocument();
     expect(screen.getAllByText("aVa").length).toBeGreaterThan(0);
     expect(screen.queryByText("Atlas")).not.toBeInTheDocument();
     expect(screen.queryByText("LH-IT-001")).not.toBeInTheDocument();

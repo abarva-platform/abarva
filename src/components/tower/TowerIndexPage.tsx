@@ -924,10 +924,10 @@ function percentOf(value: number, total: number): string {
 
 function CioDashboardTabs({
   active,
-  hrefFor,
+  onSelect,
 }: {
   active: CioDashboardView;
-  hrefFor: (view: CioDashboardView) => string;
+  onSelect: (view: CioDashboardView) => void;
 }) {
   return (
     <section
@@ -963,11 +963,11 @@ function CioDashboardTabs({
         {CIO_DASHBOARD_VIEWS.map((view) => {
           const current = view.key === active;
           return (
-            <Link
+            <button
               key={view.key}
-              href={hrefFor(view.key)}
-              scroll={false}
-              aria-current={current ? "page" : undefined}
+              type="button"
+              aria-pressed={current}
+              onClick={() => onSelect(view.key)}
               style={{
                 border: `1px solid ${current ? T.INK : T.RULE_STRONG}`,
                 borderRadius: 999,
@@ -976,11 +976,12 @@ function CioDashboardTabs({
                 padding: "8px 16px",
                 fontSize: 13,
                 fontWeight: 850,
-                textDecoration: "none",
+                fontFamily: T.SANS,
+                cursor: "pointer",
               }}
             >
               {view.label}
-            </Link>
+            </button>
           );
         })}
       </div>
@@ -5074,9 +5075,12 @@ export function TowerIndexPage({
   // The dashboard band is fixed in the cleaned-up Tower model. Keep the
   // internal lens at value so stale ?lens= URLs cannot silently re-rank data.
   const activeLens: TowerLens = "value";
-  const activeCioDashboardView = parseCioDashboardView(
-    searchParams?.get("dashboard"),
-  );
+  const dashboardParam = searchParams?.get("dashboard");
+  const [activeCioDashboardView, setActiveCioDashboardView] =
+    useState<CioDashboardView>(() => parseCioDashboardView(dashboardParam));
+  useEffect(() => {
+    setActiveCioDashboardView(parseCioDashboardView(dashboardParam));
+  }, [dashboardParam]);
   const activeDetailId = searchParams?.get("detail") ?? null;
   const activePressureId = searchParams?.get("pressure") ?? null;
   const detailInitiative = findInitiativeDetail(
@@ -5118,6 +5122,19 @@ export function TowerIndexPage({
       return buildTowerHref({ detail: displayId, pressure: pressureId });
     },
     [buildTowerHref],
+  );
+  const selectCioDashboardView = useCallback(
+    (dashboard: CioDashboardView) => {
+      setActiveCioDashboardView(dashboard);
+      router.push(
+        buildTowerHref({
+          dashboard,
+          detail: null,
+          pressure: null,
+        }),
+      );
+    },
+    [buildTowerHref, router],
   );
 
   const closeDetailHref = buildTowerHref({ detail: null, pressure: null });
@@ -5478,13 +5495,7 @@ export function TowerIndexPage({
               <>
                 <CioDashboardTabs
                   active={activeCioDashboardView}
-                  hrefFor={(dashboard) =>
-                    buildTowerHref({
-                      dashboard,
-                      detail: null,
-                      pressure: null,
-                    })
-                  }
+                  onSelect={selectCioDashboardView}
                 />
                 <CioDashboardPanel
                   active={activeCioDashboardView}
