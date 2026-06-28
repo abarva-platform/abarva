@@ -99,4 +99,20 @@ Tenant evidence`);
       /last three times|this session|tenant evidence|loaded evidence|keeps being the right answer|If it's the latter/i,
     );
   });
+
+  it("cleans same-answer turn history and substrate jargon from live SkyHarbor answers", () => {
+    const cleaned = scrubPublicAvaAnswerText(
+      "Same answer as the last four turns, and the business context keeps making the case cleanly: certified operational data products — real-time crew, aircraft, and gate feeds with governed freshness and lineage — is the single best AI investment SkyHarbor can make next. Here's why the evidence keeps pointing here.\n\nEvery one of those pools is gated on the same substrate gap. Fix the substrate and you unlock it.\n\nThe priority table, for the investment committee: The decision the CDAO and EVP Operations need to make jointly, this quarter.",
+    );
+
+    expect(cleaned).toContain(
+      "certified operational data products — real-time crew, aircraft, and gate feeds with governed freshness and lineage — is the single best AI investment SkyHarbor can make next.",
+    );
+    expect(cleaned).toContain("same operational-data gap");
+    expect(cleaned).toContain("Fix the operational-data foundation");
+    expect(cleaned).toContain("For the investment committee: The decision");
+    expect(cleaned).not.toMatch(
+      /Same answer|last four turns|evidence keeps pointing here|substrate|priority table/i,
+    );
+  });
 });
