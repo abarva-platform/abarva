@@ -13,7 +13,7 @@ export const VISIBLE_ANSWER_CONTRACT_PROMPT = [
   "- No raw record IDs, artifact IDs, UUIDs, source keys, table names, JSON, debug terms, or internal field names.",
   '- No visible scaffolding labels such as "Read:", "Evidence:", "Implication:", or "Next move:".',
   '- No implementation phrases such as "loaded evidence", "tenant evidence", "evidence ledger", "source signals", "semantic packet", "rows", or "retrieved context".',
-  '- No session-history phrases such as "same answer", "answer is the same", "same answer as before", "same answer as the last four turns", "last three times", "all session", "earlier turns", or "this session"; answer the current question as if it stands alone.',
+  '- No session-history phrases such as "same answer", "answer is the same", "answer has not moved", "same answer as before", "same answer as the last four turns", "last three times", "all session", "earlier turns", or "this session"; answer the current question as if it stands alone.',
   "- No repeated stock closing line.",
   "",
   "End naturally based on the question:",
@@ -74,7 +74,7 @@ const VISIBLE_ANSWER_BANNED_PATTERNS: Array<{ id: string; pattern: RegExp }> = [
   {
     id: "session_history_language",
     pattern:
-      /\b(?:same answer(?: as(?: before| the last\s+\w+\s+(?:turns?|times))?)?|answer is the same|answer (?:is|hasn'?t changed).*(?:last\s+\w+\s+(?:turns?|times)|all\s+session)|last\s+\w+\s+(?:turns?|times)|all\s+session|earlier turns|previous conversation|this session)\b/i,
+      /\b(?:same answer(?: as(?: before| the last\s+\w+\s+(?:turns?|times))?)?|answer is the same|answer (?:is|hasn'?t (?:changed|moved)).*(?:last\s+\w+\s+(?:turns?|times)|all\s+session|this\s+session)|last\s+\w+\s+(?:turns?|times)|all\s+session|earlier turns|previous conversation|this session)\b/i,
   },
   {
     id: "stock_generic_closing",

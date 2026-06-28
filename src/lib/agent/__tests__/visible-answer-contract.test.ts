@@ -91,6 +91,9 @@ describe("visible answer contract", () => {
     const allSessionGate = assertVisibleAnswerContract(
       "The answer is the same one the evidence has supported all session: fix certified operational data first.",
     );
+    const movedGate = assertVisibleAnswerContract(
+      "The answer hasn't moved across this session: fix certified operational data first.",
+    );
 
     expect(gate.passed).toBe(false);
     expect(gate.violations.map((violation) => violation.id)).toContain(
@@ -98,6 +101,10 @@ describe("visible answer contract", () => {
     );
     expect(allSessionGate.passed).toBe(false);
     expect(allSessionGate.violations.map((violation) => violation.id)).toContain(
+      "session_history_language",
+    );
+    expect(movedGate.passed).toBe(false);
+    expect(movedGate.violations.map((violation) => violation.id)).toContain(
       "session_history_language",
     );
   });
