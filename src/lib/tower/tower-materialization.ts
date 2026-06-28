@@ -500,6 +500,19 @@ async function upsertRows<T extends object>(
   return count ?? rows.length;
 }
 
+async function deleteScopedRows(
+  db: PostgresCompatClient,
+  table: string,
+  tenantKey: string,
+): Promise<number> {
+  const { error, count } = await db
+    .from(table)
+    .delete({ count: 'exact' })
+    .eq('tenant_key', tenantKey);
+  if (error) throw new Error(`${table} delete failed: ${error.message}`);
+  return count ?? 0;
+}
+
 const JSONB_COLUMNS_BY_TABLE: Readonly<Record<string, readonly string[]>> = {
   tower_read_model_initiatives: ['citations', 'lineage', 'gaps'],
   tower_read_model_vendors: ['citations', 'lineage', 'gaps'],
@@ -526,13 +539,45 @@ export async function persistTowerMaterializationPlan(args: {
   db: PostgresCompatClient;
   plan: TowerMaterializationPlan;
 }): Promise<{
+  deleted: {
+    initiatives: number;
+    vendors: number;
+    gaps: number;
+    spendRealismAudit: number;
+    forbiddenIdentifiers: number;
+  };
   initiatives: number;
   vendors: number;
   gaps: number;
   spendRealismAudit: number;
   forbiddenIdentifiers: number;
 }> {
+  const deleted = {
+    initiatives: await deleteScopedRows(
+      args.db,
+      'tower_read_model_initiatives',
+      args.plan.tenantKey,
+    ),
+    vendors: await deleteScopedRows(
+      args.db,
+      'tower_read_model_vendors',
+      args.plan.tenantKey,
+    ),
+    gaps: await deleteScopedRows(args.db, 'tower_gap_register', args.plan.tenantKey),
+    spendRealismAudit: await deleteScopedRows(
+      args.db,
+      'tower_spend_realism_audit',
+      args.plan.tenantKey,
+    ),
+    forbiddenIdentifiers: await deleteScopedRows(
+      args.db,
+      'tower_forbidden_identifiers',
+      args.plan.tenantKey,
+    ),
+  };
+
   return {
+    deleted,
     initiatives: await upsertRows(
       args.db,
       'tower_read_model_initiatives',
