@@ -152,6 +152,101 @@ function renderArchitectureTableCompletion(ctx: SolutionContext): string {
 </section>`;
 }
 
+function renderDiscoveryEvidenceBaselineCompletion(ctx: SolutionContext): string | undefined {
+  const metrics = ctx.metricsThatMatter ?? [];
+  const taxonomy = ctx.evidenceTaxonomy ?? [];
+  const missingInputs = ctx.clientActionableMissingInputs ?? [];
+  if (metrics.length === 0 && taxonomy.length === 0 && missingInputs.length === 0) {
+    return undefined;
+  }
+
+  const metricRows = metrics
+    .map(
+      (metric) => `<tr>
+        <td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(metric.label)}</td>
+        <td style="padding:10px;border:1px solid #cbd5e1;font-weight:800;color:#0f172a">${escapeHtml(metric.value)}</td>
+        <td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(metric.source)}</td>
+        <td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(metric.caveat ?? "Use as extracted evidence for P2 diagnosis")}</td>
+      </tr>`,
+    )
+    .join("");
+  const taxonomyRows = taxonomy
+    .map(
+      (item) => `<tr>
+        <td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(item.category)}</td>
+        <td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(item.volume)}</td>
+        <td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(item.rate)}</td>
+        <td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(item.averageResolutionDays)}</td>
+        <td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(item.manualTouchHours)}</td>
+        <td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(item.riskLevel)}</td>
+        <td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(item.owner)}</td>
+      </tr>`,
+    )
+    .join("");
+  const missingRows = missingInputs
+    .map(
+      (item) => `<tr>
+        <td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(item.needed)}</td>
+        <td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(item.whyItMatters)}</td>
+        <td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(item.owner)}</td>
+        <td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(item.howItWillBeUsed)}</td>
+        <td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(item.gateImpact)}</td>
+      </tr>`,
+    )
+    .join("");
+
+  return `<section class="evidence-baseline-completion" style="margin-top:28px;padding:22px;border:2px solid #0e7490;border-radius:14px;background:#f8fdff">
+  <h2 style="margin:0 0 8px;color:#0f172a">Evidence Baseline Completion Exhibit</h2>
+  <p style="margin:0 0 14px;color:#334155;line-height:1.55">This exhibit preserves the extracted P2 evidence that must remain visible in the diagnostic: first-class metrics, exception taxonomy, risk-owner signals, and client-actionable inputs needed before final approval.</p>
+  ${
+    metricRows
+      ? `<h3 style="margin:18px 0 8px;color:#164e63">Metrics that must anchor the diagnostic</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px">
+          <thead><tr style="background:#cffafe;color:#164e63">
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Metric</th>
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Value</th>
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Source</th>
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Use / caveat</th>
+          </tr></thead>
+          <tbody>${metricRows}</tbody>
+        </table>`
+      : ""
+  }
+  ${
+    taxonomyRows
+      ? `<h3 style="margin:18px 0 8px;color:#164e63">Exception taxonomy and risk-owner signals</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px">
+          <thead><tr style="background:#ecfeff;color:#164e63">
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Category</th>
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Volume</th>
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Rate</th>
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Avg. resolution days</th>
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Manual touch hours</th>
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Risk</th>
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Owner</th>
+          </tr></thead>
+          <tbody>${taxonomyRows}</tbody>
+        </table>`
+      : ""
+  }
+  ${
+    missingRows
+      ? `<h3 style="margin:18px 0 8px;color:#164e63">Client to complete before final</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr style="background:#fef3c7;color:#78350f">
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Needed input</th>
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Why it matters</th>
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Owner</th>
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">How it will be used</th>
+            <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Gate impact</th>
+          </tr></thead>
+          <tbody>${missingRows}</tbody>
+        </table>`
+      : ""
+  }
+</section>`;
+}
+
 function insertBeforeBodyClose(html: string, addition: string): string {
   if (/<\/body>/i.test(html)) return html.replace(/<\/body>/i, `${addition}</body>`);
   return `${html}${addition}`;
@@ -206,6 +301,14 @@ function completeMandatoryExhibits(args: {
   goldenBar: GoldenBarResult;
   context: SolutionContext;
 }): string | undefined {
+  if (
+    args.artifact === "discovery_report" &&
+    (args.goldenBar.missingExactEvidenceTerms.length > 0 ||
+      args.goldenBar.missingTaxonomyTerms.length > 0)
+  ) {
+    const completion = renderDiscoveryEvidenceBaselineCompletion(args.context);
+    return completion ? insertBeforeBodyClose(args.html, completion) : undefined;
+  }
   if (args.artifact !== "target_state_architecture") return undefined;
   if (args.goldenBar.hasDataGap || args.goldenBar.proseOnly || args.goldenBar.svgCount === 0) {
     return undefined;
