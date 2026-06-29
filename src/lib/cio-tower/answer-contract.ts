@@ -101,7 +101,12 @@ const QUESTION_BANK_METRIC_TO_MEASURE_KEYS: Record<string, readonly string[]> = 
 };
 
 function includesNormalized(haystack: string, needle: string): boolean {
-  return haystack.toLowerCase().includes(needle.toLowerCase());
+  const normalizedHaystack = haystack.toLowerCase();
+  const normalizedNeedle = needle.toLowerCase();
+  if (/^[a-z0-9]+$/i.test(normalizedNeedle)) {
+    return new RegExp(`\\b${normalizedNeedle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(normalizedHaystack);
+  }
+  return normalizedHaystack.includes(normalizedNeedle);
 }
 
 function visibleTextFromModelOutput(output: CioTowerVisibleAnswerContract | null | undefined): string {

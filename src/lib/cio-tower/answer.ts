@@ -187,7 +187,7 @@ const BOUNDARY_PATTERNS: Array<{ target: CioTowerBoundaryTarget; reason: string;
   },
   {
     target: 'Home/Explorer',
-    reason: 'The question asks to browse loaded enterprise context or source coverage.',
+    reason: 'The question asks to inspect loaded enterprise context or source coverage.',
     patterns: [
       /raw\s+context/i,
       /every\s+source\s+file/i,
@@ -270,7 +270,7 @@ export function classifyCioTowerBoundary(question: string): CioTowerBoundaryRout
 export function buildCioTowerBoundaryAnswer(route: CioTowerBoundaryRoute): CioTowerVisibleAnswerContract {
   const answerByTarget: Record<CioTowerBoundaryTarget, string> = {
     'Home/Explorer':
-      'That belongs in Home/Explorer, not Tower. Home is the right surface for loaded enterprise context, source coverage, missing fields, and source browsing; Tower should stay focused on CIO portfolio control.',
+      'That belongs in Home/Explorer, not Tower. Home is the right surface for loaded enterprise context, source coverage, missing fields, and source review; Tower should stay focused on CIO portfolio control.',
     Intelligence:
       'That belongs in Intelligence, not Tower. Tower can show portfolio status, spend, value proof, risk, renewals, and governance signals; Intelligence is the right surface for patterns, benchmarks, tradeoffs, and leadership options.',
     Source:

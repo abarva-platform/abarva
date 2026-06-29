@@ -156,6 +156,29 @@ describe('CIO Tower right-answer contract scorer', () => {
     );
   });
 
+  it('does not flag browse as the forbidden internal word rows', () => {
+    const handoffContract: CioTowerRightAnswerContract = {
+      id: 'home-explorer-handoff',
+      tenantKey: 'skyharbor-air',
+      question: 'Show me every source file behind this enterprise context.',
+      route: 'handoff',
+      artifact: 'card',
+      requiredPhrases: ['Home/Explorer'],
+      maximumLatencyMs: 2500,
+    };
+
+    const score = scoreCioTowerRightAnswerContract(handoffContract, {
+      visibleText: 'That belongs in Home/Explorer. Home lets you browse source coverage.',
+      modelOutput: visibleOutput({
+        answer: 'That belongs in Home/Explorer. Home lets you browse source coverage.',
+        tables: [],
+      }),
+      latencyMs: 900,
+    });
+
+    expect(score.pass).toBe(true);
+  });
+
   it('fails out-of-scope answers that incorrectly pull Tower metrics into the response', () => {
     const outOfScopeContract: CioTowerRightAnswerContract = {
       id: 'outside-scope-capital',
