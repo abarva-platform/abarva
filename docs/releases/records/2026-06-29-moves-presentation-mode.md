@@ -68,4 +68,4 @@ Revert the presentation-mode commit or remove traffic from the deployed ACA revi
 
 ## Known Gaps
 
-- Presentation mode still uses the real signed-in tenant/session underneath; this is intentional for data safety, but video capture should use the `Northstar Retail Group` display override and synthetic-data badge.
+- Presentation mode still uses the real signed-in tenant/session underneath; this is intentional for data safety, but video capture should use the `Retail Demo Workspace` display override and synthetic-data badge.
