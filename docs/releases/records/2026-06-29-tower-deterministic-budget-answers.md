@@ -35,7 +35,7 @@ Exact Tower IT-budget questions now answer from governed Tower metric and fact p
 - `src/lib/cio-tower/__tests__/answer.test.ts`
   - asserts exact IT-budget slice questions emit a visible table from governed facts without Claude.
 - `src/components/marketing/LoggedOutLandingPage.tsx`
-  - darkens light-section eyebrow text and marker colors to meet accessible contrast on the public homepage.
+  - darkens light-section eyebrow text, marker colors, and teal headline accents to meet accessible contrast on the public homepage.
 
 ## QA / Validation
 

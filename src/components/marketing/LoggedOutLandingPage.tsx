@@ -858,6 +858,10 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           color: var(--teal);
         }
 
+        .section.light .teal {
+          color: #005f73;
+        }
+
         .lead,
         .section-lead,
         .demo-band p {
