@@ -199,7 +199,7 @@ function scoreContracts(args: {
   });
 }
 
-function countBy<T extends Record<string, unknown>>(items: readonly T[], key: keyof T): Record<string, number> {
+function countBy<T, K extends keyof T>(items: readonly T[], key: K): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const item of items) {
     const value = String(item[key] ?? 'unknown');
