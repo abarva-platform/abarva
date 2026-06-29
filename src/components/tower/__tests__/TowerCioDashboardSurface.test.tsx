@@ -217,6 +217,30 @@ const GOVERNED_METRIC_PACKETS: CioTowerMetricPacket[] = [
     source_fact_keys: ["fact-change-1"],
     formula_version: "cio_tower_v1",
   }),
+  toCioTowerMetricPacket({
+    measure_key: "initiative_budget_fy26",
+    label: "Initiative budget",
+    description: "Committed FY26 initiative budget.",
+    period: "fy26",
+    basis: "committed",
+    scope: "initiative_portfolio",
+    value_numeric: 76_400_000,
+    value_json: { row_count: 3 },
+    source_fact_keys: ["fact-initiative-1"],
+    formula_version: "cio_tower_v1",
+  }),
+  toCioTowerMetricPacket({
+    measure_key: "measured_value_ytd",
+    label: "Measured value",
+    description: "Finance-attested measured value.",
+    period: "fy26",
+    basis: "measured",
+    scope: "initiative_portfolio",
+    value_numeric: 91_700_000,
+    value_json: { row_count: 2 },
+    source_fact_keys: ["fact-value-1"],
+    formula_version: "cio_tower_v1",
+  }),
 ];
 
 const ZERO_AMOUNT_INITIATIVES: AIInitiative[] = INITIATIVES.map(
@@ -478,6 +502,43 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.queryByText("$924.8M")).not.toBeInTheDocument();
     expect(
       screen.getByText(/across 5 portfolio-company rollups/i),
+    ).toBeInTheDocument();
+  });
+
+  it("does not claim program or measured-value rows are absent when governed metric packets exist", () => {
+    render(
+      <TowerIndexPage
+        tenantName="Industrial Demo"
+        context="Tower"
+        towerToday="2026-06-25"
+        clientId="client-industrial"
+        initiatives={[]}
+        vendors={[]}
+        activeTab="portfolio"
+        budgetRollups={BUDGET_ROLLUPS}
+        metricPackets={GOVERNED_METRIC_PACKETS}
+      />,
+    );
+
+    expect(screen.getAllByText("$877.9M").length).toBeGreaterThan(0);
+    expect(screen.getByText("$76.4M")).toBeInTheDocument();
+    expect(screen.getByText("$91.7M")).toBeInTheDocument();
+    expect(screen.getByText("2 attested programs")).toBeInTheDocument();
+    expect(
+      screen.getByText(/3 governed initiative budget entries/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/No measured value rows are loaded/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/No Tower program rows are loaded/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/waiting for tenant-bound Tower substrate/i),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/from 0 initiative rows/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Program budget entries are summarized/i),
     ).toBeInTheDocument();
   });
 
