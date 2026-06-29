@@ -359,22 +359,6 @@ export function MovesExplorer({
                           >
                             {d.title}
                           </span>
-                          {d.gate && !presentationMode && (
-                            <span
-                              style={{
-                                fontSize: 8.5,
-                                fontWeight: 700,
-                                letterSpacing: "0.06em",
-                                color: "#B5852A",
-                                background: "rgba(181,133,42,0.12)",
-                                padding: "1px 5px",
-                                borderRadius: 2,
-                                fontFamily: "JetBrains Mono, monospace",
-                              }}
-                            >
-                              GATE
-                            </span>
-                          )}
                         </div>
                       )),
                     )}
@@ -423,7 +407,7 @@ function Detail({
   if (sel.kind === "phase") {
     return (
       <div>
-        {eyebrow(`${phase.label} · gate`)}
+        {eyebrow(`${phase.label} · phase`)}
         <div
           style={{
             fontFamily: serif,
@@ -437,7 +421,7 @@ function Detail({
           style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}
         >
           {[
-            ["Gate", `${phase.gateMet}/${phase.gateTotal} ready`],
+            ["Readiness", `${phase.gateMet}/${phase.gateTotal} ready`],
             ["Artifacts", String(phase.deliverables.length)],
             ["Inputs", String(phase.inputs.length)],
           ].map(([l, v]) => (
@@ -466,8 +450,8 @@ function Detail({
           }}
         >
           <b style={{ color: INK }}>Approve &amp; Build</b> creates the phase
-          package, clears the gate when ready, and unlocks the next step. This
-          view is for review and download.
+          package, records readiness, and unlocks the next step. This view is
+          for review and download.
         </div>
       </div>
     );
@@ -482,7 +466,7 @@ function Detail({
         <div style={{ fontFamily: serif, fontSize: 19 }}>{t.title}</div>
         <div style={{ fontSize: 12.5, color: SUB, margin: "6px 0 14px" }}>
           {t.audience}
-          {t.gate ? " · gate artifact" : ""}
+          {t.gate ? " · decision artifact" : ""}
         </div>
         <div style={{ fontSize: 13.5, lineHeight: 1.6 }}>{t.purpose}</div>
         <div
@@ -540,9 +524,7 @@ function Detail({
   const ready = d.status !== "none";
   return (
     <div>
-      {eyebrow(
-        `${phase.label} · deliverable${d.gate && !presentationMode ? " · gate artifact" : ""}`,
-      )}
+      {eyebrow(`${phase.label} · deliverable`)}
       <div
         style={{
           display: "flex",

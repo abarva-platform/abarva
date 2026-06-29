@@ -1100,12 +1100,10 @@ export function FileCabinetPanel({
               margin: 0,
             }}
           >
-            {presentationMode ? "Downloads" : "File Cabinet"}
+            Downloads
           </h2>
           <p style={{ fontSize: 12, color: "#9AA3B2", margin: "3px 0 0" }}>
-            {presentationMode
-              ? `Client-ready files and review versions. ${totalCurrent} current.`
-              : `Every artifact for this Move — stored, versioned, and ready for review. ${totalCurrent} current.`}
+            Client-ready files and review versions. {totalCurrent} current.
           </p>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
