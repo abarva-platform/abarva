@@ -34,6 +34,13 @@ function elementText(element: Element): string | null {
   if (element.matches('a,button,[role="button"],[role="menuitem"],summary')) {
     return normalizeTelemetryText(element.textContent);
   }
+  if (element.matches('[data-track-click]')) {
+    return normalizeTelemetryText(
+      element.getAttribute('data-track-label') ??
+        element.getAttribute('aria-label') ??
+        element.textContent,
+    );
+  }
   return null;
 }
 
@@ -69,6 +76,38 @@ function AnonymousProductUsageTelemetry() {
       client_locked: null,
     });
   }, [pathname, posthog, searchParams]);
+
+  useEffect(() => {
+    if (!posthog) return;
+
+    function onClick(event: MouseEvent) {
+      const element = clickedElement(event.target);
+      if (!element) return;
+      const productModule = deriveProductUsageModule(window.location.pathname);
+      const anchor = element.closest('a[href]') as HTMLAnchorElement | null;
+      posthog.capture('abarva.product_click', {
+        route: window.location.pathname,
+        module: productModule,
+        signed_in: false,
+        client_id: null,
+        default_client_id: null,
+        tag: element.tagName.toLowerCase(),
+        role_attr: element.getAttribute('role'),
+        type_attr: element.getAttribute('type'),
+        element_id: element.id || null,
+        test_id: element.getAttribute('data-testid'),
+        track_id: element.getAttribute('data-track-id'),
+        label: elementText(element),
+        href: safePathFromHref(anchor?.href),
+        button: event.button,
+        meta_key: event.metaKey,
+        ctrl_key: event.ctrlKey,
+      });
+    }
+
+    document.addEventListener('click', onClick, { capture: true });
+    return () => document.removeEventListener('click', onClick, { capture: true });
+  }, [posthog]);
 
   return null;
 }

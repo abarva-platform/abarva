@@ -1,7 +1,7 @@
 'use client'
 
-import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { usePostHog } from 'posthog-js/react'
 
 type LoggedOutLandingPageProps = {
   signedOut?: boolean
@@ -30,14 +30,32 @@ const EMPTY_FORM: RequestForm = {
 }
 
 export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPageProps) {
+  const posthog = usePostHog()
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState<RequestForm>(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const trackMarketingEvent = useCallback(
+    (event: string, properties: Record<string, unknown> = {}) => {
+      try {
+        posthog?.capture(event, {
+          surface: 'public_marketing',
+          route: typeof window === 'undefined' ? '/' : window.location.pathname,
+          signed_in: false,
+          ...properties,
+        })
+      } catch {
+        // Telemetry is optional; never block public marketing or lead capture.
+      }
+    },
+    [posthog],
+  )
+
   const openReq = () => {
     setError(null)
+    trackMarketingEvent('abarva.marketing_request_access_opened')
     setModalOpen(true)
   }
 
@@ -61,6 +79,10 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
     }
     return undefined
   }, [modalOpen])
+
+  useEffect(() => {
+    trackMarketingEvent('abarva.marketing_visit')
+  }, [trackMarketingEvent])
 
   // Close on Escape.
   useEffect(() => {
@@ -112,6 +134,13 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
     event.preventDefault()
     setSubmitting(true)
     setError(null)
+    trackMarketingEvent('abarva.marketing_request_access_submitted', {
+      role: form.role || null,
+      company_size: form.companySize || null,
+      industry: form.industry || null,
+      org_type: form.orgType || null,
+      has_initiative: Boolean(form.initiative.trim()),
+    })
     try {
       const response = await fetch('/api/request-access', {
         method: 'POST',
@@ -130,8 +159,10 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
       if (!response.ok) {
         throw new Error('Request failed')
       }
+      trackMarketingEvent('abarva.marketing_request_access_succeeded')
       setSubmitted(true)
     } catch {
+      trackMarketingEvent('abarva.marketing_request_access_failed')
       setError('Something went wrong. Please try again, or email admin@abarva.ai.')
     } finally {
       setSubmitting(false)
@@ -319,6 +350,51 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           padding: 7px 13px;
           border-radius: 30px;
           border: 1px solid rgba(255, 255, 255, 0.16);
+        }
+        .abarva-landing .video-section {
+          background: linear-gradient(180deg, #f8f7f4 0%, #ffffff 48%, #f3f1ec 100%);
+          border-top: 1px solid var(--line);
+          border-bottom: 1px solid var(--line);
+        }
+        .abarva-landing .video-shell {
+          position: relative;
+          border-radius: 22px;
+          overflow: hidden;
+          border: 1px solid rgba(11, 20, 34, 0.14);
+          background: #08111f;
+          box-shadow: var(--shadow);
+        }
+        .abarva-landing .video-shell video {
+          display: block;
+          width: 100%;
+          aspect-ratio: 16 / 9;
+          background: #08111f;
+        }
+        .abarva-landing .video-shell .pf-tag {
+          position: absolute;
+          right: 16px;
+          top: 16px;
+          background: rgba(8, 15, 26, 0.74);
+          backdrop-filter: blur(8px);
+          color: #e7eefb;
+          font-size: 11.5px;
+          letter-spacing: 0.04em;
+          padding: 7px 13px;
+          border-radius: 30px;
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          pointer-events: none;
+        }
+        .abarva-landing .video-caption {
+          display: flex;
+          justify-content: space-between;
+          gap: 24px;
+          flex-wrap: wrap;
+          margin-top: 16px;
+          color: var(--mute);
+          font-size: 13px;
+        }
+        .abarva-landing .video-caption b {
+          color: var(--ink2);
         }
 
         /* ===== GENERAL ===== */
@@ -1443,10 +1519,12 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               style={{ height: 24, width: 'auto', display: 'block' }}
             />
             <div className="navlinks">
-              <Link className="btn btn-dark" href="/sign-in">
-                Sign in
-              </Link>
-              <button className="btn btn-prime" type="button" onClick={openReq}>
+              <button
+                className="btn btn-prime"
+                type="button"
+                data-track-id="marketing-nav-request-access"
+                onClick={openReq}
+              >
                 Request access
               </button>
             </div>
@@ -1467,10 +1545,19 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               and how to move from ambition to governed execution and measurable value.
             </p>
             <div className="fb-cta">
-              <button className="btn btn-prime" type="button" onClick={openReq}>
+              <button
+                className="btn btn-prime"
+                type="button"
+                data-track-id="marketing-hero-request-access"
+                onClick={openReq}
+              >
                 Request private preview
               </button>
-              <a className="btn btn-dark" href="#loop">
+              <a
+                className="btn btn-dark"
+                href="#loop"
+                data-track-id="marketing-hero-see-value-loop"
+              >
                 See the value loop
               </a>
             </div>
@@ -1490,8 +1577,8 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
             </div>
             {signedOut && (
               <div className="signed-out-note">
-                You are signed out. The active workspace context has been cleared; use the private
-                credentials from your invite to re-enter.
+                You are signed out. The active workspace context has been cleared. Please use the
+                access instructions sent to your email.
               </div>
             )}
           </div>
@@ -1886,6 +1973,46 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         </div>
       </section>
 
+      {/* ===== PRODUCT VIDEO ===== */}
+      <section className="video-section">
+        <div className="wrap rv">
+          <div className="section-head">
+            <div>
+              <div className="eyebrow">Product walkthrough</div>
+              <h2 className="lead">A rapid tour of the AbarVa operating loop.</h2>
+            </div>
+            <p className="body">
+              A short CXO-safe preview of how client context, industry perspective, governed
+              execution, sourcing, and value proof connect without exposing implementation details.
+            </p>
+          </div>
+          <div className="video-shell" data-track-click data-track-id="marketing-product-video-shell">
+            <video
+              controls
+              preload="metadata"
+              poster="/marketing/abarva-demo-cxo-safe-poster.jpg"
+              aria-label="AbarVa product walkthrough video"
+              onPlay={() => trackMarketingEvent('abarva.marketing_video_played')}
+              onEnded={() => trackMarketingEvent('abarva.marketing_video_completed')}
+            >
+              <source src="/marketing/abarva-demo-cxo-safe-qa-passed.mp4" type="video/mp4" />
+              Your browser does not support embedded video playback.
+            </video>
+            <span className="pf-tag">Private preview</span>
+          </div>
+          <div className="video-caption">
+            <span>
+              <b>What viewers see:</b> Home, Intelligence, Moves, Source, and Tower as one governed
+              operating model.
+            </span>
+            <span>
+              <b>What stays private:</b> prompts, proprietary control logic, and tenant-specific
+              implementation details.
+            </span>
+          </div>
+        </div>
+      </section>
+
       {/* ===== INSIDE THE PRODUCT ===== */}
       <section style={{ background: 'linear-gradient(180deg,#F8F7F4,#F3F1EC)' }}>
         <div className="wrap rv">
@@ -2152,7 +2279,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
             <div className="req-success">
               <div className="ok">✓</div>
               <h3>Request received</h3>
-              <p>We&rsquo;ll be in touch from admin@abarva.ai.</p>
+              <p>We&rsquo;ll review the fit and send next steps and access instructions by email.</p>
             </div>
           ) : (
             <form className="req-body" onSubmit={handleSubmit}>
@@ -2283,11 +2410,18 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
                   />
                 </div>
               </div>
-              <button className="btn btn-prime req-submit" type="submit" disabled={submitting}>
+              <button
+                className="btn btn-prime req-submit"
+                type="submit"
+                data-track-id="marketing-request-access-submit"
+                disabled={submitting}
+              >
                 {submitting ? 'Sending…' : 'Request private preview'}
               </button>
               {error && <div className="req-error">{error}</div>}
-              <div className="req-fine">We&rsquo;ll reach out from admin@abarva.ai. No spam, ever.</div>
+              <div className="req-fine">
+                We review every request before granting access. Instructions are sent by email.
+              </div>
             </form>
           )}
         </div>
