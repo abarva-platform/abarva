@@ -153,7 +153,7 @@ export default async function StrategicMoveDetailPage({
     <AppShell
       surface="programs-detail"
       topBarProps={
-        presentationMode ? { tenantName: "Northstar Retail Group" } : undefined
+        presentationMode ? { tenantName: "Retail Demo Workspace" } : undefined
       }
     >
       <StrategicMoveDetailView

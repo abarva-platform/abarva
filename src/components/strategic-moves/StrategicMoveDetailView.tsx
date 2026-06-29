@@ -81,7 +81,7 @@ function presentationCopyForMove(move: StrategicMove): PresentationCopy {
     moveTitle: compactMoveTitle(move.name),
     moveSubtitle:
       "Treasury rollout, controls modernization, reporting simplification, vendor optimization.",
-    tenantName: "Northstar Retail Group",
+    tenantName: "Retail Demo Workspace",
     displayCode: "DEMO-MOVE-2026",
     disclosure: "Synthetic demo data for product illustration",
   };
