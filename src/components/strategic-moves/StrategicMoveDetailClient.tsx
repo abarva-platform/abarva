@@ -39,6 +39,9 @@ interface Props {
   decisionThreadId?: string | null;
   originatingIntelligenceSessionId?: string | null;
   presentationMode?: boolean;
+  presentationMoveTitle?: string;
+  presentationMoveCode?: string;
+  presentationTenantName?: string;
 }
 
 function generateTurnId(): string {
@@ -64,17 +67,23 @@ export function StrategicMoveDetailClient({
   decisionThreadId = null,
   originatingIntelligenceSessionId = null,
   presentationMode = false,
+  presentationMoveTitle,
+  presentationMoveCode,
+  presentationTenantName,
 }: Props) {
+  const moveTitle = presentationMoveTitle ?? move.name;
+  const moveCode = presentationMoveCode ?? move.displayCode;
+  const tenantName = presentationTenantName ?? move.tenant.name;
   const initialThread: ChatMessage[] = [
     {
       id: 'nexus-open-detail',
       role: 'agent',
-      body: `I'm scoped to ${move.displayCode} — ${move.name}. Currently in ${move.phaseLabel}. Status: ${move.status.text.toLowerCase()}.`,
+      body: `I'm scoped to ${moveCode} — ${moveTitle}. Currently in ${move.phaseLabel}. Status: ${move.status.text.toLowerCase()}.`,
     },
     {
       id: 'nexus-open-detail-2',
       role: 'agent',
-      body: `${move.status.description}. ${decisionThreadId ? `This Move is bound to Decision Dossier ${decisionThreadId}; pronouns like "this Move" refer to ${move.displayCode}. ` : ''}Want me to walk through what's needed to advance?`,
+      body: `${move.status.description}. ${decisionThreadId ? `This Move is bound to Decision Dossier ${decisionThreadId}; pronouns like "this Move" refer to ${moveCode}. ` : ''}Want me to walk through what's needed to advance?`,
     },
   ];
   if (originatingIntelligenceSessionId) {
@@ -129,7 +138,7 @@ export function StrategicMoveDetailClient({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: fullMessage,
-            tenantName: move.tenant.name,
+            tenantName,
             agentName: 'Nexus',
             // 'programs-detail' is the existing semantic surface key for
             // /strategic-moves/[id] — canonicalizeFromBody reshapes it to
@@ -140,8 +149,8 @@ export function StrategicMoveDetailClient({
             surfaceContext: {
               programId: move.id,
               moveId: move.id,
-              moveCode: move.displayCode,
-              moveTitle: move.name,
+              moveCode,
+              moveTitle,
               decisionThreadId,
               originatingIntelligenceSessionId,
               currentPhase: move.currentPhase,
@@ -210,7 +219,15 @@ export function StrategicMoveDetailClient({
         );
       }
     },
-    [decisionThreadId, move, originatingIntelligenceSessionId, updateThread],
+    [
+      decisionThreadId,
+      move,
+      moveCode,
+      moveTitle,
+      originatingIntelligenceSessionId,
+      tenantName,
+      updateThread,
+    ],
   );
 
   return (
@@ -231,8 +248,8 @@ export function StrategicMoveDetailClient({
       }
       surfaceContext={{
         moveId: move.id,
-        moveCode: move.displayCode,
-        moveTitle: move.name,
+        moveCode,
+        moveTitle,
         decisionThreadId,
         originatingIntelligenceSessionId,
         currentPhase: move.currentPhase,
