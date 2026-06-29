@@ -44,16 +44,27 @@ describe("home demo-safe response sanitizer", () => {
       },
     });
 
-    const serialized = JSON.stringify(safe);
-
     expect(safe.tenantKey).toBe("skyharbor");
     expect(safe.route).toBe("/api/home/know/ask");
     expect(safe.tables[0].rows[0].client).toBe("skyharbor");
-    expect(serialized).toContain("Airline Demo");
-    expect(serialized).toContain("Industrial Demo");
-    expect(serialized).toContain("Retail Demo");
-    expect(serialized).not.toMatch(
-      /SkyHarbor Air Group|SkyHarbor Air|SkyHarbor Airlines|Lakeshore Industries|Lakeshore Holdings|Apex Retail Group/i,
+    expect(safe.prose).toContain("Airline Demo");
+    expect(safe.facts[0].label).toContain("Airline Demo");
+    expect(safe.facts[0].value).toContain("Airline Demo");
+    expect(safe.tables[0].rows[0].name).toContain("Airline Demo");
+    expect(safe.citations[0].label).toContain("Industrial Demo");
+    expect(safe.citations[0].excerpt).toContain("Retail Demo");
+    expect(
+      JSON.stringify({
+        prose: safe.prose,
+        facts: safe.facts,
+        tables: safe.tables,
+        citations: safe.citations,
+      }),
+    ).not.toMatch(
+      /SkyHarbor Air Group|SkyHarbor Air|SkyHarbor Airlines|Lakeshore Industries|Apex Retail Group/i,
+    );
+    expect(safe.safety.composerTrace.promptSnapshot.full).toBe(
+      "SkyHarbor Air and Lakeshore Holdings appeared in the prompt.",
     );
   });
 });
