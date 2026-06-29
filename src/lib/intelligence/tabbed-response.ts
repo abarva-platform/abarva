@@ -109,6 +109,7 @@ export function parseIntelligenceTabbedResponse(
   text: string,
 ): ParsedIntelligenceTabbedResponse {
   const rawText = text.replace(/\r\n/g, "\n").trim();
+  TAB_MARKER_RE.lastIndex = 0;
   const matches = Array.from(rawText.matchAll(TAB_MARKER_RE));
   if (matches.length === 0) {
     return {
@@ -145,6 +146,21 @@ export function parseIntelligenceTabbedResponse(
     mainAnswer,
     tabs,
   };
+}
+
+export function hasIntelligenceTabMarkers(text: string): boolean {
+  TAB_MARKER_RE.lastIndex = 0;
+  return TAB_MARKER_RE.test(text.replace(/\r\n/g, "\n"));
+}
+
+export function visibleIntelligenceMainAnswer(text: string): string {
+  const parsed = parseIntelligenceTabbedResponse(text);
+  if (hasIntelligenceTabMarkers(text)) return parsed.mainAnswer;
+  const partialMarkerIndex = parsed.rawText.search(/(?:^|\n)\s*<<<TAB:/i);
+  if (partialMarkerIndex >= 0) {
+    return parsed.rawText.slice(0, partialMarkerIndex).trim();
+  }
+  return parsed.rawText;
 }
 
 export function hasChartReadyMarkdownData(content: string): boolean {
