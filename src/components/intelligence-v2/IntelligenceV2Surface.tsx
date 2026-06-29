@@ -1,11 +1,9 @@
 "use client";
 
-// Intelligence v2 surface — the Lens. Renders the binding contract (signals /
-// context / corpus / suggested questions / trust line) for the active tenant.
-// Faithful to the Claude-Design v2 spec (Fraunces headlines, mono eyebrows,
-// hairline cards, cross-domain chips). The advisor conversation uses the
-// shared AvaChatShell/AgentDock so Intelligence cannot fall back to the old
-// centered ask page.
+// Intelligence v2 surface — executive advisor canvas. The default canvas stays
+// quiet; detailed evidence, visuals, and context appear after Claude answers.
+// The advisor conversation uses the shared AvaChatShell/AgentDock so
+// Intelligence cannot fall back to the old centered ask page.
 
 import { useMemo, useState } from "react";
 import type { IntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
@@ -19,14 +17,24 @@ import type {
   SuggestedAction,
 } from "@/components/agent/AgentDock";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
-import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
-import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
-import { hasVisibleAvaArtifacts } from "@/lib/ava-answer/renderable-artifacts";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
-import type { ParsedIntelligenceTab } from "@/lib/intelligence/tabbed-response";
-import { demoSafeClientText } from "@/lib/client-config";
+import {
+  parseIntelligenceTabbedResponse,
+  type ParsedIntelligenceTab,
+  visibleIntelligenceMainAnswer,
+} from "@/lib/intelligence/tabbed-response";
 
 type Tab = string;
+
+type ExecutiveCanvasTab = {
+  id: "decision" | "visual" | "context" | "proof";
+  label: string;
+  items: ParsedIntelligenceTab[];
+};
+
+type IntelligenceChatMessage = ChatMessage & {
+  intelligenceTabs?: ParsedIntelligenceTab[];
+};
 
 const CSS = `
 .iv2{--paper:#FBFAF7;--card:#FFFFFF;--ink:#1A1A18;--muted:#6B6B63;--faint:#9A998E;--line:#E7E3DA;--green:#1F6B3A;--greenbg:#E7F0E9;--amber:#A66A1F;
@@ -35,7 +43,7 @@ const CSS = `
 .iv2 .serif{font-family:var(--font-fraunces),Georgia,serif}
 .iv2 .ey{font-family:var(--font-geist-mono),'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
 .iv2 .hero{text-align:left;padding:24px 0 8px}
-.iv2 .hero h1{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:44px;line-height:1.06;letter-spacing:-.015em;margin:14px 0 16px}
+.iv2 .hero h1{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:40px;line-height:1.08;letter-spacing:0;margin:12px 0 12px}
 .iv2 .hero .sub{color:var(--muted);font-size:15px;max-width:720px;margin:0}
 .iv2 .chips{display:flex;flex-wrap:nowrap;gap:8px;justify-content:center;max-width:1080px;margin:16px auto 0;overflow:hidden}
 .iv2 .chips .chip{max-width:230px}
@@ -57,27 +65,36 @@ const CSS = `
 .iv2 .ansbox .ansexpertslabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-right:3px}
 .iv2 .ansbox .ansexpertchip{display:inline-flex;align-items:center;background:var(--greenbg);color:var(--green);border-radius:20px;padding:3px 11px;font-size:11.5px;font-weight:500}
 .iv2 .ansbox .ansfollowups{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
-.iv2 .tabs{display:flex;justify-content:center;gap:30px;border-bottom:1px solid var(--line);margin-top:18px}
-.iv2 .tab{padding:14px 2px;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:7px;background:none;font-family:inherit}
+.iv2 .tabs{display:flex;justify-content:flex-start;gap:22px;border-bottom:1px solid var(--line);margin-top:18px;overflow-x:auto}
+.iv2 .tab{padding:13px 2px;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:7px;background:none;font-family:inherit;white-space:nowrap}
 .iv2 .tab.active{color:var(--ink);border-bottom-color:var(--green)}
 .iv2 .tab .ct{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;color:var(--faint)}
 .iv2 .section{padding:26px 0 80px}
-.iv2 .answerPanel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:14px}
+.iv2 .answerPanel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:24px;display:grid;gap:14px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
 .iv2 .answerPanel h3{font-family:var(--font-fraunces),Georgia,serif;font-size:24px;font-weight:500;margin:0}
 .iv2 .answerText{white-space:pre-wrap;font-size:15px;line-height:1.65;color:var(--ink)}
-.iv2 .decisionTabPanel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:12px}
+.iv2 .decisionTabPanel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:24px;display:grid;gap:18px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
 .iv2 .decisionTabHead{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:12px}
 .iv2 .decisionTabTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:24px;font-weight:500}
-.iv2 .groundingBadge{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:4px 9px;color:var(--muted);background:#fff}
+.iv2 .contextNote{font-size:12px;color:var(--muted);white-space:nowrap}
 .iv2 .tabMarkdown{font-size:14px;line-height:1.65}
-.iv2 .tabMarkdown table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0 2px}
-.iv2 .tabMarkdown th,.iv2 .tabMarkdown td{border:1px solid var(--line);padding:9px 10px;vertical-align:top}
-.iv2 .tabMarkdown th{background:#F7F6F2;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
-.iv2 .emptyAnswer{border:1px dashed var(--line);border-radius:12px;padding:22px;color:var(--muted);background:rgba(255,255,255,.55)}
+.iv2 .tabMarkdown table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;margin:10px 0 2px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.iv2 .tabMarkdown th,.iv2 .tabMarkdown td{border-bottom:1px solid var(--line);padding:10px 12px;vertical-align:top}
+.iv2 .tabMarkdown th+th,.iv2 .tabMarkdown td+td{border-left:1px solid var(--line)}
+.iv2 .tabMarkdown tr:last-child td{border-bottom:0}
+.iv2 .tabMarkdown th{background:#F4F2EC;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.iv2 .canvasBlock{display:grid;gap:10px}
+.iv2 .canvasBlock+.canvasBlock{padding-top:16px;border-top:1px solid var(--line)}
+.iv2 .canvasBlockHead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.iv2 .canvasBlockTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--green)}
+.iv2 .emptyAnswer{border:1px dashed var(--line);border-radius:8px;padding:22px;color:var(--muted);background:rgba(255,255,255,.55)}
+.iv2 .startPanel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:28px;max-width:760px}
+.iv2 .startPanel h3{font-family:var(--font-fraunces),Georgia,serif;font-size:28px;font-weight:500;margin:0 0 10px}
+.iv2 .startPanel p{font-size:15px;color:var(--muted);margin:0;max-width:620px}
 .iv2 .sechead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}
 .iv2 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .iv2 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-.iv2 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 24px}
+.iv2 .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:22px 24px}
 .iv2 .tags{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
 .iv2 .tag{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .iv2 .tag.sep{color:var(--faint)}
@@ -93,7 +110,7 @@ const CSS = `
 .iv2 .act{margin-left:auto;display:flex;gap:18px}
 .iv2 .act a{font-size:12.5px;color:#2a2a26;cursor:pointer;text-decoration:none}
 .iv2 .act a.move{color:var(--green)}
-.iv2 .dimcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px}
+.iv2 .dimcard{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:20px}
 .iv2 .dimhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .iv2 .dimcard h4{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:18px;letter-spacing:-.01em}
 .iv2 .loaded{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;background:var(--greenbg);color:var(--green);padding:3px 7px;border-radius:4px;white-space:nowrap}
@@ -106,34 +123,6 @@ const CSS = `
 .iv2 .cpat p{color:var(--muted);font-size:12.5px}
 @media(max-width:900px){.iv2 .grid2,.iv2 .grid3{grid-template-columns:1fr}}
 `;
-
-const TECHNICAL_STRING_FIELDS = new Set([
-  "id",
-  "key",
-  "client",
-  "clientKey",
-  "tenantId",
-  "tenantKey",
-]);
-
-function sanitizeVisibleStrings<T>(value: T, fieldName?: string): T {
-  if (typeof value === "string" && fieldName && TECHNICAL_STRING_FIELDS.has(fieldName)) {
-    return value;
-  }
-  if (typeof value === "string") return demoSafeClientText(value) as T;
-  if (Array.isArray(value)) {
-    return value.map((item) => sanitizeVisibleStrings(item)) as T;
-  }
-  if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
-        key,
-        sanitizeVisibleStrings(entry, key),
-      ]),
-    ) as T;
-  }
-  return value;
-}
 
 function buildSurfaceContext(payload: IntelligenceBindingPayload) {
   const tenantFacts = [
@@ -196,36 +185,22 @@ function newTurnId(prefix: string): string {
 }
 
 function answerBodyFromPacket(answer: AvaAnswerPacket): string {
-  const seen = new Set<string>();
-  return [
-    answer.prose,
-    answer.directAnswer,
-    answer.interpretation,
-    answer.businessImplication,
-    answer.recommendation,
-  ]
-    .filter((part): part is string => Boolean(part?.trim()))
-    .filter((part) => {
-      const normalized = part.replace(/\s+/g, " ").trim();
-      if (seen.has(normalized)) return false;
-      seen.add(normalized);
-      return true;
-    })
-    .join("\n\n")
-    .trim();
-}
-
-function hasRenderableAvaArtifacts(
-  answer?: AvaAnswerPacket | null,
-): answer is AvaAnswerPacket {
-  return hasVisibleAvaArtifacts(answer);
+  return (
+    answer.prose?.trim() ||
+    answer.directAnswer?.trim() ||
+    [answer.interpretation, answer.businessImplication, answer.recommendation]
+      .filter((part): part is string => Boolean(part?.trim()))
+      .join("\n\n")
+      .trim()
+  );
 }
 
 function visibleLatestAnswerText(message: ChatMessage): string {
   const packetText = message.agentAnswer
     ? answerBodyFromPacket(message.agentAnswer)
     : "";
-  return demoSafeClientText(scrubPublicAvaAnswerText(packetText || message.body));
+  const raw = packetText || message.body;
+  return visibleIntelligenceMainAnswer(raw);
 }
 
 function intelligenceTabsFromAnswer(
@@ -238,7 +213,21 @@ function intelligenceTabsFromAnswer(
   return tabs.filter(isParsedIntelligenceTab);
 }
 
-function isParsedIntelligenceTab(value: unknown): value is ParsedIntelligenceTab {
+function intelligenceTabsFromMessage(
+  message?: IntelligenceChatMessage | null,
+): ParsedIntelligenceTab[] {
+  if (!message) return [];
+  if (message.intelligenceTabs && message.intelligenceTabs.length > 0) {
+    return message.intelligenceTabs;
+  }
+  const packetTabs = intelligenceTabsFromAnswer(message.agentAnswer);
+  if (packetTabs.length > 0) return packetTabs;
+  return parseIntelligenceTabbedResponse(message.body).tabs;
+}
+
+function isParsedIntelligenceTab(
+  value: unknown,
+): value is ParsedIntelligenceTab {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<ParsedIntelligenceTab>;
   return (
@@ -249,26 +238,61 @@ function isParsedIntelligenceTab(value: unknown): value is ParsedIntelligenceTab
   );
 }
 
-function groundingLabel(grounding: ParsedIntelligenceTab["grounding"]): string {
+function contextLabel(grounding: ParsedIntelligenceTab["grounding"]): string {
   switch (grounding) {
     case "tenant-evidence":
-      return "Tenant evidence";
+      return "Company evidence";
     case "function-context":
-      return "Function context";
+      return "Functional lens";
     case "category-context":
-      return "Category context";
+      return "Category lens";
     case "industry-context":
-      return "Industry context";
+      return "Industry lens";
     case "corpus-pattern":
-      return "Pattern context";
+      return "Pattern lens";
     case "benchmark":
-      return "Benchmark context";
+      return "Benchmark lens";
     case "mixed":
-      return "Mixed grounding";
+      return "Mixed lens";
     case "unknown":
     default:
-      return "Grounding noted";
+      return "Context noted";
   }
+}
+
+function shouldShowContextNote(
+  groupId: ExecutiveCanvasTab["id"],
+  grounding: ParsedIntelligenceTab["grounding"],
+): boolean {
+  if (groupId === "proof") return true;
+  return grounding === "industry-context" || grounding === "benchmark";
+}
+
+function executiveTabIdFor(
+  tab: ParsedIntelligenceTab,
+): ExecutiveCanvasTab["id"] {
+  if (tab.id === "decision") return "decision";
+  if (tab.id === "chart" || tab.id === "table") return "visual";
+  if (tab.id === "industry_insights") return "context";
+  return "proof";
+}
+
+function executiveTabsFrom(
+  tabs: ParsedIntelligenceTab[],
+): ExecutiveCanvasTab[] {
+  const groups: ExecutiveCanvasTab[] = [
+    { id: "decision", label: "Decision", items: [] },
+    { id: "visual", label: "Visual", items: [] },
+    { id: "context", label: "Context", items: [] },
+    { id: "proof", label: "Proof", items: [] },
+  ];
+  for (const item of tabs) {
+    const group = groups.find(
+      (candidate) => candidate.id === executiveTabIdFor(item),
+    );
+    if (group) group.items.push(item);
+  }
+  return groups.filter((group) => group.items.length > 0);
 }
 
 export function IntelligenceV2Surface({
@@ -281,54 +305,41 @@ export function IntelligenceV2Surface({
   // it never surfaces a client/tenant name. Re-bind here to restore personalization.
   tenantName?: string;
 }) {
-  const [tab, setTab] = useState<Tab>("decision-signals");
-  const [thread, setThread] = useState<ChatMessage[]>([]);
-  const [latestAnswer, setLatestAnswer] = useState<ChatMessage | null>(null);
+  const [tab, setTab] = useState<Tab>("answer");
+  const [thread, setThread] = useState<IntelligenceChatMessage[]>([]);
+  const [latestAnswer, setLatestAnswer] =
+    useState<IntelligenceChatMessage | null>(null);
   const [busy, setBusy] = useState(false);
-  const t = useMemo(
-    () =>
-      sanitizeVisibleStrings({
-        ...payload,
-        tenant: {
-          ...payload.tenant,
-          displayName:
-            tenantName?.trim() || payload.tenant.displayName,
-        },
-      }),
-    [payload, tenantName],
-  );
-  const tl = t.trustLine;
-  const contextEvidence = t.context.reduce((a, c) => a + (c.evidence || 0), 0);
-  const surfaceContext = buildSurfaceContext(t);
+  const t = payload;
+  const surfaceContext = buildSurfaceContext({
+    ...t,
+    tenant: {
+      ...t.tenant,
+      displayName: tenantName?.trim() || t.tenant.displayName,
+    },
+  });
   const latestIntelligenceTabs = useMemo(
-    () => intelligenceTabsFromAnswer(latestAnswer?.agentAnswer),
-    [latestAnswer?.agentAnswer],
+    () => intelligenceTabsFromMessage(latestAnswer),
+    [latestAnswer],
+  );
+  const executiveTabs = useMemo(
+    () => executiveTabsFrom(latestIntelligenceTabs),
+    [latestIntelligenceTabs],
   );
   const tabs = useMemo<AvaCanvasTab[]>(() => {
-    if (latestIntelligenceTabs.length > 0) {
+    if (executiveTabs.length > 0) {
       return [
-        { id: "answer", label: "Answer", count: 1 },
-        ...latestIntelligenceTabs
-          .filter((item) => item.content.trim())
-          .map((item) => ({
-            id: item.id,
-            label: item.label,
-          })),
+        { id: "answer", label: "Answer" },
+        ...executiveTabs.map((item) => ({
+          id: item.id,
+          label: item.label,
+        })),
       ];
     }
     return [
-      { id: "answer", label: "Answer", count: latestAnswer ? 1 : 0 },
-      { id: "decision-signals", label: "Decision Signals", count: t.signals.length },
-      { id: "business-context", label: "Business Context", count: t.context.length },
-      { id: "industry-context", label: "Industry Context", count: t.corpus.length },
+      { id: "answer", label: "Answer" },
     ];
-  }, [
-    latestAnswer,
-    latestIntelligenceTabs,
-    t.context.length,
-    t.corpus.length,
-    t.signals.length,
-  ]);
+  }, [executiveTabs]);
 
   async function askIntelligence(
     text: string,
@@ -381,17 +392,23 @@ export function IntelligenceV2Surface({
       let buffer = "";
       let answerText = "";
       let structuredAnswer: AvaAnswerPacket | null = null;
+      let sawTabPacketDuringStream = false;
 
       function updateAgentTurn(
         body: string,
         agentAnswer?: AvaAnswerPacket | null,
       ) {
+        const parsed = parseIntelligenceTabbedResponse(body);
+        const visibleBody = visibleIntelligenceMainAnswer(body);
+        const intelligenceTabs =
+          parsed.tabs.length > 0 ? parsed.tabs : undefined;
         setThread((prev) =>
           prev.map((turn) =>
             turn.id === agentId
               ? {
                   ...turn,
-                  body,
+                  body: visibleBody,
+                  intelligenceTabs,
                   ...(agentAnswer ? { agentAnswer } : null),
                 }
               : turn,
@@ -401,7 +418,8 @@ export function IntelligenceV2Surface({
           current?.id === agentId
             ? {
                 ...current,
-                body,
+                body: visibleBody,
+                intelligenceTabs,
                 ...(agentAnswer ? { agentAnswer } : null),
               }
             : current,
@@ -429,21 +447,31 @@ export function IntelligenceV2Surface({
           }
           if (event.type === "agent-answer" && event.answer) {
             const packetBody = answerBodyFromPacket(event.answer);
-            structuredAnswer = {
-              ...event.answer,
-              directAnswer:
-                event.answer.directAnswer?.trim() || answerText.trim(),
-              prose:
-                event.answer.prose?.trim() ||
+            const packetTabs = parseIntelligenceTabbedResponse(
+              packetBody || answerText,
+            ).tabs;
+            const directAnswer = visibleIntelligenceMainAnswer(
+              event.answer.directAnswer?.trim() || answerText.trim(),
+            );
+            const prose = visibleIntelligenceMainAnswer(
+              event.answer.prose?.trim() ||
                 event.answer.directAnswer?.trim() ||
                 answerText.trim(),
-            };
-            updateAgentTurn(
-              demoSafeClientText(
-                scrubPublicAvaAnswerText(packetBody || answerText.trim()),
-              ),
-              sanitizeVisibleStrings(structuredAnswer),
             );
+            const decisionFrame =
+              packetTabs.length > 0
+                ? {
+                    ...(event.answer.decisionFrame ?? {}),
+                    intelligenceTabs: packetTabs,
+                  }
+                : event.answer.decisionFrame;
+            structuredAnswer = {
+              ...event.answer,
+              directAnswer,
+              prose,
+              ...(decisionFrame ? { decisionFrame } : null),
+            };
+            updateAgentTurn(packetBody || answerText.trim(), structuredAnswer);
             continue;
           }
           const delta = eventText(event);
@@ -452,9 +480,13 @@ export function IntelligenceV2Surface({
             const displayText = structuredAnswer
               ? answerBodyFromPacket(structuredAnswer)
               : answerText;
+            sawTabPacketDuringStream =
+              sawTabPacketDuringStream || /^\s*<<<TAB:/im.test(displayText);
             updateAgentTurn(
-              demoSafeClientText(scrubPublicAvaAnswerText(displayText)),
-              structuredAnswer ? sanitizeVisibleStrings(structuredAnswer) : null,
+              sawTabPacketDuringStream
+                ? visibleIntelligenceMainAnswer(displayText)
+                : displayText,
+              structuredAnswer,
             );
           }
           if (event.type === "done" && event.telemetryEventId) {
@@ -469,12 +501,16 @@ export function IntelligenceV2Surface({
         }
       }
 
-      if (!answerText.trim() && structuredAnswer) {
+      if (answerText.trim() && sawTabPacketDuringStream) {
         updateAgentTurn(
-          demoSafeClientText(
-            scrubPublicAvaAnswerText(answerBodyFromPacket(structuredAnswer)),
-          ),
-          sanitizeVisibleStrings(structuredAnswer),
+          (structuredAnswer ? answerBodyFromPacket(structuredAnswer) : "") ||
+            answerText.trim(),
+          structuredAnswer,
+        );
+      } else if (!answerText.trim() && structuredAnswer) {
+        updateAgentTurn(
+          answerBodyFromPacket(structuredAnswer),
+          structuredAnswer,
         );
       } else if (!answerText.trim() && !structuredAnswer) {
         updateAgentTurn(
@@ -536,220 +572,82 @@ export function IntelligenceV2Surface({
               <div className="hero">
                 <div>
                   <div className="ey" style={{ color: "var(--green)" }}>
-                    INTELLIGENCE · RESEARCH &amp; ANALYSIS ENGINE
+                    INTELLIGENCE · EXECUTIVE ADVISOR
                   </div>
-                  <h1>Leadership intelligence canvas.</h1>
+                  <h1>Executive intelligence canvas.</h1>
                   <p className="sub">{t.ask.contract}</p>
-                </div>
-                <div className="trust" style={{ textAlign: "left", margin: 0 }}>
-                  <span className="mono">
-                    <b>{tl.dimensionsLoaded}</b> dimensions ·{" "}
-                    <b>{tl.evidencePoints.toLocaleString()}</b> source signals ·{" "}
-                    <b>{tl.sources}</b> sources · <b>{tl.searchVerifiedPct}%</b>{" "}
-                    search-verified
-                  </span>
                 </div>
               </div>
 
               <div className="tabs">
-                {tabs.map((item) => {
-                  const key = item.id;
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      className={`tab${tab === key ? " active" : ""}`}
-                      onClick={() => setTab(key)}
-                    >
-                      {item.label}
-                      {typeof item.count === "number" ? (
-                        <span className="ct">{item.count}</span>
-                      ) : null}
-                    </button>
-                  );
-                })}
+                {latestAnswer
+                  ? tabs.map((item) => {
+                      const key = item.id;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          className={`tab${tab === key ? " active" : ""}`}
+                          onClick={() => setTab(key)}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })
+                  : null}
               </div>
 
               <div className="section">
-                {tab === "answer" && (
+                {!latestAnswer && (
+                  <div className="startPanel">
+                    <h3>What decision needs a sharper answer?</h3>
+                    <p>
+                      Ask aVa about a funding choice, operating risk, vendor
+                      exposure, transformation priority, or AI initiative.
+                    </p>
+                  </div>
+                )}
+                {latestAnswer && tab === "answer" && (
                   <div className="answerPanel">
-                    <div className="ey">AVA · LATEST ANSWER</div>
-                    {latestAnswer ? (
-                      <>
-                        <h3>Answer from the current conversation</h3>
-                        {visibleLatestAnswerText(latestAnswer) ? (
-                          <div className="answerText">
-                            {visibleLatestAnswerText(latestAnswer)}
-                          </div>
-                        ) : (
-                          <div className="ansfetching">
-                            aVa is forming the answer…
-                          </div>
-                        )}
-                        {hasRenderableAvaArtifacts(latestAnswer.agentAnswer) ? (
-                          <AgentAnswerRenderer
-                            answer={latestAnswer.agentAnswer}
-                            showChrome={false}
-                            showProse={false}
-                          />
-                        ) : null}
-                      </>
+                    {visibleLatestAnswerText(latestAnswer) ? (
+                      <div className="answerText">
+                        {visibleLatestAnswerText(latestAnswer)}
+                      </div>
                     ) : (
-                      <div className="emptyAnswer">
-                        Ask in the left rail. Answers, tables, charts, graphs,
-                        and citations stay in the conversation, while this
-                        canvas keeps the supporting Intelligence tabs visible.
+                      <div className="ansfetching">
+                        aVa is forming the answer…
                       </div>
                     )}
                   </div>
                 )}
-                {latestIntelligenceTabs.map((item) =>
+                {executiveTabs.map((item) =>
                   tab === item.id ? (
                     <div className="decisionTabPanel" key={item.id}>
                       <div className="decisionTabHead">
                         <div className="decisionTabTitle">{item.label}</div>
-                        <span className="groundingBadge">
-                          {groundingLabel(item.grounding)}
-                        </span>
                       </div>
-                      <div className="tabMarkdown">
-                        <AgentMarkdown text={item.content} />
-                      </div>
+                      {item.items.map((canvasItem) => (
+                        <div className="canvasBlock" key={canvasItem.id}>
+                          <div className="canvasBlockHead">
+                            <div className="canvasBlockTitle">
+                              {canvasItem.label}
+                            </div>
+                            {shouldShowContextNote(
+                              item.id,
+                              canvasItem.grounding,
+                            ) ? (
+                              <span className="contextNote">
+                                {contextLabel(canvasItem.grounding)}
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="tabMarkdown">
+                            <AgentMarkdown text={canvasItem.content} />
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : null,
-                )}
-                {tab === "decision-signals" && latestIntelligenceTabs.length === 0 && (
-                  <>
-                    <div className="sechead">
-                      <span className="ey">
-                        EXECUTIVE SIGNALS · WHAT THE CONTEXT IS TELLING US
-                      </span>
-                      <span className="ey">
-                        {t.signals.length} ACTIVE · CROSS-DOMAIN
-                      </span>
-                    </div>
-                    <div className="grid2">
-                      {t.signals.map((s) => (
-                        <div className="card" key={s.id}>
-                          <div className="tags">
-                            {s.domains.map((d, i) => (
-                              <span key={d}>
-                                {i > 0 && (
-                                  <span className="tag sep">·&nbsp;</span>
-                                )}
-                                <span className="tag">{d}</span>
-                              </span>
-                            ))}
-                            {s.crossDomain && (
-                              <span className="tag cross">CROSS-DOMAIN</span>
-                            )}
-                          </div>
-                          <h3>{s.headline}</h3>
-                          <p className="body">{s.body}</p>
-                          <div className="rule" />
-                          <div className="cardfoot">
-                            <span
-                              className={`conf${s.confidence.toUpperCase().includes("HIGH") ? "" : " med"}`}
-                            >
-                              {s.confidence}
-                            </span>
-                            <span className="evi">
-                              <span className="dot" />
-                              {s.evidencePoints} source signals · {s.sources}{" "}
-                              sources
-                            </span>
-                            <span className="act">
-                              <a>Trace sources →</a>
-                              {s.move && (
-                                <a
-                                  className="move"
-                                  title={`${s.move.title} · ${s.move.owner ?? ""} · ${s.move.impact ?? ""}`}
-                                >
-                                  Shape into Move →
-                                </a>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-
-                {tab === "business-context" && latestIntelligenceTabs.length === 0 && (
-                  <>
-                    <div className="sechead">
-                      <span className="ey">
-                        AVAILABLE MATERIAL · BROWSE BY BUSINESS AREA
-                      </span>
-                      <span className="ey">
-                        {t.context.length} CONNECTED ·{" "}
-                        {contextEvidence.toLocaleString()} SOURCE SIGNALS
-                      </span>
-                    </div>
-                    <div className="grid3">
-                      {t.context.map((c) => (
-                        <div className="dimcard" key={c.dimension}>
-                          <div className="dimhead">
-                            <h4>{c.dimension}</h4>
-                            <span className="loaded">{c.status}</span>
-                          </div>
-                          <div className="desc">{c.description}</div>
-                          <div className="stats">
-                            <div className="stat">
-                              <div className="k">Source depth</div>
-                              <div className="v">
-                                {c.evidence.toLocaleString()}
-                              </div>
-                            </div>
-                            <div className="stat">
-                              <div className="k">Sources</div>
-                              <div className="v">{c.sources}</div>
-                            </div>
-                            <div className="stat">
-                              <div className="k">Confidence</div>
-                              <div className="v">{c.trust}%</div>
-                            </div>
-                          </div>
-                          {c.flag && <div className="flag">{c.flag}</div>}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-
-                {tab === "industry-context" && latestIntelligenceTabs.length === 0 && (
-                  <>
-                    <div className="sechead">
-                      <span className="ey">
-                        INDUSTRY CONTEXT · PATTERNS MATCHED TO THIS QUESTION
-                      </span>
-                      <span className="ey">{t.corpus.length} CONTEXT ITEMS</span>
-                    </div>
-                    <div className="grid3">
-                      {t.corpus.length === 0 ? (
-                        <p className="ey">No corpus patterns loaded.</p>
-                      ) : (
-                        t.corpus.map((c) => (
-                          <div className="dimcard cpat" key={c.patternName}>
-                            <div className="dom">{c.domain || "pattern"}</div>
-                            <h4
-                              style={{
-                                fontFamily:
-                                  "var(--font-fraunces),Georgia,serif",
-                                fontWeight: 500,
-                                fontSize: 17,
-                                marginBottom: 6,
-                              }}
-                            >
-                              {c.patternName}
-                            </h4>
-                            <p>{c.whenToApply}</p>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </>
                 )}
               </div>
             </div>

@@ -182,7 +182,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
 
     expect(screen.getByTestId("agent-dock-panel")).toBeInTheDocument();
     expect(
-      screen.getByText("Leadership intelligence canvas."),
+      screen.getByText("Executive intelligence canvas."),
     ).toBeInTheDocument();
     expect(screen.queryByText("Ask anything about")).not.toBeInTheDocument();
 
@@ -206,7 +206,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       format: "rich",
       surfaceContext: {
         activeTab: "intelligence",
-        activeClient: "Retail Demo",
+        activeClient: "Apex Retail Group",
         clientKey: "apex-retail",
       },
     });
@@ -236,20 +236,14 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     expect(
       screen.queryByText(/17,548 evidence points/i),
     ).not.toBeInTheDocument();
-    expect(
-      screen.getAllByText(/Retail Demo AI Spend evidence/i).length,
-    ).toBeGreaterThan(0);
     const agentTurn = screen.getByTestId("agent-dock-turn-agent");
     expect(within(agentTurn).queryByRole("table")).not.toBeInTheDocument();
     expect(
-      within(agentTurn).queryByText(/Retail Demo AI Spend evidence/i),
+      within(agentTurn).queryByText(/Apex AI Spend evidence/i),
     ).not.toBeInTheDocument();
-    const table = screen.getAllByRole("table")[0];
     expect(
-      within(table).getByText("Retail lakehouse and customer inventory graph"),
-    ).toBeInTheDocument();
-    expect(within(table).getByText("$95,000,000")).toBeInTheDocument();
-    expect(within(table).getByText("$12,000,000")).toBeInTheDocument();
+      screen.queryByText(/Apex AI Spend evidence/i),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("APX-INIT-001")).not.toBeInTheDocument();
     expect(screen.getAllByTestId("agent-dock-turn-agent")).toHaveLength(1);
     expect(screen.getAllByTestId("agent-dock-turn-user")).toHaveLength(1);
@@ -287,7 +281,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     expect(screen.getAllByTestId("agent-dock-turn-user")).toHaveLength(1);
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(JSON.parse(String(init.body))).toMatchObject({
-      q: "Which AI investments should Retail Demo scale?",
+      q: "Which AI investments should Apex scale?",
       client: "apex-retail",
       format: "rich",
     });
@@ -368,6 +362,119 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       expect(document.body.textContent).not.toContain("| Initiative |");
       expect(document.body.textContent).not.toContain("Tenant evidence");
     });
+  });
+
+  it("routes raw streamed decision-canvas markers into tabs without exposing them", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: streamFromLines([
+        JSON.stringify({
+          type: "delta",
+          text: [
+            "Certify the finance business layer before scaling more finance AI.",
+            "",
+            "<<<TAB: Decision | grounding: tenant-evidence>>>",
+            "Choice: certify the business layer first.",
+            "",
+            "<<<TAB: Table | grounding: tenant-evidence>>>",
+            "Tenant evidence: compact portfolio view.",
+            "",
+            "| Initiative | Posture |",
+            "|---|---|",
+            "| M365 Copilot finance | Hold scale |",
+            "| Kyriba rollout | Scale with guard |",
+          ].join("\n"),
+        }),
+        JSON.stringify({ type: "done" }),
+        "",
+      ]),
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(
+      <IntelligenceV2Surface
+        payload={apexPayload}
+        tenantName="Apex Retail Group"
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("agent-dock-input"), {
+      target: { value: "What is the single best AI investment?" },
+    });
+    fireEvent.click(screen.getByTestId("agent-dock-send"));
+
+    expect(
+      await screen.findAllByText(
+        "Certify the finance business layer before scaling more finance AI.",
+      ),
+    ).not.toHaveLength(0);
+    await waitFor(() => {
+      expect(document.body.textContent).not.toContain("<<<TAB:");
+    });
+
+    expect(
+      screen.getByRole("button", { name: /Decision/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Visual/ })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Table/ }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Visual/ }));
+    await waitFor(() => {
+      expect(document.body.textContent).toContain(
+        "Tenant evidence: compact portfolio view.",
+      );
+      expect(document.body.textContent).toContain("M365 Copilot finance");
+      expect(document.body.textContent).not.toContain("Company evidence");
+    });
+  });
+
+  it("strips tab markers from the visible answer even when a Chart tab is dropped", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: streamFromLines([
+        JSON.stringify({
+          type: "delta",
+          text: [
+            "Use the finance control gate before approving broader automation.",
+            "",
+            "<<<TAB: Chart | grounding: tenant-evidence>>>",
+            "Useful chart idea, but no numeric Markdown table was produced.",
+          ].join("\n"),
+        }),
+        JSON.stringify({ type: "done" }),
+        "",
+      ]),
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(
+      <IntelligenceV2Surface
+        payload={apexPayload}
+        tenantName="Apex Retail Group"
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("agent-dock-input"), {
+      target: { value: "Show the decision with a chart." },
+    });
+    fireEvent.click(screen.getByTestId("agent-dock-send"));
+
+    expect(
+      await screen.findAllByText(
+        "Use the finance control gate before approving broader automation.",
+      ),
+    ).not.toHaveLength(0);
+    await waitFor(() => {
+      expect(document.body.textContent).not.toContain("<<<TAB:");
+      expect(document.body.textContent).not.toContain("grounding:");
+    });
+    expect(
+      screen.queryByRole("button", { name: /Visual/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps source-support tables out of the visible advisor answer", async () => {
@@ -474,7 +581,9 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     await waitFor(() => {
       expect(document.body.textContent).not.toContain("aVa · intelligence");
       expect(document.body.textContent).not.toContain("high confidence");
-      expect(document.body.textContent).not.toContain("Source, Tower, or Moves");
+      expect(document.body.textContent).not.toContain(
+        "Source, Tower, or Moves",
+      );
       expect(document.body.textContent).not.toContain("Tables");
       expect(document.body.textContent).not.toContain("evidence");
       expect(document.body.textContent).not.toContain(
@@ -488,6 +597,8 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
 
   it("renders Claude-owned decision tabs on the right canvas without leaking markers into the left answer", async () => {
     const mainAnswer =
+      "SkyHarbor should fund IROPS recovery decisioning only through a governed readiness gate.";
+    const visibleMainAnswer =
       "Airline Demo should fund IROPS recovery decisioning only through a governed readiness gate.";
     const tableContent = [
       "| Option | Value | Readiness | Decision |",
@@ -604,41 +715,49 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     });
     fireEvent.click(screen.getByTestId("agent-dock-send"));
 
-    expect(await screen.findAllByText(mainAnswer)).not.toHaveLength(0);
+    expect(await screen.findAllByText(visibleMainAnswer)).not.toHaveLength(0);
     const agentTurn = screen.getByTestId("agent-dock-turn-agent");
-    expect(within(agentTurn).getByText(mainAnswer)).toBeInTheDocument();
+    expect(within(agentTurn).getByText(visibleMainAnswer)).toBeInTheDocument();
     expect(within(agentTurn).queryByText(/<<<TAB:/)).not.toBeInTheDocument();
 
-    expect(screen.getByRole("button", { name: /Decision/ })).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Industry Insights/ }),
+      screen.getByRole("button", { name: /Decision/ }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Chart/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Table/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Evidence/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Context/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Visual/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Proof/ })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Industry Insights/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Chart/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Table/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Evidence/ }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Decision 0/ }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /Chart 0/ }),
-    ).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /Industry Insights/ }));
-    expect(screen.getByText("Industry context")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Context/ }));
+    expect(screen.getByText("Industry lens")).toBeInTheDocument();
     expect(
       screen.getByText(
         "Industry context: airlines usually start with dispatch decision support. This is not tenant proof.",
       ),
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /Chart/ }));
-    expect(screen.getByText("Function context")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /Table/ }));
-    expect(screen.getByText("Tenant evidence")).toBeInTheDocument();
-    expect(
-      screen.getAllByText((_, node) => node?.textContent === tableContent).length,
-    ).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: /Visual/ }));
+    await waitFor(() => {
+      expect(screen.queryByText("Company evidence")).not.toBeInTheDocument();
+      expect(
+        screen.getAllByText((_, node) => node?.textContent === tableContent)
+          .length,
+      ).toBeGreaterThan(0);
+    });
   });
 
   it("has an Intelligence v2 binding payload for every configured client tenant", () => {
