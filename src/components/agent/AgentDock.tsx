@@ -101,7 +101,11 @@ const TECHNICAL_STRING_FIELDS = new Set([
 ]);
 
 function sanitizeVisibleStrings<T>(value: T, fieldName?: string): T {
-  if (typeof value === "string" && fieldName && TECHNICAL_STRING_FIELDS.has(fieldName)) {
+  if (
+    typeof value === "string" &&
+    fieldName &&
+    TECHNICAL_STRING_FIELDS.has(fieldName)
+  ) {
     return value;
   }
   if (typeof value === "string") return demoSafeClientText(value) as T;
@@ -113,6 +117,49 @@ function sanitizeVisibleStrings<T>(value: T, fieldName?: string): T {
       Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
         key,
         sanitizeVisibleStrings(entry, key),
+      ]),
+    ) as T;
+  }
+  return value;
+}
+
+const MOVES_CHROME_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> =
+  [
+    [/\bNo outgoing gate\b/gi, "No outgoing readiness checkpoint"],
+    [
+      /\bShow me what is still missing for this gate\./gi,
+      "Show me what is still missing for this phase.",
+    ],
+    [/\bWhat's blocking the gate\?/gi, "What's blocking progress?"],
+    [/\bOpen gate review\b/gi, "Open readiness review"],
+    [/\bGate criteria\b/g, "Readiness criteria"],
+    [/\bgate criteria\b/g, "readiness criteria"],
+    [/\bthis gate\b/gi, "this phase"],
+  ];
+
+function normalizeMovesChromeText<T>(value: T, fieldName?: string): T {
+  if (
+    typeof value === "string" &&
+    fieldName &&
+    TECHNICAL_STRING_FIELDS.has(fieldName)
+  ) {
+    return value;
+  }
+  if (typeof value === "string") {
+    let text: string = value;
+    for (const [pattern, replacement] of MOVES_CHROME_TEXT_REPLACEMENTS) {
+      text = text.replace(pattern, replacement);
+    }
+    return text as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeMovesChromeText(item)) as T;
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
+        key,
+        normalizeMovesChromeText(entry, key),
       ]),
     ) as T;
   }
@@ -544,16 +591,23 @@ export function AgentDock(props: AgentDockProps) {
     collapsedSummary,
     isAgentBusy: isAgentBusyOverride,
   } = props;
+  const isMovesSurface = surface.startsWith("moves/");
   const agent = sanitizeVisibleStrings(rawAgent);
   const surfaceContext = sanitizeVisibleStrings(rawSurfaceContext);
   const initialQuote = rawInitialQuote
     ? demoSafeClientText(rawInitialQuote)
     : rawInitialQuote;
-  const suggestedActions = sanitizeVisibleStrings(rawSuggestedActions);
+  const safeSuggestedActions = sanitizeVisibleStrings(rawSuggestedActions);
+  const suggestedActions = isMovesSurface
+    ? normalizeMovesChromeText(safeSuggestedActions)
+    : safeSuggestedActions;
   const placeholder = rawPlaceholder
     ? demoSafeClientText(rawPlaceholder)
     : rawPlaceholder;
-  const thread = sanitizeVisibleStrings(rawThread);
+  const safeThread = sanitizeVisibleStrings(rawThread);
+  const thread = isMovesSurface
+    ? normalizeMovesChromeText(safeThread)
+    : safeThread;
   const focused = variant === "focused";
   const showReviewChrome = !focused && !quietReviewChrome;
 
