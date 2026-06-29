@@ -20,7 +20,7 @@
 //     workspace does — surface 'programs-detail' + surfaceContext with
 //     programId, so `canonicalizeFromBody` reshapes it to URL-shaped
 //     '/programs/<id>' for tool registry + artifact-channel matching.
-//   - Suggested chips mirror the live mock: gate-blocking questions.
+//   - Suggested chips mirror the live mock: phase-readiness questions.
 
 import { useCallback, useRef, useState, type ReactNode } from "react";
 import {
@@ -57,13 +57,13 @@ function generateTurnId(): string {
 const SUGGESTED_ACTIONS: SuggestedAction[] = [
   {
     id: "gate-missing",
-    label: "Show me what is still missing for this gate.",
-    body: "Show me what is still missing for this gate.",
+    label: "Show me what is still missing.",
+    body: "Show me what is still missing for this phase.",
   },
   {
     id: "gate-blocking",
-    label: "What's blocking the gate?",
-    body: "What's blocking the gate?",
+    label: "What's blocking progress?",
+    body: "What's blocking progress for this phase?",
   },
 ];
 

@@ -116,7 +116,7 @@ function primaryAction(move: StrategicMove): { label: string; href: string } {
   const { status, currentPhase, phaseLabel, id } = move;
   if (status.key === "gate_blocked")
     return {
-      label: "Open gate review",
+      label: "Open readiness review",
       href: `/strategic-moves/${id}?panel=gate`,
     };
   if (status.key === "awaiting_decision")
@@ -277,8 +277,8 @@ function OverviewContent({
         </div>
         {move.gateCriteria.length === 0 ? (
           <p style={{ fontSize: 13, color: "var(--abarva-stone)", margin: 0 }}>
-            No outgoing gate for this phase — there are no further gate criteria
-            to evaluate.
+            No outgoing readiness checkpoint for this phase — there are no
+            further criteria to evaluate.
           </p>
         ) : (
           <ul className={styles.critList}>
