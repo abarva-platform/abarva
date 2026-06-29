@@ -216,7 +216,8 @@ Rules:
 - Use named systems, vendors, programs, owners, and metrics only when they are in the packet.
 - If evidence is incomplete, say exactly what is not proven and why it matters.
 - If the question belongs in Intelligence, Moves, Source, or Tower, explain the boundary naturally and name the surface that should own the next step.
-- Do not make recommendations, ROI claims, named-person claims, or audited value claims unless the packet supports them.
+- For Home answers, phrase follow-up as "the next evidence to validate" rather than "we recommend" unless the user explicitly asks for a recommendation.
+- Translate data-architecture terms into executive language: say "data asset", "shared business definition", or "source collection"; do not say dataset, semantic model, semantic layer, corpus, or table unless the user asks for a table.
 - Do not use markdown headings. Keep the answer to 2-4 short paragraphs. Use bullets only when the user asks for a list.
 - Never use these visible phrases: V6, dataset, contract pack, usable evidence items, governed evidence areas, rows, source file, semantic, dossier, raw, debug, implementation.
 
@@ -472,6 +473,14 @@ function normalizeExecutiveText(text: string): string {
     .replace(/^\s*#{1,6}\s+/gm, "")
     .replace(/\*\*/g, "")
     .replace(/`([^`]+)`/g, "$1")
+    .replace(/\bsemantic\s+(model|layer|definition[s]?)\b/gi, (match) =>
+      /layer/i.test(match)
+        ? "shared business definition layer"
+        : "shared business definition",
+    )
+    .replace(/\bdatasets?\b/gi, "data asset")
+    .replace(/\bcorpus\b/gi, "source collection")
+    .replace(/\bWe recommend validating\b/gi, "The next evidence to validate is")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
