@@ -1,7 +1,11 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { getClientOption } from '@/lib/client-config';
+import {
+  canonicalClientDisplayName,
+  demoSafeClientText,
+  getClientOption,
+} from '@/lib/client-config';
 import {
   getCanonicalV4Manifest,
   resolveV4AppClientKey,
@@ -512,13 +516,15 @@ export function getEnterpriseLandscapeViewModel(args: {
   tenantName?: string | null;
 }): EnterpriseLandscapeViewModel {
   const option = getClientOption(resolveV4AppClientKey(args.clientKey));
-  const tenantName = args.tenantName ?? option.name;
+  const tenantName =
+    canonicalClientDisplayName({ key: option.id, name: args.tenantName }) ??
+    demoSafeClientText(args.tenantName ?? option.name);
   const clientKey = option.id;
   const manifest = getCanonicalV4Manifest(clientKey);
   const v6Manifest = getV6GeneratedManifest(clientKey);
   const canonicalNav = manifest?.dimensions.length ? navFromManifest(manifest.dimensions) : ENTERPRISE_LANDSCAPE_NAV;
   const canonicalDimensionSource = manifest
-    ? `datasets/${manifest.datasetDir}/manifest.yaml`
+    ? 'Canonical demo context manifest'
     : 'legacy-enterprise-landscape-nav';
   const contextCommandCenter = buildContextCommandCenter({
     tenantName,
@@ -535,17 +541,17 @@ export function getEnterpriseLandscapeViewModel(args: {
       dimensions: manifest?.dimensions ?? [],
       richSections: skyharborSections,
     });
-    return {
+    return sanitizeViewModel({
       tenantName,
       clientKey,
-      askPlaceholder: "Ask about SkyHarbor's business, technology, data, vendors, risk, or AI landscape...",
+      askPlaceholder: `Ask about ${tenantName}'s business, technology, data, vendors, risk, or AI landscape...`,
       contextCommandCenter,
       navGroups: canonicalNav,
       sections,
       defaultSectionId: manifest?.dimensions[0]?.dimension ?? 'profile',
       contextDimensionCount: manifest?.dimensions.length ?? ENTERPRISE_LANDSCAPE_NAV.flatMap((group) => group.sections).length,
       canonicalDimensionSource,
-    };
+    });
   }
 
   const generic = manifest?.dimensions.length
@@ -556,7 +562,7 @@ export function getEnterpriseLandscapeViewModel(args: {
       richSections: {},
     })
     : buildGenericSections(tenantName, option.vertical);
-  return {
+  return sanitizeViewModel({
     tenantName,
     clientKey,
     askPlaceholder: `Ask about ${tenantName}'s business, technology, data, vendors, risk, or AI landscape...`,
@@ -566,7 +572,7 @@ export function getEnterpriseLandscapeViewModel(args: {
     defaultSectionId: manifest?.dimensions[0]?.dimension ?? 'profile',
     contextDimensionCount: manifest?.dimensions.length ?? ENTERPRISE_LANDSCAPE_NAV.flatMap((group) => group.sections).length,
     canonicalDimensionSource,
-  };
+  });
 }
 
 function getV6GeneratedManifest(clientKey: string): V6GeneratedManifest | null {
@@ -579,6 +585,24 @@ function getV6GeneratedManifest(clientKey: string): V6GeneratedManifest | null {
   } catch {
     return null;
   }
+}
+
+function sanitizeViewModel<T>(value: T): T {
+  if (typeof value === 'string') {
+    return demoSafeClientText(value) as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeViewModel(item)) as T;
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        key,
+        sanitizeViewModel(item),
+      ]),
+    ) as T;
+  }
+  return value;
 }
 
 function buildContextCommandCenter(args: {
@@ -594,7 +618,7 @@ function buildContextCommandCenter(args: {
     return {
       contractVersion: 'V6 pending',
       generatedAt: 'Not generated',
-      packSource: args.v4Manifest ? `datasets/${args.v4Manifest.datasetDir}/manifest.yaml` : 'No canonical pack found',
+      packSource: args.v4Manifest ? `${args.vertical} demo context manifest` : 'No canonical pack found',
       statusLabel: 'V6 readiness pending',
       statusDetail: 'Home is showing the current context manifest until the tenant receives a generated V6 contract pack.',
       summaryMetrics: [
@@ -647,7 +671,7 @@ function buildContextCommandCenter(args: {
   return {
     contractVersion: manifest.contractVersion,
     generatedAt: formatDate(manifest.generatedAt),
-    packSource: `datasets/${V6_DATASET_BY_CLIENT[args.clientKey] ?? manifest.sourceDataset.replace(/^datasets\//, '').replace(/-v4$/, '-v6')}`,
+    packSource: `${args.vertical} V6 demo context pack`,
     statusLabel: 'V6 context pack available',
     statusDetail: manifest.rule,
     summaryMetrics: [

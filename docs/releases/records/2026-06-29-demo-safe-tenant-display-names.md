@@ -30,6 +30,8 @@ Replaces customer-like demo tenant names with category-safe labels in shared ten
 
 - `src/lib/client-config.ts`: Canonical client labels now emit demo-safe names while retaining legacy aliases.
 - `src/lib/tenant/aliases.ts`: Tenant alias profiles now use the shared demo-safe display labels.
+- `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: Agent rail roles, placeholders, and suggested questions now sanitize old demo tenant names from Intelligence binding payloads.
+- `src/lib/home/enterprise-landscape-view-model.ts`: Home context command center now uses business-safe pack labels instead of raw dataset paths and sanitizes rendered view-model copy.
 - `datasets/*-synthetic-v6/**`: V6 pack manifests, metadata dictionaries, READMEs, and template records now use demo-safe display names.
 - `src/lib/__tests__/client-config-canonical.test.ts`: Enforces old aliases resolving to demo-safe visible names.
 - `src/app/api/home/know/ask/__tests__/route.test.ts`: Enforces Home V6 answers using demo-safe tenant labels and not leaking old demo brands.
@@ -38,6 +40,8 @@ Replaces customer-like demo tenant names with category-safe labels in shared ten
 
 - Passed: `npx jest --runTestsByPath src/lib/__tests__/client-config-canonical.test.ts src/app/api/home/know/ask/__tests__/route.test.ts --runInBand`.
 - Passed: `npx eslint src/lib/client-config.ts src/lib/tenant/aliases.ts src/lib/__tests__/client-config-canonical.test.ts src/app/api/home/know/ask/__tests__/route.test.ts`.
+- Passed: `npx jest --runTestsByPath src/lib/__tests__/client-config-canonical.test.ts src/app/api/home/know/ask/__tests__/route.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx --runInBand`.
+- Passed: `npx eslint src/lib/client-config.ts src/lib/home/enterprise-landscape-view-model.ts src/components/intelligence-v2/IntelligenceV2Surface.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx`.
 - Passed: `rg -n "Apex Retail|SkyHarbor|Meridian Health|First Capital|Lakeshore|Northstar" datasets/*-synthetic-v6` returned no matches.
 - Passed: `npm run release:check`.
 - Pending before final live proof: ACA deploy and signed-in Home Ask smoke for demo tenants.

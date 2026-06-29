@@ -22,6 +22,7 @@ import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 import { hasVisibleAvaArtifacts } from "@/lib/ava-answer/renderable-artifacts";
+import { demoSafeClientText } from "@/lib/client-config";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import type { ParsedIntelligenceTab } from "@/lib/intelligence/tabbed-response";
 
@@ -256,14 +257,24 @@ export function IntelligenceV2Surface({
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [latestAnswer, setLatestAnswer] = useState<ChatMessage | null>(null);
   const [busy, setBusy] = useState(false);
-  const t = payload;
+  const safeTenantName = demoSafeClientText(
+    tenantName?.trim() || payload.tenant.displayName,
+  );
+  const t: IntelligenceBindingPayload = {
+    ...payload,
+    tenant: {
+      ...payload.tenant,
+      displayName: safeTenantName,
+    },
+    suggestedQuestions: payload.suggestedQuestions.map(demoSafeClientText),
+  };
   const tl = t.trustLine;
   const contextEvidence = t.context.reduce((a, c) => a + (c.evidence || 0), 0);
   const surfaceContext = buildSurfaceContext({
     ...t,
     tenant: {
       ...t.tenant,
-      displayName: tenantName?.trim() || t.tenant.displayName,
+      displayName: t.tenant.displayName,
     },
   });
   const latestIntelligenceTabs = useMemo(
@@ -485,7 +496,7 @@ export function IntelligenceV2Surface({
         isBusy={busy}
         defaultLeftPercent={34}
         minLeftPx={360}
-        placeholder={t.ask.placeholder}
+        placeholder={demoSafeClientText(t.ask.placeholder)}
         agent={{
           role: `${t.tenant.displayName} Intelligence advisor`,
         }}

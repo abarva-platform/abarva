@@ -17,6 +17,36 @@ const DEMO_SAFE_CLIENT_NAMES = {
   lakeshore: "Industrial Demo",
 } as const satisfies Record<string, string>;
 
+const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/\bApex Retail Group\b/gi, DEMO_SAFE_CLIENT_NAMES.apexretail],
+  [/\bApex Retail\b/gi, DEMO_SAFE_CLIENT_NAMES.apexretail],
+  [/\bApex\b/gi, DEMO_SAFE_CLIENT_NAMES.apexretail],
+  [/\bMeridian Health System\b/gi, DEMO_SAFE_CLIENT_NAMES.meridian],
+  [/\bMeridian Health\b/gi, DEMO_SAFE_CLIENT_NAMES.meridian],
+  [/\bMeridian\b/gi, DEMO_SAFE_CLIENT_NAMES.meridian],
+  [/\bFirst Capital Financial\b/gi, DEMO_SAFE_CLIENT_NAMES.arcturus],
+  [/\bFirst Capital\b/gi, DEMO_SAFE_CLIENT_NAMES.arcturus],
+  [/\bArcturus Financial Group\b/gi, DEMO_SAFE_CLIENT_NAMES.arcturus],
+  [/\bArcturus Financial\b/gi, DEMO_SAFE_CLIENT_NAMES.arcturus],
+  [/\bArcturus\b/gi, DEMO_SAFE_CLIENT_NAMES.arcturus],
+  [/\bNorthstar Clinical Technologies\b/gi, DEMO_SAFE_CLIENT_NAMES.northstar],
+  [/\bNorthstar\b/gi, DEMO_SAFE_CLIENT_NAMES.northstar],
+  [/\bSkyHarbor Air Group\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  [/\bSkyHarbor Airlines\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  [/\bSkyHarbor Air\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  [/\bSkyHarbor\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  [/\bLakeshore Industries\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
+  [/\bLakeshore Holdings\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
+  [/\bLakeshore\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
+];
+
+export function demoSafeClientText(value: string): string {
+  return DEMO_SAFE_TEXT_REPLACEMENTS.reduce(
+    (text, [pattern, replacement]) => text.replace(pattern, replacement),
+    value,
+  );
+}
+
 export const ALL_CLIENTS: ClientOption[] = [
   {
     id: "apexretail",
