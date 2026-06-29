@@ -10,6 +10,10 @@ import type {
   AIInitiative,
   AIInitiativeVendorRow,
 } from "@/lib/admin/ai-initiatives/queries";
+import {
+  toCioTowerMetricPacket,
+  type CioTowerMetricPacket,
+} from "@/lib/cio-tower/metric-packet";
 import type { TowerBudgetRollup } from "@/lib/tower/tower-budget-rollups";
 
 let query = new URLSearchParams();
@@ -174,6 +178,45 @@ const BUDGET_ROLLUPS: TowerBudgetRollup[] = [
     employees: 9_100,
     itSpendAsPctRevenue: 0.0371,
   },
+];
+
+const GOVERNED_METRIC_PACKETS: CioTowerMetricPacket[] = [
+  toCioTowerMetricPacket({
+    measure_key: "total_it_budget_fy26",
+    label: "FY26 IT budget",
+    description: "Committed FY26 IT budget envelope.",
+    period: "fy26",
+    basis: "committed",
+    scope: "enterprise_envelope",
+    value_numeric: 877_900_000,
+    value_json: { row_count: 5 },
+    source_fact_keys: ["fact-budget-1"],
+    formula_version: "cio_tower_v1",
+  }),
+  toCioTowerMetricPacket({
+    measure_key: "run_budget_fy26",
+    label: "FY26 run budget",
+    description: "Run budget.",
+    period: "fy26",
+    basis: "committed",
+    scope: "enterprise_envelope",
+    value_numeric: 604_000_000,
+    value_json: { row_count: 5 },
+    source_fact_keys: ["fact-run-1"],
+    formula_version: "cio_tower_v1",
+  }),
+  toCioTowerMetricPacket({
+    measure_key: "change_budget_fy26",
+    label: "FY26 change budget",
+    description: "Change budget.",
+    period: "fy26",
+    basis: "committed",
+    scope: "enterprise_envelope",
+    value_numeric: 273_900_000,
+    value_json: { row_count: 5 },
+    source_fact_keys: ["fact-change-1"],
+    formula_version: "cio_tower_v1",
+  }),
 ];
 
 const ZERO_AMOUNT_INITIATIVES: AIInitiative[] = INITIATIVES.map(
@@ -407,6 +450,35 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       screen.queryByText(/OpEx\/CapEx split is not loaded/i),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Atlas")).not.toBeInTheDocument();
+  });
+
+  it("uses governed cio_tower metric packets as the dashboard headline source when rollups disagree", () => {
+    const conflictingRollups: TowerBudgetRollup[] = BUDGET_ROLLUPS.map(
+      (rollup) => ({
+        ...rollup,
+        totalItBudgetUsd: rollup.totalItBudgetUsd + 300_000_000,
+      }),
+    );
+
+    render(
+      <TowerIndexPage
+        tenantName="Lakeshore Holdings"
+        context="Tower"
+        towerToday="2026-06-25"
+        clientId="client-lakeshore"
+        initiatives={INITIATIVES}
+        vendors={VENDORS}
+        activeTab="portfolio"
+        budgetRollups={conflictingRollups}
+        metricPackets={GOVERNED_METRIC_PACKETS}
+      />,
+    );
+
+    expect(screen.getAllByText("$877.9M").length).toBeGreaterThan(0);
+    expect(screen.queryByText("$924.8M")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/across 5 portfolio-company rollups/i),
+    ).toBeInTheDocument();
   });
 
   it("does not call proven value above the committed business case unproven", () => {

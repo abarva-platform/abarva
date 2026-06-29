@@ -4,8 +4,35 @@ import {
   parseVisibleAnswerContract,
   type CioTowerPromptContext,
 } from '../answer';
+import { toCioTowerMetricPacket } from '../metric-packet';
 
 function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPromptContext {
+  const measures = [
+    {
+      measure_key: 'total_it_budget_fy26',
+      label: 'FY26 IT budget',
+      description: 'Committed FY26 IT budget envelope.',
+      period: 'fy26',
+      basis: 'committed',
+      scope: 'enterprise_envelope',
+      value_numeric: '2578000000',
+      value_json: { row_count: 13 },
+      source_fact_keys: ['fact-1'],
+      formula_version: 'cio_tower_v1',
+    },
+    {
+      measure_key: 'initiative_budget_fy26',
+      label: 'Initiative budget',
+      description: 'Committed FY26 initiative budget.',
+      period: 'fy26',
+      basis: 'committed',
+      scope: 'initiative_portfolio',
+      value_numeric: '28300000',
+      value_json: { row_count: 1 },
+      source_fact_keys: ['fact-1'],
+      formula_version: 'cio_tower_v1',
+    },
+  ];
   return {
     tenantKey: 'skyharbor-air',
     tenantName: 'SkyHarbor Air',
@@ -18,20 +45,8 @@ function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPrompt
       artifact_type: 'table',
       examples: [],
     },
-    measures: [
-      {
-        measure_key: 'total_it_budget_fy26',
-        label: 'FY26 IT budget',
-        description: 'Committed FY26 IT budget envelope.',
-        period: 'fy26',
-        basis: 'committed',
-        scope: 'enterprise_envelope',
-        value_numeric: '2578000000',
-        value_json: { row_count: 13 },
-        source_fact_keys: ['fact-1'],
-        formula_version: 'cio_tower_v1',
-      },
-    ],
+    measures,
+    metricPackets: measures.map(toCioTowerMetricPacket),
     relevantFacts: [
       {
         fact_key: 'fact-1',
@@ -77,6 +92,8 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('You own every user-visible word');
     expect(prompt).toContain('AbarVa will render the strings exactly as returned');
     expect(prompt).toContain('It will not rewrite, summarize, scrub, relabel, infer, or improve them');
+    expect(prompt).toContain('Governed metric packets. These are also what the Tower dashboard uses');
+    expect(prompt).toContain('Authoritative metric packet for this question: Initiative budget = $28.3M');
     expect(prompt).toContain('Crew Recovery & Legality Modernization');
     expect(prompt).toContain('$28.3M');
   });
@@ -127,4 +144,3 @@ describe('cio tower answer contract', () => {
     });
   });
 });
-
