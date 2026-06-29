@@ -1547,6 +1547,15 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               style={{ height: 24, width: 'auto', display: 'block' }}
             />
             <div className="navlinks">
+              <a
+                className="btn btn-dark"
+                href="#product-tour"
+                data-track-click
+                data-track-id="marketing-nav-product-tour"
+                onClick={() => trackMarketingEvent('abarva.marketing_product_tour_clicked', { location: 'nav' })}
+              >
+                Watch product tour
+              </a>
               <button
                 className="btn btn-prime"
                 type="button"
@@ -1583,10 +1592,12 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               </button>
               <a
                 className="btn btn-dark"
-                href="#loop"
-                data-track-id="marketing-hero-see-value-loop"
+                href="#product-tour"
+                data-track-click
+                data-track-id="marketing-hero-product-tour"
+                onClick={() => trackMarketingEvent('abarva.marketing_product_tour_clicked', { location: 'hero' })}
               >
-                See the value loop
+                Watch product tour
               </a>
             </div>
             <div className="fb-micro">
@@ -2002,7 +2013,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
       </section>
 
       {/* ===== PRODUCT VIDEO ===== */}
-      <section className="video-section">
+      <section className="video-section" id="product-tour">
         <div className="wrap rv">
           <div className="section-head">
             <div>
