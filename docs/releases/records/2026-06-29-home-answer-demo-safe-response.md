@@ -59,7 +59,7 @@ Revert the merge commit and redeploy through the same ACA main deploy workflow. 
 
 ## Audit Evidence
 
-- PR URL: To be added.
+- PR URL: https://github.com/abarva-platform/abarva/pull/4160
 - CI run: To be added.
 - ACA deployment: To be added after merge/deploy.
 - Live QA: To be added after rerunning the 50-question Home exact-answer audit.
