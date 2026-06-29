@@ -210,6 +210,47 @@ const CRITICAL_COLUMNS = {
   ],
 };
 
+const MONEY_VALUE_DIMENSIONS = new Set([
+  "spend_value",
+  "program_initiative",
+  "ai_initiative",
+  "vendor_contract",
+  "application_system",
+]);
+
+const MONEY_VALUE_COLUMNS = {
+  application_system: ["annual_cost_usd"],
+  vendor_contract: ["annual_cost_usd", "renewal_date", "contract_risk", "pricing_basis"],
+  spend_value: [
+    "amount_usd",
+    "amount_type",
+    "owner",
+    "period_start",
+    "period_end",
+    "value_linkage",
+    "unit_economics",
+  ],
+  program_initiative: [
+    "budget_usd",
+    "spend_to_date_usd",
+    "expected_value_usd",
+    "realized_value_usd",
+    "value_basis",
+    "target_date",
+  ],
+  ai_initiative: [
+    "licensed_users",
+    "active_users",
+    "adoption_metric",
+    "value_hypothesis",
+    "measured_value_usd",
+    "production_status",
+    "risk_status",
+    "data_readiness",
+    "scale_hold_stop",
+  ],
+};
+
 const INTENT_TEMPLATES = [
   {
     id: "inventory",
@@ -447,6 +488,8 @@ function scoreProjectedQuestion(item) {
   const isUnsupported = item.expectedMode === "unsupported_gap";
   const isHandoff = item.expectedMode === "handoff";
   const oldNameRisk = item.evidence.oldNameLeakRisk;
+  const moneyValueQuestion = isMoneyValueQuestion(item);
+  const moneyValueReadiness = assessMoneyValueReadiness(item.dimension, stats);
 
   let projectedQualityScore = 5;
   const reasons = [];
@@ -494,6 +537,18 @@ function scoreProjectedQuestion(item) {
     );
   }
 
+  if (moneyValueQuestion && !moneyValueReadiness.canMakeSpecificClaim) {
+    projectedQualityScore = Math.min(projectedQualityScore, 2);
+    reasons.push(
+      `Money/value/adoption question is not claim-ready: ${moneyValueReadiness.reason}`,
+    );
+  } else if (moneyValueQuestion && moneyValueReadiness.mustCaveat) {
+    projectedQualityScore = Math.min(projectedQualityScore, 3);
+    reasons.push(
+      `Money/value/adoption support is partial: ${moneyValueReadiness.reason}`,
+    );
+  }
+
   if (isUnsupported) {
     projectedQualityScore = Math.max(2, Math.min(projectedQualityScore, 4));
     reasons.push(
@@ -532,7 +587,81 @@ function scoreProjectedQuestion(item) {
       shouldHandoff: isHandoff,
       shouldRefuseUnsupported: isUnsupported,
       lowScore: projectedQualityScore < 3,
+      strictMoneyValueClaimGate: moneyValueQuestion,
+      moneyValueClaimReady: moneyValueReadiness.canMakeSpecificClaim,
+      mustCaveatMoneyValueClaim: moneyValueReadiness.mustCaveat,
     },
+    moneyValueReadiness,
+  };
+}
+
+function isMoneyValueQuestion(item) {
+  if (MONEY_VALUE_DIMENSIONS.has(item.dimension)) return true;
+  if (["metrics", "board_boundary", "entity_claim_boundary"].includes(item.intent)) return true;
+  return /\b(money|value|budget|spend|cost|run cost|adoption|usage|roi|return|savings|benefit|renewal|license|copilot|agent)\b/i.test(
+    item.question,
+  );
+}
+
+function assessMoneyValueReadiness(dimension, stats) {
+  const configuredColumns = MONEY_VALUE_COLUMNS[dimension] ?? [];
+  if (configuredColumns.length === 0) {
+    return {
+      applicable: false,
+      canMakeSpecificClaim: true,
+      mustCaveat: false,
+      completeness: 1,
+      reason: "No strict money/value columns apply to this dimension.",
+      missingColumns: [],
+    };
+  }
+  const missingRequired = stats.missingMoneyValueColumns.filter(
+    (column) => column.missingRate >= 0.8,
+  );
+  const completeness = stats.moneyValueCompleteness;
+  if (stats.rowCount === 0) {
+    return {
+      applicable: true,
+      canMakeSpecificClaim: false,
+      mustCaveat: true,
+      completeness,
+      reason: "no V6 rows are present for the money/value dimension",
+      missingColumns: configuredColumns,
+    };
+  }
+  if (stats.supportedMoneyValueColumnCount === 0 || completeness < 0.25) {
+    return {
+      applicable: true,
+      canMakeSpecificClaim: false,
+      mustCaveat: true,
+      completeness,
+      reason: `supported money/value column completeness is ${pct(completeness)}; missing ${missingRequired
+        .map((item) => item.column)
+        .slice(0, 6)
+        .join(", ") || "core value fields"}`,
+      missingColumns: missingRequired.map((item) => item.column),
+    };
+  }
+  if (completeness < 0.7 || missingRequired.length > 0) {
+    return {
+      applicable: true,
+      canMakeSpecificClaim: true,
+      mustCaveat: true,
+      completeness,
+      reason: `supported money/value column completeness is ${pct(completeness)}; caveat missing ${missingRequired
+        .map((item) => item.column)
+        .slice(0, 6)
+        .join(", ") || "fields"}`,
+      missingColumns: missingRequired.map((item) => item.column),
+    };
+  }
+  return {
+    applicable: true,
+    canMakeSpecificClaim: true,
+    mustCaveat: false,
+    completeness,
+    reason: `supported money/value column completeness is ${pct(completeness)}`,
+    missingColumns: [],
   };
 }
 
@@ -599,13 +728,19 @@ function loadTenantPacket(root, tenantDir) {
 
 function scoreDimension(family, rows) {
   const criticalColumns = CRITICAL_COLUMNS[family] ?? [];
+  const moneyValueColumns = MONEY_VALUE_COLUMNS[family] ?? [];
   const totalCriticalCells = rows.length * criticalColumns.length;
+  const totalMoneyValueCells = rows.length * moneyValueColumns.length;
   let presentCriticalCells = 0;
+  let presentMoneyValueCells = 0;
   let dataThinCells = 0;
   let totalCells = 0;
   let sourceOwnerMissing = 0;
   const missingByColumn = Object.fromEntries(
     criticalColumns.map((column) => [column, 0]),
+  );
+  const missingMoneyValueByColumn = Object.fromEntries(
+    moneyValueColumns.map((column) => [column, 0]),
   );
   const oldNameHits = [];
 
@@ -627,6 +762,14 @@ function scoreDimension(family, rows) {
         missingByColumn[column] += 1;
       }
     }
+
+    for (const column of moneyValueColumns) {
+      if (cleanValue(row[column])) {
+        presentMoneyValueCells += 1;
+      } else {
+        missingMoneyValueByColumn[column] += 1;
+      }
+    }
   }
 
   return {
@@ -635,9 +778,23 @@ function scoreDimension(family, rows) {
     criticalCompleteness:
       totalCriticalCells > 0 ? presentCriticalCells / totalCriticalCells : 0,
     dataThinCellRate: totalCells > 0 ? dataThinCells / totalCells : 0,
+    moneyValueColumnCount: moneyValueColumns.length,
+    supportedMoneyValueColumnCount: Object.values(missingMoneyValueByColumn).filter(
+      (missingRows) => rows.length > 0 && missingRows < rows.length,
+    ).length,
+    moneyValueCompleteness:
+      totalMoneyValueCells > 0 ? presentMoneyValueCells / totalMoneyValueCells : 1,
     missingSourceOwnerRate:
       rows.length > 0 ? sourceOwnerMissing / rows.length : 1,
     missingCriticalColumns: Object.entries(missingByColumn)
+      .filter(([, count]) => count > 0)
+      .map(([column, count]) => ({
+        column,
+        missingRows: count,
+        missingRate: rows.length > 0 ? count / rows.length : 1,
+      }))
+      .sort((a, b) => b.missingRate - a.missingRate || a.column.localeCompare(b.column)),
+    missingMoneyValueColumns: Object.entries(missingMoneyValueByColumn)
       .filter(([, count]) => count > 0)
       .map(([column, count]) => ({
         column,
@@ -663,7 +820,12 @@ function projectionEvidence(packet, dimension, row = null) {
     rowCount: dimension.stats.rowCount,
     criticalCompleteness: dimension.stats.criticalCompleteness,
     dataThinCellRate: dimension.stats.dataThinCellRate,
+    moneyValueCompleteness: dimension.stats.moneyValueCompleteness,
     missingCriticalColumns,
+    missingMoneyValueColumns: dimension.stats.missingMoneyValueColumns
+      .filter((item) => item.missingRate > 0)
+      .slice(0, 8)
+      .map((item) => item.column),
     oldNameLeakRisk: dimension.stats.oldNameHitCount > 0,
     oldNameHitSamples: dimension.stats.oldNameHitSamples.map((hit) => ({
       ...hit,
@@ -686,6 +848,16 @@ function summarize(results, tenantPackets) {
       reasons: item.scoreReasons,
     }));
   const oldNameRiskQuestions = results.filter((item) => item.qaFlags.oldNameLeakRisk);
+  const strictMoneyValueFailures = results.filter(
+    (item) =>
+      item.qaFlags.strictMoneyValueClaimGate && !item.qaFlags.moneyValueClaimReady,
+  );
+  const strictMoneyValueCaveats = results.filter(
+    (item) =>
+      item.qaFlags.strictMoneyValueClaimGate &&
+      item.qaFlags.moneyValueClaimReady &&
+      item.qaFlags.mustCaveatMoneyValueClaim,
+  );
 
   return {
     generatedAt: new Date().toISOString(),
@@ -733,6 +905,16 @@ function summarize(results, tenantPackets) {
         : 0,
     lowScoreCount: lowScoreItems.length,
     lowScores,
+    strictMoneyValueFailureCount: strictMoneyValueFailures.length,
+    strictMoneyValueFailureSample: strictMoneyValueFailures.slice(0, 50).map((item) => ({
+      id: item.id,
+      tenantDir: item.tenantDir,
+      dimension: item.dimension,
+      question: item.question,
+      reason: item.moneyValueReadiness.reason,
+      missingColumns: item.moneyValueReadiness.missingColumns,
+    })),
+    strictMoneyValueCaveatCount: strictMoneyValueCaveats.length,
     oldNameLeakRiskQuestionCount: oldNameRiskQuestions.length,
     oldNameLeakRiskSample: oldNameRiskQuestions.slice(0, 25).map((item) => ({
       id: item.id,
@@ -837,6 +1019,8 @@ function renderMarkdownReport(summary, results) {
     `- Projected decision-ready rate: ${pct(summary.projectedDecisionReadyRate)}`,
     `- Projected thin/gap/handoff rate: ${pct(summary.projectedThinOrGapRate)}`,
     `- Low-score projected questions: ${summary.lowScoreCount}`,
+    `- Strict money/value/adoption failures: ${summary.strictMoneyValueFailureCount}`,
+    `- Strict money/value/adoption caveat-required questions: ${summary.strictMoneyValueCaveatCount}`,
     `- Questions with raw old-name leak risk before API sanitization: ${summary.oldNameLeakRiskQuestionCount}`,
     "",
     "## Answer Classes",
@@ -870,6 +1054,15 @@ function renderMarkdownReport(summary, results) {
       `- ${item.tenantDir} / ${item.dimension} / score ${item.projectedQualityScore}: ${item.question}`,
     );
     lines.push(`  Reason: ${item.reasons.join(" ")}`);
+  }
+
+  lines.push("", "## Strict Money/Value/Adoption Failures", "");
+  for (const item of summary.strictMoneyValueFailureSample.slice(0, 30)) {
+    lines.push(`- ${item.tenantDir} / ${item.dimension}: ${item.question}`);
+    lines.push(`  Reason: ${item.reason}`);
+    if (item.missingColumns.length) {
+      lines.push(`  Missing columns: ${item.missingColumns.join(", ")}`);
+    }
   }
 
   lines.push("", "## Method Boundary", "");
