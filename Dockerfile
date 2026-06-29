@@ -55,9 +55,14 @@ RUN npm ci --no-audit --no-fund --prefer-offline
 FROM acrabarvalab001.azurecr.io/base/node:24-bookworm-slim AS build
 WORKDIR /app
 
+ARG NEXT_PUBLIC_POSTHOG_KEY=""
+ARG NEXT_PUBLIC_POSTHOG_HOST="https://us.i.posthog.com"
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS=--max-old-space-size=6144
+ENV NEXT_PUBLIC_POSTHOG_KEY=$NEXT_PUBLIC_POSTHOG_KEY
+ENV NEXT_PUBLIC_POSTHOG_HOST=$NEXT_PUBLIC_POSTHOG_HOST
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
