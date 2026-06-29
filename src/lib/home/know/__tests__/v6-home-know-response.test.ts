@@ -57,4 +57,23 @@ describe("Home V6 KNOW response contract", () => {
     });
     expect(after).toBe(before);
   });
+
+  it("resolves Financial Services demo aliases to the canonical V6 dataset", () => {
+    for (const tenantKey of ["arcturus", "firstcapital", "first-capital"]) {
+      const result = answerHomeKnowFromV6({
+        tenantKey,
+        question: "What business context is available for Financial Services Demo?",
+        includeTrace: true,
+      });
+
+      expect(result.tenant.appClientKey).toBe("arcturus");
+      expect(result.tenant.displayName).toBe("Financial Services Demo");
+      expect(result.tenant.datasetDir).toBe(
+        "first-capital-financial-synthetic-v6",
+      );
+      expect(result.proof.datasetDir).toBe(
+        "first-capital-financial-synthetic-v6",
+      );
+    }
+  });
 });

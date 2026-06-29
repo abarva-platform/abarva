@@ -103,3 +103,13 @@ Additional validation for the sanitizer boundary:
 
 - Focused Jest for `home-demo-safe-response.test.ts`: must show visible fields sanitized and internal prompt trace preserved exactly.
 - Live signed-in Home smoke must pass direct API and aVa Home stream checks across Industrial Demo and Airline Demo after deployment.
+
+## Financial Services V6 Alias Addendum
+
+The 100-question live correctness audit exposed a tenant-key contract issue for Financial Services Demo: the app canonical client key is `arcturus`, while the V6 Home dataset directory is `first-capital-financial-synthetic-v6`. The Home V6 dataset map now includes the canonical `arcturus` key and keeps the legacy `firstcapital` alias compatible, so Financial Services Demo cannot silently miss the V6 pack or fall back to retired semantic/dossier layers.
+
+Additional validation for this alias fix:
+
+- Focused Jest for `v6-home-know-response.test.ts`: proves `arcturus`, `firstcapital`, and `first-capital` all resolve to `Financial Services Demo` and `first-capital-financial-synthetic-v6`.
+- Focused ESLint for `v6-home-ask.ts` and `v6-home-know-response.test.ts`: passed.
+- The live 100-question correctness audit must use the canonical `arcturus` app key for Financial Services Demo while checking the V6 financial dataset in trace/proof fields.
