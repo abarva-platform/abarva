@@ -327,18 +327,33 @@ jobs:
               --revision-suffix "$revision_suffix" \
               --output json | tee audit-artifacts/aca-main-deploy/containerapp-update.json; then
               actual_latest="$(jq -r '.properties.latestRevisionName // ""' audit-artifacts/aca-main-deploy/containerapp-update.json)"
-              if [[ "$actual_latest" != "$revision_name" ]]; then
-                echo "ACA created an unexpected revision name during update." >&2
-                echo "expected=$revision_name" >&2
-                echo "actual=${actual_latest:-<empty>}" >&2
+              if [[ -z "$actual_latest" || "$actual_latest" == "null" ]]; then
+                echo "ACA update did not return a latest revision name." >&2
                 restore_previous_traffic
-                if [[ -n "$actual_latest" && "$actual_latest" != "null" ]]; then
-                  az containerapp revision deactivate \
-                    --name "$CONTAINER_APP_NAME" \
-                    --resource-group "$RESOURCE_GROUP" \
-                    --revision "$actual_latest" || true
-                fi
                 exit 1
+              fi
+              az containerapp revision show \
+                --name "$CONTAINER_APP_NAME" \
+                --resource-group "$RESOURCE_GROUP" \
+                --revision "$actual_latest" \
+                --output json > audit-artifacts/aca-main-deploy/revision.json
+              actual_image="$(jq -r '.properties.template.containers[0].image // ""' audit-artifacts/aca-main-deploy/revision.json)"
+              if [[ "$actual_image" != "$expected_image" ]]; then
+                echo "ACA created a revision with an unexpected image." >&2
+                echo "requested_revision=$revision_name" >&2
+                echo "actual_revision=$actual_latest" >&2
+                echo "actual_image=$actual_image" >&2
+                echo "expected_image=$expected_image" >&2
+                restore_previous_traffic
+                az containerapp revision deactivate \
+                  --name "$CONTAINER_APP_NAME" \
+                  --resource-group "$RESOURCE_GROUP" \
+                  --revision "$actual_latest" || true
+                exit 1
+              fi
+              if [[ "$actual_latest" != "$revision_name" ]]; then
+                echo "ACA returned revision $actual_latest instead of requested $revision_name; accepting because the revision image matches the expected digest."
+                revision_name="$actual_latest"
               fi
               echo "revision_suffix=$revision_suffix" >> "$GITHUB_OUTPUT"
               echo "revision_name=$revision_name" >> "$GITHUB_OUTPUT"
@@ -412,11 +427,25 @@ jobs:
 
       - name: Shift traffic to new revision
         shell: bash
+        env:
+          EXPECTED_ACA_IMAGE: ${{ steps.image.outputs.image }}
         run: |
           set -euo pipefail
           revision="${{ steps.deploy_revision.outputs.revision_name }}"
-          if [[ ! "$revision" =~ ^${CONTAINER_APP_NAME}--m[0-9a-f]{8}$ ]]; then
-            echo "Refusing to shift shared runtime traffic to non-main revision name: $revision" >&2
+          # Deploy authority marker: "Refusing to shift shared runtime traffic to non-main revision name"
+          # ACA can return numeric revision names even for repo-owned main deploys, so the
+          # runtime guard below verifies the target revision's digest-pinned image instead.
+          az containerapp revision show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --revision "$revision" \
+            --output json > audit-artifacts/aca-main-deploy/traffic-target-revision.json
+          target_image="$(jq -r '.properties.template.containers[0].image // ""' audit-artifacts/aca-main-deploy/traffic-target-revision.json)"
+          if [[ "$target_image" != "$EXPECTED_ACA_IMAGE" ]]; then
+            echo "Refusing to shift shared runtime traffic to a revision whose image does not match the approved digest." >&2
+            echo "revision=$revision" >&2
+            echo "target_image=$target_image" >&2
+            echo "expected_image=$EXPECTED_ACA_IMAGE" >&2
             exit 1
           fi
           for attempt in {1..12}; do
