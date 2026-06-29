@@ -6,6 +6,7 @@ import type {
   HomeKnowResponse,
 } from "@/lib/home/know/home-know-contract";
 import { sanitizeHomeKnowVisiblePayload } from "@/lib/home/know/home-demo-safe-response";
+import { applyHomeV6ExecutiveSynthesis } from "@/lib/home/know/home-v6-executive-synthesis";
 import { answerHomeKnowFromV6 } from "@/lib/home/know/v6-home-ask";
 import { toHomeKnowResponseFromV6 } from "@/lib/home/know/v6-home-know-response";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
@@ -119,7 +120,15 @@ async function buildV6HomeKnowResponse(input: {
     tenantDisplayName: input.tenantDisplayName,
     includeTrace: input.includeTrace,
   });
-  return toHomeKnowResponseFromV6(result, { question: input.question });
+  const response = toHomeKnowResponseFromV6(result, { question: input.question });
+  const synthesized = await applyHomeV6ExecutiveSynthesis({
+    response,
+    v6Result: result,
+    question: input.question,
+    tenantKey: result.tenant.canonicalKey,
+    includeTrace: input.includeTrace,
+  });
+  return synthesized.response;
 }
 
 function blockedHomeKnowResponse(input: {
