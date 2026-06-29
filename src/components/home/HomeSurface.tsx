@@ -1,8 +1,11 @@
 "use client";
 
-// Home — real React Context Explorer. Home is a KNOW-mode surface: it asks the
-// Home KNOW endpoint and renders the shared HomeKnowResponse contract. It does
-// not classify intent, retrieve data, or render Intelligence experts locally.
+// HomeSurface — legacy React Context Explorer.
+//
+// SUNSET 2026-06-28: product `/home` now mounts EnterpriseLandscapeHome as
+// the V6 Context Command Center. Keep this file only for historical tests and
+// any still-open internal references. Do not wire it back to
+// `src/app/(maestro)/home/page.tsx`.
 
 import { useCallback, useMemo, useState } from "react";
 import {
