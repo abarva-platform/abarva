@@ -1,8 +1,11 @@
 import {
+  buildCioTowerRightAnswerContract,
   scoreCioTowerRightAnswerContract,
   type CioTowerRightAnswerContract,
 } from '../answer-contract';
 import type { CioTowerVisibleAnswerContract } from '../answer';
+import type { CioTowerMetricPacket } from '../metric-packet';
+import type { TowerQuestionBankItem } from '@/lib/tower/tower-question-bank';
 
 const topProgramsContract: CioTowerRightAnswerContract = {
   id: 'skyharbor-top-programs',
@@ -46,6 +49,54 @@ function visibleOutput(overrides: Partial<CioTowerVisibleAnswerContract> = {}): 
 }
 
 describe('CIO Tower right-answer contract scorer', () => {
+  it('builds right-answer contracts from question-bank metadata and governed metric packets', () => {
+    const item: TowerQuestionBankItem = {
+      id: 'tower-q-test',
+      category: 'metric',
+      dataset: 'budget_lines',
+      intent: 'lookup',
+      route: 'deterministic',
+      artifact: 'prose',
+      question: 'What is the current loaded IT budget for the enterprise?',
+      requiredReadModels: ['tower_overview_read_model'],
+      requiredMetrics: ['loaded_it_budget'],
+      requiredEntities: ['tenant'],
+      guardrails: ['must match dashboard metric contract'],
+      latencyTargetMs: 1200,
+    };
+    const packets: CioTowerMetricPacket[] = [
+      {
+        measureKey: 'total_it_budget_fy26',
+        label: 'FY26 IT budget',
+        description: null,
+        period: 'fy26',
+        basis: 'committed',
+        scope: 'enterprise',
+        valueNumeric: 877_900_000,
+        displayValue: '$877.9M',
+        valueJson: {},
+        sourceFactKeys: ['fact-budget'],
+        formulaVersion: 'cio_tower_v1',
+      },
+    ];
+
+    expect(buildCioTowerRightAnswerContract({ tenantKey: 'skyharbor-air', item, metricPackets: packets })).toMatchObject({
+      id: 'skyharbor-air:tower-q-test',
+      tenantKey: 'skyharbor-air',
+      question: item.question,
+      route: 'deterministic',
+      artifact: 'prose',
+      expectedMetrics: [
+        {
+          measureKey: 'total_it_budget_fy26',
+          label: 'FY26 IT budget',
+          displayValue: '$877.9M',
+        },
+      ],
+      maximumLatencyMs: 2500,
+    });
+  });
+
   it('passes when the visible answer carries the expected metric and artifact', () => {
     const score = scoreCioTowerRightAnswerContract(topProgramsContract, {
       visibleText: 'SkyHarbor has $248.0M in FY26 initiative budget across the top IT program set.',

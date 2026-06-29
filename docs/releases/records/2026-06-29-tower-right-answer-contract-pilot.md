@@ -10,11 +10,11 @@
 
 ## Plain-English Summary
 
-Adds a small but concrete Tower right-answer contract pilot. The Tower question bank already defines thousands of possible CIO/CXO questions and their intended route/read models; this change adds the missing validation layer that checks whether a visible answer actually contains the expected metric values, avoids contradictory values, returns the required artifact shape, and avoids raw/internal language.
+Adds a small but concrete Tower right-answer contract pilot plus a server-side runner. The Tower question bank already defines thousands of possible CIO/CXO questions and their intended route/read models; this change adds the missing validation layer that checks whether a visible answer actually contains the expected metric values, avoids contradictory values, returns the required artifact shape, and avoids raw/internal language.
 
 ## Layer Impact
 
-- `global-control-lane`: Adds shared Tower answer validation utilities and a QA report generator. It does not change the live user path.
+- `global-control-lane`: Adds shared Tower answer validation utilities, contract generation from governed metric packets, and QA report generators. It does not change the live user path.
 - `internal-admin`: Adds a local QA script that produces an HTML report for operator review.
 
 ## Client Applicability
@@ -27,15 +27,18 @@ Adds a small but concrete Tower right-answer contract pilot. The Tower question 
 
 ## Changes Included
 
-- `src/lib/cio-tower/answer-contract.ts`: Right-answer contract types and scoring function.
+- `src/lib/cio-tower/answer-contract.ts`: Right-answer contract types, metric-packet-backed contract generation, and scoring function.
 - `src/lib/cio-tower/__tests__/answer-contract.test.ts`: Unit tests for pass/fail cases.
 - `scripts/qa/tower-answer-contract-pilot.ts`: Generates a Downloads HTML report that shows question, right-answer contract, observed answer, and score.
+- `scripts/qa/tower-answer-contract-server-runner.ts`: Generates right-answer contracts from live `cio_tower` metric packets and scores latest persisted answer traces without browser crawling.
+- `package.json`: Adds `npm run tower:cio:answer-contracts`.
 
 ## QA / Validation
 
 - Pass: `npm test -- --runTestsByPath src/lib/cio-tower/__tests__/answer-contract.test.ts --runInBand` passed, 1 suite / 5 tests.
 - Pass: `npx eslint src/lib/cio-tower/answer-contract.ts src/lib/cio-tower/__tests__/answer-contract.test.ts scripts/qa/tower-answer-contract-pilot.ts` passed.
 - Pass: `TOWER_ANSWER_CONTRACT_OUT_DIR=/Users/anand/Downloads/tower-answer-contract-pilot-latest npx tsx scripts/qa/tower-answer-contract-pilot.ts` generated the pilot report.
+- Blocked locally: `TOWER_CONTRACT_LIMIT=20 TOWER_ANSWER_CONTRACT_SERVER_OUT_DIR=/Users/anand/Downloads/tower-answer-contract-server-latest npm run tower:cio:answer-contracts` stopped before DB access because neither the shell nor `/Users/anand/Projects/nexus/.env.local` contains `DATABASE_URL`. The command is ready for an env-injected VNet/ACA operator run.
 - Pass: `npm run release:check` passed after this release record was updated.
 
 ## Rollout Plan
@@ -65,4 +68,4 @@ Revert the QA utility, tests, and script. No schema, runtime, or data changes.
 
 ## Known Gaps
 
-This pilot does not yet generate right-answer contracts for every Tower question or run the live signed-in browser route. It proves the scoring mechanism and report shape before scaling it to the full question bank.
+This pilot does not run the live signed-in browser route. The server-side runner can generate contracts for the full question bank, but trace coverage depends on persisted `cio_tower.answer_traces` from actual/server answer executions.
