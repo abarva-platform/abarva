@@ -24,6 +24,7 @@ import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 import { hasVisibleAvaArtifacts } from "@/lib/ava-answer/renderable-artifacts";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import type { ParsedIntelligenceTab } from "@/lib/intelligence/tabbed-response";
+import { demoSafeClientText } from "@/lib/client-config";
 
 type Tab = string;
 
@@ -105,6 +106,34 @@ const CSS = `
 .iv2 .cpat p{color:var(--muted);font-size:12.5px}
 @media(max-width:900px){.iv2 .grid2,.iv2 .grid3{grid-template-columns:1fr}}
 `;
+
+const TECHNICAL_STRING_FIELDS = new Set([
+  "id",
+  "key",
+  "client",
+  "clientKey",
+  "tenantId",
+  "tenantKey",
+]);
+
+function sanitizeVisibleStrings<T>(value: T, fieldName?: string): T {
+  if (typeof value === "string" && fieldName && TECHNICAL_STRING_FIELDS.has(fieldName)) {
+    return value;
+  }
+  if (typeof value === "string") return demoSafeClientText(value) as T;
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeVisibleStrings(item)) as T;
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
+        key,
+        sanitizeVisibleStrings(entry, key),
+      ]),
+    ) as T;
+  }
+  return value;
+}
 
 function buildSurfaceContext(payload: IntelligenceBindingPayload) {
   const tenantFacts = [
@@ -196,7 +225,7 @@ function visibleLatestAnswerText(message: ChatMessage): string {
   const packetText = message.agentAnswer
     ? answerBodyFromPacket(message.agentAnswer)
     : "";
-  return scrubPublicAvaAnswerText(packetText || message.body);
+  return demoSafeClientText(scrubPublicAvaAnswerText(packetText || message.body));
 }
 
 function intelligenceTabsFromAnswer(
@@ -256,16 +285,21 @@ export function IntelligenceV2Surface({
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [latestAnswer, setLatestAnswer] = useState<ChatMessage | null>(null);
   const [busy, setBusy] = useState(false);
-  const t = payload;
+  const t = useMemo(
+    () =>
+      sanitizeVisibleStrings({
+        ...payload,
+        tenant: {
+          ...payload.tenant,
+          displayName:
+            tenantName?.trim() || payload.tenant.displayName,
+        },
+      }),
+    [payload, tenantName],
+  );
   const tl = t.trustLine;
   const contextEvidence = t.context.reduce((a, c) => a + (c.evidence || 0), 0);
-  const surfaceContext = buildSurfaceContext({
-    ...t,
-    tenant: {
-      ...t.tenant,
-      displayName: tenantName?.trim() || t.tenant.displayName,
-    },
-  });
+  const surfaceContext = buildSurfaceContext(t);
   const latestIntelligenceTabs = useMemo(
     () => intelligenceTabsFromAnswer(latestAnswer?.agentAnswer),
     [latestAnswer?.agentAnswer],
@@ -405,8 +439,10 @@ export function IntelligenceV2Surface({
                 answerText.trim(),
             };
             updateAgentTurn(
-              scrubPublicAvaAnswerText(packetBody || answerText.trim()),
-              structuredAnswer,
+              demoSafeClientText(
+                scrubPublicAvaAnswerText(packetBody || answerText.trim()),
+              ),
+              sanitizeVisibleStrings(structuredAnswer),
             );
             continue;
           }
@@ -416,7 +452,10 @@ export function IntelligenceV2Surface({
             const displayText = structuredAnswer
               ? answerBodyFromPacket(structuredAnswer)
               : answerText;
-            updateAgentTurn(scrubPublicAvaAnswerText(displayText), structuredAnswer);
+            updateAgentTurn(
+              demoSafeClientText(scrubPublicAvaAnswerText(displayText)),
+              structuredAnswer ? sanitizeVisibleStrings(structuredAnswer) : null,
+            );
           }
           if (event.type === "done" && event.telemetryEventId) {
             setThread((prev) =>
@@ -432,8 +471,10 @@ export function IntelligenceV2Surface({
 
       if (!answerText.trim() && structuredAnswer) {
         updateAgentTurn(
-          scrubPublicAvaAnswerText(answerBodyFromPacket(structuredAnswer)),
-          structuredAnswer,
+          demoSafeClientText(
+            scrubPublicAvaAnswerText(answerBodyFromPacket(structuredAnswer)),
+          ),
+          sanitizeVisibleStrings(structuredAnswer),
         );
       } else if (!answerText.trim() && !structuredAnswer) {
         updateAgentTurn(

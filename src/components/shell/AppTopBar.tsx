@@ -27,7 +27,7 @@ import { useUser } from "@clerk/nextjs";
 import { useSignOut } from "@/lib/auth/use-sign-out";
 import { getVisibleNavItems } from "@/components/shell/topbar-nav-items";
 import { useClientContext } from "@/lib/use-client-context";
-import { canonicalClientDisplayName } from "@/lib/client-config";
+import { canonicalClientDisplayName, demoSafeClientText } from "@/lib/client-config";
 import { AdminInboxTopNavBadge } from "@/components/shell/AdminInboxTopNavBadge";
 
 export interface AppTopBarProps {
@@ -64,7 +64,7 @@ export function AppTopBar({
   const signOut = useSignOut();
   const { currentClient } = useClientContext();
   const signedIn = isLoaded && Boolean(user);
-  const resolvedTenantName =
+  const resolvedTenantNameRaw =
     (tenantName ? canonicalClientDisplayName({ name: tenantName }) : null) ??
     canonicalClientDisplayName({
       key: currentClient?.id,
@@ -73,6 +73,9 @@ export function AppTopBar({
     tenantName ??
     currentClient?.name ??
     null;
+  const resolvedTenantName = resolvedTenantNameRaw
+    ? demoSafeClientText(resolvedTenantNameRaw)
+    : null;
   const displayName =
     user?.fullName ||
     user?.emailAddresses?.[0]?.emailAddress?.split("@")?.[0] ||

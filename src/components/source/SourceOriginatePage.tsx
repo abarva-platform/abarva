@@ -502,7 +502,7 @@ const AVA_INTAKE_AGENT = {
 } as const;
 
 export function SourceOriginatePage({
-  clientName = "Apex Retail Group",
+  clientName = "Retail Demo",
   clientShortName = "Apex Retail",
   clientKey = "apexretail",
 }: SourceOriginatePageProps) {

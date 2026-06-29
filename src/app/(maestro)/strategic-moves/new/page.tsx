@@ -10,6 +10,7 @@ import {
 } from "@/components/strategic-moves/composeOriginateFirstMessage";
 import { AppShell } from "@/components/shell/AppShell";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { canonicalClientDisplayName } from "@/lib/client-config";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +84,11 @@ export default async function StrategicMoveOriginatePage({
 
   const fromInitiative = parseFromInitiative(params);
   const fromIntelligence = parseFromIntelligence(params);
+  const activeTenantName =
+    canonicalClientDisplayName({
+      key: activeClient.key,
+      name: activeClient.name,
+    }) ?? activeClient.name;
 
   // Compose first-message variant server-side:
   //   2A — empty entry (no draft, no initiative context)
@@ -109,7 +115,7 @@ export default async function StrategicMoveOriginatePage({
   return (
     <AppShell surface="programs">
       <StrategicMoveOriginateClient
-        tenantName={activeClient.name}
+        tenantName={activeTenantName}
         initialTurns={firstMessage ? [firstMessage] : undefined}
         originatingIntelligenceSessionId={fromIntelligence?.sessionId ?? null}
         discoveryIntakeEnabled={discoveryIntakeEnabled}

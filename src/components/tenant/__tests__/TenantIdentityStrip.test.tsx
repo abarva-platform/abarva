@@ -9,7 +9,7 @@ describe('TenantIdentityStrip', () => {
     );
 
     expect(html).toContain('Client');
-    expect(html).toContain('Meridian Health System');
+    expect(html).toContain('Healthcare Demo');
     expect(html).toContain('Tower portfolio value tenant identity');
   });
 
