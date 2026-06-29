@@ -30,6 +30,7 @@ The public AbarVa landing page now supports the approved CXO-safe product walkth
 - `src/components/marketing/LoggedOutLandingPage.tsx`: embeds the approved walkthrough MP4, adds poster/video styling, removes the public sign-in link, emits explicit public marketing events, and clarifies that access instructions are sent by email.
 - `src/components/MobileGuard.tsx`: allows public marketing/status pages on mobile while preserving the product desktop guard.
 - `src/components/ProductUsageTelemetry.tsx`: captures anonymous public clicks in addition to existing anonymous pageviews.
+- `src/components/PostHogProvider.tsx`: initializes the PostHog singleton before child telemetry hooks read the provider client, so pageview/click/request-access events are not lost to the first-render timing race.
 - `src/app/api/request-access/route.ts`: sends request notifications to both `admin@abarva.ai` and `anand.sundaram@thesundaram.com`.
 - `src/app/api/request-access/__tests__/route.test.ts`: verifies the two-recipient Resend notification path.
 - `Dockerfile`: accepts build-time `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST` so the public browser bundle can initialize PostHog after ACA builds the image.
@@ -39,7 +40,7 @@ The public AbarVa landing page now supports the approved CXO-safe product walkth
 ## QA / Validation
 
 - Pass: `npx jest src/app/api/request-access/__tests__/route.test.ts --runInBand` — 2 tests passed, including the two-recipient Resend notification assertion.
-- Pass with warnings: `npx eslint src/components/marketing/LoggedOutLandingPage.tsx src/components/MobileGuard.tsx src/components/ProductUsageTelemetry.tsx src/app/api/request-access/route.ts src/app/api/request-access/__tests__/route.test.ts` — 0 errors, 3 existing `<img>` warnings in the marketing component.
+- Pass with warnings: `npx eslint src/components/marketing/LoggedOutLandingPage.tsx src/components/MobileGuard.tsx src/components/ProductUsageTelemetry.tsx src/components/PostHogProvider.tsx src/app/api/request-access/route.ts src/app/api/request-access/__tests__/route.test.ts` — 0 errors, 3 existing `<img>` warnings in the marketing component.
 - Pass: `npm run release:check`.
 - Pass: static marketing invariant scan — video source/poster present, no visible sign-in/login text, no `/sign-in` or `/access` link in the public marketing component, public root allowed on mobile, request-access fan-out points to both recipients, and no Sundaram domain typo.
 - Pass: MP4 metadata check — H.264 1920x1080 video, AAC stereo audio, ~277 seconds.
@@ -60,6 +61,7 @@ Merge to main and deploy through the approved Azure Container Apps path for `app
 - Public page does not show a sign-in link.
 - Request-access POST stores/accepts the lead and sends notification email when `RESEND_API_KEY` is configured.
 - PostHog events are emitted after the image is built with `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com`.
+- PostHog capture requests are observed for public pageview/click/form events, not only SDK config loading.
 
 ## Rollback Plan
 
@@ -72,6 +74,7 @@ Revert this release commit and redeploy the prior ACA image. No migration or dat
 - ACA revision/image after deploy.
 - Desktop/mobile Playwright screenshots after deploy.
 - Network/API proof for request-access and static MP4 availability.
+- PostHog network proof showing event capture from the public marketing page.
 
 ## Context Ingestion Evidence
 
@@ -79,4 +82,4 @@ Not applicable.
 
 ## Known Gaps
 
-Live event delivery must be browser-proven after ACA deploy by confirming PostHog capture requests from desktop and mobile public marketing sessions.
+None for this release lane after live browser proof confirms capture requests. Product-route mobile access remains intentionally blocked outside the public marketing page.
