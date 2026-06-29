@@ -294,6 +294,8 @@ export interface AgentDockProps {
    * leaves citations, artifacts, feedback, and guardrails to the workspace.
    */
   variant?: "standard" | "focused";
+  /** Suppress loud draft/citation review chrome while preserving the normal rail layout. */
+  quietReviewChrome?: boolean;
   defaultMode?: DockMode;
   /** Free-form context passed back to the API on submit. */
   surfaceContext?: Record<string, unknown>;
@@ -398,7 +400,8 @@ export interface UploadParsedPreview {
   tableSignal: string;
   hasExtractedText: boolean;
   rawModeEscape:
-    NonNullable<AttachmentRef["parse_metadata"]>["raw_mode_escape"] | null;
+    | NonNullable<AttachmentRef["parse_metadata"]>["raw_mode_escape"]
+    | null;
   rawModeRequested: boolean;
 }
 
@@ -498,6 +501,7 @@ export function AgentDock(props: AgentDockProps) {
     agent,
     surface,
     variant = "standard",
+    quietReviewChrome = false,
     defaultMode = "side-rail",
     surfaceContext,
     initialQuote,
@@ -512,6 +516,7 @@ export function AgentDock(props: AgentDockProps) {
     isAgentBusy: isAgentBusyOverride,
   } = props;
   const focused = variant === "focused";
+  const showReviewChrome = !focused && !quietReviewChrome;
 
   // Founder feedback 2026-05-10: 'while any agent is busy retrieving info,
   // it will be nice to show a spinning icon / throbber or similar to show
@@ -823,10 +828,7 @@ export function AgentDock(props: AgentDockProps) {
         <div style={HEADER_STYLE}>
           <div style={AGENT_ROW_STYLE}>
             {agent.mark === "ava" ? (
-              <AvaAskMark
-                variant="avatar-dark"
-                style={AVATAR_AVA_MARK_STYLE}
-              />
+              <AvaAskMark variant="avatar-dark" style={AVATAR_AVA_MARK_STYLE} />
             ) : (
               <span style={AVATAR_STYLE}>{agent.initials}</span>
             )}
@@ -873,7 +875,7 @@ export function AgentDock(props: AgentDockProps) {
                 {turn.role === "agent" ? (
                   <div style={AGENT_BYLINE_STYLE}>
                     <span>{agent.name}</span>
-                    {!focused ? (
+                    {showReviewChrome ? (
                       <AILabel
                         status="draft"
                         detail="Review before acting"
@@ -905,14 +907,14 @@ export function AgentDock(props: AgentDockProps) {
                   ) : (
                     turn.body
                   )}
-                  {!focused &&
+                  {showReviewChrome &&
                   turn.role === "agent" &&
                   (!turn.citations || turn.citations.length === 0) &&
                   shouldShowPlainTextCitationGap(turn.body, surfaceContext) ? (
                     <CitationGapNotice compact />
                   ) : null}
                 </div>
-                {!focused &&
+                {showReviewChrome &&
                 turn.role === "agent" &&
                 surface !== "intelligence" &&
                 turn.citations &&
@@ -1071,7 +1073,7 @@ export function AgentDock(props: AgentDockProps) {
             ↑
           </button>
         </form>
-        {!focused ? (
+        {showReviewChrome ? (
           <>
             <div style={ACTION_APPROVAL_NOTICE_WRAP_STYLE}>
               <AgentActionApprovalNotice compact />
@@ -1102,6 +1104,7 @@ export function AgentDock(props: AgentDockProps) {
     requestRawMode,
     sendDisabled,
     setMode,
+    showReviewChrome,
     surface,
     surfaceContext,
     startUploads,
