@@ -142,79 +142,13 @@ function toStringArray(value: unknown): string[] {
     : [];
 }
 
-function rollupKey(row: TowerBudgetRollup): string {
-  return `${row.portfolioCompany.trim().toLowerCase()}::${row.fiscalYear.trim().toLowerCase()}`;
-}
-
-function preferLoadedAmount(loaded: number, derived: number): number {
-  return loaded > 0 ? loaded : derived;
-}
-
-function mergeBudgetRollups(
+export function resolveTowerBudgetRollups(
   loaded: ReadonlyArray<TowerBudgetRollup>,
   derived: ReadonlyArray<TowerBudgetRollup>,
 ): TowerBudgetRollup[] {
-  if (loaded.length === 0) return [...derived];
-  if (derived.length === 0) return [...loaded];
-
-  const byKey = new Map<string, TowerBudgetRollup>(
-    loaded.map((row) => [rollupKey(row), row] as const),
-  );
-
-  for (const derivedRow of derived) {
-    const key = rollupKey(derivedRow);
-    const loadedRow = byKey.get(key);
-    if (!loadedRow) {
-      byKey.set(key, derivedRow);
-      continue;
-    }
-
-    byKey.set(key, {
-      ...loadedRow,
-      totalItBudgetUsd: preferLoadedAmount(
-        loadedRow.totalItBudgetUsd,
-        derivedRow.totalItBudgetUsd,
-      ),
-      actualSpendYtdUsd: preferLoadedAmount(
-        loadedRow.actualSpendYtdUsd,
-        derivedRow.actualSpendYtdUsd,
-      ),
-      opexAmountUsd: preferLoadedAmount(
-        loadedRow.opexAmountUsd,
-        derivedRow.opexAmountUsd,
-      ),
-      capexAmountUsd: preferLoadedAmount(
-        loadedRow.capexAmountUsd,
-        derivedRow.capexAmountUsd,
-      ),
-      runAmountUsd: preferLoadedAmount(
-        loadedRow.runAmountUsd,
-        derivedRow.runAmountUsd,
-      ),
-      changeAmountUsd: preferLoadedAmount(
-        loadedRow.changeAmountUsd,
-        derivedRow.changeAmountUsd,
-      ),
-      vendorAmountUsd: preferLoadedAmount(
-        loadedRow.vendorAmountUsd,
-        derivedRow.vendorAmountUsd,
-      ),
-      laborAmountUsd: preferLoadedAmount(
-        loadedRow.laborAmountUsd,
-        derivedRow.laborAmountUsd,
-      ),
-      forecastSpendUsd:
-        loadedRow.forecastSpendUsd ?? derivedRow.forecastSpendUsd,
-      revenueUsd: loadedRow.revenueUsd ?? derivedRow.revenueUsd,
-      employees: loadedRow.employees ?? derivedRow.employees,
-      itSpendAsPctRevenue:
-        loadedRow.itSpendAsPctRevenue ?? derivedRow.itSpendAsPctRevenue,
-    });
-  }
-
-  return [...byKey.values()].sort(
-    (a, b) => b.totalItBudgetUsd - a.totalItBudgetUsd,
-  );
+  // Governed cio_tower rollups are a complete read-model slice. Mixing in
+  // derived initiative rollups can reintroduce stale dashboard totals.
+  return loaded.length > 0 ? [...loaded] : [...derived];
 }
 
 async function getClientProfile(
@@ -408,7 +342,7 @@ export async function buildAtlasTowerCurrentState(input: {
     ? materialized.vendors
     : vendors;
   const budgetRollups = materialized.initiatives.length
-    ? mergeBudgetRollups(
+    ? resolveTowerBudgetRollups(
         loadedBudgetRollups,
         shapeTowerBudgetRollupsFromInitiatives(towerInitiatives),
       )
