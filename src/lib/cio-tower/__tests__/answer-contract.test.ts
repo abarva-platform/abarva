@@ -138,9 +138,9 @@ describe('CIO Tower right-answer contract scorer', () => {
   it('fails raw IDs, old branding, and internal machinery language even when the metric is present', () => {
     const score = scoreCioTowerRightAnswerContract(topProgramsContract, {
       visibleText:
-        'Atlas found $248.0M in source_key tower_program_rankings rows for SKY-INIT-0017.',
+        'Atlas found $248.0M in source_key tower_program_rankings rows for SKY-INIT-0017 and T01-R05.',
       modelOutput: visibleOutput({
-        answer: 'Atlas found $248.0M in source_key tower_program_rankings rows for SKY-INIT-0017.',
+        answer: 'Atlas found $248.0M in source_key tower_program_rankings rows for SKY-INIT-0017 and T01-R05.',
       }),
       latencyMs: 1000,
     });
