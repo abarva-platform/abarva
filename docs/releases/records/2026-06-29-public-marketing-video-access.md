@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The public AbarVa landing page now supports the approved CXO-safe product walkthrough video, keeps the public experience request-access only, pins the product-tour CTA next to request access, allows the marketing page on mobile, and records public marketing visits/clicks/form events through PostHog capture when the public PostHog project key is configured.
+The public AbarVa landing page now uses the final uploaded marketing story as the source of truth, keeps the public experience request-access only, opens the approved CXO-safe product walkthrough video in a modal, pins a second product-demo CTA near the bottom of the page, allows the marketing page on mobile, and records public marketing visits/clicks/form events through PostHog capture when the public PostHog project key is configured.
 
 ## Layer Impact
 
@@ -27,25 +27,28 @@ The public AbarVa landing page now supports the approved CXO-safe product walkth
 
 ## Changes Included
 
-- `src/components/marketing/LoggedOutLandingPage.tsx`: embeds the approved walkthrough MP4, pins the product-tour CTA in the nav and hero next to request access, adds poster/video styling, removes the public sign-in link, emits explicit anonymous public marketing events to PostHog capture, and clarifies that access instructions are sent by email.
+- `src/components/marketing/LoggedOutLandingPage.tsx`: replaces the prior public page with the final uploaded marketing narrative, adds a product-demo modal, pins product-demo CTAs in the nav/hero/bottom band, keeps request access as the only public conversion path, removes public sign-in/login display, and emits explicit anonymous public marketing events to PostHog capture.
 - `src/components/MobileGuard.tsx`: allows public marketing/status pages on mobile while preserving the product desktop guard.
 - `src/components/ProductUsageTelemetry.tsx`: captures anonymous public clicks in addition to existing anonymous pageviews.
 - `src/components/PostHogProvider.tsx`: initializes the PostHog singleton before child telemetry hooks read the provider client, so pageview/click/request-access events are not lost to the first-render timing race.
-- `src/app/api/request-access/route.ts`: sends request notifications to both `admin@abarva.ai` and `anand.sundaram@thesundaram.com`.
-- `src/app/api/request-access/__tests__/route.test.ts`: verifies the two-recipient Resend notification path.
+- `src/app/api/request-access/route.ts`: sends request notifications to `admin@abarva.ai` only.
+- `src/app/api/request-access/__tests__/route.test.ts`: verifies the admin-only Resend notification path.
 - `Dockerfile`: accepts build-time `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST` so the public browser bundle can initialize PostHog after ACA builds the image.
 - `public/marketing/abarva-demo-cxo-safe-qa-passed.mp4`: approved product walkthrough video.
 - `public/marketing/abarva-demo-cxo-safe-poster.jpg`: video poster frame.
+- `public/marketing/final/*`: final uploaded public-page logo/aVa visual assets used by the replacement page.
 
 ## QA / Validation
 
-- Pass: `npx jest src/app/api/request-access/__tests__/route.test.ts --runInBand` — 2 tests passed, including the two-recipient Resend notification assertion.
+- Pass: `npx jest src/app/api/request-access/__tests__/route.test.ts --runInBand` — 2 tests passed, including the admin-only Resend notification assertion.
 - Pass with warnings: `npx eslint src/components/marketing/LoggedOutLandingPage.tsx src/components/MobileGuard.tsx src/components/ProductUsageTelemetry.tsx src/components/PostHogProvider.tsx src/app/api/request-access/route.ts src/app/api/request-access/__tests__/route.test.ts` — 0 errors, 3 existing `<img>` warnings in the marketing component.
 - Pass: `npm run release:check`.
-- Pass: static marketing invariant scan — video source/poster present, no visible sign-in/login text, no `/sign-in` or `/access` link in the public marketing component, public root allowed on mobile, request-access fan-out points to both recipients, and no Sundaram domain typo.
+- Pass: static marketing invariant scan — video source/poster present, no visible sign-in/login text, no `/sign-in` or `/access` link in the public marketing component, public root allowed on mobile, request-access fan-out points to `admin@abarva.ai` only, and no Sundaram domain typo.
+- Pass: local Playwright smoke on `http://localhost:3107/` — desktop and mobile public page rendered, no sign-in/login text was visible, request form was present, three demo entry points were visible, and the demo modal opened with `/marketing/abarva-demo-cxo-safe-qa-passed.mp4`.
+- Evidence: `/Users/anand/Downloads/final-marketing-local-smoke-20260629/desktop-home.png`, `/Users/anand/Downloads/final-marketing-local-smoke-20260629/desktop-demo-modal.png`, `/Users/anand/Downloads/final-marketing-local-smoke-20260629/mobile-home.png`, and `/Users/anand/Downloads/final-marketing-local-smoke-20260629/summary.json`.
 - Pass: MP4 metadata check — H.264 1920x1080 video, AAC stereo audio, ~277 seconds.
 - Pass: PostHog project token supplied for US Cloud; image build must pass `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com`.
-- Blocked/not-run: full `npx tsc --noEmit` on current `main` is failing on unrelated dependency/type declarations (`js-yaml`, Azure Document Intelligence, Axe Playwright). The touched-file focused gates above passed.
+- Blocked/unrelated: full `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` on current `main` is failing on unrelated dependency/type declarations (`js-yaml`, Azure Document Intelligence, Axe Playwright). The touched-file focused gates above passed.
 - Not-run yet: ACA image build/deploy and live browser proof.
 
 ## Deployment Authority

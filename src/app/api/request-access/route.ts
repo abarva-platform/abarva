@@ -17,8 +17,8 @@ type RequestAccessBody = {
   initiative?: string;
 };
 
-// Inbound private-preview lead notifications go to the shared intake plus founder copy.
-const LEAD_INBOXES = ['admin@abarva.ai', 'anand.sundaram@thesundaram.com'] as const;
+// Inbound private-preview lead notifications go to the shared AbarVa intake.
+const LEAD_INBOXES = ['admin@abarva.ai'] as const;
 const DEFAULT_FROM_EMAIL = 'AbarVa Preview <support@send.abarva.ai>';
 
 function resolveLeadFromEmail(): string {
