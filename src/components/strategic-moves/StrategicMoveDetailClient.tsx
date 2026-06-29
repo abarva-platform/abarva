@@ -266,6 +266,7 @@ export function StrategicMoveDetailClient({
         role: presentationMode ? "Move advisor" : "Strategic Moves Conductor",
       }}
       surface={presentationMode ? "moves/detail/presentation" : "moves/detail"}
+      quietReviewChrome
       defaultMode={presentationMode ? "collapsed" : "side-rail"}
       defaultLeftPercent={35}
       minLeftPx={320}

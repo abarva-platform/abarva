@@ -176,7 +176,7 @@ function TabBar({
     },
     {
       key: "cabinet",
-      label: presentationMode ? "Downloads" : "File Cabinet",
+      label: "Downloads",
       href: tabHref(moveId, "cabinet", presentationMode),
     },
     ...(presentationMode
@@ -273,7 +273,7 @@ function OverviewContent({
 
       <section className={styles.detailSection}>
         <div className={styles.detailSectionTitle}>
-          {move.phaseLabel.toUpperCase()} &middot; Gate criteria
+          {move.phaseLabel.toUpperCase()} &middot; Readiness criteria
         </div>
         {move.gateCriteria.length === 0 ? (
           <p style={{ fontSize: 13, color: "var(--abarva-stone)", margin: 0 }}>
