@@ -41,6 +41,7 @@ Home V6 now separates evidence selection from final answer writing. The determin
 - Local live-Claude probe could not complete from laptop because audited AI policy lookup requires private Azure Postgres DNS; the failure was explicit and did not silently claim Claude selection. Live ACA proof is still required after merge/deploy.
 - First production probe after deployment correctly blocked deterministic fallback, with root cause `400 ... temperature is deprecated for this model`. The request payload was corrected to omit `temperature`, then focused Jest and ESLint were rerun.
 - Second production audit passed 21 of 25 live signed-in questions. The four failures had prompt/raw Claude captured and were caused by validation rejecting otherwise usable Claude prose for terms like `semantic layer` or Home follow-up phrasing like `we recommend validating`. The sanitizer/prompt steering was tightened and focused Jest, ESLint, and release check were rerun.
+- Third production audit passed 22 of 25 live signed-in questions. The remaining failures were broad context-summary answers using evidence-packet phrases like `governed evidence areas` and `business records`. Those are now normalized to executive-facing wording before validation.
 
 ## Rollout Plan
 

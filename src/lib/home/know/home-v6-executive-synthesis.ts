@@ -217,7 +217,7 @@ Rules:
 - If evidence is incomplete, say exactly what is not proven and why it matters.
 - If the question belongs in Intelligence, Moves, Source, or Tower, explain the boundary naturally and name the surface that should own the next step.
 - For Home answers, phrase follow-up as "the next evidence to validate" rather than "we recommend" unless the user explicitly asks for a recommendation.
-- Translate data-architecture terms into executive language: say "data asset", "shared business definition", or "source collection"; do not say dataset, semantic model, semantic layer, corpus, or table unless the user asks for a table.
+- Translate data-architecture and evidence-packet terms into executive language: say "data asset", "shared business definition", "source collection", "business context areas", or "business facts"; do not say dataset, semantic model, semantic layer, corpus, governed evidence areas, business records, or table unless the user asks for a table.
 - Do not use markdown headings. Keep the answer to 2-4 short paragraphs. Use bullets only when the user asks for a list.
 - Never use these visible phrases: V6, dataset, contract pack, usable evidence items, governed evidence areas, rows, source file, semantic, dossier, raw, debug, implementation.
 
@@ -478,6 +478,8 @@ function normalizeExecutiveText(text: string): string {
         ? "shared business definition layer"
         : "shared business definition",
     )
+    .replace(/\bgoverned evidence areas?\b/gi, "business context areas")
+    .replace(/\bbusiness records?\b/gi, "business facts")
     .replace(/\bdatasets?\b/gi, "data asset")
     .replace(/\bcorpus\b/gi, "source collection")
     .replace(/\bWe recommend validating\b/gi, "The next evidence to validate is")
