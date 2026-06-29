@@ -470,6 +470,7 @@ type CioDashboardModel = {
   vendorCount: number;
   budgetRowsWithAmount: number;
   vendorRowsWithAmount: number;
+  initiativeEvidenceCount: number;
   committedTotal: number;
   initiativeBudgetTotal: number;
   measuredTotal: number;
@@ -648,6 +649,14 @@ function buildCioDashboardModel(
     metricPackets,
     "initiative_budget_fy26",
   );
+  const promisedValuePacket = findCioTowerMetricPacket(
+    metricPackets,
+    "promised_value_fy26",
+  );
+  const measuredValuePacket = findCioTowerMetricPacket(
+    metricPackets,
+    "measured_value_ytd",
+  );
   const budgetRollupTotal = budgetRollups.reduce(
     (sum, row) => sum + row.totalItBudgetUsd,
     0,
@@ -658,6 +667,7 @@ function buildCioDashboardModel(
   );
   const committedTotalFromInitiatives =
     cioTowerMetricNumber(metricPackets, "initiative_budget_fy26") ??
+    cioTowerMetricNumber(metricPackets, "promised_value_fy26") ??
     committedTotalFromInitiativesFallback;
   const committedTotal =
     cioTowerMetricNumber(metricPackets, "total_it_budget_fy26") ??
@@ -694,6 +704,10 @@ function buildCioDashboardModel(
   const measuredTotal =
     cioTowerMetricNumber(metricPackets, "measured_value_ytd") ??
     initiatives.reduce((sum, initiative) => sum + initiativeValue(initiative), 0);
+  const initiativeEvidenceCount =
+    cioTowerMetricRowCount(initiativeBudgetPacket) ??
+    cioTowerMetricRowCount(promisedValuePacket) ??
+    initiatives.filter((initiative) => initiativeBudget(initiative) > 0).length;
   const riskRows = initiatives
     .filter((initiative) => initiative.statusFlag !== "healthy")
     .sort((a, b) => initiativeBudget(b) - initiativeBudget(a));
@@ -756,11 +770,20 @@ function buildCioDashboardModel(
     gaps.push(
       "Vendor names and renewals are loaded, but contract values are missing.",
     );
-  if (initiatives.every((initiative) => initiative.measuredValueUsd === null))
+  const measuredCoverageCount =
+    cioTowerMetricRowCount(measuredValuePacket) ??
+    initiatives.filter((initiative) => initiative.measuredValueUsd !== null)
+      .length;
+  const hasMeasuredValueEvidence =
+    measuredTotal > 0 || measuredCoverageCount > 0;
+  if (!hasMeasuredValueEvidence)
     gaps.push(
       "No measured value rows are loaded, so ROI is a gap rather than a claim.",
     );
+  const hasRunChangeEvidence = runTotal > 0 || changeTotal > 0;
   if (
+    !hasRunChangeEvidence &&
+    initiatives.length > 0 &&
     initiatives.every(
       (initiative) =>
         !/run|change|opex|capex/i.test(
@@ -785,9 +808,6 @@ function buildCioDashboardModel(
     (a, b) => b.amount - a.amount,
   );
   const aiSpendTotal = aiSpendRows.reduce((sum, row) => sum + row.amount, 0);
-  const measuredCoverageCount = initiatives.filter(
-    (initiative) => initiative.measuredValueUsd !== null,
-  ).length;
   const budgetRowsWithAmount =
     cioTowerMetricRowCount(totalBudgetPacket) ??
     cioTowerMetricRowCount(initiativeBudgetPacket) ??
@@ -820,7 +840,7 @@ function buildCioDashboardModel(
         ? "missing_values"
         : budgetRollups.length > 0 || totalBudgetPacket
           ? "usable"
-          : measuredCoverageCount === 0
+          : !hasMeasuredValueEvidence
             ? "unmeasured"
             : "usable";
   const topProgram = topPrograms[0] ?? null;
@@ -830,10 +850,10 @@ function buildCioDashboardModel(
   const executiveNarrative =
     initiatives.length === 0 && budgetRollups.length === 0 && !hasMetricEvidence
       ? "Tower has the CIO canvas ready, but the tenant-bound program rows are not loaded yet."
-      : measuredCoverageCount === 0
+      : !hasMeasuredValueEvidence
         ? `${formatMoney(committedTotal)} is loaded as budget evidence across ${budgetEvidenceCount > 0 ? `${budgetEvidenceCount} portfolio-company rollup${budgetEvidenceCount === 1 ? "" : "s"}` : `${initiatives.length} program row${initiatives.length === 1 ? "" : "s"}`}, but no measured value rows are loaded. Treat budget concentration as review-required and do not use the ROI tiles until value proof is supplied.`
         : budgetEvidenceCount > 0
-          ? `${formatMoney(committedTotal)} of FY26 IT budget is loaded across ${budgetEvidenceCount} portfolio-company rollup${budgetEvidenceCount === 1 ? "" : "s"}. Tower is separating enterprise budget concentration from ${initiatives.length} initiative row${initiatives.length === 1 ? "" : "s"} and value proof.`
+          ? `${formatMoney(committedTotal)} of FY26 IT budget is loaded across ${budgetEvidenceCount} portfolio-company rollup${budgetEvidenceCount === 1 ? "" : "s"}. Tower is separating enterprise budget concentration from ${initiativeEvidenceCount > 0 ? `${initiativeEvidenceCount} governed initiative budget entr${initiativeEvidenceCount === 1 ? "y" : "ies"}` : `${initiatives.length} initiative row${initiatives.length === 1 ? "" : "s"}`} and value proof.`
           : committedTotal === 0
             ? `Tower has ${initiatives.length} loaded program rows, but budget amounts are not loaded. Use this as a portfolio coverage view, not a spend dashboard, until program budget fields are supplied.`
             : `${formatMoney(committedTotal)} of loaded IT budget is visible; ${formatMoney(measuredTotal)} is backed by measured value rows. Tower is showing budget, pressure, vendor exposure, and value proof as separate slices.`;
@@ -912,6 +932,7 @@ function buildCioDashboardModel(
     vendorCount: new Set(vendors.map((vendor) => vendor.vendorName)).size,
     budgetRowsWithAmount,
     vendorRowsWithAmount,
+    initiativeEvidenceCount,
     committedTotal,
     initiativeBudgetTotal: committedTotalFromInitiatives,
     measuredTotal,
@@ -1952,11 +1973,22 @@ function CioPanel({
 function CioProgramTable({
   rows,
   detailHrefFor,
+  evidenceCount = 0,
 }: {
   rows: ReadonlyArray<AIInitiative>;
   detailHrefFor: DetailHrefBuilder;
+  evidenceCount?: number;
 }) {
   if (rows.length === 0) {
+    if (evidenceCount > 0) {
+      return (
+        <TowerEmptyState
+          eyebrow="Program detail pending"
+          title="Program budget entries are summarized, but not yet bound to this table."
+          body={`Tower has ${evidenceCount} governed program budget entr${evidenceCount === 1 ? "y" : "ies"} in the metric layer. Bind the program names, owners, and proof fields before ranking individual programs here.`}
+        />
+      );
+    }
     return (
       <TowerEmptyState
         eyebrow="No programs"
@@ -2194,6 +2226,7 @@ function CioDashboardPanel({
             <CioPanel title="Where the portfolio money is concentrated.">
               <CioProgramTable
                 rows={model.topPrograms.slice(0, 5)}
+                evidenceCount={model.initiativeEvidenceCount}
                 detailHrefFor={detailHrefFor}
               />
             </CioPanel>
@@ -5196,6 +5229,11 @@ export function TowerIndexPage({
     budgetRollups ?? [],
     metricPackets ?? [],
   );
+  const hasTowerEvidenceForAva =
+    cioDashboardModel.initiativeCount > 0 ||
+    cioDashboardModel.initiativeEvidenceCount > 0 ||
+    cioDashboardModel.budgetRollupCount > 0 ||
+    cioDashboardModel.committedTotal > 0;
 
   // ─── aVa chat state · wired to /api/tower/cio-chat via the shared
   // <AgentDock> mounted around the workspace below. The dock owns the
@@ -5207,7 +5245,7 @@ export function TowerIndexPage({
     id: "atlas-opener",
     role: "atlas",
     content:
-      cioDashboardModel.initiativeCount > 0
+      hasTowerEvidenceForAva
         ? cioDashboardModel.executiveNarrative
         : (atlasObservationsView?.headline ??
           "aVa is waiting for tenant-bound Tower substrate before it can answer portfolio questions."),
@@ -5218,7 +5256,7 @@ export function TowerIndexPage({
   const [atlasPending, setAtlasPending] = useState(false);
   const [atlasThreadId, setAtlasThreadId] = useState<string | null>(null);
   const initialPrompts: string[] =
-    cioDashboardModel.initiativeCount > 0
+    hasTowerEvidenceForAva
       ? [
           ...cioDashboardModel.scenarioQuestions,
           ...cioDashboardModel.decisionActions.map((action) => action.ask),
