@@ -61,7 +61,7 @@ describe('POST /api/request-access', () => {
     expect(resendSendMock).toHaveBeenCalledWith(
       expect.objectContaining({
         from: 'AbarVa Preview <support@send.abarva.ai>',
-        to: ['admin@abarva.ai', 'anand.sundaram@thesundaram.com'],
+        to: ['admin@abarva.ai'],
         replyTo: 'anand@thesundaram.com',
       }),
     );
