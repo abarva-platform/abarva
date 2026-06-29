@@ -293,6 +293,7 @@ function DocumentRow({
   runArtifact?: { artifactId: string; updatedAt: string };
   presentationMode?: boolean;
 }) {
+  const calmBrowse = presentationMode;
   const hasContent = Boolean(dbRow?.latest_content?.trim());
   // Approve & Build / orchestrator output lands in generated_artifacts, not
   // deliverables_v2 — so a built document would otherwise read "not generated"
@@ -315,7 +316,7 @@ function DocumentRow({
         background: "#FFFFFF",
         border: "1px solid #e5e5e5",
         borderLeft: `3px solid ${
-          spec.gateArtifact && !presentationMode ? "#1B2B5C" : "#e5e5e5"
+          spec.gateArtifact && !calmBrowse ? "#1B2B5C" : "#e5e5e5"
         }`,
         borderRadius: 6,
         flexWrap: "wrap",
@@ -333,7 +334,7 @@ function DocumentRow({
           }}
         >
           <FormatPills format={spec.formatRecommendation} />
-          {spec.gateArtifact && !presentationMode && (
+          {spec.gateArtifact && !calmBrowse && (
             <span
               style={{
                 fontSize: 8,
@@ -350,7 +351,7 @@ function DocumentRow({
               Gate
             </span>
           )}
-          {!presentationMode && <AiDraftBadge />}
+          {!calmBrowse && <AiDraftBadge />}
         </div>
         <div
           style={{
@@ -365,7 +366,7 @@ function DocumentRow({
         <div style={{ fontSize: 10, color: "#9AA3B2", marginTop: 1 }}>
           {spec.audiencePrimary}
         </div>
-        {!presentationMode && (
+        {!calmBrowse && (
           <div style={{ fontSize: 10, color: "#7C2D12", marginTop: 3 }}>
             {MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT}
           </div>
@@ -413,7 +414,7 @@ function DocumentRow({
             not generated
           </span>
         )}
-        {!presentationMode && (
+        {!calmBrowse && (
           <span
             style={{
               fontSize: 9,
@@ -567,6 +568,7 @@ export async function PhaseDocumentsPanel({
   moveName,
   boardArtifactCount = 0,
 }: Props) {
+  const calmBrowse = Boolean(compact) || presentationMode;
   // The Documents tab is read-only browse/download — generation happens via the
   // phase workspace's Approve & Build, so the archetype/moveName/clientDisplayName
   // props (still accepted for caller compatibility) are no longer used here.
@@ -715,7 +717,7 @@ export async function PhaseDocumentsPanel({
             lineHeight: 1.45,
           }}
         >
-          {presentationMode
+          {calmBrowse
             ? `This workspace combines phase documents with ${boardArtifactCount} executive artifact${
                 boardArtifactCount === 1 ? "" : "s"
               } available for review.`
@@ -725,10 +727,10 @@ export async function PhaseDocumentsPanel({
         </div>
       )}
 
-      {!presentationMode && <DecisionSupportNotice />}
+      {!calmBrowse && <DecisionSupportNotice />}
 
       {/* Legend */}
-      {!presentationMode && (
+      {!calmBrowse && (
         <div
           style={{
             display: "flex",
@@ -864,7 +866,7 @@ export async function PhaseDocumentsPanel({
                   moveId={moveId}
                   phaseLabel={PHASE_LABELS[phase] ?? `P${phase}`}
                   runArtifact={runByKey.get(spec.deliverableTypeKey)}
-                  presentationMode={presentationMode}
+                  presentationMode={calmBrowse}
                 />
               ))}
 
