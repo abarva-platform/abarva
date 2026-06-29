@@ -1,13 +1,28 @@
 import { generateArtifact, type GenerateArtifactDeps } from "../generate-artifact";
 
+const ENOUGH_WORDS = Array.from({ length: 2600 }, (_, i) => `future${i}`).join(" ");
+
 const GOOD_ARCH_HTML = `<html><body>
+<h1>P3 Draft — based on approved P2 diagnostic for design shaping</h1>
+<p>The blueprint uses 1,872 monthly exceptions, 2,345 manual touch hours per month, 7.4 average resolution days, and Payment hold / control review evidence as draft shaping inputs.</p>
 <div class="diagram"><svg>conceptual architecture</svg></div>
 <div class="diagram"><svg>logical architecture</svg></div>
 <div class="diagram"><svg>physical deployment</svg></div>
 <div class="flow"><svg>data-flow</svg></div>
 <div class="diagram">native vs non-native pattern</div>
+<div class="diagram"><svg>current-to-future operating concept</svg></div>
+<div class="diagram"><svg>human + AI role model</svg></div>
+<div class="diagram"><svg>governance / control model</svg></div>
 <table>decision record / tradeoff</table>
 <table>KPI traceability</table>
+<table>current-to-future logic table</table>
+<table>human + AI role model table</table>
+<table>workflow option matrix</table>
+<table>control / governance matrix</table>
+<table>implementation work package table</table>
+<table>open decision log</table>
+<table>P4 readiness checklist</table>
+<p>${ENOUGH_WORDS}</p>
 </body></html>`;
 
 function deps(over: Partial<GenerateArtifactDeps> = {}): GenerateArtifactDeps {
@@ -72,6 +87,49 @@ describe("generateArtifact — the integration keystone", () => {
     if (r.status === "blocked_context") expect(r.missing.join(" ")).toMatch(/chosenOption/);
   });
 
+  it("allows a P3 future-state blueprint draft after P2 draft approval without inventing a chosen option", async () => {
+    const r = await generateArtifact(
+      {
+        moveId: "m",
+        tenantKey: "lakeshore",
+        phase: 3,
+        artifact: "target_state_architecture",
+        generationMode: "draft",
+      },
+      deps({
+        gateSources: {
+          captureComplete: async () => ({ complete: true, missing: [] }),
+          gateApproved: async () => false,
+          priorPhaseDraftApproval: async () => ({
+            approved: true,
+            sourcePhase: 2,
+            decision: "approve_for_p3_draft",
+            caveats: ["P2 approved for P3 draft shaping only."],
+          }),
+        },
+        contextSources: {
+          retrieveCurrentState: async () => `
+            Average monthly invoice exceptions, 1872
+            Manual touch hours per month, 2345
+            Average resolution days, 7.4
+            Payment hold / control review creates duplicate-payment risk.
+          `,
+          loadPriorDigests: async () => [
+            { useCase: "AP exception redesign", kpis: [{ name: "cycle time", domain: "financial" }], gaps: ["payment hold governance inconsistent"] },
+          ],
+          loadDecisions: async () => [],
+        },
+      }),
+    );
+    expect(r.status).toBe("generated");
+    if (r.status === "generated") {
+      expect(r.generationMode).toBe("draft");
+      expect(r.draftOnly).toBe(true);
+      expect(r.contextCaveats.join(" ")).toMatch(/No final P3 option has been selected/);
+      expect(r.html).toContain("P3 Draft");
+    }
+  });
+
   it("blocks_quality when the model returns prose (fails the golden bar) — saved as draft", async () => {
     const r = await generateArtifact(
       { moveId: "m", tenantKey: "t", phase: 3, artifact: "target_state_architecture" },
@@ -83,11 +141,16 @@ describe("generateArtifact — the integration keystone", () => {
 
   it("completes mandatory architecture tables when Claude returns diagrams but omits the table exhibit", async () => {
     const missingTableHtml = `<html><body>
+      <h1>P3 Draft — based on approved P2 diagnostic for design shaping</h1>
       <div class="diagram"><svg>conceptual architecture diagram</svg></div>
       <div class="diagram"><svg>logical architecture diagram</svg></div>
       <div class="diagram"><svg>physical deployment diagram</svg></div>
       <div class="flow"><svg>integration data flow diagram</svg></div>
       <div class="diagram">native vs non-native service pattern</div>
+      <div class="diagram"><svg>current-to-future operating concept</svg></div>
+      <div class="diagram"><svg>human + AI role model</svg></div>
+      <div class="diagram"><svg>governance / control model</svg></div>
+      <p>${ENOUGH_WORDS}</p>
     </body></html>`;
 
     const r = await generateArtifact(
@@ -100,7 +163,14 @@ describe("generateArtifact — the integration keystone", () => {
       expect(r.goldenBar.pass).toBe(true);
       expect(r.html).toContain("Architecture Decision Records / Tradeoff Table");
       expect(r.html).toContain("KPI-to-Capability Traceability");
-      expect(r.html.match(/<table/g)?.length).toBeGreaterThanOrEqual(2);
+      expect(r.html).toContain("Current-to-Future Logic Table");
+      expect(r.html).toContain("Human + AI Role Model");
+      expect(r.html).toContain("Workflow Option Matrix");
+      expect(r.html).toContain("Control / Governance Matrix");
+      expect(r.html).toContain("Implementation Work Package Table");
+      expect(r.html).toContain("Open Decision Log");
+      expect(r.html).toContain("P4 Readiness Checklist");
+      expect(r.html.match(/<table/g)?.length).toBeGreaterThanOrEqual(9);
     }
   });
 

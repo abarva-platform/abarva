@@ -28,14 +28,25 @@ jest.mock("@/lib/deliverables/moves-generate-deps", () => ({
   })),
   normalizeMovesDeliverableKey: jest.fn((input: string | undefined, phase: number) => {
     if (input === "discovery_report" || phase === 2) return "discovery_report";
+    if (input === "target_state_architecture" || phase === 3) return "target_state_architecture";
     return "charter";
   }),
 }));
 
 jest.mock("@/lib/deliverables/profiles/registry", () => ({
   getDeliverableProfile: jest.fn((key: string) => ({
-    title: key === "discovery_report" ? "Current Work Diagnostic" : "Program Charter",
-    decisionPurpose: key === "discovery_report" ? "Diagnose current work." : "Frame the move.",
+    title:
+      key === "discovery_report"
+        ? "Current Work Diagnostic"
+        : key === "target_state_architecture"
+          ? "P3 Future-State Blueprint Draft"
+          : "Program Charter",
+    decisionPurpose:
+      key === "discovery_report"
+        ? "Diagnose current work."
+        : key === "target_state_architecture"
+          ? "Shape the future state."
+          : "Frame the move.",
   })),
 }));
 
@@ -148,6 +159,55 @@ describe("POST /api/v1/programs/[programId]/generate", () => {
           phase: 2,
           artifact: "discovery_report",
           generationMode: "draft",
+        }),
+      }),
+    );
+    expect(mockGenerateArtifact).not.toHaveBeenCalled();
+  });
+
+  it("queues P3 Future-State Blueprint drafts through the private operator lane", async () => {
+    mockCreateDeliverableRun.mockResolvedValueOnce({ id: "run-p3-1" });
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({
+        phase: 3,
+        deliverableTypeKey: "target_state_architecture",
+        title: "P3 Future-State Blueprint Draft",
+        generationMode: "draft",
+      }),
+      routeParams,
+    );
+
+    expect(res.status).toBe(202);
+    await expect(res.json()).resolves.toMatchObject({
+      runId: "run-p3-1",
+      status: "queued",
+      async: true,
+      phase: 3,
+      deliverableKey: "target_state_architecture",
+      generationMode: "draft",
+    });
+    expect(mockAssertPhaseReady).toHaveBeenCalledWith(
+      expect.objectContaining({
+        moveId: "move-1",
+        phase: 3,
+        generationMode: "draft",
+      }),
+      expect.anything(),
+    );
+    expect(mockCreateDeliverableRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: "client-1",
+        tenantKey: "lakeshore-holdings",
+        module: "moves",
+        deliverableType: "target_state_architecture",
+        jobPayload: expect.objectContaining({
+          kind: "moves_premium_artifact",
+          sourceArtifactRef: "move-1",
+          phase: 3,
+          artifact: "target_state_architecture",
+          generationMode: "draft",
+          title: "P3 Future-State Blueprint Draft",
         }),
       }),
     );

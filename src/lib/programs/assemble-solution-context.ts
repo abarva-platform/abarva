@@ -79,8 +79,9 @@ export async function assembleMoveSolutionContext(
 
   // Promote concrete P2 evidence into first-class prompt fields so the model does
   // not have to hunt through raw CSV/XLSX excerpts for the facts that should drive
-  // the diagnostic thesis.
-  if (currentStateBound && args.targetPhase === 2) {
+  // the diagnostic thesis. P3 draft shaping must also carry these P2 signals
+  // forward so the future-state blueprint is grounded in the approved diagnostic.
+  if (currentStateBound && (args.targetPhase === 2 || args.targetPhase === 3)) {
     const specificity = inferP2EvidenceSpecificity(ctx);
     ctx = applyPhaseDigest(ctx, specificity);
   }

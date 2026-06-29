@@ -39,9 +39,9 @@ function shouldEnqueuePremiumArtifact(args: {
   generationMode: "final" | "draft";
 }): boolean {
   return (
-    args.phase === 2 &&
-    args.artifact === "discovery_report" &&
-    args.generationMode === "draft"
+    args.generationMode === "draft" &&
+    ((args.phase === 2 && args.artifact === "discovery_report") ||
+      (args.phase === 3 && args.artifact === "target_state_architecture"))
   );
 }
 
