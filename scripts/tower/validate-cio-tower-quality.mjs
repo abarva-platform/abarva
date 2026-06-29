@@ -5,7 +5,10 @@ import path from 'node:path';
 import { Client } from 'pg';
 
 const ROOT = process.cwd();
-const OUT_DIR = path.join(ROOT, 'out', 'cio-tower-quality');
+const OUT_DIR = process.env.TOWER_CIO_QUALITY_OUT_DIR
+  ?? (ROOT === '/app' || process.env.CONTAINER_APP_NAME
+    ? path.join('/tmp', 'cio-tower-quality')
+    : path.join(ROOT, 'out', 'cio-tower-quality'));
 const DATABASE_URL = process.env.DATABASE_URL;
 const REQUIRE_DB = process.argv.includes('--require-db');
 
