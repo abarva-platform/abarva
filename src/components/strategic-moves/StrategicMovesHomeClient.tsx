@@ -24,6 +24,7 @@ import {
   summaryStats,
 } from "./move-list-format";
 import { sponsorDisplayName } from "./sponsor-display";
+import { demoSafeClientText } from "@/lib/client-config";
 
 /* Scatter ("Map") view needs enough captured value data to be meaningful. */
 const SCATTER_VALUE_COVERAGE_THRESHOLD = 0.3;
@@ -272,63 +273,7 @@ export function StrategicMovesHomeClient({
         {listView === "cards" ? (
           <div className={styles.cards}>
             {visibleMoves.map((move) => (
-              <Link
-                className={`${styles.card} ${
-                  move.statusColor === "red"
-                    ? styles.cardRed
-                    : move.statusColor === "amber"
-                      ? styles.cardAmber
-                      : move.statusColor === "teal"
-                        ? styles.cardTeal
-                        : styles.cardGreen
-                }`}
-                key={move.id}
-                href={`/strategic-moves/${move.id}`}
-                prefetch={false}
-              >
-                <div className={styles.cardStrip} aria-hidden />
-                <div className={styles.cardHead}>
-                  <div className={styles.cardHeadLeft}>
-                    <div className={styles.cardTitle}>{move.name}</div>
-                    <div className={styles.cardId}>
-                      {move.displayCode} · {move.tenant.name}
-                    </div>
-                  </div>
-                  <span className={styles.archetypeTag}>{move.archetype}</span>
-                </div>
-                <div
-                  className={`${styles.gateLine} ${
-                    move.statusColor === "red"
-                      ? styles.gateLineRed
-                      : move.statusColor === "amber"
-                        ? styles.gateLineAmber
-                        : move.statusColor === "teal"
-                          ? styles.gateLineTeal
-                          : styles.gateLineGreen
-                  }`}
-                >
-                  <span className={styles.pulse} aria-hidden />
-                  <span className={styles.statusText}>{move.status.text}</span>
-                  <span className={styles.gateDetail}>
-                    · {move.status.description}
-                  </span>
-                </div>
-                <div className={styles.cardMeta}>
-                  <span>
-                    Sponsor:{" "}
-                    <strong>{sponsorDisplayName(move.sponsor)}</strong>
-                  </span>
-                  <span>
-                    Value:{" "}
-                    <span className={styles.cardMetaVal}>
-                      {formatValueAtStake(moveValue(move))}{" "}
-                      {move.valueAtStake.verified?.status === "tracked"
-                        ? "tracked"
-                        : "projected"}
-                    </span>
-                  </span>
-                </div>
-              </Link>
+              <MoveCard key={move.id} move={move} />
             ))}
           </div>
         ) : null}
@@ -364,9 +309,11 @@ export function StrategicMovesHomeClient({
                         prefetch={false}
                       >
                         <div className={styles.kanbanId}>
-                          {move.displayCode}
+                          {demoSafeClientText(move.displayCode)}
                         </div>
-                        <div className={styles.kanbanName}>{move.name}</div>
+                        <div className={styles.kanbanName}>
+                          {demoSafeClientText(move.name)}
+                        </div>
                         <div className={styles.kanbanVal}>
                           {formatValueAtStake(moveValue(move))}
                         </div>
@@ -458,9 +405,9 @@ export function StrategicMovesHomeClient({
                     top: `calc(${y}% - ${bubbleSize / 2}px)`,
                     zIndex: `${10 + index}`,
                   }}
-                  title={`${move.displayCode} · ${move.phaseLabel}`}
+                  title={`${demoSafeClientText(move.displayCode)} · ${move.phaseLabel}`}
                 >
-                  {move.mapLabel}
+                  {demoSafeClientText(move.mapLabel)}
                 </Link>
               );
             })}
@@ -468,6 +415,66 @@ export function StrategicMovesHomeClient({
         ) : null}
       </section>
     </div>
+  );
+}
+
+function MoveCard({ move }: { move: StrategicMove }) {
+  return (
+    <Link
+      className={`${styles.card} ${
+        move.statusColor === "red"
+          ? styles.cardRed
+          : move.statusColor === "amber"
+            ? styles.cardAmber
+            : move.statusColor === "teal"
+              ? styles.cardTeal
+              : styles.cardGreen
+      }`}
+      href={`/strategic-moves/${move.id}`}
+      prefetch={false}
+    >
+      <div className={styles.cardStrip} aria-hidden />
+      <div className={styles.cardHead}>
+        <div className={styles.cardHeadLeft}>
+          <div className={styles.cardTitle}>{demoSafeClientText(move.name)}</div>
+          <div className={styles.cardId}>
+            {demoSafeClientText(move.displayCode)} · {demoSafeClientText(move.tenant.name)}
+          </div>
+        </div>
+        <span className={styles.archetypeTag}>{demoSafeClientText(move.archetype)}</span>
+      </div>
+      <div
+        className={`${styles.gateLine} ${
+          move.statusColor === "red"
+            ? styles.gateLineRed
+            : move.statusColor === "amber"
+              ? styles.gateLineAmber
+              : move.statusColor === "teal"
+                ? styles.gateLineTeal
+                : styles.gateLineGreen
+        }`}
+      >
+        <span className={styles.pulse} aria-hidden />
+        <span className={styles.statusText}>{demoSafeClientText(move.status.text)}</span>
+        <span className={styles.gateDetail}>
+          · {demoSafeClientText(move.status.description)}
+        </span>
+      </div>
+      <div className={styles.cardMeta}>
+        <span>
+          Sponsor: <strong>{sponsorDisplayName(move.sponsor)}</strong>
+        </span>
+        <span>
+          Value:{" "}
+          <span className={styles.cardMetaVal}>
+            {formatValueAtStake(moveValue(move))}{" "}
+            {move.valueAtStake.verified?.status === "tracked"
+              ? "tracked"
+              : "projected"}
+          </span>
+        </span>
+      </div>
+    </Link>
   );
 }
 
