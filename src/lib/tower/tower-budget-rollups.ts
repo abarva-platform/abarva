@@ -44,8 +44,8 @@ interface ContextBudgetRecordRow {
 }
 
 interface CioTowerBudgetFactRollupRow {
-  portfolio_company: string | null;
-  fiscal_year: string | null;
+  portfolio_company: string;
+  fiscal_year: string;
   total_it_budget_usd: string | number | null;
   actual_spend_ytd_usd: string | number | null;
   forecast_spend_usd: string | number | null;
