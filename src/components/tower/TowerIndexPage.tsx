@@ -38,6 +38,12 @@ import type {
 import type { AtlasObservationsView } from "@/lib/tower/atlas-observations-view";
 import type { TowerBudgetRollup } from "@/lib/tower/tower-budget-rollups";
 import type { TowerTabKey } from "@/lib/tower/tower-lens-tabs-view";
+import {
+  cioTowerMetricNumber,
+  cioTowerMetricRowCount,
+  findCioTowerMetricPacket,
+  type CioTowerMetricPacket,
+} from "@/lib/cio-tower/metric-packet";
 
 export interface TowerSubstrateCounts {
   initiatives: number;
@@ -632,33 +638,43 @@ function buildCioDashboardModel(
   vendors: ReadonlyArray<AIInitiativeVendorRow>,
   todayIso: string,
   budgetRollups: ReadonlyArray<TowerBudgetRollup> = [],
+  metricPackets: ReadonlyArray<CioTowerMetricPacket> = [],
 ): CioDashboardModel {
+  const totalBudgetPacket = findCioTowerMetricPacket(
+    metricPackets,
+    "total_it_budget_fy26",
+  );
+  const initiativeBudgetPacket = findCioTowerMetricPacket(
+    metricPackets,
+    "initiative_budget_fy26",
+  );
   const budgetRollupTotal = budgetRollups.reduce(
     (sum, row) => sum + row.totalItBudgetUsd,
     0,
   );
-  const committedTotalFromInitiatives = initiatives.reduce(
+  const committedTotalFromInitiativesFallback = initiatives.reduce(
     (sum, initiative) => sum + initiativeBudget(initiative),
     0,
   );
+  const committedTotalFromInitiatives =
+    cioTowerMetricNumber(metricPackets, "initiative_budget_fy26") ??
+    committedTotalFromInitiativesFallback;
   const committedTotal =
-    budgetRollupTotal > 0 ? budgetRollupTotal : committedTotalFromInitiatives;
-  const actualSpendYtdTotal = budgetRollups.reduce(
-    (sum, row) => sum + row.actualSpendYtdUsd,
-    0,
-  );
+    cioTowerMetricNumber(metricPackets, "total_it_budget_fy26") ??
+    (budgetRollupTotal > 0 ? budgetRollupTotal : committedTotalFromInitiatives);
+  const actualSpendYtdTotal =
+    cioTowerMetricNumber(metricPackets, "actual_spend_ytd") ??
+    budgetRollups.reduce((sum, row) => sum + row.actualSpendYtdUsd, 0);
   const forecastSpendTotal = budgetRollups.reduce(
     (sum, row) => sum + Number(row.forecastSpendUsd ?? 0),
     0,
   );
-  const runTotal = budgetRollups.reduce(
-    (sum, row) => sum + row.runAmountUsd,
-    0,
-  );
-  const changeTotal = budgetRollups.reduce(
-    (sum, row) => sum + row.changeAmountUsd,
-    0,
-  );
+  const runTotal =
+    cioTowerMetricNumber(metricPackets, "run_budget_fy26") ??
+    budgetRollups.reduce((sum, row) => sum + row.runAmountUsd, 0);
+  const changeTotal =
+    cioTowerMetricNumber(metricPackets, "change_budget_fy26") ??
+    budgetRollups.reduce((sum, row) => sum + row.changeAmountUsd, 0);
   const opexTotal = budgetRollups.reduce(
     (sum, row) => sum + row.opexAmountUsd,
     0,
@@ -675,10 +691,9 @@ function buildCioDashboardModel(
     (sum, row) => sum + Number(row.revenueUsd ?? 0),
     0,
   );
-  const measuredTotal = initiatives.reduce(
-    (sum, initiative) => sum + initiativeValue(initiative),
-    0,
-  );
+  const measuredTotal =
+    cioTowerMetricNumber(metricPackets, "measured_value_ytd") ??
+    initiatives.reduce((sum, initiative) => sum + initiativeValue(initiative), 0);
   const riskRows = initiatives
     .filter((initiative) => initiative.statusFlag !== "healthy")
     .sort((a, b) => initiativeBudget(b) - initiativeBudget(a));
@@ -774,10 +789,12 @@ function buildCioDashboardModel(
     (initiative) => initiative.measuredValueUsd !== null,
   ).length;
   const budgetRowsWithAmount =
-    budgetRollups.length > 0
+    cioTowerMetricRowCount(totalBudgetPacket) ??
+    cioTowerMetricRowCount(initiativeBudgetPacket) ??
+    (budgetRollups.length > 0
       ? budgetRollups.filter((row) => row.totalItBudgetUsd > 0).length
       : initiatives.filter((initiative) => initiativeBudget(initiative) > 0)
-          .length;
+          .length);
   const budgetVendorTotal = budgetRollups.reduce(
     (sum, row) => sum + row.vendorAmountUsd,
     0,
@@ -791,12 +808,17 @@ function buildCioDashboardModel(
   const vendorRowsWithAmount = vendors.filter(
     (vendor) => Number(vendor.contractValueUsd ?? 0) > 0,
   ).length;
+  const budgetEvidenceCount =
+    cioTowerMetricRowCount(totalBudgetPacket) ?? budgetRollups.length;
+  const hasMetricEvidence = metricPackets.some(
+    (packet) => packet.valueNumeric !== null,
+  );
   const spendQuality: CioDashboardModel["spendQuality"] =
-    initiatives.length === 0 && budgetRollups.length === 0
+    initiatives.length === 0 && budgetRollups.length === 0 && !hasMetricEvidence
       ? "empty"
       : committedTotal === 0
         ? "missing_values"
-        : budgetRollups.length > 0
+        : budgetRollups.length > 0 || totalBudgetPacket
           ? "usable"
           : measuredCoverageCount === 0
             ? "unmeasured"
@@ -806,12 +828,12 @@ function buildCioDashboardModel(
   const topVendor = spendByVendor[0] ?? null;
   const topAiFamily = aiSpendRows[0] ?? null;
   const executiveNarrative =
-    initiatives.length === 0 && budgetRollups.length === 0
+    initiatives.length === 0 && budgetRollups.length === 0 && !hasMetricEvidence
       ? "Tower has the CIO canvas ready, but the tenant-bound program rows are not loaded yet."
       : measuredCoverageCount === 0
-        ? `${formatMoney(committedTotal)} is loaded as budget evidence across ${budgetRollups.length > 0 ? `${budgetRollups.length} portfolio-company rollup${budgetRollups.length === 1 ? "" : "s"}` : `${initiatives.length} program row${initiatives.length === 1 ? "" : "s"}`}, but no measured value rows are loaded. Treat budget concentration as review-required and do not use the ROI tiles until value proof is supplied.`
-        : budgetRollups.length > 0
-          ? `${formatMoney(committedTotal)} of FY26 IT budget is loaded across ${budgetRollups.length} portfolio-company rollup${budgetRollups.length === 1 ? "" : "s"}. Tower is separating enterprise budget concentration from ${initiatives.length} initiative row${initiatives.length === 1 ? "" : "s"} and value proof.`
+        ? `${formatMoney(committedTotal)} is loaded as budget evidence across ${budgetEvidenceCount > 0 ? `${budgetEvidenceCount} portfolio-company rollup${budgetEvidenceCount === 1 ? "" : "s"}` : `${initiatives.length} program row${initiatives.length === 1 ? "" : "s"}`}, but no measured value rows are loaded. Treat budget concentration as review-required and do not use the ROI tiles until value proof is supplied.`
+        : budgetEvidenceCount > 0
+          ? `${formatMoney(committedTotal)} of FY26 IT budget is loaded across ${budgetEvidenceCount} portfolio-company rollup${budgetEvidenceCount === 1 ? "" : "s"}. Tower is separating enterprise budget concentration from ${initiatives.length} initiative row${initiatives.length === 1 ? "" : "s"} and value proof.`
           : committedTotal === 0
             ? `Tower has ${initiatives.length} loaded program rows, but budget amounts are not loaded. Use this as a portfolio coverage view, not a spend dashboard, until program budget fields are supplied.`
             : `${formatMoney(committedTotal)} of loaded IT budget is visible; ${formatMoney(measuredTotal)} is backed by measured value rows. Tower is showing budget, pressure, vendor exposure, and value proof as separate slices.`;
@@ -894,7 +916,7 @@ function buildCioDashboardModel(
     initiativeBudgetTotal: committedTotalFromInitiatives,
     measuredTotal,
     measuredCoverageCount,
-    budgetRollupCount: budgetRollups.length,
+    budgetRollupCount: budgetEvidenceCount,
     actualSpendYtdTotal,
     forecastSpendTotal,
     runTotal,
@@ -4985,6 +5007,8 @@ interface TowerIndexPageProps {
   vendors?: ReadonlyArray<AIInitiativeVendorRow>;
   /** CIO budget rollups from the governed Tower budget read model. */
   budgetRollups?: ReadonlyArray<TowerBudgetRollup>;
+  /** Governed metric packet from cio_tower.measure_results. Dashboard and chat share this source. */
+  metricPackets?: ReadonlyArray<CioTowerMetricPacket>;
   /**
    * T-5 (Bind 1): pre-computed band tile aggregations from DB substrate.
    */
@@ -5056,6 +5080,7 @@ export function TowerIndexPage({
   initiatives,
   vendors,
   budgetRollups,
+  metricPackets,
   bandMetrics,
   pressuresView,
   atlasObservationsView,
@@ -5169,6 +5194,7 @@ export function TowerIndexPage({
     vendors ?? [],
     towerToday,
     budgetRollups ?? [],
+    metricPackets ?? [],
   );
 
   // ─── aVa chat state · wired to /api/tower/cio-chat via the shared

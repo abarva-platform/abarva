@@ -3,6 +3,14 @@ import crypto from 'node:crypto';
 import { preflightAnthropicDirectClient } from '@/lib/integrations/ai-egress';
 import { azureRead } from '@/lib/data-plane/azureRead';
 import { createTxSession } from '@/lib/data-plane/read-adapters/azureSession';
+import {
+  formatCioTowerMoney,
+  toCioTowerMetricPacket,
+  validateCioTowerMetricPacketVisibility,
+  type CioTowerMetricPacket,
+} from '@/lib/cio-tower/metric-packet';
+
+export { canonicalCioTowerTenantKey } from '@/lib/cio-tower/metric-packet';
 
 const MODEL_NAME = 'claude-sonnet-4-6';
 const PROMPT_VERSION = 'cio_tower_advisor_prompt_v1';
@@ -70,6 +78,7 @@ export interface CioTowerPromptContext {
   question: string;
   contract: CioTowerContract;
   measures: CioTowerMeasureResult[];
+  metricPackets: CioTowerMetricPacket[];
   relevantFacts: CioTowerFactRow[];
   relationships: CioTowerRelationshipRow[];
   gaps: string[];
@@ -137,30 +146,6 @@ const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
   },
 ];
 
-const CIO_TOWER_TENANT_KEY_BY_ALIAS: Record<string, string> = {
-  apex: 'apex-retail',
-  apexretail: 'apex-retail',
-  'apex-retail': 'apex-retail',
-  meridian: 'meridian-health',
-  'meridian-health': 'meridian-health',
-  arcturus: 'first-capital-financial',
-  firstcapital: 'first-capital-financial',
-  'first-capital': 'first-capital-financial',
-  'first-capital-financial': 'first-capital-financial',
-  skyharbor: 'skyharbor-air',
-  'skyharbor-air': 'skyharbor-air',
-  lakeshore: 'lakeshore-industries',
-  'lakeshore-holdings': 'lakeshore-industries',
-  'lakeshore-industries': 'lakeshore-industries',
-  morganstreet: 'lakeshore-industries',
-  'morgan-street': 'lakeshore-industries',
-};
-
-export function canonicalCioTowerTenantKey(value: string): string {
-  const normalized = value.trim().toLowerCase();
-  return CIO_TOWER_TENANT_KEY_BY_ALIAS[normalized] ?? normalized;
-}
-
 function stableKey(prefix: string, parts: readonly string[]): string {
   const hash = crypto.createHash('sha256').update(parts.join('\n')).digest('hex').slice(0, 24);
   return `${prefix}_${hash}`;
@@ -181,11 +166,7 @@ function money(value: string | number | null | undefined): string {
   if (value === null || value === undefined || value === '') return 'not loaded';
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return String(value);
-  const abs = Math.abs(numeric);
-  if (abs >= 1_000_000_000) return `$${(numeric / 1_000_000_000).toFixed(1)}B`;
-  if (abs >= 1_000_000) return `$${(numeric / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1_000) return `$${Math.round(numeric / 1_000)}K`;
-  return `$${Math.round(numeric)}`;
+  return formatCioTowerMoney(numeric);
 }
 
 function factValue(row: CioTowerFactRow): string {
@@ -260,11 +241,12 @@ export function parseVisibleAnswerContract(raw: string): CioTowerVisibleAnswerCo
 }
 
 export function buildCioTowerClaudePrompt(context: CioTowerPromptContext): string {
-  const measureLines = context.measures.map((measure) => {
-    const label = measure.label ?? measure.measure_key;
-    const value = measure.value_numeric === null ? 'not loaded' : money(measure.value_numeric);
-    return `- ${label}: ${value} (${measure.period}, ${measure.basis}; formula ${measure.formula_version}; ${measure.source_fact_keys.length} supporting facts)`;
+  const measureLines = context.metricPackets.map((measure) => {
+    return `- ${measure.label}: ${measure.displayValue} (${measure.period}, ${measure.basis}; formula ${measure.formulaVersion}; ${measure.sourceFactKeys.length} supporting facts)`;
   });
+  const authoritativeMetric = context.contract.measure_key
+    ? context.metricPackets.find((packet) => packet.measureKey === context.contract.measure_key)
+    : null;
 
   const factLines = context.relevantFacts.slice(0, 18).map((fact, index) => {
     const name = fact.entity_display_name ?? fact.entity_key ?? `Fact ${index + 1}`;
@@ -315,8 +297,11 @@ export function buildCioTowerClaudePrompt(context: CioTowerPromptContext): strin
     `Intent: ${context.contract.intent}`,
     `Question family: ${context.contract.question_family}`,
     `Preferred artifact shape: ${context.contract.artifact_type}`,
+    authoritativeMetric
+      ? `Authoritative metric packet for this question: ${authoritativeMetric.label} = ${authoritativeMetric.displayValue} (${authoritativeMetric.period}, ${authoritativeMetric.basis}; formula ${authoritativeMetric.formulaVersion}). Use this value exactly if you mention this metric.`
+      : 'Authoritative metric packet for this question: none loaded. Do not invent the metric value.',
     '',
-    'Governed measures:',
+    'Governed metric packets. These are also what the Tower dashboard uses:',
     measureLines.length ? measureLines.join('\n') : '- No governed measure result is loaded for this question.',
     '',
     'Most relevant facts:',
@@ -442,12 +427,14 @@ export async function loadCioTowerPromptContext(args: {
     loadRelevantFacts(args.tenantKey, contract),
     loadRelationships(args.tenantKey),
   ]);
+  const metricPackets = measures.map(toCioTowerMetricPacket);
   return {
     tenantKey: args.tenantKey,
     tenantName: args.tenantName,
     question: args.question,
     contract,
     measures,
+    metricPackets,
     relevantFacts,
     relationships,
     gaps: deriveGaps(contract, measures, relevantFacts),
@@ -471,6 +458,7 @@ async function persistPromptAndTrace(args: {
     question: args.context.question,
     contract: args.context.contract,
     measures: args.context.measures,
+    metricPackets: args.context.metricPackets,
     relevantFacts: args.context.relevantFacts,
     relationships: args.context.relationships,
     gaps: args.context.gaps,
@@ -579,9 +567,17 @@ export async function answerCioTowerQuestion(args: {
     validationErrors.push(error instanceof Error ? error.message : 'cio_tower_visible_contract_parse_failed');
   }
   if (parsedOutput) {
-    for (const visibleText of collectVisibleTextFromContract(parsedOutput)) {
+    const visibleTexts = collectVisibleTextFromContract(parsedOutput);
+    for (const visibleText of visibleTexts) {
       validationErrors.push(...validateVisibleAnswer(visibleText));
     }
+    validationErrors.push(
+      ...validateCioTowerMetricPacketVisibility({
+        contractKey: context.contract.contract_key,
+        packets: context.metricPackets,
+        visibleTexts,
+      }),
+    );
   }
   const latencyMs = Date.now() - startedAt;
   const { promptPackageKey, traceKey } = await persistPromptAndTrace({
