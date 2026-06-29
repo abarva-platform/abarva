@@ -1,4 +1,5 @@
 import {
+  __cioTowerAnswerTestHooks,
   buildCioTowerBoundaryAnswer,
   buildCioTowerRepairPrompt,
   buildCioTowerClaudePrompt,
@@ -203,6 +204,54 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('Include a compact table using the view=it_budget facts');
     expect(prompt).toContain('Use the display name and exact amount from Most relevant facts');
     expect(prompt).toContain('Do not invent run/change or actual-spend fields');
+  });
+
+  it('answers exact IT budget slice questions deterministically with a visible table', () => {
+    const output = __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(context({
+      question: 'What is the current loaded IT budget for each IT function?',
+      contract: {
+        contract_key: 'tower_total_it_spend',
+        intent: 'lookup',
+        question_family: 'total_it_spend',
+        measure_key: 'total_it_budget_fy26',
+        artifact_type: 'table',
+        examples: [],
+      },
+      relevantFacts: [
+        {
+          fact_key: 'fact-cloud',
+          entity_key: 'cloud-and-infrastructure',
+          entity_type: 'budget_line',
+          entity_display_name: 'Cloud And Infrastructure',
+          measure: 'budget_fy26_usd',
+          scope: 'enterprise_budget_line',
+          view: 'it_budget',
+          amount_type: 'none',
+          basis: 'committed',
+          period: 'fy26',
+          value_numeric: '201200000',
+          value_text: null,
+          unit: 'usd',
+          value_source: 'tenant_file',
+          confidence: 'high',
+          source_key: 'source-budget',
+          source_row: '4',
+          attributes: {},
+        },
+      ],
+    }));
+
+    expect(output?.reason).toContain('Exact budget-slice question');
+    expect(output?.output.answer).toContain('$2.6B');
+    expect(output?.output.answer).not.toContain('rows');
+    expect(output?.output.tables).toEqual([
+      {
+        id: 'it_budget_slices',
+        title: 'Loaded FY26 IT budget slices',
+        columns: ['Slice', 'FY26 budget', 'Basis', 'Confidence'],
+        rows: [['Cloud And Infrastructure', '$201.2M', 'committed', 'high']],
+      },
+    ]);
   });
 
   it('builds a repair prompt that asks Claude to fix, not the renderer to mutate', () => {
