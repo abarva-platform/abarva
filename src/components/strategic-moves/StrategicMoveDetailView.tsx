@@ -479,7 +479,13 @@ function ActivityContent({
 
 // ── Documents tab content ─────────────────────────────────────────────────────
 
-function DocumentsContent({ move }: { move: StrategicMove }) {
+function DocumentsContent({
+  move,
+  presentationMode = false,
+}: {
+  move: StrategicMove;
+  presentationMode?: boolean;
+}) {
   const boardArtifactCount = boardArtifactsForMove(move).length;
   return (
     <div style={{ padding: "0 4px" }}>
@@ -508,6 +514,7 @@ function DocumentsContent({ move }: { move: StrategicMove }) {
           moveName={move.name}
           clientDisplayName={move.tenant.name}
           boardArtifactCount={boardArtifactCount}
+          presentationMode={presentationMode}
         />
       </Suspense>
     </div>
@@ -890,7 +897,9 @@ function RightPane({
           presentationMode={presentationMode}
         />
       )}
-      {activeTab === "documents" && <DocumentsContent move={move} />}
+      {activeTab === "documents" && (
+        <DocumentsContent move={move} presentationMode={presentationMode} />
+      )}
       {activeTab === "sessions" && <SessionPlaybookPanel moveId={move.id} />}
       {activeTab === "cabinet" && (
         <FileCabinetPanel
