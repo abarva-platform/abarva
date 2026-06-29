@@ -188,7 +188,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
 
     const askBox = screen.getByTestId("agent-dock-input");
     expect(askBox.tagName).toBe("TEXTAREA");
-    expect(askBox).toHaveAttribute("placeholder", "Ask about Apex");
+    expect(askBox).toHaveAttribute("placeholder", "Ask about Retail Demo");
 
     fireEvent.change(askBox, {
       target: { value: "what should we do about\napex ai spend?" },
@@ -206,7 +206,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       format: "rich",
       surfaceContext: {
         activeTab: "intelligence",
-        activeClient: "Apex Retail Group",
+        activeClient: "Retail Demo",
         clientKey: "apex-retail",
       },
     });
@@ -279,7 +279,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     );
 
     fireEvent.click(
-      screen.getByText("Which AI investments should Apex scale?"),
+      screen.getByText("Which AI investments should Retail Demo scale?"),
     );
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -287,7 +287,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     expect(screen.getAllByTestId("agent-dock-turn-user")).toHaveLength(1);
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(JSON.parse(String(init.body))).toMatchObject({
-      q: "Which AI investments should Apex scale?",
+      q: "Which AI investments should Retail Demo scale?",
       client: "apex-retail",
       format: "rich",
     });
