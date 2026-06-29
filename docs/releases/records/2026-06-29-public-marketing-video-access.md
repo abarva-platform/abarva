@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The public AbarVa landing page now supports the approved CXO-safe product walkthrough video, keeps the public experience request-access only, pins the product-tour CTA next to request access, allows the marketing page on mobile, and records public marketing visits/clicks/form events through the existing PostHog client when the PostHog project key is configured.
+The public AbarVa landing page now supports the approved CXO-safe product walkthrough video, keeps the public experience request-access only, pins the product-tour CTA next to request access, allows the marketing page on mobile, and records public marketing visits/clicks/form events through PostHog capture when the public PostHog project key is configured.
 
 ## Layer Impact
 
@@ -27,7 +27,7 @@ The public AbarVa landing page now supports the approved CXO-safe product walkth
 
 ## Changes Included
 
-- `src/components/marketing/LoggedOutLandingPage.tsx`: embeds the approved walkthrough MP4, pins the product-tour CTA in the nav and hero next to request access, adds poster/video styling, removes the public sign-in link, initializes the public PostHog marketing client, emits explicit public marketing events, and clarifies that access instructions are sent by email.
+- `src/components/marketing/LoggedOutLandingPage.tsx`: embeds the approved walkthrough MP4, pins the product-tour CTA in the nav and hero next to request access, adds poster/video styling, removes the public sign-in link, emits explicit anonymous public marketing events to PostHog capture, and clarifies that access instructions are sent by email.
 - `src/components/MobileGuard.tsx`: allows public marketing/status pages on mobile while preserving the product desktop guard.
 - `src/components/ProductUsageTelemetry.tsx`: captures anonymous public clicks in addition to existing anonymous pageviews.
 - `src/components/PostHogProvider.tsx`: initializes the PostHog singleton before child telemetry hooks read the provider client, so pageview/click/request-access events are not lost to the first-render timing race.
