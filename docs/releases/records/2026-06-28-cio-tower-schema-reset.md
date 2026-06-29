@@ -153,6 +153,14 @@ checks across five tenants and six question families, with 300/300 routing to
 the expected contract:
 `node scripts/tower/validate-cio-tower-quality.mjs`.
 
+Pass: Follow-up live-surface guard closes the surviving legacy `/tower`
+front-end path. The actual `TowerIndexPage` chat now posts to
+`/api/tower/cio-chat` instead of `/api/v1/atlas/chat`, old retry fallback copy
+is removed from that page, and `AtlasChatPanel` no longer rewrites model text.
+The static guard `node scripts/tower/assert-cio-tower-live-chat-sunset.mjs`
+protects this route against regressing to the old endpoint or renderer-side
+brand mutation.
+
 Pass: The Claude prompt now requires an explicit
 `cio_tower_visible_answer_v1` JSON contract. Claude owns every user-visible
 string, including main prose, table titles, table columns, table cells, tab
@@ -163,6 +171,10 @@ model output.
 Pass: `cio_tower.answer_traces` stores the raw model response and rendered
 response identically for this route; visible-section parity is recorded in the
 artifact metadata.
+
+Pass: Server-side answer validation now blocks visible-answer contract
+violations after persisting the prompt/trace. Invalid Claude output is available
+for audit, but it is not returned to the UI for renderer-side cleanup.
 
 Pass: Focused local validation passed:
 - `npx eslint src/lib/cio-tower/answer.ts src/lib/cio-tower/__tests__/answer.test.ts src/app/api/tower/cio-chat/route.ts src/components/tower/AiControlTowerPage.tsx`

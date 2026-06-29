@@ -816,7 +816,7 @@ describe("AgentDock · thread render", () => {
     expect(turns[1]).toHaveAttribute("data-testid", "agent-dock-turn-user");
   });
 
-  it("renders compact agent responses without raw markdown markers", () => {
+  it("preserves compact agent response text without renderer rewriting", () => {
     render(
       <AgentDock
         agent={AGENT}
@@ -834,13 +834,10 @@ describe("AgentDock · thread render", () => {
     );
 
     expect(screen.getByTestId("agent-dock-turn-agent")).toHaveTextContent(
-      "APX-04 is the highest value-risk item this quarter.",
+      "**APX-04 is the highest value-risk item this quarter.**",
     );
     expect(screen.getByTestId("agent-dock-turn-agent")).toHaveTextContent(
       "AI Draft",
-    );
-    expect(screen.getByTestId("agent-dock-turn-agent")).not.toHaveTextContent(
-      "**",
     );
   });
 

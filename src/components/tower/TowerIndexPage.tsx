@@ -12,7 +12,7 @@ import {
   type AtlasMessage,
 } from "@/components/atlas/AtlasChatPanel";
 import type { AttachmentRef } from "@/components/agent/AgentDock";
-import type { AtlasChatResponse, AtlasSuggestion } from "@/lib/atlas/types";
+import type { AtlasSuggestion } from "@/lib/atlas/types";
 import {
   buildStrategicAlignment2x2View,
   dotsByQuadrant,
@@ -46,6 +46,16 @@ export interface TowerSubstrateCounts {
   decisions: number;
   stakeholderNotes: number;
   scenarios: number;
+}
+
+interface CioTowerVisibleAnswer {
+  answer: string;
+  followUpQuestion?: string | null;
+}
+
+interface CioTowerChatResponse {
+  modelOutput?: CioTowerVisibleAnswer;
+  traceKey?: string;
 }
 
 // ─── Tower design tokens — aligned with the LOCKED AbarVa design system ───────
@@ -4961,7 +4971,7 @@ interface TowerIndexPageProps {
   towerToday?: string;
   /**
    * Tenant client id for the active session — wires the AgentDock chat lane
-   * to /api/v1/atlas/chat. When omitted the chat composer disables
+   * to /api/tower/cio-chat. When omitted the chat composer disables
    * gracefully (renders the rest of the page unchanged).
    */
   clientId?: string;
@@ -5161,10 +5171,10 @@ export function TowerIndexPage({
     budgetRollups ?? [],
   );
 
-  // ─── Atlas chat state · wired to /api/v1/atlas/chat via the shared
+  // ─── aVa chat state · wired to /api/tower/cio-chat via the shared
   // <AgentDock> mounted around the workspace below. The dock owns the
   // composer (auto-grow, paperclip, mode picker, sticky bottom, resize) so
-  // the previous AtlasColumn stub composer is gone. We keep the messages /
+  // the previous Tower stub composer is gone. We keep the messages /
   // suggestions state here so the runtime contract (threadId, suggestions
   // round-trip) is preserved across turns. ────────────────────────────
   const initialOpener: AtlasMessage = {
@@ -5205,7 +5215,6 @@ export function TowerIndexPage({
     async (
       text: string,
       attachments: AttachmentRef[],
-      surfaceContextPatch?: Record<string, unknown>,
     ) => {
       const trimmed = text.trim();
       if (!trimmed && attachments.length === 0) return;
@@ -5238,50 +5247,48 @@ export function TowerIndexPage({
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 45_000);
       try {
-        const res = await fetch("/api/v1/atlas/chat", {
+        const res = await fetch("/api/tower/cio-chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             message: trimmed,
-            threadId: atlasThreadId,
-            clientId,
-            attachments: attachments.map((a) => ({
-              id: a.id,
-              file_name: a.file_name,
-              mime: a.mime,
-            })),
-            surfaceContext: {
-              clientId,
-              tenantName,
-              activeTowerLens: activeLens,
-              activeTowerDashboardView: activeCioDashboardView,
-              context,
-              ...surfaceContextPatch,
-            },
           }),
           signal: controller.signal,
         });
         const json = (await res
           .json()
-          .catch(() => ({}))) as Partial<AtlasChatResponse>;
-        if (!res.ok || !json.response || !json.threadId) {
+          .catch(() => ({}))) as Partial<CioTowerChatResponse>;
+        const modelOutput = json.modelOutput;
+        if (!res.ok || !modelOutput?.answer) {
           setAtlasMessages((prev) => [
             ...prev,
             {
               id: `atlas-error-${Date.now()}`,
               role: "atlas",
               content:
-                "aVa could not answer that right now. Honest read: the Tower summary is still valid, but the live response path needs a retry.",
+                "aVa could not produce a valid Tower answer contract. No fallback answer was generated.",
             },
           ]);
           return;
         }
-        setAtlasThreadId(json.threadId);
+        setAtlasThreadId(json.traceKey ?? atlasThreadId);
         setAtlasMessages((prev) => [
           ...prev,
-          { id: `atlas-${Date.now()}`, role: "atlas", content: json.response! },
+          {
+            id: `atlas-${Date.now()}`,
+            role: "atlas",
+            content: modelOutput.answer,
+          },
         ]);
-        if (json.suggestions) setAtlasSuggestions(json.suggestions);
+        if (modelOutput.followUpQuestion) {
+          setAtlasSuggestions([
+            {
+              label: modelOutput.followUpQuestion,
+              value: modelOutput.followUpQuestion,
+              kind: "message",
+            },
+          ]);
+        }
       } catch (err) {
         setAtlasMessages((prev) => [
           ...prev,
@@ -5290,8 +5297,8 @@ export function TowerIndexPage({
             role: "atlas",
             content:
               err instanceof DOMException && err.name === "AbortError"
-                ? "I could not complete the live aVa answer within this screen response window. The Tower facts below are still available. Next step: retry the same question or open the relevant program evidence view."
-                : "I could not complete the live aVa answer just now. The Tower facts below are still available. Next step: retry the same question or open the relevant program evidence view.",
+                ? "aVa did not return a Tower answer contract within the response window. No fallback answer was generated."
+                : "aVa did not return a Tower answer contract. No fallback answer was generated.",
           },
         ]);
       } finally {
@@ -5300,12 +5307,8 @@ export function TowerIndexPage({
       }
     },
     [
-      activeCioDashboardView,
-      activeLens,
       clientId,
       atlasThreadId,
-      context,
-      tenantName,
     ],
   );
 
@@ -5318,15 +5321,7 @@ export function TowerIndexPage({
         request.mode === "levers"
           ? `Show the lever map for ${request.metricLabel}${valueClause}.`
           : `Why is ${request.metricLabel}${valueClause}?`;
-      void sendToAtlas(prompt, [], {
-        metricExplanationRequest: {
-          source: "tower_metric_provenance",
-          metricKey: request.metricKey,
-          displayValue: request.displayValue,
-          displayConfidence: request.displayConfidence,
-          mode: request.mode,
-        },
-      });
+      void sendToAtlas(prompt, []);
     },
     [sendToAtlas],
   );

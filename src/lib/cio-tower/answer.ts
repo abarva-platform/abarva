@@ -599,6 +599,16 @@ export async function answerCioTowerQuestion(args: {
     (error as Error & { cause?: unknown }).cause = { promptPackageKey, traceKey, rawResponse };
     throw error;
   }
+  if (validationErrors.length) {
+    const error = new Error(`cio_tower_visible_contract_validation_failed:${validationErrors.join(',')}`);
+    (error as Error & { cause?: unknown }).cause = {
+      promptPackageKey,
+      traceKey,
+      rawResponse,
+      validationErrors,
+    };
+    throw error;
+  }
 
   return {
     response: parsedOutput.answer,
@@ -608,7 +618,7 @@ export async function answerCioTowerQuestion(args: {
     traceKey,
     promptHash,
     model: MODEL_NAME,
-    validationStatus: validationErrors.length ? 'failed' : 'passed',
+    validationStatus: 'passed',
     validationErrors,
     latencyMs,
   };
