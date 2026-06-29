@@ -298,6 +298,10 @@ export function buildCioTowerBoundaryAnswer(route: CioTowerBoundaryRoute): CioTo
   };
 }
 
+export const __cioTowerAnswerTestHooks = {
+  buildCioTowerDeterministicMetricAnswer,
+};
+
 function money(value: string | number | null | undefined): string {
   if (value === null || value === undefined || value === '') return 'not loaded';
   const numeric = Number(value);
@@ -593,6 +597,73 @@ function buildCioTowerBoundaryPrompt(args: {
   ].join('\n');
 }
 
+function buildCioTowerDeterministicPrompt(args: {
+  context: CioTowerPromptContext;
+  output: CioTowerVisibleAnswerContract;
+  reason: string;
+}): string {
+  return [
+    'Deterministic Tower metric answer.',
+    `Question: ${args.context.question}`,
+    `Tenant: ${args.context.tenantName}`,
+    `Contract: ${args.context.contract.contract_key}`,
+    `Reason: ${args.reason}`,
+    '',
+    'No Claude call was made. The API returned the visible-answer JSON contract below and the renderer must place it unchanged.',
+    JSON.stringify(args.output),
+  ].join('\n');
+}
+
+function asksForBudgetSlice(question: string): boolean {
+  return /\b(each|by|per|list|compare|table|function|portfolio compan|company|platform|domain|tower|area|slice)\b/i.test(question);
+}
+
+function buildTowerBudgetSliceTable(facts: readonly CioTowerFactRow[]): CioTowerVisibleTable | null {
+  const budgetFacts = facts
+    .filter((fact) => fact.view === 'it_budget' && fact.value_numeric !== null && fact.value_numeric !== undefined)
+    .slice(0, 12);
+  if (budgetFacts.length === 0) return null;
+  return {
+    id: 'it_budget_slices',
+    title: 'Loaded FY26 IT budget slices',
+    columns: ['Slice', 'FY26 budget', 'Basis', 'Confidence'],
+    rows: budgetFacts.map((fact) => [
+      fact.entity_display_name ?? fact.entity_key ?? 'Unnamed slice',
+      factValue(fact),
+      fact.basis || 'loaded',
+      fact.confidence || 'unknown',
+    ]),
+  };
+}
+
+function buildCioTowerDeterministicMetricAnswer(context: CioTowerPromptContext): {
+  output: CioTowerVisibleAnswerContract;
+  reason: string;
+} | null {
+  if (context.contract.contract_key !== 'tower_total_it_spend') return null;
+
+  const totalBudget = context.metricPackets.find((packet) => packet.measureKey === 'total_it_budget_fy26');
+  if (!totalBudget?.valueNumeric) return null;
+
+  const table = asksForBudgetSlice(context.question)
+    ? buildTowerBudgetSliceTable(context.relevantFacts)
+    : null;
+  const answer = table
+    ? `${context.tenantName}'s loaded FY26 IT budget is ${totalBudget.displayValue}. The table shows the loaded budget slices available in Tower; it does not invent run/change or actual-spend detail where those fields are missing.`
+    : `${context.tenantName}'s loaded FY26 IT budget is ${totalBudget.displayValue}. Use that as the Tower budget envelope; only slice it further where Tower has loaded business-slice facts.`;
+
+  return {
+    reason: table ? 'Exact budget-slice question answered from loaded Tower facts.' : 'Exact budget metric question answered from governed Tower metric packet.',
+    output: {
+      version: 'cio_tower_visible_answer_v1',
+      answer,
+      tables: table ? [table] : [],
+      tabs: [],
+      followUpQuestion: table ? null : 'Do you want the loaded budget slices as a table?',
+    },
+  };
+}
+
 async function loadContract(question: string): Promise<CioTowerContract> {
   const key = matchContractKey(question);
   const rows = await azureRead.query<CioTowerContract>(
@@ -855,6 +926,57 @@ export async function answerCioTowerQuestion(args: {
       latencyMs,
     };
   }
+
+  const deterministicMetric = buildCioTowerDeterministicMetricAnswer(context);
+  if (deterministicMetric) {
+    const parsedOutput = deterministicMetric.output;
+    const rawResponse = JSON.stringify(parsedOutput);
+    const promptText = buildCioTowerDeterministicPrompt({
+      context,
+      output: parsedOutput,
+      reason: deterministicMetric.reason,
+    });
+    const promptHash = sha256(promptText);
+    const validationErrors = validateParsedVisibleAnswer({
+      contractKey: context.contract.contract_key,
+      metricPackets: context.metricPackets,
+      parsedOutput,
+    });
+    const latencyMs = Date.now() - startedAt;
+    const { promptPackageKey, traceKey } = await persistPromptAndTrace({
+      context,
+      promptText,
+      promptHash,
+      rawResponse,
+      parsedOutput,
+      validationErrors,
+      latencyMs,
+      modelName: BOUNDARY_MODEL_NAME,
+    });
+    if (validationErrors.length) {
+      const error = new Error(`cio_tower_visible_contract_validation_failed:${validationErrors.join(',')}`);
+      (error as Error & { cause?: unknown }).cause = {
+        promptPackageKey,
+        traceKey,
+        rawResponse,
+        validationErrors,
+      };
+      throw error;
+    }
+    return {
+      response: parsedOutput.answer,
+      modelOutputRaw: rawResponse,
+      modelOutput: parsedOutput,
+      promptPackageKey,
+      traceKey,
+      promptHash,
+      model: BOUNDARY_MODEL_NAME,
+      validationStatus: 'passed',
+      validationErrors,
+      latencyMs,
+    };
+  }
+
   const promptText = buildCioTowerClaudePrompt(context);
   const promptHash = sha256(promptText);
   const preflight = await preflightAnthropicDirectClient({

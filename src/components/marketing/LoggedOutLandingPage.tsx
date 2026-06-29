@@ -821,6 +821,17 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           box-shadow: 0 0 13px rgba(55, 224, 192, 0.85);
         }
 
+        .section.light .eyebrow,
+        .demo-band .eyebrow {
+          color: #005f73;
+        }
+
+        .section.light .eyebrow:before,
+        .demo-band .eyebrow:before {
+          background: #007a66;
+          box-shadow: none;
+        }
+
         .centered {
           justify-content: center;
         }
@@ -845,6 +856,10 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         h1 span,
         .teal {
           color: var(--teal);
+        }
+
+        .section.light .teal {
+          color: #005f73;
         }
 
         .lead,
