@@ -101,6 +101,28 @@ function shapeGraph(graph: HomeKnowGraph): HomeKnowGraph {
 export function shapeHomeKnowResponseForRender(
   response: HomeKnowResponse,
 ): HomeKnowResponse {
+  if (response.safety.composerTrace?.composer === "home_v6_dataset_contract") {
+    const renderedText = JSON.stringify({
+      prose: response.prose,
+      tables: response.tables,
+      charts: response.charts,
+      graphs: response.graphs,
+      gaps: response.gaps,
+      citations: response.citations,
+    });
+    const leaks = renderedLayerLeakIssues(renderedText);
+    return {
+      ...response,
+      safety: {
+        ...response.safety,
+        frontendTripwireShouldFire:
+          response.safety.frontendTripwireShouldFire || leaks.length > 0,
+        unsupportedClaimsRemoved:
+          response.safety.unsupportedClaimsRemoved + leaks.length,
+      },
+    };
+  }
+
   const citations = compactHomeCitations(response.citations);
   const citationIds = new Set(citations.map((citation) => citation.id));
   const shaped: HomeKnowResponse = {

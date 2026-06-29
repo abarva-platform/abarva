@@ -30,6 +30,17 @@ const DEMO_SAFE_REPLACEMENTS = [
 
 const OLD_DEMO_NAME_RE =
   /\b(Apex Retail Group|Apex Retail|Meridian Health System|Meridian Health|First Capital Financial|First Capital|Arcturus Financial Group|Arcturus|SkyHarbor Air Group|SkyHarbor Airlines|SkyHarbor Air|SkyHarbor|Lakeshore Industries|Lakeshore Holdings|Lakeshore)\b/i;
+const TECHNICAL_OLD_NAME_SCAN_SKIP = new Set([
+  "tenant_key",
+  "v6_contract_version",
+  "business_object_family",
+  "record_id",
+  "source_system",
+  "source_file",
+  "source_row_number",
+  "created_at",
+  "updated_at",
+]);
 
 const DIMENSION_FILES = {
   enterprise_profile: "V6_01_enterprise_profile.csv",
@@ -748,6 +759,7 @@ function scoreDimension(family, rows) {
     for (const [column, value] of Object.entries(row)) {
       totalCells += 1;
       if (isDataThin(value)) dataThinCells += 1;
+      if (shouldSkipOldNameScan(column)) continue;
       if (OLD_DEMO_NAME_RE.test(String(value))) {
         oldNameHits.push({ column, value: String(value).slice(0, 160) });
       }
@@ -1183,6 +1195,10 @@ function demoSafeText(value) {
     (text, [pattern, replacement]) => text.replace(pattern, replacement),
     String(value ?? ""),
   );
+}
+
+function shouldSkipOldNameScan(column) {
+  return TECHNICAL_OLD_NAME_SCAN_SKIP.has(column) || column.endsWith("_id");
 }
 
 function businessLabel(family) {
