@@ -527,7 +527,10 @@ function explorerStatus(
   return "draft";
 }
 
-async function buildExplorerModel(move: StrategicMove): Promise<ExplorerModel> {
+async function buildExplorerModel(
+  move: StrategicMove,
+  displayMoveTitle?: string,
+): Promise<ExplorerModel> {
   // Read through the Azure/Postgres data-plane adapter (no Supabase runtime
   // dependency). azureRead has no join, so we use `current_version` as the
   // "has a committed version" proxy — a deliverable row with a version ≥ 1 has
@@ -686,15 +689,32 @@ async function buildExplorerModel(move: StrategicMove): Promise<ExplorerModel> {
     };
   });
 
-  return { moveId: move.id, moveName: move.name, currentPhase, phases };
+  return {
+    moveId: move.id,
+    moveName: displayMoveTitle ?? move.name,
+    currentPhase,
+    phases,
+  };
 }
 
-async function ExplorerInner({ move }: { move: StrategicMove }) {
-  const model = await buildExplorerModel(move);
+async function ExplorerInner({
+  move,
+  displayMoveTitle,
+}: {
+  move: StrategicMove;
+  displayMoveTitle?: string;
+}) {
+  const model = await buildExplorerModel(move, displayMoveTitle);
   return <MovesExplorer model={model} />;
 }
 
-function ExplorerContent({ move }: { move: StrategicMove }) {
+function ExplorerContent({
+  move,
+  displayMoveTitle,
+}: {
+  move: StrategicMove;
+  displayMoveTitle?: string;
+}) {
   return (
     <div style={{ padding: "0 4px" }}>
       <Suspense
@@ -711,7 +731,7 @@ function ExplorerContent({ move }: { move: StrategicMove }) {
           </div>
         }
       >
-        <ExplorerInner move={move} />
+        <ExplorerInner move={move} displayMoveTitle={displayMoveTitle} />
       </Suspense>
     </div>
   );
@@ -832,7 +852,9 @@ function RightPane({
           linkedSourceEvent={linkedSourceEvent}
         />
       )}
-      {activeTab === "explorer" && <ExplorerContent move={move} />}
+      {activeTab === "explorer" && (
+        <ExplorerContent move={move} displayMoveTitle={displayTitle} />
+      )}
       {activeTab === "documents" && <DocumentsContent move={move} />}
       {activeTab === "sessions" && <SessionPlaybookPanel moveId={move.id} />}
       {activeTab === "cabinet" && (
@@ -861,6 +883,7 @@ export function StrategicMoveDetailView({
   discoveryIntakeEnabled = false,
   workspaceExplorerEnabled = false,
 }: Props) {
+  const presentationCopy = presentationMode ? presentationCopyForMove(move) : null;
   return (
     <div
       className={`${styles.page} ${presentationMode ? styles.presentationPage : ""}`}
@@ -877,6 +900,9 @@ export function StrategicMoveDetailView({
         <StrategicMoveDetailClient
           move={move}
           presentationMode={presentationMode}
+          presentationMoveTitle={presentationCopy?.moveTitle}
+          presentationMoveCode={presentationCopy?.displayCode}
+          presentationTenantName={presentationCopy?.tenantName}
           decisionThreadId={decisionThreadId}
           originatingIntelligenceSessionId={originatingIntelligenceSessionId}
           workspace={
