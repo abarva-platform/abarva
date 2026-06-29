@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { usePostHog } from 'posthog-js/react'
+import posthog from 'posthog-js'
 
 type LoggedOutLandingPageProps = {
   signedOut?: boolean
@@ -29,8 +29,36 @@ const EMPTY_FORM: RequestForm = {
   initiative: '',
 }
 
+const PUBLIC_MARKETING_POSTHOG_KEY =
+  process.env.NEXT_PUBLIC_POSTHOG_KEY || 'phc_sBWeBFtt6CTivNZPxXArcognZKe5zHMAzm5qjmfdVQKj'
+const PUBLIC_MARKETING_POSTHOG_HOST =
+  process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com'
+
+function ensurePublicMarketingPostHog() {
+  if (typeof window === 'undefined') return null
+  if (!PUBLIC_MARKETING_POSTHOG_KEY) return null
+
+  try {
+    if (!posthog.__loaded) {
+      posthog.init(PUBLIC_MARKETING_POSTHOG_KEY, {
+        api_host: PUBLIC_MARKETING_POSTHOG_HOST,
+        person_profiles: 'identified_only',
+        autocapture: false,
+        capture_pageview: false,
+        capture_pageleave: true,
+        session_recording: {
+          maskAllInputs: true,
+          maskInputOptions: { password: true },
+        },
+      })
+    }
+    return posthog
+  } catch {
+    return null
+  }
+}
+
 export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPageProps) {
-  const posthog = usePostHog()
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState<RequestForm>(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
@@ -40,7 +68,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
   const trackMarketingEvent = useCallback(
     (event: string, properties: Record<string, unknown> = {}) => {
       try {
-        posthog?.capture(event, {
+        ensurePublicMarketingPostHog()?.capture(event, {
           surface: 'public_marketing',
           route: typeof window === 'undefined' ? '/' : window.location.pathname,
           signed_in: false,
@@ -50,7 +78,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         // Telemetry is optional; never block public marketing or lead capture.
       }
     },
-    [posthog],
+    [],
   )
 
   const openReq = () => {
