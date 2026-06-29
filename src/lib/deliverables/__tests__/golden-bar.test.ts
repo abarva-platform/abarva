@@ -74,10 +74,27 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
         <svg><text>Physical deployment diagram</text></svg>
         <svg><text>Integration data flow diagram</text></svg>
         <svg><text>Native vs non-native service pattern</text></svg>
+        <svg><text>Current-to-future operating concept</text></svg>
+        <svg><text>Human + AI role model</text></svg>
+        <svg><text>Governance / control model</text></svg>
         <h2>Decision Record and Tradeoff Table</h2>
         <table><tr><th>Decision</th><th>Tradeoff</th></tr></table>
         <h2>KPI to Capability Traceability</h2>
         <table><tr><th>KPI</th><th>Capability</th></tr></table>
+        <h2>Current-to-Future Logic Table</h2>
+        <table><tr><th>P2 finding</th><th>Implication</th></tr></table>
+        <h2>Human + AI Role Model</h2>
+        <table><tr><th>Activity</th><th>Human owner</th><th>AI role</th></tr></table>
+        <h2>Workflow Option Matrix</h2>
+        <table><tr><th>Option</th><th>Fit</th></tr></table>
+        <h2>Control / Governance Matrix</h2>
+        <table><tr><th>Control</th><th>Hook</th></tr></table>
+        <h2>Implementation Work Package Table</h2>
+        <table><tr><th>Objective</th><th>Owner</th></tr></table>
+        <h2>Open Decision Log</h2>
+        <table><tr><th>Decision</th><th>Owner</th></tr></table>
+        <h2>P4 Readiness Checklist</h2>
+        <table><tr><th>Item</th><th>Status</th></tr></table>
       </body></html>`,
       "target_state_architecture",
     );

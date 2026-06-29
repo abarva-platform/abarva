@@ -47,6 +47,32 @@ function decisionsBlock(ctx: SolutionContext): string {
   );
 }
 
+function p3FutureStateBoundaryBlock(args: {
+  artifact: DeliverableKey;
+  phase: number;
+  generationMode: GenerationMode;
+  context: SolutionContext;
+  draftCaveat?: string;
+}): string {
+  if (args.artifact !== "target_state_architecture" || args.phase !== 3) return "";
+  const draftStatus =
+    args.generationMode === "draft"
+      ? `- This is "P3 Draft — based on approved P2 diagnostic for design shaping".
+- P2 is approved only for P3 draft shaping. P2 is not final. P3 is not final.
+- Include the active draft caveat near the top: "${args.draftCaveat ?? STRATEGIC_MOVES_DRAFT_CAVEAT}"`
+      : "- Final P3 output requires formal P3 option approval and phase-gate approval.";
+  const optionRule = args.context.chosenOption
+    ? `- Build to the approved chosen option: "${args.context.chosenOption}".`
+    : `- No final option has been selected. For this draft, present 2-3 future-state options, compare them, and keep the Open Decision Log explicit. Do not imply a selected final architecture.`;
+  return `\nP3 FUTURE-STATE BLUEPRINT BOUNDARY
+${draftStatus}
+${optionRule}
+- Carry forward P2 caveats, missing evidence, sponsor/signoff limits, and client-to-complete fields.
+- AbarVa's role is to shape, govern, prove, and help the client decide. The client and delivery teams own detailed process redesign, BPMN/workflow design, ERP/AP configuration, data engineering, implementation, training, adoption execution, and run-state operations.
+- Use client-facing labels: Future-State Direction, New Way of Working Blueprint, Target Operating Concept, Implementation work packages for client/delivery teams.
+- Do not write that AbarVa implements, executes, configures systems, trains users, runs operations, or completes end-to-end automation.`;
+}
+
 export interface BuiltPrompt {
   system: string;
   user: string;
@@ -91,7 +117,9 @@ export function buildArtifactPrompt(args: {
 
   const archRule =
     profile.renderer === "html_architecture" && artifact !== "solution_approach_options"
-      ? `\nARCHITECTURE RULE:\n- Do NOT choose the solution approach here — use the already-approved chosenOption: ${ctx.chosenOption ? `"${ctx.chosenOption}"` : "[MISSING — STOP and request P3a approval]"}.\n- The architecture must be built to that decision.`
+      ? generationMode === "draft" && !ctx.chosenOption
+        ? `\nARCHITECTURE DRAFT RULE:\n- No chosenOption is approved yet. This draft may shape future-state options, compare tradeoffs, and define open decisions, but it must not select or imply final architecture approval.`
+        : `\nARCHITECTURE RULE:\n- Do NOT choose the solution approach here — use the already-approved chosenOption: ${ctx.chosenOption ? `"${ctx.chosenOption}"` : "[MISSING — STOP and request P3a approval]"}.\n- The architecture must be built to that decision.`
       : "";
 
   const draftBlock =
@@ -102,6 +130,14 @@ export function buildArtifactPrompt(args: {
   const user = `You are generating "${profile.title}" for phase P${phase}.
 
 ${standardBrief}
+
+${p3FutureStateBoundaryBlock({
+  artifact,
+  phase,
+  generationMode,
+  context: ctx,
+  draftCaveat: args.draftCaveat,
+})}
 
 BOUND SOLUTION CONTEXT
 ${contextBlock}

@@ -222,6 +222,60 @@ describe('processDeliverableQueue', () => {
     );
   });
 
+  it('processes premium P3 Future-State Blueprint draft jobs through the same private operator path', async () => {
+    const premiumRun = {
+      ...claimedRow('run-premium-p3'),
+      clientId: 'client-lake',
+      tenantKey: 'lakeshore-holdings',
+      module: 'moves',
+      deliverableType: 'target_state_architecture',
+      jobPayload: {
+        kind: 'moves_premium_artifact',
+        module: 'moves',
+        useCaseArchetype: 'ai_opportunity_discovery',
+        deliverableType: 'target_state_architecture',
+        decisionContext: 'P3 future-state blueprint',
+        clientDisplayName: 'Lakeshore Holdings',
+        initiativeDisplayName: 'Back-office Automation',
+        sourceArtifactRef: 'move-1',
+        phase: 3,
+        artifact: 'target_state_architecture',
+        generationMode: 'draft',
+        title: 'P3 Future-State Blueprint Draft',
+        useCaseQuery: 'Reduce AP exceptions',
+      },
+    };
+    claimNextDeliverableRun.mockResolvedValueOnce(premiumRun).mockResolvedValueOnce(null);
+
+    await processDeliverableQueue({ workerId: 'worker-p3', batchSize: 5 });
+
+    expect(runDeliverableForTenant).not.toHaveBeenCalled();
+    expect(generateArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        moveId: 'move-1',
+        tenantKey: 'lakeshore-holdings',
+        phase: 3,
+        artifact: 'target_state_architecture',
+        generationMode: 'draft',
+      }),
+      expect.anything(),
+    );
+    expect(persistMoveGeneratedArtifact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phase: 3,
+        artifact: 'target_state_architecture',
+        title: 'P3 Future-State Blueprint Draft',
+      }),
+    );
+    expect(completeDeliverableRun).toHaveBeenCalledWith(
+      'run-premium-p3',
+      expect.objectContaining({
+        status: 'succeeded',
+        artifactId: 'move-artifact-1',
+      }),
+    );
+  });
+
   it('marks a run failed when the generation throws', async () => {
     claimNextDeliverableRun.mockResolvedValueOnce(claimedRow('run-3')).mockResolvedValueOnce(null);
     runDeliverableForTenant.mockRejectedValue(new Error('claude exploded'));

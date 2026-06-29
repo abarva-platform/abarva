@@ -28,6 +28,31 @@ export const STRATEGIC_MOVES_FORBIDDEN_ARTIFACT_TERMS = [
   "implementation detail",
 ] as const;
 
+export const P3_FUTURE_STATE_FORBIDDEN_ARTIFACT_TERMS = [
+  "kernel",
+  "function-pack",
+  "generated-pack",
+  "source row",
+  "raw route",
+  "blob path",
+  "tenant key",
+  "debug",
+  "canonical internal id",
+  "prompt",
+  "model call",
+  "AbarVa implements",
+  "AbarVa executes",
+  "AbarVa performs detailed process redesign",
+  "AbarVa owns implementation",
+  "AbarVa owns training rollout",
+  "AbarVa automates the process end to end",
+  "final design approved",
+  "final workflow design approved",
+  "implementation is complete",
+  "P2 final approved",
+  "P3 final approved",
+] as const;
+
 export interface ArtifactDepthStandard {
   targetWords: string;
   minWords: number;
@@ -77,6 +102,19 @@ export function premiumGoldenBarOptionsForArtifact(
       minimumWordCount: depthStandardForArtifact(artifact).minWords,
       forbiddenLanguage: STRATEGIC_MOVES_FORBIDDEN_ARTIFACT_TERMS,
       ...(artifact === "discovery_report" && context
+        ? {
+            requiredExactEvidenceTerms: exactEvidenceTermsForGoldenBar(context),
+            requiredTaxonomyTerms: taxonomyTermsForGoldenBar(context),
+            forbidClientFacingRawIds: true,
+          }
+        : {}),
+    };
+  }
+  if (artifact === "target_state_architecture") {
+    return {
+      minimumWordCount: depthStandardForArtifact(artifact).minWords,
+      forbiddenLanguage: P3_FUTURE_STATE_FORBIDDEN_ARTIFACT_TERMS,
+      ...(context
         ? {
             requiredExactEvidenceTerms: exactEvidenceTermsForGoldenBar(context),
             requiredTaxonomyTerms: taxonomyTermsForGoldenBar(context),
@@ -249,6 +287,77 @@ P2 evidence-specific requirements:
 - Keep draft/final gates honest; do not mark P2 final or ready for P3 if readiness remains partial.`;
 }
 
+function p3FutureStateAssignment(): string {
+  return `PHASE-SPECIFIC ASSIGNMENT — P3 FUTURE-STATE BLUEPRINT DRAFT
+Purpose: shape the future-state direction from the approved P2 diagnostic without pretending P2
+or P3 is final. This is a design-shaping artifact, not a detailed implementation plan.
+
+Visible status requirement:
+- Title or subtitle must state: "P3 Draft — based on approved P2 diagnostic for design shaping".
+- State that P2 was approved only for P3 draft shaping.
+- State that P2 is not final and P3 is not final.
+- Carry forward sponsor/signoff, missing evidence, and unresolved decision caveats.
+
+AbarVa boundary:
+- AbarVa helps define the new way of working, future-state direction, human + AI roles, control
+  points, work packages, governance, and value tracking.
+- Client and delivery teams own detailed process redesign, BPMN/workflow design, system
+  configuration, ERP/AP changes, data engineering build, implementation, training rollout,
+  adoption execution, and run-state operations.
+- Use terms such as Future-State Direction, New Way of Working Blueprint, Target Operating
+  Concept, and Implementation work packages for client/delivery teams.
+- Do not imply AbarVa implements, executes, configures systems, trains users, runs operations,
+  or completes end-to-end automation.
+
+Evidence that must drive the thesis when present:
+- 1,872 monthly exceptions
+- 2,345 manual touch hours per month
+- 7.4 average resolution days
+- exception categories and owner/risk signals
+- payment holds
+- duplicate-payment/control implications
+- process, data, control, ownership, and AI-fit findings
+
+The artifact must answer:
+- what P2 evidence implies for the future state
+- what should change in the operating model
+- which human and AI roles are safe to introduce now
+- where human control must remain
+- which future-state options are viable now versus later
+- what controls, data, systems, governance, and adoption dependencies must be resolved
+- what implementation work packages the client/delivery teams need to take forward
+- which open decisions must be resolved before P4 planning and business case finalization
+
+Required structures:
+- Metrics-backed Executive Future-State Thesis
+- Current-to-Future Logic Table: P2 finding, future-state implication, decision required,
+  owner/delivery group, caveat
+- New Way of Working Blueprint covering triage, routing, owner accountability, policy/control
+  review, human control, AI assist, and no-automation-yet zones
+- Human + AI Role Model table: activity, human owner, AI role, control hook, evidence required
+  before scaling
+- Future-State Workflow Option Matrix with 2-3 high-level options:
+  A. rules-led workflow cleanup first
+  B. AI-assisted triage and routing
+  C. exception command center/control tower
+- Control / Governance Matrix covering duplicate-payment, payment hold governance, audit trail,
+  segregation of duties, override policy, model/human review checkpoints, and evidence before scaling
+- Data and system dependency map covering ERP/AP data quality, PO/receipt/invoice match data,
+  vendor master quality, exception status taxonomy, workflow/case tracking, OCR intake, audit trail,
+  lineage, and reporting baseline
+- Adoption / Culture / Workforce implications
+- Implementation Work Package table: objective, likely owner, key outputs, dependencies,
+  AbarVa governance role, delivery owner role
+- Open Decision Log
+- P4 Readiness Checklist
+
+Visual requirements:
+- Current-to-future operating concept diagram
+- Human + AI role model diagram
+- Governance / control model diagram
+- Use inline SVGs and real tables, not prose-only sections.`;
+}
+
 function genericPhaseAssignment(phase: number): string {
   const byPhase: Record<number, string> = {
     0: "Frame the opportunity, evidence, value hypothesis, known/unknowns, and P1 recommendation.",
@@ -265,6 +374,7 @@ export function phaseAssignmentForArtifact(args: {
 }): string {
   if (args.artifact === "charter" || args.phase === 1) return p1Assignment();
   if (args.artifact === "discovery_report" || args.phase === 2) return p2Assignment();
+  if (args.artifact === "target_state_architecture" || args.phase === 3) return p3FutureStateAssignment();
   return genericPhaseAssignment(args.phase);
 }
 

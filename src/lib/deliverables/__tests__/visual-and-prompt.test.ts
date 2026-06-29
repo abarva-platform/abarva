@@ -25,6 +25,9 @@ describe("VisualArtifactContract — richness as a contract", () => {
     expect(c.requiredVisuals.join(" ")).toMatch(/logical/);
     expect(c.requiredVisuals.join(" ")).toMatch(/physical/);
     expect(c.requiredVisuals.join(" ")).toMatch(/native/);
+    expect(c.requiredVisuals.join(" ")).toMatch(/human \+ AI role model/);
+    expect(c.requiredTables.join(" ")).toMatch(/current-to-future logic table/);
+    expect(c.requiredTables.join(" ")).toMatch(/implementation work package table/);
   });
 
   it("current-state/gap requires current-state diagram + data flow + gap matrix", () => {
@@ -85,6 +88,36 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     const ctx = emptySolutionContext("m1", "t");
     const p = buildArtifactPrompt({ artifact: "target_state_architecture", phase: 3, context: ctx });
     expect(p.user).toMatch(/STOP and request P3a approval/);
+  });
+
+  it("P3 draft prompt shapes a Future-State Blueprint without selecting a final option", () => {
+    const ctx = applyPhaseDigest(emptySolutionContext("m1", "lakeshore"), {
+      useCase: "AP exception redesign",
+      currentState: "Average monthly invoice exceptions, 1872; Manual touch hours per month, 2345; Average resolution days, 7.4.",
+      gaps: ["payment hold governance inconsistent", "duplicate-payment control risk"],
+      metricsThatMatter: [
+        { label: "Monthly invoice exceptions", value: "1,872" },
+        { label: "Manual touch hours per month", value: "2,345" },
+        { label: "Average resolution days", value: "7.4" },
+      ],
+    });
+    const p = buildArtifactPrompt({
+      artifact: "target_state_architecture",
+      phase: 3,
+      context: ctx,
+      generationMode: "draft",
+      draftCaveat: "P2 approved only for P3 draft shaping.",
+    });
+    expect(p.user).toContain("P3 FUTURE-STATE BLUEPRINT DRAFT");
+    expect(p.user).toContain("P3 Draft — based on approved P2 diagnostic for design shaping");
+    expect(p.user).toContain("P2 is not final. P3 is not final");
+    expect(p.user).toContain("No final option has been selected");
+    expect(p.user).toContain("1,872");
+    expect(p.user).toContain("2,345");
+    expect(p.user).toContain("7.4");
+    expect(p.user).toContain("Human + AI Role Model table");
+    expect(p.user).toContain("Implementation Work Package table");
+    expect(p.user).toContain("Client and delivery teams own detailed process redesign");
   });
 
   it("marks missing required context as a blocking input, not invented", () => {

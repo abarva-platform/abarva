@@ -150,6 +150,103 @@ function renderArchitectureTableCompletion(ctx: SolutionContext): string {
     </thead>
     <tbody>${kpiRows}</tbody>
   </table>
+
+  <h2 style="margin:24px 0 8px;color:#0f172a">Current-to-Future Logic Table</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:22px">
+    <thead><tr style="background:#fef9c3;color:#713f12">
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">P2 finding</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Future-state implication</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Decision required</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Owner / delivery group</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Caveat</th>
+    </tr></thead>
+    <tbody>
+      <tr><td style="padding:10px;border:1px solid #cbd5e1">${escapeHtml(summariseList(ctx.gaps ?? ctx.rootCauses))}</td><td style="padding:10px;border:1px solid #cbd5e1">Shape exception intake, routing, control review, and accountability before automation scale.</td><td style="padding:10px;border:1px solid #cbd5e1">Confirm target operating concept and design owner.</td><td style="padding:10px;border:1px solid #cbd5e1">Client finance/AP leadership with delivery team support.</td><td style="padding:10px;border:1px solid #cbd5e1">P3 remains draft until sponsor and phase gates are complete.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="margin:0 0 8px;color:#0f172a">Human + AI Role Model</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:22px">
+    <thead><tr style="background:#ede9fe;color:#4c1d95">
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Activity</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Human owner</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">AI role</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Control hook</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Evidence required before scaling</th>
+    </tr></thead>
+    <tbody>
+      <tr><td style="padding:10px;border:1px solid #cbd5e1">Exception triage</td><td style="padding:10px;border:1px solid #cbd5e1">AP operations lead</td><td style="padding:10px;border:1px solid #cbd5e1">Classify and suggest routing</td><td style="padding:10px;border:1px solid #cbd5e1">Human approval before payment-impacting action</td><td style="padding:10px;border:1px solid #cbd5e1">Case-level exception history, policy outcomes, and override data</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="margin:0 0 8px;color:#0f172a">Workflow Option Matrix</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:22px">
+    <thead><tr style="background:#dcfce7;color:#14532d">
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Option</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">What changes</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Value logic</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Complexity / risk</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Fit now / not now</th>
+    </tr></thead>
+    <tbody>
+      <tr><td style="padding:10px;border:1px solid #cbd5e1">A. Rules-led workflow cleanup first</td><td style="padding:10px;border:1px solid #cbd5e1">Standardize taxonomy, routing, and ownership.</td><td style="padding:10px;border:1px solid #cbd5e1">Reduces rework before AI scale.</td><td style="padding:10px;border:1px solid #cbd5e1">Lower complexity; depends on owner alignment.</td><td style="padding:10px;border:1px solid #cbd5e1">Strong fit for draft shaping.</td></tr>
+      <tr><td style="padding:10px;border:1px solid #cbd5e1">B. AI-assisted triage and routing</td><td style="padding:10px;border:1px solid #cbd5e1">AI recommends category, owner, and next action.</td><td style="padding:10px;border:1px solid #cbd5e1">Targets manual touch hours.</td><td style="padding:10px;border:1px solid #cbd5e1">Requires evidence, controls, and monitoring.</td><td style="padding:10px;border:1px solid #cbd5e1">Pilot only after evidence readiness.</td></tr>
+      <tr><td style="padding:10px;border:1px solid #cbd5e1">C. Exception command center / control tower</td><td style="padding:10px;border:1px solid #cbd5e1">Creates visibility, escalation, and value tracking.</td><td style="padding:10px;border:1px solid #cbd5e1">Improves cycle time and control governance.</td><td style="padding:10px;border:1px solid #cbd5e1">Depends on reporting baseline and workflow status quality.</td><td style="padding:10px;border:1px solid #cbd5e1">Good P4 planning candidate.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="margin:0 0 8px;color:#0f172a">Control / Governance Matrix</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:22px">
+    <thead><tr style="background:#fee2e2;color:#7f1d1d">
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Control area</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Future-state control point</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Human approval boundary</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Evidence before scaling</th>
+    </tr></thead>
+    <tbody>
+      <tr><td style="padding:10px;border:1px solid #cbd5e1">Duplicate payment / payment hold</td><td style="padding:10px;border:1px solid #cbd5e1">Audit trail, override policy, segregation of duties, review checkpoints.</td><td style="padding:10px;border:1px solid #cbd5e1">No payment release without accountable human approval.</td><td style="padding:10px;border:1px solid #cbd5e1">Control policy, hold disposition, override history, and exception outcomes.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="margin:0 0 8px;color:#0f172a">Implementation Work Package Table</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:22px">
+    <thead><tr style="background:#e0f2fe;color:#075985">
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Work package</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Objective</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Likely owner</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">AbarVa governance role</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Delivery owner role</th>
+    </tr></thead>
+    <tbody>
+      <tr><td style="padding:10px;border:1px solid #cbd5e1">Process design</td><td style="padding:10px;border:1px solid #cbd5e1">Turn blueprint into detailed workflow design.</td><td style="padding:10px;border:1px solid #cbd5e1">Client process owner / delivery team</td><td style="padding:10px;border:1px solid #cbd5e1">Govern work-package intent and value gates.</td><td style="padding:10px;border:1px solid #cbd5e1">Own detailed design and implementation.</td></tr>
+      <tr><td style="padding:10px;border:1px solid #cbd5e1">AI-assisted triage pilot</td><td style="padding:10px;border:1px solid #cbd5e1">Test AI recommendations under human controls.</td><td style="padding:10px;border:1px solid #cbd5e1">Finance/AP, data, security, platform teams</td><td style="padding:10px;border:1px solid #cbd5e1">Define readiness, controls, and proof standard.</td><td style="padding:10px;border:1px solid #cbd5e1">Build, configure, test, and train.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="margin:0 0 8px;color:#0f172a">Open Decision Log</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:22px">
+    <thead><tr style="background:#f1f5f9;color:#0f172a">
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Decision</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Why it matters</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Owner</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Needed before</th>
+    </tr></thead>
+    <tbody>
+      <tr><td style="padding:10px;border:1px solid #cbd5e1">Select P3 option path</td><td style="padding:10px;border:1px solid #cbd5e1">Determines P4 roadmap and business case sequencing.</td><td style="padding:10px;border:1px solid #cbd5e1">Sponsor and process/control owners</td><td style="padding:10px;border:1px solid #cbd5e1">P3 final / P4 planning</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="margin:0 0 8px;color:#0f172a">P4 Readiness Checklist</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="background:#f5f3ff;color:#4c1d95">
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Readiness item</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Status for P4</th>
+      <th style="text-align:left;padding:10px;border:1px solid #cbd5e1">Client to complete</th>
+    </tr></thead>
+    <tbody>
+      <tr><td style="padding:10px;border:1px solid #cbd5e1">P3 option selected and controls accepted</td><td style="padding:10px;border:1px solid #cbd5e1">Not final in draft</td><td style="padding:10px;border:1px solid #cbd5e1">Sponsor review and phase-gate decision</td></tr>
+    </tbody>
+  </table>
 </section>`;
 }
 
@@ -316,10 +413,7 @@ function completeMandatoryExhibits(args: {
   }
   const onlyMissingTables =
     args.goldenBar.missingVisuals.length === 0 &&
-    args.goldenBar.missingTables.length > 0 &&
-    args.goldenBar.missingTables.every((table) =>
-      ["decision records / tradeoff table", "KPI-to-capability traceability"].includes(table),
-    );
+    args.goldenBar.missingTables.length > 0;
   if (!onlyMissingTables) return undefined;
   return insertBeforeBodyClose(args.html, renderArchitectureTableCompletion(args.context));
 }
@@ -368,7 +462,12 @@ export async function generateArtifact(
   const profile = getDeliverableProfile(args.artifact);
   if (profile.renderer === "html_architecture" && args.artifact !== "solution_approach_options") {
     const archOk = architectureMayProceed(ctx);
-    if (!archOk.ready) return { status: "blocked_context", missing: archOk.missing };
+    if (!archOk.ready) {
+      if (generationMode !== "draft") return { status: "blocked_context", missing: archOk.missing };
+      contextCaveats.push(
+        "No final P3 option has been selected; this draft must compare future-state options and keep open decisions explicit.",
+      );
+    }
   }
 
   const draftCaveatText =

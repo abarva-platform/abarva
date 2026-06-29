@@ -95,4 +95,40 @@ describe("assembleMoveSolutionContext (Slice 1)", () => {
       ]),
     );
   });
+
+  it("carries concrete P2 evidence specificity forward into P3 draft shaping", async () => {
+    const out = await assembleMoveSolutionContext(
+      { moveId: "m1", tenantKey: "lakeshore", targetPhase: 3 },
+      sources({
+        loadPriorDigests: async () => [
+          {
+            useCase: "AP exception redesign",
+            kpis: [{ name: "manual touch reduction", domain: "financial" }],
+            gaps: ["payment hold governance inconsistent"],
+          },
+        ],
+        retrieveCurrentState: async () => `
+          Average monthly invoice exceptions, 1872
+          Manual touch hours per month, 2345
+          Average resolution days, 7.4
+          "exception_category","monthly_volume","percent_of_exceptions","average_resolution_days","manual_touch_hours_estimate","risk_level","primary_owner"
+          "Payment hold / control review","27","1.4","12.5","58","High","Finance Control"
+        `,
+      }),
+    );
+
+    expect(out.readiness.ready).toBe(true);
+    expect(out.context.metricsThatMatter).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: "Monthly invoice exceptions", value: "1,872" }),
+        expect.objectContaining({ label: "Manual touch hours per month", value: "2,345" }),
+        expect.objectContaining({ label: "Average resolution days", value: "7.4" }),
+      ]),
+    );
+    expect(out.context.evidenceTaxonomy).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ category: "Payment hold / control review", riskLevel: "High" }),
+      ]),
+    );
+  });
 });
