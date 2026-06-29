@@ -462,7 +462,7 @@ function MoveCard({ move }: { move: StrategicMove }) {
       </div>
       <div className={styles.cardMeta}>
         <span>
-          Sponsor: <strong>{sponsorDisplayName(move.sponsor)}</strong>
+          Sponsor: <strong>{demoSafeClientText(sponsorDisplayName(move.sponsor))}</strong>
         </span>
         <span>
           Value:{" "}
