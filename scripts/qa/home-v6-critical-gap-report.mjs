@@ -58,6 +58,17 @@ const MONEY_VALUE_COLUMNS = {
 
 const OLD_DEMO_NAME_RE =
   /\b(Apex Retail Group|Apex Retail|Meridian Health System|Meridian Health|First Capital Financial|First Capital|Arcturus Financial Group|Arcturus|SkyHarbor Air Group|SkyHarbor Airlines|SkyHarbor Air|SkyHarbor|Lakeshore Industries|Lakeshore Holdings|Lakeshore)\b/i;
+const TECHNICAL_OLD_NAME_SCAN_SKIP = new Set([
+  "tenant_key",
+  "v6_contract_version",
+  "business_object_family",
+  "record_id",
+  "source_system",
+  "source_file",
+  "source_row_number",
+  "created_at",
+  "updated_at",
+]);
 
 const PRIORITY_OVERRIDES = new Map([
   ["skyharbor-air-synthetic-v6:application_system", 1],
@@ -142,7 +153,8 @@ function scoreFile({ tenantDir, dimension, filename, filePath, records }) {
 
   for (const record of records) {
     if (!cleanValue(record.source_owner)) sourceOwnerMissing += 1;
-    for (const value of Object.values(record)) {
+    for (const [column, value] of Object.entries(record)) {
+      if (shouldSkipOldNameScan(column)) continue;
       if (OLD_DEMO_NAME_RE.test(String(value))) oldNameHits += 1;
     }
   }
@@ -414,6 +426,10 @@ function cleanValue(value) {
   if (/^static_snapshot$/i.test(text)) return "";
   if (/^confidential$/i.test(text)) return "";
   return text;
+}
+
+function shouldSkipOldNameScan(column) {
+  return TECHNICAL_OLD_NAME_SCAN_SKIP.has(column) || column.endsWith("_id");
 }
 
 function csv(value) {

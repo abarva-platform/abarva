@@ -1,0 +1,131 @@
+{
+  "tenantKey": "lakeshore-industries",
+  "clientDisplayName": "Industrial Demo",
+  "datasetVersion": "v6",
+  "generatedAt": "2026-06-29T14:49:49.881Z",
+  "sourceDataset": "datasets/lakeshore-industries-synthetic-v4",
+  "sourceTenantKey": "lakeshore",
+  "canonicalTenantKey": "lakeshore-industries",
+  "templatePack": "enterprise-intelligence-template-pack-v6",
+  "contractVersion": "v6.0",
+  "rule": "Every tenant uses the same V6 files, headers, and business metadata dictionary. Missing values are explicit data_thin values, not blank columns.",
+  "files": [
+    {
+      "file": "templates/V6_01_enterprise_profile.csv",
+      "businessObjectFamily": "enterprise_profile",
+      "columns": 31,
+      "rows": 1,
+      "dataThinCells": 0
+    },
+    {
+      "file": "templates/V6_02_business_functions.csv",
+      "businessObjectFamily": "business_function",
+      "columns": 30,
+      "rows": 18,
+      "dataThinCells": 0
+    },
+    {
+      "file": "templates/V6_03_org_ownership.csv",
+      "businessObjectFamily": "org_ownership",
+      "columns": 31,
+      "rows": 26,
+      "dataThinCells": 0
+    },
+    {
+      "file": "templates/V6_04_workforce_personas.csv",
+      "businessObjectFamily": "workforce_persona",
+      "columns": 30,
+      "rows": 10,
+      "dataThinCells": 0
+    },
+    {
+      "file": "templates/V6_05_applications_systems.csv",
+      "businessObjectFamily": "application_system",
+      "columns": 35,
+      "rows": 141,
+      "dataThinCells": 0
+    },
+    {
+      "file": "templates/V6_06_data_assets_integrations.csv",
+      "businessObjectFamily": "data_asset_integration",
+      "columns": 32,
+      "rows": 305,
+      "dataThinCells": 0
+    },
+    {
+      "file": "templates/V6_07_vendors_contracts.csv",
+      "businessObjectFamily": "vendor_contract",
+      "columns": 34,
+      "rows": 90,
+      "dataThinCells": 0
+    },
+    {
+      "file": "templates/V6_08_spend_value.csv",
+      "businessObjectFamily": "spend_value",
+      "columns": 35,
+      "rows": 150,
+      "dataThinCells": 0
+    },
+    {
+      "file": "templates/V6_09_programs_initiatives.csv",
+      "businessObjectFamily": "program_initiative",
+      "columns": 39,
+      "rows": 122,
+      "dataThinCells": 0
+    },
+    {
+      "file": "templates/V6_10_ai_initiatives.csv",
+      "businessObjectFamily": "ai_initiative",
+      "columns": 41,
+      "rows": 130,
+      "dataThinCells": 0
+    },
+    {
+      "file": "templates/V6_11_operations_risk_controls.csv",
+      "businessObjectFamily": "operations_risk_control",
+      "columns": 31,
+      "rows": 75,
+      "dataThinCells": 0
+    },
+    {
+      "file": "templates/V6_12_relationships.csv",
+      "businessObjectFamily": "relationship",
+      "columns": 32,
+      "rows": 1343,
+      "dataThinCells": 0
+    },
+    {
+      "file": "templates/V6_13_evidence_sources.csv",
+      "businessObjectFamily": "evidence_source",
+      "columns": 30,
+      "rows": 10,
+      "dataThinCells": 0
+    },
+    {
+      "file": "templates/V6_14_metric_definitions.csv",
+      "businessObjectFamily": "metric_definition",
+      "columns": 31,
+      "rows": 28,
+      "dataThinCells": 0
+    },
+    {
+      "file": "templates/V6_15_industry_corpus_patterns.csv",
+      "businessObjectFamily": "industry_corpus_pattern",
+      "columns": 31,
+      "rows": 90,
+      "dataThinCells": 0
+    },
+    {
+      "file": "templates/V6_16_expert_lenses.csv",
+      "businessObjectFamily": "expert_lens",
+      "columns": 30,
+      "rows": 5,
+      "dataThinCells": 0
+    }
+  ],
+  "totals": {
+    "files": 16,
+    "rows": 2544,
+    "dataThinCells": 0
+  }
+}

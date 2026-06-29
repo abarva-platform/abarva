@@ -165,6 +165,7 @@ export interface HomeKnowSafety {
   composerTrace?: {
     route: "/api/home/know/ask" | "home-know-engine";
     composer:
+      | "home_v6_dataset_contract"
       | "golden_home_know_semantic_synthesis"
       | "claude_text_synthesis"
       | "deterministic_fallback"

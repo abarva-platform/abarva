@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import {
-  buildHomeKnowResponse,
-  validateHomeKnowResponse,
-} from "@/lib/home/know/home-know-engine";
+import { assertVisibleAnswerContract } from "@/lib/agent/visible-answer-contract";
 import type {
   HomeKnowAskRequest,
   HomeKnowResponse,
 } from "@/lib/home/know/home-know-contract";
-import { assertVisibleAnswerContract } from "@/lib/agent/visible-answer-contract";
 import { sanitizeHomeKnowVisiblePayload } from "@/lib/home/know/home-demo-safe-response";
+import { answerHomeKnowFromV6 } from "@/lib/home/know/v6-home-ask";
+import { toHomeKnowResponseFromV6 } from "@/lib/home/know/v6-home-know-response";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
 export const runtime = "nodejs";
@@ -29,42 +27,21 @@ export async function POST(req: NextRequest) {
     allowFallback: false,
   }).catch(() => null);
 
-  const response = await buildHomeKnowResponse({
+  const tenantKey =
+    tenant?.canonicalKey ?? payload.tenantKey ?? payload.client ?? null;
+  const response = await buildV6HomeKnowResponse({
     question: payload.question,
-    tenantKey:
-      tenant?.canonicalKey ?? payload.tenantKey ?? payload.client ?? null,
-    client: tenant?.appClientKey ?? payload.client ?? null,
-    operatorTrace: includeTrace,
-  }).catch((error): HomeKnowResponse => {
-    const tenantKey =
-      tenant?.canonicalKey ?? payload.tenantKey ?? payload.client ?? "unknown";
-    return validateHomeKnowResponse({
-      mode: "KNOW",
-      tenantKey,
+    tenantKey,
+    tenantDisplayName: tenant?.displayName ?? null,
+    includeTrace,
+  }).catch((error): Promise<HomeKnowResponse> | HomeKnowResponse => {
+    return blockedHomeKnowResponse({
       question: payload.question,
-      intent: "browse",
-      answerStatus: "blocked",
-      prose:
+      tenantKey: tenantKey ?? "unknown",
+      reason:
         error instanceof Error
-          ? "I could not use the Home context views for this tenant."
-          : "I could not use the Home context views for this tenant.",
-      dimensionsUsed: [],
-      facts: [],
-      tables: [],
-      charts: [],
-      graphs: [],
-      gaps: [],
-      conflicts: [],
-      citations: [],
-      handoff: null,
-      safety: {
-        serverValidated: true,
-        blockedExperts: true,
-        blockedDecisionFrames: true,
-        blockedInternalCodes: true,
-        unsupportedClaimsRemoved: 0,
-        frontendTripwireShouldFire: false,
-      },
+          ? `V6 Home contract unavailable: ${error.message}`
+          : "V6 Home contract unavailable.",
     });
   });
 
@@ -128,6 +105,116 @@ export async function POST(req: NextRequest) {
       status: safeResponse.answerStatus === "blocked" ? 503 : 200,
     },
   );
+}
+
+async function buildV6HomeKnowResponse(input: {
+  question: string;
+  tenantKey: string | null;
+  tenantDisplayName: string | null;
+  includeTrace: boolean;
+}): Promise<HomeKnowResponse> {
+  const result = answerHomeKnowFromV6({
+    question: input.question,
+    tenantKey: input.tenantKey ?? "apexretail",
+    tenantDisplayName: input.tenantDisplayName,
+    includeTrace: input.includeTrace,
+  });
+  return toHomeKnowResponseFromV6(result, { question: input.question });
+}
+
+function blockedHomeKnowResponse(input: {
+  question: string;
+  tenantKey: string;
+  reason: string;
+}): HomeKnowResponse {
+  return {
+    mode: "KNOW",
+    tenantKey: input.tenantKey,
+    question: input.question,
+    intent: "browse",
+    answerStatus: "blocked",
+    prose:
+      "I could not use the V6 Home contract pack for this tenant, so I am not falling back to retired legacy Home layers.",
+    dimensionsUsed: [],
+    facts: [],
+    tables: [],
+    charts: [],
+    graphs: [],
+    gaps: [
+      {
+        id: "home-v6-unavailable",
+        dimensionId: "home-v6-contract",
+        objectType: "runtime_contract",
+        expectedField: "v6_dataset_pack",
+        displayLabel: "V6 Home contract unavailable",
+        severity: "critical",
+        message: input.reason,
+        citationIds: [],
+      },
+    ],
+    conflicts: [],
+    citations: [],
+    handoff: null,
+    safety: {
+      serverValidated: true,
+      blockedExperts: true,
+      blockedDecisionFrames: true,
+      blockedInternalCodes: true,
+      unsupportedClaimsRemoved: 0,
+      frontendTripwireShouldFire: false,
+      usableEvidence: false,
+      evidenceStatus: "empty_dossier",
+      evidenceReason: input.reason,
+      evidenceChannels: {
+        facts: 0,
+        tables: 0,
+        charts: 0,
+        graphs: 0,
+        citations: 0,
+        sourceCoverage: 0,
+        sections: 0,
+        rollups: 0,
+        relationshipPaths: 0,
+        metrics: 0,
+        gaps: 1,
+      },
+      composerTrace: {
+        route: "/api/home/know/ask",
+        composer: "home_v6_dataset_contract",
+        goldenComposerAttempted: false,
+        goldenComposerUsed: false,
+        fallbackUsed: false,
+        dimensionsUsed: [],
+        factsBound: 0,
+        tablesBound: 0,
+        chartsBound: 0,
+        graphsBound: 0,
+        citationsBound: 0,
+        sourceCoverageBound: 0,
+        sectionsBound: 0,
+        rollupsBound: 0,
+        relationshipPathsBound: 0,
+        metricsBound: 0,
+        gapsBound: 1,
+        usableEvidence: false,
+        evidenceChannels: {
+          facts: 0,
+          tables: 0,
+          charts: 0,
+          graphs: 0,
+          citations: 0,
+          sourceCoverage: 0,
+          sections: 0,
+          rollups: 0,
+          relationshipPaths: 0,
+          metrics: 0,
+          gaps: 1,
+        },
+        answerStatus: "blocked",
+        reason: input.reason,
+      },
+    },
+  };
 }
 
 function shouldLogHomeKnowTrace(req: NextRequest): boolean {
