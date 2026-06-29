@@ -323,6 +323,20 @@ async function main(): Promise<void> {
     }));
     const scored = scoreContracts({ contracts, traces });
     const statusCounts = countBy(scored, 'status');
+    const failedRows = scored
+      .filter((row) => row.status !== 'passed')
+      .map((row) => ({
+        id: row.contract.id,
+        tenantKey: row.contract.tenantKey,
+        question: row.contract.question,
+        status: row.status,
+        latencyMs: row.trace?.latency_ms ?? null,
+        failedChecks: row.score?.checks.filter((check) => !check.pass).map((check) => ({
+          id: check.id,
+          detail: check.detail,
+        })) ?? [],
+        renderedSnippet: (row.trace?.rendered_response ?? '').slice(0, 800),
+      }));
 
     ensureDir(outDir);
     writeFile(path.join(outDir, 'question-bank-summary.json'), JSON.stringify(summarizeTowerQuestionBank(bank), null, 2));
@@ -346,6 +360,9 @@ async function main(): Promise<void> {
       requireTraces,
     };
     console.log(JSON.stringify(summary, null, 2));
+    if (failedRows.length > 0) {
+      console.log(JSON.stringify({ event: 'tower_answer_contract_failures', failedRows }, null, 2));
+    }
 
     if (requireTraces && (statusCounts.not_run ?? 0) > 0) {
       process.exitCode = 1;
