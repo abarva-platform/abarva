@@ -56,6 +56,12 @@ function linkStyle(variant: "primary" | "ghost"): React.CSSProperties {
       };
 }
 
+function presentationBlurb(blurb: string): string {
+  return blurb
+    .replace(/\bboard-grade\b/gi, "executive-ready")
+    .replace(/\bBoard-grade\b/g, "Executive-ready");
+}
+
 function ArtifactRow({ artifact }: { artifact: BoardArtifact }) {
   return (
     <div
@@ -98,7 +104,7 @@ function ArtifactRow({ artifact }: { artifact: BoardArtifact }) {
           {artifact.label}
         </div>
         <div style={{ fontSize: 10, color: "#9AA3B2", marginTop: 1 }}>
-          {artifact.blurb}
+          {presentationBlurb(artifact.blurb)}
         </div>
       </div>
 

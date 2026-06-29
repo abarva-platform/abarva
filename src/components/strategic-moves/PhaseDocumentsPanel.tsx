@@ -36,6 +36,8 @@ interface Props {
   moveId: string;
   currentPhase?: number;
   compact?: boolean;
+  /** Demo/video presentation mode: keep downloads, reduce internal labels. */
+  presentationMode?: boolean;
   /** Move archetype — routes the orchestrator's archetype-specific brief. */
   archetype?: string;
   /** Move name — used in the orchestrator decision context + initiative label. */
@@ -280,6 +282,7 @@ function DocumentRow({
   moveId,
   phaseLabel,
   runArtifact,
+  presentationMode = false,
 }: {
   spec: DeliverableSpec;
   dbRow: DbDeliverable | undefined;
@@ -288,6 +291,7 @@ function DocumentRow({
   /** A succeeded Approve & Build run for this slot (orchestrator output in
    *  generated_artifacts), used when deliverables_v2 has no content for it. */
   runArtifact?: { artifactId: string; updatedAt: string };
+  presentationMode?: boolean;
 }) {
   const hasContent = Boolean(dbRow?.latest_content?.trim());
   // Approve & Build / orchestrator output lands in generated_artifacts, not
@@ -310,7 +314,9 @@ function DocumentRow({
         padding: "10px 12px",
         background: "#FFFFFF",
         border: "1px solid #e5e5e5",
-        borderLeft: `3px solid ${spec.gateArtifact ? "#1B2B5C" : "#e5e5e5"}`,
+        borderLeft: `3px solid ${
+          spec.gateArtifact && !presentationMode ? "#1B2B5C" : "#e5e5e5"
+        }`,
         borderRadius: 6,
         flexWrap: "wrap",
       }}
@@ -327,7 +333,7 @@ function DocumentRow({
           }}
         >
           <FormatPills format={spec.formatRecommendation} />
-          {spec.gateArtifact && (
+          {spec.gateArtifact && !presentationMode && (
             <span
               style={{
                 fontSize: 8,
@@ -344,7 +350,7 @@ function DocumentRow({
               Gate
             </span>
           )}
-          <AiDraftBadge />
+          {!presentationMode && <AiDraftBadge />}
         </div>
         <div
           style={{
@@ -359,9 +365,11 @@ function DocumentRow({
         <div style={{ fontSize: 10, color: "#9AA3B2", marginTop: 1 }}>
           {spec.audiencePrimary}
         </div>
-        <div style={{ fontSize: 10, color: "#7C2D12", marginTop: 3 }}>
-          {MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT}
-        </div>
+        {!presentationMode && (
+          <div style={{ fontSize: 10, color: "#7C2D12", marginTop: 3 }}>
+            {MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT}
+          </div>
+        )}
       </div>
 
       {/* Middle: status + date */}
@@ -405,17 +413,21 @@ function DocumentRow({
             not generated
           </span>
         )}
-        <span
-          style={{
-            fontSize: 9,
-            color: builtViaRun || hasContent ? "#3F7A5B" : "#9AA3B2",
-            fontFamily: "JetBrains Mono, monospace",
-            textTransform: "uppercase",
-            marginLeft: 6,
-          }}
-        >
-          {builtViaRun || hasContent ? "Quality: available" : "Quality: not run"}
-        </span>
+        {!presentationMode && (
+          <span
+            style={{
+              fontSize: 9,
+              color: builtViaRun || hasContent ? "#3F7A5B" : "#9AA3B2",
+              fontFamily: "JetBrains Mono, monospace",
+              textTransform: "uppercase",
+              marginLeft: 6,
+            }}
+          >
+            {builtViaRun || hasContent
+              ? "Quality: available"
+              : "Quality: not run"}
+          </span>
+        )}
       </div>
 
       {/* Right: actions */}
@@ -468,7 +480,9 @@ function DocumentRow({
           // document is produced when its phase is built via Approve & Build in
           // the phase workspace (which runs the governed, gated orchestrator).
           // This keeps the Documents tab a consistent browse/download surface.
-          <span style={{ fontSize: 10.5, color: "#9AA3B2", fontStyle: "italic" }}>
+          <span
+            style={{ fontSize: 10.5, color: "#9AA3B2", fontStyle: "italic" }}
+          >
             Not generated — built when you Approve &amp; Build {phaseLabel}
           </span>
         )}
@@ -549,6 +563,7 @@ export async function PhaseDocumentsPanel({
   moveId,
   currentPhase,
   compact,
+  presentationMode = false,
   moveName,
   boardArtifactCount = 0,
 }: Props) {
@@ -562,9 +577,8 @@ export async function PhaseDocumentsPanel({
   const evidenceNeedPackets = await getStrategicMovesTenancy()
     .then(async (ctx) => {
       if (!ctx) return [];
-      const { loadDiscoveryEvidenceReadiness } = await import(
-        "@/lib/programs/discovery/evidence-readiness"
-      );
+      const { loadDiscoveryEvidenceReadiness } =
+        await import("@/lib/programs/discovery/evidence-readiness");
       const readiness = await loadDiscoveryEvidenceReadiness(ctx, moveId);
       return buildMoveEvidenceNeedPackets({
         moveId,
@@ -588,7 +602,9 @@ export async function PhaseDocumentsPanel({
     );
     for (const spec of DELIVERABLE_REGISTRY) {
       const orchType = orchestratorDeliverableType(spec.deliverableTypeKey);
-      const run = runs.find((r) => r.deliverableType === orchType && r.artifactId);
+      const run = runs.find(
+        (r) => r.deliverableType === orchType && r.artifactId,
+      );
       if (run?.artifactId) {
         runByKey.set(spec.deliverableTypeKey, {
           artifactId: run.artifactId,
@@ -699,59 +715,68 @@ export async function PhaseDocumentsPanel({
             lineHeight: 1.45,
           }}
         >
-          This inventory combines phase documents with {boardArtifactCount}{" "}
-          board-grade artifact{boardArtifactCount === 1 ? "" : "s"} available
-          for this Move. Phase documents are the governed P1-P5 working record;
-          board-grade artifacts are executive decision packets generated from the
-          same Move context.
+          {presentationMode
+            ? `This workspace combines phase documents with ${boardArtifactCount} executive artifact${
+                boardArtifactCount === 1 ? "" : "s"
+              } available for review.`
+            : `This inventory combines phase documents with ${boardArtifactCount} board-grade artifact${
+                boardArtifactCount === 1 ? "" : "s"
+              } available for this Move. Phase documents are the governed P1-P5 working record; board-grade artifacts are executive decision packets generated from the same Move context.`}
         </div>
       )}
 
-      <DecisionSupportNotice />
+      {!presentationMode && <DecisionSupportNotice />}
 
       {/* Legend */}
-      <div
-        style={{ display: "flex", gap: 14, marginBottom: 16, flexWrap: "wrap" }}
-      >
+      {!presentationMode && (
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            gap: 5,
-            fontSize: 10,
-            color: "#6B7280",
+            gap: 14,
+            marginBottom: 16,
+            flexWrap: "wrap",
           }}
         >
           <div
             style={{
-              width: 3,
-              height: 12,
-              backgroundColor: "#1B2B5C",
-              borderRadius: 1,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              fontSize: 10,
+              color: "#6B7280",
             }}
-          />
-          Gate artifact
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 5,
-            fontSize: 10,
-            color: "#6B7280",
-          }}
-        >
+          >
+            <div
+              style={{
+                width: 3,
+                height: 12,
+                backgroundColor: "#1B2B5C",
+                borderRadius: 1,
+              }}
+            />
+            Gate artifact
+          </div>
           <div
             style={{
-              width: 3,
-              height: 12,
-              backgroundColor: "#e5e5e5",
-              borderRadius: 1,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              fontSize: 10,
+              color: "#6B7280",
             }}
-          />
-          Working document
+          >
+            <div
+              style={{
+                width: 3,
+                height: 12,
+                backgroundColor: "#e5e5e5",
+                borderRadius: 1,
+              }}
+            />
+            Working document
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Phase sections */}
       {[1, 2, 3, 4, 5].map((phase) => {
@@ -764,8 +789,9 @@ export async function PhaseDocumentsPanel({
         const phaseAttachments = attachmentsByPhase.get(phase) ?? [];
         const generatedCount = specs.filter(
           (s) =>
-            deliverablesByKey.get(s.deliverableTypeKey)?.latest_content?.trim() ||
-            runByKey.has(s.deliverableTypeKey),
+            deliverablesByKey
+              .get(s.deliverableTypeKey)
+              ?.latest_content?.trim() || runByKey.has(s.deliverableTypeKey),
         ).length;
         const isCurrent = phase === currentPhase;
 
@@ -838,6 +864,7 @@ export async function PhaseDocumentsPanel({
                   moveId={moveId}
                   phaseLabel={PHASE_LABELS[phase] ?? `P${phase}`}
                   runArtifact={runByKey.get(spec.deliverableTypeKey)}
+                  presentationMode={presentationMode}
                 />
               ))}
 
