@@ -15,6 +15,7 @@ Exact Tower IT-budget questions now answer from governed Tower metric and fact p
 ## Layer Impact
 
 - `global-control-lane`: shared Tower answer behavior for all tenants using the CIO Tower answer path.
+- `public-demo`: public logged-out homepage eyebrow contrast fix so the required axe gate remains green.
 - `client-data-lane`: no schema or data change; the path consumes already-loaded `cio_tower.measure_results` and `cio_tower.facts`.
 
 ## Client Applicability
@@ -33,6 +34,8 @@ Exact Tower IT-budget questions now answer from governed Tower metric and fact p
   - records prompt packages and answer traces with `deterministic-cio-tower-boundary-v1` so proof still captures raw output and rendered parity.
 - `src/lib/cio-tower/__tests__/answer.test.ts`
   - asserts exact IT-budget slice questions emit a visible table from governed facts without Claude.
+- `src/components/marketing/LoggedOutLandingPage.tsx`
+  - darkens light-section eyebrow text and marker colors to meet accessible contrast on the public homepage.
 
 ## QA / Validation
 
@@ -40,6 +43,7 @@ Exact Tower IT-budget questions now answer from governed Tower metric and fact p
 - `npx eslint src/lib/cio-tower/answer.ts src/lib/cio-tower/__tests__/answer.test.ts src/lib/cio-tower/__tests__/answer-contract.test.ts`: passed.
 - `git diff --check`: passed.
 - `npm run release:check`: passed.
+- Public axe accessibility: expected to pass after the contrast-only public homepage fix.
 
 ## Rollout Plan
 
