@@ -103,6 +103,38 @@ describe("AgentDock · default mode", () => {
     expect(screen.getByTestId("agent-dock-pin-bottom")).toBeInTheDocument();
   });
 
+  it("softens stale gate wording on Moves surfaces", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface="moves/detail"
+        thread={[
+          {
+            id: "a1",
+            role: "agent",
+            body: "No outgoing gate for this phase. Gate criteria are shown elsewhere.",
+          },
+        ]}
+        suggestedActions={[
+          {
+            id: "old-gate-missing",
+            label: "Show me what is still missing for this gate.",
+            body: "What's blocking the gate?",
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    expect(screen.getByTestId("agent-dock-turn-agent")).toHaveTextContent(
+      "No outgoing readiness checkpoint for this phase. Readiness criteria are shown elsewhere.",
+    );
+    expect(
+      screen.getByTestId("agent-dock-suggestion-old-gate-missing"),
+    ).toHaveTextContent("Show me what is still missing for this phase.");
+  });
+
   it("reads a stored mode preference", () => {
     window.localStorage.setItem(modeStorageKey(SURFACE), "expand");
     render(

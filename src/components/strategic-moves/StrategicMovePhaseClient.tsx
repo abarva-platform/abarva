@@ -1843,8 +1843,8 @@ export function StrategicMovePhaseClient({
                     }}
                   >
                     {isCurrentPhase
-                      ? "No outgoing gate for this phase — there are no further gate criteria to evaluate."
-                      : "Gate criteria are shown on the phase the Move is currently in."}
+                      ? "No outgoing readiness checkpoint for this phase — there are no further criteria to evaluate."
+                      : "Readiness criteria are shown on the phase the Move is currently in."}
                   </p>
                 ) : (
                   <ul
