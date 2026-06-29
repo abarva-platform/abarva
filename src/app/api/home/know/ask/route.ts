@@ -9,6 +9,7 @@ import type {
   HomeKnowResponse,
 } from "@/lib/home/know/home-know-contract";
 import { assertVisibleAnswerContract } from "@/lib/agent/visible-answer-contract";
+import { sanitizeHomeKnowVisiblePayload } from "@/lib/home/know/home-demo-safe-response";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
 
 export const runtime = "nodejs";
@@ -67,27 +68,29 @@ export async function POST(req: NextRequest) {
     });
   });
 
+  const safeResponse = sanitizeHomeKnowVisiblePayload(response);
+
   if (includeTrace) {
     console.info("[home-know.trace]", {
       route: "/api/home/know/ask",
-      tenantKey: response.tenantKey,
-      intent: response.intent,
-      answerStatus: response.answerStatus,
-      composerTrace: response.safety.composerTrace ?? null,
+      tenantKey: safeResponse.tenantKey,
+      intent: safeResponse.intent,
+      answerStatus: safeResponse.answerStatus,
+      composerTrace: safeResponse.safety.composerTrace ?? null,
       packetShape: {
-        facts: response.facts.length,
-        tables: response.tables.map((table) => ({
+        facts: safeResponse.facts.length,
+        tables: safeResponse.tables.map((table) => ({
           id: table.id,
           rows: table.rows.length,
         })),
-        charts: response.charts.length,
-        graphs: response.graphs.length,
-        gaps: response.gaps.length,
+        charts: safeResponse.charts.length,
+        graphs: safeResponse.graphs.length,
+        gaps: safeResponse.gaps.length,
       },
     });
   }
 
-  const visibleContract = assertVisibleAnswerContract(response.prose);
+  const visibleContract = assertVisibleAnswerContract(safeResponse.prose);
   if (!visibleContract.passed) {
     return NextResponse.json(
       {
@@ -104,23 +107,25 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(
     includeTrace
       ? {
-          ...response,
+          ...safeResponse,
           trace: {
-            composerTrace: response.safety.composerTrace ?? null,
+            composerTrace: safeResponse.safety.composerTrace ?? null,
             finalPrompt:
-              response.safety.composerTrace?.anthropicTrace?.finalPrompt ??
-              response.safety.composerTrace?.promptSnapshot ??
+              safeResponse.safety.composerTrace?.anthropicTrace?.finalPrompt ??
+              safeResponse.safety.composerTrace?.promptSnapshot ??
               null,
             claudeRaw:
-              response.safety.composerTrace?.anthropicTrace?.claudeRaw ?? null,
-            model: response.safety.composerTrace?.anthropicTrace?.model ?? null,
+              safeResponse.safety.composerTrace?.anthropicTrace?.claudeRaw ??
+              null,
+            model:
+              safeResponse.safety.composerTrace?.anthropicTrace?.model ?? null,
             params:
-              response.safety.composerTrace?.anthropicTrace?.params ?? null,
+              safeResponse.safety.composerTrace?.anthropicTrace?.params ?? null,
           },
         }
-      : response,
+      : safeResponse,
     {
-      status: response.answerStatus === "blocked" ? 503 : 200,
+      status: safeResponse.answerStatus === "blocked" ? 503 : 200,
     },
   );
 }
