@@ -179,6 +179,7 @@ interface TopicConfig {
 
 const V6_DATASET_BY_CLIENT: Record<ClientKey, string> = {
   apexretail: 'apex-retail-synthetic-v6',
+  arcturus: 'first-capital-financial-synthetic-v6',
   firstcapital: 'first-capital-financial-synthetic-v6',
   meridian: 'meridian-health-synthetic-v6',
   northstar: 'northstar-clinical-tech-synthetic-v1',
