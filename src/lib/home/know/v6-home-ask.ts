@@ -454,7 +454,7 @@ function buildGaps(rows: Array<Record<string, string>>, dataset: V6Dataset, conf
     .sort((a, b) => b[1] - a[1])
     .map(([label, count]) => ({
       label: humanize(label),
-      impact: `${count} ${count === 1 ? 'V6 row is' : 'V6 rows are'} explicitly marked data-thin for this evidence area.`,
+      impact: `${count} ${count === 1 ? 'V6 evidence item is' : 'V6 evidence items are'} explicitly marked data-thin for this evidence area.`,
       remediation: `Load client-approved ${humanize(label).toLowerCase()} evidence into the V6 Home pack.`,
     }));
 }
@@ -485,12 +485,12 @@ function buildAnswer(args: {
     followUpQuestion: followUpFor(topicKey),
     answerBoundary: {
       canAnswer: [
-        `Answer from ${dataset.datasetDir} V6 files only.`,
-        'Show loaded facts, explicit gaps, source files, readiness, and handoff boundaries.',
+        `Answer from the selected V6 contract pack only.`,
+        'Show loaded facts, explicit gaps, source evidence, readiness, and handoff boundaries.',
       ],
       cannotAnswer: [
         'Borrow facts from retired legacy Home context layers.',
-        'Use dollar amounts, leaders, systems, vendors, or statuses that are not present in the selected V6 files.',
+        'Use dollar amounts, leaders, systems, vendors, or statuses that are not present in the selected V6 evidence.',
       ],
       handoffTarget: config.handoffTarget ?? null,
       handoffReason: config.handoffReason,
@@ -510,19 +510,19 @@ function answerParagraphsByTopic(args: {
   gaps: V6HomeGap[];
 }): string[] {
   const { displayName, dataset, config, topicKey, rows, gaps } = args;
-  const countLine = `${displayName} has ${rows.length} usable V6 ${humanize(config.primaryDimension).toLowerCase()} evidence row${rows.length === 1 ? '' : 's'} loaded across ${config.files.length} governed evidence area${config.files.length === 1 ? '' : 's'}.`;
+  const countLine = `${displayName} has ${rows.length} usable V6 ${humanize(config.primaryDimension).toLowerCase()} evidence item${rows.length === 1 ? '' : 's'} loaded across ${config.files.length} governed evidence area${config.files.length === 1 ? '' : 's'}.`;
   if (topicKey === 'budget_spend') {
     const amounts = rows.map((row) => clean(row.amount_usd)).filter(Boolean);
     const usableAmounts = amounts.filter((value) => /^\d/.test(value));
     const profile = firstRows(dataset.files['V6_01_enterprise_profile.csv'] ?? [], 1)[0];
-    const strategicBudget = clean(profile?.strategic_priorities);
+    const strategicBudget = describeStrategicPriorities(profile?.strategic_priorities);
     return [
       usableAmounts.length
-        ? `${countLine} V6 spend records are loaded and support the listed amount fields below; each amount must stay tied to amount type, owner, and source file. Home should not reuse older budget figures that are not present in the selected V6 rows.`
-        : `${countLine} The V6 spend records are loaded, but the selected spend rows mark amount, owner, program, vendor, system, value linkage, and unit economics as data-thin. Home should not reuse older budget figures or invent a spend breakout.`,
+        ? `${countLine} V6 spend records are loaded and support the listed amount fields below; each amount must stay tied to amount type, owner, and source evidence. Home should not reuse older budget figures that are not present in the selected V6 evidence.`
+        : `${countLine} The V6 spend records are loaded, but the selected spend evidence marks amount, owner, program, vendor, system, value linkage, and unit economics as data-thin. Home should not reuse older budget figures or invent a spend breakout.`,
       strategicBudget
-        ? `The only profile-level strategic priority value available here is ${strategicBudget}. Treat that as context, not a Tower-grade budget packet.`
-        : 'No board-grade budget amount is supported by the selected V6 spend rows.',
+        ? `Profile-level strategic priority context available here: ${strategicBudget}. Treat that as context, not Tower-grade budget evidence.`
+        : 'No board-grade budget amount is supported by the selected V6 spend evidence.',
       gapSentence(gaps),
     ];
   }
@@ -530,7 +530,7 @@ function answerParagraphsByTopic(args: {
     const names = rows.slice(0, 6).map((row) => clean(row.function_name)).filter(Boolean);
     return [
       `${countLine} The loaded business areas include ${joinList(names)}.`,
-      'Each row carries an executive-owner field and critical-process text. If a KPI field is marked data-thin, Home should say that instead of converting the business-function list into generic context categories.',
+      'Each record carries an executive-owner field and critical-process text. If a KPI field is marked data-thin, Home should say that instead of converting the business-function list into generic context categories.',
       gapSentence(gaps),
     ];
   }
@@ -539,7 +539,7 @@ function answerParagraphsByTopic(args: {
     return [
       named.length
         ? `${countLine} Named systems include ${joinList(named)}. Use the table for owner, criticality, and lifecycle status.`
-        : `${countLine} The V6 application file is present, but many rows have generic system labels or data-thin ownership fields. Home can describe coverage and caveats, not a polished named application inventory.`,
+        : `${countLine} The V6 application evidence is present, but many items have generic system labels or data-thin ownership fields. Home can describe coverage and caveats, not a polished named application inventory.`,
       'The required V6 fields for this answer are system name, system owner, criticality, lifecycle status, integrations, data dependencies, and AI relevance. Missing or data-thin values must remain visible.',
       gapSentence(gaps),
     ];
@@ -586,14 +586,14 @@ function answerParagraphsByTopic(args: {
   if (topicKey === 'source_trail') {
     const evidence = rows.slice(0, 6).map((row) => `${display(row.evidence_title)} (${display(row.evidence_type)}, ${display(row.evidence_confidence)})`);
     return [
-      `${countLine} The source trail is explicit in V6 evidence-source rows: ${joinList(evidence)}.`,
+      `${countLine} The source trail is explicit in V6 evidence-source records: ${joinList(evidence)}.`,
       'Home can cite the evidence title, evidence type, source location, owner, and confidence. If source location or owner is data-thin, that limitation must be shown before Intelligence or Source relies on it.',
       gapSentence(gaps),
     ];
   }
   if (topicKey === 'loaded_context') {
     return [
-      `${displayName} is using the V6 Home contract pack, with ${dataset.manifest.totals.files} files and ${dataset.manifest.totals.rows} business records.`,
+      `${displayName} is using the V6 Home contract pack, with ${dataset.manifest.totals.files} governed evidence areas and ${dataset.manifest.totals.rows} business records.`,
       'Home can safely answer what is loaded, which facts are populated, which fields are data-thin, and which workspace should take over. It cannot borrow from retired legacy Home context layers.',
       gapSentence(gaps),
     ];
@@ -617,7 +617,7 @@ function summarizeRows(rows: Array<Record<string, string>>, config: TopicConfig)
   ).filter(Boolean);
   return samples.length
     ? `Representative V6 values: ${joinList(samples)}.`
-    : 'The selected V6 files are present, but the usable fields for this question are data-thin.';
+    : 'The selected V6 evidence is present, but the usable fields for this question are data-thin.';
 }
 
 function branchOptionsFor(config: TopicConfig): V6HomeAnswer['branchOptions'] {
@@ -630,9 +630,9 @@ function branchOptionsFor(config: TopicConfig): V6HomeAnswer['branchOptions'] {
 
 function followUpFor(topicKey: string): string {
   if (topicKey === 'budget_spend') return 'Do you want the V6 spend gaps listed by missing amount, owner, value linkage, and unit-economics fields?';
-  if (topicKey === 'sourcing_relevance') return 'Do you want Source to open a sourcing-readiness view using these V6 vendor and evidence rows?';
+  if (topicKey === 'sourcing_relevance') return 'Do you want Source to open a sourcing-readiness view using these V6 vendor and evidence items?';
   if (topicKey === 'handoff_tower') return 'Do you want Tower to evaluate adoption, spend, readiness, and value from its governed packet?';
-  return 'Which V6 file or evidence gap should aVa inspect next?';
+  return 'Which V6 evidence area or gap should aVa inspect next?';
 }
 
 function visibleQualityGate(answer: V6HomeAnswer): V6HomeAskResult['proof']['qualityGate'] {
@@ -700,6 +700,32 @@ function display(value: unknown): string {
   return clean(value) || 'Data-thin';
 }
 
+function describeStrategicPriorities(value: unknown): string {
+  const text = clean(value);
+  if (!text) return '';
+  const parts = text
+    .split('|')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const [rawKey, ...rawValue] = part.split(':');
+      const key = humanize(rawKey.trim()).toLowerCase();
+      const joinedValue = rawValue.join(':').trim();
+      if (!joinedValue) return humanize(part);
+      if (/usd$/i.test(rawKey.trim()) && /^\d+(\.\d+)?$/.test(joinedValue)) {
+        return `${key.replace(/ usd$/i, '')}: ${formatUsd(Number(joinedValue))}`;
+      }
+      return `${key}: ${humanize(joinedValue)}`;
+    });
+  return joinList(parts);
+}
+
+function formatUsd(value: number): string {
+  if (value >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(2).replace(/\.00$/, '')}B`;
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+  return `$${Math.round(value).toLocaleString('en-US')}`;
+}
+
 function firstRows(rows: Array<Record<string, string>>, count: number): Array<Record<string, string>> {
   return rows.slice(0, count);
 }
@@ -715,7 +741,7 @@ function gapSentence(gaps: V6HomeGap[]): string {
 
 function joinList(values: string[]): string {
   const cleanValues = values.filter(Boolean).slice(0, 8);
-  if (cleanValues.length === 0) return 'no populated values in the selected V6 rows';
+  if (cleanValues.length === 0) return 'no populated values in the selected V6 evidence';
   if (cleanValues.length === 1) return cleanValues[0];
   return `${cleanValues.slice(0, -1).join(', ')}, and ${cleanValues[cleanValues.length - 1]}`;
 }
