@@ -55,6 +55,19 @@ const BRAND = {
 const OPTION2_NAV_LOGO =
   "/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg";
 
+function userDisplayName(user: ReturnType<typeof useUser>["user"]): string {
+  const firstName = user?.firstName?.trim();
+  const lastName = user?.lastName?.trim();
+  const explicitPersonName = [firstName, lastName].filter(Boolean).join(" ").trim();
+  const fallback =
+    explicitPersonName ||
+    user?.fullName?.split("·")[0]?.trim() ||
+    user?.emailAddresses?.[0]?.emailAddress?.split("@")?.[0] ||
+    "User";
+
+  return demoSafeClientText(fallback).trim() || "User";
+}
+
 export function AppTopBar({
   tenantName,
   showProductNav = true,
@@ -76,10 +89,7 @@ export function AppTopBar({
   const resolvedTenantName = resolvedTenantNameRaw
     ? demoSafeClientText(resolvedTenantNameRaw)
     : null;
-  const displayName =
-    user?.fullName ||
-    user?.emailAddresses?.[0]?.emailAddress?.split("@")?.[0] ||
-    "User";
+  const displayName = userDisplayName(user);
   const initials = displayName
     .split(" ")
     .map((n) => n[0])
