@@ -94,3 +94,12 @@ Additional validation for the hotfix:
 - Local visible-answer contract over 20 Industrial Demo and Airline Demo questions: 20 passed, 0 failed.
 - Focused ESLint for the Home V6 route/adapter/helper files: passed.
 - Focused Jest for `v6-home-know-response.test.ts`: passed.
+
+## Trace Sanitizer Boundary Addendum
+
+The second signed-in live smoke found clean user-visible Airline Demo prose, but debug/proof fields were being demo-name sanitized, turning internal `skyharbor-air-synthetic-v6` evidence paths into `Airline Demo-air-synthetic-v6`. The sanitizer now preserves internal proof fields (`safety`, `trace`, composer traces, prompt snapshots, model params, and related metadata) while continuing to scrub user-visible answer sections.
+
+Additional validation for the sanitizer boundary:
+
+- Focused Jest for `home-demo-safe-response.test.ts`: must show visible fields sanitized and internal prompt trace preserved exactly.
+- Live signed-in Home smoke must pass direct API and aVa Home stream checks across Industrial Demo and Airline Demo after deployment.
