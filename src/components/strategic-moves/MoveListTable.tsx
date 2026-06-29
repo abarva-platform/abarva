@@ -109,6 +109,7 @@ export function MoveListTable({
           const moveName = demoSafeClientText(move.name);
           const moveCode = demoSafeClientText(move.displayCode);
           const statusText = demoSafeClientText(move.status.text);
+          const sponsorName = demoSafeClientText(sponsorDisplayName(move.sponsor));
           const archiveReason = move.archiveReason
             ? demoSafeClientText(move.archiveReason)
             : "";
@@ -167,7 +168,7 @@ export function MoveListTable({
                 className={`${styles.tblCol} ${styles.colSponsor}`}
                 role="cell"
               >
-                {sponsorDisplayName(move.sponsor)}
+                {sponsorName}
               </span>
 
               <span
