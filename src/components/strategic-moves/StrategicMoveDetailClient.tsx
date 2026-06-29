@@ -38,6 +38,7 @@ interface Props {
   workspace: ReactNode;
   decisionThreadId?: string | null;
   originatingIntelligenceSessionId?: string | null;
+  presentationMode?: boolean;
 }
 
 function generateTurnId(): string {
@@ -62,6 +63,7 @@ export function StrategicMoveDetailClient({
   workspace,
   decisionThreadId = null,
   originatingIntelligenceSessionId = null,
+  presentationMode = false,
 }: Props) {
   const initialThread: ChatMessage[] = [
     {
@@ -218,10 +220,15 @@ export function StrategicMoveDetailClient({
         name: 'Ava',
         role: 'Strategic Moves Conductor',
       }}
-      surface="moves/detail"
-      defaultMode="side-rail"
+      surface={presentationMode ? "moves/detail/presentation" : "moves/detail"}
+      defaultMode={presentationMode ? "collapsed" : "side-rail"}
       defaultLeftPercent={35}
       minLeftPx={320}
+      collapsedSummary={
+        presentationMode
+          ? { label: "Ask aVa", detail: "Open the Move advisor" }
+          : undefined
+      }
       surfaceContext={{
         moveId: move.id,
         moveCode: move.displayCode,

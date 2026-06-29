@@ -65,9 +65,10 @@ export function AppTopBar({
   const { currentClient } = useClientContext();
   const signedIn = isLoaded && Boolean(user);
   const resolvedTenantName =
+    (tenantName ? canonicalClientDisplayName({ name: tenantName }) : null) ??
     canonicalClientDisplayName({
       key: currentClient?.id,
-      name: tenantName ?? currentClient?.name,
+      name: currentClient?.name,
     }) ??
     tenantName ??
     currentClient?.name ??
