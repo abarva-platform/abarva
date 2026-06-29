@@ -30,6 +30,7 @@ Home V6 now separates evidence selection from final answer writing. The determin
 - Added `src/lib/home/know/home-v6-executive-synthesis.ts`.
 - Updated `/api/home/know/ask` to apply the V6 executive synthesis after deterministic evidence selection.
 - Updated the Home aVa chat stream path to use the same synthesis layer.
+- Removed deprecated `temperature` from the Claude Messages request after live ACA proof showed `claude-opus-4-8` rejects it.
 - Added focused Jest coverage for Claude selection, trace contract, fact/table preservation, and validation fallback behavior.
 
 ## QA / Validation
@@ -37,6 +38,7 @@ Home V6 now separates evidence selection from final answer writing. The determin
 - `npx jest src/lib/home/know/__tests__/home-v6-executive-synthesis.test.ts src/lib/home/know/__tests__/v6-home-know-response.test.ts --runInBand` passed.
 - `npx eslint src/lib/home/know/home-v6-executive-synthesis.ts src/app/api/home/know/ask/route.ts src/lib/home/know/home-know-agent-answer.ts src/lib/home/know/__tests__/home-v6-executive-synthesis.test.ts` passed.
 - Local live-Claude probe could not complete from laptop because audited AI policy lookup requires private Azure Postgres DNS; the failure was explicit and did not silently claim Claude selection. Live ACA proof is still required after merge/deploy.
+- First production probe after deployment correctly blocked deterministic fallback, with root cause `400 ... temperature is deprecated for this model`. The request payload was corrected to omit `temperature`, then focused Jest and ESLint were rerun.
 
 ## Rollout Plan
 

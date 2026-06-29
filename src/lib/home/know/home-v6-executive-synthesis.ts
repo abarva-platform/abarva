@@ -85,7 +85,6 @@ export async function applyHomeV6ExecutiveSynthesis(args: {
   const requestPayload = {
     model,
     max_tokens: maxTokens,
-    temperature: 0.2,
     system,
     messages: [{ role: "user" as const, content: user }],
   };
@@ -486,7 +485,6 @@ function buildPromptBoundary(args: {
   requestPayload: {
     model: string;
     max_tokens: number;
-    temperature: number;
     system: string;
     messages: ReadonlyArray<{ role: "user"; content: string }>;
   };
