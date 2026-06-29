@@ -56,7 +56,7 @@ export interface BuildCioTowerRightAnswerContractsArgs {
 }
 
 const RAW_ID_RE =
-  /\b(?:[A-Z]{2,}(?:-[A-Z0-9]+)+-\d{2,}|[A-Z]{2,}-[A-Z0-9]+-\d{3,}|TWR-[A-Z0-9-]+|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\b/i;
+  /\b(?:[A-Z]{2,}(?:-[A-Z0-9]+)+-\d{2,}|[A-Z0-9]{2,}-[A-Z0-9]+-\d{2,}|[A-Z]{2,}-[A-Z0-9]+-\d{3,}|T\d{2,}-R\d{2,}|TWR-[A-Z0-9-]+|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\b/i;
 
 const ALWAYS_FORBIDDEN_VISIBLE_PHRASES = [
   'Atlas',
@@ -230,7 +230,9 @@ export function scoreCioTowerRightAnswerContract(
   observation: CioTowerAnswerObservation,
 ): CioTowerAnswerContractScore {
   const modelVisibleText = visibleTextFromModelOutput(observation.modelOutput);
-  const visibleText = [observation.visibleText, modelVisibleText].filter(Boolean).join('\n');
+  const visibleText = modelVisibleText.trim().length > 0
+    ? modelVisibleText
+    : observation.visibleText;
   const checks: CioTowerAnswerContractCheck[] = [];
 
   const add = (id: string, pass: boolean, detail: string) => {

@@ -216,7 +216,7 @@ function normalizeVisibleText(text: string): string {
 function validateVisibleAnswer(text: string): string[] {
   const violations: string[] = [];
   const checks: Array<[string, RegExp]> = [
-    ['raw_id_or_internal_key', /\b[A-Z]{2,}[A-Z0-9_-]*-\d{2,}\b|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i],
+    ['raw_id_or_internal_key', /\b[A-Z]{2,}[A-Z0-9_-]*-\d{2,}\b|\b[A-Z0-9]{2,}-[A-Z0-9]+-\d{2,}\b|\bT\d{2,}-R\d{2,}\b|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i],
     ['visible_scaffold_label', /\b(Read|Evidence|Implication|Next move):/i],
     ['internal_data_plane_language', /\b(loaded evidence|tenant evidence|evidence ledger|semantic packet|retrieved context|source signals|rows)\b/i],
     ['atlas_branding', /\bAtlas\b/i],
@@ -549,6 +549,9 @@ async function persistPromptAndTrace(args: {
     relationships: args.context.relationships,
     gaps: args.context.gaps,
   };
+  const renderedResponse = args.parsedOutput
+    ? collectVisibleTextFromContract(args.parsedOutput).join('\n\n')
+    : null;
   const tx = createTxSession('abarva-cio-tower-answer-trace');
   await tx(async (run) => {
     await run(
@@ -573,7 +576,7 @@ async function persistPromptAndTrace(args: {
       `insert into cio_tower.answer_traces
         (trace_key, tenant_key, surface, user_question, contract_key, measure_key, prompt_package_key,
          raw_model_response, rendered_response, artifacts, validation_status, validation_errors, latency_ms, model_name)
-       values ($1,$2,'tower',$3,$4,$5,$6,$7,$7,$8::jsonb,$9,$10::jsonb,$11,$12)
+       values ($1,$2,'tower',$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11::jsonb,$12,$13)
        on conflict (trace_key) do nothing`,
       [
         traceKey,
@@ -583,6 +586,7 @@ async function persistPromptAndTrace(args: {
         args.context.contract.measure_key,
         promptPackageKey,
         args.rawResponse,
+        renderedResponse,
         JSON.stringify({
           artifact_type: args.context.contract.artifact_type,
           api_renderer_mutation: false,
