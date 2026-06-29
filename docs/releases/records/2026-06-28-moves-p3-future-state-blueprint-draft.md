@@ -65,3 +65,9 @@ To be added after validation: PR URL, commit SHA, ACA revision, image digest, fo
 ## Known Gaps
 
 Live P3 generation and browser proof are pending until the candidate is merged and deployed.
+
+## Follow-up Sanitizer Hotfix — 2026-06-29
+
+- Broadened the shared generated-artifact sanitizer so prompt-language variants such as `prompt`, `prompts`, `prompting`, `prompt policies`, and `prompt-injection` are translated into client-facing control language before golden-bar scoring.
+- Added regression coverage for the exact P3 draft quality failure where a security-control phrase still contained prompt-language and blocked persistence.
+- No schema, tenant data, or route behavior changes.

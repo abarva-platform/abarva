@@ -244,6 +244,7 @@ describe("generateArtifact — the integration keystone", () => {
       <h2>Evidence Source Table</h2><table><tr><td>Missing PO</td><td>Price mismatch</td><td>Payment hold / control review</td></tr></table>
       <p>The source row confirms the control-risk branch, and the prompt should never be visible to a client.</p>
       <p>Prompt-injection controls should be rendered as client-facing security language.</p>
+      <p>Prompts, prompting, and prompt policies must be translated before review.</p>
       <p>${enoughWords}</p>
     </body></html>`;
 
@@ -283,6 +284,7 @@ describe("generateArtifact — the integration keystone", () => {
       expect(r.html.toLowerCase()).not.toContain("source row");
       expect(r.html.toLowerCase()).not.toContain("prompt");
       expect(r.html).toContain("adversarial input attack");
+      expect(r.html).toContain("request");
       expect(r.html).toContain("1,872");
       expect(r.html).toContain("2,345");
       expect(r.html).toContain("7.4");

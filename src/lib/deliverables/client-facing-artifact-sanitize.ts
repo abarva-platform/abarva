@@ -14,7 +14,7 @@ const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\bcanonical internal id\b/gi, "internal reference"],
   [/\bdebug\b/gi, "diagnostic"],
   [/\bprompt[-\s]+injection\b/gi, "adversarial input attack"],
-  [/\bprompt\b/gi, "request"],
+  [/\bprompt(?:s|ed|ing|[-\s]+(?:engineering|policy|policies|template|templates|instruction|instructions))?\b/gi, "request"],
 ];
 
 export function sanitizeClientFacingArtifactHtml(html: string): string {
