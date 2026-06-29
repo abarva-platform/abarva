@@ -16,6 +16,7 @@ const MODEL_NAME = 'claude-sonnet-4-6';
 const PROMPT_VERSION = 'cio_tower_advisor_prompt_v1';
 const TEMPERATURE = 0;
 const MAX_TOKENS = 900;
+const MAX_REPAIR_TOKENS = 900;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -209,6 +210,26 @@ function collectVisibleTextFromContract(contract: CioTowerVisibleAnswerContract)
   return chunks.filter(Boolean);
 }
 
+function validateParsedVisibleAnswer(args: {
+  contractKey: string;
+  metricPackets: readonly CioTowerMetricPacket[];
+  parsedOutput: CioTowerVisibleAnswerContract;
+}): string[] {
+  const validationErrors: string[] = [];
+  const visibleTexts = collectVisibleTextFromContract(args.parsedOutput);
+  for (const visibleText of visibleTexts) {
+    validationErrors.push(...validateVisibleAnswer(visibleText));
+  }
+  validationErrors.push(
+    ...validateCioTowerMetricPacketVisibility({
+      contractKey: args.contractKey,
+      packets: args.metricPackets,
+      visibleTexts,
+    }),
+  );
+  return validationErrors;
+}
+
 export function parseVisibleAnswerContract(raw: string): CioTowerVisibleAnswerContract {
   const trimmed = raw.trim();
   const jsonText = trimmed.startsWith('{')
@@ -240,6 +261,36 @@ export function parseVisibleAnswerContract(raw: string): CioTowerVisibleAnswerCo
   };
 }
 
+export function buildCioTowerRepairPrompt(args: {
+  originalPrompt: string;
+  rawModelOutput: string;
+  validationErrors: readonly string[];
+}): string {
+  return [
+    'You returned an invalid Tower visible-answer JSON contract.',
+    '',
+    'Repair task:',
+    '- Return one corrected JSON object only.',
+    '- Preserve the business answer as much as possible, but fix every validation error.',
+    '- Do not add markdown fences or commentary.',
+    '- Do not expose internal data-plane language, raw IDs, source keys, table names, JSON terms, or debug language in any visible field.',
+    '- Do not use the word "rows" in visible prose or table labels; use business words such as records, entries, programs, contracts, or fields.',
+    '- If an authoritative metric packet was provided, include its display value exactly as written there.',
+    '- The renderer will place the JSON strings exactly as you return them. It will not rewrite or polish them.',
+    '',
+    'Validation errors to fix:',
+    args.validationErrors.length ? args.validationErrors.map((error) => `- ${error}`).join('\n') : '- Unknown contract validation failure.',
+    '',
+    'Original instructions and Tower context:',
+    args.originalPrompt,
+    '',
+    'Your invalid model output:',
+    args.rawModelOutput,
+    '',
+    'Return the corrected JSON object only.',
+  ].join('\n');
+}
+
 export function buildCioTowerClaudePrompt(context: CioTowerPromptContext): string {
   const measureLines = context.metricPackets.map((measure) => {
     return `- ${measure.label}: ${measure.displayValue} (${measure.period}, ${measure.basis}; formula ${measure.formulaVersion}; ${measure.sourceFactKeys.length} supporting facts)`;
@@ -268,6 +319,7 @@ export function buildCioTowerClaudePrompt(context: CioTowerPromptContext): strin
     '- Lead with the actual answer, judgment, or recommendation.',
     '- Do not open with filler, a summary of the question, or a template.',
     '- Do not mention internal retrieval, evidence machinery, semantic packets, database rows, table names, JSON, source keys, record IDs, UUIDs, or debug terms.',
+    '- Do not use the word "rows" in visible prose, table titles, column labels, cell text, or tabs. Say records, entries, programs, contracts, or fields instead.',
     '- Do not use visible scaffolding labels like "Read:", "Evidence:", "Implication:", or "Next move:".',
     '- Do not mention Atlas. The agent is aVa.',
     '- If the data is incomplete, state the specific missing business field in plain English.',
@@ -298,7 +350,7 @@ export function buildCioTowerClaudePrompt(context: CioTowerPromptContext): strin
     `Question family: ${context.contract.question_family}`,
     `Preferred artifact shape: ${context.contract.artifact_type}`,
     authoritativeMetric
-      ? `Authoritative metric packet for this question: ${authoritativeMetric.label} = ${authoritativeMetric.displayValue} (${authoritativeMetric.period}, ${authoritativeMetric.basis}; formula ${authoritativeMetric.formulaVersion}). Use this value exactly if you mention this metric.`
+      ? `Authoritative metric packet for this question: ${authoritativeMetric.label} = ${authoritativeMetric.displayValue} (${authoritativeMetric.period}, ${authoritativeMetric.basis}; formula ${authoritativeMetric.formulaVersion}). You MUST include the exact display value "${authoritativeMetric.displayValue}" in the answer if the question asks for this metric.`
       : 'Authoritative metric packet for this question: none loaded. Do not invent the metric value.',
     '',
     'Governed metric packets. These are also what the Tower dashboard uses:',
@@ -555,29 +607,73 @@ export async function answerCioTowerQuestion(args: {
     max_tokens: MAX_TOKENS,
     messages: [{ role: 'user', content: promptText }],
   });
-  const rawResponse = response.content
+  let rawResponse = response.content
     .filter((block) => block.type === 'text')
     .map((block) => block.text)
     .join('\n');
   let parsedOutput: CioTowerVisibleAnswerContract | null = null;
-  const validationErrors: string[] = [];
+  let validationErrors: string[] = [];
   try {
     parsedOutput = parseVisibleAnswerContract(rawResponse);
   } catch (error) {
     validationErrors.push(error instanceof Error ? error.message : 'cio_tower_visible_contract_parse_failed');
   }
   if (parsedOutput) {
-    const visibleTexts = collectVisibleTextFromContract(parsedOutput);
-    for (const visibleText of visibleTexts) {
-      validationErrors.push(...validateVisibleAnswer(visibleText));
-    }
-    validationErrors.push(
-      ...validateCioTowerMetricPacketVisibility({
+    validationErrors = validateParsedVisibleAnswer({
+      contractKey: context.contract.contract_key,
+      metricPackets: context.metricPackets,
+      parsedOutput,
+    });
+  }
+
+  if (validationErrors.length) {
+    const repairPrompt = buildCioTowerRepairPrompt({
+      originalPrompt: promptText,
+      rawModelOutput: rawResponse,
+      validationErrors,
+    });
+    const repairPreflight = await preflightAnthropicDirectClient({
+      tenantId: args.tenantId,
+      userId: args.userId ?? undefined,
+      workflow: 'cio-tower-chat-repair',
+      model: MODEL_NAME,
+      prompt: repairPrompt,
+      dataClass: 'confidential',
+      metadata: {
+        surface: 'tower',
+        promptVersion: PROMPT_VERSION,
         contractKey: context.contract.contract_key,
-        packets: context.metricPackets,
-        visibleTexts,
-      }),
-    );
+        tenantKey: args.tenantKey,
+        repairFor: validationErrors.join(','),
+      },
+    });
+    if (!repairPreflight.ok) {
+      throw new Error(`ai_egress_blocked:${repairPreflight.reason}`);
+    }
+    const repairResponse = await repairPreflight.client.messages.create({
+      model: MODEL_NAME,
+      temperature: TEMPERATURE,
+      max_tokens: MAX_REPAIR_TOKENS,
+      messages: [{ role: 'user', content: repairPrompt }],
+    });
+    rawResponse = repairResponse.content
+      .filter((block) => block.type === 'text')
+      .map((block) => block.text)
+      .join('\n');
+    parsedOutput = null;
+    validationErrors = [];
+    try {
+      parsedOutput = parseVisibleAnswerContract(rawResponse);
+    } catch (error) {
+      validationErrors.push(error instanceof Error ? error.message : 'cio_tower_visible_contract_parse_failed');
+    }
+    if (parsedOutput) {
+      validationErrors = validateParsedVisibleAnswer({
+        contractKey: context.contract.contract_key,
+        metricPackets: context.metricPackets,
+        parsedOutput,
+      });
+    }
   }
   const latencyMs = Date.now() - startedAt;
   const { promptPackageKey, traceKey } = await persistPromptAndTrace({

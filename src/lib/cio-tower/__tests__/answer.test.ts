@@ -1,4 +1,5 @@
 import {
+  buildCioTowerRepairPrompt,
   buildCioTowerClaudePrompt,
   canonicalCioTowerTenantKey,
   parseVisibleAnswerContract,
@@ -97,10 +98,28 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('You own every user-visible word');
     expect(prompt).toContain('AbarVa will render the strings exactly as returned');
     expect(prompt).toContain('It will not rewrite, summarize, scrub, relabel, infer, or improve them');
+    expect(prompt).toContain('Do not use the word "rows" in visible prose');
     expect(prompt).toContain('Governed metric packets. These are also what the Tower dashboard uses');
     expect(prompt).toContain('Authoritative metric packet for this question: Initiative budget = $28.3M');
+    expect(prompt).toContain('You MUST include the exact display value "$28.3M"');
     expect(prompt).toContain('Crew Recovery & Legality Modernization');
     expect(prompt).toContain('$28.3M');
+  });
+
+  it('builds a repair prompt that asks Claude to fix, not the renderer to mutate', () => {
+    const originalPrompt = buildCioTowerClaudePrompt(context());
+    const repairPrompt = buildCioTowerRepairPrompt({
+      originalPrompt,
+      rawModelOutput: '{"version":"cio_tower_visible_answer_v1","answer":"Budget is $28.3 million across rows."}',
+      validationErrors: ['metric_packet_value_missing:initiative_budget_fy26:$28.3M', 'internal_data_plane_language'],
+    });
+
+    expect(repairPrompt).toContain('Return one corrected JSON object only');
+    expect(repairPrompt).toContain('metric_packet_value_missing:initiative_budget_fy26:$28.3M');
+    expect(repairPrompt).toContain('include its display value exactly as written');
+    expect(repairPrompt).toContain('The renderer will place the JSON strings exactly as you return them');
+    expect(repairPrompt).toContain('Do not use the word "rows" in visible prose');
+    expect(repairPrompt).toContain(originalPrompt);
   });
 
   it('parses the visible answer contract without changing prose or table labels', () => {
