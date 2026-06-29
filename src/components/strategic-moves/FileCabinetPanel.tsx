@@ -94,8 +94,8 @@ interface SponsorReviewPostResponse extends SponsorReviewState {
 
 const FAMILIES: { key: string; label: string }[] = [
   { key: "generated_deliverable", label: "Deliverables" },
-  { key: "session_artifact", label: "Session Artifacts" },
-  { key: "uploaded_evidence", label: "Uploads & Evidence" },
+  { key: "session_artifact", label: "Session files" },
+  { key: "uploaded_evidence", label: "Evidence" },
   { key: "template", label: "Templates" },
   { key: "approval_artifact", label: "Approvals" },
   { key: "historical_version", label: "Historical" },
@@ -138,6 +138,11 @@ function fmtDate(iso: string): string {
 
 function StatusChip({ status }: { status: string }) {
   const tone = STATUS_TONE[status] ?? { bg: "#EEF0F3", fg: "#5A6472" };
+  const label = status
+    .replace(/review_required/g, "needs review")
+    .replace(/client_to_complete/g, "client to complete")
+    .replace(/board_ready/g, "ready")
+    .replace(/_/g, " ");
   return (
     <span
       style={{
@@ -152,7 +157,7 @@ function StatusChip({ status }: { status: string }) {
         whiteSpace: "nowrap",
       }}
     >
-      {status.replace(/_/g, " ")}
+      {label}
     </span>
   );
 }
@@ -165,7 +170,8 @@ export function artifactOutputRoleLabel(a: {
   outputRole?: string | null;
   fileFormat?: string | null;
 }): string {
-  if (a.outputRole === "docx_editable_phase_record") return "Editable deliverable";
+  if (a.outputRole === "docx_editable_phase_record")
+    return "Editable deliverable";
   if (a.outputRole === "html_visual_review_companion") {
     return "Visual review companion";
   }
@@ -372,13 +378,13 @@ function ArtifactRow({
               missingEvidence:
                 missingEvidence.length > 0
                   ? missingEvidence
-                  : sponsorReview?.packet.missingEvidence ?? [],
+                  : (sponsorReview?.packet.missingEvidence ?? []),
             }),
           },
         );
-        const json = (await res.json().catch(
-          () => ({}),
-        )) as SponsorReviewPostResponse;
+        const json = (await res
+          .json()
+          .catch(() => ({}))) as SponsorReviewPostResponse;
         if (!res.ok || !json.ok) {
           throw new Error(json.detail || json.error || `HTTP ${res.status}`);
         }
@@ -439,196 +445,215 @@ function ArtifactRow({
         }}
       >
         <div style={{ minWidth: 0 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            flexWrap: "wrap",
-          }}
-        >
-          <span
+          <div
             style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#1A1A18",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexWrap: "wrap",
             }}
           >
-            {a.title}
-          </span>
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: "#5A6472",
-              textTransform: "uppercase",
-              background: "#F4F5F7",
-              padding: "1px 6px",
-              borderRadius: 4,
-            }}
-          >
-            {artifactFormatLabel(a.fileFormat)}
-          </span>
-          {roleLabel && (
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#1A1A18",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {a.title}
+            </span>
             <span
               style={{
                 fontSize: 10,
                 fontWeight: 700,
-                color:
-                  a.outputRole === "docx_editable_phase_record"
-                    ? "#166534"
-                    : "#1B2B5C",
+                color: "#5A6472",
                 textTransform: "uppercase",
-                background:
-                  a.outputRole === "docx_editable_phase_record"
-                    ? "#E6F4EA"
-                    : "#E6F0FB",
+                background: "#F4F5F7",
                 padding: "1px 6px",
                 borderRadius: 4,
               }}
             >
-              {roleLabel}
+              {artifactFormatLabel(a.fileFormat)}
             </span>
-          )}
-          <span style={{ fontSize: 11, color: "#9AA3B2" }}>v{a.version}</span>
-          {a.regeneratedFromArtifactId && (
+            {roleLabel && (
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color:
+                    a.outputRole === "docx_editable_phase_record"
+                      ? "#166534"
+                      : "#1B2B5C",
+                  textTransform: "uppercase",
+                  background:
+                    a.outputRole === "docx_editable_phase_record"
+                      ? "#E6F4EA"
+                      : "#E6F0FB",
+                  padding: "1px 6px",
+                  borderRadius: 4,
+                }}
+              >
+                {roleLabel}
+              </span>
+            )}
+            <span style={{ fontSize: 11, color: "#9AA3B2" }}>v{a.version}</span>
+            {a.regeneratedFromArtifactId && (
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: "#1B2B5C",
+                  background: "#E6F0FB",
+                  padding: "1px 6px",
+                  borderRadius: 4,
+                }}
+              >
+                Regenerated from feedback
+              </span>
+            )}
+            <StatusChip status={a.status} />
+          </div>
+          <div
+            style={{
+              marginTop: 4,
+              fontSize: 11,
+              color: "#9AA3B2",
+              display: "flex",
+              gap: 10,
+              flexWrap: "wrap",
+            }}
+          >
+            {a.phase != null && <span>Phase {a.phase}</span>}
+            {a.qualityScore != null && (
+              <span>Quality {a.qualityScore}/100</span>
+            )}
+            {a.unsupportedClaims > 0 && (
+              <span style={{ color: "#B26A00" }}>
+                {a.unsupportedClaims} unsupported
+              </span>
+            )}
+            {!roleLabel && <span>{fmtBytes(a.fileSize)}</span>}
+            <span>{fmtDate(a.createdAt)}</span>
             <span
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: "#1B2B5C",
-                background: "#E6F0FB",
-                padding: "1px 6px",
-                borderRadius: 4,
-              }}
+              title={
+                stored
+                  ? "Stored in the secure artifact vault"
+                  : "Storage pending"
+              }
+              style={{ color: stored ? "#1E7E34" : "#B71C1C", fontWeight: 600 }}
             >
-              Regenerated from feedback
+              {stored ? "Vault" : "Storage pending"}
+            </span>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          {actionErr && (
+            <span
+              style={{ fontSize: 10.5, color: "#B71C1C", whiteSpace: "nowrap" }}
+              title={actionErr}
+            >
+              {actionErr}
             </span>
           )}
-          <StatusChip status={a.status} />
-        </div>
-        <div
-          style={{
-            marginTop: 4,
-            fontSize: 11,
-            color: "#9AA3B2",
-            display: "flex",
-            gap: 10,
-            flexWrap: "wrap",
-          }}
-        >
-          {a.phase != null && <span>Phase {a.phase}</span>}
-          {a.qualityScore != null && <span>Quality {a.qualityScore}/100</span>}
-          {a.unsupportedClaims > 0 && (
-            <span style={{ color: "#B26A00" }}>
-              {a.unsupportedClaims} unsupported
-            </span>
-          )}
-          <span>{fmtBytes(a.fileSize)}</span>
-          <span>{fmtDate(a.createdAt)}</span>
-          <span
-            title={
-              stored
-                ? "Stored in the secure artifact vault"
-                : "Storage pending"
-            }
-            style={{ color: stored ? "#1E7E34" : "#B71C1C", fontWeight: 600 }}
+          <button
+            onClick={() => setReviewOpen((open) => !open)}
+            disabled={a.lifecycleState !== "current" || reviewBusy}
+            style={{
+              fontSize: 11.5,
+              fontWeight: 600,
+              color: "#1B2B5C",
+              background: "transparent",
+              border: "1px solid #D5DAE2",
+              borderRadius: 5,
+              padding: "5px 11px",
+              whiteSpace: "nowrap",
+              cursor:
+                a.lifecycleState !== "current" || reviewBusy
+                  ? "default"
+                  : "pointer",
+              opacity: a.lifecycleState !== "current" ? 0.5 : 1,
+            }}
           >
-            {stored ? "Stored securely" : "Storage pending"}
-          </span>
-        </div>
-      </div>
-      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-        {actionErr && (
-          <span
-            style={{ fontSize: 10.5, color: "#B71C1C", whiteSpace: "nowrap" }}
-            title={actionErr}
+            Review
+          </button>
+          <button
+            onClick={openArtifact}
+            disabled={busy !== null}
+            style={{
+              fontSize: 11.5,
+              fontWeight: 600,
+              color: "#1B2B5C",
+              background: "transparent",
+              border: "1px solid #D5DAE2",
+              borderRadius: 5,
+              padding: "5px 11px",
+              whiteSpace: "nowrap",
+              cursor: busy ? "default" : "pointer",
+            }}
           >
-            {actionErr}
-          </span>
-        )}
-        <button
-          onClick={() => setReviewOpen((open) => !open)}
-          disabled={a.lifecycleState !== "current" || reviewBusy}
-          style={{
-            fontSize: 11.5,
-            fontWeight: 600,
-            color: "#1B2B5C",
-            background: "transparent",
-            border: "1px solid #D5DAE2",
-            borderRadius: 5,
-            padding: "5px 11px",
-            whiteSpace: "nowrap",
-            cursor:
-              a.lifecycleState !== "current" || reviewBusy
-                ? "default"
-                : "pointer",
-            opacity: a.lifecycleState !== "current" ? 0.5 : 1,
-          }}
-        >
-          Sponsor review
-        </button>
-        <button
-          onClick={openArtifact}
-          disabled={busy !== null}
-          style={{
-            fontSize: 11.5,
-            fontWeight: 600,
-            color: "#1B2B5C",
-            background: "transparent",
-            border: "1px solid #D5DAE2",
-            borderRadius: 5,
-            padding: "5px 11px",
-            whiteSpace: "nowrap",
-            cursor: busy ? "default" : "pointer",
-          }}
-        >
-          {busy === "open" ? "Opening…" : "Open"}
-        </button>
-        <button
-          onClick={downloadArtifact}
-          disabled={busy !== null}
-          style={{
-            fontSize: 11.5,
-            fontWeight: 600,
-            color: "#fff",
-            background: busy ? "#9AA3B2" : "#1B2B5C",
-            border: "none",
-            borderRadius: 5,
-            padding: "5px 11px",
-            whiteSpace: "nowrap",
-            cursor: busy ? "default" : "pointer",
-          }}
-        >
-          {busy === "download" ? "Downloading…" : "Download"}
-        </button>
-      </div>
+            {busy === "open" ? "Opening…" : "Open"}
+          </button>
+          <button
+            onClick={downloadArtifact}
+            disabled={busy !== null}
+            style={{
+              fontSize: 11.5,
+              fontWeight: 600,
+              color: "#fff",
+              background: busy ? "#9AA3B2" : "#1B2B5C",
+              border: "none",
+              borderRadius: 5,
+              padding: "5px 11px",
+              whiteSpace: "nowrap",
+              cursor: busy ? "default" : "pointer",
+            }}
+          >
+            {busy === "download" ? "Downloading…" : "Download"}
+          </button>
+        </div>
       </div>
       {hasReviewSignals && (
-        <div
+        <details
           style={{
-            display: "flex",
-            gap: 8,
-            flexWrap: "wrap",
             fontSize: 11.5,
             color: "#5A6472",
             lineHeight: 1.45,
           }}
         >
-          {a.feedbackItemCount != null && (
-            <span>{a.feedbackItemCount} feedback item(s) applied</span>
-          )}
-          {a.reviewStatus && <span>Review: {metaLabel(a.reviewStatus)}</span>}
-          {a.qualityStatus && <span>Quality: {a.qualityStatus}</span>}
-          {a.goldenBarStatus && (
-            <span>Golden-bar check: {a.goldenBarStatus}</span>
-          )}
-          {a.preliminaryCaveat && (
-            <span style={{ color: "#B26A00" }}>{a.preliminaryCaveat}</span>
-          )}
-        </div>
+          <summary
+            style={{
+              cursor: "pointer",
+              width: "fit-content",
+              color: "#1B2B5C",
+              fontWeight: 650,
+              listStyle: "none",
+            }}
+          >
+            Review details
+          </summary>
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              flexWrap: "wrap",
+              marginTop: 6,
+            }}
+          >
+            {a.feedbackItemCount != null && (
+              <span>{a.feedbackItemCount} feedback item(s) applied</span>
+            )}
+            {a.reviewStatus && <span>Review: {metaLabel(a.reviewStatus)}</span>}
+            {a.qualityStatus && <span>Quality: {a.qualityStatus}</span>}
+            {a.goldenBarStatus && (
+              <span>Golden-bar check: {a.goldenBarStatus}</span>
+            )}
+            {a.preliminaryCaveat && (
+              <span style={{ color: "#B26A00" }}>{a.preliminaryCaveat}</span>
+            )}
+          </div>
+        </details>
       )}
       {reviewOpen && (
         <div
@@ -676,10 +701,10 @@ function ArtifactRow({
                     color: "#334155",
                   }}
                 >
-                  P2 diagnostic is review-ready. You can approve it for P3
-                  draft shaping, request revisions, or hold for missing
-                  evidence. Approval for P3 draft shaping does not mark P2
-                  final and does not bypass sponsor/signoff gates.
+                  P2 diagnostic is review-ready. You can approve it for P3 draft
+                  shaping, request revisions, or hold for missing evidence.
+                  Approval for P3 draft shaping does not mark P2 final and does
+                  not bypass sponsor/signoff gates.
                 </p>
               </div>
               {packetLoading && (
@@ -700,7 +725,9 @@ function ArtifactRow({
                 }}
               >
                 <div>
-                  <strong style={{ color: "#0F172A" }}>Diagnostic thesis</strong>
+                  <strong style={{ color: "#0F172A" }}>
+                    Diagnostic thesis
+                  </strong>
                   <p style={{ margin: "6px 0 0", color: "#334155" }}>
                     {sponsorReview.packet.diagnosticThesis}
                   </p>
@@ -710,7 +737,9 @@ function ArtifactRow({
                   <BulletList items={sponsorReview.packet.quantifiedFacts} />
                 </div>
                 <div>
-                  <strong style={{ color: "#0F172A" }}>Known limitations</strong>
+                  <strong style={{ color: "#0F172A" }}>
+                    Known limitations
+                  </strong>
                   <BulletList items={sponsorReview.packet.knownLimitations} />
                 </div>
                 <div>
@@ -737,13 +766,19 @@ function ArtifactRow({
                   <strong style={{ color: "#0F172A" }}>Gate status</strong>
                   <p style={{ margin: "6px 0 0", color: "#334155" }}>
                     P3 draft readiness:{" "}
-                    {sponsorReview.readiness.readyForP3Draft ? "ready" : "blocked"}
+                    {sponsorReview.readiness.readyForP3Draft
+                      ? "ready"
+                      : "blocked"}
                     <br />
                     P3 final readiness:{" "}
-                    {sponsorReview.readiness.readyForP3Final ? "ready" : "blocked"}
+                    {sponsorReview.readiness.readyForP3Final
+                      ? "ready"
+                      : "blocked"}
                     <br />
                     P2 final approval:{" "}
-                    {sponsorReview.readiness.p2FinalApproved ? "approved" : "not final"}
+                    {sponsorReview.readiness.p2FinalApproved
+                      ? "approved"
+                      : "not final"}
                   </p>
                 </div>
               </div>
@@ -761,7 +796,9 @@ function ArtifactRow({
                 }}
               >
                 Latest decision:{" "}
-                <strong>{metaLabel(sponsorReview.latestDecision.decision)}</strong>
+                <strong>
+                  {metaLabel(sponsorReview.latestDecision.decision)}
+                </strong>
                 . {sponsorReview.readiness.reason}
               </div>
             )}
@@ -813,7 +850,9 @@ function ArtifactRow({
                   }}
                 >
                   <button
-                    onClick={() => void submitSponsorDecision("hold_for_evidence")}
+                    onClick={() =>
+                      void submitSponsorDecision("hold_for_evidence")
+                    }
                     disabled={reviewBusy}
                     style={{
                       fontSize: 11.5,
@@ -828,7 +867,9 @@ function ArtifactRow({
                     Hold for evidence
                   </button>
                   <button
-                    onClick={() => void submitSponsorDecision("request_revisions")}
+                    onClick={() =>
+                      void submitSponsorDecision("request_revisions")
+                    }
                     disabled={reviewBusy}
                     style={{
                       fontSize: 11.5,
@@ -940,9 +981,11 @@ function ArtifactRow({
 export function FileCabinetPanel({
   moveId,
   phase = 0,
+  presentationMode = false,
 }: {
   moveId: string;
   phase?: number;
+  presentationMode?: boolean;
 }) {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1051,17 +1094,18 @@ export function FileCabinetPanel({
           <h2
             style={{
               fontFamily: "Georgia, serif",
-              fontSize: 18,
-              fontWeight: 400,
+              fontSize: presentationMode ? 17 : 18,
+              fontWeight: 650,
               color: "#1A1A18",
               margin: 0,
             }}
           >
-            File Cabinet
+            {presentationMode ? "Downloads" : "File Cabinet"}
           </h2>
           <p style={{ fontSize: 12, color: "#9AA3B2", margin: "3px 0 0" }}>
-            Every artifact for this Move — stored, versioned, and ready for
-            review. {totalCurrent} current.
+            {presentationMode
+              ? `Client-ready files and review versions. ${totalCurrent} current.`
+              : `Every artifact for this Move — stored, versioned, and ready for review. ${totalCurrent} current.`}
           </p>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>

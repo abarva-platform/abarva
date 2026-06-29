@@ -27,7 +27,13 @@ import { sponsorDisplayName, sponsorDisplayWithRole } from "./sponsor-display";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 import type { MoveToSourceHandoffResult } from "@/lib/programs/source-trigger/move-to-source-handoff";
 
-type Tab = "overview" | "explorer" | "documents" | "sessions" | "cabinet" | "activity";
+type Tab =
+  | "overview"
+  | "explorer"
+  | "documents"
+  | "sessions"
+  | "cabinet"
+  | "activity";
 
 /** A Source event already linked back to this Move, when one exists. */
 export interface LinkedSourceEvent {
@@ -195,8 +201,9 @@ function TabBar({
         display: "flex",
         gap: 0,
         borderBottom: "1px solid #e5e5e5",
-        marginBottom: 20,
-        marginTop: 2,
+        marginBottom: presentationMode ? 16 : 20,
+        marginTop: presentationMode ? 0 : 2,
+        paddingLeft: presentationMode ? 10 : 0,
       }}
     >
       {tabs.map((tab) => {
@@ -208,7 +215,7 @@ function TabBar({
             style={{
               display: "inline-flex",
               alignItems: "center",
-              padding: "7px 16px",
+              padding: presentationMode ? "8px 14px" : "7px 16px",
               fontSize: 12,
               fontWeight: isActive ? 700 : 500,
               color: isActive ? "#1A1A18" : "#9AA3B2",
@@ -218,7 +225,7 @@ function TabBar({
                 : "2px solid transparent",
               marginBottom: -1,
               transition: "color 0.1s",
-              letterSpacing: isActive ? "0.01em" : undefined,
+              letterSpacing: 0,
             }}
           >
             {tab.label}
@@ -545,7 +552,13 @@ async function buildExplorerModel(
       updated_at: string | null;
     }>({
       table: "deliverables_v2",
-      columns: ["id", "deliverable_type_key", "status", "current_version", "updated_at"],
+      columns: [
+        "id",
+        "deliverable_type_key",
+        "status",
+        "current_version",
+        "updated_at",
+      ],
       where: { engagement_id: move.id },
       orderBy: { column: "updated_at", direction: "desc" },
       limit: 200,
@@ -554,7 +567,12 @@ async function buildExplorerModel(
 
   const byKey = new Map<
     string,
-    { id: string; status: string; updatedAt: string | null; hasContent: boolean }
+    {
+      id: string;
+      status: string;
+      updatedAt: string | null;
+      hasContent: boolean;
+    }
   >();
   for (const row of rows) {
     if (byKey.has(row.deliverable_type_key)) continue;
@@ -590,7 +608,9 @@ async function buildExplorerModel(
     );
     for (const spec of DELIVERABLE_REGISTRY) {
       const orchType = orchestratorDeliverableType(spec.deliverableTypeKey);
-      const run = runs.find((r) => r.deliverableType === orchType && r.artifactId);
+      const run = runs.find(
+        (r) => r.deliverableType === orchType && r.artifactId,
+      );
       if (run?.artifactId) {
         runByKey.set(spec.deliverableTypeKey, {
           artifactId: run.artifactId,
@@ -635,7 +655,9 @@ async function buildExplorerModel(
         gate: s.gateArtifact,
         // A succeeded run cleared the quality gate, so it reads "ready"; otherwise
         // fall back to the deliverables_v2 status (or "none" when nothing is built).
-        status: builtViaRun ? "ready" : explorerStatus(hasContent, db?.status ?? ""),
+        status: builtViaRun
+          ? "ready"
+          : explorerStatus(hasContent, db?.status ?? ""),
         downloadHtml:
           hasContent && db
             ? `${base(db.id)}?format=html`
@@ -681,7 +703,8 @@ async function buildExplorerModel(
       label: EXPLORER_PHASE_LABEL[phase] ?? `P${phase}`,
       current: phase === currentPhase,
       locked: phase > currentPhase,
-      gateMet: gateSpecs.filter((s) => builtKeys.has(s.deliverableTypeKey)).length,
+      gateMet: gateSpecs.filter((s) => builtKeys.has(s.deliverableTypeKey))
+        .length,
       gateTotal: gateSpecs.length,
       templates,
       inputs,
@@ -700,20 +723,24 @@ async function buildExplorerModel(
 async function ExplorerInner({
   move,
   displayMoveTitle,
+  presentationMode = false,
 }: {
   move: StrategicMove;
   displayMoveTitle?: string;
+  presentationMode?: boolean;
 }) {
   const model = await buildExplorerModel(move, displayMoveTitle);
-  return <MovesExplorer model={model} />;
+  return <MovesExplorer model={model} presentationMode={presentationMode} />;
 }
 
 function ExplorerContent({
   move,
   displayMoveTitle,
+  presentationMode = false,
 }: {
   move: StrategicMove;
   displayMoveTitle?: string;
+  presentationMode?: boolean;
 }) {
   return (
     <div style={{ padding: "0 4px" }}>
@@ -731,7 +758,11 @@ function ExplorerContent({
           </div>
         }
       >
-        <ExplorerInner move={move} displayMoveTitle={displayMoveTitle} />
+        <ExplorerInner
+          move={move}
+          displayMoveTitle={displayMoveTitle}
+          presentationMode={presentationMode}
+        />
       </Suspense>
     </div>
   );
@@ -853,12 +884,20 @@ function RightPane({
         />
       )}
       {activeTab === "explorer" && (
-        <ExplorerContent move={move} displayMoveTitle={displayTitle} />
+        <ExplorerContent
+          move={move}
+          displayMoveTitle={displayTitle}
+          presentationMode={presentationMode}
+        />
       )}
       {activeTab === "documents" && <DocumentsContent move={move} />}
       {activeTab === "sessions" && <SessionPlaybookPanel moveId={move.id} />}
       {activeTab === "cabinet" && (
-        <FileCabinetPanel moveId={move.id} phase={move.currentPhase ?? 0} />
+        <FileCabinetPanel
+          moveId={move.id}
+          phase={move.currentPhase ?? 0}
+          presentationMode={presentationMode}
+        />
       )}
       {activeTab === "activity" && (
         <ActivityContent
@@ -883,7 +922,9 @@ export function StrategicMoveDetailView({
   discoveryIntakeEnabled = false,
   workspaceExplorerEnabled = false,
 }: Props) {
-  const presentationCopy = presentationMode ? presentationCopyForMove(move) : null;
+  const presentationCopy = presentationMode
+    ? presentationCopyForMove(move)
+    : null;
   return (
     <div
       className={`${styles.page} ${presentationMode ? styles.presentationPage : ""}`}
