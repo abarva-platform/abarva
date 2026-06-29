@@ -14,6 +14,7 @@ export { canonicalCioTowerTenantKey } from '@/lib/cio-tower/metric-packet';
 
 const MODEL_NAME = 'claude-sonnet-4-6';
 const PROMPT_VERSION = 'cio_tower_advisor_prompt_v1';
+const BOUNDARY_MODEL_NAME = 'deterministic-cio-tower-boundary-v1';
 const TEMPERATURE = 0;
 const MAX_TOKENS = 900;
 const MAX_REPAIR_TOKENS = 900;
@@ -120,6 +121,13 @@ export interface CioTowerVisibleAnswerContract {
   followUpQuestion?: string | null;
 }
 
+type CioTowerBoundaryTarget = 'Home/Explorer' | 'Intelligence' | 'Source' | 'Moves' | 'Outside Tower' | 'Safety';
+
+interface CioTowerBoundaryRoute {
+  target: CioTowerBoundaryTarget;
+  reason: string;
+}
+
 const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
   {
     key: 'tower_trend_it_budget',
@@ -147,6 +155,78 @@ const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
   },
 ];
 
+const BOUNDARY_PATTERNS: Array<{ target: CioTowerBoundaryTarget; reason: string; patterns: RegExp[] }> = [
+  {
+    target: 'Safety',
+    reason: 'The question asks Tower to bypass tenant, evidence, or visible-answer guardrails.',
+    patterns: [
+      /ignore\s+the\s+tower\s+contract/i,
+      /different\s+tenant|other\s+tenant|another\s+tenant/i,
+      /raw\s+(initiative\s+)?ids?/i,
+      /infer\s+the\s+run\/change/i,
+      /exact\s+roi.*not\s+loaded/i,
+      /pretend\s+the\s+dashboard/i,
+      /claude\s+memory/i,
+      /make\s+up/i,
+      /local\s+file\s+paths?|source\s+table\s+names?/i,
+      /\bAtlas\b|\bSentinel\b/i,
+      /bypass\s+citations/i,
+    ],
+  },
+  {
+    target: 'Home/Explorer',
+    reason: 'The question asks to browse loaded enterprise context or source coverage.',
+    patterns: [
+      /raw\s+context/i,
+      /every\s+source\s+file/i,
+      /fields\s+are\s+missing\s+across\s+the\s+loaded\s+enterprise\s+context/i,
+      /browse\s+the\s+source/i,
+      /whole\s+tenant\s+beyond\s+tower/i,
+      /loaded\s+enterprise\s+context/i,
+    ],
+  },
+  {
+    target: 'Intelligence',
+    reason: 'The question asks for advisory interpretation, patterns, benchmarks, or strategy options.',
+    patterns: [
+      /industry\s+patterns/i,
+      /scale,\s*hold,\s*or\s*stop/i,
+      /scale.*hold.*stop/i,
+      /board-level\s+interpretation/i,
+      /benchmarks?\s+and\s+tradeoffs?/i,
+      /changing\s+strategy/i,
+      /expert\/corpus|corpus\s+patterns?/i,
+    ],
+  },
+  {
+    target: 'Source',
+    reason: 'The question asks for sourcing, supplier selection, RFP, BAFO, or commercial terms.',
+    patterns: [
+      /which\s+vendor\s+should\s+we\s+select/i,
+      /\bRFP\b|evaluation\s+criteria/i,
+      /sourcing\s+event/i,
+      /supplier\s+proposals?|BAFO/i,
+      /commercial\s+terms|negotiate/i,
+    ],
+  },
+  {
+    target: 'Moves',
+    reason: 'The question asks for execution planning or work-packet creation.',
+    patterns: [
+      /execution\s+work\s+packet/i,
+      /initiative\s+plan\s+and\s+owners/i,
+      /open\s+a\s+move/i,
+      /action\s+plan/i,
+      /assign\s+tasks?\s+and\s+milestones?/i,
+    ],
+  },
+  {
+    target: 'Outside Tower',
+    reason: 'The question is general knowledge or unrelated to the CIO Tower portfolio-control scope.',
+    patterns: [/capital\s+of\s+spain/i, /\bpoem\b/i, /\brecipe\b/i, /\bweather\b/i],
+  },
+];
+
 function stableKey(prefix: string, parts: readonly string[]): string {
   const hash = crypto.createHash('sha256').update(parts.join('\n')).digest('hex').slice(0, 24);
   return `${prefix}_${hash}`;
@@ -157,10 +237,53 @@ function sha256(text: string): string {
 }
 
 function matchContractKey(question: string): string {
+  if (classifyCioTowerBoundary(question)) return 'tower_outside_scope';
   for (const matcher of CONTRACT_MATCHERS) {
     if (matcher.patterns.some((pattern) => pattern.test(question))) return matcher.key;
   }
   return 'tower_top_it_programs_by_budget';
+}
+
+export function classifyCioTowerBoundary(question: string): CioTowerBoundaryRoute | null {
+  const shouldRoute = /if\s+tower\s+is\s+not\s+the\s+right\s+surface/i.test(question);
+  for (const boundary of BOUNDARY_PATTERNS) {
+    if (!shouldRoute && boundary.target !== 'Safety' && boundary.target !== 'Outside Tower') continue;
+    if (boundary.patterns.some((pattern) => pattern.test(question))) {
+      return { target: boundary.target, reason: boundary.reason };
+    }
+  }
+  return null;
+}
+
+export function buildCioTowerBoundaryAnswer(route: CioTowerBoundaryRoute): CioTowerVisibleAnswerContract {
+  const answerByTarget: Record<CioTowerBoundaryTarget, string> = {
+    'Home/Explorer':
+      'That belongs in Home/Explorer, not Tower. Home is the right surface for loaded enterprise context, source coverage, missing fields, and source browsing; Tower should stay focused on CIO portfolio control.',
+    Intelligence:
+      'That belongs in Intelligence, not Tower. Tower can show portfolio status, spend, value proof, risk, renewals, and governance signals; Intelligence is the right surface for patterns, benchmarks, tradeoffs, and leadership options.',
+    Source:
+      'That belongs in Source, not Tower. Tower can identify vendor exposure and renewal pressure; Source is the right surface for supplier selection, RFP criteria, BAFO strategy, and commercial terms.',
+    Moves:
+      'That belongs in Moves, not Tower. Tower can show the portfolio signal and accountable pressure point; Moves is the right surface for work packets, owners, milestones, and execution plans.',
+    'Outside Tower':
+      'That is not a Tower portfolio question. Tower can answer CIO portfolio questions about spend, programs, vendor exposure, value proof, risk, renewals, and governance.',
+    Safety:
+      'I cannot do that. Tower answers tenant-scoped portfolio questions using governed Tower facts, and it will not bypass tenant boundaries, invent missing metrics, expose internal identifiers, or use another client as evidence.',
+  };
+  return {
+    version: 'cio_tower_visible_answer_v1',
+    answer: answerByTarget[route.target],
+    tables: [],
+    tabs: [
+      {
+        id: 'route',
+        label: route.target,
+        prose: route.reason,
+        tables: [],
+      },
+    ],
+    followUpQuestion: null,
+  };
 }
 
 function money(value: string | number | null | undefined): string {
@@ -266,7 +389,7 @@ export function parseVisibleAnswerContract(raw: string): CioTowerVisibleAnswerCo
   const trimmed = raw.trim();
   const jsonText = trimmed.startsWith('{')
     ? trimmed
-    : trimmed.match(/```(?:json)?\s*([\s\S]*?)```/)?.[1]?.trim() ?? trimmed;
+    : trimmed.match(/```(?:json)?\s*([\s\S]*?)```/)?.[1]?.trim() ?? extractFirstJsonObject(trimmed) ?? trimmed;
   const parsed = JSON.parse(jsonText) as Partial<CioTowerVisibleAnswerContract>;
   if (parsed.version !== 'cio_tower_visible_answer_v1') {
     throw new Error('cio_tower_visible_contract_invalid_version');
@@ -291,6 +414,38 @@ export function parseVisibleAnswerContract(raw: string): CioTowerVisibleAnswerCo
     tabs: parsed.tabs ?? [],
     followUpQuestion: parsed.followUpQuestion ?? null,
   };
+}
+
+function extractFirstJsonObject(text: string): string | null {
+  const start = text.indexOf('{');
+  if (start < 0) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = start; index < text.length; index += 1) {
+    const char = text[index];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+    } else if (char === '{') {
+      depth += 1;
+    } else if (char === '}') {
+      depth -= 1;
+      if (depth === 0) return text.slice(start, index + 1);
+    }
+  }
+  return null;
 }
 
 export function buildCioTowerRepairPrompt(args: {
@@ -400,6 +555,23 @@ export function buildCioTowerClaudePrompt(context: CioTowerPromptContext): strin
     gapLines.length ? gapLines.join('\n') : '- No blocking gap identified for this question.',
     '',
     'Answer now. Return the JSON object only.',
+  ].join('\n');
+}
+
+function buildCioTowerBoundaryPrompt(args: {
+  context: CioTowerPromptContext;
+  boundary: CioTowerBoundaryRoute;
+  output: CioTowerVisibleAnswerContract;
+}): string {
+  return [
+    'Deterministic Tower boundary route.',
+    `Question: ${args.context.question}`,
+    `Tenant: ${args.context.tenantName}`,
+    `Target: ${args.boundary.target}`,
+    `Reason: ${args.boundary.reason}`,
+    '',
+    'No Claude call was made. The API returned the visible-answer JSON contract below and the renderer must place it unchanged.',
+    JSON.stringify(args.output),
   ].join('\n');
 }
 
@@ -535,6 +707,7 @@ async function persistPromptAndTrace(args: {
   parsedOutput: CioTowerVisibleAnswerContract | null;
   validationErrors: string[];
   latencyMs: number;
+  modelName?: string;
 }): Promise<{ promptPackageKey: string; traceKey: string }> {
   const promptPackageKey = stableKey('cio_tower_prompt', [args.context.tenantKey, args.context.question, args.promptHash, new Date().toISOString()]);
   const traceKey = stableKey('cio_tower_trace', [promptPackageKey, args.rawResponse]);
@@ -569,7 +742,7 @@ async function persistPromptAndTrace(args: {
         JSON.stringify(deterministicPacket),
         args.promptText,
         args.promptHash,
-        MODEL_NAME,
+        args.modelName ?? MODEL_NAME,
       ],
     );
     await run(
@@ -603,7 +776,7 @@ async function persistPromptAndTrace(args: {
         args.validationErrors.length ? 'failed' : 'passed',
         JSON.stringify(args.validationErrors),
         args.latencyMs,
-        MODEL_NAME,
+        args.modelName ?? MODEL_NAME,
       ],
     );
   });
@@ -619,6 +792,51 @@ export async function answerCioTowerQuestion(args: {
 }): Promise<CioTowerAnswerResult> {
   const startedAt = Date.now();
   const context = await loadCioTowerPromptContext(args);
+  const boundary = classifyCioTowerBoundary(args.question);
+  if (boundary) {
+    const parsedOutput = buildCioTowerBoundaryAnswer(boundary);
+    const rawResponse = JSON.stringify(parsedOutput);
+    const promptText = buildCioTowerBoundaryPrompt({ context, boundary, output: parsedOutput });
+    const promptHash = sha256(promptText);
+    const validationErrors = validateParsedVisibleAnswer({
+      contractKey: context.contract.contract_key,
+      metricPackets: context.metricPackets,
+      parsedOutput,
+    });
+    const latencyMs = Date.now() - startedAt;
+    const { promptPackageKey, traceKey } = await persistPromptAndTrace({
+      context,
+      promptText,
+      promptHash,
+      rawResponse,
+      parsedOutput,
+      validationErrors,
+      latencyMs,
+      modelName: BOUNDARY_MODEL_NAME,
+    });
+    if (validationErrors.length) {
+      const error = new Error(`cio_tower_visible_contract_validation_failed:${validationErrors.join(',')}`);
+      (error as Error & { cause?: unknown }).cause = {
+        promptPackageKey,
+        traceKey,
+        rawResponse,
+        validationErrors,
+      };
+      throw error;
+    }
+    return {
+      response: parsedOutput.answer,
+      modelOutputRaw: rawResponse,
+      modelOutput: parsedOutput,
+      promptPackageKey,
+      traceKey,
+      promptHash,
+      model: BOUNDARY_MODEL_NAME,
+      validationStatus: 'passed',
+      validationErrors,
+      latencyMs,
+    };
+  }
   const promptText = buildCioTowerClaudePrompt(context);
   const promptHash = sha256(promptText);
   const preflight = await preflightAnthropicDirectClient({
