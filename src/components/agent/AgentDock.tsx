@@ -58,6 +58,7 @@ import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { hasVisibleAvaArtifacts } from "@/lib/ava-answer/renderable-artifacts";
+import { demoSafeClientText } from "@/lib/client-config";
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
 // real values in the browser, so fall back to the no-op effect on the
@@ -90,13 +91,41 @@ function avaAnswerTextForDock(answer?: AvaAnswerPacket | null): string {
   );
 }
 
+const TECHNICAL_STRING_FIELDS = new Set([
+  "id",
+  "key",
+  "client",
+  "clientKey",
+  "tenantId",
+  "tenantKey",
+]);
+
+function sanitizeVisibleStrings<T>(value: T, fieldName?: string): T {
+  if (typeof value === "string" && fieldName && TECHNICAL_STRING_FIELDS.has(fieldName)) {
+    return value;
+  }
+  if (typeof value === "string") return demoSafeClientText(value) as T;
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeVisibleStrings(item)) as T;
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
+        key,
+        sanitizeVisibleStrings(entry, key),
+      ]),
+    ) as T;
+  }
+  return value;
+}
+
 function visibleAgentDockBody(
   surface: string,
   body: string,
   agentAnswer?: AvaAnswerPacket | null,
 ): string {
   void surface;
-  return avaAnswerTextForDock(agentAnswer) || body;
+  return demoSafeClientText(avaAnswerTextForDock(agentAnswer) || body);
 }
 
 /**
@@ -495,15 +524,15 @@ export function buildUploadParsedPreview(
 
 export function AgentDock(props: AgentDockProps) {
   const {
-    agent,
+    agent: rawAgent,
     surface,
     variant = "standard",
     defaultMode = "side-rail",
-    surfaceContext,
-    initialQuote,
-    suggestedActions = [],
-    placeholder,
-    thread,
+    surfaceContext: rawSurfaceContext,
+    initialQuote: rawInitialQuote,
+    suggestedActions: rawSuggestedActions = [],
+    placeholder: rawPlaceholder,
+    thread: rawThread,
     onMessage,
     workspace,
     minLeftPx = 320,
@@ -511,6 +540,16 @@ export function AgentDock(props: AgentDockProps) {
     collapsedSummary,
     isAgentBusy: isAgentBusyOverride,
   } = props;
+  const agent = sanitizeVisibleStrings(rawAgent);
+  const surfaceContext = sanitizeVisibleStrings(rawSurfaceContext);
+  const initialQuote = rawInitialQuote
+    ? demoSafeClientText(rawInitialQuote)
+    : rawInitialQuote;
+  const suggestedActions = sanitizeVisibleStrings(rawSuggestedActions);
+  const placeholder = rawPlaceholder
+    ? demoSafeClientText(rawPlaceholder)
+    : rawPlaceholder;
+  const thread = sanitizeVisibleStrings(rawThread);
   const focused = variant === "focused";
 
   // Founder feedback 2026-05-10: 'while any agent is busy retrieving info,

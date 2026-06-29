@@ -16,6 +16,7 @@ import {
 } from "@/components/agent/AgentDock";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { SHELL } from "@/lib/shell/shell-tokens";
+import { demoSafeClientText } from "@/lib/client-config";
 
 export type AvaCanvasTab = {
   id: string;
@@ -44,6 +45,34 @@ const DEFAULT_AVA_AGENT: AgentProfile = {
   role: "Enterprise advisor",
 };
 
+const TECHNICAL_STRING_FIELDS = new Set([
+  "id",
+  "key",
+  "client",
+  "clientKey",
+  "tenantId",
+  "tenantKey",
+]);
+
+function sanitizeVisibleStrings<T>(value: T, fieldName?: string): T {
+  if (typeof value === "string" && fieldName && TECHNICAL_STRING_FIELDS.has(fieldName)) {
+    return value;
+  }
+  if (typeof value === "string") return demoSafeClientText(value) as T;
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeVisibleStrings(item)) as T;
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
+        key,
+        sanitizeVisibleStrings(entry, key),
+      ]),
+    ) as T;
+  }
+  return value;
+}
+
 export function AvaChatShell({
   surface,
   thread,
@@ -59,9 +88,13 @@ export function AvaChatShell({
 }: AvaChatShellProps) {
   const profile: AgentProfile = {
     ...DEFAULT_AVA_AGENT,
-    ...agent,
+    ...sanitizeVisibleStrings(agent),
     mark: "ava",
   };
+  const safeThread = sanitizeVisibleStrings(thread);
+  const safeSuggestedActions = sanitizeVisibleStrings(suggestedActions);
+  const safeSurfaceContext = sanitizeVisibleStrings(surfaceContext);
+  const safePlaceholder = demoSafeClientText(placeholder);
 
   return (
     <AgentDock
@@ -71,13 +104,13 @@ export function AvaChatShell({
       defaultMode="side-rail"
       defaultLeftPercent={defaultLeftPercent}
       minLeftPx={minLeftPx}
-      surfaceContext={surfaceContext}
-      suggestedActions={suggestedActions}
-      thread={thread}
+      surfaceContext={safeSurfaceContext}
+      suggestedActions={safeSuggestedActions}
+      thread={safeThread}
       onMessage={onMessage}
       workspace={canvas}
       isAgentBusy={isBusy}
-      placeholder={placeholder}
+      placeholder={safePlaceholder}
       collapsedSummary={{
         label: "aVa",
         detail: "Open the advisor chat",

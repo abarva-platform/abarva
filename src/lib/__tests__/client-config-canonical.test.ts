@@ -1,23 +1,23 @@
 import { canonicalClientDisplayName, getClientOption } from '@/lib/client-config';
 
 describe('canonicalClientDisplayName', () => {
-  it('renders Apex aliases as Apex Retail Group', () => {
-    expect(getClientOption('apexretail').name).toBe('Apex Retail Group');
-    expect(canonicalClientDisplayName({ key: 'apexretail' })).toBe('Apex Retail Group');
-    expect(canonicalClientDisplayName({ key: 'apex-retail' })).toBe('Apex Retail Group');
-    expect(canonicalClientDisplayName({ name: 'Apex Retail' })).toBe('Apex Retail Group');
-    expect(canonicalClientDisplayName({ name: 'Apex Retail Group' })).toBe('Apex Retail Group');
+  it('renders Apex aliases as Retail Demo', () => {
+    expect(getClientOption('apexretail').name).toBe('Retail Demo');
+    expect(canonicalClientDisplayName({ key: 'apexretail' })).toBe('Retail Demo');
+    expect(canonicalClientDisplayName({ key: 'apex-retail' })).toBe('Retail Demo');
+    expect(canonicalClientDisplayName({ name: 'Apex Retail' })).toBe('Retail Demo');
+    expect(canonicalClientDisplayName({ name: 'Apex Retail Group' })).toBe('Retail Demo');
   });
 
-  it('renders Meridian aliases as Meridian Health', () => {
-    expect(getClientOption('meridian').name).toBe('Meridian Health System');
-    expect(canonicalClientDisplayName({ key: 'meridian' })).toBe('Meridian Health');
+  it('renders Meridian aliases as Healthcare Demo', () => {
+    expect(getClientOption('meridian').name).toBe('Healthcare Demo');
+    expect(canonicalClientDisplayName({ key: 'meridian' })).toBe('Healthcare Demo');
     expect(
       canonicalClientDisplayName({
         key: 'meridian',
         name: 'Meridian Health',
       }),
-    ).toBe('Meridian Health');
-    expect(canonicalClientDisplayName({ name: 'Meridian Health' })).toBe('Meridian Health');
+    ).toBe('Healthcare Demo');
+    expect(canonicalClientDisplayName({ name: 'Meridian Health' })).toBe('Healthcare Demo');
   });
 });

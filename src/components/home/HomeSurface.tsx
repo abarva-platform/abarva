@@ -24,6 +24,7 @@ import type {
   BindingDimension,
   BindingSignal,
 } from "@/lib/intelligence/binding/binding-payload";
+import { demoSafeClientText } from "@/lib/client-config";
 
 const CSS = `
 .homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);min-height:100%;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
@@ -72,6 +73,34 @@ const CONTEXT_BROWSER_QUESTIONS = [
 
 const EMPTY_DIMS: BindingDimension[] = [];
 const EMPTY_SIGNALS: BindingSignal[] = [];
+
+const TECHNICAL_STRING_FIELDS = new Set([
+  "id",
+  "key",
+  "client",
+  "clientKey",
+  "tenantId",
+  "tenantKey",
+]);
+
+function sanitizeVisibleStrings<T>(value: T, fieldName?: string): T {
+  if (typeof value === "string" && fieldName && TECHNICAL_STRING_FIELDS.has(fieldName)) {
+    return value;
+  }
+  if (typeof value === "string") return demoSafeClientText(value) as T;
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeVisibleStrings(item)) as T;
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
+        key,
+        sanitizeVisibleStrings(entry, key),
+      ]),
+    ) as T;
+  }
+  return value;
+}
 
 function contextBrowserQuestions(dimensions: BindingDimension[]): string[] {
   const labels = dimensions.map((dimension) =>
@@ -445,13 +474,17 @@ export function HomeSurface({
   payload: IntelligenceBindingPayload | null;
   clientKey?: string | null;
 }) {
-  const dims = payload?.context ?? EMPTY_DIMS;
-  const signals = payload?.signals ?? EMPTY_SIGNALS;
+  const safePayload = useMemo(
+    () => sanitizeVisibleStrings(payload),
+    [payload],
+  );
+  const dims = safePayload?.context ?? EMPTY_DIMS;
+  const signals = safePayload?.signals ?? EMPTY_SIGNALS;
   const [dimKey, setDimKey] = useState<string | null>(null);
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [isBusy, setIsBusy] = useState(false);
-  const tenantKey = payload?.tenant.key ?? clientKey ?? null;
-  const tenantDisplayName = payload?.tenant.displayName ?? "Enterprise";
+  const tenantKey = safePayload?.tenant.key ?? clientKey ?? null;
+  const tenantDisplayName = safePayload?.tenant.displayName ?? "Enterprise";
   const selected = dimKey
     ? (dims.find((d) => d.dimension === dimKey) ?? null)
     : null;
@@ -492,7 +525,9 @@ export function HomeSurface({
         if (!res.ok || !isHomeKnowResponse(json)) {
           throw new Error("Home KNOW returned an invalid response.");
         }
-        const response = shapeHomeKnowResponseForRender(json);
+        const response = sanitizeVisibleStrings(
+          shapeHomeKnowResponseForRender(json),
+        );
         const body = textFallback(response);
         const agentAnswer = toAvaAnswerPacket(response);
         setThread((current) =>
@@ -591,7 +626,7 @@ export function HomeSurface({
           {selected ? (
             <DimensionView dim={selected} signals={signals} />
           ) : (
-            <Overview payload={payload} />
+            <Overview payload={safePayload} />
           )}
         </main>
       </div>

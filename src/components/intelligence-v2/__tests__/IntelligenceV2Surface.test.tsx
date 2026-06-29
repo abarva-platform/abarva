@@ -188,7 +188,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
 
     const askBox = screen.getByTestId("agent-dock-input");
     expect(askBox.tagName).toBe("TEXTAREA");
-    expect(askBox).toHaveAttribute("placeholder", "Ask about Apex");
+    expect(askBox).toHaveAttribute("placeholder", "Ask about Retail Demo");
 
     fireEvent.change(askBox, {
       target: { value: "what should we do about\napex ai spend?" },
@@ -206,7 +206,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       format: "rich",
       surfaceContext: {
         activeTab: "intelligence",
-        activeClient: "Apex Retail Group",
+        activeClient: "Retail Demo",
         clientKey: "apex-retail",
       },
     });
@@ -229,7 +229,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     );
     expect(
       await screen.findAllByText(
-        "Apex should gate lakehouse scale on measured value.",
+        "Retail Demo should gate lakehouse scale on measured value.",
       ),
     ).not.toHaveLength(0);
     expect(screen.queryByText(/Consulted experts/i)).not.toBeInTheDocument();
@@ -237,12 +237,12 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       screen.queryByText(/17,548 evidence points/i),
     ).not.toBeInTheDocument();
     expect(
-      screen.getAllByText(/Apex AI Spend evidence/i).length,
+      screen.getAllByText(/Retail Demo AI Spend evidence/i).length,
     ).toBeGreaterThan(0);
     const agentTurn = screen.getByTestId("agent-dock-turn-agent");
     expect(within(agentTurn).queryByRole("table")).not.toBeInTheDocument();
     expect(
-      within(agentTurn).queryByText(/Apex AI Spend evidence/i),
+      within(agentTurn).queryByText(/Retail Demo AI Spend evidence/i),
     ).not.toBeInTheDocument();
     const table = screen.getAllByRole("table")[0];
     expect(
@@ -279,7 +279,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     );
 
     fireEvent.click(
-      screen.getByText("Which AI investments should Apex scale?"),
+      screen.getByText("Which AI investments should Retail Demo scale?"),
     );
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -287,7 +287,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     expect(screen.getAllByTestId("agent-dock-turn-user")).toHaveLength(1);
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(JSON.parse(String(init.body))).toMatchObject({
-      q: "Which AI investments should Apex scale?",
+      q: "Which AI investments should Retail Demo scale?",
       client: "apex-retail",
       format: "rich",
     });
@@ -488,7 +488,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
 
   it("renders Claude-owned decision tabs on the right canvas without leaking markers into the left answer", async () => {
     const mainAnswer =
-      "SkyHarbor should fund IROPS recovery decisioning only through a governed readiness gate.";
+      "Airline Demo should fund IROPS recovery decisioning only through a governed readiness gate.";
     const tableContent = [
       "| Option | Value | Readiness | Decision |",
       "|---|---:|---|---|",

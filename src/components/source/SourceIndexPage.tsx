@@ -389,7 +389,7 @@ function SourceEmptyState() {
     <AppShell
       surface="source"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName: 'Retail Demo',
         showLocked: true,
         context: 'Source · No active events',
       }}
@@ -491,7 +491,7 @@ export function SourceIndexPage() {
     <AppShell
       surface="source"
       topBarProps={{
-        tenantName: 'Apex Retail Group',
+        tenantName: 'Retail Demo',
         showLocked: true,
         context: 'Source · AMS Vendor Consolidation 2026 · BAFO',
       }}

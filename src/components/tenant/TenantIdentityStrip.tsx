@@ -1,3 +1,5 @@
+import { demoSafeClientText } from "@/lib/client-config";
+
 type TenantIdentityStripProps = {
   clientName: string | null | undefined;
   surface: string;
@@ -26,7 +28,9 @@ const labelStyle = {
 } as const;
 
 export function TenantIdentityStrip({ clientName, surface }: TenantIdentityStripProps) {
-  const displayName = clientName?.trim() || 'Tenant context unavailable';
+  const displayName = clientName?.trim()
+    ? demoSafeClientText(clientName.trim())
+    : 'Tenant context unavailable';
 
   return (
     <div style={stripStyle} aria-label={`${surface} tenant identity`}>
