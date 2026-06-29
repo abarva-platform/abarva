@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import posthog from 'posthog-js'
 
 type LoggedOutLandingPageProps = {
   signedOut?: boolean
@@ -33,28 +32,61 @@ const PUBLIC_MARKETING_POSTHOG_KEY =
   process.env.NEXT_PUBLIC_POSTHOG_KEY || 'phc_sBWeBFtt6CTivNZPxXArcognZKe5zHMAzm5qjmfdVQKj'
 const PUBLIC_MARKETING_POSTHOG_HOST =
   process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com'
+const PUBLIC_MARKETING_DISTINCT_ID_KEY = 'abarva_public_marketing_distinct_id'
 
-function ensurePublicMarketingPostHog() {
+function getPublicMarketingDistinctId() {
   if (typeof window === 'undefined') return null
-  if (!PUBLIC_MARKETING_POSTHOG_KEY) return null
 
   try {
-    if (!posthog.__loaded) {
-      posthog.init(PUBLIC_MARKETING_POSTHOG_KEY, {
-        api_host: PUBLIC_MARKETING_POSTHOG_HOST,
-        person_profiles: 'identified_only',
-        autocapture: false,
-        capture_pageview: false,
-        capture_pageleave: true,
-        session_recording: {
-          maskAllInputs: true,
-          maskInputOptions: { password: true },
-        },
-      })
-    }
-    return posthog
+    const existing = window.localStorage.getItem(PUBLIC_MARKETING_DISTINCT_ID_KEY)
+    if (existing) return existing
+
+    const generated =
+      typeof window.crypto?.randomUUID === 'function'
+        ? window.crypto.randomUUID()
+        : `public-${Date.now()}-${Math.random().toString(16).slice(2)}`
+    window.localStorage.setItem(PUBLIC_MARKETING_DISTINCT_ID_KEY, generated)
+    return generated
   } catch {
-    return null
+    return `public-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  }
+}
+
+function sendPublicMarketingEvent(event: string, properties: Record<string, unknown>) {
+  if (typeof window === 'undefined') return
+  if (!PUBLIC_MARKETING_POSTHOG_KEY) return
+
+  try {
+    const distinctId = getPublicMarketingDistinctId()
+    if (!distinctId) return
+
+    const host = PUBLIC_MARKETING_POSTHOG_HOST.replace(/\/$/, '')
+    const payload = {
+      api_key: PUBLIC_MARKETING_POSTHOG_KEY,
+      event,
+      properties: {
+        distinct_id: distinctId,
+        surface: 'public_marketing',
+        route: window.location.pathname,
+        signed_in: false,
+        $current_url: window.location.href,
+        $host: window.location.host,
+        $pathname: window.location.pathname,
+        $referrer: document.referrer || undefined,
+        $process_person_profile: false,
+        ...properties,
+      },
+    }
+
+    void fetch(`${host}/capture/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true,
+      mode: 'cors',
+    }).catch(() => undefined)
+  } catch {
+    // Telemetry is optional; never block public marketing or lead capture.
   }
 }
 
@@ -67,16 +99,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
 
   const trackMarketingEvent = useCallback(
     (event: string, properties: Record<string, unknown> = {}) => {
-      try {
-        ensurePublicMarketingPostHog()?.capture(event, {
-          surface: 'public_marketing',
-          route: typeof window === 'undefined' ? '/' : window.location.pathname,
-          signed_in: false,
-          ...properties,
-        })
-      } catch {
-        // Telemetry is optional; never block public marketing or lead capture.
-      }
+      sendPublicMarketingEvent(event, properties)
     },
     [],
   )
