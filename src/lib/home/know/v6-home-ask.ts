@@ -382,6 +382,11 @@ function loadV6Dataset(tenantKey: string): V6Dataset {
 
 function classifyQuestion(question: string): keyof typeof TOPICS {
   const q = question.toLowerCase();
+  if (/relationship|connect/.test(q)) return 'relationships';
+  if (/board|executive summary|board-ready/.test(q)) return 'board_summary';
+  if (/intelligence/.test(q) && /(hand|instead|take over|takeover|own|evaluate)/.test(q)) return 'handoff_intelligence';
+  if (/tower/.test(q) && /(hand|instead|hold|scale|evaluate|take over|takeover|own)/.test(q)) return 'handoff_tower';
+  if (/business context|available context|loaded context/.test(q)) return 'loaded_context';
   if (/business areas|business functions|available business/.test(q)) return 'business_areas';
   if (/technology leaders|named .*leaders|accountability/.test(q)) return 'technology_leaders';
   if (/it organization|it org|structured today|organization structured/.test(q)) return 'it_org';
@@ -390,21 +395,17 @@ function classifyQuestion(question: string): keyof typeof TOPICS {
   if (/integration|interfaces/.test(q)) return 'integrations';
   if (/vendor|contract|sourcing/.test(q) && /source|sourcing/.test(q)) return 'sourcing_relevance';
   if (/vendor|contract/.test(q)) return 'vendors_contracts';
-  if (/budget|spend|financial/.test(q)) return 'budget_spend';
+  if (/budget|spend|financial evidence|financial context/.test(q)) return 'budget_spend';
   if (/ai footprint|automation footprint/.test(q)) return 'ai_footprint';
   if (/ai initiatives|value evidence/.test(q)) return 'ai_initiatives';
   if (/operations|service management/.test(q)) return 'operations_service';
   if (/security|risk|compliance/.test(q)) return 'risk_controls';
   if (/governance|policy/.test(q)) return 'governance_policy';
   if (/metrics|outcome/.test(q)) return 'metrics_outcomes';
-  if (/relationship|connect/.test(q)) return 'relationships';
   if (/missing evidence|evidence areas|before intelligence/.test(q)) return 'evidence_gaps';
   if (/data-thin|thin|caveated/.test(q)) return 'data_thin';
   if (/ready|readiness|advisory use/.test(q)) return 'readiness';
   if (/source trail|citation|citation basis/.test(q)) return 'source_trail';
-  if (/board|executive summary|board-ready/.test(q)) return 'board_summary';
-  if (/intelligence/.test(q) && /hand|instead/.test(q)) return 'handoff_intelligence';
-  if (/tower/.test(q) && /hand|instead|hold|scale/.test(q)) return 'handoff_tower';
   if (/moves|strategic change|move/.test(q)) return 'move_relevance';
   return 'loaded_context';
 }

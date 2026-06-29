@@ -124,4 +124,50 @@ describe("Home V6 KNOW response contract", () => {
       "Home should only ground the loaded V6 facts and evidence gaps.",
     );
   });
+
+  it("routes common Home question types to the intended V6 topics", () => {
+    const cases = [
+      {
+        question:
+          "What relationships between systems, vendors, and business areas are loaded?",
+        expectedDimension: "relationships",
+        expectedText: "relationship",
+      },
+      {
+        question: "What should Intelligence take over from Home?",
+        expectedDimension: "ai_initiatives",
+        expectedText: "Intelligence owns",
+      },
+      {
+        question: "What should Tower evaluate from this context?",
+        expectedDimension: "ai_initiatives",
+        expectedText: "Tower owns",
+      },
+      {
+        question:
+          "Give me a board-ready summary of what Home knows and cannot prove yet.",
+        expectedDimension: "board_summary",
+        expectedText: "board",
+      },
+      {
+        question:
+          "What business context is available for Financial Services Demo?",
+        expectedDimension: "enterprise_profile",
+        expectedText: "V6 Home contract pack",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const result = answerHomeKnowFromV6({
+        tenantKey: "arcturus",
+        question: testCase.question,
+        includeTrace: true,
+      });
+
+      expect(result.answer.primaryDimension).toBe(testCase.expectedDimension);
+      expect(result.answer.directAnswer.toLowerCase()).toContain(
+        testCase.expectedText.toLowerCase(),
+      );
+    }
+  });
 });
