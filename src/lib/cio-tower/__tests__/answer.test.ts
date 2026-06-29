@@ -106,6 +106,48 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('$28.3M');
   });
 
+  it('keeps total spend answers from mixing function/platform lines with programs', () => {
+    const prompt = buildCioTowerClaudePrompt(context({
+      question: 'what is my IT spend?',
+      contract: {
+        contract_key: 'tower_total_it_spend',
+        intent: 'lookup',
+        question_family: 'total_it_spend',
+        measure_key: 'total_it_budget_fy26',
+        artifact_type: 'answer',
+        examples: [],
+      },
+      relevantFacts: [
+        {
+          fact_key: 'fact-cloud',
+          entity_key: 'cloud-and-infrastructure',
+          entity_type: 'budget_line',
+          entity_display_name: 'Cloud And Infrastructure',
+          measure: 'budget_fy26_usd',
+          scope: 'enterprise_budget_line',
+          view: 'it_budget',
+          amount_type: 'none',
+          basis: 'committed',
+          period: 'fy26',
+          value_numeric: '201200000',
+          value_text: null,
+          unit: 'usd',
+          value_source: 'tenant_file',
+          confidence: 'high',
+          source_key: 'source-budget',
+          source_row: '4',
+          attributes: {},
+        },
+      ],
+    }));
+
+    expect(prompt).toContain('Dashboard slice discipline');
+    expect(prompt).toContain('This question asks for the total IT budget/spend envelope');
+    expect(prompt).toContain('relevant facts with view=it_budget are function/platform budget lines');
+    expect(prompt).toContain('Do not call function/platform budget lines "programs", "initiatives", or "spending towers"');
+    expect(prompt).toContain('Do not pull initiative/program values into this answer');
+  });
+
   it('builds a repair prompt that asks Claude to fix, not the renderer to mutate', () => {
     const originalPrompt = buildCioTowerClaudePrompt(context());
     const repairPrompt = buildCioTowerRepairPrompt({

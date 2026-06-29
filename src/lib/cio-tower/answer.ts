@@ -177,6 +177,38 @@ function factValue(row: CioTowerFactRow): string {
   return 'not loaded';
 }
 
+function dashboardSliceDiscipline(context: CioTowerPromptContext): string[] {
+  const lines = [
+    'Dashboard slice discipline:',
+    '- The governed metric packets are the authority for dashboard KPI numbers.',
+    '- Do not relabel one slice as another. Enterprise budget, function/platform budget lines, initiative/program budgets, actual spend, and value are different measures.',
+    '- If you mention a KPI, use the exact governed metric packet display value.',
+    '- If you mention a cut of the budget, use only the relevant fact view for that cut and name it accurately.',
+  ];
+
+  if (context.contract.contract_key === 'tower_total_it_spend') {
+    lines.push(
+      '- This question asks for the total IT budget/spend envelope. Lead with total_it_budget_fy26, then run_budget_fy26, change_budget_fy26, actual_spend_ytd if present, and total_it_budget_fy25_baseline if useful.',
+      '- For this question, relevant facts with view=it_budget are function/platform budget lines. If you name the largest slices, call them function/platform budget lines and use their exact values from Most relevant facts.',
+      '- Do not call function/platform budget lines "programs", "initiatives", or "spending towers". Do not pull initiative/program values into this answer unless explicitly contrasting them with the enterprise budget envelope.',
+    );
+  }
+
+  if (context.contract.contract_key === 'tower_top_it_programs_by_budget') {
+    lines.push(
+      '- This question asks for programs/initiatives. Use only facts with view=initiative_budget for ranked programs. Do not substitute enterprise budget or function/platform budget lines.',
+    );
+  }
+
+  if (context.contract.contract_key === 'tower_run_change_split') {
+    lines.push(
+      '- This question asks for run/change. Use run_budget_fy26 and change_budget_fy26. Do not convert these into CapEx/OpEx unless explicit CapEx/OpEx facts are present.',
+    );
+  }
+
+  return lines;
+}
+
 function normalizeVisibleText(text: string): string {
   return text.replace(/\s+/g, ' ').trim();
 }
@@ -355,6 +387,8 @@ export function buildCioTowerClaudePrompt(context: CioTowerPromptContext): strin
     '',
     'Governed metric packets. These are also what the Tower dashboard uses:',
     measureLines.length ? measureLines.join('\n') : '- No governed measure result is loaded for this question.',
+    '',
+    dashboardSliceDiscipline(context).join('\n'),
     '',
     'Most relevant facts:',
     factLines.length ? factLines.join('\n') : '- No relevant facts are loaded for this question.',
