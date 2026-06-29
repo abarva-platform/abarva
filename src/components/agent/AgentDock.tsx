@@ -44,7 +44,6 @@ import {
 import { CANVAS } from "@/components/source/canvas/canvas-tokens";
 import { ResizableSplitter } from "@/components/source/canvas/ResizableSplitter";
 import { SynthesisFeedbackWidget } from "@/components/reasoning/SynthesisFeedbackWidget";
-import { shapeAgentResponseForSurface } from "@/lib/agent/response-shape";
 import type { AgentResponsePart } from "@/lib/agent/response-parts";
 import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { AILabel } from "@/components/abarva/AILabel";
@@ -58,7 +57,6 @@ import type { AskSource } from "@/lib/intelligence/ask/types";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
-import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 import { hasVisibleAvaArtifacts } from "@/lib/ava-answer/renderable-artifacts";
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
@@ -97,12 +95,8 @@ function visibleAgentDockBody(
   body: string,
   agentAnswer?: AvaAnswerPacket | null,
 ): string {
-  const cleaned = scrubPublicAvaAnswerText(
-    avaAnswerTextForDock(agentAnswer) || body,
-  );
-  return surface === "intelligence"
-    ? cleaned
-    : shapeAgentResponseForSurface(surface, cleaned);
+  void surface;
+  return avaAnswerTextForDock(agentAnswer) || body;
 }
 
 /**

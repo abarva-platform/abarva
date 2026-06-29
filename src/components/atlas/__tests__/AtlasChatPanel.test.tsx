@@ -68,6 +68,30 @@ describe("AtlasChatPanel · adapter", () => {
     expect(screen.getByTestId("tower-body")).toBeInTheDocument();
   });
 
+  it("does not rewrite agent-visible prose", () => {
+    render(
+      <AtlasChatPanel
+        messages={[
+          {
+            id: "a-raw",
+            role: "atlas",
+            content: "Atlas literal text should remain byte-visible.",
+          },
+        ]}
+        pending={false}
+        onSubmit={jest.fn()}
+        suggestions={[]}
+        onSuggestion={jest.fn()}
+        workspace={<div>w</div>}
+        surface={SURFACE}
+      />,
+    );
+
+    expect(screen.getByTestId("agent-dock-thread")).toHaveTextContent(
+      "Atlas literal text should remain byte-visible.",
+    );
+  });
+
   it("renders the aVa product profile and keeps the default rail uncluttered", () => {
     render(
       <AtlasChatPanel

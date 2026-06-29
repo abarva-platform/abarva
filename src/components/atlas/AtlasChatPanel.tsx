@@ -91,7 +91,7 @@ export interface AtlasChatPanelProps {
 const ATLAS_THINKING_ID = "atlas-thinking-transient";
 
 function visibleAvaCopy(value: string): string {
-  return value.replace(/\bAtlas\b/g, "aVa").replace(/\batlas\b/g, "aVa");
+  return value;
 }
 
 export function AtlasChatPanel({
