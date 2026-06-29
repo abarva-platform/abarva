@@ -27,7 +27,7 @@ The public AbarVa landing page now supports the approved CXO-safe product walkth
 
 ## Changes Included
 
-- `src/components/marketing/LoggedOutLandingPage.tsx`: embeds the approved walkthrough MP4, adds poster/video styling, removes the public sign-in link, emits explicit public marketing events, and clarifies that access instructions are sent by email.
+- `src/components/marketing/LoggedOutLandingPage.tsx`: embeds the approved walkthrough MP4, adds poster/video styling, removes the public sign-in link, initializes the public PostHog marketing client, emits explicit public marketing events, and clarifies that access instructions are sent by email.
 - `src/components/MobileGuard.tsx`: allows public marketing/status pages on mobile while preserving the product desktop guard.
 - `src/components/ProductUsageTelemetry.tsx`: captures anonymous public clicks in addition to existing anonymous pageviews.
 - `src/components/PostHogProvider.tsx`: initializes the PostHog singleton before child telemetry hooks read the provider client, so pageview/click/request-access events are not lost to the first-render timing race.
