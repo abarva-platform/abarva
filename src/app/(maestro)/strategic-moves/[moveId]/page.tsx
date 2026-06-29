@@ -23,7 +23,7 @@ type Tab = "overview" | "explorer" | "documents" | "sessions" | "cabinet" | "act
 
 interface Props {
   params: Promise<{ moveId: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; demo?: string; presentation?: string }>;
 }
 
 function resolveTab(raw: string | undefined): Tab {
@@ -36,6 +36,18 @@ function resolveTab(raw: string | undefined): Tab {
   )
     return raw;
   return "overview";
+}
+
+function isPresentationMode(sp: {
+  demo?: string;
+  presentation?: string;
+}): boolean {
+  return (
+    sp.demo === "1" ||
+    sp.demo === "true" ||
+    sp.presentation === "1" ||
+    sp.presentation === "true"
+  );
 }
 
 /** True when the Move carries a P3 sourcing-strategy deliverable. */
@@ -91,6 +103,7 @@ export default async function StrategicMoveDetailPage({
 
   const [{ moveId }, sp] = await Promise.all([params, searchParams]);
   const activeTab = resolveTab(sp.tab);
+  const presentationMode = isPresentationMode(sp);
 
   if (!isStrategicMoveRouteId(moveId)) {
     notFound();
@@ -137,10 +150,16 @@ export default async function StrategicMoveDetailPage({
   });
 
   return (
-    <AppShell surface="programs-detail">
+    <AppShell
+      surface="programs-detail"
+      topBarProps={
+        presentationMode ? { tenantName: "Northstar Retail Group" } : undefined
+      }
+    >
       <StrategicMoveDetailView
         move={move}
         activeTab={activeTab}
+        presentationMode={presentationMode}
         handoff={handoff}
         linkedSourceEvent={linkedSourceEvent}
         decisionThreadId={decisionThread?.id ?? null}

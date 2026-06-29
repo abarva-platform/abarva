@@ -39,6 +39,7 @@ export interface LinkedSourceEvent {
 interface Props {
   move: StrategicMove;
   activeTab?: Tab;
+  presentationMode?: boolean;
   /** Move→Source hand-off, computed when the Move carries a sourcing deliverable. */
   handoff?: MoveToSourceHandoffResult | null;
   /** A Source event already linked to this Move. */
@@ -52,6 +53,48 @@ interface Props {
   discoveryIntakeEnabled?: boolean;
   /** Workspace Explorer surfacing for Moves, flag-gated server-side. */
   workspaceExplorerEnabled?: boolean;
+}
+
+interface PresentationCopy {
+  moveTitle: string;
+  moveSubtitle: string;
+  tenantName: string;
+  displayCode: string;
+  disclosure: string;
+}
+
+function compactMoveTitle(name: string): string {
+  const normalized = name.trim();
+  if (/finance|treasury|kyriba|controls|reporting/i.test(normalized)) {
+    return "Finance Modernization & Value Realization";
+  }
+  const beforeColon = normalized.split(":")[0]?.trim();
+  const candidate =
+    beforeColon && beforeColon.length >= 12 ? beforeColon : normalized;
+  return candidate.length > 62
+    ? `${candidate.slice(0, 59).trim()}...`
+    : candidate;
+}
+
+function presentationCopyForMove(move: StrategicMove): PresentationCopy {
+  return {
+    moveTitle: compactMoveTitle(move.name),
+    moveSubtitle:
+      "Treasury rollout, controls modernization, reporting simplification, vendor optimization.",
+    tenantName: "Northstar Retail Group",
+    displayCode: "DEMO-MOVE-2026",
+    disclosure: "Synthetic demo data for product illustration",
+  };
+}
+
+function tabHref(moveId: string, tab: Tab, presentationMode: boolean): string {
+  const params = new URLSearchParams();
+  if (tab !== "overview") params.set("tab", tab);
+  if (presentationMode) params.set("demo", "1");
+  const query = params.toString();
+  return query
+    ? `/strategic-moves/${moveId}?${query}`
+    : `/strategic-moves/${moveId}`;
 }
 
 function formatRole(role: string): string {
@@ -100,34 +143,50 @@ function secondaryAction(
 
 // ── Tab bar ────────────────────────────────────────────────────────────────────
 
-function TabBar({ moveId, active }: { moveId: string; active: Tab }) {
+function TabBar({
+  moveId,
+  active,
+  presentationMode = false,
+}: {
+  moveId: string;
+  active: Tab;
+  presentationMode?: boolean;
+}) {
   const tabs: { key: Tab; label: string; href: string }[] = [
-    { key: "overview", label: "Overview", href: `/strategic-moves/${moveId}` },
+    {
+      key: "overview",
+      label: presentationMode ? "Story" : "Overview",
+      href: tabHref(moveId, "overview", presentationMode),
+    },
     {
       key: "explorer",
-      label: "Explorer",
-      href: `/strategic-moves/${moveId}?tab=explorer`,
+      label: presentationMode ? "Journey" : "Explorer",
+      href: tabHref(moveId, "explorer", presentationMode),
     },
     {
       key: "documents",
-      label: "Documents",
-      href: `/strategic-moves/${moveId}?tab=documents`,
-    },
-    {
-      key: "sessions",
-      label: "Sessions",
-      href: `/strategic-moves/${moveId}?tab=sessions`,
+      label: presentationMode ? "Executive Artifacts" : "Documents",
+      href: tabHref(moveId, "documents", presentationMode),
     },
     {
       key: "cabinet",
-      label: "File Cabinet",
-      href: `/strategic-moves/${moveId}?tab=cabinet`,
+      label: presentationMode ? "Downloads" : "File Cabinet",
+      href: tabHref(moveId, "cabinet", presentationMode),
     },
-    {
-      key: "activity",
-      label: "Activity",
-      href: `/strategic-moves/${moveId}?tab=activity`,
-    },
+    ...(presentationMode
+      ? []
+      : ([
+          {
+            key: "sessions",
+            label: "Sessions",
+            href: tabHref(moveId, "sessions", presentationMode),
+          },
+          {
+            key: "activity",
+            label: "Activity",
+            href: tabHref(moveId, "activity", presentationMode),
+          },
+        ] satisfies { key: Tab; label: string; href: string }[])),
   ];
 
   return (
@@ -668,6 +727,7 @@ function RightPane({
   decisionThreadId,
   discoveryIntakeEnabled = false,
   workspaceExplorerEnabled = false,
+  presentationMode = false,
 }: {
   move: StrategicMove;
   activeTab: Tab;
@@ -676,13 +736,22 @@ function RightPane({
   decisionThreadId?: string | null;
   discoveryIntakeEnabled?: boolean;
   workspaceExplorerEnabled?: boolean;
+  presentationMode?: boolean;
 }) {
   const primary = primaryAction(move);
   const secondary = secondaryAction(move);
+  const copy = presentationMode ? presentationCopyForMove(move) : null;
+  const displayTenantName = copy?.tenantName ?? move.tenant.name;
+  const displayCode = copy?.displayCode ?? move.displayCode;
+  const displayTitle = copy?.moveTitle ?? move.name;
 
   return (
-    <article className={styles.rightPane}>
-      <div className={styles.detailHead}>
+    <article
+      className={`${styles.rightPane} ${presentationMode ? styles.presentationPane : ""}`}
+    >
+      <div
+        className={`${styles.detailHead} ${presentationMode ? styles.presentationHead : ""}`}
+      >
         <div className={styles.detailHeadTop}>
           <div className={styles.detailHeadLeft}>
             <div className={styles.detailBreadcrumb}>
@@ -690,18 +759,24 @@ function RightPane({
                 Strategic Moves
               </Link>
               <span aria-hidden>&rsaquo;</span>
-              <span>{move.tenant.name}</span>
+              <span>{displayTenantName}</span>
               <span aria-hidden>&rsaquo;</span>
-              <span>{move.displayCode}</span>
+              <span>{displayCode}</span>
             </div>
-            <h1 className={styles.detailTitle}>{move.name}</h1>
+            <h1 className={styles.detailTitle}>{displayTitle}</h1>
+            {copy ? (
+              <p className={styles.presentationSubtitle}>{copy.moveSubtitle}</p>
+            ) : null}
             <div className={styles.detailId}>
               {move.archetype} &middot; Sponsor:{" "}
               {sponsorDisplayName(move.sponsor).toUpperCase()}
             </div>
+            {copy ? (
+              <div className={styles.presentationBadge}>{copy.disclosure}</div>
+            ) : null}
           </div>
           <div className={styles.detailHeadActions}>
-            {decisionThreadId && (
+            {decisionThreadId && !presentationMode && (
               <Link
                 className={styles.btnGhost}
                 href={`/dossier/${decisionThreadId}`}
@@ -718,7 +793,7 @@ function RightPane({
                 Workspace ↗
               </Link>
             )}
-            {secondary && (
+            {secondary && !presentationMode && (
               <Link className={styles.btnGhost} href={secondary.href}>
                 {secondary.label}
               </Link>
@@ -743,7 +818,11 @@ function RightPane({
       </div>
 
       <div style={{ paddingLeft: 0, paddingRight: 0 }}>
-        <TabBar moveId={move.id} active={activeTab} />
+        <TabBar
+          moveId={move.id}
+          active={activeTab}
+          presentationMode={presentationMode}
+        />
       </div>
 
       {activeTab === "overview" && (
@@ -774,6 +853,7 @@ function RightPane({
 export function StrategicMoveDetailView({
   move,
   activeTab = "overview",
+  presentationMode = false,
   handoff = null,
   linkedSourceEvent = null,
   decisionThreadId = null,
@@ -782,7 +862,9 @@ export function StrategicMoveDetailView({
   workspaceExplorerEnabled = false,
 }: Props) {
   return (
-    <div className={styles.page}>
+    <div
+      className={`${styles.page} ${presentationMode ? styles.presentationPage : ""}`}
+    >
       <div
         data-testid="move-detail-splitter-shell"
         style={{
@@ -794,6 +876,7 @@ export function StrategicMoveDetailView({
       >
         <StrategicMoveDetailClient
           move={move}
+          presentationMode={presentationMode}
           decisionThreadId={decisionThreadId}
           originatingIntelligenceSessionId={originatingIntelligenceSessionId}
           workspace={
@@ -805,6 +888,7 @@ export function StrategicMoveDetailView({
               decisionThreadId={decisionThreadId}
               discoveryIntakeEnabled={discoveryIntakeEnabled}
               workspaceExplorerEnabled={workspaceExplorerEnabled}
+              presentationMode={presentationMode}
             />
           }
         />
