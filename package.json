@@ -125,6 +125,7 @@
     "tower:cio:load-standardized": "node scripts/tower/load-cio-tower-standardized-v1.mjs",
     "tower:cio:quality": "node scripts/tower/validate-cio-tower-quality.mjs",
     "tower:cio:proof": "node scripts/tower/query-cio-tower-proof.mjs",
+    "tower:cio:trace": "node scripts/tower/query-cio-tower-answer-traces.mjs",
     "ingest:verify": "npx tsx -e \"const {Pinecone}=require('@pinecone-database/pinecone');const fs=require('fs'),path=require('path');const lines=fs.readFileSync(path.join(process.cwd(),'.env.local'),'utf-8').split('\\n');const env={};for(const l of lines){const[k,...v]=l.split('=');if(k&&v.length)env[k.trim()]=v.join('=').trim();}const pc=new Pinecone({apiKey:env.PINECONE_API_KEY});pc.index(env.PINECONE_INDEX||'nexus-knowledge').describeIndexStats().then(s=>console.log('Vectors in nexus-knowledge:',s.totalRecordCount));\"",
     "seed:enterprise": "npx tsx src/scripts/seed/run-enterprise-packj.ts",
     "seed:enterprise-depth": "npx tsx src/scripts/seed/run-enterprise-depth.ts",
