@@ -96,7 +96,7 @@ function toHomeKnowCitation(
     sourceFile: null,
     sourceRowNumber: null,
     recordId: null,
-    excerpt: `${citation.count} V6 evidence row${
+    excerpt: `${citation.count} V6 evidence item${
       citation.count === 1 ? "" : "s"
     } selected from ${sourceLabel.toLowerCase()}.`,
     confidence: "high",

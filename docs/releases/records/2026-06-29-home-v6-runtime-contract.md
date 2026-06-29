@@ -84,3 +84,13 @@ Fast rollback is ACA traffic back to the previous healthy revision. There is no 
 ## Known Gaps
 
 Live ACA deployment and signed-in browser/API proof are pending until this candidate lands on `main`.
+
+## Post-Deploy Hotfix Addendum
+
+After the first ACA deployment, signed-in Home API proof found that the production visible-answer contract rejected V6 prose containing implementation terms such as `rows`, `files`, `source file`, and raw priority metadata like `technology_budget_usd`. The hotfix changes only user-visible wording in the V6 Home answer adapter so customer-facing answers say evidence items, governed evidence areas, source evidence, and formatted business-priority values.
+
+Additional validation for the hotfix:
+
+- Local visible-answer contract over 20 Industrial Demo and Airline Demo questions: 20 passed, 0 failed.
+- Focused ESLint for the Home V6 route/adapter/helper files: passed.
+- Focused Jest for `v6-home-know-response.test.ts`: passed.
