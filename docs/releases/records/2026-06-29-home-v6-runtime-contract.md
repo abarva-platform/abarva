@@ -123,3 +123,13 @@ Additional validation for this visible-detail fix:
 - Focused Jest for `v6-home-know-response.test.ts`: proves data-estate and source-trail visible sections contain `Technology owner reference` and `Source evidence register`, and do not contain raw owner IDs, application IDs, `.csv`, or `datasets/`.
 - Focused local samples for Apex Retail data-estate, SkyHarbor source-trail, and SkyHarbor Move handoff all pass the visible quality gate.
 - The live 100-question correctness audit must be rerun after deployment and should show zero visible-answer boundary failures.
+
+## V6 Question Router Addendum
+
+The post-visible-detail live 100-question audit had zero hard failures but 21 watch cases caused by classifier ordering and broad keyword matching. Relationship questions were routed to business areas, board-ready questions were routed to readiness, "what should Intelligence/Tower take over" questions were routed to loaded context, and the phrase "Financial Services Demo" could trigger the spend path. The Home V6 classifier now prioritizes relationship, board-summary, and handoff intents before broad business/readiness/budget keywords, and treats generic business-context questions as loaded-context questions.
+
+Additional validation for this router fix:
+
+- Focused Jest for `v6-home-know-response.test.ts`: proves relationship, Intelligence handoff, Tower handoff, board summary, and Financial Services business-context prompts route to the intended V6 topic.
+- Focused local route probes show the intended primary dimensions and ownership phrases before deployment.
+- The live 100-question correctness audit must be rerun after deployment and should reduce watch cases caused by misrouted question types.
