@@ -5,6 +5,7 @@ import type {
   HomeKnowResponse,
 } from "@/lib/home/know/home-know-contract";
 import { sanitizeHomeKnowVisiblePayload } from "@/lib/home/know/home-demo-safe-response";
+import { applyHomeV6ExecutiveSynthesis } from "@/lib/home/know/home-v6-executive-synthesis";
 import { answerHomeKnowFromV6 } from "@/lib/home/know/v6-home-ask";
 import { toHomeKnowResponseFromV6 } from "@/lib/home/know/v6-home-know-response";
 import type { AskSurfaceContext } from "@/lib/intelligence/ask";
@@ -25,9 +26,17 @@ export async function buildHomeKnowAgentAnswer(
     tenantKey: input.tenantKey ?? input.client ?? "apexretail",
     includeTrace: false,
   });
-  const response = sanitizeHomeKnowVisiblePayload(
-    toHomeKnowResponseFromV6(v6Result, { question: input.question }),
-  );
+  const deterministicResponse = toHomeKnowResponseFromV6(v6Result, {
+    question: input.question,
+  });
+  const synthesized = await applyHomeV6ExecutiveSynthesis({
+    response: deterministicResponse,
+    v6Result,
+    question: input.question,
+    tenantKey: v6Result.tenant.canonicalKey,
+    includeTrace: false,
+  });
+  const response = sanitizeHomeKnowVisiblePayload(synthesized.response);
   return { response, answer: homeKnowResponseToAvaAnswer(response) };
 }
 
