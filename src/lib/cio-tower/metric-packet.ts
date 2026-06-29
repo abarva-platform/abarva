@@ -39,16 +39,23 @@ export interface CioTowerMetricResultLike {
 const CIO_TOWER_TENANT_KEY_BY_ALIAS: Record<string, string> = {
   apex: 'apex-retail',
   apexretail: 'apex-retail',
+  apexretailgroup: 'apex-retail',
   'apex-retail': 'apex-retail',
   meridian: 'meridian-health',
+  meridianhealth: 'meridian-health',
+  meridianhealthsystem: 'meridian-health',
   'meridian-health': 'meridian-health',
   arcturus: 'first-capital-financial',
   firstcapital: 'first-capital-financial',
+  firstcapitalfinancial: 'first-capital-financial',
   'first-capital': 'first-capital-financial',
   'first-capital-financial': 'first-capital-financial',
   skyharbor: 'skyharbor-air',
+  skyharborair: 'skyharbor-air',
   'skyharbor-air': 'skyharbor-air',
   lakeshore: 'lakeshore-industries',
+  lakeshoreholdings: 'lakeshore-industries',
+  lakeshoreindustries: 'lakeshore-industries',
   'lakeshore-holdings': 'lakeshore-industries',
   'lakeshore-industries': 'lakeshore-industries',
   morganstreet: 'lakeshore-industries',
@@ -57,7 +64,13 @@ const CIO_TOWER_TENANT_KEY_BY_ALIAS: Record<string, string> = {
 
 export function canonicalCioTowerTenantKey(value: string): string {
   const normalized = value.trim().toLowerCase();
-  return CIO_TOWER_TENANT_KEY_BY_ALIAS[normalized] ?? normalized;
+  const slug = normalized.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const compact = normalized.replace(/[^a-z0-9]+/g, '');
+  return CIO_TOWER_TENANT_KEY_BY_ALIAS[normalized]
+    ?? CIO_TOWER_TENANT_KEY_BY_ALIAS[slug]
+    ?? CIO_TOWER_TENANT_KEY_BY_ALIAS[compact]
+    ?? slug
+    ?? normalized;
 }
 
 export function formatCioTowerMoney(value: number | null | undefined): string {
