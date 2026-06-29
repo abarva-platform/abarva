@@ -113,3 +113,13 @@ Additional validation for this alias fix:
 - Focused Jest for `v6-home-know-response.test.ts`: proves `arcturus`, `firstcapital`, and `first-capital` all resolve to `Financial Services Demo` and `first-capital-financial-synthetic-v6`.
 - Focused ESLint for `v6-home-ask.ts` and `v6-home-know-response.test.ts`: passed.
 - The live 100-question correctness audit must use the canonical `arcturus` app key for Financial Services Demo while checking the V6 financial dataset in trace/proof fields.
+
+## V6 Visible Detail Addendum
+
+The first live 100-question correctness audit after deployment found two visible-answer boundary issues even though the V6 facts were selected correctly: Apex Retail data-estate prose exposed owner references such as `APX-IT-007`, and SkyHarbor source-trail tables exposed `.csv` source locations. The V6 Home composer now converts raw owner IDs, application IDs, checksums, dataset paths, and CSV locations into business-safe visible labels while preserving the raw dataset values in internal trace/evidence selection fields.
+
+Additional validation for this visible-detail fix:
+
+- Focused Jest for `v6-home-know-response.test.ts`: proves data-estate and source-trail visible sections contain `Technology owner reference` and `Source evidence register`, and do not contain raw owner IDs, application IDs, `.csv`, or `datasets/`.
+- Focused local samples for Apex Retail data-estate, SkyHarbor source-trail, and SkyHarbor Move handoff all pass the visible quality gate.
+- The live 100-question correctness audit must be rerun after deployment and should show zero visible-answer boundary failures.

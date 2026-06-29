@@ -427,7 +427,9 @@ function buildTable(rows: Array<Record<string, string>>, config: TopicConfig): V
   if (!selected.length) return null;
   return {
     headers: config.tableHeaders,
-    rows: selected.map((row) => config.tableColumns.map((column) => display(row[column]))),
+    rows: selected.map((row) =>
+      config.tableColumns.map((column) => display(row[column], column)),
+    ),
   };
 }
 
@@ -603,7 +605,7 @@ function answerParagraphsByTopic(args: {
     countLine,
     summarizeRows(rows, config),
     config.handoffTarget
-      ? `${surfaceName(config.handoffTarget)} should take over for decisions or recommendations; Home should only ground the loaded V6 facts and evidence gaps.`
+      ? `${surfaceName(config.handoffTarget)} owns ${handoffOwnership(config.handoffTarget)}. Home should only ground the loaded V6 facts and evidence gaps.`
       : gapSentence(gaps),
   ];
 }
@@ -611,8 +613,8 @@ function answerParagraphsByTopic(args: {
 function summarizeRows(rows: Array<Record<string, string>>, config: TopicConfig): string {
   const samples = rows.slice(0, 5).map((row) =>
     config.tableColumns
-      .map((column) => clean(row[column]))
-      .filter(Boolean)
+      .map((column) => display(row[column], column))
+      .filter((value) => value && value !== 'Data-thin' && !/ reference$/i.test(value))
       .slice(0, 2)
       .join(' / '),
   ).filter(Boolean);
@@ -697,8 +699,10 @@ function clean(value: unknown): string {
   return text;
 }
 
-function display(value: unknown): string {
-  return clean(value) || 'Data-thin';
+function display(value: unknown, column?: string): string {
+  const text = clean(value);
+  if (!text) return 'Data-thin';
+  return scrubVisibleDatasetValue(text, column);
 }
 
 function describeStrategicPriorities(value: unknown): string {
@@ -757,6 +761,24 @@ function surfaceName(value: string): string {
   if (value === 'tower') return 'Tower';
   if (value === 'moves') return 'Moves';
   if (value === 'intelligence') return 'Intelligence';
+  return value;
+}
+
+function handoffOwnership(value: string): string {
+  if (value === 'source') return 'sourcing events, vendor evidence, renewal decisions, and partner tradeoffs';
+  if (value === 'tower') return 'portfolio execution, spend, adoption, readiness, and value tracking';
+  if (value === 'moves') return 'governed change framing, ownership, sequencing, and mobilization';
+  if (value === 'intelligence') return 'advisory synthesis, options, and pattern-backed leadership recommendations';
+  return 'the next-step decision workflow';
+}
+
+function scrubVisibleDatasetValue(value: string, column?: string): string {
+  const lowerColumn = column?.toLowerCase() ?? '';
+  if (/\.csv\b|datasets\//i.test(value)) return 'Source evidence register';
+  if (/^[A-Z]{2,}-IT-\d+$/i.test(value)) return 'Technology owner reference';
+  if (/^APP-\d+$/i.test(value)) return 'Application reference';
+  if (/^SHA-[A-Z0-9-]+$/i.test(value)) return 'Source checksum';
+  if (lowerColumn.includes('source_location')) return 'Source evidence register';
   return value;
 }
 

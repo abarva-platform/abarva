@@ -76,4 +76,52 @@ describe("Home V6 KNOW response contract", () => {
       );
     }
   });
+
+  it("keeps visible V6 data-estate and source-trail fields free of raw ids and file paths", () => {
+    const dataEstate = toHomeKnowResponseFromV6(
+      answerHomeKnowFromV6({
+        tenantKey: "apexretail",
+        question: "What data estate and integration evidence is loaded?",
+        includeTrace: true,
+      }),
+      { question: "What data estate and integration evidence is loaded?" },
+    );
+    const sourceTrail = toHomeKnowResponseFromV6(
+      answerHomeKnowFromV6({
+        tenantKey: "skyharbor",
+        question: "What source trail supports these Home answers?",
+        includeTrace: true,
+      }),
+      { question: "What source trail supports these Home answers?" },
+    );
+
+    const visible = JSON.stringify({
+      dataEstateProse: dataEstate.prose,
+      dataEstateTables: dataEstate.tables,
+      sourceTrailProse: sourceTrail.prose,
+      sourceTrailTables: sourceTrail.tables,
+    });
+
+    expect(visible).not.toMatch(/\b[A-Z]{2,}-IT-\d+\b/);
+    expect(visible).not.toMatch(/\bAPP-\d+\b/);
+    expect(visible).not.toMatch(/\.csv\b|datasets\//i);
+    expect(visible).toContain("Technology owner reference");
+    expect(visible).toContain("Source evidence register");
+  });
+
+  it("uses explicit surface ownership language for Home handoffs", () => {
+    const response = toHomeKnowResponseFromV6(
+      answerHomeKnowFromV6({
+        tenantKey: "skyharbor",
+        question: "Which facts are relevant to a strategic Move?",
+        includeTrace: true,
+      }),
+      { question: "Which facts are relevant to a strategic Move?" },
+    );
+
+    expect(response.prose).toContain("Moves owns");
+    expect(response.prose).toContain(
+      "Home should only ground the loaded V6 facts and evidence gaps.",
+    );
+  });
 });
