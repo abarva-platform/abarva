@@ -140,7 +140,8 @@ describe("tower materialized read model", () => {
 
   it("falls back to F12 source evidence when materialized budget rollups are absent", async () => {
     const db: AzureReadClient = {
-      async query<R = Record<string, unknown>>() {
+      async query<R = Record<string, unknown>>(sql: string) {
+        if (sql.includes("cio_tower.facts")) return [] as R[];
         return [
           {
             id: "sha-f12-1",
@@ -205,6 +206,62 @@ describe("tower materialized read model", () => {
         }),
       ]),
     );
+  });
+
+  it("prefers governed cio_tower budget facts over legacy budget rollups", async () => {
+    const db: AzureReadClient = {
+      async query<R = Record<string, unknown>>(sql: string) {
+        expect(sql).toContain("cio_tower.facts");
+        return [
+          {
+            portfolio_company: "Cloud and Infrastructure",
+            fiscal_year: "FY2026",
+            total_it_budget_usd: "174840000",
+            run_amount_usd: "120320000",
+            change_amount_usd: "54520000",
+            opex_amount_usd: "125884800",
+            capex_amount_usd: "48955200",
+          },
+        ] as R[];
+      },
+      async select<R = Record<string, unknown>>(request: AzureReadSelect) {
+        if (request.table === "tower_budget_rollups") {
+          return [
+            {
+              portfolio_company: "Stale Cloud Rollup",
+              fiscal_year: "FY2026",
+              total_it_budget_usd: "201200000",
+              run_amount_usd: "0",
+              change_amount_usd: "0",
+            },
+          ] as R[];
+        }
+        return [] as R[];
+      },
+      async maybeSingle() {
+        return null;
+      },
+      async count() {
+        return 0;
+      },
+      async withSession(fn) {
+        return fn(async () => []);
+      },
+    };
+
+    const rollups = await listTowerBudgetRollupsForClient({
+      clientId: "client-lakeshore",
+      tenantKey: "lakeshore",
+      db,
+    });
+
+    expect(rollups).toHaveLength(1);
+    expect(rollups[0]).toMatchObject({
+      portfolioCompany: "Cloud and Infrastructure",
+      totalItBudgetUsd: 174_840_000,
+      runAmountUsd: 120_320_000,
+      changeAmountUsd: 54_520_000,
+    });
   });
 
   it("reads only tower read-model tables and budget rollups at runtime", async () => {

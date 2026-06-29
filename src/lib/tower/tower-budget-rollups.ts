@@ -1,5 +1,6 @@
 import { azureRead, type AzureReadClient } from "@/lib/data-plane/azureRead";
 import type { AIInitiative } from "@/lib/admin/ai-initiatives/queries";
+import { canonicalCioTowerTenantKey } from "@/lib/cio-tower/metric-packet";
 
 export interface TowerBudgetRollup {
   portfolioCompany: string;
@@ -40,6 +41,23 @@ interface ContextBudgetRecordRow {
   source_file: string | null;
   source_row_number: number | null;
   payload: Record<string, unknown> | null;
+}
+
+interface CioTowerBudgetFactRollupRow {
+  portfolio_company: string;
+  fiscal_year: string;
+  total_it_budget_usd: string | number | null;
+  actual_spend_ytd_usd: string | number | null;
+  forecast_spend_usd: string | number | null;
+  opex_amount_usd: string | number | null;
+  capex_amount_usd: string | number | null;
+  run_amount_usd: string | number | null;
+  change_amount_usd: string | number | null;
+  vendor_amount_usd: string | number | null;
+  labor_amount_usd: string | number | null;
+  revenue_usd: string | number | null;
+  employees: string | number | null;
+  it_spend_as_pct_revenue: string | number | null;
 }
 
 function num(value: unknown): number {
@@ -265,6 +283,45 @@ export async function listTowerBudgetRollupsForClient(args: {
   db?: AzureReadClient;
 }): Promise<TowerBudgetRollup[]> {
   const db = args.db ?? azureRead;
+  const canonicalTenantKey = canonicalCioTowerTenantKey(
+    args.tenantKey ?? args.clientId,
+  );
+  const cioTowerRows = await db.query<CioTowerBudgetFactRollupRow>(
+    `select
+        coalesce(e.display_name, f.entity_key, 'Unassigned Tower budget slice') as portfolio_company,
+        case
+          when lower(f.period) = 'fy26' then 'FY2026'
+          when lower(f.period) = 'fy25' then 'FY2025'
+          else upper(coalesce(f.period, 'FY2026'))
+        end as fiscal_year,
+        sum(case when f.view = 'it_budget' and f.amount_type = 'none' and f.basis = 'committed' and f.period = 'fy26' then f.value_numeric else 0 end) as total_it_budget_usd,
+        0 as actual_spend_ytd_usd,
+        null as forecast_spend_usd,
+        sum(case when f.view = 'it_budget' and f.amount_type = 'opex' and f.basis = 'committed' and f.period = 'fy26' then f.value_numeric else 0 end) as opex_amount_usd,
+        sum(case when f.view = 'it_budget' and f.amount_type = 'capex' and f.basis = 'committed' and f.period = 'fy26' then f.value_numeric else 0 end) as capex_amount_usd,
+        sum(case when f.view = 'it_budget' and f.amount_type = 'run' and f.basis = 'committed' and f.period = 'fy26' then f.value_numeric else 0 end) as run_amount_usd,
+        sum(case when f.view = 'it_budget' and f.amount_type = 'change' and f.basis = 'committed' and f.period = 'fy26' then f.value_numeric else 0 end) as change_amount_usd,
+        0 as vendor_amount_usd,
+        0 as labor_amount_usd,
+        null as revenue_usd,
+        null as employees,
+        null as it_spend_as_pct_revenue
+       from cio_tower.facts f
+       left join cio_tower.entities e on e.entity_key = f.entity_key
+      where f.tenant_key = $1
+        and f.view = 'it_budget'
+        and f.period = 'fy26'
+        and f.basis = 'committed'
+      group by coalesce(e.display_name, f.entity_key, 'Unassigned Tower budget slice'), f.period
+     having sum(case when f.view = 'it_budget' and f.amount_type = 'none' and f.basis = 'committed' and f.period = 'fy26' then f.value_numeric else 0 end) > 0
+      order by total_it_budget_usd desc
+      limit 100`,
+    [canonicalTenantKey],
+    { missingTable: "empty" },
+  );
+  const cioTowerRollups = shapeTowerBudgetRollups(cioTowerRows);
+  if (cioTowerRollups.length > 0) return cioTowerRollups;
+
   const rows = await db.select<TowerBudgetRollupRow>({
     table: "tower_budget_rollups",
     columns: [
