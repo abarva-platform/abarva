@@ -78,10 +78,15 @@ function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPrompt
 describe('cio tower answer contract', () => {
   it('normalizes app tenant aliases into cio_tower package keys', () => {
     expect(canonicalCioTowerTenantKey('skyharbor')).toBe('skyharbor-air');
+    expect(canonicalCioTowerTenantKey('SkyHarbor Air')).toBe('skyharbor-air');
     expect(canonicalCioTowerTenantKey('lakeshore')).toBe('lakeshore-industries');
+    expect(canonicalCioTowerTenantKey('Lakeshore Holdings')).toBe('lakeshore-industries');
     expect(canonicalCioTowerTenantKey('firstcapital')).toBe('first-capital-financial');
+    expect(canonicalCioTowerTenantKey('First Capital Financial')).toBe('first-capital-financial');
     expect(canonicalCioTowerTenantKey('apexretail')).toBe('apex-retail');
+    expect(canonicalCioTowerTenantKey('Apex Retail Group')).toBe('apex-retail');
     expect(canonicalCioTowerTenantKey('meridian')).toBe('meridian-health');
+    expect(canonicalCioTowerTenantKey('Meridian Health System')).toBe('meridian-health');
   });
 
   it('instructs Claude to own every visible word and return the explicit JSON contract', () => {

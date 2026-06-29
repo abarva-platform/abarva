@@ -6,7 +6,6 @@ import {
 } from "@/components/tower/TowerIndexPage";
 import { buildAtlasTowerCurrentState } from "@/lib/atlas/tower-grounding";
 import { resolveTowerTab } from "@/lib/tower/tower-lens-tabs-view";
-import { canonicalCioTowerTenantKey } from "@/lib/cio-tower/metric-packet";
 import { loadCioTowerMetricPackets } from "@/lib/cio-tower/metric-packet-store";
 
 export const metadata = { title: "IT Investment Tower · AbarVa" };
@@ -42,18 +41,17 @@ export default async function TowerPage({
     "Your workspace";
   const activeTab = resolveTowerTab(tab);
 
-  const towerTenantKey = activeClient?.key
-    ? canonicalCioTowerTenantKey(activeClient.key)
-    : activeClient?.id;
   const [towerState, metricPackets] = activeClient?.id
     ? await Promise.all([
         buildAtlasTowerCurrentState({
           clientId: activeClient.id,
           surfaceContext: { activeTowerLens: "value" },
         }).catch(() => null),
-        towerTenantKey
-          ? loadCioTowerMetricPackets(towerTenantKey).catch(() => [])
-          : Promise.resolve([]),
+        loadCioTowerMetricPackets([
+          activeClient.key,
+          activeClient.name,
+          activeClient.id,
+        ]).catch(() => []),
       ])
     : [null, []];
 
