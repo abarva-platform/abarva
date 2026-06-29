@@ -33,12 +33,14 @@ Signed-in demo visitors should see generic tenant labels instead of composite cu
 - Shared aVa/agent scrub boundaries in `src/components/ava-chat/AvaChatShell.tsx` and `src/components/agent/AgentDock.tsx`.
 - Home and Intelligence surface payload/answer scrubs in `src/components/home/HomeSurface.tsx` and `src/components/intelligence-v2/IntelligenceV2Surface.tsx`.
 - Page-level tenant prop fixes for Strategic Moves and Source vendor fallback.
+- Strategic Moves portfolio list/card/kanban/map labels now scrub tenant names embedded in move titles, display codes, status text, and map labels.
 
 ## QA / Validation
 
 - Passed: focused lint on the changed tenant display, shell, Home, Intelligence, Source, Moves, and AgentDock files.
 - Passed: focused Jest for client display canonicalization, TenantIdentityStrip, and IntelligenceV2Surface demo-safe rendering.
 - Passed: behavior gate regression for board-grade tenant labels, confirming Move model labels now resolve to demo-safe names.
+- Passed: focused Strategic Moves label lint and shared scrubber regression for move titles containing SkyHarbor and Lakeshore names.
 - Passed: `npm run release:check`.
 - Not run yet: signed-in browser scan across Home and Intelligence for Retail Demo, Airline Demo, Healthcare Demo, Financial Services Demo, and Industrial Demo.
 - Not run yet: ACA deployment proof and traffic verification.
@@ -63,7 +65,7 @@ Rollback by shifting ACA traffic to the previous healthy revision. No migration 
 
 ## Audit Evidence
 
-- Local validation passed on 2026-06-29: focused ESLint, focused Jest, board-grade tenant-label behavior regression, and release control.
+- Local validation passed on 2026-06-29: focused ESLint, focused Jest, board-grade tenant-label behavior regression, Strategic Moves visible-label regression, and release control.
 - Pending live browser scan output and screenshots.
 - Pending ACA revision and digest proof.
 

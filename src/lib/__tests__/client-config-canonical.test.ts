@@ -1,4 +1,4 @@
-import { canonicalClientDisplayName, getClientOption } from '@/lib/client-config';
+import { canonicalClientDisplayName, demoSafeClientText, getClientOption } from '@/lib/client-config';
 
 describe('canonicalClientDisplayName', () => {
   it('renders Apex aliases as Retail Demo', () => {
@@ -19,5 +19,14 @@ describe('canonicalClientDisplayName', () => {
       }),
     ).toBe('Healthcare Demo');
     expect(canonicalClientDisplayName({ name: 'Meridian Health' })).toBe('Healthcare Demo');
+  });
+
+  it('scrubs tenant names embedded in visible move titles and codes', () => {
+    expect(
+      demoSafeClientText('CANARY - SkyHarbor Recovery Command IROPS Architecture - skyharbor-canary-20260622161738'),
+    ).toBe('CANARY - Airline Demo Recovery Command IROPS Architecture - Airline Demo-canary-20260622161738');
+    expect(
+      demoSafeClientText('Lakeshore Enterprise Finance & Treasury Modernization'),
+    ).toBe('Industrial Demo Enterprise Finance & Treasury Modernization');
   });
 });

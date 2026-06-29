@@ -10,6 +10,7 @@ import {
   relativeTime,
 } from "./move-list-format";
 import { sponsorDisplayName } from "./sponsor-display";
+import { demoSafeClientText } from "@/lib/client-config";
 
 function statusDotClass(color: StrategicMove["statusColor"]): string {
   if (color === "red") return styles.legendRed;
@@ -105,6 +106,12 @@ export function MoveListTable({
           const archived = isArchived(move);
           const checked = Boolean(selected?.has(move.id));
           const verified = move.valueAtStake.verified?.status === "tracked";
+          const moveName = demoSafeClientText(move.name);
+          const moveCode = demoSafeClientText(move.displayCode);
+          const statusText = demoSafeClientText(move.status.text);
+          const archiveReason = move.archiveReason
+            ? demoSafeClientText(move.archiveReason)
+            : "";
           return (
             <div
               key={move.id}
@@ -117,7 +124,7 @@ export function MoveListTable({
                     type="checkbox"
                     checked={checked}
                     onChange={() => onToggle?.(move.id)}
-                    aria-label={`Select ${move.displayCode}`}
+                    aria-label={`Select ${moveCode}`}
                   />
                 </span>
               ) : null}
@@ -131,9 +138,9 @@ export function MoveListTable({
                   href={`/strategic-moves/${move.id}`}
                   prefetch={false}
                 >
-                  {move.name}
+                  {moveName}
                 </Link>
-                <span className={styles.tblMoveCode}>{move.displayCode}</span>
+                <span className={styles.tblMoveCode}>{moveCode}</span>
               </span>
 
               <span
@@ -152,9 +159,7 @@ export function MoveListTable({
                     className={`${styles.statusBadgeDot} ${statusDotClass(move.statusColor)}`}
                     aria-hidden
                   />
-                  {archived
-                    ? `Archived${move.archiveReason ? ` · ${move.archiveReason}` : ""}`
-                    : move.status.text}
+                  {archived ? `Archived${archiveReason ? ` · ${archiveReason}` : ""}` : statusText}
                 </span>
               </span>
 
