@@ -16,8 +16,8 @@ const MODEL_NAME = 'claude-sonnet-4-6';
 const PROMPT_VERSION = 'cio_tower_advisor_prompt_v1';
 const BOUNDARY_MODEL_NAME = 'deterministic-cio-tower-boundary-v1';
 const TEMPERATURE = 0;
-const MAX_TOKENS = 900;
-const MAX_REPAIR_TOKENS = 900;
+const MAX_TOKENS = 1400;
+const MAX_REPAIR_TOKENS = 1400;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -143,7 +143,19 @@ const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
   },
   {
     key: 'tower_total_it_spend',
-    patterns: [/what.*(it\s+)?spend/i, /total.*(it\s+)?budget/i, /fy26.*(it\s+)?budget/i, /how much.*(it\s+)?spend/i, /how much.*budget/i, /budget envelope/i, /technology budget/i, /cio budget/i],
+    patterns: [
+      /what.*(it\s+)?spend/i,
+      /what.*(it\s+)?budget/i,
+      /total.*(it\s+)?budget/i,
+      /fy26.*(it\s+)?budget/i,
+      /how much.*(it\s+)?spend/i,
+      /how much.*budget/i,
+      /budget envelope/i,
+      /technology budget/i,
+      /cio budget/i,
+      /budget.*(?:by|for each|per|across).*(?:function|portfolio compan|company|platform|domain|tower|area|slice)/i,
+      /(?:function|portfolio compan|company|platform|domain|tower|area|slice).*budget/i,
+    ],
   },
   {
     key: 'tower_value_realization',
@@ -236,7 +248,7 @@ function sha256(text: string): string {
   return crypto.createHash('sha256').update(text).digest('hex');
 }
 
-function matchContractKey(question: string): string {
+export function matchContractKey(question: string): string {
   if (classifyCioTowerBoundary(question)) return 'tower_outside_scope';
   for (const matcher of CONTRACT_MATCHERS) {
     if (matcher.patterns.some((pattern) => pattern.test(question))) return matcher.key;
@@ -315,6 +327,12 @@ function dashboardSliceDiscipline(context: CioTowerPromptContext): string[] {
       '- For this question, relevant facts with view=it_budget are function/platform budget lines. If you name the largest slices, call them function/platform budget lines and use their exact values from Most relevant facts.',
       '- Do not call function/platform budget lines "programs", "initiatives", or "spending towers". Do not pull initiative/program values into this answer unless explicitly contrasting them with the enterprise budget envelope.',
     );
+    if (/\b(each|by|per|list|compare|table)\b/i.test(context.question)) {
+      lines.push(
+        '- This question asks for a budget slice, not only the headline. Include a compact table using the view=it_budget facts when they are present.',
+        '- Keep the table to the most relevant business slices. Use the display name and exact amount from Most relevant facts. Do not invent run/change or actual-spend fields.',
+      );
+    }
   }
 
   if (context.contract.contract_key === 'tower_top_it_programs_by_budget') {

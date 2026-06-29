@@ -4,6 +4,7 @@ import {
   buildCioTowerClaudePrompt,
   canonicalCioTowerTenantKey,
   classifyCioTowerBoundary,
+  matchContractKey,
   parseVisibleAnswerContract,
   type CioTowerPromptContext,
 } from '../answer';
@@ -148,6 +149,60 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('relevant facts with view=it_budget are function/platform budget lines');
     expect(prompt).toContain('Do not call function/platform budget lines "programs", "initiatives", or "spending towers"');
     expect(prompt).toContain('Do not pull initiative/program values into this answer');
+  });
+
+  it('routes IT budget slice questions to the IT-budget contract', () => {
+    expect(matchContractKey('What is the current loaded IT budget for the whole Tower portfolio?')).toBe(
+      'tower_total_it_spend',
+    );
+    expect(matchContractKey('What is the current loaded IT budget for each portfolio company?')).toBe(
+      'tower_total_it_spend',
+    );
+    expect(matchContractKey('What is the current loaded IT budget for each IT function?')).toBe(
+      'tower_total_it_spend',
+    );
+    expect(matchContractKey('Give me the list of top 10 IT programs')).toBe('tower_top_it_programs_by_budget');
+  });
+
+  it('asks Claude for a compact table when an IT budget question requests each slice', () => {
+    const prompt = buildCioTowerClaudePrompt(context({
+      question: 'What is the current loaded IT budget for each IT function?',
+      contract: {
+        contract_key: 'tower_total_it_spend',
+        intent: 'lookup',
+        question_family: 'total_it_spend',
+        measure_key: 'total_it_budget_fy26',
+        artifact_type: 'answer',
+        examples: [],
+      },
+      relevantFacts: [
+        {
+          fact_key: 'fact-cloud',
+          entity_key: 'cloud-and-infrastructure',
+          entity_type: 'budget_line',
+          entity_display_name: 'Cloud And Infrastructure',
+          measure: 'budget_fy26_usd',
+          scope: 'enterprise_budget_line',
+          view: 'it_budget',
+          amount_type: 'none',
+          basis: 'committed',
+          period: 'fy26',
+          value_numeric: '201200000',
+          value_text: null,
+          unit: 'usd',
+          value_source: 'tenant_file',
+          confidence: 'high',
+          source_key: 'source-budget',
+          source_row: '4',
+          attributes: {},
+        },
+      ],
+    }));
+
+    expect(prompt).toContain('This question asks for a budget slice, not only the headline');
+    expect(prompt).toContain('Include a compact table using the view=it_budget facts');
+    expect(prompt).toContain('Use the display name and exact amount from Most relevant facts');
+    expect(prompt).toContain('Do not invent run/change or actual-spend fields');
   });
 
   it('builds a repair prompt that asks Claude to fix, not the renderer to mutate', () => {
