@@ -1,6 +1,6 @@
 {
   "tenantKey": "skyharbor-air",
-  "clientDisplayName": "SkyHarbor Air Group",
+  "clientDisplayName": "Airline Demo",
   "datasetVersion": "v6",
   "generatedAt": "2026-06-28T20:37:04.244Z",
   "sourceDataset": "datasets/skyharbor-air-synthetic-v4",

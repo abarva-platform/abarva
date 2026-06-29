@@ -1,4 +1,4 @@
-# Apex Retail Group V6 Synthetic Intelligence Pack
+# Retail Demo V6 Synthetic Intelligence Pack
 
 Generated: 2026-06-28T20:37:03.626Z
 

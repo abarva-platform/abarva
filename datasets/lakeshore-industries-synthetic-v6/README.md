@@ -1,4 +1,4 @@
-# Lakeshore Industries V6 Synthetic Intelligence Pack
+# Industrial Demo V6 Synthetic Intelligence Pack
 
 Generated: 2026-06-28T20:37:03.830Z
 

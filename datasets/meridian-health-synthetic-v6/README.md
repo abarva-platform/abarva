@@ -1,4 +1,4 @@
-# Meridian Health V6 Synthetic Intelligence Pack
+# Healthcare Demo V6 Synthetic Intelligence Pack
 
 Generated: 2026-06-28T20:37:03.915Z
 

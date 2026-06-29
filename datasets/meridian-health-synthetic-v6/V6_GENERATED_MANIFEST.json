@@ -1,6 +1,6 @@
 {
   "tenantKey": "meridian-health",
-  "clientDisplayName": "Meridian Health",
+  "clientDisplayName": "Healthcare Demo",
   "datasetVersion": "v6",
   "generatedAt": "2026-06-28T20:37:03.915Z",
   "sourceDataset": "datasets/meridian-health-synthetic-v4",

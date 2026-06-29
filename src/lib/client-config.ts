@@ -8,46 +8,55 @@ export interface ClientOption {
   vertical: string;
 }
 
+const DEMO_SAFE_CLIENT_NAMES = {
+  apexretail: "Retail Demo",
+  meridian: "Healthcare Demo",
+  arcturus: "Financial Services Demo",
+  northstar: "Clinical Technology Demo",
+  skyharbor: "Airline Demo",
+  lakeshore: "Industrial Demo",
+} as const satisfies Record<string, string>;
+
 export const ALL_CLIENTS: ClientOption[] = [
   {
     id: "apexretail",
-    name: "Apex Retail Group",
-    shortName: "Apex Retail",
+    name: DEMO_SAFE_CLIENT_NAMES.apexretail,
+    shortName: DEMO_SAFE_CLIENT_NAMES.apexretail,
     color: "#F59E0B",
     vertical: "Retail",
   },
   {
     id: "meridian",
-    name: "Meridian Health System",
-    shortName: "Meridian Health",
+    name: DEMO_SAFE_CLIENT_NAMES.meridian,
+    shortName: DEMO_SAFE_CLIENT_NAMES.meridian,
     color: "#14B8A6",
     vertical: "Healthcare",
   },
   {
     id: "arcturus",
-    name: "First Capital Financial",
-    shortName: "First Capital",
+    name: DEMO_SAFE_CLIENT_NAMES.arcturus,
+    shortName: DEMO_SAFE_CLIENT_NAMES.arcturus,
     color: "#818CF8",
     vertical: "Financial Services",
   },
   {
     id: "northstar",
-    name: "Northstar Clinical Technologies",
-    shortName: "Northstar",
+    name: DEMO_SAFE_CLIENT_NAMES.northstar,
+    shortName: DEMO_SAFE_CLIENT_NAMES.northstar,
     color: "#0F766E",
     vertical: "Clinical Technology",
   },
   {
     id: "skyharbor",
-    name: "SkyHarbor Air",
-    shortName: "SkyHarbor",
+    name: DEMO_SAFE_CLIENT_NAMES.skyharbor,
+    shortName: DEMO_SAFE_CLIENT_NAMES.skyharbor,
     color: "#075985",
     vertical: "Global Airline",
   },
   {
     id: "lakeshore",
-    name: "Lakeshore Holdings",
-    shortName: "Lakeshore",
+    name: DEMO_SAFE_CLIENT_NAMES.lakeshore,
+    shortName: DEMO_SAFE_CLIENT_NAMES.lakeshore,
     color: "#2563EB",
     vertical: "Diversified Holdco",
   },
@@ -61,8 +70,9 @@ export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
   // 'Heliara Health' / 'Heliara Health Alliance' are legacy demo names for
   // Meridian — they should never surface to a logged-in user but are kept
   // as recognized aliases so the DB-lookup fallback in active-client.ts
-  // and canonicalClientDisplayName below resolve them to the full system name.
+  // and canonicalClientDisplayName below resolve them to the demo-safe label.
   meridian: [
+    DEMO_SAFE_CLIENT_NAMES.meridian,
     "Meridian Health",
     "Meridian Health System",
     "Heliara Health",
@@ -70,15 +80,34 @@ export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
     "Heliara",
   ],
   arcturus: [
+    DEMO_SAFE_CLIENT_NAMES.arcturus,
     "Arcturus Financial",
     "Arcturus Financial Group",
     "First Capital Financial",
     "First Capital",
   ],
-  apexretail: ["Apex Retail", "Apex Retail Group"],
-  northstar: ["Northstar Clinical Technologies", "Northstar"],
-  skyharbor: ["SkyHarbor Air", "SkyHarbor Airlines", "SkyHarbor"],
-  lakeshore: ["Lakeshore Holdings"],
+  apexretail: [
+    DEMO_SAFE_CLIENT_NAMES.apexretail,
+    "Apex Retail",
+    "Apex Retail Group",
+  ],
+  northstar: [
+    DEMO_SAFE_CLIENT_NAMES.northstar,
+    "Northstar Clinical Technologies",
+    "Northstar",
+  ],
+  skyharbor: [
+    DEMO_SAFE_CLIENT_NAMES.skyharbor,
+    "SkyHarbor Air",
+    "SkyHarbor Airlines",
+    "SkyHarbor",
+  ],
+  lakeshore: [
+    DEMO_SAFE_CLIENT_NAMES.lakeshore,
+    "Lakeshore Holdings",
+    "Lakeshore Industries",
+    "Lakeshore",
+  ],
 };
 
 export const CLIENT_KEY_TO_INDUSTRY_CODE: Record<ClientKey, string> = {
@@ -134,6 +163,7 @@ export function canonicalClientDisplayName(args: {
     key === "meridian" ||
     normalizedName === "meridian health" ||
     normalizedName === "meridian health system" ||
+    normalizedName === "healthcare demo" ||
     // D-021 fix (2026-05-13): "Heliara Health" / "Heliara Health Alliance"
     // are retired demo names for Meridian. The 2026-05-13 audit found the
     // Sentinel agent opening "I composed this brief for Heliara Health from
@@ -145,7 +175,7 @@ export function canonicalClientDisplayName(args: {
     normalizedName === "heliara health alliance" ||
     (normalizedName?.startsWith("heliara ") ?? false)
   ) {
-    return "Meridian Health System";
+    return DEMO_SAFE_CLIENT_NAMES.meridian;
   }
 
   if (
@@ -155,27 +185,30 @@ export function canonicalClientDisplayName(args: {
     normalizedName === "arcturus financial group" ||
     normalizedName === "arcturus financial" ||
     normalizedName === "first capital financial" ||
-    normalizedName === "first capital"
+    normalizedName === "first capital" ||
+    normalizedName === "financial services demo"
   ) {
-    return "First Capital Financial";
+    return DEMO_SAFE_CLIENT_NAMES.arcturus;
   }
 
   if (
     key === "apexretail" ||
     key === "apex-retail" ||
     normalizedName === "apex retail" ||
-    normalizedName === "apex retail group"
+    normalizedName === "apex retail group" ||
+    normalizedName === "retail demo"
   ) {
-    return "Apex Retail Group";
+    return DEMO_SAFE_CLIENT_NAMES.apexretail;
   }
 
   if (
     key === "northstar" ||
     key === "northstar-clinical" ||
     normalizedName === "northstar clinical technologies" ||
-    normalizedName === "northstar"
+    normalizedName === "northstar" ||
+    normalizedName === "clinical technology demo"
   ) {
-    return "Northstar Clinical Technologies";
+    return DEMO_SAFE_CLIENT_NAMES.northstar;
   }
 
   if (
@@ -183,18 +216,21 @@ export function canonicalClientDisplayName(args: {
     key === "skyharbor-air" ||
     normalizedName === "skyharbor air" ||
     normalizedName === "skyharbor airlines" ||
-    normalizedName === "skyharbor"
+    normalizedName === "skyharbor" ||
+    normalizedName === "airline demo"
   ) {
-    return "SkyHarbor Air";
+    return DEMO_SAFE_CLIENT_NAMES.skyharbor;
   }
 
   if (
     key === "lakeshore" ||
     key === "lakeshore-holdings" ||
     normalizedName === "lakeshore holdings" ||
-    normalizedName === "lakeshore"
+    normalizedName === "lakeshore industries" ||
+    normalizedName === "lakeshore" ||
+    normalizedName === "industrial demo"
   ) {
-    return "Lakeshore Holdings";
+    return DEMO_SAFE_CLIENT_NAMES.lakeshore;
   }
 
   if (name) return name;
@@ -280,7 +316,7 @@ const PILOT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> = {
   "kmysore@gmail.com": "meridian", // Kiran Mysore · CDAO / pilot sponsor
   "surekha.durvasula@gmail.com": "lakeshore", // Surekha Durvasula · VP Innovation / Delivery
   "anandshp@gmail.com": "lakeshore",
-  "admin@abarva.ai": "arcturus", // First Capital Financial
+  "admin@abarva.ai": "arcturus",
   "anand@abarva.ai": "skyharbor",
 };
 

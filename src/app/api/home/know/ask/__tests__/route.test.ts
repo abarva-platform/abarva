@@ -20,14 +20,14 @@ jest.mock('@/lib/tenant/resolveTenant', () => ({
       return {
         appClientKey: 'lakeshore',
         canonicalKey: 'lakeshore',
-        displayName: 'Lakeshore Industries',
+        displayName: 'Industrial Demo',
         source: 'body',
       };
     }
     return {
       appClientKey: 'skyharbor',
       canonicalKey: 'skyharbor',
-      displayName: 'SkyHarbor Air',
+      displayName: 'Airline Demo',
       source: 'body',
     };
   }),
@@ -51,7 +51,7 @@ describe('/api/home/know/ask V6 sunset route', () => {
     expect(routeText).toContain('answerHomeKnowFromV6');
   });
 
-  it('answers Lakeshore business areas from V6 business-function rows', async () => {
+  it('answers Industrial Demo business areas from V6 business-function rows', async () => {
     const { response, body } = await ask('lakeshore', 'Show the available business areas in a concise table.');
 
     expect(response.status).toBe(200);
@@ -65,10 +65,12 @@ describe('/api/home/know/ask V6 sunset route', () => {
     expect(body.answer.directAnswer).toMatch(/Finance and Controller/i);
     expect(body.answer.table.headers).toEqual(['Business area', 'Executive owner', 'Critical processes']);
     expect(body.answer.directAnswer).not.toMatch(/semantic2|Semantic2|dossier/i);
+    expect(body.answer.directAnswer).toContain('Industrial Demo');
+    expect(body.answer.directAnswer).not.toMatch(/Lakeshore|SkyHarbor|Apex Retail|Meridian Health|First Capital/i);
     expect(body.proof.dossierAttached).toBe(false);
   });
 
-  it('answers Lakeshore application systems with named V6 systems and lifecycle fields', async () => {
+  it('answers Industrial Demo application systems with named V6 systems and lifecycle fields', async () => {
     const { body } = await ask('lakeshore', 'What application and core systems context is loaded?');
 
     expect(body.answer.directAnswer).toMatch(/SAP ECC Central Finance/i);
@@ -78,7 +80,7 @@ describe('/api/home/know/ask V6 sunset route', () => {
     expect(JSON.stringify(body.answer.table.rows)).toMatch(/stabilize|finance_transformation_dependency/i);
   });
 
-  it('answers Lakeshore vendors from V6 vendor rows instead of generic context', async () => {
+  it('answers Industrial Demo vendors from V6 vendor rows instead of generic context', async () => {
     const { body } = await ask('lakeshore', 'What vendor and contract context is loaded?');
 
     expect(body.answer.directAnswer).toMatch(/Kyriba/i);
@@ -87,17 +89,19 @@ describe('/api/home/know/ask V6 sunset route', () => {
     expect(JSON.stringify(body.answer.table.rows)).toMatch(/2026-07-06|2026-08-07/);
   });
 
-  it('keeps SkyHarbor budget/spend bounded to V6 and does not reuse old budget figures', async () => {
+  it('keeps Airline Demo budget/spend bounded to V6 and does not reuse old budget figures', async () => {
     const { body } = await ask('skyharbor', 'What IT budget, spend, or financial context is available?');
 
     expect(body.answer.directAnswer).toMatch(/spend records support the listed amount fields/i);
     expect(body.answer.directAnswer).toMatch(/data-thin/i);
     expect(body.answer.directAnswer).toMatch(/should not reuse older budget figures/i);
     expect(body.answer.directAnswer).not.toMatch(/\b(?:386M|278M|244M|85M|78M|48M)\b/);
+    expect(body.answer.directAnswer).toContain('Airline Demo');
+    expect(body.answer.directAnswer).not.toMatch(/SkyHarbor|Lakeshore|Apex Retail|Meridian Health|First Capital/i);
     expect(body.answer.table.headers).toEqual(['Spend record', 'Amount', 'Type', 'Owner']);
   });
 
-  it('answers SkyHarbor AI footprint from V6 usage fields', async () => {
+  it('answers Airline Demo AI footprint from V6 usage fields', async () => {
     const { body } = await ask('skyharbor', 'What AI and automation footprint is loaded?');
 
     expect(body.answer.directAnswer).toMatch(/M365 Copilot/i);
@@ -106,7 +110,7 @@ describe('/api/home/know/ask V6 sunset route', () => {
     expect(JSON.stringify(body.answer.table.rows)).toMatch(/20|80|240|500/);
   });
 
-  it('answers SkyHarbor source trail with V6 evidence-source fields', async () => {
+  it('answers Airline Demo source trail with V6 evidence-source fields', async () => {
     const { body } = await ask('skyharbor', 'What source trail or citation basis supports the current Home answer?');
 
     expect(body.answer.directAnswer).toMatch(/source trail is explicit in V6 evidence-source rows/i);

@@ -1,6 +1,6 @@
 {
   "tenantKey": "apex-retail",
-  "clientDisplayName": "Apex Retail Group",
+  "clientDisplayName": "Retail Demo",
   "datasetVersion": "v6",
   "generatedAt": "2026-06-28T20:37:03.626Z",
   "sourceDataset": "datasets/apex-retail-synthetic-v4",

@@ -1,6 +1,6 @@
 {
   "tenantKey": "first-capital-financial",
-  "clientDisplayName": "First Capital Financial",
+  "clientDisplayName": "Financial Services Demo",
   "datasetVersion": "v6",
   "generatedAt": "2026-06-28T20:37:03.763Z",
   "sourceDataset": "datasets/first-capital-financial-synthetic-v4",

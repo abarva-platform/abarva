@@ -1,4 +1,4 @@
-# First Capital Financial V6 Synthetic Intelligence Pack
+# Financial Services Demo V6 Synthetic Intelligence Pack
 
 Generated: 2026-06-28T20:37:03.763Z
 

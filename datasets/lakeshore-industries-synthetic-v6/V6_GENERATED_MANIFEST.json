@@ -1,6 +1,6 @@
 {
   "tenantKey": "lakeshore-industries",
-  "clientDisplayName": "Lakeshore Industries",
+  "clientDisplayName": "Industrial Demo",
   "datasetVersion": "v6",
   "generatedAt": "2026-06-28T20:37:03.830Z",
   "sourceDataset": "datasets/lakeshore-industries-synthetic-v4",
