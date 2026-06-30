@@ -486,9 +486,9 @@ Mandatory tables:
 - Vendor response control table covering the Vendor Claim Register, Automation / Productivity Commitment Table, Structured Pricing Workbook, Staffing and Location Model, SLA Commitment Table, Assumptions and Exclusions Log, Transition Plan Template, and Commercial Exceptions Table.
 - Evaluation weights and evidence-required scoring table.
 - Risk, issue, dependency, and mitigation table.
-- Process timeline table with [CLIENT TO SET] placeholders only when dates are genuinely missing.
+- Process timeline table using governed dates from evidence or explicit gate-relative anchors when dates are genuinely missing.
 - Source register separating locked uploaded evidence, upstream draft artifacts, working assumptions, and client-to-complete gaps.
-- Client-to-complete / vendor-to-confirm register with owner, due date placeholder, why it matters, and downstream impact.
+- Client-to-complete / vendor-to-confirm register with accountable role, target date or gate-relative trigger, why it matters, and downstream impact.
 
 Tone: formal procurement style, but executive-polished. Vendor-facing draft — assume the reader is a senior sales engineer or pursuit partner at a tier-one infrastructure, cloud, managed services, or application operations vendor. Be explicit, evidence-disciplined, and compact enough to complete in one synchronous generation: target 2,800-3,500 words. Quote scope from d05 only where needed. Reference the value-target range from d01 without disclosing internal sensitivity. Distinguish locked facts, working assumptions, validation gates, and missing evidence. Do not use generic procurement boilerplate. Do not invent names, dates, systems, or volumes not present in the bound context. If evidence is missing, label it as a client-to-complete gap.
 
@@ -506,15 +506,15 @@ Section budget:
 - §7: must include commercial terms and pricing instructions table.
 - §8: must include the response-compliance mandate above, vendor response/submission requirements table, and explicit completion instructions for every Vendor Response Control Pack component.
 - §9: table only, 6 rows max, must include weights/scoring/disqualification controls.
-- §10: table only, 8 rows max, must include risk owners/mitigations from Exhibits 07, 13, and 14.
+- §10: table only, 8 rows max, must include accountable risk roles/mitigations from Exhibits 07, 13, and 14.
 - §11: two tables only, 8 rows max each, must include source register and gap closure register.
 
 Compact required appendix block:
 After §8, use compact tables instead of long prose for the remaining governance material:
 - §9 table: Evaluation area | Weight | Scoring basis | Disqualification / red flag | Evidence source.
-- §10 table: Risk ID | Failure mode | Evidence source | Owner placeholder | Mitigation | Blocking gate.
+- §10 table: Risk ID | Failure mode | Evidence source | Accountable role | Mitigation | Blocking gate.
 - §11A table: Source | Status | Used in sections | Remaining action.
-- §11B table: Gap ID | Item | Owner placeholder | Due date placeholder | Blocking gate | Downstream impact.
+- §11B table: Gap ID | Item | Accountable role | Target date / trigger | Blocking gate | Downstream impact.
 
 Required compact section skeleton:
 ## §1 · Executive summary and decision context
@@ -529,7 +529,7 @@ Required compact section skeleton:
 ## §10 · Risk register, transition controls, and failure modes
 ## §11 · Source register, assumptions, and client-to-complete gaps
 
-Quality requirement: produce a draft that can pass the partner-grade quality review without a follow-up rewrite. Every major claim must either cite/derive from bound evidence, be framed as an assumption to validate, or be listed as a client-to-complete gap with owner/action. Include practical mitigations for risks; do not merely flag them. Do not leave process dates as bare [CLIENT TO SET]; either provide the governed date from evidence or put the item in the §11 closure table with owner placeholder, due-date placeholder, blocking gate, and downstream impact.`,
+Quality requirement: produce a draft that can pass the partner-grade quality review without a follow-up rewrite. Every major claim must either cite/derive from bound evidence, be framed as an assumption to validate, or be listed as a client-to-complete gap with accountable role/action. Include practical mitigations for risks; do not merely flag them. Do not use bracketed client fill-in markers. If exact names or dates are not loaded, provide the accountable role and a gate-relative target date or trigger in the §11 closure table with blocking gate and downstream impact.`,
     buildUserMessage: (ctx, upstream) => {
       const lines: string[] = [
         `Company: ${ctx.tenantName}`,
@@ -581,7 +581,7 @@ Quality requirement: produce a draft that can pass the partner-grade quality rev
       );
 
       lines.push(
-        "Draft the RFP Package per the system prompt requirements. Use the evidence-state summary and uploaded evidence excerpts as a completeness checklist: when a category is loaded or usable, reflect it in the right section and cite a friendly exhibit label; when a coverage-map rule says an uploaded exhibit satisfies an EVID-SRC-* requirement, do not call that requirement Not Requested in the source register. When a category is missing or low confidence, add it to the client-to-complete register with owner/action/why-it-matters instead of filling with generic text. This is a governed vendor-facing draft, not an issued final; explicit client-to-complete placeholders are acceptable only when clearly registered and not hidden in the narrative. Keep the draft compact and section-complete: every section §1 through §11 must appear, §7–§11 must not be sacrificed for long baseline prose, §9 must include weights/scoring/disqualification controls, §10 must include risk owners/mitigations, §11 must include a blocking-gap closure table with owner placeholder, due-date placeholder, blocking gate, and downstream impact for every unresolved item, and the final line must confirm the draft is complete pending registered gap closure.",
+        "Draft the RFP Package per the system prompt requirements. Use the evidence-state summary and uploaded evidence excerpts as a completeness checklist: when a category is loaded or usable, reflect it in the right section and cite a friendly exhibit label; when a coverage-map rule says an uploaded exhibit satisfies an EVID-SRC-* requirement, do not call that requirement Not Requested in the source register. When a category is missing or low confidence, add it to the client-to-complete register with accountable role/action/why-it-matters instead of filling with generic text. This is a governed vendor-facing draft, not an issued final; do not use bracketed client fill-in markers. If exact human names or calendar dates are missing, use accountable role names and gate-relative target triggers. Keep the draft compact and section-complete: every section §1 through §11 must appear, §7–§11 must not be sacrificed for long baseline prose, §9 must include weights/scoring/disqualification controls, §10 must include risk owners/mitigations, §11 must include a blocking-gap closure table with accountable role, target date or trigger, blocking gate, and downstream impact for every unresolved item, and the final line must confirm the draft is complete pending registered gap closure.",
       );
       return lines.join("\n");
     },
@@ -966,7 +966,7 @@ const D09_RFP_EVIDENCE_COVERAGE_RULES: RfpEvidenceCoverageRule[] = [
     satisfies: ["EVID-SRC-RFP-LEGAL-TEMPLATE"],
     sections: ["§8", "§9", "§11"],
     requiredUse:
-      "Treat as the governed response-format and RFP-instruction template for required forms, pricing workbook instructions, BAFO/compliance placeholders, and submission rules.",
+      "Treat as the governed response-format and RFP-instruction template for required forms, pricing workbook instructions, BAFO/compliance fields, and submission rules.",
   },
   {
     label: "Exhibit 11 — Data center and infrastructure inventory",
@@ -1033,7 +1033,7 @@ export function formatD09RfpEvidenceCoverage(
     );
     if (!match) {
       lines.push(
-        `- ${rule.label}: [CLIENT TO COMPLETE] missing upload; satisfies ${rule.satisfies.join(", ")}; required for ${rule.sections.join(", ")}.`,
+        `- ${rule.label}: MISSING — client action required; satisfies ${rule.satisfies.join(", ")}; required for ${rule.sections.join(", ")}.`,
       );
       continue;
     }
@@ -1053,7 +1053,7 @@ export function formatD09RfpEvidenceCoverage(
     "Source register rule: list every mapped exhibit above with status, section use, and any remaining client-to-complete action. Blocking gaps are only items still missing after this coverage map, not mapped files that were uploaded.",
   );
   lines.push(
-    "Risk/action rule: §10 must include a risk register derived from Exhibits 07, 13, and 14; §11 must include a gap closure register with owner placeholders, due-date placeholders, blocking gate, and downstream impact.",
+    "Risk/action rule: §10 must include a risk register derived from Exhibits 07, 13, and 14; §11 must include a gap closure register with accountable roles, target dates or gate-relative triggers, blocking gate, and downstream impact.",
   );
   return lines.join("\n");
 }
