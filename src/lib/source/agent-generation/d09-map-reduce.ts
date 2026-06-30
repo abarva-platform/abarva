@@ -80,7 +80,7 @@ Metric | Current Baseline | Required SLA | Measurement Period | Credit/Penalty
     instruction: `Write ONLY ## §6 · Transition approach, blackout constraints, and risk controls.
 300 words max. Include one transition/blackout table:
 Milestone | Planned Date | Blackout Window | Risk | Mitigation | Owner
-6 rows max. Reference Exhibit 14 (transition ops blackout calendar) if uploaded. Use [CLIENT TO SET] only for genuinely missing dates.`,
+6 rows max. Reference Exhibit 14 (transition ops blackout calendar) if uploaded. Use gate-relative target dates when exact dates are genuinely missing; do not use bracketed client fill-in markers.`,
   },
   {
     key: "s7",
@@ -99,7 +99,7 @@ ${SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE}
 
 Include one vendor response-control table:
 Required Deliverable | Format | Required Completion Rule | Downstream Use | Due Date | Notes
-Minimum 8 rows and include: Vendor Claim Register, Automation / Productivity Commitment Table, Structured Pricing Workbook, Staffing and Location Model, SLA Commitment Table, Assumptions and Exclusions Log, Transition Plan Template, Commercial Exceptions Table. Reference pricing template d19a and the Vendor Response Control Pack. Reference Exhibit 10 (vendor response expectations) if uploaded. Use [CLIENT TO SET] for submission dates.`,
+Minimum 8 rows and include: Vendor Claim Register, Automation / Productivity Commitment Table, Structured Pricing Workbook, Staffing and Location Model, SLA Commitment Table, Assumptions and Exclusions Log, Transition Plan Template, Commercial Exceptions Table. Reference pricing template d19a and the Vendor Response Control Pack. Reference Exhibit 10 (vendor response expectations) if uploaded. Use gate-relative target dates for submission dates when exact dates are missing; do not use bracketed client fill-in markers.`,
   },
   {
     key: "s9",

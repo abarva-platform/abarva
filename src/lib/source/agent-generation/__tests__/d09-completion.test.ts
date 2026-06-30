@@ -125,6 +125,7 @@ describe("completeD09RfpGovernanceSections", () => {
     });
 
     expect(completed).not.toMatch(/\[CLIENT TO (SET|CONFIRM|COMPLETE)\]/);
+    expect(completed).not.toMatch(/placeholder/i);
     expect(completed).toContain("T+5 weeks from sponsor sign-off");
     expect(completed).toContain("| Service delivery capability | 20% |");
     expect(completed).toContain(

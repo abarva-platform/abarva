@@ -85,7 +85,7 @@ function buildD09CompletionAppendix(ctx: SourceGenerationContext): string {
     COMPLETION_MARKER,
     "## §0 · Issuance readiness checklist",
     "",
-    "| Readiness gate | Current status | Owner placeholder | Post-gap validation step | Downstream impact |",
+    "| Readiness gate | Current status | Accountable role | Post-gap validation step | Downstream impact |",
     "|---|---|---|---|---|",
     ...buildReadinessRows(ctx),
     "",
@@ -93,7 +93,7 @@ function buildD09CompletionAppendix(ctx: SourceGenerationContext): string {
     "",
     "## §8A · Process timeline and date-closure controls",
     "",
-    "| Milestone | Interim planning anchor | Owner placeholder | Blocking gate | Downstream impact |",
+    "| Milestone | Interim planning anchor | Accountable role | Blocking gate | Downstream impact |",
     "|---|---:|---|---|---|",
     "| RFP issue date | T+5 weeks from sponsor sign-off | Sourcing lead | Issue-to-market gate | Gives vendors a dated response window while final evidence validation closes. |",
     "| Bidder Q&A close | T+7 weeks from sponsor sign-off | Sourcing lead + Legal | Equal-information gate | Keeps late Q&A changes controlled and comparable across bidders. |",
@@ -103,7 +103,7 @@ function buildD09CompletionAppendix(ctx: SourceGenerationContext): string {
     "",
     "## §9A · Evaluation controls and normalization closure",
     "",
-    "| Evaluation control | Required closure before issue | Owner placeholder | Evidence source | Why it matters |",
+    "| Evaluation control | Required closure before issue | Accountable role | Evidence source | Why it matters |",
     "|---|---|---|---|---|",
     `| E-06 commercial weighting | ${hasEvaluationWeights ? "Use the approved weighted scorecard from Exhibit 09; finance confirms total-score math before release." : "Set final percentages so the scoring model sums to 100%."} | Finance + sourcing lead | Exhibit 09 / Exhibit 15 | Prevents non-comparable commercial scoring. |`,
     "| Commercial normalization basis | Confirm NPV, ACV, and transition-cost treatment in pricing workbook instructions. | Finance | Exhibit 08 / Exhibit 15 | Keeps run/change and one-time charges comparable. |",
@@ -112,7 +112,7 @@ function buildD09CompletionAppendix(ctx: SourceGenerationContext): string {
     "",
     "## §7A · Directional commercial leverage assumptions",
     "",
-    "These figures are planning placeholders only. Vendors must not treat them as locked baselines until the client loads and validates the spend, ticket, scope, and retained-cost evidence named in §11.",
+    "These figures are planning assumptions only. Vendors must not treat them as locked baselines until the client loads and validates the spend, ticket, scope, and retained-cost evidence named in §11.",
     "",
     "| Pricing lever | Directional planning assumption | Vendor response requirement | Commercial control |",
     "|---|---|---|---|",
@@ -124,7 +124,7 @@ function buildD09CompletionAppendix(ctx: SourceGenerationContext): string {
     "",
     "## §10 · Risk register, transition controls, and failure modes",
     "",
-    "| Risk ID | Failure mode | Evidence source | Owner placeholder | Mitigation | Blocking gate |",
+    "| Risk ID | Failure mode | Evidence source | Accountable role | Mitigation | Blocking gate |",
     "|---|---|---|---|---|---|",
     "| R-01 | Incumbent knowledge-transfer or exit support is insufficient for safe transition. | Exhibit 07 / Exhibit 14 | Transition lead | Require KT plan, named SMEs, cutover entry criteria, and exit-support obligations in vendor response. | Transition readiness gate |",
     "| R-02 | Proposal economics are not comparable because run, change, transition, and pass-through costs are mixed. | Exhibit 08 / Exhibit 15 | Finance | Require normalized workbook tabs for steady-state run, transition, retained cost, pass-through, and productivity glidepath. | Commercial evaluation gate |",
@@ -145,7 +145,7 @@ function buildD09CompletionAppendix(ctx: SourceGenerationContext): string {
     "",
     "### §11B · Gap closure register",
     "",
-    "| Gap ID | Item | Owner placeholder | Due date placeholder | Blocking gate | Downstream impact |",
+    "| Gap ID | Item | Accountable role | Target date / trigger | Blocking gate | Downstream impact |",
     "|---|---|---|---|---|---|",
     `| G-04 | ${hasEvaluationWeights ? "Validate Exhibit 09 weighted-scorecard math and rater model." : "Set final E-06 commercial evaluation weight and total-score math."} | Finance + sourcing lead | T+2 weeks from sponsor sign-off | Issue-to-market gate | Evaluation model cannot be represented as final until weights sum to 100%. |`,
     "| G-09 | Confirm RFP issue, Q&A, proposal due, downselect, BAFO, and award calendar dates against transition blackout windows. | Sourcing lead | T+3 weeks from sponsor sign-off | Issue-to-market gate | Vendors cannot plan response resources or transition commitments against open dates. |",
@@ -235,7 +235,7 @@ function buildVendorResponseTemplateAppendices(): string[] {
     "",
     "## Appendix J · BAFO and Clarification Round Instructions",
     "",
-    "| Round | Trigger | Vendor must submit | Buyer control | Due date placeholder |",
+    "| Round | Trigger | Vendor must submit | Buyer control | Target response date / trigger |",
     "|---|---|---|---|---|",
     "| Written clarification | Incomplete, inconsistent, or unsupported response fields. | Updated response table rows only; narrative cannot replace structured fields. | Equal-information log and version-controlled clarification register. | T+1 week after proposal receipt. |",
     "| Commercial normalization | Pricing model not comparable across vendors or towers. | Revised pricing workbook, assumption deltas, and credit/penalty schedule. | Finance normalization workbook and exception tracker. | T+2 weeks after proposal receipt. |",
@@ -345,7 +345,7 @@ function buildSourceRows(ctx: SourceGenerationContext): string[] {
   return EXHIBITS.map((exhibit) => {
     const match = findUploadedEvidence(ctx, exhibit.keywords);
     if (!match) {
-      return `| ${exhibit.label} | [CLIENT TO COMPLETE] | ${sectionUseFor(exhibit.label)} | ${exhibit.fallbackStatus} |`;
+      return `| ${exhibit.label} | Missing — client action required | ${sectionUseFor(exhibit.label)} | ${exhibit.fallbackStatus} |`;
     }
     return `| ${exhibit.label} | Available parsed evidence — citation review pending | ${sectionUseFor(exhibit.label)} | Confirm final citation page/sheet references before issue. |`;
   });

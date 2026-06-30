@@ -31,10 +31,10 @@ describe("Source artifact prompt registry provider config", () => {
     expect(template?.systemPrompt).toContain("Section budget");
     expect(template?.systemPrompt).toContain("Preserve sections §7–§11");
     expect(template?.systemPrompt).toContain(
-      "Do not leave process dates as bare [CLIENT TO SET]",
+      "Do not use bracketed client fill-in markers",
     );
     expect(template?.systemPrompt).toContain(
-      "blocking gate, and downstream impact",
+      "blocking gate and downstream impact",
     );
     expect(template?.systemPrompt).toContain("Compact required appendix block");
     expect(template?.systemPrompt).toContain("§11A table");
@@ -173,7 +173,7 @@ describe("Source artifact prompt registry provider config", () => {
       "§9 must include weights/scoring/disqualification controls",
     );
     expect(message).toContain(
-      "blocking-gap closure table with owner placeholder",
+      "blocking-gap closure table with accountable role",
     );
     expect(message).toContain("every section §1 through §11 must appear");
     expect(message).toContain("§7–§11 must not be sacrificed");
