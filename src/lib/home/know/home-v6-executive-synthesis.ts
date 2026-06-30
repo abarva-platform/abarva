@@ -18,7 +18,7 @@ const TECHNICAL_LANGUAGE_RE =
   /\b(V6|dataset|contract pack|usable evidence items?|governed evidence areas?|selected rows?|rows?|raw source|source file|source row|directRaw|composer|fallback|semantic|dossier|implementation-facing|debug|answerSource|home_v6|home-v6|csv|\.csv|SHA-|APP-|[A-Z]{2,}-IT-\d+)\b/i;
 
 const EXECUTIVE_SIGNALS_RE =
-  /\b(means|matters|risk|decision|owner|ownership|ready|not yet|confidence|prove|proven|change|operate|value|caveat|should not)\b/i;
+  /\b(means|matters|risk|decision|owner|ownership|ready|readiness|not yet|confidence|prove|proven|evidence|recommendation|prioritization|options|leadership|change|operate|value|caveat|should not)\b/i;
 
 export interface HomeV6ExecutiveSynthesisResult {
   response: HomeKnowResponse;
@@ -508,6 +508,7 @@ function normalizeExecutiveText(text: string): string {
     .replace(/\bgoverned evidence areas?\b/gi, "business context areas")
     .replace(/\bbusiness records?\b/gi, "business facts")
     .replace(/\bsource signals?\b/gi, "source evidence")
+    .replace(/\brows?\b/gi, "lines")
     .replace(/\bdatasets?\b/gi, "data asset")
     .replace(/\bcorpus\b/gi, "source collection")
     .replace(/\bWe recommend validating\b/gi, "The next evidence to validate is")
