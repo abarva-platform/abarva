@@ -170,8 +170,9 @@ const RFP_TO_RESPONSES: SourceGateCriterion[] = [
     criterionId: 'GATE-RFP-03',
     fromStage: 'rfp',
     toStage: 'responses',
-    title: 'Response checklist published to all vendors',
-    description: 'Vendors received the checklist with format expectations and deadlines.',
+    title: 'Vendor Response Control Pack published to all vendors',
+    description:
+      'Vendors received the structured response templates, claim register, pricing workbook, assumptions/exclusions log, SLA table, transition plan template, and commercial exceptions table.',
     severity: 'hard',
     required: true,
     linkedArtifactCodes: ['d11_response_checklist'],

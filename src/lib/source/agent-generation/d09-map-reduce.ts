@@ -20,6 +20,7 @@ import type {
   TextBlock,
 } from "@/lib/integrations/ai-egress";
 import type { SourceGenerationContext } from "./types";
+import { SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE } from "./prompt-registry";
 
 const SECTION_MODEL = "claude-opus-4-8";
 const SECTION_MAX_TOKENS = 4_000;
@@ -94,9 +95,12 @@ Minimum 4 rows. Reference Exhibit 08 (pricing assumptions) and Exhibit 15 (run-v
     key: "s8",
     heading: "§8 · Vendor response instructions and mandatory submission tables",
     instruction: `Write ONLY ## §8 · Vendor response instructions and mandatory submission tables.
-Include one vendor response/submission table:
-Required Deliverable | Format | Due Date | Notes
-Minimum 4 rows. Include a submission checklist. Reference pricing template d19a. Reference Exhibit 10 (vendor response expectations) if uploaded. Use [CLIENT TO SET] for submission dates.`,
+Include the following response-compliance mandate:
+${SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE}
+
+Include one vendor response-control table:
+Required Deliverable | Format | Required Completion Rule | Downstream Use | Due Date | Notes
+Minimum 8 rows and include: Vendor Claim Register, Automation / Productivity Commitment Table, Structured Pricing Workbook, Staffing and Location Model, SLA Commitment Table, Assumptions and Exclusions Log, Transition Plan Template, Commercial Exceptions Table. Reference pricing template d19a and the Vendor Response Control Pack. Reference Exhibit 10 (vendor response expectations) if uploaded. Use [CLIENT TO SET] for submission dates.`,
   },
   {
     key: "s9",
