@@ -210,7 +210,7 @@ describe("Home V6 executive synthesis", () => {
     expect(result.response.safety.composerTrace?.fallbackUsed).toBe(true);
   });
 
-  it("treats missing demo tenant name as a warning, not a hard block", async () => {
+  it("adds the demo tenant name to the answer opening when Claude omits it", async () => {
     mockClaudeText(
       "The business context is strong enough for leadership to understand ownership, readiness, and decision risk, but not enough to claim named-person accountability.\n\nThe next evidence to validate is source freshness and owner confirmation before this becomes decision-ready.",
     );
@@ -231,9 +231,11 @@ describe("Home V6 executive synthesis", () => {
     });
 
     expect(result.trace.used).toBe(true);
+    expect(result.response.prose.startsWith("For Retail Demo,")).toBe(true);
+    expect(result.response.prose).toContain("the business context");
     expect(result.response.safety.composerTrace?.fallbackUsed).toBe(false);
     expect(result.response.safety.composerTrace?.reason).toContain(
-      "softWarnings=missing_tenant_name",
+      "softWarnings=none",
     );
   });
 

@@ -120,7 +120,10 @@ export async function applyHomeV6ExecutiveSynthesis(args: {
       timeoutMs,
     );
     const rawText = collected.text.trim();
-    const executiveText = normalizeExecutiveText(rawText);
+    const executiveText = ensureTenantOpening(
+      normalizeExecutiveText(rawText),
+      packet.tenantName,
+    );
     const artifactStatus = determineArtifactStatus({
       text: executiveText,
       response: args.response,
@@ -224,6 +227,7 @@ Rules:
 - Write for a CIO, CFO, COO, CDAO, or transformation leader. Calm, precise, direct.
 - Start with the business meaning, not counts.
 - Use tenant-safe demo names exactly as provided.
+- Open the first sentence with the tenant-safe name, such as "For Retail Demo,". This is required even when the question says "this tenant".
 - Use named systems, vendors, programs, owners, and metrics only when they are in the packet.
 - If evidence is incomplete, say exactly what is not proven and why it matters.
 - If the question belongs in Intelligence, Moves, Source, or Tower, explain the boundary naturally and name the surface that should own the next step.
@@ -362,7 +366,7 @@ function validateExecutiveText(args: {
   if (!text) hardIssues.push("empty_text");
   if (TECHNICAL_LANGUAGE_RE.test(text)) hardIssues.push("technical_language");
   if (!EXECUTIVE_SIGNALS_RE.test(text)) hardIssues.push("not_executive_friendly");
-  if (!text.includes(displayTenantName(args.response))) {
+  if (!hasTenantOpening(text, displayTenantName(args.response))) {
     softWarnings.push("missing_tenant_name");
   }
   const visible = assertVisibleAnswerContract(text);
@@ -399,6 +403,26 @@ function displayTenantName(response: HomeKnowResponse): string {
     /\b(Retail Demo|Healthcare Demo|Financial Services Demo|Industrial Demo|Airline Demo)\b/,
   );
   return proseMatch?.[1] ?? "";
+}
+
+function ensureTenantOpening(text: string, tenantName: string): string {
+  const trimmed = text.trim();
+  const name = tenantName.trim();
+  if (!trimmed || !name || hasTenantOpening(trimmed, name)) return trimmed;
+  return `For ${name}, ${sentenceCaseAfterComma(trimmed)}`;
+}
+
+function hasTenantOpening(text: string, tenantName: string): boolean {
+  const name = tenantName.trim();
+  if (!text.trim() || !name) return false;
+  const opening = text.trim().slice(0, 160);
+  return opening.toLowerCase().includes(name.toLowerCase());
+}
+
+function sentenceCaseAfterComma(text: string): string {
+  return text.replace(/^(The|This|Your|Available)\b/, (match) =>
+    match.toLowerCase(),
+  );
 }
 
 function applyExecutiveSuccess(
