@@ -1,10 +1,8 @@
 'use client';
 
-// Source events portfolio · AgentDock chip (sibling of the AgentDock
-// foundation PR #1764). Replaces the deferred-stub SentinelAgentColumn
-// with the shared <AgentDock /> side-rail so portfolio chat, paperclip
-// uploads, and resize / pin / expand modes all work consistently with
-// every other agent surface.
+// Source events portfolio · AgentDock chip. Uses the shared <AgentDock />
+// side-rail so portfolio chat, paperclip uploads, and resize / pin / expand
+// modes work consistently with every other agent surface.
 //
 // Why this lives in its own client component:
 //   - The /source/events page is server-rendered (auth + tenancy +
@@ -38,17 +36,17 @@ import {
 interface Props {
   /** Server-rendered portfolio body — becomes the AgentDock workspace. */
   workspace: ReactNode;
-  /** Active filters (forwarded to surfaceContext so Ava can reason about them). */
+  /** Active filters forwarded to surfaceContext. */
   filterStage?: string | null;
   filterStatus?: string | null;
 }
 
 const AVA_AGENT = {
-  initials: 'Av',
-  name: 'Ava',
-  role: 'Source portfolio assistant',
+  initials: 'aVa',
+  name: 'aVa',
+  role: 'Source portfolio advisor',
 };
-const SENTINEL_RUNTIME_AGENT_NAME = 'Sentinel';
+const SOURCE_RUNTIME_AGENT_NAME = 'aVa';
 
 /** Keep the suggestion ids stable for telemetry. */
 const SUGGESTION_IDS = {
@@ -81,7 +79,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
         { id: `u-${Date.now()}`, role: 'user', body: userBody },
       ]);
 
-      // Inline the extracted attachment text so Ava has the file
+      // Inline the extracted attachment text so aVa has the file
       // contents as context even before a long-form retrieval pipeline
       // is wired up. The dock route already trims preview to ~4000
       // chars per attachment which is safe to stitch into the prompt.
@@ -112,11 +110,11 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
             message: messageForRuntime,
             context,
             surface: 'source/events',
-            agentName: SENTINEL_RUNTIME_AGENT_NAME,
+            agentName: SOURCE_RUNTIME_AGENT_NAME,
           }),
         });
         if (!res.ok) {
-          throw new Error(`Ava returned ${res.status}`);
+          throw new Error(`aVa returned ${res.status}`);
         }
         const reader = res.body?.getReader();
         if (!reader) throw new Error('No response body');
@@ -136,7 +134,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
       }
 
       const trimmed = acc.trim();
-      const finalBody = trimmed.length > 0 ? trimmed : 'Ava did not return a response.';
+      const finalBody = trimmed.length > 0 ? trimmed : 'aVa did not return a response.';
       setThread((prev) => [
         ...prev,
         { id: `a-${Date.now()}`, role: 'agent', body: finalBody },

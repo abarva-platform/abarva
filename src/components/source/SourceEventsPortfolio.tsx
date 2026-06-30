@@ -310,7 +310,7 @@ export function SourceEventsPortfolio({
       <div style={TWO_COL}>
         <article style={BRIEF_CARD}>
           <div style={{ ...SOURCE_SECTION_LABEL, color: "#1B2B5C" }}>
-            Ava brief
+            aVa brief
           </div>
           <h2
             style={{
@@ -356,7 +356,7 @@ export function SourceEventsPortfolio({
               when the client data layer has loaded them.
             </div>
             <div style={{ ...SOURCE_MUTED, fontSize: "12px", marginTop: 4 }}>
-              Ask Ava directly in the chat lane on the left of this
+              Ask aVa directly in the chat lane on the left of this
               page — the dock supports portfolio-level questions, drag-and-drop
               file uploads, and resize / pin / expand modes.
             </div>
@@ -523,7 +523,7 @@ export function SourceEventsPortfolio({
       <div style={TWO_COL}>
         <SourceAlertPanel
           alerts={attentionItems}
-          title="Ava mission strip"
+          title="aVa mission strip"
           emptyLabel="No attention items are open in the current filter view."
           eventContextById={eventContextById}
           variant="light"
@@ -563,7 +563,7 @@ export function SourceEventsPortfolio({
               )}
             />
             <MetricLine
-              label="Agent recommendation"
+              label="aVa recommendation"
               detail={redactSourceFinancialText(
                 topEvent
                   ? topEvent.nextAction
@@ -614,7 +614,7 @@ function buildBriefBody(
       activeStatus)
     : "all lifecycle states";
 
-  return `Ava is using the client Source portfolio to compare ${events.length} event${events.length === 1 ? "" : "s"} across ${stageLabel.toLowerCase()} and ${statusLabel.toLowerCase()} posture. ${riskCount} open alert${riskCount === 1 ? "" : "s"} remain in view, and commercial detail beyond stage, blocker, value, and next action still belongs inside each event canvas.`;
+  return `aVa is using the client Source portfolio to compare ${events.length} event${events.length === 1 ? "" : "s"} across ${stageLabel.toLowerCase()} and ${statusLabel.toLowerCase()} posture. ${riskCount} open alert${riskCount === 1 ? "" : "s"} remain in view, and commercial detail beyond stage, blocker, value, and next action still belongs inside each event canvas.`;
 }
 
 function buildChoiceHref({

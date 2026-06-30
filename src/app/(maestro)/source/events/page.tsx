@@ -179,7 +179,7 @@ function SourceEventsEntryHeader({
               color: SHELL.INK_SOFT,
             }}
           >
-            Nexus leads the IT sourcing queue by naming the next sourcing move,
+            aVa leads the IT sourcing queue by naming the next sourcing move,
             the evidence behind it, and the gate that could block it. The table
             is supporting evidence: lifecycle, owner, linked program, value
             exposure, blocker, aging, and next action.

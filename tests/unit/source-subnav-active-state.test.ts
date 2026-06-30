@@ -3,8 +3,9 @@
  * across both information-architecture states.
  *
  * IA v2 (audit 2026-06-03, Tier 1, default ON) consolidates Source around
- * Decisions (the Queue) + Portfolio + Setup — folding the standalone Events
- * surface into Portfolio while keeping artifact operations discoverable.
+ * Decisions (the Queue) + Approvals + Portfolio + Capabilities + Setup —
+ * folding the standalone Events surface into Portfolio while keeping artifact
+ * operations and capability storytelling discoverable.
  * `NEXT_PUBLIC_SOURCE_IA_V2=0` restores the legacy
  * three-tab IA (Queue / Events / Portfolio). These pure-function tests lock
  * both states. `resolveActiveSourceTab` and `activeSourceSubNavTabs` read the
@@ -32,9 +33,21 @@ describe('IA v2 (default) — operating surfaces', () => {
     delete process.env[FLAG]; // unset ⇒ default ON
   });
 
-  test('catalogue is exactly Decisions + Portfolio + Setup, in order', () => {
-    expect(activeSourceSubNavTabs().map((t) => t.key)).toEqual(['queue', 'portfolio', 'setup']);
-    expect(activeSourceSubNavTabs().map((t) => t.label)).toEqual(['Decisions', 'Portfolio', 'Setup']);
+  test('catalogue is exactly Decisions + Approvals + Portfolio + Capabilities + Setup, in order', () => {
+    expect(activeSourceSubNavTabs().map((t) => t.key)).toEqual([
+      'queue',
+      'approvals',
+      'portfolio',
+      'capabilities',
+      'setup',
+    ]);
+    expect(activeSourceSubNavTabs().map((t) => t.label)).toEqual([
+      'Decisions',
+      'Approvals',
+      'Portfolio',
+      'Capabilities',
+      'Setup',
+    ]);
   });
 
   test('the Queue tab is labelled "Decisions"', () => {
@@ -47,6 +60,10 @@ describe('IA v2 (default) — operating surfaces', () => {
 
   test('/source/portfolio → portfolio', () => {
     expect(resolveActiveSourceTab('/source/portfolio')).toBe('portfolio');
+  });
+
+  test('/source/capabilities → capabilities', () => {
+    expect(resolveActiveSourceTab('/source/capabilities')).toBe('capabilities');
   });
 
   test('/source/setup → setup', () => {
@@ -81,14 +98,25 @@ describe('IA v1 (NEXT_PUBLIC_SOURCE_IA_V2=0) — legacy three tabs', () => {
     process.env[FLAG] = '0';
   });
 
-  test('catalogue is the three canonical tabs in order', () => {
-    expect(SOURCE_SUBNAV_TABS.map((t) => t.key)).toEqual(['queue', 'events', 'portfolio']);
-    expect(activeSourceSubNavTabs().map((t) => t.key)).toEqual(['queue', 'events', 'portfolio']);
+  test('catalogue is the canonical tabs in order', () => {
+    expect(SOURCE_SUBNAV_TABS.map((t) => t.key)).toEqual([
+      'queue',
+      'events',
+      'capabilities',
+      'portfolio',
+    ]);
+    expect(activeSourceSubNavTabs().map((t) => t.key)).toEqual([
+      'queue',
+      'events',
+      'capabilities',
+      'portfolio',
+    ]);
   });
 
   test('exact top-level routes resolve to their own tab', () => {
     expect(resolveActiveSourceTab('/source/queue')).toBe('queue');
     expect(resolveActiveSourceTab('/source/events')).toBe('events');
+    expect(resolveActiveSourceTab('/source/capabilities')).toBe('capabilities');
     expect(resolveActiveSourceTab('/source/portfolio')).toBe('portfolio');
   });
 
