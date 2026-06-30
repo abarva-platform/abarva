@@ -23,10 +23,23 @@ describe("completeD09RfpGovernanceSections", () => {
 
     expect(completed).toContain("## §8A · Process timeline and date-closure controls");
     expect(completed).toContain("## §9A · Evaluation controls and normalization closure");
+    expect(completed).toContain("## §0 · Issuance readiness checklist");
+    expect(completed).toContain("## §7A · Directional commercial leverage assumptions");
     expect(completed).toContain("## §10 · Risk register, transition controls, and failure modes");
+    expect(completed).toContain("## §12 · Legal, commercial, and submission terms for client counsel review");
+    expect(completed).toContain("## Appendix A · Vendor Claim Register Template");
+    expect(completed).toContain("## Appendix B · Automation / Productivity Commitment Table");
+    expect(completed).toContain("## Appendix C · Structured Pricing Workbook Template");
+    expect(completed).toContain("## Appendix D · Staffing and Location Model Template");
+    expect(completed).toContain("## Appendix E · SLA Commitment Table Template");
+    expect(completed).toContain("## Appendix F · Assumptions and Exclusions Log Template");
+    expect(completed).toContain("## Appendix G · Transition Plan Template");
+    expect(completed).toContain("## Appendix H · Commercial Exceptions Table Template");
     expect(completed).toContain("R-08");
     expect(completed).toContain("PCI DSS");
     expect(completed).toContain("1,800+ FTE");
+    expect(completed).toContain("CLM-001");
+    expect(completed).toContain("A-001");
     expect(completed).toContain("### §11A · Source register");
     expect(completed).toContain("### §11B · Gap closure register");
     expect(completed).toContain("G-04");
