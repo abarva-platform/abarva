@@ -1053,17 +1053,24 @@ async function runConsultingGradeQualityGate(args: {
       }),
     };
   }
-  const rewriteResponse = await rewritePreflight.client.messages.create({
+  const rewriteStream = rewritePreflight.client.messages.stream({
     model: args.model,
     max_tokens: args.maxTokens,
     system:
       "You are Ava writing a client-ready, evidence-disciplined Source deliverable. Return markdown only.",
     messages: [{ role: "user", content: rewritePrompt }],
   });
-  const rewrittenBody = rewriteResponse.content
-    .map((block) => (block.type === "text" ? block.text : ""))
-    .join("")
-    .trim();
+  const rewriteParts: string[] = [];
+  for await (const chunk of rewriteStream) {
+    if (
+      chunk.type === "content_block_delta" &&
+      chunk.delta.type === "text_delta"
+    ) {
+      rewriteParts.push(chunk.delta.text);
+    }
+  }
+  await rewriteStream.finalMessage();
+  const rewrittenBody = rewriteParts.join("").trim();
   if (!rewrittenBody) {
     return {
       ok: false,
@@ -1151,7 +1158,7 @@ async function runConsultingGradeReview(args: {
       status: 403,
     };
   }
-  const response = await preflight.client.messages.create({
+  const reviewStream = preflight.client.messages.stream({
     model: args.model,
     max_tokens: SOURCE_QUALITY_REVIEW_MAX_TOKENS,
     system:
@@ -1163,6 +1170,7 @@ async function runConsultingGradeReview(args: {
     },
     messages: [{ role: "user", content: reviewPrompt }],
   });
+  const response = await reviewStream.finalMessage();
   const raw = extractSourceQualityReviewPayload(response.content);
   try {
     return {
@@ -1185,7 +1193,7 @@ async function runConsultingGradeReview(args: {
       sourceContext: args.sourceContext,
       previousError: firstError,
     });
-    const retryResponse = await preflight.client.messages.create({
+    const retryStream = preflight.client.messages.stream({
       model: args.model,
       max_tokens: SOURCE_QUALITY_REVIEW_MAX_TOKENS,
       system: [
@@ -1202,6 +1210,7 @@ async function runConsultingGradeReview(args: {
       },
       messages: [{ role: "user", content: retryPrompt }],
     });
+    const retryResponse = await retryStream.finalMessage();
     const retryRaw = extractSourceQualityReviewPayload(retryResponse.content);
     try {
       return {
