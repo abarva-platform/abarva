@@ -17,7 +17,6 @@
 
 import type {
   AnthropicDirectClient,
-  TextBlock,
 } from "@/lib/integrations/ai-egress";
 import type { SourceGenerationContext } from "./types";
 import { SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE } from "./prompt-registry";
@@ -236,18 +235,18 @@ You are writing a single section of the d09 RFP Package for a large enterprise s
   const userMessage = `${sharedContext}\n\n${section.instruction}`;
 
   try {
-    const result = await client.messages.create({
+    const result = await streamAnthropicMarkdown({
+      client,
       model: SECTION_MODEL,
       max_tokens: SECTION_MAX_TOKENS,
       system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
     });
-    const text = result.content
-      .filter((b): b is TextBlock => b.type === "text")
-      .map((b) => b.text)
-      .join("")
-      .trim();
-    return { key: section.key, body: text, tokensOut: result.usage?.output_tokens ?? 0 };
+    return {
+      key: section.key,
+      body: result.text,
+      tokensOut: result.outputTokens,
+    };
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error(`[d09-map-reduce] section ${section.key} failed: ${errMsg}`);
@@ -280,18 +279,15 @@ You are writing §1 of the d09 RFP Package. You have been given the complete §2
   let execSummary = "";
   let tokensOut = 0;
   try {
-    const result = await client.messages.create({
+    const result = await streamAnthropicMarkdown({
+      client,
       model: SECTION_MODEL,
       max_tokens: ASSEMBLY_MAX_TOKENS,
       system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
     });
-    execSummary = result.content
-      .filter((b): b is TextBlock => b.type === "text")
-      .map((b) => b.text)
-      .join("")
-      .trim();
-    tokensOut = result.usage?.output_tokens ?? 0;
+    execSummary = result.text;
+    tokensOut = result.outputTokens;
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error(`[d09-map-reduce] assembly pass failed: ${errMsg}`);
@@ -305,6 +301,35 @@ You are writing §1 of the d09 RFP Package. You have been given the complete §2
     .join("\n\n");
 
   return { body, tokensOut };
+}
+
+async function streamAnthropicMarkdown(args: {
+  client: AnthropicDirectClient;
+  model: string;
+  max_tokens: number;
+  system: string;
+  messages: Array<{ role: "user"; content: string }>;
+}): Promise<{ text: string; outputTokens: number }> {
+  const stream = args.client.messages.stream({
+    model: args.model,
+    max_tokens: args.max_tokens,
+    system: args.system,
+    messages: args.messages,
+  });
+  const parts: string[] = [];
+  for await (const chunk of stream) {
+    if (
+      chunk.type === "content_block_delta" &&
+      chunk.delta.type === "text_delta"
+    ) {
+      parts.push(chunk.delta.text);
+    }
+  }
+  const finalMessage = await stream.finalMessage();
+  return {
+    text: parts.join("").trim(),
+    outputTokens: finalMessage.usage?.output_tokens ?? 0,
+  };
 }
 
 // ── Public entry point ──────────────────────────────────────────────────────

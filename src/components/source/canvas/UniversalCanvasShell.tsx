@@ -650,7 +650,7 @@ export function UniversalCanvasShell({
         detail?: string;
         missingUpstream?: string[];
       } | null;
-      if (!res.ok || !payload) {
+      if (!res.ok || !payload || payload.error) {
         return {
           ok: false,
           error: payload?.error ?? "unknown",
