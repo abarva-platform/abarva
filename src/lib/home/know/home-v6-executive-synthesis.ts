@@ -7,6 +7,7 @@ import type {
   HomeKnowSafety,
 } from "@/lib/home/know/home-know-contract";
 import type { V6HomeAskResult } from "@/lib/home/know/v6-home-ask";
+import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 
 const PROMPT_VERSION = "home-v6-executive-answer-v1";
 const DEFAULT_MODEL = "claude-opus-4-8";
@@ -495,7 +496,7 @@ function applyExecutiveFailureTrace(
 }
 
 function normalizeExecutiveText(text: string): string {
-  return text
+  return scrubPublicAvaAnswerText(text)
     .replace(/^\s*#{1,6}\s+/gm, "")
     .replace(/\*\*/g, "")
     .replace(/`([^`]+)`/g, "$1")

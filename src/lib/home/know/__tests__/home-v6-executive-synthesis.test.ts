@@ -237,6 +237,64 @@ describe("Home V6 executive synthesis", () => {
     );
   });
 
+  it("normalizes loaded evidence language before visible-answer validation", async () => {
+    mockClaudeText(
+      "For Airline Demo, the loaded evidence makes the Tower boundary clear: Home can explain what is proven, while Tower should own execution readiness, adoption, spend, and value tracking.\n\nThe business context shows several AI initiatives with scale, hold, and stop decisions carrying open readiness conditions. That means leadership should use Home for the current-state read and move the portfolio decision, owner signoff, and value tracking questions into Tower.\n\nThe next evidence to validate is which initiatives still lack owner signoff or lineage support before any scale decision is treated as ready.",
+    );
+    const question =
+      "Which questions should be handed off to Tower rather than answered in Home?";
+    const v6 = answerHomeKnowFromV6({
+      tenantKey: "skyharbor",
+      question,
+      includeTrace: true,
+    });
+    const deterministic = toHomeKnowResponseFromV6(v6, { question });
+
+    const result = await applyHomeV6ExecutiveSynthesis({
+      response: deterministic,
+      v6Result: v6,
+      question,
+      tenantKey: v6.tenant.canonicalKey,
+      includeTrace: true,
+    });
+
+    expect(result.trace.used).toBe(true);
+    expect(result.response.prose).toContain("Airline Demo");
+    expect(result.response.prose).toContain("Tower");
+    expect(result.response.prose).toContain("business context");
+    expect(result.response.prose).not.toContain("loaded evidence");
+    expect(result.response.safety.composerTrace?.fallbackUsed).toBe(false);
+  });
+
+  it("normalizes loaded context language before visible-answer validation", async () => {
+    mockClaudeText(
+      "The loaded context for Financial Services Demo establishes the enterprise frame, not the full financial detail. What is proven today is the scale of the technology commitment: a stated technology budget of $2.4 billion against a financial services operating model.\n\nHere is the budget evidence currently available:\n\n| Record | Industry / Model | Technology Budget |\n|---|---|---|\n| Financial Services Demo | Financial services | $2.4 billion |\n\nWhat is not yet proven is actual spend against that budget, renewal timing, or realized value and return. Those facts should be added before leadership treats burn rate, renewal exposure, or value capture as decision-ready.",
+    );
+    const question =
+      "What does the loaded context prove about budget, spend, renewals, and value?";
+    const v6 = answerHomeKnowFromV6({
+      tenantKey: "firstcapital",
+      question,
+      includeTrace: true,
+    });
+    const deterministic = toHomeKnowResponseFromV6(v6, { question });
+
+    const result = await applyHomeV6ExecutiveSynthesis({
+      response: deterministic,
+      v6Result: v6,
+      question,
+      tenantKey: v6.tenant.canonicalKey,
+      includeTrace: true,
+    });
+
+    expect(result.trace.used).toBe(true);
+    expect(result.response.prose).toContain("Financial Services Demo");
+    expect(result.response.prose).toContain("$2.4 billion");
+    expect(result.response.prose).toContain("available business material");
+    expect(result.response.prose).not.toContain("loaded context");
+    expect(result.response.safety.composerTrace?.fallbackUsed).toBe(false);
+  });
+
   it("preserves the Healthcare Demo VISUAL-001 answer with artifact status", async () => {
     mockClaudeText(
       "Healthcare Demo's readiness evidence is concentrated in source signals, which is where confidence is strongest today. Most source signals register at a high readiness level, with a smaller set at medium, while the broader enterprise profile sits at medium. In practical terms, the foundation for trusting your source landscape is solid, but the surrounding business context is less mature and warrants attention before it carries executive decisions.\n\nA table-ready view of the most important context follows:\n\n| Business context area | Readiness signal |\n|---|---|\n| Enterprise profile | Medium |\n| Source collection | High |\n| Source collection | High |\n| Source collection | Medium |\n\nThe clearest way to present this to an executive audience is a grouped bar chart showing the count of high versus medium readiness signals by business context area. This makes the contrast immediate: source collections cluster at high confidence, while enterprise profile lags at medium, so leaders can see where readiness is proven and where it is thin.\n\nThe next evidence to validate is ownership and freshness of the underlying sources, and a deeper view of why enterprise profile remains at medium.",
