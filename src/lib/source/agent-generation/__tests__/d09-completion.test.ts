@@ -35,11 +35,15 @@ describe("completeD09RfpGovernanceSections", () => {
     expect(completed).toContain("## Appendix F · Assumptions and Exclusions Log Template");
     expect(completed).toContain("## Appendix G · Transition Plan Template");
     expect(completed).toContain("## Appendix H · Commercial Exceptions Table Template");
+    expect(completed).toContain("## Appendix I · Evaluation Scorecard Template");
+    expect(completed).toContain("## Appendix J · BAFO and Clarification Round Instructions");
     expect(completed).toContain("R-08");
     expect(completed).toContain("PCI DSS");
     expect(completed).toContain("1,800+ FTE");
     expect(completed).toContain("CLM-001");
     expect(completed).toContain("A-001");
+    expect(completed).toContain("Commercial model and normalized TCO");
+    expect(completed).toContain("Written clarification");
     expect(completed).toContain("### §11A · Source register");
     expect(completed).toContain("### §11B · Gap closure register");
     expect(completed).toContain("G-04");

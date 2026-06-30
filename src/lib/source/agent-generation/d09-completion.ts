@@ -212,6 +212,23 @@ function buildVendorResponseTemplateAppendices(): string[] {
     "| Requirement | Vendor response | Exception | Proposed alternative | Buyer risk | Price impact | Review owner |",
     "|---|---|---|---|---|---|---|",
     "| SLA credit cap | Vendor to state accepted cap. | Yes / No | Vendor to propose alternate cap if exception taken. | Weak cap may make chronic miss cheaper than remediation. | Vendor to quantify. | Legal + procurement. |",
+    "",
+    "## Appendix I · Evaluation Scorecard Template",
+    "",
+    "| Evaluation area | Planning weight | Scoring basis | Disqualification / red flag | Evidence required | Review owner |",
+    "|---|---:|---|---|---|---|",
+    "| Commercial model and normalized TCO | [CLIENT TO CONFIRM] | Five-year run, transition, retained cost, pass-through, credits, and change-order economics. | Pricing workbook incomplete or materially non-comparable. | Completed Appendix C plus assumption cross-references. | Finance + sourcing. |",
+    "| Delivery model and staffing credibility | [CLIENT TO CONFIRM] | Role mix, location model, coverage, named leads, transition staffing, and escalation coverage. | Staffing model omits critical roles or hides subcontractor dependency. | Completed Appendix D plus transition staffing plan. | Technology towers + HR/change. |",
+    "| Automation and productivity commitments | [CLIENT TO CONFIRM] | Claims with baseline, method, measurement, contract exhibit, and price impact. | Automation claim not entered in Vendor Claim Register or not priced back. | Completed Appendix A and Appendix B. | Operations + finance. |",
+    "| SLA, risk, security, and transition controls | [CLIENT TO CONFIRM] | Binding SLA definitions, service credits, control posture, KT plan, blackout constraints, and cutover criteria. | Legal/security exception cannot be accepted or transition plan lacks exit criteria. | Completed Appendix E, G, H and legal exceptions log. | Legal + security + transition lead. |",
+    "",
+    "## Appendix J · BAFO and Clarification Round Instructions",
+    "",
+    "| Round | Trigger | Vendor must submit | Buyer control | Due date placeholder |",
+    "|---|---|---|---|---|",
+    "| Written clarification | Incomplete, inconsistent, or unsupported response fields. | Updated response table rows only; narrative cannot replace structured fields. | Equal-information log and version-controlled clarification register. | [CLIENT TO SET] |",
+    "| Commercial normalization | Pricing model not comparable across vendors or towers. | Revised pricing workbook, assumption deltas, and credit/penalty schedule. | Finance normalization workbook and exception tracker. | [CLIENT TO SET] |",
+    "| BAFO | Finalist selection after scoring and executive review. | Final pricing, exceptions, transition commitments, SLA credits, and productivity economics. | BAFO scorecard, redline log, and decision-readiness memo. | [CLIENT TO SET] |",
   ];
 }
 

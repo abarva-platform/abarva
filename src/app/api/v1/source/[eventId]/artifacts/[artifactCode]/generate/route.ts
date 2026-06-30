@@ -1070,7 +1070,7 @@ async function runConsultingGradeQualityGate(args: {
     }
   }
   await rewriteStream.finalMessage();
-  const rewrittenBody = rewriteParts.join("").trim();
+  let rewrittenBody = rewriteParts.join("").trim();
   if (!rewrittenBody) {
     return {
       ok: false,
@@ -1083,6 +1083,14 @@ async function runConsultingGradeQualityGate(args: {
       }),
     };
   }
+  rewrittenBody = completeD09RfpGovernanceSections({
+    artifactCode: args.artifactCode,
+    body: rewrittenBody,
+    ctx: args.ctx,
+  });
+  rewrittenBody = sanitizeClientFacingSourceDraft(rewrittenBody, {
+    companyName: args.ctx.tenantName,
+  });
 
   const secondReview = await runConsultingGradeReview({
     artifactCode: args.artifactCode,
