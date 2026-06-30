@@ -6,6 +6,7 @@ import {
 } from "@/components/tower/TowerIndexPage";
 import { buildAtlasTowerCurrentState } from "@/lib/atlas/tower-grounding";
 import { resolveTowerTab } from "@/lib/tower/tower-lens-tabs-view";
+import { loadCioTowerCxoView } from "@/lib/cio-tower/cxo-view-model";
 import { loadCioTowerMetricPackets } from "@/lib/cio-tower/metric-packet-store";
 
 export const metadata = { title: "IT Investment Tower · AbarVa" };
@@ -41,7 +42,7 @@ export default async function TowerPage({
     "Your workspace";
   const activeTab = resolveTowerTab(tab);
 
-  const [towerState, metricPackets] = activeClient?.id
+  const [towerState, metricPackets, cxoView] = activeClient?.id
     ? await Promise.all([
         buildAtlasTowerCurrentState({
           clientId: activeClient.id,
@@ -52,8 +53,12 @@ export default async function TowerPage({
           activeClient.name,
           activeClient.id,
         ]).catch(() => []),
+        loadCioTowerCxoView({
+          tenantKeyCandidates: [activeClient.key, activeClient.name, activeClient.id],
+          tenantName: activeTenantName,
+        }).catch(() => null),
       ])
-    : [null, []];
+    : [null, [], null];
 
   return (
     <TowerIndexPage
@@ -66,6 +71,7 @@ export default async function TowerPage({
       vendors={towerState?.vendors}
       budgetRollups={towerState?.budgetRollups}
       metricPackets={metricPackets}
+      cxoView={cxoView}
       bandMetrics={towerState?.bandMetrics}
       pressuresView={towerState?.pressuresView}
       atlasObservationsView={towerState?.atlasObservationsView}
