@@ -24,6 +24,16 @@ before the second quality review. This candidate also re-applies the D09
 completion after rewrite and extends the deterministic package with Appendix I
 evaluation scorecard and Appendix J BAFO / clarification instructions.
 
+Follow-up live proof on SkyHarbor event
+`e64177a2-e75b-4604-8584-fa60386225ae` showed the generated D09 could still be
+rejected after 14.6 minutes because deterministic completion sections injected
+hardcoded bracketed placeholders (`[CLIENT TO SET]` / `[CLIENT TO CONFIRM]`)
+even when supporting evidence was uploaded. This update makes the deterministic
+D09 completion appendix evidence-aware: loaded evidence is represented as
+available pending validation, milestone and BAFO dates use explicit T+ planning
+anchors, and the evaluation scorecard uses the approved 20/20/15/15/15/10/5
+weight model rather than blank placeholders.
+
 ## Layer Impact
 
 - `global-control-lane`: shared Source D09 RFP generation and quality-gate input
@@ -52,6 +62,11 @@ evaluation scorecard and Appendix J BAFO / clarification instructions.
 - `npx eslint src/lib/source/agent-generation/d09-completion.ts src/lib/source/agent-generation/__tests__/d09-completion.test.ts`
 - `npm run release:check`
 
+Additional validation for this update:
+
+- `npx jest src/lib/source/agent-generation/__tests__/d09-completion.test.ts --runInBand`
+- `npx eslint src/lib/source/agent-generation/d09-completion.ts src/lib/source/agent-generation/__tests__/d09-completion.test.ts`
+
 Live pre-fix proof against revision `ca-abarva-web-lab-eastus--me7a3dce7`
 showed D09 no longer failed on streaming, but was blocked by
 `quality_gate_failed` for evidence grounding, commercial specificity, and
@@ -60,6 +75,12 @@ artifact completeness.
 Live proof against revision `ca-abarva-web-lab-eastus--m546f1ab6` showed the
 rewrite path was still blocked by `quality_gate_failed` because the second
 review saw missing Appendices C/D/F/H and BAFO/evaluation closure instructions.
+
+Live proof against revision `ca-abarva-web-lab-eastus--m04d8c329` showed D09
+still failed the quality gate because deterministic completion placeholders
+remained in §8A, §9A, §11B, Appendix B/E/I/J despite uploaded evidence. The
+new regression test asserts that fully evidenced D09 completion emits no
+bracketed client-to-complete placeholders.
 
 ## Rollout Plan
 
@@ -90,6 +111,8 @@ migration, or data-plane changes are included.
 - Rewrite-survival failure proof folder:
   `/Users/anand/Downloads/source-response-control-live-final-2026-06-30T171738856Z`
 - Post-deploy proof folder: to be added after live verification.
+- Current failure proof folder:
+  `/Users/anand/Downloads/source-skyharbor-ams-load-proof-2026-06-30T210807122Z/continued-generation`
 
 ## Known Gaps
 

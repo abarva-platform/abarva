@@ -1,5 +1,8 @@
 import { completeD09RfpGovernanceSections } from "../d09-completion";
-import type { SourceGenerationContext } from "../types";
+import type {
+  SourceGenerationContext,
+  SourceGenerationUploadedArtifact,
+} from "../types";
 
 describe("completeD09RfpGovernanceSections", () => {
   it("appends gate-critical D09 appendix tables before quality review", () => {
@@ -42,7 +45,9 @@ describe("completeD09RfpGovernanceSections", () => {
     expect(completed).toContain("1,800+ FTE");
     expect(completed).toContain("CLM-001");
     expect(completed).toContain("A-001");
-    expect(completed).toContain("Commercial model and normalized TCO");
+    expect(completed).toContain(
+      "Commercial competitiveness and transparency",
+    );
     expect(completed).toContain("Written clarification");
     expect(completed).toContain("### §11A · Source register");
     expect(completed).toContain("### §11B · Gap closure register");
@@ -95,29 +100,52 @@ describe("completeD09RfpGovernanceSections", () => {
     expect(completed).toContain("Incumbent Provider A");
     expect(completed).toContain("Incumbent Provider B");
   });
+
+  it("uses planning anchors instead of bracketed placeholders when D09 evidence is present", () => {
+    const completed = completeD09RfpGovernanceSections({
+      artifactCode: "d09_rfp_pack",
+      body: "# RFP Package\n\n## §1 · Executive summary",
+      ctx: makeContext([
+        "01_Application_Portfolio_InScope_60Apps.csv",
+        "02_ITSM_Ticket_Volumetrics_12mo.csv",
+        "03_System_Workload_Volumetrics.csv",
+        "04_Resource_Capacity_Baseline_Pyramid.csv",
+        "05_SLA_XLA_Matrix_Current.csv",
+        "06_Tower_Scope_Service_Catalog.csv",
+        "07_Incumbent_Contract_Baseline_INTERNAL.md",
+        "08_Locked_Pricing_Assumptions_Volume_Bands.csv",
+        "09_Evaluation_Criteria_Weights_APPROVED.md",
+        "10_Vendor_Response_Expectations_and_Legal_Terms.md",
+        "11_Data_Center_Infrastructure_Inventory.csv",
+        "12_Network_Topology_Circuit_Inventory.csv",
+        "13_Security_Compliance_Control_Posture.md",
+        "14_Transition_Ops_Blackout_Calendar.csv",
+        "15_Run_vs_Change_Financial_Baseline.csv",
+      ]),
+    });
+
+    expect(completed).not.toMatch(/\[CLIENT TO (SET|CONFIRM|COMPLETE)\]/);
+    expect(completed).toContain("T+5 weeks from sponsor sign-off");
+    expect(completed).toContain("| Service delivery capability | 20% |");
+    expect(completed).toContain(
+      "Approved evaluation criteria and weights are loaded",
+    );
+  });
 });
 
-function makeContext(): SourceGenerationContext {
-  return {
-    tenantKey: "skyharbor",
-    tenantName: "SkyHarbor Air",
-    event: {
-      id: "event-1",
-      code: "SKYH-IT-MANAGED-SERVICES-2026",
-      name: "IT Managed Services Outsourcing",
-      archetype: "managed_service",
-      rigor: "strategic",
-      currentStageKey: "rfp",
-      statusLabel: "Active",
-      owner: "SVP & CIO",
-      triggerDescription: "Contracts expiring.",
-      scopeDescription: "Managed services scope.",
-      estimatedValueUsd: 300_000_000,
-    },
-    artifactStates: [],
-    gateCriteria: [],
-    evidence: [],
-    uploadedEvidence: [
+function makeContext(filenames?: string[]): SourceGenerationContext {
+  const uploadedEvidence: SourceGenerationUploadedArtifact[] =
+    filenames?.map((originalName, index) => ({
+      id: `artifact-${index + 1}`,
+      originalName,
+      artifactFamily: "other",
+      sourceFormat: originalName.endsWith(".md") ? "markdown" : "csv",
+      parseStatus: "parsed",
+      evidenceState: "parsed_uncited",
+      stageKey: "scope" as const,
+      chunkExcerpts: [],
+      factSummaries: [],
+    })) ?? [
       {
         id: "artifact-09",
         originalName: "09_Evaluation_Criteria_Weights_APPROVED.csv",
@@ -151,6 +179,27 @@ function makeContext(): SourceGenerationContext {
         chunkExcerpts: [],
         factSummaries: [],
       },
-    ],
+    ];
+
+  return {
+    tenantKey: "skyharbor",
+    tenantName: "SkyHarbor Air",
+    event: {
+      id: "event-1",
+      code: "SKYH-IT-MANAGED-SERVICES-2026",
+      name: "IT Managed Services Outsourcing",
+      archetype: "managed_service",
+      rigor: "strategic",
+      currentStageKey: "rfp",
+      statusLabel: "Active",
+      owner: "SVP & CIO",
+      triggerDescription: "Contracts expiring.",
+      scopeDescription: "Managed services scope.",
+      estimatedValueUsd: 300_000_000,
+    },
+    artifactStates: [],
+    gateCriteria: [],
+    evidence: [],
+    uploadedEvidence,
   };
 }
