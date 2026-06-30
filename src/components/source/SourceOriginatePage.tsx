@@ -36,7 +36,7 @@ interface IntakeFieldDefinition {
   prompt: string;
   placeholder: string;
   /** Optional — only the generic intake assigns a guiding agent per field. */
-  agent?: "Steward" | "Sentinel" | "Atlas";
+  agent?: "aVa";
 }
 
 type IntakeState = Record<IntakeFieldId, string>;
@@ -54,7 +54,7 @@ const INTAKE_FIELDS: IntakeFieldDefinition[] = [
     prompt: "What event makes this sourcing work necessary now?",
     placeholder:
       "Renewal date, spend pressure, service issue, merger, cloud-cost spike...",
-    agent: "Sentinel",
+    agent: "aVa",
   },
   {
     id: "decisionOwner",
@@ -62,7 +62,7 @@ const INTAKE_FIELDS: IntakeFieldDefinition[] = [
     prompt: "Who can make or sponsor the technology sourcing decision?",
     placeholder:
       "CIO, CTO, VP Infrastructure, app owner, procurement sponsor...",
-    agent: "Steward",
+    agent: "aVa",
   },
   {
     id: "scopeBoundary",
@@ -71,7 +71,7 @@ const INTAKE_FIELDS: IntakeFieldDefinition[] = [
       "Which IT services, platforms, software, cloud, data, or delivery towers are in and out?",
     placeholder:
       "In: AMS for SAP and eCommerce. Out: security operations and deskside support.",
-    agent: "Sentinel",
+    agent: "aVa",
   },
   {
     id: "valueTarget",
@@ -79,7 +79,7 @@ const INTAKE_FIELDS: IntakeFieldDefinition[] = [
     prompt: "What commercial outcome justifies standing up the event?",
     placeholder:
       "$4M run-rate savings, 15% unit-cost reduction, risk reduction, SLA uplift...",
-    agent: "Atlas",
+    agent: "aVa",
   },
   {
     id: "baselineOwner",
@@ -88,7 +88,7 @@ const INTAKE_FIELDS: IntakeFieldDefinition[] = [
       "Who owns the minimum baseline Source can use without pretending evidence is ready?",
     placeholder:
       "Finance owns spend baseline; ServiceNow owner owns ticket volume extract by May 8.",
-    agent: "Sentinel",
+    agent: "aVa",
   },
 ];
 
@@ -300,17 +300,17 @@ function GuidanceCard({
 
 const AGENT_GUIDANCE = [
   {
-    agent: "Ava",
+    agent: "aVa",
     label: "Chat-driven brief",
-    body: "Tell Ava your sourcing situation in plain language; the brief on the right fills as you talk. Override any field manually if Ava got it wrong.",
+    body: "Tell aVa your sourcing situation in plain language; the brief on the right fills as you talk. Override any field manually if aVa got it wrong.",
   },
   {
-    agent: "Ava",
+    agent: "aVa",
     label: "Five fields",
     body: "Trigger, decision owner, scope boundary, value basis, baseline owner. Capture all five before the event opens for approval.",
   },
   {
-    agent: "Ava",
+    agent: "aVa",
     label: "Evidence caution",
     body: "Loaded or promised data is not usable evidence yet; name the baseline owner and confidence limits.",
   },
@@ -327,7 +327,7 @@ const initialIntakeState: IntakeState = {
 // Legacy cleanup only. Earlier builds restored /source/new drafts from
 // localStorage, which made a new intake open with stale values and even kept
 // the optional category selector expanded. A new sourcing event now starts
-// clean; Ava fills the brief from chat instead of browser residue.
+// clean; aVa fills the brief from chat instead of browser residue.
 const AUTOSAVE_KEY_PREFIX = "abarva.source.originate.intake";
 function autosaveKey(clientKey: string): string {
   return `${AUTOSAVE_KEY_PREFIX}.${clientKey}`;
@@ -496,9 +496,9 @@ function sanitizeEventNameClause(value: string | undefined): string {
 }
 
 const AVA_INTAKE_AGENT = {
-  initials: "Av",
-  name: "Ava",
-  role: "End-to-end sourcing assistant",
+  initials: "aVa",
+  name: "aVa",
+  role: "End-to-end sourcing advisor",
 } as const;
 
 export function SourceOriginatePage({
@@ -707,8 +707,8 @@ export function SourceOriginatePage({
         <div>
           <div style={EYEBROW}>
             {intakeShape
-              ? `Step 0 · Ava · ${intakeShape.eyebrow}`
-              : "Step 0 · Ava"}
+              ? `Step 0 · aVa · ${intakeShape.eyebrow}`
+              : "Step 0 · aVa"}
           </div>
           <h2 style={HEADING}>
             {intakeShape ? intakeShape.heading : "Sourcing event intake"}
@@ -716,7 +716,7 @@ export function SourceOriginatePage({
           <p style={SUBHEAD}>
             {intakeShape
               ? intakeShape.subhead
-              : "Tell Ava your sourcing situation in plain language — the brief on the right fills as you talk. Override any field manually if Ava got it wrong. The event opens for approval only after all five facts are captured."}
+              : "Tell aVa your sourcing situation in plain language — the brief on the right fills as you talk. Override any field manually if aVa got it wrong. The event opens for approval only after all five facts are captured."}
           </p>
         </div>
 
@@ -867,7 +867,7 @@ export function SourceOriginatePage({
                   color: SHELL.INK_SOFT,
                 }}
               >
-                Optional. Ava can infer this after the intake facts are
+                Optional. aVa can infer this after the intake facts are
                 clear.
               </div>
             </div>
@@ -985,7 +985,7 @@ export function SourceOriginatePage({
         </div>
       </section>
 
-      {/* Related context — populates from Sentinel responses as the chat unfolds. */}
+      {/* Related context — populates from aVa responses as the chat unfolds. */}
       <RelatedContextSection />
 
       {/* Guidance cards */}
@@ -1002,8 +1002,7 @@ export function SourceOriginatePage({
     <AppShell
       // surface stays 'source' (closed SurfaceId enum). The brief-progress
       // cadence directive opts in via surfaceContext.sourceIntakeMode so
-      // Sentinel emits brief-progress artifacts on this canvas the same
-      // way Nexus does on /strategic-moves/new. Without sourceIntakeMode
+      // aVa emits brief-progress artifacts on this canvas. Without sourceIntakeMode
       // the right pane never auto-fills.
       surface="source"
       surfaceContext={{
@@ -1012,8 +1011,8 @@ export function SourceOriginatePage({
         clientName,
         sourceIntent: intakeShape?.intent,
         context: intakeShape
-          ? `New IT sourcing event intake — ${intakeShape.eyebrow} (Ava guided)`
-          : "New IT sourcing event intake — Ava guided",
+          ? `New IT sourcing event intake — ${intakeShape.eyebrow} (aVa guided)`
+          : "New IT sourcing event intake — aVa guided",
       }}
       topBarProps={{
         tenantName: clientName,
@@ -1038,7 +1037,7 @@ export function SourceOriginatePage({
           active={tourActive}
           config={{
             step: 2,
-            title: "Ava just needs the trigger.",
+            title: "aVa just needs the trigger.",
             body: (
               <>
                 Fill the <strong>Why now / trigger</strong> field first, then
@@ -1357,7 +1356,7 @@ const FIELD_PROMPT: CSSProperties = {
 
 // ── Related context ───────────────────────────────────────────────────────
 //
-// Surfaces tenant entities Sentinel mentions in its responses so the right
+// Surfaces tenant entities aVa mentions in its responses so the right
 // pane shows 'relevant info as we start chatting' (founder feedback
 // 2026-05-10). This is rendered inside the AppShell tree so
 // useAtlasPageState() returns the live conversation. Parsing is lightweight
@@ -1519,7 +1518,7 @@ function RelatedContextSection() {
             background: SHELL.PAPER_SOFT,
           }}
         >
-          As Ava cites vendors, systems, owners, and dollar amounts during
+          As aVa cites vendors, systems, owners, and dollar amounts during
           the conversation, they will surface here so you can see the tenant
           context grounding the brief.
         </div>

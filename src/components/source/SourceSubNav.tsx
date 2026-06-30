@@ -34,6 +34,7 @@ interface SourceSubNavTab {
 export const SOURCE_SUBNAV_TABS: readonly SourceSubNavTab[] = [
   { key: "queue", label: "Queue", href: "/source/queue" },
   { key: "events", label: "Events", href: "/source/events" },
+  { key: "capabilities", label: "Capabilities", href: "/source/capabilities" },
   { key: "portfolio", label: "Portfolio", href: "/source/portfolio" },
 ] as const;
 
@@ -46,6 +47,7 @@ export const SOURCE_SUBNAV_TABS_V2: readonly SourceSubNavTab[] = [
   { key: "queue", label: "Decisions", href: "/source/queue" },
   { key: "approvals", label: "Approvals", href: "/source/approvals" },
   { key: "portfolio", label: "Portfolio", href: "/source/portfolio" },
+  { key: "capabilities", label: "Capabilities", href: "/source/capabilities" },
   // "Deliverables" removed as a top-nav destination: generating a deliverable
   // detached from any event is the context-free anti-pattern the Workspace
   // reset replaces. Deliverables are now generated in-event-context via the
