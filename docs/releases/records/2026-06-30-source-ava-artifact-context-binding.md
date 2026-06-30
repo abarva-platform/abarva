@@ -10,11 +10,11 @@
 
 ## Plain-English Summary
 
-Source aVa now sees the Source evidence and generated artifacts that belong to the active sourcing event. Before this release, non-Apex live Source events answered mostly from the `source_events` intake row, so aVa could say evidence was missing even after documents had been uploaded and parsed. This release binds the event's Source artifact registry rows, parsed chunks, and parsed facts into the same event advisor context.
+Source aVa now sees the Source evidence and generated artifacts that belong to the active sourcing event, and live Source answers no longer inherit seed-fixture blockers. Before this release, non-Apex live Source events answered mostly from the `source_events` intake row, so aVa could say evidence was missing even after documents had been uploaded and parsed. The first live proof after artifact binding showed the event evidence was now bound, but a stale static fixture layer still overlaid “RFP generation must remain blocked” language. This release binds the event's Source artifact registry rows, parsed chunks, and parsed facts into the same event advisor context, classifies those artifacts into sourcing-relevant evidence families, and keeps static seed validation reports out of live event answer status.
 
 ## Layer Impact
 
-- `global-control-lane`: Updates shared Source aVa event-answer context binding for all tenants using `/api/v1/source/[eventId]/nexus/ask`.
+- `global-control-lane`: Updates shared Source aVa event-answer context binding and live answer readiness handling for all tenants using `/api/v1/source/[eventId]/nexus/ask`.
 - No schema, RLS, migration, tenant seed, or raw document browsing change.
 
 ## Client Applicability
@@ -28,17 +28,23 @@ Source aVa now sees the Source evidence and generated artifacts that belong to t
 ## Changes Included
 
 - `src/app/api/v1/source/[eventId]/nexus/ask/route.ts`
+- `src/lib/source/nexus-api.ts`
+- `src/lib/source/source-answer-engine.ts`
+- `src/lib/source/__tests__/nexus-api-live-context.test.ts`
 - `docs/releases/records/2026-06-30-source-ava-artifact-context-binding.md`
 
 ## QA / Validation
 
 - `npx eslint src/app/api/v1/source/[eventId]/nexus/ask/route.ts` — passed.
+- `npx eslint 'src/app/api/v1/source/[eventId]/nexus/ask/route.ts' src/lib/source/nexus-api.ts src/lib/source/source-answer-engine.ts src/lib/source/__tests__/nexus-api-live-context.test.ts` — passed.
+- `npx jest src/lib/source/__tests__/nexus-api-live-context.test.ts src/lib/source/__tests__/source-answer-engine.test.ts --runInBand` — passed, 2 suites / 39 tests.
 - `npx tsc --noEmit --pretty false` — blocked by pre-existing unrelated missing declarations for `js-yaml`, `@azure-rest/ai-document-intelligence`, and `@axe-core/playwright`; no new Source route TypeScript error was surfaced before those baseline failures.
-- Live proof planned after deploy on SkyHarbor Source event `e64177a2-e75b-4604-8584-fa60386225ae` by asking Source aVa what blocks D09 release, what vendors must provide, and what changed after the AMS evidence pack was loaded.
+- First post-deploy proof on SkyHarbor Source event `e64177a2-e75b-4604-8584-fa60386225ae` confirmed aVa now binds `26` uploaded Source evidence artifacts, `19` generated artifacts, `50` parsed excerpts, and `26` structured facts.
+- The same proof exposed the stale seed-fixture readiness overlay. A regression now asserts that live artifact-backed events do not inherit the “RFP generation must remain blocked” fixture defer and do not keep naming application inventory, ticket/SLA baseline, or agreement evidence as missing when those families are present.
 
 ## Rollout Plan
 
-Merge to `main`, deploy through the repo-owned Azure Container Apps main deploy workflow, wait for the new healthy revision, assign 100% traffic to it, and run signed-in SkyHarbor Source aVa proof.
+Merge to `main`, deploy through the repo-owned Azure Container Apps main deploy workflow, wait for the new healthy revision, assign 100% traffic to it, and run signed-in SkyHarbor Source aVa proof. Post-deploy proof must confirm both conditions: artifact evidence is bound and stale seed-fixture blockers no longer drive the visible answer.
 
 ## Deployment Authority
 
@@ -52,13 +58,14 @@ Merge to `main`, deploy through the repo-owned Azure Container Apps main deploy 
 
 ## Rollback Plan
 
-Revert this route-level context-binding change and redeploy the prior healthy ACA revision. No data rollback is required because no schema or tenant data is changed.
+Revert this route/context/answer-readiness change and redeploy the prior healthy ACA revision. No data rollback is required because no schema or tenant data is changed.
 
 ## Audit Evidence
 
 - Source evidence upload and D09 proof folder: `/Users/anand/Downloads/source-skyharbor-ams-live-rerun-2026-06-30T224056115Z`
 - Pre-fix Source aVa answers showed event-row-only evidence and did not mention loaded artifacts in `/Users/anand/Downloads/source-skyharbor-ams-live-rerun-2026-06-30T224056115Z/ava-proof`.
-- Post-deploy proof will be added to the same Source P0 Slice 3 evidence bundle.
+- First post-deploy proof after the artifact-binding deployment: `/Users/anand/Downloads/source-skyharbor-ams-live-rerun-2026-06-30T224056115Z/ava-proof-postfix`.
+- Final post-deploy proof after the readiness-overlay fix will be added to the same Source P0 Slice 3 evidence bundle.
 
 ## Known Gaps
 
