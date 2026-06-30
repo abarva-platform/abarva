@@ -238,12 +238,17 @@ export function createSourceNexusApiStubResponse(
     });
   }
 
-  const contextValidationReport = getSourceContextValidationReadableReport({
-    generatedAt,
-  });
-  const workflowValidationReport = getSourceWorkflowValidationReadableReport({
-    generatedAt,
-  });
+  const usesLiveRuntimeEvent = Boolean(input.liveEventDetail);
+  const contextValidationReport = usesLiveRuntimeEvent
+    ? undefined
+    : getSourceContextValidationReadableReport({
+        generatedAt,
+      });
+  const workflowValidationReport = usesLiveRuntimeEvent
+    ? undefined
+    : getSourceWorkflowValidationReadableReport({
+        generatedAt,
+      });
   const sentinelBriefing = buildSentinelSourceBriefing({
     contextBundle: contextResult.bundle,
     contextValidationReport,
@@ -341,24 +346,24 @@ export function createSourceNexusApiStubResponse(
           sentinelBriefing.primaryVoice.confidence),
     },
     suggestedActions,
-    contextValidationSummary: summarizeContextValidation(
-      contextValidationReport,
-    ),
-    workflowValidationSummary: summarizeWorkflowValidation(
-      workflowValidationReport,
-    ),
+    contextValidationSummary: contextValidationReport
+      ? summarizeContextValidation(contextValidationReport)
+      : null,
+    workflowValidationSummary: workflowValidationReport
+      ? summarizeWorkflowValidation(workflowValidationReport)
+      : null,
     warnings: createWarnings(
       contextResult.bundle,
       contextValidationReport,
       workflowValidationReport,
     ),
     defers: [
-      ...contextValidationReport.deferReasons.map(
+      ...(contextValidationReport?.deferReasons.map(
         (defer) => `${defer.fixtureId}: ${defer.reason}`,
-      ),
-      ...workflowValidationReport.intentionalDefers.map(
+      ) ?? []),
+      ...(workflowValidationReport?.intentionalDefers.map(
         (defer) => `${defer.fixtureId}: ${defer.explanation}`,
-      ),
+      ) ?? []),
     ],
     cannotProceedReasons: sentinelBriefing.primaryVoice.cannotProceedReasons,
     summary,
@@ -567,16 +572,16 @@ function summarizeSourceIntelligence(
 
 function deriveAnswerStatus(
   bundle: SourceAgentContextBundle,
-  contextValidationReport: SourceContextValidationReadableReport,
-  workflowValidationReport: SourceWorkflowValidationReadableReport,
+  contextValidationReport: SourceContextValidationReadableReport | undefined,
+  workflowValidationReport: SourceWorkflowValidationReadableReport | undefined,
   briefing: Pick<
     SentinelSourceBriefing,
     "overallReadiness" | "blockers" | "defers"
   >,
 ): SourceNexusApiAnswerStatus {
   if (
-    contextValidationReport.suite.rejectCount > 0 ||
-    workflowValidationReport.failedExpectations.length > 0
+    (contextValidationReport?.suite.rejectCount ?? 0) > 0 ||
+    (workflowValidationReport?.failedExpectations.length ?? 0) > 0
   ) {
     return "error";
   }
@@ -636,8 +641,8 @@ function summarizeWorkflowValidation(
 
 function createWarnings(
   bundle: SourceAgentContextBundle,
-  contextValidationReport: SourceContextValidationReadableReport,
-  workflowValidationReport: SourceWorkflowValidationReadableReport,
+  contextValidationReport: SourceContextValidationReadableReport | undefined,
+  workflowValidationReport: SourceWorkflowValidationReadableReport | undefined,
 ): string[] {
   return unique([
     "No model was called. Response is deterministic.",
@@ -648,12 +653,12 @@ function createWarnings(
         ]
       : []),
     ...bundle.contextQuality.missingContextReasons,
-    ...contextValidationReport.deferReasons.map(
+    ...(contextValidationReport?.deferReasons.map(
       (defer) => `Context defer: ${defer.reason}`,
-    ),
-    ...workflowValidationReport.intentionalDefers.map(
+    ) ?? []),
+    ...(workflowValidationReport?.intentionalDefers.map(
       (defer) => `Workflow defer: ${defer.explanation}`,
-    ),
+    ) ?? []),
   ]);
 }
 

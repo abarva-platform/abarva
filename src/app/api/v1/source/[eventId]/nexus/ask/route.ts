@@ -406,10 +406,7 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
   const artifactEvidence = [
     ...artifacts.map((artifact, index) => ({
       id: `source-artifact:${artifact.id}`,
-      segmentId:
-        artifact.source_origin === "generated"
-          ? "generated_sourcing_artifacts"
-          : "uploaded_source_evidence",
+      segmentId: inferSourceArtifactSegment(artifact),
       recordId: artifact.id,
       title: artifact.original_name ?? "Source artifact",
       sourceDoc: "source_artifacts",
@@ -425,7 +422,7 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
     })),
     ...chunks.slice(0, 18).map((chunk, index) => ({
       id: `source-artifact-chunk:${chunk.chunk_id}`,
-      segmentId: "uploaded_source_evidence",
+      segmentId: inferSourceArtifactSegmentById(chunk.artifact_id, artifacts),
       recordId: chunk.chunk_id,
       title: `${artifactNameById.get(chunk.artifact_id) ?? "Source artifact"} excerpt`,
       sourceDoc: "source_artifact_chunks",
@@ -435,7 +432,7 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
     })),
     ...facts.slice(0, 18).map((fact, index) => ({
       id: `source-artifact-fact:${fact.artifact_id}:${fact.fact_key ?? index}`,
-      segmentId: "sourcing_artifacts",
+      segmentId: inferSourceArtifactSegmentById(fact.artifact_id, artifacts),
       recordId: `${fact.artifact_id}:${fact.fact_key ?? index}`,
       title: `${artifactNameById.get(fact.artifact_id) ?? "Source artifact"} fact`,
       sourceDoc: "source_artifact_facts",
@@ -445,6 +442,52 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
     })),
   ];
   return { artifacts, chunks, facts, artifactEvidence };
+}
+
+function inferSourceArtifactSegmentById(
+  artifactId: string,
+  artifacts: SourceArtifactContextRow[],
+): string {
+  return inferSourceArtifactSegment(
+    artifacts.find((artifact) => artifact.id === artifactId),
+  );
+}
+
+function inferSourceArtifactSegment(
+  artifact: SourceArtifactContextRow | undefined,
+): string {
+  if (!artifact) return "sourcing_artifacts";
+  if (artifact.source_origin === "generated") return "sourcing_artifacts";
+
+  const text = [
+    artifact.original_name,
+    artifact.artifact_family,
+    artifact.artifact_kind,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (/\b(agreement|contract|vendor|change[-_ ]?order|amendment|commercial)\b/.test(text)) {
+    return "vendor_contracts";
+  }
+  if (/\b(ticket|servicenow|sla|service[-_ ]?level|blackout|ops|operation|incident|request|change)\b/.test(text)) {
+    return "operating_telemetry";
+  }
+  if (/\b(finance|financial|budget|cost|run[-_ ]?vs[-_ ]?change|rate|pricing)\b/.test(text)) {
+    return "it_financials";
+  }
+  if (/\b(security|compliance|risk|control|ciso|audit)\b/.test(text)) {
+    return "compliance";
+  }
+  if (/\b(evaluation|weight|transition|dependency|sponsor|authorization|roadmap|program)\b/.test(text)) {
+    return "program_inventory";
+  }
+  if (/\b(application|app|scope|tower|service[-_ ]?catalog|data[-_ ]?center|infrastructure|network|topology|circuit|cmdb)\b/.test(text)) {
+    return "it_landscape";
+  }
+
+  return "sourcing_artifacts";
 }
 
 function cleanContextText(value: string): string {

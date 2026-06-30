@@ -194,4 +194,114 @@ describe('Source Nexus API live context', () => {
     expect(response.sourceAnswer?.answerText).not.toMatch(/^Workflow gates contain blockers/m);
     expect(response.answerQuality?.renderable).toBe(true);
   });
+
+  it('does not let seed fixture blockers override live Source artifact evidence', () => {
+    const response = createSourceNexusApiStubResponse({
+      eventId: 'SKYH-SKYHARBOR-AMS-OUTSOURCING-2026',
+      prompt: 'What is still blocking the SkyHarbor AMS RFP release?',
+      tenant: {
+        tenantId: 'skyharbor',
+        tenantKey: 'skyharbor',
+        tenantName: 'SkyHarbor Air',
+        activeClientId: 'skyharbor',
+        activeClientName: 'SkyHarbor Air',
+      },
+      user: { id: 'agent-skyharbor-cto' },
+      userRole: 'cio',
+      stageKey: 'rfp',
+      liveEventDetail: sourceEventRowToDetail({
+        ...liveEventRow,
+        id: 'e64177a2-e75b-4604-8584-fa60386225ae',
+        client_key: 'skyharbor',
+        event_code: 'SKYH-SKYHARBOR-AMS-OUTSOURCING-2026',
+        event_name: 'SkyHarbor AMS Outsourcing RFP',
+        event_type: 'managed_services',
+        current_stage_key: 'rfp',
+        estimated_value_usd: 300_000_000,
+        trigger_description:
+          'SkyHarbor is evaluating application managed services outsourcing because vendor contracts are fragmented, service performance varies by tower, change orders are creating leakage, and leadership needs a governed RFP.',
+        scope_description:
+          'Application managed services sourcing event with tower scope, ticket and SLA baseline, staffing model, current agreement constraints, transition dependencies, and RFP risk register.',
+        decision_owner: 'CIO and VP Procurement',
+      }, 'SkyHarbor Air'),
+      liveTenantContext: {
+        clientKey: 'skyharbor',
+        brokerTenantKey: 'skyharbor',
+        inventoryRecordCount: 0,
+        contextChunkCount: 87,
+        embeddedContextChunkCount: 0,
+        sourceEventFound: true,
+        segments: [
+          { segmentId: 'sourcing_artifacts', inventoryRecords: 0, contextChunks: 8, embeddedChunks: 0 },
+          { segmentId: 'it_landscape', inventoryRecords: 0, contextChunks: 4, embeddedChunks: 0 },
+          { segmentId: 'operating_telemetry', inventoryRecords: 0, contextChunks: 5, embeddedChunks: 0 },
+          { segmentId: 'vendor_contracts', inventoryRecords: 0, contextChunks: 3, embeddedChunks: 0 },
+          { segmentId: 'it_financials', inventoryRecords: 0, contextChunks: 2, embeddedChunks: 0 },
+          { segmentId: 'compliance', inventoryRecords: 0, contextChunks: 2, embeddedChunks: 0 },
+          { segmentId: 'program_inventory', inventoryRecords: 0, contextChunks: 3, embeddedChunks: 0 },
+        ],
+        currentStateAreas: ['Sourcing Artifacts', 'Source Evidence and Generated Deliverables'],
+        evidenceBasis: [
+          '26 uploaded Source evidence artifact(s), 19 generated artifact(s), 50 parsed excerpt(s), and 26 structured fact(s) are bound from the Source artifact registry for this event.',
+        ],
+        retrievedEvidence: [
+          {
+            id: 'source-artifact:app-scope',
+            segmentId: 'it_landscape',
+            recordId: 'app-scope',
+            title: '02_application_scope_extract.csv',
+            sourceType: 'contextChunk',
+            sourceDoc: 'source_artifacts',
+            excerpt: 'Application scope extract: 500 in-scope applications with criticality, owner, tower, and transition complexity.',
+            confidence: 'high',
+            score: 18,
+          },
+          {
+            id: 'source-artifact:ticket-history',
+            segmentId: 'operating_telemetry',
+            recordId: 'ticket-history',
+            title: '03_servicenow_12_month_ticket_history.csv',
+            sourceType: 'contextChunk',
+            sourceDoc: 'source_artifacts',
+            excerpt: 'ServiceNow 12 month ticket history: incident, request, change, severity, reopen, and SLA breach baseline for AMS scope.',
+            confidence: 'high',
+            score: 17,
+          },
+          {
+            id: 'source-artifact:agreement',
+            segmentId: 'vendor_contracts',
+            recordId: 'agreement',
+            title: '01_current_ams_agreement_package_SYNTHETIC.md',
+            sourceType: 'contextChunk',
+            sourceDoc: 'source_artifacts',
+            excerpt: 'Current AMS agreement package: scope terms, SLA terms, pricing terms, change-control terms, transition and exit terms.',
+            confidence: 'high',
+            score: 16,
+          },
+          {
+            id: 'source-artifact:d09',
+            segmentId: 'sourcing_artifacts',
+            recordId: 'd09',
+            title: 'RFP_Package-69d8180c_source.md',
+            sourceType: 'contextChunk',
+            sourceDoc: 'source_artifacts',
+            excerpt: 'Generated RFP package for the RFP stage; quality gate passed with all dimensions at or above 8.',
+            confidence: 'high',
+            score: 15,
+          },
+        ],
+        warnings: [
+          'Using persisted Source event facts plus Source artifact registry/chunk/fact evidence for this event; raw blob contents are not exposed unless parsed into governed Source evidence.',
+        ],
+      },
+    });
+
+    expect(response.answerStatus).not.toBe('blocked');
+    expect(response.contextValidationSummary).toBeNull();
+    expect(response.workflowValidationSummary).toBeNull();
+    expect(response.defers.join('\n')).not.toMatch(/RFP generation must remain blocked/i);
+    expect(response.summary).toMatch(/application scope|ServiceNow|RFP package/i);
+    expect(response.summary).not.toMatch(/Application inventory with criticality, owner, ticket volume, and run cost/i);
+    expect(response.sourceAnswer?.deliveryModelGate?.gateStatus).not.toBe('blocked_insufficient_evidence');
+  });
 });

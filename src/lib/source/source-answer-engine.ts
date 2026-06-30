@@ -186,7 +186,10 @@ export function buildSourceAnswerEngine(
     inferMissingData(input.contextBundle, live),
   );
   const finalRiskTraps = unique([...riskTraps, ...corpusRiskTraps]);
-  const finalMissingData = unique([...missingData, ...corpusMissingData]);
+  const finalMissingData = filterResolvedMissingData(
+    unique([...missingData, ...corpusMissingData]),
+    live,
+  );
   const finalExpertLens = unique([...playbook.expertLens, ...corpusExpertLens]);
   const confidence = deriveAnswerConfidence(live, evidence);
   const limits = unique([
@@ -558,12 +561,19 @@ function rankAnswerEvidence(
     ],
     event_shaping: [
       "sourcing_artifacts",
+      "uploaded_source_evidence",
+      "generated_sourcing_artifacts",
       "evidence_ledger",
       "vendor_contracts",
       "it_landscape",
+      "operating_telemetry",
+      "it_financials",
+      "program_inventory",
       "financial_model",
     ],
     cxo_guidance: [
+      "sourcing_artifacts",
+      "program_inventory",
       "evidence_ledger",
       "financial_model",
       "it_financials",
@@ -572,6 +582,7 @@ function rankAnswerEvidence(
     ],
     risk_traps: [
       "compliance",
+      "program_inventory",
       "vendor_contracts",
       "evidence_ledger",
       "decision_traces",
@@ -579,6 +590,8 @@ function rankAnswerEvidence(
     ],
     missing_data: [
       "sourcing_artifacts",
+      "uploaded_source_evidence",
+      "generated_sourcing_artifacts",
       "evidence_ledger",
       "kpi_dictionary",
       "operating_telemetry",
@@ -587,7 +600,12 @@ function rankAnswerEvidence(
     expert_sourcing: [
       "evidence_ledger",
       "sourcing_artifacts",
+      "uploaded_source_evidence",
+      "generated_sourcing_artifacts",
       "vendor_contracts",
+      "it_landscape",
+      "operating_telemetry",
+      "it_financials",
       "peer_benchmarks",
       "vendor_intelligence",
     ],
@@ -631,22 +649,81 @@ function inferMissingData(
   bundle: SourceAgentContextBundle,
   live: SourceLiveTenantContextSnapshot,
 ): string[] {
+  const hasSegment = (segmentId: string) =>
+    live.segments.some(
+      (segment) =>
+        segment.segmentId === segmentId &&
+        segment.inventoryRecords + segment.contextChunks > 0,
+    );
+
   return unique([
     ...bundle.missingInputs,
-    ...(live.segments.some(
-      (segment) => segment.segmentId === "operating_telemetry",
-    )
+    ...(hasSegment("operating_telemetry")
       ? []
       : ["Operating telemetry baseline."]),
-    ...(live.segments.some(
-      (segment) => segment.segmentId === "vendor_contracts",
-    )
+    ...(hasSegment("vendor_contracts")
       ? []
       : ["Current vendor contract and renewal baseline."]),
-    ...(live.segments.some((segment) => segment.segmentId === "it_financials")
+    ...(hasSegment("it_financials")
       ? []
       : ["IT financial baseline."]),
+    ...(hasSegment("it_landscape")
+      ? []
+      : ["Application and infrastructure scope baseline."]),
   ]);
+}
+
+function filterResolvedMissingData(
+  items: string[],
+  live: SourceLiveTenantContextSnapshot,
+): string[] {
+  const hasSegment = (segmentId: string) =>
+    live.segments.some(
+      (segment) =>
+        segment.segmentId === segmentId &&
+        segment.inventoryRecords + segment.contextChunks > 0,
+    );
+
+  return items.filter((item) => {
+    const text = item.toLowerCase();
+    if (
+      hasSegment("it_landscape") &&
+      /\b(application inventory|application estate|support tiers|ownership boundaries|tooling|scope)\b/.test(
+        text,
+      )
+    ) {
+      return false;
+    }
+    if (
+      hasSegment("operating_telemetry") &&
+      /\b(ticket|incident|request|change baseline|sla|service[- ]?level|performance)\b/.test(
+        text,
+      )
+    ) {
+      return false;
+    }
+    if (
+      hasSegment("vendor_contracts") &&
+      /\b(contract|renewal|rate card|exclusion|agreement|vendor)\b/.test(text)
+    ) {
+      return false;
+    }
+    if (
+      hasSegment("it_financials") &&
+      /\b(financial|run[- ]?cost|cost baseline|pricing|rate)\b/.test(text)
+    ) {
+      return false;
+    }
+    if (
+      hasSegment("program_inventory") &&
+      /\b(transition|knowledge transfer|cutover|acceptance|evaluation weights|scorecard)\b/.test(
+        text,
+      )
+    ) {
+      return false;
+    }
+    return true;
+  });
 }
 
 function deriveAnswerConfidence(
