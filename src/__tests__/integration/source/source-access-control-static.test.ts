@@ -106,6 +106,13 @@ describe('Source access-control wiring', () => {
     expect(shell).toContain('error: payload?.error ?? "unknown"');
   });
 
+  it('streams Source artifact generation and quality-gate model calls for ACA-safe long requests', () => {
+    const route = read('src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route.ts');
+
+    expect(route).toContain('messages.stream');
+    expect(route).not.toContain('messages.create');
+  });
+
   it('opens persisted Source artifacts through the registry-backed detail route', () => {
     const queries = read('src/lib/source/queries.ts');
     const page = read('src/app/(maestro)/source/events/[eventId]/artifacts/[artifactId]/page.tsx');
