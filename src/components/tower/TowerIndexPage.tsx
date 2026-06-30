@@ -44,6 +44,11 @@ import {
   findCioTowerMetricPacket,
   type CioTowerMetricPacket,
 } from "@/lib/cio-tower/metric-packet";
+import type {
+  CioTowerCxoMeasureCard,
+  CioTowerCxoTableRow,
+  CioTowerCxoViewModel,
+} from "@/lib/cio-tower/cxo-view-model";
 
 export interface TowerSubstrateCounts {
   initiatives: number;
@@ -62,6 +67,14 @@ interface CioTowerVisibleAnswer {
 interface CioTowerChatResponse {
   modelOutput?: CioTowerVisibleAnswer;
   traceKey?: string;
+}
+
+function labelizeCioMeasureKey(value: string): string {
+  return value
+    .replace(/_/g, " ")
+    .replace(/\bfy(\d{2})\b/gi, "FY$1")
+    .replace(/\bit\b/gi, "IT")
+    .replace(/\bytd\b/gi, "YTD");
 }
 
 // ─── Tower design tokens — aligned with the LOCKED AbarVa design system ───────
@@ -2165,6 +2178,257 @@ function CioVendorTable({
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function CxoGovernedMeasureCard({ card }: { card: CioTowerCxoMeasureCard }) {
+  const hasValue = card.valueNumeric !== null;
+  return (
+    <article
+      data-cio-tower-measure-key={card.measureKey}
+      data-cio-tower-dashboard-value={card.displayValue}
+      style={{
+        border: `1px solid ${hasValue ? T.RULE_STRONG : T.AMBER}`,
+        borderRadius: 13,
+        background: "#fff",
+        padding: "15px 16px",
+        minHeight: 126,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 9,
+          letterSpacing: "1.4px",
+          textTransform: "uppercase",
+          color: T.GRAY_DK,
+          fontWeight: 850,
+        }}
+      >
+        {card.label || labelizeCioMeasureKey(card.measureKey)}
+      </div>
+      <div
+        style={{
+          fontFamily: T.SERIF,
+          fontSize: 29,
+          lineHeight: 1.05,
+          color: hasValue ? T.INK : T.AMBER,
+          fontWeight: 900,
+          marginTop: 10,
+        }}
+      >
+        {card.displayValue}
+      </div>
+      <div style={{ marginTop: 7, color: T.INK_2, fontSize: 12.5, lineHeight: 1.35 }}>
+        {hasValue ? (
+          <>
+            {card.period ?? "period not loaded"} · {card.basis ?? "basis not loaded"} ·{" "}
+            {card.sourceFactKeys.length} source fact{card.sourceFactKeys.length === 1 ? "" : "s"}
+          </>
+        ) : (
+          card.gap
+        )}
+      </div>
+    </article>
+  );
+}
+
+function CxoGovernedTable({
+  rows,
+  emptyTitle,
+  emptyBody,
+}: {
+  rows: ReadonlyArray<CioTowerCxoTableRow>;
+  emptyTitle: string;
+  emptyBody: string;
+}) {
+  if (rows.length === 0) {
+    return (
+      <TowerEmptyState
+        eyebrow="Governed gap"
+        title={emptyTitle}
+        body={emptyBody}
+      />
+    );
+  }
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+        <thead>
+          <tr>
+            {["Item", "Measure", "Value", "Basis", "Evidence"].map((head) => (
+              <th
+                key={head}
+                style={{
+                  textAlign: head === "Value" ? "right" : "left",
+                  padding: "0 10px 10px",
+                  fontFamily: T.MONO,
+                  fontSize: 9,
+                  letterSpacing: "1.2px",
+                  color: T.GRAY_DK,
+                  textTransform: "uppercase",
+                }}
+              >
+                {head}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.slice(0, 8).map((row, index) => (
+            <tr key={`${row.label}-${row.measure}-${index}`} style={{ borderTop: `1px solid ${T.RULE}` }}>
+              <td style={{ padding: "12px 10px", minWidth: 220 }}>
+                <strong>{row.label}</strong>
+                <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 3 }}>
+                  {row.type ? labelize(row.type) : "type not loaded"} · {row.confidence}
+                </div>
+              </td>
+              <td style={{ padding: "12px 10px", color: T.INK_2 }}>
+                {labelizeCioMeasureKey(row.measure)}
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+                {row.value}
+              </td>
+              <td style={{ padding: "12px 10px", color: T.INK_2 }}>
+                {row.period} · {row.basis}
+              </td>
+              <td style={{ padding: "12px 10px", color: T.INK_2 }}>
+                {row.source}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function CxoGovernedCommandCenter({
+  model,
+}: {
+  model: CioTowerCxoViewModel;
+}) {
+  const valueCards = model.cards.filter((card) => card.section === "value_command_center").slice(0, 5);
+  const portfolioCards = model.cards.filter((card) => card.section === "portfolio_control").slice(0, 4);
+  const trustCards = model.cards.filter((card) => card.section === "evidence_trust").slice(0, 3);
+  const parityCard = model.cards.find((card) => card.measureKey === model.parityMeasureKey);
+
+  return (
+    <div style={{ padding: "22px 32px 36px" }}>
+      <section
+        style={{
+          border: `1px solid ${T.RULE_STRONG}`,
+          borderRadius: 16,
+          background: "#fff",
+          padding: "24px 26px",
+          marginBottom: 18,
+          boxShadow: "0 18px 38px rgba(15, 23, 42, 0.08)",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: T.MONO,
+            fontSize: 10,
+            letterSpacing: "1.8px",
+            textTransform: "uppercase",
+            color: T.GOLD,
+            fontWeight: 900,
+          }}
+        >
+          Tower · governed CXO command center
+        </div>
+        <h2
+          style={{
+            margin: "9px 0 0",
+            fontFamily: T.SERIF,
+            fontSize: 30,
+            lineHeight: 1.08,
+            letterSpacing: "-0.4px",
+            color: T.INK,
+            maxWidth: 960,
+          }}
+        >
+          {model.headline}
+        </h2>
+        <p style={{ margin: "10px 0 0", color: T.INK_2, maxWidth: 900, fontSize: 14.5, lineHeight: 1.5 }}>
+          This landing slice reads only `cio_tower.measure_results`, `cio_tower.facts`,
+          `cio_tower.relationships`, and `cio_tower.entities`. Missing measures are business gaps, not zeros.
+        </p>
+      </section>
+
+      <section style={{ marginBottom: 22 }}>
+        <div style={{ fontFamily: T.MONO, fontSize: 10, letterSpacing: "1.8px", textTransform: "uppercase", color: T.GOLD, fontWeight: 900, marginBottom: 10 }}>
+          Value Command Center
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 12 }}>
+          {valueCards.map((card) => <CxoGovernedMeasureCard key={card.measureKey} card={card} />)}
+        </div>
+      </section>
+
+      <section style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.25fr) minmax(320px, 0.85fr)", gap: 18, marginBottom: 18 }}>
+        <CioPanel eyebrow="Portfolio Control" title="Which programs and budget slices deserve CIO attention.">
+          {portfolioCards.length > 0 ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12, marginBottom: 16 }}>
+              {portfolioCards.map((card) => <CxoGovernedMeasureCard key={card.measureKey} card={card} />)}
+            </div>
+          ) : null}
+          <CxoGovernedTable
+            rows={model.portfolioRows}
+            emptyTitle="No governed portfolio-control facts are loaded."
+            emptyBody="Tower needs initiative budget, IT budget, or value facts in cio_tower.facts before this table can rank the portfolio."
+          />
+        </CioPanel>
+        <div style={{ display: "grid", gap: 18 }}>
+          <CioPanel eyebrow="Vendor and Contract Exposure" title="Which vendors and contracts create leverage.">
+            <CxoGovernedTable
+              rows={model.vendorRows}
+              emptyTitle="Vendor exposure is a governed data gap."
+              emptyBody="No vendor-contract facts are loaded in cio_tower.facts for this tenant yet."
+            />
+          </CioPanel>
+          <CioPanel eyebrow="Evidence and Trust" title="What proves the dashboard.">
+            {trustCards.length > 0 ? (
+              <div style={{ display: "grid", gap: 10, marginBottom: 14 }}>
+                {trustCards.map((card) => <CxoGovernedMeasureCard key={card.measureKey} card={card} />)}
+              </div>
+            ) : null}
+            <CxoGovernedTable
+              rows={model.trustRows}
+              emptyTitle="Evidence lineage is not loaded."
+              emptyBody="Tower needs fact-to-source lineage before it can show a trust map."
+            />
+          </CioPanel>
+        </div>
+      </section>
+
+      <section
+        data-cio-tower-parity-measure-key={model.parityMeasureKey}
+        data-cio-tower-parity-dashboard-value={parityCard?.displayValue ?? "gap"}
+        style={{
+          border: `1px solid ${T.PURPLE}`,
+          borderRadius: 14,
+          background: T.PURPLE_BG,
+          padding: "18px 22px",
+        }}
+      >
+        <div style={{ fontFamily: T.MONO, fontSize: 10, letterSpacing: "1.8px", textTransform: "uppercase", color: T.PURPLE, fontWeight: 900 }}>
+          Ask aVa · dashboard/chat parity slice
+        </div>
+        <h3 style={{ margin: "8px 0 0", fontFamily: T.SERIF, fontSize: 24, lineHeight: 1.12 }}>
+          Ask “what is my IT spend?” and aVa must return the same governed value shown here.
+        </h3>
+        <p style={{ margin: "8px 0 0", color: T.INK_2, fontSize: 13.5 }}>
+          Governed measure: <strong>{model.parityMeasureKey}</strong> · dashboard value:{" "}
+          <strong>{parityCard?.displayValue ?? "gap"}</strong>. The proof script records the trace,
+          prompt package, evidence, and rendered answer for this exact measure.
+        </p>
+        {model.gaps.length > 0 ? (
+          <div style={{ marginTop: 12, color: T.AMBER, fontSize: 13.5, fontWeight: 750 }}>
+            Business gaps: {model.gaps.join(" ")}
+          </div>
+        ) : null}
+      </section>
     </div>
   );
 }
@@ -5042,6 +5306,8 @@ interface TowerIndexPageProps {
   budgetRollups?: ReadonlyArray<TowerBudgetRollup>;
   /** Governed metric packet from cio_tower.measure_results. Dashboard and chat share this source. */
   metricPackets?: ReadonlyArray<CioTowerMetricPacket>;
+  /** Governed CXO command-center model from cio_tower.* only. */
+  cxoView?: CioTowerCxoViewModel | null;
   /**
    * T-5 (Bind 1): pre-computed band tile aggregations from DB substrate.
    */
@@ -5114,6 +5380,7 @@ export function TowerIndexPage({
   vendors,
   budgetRollups,
   metricPackets,
+  cxoView,
   bandMetrics,
   pressuresView,
   atlasObservationsView,
@@ -5230,6 +5497,7 @@ export function TowerIndexPage({
     metricPackets ?? [],
   );
   const hasTowerEvidenceForAva =
+    Boolean(cxoView) ||
     cioDashboardModel.initiativeCount > 0 ||
     cioDashboardModel.initiativeEvidenceCount > 0 ||
     cioDashboardModel.budgetRollupCount > 0 ||
@@ -5245,7 +5513,9 @@ export function TowerIndexPage({
     id: "atlas-opener",
     role: "atlas",
     content:
-      hasTowerEvidenceForAva
+      cxoView
+        ? cxoView.headline
+        : hasTowerEvidenceForAva
         ? cioDashboardModel.executiveNarrative
         : (atlasObservationsView?.headline ??
           "aVa is waiting for tenant-bound Tower substrate before it can answer portfolio questions."),
@@ -5550,6 +5820,8 @@ export function TowerIndexPage({
                 pressure={detailPressure}
                 closeHref={closeDetailHref}
               />
+            ) : cxoView ? (
+              <CxoGovernedCommandCenter model={cxoView} />
             ) : (
               <>
                 <CioDashboardTabs
