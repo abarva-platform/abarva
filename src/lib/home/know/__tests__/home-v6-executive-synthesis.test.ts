@@ -295,6 +295,61 @@ describe("Home V6 executive synthesis", () => {
     expect(result.response.safety.composerTrace?.fallbackUsed).toBe(false);
   });
 
+  it("normalizes row language before visible-answer validation", async () => {
+    mockClaudeText(
+      "Industrial Demo is represented at the enterprise level with a technology budget of $1.16 billion, which gives leadership a clear budget anchor but not the internal operating structure beneath it.\n\nWhat is not yet proven is the breakdown by business units, divisions, legal entities, regions, or portfolio segments. If this were shown as a table, only the top-line enterprise row could be populated today; the remaining structural detail should stay empty until ownership and budget allocation are confirmed.\n\nThe next evidence to validate is the component-unit map and the accountable owner for each operating layer.",
+    );
+    const question =
+      "How is the company or portfolio operating structure represented, and what is missing?";
+    const v6 = answerHomeKnowFromV6({
+      tenantKey: "lakeshore",
+      question,
+      includeTrace: true,
+    });
+    const deterministic = toHomeKnowResponseFromV6(v6, { question });
+
+    const result = await applyHomeV6ExecutiveSynthesis({
+      response: deterministic,
+      v6Result: v6,
+      question,
+      tenantKey: v6.tenant.canonicalKey,
+      includeTrace: true,
+    });
+
+    expect(result.trace.used).toBe(true);
+    expect(result.response.prose).toContain("Industrial Demo");
+    expect(result.response.prose).toContain("top-line enterprise line");
+    expect(result.response.prose).not.toContain("enterprise row");
+    expect(result.response.safety.composerTrace?.fallbackUsed).toBe(false);
+  });
+
+  it("accepts executive handoff language that names recommendation and prioritization", async () => {
+    mockClaudeText(
+      "For Retail Demo, Home should confirm what the evidence proves, while Intelligence should own leadership judgment, prioritization, options, and the recommendation.\n\nThe advisory questions sitting on top of AI initiatives belong in Intelligence: which initiatives to sequence first, how to weigh trade-offs, and what an options-based investment case would look like. Home can ground the inventory and readiness, but Intelligence should synthesize the pattern-backed decision.\n\nThe next evidence to validate is initiative readiness detail before Intelligence produces a defensible recommendation.",
+    );
+    const question =
+      "Which questions should be handed off to Intelligence rather than answered in Home?";
+    const v6 = answerHomeKnowFromV6({
+      tenantKey: "apexretail",
+      question,
+      includeTrace: true,
+    });
+    const deterministic = toHomeKnowResponseFromV6(v6, { question });
+
+    const result = await applyHomeV6ExecutiveSynthesis({
+      response: deterministic,
+      v6Result: v6,
+      question,
+      tenantKey: v6.tenant.canonicalKey,
+      includeTrace: true,
+    });
+
+    expect(result.trace.used).toBe(true);
+    expect(result.response.prose).toContain("Retail Demo");
+    expect(result.response.prose).toContain("Intelligence");
+    expect(result.response.safety.composerTrace?.fallbackUsed).toBe(false);
+  });
+
   it("preserves the Healthcare Demo VISUAL-001 answer with artifact status", async () => {
     mockClaudeText(
       "Healthcare Demo's readiness evidence is concentrated in source signals, which is where confidence is strongest today. Most source signals register at a high readiness level, with a smaller set at medium, while the broader enterprise profile sits at medium. In practical terms, the foundation for trusting your source landscape is solid, but the surrounding business context is less mature and warrants attention before it carries executive decisions.\n\nA table-ready view of the most important context follows:\n\n| Business context area | Readiness signal |\n|---|---|\n| Enterprise profile | Medium |\n| Source collection | High |\n| Source collection | High |\n| Source collection | Medium |\n\nThe clearest way to present this to an executive audience is a grouped bar chart showing the count of high versus medium readiness signals by business context area. This makes the contrast immediate: source collections cluster at high confidence, while enterprise profile lags at medium, so leaders can see where readiness is proven and where it is thin.\n\nThe next evidence to validate is ownership and freshness of the underlying sources, and a deeper view of why enterprise profile remains at medium.",
