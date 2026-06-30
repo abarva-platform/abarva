@@ -152,8 +152,9 @@ const RFP: SourceArtifactSpec[] = [
   },
   {
     code: 'd11_response_checklist',
-    name: 'Response Checklist',
-    description: 'Vendor-facing list of every required response item with format expectations.',
+    name: 'Vendor Response Control Pack',
+    description:
+      'Vendor-facing response templates, pricing workbook structure, claim register, assumptions/exclusions, SLA commitments, transition plan, and commercial exceptions tables.',
     stage: 'rfp',
     family: 'response_checklist',
     requirementLevel: 'required',

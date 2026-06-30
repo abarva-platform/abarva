@@ -1,8 +1,11 @@
 import {
+  findMissingUpstreamCodes,
   getPromptTemplate,
   listSupportedGenerationCodes,
+  SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE,
 } from "../prompt-registry";
 import type { SourceGenerationContext } from "../types";
+import type { SourceEventArtifactState } from "@/lib/source/canvas-substrate/types";
 
 describe("Source artifact prompt registry provider config", () => {
   it("uses Anthropic Claude model ids for every generatable Source artifact", () => {
@@ -18,7 +21,7 @@ describe("Source artifact prompt registry provider config", () => {
   it("configures the D09 RFP package as a board-grade, source-disciplined deliverable", () => {
     const template = getPromptTemplate("d09_rfp_pack");
 
-    expect(template?.version).toBeGreaterThanOrEqual(8);
+    expect(template?.version).toBeGreaterThanOrEqual(10);
     expect(template?.maxTokens).toBeGreaterThanOrEqual(5000);
     expect(template?.systemPrompt).toContain("Source register");
     expect(template?.systemPrompt).toContain("Risk, issue, dependency");
@@ -38,6 +41,69 @@ describe("Source artifact prompt registry provider config", () => {
     expect(template?.systemPrompt).toContain(
       "RFP package draft complete — pending client closure of registered gaps.",
     );
+    expect(template?.systemPrompt).toContain(SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE);
+    expect(template?.systemPrompt).toContain("Vendor Claim Register");
+    expect(template?.systemPrompt).toContain("Commercial Exceptions Table");
+  });
+
+  it("keeps the existing core Source generation artifacts available", () => {
+    const codes = listSupportedGenerationCodes();
+
+    expect(codes).toEqual(
+      expect.arrayContaining([
+        "d01_strategy_memo",
+        "d02_value_target",
+        "d05_scope_memo",
+        "d09_rfp_pack",
+        "d11_response_checklist",
+      ]),
+    );
+  });
+
+  it("configures D11 as the Vendor Response Control Pack with all required sections", () => {
+    const template = getPromptTemplate("d11_response_checklist");
+
+    expect(template).not.toBeNull();
+    expect(template?.systemPrompt).toContain("Vendor Response Control Pack");
+    expect(template?.systemPrompt).toContain(SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE);
+    expect(template?.systemPrompt).toContain("Vendor Claim Register");
+    expect(template?.systemPrompt).toContain("Automation / Productivity Commitment Table");
+    expect(template?.systemPrompt).toContain("Structured Pricing Workbook");
+    expect(template?.systemPrompt).toContain("Staffing and Location Model");
+    expect(template?.systemPrompt).toContain("SLA Commitment Table");
+    expect(template?.systemPrompt).toContain("Assumptions and Exclusions Log");
+    expect(template?.systemPrompt).toContain("Transition Plan Template");
+    expect(template?.systemPrompt).toContain("Commercial Exceptions Table");
+    expect(template?.systemPrompt).toContain("Productivity claimed but not priced back");
+    expect(template?.systemPrompt).toContain("Outcome claim not contractually committed");
+    expect(template?.systemPrompt).toContain("Do not claim perfect proposal parsing");
+    expect(template?.systemPrompt).not.toContain("Sentinel");
+    expect(template?.systemPrompt).not.toContain("Nexus");
+    expect(template?.systemPrompt).not.toContain("Atlas");
+  });
+
+  it("binds event context and upstream RFP context into the D11 control-pack prompt", () => {
+    const template = getPromptTemplate("d11_response_checklist");
+    const ctx = makeD09Context([]);
+    ctx.artifactStates = [
+      makeArtifactState("d01_strategy_memo", "# Strategy\n\nApproved strategy."),
+      makeArtifactState("d05_scope_memo", "# Scope\n\nApproved scope."),
+    ];
+
+    const message = template?.buildUserMessage(ctx, {
+      d01_strategy_memo: "# Strategy\n\nApproved strategy.",
+      d05_scope_memo: "# Scope\n\nApproved scope.",
+      d09_rfp_pack: "# RFP\n\nVendor response instructions.",
+    });
+
+    expect(findMissingUpstreamCodes(template!, ctx)).toEqual([]);
+    expect(message).toContain("Company: SkyHarbor Air");
+    expect(message).toContain("Event: IT Managed Services Outsourcing");
+    expect(message).toContain("Trigger / why-now: Contracts expiring.");
+    expect(message).toContain("Scope description: Managed services scope.");
+    expect(message).toContain("Draft RFP Package (d09_rfp_pack)");
+    expect(message).toContain("Vendor Response Control Pack");
+    expect(message).toContain("future commercial leverage checks");
   });
 
   it("uses client-facing company language for strategy and scope drafts", () => {
@@ -159,5 +225,32 @@ function makeD09Context(filenames: string[]): SourceGenerationContext {
       chunkExcerpts: [],
       factSummaries: [],
     })),
+  };
+}
+
+function makeArtifactState(
+  artifactCode: string,
+  body: string,
+): SourceEventArtifactState {
+  return {
+    id: `state-${artifactCode}`,
+    sourceEventId: "event-1",
+    tenantKey: "skyharbor",
+    artifactCode,
+    stage: "rfp",
+    family: "rfp",
+    tier: "stub",
+    status: "approved",
+    requirementLevel: "required",
+    gateDefining: true,
+    linkedArtifactId: null,
+    notes: null,
+    body,
+    bodyFormat: "markdown",
+    bodyAuthoredBy: null,
+    bodyUpdatedAt: "2026-06-12T00:00:00.000Z",
+    bodyGenerationMetadata: null,
+    createdAt: "2026-06-12T00:00:00.000Z",
+    updatedAt: "2026-06-12T00:00:00.000Z",
   };
 }

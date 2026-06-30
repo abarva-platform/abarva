@@ -438,7 +438,7 @@ const ARTIFACT_OVERRIDES: Record<string, ArtifactOperationOverride> = {
   },
   d09_rfp_pack: {
     contentStandard:
-      "RFP table of contents: executive summary, sourcing background, in-scope services, service levels, required vendor capabilities, response format, pricing instructions, evaluation criteria/weights, timeline, and submission instructions.",
+      "RFP table of contents: executive summary, sourcing background, in-scope services, service levels, required vendor capabilities, structured response-control mandate, pricing instructions, evaluation criteria/weights, timeline, and submission instructions.",
     responsibleAiControl:
       "AI can draft the RFP from approved upstream artifacts, but procurement/sponsor approval is required before the client issues it externally.",
     currentCapability:
@@ -448,9 +448,9 @@ const ARTIFACT_OVERRIDES: Record<string, ArtifactOperationOverride> = {
   },
   d11_response_checklist: {
     contentStandard:
-      "Response checklist table: section, required flag, expected file/tab, validation rule, evaluator owner, vendor status, missing item, and acceptance condition.",
+      "Vendor Response Control Pack: response-compliance mandate, vendor claim register, automation/productivity commitment table, structured pricing workbook, staffing and location model, SLA commitment table, assumptions/exclusions log, transition plan template, commercial exceptions table, and commercial leverage readiness matrix.",
     responsibleAiControl:
-      "AI can flag missing sections, but the Maestro/procurement owner decides whether a response is accepted, rejected, or sent back.",
+      "AI can draft the structured response-control pack, but procurement and legal approve the final vendor-facing templates before issue.",
   },
   d13_vendor_responses: {
     sourceOfRecord:
@@ -885,12 +885,16 @@ const ARTIFACT_GOLD_STANDARD_OVERRIDES: Record<string, ArtifactGoldStandardOverr
   }),
   d11_response_checklist: gold({
     tableOfContents: [
-      "Response-completeness rule",
-      "Required sections",
-      "Expected file or tab",
-      "Validation rule",
-      "Evaluator owner",
-      "Acceptance condition",
+      "Response compliance mandate",
+      "Vendor Claim Register",
+      "Automation / Productivity Commitment Table",
+      "Structured Pricing Workbook",
+      "Staffing and Location Model",
+      "SLA Commitment Table",
+      "Assumptions and Exclusions Log",
+      "Transition Plan Template",
+      "Commercial Exceptions Table",
+      "Commercial leverage readiness matrix",
     ],
     approvalOwner: "Procurement owner",
     supportedDownloads: ["xlsx", "docx", "pdf"],

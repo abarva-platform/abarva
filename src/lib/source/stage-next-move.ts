@@ -74,18 +74,18 @@ const STAGE_DRAFT_CONFIG: Partial<Record<SourceStageKey, StageDraftConfig>> = {
     evidencePrimary: "Open evidence",
   },
   rfp: {
-    artifactCodes: ["d09_rfp_pack"],
-    draftTitle: "Draft the RFP package",
+    artifactCodes: ["d09_rfp_pack", "d11_response_checklist"],
+    draftTitle: "Draft the RFP and response-control pack",
     draftBody:
-      "Prepare the vendor-facing requirements, response format, scoring rubric, and sign-off trail from the locked scope.",
-    draftPrimary: "Draft with Ava",
-    draftedGateTitle: "Sponsor sign-off required before release",
+      "Prepare the vendor-facing requirements and the structured response package vendors must complete, so proposals arrive comparable, evidence-backed, and negotiation-ready.",
+    draftPrimary: "Draft with aVa",
+    draftedGateTitle: "Sponsor/procurement sign-off required before release",
   },
   responses: {
     artifactCodes: ["d11_response_checklist"],
-    draftTitle: "Review response completeness",
+    draftTitle: "Review response-control completeness",
     draftBody:
-      "Track each vendor response, parse uploaded response packs, and flag gaps before evaluation scoring starts.",
+      "Track each vendor against the response-control pack, then flag missing claim, pricing, SLA, assumption, transition, and exception fields before evaluation scoring starts.",
     draftPrimary: "Open completeness matrix",
     draftedGateTitle: "Resolve response gaps before evaluation",
   },

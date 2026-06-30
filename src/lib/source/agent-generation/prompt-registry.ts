@@ -32,7 +32,7 @@ const BOARD_GRADE_MODEL =
 // truncation. Increase these rather than accept a truncated draft.
 const DEFAULT_MAX_TOKENS = 24_000;
 
-const AVA_SOURCE_ADVISOR_VOICE = `You are Ava, AbarVa's senior sourcing and vendor-strategy advisor writing for a CIO and their leadership team. You have personally run dozens of large-enterprise sourcing events. You write with the judgment, structure, and candor of a top-tier consulting partner — never like a template engine or a compliance checklist.
+const AVA_SOURCE_ADVISOR_VOICE = `You are aVa, AbarVa's senior sourcing and vendor-strategy advisor writing for a CIO and their leadership team. You have personally run dozens of large-enterprise sourcing events. You write with the judgment, structure, and candor of a top-tier consulting partner — never like a template engine or a compliance checklist.
 
 Write like an expert, not a machine:
 - Have a point of view. Make the call. Recommend a direction and own the reasoning behind it. Lead each section with the insight that matters, then support it — do not bury the decision under background.
@@ -53,6 +53,186 @@ Client-facing language:
 Format:
 - Markdown only. ATX headings (#, ##, ###). Numbered §-prefixed sections (## §1 · …) match the AbarVa house style — but let the argument lead; headings serve the narrative, not the reverse.
 - Tables when comparing. Bullet lists when enumerating. Add a compact "so what" line after dense tables.`;
+
+export const SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE = `Vendor responses must be submitted using the provided response templates and pricing workbook. Narrative responses may supplement, but may not replace, the required structured response tables.
+
+Any productivity, automation, transformation, service-level, transition, cost-reduction, or outcome claim must be entered in the Vendor Claim Register with supporting evidence, measurement method, commercial commitment, and related pricing impact.
+
+The buyer reserves the right to treat unsupported claims, incomplete pricing fields, missing assumptions, undocumented exclusions, or non-compliant response formats as evaluation risks and/or grounds for clarification before scoring.`;
+
+const VENDOR_RESPONSE_CONTROL_SECTIONS = [
+  {
+    title: "Vendor Claim Register",
+    purpose: "Force vendors to declare major claims in a structured way.",
+    columns: [
+      "Claim ID",
+      "Claim Type",
+      "Vendor Claim",
+      "Related RFP Requirement",
+      "Evidence Provided",
+      "Commercial Commitment: Yes/No",
+      "Pricing Impact",
+      "Measurement Method",
+      "Timeframe",
+      "Contractual Location / Proposed Exhibit",
+      "Vendor Owner",
+      "Notes",
+    ],
+  },
+  {
+    title: "Automation / Productivity Commitment Table",
+    purpose: "Prevent vague AI, automation, transformation, productivity, or efficiency promises.",
+    columns: [
+      "Use Case",
+      "Baseline Volume",
+      "Current Cost / Effort Baseline",
+      "Automation Method",
+      "Tooling / Platform",
+      "Year 1 Impact",
+      "Year 2 Impact",
+      "Year 3 Impact",
+      "Price Impact",
+      "Productivity Credit / Gainshare",
+      "Measurement Method",
+      "Evidence Provided",
+      "Dependencies",
+      "Vendor Owner",
+    ],
+  },
+  {
+    title: "Structured Pricing Workbook",
+    purpose: "Make vendor pricing comparable across one-time, run, transition, transformation, tooling, governance, pass-through, optional-service, unit-rate, retained-cost, volume-pricing, productivity-credit, SLA-credit, and assumption sections.",
+    columns: [
+      "Cost Category",
+      "Cost Description",
+      "Year 0",
+      "Year 1",
+      "Year 2",
+      "Year 3",
+      "Year 4",
+      "Year 5",
+      "Unit",
+      "Quantity",
+      "Unit Price",
+      "One-Time / Recurring",
+      "Included / Optional",
+      "Assumption Reference",
+      "Notes",
+    ],
+  },
+  {
+    title: "Staffing and Location Model",
+    purpose: "Expose delivery model, rate-card, coverage, and staffing-mix risk.",
+    columns: [
+      "Role",
+      "Level",
+      "Tower / Service Area",
+      "Location",
+      "Onshore / Nearshore / Offshore",
+      "FTE",
+      "Rate",
+      "Annual Cost",
+      "Coverage Window",
+      "Responsibility",
+      "Named / Pooled",
+      "Assumption Reference",
+    ],
+  },
+  {
+    title: "SLA Commitment Table",
+    purpose: "Separate binding service commitments from cosmetic targets.",
+    columns: [
+      "Service Area",
+      "Metric",
+      "Baseline if Known",
+      "Proposed Target",
+      "Measurement Window",
+      "Reporting Frequency",
+      "Service Credit",
+      "Credit Cap",
+      "Exclusions",
+      "Root Cause / Cure Process",
+      "Executive Escalation Trigger",
+      "Evidence Provided",
+    ],
+  },
+  {
+    title: "Assumptions and Exclusions Log",
+    purpose: "Prevent vendors from hiding change-order traps in footnotes.",
+    columns: [
+      "ID",
+      "Assumption / Exclusion",
+      "Applies To",
+      "Category",
+      "Financial Impact",
+      "Operational Impact",
+      "Change Order Risk",
+      "Vendor Position",
+      "Client Action Required",
+      "Proposed Treatment",
+      "Notes",
+    ],
+  },
+  {
+    title: "Transition Plan Template",
+    purpose: "Make transition commitments testable and milestone-linked.",
+    columns: [
+      "Phase",
+      "Week",
+      "Activity",
+      "Owner",
+      "Client Dependency",
+      "Vendor Dependency",
+      "Exit Criteria",
+      "Evidence",
+      "Risk",
+      "Fee / Milestone Linkage",
+    ],
+  },
+  {
+    title: "Commercial Exceptions Table",
+    purpose: "Make vendor exceptions visible before evaluation and BAFO.",
+    columns: [
+      "RFP Requirement",
+      "Vendor Response",
+      "Exception: Yes/No",
+      "Proposed Alternative",
+      "Buyer Risk",
+      "Price Impact",
+      "Legal / Procurement Review Needed",
+      "Vendor Rationale",
+    ],
+  },
+] as const;
+
+const COMMERCIAL_LEVERAGE_READINESS_CHECKS = [
+  "Productivity claimed but not priced back",
+  "Transition fees not milestone-based",
+  "Weak SLA credit economics",
+  "Vague exclusions / change-order exposure",
+  "Rate card or staffing mix issue",
+  "Outcome claim not contractually committed",
+  "24x7 support not staffed",
+  "Pricing not comparable",
+  "Proposal claim not supported by evidence",
+  "Commercial exception creates buyer risk",
+] as const;
+
+function formatVendorResponseControlSections(): string {
+  return VENDOR_RESPONSE_CONTROL_SECTIONS.map((section, index) =>
+    [
+      `${index + 1}. ${section.title}`,
+      `   Purpose: ${section.purpose}`,
+      `   Required columns: ${section.columns.join(" | ")}`,
+    ].join("\n"),
+  ).join("\n");
+}
+
+function formatCommercialLeverageReadinessChecks(): string {
+  return COMMERCIAL_LEVERAGE_READINESS_CHECKS.map(
+    (check, index) => `${index + 1}. ${check}`,
+  ).join("\n");
+}
 
 // Render the tenant's uploaded, parsed evidence (incumbent contracts, ticket
 // extracts, etc.) so the draft can CITE it by filename. The consulting-grade
@@ -269,7 +449,7 @@ Tone: precise, business-facing, list-heavy, and operational. Start with an execu
 
   d09_rfp_pack: {
     artifactCode: "d09_rfp_pack",
-    version: 9,
+    version: 10,
     model: BOARD_GRADE_MODEL,
     maxTokens: 128_000,
     upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
@@ -291,12 +471,19 @@ Required structural sections:
 ## §10 · Risk register, transition controls, and failure modes
 ## §11 · Source register, assumptions, and client-to-complete gaps
 
+Mandatory response-compliance language for §8:
+${SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE}
+
+Mandatory response-control components to reference in §8:
+${formatVendorResponseControlSections()}
+
 Mandatory tables:
 - In-scope / out-of-scope service tower matrix.
 - Current-state baseline table covering applications, workloads, tickets, FTE, run cost, data center/private cloud, network, security/compliance, contracts, and run-vs-change spend.
 - SLA and operational obligations table.
 - Transition constraints and blackout calendar table.
 - Pricing and volume-basis instruction table.
+- Vendor response control table covering the Vendor Claim Register, Automation / Productivity Commitment Table, Structured Pricing Workbook, Staffing and Location Model, SLA Commitment Table, Assumptions and Exclusions Log, Transition Plan Template, and Commercial Exceptions Table.
 - Evaluation weights and evidence-required scoring table.
 - Risk, issue, dependency, and mitigation table.
 - Process timeline table with [CLIENT TO SET] placeholders only when dates are genuinely missing.
@@ -317,7 +504,7 @@ Section budget:
 - §5: 250 words max plus one obligations table, 6 rows max.
 - §6: 300 words max plus one transition/blackout table, 6 rows max.
 - §7: must include commercial terms and pricing instructions table.
-- §8: must include vendor response/submission requirements table.
+- §8: must include the response-compliance mandate above, vendor response/submission requirements table, and explicit completion instructions for every Vendor Response Control Pack component.
 - §9: table only, 6 rows max, must include weights/scoring/disqualification controls.
 - §10: table only, 8 rows max, must include risk owners/mitigations from Exhibits 07, 13, and 14.
 - §11: two tables only, 8 rows max each, must include source register and gap closure register.
@@ -396,6 +583,120 @@ Quality requirement: produce a draft that can pass the partner-grade quality rev
       lines.push(
         "Draft the RFP Package per the system prompt requirements. Use the evidence-state summary and uploaded evidence excerpts as a completeness checklist: when a category is loaded or usable, reflect it in the right section and cite a friendly exhibit label; when a coverage-map rule says an uploaded exhibit satisfies an EVID-SRC-* requirement, do not call that requirement Not Requested in the source register. When a category is missing or low confidence, add it to the client-to-complete register with owner/action/why-it-matters instead of filling with generic text. This is a governed vendor-facing draft, not an issued final; explicit client-to-complete placeholders are acceptable only when clearly registered and not hidden in the narrative. Keep the draft compact and section-complete: every section §1 through §11 must appear, §7–§11 must not be sacrificed for long baseline prose, §9 must include weights/scoring/disqualification controls, §10 must include risk owners/mitigations, §11 must include a blocking-gap closure table with owner placeholder, due-date placeholder, blocking gate, and downstream impact for every unresolved item, and the final line must confirm the draft is complete pending registered gap closure.",
       );
+      return lines.join("\n");
+    },
+  },
+
+  d11_response_checklist: {
+    artifactCode: "d11_response_checklist",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: 48_000,
+    upstreamRequired: ["d01_strategy_memo", "d05_scope_memo"],
+    upstreamOptional: ["d02_value_target", "d04_app_inv", "d07_ticket_synth", "d09_rfp_pack"],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Vendor Response Control Pack (artifact d11_response_checklist). This is not a generic checklist. It is the vendor-facing response package that forces proposals to arrive structured, evidence-backed, comparable, commercially useful, and ready for evaluation, pricing normalization, challenge logs, and BAFO negotiation.
+
+Core principle:
+Do not assume AbarVa can perfectly parse every messy vendor proposal after the fact. Shape the response upfront. Vendors must complete the structured tables and pricing workbook; narrative can supplement but cannot replace them.
+
+Mandatory response-compliance language:
+${SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE}
+
+Required structural sections:
+## §1 · Response compliance mandate
+## §2 · Vendor Claim Register
+## §3 · Automation / Productivity Commitment Table
+## §4 · Structured Pricing Workbook
+## §5 · Staffing and Location Model
+## §6 · SLA Commitment Table
+## §7 · Assumptions and Exclusions Log
+## §8 · Transition Plan Template
+## §9 · Commercial Exceptions Table
+## §10 · Commercial leverage readiness checks enabled
+## §11 · Completion, submission, and clarification rules
+
+Required response-control components:
+${formatVendorResponseControlSections()}
+
+Claim type values for the Vendor Claim Register:
+automation | productivity | cost reduction | SLA | transition | transformation | innovation | security | staffing | outcome-based pricing | service quality | risk reduction
+
+Assumption / exclusion category values:
+scope | pricing | staffing | transition | SLA | tooling | security | data | dependency | retained team | third-party cost
+
+Commercial leverage readiness checks this pack must make possible:
+${formatCommercialLeverageReadinessChecks()}
+
+Writing and format requirements:
+- Open with a short procurement-ready explanation of why this pack exists: to make vendor proposals comparable, evidence-backed, and negotiation-ready.
+- Include the response-compliance mandate in §1.
+- For every required component, include a table specification with purpose, required columns, required completion rule, and how Source will use it later.
+- For the Structured Pricing Workbook, name every required cost section: one-time costs, recurring run costs, transition costs, transformation costs, tooling costs, governance costs, pass-through costs, optional services, change-order unit rates, retained client cost assumptions, volume-based pricing, productivity credits, SLA credits, assumptions.
+- For the Automation / Productivity Commitment Table, state that it is required whenever the vendor claims AI, automation, productivity, transformation, or efficiency.
+- For the Transition Plan Template, require named transition lead, knowledge-transfer plan, dependency list, cutover criteria, service-readiness criteria, early-life support plan, and transition-fee milestone linkage.
+- Include an appendix-style commercial leverage readiness matrix mapping each future check to the response-control fields that enable it.
+- Vendor-facing language only. Do not expose internal agent names, raw ids, routing keys, model/provider names, table names, or implementation labels. Do not claim perfect proposal parsing.
+- Markdown only. Tables are expected. Keep the artifact complete enough to be copied into a vendor instruction pack or converted to xlsx/docx/pdf.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        ctx.event.estimatedValueUsd
+          ? `Intake value estimate: $${ctx.event.estimatedValueUsd.toLocaleString()}`
+          : `Intake value estimate: (not provided)`,
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
+        `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
+        "",
+        "— UPSTREAM CONTEXT —",
+        "Approved Sourcing Strategy Memo (d01_strategy_memo):",
+        upstream.d01_strategy_memo ??
+          "(NOT YET AUTHORED — do not fabricate; surface as a prerequisite if the artifact is generated early)",
+        "",
+        "Approved Scope Memo (d05_scope_memo):",
+        upstream.d05_scope_memo ??
+          "(NOT YET AUTHORED — do not fabricate; surface as a prerequisite if the artifact is generated early)",
+        "",
+      ].filter((line): line is string => line !== null);
+
+      if (upstream.d09_rfp_pack) {
+        lines.push(
+          "Draft RFP Package (d09_rfp_pack) — align response-control instructions to it:",
+        );
+        lines.push(upstream.d09_rfp_pack);
+        lines.push("");
+      }
+      if (upstream.d02_value_target) {
+        lines.push("Value Target Brief (d02_value_target) — use to shape commercial claim controls:");
+        lines.push(upstream.d02_value_target);
+        lines.push("");
+      }
+      if (upstream.d04_app_inv) {
+        lines.push("Application Inventory (d04_app_inv) — use to shape tower/application response fields:");
+        lines.push(upstream.d04_app_inv);
+        lines.push("");
+      }
+      if (upstream.d07_ticket_synth) {
+        lines.push("Ticket History Synthesis (d07_ticket_synth) — use to shape SLA/volume response fields:");
+        lines.push(upstream.d07_ticket_synth);
+        lines.push("");
+      }
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "Draft the Vendor Response Control Pack per the system prompt. Bind it to this event and scope, include all eight required response-control components, include the response-compliance mandate, and make the future commercial leverage checks possible without claiming perfect downstream proposal parsing.",
+      );
+
       return lines.join("\n");
     },
   },
