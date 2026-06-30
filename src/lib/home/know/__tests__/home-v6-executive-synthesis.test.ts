@@ -325,6 +325,67 @@ describe("Home V6 executive synthesis", () => {
     expect(result.response.safety.composerTrace?.fallbackUsed).toBe(false);
   });
 
+  it("requires compact three-bullet Industrial Demo answers with branch choices", async () => {
+    mockClaudeText(
+      [
+        "For Industrial Demo:",
+        "- Finance and treasury modernization is the clearest value story, but value proof must stay evidence-backed.",
+        "- SAP, data quality, payments, and controls are the operating dependencies leadership should inspect first.",
+        "- AI should be framed around work redesign, not broad automation claims.",
+        "",
+        "Caveat: named-person accountability and board-grade value proof still need validation before scale decisions.",
+        "",
+        "Next branch: Tower for spend, value, decisions; Source for vendor/contracts/renewals; Intelligence for advisory options/tradeoffs; Moves for sequencing and execution.",
+      ].join("\n"),
+    );
+    const question =
+      "What is the AI footprint, including initiatives, adoption, usage, and value evidence?";
+    const v6 = answerHomeKnowFromV6({
+      tenantKey: "lakeshore",
+      question,
+      includeTrace: true,
+    });
+    const deterministic = toHomeKnowResponseFromV6(v6, { question });
+
+    const result = await applyHomeV6ExecutiveSynthesis({
+      response: deterministic,
+      v6Result: v6,
+      question,
+      tenantKey: v6.tenant.canonicalKey,
+      includeTrace: true,
+    });
+
+    expect(result.trace.used).toBe(true);
+    expect(result.response.prose).toContain("For Industrial Demo:");
+    expect(result.response.prose).toContain("Caveat:");
+    expect(result.response.prose).toContain("Tower for spend, value, decisions");
+    expect(result.response.prose).toContain(
+      "Source for vendor/contracts/renewals",
+    );
+    expect(result.response.prose).toContain(
+      "Intelligence for advisory options/tradeoffs",
+    );
+    expect(result.response.prose).toContain(
+      "Moves for sequencing and execution",
+    );
+    expect(
+      mockGetAuditedAnthropicClient.mock.calls.at(-1)?.[0].prompt,
+    ).toContain("Industrial Demo compact format is required.");
+    expect(
+      mockGetAuditedAnthropicClient.mock.calls.at(-1)?.[0].prompt,
+    ).toContain("Target 120-170 words");
+    expect(
+      mockGetAuditedAnthropicClient.mock.calls.at(-1)?.[0].prompt,
+    ).toContain("interesting point of view");
+    expect(
+      mockGetAuditedAnthropicClient.mock.calls.at(-1)?.[0].prompt,
+    ).toContain("what this means, why it matters");
+    expect(result.response.safety.composerTrace?.reason).toContain(
+      "promptVersion=home-v6-executive-answer-v2",
+    );
+    expect(result.response.safety.composerTrace?.fallbackUsed).toBe(false);
+  });
+
   it("accepts executive handoff language that names recommendation and prioritization", async () => {
     mockClaudeText(
       "For Retail Demo, Home should confirm what the evidence proves, while Intelligence should own leadership judgment, prioritization, options, and the recommendation.\n\nThe advisory questions sitting on top of AI initiatives belong in Intelligence: which initiatives to sequence first, how to weigh trade-offs, and what an options-based investment case would look like. Home can ground the inventory and readiness, but Intelligence should synthesize the pattern-backed decision.\n\nThe next evidence to validate is initiative readiness detail before Intelligence produces a defensible recommendation.",
