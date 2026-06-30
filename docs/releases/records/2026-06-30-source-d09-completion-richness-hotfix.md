@@ -18,6 +18,12 @@ terms, and Appendix A-H vendor response templates with example rows. This
 release adds those sections without inventing client evidence: every
 client-missing item remains labelled as client-to-complete.
 
+Follow-up live proof on revision `ca-abarva-web-lab-eastus--m546f1ab6` showed
+the first quality rewrite could still drop deterministic completion material
+before the second quality review. This candidate also re-applies the D09
+completion after rewrite and extends the deterministic package with Appendix I
+evaluation scorecard and Appendix J BAFO / clarification instructions.
+
 ## Layer Impact
 
 - `global-control-lane`: shared Source D09 RFP generation and quality-gate input
@@ -36,10 +42,13 @@ client-missing item remains labelled as client-to-complete.
 
 - `src/lib/source/agent-generation/d09-completion.ts`
 - `src/lib/source/agent-generation/__tests__/d09-completion.test.ts`
+- `src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route.ts`
+- `src/__tests__/integration/source/source-access-control-static.test.ts`
 
 ## QA / Validation
 
 - `npx jest src/lib/source/agent-generation/__tests__/d09-completion.test.ts src/lib/source/agent-generation/__tests__/d09-map-reduce.test.ts src/lib/source/agent-generation/__tests__/prompt-registry.test.ts --runInBand`
+- `npx jest src/__tests__/integration/source/source-access-control-static.test.ts src/lib/source/agent-generation/__tests__/d09-completion.test.ts src/lib/source/agent-generation/__tests__/d09-map-reduce.test.ts src/lib/source/agent-generation/__tests__/prompt-registry.test.ts --runInBand`
 - `npx eslint src/lib/source/agent-generation/d09-completion.ts src/lib/source/agent-generation/__tests__/d09-completion.test.ts`
 - `npm run release:check`
 
@@ -47,6 +56,10 @@ Live pre-fix proof against revision `ca-abarva-web-lab-eastus--me7a3dce7`
 showed D09 no longer failed on streaming, but was blocked by
 `quality_gate_failed` for evidence grounding, commercial specificity, and
 artifact completeness.
+
+Live proof against revision `ca-abarva-web-lab-eastus--m546f1ab6` showed the
+rewrite path was still blocked by `quality_gate_failed` because the second
+review saw missing Appendices C/D/F/H and BAFO/evaluation closure instructions.
 
 ## Rollout Plan
 
@@ -74,6 +87,8 @@ migration, or data-plane changes are included.
 - PR URL: to be added after PR creation.
 - Pre-candidate proof folder:
   `/Users/anand/Downloads/source-response-control-live-final-2026-06-30T1645Z`
+- Rewrite-survival failure proof folder:
+  `/Users/anand/Downloads/source-response-control-live-final-2026-06-30T171738856Z`
 - Post-deploy proof folder: to be added after live verification.
 
 ## Known Gaps

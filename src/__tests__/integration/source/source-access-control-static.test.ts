@@ -113,6 +113,21 @@ describe('Source access-control wiring', () => {
     expect(route).not.toContain('messages.create');
   });
 
+  it('re-applies deterministic D09 completion after quality-gate rewrite before second review', () => {
+    const route = read('src/app/api/v1/source/[eventId]/artifacts/[artifactCode]/generate/route.ts');
+    const rewriteIndex = route.indexOf('let rewrittenBody = rewriteParts.join("").trim();');
+    const completionIndex = route.indexOf(
+      'rewrittenBody = completeD09RfpGovernanceSections',
+      rewriteIndex,
+    );
+    const secondReviewIndex = route.indexOf('const secondReview = await runConsultingGradeReview', rewriteIndex);
+
+    expect(rewriteIndex).toBeGreaterThan(-1);
+    expect(completionIndex).toBeGreaterThan(rewriteIndex);
+    expect(secondReviewIndex).toBeGreaterThan(completionIndex);
+    expect(route.indexOf('sanitizeClientFacingSourceDraft(rewrittenBody', completionIndex)).toBeGreaterThan(completionIndex);
+  });
+
   it('opens persisted Source artifacts through the registry-backed detail route', () => {
     const queries = read('src/lib/source/queries.ts');
     const page = read('src/app/(maestro)/source/events/[eventId]/artifacts/[artifactId]/page.tsx');
