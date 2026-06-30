@@ -31,6 +31,8 @@ export interface HomeV6ExecutiveSynthesisResult {
   };
 }
 
+type HomeVisualArtifactStatus = NonNullable<HomeKnowResponse["artifactStatus"]>;
+
 export function isHomeV6ExecutiveSynthesisEnabled(): boolean {
   const raw = process.env.HOME_V6_EXECUTIVE_SYNTHESIS_ENABLED
     ?.trim()
@@ -118,10 +120,16 @@ export async function applyHomeV6ExecutiveSynthesis(args: {
     );
     const rawText = collected.text.trim();
     const executiveText = normalizeExecutiveText(rawText);
-    const validationIssues = validateExecutiveText({
+    const artifactStatus = determineArtifactStatus({
       text: executiveText,
       response: args.response,
     });
+    const validation = validateExecutiveText({
+      text: executiveText,
+      response: args.response,
+      artifactStatus,
+    });
+    const validationIssues = validation.hardIssues;
     const anthropicTrace = args.includeTrace
       ? {
           finalPrompt: promptBoundary.finalPrompt,
@@ -165,6 +173,8 @@ export async function applyHomeV6ExecutiveSynthesis(args: {
     return {
       response: applyExecutiveSuccess(args.response, {
         text: executiveText,
+        artifactStatus,
+        softValidationWarnings: validation.softWarnings,
         model,
         auditId,
         promptBoundary,
@@ -218,6 +228,7 @@ Rules:
 - If the question belongs in Intelligence, Moves, Source, or Tower, explain the boundary naturally and name the surface that should own the next step.
 - For Home answers, phrase follow-up as "the next evidence to validate" rather than "we recommend" unless the user explicitly asks for a recommendation.
 - Translate data-architecture and evidence-packet terms into executive language: say "data asset", "shared business definition", "source collection", "business context areas", or "business facts"; do not say dataset, semantic model, semantic layer, corpus, governed evidence areas, business records, or table unless the user asks for a table.
+- When the user asks for a table, chart, graph, or visual explanation, use the available evidence to either provide the executive table/chart/graph content if a structured artifact is available, or explain which table/chart/graph would best represent the evidence and what it would show. Do not invent numbers. If the artifact cannot be rendered from current evidence, say what evidence is missing and recommend the right visual structure.
 - Do not use markdown headings. Keep the answer to 2-4 short paragraphs. Use bullets only when the user asks for a list.
 - Never use these visible phrases: V6, dataset, contract pack, usable evidence items, governed evidence areas, rows, source file, semantic, dossier, raw, debug, implementation.
 
@@ -342,28 +353,40 @@ Write the final executive answer now.`;
 function validateExecutiveText(args: {
   text: string;
   response: HomeKnowResponse;
-}): string[] {
-  const issues: string[] = [];
+  artifactStatus: HomeVisualArtifactStatus;
+}): { hardIssues: string[]; softWarnings: string[] } {
+  const hardIssues: string[] = [];
+  const softWarnings: string[] = [];
   const text = args.text.trim();
-  if (!text) issues.push("empty_text");
-  if (TECHNICAL_LANGUAGE_RE.test(text)) issues.push("technical_language");
-  if (!EXECUTIVE_SIGNALS_RE.test(text)) issues.push("not_executive_friendly");
+  if (!text) hardIssues.push("empty_text");
+  if (TECHNICAL_LANGUAGE_RE.test(text)) hardIssues.push("technical_language");
+  if (!EXECUTIVE_SIGNALS_RE.test(text)) hardIssues.push("not_executive_friendly");
   if (!text.includes(displayTenantName(args.response))) {
-    issues.push("missing_tenant_name");
+    softWarnings.push("missing_tenant_name");
   }
   const visible = assertVisibleAnswerContract(text);
   if (!visible.passed) {
-    issues.push(
-      ...visible.violations.map((violation) => `visible:${violation}`),
+    hardIssues.push(
+      ...visible.violations.map((violation) => `visible:${violation.id}`),
     );
+  }
+  if (
+    args.artifactStatus === "recommended_not_rendered" &&
+    /\b(rendered|shown below|displayed below)\b/i.test(text) &&
+    !hasRenderableArtifact(args.response)
+  ) {
+    hardIssues.push("claimed_unavailable_visual_artifact");
   }
   if (
     args.response.answerStatus !== "handoff" &&
     /\b(we recommend|you should invest|scale this|kill this)\b/i.test(text)
   ) {
-    issues.push("unsupported_recommendation");
+    hardIssues.push("unsupported_recommendation");
   }
-  return [...new Set(issues)];
+  return {
+    hardIssues: [...new Set(hardIssues)],
+    softWarnings: [...new Set(softWarnings)],
+  };
 }
 
 function displayTenantName(response: HomeKnowResponse): string {
@@ -381,6 +404,8 @@ function applyExecutiveSuccess(
   response: HomeKnowResponse,
   args: {
     text: string;
+    artifactStatus: HomeVisualArtifactStatus;
+    softValidationWarnings: string[];
     model: string;
     auditId: string;
     promptBoundary: ReturnType<typeof buildPromptBoundary>;
@@ -391,6 +416,7 @@ function applyExecutiveSuccess(
 ): HomeKnowResponse {
   return {
     ...response,
+    artifactStatus: args.artifactStatus,
     prose: args.text,
     safety: {
       ...response.safety,
@@ -402,7 +428,7 @@ function applyExecutiveSuccess(
             goldenComposerUsed: true,
             fallbackUsed: false,
             reason:
-              `answerSource=sanitized_claude; claudeInvoked=true; claudeSelected=true; rawClaudePreserved=${String(Boolean(args.anthropicTrace))}; promptVersion=${PROMPT_VERSION}; model=${args.model}; auditId=${args.auditId}; ` +
+              `answerSource=sanitized_claude; claudeInvoked=true; claudeSelected=true; rawClaudePreserved=${String(Boolean(args.anthropicTrace))}; artifactStatus=${args.artifactStatus}; softWarnings=${args.softValidationWarnings.join("|") || "none"}; promptVersion=${PROMPT_VERSION}; model=${args.model}; auditId=${args.auditId}; ` +
               response.safety.composerTrace.reason,
             promptSnapshot: {
               system: HOME_V6_EXECUTIVE_SYSTEM_PROMPT,
@@ -480,11 +506,48 @@ function normalizeExecutiveText(text: string): string {
     )
     .replace(/\bgoverned evidence areas?\b/gi, "business context areas")
     .replace(/\bbusiness records?\b/gi, "business facts")
+    .replace(/\bsource signals?\b/gi, "source evidence")
     .replace(/\bdatasets?\b/gi, "data asset")
     .replace(/\bcorpus\b/gi, "source collection")
     .replace(/\bWe recommend validating\b/gi, "The next evidence to validate is")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+function determineArtifactStatus(args: {
+  text: string;
+  response: HomeKnowResponse;
+}): HomeVisualArtifactStatus {
+  if (!isVisualAsk(args.response.question, args.response.intent)) {
+    return "not_requested";
+  }
+  if (hasRenderableArtifact(args.response)) return "rendered";
+  if (args.response.gaps.length > 0 && namesMissingVisualEvidence(args.text)) {
+    return "unavailable_named_gap";
+  }
+  return "recommended_not_rendered";
+}
+
+function isVisualAsk(question: string, intent: string): boolean {
+  return (
+    intent === "table" ||
+    intent === "chart" ||
+    /\b(table|chart|graph|visual|visuali[sz]e|plot|diagram)\b/i.test(question)
+  );
+}
+
+function hasRenderableArtifact(response: HomeKnowResponse): boolean {
+  return (
+    response.tables.some((table) => table.rows.length > 0) ||
+    response.charts.some((chart) => chart.data.length > 0) ||
+    response.graphs.some((graph) => graph.nodes.length > 0 || graph.edges.length > 0)
+  );
+}
+
+function namesMissingVisualEvidence(text: string): boolean {
+  return /\b(cannot|can't|not enough|missing|unavailable|not available|not yet)\b/i.test(
+    text,
+  );
 }
 
 function numberFromEnv(key: string, fallback: number): number {

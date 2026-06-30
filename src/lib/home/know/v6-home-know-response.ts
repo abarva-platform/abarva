@@ -36,6 +36,12 @@ export function toHomeKnowResponseFromV6(
     question: input?.question ?? result.trace?.session.question ?? "",
     intent,
     answerStatus,
+    artifactStatus: artifactStatusFor({
+      question: input?.question ?? result.trace?.session.question ?? "",
+      intent,
+      table,
+      gaps,
+    }),
     prose: answer.directAnswer,
     dimensionsUsed: [
       publicDimensionId(answer.primaryDimension),
@@ -60,6 +66,24 @@ export function toHomeKnowResponseFromV6(
       gapsBound: gaps.length,
     }),
   };
+}
+
+function artifactStatusFor(input: {
+  question: string;
+  intent: HomeKnowIntent;
+  table: HomeKnowTable | null;
+  gaps: HomeKnowGap[];
+}): NonNullable<HomeKnowResponse["artifactStatus"]> {
+  const visualRequested =
+    input.intent === "table" ||
+    input.intent === "chart" ||
+    /\b(table|chart|graph|visual|visuali[sz]e|plot|diagram)\b/i.test(
+      input.question,
+    );
+  if (!visualRequested) return "not_requested";
+  if (input.table && input.table.rows.length > 0) return "rendered";
+  if (input.gaps.length > 0) return "unavailable_named_gap";
+  return "recommended_not_rendered";
 }
 
 function answerStatusFor(result: V6HomeAskResult): HomeKnowAnswerStatus {

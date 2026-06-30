@@ -227,6 +227,11 @@ export interface HomeKnowResponse {
   question: string;
   intent: HomeKnowIntent;
   answerStatus: HomeKnowAnswerStatus;
+  artifactStatus?:
+    | "rendered"
+    | "recommended_not_rendered"
+    | "unavailable_named_gap"
+    | "not_requested";
   prose: string;
   dimensionsUsed: string[];
   facts: HomeKnowFact[];

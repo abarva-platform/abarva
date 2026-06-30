@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
       tenantKey: safeResponse.tenantKey,
       intent: safeResponse.intent,
       answerStatus: safeResponse.answerStatus,
+      artifactStatus: safeResponse.artifactStatus ?? null,
       composerTrace: safeResponse.safety.composerTrace ?? null,
       packetShape: {
         facts: safeResponse.facts.length,
