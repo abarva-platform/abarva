@@ -98,6 +98,14 @@ describe('Source access-control wiring', () => {
     expect(drawer).toContain('source-generated-artifact');
   });
 
+  it('treats heartbeat-wrapped artifact generation error JSON as a failed Source canvas draft', () => {
+    const shell = read('src/components/source/canvas/UniversalCanvasShell.tsx');
+
+    expect(shell).toContain('payload.error');
+    expect(shell).toContain('!res.ok || !payload || payload.error');
+    expect(shell).toContain('error: payload?.error ?? "unknown"');
+  });
+
   it('opens persisted Source artifacts through the registry-backed detail route', () => {
     const queries = read('src/lib/source/queries.ts');
     const page = read('src/app/(maestro)/source/events/[eventId]/artifacts/[artifactId]/page.tsx');
