@@ -11,6 +11,16 @@ interface ExhibitBinding {
   fallbackStatus: string;
 }
 
+interface ReadinessRow {
+  gate: string;
+  evidenceKeywords: string[][];
+  loadedStatus: string;
+  missingStatus: string;
+  owner: string;
+  validationStep: string;
+  impact: string;
+}
+
 const EXHIBITS: ExhibitBinding[] = [
   {
     label: "Exhibit 07 — Incumbent contract baseline",
@@ -68,18 +78,16 @@ export function sanitizeD09ClientFacingNames(body: string): string {
 }
 
 function buildD09CompletionAppendix(ctx: SourceGenerationContext): string {
+  const hasEvaluationWeights = Boolean(
+    findUploadedEvidence(ctx, ["evaluation", "criteria", "weights", "approved"]),
+  );
   return [
     COMPLETION_MARKER,
     "## §0 · Issuance readiness checklist",
     "",
     "| Readiness gate | Current status | Owner placeholder | Post-gap validation step | Downstream impact |",
     "|---|---|---|---|---|",
-    "| Contract spend baseline | Client to complete: current annual run cost and contract term evidence not yet locked. | Finance + sourcing lead | Finance validates source workbook and marks the fact as locked in §11A. | Anchors TCV, savings range, and pricing normalization. |",
-    "| Ticket / work volume baseline | Client to complete: monthly ticket, incident, request, change, and backlog history not yet locked. | Service owner + operations lead | Operations validates volume extract before vendors price unit economics. | Prevents unsupported SLA and staffing assumptions. |",
-    "| Application / infrastructure inventory | Client to complete: app, infrastructure, cloud, and dependency scope not yet locked. | Technology tower owners | Technology owners validate scope table before market issue. | Prevents scope gaps and change-order exposure. |",
-    "| Evaluation model | Client to complete: final weights and rater model pending. | Evaluation chair + sourcing lead | Evaluation chair signs scoring workbook before vendor release. | Makes scoring auditable and comparable. |",
-    "| Legal / commercial terms | Client to complete: legal template and commercial fallback positions pending counsel review. | Legal + procurement | Counsel validates §12 clause positions and exception treatment. | Prevents unapproved legal risk entering the market. |",
-    "| Transition calendar | Client to complete: issue, Q&A, proposal, downselect, BAFO, award, and blackout dates pending. | Sourcing lead + transition lead | Transition lead validates the calendar against business freeze windows. | Allows vendors to commit staffing and transition resources. |",
+    ...buildReadinessRows(ctx),
     "",
     "Recommended planning anchor: target gap closure within T+3 weeks and target RFP release within T+5 weeks, subject to client evidence validation and sponsor sign-off.",
     "",
@@ -87,17 +95,17 @@ function buildD09CompletionAppendix(ctx: SourceGenerationContext): string {
     "",
     "| Milestone | Interim planning anchor | Owner placeholder | Blocking gate | Downstream impact |",
     "|---|---:|---|---|---|",
-    "| RFP issue date | [CLIENT TO SET — before Sep 2026 award path] | Sourcing lead | Issue-to-market gate | Vendors cannot commit response capacity without a dated release window. |",
-    "| Bidder Q&A close | [CLIENT TO SET — after supplier conference] | Sourcing lead + Legal | Equal-information gate | Late Q&A changes create comparability risk across proposals. |",
-    "| Proposal due date | [CLIENT TO SET — before evaluation readout] | Sourcing lead | Evaluation gate | Evaluation cannot start without a fixed receipt deadline. |",
-    "| Downselect / finalist demos | [CLIENT TO SET — before BAFO] | Evaluation chair | Shortlist gate | Demo and reference work cannot be scheduled against an open timeline. |",
+    "| RFP issue date | T+5 weeks from sponsor sign-off | Sourcing lead | Issue-to-market gate | Gives vendors a dated response window while final evidence validation closes. |",
+    "| Bidder Q&A close | T+7 weeks from sponsor sign-off | Sourcing lead + Legal | Equal-information gate | Keeps late Q&A changes controlled and comparable across bidders. |",
+    "| Proposal due date | T+9 weeks from sponsor sign-off | Sourcing lead | Evaluation gate | Establishes a fixed receipt deadline for scoring and compliance checks. |",
+    "| Downselect / finalist demos | T+11 weeks from sponsor sign-off | Evaluation chair | Shortlist gate | Lets demos, references, and clarification cycles be scheduled cleanly. |",
     "| Target award | Sep 2026 constraint from event planning context | Executive sponsor + Finance | Award gate | Transition plan and incumbent notice windows must align to this date. |",
     "",
     "## §9A · Evaluation controls and normalization closure",
     "",
     "| Evaluation control | Required closure before issue | Owner placeholder | Evidence source | Why it matters |",
     "|---|---|---|---|---|",
-    "| E-06 commercial weighting | Confirm final percentage so the scoring model sums to 100%. | Finance + sourcing lead | Exhibit 09 / Exhibit 15 | Prevents non-comparable commercial scoring. |",
+    `| E-06 commercial weighting | ${hasEvaluationWeights ? "Use the approved weighted scorecard from Exhibit 09; finance confirms total-score math before release." : "Set final percentages so the scoring model sums to 100%."} | Finance + sourcing lead | Exhibit 09 / Exhibit 15 | Prevents non-comparable commercial scoring. |`,
     "| Commercial normalization basis | Confirm NPV, ACV, and transition-cost treatment in pricing workbook instructions. | Finance | Exhibit 08 / Exhibit 15 | Keeps run/change and one-time charges comparable. |",
     "| Rater model | Confirm named roles, minimum rater count, and consensus process. | Evaluation chair | Exhibit 09 | Creates auditable score trace and reduces single-reviewer bias. |",
     "| Disqualification rules | Confirm mandatory legal, security, transition, and pricing red flags. | Legal + Security + sourcing lead | Exhibit 09 / Exhibit 13 | Makes no-bid and non-compliant responses easier to reject cleanly. |",
@@ -139,11 +147,11 @@ function buildD09CompletionAppendix(ctx: SourceGenerationContext): string {
     "",
     "| Gap ID | Item | Owner placeholder | Due date placeholder | Blocking gate | Downstream impact |",
     "|---|---|---|---|---|---|",
-    "| G-04 | Confirm final E-06 commercial evaluation weight and total-score math. | Finance + sourcing lead | [CLIENT TO SET — before RFP issue] | Issue-to-market gate | Evaluation model cannot be represented as final until weights sum to 100%. |",
-    "| G-09 | Confirm RFP issue, Q&A, proposal due, downselect, BAFO, and award calendar dates. | Sourcing lead | [CLIENT TO SET — before RFP issue] | Issue-to-market gate | Vendors cannot plan response resources or transition commitments against open dates. |",
-    "| G-10 | Confirm rater roles, consensus process, and conflict-of-interest treatment. | Evaluation chair | [CLIENT TO SET — before proposal receipt] | Evaluation gate | Scores will not be auditable without a named process. |",
-    "| G-11 | Confirm PCI DSS and security-control continuity obligations for transition. | Security owner | [CLIENT TO SET — before vendor Q&A close] | Security approval gate | Compliance gaps may surface too late for vendor remediation. |",
-    "| G-12 | Confirm workforce-transition, retained-role, and change-management assumptions. | HR / change lead | [CLIENT TO SET — before downselect] | Mobilization gate | Adoption and continuity risks remain under-owned. |",
+    `| G-04 | ${hasEvaluationWeights ? "Validate Exhibit 09 weighted-scorecard math and rater model." : "Set final E-06 commercial evaluation weight and total-score math."} | Finance + sourcing lead | T+2 weeks from sponsor sign-off | Issue-to-market gate | Evaluation model cannot be represented as final until weights sum to 100%. |`,
+    "| G-09 | Confirm RFP issue, Q&A, proposal due, downselect, BAFO, and award calendar dates against transition blackout windows. | Sourcing lead | T+3 weeks from sponsor sign-off | Issue-to-market gate | Vendors cannot plan response resources or transition commitments against open dates. |",
+    "| G-10 | Confirm rater roles, consensus process, and conflict-of-interest treatment. | Evaluation chair | T+6 weeks from sponsor sign-off | Evaluation gate | Scores will not be auditable without a named process. |",
+    "| G-11 | Confirm PCI DSS and security-control continuity obligations for transition. | Security owner | T+7 weeks from sponsor sign-off | Security approval gate | Compliance gaps may surface too late for vendor remediation. |",
+    "| G-12 | Confirm workforce-transition, retained-role, and change-management assumptions. | HR / change lead | T+10 weeks from sponsor sign-off | Mobilization gate | Adoption and continuity risks remain under-owned. |",
     "",
     "## §12 · Legal, commercial, and submission terms for client counsel review",
     "",
@@ -175,7 +183,7 @@ function buildVendorResponseTemplateAppendices(): string[] {
     "",
     "| Use case | Baseline volume | Automation method | Year 1 impact | Year 2 impact | Client price impact | Dependencies |",
     "|---|---|---|---|---|---|---|",
-    "| Service desk self-service deflection | [CLIENT TO CONFIRM] tickets/month | Virtual agent + knowledge workflow | 8-12% deflection | 15-20% deflection | Productivity credit / rate reduction to be completed by vendor. | Knowledge base, ITSM integration, approval of automatable intents. |",
+    "| Service desk self-service deflection | Use Exhibit 02 monthly ticket baseline; vendor must restate assumed volume. | Virtual agent + knowledge workflow | 8-12% deflection | 15-20% deflection | Productivity credit / rate reduction to be completed by vendor. | Knowledge base, ITSM integration, approval of automatable intents. |",
     "",
     "## Appendix C · Structured Pricing Workbook Template",
     "",
@@ -193,7 +201,7 @@ function buildVendorResponseTemplateAppendices(): string[] {
     "",
     "| Service area | Metric | Baseline | Proposed commitment | Measurement period | Service credit | Exclusion reference |",
     "|---|---|---|---|---|---|---|",
-    "| Service Desk | First-contact resolution | [CLIENT TO CONFIRM] | Vendor to propose binding target | Monthly | Vendor to propose credit formula and cap | §7 assumption ID required. |",
+    "| Service Desk | First-contact resolution | Use Exhibit 05 SLA/XLA baseline; vendor must restate assumption. | Vendor to propose binding target | Monthly | Vendor to propose credit formula and cap | §7 assumption ID required. |",
     "",
     "## Appendix F · Assumptions and Exclusions Log Template",
     "",
@@ -217,19 +225,120 @@ function buildVendorResponseTemplateAppendices(): string[] {
     "",
     "| Evaluation area | Planning weight | Scoring basis | Disqualification / red flag | Evidence required | Review owner |",
     "|---|---:|---|---|---|---|",
-    "| Commercial model and normalized TCO | [CLIENT TO CONFIRM] | Five-year run, transition, retained cost, pass-through, credits, and change-order economics. | Pricing workbook incomplete or materially non-comparable. | Completed Appendix C plus assumption cross-references. | Finance + sourcing. |",
-    "| Delivery model and staffing credibility | [CLIENT TO CONFIRM] | Role mix, location model, coverage, named leads, transition staffing, and escalation coverage. | Staffing model omits critical roles or hides subcontractor dependency. | Completed Appendix D plus transition staffing plan. | Technology towers + HR/change. |",
-    "| Automation and productivity commitments | [CLIENT TO CONFIRM] | Claims with baseline, method, measurement, contract exhibit, and price impact. | Automation claim not entered in Vendor Claim Register or not priced back. | Completed Appendix A and Appendix B. | Operations + finance. |",
-    "| SLA, risk, security, and transition controls | [CLIENT TO CONFIRM] | Binding SLA definitions, service credits, control posture, KT plan, blackout constraints, and cutover criteria. | Legal/security exception cannot be accepted or transition plan lacks exit criteria. | Completed Appendix E, G, H and legal exceptions log. | Legal + security + transition lead. |",
+    "| Service delivery capability | 20% | Tower solution, staffing model, coverage, named leads, transition staffing, and escalation coverage. | Staffing model omits critical roles or hides subcontractor dependency. | Completed Appendix D plus transition staffing plan. | Technology towers + HR/change. |",
+    "| Commercial competitiveness and transparency | 20% | Five-year run, transition, retained cost, pass-through, credits, change-order economics, and assumption clarity. | Pricing workbook incomplete or materially non-comparable. | Completed Appendix C plus assumption cross-references. | Finance + sourcing. |",
+    "| Automation and productivity commitment | 15% | Claims with baseline, method, measurement, contract exhibit, and price impact. | Automation claim not entered in Vendor Claim Register or not priced back. | Completed Appendix A and Appendix B. | Operations + finance. |",
+    "| Transition risk and knowledge transfer | 15% | KT plan, runbook transfer, transition staffing, blackout controls, and exit criteria. | Transition plan lacks owner, milestone, rollback, or KT evidence. | Completed Appendix G plus transition-risk register. | Transition lead. |",
+    "| Security, compliance, and data protection | 15% | Binding control posture, audit evidence, access model, incident obligations, and regulatory continuity. | Security exception cannot be accepted or controls evidence is missing. | Completed Appendix E, H and security evidence pack. | Legal + security. |",
+    "| Cultural fit and governance model | 10% | Governance cadence, escalation path, named leaders, collaboration model, and retained-role fit. | Governance model lacks named accountability or escalation protocol. | Governance response plus operating model appendix. | CIO office + procurement. |",
+    "| Contractual exceptions and buyer risk | 5% | Legal exceptions, liability/service-credit position, termination assistance, audit rights, and buyer risk. | Commercial exception creates unacceptable buyer risk. | Legal exceptions table and counsel review. | Legal + procurement. |",
     "",
     "## Appendix J · BAFO and Clarification Round Instructions",
     "",
     "| Round | Trigger | Vendor must submit | Buyer control | Due date placeholder |",
     "|---|---|---|---|---|",
-    "| Written clarification | Incomplete, inconsistent, or unsupported response fields. | Updated response table rows only; narrative cannot replace structured fields. | Equal-information log and version-controlled clarification register. | [CLIENT TO SET] |",
-    "| Commercial normalization | Pricing model not comparable across vendors or towers. | Revised pricing workbook, assumption deltas, and credit/penalty schedule. | Finance normalization workbook and exception tracker. | [CLIENT TO SET] |",
-    "| BAFO | Finalist selection after scoring and executive review. | Final pricing, exceptions, transition commitments, SLA credits, and productivity economics. | BAFO scorecard, redline log, and decision-readiness memo. | [CLIENT TO SET] |",
+    "| Written clarification | Incomplete, inconsistent, or unsupported response fields. | Updated response table rows only; narrative cannot replace structured fields. | Equal-information log and version-controlled clarification register. | T+1 week after proposal receipt. |",
+    "| Commercial normalization | Pricing model not comparable across vendors or towers. | Revised pricing workbook, assumption deltas, and credit/penalty schedule. | Finance normalization workbook and exception tracker. | T+2 weeks after proposal receipt. |",
+    "| BAFO | Finalist selection after scoring and executive review. | Final pricing, exceptions, transition commitments, SLA credits, and productivity economics. | BAFO scorecard, redline log, and decision-readiness memo. | T+4 weeks after proposal receipt. |",
   ];
+}
+
+function buildReadinessRows(ctx: SourceGenerationContext): string[] {
+  const rows: ReadinessRow[] = [
+    {
+      gate: "Contract spend baseline",
+      evidenceKeywords: [
+        ["incumbent", "contract", "baseline"],
+        ["run", "change", "financial", "baseline"],
+      ],
+      loadedStatus:
+        "Available parsed evidence; finance validates run/change and term basis before vendor issue.",
+      missingStatus:
+        "Client to complete: current annual run cost and contract term evidence not yet locked.",
+      owner: "Finance + sourcing lead",
+      validationStep:
+        "Finance validates source workbook and marks the baseline as issue-ready in §11A.",
+      impact: "Anchors TCV, savings range, and pricing normalization.",
+    },
+    {
+      gate: "Ticket / work volume baseline",
+      evidenceKeywords: [
+        ["itsm", "ticket", "volumetrics"],
+        ["sla", "xla", "matrix"],
+      ],
+      loadedStatus:
+        "Available parsed evidence; service owner validates ticket, incident, change, and SLA baselines before vendor issue.",
+      missingStatus:
+        "Client to complete: monthly ticket, incident, request, change, and backlog history not yet locked.",
+      owner: "Service owner + operations lead",
+      validationStep:
+        "Operations validates volume extract before vendors price unit economics.",
+      impact: "Prevents unsupported SLA and staffing assumptions.",
+    },
+    {
+      gate: "Application / infrastructure inventory",
+      evidenceKeywords: [
+        ["application", "portfolio", "inscope"],
+        ["system", "workload", "volumetrics"],
+        ["data", "center", "infrastructure", "inventory"],
+        ["network", "topology", "circuit"],
+      ],
+      loadedStatus:
+        "Available parsed evidence; technology owners validate application, workload, infrastructure, and network scope before release.",
+      missingStatus:
+        "Client to complete: app, infrastructure, cloud, and dependency scope not yet locked.",
+      owner: "Technology tower owners",
+      validationStep:
+        "Technology owners validate scope table before market issue.",
+      impact: "Prevents scope gaps and change-order exposure.",
+    },
+    {
+      gate: "Evaluation model",
+      evidenceKeywords: [["evaluation", "criteria", "weights", "approved"]],
+      loadedStatus:
+        "Approved evaluation criteria and weights are loaded; Evaluation Chair validates scorer roles and conflict handling.",
+      missingStatus:
+        "Client to complete: final weights and rater model pending.",
+      owner: "Evaluation chair + sourcing lead",
+      validationStep:
+        "Evaluation chair signs scoring workbook before vendor release.",
+      impact: "Makes scoring auditable and comparable.",
+    },
+    {
+      gate: "Legal / commercial terms",
+      evidenceKeywords: [
+        ["vendor", "response", "expectations"],
+        ["security", "compliance", "control", "posture"],
+      ],
+      loadedStatus:
+        "Vendor response expectations and security-control posture are loaded; counsel validates final clause positions.",
+      missingStatus:
+        "Client to complete: legal template and commercial fallback positions pending counsel review.",
+      owner: "Legal + procurement",
+      validationStep:
+        "Counsel validates §12 clause positions and exception treatment.",
+      impact: "Prevents unapproved legal risk entering the market.",
+    },
+    {
+      gate: "Transition calendar",
+      evidenceKeywords: [["transition", "ops", "blackout", "calendar"]],
+      loadedStatus:
+        "Transition blackout calendar is loaded; transition lead validates milestone dates against freeze windows.",
+      missingStatus:
+        "Client to complete: issue, Q&A, proposal, downselect, BAFO, award, and blackout dates pending.",
+      owner: "Sourcing lead + transition lead",
+      validationStep:
+        "Transition lead validates the calendar against business freeze windows.",
+      impact: "Allows vendors to commit staffing and transition resources.",
+    },
+  ];
+
+  return rows.map((row) => {
+    const hasEvidence = row.evidenceKeywords.some((keywords) =>
+      Boolean(findUploadedEvidence(ctx, keywords)),
+    );
+    return `| ${row.gate} | ${hasEvidence ? row.loadedStatus : row.missingStatus} | ${row.owner} | ${row.validationStep} | ${row.impact} |`;
+  });
 }
 
 function buildSourceRows(ctx: SourceGenerationContext): string[] {
