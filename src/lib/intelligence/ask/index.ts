@@ -23,23 +23,22 @@ import {
 } from '@/lib/knowledge/coverage';
 import { formatCoverageReportForPrompt } from '@/lib/knowledge/coverageReport';
 import {
-  buildCurrentStateAdvisory,
-  chunkAskText,
   isBroadCurrentStateQuestion,
-  sanitizeAskSynthesis,
 } from './response-policy';
+import type { AnswerTraceEnvelope } from '@/lib/debug/answer-trace';
 import {
-  derivedEnterpriseReadToAskSources,
-  getDerivedEnterpriseReadForTenant,
-} from '@/lib/enterprise-context/derived-enterprise-read';
+  buildSkyHarborCtoReadinessPromptAddendum,
+  buildSkyHarborCtoReadinessSource,
+} from './skyharbor-cto-readiness-source';
 
 export type { AskIntent, AskSource, AskSurfaceContext, IntentClassification } from './types';
 
 export interface AskEvent {
-  type: 'classified' | 'sources' | 'delta' | 'followups' | 'done' | 'error';
+  type: 'classified' | 'sources' | 'trace' | 'delta' | 'followups' | 'done' | 'error';
   classification?: IntentClassification;
   sources?: AskSource[];
   coverageReport?: CoverageReport;
+  trace?: AnswerTraceEnvelope;
   text?: string;
   followups?: string[];
   error?: string;
@@ -56,6 +55,12 @@ export interface AskOptions {
   surfaceContext?: AskSurfaceContext | null;
   activePersonGraphNodeId?: string | null;
   activePersonDisplayName?: string | null;
+  traceEnabled?: boolean;
+  traceSession?: {
+    user?: AnswerTraceEnvelope['session']['user'];
+    tenant?: unknown;
+    question?: string | null;
+  };
 }
 
 function compactSourceDetailsForConciseAsk(sources: AskSource[]): AskSource[] {
@@ -114,9 +119,6 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
     });
     yield { type: 'classified', classification };
     const questionCategory = classifyQuestionCategory(trimmed, classification.intent);
-    const derivedEnterpriseRead = await getDerivedEnterpriseReadForTenant(
-      opts.tenant?.canonicalKey ?? opts.tenantInventoryKey ?? opts.tenantClientKey,
-    );
 
     const surfaceContext = retrieveSurfaceContextSources(opts.surfaceContext, trimmed);
     // Keep DB-backed retrieval sequential to avoid exhausting session-mode pools under Ask verifier load.
@@ -139,10 +141,28 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       tenantInventoryKey: opts.tenantInventoryKey,
     });
     const factAvailabilityBlock = formatTenantFactAvailabilityBlock(factFingerprint);
+    const skyHarborCtoSource = buildSkyHarborCtoReadinessSource(trimmed, [
+      opts.tenantClientKey,
+      opts.tenantInventoryKey,
+      opts.tenant?.appClientKey,
+      opts.tenant?.canonicalKey,
+      opts.tenant?.displayName,
+      opts.surfaceContext?.clientKey,
+      opts.surfaceContext?.activeClient,
+    ]);
+    const skyHarborCtoPromptAddendum = buildSkyHarborCtoReadinessPromptAddendum(trimmed, [
+      opts.tenantClientKey,
+      opts.tenantInventoryKey,
+      opts.tenant?.appClientKey,
+      opts.tenant?.canonicalKey,
+      opts.tenant?.displayName,
+      opts.surfaceContext?.clientKey,
+      opts.surfaceContext?.activeClient,
+    ]);
     const conciseAsk = isExplicitConciseAsk(trimmed);
     const sourceLimit = conciseAsk ? 8 : 16;
     const rawSources: AskSource[] = [
-      ...derivedEnterpriseReadToAskSources(derivedEnterpriseRead),
+      ...(skyHarborCtoSource ? [skyHarborCtoSource] : []),
       ...surfaceContext,
       ...tenantStructuredFacts,
       ...tenantEnterprise,
@@ -159,37 +179,14 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
     yield { type: 'sources', sources, coverageReport };
 
     const handoff = atlasStakeholderConflictHandoff(trimmed);
-    if (handoff) {
-      for (const chunk of chunkAskText(sanitizeAskSynthesis(handoff, 140))) {
-        yield { type: 'delta', text: chunk.trimEnd() };
-      }
-      yield { type: 'followups', followups: ['Ask Atlas to map the contradiction', 'Show the evidence behind this tension'] };
-      yield { type: 'done' };
-      return;
-    }
-
-    if (isBroadCurrentStateQuestion(trimmed)) {
-      const advisory = buildCurrentStateAdvisory(sources);
-      if (advisory) {
-        for (const chunk of chunkAskText(sanitizeAskSynthesis(advisory, 170))) {
-          yield { type: 'delta', text: chunk };
-        }
-        yield {
-          type: 'followups',
-          followups: ['Give me the CFO value lens', 'Give me the CIO delivery lens', 'Pressure-test the CMO growth lens'],
-        };
-        yield { type: 'done' };
-        return;
-      }
-    }
+    const currentStateAsk = isBroadCurrentStateQuestion(trimmed);
 
     // INT-VOICE.STRAT-2026-05-10b — Streaming whitespace bug fix.
     //
-    // The synthesizer already runs sanitizeAskSynthesis on the full text,
-    // then chunks it via chunkAskText into ~80-char pieces that each end
-    // with the trailing whitespace from `/.{1,80}(?:\s|$)/g`. We used to
-    // call sanitizeAskSynthesis(delta, 500) again here per chunk; that
-    // call's `.trim()` stripped the trailing whitespace from every chunk,
+    // The synthesizer owns final answer text and chunks it into ~80-char
+    // pieces that each end with the trailing whitespace from
+    // `/.{1,80}(?:\s|$)/g`. We used to call sanitizeAskSynthesis(delta, 500)
+    // again here per chunk; that call's `.trim()` stripped the trailing whitespace from every chunk,
     // which the SentinelChat client then concatenated together producing
     // the "ApexRetail" / "demandsensing" / "upstreamconditions" word-fusion
     // Carlos saw on every test in the 2026-05-10 re-test. The double-
@@ -205,13 +202,69 @@ export async function* askIntelligence(query: string, opts: AskOptions = {}): As
       tenantClientKey: opts.tenantClientKey,
       userId: opts.userId,
       userContextBlock: opts.userContextBlock,
-      conversationContextBlock: opts.conversationContextBlock,
       factAvailabilityBlock,
       coverageReportBlock: formatCoverageReportForPrompt(coverageReport),
+      conversationContextBlock: [
+        skyHarborCtoPromptAddendum,
+        opts.conversationContextBlock,
+        handoff
+          ? `ROUTING ADVISORY CONTEXT: A stakeholder-conflict question may need an Atlas handoff. Do not emit a deterministic handoff. Author the final user-visible answer yourself and, if a handoff is warranted, say it naturally. Suggested context only: ${handoff}`
+          : '',
+        currentStateAsk
+          ? 'CURRENT-STATE QUESTION CONTEXT: The user is asking for a broad current-state read. Author the answer from the selected sources and visible output contract; do not rely on deterministic fallback prose.'
+          : '',
+      ].filter(Boolean).join('\n\n') || undefined,
       averageConfidence,
     })) {
       answer += delta;
       yield { type: 'delta', text: delta };
+    }
+    if (opts.traceEnabled) {
+      yield {
+        type: 'trace',
+        trace: {
+          traceVersion: 'answer-quality-v1',
+          route: '/api/intelligence/ask',
+          surface: 'intelligence',
+          timestamp: new Date().toISOString(),
+          session: opts.traceSession ?? {
+            tenant: opts.tenant ?? opts.tenantClientKey ?? opts.tenantInventoryKey ?? null,
+            question: trimmed,
+          },
+          router: {
+            selectedEndpoint: '/api/intelligence/ask',
+            surface: 'intelligence',
+            intent: classification.intent,
+            primaryDimension: questionCategory,
+            secondaryDimensions: classification.entities ?? [],
+            answerMode: 'advisory_decision',
+            fallbackEligibility: true,
+          },
+          evidenceSelection: {
+            selectedDossierIds: sources.filter((source) => source.type === 'TENANT' || source.type === 'GRAPH').map((source) => source.id),
+            dossierEligibilityState: { coverageReport },
+            selectedReadModels: sources.map((source) => `${source.type}:${source.name}`),
+            selectedMetricSnapshots: sources
+              .filter((source) => /\$|\d+%|\b\d+(?:\.\d+)?\b/.test(source.detail))
+              .slice(0, 12)
+              .map((source) => ({ id: source.id, name: source.name, detail: source.detail.slice(0, 500) })),
+            selectedGaps: coverageReport.missingSegments,
+            selectedCitations: sources.map((source) => ({ id: source.id, name: source.name, type: source.type, confidence: source.confidence })),
+            artifactPlan: /\b(table|rank|compare|scorecard|chart)\b/i.test(trimmed) ? ['table'] : ['prose'],
+          },
+          modelCall: {
+            fallbackUsed: true,
+            fallbackReason: 'synthesis_trace_missing',
+          },
+          apiPayload: {
+            answer,
+            followupsPending: true,
+          },
+          validation: {
+            coverageReport,
+          },
+        },
+      };
     }
 
     const followups = await generateFollowups({

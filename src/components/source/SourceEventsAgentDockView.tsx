@@ -1,10 +1,8 @@
 'use client';
 
-// Source events portfolio · AgentDock chip (sibling of the AgentDock
-// foundation PR #1764). Replaces the deferred-stub SentinelAgentColumn
-// with the shared <AgentDock /> side-rail so portfolio chat, paperclip
-// uploads, and resize / pin / expand modes all work consistently with
-// every other agent surface.
+// Source events portfolio · AgentDock chip. Uses the shared <AgentDock />
+// side-rail so portfolio chat, paperclip uploads, and resize / pin / expand
+// modes work consistently with every other agent surface.
 //
 // Why this lives in its own client component:
 //   - The /source/events page is server-rendered (auth + tenancy +
@@ -38,17 +36,17 @@ import {
 interface Props {
   /** Server-rendered portfolio body — becomes the AgentDock workspace. */
   workspace: ReactNode;
-  /** Active filters (forwarded to surfaceContext so Sentinel can reason about them). */
+  /** Active filters forwarded to surfaceContext. */
   filterStage?: string | null;
   filterStatus?: string | null;
 }
 
-const SENTINEL_AGENT = {
-  initials: 'SS',
-  name: 'Sentinel Source',
-  role: 'Source Portfolio Conductor',
+const SOURCE_AGENT = {
+  initials: 'aVa',
+  name: 'aVa',
+  role: 'Source portfolio advisor',
 };
-const SENTINEL_RUNTIME_AGENT_NAME = 'Sentinel';
+const SOURCE_RUNTIME_AGENT_NAME = 'aVa';
 
 /** Keep the suggestion ids stable for telemetry. */
 const SUGGESTION_IDS = {
@@ -63,12 +61,10 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
   const router = useRouter();
   const [thread, setThread] = useState<ChatMessage[]>([]);
 
-  // Translate AgentDock onMessage into a streamed Sentinel runtime call,
-  // accumulating the response locally so we can commit a single agent
-  // turn when streaming finishes. We use the same /api/chat/agent
-  // endpoint every other Source agent surface uses; surfaceContext
-  // (filterStage, filterStatus) is forwarded so the prompt is grounded
-  // in the portfolio posture the user is currently looking at.
+  // Translate AgentDock onMessage into a streamed Source advisor runtime call,
+  // accumulating the response locally so we can commit a single agent turn when
+  // streaming finishes. surfaceContext is forwarded so the prompt is grounded in
+  // the portfolio posture the user is currently looking at.
   const onMessage = useCallback(
     async (text: string, attachments: AttachmentRef[]) => {
       if (!text && attachments.length === 0) return;
@@ -81,10 +77,8 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
         { id: `u-${Date.now()}`, role: 'user', body: userBody },
       ]);
 
-      // Inline the extracted attachment text so Sentinel has the file
-      // contents as context even before a long-form retrieval pipeline
-      // is wired up. The dock route already trims preview to ~4000
-      // chars per attachment which is safe to stitch into the prompt.
+      // Inline the extracted attachment text so aVa has file context even before
+      // a long-form retrieval pipeline is wired up.
       const attachmentContext = attachments
         .filter((a) => a.extracted_text_preview && a.extracted_text_preview.trim().length > 0)
         .map(
@@ -101,7 +95,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
         filterSummary.length > 0
           ? ` Portfolio filters: ${filterSummary.join(', ')}.`
           : ' Portfolio filters: none.';
-      const context = `Surface: source/events. Agent: ${SENTINEL_AGENT.name}.${portfolioContextLine} The user is asking within the AbarVa platform.`;
+      const context = `Surface: source/events. Agent: ${SOURCE_AGENT.name}.${portfolioContextLine} The user is asking within the AbarVa platform.`;
 
       let acc = '';
       try {
@@ -112,11 +106,11 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
             message: messageForRuntime,
             context,
             surface: 'source/events',
-            agentName: SENTINEL_RUNTIME_AGENT_NAME,
+            agentName: SOURCE_RUNTIME_AGENT_NAME,
           }),
         });
         if (!res.ok) {
-          throw new Error(`Sentinel returned ${res.status}`);
+          throw new Error(`aVa returned ${res.status}`);
         }
         const reader = res.body?.getReader();
         if (!reader) throw new Error('No response body');
@@ -136,7 +130,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
       }
 
       const trimmed = acc.trim();
-      const finalBody = trimmed.length > 0 ? trimmed : 'Sentinel did not return a response.';
+      const finalBody = trimmed.length > 0 ? trimmed : 'aVa did not return a response.';
       setThread((prev) => [
         ...prev,
         { id: `a-${Date.now()}`, role: 'agent', body: finalBody },
@@ -182,7 +176,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
 
   return (
     <AgentDock
-      agent={SENTINEL_AGENT}
+      agent={SOURCE_AGENT}
       surface="source/events"
       defaultMode="side-rail"
       defaultLeftPercent={30}

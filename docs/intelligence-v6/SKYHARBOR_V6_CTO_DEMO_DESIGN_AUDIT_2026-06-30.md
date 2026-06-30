@@ -1,0 +1,252 @@
+# SkyHarbor V6 CTO Demo Design Audit
+
+Generated: 2026-06-30
+
+## Purpose
+
+This audit translates the SkyHarbor airline CTO demo feedback into a concrete data and experience design. The goal is not to fabricate a richer synthetic story. The goal is to decide what AbarVa can answer today from the existing V6 substrate, what should be handled through explicit assumptions or executive input, and what must be enriched in the V6 templates before a deep CTO diligence demo.
+
+## Executive Verdict
+
+SkyHarbor V6 is structurally valid and airline-realistic, but not yet decision-grade for the hardest CTO questions.
+
+It is good enough for a strategic demo about IROPS, AI readiness, modernization tension, and architecture risk. It is not yet strong enough for a CTO who asks for exact systems, data owners, freshness SLAs, spend, measured value, vendor exposure, and signoff-ready evidence.
+
+The right product direction is:
+
+Advise now. Prove progressively. Upgrade to board-grade when evidence arrives.
+
+## Current V6 State
+
+SkyHarbor V6 contains:
+
+- 16 V6 template files
+- 14,342 rows
+- 0 blank cells
+- consistent tenant keys
+- broad airline operating vocabulary
+- explicit synthetic-demo labels
+- evidence/source metadata columns
+- industry-pattern rows that can support adjacent context
+
+Known issue:
+
+- 66,490 `data_thin` cells
+
+This does not make the dataset unusable. It means aVa must not pretend every claim is fully evidenced. The interface and prompt must separate loaded facts, assumptions, system-generated assessments, industry context, and client-approved claims.
+
+## What Exists Today
+
+| Use Case | Exists Today | Usable For |
+| --- | --- | --- |
+| Airline operating narrative | OCC/IROPS, crew, maintenance, airport ops, loyalty, pricing, passenger recovery, mainframe/platform modernization | Strategic CTO story |
+| IROPS AI readiness | IROPS function, IROPS AI initiative, IROPS programs, airline metrics, some risk/control rows | Readiness discussion |
+| AI investment portfolio | 347 AI initiative rows | High-level scale/hold/stop framing |
+| Program/initiative layer | 300 program rows | Portfolio framing and dependency discussion |
+| App/system layer | 944 application/system rows | Broad architecture context |
+| Data/integration layer | 2,220 rows | Indicates data layer exists, but not decision-grade lineage |
+| Vendor/contract layer | 320 rows | Vendor-topic routing, not detailed commercial proof |
+| Operations/risk/control layer | 1,510 rows | Risk themes and operational signals |
+| Relationships | 7,198 rows | Early decision graph substrate |
+| Metrics | 306 metric definitions | Airline KPI framing |
+| Industry patterns | 489 rows | Right-canvas industry context when labeled non-tenant |
+
+## Critical Gaps
+
+| V6 Layer | Gap | Impact |
+| --- | --- | --- |
+| `V6_10_ai_initiatives` | `value_hypothesis`, `measured_value_usd`, and `data_readiness` missing for all rows | Cannot make strong AI scale/hold/stop decisions |
+| `V6_09_programs_initiatives` | budget, spend-to-date, expected value, and realized value missing for all rows | Cannot support funding allocation with math |
+| `V6_06_data_assets_integrations` | data owner, system of record, lineage, consumers, quality score, and governance status missing for all rows | Weakest point for AI readiness and CTO credibility |
+| `V6_07_vendors_contracts` | service, annual cost, owning function, linked systems, contract risk, and pricing basis missing for all rows | Cannot prove vendor/platform fragility |
+| `V6_05_applications_systems` | vendor ID and data dependencies missing for all rows | Cannot build clean architecture dependency proof |
+| `V6_08_spend_value` | vendor/system linkage missing for all rows; amount missing for 163 rows | Cannot normalize cost to systems, vendors, or initiatives |
+| `V6_12_relationships` | some relationship rows lack typed from/to families and target IDs | Graph is broad but not always reliable for hard joins |
+| `V6_13_evidence_sources` | source location and evidence owner missing for all rows | Weak audit trail |
+| `V6_16_expert_lenses` | expert lens fields are effectively empty | aVa lacks structured CTO advisor lenses |
+
+## Product Answer Standard
+
+aVa should answer like a senior advisor, not like a data extractor.
+
+Every executive answer should have:
+
+1. Point of view
+2. What this means
+3. Why it matters
+4. What is known from loaded evidence
+5. What is assumed or missing
+6. A useful branch when more precision is needed
+
+Example branch:
+
+```text
+To make this board-grade, choose one:
+1. Use planning assumptions
+2. Enter SkyHarbor values now
+3. Generate an evidence checklist
+4. Type a custom path
+```
+
+Claude should own the wording and logic of the branch. The renderer should only detect structured branch markers and display buttons. It must not rewrite the answer.
+
+## Claim Maturity Model
+
+Every claim should be classified internally and, where useful, displayed in plain executive language.
+
+| Claim Type | Example | Generated By | Client Signoff |
+| --- | --- | --- | --- |
+| Loaded fact | System X is owned by Enterprise Platforms | Client system/document extraction | Usually no, unless disputed |
+| Extracted commercial fact | Contract renews in Q4 | Contract extraction | Yes for commercial decisions |
+| Derived metric | Cost per app | AbarVa calculation from loaded facts | Yes before board use |
+| Relationship | IROPS depends on crew legality feed | AbarVa graph from app/integration evidence | Yes before investment gate |
+| Readiness score | IROPS AI readiness is medium-low | AbarVa rules | Yes or label as AbarVa assessment |
+| Value estimate | IROPS value pool is material | Client facts plus assumptions/benchmarks | Yes |
+| Industry pattern | Airlines commonly gate IROPS AI on data freshness | Shared pattern corpus | No, but label non-tenant |
+| Recommendation | Fund readiness before autonomous scale | aVa synthesis | Decision owner signoff |
+
+## Real-World Data Availability
+
+| Data Area | Probability Client Has It | Typical Quality | Product Treatment |
+| --- | ---: | --- | --- |
+| Application inventory | 80-90% | Medium | Load as fact, allow correction |
+| Vendor/contracts | 70-85% | Medium | Load as fact, require commercial signoff |
+| Spend by vendor | 80-90% | Medium-high | Load as fact, map to systems/initiatives where possible |
+| Initiative portfolio | 70-85% | Medium | Load as fact, mark value fields as assumption if not approved |
+| Incident/ticket data | 85-95% | High volume, messy | Use for operational signals and trend evidence |
+| SLA/OLA data | 60-80% | Medium | Use for contract/ops commitments |
+| Integration inventory | 40-65% | Weak-medium | Treat as evidence gap if missing |
+| Data lineage/freshness | 25-50% | Weak | Convert missingness into readiness gate |
+| AI use case inventory | 40-70% | Weak-medium | Build initial register, require owner validation |
+| Model risk tiering | 20-50% | Weak | Ask governance owner or classify as assumption |
+| Measured AI value | 15-35% | Weak | Do not fabricate; use planning assumptions if allowed |
+| Operating value pools | 30-60% | Medium | Use as planning-grade until finance approved |
+| Control evidence | 50-80% | Medium | Map to risks and signoff gates |
+
+## Recommended Interaction Model
+
+Missing data should become an interaction, not a failure.
+
+If aVa lacks a certified value, it should ask the executive to choose:
+
+- Use planning assumptions
+- Enter values now
+- Ask the owner for evidence
+- Continue without financial sizing
+
+For example:
+
+```text
+I can size the IROPS opportunity directionally, but I do not have SkyHarbor's certified disruption cost per major event.
+
+Choose one:
+1. Use planning assumptions
+2. Enter disruption cost, event volume, and implementation range
+3. Generate a Finance/Ops evidence request
+4. Continue as readiness-only
+```
+
+This is a product behavior requirement, not just prompt style.
+
+## IROPS AI Readiness Packet Design
+
+The IROPS AI readiness packet should be a derived decision packet assembled from V6. It should not be a standalone hidden prompt document.
+
+Required source layers:
+
+- `V6_02_business_functions`
+- `V6_03_org_ownership`
+- `V6_04_workforce_personas`
+- `V6_05_applications_systems`
+- `V6_06_data_assets_integrations`
+- `V6_08_spend_value`
+- `V6_09_programs_initiatives`
+- `V6_10_ai_initiatives`
+- `V6_11_operations_risk_controls`
+- `V6_12_relationships`
+- `V6_13_evidence_sources`
+- `V6_14_metric_definitions`
+- `V6_15_industry_corpus_patterns`
+- `V6_16_expert_lenses`
+
+Packet contents:
+
+- Business decision: scale, hold, stop, or fund readiness first
+- IROPS value mechanism
+- Known systems
+- Known data assets and missing readiness evidence
+- Known owners
+- AI initiative status
+- Adoption/value evidence
+- Model/control risk
+- Vendor/platform exposure
+- Spend and funding view
+- Evidence trail
+- Missing evidence checklist
+- Optional planning assumptions
+- Branch choices for the executive
+
+## What To Enrich First
+
+Do not enrich every V6 row. Add a focused CTO demo enrichment layer across existing V6 templates.
+
+Target enrichment:
+
+1. 8-12 IROPS-critical systems
+2. 12-20 IROPS data assets/integrations
+3. 5-8 AI initiatives with value, readiness, risk, and scale/hold/stop fields
+4. 5-8 modernization programs with budget, spend, expected value, owner, and status
+5. 10-15 risks/controls tied to AI readiness
+6. 20-40 typed relationships connecting systems, data, AI, vendors, risks, and value
+7. 8-12 evidence source records with source location and evidence owner
+8. 3-5 expert lenses populated for airline CTO, data readiness, AI governance, architecture modernization, and sourcing/commercial risk
+
+## Reload Design
+
+If the V6 templates are enriched, the correct flow is:
+
+1. Update V6 templates.
+2. Validate V6 contract.
+3. Load/reload to Azure/Postgres.
+4. Rebuild read models and decision graph.
+5. Refresh retrieval/search if used.
+6. Run CTO question regression.
+7. Capture prompt packet, Claude response, rendered response, and screenshots.
+
+Do not hardcode enriched facts in the prompt.
+
+## CTO Demo Readiness Matrix
+
+| Question | Current Readiness | Recommended Handling |
+| --- | --- | --- |
+| What is blocking agentic IROPS? | Medium | Answer with POV; branch for data readiness proof |
+| What should the CTO fund first? | Medium-low | Use planning assumptions or ask for funding/value inputs |
+| Which AI investments should scale or hold? | Medium-low | Use readiness framing; avoid exact value ranking until enriched |
+| What systems does IROPS depend on? | Medium-low | Show known systems and evidence gap; enrich app/data joins |
+| What data must be certified? | Low | Ask for/assume data products; enrich lineage/freshness fields |
+| What is vendor/platform exposure? | Low | Use as hypothesis; enrich vendor-system-contract map |
+| What is the 90-day CTO action plan? | Medium | Can produce advisory plan today; label missing evidence gates |
+| Is the AI case board-grade? | Low | Answer no; generate checklist and assumptions |
+
+## Immediate Recommendation
+
+Build the next slice as:
+
+SkyHarbor V6 CTO Readiness Enrichment and Branching Answer Contract.
+
+Scope:
+
+- Enrich only the high-value CTO storyline rows in existing V6 templates.
+- Add no new synthetic tenant.
+- Add no hidden hardcoded prompt facts.
+- Add a decision-branch response contract.
+- Add tests proving Claude-owned branch choices render as buttons without rewriting the answer.
+- Run the 12 CTO demo questions and capture prompt packet, Claude output, rendered output, and screenshots.
+
+Success criteria:
+
+- aVa gives a concise point of view.
+- Missing facts trigger useful assumption/value/evidence branches.
+- IROPS readiness can be explained through systems, data, risks, owners, and value.
+- All financial and board-grade claims are marked as loaded fact, calculated, assumption-led, or client-signoff-required.
+- The right canvas shows useful decision material instead of repeated prose.
