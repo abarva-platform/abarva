@@ -689,7 +689,11 @@ ACTIVE INTELLIGENCE CANVAS RULES
       } else {
         text = [
           "This is not board-ready yet.",
-          "Close four evidence gaps before treating the recommendation as a decision: the current-state baseline, the accountable owner, the dependency or readiness gate, and the value-proof method.",
+          "Close four evidence gaps before treating the recommendation as board guidance.",
+          "- Current-state baseline",
+          "- Accountable owner",
+          "- Dependency or readiness gate",
+          "- Value-proof method",
           "Next step: name the initiative or portfolio question, then verify the baseline metric, owner, readiness gate, and evidence source in one place.",
         ].join("\n\n");
       }

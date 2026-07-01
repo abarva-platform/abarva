@@ -203,7 +203,8 @@ describe('Ask Intelligence guardrails', () => {
       expect(synthesizerCode).toContain('STANDALONE ANSWER REPAIR');
       expect(synthesizerCode).toContain('Remove any wording that depends on prior chat history');
       expect(synthesizerCode).toContain('This is not board-ready yet.');
-      expect(synthesizerCode).toContain('Close four evidence gaps before treating the recommendation as a decision');
+      expect(synthesizerCode).toContain('Close four evidence gaps before treating the recommendation as board guidance');
+      expect(synthesizerCode).toContain('- Current-state baseline');
       expect(synthesizerCode).not.toContain('hidden conversation history');
       expect(synthesizerCode).not.toContain('not going to surface it as an executive answer');
       expect(synthesizerCode).not.toContain('I detected mixed-tenant language in the draft answer');
