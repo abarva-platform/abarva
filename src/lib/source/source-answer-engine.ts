@@ -1224,7 +1224,7 @@ function buildAvaResponseParts(args: {
   const parts: AgentResponsePart[] = [
     {
       type: 'metricStrip',
-      title: 'Ava sourcing read',
+      title: 'aVa sourcing read',
       metrics: [
         { label: 'Lens', value: formatMode(args.mode), tone: 'info' },
         { label: 'Confidence', value: args.confidence, tone: confidenceTone(args.confidence) },
@@ -1261,7 +1261,7 @@ function buildAvaResponseParts(args: {
     parts.push({
       type: 'table',
       title: 'Delivery-model gate',
-      columns: ['Decision item', 'Ava read'],
+      columns: ['Decision item', 'aVa read'],
       rows: [
         ['Recommended model', args.deliveryModelGate.recommendedModelLabel],
         ['Gate status', args.deliveryModelGate.gateStatus.replace(/_/g, ' ')],
@@ -1402,7 +1402,9 @@ function formatBusinessEvidenceLabel(item: SourceLiveTenantEvidenceItem): string
 
 function toAvaVisibleText(value: string): string {
   return value
-    .replace(/\bSentinel\b/g, "Ava")
+    .replace(/\bSentinel\b/g, "aVa")
+    .replace(/\bAtlas\b/g, "decision brief")
+    .replace(/\bSteward\b/g, "governance owner")
     .replace(/^Mode:\s*[^\n]+\n?/gim, "")
     .replace(/^Current state:\s*/gim, "")
     .replace(/\bSourcing Artifacts:\s*/g, "")

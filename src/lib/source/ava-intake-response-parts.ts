@@ -27,10 +27,10 @@ export function buildAvaIntakeResponseParts(
   return [
     {
       type: "text",
-      title: "Ava sourcing read",
+      title: "aVa sourcing read",
       text:
         trimmedBody ||
-        "Ava is shaping the sourcing brief and will keep the next action visible.",
+        "aVa is shaping the sourcing brief and will keep the next action visible.",
     },
     {
       type: "metricStrip",
@@ -55,8 +55,8 @@ export function buildAvaIntakeResponseParts(
     },
     {
       type: "table",
-      title: "Brief fields Ava is assembling",
-      columns: ["Field", "Status", "What Ava needs"],
+      title: "Brief fields aVa is assembling",
+      columns: ["Field", "Status", "What aVa needs"],
       rows: input.fields.map((field) => [
         field.label,
         input.capturedIds.has(field.id) ? "Captured" : "Needed",
@@ -84,7 +84,7 @@ export function buildAvaIntakeResponseParts(
         },
       ],
       caption:
-        "Ava keeps the sourcing process moving from intake to approval.",
+        "aVa keeps the sourcing process moving from intake to approval.",
     },
     {
       type: "nextAction",

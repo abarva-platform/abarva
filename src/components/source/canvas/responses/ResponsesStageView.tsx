@@ -22,6 +22,9 @@ export function ResponsesStageView({
   challengeIntelligence,
   bafoInstructionPack,
   evaluationDecisionView,
+  decisionBriefDocxHref,
+  decisionBriefPdfHref,
+  eventDisplayName,
   documentWorkspace,
 }: {
   readiness?: SourceVendorResponseCompleteness;
@@ -29,6 +32,9 @@ export function ResponsesStageView({
   challengeIntelligence?: VendorChallengeIntelligence | null;
   bafoInstructionPack?: VendorBafoInstructionPack | null;
   evaluationDecisionView?: VendorEvaluationDecisionView | null;
+  decisionBriefDocxHref?: string;
+  decisionBriefPdfHref?: string;
+  eventDisplayName?: string;
   documentWorkspace: ReactNode;
 }) {
   const records = readiness?.records ?? [];
@@ -87,7 +93,12 @@ export function ResponsesStageView({
       <VendorResponseProfilesPanel profileSet={profileSet} />
       <VendorChallengeLeveragePanel intelligence={challengeIntelligence} />
       <VendorBafoInstructionPackPanel pack={bafoInstructionPack} />
-      <VendorEvaluationScorecardPanel decisionView={evaluationDecisionView} />
+      <VendorEvaluationScorecardPanel
+        decisionView={evaluationDecisionView}
+        decisionBriefDocxHref={decisionBriefDocxHref}
+        decisionBriefPdfHref={decisionBriefPdfHref}
+        eventDisplayName={eventDisplayName}
+      />
 
       <section data-testid="source-responses-disqualification-card" style={DECISION}>
         <div style={EYEBROW}>Decision point</div>

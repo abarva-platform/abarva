@@ -220,6 +220,9 @@ function renderStageDocumentContent({
   vendorChallengeIntelligence,
   vendorBafoInstructionPack,
   vendorEvaluationDecisionView,
+  decisionBriefDocxHref,
+  decisionBriefPdfHref,
+  eventDisplayName,
   criteria,
   evidence,
   activityEntries,
@@ -241,6 +244,9 @@ function renderStageDocumentContent({
   vendorChallengeIntelligence?: VendorChallengeIntelligence | null;
   vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
   vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
+  decisionBriefDocxHref?: string;
+  decisionBriefPdfHref?: string;
+  eventDisplayName?: string;
 }) {
   if (viewStage === "strategy") {
     return (
@@ -269,6 +275,9 @@ function renderStageDocumentContent({
         challengeIntelligence={vendorChallengeIntelligence}
         bafoInstructionPack={vendorBafoInstructionPack}
         evaluationDecisionView={vendorEvaluationDecisionView}
+        decisionBriefDocxHref={decisionBriefDocxHref}
+        decisionBriefPdfHref={decisionBriefPdfHref}
+        eventDisplayName={eventDisplayName}
         documentWorkspace={documentTabContent}
       />
     );
@@ -278,6 +287,9 @@ function renderStageDocumentContent({
     return (
       <EvaluationStageView
         evaluationDecisionView={vendorEvaluationDecisionView}
+        decisionBriefDocxHref={decisionBriefDocxHref}
+        decisionBriefPdfHref={decisionBriefPdfHref}
+        eventDisplayName={eventDisplayName}
         documentWorkspace={documentTabContent}
       />
     );
@@ -361,6 +373,7 @@ export function UniversalCanvasShell({
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeClientParam = searchParams?.get("client")?.trim() || null;
+  const displayEvent = normalizeSourceEventDisplay(event);
   const sourceArtifactRenderHref = (
     code: string,
     format: "xlsx" | "docx" | "html" | "pdf",
@@ -371,6 +384,14 @@ export function UniversalCanvasShell({
     if (activeClientParam) params.set("client", activeClientParam);
     return `/api/v1/source/${event.id}/artifacts/${encodeURIComponent(code)}/render?${params.toString()}`;
   };
+  const decisionBriefDocxHref = sourceArtifactRenderHref(
+    "d24_decision_brief",
+    "docx",
+  );
+  const decisionBriefPdfHref = sourceArtifactRenderHref(
+    "d24_decision_brief",
+    "pdf",
+  );
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const messageSequenceRef = useRef(0);
   const [selectedDocCode, setSelectedDocCode] = useState<string | undefined>(
@@ -1037,6 +1058,9 @@ export function UniversalCanvasShell({
         vendorChallengeIntelligence,
         vendorBafoInstructionPack,
         vendorEvaluationDecisionView,
+        decisionBriefDocxHref,
+        decisionBriefPdfHref,
+        eventDisplayName: displayEvent.name,
         criteria: stageCriteria,
         evidence: stageEvidence,
         activityEntries,
@@ -1081,6 +1105,20 @@ export function UniversalCanvasShell({
   ];
 
   const exportItems = [
+    {
+      key: "decision-brief-docx",
+      label: "Decision Brief DOCX",
+      href: decisionBriefDocxHref,
+      testId: "source-canvas-decision-brief-docx",
+      download: true,
+    },
+    {
+      key: "decision-brief-pdf",
+      label: "Decision Brief PDF",
+      href: decisionBriefPdfHref,
+      testId: "source-canvas-decision-brief-pdf",
+      download: true,
+    },
     {
       key: "cxo-report-html",
       label: "CXO Report",
@@ -1204,6 +1242,9 @@ export function UniversalCanvasShell({
             <div style={{ marginTop: 12 }}>
               <VendorEvaluationScorecardPanel
                 decisionView={vendorEvaluationDecisionView}
+                decisionBriefDocxHref={decisionBriefDocxHref}
+                decisionBriefPdfHref={decisionBriefPdfHref}
+                eventDisplayName={displayEvent.name}
               />
             </div>
           ) : null}
@@ -1227,7 +1268,7 @@ export function UniversalCanvasShell({
       topBarProps={{
         tenantName,
         showLocked: true,
-        context: `${event.code} · ${event.name}`,
+        context: `${displayEvent.code} · ${displayEvent.name}`,
       }}
       subNav={<SourceSubNav />}
     >
@@ -1545,18 +1586,33 @@ const AGENT_DOCK_ROLE_COPY: Record<"Sentinel" | "Atlas", string> = {
   Atlas: "Frames the executive brief, ranks finalists, locks the decision.",
 };
 
-// Unified voice: the user always talks to "Ava", regardless of which internal
+// Unified voice: the user always talks to "aVa", regardless of which internal
 // specialist (Sentinel on stages 1–9, Atlas on the executive stages) leads the
 // stage. The stage-appropriate role copy still differs (see AGENT_DOCK_ROLE_COPY);
-// only the displayed agent NAME is always Ava.
+// only the displayed agent NAME is always aVa.
 function displayAgentName(_agent: "Sentinel" | "Atlas"): string {
   void _agent;
-  return "Ava";
+  return "aVa";
 }
 
 function displayAgentInitials(_agent: "Sentinel" | "Atlas"): string {
   void _agent;
-  return "Av";
+  return "aV";
+}
+
+function normalizeSourceEventDisplay(
+  event: Pick<SourcingEventSummary, "code" | "name" | "accountName">,
+): Pick<SourcingEventSummary, "code" | "name" | "accountName"> {
+  const isSkyHarborDemo =
+    event.code.toUpperCase().startsWith("SKYH-") ||
+    /skyharbor|airline demo/i.test(`${event.accountName} ${event.name}`);
+  if (!isSkyHarborDemo) return event;
+  return {
+    ...event,
+    accountName: "SkyHarbor Air",
+    code: "SKYH-AMS-RFP-2026",
+    name: "SkyHarbor Air AMS Outsourcing RFP",
+  };
 }
 
 function CanvasTour() {

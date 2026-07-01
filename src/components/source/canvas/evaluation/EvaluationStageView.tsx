@@ -10,9 +10,15 @@ import { VendorEvaluationScorecardPanel } from "../responses/VendorEvaluationSco
 
 export function EvaluationStageView({
   evaluationDecisionView,
+  decisionBriefDocxHref,
+  decisionBriefPdfHref,
+  eventDisplayName,
   documentWorkspace,
 }: {
   evaluationDecisionView?: VendorEvaluationDecisionView | null;
+  decisionBriefDocxHref?: string;
+  decisionBriefPdfHref?: string;
+  eventDisplayName?: string;
   documentWorkspace: ReactNode;
 }) {
   return (
@@ -36,7 +42,12 @@ export function EvaluationStageView({
       </section>
 
       {evaluationDecisionView ? (
-        <VendorEvaluationScorecardPanel decisionView={evaluationDecisionView} />
+        <VendorEvaluationScorecardPanel
+          decisionView={evaluationDecisionView}
+          decisionBriefDocxHref={decisionBriefDocxHref}
+          decisionBriefPdfHref={decisionBriefPdfHref}
+          eventDisplayName={eventDisplayName}
+        />
       ) : (
         <WeightedScorecardTable />
       )}

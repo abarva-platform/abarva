@@ -819,7 +819,7 @@ const PROFILES: SourceArtifactProfile[] = [
 
   {
     id: "d24",
-    title: "Atlas Decision Brief",
+    title: "Decision Brief",
     humanTitle: "Executive Award Recommendation",
     stage: "8 · Exec Decision",
     audience: "executive",
@@ -854,7 +854,7 @@ const PROFILES: SourceArtifactProfile[] = [
 
   {
     id: "d25",
-    title: "Sentinel Risk Attestation",
+    title: "Risk Attestation",
     humanTitle: "Risk Attestation",
     stage: "8 · Exec Decision",
     audience: ["risk", "executive"],

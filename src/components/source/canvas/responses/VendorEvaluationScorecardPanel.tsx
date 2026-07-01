@@ -32,11 +32,20 @@ function recommendationStyle(
 
 export function VendorEvaluationScorecardPanel({
   decisionView,
+  decisionBriefDocxHref,
+  decisionBriefPdfHref,
+  eventDisplayName = "this sourcing event",
 }: {
   decisionView?: VendorEvaluationDecisionView | null;
+  decisionBriefDocxHref?: string;
+  decisionBriefPdfHref?: string;
+  eventDisplayName?: string;
 }) {
   if (!decisionView || decisionView.vendorSummaries.length === 0) return null;
   const vendors = decisionView.vendorSummaries;
+  const hasDecisionBriefExports = Boolean(
+    decisionBriefDocxHref || decisionBriefPdfHref,
+  );
 
   return (
     <section
@@ -51,9 +60,38 @@ export function VendorEvaluationScorecardPanel({
           <p style={COPY}>{decisionView.scoreBasis}</p>
           <p style={RECOMMENDATION_COPY}>{decisionView.finalistRecommendation}</p>
         </div>
-        <div style={COUNT_WRAP}>
-          <Count label="Vendors" value={decisionView.vendorCount} />
-          <Count label="Criteria" value={decisionView.scorecardRows.length} />
+        <div style={HEADER_ACTIONS}>
+          <div style={COUNT_WRAP}>
+            <Count label="Vendors" value={decisionView.vendorCount} />
+            <Count label="Criteria" value={decisionView.scorecardRows.length} />
+          </div>
+          {hasDecisionBriefExports ? (
+            <div style={EXPORT_WRAP} aria-label="Evaluation decision brief exports">
+              <span style={EXPORT_LABEL}>Decision brief</span>
+              <div style={EXPORT_LINKS}>
+                {decisionBriefDocxHref ? (
+                  <a
+                    href={decisionBriefDocxHref}
+                    download
+                    style={EXPORT_LINK}
+                    data-testid="source-evaluation-decision-brief-docx"
+                  >
+                    DOCX
+                  </a>
+                ) : null}
+                {decisionBriefPdfHref ? (
+                  <a
+                    href={decisionBriefPdfHref}
+                    download
+                    style={EXPORT_LINK}
+                    data-testid="source-evaluation-decision-brief-pdf"
+                  >
+                    PDF
+                  </a>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -165,7 +203,7 @@ export function VendorEvaluationScorecardPanel({
         <div>
           <div style={EYEBROW}>Evaluation Scorecard</div>
           <p style={MINI_COPY}>
-            Default weights support evaluation readiness; named client
+            Weighted category scores for {eventDisplayName}; named client
             reviewers still own final scores and award decisions.
           </p>
         </div>
@@ -355,6 +393,12 @@ const COUNT_WRAP: CSSProperties = {
   gap: 8,
 };
 
+const HEADER_ACTIONS: CSSProperties = {
+  display: "grid",
+  gap: 8,
+  justifyItems: "end",
+};
+
 const COUNT: CSSProperties = {
   minWidth: 86,
   border: `1px solid ${CANVAS.RULE}`,
@@ -364,6 +408,43 @@ const COUNT: CSSProperties = {
   gap: 2,
   textAlign: "right",
   color: CANVAS.INK,
+};
+
+const EXPORT_WRAP: CSSProperties = {
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: 8,
+  padding: "7px 9px",
+  display: "grid",
+  gap: 5,
+  justifyItems: "end",
+  background: "rgba(255,255,255,0.64)",
+};
+
+const EXPORT_LABEL: CSSProperties = {
+  fontFamily: CANVAS.MONO,
+  fontSize: CANVAS.T_MICRO_SMALL,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: CANVAS.INK_MUTED,
+  fontWeight: 700,
+};
+
+const EXPORT_LINKS: CSSProperties = {
+  display: "inline-flex",
+  gap: 6,
+};
+
+const EXPORT_LINK: CSSProperties = {
+  border: `1px solid ${CANVAS.ACTIVE}`,
+  borderRadius: 999,
+  color: CANVAS.ACTIVE,
+  background: "rgba(29,158,117,0.06)",
+  padding: "4px 8px",
+  textDecoration: "none",
+  fontFamily: CANVAS.MONO,
+  fontSize: CANVAS.T_MICRO_SMALL,
+  fontWeight: 800,
+  letterSpacing: "0.08em",
 };
 
 const SUMMARY_GRID: CSSProperties = {

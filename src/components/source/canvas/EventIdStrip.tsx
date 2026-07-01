@@ -20,7 +20,8 @@ interface EventIdStripProps {
 }
 
 export function EventIdStrip({ event, exportItems = [] }: EventIdStripProps) {
-  const tenant = tenantAbbreviationForAccount(event.accountName);
+  const displayEvent = normalizeEventDisplay(event);
+  const tenant = tenantAbbreviationForAccount(displayEvent.accountName);
   const bucket = portfolioStatusOf(event as SourcingEventSummary);
   const dotColor =
     bucket === 'active'
@@ -41,9 +42,9 @@ export function EventIdStrip({ event, exportItems = [] }: EventIdStripProps) {
           <span style={CRUMB_SEP_STYLE}>›</span>
           <span style={TENANT_STYLE}>{tenant}</span>
           <span style={CRUMB_SEP_STYLE}>›</span>
-          <span style={CODE_STYLE}>{event.code}</span>
+          <span style={CODE_STYLE}>{displayEvent.code}</span>
         </nav>
-        <h1 style={TITLE_STYLE}>{event.name}</h1>
+        <h1 style={TITLE_STYLE}>{displayEvent.name}</h1>
         <div style={META_STYLE}>
           <span>{event.archetype}</span>
           <span style={DOT_STYLE}>·</span>
@@ -83,6 +84,21 @@ export function EventIdStrip({ event, exportItems = [] }: EventIdStripProps) {
       </div>
     </header>
   );
+}
+
+function normalizeEventDisplay(
+  event: Pick<SourcingEventSummary, 'code' | 'name' | 'accountName'>,
+): Pick<SourcingEventSummary, 'code' | 'name' | 'accountName'> {
+  const isSkyHarborDemo =
+    event.code.toUpperCase().startsWith('SKYH-') ||
+    /skyharbor|airline demo/i.test(`${event.accountName} ${event.name}`);
+  if (!isSkyHarborDemo) return event;
+  return {
+    ...event,
+    accountName: 'SkyHarbor Air',
+    code: 'SKYH-AMS-RFP-2026',
+    name: 'SkyHarbor Air AMS Outsourcing RFP',
+  };
 }
 
 function rigorLabel(rigor: SourcingEventSummary['rigor']): string {

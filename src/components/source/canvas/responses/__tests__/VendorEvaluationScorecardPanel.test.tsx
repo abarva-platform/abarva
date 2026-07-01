@@ -25,7 +25,14 @@ describe("VendorEvaluationScorecardPanel", () => {
     );
 
     const html = renderToStaticMarkup(
-      createElement(VendorEvaluationScorecardPanel, { decisionView }),
+      createElement(VendorEvaluationScorecardPanel, {
+        decisionView,
+        decisionBriefDocxHref:
+          "/api/v1/source/skyh-test-event/artifacts/d24_decision_brief/render?format=docx",
+        decisionBriefPdfHref:
+          "/api/v1/source/skyh-test-event/artifacts/d24_decision_brief/render?format=pdf",
+        eventDisplayName: "SkyHarbor Air AMS Outsourcing RFP",
+      }),
     );
 
     expect(html).toContain("Normalized Vendor Comparison");
@@ -33,12 +40,19 @@ describe("VendorEvaluationScorecardPanel", () => {
     expect(html).toContain("Executive Tradeoff Summary");
     expect(html).toContain("How the score is defended");
     expect(html).toContain("BAFO Improvement Scenario");
+    expect(html).toContain("Decision brief");
+    expect(html).toContain("DOCX");
+    expect(html).toContain("PDF");
+    expect(html).toContain("SkyHarbor Air AMS Outsourcing RFP");
+    expect(html).toContain("named client reviewers still own final scores");
     expect(html).toMatch(/weighted/i);
     expect(html).toContain("Vendor A");
     expect(html).toContain("Vendor B");
     expect(html).toContain("Vendor C");
     expect(html).toMatch(/Weighted score|5-year TCO|Transition risk/i);
     expect(html).not.toMatch(/Northstar|TitanTech|CloudBridge|DataPeak|BlueMaster|ArcVault/i);
-    expect(html).not.toMatch(/source_events|Sourcing Artifacts|Mode:|Current state:/i);
+    expect(html).not.toMatch(
+      /source_events|Sourcing Artifacts|Mode:|Current state:|Airline Demo|SKYH-NORMALIZE|Atlas Decision Brief|Steward sign-off|Sentinel Risk/i,
+    );
   });
 });
