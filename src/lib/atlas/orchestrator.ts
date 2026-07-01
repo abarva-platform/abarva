@@ -1,9 +1,6 @@
 import { classifyAtlasIntent } from "@/lib/atlas/classifier";
 import { runAtlasLlm } from "@/lib/atlas/llm";
-import {
-  buildTowerFactualSpineAnswer,
-  isTowerFactualSpineCandidate,
-} from "@/lib/atlas/tower-factual-spine";
+import { isTowerFactualSpineCandidate } from "@/lib/atlas/tower-factual-spine";
 import { query_tower_current_state } from "@/lib/atlas/tool-belt";
 import {
   buildAtlasSystemPrompt,
@@ -39,6 +36,11 @@ import {
 } from "@/lib/tower/atlas-reasoning-trace";
 import { resolveTowerToday } from "@/lib/tower/today-resolution";
 import { selectAtlasPatterns } from "@/lib/tower/atlas-pattern-selectors";
+import {
+  answerCioTowerQuestion,
+  canonicalCioTowerTenantKey,
+} from "@/lib/cio-tower/answer";
+import { canonicalCioTowerTenantDisplayName } from "@/lib/cio-tower/metric-packet";
 import type {
   AtlasChatResponse,
   AtlasDebugTrace,
@@ -189,6 +191,84 @@ function makeFallbackDebugTrace(input: {
     rawModelResponse: input.rawResponse,
     renderedResponse: "",
     replacements: [],
+  };
+}
+
+async function runGovernedCioTowerTurn(input: {
+  ctx: AtlasTenancyCtx;
+  threadId: string;
+  message: string;
+  surfaceContext?: Record<string, unknown>;
+}): Promise<{
+  response: AtlasChatResponse;
+  toolResults: AtlasToolResultMap;
+  modelName: string | null;
+}> {
+  const towerState = await query_tower_current_state(
+    input.ctx,
+    input.surfaceContext,
+  );
+  const tenantKey = canonicalCioTowerTenantKey(
+    towerState.client.tenantKey ?? input.ctx.clientKey ?? input.ctx.clientId,
+  );
+  const tenantName =
+    canonicalCioTowerTenantDisplayName({
+      key: tenantKey,
+      name: towerState.client.clientName,
+    }) ??
+    towerState.client.clientName ??
+    tenantKey;
+  const answer = await answerCioTowerQuestion({
+    tenantId: input.ctx.clientId,
+    userId: input.ctx.userId,
+    tenantKey,
+    tenantName,
+    question: input.message,
+  });
+
+  return {
+    toolResults: { towerState },
+    modelName: answer.model,
+    response: {
+      threadId: input.threadId,
+      routeType: "tool_augmented",
+      intent: "llm",
+      response: answer.response,
+      suggestions: [
+        {
+          label: "Show source proof",
+          value: "Show the source evidence behind this Tower answer.",
+          kind: "message",
+        },
+        {
+          label: "Compare value proof",
+          value: "Compare budget commitment against measured value proof.",
+          kind: "message",
+        },
+      ],
+      signalId: null,
+      observationId: null,
+      toolsUsed: ["query_tower_current_state", "answer_cio_tower_question"],
+      atlasMode: "live",
+      fallbackReason: null,
+      debugTrace: wantsDebugTrace(input.surfaceContext)
+        ? ({
+            routing: {
+              promptVersion: ATLAS_PROMPT_VERSION,
+              dossierId: null,
+              dossierVersion: null,
+              dossierBuiltAt: null,
+              fallbackUsed: false,
+              fallbackReason: null,
+              shapeIssues: [],
+            },
+            finalPrompt: answer.promptPackageKey,
+            rawModelResponse: answer.modelOutputRaw,
+            renderedResponse: "",
+            replacements: [],
+          } satisfies AtlasDebugTrace)
+        : undefined,
+    },
   };
 }
 
@@ -439,40 +519,16 @@ export async function runAtlasTurnDetailed(input: {
   const metricExplanationRequest = readMetricExplanationRequest(
     input.surfaceContext,
   );
-  const factualSpineState = isTowerFactualSpineCandidate(input.message)
-    ? await query_tower_current_state(input.ctx, input.surfaceContext).catch(
-        () => null,
-      )
-    : null;
-  const factualSpine = factualSpineState
-    ? buildTowerFactualSpineAnswer(input.message, factualSpineState)
-    : null;
-
-  if (factualSpine && factualSpineState) {
-    toolResults = { towerState: factualSpineState };
-    modelName = "tower-factual-spine-deterministic";
-    response = {
+  if (isTowerFactualSpineCandidate(input.message)) {
+    const governed = await runGovernedCioTowerTurn({
+      ctx: input.ctx,
       threadId: thread.id,
-      routeType: "tool_augmented",
-      intent: "llm",
-      response: factualSpine.response,
-      suggestions: factualSpine.suggestions,
-      signalId: null,
-      observationId: null,
-      toolsUsed: ["query_tower_current_state", "build_tower_factual_spine"],
-      atlasMode: "live",
-      fallbackReason: null,
-      debugTrace: makeFallbackDebugTrace({
-        enabled: wantsDebugTrace(input.surfaceContext),
-        routeType: "tool_augmented",
-        intent: "llm",
-        rawResponse: [
-          "DETERMINISTIC_TOWER_FACTUAL_SPINE",
-          `Intent: ${factualSpine.matchedIntent}`,
-          factualSpine.response,
-        ].join("\n"),
-      }),
-    };
+      message: input.message,
+      surfaceContext: input.surfaceContext,
+    });
+    response = governed.response;
+    toolResults = governed.toolResults;
+    modelName = governed.modelName;
   } else if (metricExplanationRequest) {
     const metricTurn = await runMetricExplanationTurn({
       ctx: input.ctx,

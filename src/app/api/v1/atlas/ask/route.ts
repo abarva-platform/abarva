@@ -37,7 +37,10 @@ export async function POST(req: NextRequest) {
       surfaceContext: body.surfaceContext,
     });
     const renderedResponse = buildAtlasRenderedResponse({
-      clientName: result.toolResults.portfolio?.clientName ?? "Active client",
+      clientName:
+        result.toolResults.towerState?.client.clientName ??
+        result.toolResults.portfolio?.clientName ??
+        "Active client",
       message,
       result,
     });
