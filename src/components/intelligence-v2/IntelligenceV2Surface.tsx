@@ -131,8 +131,11 @@ const CSS = `
 .iv2 .canvasMetric{border:1px solid #DED7CA;border-radius:8px;background:rgba(255,255,255,.74);padding:9px 11px;min-width:0}
 .iv2 .canvasMetricLabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .iv2 .canvasMetricValue{font-size:12.5px;color:var(--ink);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.iv2 .sequenceMap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:stretch}
-.iv2 .sequenceColumn{border:1px solid color-mix(in srgb,var(--tone,#CFC7B8) 30%,#DDD6C9);border-radius:12px;background:#fff;min-width:0;display:grid;align-content:start;gap:11px;padding:12px;box-shadow:inset 0 5px 0 var(--tone,#CFC7B8),0 10px 24px rgba(40,35,24,.05)}
+.iv2 .sequenceMap{display:grid;grid-template-columns:repeat(4,minmax(250px,1fr));gap:10px;align-items:stretch;overflow-x:auto;overscroll-behavior-x:contain;padding:0 2px 10px;scroll-snap-type:x proximity}
+.iv2 .sequenceMap::-webkit-scrollbar{height:8px}
+.iv2 .sequenceMap::-webkit-scrollbar-thumb{background:#D3CABA;border-radius:999px}
+.iv2 .sequenceMap::-webkit-scrollbar-track{background:#F4F0E8;border-radius:999px}
+.iv2 .sequenceColumn{border:1px solid color-mix(in srgb,var(--tone,#CFC7B8) 30%,#DDD6C9);border-radius:12px;background:#fff;min-width:250px;display:grid;align-content:start;gap:11px;padding:12px;scroll-snap-align:start;box-shadow:inset 0 5px 0 var(--tone,#CFC7B8),0 10px 24px rgba(40,35,24,.05)}
 .iv2 .sequenceColumn[data-tone="scale"]{--tone:#1F7A46;background:linear-gradient(180deg,#F2FBF5,#fff 42%)}
 .iv2 .sequenceColumn[data-tone="certify"]{--tone:#237A95;background:linear-gradient(180deg,#EFF9FC,#fff 42%)}
 .iv2 .sequenceColumn[data-tone="fund"]{--tone:#A66A1F;background:linear-gradient(180deg,#FFF7E6,#fff 42%)}
@@ -143,16 +146,16 @@ const CSS = `
 .iv2 .sequenceColumnCount{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--tone,#1F6B3A);border-radius:999px;padding:2px 7px;white-space:nowrap}
 .iv2 .sequenceColumnHint{font-size:11px;line-height:1.28;color:var(--muted);max-width:190px}
 .iv2 .sequenceItem{border:1px solid #E2DACD;border-radius:10px;background:rgba(255,255,255,.95);padding:11px;display:grid;gap:8px;box-shadow:0 8px 20px rgba(40,35,24,.045)}
-.iv2 .sequenceItemLabel{font-size:13px;font-weight:750;line-height:1.22;color:var(--ink)}
-.iv2 .sequenceItemMeta{font-size:11px;line-height:1.38;color:var(--muted)}
-.iv2 .sequenceAction{font-size:11.5px;line-height:1.32;color:#2D332E;font-weight:650}
+.iv2 .sequenceItemLabel{font-size:13px;font-weight:750;line-height:1.22;color:var(--ink);overflow-wrap:anywhere}
+.iv2 .sequenceItemMeta{font-size:11px;line-height:1.38;color:var(--muted);overflow-wrap:anywhere}
+.iv2 .sequenceAction{font-size:11.5px;line-height:1.32;color:#2D332E;font-weight:650;overflow-wrap:anywhere}
 .iv2 .sequenceItemChips{display:flex;flex-wrap:wrap;gap:5px}
 .iv2 .sequenceChip{display:inline-flex;align-items:center;max-width:100%;border:1px solid #E4DED2;border-radius:999px;background:#FBFAF7;color:#3E3D36;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.02em;padding:3px 7px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .iv2 .sequenceChip.value{border-color:rgba(31,107,58,.24);background:#EAF3EC;color:#1F6B3A}
 .iv2 .sequenceChip.ready{border-color:rgba(35,122,149,.22);background:#EAF5F8;color:#1F6680}
 .iv2 .sequenceChip.risk{border-color:rgba(166,106,31,.25);background:#FBF1E1;color:#8A5415}
-.iv2 .sequenceChip.gate{max-width:100%;border-color:rgba(42,42,38,.16);background:#F4F2EC;color:#56534B}
-.iv2 .sequenceChip.owner{max-width:100%;border-color:rgba(31,107,58,.18);background:#F1F7F2;color:#285A3A}
+.iv2 .sequenceChip.gate{max-width:100%;border-color:rgba(42,42,38,.16);background:#F4F2EC;color:#56534B;white-space:normal}
+.iv2 .sequenceChip.owner{max-width:100%;border-color:rgba(31,107,58,.18);background:#F1F7F2;color:#285A3A;white-space:normal}
 .iv2 .matrixCanvas{position:relative;min-height:370px;border:1px solid #DDD6C9;border-radius:12px;background:linear-gradient(180deg,#fff,#F8F6EF);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
 .iv2 .matrixCanvas::before{content:"";position:absolute;inset:12%;border-left:1px solid #D8D2C5;border-bottom:1px solid #D8D2C5}
 .iv2 .matrixCanvas::after{content:"";position:absolute;left:50%;top:12%;bottom:12%;border-left:1px dashed #D8D2C5}
