@@ -5,6 +5,7 @@ import type { IntelligenceDossier } from "@/lib/intelligence/dossiers";
 import {
   buildIntelligenceConsultantPromptPacket,
   buildIntelligenceConsultantUserPrompt,
+  INTELLIGENCE_CONSULTANT_TEXT_SYSTEM_PROMPT,
   synthesizeIntelligenceConsultantText,
   validateIntelligenceConsultantText,
 } from "../intelligence-consultant-text-synthesis";
@@ -65,7 +66,8 @@ const dossier = {
       {
         id: "gap-1",
         label: "Realized value baseline is missing.",
-        detail: "The packet does not include measured realized value for the candidate AI investments.",
+        detail:
+          "The packet does not include measured realized value for the candidate AI investments.",
         severity: "medium",
       },
     ],
@@ -85,17 +87,20 @@ const dossier = {
       {
         patternFamilyId: "airline-ops",
         patternFamilyName: "Airline operations AI sequencing",
-        relevanceReason: "The question asks how to allocate AI capital in airline operations.",
+        relevanceReason:
+          "The question asks how to allocate AI capital in airline operations.",
         industryFit: "airline",
         functionFit: "operations",
         valueLever: "disruption recovery and bounded operational loops",
         patterns: [
           {
             patternId: "pattern-1",
-            title: "Scale bounded loops before write-back-heavy recovery orchestration",
+            title:
+              "Scale bounded loops before write-back-heavy recovery orchestration",
             summary:
               "Airline AI programs scale faster where the operational loop is bounded and data freshness is already governed.",
-            applicability: "High for MRO and turn management; lower for IROPS until integration gates clear.",
+            applicability:
+              "High for MRO and turn management; lower for IROPS until integration gates clear.",
             prerequisites: ["governed operational data", "human escalation"],
             risks: ["false confidence at disruption volume"],
             evidenceStrength: "moderate",
@@ -105,7 +110,8 @@ const dossier = {
       },
     ],
     patternsExcluded: [],
-    applicabilitySummary: "Pattern support favors sequencing, not a single unconstrained AI spend.",
+    applicabilitySummary:
+      "Pattern support favors sequencing, not a single unconstrained AI spend.",
     citations: [
       {
         id: "corpus-1",
@@ -121,8 +127,10 @@ const dossier = {
         expertId: "xp.airline.operations-revenue-management",
         nameOrRole: "Airline Operations & Revenue Management Expert",
         lens: "airline operations",
-        whySelected: "The question is about AI investment sequencing for airline operations.",
-        expectedContribution: "Pressure-test scale readiness and operational failure modes.",
+        whySelected:
+          "The question is about AI investment sequencing for airline operations.",
+        expectedContribution:
+          "Pressure-test scale readiness and operational failure modes.",
         questionsThisExpertShouldPressureTest: [
           "Which operational loops can scale without mainframe write-back?",
         ],
@@ -141,7 +149,8 @@ const dossier = {
       },
     ],
     excludedExperts: [],
-    expertLensSummary: "Operations and value lenses are enough for this first answer.",
+    expertLensSummary:
+      "Operations and value lenses are enough for this first answer.",
     citations: [],
   },
   benchmarkDossier: {
@@ -159,11 +168,13 @@ const dossier = {
       {
         optionId: "scale-mro",
         title: "Scale MRO predictive maintenance",
-        description: "Bounded operational loop with fewer write-back dependencies.",
+        description:
+          "Bounded operational loop with fewer write-back dependencies.",
         tenantEvidenceSupport: ["MRO loop is bounded"],
         corpusSupport: ["Scale bounded loops first"],
         expertSupport: ["Airline operations lens"],
-        expectedValue: "Operational reliability and avoidable maintenance disruption",
+        expectedValue:
+          "Operational reliability and avoidable maintenance disruption",
         executionComplexity: "medium",
         riskLevel: "low",
         prerequisites: ["validate realized value baseline"],
@@ -175,7 +186,9 @@ const dossier = {
         title: "Hold IROPS recovery orchestration",
         description: "Do not scale until write-back and identity gates clear.",
         tenantEvidenceSupport: ["mainframe API exposure remains a dependency"],
-        corpusSupport: ["write-back-heavy recovery automation fails without governed data"],
+        corpusSupport: [
+          "write-back-heavy recovery automation fails without governed data",
+        ],
         expertSupport: ["operations risk lens"],
         expectedValue: "High upside after readiness gates",
         executionComplexity: "high",
@@ -274,6 +287,15 @@ describe("Intelligence consultant text synthesis", () => {
     } else {
       process.env.ANTHROPIC_API_KEY = oldKey;
     }
+  });
+
+  it("allows only the governed native canvas JSON exception", () => {
+    expect(INTELLIGENCE_CONSULTANT_TEXT_SYSTEM_PROMPT).toContain(
+      "The only JSON exception is the governed fenced `abarva-canvas` block",
+    );
+    expect(INTELLIGENCE_CONSULTANT_TEXT_SYSTEM_PROMPT).not.toContain(
+      "Do not return JSON. Return final user-facing text only.",
+    );
   });
 
   it("builds a bounded advisory packet with tenant, corpus, advisory lens, option, and gap sections", () => {
@@ -455,7 +477,9 @@ describe("Intelligence consultant text synthesis", () => {
         "| Data estate rationalization | $122M | Foundation work | Benefit timing | Start as enabler |",
       ].join("\n"),
     );
-    expect(parsed.tabs.find((tab) => tab.id === "industry_insights")).toMatchObject({
+    expect(
+      parsed.tabs.find((tab) => tab.id === "industry_insights"),
+    ).toMatchObject({
       grounding: "industry-context",
     });
   });
@@ -598,7 +622,9 @@ describe("Intelligence consultant text synthesis", () => {
     expect(parsed.mainAnswer).toBe(advisoryAnswer);
     expect(parsed.tabs.find((tab) => tab.id === "chart")).toMatchObject({
       grounding: "industry-context",
-      content: expect.stringContaining("| Opportunity | Value score | Readiness score |"),
+      content: expect.stringContaining(
+        "| Opportunity | Value score | Readiness score |",
+      ),
     });
   });
 

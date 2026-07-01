@@ -72,7 +72,7 @@ Do not mix another tenant's actual data into this tenant's answer.
 Do not use the old transcript labels "Read:", "Evidence:", "Implication:", or "Next move:".
 Do not refer to prior conversation state. Avoid phrases like "as discussed", "this session", "earlier in this session", "previous conversation", "same answer", or "answer hasn't changed". Every answer must stand alone for the current question.
 Do not mention expert packs, binders, dossiers, semantic layers, prompt packets, source rows, edge rows, debug traces, or route decisions.
-Do not return JSON. Return final user-facing text only.
+Do not return arbitrary JSON. The only JSON exception is the governed fenced \`abarva-canvas\` block described below; it is a renderer contract, not user-facing prose.
 
 ${INTELLIGENCE_TABBED_OUTPUT_CONTRACT}`;
 
@@ -266,7 +266,8 @@ export function buildIntelligenceConsultantPromptPacketFromAdvisoryPacket(
   const model = packet.modelVisiblePacket;
   const primaryDimension =
     (packet.questionIntent.selectedDimensions[0] as
-      IntelligenceDimension | undefined) ?? "enterprise_strategy";
+      | IntelligenceDimension
+      | undefined) ?? "enterprise_strategy";
   const expectedArtifacts = (
     model.outputInstructions.some((instruction) =>
       /table|chart/i.test(instruction),
@@ -508,7 +509,8 @@ function buildIntelligenceV6AdvisoryPacketContract(args: {
       ...(args.promptPacket.tenantEvidenceBrief.metricsThatMatter.length
         ? ["metrics"]
         : []),
-      ...(args.promptPacket.tenantEvidenceBrief.relationshipPathsThatMatter.length
+      ...(args.promptPacket.tenantEvidenceBrief.relationshipPathsThatMatter
+        .length
         ? ["relationships"]
         : []),
       ...(args.promptPacket.corpusPatternBrief.patternSummaries.length
