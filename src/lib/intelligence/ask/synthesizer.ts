@@ -34,6 +34,7 @@ import {
 } from "@/lib/intelligence/tabbed-response";
 import { hasExecutiveCanvasPayload } from "@/lib/intelligence/executive-canvas-payload";
 import { buildIndustrialCioBackofficeNativeCanvasBlock } from "./industrial-cio-backoffice-source";
+import { buildSkyHarborCtoReadinessNativeCanvasBlock } from "./skyharbor-cto-readiness-source";
 
 export { chunkAskText, sanitizeAskSynthesis } from "./response-policy";
 
@@ -731,6 +732,20 @@ ACTIVE INTELLIGENCE CANVAS RULES
       text = appendNativeCanvasToDecisionTab(
         text,
         buildIndustrialCioBackofficeNativeCanvasBlock(args.query, [
+          args.tenantClientKey,
+          args.tenantId,
+        ]),
+      );
+    }
+    if (
+      args.richText &&
+      requiresNativeExecutiveCanvas(args.query) &&
+      !hasExecutiveCanvasPayload(text) &&
+      args.sources.some((source) => source.id === "skyharbor-cto-readiness")
+    ) {
+      text = appendNativeCanvasToDecisionTab(
+        text,
+        buildSkyHarborCtoReadinessNativeCanvasBlock(args.query, [
           args.tenantClientKey,
           args.tenantId,
         ]),

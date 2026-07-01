@@ -1,9 +1,11 @@
 import {
+  buildSkyHarborCtoReadinessNativeCanvasBlock,
   buildSkyHarborCtoReadinessPromptAddendum,
   buildSkyHarborCtoReadinessSource,
   isSkyHarborCtoReadinessQuestion,
   isSkyHarborTenantKey,
 } from "../skyharbor-cto-readiness-source";
+import { extractExecutiveCanvasPayloads } from "@/lib/intelligence/executive-canvas-payload";
 
 describe("SkyHarbor CTO readiness ask source", () => {
   it("recognizes SkyHarbor tenant aliases", () => {
@@ -96,6 +98,84 @@ describe("SkyHarbor CTO readiness ask source", () => {
     expect(addendum).toContain("Airline Demo IROPS");
     expect(addendum).toContain("planning assumptions");
     expect(addendum).toContain("client-signoff-required");
-    expect(addendum).toContain("Decision, Visual, Evidence, Assumptions");
+    expect(addendum).toContain(
+      "Decision, Industry Insights, Chart, Table, and Evidence",
+    );
+    expect(addendum).toContain("investmentSequencingMap");
+    expect(addendum).toContain("valueReadinessMatrix");
+    expect(addendum).toContain("gateToValueRoadmap");
+    expect(addendum).toContain("proofBoundary");
+    expect(addendum).toContain("include initiative owner and gate");
+  });
+
+  it("builds a valid native sequencing canvas fallback for the airline CTO demo", () => {
+    const block = buildSkyHarborCtoReadinessNativeCanvasBlock(
+      "Which AI investments should Tower hold or scale?",
+      ["skyharbor-air"],
+    );
+
+    const extracted = extractExecutiveCanvasPayloads(block);
+
+    expect(extracted.visibleContent).toBe("");
+    expect(extracted.payloads[0]).toMatchObject({
+      canvasType: "investmentSequencingMap",
+      title: "AI Investment Sequencing — Airline Demo",
+      columns: [
+        { label: "Scale now" },
+        { label: "Certify then scale" },
+        { label: "Fund readiness" },
+        { label: "Hold / control" },
+      ],
+      proofBoundary: {
+        decisionRequired: expect.stringContaining("readiness-first"),
+      },
+    });
+  });
+
+  it("builds native matrix and roadmap fallbacks for tradeoff and prerequisite questions", () => {
+    const matrixBlock = buildSkyHarborCtoReadinessNativeCanvasBlock(
+      "Which airline AI bets are high value but not ready across IROPS, crew recovery, passenger disruption recovery, and maintenance?",
+      ["skyharbor-air"],
+    );
+    const roadmapBlock = buildSkyHarborCtoReadinessNativeCanvasBlock(
+      "What has to happen first before we scale autonomous IROPS and passenger recovery AI?",
+      ["skyharbor-air"],
+    );
+    const proofBlock = buildSkyHarborCtoReadinessNativeCanvasBlock(
+      "Is the IROPS AI case board-grade today, and what evidence is missing?",
+      ["skyharbor-air"],
+    );
+
+    const matrix = extractExecutiveCanvasPayloads(matrixBlock).payloads[0];
+    const roadmap = extractExecutiveCanvasPayloads(roadmapBlock).payloads[0];
+    const proof = extractExecutiveCanvasPayloads(proofBlock).payloads[0];
+
+    expect(matrix).toMatchObject({
+      canvasType: "valueReadinessMatrix",
+      title: "AI Portfolio Value / Readiness Map — Airline Demo",
+      items: expect.arrayContaining([
+        expect.objectContaining({
+          label: "IROPS Decision Assistant",
+          action: "Fund readiness before autonomous scale",
+        }),
+      ]),
+    });
+    expect(roadmap).toMatchObject({
+      canvasType: "gateToValueRoadmap",
+      title: "IROPS AI Gate-to-Value Roadmap — Airline Demo",
+      gates: expect.arrayContaining([
+        expect.objectContaining({
+          label: "Close model-risk and HITL controls",
+          status: "Gate 3",
+        }),
+      ]),
+    });
+    expect(proof).toMatchObject({
+      canvasType: "proofBoundary",
+      title: "IROPS AI Proof Boundary — Airline Demo",
+      proofBoundary: {
+        decisionRequired: expect.stringContaining("planning assumptions"),
+      },
+    });
   });
 });
