@@ -66,6 +66,12 @@ describe("Source decision brief export payload", () => {
       "SkyHarbor Air AMS Outsourcing RFP - Evaluation Decision Brief",
     );
     expect(payload.body).toContain("Vendor comparison, BAFO posture");
+    expect(payload.body).toContain("> **Recommendation:**");
+    expect(payload.body).toContain("### Vendor A");
+    expect(payload.body).toContain("### Vendor B");
+    expect(payload.body).toContain("### Vendor C");
+    expect(payload.body).toContain("Scorecard rationale:");
+    expect(payload.body).toContain("> **Decision required:**");
     for (const section of DECISION_BRIEF_REQUIRED_SECTIONS) {
       expect(payload.body).toContain(`## ${section}`);
     }
@@ -150,6 +156,8 @@ describe("Source decision brief export payload", () => {
     expect(body).toContain("Vendor A");
     expect(body).toContain("Vendor B");
     expect(body).toContain("Vendor C");
+    expect(body).toContain("Lead BAFO lane");
+    expect(body).toContain("Executive actions:");
     expectNoForbiddenTerms(body);
   });
 });

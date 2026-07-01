@@ -29,6 +29,7 @@ import type { Workbook } from "exceljs";
 import type { DeliverableFormat } from "@/lib/programs/exports/types";
 import type { SourceDeliverableSpec, SourceDeliverableKind } from "./types";
 import { routeFormat } from "./format-router";
+import { eventCodeFromSpec } from "./metadata";
 import {
   AI_DECISION_SUPPORT_WATERMARK,
   HUMAN_DECISION_ATTESTATION_TEXT,
@@ -779,7 +780,8 @@ function filenameFor(
 ): string {
   const dateStamp = (spec.generatedAt ?? new Date().toISOString()).slice(0, 10);
   const codeSegment = artifactCodeForKind(spec.kind);
-  return `${codeSegment}__${spec.sourceEventId}__${dateStamp}.${format}`;
+  const eventSegment = eventCodeFromSpec(spec, spec.sourceEventId);
+  return `${codeSegment}__${eventSegment}__${dateStamp}.${format}`;
 }
 
 function artifactCodeForKind(kind: SourceDeliverableKind): string {

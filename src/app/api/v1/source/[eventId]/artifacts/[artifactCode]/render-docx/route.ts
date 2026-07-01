@@ -39,6 +39,7 @@ import { buildRenewalDecisionPayloadFromContext } from "@/lib/source/exports/pay
 import { buildDemandChallengePayloadFromContext } from "@/lib/source/exports/payloads/demand-challenge-payload";
 import { buildSourcingApproachPayloadFromContext } from "@/lib/source/exports/payloads/sourcing-approach-payload";
 import { buildVendorRiskPackPayloadFromContext } from "@/lib/source/exports/payloads/vendor-risk-pack-payload";
+import { eventCodeFromPayload } from "@/lib/source/exports/metadata";
 
 const NARRATIVE_CODES = new Set([
   "d01_strategy_memo",
@@ -149,8 +150,8 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
   // pipeline uses.
   const generatedAt = new Date().toISOString();
   let document;
+  let payload: unknown;
   try {
-    let payload: unknown;
     if (LIFECYCLE_NARRATIVE_BUILDERS[artifactCode]) {
       payload = await LIFECYCLE_NARRATIVE_BUILDERS[artifactCode]!(
         ctx,
@@ -205,7 +206,8 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
   }
 
   const buffer = await Packer.toBuffer(document);
-  const filename = `${artifactCode}__${ctx.event.code}__${generatedAt.slice(0, 10)}.docx`;
+  const responseEventCode = eventCodeFromPayload(payload, ctx.event.code);
+  const filename = `${artifactCode}__${responseEventCode}__${generatedAt.slice(0, 10)}.docx`;
   return new Response(buffer as unknown as ArrayBuffer, {
     status: 200,
     headers: {
@@ -213,7 +215,7 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
       "content-disposition": `attachment; filename="${filename}"`,
       "cache-control": "no-store",
       "x-source-artifact-code": artifactCode,
-      "x-source-event-code": ctx.event.code,
+      "x-source-event-code": responseEventCode,
       "x-source-artifact-format": "docx",
     },
   });

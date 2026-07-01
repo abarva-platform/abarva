@@ -26,6 +26,7 @@ import {
 } from '@/lib/source/exports';
 import { buildNarrativeDocxPayloadFromContext } from '@/lib/source/exports/payloads/narrative-docx-payload';
 import { buildAiClauseGapPayloadFromContext } from '@/lib/source/exports/payloads/ai-clause-gap-payload';
+import { eventCodeFromPayload } from '@/lib/source/exports/metadata';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -103,8 +104,9 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
 
   const generatedAt = new Date().toISOString();
   let html: string;
+  let payload: unknown;
   try {
-    const payload =
+    payload =
       artifactCode === 'dx6a_ai_clause_gap'
         ? buildAiClauseGapPayloadFromContext(ctx, generatedAt)
         : buildNarrativeDocxPayloadFromContext(ctx, artifactCode, generatedAt);
@@ -129,7 +131,7 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
       'content-type': HTML_CONTENT_TYPE,
       'cache-control': 'no-store',
       'x-source-artifact-code': artifactCode,
-      'x-source-event-code': ctx.event.code,
+      'x-source-event-code': eventCodeFromPayload(payload, ctx.event.code),
       'x-source-artifact-format': 'html',
       // Strict CSP — no scripts. Allows Google Fonts (Inter / Fraunces /
       // JetBrains Mono per AbarVa v3 typography) but no other remote

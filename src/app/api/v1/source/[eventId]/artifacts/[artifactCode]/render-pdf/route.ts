@@ -51,6 +51,7 @@ import {
   VENDOR_RISK_PACK_PDF_CONFIG,
   buildNarrativePdf,
 } from "@/lib/source/exports/renderers/narrative-pdf";
+import { eventCodeFromPayload } from "@/lib/source/exports/metadata";
 
 const NARRATIVE_CODES = new Set([
   "d01_strategy_memo",
@@ -268,7 +269,8 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
     }
   }
 
-  const filename = `${artifactCode}__${ctx.event.code}__${generatedAt.slice(0, 10)}.pdf`;
+  const responseEventCode = eventCodeFromPayload(payload, ctx.event.code);
+  const filename = `${artifactCode}__${responseEventCode}__${generatedAt.slice(0, 10)}.pdf`;
   return new Response(buffer as unknown as ArrayBuffer, {
     status: 200,
     headers: {
@@ -276,7 +278,7 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
       "content-disposition": `attachment; filename="${filename}"`,
       "cache-control": "no-store",
       "x-source-artifact-code": artifactCode,
-      "x-source-event-code": ctx.event.code,
+      "x-source-event-code": responseEventCode,
       "x-source-artifact-format": "pdf",
       ...(degraded ? { "x-source-pdf-degraded": "true" } : {}),
     },
