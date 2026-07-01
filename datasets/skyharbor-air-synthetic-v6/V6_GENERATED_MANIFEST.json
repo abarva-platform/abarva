@@ -1,8 +1,8 @@
 {
   "tenantKey": "skyharbor-air",
-  "clientDisplayName": "Airline Demo",
+  "clientDisplayName": "SkyHarbor Air Group",
   "datasetVersion": "v6",
-  "generatedAt": "2026-06-29T14:49:49.881Z",
+  "generatedAt": "2026-06-30T00:00:00.000Z",
   "sourceDataset": "datasets/skyharbor-air-synthetic-v4",
   "sourceTenantKey": "skyharbor-air",
   "canonicalTenantKey": "skyharbor-air",
@@ -15,117 +15,123 @@
       "businessObjectFamily": "enterprise_profile",
       "columns": 31,
       "rows": 1,
-      "dataThinCells": 0
+      "dataThinCells": 2
     },
     {
       "file": "templates/V6_02_business_functions.csv",
       "businessObjectFamily": "business_function",
       "columns": 30,
       "rows": 55,
-      "dataThinCells": 0
+      "dataThinCells": 110
     },
     {
       "file": "templates/V6_03_org_ownership.csv",
       "businessObjectFamily": "org_ownership",
       "columns": 31,
       "rows": 66,
-      "dataThinCells": 0
+      "dataThinCells": 276
     },
     {
       "file": "templates/V6_04_workforce_personas.csv",
       "businessObjectFamily": "workforce_persona",
       "columns": 30,
       "rows": 18,
-      "dataThinCells": 0
+      "dataThinCells": 36
     },
     {
       "file": "templates/V6_05_applications_systems.csv",
       "businessObjectFamily": "application_system",
       "columns": 35,
-      "rows": 944,
-      "dataThinCells": 0
+      "rows": 956,
+      "dataThinCells": 8276
     },
     {
       "file": "templates/V6_06_data_assets_integrations.csv",
       "businessObjectFamily": "data_asset_integration",
       "columns": 32,
-      "rows": 2220,
-      "dataThinCells": 0
+      "rows": 2236,
+      "dataThinCells": 17760
     },
     {
       "file": "templates/V6_07_vendors_contracts.csv",
       "businessObjectFamily": "vendor_contract",
       "columns": 34,
       "rows": 320,
-      "dataThinCells": 0
+      "dataThinCells": 2560
     },
     {
       "file": "templates/V6_08_spend_value.csv",
       "businessObjectFamily": "spend_value",
       "columns": 35,
-      "rows": 483,
-      "dataThinCells": 0
+      "rows": 491,
+      "dataThinCells": 2533
     },
     {
       "file": "templates/V6_09_programs_initiatives.csv",
       "businessObjectFamily": "program_initiative",
       "columns": 39,
-      "rows": 300,
-      "dataThinCells": 0
+      "rows": 308,
+      "dataThinCells": 3360
     },
     {
       "file": "templates/V6_10_ai_initiatives.csv",
       "businessObjectFamily": "ai_initiative",
       "columns": 41,
-      "rows": 347,
-      "dataThinCells": 0
+      "rows": 355,
+      "dataThinCells": 4574
     },
     {
       "file": "templates/V6_11_operations_risk_controls.csv",
       "businessObjectFamily": "operations_risk_control",
       "columns": 31,
-      "rows": 1510,
-      "dataThinCells": 0
+      "rows": 1522,
+      "dataThinCells": 6421
     },
     {
       "file": "templates/V6_12_relationships.csv",
       "businessObjectFamily": "relationship",
       "columns": 32,
-      "rows": 7198,
-      "dataThinCells": 0
+      "rows": 7230,
+      "dataThinCells": 17907
     },
     {
       "file": "templates/V6_13_evidence_sources.csv",
       "businessObjectFamily": "evidence_source",
       "columns": 30,
-      "rows": 80,
-      "dataThinCells": 0
+      "rows": 92,
+      "dataThinCells": 320
     },
     {
       "file": "templates/V6_14_metric_definitions.csv",
       "businessObjectFamily": "metric_definition",
       "columns": 31,
       "rows": 306,
-      "dataThinCells": 0
+      "dataThinCells": 972
     },
     {
       "file": "templates/V6_15_industry_corpus_patterns.csv",
       "businessObjectFamily": "industry_corpus_pattern",
       "columns": 31,
       "rows": 489,
-      "dataThinCells": 0
+      "dataThinCells": 1343
     },
     {
       "file": "templates/V6_16_expert_lenses.csv",
       "businessObjectFamily": "expert_lens",
       "columns": 30,
-      "rows": 5,
-      "dataThinCells": 0
+      "rows": 8,
+      "dataThinCells": 16
     }
   ],
   "totals": {
     "files": 16,
-    "rows": 14342,
-    "dataThinCells": 0
+    "rows": 14453,
+    "dataThinCells": 66466
+  },
+  "enrichment": {
+    "id": "skyharbor-v6-cto-readiness-irops-storyline",
+    "generatedAt": "2026-06-30T00:00:00Z",
+    "principle": "Advise now. Prove progressively. Upgrade to board-grade when evidence arrives.",
+    "scope": "Focused CTO/IROPS storyline enrichment across existing V6 templates; no hidden prompt facts."
   }
 }

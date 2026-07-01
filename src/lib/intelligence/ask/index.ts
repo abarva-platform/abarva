@@ -42,6 +42,14 @@ import {
   type AdvisoryPacket,
 } from "@/lib/intelligence/advisory-packet";
 import { synthesizeIntelligenceConsultantText } from "@/lib/intelligence/intelligence-consultant-text-synthesis";
+import {
+  buildSkyHarborCtoReadinessPromptAddendum,
+  buildSkyHarborCtoReadinessSource,
+} from "./skyharbor-cto-readiness-source";
+import {
+  buildIndustrialCioBackofficePromptAddendum,
+  buildIndustrialCioBackofficeSource,
+} from "./industrial-cio-backoffice-source";
 
 export type {
   AskIntent,
@@ -216,10 +224,52 @@ export async function* askIntelligence(
     // grounding comes from tenant substrate, structured context, corpus
     // patterns, and benchmarks; lightweight routing/lens decisions stay hidden.
     const groundedFactBlock = factAvailabilityBlock;
+    const skyHarborCtoSource = buildSkyHarborCtoReadinessSource(trimmed, [
+      opts.tenantClientKey,
+      opts.tenantInventoryKey,
+      opts.tenant?.appClientKey,
+      opts.tenant?.canonicalKey,
+      opts.tenant?.displayName,
+      opts.surfaceContext?.clientKey,
+      opts.surfaceContext?.activeClient,
+    ]);
+    const skyHarborCtoPromptAddendum = buildSkyHarborCtoReadinessPromptAddendum(
+      trimmed,
+      [
+        opts.tenantClientKey,
+        opts.tenantInventoryKey,
+        opts.tenant?.appClientKey,
+        opts.tenant?.canonicalKey,
+        opts.tenant?.displayName,
+        opts.surfaceContext?.clientKey,
+        opts.surfaceContext?.activeClient,
+      ],
+    );
+    const industrialCioSource = buildIndustrialCioBackofficeSource(trimmed, [
+      opts.tenantClientKey,
+      opts.tenantInventoryKey,
+      opts.tenant?.appClientKey,
+      opts.tenant?.canonicalKey,
+      opts.tenant?.displayName,
+      opts.surfaceContext?.clientKey,
+      opts.surfaceContext?.activeClient,
+    ]);
+    const industrialCioPromptAddendum =
+      buildIndustrialCioBackofficePromptAddendum(trimmed, [
+        opts.tenantClientKey,
+        opts.tenantInventoryKey,
+        opts.tenant?.appClientKey,
+        opts.tenant?.canonicalKey,
+        opts.tenant?.displayName,
+        opts.surfaceContext?.clientKey,
+        opts.surfaceContext?.activeClient,
+      ]);
 
     const conciseAsk = isExplicitConciseAsk(trimmed);
     const sourceLimit = conciseAsk ? 8 : 16;
     const rawSources: AskSource[] = [
+      ...(industrialCioSource ? [industrialCioSource] : []),
+      ...(skyHarborCtoSource ? [skyHarborCtoSource] : []),
       ...surfaceContext,
       ...tenantStructuredFacts,
       ...tenantEnterprise,
@@ -359,7 +409,14 @@ export async function* askIntelligence(
       tenantClientKey: opts.tenantClientKey,
       userId: opts.userId,
       userContextBlock: opts.userContextBlock,
-      conversationContextBlock: opts.conversationContextBlock,
+      conversationContextBlock:
+        [
+          industrialCioPromptAddendum,
+          skyHarborCtoPromptAddendum,
+          opts.conversationContextBlock,
+        ]
+          .filter(Boolean)
+          .join("\n\n") || undefined,
       factAvailabilityBlock: groundedFactBlock,
       coverageReportBlock: formatCoverageReportForPrompt(coverageReport),
       intelligenceDossier,

@@ -1,0 +1,44 @@
+[
+  {
+    "statement": "Industrial Demo has enough loaded evidence to start a Treasury/Finance Shared Services value-office proof.",
+    "maturity": "loaded_fact",
+    "basis": "12 functions, 18 systems, 12 AI initiatives, and 14 operations/control rows are selected from V6.",
+    "confidence": "high",
+    "signoffRequired": false
+  },
+  {
+    "statement": "Treasury and Finance should be Phase 1; HR and Legal should be discovery branches until their process evidence is loaded.",
+    "maturity": "abarva_assessment",
+    "basis": "Treasury/Finance evidence has named systems, initiatives, metrics, risks, and owners; HR/Legal evidence is thinner in the current packet.",
+    "confidence": "medium",
+    "signoffRequired": true
+  },
+  {
+    "statement": "Measured AI values in the packet are tenant evidence but still require Finance attestation before board or investment-committee use.",
+    "maturity": "client_signoff_required",
+    "basis": "14 spend/value rows and 12 metric rows are present, but Finance-approved value governance is still a required checklist item.",
+    "confidence": "high",
+    "signoffRequired": true
+  },
+  {
+    "statement": "Shared Services value depends on process redesign, controls, adoption, and data lineage, not tool deployment alone.",
+    "maturity": "industry_context",
+    "basis": "8 industry/pattern rows and expert lenses reinforce this boundary.",
+    "confidence": "medium",
+    "signoffRequired": false
+  },
+  {
+    "statement": "System, data, and control dependencies are relationship-backed but need owner validation before they become a signed operating model.",
+    "maturity": "relationship_inferred",
+    "basis": "32 relationship rows are in the focused packet.",
+    "confidence": "medium",
+    "signoffRequired": true
+  },
+  {
+    "statement": "Missing values should trigger CIO/CFO choice prompts instead of fabricated precision.",
+    "maturity": "missing_evidence",
+    "basis": "Current process volumes, unit costs, exception cost, adoption baselines, HR, and Legal source evidence remain explicit gaps.",
+    "confidence": "high",
+    "signoffRequired": false
+  }
+]

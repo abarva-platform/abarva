@@ -1,0 +1,59 @@
+{
+  "ok": true,
+  "generatedAt": "2026-06-30T22:56:00.433Z",
+  "tenantCount": 5,
+  "templateCount": 16,
+  "tenants": [
+    {
+      "tenantKey": "apex-retail",
+      "clientDisplayName": "Apex Retail Group",
+      "sourceTenantKey": "apex-retail",
+      "sourceDataset": "datasets/apex-retail-synthetic-v4",
+      "files": 16,
+      "rows": 3589,
+      "dataThinCells": 11537,
+      "blankCells": 0
+    },
+    {
+      "tenantKey": "first-capital-financial",
+      "clientDisplayName": "First Capital Financial",
+      "sourceTenantKey": "first-capital",
+      "sourceDataset": "datasets/first-capital-financial-synthetic-v4",
+      "files": 16,
+      "rows": 5609,
+      "dataThinCells": 21266,
+      "blankCells": 0
+    },
+    {
+      "tenantKey": "lakeshore-industries",
+      "clientDisplayName": "Lakeshore Industries",
+      "sourceTenantKey": "lakeshore",
+      "sourceDataset": "datasets/lakeshore-industries-synthetic-v4",
+      "files": 16,
+      "rows": 2544,
+      "dataThinCells": 9487,
+      "blankCells": 0
+    },
+    {
+      "tenantKey": "meridian-health",
+      "clientDisplayName": "Meridian Health",
+      "sourceTenantKey": "meridian-health",
+      "sourceDataset": "datasets/meridian-health-synthetic-v4",
+      "files": 16,
+      "rows": 3439,
+      "dataThinCells": 12729,
+      "blankCells": 0
+    },
+    {
+      "tenantKey": "skyharbor-air",
+      "clientDisplayName": "SkyHarbor Air Group",
+      "sourceTenantKey": "skyharbor-air",
+      "sourceDataset": "datasets/skyharbor-air-synthetic-v4",
+      "files": 16,
+      "rows": 14453,
+      "dataThinCells": 66466,
+      "blankCells": 0
+    }
+  ],
+  "failures": []
+}
