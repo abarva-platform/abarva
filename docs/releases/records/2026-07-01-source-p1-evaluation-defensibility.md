@@ -31,10 +31,13 @@ This release hardens the Source vendor evaluation output so a sourcing executive
 - Updates the evaluation scorecard panel to show how the score is defended and how BAFO cures can move vendor scores.
 - Updates Source aVa evaluation answers so Vendor B is a price benchmark unless specified staffing, retained-effort, pass-through, and productivity-credit gaps are cured.
 - Adds route evidence for finalist recommendation and score-impact scenarios.
+- Polishes score-impact answer copy so aVa says what BAFO must provide, rather than producing mechanical “cures price...” phrasing.
 
 ## QA / Validation
 
 - `npx jest src/lib/source/proposal-intelligence/__tests__/proposal-intelligence.test.ts src/components/source/canvas/responses/__tests__/VendorEvaluationScorecardPanel.test.tsx src/lib/source/__tests__/source-answer-engine.test.ts --runInBand` — passed, 68 tests.
+- `npx jest src/lib/source/__tests__/source-answer-engine.test.ts --runInBand` — passed, 44 tests for the score-impact answer copy follow-up.
+- `npx eslint src/lib/source/source-answer-engine.ts src/lib/source/__tests__/source-answer-engine.test.ts` — passed.
 
 ## Rollout Plan
 
