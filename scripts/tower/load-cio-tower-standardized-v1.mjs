@@ -334,7 +334,19 @@ function resolveEntityKey(out, entityKey) {
 function normalizedReference(value) {
   const raw = String(value || '').trim();
   if (!raw) return null;
-  return raw.replace(/-FY2025-.+$/, '');
+  return raw
+    .replace(/-FY2025-.+$/, '')
+    .replace(/\s+FY2025 trend baseline$/i, '');
+}
+
+function referenceVariants(value) {
+  const normalized = normalizedReference(value);
+  if (!normalized) return [];
+
+  const variants = [normalized];
+  const initiativeMatch = normalized.match(/^(.+-INIT-\d{3})(?:-\d+)?$/);
+  if (initiativeMatch) variants.push(initiativeMatch[1]);
+  return Array.from(new Set(variants));
 }
 
 function factEntityReferences(row) {
@@ -344,7 +356,7 @@ function factEntityReferences(row) {
   } else {
     refs.push(row.source_record_id, row.reconciles_to_record_id, row.is_rollup_of, row.source_label);
   }
-  return refs.map(normalizedReference).filter(Boolean);
+  return refs.flatMap(referenceVariants).filter(Boolean);
 }
 
 function resolveFactEntityKey(out, tenantKey, row) {
