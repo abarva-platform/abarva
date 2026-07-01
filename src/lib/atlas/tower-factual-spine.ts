@@ -573,6 +573,9 @@ export function isTowerFactualSpineCandidate(question: string): boolean {
     /\b(budget|spend|money|cost)\b/.test(q) ||
     (/\b(top|largest|biggest|list)\b/.test(q) &&
       /\b(programs?|initiatives?)\b/.test(q)) ||
+    /\b(value\s+gap|promised.*measured|unproven\s+value|least\s+proven)\b/.test(q) ||
+    /\b(weak\s+value\s+evidence|weakest\s+evidence|missing\s+value\s+evidence|evidence\s+gap|under[- ]?proven)\b/.test(q) ||
+    /\b(inspect\s+this\s+week|what\s+should\s+i\s+inspect|where\s+should\s+i\s+focus|what\s+needs\s+(my\s+)?attention|next\s+funding\s+gate)\b/.test(q) ||
     (/\b(top|largest|biggest)\b/.test(q) && /\bvendor|contract\b/.test(q)) ||
     (/\b(measured value|value proof|realized value)\b/.test(q) &&
       /\b(total|across|all)\b/.test(q)) ||
