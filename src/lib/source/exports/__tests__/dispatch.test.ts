@@ -61,6 +61,30 @@ describe("renderSourceDeliverable · narrative kinds", () => {
       });
     });
   }
+
+  it("uses payload tenantName for narrative cover metadata when provided", async () => {
+    const result = await renderSourceDeliverable(
+      {
+        ...COMMON_BASE,
+        tenantKey: "Airline Demo",
+        kind: "decision-brief",
+        payload: {
+          ...NARRATIVE_PAYLOAD,
+          tenantName: "Aviation Client",
+          eventCode: "SKYH-AMS-RFP-2026",
+          eventName: "AMS RFP Decision Brief",
+          generatedAt: COMMON_BASE.generatedAt,
+        },
+      },
+      "html",
+    );
+
+    const html = result.buffer.toString("utf8");
+    expect(html).toContain("Company: Aviation Client");
+    expect(html).toContain("d24 · Decision Brief · Aviation Client");
+    expect(html).not.toContain("Company: Airline Demo");
+    expect(html).not.toContain("d24 · Decision Brief · Airline Demo");
+  });
 });
 
 describe("renderSourceDeliverable · structured-data kinds (xlsx + docx)", () => {
