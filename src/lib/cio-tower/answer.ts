@@ -760,6 +760,7 @@ interface ProgramValueProfile {
   name: string;
   owner: string;
   blocker: string;
+  isAiProgram: boolean;
   budgetNumeric: number;
   budget: string;
   promisedValueNumeric: number;
@@ -805,7 +806,40 @@ function firstAttribute(rows: readonly CioTowerFactRow[], keys: readonly string[
   return fallback;
 }
 
-function programValueProfiles(facts: readonly CioTowerFactRow[], limit = 10): ProgramValueProfile[] {
+function requestedProgramCount(question: string, fallback: number): number {
+  const explicit = question.match(/\btop\s+(\d{1,2})\b/i)?.[1];
+  if (!explicit) return fallback;
+  const parsed = Number(explicit);
+  if (!Number.isInteger(parsed) || parsed <= 0) return fallback;
+  return Math.min(parsed, 25);
+}
+
+function isAiProgramQuestion(question: string): boolean {
+  return /\bAI\b|agentic|automation|copilot|model|predictive|machine\s+learning|genai|generative/i.test(question);
+}
+
+function isAiProgramGroup(rows: readonly CioTowerFactRow[]): boolean {
+  const text = rows
+    .map((row) => [
+      row.entity_type,
+      row.entity_display_name,
+      row.measure,
+      row.scope,
+      row.view,
+      ...Object.values(row.attributes ?? {}).filter((value): value is string => typeof value === 'string'),
+    ].join(' '))
+    .join(' ')
+    .toLowerCase();
+
+  return /\bai\b|agentic|automation|copilot|model|predictive|machine learning|genai|generative/.test(text)
+    || /(?:^|[_\s-])ai(?:$|[_\s-])/.test(text);
+}
+
+function programValueProfiles(
+  facts: readonly CioTowerFactRow[],
+  limit = 10,
+  options: { aiOnly?: boolean } = {},
+): ProgramValueProfile[] {
   const grouped = new Map<string, CioTowerFactRow[]>();
   for (const fact of facts) {
     if (!['initiative_budget', 'value'].includes(fact.view)) continue;
@@ -822,10 +856,12 @@ function programValueProfiles(facts: readonly CioTowerFactRow[], limit = 10): Pr
         ? Math.max(promisedValueNumeric - measuredValueNumeric, 0)
         : null;
       const primary = group[0] as CioTowerFactRow;
+      const isAiProgram = isAiProgramGroup(group);
       return {
         name: loadedName(primary, 'Program name not loaded'),
         owner: firstAttribute(group, ['owner_role', 'owner_name', 'owner', 'business_sponsor_role'], 'Owner not loaded'),
         blocker: firstAttribute(group, ['primary_blocker', 'blocker', 'status_summary'], 'No blocker loaded'),
+        isAiProgram,
         budgetNumeric,
         budget: budgetNumeric > 0 ? formatCioTowerMoney(budgetNumeric) : 'gap',
         promisedValueNumeric,
@@ -837,17 +873,22 @@ function programValueProfiles(facts: readonly CioTowerFactRow[], limit = 10): Pr
         confidence: group.map((row) => row.confidence).sort((left, right) => ['high', 'medium', 'low', 'not_loaded'].indexOf(left) - ['high', 'medium', 'low', 'not_loaded'].indexOf(right))[0] ?? 'not_loaded',
       };
     })
+    .filter((profile) => !options.aiOnly || profile.isAiProgram)
     .filter((profile) => profile.budgetNumeric > 0 || profile.promisedValueNumeric > 0 || profile.measuredValueNumeric > 0)
     .sort((left, right) => right.budgetNumeric - left.budgetNumeric)
     .slice(0, limit);
 }
 
-function buildTowerTopProgramsTable(facts: readonly CioTowerFactRow[], limit = 10): CioTowerVisibleTable | null {
-  const profiles = programValueProfiles(facts, limit);
+function buildTowerTopProgramsTable(
+  facts: readonly CioTowerFactRow[],
+  limit = 10,
+  options: { aiOnly?: boolean } = {},
+): CioTowerVisibleTable | null {
+  const profiles = programValueProfiles(facts, limit, options);
   if (profiles.length === 0) return null;
   return {
-    id: 'top_it_programs_by_budget',
-    title: 'Top IT programs by budget and value proof',
+    id: options.aiOnly ? 'top_ai_programs_by_budget' : 'top_it_programs_by_budget',
+    title: options.aiOnly ? 'Top AI programs by budget and value proof' : 'Top IT programs by budget and value proof',
     columns: ['Rank', 'Program', 'Owner', 'FY26 budget', 'Promised value', 'Measured value', 'Value gap', 'Evidence', 'Blocker'],
     rows: profiles.map((profile, index) => [
       String(index + 1),
@@ -872,19 +913,30 @@ function buildCioTowerDeterministicMetricAnswer(context: CioTowerPromptContext):
   reason: string;
 } | null {
   if (context.contract.contract_key === 'tower_top_it_programs_by_budget') {
-    const table = buildTowerTopProgramsTable(context.relevantFacts, 10);
+    const aiOnly = isAiProgramQuestion(context.question);
+    const limit = requestedProgramCount(context.question, aiOnly ? 5 : 10);
+    const table = buildTowerTopProgramsTable(context.relevantFacts, limit, { aiOnly });
     if (!table) return null;
-    const initiativeBudget = context.metricPackets.find((packet) => packet.measureKey === 'initiative_budget_fy26');
     const topProgram = table.rows[0]?.[1] ?? 'the largest loaded program';
     const topBudget = table.rows[0]?.[3] ?? 'not loaded';
-    const aggregateSentence = initiativeBudget?.valueNumeric
-      ? ` The loaded FY26 initiative budget total is ${initiativeBudget.displayValue}.`
+    const selectedTotal = table.rows.reduce((sum, row) => {
+      const raw = row[3]?.replace(/[$,MB]/g, '') ?? '';
+      const numeric = Number(raw);
+      if (!Number.isFinite(numeric)) return sum;
+      return sum + (row[3]?.includes('B') ? numeric * 1_000_000_000 : numeric * 1_000_000);
+    }, 0);
+    const selectedTotalSentence = selectedTotal > 0
+      ? ` The loaded FY26 ${aiOnly ? 'AI-program' : 'program'} budget in this ranked cut is ${formatCioTowerMoney(selectedTotal)}.`
       : '';
+    const programLabel = aiOnly ? 'AI program' : 'IT program';
+    const pluralProgramLabel = aiOnly ? 'AI programs' : 'IT programs';
     return {
-      reason: 'Top program budget question answered from loaded Tower program budget facts.',
+      reason: aiOnly
+        ? 'Top AI program budget question answered from loaded Tower program budget and value facts.'
+        : 'Top program budget question answered from loaded Tower program budget facts.',
       output: {
         version: 'cio_tower_visible_answer_v1',
-        answer: `${context.tenantName}'s top loaded IT program by FY26 budget is ${topProgram} at ${topBudget}.${aggregateSentence} Tower is ranking the loaded program budget facts it has; it is not filling in missing programs or estimating spend that is not loaded.`,
+        answer: `${context.tenantName}'s top loaded ${programLabel} by FY26 budget is ${topProgram} at ${topBudget}.${selectedTotalSentence} Tower is ranking loaded ${pluralProgramLabel} with budget and value proof kept separate; it is not filling in missing programs or estimating spend that is not loaded.`,
         tables: [table],
         tabs: [],
         followUpQuestion: 'Do you want Tower to show the decision or risk view for these programs next?',
