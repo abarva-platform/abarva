@@ -50,6 +50,7 @@ import { AILabel } from "@/components/abarva/AILabel";
 import { AIResponsibilityFooter } from "@/components/abarva/AIResponsibilityFooter";
 import { shouldShowPlainTextCitationGap } from "@/lib/agent/citation-gap";
 import { AgentActionApprovalNotice } from "./AgentActionApprovalNotice";
+import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { AgentResponseParts } from "./AgentResponseParts";
 import { CitationGapNotice } from "./CitationGapNotice";
 import { EvidenceBasis } from "./EvidenceBasis";
@@ -996,7 +997,15 @@ export function AgentDock(props: AgentDockProps) {
                     ) ? (
                     <AgentAnswerRenderer answer={turn.agentAnswer} />
                   ) : turn.role === "agent" ? (
-                    visibleAgentDockBody(surface, turn.body, turn.agentAnswer)
+                    <div style={MARKDOWN_BUBBLE_STYLE}>
+                      <AgentMarkdown
+                        text={visibleAgentDockBody(
+                          surface,
+                          turn.body,
+                          turn.agentAnswer,
+                        )}
+                      />
+                    </div>
                   ) : (
                     turn.body
                   )}
@@ -1955,6 +1964,10 @@ const BUBBLE_STYLE: CSSProperties = {
   whiteSpace: "pre-wrap",
   wordBreak: "break-word",
   maxWidth: "100%",
+};
+
+const MARKDOWN_BUBBLE_STYLE: CSSProperties = {
+  whiteSpace: "normal",
 };
 
 const FOCUSED_AGENT_BUBBLE_STYLE: CSSProperties = {

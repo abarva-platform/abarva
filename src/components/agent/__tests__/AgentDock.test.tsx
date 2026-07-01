@@ -33,6 +33,19 @@ import {
   type ChatMessage,
 } from "../AgentDock";
 
+jest.mock("@/lib/agent/markdownRenderer", () => ({
+  AgentMarkdown: ({ text }: { text: string }) => {
+    const parts = text.split(/\*\*(.*?)\*\*/g);
+    return (
+      <div data-testid="agent-markdown">
+        {parts.map((part, index) =>
+          index % 2 === 1 ? <strong key={index}>{part}</strong> : part,
+        )}
+      </div>
+    );
+  },
+}));
+
 const SURFACE = "test/agent-dock";
 
 const AGENT = {
@@ -182,6 +195,31 @@ describe("AgentDock · default mode", () => {
       }),
     ).toHaveAttribute("data-ai-label-status", "draft");
     expect(within(userTurn).queryByText("AI Draft")).not.toBeInTheDocument();
+  });
+
+  it("renders agent markdown emphasis instead of exposing raw markers", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={[
+          {
+            id: "a1",
+            role: "agent",
+            body: "**Start with Treasury** before scaling HR and Legal AI.",
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const agentTurn = screen.getByTestId("agent-dock-turn-agent");
+    expect(within(agentTurn).getByTestId("agent-markdown")).toBeInTheDocument();
+    expect(within(agentTurn).getByText("Start with Treasury").tagName).toBe(
+      "STRONG",
+    );
+    expect(agentTurn).not.toHaveTextContent("**Start with Treasury**");
   });
 
   it("shows a citation gap for substantive uncited agent text without evidence context", () => {
@@ -848,7 +886,7 @@ describe("AgentDock · thread render", () => {
     expect(turns[1]).toHaveAttribute("data-testid", "agent-dock-turn-user");
   });
 
-  it("preserves compact agent response text without renderer rewriting", () => {
+  it("formats compact agent markdown without rewriting the answer words", () => {
     render(
       <AgentDock
         agent={AGENT}
@@ -865,12 +903,19 @@ describe("AgentDock · thread render", () => {
       />,
     );
 
-    expect(screen.getByTestId("agent-dock-turn-agent")).toHaveTextContent(
+    const agentTurn = screen.getByTestId("agent-dock-turn-agent");
+    expect(
+      within(agentTurn).getByText(
+        "APX-04 is the highest value-risk item this quarter.",
+      ).tagName,
+    ).toBe("STRONG");
+    expect(agentTurn).not.toHaveTextContent(
       "**APX-04 is the highest value-risk item this quarter.**",
     );
-    expect(screen.getByTestId("agent-dock-turn-agent")).toHaveTextContent(
-      "AI Draft",
+    expect(agentTurn).toHaveTextContent(
+      "Portfolio KPI evidence shows sponsor ambiguity",
     );
+    expect(agentTurn).toHaveTextContent("AI Draft");
   });
 
   it("renders evidence-only Ava packets as concise prose", () => {
