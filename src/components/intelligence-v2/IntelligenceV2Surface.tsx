@@ -461,18 +461,27 @@ function companionCardKicker(tab: ParsedIntelligenceTab): string {
 }
 
 function companionCardsFrom(tabs: ParsedIntelligenceTab[]): CompanionCard[] {
-  return tabs.slice(0, 5).map((item) => ({
-    ...item,
-    kicker: companionCardKicker(item),
-    title: companionCardTitle(item),
-    wide:
-      item.id === "chart" ||
-      item.id === "table" ||
-      item.id === "decision" ||
-      item.id === "evidence" ||
-      hasExecutiveCanvasPayload(item.content) ||
-      item.content.length > 520,
-  }));
+  return tabs
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const aHasCanvas = hasExecutiveCanvasPayload(a.item.content);
+      const bHasCanvas = hasExecutiveCanvasPayload(b.item.content);
+      if (aHasCanvas !== bHasCanvas) return aHasCanvas ? -1 : 1;
+      return a.index - b.index;
+    })
+    .slice(0, 5)
+    .map(({ item }) => ({
+      ...item,
+      kicker: companionCardKicker(item),
+      title: companionCardTitle(item),
+      wide:
+        item.id === "chart" ||
+        item.id === "table" ||
+        item.id === "decision" ||
+        item.id === "evidence" ||
+        hasExecutiveCanvasPayload(item.content) ||
+        item.content.length > 520,
+    }));
 }
 
 type MarkdownTable = {

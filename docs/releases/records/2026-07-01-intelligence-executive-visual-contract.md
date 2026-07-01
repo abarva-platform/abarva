@@ -32,6 +32,8 @@ Final signed-in browser proof then confirmed the Airline Demo native sequencing 
 
 This research-grade exhibit follow-up keeps the same governed renderer contract but makes the investment sequencing canvas less busy and more visual. The right canvas now prioritizes a product-colored value/readiness plot, compact funding sequence, proof boundary, and small summary strip instead of showing every initiative as a large card. No tenant data, scoring logic, prompt policy, or native-canvas payload contract changes in this slice.
 
+Signed-in visual QA on the research-grade deploy showed Industrial Demo presenting the native exhibit first, but Airline Demo sometimes displayed prose/table companion cards above the native exhibit when Claude emitted multiple tabs. This follow-up promotes any tab containing a governed native executive canvas to the top of the right canvas while preserving the tab content unchanged.
+
 ## Layer Impact
 
 - `global-control-lane`: Updates the shared Intelligence v2 answer contract and right-canvas renderer for all tenants using the executive canvas.
@@ -65,6 +67,7 @@ This research-grade exhibit follow-up keeps the same governed renderer contract 
 - `src/components/intelligence-v2/IntelligenceV2Surface.tsx` and `src/lib/intelligence/executive-canvas-payload.ts`: add stable native-canvas proof attributes, prevent right-canvas sequencing overflow, and remove residual standalone `abarva-canvas` language labels from visible prose.
 - `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: keeps four-lane sequencing boards readable by giving each lane a board-grade minimum width, adding horizontal exhibit scroll, and allowing long initiative names, owner chips, and gate chips to wrap cleanly instead of clipping.
 - `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: refines `investmentSequencingMap` into a quieter research-grade exhibit using the product palette: a value/readiness plot, compact funding-sequence spine, proof boundary, and executive metric strip.
+- `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: promotes companion cards with governed native executive-canvas payloads above prose/table companion cards so the decision exhibit is visible first when Claude emits multiple tabs.
 - `src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx`: updates native sequencing coverage to assert the value/readiness exhibit and funding-sequence rendering.
 - `docs/demo/intelligence-executive-canvas-demo-script-2026-07-01.md`: adds SkyHarbor and Industrial/Morgan Street prompts that exercise all native exhibit families for demo proof.
 - `src/lib/client-config.ts`: collapses duplicate canonical tenant aliases after demo-safe text replacement so Intelligence chrome, prompts, and visible answers do not show stacked labels such as `Air Air`, `Holdings Holdings`, or repeated canonical tails such as `Retail Group Group`.
@@ -97,6 +100,8 @@ This research-grade exhibit follow-up keeps the same governed renderer contract 
 - Sequence-board readability lint: `/Users/anand/Projects/nexus/node_modules/.bin/eslint src/components/intelligence-v2/IntelligenceV2Surface.tsx` passed.
 - Research-grade sequencing validation: `/Users/anand/Projects/nexus/node_modules/.bin/jest src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx --runInBand` passed. Jest still reports pre-existing duplicate manual mock warnings for Markdown mocks.
 - Research-grade sequencing lint: `/Users/anand/Projects/nexus/node_modules/.bin/eslint src/components/intelligence-v2/IntelligenceV2Surface.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx` passed.
+- Native-exhibit-first validation: `/Users/anand/Projects/nexus/node_modules/.bin/jest src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx --runInBand` passed. Jest still reports pre-existing duplicate manual mock warnings for Markdown mocks.
+- Native-exhibit-first lint: `/Users/anand/Projects/nexus/node_modules/.bin/eslint src/components/intelligence-v2/IntelligenceV2Surface.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx` passed.
 
 ## Rollout Plan
 

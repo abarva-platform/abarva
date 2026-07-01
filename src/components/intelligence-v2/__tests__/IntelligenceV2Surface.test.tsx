@@ -842,6 +842,11 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
           text: [
             mainAnswer,
             "",
+            "<<<TAB: Table | grounding: tenant-evidence>>>",
+            "| Initiative | Posture |",
+            "| --- | --- |",
+            "| Legacy table | Hold |",
+            "",
             "<<<TAB: Decision | grounding: tenant-evidence>>>",
             "Tenant evidence: use the sequence to separate scale decisions from readiness funding.",
             "",
@@ -880,6 +885,9 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       expect(
         screen.getByTestId("executive-canvas-sequencing"),
       ).toBeInTheDocument();
+      expect(
+        document.querySelector(".companionCard:first-child"),
+      ).toContainElement(screen.getByTestId("executive-canvas-sequencing"));
       expect(screen.getByTestId("executive-canvas-sequencing")).toHaveAttribute(
         "data-native-canvas-type",
         "executive-canvas-sequencing",
