@@ -69,6 +69,10 @@ function userDisplayName(user: ReturnType<typeof useUser>["user"]): string {
   return demoSafeClientText(fallback).trim() || "User";
 }
 
+function shouldPreferTenantOverUserAlias(displayName: string): boolean {
+  return /\b(?:demo|agent)\b/i.test(displayName);
+}
+
 export function AppTopBar({
   tenantName,
   preserveTenantName = false,
@@ -94,7 +98,11 @@ export function AppTopBar({
       ? resolvedTenantNameRaw
       : demoSafeClientText(resolvedTenantNameRaw)
     : null;
-  const displayName = userDisplayName(user);
+  const userName = userDisplayName(user);
+  const displayName =
+    preserveTenantName && resolvedTenantName && shouldPreferTenantOverUserAlias(userName)
+      ? resolvedTenantName
+      : userName;
   const initials = displayName
     .split(" ")
     .map((n) => n[0])
