@@ -4,6 +4,15 @@ import { preflightAnthropicDirectClient } from '@/lib/integrations/ai-egress';
 import { azureRead } from '@/lib/data-plane/azureRead';
 import { createTxSession } from '@/lib/data-plane/read-adapters/azureSession';
 import {
+  buildModuleV6PacketContract,
+  buildModuleV6VisibleOutputAudit,
+  moduleV6PacketPromptBlock,
+  validateModuleV6VisibleSections,
+  type ModuleV6PacketContract,
+  type ModuleV6VisibleOutputAudit,
+  type ModuleV6VisibleSection,
+} from '@/lib/agent/module-v6-answer-contract';
+import {
   formatCioTowerMoney,
   toCioTowerMetricPacket,
   validateCioTowerMetricPacketVisibility,
@@ -84,6 +93,7 @@ export interface CioTowerPromptContext {
   relevantFacts: CioTowerFactRow[];
   relationships: CioTowerRelationshipRow[];
   gaps: string[];
+  v6PacketContract: ModuleV6PacketContract;
 }
 
 export interface CioTowerAnswerResult {
@@ -97,6 +107,7 @@ export interface CioTowerAnswerResult {
   validationStatus: 'passed' | 'failed';
   validationErrors: string[];
   latencyMs: number;
+  v6VisibleOutputAudit: ModuleV6VisibleOutputAudit;
 }
 
 export interface CioTowerVisibleTable {
@@ -387,6 +398,63 @@ function collectVisibleTextFromContract(contract: CioTowerVisibleAnswerContract)
   return chunks.filter(Boolean);
 }
 
+function tableTextForModuleAudit(table: CioTowerVisibleTable): string {
+  return [
+    table.title,
+    table.columns.join(' | '),
+    ...table.rows.map((row) => row.join(' | ')),
+  ].join('\n');
+}
+
+function collectVisibleSectionsFromContract(
+  contract: CioTowerVisibleAnswerContract,
+): ModuleV6VisibleSection[] {
+  const sections: ModuleV6VisibleSection[] = [
+    {
+      id: 'answer',
+      label: 'Answer',
+      modelText: contract.answer,
+      renderedText: contract.answer,
+    },
+  ];
+  for (const table of contract.tables ?? []) {
+    const tableText = tableTextForModuleAudit(table);
+    sections.push({
+      id: `table:${table.id}`,
+      label: table.title,
+      modelText: tableText,
+      renderedText: tableText,
+    });
+  }
+  for (const tab of contract.tabs ?? []) {
+    const tabText = [tab.label, tab.prose].filter(Boolean).join('\n');
+    sections.push({
+      id: `tab:${tab.id}`,
+      label: tab.label,
+      modelText: tabText,
+      renderedText: tabText,
+    });
+    for (const table of tab.tables ?? []) {
+      const tableText = tableTextForModuleAudit(table);
+      sections.push({
+        id: `tab:${tab.id}:table:${table.id}`,
+        label: table.title,
+        modelText: tableText,
+        renderedText: tableText,
+      });
+    }
+  }
+  if (contract.followUpQuestion) {
+    sections.push({
+      id: 'follow_up',
+      label: 'Follow-up question',
+      modelText: contract.followUpQuestion,
+      renderedText: contract.followUpQuestion,
+    });
+  }
+  return sections;
+}
+
 function validateParsedVisibleAnswer(args: {
   contractKey: string;
   metricPackets: readonly CioTowerMetricPacket[];
@@ -403,6 +471,11 @@ function validateParsedVisibleAnswer(args: {
       packets: args.metricPackets,
       visibleTexts,
     }),
+  );
+  validationErrors.push(
+    ...validateModuleV6VisibleSections(
+      collectVisibleSectionsFromContract(args.parsedOutput),
+    ),
   );
   return validationErrors;
 }
@@ -558,6 +631,12 @@ export function buildCioTowerClaudePrompt(context: CioTowerPromptContext): strin
     `Intent: ${context.contract.intent}`,
     `Question family: ${context.contract.question_family}`,
     `Preferred artifact shape: ${context.contract.artifact_type}`,
+    '',
+    'Tower number discipline:',
+    '- Tower owns numbers. Claude owns narrative. The renderer owns presentation.',
+    '- Use only governed metric packets and relevant Tower facts for amounts, counts, percentages, dates, formula versions, and evidence lineage.',
+    '- Do not calculate, infer, extrapolate, smooth, or estimate spend, value, ROI, renewal exposure, adoption, or readiness values.',
+    '- If a metric value is not loaded in the packet, state the gap plainly instead of filling it from pattern knowledge or general business logic.',
     authoritativeMetric
       ? `Authoritative metric packet for this question: ${authoritativeMetric.label} = ${authoritativeMetric.displayValue} (${authoritativeMetric.period}, ${authoritativeMetric.basis}; formula ${authoritativeMetric.formulaVersion}). You MUST include the exact display value "${authoritativeMetric.displayValue}" in the answer if the question asks for this metric.`
       : 'Authoritative metric packet for this question: none loaded. Do not invent the metric value.',
@@ -575,6 +654,8 @@ export function buildCioTowerClaudePrompt(context: CioTowerPromptContext): strin
     '',
     'Known data gaps:',
     gapLines.length ? gapLines.join('\n') : '- No blocking gap identified for this question.',
+    '',
+    moduleV6PacketPromptBlock(context.v6PacketContract),
     '',
     'Answer now. Return the JSON object only.',
   ].join('\n');
@@ -763,6 +844,48 @@ function deriveGaps(contract: CioTowerContract, measures: CioTowerMeasureResult[
   return [...new Set(gaps)];
 }
 
+function buildCioTowerV6PacketContract(args: {
+  tenantKey: string;
+  tenantName: string;
+  question: string;
+  contract: CioTowerContract;
+  metricPackets: readonly CioTowerMetricPacket[];
+  facts: readonly CioTowerFactRow[];
+  relationships: readonly CioTowerRelationshipRow[];
+  gaps: readonly string[];
+}): ModuleV6PacketContract {
+  const loadedMetricLabels = args.metricPackets
+    .filter((packet) => packet.valueNumeric !== null)
+    .slice(0, 10)
+    .map((packet) => `${packet.label}=${packet.displayValue}`);
+  return buildModuleV6PacketContract({
+    surface: 'tower',
+    packetType: 'metric-read-model',
+    tenantKey: args.tenantKey,
+    tenantName: args.tenantName,
+    question: args.question,
+    packetSummary: [
+      `Tower contract ${args.contract.contract_key}`,
+      `${args.metricPackets.length} governed metric packets`,
+      `${args.facts.length} relevant fact records`,
+      `${args.relationships.length} relationship records`,
+      loadedMetricLabels.length ? `Loaded metrics: ${loadedMetricLabels.join('; ')}` : 'No loaded metric values',
+    ].join('. '),
+    requiredEvidenceFamilies: [
+      'cio_tower.measure_results',
+      'cio_tower.facts',
+      'cio_tower.relationships',
+      'cio_tower.question_contracts',
+    ],
+    availableEvidenceFamilies: [
+      ...(args.metricPackets.length ? ['governed metric packets'] : []),
+      ...(args.facts.length ? ['tower facts'] : []),
+      ...(args.relationships.length ? ['tower relationships'] : []),
+    ],
+    missingEvidence: args.gaps,
+  });
+}
+
 export async function loadCioTowerPromptContext(args: {
   tenantKey: string;
   tenantName: string;
@@ -775,6 +898,17 @@ export async function loadCioTowerPromptContext(args: {
     loadRelationships(args.tenantKey),
   ]);
   const metricPackets = measures.map(toCioTowerMetricPacket);
+  const gaps = deriveGaps(contract, measures, relevantFacts);
+  const v6PacketContract = buildCioTowerV6PacketContract({
+    tenantKey: args.tenantKey,
+    tenantName: args.tenantName,
+    question: args.question,
+    contract,
+    metricPackets,
+    facts: relevantFacts,
+    relationships,
+    gaps,
+  });
   return {
     tenantKey: args.tenantKey,
     tenantName: args.tenantName,
@@ -784,7 +918,8 @@ export async function loadCioTowerPromptContext(args: {
     metricPackets,
     relevantFacts,
     relationships,
-    gaps: deriveGaps(contract, measures, relevantFacts),
+    gaps,
+    v6PacketContract,
   };
 }
 
@@ -797,7 +932,7 @@ async function persistPromptAndTrace(args: {
   validationErrors: string[];
   latencyMs: number;
   modelName?: string;
-}): Promise<{ promptPackageKey: string; traceKey: string }> {
+}): Promise<{ promptPackageKey: string; traceKey: string; v6VisibleOutputAudit: ModuleV6VisibleOutputAudit }> {
   const promptPackageKey = stableKey('cio_tower_prompt', [args.context.tenantKey, args.context.question, args.promptHash, new Date().toISOString()]);
   const traceKey = stableKey('cio_tower_trace', [promptPackageKey, args.rawResponse]);
   const deterministicPacket = {
@@ -810,10 +945,34 @@ async function persistPromptAndTrace(args: {
     relevantFacts: args.context.relevantFacts,
     relationships: args.context.relationships,
     gaps: args.context.gaps,
+    v6PacketContract: args.context.v6PacketContract,
   };
   const renderedResponse = args.parsedOutput
     ? collectVisibleTextFromContract(args.parsedOutput).join('\n\n')
     : null;
+  const v6VisibleOutputAudit = args.parsedOutput
+    ? buildModuleV6VisibleOutputAudit({
+      surface: 'tower',
+      packetType: 'metric-read-model',
+      answerSource: args.modelName === BOUNDARY_MODEL_NAME ? 'deterministic_contract' : 'claude_text',
+      claudeInvoked: args.modelName !== BOUNDARY_MODEL_NAME,
+      claudeSelected: args.modelName !== BOUNDARY_MODEL_NAME,
+      fallbackUsed: false,
+      rawClaudePreserved: true,
+      sections: collectVisibleSectionsFromContract(args.parsedOutput),
+      validationErrors: args.validationErrors,
+    })
+    : buildModuleV6VisibleOutputAudit({
+      surface: 'tower',
+      packetType: 'metric-read-model',
+      answerSource: 'contract_failed',
+      claudeInvoked: args.modelName !== BOUNDARY_MODEL_NAME,
+      claudeSelected: false,
+      fallbackUsed: false,
+      rawClaudePreserved: false,
+      sections: [],
+      validationErrors: args.validationErrors,
+    });
   const tx = createTxSession('abarva-cio-tower-answer-trace');
   await tx(async (run) => {
     await run(
@@ -852,13 +1011,15 @@ async function persistPromptAndTrace(args: {
         JSON.stringify({
           artifact_type: args.context.contract.artifact_type,
           api_renderer_mutation: false,
+          v6_module_contract: args.context.v6PacketContract,
+          v6_visible_output_audit: v6VisibleOutputAudit,
           visible_answer_contract: args.parsedOutput,
           visible_section_parity: args.parsedOutput
-            ? collectVisibleTextFromContract(args.parsedOutput).map((text, index) => ({
+            ? v6VisibleOutputAudit.visibleSectionParity.map((section, index) => ({
               index,
-              model_text: text,
-              rendered_text: text,
-              byte_equal_except_whitespace: normalizeVisibleText(text) === normalizeVisibleText(text),
+              model_text: section.modelText,
+              rendered_text: section.renderedText,
+              byte_equal_except_whitespace: section.byteEqualExceptWhitespace,
             }))
             : [],
         }),
@@ -869,7 +1030,7 @@ async function persistPromptAndTrace(args: {
       ],
     );
   });
-  return { promptPackageKey, traceKey };
+  return { promptPackageKey, traceKey, v6VisibleOutputAudit };
 }
 
 export async function answerCioTowerQuestion(args: {
@@ -893,7 +1054,7 @@ export async function answerCioTowerQuestion(args: {
       parsedOutput,
     });
     const latencyMs = Date.now() - startedAt;
-    const { promptPackageKey, traceKey } = await persistPromptAndTrace({
+    const { promptPackageKey, traceKey, v6VisibleOutputAudit } = await persistPromptAndTrace({
       context,
       promptText,
       promptHash,
@@ -924,6 +1085,7 @@ export async function answerCioTowerQuestion(args: {
       validationStatus: 'passed',
       validationErrors,
       latencyMs,
+      v6VisibleOutputAudit,
     };
   }
 
@@ -943,7 +1105,7 @@ export async function answerCioTowerQuestion(args: {
       parsedOutput,
     });
     const latencyMs = Date.now() - startedAt;
-    const { promptPackageKey, traceKey } = await persistPromptAndTrace({
+    const { promptPackageKey, traceKey, v6VisibleOutputAudit } = await persistPromptAndTrace({
       context,
       promptText,
       promptHash,
@@ -974,6 +1136,7 @@ export async function answerCioTowerQuestion(args: {
       validationStatus: 'passed',
       validationErrors,
       latencyMs,
+      v6VisibleOutputAudit,
     };
   }
 
@@ -1072,7 +1235,7 @@ export async function answerCioTowerQuestion(args: {
     }
   }
   const latencyMs = Date.now() - startedAt;
-  const { promptPackageKey, traceKey } = await persistPromptAndTrace({
+  const { promptPackageKey, traceKey, v6VisibleOutputAudit } = await persistPromptAndTrace({
     context,
     promptText,
     promptHash,
@@ -1109,5 +1272,6 @@ export async function answerCioTowerQuestion(args: {
     validationStatus: 'passed',
     validationErrors,
     latencyMs,
+    v6VisibleOutputAudit,
   };
 }

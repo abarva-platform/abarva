@@ -21,12 +21,24 @@ import { registerSynthesisCache } from "@/lib/reasoning/synthesis-cache-registry
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
+import {
+  MODULE_V6_ANSWER_CONTRACT_VERSION,
+  buildModuleV6PacketContract,
+  moduleV6PacketPromptBlock,
+  type ModuleV6PacketContract,
+} from "@/lib/agent/module-v6-answer-contract";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
 const synthesisCache = new Map<string, string>();
 const cacheCreatedAt = new Map<string, number>();
 registerSynthesisCache("programs", synthesisCache, cacheCreatedAt);
+
+const MOVES_V6_SYNTHESIS_HEADERS = {
+  "X-AbarVa-V6-Contract": MODULE_V6_ANSWER_CONTRACT_VERSION,
+  "X-AbarVa-V6-Surface": "moves",
+  "X-AbarVa-Renderer-Policy": "placement-only",
+} as const;
 
 const NEXUS_SYNTHESIS_VOICE_AND_TASK = `You are Ava, AbarVa's program orchestrator on the Programs surface.
 
@@ -54,6 +66,60 @@ function buildNexusSynthesisPrompt(userContextBlock: string): string {
     .join("\n\n");
 }
 
+function buildMovesV6ExecutionSequencePacket(args: {
+  tenantKey: string;
+  tenantName: string;
+  question: string;
+  ctx: ReturnType<typeof buildProgramSynthesisContext>;
+}): ModuleV6PacketContract {
+  const snap = args.ctx.instanceSnapshot as {
+    name?: string;
+    currentPhase?: number;
+    phaseLabel?: string;
+    gateStatus?: string;
+    evidenceCount?: number;
+    openBlockers?: string[];
+    linkedSourceEvents?: Array<{ name: string; type: string }>;
+  };
+  const missingEvidence = [
+    ...(snap.openBlockers ?? []),
+    ...args.ctx.missingArtifacts.map((artifact) => artifact.label),
+    ...args.ctx.gatesSummary.blocked.map((gate) => gate.description),
+  ];
+  return buildModuleV6PacketContract({
+    surface: "moves",
+    packetType: "execution-sequence-packet",
+    tenantKey: args.tenantKey,
+    tenantName: args.tenantName,
+    question: args.question,
+    packetSummary: [
+      `Move ${snap.name ?? args.ctx.instanceId}`,
+      `phase ${snap.currentPhase ?? "unknown"} ${snap.phaseLabel ?? ""}`.trim(),
+      `gate status ${snap.gateStatus ?? "unknown"}`,
+      `${args.ctx.gatesSummary.met} of ${args.ctx.gatesSummary.total} gate criteria met`,
+      `${snap.evidenceCount ?? 0} evidence items`,
+      `${args.ctx.missingArtifacts.length} missing artifacts`,
+      `${snap.linkedSourceEvents?.length ?? 0} linked Source events`,
+    ].join(". "),
+    requiredEvidenceFamilies: [
+      "move phase state",
+      "gate criteria",
+      "deliverables and artifacts",
+      "execution blockers",
+      "linked Source dependencies",
+      "decision trail",
+    ],
+    availableEvidenceFamilies: [
+      "phase and gate state",
+      ...(snap.evidenceCount ? ["move evidence"] : []),
+      ...(args.ctx.citations.length ? ["pattern citations"] : []),
+      ...(snap.linkedSourceEvents?.length ? ["linked Source events"] : []),
+      ...(args.ctx.cascadeContext.length ? ["cross-module dependencies"] : []),
+    ],
+    missingEvidence,
+  });
+}
+
 export async function POST(request: Request) {
   const startedAt = Date.now();
   const body = (await request.json()) as { programId?: string };
@@ -78,7 +144,7 @@ export async function POST(request: Request) {
 
   // Cache check
   const stateHash = programInstanceStateHash(instance);
-  const cacheKey = `${instance.id}:${stateHash}:${instance.patternVersion}:nexus`;
+  const cacheKey = `${instance.id}:${stateHash}:${instance.patternVersion}:nexus:${MODULE_V6_ANSWER_CONTRACT_VERSION}`;
   const etag = computeSynthesisEtag(cacheKey);
   const ifNoneMatch = request.headers.get("if-none-match");
   const cached = synthesisCache.get(cacheKey);
@@ -102,6 +168,7 @@ export async function POST(request: Request) {
         ETag: etag,
         "X-Cache": "HIT",
         "X-Synthesis-Event-Id": event.id,
+        ...MOVES_V6_SYNTHESIS_HEADERS,
       },
     });
   }
@@ -124,6 +191,7 @@ export async function POST(request: Request) {
         ETag: etag,
         "X-Cache": "HIT",
         "X-Synthesis-Event-Id": event.id,
+        ...MOVES_V6_SYNTHESIS_HEADERS,
       },
     });
   }
@@ -175,9 +243,19 @@ export async function POST(request: Request) {
   const expertGrounding = sharedMovesOn
     ? summonExpertsForQuery({ query: snap.name, clientKey: activeClient.key })
     : { experts: [] as ExpertRef[], groundingBlock: "" };
-  const groundedUserMessage = expertGrounding.groundingBlock
-    ? `${expertGrounding.groundingBlock}\n\n${userMessage}`
-    : userMessage;
+  const v6PacketContract = buildMovesV6ExecutionSequencePacket({
+    tenantKey: activeClient.key,
+    tenantName: activeClient.name,
+    question: `Synthesize Moves execution state for ${instance.name}`,
+    ctx,
+  });
+  const groundedUserMessage = [
+    expertGrounding.groundingBlock,
+    moduleV6PacketPromptBlock(v6PacketContract),
+    userMessage,
+  ]
+    .filter((part): part is string => Boolean(part?.trim()))
+    .join("\n\n");
 
   const preflight = await preflightAnthropicDirectClient({
     tenantId: activeClient.id,
@@ -247,6 +325,7 @@ export async function POST(request: Request) {
       ETag: etag,
       "X-Cache": "MISS",
       "X-Synthesis-Event-Id": event.id,
+      ...MOVES_V6_SYNTHESIS_HEADERS,
     },
   });
 }

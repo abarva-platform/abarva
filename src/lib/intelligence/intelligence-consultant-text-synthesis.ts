@@ -1,4 +1,9 @@
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
+import {
+  buildModuleV6PacketContract,
+  moduleV6PacketPromptBlock,
+  type ModuleV6PacketContract,
+} from "@/lib/agent/module-v6-answer-contract";
 import type { AdvisoryPacket } from "@/lib/intelligence/advisory-packet";
 import type {
   IntelligenceArtifactType,
@@ -8,7 +13,6 @@ import type {
 } from "@/lib/intelligence/dossiers";
 import { cleanIntelligenceModelInput } from "@/lib/intelligence/model-input-cleaner";
 import {
-  hasChartReadyMarkdownData,
   INTELLIGENCE_TABBED_OUTPUT_CONTRACT,
   parseIntelligenceTabbedResponse,
 } from "@/lib/intelligence/tabbed-response";
@@ -466,6 +470,60 @@ export function buildIntelligenceConsultantUserPrompt(
   ].join("\n");
 }
 
+function buildIntelligenceV6AdvisoryPacketContract(args: {
+  dossier: IntelligenceDossier;
+  promptPacket: IntelligenceConsultantPromptPacket;
+}): ModuleV6PacketContract {
+  return buildModuleV6PacketContract({
+    surface: "intelligence",
+    packetType: "advisory-packet",
+    tenantKey: args.promptPacket.tenantBrief.tenantKey,
+    tenantName: args.promptPacket.tenantBrief.tenantName,
+    question: args.promptPacket.questionBrief.originalQuestion,
+    packetSummary: [
+      `Intent ${args.promptPacket.questionBrief.intelligenceIntent}`,
+      `primary dimension ${args.promptPacket.questionBrief.primaryDimension}`,
+      `${args.promptPacket.tenantEvidenceBrief.factsThatMatter.length} tenant facts`,
+      `${args.promptPacket.tenantEvidenceBrief.metricsThatMatter.length} metrics`,
+      `${args.promptPacket.tenantEvidenceBrief.relationshipPathsThatMatter.length} relationships`,
+      `${args.promptPacket.corpusPatternBrief.patternSummaries.length} corpus patterns`,
+      `${args.promptPacket.advisoryLensBrief.lenses.length} advisory lenses`,
+    ].join(". "),
+    requiredEvidenceFamilies: [
+      "tenant facts",
+      "named entities",
+      "relationships",
+      "metrics or maturity signals",
+      "missing evidence",
+      "industry/corpus context",
+      "expert lenses",
+    ],
+    availableEvidenceFamilies: [
+      ...(args.promptPacket.tenantEvidenceBrief.factsThatMatter.length
+        ? ["tenant facts"]
+        : []),
+      ...(args.promptPacket.tenantEvidenceBrief.metricsThatMatter.length
+        ? ["metrics"]
+        : []),
+      ...(args.promptPacket.tenantEvidenceBrief.relationshipPathsThatMatter.length
+        ? ["relationships"]
+        : []),
+      ...(args.promptPacket.corpusPatternBrief.patternSummaries.length
+        ? ["industry/corpus context"]
+        : []),
+      ...(args.promptPacket.advisoryLensBrief.lenses.length
+        ? ["expert lenses"]
+        : []),
+    ],
+    missingEvidence: [
+      ...args.promptPacket.tenantEvidenceBrief.missingEvidence,
+      ...args.dossier.evidenceBoundary.cannotConclude.map(
+        (item) => `Cannot conclude: ${item}`,
+      ),
+    ].slice(0, 16),
+  });
+}
+
 export async function synthesizeIntelligenceConsultantText(args: {
   dossier: IntelligenceDossier;
   advisoryPacket?: AdvisoryPacket;
@@ -522,7 +580,14 @@ export async function synthesizeIntelligenceConsultantText(args: {
         args.advisoryPacket,
       )
     : buildIntelligenceConsultantPromptPacket(args.dossier);
-  const user = buildIntelligenceConsultantUserPrompt(promptPacket);
+  const v6PacketContract = buildIntelligenceV6AdvisoryPacketContract({
+    dossier: args.dossier,
+    promptPacket,
+  });
+  const user = [
+    buildIntelligenceConsultantUserPrompt(promptPacket),
+    moduleV6PacketPromptBlock(v6PacketContract),
+  ].join("\n\n");
   const prompt = [INTELLIGENCE_CONSULTANT_TEXT_SYSTEM_PROMPT, user].join(
     "\n\n",
   );
@@ -561,6 +626,7 @@ export async function synthesizeIntelligenceConsultantText(args: {
     );
     let rawText = extractAnthropicText(message);
     let text = normalizeConsultantText(rawText);
+    const contractValidationIssues: string[] = [];
     const requiredVisualRows = requiredVisualTableRows(args.dossier.question);
     const expectedVisualTab = expectedVisualTabId(args.dossier.question);
     if (
@@ -606,30 +672,11 @@ export async function synthesizeIntelligenceConsultantText(args: {
         rawText = repairedText;
         text = repairedText;
       } else {
-        const fallbackSourceText = repairedText || text;
-        const fallbackTable = fallbackVisualTableFromPacket(
-          promptPacket,
-          fallbackSourceText,
-          requiredVisualRows,
+        rawText = repairedText || rawText;
+        text = normalizeConsultantText(rawText);
+        contractValidationIssues.push(
+          `missing_model_generated_visual_tab:${expectedVisualTab}`,
         );
-        if (fallbackTable) {
-          const fallbackBase = stripMarkdownTablesFromText(fallbackSourceText);
-          const visualTab = visualTabForFallback(
-            args.dossier.question,
-            fallbackTable,
-          );
-          rawText = [
-            fallbackBase,
-            "",
-            visualTab.marker,
-            visualTab.intro,
-            "",
-            fallbackTable,
-          ]
-            .join("\n")
-            .trim();
-          text = normalizeConsultantText(rawText);
-        }
       }
     }
     args.onModelOutput?.({
@@ -639,10 +686,13 @@ export async function synthesizeIntelligenceConsultantText(args: {
       auditId,
       route: "intelligence-consultant-text-synthesis",
     });
-    const validationIssues = validateIntelligenceConsultantText({
-      text,
-      dossier: args.dossier,
-    });
+    const validationIssues = [
+      ...validateIntelligenceConsultantText({
+        text,
+        dossier: args.dossier,
+      }),
+      ...contractValidationIssues,
+    ];
     if (validationIssues.length > 0) {
       return {
         attempted: true,
@@ -797,84 +847,6 @@ function expectedVisualTabId(question: string): "chart" | "table" | undefined {
   return undefined;
 }
 
-function visualTabForFallback(
-  question: string,
-  table: string,
-): { marker: string; intro: string } {
-  if (
-    expectedVisualTabId(question) === "chart" &&
-    hasChartReadyMarkdownData(table)
-  ) {
-    return {
-      marker: visualTabMarkerForQuestion(question, "Chart"),
-      intro: visualTabIntroForQuestion(question),
-    };
-  }
-  return {
-    marker: "<<<TAB: Table | grounding: tenant-evidence>>>",
-    intro: "Tenant evidence: compact decision view from the loaded packet. Use this as a fallback because chart-ready industry data was not available in the model output.",
-  };
-}
-
-function visualTabMarkerForQuestion(
-  question: string,
-  tab: "Chart" | "Table",
-): string {
-  if (/\bindustry\b/i.test(question)) {
-    return `<<<TAB: ${tab} | grounding: industry-context>>>`;
-  }
-  if (/\bbenchmark|trend|peer|market\b/i.test(question)) {
-    return `<<<TAB: ${tab} | grounding: benchmark>>>`;
-  }
-  if (/\bfunction\b/i.test(question)) {
-    return `<<<TAB: ${tab} | grounding: function-context>>>`;
-  }
-  if (/\bcategory\b/i.test(question)) {
-    return `<<<TAB: ${tab} | grounding: category-context>>>`;
-  }
-  return `<<<TAB: ${tab} | grounding: tenant-evidence>>>`;
-}
-
-function visualTabIntroForQuestion(question: string): string {
-  if (/\bindustry\b/i.test(question)) {
-    return "Industry context, not tenant proof: use this as a directional companion view when tenant-specific chart data is not available.";
-  }
-  if (/\bbenchmark|trend|peer|market\b/i.test(question)) {
-    return "Directional benchmark context, not tenant proof: use this as a planning view unless tenant evidence is cited in the row.";
-  }
-  if (/\bfunction\b/i.test(question)) {
-    return "Function context: use this to reason about the broader operating function, not as standalone tenant proof.";
-  }
-  if (/\bcategory\b/i.test(question)) {
-    return "Category context: use this to reason about the broader category, not as standalone tenant proof.";
-  }
-  return "Tenant evidence: compact decision view from the loaded packet.";
-}
-
-function stripMarkdownTablesFromText(text: string): string {
-  const lines = text.split(/\r?\n/);
-  const keep: string[] = [];
-  for (let index = 0; index < lines.length; index += 1) {
-    const header = splitMarkdownTableLine(lines[index] ?? "");
-    if (
-      header.length >= 2 &&
-      MARKDOWN_TABLE_SEPARATOR_RE.test(lines[index + 1] ?? "")
-    ) {
-      index += 2;
-      while (
-        index < lines.length &&
-        splitMarkdownTableLine(lines[index] ?? "").length >= 2
-      ) {
-        index += 1;
-      }
-      index -= 1;
-      continue;
-    }
-    keep.push(lines[index] ?? "");
-  }
-  return normalizeConsultantText(keep.join("\n"));
-}
-
 function splitMarkdownTableLine(line: string): string[] {
   const trimmed = line.trim();
   if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return [];
@@ -892,197 +864,6 @@ function extractAnthropicText(message: {
     .map((item) => item.text)
     .join("\n")
     .trim();
-}
-
-function parseOptionBrief(option: string): {
-  title: string;
-  action: string;
-  value: string;
-  complexity: string;
-  risk: string;
-  missing: string;
-} | null {
-  const [titlePart, rest = ""] = option.split(/:\s*/, 2);
-  const title = titlePart.trim();
-  if (!title) return null;
-  return {
-    title,
-    action: rest.split(";")[0]?.trim() || "assess with accountable owner",
-    value:
-      rest.match(/(?:^|;\s*)value=([^;]+)/)?.[1]?.trim() ||
-      "not shown in loaded sources",
-    complexity:
-      rest.match(/(?:^|;\s*)complexity=([^;]+)/)?.[1]?.trim() ||
-      "not shown in loaded sources",
-    risk:
-      rest.match(/(?:^|;\s*)risk=([^;]+)/)?.[1]?.trim() ||
-      "not shown in loaded sources",
-    missing:
-      rest.match(/(?:^|;\s*)missing=([^;]+)/)?.[1]?.trim() || "none named",
-  };
-}
-
-function parseMetricBrief(
-  metric: string,
-): { label: string; value: string } | null {
-  const [labelPart, rest = ""] = metric.split(/:\s*/, 2);
-  const label = labelPart.trim();
-  if (!label || !rest.trim()) return null;
-  const value = rest.replace(/\s*\([^)]*\)\s*$/, "").trim();
-  return {
-    label,
-    value: value || "not shown in loaded sources",
-  };
-}
-
-function markdownEscapeCell(value: string): string {
-  return value.replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
-}
-
-function titleCaseNarrativeLabel(label: string): string {
-  const cleaned =
-    label
-      .split(/[.!?;:]/)
-      .at(-1)
-      ?.replace(/^(?:and\s+)?(?:the|a|an)\s+/i, "")
-      .replace(/^and\s+/i, "")
-      .replace(/\s+/g, " ")
-      .trim() ?? "";
-  if (!cleaned) return "";
-  if (/\b[A-Z]{2,}\b/.test(cleaned) || /^[A-Z]/.test(cleaned)) {
-    return cleaned;
-  }
-  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
-}
-
-function fallbackMetricTableFromPacket(
-  packet: IntelligenceConsultantPromptPacket,
-  minRows = 2,
-): string | null {
-  const rows = packet.tenantEvidenceBrief.metricsThatMatter
-    .map(parseMetricBrief)
-    .filter((metric): metric is NonNullable<typeof metric> => metric !== null)
-    .slice(0, 6);
-  if (rows.length < minRows) return null;
-
-  const risk =
-    packet.riskCaveatBrief.dataReadinessGaps[0] ??
-    packet.riskCaveatBrief.governanceRisks[0] ??
-    packet.riskCaveatBrief.executionRisks[0] ??
-    "not shown in loaded sources";
-  const nextAction =
-    packet.optionsBrief.decisionCriteria[0] ??
-    "confirm owner, baseline, and control evidence before scale";
-
-  return [
-    "| Initiative | Value | Readiness | Risk | Next action |",
-    "|---|---:|---|---|---|",
-    ...rows.map((row) => {
-      return `| ${markdownEscapeCell(row.label)} | ${markdownEscapeCell(row.value)} | not shown in loaded sources | ${markdownEscapeCell(risk)} | ${markdownEscapeCell(nextAction)} |`;
-    }),
-  ].join("\n");
-}
-
-function fallbackDecisionTableFromPacket(
-  packet: IntelligenceConsultantPromptPacket,
-  minRows = 2,
-): string | null {
-  const rows = packet.optionsBrief.options
-    .map(parseOptionBrief)
-    .filter((option): option is NonNullable<typeof option> => option !== null)
-    .slice(0, 6);
-  if (rows.length < minRows) return null;
-
-  return [
-    "| Initiative | Value | Readiness | Risk | Next action |",
-    "|---|---:|---|---|---|",
-    ...rows.map((row) => {
-      const readiness =
-        row.missing && row.missing.toLowerCase() !== "none named"
-          ? `blocked by ${row.missing}`
-          : `complexity ${row.complexity}`;
-      return `| ${markdownEscapeCell(row.title)} | ${markdownEscapeCell(row.value)} | ${markdownEscapeCell(readiness)} | ${markdownEscapeCell(row.risk)} | ${markdownEscapeCell(row.action)} |`;
-    }),
-  ].join("\n");
-}
-
-function fallbackNarrativeTableFromText(
-  packet: IntelligenceConsultantPromptPacket,
-  narrative: string,
-  minRows = 2,
-): string | null {
-  const rows = new Map<string, { label: string; value: string }>();
-  const addRow = (label: string, value: string) => {
-    const normalizedLabel = titleCaseNarrativeLabel(label);
-    if (!normalizedLabel || normalizedLabel.length > 90) return;
-    const normalizedValue = value.trim();
-    if (!/^\$[\d,.]+[KMBT]?\b/i.test(normalizedValue)) return;
-    const key = normalizedLabel.toLowerCase();
-    if (!rows.has(key))
-      rows.set(key, { label: normalizedLabel, value: normalizedValue });
-  };
-
-  const possessivePattern =
-    /(?:the\s+)?([A-Za-z][A-Za-z0-9&/().,\-\s]{2,80}?)['’]s\s+(\$[\d,.]+[KMBT]?\b(?:\s+(?:promise|gap|benefit|value|budget))?)/g;
-  for (const match of narrative.matchAll(possessivePattern)) {
-    addRow(match[1] ?? "", match[2] ?? "");
-  }
-
-  const parentheticalPattern =
-    /([A-Za-z][A-Za-z0-9&/().,\-\s]{2,80}?)\s+\((\$[\d,.]+[KMBT]?\b[^)]{0,40})\)/g;
-  for (const match of narrative.matchAll(parentheticalPattern)) {
-    addRow(match[1] ?? "", match[2] ?? "");
-  }
-
-  const valueInLabelPattern =
-    /(\$[\d,.]+[KMBT]?\b(?:\s+(?:promise|gap|benefit|value|budget))?)\s+in\s+([A-Za-z][A-Za-z0-9&/().,\-\s]{2,80}?)(?:[,.]|;|\band\b|\bwith\b|$)/g;
-  for (const match of narrative.matchAll(valueInLabelPattern)) {
-    addRow(match[2] ?? "", match[1] ?? "");
-  }
-
-  const valueLabelPattern =
-    /(?:protects|validates|unlocks|gates|funds|covers|represents)\s+(\$[\d,.]+[KMBT]?\b(?:\s+(?:promise|gap|benefit|value|budget))?)\s+(?:in\s+)?([A-Za-z][A-Za-z0-9&/().,\-\s]{2,80}?)(?:[,.]|;|\band\b|\bwith\b|$)/g;
-  for (const match of narrative.matchAll(valueLabelPattern)) {
-    addRow(match[2] ?? "", match[1] ?? "");
-  }
-
-  const tableRows = Array.from(rows.values()).slice(0, 6);
-  if (tableRows.length < minRows) return null;
-
-  const readiness =
-    packet.riskCaveatBrief.dataReadinessGaps[0] ??
-    packet.riskCaveatBrief.measurementRisks[0] ??
-    "requires evidence gate before scale";
-  const risk =
-    packet.riskCaveatBrief.governanceRisks[0] ??
-    packet.riskCaveatBrief.executionRisks[0] ??
-    packet.riskCaveatBrief.measurementRisks[0] ??
-    "value depends on confirmed controls and owner signoff";
-  const nextAction =
-    packet.optionsBrief.decisionCriteria[0] ??
-    "confirm owner, baseline, and control evidence before scale";
-
-  return [
-    "| Initiative | Value | Readiness | Risk | Next action |",
-    "|---|---:|---|---|---|",
-    ...tableRows.map((row) => {
-      return `| ${markdownEscapeCell(row.label)} | ${markdownEscapeCell(row.value)} | ${markdownEscapeCell(readiness)} | ${markdownEscapeCell(risk)} | ${markdownEscapeCell(nextAction)} |`;
-    }),
-  ].join("\n");
-}
-
-function fallbackVisualTableFromPacket(
-  packet: IntelligenceConsultantPromptPacket,
-  narrative?: string,
-  minRows = 2,
-): string | null {
-  return (
-    fallbackMetricTableFromPacket(packet, minRows) ??
-    (narrative
-      ? fallbackNarrativeTableFromText(packet, narrative, minRows)
-      : null) ??
-    fallbackDecisionTableFromPacket(packet, minRows)
-  );
 }
 
 async function withTimeout<T>(

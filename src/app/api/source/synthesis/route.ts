@@ -20,12 +20,24 @@ import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
 import { buildAgentContextContractBlock } from "@/lib/agent/module-context-contract";
+import {
+  MODULE_V6_ANSWER_CONTRACT_VERSION,
+  buildModuleV6PacketContract,
+  moduleV6PacketPromptBlock,
+  type ModuleV6PacketContract,
+} from "@/lib/agent/module-v6-answer-contract";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
 const synthesisCache = new Map<string, string>();
 const cacheCreatedAt = new Map<string, number>();
 registerSynthesisCache("source", synthesisCache, cacheCreatedAt);
+
+const SOURCE_V6_SYNTHESIS_HEADERS = {
+  "X-AbarVa-V6-Contract": MODULE_V6_ANSWER_CONTRACT_VERSION,
+  "X-AbarVa-V6-Surface": "source",
+  "X-AbarVa-Renderer-Policy": "placement-only",
+} as const;
 
 const AVA_SOURCE_SYNTHESIS_VOICE_AND_TASK = `You are aVa, AbarVa's intelligence validator on the Source surface.
 
@@ -66,6 +78,56 @@ function buildAvaSynthesisPrompt(userContextBlock: string): string {
     .join("\n\n");
 }
 
+function buildSourceV6VendorCommercialPacket(args: {
+  tenantKey: string;
+  tenantName: string;
+  question: string;
+  ctx: ReturnType<typeof buildSourceSynthesisContext>;
+}): ModuleV6PacketContract {
+  const snap = args.ctx.instanceSnapshot as {
+    name?: string;
+    vendorCount?: number;
+    activeVendors?: string[];
+    riskFlags?: string[];
+    linkedPrograms?: Array<{ name: string; linkType: string }>;
+  };
+  const missingEvidence = [
+    ...args.ctx.missingArtifacts.map((artifact) => artifact.label),
+    ...args.ctx.gatesSummary.blocked.map((gate) => gate.description),
+  ];
+  return buildModuleV6PacketContract({
+    surface: "source",
+    packetType: "vendor-commercial-packet",
+    tenantKey: args.tenantKey,
+    tenantName: args.tenantName,
+    question: args.question,
+    packetSummary: [
+      `Sourcing event ${snap.name ?? args.ctx.instanceId}`,
+      `${snap.vendorCount ?? 0} vendors`,
+      `${snap.activeVendors?.length ?? 0} active vendors`,
+      `${args.ctx.gatesSummary.met} of ${args.ctx.gatesSummary.total} gate criteria met`,
+      `${args.ctx.missingArtifacts.length} missing artifacts`,
+      `${snap.riskFlags?.length ?? 0} open risk flags`,
+    ].join(". "),
+    requiredEvidenceFamilies: [
+      "sourcing event state",
+      "vendor responses",
+      "commercial gates",
+      "pricing and BAFO evidence",
+      "contract and renewal evidence",
+      "linked program dependencies",
+    ],
+    availableEvidenceFamilies: [
+      "event stage and gate state",
+      ...(snap.activeVendors?.length ? ["active vendor list"] : []),
+      ...(args.ctx.citations.length ? ["pattern citations"] : []),
+      ...(args.ctx.cascadeContext.length ? ["linked program dependencies"] : []),
+      ...(snap.riskFlags?.length ? ["open risk flags"] : []),
+    ],
+    missingEvidence,
+  });
+}
+
 export async function POST(request: Request) {
   const startedAt = Date.now();
   const body = (await request.json()) as {
@@ -95,7 +157,7 @@ export async function POST(request: Request) {
 
   // Cache check
   const stateHash = instanceStateHash(instance);
-  const cacheKey = `${instance.id}:${stateHash}:${pattern.version}:ava`;
+  const cacheKey = `${instance.id}:${stateHash}:${pattern.version}:ava:${MODULE_V6_ANSWER_CONTRACT_VERSION}`;
   const etag = computeSynthesisEtag(cacheKey);
   const ifNoneMatch = request.headers.get("if-none-match");
   const cached = synthesisCache.get(cacheKey);
@@ -121,6 +183,7 @@ export async function POST(request: Request) {
         ETag: etag,
         "X-Cache": "HIT",
         "X-Synthesis-Event-Id": event.id,
+        ...SOURCE_V6_SYNTHESIS_HEADERS,
       },
     });
   }
@@ -143,6 +206,7 @@ export async function POST(request: Request) {
         ETag: etag,
         "X-Cache": "HIT",
         "X-Synthesis-Event-Id": event.id,
+        ...SOURCE_V6_SYNTHESIS_HEADERS,
       },
     });
   }
@@ -172,9 +236,20 @@ export async function POST(request: Request) {
   const expertGrounding = sharedSourceOn
     ? summonExpertsForQuery({ query: instance.name })
     : { experts: [] as ExpertRef[], groundingBlock: "" };
-  const groundedUserMessage = expertGrounding.groundingBlock
-    ? `${expertGrounding.groundingBlock}\n\n${userMessage}`
-    : userMessage;
+  const v6PacketContract = buildSourceV6VendorCommercialPacket({
+    tenantKey: activeClient.key,
+    tenantName: activeClient.name,
+    question: `Synthesize Source state for ${instance.name}`,
+    ctx,
+  });
+  const v6PacketBlock = moduleV6PacketPromptBlock(v6PacketContract);
+  const groundedUserMessage = [
+    expertGrounding.groundingBlock,
+    v6PacketBlock,
+    userMessage,
+  ]
+    .filter((part): part is string => Boolean(part?.trim()))
+    .join("\n\n");
 
   const preflight = await preflightAnthropicDirectClient({
     tenantId: activeClient.id,
@@ -241,6 +316,7 @@ export async function POST(request: Request) {
       ETag: etag,
       "X-Cache": "MISS",
       "X-Synthesis-Event-Id": event.id,
+      ...SOURCE_V6_SYNTHESIS_HEADERS,
     },
   });
 }
