@@ -128,4 +128,44 @@ describe("runAtlasTurnDetailed governed Tower path", () => {
     expect(result.toolsUsed).toContain("answer_cio_tower_question");
     expect(result.debugTrace?.rawModelResponse).toContain("SkyHarbor Air");
   });
+
+  it("routes advisor-posture questions through the governed CIO Tower answer contract", async () => {
+    answerCioTowerQuestion.mockResolvedValueOnce({
+      response:
+        "SkyHarbor Air should inspect before scaling Engineering Productivity AI.",
+      modelOutputRaw: JSON.stringify({
+        answer:
+          "SkyHarbor Air should inspect before scaling Engineering Productivity AI.",
+      }),
+      promptPackageKey: "prompt-governed-posture",
+      traceKey: "trace-governed-posture",
+      model: "deterministic-cio-tower-boundary-v1",
+    });
+
+    const { runAtlasTurnDetailed } = await import("@/lib/atlas/orchestrator");
+
+    const result = await runAtlasTurnDetailed({
+      ctx: {
+        clientId: "client-skyharbor",
+        clientKey: "skyharbor",
+        userId: "user-skyharbor",
+      },
+      message:
+        "Which investment posture should the CIO take on Engineering Productivity AI, and why?",
+      surfaceContext: { traceMode: true },
+    });
+
+    expect(answerCioTowerQuestion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantKey: "skyharbor-air",
+        tenantName: "SkyHarbor Air",
+        question:
+          "Which investment posture should the CIO take on Engineering Productivity AI, and why?",
+      }),
+    );
+    expect(runAtlasLlm).not.toHaveBeenCalled();
+    expect(result.response).toContain("inspect before scaling");
+    expect(result.toolsUsed).toContain("answer_cio_tower_question");
+    expect(result.debugTrace?.finalPrompt).toBe("prompt-governed-posture");
+  });
 });
