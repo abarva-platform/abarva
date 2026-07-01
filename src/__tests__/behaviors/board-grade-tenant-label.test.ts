@@ -45,7 +45,7 @@ describe('resolveBoardGradeTenantLabel — P1-3 honesty contract', () => {
       { tenant_key: 'apexretail', tenant_name: 'Apex Retail Group' },
       'retail',
     );
-    expect(tenantLabel).toBe('Retail Demo');
+    expect(tenantLabel).toBe('Apex Retail Group');
     expect(tenantKey).toBe('apexretail');
     expect(INDUSTRY_SLUGS).not.toContain(tenantLabel);
   });
@@ -55,7 +55,7 @@ describe('resolveBoardGradeTenantLabel — P1-3 honesty contract', () => {
       { tenant_key: 'meridian', tenant_name: 'Meridian Health System' },
       'healthcare-provider',
     );
-    expect(tenantLabel).toBe('Healthcare Demo');
+    expect(tenantLabel).toBe('Meridian Health System');
     expect(INDUSTRY_SLUGS).not.toContain(tenantLabel);
   });
 
@@ -64,7 +64,7 @@ describe('resolveBoardGradeTenantLabel — P1-3 honesty contract', () => {
       { tenant_key: 'arcturus', tenant_name: 'First Capital Financial' },
       'financial-services',
     );
-    expect(tenantLabel).toBe('Financial Services Demo');
+    expect(tenantLabel).toBe('First Capital Financial');
     expect(INDUSTRY_SLUGS).not.toContain(tenantLabel);
   });
 
@@ -73,7 +73,7 @@ describe('resolveBoardGradeTenantLabel — P1-3 honesty contract', () => {
       { tenantKey: 'apexretail', tenantName: 'Apex Retail Group' } as MoveBusinessCaseInput,
       'retail',
     );
-    expect(tenantLabel).toBe('Retail Demo');
+    expect(tenantLabel).toBe('Apex Retail Group');
   });
 
   it('falls back to threaded tenant_name when the key is unknown', () => {
@@ -177,7 +177,7 @@ describe('Board-grade Move model files — P1-3 end-to-end', () => {
       // reason, the model file's unbound path doesn't carry tenantLabel —
       // skip the assertion in that case.
       if (result.bound !== false && typeof result.tenantLabel === 'string') {
-        expect(result.tenantLabel).toBe('Retail Demo');
+        expect(result.tenantLabel).toBe('Apex Retail Group');
         expect(INDUSTRY_SLUGS).not.toContain(result.tenantLabel);
       }
     },

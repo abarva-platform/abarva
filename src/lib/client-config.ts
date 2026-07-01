@@ -9,12 +9,12 @@ export interface ClientOption {
 }
 
 export const DEMO_SAFE_CLIENT_NAMES = {
-  apexretail: "Retail Demo",
-  meridian: "Healthcare Demo",
-  arcturus: "Financial Services Demo",
+  apexretail: "Apex Retail Group",
+  meridian: "Meridian Health System",
+  arcturus: "First Capital Financial",
   northstar: "Clinical Technology Demo",
-  skyharbor: "Airline Demo",
-  lakeshore: "Industrial Demo",
+  skyharbor: "SkyHarbor Air",
+  lakeshore: "Lakeshore Holdings",
 } as const satisfies Record<string, string>;
 
 const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
