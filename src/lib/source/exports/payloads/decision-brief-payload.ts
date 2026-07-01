@@ -167,9 +167,11 @@ export function buildEvaluationDecisionBriefMarkdown(args: {
     "",
     "## Executive Recommendation",
     "",
-    args.decisionView.finalistRecommendation,
+    "> **Recommendation:** Advance Vendor A as the risk-adjusted BAFO lead, keep Vendor C in the finalist lane as the service-accountability challenger, and keep Vendor B as a price benchmark only if it cures the named execution and commercial gaps.",
     "",
-    "AbarVa recommends using BAFO to sharpen the commercial decision before any award recommendation is finalized. Vendor A should lead the BAFO round on risk-adjusted continuity, Vendor C should remain a conditional service-accountability challenger, and Vendor B should remain the price benchmark until it cures execution and commercial gaps.",
+    cleanText(args.decisionView.finalistRecommendation),
+    "",
+    "The brief is structured for an executive decision meeting: first the recommendation, then the ranking logic, then the score basis, then the BAFO conditions that could change the outcome.",
     "",
     "## Vendor Ranking and Readiness",
     "",
@@ -177,22 +179,22 @@ export function buildEvaluationDecisionBriefMarkdown(args: {
       [
         "Rank",
         "Vendor",
-        "Current score",
+        "Score",
         "Readiness",
-        "BAFO posture",
-        "Primary rationale",
-        "Must-resolve conditions",
+        "BAFO role",
+        "Executive implication",
       ],
       orderedSummaries.map((summary) => [
         String(summary.rank),
         labelForVendor(summary.vendorId, vendorLabels),
-        summary.weightedScore.toFixed(1),
+        `${summary.weightedScore.toFixed(1)}/10`,
         titleCase(summary.readiness),
         cleanText(summary.finalistPosture),
-        cleanText(summary.decisionRationale),
-        cleanList(summary.conditions, 3),
+        executiveImplicationFor(summary.rank),
       ]),
     ),
+    "",
+    vendorRankingCards(orderedSummaries, vendorLabels),
     "",
     "## Weighted Evaluation Scorecard",
     "",
@@ -205,12 +207,17 @@ export function buildEvaluationDecisionBriefMarkdown(args: {
         "Vendor A",
         "Vendor B",
         "Vendor C",
-        "Decision rationale",
       ],
       args.decisionView.scorecardRows.map((row) =>
         scorecardTableRow(row, vendorLabels),
       ),
     ),
+    "",
+    "Scorecard rationale:",
+    "",
+    args.decisionView.scorecardRows
+      .map((row) => scorecardRationale(row, vendorLabels))
+      .join("\n"),
     "",
     "## Normalized Vendor Comparison",
     "",
@@ -301,9 +308,9 @@ export function buildEvaluationDecisionBriefMarkdown(args: {
     "",
     "## Decision Required",
     "",
-    "The executive sponsor should approve a controlled BAFO round, confirm the weighting model as directionally fit for executive review, and require vendors to cure the named evidence gaps before the recommendation is used for final award.",
+    "> **Decision required:** Approve a controlled BAFO round, confirm the weighting model as directionally fit for executive review, and require vendors to cure the named evidence gaps before any final award recommendation.",
     "",
-    "Decision request:",
+    "Executive actions:",
     "",
     "- Confirm Vendor A as the risk-adjusted BAFO lead.",
     "- Keep Vendor C in the finalist lane if scope and transition are normalized.",
@@ -358,14 +365,39 @@ function scorecardTableRow(
   return [
     row.label,
     `${row.weight}%`,
-    scoreForVendor(row, "Vendor A", vendorLabels),
-    scoreForVendor(row, "Vendor B", vendorLabels),
-    scoreForVendor(row, "Vendor C", vendorLabels),
-    cleanText(row.guidance),
+    scoreOnlyForVendor(row, "Vendor A", vendorLabels),
+    scoreOnlyForVendor(row, "Vendor B", vendorLabels),
+    scoreOnlyForVendor(row, "Vendor C", vendorLabels),
   ];
 }
 
-function scoreForVendor(
+function vendorRankingCards(
+  summaries: VendorEvaluationDecisionView["vendorSummaries"],
+  vendorLabels: Map<string, string>,
+): string {
+  return summaries
+    .map((summary) => {
+      const vendor = labelForVendor(summary.vendorId, vendorLabels);
+      return [
+        `### ${vendor}`,
+        "",
+        `- Current score: ${summary.weightedScore.toFixed(1)}/10`,
+        `- BAFO role: ${cleanText(summary.finalistPosture)}`,
+        `- Why this rank: ${cleanText(summary.decisionRationale)}`,
+        `- Must resolve: ${cleanList(summary.conditions, 3)}`,
+        `- Decision implication: ${executiveImplicationFor(summary.rank)}`,
+      ].join("\n");
+    })
+    .join("\n\n");
+}
+
+function executiveImplicationFor(rank: number): string {
+  if (rank === 1) return "Lead BAFO lane; protect continuity and validate price.";
+  if (rank === 2) return "Keep as credible finalist if scope and transition are normalized.";
+  return "Use as commercial benchmark until cure items are contractually supported.";
+}
+
+function scoreOnlyForVendor(
   row: VendorEvaluationScorecardRow,
   label: "Vendor A" | "Vendor B" | "Vendor C",
   vendorLabels: Map<string, string>,
@@ -374,7 +406,20 @@ function scoreForVendor(
     (candidate) => labelForVendor(candidate.vendorId, vendorLabels) === label,
   );
   if (!value) return "Not scored";
-  return `${value.score.toFixed(1)} - ${cleanText(value.rationale)}`;
+  return value.score.toFixed(1);
+}
+
+function scorecardRationale(
+  row: VendorEvaluationScorecardRow,
+  vendorLabels: Map<string, string>,
+): string {
+  const scores = row.scores
+    .map(
+      (score) =>
+        `${labelForVendor(score.vendorId, vendorLabels)} ${score.score.toFixed(1)}: ${cleanText(score.rationale)}`,
+    )
+    .join("; ");
+  return `- ${row.label} (${row.weight}%): ${cleanText(row.guidance)} ${scores}`;
 }
 
 function valueForVendor(

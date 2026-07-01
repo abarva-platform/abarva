@@ -28,6 +28,7 @@ import { loadUserSourceAccessPolicy } from '@/lib/auth/source-access-policy';
 import { buildSourceGenerationContext } from '@/lib/source/agent-generation/server';
 
 import { renderSourceDeliverable } from '@/lib/source/exports/dispatch';
+import { eventCodeFromSpec } from '@/lib/source/exports/metadata';
 import { buildSourceDeliverableSpec, kindForArtifactCode } from '@/lib/source/exports/spec-builder';
 import type { DeliverableFormat } from '@/lib/programs/exports/types';
 
@@ -160,8 +161,10 @@ async function renderArtifact(req: NextRequest, { params }: RouteCtx, method: 'G
   // Build spec + render.
   const generatedAt = new Date().toISOString();
   let result;
+  let responseEventCode = ctx.event.code;
   try {
     const spec = await buildSourceDeliverableSpec(ctx, kind, generatedAt);
+    responseEventCode = eventCodeFromSpec(spec, ctx.event.code);
     result = await renderSourceDeliverable(spec, requestedFormat);
   } catch (err) {
     console.error(
@@ -189,7 +192,7 @@ async function renderArtifact(req: NextRequest, { params }: RouteCtx, method: 'G
       'content-type': result.contentType,
       'cache-control': 'no-store',
       'x-source-artifact-code': artifactCode,
-      'x-source-event-code': ctx.event.code,
+      'x-source-event-code': responseEventCode,
       'x-source-artifact-format': result.format,
       'x-source-artifact-kind': kind,
       ...(variantParam ? { 'x-source-artifact-variant': variantParam } : {}),

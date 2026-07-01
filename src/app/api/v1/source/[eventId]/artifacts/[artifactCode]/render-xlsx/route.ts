@@ -36,6 +36,7 @@ import { buildMarketScanPayloadFromContext } from '@/lib/source/exports/payloads
 import { buildTcoIcebergPayloadFromContext } from '@/lib/source/exports/payloads/tco-iceberg-payload';
 import { buildAiClauseGapPayloadFromContext } from '@/lib/source/exports/payloads/ai-clause-gap-payload';
 import { buildRenewalDecisionPayloadFromContext } from '@/lib/source/exports/payloads/renewal-decision-payload';
+import { eventCodeFromPayload } from '@/lib/source/exports/metadata';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -114,8 +115,8 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
   // Build payload + render workbook.
   const generatedAt = new Date().toISOString();
   let workbook;
+  let payload: unknown;
   try {
-    let payload: unknown;
     switch (artifactCode) {
       case 'd19_pricing_workbook':
         payload = buildPricingTemplatePayloadFromContext(ctx, generatedAt);
@@ -170,7 +171,8 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
   }
 
   const buffer = await workbook.xlsx.writeBuffer();
-  const filename = `${artifactCode}__${ctx.event.code}__${generatedAt.slice(0, 10)}.xlsx`;
+  const responseEventCode = eventCodeFromPayload(payload, ctx.event.code);
+  const filename = `${artifactCode}__${responseEventCode}__${generatedAt.slice(0, 10)}.xlsx`;
   return new Response(buffer as ArrayBuffer, {
     status: 200,
     headers: {
@@ -178,7 +180,7 @@ export async function GET(req: NextRequest, { params }: RouteCtx) {
       'content-disposition': `attachment; filename="${filename}"`,
       'cache-control': 'no-store',
       'x-source-artifact-code': artifactCode,
-      'x-source-event-code': ctx.event.code,
+      'x-source-event-code': responseEventCode,
     },
   });
 }

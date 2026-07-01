@@ -423,6 +423,6 @@ describe("renderSourceDeliverable · structured artifacts render every format (G
     expect(result.format).toBe("html");
     expect(html).toContain("<!DOCTYPE html>");
     expect(html).toContain("Pricing Workbook Summary");
-    expect(html).toContain("d19_pricing_workbook");
+    expect(html).toContain("d19 · Pricing Workbook Summary");
   });
 });
