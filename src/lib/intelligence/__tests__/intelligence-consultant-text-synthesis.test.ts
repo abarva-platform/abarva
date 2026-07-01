@@ -714,4 +714,13 @@ describe("Intelligence consultant text synthesis", () => {
       }),
     ).toEqual(expect.arrayContaining(["old_template_labels", "raw_id_leak"]));
   });
+
+  it("rejects session-dependent answer language", () => {
+    expect(
+      validateIntelligenceConsultantText({
+        text: "As discussed earlier in this session, the answer has not changed: SkyHarbor should hold IROPS scale until the evidence gaps are closed.",
+        dossier,
+      }),
+    ).toEqual(expect.arrayContaining(["session_context_language"]));
+  });
 });
