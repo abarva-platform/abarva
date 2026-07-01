@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Tower now treats IT budget lineage questions as governed budget-metric questions instead of falling through to the generic top-programs answer path. For questions such as "Show metric lineage for the IT budget answer," Tower answers from the same governed metric packet used by the dashboard and returns the visible-answer contract deterministically.
+Tower now treats IT budget lineage questions as governed budget-metric questions instead of falling through to the generic top-programs answer path. For questions such as "Show metric lineage for the IT budget answer," Tower answers from the same governed Tower measure used by the dashboard and returns the visible-answer contract deterministically.
 
 ## Layer Impact
 
@@ -35,6 +35,7 @@ Tower now treats IT budget lineage questions as governed budget-metric questions
 - `npx jest src/lib/cio-tower/__tests__/answer.test.ts src/lib/cio-tower/__tests__/answer-contract.test.ts --runInBand` passed.
 - `git diff --check` passed.
 - Pre-fix signed-in production check reproduced the failure on Industrial Demo Tower lineage with `cio_tower_visible_contract_parse_failed`, confirming the hotfix target.
+- Post-deploy signed-in production check confirmed the first hotfix removed the parse failure but exposed a visible-language validation failure on the word "packet"; this follow-up removes that internal term from visible prose.
 
 ## Rollout Plan
 
