@@ -82,10 +82,18 @@ function score(row) {
   const finalPrompt = trace?.finalPrompt ?? null;
   const rawModelResponse = trace?.rawModelResponse ?? null;
   const rendered = trace?.renderedResponse || row.json.response || "";
+  const toolsUsed = Array.isArray(row.json.toolsUsed) ? row.json.toolsUsed : [];
   const deterministicNoClaude =
     row.type === "deterministic" &&
     finalPrompt === null &&
     /^DETERMINISTIC_TOWER_FACTUAL_SPINE\b/.test(asText(rawModelResponse));
+  const governedTowerToolTrace =
+    row.type === "deterministic" &&
+    toolsUsed.includes("answer_cio_tower_question") &&
+    typeof finalPrompt === "string" &&
+    finalPrompt.trim().length > 0 &&
+    typeof rawModelResponse === "string" &&
+    rawModelResponse.trim().length > 0;
   const claudeTrace =
     row.type === "claude" &&
     typeof finalPrompt === "string" &&
@@ -94,7 +102,7 @@ function score(row) {
     rawModelResponse.trim().length > 0;
   return {
     statusOk: row.status >= 200 && row.status < 300,
-    expectedPathOk: row.type === "deterministic" ? deterministicNoClaude : claudeTrace,
+    expectedPathOk: row.type === "deterministic" ? deterministicNoClaude || governedTowerToolTrace : claudeTrace,
     renderedNonEmpty: asText(rendered).trim().length > 0,
     renderedEqualsResponse: asText(rendered).trim() === asText(row.json.response).trim(),
   };

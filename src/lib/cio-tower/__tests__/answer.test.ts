@@ -383,7 +383,7 @@ describe('cio tower answer contract', () => {
     expect(output?.reason).toBe('Top program budget question answered from loaded Tower program budget facts.');
     expect(output?.output.answer).toContain('Crew Recovery & Legality Modernization');
     expect(output?.output.answer).toContain('$28.3M');
-    expect(output?.output.answer).toContain('The loaded FY26 initiative budget total is $28.3M');
+    expect(output?.output.answer).toContain('The loaded FY26 program budget in this ranked cut is $28.3M');
     expect(output?.output.answer).not.toContain('initiative-1');
     expect(output?.output.tables).toEqual([
       {
@@ -410,6 +410,53 @@ describe('cio tower answer contract', () => {
         parsedOutput: output!.output,
       }),
     ).toEqual([]);
+  });
+
+  it('answers top AI program questions with an AI-specific ranked table and requested limit', () => {
+    const base = context().relevantFacts[0]!;
+    const output = __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(context({
+      question: 'give me the list of top 5 AI programs by spend and value',
+      relevantFacts: [
+        {
+          ...base,
+          fact_key: 'non-ai-budget',
+          entity_key: 'initiative-non-ai',
+          entity_display_name: 'Core Network Refresh',
+          value_numeric: '90000000',
+          attributes: {
+            record_name: 'Core Network Refresh',
+            portfolio_segment: 'infrastructure',
+          },
+        },
+        ...Array.from({ length: 6 }, (_, index) => ({
+          ...base,
+          fact_key: `ai-budget-${index + 1}`,
+          entity_key: `initiative-ai-${index + 1}`,
+          entity_display_name: `AI Program ${index + 1}`,
+          value_numeric: String(60_000_000 - index * 1_000_000),
+          attributes: {
+            record_name: `AI Program ${index + 1}`,
+            portfolio_segment: 'corporate_ai',
+            owner_role: 'CIO',
+          },
+        })),
+      ],
+    }));
+
+    expect(output?.reason).toBe('Top AI program budget question answered from loaded Tower program budget and value facts.');
+    expect(output?.output.answer).toContain("SkyHarbor Air's top loaded AI program");
+    expect(output?.output.answer).toContain('AI-program budget in this ranked cut');
+    expect(output?.output.answer).not.toContain('Core Network Refresh');
+    expect(output?.output.tables?.[0]?.id).toBe('top_ai_programs_by_budget');
+    expect(output?.output.tables?.[0]?.title).toBe('Top AI programs by budget and value proof');
+    expect(output?.output.tables?.[0]?.rows).toHaveLength(5);
+    expect(output?.output.tables?.[0]?.rows.map((row) => row[1])).toEqual([
+      'AI Program 1',
+      'AI Program 2',
+      'AI Program 3',
+      'AI Program 4',
+      'AI Program 5',
+    ]);
   });
 
   it('scrubs code-shaped loaded program names before visible validation', () => {
