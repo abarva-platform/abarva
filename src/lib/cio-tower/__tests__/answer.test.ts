@@ -9,6 +9,7 @@ import {
   parseVisibleAnswerContract,
   type CioTowerPromptContext,
 } from '../answer';
+import { buildModuleV6PacketContract } from '../../agent/module-v6-answer-contract';
 import { toCioTowerMetricPacket } from '../metric-packet';
 
 function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPromptContext {
@@ -67,15 +68,26 @@ function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPrompt
         value_numeric: '28300000',
         value_text: null,
         unit: 'usd',
-        value_source: 'tenant_file',
-        confidence: 'high',
-        source_key: 'source-1',
-        source_row: '12',
-        attributes: {},
+      value_source: 'tenant_file',
+      confidence: 'high',
+      source_key: 'source-1',
+      source_row: '12',
+      attributes: {},
       },
     ],
     relationships: [],
     gaps: ['Actual spend YTD is missing or not separately loaded.'],
+    v6PacketContract: buildModuleV6PacketContract({
+      surface: 'tower',
+      packetType: 'metric-read-model',
+      tenantKey: 'skyharbor-air',
+      tenantName: 'SkyHarbor Air',
+      question: 'give me the list of top 10 IT programs',
+      packetSummary: 'Test Tower metric packet.',
+      requiredEvidenceFamilies: ['cio_tower.measure_results'],
+      availableEvidenceFamilies: ['governed metric packets'],
+      missingEvidence: ['Actual spend YTD is missing or not separately loaded.'],
+    }),
     ...overrides,
   };
 }
@@ -103,6 +115,8 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('AbarVa will render the strings exactly as returned');
     expect(prompt).toContain('It will not rewrite, summarize, scrub, relabel, infer, or improve them');
     expect(prompt).toContain('Do not use the word "rows" in visible prose');
+    expect(prompt).toContain('Tower owns numbers. Claude owns narrative. The renderer owns presentation.');
+    expect(prompt).toContain('Do not calculate, infer, extrapolate, smooth, or estimate spend, value, ROI');
     expect(prompt).toContain('Governed metric packets. These are also what the Tower dashboard uses');
     expect(prompt).toContain('Authoritative metric packet for this question: Initiative budget = $28.3M');
     expect(prompt).toContain('You MUST include the exact display value "$28.3M"');

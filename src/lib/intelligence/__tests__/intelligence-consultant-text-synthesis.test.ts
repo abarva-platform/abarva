@@ -460,7 +460,7 @@ describe("Intelligence consultant text synthesis", () => {
     });
   });
 
-  it("repairs prose-only explicit visual answers with a grounded decision table", async () => {
+  it("rejects prose-only explicit visual answers instead of building API fallback tables", async () => {
     const create = mockClaudeTexts([
       [
         "SkyHarbor should sequence the next AI tranche toward bounded operational loops first, with MRO predictive maintenance as the scale candidate and IROPS recovery held behind integration gates.",
@@ -488,22 +488,17 @@ describe("Intelligence consultant text synthesis", () => {
     });
 
     expect(create).toHaveBeenCalledTimes(2);
-    const text = result && "text" in result ? result.text : "";
-    expect(text).toContain("| Initiative | Value | Readiness | Risk | Next action |");
-    expect(text).toContain("| Scale MRO predictive maintenance |");
-    expect(text).toContain("| Hold IROPS recovery orchestration |");
-    const parsed = parseIntelligenceTabbedResponse(text);
-    expect(parsed.mainAnswer).not.toContain("| Initiative |");
-    expect(parsed.tabs.find((tab) => tab.id === "table")?.content).toContain(
-      "| Initiative | Value | Readiness | Risk | Next action |",
-    );
-    expect(text).not.toContain("Supporting Material");
     expect(result).toMatchObject({
-      trace: { used: true, model: expect.any(String) },
+      attempted: true,
+      used: false,
+      reason: "validation_failed",
+      validationIssues: expect.arrayContaining([
+        "missing_model_generated_visual_tab:table",
+      ]),
     });
   });
 
-  it("falls back to metric evidence when explicit visual answers have no option rows", async () => {
+  it("rejects explicit visual answers with no model-generated option rows", async () => {
     const create = mockClaudeTexts([
       [
         "The finance AI portfolio has value, but scale should wait for evidence on measurement and controls.",
@@ -559,18 +554,13 @@ describe("Intelligence consultant text synthesis", () => {
     });
 
     expect(create).toHaveBeenCalledTimes(2);
-    const text = result && "text" in result ? result.text : "";
-    expect(text).toContain("| Initiative | Value | Readiness | Risk | Next action |");
-    expect(text).toContain("| Kyriba global cash and payments rollout |");
-    expect(text).toContain("| M365 Copilot finance automation |");
-    expect(text).toContain("| Finance semantic layer |");
-    const parsed = parseIntelligenceTabbedResponse(text);
-    expect(parsed.mainAnswer).not.toContain("| Initiative |");
-    expect(parsed.tabs.find((tab) => tab.id === "table")?.content).toContain(
-      "| Initiative | Value | Readiness | Risk | Next action |",
-    );
     expect(result).toMatchObject({
-      trace: { used: true, model: expect.any(String) },
+      attempted: true,
+      used: false,
+      reason: "validation_failed",
+      validationIssues: expect.arrayContaining([
+        "missing_model_generated_visual_tab:table",
+      ]),
     });
   });
 
@@ -612,7 +602,7 @@ describe("Intelligence consultant text synthesis", () => {
     });
   });
 
-  it("replaces undersized repaired tables with metric evidence fallback", async () => {
+  it("rejects undersized repaired tables instead of replacing them outside Claude", async () => {
     const create = mockClaudeTexts([
       "The finance AI portfolio has value, but the control gates need to close before scale.",
       [
@@ -666,20 +656,17 @@ describe("Intelligence consultant text synthesis", () => {
     });
 
     expect(create).toHaveBeenCalledTimes(2);
-    const text = result && "text" in result ? result.text : "";
-    expect(text).toContain("| Initiative | Value | Readiness | Risk | Next action |");
-    expect(text).toContain("| Kyriba global cash and payments rollout |");
-    expect(text).toContain("| M365 Copilot finance automation |");
-    expect(text).toContain("| Finance semantic layer |");
-    expect(text).not.toContain("| Initiative | Budget | Promised benefit |");
-    const parsed = parseIntelligenceTabbedResponse(text);
-    expect(parsed.mainAnswer).not.toContain("| Initiative |");
-    expect(parsed.tabs.find((tab) => tab.id === "table")?.content).toContain(
-      "| Initiative | Value | Readiness | Risk | Next action |",
-    );
+    expect(result).toMatchObject({
+      attempted: true,
+      used: false,
+      reason: "validation_failed",
+      validationIssues: expect.arrayContaining([
+        "missing_model_generated_visual_tab:table",
+      ]),
+    });
   });
 
-  it("builds a visual fallback from grounded narrative when packet rows are sparse", async () => {
+  it("rejects sparse grounded narratives when Claude does not generate the visual tab", async () => {
     const narrative = [
       "The portfolio carries $292M in promised benefit against $132M in combined budget across six initiatives, but readiness is uneven.",
       "",
@@ -709,17 +696,14 @@ describe("Intelligence consultant text synthesis", () => {
     });
 
     expect(create).toHaveBeenCalledTimes(2);
-    const text = result && "text" in result ? result.text : "";
-    expect(text).toContain("| Initiative | Value | Readiness | Risk | Next action |");
-    expect(text).toContain("| Bank connectivity | $12M, October 2026 |");
-    expect(text).toContain("| Kyriba | $86M promise |");
-    expect(text).toContain("| Business layer | $46M promise |");
-    expect(text).toContain("| Variance explainer | $17M |");
-    const parsed = parseIntelligenceTabbedResponse(text);
-    expect(parsed.mainAnswer).not.toContain("| Initiative |");
-    expect(parsed.tabs.find((tab) => tab.id === "table")?.content).toContain(
-      "| Initiative | Value | Readiness | Risk | Next action |",
-    );
+    expect(result).toMatchObject({
+      attempted: true,
+      used: false,
+      reason: "validation_failed",
+      validationIssues: expect.arrayContaining([
+        "missing_model_generated_visual_tab:table",
+      ]),
+    });
   });
 
   it("rejects old transcript labels and raw ids", () => {
