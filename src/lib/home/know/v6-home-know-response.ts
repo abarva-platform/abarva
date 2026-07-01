@@ -14,7 +14,12 @@ import type {
   V6HomeCitation,
 } from "@/lib/home/know/v6-home-ask";
 
-const SUPPORTED_HANDOFF_TARGETS = new Set(["intelligence", "tower", "moves"]);
+const SUPPORTED_HANDOFF_TARGETS = new Set([
+  "intelligence",
+  "tower",
+  "source",
+  "moves",
+]);
 
 export function toHomeKnowResponseFromV6(
   result: V6HomeAskResult,
@@ -45,9 +50,9 @@ export function toHomeKnowResponseFromV6(
     prose: answer.directAnswer,
     dimensionsUsed: [
       publicDimensionId(answer.primaryDimension),
-      ...answer.relatedDimensions.filter(
-        (dimension) => dimension !== answer.primaryDimension,
-      ).map(publicDimensionId),
+      ...answer.relatedDimensions
+        .filter((dimension) => dimension !== answer.primaryDimension)
+        .map(publicDimensionId),
     ],
     facts,
     tables: table ? [table] : [],
@@ -57,6 +62,11 @@ export function toHomeKnowResponseFromV6(
     conflicts: [],
     citations: answer.citations.map(toHomeKnowCitation),
     handoff: toHomeKnowHandoff(result),
+    answerability: answer.answerability,
+    contextQuality: {
+      ...answer.contextQuality,
+      recommendedHandoff: toHomeKnowHandoff(result),
+    },
     safety: toHomeKnowSafety(result, {
       intent,
       answerStatus,
@@ -102,7 +112,9 @@ function intentFor(
   if (answerStatus === "handoff") return "decision_handoff";
   if (table) return "table";
   if (gaps.length > 0) return "gap";
-  if (/available|loaded|context|show/i.test(result.trace?.session.question ?? "")) {
+  if (
+    /available|loaded|context|show/i.test(result.trace?.session.question ?? "")
+  ) {
     return "browse";
   }
   return "lookup";
@@ -266,14 +278,15 @@ function toHomeKnowSafety(
       usableEvidence: result.proof.selectedRows > 0,
       evidenceChannels,
       answerStatus: counts.answerStatus,
-      reason:
-        `answerSource=v6_dataset_contract; oldSemanticLayersSunset=${String(
-          result.proof.oldSemanticLayersSunset,
-        )}; datasetDir=${result.tenant.datasetDir}; selectedRows=${
-          result.proof.selectedRows
-        }; selectedFacts=${result.proof.selectedFacts}; qualityGate=${
-          result.proof.qualityGate.passed ? "passed" : "failed"
-        }`,
+      reason: `answerSource=v6_dataset_contract; oldSemanticLayersSunset=${String(
+        result.proof.oldSemanticLayersSunset,
+      )}; datasetDir=${result.tenant.datasetDir}; selectedRows=${
+        result.proof.selectedRows
+      }; selectedFacts=${result.proof.selectedFacts}; qualityGate=${
+        result.proof.qualityGate.passed ? "passed" : "failed"
+      }; answerability=${result.answer.answerability}; contextQuality=${
+        result.answer.contextQuality.overall
+      }`,
       promptSnapshot: result.trace
         ? {
             system:

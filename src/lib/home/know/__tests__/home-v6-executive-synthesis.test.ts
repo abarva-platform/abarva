@@ -87,6 +87,20 @@ describe("Home V6 executive synthesis", () => {
         prompt: expect.stringContaining(HOME_V6_EXECUTIVE_SYSTEM_PROMPT),
       }),
     );
+    expect(mockGetAuditedAnthropicClient).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: expect.stringContaining("Answerability:"),
+      }),
+    );
+    expect(mockGetAuditedAnthropicClient).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: expect.stringContaining("Context quality:"),
+      }),
+    );
+    expect(result.response.answerability).toBe(deterministic.answerability);
+    expect(result.response.contextQuality).toEqual(
+      deterministic.contextQuality,
+    );
   });
 
   it("marks raw Claude preserved even when trace exposure is disabled", async () => {
@@ -122,7 +136,9 @@ describe("Home V6 executive synthesis", () => {
     expect(result.response.safety.composerTrace?.reason).toContain(
       "traceRawClaudeExposed=false",
     );
-    expect(result.response.safety.composerTrace?.anthropicTrace).toBeUndefined();
+    expect(
+      result.response.safety.composerTrace?.anthropicTrace,
+    ).toBeUndefined();
   });
 
   it("preserves Claude markdown emphasis as part of the visible answer contract", async () => {
@@ -490,7 +506,9 @@ describe("Home V6 executive synthesis", () => {
     expect(result.trace.used).toBe(true);
     expect(result.response.prose).toContain("For Industrial Demo:");
     expect(result.response.prose).toContain("Caveat:");
-    expect(result.response.prose).toContain("Tower for spend, value, decisions");
+    expect(result.response.prose).toContain(
+      "Tower for spend, value, decisions",
+    );
     expect(result.response.prose).toContain(
       "Source for vendor/contracts/renewals",
     );

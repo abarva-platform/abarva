@@ -1,19 +1,10 @@
 export type HomeKnowMode = "KNOW";
 
 export type HomeKnowIntent =
-  | "lookup"
-  | "browse"
-  | "table"
-  | "chart"
-  | "gap"
-  | "decision_handoff";
+  "lookup" | "browse" | "table" | "chart" | "gap" | "decision_handoff";
 
 export type HomeKnowAnswerStatus =
-  | "answered"
-  | "partial"
-  | "no_data"
-  | "handoff"
-  | "blocked";
+  "answered" | "partial" | "no_data" | "handoff" | "blocked";
 
 export type HomeKnowCitationSourceClass =
   | "tenant-record"
@@ -50,11 +41,7 @@ export interface HomeKnowTable {
 
 export type HomeKnowChartKind = "cost-stack" | "bar";
 export type HomeKnowChartType =
-  | "bar"
-  | "stacked_bar"
-  | "line"
-  | "waterfall"
-  | "cost_stack";
+  "bar" | "stacked_bar" | "line" | "waterfall" | "cost_stack";
 
 export interface HomeKnowChart {
   id: string;
@@ -134,9 +121,49 @@ export interface HomeKnowCitation {
 }
 
 export interface HomeKnowHandoff {
-  target: "intelligence" | "tower" | "moves" | null;
+  target: "intelligence" | "tower" | "source" | "moves" | null;
   label: string;
   reason: string;
+}
+
+export type HomeKnowAnswerability =
+  | "answerable_from_loaded_context"
+  | "answerable_with_caveat"
+  | "planning_grade_only"
+  | "requires_tower"
+  | "requires_intelligence"
+  | "requires_source"
+  | "requires_moves"
+  | "data_thin"
+  | "blocked_wrong_tenant"
+  | "unsupported";
+
+export interface HomeKnowContextQualityDimension {
+  dimensionName: string;
+  coverageScore: number;
+  freshnessScore: number;
+  confidenceScore: number;
+  relationshipScore: number;
+  citationScore: number;
+  gapCount: number;
+  dataThinCount: number;
+  loadedFactCount: number;
+  assumptionCount: number;
+  clientSignoffRequiredCount: number;
+  supportedAnswerTypes: string[];
+  blockedAnswerTypes: string[];
+  handoffSurface: "home" | "intelligence" | "tower" | "source" | "moves" | null;
+}
+
+export interface HomeKnowContextQuality {
+  answerability: HomeKnowAnswerability;
+  overall: "strong" | "medium" | "thin" | "blocked";
+  summary: string;
+  strongDimensions: string[];
+  mediumDimensions: string[];
+  thinDimensions: string[];
+  recommendedHandoff: HomeKnowHandoff | null;
+  dimensions: HomeKnowContextQualityDimension[];
 }
 
 export interface HomeKnowSafety {
@@ -242,6 +269,8 @@ export interface HomeKnowResponse {
   conflicts: HomeKnowConflict[];
   citations: HomeKnowCitation[];
   handoff: HomeKnowHandoff | null;
+  answerability?: HomeKnowAnswerability;
+  contextQuality?: HomeKnowContextQuality;
   safety: HomeKnowSafety;
 }
 
