@@ -68,7 +68,8 @@ Companion canvas:
 - Evidence should separate tenant facts, industry/pattern context, benchmarks, planning assumptions, missing evidence, and what the executive should validate next.
 
 Executive visual payload:
-- When a stronger exhibit is useful, include one optional fenced JSON block inside a Chart, Table, Decision, or Evidence tab using this exact fence language: \`\`\`abarva-canvas
+- For strategic prioritization, sequencing, investment, value/readiness, transformation, gate, roadmap, risk-boundary, or proof-boundary questions, include one fenced JSON block inside the most relevant Chart, Table, Decision, or Evidence tab using this exact fence language: \`\`\`abarva-canvas
+- For narrow factual questions, use the fenced block only when it would add decision value.
 - Do not write HTML, SVG, CSS, or arbitrary chart code. Choose one supported canvasType and provide the structured advisory data. The renderer draws the exhibit consistently.
 - Supported canvasType values:
   investmentSequencingMap: columns with labels such as Scale now, Certify then scale, Fund readiness, Hold / stop.

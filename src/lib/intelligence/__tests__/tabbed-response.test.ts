@@ -174,6 +174,9 @@ describe("Intelligence tabbed response parser", () => {
     expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
       "valueReadinessMatrix",
     );
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
+      "For strategic prioritization",
+    );
 
     const parsed = parseIntelligenceTabbedResponse(
       [
