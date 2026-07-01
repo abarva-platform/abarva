@@ -42,6 +42,9 @@ Tower advisory posture questions now use the governed Tower portfolio value fact
 - `npm run release:check` must pass before PR merge.
 - Live VNet loader attempt on the first candidate failed because `artifact_type='card'` violated the existing `cio_tower.question_contracts_artifact_type_check`. The follow-up candidate keeps the CIO Morning Brief as a visible brief/table but stores the governed question contract as `artifact_type='table'`, which matches the live schema.
 - Live VNet loader attempt on the artifact-type follow-up failed because `intent='advise'` violated the existing `cio_tower.question_contracts_intent_check`. The next candidate stores the advisor morning brief as `intent='diagnose'`, which matches the live schema and keeps the visible answer behavior unchanged.
+- Signed-in live trace on the intent follow-up passed 6/7 canaries and exposed one remaining route miss: advisor-posture phrasing was registered in the Tower question contract but was not admitted by the outer Atlas governed-Tower candidate gate, so it fell through to the general path and was correctly blocked by the visible-answer contract. The routing hotfix adds advisor/morning-brief/posture phrases to the governed Tower gate and adds an Atlas-boundary regression test.
+- `npx jest src/lib/atlas/__tests__/orchestrator-governed-tower.test.ts src/lib/cio-tower/__tests__/answer.test.ts src/lib/cio-tower/__tests__/answer-contract.test.ts --runInBand` passed after the routing hotfix: 3 suites, 34 tests.
+- `npx eslint src/lib/atlas/tower-factual-spine.ts src/lib/atlas/__tests__/orchestrator-governed-tower.test.ts src/lib/cio-tower/answer.ts scripts/qa/tower-prompt-raw-render-trace.mjs` passed after the routing hotfix.
 
 ## Rollout Plan
 
@@ -67,7 +70,7 @@ Revert the PR and redeploy `main` through the ACA main deploy workflow. If the l
 
 ## Audit Evidence
 
-- PR URL: To be added after PR creation.
+- PR URL: #4284, #4287, #4290, and routing hotfix PR to be added after creation.
 - CI run: To be added after PR checks.
 - Local proof: Jest, ESLint, loader dry-run, and `release:check`.
 - Live proof: To be added after deploy and signed-in trace.
@@ -75,4 +78,4 @@ Revert the PR and redeploy `main` through the ACA main deploy workflow. If the l
 ## Known Gaps
 
 - This is not a full physical advisor-brief cache table. It is the first governed fast path for CIO advisor posture using existing Tower facts and measure packets.
-- First candidate merged and deployed, but the VNet DB refresh failed on the artifact-type constraint noted above. The artifact-type follow-up also merged and deployed, but the VNet DB refresh failed on the intent constraint noted above. The intent follow-up must be merged, deployed, VNet-refreshed, and browser-proven before release closure.
+- The intent follow-up merged, deployed, and VNet-refreshed successfully. The remaining release closure item is the routing hotfix deploy plus a clean signed-in Tower prompt/raw/render trace.
