@@ -185,7 +185,7 @@ export function buildNarrativeHtml(
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${docTitle}</title>
-  <meta name="generator" content="AbarVa · Sentinel" />
+  <meta name="generator" content="AbarVa Source" />
   <meta name="x-source-document" content="${escapeHtml(config.documentTitle)}" />
   <style>${STYLE_BLOCK}</style>
 </head>
@@ -205,7 +205,7 @@ export function buildNarrativeHtml(
       ${body}
     </main>
     <footer class="source-doc__footer">
-      ${confidential} · Source canvas · ${eventCode} · scaffolded by AbarVa Sentinel · generated ${generatedAt}
+      ${confidential} · AbarVa Source · ${eventCode} · generated ${generatedAt}
     </footer>
   </article>
 </body>

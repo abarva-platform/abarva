@@ -83,10 +83,10 @@ export function buildNarrativePdf(
   return (
     <Document
       title={`${config.documentTitle} · ${payload.eventCode}`}
-      author="AbarVa · Sentinel"
+      author="AbarVa Source"
       subject={`${config.headerLabel} for sourcing event ${payload.eventCode}.`}
-      creator="AbarVa · Sentinel"
-      producer="AbarVa · Sentinel"
+      creator="AbarVa Source"
+      producer="AbarVa Source"
     >
       {/* Cover page — kept simple. Earlier slices used `fixed`
           headers + footers with a `render` page-counter, but that

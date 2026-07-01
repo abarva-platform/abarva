@@ -70,13 +70,13 @@ export function buildNarrativeDocx(
   const bodyBlocks = markdownToDocxBlocks(payload.body || "");
   const footerNote = bodyParagraph([
     bodyRun(
-      `Source canvas · ${payload.eventCode} · scaffolded by AbarVa Sentinel · generated ${payload.generatedAt}`,
+      `AbarVa Source · ${payload.eventCode} · generated ${payload.generatedAt}`,
       { color: SOURCE_DOCX.MUTED_COLOR, size: 18 },
     ),
   ]);
 
   return new Document({
-    creator: "AbarVa · Sentinel",
+    creator: "AbarVa Source",
     title: `${config.documentTitle} · ${payload.eventCode}`,
     description: `${config.headerLabel} for sourcing event ${payload.eventCode}.`,
     numbering: ORDERED_NUMBERING_CONFIG,
