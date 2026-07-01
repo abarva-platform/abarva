@@ -32,6 +32,7 @@ import {
   INTELLIGENCE_TABBED_OUTPUT_CONTRACT,
   parseIntelligenceTabbedResponse,
 } from "@/lib/intelligence/tabbed-response";
+import { hasExecutiveCanvasPayload } from "@/lib/intelligence/executive-canvas-payload";
 
 export { chunkAskText, sanitizeAskSynthesis } from "./response-policy";
 
@@ -309,21 +310,45 @@ function isExplicitVisualAsk(query: string): boolean {
   );
 }
 
+function requiresNativeExecutiveCanvas(query: string): boolean {
+  return /\b(abarva\s+right-canvas|structured\s+abarva|executive\s+(?:canvas|exhibit)|canvas\s+exhibit|prioriti[sz]e|priority|priorities|sequence|sequencing|investment|invest|fund|funding|value[ -/]readiness|readiness|gate|roadmap|risk-boundary|proof-boundary|transformation|operating model|portfolio)\b/i.test(
+    query,
+  );
+}
+
 function requiredCanvasTabsForQuery(query: string): string[] {
   const required: string[] = [];
-  if (/\b(decision|recommend|recommendation|choice|choose|prioriti[sz]e|investment|invest)\b/i.test(query)) {
+  if (
+    /\b(decision|recommend|recommendation|choice|choose|prioriti[sz]e|investment|invest)\b/i.test(
+      query,
+    )
+  ) {
     required.push("Decision");
   }
-  if (/\b(industry|benchmark|benchmarks|market|peer|peers|case stud(?:y|ies)|examples?)\b/i.test(query)) {
+  if (
+    /\b(industry|benchmark|benchmarks|market|peer|peers|case stud(?:y|ies)|examples?)\b/i.test(
+      query,
+    )
+  ) {
     required.push("Industry Insights");
   }
-  if (/\b(chart|charts|graph|graphs|visual|visuals|visuali[sz]e|plot|trend)\b/i.test(query)) {
+  if (
+    /\b(chart|charts|graph|graphs|visual|visuals|visuali[sz]e|plot|trend)\b/i.test(
+      query,
+    )
+  ) {
     required.push("Chart");
   }
-  if (/\b(table|tables|matrix|comparison grid|scorecard|breakdown)\b/i.test(query)) {
+  if (
+    /\b(table|tables|matrix|comparison grid|scorecard|breakdown)\b/i.test(query)
+  ) {
     required.push("Table");
   }
-  if (/\b(evidence|proof|source|sources|support|citation|citations|trace)\b/i.test(query)) {
+  if (
+    /\b(evidence|proof|source|sources|support|citation|citations|trace)\b/i.test(
+      query,
+    )
+  ) {
     required.push("Evidence");
   }
   return Array.from(new Set(required));
@@ -333,7 +358,9 @@ function missingRequiredCanvasTabs(text: string, query: string): string[] {
   const parsed = parseIntelligenceTabbedResponse(text);
   if (parsed.tabs.length === 0) return [];
   const present = new Set(parsed.tabs.map((tab) => tab.label));
-  return requiredCanvasTabsForQuery(query).filter((label) => !present.has(label));
+  return requiredCanvasTabsForQuery(query).filter(
+    (label) => !present.has(label),
+  );
 }
 
 function hasMarkdownDecisionTable(text: string): boolean {
@@ -502,7 +529,7 @@ ACTIVE INTELLIGENCE CANVAS RULES
       : `${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}`;
   const rawPrompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
-    ? "\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when memory is present. Never mention the memory mechanism, prior conversation state, or phrases such as \"this session\", \"as discussed\", \"previous conversation\", \"same answer\", or \"answer hasn't changed\" in user-visible text."
+    ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when memory is present. Never mention the memory mechanism, prior conversation state, or phrases such as "this session", "as discussed", "previous conversation", "same answer", or "answer hasn\'t changed" in user-visible text.'
     : "";
   const prompt = cleanIntelligenceModelInputText(rawPrompt);
   const systemWithContinuity = cleanIntelligenceModelInputText(
@@ -562,7 +589,7 @@ ACTIVE INTELLIGENCE CANVAS RULES
               "DRAFT TO REPAIR:",
               text,
               "",
-              "VISUAL CONTRACT REPAIR: The user explicitly asked for a table, chart, graph, visual, ranking, matrix, breakdown, or show-me structure. Keep the senior-advisor answer concise, then use the Intelligence decision-canvas tab markers from the system prompt. Put exactly one compact GitHub-flavored Markdown decision table with a header row, separator row, and 2-6 evidence-backed rows inside a Table or Chart tab. Use the columns the user requested where possible. Do not add source-support or evidence-register tables. If a requested value is not in the sources, write \"not shown in loaded sources\" in that cell rather than inventing it. Return only the final answer.",
+              'VISUAL CONTRACT REPAIR: The user explicitly asked for a table, chart, graph, visual, ranking, matrix, breakdown, or show-me structure. Keep the senior-advisor answer concise, then use the Intelligence decision-canvas tab markers from the system prompt. Put exactly one compact GitHub-flavored Markdown decision table with a header row, separator row, and 2-6 evidence-backed rows inside a Table or Chart tab. Use the columns the user requested where possible. Do not add source-support or evidence-register tables. If a requested value is not in the sources, write "not shown in loaded sources" in that cell rather than inventing it. Return only the final answer.',
             ].join("\n"),
           },
         ],
@@ -659,6 +686,39 @@ ACTIVE INTELLIGENCE CANVAS RULES
         }
       }
     }
+    if (
+      args.richText &&
+      requiresNativeExecutiveCanvas(args.query) &&
+      !hasExecutiveCanvasPayload(text)
+    ) {
+      const nativeCanvasRepairPrompt = [
+        prompt,
+        "",
+        "DRAFT TO REPAIR:",
+        text,
+        "",
+        "NATIVE EXECUTIVE CANVAS REPAIR:",
+        "Return the same final answer, but add exactly one governed `abarva-canvas` fenced JSON block inside the most relevant Chart, Table, Decision, or Evidence tab.",
+        "Use one supported canvasType from the system prompt: investmentSequencingMap, valueReadinessMatrix, gateToValueRoadmap, or proofBoundary.",
+        "Do not write HTML, SVG, CSS, arbitrary JSON, or additional machine payloads.",
+        "Preserve the main answer, existing recommendations, tenant facts, evidence boundaries, and any compact Markdown table unless the native exhibit makes the table redundant.",
+        "The fenced block is the only allowed JSON and must be valid JSON. Return only the final user-facing answer.",
+      ].join("\n");
+      args.onModelInput?.({
+        system: systemWithContinuity,
+        user: nativeCanvasRepairPrompt,
+      });
+      const nativeCanvasRepair = await client.messages.create({
+        model,
+        max_tokens: Math.max(chooseSynthesisTokenBudget(args.query), 1800),
+        system: systemWithContinuity,
+        messages: [{ role: "user", content: nativeCanvasRepairPrompt }],
+      });
+      const repairedText = extractMessageText(nativeCanvasRepair).trim();
+      if (repairedText && hasExecutiveCanvasPayload(repairedText)) {
+        text = repairedText;
+      }
+    }
     if (SESSION_CONTEXT_LANGUAGE_RE.test(text)) {
       const standaloneRepairPrompt = [
         prompt,
@@ -670,7 +730,7 @@ ACTIVE INTELLIGENCE CANVAS RULES
         "Return the same final answer as a standalone executive answer for the current question.",
         "Preserve the same tenant facts, caveats, tabs, Markdown tables, recommendations, and evidence boundaries.",
         "Remove any wording that depends on prior chat history or conversation continuity.",
-        "Do not use phrases such as \"as discussed\", \"as mentioned\", \"this session\", \"earlier in this session\", \"previous conversation\", \"prior conversation\", \"same answer\", \"answer hasn't changed\", or \"keeps being the right answer\".",
+        'Do not use phrases such as "as discussed", "as mentioned", "this session", "earlier in this session", "previous conversation", "prior conversation", "same answer", "answer hasn\'t changed", or "keeps being the right answer".',
         "Do not summarize, shorten, add new facts, or change the recommendation. Return only the final user-facing answer.",
       ].join("\n");
       args.onModelInput?.({
