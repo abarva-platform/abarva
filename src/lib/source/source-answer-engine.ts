@@ -660,7 +660,10 @@ function toCurrentStateFindings(
 function formatCurrentStateFinding(item: SourceLiveTenantEvidenceItem): string {
   const segmentLabel = formatSegmentLabel(item.segmentId);
   if (isStructuredRowExcerpt(item.excerpt)) {
-    return `${segmentLabel}: ${formatEvidenceTitle(item.title)} is loaded as cited sourcing evidence for this answer.`;
+    return `${formatEvidenceTitle(item.title)} is cited evidence for this sourcing read.`;
+  }
+  if (item.segmentId === "sourcing_artifacts") {
+    return cleanEvidenceExcerpt(item.excerpt);
   }
   return `${segmentLabel}: ${cleanEvidenceExcerpt(item.excerpt)}`;
 }
@@ -824,14 +827,10 @@ function formatAnswerText(args: {
 }): string {
   const evidenceLabels = args.evidence
     .slice(0, 4)
-    .map(
-      (item, index) =>
-        `[${index + 1}] ${formatSegmentLabel(item.segmentId)} - ${item.sourceDoc ?? item.recordId}`,
-    );
+    .map((item, index) => `[${index + 1}] ${formatBusinessEvidenceLabel(item)}`);
   const body = [
-    `Mode: ${formatMode(args.mode)}. Confidence: ${args.confidence}.`,
-    `Current state: ${joinSentences(args.currentStateFindings)}`,
-    `Sourcing implication: ${joinSentences(args.sourcingImplications)}`,
+    joinSentences(args.currentStateFindings),
+    `What it means for sourcing: ${joinSentences(args.sourcingImplications)}`,
     `CXO guidance: ${joinSentences(args.cxoGuidance)}`,
     args.riskTraps.length
       ? `Risks/traps: ${joinSentences(args.riskTraps)}`
@@ -1188,7 +1187,7 @@ function toAnswerCitation(
 ): SourceAnswerEvidenceCitation {
   return {
     id: item.id,
-    label: `${formatSegmentLabel(item.segmentId)} - ${item.title}`,
+    label: formatBusinessEvidenceLabel(item),
     segmentId: item.segmentId,
     recordId: item.recordId,
     sourceDoc: item.sourceDoc,
@@ -1202,7 +1201,7 @@ function formatEvidenceCitationExcerpt(
   item: SourceLiveTenantEvidenceItem,
 ): string {
   if (isStructuredRowExcerpt(item.excerpt)) {
-    return `${formatEvidenceTitle(item.title)} is structured Source evidence for ${formatSegmentLabel(item.segmentId).toLowerCase()}.`;
+    return `${formatEvidenceTitle(item.title)} is cited evidence for this sourcing read.`;
   }
   return cleanEvidenceExcerpt(item.excerpt);
 }
@@ -1227,10 +1226,10 @@ function buildAvaResponseParts(args: {
       type: 'metricStrip',
       title: 'Ava sourcing read',
       metrics: [
-        { label: 'Mode', value: formatMode(args.mode), tone: 'info' },
+        { label: 'Lens', value: formatMode(args.mode), tone: 'info' },
         { label: 'Confidence', value: args.confidence, tone: confidenceTone(args.confidence) },
         {
-          label: 'Evidence',
+          label: 'Support',
           value: String(args.evidenceCitations.length),
           tone: args.evidenceCitations.length > 0 ? 'good' : 'warning',
         },
@@ -1251,10 +1250,10 @@ function buildAvaResponseParts(args: {
   if (args.currentStateFindings.length > 0 || args.sourcingImplications.length > 0) {
     parts.push({
       type: 'table',
-      title: 'Current state to sourcing implication',
-      columns: ['Current-state signal', 'So what for sourcing'],
+      title: 'Decision signals and sourcing implications',
+      columns: ['Signal', 'So what for sourcing'],
       rows: zipRows(args.currentStateFindings, args.sourcingImplications),
-      caption: 'This preserves the advisory chain: evidence observed, then the sourcing implication.',
+      caption: 'This keeps each recommendation tied to a visible sourcing signal.',
     });
   }
 
@@ -1331,7 +1330,6 @@ function buildAvaResponseParts(args: {
         label: citation.label,
         excerpt: citation.excerpt,
         confidence: citation.confidence,
-        sourceDoc: citation.sourceDoc,
       })),
     });
   }
@@ -1391,8 +1389,32 @@ function cleanEvidenceExcerpt(excerpt: string): string {
     .replace(/[.。]?$/, ".");
 }
 
+function formatBusinessEvidenceLabel(item: SourceLiveTenantEvidenceItem): string {
+  const title = formatEvidenceTitle(item.title);
+  if (/\bVendor\s+[A-Z]\b/i.test(title)) return title;
+  if (/finalist recommendation/i.test(title)) return "Finalist recommendation";
+  if (/normalized vendor comparison/i.test(title)) {
+    return title.replace(/normalized vendor comparison\s*[-:]\s*/i, "Vendor comparison: ");
+  }
+  if (item.segmentId === "sourcing_artifacts") return title || "Sourcing evidence";
+  return `${formatSegmentLabel(item.segmentId)} - ${title}`;
+}
+
 function toAvaVisibleText(value: string): string {
-  return value.replace(/\bSentinel\b/g, "Ava");
+  return value
+    .replace(/\bSentinel\b/g, "Ava")
+    .replace(/^Mode:\s*[^\n]+\n?/gim, "")
+    .replace(/^Current state:\s*/gim, "")
+    .replace(/\bSourcing Artifacts:\s*/g, "")
+    .replace(/\bSource Artifacts:\s*/g, "")
+    .replace(/\bSourcing Artifacts\b/g, "Sourcing evidence")
+    .replace(/\bSource Artifacts\b/g, "Sourcing evidence")
+    .replace(/\bsource_events\b/g, "sourcing record")
+    .replace(/\bSource artifact registry\/chunk\/fact evidence\b/gi, "governed sourcing evidence")
+    .replace(/\bSource artifact registry\b/gi, "governed sourcing evidence")
+    .replace(/\bsource rows?\b/gi, "source evidence")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 function joinSentences(items: string[]): string {

@@ -472,9 +472,14 @@ export function normalizeSourceNexusApiRequestBody(
   }
 
   const record = body as Record<string, unknown>;
+  const prompt =
+    normalizeText(record.prompt) ??
+    normalizeText(record.question) ??
+    normalizeText(record.message) ??
+    normalizeText(record.text);
 
   return {
-    prompt: normalizeText(record.prompt),
+    prompt,
     mode: normalizeMode(record.mode),
     focusArea: normalizeText(record.focusArea),
     userRole: normalizeUserRole(record.userRole),
