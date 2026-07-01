@@ -249,7 +249,8 @@ describe("Source answer engine", () => {
       recommendedNextAction:
         "Lock CDP scoring around identity, activation, integration ownership, governance, and full TCO before BAFO.",
     });
-    expect(answer?.answerText).toContain("Current state");
+    expect(answer?.answerText).not.toContain("Current state:");
+    expect(answer?.answerText).toContain("What it means for sourcing");
     expect(answer?.answerText).toContain("CXO guidance");
     expect(answer?.expertLens[0]).toContain("enterprise data operating model");
     expect(answer?.evidenceCitations.length).toBeGreaterThanOrEqual(5);
@@ -337,7 +338,7 @@ describe("Source answer engine", () => {
     });
 
     expect(answer?.answerText).toContain(
-      "17 RFP Risk Register APPROVED.csv is loaded as cited sourcing evidence",
+      "17 RFP Risk Register APPROVED.csv is cited evidence for this sourcing read",
     );
     expect(answer?.answerText).not.toContain("risk_id,risk_category");
     expect(answer?.answerText).not.toContain("RFP-R1,Transition");
@@ -348,7 +349,7 @@ describe("Source answer engine", () => {
       responseParts: answer?.responseParts,
     });
     expect(visiblePayload).toContain(
-      "17 RFP Risk Register APPROVED.csv is structured Source evidence",
+      "17 RFP Risk Register APPROVED.csv is cited evidence for this sourcing read",
     );
     expect(visiblePayload).not.toContain("risk_id,risk_category");
     expect(visiblePayload).not.toContain("blocking_gate,evidence_basis");
@@ -631,6 +632,9 @@ describe("Source answer engine", () => {
       expect(answer?.answerText).not.toContain("Current state:");
       expect(answer?.answerText).not.toContain("source_events");
       expect(answer?.answerText).not.toContain("Sourcing Artifacts");
+      const renderedPartText = JSON.stringify(answer?.responseParts ?? []);
+      expect(renderedPartText).not.toMatch(/Mode:|Current state:|source_events|Sourcing Artifacts|Source Artifacts/i);
+      expect(renderedPartText).toContain("Decision signals and sourcing implications");
     },
   );
 
