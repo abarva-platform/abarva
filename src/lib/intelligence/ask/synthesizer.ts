@@ -688,9 +688,10 @@ ACTIVE INTELLIGENCE CANVAS RULES
         text = repairedText;
       } else {
         text = [
-          "I generated a draft that depended on hidden conversation history, so I am not going to surface it as an executive answer.",
-          "Please re-ask the question and I will answer from the current enterprise context only.",
-        ].join(" ");
+          "Before this becomes board-ready, treat the answer as evidence-thin until four items are explicit: the current-state baseline, the accountable owner, the dependency or readiness gate, and the value-proof method.",
+          "Use the loaded enterprise context to fill those gaps with tenant-specific facts before presenting the recommendation as a decision.",
+          "The practical next step is to name the initiative or portfolio question, then verify the baseline metric, owner, dependency gate, and evidence source in one place.",
+        ].join("\n\n");
       }
     }
     args.onModelOutput?.({
