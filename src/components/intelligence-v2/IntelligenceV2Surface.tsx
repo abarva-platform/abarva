@@ -20,6 +20,12 @@ import {
   type ParsedIntelligenceTab,
   visibleIntelligenceMainAnswer,
 } from "@/lib/intelligence/tabbed-response";
+import {
+  extractExecutiveCanvasPayloads,
+  type ExecutiveCanvasItem,
+  type ExecutiveCanvasPayload,
+  type ExecutiveCanvasProofBoundary,
+} from "@/lib/intelligence/executive-canvas-payload";
 
 type Tab = string;
 
@@ -109,6 +115,35 @@ const CSS = `
 .iv2 .mapAxis.y{left:14%;top:6%}
 .iv2 .mapAxis.x{right:8%;bottom:6%}
 .iv2 .visualRead{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:9px}
+.iv2 .nativeCanvas{border:1px solid var(--line);border-radius:8px;background:#FCFBF8;padding:13px;margin:0 0 12px;display:grid;gap:12px}
+.iv2 .nativeCanvasTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:18px;line-height:1.18;font-weight:500}
+.iv2 .sequenceMap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.iv2 .sequenceColumn{border:1px solid var(--line);border-radius:8px;background:#fff;min-width:0;display:grid;align-content:start;gap:8px;padding:10px}
+.iv2 .sequenceColumnTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--green)}
+.iv2 .sequenceItem{border:1px solid #E8E3D8;border-radius:7px;background:#FBFAF7;padding:8px;display:grid;gap:3px}
+.iv2 .sequenceItemLabel{font-size:12px;font-weight:600;line-height:1.25;color:var(--ink)}
+.iv2 .sequenceItemMeta{font-size:11px;line-height:1.3;color:var(--muted)}
+.iv2 .matrixCanvas{position:relative;min-height:310px;border:1px solid var(--line);border-radius:8px;background:linear-gradient(180deg,#fff,#F8F6EF);overflow:hidden}
+.iv2 .matrixCanvas::before{content:"";position:absolute;inset:12%;border-left:1px solid #D8D2C5;border-bottom:1px solid #D8D2C5}
+.iv2 .matrixCanvas::after{content:"";position:absolute;left:50%;top:12%;bottom:12%;border-left:1px dashed #D8D2C5}
+.iv2 .matrixZone{position:absolute;right:12%;top:12%;width:38%;height:38%;border-radius:8px;background:rgba(31,107,58,.08);border:1px solid rgba(31,107,58,.16)}
+.iv2 .matrixDivider{position:absolute;left:12%;right:12%;top:50%;border-top:1px dashed #D8D2C5}
+.iv2 .matrixPoint{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px;max-width:46%}
+.iv2 .matrixDot{width:14px;height:14px;border-radius:50%;background:#1F6B3A;box-shadow:0 0 0 4px rgba(31,107,58,.14);flex:none}
+.iv2 .matrixDot.highRisk{background:#A66A1F;box-shadow:0 0 0 4px rgba(166,106,31,.15)}
+.iv2 .matrixLabel{font-size:11.5px;line-height:1.2;color:var(--ink);background:rgba(255,255,255,.86);border:1px solid rgba(231,227,218,.9);border-radius:6px;padding:4px 6px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.iv2 .roadmap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.iv2 .roadmapGate{position:relative;border:1px solid var(--line);border-radius:8px;background:#fff;padding:12px;display:grid;gap:6px;min-width:0}
+.iv2 .roadmapGate::after{content:"";position:absolute;right:-10px;top:50%;width:10px;border-top:1px solid #D8D2C5}
+.iv2 .roadmapGate:last-child::after{display:none}
+.iv2 .roadmapStep{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.iv2 .roadmapLabel{font-size:13px;font-weight:600;line-height:1.25;color:var(--ink)}
+.iv2 .roadmapMeta{font-size:11.5px;line-height:1.35;color:var(--muted)}
+.iv2 .proofGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.iv2 .proofBox{border:1px solid var(--line);border-radius:8px;background:#fff;padding:11px;min-width:0}
+.iv2 .proofBoxTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:7px}
+.iv2 .proofBox ul{margin:0;padding-left:16px;color:var(--muted);font-size:12px;line-height:1.45}
+.iv2 .proofDecision{border-top:1px solid var(--line);padding-top:9px;font-size:12.5px;color:var(--ink)}
 .iv2 .emptyAnswer{border:1px dashed var(--line);border-radius:8px;padding:22px;color:var(--muted);background:rgba(255,255,255,.55)}
 .iv2 .startPanel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:28px;max-width:760px}
 .iv2 .startPanel h3{font-family:var(--font-fraunces),Georgia,serif;font-size:28px;font-weight:500;margin:0 0 10px}
@@ -143,7 +178,7 @@ const CSS = `
 .iv2 .flag{color:var(--amber);font-size:11.5px;margin-top:12px;font-family:var(--font-geist-mono),ui-monospace,monospace}
 .iv2 .cpat .dom{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:8px}
 .iv2 .cpat p{color:var(--muted);font-size:12.5px}
-@media(max-width:900px){.iv2 .grid2,.iv2 .grid3,.iv2 .companionGrid{grid-template-columns:1fr}.iv2 .companionCard.wide{grid-column:auto}}
+@media(max-width:900px){.iv2 .grid2,.iv2 .grid3,.iv2 .companionGrid,.iv2 .sequenceMap,.iv2 .roadmap,.iv2 .proofGrid{grid-template-columns:1fr}.iv2 .companionCard.wide{grid-column:auto}.iv2 .roadmapGate::after{display:none}}
 `;
 
 function buildSurfaceContext(payload: IntelligenceBindingPayload) {
@@ -450,8 +485,17 @@ function visualTitle(card: ParsedIntelligenceTab): string {
   return "Decision shape";
 }
 
+function visibleCompanionContent(content: string): string {
+  return extractExecutiveCanvasPayloads(content).visibleContent;
+}
+
 function VisualCardEnhancement({ card }: { card: ParsedIntelligenceTab }) {
   if (card.id !== "chart" && card.id !== "table") return null;
+  const executiveCanvas = extractExecutiveCanvasPayloads(card.content)
+    .payloads[0];
+  if (executiveCanvas) {
+    return <ExecutiveCanvasVisual payload={executiveCanvas} />;
+  }
   const table = parseFirstMarkdownTable(card.content);
   if (!table) return null;
   const labelIndex = labelColumnIndex(table);
@@ -571,6 +615,218 @@ function VisualCardEnhancement({ card }: { card: ParsedIntelligenceTab }) {
       </div>
     </div>
   );
+}
+
+function ExecutiveCanvasVisual({
+  payload,
+}: {
+  payload: ExecutiveCanvasPayload;
+}) {
+  switch (payload.canvasType) {
+    case "investmentSequencingMap":
+      return <InvestmentSequencingMap payload={payload} />;
+    case "valueReadinessMatrix":
+      return <ValueReadinessMatrix payload={payload} />;
+    case "gateToValueRoadmap":
+      return <GateToValueRoadmap payload={payload} />;
+    case "proofBoundary":
+      return <ProofBoundaryVisual payload={payload} />;
+  }
+}
+
+function InvestmentSequencingMap({
+  payload,
+}: {
+  payload: ExecutiveCanvasPayload;
+}) {
+  const columns = payload.columns?.slice(0, 4) ?? [];
+  if (columns.length === 0) return null;
+  return (
+    <div className="nativeCanvas" data-testid="executive-canvas-sequencing">
+      <NativeCanvasTitle title={payload.title ?? "Investment sequence"} />
+      <div className="sequenceMap">
+        {columns.map((column) => (
+          <div className="sequenceColumn" key={column.label}>
+            <div className="sequenceColumnTitle">{column.label}</div>
+            {column.items.slice(0, 4).map((item, index) => (
+              <SequenceItem item={item} key={`${column.label}-${index}`} />
+            ))}
+          </div>
+        ))}
+      </div>
+      <ProofBoundaryInline proofBoundary={payload.proofBoundary} />
+    </div>
+  );
+}
+
+function SequenceItem({ item }: { item: string | ExecutiveCanvasItem }) {
+  if (typeof item === "string") {
+    return (
+      <div className="sequenceItem">
+        <div className="sequenceItemLabel">{item}</div>
+      </div>
+    );
+  }
+  const metrics = [
+    scoreLabel("value", item.value),
+    scoreLabel("ready", item.readiness),
+    scoreLabel("risk", item.risk),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return (
+    <div className="sequenceItem">
+      <div className="sequenceItemLabel">{item.label}</div>
+      {item.action ? (
+        <div className="sequenceItemMeta">{item.action}</div>
+      ) : null}
+      {metrics ? <div className="sequenceItemMeta">{metrics}</div> : null}
+      {item.note ? <div className="sequenceItemMeta">{item.note}</div> : null}
+    </div>
+  );
+}
+
+function ValueReadinessMatrix({
+  payload,
+}: {
+  payload: ExecutiveCanvasPayload;
+}) {
+  const items = payload.items?.filter(hasMatrixCoordinates).slice(0, 8) ?? [];
+  if (items.length === 0) return null;
+  return (
+    <div className="nativeCanvas" data-testid="executive-canvas-matrix">
+      <NativeCanvasTitle title={payload.title ?? "Value readiness matrix"} />
+      <div className="matrixCanvas" aria-label="Value readiness matrix">
+        <div className="matrixZone" />
+        <div className="matrixDivider" />
+        <div className="mapAxis y">Value</div>
+        <div className="mapAxis x">Readiness</div>
+        {items.map((item) => (
+          <div
+            className="matrixPoint"
+            key={`${item.label}-${item.value}-${item.readiness}`}
+            style={{
+              left: `${scaleScore(item.readiness)}%`,
+              top: `${100 - scaleScore(item.value)}%`,
+            }}
+          >
+            <span
+              className={`matrixDot${(item.risk ?? 0) >= 7 ? " highRisk" : ""}`}
+              aria-hidden="true"
+            />
+            <span className="matrixLabel">
+              {item.label}
+              {item.action ? ` · ${item.action}` : ""}
+            </span>
+          </div>
+        ))}
+      </div>
+      <ProofBoundaryInline proofBoundary={payload.proofBoundary} />
+    </div>
+  );
+}
+
+function GateToValueRoadmap({ payload }: { payload: ExecutiveCanvasPayload }) {
+  const gates = payload.gates?.slice(0, 5) ?? [];
+  if (gates.length === 0) return null;
+  return (
+    <div className="nativeCanvas" data-testid="executive-canvas-roadmap">
+      <NativeCanvasTitle title={payload.title ?? "Gate-to-value roadmap"} />
+      <div className="roadmap">
+        {gates.map((gate, index) => (
+          <div className="roadmapGate" key={`${gate.label}-${index}`}>
+            <div className="roadmapStep">Gate {index + 1}</div>
+            <div className="roadmapLabel">{gate.label}</div>
+            {gate.status ? (
+              <div className="roadmapMeta">{gate.status}</div>
+            ) : null}
+            {gate.owner ? (
+              <div className="roadmapMeta">{gate.owner}</div>
+            ) : null}
+            {gate.dependency ? (
+              <div className="roadmapMeta">{gate.dependency}</div>
+            ) : null}
+            {gate.valueUnlocked ? (
+              <div className="roadmapMeta">{gate.valueUnlocked}</div>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      <ProofBoundaryInline proofBoundary={payload.proofBoundary} />
+    </div>
+  );
+}
+
+function ProofBoundaryVisual({ payload }: { payload: ExecutiveCanvasPayload }) {
+  if (!payload.proofBoundary) return null;
+  return (
+    <div className="nativeCanvas" data-testid="executive-canvas-proof">
+      <NativeCanvasTitle title={payload.title ?? "Proof boundary"} />
+      <ProofBoundaryGrid proofBoundary={payload.proofBoundary} />
+    </div>
+  );
+}
+
+function NativeCanvasTitle({ title }: { title: string }) {
+  return <div className="nativeCanvasTitle">{title}</div>;
+}
+
+function ProofBoundaryInline({
+  proofBoundary,
+}: {
+  proofBoundary?: ExecutiveCanvasProofBoundary;
+}) {
+  if (!proofBoundary?.decisionRequired) return null;
+  return (
+    <div className="proofDecision">
+      <strong>Decision required:</strong> {proofBoundary.decisionRequired}
+    </div>
+  );
+}
+
+function ProofBoundaryGrid({
+  proofBoundary,
+}: {
+  proofBoundary: ExecutiveCanvasProofBoundary;
+}) {
+  const boxes = [
+    ["Known", proofBoundary.known ?? []],
+    ["Assumed", proofBoundary.assumed ?? []],
+    ["Missing", proofBoundary.missing ?? []],
+  ] as const;
+  return (
+    <>
+      <div className="proofGrid">
+        {boxes.map(([label, items]) =>
+          items.length > 0 ? (
+            <div className="proofBox" key={label}>
+              <div className="proofBoxTitle">{label}</div>
+              <ul>
+                {items.slice(0, 4).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null,
+        )}
+      </div>
+      <ProofBoundaryInline proofBoundary={proofBoundary} />
+    </>
+  );
+}
+
+function hasMatrixCoordinates(
+  item: ExecutiveCanvasItem,
+): item is ExecutiveCanvasItem & { value: number; readiness: number } {
+  return Number.isFinite(item.value) && Number.isFinite(item.readiness);
+}
+
+function scaleScore(value: number): number {
+  return Math.max(14, Math.min(86, 14 + (value / 10) * 72));
+}
+
+function scoreLabel(label: string, value?: number): string {
+  return Number.isFinite(value) ? `${label} ${value}` : "";
 }
 
 export function IntelligenceV2Surface({
@@ -906,7 +1162,9 @@ export function IntelligenceV2Surface({
                             </div>
                             <div className="tabMarkdown companionBody">
                               <VisualCardEnhancement card={card} />
-                              <AgentMarkdown text={card.content} />
+                              <AgentMarkdown
+                                text={visibleCompanionContent(card.content)}
+                              />
                             </div>
                           </section>
                         ))}

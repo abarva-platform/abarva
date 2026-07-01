@@ -794,6 +794,104 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     });
   });
 
+  it("renders structured AbarVa executive canvas payloads without exposing JSON", async () => {
+    const mainAnswer =
+      "Scale Loyalty now, certify Crew Recovery next, and fund IROPS readiness before autonomous expansion.";
+    const canvasPayload = {
+      canvasType: "investmentSequencingMap",
+      title: "AI funding sequence for SkyHarbor",
+      columns: [
+        {
+          label: "Scale now",
+          items: [
+            {
+              label: "Loyalty",
+              value: 8,
+              readiness: 8,
+              risk: 4,
+              action: "Scale now",
+            },
+          ],
+        },
+        {
+          label: "Certify then scale",
+          items: ["Crew Recovery", "Predictive Maintenance"],
+        },
+        {
+          label: "Fund readiness",
+          items: ["IROPS", "Customer Disruption Recovery"],
+        },
+      ],
+      proofBoundary: {
+        known: ["Loyalty has certified engagement data"],
+        missing: ["IROPS operational data certification"],
+        decisionRequired: "Give CDAO gate authority before the IROPS tranche.",
+      },
+    };
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: streamFromLines([
+        JSON.stringify({
+          type: "delta",
+          text: [
+            mainAnswer,
+            "",
+            "<<<TAB: Chart | grounding: tenant-evidence>>>",
+            "Tenant evidence: use the sequence to separate scale decisions from readiness funding.",
+            "",
+            "```abarva-canvas",
+            JSON.stringify(canvasPayload),
+            "```",
+          ].join("\n"),
+        }),
+        JSON.stringify({ type: "done" }),
+        "",
+      ]),
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(
+      <IntelligenceV2Surface
+        payload={{
+          ...apexPayload,
+          tenant: {
+            key: "skyharbor-air",
+            displayName: "SkyHarbor Air",
+            industry: "Airline",
+          },
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("agent-dock-input"), {
+      target: { value: "Where should we fund AI next?" },
+    });
+    fireEvent.click(screen.getByTestId("agent-dock-send"));
+
+    expect(await screen.findAllByText(mainAnswer)).not.toHaveLength(0);
+    await waitFor(() => {
+      expect(screen.getByText("Decision canvas")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("executive-canvas-sequencing"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("AI funding sequence for SkyHarbor"),
+      ).toBeInTheDocument();
+      expect(screen.getAllByText("Scale now").length).toBeGreaterThan(0);
+      expect(screen.getByText("Certify then scale")).toBeInTheDocument();
+      expect(screen.getByText("Fund readiness")).toBeInTheDocument();
+      expect(screen.getByText("Loyalty")).toBeInTheDocument();
+      expect(
+        screen.getByText("Give CDAO gate authority before the IROPS tranche."),
+      ).toBeInTheDocument();
+      expect(document.body.textContent).not.toContain("abarva-canvas");
+      expect(document.body.textContent).not.toContain("canvasType");
+      expect(document.body.textContent).not.toContain("grounding:");
+      expect(document.body.textContent).not.toContain("<<<TAB:");
+    });
+  });
+
   it("has an Intelligence v2 binding payload for every configured client tenant", () => {
     for (const client of ALL_CLIENTS) {
       expect(getIntelligenceBindingPayload(client.id)).toBeTruthy();
