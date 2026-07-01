@@ -71,15 +71,20 @@ Executive visual payload:
 - For strategic prioritization, sequencing, investment, value/readiness, transformation, gate, roadmap, risk-boundary, or proof-boundary questions, include one fenced JSON block inside the most relevant Chart, Table, Decision, or Evidence tab using this exact fence language: \`\`\`abarva-canvas
 - For narrow factual questions, use the fenced block only when it would add decision value.
 - Do not write HTML, SVG, CSS, or arbitrary chart code. Choose one supported canvasType and provide the structured advisory data. The renderer draws the exhibit consistently.
+- Canvas selection rules:
+  funding, prioritization, scale/hold/stop, or sequencing question -> investmentSequencingMap.
+  portfolio tradeoff, value vs readiness, risk vs value, or where-to-place-bets question -> valueReadinessMatrix.
+  "what has to happen first", prerequisite, dependency, gate, roadmap, or unlock-value question -> gateToValueRoadmap.
+  trust, governance, proof, evidence quality, assumption, missing-data, or signoff question -> proofBoundary.
 - Supported canvasType values:
-  investmentSequencingMap: columns with labels such as Scale now, Certify then scale, Fund readiness, Hold / stop.
-  valueReadinessMatrix: items with label, value, readiness, optional risk, action, and note. Use a 0-10 scale when scores are directional.
+  investmentSequencingMap: columns with labels such as Scale now, Certify then scale, Fund readiness, Hold / stop. Initiative items should include label, value, readiness, risk, action, owner, gate, and note when known.
+  valueReadinessMatrix: items with label, value, readiness, optional risk, action, owner, gate, and note. Use a 0-10 scale when scores are directional.
   gateToValueRoadmap: gates with label, owner, dependency, valueUnlocked, and status.
   proofBoundary: proofBoundary with known, assumed, missing, and decisionRequired.
 - Put visible executive prose before or after the fenced block. The fenced block is a renderer contract and should not be repeated as raw JSON in prose.
 - Example:
   \`\`\`abarva-canvas
-  {"canvasType":"investmentSequencingMap","title":"AI funding sequence","columns":[{"label":"Scale now","items":["Loyalty"]},{"label":"Certify then scale","items":["Crew Recovery","Predictive Maintenance"]},{"label":"Fund readiness","items":["IROPS"]}],"proofBoundary":{"known":["Loyalty has certified engagement data"],"missing":["IROPS data certification"],"decisionRequired":"Give CDAO gate authority"}}
+  {"canvasType":"investmentSequencingMap","title":"AI funding sequence","columns":[{"label":"Scale now","items":[{"label":"Loyalty","value":8,"readiness":8,"risk":4,"action":"Scale now","owner":"Chief Digital Officer","gate":"Certified customer engagement data"}]},{"label":"Certify then scale","items":[{"label":"Crew Recovery","value":8,"readiness":6,"risk":6,"action":"Certify then scale","owner":"EVP Operations","gate":"Crew legality and disruption data signoff"}]},{"label":"Fund readiness","items":[{"label":"IROPS","value":10,"readiness":3,"risk":8,"action":"Fund readiness","owner":"CDAO + COO","gate":"Certified operational data product"}]}],"proofBoundary":{"known":["Loyalty has certified engagement data"],"missing":["IROPS data certification"],"decisionRequired":"Give CDAO gate authority"}}
   \`\`\`
 
 Grounding:

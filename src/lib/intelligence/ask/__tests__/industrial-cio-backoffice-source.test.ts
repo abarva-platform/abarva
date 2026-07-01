@@ -80,6 +80,13 @@ describe("Industrial CIO back-office ask source", () => {
     expect(addendum).toContain("Treasury and Finance as the Phase 1 proof");
     expect(addendum).toContain("HR and Legal need source evidence");
     expect(addendum).toContain("planning assumptions");
-    expect(addendum).toContain("Decision, Visual, Evidence, Assumptions");
+    expect(addendum).toContain(
+      "Decision, Industry Insights, Chart, Table, and Evidence",
+    );
+    expect(addendum).toContain("investmentSequencingMap");
+    expect(addendum).toContain("valueReadinessMatrix");
+    expect(addendum).toContain("gateToValueRoadmap");
+    expect(addendum).toContain("proofBoundary");
+    expect(addendum).toContain("include initiative owner and gate");
   });
 });

@@ -810,6 +810,8 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
               readiness: 8,
               risk: 4,
               action: "Scale now",
+              owner: "Chief Digital Officer",
+              gate: "Certified customer engagement data",
             },
           ],
         },
@@ -878,10 +880,24 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       expect(
         screen.getByText("AI funding sequence for SkyHarbor"),
       ).toBeInTheDocument();
+      expect(
+        screen
+          .getByText(
+            "Tenant evidence: use the sequence to separate scale decisions from readiness funding.",
+          )
+          .closest(".companionCard"),
+      ).toHaveClass("wide");
       expect(screen.getAllByText("Scale now").length).toBeGreaterThan(0);
       expect(screen.getByText("Certify then scale")).toBeInTheDocument();
       expect(screen.getByText("Fund readiness")).toBeInTheDocument();
       expect(screen.getByText("Loyalty")).toBeInTheDocument();
+      expect(screen.getByText("Value 8")).toBeInTheDocument();
+      expect(screen.getByText("Ready 8")).toBeInTheDocument();
+      expect(screen.getByText("Risk 4")).toBeInTheDocument();
+      expect(screen.getByText("Chief Digital Officer")).toBeInTheDocument();
+      expect(
+        screen.getByText("Certified customer engagement data"),
+      ).toBeInTheDocument();
       expect(
         screen.getByText("Give CDAO gate authority before the IROPS tranche."),
       ).toBeInTheDocument();

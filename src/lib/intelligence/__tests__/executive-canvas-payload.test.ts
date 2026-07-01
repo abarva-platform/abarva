@@ -19,6 +19,8 @@ describe("executive canvas payload extraction", () => {
             readiness: 8,
             risk: 4,
             action: "Scale now",
+            owner: "Chief Digital Officer",
+            gate: "Certified customer engagement data",
           },
         ],
         proofBoundary: {
@@ -46,6 +48,8 @@ describe("executive canvas payload extraction", () => {
           readiness: 8,
           risk: 4,
           action: "Scale now",
+          owner: "Chief Digital Officer",
+          gate: "Certified customer engagement data",
         },
       ],
     });

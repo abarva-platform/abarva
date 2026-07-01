@@ -12,6 +12,8 @@
 
 The Intelligence companion canvas now supports AbarVa-native executive exhibits. Claude can choose a governed `abarva-canvas` payload for sequencing, value/readiness, gate-to-value, or proof-boundary visuals; the renderer draws the exhibit consistently and hides the machine payload from the UI. Markdown-table visuals remain as a fallback.
 
+Follow-up premium exhibit hardening upgrades the native canvas from a compact card into a board-style exhibit. Investment sequencing now uses stronger column hierarchy, initiative cards, value/readiness/risk/owner/gate chips, decision-required treatment, and full-width prose-heavy decision cards. The prompt contract now tells Claude which native exhibit to choose for funding, tradeoff, prerequisite, and governance questions without allowing arbitrary HTML or raw JSON.
+
 ## Layer Impact
 
 - `global-control-lane`: Updates the shared Intelligence v2 answer contract and right-canvas renderer for all tenants using the executive canvas.
@@ -31,6 +33,10 @@ The Intelligence companion canvas now supports AbarVa-native executive exhibits.
 - `src/lib/intelligence/executive-canvas-payload.ts`: adds parser/normalizer for supported executive canvas payloads.
 - `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`: allows the governed `abarva-canvas` payload as the only JSON exception, avoiding a prompt conflict that pushed Claude back to plain Markdown tables.
 - `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: renders native sequencing, value/readiness matrix, gate-to-value roadmap, and proof-boundary exhibits while hiding raw payload JSON; native payloads are honored from any companion card allowed by the prompt contract, including Decision and Evidence, not only Chart/Table.
+- `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: upgrades native exhibits with premium board styling, tone-coded sequencing columns, initiative owner/gate chips, roadmap status/owner/dependency treatment, matrix quadrant labels, and full-width Decision/Evidence companion cards when content is prose-heavy or carries a native payload.
+- `src/lib/intelligence/tabbed-response.ts`: adds explicit canvas-selection guidance so prioritization questions choose sequencing, portfolio tradeoff questions choose value/readiness, prerequisite questions choose gate-to-value, and governance/trust questions choose proof boundary while preserving the strict renderer contract.
+- `src/lib/intelligence/executive-canvas-payload.ts`: extends initiative items with optional `owner` and `gate` fields for board-ready exhibit cards.
+- `src/lib/intelligence/ask/industrial-cio-backoffice-source.ts`: updates Morgan Street / Industrial Demo guidance to the current canvas grammar and asks Claude to use the correct exhibit pattern for CIO shared-services AI questions.
 - Focused parser and UI tests for payload extraction, tab preservation, native rendering, and no marker/payload leakage.
 
 ## QA / Validation
@@ -39,6 +45,7 @@ The Intelligence companion canvas now supports AbarVa-native executive exhibits.
 - `npx eslint src/lib/intelligence/executive-canvas-payload.ts src/lib/intelligence/tabbed-response.ts src/components/intelligence-v2/IntelligenceV2Surface.tsx src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/lib/intelligence/__tests__/tabbed-response.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx` passed.
 - Follow-up renderer-boundary validation: `./node_modules/.bin/jest src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/lib/intelligence/__tests__/tabbed-response.test.ts --runInBand` passed with Decision-tab native canvas coverage.
 - Follow-up renderer-boundary validation: `npx eslint src/components/intelligence-v2/IntelligenceV2Surface.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx` passed.
+- Premium exhibit validation: `./node_modules/.bin/jest src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/lib/intelligence/__tests__/tabbed-response.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/ask/__tests__/industrial-cio-backoffice-source.test.ts --runInBand` passed.
 
 ## Rollout Plan
 
