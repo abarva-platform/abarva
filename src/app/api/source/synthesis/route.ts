@@ -39,6 +39,43 @@ const SOURCE_V6_SYNTHESIS_HEADERS = {
   "X-AbarVa-Renderer-Policy": "placement-only",
 } as const;
 
+const DEFAULT_SOURCE_INSTANCE_ID = "apex-retail-ams-outsourcing-2026";
+const SOURCE_INSTANCE_ALIASES: Record<string, string> = {
+  "ams-vendor-consolidation-2026": DEFAULT_SOURCE_INSTANCE_ID,
+  "SRC-AMS-2026": DEFAULT_SOURCE_INSTANCE_ID,
+};
+
+function canonicalTenantKey(value: string | null | undefined): string {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (["apexretail", "apex-retail", "apex-retail-group"].includes(normalized)) {
+    return "apex-retail";
+  }
+  if (["skyharbor", "skyharbor-air", "skyharbor-airlines"].includes(normalized)) {
+    return "skyharbor-air";
+  }
+  if (["lakeshore", "lakeshore-holdings", "lakeshore-industries"].includes(normalized)) {
+    return "lakeshore-holdings";
+  }
+  return normalized;
+}
+
+function resolveSourceInstanceId(instanceId: string): string {
+  return SOURCE_INSTANCE_ALIASES[instanceId] ?? instanceId;
+}
+
+function sourceJsonError(
+  body: { error: string; detail?: string },
+  init: ResponseInit,
+): Response {
+  return Response.json(body, {
+    ...init,
+    headers: {
+      ...SOURCE_V6_SYNTHESIS_HEADERS,
+      ...(init.headers ?? {}),
+    },
+  });
+}
+
 const AVA_SOURCE_SYNTHESIS_VOICE_AND_TASK = `You are aVa, AbarVa's intelligence validator on the Source surface.
 
 Your synthesis task: given the structured state of a sourcing event (current stage, gate evaluations, missing artifacts, linked program dependencies), produce a 2–3 sentence validator's assessment in aVa Source voice.
@@ -134,18 +171,51 @@ export async function POST(request: Request) {
     instanceId?: string;
     patternId?: string;
   };
-  const instanceId = body.instanceId ?? "ams-vendor-consolidation-2026";
 
-  // Resolve instance (currently only AMS is typed; fallback gracefully)
-  const instance =
-    SOURCE_EVENT_INSTANCES.find((i) => i.id === instanceId) ??
-    SOURCE_EVENT_INSTANCES[0];
+  const activeClient = await getActiveClientRow();
+  if (!activeClient) {
+    return sourceJsonError(
+      { error: "no_client", detail: "No active client for AI egress policy." },
+      { status: 403 },
+    );
+  }
+
+  const activeTenantKey = canonicalTenantKey(activeClient.key);
+  const instanceId = body.instanceId
+    ? resolveSourceInstanceId(body.instanceId)
+    : activeTenantKey === "apex-retail"
+      ? DEFAULT_SOURCE_INSTANCE_ID
+      : null;
+
+  if (!instanceId) {
+    return sourceJsonError(
+      {
+        error: "source_synthesis_not_available",
+        detail: "No V6 Source event is loaded for the active tenant.",
+      },
+      { status: 404 },
+    );
+  }
+
+  const instance = SOURCE_EVENT_INSTANCES.find((i) => i.id === instanceId);
 
   if (!instance) {
-    return new Response(JSON.stringify({ error: "instance not found" }), {
+    return sourceJsonError({ error: "instance not found" }, {
       status: 404,
-      headers: { "Content-Type": "application/json" },
     });
+  }
+
+  const instanceTenantKey = canonicalTenantKey(
+    instance.tenantSlug ?? instance.tenantId,
+  );
+  if (instanceTenantKey !== activeTenantKey) {
+    return sourceJsonError(
+      {
+        error: "wrong_client",
+        detail: "Requested Source event does not belong to the active tenant.",
+      },
+      { status: 403 },
+    );
   }
 
   // Only AMS-001 pattern supported in REASON-14; extend as more patterns author
@@ -216,13 +286,6 @@ export async function POST(request: Request) {
 
   // F0.2 Layer 0
   const userContextBlock = await getUserContextPromptBlock();
-  const activeClient = await getActiveClientRow();
-  if (!activeClient) {
-    return Response.json(
-      { error: "no_client", detail: "No active client for AI egress policy." },
-      { status: 403 },
-    );
-  }
   const systemPrompt = buildAvaSynthesisPrompt(userContextBlock);
 
   // Shared Context Brain (flag-gated, default OFF). When on for the tenant,
