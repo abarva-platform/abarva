@@ -7,29 +7,30 @@ import { canonicalClientDisplayName } from "@/lib/client-config";
 // canonicalClientDisplayName, which resolves each tenant from its (key, name).
 //
 // Move cards always pass the tenant's DB name (clients.name), so this asserts
-// the realistic resolution path: each tenant resolves to ITSELF, never Apex.
+// the realistic resolution path: each tenant resolves to its demo-safe label,
+// never Apex.
 describe("Move-card tenant name resolution (no cross-tenant Apex default)", () => {
-  const cases: Array<[string, string]> = [
-    ["skyharbor", "SkyHarbor Air"],
-    ["northstar", "Northstar Clinical Technologies"],
-    ["lakeshore", "Lakeshore Holdings"],
-    ["apexretail", "Apex Retail Group"],
+  const cases: Array<[string, string, string]> = [
+    ["skyharbor", "SkyHarbor Air", "Airline Demo"],
+    ["northstar", "Northstar Clinical Technologies", "Clinical Technology Demo"],
+    ["lakeshore", "Lakeshore Holdings", "Industrial Demo"],
+    ["apexretail", "Apex Retail Group", "Retail Demo"],
   ];
 
-  it.each(cases)("resolves %s from its DB name -> %s", (key, name) => {
-    expect(canonicalClientDisplayName({ key, name })).toBe(name);
+  it.each(cases)("resolves %s from DB name %s -> %s", (key, name, expected) => {
+    expect(canonicalClientDisplayName({ key, name })).toBe(expected);
   });
 
-  it("never collapses a non-Apex tenant to Apex Retail Group", () => {
+  it("never collapses a non-Apex tenant to Retail Demo", () => {
     expect(
       canonicalClientDisplayName({ key: "skyharbor", name: "SkyHarbor Air" }),
-    ).not.toBe("Apex Retail Group");
+    ).not.toBe("Retail Demo");
     expect(
       canonicalClientDisplayName({
         key: "northstar",
         name: "Northstar Clinical Technologies",
       }),
-    ).not.toBe("Apex Retail Group");
+    ).not.toBe("Retail Demo");
   });
 
   it("returns the raw name for an unmapped tenant rather than inventing Apex", () => {

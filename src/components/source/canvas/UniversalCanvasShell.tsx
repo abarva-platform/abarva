@@ -1609,9 +1609,9 @@ function normalizeSourceEventDisplay(
   if (!isSkyHarborDemo) return event;
   return {
     ...event,
-    accountName: "SkyHarbor Air",
+    accountName: "Airline Demo",
     code: "SKYH-AMS-RFP-2026",
-    name: "SkyHarbor Air AMS Outsourcing RFP",
+    name: "Airline Demo AMS Outsourcing RFP",
   };
 }
 

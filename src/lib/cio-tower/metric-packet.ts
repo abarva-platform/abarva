@@ -75,11 +75,11 @@ const CIO_TOWER_TENANT_KEY_BY_ALIAS: Record<string, string> = {
 };
 
 const CIO_TOWER_TENANT_DISPLAY_NAME_BY_KEY: Record<string, string> = {
-  'apex-retail': 'Apex Retail Group',
-  'meridian-health': 'Meridian Health System',
-  'first-capital-financial': 'First Capital Financial',
-  'skyharbor-air': 'SkyHarbor Air',
-  'lakeshore-industries': 'Lakeshore Holdings',
+  'apex-retail': 'Retail Demo',
+  'meridian-health': 'Healthcare Demo',
+  'first-capital-financial': 'Financial Services Demo',
+  'skyharbor-air': 'Airline Demo',
+  'lakeshore-industries': 'Industrial Demo',
 };
 
 export function canonicalCioTowerTenantKey(value: string): string {

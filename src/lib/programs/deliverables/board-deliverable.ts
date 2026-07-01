@@ -11,6 +11,7 @@
 
 import "server-only";
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
+import { getClientOption } from "@/lib/client-config";
 import type { GeneratedDeliverable } from "@/lib/programs/deliverable-refinement";
 import {
   buildSourceRegister,
@@ -33,14 +34,14 @@ const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const TENANT_DISPLAY: Record<string, string> = {
-  skyharbor: "SkyHarbor Air",
-  "skyharbor-air": "SkyHarbor Air",
-  "apex-retail": "Apex Retail",
-  apexretail: "Apex Retail",
-  "meridian-health": "Meridian Health",
-  "first-capital": "First Capital",
-  "lakeshore-holdings": "Lakeshore Holdings",
-  "northstar-clinical": "Northstar Clinical",
+  skyharbor: getClientOption("skyharbor").name,
+  "skyharbor-air": getClientOption("skyharbor").name,
+  "apex-retail": getClientOption("apexretail").name,
+  apexretail: getClientOption("apexretail").name,
+  "meridian-health": getClientOption("meridian").name,
+  "first-capital": getClientOption("arcturus").name,
+  "lakeshore-holdings": getClientOption("lakeshore").name,
+  "northstar-clinical": getClientOption("northstar").name,
 };
 
 export function tenantDisplayName(clientKey: string): string {

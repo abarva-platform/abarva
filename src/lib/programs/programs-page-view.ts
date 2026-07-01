@@ -280,11 +280,11 @@ const PROGRAM_FIXTURES_BY_TENANT: Record<ProgramsIndexTenant, ProgramRow[]> = {
 };
 
 const PROGRAM_TENANT_LABELS: Record<ProgramsIndexTenant, string> = {
-  'apex-retail': 'Apex Retail Group',
-  'meridian-health': 'Meridian Health System',
-  'first-capital': 'First Capital Financial',
+  'apex-retail': getClientOption('apexretail').name,
+  'meridian-health': getClientOption('meridian').name,
+  'first-capital': getClientOption('arcturus').name,
   'northstar-clinical': getClientOption('northstar').name,
-  'skyharbor-air': 'SkyHarbor Air',
+  'skyharbor-air': getClientOption('skyharbor').name,
 };
 
 const PHASE_FILTER_TENANT_BY_INDEX_TENANT: Record<ProgramsIndexTenant, string> = {
