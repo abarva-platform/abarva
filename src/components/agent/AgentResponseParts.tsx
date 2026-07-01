@@ -140,10 +140,12 @@ function CitationsPart({ part }: { part: AgentCitationsPart }) {
             key={`${citation.label}-${citation.sourceDoc ?? ""}`}
             style={CITATION_STYLE}
           >
-            <div style={CITATION_LABEL_STYLE}>{citation.label}</div>
+            <div style={CITATION_LABEL_STYLE}>
+              {formatCitationLabel(citation.label)}
+            </div>
             <p style={CAPTION_STYLE}>{citation.excerpt}</p>
             <div style={CITATION_META_STYLE}>
-              {citation.sourceDoc ?? "source"} - confidence{" "}
+              {formatCitationSource(citation.sourceDoc)} - confidence{" "}
               {citation.confidence}
             </div>
           </article>
@@ -151,6 +153,23 @@ function CitationsPart({ part }: { part: AgentCitationsPart }) {
       </div>
     </section>
   );
+}
+
+function formatCitationLabel(label: string): string {
+  return label
+    .replace(/^Sourcing Artifacts\s*[-–]\s*/i, "")
+    .replace(/^Generated Sourcing Artifacts\s*[-–]\s*/i, "Generated artifact - ")
+    .replace(/^Uploaded Source Evidence\s*[-–]\s*/i, "Uploaded evidence - ")
+    .replace(/\bsource_events\b/gi, "Source event evidence")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatCitationSource(sourceDoc?: string): string {
+  if (!sourceDoc) return "Source evidence";
+  const normalized = sourceDoc.trim();
+  if (/^source_events$/i.test(normalized)) return "Source event evidence";
+  return normalized.replace(/_/g, " ");
 }
 
 function NextActionPart({ part }: { part: AgentNextActionPart }) {
