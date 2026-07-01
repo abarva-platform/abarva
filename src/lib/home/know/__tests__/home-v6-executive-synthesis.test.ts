@@ -167,6 +167,48 @@ describe("Home V6 executive synthesis", () => {
     ).toBe(result.response.prose);
   });
 
+  it("treats whitespace-only list formatting as preserved Claude text", async () => {
+    mockClaudeText(
+      [
+        "For Industrial Demo, the dependency story is clear enough for leadership.",
+        "",
+        "- **What this means:** cash positioning, bank connectivity, and payment approval form the critical path.",
+        "- **Why it matters:** trust weakens where lineage and quality are least mature.",
+        "- **Where to branch:** Tower for value, Source for vendor dependencies, Intelligence for tradeoffs, and Moves for sequencing.",
+        "",
+        "Where next:",
+        "- Tower for value and priority.",
+        "- Source for vendor dependencies.",
+      ].join("\n"),
+    );
+    const question =
+      "Describe the integration and dependency graph across systems, vendors, data, and risks.";
+    const v6 = answerHomeKnowFromV6({
+      tenantKey: "lakeshore",
+      question,
+      includeTrace: true,
+    });
+    const deterministic = toHomeKnowResponseFromV6(v6, { question });
+
+    const result = await applyHomeV6ExecutiveSynthesis({
+      response: deterministic,
+      v6Result: v6,
+      question,
+      tenantKey: v6.tenant.canonicalKey,
+      includeTrace: true,
+    });
+
+    expect(result.trace.used).toBe(true);
+    expect(result.response.prose).toContain("**What this means:**");
+    expect(result.response.prose).toContain("Where next:");
+    expect(result.response.safety.composerTrace?.reason).toContain(
+      "answerSource=claude_text",
+    );
+    expect(result.response.safety.composerTrace?.reason).toContain(
+      "rawClaudePreserved=true",
+    );
+  });
+
   it("falls back with explicit trace when Claude output exposes technical language", async () => {
     mockClaudeText(
       "Retail Demo has 50 usable V6 evidence rows from the dataset contract pack.",

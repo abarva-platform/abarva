@@ -122,7 +122,7 @@ export async function applyHomeV6ExecutiveSynthesis(args: {
     const rawText = collected.text.trim();
     const normalizedText = normalizeExecutiveText(rawText);
     const executiveText = ensureTenantOpening(normalizedText, packet.tenantName);
-    const rawClaudePreserved = executiveText === rawText;
+    const rawClaudePreserved = preservesClaudeVisibleText(rawText, executiveText);
     const artifactStatus = determineArtifactStatus({
       text: executiveText,
       response: args.response,
@@ -579,6 +579,14 @@ function scrubExecutiveTextPreservingMarkdownEmphasis(text: string): string {
   return scrubPublicAvaAnswerText(
     text.replace(/\*\*/g, MARKDOWN_EMPHASIS_SENTINEL),
   ).replaceAll(MARKDOWN_EMPHASIS_SENTINEL, "**");
+}
+
+function preservesClaudeVisibleText(rawText: string, visibleText: string): boolean {
+  return normalizePreservationText(rawText) === normalizePreservationText(visibleText);
+}
+
+function normalizePreservationText(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
 }
 
 function determineArtifactStatus(args: {
