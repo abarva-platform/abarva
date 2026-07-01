@@ -42,8 +42,9 @@ decisions.
 
 ## QA / Validation
 
-- Documentation reviewed against the supplied P1 doctrine.
-- No runtime tests required because this candidate changes docs only.
+- PASS: Documentation reviewed against the supplied P1 doctrine.
+- NOT RUN: Runtime tests are not required because this candidate changes docs
+  only.
 
 ## Rollout Plan
 

@@ -21,6 +21,7 @@ import type { SourceStageKey } from "@/lib/source/types";
 import { ensureThreadForSourceEvent } from "@/lib/decisions/auto-linker";
 import { listSourceEventActivityEntries } from "@/lib/source/activity-log";
 import { buildSourceVendorResponseCompleteness } from "@/lib/source/vendor-response-completeness";
+import { buildVendorResponseMveProfiles } from "@/lib/source/proposal-intelligence";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 
 export const dynamic = "force-dynamic";
@@ -131,6 +132,12 @@ export default async function SourceEventDetailPage({
   const vendorResponseReadiness = buildSourceVendorResponseCompleteness({
     event,
   });
+  const vendorResponseProfiles = buildVendorResponseMveProfiles({
+    id: event.id,
+    code: event.code,
+    name: event.name,
+    accountName: event.accountName,
+  });
   const flagScope = {
     clientKey: activeClient?.key ?? null,
     clientId: activeClient?.id ?? null,
@@ -158,6 +165,7 @@ export default async function SourceEventDetailPage({
       tenantName={tenantName}
       decisionThreadId={decisionThread?.id ?? null}
       vendorResponseReadiness={vendorResponseReadiness}
+      vendorResponseProfiles={vendorResponseProfiles}
       workspaceExplorerEnabled={workspaceExplorerEnabled}
       strategyAutoDraftEnabled={strategyAutoDraftEnabled}
       simpleFrontEnabled={simpleFrontEnabled}

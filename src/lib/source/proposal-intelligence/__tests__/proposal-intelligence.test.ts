@@ -14,6 +14,7 @@ import {
   isolateBundleForVendor,
   buildProposalContextTrace,
 } from "../isolation";
+import { buildVendorResponseMveProfiles } from "../mve-profile";
 import type {
   EvaluationCriterion,
   ProposalNormalizationRow,
@@ -392,5 +393,63 @@ describe("vendor isolation — structural + provable", () => {
     });
     expect(dirty.vendor_isolation_status).toBe("violation_detected");
     expect(dirty.excluded_objects_by_reason.vendor_isolation_excluded).toBe(1);
+  });
+});
+
+describe("vendor response MVE profiles", () => {
+  it("builds three SkyHarbor synthetic vendor profiles from long response packages plus exhibits", () => {
+    const set = buildVendorResponseMveProfiles({
+      id: "49c77bca-471d-4398-8b13-fa8ed1487597",
+      code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
+      name: "SkyHarbor AMS Outsourcing RFP",
+      accountName: "SkyHarbor Air",
+    });
+
+    expect(set).toBeTruthy();
+    expect(set!.profiles).toHaveLength(3);
+    expect(set!.profiles.every((profile) => profile.syntheticDemo)).toBe(true);
+    expect(set!.profiles.every((profile) => profile.sectionMap.length)).toBe(
+      true,
+    );
+    expect(set!.profiles.every((profile) => profile.exhibits.length >= 9)).toBe(
+      true,
+    );
+    expect(
+      set!.profiles.every((profile) => profile.extractionCards.length >= 3),
+    ).toBe(true);
+  });
+
+  it("flags narrative/exhibit mismatches as unsupported claims and conditional readiness", () => {
+    const set = buildVendorResponseMveProfiles({
+      id: "skyh-test-event",
+      code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
+      name: "SkyHarbor AMS Outsourcing RFP",
+    })!;
+    const scaleProfile = set.profiles.find((profile) =>
+      profile.vendorId.includes("scale"),
+    )!;
+
+    expect(scaleProfile.readyForEvaluation).toBe("conditional");
+    expect(scaleProfile.unsupportedClaims).toEqual(
+      expect.arrayContaining([
+        "Automation claim is unsupported commercially",
+        "24x7 coverage is not staffed",
+      ]),
+    );
+    expect(scaleProfile.clarificationQuestions.join(" ")).toMatch(
+      /baseline|pricing credit|FTE|location/i,
+    );
+    expect(scaleProfile.pricingSummary.fiveYearTcoUsd).toBe(91_800_000);
+  });
+
+  it("does not bind SkyHarbor synthetic profiles to a non-SkyHarbor event", () => {
+    expect(
+      buildVendorResponseMveProfiles({
+        id: "apex-retail-ams-outsourcing-2026",
+        code: "APEX-AMS-2026",
+        name: "Apex AMS Outsourcing",
+        accountName: "Apex Retail",
+      }),
+    ).toBeNull();
   });
 });

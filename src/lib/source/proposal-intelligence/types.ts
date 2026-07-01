@@ -91,6 +91,108 @@ export interface ProposalHealthAssessment {
   scoreReadiness: ScoreReadiness;
 }
 
+// ── Minimum viable extraction profile ───────────────────────────────────────
+
+export type VendorResponseSectionStatus =
+  | "complete"
+  | "partial"
+  | "missing"
+  | "exception";
+
+export interface VendorResponseSectionMapRow {
+  sectionNumber: number;
+  rfpSection: string;
+  responseReference: string;
+  status: VendorResponseSectionStatus;
+  notes: string;
+}
+
+export type VendorResponseExhibitKind =
+  | "claim_register"
+  | "productivity_commitments"
+  | "pricing_workbook"
+  | "staffing_location_model"
+  | "sla_commitments"
+  | "assumptions_exclusions"
+  | "transition_milestones"
+  | "commercial_exceptions"
+  | "evidence_index";
+
+export interface VendorResponseExhibitStatus {
+  kind: VendorResponseExhibitKind;
+  label: string;
+  status: "complete" | "partial" | "missing";
+  evidenceReference: string | null;
+  issue: string | null;
+}
+
+export type VendorExtractionCardType =
+  | "claim"
+  | "pricing"
+  | "productivity"
+  | "staffing"
+  | "sla"
+  | "assumption"
+  | "exception"
+  | "transition";
+
+export interface VendorExtractionCard {
+  cardId: string;
+  type: VendorExtractionCardType;
+  title: string;
+  extractedValue: string;
+  evidenceReference: string | null;
+  confidence: "high" | "medium" | "low";
+  structuredExhibitStatus: "supported" | "partial" | "missing";
+  missingFields: string[];
+  finding: string;
+  recommendedAction: string;
+}
+
+export interface VendorResponsePricingSummary {
+  yearOneRunCostUsd: number | null;
+  transitionCostUsd: number | null;
+  oneTimeCostUsd: number | null;
+  optionalCostUsd: number | null;
+  fiveYearTcoUsd: number | null;
+  pricingBasis: string;
+}
+
+export interface VendorResponseProfile {
+  sourceEventId: string;
+  tenantKey: string;
+  vendorId: string;
+  vendorName: string;
+  responseVersion: number;
+  syntheticDemo: boolean;
+  packageSummary: string;
+  narrativePageEquivalent: string;
+  responseCompleteness: {
+    percent: number;
+    completeSections: number;
+    totalSections: number;
+    missingSections: string[];
+    partialSections: string[];
+  };
+  majorClaims: string[];
+  evidenceProvided: string[];
+  pricingSummary: VendorResponsePricingSummary;
+  productivityCommitment: string;
+  staffingModelSummary: string;
+  slaCommitments: string;
+  assumptionsExclusions: string[];
+  commercialExceptions: string[];
+  transitionCommitments: string;
+  unsupportedClaims: string[];
+  clarificationQuestions: string[];
+  negotiationLevers: string[];
+  readyForEvaluation: "yes" | "no" | "conditional";
+  readyReason: string;
+  sectionMap: VendorResponseSectionMapRow[];
+  exhibits: VendorResponseExhibitStatus[];
+  extractionCards: VendorExtractionCard[];
+}
+
 // ── Normalization ───────────────────────────────────────────────────────────
 
 export type NormalizedCategory =
