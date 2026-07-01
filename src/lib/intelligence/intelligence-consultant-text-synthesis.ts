@@ -266,7 +266,8 @@ export function buildIntelligenceConsultantPromptPacketFromAdvisoryPacket(
   const model = packet.modelVisiblePacket;
   const primaryDimension =
     (packet.questionIntent.selectedDimensions[0] as
-      IntelligenceDimension | undefined) ?? "enterprise_strategy";
+      | IntelligenceDimension
+      | undefined) ?? "enterprise_strategy";
   const expectedArtifacts = (
     model.outputInstructions.some((instruction) =>
       /table|chart/i.test(instruction),
@@ -458,7 +459,9 @@ export function buildIntelligenceConsultantUserPrompt(
     "",
     "Instructions:",
     "Write the best possible Intelligence answer from this packet.",
-    "Start with the executive answer in one short paragraph.",
+    `The first user-visible sentence must begin with exactly "${packet.tenantBrief.tenantName}". Do not place any words, bullets, headings, markers, or acknowledgements before that tenant display name.`,
+    `If your natural opening would not start with "${packet.tenantBrief.tenantName}", rewrite only the opening sentence so it does.`,
+    "Start with the executive answer in one short paragraph after the tenant-name opener.",
     "Then explain the evidence spine: what the tenant facts support, what corpus/pattern content adds, and what benchmark context calibrates.",
     "When the user asks what to prioritize, kill, sequence, compare, fund, or investigate, include options and tradeoffs.",
     "When comparing multiple items, include a compact Markdown table with business-friendly columns.",
@@ -508,7 +511,8 @@ function buildIntelligenceV6AdvisoryPacketContract(args: {
       ...(args.promptPacket.tenantEvidenceBrief.metricsThatMatter.length
         ? ["metrics"]
         : []),
-      ...(args.promptPacket.tenantEvidenceBrief.relationshipPathsThatMatter.length
+      ...(args.promptPacket.tenantEvidenceBrief.relationshipPathsThatMatter
+        .length
         ? ["relationships"]
         : []),
       ...(args.promptPacket.corpusPatternBrief.patternSummaries.length

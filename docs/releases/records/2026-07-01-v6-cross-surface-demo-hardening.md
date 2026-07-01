@@ -48,6 +48,13 @@ This release hardens the demo V6 answer path across Intelligence, Tower, Source,
 - Remaining root causes were specific: Airline Intelligence answers still used the legacy customer label instead of opening with "Airline Demo"; Moves answers were grounded but omitted the exact tenant domain terms required by the strict proof (`IROPS` for Airline Demo and `treasury` for Industrial Demo); Tower page chrome still displayed legacy tenant names because the Tower page used a Tower-specific display mapper instead of the global demo-safe mapper.
 - Remediation in this follow-up: Airline CTO readiness source/prompt now uses "Airline Demo" as the visible tenant identity and forbids legacy SkyHarbor labels; Intelligence advisory/dossier packets now receive the canonical demo-safe tenant display name; Moves V6 execution packets and prompts include the required tenant domain phrase; Tower page chrome now uses the global `canonicalClientDisplayName` mapper.
 
+### Third Production Proof Remediation — 2026-07-01T13:52:00Z
+
+- ACA deploy for the second remediation succeeded on revision `ca-abarva-web-lab-eastus--mb2879aba` at 100% traffic with image tag `main-b2879aba`.
+- Signed-in production proof improved to 48/50 API checks passing and 10/10 page smokes passing.
+- Remaining root cause: two Airline Demo Intelligence answers were substantively grounded but did not begin the first visible sentence with the exact tenant display name, so the strict proof failed `missing tenant display name Airline Demo`.
+- Remediation in this follow-up: the Intelligence consultant prompt now requires the first user-visible sentence to begin with the exact tenant display name from the packet and forbids headings, bullets, markers, acknowledgements, or any other words before it. The shared consultant answer-shape contract now carries the same literal opener rule.
+
 ## QA / Validation
 
 - `npx jest src/app/api/source/synthesis/__tests__/route.test.ts src/app/api/programs/synthesis/__tests__/route.test.ts src/lib/cio-tower/__tests__/answer.test.ts src/lib/intelligence/__tests__/skyharbor-cto-readiness.test.ts src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts --runInBand`
@@ -72,6 +79,18 @@ This release hardens the demo V6 answer path across Intelligence, Tower, Source,
 - Second remediation local gate:
   - `npx jest src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts src/app/api/programs/synthesis/__tests__/route.test.ts src/app/api/tower/ask/route.test.ts src/lib/agent/__tests__/module-v6-answer-contract.test.ts --runInBand`
   - Result: Passed, 4 suites / 13 tests.
+- Second remediation production proof:
+  - ACA revision: `ca-abarva-web-lab-eastus--mb2879aba`, traffic 100%, runtime invariant passed.
+  - Evidence path: `audit-artifacts/v6-cross-surface-50-prod/v6-cross-surface-50-2026-07-01T13-39-44-920Z-edcce148c/`.
+  - Result: 50/50 signed-in API calls returned HTTP 200; 48/50 passed strict visible-answer scorer; 10/10 page route smokes passed.
+  - Disposition: Failed proof. Used to drive the third production-proof remediation above.
+- Third remediation local gate:
+  - `npx jest src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts src/lib/intelligence/ask/response-policy.test.ts src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts --runInBand`
+  - Result: Passed, 3 suites / 31 tests.
+  - `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false`
+  - Result: Passed.
+  - `npx eslint src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/lib/intelligence/ask/response-policy.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts`
+  - Result: Passed.
 
 ## Rollout Plan
 
