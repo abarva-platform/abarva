@@ -70,6 +70,7 @@ Revert this route/context/answer-readiness change and redeploy the prior healthy
 - Follow-up uploaded-evidence priority fix: Source aVa scores uploaded, parsed, fact-bearing Source evidence ahead of generated draft artifacts so current-state citations and visible guidance are driven by the client evidence pack first.
 - Follow-up filename normalization fix: uploaded files with underscores or dotted names, such as `17_RFP_Risk_Register_APPROVED.csv` and `15_Run_vs_Change_Financial_Baseline_FINANCE_VALIDATED.csv`, are normalized before segment matching. This prevents valid business evidence from being trapped in generic `sourcing_artifacts`, and metadata-only `artifact_summary` facts are demoted below parsed excerpts and artifact-level evidence.
 - Follow-up structured-row rendering fix: Source aVa current-state prose now summarizes CSV-like evidence by cited document title and segment instead of pasting raw row fragments into the visible answer. This keeps the answer readable while preserving citations.
+- Follow-up citation excerpt rendering fix: Source aVa citation excerpts and structured response parts now use the same structured-row summary as the answer lead, so CSV headers, risk IDs, and broken row tails are not exposed in hover/citation/detail surfaces.
 
 ## Known Gaps
 

@@ -341,9 +341,18 @@ describe("Source answer engine", () => {
     );
     expect(answer?.answerText).not.toContain("risk_id,risk_category");
     expect(answer?.answerText).not.toContain("RFP-R1,Transition");
-    expect(answer?.currentStateFindings.join("\n")).not.toContain(
-      "blocking_gate,evidence_basis",
+    const visiblePayload = JSON.stringify({
+      answerText: answer?.answerText,
+      currentStateFindings: answer?.currentStateFindings,
+      evidenceCitations: answer?.evidenceCitations,
+      responseParts: answer?.responseParts,
+    });
+    expect(visiblePayload).toContain(
+      "17 RFP Risk Register APPROVED.csv is structured Source evidence",
     );
+    expect(visiblePayload).not.toContain("risk_id,risk_category");
+    expect(visiblePayload).not.toContain("blocking_gate,evidence_basis");
+    expect(visiblePayload).not.toContain("RFP-R1,Transition");
   });
 
   it("attaches a Slice 1.1 category strategy classification (CDP -> data/AI platform)", () => {
