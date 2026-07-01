@@ -664,9 +664,13 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
                   label: "Chart",
                   grounding: "function-context",
                   content: [
-                    "| Value pool | Annual value |",
-                    "|---|---:|",
-                    "| IROPS recovery decisioning | $270M |",
+                    "Function context: directional opportunity map for the right canvas.",
+                    "",
+                    "| Value pool | Annual value | Readiness |",
+                    "|---|---:|---:|",
+                    "| IROPS recovery decisioning | $270M | 72 |",
+                    "| Predictive maintenance | $140M | 64 |",
+                    "| Loyalty personalization | $95M | 81 |",
                   ].join("\n"),
                 },
                 {
@@ -773,6 +777,10 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       expect(screen.getByText("Decision Table")).toBeInTheDocument();
       expect(screen.getByText("Proof Boundary")).toBeInTheDocument();
       expect(screen.getByText("Industry lens")).toBeInTheDocument();
+      expect(screen.getByTestId("intelligence-visual-map")).toBeInTheDocument();
+      expect(screen.getByText("Visual snapshot")).toBeInTheDocument();
+      expect(screen.getByText("Annual value")).toBeInTheDocument();
+      expect(screen.getByText("Readiness")).toBeInTheDocument();
       expect(
         screen.getByText(
           "Industry context: airlines usually start with dispatch decision support. This is not tenant proof.",

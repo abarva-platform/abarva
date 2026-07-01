@@ -86,6 +86,29 @@ const CSS = `
 .iv2 .companionBody table{font-size:12.5px;margin-top:6px}
 .iv2 .companionBody p:first-child{margin-top:0}
 .iv2 .companionBody p:last-child{margin-bottom:0}
+.iv2 .visualSummary{border:1px solid var(--line);border-radius:8px;background:#FCFBF8;padding:12px;margin:0 0 12px;display:grid;gap:10px}
+.iv2 .visualSummaryTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.iv2 .visualMetricGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.iv2 .visualMetric{border:1px solid var(--line);border-radius:7px;background:#fff;padding:10px;min-width:0}
+.iv2 .visualMetricLabel{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iv2 .visualMetricValue{font-family:var(--font-fraunces),Georgia,serif;font-size:22px;line-height:1.05;margin-top:4px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iv2 .barChart{display:grid;gap:8px}
+.iv2 .barRow{display:grid;grid-template-columns:minmax(120px,1.15fr) minmax(160px,2fr) auto;gap:10px;align-items:center}
+.iv2 .barLabel{font-size:12px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.iv2 .barTrack{height:9px;border-radius:999px;background:#ECE8DF;overflow:hidden}
+.iv2 .barFill{height:100%;border-radius:999px;background:linear-gradient(90deg,#1F6B3A,#52A46D)}
+.iv2 .barValue{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;color:var(--muted);white-space:nowrap;text-align:right}
+.iv2 .opportunityMap{position:relative;min-height:260px;border:1px solid var(--line);border-radius:8px;background:linear-gradient(180deg,#fff,#F8F6EF);overflow:hidden}
+.iv2 .opportunityMap::before{content:"";position:absolute;inset:12%;border-left:1px solid #D8D2C5;border-bottom:1px solid #D8D2C5}
+.iv2 .opportunityMap::after{content:"";position:absolute;left:50%;top:12%;bottom:12%;border-left:1px dashed #D8D2C5}
+.iv2 .opportunityZone{position:absolute;right:12%;top:12%;width:38%;height:38%;border-radius:8px;background:rgba(31,107,58,.08);border:1px solid rgba(31,107,58,.16)}
+.iv2 .mapPoint{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px;max-width:44%}
+.iv2 .mapDot{width:13px;height:13px;border-radius:50%;background:#1F6B3A;box-shadow:0 0 0 4px rgba(31,107,58,.14);flex:none}
+.iv2 .mapLabel{font-size:11.5px;line-height:1.2;color:var(--ink);background:rgba(255,255,255,.82);border:1px solid rgba(231,227,218,.86);border-radius:6px;padding:4px 6px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.iv2 .mapAxis{position:absolute;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.iv2 .mapAxis.y{left:14%;top:6%}
+.iv2 .mapAxis.x{right:8%;bottom:6%}
+.iv2 .visualRead{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:9px}
 .iv2 .emptyAnswer{border:1px dashed var(--line);border-radius:8px;padding:22px;color:var(--muted);background:rgba(255,255,255,.55)}
 .iv2 .startPanel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:28px;max-width:760px}
 .iv2 .startPanel h3{font-family:var(--font-fraunces),Georgia,serif;font-size:28px;font-weight:500;margin:0 0 10px}
@@ -302,6 +325,252 @@ function companionCardsFrom(tabs: ParsedIntelligenceTab[]): CompanionCard[] {
     title: companionCardTitle(item),
     wide: item.id === "chart" || item.id === "table",
   }));
+}
+
+type MarkdownTable = {
+  headers: string[];
+  rows: string[][];
+};
+
+type NumericCell = {
+  value: number;
+  display: string;
+};
+
+function splitMarkdownTableLine(line: string): string[] {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return [];
+  return trimmed
+    .slice(1, -1)
+    .split("|")
+    .map((cell) => cell.trim());
+}
+
+function isMarkdownSeparator(line: string): boolean {
+  return /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line);
+}
+
+function parseFirstMarkdownTable(content: string): MarkdownTable | null {
+  const lines = content.split(/\n/);
+  for (let index = 0; index < lines.length - 1; index += 1) {
+    const headers = splitMarkdownTableLine(lines[index] ?? "");
+    if (headers.length < 2 || !isMarkdownSeparator(lines[index + 1] ?? "")) {
+      continue;
+    }
+    const rows: string[][] = [];
+    for (let rowIndex = index + 2; rowIndex < lines.length; rowIndex += 1) {
+      const cells = splitMarkdownTableLine(lines[rowIndex] ?? "");
+      if (cells.length < 2) break;
+      rows.push(cells.slice(0, headers.length));
+    }
+    if (rows.length > 0) return { headers, rows };
+  }
+  return null;
+}
+
+function cleanCellText(value: string): string {
+  return value
+    .replace(/[*_`]/g, "")
+    .replace(/<[^>]+>/g, "")
+    .trim();
+}
+
+function numericCellFrom(value: string): NumericCell | null {
+  const cleaned = cleanCellText(value);
+  const match = cleaned.match(/(-?\$?\d[\d,]*(?:\.\d+)?)\s*([KMB])?\s*%?/i);
+  if (!match) return null;
+  const rawNumber = Number(match[1]?.replace(/[$,]/g, ""));
+  if (!Number.isFinite(rawNumber)) return null;
+  const suffix = match[2]?.toUpperCase();
+  const normalized =
+    suffix === "B"
+      ? rawNumber * 1000
+      : suffix === "K"
+        ? rawNumber / 1000
+        : rawNumber;
+  return {
+    value: normalized,
+    display: cleaned,
+  };
+}
+
+function labelColumnIndex(table: MarkdownTable): number {
+  const preferred = table.headers.findIndex((header) =>
+    /initiative|option|lever|domain|tower|function|category|pool|case|area|priority/i.test(
+      header,
+    ),
+  );
+  if (preferred >= 0) return preferred;
+  const firstTextColumn = table.headers.findIndex((_, index) =>
+    table.rows.some((row) => !numericCellFrom(row[index] ?? "")),
+  );
+  return firstTextColumn >= 0 ? firstTextColumn : 0;
+}
+
+function numericColumns(table: MarkdownTable): number[] {
+  return table.headers
+    .map((_, index) => index)
+    .filter((index) =>
+      table.rows.some((row) => numericCellFrom(row[index] ?? "")),
+    );
+}
+
+function preferredNumericColumn(table: MarkdownTable): number | null {
+  const columns = numericColumns(table);
+  if (columns.length === 0) return null;
+  const preferred = columns.find((index) =>
+    /value|impact|cost|tco|spend|saving|benefit|volume|score|risk|readiness|percent|%/i.test(
+      table.headers[index] ?? "",
+    ),
+  );
+  return preferred ?? columns[0] ?? null;
+}
+
+function axisColumns(table: MarkdownTable): [number, number] | null {
+  const columns = numericColumns(table);
+  if (columns.length < 2) return null;
+  const readiness = columns.find((index) =>
+    /readiness|maturity|confidence|feasibility|ability|fit|score/i.test(
+      table.headers[index] ?? "",
+    ),
+  );
+  const value = columns.find((index) =>
+    /value|impact|benefit|saving|opportunity|pool|cost|tco|spend/i.test(
+      table.headers[index] ?? "",
+    ),
+  );
+  if (readiness !== undefined && value !== undefined && readiness !== value) {
+    return [readiness, value];
+  }
+  return [columns[0] as number, columns[1] as number];
+}
+
+function visualTitle(card: ParsedIntelligenceTab): string {
+  if (card.id === "chart") return "Visual snapshot";
+  return "Decision shape";
+}
+
+function VisualCardEnhancement({ card }: { card: ParsedIntelligenceTab }) {
+  if (card.id !== "chart" && card.id !== "table") return null;
+  const table = parseFirstMarkdownTable(card.content);
+  if (!table) return null;
+  const labelIndex = labelColumnIndex(table);
+  const numericIndex = preferredNumericColumn(table);
+  if (numericIndex === null) return null;
+
+  const points = table.rows
+    .map((row) => {
+      const numeric = numericCellFrom(row[numericIndex] ?? "");
+      if (!numeric) return null;
+      return {
+        label: cleanCellText(row[labelIndex] ?? "Item"),
+        value: numeric.value,
+        display: numeric.display,
+      };
+    })
+    .filter(
+      (point): point is { label: string; value: number; display: string } =>
+        Boolean(point),
+    )
+    .slice(0, 6);
+
+  if (points.length === 0) return null;
+
+  const axes = axisColumns(table);
+  if (card.id === "chart" && axes && points.length >= 2) {
+    const [xIndex, yIndex] = axes;
+    const mapPoints = table.rows
+      .map((row) => {
+        const x = numericCellFrom(row[xIndex] ?? "");
+        const y = numericCellFrom(row[yIndex] ?? "");
+        if (!x || !y) return null;
+        return {
+          label: cleanCellText(row[labelIndex] ?? "Item"),
+          x: x.value,
+          y: y.value,
+        };
+      })
+      .filter((point): point is { label: string; x: number; y: number } =>
+        Boolean(point),
+      )
+      .slice(0, 6);
+    if (mapPoints.length >= 2) {
+      const xValues = mapPoints.map((point) => point.x);
+      const yValues = mapPoints.map((point) => point.y);
+      const minX = Math.min(...xValues);
+      const maxX = Math.max(...xValues);
+      const minY = Math.min(...yValues);
+      const maxY = Math.max(...yValues);
+      const scale = (value: number, min: number, max: number) =>
+        max === min ? 50 : 18 + ((value - min) / (max - min)) * 64;
+
+      return (
+        <div className="visualSummary" data-testid="intelligence-visual-map">
+          <div className="visualSummaryTitle">{visualTitle(card)}</div>
+          <div className="opportunityMap" aria-label="Opportunity map">
+            <div className="opportunityZone" />
+            <div className="mapAxis y">{table.headers[yIndex]}</div>
+            <div className="mapAxis x">{table.headers[xIndex]}</div>
+            {mapPoints.map((point) => (
+              <div
+                className="mapPoint"
+                key={`${point.label}-${point.x}-${point.y}`}
+                style={{
+                  left: `${scale(point.x, minX, maxX)}%`,
+                  top: `${100 - scale(point.y, minY, maxY)}%`,
+                }}
+              >
+                <span className="mapDot" aria-hidden="true" />
+                <span className="mapLabel">{point.label}</span>
+              </div>
+            ))}
+          </div>
+          <div className="visualRead">
+            Read high and right as stronger value/readiness fit.
+          </div>
+        </div>
+      );
+    }
+  }
+
+  if (points.length <= 3) {
+    return (
+      <div className="visualSummary" data-testid="intelligence-visual-metrics">
+        <div className="visualSummaryTitle">{visualTitle(card)}</div>
+        <div className="visualMetricGrid">
+          {points.map((point) => (
+            <div className="visualMetric" key={`${point.label}-${point.value}`}>
+              <div className="visualMetricLabel">{point.label}</div>
+              <div className="visualMetricValue">{point.display}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const maxValue = Math.max(...points.map((point) => Math.abs(point.value)), 1);
+  return (
+    <div className="visualSummary" data-testid="intelligence-visual-bars">
+      <div className="visualSummaryTitle">{visualTitle(card)}</div>
+      <div className="barChart">
+        {points.map((point) => (
+          <div className="barRow" key={`${point.label}-${point.value}`}>
+            <div className="barLabel">{point.label}</div>
+            <div className="barTrack" aria-hidden="true">
+              <div
+                className="barFill"
+                style={{
+                  width: `${Math.max(6, (Math.abs(point.value) / maxValue) * 100)}%`,
+                }}
+              />
+            </div>
+            <div className="barValue">{point.display}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function IntelligenceV2Surface({
@@ -636,6 +905,7 @@ export function IntelligenceV2Surface({
                               {card.title}
                             </div>
                             <div className="tabMarkdown companionBody">
+                              <VisualCardEnhancement card={card} />
                               <AgentMarkdown text={card.content} />
                             </div>
                           </section>
