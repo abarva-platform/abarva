@@ -20,6 +20,8 @@ Production follow-up smoke on the final ACA image found no raw marker/JSON leaka
 
 Second production proof on the corrected ACA image passed SkyHarbor but found one Industrial/Morgan Street edge case: Claude returned the correct `investmentSequencingMap` object, but with a raw newline inside a JSON string and without the fenced `abarva-canvas` wrapper, so the object was visible in the Decision card. This follow-up makes the renderer boundary more defensive: supported bare canvas objects with raw control characters are repaired and rendered when safe, partial streaming canvas objects are hidden, and repeated canonical alias tails such as `Apex Retail Group Retail Group Group` are collapsed.
 
+Third production proof on the corrected ACA image passed SkyHarbor and confirmed the Industrial leak was gone, but Industrial still sometimes fell back to a clean decision table with no native board exhibit. This correction adds a deterministic Industrial/Morgan Street native-canvas fallback from the curated V6 readiness packet when Claude still omits a governed payload after the repair prompt. The fallback is source-grounded, hidden from prose, and rendered by the existing `investmentSequencingMap` component.
+
 ## Layer Impact
 
 - `global-control-lane`: Updates the shared Intelligence v2 answer contract and right-canvas renderer for all tenants using the executive canvas.
@@ -45,6 +47,7 @@ Second production proof on the corrected ACA image passed SkyHarbor but found on
 - `src/lib/intelligence/executive-canvas-payload.ts`: repairs supported bare executive-canvas JSON so valid `canvasType` payloads render as native exhibits and do not leak raw JSON into the UI.
 - `src/lib/intelligence/executive-canvas-payload.ts`: repairs raw newlines/tabs inside supported bare executive-canvas JSON strings and strips partial bare canvas payloads during streaming so malformed control payloads do not become visible prose.
 - `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`: adds the same native-canvas repair/validation path to consultant synthesis so strategic prioritization answers cannot pass with only Markdown/Table fallback cards.
+- `src/lib/intelligence/ask/industrial-cio-backoffice-source.ts` and `src/lib/intelligence/ask/synthesizer.ts`: add a deterministic Industrial/Morgan Street native-canvas fallback from the curated readiness packet when the model still omits a governed native exhibit for the CIO demo question.
 - `src/lib/client-config.ts`: collapses duplicate canonical tenant aliases after demo-safe text replacement so Intelligence chrome, prompts, and visible answers do not show stacked labels such as `Air Air`, `Holdings Holdings`, or repeated canonical tails such as `Retail Group Group`.
 - `src/lib/intelligence/ask/industrial-cio-backoffice-source.ts`: updates Morgan Street / Industrial Demo guidance to the current canvas grammar and asks Claude to use the correct exhibit pattern for CIO shared-services AI questions.
 - Focused parser and UI tests for payload extraction, tab preservation, native rendering, and no marker/payload leakage.
@@ -62,6 +65,8 @@ Second production proof on the corrected ACA image passed SkyHarbor but found on
 - Consultant-native repair and tenant-label lint: `npx eslint src/lib/client-config.ts src/lib/__tests__/client-config-canonical.test.ts src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts` passed.
 - Defensive canvas-parser and canonical-label validation: `./node_modules/.bin/jest src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/lib/__tests__/client-config-canonical.test.ts --runInBand` passed. Jest still reports pre-existing duplicate manual mock warnings for Markdown mocks.
 - Defensive canvas-parser and canonical-label lint: `npx eslint src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/executive-canvas-payload.ts src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/lib/client-config.ts src/lib/__tests__/client-config-canonical.test.ts` passed.
+- Industrial deterministic native-canvas fallback validation: `./node_modules/.bin/jest src/lib/intelligence/ask/__tests__/industrial-cio-backoffice-source.test.ts src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/__tests__/client-config-canonical.test.ts --runInBand` passed. Jest still reports pre-existing duplicate manual mock warnings for Markdown mocks.
+- Industrial deterministic native-canvas fallback lint: `npx eslint src/lib/intelligence/ask/industrial-cio-backoffice-source.ts src/lib/intelligence/ask/__tests__/industrial-cio-backoffice-source.test.ts src/lib/intelligence/ask/synthesizer.ts` passed.
 
 ## Rollout Plan
 
