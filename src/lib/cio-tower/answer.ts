@@ -1359,7 +1359,11 @@ function buildCioTowerDeterministicMetricAnswer(
     const actualSpend = context.metricPackets.find(
       (packet) => packet.measureKey === "actual_spend_ytd",
     );
+    const initiativeBudget = context.metricPackets.find(
+      (packet) => packet.measureKey === "initiative_budget_fy26",
+    );
     const metricSentence = [
+      initiativeBudget?.valueNumeric ? `initiative budget ${initiativeBudget.displayValue}` : null,
       promisedValue?.valueNumeric ? `promised value ${promisedValue.displayValue}` : null,
       measuredValue?.valueNumeric ? `measured value ${measuredValue.displayValue}` : null,
       actualSpend?.valueNumeric ? `actual spend YTD ${actualSpend.displayValue}` : null,

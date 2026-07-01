@@ -14,6 +14,7 @@ import {
   answerCioTowerQuestion,
   canonicalCioTowerTenantKey,
 } from "@/lib/cio-tower/answer";
+import { canonicalCioTowerTenantDisplayName } from "@/lib/cio-tower/metric-packet";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
 import { composeAllAgentDoctrineBlock } from "@/lib/agent/all-agent-doctrine";
@@ -86,13 +87,17 @@ export async function POST(request: Request) {
   }
 
   try {
+    const tenantKey = canonicalCioTowerTenantKey(
+      tenancy.clientKey ?? activeClient.key ?? tenancy.clientId,
+    );
+    const tenantName =
+      canonicalCioTowerTenantDisplayName({ key: tenantKey, name: activeClient.name }) ??
+      activeClient.name;
     const result = await answerCioTowerQuestion({
       tenantId: tenancy.clientId,
       userId: tenancy.userId,
-      tenantKey: canonicalCioTowerTenantKey(
-        tenancy.clientKey ?? activeClient.key ?? tenancy.clientId,
-      ),
-      tenantName: activeClient.name,
+      tenantKey,
+      tenantName,
       question,
     });
     return new Response(result.response, {
