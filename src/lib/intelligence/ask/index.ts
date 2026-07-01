@@ -46,6 +46,10 @@ import {
   buildSkyHarborCtoReadinessPromptAddendum,
   buildSkyHarborCtoReadinessSource,
 } from "./skyharbor-cto-readiness-source";
+import {
+  buildIndustrialCioBackofficePromptAddendum,
+  buildIndustrialCioBackofficeSource,
+} from "./industrial-cio-backoffice-source";
 
 export type {
   AskIntent,
@@ -229,7 +233,19 @@ export async function* askIntelligence(
       opts.surfaceContext?.clientKey,
       opts.surfaceContext?.activeClient,
     ]);
-    const skyHarborCtoPromptAddendum = buildSkyHarborCtoReadinessPromptAddendum(trimmed, [
+    const skyHarborCtoPromptAddendum = buildSkyHarborCtoReadinessPromptAddendum(
+      trimmed,
+      [
+        opts.tenantClientKey,
+        opts.tenantInventoryKey,
+        opts.tenant?.appClientKey,
+        opts.tenant?.canonicalKey,
+        opts.tenant?.displayName,
+        opts.surfaceContext?.clientKey,
+        opts.surfaceContext?.activeClient,
+      ],
+    );
+    const industrialCioSource = buildIndustrialCioBackofficeSource(trimmed, [
       opts.tenantClientKey,
       opts.tenantInventoryKey,
       opts.tenant?.appClientKey,
@@ -238,10 +254,21 @@ export async function* askIntelligence(
       opts.surfaceContext?.clientKey,
       opts.surfaceContext?.activeClient,
     ]);
+    const industrialCioPromptAddendum =
+      buildIndustrialCioBackofficePromptAddendum(trimmed, [
+        opts.tenantClientKey,
+        opts.tenantInventoryKey,
+        opts.tenant?.appClientKey,
+        opts.tenant?.canonicalKey,
+        opts.tenant?.displayName,
+        opts.surfaceContext?.clientKey,
+        opts.surfaceContext?.activeClient,
+      ]);
 
     const conciseAsk = isExplicitConciseAsk(trimmed);
     const sourceLimit = conciseAsk ? 8 : 16;
     const rawSources: AskSource[] = [
+      ...(industrialCioSource ? [industrialCioSource] : []),
       ...(skyHarborCtoSource ? [skyHarborCtoSource] : []),
       ...surfaceContext,
       ...tenantStructuredFacts,
@@ -382,10 +409,14 @@ export async function* askIntelligence(
       tenantClientKey: opts.tenantClientKey,
       userId: opts.userId,
       userContextBlock: opts.userContextBlock,
-      conversationContextBlock: [
-        skyHarborCtoPromptAddendum,
-        opts.conversationContextBlock,
-      ].filter(Boolean).join("\n\n") || undefined,
+      conversationContextBlock:
+        [
+          industrialCioPromptAddendum,
+          skyHarborCtoPromptAddendum,
+          opts.conversationContextBlock,
+        ]
+          .filter(Boolean)
+          .join("\n\n") || undefined,
       factAvailabilityBlock: groundedFactBlock,
       coverageReportBlock: formatCoverageReportForPrompt(coverageReport),
       intelligenceDossier,
