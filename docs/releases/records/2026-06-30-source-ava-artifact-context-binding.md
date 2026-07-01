@@ -67,6 +67,7 @@ Revert this route/context/answer-readiness change and redeploy the prior healthy
 - First post-deploy proof after the artifact-binding deployment: `/Users/anand/Downloads/source-skyharbor-ams-live-rerun-2026-06-30T224056115Z/ava-proof-postfix`.
 - Final post-deploy proof after the readiness-overlay fix will be added to the same Source P0 Slice 3 evidence bundle.
 - Follow-up artifact segment classification fix: uploaded Source evidence is classified by file/content semantics before falling back to `source_origin`, so risk registers, agreements, ticket/SLA baselines, finance baselines, service catalog/scope files, and transition evidence are not collapsed into generic `sourcing_artifacts`.
+- Follow-up uploaded-evidence priority fix: Source aVa scores uploaded, parsed, fact-bearing Source evidence ahead of generated draft artifacts so current-state citations and visible guidance are driven by the client evidence pack first.
 
 ## Known Gaps
 

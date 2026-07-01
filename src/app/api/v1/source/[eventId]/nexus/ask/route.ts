@@ -418,7 +418,7 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
         artifact.parse_status === "parsed" || artifact.source_origin === "generated"
           ? ("high" as const)
           : ("medium" as const),
-      score: 18 - Math.min(index, 10),
+      score: scoreSourceArtifactEvidence(artifact, index, "artifact"),
     })),
     ...chunks.slice(0, 18).map((chunk, index) => ({
       id: `source-artifact-chunk:${chunk.chunk_id}`,
@@ -428,7 +428,11 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
       sourceDoc: "source_artifact_chunks",
       excerpt: cleanContextText(chunk.chunk_text ?? ""),
       confidence: confidenceFromNumber(chunk.confidence),
-      score: 15 - Math.min(index, 10),
+      score: scoreSourceArtifactEvidence(
+        artifacts.find((artifact) => artifact.id === chunk.artifact_id),
+        index,
+        "chunk",
+      ),
     })),
     ...facts.slice(0, 18).map((fact, index) => ({
       id: `source-artifact-fact:${fact.artifact_id}:${fact.fact_key ?? index}`,
@@ -438,10 +442,39 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
       sourceDoc: "source_artifact_facts",
       excerpt: `${fact.fact_type ?? "artifact_fact"} ${fact.fact_key ?? ""}: ${summarizeFactValue(fact.fact_value)}`,
       confidence: confidenceFromNumber(fact.confidence),
-      score: 14 - Math.min(index, 10),
+      score: scoreSourceArtifactEvidence(
+        artifacts.find((artifact) => artifact.id === fact.artifact_id),
+        index,
+        "fact",
+      ),
     })),
   ];
   return { artifacts, chunks, facts, artifactEvidence };
+}
+
+function scoreSourceArtifactEvidence(
+  artifact: SourceArtifactContextRow | undefined,
+  index: number,
+  evidenceKind: "artifact" | "chunk" | "fact",
+): number {
+  if (!artifact) return 8 - Math.min(index, 10);
+
+  const segment = inferSourceArtifactSegment(artifact);
+  const isUploaded = artifact.source_origin === "uploaded";
+  const isGenerated = artifact.source_origin === "generated";
+  const isParsed = artifact.parse_status === "parsed";
+  const isFactBearing = evidenceKind === "fact" || evidenceKind === "chunk";
+  const isBusinessEvidence = segment !== "sourcing_artifacts";
+
+  let score = 18;
+  if (isUploaded) score += 24;
+  if (isParsed) score += 8;
+  if (isBusinessEvidence) score += 10;
+  if (isFactBearing) score += 6;
+  if (evidenceKind === "fact") score += 2;
+  if (isGenerated) score -= 14;
+
+  return score - Math.min(index, 20) * 0.25;
 }
 
 function inferSourceArtifactSegmentById(
