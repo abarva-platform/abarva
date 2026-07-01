@@ -1,5 +1,4 @@
 import { getActiveClientRow } from "@/lib/active-client";
-import { canonicalClientDisplayName } from "@/lib/client-config";
 import {
   TowerIndexPage,
   type TowerSubstrateCounts,
@@ -7,6 +6,7 @@ import {
 import { buildAtlasTowerCurrentState } from "@/lib/atlas/tower-grounding";
 import { resolveTowerTab } from "@/lib/tower/tower-lens-tabs-view";
 import { loadCioTowerCxoView } from "@/lib/cio-tower/cxo-view-model";
+import { canonicalCioTowerTenantDisplayName } from "@/lib/cio-tower/metric-packet";
 import { loadCioTowerMetricPackets } from "@/lib/cio-tower/metric-packet-store";
 
 export const metadata = { title: "IT Investment Tower · AbarVa" };
@@ -34,7 +34,7 @@ export default async function TowerPage({
   const { tab } = await searchParams;
   const activeClient = await getActiveClientRow();
   const activeTenantName =
-    canonicalClientDisplayName({
+    canonicalCioTowerTenantDisplayName({
       key: activeClient?.key,
       name: activeClient?.name,
     }) ??

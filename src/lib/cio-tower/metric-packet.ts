@@ -40,26 +40,46 @@ const CIO_TOWER_TENANT_KEY_BY_ALIAS: Record<string, string> = {
   apex: 'apex-retail',
   apexretail: 'apex-retail',
   apexretailgroup: 'apex-retail',
+  retaildemo: 'apex-retail',
+  'retail-demo': 'apex-retail',
   'apex-retail': 'apex-retail',
   meridian: 'meridian-health',
   meridianhealth: 'meridian-health',
   meridianhealthsystem: 'meridian-health',
+  healthcaredemo: 'meridian-health',
+  'healthcare-demo': 'meridian-health',
   'meridian-health': 'meridian-health',
   arcturus: 'first-capital-financial',
   firstcapital: 'first-capital-financial',
   firstcapitalfinancial: 'first-capital-financial',
+  financialservicesdemo: 'first-capital-financial',
+  'financial-services-demo': 'first-capital-financial',
   'first-capital': 'first-capital-financial',
   'first-capital-financial': 'first-capital-financial',
   skyharbor: 'skyharbor-air',
   skyharborair: 'skyharbor-air',
+  airlinedemo: 'skyharbor-air',
+  'airline-demo': 'skyharbor-air',
   'skyharbor-air': 'skyharbor-air',
   lakeshore: 'lakeshore-industries',
   lakeshoreholdings: 'lakeshore-industries',
   lakeshoreindustries: 'lakeshore-industries',
+  industrialdemo: 'lakeshore-industries',
+  'industrial-demo': 'lakeshore-industries',
+  manufacturingdemo: 'lakeshore-industries',
+  'manufacturing-demo': 'lakeshore-industries',
   'lakeshore-holdings': 'lakeshore-industries',
   'lakeshore-industries': 'lakeshore-industries',
   morganstreet: 'lakeshore-industries',
   'morgan-street': 'lakeshore-industries',
+};
+
+const CIO_TOWER_TENANT_DISPLAY_NAME_BY_KEY: Record<string, string> = {
+  'apex-retail': 'Apex Retail Group',
+  'meridian-health': 'Meridian Health System',
+  'first-capital-financial': 'First Capital Financial',
+  'skyharbor-air': 'SkyHarbor Air',
+  'lakeshore-industries': 'Lakeshore Holdings',
 };
 
 export function canonicalCioTowerTenantKey(value: string): string {
@@ -71,6 +91,21 @@ export function canonicalCioTowerTenantKey(value: string): string {
     ?? CIO_TOWER_TENANT_KEY_BY_ALIAS[compact]
     ?? slug
     ?? normalized;
+}
+
+export function canonicalCioTowerTenantDisplayName(args: {
+  key?: string | null;
+  name?: string | null;
+}): string | null {
+  const candidates = [args.key, args.name].filter(
+    (value): value is string => typeof value === 'string' && value.trim().length > 0,
+  );
+  for (const candidate of candidates) {
+    const canonicalKey = canonicalCioTowerTenantKey(candidate);
+    const displayName = CIO_TOWER_TENANT_DISPLAY_NAME_BY_KEY[canonicalKey];
+    if (displayName) return displayName;
+  }
+  return args.name?.trim() || null;
 }
 
 export function formatCioTowerMoney(value: number | null | undefined): string {

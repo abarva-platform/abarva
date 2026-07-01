@@ -32,6 +32,7 @@ import { AdminInboxTopNavBadge } from "@/components/shell/AdminInboxTopNavBadge"
 
 export interface AppTopBarProps {
   tenantName?: string;
+  preserveTenantName?: boolean;
   /** Hide the product nav entirely (used by sign-out / error chrome). */
   showProductNav?: boolean;
   /** @deprecated retained for AppShell call-site compat; unused in v2. */
@@ -70,6 +71,7 @@ function userDisplayName(user: ReturnType<typeof useUser>["user"]): string {
 
 export function AppTopBar({
   tenantName,
+  preserveTenantName = false,
   showProductNav = true,
 }: AppTopBarProps = {}) {
   const pathname = usePathname() ?? "";
@@ -77,17 +79,20 @@ export function AppTopBar({
   const signOut = useSignOut();
   const { currentClient } = useClientContext();
   const signedIn = isLoaded && Boolean(user);
-  const resolvedTenantNameRaw =
-    (tenantName ? canonicalClientDisplayName({ name: tenantName }) : null) ??
-    canonicalClientDisplayName({
-      key: currentClient?.id,
-      name: currentClient?.name,
-    }) ??
-    tenantName ??
-    currentClient?.name ??
-    null;
+  const resolvedTenantNameRaw = preserveTenantName
+    ? (tenantName ?? currentClient?.name ?? null)
+    : (tenantName ? canonicalClientDisplayName({ name: tenantName }) : null) ??
+      canonicalClientDisplayName({
+        key: currentClient?.id,
+        name: currentClient?.name,
+      }) ??
+      tenantName ??
+      currentClient?.name ??
+      null;
   const resolvedTenantName = resolvedTenantNameRaw
-    ? demoSafeClientText(resolvedTenantNameRaw)
+    ? preserveTenantName
+      ? resolvedTenantNameRaw
+      : demoSafeClientText(resolvedTenantNameRaw)
     : null;
   const displayName = userDisplayName(user);
   const initials = displayName

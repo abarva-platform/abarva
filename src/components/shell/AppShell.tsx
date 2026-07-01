@@ -31,6 +31,7 @@ interface AppShellProps {
   surfaceContext?: Record<string, unknown>;
   topBarProps?: {
     tenantName?: string;
+    preserveTenantName?: boolean;
     showLocked?: boolean;
     context?: string;
     timeString?: string;
@@ -108,6 +109,7 @@ export function AppShell({
       >
         <AppTopBar
           tenantName={topBarProps?.tenantName}
+          preserveTenantName={topBarProps?.preserveTenantName}
           showLocked={topBarProps?.showLocked}
           context={topBarProps?.context}
           timeString={topBarProps?.timeString}
