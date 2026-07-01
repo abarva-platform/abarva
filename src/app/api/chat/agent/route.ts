@@ -1471,8 +1471,16 @@ export async function POST(request: Request) {
   // client. Violations are logged to the in-memory ring buffer
   // (synthesis_violations recorder) for telemetry.
   let bufferedOutput = "";
+  let pendingAgentOutput = "";
   const readable = new ReadableStream({
     async start(controller) {
+      const flushAgentOutput = () => {
+        if (!pendingAgentOutput) return;
+        const demoSafeText = demoSafeClientText(pendingAgentOutput);
+        bufferedOutput += demoSafeText;
+        controller.enqueue(encoder.encode(demoSafeText));
+        pendingAgentOutput = "";
+      };
       // Tools (commit_program) and the loop both write through this sink.
       // Tool-side writes carry surface-specific sentinels (e.g. the
       // `[[program-created:<id>]]` navigation hint emitted by
@@ -1482,9 +1490,7 @@ export async function POST(request: Request) {
           const safeText = sanitizeAutonomousDecisionLanguage(
             sanitizeRestrictedFinancialText(text, userAccessPolicy),
           );
-          const demoSafeText = demoSafeClientText(safeText);
-          bufferedOutput += demoSafeText;
-          controller.enqueue(encoder.encode(demoSafeText));
+          pendingAgentOutput += safeText;
         },
       };
       try {
@@ -1563,10 +1569,9 @@ export async function POST(request: Request) {
         // Surface tool/stream errors to the client honestly rather
         // than silently truncating the response.
         const errMessage = err instanceof Error ? err.message : String(err);
-        controller.enqueue(
-          encoder.encode(demoSafeClientText(`\n\n[stream error: ${errMessage}]`)),
-        );
+        writer.write(`\n\n[stream error: ${errMessage}]`);
       } finally {
+        flushAgentOutput();
         controller.close();
         // F0.3 post-hoc validation — non-blocking, telemetry-only.
         // The structural mechanism for action-claim integrity is F0.4
