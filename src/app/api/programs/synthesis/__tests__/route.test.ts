@@ -25,9 +25,19 @@ jest.mock('@/lib/reasoning/synthesis-telemetry', () => ({
   recordSynthesisEvent: jest.fn(() => ({ id: 'evt-1' })),
 }));
 
+function claudeTextStream(text: string) {
+  return (async function* stream() {
+    yield {
+      type: 'content_block_delta',
+      delta: { type: 'text_delta', text },
+    };
+  })();
+}
+
 describe('POST /api/programs/synthesis', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAnthropicStream.mockReturnValue(claudeTextStream('Moves V6 answer.'));
     mockGetActiveClientRow.mockResolvedValue({
       id: 'client-apex',
       name: 'Retail Demo',
@@ -53,7 +63,7 @@ describe('POST /api/programs/synthesis', () => {
     expect(mockAnthropicStream).not.toHaveBeenCalled();
   });
 
-  it('does not default non-Apex tenants to the Apex CDP fixture', async () => {
+  it('uses the active Industrial Demo V6 Moves pack instead of defaulting to the Apex CDP fixture', async () => {
     mockGetActiveClientRow.mockResolvedValue({
       id: 'client-lakeshore',
       name: 'Industrial Demo',
@@ -69,13 +79,39 @@ describe('POST /api/programs/synthesis', () => {
       }),
     );
 
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(200);
     expect(res.headers.get('x-abarva-v6-surface')).toBe('moves');
-    await expect(res.json()).resolves.toEqual({
-      error: 'program_synthesis_not_available',
-      detail: 'No V6 Moves program is loaded for the active tenant.',
+    await expect(res.text()).resolves.toBe('Moves V6 answer.');
+    expect(mockAnthropicStream).toHaveBeenCalledTimes(1);
+    const streamArgs = mockAnthropicStream.mock.calls[0]?.[0];
+    expect(streamArgs.messages[0].content).toContain('Kyriba global cash and payments rollout');
+    expect(streamArgs.messages[0].content).toContain('execution-sequence-packet');
+    expect(streamArgs.messages[0].content).not.toContain('APX-CDP-2026');
+  });
+
+  it('uses the active Airline Demo V6 Moves pack for airline programs', async () => {
+    mockAnthropicStream.mockReturnValue(claudeTextStream('Airline Moves V6 answer.'));
+    mockGetActiveClientRow.mockResolvedValue({
+      id: 'client-skyharbor',
+      name: 'Airline Demo',
+      industry_code: 'airline',
+      key: 'skyharbor-air',
     });
-    expect(mockAnthropicStream).not.toHaveBeenCalled();
+    const { POST } = await import('../route');
+    const res = await POST(
+      new Request('http://test/api/programs/synthesis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('x-abarva-v6-surface')).toBe('moves');
+    await expect(res.text()).resolves.toBe('Airline Moves V6 answer.');
+    const streamArgs = mockAnthropicStream.mock.calls[0]?.[0];
+    expect(streamArgs.messages[0].content).toContain('OCC Modernization');
+    expect(streamArgs.messages[0].content).toContain('execution-sequence-packet');
   });
 
   it('blocks explicit Apex program access for a different active tenant', async () => {
