@@ -67,6 +67,22 @@ Revert the merge commit and redeploy the previous known-good ACA image through t
 - ACA deployment evidence: Pending.
 - Signed-in 20-question answer proof: Pending.
 
+### First Production Proof Remediation — 2026-07-01T19:52:00Z
+
+- ACA deploy for PR #4283 succeeded on revision `ca-abarva-web-lab-eastus--mce523e4d` at 100% traffic with image tag `main-ce523e4d`.
+- Runtime invariant passed with image digest `sha256:8146a6487b16048fbac239f631a5a3a26d25430c1e4c3d183435936d7061c591`.
+- Signed-in 20-question answer audit improved to 16/20 passing with 1 warning.
+- Remaining name-hygiene root cause: universal agent text was sanitized per Claude stream delta, so a legacy shorthand such as `SkyHarbor` could survive when split across streamed deltas.
+- Remediation in this follow-up: universal agent natural-language output is buffered until the answer completes, then the shared demo-safe client-name sanitizer runs over the completed text before the text is sent to the client. Context-bundle artifacts remain emitted first and continue to pass through the same sanitizer.
+- Separate remaining non-name issue: Airline Demo Tower `tower-budget-value` returns `cio_tower_visible_contract_parse_failed`; this belongs to the Tower visible-contract lane rather than the generic-name hygiene lane.
+
+#### First remediation local gate
+
+- `npx jest src/app/api/chat/agent/__tests__/agent-route-context-bundle.test.ts src/lib/__tests__/client-config-canonical.test.ts --runInBand`
+  - Result: Passed, 2 suites / 34 tests.
+- `npx eslint src/app/api/chat/agent/route.ts src/app/api/chat/agent/__tests__/agent-route-context-bundle.test.ts`
+  - Result: Passed.
+
 ## Known Gaps
 
 This release fixes generic-name leakage in answer payloads. It does not replace the separate 50-question answer-quality/correctness audit, and it does not resolve independent Tower contract parse failures except to make returned error text demo-safe.
