@@ -10,12 +10,17 @@ import 'server-only';
 import type { SourceGenerationContext } from '@/lib/source/agent-generation/types';
 import { loadArtifactTemplate } from '@/lib/source/canvas-substrate/templates';
 import type { NarrativeDocxPayload } from '../renderers/narrative-docx';
+import { buildDecisionBriefPayloadFromContext } from './decision-brief-payload';
 
 export function buildNarrativeDocxPayloadFromContext(
   ctx: SourceGenerationContext,
   artifactCode: string,
   generatedAt: string,
 ): NarrativeDocxPayload {
+  if (artifactCode === "d24_decision_brief") {
+    return buildDecisionBriefPayloadFromContext(ctx, generatedAt);
+  }
+
   const state = ctx.artifactStates.find((a) => a.artifactCode === artifactCode);
   const authoredBody = state?.body ?? null;
   assertNarrativeArtifactExportable(artifactCode, state);
