@@ -202,6 +202,9 @@ describe('Ask Intelligence guardrails', () => {
       expect(synthesizerCode).toContain('SESSION_CONTEXT_LANGUAGE_RE');
       expect(synthesizerCode).toContain('STANDALONE ANSWER REPAIR');
       expect(synthesizerCode).toContain('Remove any wording that depends on prior chat history');
+      expect(synthesizerCode).toContain('Before this becomes board-ready, treat the answer as evidence-thin');
+      expect(synthesizerCode).not.toContain('hidden conversation history');
+      expect(synthesizerCode).not.toContain('not going to surface it as an executive answer');
       expect(synthesizerCode).toMatch(
         /if\s*\(\s*SESSION_CONTEXT_LANGUAGE_RE\.test\(text\)\s*\)[\s\S]*?const\s+tabbedResponse\s*=\s*parseIntelligenceTabbedResponse\(text\);/,
       );
