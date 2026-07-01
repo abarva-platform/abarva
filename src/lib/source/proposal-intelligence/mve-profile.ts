@@ -6,6 +6,7 @@ import type {
   VendorEvaluationComparisonRow,
   VendorEvaluationDecisionView,
   VendorEvaluationRecommendation,
+  VendorEvaluationScoreImpact,
   VendorEvaluationScorecardRow,
   VendorEvaluationScoreValue,
   VendorEvaluationVendorSummary,
@@ -489,14 +490,23 @@ export function buildVendorEvaluationDecisionView(
     tenantKey: profileSet.tenantKey,
     generatedAt: profileSet.generatedAt,
     scoreBasis:
-      "Default demo evaluation model derived from MVE profiles, challenge log, BAFO holdbacks, pricing summaries, SLA commitments, transition findings, assumptions, exceptions, and evidence completeness. Human scoring remains required before award.",
+      "Default demo evaluation model derived from MVE profiles, challenge log, BAFO holdbacks, pricing summaries, SLA commitments, transition findings, assumptions, exceptions, and evidence completeness. Weighted scores are advisory and remain conditional until human reviewers validate BAFO evidence.",
+    finalistRecommendation:
+      "Advance Vendor A as the risk-adjusted lead and Vendor C as a conditional service-accountability finalist. Keep Vendor B as the price benchmark only; it should not become a preferred finalist unless BAFO cures staffing coverage, retained-effort, pass-through, and productivity-credit gaps.",
+    scoringTransparency: [
+      "Weighted total = sum of each criterion score multiplied by its weight; weights total 100%.",
+      "Commercial value rewards lower normalized TCO only after pass-throughs, optional scope, retained effort, and transition costs are comparable.",
+      "Execution-risk criteria can outweigh price when staffing, transition, SLA, scope, or exceptions remain conditional.",
+      "A vendor can improve only by submitting cited BAFO exhibits that close the named scoring holdbacks.",
+    ],
     vendorCount: profiles.length,
     comparisonRows: buildEvaluationComparisonRows(profiles),
     scorecardRows,
     vendorSummaries,
+    scoreImprovementScenarios: buildScoreImprovementScenarios(vendorSummaries),
     executiveTradeoffs: [
       "Vendor A is the risk-adjusted leader: strongest continuity and scope confidence, but BAFO must improve productivity credits, SLA remedies, and transition fee holdbacks.",
-      "Vendor B is cheapest on normalized 5-year TCO, but its savings depend on resolving coverage staffing, retained-client effort, and unpriced productivity commitments.",
+      "Vendor B is cheapest on normalized 5-year TCO, but remains a price benchmark rather than a preferred finalist until staffing, retained-effort, pass-through, and productivity economics are contractually cured.",
       "Vendor C has the strongest SLA economics and clean evidence discipline, but its base scope excludes or conditions corporate shared-services support and carries a slower transition posture.",
       "The executive decision is not lowest price versus highest score; it is whether the buyer values lower TCO enough to accept Vendor B's unresolved execution risk, or pays for Vendor A's continuity while forcing sharper BAFO economics.",
     ],
@@ -736,7 +746,13 @@ function buildEvaluationScorecardRows(
     label: criterion.label,
     weight: criterion.weight,
     guidance: criterion.guidance,
-    scores: profiles.map(criterion.score),
+    scores: profiles.map((profile) => {
+      const value = criterion.score(profile);
+      return {
+        ...value,
+        weightedContribution: weightedContribution(value.score, criterion.weight),
+      };
+    }),
   }));
 }
 
@@ -750,6 +766,7 @@ function scoreValue(
     vendorId: profile.vendorId,
     vendorName: profile.vendorName,
     score,
+    weightedContribution: 0,
     rationale,
     evidenceLabel,
     confidence:
@@ -807,6 +824,7 @@ function buildEvaluationVendorSummaries(args: {
           .filter((challenge) => challenge.severity === "high")
           .map((challenge) => challenge.clarificationQuestion),
       ].slice(0, 4),
+      finalistPosture: finalistPostureForVendor(profile),
     };
   });
 }
@@ -826,7 +844,7 @@ function weightedVendorScore(
 function recommendationForVendor(
   profile: VendorResponseProfile,
 ): VendorEvaluationRecommendation {
-  if (profile.vendorId.includes("scale")) return "advance_with_conditions";
+  if (profile.vendorId.includes("scale")) return "hold_until_clarified";
   if (profile.vendorId.includes("incumbent")) return "advance_to_bafo";
   return "advance_with_conditions";
 }
@@ -836,9 +854,84 @@ function decisionRationale(profile: VendorResponseProfile, score: number): strin
     return `Risk-adjusted leader at ${score.toFixed(1)}/10 because continuity, scope coverage, and transition confidence outweigh its weaker commercial remedies.`;
   }
   if (profile.vendorId.includes("scale")) {
-    return `Lowest-cost challenger at ${score.toFixed(1)}/10, but coverage staffing, retained effort, and productivity economics must close before the price advantage can be trusted.`;
+    return `Lowest-cost price benchmark at ${score.toFixed(1)}/10, but coverage staffing, retained effort, pass-through exposure, and productivity economics must close before it can be treated as a preferred finalist.`;
   }
   return `Service-quality specialist at ${score.toFixed(1)}/10 with strong SLA economics, but scope and transition caveats must be normalized before it can lead.`;
+}
+
+function finalistPostureForVendor(profile: VendorResponseProfile): string {
+  if (profile.vendorId.includes("incumbent")) {
+    return "Preferred BAFO lead: advance, but require sharper commercial remedies before award.";
+  }
+  if (profile.vendorId.includes("scale")) {
+    return "Price benchmark only: hold from preferred-finalist status unless BAFO cures the named staffing, retained-effort, pass-through, and productivity gaps.";
+  }
+  return "Conditional finalist: advance if corporate shared-services scope and transition timing are normalized.";
+}
+
+function buildScoreImprovementScenarios(
+  summaries: VendorEvaluationVendorSummary[],
+): VendorEvaluationScoreImpact[] {
+  return summaries.map((summary) => {
+    if (summary.vendorId.includes("incumbent")) {
+      return scoreImpact(summary, {
+        potentialScore: 7.8,
+        bafoCure:
+          "Price the full productivity credit, strengthen SLA remedies, and move transition fees behind accepted KT and stabilization milestones.",
+        requiredEvidence:
+          "Revised productivity table, SLA credit exhibit, and milestone-linked transition payment schedule.",
+        decisionImpact:
+          "Vendor A becomes a more defensible lead because the continuity premium is matched by stronger commercial accountability.",
+      });
+    }
+    if (summary.vendorId.includes("scale")) {
+      return scoreImpact(summary, {
+        potentialScore: 7.3,
+        bafoCure:
+          "Reconcile 24x7 staffing to role/location tables, cap tooling pass-throughs, cost retained-client effort, and commit productivity price-downs.",
+        requiredEvidence:
+          "Shift/FTE/location table, retained-effort RACI with cost model, capped pass-through schedule, and year-by-year productivity credit.",
+        decisionImpact:
+          "Vendor B can move from price benchmark to viable finalist, but not to risk-adjusted lead unless execution proof is contractual.",
+      });
+    }
+    return scoreImpact(summary, {
+      potentialScore: 7.6,
+      bafoCure:
+        "Include or normalize corporate shared-services scope and provide an accelerated transition option with price impact.",
+      requiredEvidence:
+        "Corporate tower scope addendum, normalized pricing workbook, and accelerated transition milestone plan.",
+      decisionImpact:
+        "Vendor C can become the service-accountability challenger if its narrower scope becomes comparable.",
+    });
+  });
+}
+
+function scoreImpact(
+  summary: VendorEvaluationVendorSummary,
+  input: {
+    potentialScore: number;
+    bafoCure: string;
+    requiredEvidence: string;
+    decisionImpact: string;
+  },
+): VendorEvaluationScoreImpact {
+  const currentScore = summary.weightedScore;
+  const potentialScore = input.potentialScore;
+  return {
+    vendorId: summary.vendorId,
+    vendorName: summary.vendorName,
+    currentScore,
+    potentialScore,
+    scoreDelta: Math.round((potentialScore - currentScore) * 10) / 10,
+    bafoCure: input.bafoCure,
+    requiredEvidence: input.requiredEvidence,
+    decisionImpact: input.decisionImpact,
+  };
+}
+
+function weightedContribution(score: number, weight: number): number {
+  return Math.round(score * weight) / 100;
 }
 
 function tradeoffsForVendor(profile: VendorResponseProfile): string[] {

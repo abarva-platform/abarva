@@ -31,6 +31,9 @@ describe("VendorEvaluationScorecardPanel", () => {
     expect(html).toContain("Normalized Vendor Comparison");
     expect(html).toContain("Evaluation Scorecard");
     expect(html).toContain("Executive Tradeoff Summary");
+    expect(html).toContain("How the score is defended");
+    expect(html).toContain("BAFO Improvement Scenario");
+    expect(html).toMatch(/weighted/i);
     expect(html).toContain("Vendor A");
     expect(html).toContain("Vendor B");
     expect(html).toContain("Vendor C");

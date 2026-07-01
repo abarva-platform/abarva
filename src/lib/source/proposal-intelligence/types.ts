@@ -327,6 +327,7 @@ export interface VendorEvaluationScoreValue {
   vendorId: string;
   vendorName: string;
   score: number;
+  weightedContribution: number;
   rationale: string;
   evidenceLabel: string;
   confidence: "high" | "medium" | "low";
@@ -350,6 +351,18 @@ export interface VendorEvaluationVendorSummary {
   decisionRationale: string;
   tradeoffs: string[];
   conditions: string[];
+  finalistPosture: string;
+}
+
+export interface VendorEvaluationScoreImpact {
+  vendorId: string;
+  vendorName: string;
+  currentScore: number;
+  potentialScore: number;
+  scoreDelta: number;
+  bafoCure: string;
+  requiredEvidence: string;
+  decisionImpact: string;
 }
 
 export interface VendorEvaluationDecisionView {
@@ -357,10 +370,13 @@ export interface VendorEvaluationDecisionView {
   tenantKey: string;
   generatedAt: string;
   scoreBasis: string;
+  finalistRecommendation: string;
+  scoringTransparency: string[];
   vendorCount: number;
   comparisonRows: VendorEvaluationComparisonRow[];
   scorecardRows: VendorEvaluationScorecardRow[];
   vendorSummaries: VendorEvaluationVendorSummary[];
+  scoreImprovementScenarios: VendorEvaluationScoreImpact[];
   executiveTradeoffs: string[];
   leadingVendorId: string;
   cheapestVendorId: string;

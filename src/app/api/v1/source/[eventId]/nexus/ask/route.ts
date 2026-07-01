@@ -303,6 +303,7 @@ async function buildEventIntakeTenantContextSnapshot(args: {
       excerpt: [
         `Rank ${summary.rank}; weighted score ${summary.weightedScore.toFixed(1)}/10; recommendation ${summary.recommendation.replaceAll("_", " ")}.`,
         summary.decisionRationale,
+        `Finalist posture: ${summary.finalistPosture}`,
         `Tradeoffs: ${summary.tradeoffs.join(" ")}`,
         summary.conditions.length
           ? `Conditions: ${summary.conditions.join(" ")}`
@@ -310,6 +311,27 @@ async function buildEventIntakeTenantContextSnapshot(args: {
       ].join(" "),
       score: 30 - index,
     })) ?? []),
+    ...(vendorEvaluationView?.scoreImprovementScenarios.map((scenario, index) => ({
+      recordId: `${scenario.vendorId}-score-impact`,
+      title: `${scenario.vendorName} score impact scenario`,
+      excerpt: [
+        `Score movement: ${scenario.currentScore.toFixed(1)} to ${scenario.potentialScore.toFixed(1)} if cured; delta +${scenario.scoreDelta.toFixed(1)}.`,
+        `BAFO cure: ${scenario.bafoCure}`,
+        `Required evidence: ${scenario.requiredEvidence}`,
+        `Decision impact: ${scenario.decisionImpact}`,
+      ].join(" "),
+      score: 27 - index,
+    })) ?? []),
+    ...(vendorEvaluationView
+      ? [
+          {
+            recordId: "evaluation-finalist-recommendation",
+            title: "Finalist recommendation",
+            excerpt: vendorEvaluationView.finalistRecommendation,
+            score: 26,
+          },
+        ]
+      : []),
     ...(vendorEvaluationView?.comparisonRows.slice(0, 6).map((row, index) => ({
       recordId: `evaluation-comparison-${row.comparisonId}`,
       title: `Normalized vendor comparison - ${row.label}`,

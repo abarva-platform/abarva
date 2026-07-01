@@ -862,6 +862,16 @@ type EvaluationVendorSummary = {
   rationale: string;
   tradeoffs: string;
   conditions: string;
+  finalistPosture: string;
+};
+
+type EvaluationScoreImpact = {
+  vendorName: string;
+  currentScore: string;
+  potentialScore: string;
+  delta: string;
+  cure: string;
+  decisionImpact: string;
 };
 
 function buildEvaluationDecisionAnswer(args: {
@@ -890,7 +900,14 @@ function buildEvaluationDecisionAnswer(args: {
 
   const sorted = [...summaries].sort((a, b) => a.rank - b.rank);
   const vendorLine = (summary: EvaluationVendorSummary) =>
-    `${summary.vendorName}: rank ${summary.rank}, ${summary.score}/10, ${summary.recommendation}; ${summary.rationale}`;
+    `${summary.vendorName}: rank ${summary.rank}, ${summary.score}/10; ${summary.finalistPosture || summary.rationale}`;
+  const scoreImpacts = args.evidence
+    .filter((item) => /\bscore impact scenario\b/i.test(item.title))
+    .map(parseEvaluationScoreImpact)
+    .filter((impact): impact is EvaluationScoreImpact => Boolean(impact));
+  const finalistRecommendation =
+    args.evidence.find((item) => /\bfinalist recommendation\b/i.test(item.title))
+      ?.excerpt ?? "";
   const leading = sorted[0];
   const cheapest = findVendorFromComparison(args.evidence, "Normalized 5-year TCO") ??
     summaries.find((summary) => summary.vendorName === "Vendor B") ??
@@ -909,7 +926,7 @@ function buildEvaluationDecisionAnswer(args: {
     leadSentence = `${transitionRisk.vendorName} carries the highest transition risk because execution confidence depends on closing staffing coverage, retained-client dependency, and cutover evidence.`;
   } else if (/\badvance\b/.test(text)) {
     leadSentence =
-      "Advance the vendors into BAFO selectively: Vendor A should advance as the risk-adjusted lead, Vendor B should advance only with commercial and staffing conditions, and Vendor C should advance only if scope normalization is resolved.";
+      "Advance Vendor A as the risk-adjusted lead and Vendor C as a conditional service-accountability finalist; keep Vendor B as a price benchmark unless it cures its staffing, retained-effort, pass-through, and productivity-credit gaps before BAFO.";
   } else if (/\btradeoffs?\b/.test(text)) {
     leadSentence =
       "The executive tradeoff is continuity versus price versus service accountability: Vendor A is safer, Vendor B is cheaper, and Vendor C has stronger SLA economics but narrower scope.";
@@ -917,9 +934,14 @@ function buildEvaluationDecisionAnswer(args: {
 
   const answerText = [
     leadSentence,
-    `Current evaluation view: ${sorted.map(vendorLine).join(" ")}`,
-    `${cheapest.vendorName} sets the price challenge; ${transitionRisk.vendorName} sets the execution-risk caution; Vendor C remains relevant because its SLA economics are strongest even though its base scope is narrower.`,
-    "The right next move is a BAFO round that converts each vendor's open conditions into structured exhibits, revised pricing, staffed coverage, SLA remedies, and exception dispositions before final scoring is locked.",
+    `Why the score is defensible: ${sorted.map(vendorLine).join(" ")}`,
+    finalistRecommendation
+      ? `Finalist posture: ${finalistRecommendation}`
+      : `${cheapest.vendorName} sets the price challenge; ${transitionRisk.vendorName} sets the execution-risk caution; Vendor C remains relevant because its SLA economics are strongest even though its base scope is narrower.`,
+    scoreImpacts.length
+      ? `What can change the score: ${scoreImpacts.map(formatScoreImpact).join(" ")}`
+      : "What can change the score: revised BAFO exhibits must close staffing, transition, SLA, productivity, pricing, and exception holdbacks before final scoring is locked.",
+    "Next action: issue a targeted BAFO round, then lock human reviewer scores only after revised exhibits reconcile to pricing, SLA, staffing, transition, and exceptions.",
   ].join("\n");
 
   return {
@@ -928,7 +950,7 @@ function buildEvaluationDecisionAnswer(args: {
     currentStateFindings: sorted.map(vendorLine),
     sourcingImplications: [
       `${leading.vendorName} is the current risk-adjusted leader, but final selection should wait for BAFO closure.`,
-      `${cheapest.vendorName} should not win on price alone until execution-risk conditions are contractually resolved.`,
+      `${cheapest.vendorName} should remain a price benchmark, not a preferred finalist, until execution-risk conditions are contractually resolved.`,
       "Vendor C should stay in the comparison because its SLA accountability creates negotiation leverage even if scope caveats remain.",
     ],
     cxoGuidance: [
@@ -959,6 +981,9 @@ function parseEvaluationSummary(
     excerpt.match(/Tradeoffs:\s*(.*?)(?:\s+Conditions:|$)/i)?.[1]?.trim() ??
     "";
   const conditions = excerpt.match(/Conditions:\s*(.*)$/i)?.[1]?.trim() ?? "";
+  const finalistPosture =
+    excerpt.match(/Finalist posture:\s*(.*?)(?:\s+Tradeoffs:|$)/i)?.[1]?.trim() ??
+    "";
   return {
     vendorName,
     rank,
@@ -967,7 +992,34 @@ function parseEvaluationSummary(
     rationale: sentenceAfterRecommendation,
     tradeoffs,
     conditions,
+    finalistPosture,
   };
+}
+
+function parseEvaluationScoreImpact(
+  item: SourceLiveTenantEvidenceItem,
+): EvaluationScoreImpact | null {
+  const vendorName = item.title.match(/\bVendor\s+[A-Z]\b/)?.[0];
+  if (!vendorName) return null;
+  const excerpt = cleanEvidenceExcerpt(item.excerpt);
+  const movement = excerpt.match(
+    /Score movement:\s*([0-9.]+)\s+to\s+([0-9.]+).*?delta\s+\+?([0-9.]+)/i,
+  );
+  const cure = excerpt.match(/BAFO cure:\s*(.*?)(?:\s+Required evidence:|$)/i)?.[1]?.trim() ?? "";
+  const decisionImpact =
+    excerpt.match(/Decision impact:\s*(.*)$/i)?.[1]?.trim() ?? "";
+  return {
+    vendorName,
+    currentScore: movement?.[1] ?? "n/a",
+    potentialScore: movement?.[2] ?? "n/a",
+    delta: movement?.[3] ?? "n/a",
+    cure,
+    decisionImpact,
+  };
+}
+
+function formatScoreImpact(impact: EvaluationScoreImpact): string {
+  return `${impact.vendorName} can move from ${impact.currentScore} to ${impact.potentialScore} (+${impact.delta}) if BAFO cures ${impact.cure.toLowerCase()} ${impact.decisionImpact}`;
 }
 
 function findVendorFromComparison(
@@ -1001,6 +1053,7 @@ function findVendorFromComparison(
         rationale: excerpt,
         tradeoffs: "",
         conditions: "",
+        finalistPosture: "",
       };
     }
   }
@@ -1028,6 +1081,7 @@ function findVendorFromComparison(
         rationale: excerpt,
         tradeoffs: "",
         conditions: "",
+        finalistPosture: "",
       };
     }
   }
