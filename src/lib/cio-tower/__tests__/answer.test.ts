@@ -10,7 +10,10 @@ import {
   type CioTowerPromptContext,
 } from '../answer';
 import { buildModuleV6PacketContract } from '../../agent/module-v6-answer-contract';
-import { toCioTowerMetricPacket } from '../metric-packet';
+import {
+  canonicalCioTowerTenantDisplayName,
+  toCioTowerMetricPacket,
+} from '../metric-packet';
 
 function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPromptContext {
   const measures = [
@@ -104,6 +107,15 @@ describe('cio tower answer contract', () => {
     expect(canonicalCioTowerTenantKey('Apex Retail Group')).toBe('apex-retail');
     expect(canonicalCioTowerTenantKey('meridian')).toBe('meridian-health');
     expect(canonicalCioTowerTenantKey('Meridian Health System')).toBe('meridian-health');
+  });
+
+  it('renders real tenant names for Tower executive surfaces', () => {
+    expect(canonicalCioTowerTenantDisplayName({ key: 'skyharbor' })).toBe('SkyHarbor Air');
+    expect(canonicalCioTowerTenantDisplayName({ name: 'Airline Demo' })).toBe('SkyHarbor Air');
+    expect(canonicalCioTowerTenantDisplayName({ key: 'lakeshore' })).toBe('Lakeshore Holdings');
+    expect(canonicalCioTowerTenantDisplayName({ name: 'Industrial Demo' })).toBe('Lakeshore Holdings');
+    expect(canonicalCioTowerTenantDisplayName({ key: 'firstcapital' })).toBe('First Capital Financial');
+    expect(canonicalCioTowerTenantDisplayName({ name: 'Retail Demo' })).toBe('Apex Retail Group');
   });
 
   it('instructs Claude to own every visible word and return the explicit JSON contract', () => {

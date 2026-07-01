@@ -6062,7 +6062,7 @@ export function TowerIndexPage({
   return (
     <AppShell
       surface="tower"
-      topBarProps={{ tenantName, showLocked: true, context }}
+      topBarProps={{ tenantName, preserveTenantName: true, showLocked: true, context }}
       middleStrip={towerSubmenuSlot}
     >
       <AtlasChatPanel
