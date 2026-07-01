@@ -20,6 +20,7 @@ import { getSourcingEvent, sourceEventRowToDetail } from "@/lib/source/queries";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import {
+  buildVendorBafoInstructionPack,
   buildVendorChallengeIntelligence,
   buildVendorResponseMveProfiles,
 } from "@/lib/source/proposal-intelligence";
@@ -232,6 +233,7 @@ async function buildEventIntakeTenantContextSnapshot(args: {
     accountName: args.event.accountName,
   });
   const vendorChallenges = buildVendorChallengeIntelligence(vendorProfiles);
+  const vendorBafoPack = buildVendorBafoInstructionPack(vendorChallenges);
   const eventEvidence = [
     {
       recordId: "trigger",
@@ -277,6 +279,18 @@ async function buildEventIntakeTenantContextSnapshot(args: {
       ].join(" "),
       score: 18 - index,
     })) ?? []),
+    ...(vendorBafoPack?.vendorInstructions.flatMap((instruction, vendorIndex) =>
+      instruction.questions.slice(0, 4).map((question, questionIndex) => ({
+        recordId: question.questionId,
+        title: `${instruction.vendorName} BAFO instruction`,
+        excerpt: [
+          `${question.category}: ${question.question}`,
+          `Required response: ${question.requiredResponseFormat}`,
+          `Scoring holdback: ${question.scoringDisposition}`,
+        ].join(" "),
+        score: 26 - vendorIndex * 4 - questionIndex,
+      })),
+    ) ?? []),
   ].filter((item) => item.excerpt.trim().length > 0);
   const evidence = [
     ...eventEvidence.map((item) => ({

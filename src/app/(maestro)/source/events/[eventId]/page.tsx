@@ -22,6 +22,7 @@ import { ensureThreadForSourceEvent } from "@/lib/decisions/auto-linker";
 import { listSourceEventActivityEntries } from "@/lib/source/activity-log";
 import { buildSourceVendorResponseCompleteness } from "@/lib/source/vendor-response-completeness";
 import {
+  buildVendorBafoInstructionPack,
   buildVendorChallengeIntelligence,
   buildVendorResponseMveProfiles,
 } from "@/lib/source/proposal-intelligence";
@@ -143,6 +144,9 @@ export default async function SourceEventDetailPage({
   });
   const vendorChallengeIntelligence =
     buildVendorChallengeIntelligence(vendorResponseProfiles);
+  const vendorBafoInstructionPack = buildVendorBafoInstructionPack(
+    vendorChallengeIntelligence,
+  );
   const flagScope = {
     clientKey: activeClient?.key ?? null,
     clientId: activeClient?.id ?? null,
@@ -172,6 +176,7 @@ export default async function SourceEventDetailPage({
       vendorResponseReadiness={vendorResponseReadiness}
       vendorResponseProfiles={vendorResponseProfiles}
       vendorChallengeIntelligence={vendorChallengeIntelligence}
+      vendorBafoInstructionPack={vendorBafoInstructionPack}
       workspaceExplorerEnabled={workspaceExplorerEnabled}
       strategyAutoDraftEnabled={strategyAutoDraftEnabled}
       simpleFrontEnabled={simpleFrontEnabled}

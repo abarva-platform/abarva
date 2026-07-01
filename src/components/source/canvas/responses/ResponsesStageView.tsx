@@ -3,12 +3,14 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
 import type {
+  VendorBafoInstructionPack,
   VendorChallengeIntelligence,
   VendorResponseProfileSet,
 } from "@/lib/source/proposal-intelligence";
 import { CANVAS } from "../canvas-tokens";
 import { CompletenessMatrix } from "./CompletenessMatrix";
 import { QnaSymmetryLog } from "./QnaSymmetryLog";
+import { VendorBafoInstructionPackPanel } from "./VendorBafoInstructionPackPanel";
 import { VendorChallengeLeveragePanel } from "./VendorChallengeLeveragePanel";
 import { VendorResponseProfilesPanel } from "./VendorResponseProfilesPanel";
 
@@ -16,11 +18,13 @@ export function ResponsesStageView({
   readiness,
   profileSet,
   challengeIntelligence,
+  bafoInstructionPack,
   documentWorkspace,
 }: {
   readiness?: SourceVendorResponseCompleteness;
   profileSet?: VendorResponseProfileSet | null;
   challengeIntelligence?: VendorChallengeIntelligence | null;
+  bafoInstructionPack?: VendorBafoInstructionPack | null;
   documentWorkspace: ReactNode;
 }) {
   const records = readiness?.records ?? [];
@@ -78,6 +82,7 @@ export function ResponsesStageView({
 
       <VendorResponseProfilesPanel profileSet={profileSet} />
       <VendorChallengeLeveragePanel intelligence={challengeIntelligence} />
+      <VendorBafoInstructionPackPanel pack={bafoInstructionPack} />
 
       <section data-testid="source-responses-disqualification-card" style={DECISION}>
         <div style={EYEBROW}>Decision point</div>

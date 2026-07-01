@@ -257,6 +257,49 @@ export interface VendorChallengeIntelligence {
   leverageSeeds: CommercialLeverageSeed[];
 }
 
+// ── BAFO instruction pack ──────────────────────────────────────────────────
+
+export type VendorBafoQuestionPriority = "must_resolve" | "should_improve";
+
+export interface VendorBafoQuestion {
+  questionId: string;
+  vendorId: string;
+  vendorName: string;
+  priority: VendorBafoQuestionPriority;
+  category: string;
+  question: string;
+  requiredResponseFormat: string;
+  evidenceLabel: string;
+  buyerRisk: string;
+  scoringDisposition: string;
+  sourceChallengeId: string;
+  sourceLeverageSeedId: string;
+}
+
+export interface VendorBafoVendorInstruction {
+  vendorId: string;
+  vendorName: string;
+  readyForEvaluation: "yes" | "no" | "conditional";
+  priority: "high" | "medium" | "low";
+  instructionCount: number;
+  mustResolveBeforeScoring: string[];
+  questions: VendorBafoQuestion[];
+}
+
+export interface VendorBafoInstructionPack {
+  sourceEventId: string;
+  tenantKey: string;
+  generatedAt: string;
+  roundLabel: string;
+  executiveSummary: string;
+  vendorCount: number;
+  questionCount: number;
+  commonResponseRequirements: string[];
+  completenessCriteria: string[];
+  scoringHoldbacks: string[];
+  vendorInstructions: VendorBafoVendorInstruction[];
+}
+
 // ── Normalization ───────────────────────────────────────────────────────────
 
 export type NormalizedCategory =

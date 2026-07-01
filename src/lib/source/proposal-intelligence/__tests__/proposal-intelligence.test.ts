@@ -15,6 +15,7 @@ import {
   buildProposalContextTrace,
 } from "../isolation";
 import {
+  buildVendorBafoInstructionPack,
   buildVendorChallengeIntelligence,
   buildVendorResponseMveProfiles,
 } from "../mve-profile";
@@ -520,5 +521,58 @@ describe("vendor challenge log and commercial leverage seeds", () => {
 
   it("does not create challenge intelligence without a profile set", () => {
     expect(buildVendorChallengeIntelligence(null)).toBeNull();
+  });
+});
+
+describe("vendor BAFO instruction pack", () => {
+  const set = buildVendorResponseMveProfiles({
+    id: "skyh-test-event",
+    code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
+    name: "SkyHarbor AMS Outsourcing RFP",
+    accountName: "SkyHarbor Air",
+  })!;
+  const intelligence = buildVendorChallengeIntelligence(set)!;
+
+  it("turns leverage seeds into a vendor-specific BAFO instruction pack", () => {
+    const pack = buildVendorBafoInstructionPack(intelligence)!;
+
+    expect(pack.vendorInstructions).toHaveLength(3);
+    expect(pack.questionCount).toBeGreaterThanOrEqual(5);
+    expect(pack.commonResponseRequirements.join(" ")).toMatch(
+      /structured response|commercial change|productivity/i,
+    );
+    expect(pack.completenessCriteria.join(" ")).toMatch(
+      /must-resolve|scoring credit|buyer-risk/i,
+    );
+    expect(
+      pack.vendorInstructions.every(
+        (instruction) => instruction.questions.length >= 1,
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps Vendor B BAFO asks specific to profile-derived gaps", () => {
+    const pack = buildVendorBafoInstructionPack(intelligence)!;
+    const vendorB = pack.vendorInstructions.find((instruction) =>
+      instruction.vendorName.includes("Vendor B"),
+    )!;
+    const text = vendorB.questions
+      .map((question) =>
+        [
+          question.question,
+          question.requiredResponseFormat,
+          question.scoringDisposition,
+        ].join(" "),
+      )
+      .join(" ");
+
+    expect(vendorB.priority).toBe("high");
+    expect(text).toMatch(/baseline volume|price-down|gainshare|pricing credit/i);
+    expect(text).toMatch(/shift|location|FTE|24x7/i);
+    expect(text).not.toMatch(/Northstar|TitanTech|CloudBridge|DataPeak/i);
+  });
+
+  it("does not create a BAFO pack without challenge intelligence", () => {
+    expect(buildVendorBafoInstructionPack(null)).toBeNull();
   });
 });
