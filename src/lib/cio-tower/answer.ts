@@ -314,6 +314,7 @@ export function buildCioTowerBoundaryAnswer(route: CioTowerBoundaryRoute): CioTo
 
 export const __cioTowerAnswerTestHooks = {
   buildCioTowerDeterministicMetricAnswer,
+  factWhereForContract,
   validateParsedVisibleAnswer,
 };
 
@@ -883,7 +884,7 @@ async function loadMeasures(tenantKey: string): Promise<CioTowerMeasureResult[]>
 }
 
 function factWhereForContract(contract: CioTowerContract): { views: string[]; limit: number } {
-  if (contract.contract_key === 'tower_top_it_programs_by_budget') return { views: ['initiative_budget', 'value'], limit: 30 };
+  if (contract.contract_key === 'tower_top_it_programs_by_budget') return { views: ['initiative_budget'], limit: 30 };
   if (contract.contract_key === 'tower_total_it_spend') return { views: ['it_budget'], limit: 20 };
   if (contract.contract_key === 'tower_run_change_split') return { views: ['it_budget'], limit: 25 };
   if (contract.contract_key === 'tower_value_realization') return { views: ['value', 'initiative_budget'], limit: 30 };

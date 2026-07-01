@@ -178,6 +178,19 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('Do not pull initiative/program values into this answer');
   });
 
+  it('loads only initiative budget facts for top-program budget rankings', () => {
+    expect(
+      __cioTowerAnswerTestHooks.factWhereForContract({
+        contract_key: 'tower_top_it_programs_by_budget',
+        intent: 'table',
+        question_family: 'top_it_programs_by_budget',
+        measure_key: 'initiative_budget_fy26',
+        artifact_type: 'table',
+        examples: [],
+      }),
+    ).toEqual({ views: ['initiative_budget'], limit: 30 });
+  });
+
   it('routes IT budget slice questions to the IT-budget contract', () => {
     expect(matchContractKey('What is the current loaded IT budget for the whole Tower portfolio?')).toBe(
       'tower_total_it_spend',
