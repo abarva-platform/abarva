@@ -2184,6 +2184,9 @@ function CioVendorTable({
 
 function CxoGovernedMeasureCard({ card }: { card: CioTowerCxoMeasureCard }) {
   const hasValue = card.valueNumeric !== null;
+  const footer = hasValue
+    ? `${card.period?.toUpperCase() ?? "Current"} ${card.basis ?? "plan"} · verified input`
+    : card.gap;
   return (
     <article
       data-cio-tower-measure-key={card.measureKey}
@@ -2221,14 +2224,7 @@ function CxoGovernedMeasureCard({ card }: { card: CioTowerCxoMeasureCard }) {
         {card.displayValue}
       </div>
       <div style={{ marginTop: 7, color: T.INK_2, fontSize: 12.5, lineHeight: 1.35 }}>
-        {hasValue ? (
-          <>
-            {card.period?.toUpperCase() ?? "period not loaded"} · {card.basis ?? "basis not loaded"} ·{" "}
-            source-backed
-          </>
-        ) : (
-          card.gap
-        )}
+        {footer}
       </div>
     </article>
   );
@@ -2323,7 +2319,7 @@ function CxoGovernedTable({
   if (rows.length === 0) {
     return (
       <TowerEmptyState
-        eyebrow="Governed gap"
+        eyebrow="Missing input"
         title={emptyTitle}
         body={emptyBody}
       />
@@ -2334,7 +2330,7 @@ function CxoGovernedTable({
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
         <thead>
           <tr>
-            {["Item", "Measure", "Value", "Basis", "Evidence"].map((head) => (
+            {["Item", "Metric", "Value", "Timing", "Where it comes from"].map((head) => (
               <th
                 key={head}
                 style={{
@@ -2434,8 +2430,8 @@ function CxoTenantBenchmark({
     return (
       <TowerEmptyState
         eyebrow="Benchmark gap"
-        title="Peer benchmark data is not loaded."
-        body="The governed measure layer has no peer rows to compare against yet."
+        title="Peer comparison is not ready yet."
+        body="Tower needs comparable budget and value inputs before it can show the peer view."
       />
     );
   }
@@ -2538,7 +2534,7 @@ function CxoGovernedCommandCenter({
             fontWeight: 900,
           }}
         >
-          Tower · governed CXO command center
+          Tower · CIO command center
         </div>
         <h2
           style={{
@@ -2554,9 +2550,8 @@ function CxoGovernedCommandCenter({
           {model.headline}
         </h2>
         <p style={{ margin: "10px 0 0", color: T.INK_2, maxWidth: 900, fontSize: 14.5, lineHeight: 1.5 }}>
-          Tower v1 is focused on one board-grade question: whether the FY26 technology
-          budget is translating into measured value. Missing measures are shown as business
-          gaps, not zeroes.
+          Start here: how much are we spending, how much value have we promised, what has
+          been proven, and where should leadership inspect next?
         </p>
       </section>
 
@@ -2570,31 +2565,31 @@ function CxoGovernedCommandCenter({
       </section>
 
       <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
-        <CioPanel eyebrow="Budget Mix" title="How much is run, how much is change, and how much is moving through initiatives.">
+        <CioPanel eyebrow="Budget Mix" title="Where the money is committed.">
           <CxoBudgetMix cards={model.cards} />
         </CioPanel>
 
-        <CioPanel eyebrow="Value Realization" title="What was promised, what is measured, and how much value still needs proof.">
+        <CioPanel eyebrow="Value Realization" title="Whether the portfolio is paying back.">
           <CxoValueRealization cards={model.cards} />
         </CioPanel>
 
-        <CioPanel eyebrow="Portfolio Control" title="Which funded work deserves CIO inspection first.">
+        <CioPanel eyebrow="Portfolio Control" title="Which budget lanes and programs need attention first.">
           <CxoGovernedTable
             rows={model.portfolioRows}
-            emptyTitle="No governed portfolio-control facts are loaded."
-            emptyBody="Tower needs initiative budget, IT budget, or value facts before this table can rank the portfolio."
+            emptyTitle="Portfolio accountability is not ready yet."
+            emptyBody="Tower needs initiative budget, owner, and value inputs before it can rank funded work."
           />
         </CioPanel>
 
-        <CioPanel eyebrow="Tenant Benchmark" title="How this tenant compares with the governed peer set.">
+        <CioPanel eyebrow="Tenant Benchmark" title="How this portfolio compares with peers.">
           <CxoTenantBenchmark model={model} />
         </CioPanel>
 
-        <CioPanel eyebrow="Evidence and Trust" title="What proves the dashboard.">
+        <CioPanel eyebrow="Evidence and Trust" title="Where leadership can inspect the numbers.">
           <CxoGovernedTable
             rows={model.trustRows}
-            emptyTitle="Evidence lineage is not loaded."
-            emptyBody="Tower needs fact-to-source lineage before it can show a trust map."
+            emptyTitle="Source detail is not ready yet."
+            emptyBody="Tower needs source references before it can show the inspection path."
           />
         </CioPanel>
       </section>
@@ -2610,15 +2605,15 @@ function CxoGovernedCommandCenter({
         }}
       >
         <div style={{ fontFamily: T.MONO, fontSize: 10, letterSpacing: "1.8px", textTransform: "uppercase", color: T.PURPLE, fontWeight: 900 }}>
-          Ask aVa · dashboard/chat parity slice
+          Ask aVa
         </div>
         <h3 style={{ margin: "8px 0 0", fontFamily: T.SERIF, fontSize: 24, lineHeight: 1.12 }}>
-          Ask “what is my IT spend?” and aVa must return the same governed value shown here.
+          Ask “what is my IT spend?” and aVa should explain the same board number in plain language.
         </h3>
         <p style={{ margin: "8px 0 0", color: T.INK_2, fontSize: 13.5 }}>
-          Governed measure: <strong>{model.parityMeasureKey}</strong> · dashboard value:{" "}
-          <strong>{parityCard?.displayValue ?? "gap"}</strong>. The proof script records the trace,
-          prompt package, evidence, and rendered answer for this exact measure.
+          Tower is anchored on <strong>{parityCard?.displayValue ?? "gap"}</strong> for the executive
+          budget envelope. Use aVa to explain what the number means, where value is lagging,
+          and what to inspect next.
         </p>
         {model.gaps.length > 0 ? (
           <div style={{ marginTop: 12, color: T.AMBER, fontSize: 13.5, fontWeight: 750 }}>
@@ -5995,8 +5990,8 @@ export function TowerIndexPage({
                   lineHeight: 1.35,
                 }}
               >
-                Budget, top programs, vendors, AI spend, outcomes, and risk
-                slices from loaded Tower evidence.
+                Budget, top programs, value proof, vendor exposure, and risks the CIO
+                should inspect this week.
               </div>
             </div>
             {reportDownloadSlot ? (
