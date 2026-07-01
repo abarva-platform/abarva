@@ -688,9 +688,9 @@ ACTIVE INTELLIGENCE CANVAS RULES
         text = repairedText;
       } else {
         text = [
-          "Before this becomes board-ready, treat the answer as evidence-thin until four items are explicit: the current-state baseline, the accountable owner, the dependency or readiness gate, and the value-proof method.",
-          "Use the loaded enterprise context to fill those gaps with tenant-specific facts before presenting the recommendation as a decision.",
-          "The practical next step is to name the initiative or portfolio question, then verify the baseline metric, owner, dependency gate, and evidence source in one place.",
+          "This is not board-ready yet.",
+          "Close four evidence gaps before treating the recommendation as a decision: the current-state baseline, the accountable owner, the dependency or readiness gate, and the value-proof method.",
+          "Next step: name the initiative or portfolio question, then verify the baseline metric, owner, readiness gate, and evidence source in one place.",
         ].join("\n\n");
       }
     }
@@ -731,9 +731,9 @@ ACTIVE INTELLIGENCE CANVAS RULES
     });
     if (offTenantMention.detected) {
       yield [
-        "I detected mixed-tenant language in the draft answer, so I am not going to surface it.",
-        "Your session remains pinned to the active tenant. Re-ask the question and I will answer from the active tenant context only.",
-        "[tenant-isolation guard fired: off-tenant mention blocked]",
+        "This answer is blocked because the available response path mixed tenant language.",
+        "Treat this as a tenant-safety stop, not as enterprise guidance.",
+        "Re-ask from the active workspace, and I will answer only from evidence whose tenant key and display name match the current tenant.",
       ].join("\n");
       return;
     }
