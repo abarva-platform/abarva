@@ -43,6 +43,42 @@ function context(
       source_fact_keys: ["fact-1"],
       formula_version: "cio_tower_v1",
     },
+    {
+      measure_key: "actual_spend_ytd",
+      label: "Actual spend YTD",
+      description: "Actual initiative spend YTD.",
+      period: "ytd",
+      basis: "actual",
+      scope: "initiative_portfolio",
+      value_numeric: "9000000",
+      value_json: { row_count: 1 },
+      source_fact_keys: ["fact-actual-1"],
+      formula_version: "cio_tower_v1",
+    },
+    {
+      measure_key: "promised_value_fy26",
+      label: "Promised value FY26",
+      description: "Promised FY26 initiative value.",
+      period: "fy26",
+      basis: "forecast",
+      scope: "initiative_portfolio",
+      value_numeric: "270000000",
+      value_json: { row_count: 1 },
+      source_fact_keys: ["fact-value-1"],
+      formula_version: "cio_tower_v1",
+    },
+    {
+      measure_key: "measured_value_ytd",
+      label: "Measured value YTD",
+      description: "Measured value YTD.",
+      period: "ytd",
+      basis: "actual",
+      scope: "initiative_portfolio",
+      value_numeric: "91800000",
+      value_json: { row_count: 1 },
+      source_fact_keys: ["fact-measured-1"],
+      formula_version: "cio_tower_v1",
+    },
   ];
   return {
     tenantKey: "skyharbor-air",
@@ -78,6 +114,30 @@ function context(
         source_key: "source-1",
         source_row: "12",
         attributes: {},
+      },
+      {
+        fact_key: "fact-actual-1",
+        entity_key: "initiative-1",
+        entity_type: "initiative",
+        entity_display_name: "Crew Recovery & Legality Modernization",
+        measure: "actual_spend_ytd_usd",
+        scope: "initiative",
+        view: "initiative_budget",
+        amount_type: "none",
+        basis: "actual",
+        period: "ytd",
+        value_numeric: "9000000",
+        value_text: null,
+        unit: "usd",
+        value_source: "tenant_file",
+        confidence: "high",
+        source_key: "source-actual",
+        source_row: "12",
+        attributes: {
+          owner_role: "VP Integration",
+          evidence_status: "source cited",
+          primary_blocker: "Crew legality and data readiness",
+        },
       },
       {
         fact_key: "fact-value-1",
@@ -287,6 +347,22 @@ describe("cio tower answer contract", () => {
         examples: [],
       }),
     ).toEqual({ views: ["initiative_budget", "value"], limit: 120 });
+    for (const contractKey of [
+      "tower_portfolio_value_gap",
+      "tower_weak_value_evidence",
+      "tower_inspect_this_week",
+    ]) {
+      expect(
+        __cioTowerAnswerTestHooks.factWhereForContract({
+          contract_key: contractKey,
+          intent: "table",
+          question_family: contractKey,
+          measure_key: "initiative_budget_fy26",
+          artifact_type: "table",
+          examples: [],
+        }),
+      ).toEqual({ views: ["initiative_budget", "value"], limit: 120 });
+    }
   });
 
   it("routes IT budget slice questions to the IT-budget contract", () => {
@@ -307,6 +383,15 @@ describe("cio tower answer contract", () => {
     ).toBe("tower_total_it_spend");
     expect(matchContractKey("Give me the list of top 10 IT programs")).toBe(
       "tower_top_it_programs_by_budget",
+    );
+    expect(matchContractKey("Which initiatives have the largest value gap?")).toBe(
+      "tower_portfolio_value_gap",
+    );
+    expect(matchContractKey("Which programs have weak value evidence?")).toBe(
+      "tower_weak_value_evidence",
+    );
+    expect(matchContractKey("What should I inspect this week?")).toBe(
+      "tower_inspect_this_week",
     );
   });
 
@@ -496,11 +581,15 @@ describe("cio tower answer contract", () => {
           "Program",
           "Owner",
           "FY26 budget",
+          "Actual spend YTD",
           "Promised value",
           "Measured value",
           "Value gap",
+          "Burn rate",
+          "Realization rate",
+          "Value per $ spent",
           "Evidence",
-          "Blocker",
+          "Inspect because",
         ],
         rows: [
           [
@@ -508,11 +597,15 @@ describe("cio tower answer contract", () => {
             "Crew Recovery & Legality Modernization",
             "VP Integration",
             "$28.3M",
+            "$9.0M",
             "$270.0M",
             "$91.8M",
             "$178.2M",
+            "32%",
+            "34%",
+            "10.20x",
             "source cited",
-            "Crew legality and data readiness",
+            "Promised value is ahead of measured value.",
           ],
         ],
       },
@@ -558,6 +651,87 @@ describe("cio tower answer contract", () => {
         parsedOutput: output!.output,
       }),
     ).toEqual([]);
+  });
+
+  it("answers largest value-gap questions from the portfolio value pack", () => {
+    const output =
+      __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(
+        context({
+          question: "Which initiatives have the largest value gap?",
+          contract: {
+            contract_key: "tower_portfolio_value_gap",
+            intent: "table",
+            question_family: "portfolio_value_gap",
+            measure_key: "promised_value_fy26",
+            artifact_type: "table",
+            examples: [],
+          },
+        }),
+      );
+
+    expect(output?.reason).toBe(
+      "Largest value gap answered from governed Tower initiative budget and value facts.",
+    );
+    expect(output?.output.answer).toContain(
+      "SkyHarbor Air's largest loaded value gap is Crew Recovery & Legality Modernization at $178.2M.",
+    );
+    expect(output?.output.answer).toContain(
+      "promised value $270.0M, measured value $91.8M, actual spend YTD $9.0M",
+    );
+    expect(output?.output.tables?.[0]?.id).toBe("portfolio_value_value_gap");
+    expect(output?.output.tables?.[0]?.rows[0]).toEqual([
+      "1",
+      "Crew Recovery & Legality Modernization",
+      "VP Integration",
+      "$28.3M",
+      "$9.0M",
+      "$270.0M",
+      "$91.8M",
+      "$178.2M",
+      "32%",
+      "34%",
+      "10.20x",
+      "source cited",
+      "Promised value is ahead of measured value.",
+    ]);
+    expect(
+      __cioTowerAnswerTestHooks.validateParsedVisibleAnswer({
+        contractKey: "tower_portfolio_value_gap",
+        metricPackets: context().metricPackets,
+        parsedOutput: output!.output,
+      }),
+    ).toEqual([]);
+  });
+
+  it("answers inspect-this-week questions with an inspection reason", () => {
+    const output =
+      __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(
+        context({
+          question: "What should I inspect this week?",
+          contract: {
+            contract_key: "tower_inspect_this_week",
+            intent: "table",
+            question_family: "inspect_this_week",
+            measure_key: "initiative_budget_fy26",
+            artifact_type: "table",
+            examples: [],
+          },
+        }),
+      );
+
+    expect(output?.reason).toBe(
+      "Inspection priority answered from governed Tower budget, spend, and value facts.",
+    );
+    expect(output?.output.answer).toContain(
+      "SkyHarbor Air should inspect Crew Recovery & Legality Modernization first.",
+    );
+    expect(output?.output.tables?.[0]?.title).toBe(
+      "Portfolio items to inspect this week",
+    );
+    expect(output?.output.tables?.[0]?.columns).toContain("Inspect because");
+    expect(output?.output.tables?.[0]?.rows[0]?.[12]).toBe(
+      "Promised value is ahead of measured value.",
+    );
   });
 
   it("answers top AI program questions with an AI-specific ranked table and requested limit", () => {

@@ -54,13 +54,19 @@ export interface CioTowerPortfolioValueRow {
   blocker: string;
   budgetNumeric: number | null;
   budget: string;
+  actualSpendNumeric: number | null;
+  actualSpend: string;
   promisedValueNumeric: number | null;
   promisedValue: string;
   measuredValueNumeric: number | null;
   measuredValue: string;
   valueGapNumeric: number | null;
   valueGap: string;
+  spendBurnRate: string;
+  valueRealizationRate: string;
+  measuredValuePerDollarSpent: string;
   evidenceStatus: string;
+  inspectionReason: string;
   confidence: string;
   source: string;
   sourceFactKeys: string[];
@@ -281,11 +287,18 @@ function programLabel(row: FactEvidenceRow, fallback: string): string {
     ?? fallback;
 }
 
-function portfolioValueAmount(row: FactEvidenceRow, kind: 'budget' | 'promised' | 'measured'): number | null {
+function portfolioValueAmount(row: FactEvidenceRow, kind: 'budget' | 'actual' | 'promised' | 'measured'): number | null {
   const value = numericMetricValue(row.value_numeric);
   if (value === null) return null;
   if (kind === 'budget') {
     return row.view === 'initiative_budget' && row.period.toLowerCase() === 'fy26' ? value : null;
+  }
+  if (kind === 'actual') {
+    return row.view === 'initiative_budget'
+      && row.period.toLowerCase() === 'ytd'
+      && row.basis.toLowerCase() === 'actual'
+      ? value
+      : null;
   }
   if (row.view !== 'value') return null;
   const measure = row.measure.toLowerCase();
@@ -313,6 +326,36 @@ function highestConfidence(rows: FactEvidenceRow[]): string {
     .sort((left, right) => order.indexOf(left) - order.indexOf(right))[0] ?? 'not_loaded';
 }
 
+function formatRate(numerator: number | null, denominator: number | null): string {
+  if (!numerator || !denominator || denominator <= 0) return 'gap';
+  return `${Math.round((numerator / denominator) * 100)}%`;
+}
+
+function formatMultiple(numerator: number | null, denominator: number | null): string {
+  if (!numerator || !denominator || denominator <= 0) return 'gap';
+  return `${(numerator / denominator).toFixed(2)}x`;
+}
+
+function inspectionReason(args: {
+  budget: number | null;
+  actualSpend: number | null;
+  promisedValue: number | null;
+  measuredValue: number | null;
+  valueGap: number | null;
+  owner: string;
+  blocker: string;
+  evidenceStatus: string;
+}): string {
+  if (!args.owner || args.owner === 'Owner not loaded') return 'Owner accountability is missing.';
+  if (!args.promisedValue) return 'Business-case value is missing.';
+  if (!args.measuredValue) return 'Finance-attested value proof is missing.';
+  if (args.valueGap && args.valueGap > 0) return 'Promised value is ahead of measured value.';
+  if (args.actualSpend && args.budget && args.actualSpend / args.budget > 0.6) return 'Spend burn is ahead of the annual budget pace.';
+  if (args.evidenceStatus === 'Evidence status not loaded') return 'Evidence status is missing.';
+  if (args.blocker !== 'No blocker loaded') return args.blocker;
+  return 'Review proof before the next funding gate.';
+}
+
 function buildPortfolioValueRows(rows: FactEvidenceRow[]): CioTowerPortfolioValueRow[] {
   const grouped = new Map<string, FactEvidenceRow[]>();
   for (const row of rows) {
@@ -324,33 +367,57 @@ function buildPortfolioValueRows(rows: FactEvidenceRow[]): CioTowerPortfolioValu
   return Array.from(grouped.values())
     .map((group) => {
       const budgetNumeric = group.reduce((sum, row) => sum + (portfolioValueAmount(row, 'budget') ?? 0), 0);
+      const actualSpendNumeric = group.reduce((sum, row) => sum + (portfolioValueAmount(row, 'actual') ?? 0), 0);
       const promisedValueNumeric = group.reduce((sum, row) => sum + (portfolioValueAmount(row, 'promised') ?? 0), 0);
       const measuredValueNumeric = group.reduce((sum, row) => sum + (portfolioValueAmount(row, 'measured') ?? 0), 0);
       const hasBudget = budgetNumeric > 0;
+      const hasActualSpend = actualSpendNumeric > 0;
       const hasPromised = promisedValueNumeric > 0;
       const hasMeasured = measuredValueNumeric > 0;
       const valueGapNumeric = hasPromised ? Math.max(promisedValueNumeric - measuredValueNumeric, 0) : null;
       const sourceFacts = Array.from(new Set(group.map((row) => row.fact_key)));
       const primary = group[0] as FactEvidenceRow;
+      const owner = firstBusinessText(group, ['owner_role', 'owner_name', 'owner', 'business_sponsor_role'], 'Owner not loaded');
+      const blocker = firstBusinessText(group, ['primary_blocker', 'blocker', 'status_summary'], 'No blocker loaded');
+      const evidenceStatus = firstBusinessText(group, ['evidence_status', 'value_confidence', 'finance_attested'], 'Evidence status not loaded');
+      const budget = hasBudget ? budgetNumeric : null;
+      const actualSpend = hasActualSpend ? actualSpendNumeric : null;
+      const promisedValue = hasPromised ? promisedValueNumeric : null;
+      const measuredValue = hasMeasured ? measuredValueNumeric : null;
       return {
         program: programLabel(primary, 'Program name not loaded'),
-        owner: firstBusinessText(group, ['owner_role', 'owner_name', 'owner', 'business_sponsor_role'], 'Owner not loaded'),
-        blocker: firstBusinessText(group, ['primary_blocker', 'blocker', 'status_summary'], 'No blocker loaded'),
-        budgetNumeric: hasBudget ? budgetNumeric : null,
+        owner,
+        blocker,
+        budgetNumeric: budget,
         budget: hasBudget ? formatCioTowerMoney(budgetNumeric) : 'gap',
-        promisedValueNumeric: hasPromised ? promisedValueNumeric : null,
+        actualSpendNumeric: actualSpend,
+        actualSpend: hasActualSpend ? formatCioTowerMoney(actualSpendNumeric) : 'gap',
+        promisedValueNumeric: promisedValue,
         promisedValue: hasPromised ? formatCioTowerMoney(promisedValueNumeric) : 'gap',
-        measuredValueNumeric: hasMeasured ? measuredValueNumeric : null,
+        measuredValueNumeric: measuredValue,
         measuredValue: hasMeasured ? formatCioTowerMoney(measuredValueNumeric) : 'gap',
         valueGapNumeric,
         valueGap: valueGapNumeric === null ? 'gap' : formatCioTowerMoney(valueGapNumeric),
-        evidenceStatus: firstBusinessText(group, ['evidence_status', 'value_confidence', 'finance_attested'], 'Evidence status not loaded'),
+        spendBurnRate: formatRate(actualSpend, budget),
+        valueRealizationRate: formatRate(measuredValue, promisedValue),
+        measuredValuePerDollarSpent: formatMultiple(measuredValue, actualSpend),
+        evidenceStatus,
+        inspectionReason: inspectionReason({
+          budget,
+          actualSpend,
+          promisedValue,
+          measuredValue,
+          valueGap: valueGapNumeric,
+          owner,
+          blocker,
+          evidenceStatus,
+        }),
         confidence: highestConfidence(group),
         source: sourceLabel(primary),
         sourceFactKeys: sourceFacts,
       };
     })
-    .filter((row) => row.budgetNumeric !== null || row.promisedValueNumeric !== null || row.measuredValueNumeric !== null)
+    .filter((row) => row.budgetNumeric !== null || row.actualSpendNumeric !== null || row.promisedValueNumeric !== null || row.measuredValueNumeric !== null)
     .sort((left, right) => (right.budgetNumeric ?? 0) - (left.budgetNumeric ?? 0))
     .slice(0, 12);
 }

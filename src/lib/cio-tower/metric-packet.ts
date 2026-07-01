@@ -170,6 +170,9 @@ export function requiredMetricKeysForTowerContract(contractKey: string): CioTowe
   if (contractKey === 'tower_trend_it_budget') return ['total_it_budget_fy25_baseline', 'total_it_budget_fy26'];
   if (contractKey === 'tower_value_realization') return ['measured_value_ytd'];
   if (contractKey === 'tower_top_it_programs_by_budget') return ['initiative_budget_fy26'];
+  if (contractKey === 'tower_portfolio_value_gap') return ['promised_value_fy26', 'measured_value_ytd'];
+  if (contractKey === 'tower_weak_value_evidence') return ['promised_value_fy26', 'measured_value_ytd'];
+  if (contractKey === 'tower_inspect_this_week') return ['initiative_budget_fy26', 'actual_spend_ytd', 'promised_value_fy26', 'measured_value_ytd'];
   return [];
 }
 
