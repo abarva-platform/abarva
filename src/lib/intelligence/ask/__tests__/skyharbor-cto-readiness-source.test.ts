@@ -11,6 +11,7 @@ describe("SkyHarbor CTO readiness ask source", () => {
   it("recognizes SkyHarbor tenant aliases", () => {
     expect(isSkyHarborTenantKey("skyharbor-air")).toBe(true);
     expect(isSkyHarborTenantKey("SkyHarbor Air Group")).toBe(true);
+    expect(isSkyHarborTenantKey("Airline Demo")).toBe(true);
     expect(isSkyHarborTenantKey("lakeshore-industries")).toBe(false);
   });
 
@@ -111,7 +112,7 @@ describe("SkyHarbor CTO readiness ask source", () => {
   it("builds a valid native sequencing canvas fallback for the airline CTO demo", () => {
     const block = buildSkyHarborCtoReadinessNativeCanvasBlock(
       "Which AI investments should Tower hold or scale?",
-      ["skyharbor-air"],
+      ["Airline Demo"],
     );
 
     const extracted = extractExecutiveCanvasPayloads(block);
