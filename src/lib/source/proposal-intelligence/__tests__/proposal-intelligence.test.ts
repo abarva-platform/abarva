@@ -14,7 +14,10 @@ import {
   isolateBundleForVendor,
   buildProposalContextTrace,
 } from "../isolation";
-import { buildVendorResponseMveProfiles } from "../mve-profile";
+import {
+  buildVendorChallengeIntelligence,
+  buildVendorResponseMveProfiles,
+} from "../mve-profile";
 import type {
   EvaluationCriterion,
   ProposalNormalizationRow,
@@ -451,5 +454,71 @@ describe("vendor response MVE profiles", () => {
         accountName: "Apex Retail",
       }),
     ).toBeNull();
+  });
+});
+
+describe("vendor challenge log and commercial leverage seeds", () => {
+  const set = buildVendorResponseMveProfiles({
+    id: "skyh-test-event",
+    code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
+    name: "SkyHarbor AMS Outsourcing RFP",
+    accountName: "SkyHarbor Air",
+  })!;
+
+  it("derives vendor-specific challenge records from MVE profile issues", () => {
+    const intelligence = buildVendorChallengeIntelligence(set)!;
+
+    expect(intelligence.challengeLog.length).toBeGreaterThanOrEqual(5);
+    expect(
+      new Set(intelligence.challengeLog.map((entry) => entry.vendorName)).size,
+    ).toBe(3);
+    expect(
+      intelligence.challengeLog.some(
+        (entry) =>
+          entry.vendorName.includes("Vendor B") &&
+          entry.issueCategory === "productivity_gap" &&
+          /pricing credit|baseline/i.test(entry.clarificationQuestion),
+      ),
+    ).toBe(true);
+    expect(
+      intelligence.challengeLog.every(
+        (entry) =>
+          entry.finding.length > 20 &&
+          entry.evidenceLabel.length > 5 &&
+          entry.scoringImplication.length > 20,
+      ),
+    ).toBe(true);
+  });
+
+  it("turns challenge rows into BAFO-ready leverage seeds without inventing vendors", () => {
+    const intelligence = buildVendorChallengeIntelligence(set)!;
+
+    expect(intelligence.leverageSeeds.length).toBe(
+      intelligence.challengeLog.length,
+    );
+    expect(
+      intelligence.leverageSeeds.some(
+        (seed) =>
+          seed.vendorName.includes("Vendor A") &&
+          seed.leverType === "productivity_not_priced_back" &&
+          /year-by-year productivity credit/i.test(seed.bafoLanguage),
+      ),
+    ).toBe(true);
+    expect(
+      intelligence.leverageSeeds.some(
+        (seed) =>
+          seed.vendorName.includes("Vendor C") &&
+          seed.leverType === "commercial_exception_buyer_risk",
+      ),
+    ).toBe(true);
+    expect(
+      intelligence.leverageSeeds
+        .map((seed) => seed.vendorName)
+        .join(" "),
+    ).not.toMatch(/Northstar|TitanTech|CloudBridge|DataPeak|BlueMaster|ArcVault/i);
+  });
+
+  it("does not create challenge intelligence without a profile set", () => {
+    expect(buildVendorChallengeIntelligence(null)).toBeNull();
   });
 });

@@ -193,6 +193,70 @@ export interface VendorResponseProfile {
   extractionCards: VendorExtractionCard[];
 }
 
+// ── Challenge log + commercial leverage seeds ──────────────────────────────
+
+export type VendorChallengeIssueCategory =
+  | "unsupported_claim"
+  | "pricing_gap"
+  | "productivity_gap"
+  | "sla_gap"
+  | "staffing_coverage_gap"
+  | "transition_gap"
+  | "assumption_exclusion_risk"
+  | "commercial_exception"
+  | "scope_coverage_gap"
+  | "evidence_missing";
+
+export interface VendorChallengeLogEntry {
+  challengeId: string;
+  vendorId: string;
+  vendorName: string;
+  issueCategory: VendorChallengeIssueCategory;
+  finding: string;
+  evidenceLabel: string;
+  severity: "high" | "medium" | "low";
+  whyItMatters: string;
+  clarificationQuestion: string;
+  scoringImplication: string;
+  readyForEvaluation: "yes" | "no" | "conditional";
+}
+
+export type CommercialLeverageType =
+  | "productivity_not_priced_back"
+  | "transition_fee_not_milestone_based"
+  | "weak_sla_credit_economics"
+  | "vague_exclusions_change_order_exposure"
+  | "rate_card_or_staffing_mix_issue"
+  | "outcome_claim_not_committed"
+  | "support_not_staffed"
+  | "pricing_not_comparable"
+  | "proposal_claim_not_supported"
+  | "commercial_exception_buyer_risk";
+
+export interface CommercialLeverageSeed {
+  seedId: string;
+  vendorId: string;
+  vendorName: string;
+  leverType: CommercialLeverageType;
+  finding: string;
+  evidenceLabel: string;
+  buyerRisk: string;
+  recommendedAsk: string;
+  bafoLanguage: string;
+  confidence: "high" | "medium" | "low";
+  estimatedImpact: string;
+}
+
+export interface VendorChallengeIntelligence {
+  sourceEventId: string;
+  tenantKey: string;
+  generatedAt: string;
+  challengeCount: number;
+  leverageSeedCount: number;
+  challengeLog: VendorChallengeLogEntry[];
+  leverageSeeds: CommercialLeverageSeed[];
+}
+
 // ── Normalization ───────────────────────────────────────────────────────────
 
 export type NormalizedCategory =

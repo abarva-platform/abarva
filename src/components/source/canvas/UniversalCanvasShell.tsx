@@ -151,6 +151,7 @@ import { StrategyStageView } from "./strategy/StrategyStageView";
 import { ScopeStageView } from "./scope/ScopeStageView";
 import { RfpStageView } from "./rfp/RfpStageView";
 import { ResponsesStageView } from "./responses/ResponsesStageView";
+import { VendorChallengeLeveragePanel } from "./responses/VendorChallengeLeveragePanel";
 import { VendorResponseProfilesPanel } from "./responses/VendorResponseProfilesPanel";
 import { EvaluationStageView } from "./evaluation/EvaluationStageView";
 import { PricingStageView } from "./pricing/PricingStageView";
@@ -159,7 +160,10 @@ import { ExecutiveDecisionStageView } from "./executive-decision/ExecutiveDecisi
 import { TransitionStageView } from "./transition/TransitionStageView";
 import { SimpleFrontErrorBoundary } from "./SimpleFrontErrorBoundary";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
-import type { VendorResponseProfileSet } from "@/lib/source/proposal-intelligence";
+import type {
+  VendorChallengeIntelligence,
+  VendorResponseProfileSet,
+} from "@/lib/source/proposal-intelligence";
 
 interface UniversalCanvasShellProps {
   event: Pick<
@@ -192,6 +196,7 @@ interface UniversalCanvasShellProps {
   decisionThreadId?: string | null;
   vendorResponseReadiness?: SourceVendorResponseCompleteness;
   vendorResponseProfiles?: VendorResponseProfileSet | null;
+  vendorChallengeIntelligence?: VendorChallengeIntelligence | null;
   workspaceExplorerEnabled?: boolean;
   strategyAutoDraftEnabled?: boolean;
   simpleFrontEnabled?: boolean;
@@ -206,6 +211,7 @@ function renderStageDocumentContent({
   documentTabContent,
   vendorResponseReadiness,
   vendorResponseProfiles,
+  vendorChallengeIntelligence,
   criteria,
   evidence,
   activityEntries,
@@ -224,6 +230,7 @@ function renderStageDocumentContent({
   documentTabContent: ReactNode;
   vendorResponseReadiness?: SourceVendorResponseCompleteness;
   vendorResponseProfiles?: VendorResponseProfileSet | null;
+  vendorChallengeIntelligence?: VendorChallengeIntelligence | null;
 }) {
   if (viewStage === "strategy") {
     return (
@@ -249,6 +256,7 @@ function renderStageDocumentContent({
       <ResponsesStageView
         readiness={vendorResponseReadiness}
         profileSet={vendorResponseProfiles}
+        challengeIntelligence={vendorChallengeIntelligence}
         documentWorkspace={documentTabContent}
       />
     );
@@ -326,6 +334,7 @@ export function UniversalCanvasShell({
   decisionThreadId = null,
   vendorResponseReadiness,
   vendorResponseProfiles,
+  vendorChallengeIntelligence,
   workspaceExplorerEnabled = false,
   strategyAutoDraftEnabled = false,
   simpleFrontEnabled = false,
@@ -1006,6 +1015,7 @@ export function UniversalCanvasShell({
         documentTabContent,
         vendorResponseReadiness,
         vendorResponseProfiles,
+        vendorChallengeIntelligence,
         criteria: stageCriteria,
         evidence: stageEvidence,
         activityEntries,
@@ -1150,6 +1160,14 @@ export function UniversalCanvasShell({
           vendorResponseProfiles?.profiles?.length ? (
             <div style={{ marginTop: 12 }}>
               <VendorResponseProfilesPanel profileSet={vendorResponseProfiles} />
+            </div>
+          ) : null}
+          {(viewStage === "responses" || viewStage === "vendor_responses") &&
+          vendorChallengeIntelligence ? (
+            <div style={{ marginTop: 12 }}>
+              <VendorChallengeLeveragePanel
+                intelligence={vendorChallengeIntelligence}
+              />
             </div>
           ) : null}
         </>

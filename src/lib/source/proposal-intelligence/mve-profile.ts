@@ -1,5 +1,9 @@
 import type {
+  CommercialLeverageSeed,
   VendorExtractionCard,
+  VendorChallengeIntelligence,
+  VendorChallengeIssueCategory,
+  VendorChallengeLogEntry,
   VendorResponseExhibitStatus,
   VendorResponsePricingSummary,
   VendorResponseProfile,
@@ -358,4 +362,288 @@ export function buildVendorResponseMveProfiles(
     profileCount: profiles.length,
     profiles,
   };
+}
+
+export function buildVendorChallengeIntelligence(
+  profileSet: VendorResponseProfileSet | null | undefined,
+): VendorChallengeIntelligence | null {
+  if (!profileSet?.profiles.length) return null;
+  const challengeLog = profileSet.profiles.flatMap((profile) =>
+    profile.extractionCards
+      .filter((card) => shouldChallengeCard(card))
+      .map((card, index) => challengeFromCard(profile, card, index)),
+  );
+  const leverageSeeds = challengeLog.map((challenge, index) =>
+    leverageSeedFromChallenge(challenge, index),
+  );
+
+  return {
+    sourceEventId: profileSet.sourceEventId,
+    tenantKey: profileSet.tenantKey,
+    generatedAt: profileSet.generatedAt,
+    challengeCount: challengeLog.length,
+    leverageSeedCount: leverageSeeds.length,
+    challengeLog,
+    leverageSeeds,
+  };
+}
+
+function shouldChallengeCard(card: VendorExtractionCard): boolean {
+  return (
+    card.structuredExhibitStatus !== "supported" ||
+    card.missingFields.length > 0 ||
+    /not fully|not backed|not staffed|weak|front-loaded|optional|exclusion|risk|slower|not comparable|commercial/i.test(
+      `${card.title} ${card.finding} ${card.recommendedAction}`,
+    )
+  );
+}
+
+function challengeFromCard(
+  profile: VendorResponseProfile,
+  card: VendorExtractionCard,
+  index: number,
+): VendorChallengeLogEntry {
+  const issueCategory = issueCategoryForCard(card);
+  const severity = severityForCard(card, profile);
+  return {
+    challengeId: `${profile.vendorId}-challenge-${String(index + 1).padStart(2, "0")}`,
+    vendorId: profile.vendorId,
+    vendorName: profile.vendorName,
+    issueCategory,
+    finding: card.finding,
+    evidenceLabel: card.evidenceReference ?? "Evidence not provided in the MVE profile",
+    severity,
+    whyItMatters: whyItMatters(issueCategory),
+    clarificationQuestion: clarificationQuestionForCard(card),
+    scoringImplication: scoringImplicationForCard(card, issueCategory),
+    readyForEvaluation: profile.readyForEvaluation,
+  };
+}
+
+function issueCategoryForCard(
+  card: VendorExtractionCard,
+): VendorChallengeIssueCategory {
+  if (card.type === "productivity") return "productivity_gap";
+  if (card.type === "pricing") return "pricing_gap";
+  if (card.type === "sla") return "sla_gap";
+  if (card.type === "staffing") return "staffing_coverage_gap";
+  if (card.type === "transition") return "transition_gap";
+  if (card.type === "assumption") return "assumption_exclusion_risk";
+  if (card.type === "exception") return "commercial_exception";
+  if (card.type === "claim") return "unsupported_claim";
+  return card.structuredExhibitStatus === "missing"
+    ? "evidence_missing"
+    : "unsupported_claim";
+}
+
+function severityForCard(
+  card: VendorExtractionCard,
+  profile: VendorResponseProfile,
+): VendorChallengeLogEntry["severity"] {
+  if (
+    card.structuredExhibitStatus === "missing" ||
+    profile.readyForEvaluation === "no" ||
+    /not staffed|not commercially|not comparable|buyer-risk|change-order|SLA cap|retained responsibilities/i.test(
+      `${card.title} ${card.finding}`,
+    )
+  ) {
+    return "high";
+  }
+  if (
+    card.structuredExhibitStatus === "partial" ||
+    card.missingFields.length > 0 ||
+    profile.readyForEvaluation === "conditional"
+  ) {
+    return "medium";
+  }
+  return "low";
+}
+
+function whyItMatters(issueCategory: VendorChallengeIssueCategory): string {
+  switch (issueCategory) {
+    case "productivity_gap":
+      return "The buyer may not receive the economic benefit of the vendor's productivity story unless it is backed by baseline, measurement, and commercial credit.";
+    case "pricing_gap":
+      return "Pricing that cannot be normalized can distort TCO, evaluation scoring, and BAFO leverage.";
+    case "sla_gap":
+      return "Weak remedies reduce accountability on services that matter to airline operations.";
+    case "staffing_coverage_gap":
+      return "Coverage claims without staffing detail create operational risk after transition.";
+    case "transition_gap":
+      return "Transition economics and milestones need to protect the buyer during knowledge transfer, cutover, and stabilization.";
+    case "assumption_exclusion_risk":
+      return "Assumptions can move cost, effort, or delivery risk back to the buyer after award.";
+    case "commercial_exception":
+      return "Commercial exceptions can weaken the buyer's contracted position even when the proposal reads well.";
+    case "scope_coverage_gap":
+      return "Scope gaps make vendor comparisons unreliable and can create post-award change orders.";
+    case "evidence_missing":
+      return "The evaluation team should not score the claim as proven until supporting evidence is supplied.";
+    case "unsupported_claim":
+    default:
+      return "A sourcing claim should not influence scoring or negotiation unless it is supported by a structured exhibit or citation.";
+  }
+}
+
+function clarificationQuestionForCard(card: VendorExtractionCard): string {
+  const missing = card.missingFields.length
+    ? ` Include ${card.missingFields.join(", ")}.`
+    : "";
+  return `${card.recommendedAction}${missing}`.trim();
+}
+
+function scoringImplicationForCard(
+  card: VendorExtractionCard,
+  issueCategory: VendorChallengeIssueCategory,
+): string {
+  if (issueCategory === "productivity_gap") {
+    return "Do not give full automation/productivity scoring credit until the economics are contractually committed.";
+  }
+  if (issueCategory === "staffing_coverage_gap") {
+    return "Treat coverage as conditional until staffing, location, and shift evidence reconcile to the support model.";
+  }
+  if (issueCategory === "sla_gap") {
+    return "Score SLA quality separately from SLA economics until the credit cap and chronic-miss terms are improved.";
+  }
+  if (issueCategory === "commercial_exception") {
+    return "Evaluate only after the exception is accepted, priced, or removed.";
+  }
+  if (card.structuredExhibitStatus === "supported") {
+    return "Can be scored with caveats if the buyer accepts the stated tradeoff.";
+  }
+  return "Treat as conditional before evaluation scoring.";
+}
+
+function leverageSeedFromChallenge(
+  challenge: VendorChallengeLogEntry,
+  index: number,
+): CommercialLeverageSeed {
+  const leverType = leverTypeForChallenge(challenge);
+  return {
+    seedId: `${challenge.vendorId}-leverage-${String(index + 1).padStart(2, "0")}`,
+    vendorId: challenge.vendorId,
+    vendorName: challenge.vendorName,
+    leverType,
+    finding: challenge.finding,
+    evidenceLabel: challenge.evidenceLabel,
+    buyerRisk: buyerRiskForLever(leverType),
+    recommendedAsk: recommendedAskForLever(leverType),
+    bafoLanguage: bafoLanguageForLever(leverType, challenge),
+    confidence: challenge.severity === "high" ? "high" : "medium",
+    estimatedImpact: estimatedImpactForLever(leverType),
+  };
+}
+
+function leverTypeForChallenge(
+  challenge: VendorChallengeLogEntry,
+): CommercialLeverageSeed["leverType"] {
+  switch (challenge.issueCategory) {
+    case "productivity_gap":
+      return "productivity_not_priced_back";
+    case "transition_gap":
+      return "transition_fee_not_milestone_based";
+    case "sla_gap":
+      return "weak_sla_credit_economics";
+    case "staffing_coverage_gap":
+      return "support_not_staffed";
+    case "pricing_gap":
+      return "pricing_not_comparable";
+    case "assumption_exclusion_risk":
+      return "vague_exclusions_change_order_exposure";
+    case "commercial_exception":
+      return "commercial_exception_buyer_risk";
+    case "scope_coverage_gap":
+      return "pricing_not_comparable";
+    case "evidence_missing":
+      return "proposal_claim_not_supported";
+    case "unsupported_claim":
+    default:
+      return "outcome_claim_not_committed";
+  }
+}
+
+function buyerRiskForLever(type: CommercialLeverageSeed["leverType"]): string {
+  switch (type) {
+    case "productivity_not_priced_back":
+      return "Transformation upside remains with the vendor unless savings are priced back or gainshared.";
+    case "transition_fee_not_milestone_based":
+      return "Buyer pays before knowledge transfer, cutover, and stabilization outcomes are accepted.";
+    case "weak_sla_credit_economics":
+      return "Operational misses may be cheaper for the vendor than service recovery.";
+    case "support_not_staffed":
+      return "The promised operating model may fail during peak or 24x7 coverage windows.";
+    case "pricing_not_comparable":
+      return "Evaluation may select the wrong vendor because cost scope is not apples-to-apples.";
+    case "vague_exclusions_change_order_exposure":
+      return "Post-award change orders may absorb expected savings.";
+    case "rate_card_or_staffing_mix_issue":
+      return "The delivery economics may depend on an unstated or unstable role mix.";
+    case "commercial_exception_buyer_risk":
+      return "Contract protections may be weaker than the proposal narrative implies.";
+    case "outcome_claim_not_committed":
+    case "proposal_claim_not_supported":
+    default:
+      return "The proposal can influence perception without creating a binding delivery obligation.";
+  }
+}
+
+function recommendedAskForLever(type: CommercialLeverageSeed["leverType"]): string {
+  switch (type) {
+    case "productivity_not_priced_back":
+      return "Require a year-by-year productivity credit or gainshare schedule tied to baseline volume and automation delivery.";
+    case "transition_fee_not_milestone_based":
+      return "Put a meaningful portion of transition fees at risk behind accepted KT, cutover, and stabilization milestones.";
+    case "weak_sla_credit_economics":
+      return "Increase service-credit caps, add chronic-miss escalators, and limit earn-back rights for critical services.";
+    case "support_not_staffed":
+      return "Require a shift, location, and FTE coverage table that reconciles to 24x7 and critical-app commitments.";
+    case "pricing_not_comparable":
+      return "Normalize all optional, pass-through, retained-effort, and excluded-scope costs before scoring.";
+    case "vague_exclusions_change_order_exposure":
+      return "Convert vague exclusions into priced, accepted, or removed positions before BAFO.";
+    case "commercial_exception_buyer_risk":
+      return "Require the vendor to remove, price, or explicitly flag each buyer-risk exception for executive decision.";
+    case "rate_card_or_staffing_mix_issue":
+      return "Require role-level rate card, pyramid, location mix, and substitution rules.";
+    case "outcome_claim_not_committed":
+    case "proposal_claim_not_supported":
+    default:
+      return "Require the claim to be added to the vendor claim register with evidence, owner, measure, and remedy.";
+  }
+}
+
+function bafoLanguageForLever(
+  type: CommercialLeverageSeed["leverType"],
+  challenge: VendorChallengeLogEntry,
+): string {
+  if (type === "productivity_not_priced_back") {
+    return "Please provide a year-by-year productivity credit schedule, including baseline volumes, automation use cases, measurement method, and financial credit if committed productivity is not achieved.";
+  }
+  if (type === "support_not_staffed") {
+    return "Please reconcile the proposed coverage model to a staffing table by role, shift, location, and critical application tier.";
+  }
+  if (type === "transition_fee_not_milestone_based") {
+    return "Please revise transition pricing so payment is tied to accepted knowledge transfer, cutover, stabilization, and exit criteria.";
+  }
+  if (type === "weak_sla_credit_economics") {
+    return "Please improve service-credit economics for critical services, including cap, chronic-miss escalation, earn-back rules, and reporting cadence.";
+  }
+  return `Please address this BAFO issue before evaluation scoring: ${challenge.clarificationQuestion}`;
+}
+
+function estimatedImpactForLever(type: CommercialLeverageSeed["leverType"]): string {
+  switch (type) {
+    case "productivity_not_priced_back":
+      return "Potential multi-year run-rate improvement if converted into price-down or gainshare.";
+    case "transition_fee_not_milestone_based":
+      return "Reduces transition cash-flow and delivery acceptance risk.";
+    case "weak_sla_credit_economics":
+      return "Improves operational accountability without inventing new savings.";
+    case "support_not_staffed":
+      return "Reduces service-failure and retained-team backfill risk.";
+    case "pricing_not_comparable":
+      return "Improves TCO comparability before executive decision.";
+    default:
+      return "Qualitative negotiation leverage; value depends on vendor BAFO response.";
+  }
 }
