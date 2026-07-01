@@ -45,6 +45,9 @@ Tower advisory posture questions now use the governed Tower portfolio value fact
 - Signed-in live trace on the intent follow-up passed 6/7 canaries and exposed one remaining route miss: advisor-posture phrasing was registered in the Tower question contract but was not admitted by the outer Atlas governed-Tower candidate gate, so it fell through to the general path and was correctly blocked by the visible-answer contract. The routing hotfix adds advisor/morning-brief/posture phrases to the governed Tower gate and adds an Atlas-boundary regression test.
 - `npx jest src/lib/atlas/__tests__/orchestrator-governed-tower.test.ts src/lib/cio-tower/__tests__/answer.test.ts src/lib/cio-tower/__tests__/answer-contract.test.ts --runInBand` passed after the routing hotfix: 3 suites, 34 tests.
 - `npx eslint src/lib/atlas/tower-factual-spine.ts src/lib/atlas/__tests__/orchestrator-governed-tower.test.ts src/lib/cio-tower/answer.ts scripts/qa/tower-prompt-raw-render-trace.mjs` passed after the routing hotfix.
+- The deployed routing hotfix passed the signed-in Tower prompt/raw/render trace 7/7 on the latest `main` ACA image, but browser-visible `/tower` still exposed the legacy generic demo-safe label `Airline Demo`. The browser-label follow-up keeps the Tower page on the Tower canonical display-name resolver so signed-in executive chrome shows `SkyHarbor Air` while leaving non-Tower demo-safe mapping untouched.
+- `npx jest src/lib/cio-tower/__tests__/answer.test.ts src/lib/atlas/__tests__/orchestrator-governed-tower.test.ts --runInBand` passed after the browser-label follow-up: 2 suites, 28 tests.
+- `npx eslint src/app/'(maestro)'/tower/page.tsx src/lib/cio-tower/metric-packet.ts src/lib/cio-tower/__tests__/answer.test.ts src/lib/atlas/__tests__/orchestrator-governed-tower.test.ts` passed after the browser-label follow-up.
 
 ## Rollout Plan
 
@@ -70,7 +73,7 @@ Revert the PR and redeploy `main` through the ACA main deploy workflow. If the l
 
 ## Audit Evidence
 
-- PR URL: #4284, #4287, #4290, and routing hotfix PR to be added after creation.
+- PR URL: #4284, #4287, #4290, #4293, and browser-label follow-up PR to be added after creation.
 - CI run: To be added after PR checks.
 - Local proof: Jest, ESLint, loader dry-run, and `release:check`.
 - Live proof: To be added after deploy and signed-in trace.
@@ -78,4 +81,4 @@ Revert the PR and redeploy `main` through the ACA main deploy workflow. If the l
 ## Known Gaps
 
 - This is not a full physical advisor-brief cache table. It is the first governed fast path for CIO advisor posture using existing Tower facts and measure packets.
-- The intent follow-up merged, deployed, and VNet-refreshed successfully. The remaining release closure item is the routing hotfix deploy plus a clean signed-in Tower prompt/raw/render trace.
+- The intent follow-up merged, deployed, and VNet-refreshed successfully. The routing hotfix is merged, deployed, and signed-in trace clean. The remaining release closure item is the browser-label follow-up deploy plus clean signed-in browser-visible Tower proof.
