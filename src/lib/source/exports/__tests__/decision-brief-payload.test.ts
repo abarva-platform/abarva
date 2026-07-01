@@ -68,6 +68,7 @@ describe("Source decision brief export payload", () => {
     expect(payload.body).toContain("### Vendor C");
     expect(payload.body).toContain("Scorecard rationale:");
     expect(payload.body).toContain("> **Decision required:**");
+    expect(payload.body).not.toContain("Airline Demo");
     for (const section of DECISION_BRIEF_REQUIRED_SECTIONS) {
       expect(payload.body).toContain(`## ${section}`);
     }
