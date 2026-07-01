@@ -1003,7 +1003,7 @@ function parseEvaluationScoreImpact(
   if (!vendorName) return null;
   const excerpt = cleanEvidenceExcerpt(item.excerpt);
   const movement = excerpt.match(
-    /Score movement:\s*([0-9.]+)\s+to\s+([0-9.]+).*?delta\s+\+?([0-9.]+)/i,
+    /Score movement:\s*([0-9]+(?:\.[0-9]+)?)\s+to\s+([0-9]+(?:\.[0-9]+)?).*?delta\s+\+?([0-9]+(?:\.[0-9]+)?)/i,
   );
   const cure = excerpt.match(/BAFO cure:\s*(.*?)(?:\s+Required evidence:|$)/i)?.[1]?.trim() ?? "";
   const decisionImpact =
@@ -1019,7 +1019,7 @@ function parseEvaluationScoreImpact(
 }
 
 function formatScoreImpact(impact: EvaluationScoreImpact): string {
-  return `${impact.vendorName} can move from ${impact.currentScore} to ${impact.potentialScore} (+${impact.delta}) if BAFO cures ${impact.cure.toLowerCase()} ${impact.decisionImpact}`;
+  return `${impact.vendorName} can move from ${impact.currentScore} to ${impact.potentialScore} (+${impact.delta}) if BAFO provides this cure: ${impact.cure} ${impact.decisionImpact}`;
 }
 
 function findVendorFromComparison(
