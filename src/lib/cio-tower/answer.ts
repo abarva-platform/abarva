@@ -759,22 +759,109 @@ function loadedName(row: CioTowerFactRow, fallback: string): string {
   return fallback;
 }
 
-function buildTowerTopProgramsTable(facts: readonly CioTowerFactRow[], limit = 10): CioTowerVisibleTable | null {
-  const programFacts = facts
-    .filter((fact) => fact.view === 'initiative_budget' && fact.value_numeric !== null && fact.value_numeric !== undefined)
-    .sort((left, right) => Number(right.value_numeric ?? 0) - Number(left.value_numeric ?? 0))
+interface ProgramValueProfile {
+  name: string;
+  owner: string;
+  blocker: string;
+  budgetNumeric: number;
+  budget: string;
+  promisedValueNumeric: number;
+  promisedValue: string;
+  measuredValueNumeric: number;
+  measuredValue: string;
+  valueGap: string;
+  evidenceStatus: string;
+  confidence: string;
+}
+
+function profileGroupKey(row: CioTowerFactRow): string {
+  return row.entity_key
+    ?? attributeText(row, 'initiative_id')
+    ?? attributeText(row, 'program_id')
+    ?? attributeText(row, 'source_record_id')
+    ?? row.entity_display_name
+    ?? row.fact_key;
+}
+
+function profileAmount(row: CioTowerFactRow, kind: 'budget' | 'promised' | 'measured'): number {
+  const numeric = Number(row.value_numeric ?? 0);
+  if (!Number.isFinite(numeric) || numeric <= 0) return 0;
+  if (kind === 'budget') {
+    return row.view === 'initiative_budget' && row.period.toLowerCase() === 'fy26' ? numeric : 0;
+  }
+  if (row.view !== 'value') return 0;
+  const measure = row.measure.toLowerCase();
+  const basis = row.basis.toLowerCase();
+  if (kind === 'promised') {
+    return basis === 'forecast' || measure.includes('promised') || measure.includes('benefit') ? numeric : 0;
+  }
+  return basis === 'actual' || basis === 'measured' || measure.includes('measured') || measure.includes('realized') ? numeric : 0;
+}
+
+function firstAttribute(rows: readonly CioTowerFactRow[], keys: readonly string[], fallback: string): string {
+  for (const row of rows) {
+    for (const key of keys) {
+      const value = attributeText(row, key);
+      if (value) return value;
+    }
+  }
+  return fallback;
+}
+
+function programValueProfiles(facts: readonly CioTowerFactRow[], limit = 10): ProgramValueProfile[] {
+  const grouped = new Map<string, CioTowerFactRow[]>();
+  for (const fact of facts) {
+    if (!['initiative_budget', 'value'].includes(fact.view)) continue;
+    const key = profileGroupKey(fact);
+    grouped.set(key, [...(grouped.get(key) ?? []), fact]);
+  }
+
+  return Array.from(grouped.values())
+    .map((group, index) => {
+      const budgetNumeric = group.reduce((sum, row) => sum + profileAmount(row, 'budget'), 0);
+      const promisedValueNumeric = group.reduce((sum, row) => sum + profileAmount(row, 'promised'), 0);
+      const measuredValueNumeric = group.reduce((sum, row) => sum + profileAmount(row, 'measured'), 0);
+      const valueGapNumeric = promisedValueNumeric > 0
+        ? Math.max(promisedValueNumeric - measuredValueNumeric, 0)
+        : null;
+      const primary = group[0] as CioTowerFactRow;
+      return {
+        name: loadedName(primary, 'Program name not loaded'),
+        owner: firstAttribute(group, ['owner_role', 'owner_name', 'owner', 'business_sponsor_role'], 'Owner not loaded'),
+        blocker: firstAttribute(group, ['primary_blocker', 'blocker', 'status_summary'], 'No blocker loaded'),
+        budgetNumeric,
+        budget: budgetNumeric > 0 ? formatCioTowerMoney(budgetNumeric) : 'gap',
+        promisedValueNumeric,
+        promisedValue: promisedValueNumeric > 0 ? formatCioTowerMoney(promisedValueNumeric) : 'gap',
+        measuredValueNumeric,
+        measuredValue: measuredValueNumeric > 0 ? formatCioTowerMoney(measuredValueNumeric) : 'gap',
+        valueGap: valueGapNumeric === null ? 'gap' : formatCioTowerMoney(valueGapNumeric),
+        evidenceStatus: firstAttribute(group, ['evidence_status', 'value_confidence', 'finance_attested'], 'Evidence status not loaded'),
+        confidence: group.map((row) => row.confidence).sort((left, right) => ['high', 'medium', 'low', 'not_loaded'].indexOf(left) - ['high', 'medium', 'low', 'not_loaded'].indexOf(right))[0] ?? 'not_loaded',
+      };
+    })
+    .filter((profile) => profile.budgetNumeric > 0 || profile.promisedValueNumeric > 0 || profile.measuredValueNumeric > 0)
+    .sort((left, right) => right.budgetNumeric - left.budgetNumeric)
     .slice(0, limit);
-  if (programFacts.length === 0) return null;
+}
+
+function buildTowerTopProgramsTable(facts: readonly CioTowerFactRow[], limit = 10): CioTowerVisibleTable | null {
+  const profiles = programValueProfiles(facts, limit);
+  if (profiles.length === 0) return null;
   return {
     id: 'top_it_programs_by_budget',
-    title: 'Top loaded IT programs by FY26 budget',
-    columns: ['Rank', 'Program', 'FY26 budget', 'Basis', 'Confidence'],
-    rows: programFacts.map((fact, index) => [
+    title: 'Top IT programs by budget and value proof',
+    columns: ['Rank', 'Program', 'Owner', 'FY26 budget', 'Promised value', 'Measured value', 'Value gap', 'Evidence', 'Blocker'],
+    rows: profiles.map((profile, index) => [
       String(index + 1),
-      loadedName(fact, 'Program name not loaded'),
-      factValue(fact),
-      fact.basis || 'loaded',
-      fact.confidence || 'unknown',
+      profile.name,
+      profile.owner,
+      profile.budget,
+      profile.promisedValue,
+      profile.measuredValue,
+      profile.valueGap,
+      profile.evidenceStatus,
+      profile.blocker,
     ]),
   };
 }
@@ -792,7 +879,7 @@ function buildCioTowerDeterministicMetricAnswer(context: CioTowerPromptContext):
     if (!table) return null;
     const initiativeBudget = context.metricPackets.find((packet) => packet.measureKey === 'initiative_budget_fy26');
     const topProgram = table.rows[0]?.[1] ?? 'the largest loaded program';
-    const topBudget = table.rows[0]?.[2] ?? 'not loaded';
+    const topBudget = table.rows[0]?.[3] ?? 'not loaded';
     const aggregateSentence = initiativeBudget?.valueNumeric
       ? ` The loaded FY26 initiative budget total is ${initiativeBudget.displayValue}.`
       : '';
@@ -893,7 +980,7 @@ async function loadMeasures(tenantKey: string): Promise<CioTowerMeasureResult[]>
 }
 
 function factWhereForContract(contract: CioTowerContract): { views: string[]; limit: number } {
-  if (contract.contract_key === 'tower_top_it_programs_by_budget') return { views: ['initiative_budget'], limit: 30 };
+  if (contract.contract_key === 'tower_top_it_programs_by_budget') return { views: ['initiative_budget', 'value'], limit: 120 };
   if (contract.contract_key === 'tower_total_it_spend') return { views: ['it_budget'], limit: 20 };
   if (contract.contract_key === 'tower_run_change_split') return { views: ['it_budget'], limit: 25 };
   if (contract.contract_key === 'tower_value_realization') return { views: ['value', 'initiative_budget'], limit: 30 };

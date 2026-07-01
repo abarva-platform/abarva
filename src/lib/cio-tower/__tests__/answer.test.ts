@@ -77,6 +77,54 @@ function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPrompt
       source_row: '12',
       attributes: {},
       },
+      {
+        fact_key: 'fact-value-1',
+        entity_key: 'initiative-1',
+        entity_type: 'initiative',
+        entity_display_name: 'Crew Recovery & Legality Modernization',
+        measure: 'promised_benefit_usd',
+        scope: 'initiative',
+        view: 'value',
+        amount_type: 'none',
+        basis: 'forecast',
+        period: 'fy26',
+        value_numeric: '270000000',
+        value_text: null,
+        unit: 'usd',
+        value_source: 'tenant_file',
+        confidence: 'high',
+        source_key: 'source-value',
+        source_row: '12',
+        attributes: {
+          owner_role: 'VP Integration',
+          evidence_status: 'source cited',
+          primary_blocker: 'Crew legality and data readiness',
+        },
+      },
+      {
+        fact_key: 'fact-measured-1',
+        entity_key: 'initiative-1',
+        entity_type: 'initiative',
+        entity_display_name: 'Crew Recovery & Legality Modernization',
+        measure: 'measured_value_usd',
+        scope: 'initiative',
+        view: 'value',
+        amount_type: 'none',
+        basis: 'actual',
+        period: 'ytd',
+        value_numeric: '91800000',
+        value_text: null,
+        unit: 'usd',
+        value_source: 'tenant_file',
+        confidence: 'high',
+        source_key: 'source-value',
+        source_row: '12',
+        attributes: {
+          owner_role: 'VP Integration',
+          evidence_status: 'source cited',
+          primary_blocker: 'Crew legality and data readiness',
+        },
+      },
     ],
     relationships: [],
     gaps: ['Actual spend YTD is missing or not separately loaded.'],
@@ -188,7 +236,7 @@ describe('cio tower answer contract', () => {
         artifact_type: 'table',
         examples: [],
       }),
-    ).toEqual({ views: ['initiative_budget'], limit: 30 });
+    ).toEqual({ views: ['initiative_budget', 'value'], limit: 120 });
   });
 
   it('routes IT budget slice questions to the IT-budget contract', () => {
@@ -340,9 +388,19 @@ describe('cio tower answer contract', () => {
     expect(output?.output.tables).toEqual([
       {
         id: 'top_it_programs_by_budget',
-        title: 'Top loaded IT programs by FY26 budget',
-        columns: ['Rank', 'Program', 'FY26 budget', 'Basis', 'Confidence'],
-        rows: [['1', 'Crew Recovery & Legality Modernization', '$28.3M', 'committed', 'high']],
+        title: 'Top IT programs by budget and value proof',
+        columns: ['Rank', 'Program', 'Owner', 'FY26 budget', 'Promised value', 'Measured value', 'Value gap', 'Evidence', 'Blocker'],
+        rows: [[
+          '1',
+          'Crew Recovery & Legality Modernization',
+          'VP Integration',
+          '$28.3M',
+          '$270.0M',
+          '$91.8M',
+          '$178.2M',
+          'source cited',
+          'Crew legality and data readiness',
+        ]],
       },
     ]);
     expect(

@@ -48,6 +48,24 @@ export interface CioTowerCxoTableRow {
   source: string;
 }
 
+export interface CioTowerPortfolioValueRow {
+  program: string;
+  owner: string;
+  blocker: string;
+  budgetNumeric: number | null;
+  budget: string;
+  promisedValueNumeric: number | null;
+  promisedValue: string;
+  measuredValueNumeric: number | null;
+  measuredValue: string;
+  valueGapNumeric: number | null;
+  valueGap: string;
+  evidenceStatus: string;
+  confidence: string;
+  source: string;
+  sourceFactKeys: string[];
+}
+
 export interface CioTowerCxoBenchmarkRow {
   tenantKey: string;
   label: string;
@@ -69,6 +87,7 @@ export interface CioTowerCxoViewModel {
   sections: Array<{ key: CioTowerCxoSectionKey; label: string; purpose: string }>;
   cards: CioTowerCxoMeasureCard[];
   portfolioRows: CioTowerCxoTableRow[];
+  portfolioValueRows: CioTowerPortfolioValueRow[];
   vendorRows: CioTowerCxoTableRow[];
   trustRows: CioTowerCxoTableRow[];
   benchmarkRows: CioTowerCxoBenchmarkRow[];
@@ -91,6 +110,7 @@ interface MeasureResultRow {
 
 interface FactEvidenceRow {
   fact_key: string;
+  entity_key: string | null;
   entity_type: string | null;
   entity_display_name: string | null;
   measure: string;
@@ -105,6 +125,7 @@ interface FactEvidenceRow {
   source_row: string | null;
   source_file: string | null;
   source_system: string | null;
+  attributes: Record<string, unknown> | null;
 }
 
 const CXO_SECTIONS: CioTowerCxoViewModel['sections'] = [
@@ -231,6 +252,103 @@ function tableRowsFromFacts(rows: FactEvidenceRow[]): CioTowerCxoTableRow[] {
   }));
 }
 
+function attributeText(row: FactEvidenceRow, key: string): string | null {
+  const value = row.attributes?.[key];
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
+
+function groupKeyForPortfolioValue(row: FactEvidenceRow): string {
+  return row.entity_key
+    ?? attributeText(row, 'initiative_id')
+    ?? attributeText(row, 'program_id')
+    ?? attributeText(row, 'source_record_id')
+    ?? row.entity_display_name
+    ?? row.fact_key;
+}
+
+function programLabel(row: FactEvidenceRow, fallback: string): string {
+  return attributeText(row, 'initiative_name')
+    ?? attributeText(row, 'program_name')
+    ?? attributeText(row, 'business_name')
+    ?? attributeText(row, 'name')
+    ?? row.entity_display_name
+    ?? fallback;
+}
+
+function portfolioValueAmount(row: FactEvidenceRow, kind: 'budget' | 'promised' | 'measured'): number | null {
+  const value = numericMetricValue(row.value_numeric);
+  if (value === null) return null;
+  if (kind === 'budget') {
+    return row.view === 'initiative_budget' && row.period.toLowerCase() === 'fy26' ? value : null;
+  }
+  if (row.view !== 'value') return null;
+  const measure = row.measure.toLowerCase();
+  const basis = row.basis.toLowerCase();
+  if (kind === 'promised') {
+    return basis === 'forecast' || measure.includes('promised') || measure.includes('benefit') ? value : null;
+  }
+  return basis === 'actual' || basis === 'measured' || measure.includes('measured') || measure.includes('realized') ? value : null;
+}
+
+function firstBusinessText(rows: FactEvidenceRow[], keys: string[], fallback: string): string {
+  for (const row of rows) {
+    for (const key of keys) {
+      const value = attributeText(row, key);
+      if (value) return value;
+    }
+  }
+  return fallback;
+}
+
+function highestConfidence(rows: FactEvidenceRow[]): string {
+  const order = ['high', 'medium', 'low', 'not_loaded'];
+  return rows
+    .map((row) => row.confidence)
+    .sort((left, right) => order.indexOf(left) - order.indexOf(right))[0] ?? 'not_loaded';
+}
+
+function buildPortfolioValueRows(rows: FactEvidenceRow[]): CioTowerPortfolioValueRow[] {
+  const grouped = new Map<string, FactEvidenceRow[]>();
+  for (const row of rows) {
+    if (!['initiative_budget', 'value'].includes(row.view)) continue;
+    const key = groupKeyForPortfolioValue(row);
+    grouped.set(key, [...(grouped.get(key) ?? []), row]);
+  }
+
+  return Array.from(grouped.values())
+    .map((group, index) => {
+      const budgetNumeric = group.reduce((sum, row) => sum + (portfolioValueAmount(row, 'budget') ?? 0), 0);
+      const promisedValueNumeric = group.reduce((sum, row) => sum + (portfolioValueAmount(row, 'promised') ?? 0), 0);
+      const measuredValueNumeric = group.reduce((sum, row) => sum + (portfolioValueAmount(row, 'measured') ?? 0), 0);
+      const hasBudget = budgetNumeric > 0;
+      const hasPromised = promisedValueNumeric > 0;
+      const hasMeasured = measuredValueNumeric > 0;
+      const valueGapNumeric = hasPromised ? Math.max(promisedValueNumeric - measuredValueNumeric, 0) : null;
+      const sourceFacts = Array.from(new Set(group.map((row) => row.fact_key)));
+      const primary = group[0] as FactEvidenceRow;
+      return {
+        program: programLabel(primary, 'Program name not loaded'),
+        owner: firstBusinessText(group, ['owner_role', 'owner_name', 'owner', 'business_sponsor_role'], 'Owner not loaded'),
+        blocker: firstBusinessText(group, ['primary_blocker', 'blocker', 'status_summary'], 'No blocker loaded'),
+        budgetNumeric: hasBudget ? budgetNumeric : null,
+        budget: hasBudget ? formatCioTowerMoney(budgetNumeric) : 'gap',
+        promisedValueNumeric: hasPromised ? promisedValueNumeric : null,
+        promisedValue: hasPromised ? formatCioTowerMoney(promisedValueNumeric) : 'gap',
+        measuredValueNumeric: hasMeasured ? measuredValueNumeric : null,
+        measuredValue: hasMeasured ? formatCioTowerMoney(measuredValueNumeric) : 'gap',
+        valueGapNumeric,
+        valueGap: valueGapNumeric === null ? 'gap' : formatCioTowerMoney(valueGapNumeric),
+        evidenceStatus: firstBusinessText(group, ['evidence_status', 'value_confidence', 'finance_attested'], 'Evidence status not loaded'),
+        confidence: highestConfidence(group),
+        source: sourceLabel(primary),
+        sourceFactKeys: sourceFacts,
+      };
+    })
+    .filter((row) => row.budgetNumeric !== null || row.promisedValueNumeric !== null || row.measuredValueNumeric !== null)
+    .sort((left, right) => (right.budgetNumeric ?? 0) - (left.budgetNumeric ?? 0))
+    .slice(0, 12);
+}
+
 async function loadMeasureRows(tenantKey: string): Promise<MeasureResultRow[]> {
   return azureRead.query<MeasureResultRow>(
     `select mr.measure_key, m.label, m.description, mr.period, mr.basis, mr.scope,
@@ -247,9 +365,9 @@ async function loadMeasureRows(tenantKey: string): Promise<MeasureResultRow[]> {
 async function loadFactsByKeys(tenantKey: string, factKeys: string[]): Promise<FactEvidenceRow[]> {
   if (factKeys.length === 0) return [];
   return azureRead.query<FactEvidenceRow>(
-    `select f.fact_key, f.entity_type, e.display_name as entity_display_name,
+    `select f.fact_key, f.entity_key, f.entity_type, e.display_name as entity_display_name,
             f.measure, f.view, f.period, f.basis, f.confidence, f.value_numeric, f.value_text,
-            f.unit, f.source_key, f.source_row, sr.source_file, sr.source_system
+            f.unit, f.source_key, f.source_row, sr.source_file, sr.source_system, f.attributes
        from cio_tower.facts f
        left join cio_tower.entities e on e.entity_key = f.entity_key
        left join cio_tower.source_registry sr on sr.source_key = f.source_key
@@ -263,9 +381,9 @@ async function loadFactsByKeys(tenantKey: string, factKeys: string[]): Promise<F
 
 async function loadFactsForViews(tenantKey: string, views: string[], limit: number): Promise<FactEvidenceRow[]> {
   return azureRead.query<FactEvidenceRow>(
-    `select f.fact_key, f.entity_type, e.display_name as entity_display_name,
+    `select f.fact_key, f.entity_key, f.entity_type, e.display_name as entity_display_name,
             f.measure, f.view, f.period, f.basis, f.confidence, f.value_numeric, f.value_text,
-            f.unit, f.source_key, f.source_row, sr.source_file, sr.source_system
+            f.unit, f.source_key, f.source_row, sr.source_file, sr.source_system, f.attributes
        from cio_tower.facts f
        left join cio_tower.entities e on e.entity_key = f.entity_key
        left join cio_tower.source_registry sr on sr.source_key = f.source_key
@@ -280,9 +398,9 @@ async function loadFactsForViews(tenantKey: string, views: string[], limit: numb
 
 async function loadTrustFacts(tenantKey: string): Promise<FactEvidenceRow[]> {
   return azureRead.query<FactEvidenceRow>(
-    `select f.fact_key, f.entity_type, e.display_name as entity_display_name,
+    `select f.fact_key, f.entity_key, f.entity_type, e.display_name as entity_display_name,
             f.measure, f.view, f.period, f.basis, f.confidence, f.value_numeric, f.value_text,
-            f.unit, f.source_key, f.source_row, sr.source_file, sr.source_system
+            f.unit, f.source_key, f.source_row, sr.source_file, sr.source_system, f.attributes
        from cio_tower.facts f
        left join cio_tower.entities e on e.entity_key = f.entity_key
        left join cio_tower.source_registry sr on sr.source_key = f.source_key
@@ -373,7 +491,7 @@ export async function loadCioTowerCxoView(args: {
     const allSourceFactKeys = Array.from(new Set(measureRows.flatMap((row) => row.source_fact_keys ?? [])));
     const [measureEvidenceRows, portfolioFacts, vendorFacts, trustFacts, benchmarkRows] = await Promise.all([
       loadFactsByKeys(tenantKey, allSourceFactKeys),
-      loadFactsForViews(tenantKey, ['initiative_budget', 'value', 'it_budget'], 10),
+      loadFactsForViews(tenantKey, ['initiative_budget', 'value', 'it_budget'], 240),
       loadFactsForViews(tenantKey, ['vendor_contract'], 8),
       loadTrustFacts(tenantKey),
       loadBenchmarkRows(tenantKey),
@@ -410,6 +528,7 @@ export async function loadCioTowerCxoView(args: {
       sections: CXO_SECTIONS,
       cards,
       portfolioRows: tableRowsFromFacts(portfolioFacts),
+      portfolioValueRows: buildPortfolioValueRows(portfolioFacts),
       vendorRows: tableRowsFromFacts(vendorFacts),
       trustRows: tableRowsFromFacts(trustFacts),
       benchmarkRows,
