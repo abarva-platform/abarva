@@ -172,11 +172,16 @@ const CSS = `
 .iv2 .researchAxis{position:absolute;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
 .iv2 .researchAxis.y{left:15px;top:0;bottom:0;display:flex;align-items:center;writing-mode:vertical-rl;transform:rotate(180deg)}
 .iv2 .researchAxis.x{right:42px;bottom:15px}
-.iv2 .researchPoint{position:absolute;z-index:2;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px;max-width:46%}
+.iv2 .researchPoint{position:absolute;z-index:2;transform:translate(-50%,-50%);display:flex;align-items:center;gap:6px;max-width:34%}
+.iv2 .researchPoint[data-label-placement="left"]{flex-direction:row-reverse}
+.iv2 .researchPoint[data-label-placement="left"] .researchPointLabel{text-align:right}
+.iv2 .researchPoint[data-label-placement="above"]{flex-direction:column-reverse;align-items:center;gap:4px}
+.iv2 .researchPoint[data-label-placement="below"]{flex-direction:column;align-items:center;gap:4px}
+.iv2 .researchPoint[data-label-placement="above"] .researchPointLabel,.iv2 .researchPoint[data-label-placement="below"] .researchPointLabel{text-align:center;max-width:118px}
 .iv2 .researchDot{width:var(--dot,16px);height:var(--dot,16px);border-radius:50%;background:var(--green);box-shadow:0 0 0 5px rgba(31,107,58,.14),0 8px 18px -8px rgba(31,107,58,.55);flex:none}
 .iv2 .researchPoint[data-risk="gated"] .researchDot{background:var(--amber);box-shadow:0 0 0 5px rgba(166,106,31,.13),0 8px 18px -8px rgba(166,106,31,.52)}
 .iv2 .researchPoint[data-risk="risk"] .researchDot{background:#8C4B35;box-shadow:0 0 0 5px rgba(140,75,53,.13),0 8px 18px -8px rgba(140,75,53,.52)}
-.iv2 .researchPointLabel{font-size:11.5px;font-weight:700;line-height:1.16;color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.92),0 0 8px rgba(255,255,255,.86);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.iv2 .researchPointLabel{font-size:10.25px;font-weight:700;line-height:1.12;color:var(--ink);max-width:132px;text-shadow:0 1px 0 rgba(255,255,255,.92),0 0 8px rgba(255,255,255,.86);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .iv2 .researchTooltip{position:absolute;left:50%;top:calc(100% + 10px);width:220px;transform:translate(-50%,6px);background:#FFFEFB;border:1px solid var(--line);border-radius:10px;padding:12px;box-shadow:0 18px 38px -16px rgba(40,35,24,.36);opacity:0;visibility:hidden;transition:opacity .15s ease,transform .15s ease;z-index:8}
 .iv2 .researchPoint:hover .researchTooltip{opacity:1;visibility:visible;transform:translate(-50%,0)}
 .iv2 .researchTooltipTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:15px;line-height:1.18;font-weight:500;color:var(--ink);margin-bottom:7px}
@@ -227,10 +232,15 @@ const CSS = `
 .iv2 .matrixZoneLabel{position:absolute;right:14%;top:14%;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#1F6B3A}
 .iv2 .matrixLowLabel{position:absolute;left:14%;bottom:14%;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
 .iv2 .matrixDivider{position:absolute;left:12%;right:12%;top:50%;border-top:1px dashed #D8D2C5}
-.iv2 .matrixPoint{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px;max-width:46%}
+.iv2 .matrixPoint{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:6px;max-width:34%}
+.iv2 .matrixPoint[data-label-placement="left"]{flex-direction:row-reverse}
+.iv2 .matrixPoint[data-label-placement="left"] .matrixLabel{text-align:right}
+.iv2 .matrixPoint[data-label-placement="above"]{flex-direction:column-reverse;align-items:center;gap:4px}
+.iv2 .matrixPoint[data-label-placement="below"]{flex-direction:column;align-items:center;gap:4px}
+.iv2 .matrixPoint[data-label-placement="above"] .matrixLabel,.iv2 .matrixPoint[data-label-placement="below"] .matrixLabel{text-align:center;max-width:118px}
 .iv2 .matrixDot{width:var(--dot,14px);height:var(--dot,14px);border-radius:50%;background:#1F6B3A;box-shadow:0 0 0 5px rgba(31,107,58,.14);flex:none}
 .iv2 .matrixDot.highRisk{background:#A66A1F;box-shadow:0 0 0 4px rgba(166,106,31,.15)}
-.iv2 .matrixLabel{font-size:11.5px;font-weight:650;line-height:1.2;color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.92),0 0 8px rgba(255,255,255,.86);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.iv2 .matrixLabel{font-size:10.25px;font-weight:650;line-height:1.12;color:var(--ink);max-width:132px;text-shadow:0 1px 0 rgba(255,255,255,.92),0 0 8px rgba(255,255,255,.86);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .iv2 .matrixLegend{display:flex;flex-wrap:wrap;gap:7px;color:var(--muted);font-size:11.5px}
 .iv2 .matrixLegend span{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:#fff;padding:3px 8px}
 .iv2 .matrixItemList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -849,9 +859,11 @@ function ResearchValueReadinessPlot({
       <div className="researchZoneLabel">Fund first</div>
       <div className="researchAxis y">Value at stake</div>
       <div className="researchAxis x">Readiness today</div>
-      {items.map((item) => (
+      {items.map((item, index) => (
         <div
           className="researchPoint"
+          aria-label={item.label}
+          data-label-placement={chartLabelPlacement(index, item)}
           data-risk={researchRiskTone(item.risk)}
           key={`${item.label}-${item.value}-${item.readiness}`}
           style={{
@@ -866,7 +878,9 @@ function ResearchValueReadinessPlot({
             }
             aria-hidden="true"
           />
-          <span className="researchPointLabel">{item.label}</span>
+          <span className="researchPointLabel" title={item.label}>
+            {chartDisplayLabel(item.label)}
+          </span>
           <ResearchPointTooltip item={item} />
         </div>
       ))}
@@ -1052,9 +1066,11 @@ function ValueReadinessMatrix({
         <div className="matrixDivider" />
         <div className="mapAxis y">Value</div>
         <div className="mapAxis x">Readiness</div>
-        {items.map((item) => (
+        {items.map((item, index) => (
           <div
             className="matrixPoint"
+            aria-label={item.label}
+            data-label-placement={chartLabelPlacement(index, item)}
             key={`${item.label}-${item.value}-${item.readiness}`}
             style={{
               left: `${scaleScore(item.readiness)}%`,
@@ -1068,9 +1084,8 @@ function ValueReadinessMatrix({
               }
               aria-hidden="true"
             />
-            <span className="matrixLabel">
-              {item.label}
-              {item.action ? ` · ${item.action}` : ""}
+            <span className="matrixLabel" title={item.label}>
+              {chartDisplayLabel(item.label)}
             </span>
           </div>
         ))}
@@ -1247,6 +1262,39 @@ function hasMatrixCoordinates(
 
 function scaleScore(value: number): number {
   return Math.max(14, Math.min(86, 14 + (value / 10) * 72));
+}
+
+function chartLabelPlacement(
+  index: number,
+  item: ExecutiveCanvasItem & { value: number; readiness: number },
+): "right" | "left" | "above" | "below" {
+  const x = scaleScore(item.readiness);
+  const y = 100 - scaleScore(item.value);
+  if (x > 72) return index % 2 === 0 ? "left" : "above";
+  if (x < 28) return index % 2 === 0 ? "right" : "below";
+  if (y < 28) return index % 2 === 0 ? "below" : "left";
+  if (y > 72) return index % 2 === 0 ? "above" : "right";
+  return (["right", "above", "left", "below"] as const)[index % 4];
+}
+
+function chartDisplayLabel(label: string): string {
+  const trimmed = label.trim().replace(/\s+/g, " ");
+  const maxLength = 30;
+  if (trimmed.length <= maxLength) return trimmed;
+  const compact = trimmed
+    .replace(/[,&/]/g, " ")
+    .replace(/\s+-\s+/g, " ")
+    .replace(/\b(and|the|for|with|across|program|initiative)\b/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const words = compact.split(" ").filter(Boolean);
+  let visibleWords = words.slice(0, 4);
+  while (visibleWords.length > 2 && visibleWords.join(" ").length > maxLength) {
+    visibleWords = visibleWords.slice(0, -1);
+  }
+  const candidate = visibleWords.join(" ");
+  const fallback = trimmed.slice(0, maxLength - 3).trimEnd();
+  return `${candidate.length >= 8 ? candidate : fallback}...`;
 }
 
 function matrixDotSize(value?: number): number {
