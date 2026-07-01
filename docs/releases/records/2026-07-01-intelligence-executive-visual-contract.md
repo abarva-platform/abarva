@@ -30,13 +30,15 @@ The Intelligence companion canvas now supports AbarVa-native executive exhibits.
 - `src/lib/intelligence/ask/synthesizer.ts`: adds a native-canvas repair loop for strategic answers that satisfy the right canvas with fallback Markdown tables but omit the governed payload.
 - `src/lib/intelligence/executive-canvas-payload.ts`: adds parser/normalizer for supported executive canvas payloads.
 - `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`: allows the governed `abarva-canvas` payload as the only JSON exception, avoiding a prompt conflict that pushed Claude back to plain Markdown tables.
-- `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: renders native sequencing, value/readiness matrix, gate-to-value roadmap, and proof-boundary exhibits while hiding raw payload JSON.
+- `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: renders native sequencing, value/readiness matrix, gate-to-value roadmap, and proof-boundary exhibits while hiding raw payload JSON; native payloads are honored from any companion card allowed by the prompt contract, including Decision and Evidence, not only Chart/Table.
 - Focused parser and UI tests for payload extraction, tab preservation, native rendering, and no marker/payload leakage.
 
 ## QA / Validation
 
 - `./node_modules/.bin/jest src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/lib/intelligence/__tests__/tabbed-response.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx --runInBand` passed.
 - `npx eslint src/lib/intelligence/executive-canvas-payload.ts src/lib/intelligence/tabbed-response.ts src/components/intelligence-v2/IntelligenceV2Surface.tsx src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/lib/intelligence/__tests__/tabbed-response.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx` passed.
+- Follow-up renderer-boundary validation: `./node_modules/.bin/jest src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/lib/intelligence/__tests__/tabbed-response.test.ts --runInBand` passed with Decision-tab native canvas coverage.
+- Follow-up renderer-boundary validation: `npx eslint src/components/intelligence-v2/IntelligenceV2Surface.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx` passed.
 
 ## Rollout Plan
 

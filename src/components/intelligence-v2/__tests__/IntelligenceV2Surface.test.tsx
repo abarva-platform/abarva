@@ -837,7 +837,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
           text: [
             mainAnswer,
             "",
-            "<<<TAB: Chart | grounding: tenant-evidence>>>",
+            "<<<TAB: Decision | grounding: tenant-evidence>>>",
             "Tenant evidence: use the sequence to separate scale decisions from readiness funding.",
             "",
             "```abarva-canvas",

@@ -490,12 +490,12 @@ function visibleCompanionContent(content: string): string {
 }
 
 function VisualCardEnhancement({ card }: { card: ParsedIntelligenceTab }) {
-  if (card.id !== "chart" && card.id !== "table") return null;
   const executiveCanvas = extractExecutiveCanvasPayloads(card.content)
     .payloads[0];
   if (executiveCanvas) {
     return <ExecutiveCanvasVisual payload={executiveCanvas} />;
   }
+  if (card.id !== "chart" && card.id !== "table") return null;
   const table = parseFirstMarkdownTable(card.content);
   if (!table) return null;
   const labelIndex = labelColumnIndex(table);
