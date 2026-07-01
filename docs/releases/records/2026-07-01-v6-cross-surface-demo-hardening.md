@@ -63,6 +63,14 @@ This release hardens the demo V6 answer path across Intelligence, Tower, Source,
 - Remaining root causes were narrow: the generic Airline Demo `data-thin` question did not trigger the Airline IROPS CTO readiness packet, so the answer drifted to generic application/system facts; Airline Demo Source answers were honest and tenant-safe but omitted the literal word `commercial`, causing the strict Source scorer to fail the commercial-evidence boundary.
 - Remediation in this follow-up: the Airline CTO readiness source now treats `data-thin` as a readiness/evidence-boundary question, and Source synthesis now requires the exact phrase `commercial evidence is DATA-THIN` when commercial fields are missing. Source also adds a Source-specific prompt/cache version so production regenerates the synthesis rather than serving a previous cached answer.
 
+### Fifth Production Proof Remediation — 2026-07-01T15:08:00Z
+
+- ACA deploy for the fourth remediation succeeded on revision `ca-abarva-web-lab-eastus--m95a588d4` at 100% traffic with image tag `main-95a588d4`.
+- Targeted signed-in production proof for the seven previous Airline Demo failures passed: 7/7 API checks and 5/5 page smokes.
+- Full signed-in production proof then returned 42/50 API checks passing and 10/10 page smokes passing.
+- Remaining root cause was isolated to Tower: top-program deterministic answers exposed the visible ranked-cut total but not the governed `initiative_budget_fy26` aggregate packet value, so Tower's strict visible contract failed with `metric_packet_value_missing`.
+- Remediation in this follow-up: Tower top-program deterministic answers now include the governed FY26 initiative-budget control total from the metric packet and separately identify the ranked-cut total from the visible table. This keeps the Tower rule intact: Tower owns numbers, narrative explains them, and validation does not relax the metric packet contract.
+
 ## QA / Validation
 
 - `npx jest src/app/api/source/synthesis/__tests__/route.test.ts src/app/api/programs/synthesis/__tests__/route.test.ts src/lib/cio-tower/__tests__/answer.test.ts src/lib/intelligence/__tests__/skyharbor-cto-readiness.test.ts src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts --runInBand`
@@ -113,6 +121,16 @@ This release hardens the demo V6 answer path across Intelligence, Tower, Source,
   - Result: Passed.
   - `npx eslint src/lib/intelligence/ask/skyharbor-cto-readiness-source.ts src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts src/app/api/source/synthesis/route.ts src/app/api/source/synthesis/__tests__/route.test.ts`
   - Result: Passed.
+- Fifth remediation production proof before patch:
+  - ACA revision: `ca-abarva-web-lab-eastus--m95a588d4`, traffic 100%, runtime invariant passed.
+  - Targeted evidence path: `audit-artifacts/v6-cross-surface-50-prod/v6-cross-surface-50-2026-07-01T14-54-14-788Z-1a8d49d5f/`.
+  - Targeted result: 7/7 signed-in Airline Demo checks passed; 5/5 page route smokes passed.
+  - Full evidence path: `audit-artifacts/v6-cross-surface-50-prod/v6-cross-surface-50-2026-07-01T14-55-06-808Z-1a8d49d5f/`.
+  - Full result: 50/50 signed-in API calls returned; 42/50 passed strict visible-answer scorer; 10/10 page route smokes passed.
+  - Disposition: Failed proof. Used to drive the fifth production-proof remediation above.
+- Fifth remediation local gate:
+  - `npx jest src/lib/cio-tower/__tests__/answer.test.ts src/lib/cio-tower/__tests__/answer-contract.test.ts --runInBand`
+  - Result: Passed, 2 suites / 29 tests.
 
 ## Rollout Plan
 
