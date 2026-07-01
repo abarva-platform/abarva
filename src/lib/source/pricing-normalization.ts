@@ -822,7 +822,7 @@ export function buildSourcePricingNormalization(
   output.nexusGuidance =
     output.summary.comparable === 0
       ? "Do not shortlist yet. Close high severity traps and missing comparability requirements first."
-      : "Run BAFO prep only after risk-adjusted traps are either closed or explicitly accepted by Steward.";
+      : "Run BAFO prep only after risk-adjusted traps are either closed or explicitly accepted by the governance owner.";
   output.sentinelEvidenceNotes = output.traps
     .filter((trap) => trap.category === "Evidence")
     .map((trap) => `${trap.vendorName}: ${trap.signal}`);

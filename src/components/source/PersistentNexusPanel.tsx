@@ -97,7 +97,7 @@ function resolveAgentIdentity(leadAgent: string): {
       avatar: 'Σ',
       avatarBg: '#1a3a6c',
       dotColor: '#4f8fd4',
-      subhead: 'Ava is scoped to this event. I surface risk, data gaps, and pricing traps.',
+      subhead: 'aVa is scoped to this event. I surface risk, data gaps, and pricing traps.',
     };
   }
   if (name.includes('atlas')) {
@@ -105,7 +105,7 @@ function resolveAgentIdentity(leadAgent: string): {
       avatar: 'A',
       avatarBg: '#2a3040',
       dotColor: '#7a8aaa',
-      subhead: 'Ava is leading this step. I synthesise evidence into a decision brief.',
+      subhead: 'aVa is leading this step. I synthesize evidence into a decision brief.',
     };
   }
   // Default: Nexus
@@ -113,7 +113,7 @@ function resolveAgentIdentity(leadAgent: string): {
     avatar: '✦',
     avatarBg: '#1B2B5C',
     dotColor: '#d49b3a',
-    subhead: 'Ava is leading this step. I keep the event on track and surface blockers early.',
+    subhead: 'aVa is leading this step. I keep the event on track and surface blockers early.',
   };
 }
 
@@ -225,8 +225,8 @@ export function PersistentNexusPanel({
   event: SourcingEventDetail;
   missionReport: SourceAgentMissionReport;
 }) {
-  const { avatar, avatarBg, dotColor, subhead } = resolveAgentIdentity(event.leadAgent ?? 'Ava');
-  const agentName = event.leadAgent ?? 'Ava';
+  const { avatar, avatarBg, dotColor, subhead } = resolveAgentIdentity(event.leadAgent ?? 'aVa');
+  const agentName = event.leadAgent ?? 'aVa';
   const statusLine = `SCOPED · ${event.id.toUpperCase()} · ${event.currentStageLabel.toUpperCase()}`;
 
   // Context bundle: compact summary for the strip

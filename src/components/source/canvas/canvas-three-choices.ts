@@ -30,7 +30,7 @@ export const CANVAS_THREE_CHOICES: Record<SourceStageKey, string[]> = {
   evaluation: [
     'Run sensitivity at proposed weight changes',
     'Show evidence backing the top-ranked vendor',
-    'Lock weights and Steward sign-off',
+    'Prepare governance sign-off',
   ],
   pricing: [
     'Show the pricing trap log',
@@ -43,7 +43,7 @@ export const CANVAS_THREE_CHOICES: Record<SourceStageKey, string[]> = {
     'Compare BAFO deltas across rounds',
   ],
   executive_decision: [
-    'Walk me through the Atlas decision brief',
+    'Walk me through the decision brief',
     'Show the runner-up case',
     'Surface the 3 open risks needing attention',
   ],

@@ -208,8 +208,8 @@ export const PRICING_WORKBOOK_SUMMARY_DOCX_CONFIG: NarrativeDocxConfig = {
 
 export const DECISION_BRIEF_DOCX_CONFIG: NarrativeDocxConfig = {
   artifactCode: "d24_decision_brief",
-  headerLabel: "d24 Atlas Decision Brief",
-  eyebrowFor: (tenant) => `d24 · Atlas Decision Brief · ${tenant}`,
+  headerLabel: "d24 Decision Brief",
+  eyebrowFor: (tenant) => `d24 · Decision Brief · ${tenant}`,
   documentTitle: "Decision Brief",
   confidentialityNote:
     "Executive review only — pre-decision; not for vendor distribution",
