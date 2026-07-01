@@ -459,6 +459,26 @@ describe('cio tower answer contract', () => {
     expect(output?.output.tables?.[0]?.rows[0]?.[1]).toBe('IROPS Data Foundation');
   });
 
+  it('uses source labels as a readable fallback for governed Tower amount facts', () => {
+    const ctx = context({
+      relevantFacts: [
+        {
+          ...context().relevantFacts[0],
+          entity_key: null,
+          entity_display_name: null,
+          attributes: {
+            source_label: 'IROPS Agentic Recovery Cockpit',
+          },
+        },
+      ],
+    });
+    const output = __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(ctx);
+
+    expect(output?.output.answer).toContain('IROPS Agentic Recovery Cockpit');
+    expect(output?.output.answer).not.toContain('Program name not loaded');
+    expect(output?.output.tables?.[0]?.rows[0]?.[1]).toBe('IROPS Agentic Recovery Cockpit');
+  });
+
   it('does not invent program labels when no V6 business metadata name is loaded', () => {
     const ctx = context({
       relevantFacts: [

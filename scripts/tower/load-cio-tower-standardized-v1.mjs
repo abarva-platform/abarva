@@ -331,6 +331,30 @@ function resolveEntityKey(out, entityKey) {
   return out.entityAliases.get(entityKey) ?? entityKey;
 }
 
+function normalizedReference(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  return raw.replace(/-FY2025-.+$/, '');
+}
+
+function factEntityReferences(row) {
+  const refs = [];
+  if (row.view === 'initiative_budget') {
+    refs.push(row.source_label, row.reconciles_to_record_id, row.is_rollup_of, row.source_record_id);
+  } else {
+    refs.push(row.source_record_id, row.reconciles_to_record_id, row.is_rollup_of, row.source_label);
+  }
+  return refs.map(normalizedReference).filter(Boolean);
+}
+
+function resolveFactEntityKey(out, tenantKey, row) {
+  for (const ref of factEntityReferences(row)) {
+    const candidate = resolveEntityKey(out, key(tenantKey, ref));
+    if (out.entities.has(candidate)) return candidate;
+  }
+  return null;
+}
+
 function addRelationship(out, relationship) {
   if (!relationship.from_entity_key || !relationship.to_entity_key) return;
   const naturalKey = key(
@@ -430,8 +454,7 @@ function loadFacts(out, tenantKey, tenantDir) {
     for (const row of readCsv(filePath)) {
       const value = numberOrNull(row.amount_usd);
       if (value === null) continue;
-      const rawEntityKey = row.source_record_id ? key(tenantKey, String(row.source_record_id).replace(/-FY2025-.+$/, '')) : null;
-      const entityKey = resolveEntityKey(out, rawEntityKey);
+      const entityKey = resolveFactEntityKey(out, tenantKey, row);
       out.facts.push({
         fact_key: key(tenantKey, rel, row.source_record_id, row.view, row.amount_type, row.basis, row.period, row.source_row),
         tenant_key: tenantKey,
@@ -633,7 +656,29 @@ async function upsertFacts(client, rows) {
     await client.query(
       `INSERT INTO cio_tower.facts (fact_key, tenant_key, entity_key, entity_type, measure, scope, view, amount_type, basis, period, value_numeric, value_text, value_date, value_bool, unit, value_source, confidence, source_key, source_row, formula_key, formula_version, is_rollup_of, component_of, attributes)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
-       ON CONFLICT (fact_key) DO UPDATE SET value_numeric=EXCLUDED.value_numeric, attributes=EXCLUDED.attributes`,
+       ON CONFLICT (fact_key) DO UPDATE SET
+         entity_key=EXCLUDED.entity_key,
+         entity_type=EXCLUDED.entity_type,
+         measure=EXCLUDED.measure,
+         scope=EXCLUDED.scope,
+         view=EXCLUDED.view,
+         amount_type=EXCLUDED.amount_type,
+         basis=EXCLUDED.basis,
+         period=EXCLUDED.period,
+         value_numeric=EXCLUDED.value_numeric,
+         value_text=EXCLUDED.value_text,
+         value_date=EXCLUDED.value_date,
+         value_bool=EXCLUDED.value_bool,
+         unit=EXCLUDED.unit,
+         value_source=EXCLUDED.value_source,
+         confidence=EXCLUDED.confidence,
+         source_key=EXCLUDED.source_key,
+         source_row=EXCLUDED.source_row,
+         formula_key=EXCLUDED.formula_key,
+         formula_version=EXCLUDED.formula_version,
+         is_rollup_of=EXCLUDED.is_rollup_of,
+         component_of=EXCLUDED.component_of,
+         attributes=EXCLUDED.attributes`,
       [
         row.fact_key, row.tenant_key, row.entity_key, row.entity_type, row.measure, row.scope, row.view, row.amount_type, row.basis, row.period,
         row.value_numeric, row.value_text, row.value_date, row.value_bool, row.unit, row.value_source, row.confidence, row.source_key, row.source_row,
