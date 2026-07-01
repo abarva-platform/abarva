@@ -27,6 +27,7 @@ const CTO_READINESS_TERMS = [
   /\bai\s+(?:readiness|investment|investments|scale|portfolio|initiative|initiatives)\b/i,
   /\bmodel[-\s]?risk\b/i,
   /\bdata\s+(?:readiness|freshness|lineage|certification|certified)\b/i,
+  /\bdata[-\s]?thin\b/i,
   /\bboard[-\s]?grade\b/i,
   /\bboard[-\s]?ready\b/i,
   /\bboard\s+decision\b/i,

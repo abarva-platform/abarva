@@ -55,6 +55,14 @@ This release hardens the demo V6 answer path across Intelligence, Tower, Source,
 - Remaining root cause: two Airline Demo Intelligence answers were substantively grounded but did not begin the first visible sentence with the exact tenant display name, so the strict proof failed `missing tenant display name Airline Demo`.
 - Remediation in this follow-up: the Intelligence consultant prompt now requires the first user-visible sentence to begin with the exact tenant display name from the packet and forbids headings, bullets, markers, acknowledgements, or any other words before it. The shared consultant answer-shape contract now carries the same literal opener rule.
 
+### Fourth Production Proof Remediation — 2026-07-01T14:29:00Z
+
+- ACA deploy for the third remediation was superseded by a newer main deploy that included the same tenant-opener fix plus the Tower FY2025 patch. Runtime invariant passed on revision `ca-abarva-web-lab-eastus--m90f0bcb6` at 100% traffic with image tag `main-90f0bcb6`.
+- Targeted signed-in production proof for the two previous Airline Demo Intelligence regressions passed: 2/2 API checks and 5/5 page smokes.
+- Full signed-in production proof then returned 43/50 API checks passing and 10/10 page smokes passing.
+- Remaining root causes were narrow: the generic Airline Demo `data-thin` question did not trigger the Airline IROPS CTO readiness packet, so the answer drifted to generic application/system facts; Airline Demo Source answers were honest and tenant-safe but omitted the literal word `commercial`, causing the strict Source scorer to fail the commercial-evidence boundary.
+- Remediation in this follow-up: the Airline CTO readiness source now treats `data-thin` as a readiness/evidence-boundary question, and Source synthesis now requires the exact phrase `commercial evidence is DATA-THIN` when commercial fields are missing. Source also adds a Source-specific prompt/cache version so production regenerates the synthesis rather than serving a previous cached answer.
+
 ## QA / Validation
 
 - `npx jest src/app/api/source/synthesis/__tests__/route.test.ts src/app/api/programs/synthesis/__tests__/route.test.ts src/lib/cio-tower/__tests__/answer.test.ts src/lib/intelligence/__tests__/skyharbor-cto-readiness.test.ts src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts --runInBand`
@@ -90,6 +98,20 @@ This release hardens the demo V6 answer path across Intelligence, Tower, Source,
   - `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false`
   - Result: Passed.
   - `npx eslint src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/lib/intelligence/ask/response-policy.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts`
+  - Result: Passed.
+- Fourth remediation production proof before patch:
+  - ACA revision: `ca-abarva-web-lab-eastus--m90f0bcb6`, traffic 100%, runtime invariant passed.
+  - Targeted evidence path: `audit-artifacts/v6-cross-surface-50-prod/v6-cross-surface-50-2026-07-01T14-16-50-647Z-0a4a166be/`.
+  - Targeted result: 2/2 signed-in Airline Demo Intelligence checks passed; 5/5 page route smokes passed.
+  - Full evidence path: `audit-artifacts/v6-cross-surface-50-prod/v6-cross-surface-50-2026-07-01T14-18-14-459Z-0a4a166be/`.
+  - Full result: 50/50 signed-in API calls returned HTTP 200; 43/50 passed strict visible-answer scorer; 10/10 page route smokes passed.
+  - Disposition: Failed proof. Used to drive the fourth production-proof remediation above.
+- Fourth remediation local gate:
+  - `npx jest src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts src/app/api/source/synthesis/__tests__/route.test.ts --runInBand`
+  - Result: Passed, 2 suites / 7 tests.
+  - `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false`
+  - Result: Passed.
+  - `npx eslint src/lib/intelligence/ask/skyharbor-cto-readiness-source.ts src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts src/app/api/source/synthesis/route.ts src/app/api/source/synthesis/__tests__/route.test.ts`
   - Result: Passed.
 
 ## Rollout Plan
