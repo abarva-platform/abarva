@@ -64,7 +64,7 @@ describe("home demo-safe response sanitizer", () => {
       /SkyHarbor Air Group|SkyHarbor Air|SkyHarbor Airlines|Lakeshore Industries|Apex Retail Group/i,
     );
     expect(safe.safety.composerTrace.promptSnapshot.full).toBe(
-      "SkyHarbor Air and Lakeshore Holdings appeared in the prompt.",
+      "Airline Demo and Industrial Demo appeared in the prompt.",
     );
   });
 });

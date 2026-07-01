@@ -15,6 +15,7 @@ import {
   canonicalCioTowerTenantKey,
 } from "@/lib/cio-tower/answer";
 import { canonicalCioTowerTenantDisplayName } from "@/lib/cio-tower/metric-packet";
+import { demoSafeClientText } from "@/lib/client-config";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
 import { composeAllAgentDoctrineBlock } from "@/lib/agent/all-agent-doctrine";
@@ -91,7 +92,12 @@ export async function POST(request: Request) {
       tenancy.clientKey ?? activeClient.key ?? tenancy.clientId,
     );
     const tenantName =
-      canonicalCioTowerTenantDisplayName({ key: tenantKey, name: activeClient.name }) ??
+      demoSafeClientText(
+        canonicalCioTowerTenantDisplayName({
+          key: tenantKey,
+          name: activeClient.name,
+        }) ?? activeClient.name,
+      ) ??
       activeClient.name;
     const result = await answerCioTowerQuestion({
       tenantId: tenancy.clientId,
@@ -100,7 +106,7 @@ export async function POST(request: Request) {
       tenantName,
       question,
     });
-    return new Response(result.response, {
+    return new Response(demoSafeClientText(result.response), {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "X-Tower-Grounded": "true",
@@ -113,7 +119,7 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return new Response(message, {
+    return new Response(demoSafeClientText(message), {
       status: 502,
       headers: {
         "Content-Type": "text/plain; charset=utf-8",

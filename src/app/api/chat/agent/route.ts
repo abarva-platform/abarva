@@ -51,7 +51,10 @@ import {
   AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
   sanitizeAutonomousDecisionLanguage,
 } from "@/lib/ai-liability/human-decision-controls";
-import { canonicalClientDisplayName } from "@/lib/client-config";
+import {
+  canonicalClientDisplayName,
+  demoSafeClientText,
+} from "@/lib/client-config";
 import {
   retrieveStageContext,
   retrieveCategoryContext,
@@ -1479,8 +1482,9 @@ export async function POST(request: Request) {
           const safeText = sanitizeAutonomousDecisionLanguage(
             sanitizeRestrictedFinancialText(text, userAccessPolicy),
           );
-          bufferedOutput += safeText;
-          controller.enqueue(encoder.encode(safeText));
+          const demoSafeText = demoSafeClientText(safeText);
+          bufferedOutput += demoSafeText;
+          controller.enqueue(encoder.encode(demoSafeText));
         },
       };
       try {
@@ -1495,7 +1499,9 @@ export async function POST(request: Request) {
         // (CB-10) — on broker throw it emits a placeholder generic
         // bundle with the failure as a warning, so the panel can
         // distinguish "no retrieval needed" from "retrieval errored."
-        controller.enqueue(encoder.encode(contextBundleArtifact));
+        controller.enqueue(
+          encoder.encode(demoSafeClientText(contextBundleArtifact)),
+        );
         if (shouldRunProviderOverloadDrill(request)) {
           throw new AgentProviderOverloadDrillError();
         }
@@ -1557,7 +1563,9 @@ export async function POST(request: Request) {
         // Surface tool/stream errors to the client honestly rather
         // than silently truncating the response.
         const errMessage = err instanceof Error ? err.message : String(err);
-        controller.enqueue(encoder.encode(`\n\n[stream error: ${errMessage}]`));
+        controller.enqueue(
+          encoder.encode(demoSafeClientText(`\n\n[stream error: ${errMessage}]`)),
+        );
       } finally {
         controller.close();
         // F0.3 post-hoc validation — non-blocking, telemetry-only.

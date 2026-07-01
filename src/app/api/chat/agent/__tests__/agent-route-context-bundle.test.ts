@@ -91,7 +91,7 @@ describe("agent route · CB-6 context-bundle wiring", () => {
     // The enqueue must precede `runToolUseLoop` inside the readable's start.
     const startIdx = source.indexOf("async start(controller)");
     const enqueueIdx = source.indexOf(
-      "controller.enqueue(encoder.encode(contextBundleArtifact))",
+      "controller.enqueue(\n          encoder.encode(demoSafeClientText(contextBundleArtifact)),\n        )",
     );
     const loopIdx = source.indexOf("await runToolUseLoop({");
     expect(startIdx).toBeGreaterThan(-1);
