@@ -171,9 +171,11 @@ function visibleAgentDockBody(
   surface: string,
   body: string,
   agentAnswer?: AvaAnswerPacket | null,
+  preserveVisibleText = false,
 ): string {
   void surface;
-  return demoSafeClientText(avaAnswerTextForDock(agentAnswer) || body);
+  const text = avaAnswerTextForDock(agentAnswer) || body;
+  return preserveVisibleText ? text : demoSafeClientText(text);
 }
 
 /**
@@ -393,6 +395,8 @@ export interface AgentDockProps {
   /** Side-rail splitter overrides. */
   minLeftPx?: number;
   defaultLeftPercent?: number;
+  /** Preserve caller-provided visible text when the surface has already applied its own naming policy. */
+  preserveVisibleText?: boolean;
   /** Optional copy for the collapsed chip. Defaults to the legacy "Ask {agent}". */
   collapsedSummary?: {
     label: string;
@@ -589,23 +593,32 @@ export function AgentDock(props: AgentDockProps) {
     workspace,
     minLeftPx = 320,
     defaultLeftPercent = 38,
+    preserveVisibleText = false,
     collapsedSummary,
     isAgentBusy: isAgentBusyOverride,
   } = props;
   const isMovesSurface = surface.startsWith("moves/");
-  const agent = sanitizeVisibleStrings(rawAgent);
-  const surfaceContext = sanitizeVisibleStrings(rawSurfaceContext);
+  const agent = preserveVisibleText ? rawAgent : sanitizeVisibleStrings(rawAgent);
+  const surfaceContext = preserveVisibleText
+    ? rawSurfaceContext
+    : sanitizeVisibleStrings(rawSurfaceContext);
   const initialQuote = rawInitialQuote
-    ? demoSafeClientText(rawInitialQuote)
+    ? preserveVisibleText
+      ? rawInitialQuote
+      : demoSafeClientText(rawInitialQuote)
     : rawInitialQuote;
-  const safeSuggestedActions = sanitizeVisibleStrings(rawSuggestedActions);
+  const safeSuggestedActions = preserveVisibleText
+    ? rawSuggestedActions
+    : sanitizeVisibleStrings(rawSuggestedActions);
   const suggestedActions = isMovesSurface
     ? normalizeMovesChromeText(safeSuggestedActions)
     : safeSuggestedActions;
   const placeholder = rawPlaceholder
-    ? demoSafeClientText(rawPlaceholder)
+    ? preserveVisibleText
+      ? rawPlaceholder
+      : demoSafeClientText(rawPlaceholder)
     : rawPlaceholder;
-  const safeThread = sanitizeVisibleStrings(rawThread);
+  const safeThread = preserveVisibleText ? rawThread : sanitizeVisibleStrings(rawThread);
   const thread = isMovesSurface
     ? normalizeMovesChromeText(safeThread)
     : safeThread;
@@ -1003,6 +1016,7 @@ export function AgentDock(props: AgentDockProps) {
                           surface,
                           turn.body,
                           turn.agentAnswer,
+                          preserveVisibleText,
                         )}
                       />
                     </div>
@@ -1199,6 +1213,7 @@ export function AgentDock(props: AgentDockProps) {
     onChangeDraft,
     onComposerKeyDown,
     placeholder,
+    preserveVisibleText,
     onDragLeave,
     onDragOver,
     onDrop,
