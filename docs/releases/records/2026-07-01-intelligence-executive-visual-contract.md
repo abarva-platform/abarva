@@ -27,6 +27,7 @@ The Intelligence companion canvas now supports AbarVa-native executive exhibits.
 ## Changes Included
 
 - `src/lib/intelligence/tabbed-response.ts`: documents the governed `abarva-canvas` payload, requires one native exhibit for strategic prioritization / sequencing / gate / value-readiness questions when structured content exists, and preserves Chart tabs that contain structured canvas data.
+- `src/lib/intelligence/ask/synthesizer.ts`: adds a native-canvas repair loop for strategic answers that satisfy the right canvas with fallback Markdown tables but omit the governed payload.
 - `src/lib/intelligence/executive-canvas-payload.ts`: adds parser/normalizer for supported executive canvas payloads.
 - `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`: allows the governed `abarva-canvas` payload as the only JSON exception, avoiding a prompt conflict that pushed Claude back to plain Markdown tables.
 - `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: renders native sequencing, value/readiness matrix, gate-to-value roadmap, and proof-boundary exhibits while hiding raw payload JSON.
