@@ -29,6 +29,8 @@ describe("Tower tenant display names", () => {
     expect(appTopBarSource).toContain("? (tenantName ?? currentClient?.name ?? null)");
     expect(appTopBarSource).toContain("? preserveTenantName");
     expect(appTopBarSource).toContain("? resolvedTenantNameRaw");
+    expect(appTopBarSource).toContain("shouldPreferTenantOverUserAlias");
+    expect(appTopBarSource).toContain("preserveTenantName && resolvedTenantName");
     expect(towerPageSource).toContain("preserveTenantName: true");
   });
 
