@@ -355,6 +355,73 @@ describe("Source answer engine", () => {
     expect(visiblePayload).not.toContain("RFP-R1,Transition");
   });
 
+  it("answers BAFO questions from vendor-specific instructions instead of generic current-state prose", () => {
+    const contextWithBafoInstructions: SourceAgentContextBundle = {
+      ...contextBundle,
+      liveTenantContext: {
+        ...liveTenantContext,
+        embeddedContextChunkCount: 0,
+        retrievedEvidence: [
+          {
+            id: "source-event:sky:bafo-a-01",
+            segmentId: "sourcing_artifacts",
+            recordId: "BAFO-A-01",
+            title: "Vendor A BAFO instruction",
+            sourceType: "contextChunk",
+            sourceDoc: "source_events",
+            excerpt:
+              "productivity gap: Please provide a year-by-year productivity credit schedule, including baseline volumes, automation use cases, measurement method, and financial credit if committed productivity is not achieved. Required response: Baseline volume + committed % by year + price-down or gainshare schedule + remedy. Scoring holdback: Do not give full automation/productivity scoring credit until the economics are contractually committed.",
+            confidence: "high",
+            score: 26,
+          },
+          {
+            id: "source-event:sky:bafo-b-01",
+            segmentId: "sourcing_artifacts",
+            recordId: "BAFO-B-01",
+            title: "Vendor B BAFO instruction",
+            sourceType: "contextChunk",
+            sourceDoc: "source_events",
+            excerpt:
+              "staffing coverage gap: Please reconcile the proposed coverage model to a staffing table by role, shift, location, and critical application tier. Required response: Role/FTE/shift/location table + named critical-app coverage + exception list. Scoring holdback: Treat coverage as conditional until staffing, location, and shift evidence reconcile to the support model.",
+            confidence: "high",
+            score: 25,
+          },
+          {
+            id: "source-event:sky:bafo-c-01",
+            segmentId: "sourcing_artifacts",
+            recordId: "BAFO-C-01",
+            title: "Vendor C BAFO instruction",
+            sourceType: "contextChunk",
+            sourceDoc: "source_events",
+            excerpt:
+              "scope exception: Please include the optional tower in normalized TCO or exclude it from all vendors. Required response: Exception disposition table with redline, pricing impact, and executive decision flag. Scoring holdback: Evaluate only after the exception is accepted, priced, or removed.",
+            confidence: "high",
+            score: 24,
+          },
+        ],
+      },
+    };
+
+    const answer = buildSourceAnswerEngine({
+      prompt: "What should go into BAFO?",
+      contextBundle: contextWithBafoInstructions,
+      userRole: "cio",
+    });
+
+    expect(answer?.title).toBe("BAFO instruction answer");
+    expect(answer?.answerText).toContain("BAFO should focus on 3 unresolved commercial commitments");
+    expect(answer?.answerText).toContain("Vendor A");
+    expect(answer?.answerText).toContain("Vendor B");
+    expect(answer?.answerText).toContain("Vendor C");
+    expect(answer?.answerText).toContain("structured exhibits");
+    expect(answer?.answerText).toContain("Do not award full scoring credit");
+    expect(answer?.recommendedNextAction).toContain("Issue the vendor-specific BAFO questions");
+    expect(answer?.answerText).not.toContain("Mode:");
+    expect(answer?.answerText).not.toContain("Current state:");
+    expect(answer?.answerText).not.toContain("source_events");
+    expect(answer?.answerText).not.toContain("Sourcing Artifacts");
+  });
+
   it("attaches a Slice 1.1 category strategy classification (CDP -> data/AI platform)", () => {
     const answer = buildSourceAnswerEngine({
       prompt: "How should the CIO shape the CDP sourcing event?",

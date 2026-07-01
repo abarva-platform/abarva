@@ -170,11 +170,19 @@ export function buildSourceAnswerEngine(
       ...live.warnings,
     ].join("\n"),
   );
-  const currentStateFindings = toCurrentStateFindings(evidence, live);
-  const sourcingImplications = selectByMode(mode, playbook.eventShaping, [
+  const bafoInstructionAnswer = buildBafoInstructionAnswer({
+    prompt: input.prompt,
+    evidence,
+  });
+  const currentStateFindings =
+    bafoInstructionAnswer?.currentStateFindings ??
+    toCurrentStateFindings(evidence, live);
+  const sourcingImplications =
+    bafoInstructionAnswer?.sourcingImplications ??
+    selectByMode(mode, playbook.eventShaping, [
     `Shape ${eventName(input.contextBundle)} around the strongest current-state evidence first, then treat uncited assumptions as open diligence.`,
   ]);
-  const cxoGuidance = selectByMode(mode, playbook.cxoGuidance, [
+  const cxoGuidance = bafoInstructionAnswer?.cxoGuidance ?? selectByMode(mode, playbook.cxoGuidance, [
     "Ask the accountable CXO to approve the value hypothesis, evidence threshold, and decision rights before vendors shape the narrative.",
   ]);
   const riskTraps = selectByMode(mode, playbook.riskTraps, [
@@ -208,7 +216,7 @@ export function buildSourceAnswerEngine(
         ]
       : []),
   ]);
-  const rawAnswerText = hardQuestionAnswer?.answerText ?? formatAnswerText({
+  const rawAnswerText = hardQuestionAnswer?.answerText ?? bafoInstructionAnswer?.answerText ?? formatAnswerText({
     mode,
     currentStateFindings,
     sourcingImplications,
@@ -226,9 +234,13 @@ export function buildSourceAnswerEngine(
         hardQuestionAnswer.whatWouldChangeTheAnswer,
         ...corpusExpertLens,
       ]
+    : bafoInstructionAnswer
+      ? bafoInstructionAnswer.cxoGuidance
     : cxoGuidance;
   const recommendedNextAction =
-    hardQuestionAnswer?.recommendedNextAction ?? playbook.nextAction;
+    hardQuestionAnswer?.recommendedNextAction ??
+    bafoInstructionAnswer?.recommendedNextAction ??
+    playbook.nextAction;
   const evidenceCitations = evidence.map(toAnswerCitation);
   const answerText = toAvaVisibleText(rawAnswerText);
   const visibleCurrentStateFindings = currentStateFindings.map(toAvaVisibleText);
@@ -245,7 +257,7 @@ export function buildSourceAnswerEngine(
   return {
     engineVersion: "source-answer-engine/v1",
     mode,
-    title: `${playbook.label} answer`,
+    title: bafoInstructionAnswer?.title ?? `${playbook.label} answer`,
     answerText,
     currentStateFindings: visibleCurrentStateFindings,
     sourcingImplications: visibleSourcingImplications,
@@ -823,6 +835,108 @@ function formatAnswerText(args: {
     .filter(Boolean)
     .join("\n");
   return body;
+}
+
+type BafoInstructionAsk = {
+  vendorName: string;
+  question: string;
+  requiredResponse: string;
+  scoringHoldback: string;
+};
+
+function buildBafoInstructionAnswer(args: {
+  prompt: string;
+  evidence: SourceLiveTenantEvidenceItem[];
+}): {
+  title: string;
+  answerText: string;
+  currentStateFindings: string[];
+  sourcingImplications: string[];
+  cxoGuidance: string[];
+  recommendedNextAction: string;
+} | null {
+  if (!/\b(bafo|best and final|best-and-final|what should go into)\b/i.test(args.prompt)) {
+    return null;
+  }
+
+  const asks = args.evidence
+    .filter((item) => /\bBAFO instruction\b/i.test(item.title))
+    .map(parseBafoInstructionAsk)
+    .filter((ask): ask is BafoInstructionAsk => Boolean(ask));
+  if (asks.length === 0) return null;
+
+  const byVendor = new Map<string, BafoInstructionAsk[]>();
+  for (const ask of asks) {
+    const items = byVendor.get(ask.vendorName) ?? [];
+    items.push(ask);
+    byVendor.set(ask.vendorName, items);
+  }
+
+  const vendorSummaries = Array.from(byVendor.entries()).map(
+    ([vendorName, vendorAsks]) =>
+      `${vendorName}: ${vendorAsks
+        .slice(0, 3)
+        .map((ask) => summarizeBafoQuestion(ask.question))
+        .join("; ")}.`,
+  );
+  const highestRiskVendor =
+    byVendor.get("Vendor B") && byVendor.get("Vendor B")!.length > 0
+      ? "Vendor B"
+      : vendorSummaries[0]?.split(":")[0] ?? "the conditional vendor";
+
+  return {
+    title: "BAFO instruction answer",
+    answerText: [
+      `BAFO should focus on ${asks.length} unresolved commercial commitments across ${byVendor.size} vendor profiles, not on another broad narrative refresh.`,
+      `${vendorSummaries.join(" ")}`,
+      `${highestRiskVendor} is the most conditional profile for scoring because its asks include evidence that must reconcile productivity economics, coverage staffing, or buyer-retained effort before the comparison hardens.`,
+      "Require each vendor to answer in structured exhibits: revised pricing, baseline volume or staffing table, affected clause, implementation dependency, effective date, and remedy if the commitment is missed.",
+      "Do not award full scoring credit for any claim that stays unsupported, unpriced, outside the structured exhibits, or shifted back to the buyer through assumptions and exclusions.",
+    ].join("\n"),
+    currentStateFindings: vendorSummaries,
+    sourcingImplications: [
+      "Use the BAFO pack to convert unsupported response claims into vendor-specific questions and scoring holdbacks.",
+      "Treat productivity, SLA economics, transition fees, staffing coverage, scope comparability, and retained-role effort as the negotiation spine.",
+      "Keep each vendor conditional until its revised exhibits reconcile to the pricing workbook, SLA table, staffing model, transition plan, and assumptions log.",
+    ],
+    cxoGuidance: [
+      "The CIO should hold scoring open until operational commitments are backed by service, staffing, transition, and remedy evidence.",
+      "The CFO should require every productivity or scope claim to show a price-down, gainshare, credit, or normalized TCO impact.",
+      "The sourcing lead should make the BAFO response format mandatory so narrative claims cannot replace structured commitments.",
+    ],
+    recommendedNextAction:
+      "Issue the vendor-specific BAFO questions and hold final scoring until the revised exhibits close or price the open risks.",
+  };
+}
+
+function parseBafoInstructionAsk(
+  item: SourceLiveTenantEvidenceItem,
+): BafoInstructionAsk | null {
+  const vendorName = item.title.match(/\bVendor\s+[A-Z]\b/)?.[0];
+  if (!vendorName) return null;
+  const excerpt = cleanEvidenceExcerpt(item.excerpt);
+  const questionMatch = excerpt.match(/^[^:]+:\s*(.*?)(?:\s+Required response:|$)/i);
+  const requiredResponseMatch = excerpt.match(
+    /Required response:\s*(.*?)(?:\s+Scoring holdback:|$)/i,
+  );
+  const scoringHoldbackMatch = excerpt.match(/Scoring holdback:\s*(.*)$/i);
+  const question = questionMatch?.[1]?.trim();
+  if (!question) return null;
+  return {
+    vendorName,
+    question,
+    requiredResponse: requiredResponseMatch?.[1]?.trim() ?? "Structured BAFO exhibit with pricing, scope, owner, dependency, and effective date.",
+    scoringHoldback: scoringHoldbackMatch?.[1]?.trim() ?? "Hold scoring until the commitment is evidenced.",
+  };
+}
+
+function summarizeBafoQuestion(question: string): string {
+  return question
+    .replace(/^Please\s+/i, "")
+    .replace(/\bbefore evaluation scoring\b/gi, "before scoring")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[.。]?$/, "");
 }
 
 function toAnswerCitation(
