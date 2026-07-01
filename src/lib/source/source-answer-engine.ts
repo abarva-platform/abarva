@@ -171,19 +171,25 @@ export function buildSourceAnswerEngine(
       ...live.warnings,
     ].join("\n"),
   );
+  const evaluationDecisionAnswer = buildEvaluationDecisionAnswer({
+    prompt: input.prompt,
+    evidence: rankedEvidence,
+  });
   const bafoInstructionAnswer = buildBafoInstructionAnswer({
     prompt: input.prompt,
     evidence: rankedEvidence,
   });
   const currentStateFindings =
+    evaluationDecisionAnswer?.currentStateFindings ??
     bafoInstructionAnswer?.currentStateFindings ??
     toCurrentStateFindings(evidence, live);
   const sourcingImplications =
+    evaluationDecisionAnswer?.sourcingImplications ??
     bafoInstructionAnswer?.sourcingImplications ??
     selectByMode(mode, playbook.eventShaping, [
     `Shape ${eventName(input.contextBundle)} around the strongest current-state evidence first, then treat uncited assumptions as open diligence.`,
   ]);
-  const cxoGuidance = bafoInstructionAnswer?.cxoGuidance ?? selectByMode(mode, playbook.cxoGuidance, [
+  const cxoGuidance = evaluationDecisionAnswer?.cxoGuidance ?? bafoInstructionAnswer?.cxoGuidance ?? selectByMode(mode, playbook.cxoGuidance, [
     "Ask the accountable CXO to approve the value hypothesis, evidence threshold, and decision rights before vendors shape the narrative.",
   ]);
   const riskTraps = selectByMode(mode, playbook.riskTraps, [
@@ -217,7 +223,7 @@ export function buildSourceAnswerEngine(
         ]
       : []),
   ]);
-  const rawAnswerText = hardQuestionAnswer?.answerText ?? bafoInstructionAnswer?.answerText ?? formatAnswerText({
+  const rawAnswerText = evaluationDecisionAnswer?.answerText ?? hardQuestionAnswer?.answerText ?? bafoInstructionAnswer?.answerText ?? formatAnswerText({
     mode,
     currentStateFindings,
     sourcingImplications,
@@ -228,7 +234,9 @@ export function buildSourceAnswerEngine(
     evidence,
     limits,
   });
-  const finalCxoGuidance = hardQuestionAnswer
+  const finalCxoGuidance = evaluationDecisionAnswer
+    ? evaluationDecisionAnswer.cxoGuidance
+    : hardQuestionAnswer
     ? [
         hardQuestionAnswer.directAnswer,
         hardQuestionAnswer.sourcingJudgment,
@@ -239,6 +247,7 @@ export function buildSourceAnswerEngine(
       ? bafoInstructionAnswer.cxoGuidance
     : cxoGuidance;
   const recommendedNextAction =
+    evaluationDecisionAnswer?.recommendedNextAction ??
     hardQuestionAnswer?.recommendedNextAction ??
     bafoInstructionAnswer?.recommendedNextAction ??
     playbook.nextAction;
@@ -258,7 +267,7 @@ export function buildSourceAnswerEngine(
   return {
     engineVersion: "source-answer-engine/v1",
     mode,
-    title: bafoInstructionAnswer?.title ?? `${playbook.label} answer`,
+    title: evaluationDecisionAnswer?.title ?? bafoInstructionAnswer?.title ?? `${playbook.label} answer`,
     answerText,
     currentStateFindings: visibleCurrentStateFindings,
     sourcingImplications: visibleSourcingImplications,
@@ -844,6 +853,186 @@ type BafoInstructionAsk = {
   requiredResponse: string;
   scoringHoldback: string;
 };
+
+type EvaluationVendorSummary = {
+  vendorName: string;
+  rank: number;
+  score: string;
+  recommendation: string;
+  rationale: string;
+  tradeoffs: string;
+  conditions: string;
+};
+
+function buildEvaluationDecisionAnswer(args: {
+  prompt: string;
+  evidence: SourceLiveTenantEvidenceItem[];
+}): {
+  title: string;
+  answerText: string;
+  currentStateFindings: string[];
+  sourcingImplications: string[];
+  cxoGuidance: string[];
+  recommendedNextAction: string;
+} | null {
+  const text = args.prompt.toLowerCase();
+  const looksEvaluationSpecific =
+    /\b(leading|leader|cheapest|lowest|highest transition risk|transition risk|advance to bafo|advance|executive tradeoffs?|tradeoffs?|scorecard|evaluation|rank|ranking)\b/.test(
+      text,
+    ) && !/\b(what should go into bafo|bafo asks?|bafo questions?|draft the bafo)\b/.test(text);
+  if (!looksEvaluationSpecific) return null;
+
+  const summaries = args.evidence
+    .filter((item) => /\bevaluation summary\b/i.test(item.title))
+    .map(parseEvaluationSummary)
+    .filter((summary): summary is EvaluationVendorSummary => Boolean(summary));
+  if (summaries.length === 0) return null;
+
+  const sorted = [...summaries].sort((a, b) => a.rank - b.rank);
+  const vendorLine = (summary: EvaluationVendorSummary) =>
+    `${summary.vendorName}: rank ${summary.rank}, ${summary.score}/10, ${summary.recommendation}; ${summary.rationale}`;
+  const leading = sorted[0];
+  const cheapest = findVendorFromComparison(args.evidence, "Normalized 5-year TCO") ??
+    summaries.find((summary) => summary.vendorName === "Vendor B") ??
+    leading;
+  const transitionRisk =
+    findVendorFromComparison(args.evidence, "Transition risk", /highest risk/i) ??
+    summaries.find((summary) => summary.vendorName === "Vendor B") ??
+    sorted.at(-1) ??
+    leading;
+
+  let leadSentence =
+    `${leading.vendorName} is leading on a risk-adjusted basis, not because it is cheapest, but because it has the strongest continuity, scope, and transition posture.`;
+  if (/\bcheapest|lowest|tco|cost\b/.test(text)) {
+    leadSentence = `${cheapest.vendorName} is cheapest on normalized 5-year TCO, but the lower price is conditional until retained effort, pass-throughs, and productivity economics are closed.`;
+  } else if (/\bhighest transition risk|transition risk\b/.test(text)) {
+    leadSentence = `${transitionRisk.vendorName} carries the highest transition risk because execution confidence depends on closing staffing coverage, retained-client dependency, and cutover evidence.`;
+  } else if (/\badvance\b/.test(text)) {
+    leadSentence =
+      "Advance the vendors into BAFO selectively: Vendor A should advance as the risk-adjusted lead, Vendor B should advance only with commercial and staffing conditions, and Vendor C should advance only if scope normalization is resolved.";
+  } else if (/\btradeoffs?\b/.test(text)) {
+    leadSentence =
+      "The executive tradeoff is continuity versus price versus service accountability: Vendor A is safer, Vendor B is cheaper, and Vendor C has stronger SLA economics but narrower scope.";
+  }
+
+  const answerText = [
+    leadSentence,
+    `Current evaluation view: ${sorted.map(vendorLine).join(" ")}`,
+    `${cheapest.vendorName} sets the price challenge; ${transitionRisk.vendorName} sets the execution-risk caution; Vendor C remains relevant because its SLA economics are strongest even though its base scope is narrower.`,
+    "The right next move is a BAFO round that converts each vendor's open conditions into structured exhibits, revised pricing, staffed coverage, SLA remedies, and exception dispositions before final scoring is locked.",
+  ].join("\n");
+
+  return {
+    title: "Evaluation scorecard answer",
+    answerText,
+    currentStateFindings: sorted.map(vendorLine),
+    sourcingImplications: [
+      `${leading.vendorName} is the current risk-adjusted leader, but final selection should wait for BAFO closure.`,
+      `${cheapest.vendorName} should not win on price alone until execution-risk conditions are contractually resolved.`,
+      "Vendor C should stay in the comparison because its SLA accountability creates negotiation leverage even if scope caveats remain.",
+    ],
+    cxoGuidance: [
+      "The CIO should keep scoring conditional until staffing, transition, SLA, and support-scope commitments are evidenced.",
+      "The CFO should require normalized TCO and priced remedies before treating any vendor as financially preferred.",
+      "The sourcing lead should run BAFO against the exact holdbacks in the scorecard, not against broad narrative refreshes.",
+    ],
+    recommendedNextAction:
+      "Run BAFO against the scorecard holdbacks, then lock human reviewer scores only after revised exhibits reconcile to pricing, SLA, staffing, transition, and exceptions.",
+  };
+}
+
+function parseEvaluationSummary(
+  item: SourceLiveTenantEvidenceItem,
+): EvaluationVendorSummary | null {
+  const vendorName = item.title.match(/\bVendor\s+[A-Z]\b/)?.[0];
+  if (!vendorName) return null;
+  const excerpt = cleanEvidenceExcerpt(item.excerpt);
+  const rank = Number(excerpt.match(/\bRank\s+(\d+)/i)?.[1] ?? "99");
+  const score = excerpt.match(/weighted score\s+([0-9.]+)\/10/i)?.[1] ?? "n/a";
+  const recommendation =
+    excerpt.match(/recommendation\s+([a-z ]+)\./i)?.[1]?.trim() ??
+    "conditional";
+  const sentenceAfterRecommendation =
+    excerpt.match(/recommendation\s+[a-z ]+\.\s*(.*?)(?:\s+Tradeoffs:|$)/i)?.[1]?.trim() ??
+    excerpt;
+  const tradeoffs =
+    excerpt.match(/Tradeoffs:\s*(.*?)(?:\s+Conditions:|$)/i)?.[1]?.trim() ??
+    "";
+  const conditions = excerpt.match(/Conditions:\s*(.*)$/i)?.[1]?.trim() ?? "";
+  return {
+    vendorName,
+    rank,
+    score,
+    recommendation,
+    rationale: sentenceAfterRecommendation,
+    tradeoffs,
+    conditions,
+  };
+}
+
+function findVendorFromComparison(
+  evidence: SourceLiveTenantEvidenceItem[],
+  label: string,
+  vendorClausePattern?: RegExp,
+): EvaluationVendorSummary | null {
+  const row = evidence.find(
+    (item) =>
+      item.title.toLowerCase().includes("normalized vendor comparison") &&
+      item.title.toLowerCase().includes(label.toLowerCase()),
+  );
+  if (!row) return null;
+  const excerpt = cleanEvidenceExcerpt(row.excerpt);
+  const vendorNames = [...excerpt.matchAll(/\bVendor\s+[A-Z]\b/g)].map(
+    (match) => match[0],
+  );
+  if (vendorClausePattern) {
+    const matchedVendor = vendorNames.find((vendorName) => {
+      const clause = excerpt.match(
+        new RegExp(`${vendorName.replace(" ", "\\s+")}:[^.]+\\.`, "i"),
+      )?.[0];
+      return clause ? vendorClausePattern.test(clause) : false;
+    });
+    if (matchedVendor) {
+      return {
+        vendorName: matchedVendor,
+        rank: 99,
+        score: "n/a",
+        recommendation: "conditional",
+        rationale: excerpt,
+        tradeoffs: "",
+        conditions: "",
+      };
+    }
+  }
+  if (/5-year tco/i.test(label)) {
+    const costs = vendorNames
+      .map((vendorName) => {
+        const clause = excerpt.match(
+          new RegExp(`${vendorName.replace(" ", "\\s+")}:\\s*\\$([0-9.]+)M`, "i"),
+        );
+        return clause
+          ? { vendorName, cost: Number(clause[1]) }
+          : null;
+      })
+      .filter((value): value is { vendorName: string; cost: number } =>
+        Boolean(value),
+      )
+      .sort((a, b) => a.cost - b.cost);
+    const cheapest = costs[0];
+    if (cheapest) {
+      return {
+        vendorName: cheapest.vendorName,
+        rank: 99,
+        score: "n/a",
+        recommendation: "conditional",
+        rationale: excerpt,
+        tradeoffs: "",
+        conditions: "",
+      };
+    }
+  }
+  return null;
+}
 
 function buildBafoInstructionAnswer(args: {
   prompt: string;

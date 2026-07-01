@@ -1,14 +1,18 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import type { VendorEvaluationDecisionView } from "@/lib/source/proposal-intelligence";
 import { CANVAS } from "../canvas-tokens";
 import { BatnaPanel } from "./BatnaPanel";
 import { DissentPanel } from "./DissentPanel";
 import { WeightedScorecardTable } from "./WeightedScorecardTable";
+import { VendorEvaluationScorecardPanel } from "../responses/VendorEvaluationScorecardPanel";
 
 export function EvaluationStageView({
+  evaluationDecisionView,
   documentWorkspace,
 }: {
+  evaluationDecisionView?: VendorEvaluationDecisionView | null;
   documentWorkspace: ReactNode;
 }) {
   return (
@@ -31,12 +35,18 @@ export function EvaluationStageView({
         </div>
       </section>
 
-      <WeightedScorecardTable />
+      {evaluationDecisionView ? (
+        <VendorEvaluationScorecardPanel decisionView={evaluationDecisionView} />
+      ) : (
+        <WeightedScorecardTable />
+      )}
 
-      <div style={GRID}>
-        <DissentPanel />
-        <BatnaPanel />
-      </div>
+      {!evaluationDecisionView ? (
+        <div style={GRID}>
+          <DissentPanel />
+          <BatnaPanel />
+        </div>
+      ) : null}
 
       <div data-testid="source-evaluation-document-workspace">
         {documentWorkspace}

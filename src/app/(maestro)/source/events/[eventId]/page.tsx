@@ -24,6 +24,7 @@ import { buildSourceVendorResponseCompleteness } from "@/lib/source/vendor-respo
 import {
   buildVendorBafoInstructionPack,
   buildVendorChallengeIntelligence,
+  buildVendorEvaluationDecisionView,
   buildVendorResponseMveProfiles,
 } from "@/lib/source/proposal-intelligence";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
@@ -147,6 +148,11 @@ export default async function SourceEventDetailPage({
   const vendorBafoInstructionPack = buildVendorBafoInstructionPack(
     vendorChallengeIntelligence,
   );
+  const vendorEvaluationDecisionView = buildVendorEvaluationDecisionView(
+    vendorResponseProfiles,
+    vendorChallengeIntelligence,
+    vendorBafoInstructionPack,
+  );
   const flagScope = {
     clientKey: activeClient?.key ?? null,
     clientId: activeClient?.id ?? null,
@@ -177,6 +183,7 @@ export default async function SourceEventDetailPage({
       vendorResponseProfiles={vendorResponseProfiles}
       vendorChallengeIntelligence={vendorChallengeIntelligence}
       vendorBafoInstructionPack={vendorBafoInstructionPack}
+      vendorEvaluationDecisionView={vendorEvaluationDecisionView}
       workspaceExplorerEnabled={workspaceExplorerEnabled}
       strategyAutoDraftEnabled={strategyAutoDraftEnabled}
       simpleFrontEnabled={simpleFrontEnabled}

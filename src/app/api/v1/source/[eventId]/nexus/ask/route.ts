@@ -22,6 +22,7 @@ import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import {
   buildVendorBafoInstructionPack,
   buildVendorChallengeIntelligence,
+  buildVendorEvaluationDecisionView,
   buildVendorResponseMveProfiles,
 } from "@/lib/source/proposal-intelligence";
 
@@ -234,6 +235,11 @@ async function buildEventIntakeTenantContextSnapshot(args: {
   });
   const vendorChallenges = buildVendorChallengeIntelligence(vendorProfiles);
   const vendorBafoPack = buildVendorBafoInstructionPack(vendorChallenges);
+  const vendorEvaluationView = buildVendorEvaluationDecisionView(
+    vendorProfiles,
+    vendorChallenges,
+    vendorBafoPack,
+  );
   const eventEvidence = [
     {
       recordId: "trigger",
@@ -291,6 +297,37 @@ async function buildEventIntakeTenantContextSnapshot(args: {
         score: 26 - vendorIndex * 4 - questionIndex,
       })),
     ) ?? []),
+    ...(vendorEvaluationView?.vendorSummaries.map((summary, index) => ({
+      recordId: `${summary.vendorId}-evaluation-summary`,
+      title: `${summary.vendorName} evaluation summary`,
+      excerpt: [
+        `Rank ${summary.rank}; weighted score ${summary.weightedScore.toFixed(1)}/10; recommendation ${summary.recommendation.replaceAll("_", " ")}.`,
+        summary.decisionRationale,
+        `Tradeoffs: ${summary.tradeoffs.join(" ")}`,
+        summary.conditions.length
+          ? `Conditions: ${summary.conditions.join(" ")}`
+          : "Conditions: no additional conditions beyond human score lock.",
+      ].join(" "),
+      score: 30 - index,
+    })) ?? []),
+    ...(vendorEvaluationView?.comparisonRows.slice(0, 6).map((row, index) => ({
+      recordId: `evaluation-comparison-${row.comparisonId}`,
+      title: `Normalized vendor comparison - ${row.label}`,
+      excerpt: [
+        `${row.label}: ${row.decisionUse}`,
+        ...row.values.map(
+          (value) =>
+            `${value.vendorName}: ${value.value}; posture ${value.posture}; ${value.caveat}`,
+        ),
+      ].join(" "),
+      score: 24 - index,
+    })) ?? []),
+    ...(vendorEvaluationView?.executiveTradeoffs.map((tradeoff, index) => ({
+      recordId: `evaluation-tradeoff-${index + 1}`,
+      title: "Executive tradeoff summary",
+      excerpt: tradeoff,
+      score: 20 - index,
+    })) ?? []),
   ].filter((item) => item.excerpt.trim().length > 0);
   const evidence = [
     ...eventEvidence.map((item) => ({

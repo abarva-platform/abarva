@@ -7,54 +7,54 @@ const CRITERIA = [
   {
     label: "Technical depth",
     weight: 30,
-    northstar: 8.5,
-    atlas: 7.8,
-    arcvault: 6.5,
+    vendorA: 8.2,
+    vendorB: 6.6,
+    vendorC: 6.4,
     rationale:
-      "Northstar has the strongest AMS depth; Atlas leads commercially but needs transition proof.",
+      "Vendor A has the strongest AMS depth; Vendor B is broader but needs transition proof.",
   },
   {
     label: "Commercial fit",
     weight: 25,
-    northstar: 7.2,
-    atlas: 8.8,
-    arcvault: 7.0,
+    vendorA: 6.9,
+    vendorB: 8.4,
+    vendorC: 7.2,
     rationale:
-      "Atlas prices below median; Northstar needs BAFO pressure on run-rate transparency.",
+      "Vendor B prices below the others; Vendor A needs BAFO pressure on run-rate transparency.",
   },
   {
     label: "Transition risk",
     weight: 20,
-    northstar: 7.5,
-    atlas: 6.8,
-    arcvault: 7.5,
+    vendorA: 8.0,
+    vendorB: 5.9,
+    vendorC: 6.5,
     rationale:
-      "Northstar and ArcVault are credible; Atlas needs named cutover owners.",
+      "Vendor A is the safest transition posture; Vendor B needs named cutover owners.",
   },
   {
     label: "Governance + SLA",
     weight: 15,
-    northstar: 8.1,
-    atlas: 7.1,
-    arcvault: 6.9,
+    vendorA: 7.1,
+    vendorB: 7.4,
+    vendorC: 8.8,
     rationale:
-      "Northstar has clearer escalation paths and audit-friendly SLA cadence.",
+      "Vendor C has the strongest SLA remedy posture; Vendor A has clearer continuity.",
   },
   {
     label: "Evidence quality",
     weight: 10,
-    northstar: 8.4,
-    atlas: 7.4,
-    arcvault: 6.7,
+    vendorA: 8.0,
+    vendorB: 6.2,
+    vendorC: 8.2,
     rationale:
       "Reviewer notes cite reference calls and uploaded response sections.",
   },
 ];
 
 const VENDORS = [
-  { key: "northstar", label: "Northstar" },
-  { key: "atlas", label: "Atlas SI" },
-  { key: "arcvault", label: "ArcVault" },
+  { key: "vendorA", label: "Vendor A" },
+  { key: "vendorB", label: "Vendor B" },
+  { key: "vendorC", label: "Vendor C" },
 ] as const;
 
 function total(key: (typeof VENDORS)[number]["key"]) {
@@ -108,7 +108,7 @@ export function WeightedScorecardTable() {
                 </td>
               ))}
               <td style={TD_RATIONALE}>
-                Northstar leads; Atlas remains the human-named BATNA.
+                Vendor A leads; Vendor B remains the human-reviewed BATNA.
               </td>
             </tr>
           </tbody>

@@ -499,6 +499,116 @@ describe("Source answer engine", () => {
     expect(answer?.answerText).not.toContain("Sourcing Artifacts");
   });
 
+  it.each([
+    ["Which vendor is leading?", "Vendor A is leading"],
+    ["Which vendor is cheapest on normalized TCO?", "Vendor B is cheapest"],
+    ["Which vendor has the highest transition risk?", "Vendor B carries the highest transition risk"],
+    ["Which vendor should advance to BAFO?", "Advance the vendors into BAFO selectively"],
+    ["What are the executive tradeoffs?", "continuity versus price versus service accountability"],
+  ])(
+    "answers evaluation scorecard question: %s",
+    (prompt, expectedLead) => {
+      const contextWithEvaluationScorecard: SourceAgentContextBundle = {
+        ...contextBundle,
+        sourcingEvent: {
+          ...contextBundle.sourcingEvent,
+          id: "skyh-test-event",
+          code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
+          name: "SkyHarbor AMS Outsourcing RFP",
+          accountName: "SkyHarbor Air",
+          archetype: "managed_services",
+          rigor: "strategic",
+          lifecycleStatus: "active",
+          owner: "CIO Office",
+          valueAtStakeUsd: 96_400_000,
+          currentStageKey: "evaluation",
+        },
+        liveTenantContext: {
+          ...liveTenantContext,
+          embeddedContextChunkCount: 0,
+          retrievedEvidence: [
+            {
+              id: "source-event:sky:eval-a",
+              segmentId: "sourcing_artifacts",
+              recordId: "vendor-a-evaluation-summary",
+              title: "Vendor A evaluation summary",
+              sourceType: "contextChunk",
+              sourceDoc: "source_events",
+              excerpt:
+                "Rank 1; weighted score 7.4/10; recommendation advance to bafo. Risk-adjusted leader at 7.4/10 because continuity, scope coverage, and transition confidence outweigh its weaker commercial remedies. Tradeoffs: Best continuity and transition risk posture. Needs stronger productivity price-down, SLA credit economics, and transition fee holdbacks. Conditions: improve productivity credits and transition fee holdbacks.",
+              confidence: "high",
+              score: 30,
+            },
+            {
+              id: "source-event:sky:eval-b",
+              segmentId: "sourcing_artifacts",
+              recordId: "vendor-b-evaluation-summary",
+              title: "Vendor B evaluation summary",
+              sourceType: "contextChunk",
+              sourceDoc: "source_events",
+              excerpt:
+                "Rank 3; weighted score 6.7/10; recommendation advance with conditions. Lowest-cost challenger at 6.7/10, but coverage staffing, retained effort, and productivity economics must close before the price advantage can be trusted. Tradeoffs: Best apparent normalized TCO. Highest execution risk because productivity, staffing coverage, and retained-client effort remain conditional. Conditions: reconcile proposed coverage model to staffing table; include retained effort in normalized TCO.",
+              confidence: "high",
+              score: 29,
+            },
+            {
+              id: "source-event:sky:eval-c",
+              segmentId: "sourcing_artifacts",
+              recordId: "vendor-c-evaluation-summary",
+              title: "Vendor C evaluation summary",
+              sourceType: "contextChunk",
+              sourceDoc: "source_events",
+              excerpt:
+                "Rank 2; weighted score 7.0/10; recommendation advance with conditions. Service-quality specialist at 7.0/10 with strong SLA economics, but scope and transition caveats must be normalized before it can lead. Tradeoffs: Best SLA remedy posture and clean evidence discipline. Narrower base scope and slower transition make the headline price less directly comparable. Conditions: normalize optional corporate tower and accelerated transition option.",
+              confidence: "high",
+              score: 28,
+            },
+            {
+              id: "source-event:sky:comparison-tco",
+              segmentId: "sourcing_artifacts",
+              recordId: "evaluation-comparison-normalized-tco",
+              title: "Normalized vendor comparison - Normalized 5-year TCO",
+              sourceType: "contextChunk",
+              sourceDoc: "source_events",
+              excerpt:
+                "Normalized 5-year TCO: Shows cost position after transition, optional, and one-time lines are visible. Vendor A: $96.4M; posture watch; Higher TCO reflects continuity. Vendor B: $91.8M; posture strength; Lowest TCO with retained-effort caveats. Vendor C: $94.3M; posture watch; Optional corporate support must be normalized.",
+              confidence: "high",
+              score: 27,
+            },
+            {
+              id: "source-event:sky:comparison-transition",
+              segmentId: "sourcing_artifacts",
+              recordId: "evaluation-comparison-transition-risk",
+              title: "Normalized vendor comparison - Transition risk",
+              sourceType: "contextChunk",
+              sourceDoc: "source_events",
+              excerpt:
+                "Transition risk: Highlights transition commitments. Vendor A: lower operational risk. Vendor B: Highest risk because client SME dependency and coverage proof remain open. Vendor C: schedule risk remains because stabilization extends beyond buyer target.",
+              confidence: "high",
+              score: 26,
+            },
+          ],
+        },
+      };
+
+      const answer = buildSourceAnswerEngine({
+        prompt,
+        contextBundle: contextWithEvaluationScorecard,
+        userRole: "cio",
+      });
+
+      expect(answer?.title).toBe("Evaluation scorecard answer");
+      expect(answer?.answerText).toContain(expectedLead);
+      expect(answer?.answerText).toContain("Vendor A");
+      expect(answer?.answerText).toContain("Vendor B");
+      expect(answer?.answerText).toContain("Vendor C");
+      expect(answer?.answerText).not.toContain("Mode:");
+      expect(answer?.answerText).not.toContain("Current state:");
+      expect(answer?.answerText).not.toContain("source_events");
+      expect(answer?.answerText).not.toContain("Sourcing Artifacts");
+    },
+  );
+
   it("attaches a Slice 1.1 category strategy classification (CDP -> data/AI platform)", () => {
     const answer = buildSourceAnswerEngine({
       prompt: "How should the CIO shape the CDP sourcing event?",

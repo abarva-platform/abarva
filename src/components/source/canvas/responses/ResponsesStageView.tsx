@@ -5,6 +5,7 @@ import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-respo
 import type {
   VendorBafoInstructionPack,
   VendorChallengeIntelligence,
+  VendorEvaluationDecisionView,
   VendorResponseProfileSet,
 } from "@/lib/source/proposal-intelligence";
 import { CANVAS } from "../canvas-tokens";
@@ -12,6 +13,7 @@ import { CompletenessMatrix } from "./CompletenessMatrix";
 import { QnaSymmetryLog } from "./QnaSymmetryLog";
 import { VendorBafoInstructionPackPanel } from "./VendorBafoInstructionPackPanel";
 import { VendorChallengeLeveragePanel } from "./VendorChallengeLeveragePanel";
+import { VendorEvaluationScorecardPanel } from "./VendorEvaluationScorecardPanel";
 import { VendorResponseProfilesPanel } from "./VendorResponseProfilesPanel";
 
 export function ResponsesStageView({
@@ -19,12 +21,14 @@ export function ResponsesStageView({
   profileSet,
   challengeIntelligence,
   bafoInstructionPack,
+  evaluationDecisionView,
   documentWorkspace,
 }: {
   readiness?: SourceVendorResponseCompleteness;
   profileSet?: VendorResponseProfileSet | null;
   challengeIntelligence?: VendorChallengeIntelligence | null;
   bafoInstructionPack?: VendorBafoInstructionPack | null;
+  evaluationDecisionView?: VendorEvaluationDecisionView | null;
   documentWorkspace: ReactNode;
 }) {
   const records = readiness?.records ?? [];
@@ -83,6 +87,7 @@ export function ResponsesStageView({
       <VendorResponseProfilesPanel profileSet={profileSet} />
       <VendorChallengeLeveragePanel intelligence={challengeIntelligence} />
       <VendorBafoInstructionPackPanel pack={bafoInstructionPack} />
+      <VendorEvaluationScorecardPanel decisionView={evaluationDecisionView} />
 
       <section data-testid="source-responses-disqualification-card" style={DECISION}>
         <div style={EYEBROW}>Decision point</div>

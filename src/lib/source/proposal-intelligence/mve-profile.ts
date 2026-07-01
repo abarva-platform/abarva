@@ -3,6 +3,12 @@ import type {
   VendorBafoInstructionPack,
   VendorBafoQuestion,
   VendorBafoVendorInstruction,
+  VendorEvaluationComparisonRow,
+  VendorEvaluationDecisionView,
+  VendorEvaluationRecommendation,
+  VendorEvaluationScorecardRow,
+  VendorEvaluationScoreValue,
+  VendorEvaluationVendorSummary,
   VendorExtractionCard,
   VendorChallengeIntelligence,
   VendorChallengeIssueCategory,
@@ -449,6 +455,552 @@ export function buildVendorBafoInstructionPack(
     scoringHoldbacks,
     vendorInstructions,
   };
+}
+
+export function buildVendorEvaluationDecisionView(
+  profileSet: VendorResponseProfileSet | null | undefined,
+  intelligence?: VendorChallengeIntelligence | null,
+  bafoPack?: VendorBafoInstructionPack | null,
+): VendorEvaluationDecisionView | null {
+  if (!profileSet?.profiles.length) return null;
+  const profiles = profileSet.profiles;
+  const scorecardRows = buildEvaluationScorecardRows(profiles);
+  const vendorSummaries = buildEvaluationVendorSummaries({
+    profiles,
+    scorecardRows,
+    intelligence,
+    bafoPack,
+  });
+  const sorted = [...vendorSummaries].sort(
+    (a, b) => b.weightedScore - a.weightedScore,
+  );
+  const cheapest = [...profiles].sort(
+    (a, b) =>
+      (a.pricingSummary.fiveYearTcoUsd ?? Number.MAX_SAFE_INTEGER) -
+      (b.pricingSummary.fiveYearTcoUsd ?? Number.MAX_SAFE_INTEGER),
+  )[0];
+  const highestTransitionRisk =
+    profiles.find((profile) => profile.vendorId.includes("scale")) ??
+    sorted.at(-1) ??
+    profiles[0];
+
+  return {
+    sourceEventId: profileSet.sourceEventId,
+    tenantKey: profileSet.tenantKey,
+    generatedAt: profileSet.generatedAt,
+    scoreBasis:
+      "Default demo evaluation model derived from MVE profiles, challenge log, BAFO holdbacks, pricing summaries, SLA commitments, transition findings, assumptions, exceptions, and evidence completeness. Human scoring remains required before award.",
+    vendorCount: profiles.length,
+    comparisonRows: buildEvaluationComparisonRows(profiles),
+    scorecardRows,
+    vendorSummaries,
+    executiveTradeoffs: [
+      "Vendor A is the risk-adjusted leader: strongest continuity and scope confidence, but BAFO must improve productivity credits, SLA remedies, and transition fee holdbacks.",
+      "Vendor B is cheapest on normalized 5-year TCO, but its savings depend on resolving coverage staffing, retained-client effort, and unpriced productivity commitments.",
+      "Vendor C has the strongest SLA economics and clean evidence discipline, but its base scope excludes or conditions corporate shared-services support and carries a slower transition posture.",
+      "The executive decision is not lowest price versus highest score; it is whether the buyer values lower TCO enough to accept Vendor B's unresolved execution risk, or pays for Vendor A's continuity while forcing sharper BAFO economics.",
+    ],
+    leadingVendorId: sorted[0]?.vendorId ?? profiles[0].vendorId,
+    cheapestVendorId: cheapest?.vendorId ?? profiles[0].vendorId,
+    highestTransitionRiskVendorId:
+      typeof highestTransitionRisk === "string"
+        ? highestTransitionRisk
+        : highestTransitionRisk.vendorId,
+    recommendedAdvanceVendorIds: vendorSummaries
+      .filter((summary) => summary.recommendation !== "hold_until_clarified")
+      .map((summary) => summary.vendorId),
+  };
+}
+
+function buildEvaluationComparisonRows(
+  profiles: VendorResponseProfile[],
+): VendorEvaluationComparisonRow[] {
+  return [
+    comparisonRow(profiles, {
+      id: "normalized-tco",
+      label: "Normalized 5-year TCO",
+      decisionUse: "Shows cost position after transition, optional, and one-time lines are visible.",
+      value: (profile) => money(profile.pricingSummary.fiveYearTcoUsd),
+      caveat: (profile) => profile.pricingSummary.pricingBasis,
+      posture: (profile) =>
+        profile.vendorId.includes("scale")
+          ? "strength"
+          : profile.vendorId.includes("specialist")
+            ? "watch"
+            : "watch",
+      evidence: (profile) => profile.pricingSummary.pricingBasis,
+    }),
+    comparisonRow(profiles, {
+      id: "year-one-run",
+      label: "Year 1 run cost",
+      decisionUse: "Separates ongoing run economics from transition and optional scope.",
+      value: (profile) => money(profile.pricingSummary.yearOneRunCostUsd),
+      caveat: (profile) =>
+        profile.vendorId.includes("scale")
+          ? "Lowest run price, but retained effort and pass-throughs need BAFO closure."
+          : profile.vendorId.includes("specialist")
+            ? "Moderate run price, with optional corporate tower normalization required."
+            : "Higher run price reflects continuity and incumbent knowledge.",
+      posture: (profile) => (profile.vendorId.includes("scale") ? "strength" : "watch"),
+      evidence: (profile) => profile.pricingSummary.pricingBasis,
+    }),
+    comparisonRow(profiles, {
+      id: "transition-risk",
+      label: "Transition risk",
+      decisionUse: "Highlights whether transition commitments protect knowledge transfer, cutover, and stabilization.",
+      value: (profile) => profile.transitionCommitments,
+      caveat: (profile) =>
+        profile.vendorId.includes("scale")
+          ? "Highest risk because client SME dependency and coverage proof remain open."
+          : profile.vendorId.includes("specialist")
+            ? "Schedule risk remains because stabilization extends beyond buyer target."
+            : "Lower operational risk, but fee holdbacks need stronger milestone linkage.",
+      posture: (profile) =>
+        profile.vendorId.includes("scale")
+          ? "risk"
+          : profile.vendorId.includes("specialist")
+            ? "watch"
+            : "strength",
+      evidence: (profile) =>
+        profile.extractionCards.find((card) => card.type === "transition")
+          ?.evidenceReference ?? "Transition milestone exhibit",
+    }),
+    comparisonRow(profiles, {
+      id: "sla-economics",
+      label: "SLA economics",
+      decisionUse: "Tests whether service promises carry operationally meaningful remedies.",
+      value: (profile) => profile.slaCommitments,
+      caveat: (profile) =>
+        profile.vendorId.includes("specialist")
+          ? "Strongest SLA credit cap and chronic-miss escalation."
+          : profile.vendorId.includes("incumbent")
+            ? "Targets are usable, but credit economics are too light."
+            : "SLA framework is complete, but must reconcile to staffed coverage.",
+      posture: (profile) => (profile.vendorId.includes("specialist") ? "strength" : "watch"),
+      evidence: (profile) =>
+        profile.extractionCards.find((card) => card.type === "sla")
+          ?.evidenceReference ?? "SLA commitment table",
+    }),
+    comparisonRow(profiles, {
+      id: "automation-productivity",
+      label: "Automation/productivity credibility",
+      decisionUse: "Distinguishes automation narrative from priced, measured commitments.",
+      value: (profile) => profile.productivityCommitment,
+      caveat: (profile) =>
+        profile.vendorId.includes("scale")
+          ? "Biggest upside claim, but baseline and price-down are not committed."
+          : profile.vendorId.includes("incumbent")
+            ? "Claim is credible operationally but only partially priced back."
+            : "More modest claim, with better measurement discipline but lower upside.",
+      posture: (profile) =>
+        profile.vendorId.includes("scale") || profile.vendorId.includes("incumbent")
+          ? "risk"
+          : "watch",
+      evidence: (profile) =>
+        profile.extractionCards.find((card) => card.type === "productivity")
+          ?.evidenceReference ?? "Productivity commitment exhibit",
+    }),
+    comparisonRow(profiles, {
+      id: "evaluation-readiness",
+      label: "Evaluation readiness",
+      decisionUse: "Summarizes whether the vendor can be scored now or only conditionally.",
+      value: (profile) => profile.readyForEvaluation,
+      caveat: (profile) => profile.readyReason,
+      posture: (profile) =>
+        profile.readyForEvaluation === "yes"
+          ? "strength"
+          : profile.readyForEvaluation === "conditional"
+            ? "watch"
+            : "risk",
+      evidence: (profile) =>
+        profile.unsupportedClaims.length
+          ? profile.unsupportedClaims.slice(0, 2).join("; ")
+          : "No major unsupported claims flagged in the MVE profile",
+    }),
+  ];
+}
+
+function comparisonRow(
+  profiles: VendorResponseProfile[],
+  input: {
+    id: string;
+    label: string;
+    decisionUse: string;
+    value: (profile: VendorResponseProfile) => string;
+    caveat: (profile: VendorResponseProfile) => string;
+    posture: (profile: VendorResponseProfile) => VendorEvaluationComparisonRow["values"][number]["posture"];
+    evidence: (profile: VendorResponseProfile) => string;
+  },
+): VendorEvaluationComparisonRow {
+  return {
+    comparisonId: input.id,
+    label: input.label,
+    decisionUse: input.decisionUse,
+    values: profiles.map((profile) => ({
+      vendorId: profile.vendorId,
+      vendorName: profile.vendorName,
+      value: input.value(profile),
+      posture: input.posture(profile),
+      caveat: input.caveat(profile),
+      evidenceLabel: input.evidence(profile),
+    })),
+  };
+}
+
+function buildEvaluationScorecardRows(
+  profiles: VendorResponseProfile[],
+): VendorEvaluationScorecardRow[] {
+  const criteria: Array<{
+    id: string;
+    label: string;
+    weight: number;
+    guidance: string;
+    score: (profile: VendorResponseProfile) => VendorEvaluationScoreValue;
+  }> = [
+    {
+      id: "commercial-value",
+      label: "Commercial value",
+      weight: 18,
+      guidance: "Score cost only after TCO, optional scope, pass-throughs, and retained effort are normalized.",
+      score: (profile) =>
+        scoreValue(profile, commercialScore(profile), commercialRationale(profile), profile.pricingSummary.pricingBasis),
+    },
+    {
+      id: "scope-fit",
+      label: "Scope fit",
+      weight: 14,
+      guidance: "Score included scope, corporate tower coverage, application support boundaries, and exclusions.",
+      score: (profile) =>
+        scoreValue(profile, scopeFitScore(profile), scopeFitRationale(profile), profile.sectionMap.find((section) => section.sectionNumber === 2)?.responseReference ?? "Scope response"),
+    },
+    {
+      id: "service-sla-strength",
+      label: "Service and SLA strength",
+      weight: 14,
+      guidance: "Score service targets together with credit economics, chronic-miss handling, and reporting.",
+      score: (profile) =>
+        scoreValue(profile, slaScore(profile), slaRationale(profile), profile.extractionCards.find((card) => card.type === "sla")?.evidenceReference ?? "SLA commitment table"),
+    },
+    {
+      id: "transition-readiness",
+      label: "Transition readiness",
+      weight: 12,
+      guidance: "Score KT, cutover, stabilization, milestone economics, and client dependency risk.",
+      score: (profile) =>
+        scoreValue(profile, transitionScore(profile), transitionRationale(profile), profile.extractionCards.find((card) => card.type === "transition")?.evidenceReference ?? "Transition milestone plan"),
+    },
+    {
+      id: "staffing-delivery",
+      label: "Staffing and delivery model",
+      weight: 10,
+      guidance: "Score role mix, shift coverage, location coverage, and critical application support.",
+      score: (profile) =>
+        scoreValue(profile, staffingScore(profile), staffingRationale(profile), profile.exhibits.find((exhibit) => exhibit.kind === "staffing_location_model")?.evidenceReference ?? "Staffing model exhibit"),
+    },
+    {
+      id: "automation-credibility",
+      label: "Automation/productivity credibility",
+      weight: 10,
+      guidance: "Score only when baseline, measurement method, year-by-year commitment, and commercial remedy are clear.",
+      score: (profile) =>
+        scoreValue(profile, automationScore(profile), automationRationale(profile), profile.extractionCards.find((card) => card.type === "productivity")?.evidenceReference ?? "Productivity commitment exhibit"),
+    },
+    {
+      id: "pricing-transparency",
+      label: "Pricing transparency",
+      weight: 8,
+      guidance: "Score workbook clarity, pass-through caps, optional scope, and apples-to-apples comparability.",
+      score: (profile) =>
+        scoreValue(profile, pricingTransparencyScore(profile), pricingTransparencyRationale(profile), profile.exhibits.find((exhibit) => exhibit.kind === "pricing_workbook")?.evidenceReference ?? "Pricing workbook"),
+    },
+    {
+      id: "risk-exceptions",
+      label: "Risk and commercial exceptions",
+      weight: 8,
+      guidance: "Score assumptions, exclusions, redlines, and buyer-risk transfer.",
+      score: (profile) =>
+        scoreValue(profile, riskExceptionScore(profile), riskExceptionRationale(profile), profile.exhibits.find((exhibit) => exhibit.kind === "commercial_exceptions")?.evidenceReference ?? "Commercial exceptions table"),
+    },
+    {
+      id: "evidence-completeness",
+      label: "Evidence completeness",
+      weight: 6,
+      guidance: "Score section completeness, exhibits, and unresolved unsupported claims.",
+      score: (profile) =>
+        scoreValue(profile, evidenceScore(profile), evidenceRationale(profile), `${profile.responseCompleteness.completeSections}/${profile.responseCompleteness.totalSections} sections and ${profile.exhibits.length} exhibits checked`),
+    },
+  ];
+
+  return criteria.map((criterion) => ({
+    criterionId: criterion.id,
+    label: criterion.label,
+    weight: criterion.weight,
+    guidance: criterion.guidance,
+    scores: profiles.map(criterion.score),
+  }));
+}
+
+function scoreValue(
+  profile: VendorResponseProfile,
+  score: number,
+  rationale: string,
+  evidenceLabel: string,
+): VendorEvaluationScoreValue {
+  return {
+    vendorId: profile.vendorId,
+    vendorName: profile.vendorName,
+    score,
+    rationale,
+    evidenceLabel,
+    confidence:
+      profile.readyForEvaluation === "yes"
+        ? "high"
+        : profile.readyForEvaluation === "conditional"
+          ? "medium"
+          : "low",
+  };
+}
+
+function buildEvaluationVendorSummaries(args: {
+  profiles: VendorResponseProfile[];
+  scorecardRows: VendorEvaluationScorecardRow[];
+  intelligence?: VendorChallengeIntelligence | null;
+  bafoPack?: VendorBafoInstructionPack | null;
+}): VendorEvaluationVendorSummary[] {
+  const totals = args.profiles.map((profile) => {
+    const weightedScore = weightedVendorScore(profile.vendorId, args.scorecardRows);
+    const openChallenges =
+      args.intelligence?.challengeLog.filter(
+        (challenge) => challenge.vendorId === profile.vendorId,
+      ) ?? [];
+    const bafoInstruction =
+      args.bafoPack?.vendorInstructions.find(
+        (instruction) => instruction.vendorId === profile.vendorId,
+      ) ?? null;
+    return {
+      profile,
+      weightedScore,
+      openChallenges,
+      bafoInstruction,
+    };
+  });
+  const rankByVendor = new Map(
+    [...totals]
+      .sort((a, b) => b.weightedScore - a.weightedScore)
+      .map((entry, index) => [entry.profile.vendorId, index + 1]),
+  );
+
+  return totals.map(({ profile, weightedScore, openChallenges, bafoInstruction }) => {
+    const recommendation = recommendationForVendor(profile);
+    return {
+      vendorId: profile.vendorId,
+      vendorName: profile.vendorName,
+      rank: rankByVendor.get(profile.vendorId) ?? totals.length,
+      weightedScore,
+      readiness: profile.readyForEvaluation,
+      recommendation,
+      decisionRationale: decisionRationale(profile, weightedScore),
+      tradeoffs: tradeoffsForVendor(profile),
+      conditions: [
+        ...(bafoInstruction?.mustResolveBeforeScoring ?? []),
+        ...openChallenges
+          .filter((challenge) => challenge.severity === "high")
+          .map((challenge) => challenge.clarificationQuestion),
+      ].slice(0, 4),
+    };
+  });
+}
+
+function weightedVendorScore(
+  vendorId: string,
+  scorecardRows: VendorEvaluationScorecardRow[],
+): number {
+  const totalWeight = scorecardRows.reduce((sum, row) => sum + row.weight, 0);
+  const score = scorecardRows.reduce((sum, row) => {
+    const value = row.scores.find((candidate) => candidate.vendorId === vendorId);
+    return sum + (value?.score ?? 0) * (row.weight / totalWeight);
+  }, 0);
+  return Math.round(score * 10) / 10;
+}
+
+function recommendationForVendor(
+  profile: VendorResponseProfile,
+): VendorEvaluationRecommendation {
+  if (profile.vendorId.includes("scale")) return "advance_with_conditions";
+  if (profile.vendorId.includes("incumbent")) return "advance_to_bafo";
+  return "advance_with_conditions";
+}
+
+function decisionRationale(profile: VendorResponseProfile, score: number): string {
+  if (profile.vendorId.includes("incumbent")) {
+    return `Risk-adjusted leader at ${score.toFixed(1)}/10 because continuity, scope coverage, and transition confidence outweigh its weaker commercial remedies.`;
+  }
+  if (profile.vendorId.includes("scale")) {
+    return `Lowest-cost challenger at ${score.toFixed(1)}/10, but coverage staffing, retained effort, and productivity economics must close before the price advantage can be trusted.`;
+  }
+  return `Service-quality specialist at ${score.toFixed(1)}/10 with strong SLA economics, but scope and transition caveats must be normalized before it can lead.`;
+}
+
+function tradeoffsForVendor(profile: VendorResponseProfile): string[] {
+  if (profile.vendorId.includes("incumbent")) {
+    return [
+      "Best continuity and transition risk posture.",
+      "Needs stronger productivity price-down, SLA credit economics, and transition fee holdbacks.",
+    ];
+  }
+  if (profile.vendorId.includes("scale")) {
+    return [
+      "Best apparent normalized TCO.",
+      "Highest execution risk because productivity, staffing coverage, and retained-client effort remain conditional.",
+    ];
+  }
+  return [
+    "Best SLA remedy posture and clean evidence discipline.",
+    "Narrower base scope and slower transition make the headline price less directly comparable.",
+  ];
+}
+
+function money(value: number | null): string {
+  if (value === null) return "Not provided";
+  return `$${(value / 1_000_000).toFixed(1)}M`;
+}
+
+function commercialScore(profile: VendorResponseProfile): number {
+  if (profile.vendorId.includes("scale")) return 8.4;
+  if (profile.vendorId.includes("specialist")) return 7.2;
+  return 6.9;
+}
+
+function commercialRationale(profile: VendorResponseProfile): string {
+  if (profile.vendorId.includes("scale")) {
+    return "Lowest apparent TCO, with pass-through and retained-effort caveats.";
+  }
+  if (profile.vendorId.includes("specialist")) {
+    return "Middle TCO, but optional corporate support must be normalized.";
+  }
+  return "Highest TCO, offset by stronger continuity and incumbent knowledge.";
+}
+
+function scopeFitScore(profile: VendorResponseProfile): number {
+  if (profile.vendorId.includes("incumbent")) return 8.2;
+  if (profile.vendorId.includes("scale")) return 6.6;
+  return 6.4;
+}
+
+function scopeFitRationale(profile: VendorResponseProfile): string {
+  if (profile.vendorId.includes("incumbent")) {
+    return "Strongest match to AMS scope and retained-team boundary.";
+  }
+  if (profile.vendorId.includes("scale")) {
+    return "Broad scope story, but retained obligations and tower mapping need clarification.";
+  }
+  return "Good operational service fit, with corporate shared-services scope conditional.";
+}
+
+function slaScore(profile: VendorResponseProfile): number {
+  if (profile.vendorId.includes("specialist")) return 8.8;
+  if (profile.vendorId.includes("scale")) return 7.4;
+  return 7.1;
+}
+
+function slaRationale(profile: VendorResponseProfile): string {
+  if (profile.vendorId.includes("specialist")) {
+    return "Strongest service-credit economics and chronic-miss posture.";
+  }
+  if (profile.vendorId.includes("scale")) {
+    return "Complete SLA framework, but coverage staffing must prove it is executable.";
+  }
+  return "Clear targets, but credit cap is too light for critical operations.";
+}
+
+function transitionScore(profile: VendorResponseProfile): number {
+  if (profile.vendorId.includes("incumbent")) return 8.0;
+  if (profile.vendorId.includes("specialist")) return 6.5;
+  return 5.9;
+}
+
+function transitionRationale(profile: VendorResponseProfile): string {
+  if (profile.vendorId.includes("incumbent")) {
+    return "Lowest practical transition risk, but fee timing should move behind accepted milestones.";
+  }
+  if (profile.vendorId.includes("specialist")) {
+    return "Lower transition cost, with slower stabilization than the buyer target.";
+  }
+  return "Detailed plan, but client SME dependency and coverage proof create execution risk.";
+}
+
+function staffingScore(profile: VendorResponseProfile): number {
+  if (profile.vendorId.includes("incumbent")) return 8.0;
+  if (profile.vendorId.includes("specialist")) return 7.7;
+  return 5.6;
+}
+
+function staffingRationale(profile: VendorResponseProfile): string {
+  if (profile.vendorId.includes("scale")) {
+    return "24x7 claim is not reconciled to role, shift, and location tables.";
+  }
+  return "Staffing model is usable for evaluation, with BAFO refinements still needed.";
+}
+
+function automationScore(profile: VendorResponseProfile): number {
+  if (profile.vendorId.includes("specialist")) return 6.8;
+  if (profile.vendorId.includes("incumbent")) return 6.2;
+  return 5.3;
+}
+
+function automationRationale(profile: VendorResponseProfile): string {
+  if (profile.vendorId.includes("scale")) {
+    return "Largest claim, but baseline and price-down mechanism are missing.";
+  }
+  if (profile.vendorId.includes("incumbent")) {
+    return "Credible operational story, only partially priced back.";
+  }
+  return "More modest automation claim, with better measurement discipline.";
+}
+
+function pricingTransparencyScore(profile: VendorResponseProfile): number {
+  if (profile.vendorId.includes("incumbent")) return 7.1;
+  if (profile.vendorId.includes("scale")) return 6.0;
+  return 6.5;
+}
+
+function pricingTransparencyRationale(profile: VendorResponseProfile): string {
+  if (profile.vendorId.includes("scale")) {
+    return "Workbook exists, but pass-throughs and retained effort need caps and normalization.";
+  }
+  if (profile.vendorId.includes("specialist")) {
+    return "Workbook is complete, but optional corporate tower pricing affects comparability.";
+  }
+  return "Workbook is complete, with transition fee timing as the main commercial caveat.";
+}
+
+function riskExceptionScore(profile: VendorResponseProfile): number {
+  if (profile.vendorId.includes("incumbent")) return 7.0;
+  if (profile.vendorId.includes("specialist")) return 6.4;
+  return 5.6;
+}
+
+function riskExceptionRationale(profile: VendorResponseProfile): string {
+  if (profile.vendorId.includes("scale")) {
+    return "Retained responsibilities and demand volatility exceptions shift risk back to the buyer.";
+  }
+  if (profile.vendorId.includes("specialist")) {
+    return "ERP, rationalization, and corporate support exceptions require executive disposition.";
+  }
+  return "A smaller set of buyer-risk exceptions remains for BAFO cleanup.";
+}
+
+function evidenceScore(profile: VendorResponseProfile): number {
+  if (profile.vendorId.includes("incumbent")) return 8.0;
+  if (profile.vendorId.includes("specialist")) return 8.2;
+  return 6.2;
+}
+
+function evidenceRationale(profile: VendorResponseProfile): string {
+  if (profile.vendorId.includes("scale")) {
+    return "Response is broad, but several critical claims are only partially in structured exhibits.";
+  }
+  return "Evidence package is complete enough for conditional scoring with named caveats.";
 }
 
 function groupByVendor<T extends { vendorId: string }>(items: T[]): Map<string, T[]> {
