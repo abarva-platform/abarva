@@ -151,6 +151,7 @@ import { StrategyStageView } from "./strategy/StrategyStageView";
 import { ScopeStageView } from "./scope/ScopeStageView";
 import { RfpStageView } from "./rfp/RfpStageView";
 import { ResponsesStageView } from "./responses/ResponsesStageView";
+import { VendorResponseProfilesPanel } from "./responses/VendorResponseProfilesPanel";
 import { EvaluationStageView } from "./evaluation/EvaluationStageView";
 import { PricingStageView } from "./pricing/PricingStageView";
 import { BafoStageView } from "./bafo/BafoStageView";
@@ -1124,26 +1125,34 @@ export function UniversalCanvasShell({
           <SimpleFrontUnavailable>{advancedWorkspace}</SimpleFrontUnavailable>
         }
       >
-        <SimpleStageFront
-          eventId={event.id}
-          stage={viewStage}
-          view={simpleStageScreen}
-          generating={Boolean(
-            pendingGenerationByCode[
-              simpleStageScreen.deliverable.artifactCode
-            ],
-          )}
-          registryArtifacts={registryArtifactsState}
-          onGenerateArtifact={handleArtifactGenerate}
-          onAdvanceStage={(stage) =>
-            void handlePromoteStage(
-              stage,
-              `Advanced from Start here: ${simpleStageScreen.stageLabel}`,
-            )
-          }
-          onRefresh={() => router.refresh()}
-          advanced={advancedWorkspace}
-        />
+        <>
+          <SimpleStageFront
+            eventId={event.id}
+            stage={viewStage}
+            view={simpleStageScreen}
+            generating={Boolean(
+              pendingGenerationByCode[
+                simpleStageScreen.deliverable.artifactCode
+              ],
+            )}
+            registryArtifacts={registryArtifactsState}
+            onGenerateArtifact={handleArtifactGenerate}
+            onAdvanceStage={(stage) =>
+              void handlePromoteStage(
+                stage,
+                `Advanced from Start here: ${simpleStageScreen.stageLabel}`,
+              )
+            }
+            onRefresh={() => router.refresh()}
+            advanced={advancedWorkspace}
+          />
+          {(viewStage === "responses" || viewStage === "vendor_responses") &&
+          vendorResponseProfiles?.profiles?.length ? (
+            <div style={{ marginTop: 12 }}>
+              <VendorResponseProfilesPanel profileSet={vendorResponseProfiles} />
+            </div>
+          ) : null}
+        </>
       </SimpleFrontErrorBoundary>
     ) : simpleFrontEnabled ? (
       <SimpleFrontUnavailable reason="Simple Start here view is unavailable for this event state. Showing the full workspace instead.">
