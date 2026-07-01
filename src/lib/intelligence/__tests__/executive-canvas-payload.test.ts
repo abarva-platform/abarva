@@ -72,4 +72,67 @@ describe("executive canvas payload extraction", () => {
     expect(extracted.payloads).toHaveLength(0);
     expect(extracted.visibleContent).toBe("Decision support.");
   });
+
+  it("repairs supported bare canvas JSON without exposing it as visible prose", () => {
+    const content = [
+      "The CIO should sequence the shared-services portfolio.",
+      "",
+      JSON.stringify(
+        {
+          canvasType: "investmentSequencingMap",
+          title: "Shared services AI sequence",
+          columns: [
+            {
+              label: "Scale now",
+              items: [
+                {
+                  label: "Kyriba Cash & Payments",
+                  value: 9,
+                  readiness: 6,
+                  risk: 8,
+                  action: "Close control evidence gaps",
+                  owner: "Treasurer",
+                  gate: "Critical-bank certification",
+                },
+              ],
+            },
+          ],
+          proofBoundary: {
+            missing: ["HR and Legal source-system evidence"],
+            decisionRequired: "Approve Treasury + Finance as Phase 1.",
+          },
+        },
+        null,
+        2,
+      ),
+      "",
+      "Use this as the board exhibit.",
+    ].join("\n");
+
+    expect(hasExecutiveCanvasPayload(content)).toBe(true);
+    const extracted = extractExecutiveCanvasPayloads(content);
+
+    expect(extracted.payloads).toHaveLength(1);
+    expect(extracted.payloads[0]).toMatchObject({
+      canvasType: "investmentSequencingMap",
+      title: "Shared services AI sequence",
+      columns: [
+        {
+          label: "Scale now",
+          items: [
+            {
+              label: "Kyriba Cash & Payments",
+              owner: "Treasurer",
+              gate: "Critical-bank certification",
+            },
+          ],
+        },
+      ],
+    });
+    expect(extracted.visibleContent).toBe(
+      "The CIO should sequence the shared-services portfolio.\n\nUse this as the board exhibit.",
+    );
+    expect(extracted.visibleContent).not.toContain("canvasType");
+    expect(extracted.visibleContent).not.toContain("investmentSequencingMap");
+  });
 });
