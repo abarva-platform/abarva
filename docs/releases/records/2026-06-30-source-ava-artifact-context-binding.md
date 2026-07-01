@@ -68,6 +68,7 @@ Revert this route/context/answer-readiness change and redeploy the prior healthy
 - Final post-deploy proof after the readiness-overlay fix will be added to the same Source P0 Slice 3 evidence bundle.
 - Follow-up artifact segment classification fix: uploaded Source evidence is classified by file/content semantics before falling back to `source_origin`, so risk registers, agreements, ticket/SLA baselines, finance baselines, service catalog/scope files, and transition evidence are not collapsed into generic `sourcing_artifacts`.
 - Follow-up uploaded-evidence priority fix: Source aVa scores uploaded, parsed, fact-bearing Source evidence ahead of generated draft artifacts so current-state citations and visible guidance are driven by the client evidence pack first.
+- Follow-up filename normalization fix: uploaded files with underscores or dotted names, such as `17_RFP_Risk_Register_APPROVED.csv` and `15_Run_vs_Change_Financial_Baseline_FINANCE_VALIDATED.csv`, are normalized before segment matching. This prevents valid business evidence from being trapped in generic `sourcing_artifacts`, and metadata-only `artifact_summary` facts are demoted below parsed excerpts and artifact-level evidence.
 
 ## Known Gaps
 

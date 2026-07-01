@@ -284,10 +284,13 @@ async function buildEventIntakeTenantContextSnapshot(args: {
     embeddedContextChunkCount: 0,
     sourceEventFound: true,
     segments,
-    currentStateAreas: [
-      "Sourcing Artifacts",
-      ...(artifactContext.artifacts.length ? ["Source Evidence and Generated Deliverables"] : []),
-    ],
+    currentStateAreas: segments
+      .filter((segment) => segment.segmentId !== "sourcing_artifacts")
+      .map((segment) => formatSourceSegmentLabel(segment.segmentId))
+      .concat(
+        segmentCounts.has("sourcing_artifacts") ? ["Sourcing Artifacts"] : [],
+      )
+      .slice(0, 8),
     evidenceBasis: [
       `${args.activeClientName ?? clientKey} persisted Source event: trigger, scope, value basis, decision owner and gate criteria from source_events.`,
       ...(artifactContext.artifacts.length
@@ -446,7 +449,7 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
         artifacts.find((artifact) => artifact.id === fact.artifact_id),
         index,
         "fact",
-      ),
+      ) - (fact.fact_type === "artifact_summary" ? 18 : 0),
     })),
   ];
   return { artifacts, chunks, facts, artifactEvidence };
@@ -499,7 +502,8 @@ function inferSourceArtifactSegment(
   ]
     .filter(Boolean)
     .join(" ")
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/[_/.-]+/g, " ");
 
   if (/\b(agreement|contract|vendor|change[-_ ]?order|amendment|commercial)\b/.test(text)) {
     return "vendor_contracts";
@@ -524,6 +528,14 @@ function inferSourceArtifactSegment(
   }
 
   return "sourcing_artifacts";
+}
+
+function formatSourceSegmentLabel(segmentId: string): string {
+  return segmentId
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function cleanContextText(value: string): string {
