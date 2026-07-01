@@ -16,6 +16,7 @@ describe('SkyHarbor CTO readiness ask source', () => {
     expect(isSkyHarborCtoReadinessQuestion('What is blocking agentic IROPS from scaling?')).toBe(true);
     expect(isSkyHarborCtoReadinessQuestion('What data must be certified before autonomous recovery decisions?')).toBe(true);
     expect(isSkyHarborCtoReadinessQuestion('What should the CTO fund first for AI readiness?')).toBe(true);
+    expect(isSkyHarborCtoReadinessQuestion('What evidence gaps matter before a board decision?')).toBe(true);
     expect(isSkyHarborCtoReadinessQuestion('Summarize the last conversation in one sentence.')).toBe(false);
   });
 
@@ -33,6 +34,8 @@ describe('SkyHarbor CTO readiness ask source', () => {
     expect(source?.detail).toContain('Recommended decision posture: fund readiness before autonomous scale.');
     expect(source?.detail).toContain('Operations Control Center Platform');
     expect(source?.detail).toContain('Finance-approved disruption cost baseline');
+    expect(source?.detail).toContain('Board decision readiness spine');
+    expect(source?.detail).toContain('Vendor/system linkage');
     expect(source?.detail).not.toContain('lakeshore');
 
     expect(buildSkyHarborCtoReadinessSource('What is blocking agentic IROPS from scaling?', [

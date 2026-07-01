@@ -27,6 +27,10 @@ import {
   moduleV6PacketPromptBlock,
   type ModuleV6PacketContract,
 } from "@/lib/agent/module-v6-answer-contract";
+import {
+  buildV6ProgramInstanceForTenant,
+  canonicalV6DemoTenantKey,
+} from "@/lib/module-v6/demo-tenant-packs";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
@@ -41,17 +45,7 @@ const MOVES_V6_SYNTHESIS_HEADERS = {
 } as const;
 
 function canonicalTenantKey(value: string | null | undefined): string {
-  const normalized = String(value ?? "").trim().toLowerCase();
-  if (["apexretail", "apex-retail", "apex-retail-group"].includes(normalized)) {
-    return "apex-retail";
-  }
-  if (["skyharbor", "skyharbor-air", "skyharbor-airlines"].includes(normalized)) {
-    return "skyharbor-air";
-  }
-  if (["lakeshore", "lakeshore-holdings", "lakeshore-industries"].includes(normalized)) {
-    return "lakeshore-holdings";
-  }
-  return normalized;
+  return canonicalV6DemoTenantKey(value);
 }
 
 function movesJsonError(
@@ -162,7 +156,10 @@ export async function POST(request: Request) {
   const activeTenantKey = canonicalTenantKey(activeClient.key);
   const programId = body.programId
     ?? (activeTenantKey === "apex-retail" ? APX_CDP_2026_INSTANCE.id : null);
-  if (!programId) {
+  const v6Instance = activeTenantKey === "apex-retail"
+    ? null
+    : buildV6ProgramInstanceForTenant(activeTenantKey, programId);
+  if (!programId && !v6Instance) {
     return movesJsonError(
       {
         error: "program_synthesis_not_available",
@@ -175,7 +172,7 @@ export async function POST(request: Request) {
   // Resolve deterministic demo instances only. Do not fall back from an
   // unknown live DB UUID to APX_CDP_2026_INSTANCE; that contaminates
   // user-created programs with unrelated CDP/BAFO/Vendor C recommendations.
-  const instance = APEX_RETAIL_PROGRAM_INSTANCES.find((i) => i.id === programId);
+  const instance = v6Instance ?? APEX_RETAIL_PROGRAM_INSTANCES.find((i) => i.id === programId);
   if (!instance) {
     return movesJsonError(
       { error: "program_synthesis_not_available" },

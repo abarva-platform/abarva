@@ -28,6 +28,11 @@ const CTO_READINESS_TERMS = [
   /\bmodel[-\s]?risk\b/i,
   /\bdata\s+(?:readiness|freshness|lineage|certification|certified)\b/i,
   /\bboard[-\s]?grade\b/i,
+  /\bboard[-\s]?ready\b/i,
+  /\bboard\s+decision\b/i,
+  /\bboard\s+guidance\b/i,
+  /\bevidence\s+gaps?\b/i,
+  /\bbefore\s+(?:a\s+)?board\b/i,
 ];
 
 function normalizeTenantKey(value: string | null | undefined): string {
@@ -72,6 +77,13 @@ export function formatSkyHarborCtoReadinessSourceDetail(packet: SkyHarborCtoRead
     `- AI initiatives: ${listValues(packet.aiInitiatives, 'use_case', 8)}.`,
     `- Modernization programs: ${listValues(packet.programs, 'record_name', 8)}.`,
     `- Open risks and controls: ${listValues(packet.risksControls, 'risk_or_control', 8)}.`,
+    '',
+    'Board decision readiness spine:',
+    '- Finance baseline: disruption-cost baseline and realized-value proof are required before board-grade value claims.',
+    '- Data certification: crew legality, PNR/reservation events, flight status, operational event store, and recovery history need owner-signed freshness and lineage.',
+    '- Control evidence: model-risk tiering, human-in-loop workflow, override logs, and accountable control owners must be explicit.',
+    '- Vendor/system linkage: critical platform support, SLAs, and integration dependencies must be tied to the IROPS operating path.',
+    '- Adoption/value proof: usage, decision latency, override rate, and realized operational value need measured evidence.',
     '',
     'Missing evidence to make claims board-grade:',
     packet.missingEvidenceChecklist.map((item) => `- ${item}`).join('\n'),

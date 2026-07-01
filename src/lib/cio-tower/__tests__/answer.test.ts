@@ -380,6 +380,45 @@ describe('cio tower answer contract', () => {
     ).toEqual([]);
   });
 
+  it('uses V6 business metadata names when entity labels are code-shaped', () => {
+    const ctx = context({
+      relevantFacts: [
+        {
+          ...context().relevantFacts[0],
+          entity_display_name: 'SHA-PROG-CTO-002',
+          attributes: {
+            record_name: 'IROPS Data Foundation',
+            program_name: 'Do not prefer this when record_name exists',
+          },
+        },
+      ],
+    });
+    const output = __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(ctx);
+
+    expect(output?.output.answer).toContain('IROPS Data Foundation');
+    expect(output?.output.answer).not.toContain('SHA-PROG-CTO-002');
+    expect(output?.output.answer).not.toContain('Loaded program');
+    expect(output?.output.tables?.[0]?.rows[0]?.[1]).toBe('IROPS Data Foundation');
+  });
+
+  it('does not invent program labels when no V6 business metadata name is loaded', () => {
+    const ctx = context({
+      relevantFacts: [
+        {
+          ...context().relevantFacts[0],
+          entity_display_name: 'SHA-PROG-CTO-999',
+          attributes: {},
+        },
+      ],
+    });
+    const output = __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(ctx);
+
+    expect(output?.output.answer).toContain('Program name not loaded');
+    expect(output?.output.answer).not.toContain('Loaded program');
+    expect(output?.output.answer).not.toContain('SHA-PROG-CTO-999');
+    expect(output?.output.tables?.[0]?.rows[0]?.[1]).toBe('Program name not loaded');
+  });
+
   it('builds a repair prompt that asks Claude to fix, not the renderer to mutate', () => {
     const originalPrompt = buildCioTowerClaudePrompt(context());
     const repairPrompt = buildCioTowerRepairPrompt({

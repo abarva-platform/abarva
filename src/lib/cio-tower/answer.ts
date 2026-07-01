@@ -735,15 +735,20 @@ function cleanVisibleBusinessName(value: string | null | undefined, fallback: st
   if (!raw) return fallback;
   const withoutPrefix = raw.replace(KEY_PREFIX, '').trim();
   const candidate = withoutPrefix || raw;
+  if (/^\d+$/.test(candidate)) return fallback;
   return KEY_SHAPED_VISIBLE_NAME.test(candidate) ? fallback : candidate;
 }
 
 function loadedName(row: CioTowerFactRow, fallback: string): string {
   const candidates = [
+    attributeText(row, 'record_name'),
     attributeText(row, 'initiative_name'),
     attributeText(row, 'program_name'),
+    attributeText(row, 'display_name'),
+    attributeText(row, 'title'),
     attributeText(row, 'business_name'),
     attributeText(row, 'business_label'),
+    attributeText(row, 'label'),
     attributeText(row, 'name'),
     row.entity_display_name,
   ];
@@ -766,7 +771,7 @@ function buildTowerTopProgramsTable(facts: readonly CioTowerFactRow[], limit = 1
     columns: ['Rank', 'Program', 'FY26 budget', 'Basis', 'Confidence'],
     rows: programFacts.map((fact, index) => [
       String(index + 1),
-      loadedName(fact, `Loaded program ${index + 1}`),
+      loadedName(fact, 'Program name not loaded'),
       factValue(fact),
       fact.basis || 'loaded',
       fact.confidence || 'unknown',

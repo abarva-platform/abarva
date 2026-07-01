@@ -26,6 +26,10 @@ import {
   moduleV6PacketPromptBlock,
   type ModuleV6PacketContract,
 } from "@/lib/agent/module-v6-answer-contract";
+import {
+  buildV6SourceEventInstanceForTenant,
+  canonicalV6DemoTenantKey,
+} from "@/lib/module-v6/demo-tenant-packs";
 
 // Simple in-memory cache: key → text response
 // In production this would be Redis; for demo an in-process cache is sufficient.
@@ -46,17 +50,7 @@ const SOURCE_INSTANCE_ALIASES: Record<string, string> = {
 };
 
 function canonicalTenantKey(value: string | null | undefined): string {
-  const normalized = String(value ?? "").trim().toLowerCase();
-  if (["apexretail", "apex-retail", "apex-retail-group"].includes(normalized)) {
-    return "apex-retail";
-  }
-  if (["skyharbor", "skyharbor-air", "skyharbor-airlines"].includes(normalized)) {
-    return "skyharbor-air";
-  }
-  if (["lakeshore", "lakeshore-holdings", "lakeshore-industries"].includes(normalized)) {
-    return "lakeshore-holdings";
-  }
-  return normalized;
+  return canonicalV6DemoTenantKey(value);
 }
 
 function resolveSourceInstanceId(instanceId: string): string {
@@ -186,8 +180,11 @@ export async function POST(request: Request) {
     : activeTenantKey === "apex-retail"
       ? DEFAULT_SOURCE_INSTANCE_ID
       : null;
+  const v6Instance = activeTenantKey === "apex-retail"
+    ? null
+    : buildV6SourceEventInstanceForTenant(activeTenantKey, instanceId);
 
-  if (!instanceId) {
+  if (!instanceId && !v6Instance) {
     return sourceJsonError(
       {
         error: "source_synthesis_not_available",
@@ -197,7 +194,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const instance = SOURCE_EVENT_INSTANCES.find((i) => i.id === instanceId);
+  const instance = v6Instance ?? SOURCE_EVENT_INSTANCES.find((i) => i.id === instanceId);
 
   if (!instance) {
     return sourceJsonError({ error: "instance not found" }, {

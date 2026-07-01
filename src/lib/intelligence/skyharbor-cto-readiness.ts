@@ -140,14 +140,18 @@ export function buildSkyHarborCtoReadinessPacket(repoRoot = process.cwd()): SkyH
 export function composeSkyHarborCtoAnswer(question: string, packet = buildSkyHarborCtoReadinessPacket()): string {
   const lower = question.toLowerCase();
   const boardGrade = /board-grade|board grade|board ready|board-ready/.test(lower);
+  const boardGap = /evidence gap|evidence gaps|board decision|board guidance|before.*board|board.*before|board.*evidence/.test(lower);
   const fund = /fund|invest|investment|first/.test(lower);
   const systems = /system|depend/.test(lower);
   const data = /data|certif|freshness|lineage/.test(lower);
   const value = /value|finance|roi|claim/.test(lower);
   const controls = /control|model-risk|risk gate|gate/.test(lower);
 
+  if (boardGrade || boardGap) {
+    return composeSkyHarborBoardGapAnswer(packet);
+  }
+
   let pointOfView = 'My point of view: SkyHarbor should fund IROPS readiness before autonomous scale.';
-  if (boardGrade) pointOfView = 'My point of view: the IROPS AI case is planning-grade today, not board-grade.';
   if (fund) pointOfView = 'My point of view: the CTO should fund the IROPS data foundation, event backbone, and AI governance gate before broad autonomous recovery scale.';
   if (systems) pointOfView = 'My point of view: IROPS depends on a small set of operationally critical systems, and the weak spot is the certified data path across them.';
   if (data) pointOfView = 'My point of view: the data products to certify first are crew legality, flight status, PNR/reservation events, operational event store, and recovery decision history.';
@@ -169,6 +173,28 @@ export function composeSkyHarborCtoAnswer(question: string, packet = buildSkyHar
     `Known from loaded evidence: ${packet.systems.slice(0, 4).map((row) => row.system_name).join(', ')}; ${packet.dataAssets.slice(0, 4).map((row) => row.data_asset_name).join(', ')}; and ${packet.aiInitiatives.slice(0, 3).map((row) => row.use_case).join(', ')}.`,
     `Assumption-led or missing: ${packet.missingEvidenceChecklist.slice(0, 4).join(' ')}`,
     `What would make it board-grade: Finance signoff is required for disruption cost and value; client owners must also sign off on data freshness, model-risk tier, HITL control, vendor-system links, and realized value evidence.`,
+    formatDecisionBranch(packet.branch),
+  ].join('\n\n');
+}
+
+function composeSkyHarborBoardGapAnswer(packet: SkyHarborCtoReadinessPacket): string {
+  const systems = namedList(packet.systems, 'system_name', 5);
+  const programs = namedList(packet.programs, 'record_name', 8);
+  const aiInitiatives = namedList(packet.aiInitiatives, 'use_case', 4);
+  const risks = namedList(packet.risksControls, 'record_name', 4);
+
+  return [
+    'My point of view: the Airline Demo IROPS AI case is not board-ready yet; it is planning-grade and strong enough to fund readiness.',
+    [
+      '- Fund the readiness gate now: the strongest near-term decision is IROPS data/control readiness, not broad autonomous recovery scale.',
+      '- Make Finance and control signoff the board threshold: disruption-cost baseline, realized value, data freshness, model risk, and HITL control need evidence.',
+      '- Use the V6 packet as the story spine: systems, programs, AI initiatives, risks, and missing evidence are loaded, but value is not yet board-grade.',
+    ].join('\n'),
+    `Known from V6: the critical systems include ${systems}; the change programs include ${programs}; and the AI initiatives include ${aiInitiatives}.`,
+    `The board gap is specific: ${packet.missingEvidenceChecklist.join(' ')}`,
+    `Why this matters: ${packet.valueMechanism} Without certified inputs and controls, a polished IROPS demo can still fail in the operation.`,
+    `Risks to name in the discussion: ${risks}. These are not abstract AI risks; they are operating gates that determine whether recommendations can be trusted during disruption.`,
+    'What would make it board-ready: Finance signoff is required for disruption value, plus owner-signed freshness SLAs, model-risk tier approval, human-in-loop approval and override logs, vendor/system support linkage, and measured adoption or realized-value evidence.',
     formatDecisionBranch(packet.branch),
   ].join('\n\n');
 }
@@ -350,4 +376,12 @@ function clean(value: unknown): string {
   const text = String(value ?? '').trim();
   if (!text || text.startsWith('data_thin:')) return '';
   return text;
+}
+
+function namedList(rows: V6Record[], key: string, limit: number): string {
+  const values = rows
+    .map((row) => clean(row[key]) || clean(row.record_name))
+    .filter(Boolean)
+    .slice(0, limit);
+  return values.length > 0 ? values.join(', ') : 'no named items loaded';
 }
