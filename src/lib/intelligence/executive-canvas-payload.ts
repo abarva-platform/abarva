@@ -49,6 +49,12 @@ export interface ExtractedExecutiveCanvasPayloads {
   visibleContent: string;
 }
 
+type BareExecutiveCanvasBlock = {
+  start: number;
+  end: number;
+  payload?: ExecutiveCanvasPayload;
+};
+
 const EXECUTIVE_CANVAS_BLOCK_RE =
   /```(?:abarva-canvas|json\s+abarva-canvas)\s*\n([\s\S]*?)```/gim;
 
@@ -71,13 +77,11 @@ export function extractExecutiveCanvasPayloads(
       return "";
     })
     .trim();
-  const barePayloads = findBareExecutiveCanvasPayloads(
-    contentWithoutFencedBlocks,
-  );
-  for (const match of barePayloads) {
-    payloads.push(match.payload);
+  const bareBlocks = findBareExecutiveCanvasBlocks(contentWithoutFencedBlocks);
+  for (const match of bareBlocks) {
+    if (match.payload) payloads.push(match.payload);
   }
-  const visibleContent = removeRanges(contentWithoutFencedBlocks, barePayloads)
+  const visibleContent = removeRanges(contentWithoutFencedBlocks, bareBlocks)
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
@@ -90,11 +94,21 @@ export function extractExecutiveCanvasPayloads(
 function findBareExecutiveCanvasPayloads(
   content: string,
 ): Array<{ start: number; end: number; payload: ExecutiveCanvasPayload }> {
-  const matches: Array<{
-    start: number;
-    end: number;
-    payload: ExecutiveCanvasPayload;
-  }> = [];
+  return findBareExecutiveCanvasBlocks(content).filter(
+    (
+      block,
+    ): block is {
+      start: number;
+      end: number;
+      payload: ExecutiveCanvasPayload;
+    } => Boolean(block.payload),
+  );
+}
+
+function findBareExecutiveCanvasBlocks(
+  content: string,
+): BareExecutiveCanvasBlock[] {
+  const matches: BareExecutiveCanvasBlock[] = [];
   let searchStart = 0;
   while (searchStart < content.length) {
     const canvasTypeIndex = content.indexOf('"canvasType"', searchStart);
@@ -106,13 +120,13 @@ function findBareExecutiveCanvasPayloads(
     }
     const end = findJsonObjectEnd(content, start);
     if (end < 0) {
-      searchStart = canvasTypeIndex + 12;
-      continue;
+      matches.push({ start, end: content.length });
+      break;
     }
     const rawPayload = content.slice(start, end);
     const payload = parseExecutiveCanvasPayload(rawPayload);
-    if (payload) {
-      matches.push({ start, end, payload });
+    if (payload || looksLikeExecutiveCanvasPayload(rawPayload)) {
+      matches.push({ start, end, ...(payload ? { payload } : {}) });
       searchStart = end;
       continue;
     }
@@ -168,7 +182,7 @@ function parseExecutiveCanvasPayload(
   rawPayload: string,
 ): ExecutiveCanvasPayload | null {
   try {
-    const value = JSON.parse(rawPayload);
+    const value = parseExecutiveCanvasJson(rawPayload);
     if (!isRecord(value)) return null;
     const canvasType = stringValue(value.canvasType);
     if (!isExecutiveCanvasType(canvasType)) return null;
@@ -193,6 +207,67 @@ function parseExecutiveCanvasPayload(
   } catch {
     return null;
   }
+}
+
+function parseExecutiveCanvasJson(rawPayload: string): unknown {
+  try {
+    return JSON.parse(rawPayload);
+  } catch (error) {
+    const repairedPayload =
+      escapeControlCharactersInsideJsonStrings(rawPayload);
+    if (repairedPayload === rawPayload) throw error;
+    return JSON.parse(repairedPayload);
+  }
+}
+
+function escapeControlCharactersInsideJsonStrings(rawPayload: string): string {
+  let repaired = "";
+  let inString = false;
+  let escaped = false;
+  for (let index = 0; index < rawPayload.length; index += 1) {
+    const char = rawPayload[index] ?? "";
+    if (escaped) {
+      repaired += char;
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      repaired += char;
+      escaped = inString;
+      continue;
+    }
+    if (char === '"') {
+      repaired += char;
+      inString = !inString;
+      continue;
+    }
+    if (inString) {
+      if (char === "\n") {
+        repaired += "\\n";
+        continue;
+      }
+      if (char === "\r") {
+        repaired += "\\r";
+        continue;
+      }
+      if (char === "\t") {
+        repaired += "\\t";
+        continue;
+      }
+    }
+    repaired += char;
+  }
+  return repaired;
+}
+
+function looksLikeExecutiveCanvasPayload(rawPayload: string): boolean {
+  return (
+    rawPayload.includes('"canvasType"') &&
+    (rawPayload.includes('"investmentSequencingMap"') ||
+      rawPayload.includes('"valueReadinessMatrix"') ||
+      rawPayload.includes('"gateToValueRoadmap"') ||
+      rawPayload.includes('"proofBoundary"'))
+  );
 }
 
 function normalizeColumns(value: unknown): ExecutiveCanvasColumn[] {

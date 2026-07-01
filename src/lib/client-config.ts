@@ -49,25 +49,39 @@ export function demoSafeClientText(value: string): string {
 }
 
 function collapseRepeatedDemoSafeClientNames(value: string): string {
-  return [
+  const names = [
     DEMO_SAFE_CLIENT_NAMES.apexretail,
     DEMO_SAFE_CLIENT_NAMES.meridian,
     DEMO_SAFE_CLIENT_NAMES.arcturus,
     DEMO_SAFE_CLIENT_NAMES.northstar,
     DEMO_SAFE_CLIENT_NAMES.skyharbor,
     DEMO_SAFE_CLIENT_NAMES.lakeshore,
-  ].reduce((text, name) => {
-    const words = name.split(/\s+/).filter(Boolean);
-    const suffix = words[words.length - 1];
-    if (!suffix) return text;
-    return text.replace(
-      new RegExp(
-        `\\b${escapeRegExp(name)}(?:\\s+${escapeRegExp(suffix)})+\\b`,
-        "g",
-      ),
-      name,
-    );
-  }, value);
+  ];
+  let text = value;
+  for (let pass = 0; pass < 5; pass += 1) {
+    const before = text;
+    text = names.reduce((next, name) => {
+      const words = name.split(/\s+/).filter(Boolean);
+      const suffix = words[words.length - 1];
+      if (!suffix) return next;
+      const tail = words.slice(1).map(escapeRegExp).join("\\s+");
+      const collapsedTail = tail
+        ? next.replace(
+            new RegExp(`\\b${escapeRegExp(name)}(?:\\s+${tail})+\\b`, "g"),
+            name,
+          )
+        : next;
+      return collapsedTail.replace(
+        new RegExp(
+          `\\b${escapeRegExp(name)}(?:\\s+${escapeRegExp(suffix)})+\\b`,
+          "g",
+        ),
+        name,
+      );
+    }, text);
+    if (text === before) break;
+  }
+  return text;
 }
 
 function escapeRegExp(value: string): string {

@@ -188,7 +188,10 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
 
     const askBox = screen.getByTestId("agent-dock-input");
     expect(askBox.tagName).toBe("TEXTAREA");
-    expect(askBox).toHaveAttribute("placeholder", "Ask about Retail Demo");
+    expect(askBox).toHaveAttribute(
+      "placeholder",
+      "Ask about Apex Retail Group",
+    );
 
     fireEvent.change(askBox, {
       target: { value: "what should we do about\napex ai spend?" },
@@ -229,7 +232,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     );
     expect(
       await screen.findAllByText(
-        "Retail Demo should gate lakehouse scale on measured value.",
+        "Apex Retail Group should gate lakehouse scale on measured value.",
       ),
     ).not.toHaveLength(0);
     expect(screen.queryByText(/Consulted experts/i)).not.toBeInTheDocument();
@@ -273,7 +276,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     );
 
     fireEvent.click(
-      screen.getByText("Which AI investments should Retail Demo scale?"),
+      screen.getByText("Which AI investments should Apex Retail Group scale?"),
     );
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -610,7 +613,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     const mainAnswer =
       "SkyHarbor should fund IROPS recovery decisioning only through a governed readiness gate.";
     const visibleMainAnswer =
-      "Airline Demo should fund IROPS recovery decisioning only through a governed readiness gate.";
+      "SkyHarbor Air should fund IROPS recovery decisioning only through a governed readiness gate.";
     const tableContent = [
       "| Option | Value | Readiness | Decision |",
       "|---|---:|---|---|",
