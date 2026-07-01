@@ -8,9 +8,6 @@ jest.mock('@/lib/integrations/ai-egress', () => ({
       messages: { stream: mockAnthropicStream },
     },
   })),
-  getAnthropicDirectClient: jest.fn(() => ({
-    messages: { stream: mockAnthropicStream },
-  })),
 }));
 
 jest.mock('@/lib/active-client', () => ({
@@ -25,7 +22,7 @@ jest.mock('@/lib/reasoning/synthesis-telemetry', () => ({
   recordSynthesisEvent: jest.fn(() => ({ id: 'evt-1' })),
 }));
 
-describe('POST /api/programs/synthesis', () => {
+describe('POST /api/source/synthesis', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetActiveClientRow.mockResolvedValue({
@@ -36,33 +33,16 @@ describe('POST /api/programs/synthesis', () => {
     });
   });
 
-  it('does not fall back to the Apex CDP fixture for unknown live program ids', async () => {
-    const { POST } = await import('../route');
-    const res = await POST(
-      new Request('http://test/api/programs/synthesis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ programId: 'f9fc92e8-3bbc-45d2-8e78-59671bb4feb3' }),
-      }),
-    );
-
-    expect(res.status).toBe(404);
-    await expect(res.json()).resolves.toEqual({
-      error: 'program_synthesis_not_available',
-    });
-    expect(mockAnthropicStream).not.toHaveBeenCalled();
-  });
-
-  it('does not default non-Apex tenants to the Apex CDP fixture', async () => {
+  it('does not default non-Apex tenants to the Apex AMS fixture', async () => {
     mockGetActiveClientRow.mockResolvedValue({
-      id: 'client-lakeshore',
-      name: 'Industrial Demo',
-      industry_code: 'industrial',
-      key: 'lakeshore-industries',
+      id: 'client-skyharbor',
+      name: 'Airline Demo',
+      industry_code: 'airline',
+      key: 'skyharbor-air',
     });
     const { POST } = await import('../route');
     const res = await POST(
-      new Request('http://test/api/programs/synthesis', {
+      new Request('http://test/api/source/synthesis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
@@ -70,15 +50,15 @@ describe('POST /api/programs/synthesis', () => {
     );
 
     expect(res.status).toBe(404);
-    expect(res.headers.get('x-abarva-v6-surface')).toBe('moves');
+    expect(res.headers.get('x-abarva-v6-surface')).toBe('source');
     await expect(res.json()).resolves.toEqual({
-      error: 'program_synthesis_not_available',
-      detail: 'No V6 Moves program is loaded for the active tenant.',
+      error: 'source_synthesis_not_available',
+      detail: 'No V6 Source event is loaded for the active tenant.',
     });
     expect(mockAnthropicStream).not.toHaveBeenCalled();
   });
 
-  it('blocks explicit Apex program access for a different active tenant', async () => {
+  it('blocks explicit Apex Source event access for a different active tenant', async () => {
     mockGetActiveClientRow.mockResolvedValue({
       id: 'client-lakeshore',
       name: 'Industrial Demo',
@@ -87,18 +67,18 @@ describe('POST /api/programs/synthesis', () => {
     });
     const { POST } = await import('../route');
     const res = await POST(
-      new Request('http://test/api/programs/synthesis', {
+      new Request('http://test/api/source/synthesis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ programId: 'APX-CDP-2026' }),
+        body: JSON.stringify({ instanceId: 'ams-vendor-consolidation-2026' }),
       }),
     );
 
     expect(res.status).toBe(403);
-    expect(res.headers.get('x-abarva-v6-surface')).toBe('moves');
+    expect(res.headers.get('x-abarva-v6-surface')).toBe('source');
     await expect(res.json()).resolves.toEqual({
       error: 'wrong_client',
-      detail: 'Requested Moves program does not belong to the active tenant.',
+      detail: 'Requested Source event does not belong to the active tenant.',
     });
     expect(mockAnthropicStream).not.toHaveBeenCalled();
   });

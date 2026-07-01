@@ -40,6 +40,33 @@ const MOVES_V6_SYNTHESIS_HEADERS = {
   "X-AbarVa-Renderer-Policy": "placement-only",
 } as const;
 
+function canonicalTenantKey(value: string | null | undefined): string {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (["apexretail", "apex-retail", "apex-retail-group"].includes(normalized)) {
+    return "apex-retail";
+  }
+  if (["skyharbor", "skyharbor-air", "skyharbor-airlines"].includes(normalized)) {
+    return "skyharbor-air";
+  }
+  if (["lakeshore", "lakeshore-holdings", "lakeshore-industries"].includes(normalized)) {
+    return "lakeshore-holdings";
+  }
+  return normalized;
+}
+
+function movesJsonError(
+  body: { error: string; detail?: string },
+  init: ResponseInit,
+): Response {
+  return Response.json(body, {
+    ...init,
+    headers: {
+      ...MOVES_V6_SYNTHESIS_HEADERS,
+      ...(init.headers ?? {}),
+    },
+  });
+}
+
 const NEXUS_SYNTHESIS_VOICE_AND_TASK = `You are Ava, AbarVa's program orchestrator on the Programs surface.
 
 Your synthesis task: given the current state of a program (phase, gate status, evidence, linked dependencies), produce a 2–3 sentence maestro-voice recommendation.
@@ -123,18 +150,48 @@ function buildMovesV6ExecutionSequencePacket(args: {
 export async function POST(request: Request) {
   const startedAt = Date.now();
   const body = (await request.json()) as { programId?: string };
-  const programId = body.programId ?? APX_CDP_2026_INSTANCE.id;
+
+  const activeClient = await getActiveClientRow();
+  if (!activeClient) {
+    return movesJsonError(
+      { error: "no_client", detail: "No active client for AI egress policy." },
+      { status: 403 },
+    );
+  }
+
+  const activeTenantKey = canonicalTenantKey(activeClient.key);
+  const programId = body.programId
+    ?? (activeTenantKey === "apex-retail" ? APX_CDP_2026_INSTANCE.id : null);
+  if (!programId) {
+    return movesJsonError(
+      {
+        error: "program_synthesis_not_available",
+        detail: "No V6 Moves program is loaded for the active tenant.",
+      },
+      { status: 404 },
+    );
+  }
 
   // Resolve deterministic demo instances only. Do not fall back from an
   // unknown live DB UUID to APX_CDP_2026_INSTANCE; that contaminates
   // user-created programs with unrelated CDP/BAFO/Vendor C recommendations.
-  const instance =
-    APEX_RETAIL_PROGRAM_INSTANCES.find((i) => i.id === programId) ??
-    (body.programId ? null : APX_CDP_2026_INSTANCE);
+  const instance = APEX_RETAIL_PROGRAM_INSTANCES.find((i) => i.id === programId);
   if (!instance) {
-    return Response.json(
+    return movesJsonError(
       { error: "program_synthesis_not_available" },
       { status: 404 },
+    );
+  }
+  const instanceTenantKey = canonicalTenantKey(
+    instance.tenantSlug ?? instance.tenantId,
+  );
+  if (instanceTenantKey !== activeTenantKey) {
+    return movesJsonError(
+      {
+        error: "wrong_client",
+        detail: "Requested Moves program does not belong to the active tenant.",
+      },
+      { status: 403 },
     );
   }
 
@@ -224,14 +281,6 @@ export async function POST(request: Request) {
 
   // F0.2 Layer 0
   const userContextBlock = await getUserContextPromptBlock();
-  const activeClient = await getActiveClientRow();
-  if (!activeClient) {
-    return Response.json(
-      { error: "no_client", detail: "No active client for AI egress policy." },
-      { status: 403 },
-    );
-  }
-
   // Shared Context Brain (flag-gated, default OFF). When on for the tenant,
   // ground this program synthesis in the Consilium expert(s) for the program
   // subject (industry-fenced via the active client key). Flag off = byte-
