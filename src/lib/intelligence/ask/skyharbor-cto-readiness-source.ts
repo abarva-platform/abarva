@@ -11,6 +11,9 @@ const SKYHARBOR_KEYS = new Set([
   "skyharbor-air-group",
   "skyharbor air",
   "skyharbor air group",
+  "airline-demo",
+  "airline demo",
+  "airline demo group",
 ]);
 
 const CTO_READINESS_TERMS = [
@@ -46,7 +49,11 @@ export function isSkyHarborTenantKey(
   value: string | null | undefined,
 ): boolean {
   const normalized = normalizeTenantKey(value);
-  return SKYHARBOR_KEYS.has(normalized) || normalized.includes("skyharbor");
+  return (
+    SKYHARBOR_KEYS.has(normalized) ||
+    normalized.includes("skyharbor") ||
+    normalized.includes("airline demo")
+  );
 }
 
 export function isSkyHarborCtoReadinessQuestion(query: string): boolean {
