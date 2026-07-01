@@ -83,6 +83,21 @@ Revert the merge commit and redeploy the previous known-good ACA image through t
 - `npx eslint src/app/api/chat/agent/route.ts src/app/api/chat/agent/__tests__/agent-route-context-bundle.test.ts`
   - Result: Passed.
 
+### Second Production Proof Remediation — 2026-07-01T20:22:00Z
+
+- Superseding ACA deploy included PR #4285 on revision `ca-abarva-web-lab-eastus--ma9a81702` at 100% traffic with image tag `main-a9a81702`.
+- Runtime invariant passed with image digest `sha256:1f3aa0f6645552a7bdc12efb648edc637bf089255c73cf8dee57425190fe98ac`.
+- Signed-in 20-question answer audit improved to 18/20 passing with 0 warnings.
+- Remaining root cause: Home debug trace includes JSON-encoded final prompt strings. Those strings store newlines as literal `\n`, so the regex word-boundary replacement did not match a legacy name immediately after the escaped newline sequence.
+- Remediation in this follow-up: the shared `demoSafeClientText` helper now runs a conservative longest-first literal replacement pass after the regex pass, covering JSON-encoded prompt/debug strings without relying on word-boundary behavior.
+
+#### Second remediation local gate
+
+- `npx jest src/lib/__tests__/client-config-canonical.test.ts src/lib/home/know/__tests__/home-demo-safe-response.test.ts --runInBand`
+  - Result: Passed, 2 suites / 7 tests.
+- `npx eslint src/lib/client-config.ts src/lib/__tests__/client-config-canonical.test.ts`
+  - Result: Passed.
+
 ## Known Gaps
 
 This release fixes generic-name leakage in answer payloads. It does not replace the separate 50-question answer-quality/correctness audit, and it does not resolve independent Tower contract parse failures except to make returned error text demo-safe.

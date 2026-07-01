@@ -70,6 +70,16 @@ describe("canonicalClientDisplayName", () => {
     ).toBe("Retail Demo advisor");
   });
 
+  it("scrubs legacy names inside JSON-escaped prompt strings", () => {
+    expect(
+      demoSafeClientText(
+        String.raw`Current deterministic answer:\nSkyHarbor Air Group is using the V6 Home contract pack.`,
+      ),
+    ).toBe(
+      String.raw`Current deterministic answer:\nAirline Demo is using the V6 Home contract pack.`,
+    );
+  });
+
   it("uses generic demo names for all launch-demo tenants", () => {
     expect(getClientOption("skyharbor").name).toBe("Airline Demo");
     expect(getClientOption("lakeshore").name).toBe("Industrial Demo");

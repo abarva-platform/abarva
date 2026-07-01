@@ -47,10 +47,35 @@ const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
   [/\bLakeshore\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
 ];
 
+const DEMO_SAFE_LITERAL_TEXT_REPLACEMENTS: ReadonlyArray<
+  readonly [string, string]
+> = [
+  ["Apex Retail Group", DEMO_SAFE_CLIENT_NAMES.apexretail],
+  ["Apex Retail", DEMO_SAFE_CLIENT_NAMES.apexretail],
+  ["Meridian Health System", DEMO_SAFE_CLIENT_NAMES.meridian],
+  ["Meridian Health", DEMO_SAFE_CLIENT_NAMES.meridian],
+  ["First Capital Financial", DEMO_SAFE_CLIENT_NAMES.arcturus],
+  ["First Capital", DEMO_SAFE_CLIENT_NAMES.arcturus],
+  ["Arcturus Financial Group", DEMO_SAFE_CLIENT_NAMES.arcturus],
+  ["Arcturus Financial", DEMO_SAFE_CLIENT_NAMES.arcturus],
+  ["Northstar Clinical Technologies", DEMO_SAFE_CLIENT_NAMES.northstar],
+  ["SkyHarbor Air Group", DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  ["SkyHarbor Airlines", DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  ["SkyHarbor Air", DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  ["SkyHarbor", DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  ["Lakeshore Industries", DEMO_SAFE_CLIENT_NAMES.lakeshore],
+  ["Lakeshore Holdings", DEMO_SAFE_CLIENT_NAMES.lakeshore],
+  ["Lakeshore", DEMO_SAFE_CLIENT_NAMES.lakeshore],
+];
+
 export function demoSafeClientText(value: string): string {
-  const replaced = DEMO_SAFE_TEXT_REPLACEMENTS.reduce(
+  const regexReplaced = DEMO_SAFE_TEXT_REPLACEMENTS.reduce(
     (text, [pattern, replacement]) => text.replace(pattern, replacement),
     value,
+  );
+  const replaced = DEMO_SAFE_LITERAL_TEXT_REPLACEMENTS.reduce(
+    (text, [needle, replacement]) => text.split(needle).join(replacement),
+    regexReplaced,
   );
   return collapseRepeatedDemoSafeClientNames(replaced);
 }
