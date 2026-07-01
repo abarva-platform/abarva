@@ -86,6 +86,8 @@ export interface AtlasChatPanelProps {
   minLeftPx?: number;
   /** Default mode for first-time visitors (default "side-rail"). */
   defaultMode?: DockMode;
+  /** Preserve already-governed real tenant labels instead of applying demo-safe aliases. */
+  preserveVisibleText?: boolean;
 }
 
 const ATLAS_THINKING_ID = "atlas-thinking-transient";
@@ -109,6 +111,7 @@ export function AtlasChatPanel({
   defaultLeftPercent = 35,
   minLeftPx = 320,
   defaultMode = "side-rail",
+  preserveVisibleText = false,
 }: AtlasChatPanelProps) {
   // Translate legacy AtlasMessage[] → AgentDock ChatMessage[].
   // Append a transient "thinking" turn while the caller is awaiting the
@@ -154,6 +157,7 @@ export function AtlasChatPanel({
       surfaceContext={surfaceContext}
       variant={variant}
       initialQuote={initialQuote}
+      preserveVisibleText={preserveVisibleText}
       thread={thread}
       suggestedActions={suggestedActions}
       onMessage={(text, attachments) => onSubmit(text, attachments)}

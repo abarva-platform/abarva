@@ -6074,6 +6074,7 @@ export function TowerIndexPage({
         workspace={towerWorkspace}
         surface="tower"
         variant="focused"
+        preserveVisibleText
         surfaceContext={{
           clientId: clientId ?? null,
           tenantName,
