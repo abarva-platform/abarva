@@ -48,7 +48,7 @@ const DEFAULT_QUESTIONS = [
   },
   {
     id: "advisory-posture",
-    type: "claude",
+    type: "deterministic",
     question:
       "Which investment posture should the CIO take on Engineering Productivity AI, and why?",
   },

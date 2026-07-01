@@ -173,6 +173,7 @@ export function requiredMetricKeysForTowerContract(contractKey: string): CioTowe
   if (contractKey === 'tower_portfolio_value_gap') return ['promised_value_fy26', 'measured_value_ytd'];
   if (contractKey === 'tower_weak_value_evidence') return ['promised_value_fy26', 'measured_value_ytd'];
   if (contractKey === 'tower_inspect_this_week') return ['initiative_budget_fy26', 'actual_spend_ytd', 'promised_value_fy26', 'measured_value_ytd'];
+  if (contractKey === 'tower_advisor_morning_brief') return ['initiative_budget_fy26', 'actual_spend_ytd', 'promised_value_fy26', 'measured_value_ytd'];
   return [];
 }
 

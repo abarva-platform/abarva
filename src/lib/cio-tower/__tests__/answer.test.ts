@@ -351,6 +351,7 @@ describe("cio tower answer contract", () => {
       "tower_portfolio_value_gap",
       "tower_weak_value_evidence",
       "tower_inspect_this_week",
+      "tower_advisor_morning_brief",
     ]) {
       expect(
         __cioTowerAnswerTestHooks.factWhereForContract({
@@ -393,6 +394,11 @@ describe("cio tower answer contract", () => {
     expect(matchContractKey("What should I inspect this week?")).toBe(
       "tower_inspect_this_week",
     );
+    expect(
+      matchContractKey(
+        "Which investment posture should the CIO take on Engineering Productivity AI, and why?",
+      ),
+    ).toBe("tower_advisor_morning_brief");
   });
 
   it("asks Claude for a compact table when an IT budget question requests each slice", () => {
@@ -613,6 +619,45 @@ describe("cio tower answer contract", () => {
     expect(
       __cioTowerAnswerTestHooks.validateParsedVisibleAnswer({
         contractKey: context().contract.contract_key,
+        metricPackets: context().metricPackets,
+        parsedOutput: output!.output,
+      }),
+    ).toEqual([]);
+  });
+
+  it("answers CIO advisor posture from the governed morning brief path", () => {
+    const output =
+      __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(
+        context({
+          question:
+            "Which investment posture should the CIO take on Crew Recovery & Legality Modernization, and why?",
+          contract: {
+            contract_key: "tower_advisor_morning_brief",
+            intent: "advise",
+            question_family: "advisor_morning_brief",
+            measure_key: "initiative_budget_fy26",
+            artifact_type: "card",
+            examples: [],
+          },
+        }),
+      );
+
+    expect(output?.reason).toContain("CIO Morning Brief");
+    expect(output?.output.answer).toContain(
+      "SkyHarbor Air should inspect before scaling on Crew Recovery & Legality Modernization",
+    );
+    expect(output?.output.answer).toContain("$28.3M");
+    expect(output?.output.answer).toContain("$9.0M");
+    expect(output?.output.answer).toContain("$270.0M");
+    expect(output?.output.answer).toContain("$91.8M");
+    expect(output?.output.answer).not.toContain("rows");
+    expect(output?.output.tables?.[0]).toMatchObject({
+      id: "cio_morning_brief",
+      title: "CIO morning brief",
+    });
+    expect(
+      __cioTowerAnswerTestHooks.validateParsedVisibleAnswer({
+        contractKey: "tower_advisor_morning_brief",
         metricPackets: context().metricPackets,
         parsedOutput: output!.output,
       }),
