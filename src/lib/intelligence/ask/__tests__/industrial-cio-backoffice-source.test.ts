@@ -1,9 +1,11 @@
 import {
+  buildIndustrialCioBackofficeNativeCanvasBlock,
   buildIndustrialCioBackofficePromptAddendum,
   buildIndustrialCioBackofficeSource,
   isIndustrialCioBackofficeQuestion,
   isIndustrialTenantKey,
 } from "../industrial-cio-backoffice-source";
+import { extractExecutiveCanvasPayloads } from "@/lib/intelligence/executive-canvas-payload";
 
 describe("Industrial CIO back-office ask source", () => {
   it("recognizes Industrial Demo, Lakeshore, and Morgan Street tenant aliases", () => {
@@ -88,5 +90,29 @@ describe("Industrial CIO back-office ask source", () => {
     expect(addendum).toContain("gateToValueRoadmap");
     expect(addendum).toContain("proofBoundary");
     expect(addendum).toContain("include initiative owner and gate");
+  });
+
+  it("builds a valid native sequencing canvas fallback for the CIO demo", () => {
+    const block = buildIndustrialCioBackofficeNativeCanvasBlock(
+      "How should the CIO prioritize AI and automation across HR, finance, treasury, legal, and shared services?",
+      ["industrial demo"],
+    );
+
+    const extracted = extractExecutiveCanvasPayloads(block);
+
+    expect(extracted.visibleContent).toBe("");
+    expect(extracted.payloads[0]).toMatchObject({
+      canvasType: "investmentSequencingMap",
+      title: "CIO AI & Automation Sequencing — Industrial Demo",
+      columns: [
+        { label: "Scale now" },
+        { label: "Certify then scale" },
+        { label: "Fund readiness" },
+        { label: "Hold / discovery" },
+      ],
+      proofBoundary: {
+        decisionRequired: expect.stringContaining("Treasury + Finance"),
+      },
+    });
   });
 });

@@ -168,3 +168,117 @@ export function buildIndustrialCioBackofficePromptAddendum(
     "End with a branch choice only when it helps the user continue: use planning assumptions, enter current values, start Treasury + Finance, add HR/Legal discovery, or create the office blueprint.",
   ].join("\n");
 }
+
+export function buildIndustrialCioBackofficeNativeCanvasBlock(
+  query: string,
+  tenantKeys: Array<string | null | undefined>,
+): string {
+  if (
+    !tenantKeys.some(isIndustrialTenantKey) ||
+    !isIndustrialCioBackofficeQuestion(query)
+  ) {
+    return "";
+  }
+  const packet = buildIndustrialCioBackofficePacket();
+  const [treasury, finance, serviceDesk, hrLegal] = packet.lighthouseUseCases;
+  const payload = {
+    canvasType: "investmentSequencingMap",
+    title: "CIO AI & Automation Sequencing — Industrial Demo",
+    columns: [
+      {
+        label: "Scale now",
+        items: [
+          {
+            label: treasury?.name ?? "Kyriba cash and payment-control proof",
+            value: 9,
+            readiness: 7,
+            risk: 7,
+            action: "Close control evidence gates, then scale as Phase 1",
+            owner: "Treasurer + CFO",
+            gate: "Critical-bank certification and SOX signer evidence complete",
+            note:
+              treasury?.why ??
+              "Treasury has the strongest loaded system, control, and value evidence.",
+          },
+        ],
+      },
+      {
+        label: "Certify then scale",
+        items: [
+          {
+            label:
+              finance?.name ?? "Finance close and reporting semantic layer",
+            value: 8,
+            readiness: 6,
+            risk: 6,
+            action:
+              "Fund semantic ownership and certification before broad AI scale",
+            owner: "Controller + CFO",
+            gate: "Finance-approved close baseline and GL definitions",
+            note:
+              finance?.why ??
+              "Finance automation depends on certified reporting definitions.",
+          },
+          {
+            label:
+              serviceDesk?.name ??
+              "ServiceNow finance support and knowledge automation",
+            value: 6,
+            readiness: 6,
+            risk: 4,
+            action:
+              "Expand pilot after deflection and quality metrics are certified",
+            owner: "VP IT Operations",
+            gate: "Ticket-volume baseline and resolution-quality evidence",
+            note:
+              serviceDesk?.why ??
+              "Support automation needs service-volume and knowledge-quality proof.",
+          },
+        ],
+      },
+      {
+        label: "Fund readiness",
+        items: [
+          {
+            label: "Liquidity forecasting and working-capital analytics",
+            value: 8,
+            readiness: 4,
+            risk: 6,
+            action:
+              "Sequence after cash, AP/AR, S&OP, and GL data products are certified",
+            owner: "CFO",
+            gate: "Cash positioning gold table plus AP/AR and S&OP readiness",
+            note: "Use Finance/Treasury data-product certification as the reusable Value Office pattern.",
+          },
+        ],
+      },
+      {
+        label: "Hold / discovery",
+        items: [
+          {
+            label: hrLegal?.name ?? "HR and Legal AI operating model discovery",
+            value: 5,
+            readiness: 2,
+            risk: 4,
+            action: "Open discovery; do not claim scale readiness yet",
+            owner: "CHRO + General Counsel",
+            gate: "Workday, CLM/eBilling, matter, policy, and service-volume evidence loaded",
+            note:
+              hrLegal?.why ??
+              "HR and Legal belong in the roadmap after source evidence is loaded.",
+          },
+        ],
+      },
+    ],
+    proofBoundary: {
+      known: [
+        "Treasury and Finance have the strongest loaded Industrial Demo evidence.",
+        "The Value Office pattern should prove Finance-attested outcomes before broad reuse.",
+      ],
+      missing: packet.missingEvidenceChecklist.slice(0, 3),
+      decisionRequired:
+        "CIO and CFO approve Treasury + Finance as Phase 1 and designate HR/Legal as discovery branches until source evidence is signed off.",
+    },
+  };
+  return ["```abarva-canvas", JSON.stringify(payload), "```"].join("\n");
+}

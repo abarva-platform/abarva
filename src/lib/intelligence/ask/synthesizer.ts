@@ -33,6 +33,7 @@ import {
   parseIntelligenceTabbedResponse,
 } from "@/lib/intelligence/tabbed-response";
 import { hasExecutiveCanvasPayload } from "@/lib/intelligence/executive-canvas-payload";
+import { buildIndustrialCioBackofficeNativeCanvasBlock } from "./industrial-cio-backoffice-source";
 
 export { chunkAskText, sanitizeAskSynthesis } from "./response-policy";
 
@@ -719,6 +720,22 @@ ACTIVE INTELLIGENCE CANVAS RULES
         text = repairedText;
       }
     }
+    if (
+      args.richText &&
+      requiresNativeExecutiveCanvas(args.query) &&
+      !hasExecutiveCanvasPayload(text) &&
+      args.sources.some(
+        (source) => source.id === "industrial-cio-backoffice-readiness",
+      )
+    ) {
+      text = appendNativeCanvasToDecisionTab(
+        text,
+        buildIndustrialCioBackofficeNativeCanvasBlock(args.query, [
+          args.tenantClientKey,
+          args.tenantId,
+        ]),
+      );
+    }
     if (SESSION_CONTEXT_LANGUAGE_RE.test(text)) {
       const standaloneRepairPrompt = [
         prompt,
@@ -832,4 +849,40 @@ ACTIVE INTELLIGENCE CANVAS RULES
   } catch (err) {
     yield `\n\n[synthesis error: ${err instanceof Error ? err.message : "unknown"}]`;
   }
+}
+
+function appendNativeCanvasToDecisionTab(
+  text: string,
+  nativeCanvasBlock: string,
+): string {
+  const block = nativeCanvasBlock.trim();
+  if (!block) return text;
+  const decisionMarkerRe =
+    /<<<TAB:\s*Decision(?:\s*\|\s*grounding:\s*[^>]+?)?\s*>>>\s*/i;
+  const decisionMarker = decisionMarkerRe.exec(text);
+  if (!decisionMarker) {
+    return [
+      text.trim(),
+      "<<<TAB: Decision | grounding: tenant-evidence>>>",
+      block,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+  }
+  const insertStart = decisionMarker.index + decisionMarker[0].length;
+  const afterDecisionMarker = text.slice(insertStart);
+  const nextTab =
+    /\n\s*<<<TAB:\s*(?:Industry Insights|Chart|Table|Evidence)\b/i.exec(
+      afterDecisionMarker,
+    );
+  const insertAt =
+    nextTab?.index === undefined ? text.length : insertStart + nextTab.index;
+  return [
+    text.slice(0, insertAt).trimEnd(),
+    "",
+    block,
+    text.slice(insertAt).trimStart(),
+  ]
+    .filter((part) => part.length > 0)
+    .join("\n");
 }
