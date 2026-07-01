@@ -370,10 +370,6 @@ function dashboardSliceDiscipline(context: CioTowerPromptContext): string[] {
   return lines;
 }
 
-function normalizeVisibleText(text: string): string {
-  return text.replace(/\s+/g, ' ').trim();
-}
-
 function validateVisibleAnswer(text: string): string[] {
   const violations: string[] = [];
   const checks: Array<[string, RegExp]> = [
@@ -748,6 +744,7 @@ function loadedName(row: CioTowerFactRow, fallback: string): string {
     attributeText(row, 'title'),
     attributeText(row, 'business_name'),
     attributeText(row, 'business_label'),
+    attributeText(row, 'source_label'),
     attributeText(row, 'label'),
     attributeText(row, 'name'),
     row.entity_display_name,
@@ -817,7 +814,7 @@ function programValueProfiles(facts: readonly CioTowerFactRow[], limit = 10): Pr
   }
 
   return Array.from(grouped.values())
-    .map((group, index) => {
+    .map((group) => {
       const budgetNumeric = group.reduce((sum, row) => sum + profileAmount(row, 'budget'), 0);
       const promisedValueNumeric = group.reduce((sum, row) => sum + profileAmount(row, 'promised'), 0);
       const measuredValueNumeric = group.reduce((sum, row) => sum + profileAmount(row, 'measured'), 0);

@@ -276,10 +276,21 @@ async function readDbSnapshot() {
       order by contract_key
     `);
 
+    const orphanFacts = await client.query(`
+      select tenant_key, count(*)::int as orphan_initiative_budget_facts
+      from cio_tower.facts
+      where tenant_key = any($1::text[])
+        and view = 'initiative_budget'
+        and entity_key is null
+      group by tenant_key
+      order by tenant_key
+    `, [tenants]);
+
     return {
       counts: counts.rows,
       measures: measures.rows,
       contracts: dbContracts.rows,
+      orphanFacts: orphanFacts.rows,
     };
   } finally {
     await client.end();
@@ -350,6 +361,9 @@ function buildIntegrityChecks(dbSnapshot) {
     }];
   }
   const checks = [];
+  const orphanFactsByTenant = new Map(
+    (dbSnapshot.orphanFacts ?? []).map((row) => [row.tenant_key, Number(row.orphan_initiative_budget_facts)]),
+  );
   for (const row of dbSnapshot.counts) {
     checks.push({
       id: `${row.tenant_key}:source_rows`,
@@ -370,6 +384,12 @@ function buildIntegrityChecks(dbSnapshot) {
       id: `${row.tenant_key}:relationships`,
       passed: Number(row.relationship_rows) > 0,
       message: `${row.tenant_key} relationships = ${row.relationship_rows}`,
+    });
+    const orphanFactCount = orphanFactsByTenant.get(row.tenant_key) ?? 0;
+    checks.push({
+      id: `${row.tenant_key}:initiative_budget_entity_binding`,
+      passed: orphanFactCount === 0,
+      message: `${row.tenant_key} orphan initiative-budget facts = ${orphanFactCount}; expected 0`,
     });
   }
   return checks;

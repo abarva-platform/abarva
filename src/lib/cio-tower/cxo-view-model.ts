@@ -267,9 +267,15 @@ function groupKeyForPortfolioValue(row: FactEvidenceRow): string {
 }
 
 function programLabel(row: FactEvidenceRow, fallback: string): string {
-  return attributeText(row, 'initiative_name')
+  return attributeText(row, 'record_name')
+    ?? attributeText(row, 'initiative_name')
     ?? attributeText(row, 'program_name')
+    ?? attributeText(row, 'display_name')
+    ?? attributeText(row, 'title')
     ?? attributeText(row, 'business_name')
+    ?? attributeText(row, 'business_label')
+    ?? attributeText(row, 'source_label')
+    ?? attributeText(row, 'label')
     ?? attributeText(row, 'name')
     ?? row.entity_display_name
     ?? fallback;
@@ -316,7 +322,7 @@ function buildPortfolioValueRows(rows: FactEvidenceRow[]): CioTowerPortfolioValu
   }
 
   return Array.from(grouped.values())
-    .map((group, index) => {
+    .map((group) => {
       const budgetNumeric = group.reduce((sum, row) => sum + (portfolioValueAmount(row, 'budget') ?? 0), 0);
       const promisedValueNumeric = group.reduce((sum, row) => sum + (portfolioValueAmount(row, 'promised') ?? 0), 0);
       const measuredValueNumeric = group.reduce((sum, row) => sum + (portfolioValueAmount(row, 'measured') ?? 0), 0);
