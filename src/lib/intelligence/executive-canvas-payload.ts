@@ -10,6 +10,8 @@ export interface ExecutiveCanvasItem {
   readiness?: number;
   risk?: number;
   action?: string;
+  owner?: string;
+  gate?: string;
   note?: string;
 }
 
@@ -138,6 +140,8 @@ function normalizeItem(value: unknown): ExecutiveCanvasItem | null {
     ...optionalNumber("readiness", value.readiness),
     ...optionalNumber("risk", value.risk),
     ...optionalString("action", value.action),
+    ...optionalString("owner", value.owner),
+    ...optionalString("gate", value.gate),
     ...optionalString("note", value.note),
   };
 }

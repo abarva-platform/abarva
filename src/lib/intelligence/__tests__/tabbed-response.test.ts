@@ -177,6 +177,21 @@ describe("Intelligence tabbed response parser", () => {
     expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
       "For strategic prioritization",
     );
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
+      "funding, prioritization, scale/hold/stop, or sequencing question -> investmentSequencingMap",
+    );
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
+      "portfolio tradeoff, value vs readiness, risk vs value, or where-to-place-bets question -> valueReadinessMatrix",
+    );
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
+      '"what has to happen first", prerequisite, dependency, gate, roadmap, or unlock-value question -> gateToValueRoadmap',
+    );
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
+      "trust, governance, proof, evidence quality, assumption, missing-data, or signoff question -> proofBoundary",
+    );
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
+      "Do not write HTML, SVG, CSS, or arbitrary chart code",
+    );
 
     const parsed = parseIntelligenceTabbedResponse(
       [

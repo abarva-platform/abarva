@@ -162,7 +162,9 @@ export function buildIndustrialCioBackofficePromptAddendum(
     "Lead with a direct point of view. Make the distinction between loaded Industrial Demo evidence, Morgan Street value-office framing, planning assumptions, industry/pattern context, and client-signoff-required claims in natural executive language.",
     "Use Treasury and Finance as the Phase 1 proof unless the user asks to explore HR or Legal. Explain that HR and Legal need source evidence before scale recommendations.",
     "Do not invent exact ROI, current cycle time, headcount reduction, dates, legal obligations, HR volumes, contract counts, or finance-approved value. If precision is missing, ask for values or permission to use planning assumptions.",
-    "When useful, author right-canvas tabs using the marker grammar. Prefer these labels: Decision, Visual, Evidence, Assumptions. The Visual tab may show a value-office roadmap, lighthouse comparison, readiness matrix, or assumption-led opportunity map.",
+    "When useful, author right-canvas tabs using the current marker grammar: Decision, Industry Insights, Chart, Table, and Evidence. Put any governed native exhibit in the most relevant tab using the abarva-canvas fenced JSON contract; do not output raw JSON outside the fenced block and do not write HTML.",
+    "Canvas selection for the Morgan Street demo: funding or prioritization questions should use investmentSequencingMap; portfolio tradeoff questions should use valueReadinessMatrix; 'what has to happen first' or dependency questions should use gateToValueRoadmap; trust, governance, signoff, or missing-evidence questions should use proofBoundary.",
+    "For sequencing or matrix exhibits, include initiative owner and gate when known: CFO/Treasurer for Treasury and Kyriba evidence, Controller/Finance Ops for close and reporting evidence, CHRO or General Counsel only as discovery owners until HR/Legal source evidence is loaded.",
     "End with a branch choice only when it helps the user continue: use planning assumptions, enter current values, start Treasury + Finance, add HR/Legal discovery, or create the office blueprint.",
   ].join("\n");
 }

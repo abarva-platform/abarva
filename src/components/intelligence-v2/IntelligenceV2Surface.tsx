@@ -22,6 +22,7 @@ import {
 } from "@/lib/intelligence/tabbed-response";
 import {
   extractExecutiveCanvasPayloads,
+  hasExecutiveCanvasPayload,
   type ExecutiveCanvasItem,
   type ExecutiveCanvasPayload,
   type ExecutiveCanvasProofBoundary,
@@ -115,35 +116,55 @@ const CSS = `
 .iv2 .mapAxis.y{left:14%;top:6%}
 .iv2 .mapAxis.x{right:8%;bottom:6%}
 .iv2 .visualRead{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:9px}
-.iv2 .nativeCanvas{border:1px solid var(--line);border-radius:8px;background:#FCFBF8;padding:13px;margin:0 0 12px;display:grid;gap:12px}
-.iv2 .nativeCanvasTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:18px;line-height:1.18;font-weight:500}
-.iv2 .sequenceMap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.iv2 .sequenceColumn{border:1px solid var(--line);border-radius:8px;background:#fff;min-width:0;display:grid;align-content:start;gap:8px;padding:10px}
-.iv2 .sequenceColumnTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--green)}
-.iv2 .sequenceItem{border:1px solid #E8E3D8;border-radius:7px;background:#FBFAF7;padding:8px;display:grid;gap:3px}
-.iv2 .sequenceItemLabel{font-size:12px;font-weight:600;line-height:1.25;color:var(--ink)}
-.iv2 .sequenceItemMeta{font-size:11px;line-height:1.3;color:var(--muted)}
-.iv2 .matrixCanvas{position:relative;min-height:310px;border:1px solid var(--line);border-radius:8px;background:linear-gradient(180deg,#fff,#F8F6EF);overflow:hidden}
+.iv2 .nativeCanvas{border:1px solid #DDD6C9;border-radius:10px;background:linear-gradient(180deg,#fff,#F8F6EF);padding:16px;margin:0 0 12px;display:grid;gap:14px;box-shadow:0 10px 28px rgba(40,35,24,.06)}
+.iv2 .nativeCanvasTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:20px;line-height:1.14;font-weight:500;color:#171713}
+.iv2 .sequenceMap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.iv2 .sequenceColumn{border:1px solid var(--line);border-radius:10px;background:#fff;min-width:0;display:grid;align-content:start;gap:10px;padding:10px;box-shadow:inset 0 4px 0 var(--tone,#CFC7B8)}
+.iv2 .sequenceColumn[data-tone="scale"]{--tone:#1F7A46;background:linear-gradient(180deg,#F5FBF6,#fff)}
+.iv2 .sequenceColumn[data-tone="certify"]{--tone:#237A95;background:linear-gradient(180deg,#F3FAFC,#fff)}
+.iv2 .sequenceColumn[data-tone="fund"]{--tone:#A66A1F;background:linear-gradient(180deg,#FFF8EA,#fff)}
+.iv2 .sequenceColumn[data-tone="hold"]{--tone:#8C4B35;background:linear-gradient(180deg,#FFF4F0,#fff)}
+.iv2 .sequenceColumnHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;border-bottom:1px solid rgba(231,227,218,.9);padding:2px 1px 8px}
+.iv2 .sequenceColumnTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--tone,#1F6B3A);font-weight:700}
+.iv2 .sequenceColumnHint{font-size:10.5px;line-height:1.25;color:var(--muted);text-align:right;max-width:92px}
+.iv2 .sequenceItem{border:1px solid #E5DED2;border-radius:9px;background:rgba(255,255,255,.92);padding:10px;display:grid;gap:7px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+.iv2 .sequenceItemLabel{font-size:12.5px;font-weight:700;line-height:1.25;color:var(--ink)}
+.iv2 .sequenceItemMeta{font-size:11px;line-height:1.35;color:var(--muted)}
+.iv2 .sequenceAction{font-size:11.5px;line-height:1.3;color:#2D332E;font-weight:600}
+.iv2 .sequenceItemChips{display:flex;flex-wrap:wrap;gap:5px}
+.iv2 .sequenceChip{display:inline-flex;align-items:center;max-width:100%;border:1px solid #E4DED2;border-radius:999px;background:#FBFAF7;color:#3E3D36;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.02em;padding:2px 7px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iv2 .sequenceChip.value{border-color:rgba(31,107,58,.24);background:#EAF3EC;color:#1F6B3A}
+.iv2 .sequenceChip.ready{border-color:rgba(35,122,149,.22);background:#EAF5F8;color:#1F6680}
+.iv2 .sequenceChip.risk{border-color:rgba(166,106,31,.25);background:#FBF1E1;color:#8A5415}
+.iv2 .sequenceChip.gate{max-width:100%;border-color:rgba(42,42,38,.16);background:#F4F2EC;color:#56534B}
+.iv2 .sequenceChip.owner{max-width:100%;border-color:rgba(31,107,58,.18);background:#F1F7F2;color:#285A3A}
+.iv2 .matrixCanvas{position:relative;min-height:330px;border:1px solid #DDD6C9;border-radius:10px;background:linear-gradient(180deg,#fff,#F8F6EF);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
 .iv2 .matrixCanvas::before{content:"";position:absolute;inset:12%;border-left:1px solid #D8D2C5;border-bottom:1px solid #D8D2C5}
 .iv2 .matrixCanvas::after{content:"";position:absolute;left:50%;top:12%;bottom:12%;border-left:1px dashed #D8D2C5}
-.iv2 .matrixZone{position:absolute;right:12%;top:12%;width:38%;height:38%;border-radius:8px;background:rgba(31,107,58,.08);border:1px solid rgba(31,107,58,.16)}
+.iv2 .matrixZone{position:absolute;right:12%;top:12%;width:38%;height:38%;border-radius:10px;background:rgba(31,107,58,.09);border:1px solid rgba(31,107,58,.18)}
+.iv2 .matrixZoneLabel{position:absolute;right:14%;top:14%;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#1F6B3A}
+.iv2 .matrixLowLabel{position:absolute;left:14%;bottom:14%;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
 .iv2 .matrixDivider{position:absolute;left:12%;right:12%;top:50%;border-top:1px dashed #D8D2C5}
 .iv2 .matrixPoint{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px;max-width:46%}
 .iv2 .matrixDot{width:14px;height:14px;border-radius:50%;background:#1F6B3A;box-shadow:0 0 0 4px rgba(31,107,58,.14);flex:none}
 .iv2 .matrixDot.highRisk{background:#A66A1F;box-shadow:0 0 0 4px rgba(166,106,31,.15)}
-.iv2 .matrixLabel{font-size:11.5px;line-height:1.2;color:var(--ink);background:rgba(255,255,255,.86);border:1px solid rgba(231,227,218,.9);border-radius:6px;padding:4px 6px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.iv2 .roadmap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
-.iv2 .roadmapGate{position:relative;border:1px solid var(--line);border-radius:8px;background:#fff;padding:12px;display:grid;gap:6px;min-width:0}
+.iv2 .matrixLabel{font-size:11.5px;line-height:1.22;color:var(--ink);background:rgba(255,255,255,.9);border:1px solid rgba(231,227,218,.92);border-radius:7px;padding:5px 7px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;box-shadow:0 6px 16px rgba(40,35,24,.06)}
+.iv2 .matrixLegend{display:flex;flex-wrap:wrap;gap:7px;color:var(--muted);font-size:11.5px}
+.iv2 .matrixLegend span{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:#fff;padding:3px 8px}
+.iv2 .roadmap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.iv2 .roadmapGate{position:relative;border:1px solid #DED7CA;border-radius:10px;background:linear-gradient(180deg,#fff,#FCFBF8);padding:13px;display:grid;gap:7px;min-width:0;box-shadow:0 1px 0 rgba(0,0,0,.02)}
 .iv2 .roadmapGate::after{content:"";position:absolute;right:-10px;top:50%;width:10px;border-top:1px solid #D8D2C5}
 .iv2 .roadmapGate:last-child::after{display:none}
-.iv2 .roadmapStep{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.iv2 .roadmapStep{display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.iv2 .roadmapStatus{display:inline-flex;max-width:92px;border-radius:999px;background:#F4F2EC;color:#625E55;padding:2px 7px;font-size:8.5px;letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .iv2 .roadmapLabel{font-size:13px;font-weight:600;line-height:1.25;color:var(--ink)}
 .iv2 .roadmapMeta{font-size:11.5px;line-height:1.35;color:var(--muted)}
+.iv2 .roadmapMeta strong{color:#383832;font-weight:650}
 .iv2 .proofGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .iv2 .proofBox{border:1px solid var(--line);border-radius:8px;background:#fff;padding:11px;min-width:0}
 .iv2 .proofBoxTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:7px}
 .iv2 .proofBox ul{margin:0;padding-left:16px;color:var(--muted);font-size:12px;line-height:1.45}
-.iv2 .proofDecision{border-top:1px solid var(--line);padding-top:9px;font-size:12.5px;color:var(--ink)}
+.iv2 .proofDecision{border:1px solid rgba(31,107,58,.18);border-left:4px solid var(--green);border-radius:8px;background:#F1F7F2;padding:10px 12px;font-size:12.5px;color:var(--ink)}
 .iv2 .emptyAnswer{border:1px dashed var(--line);border-radius:8px;padding:22px;color:var(--muted);background:rgba(255,255,255,.55)}
 .iv2 .startPanel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:28px;max-width:760px}
 .iv2 .startPanel h3{font-family:var(--font-fraunces),Georgia,serif;font-size:28px;font-weight:500;margin:0 0 10px}
@@ -358,7 +379,13 @@ function companionCardsFrom(tabs: ParsedIntelligenceTab[]): CompanionCard[] {
     ...item,
     kicker: companionCardKicker(item),
     title: companionCardTitle(item),
-    wide: item.id === "chart" || item.id === "table",
+    wide:
+      item.id === "chart" ||
+      item.id === "table" ||
+      item.id === "decision" ||
+      item.id === "evidence" ||
+      hasExecutiveCanvasPayload(item.content) ||
+      item.content.length > 520,
   }));
 }
 
@@ -646,8 +673,17 @@ function InvestmentSequencingMap({
       <NativeCanvasTitle title={payload.title ?? "Investment sequence"} />
       <div className="sequenceMap">
         {columns.map((column) => (
-          <div className="sequenceColumn" key={column.label}>
-            <div className="sequenceColumnTitle">{column.label}</div>
+          <div
+            className="sequenceColumn"
+            data-tone={sequencingTone(column.label)}
+            key={column.label}
+          >
+            <div className="sequenceColumnHeader">
+              <div className="sequenceColumnTitle">{column.label}</div>
+              <div className="sequenceColumnHint">
+                {sequencingHint(column.label)}
+              </div>
+            </div>
             {column.items.slice(0, 4).map((item, index) => (
               <SequenceItem item={item} key={`${column.label}-${index}`} />
             ))}
@@ -668,19 +704,33 @@ function SequenceItem({ item }: { item: string | ExecutiveCanvasItem }) {
     );
   }
   const metrics = [
-    scoreLabel("value", item.value),
-    scoreLabel("ready", item.readiness),
-    scoreLabel("risk", item.risk),
-  ]
-    .filter(Boolean)
-    .join(" · ");
+    scoreChip("value", "Value", item.value),
+    scoreChip("ready", "Ready", item.readiness),
+    scoreChip("risk", "Risk", item.risk),
+  ].filter(Boolean);
+  const chips = [
+    ...metrics,
+    item.owner ? { label: item.owner, className: "owner" } : null,
+    item.gate ? { label: item.gate, className: "gate" } : null,
+  ].filter((chip): chip is { label: string; className: string } =>
+    Boolean(chip),
+  );
   return (
     <div className="sequenceItem">
       <div className="sequenceItemLabel">{item.label}</div>
-      {item.action ? (
-        <div className="sequenceItemMeta">{item.action}</div>
+      {item.action ? <div className="sequenceAction">{item.action}</div> : null}
+      {chips.length > 0 ? (
+        <div className="sequenceItemChips">
+          {chips.map((chip) => (
+            <span
+              className={`sequenceChip ${chip.className}`}
+              key={`${chip.className}-${chip.label}`}
+            >
+              {chip.label}
+            </span>
+          ))}
+        </div>
       ) : null}
-      {metrics ? <div className="sequenceItemMeta">{metrics}</div> : null}
       {item.note ? <div className="sequenceItemMeta">{item.note}</div> : null}
     </div>
   );
@@ -698,6 +748,8 @@ function ValueReadinessMatrix({
       <NativeCanvasTitle title={payload.title ?? "Value readiness matrix"} />
       <div className="matrixCanvas" aria-label="Value readiness matrix">
         <div className="matrixZone" />
+        <div className="matrixZoneLabel">Fund / scale</div>
+        <div className="matrixLowLabel">Avoid / defer</div>
         <div className="matrixDivider" />
         <div className="mapAxis y">Value</div>
         <div className="mapAxis x">Readiness</div>
@@ -721,6 +773,11 @@ function ValueReadinessMatrix({
           </div>
         ))}
       </div>
+      <div className="matrixLegend">
+        <span>High value + high readiness: scale</span>
+        <span>High value + low readiness: fund the gate first</span>
+        <span>Amber dot: elevated risk</span>
+      </div>
       <ProofBoundaryInline proofBoundary={payload.proofBoundary} />
     </div>
   );
@@ -735,19 +792,27 @@ function GateToValueRoadmap({ payload }: { payload: ExecutiveCanvasPayload }) {
       <div className="roadmap">
         {gates.map((gate, index) => (
           <div className="roadmapGate" key={`${gate.label}-${index}`}>
-            <div className="roadmapStep">Gate {index + 1}</div>
+            <div className="roadmapStep">
+              <span>Gate {index + 1}</span>
+              {gate.status ? (
+                <span className="roadmapStatus">{gate.status}</span>
+              ) : null}
+            </div>
             <div className="roadmapLabel">{gate.label}</div>
-            {gate.status ? (
-              <div className="roadmapMeta">{gate.status}</div>
-            ) : null}
             {gate.owner ? (
-              <div className="roadmapMeta">{gate.owner}</div>
+              <div className="roadmapMeta">
+                <strong>Owner:</strong> {gate.owner}
+              </div>
             ) : null}
             {gate.dependency ? (
-              <div className="roadmapMeta">{gate.dependency}</div>
+              <div className="roadmapMeta">
+                <strong>Dependency:</strong> {gate.dependency}
+              </div>
             ) : null}
             {gate.valueUnlocked ? (
-              <div className="roadmapMeta">{gate.valueUnlocked}</div>
+              <div className="roadmapMeta">
+                <strong>Value:</strong> {gate.valueUnlocked}
+              </div>
             ) : null}
           </div>
         ))}
@@ -825,8 +890,40 @@ function scaleScore(value: number): number {
   return Math.max(14, Math.min(86, 14 + (value / 10) * 72));
 }
 
-function scoreLabel(label: string, value?: number): string {
-  return Number.isFinite(value) ? `${label} ${value}` : "";
+function scoreChip(
+  className: string,
+  label: string,
+  value?: number,
+): { label: string; className: string } | null {
+  return Number.isFinite(value)
+    ? { label: `${label} ${value}`, className }
+    : null;
+}
+
+function sequencingTone(
+  label: string,
+): "scale" | "certify" | "fund" | "hold" | "neutral" {
+  const normalized = label.toLowerCase();
+  if (/(scale|now|fund first)/.test(normalized)) return "scale";
+  if (/(certify|validate|then)/.test(normalized)) return "certify";
+  if (/(readiness|foundation|prepare|enable)/.test(normalized)) return "fund";
+  if (/(hold|stop|defer|avoid|kill)/.test(normalized)) return "hold";
+  return "neutral";
+}
+
+function sequencingHint(label: string): string {
+  switch (sequencingTone(label)) {
+    case "scale":
+      return "Ready to move";
+    case "certify":
+      return "Gate, then scale";
+    case "fund":
+      return "Build the substrate";
+    case "hold":
+      return "Protect capital";
+    default:
+      return "Decision lane";
+  }
 }
 
 export function IntelligenceV2Surface({
