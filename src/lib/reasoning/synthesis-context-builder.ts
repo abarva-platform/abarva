@@ -1,12 +1,15 @@
-import type { SourceEventInstance } from '@/lib/source/source-event-instance';
-import { buildEvidenceMap, buildEvidenceMapWithIngestions } from '@/lib/source/source-event-instance';
-import { createGateEvaluator } from '@/lib/reasoning/gate-evaluator';
-import { createContradictionDetector } from '@/lib/reasoning/contradiction-detector';
-import { createFailureModeDetector } from '@/lib/reasoning/failure-mode-detector';
-import { computeCascadeImpacts } from '@/lib/reasoning/cross-instance-reasoner';
-import { recordCascadeEvent } from '@/lib/reasoning/cascade-telemetry';
-import type { LifecyclePatternSeed } from '@/lib/intelligence/seed-types';
-import type { SynthesisContext, GateEvaluation } from '@/lib/reasoning/types';
+import type { SourceEventInstance } from "@/lib/source/source-event-instance";
+import {
+  buildEvidenceMap,
+  buildEvidenceMapWithIngestions,
+} from "@/lib/source/source-event-instance";
+import { createGateEvaluator } from "@/lib/reasoning/gate-evaluator";
+import { createContradictionDetector } from "@/lib/reasoning/contradiction-detector";
+import { createFailureModeDetector } from "@/lib/reasoning/failure-mode-detector";
+import { computeCascadeImpacts } from "@/lib/reasoning/cross-instance-reasoner";
+import { recordCascadeEvent } from "@/lib/reasoning/cascade-telemetry";
+import type { LifecyclePatternSeed } from "@/lib/intelligence/seed-types";
+import type { SynthesisContext, GateEvaluation } from "@/lib/reasoning/types";
 
 /**
  * Map the reasoner's directional severity (`blocking | accelerating |
@@ -15,11 +18,11 @@ import type { SynthesisContext, GateEvaluation } from '@/lib/reasoning/types';
  * a new shared module.
  */
 function mapDirectionalSeverity(
-  severity: 'blocking' | 'accelerating' | 'informational',
-): 'low' | 'medium' | 'high' {
-  if (severity === 'blocking') return 'high';
-  if (severity === 'accelerating') return 'medium';
-  return 'low';
+  severity: "blocking" | "accelerating" | "informational",
+): "low" | "medium" | "high" {
+  if (severity === "blocking") return "high";
+  if (severity === "accelerating") return "medium";
+  return "low";
 }
 
 /**
@@ -34,27 +37,41 @@ export function buildSourceSynthesisContext(
   // demo-side evidence contributions; falls back to the base map when
   // the helper is unavailable (defensive — both helpers live in the
   // same module today).
-  const evidenceMap = typeof buildEvidenceMapWithIngestions === 'function'
-    ? buildEvidenceMapWithIngestions(instance)
-    : buildEvidenceMap(instance);
+  const evidenceMap =
+    typeof buildEvidenceMapWithIngestions === "function"
+      ? buildEvidenceMapWithIngestions(instance)
+      : buildEvidenceMap(instance);
   const evaluator = createGateEvaluator(pattern);
-  const gateEvals: GateEvaluation[] = evaluator.evaluateStage(instance.currentStage, evidenceMap);
+  const gateEvals: GateEvaluation[] = evaluator.evaluateStage(
+    instance.currentStage,
+    evidenceMap,
+  );
   evaluator.evaluateAllStages(instance.currentStage, evidenceMap);
   const unmet = evaluator.unmetCriteria(instance.currentStage, evidenceMap);
   const canAdvance = evaluator.canAdvance(instance.currentStage, evidenceMap);
 
-  const metCount = gateEvals.filter(g => g.status === 'met' || g.status === 'waived').length;
-  const hardBlockers = unmet.filter(g => g.gateType === 'hard');
+  const metCount = gateEvals.filter(
+    (g) => g.status === "met" || g.status === "waived",
+  ).length;
+  const hardBlockers = unmet.filter((g) => g.gateType === "hard");
 
   // Find the stage definition for current stage guidance
-  const currentStageDef = pattern.stages.find(s => s.id === instance.currentStage);
+  const currentStageDef = pattern.stages.find(
+    (s) => s.id === instance.currentStage,
+  );
 
   // Missing artifacts for current stage
-  const stageArtifacts = pattern.expectedArtifacts.filter(a => a.stageId === instance.currentStage);
-  const presentArtifactIds = new Set(instance.artifacts.map(a => a.expectedArtifactId).filter((id): id is string => Boolean(id)));
+  const stageArtifacts = pattern.expectedArtifacts.filter(
+    (a) => a.stageId === instance.currentStage,
+  );
+  const presentArtifactIds = new Set(
+    instance.artifacts
+      .map((a) => a.expectedArtifactId)
+      .filter((id): id is string => Boolean(id)),
+  );
   const missingArtifacts = stageArtifacts
-    .filter(a => !presentArtifactIds.has(a.id))
-    .map(a => ({
+    .filter((a) => !presentArtifactIds.has(a.id))
+    .map((a) => ({
       artifactId: a.id,
       label: a.label,
       stageId: a.stageId,
@@ -86,7 +103,7 @@ export function buildSourceSynthesisContext(
         ...(impact.impactSeverity !== undefined
           ? { impactSeverity: impact.impactSeverity }
           : {}),
-        buildContext: 'source-synthesis',
+        buildContext: "source-synthesis",
       });
     }
   } catch {
@@ -96,11 +113,15 @@ export function buildSourceSynthesisContext(
   // Citations: pattern stage guidance + gate criteria
   const citations = [
     {
-      ref: { patternId: pattern.patternId, patternVersion: pattern.version, section: `§ Stage — ${instance.currentStage}` },
-      excerpt: currentStageDef?.description ?? '',
+      ref: {
+        patternId: pattern.patternId,
+        patternVersion: pattern.version,
+        section: `§ Stage — ${instance.currentStage}`,
+      },
+      excerpt: currentStageDef?.description ?? "",
       relevance: `Current stage definition for ${instance.currentStage}`,
     },
-    ...hardBlockers.slice(0, 3).map(b => ({
+    ...hardBlockers.slice(0, 3).map((b) => ({
       ref: b.patternRef,
       excerpt: b.evaluationHint,
       relevance: `Hard gate blocker: ${b.description}`,
@@ -109,7 +130,7 @@ export function buildSourceSynthesisContext(
 
   return {
     instanceId: instance.id,
-    instanceType: 'source-event',
+    instanceType: "source-event",
     patternId: pattern.patternId,
     patternVersion: pattern.version,
     currentStage: instance.currentStage,
@@ -119,7 +140,8 @@ export function buildSourceSynthesisContext(
       unmet: gateEvals.length - metCount,
       blocked: hardBlockers,
     },
-    activeContradictions: createContradictionDetector(pattern).detect(evidenceMap),
+    activeContradictions:
+      createContradictionDetector(pattern).detect(evidenceMap),
     failureModes: createFailureModeDetector(pattern).detect(evidenceMap),
     missingArtifacts,
     cascadeContext,
@@ -128,12 +150,32 @@ export function buildSourceSynthesisContext(
       name: instance.name,
       tenantSlug: instance.tenantSlug,
       vendorCount: instance.vendors.length,
-      activeVendors: instance.vendors.filter(v => v.status === 'invited-bafo' || v.status === 'shortlisted').map(v => v.name),
-      riskFlags: instance.vendors.flatMap(v => v.riskFlags).filter(f => f.status === 'open').map(f => f.label),
+      activeVendors: instance.vendors
+        .filter(
+          (v) => v.status === "invited-bafo" || v.status === "shortlisted",
+        )
+        .map((v) => v.name),
+      vendorFacts: instance.vendors.slice(0, 6).map((v) => ({
+        name: v.name,
+        status: v.status,
+        differentiators: v.differentiators,
+        pricingBand: v.pricingBand,
+        openRiskFlags: v.riskFlags
+          .filter((f) => f.status === "open")
+          .map((f) => f.label),
+      })),
+      riskFlags: instance.vendors
+        .flatMap((v) => v.riskFlags)
+        .filter((f) => f.status === "open")
+        .map((f) => f.label),
       canAdvance,
-      linkedPrograms: instance.linkedPrograms.map(lp => ({ id: lp.programId, name: lp.programName, linkType: lp.linkType })),
+      linkedPrograms: instance.linkedPrograms.map((lp) => ({
+        id: lp.programId,
+        name: lp.programName,
+        linkType: lp.linkType,
+      })),
     },
-    stageGuidance: currentStageDef?.description ?? '',
+    stageGuidance: currentStageDef?.description ?? "",
     builtAt: Date.now(),
   };
 }
@@ -145,14 +187,14 @@ export function buildSourceSynthesisContext(
 export function instanceStateHash(instance: SourceEventInstance): string {
   const key = JSON.stringify({
     stage: instance.currentStage,
-    vendors: instance.vendors.map(v => ({ id: v.id, status: v.status })),
+    vendors: instance.vendors.map((v) => ({ id: v.id, status: v.status })),
     artifactCount: instance.artifacts.length,
     evidenceCount: instance.evidence.length,
   });
   // Simple djb2 hash — deterministic, no crypto needed
   let hash = 5381;
   for (let i = 0; i < key.length; i++) {
-    hash = ((hash << 5) + hash) + key.charCodeAt(i);
+    hash = (hash << 5) + hash + key.charCodeAt(i);
     hash |= 0;
   }
   return Math.abs(hash).toString(36);

@@ -72,7 +72,13 @@ Nexus voice register (from brand voice spec §9):
 - Be specific about timing when relevant (e.g. "BAFO award expected May 30").
 - Precise. No boilerplate. No filler.
 
-Format: Plain prose, 40–60 words. No headers, no bullets, no markdown.`;
+Format: Plain prose, 50–80 words. No headers, no bullets, no markdown.
+
+Visible-output requirements:
+- Start the first sentence with the exact tenant display name from the V6 packet contract.
+- Name the current Move/program and the linked Source dependency when present.
+- Use the words board-ready and evidence trail when explaining why the Move can or cannot advance.
+- Do not claim milestone precision, spend, ROI, or value unless it is in the packet.`;
 
 function buildNexusSynthesisPrompt(userContextBlock: string): string {
   // F0.2 + F0.3: role/voice → user context (Layer 0) → reasoning + scope
@@ -154,11 +160,13 @@ export async function POST(request: Request) {
   }
 
   const activeTenantKey = canonicalTenantKey(activeClient.key);
-  const programId = body.programId
-    ?? (activeTenantKey === "apex-retail" ? APX_CDP_2026_INSTANCE.id : null);
-  const v6Instance = activeTenantKey === "apex-retail"
-    ? null
-    : buildV6ProgramInstanceForTenant(activeTenantKey, programId);
+  const programId =
+    body.programId ??
+    (activeTenantKey === "apex-retail" ? APX_CDP_2026_INSTANCE.id : null);
+  const v6Instance =
+    activeTenantKey === "apex-retail"
+      ? null
+      : buildV6ProgramInstanceForTenant(activeTenantKey, programId);
   if (!programId && !v6Instance) {
     return movesJsonError(
       {
@@ -172,7 +180,8 @@ export async function POST(request: Request) {
   // Resolve deterministic demo instances only. Do not fall back from an
   // unknown live DB UUID to APX_CDP_2026_INSTANCE; that contaminates
   // user-created programs with unrelated CDP/BAFO/Vendor C recommendations.
-  const instance = v6Instance ?? APEX_RETAIL_PROGRAM_INSTANCES.find((i) => i.id === programId);
+  const instance =
+    v6Instance ?? APEX_RETAIL_PROGRAM_INSTANCES.find((i) => i.id === programId);
   if (!instance) {
     return movesJsonError(
       { error: "program_synthesis_not_available" },
@@ -271,7 +280,7 @@ export async function POST(request: Request) {
     snap.linkedSourceEvents.length > 0
       ? `Programme dependency: ${snap.linkedSourceEvents[0].name} — ${snap.linkedSourceEvents[0].type}.`
       : "",
-    "Provide Nexus's 2–3 sentence next-move recommendation.",
+    "Provide Ava's 2–3 sentence next-move recommendation. Use the V6 packet contract's exact tenantName in the opening sentence, and make the board-ready/evidence-trail boundary visible.",
   ]
     .filter(Boolean)
     .join("\n");

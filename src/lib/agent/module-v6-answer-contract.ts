@@ -103,6 +103,9 @@ export function moduleV6PacketPromptBlock(
     "V6 packet contract:",
     JSON.stringify(contract, null, 2),
     "",
+    `Visible tenant identity requirement: start the first user-visible sentence with the exact tenant display name "${contract.tenantName}".`,
+    "Do not use legacy customer names if the tenantName is a generic demo label.",
+    "",
     moduleV6VisibleOutputInstructions(contract),
   ].join("\n");
 }
@@ -164,7 +167,10 @@ export function buildModuleV6VisibleOutputAudit(args: {
 export function collectModuleV6VisibleText(
   sections: readonly ModuleV6VisibleSection[],
 ): string {
-  return sections.map((section) => section.modelText).filter(Boolean).join("\n");
+  return sections
+    .map((section) => section.modelText)
+    .filter(Boolean)
+    .join("\n");
 }
 
 export function validateModuleV6VisibleSections(

@@ -81,7 +81,12 @@ aVa Source voice register:
 - Precise. No hedging language. No generic procurement boilerplate.
 - Reference the linked program dependency when it directly affects urgency.
 
-Format: Plain prose, 40–60 words. No headers, no bullets, no markdown.`;
+Format: Plain prose, 50–80 words. No headers, no bullets, no markdown.
+
+Visible-output requirements:
+- Start the first sentence with the exact tenant display name from the V6 packet contract.
+- If commercial evidence is thin or fields are not loaded, use the phrase DATA-THIN and name the missing commercial fields in business language: service scope, annual cost, renewal or contract evidence.
+- If commercial facts are loaded, name at least one loaded system, vendor, service, annual cost, renewal, or linked program fact before giving the action.`;
 
 function buildAvaSynthesisPrompt(userContextBlock: string): string {
   const sourceContractBlock = buildAgentContextContractBlock({
@@ -152,10 +157,15 @@ function buildSourceV6VendorCommercialPacket(args: {
       "event stage and gate state",
       ...(snap.activeVendors?.length ? ["active vendor list"] : []),
       ...(args.ctx.citations.length ? ["pattern citations"] : []),
-      ...(args.ctx.cascadeContext.length ? ["linked program dependencies"] : []),
+      ...(args.ctx.cascadeContext.length
+        ? ["linked program dependencies"]
+        : []),
       ...(snap.riskFlags?.length ? ["open risk flags"] : []),
     ],
-    missingEvidence,
+    missingEvidence: [
+      ...missingEvidence,
+      "service scope, annual cost, renewal or contract evidence must be explicit before award readiness is claimed",
+    ],
   });
 }
 
@@ -180,9 +190,10 @@ export async function POST(request: Request) {
     : activeTenantKey === "apex-retail"
       ? DEFAULT_SOURCE_INSTANCE_ID
       : null;
-  const v6Instance = activeTenantKey === "apex-retail"
-    ? null
-    : buildV6SourceEventInstanceForTenant(activeTenantKey, instanceId);
+  const v6Instance =
+    activeTenantKey === "apex-retail"
+      ? null
+      : buildV6SourceEventInstanceForTenant(activeTenantKey, instanceId);
 
   if (!instanceId && !v6Instance) {
     return sourceJsonError(
@@ -194,12 +205,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const instance = v6Instance ?? SOURCE_EVENT_INSTANCES.find((i) => i.id === instanceId);
+  const instance =
+    v6Instance ?? SOURCE_EVENT_INSTANCES.find((i) => i.id === instanceId);
 
   if (!instance) {
-    return sourceJsonError({ error: "instance not found" }, {
-      status: 404,
-    });
+    return sourceJsonError(
+      { error: "instance not found" },
+      {
+        status: 404,
+      },
+    );
   }
 
   const instanceTenantKey = canonicalTenantKey(
@@ -412,6 +427,41 @@ function buildSynthesisUserMessage(
     lines.push(`Open risk flags: ${riskFlags.join("; ")}.`);
   }
 
+  const activeVendors = ctx.instanceSnapshot["activeVendors"] as string[];
+  if (activeVendors?.length > 0) {
+    lines.push(`Active vendors in packet: ${activeVendors.join("; ")}.`);
+  }
+
+  const vendorFacts = ctx.instanceSnapshot["vendorFacts"] as
+    | Array<{
+        name?: string;
+        status?: string;
+        differentiators?: string[];
+        pricingBand?: string;
+        openRiskFlags?: string[];
+      }>
+    | undefined;
+  if (vendorFacts?.length) {
+    lines.push(
+      `Vendor commercial facts: ${vendorFacts
+        .slice(0, 4)
+        .map((vendor) =>
+          [
+            vendor.name,
+            vendor.status ? `status ${vendor.status}` : "",
+            ...(vendor.differentiators ?? []).slice(0, 3),
+            vendor.pricingBand ? `pricing band ${vendor.pricingBand}` : "",
+            ...(vendor.openRiskFlags ?? [])
+              .slice(0, 2)
+              .map((flag) => `risk ${flag}`),
+          ]
+            .filter(Boolean)
+            .join(" | "),
+        )
+        .join("; ")}.`,
+    );
+  }
+
   if (ctx.cascadeContext.length > 0) {
     const blocking = ctx.cascadeContext.find((c) => c.severity === "blocking");
     if (blocking) {
@@ -421,7 +471,7 @@ function buildSynthesisUserMessage(
 
   lines.push(
     "",
-    "Provide aVa's 2–3 sentence validator assessment of this state.",
+    "Provide aVa's 2–3 sentence validator assessment of this state. Use the V6 packet contract's exact tenantName in the opening sentence, and make the commercial evidence boundary visible.",
   );
 
   return lines.join("\n");

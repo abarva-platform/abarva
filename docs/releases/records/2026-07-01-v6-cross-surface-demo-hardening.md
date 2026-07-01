@@ -35,11 +35,28 @@ This release hardens the demo V6 answer path across Intelligence, Tower, Source,
 - Updated `src/lib/cio-tower/answer.ts` to prefer V6 business metadata names and avoid invented "Loaded program" labels.
 - Added focused tests for Source, Moves, Intelligence, and Tower behavior.
 
+### Follow-up Contract Hardening — 2026-07-01T12:35:22Z
+
+- Production proof after the first deploy showed authenticated responses but failed the strict demo gate: 50/50 API calls returned HTTP 200, 0/50 met the visible-answer scorer, and 8/10 page smokes passed.
+- Root cause: the answer paths did not consistently require the generic demo tenant display name in the first visible sentence; legacy `/api/tower/ask` still used the older ungrounded Tower prompt and could answer with Apex/APX examples for Airline/Industrial sessions; Source and Moves short synthesis could omit commercial evidence boundary and board-ready/evidence-trail language even when the V6 pack contained the right facts.
+- Remediation in this follow-up: V6 packet prompt blocks now require the exact `tenantName` opening; the shared consultant answer contract requires generic demo names over legacy customer names; Source prompt context includes vendor commercial facts and requires DATA-THIN/commercial-boundary wording when evidence is thin; Moves requires board-ready/evidence-trail language; legacy `/api/tower/ask` delegates to the governed CIO Tower V6 answer engine.
+
 ## QA / Validation
 
 - `npx jest src/app/api/source/synthesis/__tests__/route.test.ts src/app/api/programs/synthesis/__tests__/route.test.ts src/lib/cio-tower/__tests__/answer.test.ts src/lib/intelligence/__tests__/skyharbor-cto-readiness.test.ts src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts --runInBand`
   - Result: Passed, 5 suites / 36 tests.
   - Note: Jest reports pre-existing duplicate manual mock warnings for markdown-related mocks.
+- First production 50-question proof after ACA deploy:
+  - Evidence path: `audit-artifacts/v6-cross-surface-50-prod/v6-cross-surface-50-2026-07-01T12-16-59-656Z-a565a41af/`.
+  - Result: 50/50 signed-in API calls returned HTTP 200; 0/50 passed strict visible-answer scorer; 8/10 page route smokes passed.
+  - Disposition: Failed proof. Used to drive the follow-up contract hardening above.
+- Follow-up local gate:
+  - `npx jest src/app/api/source/synthesis/__tests__/route.test.ts src/app/api/programs/synthesis/__tests__/route.test.ts src/app/api/tower/ask/route.test.ts src/lib/agent/__tests__/module-v6-answer-contract.test.ts --runInBand`
+  - Result: Passed, 4 suites / 12 tests.
+  - `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false`
+  - Result: Passed.
+  - `npx eslint src/lib/agent/module-v6-answer-contract.ts src/lib/intelligence/ask/response-policy.ts src/lib/reasoning/synthesis-context-builder.ts src/app/api/source/synthesis/route.ts src/app/api/programs/synthesis/route.ts src/app/api/tower/ask/route.ts src/app/api/tower/ask/route.test.ts`
+  - Result: Passed.
 
 ## Rollout Plan
 
