@@ -199,6 +199,19 @@ const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
     ],
   },
   {
+    key: "tower_advisor_morning_brief",
+    patterns: [
+      /investment\s+posture/i,
+      /posture\s+should\s+the\s+CIO/i,
+      /cio\s+morning\s+brief/i,
+      /morning\s+brief/i,
+      /what\s+changed.*tower/i,
+      /what\s+should\s+the\s+CIO\s+know/i,
+      /executive\s+brief/i,
+      /advisor\s+brief/i,
+    ],
+  },
+  {
     key: "tower_run_change_split",
     patterns: [/run.*change/i, /change.*run/i, /capex.*opex/i, /opex.*capex/i],
   },
@@ -422,6 +435,12 @@ function fallbackContractForKey(key: string): CioTowerContract {
       question_family: "inspect_this_week",
       measure_key: "initiative_budget_fy26",
       artifact_type: "table",
+    },
+    tower_advisor_morning_brief: {
+      intent: "advise",
+      question_family: "advisor_morning_brief",
+      measure_key: "initiative_budget_fy26",
+      artifact_type: "card",
     },
     tower_total_it_spend: {
       intent: "lookup",
@@ -1319,6 +1338,134 @@ function buildTowerPortfolioValueTable(
 
 const buildTowerTopProgramsTable = buildTowerPortfolioValueTable;
 
+function normalizedSearchText(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function profileMatchesQuestion(
+  profile: ProgramValueProfile,
+  question: string,
+): boolean {
+  const questionText = normalizedSearchText(question);
+  const profileTokens = normalizedSearchText(profile.name)
+    .split(" ")
+    .filter((token) => token.length > 2);
+  if (profileTokens.length === 0) return false;
+  return profileTokens.every((token) => questionText.includes(token));
+}
+
+function selectAdvisorFocusProfile(
+  question: string,
+  profiles: readonly ProgramValueProfile[],
+): ProgramValueProfile | null {
+  return (
+    profiles.find((profile) => profileMatchesQuestion(profile, question)) ??
+    profiles
+      .slice()
+      .sort((left, right) => profileRankScore(right, "inspect") - profileRankScore(left, "inspect"))[0] ??
+    null
+  );
+}
+
+function advisorPostureForProfile(profile: ProgramValueProfile): string {
+  if (profile.measuredValueNumeric <= 0 && profile.promisedValueNumeric > 0) {
+    return "hold additional funding until value proof is finance-attested";
+  }
+  if (profile.valueGapNumeric !== null && profile.valueGapNumeric > 0) {
+    return "inspect before scaling";
+  }
+  if (profile.actualSpendNumeric > 0 && profile.measuredValueNumeric > 0) {
+    return "continue with proof-based funding";
+  }
+  return "keep under review until the next funding gate";
+}
+
+function buildCioTowerAdvisorMorningBrief(
+  context: CioTowerPromptContext,
+): {
+  output: CioTowerVisibleAnswerContract;
+  reason: string;
+} | null {
+  const profiles = programValueProfiles(context.relevantFacts);
+  const focus = selectAdvisorFocusProfile(context.question, profiles);
+  if (!focus) return null;
+
+  const initiativeBudget = context.metricPackets.find(
+    (packet) => packet.measureKey === "initiative_budget_fy26",
+  );
+  const actualSpend = context.metricPackets.find(
+    (packet) => packet.measureKey === "actual_spend_ytd",
+  );
+  const promisedValue = context.metricPackets.find(
+    (packet) => packet.measureKey === "promised_value_fy26",
+  );
+  const measuredValue = context.metricPackets.find(
+    (packet) => packet.measureKey === "measured_value_ytd",
+  );
+  const totals = [
+    initiativeBudget?.valueNumeric ? `initiative budget ${initiativeBudget.displayValue}` : null,
+    actualSpend?.valueNumeric ? `actual spend YTD ${actualSpend.displayValue}` : null,
+    promisedValue?.valueNumeric ? `promised value ${promisedValue.displayValue}` : null,
+    measuredValue?.valueNumeric ? `measured value ${measuredValue.displayValue}` : null,
+  ].filter(Boolean).join(", ");
+  const totalsSentence = totals
+    ? ` Portfolio totals are ${totals}.`
+    : " Portfolio totals are omitted because the governed measure packets are incomplete.";
+  const posture = advisorPostureForProfile(focus);
+  const topInspectionProfiles = profiles
+    .slice()
+    .sort((left, right) => profileRankScore(right, "inspect") - profileRankScore(left, "inspect"))
+    .slice(0, 5);
+
+  return {
+    reason: "CIO Morning Brief answered from governed Tower portfolio value facts without a cold advisor model call.",
+    output: {
+      version: "cio_tower_visible_answer_v1",
+      answer: `${context.tenantName} should ${posture} on ${focus.name}. It carries ${focus.budget} of FY26 budget, ${focus.actualSpend} of actual spend, ${focus.promisedValue} of promised value, and ${focus.measuredValue} of measured value; the inspection reason is ${focus.inspectionReason.toLowerCase()}.${totalsSentence}`,
+      tables: [
+        {
+          id: "cio_morning_brief",
+          title: "CIO morning brief",
+          columns: [
+            "Priority",
+            "Program",
+            "Posture",
+            "FY26 budget",
+            "Actual spend YTD",
+            "Promised value",
+            "Measured value",
+            "Value gap",
+            "Owner",
+            "Why inspect",
+          ],
+          rows: topInspectionProfiles.map((profile, index) => [
+            String(index + 1),
+            profile.name,
+            advisorPostureForProfile(profile),
+            profile.budget,
+            profile.actualSpend,
+            profile.promisedValue,
+            profile.measuredValue,
+            profile.valueGap,
+            profile.owner,
+            profile.inspectionReason,
+          ]),
+        },
+      ],
+      tabs: [
+        {
+          id: "source_boundary",
+          label: "Source boundary",
+          prose:
+            "This brief uses governed Tower budget, actual spend, promised value, measured value, owner, blocker, and evidence-status facts. It does not estimate missing ROI or convert promised value into proven value.",
+          tables: [],
+        },
+      ],
+      followUpQuestion: "Do you want the source evidence behind the first priority?",
+    },
+  };
+}
+
 function asksForMetricLineage(question: string): boolean {
   return /lineage|formula|source\s+trace|trace\s+the\s+metric|where.*number.*come/i.test(
     question,
@@ -1331,6 +1478,10 @@ function buildCioTowerDeterministicMetricAnswer(
   output: CioTowerVisibleAnswerContract;
   reason: string;
 } | null {
+  if (context.contract.contract_key === "tower_advisor_morning_brief") {
+    return buildCioTowerAdvisorMorningBrief(context);
+  }
+
   if (
     context.contract.contract_key === "tower_portfolio_value_gap" ||
     context.contract.contract_key === "tower_weak_value_evidence" ||
@@ -1540,7 +1691,8 @@ function factWhereForContract(contract: CioTowerContract): {
     contract.contract_key === "tower_top_it_programs_by_budget" ||
     contract.contract_key === "tower_portfolio_value_gap" ||
     contract.contract_key === "tower_weak_value_evidence" ||
-    contract.contract_key === "tower_inspect_this_week"
+    contract.contract_key === "tower_inspect_this_week" ||
+    contract.contract_key === "tower_advisor_morning_brief"
   )
     return { views: ["initiative_budget", "value"], limit: 120 };
   if (contract.contract_key === "tower_total_it_spend")
