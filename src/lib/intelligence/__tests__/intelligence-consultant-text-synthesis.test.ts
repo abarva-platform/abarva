@@ -322,6 +322,12 @@ describe("Intelligence consultant text synthesis", () => {
     expect(prompt).toContain("Tenant evidence:");
     expect(prompt).toContain("Corpus patterns:");
     expect(prompt).toContain("Advisory lenses:");
+    expect(prompt).toContain(
+      'The first user-visible sentence must begin with exactly "SkyHarbor Air".',
+    );
+    expect(prompt).toContain(
+      'If your natural opening would not start with "SkyHarbor Air"',
+    );
     expect(prompt).not.toContain("Expert council:");
     expect(prompt).not.toContain("Return structured JSON");
   });
