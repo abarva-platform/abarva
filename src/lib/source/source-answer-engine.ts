@@ -645,6 +645,7 @@ function formatCurrentStateFinding(item: SourceLiveTenantEvidenceItem): string {
 
 function formatEvidenceTitle(title: string): string {
   return title
+    .replace(/^#+\s*/, "")
     .replace(/\s+(excerpt|fact)$/i, "")
     .replace(/[_-]+/g, " ")
     .replace(/\s+/g, " ")
@@ -656,8 +657,19 @@ function isStructuredRowExcerpt(excerpt: string): boolean {
   if (!trimmed) return false;
   const commaCount = (trimmed.match(/,/g) ?? []).length;
   const quotedCommaCount = (trimmed.match(/",/g) ?? []).length;
+  const danglingCsvQuote = /",|,"|"\w/.test(trimmed);
+  const roleTailFragment =
+    /,\s*(and\s+)?(pass-through|exception|owner|lead|manager|director|sme|analyst)\b/i.test(
+      trimmed,
+    );
   const headerLike = /\b[a-z][a-z0-9_]+,[a-z][a-z0-9_]+,/i.test(trimmed);
-  return quotedCommaCount >= 2 || commaCount >= 8 || headerLike;
+  return (
+    quotedCommaCount >= 1 ||
+    commaCount >= 8 ||
+    danglingCsvQuote ||
+    roleTailFragment ||
+    headerLike
+  );
 }
 
 function selectByMode(
@@ -823,9 +835,18 @@ function toAnswerCitation(
     recordId: item.recordId,
     sourceDoc: item.sourceDoc,
     sourcePath: item.sourcePath,
-    excerpt: toAvaVisibleText(cleanEvidenceExcerpt(item.excerpt)),
+    excerpt: toAvaVisibleText(formatEvidenceCitationExcerpt(item)),
     confidence: item.confidence,
   };
+}
+
+function formatEvidenceCitationExcerpt(
+  item: SourceLiveTenantEvidenceItem,
+): string {
+  if (isStructuredRowExcerpt(item.excerpt)) {
+    return `${formatEvidenceTitle(item.title)} is structured Source evidence for ${formatSegmentLabel(item.segmentId).toLowerCase()}.`;
+  }
+  return cleanEvidenceExcerpt(item.excerpt);
 }
 
 function buildAvaResponseParts(args: {
