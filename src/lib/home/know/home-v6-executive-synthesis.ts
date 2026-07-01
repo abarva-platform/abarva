@@ -120,10 +120,9 @@ export async function applyHomeV6ExecutiveSynthesis(args: {
       timeoutMs,
     );
     const rawText = collected.text.trim();
-    const executiveText = ensureTenantOpening(
-      normalizeExecutiveText(rawText),
-      packet.tenantName,
-    );
+    const normalizedText = normalizeExecutiveText(rawText);
+    const executiveText = ensureTenantOpening(normalizedText, packet.tenantName);
+    const rawClaudePreserved = executiveText === rawText;
     const artifactStatus = determineArtifactStatus({
       text: executiveText,
       response: args.response,
@@ -183,6 +182,7 @@ export async function applyHomeV6ExecutiveSynthesis(args: {
         auditId,
         promptBoundary,
         anthropicTrace,
+        rawClaudePreserved,
         maxTokens,
         timeoutMs,
       }),
@@ -468,6 +468,7 @@ function applyExecutiveSuccess(
     auditId: string;
     promptBoundary: ReturnType<typeof buildPromptBoundary>;
     anthropicTrace?: NonNullable<HomeKnowSafety["composerTrace"]>["anthropicTrace"];
+    rawClaudePreserved: boolean;
     maxTokens: number;
     timeoutMs: number;
   },
@@ -486,7 +487,7 @@ function applyExecutiveSuccess(
             goldenComposerUsed: true,
             fallbackUsed: false,
             reason:
-              `answerSource=sanitized_claude; claudeInvoked=true; claudeSelected=true; rawClaudePreserved=${String(Boolean(args.anthropicTrace))}; artifactStatus=${args.artifactStatus}; softWarnings=${args.softValidationWarnings.join("|") || "none"}; promptVersion=${PROMPT_VERSION}; model=${args.model}; auditId=${args.auditId}; ` +
+              `answerSource=${args.rawClaudePreserved ? "claude_text" : "sanitized_claude"}; claudeInvoked=true; claudeSelected=true; rawClaudePreserved=${String(args.rawClaudePreserved)}; traceRawClaudeExposed=${String(Boolean(args.anthropicTrace))}; artifactStatus=${args.artifactStatus}; softWarnings=${args.softValidationWarnings.join("|") || "none"}; promptVersion=${PROMPT_VERSION}; model=${args.model}; auditId=${args.auditId}; ` +
               response.safety.composerTrace.reason,
             promptSnapshot: {
               system: HOME_V6_EXECUTIVE_SYSTEM_PROMPT,
