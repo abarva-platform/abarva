@@ -245,11 +245,33 @@ describe("HomeKnowAnswerRenderer", () => {
 
     expect(
       screen.getByText(
-        "The loaded evidence shows a clear current-state picture of the organization.",
+        "The business context shows a clear current-state picture of the organization.",
       ),
     ).toBeInTheDocument();
     expect(screen.queryByText(/source support supports/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/\bsupporting material\b/i)).not.toBeInTheDocument();
+  });
+
+  it("passes Claude markdown emphasis to the markdown renderer", () => {
+    const { container } = render(
+      <HomeKnowAnswerRenderer
+        response={{
+          ...baseResponse,
+          prose:
+            "For Industrial Demo:\n- **What this means:** treasury modernization is the strongest current story.\n- **Why it matters:** value proof depends on controls and period-specific evidence.",
+          tables: [],
+          gaps: [],
+          citations: [],
+        }}
+      />,
+    );
+
+    expect(
+      container.querySelector('[data-mock="react-markdown"]'),
+    ).toHaveTextContent(
+      "**What this means:** treasury modernization is the strongest current story.",
+    );
+    expect(container.textContent).toContain("For Industrial Demo:");
   });
 
   it("shapes citation and coverage-table labels before rendering", () => {
