@@ -17,6 +17,7 @@ import {
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { SHELL } from "@/lib/shell/shell-tokens";
 import { demoSafeClientText } from "@/lib/client-config";
+import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 
 export type AvaCanvasTab = {
   id: string;
@@ -27,7 +28,10 @@ export type AvaCanvasTab = {
 export type AvaChatShellProps = {
   surface: string;
   thread: ChatMessage[];
-  onMessage: (text: string, attachments: AttachmentRef[]) => void | Promise<void>;
+  onMessage: (
+    text: string,
+    attachments: AttachmentRef[],
+  ) => void | Promise<void>;
   canvas: ReactNode;
   suggestedActions?: SuggestedAction[];
   surfaceContext?: Record<string, unknown>;
@@ -55,7 +59,11 @@ const TECHNICAL_STRING_FIELDS = new Set([
 ]);
 
 function sanitizeVisibleStrings<T>(value: T, fieldName?: string): T {
-  if (typeof value === "string" && fieldName && TECHNICAL_STRING_FIELDS.has(fieldName)) {
+  if (
+    typeof value === "string" &&
+    fieldName &&
+    TECHNICAL_STRING_FIELDS.has(fieldName)
+  ) {
     return value;
   }
   if (typeof value === "string") return demoSafeClientText(value) as T;
@@ -170,7 +178,10 @@ export function AvaCanvas({
           </button>
         ))}
       </div>
-      <div style={CANVAS_BODY_STYLE} data-testid={`ava-canvas-panel-${activeTab}`}>
+      <div
+        style={CANVAS_BODY_STYLE}
+        data-testid={`ava-canvas-panel-${activeTab}`}
+      >
         {children}
       </div>
     </section>
@@ -193,8 +204,16 @@ export function AvaMessage({ message }: { message: ChatMessage }) {
       data-role={message.role}
       style={message.role === "user" ? USER_MESSAGE_STYLE : AVA_MESSAGE_STYLE}
     >
-      {message.role === "agent" ? <div style={MESSAGE_BYLINE_STYLE}>aVa</div> : null}
-      <div style={MESSAGE_BODY_STYLE}>{message.body}</div>
+      {message.role === "agent" ? (
+        <div style={MESSAGE_BYLINE_STYLE}>aVa</div>
+      ) : null}
+      <div style={MESSAGE_BODY_STYLE}>
+        {message.role === "agent" ? (
+          <AgentMarkdown text={message.body} />
+        ) : (
+          message.body
+        )}
+      </div>
     </article>
   );
 }
@@ -280,8 +299,12 @@ export function AvaAnswerSummary({
   return (
     <div style={SUMMARY_STYLE} data-testid="ava-answer-summary">
       <p style={SUMMARY_DIRECT_STYLE}>{directAnswer}</p>
-      {whyItMatters ? <SummaryRow label="Why it matters" value={whyItMatters} /> : null}
-      {evidencePreview ? <SummaryRow label="Proof" value={evidencePreview} /> : null}
+      {whyItMatters ? (
+        <SummaryRow label="Why it matters" value={whyItMatters} />
+      ) : null}
+      {evidencePreview ? (
+        <SummaryRow label="Proof" value={evidencePreview} />
+      ) : null}
       {confidence ? <SummaryRow label="Confidence" value={confidence} /> : null}
       {nextAction ? <SummaryRow label="Next" value={nextAction} /> : null}
       {suggestions.length > 0 ? (
@@ -455,7 +478,7 @@ const MESSAGE_BODY_STYLE: CSSProperties = {
   fontSize: 14,
   lineHeight: 1.5,
   color: SHELL.INK,
-  whiteSpace: "pre-wrap",
+  whiteSpace: "normal",
 };
 
 const COMPOSER_STYLE: CSSProperties = {
