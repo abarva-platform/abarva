@@ -41,10 +41,37 @@ const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
 ];
 
 export function demoSafeClientText(value: string): string {
-  return DEMO_SAFE_TEXT_REPLACEMENTS.reduce(
+  const replaced = DEMO_SAFE_TEXT_REPLACEMENTS.reduce(
     (text, [pattern, replacement]) => text.replace(pattern, replacement),
     value,
   );
+  return collapseRepeatedDemoSafeClientNames(replaced);
+}
+
+function collapseRepeatedDemoSafeClientNames(value: string): string {
+  return [
+    DEMO_SAFE_CLIENT_NAMES.apexretail,
+    DEMO_SAFE_CLIENT_NAMES.meridian,
+    DEMO_SAFE_CLIENT_NAMES.arcturus,
+    DEMO_SAFE_CLIENT_NAMES.northstar,
+    DEMO_SAFE_CLIENT_NAMES.skyharbor,
+    DEMO_SAFE_CLIENT_NAMES.lakeshore,
+  ].reduce((text, name) => {
+    const words = name.split(/\s+/).filter(Boolean);
+    const suffix = words[words.length - 1];
+    if (!suffix) return text;
+    return text.replace(
+      new RegExp(
+        `\\b${escapeRegExp(name)}(?:\\s+${escapeRegExp(suffix)})+\\b`,
+        "g",
+      ),
+      name,
+    );
+  }, value);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export const ALL_CLIENTS: ClientOption[] = [

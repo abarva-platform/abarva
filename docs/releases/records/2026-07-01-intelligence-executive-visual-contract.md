@@ -16,6 +16,8 @@ Follow-up premium exhibit hardening upgrades the native canvas from a compact ca
 
 Production Industrial Demo smoke found that Claude sometimes emits the correct `canvasType` payload as bare JSON instead of the fenced `abarva-canvas` block. The renderer now defensively parses only supported bare executive-canvas payloads, removes them from visible prose, and renders the native exhibit; arbitrary or unsupported JSON remains ignored.
 
+Production follow-up smoke on the final ACA image found no raw marker/JSON leakage, but exposed two remaining demo-quality gaps: the consultant synthesis path could accept a strategic answer with right-canvas tabs but no native `abarva-canvas` exhibit, and demo-safe tenant name replacement could stack aliases into duplicated labels such as `SkyHarbor Air Air` or `Lakeshore Holdings Holdings`. This correction applies the native-canvas repair gate to consultant synthesis and collapses duplicate canonical tenant names before display/prompt use.
+
 ## Layer Impact
 
 - `global-control-lane`: Updates the shared Intelligence v2 answer contract and right-canvas renderer for all tenants using the executive canvas.
@@ -39,6 +41,8 @@ Production Industrial Demo smoke found that Claude sometimes emits the correct `
 - `src/lib/intelligence/tabbed-response.ts`: adds explicit canvas-selection guidance so prioritization questions choose sequencing, portfolio tradeoff questions choose value/readiness, prerequisite questions choose gate-to-value, and governance/trust questions choose proof boundary while preserving the strict renderer contract.
 - `src/lib/intelligence/executive-canvas-payload.ts`: extends initiative items with optional `owner` and `gate` fields for board-ready exhibit cards.
 - `src/lib/intelligence/executive-canvas-payload.ts`: repairs supported bare executive-canvas JSON so valid `canvasType` payloads render as native exhibits and do not leak raw JSON into the UI.
+- `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`: adds the same native-canvas repair/validation path to consultant synthesis so strategic prioritization answers cannot pass with only Markdown/Table fallback cards.
+- `src/lib/client-config.ts`: collapses duplicate canonical tenant aliases after demo-safe text replacement so Intelligence chrome, prompts, and visible answers do not show stacked labels such as `Air Air` or `Holdings Holdings`.
 - `src/lib/intelligence/ask/industrial-cio-backoffice-source.ts`: updates Morgan Street / Industrial Demo guidance to the current canvas grammar and asks Claude to use the correct exhibit pattern for CIO shared-services AI questions.
 - Focused parser and UI tests for payload extraction, tab preservation, native rendering, and no marker/payload leakage.
 
@@ -51,6 +55,8 @@ Production Industrial Demo smoke found that Claude sometimes emits the correct `
 - Premium exhibit validation: `./node_modules/.bin/jest src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/lib/intelligence/__tests__/tabbed-response.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/ask/__tests__/industrial-cio-backoffice-source.test.ts --runInBand` passed.
 - Industrial raw-JSON repair validation: `./node_modules/.bin/jest src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx --runInBand` passed.
 - Industrial raw-JSON repair lint: `npx eslint src/lib/intelligence/executive-canvas-payload.ts src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/components/intelligence-v2/IntelligenceV2Surface.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx` passed.
+- Consultant-native repair and tenant-label validation: `./node_modules/.bin/jest src/lib/__tests__/client-config-canonical.test.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts --runInBand` passed. Jest still reports pre-existing duplicate manual mock warnings for Markdown mocks.
+- Consultant-native repair and tenant-label lint: `npx eslint src/lib/client-config.ts src/lib/__tests__/client-config-canonical.test.ts src/lib/intelligence/intelligence-consultant-text-synthesis.ts src/lib/intelligence/__tests__/intelligence-consultant-text-synthesis.test.ts` passed.
 
 ## Rollout Plan
 
