@@ -14,6 +14,7 @@ import {
   toCioTowerMetricPacket,
   type CioTowerMetricPacket,
 } from "@/lib/cio-tower/metric-packet";
+import type { CioTowerCxoViewModel } from "@/lib/cio-tower/cxo-view-model";
 import type { TowerBudgetRollup } from "@/lib/tower/tower-budget-rollups";
 
 let query = new URLSearchParams();
@@ -256,6 +257,98 @@ const ZERO_AMOUNT_VENDORS: AIInitiativeVendorRow[] = VENDORS.map((vendor) => ({
   ...vendor,
   contractValueUsd: 0,
 }));
+
+const GOVERNED_CXO_VIEW: CioTowerCxoViewModel = {
+  tenantKey: "skyharbor-air",
+  tenantName: "SkyHarbor Air",
+  generatedFrom: "cio_tower",
+  headline:
+    "SkyHarbor Air has $2.6B of FY26 technology budget in view. The executive question is how much of that spend is turning into measurable value.",
+  sections: [],
+  cards: [
+    {
+      measureKey: "total_it_budget_fy26",
+      label: "FY26 IT budget",
+      section: "value_command_center",
+      valueNumeric: 2_578_000_000,
+      displayValue: "$2.6B",
+      period: "fy26",
+      basis: "committed",
+      scope: "enterprise_envelope",
+      formulaVersion: "cio_tower_v1",
+      sourceFactKeys: ["fact-budget"],
+      evidence: [],
+      gap: null,
+    },
+    {
+      measureKey: "initiative_budget_fy26",
+      label: "Initiative budget",
+      section: "portfolio_control",
+      valueNumeric: 28_300_000,
+      displayValue: "$28.3M",
+      period: "fy26",
+      basis: "committed",
+      scope: "initiative_portfolio",
+      formulaVersion: "cio_tower_v1",
+      sourceFactKeys: ["fact-initiative"],
+      evidence: [],
+      gap: null,
+    },
+    {
+      measureKey: "promised_value_fy26",
+      label: "Promised value",
+      section: "value_command_center",
+      valueNumeric: 270_000_000,
+      displayValue: "$270.0M",
+      period: "fy26",
+      basis: "forecast",
+      scope: "initiative_portfolio",
+      formulaVersion: "cio_tower_v1",
+      sourceFactKeys: ["fact-promised"],
+      evidence: [],
+      gap: null,
+    },
+    {
+      measureKey: "measured_value_ytd",
+      label: "Measured value",
+      section: "value_command_center",
+      valueNumeric: 91_800_000,
+      displayValue: "$91.8M",
+      period: "ytd",
+      basis: "actual",
+      scope: "initiative_portfolio",
+      formulaVersion: "cio_tower_v1",
+      sourceFactKeys: ["fact-measured"],
+      evidence: [],
+      gap: null,
+    },
+  ],
+  portfolioRows: [],
+  portfolioValueRows: [
+    {
+      program: "Crew Recovery & Legality Modernization",
+      owner: "VP Integration",
+      blocker: "Crew legality and data readiness",
+      budgetNumeric: 28_300_000,
+      budget: "$28.3M",
+      promisedValueNumeric: 270_000_000,
+      promisedValue: "$270.0M",
+      measuredValueNumeric: 91_800_000,
+      measuredValue: "$91.8M",
+      valueGapNumeric: 178_200_000,
+      valueGap: "$178.2M",
+      evidenceStatus: "source cited",
+      confidence: "high",
+      source: "T01_initiative-registry.csv row 2",
+      sourceFactKeys: ["fact-initiative", "fact-promised", "fact-measured"],
+    },
+  ],
+  vendorRows: [],
+  trustRows: [],
+  benchmarkRows: [],
+  gaps: [],
+  parityMeasureKey: "total_it_budget_fy26",
+};
 
 const OVER_PROVEN_INITIATIVES: AIInitiative[] = INITIATIVES.map(
   (initiative, index) => ({
@@ -584,5 +677,30 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.queryByText("model_governance")).not.toBeInTheDocument();
     expect(screen.queryByText("run_resilience")).not.toBeInTheDocument();
     expect(screen.getAllByText("Model Governance").length).toBeGreaterThan(0);
+  });
+
+  it("renders the governed Portfolio Value Pack from the CXO view model", () => {
+    render(
+      <TowerIndexPage
+        tenantName="SkyHarbor Air"
+        context="Tower"
+        towerToday="2026-06-25"
+        clientId="client-skyharbor"
+        initiatives={[]}
+        vendors={[]}
+        activeTab="portfolio"
+        cxoView={GOVERNED_CXO_VIEW}
+      />,
+    );
+
+    expect(screen.getByText("Portfolio Value Pack")).toBeInTheDocument();
+    expect(screen.getByText("Crew Recovery & Legality Modernization")).toBeInTheDocument();
+    expect(screen.getByText("VP Integration")).toBeInTheDocument();
+    expect(screen.getAllByText("$28.3M").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("$270.0M").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("$91.8M").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("$178.2M").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("Crew legality and data readiness")).toBeInTheDocument();
+    expect(screen.queryByText("cio_tower")).not.toBeInTheDocument();
   });
 });

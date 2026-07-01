@@ -46,6 +46,7 @@ import {
 } from "@/lib/cio-tower/metric-packet";
 import type {
   CioTowerCxoMeasureCard,
+  CioTowerPortfolioValueRow,
   CioTowerCxoTableRow,
   CioTowerCxoViewModel,
 } from "@/lib/cio-tower/cxo-view-model";
@@ -2377,6 +2378,105 @@ function CxoGovernedTable({
   );
 }
 
+function CxoPortfolioValuePackTable({
+  rows,
+}: {
+  rows: ReadonlyArray<CioTowerPortfolioValueRow>;
+}) {
+  if (rows.length === 0) {
+    return (
+      <TowerEmptyState
+        eyebrow="Missing input"
+        title="Portfolio value proof is not ready yet."
+        body="Tower needs initiative budget, promised value, measured value, owner, and blocker fields before it can show the CIO value-pack view."
+      />
+    );
+  }
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table
+        data-cio-tower-portfolio-value-pack="true"
+        style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+      >
+        <thead>
+          <tr>
+            {[
+              "Program",
+              "Owner",
+              "Budget",
+              "Promised value",
+              "Measured value",
+              "Gap",
+              "Evidence",
+              "Blocker",
+              "Source",
+            ].map((head) => (
+              <th
+                key={head}
+                style={{
+                  textAlign: ["Budget", "Promised value", "Measured value", "Gap"].includes(head) ? "right" : "left",
+                  padding: "0 10px 10px",
+                  fontFamily: T.MONO,
+                  fontSize: 9,
+                  letterSpacing: "1.2px",
+                  color: T.GRAY_DK,
+                  textTransform: "uppercase",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {head}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.slice(0, 10).map((row, index) => (
+            <tr
+              key={`${row.program}-${index}`}
+              data-cio-tower-program={row.program}
+              data-cio-tower-budget={row.budget}
+              data-cio-tower-promised-value={row.promisedValue}
+              data-cio-tower-measured-value={row.measuredValue}
+              style={{ borderTop: `1px solid ${T.RULE}` }}
+            >
+              <td style={{ padding: "12px 10px", minWidth: 220 }}>
+                <strong>{row.program}</strong>
+                <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 3 }}>
+                  {row.confidence} confidence
+                </div>
+              </td>
+              <td style={{ padding: "12px 10px", color: T.INK_2, minWidth: 150 }}>
+                {row.owner}
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+                {row.budget}
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+                {row.promisedValue}
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+                {row.measuredValue}
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850, color: row.valueGap === "gap" ? T.AMBER : T.INK }}>
+                {row.valueGap}
+              </td>
+              <td style={{ padding: "12px 10px", color: T.INK_2, minWidth: 150 }}>
+                {row.evidenceStatus}
+              </td>
+              <td style={{ padding: "12px 10px", color: T.INK_2, minWidth: 220 }}>
+                {row.blocker}
+              </td>
+              <td style={{ padding: "12px 10px", color: T.INK_2, minWidth: 190 }}>
+                {row.source}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function CxoBudgetMix({
   cards,
 }: {
@@ -2573,12 +2673,8 @@ function CxoGovernedCommandCenter({
           <CxoValueRealization cards={model.cards} />
         </CioPanel>
 
-        <CioPanel eyebrow="Portfolio Control" title="Which budget lanes and programs need attention first.">
-          <CxoGovernedTable
-            rows={model.portfolioRows}
-            emptyTitle="Portfolio accountability is not ready yet."
-            emptyBody="Tower needs initiative budget, owner, and value inputs before it can rank funded work."
-          />
+        <CioPanel eyebrow="Portfolio Value Pack" title="Which funded programs have value proof, owners, blockers, and gaps.">
+          <CxoPortfolioValuePackTable rows={model.portfolioValueRows} />
         </CioPanel>
 
         <CioPanel eyebrow="Tenant Benchmark" title="How this portfolio compares with peers.">

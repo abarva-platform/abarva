@@ -121,6 +121,18 @@ async function main(): Promise<void> {
       scope: card.scope,
       gap: card.gap,
     },
+    portfolioValuePack: view.portfolioValueRows.map((row) => ({
+      program: row.program,
+      owner: row.owner,
+      budget: row.budget,
+      promisedValue: row.promisedValue,
+      measuredValue: row.measuredValue,
+      valueGap: row.valueGap,
+      evidenceStatus: row.evidenceStatus,
+      blocker: row.blocker,
+      source: row.source,
+      sourceFactKeys: row.sourceFactKeys,
+    })),
     ava: {
       question,
       valueAppearsInAnswer,
