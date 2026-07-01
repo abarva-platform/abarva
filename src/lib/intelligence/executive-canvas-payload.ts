@@ -54,19 +54,30 @@ const EXECUTIVE_CANVAS_BLOCK_RE =
 
 export function hasExecutiveCanvasPayload(content: string): boolean {
   EXECUTIVE_CANVAS_BLOCK_RE.lastIndex = 0;
-  return EXECUTIVE_CANVAS_BLOCK_RE.test(content);
+  return (
+    EXECUTIVE_CANVAS_BLOCK_RE.test(content) ||
+    findBareExecutiveCanvasPayloads(content).length > 0
+  );
 }
 
 export function extractExecutiveCanvasPayloads(
   content: string,
 ): ExtractedExecutiveCanvasPayloads {
   const payloads: ExecutiveCanvasPayload[] = [];
-  const visibleContent = content
+  const contentWithoutFencedBlocks = content
     .replace(EXECUTIVE_CANVAS_BLOCK_RE, (_match, rawPayload: string) => {
       const payload = parseExecutiveCanvasPayload(rawPayload);
       if (payload) payloads.push(payload);
       return "";
     })
+    .trim();
+  const barePayloads = findBareExecutiveCanvasPayloads(
+    contentWithoutFencedBlocks,
+  );
+  for (const match of barePayloads) {
+    payloads.push(match.payload);
+  }
+  const visibleContent = removeRanges(contentWithoutFencedBlocks, barePayloads)
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
@@ -74,6 +85,83 @@ export function extractExecutiveCanvasPayloads(
     payloads,
     visibleContent,
   };
+}
+
+function findBareExecutiveCanvasPayloads(
+  content: string,
+): Array<{ start: number; end: number; payload: ExecutiveCanvasPayload }> {
+  const matches: Array<{
+    start: number;
+    end: number;
+    payload: ExecutiveCanvasPayload;
+  }> = [];
+  let searchStart = 0;
+  while (searchStart < content.length) {
+    const canvasTypeIndex = content.indexOf('"canvasType"', searchStart);
+    if (canvasTypeIndex < 0) break;
+    const start = content.lastIndexOf("{", canvasTypeIndex);
+    if (start < 0) {
+      searchStart = canvasTypeIndex + 12;
+      continue;
+    }
+    const end = findJsonObjectEnd(content, start);
+    if (end < 0) {
+      searchStart = canvasTypeIndex + 12;
+      continue;
+    }
+    const rawPayload = content.slice(start, end);
+    const payload = parseExecutiveCanvasPayload(rawPayload);
+    if (payload) {
+      matches.push({ start, end, payload });
+      searchStart = end;
+      continue;
+    }
+    searchStart = canvasTypeIndex + 12;
+  }
+  return matches;
+}
+
+function findJsonObjectEnd(content: string, start: number): number {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = start; index < content.length; index += 1) {
+    const char = content[index];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaped = inString;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+    if (char === "{") depth += 1;
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) return index + 1;
+    }
+  }
+  return -1;
+}
+
+function removeRanges(
+  content: string,
+  ranges: Array<{ start: number; end: number }>,
+): string {
+  if (ranges.length === 0) return content;
+  let cursor = 0;
+  let next = "";
+  for (const range of ranges.sort((a, b) => a.start - b.start)) {
+    next += content.slice(cursor, range.start);
+    cursor = range.end;
+  }
+  next += content.slice(cursor);
+  return next;
 }
 
 function parseExecutiveCanvasPayload(
