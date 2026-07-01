@@ -628,14 +628,36 @@ function toCurrentStateFindings(
 ): string[] {
   const findings = evidence
     .slice(0, 4)
-    .map(
-      (item) =>
-        `${formatSegmentLabel(item.segmentId)}: ${cleanEvidenceExcerpt(item.excerpt)}`,
-    );
+    .map(formatCurrentStateFinding);
   if (findings.length > 0) return findings;
   return live.evidenceBasis
     .slice(0, 4)
     .map((basis) => `Loaded context: ${basis}.`);
+}
+
+function formatCurrentStateFinding(item: SourceLiveTenantEvidenceItem): string {
+  const segmentLabel = formatSegmentLabel(item.segmentId);
+  if (isStructuredRowExcerpt(item.excerpt)) {
+    return `${segmentLabel}: ${formatEvidenceTitle(item.title)} is loaded as cited sourcing evidence for this answer.`;
+  }
+  return `${segmentLabel}: ${cleanEvidenceExcerpt(item.excerpt)}`;
+}
+
+function formatEvidenceTitle(title: string): string {
+  return title
+    .replace(/\s+(excerpt|fact)$/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isStructuredRowExcerpt(excerpt: string): boolean {
+  const trimmed = excerpt.trim();
+  if (!trimmed) return false;
+  const commaCount = (trimmed.match(/,/g) ?? []).length;
+  const quotedCommaCount = (trimmed.match(/",/g) ?? []).length;
+  const headerLike = /\b[a-z][a-z0-9_]+,[a-z][a-z0-9_]+,/i.test(trimmed);
+  return quotedCommaCount >= 2 || commaCount >= 8 || headerLike;
 }
 
 function selectByMode(

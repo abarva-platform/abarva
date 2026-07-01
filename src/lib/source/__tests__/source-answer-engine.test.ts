@@ -307,6 +307,45 @@ describe("Source answer engine", () => {
     });
   });
 
+  it("summarizes structured CSV evidence in the visible current-state lead instead of pasting raw rows", () => {
+    const contextWithStructuredRows: SourceAgentContextBundle = {
+      ...contextBundle,
+      liveTenantContext: {
+        ...liveTenantContext,
+        retrievedEvidence: [
+          {
+            id: "source-artifact-chunk:rfp-risk",
+            segmentId: "compliance",
+            recordId: "rfp-risk",
+            title: "17_RFP_Risk_Register_APPROVED.csv excerpt",
+            sourceType: "contextChunk",
+            sourceDoc: "source_artifact_chunks",
+            excerpt:
+              'risk_id,risk_category,failure_mode,likelihood,impact,mitigation,owner,blocking_gate,evidence_basis RFP-R1,Transition,"Incumbent knowledge transfer is incomplete or delayed",Medium,High,"Require KT plan, runbook escrow, named SMEs, and exit criteria before transition wave approval",AMS Transition Lead,Transition readiness gate,"Agreement baseline; transition dependency register; blackout calendar"',
+            confidence: "high",
+            score: 40,
+          },
+          ...liveTenantContext.retrievedEvidence,
+        ],
+      },
+    };
+
+    const answer = buildSourceAnswerEngine({
+      prompt: "What is still blocking the AMS RFP release?",
+      contextBundle: contextWithStructuredRows,
+      userRole: "cio",
+    });
+
+    expect(answer?.answerText).toContain(
+      "17 RFP Risk Register APPROVED.csv is loaded as cited sourcing evidence",
+    );
+    expect(answer?.answerText).not.toContain("risk_id,risk_category");
+    expect(answer?.answerText).not.toContain("RFP-R1,Transition");
+    expect(answer?.currentStateFindings.join("\n")).not.toContain(
+      "blocking_gate,evidence_basis",
+    );
+  });
+
   it("attaches a Slice 1.1 category strategy classification (CDP -> data/AI platform)", () => {
     const answer = buildSourceAnswerEngine({
       prompt: "How should the CIO shape the CDP sourcing event?",
