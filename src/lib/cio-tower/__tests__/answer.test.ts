@@ -481,7 +481,7 @@ describe("cio tower answer contract", () => {
     );
     expect(output?.output.answer).toContain("$28.3M");
     expect(output?.output.answer).toContain(
-      "Tower's governed FY26 initiative-budget control total is $28.3M",
+      "The full FY26 initiative budget in Tower is $28.3M",
     );
     expect(output?.output.answer).toContain(
       "The loaded FY26 program budget in this ranked cut is $28.3M",
@@ -526,7 +526,7 @@ describe("cio tower answer contract", () => {
     ).toEqual([]);
   });
 
-  it("keeps the governed initiative-budget control total visible when ranked rows are only a cut", () => {
+  it("keeps the full initiative budget visible when ranked rows are only a cut", () => {
     const baseContext = context();
     const ctx = context({
       measures: baseContext.measures.map((measure) =>
@@ -546,7 +546,7 @@ describe("cio tower answer contract", () => {
       __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(ctx);
 
     expect(output?.output.answer).toContain(
-      "Tower's governed FY26 initiative-budget control total is $1.0B",
+      "The full FY26 initiative budget in Tower is $1.0B",
     );
     expect(output?.output.answer).toContain(
       "The loaded FY26 program budget in this ranked cut is $28.3M",
@@ -601,6 +601,9 @@ describe("cio tower answer contract", () => {
       "SkyHarbor Air's top loaded AI program",
     );
     expect(output?.output.answer).toContain(
+      "The full FY26 initiative budget in Tower is $28.3M",
+    );
+    expect(output?.output.answer).toContain(
       "AI-program budget in this ranked cut",
     );
     expect(output?.output.answer).not.toContain("Core Network Refresh");
@@ -616,6 +619,13 @@ describe("cio tower answer contract", () => {
       "AI Program 4",
       "AI Program 5",
     ]);
+    expect(
+      __cioTowerAnswerTestHooks.validateParsedVisibleAnswer({
+        contractKey: context().contract.contract_key,
+        metricPackets: context().metricPackets,
+        parsedOutput: output!.output,
+      }),
+    ).toEqual([]);
   });
 
   it("scrubs code-shaped loaded program names before visible validation", () => {

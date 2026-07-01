@@ -1130,7 +1130,7 @@ function buildCioTowerDeterministicMetricAnswer(
       );
     }, 0);
     const controlTotalSentence = initiativeBudget?.valueNumeric
-      ? ` Tower's governed FY26 initiative-budget control total is ${initiativeBudget.displayValue}.`
+      ? ` The full FY26 initiative budget in Tower is ${initiativeBudget.displayValue}.`
       : "";
     const selectedTotalSentence =
       selectedTotal > 0
