@@ -70,7 +70,7 @@ describe("StrategicMoveOriginateClient", () => {
     mockFetchWithChatArtifact("");
   });
 
-  it("requires all seven P0 scaffold sections before promotion", async () => {
+  it("requires all seven Move brief sections before promotion", async () => {
     const fourSectionProgress =
       "Captured four fields. [[artifact:brief-progress]]" +
       JSON.stringify({
@@ -122,7 +122,9 @@ describe("StrategicMoveOriginateClient", () => {
     expect(
       screen.getByText("0 of 7 required sections complete"),
     ).toBeInTheDocument();
-    expect(screen.getByText(/seven-section P0 scaffold/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Describe the business problem or opportunity/i),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/optional/i)).not.toBeInTheDocument();
 
     await act(async () => {
@@ -140,7 +142,7 @@ describe("StrategicMoveOriginateClient", () => {
 
     expect(promoteButton).toBeDisabled();
     expect(
-      screen.getByText("Complete all 7 scaffold sections to promote."),
+      screen.getByText("Complete all 7 brief sections to promote."),
     ).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/chat/agent",

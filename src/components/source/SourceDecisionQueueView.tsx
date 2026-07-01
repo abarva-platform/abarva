@@ -90,6 +90,29 @@ const POSTURE_LABEL: Record<DecisionPosture, string> = {
   unblock: "Unblock",
 };
 
+const POSTURE_GUIDANCE: Record<DecisionPosture, string> = {
+  renegotiate: "Negotiation ready",
+  consolidate: "Consolidation candidate",
+  right_size: "Right-size before renewal",
+  review: "Review required",
+  unblock: "Needs evidence before action",
+};
+
+function cleanQueueCopy(text: string): string {
+  return text
+    .replace(/\bvendor_contracts\b/g, "vendor contract evidence")
+    .replace(/\bit_financials\b/g, "financial baseline evidence")
+    .replace(/\bposture:\s*unblock\b/gi, "needs evidence before action")
+    .replace(/\bposture:\s*review\b/gi, "needs review")
+    .replace(/\bposture:\s*renegotiate\b/gi, "ready for negotiation")
+    .replace(/\bposture:\s*consolidate\b/gi, "consolidation candidate")
+    .replace(/\bposture:\s*right[_-]?size\b/gi, "right-size before renewal")
+    .replace(/\bgrounding\b/gi, "evidence")
+    .replace(/\bAbarVa should decline rather than guess\b/g, "Do not recommend until the missing evidence is refreshed")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /** The mid-stream entry points (FIX 4) — "I already have …". */
 const ENTRY_POINTS: { label: string; href: string }[] = [
   { label: "I have a vendor", href: "/source/new?intent=vendor" },
@@ -323,7 +346,7 @@ function DecisionBundleCard({
           color={urgency.text}
         />
         <Pill
-          text={`Posture: ${POSTURE_LABEL[bundle.posture]}`}
+          text={POSTURE_GUIDANCE[bundle.posture] ?? POSTURE_LABEL[bundle.posture]}
           bg={SHELL.PAPER_DEEP}
           line={SHELL.CARD_LINE}
           color={SHELL.INK_SOFT}
@@ -347,7 +370,7 @@ function DecisionBundleCard({
           lineHeight: 1.3,
         }}
       >
-        {bundle.headline}
+        {cleanQueueCopy(bundle.headline)}
       </h3>
       <p
         style={{
@@ -358,7 +381,7 @@ function DecisionBundleCard({
           lineHeight: 1.5,
         }}
       >
-        {bundle.summary}
+        {cleanQueueCopy(bundle.summary)}
       </p>
 
       {bundle.accountability ? (
@@ -412,7 +435,7 @@ function DecisionBundleCard({
             color: SHELL.INK_MUTED,
           }}
         >
-          {bundle.recommendedAction}
+          {cleanQueueCopy(bundle.recommendedAction)}
         </span>
         <Link
           href={bundle.deepLink}

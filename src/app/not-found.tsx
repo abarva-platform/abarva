@@ -88,7 +88,8 @@ export default async function NotFound() {
             lineHeight: 1.6,
           }}
         >
-          The page you&apos;re looking for doesn&apos;t exist or has been moved.
+        This page may have moved, or your current account may not have access
+        to it.
         </div>
 
         {/* Action links */}
@@ -108,7 +109,7 @@ export default async function NotFound() {
               textDecoration: 'none',
             }}
           >
-            Go to root
+            Go to AbarVa
           </Link>
           <Link
             href="/home"
@@ -125,7 +126,7 @@ export default async function NotFound() {
               textDecoration: 'none',
             }}
           >
-            Go to home
+            Go to Home
           </Link>
         </div>
       </div>
@@ -142,7 +143,7 @@ export default async function NotFound() {
           textTransform: 'uppercase',
         }}
       >
-        At · Atlas · Route not found
+        AbarVa · Page unavailable
       </div>
     </div>
   )

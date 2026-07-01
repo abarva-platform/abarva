@@ -35,6 +35,9 @@ export const PUBLIC_ROUTE_PATTERNS = [
   "/invite(.*)",
   "/auth-redirect(.*)",
   "/",
+  // Public marketing video/demo page. This is not a product workspace; deeper
+  // /demo/* product/demo workspaces remain auth-gated below.
+  "/demo",
   // Keep the signed-out surface intentionally lean. Product, architecture,
   // training, model-card, contact, status, and other detail pages are private
   // workspace material unless the user is signed in.
@@ -161,7 +164,9 @@ export const AUTH_REQUIRED_ROUTE_PATTERNS = [
   "/architecture(.*)",
   "/atlas(.*)",
   "/contradictions(.*)",
-  "/demo(.*)",
+  "/demo/programs(.*)",
+  "/demo/explore(.*)",
+  "/demo/agent-markdown-fixture(.*)",
   "/digest(.*)",
   "/editorial(.*)",
   "/intelligence(.*)",

@@ -140,7 +140,7 @@ function composeFromInitiativeMessage(
 
 ${statusNote}
 
-To build the brief, I need the full seven-section P0 scaffold: your read on what's causing this, the archetype, who should sponsor the recovery, what scope makes this tractable in one Move, the evidence family, a value hypothesis, and foundation readiness.
+To build the brief, I need seven clear inputs: what is causing this, the Move archetype, who should sponsor the recovery, what scope makes this tractable, the evidence family, the value hypothesis, and foundation readiness.
 
 ${sponsorLine}`,
     id: `originate-open-2d-${from.displayId.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
@@ -190,7 +190,7 @@ ${bindingLine}
 ${sourceLine}
 ${contradictionLine}
 
-To turn this into a Move, I need to lock the full seven-section P0 scaffold: the business outcome, archetype, executive sponsor, scope boundary, evidence family, value hypothesis, and foundation readiness. My suggested first draft is a pattern-controlled Move that proves the use case only after the data and ownership contradictions are resolved.`,
+To turn this into a Move, I need seven clear inputs: the business outcome, archetype, executive sponsor, scope boundary, evidence family, value hypothesis, and foundation readiness. My suggested first draft is a pattern-controlled Move that proves the use case only after the data and ownership contradictions are resolved.`,
     id: `originate-open-intelligence-${idSuffix}`,
   };
 }
@@ -231,7 +231,7 @@ export async function composeOriginateFirstMessage(
       lastCompleted < 7 ? SCAFFOLD_STEP_DESCRIPTIONS[lastCompleted + 1] : null;
 
     const text = nextStep
-      ? `Welcome back. You left off at ${completedStep.name} (step ${lastCompleted} of 7). Your next step is ${nextStep.name} — ${nextStep.description}. Ready to continue, or want to review what's been captured so far?`
+      ? `Welcome back. You left off at ${completedStep.name} (${lastCompleted} of 7). Next, we should clarify ${nextStep.name.toLowerCase()}. Ready to continue, or do you want to review what has been captured so far?`
       : `Your brief looks complete. Review the canvas sections and click Promote to P1 Charter when you're ready.`;
 
     return {
@@ -246,7 +246,7 @@ export async function composeOriginateFirstMessage(
   return {
     role: "assistant",
     agentName: "Nexus",
-    text: `To start a new Strategic Move, I need the seven-section P0 scaffold: the hypothesis, archetype, sponsor candidate, scope boundary, evidence family, value hypothesis, and foundation readiness. You can type a description or paste something — a CEO note, email thread, board memo, or problem statement. Where do you want to start?`,
+    text: `Describe the business problem or opportunity in plain English. A note, email thread, board memo, or problem statement is enough. I will help turn it into a clear Move brief: the bet, sponsor, scope, evidence needed, value hypothesis, and readiness checks.`,
     id: "originate-open-2a",
   };
 }
