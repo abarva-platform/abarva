@@ -176,7 +176,7 @@ const CSS = `
 .iv2 .researchDot{width:var(--dot,16px);height:var(--dot,16px);border-radius:50%;background:var(--green);box-shadow:0 0 0 5px rgba(31,107,58,.14),0 8px 18px -8px rgba(31,107,58,.55);flex:none}
 .iv2 .researchPoint[data-risk="gated"] .researchDot{background:var(--amber);box-shadow:0 0 0 5px rgba(166,106,31,.13),0 8px 18px -8px rgba(166,106,31,.52)}
 .iv2 .researchPoint[data-risk="risk"] .researchDot{background:#8C4B35;box-shadow:0 0 0 5px rgba(140,75,53,.13),0 8px 18px -8px rgba(140,75,53,.52)}
-.iv2 .researchPointLabel{font-size:11.5px;font-weight:650;line-height:1.18;color:var(--ink);background:rgba(255,255,255,.9);border:1px solid rgba(231,227,218,.92);border-radius:7px;padding:4px 7px;box-shadow:0 7px 18px rgba(40,35,24,.08);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.iv2 .researchPointLabel{font-size:11.5px;font-weight:700;line-height:1.16;color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.92),0 0 8px rgba(255,255,255,.86);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .iv2 .researchTooltip{position:absolute;left:50%;top:calc(100% + 10px);width:220px;transform:translate(-50%,6px);background:#FFFEFB;border:1px solid var(--line);border-radius:10px;padding:12px;box-shadow:0 18px 38px -16px rgba(40,35,24,.36);opacity:0;visibility:hidden;transition:opacity .15s ease,transform .15s ease;z-index:8}
 .iv2 .researchPoint:hover .researchTooltip{opacity:1;visibility:visible;transform:translate(-50%,0)}
 .iv2 .researchTooltipTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:15px;line-height:1.18;font-weight:500;color:var(--ink);margin-bottom:7px}
@@ -230,7 +230,7 @@ const CSS = `
 .iv2 .matrixPoint{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px;max-width:46%}
 .iv2 .matrixDot{width:var(--dot,14px);height:var(--dot,14px);border-radius:50%;background:#1F6B3A;box-shadow:0 0 0 5px rgba(31,107,58,.14);flex:none}
 .iv2 .matrixDot.highRisk{background:#A66A1F;box-shadow:0 0 0 4px rgba(166,106,31,.15)}
-.iv2 .matrixLabel{font-size:11.5px;line-height:1.22;color:var(--ink);background:rgba(255,255,255,.9);border:1px solid rgba(231,227,218,.92);border-radius:7px;padding:5px 7px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;box-shadow:0 6px 16px rgba(40,35,24,.06)}
+.iv2 .matrixLabel{font-size:11.5px;font-weight:650;line-height:1.2;color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.92),0 0 8px rgba(255,255,255,.86);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .iv2 .matrixLegend{display:flex;flex-wrap:wrap;gap:7px;color:var(--muted);font-size:11.5px}
 .iv2 .matrixLegend span{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:#fff;padding:3px 8px}
 .iv2 .matrixItemList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
