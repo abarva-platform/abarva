@@ -65,6 +65,16 @@ export interface ContractOptimizationStaffingCommitment {
   evidenceId: string;
 }
 
+export interface ContractOptimizationChangeOrderLine {
+  requestId: string;
+  category: string;
+  amountUsd: number;
+  recurring: boolean;
+  catalogMapped: boolean;
+  approvalEvidence: "complete" | "partial" | "missing";
+  evidenceId: string;
+}
+
 export interface ContractOptimizationInput {
   tenantKey: string;
   sourceEventId: string;
@@ -81,6 +91,7 @@ export interface ContractOptimizationInput {
   invoiceLines: ContractOptimizationInvoiceLine[];
   operationalBaselines: ContractOptimizationOperationalBaseline[];
   staffingCommitments: ContractOptimizationStaffingCommitment[];
+  changeOrders: ContractOptimizationChangeOrderLine[];
 }
 
 export type ContractOptimizationFindingCategory =
@@ -149,6 +160,13 @@ export interface ContractOptimizationMveProfile {
   }>;
   findings: ContractOptimizationFinding[];
   levers: ContractOptimizationLever[];
+  recommendedPath: {
+    immediateAction: string;
+    primaryPath: string;
+    fallbackPath: string;
+    doNotDo: string;
+    decisionOwnerRole: string;
+  };
   clientToComplete: string[];
   readyForOptimization: "yes" | "conditional" | "no";
   readyReason: string;

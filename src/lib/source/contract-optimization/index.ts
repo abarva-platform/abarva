@@ -2,6 +2,7 @@ export {
   buildContractOptimizationMveProfile,
   buildSkyHarborAmsExistingContractInput,
 } from "./mve-profile";
+export { buildContractOptimizationBriefMarkdown } from "./brief";
 export { toContractOptimizationPersistenceRows } from "./persistence";
 
 export type {
@@ -10,6 +11,7 @@ export type {
   ContractOptimizationInput,
   ContractOptimizationLever,
   ContractOptimizationMveProfile,
+  ContractOptimizationChangeOrderLine,
 } from "./types";
 export type {
   ContractOptimizationFindingRow,

@@ -155,6 +155,7 @@ import { VendorBafoInstructionPackPanel } from "./responses/VendorBafoInstructio
 import { VendorChallengeLeveragePanel } from "./responses/VendorChallengeLeveragePanel";
 import { VendorEvaluationScorecardPanel } from "./responses/VendorEvaluationScorecardPanel";
 import { VendorResponseProfilesPanel } from "./responses/VendorResponseProfilesPanel";
+import { ContractOptimizationProfilePanel } from "./contract-optimization/ContractOptimizationProfilePanel";
 import { EvaluationStageView } from "./evaluation/EvaluationStageView";
 import { PricingStageView } from "./pricing/PricingStageView";
 import { BafoStageView } from "./bafo/BafoStageView";
@@ -168,6 +169,7 @@ import type {
   VendorEvaluationDecisionView,
   VendorResponseProfileSet,
 } from "@/lib/source/proposal-intelligence";
+import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization";
 
 interface UniversalCanvasShellProps {
   event: Pick<
@@ -203,6 +205,7 @@ interface UniversalCanvasShellProps {
   vendorChallengeIntelligence?: VendorChallengeIntelligence | null;
   vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
   vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
+  contractOptimizationProfile?: ContractOptimizationMveProfile | null;
   workspaceExplorerEnabled?: boolean;
   strategyAutoDraftEnabled?: boolean;
   simpleFrontEnabled?: boolean;
@@ -220,6 +223,7 @@ function renderStageDocumentContent({
   vendorChallengeIntelligence,
   vendorBafoInstructionPack,
   vendorEvaluationDecisionView,
+  contractOptimizationProfile,
   decisionBriefDocxHref,
   decisionBriefPdfHref,
   eventDisplayName,
@@ -244,6 +248,7 @@ function renderStageDocumentContent({
   vendorChallengeIntelligence?: VendorChallengeIntelligence | null;
   vendorBafoInstructionPack?: VendorBafoInstructionPack | null;
   vendorEvaluationDecisionView?: VendorEvaluationDecisionView | null;
+  contractOptimizationProfile?: ContractOptimizationMveProfile | null;
   decisionBriefDocxHref?: string;
   decisionBriefPdfHref?: string;
   eventDisplayName?: string;
@@ -275,6 +280,7 @@ function renderStageDocumentContent({
         challengeIntelligence={vendorChallengeIntelligence}
         bafoInstructionPack={vendorBafoInstructionPack}
         evaluationDecisionView={vendorEvaluationDecisionView}
+        contractOptimizationProfile={contractOptimizationProfile}
         decisionBriefDocxHref={decisionBriefDocxHref}
         decisionBriefPdfHref={decisionBriefPdfHref}
         eventDisplayName={eventDisplayName}
@@ -366,6 +372,7 @@ export function UniversalCanvasShell({
   vendorChallengeIntelligence,
   vendorBafoInstructionPack,
   vendorEvaluationDecisionView,
+  contractOptimizationProfile,
   workspaceExplorerEnabled = false,
   strategyAutoDraftEnabled = false,
   simpleFrontEnabled = false,
@@ -1058,6 +1065,7 @@ export function UniversalCanvasShell({
         vendorChallengeIntelligence,
         vendorBafoInstructionPack,
         vendorEvaluationDecisionView,
+        contractOptimizationProfile,
         decisionBriefDocxHref,
         decisionBriefPdfHref,
         eventDisplayName: displayEvent.name,
@@ -1233,6 +1241,16 @@ export function UniversalCanvasShell({
           vendorBafoInstructionPack ? (
             <div style={{ marginTop: 12 }}>
               <VendorBafoInstructionPackPanel pack={vendorBafoInstructionPack} />
+            </div>
+          ) : null}
+          {(viewStage === "responses" ||
+            viewStage === "vendor_responses" ||
+            viewStage === "evaluation") &&
+          contractOptimizationProfile ? (
+            <div style={{ marginTop: 12 }}>
+              <ContractOptimizationProfilePanel
+                profile={contractOptimizationProfile}
+              />
             </div>
           ) : null}
           {(viewStage === "responses" ||

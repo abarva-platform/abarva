@@ -16,6 +16,7 @@ sourcing record needed to optimize, renegotiate, renew, or rebid.
 | `invoice-baseline-fy26-synthetic.csv` | invoice history | contracted vs invoiced variance, pass-through exposure, out-of-catalog leakage |
 | `service-performance-baseline-fy26-synthetic.csv` | service performance export | incident/change volume, SLA miss patterns, reopen and emergency-change trends |
 | `staffing-location-attestation-fy26-synthetic.csv` | staffing roster / attestation | committed vs observed FTE, location mix, coverage gaps |
+| `change-order-ledger-fy26-synthetic.csv` | change-order log / amendment ledger | recurring vs one-time change orders, catalog mapping, approval evidence, renewal baseline creep |
 
 ## Product boundary
 
@@ -27,9 +28,10 @@ output must map to:
 3. SLA economics
 4. Staffing and coverage
 5. Operational volume and quality
-6. Optimization findings
-7. Negotiation levers
-8. Client-to-complete gaps
+6. Change orders and amendments
+7. Optimization findings
+8. Negotiation levers
+9. Client-to-complete gaps
 
 Raw files belong in controlled storage and `source_artifacts`. Structured
 output belongs in:

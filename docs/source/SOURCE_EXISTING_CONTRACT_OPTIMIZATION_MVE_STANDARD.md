@@ -65,10 +65,25 @@ Draft optimization can proceed with:
 Executive-ready optimization requires:
 
 - change-order log;
+- amendment and renewal proposal history where available;
 - benchmark rights and benchmark pack;
 - renewal notice confirmation;
 - governance minutes or supplier QBRs;
 - client-approved finance validation of any recovery estimate.
+
+## Recommended path standard
+
+Every existing-contract optimization profile must state the path in business
+language:
+
+- immediate action: cure / reservation-of-rights / evidence request;
+- primary path: renegotiate with evidence-backed cure conditions;
+- fallback path: prepare competitive RFP if cure conditions remain unresolved;
+- do-not-do: do not renew as-is when leakage, SLA, staffing, or recurring
+  change-order issues remain open.
+
+This path is what aVa and the Source UI should use first. Raw contract browsing
+or clause-level Q&A should not be the primary experience.
 
 ## Guardrails
 

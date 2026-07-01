@@ -1,0 +1,6 @@
+request_id,category,amount_usd,recurring,catalog_mapped,approval_evidence,owner_role,source_type,label
+CO-0261,airport operations app hypercare,186000,false,true,complete,AMS tower lead,synthetic_demo,Synthetic demo evidence
+CO-0274,premium weekend coverage,312000,true,false,partial,Service delivery lead,synthetic_demo,Synthetic demo evidence
+CO-0288,integration incident bridge support,428000,true,false,partial,Integration operations lead,synthetic_demo,Synthetic demo evidence
+CO-0302,finance close stabilization,144000,false,false,missing,Finance systems owner,synthetic_demo,Synthetic demo evidence
+CO-0310,tooling pass-through uplift,268000,true,false,partial,Commercial lead,synthetic_demo,Synthetic demo evidence

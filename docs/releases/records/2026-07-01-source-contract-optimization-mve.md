@@ -10,9 +10,10 @@
 
 ## Plain-English Summary
 
-Adds the first Source slice for analyzing and optimizing an existing large
+Adds the first Source slices for analyzing and optimizing an existing large
 outsourcing contract. The change defines a minimum viable extraction profile,
-structured findings, and negotiation levers so Source can support renewal,
+structured findings, negotiation levers, recommended path, Source UI panel,
+aVa grounding, and a markdown optimization brief so Source can support renewal,
 renegotiation, rebid, and optimization decisions without becoming a generic
 document browser.
 
@@ -28,7 +29,8 @@ document browser.
 - Specific clients: the included SkyHarbor pack is synthetic demo evidence only.
 - Internal only: none.
 - Public/demo only: synthetic pack is for demo/proof only.
-- Feature flag: not yet wired to a live default UI path.
+- Feature flag: reuses the existing Source event workspace path; the synthetic
+  SkyHarbor profile is tenant/event guarded.
 
 ## Changes Included
 
@@ -42,10 +44,13 @@ document browser.
   `datasets/source/contract-optimization/skyharbor-ams-renewal-2026/*`
 - Product standard:
   `docs/source/SOURCE_EXISTING_CONTRACT_OPTIMIZATION_MVE_STANDARD.md`
+- Source event UI panel for the tenant/event-guarded optimization profile.
+- Source aVa context grounding for recommended path, findings, and levers.
+- Markdown optimization brief export route for the guarded profile.
 
 ## QA / Validation
 
-- PASS: focused Jest for the new contract optimization module (4/4):
+- PASS: focused Jest for the new contract optimization module:
   `npx jest src/lib/source/contract-optimization/__tests__/contract-optimization-mve.test.ts --runInBand`
 - PASS: focused ESLint for touched Source contract optimization files:
   `npx eslint src/lib/source/contract-optimization/**/*.ts`
@@ -62,8 +67,8 @@ document browser.
 ## Rollout Plan
 
 Merge through PR, apply the migration through the approved Azure/Postgres path,
-then wire a future Source route/UI slice to read the structured profile. No live
-runtime behavior changes until that route/UI wiring lands.
+then deploy through the approved ACA main lane. Signed-in browser proof is
+required before claiming the Source UI/aVa/export path is live.
 
 ## Deployment Authority
 
@@ -89,7 +94,7 @@ schema cleanup is scheduled.
 
 ## Known Gaps
 
-- UI route and aVa answer wiring are intentionally out of scope for this first
-  slice.
+- DOCX/PDF optimization brief renderers are not yet wired; this slice provides a
+  markdown brief route and UI export link.
 - Live data-plane migration has not been applied in this branch.
-- DOCX/PDF optimization brief export is a follow-up slice.
+- Signed-in browser proof has not been run in this branch.
