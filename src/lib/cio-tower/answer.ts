@@ -1485,12 +1485,14 @@ function buildCioTowerDeterministicMetricAnswer(
   if (
     context.contract.contract_key === "tower_portfolio_value_gap" ||
     context.contract.contract_key === "tower_weak_value_evidence" ||
-    context.contract.contract_key === "tower_inspect_this_week"
+    context.contract.contract_key === "tower_inspect_this_week" ||
+    context.contract.contract_key === "tower_value_realization"
   ) {
     const modeByContract: Record<string, ProgramValueRankingMode> = {
       tower_portfolio_value_gap: "value_gap",
       tower_weak_value_evidence: "weak_evidence",
       tower_inspect_this_week: "inspect",
+      tower_value_realization: "inspect",
     };
     const mode = modeByContract[context.contract.contract_key] ?? "inspect";
     const limit = requestedProgramCount(context.question, mode === "inspect" ? 5 : 10);
@@ -1522,16 +1524,20 @@ function buildCioTowerDeterministicMetricAnswer(
     const prefix =
       mode === "value_gap"
         ? `${context.tenantName}'s largest loaded value gap is ${topProgram} at ${topGap}.`
-        : mode === "weak_evidence"
-          ? `${context.tenantName}'s weakest value-evidence item is ${topProgram}.`
-          : `${context.tenantName} should inspect ${topProgram} first.`;
+        : context.contract.contract_key === "tower_value_realization"
+          ? `${context.tenantName} should press for value proof first on ${topProgram}.`
+          : mode === "weak_evidence"
+            ? `${context.tenantName}'s weakest value-evidence item is ${topProgram}.`
+            : `${context.tenantName} should inspect ${topProgram} first.`;
     return {
       reason:
         mode === "value_gap"
           ? "Largest value gap answered from governed Tower initiative budget and value facts."
-          : mode === "weak_evidence"
-            ? "Weak value evidence answered from governed Tower initiative value facts."
-            : "Inspection priority answered from governed Tower budget, spend, and value facts.",
+          : context.contract.contract_key === "tower_value_realization"
+            ? "Value-realization question answered from governed Tower budget, spend, promised value, and measured value facts."
+            : mode === "weak_evidence"
+              ? "Weak value evidence answered from governed Tower initiative value facts."
+              : "Inspection priority answered from governed Tower budget, spend, and value facts.",
       output: {
         version: "cio_tower_visible_answer_v1",
         answer: `${prefix} ${topReason}${metricSentence ? ` Portfolio control totals are ${metricSentence}.` : ""} The table keeps budget, actual spend, promised value, and measured value separate so Tower does not turn missing proof into ROI.`,

@@ -748,6 +748,51 @@ describe("cio tower answer contract", () => {
     ).toEqual([]);
   });
 
+  it("answers spend/value proof questions deterministically from governed value facts", () => {
+    expect(
+      matchContractKey(
+        "Where is spend producing value, and where should leadership press for proof?",
+      ),
+    ).toBe("tower_value_realization");
+
+    const output =
+      __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(
+        context({
+          question:
+            "Where is spend producing value, and where should leadership press for proof?",
+          contract: {
+            contract_key: "tower_value_realization",
+            intent: "diagnose",
+            question_family: "value_realization",
+            measure_key: "measured_value_ytd",
+            artifact_type: "table",
+            examples: [],
+          },
+        }),
+      );
+
+    expect(output?.reason).toBe(
+      "Value-realization question answered from governed Tower budget, spend, promised value, and measured value facts.",
+    );
+    expect(output?.output.answer).toContain(
+      "SkyHarbor Air should press for value proof first on Crew Recovery & Legality Modernization.",
+    );
+    expect(output?.output.answer).toContain(
+      "promised value $270.0M, measured value $91.8M, actual spend YTD $9.0M",
+    );
+    expect(output?.output.answer).not.toContain("calculated ROI");
+    expect(output?.output.tables?.[0]?.title).toBe(
+      "Portfolio items to inspect this week",
+    );
+    expect(
+      __cioTowerAnswerTestHooks.validateParsedVisibleAnswer({
+        contractKey: "tower_value_realization",
+        metricPackets: context().metricPackets,
+        parsedOutput: output!.output,
+      }),
+    ).toEqual([]);
+  });
+
   it("answers inspect-this-week questions with an inspection reason", () => {
     const output =
       __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(
