@@ -364,7 +364,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     });
   });
 
-  it("routes raw streamed decision-canvas markers into tabs without exposing them", async () => {
+  it("routes raw streamed decision-canvas markers into a companion board without exposing them", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -414,23 +414,26 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     });
 
     expect(
-      screen.getByRole("button", { name: /Decision/ }),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: /Companion/ }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /^Answer$/ }),
     ).not.toBeInTheDocument();
     expect(
-      await screen.findByText(
-        "The answer stays in the chat. This pane keeps the choice, tradeoff, and executive action visible.",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Visual/ })).toBeInTheDocument();
+      screen.queryByRole("button", { name: /Decision/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Visual/ }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Table/ }),
     ).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /Visual/ }));
     await waitFor(() => {
+      expect(screen.getByText("Decision canvas")).toBeInTheDocument();
+      expect(screen.getByText("2 views")).toBeInTheDocument();
+      expect(screen.getByText("Decision")).toBeInTheDocument();
+      expect(screen.getByText("Decision Table")).toBeInTheDocument();
       expect(document.body.textContent).toContain(
         "Tenant evidence: compact portfolio view.",
       );
@@ -603,7 +606,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     });
   });
 
-  it("renders Claude-owned decision tabs on the right canvas without leaking markers into the left answer", async () => {
+  it("renders Claude-owned companion cards on the right canvas without leaking markers into the left answer", async () => {
     const mainAnswer =
       "SkyHarbor should fund IROPS recovery decisioning only through a governed readiness gate.";
     const visibleMainAnswer =
@@ -729,19 +732,23 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     expect(within(agentTurn).queryByText(/<<<TAB:/)).not.toBeInTheDocument();
 
     expect(
-      screen.getByRole("button", { name: /Decision/ }),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: /Companion/ }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /^Answer$/ }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Context/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Visual/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Proof/ })).toBeInTheDocument();
     expect(
-      await screen.findByText(
-        "The answer stays in the chat. This pane keeps the choice, tradeoff, and executive action visible.",
-      ),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: /Decision/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Context/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Visual/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Proof/ }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Industry Insights/ }),
     ).not.toBeInTheDocument();
@@ -758,16 +765,19 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       screen.queryByRole("button", { name: /Decision 0/ }),
     ).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /Context/ }));
-    expect(screen.getByText("Industry lens")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Industry context: airlines usually start with dispatch decision support. This is not tenant proof.",
-      ),
-    ).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /Visual/ }));
     await waitFor(() => {
+      expect(screen.getByText("Decision canvas")).toBeInTheDocument();
+      expect(screen.getByText("5 views")).toBeInTheDocument();
+      expect(screen.getByText("Industry Signal")).toBeInTheDocument();
+      expect(screen.getByText("Opportunity Map")).toBeInTheDocument();
+      expect(screen.getByText("Decision Table")).toBeInTheDocument();
+      expect(screen.getByText("Proof Boundary")).toBeInTheDocument();
+      expect(screen.getByText("Industry lens")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Industry context: airlines usually start with dispatch decision support. This is not tenant proof.",
+        ),
+      ).toBeInTheDocument();
       expect(screen.queryByText("Company evidence")).not.toBeInTheDocument();
       expect(
         screen.getAllByText((_, node) => node?.textContent === tableContent)

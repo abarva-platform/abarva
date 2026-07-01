@@ -7,10 +7,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { IntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
-import {
-  AvaChatShell,
-  type AvaCanvasTab,
-} from "@/components/ava-chat/AvaChatShell";
+import { AvaChatShell } from "@/components/ava-chat/AvaChatShell";
 import type {
   AttachmentRef,
   ChatMessage,
@@ -26,10 +23,10 @@ import {
 
 type Tab = string;
 
-type ExecutiveCanvasTab = {
-  id: "decision" | "visual" | "context" | "proof";
-  label: string;
-  items: ParsedIntelligenceTab[];
+type CompanionCard = ParsedIntelligenceTab & {
+  kicker: string;
+  title: string;
+  wide: boolean;
 };
 
 type IntelligenceChatMessage = ChatMessage & {
@@ -39,12 +36,12 @@ type IntelligenceChatMessage = ChatMessage & {
 const CSS = `
 .iv2{--paper:#FBFAF7;--card:#FFFFFF;--ink:#1A1A18;--muted:#6B6B63;--faint:#9A998E;--line:#E7E3DA;--green:#1F6B3A;--greenbg:#E7F0E9;--amber:#A66A1F;
   background:var(--paper);color:var(--ink);min-height:100%;font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px;line-height:1.55}
-.iv2 .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+.iv2 .wrap{max-width:1220px;margin:0 auto;padding:0 28px}
 .iv2 .serif{font-family:var(--font-fraunces),Georgia,serif}
 .iv2 .ey{font-family:var(--font-geist-mono),'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
-.iv2 .hero{text-align:left;padding:24px 0 8px}
-.iv2 .hero h1{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:40px;line-height:1.08;letter-spacing:0;margin:12px 0 12px}
-.iv2 .hero .sub{color:var(--muted);font-size:15px;max-width:720px;margin:0}
+.iv2 .hero{text-align:left;padding:14px 0 2px}
+.iv2 .hero h1{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:32px;line-height:1.08;letter-spacing:0;margin:7px 0 7px}
+.iv2 .hero .sub{color:var(--muted);font-size:13.5px;max-width:760px;margin:0}
 .iv2 .chips{display:flex;flex-wrap:nowrap;gap:8px;justify-content:center;max-width:1080px;margin:16px auto 0;overflow:hidden}
 .iv2 .chips .chip{max-width:230px}
 @media(max-width:760px){.iv2 .chips{flex-wrap:wrap}.iv2 .chips .chip{max-width:340px}}
@@ -65,29 +62,30 @@ const CSS = `
 .iv2 .ansbox .ansexpertslabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-right:3px}
 .iv2 .ansbox .ansexpertchip{display:inline-flex;align-items:center;background:var(--greenbg);color:var(--green);border-radius:20px;padding:3px 11px;font-size:11.5px;font-weight:500}
 .iv2 .ansbox .ansfollowups{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
-.iv2 .tabs{display:flex;justify-content:flex-start;gap:22px;border-bottom:1px solid var(--line);margin-top:18px;overflow-x:auto}
-.iv2 .tab{padding:13px 2px;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:7px;background:none;font-family:inherit;white-space:nowrap}
-.iv2 .tab.active{color:var(--ink);border-bottom-color:var(--green)}
-.iv2 .tab .ct{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;color:var(--faint)}
-.iv2 .section{padding:26px 0 80px}
+.iv2 .section{padding:16px 0 80px}
 .iv2 .answerPanel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:24px;display:grid;gap:14px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
 .iv2 .answerPanel h3{font-family:var(--font-fraunces),Georgia,serif;font-size:24px;font-weight:500;margin:0}
 .iv2 .answerText{white-space:pre-wrap;font-size:15px;line-height:1.65;color:var(--ink)}
-.iv2 .decisionTabPanel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:24px;display:grid;gap:18px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
-.iv2 .decisionTabHead{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:12px}
-.iv2 .decisionTabTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:24px;font-weight:500}
-.iv2 .decisionTabHint{font-size:12.5px;color:var(--muted);max-width:420px;line-height:1.5}
-.iv2 .contextNote{font-size:12px;color:var(--muted);white-space:nowrap}
 .iv2 .tabMarkdown{font-size:14px;line-height:1.65}
 .iv2 .tabMarkdown table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;margin:10px 0 2px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .iv2 .tabMarkdown th,.iv2 .tabMarkdown td{border-bottom:1px solid var(--line);padding:10px 12px;vertical-align:top}
 .iv2 .tabMarkdown th+th,.iv2 .tabMarkdown td+td{border-left:1px solid var(--line)}
 .iv2 .tabMarkdown tr:last-child td{border-bottom:0}
 .iv2 .tabMarkdown th{background:#F4F2EC;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
-.iv2 .canvasBlock{display:grid;gap:10px}
-.iv2 .canvasBlock+.canvasBlock{padding-top:16px;border-top:1px solid var(--line)}
-.iv2 .canvasBlockHead{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.iv2 .canvasBlockTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--green)}
+.iv2 .companionPanel{display:grid;gap:14px}
+.iv2 .companionHead{display:flex;align-items:baseline;justify-content:space-between;gap:14px;border-bottom:1px solid var(--line);padding-bottom:9px}
+.iv2 .companionTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:21px;font-weight:500}
+.iv2 .companionCount{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.iv2 .companionGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.iv2 .companionCard{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;display:grid;gap:9px;min-width:0;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+.iv2 .companionCard.wide{grid-column:1/-1}
+.iv2 .companionKicker{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--green)}
+.iv2 .companionGrounding{color:var(--faint)}
+.iv2 .companionCardTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:20px;line-height:1.18;font-weight:500}
+.iv2 .companionBody{font-size:13.5px;line-height:1.58;min-width:0}
+.iv2 .companionBody table{font-size:12.5px;margin-top:6px}
+.iv2 .companionBody p:first-child{margin-top:0}
+.iv2 .companionBody p:last-child{margin-bottom:0}
 .iv2 .emptyAnswer{border:1px dashed var(--line);border-radius:8px;padding:22px;color:var(--muted);background:rgba(255,255,255,.55)}
 .iv2 .startPanel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:28px;max-width:760px}
 .iv2 .startPanel h3{font-family:var(--font-fraunces),Georgia,serif;font-size:28px;font-weight:500;margin:0 0 10px}
@@ -122,7 +120,7 @@ const CSS = `
 .iv2 .flag{color:var(--amber);font-size:11.5px;margin-top:12px;font-family:var(--font-geist-mono),ui-monospace,monospace}
 .iv2 .cpat .dom{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:8px}
 .iv2 .cpat p{color:var(--muted);font-size:12.5px}
-@media(max-width:900px){.iv2 .grid2,.iv2 .grid3{grid-template-columns:1fr}}
+@media(max-width:900px){.iv2 .grid2,.iv2 .grid3,.iv2 .companionGrid{grid-template-columns:1fr}.iv2 .companionCard.wide{grid-column:auto}}
 `;
 
 function buildSurfaceContext(payload: IntelligenceBindingPayload) {
@@ -261,52 +259,49 @@ function contextLabel(grounding: ParsedIntelligenceTab["grounding"]): string {
   }
 }
 
-function shouldShowContextNote(
-  groupId: ExecutiveCanvasTab["id"],
-  grounding: ParsedIntelligenceTab["grounding"],
-): boolean {
-  if (groupId === "proof") return true;
+function shouldShowContextNote(card: ParsedIntelligenceTab): boolean {
+  if (card.id === "evidence") return true;
+  const grounding = card.grounding;
   return grounding === "industry-context" || grounding === "benchmark";
 }
 
-function executiveTabIdFor(
-  tab: ParsedIntelligenceTab,
-): ExecutiveCanvasTab["id"] {
-  if (tab.id === "decision") return "decision";
-  if (tab.id === "chart" || tab.id === "table") return "visual";
-  if (tab.id === "industry_insights") return "context";
-  return "proof";
-}
-
-function executiveTabsFrom(
-  tabs: ParsedIntelligenceTab[],
-): ExecutiveCanvasTab[] {
-  const groups: ExecutiveCanvasTab[] = [
-    { id: "decision", label: "Decision", items: [] },
-    { id: "visual", label: "Visual", items: [] },
-    { id: "context", label: "Context", items: [] },
-    { id: "proof", label: "Proof", items: [] },
-  ];
-  for (const item of tabs) {
-    const group = groups.find(
-      (candidate) => candidate.id === executiveTabIdFor(item),
-    );
-    if (group) group.items.push(item);
-  }
-  return groups.filter((group) => group.items.length > 0);
-}
-
-function companionHintFor(tabId: ExecutiveCanvasTab["id"]): string {
-  switch (tabId) {
+function companionCardTitle(tab: ParsedIntelligenceTab): string {
+  switch (tab.id) {
     case "decision":
-      return "The answer stays in the chat. This pane keeps the choice, tradeoff, and executive action visible.";
-    case "visual":
-      return "Use this pane for chart-ready or table-ready context that helps size, compare, or sequence the decision.";
-    case "context":
-      return "Use this pane for adjacent industry, benchmark, or pattern context without confusing it with tenant proof.";
-    case "proof":
-      return "Use this pane to check the evidence boundary, assumptions, and missing inputs behind the answer.";
+      return "Decision";
+    case "industry_insights":
+      return "Industry Signal";
+    case "chart":
+      return "Opportunity Map";
+    case "table":
+      return "Decision Table";
+    case "evidence":
+      return "Proof Boundary";
   }
+}
+
+function companionCardKicker(tab: ParsedIntelligenceTab): string {
+  switch (tab.id) {
+    case "decision":
+      return "Choice";
+    case "industry_insights":
+      return "Outside-in";
+    case "chart":
+      return "Visual";
+    case "table":
+      return "Comparison";
+    case "evidence":
+      return "Boundary";
+  }
+}
+
+function companionCardsFrom(tabs: ParsedIntelligenceTab[]): CompanionCard[] {
+  return tabs.slice(0, 5).map((item) => ({
+    ...item,
+    kicker: companionCardKicker(item),
+    title: companionCardTitle(item),
+    wide: item.id === "chart" || item.id === "table",
+  }));
 }
 
 export function IntelligenceV2Surface({
@@ -336,33 +331,21 @@ export function IntelligenceV2Surface({
     () => intelligenceTabsFromMessage(latestAnswer),
     [latestAnswer],
   );
-  const executiveTabs = useMemo(
-    () => executiveTabsFrom(latestIntelligenceTabs),
+  const companionCards = useMemo(
+    () => companionCardsFrom(latestIntelligenceTabs),
     [latestIntelligenceTabs],
   );
-  const tabs = useMemo<AvaCanvasTab[]>(() => {
-    if (executiveTabs.length > 0) {
-      return executiveTabs.map((item) => ({
-        id: item.id,
-        label: item.label,
-      }));
-    }
-    return [{ id: "answer", label: "Answer" }];
-  }, [executiveTabs]);
 
   useEffect(() => {
     if (!latestAnswer) return;
-    if (executiveTabs.length > 0) {
-      const hasActiveCompanionTab = executiveTabs.some(
-        (item) => item.id === tab,
-      );
-      if (!hasActiveCompanionTab) {
-        setTab(executiveTabs[0]?.id ?? "answer");
-      }
+    if (companionCards.length > 0 && tab !== "companion") {
+      setTab("companion");
       return;
     }
-    if (tab !== "answer") setTab("answer");
-  }, [executiveTabs, latestAnswer, tab]);
+    if (companionCards.length === 0 && tab !== "answer") {
+      setTab("answer");
+    }
+  }, [companionCards.length, latestAnswer, tab]);
 
   async function askIntelligence(
     text: string,
@@ -602,24 +585,6 @@ export function IntelligenceV2Surface({
                 </div>
               </div>
 
-              <div className="tabs">
-                {latestAnswer
-                  ? tabs.map((item) => {
-                      const key = item.id;
-                      return (
-                        <button
-                          key={key}
-                          type="button"
-                          className={`tab${tab === key ? " active" : ""}`}
-                          onClick={() => setTab(key)}
-                        >
-                          {item.label}
-                        </button>
-                      );
-                    })
-                  : null}
-              </div>
-
               <div className="section">
                 {!latestAnswer && (
                   <div className="startPanel">
@@ -643,38 +608,41 @@ export function IntelligenceV2Surface({
                     )}
                   </div>
                 )}
-                {executiveTabs.map((item) =>
-                  tab === item.id ? (
-                    <div className="decisionTabPanel" key={item.id}>
-                      <div className="decisionTabHead">
-                        <div className="decisionTabTitle">{item.label}</div>
-                        <div className="decisionTabHint">
-                          {companionHintFor(item.id)}
+                {latestAnswer &&
+                  companionCards.length > 0 &&
+                  tab === "companion" && (
+                    <div className="companionPanel">
+                      <div className="companionHead">
+                        <div className="companionTitle">Decision canvas</div>
+                        <div className="companionCount">
+                          {companionCards.length} views
                         </div>
                       </div>
-                      {item.items.map((canvasItem) => (
-                        <div className="canvasBlock" key={canvasItem.id}>
-                          <div className="canvasBlockHead">
-                            <div className="canvasBlockTitle">
-                              {canvasItem.label}
+                      <div className="companionGrid">
+                        {companionCards.map((card) => (
+                          <section
+                            className={`companionCard${card.wide ? " wide" : ""}`}
+                            key={card.id}
+                          >
+                            <div className="companionKicker">
+                              <span>{card.kicker}</span>
+                              {shouldShowContextNote(card) ? (
+                                <span className="companionGrounding">
+                                  {contextLabel(card.grounding)}
+                                </span>
+                              ) : null}
                             </div>
-                            {shouldShowContextNote(
-                              item.id,
-                              canvasItem.grounding,
-                            ) ? (
-                              <span className="contextNote">
-                                {contextLabel(canvasItem.grounding)}
-                              </span>
-                            ) : null}
-                          </div>
-                          <div className="tabMarkdown">
-                            <AgentMarkdown text={canvasItem.content} />
-                          </div>
-                        </div>
-                      ))}
+                            <div className="companionCardTitle">
+                              {card.title}
+                            </div>
+                            <div className="tabMarkdown companionBody">
+                              <AgentMarkdown text={card.content} />
+                            </div>
+                          </section>
+                        ))}
+                      </div>
                     </div>
-                  ) : null,
-                )}
+                  )}
               </div>
             </div>
           </div>

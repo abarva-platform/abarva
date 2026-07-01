@@ -48,7 +48,10 @@ describe("Intelligence tabbed response parser", () => {
       "The right canvas should add decision support, not duplicate the main answer",
     );
     expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
-      "function/category opportunity map",
+      "Use three to five cards for most strategic or analytical answers",
+    );
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
+      "peer-pattern, risk, value-model, assumption",
     );
 
     const parsed = parseIntelligenceTabbedResponse(
@@ -126,7 +129,9 @@ describe("Intelligence tabbed response parser", () => {
       "Table",
       "Evidence",
     ]);
-    expect(parsed.tabs.find((tab) => tab.id === "industry_insights")).toMatchObject({
+    expect(
+      parsed.tabs.find((tab) => tab.id === "industry_insights"),
+    ).toMatchObject({
       grounding: "industry-context",
     });
     expect(parsed.tabs.find((tab) => tab.id === "table")?.content).toBe(
