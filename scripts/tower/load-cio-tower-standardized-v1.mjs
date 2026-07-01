@@ -147,7 +147,7 @@ const questionContracts = [
     default_scope: 'initiative',
     dimensions: ['initiative', 'budget', 'actual_spend', 'promised_value', 'measured_value', 'evidence_status', 'owner'],
     required_fields: ['initiative_name', 'budget_fy26_usd', 'actual_spend_ytd_usd', 'promised_value_fy26_usd', 'measured_value_ytd_usd', 'evidence_status'],
-    artifact_type: 'card',
+    artifact_type: 'table',
     examples: ['which investment posture should the CIO take?', 'give me the CIO morning brief', 'what should the CIO know this morning?'],
   },
   {

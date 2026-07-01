@@ -636,7 +636,7 @@ describe("cio tower answer contract", () => {
             intent: "advise",
             question_family: "advisor_morning_brief",
             measure_key: "initiative_budget_fy26",
-            artifact_type: "card",
+            artifact_type: "table",
             examples: [],
           },
         }),
