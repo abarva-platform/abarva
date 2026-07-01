@@ -25,6 +25,8 @@ const RAW_ID_RE =
   /\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
 const INTERNAL_RE =
   /\b(home_know|read-model|route used|localhost|\/Users\/|debug|packet json|source_record_id)\b/i;
+const SESSION_CONTEXT_RE =
+  /\b(as discussed|as mentioned|this session|earlier in this session|earlier in the session|previous conversation|prior conversation|answer has(?:n't| not) changed|same answer|keeps being the right answer)\b/i;
 const OLD_SECTION_RE = /^\s*(?:Read|Evidence|Implication|Next move)\s*:/gim;
 
 const MARKDOWN_TABLE_SEPARATOR_RE =
@@ -68,6 +70,7 @@ Do not claim exact ROI unless the packet provides support.
 Do not say a recommendation is high confidence if tenant evidence is thin.
 Do not mix another tenant's actual data into this tenant's answer.
 Do not use the old transcript labels "Read:", "Evidence:", "Implication:", or "Next move:".
+Do not refer to prior conversation state. Avoid phrases like "as discussed", "this session", "earlier in this session", "previous conversation", "same answer", or "answer hasn't changed". Every answer must stand alone for the current question.
 Do not mention expert packs, binders, dossiers, semantic layers, prompt packets, source rows, edge rows, debug traces, or route decisions.
 Do not return JSON. Return final user-facing text only.
 
@@ -738,6 +741,7 @@ export function validateIntelligenceConsultantText(args: {
   if (OLD_SECTION_RE.test(text)) issues.push("old_template_labels");
   if (RAW_ID_RE.test(text)) issues.push("raw_id_leak");
   if (INTERNAL_RE.test(text)) issues.push("internal_language");
+  if (SESSION_CONTEXT_RE.test(text)) issues.push("session_context_language");
   if (
     args.dossier.tenantEvidenceDossier.confidence !== "strong" &&
     /\b(high confidence|certain|definitely|clearly proven)\b/i.test(text)
