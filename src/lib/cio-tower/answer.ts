@@ -164,6 +164,9 @@ const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
       /budget envelope/i,
       /technology budget/i,
       /cio budget/i,
+      /(?:metric\s+)?lineage.*(?:it\s+)?budget/i,
+      /(?:it\s+)?budget.*(?:metric\s+)?lineage/i,
+      /where.*(?:it\s+)?budget.*(?:number|value)?.*come\s+from/i,
       /budget.*(?:by|for each|per|across).*(?:function|portfolio compan|company|platform|domain|tower|area|slice)/i,
       /(?:function|portfolio compan|company|platform|domain|tower|area|slice).*budget/i,
     ],
@@ -717,6 +720,10 @@ function buildTowerBudgetSliceTable(facts: readonly CioTowerFactRow[]): CioTower
   };
 }
 
+function asksForMetricLineage(question: string): boolean {
+  return /lineage|formula|source\s+trace|trace\s+the\s+metric|where.*number.*come/i.test(question);
+}
+
 function buildCioTowerDeterministicMetricAnswer(context: CioTowerPromptContext): {
   output: CioTowerVisibleAnswerContract;
   reason: string;
@@ -725,6 +732,35 @@ function buildCioTowerDeterministicMetricAnswer(context: CioTowerPromptContext):
 
   const totalBudget = context.metricPackets.find((packet) => packet.measureKey === 'total_it_budget_fy26');
   if (!totalBudget?.valueNumeric) return null;
+
+  if (asksForMetricLineage(context.question)) {
+    return {
+      reason: 'Exact budget metric lineage answered from governed Tower metric packet.',
+      output: {
+        version: 'cio_tower_visible_answer_v1',
+        answer: `${context.tenantName}'s loaded FY26 IT budget is ${totalBudget.displayValue}. Tower traces that value to the governed budget metric packet for ${totalBudget.period}, using the ${totalBudget.basis} basis and formula version ${totalBudget.formulaVersion}. It is backed by ${totalBudget.sourceFactKeys.length} supporting Tower fact${totalBudget.sourceFactKeys.length === 1 ? '' : 's'}; Tower does not expose internal fact identifiers in the user-visible answer.`,
+        tables: [
+          {
+            id: 'it_budget_metric_lineage',
+            title: 'IT budget metric lineage',
+            columns: ['Metric', 'Value', 'Period', 'Basis', 'Formula version', 'Supporting facts'],
+            rows: [
+              [
+                totalBudget.label,
+                totalBudget.displayValue,
+                totalBudget.period,
+                totalBudget.basis,
+                totalBudget.formulaVersion,
+                String(totalBudget.sourceFactKeys.length),
+              ],
+            ],
+          },
+        ],
+        tabs: [],
+        followUpQuestion: 'Do you want the loaded budget slices behind this metric?',
+      },
+    };
+  }
 
   const table = asksForBudgetSlice(context.question)
     ? buildTowerBudgetSliceTable(context.relevantFacts)

@@ -280,6 +280,38 @@ describe('cio tower answer contract', () => {
     ]);
   });
 
+  it('routes IT budget lineage questions to the governed total-budget packet', () => {
+    expect(matchContractKey('Show metric lineage for the IT budget answer.')).toBe('tower_total_it_spend');
+    expect(matchContractKey('Where did the IT budget number come from?')).toBe('tower_total_it_spend');
+  });
+
+  it('answers IT budget lineage deterministically from the metric packet', () => {
+    const output = __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(context({
+      question: 'Show metric lineage for the IT budget answer.',
+      contract: {
+        contract_key: 'tower_total_it_spend',
+        intent: 'lookup',
+        question_family: 'total_it_spend',
+        measure_key: 'total_it_budget_fy26',
+        artifact_type: 'answer',
+        examples: [],
+      },
+    }));
+
+    expect(output?.reason).toBe('Exact budget metric lineage answered from governed Tower metric packet.');
+    expect(output?.output.answer).toContain("SkyHarbor Air's loaded FY26 IT budget is $2.6B");
+    expect(output?.output.answer).toContain('formula version cio_tower_v1');
+    expect(output?.output.answer).toContain('1 supporting Tower fact');
+    expect(output?.output.tables).toEqual([
+      {
+        id: 'it_budget_metric_lineage',
+        title: 'IT budget metric lineage',
+        columns: ['Metric', 'Value', 'Period', 'Basis', 'Formula version', 'Supporting facts'],
+        rows: [['FY26 IT budget', '$2.6B', 'fy26', 'committed', 'cio_tower_v1', '1']],
+      },
+    ]);
+  });
+
   it('builds a repair prompt that asks Claude to fix, not the renderer to mutate', () => {
     const originalPrompt = buildCioTowerClaudePrompt(context());
     const repairPrompt = buildCioTowerRepairPrompt({
