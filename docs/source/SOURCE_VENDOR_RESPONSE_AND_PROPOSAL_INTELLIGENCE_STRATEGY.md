@@ -96,6 +96,50 @@ info, risks, commercial concerns, exceptions, clarification questions, evaluator
 areas, score-readiness. Generated through the governed orchestrator from a
 **vendor-isolated** bundle; every claim cited to that vendor's documents or flagged.
 
+## 6.1 · Minimum viable sourcing extraction
+
+Source should not become a generic vendor-document Q&A system. Vendor responses can be
+long, narrative-heavy packages, but the product value is not "read a 100-page response."
+The product value is turning the response into the minimum sourcing-critical record needed
+to compare, challenge, price, negotiate, and decide.
+
+The required extraction flow is:
+
+```text
+sectioned vendor response package
+  -> section map
+  -> minimum viable sourcing record
+  -> exhibit cross-checks
+  -> challenge log
+  -> BAFO asks
+  -> executive decision support
+```
+
+Each vendor package must be processed section by section, extracting only:
+
+1. response completeness by RFP section;
+2. major vendor claims;
+3. evidence supporting each claim;
+4. pricing summary: run cost, transition cost, one-time cost, optional cost, 5-year TCO;
+5. productivity / automation commitments and whether they are priced back;
+6. staffing and location model;
+7. SLA targets, credits, caps, exclusions, and reporting;
+8. assumptions and exclusions that create buyer risk;
+9. commercial, legal, and RFP exceptions;
+10. transition plan, KT obligations, dependencies, exit criteria, and milestone linkage.
+
+The normalized output is a **Vendor Response Profile**: vendor name, response
+completeness, 5-year TCO, year-one run cost, transition cost, productivity commitment,
+SLA commitment, staffing model, major assumptions, major exclusions, commercial
+exceptions, unsupported claims, clarification questions, negotiation levers, and a
+ready-for-evaluation verdict.
+
+Every extraction should be represented as a card with the vendor, claim or commitment,
+evidence reference, structured-exhibit status, missing fields, confidence, sourcing
+finding, and recommended action. A productivity claim in a narrative section is not
+commercially evaluable unless it is also registered in the claim register and reflected
+in the pricing/productivity exhibits.
+
 ## 7 · Normalization
 
 `ProposalNormalizationModel` rows: (event, vendor, version, rfp_section,

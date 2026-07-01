@@ -2,15 +2,19 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
+import type { VendorResponseProfileSet } from "@/lib/source/proposal-intelligence";
 import { CANVAS } from "../canvas-tokens";
 import { CompletenessMatrix } from "./CompletenessMatrix";
 import { QnaSymmetryLog } from "./QnaSymmetryLog";
+import { VendorResponseProfilesPanel } from "./VendorResponseProfilesPanel";
 
 export function ResponsesStageView({
   readiness,
+  profileSet,
   documentWorkspace,
 }: {
   readiness?: SourceVendorResponseCompleteness;
+  profileSet?: VendorResponseProfileSet | null;
   documentWorkspace: ReactNode;
 }) {
   const records = readiness?.records ?? [];
@@ -65,6 +69,8 @@ export function ResponsesStageView({
         <CompletenessMatrix readiness={readiness} />
         <QnaSymmetryLog />
       </div>
+
+      <VendorResponseProfilesPanel profileSet={profileSet} />
 
       <section data-testid="source-responses-disqualification-card" style={DECISION}>
         <div style={EYEBROW}>Decision point</div>

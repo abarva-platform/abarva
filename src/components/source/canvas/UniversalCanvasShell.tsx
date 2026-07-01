@@ -158,6 +158,7 @@ import { ExecutiveDecisionStageView } from "./executive-decision/ExecutiveDecisi
 import { TransitionStageView } from "./transition/TransitionStageView";
 import { SimpleFrontErrorBoundary } from "./SimpleFrontErrorBoundary";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
+import type { VendorResponseProfileSet } from "@/lib/source/proposal-intelligence";
 
 interface UniversalCanvasShellProps {
   event: Pick<
@@ -189,6 +190,7 @@ interface UniversalCanvasShellProps {
   tenantName: string;
   decisionThreadId?: string | null;
   vendorResponseReadiness?: SourceVendorResponseCompleteness;
+  vendorResponseProfiles?: VendorResponseProfileSet | null;
   workspaceExplorerEnabled?: boolean;
   strategyAutoDraftEnabled?: boolean;
   simpleFrontEnabled?: boolean;
@@ -202,6 +204,7 @@ function renderStageDocumentContent({
   onSelectCode,
   documentTabContent,
   vendorResponseReadiness,
+  vendorResponseProfiles,
   criteria,
   evidence,
   activityEntries,
@@ -219,6 +222,7 @@ function renderStageDocumentContent({
   onSelectCode: (code: string) => void;
   documentTabContent: ReactNode;
   vendorResponseReadiness?: SourceVendorResponseCompleteness;
+  vendorResponseProfiles?: VendorResponseProfileSet | null;
 }) {
   if (viewStage === "strategy") {
     return (
@@ -243,6 +247,7 @@ function renderStageDocumentContent({
     return (
       <ResponsesStageView
         readiness={vendorResponseReadiness}
+        profileSet={vendorResponseProfiles}
         documentWorkspace={documentTabContent}
       />
     );
@@ -319,6 +324,7 @@ export function UniversalCanvasShell({
   tenantName,
   decisionThreadId = null,
   vendorResponseReadiness,
+  vendorResponseProfiles,
   workspaceExplorerEnabled = false,
   strategyAutoDraftEnabled = false,
   simpleFrontEnabled = false,
@@ -998,6 +1004,7 @@ export function UniversalCanvasShell({
         onSelectCode: setSelectedDocCode,
         documentTabContent,
         vendorResponseReadiness,
+        vendorResponseProfiles,
         criteria: stageCriteria,
         evidence: stageEvidence,
         activityEntries,
