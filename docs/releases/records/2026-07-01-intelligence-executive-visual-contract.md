@@ -28,6 +28,8 @@ Production signed-in proof after the board-exhibit deploy showed Industrial/Morg
 
 Final production proof exposed the exact remaining mismatch: the live signed-in tenant chrome uses the demo-safe name `Airline Demo`, while the SkyHarbor CTO readiness source only matched `skyharbor*` tenant aliases. This follow-up treats `Airline Demo` aliases as the same curated SkyHarbor/Airline CTO readiness packet so the deterministic native canvas fallback is eligible in the live demo tenant.
 
+Final signed-in browser proof then confirmed the Airline Demo native sequencing exhibit renders, but exposed two renderer-polish issues: the proof harness had no stable native-canvas DOM attribute to assert against, and the board exhibit could overflow horizontally in the right canvas because the native canvas width did not include padding in its box model. This follow-up adds the stable `data-native-canvas-type` attribute, makes native canvases border-box, tightens sequencing columns, and strips residual standalone `abarva-canvas` labels from visible content.
+
 ## Layer Impact
 
 - `global-control-lane`: Updates the shared Intelligence v2 answer contract and right-canvas renderer for all tenants using the executive canvas.
@@ -58,6 +60,7 @@ Final production proof exposed the exact remaining mismatch: the live signed-in 
 - `src/lib/intelligence/ask/industrial-cio-backoffice-source.ts`: makes the deterministic Industrial/Morgan Street fallback choose sequencing, value/readiness, gate-to-value, or proof-boundary payloads based on the user question.
 - `src/lib/intelligence/ask/skyharbor-cto-readiness-source.ts` and `src/lib/intelligence/ask/synthesizer.ts`: add the same deterministic native-canvas fallback for SkyHarbor/Airline Demo CTO readiness questions, including investment sequencing, value/readiness, gate-to-value, and proof-boundary payloads from the curated V6 packet.
 - `src/lib/intelligence/ask/skyharbor-cto-readiness-source.ts`: recognizes the production demo-safe `Airline Demo` tenant aliases as the SkyHarbor/Airline CTO readiness source so the live signed-in demo path can trigger the native exhibit fallback.
+- `src/components/intelligence-v2/IntelligenceV2Surface.tsx` and `src/lib/intelligence/executive-canvas-payload.ts`: add stable native-canvas proof attributes, prevent right-canvas sequencing overflow, and remove residual standalone `abarva-canvas` language labels from visible prose.
 - `docs/demo/intelligence-executive-canvas-demo-script-2026-07-01.md`: adds SkyHarbor and Industrial/Morgan Street prompts that exercise all native exhibit families for demo proof.
 - `src/lib/client-config.ts`: collapses duplicate canonical tenant aliases after demo-safe text replacement so Intelligence chrome, prompts, and visible answers do not show stacked labels such as `Air Air`, `Holdings Holdings`, or repeated canonical tails such as `Retail Group Group`.
 - `src/lib/intelligence/ask/industrial-cio-backoffice-source.ts`: updates Morgan Street / Industrial Demo guidance to the current canvas grammar and asks Claude to use the correct exhibit pattern for CIO shared-services AI questions.
@@ -83,6 +86,8 @@ Final production proof exposed the exact remaining mismatch: the live signed-in 
 - SkyHarbor native-canvas fallback validation: `/Users/anand/Projects/nexus/node_modules/.bin/jest src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts src/lib/intelligence/ask/__tests__/industrial-cio-backoffice-source.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/__tests__/executive-canvas-payload.test.ts --runInBand` passed. Jest still reports pre-existing duplicate manual mock warnings for Markdown mocks.
 - SkyHarbor native-canvas fallback lint: `/Users/anand/Projects/nexus/node_modules/.bin/eslint src/lib/intelligence/ask/skyharbor-cto-readiness-source.ts src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts src/lib/intelligence/ask/synthesizer.ts` passed.
 - Airline Demo alias validation: `/Users/anand/Projects/nexus/node_modules/.bin/jest src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts --runInBand` passed. Jest still reports pre-existing duplicate manual mock warnings for Markdown mocks.
+- Final renderer polish validation: `/Users/anand/Projects/nexus/node_modules/.bin/jest src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx --runInBand` passed. Jest still reports pre-existing duplicate manual mock warnings for Markdown mocks.
+- Final renderer polish lint: `/Users/anand/Projects/nexus/node_modules/.bin/eslint src/lib/intelligence/executive-canvas-payload.ts src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/components/intelligence-v2/IntelligenceV2Surface.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx` passed.
 
 ## Rollout Plan
 

@@ -187,4 +187,22 @@ loaded and signed off","note":"Raw newline came from the model"}]}]}`,
     expect(extracted.visibleContent).not.toContain("canvasType");
     expect(extracted.visibleContent).not.toContain("investmentSequencingMap");
   });
+
+  it("removes residual standalone canvas language labels from visible content", () => {
+    const content = [
+      "Use this as the board exhibit.",
+      "",
+      "abarva-canvas",
+      "",
+      "The decision is to fund readiness first.",
+    ].join("\n");
+
+    const extracted = extractExecutiveCanvasPayloads(content);
+
+    expect(extracted.payloads).toHaveLength(0);
+    expect(extracted.visibleContent).toBe(
+      "Use this as the board exhibit.\n\nThe decision is to fund readiness first.",
+    );
+    expect(extracted.visibleContent).not.toContain("abarva-canvas");
+  });
 });

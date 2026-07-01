@@ -880,6 +880,10 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       expect(
         screen.getByTestId("executive-canvas-sequencing"),
       ).toBeInTheDocument();
+      expect(screen.getByTestId("executive-canvas-sequencing")).toHaveAttribute(
+        "data-native-canvas-type",
+        "executive-canvas-sequencing",
+      );
       expect(
         screen.getByText("AI funding sequence for SkyHarbor"),
       ).toBeInTheDocument();

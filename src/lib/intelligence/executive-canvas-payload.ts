@@ -82,6 +82,7 @@ export function extractExecutiveCanvasPayloads(
     if (match.payload) payloads.push(match.payload);
   }
   const visibleContent = removeRanges(contentWithoutFencedBlocks, bareBlocks)
+    .replace(/(?:^|\n)\s*`{0,3}\s*abarva-canvas\s*`{0,3}\s*(?=\n|$)/gi, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 

@@ -122,7 +122,7 @@ const CSS = `
 .iv2 .companionCard.wide:has(.nativeCanvas) .companionKicker{padding:16px 18px 0}
 .iv2 .companionCard.wide:has(.nativeCanvas) .companionCardTitle{padding:0 18px}
 .iv2 .companionCard.wide:has(.nativeCanvas) .companionBody{padding:0 18px 18px}
-.iv2 .nativeCanvas{width:100%;border:1px solid #D7D0C4;border-radius:12px;background:linear-gradient(180deg,#FFFDF9 0%,#F6F2EA 100%);padding:18px;margin:0 0 14px;display:grid;gap:16px;box-shadow:0 18px 42px rgba(40,35,24,.09)}
+.iv2 .nativeCanvas{box-sizing:border-box;width:100%;border:1px solid #D7D0C4;border-radius:12px;background:linear-gradient(180deg,#FFFDF9 0%,#F6F2EA 100%);padding:18px;margin:0 0 14px;display:grid;gap:16px;box-shadow:0 18px 42px rgba(40,35,24,.09)}
 .iv2 .nativeCanvasHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:1px solid rgba(215,208,196,.9);padding-bottom:12px}
 .iv2 .nativeCanvasTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:23px;line-height:1.08;font-weight:500;color:#171713}
 .iv2 .nativeCanvasMeta{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);white-space:nowrap;margin-top:5px}
@@ -131,7 +131,7 @@ const CSS = `
 .iv2 .canvasMetric{border:1px solid #DED7CA;border-radius:8px;background:rgba(255,255,255,.74);padding:9px 11px;min-width:0}
 .iv2 .canvasMetricLabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .iv2 .canvasMetricValue{font-size:12.5px;color:var(--ink);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.iv2 .sequenceMap{display:grid;grid-template-columns:1.08fr 1fr 1fr .92fr;gap:12px;align-items:stretch}
+.iv2 .sequenceMap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:stretch}
 .iv2 .sequenceColumn{border:1px solid color-mix(in srgb,var(--tone,#CFC7B8) 30%,#DDD6C9);border-radius:12px;background:#fff;min-width:0;display:grid;align-content:start;gap:11px;padding:12px;box-shadow:inset 0 5px 0 var(--tone,#CFC7B8),0 10px 24px rgba(40,35,24,.05)}
 .iv2 .sequenceColumn[data-tone="scale"]{--tone:#1F7A46;background:linear-gradient(180deg,#F2FBF5,#fff 42%)}
 .iv2 .sequenceColumn[data-tone="certify"]{--tone:#237A95;background:linear-gradient(180deg,#EFF9FC,#fff 42%)}
@@ -688,7 +688,11 @@ function InvestmentSequencingMap({
   const columns = payload.columns?.slice(0, 4) ?? [];
   if (columns.length === 0) return null;
   return (
-    <div className="nativeCanvas" data-testid="executive-canvas-sequencing">
+    <div
+      className="nativeCanvas"
+      data-native-canvas-type="executive-canvas-sequencing"
+      data-testid="executive-canvas-sequencing"
+    >
       <NativeCanvasTitle
         meta="Board exhibit"
         title={payload.title ?? "Investment sequence"}
@@ -784,7 +788,11 @@ function ValueReadinessMatrix({
   const items = payload.items?.filter(hasMatrixCoordinates).slice(0, 8) ?? [];
   if (items.length === 0) return null;
   return (
-    <div className="nativeCanvas" data-testid="executive-canvas-matrix">
+    <div
+      className="nativeCanvas"
+      data-native-canvas-type="executive-canvas-matrix"
+      data-testid="executive-canvas-matrix"
+    >
       <NativeCanvasTitle
         meta="Portfolio tradeoff"
         title={payload.title ?? "Value readiness matrix"}
@@ -865,7 +873,11 @@ function GateToValueRoadmap({ payload }: { payload: ExecutiveCanvasPayload }) {
   const gates = payload.gates?.slice(0, 5) ?? [];
   if (gates.length === 0) return null;
   return (
-    <div className="nativeCanvas" data-testid="executive-canvas-roadmap">
+    <div
+      className="nativeCanvas"
+      data-native-canvas-type="executive-canvas-roadmap"
+      data-testid="executive-canvas-roadmap"
+    >
       <NativeCanvasTitle
         meta="Gate to value"
         title={payload.title ?? "Gate-to-value roadmap"}
@@ -911,7 +923,11 @@ function GateToValueRoadmap({ payload }: { payload: ExecutiveCanvasPayload }) {
 function ProofBoundaryVisual({ payload }: { payload: ExecutiveCanvasPayload }) {
   if (!payload.proofBoundary) return null;
   return (
-    <div className="nativeCanvas" data-testid="executive-canvas-proof">
+    <div
+      className="nativeCanvas"
+      data-native-canvas-type="executive-canvas-proof"
+      data-testid="executive-canvas-proof"
+    >
       <NativeCanvasTitle
         meta="Trust boundary"
         title={payload.title ?? "Proof boundary"}
