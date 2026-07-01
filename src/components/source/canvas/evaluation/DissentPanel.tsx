@@ -9,7 +9,7 @@ export function DissentPanel() {
       <div style={EYEBROW}>Dissent captured</div>
       <h3 style={TITLE}>Minority view is first-class evidence</h3>
       <p style={COPY}>
-        Sarah Chen, CTO Office, challenges whether Atlas SI&apos;s commercial
+        CTO Office reviewer challenges whether Vendor B&apos;s commercial
         advantage offsets its transition depth gap.
       </p>
       <div style={ATTACHMENT}>

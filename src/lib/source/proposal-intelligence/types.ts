@@ -300,6 +300,74 @@ export interface VendorBafoInstructionPack {
   vendorInstructions: VendorBafoVendorInstruction[];
 }
 
+// ── Evaluation scorecard decision view ─────────────────────────────────────
+
+export type VendorEvaluationRecommendation =
+  | "advance_to_bafo"
+  | "advance_with_conditions"
+  | "hold_until_clarified";
+
+export interface VendorEvaluationValue {
+  vendorId: string;
+  vendorName: string;
+  value: string;
+  posture: "strength" | "watch" | "risk";
+  caveat: string;
+  evidenceLabel: string;
+}
+
+export interface VendorEvaluationComparisonRow {
+  comparisonId: string;
+  label: string;
+  decisionUse: string;
+  values: VendorEvaluationValue[];
+}
+
+export interface VendorEvaluationScoreValue {
+  vendorId: string;
+  vendorName: string;
+  score: number;
+  rationale: string;
+  evidenceLabel: string;
+  confidence: "high" | "medium" | "low";
+}
+
+export interface VendorEvaluationScorecardRow {
+  criterionId: string;
+  label: string;
+  weight: number;
+  guidance: string;
+  scores: VendorEvaluationScoreValue[];
+}
+
+export interface VendorEvaluationVendorSummary {
+  vendorId: string;
+  vendorName: string;
+  rank: number;
+  weightedScore: number;
+  readiness: VendorResponseProfile["readyForEvaluation"];
+  recommendation: VendorEvaluationRecommendation;
+  decisionRationale: string;
+  tradeoffs: string[];
+  conditions: string[];
+}
+
+export interface VendorEvaluationDecisionView {
+  sourceEventId: string;
+  tenantKey: string;
+  generatedAt: string;
+  scoreBasis: string;
+  vendorCount: number;
+  comparisonRows: VendorEvaluationComparisonRow[];
+  scorecardRows: VendorEvaluationScorecardRow[];
+  vendorSummaries: VendorEvaluationVendorSummary[];
+  executiveTradeoffs: string[];
+  leadingVendorId: string;
+  cheapestVendorId: string;
+  highestTransitionRiskVendorId: string;
+  recommendedAdvanceVendorIds: string[];
+}
+
 // ── Normalization ───────────────────────────────────────────────────────────
 
 export type NormalizedCategory =

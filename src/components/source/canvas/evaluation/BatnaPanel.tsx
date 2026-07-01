@@ -9,7 +9,7 @@ export function BatnaPanel() {
       <div style={EYEBROW}>BATNA</div>
       <h3 style={TITLE}>Named by sourcing lead</h3>
       <p style={COPY}>
-        Atlas SI is the named BATNA, not auto-derived. Credibility is medium:
+        Vendor B is the named BATNA, not auto-derived. Credibility is medium:
         commercial fit is strong, but transition evidence must close before
         BAFO.
       </p>

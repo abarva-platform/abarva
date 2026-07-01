@@ -17,6 +17,7 @@ import {
 import {
   buildVendorBafoInstructionPack,
   buildVendorChallengeIntelligence,
+  buildVendorEvaluationDecisionView,
   buildVendorResponseMveProfiles,
 } from "../mve-profile";
 import type {
@@ -574,5 +575,72 @@ describe("vendor BAFO instruction pack", () => {
 
   it("does not create a BAFO pack without challenge intelligence", () => {
     expect(buildVendorBafoInstructionPack(null)).toBeNull();
+  });
+});
+
+describe("vendor evaluation decision view", () => {
+  const set = buildVendorResponseMveProfiles({
+    id: "skyh-test-event",
+    code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
+    name: "SkyHarbor AMS Outsourcing RFP",
+    accountName: "SkyHarbor Air",
+  })!;
+  const intelligence = buildVendorChallengeIntelligence(set)!;
+  const bafoPack = buildVendorBafoInstructionPack(intelligence)!;
+
+  it("builds normalized comparison, scorecard, and executive tradeoffs for every vendor", () => {
+    const view = buildVendorEvaluationDecisionView(
+      set,
+      intelligence,
+      bafoPack,
+    )!;
+
+    expect(view.vendorCount).toBe(3);
+    expect(view.vendorSummaries.map((summary) => summary.vendorName)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("Vendor A"),
+        expect.stringContaining("Vendor B"),
+        expect.stringContaining("Vendor C"),
+      ]),
+    );
+    expect(view.comparisonRows.map((row) => row.label)).toEqual(
+      expect.arrayContaining([
+        "Normalized 5-year TCO",
+        "Transition risk",
+        "Automation/productivity credibility",
+        "Evaluation readiness",
+      ]),
+    );
+    expect(view.scorecardRows.length).toBeGreaterThanOrEqual(8);
+    expect(view.leadingVendorId).toContain("vendor-a");
+    expect(view.cheapestVendorId).toContain("vendor-b");
+    expect(view.highestTransitionRiskVendorId).toContain("vendor-b");
+    expect(view.executiveTradeoffs.join(" ")).toMatch(/Vendor A|Vendor B|Vendor C/);
+    expect(JSON.stringify(view)).not.toMatch(
+      /Northstar|TitanTech|CloudBridge|DataPeak|BlueMaster|ArcVault/i,
+    );
+  });
+
+  it("keeps scorecard weights deterministic and recommendations conditional", () => {
+    const view = buildVendorEvaluationDecisionView(
+      set,
+      intelligence,
+      bafoPack,
+    )!;
+    const weightTotal = view.scorecardRows.reduce(
+      (sum, row) => sum + row.weight,
+      0,
+    );
+    const vendorB = view.vendorSummaries.find((summary) =>
+      summary.vendorName.includes("Vendor B"),
+    )!;
+    const vendorC = view.vendorSummaries.find((summary) =>
+      summary.vendorName.includes("Vendor C"),
+    )!;
+
+    expect(weightTotal).toBe(100);
+    expect(vendorB.recommendation).toBe("advance_with_conditions");
+    expect(vendorB.conditions.join(" ")).toMatch(/coverage|staffing|retained/i);
+    expect(vendorC.tradeoffs.join(" ")).toMatch(/SLA|scope|transition/i);
   });
 });

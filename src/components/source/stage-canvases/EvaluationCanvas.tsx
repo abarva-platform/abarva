@@ -13,7 +13,7 @@ interface EvaluationCanvasProps {
   nextGateEvaluations?: GateEvaluation[];
 }
 
-// Illustrative vendor scores per criterion for the AMS event
+// Default evaluation-readiness scores for the synthetic AMS vendor set.
 const AMS_SCORECARD: {
   criterionId: string;
   label: string;
@@ -23,46 +23,45 @@ const AMS_SCORECARD: {
 }[] = [
   {
     criterionId: 'technical-capability',
-    label: 'Technical capability',
+    label: 'Scope and service capability',
     weight: 30,
-    scores: { northstar: 8, arcvault: 8, bluemaster: 6, datapeak: 9 },
-    notes: { northstar: 'Strong retail AMS track record', arcvault: 'SAP/CDP integration depth', bluemaster: '62% auto-resolution rate', datapeak: 'Analytics-first — exceeds scope' },
+    scores: { vendorA: 8.2, vendorB: 6.6, vendorC: 6.4 },
+    notes: { vendorA: 'Strongest match to AMS scope and retained-team boundary', vendorB: 'Broad story, but retained obligations need closure', vendorC: 'Good service fit with narrower corporate tower scope' },
   },
   {
     criterionId: 'pricing',
-    label: 'Pricing competitiveness',
+    label: 'Commercial value',
     weight: 25,
-    scores: { northstar: 7, arcvault: 7, bluemaster: 9, datapeak: 4 },
-    notes: { northstar: 'Tier-2 bundling opacity', arcvault: 'Rationalization advisory included', bluemaster: 'Lowest TCO — transition risk', datapeak: 'Premium band — value mismatch' },
+    scores: { vendorA: 6.9, vendorB: 8.4, vendorC: 7.2 },
+    notes: { vendorA: 'Higher TCO offset by continuity', vendorB: 'Lowest TCO with retained-effort caveats', vendorC: 'Middle TCO; optional scope must be normalized' },
   },
   {
     criterionId: 'transition',
-    label: 'Transition plan quality',
+    label: 'Transition readiness',
     weight: 20,
-    scores: { northstar: 8, arcvault: 7, bluemaster: 3, datapeak: 6 },
-    notes: { northstar: 'Named staffing, SLA pre-aligned', arcvault: 'Governance gap — escalation paths missing', bluemaster: '6-page plan vs 25–40 expected', datapeak: '16-week cadence conflicts CDP Q3' },
+    scores: { vendorA: 8.0, vendorB: 5.9, vendorC: 6.5 },
+    notes: { vendorA: 'Lower operational risk; fee holdbacks need sharpening', vendorB: 'Client dependency and staffing proof still open', vendorC: 'Lower transition cost with slower stabilization' },
   },
   {
     criterionId: 'governance',
-    label: 'Governance & SLA framework',
+    label: 'SLA accountability',
     weight: 15,
-    scores: { northstar: 7, arcvault: 5, bluemaster: 6, datapeak: 7 },
-    notes: { northstar: 'SLA scope creep indicators in §4.2', arcvault: 'Steering committee undefined', bluemaster: 'Standard offshore SLA model', datapeak: 'Embedded alerting toolchain' },
+    scores: { vendorA: 7.1, vendorB: 7.4, vendorC: 8.8 },
+    notes: { vendorA: 'Clear targets; credit cap too light', vendorB: 'Complete framework; staffing must prove coverage', vendorC: 'Strongest remedies and chronic-miss posture' },
   },
   {
     criterionId: 'references',
-    label: 'Client references',
+    label: 'Evidence completeness',
     weight: 10,
-    scores: { northstar: 9, arcvault: 8, bluemaster: 6, datapeak: 8 },
-    notes: { northstar: '12 enterprise retail clients cited', arcvault: '2 named CDP/SAP references', bluemaster: 'Offshore-model references only', datapeak: 'Comparable retail client 2023–present' },
+    scores: { vendorA: 8.0, vendorB: 6.2, vendorC: 8.2 },
+    notes: { vendorA: 'Complete enough for conditional scoring', vendorB: 'Critical claims only partially in exhibits', vendorC: 'Clean evidence discipline with scope caveats' },
   },
 ];
 
 const VENDORS = [
-  { id: 'northstar', label: 'Northstar', band: 'bafo' },
-  { id: 'arcvault', label: 'ArcVault', band: 'bafo' },
-  { id: 'bluemaster', label: 'BlueMaster', band: 'declined' },
-  { id: 'datapeak', label: 'DataPeak', band: 'declined' },
+  { id: 'vendorA', label: 'Vendor A', band: 'bafo' },
+  { id: 'vendorB', label: 'Vendor B', band: 'bafo' },
+  { id: 'vendorC', label: 'Vendor C', band: 'bafo' },
 ];
 
 function weightedScore(vendorId: string): string {
@@ -177,7 +176,7 @@ export function EvaluationCanvas({ stageKey, event, nextGateEvaluations = [] }: 
           </table>
         </div>
         <div style={{ marginTop: 6, fontFamily: SHELL.MONO, fontSize: 8, letterSpacing: '0.06em', color: SHELL.INK_MUTED }}>
-          Hover cells for rationale. Scores are illustrative — final scores require Steward lock.
+          Hover cells for rationale. Scores are default evaluation readiness guidance — final scores require human reviewer lock.
         </div>
       </div>
 
