@@ -65,5 +65,8 @@ describe("canonicalClientDisplayName", () => {
     expect(
       canonicalClientDisplayName({ name: "Lakeshore Holdings Holdings" }),
     ).toBe("Lakeshore Holdings");
+    expect(
+      demoSafeClientText("Apex Retail Group Retail Group Group advisor"),
+    ).toBe("Apex Retail Group advisor");
   });
 });
