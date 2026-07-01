@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release adds the first governed Portfolio Value Pack slice to Tower. The Tower command center now has a row-level view of funded programs with owner, budget, promised value, measured value, value gap, blocker, evidence status, and source evidence from `cio_tower` instead of a generic fact table.
+This release strengthens the first governed Portfolio Value Pack slice in Tower. The Tower command center now has a row-level view of funded programs with owner, budget, actual spend YTD, promised value, measured value, value gap, burn rate, realization rate, value per dollar spent, evidence status, inspection reason, blocker, and source evidence from `cio_tower` instead of a generic fact table.
 
 ## Layer Impact
 
@@ -28,15 +28,16 @@ This release adds the first governed Portfolio Value Pack slice to Tower. The To
 ## Changes Included
 
 - Adds a governed Portfolio Value Pack row model to `src/lib/cio-tower/cxo-view-model.ts`.
-- Updates the Tower CXO dashboard to render owner, budget, promised value, measured value, value gap, evidence status, blocker, and source for portfolio programs.
-- Updates deterministic top-program aVa answers to use budget and value facts together.
-- Extends `scripts/qa/tower-cxo-parity-proof.ts` to record portfolio value-pack rows in the proof output.
+- Updates the Tower CXO dashboard to render owner, budget, actual spend YTD, promised value, measured value, value gap, realization rate, value per dollar spent, evidence status, inspection reason, blocker, and source for portfolio programs.
+- Updates deterministic top-program aVa answers to use budget, actual spend, and value facts together.
+- Adds deterministic aVa answer families for largest value gap, weak value evidence, and inspect-this-week questions.
+- Extends `scripts/qa/tower-prompt-raw-render-trace.mjs` so the deployed proof asks Portfolio Value Pack questions and captures final prompt, raw model output, and rendered response.
 
 ## QA / Validation
 
-- Passed: `npx jest src/lib/cio-tower/__tests__/answer.test.ts src/lib/cio-tower/__tests__/answer-contract.test.ts --runInBand` (`24` tests).
+- Passed: `npx jest src/lib/cio-tower/__tests__/answer.test.ts --runInBand` (`24` tests).
 - Passed: `npx jest src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx --runInBand` (`11` tests).
-- Passed with warnings only: `npx eslint src/lib/cio-tower/cxo-view-model.ts src/lib/cio-tower/answer.ts src/lib/cio-tower/__tests__/answer.test.ts src/components/tower/TowerIndexPage.tsx src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx scripts/qa/tower-cxo-parity-proof.ts`. The warnings are existing unused declarations in the large Tower surface plus one existing unused helper in `answer.ts`; no lint errors were reported.
+- Passed with warnings only: `npx eslint src/lib/cio-tower/answer.ts src/lib/cio-tower/cxo-view-model.ts src/lib/cio-tower/metric-packet.ts src/components/tower/TowerIndexPage.tsx src/lib/cio-tower/__tests__/answer.test.ts src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx scripts/qa/tower-prompt-raw-render-trace.mjs`. The warnings are existing unused declarations in the large Tower surface; no lint errors were reported.
 - Blocked by unrelated baseline dependency declarations: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` currently fails before this slice on missing project declarations/packages for `js-yaml`, `@azure-rest/ai-document-intelligence`, and `@axe-core/playwright`.
 - Passed: `npm run release:check`.
 - Pending after deploy: live parity proof showing dashboard value, aVa value, source evidence, prompt package, and trace ID on `app.abarva.ai`.

@@ -2404,17 +2404,20 @@ function CxoPortfolioValuePackTable({
               "Program",
               "Owner",
               "Budget",
+              "Actual YTD",
               "Promised value",
               "Measured value",
               "Gap",
+              "Realization",
+              "Value / $",
               "Evidence",
-              "Blocker",
+              "Inspect because",
               "Source",
             ].map((head) => (
               <th
                 key={head}
                 style={{
-                  textAlign: ["Budget", "Promised value", "Measured value", "Gap"].includes(head) ? "right" : "left",
+                  textAlign: ["Budget", "Actual YTD", "Promised value", "Measured value", "Gap", "Realization", "Value / $"].includes(head) ? "right" : "left",
                   padding: "0 10px 10px",
                   fontFamily: T.MONO,
                   fontSize: 9,
@@ -2435,8 +2438,11 @@ function CxoPortfolioValuePackTable({
               key={`${row.program}-${index}`}
               data-cio-tower-program={row.program}
               data-cio-tower-budget={row.budget}
+              data-cio-tower-actual-spend={row.actualSpend}
               data-cio-tower-promised-value={row.promisedValue}
               data-cio-tower-measured-value={row.measuredValue}
+              data-cio-tower-value-gap={row.valueGap}
+              data-cio-tower-inspection-reason={row.inspectionReason}
               style={{ borderTop: `1px solid ${T.RULE}` }}
             >
               <td style={{ padding: "12px 10px", minWidth: 220 }}>
@@ -2452,6 +2458,12 @@ function CxoPortfolioValuePackTable({
                 {row.budget}
               </td>
               <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+                {row.actualSpend}
+                <div style={{ color: T.GRAY_DK, fontSize: 11, marginTop: 3 }}>
+                  {row.spendBurnRate} burn
+                </div>
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
                 {row.promisedValue}
               </td>
               <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
@@ -2460,11 +2472,20 @@ function CxoPortfolioValuePackTable({
               <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850, color: row.valueGap === "gap" ? T.AMBER : T.INK }}>
                 {row.valueGap}
               </td>
+              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+                {row.valueRealizationRate}
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+                {row.measuredValuePerDollarSpent}
+              </td>
               <td style={{ padding: "12px 10px", color: T.INK_2, minWidth: 150 }}>
                 {row.evidenceStatus}
               </td>
               <td style={{ padding: "12px 10px", color: T.INK_2, minWidth: 220 }}>
-                {row.blocker}
+                <strong style={{ color: T.INK }}>{row.inspectionReason}</strong>
+                <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 4 }}>
+                  {row.blocker}
+                </div>
               </td>
               <td style={{ padding: "12px 10px", color: T.INK_2, minWidth: 190 }}>
                 {row.source}

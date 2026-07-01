@@ -22,6 +22,21 @@ const DEFAULT_QUESTIONS = [
     question: "give me the list of top 10 IT programs",
   },
   {
+    id: "largest-value-gap",
+    type: "deterministic",
+    question: "Which initiatives have the largest value gap?",
+  },
+  {
+    id: "weak-value-evidence",
+    type: "deterministic",
+    question: "Which programs have weak value evidence?",
+  },
+  {
+    id: "inspect-this-week",
+    type: "deterministic",
+    question: "What should I inspect this week?",
+  },
+  {
     id: "top-5-ai-programs",
     type: "deterministic",
     question: "give me the list of top 5 AI programs by spend and value",
