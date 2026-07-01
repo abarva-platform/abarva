@@ -50,6 +50,7 @@ import {
   buildIndustrialCioBackofficePromptAddendum,
   buildIndustrialCioBackofficeSource,
 } from "./industrial-cio-backoffice-source";
+import { canonicalClientDisplayName } from "@/lib/client-config";
 
 export type {
   AskIntent,
@@ -287,14 +288,19 @@ export async function* askIntelligence(
         : 0;
     const coverageReport = assertCoverage(questionCategory, sources);
     yield { type: "sources", sources, coverageReport };
+    const demoSafeTenantName =
+      canonicalClientDisplayName({
+        key: opts.tenantClientKey ?? opts.tenantInventoryKey ?? undefined,
+        name: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+      }) ??
+      opts.tenant?.displayName ??
+      opts.surfaceContext?.activeClient ??
+      opts.tenantClientKey ??
+      undefined;
     const advisoryPacket = assembleAdvisoryPacket({
       tenantKey:
         opts.tenantClientKey ?? opts.tenantInventoryKey ?? opts.tenantId,
-      tenantName:
-        opts.tenant?.displayName ??
-        opts.surfaceContext?.activeClient ??
-        opts.tenantClientKey ??
-        undefined,
+      tenantName: demoSafeTenantName,
       question: trimmed,
       classification,
       sources,
@@ -306,11 +312,7 @@ export async function* askIntelligence(
       buildIntelligenceDossier({
         tenantKey:
           opts.tenantClientKey ?? opts.tenantInventoryKey ?? opts.tenantId,
-        tenantName:
-          opts.tenant?.displayName ??
-          opts.surfaceContext?.activeClient ??
-          opts.tenantClientKey ??
-          undefined,
+        tenantName: demoSafeTenantName,
         question: trimmed,
         classification,
         sources,

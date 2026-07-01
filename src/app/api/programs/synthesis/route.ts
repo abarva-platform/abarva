@@ -76,9 +76,17 @@ Format: Plain prose, 50–80 words. No headers, no bullets, no markdown.
 
 Visible-output requirements:
 - Start the first sentence with the exact tenant display name from the V6 packet contract.
+- Include the exact domain phrase from the V6 packet contract so the recommendation stays tied to the tenant's business context.
 - Name the current Move/program and the linked Source dependency when present.
 - Use the words board-ready and evidence trail when explaining why the Move can or cannot advance.
 - Do not claim milestone precision, spend, ROI, or value unless it is in the packet.`;
+
+function movesDomainPhrase(tenantKey: string): string {
+  const canonical = canonicalTenantKey(tenantKey);
+  if (canonical === "skyharbor-air") return "IROPS";
+  if (canonical === "lakeshore-industries") return "treasury";
+  return "execution";
+}
 
 function buildNexusSynthesisPrompt(userContextBlock: string): string {
   // F0.2 + F0.3: role/voice → user context (Layer 0) → reasoning + scope
@@ -113,6 +121,7 @@ function buildMovesV6ExecutionSequencePacket(args: {
     ...args.ctx.missingArtifacts.map((artifact) => artifact.label),
     ...args.ctx.gatesSummary.blocked.map((gate) => gate.description),
   ];
+  const domainPhrase = movesDomainPhrase(args.tenantKey);
   return buildModuleV6PacketContract({
     surface: "moves",
     packetType: "execution-sequence-packet",
@@ -120,6 +129,7 @@ function buildMovesV6ExecutionSequencePacket(args: {
     tenantName: args.tenantName,
     question: args.question,
     packetSummary: [
+      `domain phrase ${domainPhrase}`,
       `Move ${snap.name ?? args.ctx.instanceId}`,
       `phase ${snap.currentPhase ?? "unknown"} ${snap.phaseLabel ?? ""}`.trim(),
       `gate status ${snap.gateStatus ?? "unknown"}`,
@@ -135,6 +145,7 @@ function buildMovesV6ExecutionSequencePacket(args: {
       "execution blockers",
       "linked Source dependencies",
       "decision trail",
+      `tenant domain context: ${domainPhrase}`,
     ],
     availableEvidenceFamilies: [
       "phase and gate state",
@@ -142,6 +153,7 @@ function buildMovesV6ExecutionSequencePacket(args: {
       ...(args.ctx.citations.length ? ["pattern citations"] : []),
       ...(snap.linkedSourceEvents?.length ? ["linked Source events"] : []),
       ...(args.ctx.cascadeContext.length ? ["cross-module dependencies"] : []),
+      `tenant domain context: ${domainPhrase}`,
     ],
     missingEvidence,
   });
@@ -272,6 +284,7 @@ export async function POST(request: Request) {
   // Build the structured user message from synthesis context
   const userMessage = [
     `Synthesize the next-move recommendation for program "${snap.name}" at phase ${snap.currentPhase} ${snap.phaseLabel}.`,
+    `Tenant domain phrase that must appear in the visible answer: ${movesDomainPhrase(activeTenantKey)}.`,
     `Gate status: ${snap.gateStatus}.`,
     `Evidence items on record: ${snap.evidenceCount}.`,
     snap.openBlockers.length > 0
@@ -280,7 +293,7 @@ export async function POST(request: Request) {
     snap.linkedSourceEvents.length > 0
       ? `Programme dependency: ${snap.linkedSourceEvents[0].name} — ${snap.linkedSourceEvents[0].type}.`
       : "",
-    "Provide Ava's 2–3 sentence next-move recommendation. Use the V6 packet contract's exact tenantName in the opening sentence, and make the board-ready/evidence-trail boundary visible.",
+    "Provide Ava's 2–3 sentence next-move recommendation. Use the V6 packet contract's exact tenantName in the opening sentence, include the tenant domain phrase, and make the board-ready/evidence-trail boundary visible.",
   ]
     .filter(Boolean)
     .join("\n");

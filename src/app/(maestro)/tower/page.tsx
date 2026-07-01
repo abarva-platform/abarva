@@ -6,8 +6,8 @@ import {
 import { buildAtlasTowerCurrentState } from "@/lib/atlas/tower-grounding";
 import { resolveTowerTab } from "@/lib/tower/tower-lens-tabs-view";
 import { loadCioTowerCxoView } from "@/lib/cio-tower/cxo-view-model";
-import { canonicalCioTowerTenantDisplayName } from "@/lib/cio-tower/metric-packet";
 import { loadCioTowerMetricPackets } from "@/lib/cio-tower/metric-packet-store";
+import { canonicalClientDisplayName } from "@/lib/client-config";
 
 export const metadata = { title: "IT Investment Tower · AbarVa" };
 export const dynamic = "force-dynamic";
@@ -34,7 +34,7 @@ export default async function TowerPage({
   const { tab } = await searchParams;
   const activeClient = await getActiveClientRow();
   const activeTenantName =
-    canonicalCioTowerTenantDisplayName({
+    canonicalClientDisplayName({
       key: activeClient?.key,
       name: activeClient?.name,
     }) ??
@@ -54,7 +54,11 @@ export default async function TowerPage({
           activeClient.id,
         ]).catch(() => []),
         loadCioTowerCxoView({
-          tenantKeyCandidates: [activeClient.key, activeClient.name, activeClient.id],
+          tenantKeyCandidates: [
+            activeClient.key,
+            activeClient.name,
+            activeClient.id,
+          ],
           tenantName: activeTenantName,
         }).catch(() => null),
       ])
