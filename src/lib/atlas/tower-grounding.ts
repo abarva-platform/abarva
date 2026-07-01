@@ -35,6 +35,7 @@ import {
   canonicalTenantKey,
   tenantIndustryCode,
 } from "@/lib/tenant/aliases";
+import { canonicalCioTowerTenantDisplayName } from "@/lib/cio-tower/metric-packet";
 
 type IndustryCode = "HEALTHCARE_IDN" | "FINSERV" | "RETAIL" | "GENERAL";
 
@@ -175,11 +176,19 @@ async function getClientProfile(
     ? canonicalTenantDisplayName(clientKey, row?.name)
     : "Active client";
   const fallbackIndustry = clientKey ? tenantIndustryCode(clientKey) : null;
+  const tenantKey = row?.tenant_key ?? row?.slug ?? fallbackTenantKey;
+  const clientName =
+    canonicalCioTowerTenantDisplayName({
+      key: tenantKey ?? clientKey ?? null,
+      name: row?.name ?? fallbackName,
+    }) ??
+    row?.name ??
+    fallbackName;
 
   return {
     clientId,
-    clientName: row?.name ?? fallbackName,
-    tenantKey: row?.tenant_key ?? row?.slug ?? fallbackTenantKey,
+    clientName,
+    tenantKey,
     industryCode: normalizeIndustryCode(
       row?.industry_code ?? row?.industry ?? fallbackIndustry,
     ),
