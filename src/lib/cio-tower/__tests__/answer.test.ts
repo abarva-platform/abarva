@@ -300,6 +300,8 @@ describe('cio tower answer contract', () => {
 
     expect(output?.reason).toBe('Exact budget metric lineage answered from governed Tower metric packet.');
     expect(output?.output.answer).toContain("SkyHarbor Air's loaded FY26 IT budget is $2.6B");
+    expect(output?.output.answer).toContain('governed Tower budget measure');
+    expect(output?.output.answer).not.toContain('packet');
     expect(output?.output.answer).toContain('formula version cio_tower_v1');
     expect(output?.output.answer).toContain('1 supporting Tower fact');
     expect(output?.output.tables).toEqual([

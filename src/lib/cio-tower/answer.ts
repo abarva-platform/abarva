@@ -738,7 +738,7 @@ function buildCioTowerDeterministicMetricAnswer(context: CioTowerPromptContext):
       reason: 'Exact budget metric lineage answered from governed Tower metric packet.',
       output: {
         version: 'cio_tower_visible_answer_v1',
-        answer: `${context.tenantName}'s loaded FY26 IT budget is ${totalBudget.displayValue}. Tower traces that value to the governed budget metric packet for ${totalBudget.period}, using the ${totalBudget.basis} basis and formula version ${totalBudget.formulaVersion}. It is backed by ${totalBudget.sourceFactKeys.length} supporting Tower fact${totalBudget.sourceFactKeys.length === 1 ? '' : 's'}; Tower does not expose internal fact identifiers in the user-visible answer.`,
+        answer: `${context.tenantName}'s loaded FY26 IT budget is ${totalBudget.displayValue}. Tower traces that value to the governed Tower budget measure for ${totalBudget.period}, using the ${totalBudget.basis} basis and formula version ${totalBudget.formulaVersion}. It is backed by ${totalBudget.sourceFactKeys.length} supporting Tower fact${totalBudget.sourceFactKeys.length === 1 ? '' : 's'}; Tower does not expose internal fact identifiers in the user-visible answer.`,
         tables: [
           {
             id: 'it_budget_metric_lineage',
