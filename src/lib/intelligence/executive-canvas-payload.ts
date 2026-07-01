@@ -1,0 +1,216 @@
+export type ExecutiveCanvasType =
+  | "investmentSequencingMap"
+  | "valueReadinessMatrix"
+  | "gateToValueRoadmap"
+  | "proofBoundary";
+
+export interface ExecutiveCanvasItem {
+  label: string;
+  value?: number;
+  readiness?: number;
+  risk?: number;
+  action?: string;
+  note?: string;
+}
+
+export interface ExecutiveCanvasColumn {
+  label: string;
+  items: Array<string | ExecutiveCanvasItem>;
+}
+
+export interface ExecutiveCanvasGate {
+  label: string;
+  owner?: string;
+  dependency?: string;
+  valueUnlocked?: string;
+  status?: string;
+}
+
+export interface ExecutiveCanvasProofBoundary {
+  known?: string[];
+  assumed?: string[];
+  missing?: string[];
+  decisionRequired?: string;
+}
+
+export interface ExecutiveCanvasPayload {
+  canvasType: ExecutiveCanvasType;
+  title?: string;
+  columns?: ExecutiveCanvasColumn[];
+  items?: ExecutiveCanvasItem[];
+  gates?: ExecutiveCanvasGate[];
+  proofBoundary?: ExecutiveCanvasProofBoundary;
+}
+
+export interface ExtractedExecutiveCanvasPayloads {
+  payloads: ExecutiveCanvasPayload[];
+  visibleContent: string;
+}
+
+const EXECUTIVE_CANVAS_BLOCK_RE =
+  /```(?:abarva-canvas|json\s+abarva-canvas)\s*\n([\s\S]*?)```/gim;
+
+export function hasExecutiveCanvasPayload(content: string): boolean {
+  EXECUTIVE_CANVAS_BLOCK_RE.lastIndex = 0;
+  return EXECUTIVE_CANVAS_BLOCK_RE.test(content);
+}
+
+export function extractExecutiveCanvasPayloads(
+  content: string,
+): ExtractedExecutiveCanvasPayloads {
+  const payloads: ExecutiveCanvasPayload[] = [];
+  const visibleContent = content
+    .replace(EXECUTIVE_CANVAS_BLOCK_RE, (_match, rawPayload: string) => {
+      const payload = parseExecutiveCanvasPayload(rawPayload);
+      if (payload) payloads.push(payload);
+      return "";
+    })
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return {
+    payloads,
+    visibleContent,
+  };
+}
+
+function parseExecutiveCanvasPayload(
+  rawPayload: string,
+): ExecutiveCanvasPayload | null {
+  try {
+    const value = JSON.parse(rawPayload);
+    if (!isRecord(value)) return null;
+    const canvasType = stringValue(value.canvasType);
+    if (!isExecutiveCanvasType(canvasType)) return null;
+
+    const payload: ExecutiveCanvasPayload = { canvasType };
+    const title = stringValue(value.title);
+    if (title) payload.title = title;
+
+    const columns = normalizeColumns(value.columns);
+    if (columns.length > 0) payload.columns = columns;
+
+    const items = normalizeItems(value.items);
+    if (items.length > 0) payload.items = items;
+
+    const gates = normalizeGates(value.gates);
+    if (gates.length > 0) payload.gates = gates;
+
+    const proofBoundary = normalizeProofBoundary(value.proofBoundary);
+    if (proofBoundary) payload.proofBoundary = proofBoundary;
+
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeColumns(value: unknown): ExecutiveCanvasColumn[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((column) => {
+      if (!isRecord(column)) return null;
+      const label = stringValue(column.label);
+      const rawItems = Array.isArray(column.items) ? column.items : [];
+      const items = rawItems
+        .map((item) => (typeof item === "string" ? item : normalizeItem(item)))
+        .filter((item): item is string | ExecutiveCanvasItem => Boolean(item));
+      if (!label || items.length === 0) return null;
+      return { label, items };
+    })
+    .filter((column): column is ExecutiveCanvasColumn => Boolean(column));
+}
+
+function normalizeItems(value: unknown): ExecutiveCanvasItem[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => normalizeItem(item))
+    .filter((item): item is ExecutiveCanvasItem => Boolean(item));
+}
+
+function normalizeItem(value: unknown): ExecutiveCanvasItem | null {
+  if (!isRecord(value)) return null;
+  const label = stringValue(value.label);
+  if (!label) return null;
+  return {
+    label,
+    ...optionalNumber("value", value.value),
+    ...optionalNumber("readiness", value.readiness),
+    ...optionalNumber("risk", value.risk),
+    ...optionalString("action", value.action),
+    ...optionalString("note", value.note),
+  };
+}
+
+function normalizeGates(value: unknown): ExecutiveCanvasGate[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((gate) => {
+      if (!isRecord(gate)) return null;
+      const label = stringValue(gate.label);
+      if (!label) return null;
+      return {
+        label,
+        ...optionalString("owner", gate.owner),
+        ...optionalString("dependency", gate.dependency),
+        ...optionalString("valueUnlocked", gate.valueUnlocked),
+        ...optionalString("status", gate.status),
+      };
+    })
+    .filter((gate): gate is ExecutiveCanvasGate => Boolean(gate));
+}
+
+function normalizeProofBoundary(
+  value: unknown,
+): ExecutiveCanvasProofBoundary | null {
+  if (!isRecord(value)) return null;
+  const proofBoundary: ExecutiveCanvasProofBoundary = {
+    known: stringArray(value.known),
+    assumed: stringArray(value.assumed),
+    missing: stringArray(value.missing),
+    ...optionalString("decisionRequired", value.decisionRequired),
+  };
+  if (
+    proofBoundary.known?.length ||
+    proofBoundary.assumed?.length ||
+    proofBoundary.missing?.length ||
+    proofBoundary.decisionRequired
+  ) {
+    return proofBoundary;
+  }
+  return null;
+}
+
+function isExecutiveCanvasType(value: string): value is ExecutiveCanvasType {
+  return (
+    value === "investmentSequencingMap" ||
+    value === "valueReadinessMatrix" ||
+    value === "gateToValueRoadmap" ||
+    value === "proofBoundary"
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function stringValue(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => stringValue(item))
+    .filter((item) => item.length > 0);
+}
+
+function optionalString(key: string, value: unknown): Record<string, string> {
+  const text = stringValue(value);
+  return text ? { [key]: text } : {};
+}
+
+function optionalNumber(key: string, value: unknown): Record<string, number> {
+  const number = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(number) ? { [key]: number } : {};
+}

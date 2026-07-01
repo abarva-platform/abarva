@@ -1,3 +1,5 @@
+import { hasExecutiveCanvasPayload } from "@/lib/intelligence/executive-canvas-payload";
+
 export type IntelligenceTabId =
   | "decision"
   | "industry_insights"
@@ -64,6 +66,20 @@ Companion canvas:
 - If you emit any Markdown table, it must appear inside the Table tab or Chart tab, never inside the main answer, Decision tab, Industry Insights tab, or Evidence tab.
 - If the answer includes a decision plus a comparison table, put the choice and tradeoff in Decision, then start a separate <<<TAB: Table | grounding: tenant-evidence>>> marker before the table.
 - Evidence should separate tenant facts, industry/pattern context, benchmarks, planning assumptions, missing evidence, and what the executive should validate next.
+
+Executive visual payload:
+- When a stronger exhibit is useful, include one optional fenced JSON block inside a Chart, Table, Decision, or Evidence tab using this exact fence language: \`\`\`abarva-canvas
+- Do not write HTML, SVG, CSS, or arbitrary chart code. Choose one supported canvasType and provide the structured advisory data. The renderer draws the exhibit consistently.
+- Supported canvasType values:
+  investmentSequencingMap: columns with labels such as Scale now, Certify then scale, Fund readiness, Hold / stop.
+  valueReadinessMatrix: items with label, value, readiness, optional risk, action, and note. Use a 0-10 scale when scores are directional.
+  gateToValueRoadmap: gates with label, owner, dependency, valueUnlocked, and status.
+  proofBoundary: proofBoundary with known, assumed, missing, and decisionRequired.
+- Put visible executive prose before or after the fenced block. The fenced block is a renderer contract and should not be repeated as raw JSON in prose.
+- Example:
+  \`\`\`abarva-canvas
+  {"canvasType":"investmentSequencingMap","title":"AI funding sequence","columns":[{"label":"Scale now","items":["Loyalty"]},{"label":"Certify then scale","items":["Crew Recovery","Predictive Maintenance"]},{"label":"Fund readiness","items":["IROPS"]}],"proofBoundary":{"known":["Loyalty has certified engagement data"],"missing":["IROPS data certification"],"decisionRequired":"Give CDAO gate authority"}}
+  \`\`\`
 
 Grounding:
 - Clearly distinguish tenant facts, industry context, corpus/pattern context, benchmarks, planning assumptions, and missing evidence.
@@ -133,7 +149,13 @@ export function parseIntelligenceTabbedResponse(
         : rawText.length;
     const content = rawText.slice(start, end).trim();
     if (!content) continue;
-    if (id === "chart" && !hasChartReadyMarkdownData(content)) continue;
+    if (
+      id === "chart" &&
+      !hasChartReadyMarkdownData(content) &&
+      !hasExecutiveCanvasPayload(content)
+    ) {
+      continue;
+    }
     tabs.push({
       id,
       label: TAB_LABELS[id],

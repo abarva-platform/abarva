@@ -165,4 +165,41 @@ describe("Intelligence tabbed response parser", () => {
     expect(parsed.tabs.map((tab) => tab.id)).toEqual(["table"]);
     expect(hasChartReadyMarkdownData("No table here")).toBe(false);
   });
+
+  it("keeps Chart tabs that carry a governed executive canvas payload", () => {
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain("abarva-canvas");
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
+      "investmentSequencingMap",
+    );
+    expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
+      "valueReadinessMatrix",
+    );
+
+    const parsed = parseIntelligenceTabbedResponse(
+      [
+        "Scale Loyalty now and fund IROPS readiness.",
+        "",
+        "<<<TAB: Chart | grounding: tenant-evidence>>>",
+        "Tenant evidence: structured decision exhibit.",
+        "",
+        "```abarva-canvas",
+        JSON.stringify({
+          canvasType: "investmentSequencingMap",
+          title: "AI funding sequence",
+          columns: [
+            { label: "Scale now", items: ["Loyalty"] },
+            { label: "Fund readiness", items: ["IROPS"] },
+          ],
+        }),
+        "```",
+      ].join("\n"),
+    );
+
+    expect(parsed.tabs).toHaveLength(1);
+    expect(parsed.tabs[0]).toMatchObject({
+      id: "chart",
+      grounding: "tenant-evidence",
+    });
+    expect(parsed.tabs[0]?.content).toContain("```abarva-canvas");
+  });
 });
