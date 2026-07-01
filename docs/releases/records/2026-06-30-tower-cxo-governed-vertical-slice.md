@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Tower now has a smallest release-proof CXO command-center slice that reads governed `cio_tower` measures and facts first. The landing page shows a governed Value Command Center, Portfolio Control, Vendor and Contract Exposure, Evidence and Trust, and an Ask aVa parity panel. Missing governed measures render as named business gaps instead of `$0`, placeholder math, or demo values.
+Tower now has a smallest release-proof CXO command-center slice that reads governed `cio_tower` measures and facts first. The landing page is intentionally frozen around the first credible Tower v1 story: Money → Work → Value → Evidence. It shows the eight governed measures, derived budget/value ratios, portfolio-control facts, peer benchmark rows, evidence/trust lineage, and an Ask aVa parity panel. Missing governed measures render as named business gaps instead of `$0`, placeholder math, or demo values.
 
 ## Layer Impact
 
@@ -29,7 +29,8 @@ Tower now has a smallest release-proof CXO command-center slice that reads gover
 
 - Adds `src/lib/cio-tower/cxo-view-model.ts` for a governed `cio_tower`-only CXO view model.
 - Updates `src/app/(maestro)/tower/page.tsx` to load and pass the governed model.
-- Updates `src/components/tower/TowerIndexPage.tsx` to render the governed CXO command-center landing when available.
+- Updates `src/components/tower/TowerIndexPage.tsx` to render the governed CXO command-center landing when available, including Budget Mix, Value Realization, Tenant Benchmark, Portfolio Control, Evidence and Trust, and Ask aVa reconciliation.
+- Defers vendor concentration, renewal exposure, full CFO slicing, and AI governance views until those governed measures are populated and proven.
 - Adds `scripts/qa/tower-cxo-parity-proof.ts` and `npm run tower:cio:cxo-parity` to prove one dashboard KPI and one aVa answer reconcile to the same governed measure.
 
 ## QA / Validation
@@ -66,4 +67,4 @@ Revert this PR. Existing Tower route and chat API remain in place; the governed 
 
 ## Known Gaps
 
-This is intentionally one vertical slice. It does not complete the full Tower redesign, all-dashboard tab rewiring, or all-tenant browser proof. It proves one governed dashboard/chat parity path first.
+This is intentionally one vertical slice. It does not complete the full Tower redesign, all-dashboard tab rewiring, vendor concentration, renewal exposure, AI governance, or all-tenant browser proof. It proves the first governed dashboard/chat parity path and the credible Tower v1 demo story first.

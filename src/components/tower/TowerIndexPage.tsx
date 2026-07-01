@@ -2223,12 +2223,89 @@ function CxoGovernedMeasureCard({ card }: { card: CioTowerCxoMeasureCard }) {
       <div style={{ marginTop: 7, color: T.INK_2, fontSize: 12.5, lineHeight: 1.35 }}>
         {hasValue ? (
           <>
-            {card.period ?? "period not loaded"} · {card.basis ?? "basis not loaded"} ·{" "}
-            {card.sourceFactKeys.length} source fact{card.sourceFactKeys.length === 1 ? "" : "s"}
+            {card.period?.toUpperCase() ?? "period not loaded"} · {card.basis ?? "basis not loaded"} ·{" "}
+            source-backed
           </>
         ) : (
           card.gap
         )}
+      </div>
+    </article>
+  );
+}
+
+function findCxoCard(
+  cards: ReadonlyArray<CioTowerCxoMeasureCard>,
+  measureKey: string,
+): CioTowerCxoMeasureCard | null {
+  return cards.find((card) => card.measureKey === measureKey) ?? null;
+}
+
+function safeRatio(numerator: number | null | undefined, denominator: number | null | undefined): number | null {
+  if (!Number.isFinite(Number(numerator)) || !Number.isFinite(Number(denominator))) return null;
+  const den = Number(denominator);
+  if (den <= 0) return null;
+  return Number(numerator) / den;
+}
+
+function formatPlainPercent(ratio: number | null | undefined): string {
+  if (ratio === null || ratio === undefined || !Number.isFinite(ratio)) return "gap";
+  return `${(ratio * 100).toFixed(1)}%`;
+}
+
+function formatMoneyGap(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "gap";
+  return formatMoney(value);
+}
+
+function DerivedCxoMetricCard({
+  label,
+  value,
+  detail,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  tone?: "neutral" | "good" | "warn";
+}) {
+  const color = tone === "good" ? T.GREEN : tone === "warn" ? T.AMBER : T.INK;
+  return (
+    <article
+      style={{
+        border: `1px solid ${tone === "warn" ? T.AMBER : T.RULE_STRONG}`,
+        borderRadius: 13,
+        background: "#fff",
+        padding: "15px 16px",
+        minHeight: 118,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 9,
+          letterSpacing: "1.4px",
+          textTransform: "uppercase",
+          color: T.GRAY_DK,
+          fontWeight: 850,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          marginTop: 10,
+          fontFamily: T.SERIF,
+          fontSize: 29,
+          lineHeight: 1.05,
+          color,
+          fontWeight: 900,
+        }}
+      >
+        {value}
+      </div>
+      <div style={{ marginTop: 7, color: T.INK_2, fontSize: 12.5, lineHeight: 1.35 }}>
+        {detail}
       </div>
     </article>
   );
@@ -2304,14 +2381,139 @@ function CxoGovernedTable({
   );
 }
 
+function CxoBudgetMix({
+  cards,
+}: {
+  cards: ReadonlyArray<CioTowerCxoMeasureCard>;
+}) {
+  const total = findCxoCard(cards, "total_it_budget_fy26")?.valueNumeric ?? null;
+  const run = findCxoCard(cards, "run_budget_fy26")?.valueNumeric ?? null;
+  const change = findCxoCard(cards, "change_budget_fy26")?.valueNumeric ?? null;
+  const initiative = findCxoCard(cards, "initiative_budget_fy26")?.valueNumeric ?? null;
+  const actualSpend = findCxoCard(cards, "actual_spend_ytd")?.valueNumeric ?? null;
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
+      <DerivedCxoMetricCard label="Run ratio" value={formatPlainPercent(safeRatio(run, total))} detail={`${formatMoneyGap(run)} run / ${formatMoneyGap(total)} total`} />
+      <DerivedCxoMetricCard label="Change ratio" value={formatPlainPercent(safeRatio(change, total))} detail={`${formatMoneyGap(change)} change / ${formatMoneyGap(total)} total`} />
+      <DerivedCxoMetricCard label="Initiative intensity" value={formatPlainPercent(safeRatio(initiative, total))} detail={`${formatMoneyGap(initiative)} funded work / ${formatMoneyGap(total)} total`} />
+      <DerivedCxoMetricCard label="Spend burn rate" value={formatPlainPercent(safeRatio(actualSpend, initiative))} detail={`${formatMoneyGap(actualSpend)} YTD spend / ${formatMoneyGap(initiative)} initiative budget`} />
+    </div>
+  );
+}
+
+function CxoValueRealization({
+  cards,
+}: {
+  cards: ReadonlyArray<CioTowerCxoMeasureCard>;
+}) {
+  const promised = findCxoCard(cards, "promised_value_fy26")?.valueNumeric ?? null;
+  const measured = findCxoCard(cards, "measured_value_ytd")?.valueNumeric ?? null;
+  const actualSpend = findCxoCard(cards, "actual_spend_ytd")?.valueNumeric ?? null;
+  const initiative = findCxoCard(cards, "initiative_budget_fy26")?.valueNumeric ?? null;
+  const gap = promised !== null && measured !== null ? Math.max(promised - measured, 0) : null;
+  const measuredPerSpent = safeRatio(measured, actualSpend);
+  const promisedPerInitiative = safeRatio(promised, initiative);
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
+      <DerivedCxoMetricCard label="Promised value" value={formatMoneyGap(promised)} detail="FY26 forecast value from governed initiative records" />
+      <DerivedCxoMetricCard label="Measured value" value={formatMoneyGap(measured)} detail="YTD measured value only where loaded" tone={measured ? "good" : "warn"} />
+      <DerivedCxoMetricCard label="Value gap" value={formatMoneyGap(gap)} detail="Promised value not yet measured YTD" tone={gap && gap > 0 ? "warn" : "good"} />
+      <DerivedCxoMetricCard label="Value per dollar spent" value={measuredPerSpent === null ? "gap" : `${measuredPerSpent.toFixed(2)}x`} detail={`${formatMoneyGap(measured)} measured / ${formatMoneyGap(actualSpend)} spent YTD`} />
+      <DerivedCxoMetricCard label="Promised value per initiative $" value={promisedPerInitiative === null ? "gap" : `${promisedPerInitiative.toFixed(2)}x`} detail={`${formatMoneyGap(promised)} promised / ${formatMoneyGap(initiative)} initiative budget`} />
+      <DerivedCxoMetricCard label="Measured realization rate" value={formatPlainPercent(safeRatio(measured, promised))} detail={`${formatMoneyGap(measured)} measured / ${formatMoneyGap(promised)} promised`} />
+    </div>
+  );
+}
+
+function CxoTenantBenchmark({
+  model,
+}: {
+  model: CioTowerCxoViewModel;
+}) {
+  if (model.benchmarkRows.length === 0) {
+    return (
+      <TowerEmptyState
+        eyebrow="Benchmark gap"
+        title="Peer benchmark data is not loaded."
+        body="The governed measure layer has no peer rows to compare against yet."
+      />
+    );
+  }
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+        <thead>
+          <tr>
+            {["Peer", "FY26 IT budget", "Run mix", "Change mix", "Initiative intensity", "Value realization"].map((head) => (
+              <th
+                key={head}
+                style={{
+                  textAlign: head === "Peer" ? "left" : "right",
+                  padding: "0 10px 10px",
+                  fontFamily: T.MONO,
+                  fontSize: 9,
+                  letterSpacing: "1.2px",
+                  color: T.GRAY_DK,
+                  textTransform: "uppercase",
+                }}
+              >
+                {head}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {model.benchmarkRows.map((row) => (
+            <tr
+              key={row.tenantKey}
+              style={{
+                borderTop: `1px solid ${T.RULE}`,
+                background: row.isCurrent ? T.GREEN_BG : "transparent",
+              }}
+            >
+              <td style={{ padding: "12px 10px", fontWeight: 900 }}>
+                {row.isCurrent ? model.tenantName : row.label}
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 850 }}>
+                {formatMoneyGap(row.totalBudget)}
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "right" }}>
+                {formatPlainPercent(safeRatio(row.runBudget, row.totalBudget))}
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "right" }}>
+                {formatPlainPercent(safeRatio(row.changeBudget, row.totalBudget))}
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "right" }}>
+                {formatPlainPercent(safeRatio(row.initiativeBudget, row.totalBudget))}
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "right" }}>
+                {formatPlainPercent(safeRatio(row.measuredValue, row.promisedValue))}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function CxoGovernedCommandCenter({
   model,
 }: {
   model: CioTowerCxoViewModel;
 }) {
-  const valueCards = model.cards.filter((card) => card.section === "value_command_center").slice(0, 5);
-  const portfolioCards = model.cards.filter((card) => card.section === "portfolio_control").slice(0, 4);
-  const trustCards = model.cards.filter((card) => card.section === "evidence_trust").slice(0, 3);
+  const commandCards = [
+    "total_it_budget_fy26",
+    "total_it_budget_fy25_baseline",
+    "run_budget_fy26",
+    "change_budget_fy26",
+    "initiative_budget_fy26",
+    "actual_spend_ytd",
+    "promised_value_fy26",
+    "measured_value_ytd",
+  ]
+    .map((measureKey) => findCxoCard(model.cards, measureKey))
+    .filter((card): card is CioTowerCxoMeasureCard => Boolean(card));
   const parityCard = model.cards.find((card) => card.measureKey === model.parityMeasureKey);
 
   return (
@@ -2352,8 +2554,9 @@ function CxoGovernedCommandCenter({
           {model.headline}
         </h2>
         <p style={{ margin: "10px 0 0", color: T.INK_2, maxWidth: 900, fontSize: 14.5, lineHeight: 1.5 }}>
-          This landing slice reads only `cio_tower.measure_results`, `cio_tower.facts`,
-          `cio_tower.relationships`, and `cio_tower.entities`. Missing measures are business gaps, not zeros.
+          Tower v1 is focused on one board-grade question: whether the FY26 technology
+          budget is translating into measured value. Missing measures are shown as business
+          gaps, not zeroes.
         </p>
       </section>
 
@@ -2361,45 +2564,39 @@ function CxoGovernedCommandCenter({
         <div style={{ fontFamily: T.MONO, fontSize: 10, letterSpacing: "1.8px", textTransform: "uppercase", color: T.GOLD, fontWeight: 900, marginBottom: 10 }}>
           Value Command Center
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 12 }}>
-          {valueCards.map((card) => <CxoGovernedMeasureCard key={card.measureKey} card={card} />)}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
+          {commandCards.map((card) => <CxoGovernedMeasureCard key={card.measureKey} card={card} />)}
         </div>
       </section>
 
-      <section style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.25fr) minmax(320px, 0.85fr)", gap: 18, marginBottom: 18 }}>
-        <CioPanel eyebrow="Portfolio Control" title="Which programs and budget slices deserve CIO attention.">
-          {portfolioCards.length > 0 ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12, marginBottom: 16 }}>
-              {portfolioCards.map((card) => <CxoGovernedMeasureCard key={card.measureKey} card={card} />)}
-            </div>
-          ) : null}
+      <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
+        <CioPanel eyebrow="Budget Mix" title="How much is run, how much is change, and how much is moving through initiatives.">
+          <CxoBudgetMix cards={model.cards} />
+        </CioPanel>
+
+        <CioPanel eyebrow="Value Realization" title="What was promised, what is measured, and how much value still needs proof.">
+          <CxoValueRealization cards={model.cards} />
+        </CioPanel>
+
+        <CioPanel eyebrow="Portfolio Control" title="Which funded work deserves CIO inspection first.">
           <CxoGovernedTable
             rows={model.portfolioRows}
             emptyTitle="No governed portfolio-control facts are loaded."
-            emptyBody="Tower needs initiative budget, IT budget, or value facts in cio_tower.facts before this table can rank the portfolio."
+            emptyBody="Tower needs initiative budget, IT budget, or value facts before this table can rank the portfolio."
           />
         </CioPanel>
-        <div style={{ display: "grid", gap: 18 }}>
-          <CioPanel eyebrow="Vendor and Contract Exposure" title="Which vendors and contracts create leverage.">
-            <CxoGovernedTable
-              rows={model.vendorRows}
-              emptyTitle="Vendor exposure is a governed data gap."
-              emptyBody="No vendor-contract facts are loaded in cio_tower.facts for this tenant yet."
-            />
-          </CioPanel>
-          <CioPanel eyebrow="Evidence and Trust" title="What proves the dashboard.">
-            {trustCards.length > 0 ? (
-              <div style={{ display: "grid", gap: 10, marginBottom: 14 }}>
-                {trustCards.map((card) => <CxoGovernedMeasureCard key={card.measureKey} card={card} />)}
-              </div>
-            ) : null}
-            <CxoGovernedTable
-              rows={model.trustRows}
-              emptyTitle="Evidence lineage is not loaded."
-              emptyBody="Tower needs fact-to-source lineage before it can show a trust map."
-            />
-          </CioPanel>
-        </div>
+
+        <CioPanel eyebrow="Tenant Benchmark" title="How this tenant compares with the governed peer set.">
+          <CxoTenantBenchmark model={model} />
+        </CioPanel>
+
+        <CioPanel eyebrow="Evidence and Trust" title="What proves the dashboard.">
+          <CxoGovernedTable
+            rows={model.trustRows}
+            emptyTitle="Evidence lineage is not loaded."
+            emptyBody="Tower needs fact-to-source lineage before it can show a trust map."
+          />
+        </CioPanel>
       </section>
 
       <section
