@@ -137,7 +137,8 @@ export function buildSourceAnswerEngine(
     input.contextBundle,
     input.prompt,
   );
-  const evidence = rankAnswerEvidence(live, mode).slice(0, 8);
+  const rankedEvidence = rankAnswerEvidence(live, mode);
+  const evidence = rankedEvidence.slice(0, 8);
   const corpusSections = getSourceCorpusAnswerPatternSections({
     event: input.contextBundle.sourcingEvent ?? {},
     prompt: input.prompt,
@@ -172,7 +173,7 @@ export function buildSourceAnswerEngine(
   );
   const bafoInstructionAnswer = buildBafoInstructionAnswer({
     prompt: input.prompt,
-    evidence,
+    evidence: rankedEvidence,
   });
   const currentStateFindings =
     bafoInstructionAnswer?.currentStateFindings ??
