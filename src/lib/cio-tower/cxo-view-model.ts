@@ -111,12 +111,12 @@ const CXO_SECTIONS: CioTowerCxoViewModel['sections'] = [
   {
     key: 'value_command_center',
     label: 'Value Command Center',
-    purpose: 'Budget, committed value, proven value, and value proof gaps from governed measures.',
+    purpose: 'Budget, promised value, proven value, and the value still needing executive attention.',
   },
   {
     key: 'portfolio_control',
     label: 'Portfolio Control',
-    purpose: 'Top programs and budget slices that are source-backed enough for CIO inspection.',
+    purpose: 'The budget lanes and funded programs the CIO should inspect first.',
   },
   {
     key: 'vendor_contract_exposure',
@@ -131,7 +131,7 @@ const CXO_SECTIONS: CioTowerCxoViewModel['sections'] = [
   {
     key: 'ask_ava',
     label: 'Ask aVa',
-    purpose: 'Ask the same governed measures and compare the answer trace with the dashboard.',
+    purpose: 'Ask aVa to explain the numbers, tradeoffs, and action path in plain executive language.',
   },
 ];
 
@@ -174,13 +174,13 @@ function sourceLabel(row: FactEvidenceRow): string {
 }
 
 function businessGapForMeasure(measureKey: string): string {
-  if (measureKey === 'total_it_budget_fy26') return 'FY26 total IT budget is not loaded as a governed Tower measure.';
-  if (measureKey === 'promised_value_fy26') return 'Committed value/business-case benefit is not loaded as a governed Tower measure.';
-  if (measureKey === 'measured_value_ytd') return 'Finance-attested measured value is not loaded as a governed Tower measure.';
-  if (measureKey === 'actual_spend_ytd') return 'Actual spend YTD is not loaded as a governed Tower measure.';
-  if (measureKey === 'run_budget_fy26') return 'Run budget split is not loaded as a governed Tower measure.';
-  if (measureKey === 'change_budget_fy26') return 'Change budget split is not loaded as a governed Tower measure.';
-  return `${measureKey} is not loaded as a governed Tower measure.`;
+  if (measureKey === 'total_it_budget_fy26') return 'FY26 total IT budget is not available yet.';
+  if (measureKey === 'promised_value_fy26') return 'Business-case value is not available yet.';
+  if (measureKey === 'measured_value_ytd') return 'Finance-attested realized value is not available yet.';
+  if (measureKey === 'actual_spend_ytd') return 'Year-to-date actual spend is not available yet.';
+  if (measureKey === 'run_budget_fy26') return 'Run budget split is not available yet.';
+  if (measureKey === 'change_budget_fy26') return 'Change budget split is not available yet.';
+  return 'This metric is not available yet.';
 }
 
 function cardFromMeasure(row: MeasureResultRow, evidence: CioTowerCxoEvidenceRef[]): CioTowerCxoMeasureCard {
@@ -399,8 +399,8 @@ export async function loadCioTowerCxoView(args: {
     const gaps = Array.from(new Set(cards.map((card) => card.gap).filter((gap): gap is string => Boolean(gap))));
     const totalBudget = cards.find((card) => card.measureKey === 'total_it_budget_fy26');
     const headline = totalBudget?.valueNumeric
-      ? `${args.tenantName}'s governed Tower budget measure is ${totalBudget.displayValue}; every card below is either backed by cio_tower evidence or marked as a business gap.`
-      : `${args.tenantName}'s Tower command center is waiting for a governed FY26 IT budget measure; gaps are shown instead of placeholder dollars.`;
+      ? `${args.tenantName} has ${totalBudget.displayValue} of FY26 technology budget in view. The executive question is how much of that spend is turning into measurable value.`
+      : `${args.tenantName}'s Tower command center is waiting for the FY26 technology budget before it can tell a board-grade value story.`;
 
     return {
       tenantKey,
