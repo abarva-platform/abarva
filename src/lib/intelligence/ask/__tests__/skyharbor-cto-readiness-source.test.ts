@@ -35,6 +35,11 @@ describe("SkyHarbor CTO readiness ask source", () => {
     ).toBe(true);
     expect(
       isSkyHarborCtoReadinessQuestion(
+        "What important question is data-thin, and what evidence would close it?",
+      ),
+    ).toBe(true);
+    expect(
+      isSkyHarborCtoReadinessQuestion(
         "Summarize the last conversation in one sentence.",
       ),
     ).toBe(false);

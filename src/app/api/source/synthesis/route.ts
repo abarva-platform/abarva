@@ -42,6 +42,8 @@ const SOURCE_V6_SYNTHESIS_HEADERS = {
   "X-AbarVa-V6-Surface": "source",
   "X-AbarVa-Renderer-Policy": "placement-only",
 } as const;
+const SOURCE_V6_SYNTHESIS_PROMPT_VERSION =
+  "source-v6-synthesis-2026-07-01-final-gaps";
 
 const DEFAULT_SOURCE_INSTANCE_ID = "apex-retail-ams-outsourcing-2026";
 const SOURCE_INSTANCE_ALIASES: Record<string, string> = {
@@ -85,7 +87,7 @@ Format: Plain prose, 50–80 words. No headers, no bullets, no markdown.
 
 Visible-output requirements:
 - Start the first sentence with the exact tenant display name from the V6 packet contract.
-- If commercial evidence is thin or fields are not loaded, use the phrase DATA-THIN and name the missing commercial fields in business language: service scope, annual cost, renewal or contract evidence.
+- If commercial evidence is thin or fields are not loaded, use the exact phrase "commercial evidence is DATA-THIN" and name the missing commercial fields in business language: service scope, annual cost, renewal or contract evidence.
 - If commercial facts are loaded, name at least one loaded system, vendor, service, annual cost, renewal, or linked program fact before giving the action.`;
 
 function buildAvaSynthesisPrompt(userContextBlock: string): string {
@@ -239,7 +241,7 @@ export async function POST(request: Request) {
 
   // Cache check
   const stateHash = instanceStateHash(instance);
-  const cacheKey = `${instance.id}:${stateHash}:${pattern.version}:ava:${MODULE_V6_ANSWER_CONTRACT_VERSION}`;
+  const cacheKey = `${instance.id}:${stateHash}:${pattern.version}:ava:${MODULE_V6_ANSWER_CONTRACT_VERSION}:${SOURCE_V6_SYNTHESIS_PROMPT_VERSION}`;
   const etag = computeSynthesisEtag(cacheKey);
   const ifNoneMatch = request.headers.get("if-none-match");
   const cached = synthesisCache.get(cacheKey);
@@ -472,6 +474,7 @@ function buildSynthesisUserMessage(
   lines.push(
     "",
     "Provide aVa's 2–3 sentence validator assessment of this state. Use the V6 packet contract's exact tenantName in the opening sentence, and make the commercial evidence boundary visible.",
+    'If fields are missing, include the exact phrase "commercial evidence is DATA-THIN".',
   );
 
   return lines.join("\n");
