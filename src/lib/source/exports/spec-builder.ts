@@ -105,9 +105,11 @@ export async function buildSourceDeliverableSpec(
       ...base,
       kind,
       payload: {
+        tenantName: payload.tenantName,
         eventCode: payload.eventCode,
         eventName: payload.eventName,
         issuedBy: payload.issuedBy,
+        generatedAt: payload.generatedAt,
         body: payload.body,
         bodyIsAuthored: payload.bodyIsAuthored,
       } as unknown as Record<string, unknown>,
@@ -183,9 +185,11 @@ export async function buildSourceDeliverableSpec(
     case "vendor-risk-pack": {
       const builder = LIFECYCLE_NARRATIVE_KINDS[kind]!;
       const payload = (await builder(ctx, generatedAt)) as {
+        tenantName?: string;
         eventCode: string;
         eventName: string;
         issuedBy?: string;
+        generatedAt?: string;
         body: string;
         bodyIsAuthored: boolean;
       };
@@ -193,9 +197,11 @@ export async function buildSourceDeliverableSpec(
         ...base,
         kind,
         payload: {
+          tenantName: payload.tenantName,
           eventCode: payload.eventCode,
           eventName: payload.eventName,
           issuedBy: payload.issuedBy,
+          generatedAt: payload.generatedAt,
           body: payload.body,
           bodyIsAuthored: payload.bodyIsAuthored,
         } as unknown as Record<string, unknown>,

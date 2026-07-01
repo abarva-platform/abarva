@@ -28,6 +28,7 @@ export const DECISION_BRIEF_REQUIRED_SECTIONS = [
 ] as const;
 
 export const DECISION_BRIEF_FORBIDDEN_PATTERNS = [
+  /Airline Demo/i,
   /SkyHarbor Air/i,
   /SkyHarbor/i,
   /SKYH-NORMALIZE/i,
@@ -320,7 +321,7 @@ export function buildEvaluationDecisionBriefMarkdown(args: {
     "",
     "## Evidence / Source Note",
     "",
-    "This brief is based on the Airline Demo AMS Source event evidence pack, Vendor Response MVE Profiles, Vendor Challenge Log, Commercial Leverage Seeds, BAFO Instruction Pack, and Evaluation Scorecard available in AbarVa Source. Figures are planning and evaluation inputs; final award support requires sponsor approval, vendor BAFO responses, legal/commercial review, and finance validation.",
+    "This brief is based on the AMS Source event evidence pack, Vendor Response MVE Profiles, Vendor Challenge Log, Commercial Leverage Seeds, BAFO Instruction Pack, and Evaluation Scorecard available in AbarVa Source. Figures are planning and evaluation inputs; final award support requires sponsor approval, vendor BAFO responses, legal/commercial review, and finance validation.",
     "",
   ].join("\n");
 
