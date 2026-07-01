@@ -335,6 +335,7 @@ describe('cio tower answer contract', () => {
     expect(output?.reason).toBe('Top program budget question answered from loaded Tower program budget facts.');
     expect(output?.output.answer).toContain('Crew Recovery & Legality Modernization');
     expect(output?.output.answer).toContain('$28.3M');
+    expect(output?.output.answer).toContain('The loaded FY26 initiative budget total is $28.3M');
     expect(output?.output.answer).not.toContain('initiative-1');
     expect(output?.output.tables).toEqual([
       {
@@ -344,6 +345,13 @@ describe('cio tower answer contract', () => {
         rows: [['1', 'Crew Recovery & Legality Modernization', '$28.3M', 'committed', 'high']],
       },
     ]);
+    expect(
+      __cioTowerAnswerTestHooks.validateParsedVisibleAnswer({
+        contractKey: context().contract.contract_key,
+        metricPackets: context().metricPackets,
+        parsedOutput: output!.output,
+      }),
+    ).toEqual([]);
   });
 
   it('scrubs code-shaped loaded program names before visible validation', () => {

@@ -785,13 +785,17 @@ function buildCioTowerDeterministicMetricAnswer(context: CioTowerPromptContext):
   if (context.contract.contract_key === 'tower_top_it_programs_by_budget') {
     const table = buildTowerTopProgramsTable(context.relevantFacts, 10);
     if (!table) return null;
+    const initiativeBudget = context.metricPackets.find((packet) => packet.measureKey === 'initiative_budget_fy26');
     const topProgram = table.rows[0]?.[1] ?? 'the largest loaded program';
     const topBudget = table.rows[0]?.[2] ?? 'not loaded';
+    const aggregateSentence = initiativeBudget?.valueNumeric
+      ? ` The loaded FY26 initiative budget total is ${initiativeBudget.displayValue}.`
+      : '';
     return {
       reason: 'Top program budget question answered from loaded Tower program budget facts.',
       output: {
         version: 'cio_tower_visible_answer_v1',
-        answer: `${context.tenantName}'s top loaded IT program by FY26 budget is ${topProgram} at ${topBudget}. Tower is ranking the loaded program budget facts it has; it is not filling in missing programs or estimating spend that is not loaded.`,
+        answer: `${context.tenantName}'s top loaded IT program by FY26 budget is ${topProgram} at ${topBudget}.${aggregateSentence} Tower is ranking the loaded program budget facts it has; it is not filling in missing programs or estimating spend that is not loaded.`,
         tables: [table],
         tabs: [],
         followUpQuestion: 'Do you want Tower to show the decision or risk view for these programs next?',
