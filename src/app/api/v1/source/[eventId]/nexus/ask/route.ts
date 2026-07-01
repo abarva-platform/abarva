@@ -457,12 +457,12 @@ function inferSourceArtifactSegment(
   artifact: SourceArtifactContextRow | undefined,
 ): string {
   if (!artifact) return "sourcing_artifacts";
-  if (artifact.source_origin === "generated") return "sourcing_artifacts";
 
   const text = [
     artifact.original_name,
     artifact.artifact_family,
     artifact.artifact_kind,
+    artifact.source_origin,
   ]
     .filter(Boolean)
     .join(" ")
@@ -485,6 +485,9 @@ function inferSourceArtifactSegment(
   }
   if (/\b(application|app|scope|tower|service[-_ ]?catalog|data[-_ ]?center|infrastructure|network|topology|circuit|cmdb)\b/.test(text)) {
     return "it_landscape";
+  }
+  if (/\b(generated|rfp[_ -]?package|response[_ -]?checklist|preview|source\\.md|artifact)\b/.test(text)) {
+    return "sourcing_artifacts";
   }
 
   return "sourcing_artifacts";
