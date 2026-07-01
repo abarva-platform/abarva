@@ -16,6 +16,7 @@ import {
   INTELLIGENCE_TABBED_OUTPUT_CONTRACT,
   parseIntelligenceTabbedResponse,
 } from "@/lib/intelligence/tabbed-response";
+import { hasExecutiveCanvasPayload } from "@/lib/intelligence/executive-canvas-payload";
 
 const DEFAULT_MODEL = "claude-opus-4-7";
 const DEFAULT_MAX_TOKENS = 25_000;
@@ -686,6 +687,48 @@ export async function synthesizeIntelligenceConsultantText(args: {
         );
       }
     }
+    if (
+      contractValidationIssues.length === 0 &&
+      requiresNativeExecutiveCanvas(args.dossier.question) &&
+      !hasExecutiveCanvasPayload(text)
+    ) {
+      const repairUser = [
+        user,
+        "",
+        "Draft answer that missed the native executive exhibit contract:",
+        text,
+        "",
+        "Native canvas repair instruction:",
+        "Return the same senior-advisor answer, but add exactly one governed `abarva-canvas` fenced JSON block inside the most relevant Decision, Chart, Table, or Evidence tab.",
+        "Use one supported canvasType from the system prompt: investmentSequencingMap, valueReadinessMatrix, gateToValueRoadmap, or proofBoundary.",
+        "For prioritization, funding, scale, hold, stop, or sequencing questions, prefer investmentSequencingMap.",
+        "For portfolio tradeoff or value-readiness questions, prefer valueReadinessMatrix.",
+        "For dependency, prerequisite, gate, roadmap, or unlock-value questions, prefer gateToValueRoadmap.",
+        "For trust, governance, evidence quality, assumption, missing-data, or signoff questions, prefer proofBoundary.",
+        "Preserve the recommendation, tenant facts, caveats, and any useful Markdown table. Do not expose raw JSON outside the fenced block.",
+        "Do not write HTML, SVG, CSS, or arbitrary chart code. Return final user-facing text only.",
+      ].join("\n");
+      const repaired = await withTimeout(
+        client.messages.create({
+          model,
+          max_tokens: Math.max(maxTokens, 1800),
+          system: INTELLIGENCE_CONSULTANT_TEXT_SYSTEM_PROMPT,
+          messages: [{ role: "user", content: repairUser }],
+        }),
+        timeoutMs,
+      );
+      const repairedText = normalizeConsultantText(
+        extractAnthropicText(repaired),
+      );
+      if (hasExecutiveCanvasPayload(repairedText)) {
+        rawText = repairedText;
+        text = repairedText;
+      } else {
+        rawText = repairedText || rawText;
+        text = normalizeConsultantText(rawText);
+        contractValidationIssues.push("missing_native_executive_canvas");
+      }
+    }
     args.onModelOutput?.({
       rawText,
       text,
@@ -787,6 +830,12 @@ function numberFromEnv(key: string, fallback: number): number {
 
 function isExplicitVisualAsk(query: string): boolean {
   return /\b(table|tables|tabular|matrix|chart|charts|graph|graphs|visual|visually|visualize|plot|ranking|ranked|compare|comparison|break ?down|show me)\b/i.test(
+    query,
+  );
+}
+
+function requiresNativeExecutiveCanvas(query: string): boolean {
+  return /\b(abarva\s+right-canvas|structured\s+abarva|executive\s+(?:canvas|exhibit)|canvas\s+exhibit|prioriti[sz]e|priority|priorities|sequence|sequencing|investment|invest|fund|funding|value[ -/]readiness|readiness|gate|roadmap|risk-boundary|proof-boundary|transformation|operating model|portfolio|scale|hold|stop)\b/i.test(
     query,
   );
 }

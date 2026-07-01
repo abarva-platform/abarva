@@ -406,6 +406,43 @@ describe("Intelligence consultant text synthesis", () => {
       "<<<TAB: Decision | grounding: tenant-evidence>>>",
       "Approve a gated IROPS decisioning tranche. The executive choice is to fund recovery option ranking and human dispatch support before autonomous write-back.",
       "",
+      "```abarva-canvas",
+      JSON.stringify({
+        canvasType: "investmentSequencingMap",
+        title: "AI funding sequence",
+        columns: [
+          {
+            label: "Scale now",
+            items: [
+              {
+                label: "MRO predictive maintenance",
+                value: 7,
+                readiness: 7,
+                risk: 4,
+                action: "Scale bounded loop",
+                owner: "EVP Operations",
+                gate: "Measured realized-value baseline",
+              },
+            ],
+          },
+          {
+            label: "Fund readiness",
+            items: [
+              {
+                label: "IROPS recovery decisioning",
+                value: 10,
+                readiness: 2,
+                risk: 8,
+                action: "Fund gated tranche",
+                owner: "COO + CDAO",
+                gate: "Signed data freshness SLA",
+              },
+            ],
+          },
+        ],
+      }),
+      "```",
+      "",
       "<<<TAB: Industry Insights | grounding: industry-context>>>",
       "Industry context: airlines that improve disruption recovery usually start with decision support around crew, aircraft, and passenger recovery. This is not tenant proof; it is context for why the SkyHarbor operating problem is worth prioritizing.",
       "",
@@ -488,6 +525,100 @@ describe("Intelligence consultant text synthesis", () => {
     ).toMatchObject({
       grounding: "industry-context",
     });
+  });
+
+  it("repairs strategic consultant answers that have tabs but no native executive canvas", async () => {
+    const initialAnswer = [
+      "SkyHarbor should sequence AI funding instead of spreading the tranche evenly. Loyalty scales first, crew recovery and IROPS need certification before scale, and predictive maintenance should stay in a bounded proof.",
+      "",
+      "<<<TAB: Decision | grounding: tenant-evidence>>>",
+      "Choice: scale Loyalty now; certify IROPS and Crew Recovery before autonomous scale.",
+      "",
+      "<<<TAB: Table | grounding: tenant-evidence>>>",
+      "| Initiative | Value | Readiness | Action |",
+      "|---|---:|---:|---|",
+      "| Loyalty AI | 8 | 9 | Scale now |",
+      "| IROPS recovery | 10 | 3 | Fund readiness |",
+      "| Crew Recovery | 8 | 6 | Certify then scale |",
+      "",
+      "<<<TAB: Evidence | grounding: tenant-evidence>>>",
+      "Tenant facts support the sequencing, while exact realized value remains a gap to confirm.",
+    ].join("\n");
+    const repairedAnswer = [
+      initialAnswer,
+      "",
+      "```abarva-canvas",
+      JSON.stringify({
+        canvasType: "investmentSequencingMap",
+        title: "AI funding sequence",
+        columns: [
+          {
+            label: "Scale now",
+            items: [
+              {
+                label: "Loyalty AI",
+                value: 8,
+                readiness: 9,
+                risk: 3,
+                action: "Scale now",
+                owner: "Chief Digital Officer",
+                gate: "Certified customer data",
+              },
+            ],
+          },
+          {
+            label: "Certify then scale",
+            items: [
+              {
+                label: "Crew Recovery",
+                value: 8,
+                readiness: 6,
+                risk: 6,
+                action: "Certify then scale",
+                owner: "EVP Operations",
+                gate: "Crew legality signoff",
+              },
+            ],
+          },
+          {
+            label: "Fund readiness",
+            items: [
+              {
+                label: "IROPS recovery",
+                value: 10,
+                readiness: 3,
+                risk: 8,
+                action: "Fund readiness",
+                owner: "CDAO + COO",
+                gate: "Certified operational data product",
+              },
+            ],
+          },
+        ],
+      }),
+      "```",
+    ].join("\n");
+    const create = mockClaudeTexts([initialAnswer, repairedAnswer]);
+
+    const result = await synthesizeIntelligenceConsultantText({
+      dossier: {
+        ...dossier,
+        question:
+          "Where should SkyHarbor prioritize AI funding across IROPS, predictive maintenance, crew recovery, and loyalty?",
+      },
+      tenantId: "tenant-skyharbor",
+    });
+
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(result).toMatchObject({
+      trace: { used: true, model: expect.any(String) },
+    });
+    expect(result && "text" in result ? result.text : "").toContain(
+      "```abarva-canvas",
+    );
+    expect(result && "text" in result ? result.text : "").toContain(
+      "investmentSequencingMap",
+    );
   });
 
   it("rejects prose-only explicit visual answers instead of building API fallback tables", async () => {
