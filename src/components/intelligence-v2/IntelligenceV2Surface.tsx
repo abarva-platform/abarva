@@ -5,7 +5,7 @@
 // The advisor conversation uses the shared AvaChatShell/AgentDock so
 // Intelligence cannot fall back to the old centered ask page.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { IntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
 import {
   AvaChatShell,
@@ -76,6 +76,7 @@ const CSS = `
 .iv2 .decisionTabPanel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:24px;display:grid;gap:18px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
 .iv2 .decisionTabHead{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:12px}
 .iv2 .decisionTabTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:24px;font-weight:500}
+.iv2 .decisionTabHint{font-size:12.5px;color:var(--muted);max-width:420px;line-height:1.5}
 .iv2 .contextNote{font-size:12px;color:var(--muted);white-space:nowrap}
 .iv2 .tabMarkdown{font-size:14px;line-height:1.65}
 .iv2 .tabMarkdown table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;margin:10px 0 2px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
@@ -295,6 +296,19 @@ function executiveTabsFrom(
   return groups.filter((group) => group.items.length > 0);
 }
 
+function companionHintFor(tabId: ExecutiveCanvasTab["id"]): string {
+  switch (tabId) {
+    case "decision":
+      return "The answer stays in the chat. This pane keeps the choice, tradeoff, and executive action visible.";
+    case "visual":
+      return "Use this pane for chart-ready or table-ready context that helps size, compare, or sequence the decision.";
+    case "context":
+      return "Use this pane for adjacent industry, benchmark, or pattern context without confusing it with tenant proof.";
+    case "proof":
+      return "Use this pane to check the evidence boundary, assumptions, and missing inputs behind the answer.";
+  }
+}
+
 export function IntelligenceV2Surface({
   payload,
   tenantName,
@@ -328,18 +342,27 @@ export function IntelligenceV2Surface({
   );
   const tabs = useMemo<AvaCanvasTab[]>(() => {
     if (executiveTabs.length > 0) {
-      return [
-        { id: "answer", label: "Answer" },
-        ...executiveTabs.map((item) => ({
-          id: item.id,
-          label: item.label,
-        })),
-      ];
+      return executiveTabs.map((item) => ({
+        id: item.id,
+        label: item.label,
+      }));
     }
-    return [
-      { id: "answer", label: "Answer" },
-    ];
+    return [{ id: "answer", label: "Answer" }];
   }, [executiveTabs]);
+
+  useEffect(() => {
+    if (!latestAnswer) return;
+    if (executiveTabs.length > 0) {
+      const hasActiveCompanionTab = executiveTabs.some(
+        (item) => item.id === tab,
+      );
+      if (!hasActiveCompanionTab) {
+        setTab(executiveTabs[0]?.id ?? "answer");
+      }
+      return;
+    }
+    if (tab !== "answer") setTab("answer");
+  }, [executiveTabs, latestAnswer, tab]);
 
   async function askIntelligence(
     text: string,
@@ -625,6 +648,9 @@ export function IntelligenceV2Surface({
                     <div className="decisionTabPanel" key={item.id}>
                       <div className="decisionTabHead">
                         <div className="decisionTabTitle">{item.label}</div>
+                        <div className="decisionTabHint">
+                          {companionHintFor(item.id)}
+                        </div>
                       </div>
                       {item.items.map((canvasItem) => (
                         <div className="canvasBlock" key={canvasItem.id}>

@@ -416,6 +416,14 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     expect(
       screen.getByRole("button", { name: /Decision/ }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Answer$/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "The answer stays in the chat. This pane keeps the choice, tradeoff, and executive action visible.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Visual/ })).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Table/ }),
@@ -723,9 +731,17 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     expect(
       screen.getByRole("button", { name: /Decision/ }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Answer$/ }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Context/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Visual/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Proof/ })).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "The answer stays in the chat. This pane keeps the choice, tradeoff, and executive action visible.",
+      ),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Industry Insights/ }),
     ).not.toBeInTheDocument();
