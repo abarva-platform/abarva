@@ -1,4 +1,6 @@
 import type { NextRequest } from "next/server";
+import { Packer } from "docx";
+import { pdf } from "@react-pdf/renderer";
 
 import { requireTenancy, tenancyErrorResponse } from "../../../../_intel-auth";
 import { getActiveClientRow } from "@/lib/active-client";
@@ -8,15 +10,35 @@ import {
   buildContractOptimizationMveProfile,
   buildSkyHarborAmsExistingContractInput,
 } from "@/lib/source/contract-optimization";
+import { DOCX_CONTENT_TYPE } from "@/lib/exports-shared/docx-base";
+import { PDF_CONTENT_TYPE } from "@/lib/exports-shared/pdf-base";
+import {
+  buildNarrativeDocx,
+  type NarrativeDocxConfig,
+  type NarrativeDocxPayload,
+} from "@/lib/source/exports/renderers/narrative-docx";
+import { buildNarrativePdf } from "@/lib/source/exports/renderers/narrative-pdf";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 type RouteContext = {
   params: Promise<{ eventId?: string }>;
 };
 
-export async function GET(_request: NextRequest, { params }: RouteContext) {
+type ExportFormat = "md" | "docx" | "pdf";
+
+const CONTRACT_OPTIMIZATION_CONFIG: NarrativeDocxConfig = {
+  artifactCode: "source_contract_optimization_brief",
+  headerLabel: "AMS Contract Optimization Brief",
+  eyebrowFor: (tenant) => `Source · Existing Contract Optimization · ${tenant}`,
+  documentTitle: "AMS Contract Optimization Brief",
+  confidentialityNote:
+    "Executive review only — sourcing optimization brief; not for vendor distribution",
+};
+
+export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
     await requireTenancy();
     const { eventId } = await params;
@@ -54,14 +76,40 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
       }),
     );
     const markdown = buildContractOptimizationBriefMarkdown(profile);
-    return new Response(markdown, {
-      status: 200,
-      headers: {
-        "content-type": "text/markdown; charset=utf-8",
-        "content-disposition":
-          'attachment; filename="skyharbor-ams-contract-optimization-brief.md"',
-      },
-    });
+    const format = normalizeFormat(request.nextUrl.searchParams.get("format"));
+    const generatedAt = new Date().toISOString();
+    const payload: NarrativeDocxPayload = {
+      tenantName: activeClient?.name ?? "SkyHarbor Air",
+      eventCode: event.code,
+      eventName: `${profile.contractName} Optimization Brief`,
+      issuedBy: "AbarVa Source",
+      generatedAt,
+      body: markdown,
+      bodyIsAuthored: true,
+    };
+    const baseName = "skyharbor-ams-contract-optimization-brief";
+
+    if (format === "docx") {
+      const document = buildNarrativeDocx(payload, CONTRACT_OPTIMIZATION_CONFIG);
+      const buffer = await Packer.toBuffer(document);
+      return fileResponse(buffer, DOCX_CONTENT_TYPE, `${baseName}.docx`, format, event.code);
+    }
+    if (format === "pdf") {
+      const element = buildNarrativePdf(payload, CONTRACT_OPTIMIZATION_CONFIG);
+      const stream = await pdf(element).toBuffer();
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream as AsyncIterable<Buffer | string>) {
+        chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+      }
+      return fileResponse(Buffer.concat(chunks), PDF_CONTENT_TYPE, `${baseName}.pdf`, format, event.code);
+    }
+    return fileResponse(
+      Buffer.from(markdown, "utf8"),
+      "text/markdown; charset=utf-8",
+      `${baseName}.md`,
+      format,
+      event.code,
+    );
   } catch (error) {
     try {
       return tenancyErrorResponse(error);
@@ -79,6 +127,31 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
       );
     }
   }
+}
+
+function normalizeFormat(value: string | null): ExportFormat {
+  if (value === "docx" || value === "pdf") return value;
+  return "md";
+}
+
+function fileResponse(
+  body: Buffer,
+  contentType: string,
+  filename: string,
+  format: ExportFormat,
+  eventCode: string,
+): Response {
+  return new Response(body as unknown as ArrayBuffer, {
+    status: 200,
+    headers: {
+      "content-type": contentType,
+      "content-disposition": `attachment; filename="${filename}"`,
+      "cache-control": "no-store",
+      "x-source-artifact-code": "source_contract_optimization_brief",
+      "x-source-event-code": eventCode,
+      "x-source-artifact-format": format,
+    },
+  });
 }
 
 function shouldBindSkyHarborContractOptimization(args: {

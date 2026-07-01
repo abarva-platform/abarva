@@ -8,6 +8,15 @@ import type {
 const money = (value: number): string =>
   `$${Math.round(value).toLocaleString("en-US")}`;
 
+const number = (value: number): string =>
+  value.toLocaleString("en-US", { maximumFractionDigits: 1 });
+
+const metricValue = (value: number, unit: string): string => {
+  if (unit === "%") return `${number(value)}%`;
+  if (/per month/i.test(unit)) return `${number(value)} ${unit}`;
+  return `${number(value)} ${unit}`;
+};
+
 const evidenceLabel = (
   input: ContractOptimizationInput,
   evidenceId: string,
@@ -124,7 +133,7 @@ function operationalRisk(input: ContractOptimizationInput): ContractOptimization
     evidenceLabels: [...new Set(deteriorated.map((metric) => evidenceLabel(input, metric.evidenceId)))],
     severity: "medium",
     currentState: deteriorated
-      .map((metric) => `${metric.metric}: ${metric.current}${metric.unit} vs baseline ${metric.baseline}${metric.unit}`)
+      .map((metric) => `${metric.metric}: ${metricValue(metric.current, metric.unit)} vs baseline ${metricValue(metric.baseline, metric.unit)}`)
       .join("; "),
     sourcingImplication:
       "The contract should be optimized around real demand drivers instead of renewing the original run baseline.",
@@ -156,12 +165,20 @@ function buildLevers(findings: ContractOptimizationFinding[]): ContractOptimizat
   return findings.map((finding, index) => {
     const base = {
       findingId: finding.findingId,
-      priority: (finding.severity === "high" ? "P0" : index <= 2 ? "P1" : "P2") as ContractOptimizationLever["priority"],
+      priority: (finding.severity === "high"
+        ? "P0"
+        : finding.category === "renewal_window" ||
+            finding.category === "scope_change_order_exposure"
+          ? "P1"
+          : index <= 2
+            ? "P1"
+            : "P2") as ContractOptimizationLever["priority"],
       ownerRole: finding.category === "sla_credit_leakage" ? "Service delivery lead" : "Commercial lead",
     };
     if (finding.category === "price_leakage") {
       return {
         ...base,
+        ownerRole: "Procurement commercial lead",
         leverId: "L-RECOVER-LEAKAGE",
         leverType: "recover_invoice_leakage",
         buyerAsk:
@@ -176,6 +193,7 @@ function buildLevers(findings: ContractOptimizationFinding[]): ContractOptimizat
     if (finding.category === "sla_credit_leakage") {
       return {
         ...base,
+        ownerRole: "IT service owner",
         leverId: "L-SLA-ECONOMICS",
         leverType: "tighten_service_credit_economics",
         buyerAsk: "Increase SLA credit cap and add chronic-miss escalators for critical towers.",
@@ -189,6 +207,7 @@ function buildLevers(findings: ContractOptimizationFinding[]): ContractOptimizat
     if (finding.category === "staffing_coverage_gap") {
       return {
         ...base,
+        ownerRole: "Vendor management lead",
         leverId: "L-STAFFING-TRUEUP",
         leverType: "reprice_staffing_coverage",
         buyerAsk: "True up underfilled staffing commitments through credits or revised tower pricing.",
@@ -202,6 +221,7 @@ function buildLevers(findings: ContractOptimizationFinding[]): ContractOptimizat
     if (finding.category === "service_performance_risk") {
       return {
         ...base,
+        ownerRole: "IT service owner",
         leverId: "L-PRODUCTIVITY-CURE",
         leverType: "force_productivity_commitment",
         buyerAsk: "Convert demand and ticket-growth pressure into a measured automation and productivity glidepath.",
@@ -215,6 +235,7 @@ function buildLevers(findings: ContractOptimizationFinding[]): ContractOptimizat
     if (finding.category === "scope_change_order_exposure") {
       return {
         ...base,
+        ownerRole: "Procurement commercial lead / finance controller",
         leverId: "L-CHANGE-ORDER-CATALOG",
         leverType: "convert_change_orders_to_catalog",
         buyerAsk: "Convert approved recurring change orders into catalog pricing and credit unsupported items.",
@@ -227,6 +248,7 @@ function buildLevers(findings: ContractOptimizationFinding[]): ContractOptimizat
     }
     return {
       ...base,
+      ownerRole: "Renewal steering committee",
       leverId: "L-RENEWAL-WINDOW",
       leverType: "use_renewal_window",
       buyerAsk: "Use renewal timing to preserve competitive tension until cure items close.",

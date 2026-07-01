@@ -34,9 +34,15 @@ export function ContractOptimizationProfilePanel({
           </p>
           <a
             style={EXPORT_LINK}
-            href={`/api/v1/source/${encodeURIComponent(profile.sourceEventId)}/contract-optimization/brief`}
+            href={`/api/v1/source/${encodeURIComponent(profile.sourceEventId)}/contract-optimization/brief?format=docx`}
           >
-            Export optimization brief
+            Export DOCX brief
+          </a>
+          <a
+            style={{ ...EXPORT_LINK, marginLeft: 8 }}
+            href={`/api/v1/source/${encodeURIComponent(profile.sourceEventId)}/contract-optimization/brief?format=pdf`}
+          >
+            Export PDF brief
           </a>
         </div>
         <div style={METRICS}>
@@ -96,7 +102,7 @@ export function ContractOptimizationProfilePanel({
               <article key={lever.leverId} style={ROW}>
                 <div style={ROW_TOP}>
                   <strong style={ROW_TITLE}>{lever.buyerAsk}</strong>
-                  <span style={LEVER_TYPE}>{lever.priority}</span>
+                  <span style={LEVER_TYPE}>{urgencyLabel(lever.priority)}</span>
                 </div>
                 <p style={ROW_TEXT}>{lever.negotiationLanguage}</p>
                 <p style={ROW_META}>
@@ -145,6 +151,14 @@ function money(value: number): string {
   if (!Number.isFinite(value) || value <= 0) return "$0";
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
   return `$${Math.round(value / 1_000)}K`;
+}
+
+function urgencyLabel(
+  priority: ContractOptimizationMveProfile["levers"][number]["priority"],
+): string {
+  if (priority === "P0") return "Immediate";
+  if (priority === "P1") return "Before renewal notice";
+  return "Post-cure governance";
 }
 
 function severityTone(

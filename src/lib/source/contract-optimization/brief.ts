@@ -1,9 +1,27 @@
 import type { ContractOptimizationMveProfile } from "./types";
 
 const money = (value: number | null): string => {
-  if (!value || !Number.isFinite(value)) return "Value to test";
+  if (!value || !Number.isFinite(value)) return "Value to be quantified during vendor cure review";
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
   return `$${Math.round(value / 1_000)}K`;
+};
+
+const urgencyLabel = (
+  priority: ContractOptimizationMveProfile["levers"][number]["priority"],
+): string => {
+  if (priority === "P0") return "Immediate";
+  if (priority === "P1") return "Before renewal notice";
+  return "Post-cure governance";
+};
+
+const impactRange = (
+  low: number | null,
+  high: number | null,
+): string => {
+  if (!low && !high) return "Value to be quantified during vendor cure review";
+  if (!low) return `Up to ${money(high)}`;
+  if (!high) return `At least ${money(low)}`;
+  return `${money(low)} to ${money(high)}`;
 };
 
 export function buildContractOptimizationBriefMarkdown(
@@ -50,9 +68,9 @@ export function buildContractOptimizationBriefMarkdown(
     ...profile.levers.flatMap((lever) => [
       `### ${lever.buyerAsk}`,
       "",
-      `- Priority: ${lever.priority}`,
+      `- Timing: ${urgencyLabel(lever.priority)}`,
       `- Value basis: ${lever.valueBasis.replaceAll("_", " ")}`,
-      `- Impact range: ${money(lever.annualImpactLowUsd)} to ${money(lever.annualImpactHighUsd)}`,
+      `- Impact range: ${impactRange(lever.annualImpactLowUsd, lever.annualImpactHighUsd)}`,
       `- Negotiation language: ${lever.negotiationLanguage}`,
       `- Owner role: ${lever.ownerRole}`,
       "",

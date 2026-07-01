@@ -2,6 +2,7 @@ import {
   buildContractOptimizationMveProfile,
   buildSkyHarborAmsExistingContractInput,
 } from "../mve-profile";
+import { buildContractOptimizationBriefMarkdown } from "../brief";
 import { toContractOptimizationPersistenceRows } from "../persistence";
 
 describe("Source contract optimization MVE", () => {
@@ -100,5 +101,21 @@ describe("Source contract optimization MVE", () => {
     expect(rows.levers).toHaveLength(profile.levers.length);
     expect(rows.findings[0]).toHaveProperty("sourcing_implication");
     expect(rows.levers.every((lever) => lever.buyer_ask.length > 20)).toBe(true);
+  });
+
+  it("renders a CXO-readable optimization brief without unit or priority leaks", () => {
+    const profile = buildContractOptimizationMveProfile(
+      buildSkyHarborAmsExistingContractInput(),
+    );
+    const brief = buildContractOptimizationBriefMarkdown(profile);
+
+    expect(brief).toContain("8,610 tickets");
+    expect(brief).toContain("44 per month");
+    expect(brief).toContain("Timing: Immediate");
+    expect(brief).toContain("Timing: Before renewal notice");
+    expect(brief).not.toContain("8610tickets");
+    expect(brief).not.toContain("44per month");
+    expect(brief).not.toContain("Value to test to Value to test");
+    expect(brief).not.toMatch(/Priority: P[0-2]/);
   });
 });
