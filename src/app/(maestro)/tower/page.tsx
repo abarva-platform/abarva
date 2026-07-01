@@ -8,6 +8,7 @@ import { resolveTowerTab } from "@/lib/tower/tower-lens-tabs-view";
 import { loadCioTowerCxoView } from "@/lib/cio-tower/cxo-view-model";
 import { loadCioTowerMetricPackets } from "@/lib/cio-tower/metric-packet-store";
 import { canonicalClientDisplayName } from "@/lib/client-config";
+import { canonicalCioTowerTenantDisplayName } from "@/lib/cio-tower/metric-packet";
 
 export const metadata = { title: "IT Investment Tower · AbarVa" };
 export const dynamic = "force-dynamic";
@@ -34,6 +35,10 @@ export default async function TowerPage({
   const { tab } = await searchParams;
   const activeClient = await getActiveClientRow();
   const activeTenantName =
+    canonicalCioTowerTenantDisplayName({
+      key: activeClient?.key,
+      name: activeClient?.name,
+    }) ??
     canonicalClientDisplayName({
       key: activeClient?.key,
       name: activeClient?.name,
