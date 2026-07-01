@@ -720,6 +720,31 @@ function buildTowerBudgetSliceTable(facts: readonly CioTowerFactRow[]): CioTower
   };
 }
 
+function loadedName(row: CioTowerFactRow, fallback: string): string {
+  const name = row.entity_display_name?.trim();
+  return name && !/^[a-z]+[-_][a-z0-9_-]+$/i.test(name) ? name : fallback;
+}
+
+function buildTowerTopProgramsTable(facts: readonly CioTowerFactRow[], limit = 10): CioTowerVisibleTable | null {
+  const programFacts = facts
+    .filter((fact) => fact.view === 'initiative_budget' && fact.value_numeric !== null && fact.value_numeric !== undefined)
+    .sort((left, right) => Number(right.value_numeric ?? 0) - Number(left.value_numeric ?? 0))
+    .slice(0, limit);
+  if (programFacts.length === 0) return null;
+  return {
+    id: 'top_it_programs_by_budget',
+    title: 'Top loaded IT programs by FY26 budget',
+    columns: ['Rank', 'Program', 'FY26 budget', 'Basis', 'Confidence'],
+    rows: programFacts.map((fact, index) => [
+      String(index + 1),
+      loadedName(fact, `Loaded program ${index + 1}`),
+      factValue(fact),
+      fact.basis || 'loaded',
+      fact.confidence || 'unknown',
+    ]),
+  };
+}
+
 function asksForMetricLineage(question: string): boolean {
   return /lineage|formula|source\s+trace|trace\s+the\s+metric|where.*number.*come/i.test(question);
 }
@@ -728,6 +753,23 @@ function buildCioTowerDeterministicMetricAnswer(context: CioTowerPromptContext):
   output: CioTowerVisibleAnswerContract;
   reason: string;
 } | null {
+  if (context.contract.contract_key === 'tower_top_it_programs_by_budget') {
+    const table = buildTowerTopProgramsTable(context.relevantFacts, 10);
+    if (!table) return null;
+    const topProgram = table.rows[0]?.[1] ?? 'the largest loaded program';
+    const topBudget = table.rows[0]?.[2] ?? 'not loaded';
+    return {
+      reason: 'Top program budget question answered from loaded Tower program budget facts.',
+      output: {
+        version: 'cio_tower_visible_answer_v1',
+        answer: `${context.tenantName}'s top loaded IT program by FY26 budget is ${topProgram} at ${topBudget}. Tower is ranking the loaded program budget facts it has; it is not filling in missing programs or estimating spend that is not loaded.`,
+        tables: [table],
+        tabs: [],
+        followUpQuestion: 'Do you want Tower to show the decision or risk view for these programs next?',
+      },
+    };
+  }
+
   if (context.contract.contract_key !== 'tower_total_it_spend') return null;
 
   const totalBudget = context.metricPackets.find((packet) => packet.measureKey === 'total_it_budget_fy26');

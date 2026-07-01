@@ -314,6 +314,25 @@ describe('cio tower answer contract', () => {
     ]);
   });
 
+  it('answers top program budget rankings deterministically from loaded Tower facts', () => {
+    const output = __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(context({
+      question: 'Give me the list of top 10 IT programs by budget.',
+    }));
+
+    expect(output?.reason).toBe('Top program budget question answered from loaded Tower program budget facts.');
+    expect(output?.output.answer).toContain('Crew Recovery & Legality Modernization');
+    expect(output?.output.answer).toContain('$28.3M');
+    expect(output?.output.answer).not.toContain('initiative-1');
+    expect(output?.output.tables).toEqual([
+      {
+        id: 'top_it_programs_by_budget',
+        title: 'Top loaded IT programs by FY26 budget',
+        columns: ['Rank', 'Program', 'FY26 budget', 'Basis', 'Confidence'],
+        rows: [['1', 'Crew Recovery & Legality Modernization', '$28.3M', 'committed', 'high']],
+      },
+    ]);
+  });
+
   it('builds a repair prompt that asks Claude to fix, not the renderer to mutate', () => {
     const originalPrompt = buildCioTowerClaudePrompt(context());
     const repairPrompt = buildCioTowerRepairPrompt({
