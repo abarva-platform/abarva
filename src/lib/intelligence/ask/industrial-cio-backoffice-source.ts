@@ -181,6 +181,142 @@ export function buildIndustrialCioBackofficeNativeCanvasBlock(
   }
   const packet = buildIndustrialCioBackofficePacket();
   const [treasury, finance, serviceDesk, hrLegal] = packet.lighthouseUseCases;
+  const canvasIntent = industrialCanvasIntent(query);
+  if (canvasIntent === "valueReadinessMatrix") {
+    return wrapIndustrialCanvasPayload({
+      canvasType: "valueReadinessMatrix",
+      title: "Shared Services AI Value / Readiness Map — Industrial Demo",
+      items: [
+        {
+          label: treasury?.name ?? "Kyriba cash and payment-control proof",
+          value: 9,
+          readiness: 7,
+          risk: 7,
+          action: "Scale after control gates close",
+          owner: "Treasurer + CFO",
+          gate: "Critical-bank certification and SOX signer evidence complete",
+          note:
+            treasury?.why ??
+            "Treasury has the strongest loaded system, control, and value evidence.",
+        },
+        {
+          label: finance?.name ?? "Finance close and reporting semantic layer",
+          value: 8,
+          readiness: 6,
+          risk: 6,
+          action: "Certify then scale",
+          owner: "Controller + CFO",
+          gate: "Finance-approved close baseline and GL definitions",
+          note:
+            finance?.why ??
+            "Finance automation depends on certified reporting definitions.",
+        },
+        {
+          label:
+            serviceDesk?.name ??
+            "ServiceNow finance support and knowledge automation",
+          value: 6,
+          readiness: 6,
+          risk: 4,
+          action: "Expand pilot after evidence",
+          owner: "VP IT Operations",
+          gate: "Ticket-volume baseline and resolution-quality evidence",
+          note:
+            serviceDesk?.why ??
+            "Support automation needs service-volume and knowledge-quality proof.",
+        },
+        {
+          label: hrLegal?.name ?? "HR and Legal AI operating model discovery",
+          value: 5,
+          readiness: 2,
+          risk: 4,
+          action: "Hold for discovery",
+          owner: "CHRO + General Counsel",
+          gate: "Workday, CLM/eBilling, matter, policy, and service-volume evidence loaded",
+          note:
+            hrLegal?.why ??
+            "HR and Legal belong in the roadmap after source evidence is loaded.",
+        },
+      ],
+      proofBoundary: {
+        known: [
+          "Treasury and Finance have the strongest loaded Industrial Demo evidence.",
+          "HR and Legal do not yet have enough source evidence for scale claims.",
+        ],
+        missing: packet.missingEvidenceChecklist.slice(0, 3),
+        decisionRequired:
+          "Use the map to pick Phase 1 scale candidates and assign evidence owners for HR/Legal discovery.",
+      },
+    });
+  }
+  if (canvasIntent === "gateToValueRoadmap") {
+    return wrapIndustrialCanvasPayload({
+      canvasType: "gateToValueRoadmap",
+      title: "Shared Services AI Gate-to-Value Roadmap — Industrial Demo",
+      gates: [
+        {
+          label: "Close Treasury control evidence",
+          owner: "Treasurer + CFO",
+          dependency:
+            "Critical-bank certification, payment-format evidence, signer controls, and SOX support",
+          valueUnlocked:
+            "Kyriba and cash-visibility automation becomes board-ready",
+          status: "Gate 1",
+        },
+        {
+          label: "Certify Finance semantic ownership",
+          owner: "Controller + CFO",
+          dependency:
+            "Close baseline, GL definitions, AP/AR feed quality, and reporting ownership",
+          valueUnlocked:
+            "Finance close and reporting AI can move from pilot to scale",
+          status: "Gate 2",
+        },
+        {
+          label: "Prove support automation quality",
+          owner: "VP IT Operations",
+          dependency:
+            "Ticket-volume baseline, deflection quality, knowledge ownership, and escalation rules",
+          valueUnlocked: "Shared-services automation pattern can be reused",
+          status: "Gate 3",
+        },
+        {
+          label: "Load HR and Legal evidence",
+          owner: "CHRO + General Counsel",
+          dependency:
+            "Workday process volumes, CLM/eBilling evidence, matter taxonomy, policy corpus, and service demand",
+          valueUnlocked:
+            "HR and Legal become candidates for the next Value Office wave",
+          status: "Discovery",
+        },
+      ],
+      proofBoundary: {
+        known: [
+          "Treasury and Finance are the Phase 1 proof areas in the loaded Industrial Demo packet.",
+          "The operating model should not scale claims without function-owner signoff.",
+        ],
+        missing: packet.missingEvidenceChecklist.slice(0, 4),
+        decisionRequired:
+          "CIO and CFO name gate owners and approve the first 30-day evidence sprint.",
+      },
+    });
+  }
+  if (canvasIntent === "proofBoundary") {
+    return wrapIndustrialCanvasPayload({
+      canvasType: "proofBoundary",
+      title: "Shared Services AI Proof Boundary — Industrial Demo",
+      proofBoundary: {
+        known: [
+          "Treasury and Finance carry the strongest loaded source evidence.",
+          "The Value Office should distinguish evidence-backed claims from planning assumptions.",
+        ],
+        assumed: packet.planningAssumptions.slice(0, 3),
+        missing: packet.missingEvidenceChecklist.slice(0, 5),
+        decisionRequired:
+          "Ask the CIO/CFO whether to use planning assumptions now or collect signed-off current values first.",
+      },
+    });
+  }
   const payload = {
     canvasType: "investmentSequencingMap",
     title: "CIO AI & Automation Sequencing — Industrial Demo",
@@ -280,5 +416,40 @@ export function buildIndustrialCioBackofficeNativeCanvasBlock(
         "CIO and CFO approve Treasury + Finance as Phase 1 and designate HR/Legal as discovery branches until source evidence is signed off.",
     },
   };
+  return wrapIndustrialCanvasPayload(payload);
+}
+
+function industrialCanvasIntent(
+  query: string,
+):
+  | "investmentSequencingMap"
+  | "valueReadinessMatrix"
+  | "gateToValueRoadmap"
+  | "proofBoundary" {
+  if (
+    /\b(?:what\s+has\s+to\s+happen\s+first|before|prerequisite|dependency|gate|roadmap|unlock)\b/i.test(
+      query,
+    )
+  ) {
+    return "gateToValueRoadmap";
+  }
+  if (
+    /\b(?:portfolio|tradeoff|trade-off|value\s*(?:\/|vs\.?|versus)\s*readiness|readiness|high\s+value|not\s+ready)\b/i.test(
+      query,
+    )
+  ) {
+    return "valueReadinessMatrix";
+  }
+  if (
+    /\b(?:trust|governance|proof|evidence\s+quality|assumption|missing|signoff|sign-off|validate|validated)\b/i.test(
+      query,
+    )
+  ) {
+    return "proofBoundary";
+  }
+  return "investmentSequencingMap";
+}
+
+function wrapIndustrialCanvasPayload(payload: object): string {
   return ["```abarva-canvas", JSON.stringify(payload), "```"].join("\n");
 }

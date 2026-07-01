@@ -76,6 +76,8 @@ Executive visual payload:
   portfolio tradeoff, value vs readiness, risk vs value, or where-to-place-bets question -> valueReadinessMatrix.
   "what has to happen first", prerequisite, dependency, gate, roadmap, or unlock-value question -> gateToValueRoadmap.
   trust, governance, proof, evidence quality, assumption, missing-data, or signoff question -> proofBoundary.
+- Prefer the native exhibit over a plain Markdown table when the question is executive, strategic, or investment-facing. Use Markdown tables only as supporting detail.
+- Do not duplicate the main answer on the right canvas. The right canvas should show the decision exhibit, proof boundary, industry signal, or adjacent view that helps the CXO decide.
 - Supported canvasType values:
   investmentSequencingMap: columns with labels such as Scale now, Certify then scale, Fund readiness, Hold / stop. Initiative items should include label, value, readiness, risk, action, owner, gate, and note when known.
   valueReadinessMatrix: items with label, value, readiness, optional risk, action, owner, gate, and note. Use a 0-10 scale when scores are directional.
