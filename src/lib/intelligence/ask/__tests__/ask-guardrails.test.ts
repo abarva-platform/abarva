@@ -198,6 +198,15 @@ describe('Ask Intelligence guardrails', () => {
       expect(synthesizerCode).toContain('Return only the missing tab blocks');
     });
 
+    it('repairs session-history wording before any active Ask synthesis output is rendered', () => {
+      expect(synthesizerCode).toContain('SESSION_CONTEXT_LANGUAGE_RE');
+      expect(synthesizerCode).toContain('STANDALONE ANSWER REPAIR');
+      expect(synthesizerCode).toContain('Remove any wording that depends on prior chat history');
+      expect(synthesizerCode).toMatch(
+        /if\s*\(\s*SESSION_CONTEXT_LANGUAGE_RE\.test\(text\)\s*\)[\s\S]*?const\s+tabbedResponse\s*=\s*parseIntelligenceTabbedResponse\(text\);/,
+      );
+    });
+
     it('keeps repaired visuals inside Claude-owned canvas tabs', () => {
       expect(synthesizerCode).toContain(
         'inside a Table or Chart tab',
