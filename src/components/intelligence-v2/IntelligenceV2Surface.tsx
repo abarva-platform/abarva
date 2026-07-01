@@ -5,7 +5,7 @@
 // The advisor conversation uses the shared AvaChatShell/AgentDock so
 // Intelligence cannot fall back to the old centered ask page.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import type { IntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
 import { AvaChatShell } from "@/components/ava-chat/AvaChatShell";
 import type {
@@ -116,29 +116,44 @@ const CSS = `
 .iv2 .mapAxis.y{left:14%;top:6%}
 .iv2 .mapAxis.x{right:8%;bottom:6%}
 .iv2 .visualRead{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:9px}
-.iv2 .nativeCanvas{border:1px solid #DDD6C9;border-radius:10px;background:linear-gradient(180deg,#fff,#F8F6EF);padding:16px;margin:0 0 12px;display:grid;gap:14px;box-shadow:0 10px 28px rgba(40,35,24,.06)}
-.iv2 .nativeCanvasTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:20px;line-height:1.14;font-weight:500;color:#171713}
-.iv2 .sequenceMap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.iv2 .sequenceColumn{border:1px solid var(--line);border-radius:10px;background:#fff;min-width:0;display:grid;align-content:start;gap:10px;padding:10px;box-shadow:inset 0 4px 0 var(--tone,#CFC7B8)}
-.iv2 .sequenceColumn[data-tone="scale"]{--tone:#1F7A46;background:linear-gradient(180deg,#F5FBF6,#fff)}
-.iv2 .sequenceColumn[data-tone="certify"]{--tone:#237A95;background:linear-gradient(180deg,#F3FAFC,#fff)}
-.iv2 .sequenceColumn[data-tone="fund"]{--tone:#A66A1F;background:linear-gradient(180deg,#FFF8EA,#fff)}
-.iv2 .sequenceColumn[data-tone="hold"]{--tone:#8C4B35;background:linear-gradient(180deg,#FFF4F0,#fff)}
-.iv2 .sequenceColumnHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;border-bottom:1px solid rgba(231,227,218,.9);padding:2px 1px 8px}
-.iv2 .sequenceColumnTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--tone,#1F6B3A);font-weight:700}
-.iv2 .sequenceColumnHint{font-size:10.5px;line-height:1.25;color:var(--muted);text-align:right;max-width:92px}
-.iv2 .sequenceItem{border:1px solid #E5DED2;border-radius:9px;background:rgba(255,255,255,.92);padding:10px;display:grid;gap:7px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
-.iv2 .sequenceItemLabel{font-size:12.5px;font-weight:700;line-height:1.25;color:var(--ink)}
-.iv2 .sequenceItemMeta{font-size:11px;line-height:1.35;color:var(--muted)}
-.iv2 .sequenceAction{font-size:11.5px;line-height:1.3;color:#2D332E;font-weight:600}
+.iv2 .companionCard.wide{grid-column:1/-1}
+.iv2 .companionCard.wide .companionBody{max-width:none}
+.iv2 .companionCard.wide:has(.nativeCanvas){padding:0;overflow:hidden;background:#FFFEFB}
+.iv2 .companionCard.wide:has(.nativeCanvas) .companionKicker{padding:16px 18px 0}
+.iv2 .companionCard.wide:has(.nativeCanvas) .companionCardTitle{padding:0 18px}
+.iv2 .companionCard.wide:has(.nativeCanvas) .companionBody{padding:0 18px 18px}
+.iv2 .nativeCanvas{width:100%;border:1px solid #D7D0C4;border-radius:12px;background:linear-gradient(180deg,#FFFDF9 0%,#F6F2EA 100%);padding:18px;margin:0 0 14px;display:grid;gap:16px;box-shadow:0 18px 42px rgba(40,35,24,.09)}
+.iv2 .nativeCanvasHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:1px solid rgba(215,208,196,.9);padding-bottom:12px}
+.iv2 .nativeCanvasTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:23px;line-height:1.08;font-weight:500;color:#171713}
+.iv2 .nativeCanvasMeta{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);white-space:nowrap;margin-top:5px}
+.iv2 .nativeCanvasRead{font-size:12.5px;line-height:1.45;color:var(--muted);max-width:760px}
+.iv2 .canvasMetricStrip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.iv2 .canvasMetric{border:1px solid #DED7CA;border-radius:8px;background:rgba(255,255,255,.74);padding:9px 11px;min-width:0}
+.iv2 .canvasMetricLabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iv2 .canvasMetricValue{font-size:12.5px;color:var(--ink);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.iv2 .sequenceMap{display:grid;grid-template-columns:1.08fr 1fr 1fr .92fr;gap:12px;align-items:stretch}
+.iv2 .sequenceColumn{border:1px solid color-mix(in srgb,var(--tone,#CFC7B8) 30%,#DDD6C9);border-radius:12px;background:#fff;min-width:0;display:grid;align-content:start;gap:11px;padding:12px;box-shadow:inset 0 5px 0 var(--tone,#CFC7B8),0 10px 24px rgba(40,35,24,.05)}
+.iv2 .sequenceColumn[data-tone="scale"]{--tone:#1F7A46;background:linear-gradient(180deg,#F2FBF5,#fff 42%)}
+.iv2 .sequenceColumn[data-tone="certify"]{--tone:#237A95;background:linear-gradient(180deg,#EFF9FC,#fff 42%)}
+.iv2 .sequenceColumn[data-tone="fund"]{--tone:#A66A1F;background:linear-gradient(180deg,#FFF7E6,#fff 42%)}
+.iv2 .sequenceColumn[data-tone="hold"]{--tone:#8C4B35;background:linear-gradient(180deg,#FFF2ED,#fff 42%)}
+.iv2 .sequenceColumnHeader{display:grid;gap:5px;border-bottom:1px solid rgba(231,227,218,.9);padding:2px 1px 9px;min-height:72px}
+.iv2 .sequenceColumnTop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.iv2 .sequenceColumnTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tone,#1F6B3A);font-weight:800}
+.iv2 .sequenceColumnCount{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--tone,#1F6B3A);border-radius:999px;padding:2px 7px;white-space:nowrap}
+.iv2 .sequenceColumnHint{font-size:11px;line-height:1.28;color:var(--muted);max-width:190px}
+.iv2 .sequenceItem{border:1px solid #E2DACD;border-radius:10px;background:rgba(255,255,255,.95);padding:11px;display:grid;gap:8px;box-shadow:0 8px 20px rgba(40,35,24,.045)}
+.iv2 .sequenceItemLabel{font-size:13px;font-weight:750;line-height:1.22;color:var(--ink)}
+.iv2 .sequenceItemMeta{font-size:11px;line-height:1.38;color:var(--muted)}
+.iv2 .sequenceAction{font-size:11.5px;line-height:1.32;color:#2D332E;font-weight:650}
 .iv2 .sequenceItemChips{display:flex;flex-wrap:wrap;gap:5px}
-.iv2 .sequenceChip{display:inline-flex;align-items:center;max-width:100%;border:1px solid #E4DED2;border-radius:999px;background:#FBFAF7;color:#3E3D36;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.02em;padding:2px 7px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iv2 .sequenceChip{display:inline-flex;align-items:center;max-width:100%;border:1px solid #E4DED2;border-radius:999px;background:#FBFAF7;color:#3E3D36;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.02em;padding:3px 7px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .iv2 .sequenceChip.value{border-color:rgba(31,107,58,.24);background:#EAF3EC;color:#1F6B3A}
 .iv2 .sequenceChip.ready{border-color:rgba(35,122,149,.22);background:#EAF5F8;color:#1F6680}
 .iv2 .sequenceChip.risk{border-color:rgba(166,106,31,.25);background:#FBF1E1;color:#8A5415}
 .iv2 .sequenceChip.gate{max-width:100%;border-color:rgba(42,42,38,.16);background:#F4F2EC;color:#56534B}
 .iv2 .sequenceChip.owner{max-width:100%;border-color:rgba(31,107,58,.18);background:#F1F7F2;color:#285A3A}
-.iv2 .matrixCanvas{position:relative;min-height:330px;border:1px solid #DDD6C9;border-radius:10px;background:linear-gradient(180deg,#fff,#F8F6EF);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
+.iv2 .matrixCanvas{position:relative;min-height:370px;border:1px solid #DDD6C9;border-radius:12px;background:linear-gradient(180deg,#fff,#F8F6EF);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
 .iv2 .matrixCanvas::before{content:"";position:absolute;inset:12%;border-left:1px solid #D8D2C5;border-bottom:1px solid #D8D2C5}
 .iv2 .matrixCanvas::after{content:"";position:absolute;left:50%;top:12%;bottom:12%;border-left:1px dashed #D8D2C5}
 .iv2 .matrixZone{position:absolute;right:12%;top:12%;width:38%;height:38%;border-radius:10px;background:rgba(31,107,58,.09);border:1px solid rgba(31,107,58,.18)}
@@ -146,25 +161,29 @@ const CSS = `
 .iv2 .matrixLowLabel{position:absolute;left:14%;bottom:14%;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
 .iv2 .matrixDivider{position:absolute;left:12%;right:12%;top:50%;border-top:1px dashed #D8D2C5}
 .iv2 .matrixPoint{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px;max-width:46%}
-.iv2 .matrixDot{width:14px;height:14px;border-radius:50%;background:#1F6B3A;box-shadow:0 0 0 4px rgba(31,107,58,.14);flex:none}
+.iv2 .matrixDot{width:var(--dot,14px);height:var(--dot,14px);border-radius:50%;background:#1F6B3A;box-shadow:0 0 0 5px rgba(31,107,58,.14);flex:none}
 .iv2 .matrixDot.highRisk{background:#A66A1F;box-shadow:0 0 0 4px rgba(166,106,31,.15)}
 .iv2 .matrixLabel{font-size:11.5px;line-height:1.22;color:var(--ink);background:rgba(255,255,255,.9);border:1px solid rgba(231,227,218,.92);border-radius:7px;padding:5px 7px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;box-shadow:0 6px 16px rgba(40,35,24,.06)}
 .iv2 .matrixLegend{display:flex;flex-wrap:wrap;gap:7px;color:var(--muted);font-size:11.5px}
 .iv2 .matrixLegend span{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:#fff;padding:3px 8px}
-.iv2 .roadmap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.iv2 .roadmapGate{position:relative;border:1px solid #DED7CA;border-radius:10px;background:linear-gradient(180deg,#fff,#FCFBF8);padding:13px;display:grid;gap:7px;min-width:0;box-shadow:0 1px 0 rgba(0,0,0,.02)}
-.iv2 .roadmapGate::after{content:"";position:absolute;right:-10px;top:50%;width:10px;border-top:1px solid #D8D2C5}
+.iv2 .matrixItemList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.iv2 .matrixItemCard{border:1px solid #E2DACD;border-radius:9px;background:#fff;padding:9px 10px;display:grid;gap:5px;min-width:0}
+.iv2 .matrixItemName{font-size:12px;font-weight:700;color:var(--ink)}
+.iv2 .matrixItemMeta{display:flex;flex-wrap:wrap;gap:5px}
+.iv2 .roadmap{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;align-items:stretch}
+.iv2 .roadmapGate{position:relative;border:1px solid #DED7CA;border-radius:11px;background:linear-gradient(180deg,#fff,#FCFBF8);padding:13px;display:grid;gap:8px;min-width:0;box-shadow:0 10px 24px rgba(40,35,24,.045)}
+.iv2 .roadmapGate::after{content:"";position:absolute;right:-10px;top:50%;width:10px;border-top:1px solid #BFB5A5}
 .iv2 .roadmapGate:last-child::after{display:none}
 .iv2 .roadmapStep{display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
 .iv2 .roadmapStatus{display:inline-flex;max-width:92px;border-radius:999px;background:#F4F2EC;color:#625E55;padding:2px 7px;font-size:8.5px;letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .iv2 .roadmapLabel{font-size:13px;font-weight:600;line-height:1.25;color:var(--ink)}
 .iv2 .roadmapMeta{font-size:11.5px;line-height:1.35;color:var(--muted)}
 .iv2 .roadmapMeta strong{color:#383832;font-weight:650}
-.iv2 .proofGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-.iv2 .proofBox{border:1px solid var(--line);border-radius:8px;background:#fff;padding:11px;min-width:0}
+.iv2 .proofGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.iv2 .proofBox{border:1px solid var(--line);border-radius:9px;background:#fff;padding:12px;min-width:0}
 .iv2 .proofBoxTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:7px}
 .iv2 .proofBox ul{margin:0;padding-left:16px;color:var(--muted);font-size:12px;line-height:1.45}
-.iv2 .proofDecision{border:1px solid rgba(31,107,58,.18);border-left:4px solid var(--green);border-radius:8px;background:#F1F7F2;padding:10px 12px;font-size:12.5px;color:var(--ink)}
+.iv2 .proofDecision{border:1px solid rgba(31,107,58,.22);border-left:5px solid var(--green);border-radius:10px;background:linear-gradient(90deg,#EEF8F0,#FAFDF9);padding:12px 14px;font-size:13px;color:var(--ink);box-shadow:0 8px 18px rgba(31,107,58,.06)}
 .iv2 .emptyAnswer{border:1px dashed var(--line);border-radius:8px;padding:22px;color:var(--muted);background:rgba(255,255,255,.55)}
 .iv2 .startPanel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:28px;max-width:760px}
 .iv2 .startPanel h3{font-family:var(--font-fraunces),Georgia,serif;font-size:28px;font-weight:500;margin:0 0 10px}
@@ -670,7 +689,23 @@ function InvestmentSequencingMap({
   if (columns.length === 0) return null;
   return (
     <div className="nativeCanvas" data-testid="executive-canvas-sequencing">
-      <NativeCanvasTitle title={payload.title ?? "Investment sequence"} />
+      <NativeCanvasTitle
+        meta="Board exhibit"
+        title={payload.title ?? "Investment sequence"}
+      />
+      <div className="nativeCanvasRead">
+        Read left to right as an executive funding sequence: scale what is
+        ready, certify what is valuable but gated, fund readiness where the
+        value pool is real, and hold anything without enough proof.
+      </div>
+      <CanvasMetricStrip
+        metrics={[
+          ["Decision shape", `${columns.length} lanes`],
+          ["Scale-ready", String(countColumnItems(columns, /scale/i))],
+          ["Gated bets", String(countColumnItems(columns, /certify|fund/i))],
+          ["Hold / stop", String(countColumnItems(columns, /hold|stop|defer/i))],
+        ]}
+      />
       <div className="sequenceMap">
         {columns.map((column) => (
           <div
@@ -679,7 +714,12 @@ function InvestmentSequencingMap({
             key={column.label}
           >
             <div className="sequenceColumnHeader">
-              <div className="sequenceColumnTitle">{column.label}</div>
+              <div className="sequenceColumnTop">
+                <div className="sequenceColumnTitle">{column.label}</div>
+                <div className="sequenceColumnCount">
+                  {column.items.length} {column.items.length === 1 ? "bet" : "bets"}
+                </div>
+              </div>
               <div className="sequenceColumnHint">
                 {sequencingHint(column.label)}
               </div>
@@ -745,7 +785,15 @@ function ValueReadinessMatrix({
   if (items.length === 0) return null;
   return (
     <div className="nativeCanvas" data-testid="executive-canvas-matrix">
-      <NativeCanvasTitle title={payload.title ?? "Value readiness matrix"} />
+      <NativeCanvasTitle
+        meta="Portfolio tradeoff"
+        title={payload.title ?? "Value readiness matrix"}
+      />
+      <div className="nativeCanvasRead">
+        Use the upper-right quadrant for scale decisions. Upper-left ideas are
+        worth protecting, but the right move is to fund the gate before funding
+        scale.
+      </div>
       <div className="matrixCanvas" aria-label="Value readiness matrix">
         <div className="matrixZone" />
         <div className="matrixZoneLabel">Fund / scale</div>
@@ -764,6 +812,9 @@ function ValueReadinessMatrix({
           >
             <span
               className={`matrixDot${(item.risk ?? 0) >= 7 ? " highRisk" : ""}`}
+              style={
+                { "--dot": `${matrixDotSize(item.value)}px` } as CSSProperties
+              }
               aria-hidden="true"
             />
             <span className="matrixLabel">
@@ -778,6 +829,33 @@ function ValueReadinessMatrix({
         <span>High value + low readiness: fund the gate first</span>
         <span>Amber dot: elevated risk</span>
       </div>
+      <div className="matrixItemList">
+        {items.slice(0, 6).map((item) => (
+          <div className="matrixItemCard" key={`matrix-card-${item.label}`}>
+            <div className="matrixItemName">{item.label}</div>
+            <div className="matrixItemMeta">
+              {scoreChip("value", "Value", item.value) ? (
+                <span className="sequenceChip value">
+                  {scoreChip("value", "Value", item.value)?.label}
+                </span>
+              ) : null}
+              {scoreChip("ready", "Ready", item.readiness) ? (
+                <span className="sequenceChip ready">
+                  {scoreChip("ready", "Ready", item.readiness)?.label}
+                </span>
+              ) : null}
+              {scoreChip("risk", "Risk", item.risk) ? (
+                <span className="sequenceChip risk">
+                  {scoreChip("risk", "Risk", item.risk)?.label}
+                </span>
+              ) : null}
+              {item.gate ? (
+                <span className="sequenceChip gate">{item.gate}</span>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
       <ProofBoundaryInline proofBoundary={payload.proofBoundary} />
     </div>
   );
@@ -788,7 +866,15 @@ function GateToValueRoadmap({ payload }: { payload: ExecutiveCanvasPayload }) {
   if (gates.length === 0) return null;
   return (
     <div className="nativeCanvas" data-testid="executive-canvas-roadmap">
-      <NativeCanvasTitle title={payload.title ?? "Gate-to-value roadmap"} />
+      <NativeCanvasTitle
+        meta="Gate to value"
+        title={payload.title ?? "Gate-to-value roadmap"}
+      />
+      <div className="nativeCanvasRead">
+        This is the conversion path from idea to capital release: each gate
+        should have an owner, dependency, status, and value unlocked before the
+        next funding decision.
+      </div>
       <div className="roadmap">
         {gates.map((gate, index) => (
           <div className="roadmapGate" key={`${gate.label}-${index}`}>
@@ -826,14 +912,45 @@ function ProofBoundaryVisual({ payload }: { payload: ExecutiveCanvasPayload }) {
   if (!payload.proofBoundary) return null;
   return (
     <div className="nativeCanvas" data-testid="executive-canvas-proof">
-      <NativeCanvasTitle title={payload.title ?? "Proof boundary"} />
+      <NativeCanvasTitle
+        meta="Trust boundary"
+        title={payload.title ?? "Proof boundary"}
+      />
       <ProofBoundaryGrid proofBoundary={payload.proofBoundary} />
     </div>
   );
 }
 
-function NativeCanvasTitle({ title }: { title: string }) {
-  return <div className="nativeCanvasTitle">{title}</div>;
+function NativeCanvasTitle({
+  title,
+  meta,
+}: {
+  title: string;
+  meta: string;
+}) {
+  return (
+    <div className="nativeCanvasHeader">
+      <div className="nativeCanvasTitle">{title}</div>
+      <div className="nativeCanvasMeta">{meta}</div>
+    </div>
+  );
+}
+
+function CanvasMetricStrip({
+  metrics,
+}: {
+  metrics: Array<[string, string]>;
+}) {
+  return (
+    <div className="canvasMetricStrip">
+      {metrics.map(([label, value]) => (
+        <div className="canvasMetric" key={label}>
+          <div className="canvasMetricLabel">{label}</div>
+          <div className="canvasMetricValue">{value}</div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function ProofBoundaryInline({
@@ -888,6 +1005,20 @@ function hasMatrixCoordinates(
 
 function scaleScore(value: number): number {
   return Math.max(14, Math.min(86, 14 + (value / 10) * 72));
+}
+
+function matrixDotSize(value?: number): number {
+  if (!Number.isFinite(value)) return 14;
+  return Math.max(12, Math.min(24, 10 + Number(value)));
+}
+
+function countColumnItems(
+  columns: NonNullable<ExecutiveCanvasPayload["columns"]>,
+  labelPattern: RegExp,
+): number {
+  return columns
+    .filter((column) => labelPattern.test(column.label))
+    .reduce((total, column) => total + column.items.length, 0);
 }
 
 function scoreChip(

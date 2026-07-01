@@ -22,6 +22,8 @@ Second production proof on the corrected ACA image passed SkyHarbor but found on
 
 Third production proof on the corrected ACA image passed SkyHarbor and confirmed the Industrial leak was gone, but Industrial still sometimes fell back to a clean decision table with no native board exhibit. This correction adds a deterministic Industrial/Morgan Street native-canvas fallback from the curated V6 readiness packet when Claude still omits a governed payload after the repair prompt. The fallback is source-grounded, hidden from prose, and rendered by the existing `investmentSequencingMap` component.
 
+This follow-up upgrades the native exhibits from compact cards into fuller board-style decision surfaces. The right canvas now uses the available width for sequencing lanes, value/readiness matrices, gate-to-value roadmaps, owner/gate chips, metric strips, and decision-required banners. The Industrial/Morgan Street fallback now selects the same exhibit family as the prompt contract: prioritization gets sequencing, portfolio tradeoff gets value/readiness, prerequisite questions get gate-to-value, and trust/governance questions get proof boundary.
+
 ## Layer Impact
 
 - `global-control-lane`: Updates the shared Intelligence v2 answer contract and right-canvas renderer for all tenants using the executive canvas.
@@ -48,6 +50,9 @@ Third production proof on the corrected ACA image passed SkyHarbor and confirmed
 - `src/lib/intelligence/executive-canvas-payload.ts`: repairs raw newlines/tabs inside supported bare executive-canvas JSON strings and strips partial bare canvas payloads during streaming so malformed control payloads do not become visible prose.
 - `src/lib/intelligence/intelligence-consultant-text-synthesis.ts`: adds the same native-canvas repair/validation path to consultant synthesis so strategic prioritization answers cannot pass with only Markdown/Table fallback cards.
 - `src/lib/intelligence/ask/industrial-cio-backoffice-source.ts` and `src/lib/intelligence/ask/synthesizer.ts`: add a deterministic Industrial/Morgan Street native-canvas fallback from the curated readiness packet when the model still omits a governed native exhibit for the CIO demo question.
+- `src/components/intelligence-v2/IntelligenceV2Surface.tsx`: upgrades native exhibits into board-style right-canvas surfaces with lane counts, metric strips, value/readiness/risk chips, owner/gate treatment, matrix cards, and roadmap gates.
+- `src/lib/intelligence/ask/industrial-cio-backoffice-source.ts`: makes the deterministic Industrial/Morgan Street fallback choose sequencing, value/readiness, gate-to-value, or proof-boundary payloads based on the user question.
+- `docs/demo/intelligence-executive-canvas-demo-script-2026-07-01.md`: adds SkyHarbor and Industrial/Morgan Street prompts that exercise all native exhibit families for demo proof.
 - `src/lib/client-config.ts`: collapses duplicate canonical tenant aliases after demo-safe text replacement so Intelligence chrome, prompts, and visible answers do not show stacked labels such as `Air Air`, `Holdings Holdings`, or repeated canonical tails such as `Retail Group Group`.
 - `src/lib/intelligence/ask/industrial-cio-backoffice-source.ts`: updates Morgan Street / Industrial Demo guidance to the current canvas grammar and asks Claude to use the correct exhibit pattern for CIO shared-services AI questions.
 - Focused parser and UI tests for payload extraction, tab preservation, native rendering, and no marker/payload leakage.
@@ -67,6 +72,8 @@ Third production proof on the corrected ACA image passed SkyHarbor and confirmed
 - Defensive canvas-parser and canonical-label lint: `npx eslint src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/executive-canvas-payload.ts src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/lib/client-config.ts src/lib/__tests__/client-config-canonical.test.ts` passed.
 - Industrial deterministic native-canvas fallback validation: `./node_modules/.bin/jest src/lib/intelligence/ask/__tests__/industrial-cio-backoffice-source.test.ts src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/__tests__/client-config-canonical.test.ts --runInBand` passed. Jest still reports pre-existing duplicate manual mock warnings for Markdown mocks.
 - Industrial deterministic native-canvas fallback lint: `npx eslint src/lib/intelligence/ask/industrial-cio-backoffice-source.ts src/lib/intelligence/ask/__tests__/industrial-cio-backoffice-source.test.ts src/lib/intelligence/ask/synthesizer.ts` passed.
+- Board-exhibit polish validation: `/Users/anand/Projects/nexus/node_modules/.bin/jest src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/__tests__/tabbed-response.test.ts src/lib/intelligence/__tests__/executive-canvas-payload.test.ts src/lib/intelligence/ask/__tests__/industrial-cio-backoffice-source.test.ts --runInBand` passed. Jest still reports pre-existing duplicate manual mock warnings for Markdown mocks.
+- Board-exhibit polish lint: `/Users/anand/Projects/nexus/node_modules/.bin/eslint src/components/intelligence-v2/IntelligenceV2Surface.tsx src/components/intelligence-v2/__tests__/IntelligenceV2Surface.test.tsx src/lib/intelligence/tabbed-response.ts src/lib/intelligence/ask/industrial-cio-backoffice-source.ts src/lib/intelligence/ask/__tests__/industrial-cio-backoffice-source.test.ts` passed.
 
 ## Rollout Plan
 

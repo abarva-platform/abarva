@@ -190,7 +190,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     expect(askBox.tagName).toBe("TEXTAREA");
     expect(askBox).toHaveAttribute(
       "placeholder",
-      "Ask about Apex Retail Group",
+      "Ask about Retail Demo",
     );
 
     fireEvent.change(askBox, {
@@ -232,7 +232,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     );
     expect(
       await screen.findAllByText(
-        "Apex Retail Group should gate lakehouse scale on measured value.",
+        "Retail Demo should gate lakehouse scale on measured value.",
       ),
     ).not.toHaveLength(0);
     expect(screen.queryByText(/Consulted experts/i)).not.toBeInTheDocument();
@@ -276,7 +276,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     );
 
     fireEvent.click(
-      screen.getByText("Which AI investments should Apex Retail Group scale?"),
+      screen.getByText("Which AI investments should Retail Demo scale?"),
     );
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -613,7 +613,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     const mainAnswer =
       "SkyHarbor should fund IROPS recovery decisioning only through a governed readiness gate.";
     const visibleMainAnswer =
-      "SkyHarbor Air should fund IROPS recovery decisioning only through a governed readiness gate.";
+      "Airline Demo should fund IROPS recovery decisioning only through a governed readiness gate.";
     const tableContent = [
       "| Option | Value | Readiness | Decision |",
       "|---|---:|---|---|",
@@ -908,6 +908,177 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       expect(document.body.textContent).not.toContain("canvasType");
       expect(document.body.textContent).not.toContain("grounding:");
       expect(document.body.textContent).not.toContain("<<<TAB:");
+    });
+  });
+
+  it("renders value/readiness matrix payloads as a native board exhibit", async () => {
+    const mainAnswer =
+      "The portfolio tradeoff is clear: scale Loyalty, protect Crew Recovery, and fund IROPS readiness before autonomous expansion.";
+    const canvasPayload = {
+      canvasType: "valueReadinessMatrix",
+      title: "AI portfolio value/readiness map",
+      items: [
+        {
+          label: "Loyalty AI",
+          value: 8,
+          readiness: 9,
+          risk: 4,
+          action: "Scale now",
+          owner: "President Loyalty",
+          gate: "Certified customer engagement data",
+        },
+        {
+          label: "IROPS Decision Assistant",
+          value: 10,
+          readiness: 3,
+          risk: 8,
+          action: "Fund readiness",
+          owner: "EVP Operations + CDAO",
+          gate: "Certified operational data product",
+        },
+      ],
+      proofBoundary: {
+        known: ["Loyalty evidence is stronger than IROPS data readiness."],
+        missing: ["IROPS operational certification"],
+        decisionRequired: "Approve the readiness sprint before scale capital.",
+      },
+    };
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: streamFromLines([
+        JSON.stringify({
+          type: "delta",
+          text: [
+            mainAnswer,
+            "",
+            "<<<TAB: Chart | grounding: tenant-evidence>>>",
+            "Tenant evidence: value/readiness map.",
+            "",
+            "```abarva-canvas",
+            JSON.stringify(canvasPayload),
+            "```",
+          ].join("\n"),
+        }),
+        JSON.stringify({ type: "done" }),
+        "",
+      ]),
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(
+      <IntelligenceV2Surface
+        payload={{
+          ...apexPayload,
+          tenant: {
+            key: "skyharbor-air",
+            displayName: "SkyHarbor Air",
+            industry: "Airline",
+          },
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("agent-dock-input"), {
+      target: { value: "Which AI bets are high value but not ready?" },
+    });
+    fireEvent.click(screen.getByTestId("agent-dock-send"));
+
+    expect(await screen.findAllByText(mainAnswer)).not.toHaveLength(0);
+    await waitFor(() => {
+      expect(screen.getByTestId("executive-canvas-matrix")).toBeInTheDocument();
+      expect(screen.getByText("Portfolio tradeoff")).toBeInTheDocument();
+      expect(screen.getByText("AI portfolio value/readiness map")).toBeInTheDocument();
+      expect(screen.getByText("High value + low readiness: fund the gate first")).toBeInTheDocument();
+      expect(screen.getByText("Loyalty AI")).toBeInTheDocument();
+      expect(screen.getByText("IROPS Decision Assistant")).toBeInTheDocument();
+      expect(screen.getByText("Certified operational data product")).toBeInTheDocument();
+      expect(screen.getByText("Approve the readiness sprint before scale capital.")).toBeInTheDocument();
+      expect(document.body.textContent).not.toContain("canvasType");
+      expect(document.body.textContent).not.toContain("abarva-canvas");
+    });
+  });
+
+  it("renders gate-to-value roadmap payloads as a native board exhibit", async () => {
+    const mainAnswer =
+      "Do not fund scale first. Fund the gates that convert AI ideas into capital-ready initiatives.";
+    const canvasPayload = {
+      canvasType: "gateToValueRoadmap",
+      title: "AI gate-to-value roadmap",
+      gates: [
+        {
+          label: "Certify source data products",
+          owner: "CDAO",
+          dependency: "Crew, PNR, event store, and maintenance lineage",
+          valueUnlocked: "$270M IROPS pool becomes investment-grade",
+          status: "First",
+        },
+        {
+          label: "Approve human-in-loop model boundary",
+          owner: "AI Governance Council",
+          dependency: "Model-risk tier and operational exception handling",
+          valueUnlocked: "Safe pilot expansion",
+          status: "Next",
+        },
+      ],
+      proofBoundary: {
+        known: ["The largest value pool is gated by operational data readiness."],
+        missing: ["Certified freshness SLA"],
+        decisionRequired: "Name the accountable gate owner before releasing scale capital.",
+      },
+    };
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: streamFromLines([
+        JSON.stringify({
+          type: "delta",
+          text: [
+            mainAnswer,
+            "",
+            "<<<TAB: Decision | grounding: tenant-evidence>>>",
+            "Tenant evidence: this is a gate-before-scale decision.",
+            "",
+            "```abarva-canvas",
+            JSON.stringify(canvasPayload),
+            "```",
+          ].join("\n"),
+        }),
+        JSON.stringify({ type: "done" }),
+        "",
+      ]),
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(
+      <IntelligenceV2Surface
+        payload={{
+          ...apexPayload,
+          tenant: {
+            key: "skyharbor-air",
+            displayName: "SkyHarbor Air",
+            industry: "Airline",
+          },
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("agent-dock-input"), {
+      target: { value: "What has to happen first before we scale IROPS AI?" },
+    });
+    fireEvent.click(screen.getByTestId("agent-dock-send"));
+
+    expect(await screen.findAllByText(mainAnswer)).not.toHaveLength(0);
+    await waitFor(() => {
+      expect(screen.getByTestId("executive-canvas-roadmap")).toBeInTheDocument();
+      expect(screen.getByText("Gate to value")).toBeInTheDocument();
+      expect(screen.getByText("AI gate-to-value roadmap")).toBeInTheDocument();
+      expect(screen.getByText("Certify source data products")).toBeInTheDocument();
+      expect(screen.getByText("AI Governance Council")).toBeInTheDocument();
+      expect(screen.getByText("$270M IROPS pool becomes investment-grade")).toBeInTheDocument();
+      expect(screen.getByText("Name the accountable gate owner before releasing scale capital.")).toBeInTheDocument();
+      expect(document.body.textContent).not.toContain("canvasType");
+      expect(document.body.textContent).not.toContain("abarva-canvas");
     });
   });
 

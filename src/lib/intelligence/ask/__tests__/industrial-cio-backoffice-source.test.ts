@@ -115,4 +115,39 @@ describe("Industrial CIO back-office ask source", () => {
       },
     });
   });
+
+  it("builds native matrix and roadmap fallbacks for tradeoff and prerequisite questions", () => {
+    const matrixBlock = buildIndustrialCioBackofficeNativeCanvasBlock(
+      "Which shared-services AI bets are high value but not ready across HR, finance, treasury, legal, and shared services?",
+      ["industrial demo"],
+    );
+    const roadmapBlock = buildIndustrialCioBackofficeNativeCanvasBlock(
+      "What has to happen first before the CIO scales AI across Finance, Treasury, HR, Legal, and shared services?",
+      ["industrial demo"],
+    );
+
+    const matrix = extractExecutiveCanvasPayloads(matrixBlock).payloads[0];
+    const roadmap = extractExecutiveCanvasPayloads(roadmapBlock).payloads[0];
+
+    expect(matrix).toMatchObject({
+      canvasType: "valueReadinessMatrix",
+      title: "Shared Services AI Value / Readiness Map — Industrial Demo",
+      items: expect.arrayContaining([
+        expect.objectContaining({
+          label: expect.stringContaining("HR"),
+          action: "Hold for discovery",
+        }),
+      ]),
+    });
+    expect(roadmap).toMatchObject({
+      canvasType: "gateToValueRoadmap",
+      title: "Shared Services AI Gate-to-Value Roadmap — Industrial Demo",
+      gates: expect.arrayContaining([
+        expect.objectContaining({
+          label: "Load HR and Legal evidence",
+          status: "Discovery",
+        }),
+      ]),
+    });
+  });
 });
