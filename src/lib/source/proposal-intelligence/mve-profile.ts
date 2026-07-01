@@ -1,5 +1,8 @@
 import type {
   CommercialLeverageSeed,
+  VendorBafoInstructionPack,
+  VendorBafoQuestion,
+  VendorBafoVendorInstruction,
   VendorExtractionCard,
   VendorChallengeIntelligence,
   VendorChallengeIssueCategory,
@@ -386,6 +389,162 @@ export function buildVendorChallengeIntelligence(
     challengeLog,
     leverageSeeds,
   };
+}
+
+export function buildVendorBafoInstructionPack(
+  intelligence: VendorChallengeIntelligence | null | undefined,
+): VendorBafoInstructionPack | null {
+  if (!intelligence?.challengeLog.length || !intelligence.leverageSeeds.length) {
+    return null;
+  }
+  const challengeByVendor = groupByVendor(intelligence.challengeLog);
+  const seedByVendor = groupByVendor(intelligence.leverageSeeds);
+  const vendorIds = Array.from(
+    new Set([
+      ...intelligence.challengeLog.map((challenge) => challenge.vendorId),
+      ...intelligence.leverageSeeds.map((seed) => seed.vendorId),
+    ]),
+  );
+  const vendorInstructions = vendorIds.map((vendorId) =>
+    bafoInstructionForVendor(
+      vendorId,
+      challengeByVendor.get(vendorId) ?? [],
+      seedByVendor.get(vendorId) ?? [],
+    ),
+  );
+  const questionCount = vendorInstructions.reduce(
+    (sum, instruction) => sum + instruction.instructionCount,
+    0,
+  );
+  const scoringHoldbacks = Array.from(
+    new Set(
+      vendorInstructions
+        .flatMap((instruction) => instruction.mustResolveBeforeScoring)
+        .slice(0, 8),
+    ),
+  );
+
+  return {
+    sourceEventId: intelligence.sourceEventId,
+    tenantKey: intelligence.tenantKey,
+    generatedAt: intelligence.generatedAt,
+    roundLabel: "BAFO Round 1 instruction pack",
+    executiveSummary:
+      "Source converts response-profile challenges into vendor-specific BAFO instructions so evaluation does not harden around unsupported claims, non-comparable pricing, weak SLA economics, or unpriced buyer risk.",
+    vendorCount: vendorInstructions.length,
+    questionCount,
+    commonResponseRequirements: [
+      "Answer every BAFO item in the order provided; do not replace a requested structured response with narrative only.",
+      "For every commercial change, provide the revised price, affected contract clause, implementation dependency, and effective date.",
+      "For every productivity or automation claim, provide baseline volume, measurement method, year-by-year commitment, and financial remedy.",
+      "For every assumption, exclusion, or exception, mark it as removed, priced, or explicitly accepted as buyer risk.",
+      "Provide a redline or exhibit reference for every revised SLA, staffing, transition, or pricing commitment.",
+    ],
+    completenessCriteria: [
+      "Every must-resolve item has a direct response.",
+      "Pricing, staffing, SLA, transition, assumptions, and exceptions are internally consistent across narrative and exhibits.",
+      "No vendor receives full scoring credit for a claim that remains unpriced, unsupported, or outside the structured exhibits.",
+      "Buyer-risk exceptions are either removed, priced, or escalated to executive decision.",
+    ],
+    scoringHoldbacks,
+    vendorInstructions,
+  };
+}
+
+function groupByVendor<T extends { vendorId: string }>(items: T[]): Map<string, T[]> {
+  const grouped = new Map<string, T[]>();
+  for (const item of items) {
+    const bucket = grouped.get(item.vendorId) ?? [];
+    bucket.push(item);
+    grouped.set(item.vendorId, bucket);
+  }
+  return grouped;
+}
+
+function bafoInstructionForVendor(
+  vendorId: string,
+  challenges: VendorChallengeLogEntry[],
+  seeds: CommercialLeverageSeed[],
+): VendorBafoVendorInstruction {
+  const vendorName =
+    challenges[0]?.vendorName ?? seeds[0]?.vendorName ?? "Vendor";
+  const seedByType = new Map(seeds.map((seed) => [seed.leverType, seed]));
+  const questions = challenges.map((challenge, index) => {
+    const seed =
+      seedByType.get(leverTypeForChallenge(challenge)) ??
+      seeds[index] ??
+      leverageSeedFromChallenge(challenge, index);
+    return bafoQuestionFromChallenge(challenge, seed, index);
+  });
+  const priority: VendorBafoVendorInstruction["priority"] = questions.some(
+    (question) => question.priority === "must_resolve",
+  )
+    ? "high"
+    : questions.length > 1
+      ? "medium"
+      : "low";
+
+  return {
+    vendorId,
+    vendorName,
+    readyForEvaluation:
+      challenges.find((challenge) => challenge.readyForEvaluation !== "yes")
+        ?.readyForEvaluation ?? "yes",
+    priority,
+    instructionCount: questions.length,
+    mustResolveBeforeScoring: questions
+      .filter((question) => question.priority === "must_resolve")
+      .map((question) => question.scoringDisposition),
+    questions,
+  };
+}
+
+function bafoQuestionFromChallenge(
+  challenge: VendorChallengeLogEntry,
+  seed: CommercialLeverageSeed,
+  index: number,
+): VendorBafoQuestion {
+  return {
+    questionId: `BAFO-${challenge.vendorId.replace(/^vendor-/, "").toUpperCase()}-${String(index + 1).padStart(2, "0")}`,
+    vendorId: challenge.vendorId,
+    vendorName: challenge.vendorName,
+    priority: challenge.severity === "high" ? "must_resolve" : "should_improve",
+    category: challenge.issueCategory.replaceAll("_", " "),
+    question: seed.bafoLanguage,
+    requiredResponseFormat: requiredResponseFormatForLever(seed.leverType),
+    evidenceLabel: challenge.evidenceLabel,
+    buyerRisk: seed.buyerRisk,
+    scoringDisposition: challenge.scoringImplication,
+    sourceChallengeId: challenge.challengeId,
+    sourceLeverageSeedId: seed.seedId,
+  };
+}
+
+function requiredResponseFormatForLever(
+  type: CommercialLeverageSeed["leverType"],
+): string {
+  switch (type) {
+    case "productivity_not_priced_back":
+      return "Baseline volume + committed % by year + price-down or gainshare schedule + remedy.";
+    case "support_not_staffed":
+      return "Role/FTE/shift/location table + named critical-app coverage + exception list.";
+    case "transition_fee_not_milestone_based":
+      return "Revised transition fee schedule tied to KT, cutover, stabilization, and acceptance milestones.";
+    case "weak_sla_credit_economics":
+      return "Updated SLA credit cap, chronic-miss escalator, earn-back limits, and reporting cadence.";
+    case "pricing_not_comparable":
+      return "Normalized included/excluded scope table + optional/pass-through pricing + buyer-retained effort.";
+    case "vague_exclusions_change_order_exposure":
+      return "Assumption/exclusion disposition: removed, priced, or buyer-accepted with quantified impact.";
+    case "commercial_exception_buyer_risk":
+      return "Exception disposition table with redline, pricing impact, and executive decision flag.";
+    case "rate_card_or_staffing_mix_issue":
+      return "Role-level rate card + pyramid/location mix + substitution and escalation rules.";
+    case "outcome_claim_not_committed":
+    case "proposal_claim_not_supported":
+    default:
+      return "Claim register update with evidence, owner, measure, due date, and contractual remedy.";
+  }
 }
 
 function shouldChallengeCard(card: VendorExtractionCard): boolean {
