@@ -503,7 +503,7 @@ describe("Source answer engine", () => {
     ["Which vendor is leading?", "Vendor A is leading"],
     ["Which vendor is cheapest on normalized TCO?", "Vendor B is cheapest"],
     ["Which vendor has the highest transition risk?", "Vendor B carries the highest transition risk"],
-    ["Which vendor should advance to BAFO?", "Advance the vendors into BAFO selectively"],
+    ["Which vendor should advance to BAFO?", "Advance Vendor A as the risk-adjusted lead and Vendor C"],
     ["What are the executive tradeoffs?", "continuity versus price versus service accountability"],
   ])(
     "answers evaluation scorecard question: %s",
@@ -535,7 +535,7 @@ describe("Source answer engine", () => {
               sourceType: "contextChunk",
               sourceDoc: "source_events",
               excerpt:
-                "Rank 1; weighted score 7.4/10; recommendation advance to bafo. Risk-adjusted leader at 7.4/10 because continuity, scope coverage, and transition confidence outweigh its weaker commercial remedies. Tradeoffs: Best continuity and transition risk posture. Needs stronger productivity price-down, SLA credit economics, and transition fee holdbacks. Conditions: improve productivity credits and transition fee holdbacks.",
+                "Rank 1; weighted score 7.4/10; recommendation advance to bafo. Risk-adjusted leader at 7.4/10 because continuity, scope coverage, and transition confidence outweigh its weaker commercial remedies. Finalist posture: Preferred BAFO lead: advance, but require sharper commercial remedies before award. Tradeoffs: Best continuity and transition risk posture. Needs stronger productivity price-down, SLA credit economics, and transition fee holdbacks. Conditions: improve productivity credits and transition fee holdbacks.",
               confidence: "high",
               score: 30,
             },
@@ -547,7 +547,7 @@ describe("Source answer engine", () => {
               sourceType: "contextChunk",
               sourceDoc: "source_events",
               excerpt:
-                "Rank 3; weighted score 6.7/10; recommendation advance with conditions. Lowest-cost challenger at 6.7/10, but coverage staffing, retained effort, and productivity economics must close before the price advantage can be trusted. Tradeoffs: Best apparent normalized TCO. Highest execution risk because productivity, staffing coverage, and retained-client effort remain conditional. Conditions: reconcile proposed coverage model to staffing table; include retained effort in normalized TCO.",
+                "Rank 3; weighted score 6.6/10; recommendation hold until clarified. Lowest-cost price benchmark at 6.6/10, but coverage staffing, retained effort, pass-through exposure, and productivity economics must close before it can be treated as a preferred finalist. Finalist posture: Price benchmark only: hold from preferred-finalist status unless BAFO cures the named staffing, retained-effort, pass-through, and productivity gaps. Tradeoffs: Best apparent normalized TCO. Highest execution risk because productivity, staffing coverage, and retained-client effort remain conditional. Conditions: reconcile proposed coverage model to staffing table; include retained effort in normalized TCO.",
               confidence: "high",
               score: 29,
             },
@@ -559,7 +559,7 @@ describe("Source answer engine", () => {
               sourceType: "contextChunk",
               sourceDoc: "source_events",
               excerpt:
-                "Rank 2; weighted score 7.0/10; recommendation advance with conditions. Service-quality specialist at 7.0/10 with strong SLA economics, but scope and transition caveats must be normalized before it can lead. Tradeoffs: Best SLA remedy posture and clean evidence discipline. Narrower base scope and slower transition make the headline price less directly comparable. Conditions: normalize optional corporate tower and accelerated transition option.",
+                "Rank 2; weighted score 7.2/10; recommendation advance with conditions. Service-quality specialist at 7.2/10 with strong SLA economics, but scope and transition caveats must be normalized before it can lead. Finalist posture: Conditional finalist: advance if corporate shared-services scope and transition timing are normalized. Tradeoffs: Best SLA remedy posture and clean evidence discipline. Narrower base scope and slower transition make the headline price less directly comparable. Conditions: normalize optional corporate tower and accelerated transition option.",
               confidence: "high",
               score: 28,
             },
@@ -587,6 +587,30 @@ describe("Source answer engine", () => {
               confidence: "high",
               score: 26,
             },
+            {
+              id: "source-event:sky:impact-b",
+              segmentId: "sourcing_artifacts",
+              recordId: "vendor-b-score-impact",
+              title: "Vendor B score impact scenario",
+              sourceType: "contextChunk",
+              sourceDoc: "source_events",
+              excerpt:
+                "Score movement: 6.6 to 7.3 if cured; delta +0.7. BAFO cure: Reconcile 24x7 staffing to role/location tables, cap tooling pass-throughs, cost retained-client effort, and commit productivity price-downs. Required evidence: Shift/FTE/location table, retained-effort RACI with cost model, capped pass-through schedule, and year-by-year productivity credit. Decision impact: Vendor B can move from price benchmark to viable finalist, but not to risk-adjusted lead unless execution proof is contractual.",
+              confidence: "high",
+              score: 25,
+            },
+            {
+              id: "source-event:sky:finalist",
+              segmentId: "sourcing_artifacts",
+              recordId: "evaluation-finalist-recommendation",
+              title: "Finalist recommendation",
+              sourceType: "contextChunk",
+              sourceDoc: "source_events",
+              excerpt:
+                "Advance Vendor A as the risk-adjusted lead and Vendor C as a conditional service-accountability finalist. Keep Vendor B as the price benchmark only; it should not become a preferred finalist unless BAFO cures staffing coverage, retained-effort, pass-through, and productivity-credit gaps.",
+              confidence: "high",
+              score: 24,
+            },
           ],
         },
       };
@@ -602,6 +626,7 @@ describe("Source answer engine", () => {
       expect(answer?.answerText).toContain("Vendor A");
       expect(answer?.answerText).toContain("Vendor B");
       expect(answer?.answerText).toContain("Vendor C");
+      expect(answer?.answerText).toContain("What can change the score");
       expect(answer?.answerText).not.toContain("Mode:");
       expect(answer?.answerText).not.toContain("Current state:");
       expect(answer?.answerText).not.toContain("source_events");

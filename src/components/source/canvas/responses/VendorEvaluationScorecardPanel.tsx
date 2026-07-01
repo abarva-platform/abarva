@@ -49,11 +49,21 @@ export function VendorEvaluationScorecardPanel({
           <div style={EYEBROW}>Evaluation decision view</div>
           <h3 style={TITLE}>Normalized Vendor Comparison + Scorecard</h3>
           <p style={COPY}>{decisionView.scoreBasis}</p>
+          <p style={RECOMMENDATION_COPY}>{decisionView.finalistRecommendation}</p>
         </div>
         <div style={COUNT_WRAP}>
           <Count label="Vendors" value={decisionView.vendorCount} />
           <Count label="Criteria" value={decisionView.scorecardRows.length} />
         </div>
+      </div>
+
+      <div style={TRANSPARENCY_BOX}>
+        <div style={EYEBROW}>How the score is defended</div>
+        <ul style={BULLET_LIST}>
+          {decisionView.scoringTransparency.map((rule) => (
+            <li key={rule}>{rule}</li>
+          ))}
+        </ul>
       </div>
 
       <div style={SUMMARY_GRID}>
@@ -78,6 +88,7 @@ export function VendorEvaluationScorecardPanel({
               <strong>{summary.weightedScore.toFixed(1)}/10</strong>
             </div>
             <p style={MINI_COPY}>{summary.decisionRationale}</p>
+            <p style={POSTURE_COPY}>{summary.finalistPosture}</p>
             <ul style={BULLET_LIST}>
               {summary.tradeoffs.slice(0, 2).map((tradeoff) => (
                 <li key={tradeoff}>{tradeoff}</li>
@@ -186,6 +197,11 @@ export function VendorEvaluationScorecardPanel({
                     return (
                       <td key={vendor.vendorId} style={TD_SCORE}>
                         <strong>{score?.score.toFixed(1) ?? "—"}</strong>
+                        {score ? (
+                          <em style={WEIGHTED_NOTE}>
+                            {score.weightedContribution.toFixed(2)} weighted
+                          </em>
+                        ) : null}
                         <span>{score?.rationale ?? "No rationale loaded."}</span>
                       </td>
                     );
@@ -203,6 +219,46 @@ export function VendorEvaluationScorecardPanel({
                   </td>
                 ))}
               </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style={TABLE_SECTION}>
+        <div>
+          <div style={EYEBROW}>BAFO Improvement Scenario</div>
+          <p style={MINI_COPY}>
+            Shows which cures can move a score, what evidence is required, and
+            how the recommendation changes.
+          </p>
+        </div>
+        <div style={TABLE_WRAP}>
+          <table style={TABLE}>
+            <thead>
+              <tr>
+                <th style={{ ...TH, textAlign: "left" }}>Vendor</th>
+                <th style={TH}>Now</th>
+                <th style={TH}>If cured</th>
+                <th style={{ ...TH, textAlign: "left" }}>BAFO cure</th>
+                <th style={{ ...TH, textAlign: "left" }}>Decision impact</th>
+              </tr>
+            </thead>
+            <tbody>
+              {decisionView.scoreImprovementScenarios.map((scenario) => (
+                <tr key={scenario.vendorId}>
+                  <td style={TD_LABEL}>
+                    <strong>{scenario.vendorName.replace(/\s+—\s+.*/, "")}</strong>
+                    <span>{scenario.requiredEvidence}</span>
+                  </td>
+                  <td style={TD_CENTER}>{scenario.currentScore.toFixed(1)}</td>
+                  <td style={TD_CENTER}>
+                    {scenario.potentialScore.toFixed(1)}
+                    <span style={DELTA}>+{scenario.scoreDelta.toFixed(1)}</span>
+                  </td>
+                  <td style={TD}>{scenario.bafoCure}</td>
+                  <td style={TD}>{scenario.decisionImpact}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -270,11 +326,28 @@ const COPY: CSSProperties = {
   maxWidth: 900,
 };
 
+const RECOMMENDATION_COPY: CSSProperties = {
+  margin: "10px 0 0",
+  color: CANVAS.INK,
+  fontSize: CANVAS.T_BODY_SMALL,
+  lineHeight: 1.5,
+  maxWidth: 980,
+  fontWeight: 700,
+};
+
 const MINI_COPY: CSSProperties = {
   margin: 0,
   color: CANVAS.INK_SOFT,
   fontSize: CANVAS.T_BODY_SMALL,
   lineHeight: 1.45,
+};
+
+const POSTURE_COPY: CSSProperties = {
+  margin: 0,
+  color: CANVAS.INK,
+  fontSize: CANVAS.T_BODY_SMALL,
+  lineHeight: 1.45,
+  fontWeight: 700,
 };
 
 const COUNT_WRAP: CSSProperties = {
@@ -369,6 +442,15 @@ const TABLE_SECTION: CSSProperties = {
   gap: 10,
 };
 
+const TRANSPARENCY_BOX: CSSProperties = {
+  border: `1px solid ${CANVAS.HAIRLINE}`,
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  background: "rgba(10, 48, 76, 0.04)",
+  padding: 12,
+  display: "grid",
+  gap: 8,
+};
+
 const TABLE_WRAP: CSSProperties = {
   overflowX: "auto",
 };
@@ -410,6 +492,24 @@ const TD: CSSProperties = {
 const TD_SCORE: CSSProperties = {
   ...TD,
   textAlign: "left",
+};
+
+const WEIGHTED_NOTE: CSSProperties = {
+  display: "block",
+  marginTop: 2,
+  color: CANVAS.INK_MUTED,
+  fontStyle: "normal",
+  fontSize: CANVAS.T_MICRO,
+  fontFamily: CANVAS.MONO,
+};
+
+const DELTA: CSSProperties = {
+  display: "block",
+  marginTop: 2,
+  color: "#0b7a4b",
+  fontSize: CANVAS.T_MICRO,
+  fontFamily: CANVAS.MONO,
+  fontWeight: 800,
 };
 
 const TD_CENTER: CSSProperties = {

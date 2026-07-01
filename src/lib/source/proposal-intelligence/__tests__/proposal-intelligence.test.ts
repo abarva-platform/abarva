@@ -612,6 +612,12 @@ describe("vendor evaluation decision view", () => {
       ]),
     );
     expect(view.scorecardRows.length).toBeGreaterThanOrEqual(8);
+    expect(view.scoringTransparency.join(" ")).toMatch(/weights total 100/i);
+    expect(view.finalistRecommendation).toMatch(/Vendor A|Vendor C|Vendor B/);
+    expect(view.scoreImprovementScenarios).toHaveLength(3);
+    expect(view.scoreImprovementScenarios.find((scenario) =>
+      scenario.vendorName.includes("Vendor B"),
+    )?.potentialScore).toBeGreaterThan(7);
     expect(view.leadingVendorId).toContain("vendor-a");
     expect(view.cheapestVendorId).toContain("vendor-b");
     expect(view.highestTransitionRiskVendorId).toContain("vendor-b");
@@ -639,7 +645,8 @@ describe("vendor evaluation decision view", () => {
     )!;
 
     expect(weightTotal).toBe(100);
-    expect(vendorB.recommendation).toBe("advance_with_conditions");
+    expect(vendorB.recommendation).toBe("hold_until_clarified");
+    expect(vendorB.finalistPosture).toMatch(/Price benchmark/i);
     expect(vendorB.conditions.join(" ")).toMatch(/coverage|staffing|retained/i);
     expect(vendorC.tradeoffs.join(" ")).toMatch(/SLA|scope|transition/i);
   });
