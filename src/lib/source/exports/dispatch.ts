@@ -136,9 +136,11 @@ export interface SourceDeliverableRenderResult {
 
 /** Common fields every Source narrative kind carries. */
 interface NarrativeBasePayload {
+  tenantName?: string;
   eventCode: string;
   eventName: string;
   issuedBy?: string;
+  generatedAt?: string;
   body: string;
   bodyIsAuthored: boolean;
 }
@@ -421,11 +423,11 @@ async function renderNarrative(
 ): Promise<SourceDeliverableRenderResult> {
   const payload = spec.payload as unknown as NarrativeBasePayload;
   const legacyPayload: NarrativeDocxPayload = {
-    tenantName: spec.tenantKey,
+    tenantName: payload.tenantName ?? spec.tenantKey,
     eventCode: payload.eventCode,
     eventName: payload.eventName,
     issuedBy: payload.issuedBy,
-    generatedAt,
+    generatedAt: payload.generatedAt ?? generatedAt,
     body: withAiDecisionSupportExportNote(payload.body),
     bodyIsAuthored: payload.bodyIsAuthored,
   };
