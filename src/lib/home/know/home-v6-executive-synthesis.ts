@@ -35,18 +35,16 @@ export interface HomeV6ExecutiveSynthesisResult {
 type HomeVisualArtifactStatus = NonNullable<HomeKnowResponse["artifactStatus"]>;
 
 export function isHomeV6ExecutiveSynthesisEnabled(): boolean {
-  const raw = process.env.HOME_V6_EXECUTIVE_SYNTHESIS_ENABLED
-    ?.trim()
-    .toLowerCase();
+  const raw =
+    process.env.HOME_V6_EXECUTIVE_SYNTHESIS_ENABLED?.trim().toLowerCase();
   if (raw === "false" || raw === "0" || raw === "off") return false;
   if (raw === "true" || raw === "1" || raw === "on") return true;
   return process.env.NODE_ENV === "production";
 }
 
 export function isHomeV6ExecutiveSynthesisRequired(): boolean {
-  const raw = process.env.HOME_V6_EXECUTIVE_SYNTHESIS_REQUIRED
-    ?.trim()
-    .toLowerCase();
+  const raw =
+    process.env.HOME_V6_EXECUTIVE_SYNTHESIS_REQUIRED?.trim().toLowerCase();
   if (raw === "false" || raw === "0" || raw === "off") return false;
   if (raw === "true" || raw === "1" || raw === "on") return true;
   return process.env.NODE_ENV === "production";
@@ -121,8 +119,14 @@ export async function applyHomeV6ExecutiveSynthesis(args: {
     );
     const rawText = collected.text.trim();
     const normalizedText = normalizeExecutiveText(rawText);
-    const executiveText = ensureTenantOpening(normalizedText, packet.tenantName);
-    const rawClaudePreserved = preservesClaudeVisibleText(rawText, executiveText);
+    const executiveText = ensureTenantOpening(
+      normalizedText,
+      packet.tenantName,
+    );
+    const rawClaudePreserved = preservesClaudeVisibleText(
+      rawText,
+      executiveText,
+    );
     const artifactStatus = determineArtifactStatus({
       text: executiveText,
       response: args.response,
@@ -198,7 +202,7 @@ export async function applyHomeV6ExecutiveSynthesis(args: {
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     return {
-        response: applyExecutiveFailureTrace(args.response, {
+      response: applyExecutiveFailureTrace(args.response, {
         reason,
         validationIssues: [],
         model,
@@ -231,6 +235,7 @@ Rules:
 - Use named systems, vendors, programs, owners, and metrics only when they are in the packet.
 - If evidence is incomplete, say exactly what is not proven and why it matters.
 - If the question belongs in Intelligence, Moves, Source, or Tower, explain the boundary naturally and name the surface that should own the next step.
+- Use answerability and context quality as decision controls: if the answer is planning-grade, data-thin, or module-owned, say that plainly in executive language and route the next step. Do not expose the words "answerability", "context quality", "score", or the raw classification labels.
 - For Home answers, phrase follow-up as "the next evidence to validate" rather than "we recommend" unless the user explicitly asks for a recommendation.
 - Translate data-architecture and evidence-packet terms into executive language: say "data asset", "shared business definition", "source collection", "business context areas", or "business facts"; do not say dataset, semantic model, semantic layer, corpus, governed evidence areas, business records, or table unless the user asks for a table.
 - When the user asks for a table, chart, graph, or visual explanation, use the available evidence to either provide the executive table/chart/graph content if a structured artifact is available, or explain which table/chart/graph would best represent the evidence and what it would show. Do not invent numbers. If the artifact cannot be rendered from current evidence, say what evidence is missing and recommend the right visual structure.
@@ -259,6 +264,14 @@ interface ExecutivePacket {
   } | null;
   gaps: Array<{ label: string; detail: string; severity: string }>;
   handoff: { label: string; reason: string; target: string | null } | null;
+  answerability: string;
+  contextQuality: {
+    overall: string;
+    summary: string;
+    strongDimensions: string[];
+    mediumDimensions: string[];
+    thinDimensions: string[];
+  } | null;
   styleContract: string;
   citations: Array<{ label: string; excerpt?: string | null }>;
   proof: {
@@ -301,6 +314,16 @@ function buildExecutivePacket(
           label: response.handoff.label,
           reason: response.handoff.reason,
           target: response.handoff.target,
+        }
+      : null,
+    answerability: response.answerability ?? "answerable_with_caveat",
+    contextQuality: response.contextQuality
+      ? {
+          overall: response.contextQuality.overall,
+          summary: response.contextQuality.summary,
+          strongDimensions: response.contextQuality.strongDimensions,
+          mediumDimensions: response.contextQuality.mediumDimensions,
+          thinDimensions: response.contextQuality.thinDimensions,
         }
       : null,
     styleContract: buildStyleContract(v6Result.tenant.displayName),
@@ -350,6 +373,12 @@ ${packet.gaps.map((gap) => `- ${gap.label}: ${gap.detail} (${gap.severity})`).jo
 Handoff boundary:
 ${packet.handoff ? `${packet.handoff.label}: ${packet.handoff.reason}` : "None"}
 
+Answerability:
+${packet.answerability}
+
+Context quality:
+${packet.contextQuality ? JSON.stringify(packet.contextQuality, null, 2) : "None"}
+
 Required answer shape:
 ${packet.styleContract}
 
@@ -398,7 +427,8 @@ function validateExecutiveText(args: {
   const text = args.text.trim();
   if (!text) hardIssues.push("empty_text");
   if (TECHNICAL_LANGUAGE_RE.test(text)) hardIssues.push("technical_language");
-  if (!EXECUTIVE_SIGNALS_RE.test(text)) hardIssues.push("not_executive_friendly");
+  if (!EXECUTIVE_SIGNALS_RE.test(text))
+    hardIssues.push("not_executive_friendly");
   if (!hasTenantOpening(text, displayTenantName(args.response))) {
     softWarnings.push("missing_tenant_name");
   }
@@ -467,7 +497,9 @@ function applyExecutiveSuccess(
     model: string;
     auditId: string;
     promptBoundary: ReturnType<typeof buildPromptBoundary>;
-    anthropicTrace?: NonNullable<HomeKnowSafety["composerTrace"]>["anthropicTrace"];
+    anthropicTrace?: NonNullable<
+      HomeKnowSafety["composerTrace"]
+    >["anthropicTrace"];
     rawClaudePreserved: boolean;
     maxTokens: number;
     timeoutMs: number;
@@ -510,7 +542,9 @@ function applyExecutiveFailureTrace(
     validationIssues: string[];
     model: string;
     promptBoundary: ReturnType<typeof buildPromptBoundary>;
-    anthropicTrace?: NonNullable<HomeKnowSafety["composerTrace"]>["anthropicTrace"];
+    anthropicTrace?: NonNullable<
+      HomeKnowSafety["composerTrace"]
+    >["anthropicTrace"];
     auditId?: string;
     maxTokens: number;
     timeoutMs: number;
@@ -568,7 +602,10 @@ function normalizeExecutiveText(text: string): string {
     .replace(/\brows?\b/gi, "lines")
     .replace(/\bdatasets?\b/gi, "data asset")
     .replace(/\bcorpus\b/gi, "source collection")
-    .replace(/\bWe recommend validating\b/gi, "The next evidence to validate is")
+    .replace(
+      /\bWe recommend validating\b/gi,
+      "The next evidence to validate is",
+    )
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -581,8 +618,14 @@ function scrubExecutiveTextPreservingMarkdownEmphasis(text: string): string {
   ).replaceAll(MARKDOWN_EMPHASIS_SENTINEL, "**");
 }
 
-function preservesClaudeVisibleText(rawText: string, visibleText: string): boolean {
-  return normalizePreservationText(rawText) === normalizePreservationText(visibleText);
+function preservesClaudeVisibleText(
+  rawText: string,
+  visibleText: string,
+): boolean {
+  return (
+    normalizePreservationText(rawText) ===
+    normalizePreservationText(visibleText)
+  );
 }
 
 function normalizePreservationText(text: string): string {
@@ -615,7 +658,9 @@ function hasRenderableArtifact(response: HomeKnowResponse): boolean {
   return (
     response.tables.some((table) => table.rows.length > 0) ||
     response.charts.some((chart) => chart.data.length > 0) ||
-    response.graphs.some((graph) => graph.nodes.length > 0 || graph.edges.length > 0)
+    response.graphs.some(
+      (graph) => graph.nodes.length > 0 || graph.edges.length > 0,
+    )
   );
 }
 
@@ -685,10 +730,10 @@ async function collectAnthropicStream(
 function isAsyncIterable(value: unknown): value is AsyncIterable<unknown> {
   return Boolean(
     value &&
-      typeof value === "object" &&
-      Symbol.asyncIterator in value &&
-      typeof (value as AsyncIterable<unknown>)[Symbol.asyncIterator] ===
-        "function",
+    typeof value === "object" &&
+    Symbol.asyncIterator in value &&
+    typeof (value as AsyncIterable<unknown>)[Symbol.asyncIterator] ===
+      "function",
   );
 }
 

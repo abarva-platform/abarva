@@ -58,11 +58,95 @@ describe("Home V6 KNOW response contract", () => {
     expect(after).toBe(before);
   });
 
+  it("adds answerability and context quality without changing visible render content", () => {
+    const result = answerHomeKnowFromV6({
+      tenantKey: "skyharbor",
+      question:
+        "Should Tower evaluate the spend and value proof for these AI initiatives?",
+      includeTrace: true,
+    });
+    const response = toHomeKnowResponseFromV6(result, {
+      question:
+        "Should Tower evaluate the spend and value proof for these AI initiatives?",
+    });
+
+    expect(response.answerability).toBe("requires_tower");
+    expect(response.contextQuality?.recommendedHandoff?.target).toBe("tower");
+    expect(response.contextQuality?.summary).toContain(
+      result.tenant.displayName,
+    );
+    expect(response.safety.composerTrace?.reason).toContain(
+      "answerability=requires_tower",
+    );
+    expect(response.safety.composerTrace?.reason).toContain("contextQuality=");
+
+    const shaped = shapeHomeKnowResponseForRender(response);
+    expect(shaped.prose).toBe(response.prose);
+    expect(shaped.contextQuality).toEqual(response.contextQuality);
+    expect(shaped.answerability).toBe("requires_tower");
+  });
+
+  it("classifies spend and value questions as planning-grade when V6 evidence is thin", () => {
+    const response = toHomeKnowResponseFromV6(
+      answerHomeKnowFromV6({
+        tenantKey: "skyharbor",
+        question:
+          "What budget, spend, or value can be claimed today versus what needs Finance signoff?",
+        includeTrace: true,
+      }),
+      {
+        question:
+          "What budget, spend, or value can be claimed today versus what needs Finance signoff?",
+      },
+    );
+
+    expect(response.answerability).toBe("planning_grade_only");
+    expect(response.contextQuality?.thinDimensions.length).toBeGreaterThan(0);
+    expect(response.contextQuality?.dimensions[0].blockedAnswerTypes).toContain(
+      "board-grade value claim",
+    );
+  });
+
+  it("classifies explicit data-thin questions as data-thin rather than confident", () => {
+    const response = toHomeKnowResponseFromV6(
+      answerHomeKnowFromV6({
+        tenantKey: "lakeshore",
+        question: "What is data-thin and should be caveated?",
+        includeTrace: true,
+      }),
+      { question: "What is data-thin and should be caveated?" },
+    );
+
+    expect(response.answerability).toBe("data_thin");
+    expect(response.contextQuality?.overall).toBe("thin");
+    expect(response.contextQuality?.dimensions[0].blockedAnswerTypes).toContain(
+      "confident answer",
+    );
+  });
+
+  it("routes vendor commercial questions to Source as a first-class Home handoff", () => {
+    const response = toHomeKnowResponseFromV6(
+      answerHomeKnowFromV6({
+        tenantKey: "lakeshore",
+        question: "What vendor and contract evidence should Source take over?",
+        includeTrace: true,
+      }),
+      {
+        question: "What vendor and contract evidence should Source take over?",
+      },
+    );
+
+    expect(response.answerability).toBe("requires_source");
+    expect(response.handoff?.target).toBe("source");
+    expect(response.contextQuality?.recommendedHandoff?.target).toBe("source");
+  });
+
   it("resolves Financial Services demo aliases to the canonical V6 dataset", () => {
     for (const tenantKey of ["arcturus", "firstcapital", "first-capital"]) {
       const result = answerHomeKnowFromV6({
         tenantKey,
-        question: "What business context is available for Financial Services Demo?",
+        question:
+          "What business context is available for Financial Services Demo?",
         includeTrace: true,
       });
 
@@ -106,7 +190,7 @@ describe("Home V6 KNOW response contract", () => {
     expect(visible).not.toMatch(/\bAPP-\d+\b/);
     expect(visible).not.toMatch(/\.csv\b|datasets\//i);
     expect(visible).toContain("Technology owner reference");
-    expect(visible).toContain("Source evidence register");
+    expect(visible).toContain("Data-thin");
   });
 
   it("uses explicit surface ownership language for Home handoffs", () => {
