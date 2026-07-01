@@ -333,6 +333,32 @@ describe('cio tower answer contract', () => {
     ]);
   });
 
+  it('scrubs code-shaped loaded program names before visible validation', () => {
+    const ctx = context({
+      relevantFacts: [
+        {
+          ...context().relevantFacts[0],
+          entity_display_name: 'AOG-IRROPS-01',
+          attributes: {
+            initiative_name: 'Crew Recovery Modernization',
+          },
+        },
+      ],
+    });
+    const output = __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(ctx);
+
+    expect(output?.output.answer).toContain('Crew Recovery Modernization');
+    expect(output?.output.answer).not.toContain('AOG-IRROPS-01');
+    expect(output?.output.tables?.[0]?.rows[0]?.[1]).toBe('Crew Recovery Modernization');
+    expect(
+      __cioTowerAnswerTestHooks.validateParsedVisibleAnswer({
+        contractKey: ctx.contract.contract_key,
+        metricPackets: ctx.metricPackets,
+        parsedOutput: output!.output,
+      }),
+    ).toEqual([]);
+  });
+
   it('builds a repair prompt that asks Claude to fix, not the renderer to mutate', () => {
     const originalPrompt = buildCioTowerClaudePrompt(context());
     const repairPrompt = buildCioTowerRepairPrompt({
