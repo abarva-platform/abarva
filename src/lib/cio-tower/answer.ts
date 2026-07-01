@@ -314,6 +314,7 @@ export function buildCioTowerBoundaryAnswer(route: CioTowerBoundaryRoute): CioTo
 
 export const __cioTowerAnswerTestHooks = {
   buildCioTowerDeterministicMetricAnswer,
+  validateParsedVisibleAnswer,
 };
 
 function money(value: string | number | null | undefined): string {
@@ -720,9 +721,36 @@ function buildTowerBudgetSliceTable(facts: readonly CioTowerFactRow[]): CioTower
   };
 }
 
+const KEY_SHAPED_VISIBLE_NAME = /\b(?:[A-Z]{2,}[A-Z0-9]*-[A-Z0-9][A-Z0-9_-]*-\d{1,}|[A-Z]{2,}[A-Z0-9]*-\d{2,}|T\d{2,}-R\d{2,}|NODE[-_ ]?\d{3,}|[a-z]+[-_][a-z0-9_-]{3,})\b/i;
+const KEY_PREFIX = /^\s*(?:[A-Z]{2,}[A-Z0-9]*-[A-Z0-9][A-Z0-9_-]*-\d{1,}|[A-Z]{2,}[A-Z0-9]*-\d{2,}|T\d{2,}-R\d{2,}|NODE[-_ ]?\d{3,}|[a-z]+[-_][a-z0-9_-]{3,})\s*(?:[:\-–—]\s*|\s+)/i;
+
+function attributeText(row: CioTowerFactRow, key: string): string | null {
+  const value = row.attributes?.[key];
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function cleanVisibleBusinessName(value: string | null | undefined, fallback: string): string {
+  const raw = value?.trim();
+  if (!raw) return fallback;
+  const withoutPrefix = raw.replace(KEY_PREFIX, '').trim();
+  const candidate = withoutPrefix || raw;
+  return KEY_SHAPED_VISIBLE_NAME.test(candidate) ? fallback : candidate;
+}
+
 function loadedName(row: CioTowerFactRow, fallback: string): string {
-  const name = row.entity_display_name?.trim();
-  return name && !/^[a-z]+[-_][a-z0-9_-]+$/i.test(name) ? name : fallback;
+  const candidates = [
+    attributeText(row, 'initiative_name'),
+    attributeText(row, 'program_name'),
+    attributeText(row, 'business_name'),
+    attributeText(row, 'business_label'),
+    attributeText(row, 'name'),
+    row.entity_display_name,
+  ];
+  for (const candidate of candidates) {
+    const cleaned = cleanVisibleBusinessName(candidate, fallback);
+    if (cleaned !== fallback) return cleaned;
+  }
+  return fallback;
 }
 
 function buildTowerTopProgramsTable(facts: readonly CioTowerFactRow[], limit = 10): CioTowerVisibleTable | null {
