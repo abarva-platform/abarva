@@ -51,10 +51,10 @@ export const DECISION_BRIEF_FORBIDDEN_PATTERNS = [
 ] as const;
 
 const DISPLAY_EVENT = {
-  accountName: "Airline Demo",
+  accountName: "Aviation Client",
   code: "SKYH-AMS-RFP-2026",
-  name: "Airline Demo AMS Outsourcing RFP",
-  title: "Airline Demo AMS Outsourcing RFP - Evaluation Decision Brief",
+  name: "AMS Outsourcing RFP",
+  title: "AMS RFP Decision Brief",
   subtitle: "Vendor comparison, BAFO posture, and executive decision recommendation",
 };
 

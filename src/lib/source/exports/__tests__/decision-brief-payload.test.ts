@@ -57,14 +57,10 @@ describe("Source decision brief export payload", () => {
     );
 
     expect(payload.bodyIsAuthored).toBe(true);
-    expect(payload.tenantName).toBe("SkyHarbor Air");
+    expect(payload.tenantName).toBe("Aviation Client");
     expect(payload.eventCode).toBe("SKYH-AMS-RFP-2026");
-    expect(payload.eventName).toBe(
-      "SkyHarbor Air AMS Outsourcing RFP - Evaluation Decision Brief",
-    );
-    expect(payload.body).toContain(
-      "SkyHarbor Air AMS Outsourcing RFP - Evaluation Decision Brief",
-    );
+    expect(payload.eventName).toBe("AMS RFP Decision Brief");
+    expect(payload.body).toContain("AMS RFP Decision Brief");
     expect(payload.body).toContain("Vendor comparison, BAFO posture");
     expect(payload.body).toContain("> **Recommendation:**");
     expect(payload.body).toContain("### Vendor A");
@@ -119,7 +115,7 @@ describe("Source decision brief export payload", () => {
     );
     const html = buildNarrativeHtml(payload, DECISION_BRIEF_DOCX_CONFIG);
 
-    expect(html).toContain("SkyHarbor Air AMS Outsourcing RFP - Evaluation Decision Brief");
+    expect(html).toContain("AMS RFP Decision Brief");
     expect(html).toContain("AbarVa Source");
     expectNoForbiddenTerms(html);
   });
