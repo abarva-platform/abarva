@@ -1266,7 +1266,7 @@ export function UniversalCanvasShell({
         viewStage,
       }}
       topBarProps={{
-        tenantName,
+        tenantName: displayEvent.accountName || tenantName,
         showLocked: true,
         context: `${displayEvent.code} · ${displayEvent.name}`,
       }}

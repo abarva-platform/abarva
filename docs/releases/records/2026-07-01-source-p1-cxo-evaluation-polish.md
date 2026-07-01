@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Source P1 now presents the vendor evaluation experience in cleaner CXO-facing language. The SkyHarbor demo sourcing event displays as SkyHarbor Air AMS Outsourcing RFP, the assistant label is standardized to aVa on the evaluation surface, governance sign-off replaces internal Steward language, and the evaluation scorecard exposes DOCX/PDF decision brief exports from the live artifact render route.
+Source P1 now presents the vendor evaluation experience in cleaner CXO-facing language. The SkyHarbor demo sourcing event displays as SkyHarbor Air AMS Outsourcing RFP, the assistant label is standardized to aVa on the evaluation surface, governance sign-off replaces internal Steward language, the Source top chrome uses the normalized SkyHarbor Air label for this demo event, and the evaluation scorecard exposes DOCX/PDF decision brief exports from the live artifact render route.
 
 ## Layer Impact
 
@@ -28,6 +28,7 @@ Source P1 now presents the vendor evaluation experience in cleaner CXO-facing la
 ## Changes Included
 
 - Source canvas passes decision brief DOCX/PDF export links into the responses and evaluation stage panels.
+- Source app-shell chrome uses the normalized display account name for the SkyHarbor AMS demo event.
 - Vendor evaluation scorecard shows a defensible weighted score breakdown tied to the event display name and exposes decision brief export controls.
 - Source evaluation-stage copy replaces internal Steward/Atlas/Sentinel-facing language with business-facing governance and decision brief labels.
 - Focused Source scorecard test covers the export controls, weighted breakdown, and absence of old demo/internal labels.
