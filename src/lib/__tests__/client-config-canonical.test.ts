@@ -5,35 +5,35 @@ import {
 } from "@/lib/client-config";
 
 describe("canonicalClientDisplayName", () => {
-  it("renders Apex aliases as Apex Retail Group", () => {
-    expect(getClientOption("apexretail").name).toBe("Apex Retail Group");
+  it("renders Apex aliases as Retail Demo", () => {
+    expect(getClientOption("apexretail").name).toBe("Retail Demo");
     expect(canonicalClientDisplayName({ key: "apexretail" })).toBe(
-      "Apex Retail Group",
+      "Retail Demo",
     );
     expect(canonicalClientDisplayName({ key: "apex-retail" })).toBe(
-      "Apex Retail Group",
+      "Retail Demo",
     );
     expect(canonicalClientDisplayName({ name: "Apex Retail" })).toBe(
-      "Apex Retail Group",
+      "Retail Demo",
     );
     expect(canonicalClientDisplayName({ name: "Apex Retail Group" })).toBe(
-      "Apex Retail Group",
+      "Retail Demo",
     );
   });
 
-  it("renders Meridian aliases as Meridian Health System", () => {
-    expect(getClientOption("meridian").name).toBe("Meridian Health System");
+  it("renders Meridian aliases as Healthcare Demo", () => {
+    expect(getClientOption("meridian").name).toBe("Healthcare Demo");
     expect(canonicalClientDisplayName({ key: "meridian" })).toBe(
-      "Meridian Health System",
+      "Healthcare Demo",
     );
     expect(
       canonicalClientDisplayName({
         key: "meridian",
         name: "Meridian Health",
       }),
-    ).toBe("Meridian Health System");
+    ).toBe("Healthcare Demo");
     expect(canonicalClientDisplayName({ name: "Meridian Health" })).toBe(
-      "Meridian Health System",
+      "Healthcare Demo",
     );
   });
 
@@ -43,30 +43,42 @@ describe("canonicalClientDisplayName", () => {
         "CANARY - SkyHarbor Recovery Command IROPS Architecture - skyharbor-canary-20260622161738",
       ),
     ).toBe(
-      "CANARY - SkyHarbor Air Recovery Command IROPS Architecture - SkyHarbor Air-canary-20260622161738",
+      "CANARY - Airline Demo Recovery Command IROPS Architecture - Airline Demo-canary-20260622161738",
     );
     expect(
       demoSafeClientText(
         "Lakeshore Enterprise Finance & Treasury Modernization",
       ),
-    ).toBe("Lakeshore Holdings Enterprise Finance & Treasury Modernization");
+    ).toBe("Industrial Demo Enterprise Finance & Treasury Modernization");
   });
 
   it("does not stack canonical tenant aliases into duplicated display names", () => {
     expect(demoSafeClientText("SkyHarbor Air Air Intelligence advisor")).toBe(
-      "SkyHarbor Air Intelligence advisor",
+      "Airline Demo Intelligence advisor",
     );
     expect(
       demoSafeClientText("Lakeshore Holdings Holdings Intelligence advisor"),
-    ).toBe("Lakeshore Holdings Intelligence advisor");
+    ).toBe("Industrial Demo Intelligence advisor");
     expect(canonicalClientDisplayName({ name: "SkyHarbor Air Air" })).toBe(
-      "SkyHarbor Air",
+      "Airline Demo",
     );
     expect(
       canonicalClientDisplayName({ name: "Lakeshore Holdings Holdings" }),
-    ).toBe("Lakeshore Holdings");
+    ).toBe("Industrial Demo");
     expect(
       demoSafeClientText("Apex Retail Group Retail Group Group advisor"),
-    ).toBe("Apex Retail Group advisor");
+    ).toBe("Retail Demo advisor");
+  });
+
+  it("uses generic demo names for all launch-demo tenants", () => {
+    expect(getClientOption("skyharbor").name).toBe("Airline Demo");
+    expect(getClientOption("lakeshore").name).toBe("Industrial Demo");
+    expect(getClientOption("arcturus").name).toBe("Financial Services Demo");
+    expect(canonicalClientDisplayName({ name: "First Capital Financial" })).toBe(
+      "Financial Services Demo",
+    );
+    expect(canonicalClientDisplayName({ name: "Arcturus Financial Group" })).toBe(
+      "Financial Services Demo",
+    );
   });
 });

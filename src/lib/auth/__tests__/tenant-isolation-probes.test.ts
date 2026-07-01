@@ -450,41 +450,41 @@ describe("Probe 5b · industryCodeForClientName", () => {
 // =====================================================================
 
 describe("Probe 5c · canonicalClientDisplayName", () => {
-  it("renders Meridian aliases as the full integrated system name", () => {
+  it("renders Meridian aliases as the generic Healthcare Demo name", () => {
     expect(canonicalClientDisplayName({ key: "meridian" })).toBe(
-      "Meridian Health System",
+      "Healthcare Demo",
     );
     expect(
       canonicalClientDisplayName({
         key: "meridian",
         name: "Meridian Health",
       }),
-    ).toBe("Meridian Health System");
+    ).toBe("Healthcare Demo");
     expect(
       canonicalClientDisplayName({
         key: "meridian-health",
         name: "Heliara Health Alliance",
       }),
-    ).toBe("Meridian Health System");
+    ).toBe("Healthcare Demo");
   });
 
-  it("keeps the internal arcturus key compatible while rendering First Capital to users", () => {
-    expect(getClientOption("arcturus").name).toBe("First Capital Financial");
+  it("keeps the internal arcturus key compatible while rendering Financial Services Demo to users", () => {
+    expect(getClientOption("arcturus").name).toBe("Financial Services Demo");
     expect(canonicalClientDisplayName({ key: "arcturus" })).toBe(
-      "First Capital Financial",
+      "Financial Services Demo",
     );
     expect(
       canonicalClientDisplayName({
         key: "arcturus",
         name: "Arcturus Financial Group",
       }),
-    ).toBe("First Capital Financial");
+    ).toBe("Financial Services Demo");
     expect(
       canonicalClientDisplayName({
         key: "first-capital",
         name: "Arcturus Financial",
       }),
-    ).toBe("First Capital Financial");
+    ).toBe("Financial Services Demo");
   });
 });
 

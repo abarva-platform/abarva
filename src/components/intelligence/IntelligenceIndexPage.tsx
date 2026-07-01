@@ -16,6 +16,7 @@ import {
 } from '@/lib/intelligence/j0-failure-mode-cards';
 import { getPatternManifestEntries } from '@/lib/intelligence/pattern-manifest';
 import { getActiveClientRow } from '@/lib/active-client';
+import { canonicalClientDisplayName, getClientOption } from '@/lib/client-config';
 
 const HEADLINE = 'Explore layer for AI bets.';
 
@@ -47,7 +48,11 @@ export async function IntelligenceIndexPage() {
     <AppShell
       surface="intelligence"
       topBarProps={{
-        tenantName: activeClient?.name ?? 'Apex Retail Group',
+        tenantName:
+          canonicalClientDisplayName({
+            key: activeClient?.key,
+            name: activeClient?.name,
+          }) ?? getClientOption('apexretail').name,
         showLocked: true,
         context: 'Intelligence - Explore Layer',
       }}

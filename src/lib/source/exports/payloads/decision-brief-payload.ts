@@ -28,7 +28,8 @@ export const DECISION_BRIEF_REQUIRED_SECTIONS = [
 ] as const;
 
 export const DECISION_BRIEF_FORBIDDEN_PATTERNS = [
-  /Airline Demo/i,
+  /SkyHarbor Air/i,
+  /SkyHarbor/i,
   /SKYH-NORMALIZE/i,
   /Atlas/i,
   /Sentinel/i,
@@ -50,10 +51,10 @@ export const DECISION_BRIEF_FORBIDDEN_PATTERNS = [
 ] as const;
 
 const DISPLAY_EVENT = {
-  accountName: "SkyHarbor Air",
+  accountName: "Airline Demo",
   code: "SKYH-AMS-RFP-2026",
-  name: "SkyHarbor Air AMS Outsourcing RFP",
-  title: "SkyHarbor Air AMS Outsourcing RFP - Evaluation Decision Brief",
+  name: "Airline Demo AMS Outsourcing RFP",
+  title: "Airline Demo AMS Outsourcing RFP - Evaluation Decision Brief",
   subtitle: "Vendor comparison, BAFO posture, and executive decision recommendation",
 };
 
@@ -312,7 +313,7 @@ export function buildEvaluationDecisionBriefMarkdown(args: {
     "",
     "## Evidence / Source Note",
     "",
-    "This brief is based on the SkyHarbor AMS Source event evidence pack, Vendor Response MVE Profiles, Vendor Challenge Log, Commercial Leverage Seeds, BAFO Instruction Pack, and Evaluation Scorecard available in AbarVa Source. Figures are planning and evaluation inputs; final award support requires sponsor approval, vendor BAFO responses, legal/commercial review, and finance validation.",
+    "This brief is based on the Airline Demo AMS Source event evidence pack, Vendor Response MVE Profiles, Vendor Challenge Log, Commercial Leverage Seeds, BAFO Instruction Pack, and Evaluation Scorecard available in AbarVa Source. Figures are planning and evaluation inputs; final award support requires sponsor approval, vendor BAFO responses, legal/commercial review, and finance validation.",
     "",
   ].join("\n");
 
@@ -410,7 +411,8 @@ function cleanList(items: string[], limit: number): string {
 
 function cleanText(value: string): string {
   return value
-    .replace(/\bAirline Demo\b/gi, DISPLAY_EVENT.accountName)
+    .replace(/\bSkyHarbor Air\b/gi, DISPLAY_EVENT.accountName)
+    .replace(/\bSkyHarbor\b/gi, DISPLAY_EVENT.accountName)
     .replace(/\bSteward\b/gi, "governance")
     .replace(/\bAtlas\b/gi, "aVa")
     .replace(/\bSentinel\b/gi, "aVa")
