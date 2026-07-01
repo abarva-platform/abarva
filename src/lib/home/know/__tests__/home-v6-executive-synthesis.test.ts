@@ -72,6 +72,12 @@ describe("Home V6 executive synthesis", () => {
     expect(result.response.safety.composerTrace?.reason).toContain(
       "claudeSelected=true",
     );
+    expect(result.response.safety.composerTrace?.reason).toContain(
+      "rawClaudePreserved=false",
+    );
+    expect(result.response.safety.composerTrace?.reason).toContain(
+      "traceRawClaudeExposed=true",
+    );
     expect(
       result.response.safety.composerTrace?.anthropicTrace?.claudeRaw.text,
     ).toContain("Retail Demo");
@@ -81,6 +87,42 @@ describe("Home V6 executive synthesis", () => {
         prompt: expect.stringContaining(HOME_V6_EXECUTIVE_SYSTEM_PROMPT),
       }),
     );
+  });
+
+  it("marks raw Claude preserved even when trace exposure is disabled", async () => {
+    mockClaudeText(
+      "For Retail Demo, the loaded business context is strong enough to describe ownership, readiness, and decision risk, but not enough to claim named-person accountability.\n\nThe next evidence to validate is source freshness and owner confirmation before this becomes decision-ready.",
+    );
+    const question = "What business context is available for this tenant?";
+    const v6 = answerHomeKnowFromV6({
+      tenantKey: "apexretail",
+      question,
+      includeTrace: false,
+    });
+    const deterministic = toHomeKnowResponseFromV6(v6, { question });
+
+    const result = await applyHomeV6ExecutiveSynthesis({
+      response: deterministic,
+      v6Result: v6,
+      question,
+      tenantKey: v6.tenant.canonicalKey,
+      includeTrace: false,
+    });
+
+    expect(result.trace.used).toBe(true);
+    expect(result.response.prose).toBe(
+      "For Retail Demo, the loaded business context is strong enough to describe ownership, readiness, and decision risk, but not enough to claim named-person accountability.\n\nThe next evidence to validate is source freshness and owner confirmation before this becomes decision-ready.",
+    );
+    expect(result.response.safety.composerTrace?.reason).toContain(
+      "answerSource=claude_text",
+    );
+    expect(result.response.safety.composerTrace?.reason).toContain(
+      "rawClaudePreserved=true",
+    );
+    expect(result.response.safety.composerTrace?.reason).toContain(
+      "traceRawClaudeExposed=false",
+    );
+    expect(result.response.safety.composerTrace?.anthropicTrace).toBeUndefined();
   });
 
   it("falls back with explicit trace when Claude output exposes technical language", async () => {
@@ -265,6 +307,12 @@ describe("Home V6 executive synthesis", () => {
     expect(result.response.prose).toContain("Tower");
     expect(result.response.prose).toContain("business context");
     expect(result.response.prose).not.toContain("loaded evidence");
+    expect(result.response.safety.composerTrace?.reason).toContain(
+      "answerSource=sanitized_claude",
+    );
+    expect(result.response.safety.composerTrace?.reason).toContain(
+      "rawClaudePreserved=false",
+    );
     expect(result.response.safety.composerTrace?.fallbackUsed).toBe(false);
   });
 
