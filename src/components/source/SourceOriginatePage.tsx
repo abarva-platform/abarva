@@ -707,8 +707,8 @@ export function SourceOriginatePage({
         <div>
           <div style={EYEBROW}>
             {intakeShape
-              ? `Step 0 · aVa · ${intakeShape.eyebrow}`
-              : "Step 0 · aVa"}
+              ? `Start · ${intakeShape.eyebrow}`
+              : "Start · Source intake"}
           </div>
           <h2 style={HEADING}>
             {intakeShape ? intakeShape.heading : "Sourcing event intake"}
@@ -734,7 +734,7 @@ export function SourceOriginatePage({
                 color: SHELL.MINT_TEXT,
               }}
             >
-              Routes to
+              Next step
             </span>
             <div style={{ display: "grid", gap: 2 }}>
               <div
@@ -763,7 +763,7 @@ export function SourceOriginatePage({
 
         {/* Intake fields */}
         <div style={{ display: "grid", gap: 0 }}>
-          <div style={{ ...SECTION_LABEL, marginBottom: 4 }}>Event facts</div>
+          <div style={{ ...SECTION_LABEL, marginBottom: 4 }}>Intake basics</div>
           {intakeFields.map((field) => {
             const value = intake[field.id];
             const complete = value.trim().length > 0;
@@ -821,8 +821,8 @@ export function SourceOriginatePage({
                         ? "From chat"
                         : "Captured"
                       : isRequired
-                        ? "Required"
-                        : "Needed"}
+                        ? "Start here"
+                        : "Add"}
                   </span>
                 </div>
                 <textarea
@@ -857,7 +857,7 @@ export function SourceOriginatePage({
         >
           <summary style={OPTIONAL_CATEGORY_SUMMARY_STYLE}>
             <div>
-              <div style={SECTION_LABEL}>Sourcing category</div>
+              <div style={SECTION_LABEL}>Category</div>
               <div
                 style={{
                   marginTop: 2,
@@ -935,7 +935,7 @@ export function SourceOriginatePage({
                 color: SHELL.PEACH_TEXT,
               }}
             >
-              Capture all five intake facts to open the approval route.
+              Capture the five basics to open the approval route.
             </div>
           )}
 
@@ -990,7 +990,7 @@ export function SourceOriginatePage({
 
       {/* Guidance cards */}
       <section style={{ display: "grid", gap: 6 }}>
-        <div style={SECTION_LABEL}>Agent guidance</div>
+        <div style={SECTION_LABEL}>How to use this</div>
         {AGENT_GUIDANCE.map((item) => (
           <GuidanceCard key={item.label} {...item} />
         ))}
@@ -1520,7 +1520,7 @@ function RelatedContextSection() {
         >
           As aVa cites vendors, systems, owners, and dollar amounts during
           the conversation, they will surface here so you can see the tenant
-          context grounding the brief.
+          context supports the brief.
         </div>
       </section>
     );

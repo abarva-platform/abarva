@@ -121,7 +121,7 @@ export function StrategicMoveOriginateClient({
         id: "nexus-open-2a",
         role: "assistant",
         agentName: "Nexus",
-        text: `To start a new Strategic Move, I need the seven-section P0 scaffold: the hypothesis, archetype, sponsor candidate, scope boundary, evidence family, value hypothesis, and foundation readiness. Where do you want to start?`,
+        text: `Describe the business problem or opportunity in plain English. I will help shape it into a Move brief with the right sponsor, scope, evidence, value hypothesis, and readiness checks.`,
       },
     ],
   );
@@ -514,7 +514,7 @@ export function StrategicMoveOriginateClient({
           <span className={styles.originBranch} aria-hidden>
             &#8627;
           </span>
-          <span className={styles.originLabel}>Originating new move</span>
+          <span className={styles.originLabel}>Start a Move</span>
           <span id="orig-identity-title" className={styles.originDraftBadge}>
             {brief.programName.trim()
               ? brief.programName.toUpperCase()
@@ -544,7 +544,7 @@ export function StrategicMoveOriginateClient({
               <div>
                 <div className={styles.agentStatus}>
                   <span className={styles.agentStatusDot} aria-hidden />
-                  NEW MOVE &middot; P0 ORIGINATE
+                  New Move
                 </div>
               </div>
             </div>
@@ -581,7 +581,7 @@ export function StrategicMoveOriginateClient({
               aria-controls="orig-chat-scaffold-grid"
             >
               <span aria-hidden>&#8627;</span>
-              Scaffold
+              Brief checklist
               <span className={styles.startChipCount}>
                 {requiredFilled}/{REQUIRED_FIELD_COUNT} req.
               </span>
@@ -683,9 +683,7 @@ export function StrategicMoveOriginateClient({
                 <h1 className={styles.detailTitle}>
                   Originate a strategic move
                 </h1>
-                <div className={styles.detailId}>
-                  P0 Originate &middot; Drafting
-                </div>
+                <div className={styles.detailId}>Start &middot; Drafting</div>
               </div>
             </div>
             <PhaseRail current={0} status="teal" />
@@ -760,8 +758,8 @@ export function StrategicMoveOriginateClient({
                         </div>
                       ) : (
                         <div className={styles.scaffoldEmpty}>
-                          Ava will capture {label.toLowerCase()} from your
-                          conversation.
+                          Not captured yet. Add it in the conversation or type
+                          it directly when ready.
                         </div>
                       )}
                     </div>
@@ -790,7 +788,7 @@ export function StrategicMoveOriginateClient({
               <input
                 id="orig-identity-name-input"
                 type="text"
-                placeholder="Move name (Ava will suggest, or type here)"
+                placeholder="Move name (aVa will suggest, or type here)"
                 value={brief.programName}
                 onChange={(e) =>
                   setBrief((prev) => ({ ...prev, programName: e.target.value }))
@@ -824,7 +822,7 @@ export function StrategicMoveOriginateClient({
                 id="orig-promote-bar-status-text"
                 className={styles.promoteHelper}
               >
-                Complete all 7 scaffold sections to promote.
+                Complete all 7 brief sections to promote.
               </div>
             ) : null}
             {submitError ? (

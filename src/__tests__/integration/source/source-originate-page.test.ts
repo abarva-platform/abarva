@@ -130,18 +130,18 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     expect(html).toContain("Minimum data / baseline owner");
   });
 
-  it("renders event facts before the optional sourcing category selector", () => {
-    expect(html).toContain("Event facts");
-    expect(html).toContain("Sourcing category");
-    expect(html.indexOf("Event facts")).toBeLessThan(
-      html.indexOf("Sourcing category"),
+  it("renders intake basics before the optional category selector", () => {
+    expect(html).toContain("Intake basics");
+    expect(html).toContain("Category");
+    expect(html.indexOf("Intake basics")).toBeLessThan(
+      html.indexOf("Category"),
     );
   });
 
   it("renders the optional category selector with five canonical archetypes", () => {
-    expect(html).toContain("Sourcing category");
+    expect(html).toContain("Category");
     expect(html).toContain(
-      "Ava can infer this after the intake facts are clear",
+      "aVa can infer this after the intake facts are clear",
     );
     expect(html).toContain("Application Managed Services");
     expect(html).toContain("Cloud &amp; Infrastructure");
@@ -151,7 +151,7 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
   });
 
   it("renders agent guidance without generic chatbot copy", () => {
-    expect(html).toContain("Agent guidance");
+    expect(html).toContain("How to use this");
     // Founder feedback 2026-05-10 reshaped Source intake to be chat-driven
     // (the right pane fills from Sentinel's brief-progress artifacts) so
     // the guidance labels were rewritten to reflect that posture.
@@ -234,9 +234,7 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
 
     expect(screen.queryByTestId("source-intake-completion-footer")).toBeNull();
     expect(
-      screen.getByText(
-        "Capture all five intake facts to open the approval route.",
-      ),
+      screen.getByText("Capture the five basics to open the approval route."),
     ).toBeTruthy();
   });
 
@@ -319,12 +317,7 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
       }),
     );
     expect(meridianHtml).toContain("Meridian Health System");
-    expect(meridianHtml).toContain(
-      "Ready to stand up a new IT sourcing event for Meridian Health System",
-    );
-    expect(meridianHtml).not.toContain(
-      "Ready to stand up a new IT sourcing event for Apex Retail",
-    );
+    expect(meridianHtml).not.toContain("Apex Retail");
   });
 
   it("starts new sourcing events clean and clears legacy autosaved drafts", () => {
@@ -359,9 +352,7 @@ describe("SourceOriginatePage (SRC-FLW-INTAKE)", () => {
     ).toBeNull();
     expect(screen.queryByText("Draft restored from autosave")).toBeNull();
     expect(
-      screen.getByText(
-        "Capture all five intake facts to open the approval route.",
-      ),
+      screen.getByText("Capture the five basics to open the approval route."),
     ).toBeTruthy();
     expect(
       window.localStorage.getItem("abarva.source.originate.intake.meridian"),

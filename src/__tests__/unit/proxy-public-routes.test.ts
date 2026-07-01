@@ -85,10 +85,22 @@ describe('proxy public route patterns', () => {
   });
 
   it('keeps the signed-out entry surfaces public', () => {
-    for (const path of ['/', '/sign-in', '/signed-out', '/invite/start']) {
+    for (const path of ['/', '/sign-in', '/signed-out', '/invite/start', '/demo']) {
       const request = new NextRequest(`https://app.abarva.ai${path}`);
       expect(isPublicRoute(request)).toBe(true);
       expect(isAuthRequiredRoute(request)).toBe(false);
+    }
+  });
+
+  it('keeps product demo workspaces auth-gated while the marketing demo is public', () => {
+    for (const path of [
+      '/demo/programs/new',
+      '/demo/explore',
+      '/demo/agent-markdown-fixture',
+    ]) {
+      const request = new NextRequest(`https://app.abarva.ai${path}`);
+      expect(isPublicRoute(request)).toBe(false);
+      expect(isAuthRequiredRoute(request)).toBe(true);
     }
   });
 });

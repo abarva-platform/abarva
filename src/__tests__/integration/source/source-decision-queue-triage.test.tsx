@@ -127,4 +127,37 @@ describe("SourceDecisionQueueView triage bands", () => {
     expect(html).toContain("Confirm before changing deadlines");
     expect(html).toContain("No queue date is changed silently");
   });
+
+  it("scrubs internal source vocabulary from queue card copy", () => {
+    const html = renderToStaticMarkup(
+      createElement(SourceDecisionQueueView, {
+        queue: queue([
+          {
+            ...bundle("blocked", "due_now", 7_500_000, "Acme"),
+            headline: "Acme posture: unblock",
+            summary:
+              "vendor_contracts and it_financials grounding are incomplete.",
+            recommendedAction:
+              "AbarVa should decline rather than guess until posture: review clears.",
+          },
+        ]),
+        activeBand: "all",
+        sort: "deadline",
+        activeEventsCount: 1,
+      }),
+    );
+
+    expect(html).toContain("Acme needs evidence before action");
+    expect(html).toContain("vendor contract evidence");
+    expect(html).toContain("financial baseline evidence");
+    expect(html).toContain("evidence are incomplete");
+    expect(html).toContain("Do not recommend until the missing evidence is refreshed");
+    expect(html).toContain("needs review clears");
+    expect(html).toContain("Review required");
+    expect(html).not.toContain("vendor_contracts");
+    expect(html).not.toContain("it_financials");
+    expect(html).not.toContain("grounding");
+    expect(html).not.toContain("posture:");
+    expect(html).not.toContain("AbarVa should decline rather than guess");
+  });
 });
