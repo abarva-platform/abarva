@@ -275,6 +275,9 @@ For explicit concise requests:
 - Do not invent tenant facts, peer statistics, dates, dollars, vendors, or rankings.
 - Never start with hollow acknowledgements ("Good question", "Great question", "Happy to", "Let me").`;
 
+const SESSION_CONTEXT_LANGUAGE_RE =
+  /\b(as discussed|as mentioned|this session|earlier in this session|earlier in the session|previous conversation|prior conversation|answer has(?:n't| not) changed|same answer|keeps being the right answer)\b/i;
+
 export function isExplicitConciseAsk(query: string): boolean {
   return /\b(concise|brief|short|one\s+(?:short\s+)?(?:paragraph|sentence)|summari[sz]e\s+in\s+one)\b/.test(
     query.toLowerCase(),
@@ -499,7 +502,7 @@ ACTIVE INTELLIGENCE CANVAS RULES
       : `${rolePrompt}\n\n${CONSULTANT_ANSWER_SHAPE_CONTRACT}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}`;
   const rawPrompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
-    ? "\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when session memory is present."
+    ? "\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when memory is present. Never mention the memory mechanism, prior conversation state, or phrases such as \"this session\", \"as discussed\", \"previous conversation\", \"same answer\", or \"answer hasn't changed\" in user-visible text."
     : "";
   const prompt = cleanIntelligenceModelInputText(rawPrompt);
   const systemWithContinuity = cleanIntelligenceModelInputText(
@@ -654,6 +657,40 @@ ACTIVE INTELLIGENCE CANVAS RULES
             text = combinedText;
           }
         }
+      }
+    }
+    if (SESSION_CONTEXT_LANGUAGE_RE.test(text)) {
+      const standaloneRepairPrompt = [
+        prompt,
+        "",
+        "DRAFT TO REPAIR:",
+        text,
+        "",
+        "STANDALONE ANSWER REPAIR:",
+        "Return the same final answer as a standalone executive answer for the current question.",
+        "Preserve the same tenant facts, caveats, tabs, Markdown tables, recommendations, and evidence boundaries.",
+        "Remove any wording that depends on prior chat history or conversation continuity.",
+        "Do not use phrases such as \"as discussed\", \"as mentioned\", \"this session\", \"earlier in this session\", \"previous conversation\", \"prior conversation\", \"same answer\", \"answer hasn't changed\", or \"keeps being the right answer\".",
+        "Do not summarize, shorten, add new facts, or change the recommendation. Return only the final user-facing answer.",
+      ].join("\n");
+      args.onModelInput?.({
+        system: systemWithContinuity,
+        user: standaloneRepairPrompt,
+      });
+      const standaloneRepair = await client.messages.create({
+        model,
+        max_tokens: Math.max(chooseSynthesisTokenBudget(args.query), 1600),
+        system: systemWithContinuity,
+        messages: [{ role: "user", content: standaloneRepairPrompt }],
+      });
+      const repairedText = extractMessageText(standaloneRepair).trim();
+      if (repairedText && !SESSION_CONTEXT_LANGUAGE_RE.test(repairedText)) {
+        text = repairedText;
+      } else {
+        text = [
+          "I generated a draft that depended on hidden conversation history, so I am not going to surface it as an executive answer.",
+          "Please re-ask the question and I will answer from the current enterprise context only.",
+        ].join(" ");
       }
     }
     args.onModelOutput?.({
