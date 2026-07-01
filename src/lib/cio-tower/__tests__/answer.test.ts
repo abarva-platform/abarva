@@ -633,7 +633,7 @@ describe("cio tower answer contract", () => {
             "Which investment posture should the CIO take on Crew Recovery & Legality Modernization, and why?",
           contract: {
             contract_key: "tower_advisor_morning_brief",
-            intent: "advise",
+            intent: "diagnose",
             question_family: "advisor_morning_brief",
             measure_key: "initiative_budget_fy26",
             artifact_type: "table",

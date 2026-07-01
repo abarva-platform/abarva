@@ -141,7 +141,7 @@ const questionContracts = [
   },
   {
     contract_key: 'tower_advisor_morning_brief',
-    intent: 'advise',
+    intent: 'diagnose',
     question_family: 'advisor_morning_brief',
     measure_key: 'initiative_budget_fy26',
     default_scope: 'initiative',
