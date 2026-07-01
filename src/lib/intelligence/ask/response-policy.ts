@@ -13,7 +13,7 @@ const CONSULTANT_INLINE_SECTION_RE =
 export const CONSULTANT_ANSWER_SHAPE_CONTRACT = `CONSULTANT ANSWER SHAPE
 
 For Home, Intelligence, and Tower, answer like a senior expert consultant in a GPT/Claude-style conversation, not a template transcript.
-- Open with the direct recommendation or judgment in 1-2 sentences.
+- Open with the active tenant display name when it is supplied in context or a packet, then the direct recommendation or judgment in 1-2 sentences. Use generic demo names such as "Airline Demo" or "Industrial Demo" instead of legacy customer names when those are the active display names.
 - Then explain the specific tenant facts, corpus pattern, benchmark, system, vendor, program, dollar value, or cited constraint that supports the view.
 - Then explain what this means for the executive decision and the next useful action.
 
@@ -122,7 +122,10 @@ export function enforceDecisionGradeAnswer(text: string): string {
 function sanitizeVisibleAnswerLanguage(text: string): string {
   return text
     .replace(/^\s*Honest\s+(?:read|answer)\s+(?:up\s+front|first)\s*:\s*/i, "")
-    .replace(/\n\s*Honest\s+(?:read|answer)\s+(?:up\s+front|first)\s*:\s*/gi, "\n")
+    .replace(
+      /\n\s*Honest\s+(?:read|answer)\s+(?:up\s+front|first)\s*:\s*/gi,
+      "\n",
+    )
     .replace(/\bAva\b/g, "aVa")
     .replace(/\bSentinel\b/g, "aVa")
     .replace(/\bAtlas\b/g, "aVa")

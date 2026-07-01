@@ -5,17 +5,16 @@
 // Server-side Tower answer endpoint. Tower's visible route now uses the shared
 // React aVa/Atlas AgentDock shell; this endpoint remains the lightweight
 // streaming seam for Tower questions that use the legacy `/api/tower/ask`
-// contract. When the `scb_shared_engine_tower` flag is ON for the tenant, it
-// grounds the answer in the Consilium expert faculty via `summonExpertsForQuery`.
+// contract. The legacy path now delegates to the governed CIO Tower V6 answer
+// engine so it cannot drift into older demo-block or Apex fixture behavior.
 
-import { preflightAnthropicDirectClient } from "@/lib/integrations/ai-egress";
 import { getActiveClientRow } from "@/lib/active-client";
-import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
-import { summonExpertsForQuery } from "@/lib/intelligence/answer/expert-grounding";
-import type { ExpertRef } from "@/lib/ava-answer/contract";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
+import {
+  answerCioTowerQuestion,
+  canonicalCioTowerTenantKey,
+} from "@/lib/cio-tower/answer";
 import { AGENT_DEMO_SYSTEM_BLOCK } from "@/lib/agent/demo-context";
-import { getUserContextPromptBlock } from "@/lib/agent/userContext";
 import { FOUR_LAYER_REASONING_INSTRUCTIONS } from "@/lib/intelligence/synthesis/instructionLayer";
 import { composeAllAgentDoctrineBlock } from "@/lib/agent/all-agent-doctrine";
 import { CONSULTANT_ANSWER_SHAPE_CONTRACT } from "@/lib/intelligence/ask/response-policy";
@@ -56,8 +55,9 @@ export function buildAvaTowerAskPrompt(userContextBlock: string): string {
 
 export async function POST(request: Request) {
   // Auth: same tenancy gate the synthesis route uses.
+  let tenancy;
   try {
-    await requireTenancy();
+    tenancy = await requireTenancy();
   } catch (err) {
     return tenancyErrorResponse(err);
   }
@@ -85,74 +85,37 @@ export async function POST(request: Request) {
     );
   }
 
-  // Layer 0 user context (same helper as synthesis).
-  const userContextBlock = await getUserContextPromptBlock();
-  const systemPrompt = buildAvaTowerAskPrompt(userContextBlock);
-
-  // Shared Context Brain (flag-gated, default OFF). When ON for the tenant,
-  // ground the Tower answer in the Consilium expert(s) the router summons for
-  // the question, industry-fenced via the active client key. Flag OFF =
-  // byte-identical to the ungrounded path (groundedUserMessage === question).
-  const sharedTowerOn = isFeatureEnabled(
-    { clientKey: activeClient.key },
-    "scb_shared_engine_tower",
-  );
-  const expertGrounding = sharedTowerOn
-    ? summonExpertsForQuery({ query: question, clientKey: activeClient.key })
-    : { experts: [] as ExpertRef[], groundingBlock: "" };
-  const groundedUserMessage = expertGrounding.groundingBlock
-    ? `${expertGrounding.groundingBlock}\n\n${question}`
-    : question;
-
-  // Egress: identical preflight → client → messages.stream path as synthesis.
-  const preflight = await preflightAnthropicDirectClient({
-    tenantId: activeClient.id,
-    workflow: "tower-ask",
-    model: "claude-sonnet-4-6",
-    prompt: [systemPrompt, groundedUserMessage].join("\n\n"),
-    dataClass: "confidential",
-    metadata: { surface: "tower", grounded: String(sharedTowerOn) },
-  });
-  if (!preflight.ok) {
-    return new Response(preflight.reason, {
-      status: 403,
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
+  try {
+    const result = await answerCioTowerQuestion({
+      tenantId: tenancy.clientId,
+      userId: tenancy.userId,
+      tenantKey: canonicalCioTowerTenantKey(
+        tenancy.clientKey ?? activeClient.key ?? tenancy.clientId,
+      ),
+      tenantName: activeClient.name,
+      question,
+    });
+    return new Response(result.response, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-Tower-Grounded": "true",
+        "X-AbarVa-V6-Contract": result.v6VisibleOutputAudit.version,
+        "X-AbarVa-V6-Surface": "tower",
+        "X-AbarVa-Renderer-Policy": "placement-only",
+        "X-AbarVa-Tower-Trace-Key": result.traceKey,
+        "X-AbarVa-Tower-Validation": result.validationStatus,
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return new Response(message, {
+      status: 502,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-AbarVa-V6-Surface": "tower",
+        "X-AbarVa-Renderer-Policy": "placement-only",
+        "X-AbarVa-Tower-Validation": "failed",
+      },
     });
   }
-  const client = preflight.client;
-
-  const stream = await client.messages.stream({
-    model: "claude-sonnet-4-6",
-    max_tokens: 600,
-    system: systemPrompt,
-    messages: [{ role: "user", content: groundedUserMessage }],
-  });
-
-  const encoder = new TextEncoder();
-  const readable = new ReadableStream({
-    async start(controller) {
-      try {
-        for await (const chunk of stream) {
-          if (
-            chunk.type === "content_block_delta" &&
-            chunk.delta.type === "text_delta"
-          ) {
-            controller.enqueue(encoder.encode(chunk.delta.text));
-          }
-        }
-      } catch (err) {
-        controller.error(err);
-        return;
-      }
-      controller.close();
-    },
-  });
-
-  return new Response(readable, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Transfer-Encoding": "chunked",
-      "X-Tower-Grounded": String(sharedTowerOn),
-    },
-  });
 }
