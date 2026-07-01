@@ -19,6 +19,10 @@ import type { SourcingEventDetail } from "@/lib/source/types";
 import { getSourcingEvent, sourceEventRowToDetail } from "@/lib/source/queries";
 import { selectSourceWriteAdapter } from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import {
+  buildVendorChallengeIntelligence,
+  buildVendorResponseMveProfiles,
+} from "@/lib/source/proposal-intelligence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -221,6 +225,13 @@ async function buildEventIntakeTenantContextSnapshot(args: {
       ? APEX_RETAIL_BROKER_TENANT_KEY
       : clientKey;
   const artifactContext = await loadSourceEventArtifactContext(args.event.id);
+  const vendorProfiles = buildVendorResponseMveProfiles({
+    id: args.event.id,
+    code: args.event.code,
+    name: args.event.name,
+    accountName: args.event.accountName,
+  });
+  const vendorChallenges = buildVendorChallengeIntelligence(vendorProfiles);
   const eventEvidence = [
     {
       recordId: "trigger",
@@ -246,6 +257,26 @@ async function buildEventIntakeTenantContextSnapshot(args: {
       excerpt: `${criterion.label}: ${criterion.note ?? criterion.status}`,
       score: 12 - index,
     })),
+    ...(vendorChallenges?.challengeLog.slice(0, 8).map((challenge, index) => ({
+      recordId: challenge.challengeId,
+      title: `${challenge.vendorName} challenge`,
+      excerpt: [
+        `${challenge.issueCategory.replaceAll("_", " ")}: ${challenge.finding}`,
+        `Ask: ${challenge.clarificationQuestion}`,
+        `Scoring implication: ${challenge.scoringImplication}`,
+      ].join(" "),
+      score: 22 - index,
+    })) ?? []),
+    ...(vendorChallenges?.leverageSeeds.slice(0, 8).map((seed, index) => ({
+      recordId: seed.seedId,
+      title: `${seed.vendorName} BAFO leverage seed`,
+      excerpt: [
+        `${seed.leverType.replaceAll("_", " ")}: ${seed.finding}`,
+        `Recommended ask: ${seed.recommendedAsk}`,
+        `BAFO language: ${seed.bafoLanguage}`,
+      ].join(" "),
+      score: 18 - index,
+    })) ?? []),
   ].filter((item) => item.excerpt.trim().length > 0);
   const evidence = [
     ...eventEvidence.map((item) => ({

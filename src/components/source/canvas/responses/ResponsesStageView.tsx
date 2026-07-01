@@ -2,19 +2,25 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import type { SourceVendorResponseCompleteness } from "@/lib/source/vendor-response-types";
-import type { VendorResponseProfileSet } from "@/lib/source/proposal-intelligence";
+import type {
+  VendorChallengeIntelligence,
+  VendorResponseProfileSet,
+} from "@/lib/source/proposal-intelligence";
 import { CANVAS } from "../canvas-tokens";
 import { CompletenessMatrix } from "./CompletenessMatrix";
 import { QnaSymmetryLog } from "./QnaSymmetryLog";
+import { VendorChallengeLeveragePanel } from "./VendorChallengeLeveragePanel";
 import { VendorResponseProfilesPanel } from "./VendorResponseProfilesPanel";
 
 export function ResponsesStageView({
   readiness,
   profileSet,
+  challengeIntelligence,
   documentWorkspace,
 }: {
   readiness?: SourceVendorResponseCompleteness;
   profileSet?: VendorResponseProfileSet | null;
+  challengeIntelligence?: VendorChallengeIntelligence | null;
   documentWorkspace: ReactNode;
 }) {
   const records = readiness?.records ?? [];
@@ -71,6 +77,7 @@ export function ResponsesStageView({
       </div>
 
       <VendorResponseProfilesPanel profileSet={profileSet} />
+      <VendorChallengeLeveragePanel intelligence={challengeIntelligence} />
 
       <section data-testid="source-responses-disqualification-card" style={DECISION}>
         <div style={EYEBROW}>Decision point</div>
