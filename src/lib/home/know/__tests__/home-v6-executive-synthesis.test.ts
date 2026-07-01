@@ -125,6 +125,48 @@ describe("Home V6 executive synthesis", () => {
     expect(result.response.safety.composerTrace?.anthropicTrace).toBeUndefined();
   });
 
+  it("preserves Claude markdown emphasis as part of the visible answer contract", async () => {
+    mockClaudeText(
+      [
+        "For Industrial Demo:",
+        "- **What this means:** finance modernization is the strongest current story, but the value claim still needs proof.",
+        "- **Why it matters:** SAP feeds, treasury controls, and payment evidence decide whether this is board-ready.",
+        "- **Where to go next:** use Tower for spend and value, Source for renewals, and Moves for execution sequencing.",
+        "",
+        "Caveat: named ownership and period-specific value evidence still need validation before leadership treats the case as proven.",
+      ].join("\n"),
+    );
+    const question =
+      "What is the AI footprint, including initiatives, adoption, usage, and value evidence?";
+    const v6 = answerHomeKnowFromV6({
+      tenantKey: "lakeshore",
+      question,
+      includeTrace: true,
+    });
+    const deterministic = toHomeKnowResponseFromV6(v6, { question });
+
+    const result = await applyHomeV6ExecutiveSynthesis({
+      response: deterministic,
+      v6Result: v6,
+      question,
+      tenantKey: v6.tenant.canonicalKey,
+      includeTrace: true,
+    });
+
+    expect(result.trace.used).toBe(true);
+    expect(result.response.prose).toContain("**What this means:**");
+    expect(result.response.prose).toContain("**Why it matters:**");
+    expect(result.response.safety.composerTrace?.reason).toContain(
+      "answerSource=claude_text",
+    );
+    expect(result.response.safety.composerTrace?.reason).toContain(
+      "rawClaudePreserved=true",
+    );
+    expect(
+      result.response.safety.composerTrace?.anthropicTrace?.claudeRaw.text,
+    ).toBe(result.response.prose);
+  });
+
   it("falls back with explicit trace when Claude output exposes technical language", async () => {
     mockClaudeText(
       "Retail Demo has 50 usable V6 evidence rows from the dataset contract pack.",

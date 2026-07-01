@@ -15,6 +15,7 @@ import {
   shapePublicText,
   sourceClassDisplayLabel,
 } from "@/lib/ava-answer/render-layer-shaper";
+import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { shapeHomeKnowResponseForRender } from "@/lib/home/know/home-render-layer-shaper";
 
 const CSS = `
@@ -26,8 +27,13 @@ const CSS = `
 .homeKnowAnswer .hk-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
 .homeKnowAnswer .hk-pill{display:inline-flex;align-items:center;border:1px solid var(--hk-line);border-radius:999px;background:#fff;padding:4px 9px;font-size:12px;color:var(--hk-muted)}
 .homeKnowAnswer .hk-pill.good{background:#E9F6ED;border-color:transparent;color:var(--hk-green);font-weight:650}
-.homeKnowAnswer .hk-prose{font-size:15px;line-height:1.68;white-space:pre-wrap;color:#20201b}
+.homeKnowAnswer .hk-prose{font-size:15px;line-height:1.68;color:#20201b}
 .homeKnowAnswer.compact .hk-prose{font-size:14px;line-height:1.62}
+.homeKnowAnswer .hk-prose :where(p,ul,ol,table){margin:0 0 10px}
+.homeKnowAnswer .hk-prose :where(p:last-child,ul:last-child,ol:last-child,table:last-child){margin-bottom:0}
+.homeKnowAnswer .hk-prose ul,.homeKnowAnswer .hk-prose ol{padding-left:1.18rem;display:grid;gap:8px}
+.homeKnowAnswer .hk-prose strong{font-weight:760;color:#171713}
+.homeKnowAnswer .hk-prose code{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:.92em;background:#F3F0E8;border:1px solid var(--hk-line);border-radius:5px;padding:1px 4px}
 .homeKnowAnswer .hk-section{display:grid;gap:10px}
 .homeKnowAnswer .hk-title{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--hk-muted);font-weight:700}
 .homeKnowAnswer .hk-tableWrap,.homeKnowAnswer .hk-chart,.homeKnowAnswer .hk-graph,.homeKnowAnswer .hk-gapBox,.homeKnowAnswer .hk-handoff,.homeKnowAnswer .hk-drawer{border:1px solid var(--hk-line);border-radius:8px;background:#fff;overflow:hidden}
@@ -87,7 +93,7 @@ const INTERNAL_CODE_REPLACE =
 function sanitizeHomeText(value: unknown): string {
   if (value === null || value === undefined) return "—";
   const text = String(value);
-  const cleaned = shapePublicText(scrubHomePublicAnswerText(text
+  const cleaned = shapePublicText(scrubHomeTextPreservingMarkdownEmphasis(text
     .replace(/(^|\n)\s*(Read|Evidence|Implication|Next move):\s*/gi, "$1")
     .replace(/\bmissing evidence path\b/gi, "missing source path")
     .replace(/\bevidence path\b/gi, "source path")
@@ -103,6 +109,14 @@ function sanitizeHomeText(value: unknown): string {
     .replace(INTERNAL_CODE_REPLACE, "source reference")
     .trim()));
   return cleaned || "—";
+}
+
+const MARKDOWN_EMPHASIS_SENTINEL = "__ABARVA_MARKDOWN_EMPHASIS__";
+
+function scrubHomeTextPreservingMarkdownEmphasis(text: string): string {
+  return scrubHomePublicAnswerText(
+    text.replace(/\*\*/g, MARKDOWN_EMPHASIS_SENTINEL),
+  ).replaceAll(MARKDOWN_EMPHASIS_SENTINEL, "**");
 }
 
 function displayIdentifier(value: unknown): string {
@@ -581,7 +595,11 @@ export function HomeKnowAnswerRenderer({
 
         <HandoffBanner response={displayResponse} />
 
-        {safeProse ? <div className="hk-prose">{safeProse}</div> : null}
+        {safeProse ? (
+          <div className="hk-prose">
+            <AgentMarkdown text={safeProse} />
+          </div>
+        ) : null}
 
         {hasEvidence ? (
           <details className="hk-evidenceToggle" open={evidenceOpen}>

@@ -554,9 +554,8 @@ function applyExecutiveFailureTrace(
 }
 
 function normalizeExecutiveText(text: string): string {
-  return scrubPublicAvaAnswerText(text)
+  return scrubExecutiveTextPreservingMarkdownEmphasis(text)
     .replace(/^\s*#{1,6}\s+/gm, "")
-    .replace(/\*\*/g, "")
     .replace(/`([^`]+)`/g, "$1")
     .replace(/\bsemantic\s+(model|layer|definition[s]?)\b/gi, (match) =>
       /layer/i.test(match)
@@ -572,6 +571,14 @@ function normalizeExecutiveText(text: string): string {
     .replace(/\bWe recommend validating\b/gi, "The next evidence to validate is")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+const MARKDOWN_EMPHASIS_SENTINEL = "__ABARVA_MARKDOWN_EMPHASIS__";
+
+function scrubExecutiveTextPreservingMarkdownEmphasis(text: string): string {
+  return scrubPublicAvaAnswerText(
+    text.replace(/\*\*/g, MARKDOWN_EMPHASIS_SENTINEL),
+  ).replaceAll(MARKDOWN_EMPHASIS_SENTINEL, "**");
 }
 
 function determineArtifactStatus(args: {
