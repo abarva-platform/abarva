@@ -897,7 +897,9 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       expect(screen.getAllByText("Scale now").length).toBeGreaterThan(0);
       expect(screen.getByText("Certify then scale")).toBeInTheDocument();
       expect(screen.getByText("Fund readiness")).toBeInTheDocument();
-      expect(screen.getByText("Loyalty")).toBeInTheDocument();
+      expect(screen.getAllByText("Loyalty").length).toBeGreaterThan(0);
+      expect(screen.getByText(/Value vs\. readiness/i)).toBeInTheDocument();
+      expect(screen.getByText("Funding sequence")).toBeInTheDocument();
       expect(screen.getByText("Value 8")).toBeInTheDocument();
       expect(screen.getByText("Ready 8")).toBeInTheDocument();
       expect(screen.getByText("Risk 4")).toBeInTheDocument();

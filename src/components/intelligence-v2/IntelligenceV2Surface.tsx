@@ -156,6 +156,70 @@ const CSS = `
 .iv2 .sequenceChip.risk{border-color:rgba(166,106,31,.25);background:#FBF1E1;color:#8A5415}
 .iv2 .sequenceChip.gate{max-width:100%;border-color:rgba(42,42,38,.16);background:#F4F2EC;color:#56534B;white-space:normal}
 .iv2 .sequenceChip.owner{max-width:100%;border-color:rgba(31,107,58,.18);background:#F1F7F2;color:#285A3A;white-space:normal}
+.iv2 .researchCanvas{gap:18px;background:linear-gradient(180deg,#FFFDF9 0%,#F4F1E9 100%)}
+.iv2 .researchExhibit{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(280px,.82fr);gap:28px;align-items:start}
+.iv2 .researchPlotBlock{min-width:0}
+.iv2 .researchPlotTop{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:10px}
+.iv2 .researchExhibitLabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#2A2A26}
+.iv2 .researchExhibitLabel span{color:var(--faint);margin-right:8px}
+.iv2 .researchN{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
+.iv2 .researchMatrix{position:relative;min-height:390px;border:1px solid #DDD6C9;border-radius:13px;background:radial-gradient(105% 88% at 84% 18%,rgba(31,107,58,.08),transparent 55%),linear-gradient(180deg,#fff,#FAF7F0);overflow:hidden;box-shadow:0 22px 46px -28px rgba(40,35,24,.3)}
+.iv2 .researchMatrixGrid{position:absolute;inset:44px 42px 44px 56px;background-image:linear-gradient(to right,rgba(42,42,38,.045) 1px,transparent 1px),linear-gradient(to bottom,rgba(42,42,38,.045) 1px,transparent 1px);background-size:25% 25%}
+.iv2 .researchMatrixFrontier{position:absolute;left:56px;right:42px;top:44px;bottom:44px;pointer-events:none}
+.iv2 .researchMatrixFrontier svg{width:100%;height:100%;display:block}
+.iv2 .researchZoneLabel{position:absolute;right:52px;top:56px;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);font-weight:750}
+.iv2 .researchZoneLabel::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(31,107,58,.13);margin-right:7px;vertical-align:middle}
+.iv2 .researchAxis{position:absolute;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.iv2 .researchAxis.y{left:15px;top:0;bottom:0;display:flex;align-items:center;writing-mode:vertical-rl;transform:rotate(180deg)}
+.iv2 .researchAxis.x{right:42px;bottom:15px}
+.iv2 .researchPoint{position:absolute;z-index:2;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px;max-width:46%}
+.iv2 .researchDot{width:var(--dot,16px);height:var(--dot,16px);border-radius:50%;background:var(--green);box-shadow:0 0 0 5px rgba(31,107,58,.14),0 8px 18px -8px rgba(31,107,58,.55);flex:none}
+.iv2 .researchPoint[data-risk="gated"] .researchDot{background:var(--amber);box-shadow:0 0 0 5px rgba(166,106,31,.13),0 8px 18px -8px rgba(166,106,31,.52)}
+.iv2 .researchPoint[data-risk="risk"] .researchDot{background:#8C4B35;box-shadow:0 0 0 5px rgba(140,75,53,.13),0 8px 18px -8px rgba(140,75,53,.52)}
+.iv2 .researchPointLabel{font-size:11.5px;font-weight:650;line-height:1.18;color:var(--ink);background:rgba(255,255,255,.9);border:1px solid rgba(231,227,218,.92);border-radius:7px;padding:4px 7px;box-shadow:0 7px 18px rgba(40,35,24,.08);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.iv2 .researchTooltip{position:absolute;left:50%;top:calc(100% + 10px);width:220px;transform:translate(-50%,6px);background:#FFFEFB;border:1px solid var(--line);border-radius:10px;padding:12px;box-shadow:0 18px 38px -16px rgba(40,35,24,.36);opacity:0;visibility:hidden;transition:opacity .15s ease,transform .15s ease;z-index:8}
+.iv2 .researchPoint:hover .researchTooltip{opacity:1;visibility:visible;transform:translate(-50%,0)}
+.iv2 .researchTooltipTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:15px;line-height:1.18;font-weight:500;color:var(--ink);margin-bottom:7px}
+.iv2 .researchTooltipRows{display:grid;gap:4px;font-size:11.5px;color:var(--muted)}
+.iv2 .researchTooltipRows span{display:flex;justify-content:space-between;gap:8px;border-top:1px solid #EFEAE0;padding-top:4px}
+.iv2 .researchTooltipRows b{font-weight:650;color:var(--ink);text-align:right}
+.iv2 .researchLegend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:12px;font-size:11.5px;color:var(--muted)}
+.iv2 .researchLegendItem{display:inline-flex;align-items:center;gap:6px}
+.iv2 .researchLegendDot{width:9px;height:9px;border-radius:50%;background:var(--green)}
+.iv2 .researchLegendDot.gated{background:var(--amber)}
+.iv2 .researchLegendDot.risk{background:#8C4B35}
+.iv2 .researchBubbleKey{margin-left:auto;color:var(--faint);white-space:nowrap}
+.iv2 .researchSequence{min-width:0}
+.iv2 .researchSequenceTitle{font-family:var(--font-fraunces),Georgia,serif;font-size:19px;line-height:1.15;font-weight:500;color:var(--ink);margin:0 0 5px}
+.iv2 .researchSequenceSub{font-size:12.5px;color:var(--faint);margin:0 0 17px}
+.iv2 .researchSpine{list-style:none;margin:0;padding:0 0 0 22px;position:relative}
+.iv2 .researchSpine::before{content:"";position:absolute;left:6px;top:7px;bottom:10px;width:2px;border-radius:2px;background:linear-gradient(180deg,var(--green),var(--amber) 60%,#8C4B35);opacity:.34}
+.iv2 .researchStage{position:relative;padding:0 0 20px}
+.iv2 .researchStage:last-child{padding-bottom:0}
+.iv2 .researchStageDot{position:absolute;left:-22px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--tone,var(--green));border:3px solid #F4F1E9}
+.iv2 .researchStageLabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--tone,var(--green));font-weight:750;margin-bottom:6px}
+.iv2 .researchStage[data-tone="scale"]{--tone:var(--green)}
+.iv2 .researchStage[data-tone="certify"],.iv2 .researchStage[data-tone="fund"]{--tone:var(--amber)}
+.iv2 .researchStage[data-tone="hold"]{--tone:#8C4B35}
+.iv2 .researchStageItems{font-size:14px;line-height:1.45;color:#33332D}
+.iv2 .researchStageItems strong{font-weight:700;color:var(--ink)}
+.iv2 .researchStageMeta{font-size:11.5px;color:var(--faint);margin-top:4px;line-height:1.35}
+.iv2 .researchProof{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border-top:1px solid var(--line);padding-top:16px}
+.iv2 .researchProofItem{padding:0 16px;border-left:1px solid var(--line);min-width:0}
+.iv2 .researchProofItem:first-child{padding-left:0;border-left:0}
+.iv2 .researchProofLabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:700;margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.iv2 .researchProofLabel::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--proof,#9A998E);flex:none}
+.iv2 .researchProofItem.known{--proof:var(--green)}
+.iv2 .researchProofItem.missing{--proof:#8C4B35}
+.iv2 .researchProofItem.assumed{--proof:var(--amber)}
+.iv2 .researchProofItem.decision{--proof:#237A95}
+.iv2 .researchProofText{font-size:12.5px;line-height:1.42;color:#3D3D36}
+.iv2 .researchStats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border-top:1px solid var(--line);padding-top:16px}
+.iv2 .researchStat{padding:0 16px;border-left:1px solid var(--line);min-width:0}
+.iv2 .researchStat:first-child{padding-left:0;border-left:0}
+.iv2 .researchStatValue{font-family:var(--font-fraunces),Georgia,serif;font-size:28px;line-height:1;color:var(--tone,var(--green));font-weight:500}
+.iv2 .researchStatLabel{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iv2 .researchStatHint{font-size:11.5px;color:var(--faint);margin-top:3px}
 .iv2 .matrixCanvas{position:relative;min-height:370px;border:1px solid #DDD6C9;border-radius:12px;background:linear-gradient(180deg,#fff,#F8F6EF);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
 .iv2 .matrixCanvas::before{content:"";position:absolute;inset:12%;border-left:1px solid #D8D2C5;border-bottom:1px solid #D8D2C5}
 .iv2 .matrixCanvas::after{content:"";position:absolute;left:50%;top:12%;bottom:12%;border-left:1px dashed #D8D2C5}
@@ -221,7 +285,7 @@ const CSS = `
 .iv2 .flag{color:var(--amber);font-size:11.5px;margin-top:12px;font-family:var(--font-geist-mono),ui-monospace,monospace}
 .iv2 .cpat .dom{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:8px}
 .iv2 .cpat p{color:var(--muted);font-size:12.5px}
-@media(max-width:900px){.iv2 .grid2,.iv2 .grid3,.iv2 .companionGrid,.iv2 .sequenceMap,.iv2 .roadmap,.iv2 .proofGrid{grid-template-columns:1fr}.iv2 .companionCard.wide{grid-column:auto}.iv2 .roadmapGate::after{display:none}}
+@media(max-width:900px){.iv2 .grid2,.iv2 .grid3,.iv2 .companionGrid,.iv2 .sequenceMap,.iv2 .roadmap,.iv2 .proofGrid,.iv2 .researchExhibit,.iv2 .researchProof,.iv2 .researchStats{grid-template-columns:1fr}.iv2 .companionCard.wide{grid-column:auto}.iv2 .roadmapGate::after{display:none}.iv2 .researchProofItem,.iv2 .researchStat{padding:12px 0 0;border-left:0;border-top:1px solid var(--line)}.iv2 .researchProofItem:first-child,.iv2 .researchStat:first-child{padding-top:0;border-top:0}.iv2 .researchBubbleKey{margin-left:0}.iv2 .researchMatrix{min-height:340px}}
 `;
 
 function buildSurfaceContext(payload: IntelligenceBindingPayload) {
@@ -690,9 +754,16 @@ function InvestmentSequencingMap({
 }) {
   const columns = payload.columns?.slice(0, 4) ?? [];
   if (columns.length === 0) return null;
+  const sequenceItems = flattenSequencingItems(columns);
+  const matrixItems = sequenceItems
+    .map((entry) => entry.item)
+    .filter(isExecutiveCanvasItem)
+    .filter(hasMatrixCoordinates)
+    .slice(0, 8);
+  const stats = researchSequencingStats(columns);
   return (
     <div
-      className="nativeCanvas"
+      className="nativeCanvas researchCanvas"
       data-native-canvas-type="executive-canvas-sequencing"
       data-testid="executive-canvas-sequencing"
     >
@@ -700,85 +771,245 @@ function InvestmentSequencingMap({
         meta="Board exhibit"
         title={payload.title ?? "Investment sequence"}
       />
-      <div className="nativeCanvasRead">
-        Read left to right as an executive funding sequence: scale what is
-        ready, certify what is valuable but gated, fund readiness where the
-        value pool is real, and hold anything without enough proof.
-      </div>
-      <CanvasMetricStrip
-        metrics={[
-          ["Decision shape", `${columns.length} lanes`],
-          ["Scale-ready", String(countColumnItems(columns, /scale/i))],
-          ["Gated bets", String(countColumnItems(columns, /certify|fund/i))],
-          ["Hold / stop", String(countColumnItems(columns, /hold|stop|defer/i))],
-        ]}
-      />
-      <div className="sequenceMap">
-        {columns.map((column) => (
-          <div
-            className="sequenceColumn"
-            data-tone={sequencingTone(column.label)}
-            key={column.label}
-          >
-            <div className="sequenceColumnHeader">
-              <div className="sequenceColumnTop">
-                <div className="sequenceColumnTitle">{column.label}</div>
-                <div className="sequenceColumnCount">
-                  {column.items.length} {column.items.length === 1 ? "bet" : "bets"}
-                </div>
-              </div>
-              <div className="sequenceColumnHint">
-                {sequencingHint(column.label)}
-              </div>
+      <div className="researchExhibit">
+        <div className="researchPlotBlock">
+          <div className="researchPlotTop">
+            <div className="researchExhibitLabel">
+              <span>Exhibit 1</span> Value vs. readiness
             </div>
-            {column.items.slice(0, 4).map((item, index) => (
-              <SequenceItem item={item} key={`${column.label}-${index}`} />
-            ))}
+            <div className="researchN">N = {matrixItems.length} initiatives</div>
           </div>
-        ))}
+          {matrixItems.length > 0 ? (
+            <ResearchValueReadinessPlot items={matrixItems} />
+          ) : (
+            <div className="emptyAnswer">
+              Funding sequence is the primary exhibit for this answer.
+            </div>
+          )}
+          <ResearchLegend />
+        </div>
+        <ResearchFundingSequence columns={columns} />
       </div>
-      <ProofBoundaryInline proofBoundary={payload.proofBoundary} />
+      <ResearchProofBoundary proofBoundary={payload.proofBoundary} />
+      <ResearchStatStrip stats={stats} />
     </div>
   );
 }
 
-function SequenceItem({ item }: { item: string | ExecutiveCanvasItem }) {
-  if (typeof item === "string") {
-    return (
-      <div className="sequenceItem">
-        <div className="sequenceItemLabel">{item}</div>
-      </div>
-    );
-  }
-  const metrics = [
-    scoreChip("value", "Value", item.value),
-    scoreChip("ready", "Ready", item.readiness),
-    scoreChip("risk", "Risk", item.risk),
-  ].filter(Boolean);
-  const chips = [
-    ...metrics,
-    item.owner ? { label: item.owner, className: "owner" } : null,
-    item.gate ? { label: item.gate, className: "gate" } : null,
-  ].filter((chip): chip is { label: string; className: string } =>
-    Boolean(chip),
+type SequencingEntry = {
+  columnLabel: string;
+  item: string | ExecutiveCanvasItem;
+};
+
+function flattenSequencingItems(
+  columns: NonNullable<ExecutiveCanvasPayload["columns"]>,
+): SequencingEntry[] {
+  return columns.flatMap((column) =>
+    column.items.map((item) => ({
+      columnLabel: column.label,
+      item,
+    })),
   );
+}
+
+function isExecutiveCanvasItem(
+  item: string | ExecutiveCanvasItem,
+): item is ExecutiveCanvasItem {
+  return typeof item !== "string";
+}
+
+function ResearchValueReadinessPlot({
+  items,
+}: {
+  items: Array<ExecutiveCanvasItem & { value: number; readiness: number }>;
+}) {
   return (
-    <div className="sequenceItem">
-      <div className="sequenceItemLabel">{item.label}</div>
-      {item.action ? <div className="sequenceAction">{item.action}</div> : null}
-      {chips.length > 0 ? (
-        <div className="sequenceItemChips">
-          {chips.map((chip) => (
-            <span
-              className={`sequenceChip ${chip.className}`}
-              key={`${chip.className}-${chip.label}`}
-            >
-              {chip.label}
-            </span>
-          ))}
+    <div className="researchMatrix" aria-label="Value readiness matrix">
+      <div className="researchMatrixGrid" />
+      <div className="researchMatrixFrontier" aria-hidden="true">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path
+            d="M8 88 C26 68 44 52 60 34 C72 22 82 16 92 8"
+            fill="none"
+            stroke="rgba(31,107,58,.35)"
+            strokeDasharray="3 4"
+            strokeWidth="1"
+          />
+        </svg>
+      </div>
+      <div className="researchZoneLabel">Fund first</div>
+      <div className="researchAxis y">Value at stake</div>
+      <div className="researchAxis x">Readiness today</div>
+      {items.map((item) => (
+        <div
+          className="researchPoint"
+          data-risk={researchRiskTone(item.risk)}
+          key={`${item.label}-${item.value}-${item.readiness}`}
+          style={{
+            left: `${scaleScore(item.readiness)}%`,
+            top: `${100 - scaleScore(item.value)}%`,
+          }}
+        >
+          <span
+            className="researchDot"
+            style={
+              { "--dot": `${matrixDotSize(item.value)}px` } as CSSProperties
+            }
+            aria-hidden="true"
+          />
+          <span className="researchPointLabel">{item.label}</span>
+          <ResearchPointTooltip item={item} />
         </div>
-      ) : null}
-      {item.note ? <div className="sequenceItemMeta">{item.note}</div> : null}
+      ))}
+    </div>
+  );
+}
+
+function ResearchPointTooltip({
+  item,
+}: {
+  item: ExecutiveCanvasItem & { value: number; readiness: number };
+}) {
+  return (
+    <div className="researchTooltip">
+      <div className="researchTooltipTitle">{item.label}</div>
+      <div className="researchTooltipRows">
+        <span>
+          Value <b>Value {item.value}</b>
+        </span>
+        <span>
+          Readiness <b>Ready {item.readiness}</b>
+        </span>
+        {Number.isFinite(item.risk) ? (
+          <span>
+            Risk <b>Risk {item.risk}</b>
+          </span>
+        ) : null}
+        {item.owner ? (
+          <span>
+            Owner <b>{item.owner}</b>
+          </span>
+        ) : null}
+        {item.gate ? (
+          <span>
+            Gate <b>{item.gate}</b>
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function ResearchLegend() {
+  return (
+    <div className="researchLegend">
+      <span className="researchLegendItem">
+        <span className="researchLegendDot" /> Ready to scale
+      </span>
+      <span className="researchLegendItem">
+        <span className="researchLegendDot gated" /> Gated
+      </span>
+      <span className="researchLegendItem">
+        <span className="researchLegendDot risk" /> Not ready
+      </span>
+      <span className="researchBubbleKey">Bubble size = value at stake</span>
+    </div>
+  );
+}
+
+function ResearchFundingSequence({
+  columns,
+}: {
+  columns: NonNullable<ExecutiveCanvasPayload["columns"]>;
+}) {
+  return (
+    <div className="researchSequence">
+      <h3 className="researchSequenceTitle">Funding sequence</h3>
+      <p className="researchSequenceSub">Four moves, read top to bottom.</p>
+      <ol className="researchSpine">
+        {columns.map((column) => (
+          <li
+            className="researchStage"
+            data-tone={sequencingTone(column.label)}
+            key={column.label}
+          >
+            <span className="researchStageDot" aria-hidden="true" />
+            <div className="researchStageLabel">{column.label}</div>
+            <div className="researchStageItems">
+              {compactSequenceLabels(column.items)}
+            </div>
+            <div className="researchStageMeta">
+              {sequencingHint(column.label)}
+              {column.items.length > 3 ? ` · +${column.items.length - 3} more` : ""}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+function compactSequenceLabels(items: Array<string | ExecutiveCanvasItem>) {
+  const visibleItems = items.slice(0, 3);
+  return (
+    <>
+      {visibleItems.map((item, index) => (
+        <span key={`${itemLabel(item)}-${index}`}>
+          {index > 0 ? " · " : null}
+          <strong>{itemLabel(item)}</strong>
+        </span>
+      ))}
+    </>
+  );
+}
+
+function itemLabel(item: string | ExecutiveCanvasItem): string {
+  return typeof item === "string" ? item : item.label;
+}
+
+function ResearchProofBoundary({
+  proofBoundary,
+}: {
+  proofBoundary?: ExecutiveCanvasProofBoundary;
+}) {
+  if (!proofBoundary) return null;
+  const proofItems = [
+    ["known", "Known", proofBoundary.known?.[0]],
+    ["missing", "Missing", proofBoundary.missing?.[0]],
+    ["assumed", "Assumed", proofBoundary.assumed?.[0]],
+    ["decision", "Decision", proofBoundary.decisionRequired],
+  ].filter((item): item is [string, string, string] => Boolean(item[2]));
+  if (proofItems.length === 0) return null;
+  return (
+    <div className="researchProof">
+      {proofItems.map(([className, label, text]) => (
+        <div className={`researchProofItem ${className}`} key={label}>
+          <div className="researchProofLabel">{label}</div>
+          <div className="researchProofText">{text}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ResearchStatStrip({
+  stats,
+}: {
+  stats: Array<{ label: string; value: number; hint: string; tone: string }>;
+}) {
+  return (
+    <div className="researchStats">
+      {stats.map((stat) => (
+        <div
+          className="researchStat"
+          key={stat.label}
+          style={{ "--tone": stat.tone } as CSSProperties}
+        >
+          <div className="researchStatValue">{stat.value}</div>
+          <div className="researchStatLabel">{stat.label}</div>
+          <div className="researchStatHint">{stat.hint}</div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -955,23 +1186,6 @@ function NativeCanvasTitle({
   );
 }
 
-function CanvasMetricStrip({
-  metrics,
-}: {
-  metrics: Array<[string, string]>;
-}) {
-  return (
-    <div className="canvasMetricStrip">
-      {metrics.map(([label, value]) => (
-        <div className="canvasMetric" key={label}>
-          <div className="canvasMetricLabel">{label}</div>
-          <div className="canvasMetricValue">{value}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function ProofBoundaryInline({
   proofBoundary,
 }: {
@@ -1038,6 +1252,44 @@ function countColumnItems(
   return columns
     .filter((column) => labelPattern.test(column.label))
     .reduce((total, column) => total + column.items.length, 0);
+}
+
+function researchSequencingStats(
+  columns: NonNullable<ExecutiveCanvasPayload["columns"]>,
+): Array<{ label: string; value: number; hint: string; tone: string }> {
+  return [
+    {
+      label: "Scale now",
+      value: countColumnItems(columns, /scale/i),
+      hint: "Low governance drag",
+      tone: "var(--green)",
+    },
+    {
+      label: "Gated bets",
+      value: countColumnItems(columns, /certify|validate|then/i),
+      hint: "Need signoff",
+      tone: "var(--amber)",
+    },
+    {
+      label: "Readiness",
+      value: countColumnItems(columns, /readiness|foundation|prepare|enable|fund/i),
+      hint: "Fund substrate",
+      tone: "var(--amber)",
+    },
+    {
+      label: "Hold",
+      value: countColumnItems(columns, /hold|stop|defer|avoid|kill/i),
+      hint: "Protect capital",
+      tone: "#8C4B35",
+    },
+  ];
+}
+
+function researchRiskTone(risk?: number): "ready" | "gated" | "risk" {
+  if (!Number.isFinite(risk)) return "ready";
+  if (Number(risk) >= 7) return "risk";
+  if (Number(risk) >= 5) return "gated";
+  return "ready";
 }
 
 function scoreChip(
