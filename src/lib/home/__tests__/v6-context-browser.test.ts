@@ -19,11 +19,19 @@ describe("Home V6 context browser", () => {
       { key: "contract_risk", label: "Risk/gap" },
     ]);
     expect(browser?.dimensions["Vendors & Contracts"].rows[0]).toEqual([
-      "Kyriba",
-      "finance treasury",
-      "2026-07-06",
-      "Renewal concentration",
+      "Workday",
+      "HCM and finance SaaS",
+      "2027-02-28",
+      "medium",
     ]);
+    expect(browser?.dimensions["Vendors & Contracts"].sourceRows[0]).toEqual(
+      expect.objectContaining({
+        v6File: "V6_07_vendors_contracts.csv",
+        rowNumber: 2,
+        rowId: "LH-VDR-WORKDAY",
+        label: "Workday",
+      }),
+    );
     expect(Object.keys(browser?.dimensions ?? {})).toEqual(
       expect.arrayContaining([
         "Enterprise Profile",
