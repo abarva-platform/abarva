@@ -128,9 +128,45 @@ describe('Source Nexus API live context', () => {
     );
     expect(response.sentinelBriefing?.primaryVoice.evidenceNotes).toEqual(
       expect.arrayContaining([
-        'Live Apex context: 403 inventory records, 935 context chunks, 935 embedded chunks.',
+        'Live Apex Retail Group context: 403 inventory records, 935 context chunks, 935 embedded chunks.',
       ]),
     );
+  });
+
+  it('uses the live tenant label in Source briefing evidence notes', () => {
+    const response = createSourceNexusApiStubResponse({
+      eventId: 'SKYH-AMS-CONTRACT-OPT-2026',
+      prompt: 'What is the financial exposure?',
+      tenant: {
+        tenantId: 'client-skyharbor',
+        tenantKey: 'skyharbor',
+        tenantName: 'SkyHarbor Air',
+        activeClientId: 'client-skyharbor',
+        activeClientName: 'SkyHarbor Air',
+      },
+      user: { id: 'user-skyharbor' },
+      userRole: 'cio',
+      liveEventDetail: sourceEventRowToDetail({
+        ...liveEventRow,
+        id: 'skyh-ams-contract-opt-2026',
+        client_key: 'skyharbor',
+        event_code: 'SKYH-AMS-CONTRACT-OPT-2026',
+        event_name: 'SkyHarbor AMS Contract Optimization and Renewal Decision',
+        event_type: 'managed-service',
+      }, 'SkyHarbor Air'),
+      liveTenantContext: {
+        ...liveTenantContext,
+        clientKey: 'skyharbor',
+      },
+    });
+
+    const evidenceNotes = response.sentinelBriefing?.primaryVoice.evidenceNotes ?? [];
+    expect(evidenceNotes).toEqual(
+      expect.arrayContaining([
+        'Live SkyHarbor Air context: 403 inventory records, 935 context chunks, 935 embedded chunks.',
+      ]),
+    );
+    expect(evidenceNotes.join('\n')).not.toContain('Live Apex context');
   });
 
   it('answers RFI or BAFO pressure from persisted event intake without a generic unavailable-context response', () => {
