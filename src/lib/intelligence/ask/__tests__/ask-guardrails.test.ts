@@ -252,6 +252,8 @@ describe("Ask Intelligence guardrails", () => {
     it("repairs explicit tab requests before rendering when Claude omits a required tab", () => {
       expect(synthesizerCode).toContain("requiredCanvasTabsForQuery");
       expect(synthesizerCode).toContain("missingRequiredCanvasTabs");
+      expect(synthesizerCode).toContain("blockingRepairEnabled");
+      expect(synthesizerCode).toContain("blocking_repairs.skipped");
       expect(synthesizerCode).toContain(
         "MANDATORY INTELLIGENCE CANVAS TAB REPAIR",
       );
@@ -263,6 +265,9 @@ describe("Ask Intelligence guardrails", () => {
     });
 
     it("repairs strategic answers that omit the governed native canvas payload", () => {
+      expect(synthesizerCode).toContain(
+        "isBlockingIntelligenceRepairEnabled",
+      );
       expect(synthesizerCode).toContain("requiresNativeExecutiveCanvas");
       expect(synthesizerCode).toContain("hasExecutiveCanvasPayload");
       expect(synthesizerCode).toContain("NATIVE EXECUTIVE CANVAS REPAIR");
@@ -283,6 +288,23 @@ describe("Ask Intelligence guardrails", () => {
       );
       expect(synthesizerCode).toContain("cleanUntabbedCanvasMainAnswer");
       expect(synthesizerCode).toContain("buildFallbackNativeCanvasBlock");
+    });
+
+    it("keeps blocking repair out of the default live route path", () => {
+      const indexCode = readFileSync(join(__dirname, "..", "index.ts"), "utf8");
+
+      expect(indexCode).toContain("isBlockingIntelligenceRepairEnabled");
+      expect(indexCode).toContain("consultant.synthesis.skipped");
+      expect(synthesizerCode).toContain("live_no_repair_mode");
+      expect(synthesizerCode).toMatch(
+        /if\s*\(\s*blockingRepairEnabled\s*&&\s*missingTabs\.length\s*>\s*0\s*\)/,
+      );
+      expect(synthesizerCode).toMatch(
+        /blockingRepairEnabled\s*&&[\s\S]*?isExplicitVisualAsk\(args\.query\)/,
+      );
+      expect(synthesizerCode).toMatch(
+        /blockingRepairEnabled\s*&&[\s\S]*?requiresNativeExecutiveCanvas\(args\.query\)/,
+      );
     });
 
     it("repairs session-history wording before any active Ask synthesis output is rendered", () => {

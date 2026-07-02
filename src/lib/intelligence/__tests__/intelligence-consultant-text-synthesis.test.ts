@@ -269,11 +269,15 @@ function mockClaudeTexts(texts: string[]) {
 describe("Intelligence consultant text synthesis", () => {
   const oldEnabled = process.env.INTELLIGENCE_CLAUDE_SYNTHESIS_ENABLED;
   const oldKey = process.env.ANTHROPIC_API_KEY;
+  const oldRepairMode = process.env.INTELLIGENCE_LIVE_REPAIR_MODE;
+  const oldDisableRepair = process.env.INTELLIGENCE_DISABLE_BLOCKING_REPAIR;
 
   beforeEach(() => {
     mockGetAuditedAnthropicClient.mockReset();
     process.env.INTELLIGENCE_CLAUDE_SYNTHESIS_ENABLED = "true";
     process.env.ANTHROPIC_API_KEY = "test-key";
+    process.env.INTELLIGENCE_LIVE_REPAIR_MODE = "blocking";
+    delete process.env.INTELLIGENCE_DISABLE_BLOCKING_REPAIR;
   });
 
   afterEach(() => {
@@ -286,6 +290,16 @@ describe("Intelligence consultant text synthesis", () => {
       delete process.env.ANTHROPIC_API_KEY;
     } else {
       process.env.ANTHROPIC_API_KEY = oldKey;
+    }
+    if (oldRepairMode === undefined) {
+      delete process.env.INTELLIGENCE_LIVE_REPAIR_MODE;
+    } else {
+      process.env.INTELLIGENCE_LIVE_REPAIR_MODE = oldRepairMode;
+    }
+    if (oldDisableRepair === undefined) {
+      delete process.env.INTELLIGENCE_DISABLE_BLOCKING_REPAIR;
+    } else {
+      process.env.INTELLIGENCE_DISABLE_BLOCKING_REPAIR = oldDisableRepair;
     }
   });
 
@@ -619,6 +633,47 @@ describe("Intelligence consultant text synthesis", () => {
     expect(result && "text" in result ? result.text : "").toContain(
       "executive-canvas-sequencing",
     );
+  });
+
+  it("does not call consultant repair when live no-repair mode is active", async () => {
+    delete process.env.INTELLIGENCE_LIVE_REPAIR_MODE;
+    process.env.INTELLIGENCE_DISABLE_BLOCKING_REPAIR = "true";
+    const initialAnswer = [
+      "SkyHarbor should sequence AI funding instead of spreading the tranche evenly. Loyalty scales first, crew recovery and IROPS need certification before scale, and predictive maintenance should stay in a bounded proof.",
+      "",
+      "<<<TAB: Decision | grounding: tenant-evidence>>>",
+      "Choice: scale Loyalty now; certify IROPS and Crew Recovery before autonomous scale.",
+      "",
+      "<<<TAB: Table | grounding: tenant-evidence>>>",
+      "| Initiative | Value | Readiness | Action |",
+      "|---|---:|---:|---|",
+      "| Loyalty AI | 8 | 9 | Scale now |",
+      "| IROPS recovery | 10 | 3 | Fund readiness |",
+      "| Crew Recovery | 8 | 6 | Certify then scale |",
+      "",
+      "<<<TAB: Evidence | grounding: tenant-evidence>>>",
+      "Tenant facts support the sequencing, while exact realized value remains a gap to confirm.",
+    ].join("\n");
+    const create = mockClaudeTexts([initialAnswer]);
+
+    const result = await synthesizeIntelligenceConsultantText({
+      dossier: {
+        ...dossier,
+        question:
+          "Where should SkyHarbor prioritize AI funding across IROPS, predictive maintenance, crew recovery, and loyalty?",
+      },
+      tenantId: "tenant-skyharbor",
+    });
+
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({
+      attempted: true,
+      used: false,
+      reason: "validation_failed",
+      validationIssues: expect.arrayContaining([
+        "missing_native_executive_canvas",
+      ]),
+    });
   });
 
   it("rejects prose-only explicit visual answers instead of building API fallback tables", async () => {
