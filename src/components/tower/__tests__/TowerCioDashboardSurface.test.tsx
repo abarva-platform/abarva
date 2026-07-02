@@ -617,7 +617,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
   it("does not claim program or measured-value rows are absent when governed metric packets exist", () => {
     render(
       <TowerIndexPage
-        tenantName="Industrial Demo"
+        tenantName="Lakeshore Holdings"
         context="Tower"
         towerToday="2026-06-25"
         clientId="client-industrial"

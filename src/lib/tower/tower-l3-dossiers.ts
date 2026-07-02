@@ -461,7 +461,7 @@ function tenantLabelFor(tenantKey: string): string {
           ? 'meridian'
           : key === 'skyharbor-air'
             ? 'skyharbor'
-            : key === 'lakeshore-industries' || key === 'lakeshore-holdings'
+            : key === 'lakeshore-holdings'
               ? 'lakeshore'
               : key;
 

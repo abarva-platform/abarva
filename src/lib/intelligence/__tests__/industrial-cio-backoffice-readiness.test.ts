@@ -79,7 +79,7 @@ describe("Industrial CIO back-office readiness packet", () => {
 
   it("preserves Claude-owned branch wording while exposing renderable buttons", () => {
     const answer = composeIndustrialCioBackofficeAnswer(
-      "How should Morgan Street stand up the Value Office?",
+      "How should Lakeshore Holdings stand up the Value Office?",
     );
     const parsed = parseDecisionBranch(answer);
 

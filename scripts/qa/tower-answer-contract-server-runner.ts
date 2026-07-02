@@ -36,7 +36,7 @@ interface ScoredContract {
 const DEFAULT_TENANTS = [
   'apex-retail',
   'first-capital-financial',
-  'lakeshore-industries',
+  'lakeshore-holdings',
   'meridian-health',
   'skyharbor-air',
 ];

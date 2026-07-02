@@ -153,7 +153,7 @@ describe("Home V6 executive synthesis", () => {
   it("preserves Claude markdown emphasis as part of the visible answer contract", async () => {
     mockClaudeText(
       [
-        "For Industrial Demo:",
+        "For Lakeshore Holdings:",
         "- **What this means:** finance modernization is the strongest current story, but the value claim still needs proof.",
         "- **Why it matters:** SAP feeds, treasury controls, and payment evidence decide whether this is board-ready.",
         "- **Where to go next:** use Tower for spend and value, Source for renewals, and Moves for execution sequencing.",
@@ -195,7 +195,7 @@ describe("Home V6 executive synthesis", () => {
   it("treats whitespace-only list formatting as preserved Claude text", async () => {
     mockClaudeText(
       [
-        "For Industrial Demo, the dependency story is clear enough for leadership.",
+        "For Lakeshore Holdings, the dependency story is clear enough for leadership.",
         "",
         "- **What this means:** cash positioning, bank connectivity, and payment approval form the critical path.",
         "- **Why it matters:** trust weakens where lineage and quality are least mature.",
@@ -486,7 +486,7 @@ describe("Home V6 executive synthesis", () => {
 
   it("normalizes row language before visible-answer validation", async () => {
     mockClaudeText(
-      "Industrial Demo is represented at the enterprise level with a technology budget of $1.16 billion, which gives leadership a clear budget anchor but not the internal operating structure beneath it.\n\nWhat is not yet proven is the breakdown by business units, divisions, legal entities, regions, or portfolio segments. If this were shown as a table, only the top-line enterprise row could be populated today; the remaining structural detail should stay empty until ownership and budget allocation are confirmed.\n\nThe next evidence to validate is the component-unit map and the accountable owner for each operating layer.",
+      "Lakeshore Holdings is represented as a holding company: direct holdco revenue is not a valid operating claim, portfolio-company revenue rolls up to $7.12 billion, and the direct IT budget is $190.6 million.\n\nWhat is not yet board-grade is the $3.56 billion operating-company allocation bucket. If this were shown as a table, Northline, Brightmark, Forge & Field, and Great Lakes Pantry can be populated, while the allocation bucket should stay marked as requiring opco split or naming.\n\nThe next evidence to validate is the operating-company allocation map and the accountable owner for each operating layer.",
     );
     const question =
       "How is the company or portfolio operating structure represented, and what is missing?";
@@ -506,16 +506,16 @@ describe("Home V6 executive synthesis", () => {
     });
 
     expect(result.trace.used).toBe(true);
-    expect(result.response.prose).toContain("Industrial Demo");
+    expect(result.response.prose).toContain("Lakeshore Holdings");
     expect(result.response.prose).toContain("top-line enterprise line");
     expect(result.response.prose).not.toContain("enterprise row");
     expect(result.response.safety.composerTrace?.fallbackUsed).toBe(false);
   });
 
-  it("requires compact three-bullet Industrial Demo answers with branch choices", async () => {
+  it("requires compact three-bullet Lakeshore Holdings answers with branch choices", async () => {
     mockClaudeText(
       [
-        "For Industrial Demo:",
+        "For Lakeshore Holdings:",
         "- Finance and treasury modernization is the clearest value story, but value proof must stay evidence-backed.",
         "- SAP, data quality, payments, and controls are the operating dependencies leadership should inspect first.",
         "- AI should be framed around work redesign, not broad automation claims.",
@@ -543,7 +543,7 @@ describe("Home V6 executive synthesis", () => {
     });
 
     expect(result.trace.used).toBe(true);
-    expect(result.response.prose).toContain("For Industrial Demo:");
+    expect(result.response.prose).toContain("For Lakeshore Holdings:");
     expect(result.response.prose).toContain("Caveat:");
     expect(result.response.prose).toContain(
       "Tower for spend, value, decisions",
@@ -559,7 +559,7 @@ describe("Home V6 executive synthesis", () => {
     );
     expect(
       mockGetAuditedAnthropicClient.mock.calls.at(-1)?.[0].prompt,
-    ).toContain("Industrial Demo compact format is required.");
+    ).toContain("Lakeshore Holdings compact format is required.");
     expect(
       mockGetAuditedAnthropicClient.mock.calls.at(-1)?.[0].prompt,
     ).toContain("Target 120-170 words");
@@ -578,10 +578,10 @@ describe("Home V6 executive synthesis", () => {
   it("blocks Home from making final vendor renegotiation decisions", async () => {
     process.env.HOME_V6_EXECUTIVE_SYNTHESIS_REQUIRED = "1";
     mockClaudeText(
-      "For Industrial Demo:\n- The first contract to reopen is Microsoft.\n- The renewal risk is the highest commercial pressure point.\n- The next step is renegotiation.\n\nCaveat: Source can validate the supporting evidence later.",
+      "For Lakeshore Holdings:\n- The first contract to reopen is Microsoft.\n- The renewal risk is the highest commercial pressure point.\n- The next step is renegotiation.\n\nCaveat: Source can validate the supporting evidence later.",
     );
     const question =
-      "For Industrial Demo, which vendor contract should be renegotiated first?";
+      "For Lakeshore Holdings, which vendor contract should be renegotiated first?";
     const v6 = answerHomeKnowFromV6({
       tenantKey: "lakeshore",
       question,

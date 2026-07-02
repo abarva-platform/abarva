@@ -39,7 +39,7 @@ const INDUSTRIAL_QUESTIONS = {
     "Across HR, Legal, Treasury, Finance, and Shared Services, where should we prioritize AI investment in the next 90 days?",
     "Which back-office AI investment should the CIO fund first if the goal is visible value without increasing control risk?",
     "How should the Innovation Office sequence Treasury, Finance, HR, Legal, and Shared Services for a first wave of AI automation?",
-    "Where should Morgan Street place the next dollar of AI funding across Treasury, FP&A, close, HR service delivery, Legal intake, and shared services?",
+    "Where should Lakeshore Holdings place the next dollar of AI funding across Treasury, FP&A, close, HR service delivery, Legal intake, and shared services?",
     "What is the strongest lighthouse use case for the Industrial demo if the CIO wants proof fast but not a generic Copilot story?",
     "Which AI bets should be treated as enterprise transformation versus tactical automation?",
     "How should the CIO balance value, readiness, and proof quality across Treasury, Finance, HR, Legal, and Shared Services?",
@@ -64,7 +64,7 @@ const INDUSTRIAL_QUESTIONS = {
     "What decision rights should sit with the CIO versus CFO versus General Counsel for back-office AI?",
     "What must be true before an AI assistant can write, approve, or submit anything in finance, HR, or legal workflows?",
     "What are the minimum gates for moving from AI pilot to scaled operating model?",
-    "How should Morgan Street avoid funding AI pilots that never change the way shared services operates?",
+    "How should Lakeshore Holdings avoid funding AI pilots that never change the way shared services operates?",
     "What should be escalated to the CFO versus handled by the value office?",
   ],
   roadmap_execution: [
@@ -1137,13 +1137,13 @@ function chooseRecommendedDemoStoryline(results) {
       /irops|portfolio|loyalty|crew/i.test(result.question),
   );
   if (industrialPass && skyharborPass) {
-    return "Lead with Industrial/Morgan Street value-office prioritization, then show SkyHarbor airline AI portfolio as the cross-industry proof of the same decision engine.";
+    return "Lead with Lakeshore Holdings value-office prioritization, then show SkyHarbor airline AI portfolio as the cross-industry proof of the same decision engine.";
   }
   if (skyharborPass) {
     return "Lead with SkyHarbor airline AI portfolio: scale Loyalty, certify Crew/Predictive, and fund IROPS readiness before scale.";
   }
   if (industrialPass) {
-    return "Lead with Industrial/Morgan Street back-office AI: scale Treasury/Kyriba, certify Finance and Shared Services, and gate HR/Legal by proof quality.";
+    return "Lead with Lakeshore Holdings back-office AI: scale Treasury/Kyriba, certify Finance and Shared Services, and gate HR/Legal by proof quality.";
   }
   return "Do not select a live demo storyline from this run until failures are reviewed.";
 }

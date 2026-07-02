@@ -49,7 +49,7 @@ describe("canonicalClientDisplayName", () => {
       demoSafeClientText(
         "Lakeshore Enterprise Finance & Treasury Modernization",
       ),
-    ).toBe("Industrial Demo Enterprise Finance & Treasury Modernization");
+    ).toBe("Lakeshore Holdings Enterprise Finance & Treasury Modernization");
   });
 
   it("does not stack canonical tenant aliases into duplicated display names", () => {
@@ -58,13 +58,13 @@ describe("canonicalClientDisplayName", () => {
     );
     expect(
       demoSafeClientText("Lakeshore Holdings Holdings Intelligence advisor"),
-    ).toBe("Industrial Demo Intelligence advisor");
+    ).toBe("Lakeshore Holdings Intelligence advisor");
     expect(canonicalClientDisplayName({ name: "SkyHarbor Air Air" })).toBe(
       "Airline Demo",
     );
     expect(
       canonicalClientDisplayName({ name: "Lakeshore Holdings Holdings" }),
-    ).toBe("Industrial Demo");
+    ).toBe("Lakeshore Holdings");
     expect(
       demoSafeClientText("Apex Retail Group Retail Group Group advisor"),
     ).toBe("Retail Demo advisor");
@@ -82,7 +82,7 @@ describe("canonicalClientDisplayName", () => {
 
   it("uses generic demo names for all launch-demo tenants", () => {
     expect(getClientOption("skyharbor").name).toBe("Airline Demo");
-    expect(getClientOption("lakeshore").name).toBe("Industrial Demo");
+    expect(getClientOption("lakeshore").name).toBe("Lakeshore Holdings");
     expect(getClientOption("arcturus").name).toBe("Financial Services Demo");
     expect(canonicalClientDisplayName({ name: "First Capital Financial" })).toBe(
       "Financial Services Demo",

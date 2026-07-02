@@ -8,7 +8,7 @@ This supplemental pack makes the Lakeshore holding-company model explicit while 
 - Corporate Shared Services includes HR, legal, finance, treasury, investments, governance, and corporate business operations.
 - Corporate IT runs the systems that support Corporate Shared Services.
 - Corporate Innovation IT and Data AI is a subset of Corporate IT budget and leads cross-portfolio data and AI ideas.
-- Northline Logistics Group, Crestpoint Marketing Services, Riverton Consumer Products, and Arborfield Workplace Services each have local IT leadership, systems, processes, vendors, budgets, and programs.
+- Northline, Brightmark, Forge & Field, and Great Lakes Pantry each have local IT leadership, systems, processes, vendors, budgets, and programs.
 
 ## Budget rule
 

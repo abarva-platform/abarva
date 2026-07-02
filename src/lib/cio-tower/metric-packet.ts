@@ -61,17 +61,9 @@ const CIO_TOWER_TENANT_KEY_BY_ALIAS: Record<string, string> = {
   airlinedemo: 'skyharbor-air',
   'airline-demo': 'skyharbor-air',
   'skyharbor-air': 'skyharbor-air',
-  lakeshore: 'lakeshore-industries',
-  lakeshoreholdings: 'lakeshore-industries',
-  lakeshoreindustries: 'lakeshore-industries',
-  industrialdemo: 'lakeshore-industries',
-  'industrial-demo': 'lakeshore-industries',
-  manufacturingdemo: 'lakeshore-industries',
-  'manufacturing-demo': 'lakeshore-industries',
-  'lakeshore-holdings': 'lakeshore-industries',
-  'lakeshore-industries': 'lakeshore-industries',
-  morganstreet: 'lakeshore-industries',
-  'morgan-street': 'lakeshore-industries',
+  lakeshore: 'lakeshore-holdings',
+  lakeshoreholdings: 'lakeshore-holdings',
+  'lakeshore-holdings': 'lakeshore-holdings',
 };
 
 const CIO_TOWER_TENANT_DISPLAY_NAME_BY_KEY: Record<string, string> = {
@@ -79,7 +71,7 @@ const CIO_TOWER_TENANT_DISPLAY_NAME_BY_KEY: Record<string, string> = {
   'meridian-health': 'Meridian Health System',
   'first-capital-financial': 'First Capital Financial',
   'skyharbor-air': 'SkyHarbor Air',
-  'lakeshore-industries': 'Lakeshore Holdings',
+  'lakeshore-holdings': 'Lakeshore Holdings',
 };
 
 export function canonicalCioTowerTenantKey(value: string): string {

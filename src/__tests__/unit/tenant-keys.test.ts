@@ -12,6 +12,7 @@ describe("canonicalTenantKey", () => {
   // the migration/guard needs a matching update.
   it("exposes the documented tenant alias map", () => {
     expect(TENANT_KEY_ALIASES).toEqual({
+      "airline demo": "skyharbor-air",
       apex: "apex-retail",
       "apex retail": "apex-retail",
       "apex retail group": "apex-retail",
@@ -21,24 +22,19 @@ describe("canonicalTenantKey", () => {
       "first capital financial": "first-capital",
       "first-capital-financial": "first-capital",
       firstcapital: "first-capital",
+      "clinical technology demo": "northstar-clinical",
+      "financial services demo": "first-capital",
+      "healthcare demo": "meridian-health",
       heliara: "meridian-health",
       "heliara health": "meridian-health",
       lakeshore: "lakeshore-holdings",
       "lakeshore holdings": "lakeshore-holdings",
-      "lakeshore industries": "lakeshore-holdings",
-      "lakeshore-industries": "lakeshore-holdings",
-      "mona street": "lakeshore-holdings",
-      "mona-street": "lakeshore-holdings",
-      "morgan street": "lakeshore-holdings",
-      "morgan-street": "lakeshore-holdings",
-      "morgan-street-holdings": "lakeshore-holdings",
-      morganstreet: "lakeshore-holdings",
-      "morganstreet-other": "lakeshore-holdings",
       meridian: "meridian-health",
       "meridian health": "meridian-health",
       "meridian health system": "meridian-health",
       northstar: "northstar-clinical",
       "northstar clinical technologies": "northstar-clinical",
+      "retail demo": "apex-retail",
       skyharbor: "skyharbor-air",
       "skyharbor air": "skyharbor-air",
       "skyharbor airlines": "skyharbor-air",
@@ -52,8 +48,15 @@ describe("canonicalTenantKey", () => {
     expect(canonicalTenantKey("northstar-clinical")).toBe("northstar-clinical");
     expect(canonicalTenantKey("skyharbor")).toBe("skyharbor-air");
     expect(canonicalTenantKey("lakeshore")).toBe("lakeshore-holdings");
-    expect(canonicalTenantKey("morganstreet")).toBe("lakeshore-holdings");
-    expect(canonicalTenantKey("mona-street")).toBe("lakeshore-holdings");
+    expect(canonicalTenantKey("lakeshore holdings")).toBe("lakeshore-holdings");
+  });
+
+  it("does not silently normalize retired Lakeshore aliases", () => {
+    expect(canonicalTenantKey("lakeshore-industries")).toBe("lakeshore-industries");
+    expect(canonicalTenantKey("lakeshore industries")).toBe("lakeshore industries");
+    expect(canonicalTenantKey("morganstreet")).toBe("morganstreet");
+    expect(canonicalTenantKey("morgan-street")).toBe("morgan-street");
+    expect(canonicalTenantKey("mona-street")).toBe("mona-street");
   });
 
   it("is idempotent — canonical values pass through unchanged", () => {

@@ -78,15 +78,15 @@ describe("POST /api/source/synthesis", () => {
     );
   });
 
-  it("uses the active Industrial Demo V6 Source pack with loaded commercial facts", async () => {
+  it("uses the active Lakeshore Holdings V6 Source pack with loaded commercial facts", async () => {
     mockAnthropicStream.mockReturnValue(
       claudeTextStream("Industrial Source V6 answer."),
     );
     mockGetActiveClientRow.mockResolvedValue({
       id: "client-lakeshore",
-      name: "Industrial Demo",
+      name: "Lakeshore Holdings",
       industry_code: "industrial",
-      key: "lakeshore-industries",
+      key: "lakeshore-holdings",
     });
     const { POST } = await import("../route");
     const res = await POST(
@@ -102,7 +102,7 @@ describe("POST /api/source/synthesis", () => {
     await expect(res.text()).resolves.toBe("Industrial Source V6 answer.");
     const streamArgs = mockAnthropicStream.mock.calls[0]?.[0];
     expect(streamArgs.messages[0].content).toContain(
-      "Kyriba global cash and payments rollout vendor and commercial readiness",
+      "Corporate ERP and HCM controls modernization vendor and commercial readiness",
     );
     expect(streamArgs.messages[0].content).toContain(
       "vendor-commercial-packet",
@@ -112,9 +112,9 @@ describe("POST /api/source/synthesis", () => {
   it("blocks explicit Apex Source event access for a different active tenant", async () => {
     mockGetActiveClientRow.mockResolvedValue({
       id: "client-lakeshore",
-      name: "Industrial Demo",
+      name: "Lakeshore Holdings",
       industry_code: "industrial",
-      key: "lakeshore-industries",
+      key: "lakeshore-holdings",
     });
     const { POST } = await import("../route");
     const res = await POST(

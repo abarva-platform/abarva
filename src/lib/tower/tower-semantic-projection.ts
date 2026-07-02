@@ -412,7 +412,6 @@ export async function listProjectedTowerReadModelForClient(args: {
   const tenantAliases = [
     args.tenantKey,
     args.tenantKey?.replace(/-/g, ''),
-    args.tenantKey === 'lakeshore' ? 'lakeshore-industries' : null,
     args.tenantKey === 'lakeshore' ? 'lakeshore-holdings' : null,
   ].filter((value): value is string => Boolean(value));
 

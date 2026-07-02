@@ -63,12 +63,12 @@ describe('POST /api/programs/synthesis', () => {
     expect(mockAnthropicStream).not.toHaveBeenCalled();
   });
 
-  it('uses the active Industrial Demo V6 Moves pack instead of defaulting to the Apex CDP fixture', async () => {
+  it('uses the active Lakeshore Holdings V6 Moves pack instead of defaulting to the Apex CDP fixture', async () => {
     mockGetActiveClientRow.mockResolvedValue({
       id: 'client-lakeshore',
-      name: 'Industrial Demo',
+      name: 'Lakeshore Holdings',
       industry_code: 'industrial',
-      key: 'lakeshore-industries',
+      key: 'lakeshore-holdings',
     });
     const { POST } = await import('../route');
     const res = await POST(
@@ -84,7 +84,7 @@ describe('POST /api/programs/synthesis', () => {
     await expect(res.text()).resolves.toBe('Moves V6 answer.');
     expect(mockAnthropicStream).toHaveBeenCalledTimes(1);
     const streamArgs = mockAnthropicStream.mock.calls[0]?.[0];
-    expect(streamArgs.messages[0].content).toContain('Kyriba global cash and payments rollout');
+    expect(streamArgs.messages[0].content).toContain('Corporate ERP and HCM controls modernization');
     expect(streamArgs.messages[0].content).toContain('execution-sequence-packet');
     expect(streamArgs.messages[0].content).not.toContain('APX-CDP-2026');
   });
@@ -117,9 +117,9 @@ describe('POST /api/programs/synthesis', () => {
   it('blocks explicit Apex program access for a different active tenant', async () => {
     mockGetActiveClientRow.mockResolvedValue({
       id: 'client-lakeshore',
-      name: 'Industrial Demo',
+      name: 'Lakeshore Holdings',
       industry_code: 'industrial',
-      key: 'lakeshore-industries',
+      key: 'lakeshore-holdings',
     });
     const { POST } = await import('../route');
     const res = await POST(

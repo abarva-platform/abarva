@@ -2,19 +2,23 @@ import fs from "node:fs";
 import path from "node:path";
 
 const repoRoot = process.cwd();
-const tenantDir = path.join(repoRoot, "datasets/lakeshore-industries-synthetic-v6");
+const tenantDir = path.join(repoRoot, "datasets/lakeshore-holdings-synthetic-v6");
 const templateDir = path.join(tenantDir, "templates");
 const holdcoDir = path.join(tenantDir, "holdco_tower");
-const TENANT_KEY = "lakeshore-industries";
+const TENANT_KEY = "lakeshore-holdings";
 const CLIENT = "Lakeshore Holdings";
 const EXPECTED_DIRECT_IT_BUDGET = 190600000;
 const EXPECTED_ALLOCATION_VIEW = 36500000;
 const EXPECTED_INNOVATION_COMPONENT = 11800000;
+const EXPECTED_PORTFOLIO_REVENUE = 7120000000;
+const EXPECTED_NAMED_OPCO_REVENUE = 3560000000;
+const EXPECTED_OPCO_REVENUE_TO_ALLOCATE = 3560000000;
+const EXPECTED_EMPLOYEES = 11800;
 const PORTFOLIO_COMPANIES = [
-  "Northline Logistics Group",
-  "Crestpoint Marketing Services",
-  "Riverton Consumer Products",
-  "Arborfield Workplace Services",
+  "Northline",
+  "Brightmark",
+  "Forge & Field",
+  "Great Lakes Pantry",
 ];
 
 function parseCsv(text) {
@@ -105,7 +109,7 @@ function main() {
 
   const hierarchy = readCsv(path.join(holdcoDir, "H01_entity_hierarchy.csv"));
   const metricMap = readCsv(path.join(holdcoDir, "H02_dashboard_metric_map.csv"));
-  assert(hierarchy.length === 7, `expected 7 holdco entities, found ${hierarchy.length}`);
+  assert(hierarchy.length === 8, `expected 8 holdco entities, found ${hierarchy.length}`);
   assert(
     PORTFOLIO_COMPANIES.every((name) => hierarchy.some((row) => row.entity_name === name && row.entity_type === "portfolio_company")),
     "not every portfolio company is present in H01_entity_hierarchy.csv",
@@ -118,14 +122,24 @@ function main() {
     hierarchy.some((row) => row.entity_name === "Corporate Innovation IT and Data AI" && row.entity_type === "corporate_innovation_it"),
     "Corporate Innovation IT and Data AI entity is missing",
   );
+  const holdco = hierarchy.find((row) => row.entity_id === "LH-HOLDCO");
+  assert(Number(holdco?.revenue_usd) === 0, "Lakeshore Holdings must not carry direct operating revenue");
+  assert(Number(holdco?.employees) === EXPECTED_EMPLOYEES, "Lakeshore Holdings employee rollup is wrong");
+  const namedOpcoRevenue = hierarchy
+    .filter((row) => row.entity_type === "portfolio_company")
+    .reduce((total, row) => total + Number(row.revenue_usd || 0), 0);
+  assert(namedOpcoRevenue === EXPECTED_NAMED_OPCO_REVENUE, `named opco revenue should be ${EXPECTED_NAMED_OPCO_REVENUE}, found ${namedOpcoRevenue}`);
+  const allocationBucket = hierarchy.find((row) => row.entity_id === "LH-OPCO-ALLOC");
+  assert(Number(allocationBucket?.revenue_usd) === EXPECTED_OPCO_REVENUE_TO_ALLOCATE, "opco revenue allocation bucket is wrong");
+  assert(namedOpcoRevenue + Number(allocationBucket?.revenue_usd || 0) === EXPECTED_PORTFOLIO_REVENUE, "portfolio-company revenue rollup is wrong");
 
   const orgRows = readCsv(path.join(templateDir, "V6_03_org_ownership.csv"));
-  for (const role of ["Group CIO", "Northline CIO", "Crestpoint CIO", "Riverton CIO", "Arborfield IT Director", "VP Corporate Innovation IT and Data AI"]) {
+  for (const role of ["Group CIO", "Northline CIO", "Brightmark CIO", "Forge & Field CIO", "Great Lakes Pantry IT Director", "VP Corporate Innovation IT and Data AI"]) {
     assert(orgRows.some((row) => row.leader_role === role), `missing IT leadership role: ${role}`);
   }
 
   const systems = readCsv(path.join(templateDir, "V6_05_applications_systems.csv"));
-  for (const owner of ["Northline CIO", "Crestpoint CIO", "Riverton CIO", "Arborfield IT Director", "VP Corporate Platforms", "VP Corporate Innovation IT and Data AI"]) {
+  for (const owner of ["Northline CIO", "Brightmark CIO", "Forge & Field CIO", "Great Lakes Pantry IT Director", "VP Corporate Platforms", "VP Corporate Innovation IT and Data AI"]) {
     assert(systems.some((row) => row.system_owner === owner), `missing system ownership for ${owner}`);
   }
 
@@ -158,7 +172,7 @@ function main() {
 
   const programs = readCsv(path.join(templateDir, "V6_09_programs_initiatives.csv"));
   assert(programs.length >= 15, `expected at least 15 program rows, found ${programs.length}`);
-  for (const opco of ["Northline", "Crestpoint", "Riverton", "Arborfield"]) {
+  for (const opco of ["Northline", "Brightmark", "Forge & Field", "Great Lakes Pantry"]) {
     assert(programs.some((row) => row.record_name.includes(opco)), `missing program rows for ${opco}`);
   }
 

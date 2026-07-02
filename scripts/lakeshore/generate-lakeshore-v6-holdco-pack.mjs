@@ -2,11 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 
 const repoRoot = process.cwd();
-const tenantDir = path.join(repoRoot, "datasets/lakeshore-industries-synthetic-v6");
+const tenantDir = path.join(repoRoot, "datasets/lakeshore-holdings-synthetic-v6");
 const templateDir = path.join(tenantDir, "templates");
 const holdcoDir = path.join(tenantDir, "holdco_tower");
 
-const TENANT_KEY = "lakeshore-industries";
+const TENANT_KEY = "lakeshore-holdings";
 const CLIENT = "Lakeshore Holdings";
 const VERSION = "v6.0";
 const AS_OF = "2026-06-18";
@@ -75,11 +75,11 @@ const entities = [
     entity_type: "holding_company",
     parent_entity_id: "none",
     industry: "Diversified private holding company",
-    revenue_usd: 5400000000,
-    employees: 18400,
+    revenue_usd: 0,
+    employees: 11800,
     it_budget_usd: 190600000,
     cio_role: "Group CIO",
-    notes: "Enterprise rollup across four operating companies plus corporate shared services. Direct IT budget excludes internal allocation rows.",
+    notes: "Holdco direct revenue is zero for answer purposes; portfolio-company revenue rolls up to 7.12B. Direct IT budget excludes internal allocation rows.",
   },
   {
     entity_id: "LH-CORP",
@@ -88,7 +88,7 @@ const entities = [
     parent_entity_id: "LH-HOLDCO",
     industry: "Corporate center",
     revenue_usd: 0,
-    employees: 820,
+    employees: 610,
     it_budget_usd: 36500000,
     cio_role: "Group CIO",
     notes: "Runs HR, legal, finance, treasury, investments, governance, productivity, identity, integration, reporting, and enterprise platforms.",
@@ -107,51 +107,63 @@ const entities = [
   },
   {
     entity_id: "LH-NORTHLINE",
-    entity_name: "Northline Logistics Group",
+    entity_name: "Northline",
     entity_type: "portfolio_company",
     parent_entity_id: "LH-HOLDCO",
     industry: "Logistics and warehouse operations",
-    revenue_usd: 1550000000,
-    employees: 5200,
+    revenue_usd: 1500000000,
+    employees: 6000,
     it_budget_usd: 42600000,
     cio_role: "Northline CIO",
     notes: "Local IT owns warehouse, transportation, telematics, labor, and logistics data platforms while consuming corporate shared services.",
   },
   {
-    entity_id: "LH-CRESTPOINT",
-    entity_name: "Crestpoint Marketing Services",
+    entity_id: "LH-BRIGHTMARK",
+    entity_name: "Brightmark",
     entity_type: "portfolio_company",
     parent_entity_id: "LH-HOLDCO",
     industry: "Marketing services",
-    revenue_usd: 1050000000,
-    employees: 3300,
+    revenue_usd: 720000000,
+    employees: 2450,
     it_budget_usd: 33600000,
-    cio_role: "Crestpoint CIO",
+    cio_role: "Brightmark CIO",
     notes: "Local IT owns CRM, campaign operations, project margin, resource planning, creative operations, and customer analytics.",
   },
   {
-    entity_id: "LH-RIVERTON",
-    entity_name: "Riverton Consumer Products",
+    entity_id: "LH-FORGEFIELD",
+    entity_name: "Forge & Field",
     entity_type: "portfolio_company",
     parent_entity_id: "LH-HOLDCO",
     industry: "Consumer products and direct-to-consumer commerce",
-    revenue_usd: 1400000000,
-    employees: 4600,
+    revenue_usd: 800000000,
+    employees: 1530,
     it_budget_usd: 45500000,
-    cio_role: "Riverton CIO",
+    cio_role: "Forge & Field CIO",
     notes: "Local IT owns ERP, demand planning, commerce, customer data, manufacturing planning, and supply-chain analytics.",
   },
   {
-    entity_id: "LH-ARBORFIELD",
-    entity_name: "Arborfield Workplace Services",
+    entity_id: "LH-GLPANTRY",
+    entity_name: "Great Lakes Pantry",
     entity_type: "portfolio_company",
     parent_entity_id: "LH-HOLDCO",
     industry: "Workplace services",
-    revenue_usd: 920000000,
-    employees: 2900,
+    revenue_usd: 540000000,
+    employees: 1210,
     it_budget_usd: 32400000,
-    cio_role: "Arborfield IT Director",
+    cio_role: "Great Lakes Pantry IT Director",
     notes: "Local IT owns field service, workforce scheduling, billing, customer support, asset data, and service quality reporting.",
+  },
+  {
+    entity_id: "LH-OPCO-ALLOC",
+    entity_name: "Operating-company revenue allocation bucket",
+    entity_type: "portfolio_company_revenue_bucket",
+    parent_entity_id: "LH-HOLDCO",
+    industry: "Operating-company allocation required",
+    revenue_usd: 3560000000,
+    employees: 0,
+    it_budget_usd: 0,
+    cio_role: "Group CFO",
+    notes: "This is not holding-company revenue. It is the remaining operating-company revenue bucket that must be spread to named or additional operating companies before board-grade opco reporting.",
   },
 ];
 
@@ -171,12 +183,12 @@ const functions = [
   ["LH-FN-INNOV", "Corporate Innovation IT and Data AI", "VP Corporate Innovation IT and Data AI", "innovation_it", "experiment-to-scale rate|data product reuse|AI governance coverage", "AI opportunity discovery|data product factory|model risk intake"],
   ["LH-FN-NORTHLINE-OPS", "Northline Logistics Operations", "Northline COO", "portfolio_company", "on-time dispatch|warehouse throughput|labor utilization", "warehouse execution|transportation planning|telematics operations"],
   ["LH-FN-NORTHLINE-IT", "Northline Local IT", "Northline CIO", "portfolio_company_it", "WMS availability|TMS integration freshness|local ticket SLA", "local applications|local data products|opco IT operations"],
-  ["LH-FN-CRESTPOINT-OPS", "Crestpoint Client Delivery", "Crestpoint COO", "portfolio_company", "project margin|resource utilization|campaign cycle time", "client delivery|resource planning|campaign operations"],
-  ["LH-FN-CRESTPOINT-IT", "Crestpoint Local IT", "Crestpoint CIO", "portfolio_company_it", "CRM quality|creative workflow uptime|analytics freshness", "local applications|local data products|opco IT operations"],
-  ["LH-FN-RIVERTON-OPS", "Riverton Commercial and Supply Chain", "Riverton COO", "portfolio_company", "fill rate|forecast accuracy|DTC conversion", "demand planning|DTC commerce|supply planning"],
-  ["LH-FN-RIVERTON-IT", "Riverton Local IT", "Riverton CIO", "portfolio_company_it", "ERP uptime|commerce incident rate|planning data quality", "local applications|local data products|opco IT operations"],
-  ["LH-FN-ARBORFIELD-OPS", "Arborfield Service Operations", "Arborfield COO", "portfolio_company", "technician productivity|first-time fix|billing leakage", "field service|workforce scheduling|billing operations"],
-  ["LH-FN-ARBORFIELD-IT", "Arborfield Local IT", "Arborfield IT Director", "portfolio_company_it", "FSM uptime|billing data quality|service desk SLA", "local applications|local data products|opco IT operations"],
+  ["LH-FN-CRESTPOINT-OPS", "Brightmark Client Delivery", "Brightmark COO", "portfolio_company", "project margin|resource utilization|campaign cycle time", "client delivery|resource planning|campaign operations"],
+  ["LH-FN-CRESTPOINT-IT", "Brightmark Local IT", "Brightmark CIO", "portfolio_company_it", "CRM quality|creative workflow uptime|analytics freshness", "local applications|local data products|opco IT operations"],
+  ["LH-FN-RIVERTON-OPS", "Forge & Field Commercial and Supply Chain", "Forge & Field COO", "portfolio_company", "fill rate|forecast accuracy|DTC conversion", "demand planning|DTC commerce|supply planning"],
+  ["LH-FN-RIVERTON-IT", "Forge & Field Local IT", "Forge & Field CIO", "portfolio_company_it", "ERP uptime|commerce incident rate|planning data quality", "local applications|local data products|opco IT operations"],
+  ["LH-FN-ARBORFIELD-OPS", "Great Lakes Pantry Service Operations", "Great Lakes Pantry COO", "portfolio_company", "technician productivity|first-time fix|billing leakage", "field service|workforce scheduling|billing operations"],
+  ["LH-FN-ARBORFIELD-IT", "Great Lakes Pantry Local IT", "Great Lakes Pantry IT Director", "portfolio_company_it", "FSM uptime|billing data quality|service desk SLA", "local applications|local data products|opco IT operations"],
 ];
 
 const systems = [
@@ -195,15 +207,15 @@ const systems = [
   ["LH-SYS-NORTH-WMS", "Northline Warehouse WMS", "Warehouse execution", "Northline CIO", "high", "modernizing", "LH-VDR-MANHATTAN", 6100000, "Northline TMS;Azure Data Lakehouse", "orders;inventory;pick labor", "high"],
   ["LH-SYS-NORTH-TMS", "Northline TMS", "Transportation planning and dispatch", "Northline CIO", "high", "scale", "LH-VDR-BLUEYONDER", 4800000, "Northline WMS;telematics;Power BI", "loads;routes;carrier performance", "high"],
   ["LH-SYS-NORTH-TELE", "Northline Fleet Telematics", "Fleet telemetry and safety", "Northline CIO", "medium", "scale", "LH-VDR-GEOTAB", 1500000, "Northline TMS;Azure Data Lakehouse", "vehicle telemetry;driver events", "medium"],
-  ["LH-SYS-CREST-CRM", "Crestpoint Salesforce CRM", "Client pipeline and account operations", "Crestpoint CIO", "high", "scale", "LH-VDR-SALESFORCE", 4700000, "Crestpoint PSA;Marketing Automation", "accounts;opportunities;client health", "high"],
-  ["LH-SYS-CREST-PSA", "Crestpoint Professional Services Automation", "Project margin and resource planning", "Crestpoint CIO", "high", "modernizing", "LH-VDR-KANTATA", 3300000, "Salesforce CRM;Workday;Power BI", "projects;time;margin;resource plan", "high"],
-  ["LH-SYS-CREST-MKT", "Crestpoint Marketing Automation", "Campaign orchestration", "Crestpoint CIO", "medium", "scale", "LH-VDR-ADOBE", 2600000, "Salesforce CRM;Data Lakehouse", "campaigns;leads;content performance", "medium"],
-  ["LH-SYS-RIV-ERP", "Riverton SAP S/4", "Consumer products ERP and planning", "Riverton CIO", "high", "modernizing", "LH-VDR-SAP", 8700000, "Demand Planning;DTC Commerce;Azure Data Lakehouse", "orders;inventory;costs;production plan", "high"],
-  ["LH-SYS-RIV-DTC", "Riverton DTC Commerce", "Direct-to-consumer storefront and order capture", "Riverton CIO", "high", "scale", "LH-VDR-SHOPIFY", 4100000, "SAP S/4;Customer Data Platform", "orders;customer behavior;conversion", "high"],
-  ["LH-SYS-RIV-DEMAND", "Riverton Demand Planning", "Forecasting and supply planning", "Riverton CIO", "high", "build", "LH-VDR-BLUEYONDER", 3600000, "SAP S/4;DTC Commerce;Azure Data Lakehouse", "forecast;inventory;replenishment", "high"],
-  ["LH-SYS-ARB-FSM", "Arborfield Field Service", "Technician dispatch and service execution", "Arborfield IT Director", "high", "modernizing", "LH-VDR-SERVICEMAX", 3900000, "Scheduling;Billing;Power BI", "work orders;technician status;parts usage", "high"],
-  ["LH-SYS-ARB-SCHED", "Arborfield Workforce Scheduling", "Technician and field workforce planning", "Arborfield IT Director", "medium", "scale", "LH-VDR-UKG", 2200000, "Field Service;Workday", "schedules;availability;overtime", "medium"],
-  ["LH-SYS-ARB-BILL", "Arborfield Billing Platform", "Billing leakage and revenue operations", "Arborfield IT Director", "high", "modernizing", "LH-VDR-ZUORA", 2500000, "Field Service;Oracle Fusion ERP", "invoices;usage;credits;collections", "high"],
+  ["LH-SYS-CREST-CRM", "Brightmark Salesforce CRM", "Client pipeline and account operations", "Brightmark CIO", "high", "scale", "LH-VDR-SALESFORCE", 4700000, "Brightmark PSA;Marketing Automation", "accounts;opportunities;client health", "high"],
+  ["LH-SYS-CREST-PSA", "Brightmark Professional Services Automation", "Project margin and resource planning", "Brightmark CIO", "high", "modernizing", "LH-VDR-KANTATA", 3300000, "Salesforce CRM;Workday;Power BI", "projects;time;margin;resource plan", "high"],
+  ["LH-SYS-CREST-MKT", "Brightmark Marketing Automation", "Campaign orchestration", "Brightmark CIO", "medium", "scale", "LH-VDR-ADOBE", 2600000, "Salesforce CRM;Data Lakehouse", "campaigns;leads;content performance", "medium"],
+  ["LH-SYS-RIV-ERP", "Forge & Field SAP S/4", "Consumer products ERP and planning", "Forge & Field CIO", "high", "modernizing", "LH-VDR-SAP", 8700000, "Demand Planning;DTC Commerce;Azure Data Lakehouse", "orders;inventory;costs;production plan", "high"],
+  ["LH-SYS-RIV-DTC", "Forge & Field DTC Commerce", "Direct-to-consumer storefront and order capture", "Forge & Field CIO", "high", "scale", "LH-VDR-SHOPIFY", 4100000, "SAP S/4;Customer Data Platform", "orders;customer behavior;conversion", "high"],
+  ["LH-SYS-RIV-DEMAND", "Forge & Field Demand Planning", "Forecasting and supply planning", "Forge & Field CIO", "high", "build", "LH-VDR-BLUEYONDER", 3600000, "SAP S/4;DTC Commerce;Azure Data Lakehouse", "forecast;inventory;replenishment", "high"],
+  ["LH-SYS-ARB-FSM", "Great Lakes Pantry Field Service", "Technician dispatch and service execution", "Great Lakes Pantry IT Director", "high", "modernizing", "LH-VDR-SERVICEMAX", 3900000, "Scheduling;Billing;Power BI", "work orders;technician status;parts usage", "high"],
+  ["LH-SYS-ARB-SCHED", "Great Lakes Pantry Workforce Scheduling", "Technician and field workforce planning", "Great Lakes Pantry IT Director", "medium", "scale", "LH-VDR-UKG", 2200000, "Field Service;Workday", "schedules;availability;overtime", "medium"],
+  ["LH-SYS-ARB-BILL", "Great Lakes Pantry Billing Platform", "Billing leakage and revenue operations", "Great Lakes Pantry IT Director", "high", "modernizing", "LH-VDR-ZUORA", 2500000, "Field Service;Oracle Fusion ERP", "invoices;usage;credits;collections", "high"],
 ];
 
 const vendors = [
@@ -215,25 +227,25 @@ const vendors = [
   ["LH-VDR-MICROSOFT", "Microsoft", "LH-CTR-MSFT-001", "Cloud, identity, productivity, and AI", 17200000, "2027-06-30", "Corporate IT", "LH-SYS-M365|LH-SYS-ENTRA|LH-SYS-AZURE-LAKE", "high", "enterprise agreement and consumption"],
   ["LH-VDR-SERVICENOW", "ServiceNow", "LH-CTR-SNOW-001", "ITSM and AI governance workflow", 4950000, "2026-11-30", "Corporate IT", "LH-SYS-SNOW|LH-SYS-AI-GOV", "medium", "subscription plus workflow automation"],
   ["LH-VDR-DATABRICKS", "Databricks", "LH-CTR-DBX-001", "AI and analytics workspace", 1800000, "2027-01-31", "Innovation IT", "LH-SYS-DATABRICKS", "medium", "consumption"],
-  ["LH-VDR-SALESFORCE", "Salesforce", "LH-CTR-SFDC-001", "CRM and integration platform", 7200000, "2026-10-31", "Crestpoint and Corporate IT", "LH-SYS-CREST-CRM|LH-SYS-MULESOFT", "medium", "subscription plus integration"],
+  ["LH-VDR-SALESFORCE", "Salesforce", "LH-CTR-SFDC-001", "CRM and integration platform", 7200000, "2026-10-31", "Brightmark and Corporate IT", "LH-SYS-CREST-CRM|LH-SYS-MULESOFT", "medium", "subscription plus integration"],
   ["LH-VDR-MANHATTAN", "Manhattan Associates", "LH-CTR-MANH-001", "Warehouse execution", 6100000, "2027-03-31", "Northline IT", "LH-SYS-NORTH-WMS", "medium", "subscription plus support"],
-  ["LH-VDR-BLUEYONDER", "Blue Yonder", "LH-CTR-BY-001", "Transportation and demand planning", 8400000, "2026-09-30", "Northline and Riverton IT", "LH-SYS-NORTH-TMS|LH-SYS-RIV-DEMAND", "high", "subscription plus optimization"],
+  ["LH-VDR-BLUEYONDER", "Blue Yonder", "LH-CTR-BY-001", "Transportation and demand planning", 8400000, "2026-09-30", "Northline and Forge & Field IT", "LH-SYS-NORTH-TMS|LH-SYS-RIV-DEMAND", "high", "subscription plus optimization"],
   ["LH-VDR-GEOTAB", "Geotab", "LH-CTR-GEOTAB-001", "Fleet telematics", 1500000, "2027-02-28", "Northline IT", "LH-SYS-NORTH-TELE", "medium", "subscription by vehicle"],
-  ["LH-VDR-KANTATA", "Kantata", "LH-CTR-KANTATA-001", "Professional services automation", 3300000, "2026-12-31", "Crestpoint IT", "LH-SYS-CREST-PSA", "medium", "subscription"],
-  ["LH-VDR-ADOBE", "Adobe", "LH-CTR-ADOBE-001", "Marketing automation and creative workflow", 2600000, "2027-01-31", "Crestpoint IT", "LH-SYS-CREST-MKT", "medium", "subscription"],
-  ["LH-VDR-SAP", "SAP", "LH-CTR-SAP-001", "ERP platform for Riverton", 8700000, "2027-05-31", "Riverton IT", "LH-SYS-RIV-ERP", "medium", "subscription and managed support"],
-  ["LH-VDR-SHOPIFY", "Shopify", "LH-CTR-SHOP-001", "DTC commerce platform", 4100000, "2027-02-28", "Riverton IT", "LH-SYS-RIV-DTC", "medium", "subscription plus transaction fees"],
-  ["LH-VDR-SERVICEMAX", "ServiceMax", "LH-CTR-SMAX-001", "Field service management", 3900000, "2026-08-31", "Arborfield IT", "LH-SYS-ARB-FSM", "high", "subscription plus mobile platform"],
-  ["LH-VDR-UKG", "UKG", "LH-CTR-UKG-001", "Workforce scheduling", 2200000, "2027-03-31", "Arborfield IT", "LH-SYS-ARB-SCHED", "low", "subscription by worker"],
-  ["LH-VDR-ZUORA", "Zuora", "LH-CTR-ZUORA-001", "Billing platform", 2500000, "2026-10-31", "Arborfield IT", "LH-SYS-ARB-BILL", "medium", "subscription plus transaction volume"],
+  ["LH-VDR-KANTATA", "Kantata", "LH-CTR-KANTATA-001", "Professional services automation", 3300000, "2026-12-31", "Brightmark IT", "LH-SYS-CREST-PSA", "medium", "subscription"],
+  ["LH-VDR-ADOBE", "Adobe", "LH-CTR-ADOBE-001", "Marketing automation and creative workflow", 2600000, "2027-01-31", "Brightmark IT", "LH-SYS-CREST-MKT", "medium", "subscription"],
+  ["LH-VDR-SAP", "SAP", "LH-CTR-SAP-001", "ERP platform for Forge & Field", 8700000, "2027-05-31", "Forge & Field IT", "LH-SYS-RIV-ERP", "medium", "subscription and managed support"],
+  ["LH-VDR-SHOPIFY", "Shopify", "LH-CTR-SHOP-001", "DTC commerce platform", 4100000, "2027-02-28", "Forge & Field IT", "LH-SYS-RIV-DTC", "medium", "subscription plus transaction fees"],
+  ["LH-VDR-SERVICEMAX", "ServiceMax", "LH-CTR-SMAX-001", "Field service management", 3900000, "2026-08-31", "Great Lakes Pantry IT", "LH-SYS-ARB-FSM", "high", "subscription plus mobile platform"],
+  ["LH-VDR-UKG", "UKG", "LH-CTR-UKG-001", "Workforce scheduling", 2200000, "2027-03-31", "Great Lakes Pantry IT", "LH-SYS-ARB-SCHED", "low", "subscription by worker"],
+  ["LH-VDR-ZUORA", "Zuora", "LH-CTR-ZUORA-001", "Billing platform", 2500000, "2026-10-31", "Great Lakes Pantry IT", "LH-SYS-ARB-BILL", "medium", "subscription plus transaction volume"],
 ];
 
 const budgetByEntity = [
   ["LH-CORP", "Corporate Shared Services IT", 36500000, 23600000, 12900000, "Corporate IT budget supporting HR, legal, finance, treasury, investments, productivity, identity, integration, and shared data platforms."],
-  ["LH-NORTHLINE", "Northline Logistics Group IT", 42600000, 27000000, 15600000, "Local IT budget for warehouse, transportation, telematics, labor, and logistics analytics."],
-  ["LH-CRESTPOINT", "Crestpoint Marketing Services IT", 33600000, 20400000, 13200000, "Local IT budget for CRM, project delivery, creative operations, marketing automation, and analytics."],
-  ["LH-RIVERTON", "Riverton Consumer Products IT", 45500000, 27800000, 17700000, "Local IT budget for ERP, commerce, demand planning, manufacturing planning, and supply chain analytics."],
-  ["LH-ARBORFIELD", "Arborfield Workplace Services IT", 32400000, 19400000, 13000000, "Local IT budget for field service, workforce scheduling, billing, and service quality analytics."],
+  ["LH-NORTHLINE", "Northline IT", 42600000, 27000000, 15600000, "Local IT budget for warehouse, transportation, telematics, labor, and logistics analytics."],
+  ["LH-CRESTPOINT", "Brightmark IT", 33600000, 20400000, 13200000, "Local IT budget for CRM, project delivery, creative operations, marketing automation, and analytics."],
+  ["LH-RIVERTON", "Forge & Field IT", 45500000, 27800000, 17700000, "Local IT budget for ERP, commerce, demand planning, manufacturing planning, and supply chain analytics."],
+  ["LH-ARBORFIELD", "Great Lakes Pantry IT", 32400000, 19400000, 13000000, "Local IT budget for field service, workforce scheduling, billing, and service quality analytics."],
 ];
 
 const programs = [
@@ -244,12 +256,12 @@ const programs = [
   ["LH-PGM-AI-GOV", "AI governance and opportunity intake", "Group CIO", "VP Corporate Innovation IT and Data AI", "Group CIO", "build", 2800000, 900000, 4000000, 200000, "faster AI intake with model risk controls", "on_track", "2026-10-31", "AI Governance Registry;ServiceNow;Databricks", "Measured value is early", "Scale intake workflow before model experimentation expands"],
   ["LH-PGM-NORTH-WARE", "Northline warehouse automation analytics", "Northline COO", "Northline CIO", "Northline CEO", "scale", 8600000, 3100000, 13000000, 2500000, "labor productivity and throughput improvement", "on_track", "2027-01-31", "Northline WMS;Azure Data Lakehouse", "Labor standard baselines need validation", "Scale in two largest distribution centers"],
   ["LH-PGM-NORTH-TMS", "Northline transport visibility cockpit", "Northline COO", "Northline CIO", "Northline CEO", "build", 6400000, 2200000, 8000000, 1100000, "route exception reduction and carrier performance", "watch", "2026-12-15", "Northline TMS;Fleet Telematics", "Carrier data quality is inconsistent", "Fix carrier feed quality before expanding AI dispatch"],
-  ["LH-PGM-CREST-MARGIN", "Crestpoint project margin cockpit", "Crestpoint CFO", "Crestpoint CIO", "Crestpoint CEO", "pilot", 5800000, 1900000, 7000000, 900000, "project margin visibility and writeoff reduction", "watch", "2027-02-28", "Crestpoint PSA;Salesforce CRM", "Timesheet compliance is not uniform", "Continue pilot with resource governance"],
-  ["LH-PGM-CREST-GENAI", "Crestpoint proposal and creative GenAI assistant", "Crestpoint COO", "Crestpoint CIO", "Crestpoint CEO", "pilot", 3200000, 1000000, 5000000, 400000, "proposal cycle-time reduction and content reuse", "watch", "2026-11-30", "Microsoft 365 Copilot;Salesforce CRM;Adobe", "Content approval and brand-risk controls pending", "Hold scale until approval workflow evidence is loaded"],
-  ["LH-PGM-RIV-DEMAND", "Riverton DTC demand sensing", "Riverton COO", "Riverton CIO", "Riverton CEO", "build", 7200000, 2600000, 11000000, 1200000, "forecast accuracy and stockout reduction", "watch", "2027-01-31", "Riverton Demand Planning;DTC Commerce;SAP S/4", "SKU-location quality is uneven", "Gate scale on forecast-error baseline"],
-  ["LH-PGM-RIV-SUPPLY", "Riverton supply planning modernization", "Riverton COO", "Riverton CIO", "Riverton CEO", "build", 6800000, 2000000, 9000000, 800000, "planning cycle-time and inventory control", "watch", "2027-03-31", "SAP S/4;Demand Planning", "Master-data ownership is fragmented", "Resolve master-data ownership before heavy automation"],
-  ["LH-PGM-ARB-TECH", "Arborfield technician productivity", "Arborfield COO", "Arborfield IT Director", "Arborfield CEO", "scale", 4900000, 1600000, 6000000, 600000, "first-time fix and route productivity", "on_track", "2026-12-31", "Arborfield Field Service;Workforce Scheduling", "Parts availability data is incomplete", "Scale with parts-data remediation"],
-  ["LH-PGM-ARB-BILL", "Arborfield billing leakage controls", "Arborfield CFO", "Arborfield IT Director", "Arborfield CEO", "pilot", 3700000, 1200000, 5500000, 700000, "billing leakage reduction and faster collections", "on_track", "2026-10-31", "Billing Platform;Oracle Fusion ERP", "Credit memo root-cause coding is thin", "Continue pilot and standardize leakage reason codes"],
+  ["LH-PGM-CREST-MARGIN", "Brightmark project margin cockpit", "Brightmark CFO", "Brightmark CIO", "Brightmark CEO", "pilot", 5800000, 1900000, 7000000, 900000, "project margin visibility and writeoff reduction", "watch", "2027-02-28", "Brightmark PSA;Salesforce CRM", "Timesheet compliance is not uniform", "Continue pilot with resource governance"],
+  ["LH-PGM-CREST-GENAI", "Brightmark proposal and creative GenAI assistant", "Brightmark COO", "Brightmark CIO", "Brightmark CEO", "pilot", 3200000, 1000000, 5000000, 400000, "proposal cycle-time reduction and content reuse", "watch", "2026-11-30", "Microsoft 365 Copilot;Salesforce CRM;Adobe", "Content approval and brand-risk controls pending", "Hold scale until approval workflow evidence is loaded"],
+  ["LH-PGM-RIV-DEMAND", "Forge & Field DTC demand sensing", "Forge & Field COO", "Forge & Field CIO", "Forge & Field CEO", "build", 7200000, 2600000, 11000000, 1200000, "forecast accuracy and stockout reduction", "watch", "2027-01-31", "Forge & Field Demand Planning;DTC Commerce;SAP S/4", "SKU-location quality is uneven", "Gate scale on forecast-error baseline"],
+  ["LH-PGM-RIV-SUPPLY", "Forge & Field supply planning modernization", "Forge & Field COO", "Forge & Field CIO", "Forge & Field CEO", "build", 6800000, 2000000, 9000000, 800000, "planning cycle-time and inventory control", "watch", "2027-03-31", "SAP S/4;Demand Planning", "Master-data ownership is fragmented", "Resolve master-data ownership before heavy automation"],
+  ["LH-PGM-ARB-TECH", "Great Lakes Pantry technician productivity", "Great Lakes Pantry COO", "Great Lakes Pantry IT Director", "Great Lakes Pantry CEO", "scale", 4900000, 1600000, 6000000, 600000, "first-time fix and route productivity", "on_track", "2026-12-31", "Great Lakes Pantry Field Service;Workforce Scheduling", "Parts availability data is incomplete", "Scale with parts-data remediation"],
+  ["LH-PGM-ARB-BILL", "Great Lakes Pantry billing leakage controls", "Great Lakes Pantry CFO", "Great Lakes Pantry IT Director", "Great Lakes Pantry CEO", "pilot", 3700000, 1200000, 5500000, 700000, "billing leakage reduction and faster collections", "on_track", "2026-10-31", "Billing Platform;Oracle Fusion ERP", "Credit memo root-cause coding is thin", "Continue pilot and standardize leakage reason codes"],
   ["LH-PGM-ZT", "Enterprise zero-trust access cleanup", "CISO", "VP Corporate Platforms", "Group CIO", "build", 6000000, 2400000, 0, 0, "risk reduction and privileged-access control", "watch", "2026-12-31", "Entra ID;ServiceNow;opco apps", "Risk avoided is not a measured value claim", "Treat as risk program, not ROI program"],
   ["LH-PGM-ITSM", "ServiceNow ITSM standardization", "Group CIO", "VP Corporate Platforms", "Group CIO", "build", 5200000, 1800000, 6200000, 500000, "ticket SLA, change quality, and CMDB completeness", "watch", "2027-01-31", "ServiceNow ITSM;opco service desks", "Opco service catalogs are inconsistent", "Standardize service taxonomy before enterprise reporting"],
 ];
@@ -258,9 +270,9 @@ const aiInitiatives = [
   ["LH-AI-001", "Portfolio KPI narrative assistant", "board reporting", "Claude via governed dossier", "Board packet narrative copilot", "Corporate investments team", 45, 18, "40% recurring monthly use", "reduce board-pack preparation time and improve consistency", 350000, "pilot", "medium", "tier_2", "medium", "continue", "scale_with_guardrails"],
   ["LH-AI-002", "Treasury cash anomaly monitor", "treasury operations", "Azure ML and rules engine", "Cash anomaly agent", "Treasury analysts", 16, 9, "weekly exception triage", "catch duplicate or late payment anomalies", 120000, "pilot", "medium", "tier_2", "high", "continue", "scale_after_bank_feed_cleanup"],
   ["LH-AI-003", "Northline dispatch exception assistant", "transportation dispatch", "LLM plus TMS context", "Dispatch exception advisor", "dispatch supervisors", 80, 24, "daily use in two regions", "reduce manual triage and delay escalations", 420000, "pilot", "medium", "tier_2", "medium", "need carrier feed controls", "hold_until_feed_quality"],
-  ["LH-AI-004", "Crestpoint proposal drafting assistant", "proposal operations", "Microsoft 365 Copilot", "Proposal copilot", "sales and creative teams", 220, 76, "35% active weekly", "shorten proposal cycle time", 400000, "pilot", "medium", "tier_1", "medium", "need brand approval workflow", "hold"],
-  ["LH-AI-005", "Riverton demand sensing pilot", "demand planning", "forecast model and feature store", "Demand sensing model", "planning team", 35, 12, "weekly planner review", "improve forecast accuracy", 650000, "pilot", "high", "tier_2", "medium", "need SKU-location quality baseline", "hold_until_data_quality"],
-  ["LH-AI-006", "Arborfield technician next-best-action", "field service", "rules plus service history model", "Technician assist", "field supervisors", 60, 20, "limited pilot", "increase first-time fix", 250000, "pilot", "medium", "tier_2", "medium", "parts data incomplete", "continue_small_pilot"],
+  ["LH-AI-004", "Brightmark proposal drafting assistant", "proposal operations", "Microsoft 365 Copilot", "Proposal copilot", "sales and creative teams", 220, 76, "35% active weekly", "shorten proposal cycle time", 400000, "pilot", "medium", "tier_1", "medium", "need brand approval workflow", "hold"],
+  ["LH-AI-005", "Forge & Field demand sensing pilot", "demand planning", "forecast model and feature store", "Demand sensing model", "planning team", 35, 12, "weekly planner review", "improve forecast accuracy", 650000, "pilot", "high", "tier_2", "medium", "need SKU-location quality baseline", "hold_until_data_quality"],
+  ["LH-AI-006", "Great Lakes Pantry technician next-best-action", "field service", "rules plus service history model", "Technician assist", "field supervisors", 60, 20, "limited pilot", "increase first-time fix", 250000, "pilot", "medium", "tier_2", "medium", "parts data incomplete", "continue_small_pilot"],
   ["LH-AI-007", "Service desk ticket summarization", "ITSM", "ServiceNow AI", "Ticket summary assistant", "IT support agents", 120, 64, "53% active weekly", "reduce handle time and improve knowledge capture", 280000, "production", "low", "tier_1", "high", "expand with quality monitoring", "scale"],
   ["LH-AI-008", "Contract renewal risk summarizer", "legal operations", "LLM over CLM obligations", "Renewal risk assistant", "legal and procurement", 28, 8, "early pilot", "surface renewal obligations and risk", 70000, "pilot", "medium", "tier_2", "low", "legacy contracts not migrated", "hold"],
 ];
@@ -272,10 +284,11 @@ function makeProfileRows() {
       company_name: CLIENT,
       industry: "Diversified private holding company",
       sub_industry: "portfolio-company operator with corporate shared services",
-      revenue_usd: 5400000000,
-      employee_count: 18400,
-      business_model: "Holding company with four operating companies plus corporate shared services. Corporate IT supports shared services and enterprise platforms; each portfolio company has its own local IT leadership and systems.",
-      strategic_priorities: `enterprise_total_revenue_usd:5400000000|direct_it_budget_usd:${directItBudget}|corporate_it_budget_usd:36500000|innovation_it_subset_usd:${innovationBudget}|portfolio_companies:4|do_not_add_allocated_shared_service_rows_to_enterprise_total`,
+      revenue_usd: 0,
+      employee_count: 11800,
+      known_gaps: "direct holding-company revenue is not a valid claim; revenue is held at operating-company rollup level",
+      business_model: "Holding company with four named operating companies plus an operating-company revenue allocation bucket. Corporate IT carries its own budget and supports shared services and enterprise platforms; each operating company carries its own local IT and operating budget.",
+      strategic_priorities: `portfolio_company_revenue_rollup_usd:7120000000|named_operating_company_revenue_usd:3560000000|opco_revenue_to_allocate_usd:3560000000|direct_holdco_revenue_usd:0|total_employees:11800|direct_it_budget_usd:${directItBudget}|corporate_it_budget_usd:36500000|portfolio_company_local_it_budget_usd:154100000|innovation_it_subset_usd:${innovationBudget}|do_not_add_allocated_shared_service_rows_to_enterprise_total`,
     },
   ];
 }
@@ -299,9 +312,9 @@ function makeOrgRows() {
     ["LH-ORG-INNOV", "Corporate Innovation IT and Data AI", "VP Corporate Innovation IT and Data AI", "Group CIO", "Leads shared data products, AI opportunity discovery, model-risk intake, reusable automation patterns, and cross-opco analytics.", "Azure Data Lakehouse|Databricks Innovation Workspace|AI Governance Registry|Power BI", "AI intake|data product factory|portfolio analytics|model governance"],
     ["LH-ORG-CISO", "Information Security", "CISO", "Group CIO", "Owns cyber controls, identity risk, vulnerability remediation, and security architecture across corporate and opco systems.", "Entra ID|ServiceNow ITSM|Microsoft Purview", "access governance|incident response|risk reporting"],
     ["LH-ORG-NORTH-CIO", "Northline Local IT", "Northline CIO", "Northline CEO and Group CIO", "Owns local logistics systems, data feeds, service desk, and IT budget for Northline.", "Northline Warehouse WMS|Northline TMS|Northline Fleet Telematics", "warehouse technology|transportation technology|local service management"],
-    ["LH-ORG-CREST-CIO", "Crestpoint Local IT", "Crestpoint CIO", "Crestpoint CEO and Group CIO", "Owns local client-delivery systems, CRM, project margin systems, creative operations, and local IT budget.", "Crestpoint Salesforce CRM|Crestpoint Professional Services Automation|Crestpoint Marketing Automation", "client technology|resource planning|creative workflow support"],
-    ["LH-ORG-RIV-CIO", "Riverton Local IT", "Riverton CIO", "Riverton CEO and Group CIO", "Owns Riverton ERP, DTC commerce, demand planning, manufacturing planning, and local IT budget.", "Riverton SAP S/4|Riverton DTC Commerce|Riverton Demand Planning", "commercial technology|supply-chain technology|local service management"],
-    ["LH-ORG-ARB-IT", "Arborfield Local IT", "Arborfield IT Director", "Arborfield CEO and Group CIO", "Owns field-service, scheduling, billing, asset, and service quality systems plus local IT budget.", "Arborfield Field Service|Arborfield Workforce Scheduling|Arborfield Billing Platform", "field service technology|billing technology|local service management"],
+    ["LH-ORG-CREST-CIO", "Brightmark Local IT", "Brightmark CIO", "Brightmark CEO and Group CIO", "Owns local client-delivery systems, CRM, project margin systems, creative operations, and local IT budget.", "Brightmark Salesforce CRM|Brightmark Professional Services Automation|Brightmark Marketing Automation", "client technology|resource planning|creative workflow support"],
+    ["LH-ORG-RIV-CIO", "Forge & Field Local IT", "Forge & Field CIO", "Forge & Field CEO and Group CIO", "Owns Forge & Field ERP, DTC commerce, demand planning, manufacturing planning, and local IT budget.", "Forge & Field SAP S/4|Forge & Field DTC Commerce|Forge & Field Demand Planning", "commercial technology|supply-chain technology|local service management"],
+    ["LH-ORG-ARB-IT", "Great Lakes Pantry Local IT", "Great Lakes Pantry IT Director", "Great Lakes Pantry CEO and Group CIO", "Owns field-service, scheduling, billing, asset, and service quality systems plus local IT budget.", "Great Lakes Pantry Field Service|Great Lakes Pantry Workforce Scheduling|Great Lakes Pantry Billing Platform", "field service technology|billing technology|local service management"],
   ];
   return rows.map(([id, name, leader, reports, rights, ownedSystems, ownedProcesses], index) => ({
     ...shared("org_ownership", id, name, "holdco/org-ownership.csv", index + 1, leader),
@@ -324,9 +337,9 @@ function makePersonaRows() {
     ["LH-PER-IT-SUPPORT", "IT service desk analyst", "Corporate IT", 58, "high", "ticket triage, knowledge search, access requests"],
     ["LH-PER-DATA", "Data product owner", "Corporate Innovation IT and Data AI", 16, "high", "data product roadmap, quality, reuse, AI readiness"],
     ["LH-PER-NORTH-DISP", "Northline dispatch supervisor", "Northline Logistics Operations", 120, "high", "route exceptions, carrier issues, warehouse coordination"],
-    ["LH-PER-CREST-PM", "Crestpoint project manager", "Crestpoint Client Delivery", 210, "medium", "resource plans, project margin, delivery risk"],
-    ["LH-PER-RIV-PLANNER", "Riverton demand planner", "Riverton Commercial and Supply Chain", 64, "high", "forecast exceptions, inventory risk, DTC demand"],
-    ["LH-PER-ARB-DISPATCH", "Arborfield field dispatcher", "Arborfield Service Operations", 95, "high", "technician dispatch, parts availability, customer commitments"],
+    ["LH-PER-CREST-PM", "Brightmark project manager", "Brightmark Client Delivery", 210, "medium", "resource plans, project margin, delivery risk"],
+    ["LH-PER-RIV-PLANNER", "Forge & Field demand planner", "Forge & Field Commercial and Supply Chain", 64, "high", "forecast exceptions, inventory risk, DTC demand"],
+    ["LH-PER-ARB-DISPATCH", "Great Lakes Pantry field dispatcher", "Great Lakes Pantry Service Operations", 95, "high", "technician dispatch, parts availability, customer commitments"],
   ];
   return personas.map(([id, name, area, population, relevance, context], index) => ({
     ...shared("workforce_persona", id, name, "holdco/workforce-personas.csv", index + 1),
@@ -365,9 +378,9 @@ function makeDataAssetRows() {
     ["LH-DATA-PORTFOLIO-KPI", "Portfolio company KPI hub", "Chief Investment Officer", "Azure Data Lakehouse", "opco source extracts to Lakehouse to board pack", "Investments|Tower|Intelligence", 0.74, "watch"],
     ["LH-DATA-AI-REG", "AI opportunity and risk registry", "VP Corporate Innovation IT and Data AI", "AI Governance Registry", "ServiceNow AI intake to Databricks and Power BI", "Group CIO|CISO|Innovation IT", 0.78, "governed"],
     ["LH-DATA-NORTH-OPS", "Northline warehouse and transportation facts", "Northline CIO", "Northline WMS and TMS", "WMS/TMS to Azure Data Lakehouse", "Northline Ops|Group CIO|Tower", 0.71, "watch"],
-    ["LH-DATA-CREST-MARGIN", "Crestpoint project margin facts", "Crestpoint CIO", "Crestpoint PSA", "PSA to Salesforce to Power BI", "Crestpoint CFO|Tower", 0.69, "watch"],
-    ["LH-DATA-RIV-DEMAND", "Riverton demand and commerce facts", "Riverton CIO", "Riverton Demand Planning and DTC Commerce", "Commerce and planning extracts to Azure Data Lakehouse", "Riverton Ops|Innovation IT|Tower", 0.66, "watch"],
-    ["LH-DATA-ARB-SERVICE", "Arborfield service execution facts", "Arborfield IT Director", "Arborfield Field Service", "FSM to Billing Platform to Power BI", "Arborfield COO|Tower", 0.72, "watch"],
+    ["LH-DATA-CREST-MARGIN", "Brightmark project margin facts", "Brightmark CIO", "Brightmark PSA", "PSA to Salesforce to Power BI", "Brightmark CFO|Tower", 0.69, "watch"],
+    ["LH-DATA-RIV-DEMAND", "Forge & Field demand and commerce facts", "Forge & Field CIO", "Forge & Field Demand Planning and DTC Commerce", "Commerce and planning extracts to Azure Data Lakehouse", "Forge & Field Ops|Innovation IT|Tower", 0.66, "watch"],
+    ["LH-DATA-ARB-SERVICE", "Great Lakes Pantry service execution facts", "Great Lakes Pantry IT Director", "Great Lakes Pantry Field Service", "FSM to Billing Platform to Power BI", "Great Lakes Pantry COO|Tower", 0.72, "watch"],
   ];
   const curated = assets.map(([id, name, owner, system, lineage, consumers, quality, governance], index) => ({
     ...shared("data_asset_integration", id, name, "holdco/data-assets-integrations.csv", index + 1, owner),
@@ -439,9 +452,9 @@ function makeSpendRows() {
   rows.push(spendRow("LH-SPEND-INNOV-COMPONENT", "Corporate Innovation IT and Data AI budget component", innovationBudget, "component_budget", "VP Corporate Innovation IT and Data AI", "LH-PGM-DATA-FOUND", "LH-VDR-DATABRICKS", "LH-SYS-DATABRICKS", "discretionary", "2026-12-31", "Subset of Corporate Shared Services IT budget for data, AI, innovation, and governance.", "not additive to enterprise total", index++));
   const allocations = [
     ["LH-NORTHLINE", "Northline allocated corporate shared-services IT consumption", 14200000],
-    ["LH-CRESTPOINT", "Crestpoint allocated corporate shared-services IT consumption", 9800000],
-    ["LH-RIVERTON", "Riverton allocated corporate shared-services IT consumption", 7800000],
-    ["LH-ARBORFIELD", "Arborfield allocated corporate shared-services IT consumption", 4700000],
+    ["LH-CRESTPOINT", "Brightmark allocated corporate shared-services IT consumption", 9800000],
+    ["LH-RIVERTON", "Forge & Field allocated corporate shared-services IT consumption", 7800000],
+    ["LH-ARBORFIELD", "Great Lakes Pantry allocated corporate shared-services IT consumption", 4700000],
   ];
   for (const [entityId, name, amount] of allocations) {
     rows.push(spendRow(`LH-SPEND-${entityId}-ALLOC`, name, amount, "allocated_shared_services_cost", "Corporate IT chargeback office", "not_applicable", "not_applicable", "not_applicable", "allocated", "2026-12-31", "Allocation of corporate IT budget to portfolio company consumption.", "allocation view only; excluded from enterprise direct IT budget", index++));
@@ -508,9 +521,9 @@ function makeRiskRows() {
     ["portfolio KPI freshness", "Chief Investment Officer", "medium", "watch", "quarterly portfolio KPI attestation", "Azure Data Lakehouse|DealCloud Portfolio CRM", "opco KPI refresh cadence varies"],
     ["AI model-risk intake", "VP Corporate Innovation IT and Data AI", "medium", "controlled", "AI use-case registry approval", "AI Governance Registry|Databricks Innovation Workspace", "model-risk evidence required before scale"],
     ["Northline carrier feed quality", "Northline CIO", "high", "watch", "carrier feed data-quality checks", "Northline TMS|Northline Fleet Telematics", "carrier feed quality blocks AI dispatch scale"],
-    ["Crestpoint brand-risk approval", "Crestpoint CIO", "medium", "watch", "content approval workflow", "Crestpoint Marketing Automation|Microsoft 365 and Copilot", "proposal AI needs approval evidence"],
-    ["Riverton SKU-location quality", "Riverton CIO", "high", "watch", "SKU-location quality threshold", "Riverton SAP S/4|Riverton Demand Planning", "demand sensing cannot scale without quality baseline"],
-    ["Arborfield parts availability data", "Arborfield IT Director", "medium", "watch", "parts master-data quality control", "Arborfield Field Service", "technician recommendations limited by parts data"],
+    ["Brightmark brand-risk approval", "Brightmark CIO", "medium", "watch", "content approval workflow", "Brightmark Marketing Automation|Microsoft 365 and Copilot", "proposal AI needs approval evidence"],
+    ["Forge & Field SKU-location quality", "Forge & Field CIO", "high", "watch", "SKU-location quality threshold", "Forge & Field SAP S/4|Forge & Field Demand Planning", "demand sensing cannot scale without quality baseline"],
+    ["Great Lakes Pantry parts availability data", "Great Lakes Pantry IT Director", "medium", "watch", "parts master-data quality control", "Great Lakes Pantry Field Service", "technician recommendations limited by parts data"],
     ["enterprise access cleanup", "CISO", "high", "watch", "privileged access review", "Entra ID|ServiceNow ITSM", "zero-trust benefit is risk reduction, not measured ROI"],
   ];
   return risks.map(([process, owner, severity, status, control, systemsAffected, impact], index) => ({
@@ -567,9 +580,9 @@ function makeRelationshipRows() {
     ["LH-DATA-PORTFOLIO-KPI", "Portfolio company KPI hub", "Chief Investment Officer", "Azure Data Lakehouse"],
     ["LH-DATA-AI-REG", "AI opportunity and risk registry", "VP Corporate Innovation IT and Data AI", "AI Governance Registry"],
     ["LH-DATA-NORTH-OPS", "Northline warehouse and transportation facts", "Northline CIO", "Northline Warehouse WMS"],
-    ["LH-DATA-CREST-MARGIN", "Crestpoint project margin facts", "Crestpoint CIO", "Crestpoint Professional Services Automation"],
-    ["LH-DATA-RIV-DEMAND", "Riverton demand and commerce facts", "Riverton CIO", "Riverton Demand Planning"],
-    ["LH-DATA-ARB-SERVICE", "Arborfield service execution facts", "Arborfield IT Director", "Arborfield Field Service"],
+    ["LH-DATA-CREST-MARGIN", "Brightmark project margin facts", "Brightmark CIO", "Brightmark Professional Services Automation"],
+    ["LH-DATA-RIV-DEMAND", "Forge & Field demand and commerce facts", "Forge & Field CIO", "Forge & Field Demand Planning"],
+    ["LH-DATA-ARB-SERVICE", "Great Lakes Pantry service execution facts", "Great Lakes Pantry IT Director", "Great Lakes Pantry Field Service"],
   ]) {
     const system = systems.find(([, name]) => name === systemOfRecord);
     if (system) {
@@ -677,7 +690,7 @@ function makeExpertRows() {
     ["LH-EXP-HOLDCO-CIO", "Holding Company CIO Operating Model Expert", "holdco IT rollup, corporate/shared service IT, local opco IT", "questions about enterprise total, shared services allocation, local CIO ownership, or opco IT budgets", "What is direct vs allocated? Which CIO owns the system? Which spend is local vs corporate?", "Do not double-count allocated shared services as enterprise spend."],
     ["LH-EXP-CORP-SERVICES", "Corporate Shared Services Technology Expert", "HR, legal, finance, treasury, investments platforms", "questions about Corporate Shared Services systems, shared business processes, or support model", "Which corporate function owns the process? Which system is authoritative? What field is missing?", "Do not imply the corporate center runs opco local systems."],
     ["LH-EXP-DATA-AI", "Corporate Innovation IT and Data AI Expert", "cross-portfolio data products and AI governance", "questions about AI investment, data products, innovation, model risk, or reusable automation", "Is this an experiment, governed data product, or scale candidate? What data quality gate exists?", "Do not claim AI ROI where measured value is not loaded."],
-    ["LH-EXP-OPCO", "Portfolio Company Technology Expert", "local IT systems, local CIO responsibilities, opco operating data", "questions about Northline, Crestpoint, Riverton, or Arborfield systems and budgets", "Which opco owns it? What local system or process does it support? Does it consume corporate shared services?", "Do not merge opco facts without showing entity scope."],
+    ["LH-EXP-OPCO", "Portfolio Company Technology Expert", "local IT systems, local CIO responsibilities, opco operating data", "questions about Northline, Brightmark, Forge & Field, or Great Lakes Pantry systems and budgets", "Which opco owns it? What local system or process does it support? Does it consume corporate shared services?", "Do not merge opco facts without showing entity scope."],
   ];
   return lenses.map(([id, name, focus, activation, questions, forbidden], index) => ({
     ...shared("expert_lens", id, name, "holdco/expert-lenses.csv", index + 1),
@@ -712,6 +725,8 @@ function writeSupplementalFiles() {
       budget_additivity_rule:
         entity.entity_type === "corporate_innovation_it"
           ? "subset_of_corporate_it_budget_not_additive"
+          : entity.entity_type === "portfolio_company_revenue_bucket"
+            ? "revenue_bucket_requires_opco_allocation_not_direct_holdco"
           : entity.entity_type === "portfolio_company" || entity.entity_type === "corporate_shared_services"
             ? "direct_it_budget_additive_to_enterprise_total"
             : "rollup_entity_do_not_add_as_source_row",
@@ -719,6 +734,33 @@ function writeSupplementalFiles() {
   );
 
   const metricRows = [
+    {
+      metric_key: "portfolio_company_revenue_rollup_fy26",
+      metric_label: "FY26 portfolio-company revenue rollup",
+      value_usd: 7120000000,
+      formula: "named operating-company revenue plus operating-company allocation bucket",
+      included_amount_types: "portfolio_company_revenue|opco_revenue_allocation",
+      excluded_amount_types: "holding_company_revenue",
+      source_files: "H01_entity_hierarchy.csv|V6_01_enterprise_profile.csv",
+    },
+    {
+      metric_key: "named_portfolio_company_revenue_fy26",
+      metric_label: "FY26 named portfolio-company revenue",
+      value_usd: 3560000000,
+      formula: "Northline plus Brightmark plus Forge & Field plus Great Lakes Pantry revenue",
+      included_amount_types: "portfolio_company_revenue",
+      excluded_amount_types: "holding_company_revenue|opco_revenue_allocation",
+      source_files: "H01_entity_hierarchy.csv",
+    },
+    {
+      metric_key: "opco_revenue_to_allocate_fy26",
+      metric_label: "FY26 operating-company revenue to allocate",
+      value_usd: 3560000000,
+      formula: "remaining portfolio-company revenue requiring opco naming or split before board-grade reporting",
+      included_amount_types: "opco_revenue_allocation",
+      excluded_amount_types: "holding_company_revenue",
+      source_files: "H01_entity_hierarchy.csv|V6_01_enterprise_profile.csv",
+    },
     {
       metric_key: "total_direct_it_budget_fy26",
       metric_label: "FY26 direct IT budget",
@@ -750,7 +792,7 @@ function writeSupplementalFiles() {
       metric_key: "portfolio_company_local_it_budget_fy26",
       metric_label: "Portfolio-company local IT budget",
       value_usd: opcos.reduce((sum, entity) => sum + entity.it_budget_usd, 0),
-      formula: "sum annual_it_budget rows for Northline, Crestpoint, Riverton, and Arborfield",
+      formula: "sum annual_it_budget rows for Northline, Brightmark, Forge & Field, and Great Lakes Pantry",
       included_amount_types: "annual_it_budget",
       excluded_amount_types: "allocated_shared_services_cost",
       source_files: "V6_08_spend_value.csv|H01_entity_hierarchy.csv",
@@ -783,7 +825,7 @@ This supplemental pack makes the Lakeshore holding-company model explicit while 
 - Corporate Shared Services includes HR, legal, finance, treasury, investments, governance, and corporate business operations.
 - Corporate IT runs the systems that support Corporate Shared Services.
 - Corporate Innovation IT and Data AI is a subset of Corporate IT budget and leads cross-portfolio data and AI ideas.
-- Northline Logistics Group, Crestpoint Marketing Services, Riverton Consumer Products, and Arborfield Workplace Services each have local IT leadership, systems, processes, vendors, budgets, and programs.
+- Northline, Brightmark, Forge & Field, and Great Lakes Pantry each have local IT leadership, systems, processes, vendors, budgets, and programs.
 
 ## Budget rule
 
@@ -837,8 +879,8 @@ The validator writes \`out/lakeshore-v6-holdco-validation.json\`.
   if (fs.existsSync(dictionaryPath)) {
     const dictionary = fs
       .readFileSync(dictionaryPath, "utf8")
-      .replaceAll("Industrial Demo-industries", TENANT_KEY)
-      .replaceAll("Industrial Demo", CLIENT);
+      .replaceAll("lakeshore-industries", TENANT_KEY)
+      .replaceAll("Lakeshore Industries", CLIENT);
     fs.writeFileSync(dictionaryPath, dictionary);
   }
 }
@@ -846,12 +888,20 @@ The validator writes \`out/lakeshore-v6-holdco-validation.json\`.
 function updateManifest() {
   const manifestPath = path.join(tenantDir, "V6_GENERATED_MANIFEST.json");
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  manifest.tenantKey = TENANT_KEY;
   manifest.clientDisplayName = CLIENT;
+  manifest.sourceDataset = "datasets/lakeshore-holdings-synthetic-v4";
+  manifest.canonicalTenantKey = TENANT_KEY;
   manifest.holdcoRealignment = {
     generatedAt: UPDATED,
     canonicalTenantKey: TENANT_KEY,
     displayName: CLIENT,
     model: "holding_company_with_corporate_shared_services_and_portfolio_company_local_it",
+    portfolioCompanyRevenueRollupUsd: 7120000000,
+    namedOperatingCompanyRevenueUsd: 3560000000,
+    opcoRevenueToAllocateUsd: 3560000000,
+    directHoldcoRevenueUsd: 0,
+    employeeRollup: 11800,
     directItBudgetUsd: directItBudget,
     corporateSharedServicesItBudgetUsd: 36500000,
     innovationItDataAiComponentUsd: innovationBudget,

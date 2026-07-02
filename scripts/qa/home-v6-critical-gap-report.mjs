@@ -5,7 +5,7 @@ import path from "node:path";
 const DEFAULT_TENANTS = [
   "apex-retail-synthetic-v6",
   "first-capital-financial-synthetic-v6",
-  "lakeshore-industries-synthetic-v6",
+  "lakeshore-holdings-synthetic-v6",
   "meridian-health-synthetic-v6",
   "skyharbor-air-synthetic-v6",
 ];
@@ -57,7 +57,7 @@ const MONEY_VALUE_COLUMNS = {
 };
 
 const OLD_DEMO_NAME_RE =
-  /\b(Apex Retail Group|Apex Retail|Meridian Health System|Meridian Health|First Capital Financial|First Capital|Arcturus Financial Group|Arcturus|SkyHarbor Air Group|SkyHarbor Airlines|SkyHarbor Air|SkyHarbor|Lakeshore Industries|Lakeshore Holdings|Lakeshore)\b/i;
+  /\b(Apex Retail Group|Apex Retail|Meridian Health System|Meridian Health|First Capital Financial|First Capital|Arcturus Financial Group|Arcturus|SkyHarbor Air Group|SkyHarbor Airlines|SkyHarbor Air|SkyHarbor|Lakeshore Holdings|Lakeshore Holdings|Lakeshore)\b/i;
 const TECHNICAL_OLD_NAME_SCAN_SKIP = new Set([
   "tenant_key",
   "v6_contract_version",
@@ -76,10 +76,10 @@ const PRIORITY_OVERRIDES = new Map([
   ["skyharbor-air-synthetic-v6:vendor_contract", 3],
   ["skyharbor-air-synthetic-v6:program_initiative", 4],
   ["skyharbor-air-synthetic-v6:ai_initiative", 5],
-  ["lakeshore-industries-synthetic-v6:business_function", 6],
-  ["lakeshore-industries-synthetic-v6:vendor_contract", 7],
-  ["lakeshore-industries-synthetic-v6:operations_risk_control", 8],
-  ["lakeshore-industries-synthetic-v6:application_system", 9],
+  ["lakeshore-holdings-synthetic-v6:business_function", 6],
+  ["lakeshore-holdings-synthetic-v6:vendor_contract", 7],
+  ["lakeshore-holdings-synthetic-v6:operations_risk_control", 8],
+  ["lakeshore-holdings-synthetic-v6:application_system", 9],
 ]);
 
 const args = parseArgs(process.argv.slice(2));

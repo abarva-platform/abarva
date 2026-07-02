@@ -20,7 +20,7 @@ const TENANTS: Array<{ key: ClientKey; slugAliases: string[] }> = [
   { key: 'meridian', slugAliases: ['meridian', 'meridian-health'] },
   { key: 'arcturus', slugAliases: ['arcturus', 'first-capital', 'first-capital-financial'] },
   { key: 'skyharbor', slugAliases: ['skyharbor', 'skyharbor-air'] },
-  { key: 'lakeshore', slugAliases: ['lakeshore', 'lakeshore-holdings', 'lakeshore-industries'] },
+  { key: 'lakeshore', slugAliases: ['lakeshore', 'lakeshore-holdings'] },
 ];
 
 export async function GET() {

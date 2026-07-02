@@ -95,10 +95,11 @@ describe("tenant context search backfill mapping", () => {
     expect(canonicalTenantKey("meridian_healthcare")).toBe("meridian-health");
     expect(canonicalTenantKey("apexretail")).toBe("apex-retail");
     expect(canonicalTenantKey("lakeshore")).toBe("lakeshore-holdings");
-    expect(canonicalTenantKey("morganstreet")).toBe("lakeshore-holdings");
-    expect(canonicalTenantKey("mona-street")).toBe("lakeshore-holdings");
     expect(canonicalTenantKey("skyharbor")).toBe("skyharbor-air");
     expect(canonicalTenantKey("northstar")).toBe("northstar-clinical");
+    expect(canonicalTenantKey("lakeshore-industries")).toBe("lakeshore-industries");
+    expect(canonicalTenantKey("morganstreet")).toBe("morganstreet");
+    expect(canonicalTenantKey("mona-street")).toBe("mona-street");
     expect(
       toTenantContextSearchDocument({
         client_id: "client-first-capital",

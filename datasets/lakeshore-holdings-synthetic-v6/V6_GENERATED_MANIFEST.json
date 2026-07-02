@@ -1,11 +1,11 @@
 {
-  "tenantKey": "lakeshore-industries",
+  "tenantKey": "lakeshore-holdings",
   "clientDisplayName": "Lakeshore Holdings",
   "datasetVersion": "v6",
   "generatedAt": "2026-06-29T14:49:49.881Z",
-  "sourceDataset": "datasets/lakeshore-industries-synthetic-v4",
+  "sourceDataset": "datasets/lakeshore-holdings-synthetic-v4",
   "sourceTenantKey": "lakeshore",
-  "canonicalTenantKey": "lakeshore-industries",
+  "canonicalTenantKey": "lakeshore-holdings",
   "templatePack": "enterprise-intelligence-template-pack-v6",
   "contractVersion": "v6.0",
   "rule": "Every tenant uses the same V6 files, headers, and business metadata dictionary. Missing values are explicit data_thin values, not blank columns.",
@@ -130,18 +130,23 @@
   },
   "holdcoRealignment": {
     "generatedAt": "2026-07-01T18:00:00Z",
-    "canonicalTenantKey": "lakeshore-industries",
+    "canonicalTenantKey": "lakeshore-holdings",
     "displayName": "Lakeshore Holdings",
     "model": "holding_company_with_corporate_shared_services_and_portfolio_company_local_it",
+    "portfolioCompanyRevenueRollupUsd": 7120000000,
+    "namedOperatingCompanyRevenueUsd": 3560000000,
+    "opcoRevenueToAllocateUsd": 3560000000,
+    "directHoldcoRevenueUsd": 0,
+    "employeeRollup": 11800,
     "directItBudgetUsd": 190600000,
     "corporateSharedServicesItBudgetUsd": 36500000,
     "innovationItDataAiComponentUsd": 11800000,
     "portfolioCompanyCount": 4,
     "portfolioCompanyNames": [
-      "Northline Logistics Group",
-      "Crestpoint Marketing Services",
-      "Riverton Consumer Products",
-      "Arborfield Workplace Services"
+      "Northline",
+      "Brightmark",
+      "Forge & Field",
+      "Great Lakes Pantry"
     ],
     "nonAdditiveAmountTypes": [
       "component_budget",
