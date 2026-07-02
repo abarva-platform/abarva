@@ -1203,6 +1203,39 @@ function buildContractOptimizationResponseParts(args: {
   }
   parts.push({
     type: "table",
+    title: "Business impact lens",
+    columns: ["Impact", "What it means", "Decision use"],
+    rows: [
+      [
+        "Cost",
+        exposureRows.length
+          ? "Recoverable leakage and normalized baseline economics drive the immediate value case."
+          : "Commercial value must be quantified during vendor cure review.",
+        "Use to set recovery, credit, and baseline-normalization asks.",
+      ],
+      [
+        "Risk",
+        findings.some((finding) => /sla|staffing|service|coverage/i.test(finding.title))
+          ? "Weak remedies, staffing gaps, and service pressure keep operational risk with the buyer."
+          : "Risk posture depends on the vendor proof pack.",
+        "Use to decide whether renewal can proceed with conditions or needs competitive fallback.",
+      ],
+      [
+        "Speed",
+        "A cure-first path is faster than a full rebid only if evidence arrives before the renewal window decays.",
+        "Use to sequence cure notice, reconciliation, vendor response, and executive decision.",
+      ],
+      [
+        "Customer / service",
+        "Ticket, reopen, restore, and emergency-change pressure affect service reliability if remedies stay weak.",
+        "Use to align the CIO service-risk decision with sourcing terms.",
+      ],
+    ],
+    caption:
+      "Every sourcing finding is mapped to executive impact before it becomes a recommendation.",
+  });
+  parts.push({
+    type: "table",
     title: tableTitle,
     columns: ["Area", "What the executive should ask for", "Evidence basis"],
     rows: findings.slice(0, 5).map((finding) => [

@@ -870,6 +870,7 @@ describe("Source answer engine", () => {
     );
     expect(renewAnswer?.answerText).toContain("Action required:");
     expect(renewAnswer?.responseParts.some((part) => part.type === "barChart" && part.title === "Exposure by driver")).toBe(true);
+    expect(renewAnswer?.responseParts.some((part) => part.type === "table" && part.title === "Business impact lens")).toBe(true);
     expect(renewAnswer?.responseParts.some((part) => part.type === "table" && part.title === "Contract optimization decision signals")).toBe(true);
     expect(renewAnswer?.answerText).not.toContain("Contract optimization finding");
     expect(cureAnswer?.answerText).toContain("The cure notice should preserve rights");
