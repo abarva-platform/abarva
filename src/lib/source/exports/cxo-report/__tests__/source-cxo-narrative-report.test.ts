@@ -16,7 +16,7 @@ describe('Source CXO narrative report', () => {
     expect(report.tenantName).toBe('Apex Retail');
     expect(report.eventCode).toBe('APX-CC-2026');
     expect(report.audience).toContain('VP Sourcing');
-    expect(report.verdict).toBe('Award / proceed');
+    expect(report.verdict).toBe('Pending — Evaluation / BAFO / Decision');
     expect(report.slides.map((slide) => slide.kind)).toEqual([
       'cover',
       'answer',
@@ -32,7 +32,9 @@ describe('Source CXO narrative report', () => {
   });
 
   it('maps lifecycle artifacts to standards and preserves missing/scaffold states', () => {
-    const report = buildSourceCxoNarrativeReport(makeDealPackInput());
+    const report = buildSourceCxoNarrativeReport(
+      makeDealPackInput({ currentStageKey: 'executive_decision' }),
+    );
     const selection = report.artifactCoverage.find((item) => item.artifactCode === 'd27_selection_memo');
     const tco = report.artifactCoverage.find((item) => item.artifactCode === 'dx4_tco_iceberg');
     const renewal = report.artifactCoverage.find((item) => item.artifactCode === 'dx7_renewal_decision');
@@ -122,7 +124,9 @@ describe('Source CXO narrative report', () => {
   });
 
   it('PINS the CXO PPTX verdict to the report verdict (award-ready)', async () => {
-    const report = buildSourceCxoNarrativeReport(makeDealPackInput());
+    const report = buildSourceCxoNarrativeReport(
+      makeDealPackInput({ currentStageKey: 'executive_decision' }),
+    );
     const buffer = await renderSourceCxoNarrativePptx(report);
     const text = await extractPptxText(buffer);
 
@@ -141,7 +145,12 @@ async function extractPptxText(buffer: Buffer): Promise<string> {
 }
 
 function makeDealPackInput(
-  overrides: { selectionMemoBody?: string | null; eventOwner?: string | null; gateState?: 'met' | 'not_met' } = {},
+  overrides: {
+    selectionMemoBody?: string | null;
+    eventOwner?: string | null;
+    gateState?: 'met' | 'not_met';
+    currentStageKey?: DealPackInput['currentStageKey'];
+  } = {},
 ): DealPackInput {
   const selectionMemoBody =
     overrides.selectionMemoBody === undefined
@@ -153,7 +162,7 @@ function makeDealPackInput(
     eventName: 'Apex Retail Contact Center AI',
     eventOwner: overrides.eventOwner === undefined ? 'Maya Chen, VP Customer Ops' : overrides.eventOwner,
     eventStatus: 'Active',
-    currentStageKey: 'selection',
+    currentStageKey: overrides.currentStageKey ?? 'selection',
     archetype: 'contact_center_ai',
     estimatedValueUsd: 4_200_000,
     generatedAt: GENERATED_AT,
