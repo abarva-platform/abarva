@@ -90,6 +90,30 @@ describe("HomeKnowAnswerRenderer", () => {
     expect(screen.queryByText("Retail Expert")).not.toBeInTheDocument();
   });
 
+  it("does not render the structured table again when the prose already includes it", () => {
+    render(
+      <HomeKnowAnswerRenderer
+        response={{
+          ...baseResponse,
+          prose: [
+            "For Industrial Demo, the IT organization is role and domain based.",
+            "",
+            "Requested structure:",
+            "",
+            "| Portfolio | Owner role |",
+            "|---|---|",
+            "| Data & Analytics | CDO |",
+          ].join("\n"),
+        }}
+      />,
+    );
+
+    expect(screen.getByText(/Requested structure:/)).toBeInTheDocument();
+    expect(screen.getByText(/Data & Analytics/)).toBeInTheDocument();
+    expect(screen.queryByText("Tables")).not.toBeInTheDocument();
+    expect(screen.queryByText("IT ownership")).not.toBeInTheDocument();
+  });
+
   it("renders decision questions as handoff banners, not Home recommendations", () => {
     render(
       <HomeKnowAnswerRenderer

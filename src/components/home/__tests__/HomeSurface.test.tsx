@@ -11,6 +11,7 @@ import "@testing-library/jest-dom";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { HomeSurface } from "@/components/home/HomeSurface";
 import type { IntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
+import type { HomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
 
 const payload = {
   tenant: {
@@ -50,6 +51,16 @@ const payload = {
       trust: 82,
       flag: null,
     },
+    {
+      dimension: "Vendors & Contracts",
+      status: "LOADED",
+      description:
+        "The vendor base, renewal calendar, and commercial concentration.",
+      evidence: 2487,
+      sources: 4,
+      trust: 82,
+      flag: null,
+    },
   ],
   corpus: [
     {
@@ -60,6 +71,31 @@ const payload = {
     },
   ],
 } as unknown as IntelligenceBindingPayload;
+
+const v6Browser = {
+  tenantKey: "apexretail",
+  displayName: "Apex Retail Group",
+  datasetDir: "apex-retail-synthetic-v6",
+  generatedAt: "2026-06-28T00:00:00.000Z",
+  dimensions: {
+    "Vendors & Contracts": {
+      dimension: "Vendors & Contracts",
+      title: "Vendors and contracts",
+      fileNames: ["V6_07_vendors_contracts.csv"],
+      rowCount: 90,
+      dataThinCells: 12,
+      sourceCount: 1,
+      columns: [
+        { key: "vendor_name", label: "Vendor" },
+        { key: "service", label: "Service" },
+        { key: "renewal_date", label: "Renewal" },
+        { key: "contract_risk", label: "Risk/gap" },
+      ],
+      rows: [["Kyriba", "Treasury", "2026-07-06", "Missing: contract risk"]],
+      knownGaps: [{ label: "Contract Risk", count: 12 }],
+    },
+  },
+} satisfies HomeV6ContextBrowser;
 
 describe("HomeSurface — real React Context Explorer", () => {
   it("renders the shared aVa dock + Context Explorer canvas", () => {
@@ -85,11 +121,14 @@ describe("HomeSurface — real React Context Explorer", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/33 supporting signals · 2 sources/),
+      screen.getByText(/33 evidence points · 2 sources/),
     ).toBeInTheDocument();
     // rail lists the loaded context dimension; detail not shown yet
-    expect(screen.getByText("1 business areas loaded")).toBeInTheDocument();
+    expect(screen.getByText("2 context areas loaded")).toBeInTheDocument();
     expect(screen.queryByText("Business areas · 8")).not.toBeInTheDocument();
+    expect(screen.getByText("Context areas")).toBeInTheDocument();
+    expect(screen.getByText("Evidence points")).toBeInTheDocument();
+    expect(screen.getByText("Lens: AI Initiatives · Data Quality · Spans multiple areas")).toBeInTheDocument();
     expect(screen.getByRole("option", { name: /IT systems landscape/ })).toBeInTheDocument();
     expect(
       screen.queryByText("Applications, integrations, systems of record"),
@@ -105,5 +144,38 @@ describe("HomeSurface — real React Context Explorer", () => {
       screen.getByText("Applications, integrations, systems of record"),
     ).toBeInTheDocument();
     expect(screen.getByText("82%")).toBeInTheDocument();
+  });
+
+  it("explains what vendor and contract context means in browse mode", () => {
+    render(
+      <HomeSurface
+        clientKey="apexretail"
+        payload={payload}
+        v6Browser={v6Browser}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Choose context dimension"), {
+      target: { value: "Vendors & Contracts" },
+    });
+
+    expect(screen.getByText("What is loaded here")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Vendor roster, contract and renewal evidence, commercial concentration, sourcing relevance, and missing contract fields.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("How to browse it")).toBeInTheDocument();
+    expect(
+      screen.getByText("Which renewals or vendors need attention?"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Detail types available")).toBeInTheDocument();
+    expect(
+      screen.getByText("Loaded vendor and contract coverage"),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/evidence points are loaded/)).toBeInTheDocument();
+    expect(screen.getByText("Vendors and contracts")).toBeInTheDocument();
+    expect(screen.getByText("Kyriba")).toBeInTheDocument();
+    expect(screen.getByText("Treasury")).toBeInTheDocument();
+    expect(screen.getByText("V6_07_vendors_contracts.csv")).toBeInTheDocument();
   });
 });

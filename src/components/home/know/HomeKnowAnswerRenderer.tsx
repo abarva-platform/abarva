@@ -197,6 +197,49 @@ function citationsFor(
   });
 }
 
+function normalizeTableDedupeText(value: unknown): string {
+  return sanitizeHomeText(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function containsDedupeToken(haystack: string, value: unknown): boolean {
+  const token = normalizeTableDedupeText(value);
+  if (!token || token === "data thin") return false;
+  return haystack.includes(token);
+}
+
+function tableAlreadyRenderedInProse(
+  prose: string,
+  table: HomeKnowTable,
+): boolean {
+  const normalizedProse = normalizeTableDedupeText(prose);
+  if (!normalizedProse) return false;
+
+  const columnHits = table.columns.filter((column) =>
+    containsDedupeToken(normalizedProse, column.label),
+  ).length;
+  const rowValues = table.rows
+    .slice(0, 3)
+    .flatMap((row) =>
+      table.columns.map((column) => formatValue(row[column.key], column)),
+    )
+    .filter((value) => {
+      const normalized = normalizeTableDedupeText(value);
+      return normalized && normalized !== "data thin";
+    });
+  const rowHits = rowValues.filter((value) =>
+    containsDedupeToken(normalizedProse, value),
+  ).length;
+
+  return (
+    columnHits >= Math.min(2, table.columns.length) &&
+    rowHits >= Math.min(3, rowValues.length)
+  );
+}
+
 function CitationChips({
   citations,
   onSelect,
@@ -563,7 +606,14 @@ export function HomeKnowAnswerRenderer({
     return sanitizeHomeText(displayResponse.prose);
   }, [displayResponse]);
   const visibleCitations = displayResponse.citations;
-  const tableCount = displayResponse.tables.length;
+  const visibleTables = useMemo(
+    () =>
+      displayResponse.tables.filter(
+        (table) => !tableAlreadyRenderedInProse(safeProse, table),
+      ),
+    [displayResponse.tables, safeProse],
+  );
+  const tableCount = visibleTables.length;
   const chartCount = displayResponse.charts.length;
   const graphCount = displayResponse.graphs.length;
 
@@ -608,7 +658,7 @@ export function HomeKnowAnswerRenderer({
               {tableCount > 0 ? (
                 <div className="hk-section">
                   <div className="hk-title">Tables</div>
-                  {displayResponse.tables.map((table) => (
+                  {visibleTables.map((table) => (
                     <HomeTableExhibit
                       citations={citationsFor(
                         table.citationIds,
