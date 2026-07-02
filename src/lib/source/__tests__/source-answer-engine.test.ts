@@ -864,26 +864,26 @@ describe("Source answer engine", () => {
 
     expect(renewAnswer?.answerText).toContain("Do not renew as-is");
     expect(renewAnswer?.answerText).toContain("RFP fallback");
-    expect(renewAnswer?.answerText).toContain("Top 3 drivers:");
+    expect(renewAnswer?.answerText).toContain("Decision posture:");
     expect(renewAnswer?.answerText).toContain(
       "Financial exposure: approximately $3.6M-$4.8M annualized, subject to vendor cure review.",
     );
     expect(renewAnswer?.answerText).toContain("Action required:");
-    expect(renewAnswer?.answerText).toContain(
-      "- Invoices are running above contracted baseline:",
-    );
+    expect(renewAnswer?.responseParts.some((part) => part.type === "barChart" && part.title === "Exposure by driver")).toBe(true);
+    expect(renewAnswer?.responseParts.some((part) => part.type === "table" && part.title === "Contract optimization decision signals")).toBe(true);
     expect(renewAnswer?.answerText).not.toContain("Contract optimization finding");
     expect(cureAnswer?.answerText).toContain("The cure notice should preserve rights");
-    expect(cureAnswer?.answerText).toContain("Top 3 cure drivers:");
+    expect(cureAnswer?.answerText).toContain("Cure posture:");
     expect(cureAnswer?.answerText).toContain("Invoice cure");
     expect(cureAnswer?.answerText).toContain("Change-order cure");
-    expect(cureAnswer?.answerText).toContain("Implication:");
+    expect(cureAnswer?.responseParts.some((part) => part.type === "table" && part.title === "Cure notice agenda")).toBe(true);
     expect(cureAnswer?.answerText).not.toContain("\nAction:");
     expect(exposureAnswer?.answerText).not.toContain("Operational pressure: - ");
-    expect(exposureAnswer?.answerText).toContain("Top 3 drivers:");
+    expect(exposureAnswer?.answerText).toContain("Top exposure drivers:");
     expect(exposureAnswer?.answerText).toContain(
       "Financial exposure: approximately $3.6M-$4.8M annualized, subject to vendor cure review.",
     );
+    expect(exposureAnswer?.responseParts.some((part) => part.type === "barChart" && part.title === "Exposure by driver")).toBe(true);
     expect(missingAnswer?.answerText).toContain(
       "not enough to approve a final commercial reset",
     );

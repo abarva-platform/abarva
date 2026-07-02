@@ -16,6 +16,16 @@ export function ContractOptimizationProfilePanel({
   const topFindings = profile.findings.slice(0, 6);
   const topLevers = profile.levers.slice(0, 6);
   const exposure = computeContractOptimizationExposureRollup(profile);
+  const exposureBars = profile.visualInsights.exposureByDriver
+    .filter((driver) => driver.annualImpactHighUsd)
+    .slice(0, 4);
+  const maxExposure = Math.max(
+    1,
+    ...exposureBars.map((driver) => driver.annualImpactHighUsd ?? 0),
+  );
+  const invoiceTrend = profile.visualInsights.invoiceVarianceTrend;
+  const latestInvoiceVariance = invoiceTrend.at(-1)?.varianceUsd ?? 0;
+  const operationalPressure = profile.visualInsights.operationalPressure;
 
   return (
     <section
@@ -67,6 +77,67 @@ export function ContractOptimizationProfilePanel({
           <p style={WARNING_LINE}>
             <strong>Do not:</strong> {profile.recommendedPath.doNotDo}
           </p>
+        </div>
+      </div>
+
+      <div style={INSIGHT_GRID} aria-label="Executive visual insights">
+        <div style={INSIGHT_CARD}>
+          <div style={EYEBROW}>Exposure Drivers</div>
+          <h4 style={INSIGHT_TITLE}>Where value is leaking</h4>
+          <div style={BAR_LIST}>
+            {exposureBars.map((driver) => (
+              <div key={driver.driver} style={BAR_ROW}>
+                <div style={BAR_LABEL}>{shorten(driver.driver)}</div>
+                <div style={BAR_TRACK}>
+                  <span
+                    style={{
+                      ...BAR_FILL,
+                      width: `${Math.max(8, ((driver.annualImpactHighUsd ?? 0) / maxExposure) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <strong style={BAR_VALUE}>{money(driver.annualImpactHighUsd ?? 0)}</strong>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={INSIGHT_CARD}>
+          <div style={EYEBROW}>Invoice Trend</div>
+          <h4 style={INSIGHT_TITLE}>Variance is not a one-month anomaly</h4>
+          <div style={TREND_ROW}>
+            {invoiceTrend.map((row) => (
+              <div key={row.month} style={TREND_POINT}>
+                <span
+                  title={`${row.month}: ${money(row.varianceUsd)} variance`}
+                  style={{
+                    ...TREND_BAR,
+                    height: `${Math.max(12, Math.min(54, row.variancePct * 8))}px`,
+                  }}
+                />
+                <span>{row.month.slice(5)}</span>
+              </div>
+            ))}
+          </div>
+          <p style={MINI_COPY}>Latest sampled variance: {money(latestInvoiceVariance)}</p>
+        </div>
+
+        <div style={INSIGHT_CARD}>
+          <div style={EYEBROW}>Operational Pressure</div>
+          <h4 style={INSIGHT_TITLE}>Demand and quality signals are above baseline</h4>
+          <table style={MINI_TABLE}>
+            <tbody>
+              {operationalPressure.map((metric) => (
+                <tr key={metric.metric}>
+                  <td>{metric.metric}</td>
+                  <td>{metric.current.toLocaleString("en-US", { maximumFractionDigits: 1 })}</td>
+                  <td style={{ color: CANVAS.BLOCKED, fontWeight: 800 }}>
+                    +{metric.deltaPct.toFixed(1)}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -151,6 +222,14 @@ function money(value: number): string {
   if (!Number.isFinite(value) || value <= 0) return "$0";
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
   return `$${Math.round(value / 1_000)}K`;
+}
+
+function shorten(value: string): string {
+  return value
+    .replace(/^Recover or credit unsupported\s+/i, "Recover ")
+    .replace(/^True up underfilled\s+/i, "True up ")
+    .replace(/^Convert approved recurring\s+/i, "Catalog ")
+    .replace(/^Increase\s+/i, "Increase ");
 }
 
 function urgencyLabel(
@@ -257,6 +336,96 @@ const PATH_LINE: CSSProperties = {
 const WARNING_LINE: CSSProperties = {
   ...PATH_LINE,
   color: CANVAS.BLOCKED,
+};
+
+const INSIGHT_GRID: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+  gap: 10,
+};
+
+const INSIGHT_CARD: CSSProperties = {
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  padding: 12,
+  background: "rgba(255,255,255,0.72)",
+  display: "grid",
+  gap: 8,
+  alignContent: "start",
+};
+
+const INSIGHT_TITLE: CSSProperties = {
+  margin: 0,
+  fontFamily: CANVAS.SERIF,
+  fontSize: 18,
+  lineHeight: 1.16,
+  color: CANVAS.INK,
+};
+
+const BAR_LIST: CSSProperties = {
+  display: "grid",
+  gap: 8,
+};
+
+const BAR_ROW: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(100px, 1.1fr) minmax(80px, 1fr) 52px",
+  gap: 8,
+  alignItems: "center",
+};
+
+const BAR_LABEL: CSSProperties = {
+  fontSize: 12,
+  lineHeight: 1.2,
+  color: CANVAS.INK,
+};
+
+const BAR_TRACK: CSSProperties = {
+  height: 8,
+  borderRadius: 999,
+  background: "rgba(11,31,68,0.08)",
+  overflow: "hidden",
+};
+
+const BAR_FILL: CSSProperties = {
+  display: "block",
+  height: "100%",
+  borderRadius: 999,
+  background: CANVAS.ACTIVE,
+};
+
+const BAR_VALUE: CSSProperties = {
+  textAlign: "right",
+  fontSize: 12,
+  color: CANVAS.INK,
+};
+
+const TREND_ROW: CSSProperties = {
+  minHeight: 64,
+  display: "flex",
+  alignItems: "end",
+  gap: 7,
+};
+
+const TREND_POINT: CSSProperties = {
+  display: "grid",
+  justifyItems: "center",
+  gap: 4,
+  fontSize: 10,
+  color: CANVAS.INK_MUTED,
+};
+
+const TREND_BAR: CSSProperties = {
+  width: 13,
+  borderRadius: "8px 8px 2px 2px",
+  background: CANVAS.ACTIVE,
+};
+
+const MINI_TABLE: CSSProperties = {
+  width: "100%",
+  borderCollapse: "collapse",
+  fontSize: 12,
+  color: CANVAS.INK,
 };
 
 const GRID: CSSProperties = {

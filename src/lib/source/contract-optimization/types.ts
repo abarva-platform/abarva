@@ -170,4 +170,36 @@ export interface ContractOptimizationMveProfile {
   clientToComplete: string[];
   readyForOptimization: "yes" | "conditional" | "no";
   readyReason: string;
+  visualInsights: {
+    exposureByDriver: Array<{
+      driver: string;
+      annualImpactLowUsd: number | null;
+      annualImpactHighUsd: number | null;
+      valueBasis: "evidenced" | "opportunity_to_test";
+      action: string;
+    }>;
+    invoiceVarianceTrend: Array<{
+      month: string;
+      contractedAmountUsd: number;
+      invoicedAmountUsd: number;
+      varianceUsd: number;
+      variancePct: number;
+    }>;
+    operationalPressure: Array<{
+      metric: string;
+      baseline: number;
+      current: number;
+      deltaPct: number;
+      unit: string;
+      implication: string;
+    }>;
+    staffingCoverage: Array<{
+      tower: string;
+      committedFte: number;
+      observedFte: number;
+      gapFte: number;
+      gapPct: number;
+      coverage: string;
+    }>;
+  };
 }

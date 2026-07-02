@@ -18,6 +18,10 @@ describe("ContractOptimizationProfilePanel", () => {
 
     expect(html).toContain("Contract Baseline");
     expect(html).toContain("Recommended Path");
+    expect(html).toContain("Exposure Drivers");
+    expect(html).toContain("Invoice Trend");
+    expect(html).toContain("Operational Pressure");
+    expect(html).toContain("Where value is leaking");
     expect(html).toContain("Optimization Findings");
     expect(html).toContain("Negotiation Levers");
     expect(html).toContain("Evidence Caveats");

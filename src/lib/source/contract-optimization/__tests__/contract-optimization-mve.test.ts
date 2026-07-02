@@ -117,6 +117,30 @@ describe("Source contract optimization MVE", () => {
     expect(rows.levers.every((lever) => lever.buyer_ask.length > 20)).toBe(true);
   });
 
+  it("creates deterministic visual insights for executive storytelling", () => {
+    const profile = buildContractOptimizationMveProfile(
+      buildSkyHarborAmsExistingContractInput(),
+    );
+
+    expect(profile.visualInsights.exposureByDriver.length).toBeGreaterThanOrEqual(5);
+    expect(profile.visualInsights.invoiceVarianceTrend).toHaveLength(6);
+    expect(profile.visualInsights.invoiceVarianceTrend[0]).toMatchObject({
+      month: "2026-01",
+      varianceUsd: 65_000,
+    });
+    expect(profile.visualInsights.operationalPressure.map((metric) => metric.metric)).toEqual(
+      expect.arrayContaining([
+        "Monthly AMS tickets",
+        "Reopened incidents",
+        "Emergency changes",
+      ]),
+    );
+    expect(profile.visualInsights.staffingCoverage[0]).toMatchObject({
+      tower: "Airline operations apps",
+      gapFte: 6,
+    });
+  });
+
   it("renders a CXO-readable optimization brief without unit or priority leaks", () => {
     const profile = buildContractOptimizationMveProfile(
       buildSkyHarborAmsExistingContractInput(),
@@ -126,6 +150,14 @@ describe("Source contract optimization MVE", () => {
     expect(brief).toContain("8,610 tickets");
     expect(brief).toContain("44 per month");
     expect(brief).toContain("## One-Page Executive Front Sheet");
+    expect(brief).toContain("## Strategy Consulting Exhibits");
+    expect(brief).toContain("### Exhibit 1: Exposure Bridge and Buyer Action");
+    expect(brief).toContain("### Exhibit 2: Invoice Variance Trend");
+    expect(brief).toContain("### Exhibit 3: Operational Pressure Versus Baseline");
+    expect(brief).toContain("### Exhibit 4: Staffing Coverage Reconciliation");
+    expect(brief).toContain("| Month | Contracted | Invoiced | Variance | Variance % | Trend |");
+    expect(brief).toContain("| 2026-06 | $3.2M | $3.4M | $166K | +5.2% |");
+    expect(brief).toContain("| Monthly AMS tickets | 7,420 tickets | 8,610 tickets | +16.0% |");
     expect(brief).toContain("**Recommendation:** Do not renew");
     expect(brief).toContain("**Top findings:**");
     expect(brief).toContain("**Cure notice asks:**");
