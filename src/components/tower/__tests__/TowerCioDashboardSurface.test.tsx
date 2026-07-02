@@ -709,17 +709,24 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       />,
     );
 
-    expect(screen.getByText("Portfolio Value Pack")).toBeInTheDocument();
     expect(screen.getByText("Executive operating view")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Value" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Budget" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Portfolio" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Benchmark" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Evidence" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ask aVa" })).toBeInTheDocument();
     expect(screen.queryByText("Tower · CIO command center")).not.toBeInTheDocument();
     expect(screen.queryByText(/12:00 AM/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Tuesday/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Portfolio" }));
+    expect(screen.getByText("Portfolio Value Pack")).toBeInTheDocument();
     expect(screen.getByText("Crew Recovery & Legality Modernization")).toBeInTheDocument();
     expect(screen.getByText("VP Integration")).toBeInTheDocument();
-    expect(screen.getAllByText("$28.3M").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText("$270.0M").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText("$91.8M").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText("$178.2M").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("$28.3M")).toBeInTheDocument();
+    expect(screen.getByText("$270.0M")).toBeInTheDocument();
+    expect(screen.getByText("$91.8M")).toBeInTheDocument();
+    expect(screen.getByText("$178.2M")).toBeInTheDocument();
     expect(screen.getByText("Crew legality and data readiness")).toBeInTheDocument();
     expect(screen.queryByText("cio_tower")).not.toBeInTheDocument();
   });

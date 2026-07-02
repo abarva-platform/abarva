@@ -2610,11 +2610,58 @@ function CxoTenantBenchmark({
   );
 }
 
+type CxoCommandSection =
+  | "value"
+  | "budget"
+  | "portfolio"
+  | "benchmark"
+  | "evidence"
+  | "ask";
+
+const CXO_COMMAND_SECTIONS: Array<{
+  key: CxoCommandSection;
+  label: string;
+  description: string;
+}> = [
+  {
+    key: "value",
+    label: "Value",
+    description: "Board numbers: budget, spend, promised value, measured value.",
+  },
+  {
+    key: "budget",
+    label: "Budget",
+    description: "Run/change, funded work, spend burn, and value realization.",
+  },
+  {
+    key: "portfolio",
+    label: "Portfolio",
+    description: "Programs, owners, blockers, value proof, and inspection reasons.",
+  },
+  {
+    key: "benchmark",
+    label: "Benchmark",
+    description: "How this portfolio compares with peer technology portfolios.",
+  },
+  {
+    key: "evidence",
+    label: "Evidence",
+    description: "Source coverage, confidence, and where to inspect the numbers.",
+  },
+  {
+    key: "ask",
+    label: "Ask aVa",
+    description: "Use the same governed measure that drives the dashboard.",
+  },
+];
+
 function CxoGovernedCommandCenter({
   model,
 }: {
   model: CioTowerCxoViewModel;
 }) {
+  const [activeSection, setActiveSection] =
+    useState<CxoCommandSection>("value");
   const commandCards = [
     "total_it_budget_fy26",
     "total_it_budget_fy25_baseline",
@@ -2628,6 +2675,9 @@ function CxoGovernedCommandCenter({
     .map((measureKey) => findCxoCard(model.cards, measureKey))
     .filter((card): card is CioTowerCxoMeasureCard => Boolean(card));
   const parityCard = model.cards.find((card) => card.measureKey === model.parityMeasureKey);
+  const activeSectionCopy = CXO_COMMAND_SECTIONS.find(
+    (section) => section.key === activeSection,
+  );
 
   return (
     <div style={{ padding: "18px 32px 34px" }}>
@@ -2672,6 +2722,57 @@ function CxoGovernedCommandCenter({
         </p>
       </section>
 
+      <section
+        aria-label="Tower command center sections"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 16,
+          marginBottom: 16,
+          borderBottom: `1px solid ${T.RULE_STRONG}`,
+          paddingBottom: 12,
+        }}
+      >
+        <div
+          style={{
+            color: T.INK_2,
+            fontSize: 12.5,
+            lineHeight: 1.35,
+            maxWidth: 540,
+          }}
+        >
+          {activeSectionCopy?.description}
+        </div>
+        <div style={{ display: "flex", gap: 7, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          {CXO_COMMAND_SECTIONS.map((section) => {
+            const selected = section.key === activeSection;
+            return (
+              <button
+                key={section.key}
+                type="button"
+                onClick={() => setActiveSection(section.key)}
+                aria-pressed={selected}
+                style={{
+                  border: `1px solid ${selected ? T.INK : T.RULE_STRONG}`,
+                  borderRadius: 999,
+                  background: selected ? T.INK : "#fff",
+                  color: selected ? "#fff" : T.INK_2,
+                  padding: "6px 12px",
+                  fontSize: 12,
+                  fontWeight: 760,
+                  fontFamily: T.SANS,
+                  cursor: "pointer",
+                }}
+              >
+                {section.label}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {activeSection === "value" ? (
       <section style={{ marginBottom: 20 }}>
         <div style={{ fontFamily: T.MONO, fontSize: 9.5, letterSpacing: "1.5px", textTransform: "uppercase", color: T.GOLD, fontWeight: 900, marginBottom: 9 }}>
           Value Command Center
@@ -2680,7 +2781,9 @@ function CxoGovernedCommandCenter({
           {commandCards.map((card) => <CxoGovernedMeasureCard key={card.measureKey} card={card} />)}
         </div>
       </section>
+      ) : null}
 
+      {activeSection === "budget" ? (
       <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
         <CioPanel eyebrow="Budget Mix" title="Where the money is committed.">
           <CxoBudgetMix cards={model.cards} />
@@ -2689,15 +2792,27 @@ function CxoGovernedCommandCenter({
         <CioPanel eyebrow="Value Realization" title="Whether the portfolio is paying back.">
           <CxoValueRealization cards={model.cards} />
         </CioPanel>
+      </section>
+      ) : null}
 
+      {activeSection === "portfolio" ? (
+      <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
         <CioPanel eyebrow="Portfolio Value Pack" title="Which funded programs have value proof, owners, blockers, and gaps.">
           <CxoPortfolioValuePackTable rows={model.portfolioValueRows} />
         </CioPanel>
+      </section>
+      ) : null}
 
+      {activeSection === "benchmark" ? (
+      <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
         <CioPanel eyebrow="Tenant Benchmark" title="How this portfolio compares with peers.">
           <CxoTenantBenchmark model={model} />
         </CioPanel>
+      </section>
+      ) : null}
 
+      {activeSection === "evidence" ? (
+      <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
         <CioPanel eyebrow="Evidence and Trust" title="Where leadership can inspect the numbers.">
           <CxoGovernedTable
             rows={model.trustRows}
@@ -2706,7 +2821,9 @@ function CxoGovernedCommandCenter({
           />
         </CioPanel>
       </section>
+      ) : null}
 
+      {activeSection === "ask" ? (
       <section
         data-cio-tower-parity-measure-key={model.parityMeasureKey}
         data-cio-tower-parity-dashboard-value={parityCard?.displayValue ?? "gap"}
@@ -2734,6 +2851,7 @@ function CxoGovernedCommandCenter({
           </div>
         ) : null}
       </section>
+      ) : null}
     </div>
   );
 }
