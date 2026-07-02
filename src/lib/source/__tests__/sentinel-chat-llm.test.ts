@@ -83,8 +83,6 @@ const fallbackResponse = {
   generatedAt: "2026-06-04T00:00:00.000Z",
   noModel: true,
   answer: "Deterministic fallback answer.",
-  message: "Deterministic fallback answer.",
-  text: "Deterministic fallback answer.",
   answerStatus: "answered",
   contextScope: "event",
   contextQuality: null,
