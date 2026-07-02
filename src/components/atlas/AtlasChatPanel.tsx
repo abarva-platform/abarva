@@ -88,6 +88,8 @@ export interface AtlasChatPanelProps {
   defaultMode?: DockMode;
   /** Preserve already-governed real tenant labels instead of applying demo-safe aliases. */
   preserveVisibleText?: boolean;
+  /** Keep suggested questions visible when the surface has an opening advisor turn. */
+  keepSuggestedActionsVisible?: boolean;
 }
 
 const ATLAS_THINKING_ID = "atlas-thinking-transient";
@@ -112,6 +114,7 @@ export function AtlasChatPanel({
   minLeftPx = 320,
   defaultMode = "side-rail",
   preserveVisibleText = false,
+  keepSuggestedActionsVisible = false,
 }: AtlasChatPanelProps) {
   // Translate legacy AtlasMessage[] → AgentDock ChatMessage[].
   // Append a transient "thinking" turn while the caller is awaiting the
@@ -160,6 +163,7 @@ export function AtlasChatPanel({
       preserveVisibleText={preserveVisibleText}
       thread={thread}
       suggestedActions={suggestedActions}
+      keepSuggestedActionsVisible={keepSuggestedActionsVisible}
       onMessage={(text, attachments) => onSubmit(text, attachments)}
       workspace={workspace}
     />
