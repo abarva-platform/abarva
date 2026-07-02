@@ -28,7 +28,9 @@ Source contract optimization answers now respond to the actual executive questio
 ## Changes Included
 
 - `src/lib/source/source-answer-engine.ts`: adds the contract optimization answer builder.
+- `src/lib/source/source-answer-engine.ts`: tightens contract optimization finding selection so invoice, SLA, staffing, change-order, and workload findings do not collapse into duplicate prose.
 - `src/lib/source/__tests__/source-answer-engine.test.ts`: adds regression coverage for renew/rebid, cure notice, and missing evidence questions.
+- `src/lib/source/__tests__/source-answer-engine.test.ts`: adds regression coverage that user-facing answers do not leak the internal `Contract optimization finding` prefix.
 - `src/components/source/canvas/UniversalCanvasShell.tsx`: normalizes SkyHarbor Source event display labels.
 - `src/components/source/PersistentNexusPanel.tsx`: renders the persistent Source assistant dock as `aVa`.
 
