@@ -915,15 +915,22 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       expect(screen.getAllByText("Loyalty").length).toBeGreaterThan(0);
       expect(screen.getByText(/Value vs\. readiness/i)).toBeInTheDocument();
       expect(screen.getByText("Funding sequence")).toBeInTheDocument();
-      const researchLabels = Array.from(
-        document.querySelectorAll(".researchPointLabel"),
-      ).map((node) => node.textContent);
-      expect(researchLabels).toContain("HR AI operating model...");
-      expect(researchLabels).not.toContain(
-        "HR AI operating model and shared services transformation",
+      const plottedMarkers = Array.from(
+        document.querySelectorAll(".researchDot"),
+      ).map((node) => node.textContent?.trim());
+      expect(plottedMarkers).toEqual(["1", "2"]);
+      expect(document.querySelector(".chartKey")).toBeInTheDocument();
+      expect(
+        screen.getAllByText(
+          "HR AI operating model and shared services transformation",
+        ).length,
+      ).toBeGreaterThan(0);
+      expect(document.querySelector(".researchPoint")).not.toHaveAttribute(
+        "data-label-placement",
       );
       expect(document.querySelector(".researchPoint")).toHaveAttribute(
-        "data-label-placement",
+        "aria-label",
+        expect.stringContaining("1."),
       );
       expect(screen.getByText("Value 8")).toBeInTheDocument();
       expect(screen.getByText("Ready 8")).toBeInTheDocument();
