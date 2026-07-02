@@ -447,6 +447,24 @@ describe("cio tower answer contract", () => {
     );
   });
 
+  it("persists fallback route families through live registry-backed contract keys", () => {
+    expect(
+      __cioTowerAnswerTestHooks.persistableTraceContractKey(
+        "tower_vendor_contract_gap",
+      ),
+    ).toBe("tower_inspect_this_week");
+    expect(
+      __cioTowerAnswerTestHooks.persistableTraceContractKey(
+        "tower_evidence_trust",
+      ),
+    ).toBe("tower_weak_value_evidence");
+    expect(
+      __cioTowerAnswerTestHooks.persistableTraceContractKey(
+        "tower_total_it_spend",
+      ),
+    ).toBe("tower_total_it_spend");
+  });
+
   it("asks Claude for a compact table when an IT budget question requests each slice", () => {
     const prompt = buildCioTowerClaudePrompt(
       context({
