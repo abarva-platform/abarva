@@ -85,10 +85,10 @@ describe("Industrial CIO back-office ask source", () => {
     expect(addendum).toContain(
       "Decision, Industry Insights, Chart, Table, and Evidence",
     );
-    expect(addendum).toContain("investmentSequencingMap");
-    expect(addendum).toContain("valueReadinessMatrix");
-    expect(addendum).toContain("gateToValueRoadmap");
-    expect(addendum).toContain("proofBoundary");
+    expect(addendum).toContain("executive-canvas-sequencing");
+    expect(addendum).toContain("value-readiness-matrix");
+    expect(addendum).toContain("gate-to-value-roadmap");
+    expect(addendum).toContain("proof-boundary-card");
     expect(addendum).toContain("include initiative owner and gate");
     expect(addendum).not.toContain("When useful");
   });
@@ -103,9 +103,9 @@ describe("Industrial CIO back-office ask source", () => {
 
     expect(extracted.visibleContent).toBe("");
     expect(extracted.payloads[0]).toMatchObject({
-      canvasType: "investmentSequencingMap",
+      canvasType: "executive-canvas-sequencing",
       title: "CIO AI & Automation Sequencing — Industrial Demo",
-      columns: [
+      lanes: [
         { label: "Scale now" },
         { label: "Certify then scale" },
         { label: "Fund readiness" },
@@ -131,7 +131,7 @@ describe("Industrial CIO back-office ask source", () => {
     const roadmap = extractExecutiveCanvasPayloads(roadmapBlock).payloads[0];
 
     expect(matrix).toMatchObject({
-      canvasType: "valueReadinessMatrix",
+      canvasType: "value-readiness-matrix",
       title: "Shared Services AI Value / Readiness Map — Industrial Demo",
       items: expect.arrayContaining([
         expect.objectContaining({
@@ -141,7 +141,7 @@ describe("Industrial CIO back-office ask source", () => {
       ]),
     });
     expect(roadmap).toMatchObject({
-      canvasType: "gateToValueRoadmap",
+      canvasType: "gate-to-value-roadmap",
       title: "Shared Services AI Gate-to-Value Roadmap — Industrial Demo",
       gates: expect.arrayContaining([
         expect.objectContaining({

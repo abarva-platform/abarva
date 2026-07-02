@@ -769,7 +769,7 @@ ACTIVE INTELLIGENCE CANVAS RULES
         "",
         "NATIVE EXECUTIVE CANVAS REPAIR:",
         "Return the same final answer, but add exactly one governed `abarva-canvas` fenced JSON block inside the most relevant Chart, Table, Decision, or Evidence tab.",
-        "Use one supported canvasType from the system prompt: investmentSequencingMap, valueReadinessMatrix, gateToValueRoadmap, or proofBoundary.",
+        "Use one supported canvasType from the system prompt: executive-canvas-sequencing, value-readiness-matrix, gate-to-value-roadmap, or proof-boundary-card.",
         "Do not write HTML, SVG, CSS, arbitrary JSON, or additional machine payloads.",
         "Preserve the main answer, existing recommendations, tenant facts, evidence boundaries, and any compact Markdown table unless the native exhibit makes the table redundant.",
         "The fenced block is the only allowed JSON and must be valid JSON. Return only the final user-facing answer.",
@@ -1035,8 +1035,10 @@ function buildFallbackTabBlock(
 ): string {
   if (label === "Decision") {
     const firstSentence =
-      mainAnswer.split(/(?<=[.!?])\s+/).find(Boolean)?.trim() ??
-      "Sequence the work by value, readiness, and proof.";
+      mainAnswer
+        .split(/(?<=[.!?])\s+/)
+        .find(Boolean)
+        ?.trim() ?? "Sequence the work by value, readiness, and proof.";
     return [
       "<<<TAB: Decision | grounding: tenant-evidence>>>",
       `Executive choice: ${firstSentence}`,
@@ -1058,8 +1060,9 @@ function buildFallbackTabBlock(
         nativeCanvas,
       ].join("\n");
     }
-    const tenantCount = args.sources.filter((source) => source.type === "TENANT")
-      .length;
+    const tenantCount = args.sources.filter(
+      (source) => source.type === "TENANT",
+    ).length;
     const patternCount = args.sources.length - tenantCount;
     return [
       "<<<TAB: Chart | grounding: mixed>>>",
@@ -1081,25 +1084,27 @@ function buildFallbackTabBlock(
       "<<<TAB: Table | grounding: tenant-evidence>>>",
       "| Decision support | Grounding |",
       "|---|---|",
-      ...(rows.length > 0
-        ? rows
-        : ["| Evidence packet | Tenant evidence |"]),
+      ...(rows.length > 0 ? rows : ["| Evidence packet | Tenant evidence |"]),
     ].join("\n");
   }
   return [
     "<<<TAB: Evidence | grounding: tenant-evidence>>>",
-    `Tenant facts used: ${args.sources
-      .filter((source) => source.type === "TENANT")
-      .slice(0, 3)
-      .map((source) => source.name || source.id)
-      .filter(Boolean)
-      .join("; ") || "tenant evidence packet"}.`,
-    `Industry or pattern context used: ${args.sources
-      .filter((source) => source.type !== "TENANT")
-      .slice(0, 3)
-      .map((source) => source.name || source.id)
-      .filter(Boolean)
-      .join("; ") || "none used"}.`,
+    `Tenant facts used: ${
+      args.sources
+        .filter((source) => source.type === "TENANT")
+        .slice(0, 3)
+        .map((source) => source.name || source.id)
+        .filter(Boolean)
+        .join("; ") || "tenant evidence packet"
+    }.`,
+    `Industry or pattern context used: ${
+      args.sources
+        .filter((source) => source.type !== "TENANT")
+        .slice(0, 3)
+        .map((source) => source.name || source.id)
+        .filter(Boolean)
+        .join("; ") || "none used"
+    }.`,
     "Validation point: confirm the accountable owner, baseline metric, and proof gate before using the answer as board-grade guidance.",
   ].join("\n");
 }

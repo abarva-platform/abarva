@@ -163,7 +163,7 @@ export function buildIndustrialCioBackofficePromptAddendum(
     "Use Treasury and Finance as the Phase 1 proof unless the user asks to explore HR or Legal. Explain that HR and Legal need source evidence before scale recommendations.",
     "Do not invent exact ROI, current cycle time, headcount reduction, dates, legal obligations, HR volumes, contract counts, or finance-approved value. If precision is missing, ask for values or permission to use planning assumptions.",
     "Author all right-canvas tabs using the current marker grammar: Decision, Industry Insights, Chart, Table, and Evidence. Put the governed native exhibit in the Chart tab using the abarva-canvas fenced JSON contract; do not output raw JSON outside the fenced block and do not write HTML.",
-    "Canvas selection for the Morgan Street demo: funding or prioritization questions should use investmentSequencingMap; portfolio tradeoff questions should use valueReadinessMatrix; 'what has to happen first' or dependency questions should use gateToValueRoadmap; trust, governance, signoff, or missing-evidence questions should use proofBoundary.",
+    "Canvas selection for the Morgan Street demo: funding or prioritization questions should use executive-canvas-sequencing; portfolio tradeoff questions should use value-readiness-matrix; 'what has to happen first' or dependency questions should use gate-to-value-roadmap; trust, governance, signoff, or missing-evidence questions should use proof-boundary-card.",
     "For sequencing or matrix exhibits, include initiative owner and gate when known: CFO/Treasurer for Treasury and Kyriba evidence, Controller/Finance Ops for close and reporting evidence, CHRO or General Counsel only as discovery owners until HR/Legal source evidence is loaded.",
     "End with a branch choice only when it helps the user continue: use planning assumptions, enter current values, start Treasury + Finance, add HR/Legal discovery, or create the office blueprint.",
   ].join("\n");
@@ -182,9 +182,9 @@ export function buildIndustrialCioBackofficeNativeCanvasBlock(
   const packet = buildIndustrialCioBackofficePacket();
   const [treasury, finance, serviceDesk, hrLegal] = packet.lighthouseUseCases;
   const canvasIntent = industrialCanvasIntent(query);
-  if (canvasIntent === "valueReadinessMatrix") {
+  if (canvasIntent === "value-readiness-matrix") {
     return wrapIndustrialCanvasPayload({
-      canvasType: "valueReadinessMatrix",
+      canvasType: "value-readiness-matrix",
       title: "Shared Services AI Value / Readiness Map — Industrial Demo",
       items: [
         {
@@ -249,9 +249,9 @@ export function buildIndustrialCioBackofficeNativeCanvasBlock(
       },
     });
   }
-  if (canvasIntent === "gateToValueRoadmap") {
+  if (canvasIntent === "gate-to-value-roadmap") {
     return wrapIndustrialCanvasPayload({
-      canvasType: "gateToValueRoadmap",
+      canvasType: "gate-to-value-roadmap",
       title: "Shared Services AI Gate-to-Value Roadmap — Industrial Demo",
       gates: [
         {
@@ -301,9 +301,9 @@ export function buildIndustrialCioBackofficeNativeCanvasBlock(
       },
     });
   }
-  if (canvasIntent === "proofBoundary") {
+  if (canvasIntent === "proof-boundary-card") {
     return wrapIndustrialCanvasPayload({
-      canvasType: "proofBoundary",
+      canvasType: "proof-boundary-card",
       title: "Shared Services AI Proof Boundary — Industrial Demo",
       proofBoundary: {
         known: [
@@ -318,9 +318,9 @@ export function buildIndustrialCioBackofficeNativeCanvasBlock(
     });
   }
   const payload = {
-    canvasType: "investmentSequencingMap",
+    canvasType: "executive-canvas-sequencing",
     title: "CIO AI & Automation Sequencing — Industrial Demo",
-    columns: [
+    lanes: [
       {
         label: "Scale now",
         items: [
@@ -422,32 +422,32 @@ export function buildIndustrialCioBackofficeNativeCanvasBlock(
 function industrialCanvasIntent(
   query: string,
 ):
-  | "investmentSequencingMap"
-  | "valueReadinessMatrix"
-  | "gateToValueRoadmap"
-  | "proofBoundary" {
+  | "executive-canvas-sequencing"
+  | "value-readiness-matrix"
+  | "gate-to-value-roadmap"
+  | "proof-boundary-card" {
   if (
     /\b(?:what\s+has\s+to\s+happen\s+first|before|prerequisite|dependency|gate|roadmap|unlock)\b/i.test(
       query,
     )
   ) {
-    return "gateToValueRoadmap";
+    return "gate-to-value-roadmap";
   }
   if (
     /\b(?:portfolio|tradeoff|trade-off|value\s*(?:\/|vs\.?|versus)\s*readiness|readiness|high\s+value|not\s+ready)\b/i.test(
       query,
     )
   ) {
-    return "valueReadinessMatrix";
+    return "value-readiness-matrix";
   }
   if (
     /\b(?:trust|governance|proof|evidence\s+quality|assumption|missing|signoff|sign-off|validate|validated)\b/i.test(
       query,
     )
   ) {
-    return "proofBoundary";
+    return "proof-boundary-card";
   }
-  return "investmentSequencingMap";
+  return "executive-canvas-sequencing";
 }
 
 function wrapIndustrialCanvasPayload(payload: object): string {

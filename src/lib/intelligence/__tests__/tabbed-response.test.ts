@@ -170,25 +170,25 @@ describe("Intelligence tabbed response parser", () => {
   it("keeps Chart tabs that carry a governed executive canvas payload", () => {
     expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain("abarva-canvas");
     expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
-      "investmentSequencingMap",
+      "executive-canvas-sequencing",
     );
     expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
-      "valueReadinessMatrix",
+      "value-readiness-matrix",
     );
     expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
       "For strategic prioritization",
     );
     expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
-      "funding, prioritization, scale/hold/stop, or sequencing question -> investmentSequencingMap",
+      "funding, prioritization, scale/hold/stop, or sequencing question -> executive-canvas-sequencing",
     );
     expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
-      "portfolio tradeoff, value vs readiness, risk vs value, or where-to-place-bets question -> valueReadinessMatrix",
+      "portfolio tradeoff, value vs readiness, risk vs value, or where-to-place-bets question -> value-readiness-matrix",
     );
     expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
-      '"what has to happen first", prerequisite, dependency, gate, roadmap, or unlock-value question -> gateToValueRoadmap',
+      '"what has to happen first", prerequisite, dependency, gate, roadmap, or unlock-value question -> gate-to-value-roadmap',
     );
     expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
-      "trust, governance, proof, evidence quality, assumption, missing-data, or signoff question -> proofBoundary",
+      "trust, governance, proof, evidence quality, assumption, missing-data, or signoff question -> proof-boundary-card",
     );
     expect(INTELLIGENCE_TABBED_OUTPUT_CONTRACT).toContain(
       "Do not write HTML, SVG, CSS, or arbitrary chart code",
@@ -203,11 +203,11 @@ describe("Intelligence tabbed response parser", () => {
         "",
         "```abarva-canvas",
         JSON.stringify({
-          canvasType: "investmentSequencingMap",
+          canvasType: "executive-canvas-sequencing",
           title: "AI funding sequence",
-          columns: [
-            { label: "Scale now", items: ["Loyalty"] },
-            { label: "Fund readiness", items: ["IROPS"] },
+          lanes: [
+            { label: "Scale now", items: [{ label: "Loyalty" }] },
+            { label: "Fund readiness", items: [{ label: "IROPS" }] },
           ],
         }),
         "```",
@@ -228,7 +228,7 @@ describe("Intelligence tabbed response parser", () => {
       "",
       "```abarva-canvas",
       JSON.stringify({
-        exhibit: "investmentSequencingMap",
+        exhibit: "executive-canvas-sequencing",
         title: "Wrong schema",
         waves: [{ wave: "Scale", initiatives: ["Kyriba"] }],
       }),

@@ -1,0 +1,25 @@
+{
+  "canvasType": "gate-to-value-roadmap",
+  "title": "Move gate-to-value roadmap",
+  "gates": [
+    {
+      "label": "Confirm accountable owner",
+      "owner": "Executive sponsor",
+      "dependency": "Decision owner and funding authority",
+      "valueUnlocked": "Move can enter governed execution",
+      "status": "Gate 1"
+    },
+    {
+      "label": "Certify proof package",
+      "owner": "Program lead",
+      "dependency": "Evidence, baseline, and risk owner",
+      "valueUnlocked": "Value claim becomes execution-grade",
+      "status": "Gate 2"
+    }
+  ],
+  "proofBoundary": {
+    "known": ["The move has an explicit sponsor and decision path."],
+    "missing": ["Signed baseline and risk owner evidence."],
+    "decisionRequired": "Approve the proof package before committing scale capital."
+  }
+}
