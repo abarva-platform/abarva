@@ -271,6 +271,20 @@ describe("Ask Intelligence guardrails", () => {
       );
     });
 
+    it("contains a final mandatory-canvas fallback before old prose sanitization", () => {
+      expect(synthesizerCode).toContain(
+        "ensureMandatoryCompanionCanvasFallback",
+      );
+      expect(synthesizerCode).toMatch(
+        /ensureMandatoryCompanionCanvasFallback\(text,[\s\S]*?args\.onModelOutput/,
+      );
+      expect(synthesizerCode).toMatch(
+        /const\s+tabbedResponse\s*=\s*parseIntelligenceTabbedResponse\(text\);[\s\S]*?sanitizeAskSynthesis/,
+      );
+      expect(synthesizerCode).toContain("cleanUntabbedCanvasMainAnswer");
+      expect(synthesizerCode).toContain("buildFallbackNativeCanvasBlock");
+    });
+
     it("repairs session-history wording before any active Ask synthesis output is rendered", () => {
       expect(synthesizerCode).toContain("SESSION_CONTEXT_LANGUAGE_RE");
       expect(synthesizerCode).toContain("STANDALONE ANSWER REPAIR");

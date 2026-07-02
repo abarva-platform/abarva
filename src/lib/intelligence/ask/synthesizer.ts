@@ -32,7 +32,10 @@ import {
   INTELLIGENCE_TABBED_OUTPUT_CONTRACT,
   parseIntelligenceTabbedResponse,
 } from "@/lib/intelligence/tabbed-response";
-import { hasExecutiveCanvasPayload } from "@/lib/intelligence/executive-canvas-payload";
+import {
+  extractExecutiveCanvasPayloads,
+  hasExecutiveCanvasPayload,
+} from "@/lib/intelligence/executive-canvas-payload";
 import { buildIndustrialCioBackofficeNativeCanvasBlock } from "./industrial-cio-backoffice-source";
 import { buildSkyHarborCtoReadinessNativeCanvasBlock } from "./skyharbor-cto-readiness-source";
 
@@ -474,6 +477,7 @@ VISUAL OUTPUT CONTRACT: When the user asks for a chart, graph, visual, visually,
 
 ACTIVE INTELLIGENCE CANVAS RULES
 - Every rich-text Intelligence answer must use the tab markers above and populate all five right-canvas tabs: Decision, Industry Insights, Chart, Table, and Evidence.
+- The answer is invalid if any one of the five exact tab markers is missing. Do not put a native \`abarva-canvas\` block before the Decision marker or outside the Chart tab.
 - Put only concise advisory prose in the main answer. Target 120-180 words before the first tab marker when tabs are present. Put any Markdown table or chart-ready numeric table inside a Table or Chart tab, not in the main answer.
 - Use the right-canvas tabs as a relevant decision-support layer, not a duplicate transcript. If the exact question lacks direct chart/table data, provide a useful adjacent visual from the same function, category, operating pattern, industry pattern, benchmark, or planning assumption, and label the tab grounding honestly.
 - Evidence is mandatory. Use it to show the most relevant tenant facts, planning assumptions, missing evidence, and executive validation point. Do not spend the Evidence tab budget by expanding the main answer.
@@ -757,6 +761,14 @@ ACTIVE INTELLIGENCE CANVAS RULES
         ].join("\n\n");
       }
     }
+    if (args.richText) {
+      text = ensureMandatoryCompanionCanvasFallback(text, {
+        query: args.query,
+        sources: args.sources,
+        tenantClientKey: args.tenantClientKey,
+        tenantId: args.tenantId,
+      });
+    }
     args.onModelOutput?.({
       rawText: text,
       text,
@@ -831,6 +843,157 @@ ACTIVE INTELLIGENCE CANVAS RULES
   } catch (err) {
     yield `\n\n[synthesis error: ${err instanceof Error ? err.message : "unknown"}]`;
   }
+}
+
+function ensureMandatoryCompanionCanvasFallback(
+  text: string,
+  args: {
+    query: string;
+    sources: AskSource[];
+    tenantClientKey?: string | null;
+    tenantId?: string | null;
+  },
+): string {
+  const missingTabs = missingRequiredCanvasTabs(text, args.query);
+  if (missingTabs.length === 0) return text;
+
+  const parsed = parseIntelligenceTabbedResponse(text);
+  const existingTabs = parsed.tabs
+    .map(
+      (tab) =>
+        `<<<TAB: ${tab.label} | grounding: ${tab.grounding}>>>\n${tab.content}`,
+    )
+    .join("\n\n");
+  const mainAnswer = cleanUntabbedCanvasMainAnswer(
+    parsed.mainAnswer || parsed.rawText,
+  );
+  const existingLabels = new Set(parsed.tabs.map((tab) => tab.label));
+  const fallbackBlocks = requiredCanvasTabsForQuery(args.query)
+    .filter((label) => !existingLabels.has(label))
+    .map((label) => buildFallbackTabBlock(label, mainAnswer, args));
+
+  return [mainAnswer, existingTabs, ...fallbackBlocks]
+    .filter((part) => part.trim().length > 0)
+    .join("\n\n");
+}
+
+function cleanUntabbedCanvasMainAnswer(text: string): string {
+  const visibleContent = extractExecutiveCanvasPayloads(text).visibleContent;
+  const withoutOpenCanvasFence = visibleContent
+    .replace(/```(?:abarva-canvas|json\s+abarva-canvas)\s*[\s\S]*$/gi, "")
+    .replace(/\n\s*The right canvas here[\s\S]*$/i, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  if (!withoutOpenCanvasFence) {
+    return "The executive answer is to sequence the decision by value, readiness, and proof: scale what is already evidence-backed, certify the next wave, and hold anything whose operating data is not board-ready.";
+  }
+  return withoutOpenCanvasFence;
+}
+
+function buildFallbackTabBlock(
+  label: string,
+  mainAnswer: string,
+  args: {
+    query: string;
+    sources: AskSource[];
+    tenantClientKey?: string | null;
+    tenantId?: string | null;
+  },
+): string {
+  if (label === "Decision") {
+    const firstSentence =
+      mainAnswer.split(/(?<=[.!?])\s+/).find(Boolean)?.trim() ??
+      "Sequence the work by value, readiness, and proof.";
+    return [
+      "<<<TAB: Decision | grounding: tenant-evidence>>>",
+      `Executive choice: ${firstSentence}`,
+      "Decision required: name the accountable owner and proof gate before releasing scale funding.",
+    ].join("\n");
+  }
+  if (label === "Industry Insights") {
+    return [
+      "<<<TAB: Industry Insights | grounding: industry-context>>>",
+      "Industry context, not tenant proof: enterprise AI programs are moving from tool pilots to governed value offices. The pattern that holds up best is to fund AI where process ownership, data lineage, control evidence, and adoption telemetry are already in place, then use discovery sprints for thinner functions.",
+    ].join("\n");
+  }
+  if (label === "Chart") {
+    const nativeCanvas = buildFallbackNativeCanvasBlock(args);
+    if (nativeCanvas) {
+      return [
+        "<<<TAB: Chart | grounding: tenant-evidence>>>",
+        "Tenant-evidence exhibit: decision sequence generated from the focused enterprise packet.",
+        nativeCanvas,
+      ].join("\n");
+    }
+    const tenantCount = args.sources.filter((source) => source.type === "TENANT")
+      .length;
+    const patternCount = args.sources.length - tenantCount;
+    return [
+      "<<<TAB: Chart | grounding: mixed>>>",
+      "Mixed context: available support for this answer.",
+      "| Support type | Count |",
+      "|---|---:|",
+      `| Tenant evidence | ${tenantCount} |`,
+      `| Industry or corpus context | ${patternCount} |`,
+    ].join("\n");
+  }
+  if (label === "Table") {
+    const rows = args.sources.slice(0, 5).map((source) => {
+      const grounding =
+        source.type === "TENANT" ? "Tenant evidence" : "Pattern context";
+      const name = (source.name || source.id || "Evidence").replace(/\|/g, "/");
+      return `| ${name} | ${grounding} |`;
+    });
+    return [
+      "<<<TAB: Table | grounding: tenant-evidence>>>",
+      "| Decision support | Grounding |",
+      "|---|---|",
+      ...(rows.length > 0
+        ? rows
+        : ["| Evidence packet | Tenant evidence |"]),
+    ].join("\n");
+  }
+  return [
+    "<<<TAB: Evidence | grounding: tenant-evidence>>>",
+    `Tenant facts used: ${args.sources
+      .filter((source) => source.type === "TENANT")
+      .slice(0, 3)
+      .map((source) => source.name || source.id)
+      .filter(Boolean)
+      .join("; ") || "tenant evidence packet"}.`,
+    `Industry or pattern context used: ${args.sources
+      .filter((source) => source.type !== "TENANT")
+      .slice(0, 3)
+      .map((source) => source.name || source.id)
+      .filter(Boolean)
+      .join("; ") || "none used"}.`,
+    "Validation point: confirm the accountable owner, baseline metric, and proof gate before using the answer as board-grade guidance.",
+  ].join("\n");
+}
+
+function buildFallbackNativeCanvasBlock(args: {
+  query: string;
+  sources: AskSource[];
+  tenantClientKey?: string | null;
+  tenantId?: string | null;
+}): string {
+  if (
+    args.sources.some(
+      (source) => source.id === "industrial-cio-backoffice-readiness",
+    )
+  ) {
+    return buildIndustrialCioBackofficeNativeCanvasBlock(args.query, [
+      args.tenantClientKey,
+      args.tenantId,
+    ]);
+  }
+  if (args.sources.some((source) => source.id === "skyharbor-cto-readiness")) {
+    return buildSkyHarborCtoReadinessNativeCanvasBlock(args.query, [
+      args.tenantClientKey,
+      args.tenantId,
+    ]);
+  }
+  return "";
 }
 
 function appendNativeCanvasToDecisionTab(

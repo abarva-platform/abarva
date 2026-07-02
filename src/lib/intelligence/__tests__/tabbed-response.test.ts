@@ -3,6 +3,7 @@ import {
   INTELLIGENCE_TABBED_OUTPUT_CONTRACT,
   parseIntelligenceTabbedResponse,
 } from "@/lib/intelligence/tabbed-response";
+import { hasExecutiveCanvasPayload } from "@/lib/intelligence/executive-canvas-payload";
 
 const skyharborIropsRaw = [
   "SkyHarbor should make IROPS recovery decisioning the next AI investment, but only through a governed readiness gate. It is the largest operational value pool in the packet, and the decision is not to buy autonomy; it is to fund decision support where certified operating data, crew legality, and passenger reaccommodation controls are already clear.",
@@ -219,5 +220,31 @@ describe("Intelligence tabbed response parser", () => {
       grounding: "tenant-evidence",
     });
     expect(parsed.tabs[0]?.content).toContain("```abarva-canvas");
+  });
+
+  it("does not treat malformed abarva-canvas fences as valid native payloads", () => {
+    const malformed = [
+      "The answer should stay visible as prose.",
+      "",
+      "```abarva-canvas",
+      JSON.stringify({
+        exhibit: "investmentSequencingMap",
+        title: "Wrong schema",
+        waves: [{ wave: "Scale", initiatives: ["Kyriba"] }],
+      }),
+      "```",
+    ].join("\n");
+
+    expect(hasExecutiveCanvasPayload(malformed)).toBe(false);
+    const parsed = parseIntelligenceTabbedResponse(
+      [
+        "The answer should stay visible as prose.",
+        "",
+        "<<<TAB: Chart | grounding: tenant-evidence>>>",
+        "Tenant exhibit.",
+        malformed,
+      ].join("\n"),
+    );
+    expect(parsed.tabs).toHaveLength(0);
   });
 });

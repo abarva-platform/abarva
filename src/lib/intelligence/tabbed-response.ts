@@ -46,12 +46,15 @@ Return one main answer, then mandatory right-canvas companion cards using the ex
 Main answer:
 - Put the executive answer before any tab marker.
 - Do not include tables in the main answer.
+- Do not put an \`abarva-canvas\` fenced block in the main answer. A native canvas block is valid only inside the Chart tab.
 - Do not expose raw IDs, field names, debug labels, or implementation terms.
 - Keep the main answer concise and decision-led. It should not duplicate the right-canvas tabs.
 
 Companion canvas:
 - The renderer places each marked section as a separate card on the right side. It does not rewrite your prose, tables, or chart data.
-- Always provide all five companion cards for Intelligence answers. Do not omit a card because the question is broad, narrative, or lacks perfect tenant data.
+- Always provide all five companion cards for Intelligence answers. The response is invalid unless it contains all five exact \`<<<TAB: ...>>>\` markers.
+- Do not describe which canvas you chose in the main answer. Put the chosen exhibit or chart data inside the Chart tab.
+- Do not omit a card because the question is broad, narrative, or lacks perfect tenant data.
 - The right canvas should add decision support, not duplicate the main answer. Bring useful adjacent views: exact tenant metric when available; otherwise a relevant function, category, industry, corpus-pattern, benchmark, peer-pattern, risk, value-model, assumption, or planning view with honest grounding.
 - Use these exact start markers, in this order:
   <<<TAB: Decision | grounding: tenant-evidence>>>
