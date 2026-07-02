@@ -61,6 +61,10 @@ becoming a generic document browser.
   and performs participant seeding after the Source event/profile transaction
   commits so a convenience grant mismatch cannot roll back the Source event and
   contract optimization evidence.
+- Tenant-alias read/access hardening for Source: persisted Source event lookup
+  and participant grants now resolve through the shared tenant alias set
+  (`skyharbor` / `skyharbor-air`, etc.) so canonical app keys and production
+  data-plane tenant keys do not split the same client workspace.
 
 ## QA / Validation
 
@@ -83,6 +87,8 @@ becoming a generic document browser.
 - PASS: participant-grant hardening removes the stale `clients.key` lookup that
   failed in the live private operator run and keeps optional participant seeding
   outside the critical evidence transaction.
+- PASS: Source tenant-alias hardening keeps lookup and access checks inside the
+  same tenant alias family rather than requiring one literal client-key spelling.
 - BLOCKED: full-repo TypeScript with large heap reached existing dependency
   declaration gaps outside this slice (`js-yaml`,
   `@azure-rest/ai-document-intelligence`, `@axe-core/playwright`).

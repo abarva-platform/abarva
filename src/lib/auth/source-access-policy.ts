@@ -8,6 +8,7 @@ import {
   loadHoldingGroupClientProfile,
 } from "@/lib/auth/holding-group-policy";
 import { inferClientKeyFromEmail } from "@/lib/client-config";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
 export type SourceAccessLevel =
@@ -183,27 +184,36 @@ async function loadSourceParticipants(
   personId: string,
   activeClientKey: string,
 ): Promise<SourceParticipantRow[]> {
-  const { data, error } = await getAzureReadFluentClient()
-    .from("source_event_participants")
-    .select(
-      "source_event_id, client_key, approval_authority, source_access_level, can_view_financial, can_upload_source_artifacts, can_generate_sourcing_artifacts, can_publish_sourcing_artifacts, can_approve_source_stages, can_approve_award",
-    )
-    .eq("user_id", personId)
-    .eq("client_key", activeClientKey);
+  const clientKeyAliases = Array.from(
+    new Set([activeClientKey, ...tenantAliasesFor(activeClientKey)]),
+  );
+  const rows: SourceParticipantRow[] = [];
 
-  if (error) {
-    // The Source participant table may not exist in older demo databases.
-    // Fail closed for non-admin users instead of throwing the Source page.
-    console.warn(
-      "[source-access-policy] source_event_participants unavailable:",
-      error.message,
-    );
-    return [];
+  for (const clientKey of clientKeyAliases) {
+    const { data, error } = await getAzureReadFluentClient()
+      .from("source_event_participants")
+      .select(
+        "source_event_id, client_key, approval_authority, source_access_level, can_view_financial, can_upload_source_artifacts, can_generate_sourcing_artifacts, can_publish_sourcing_artifacts, can_approve_source_stages, can_approve_award",
+      )
+      .eq("user_id", personId)
+      .eq("client_key", clientKey);
+
+    if (error) {
+      // The Source participant table may not exist in older demo databases.
+      // Fail closed for non-admin users instead of throwing the Source page.
+      console.warn(
+        "[source-access-policy] source_event_participants unavailable:",
+        error.message,
+      );
+      return [];
+    }
+    rows.push(...(((data as SourceParticipantRow[] | null) ?? []).filter((row) =>
+      Boolean(row.source_event_id),
+    )));
+    if (rows.length > 0) break;
   }
 
-  return ((data as SourceParticipantRow[] | null) ?? []).filter((row) =>
-    Boolean(row.source_event_id),
-  );
+  return rows;
 }
 
 async function resolveSourcePolicyPersonId(
