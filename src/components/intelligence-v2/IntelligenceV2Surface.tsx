@@ -790,7 +790,9 @@ function InvestmentSequencingMap({
             <div className="researchExhibitLabel">
               <span>Exhibit 1</span> Value vs. readiness
             </div>
-            <div className="researchN">N = {matrixItems.length} initiatives</div>
+            <div className="researchN">
+              N = {matrixItems.length} initiatives
+            </div>
           </div>
           {matrixItems.length > 0 ? (
             <ResearchValueReadinessPlot items={matrixItems} />
@@ -980,7 +982,9 @@ function ResearchFundingSequence({
             </div>
             <div className="researchStageMeta">
               {sequencingHint(column.label)}
-              {column.items.length > 3 ? ` · +${column.items.length - 3} more` : ""}
+              {column.items.length > 3
+                ? ` · +${column.items.length - 3} more`
+                : ""}
             </div>
           </li>
         ))}
@@ -1214,13 +1218,7 @@ function ProofBoundaryVisual({ payload }: { payload: ExecutiveCanvasPayload }) {
   );
 }
 
-function NativeCanvasTitle({
-  title,
-  meta,
-}: {
-  title: string;
-  meta: string;
-}) {
+function NativeCanvasTitle({ title, meta }: { title: string; meta: string }) {
   return (
     <div className="nativeCanvasHeader">
       <div className="nativeCanvasTitle">{title}</div>
@@ -1315,7 +1313,10 @@ function researchSequencingStats(
     },
     {
       label: "Readiness",
-      value: countColumnItems(columns, /readiness|foundation|prepare|enable|fund/i),
+      value: countColumnItems(
+        columns,
+        /readiness|foundation|prepare|enable|fund/i,
+      ),
       hint: "Fund substrate",
       tone: "var(--amber)",
     },
@@ -1405,7 +1406,11 @@ function followUpQuestionsFor(
     ];
   }
 
-  if (/irops|crew|disruption|airline|predictive|maintenance|loyalty|passenger/.test(q)) {
+  if (
+    /irops|crew|disruption|airline|predictive|maintenance|loyalty|passenger/.test(
+      q,
+    )
+  ) {
     return [
       "What must be true before this scales safely?",
       "Which gate, owner, and metric should the CTO approve next?",
@@ -1432,6 +1437,302 @@ function followUpQuestionsFor(
         "What decision should the CIO make next?",
         "Show the strongest supporting canvas for this answer.",
       ];
+}
+
+function fastInsightTabsFor(
+  tenantKey: string,
+  question: string,
+): ParsedIntelligenceTab[] {
+  const normalizedTenant = tenantKey.toLowerCase();
+  const q = question.toLowerCase();
+  if (
+    /skyharbor|airline|irops|crew|disruption|predictive|maintenance|loyalty|passenger/.test(
+      `${normalizedTenant} ${q}`,
+    )
+  ) {
+    return buildFastCanvasTabs({
+      decision:
+        "Building decision frame: start with the airline AI portfolio as a gate-before-scale decision while the full advisor answer is generated. The initial posture is to scale the clean customer and crew bets, certify operational recovery, and fund readiness before autonomous IROPS expansion.",
+      industry:
+        "Industry context: airline AI value tends to concentrate in disruption recovery, crew utilization, maintenance avoidance, and customer re-accommodation, but regulated operational decisions need certified data and human-in-loop controls before scale.",
+      table: [
+        "| Initiative | Fast posture | Gate |",
+        "| --- | --- | --- |",
+        "| Loyalty AI | Scale now | Certified customer engagement data |",
+        "| Crew Recovery | Certify then scale | Crew legality and disruption feed signoff |",
+        "| Predictive Maintenance | Certify then scale | Maintenance lineage and exception workflow |",
+        "| IROPS Decisioning | Fund readiness | Operational event store and freshness SLA |",
+        "| Customer Disruption Recovery | Fund readiness | PNR, notification, and consent quality |",
+      ].join("\n"),
+      evidence:
+        "Fast canvas uses the loaded SkyHarbor airline decision packet and should be treated as the initial exhibit until the advisor response finishes. The final answer may refine lanes, gates, and owners.",
+      canvas: {
+        canvasType: "investmentSequencingMap",
+        title: "Building airline AI decision frame",
+        columns: [
+          {
+            label: "Scale now",
+            items: [
+              {
+                label: "Loyalty AI",
+                value: 8,
+                readiness: 8,
+                risk: 4,
+                action: "Scale now",
+                owner: "President Loyalty",
+                gate: "Certified engagement data",
+              },
+              {
+                label: "Crew Recovery",
+                value: 8,
+                readiness: 7,
+                risk: 5,
+                action: "Scale under controls",
+                owner: "EVP Operations",
+                gate: "Crew legality signoff",
+              },
+            ],
+          },
+          {
+            label: "Certify then scale",
+            items: [
+              {
+                label: "Predictive Maintenance",
+                value: 7,
+                readiness: 6,
+                risk: 5,
+                action: "Certify then scale",
+                owner: "TechOps",
+                gate: "Maintenance lineage certification",
+              },
+            ],
+          },
+          {
+            label: "Fund readiness",
+            items: [
+              {
+                label: "IROPS Decisioning",
+                value: 10,
+                readiness: 3,
+                risk: 8,
+                action: "Fund readiness",
+                owner: "COO + CDAO",
+                gate: "Operational event store SLA",
+              },
+              {
+                label: "Customer Disruption Recovery",
+                value: 9,
+                readiness: 3,
+                risk: 8,
+                action: "Fund readiness",
+                owner: "Chief Customer Officer",
+                gate: "PNR and consent quality",
+              },
+            ],
+          },
+          {
+            label: "Hold / stop",
+            items: [
+              {
+                label: "Autonomous expansion without gates",
+                value: 6,
+                readiness: 2,
+                risk: 9,
+                action: "Hold",
+                owner: "AI Governance Council",
+                gate: "Model-risk boundary",
+              },
+            ],
+          },
+        ],
+        proofBoundary: {
+          known: [
+            "Airline value pools map to recovery, crew, loyalty, and maintenance operations.",
+          ],
+          missing: [
+            "Signed data-product certification for regulated operational feeds.",
+          ],
+          assumed: [
+            "Directional 0-10 scores are fast-canvas planning scores until final answer settles.",
+          ],
+          decisionRequired:
+            "Name the data gate owner and block scale capital where operational data is uncertified.",
+        },
+      },
+    });
+  }
+
+  if (
+    /lakeshore|industrial|morgan|hr|legal|treasury|kyriba|finance|fp&a|shared services|back[- ]office/.test(
+      `${normalizedTenant} ${q}`,
+    )
+  ) {
+    return buildFastCanvasTabs({
+      decision:
+        "Building decision frame: treat the industrial AI agenda as a value-office sequence while the full advisor answer is generated. The initial posture is to scale treasury/control automation first, certify HR and legal knowledge workflows, and fund shared-services data readiness before broad Copilot expansion.",
+      industry:
+        "Industry context: industrial back-office AI usually works best when automation is tied to control evidence, service-line ownership, and measurable cycle-time or working-capital outcomes, not generic assistant adoption.",
+      table: [
+        "| Function | Fast posture | Gate |",
+        "| --- | --- | --- |",
+        "| Treasury / Kyriba | Scale now | Bank connectivity, SAP feed, signer, and SOX evidence |",
+        "| Finance close / FP&A | Certify then scale | Metric ownership and reconciliation evidence |",
+        "| HR service delivery | Certify then scale | Policy ownership and case taxonomy |",
+        "| Legal intake / CLM | Fund readiness | Clause library and approval authority |",
+        "| Shared services AI | Fund readiness | Process ownership and service baseline |",
+      ].join("\n"),
+      evidence:
+        "Fast canvas uses the loaded Industrial/Morgan Street back-office decision packet and should be treated as the initial exhibit until the advisor response finishes. The final answer may refine sequencing, gates, and owners.",
+      canvas: {
+        canvasType: "investmentSequencingMap",
+        title: "Building industrial back-office decision frame",
+        columns: [
+          {
+            label: "Scale now",
+            items: [
+              {
+                label: "Treasury / Kyriba controls",
+                value: 8,
+                readiness: 8,
+                risk: 4,
+                action: "Scale now",
+                owner: "CFO + Treasurer",
+                gate: "Bank, SAP, signer, and SOX evidence",
+              },
+            ],
+          },
+          {
+            label: "Certify then scale",
+            items: [
+              {
+                label: "Finance close / FP&A AI",
+                value: 8,
+                readiness: 6,
+                risk: 6,
+                action: "Certify then scale",
+                owner: "Controller + FP&A lead",
+                gate: "Metric ownership and reconciliation proof",
+              },
+              {
+                label: "HR service automation",
+                value: 7,
+                readiness: 6,
+                risk: 5,
+                action: "Certify then scale",
+                owner: "CHRO",
+                gate: "Policy owner and case taxonomy",
+              },
+            ],
+          },
+          {
+            label: "Fund readiness",
+            items: [
+              {
+                label: "Legal intake / CLM AI",
+                value: 7,
+                readiness: 4,
+                risk: 7,
+                action: "Fund readiness",
+                owner: "General Counsel",
+                gate: "Clause library and approval authority",
+              },
+              {
+                label: "Shared services operating model",
+                value: 9,
+                readiness: 4,
+                risk: 7,
+                action: "Fund readiness",
+                owner: "VP Shared Services",
+                gate: "Service baseline and process ownership",
+              },
+            ],
+          },
+          {
+            label: "Hold / stop",
+            items: [
+              {
+                label: "Generic assistant rollout",
+                value: 5,
+                readiness: 5,
+                risk: 8,
+                action: "Hold",
+                owner: "CIO",
+                gate: "Use-case owner and control boundary",
+              },
+            ],
+          },
+        ],
+        proofBoundary: {
+          known: [
+            "Back-office priorities map to Treasury, Finance, HR, Legal, and Shared Services.",
+          ],
+          missing: [
+            "Function-owner signoff on the value baseline and control evidence.",
+          ],
+          assumed: [
+            "Directional 0-10 scores are fast-canvas planning scores until final answer settles.",
+          ],
+          decisionRequired:
+            "Approve one lighthouse value-office lane and require control evidence before scale funding.",
+        },
+      },
+    });
+  }
+
+  return [];
+}
+
+function buildFastCanvasTabs({
+  decision,
+  industry,
+  table,
+  evidence,
+  canvas,
+}: {
+  decision: string;
+  industry: string;
+  table: string;
+  evidence: string;
+  canvas: ExecutiveCanvasPayload;
+}): ParsedIntelligenceTab[] {
+  return [
+    {
+      id: "decision",
+      label: "Decision",
+      grounding: "tenant-evidence",
+      content: decision,
+    },
+    {
+      id: "industry_insights",
+      label: "Industry Insights",
+      grounding: "industry-context",
+      content: industry,
+    },
+    {
+      id: "chart",
+      label: "Chart",
+      grounding: "mixed",
+      content: [
+        "Initial decision exhibit while aVa completes the model-grounded advisor answer.",
+        "",
+        "```abarva-canvas",
+        JSON.stringify(canvas),
+        "```",
+      ].join("\n"),
+    },
+    {
+      id: "table",
+      label: "Table",
+      grounding: "tenant-evidence",
+      content: table,
+    },
+    {
+      id: "evidence",
+      label: "Evidence",
+      grounding: "mixed",
+      content: evidence,
+    },
+  ];
 }
 
 export function IntelligenceV2Surface({
@@ -1487,6 +1788,7 @@ export function IntelligenceV2Surface({
   ) {
     const q = text.trim();
     if (!q && attachments.length === 0) return;
+    const fastTabs = fastInsightTabsFor(t.tenant.key, q);
 
     const userTurn: ChatMessage = {
       id: newTurnId("intelligence-user"),
@@ -1497,10 +1799,11 @@ export function IntelligenceV2Surface({
           : q,
     };
     const agentId = newTurnId("intelligence-ava");
-    const agentTurn: ChatMessage = {
+    const agentTurn: IntelligenceChatMessage = {
       id: agentId,
       role: "agent",
       body: "",
+      ...(fastTabs.length > 0 ? { intelligenceTabs: fastTabs } : null),
     };
 
     setThread((prev) => [...prev, userTurn, agentTurn]);
@@ -1540,15 +1843,22 @@ export function IntelligenceV2Surface({
       ) {
         const parsed = parseIntelligenceTabbedResponse(body);
         const visibleBody = visibleIntelligenceMainAnswer(body);
+        const answerTabs = intelligenceTabsFromAnswer(agentAnswer);
         const intelligenceTabs =
-          parsed.tabs.length > 0 ? parsed.tabs : undefined;
+          parsed.tabs.length > 0
+            ? parsed.tabs
+            : answerTabs.length > 0
+              ? answerTabs
+              : undefined;
         setThread((prev) =>
           prev.map((turn) =>
             turn.id === agentId
               ? {
                   ...turn,
                   body: visibleBody,
-                  intelligenceTabs,
+                  intelligenceTabs:
+                    intelligenceTabs ??
+                    (turn as IntelligenceChatMessage).intelligenceTabs,
                   ...(agentAnswer ? { agentAnswer } : null),
                 }
               : turn,
@@ -1559,7 +1869,7 @@ export function IntelligenceV2Surface({
             ? {
                 ...current,
                 body: visibleBody,
-                intelligenceTabs,
+                intelligenceTabs: intelligenceTabs ?? current.intelligenceTabs,
                 ...(agentAnswer ? { agentAnswer } : null),
               }
             : current,

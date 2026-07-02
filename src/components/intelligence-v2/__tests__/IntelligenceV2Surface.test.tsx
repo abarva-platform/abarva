@@ -97,6 +97,107 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     });
   });
 
+  it("shows a fast SkyHarbor insight canvas before the model stream returns", async () => {
+    const fetchMock = jest.fn(
+      () =>
+        new Promise<Response>(() => {
+          // Keep the request pending so the test proves the canvas is client-side
+          // fast-path behavior rather than a completed model response.
+        }),
+    );
+    global.fetch = fetchMock as typeof fetch;
+
+    render(
+      <IntelligenceV2Surface
+        payload={{
+          ...apexPayload,
+          tenant: {
+            key: "skyharbor-air",
+            displayName: "SkyHarbor Air",
+            industry: "Airline",
+          },
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("agent-dock-input"), {
+      target: {
+        value:
+          "Where should SkyHarbor fund AI next across IROPS, predictive maintenance, crew recovery, loyalty, and customer disruption recovery?",
+      },
+    });
+    fireEvent.click(screen.getByTestId("agent-dock-send"));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(screen.getByText("Decision canvas")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("executive-canvas-sequencing"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Building airline AI decision frame"),
+      ).toBeInTheDocument();
+      expect(screen.getAllByText("IROPS Decisioning").length).toBeGreaterThan(
+        0,
+      );
+      expect(
+        screen.getAllByText("Customer Disruption Recovery").length,
+      ).toBeGreaterThan(0);
+      expect(document.body.textContent).not.toContain("canvasType");
+      expect(document.body.textContent).not.toContain("abarva-canvas");
+    });
+  });
+
+  it("shows a fast Industrial insight canvas for back-office AI questions", async () => {
+    const fetchMock = jest.fn(
+      () =>
+        new Promise<Response>(() => {
+          // Keep the request pending to prove the first canvas does not wait on Claude.
+        }),
+    );
+    global.fetch = fetchMock as typeof fetch;
+
+    render(
+      <IntelligenceV2Surface
+        payload={{
+          ...apexPayload,
+          tenant: {
+            key: "lakeshore-holdings",
+            displayName: "Industrial Demo",
+            industry: "Industrial",
+          },
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("agent-dock-input"), {
+      target: {
+        value:
+          "Across HR, Legal, Treasury, Finance, and Shared Services, where should we prioritize AI investment in the next 90 days?",
+      },
+    });
+    fireEvent.click(screen.getByTestId("agent-dock-send"));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(screen.getByText("Decision canvas")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("executive-canvas-sequencing"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Building industrial back-office decision frame"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getAllByText("Treasury / Kyriba controls").length,
+      ).toBeGreaterThan(0);
+      expect(
+        screen.getAllByText("Legal intake / CLM AI").length,
+      ).toBeGreaterThan(0);
+      expect(document.body.textContent).not.toContain("canvasType");
+      expect(document.body.textContent).not.toContain("abarva-canvas");
+    });
+  });
+
   it("posts Apex v2 binding facts and renders streamed Ava answer tables", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
@@ -188,10 +289,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
 
     const askBox = screen.getByTestId("agent-dock-input");
     expect(askBox.tagName).toBe("TEXTAREA");
-    expect(askBox).toHaveAttribute(
-      "placeholder",
-      "Ask about Retail Demo",
-    );
+    expect(askBox).toHaveAttribute("placeholder", "Ask about Retail Demo");
 
     fireEvent.change(askBox, {
       target: { value: "what should we do about\napex ai spend?" },
@@ -330,9 +428,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "What value-readiness tradeoff should the CIO approve?",
-      ),
+      screen.getByText("What value-readiness tradeoff should the CIO approve?"),
     ).toBeInTheDocument();
   });
 
@@ -1072,12 +1168,22 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
     await waitFor(() => {
       expect(screen.getByTestId("executive-canvas-matrix")).toBeInTheDocument();
       expect(screen.getByText("Portfolio tradeoff")).toBeInTheDocument();
-      expect(screen.getByText("AI portfolio value/readiness map")).toBeInTheDocument();
-      expect(screen.getByText("High value + low readiness: fund the gate first")).toBeInTheDocument();
+      expect(
+        screen.getByText("AI portfolio value/readiness map"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("High value + low readiness: fund the gate first"),
+      ).toBeInTheDocument();
       expect(screen.getAllByText("Loyalty AI").length).toBeGreaterThan(1);
-      expect(screen.getAllByText("IROPS Decision Assistant").length).toBeGreaterThan(1);
-      expect(screen.getByText("Certified operational data product")).toBeInTheDocument();
-      expect(screen.getByText("Approve the readiness sprint before scale capital.")).toBeInTheDocument();
+      expect(
+        screen.getAllByText("IROPS Decision Assistant").length,
+      ).toBeGreaterThan(1);
+      expect(
+        screen.getByText("Certified operational data product"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Approve the readiness sprint before scale capital."),
+      ).toBeInTheDocument();
       expect(document.body.textContent).not.toContain("canvasType");
       expect(document.body.textContent).not.toContain("abarva-canvas");
     });
@@ -1106,9 +1212,12 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
         },
       ],
       proofBoundary: {
-        known: ["The largest value pool is gated by operational data readiness."],
+        known: [
+          "The largest value pool is gated by operational data readiness.",
+        ],
         missing: ["Certified freshness SLA"],
-        decisionRequired: "Name the accountable gate owner before releasing scale capital.",
+        decisionRequired:
+          "Name the accountable gate owner before releasing scale capital.",
       },
     };
     const fetchMock = jest.fn().mockResolvedValue({
@@ -1154,13 +1263,23 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
 
     expect(await screen.findAllByText(mainAnswer)).not.toHaveLength(0);
     await waitFor(() => {
-      expect(screen.getByTestId("executive-canvas-roadmap")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("executive-canvas-roadmap"),
+      ).toBeInTheDocument();
       expect(screen.getByText("Gate to value")).toBeInTheDocument();
       expect(screen.getByText("AI gate-to-value roadmap")).toBeInTheDocument();
-      expect(screen.getByText("Certify source data products")).toBeInTheDocument();
+      expect(
+        screen.getByText("Certify source data products"),
+      ).toBeInTheDocument();
       expect(screen.getByText("AI Governance Council")).toBeInTheDocument();
-      expect(screen.getByText("$270M IROPS pool becomes investment-grade")).toBeInTheDocument();
-      expect(screen.getByText("Name the accountable gate owner before releasing scale capital.")).toBeInTheDocument();
+      expect(
+        screen.getByText("$270M IROPS pool becomes investment-grade"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Name the accountable gate owner before releasing scale capital.",
+        ),
+      ).toBeInTheDocument();
       expect(document.body.textContent).not.toContain("canvasType");
       expect(document.body.textContent).not.toContain("abarva-canvas");
     });
