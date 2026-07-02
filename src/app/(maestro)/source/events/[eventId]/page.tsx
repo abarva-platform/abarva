@@ -30,6 +30,7 @@ import {
 import {
   buildContractOptimizationMveProfile,
   buildSkyHarborAmsExistingContractInput,
+  isSkyHarborContractOptimizationEvent,
 } from "@/lib/source/contract-optimization";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 
@@ -157,7 +158,7 @@ export default async function SourceEventDetailPage({
     vendorChallengeIntelligence,
     vendorBafoInstructionPack,
   );
-  const contractOptimizationProfile = shouldBindSkyHarborContractOptimization({
+  const contractOptimizationProfile = isSkyHarborContractOptimizationEvent({
     activeClientKey: activeClient?.key,
     eventCode: event.code,
     eventName: event.name,
@@ -205,21 +206,5 @@ export default async function SourceEventDetailPage({
       strategyAutoDraftEnabled={strategyAutoDraftEnabled}
       simpleFrontEnabled={simpleFrontEnabled}
     />
-  );
-}
-
-function shouldBindSkyHarborContractOptimization(args: {
-  activeClientKey?: string | null;
-  eventCode: string;
-  eventName: string;
-}): boolean {
-  if (args.activeClientKey !== "skyharbor-air") return false;
-  const text = `${args.eventCode} ${args.eventName}`.toLowerCase();
-  return (
-    text.includes("ams") ||
-    text.includes("application managed") ||
-    text.includes("contract") ||
-    text.includes("outsourcing") ||
-    text.includes("renewal")
   );
 }

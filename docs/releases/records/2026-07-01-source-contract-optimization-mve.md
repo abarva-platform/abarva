@@ -52,6 +52,10 @@ becoming a generic document browser.
   so exported content avoids backlog-style priority terms.
 - Private-operator-compatible load script:
   `source:contract-optimization:load-skyharbor`.
+- Live-binding correction for the deployed SkyHarbor runtime client key:
+  the guarded contract-optimization path accepts both `skyharbor` and
+  `skyharbor-air` aliases, and the load script now ensures the Source event
+  shell plus participant grants exist before proof.
 
 ## QA / Validation
 
@@ -69,6 +73,8 @@ becoming a generic document browser.
   wording, and user-facing `P0`/`P1`/`P2` labels.
 - PASS: load runner compiles with the focused Source contract optimization
   TypeScript slice.
+- PASS: follow-up live-binding fix passed focused Jest, focused ESLint,
+  targeted TypeScript compile, and release check before redeploy.
 - BLOCKED: full-repo TypeScript with large heap reached existing dependency
   declaration gaps outside this slice (`js-yaml`,
   `@azure-rest/ai-document-intelligence`, `@axe-core/playwright`).
