@@ -261,6 +261,62 @@ function buildLevers(findings: ContractOptimizationFinding[]): ContractOptimizat
   });
 }
 
+function buildVisualInsights(
+  input: ContractOptimizationInput,
+  levers: ContractOptimizationLever[],
+): ContractOptimizationMveProfile["visualInsights"] {
+  return {
+    exposureByDriver: levers.map((lever) => ({
+      driver: lever.buyerAsk,
+      annualImpactLowUsd: lever.annualImpactLowUsd,
+      annualImpactHighUsd: lever.annualImpactHighUsd,
+      valueBasis: lever.valueBasis,
+      action: lever.negotiationLanguage,
+    })),
+    invoiceVarianceTrend: input.invoiceLines.map((line) => {
+      const varianceUsd = Math.max(
+        0,
+        line.invoicedAmountUsd - line.contractedAmountUsd,
+      );
+      return {
+        month: line.month,
+        contractedAmountUsd: line.contractedAmountUsd,
+        invoicedAmountUsd: line.invoicedAmountUsd,
+        varianceUsd,
+        variancePct:
+          line.contractedAmountUsd > 0
+            ? (varianceUsd / line.contractedAmountUsd) * 100
+            : 0,
+      };
+    }),
+    operationalPressure: input.operationalBaselines.map((metric) => ({
+      metric: metric.metric,
+      baseline: metric.baseline,
+      current: metric.current,
+      deltaPct:
+        metric.baseline > 0
+          ? ((metric.current - metric.baseline) / metric.baseline) * 100
+          : 0,
+      unit: metric.unit,
+      implication: metric.implication,
+    })),
+    staffingCoverage: input.staffingCommitments.map((row) => {
+      const gapFte = Math.max(0, row.committedFte - row.observedFte);
+      return {
+        tower: row.tower,
+        committedFte: row.committedFte,
+        observedFte: row.observedFte,
+        gapFte,
+        gapPct:
+          row.committedFte > 0
+            ? (gapFte / row.committedFte) * 100
+            : 0,
+        coverage: row.coverage,
+      };
+    }),
+  };
+}
+
 function area(
   areaName: string,
   evidenceLabels: string[],
@@ -287,6 +343,7 @@ export function buildContractOptimizationMveProfile(
   ].filter((finding): finding is ContractOptimizationFinding => Boolean(finding));
 
   const levers = buildLevers(findings);
+  const visualInsights = buildVisualInsights(input, levers);
   const clientToComplete = [
     input.invoiceLines.length ? null : "Load at least 12 months of invoice history.",
     input.operationalBaselines.length ? null : "Load ticket, incident, and service-volume history.",
@@ -345,6 +402,7 @@ export function buildContractOptimizationMveProfile(
         : findings.length
           ? "The profile is strong enough for a renewal/optimization workshop, with caveats and vendor cure items named."
           : "The profile is ready for optimization with no major evidence gaps detected.",
+    visualInsights,
   };
 }
 

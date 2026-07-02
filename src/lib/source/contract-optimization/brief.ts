@@ -25,6 +25,20 @@ const impactRange = (
   return `${money(low)} to ${money(high)}`;
 };
 
+const percent = (value: number): string =>
+  `${value >= 0 ? "+" : ""}${value.toFixed(1)}%`;
+
+const number = (value: number): string =>
+  value.toLocaleString("en-US", { maximumFractionDigits: 1 });
+
+const md = (value: string): string => value.replace(/\|/g, "/");
+
+const bar = (value: number, maxValue: number, width = 12): string => {
+  if (!Number.isFinite(value) || value <= 0 || maxValue <= 0) return "";
+  const filled = Math.max(1, Math.round((value / maxValue) * width));
+  return "#".repeat(filled).padEnd(width, ".");
+};
+
 const topFindingTitles = (
   profile: ContractOptimizationMveProfile,
   count: number,
@@ -47,6 +61,79 @@ const cureNoticeAsks = (profile: ContractOptimizationMveProfile): string[] => {
         "True up staffing coverage against committed roles and locations.",
         "Separate one-time change orders from recurring run-rate baseline.",
       ];
+};
+
+const strategyConsultingExhibits = (
+  profile: ContractOptimizationMveProfile,
+): string[] => {
+  const exposure = computeContractOptimizationExposureRollup(profile);
+  const exposureDrivers = profile.visualInsights.exposureByDriver
+    .filter((driver) => driver.annualImpactHighUsd || driver.valueBasis === "opportunity_to_test")
+    .slice(0, 6);
+  const invoiceTrend = profile.visualInsights.invoiceVarianceTrend;
+  const maxVariance = Math.max(
+    1,
+    ...invoiceTrend.map((row) => row.varianceUsd),
+  );
+  const operationalPressure = profile.visualInsights.operationalPressure;
+  const staffingCoverage = profile.visualInsights.staffingCoverage;
+
+  return [
+    "## Strategy Consulting Exhibits",
+    "",
+    "These exhibits summarize the sourcing story in the format an executive steering committee can scan: where value is leaking, how the leakage is trending, which operating signals are above baseline, and which staffing commitments must be cured before renewal.",
+    "",
+    "### Exhibit 1: Exposure Bridge and Buyer Action",
+    "",
+    "| Driver | Impact range | Basis | Buyer action |",
+    "|---|---:|---|---|",
+    ...exposureDrivers.map((driver) => [
+      `| ${md(driver.driver)}`,
+      impactRange(driver.annualImpactLowUsd, driver.annualImpactHighUsd),
+      driver.valueBasis.replaceAll("_", " "),
+      `${md(driver.action)} |`,
+    ].join(" | ")),
+    "",
+    `**Readout:** ${exposure.label}. Treat non-quantified productivity/SLA economics as negotiation upside until the vendor provides measurable cure evidence.`,
+    "",
+    "### Exhibit 2: Invoice Variance Trend",
+    "",
+    "| Month | Contracted | Invoiced | Variance | Variance % | Trend |",
+    "|---|---:|---:|---:|---:|---|",
+    ...invoiceTrend.map((row) => [
+      `| ${row.month}`,
+      money(row.contractedAmountUsd),
+      money(row.invoicedAmountUsd),
+      money(row.varianceUsd),
+      percent(row.variancePct),
+      `${bar(row.varianceUsd, maxVariance)} |`,
+    ].join(" | ")),
+    "",
+    "### Exhibit 3: Operational Pressure Versus Baseline",
+    "",
+    "| Metric | Baseline | Current | Delta | Sourcing implication |",
+    "|---|---:|---:|---:|---|",
+    ...operationalPressure.map((metric) => [
+      `| ${md(metric.metric)}`,
+      `${number(metric.baseline)} ${metric.unit}`,
+      `${number(metric.current)} ${metric.unit}`,
+      percent(metric.deltaPct),
+      `${md(metric.implication)} |`,
+    ].join(" | ")),
+    "",
+    "### Exhibit 4: Staffing Coverage Reconciliation",
+    "",
+    "| Tower | Committed FTE | Observed FTE | Gap | Gap % | Coverage note |",
+    "|---|---:|---:|---:|---:|---|",
+    ...staffingCoverage.map((row) => [
+      `| ${md(row.tower)}`,
+      number(row.committedFte),
+      number(row.observedFte),
+      number(row.gapFte),
+      percent(row.gapPct),
+      `${md(row.coverage)} |`,
+    ].join(" | ")),
+  ];
 };
 
 export function buildContractOptimizationBriefMarkdown(
@@ -86,6 +173,8 @@ export function buildContractOptimizationBriefMarkdown(
     `- Ready for optimization: ${profile.readyForOptimization}`,
     `- Decision owner: ${profile.recommendedPath.decisionOwnerRole}`,
     `- High-priority findings: ${highFindings}`,
+    "",
+    ...strategyConsultingExhibits(profile),
     "",
     "## Decision Snapshot",
     "",

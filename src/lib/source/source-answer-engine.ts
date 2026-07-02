@@ -315,6 +315,7 @@ export function buildSourceAnswerEngine(
       deliveryModelGate,
       shouldCostEstimate,
       proposalNormalization,
+      extraResponseParts: contractOptimizationAnswer?.extraResponseParts ?? [],
     }),
     categoryStrategy,
     deliveryModelGate,
@@ -921,6 +922,7 @@ function buildContractOptimizationAnswer(args: {
   sourcingImplications: string[];
   cxoGuidance: string[];
   recommendedNextAction: string;
+  extraResponseParts: AgentResponsePart[];
 } | null {
   const contractEvidence = args.evidence.filter((item) =>
     /\bcontract optimization\b/i.test(item.title),
@@ -987,6 +989,7 @@ function buildContractOptimizationAnswer(args: {
 
   let lead: string;
   let body: string[];
+  let extraResponseParts: AgentResponsePart[];
   let nextAction =
     path.immediateAction ||
     "Issue a cure and reservation-of-rights notice, then use the response to decide whether to renegotiate or launch a competitive event.";
@@ -995,21 +998,24 @@ function buildContractOptimizationAnswer(args: {
     lead =
       "Do not renew as-is. The evidence supports renegotiating under cure conditions while preparing an RFP fallback if the incumbent cannot close the commercial and operational gaps.";
     body = [
-      topReasons ? `Top 3 drivers:\n${topReasons}` : "",
       financialExposure,
+      "Decision posture: renegotiate first, but preserve competitive tension until the vendor cures the named gaps.",
       path.primaryPath ? `Action required: ${path.primaryPath}` : "",
       path.fallbackPath ? `Fallback: ${path.fallbackPath}` : "",
       evidenceLine,
     ];
+    extraResponseParts = buildContractOptimizationResponseParts({
+      view: "decision",
+      findings: [priceLeakage, slaLeakage, staffingGap, changeOrderLeakage, workloadMismatch],
+    });
     nextAction =
       "Send the cure notice, freeze the renewal baseline until variances are classified, and prepare the fallback RFP package in parallel.";
   } else if (/\b(cure|notice)\b/.test(text)) {
     lead =
       "The cure notice should preserve rights and require the incumbent to reconcile invoice variance, SLA remedies, staffing coverage, and change-order treatment before renewal pricing is accepted.";
     body = [
-      topReasons ? `Top 3 cure drivers:\n${topReasons}` : "",
       financialExposure,
-      "Implication: renewal pricing should stay conditional until the vendor cures or credits the named commercial and operational gaps.",
+      "Cure posture: make renewal pricing conditional on evidence, credits, and stronger remedies.",
       priceLeakage
         ? formatExecutiveAsk(
             "Invoice cure",
@@ -1040,15 +1046,18 @@ function buildContractOptimizationAnswer(args: {
         : "",
       evidenceLine,
     ];
+    extraResponseParts = buildContractOptimizationResponseParts({
+      view: "cure",
+      findings: [priceLeakage, slaLeakage, staffingGap, changeOrderLeakage, workloadMismatch],
+    });
     nextAction =
       "Draft the notice with legal, procurement, finance, and IT service owner review before the renewal notice window.";
   } else if (/\b(vendor a|prove|before renewal)\b/.test(text)) {
     lead =
       "Before renewal, the incumbent must prove the current run-rate is clean, the service remedies are enforceable, staffing coverage matches the committed model, and recurring change orders are justified.";
     body = [
-      topReasons ? `Top 3 proof points:\n${topReasons}` : "",
       financialExposure,
-      "Implication: renewal approval should wait for a reconciliation pack with priced remedies.",
+      "Proof posture: renewal approval should wait for a reconciliation pack with priced remedies.",
       priceLeakage
         ? formatExecutiveAsk(
             "Commercial proof",
@@ -1079,6 +1088,10 @@ function buildContractOptimizationAnswer(args: {
         : "",
       evidenceLine,
     ];
+    extraResponseParts = buildContractOptimizationResponseParts({
+      view: "proof",
+      findings: [priceLeakage, slaLeakage, staffingGap, changeOrderLeakage, workloadMismatch],
+    });
     nextAction =
       "Hold renewal approval until the incumbent supplies the reconciliation pack and agrees to priced remedies.";
   } else if (/\b(missing|evidence)\b/.test(text)) {
@@ -1090,6 +1103,10 @@ function buildContractOptimizationAnswer(args: {
       "Action required: request the reconciliation pack before approving any final commercial reset.",
       evidenceLine,
     ];
+    extraResponseParts = buildContractOptimizationResponseParts({
+      view: "gaps",
+      findings: [priceLeakage, slaLeakage, staffingGap, changeOrderLeakage, workloadMismatch],
+    });
     nextAction =
       "Request the reconciliation pack and use unresolved gaps as BAFO or rebid conditions.";
   } else {
@@ -1097,12 +1114,16 @@ function buildContractOptimizationAnswer(args: {
       "The money leakage is concentrated in invoice variance, weak SLA economics, staffing coverage variance, and recurring change-order exposure.";
     body = [
       financialExposure,
-      topReasons ? `Top 3 drivers:\n${topReasons}` : "",
+      topReasons ? `Top exposure drivers:\n${topReasons}` : "",
       path.immediateAction ? `Immediate action: ${path.immediateAction}` : "",
       workloadMismatch
         ? `Evidence note: ${formatFindingBullet(workloadMismatch).replace(/^- /, "")}`
         : evidenceLine,
     ];
+    extraResponseParts = buildContractOptimizationResponseParts({
+      view: "leakage",
+      findings: [priceLeakage, staffingGap, changeOrderLeakage, slaLeakage, workloadMismatch],
+    });
     nextAction =
       "Create a recovery schedule and require the incumbent to classify each exposure as approved demand, recoverable leakage, or future catalog item.";
   }
@@ -1132,7 +1153,67 @@ function buildContractOptimizationAnswer(args: {
       "Procurement and legal should own cure language, reservation of rights, and the renewal/rebid decision gate.",
     ],
     recommendedNextAction: nextAction,
+    extraResponseParts,
   };
+}
+
+function buildContractOptimizationResponseParts(args: {
+  view: "decision" | "cure" | "proof" | "gaps" | "leakage";
+  findings: Array<ContractOptimizationFinding | undefined>;
+}): AgentResponsePart[] {
+  const findings = args.findings.filter(
+    (finding): finding is ContractOptimizationFinding => Boolean(finding),
+  );
+  const exposureRows = findings
+    .map((finding) => ({
+      finding,
+      exposureUsd: extractFindingExposureUsd({
+        title: finding.title,
+        currentState: finding.issue || finding.excerpt,
+      }),
+    }))
+    .filter(
+      (row): row is { finding: ContractOptimizationFinding; exposureUsd: number } =>
+        row.exposureUsd !== null && Number.isFinite(row.exposureUsd),
+    );
+  const tableTitle =
+    args.view === "cure"
+      ? "Cure notice agenda"
+      : args.view === "proof"
+        ? "Vendor proof pack"
+        : args.view === "gaps"
+          ? "Evidence still needed"
+          : "Contract optimization decision signals";
+
+  const parts: AgentResponsePart[] = [];
+  if (exposureRows.length > 0) {
+    parts.push({
+      type: "barChart",
+      title: "Exposure by driver",
+      unit: "usd",
+      bars: exposureRows.slice(0, 4).map((row) => ({
+        label: row.finding.title,
+        value: row.exposureUsd,
+        displayValue: formatContractOptimizationMoney(row.exposureUsd),
+        tone: "warning",
+      })),
+      caption:
+        "Quantified exposure is shown only where the loaded evidence supports a dollar range.",
+    });
+  }
+  parts.push({
+    type: "table",
+    title: tableTitle,
+    columns: ["Area", "What the executive should ask for", "Evidence basis"],
+    rows: findings.slice(0, 5).map((finding) => [
+      finding.title,
+      finding.recommendedAction || finding.implication || "Resolve before renewal approval.",
+      finding.evidence || "Evidence captured in the contract optimization profile.",
+    ]),
+    caption:
+      "The table keeps the advisory answer tied to the sourcing-critical extraction record.",
+  });
+  return parts;
 }
 
 function parseContractOptimizationPath(
@@ -1589,6 +1670,7 @@ function buildAvaResponseParts(args: {
   deliveryModelGate: DeliveryModelGateResult | null;
   shouldCostEstimate: ShouldCostEstimate | null;
   proposalNormalization: ProposalNormalizationMatrix | null;
+  extraResponseParts?: AgentResponsePart[];
 }): AgentResponsePart[] {
   const parts: AgentResponsePart[] = [
     {
@@ -1615,6 +1697,10 @@ function buildAvaResponseParts(args: {
       text: args.answerText,
     },
   ];
+
+  if (args.extraResponseParts?.length) {
+    parts.push(...args.extraResponseParts);
+  }
 
   if (args.currentStateFindings.length > 0 || args.sourcingImplications.length > 0) {
     parts.push({
