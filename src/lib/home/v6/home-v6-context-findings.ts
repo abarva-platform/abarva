@@ -175,7 +175,7 @@ const INDUSTRIAL_RECIPES: FindingRecipe[] = [
       "AI & Automation Footprint",
     ],
     terms: ["liquidity", "forecast", "cash", "working", "capital", "metric"],
-    title: "Liquidity forecasting needs certified finance data products.",
+    title: "Liquidity forecasting should stay gated on finance data readiness.",
     finding:
       "The V6 substrate shows finance-data and value-measurement context, but forecasting should stay evidence-gated until metric ownership and data readiness are clear.",
     why: "Home can surface the opportunity and the gaps; Tower should own whether value is provable and ready to track.",

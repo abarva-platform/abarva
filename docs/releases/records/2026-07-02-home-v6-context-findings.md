@@ -32,11 +32,14 @@ Home overview findings now come from the V6 context browser substrate instead of
 - `src/lib/home/v6/home-v6-context-findings.ts`
 - `src/lib/home/v6/__tests__/home-v6-context-findings.test.ts`
 - `src/components/home/__tests__/HomeSurface.test.tsx`
+- Hotfix: renamed one Industrial Demo V6 finding that reused a legacy top-four signal headline, and added a regression test banning the old Home signal headlines from V6 findings.
 
 ## QA / Validation
 
 - Pass: `npx jest src/lib/home/__tests__/v6-context-browser.test.ts src/lib/home/v6/__tests__/home-v6-context-findings.test.ts src/components/home/__tests__/HomeSurface.test.tsx --runInBand`
 - Pass: `npx eslint src/lib/home/v6-context-browser.ts src/lib/home/v6/home-v6-context-findings.ts src/lib/home/v6/__tests__/home-v6-context-findings.test.ts src/components/home/HomeSurface.tsx src/components/home/__tests__/HomeSurface.test.tsx src/app/api/home/know/ask/route.ts src/lib/home/know/home-demo-safe-response.ts src/lib/home/know/home-know-contract.ts src/lib/home/know/__tests__/home-demo-safe-response.test.ts src/lib/home/__tests__/v6-context-browser.test.ts`
+- Pass hotfix: `npx jest src/lib/home/v6/__tests__/home-v6-context-findings.test.ts --runInBand`
+- Pass hotfix: `npx eslint src/lib/home/v6/home-v6-context-findings.ts src/lib/home/v6/__tests__/home-v6-context-findings.test.ts`
 - Not run yet: signed-in ACA browser proof. Required after merge/deploy.
 
 ## Rollout Plan
