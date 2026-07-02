@@ -320,14 +320,14 @@ function makeTrendFacts(spendRows) {
 
 function makeDictionary({ entities, functions, systems, vendors, programs }) {
   const rows = [];
-  const push = (node_id, business_label, node_type, readable_summary, confidence, caveat, sourceFile, sourceRowNumber) => {
+  const push = (node_id, business_label, node_type, readable_summary, confidence, caveat, originalSourceFile, sourceRowNumber) => {
     rows.push({
       tenant_key: TENANT_KEY,
       node_id,
       business_label,
       node_type,
-      source_file: sourceFile,
-      readable_summary,
+      source_file: "family-8-semantic-enrichment/F25_context-node-dictionary.csv",
+      readable_summary: `${readable_summary} Source: ${originalSourceFile}.`,
       confidence,
       caveat,
       source_row: sourceRowNumber,
