@@ -153,6 +153,8 @@ describe("Source contract optimization MVE", () => {
 
     expect(brief).toContain("8,610 tickets");
     expect(brief).toContain("44 per month");
+    expect(brief).toContain("# AMS Contract Optimization Brief");
+    expect(brief).toContain("**Contract in scope:** SkyHarbor Air Application Managed Services Agreement.");
     expect(brief).toContain("## Page 1: Executive Message");
     expect(brief).toContain("## Page 2: Where Value Is Leaking");
     expect(brief).toContain("## Page 3: Why It Is Happening");
@@ -161,6 +163,9 @@ describe("Source contract optimization MVE", () => {
     expect(brief).toContain("## Page 5: Commercial Negotiation Strategy");
     expect(brief).toContain("SkyHarbor Air Application Managed Services Agreement should not be renewed under its current commercial baseline.");
     expect(brief).toContain("The contract commercial model no longer reflects today’s operating reality");
+    expect(brief).toContain("| Sequence | Leakage driver | Executive readout |");
+    expect(brief).toContain("| 1 | Invoice variance | Recover cash by reconciling unsupported variance before renewal pricing is accepted. |");
+    expect(brief).toContain("| 5 | Productivity not priced back | Convert productivity claims into measurable, priced commitments. |");
     expect(brief).toContain("### Commercial Opportunity Map");
     expect(brief).toContain("| Recover cash | Recover unsupported invoice variance");
     expect(brief).toContain("### Root-Cause Map");
@@ -190,6 +195,7 @@ describe("Source contract optimization MVE", () => {
     expect(brief).not.toContain("8610tickets");
     expect(brief).not.toContain("44per month");
     expect(brief).not.toContain("Value to test to Value to test");
+    expect(brief).not.toContain("↓");
     expect(brief).not.toMatch(/Priority: P[0-2]/);
     expect(brief).not.toContain("Current state:");
     expect(brief).not.toContain("SkyHarbor Air AMS Outsourcing RFP");

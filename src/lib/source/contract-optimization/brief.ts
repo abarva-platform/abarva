@@ -67,6 +67,35 @@ const cureNoticeAsks = (profile: ContractOptimizationMveProfile): string[] => {
 const impactLabel = (value: string): string =>
   value.charAt(0).toUpperCase() + value.slice(1);
 
+const contractBriefTitle = (profile: ContractOptimizationMveProfile): string => {
+  if (/application managed services|ams/i.test(profile.contractName)) {
+    return "AMS Contract Optimization Brief";
+  }
+
+  return `${profile.contractName} Optimization Brief`;
+};
+
+const leakageDriverReadout = (driver: string): string => {
+  const normalized = driver.toLowerCase();
+  if (normalized.includes("invoice")) {
+    return "Recover cash by reconciling unsupported variance before renewal pricing is accepted.";
+  }
+  if (normalized.includes("change")) {
+    return "Stop recurring exceptions from becoming the next run-rate baseline.";
+  }
+  if (normalized.includes("sla")) {
+    return "Reset service credits so accountability matches operational criticality.";
+  }
+  if (normalized.includes("staff")) {
+    return "True up priced roles, tower coverage, and location commitments.";
+  }
+  if (normalized.includes("productivity")) {
+    return "Convert productivity claims into measurable, priced commitments.";
+  }
+
+  return "Tie the driver to a cure action before renewal approval.";
+};
+
 const strategyConsultingExhibits = (
   profile: ContractOptimizationMveProfile,
 ): string[] => {
@@ -151,7 +180,9 @@ export function buildContractOptimizationBriefMarkdown(
   const frontSheetFindings = topFindingTitles(profile, 4);
   const frontSheetAsks = cureNoticeAsks(profile);
   return [
-    `# ${profile.contractName} Optimization Brief`,
+    `# ${contractBriefTitle(profile)}`,
+    "",
+    `**Contract in scope:** ${profile.contractName}.`,
     "",
     "## Page 1: Executive Message",
     "",
@@ -173,8 +204,10 @@ export function buildContractOptimizationBriefMarkdown(
     "",
     "The value leakage is not one isolated issue. It is a chain of commercial and operating signals that should be cured together.",
     "",
+    "| Sequence | Leakage driver | Executive readout |",
+    "|---:|---|---|",
     ...storyPack.valueLeakageTree.map((item, index) =>
-      `${index === 0 ? "" : "  "}${"↓ ".repeat(index)}${item}`,
+      `| ${index + 1} | ${md(item)} | ${md(leakageDriverReadout(item))} |`,
     ),
     "",
     "### Commercial Opportunity Map",
