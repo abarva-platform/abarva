@@ -856,6 +856,11 @@ describe("Source answer engine", () => {
       contextBundle: skyharborContractBundle,
       userRole: "cio",
     });
+    const exposureAnswer = buildSourceAnswerEngine({
+      prompt: "Where are we leaking money?",
+      contextBundle: skyharborContractBundle,
+      userRole: "cio",
+    });
 
     expect(renewAnswer?.answerText).toContain("Do not renew as-is");
     expect(renewAnswer?.answerText).toContain("RFP fallback");
@@ -869,6 +874,7 @@ describe("Source answer engine", () => {
     expect(cureAnswer?.answerText).toContain("Change-order cure");
     expect(cureAnswer?.answerText).toContain("\nImplication:");
     expect(cureAnswer?.answerText).toContain("\nAction:");
+    expect(exposureAnswer?.answerText).not.toContain("Operational pressure: - ");
     expect(missingAnswer?.answerText).toContain(
       "not enough to approve a final commercial reset",
     );
