@@ -1,4 +1,7 @@
-import { buildTowerFactualSpineAnswer } from "@/lib/atlas/tower-factual-spine";
+import {
+  buildTowerFactualSpineAnswer,
+  isTowerFactualSpineCandidate,
+} from "@/lib/atlas/tower-factual-spine";
 import type { AtlasTowerCurrentState } from "@/lib/atlas/tower-grounding";
 
 const towerState = {
@@ -529,6 +532,28 @@ describe("buildTowerFactualSpineAnswer", () => {
       expect(answer?.response).not.toContain("portfolio-company rollups");
       expect(answer?.response).toContain("Model governance");
       expect(answer?.response).toContain("Data quality");
+    }
+  });
+
+  it("classifies the Tower 100Q hardening families as governed Tower candidates", () => {
+    const prompts = [
+      "What do we know about run versus change spend?",
+      "Which programs are healthy, watched, or at risk?",
+      "Show the programs grouped by business function.",
+      "Which programs depend on foundational data or platform work?",
+      "What is the committed value across the portfolio?",
+      "What is the best AI investment story Tower can support from loaded evidence?",
+      "Which contracts renew soon?",
+      "What should procurement challenge in the next vendor review?",
+      "Which vendor relationships are tied to at-risk programs?",
+      "What source evidence supports the Tower dashboard?",
+      "Which Tower claims are only directional, not proven?",
+      "Which metric is least trustworthy and why?",
+      "What is the cleanest executive summary for the CIO today?",
+    ];
+
+    for (const prompt of prompts) {
+      expect(isTowerFactualSpineCandidate(prompt)).toBe(true);
     }
   });
 });

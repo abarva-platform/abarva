@@ -162,9 +162,13 @@ const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
     key: "tower_top_it_programs_by_budget",
     patterns: [
       /top\s+\d+\s+(it\s+)?(program|initiative)/i,
+      /list\s+of\s+(?:the\s+)?top\s+\d+\s+(it\s+)?(program|initiative)/i,
       /top\s+funded\s+(it\s+)?(program|initiative)/i,
       /largest\s+(it\s+)?(program|initiative)/i,
       /rank.*(program|initiative).*budget/i,
+      /top\s+AI\s+programs?/i,
+      /AI\s+(?:programs?|initiatives?).*(?:spend|value|budget)/i,
+      /best\s+AI\s+investment\s+story/i,
     ],
   },
   {
@@ -196,6 +200,14 @@ const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
       /where\s+should\s+i\s+focus/i,
       /what\s+needs\s+(my\s+)?attention/i,
       /next\s+funding\s+gate/i,
+      /healthy.*watched.*risk/i,
+      /watched.*risk/i,
+      /group(?:ed)?\s+by\s+business\s+function/i,
+      /program\s+owners?.*largest\s+budget/i,
+      /largest\s+budget\s+responsibility/i,
+      /foundational\s+(?:data|platform)/i,
+      /platform\s+work/i,
+      /biggest\s+blockers?/i,
     ],
   },
   {
@@ -214,6 +226,36 @@ const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
   {
     key: "tower_run_change_split",
     patterns: [/run.*change/i, /change.*run/i, /capex.*opex/i, /opex.*capex/i],
+  },
+  {
+    key: "tower_vendor_contract_gap",
+    patterns: [
+      /contracts?\s+renew/i,
+      /renewals?\s+soon/i,
+      /vendor\s+relationships?/i,
+      /vendor\s+spend/i,
+      /vendor\s+exposure/i,
+      /vendor\s+concentration/i,
+      /procurement\s+challenge/i,
+      /vendor\s+review/i,
+      /contract\s+exposure/i,
+    ],
+  },
+  {
+    key: "tower_evidence_trust",
+    patterns: [
+      /source\s+evidence/i,
+      /supports?\s+the\s+Tower\s+dashboard/i,
+      /dashboard\s+evidence/i,
+      /board[- ]grade/i,
+      /claims?.*directional/i,
+      /directional.*proven/i,
+      /not\s+say\s+yet/i,
+      /evidence\s+is\s+missing/i,
+      /least\s+trustworthy/i,
+      /biggest\s+Tower\s+risks?/i,
+      /cleanest\s+executive\s+summary/i,
+    ],
   },
   {
     key: "tower_total_it_spend",
@@ -237,7 +279,11 @@ const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
   {
     key: "tower_value_realization",
     patterns: [
+      /committed\s+value/i,
       /measured value/i,
+      /value\s+has\s+been\s+proven/i,
+      /proven\s+so\s+far/i,
+      /claimed\s+yet/i,
       /value.*lag/i,
       /realized value/i,
       /where.*value/i,
@@ -354,7 +400,7 @@ export function matchContractKey(question: string): string {
     if (matcher.patterns.some((pattern) => pattern.test(question)))
       return matcher.key;
   }
-  return "tower_top_it_programs_by_budget";
+  return "tower_evidence_trust";
 }
 
 export function classifyCioTowerBoundary(
@@ -441,6 +487,18 @@ function fallbackContractForKey(key: string): CioTowerContract {
       question_family: "advisor_morning_brief",
       measure_key: "initiative_budget_fy26",
       artifact_type: "table",
+    },
+    tower_vendor_contract_gap: {
+      intent: "gap",
+      question_family: "vendor_contract_gap",
+      measure_key: null,
+      artifact_type: "gap_card",
+    },
+    tower_evidence_trust: {
+      intent: "diagnose",
+      question_family: "evidence_trust",
+      measure_key: null,
+      artifact_type: "trust_readout",
     },
     tower_total_it_spend: {
       intent: "lookup",
@@ -1472,12 +1530,272 @@ function asksForMetricLineage(question: string): boolean {
   );
 }
 
+function metricPacket(
+  context: CioTowerPromptContext,
+  measureKey: string,
+): CioTowerMetricPacket | null {
+  return (
+    context.metricPackets.find((packet) => packet.measureKey === measureKey) ??
+    null
+  );
+}
+
+function packetValue(packet: CioTowerMetricPacket | null): string {
+  return packet?.valueNumeric ? packet.displayValue : "not populated";
+}
+
+function gapList(context: CioTowerPromptContext): string {
+  return context.gaps.length
+    ? context.gaps.join("; ")
+    : "No blocking Tower gap is identified for this question, but Tower still separates budget, spend, promised value, and measured value.";
+}
+
+function buildRunChangeSplitAnswer(
+  context: CioTowerPromptContext,
+): {
+  output: CioTowerVisibleAnswerContract;
+  reason: string;
+} {
+  const run = metricPacket(context, "run_budget_fy26");
+  const change = metricPacket(context, "change_budget_fy26");
+  const actual = metricPacket(context, "actual_spend_ytd");
+  const hasRun = Boolean(run?.valueNumeric);
+  const hasChange = Boolean(change?.valueNumeric);
+  const question = context.question.toLowerCase();
+  const asksCapexOpex = /capex|opex/.test(question);
+  const answer = asksCapexOpex
+    ? `${context.tenantName} does not have a governed CapEx versus OpEx split in this Tower answer layer. The available split is run versus change: run is ${packetValue(run)} and change is ${packetValue(change)}.`
+    : hasRun && hasChange
+      ? `${context.tenantName}'s FY26 run/change split is ${run?.displayValue} run and ${change?.displayValue} change. ${actual?.valueNumeric ? `Actual spend YTD is ${actual.displayValue}.` : "Actual spend YTD is not separately populated."}`
+      : `${context.tenantName} does not have a complete governed run/change split in Tower yet. Run is ${packetValue(run)} and change is ${packetValue(change)}.`;
+  return {
+    reason:
+      "Run/change question answered deterministically from governed Tower measure packets.",
+    output: {
+      version: "cio_tower_visible_answer_v1",
+      answer,
+      tables: [
+        {
+          id: "run_change_split",
+          title: asksCapexOpex
+            ? "Available spend split"
+            : "FY26 run/change split",
+          columns: ["Measure", "Value", "Status"],
+          rows: [
+            ["Run budget", packetValue(run), hasRun ? "Available" : "Gap"],
+            [
+              "Change budget",
+              packetValue(change),
+              hasChange ? "Available" : "Gap",
+            ],
+            [
+              "Actual spend YTD",
+              packetValue(actual),
+              actual?.valueNumeric ? "Available" : "Gap",
+            ],
+          ],
+        },
+      ],
+      tabs: [
+        {
+          id: "gap",
+          label: "Gap",
+          prose: asksCapexOpex
+            ? "CapEx and OpEx require their own finance fields; Tower will not infer them from run and change."
+            : gapList(context),
+          tables: [],
+        },
+      ],
+      followUpQuestion: "Do you want the budget rollup view by portfolio company next?",
+    },
+  };
+}
+
+function buildTrendAnswer(
+  context: CioTowerPromptContext,
+): {
+  output: CioTowerVisibleAnswerContract;
+  reason: string;
+} {
+  const fy25 = metricPacket(context, "total_it_budget_fy25_baseline");
+  const fy26 = metricPacket(context, "total_it_budget_fy26");
+  const delta =
+    fy25?.valueNumeric && fy26?.valueNumeric
+      ? fy26.valueNumeric - fy25.valueNumeric
+      : null;
+  const deltaText =
+    delta === null
+      ? "Trend cannot be calculated until both FY25 baseline and FY26 budget are populated."
+      : `The year-over-year change is ${formatCioTowerMoney(delta)} (${delta >= 0 ? "increase" : "decrease"}).`;
+  return {
+    reason:
+      "Budget trend question answered deterministically from FY25 and FY26 Tower measures.",
+    output: {
+      version: "cio_tower_visible_answer_v1",
+      answer: `${context.tenantName}'s FY25 to FY26 Tower budget trend uses two governed budget measures: FY25 is ${packetValue(fy25)} and FY26 is ${packetValue(fy26)}. ${deltaText}`,
+      tables: [
+        {
+          id: "budget_trend",
+          title: "Budget trend",
+          columns: ["Period", "Budget", "Status"],
+          rows: [
+            ["FY25 baseline", packetValue(fy25), fy25?.valueNumeric ? "Available" : "Gap"],
+            ["FY26 budget", packetValue(fy26), fy26?.valueNumeric ? "Available" : "Gap"],
+            ["Change", delta === null ? "not calculable" : formatCioTowerMoney(delta), delta === null ? "Gap" : "Available"],
+          ],
+        },
+      ],
+      tabs: [],
+      followUpQuestion: "Do you want the FY26 budget broken down by portfolio company?",
+    },
+  };
+}
+
+function buildVendorContractGapAnswer(
+  context: CioTowerPromptContext,
+): {
+  output: CioTowerVisibleAnswerContract;
+  reason: string;
+} {
+  return {
+    reason:
+      "Vendor and contract question answered as a specific Tower data gap instead of using a wrong program template.",
+    output: {
+      version: "cio_tower_visible_answer_v1",
+      answer: `${context.tenantName} cannot get a board-grade vendor or renewal answer from Tower yet because the governed Tower answer layer does not expose contract value, renewal date, vendor-to-program linkage, and procurement owner as a complete question set. Treat this as a contract-data gap, not as evidence that there is no vendor risk.`,
+      tables: [
+        {
+          id: "vendor_contract_requirements",
+          title: "Vendor answer requirements",
+          columns: ["Question need", "Required field", "Current status"],
+          rows: [
+            ["Renewals soon", "Renewal date by contract", "Gap"],
+            ["Contract exposure", "Contract value by vendor", "Gap"],
+            ["Vendor tied to at-risk programs", "Vendor-to-program relationship", "Gap"],
+            ["Procurement challenge", "Commercial owner and renewal posture", "Gap"],
+          ],
+        },
+      ],
+      tabs: [
+        {
+          id: "what_tower_can_answer",
+          label: "What Tower can answer",
+          prose:
+            "Tower can still answer program budget, value proof, weak evidence, inspection priorities, and run/change budget where those governed measures exist.",
+          tables: [],
+        },
+      ],
+      followUpQuestion: "Do you want the program value-proof view instead?",
+    },
+  };
+}
+
+function buildEvidenceTrustAnswer(
+  context: CioTowerPromptContext,
+): {
+  output: CioTowerVisibleAnswerContract;
+  reason: string;
+} {
+  const loadedMetrics = context.metricPackets.filter(
+    (packet) => packet.valueNumeric !== null,
+  );
+  const missingMeasures = [
+    "actual_spend_ytd",
+    "measured_value_ytd",
+    "run_budget_fy26",
+    "change_budget_fy26",
+  ]
+    .map((key) => metricPacket(context, key))
+    .filter((packet): packet is CioTowerMetricPacket => Boolean(packet))
+    .filter((packet) => packet.valueNumeric === null);
+  const weakest =
+    missingMeasures[0] ??
+    loadedMetrics
+      .slice()
+      .sort(
+        (left, right) =>
+          (left.sourceFactKeys.length || 0) -
+          (right.sourceFactKeys.length || 0),
+      )[0] ??
+    null;
+  const weakestText = weakest
+    ? `${weakest.label} (${weakest.displayValue})`
+    : "no governed Tower metric";
+  const question = context.question.toLowerCase();
+  const asksSummary = /cleanest\s+executive\s+summary/.test(question);
+  const answer = asksSummary
+    ? `${context.tenantName}'s clean Tower message is this: budget and portfolio structure are visible, but leadership should not claim value or ROI beyond the measured-value fields Tower can defend. The first inspection point is the largest budget or value-proof gap, not a generic transformation story.`
+    : `${context.tenantName}'s Tower confidence is strongest where a governed metric has supporting Tower facts and weakest around ${weakestText}. The current evidence set for this question includes ${loadedMetrics.length} populated metrics, ${context.relevantFacts.length} relevant fact records, and ${context.relationships.length} relationship records.`;
+  return {
+    reason:
+      "Evidence and trust question answered deterministically from metric coverage, fact coverage, relationship coverage, and explicit gaps.",
+    output: {
+      version: "cio_tower_visible_answer_v1",
+      answer,
+      tables: [
+        {
+          id: "tower_evidence_trust",
+          title: "Tower evidence trust",
+          columns: ["Area", "Readout", "Business meaning"],
+          rows: [
+            [
+              "Populated metrics",
+              String(loadedMetrics.length),
+              "Numbers Tower can cite directly",
+            ],
+            [
+              "Relevant facts",
+              String(context.relevantFacts.length),
+              "Business support behind the answer",
+            ],
+            [
+              "Relationships",
+              String(context.relationships.length),
+              "Connection strength between programs, owners, vendors, and outcomes",
+            ],
+            [
+              "Weakest metric",
+              weakestText,
+              "Inspect this before making an executive claim",
+            ],
+          ],
+        },
+      ],
+      tabs: [
+        {
+          id: "do_not_claim",
+          label: "Do not claim",
+          prose: gapList(context),
+          tables: [],
+        },
+      ],
+      followUpQuestion: "Do you want the weakest metric traced to the source fields?",
+    },
+  };
+}
+
 function buildCioTowerDeterministicMetricAnswer(
   context: CioTowerPromptContext,
 ): {
   output: CioTowerVisibleAnswerContract;
   reason: string;
 } | null {
+  if (context.contract.contract_key === "tower_vendor_contract_gap") {
+    return buildVendorContractGapAnswer(context);
+  }
+
+  if (context.contract.contract_key === "tower_evidence_trust") {
+    return buildEvidenceTrustAnswer(context);
+  }
+
+  if (context.contract.contract_key === "tower_run_change_split") {
+    return buildRunChangeSplitAnswer(context);
+  }
+
+  if (context.contract.contract_key === "tower_trend_it_budget") {
+    return buildTrendAnswer(context);
+  }
+
   if (context.contract.contract_key === "tower_advisor_morning_brief") {
     return buildCioTowerAdvisorMorningBrief(context);
   }
@@ -1706,9 +2024,13 @@ function factWhereForContract(contract: CioTowerContract): {
   if (contract.contract_key === "tower_run_change_split")
     return { views: ["it_budget"], limit: 25 };
   if (contract.contract_key === "tower_value_realization")
-    return { views: ["value", "initiative_budget"], limit: 30 };
+    return { views: ["value", "initiative_budget"], limit: 120 };
   if (contract.contract_key === "tower_trend_it_budget")
     return { views: ["it_budget"], limit: 30 };
+  if (contract.contract_key === "tower_vendor_contract_gap")
+    return { views: ["initiative_budget", "value"], limit: 40 };
+  if (contract.contract_key === "tower_evidence_trust")
+    return { views: ["initiative_budget", "it_budget", "value"], limit: 80 };
   return { views: ["initiative_budget", "it_budget", "value"], limit: 20 };
 }
 
