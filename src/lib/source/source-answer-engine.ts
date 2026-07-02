@@ -965,13 +965,6 @@ function buildContractOptimizationAnswer(args: {
     /\bticket|emergency change|operational volume/i,
   );
 
-  const exposureLine = formatFindingBullets([
-    priceLeakage,
-    staffingGap,
-    changeOrderLeakage,
-    slaLeakage,
-  ]);
-
   const evidenceLine = formatContractEvidenceLine([
     priceLeakage,
     slaLeakage,
@@ -1002,12 +995,10 @@ function buildContractOptimizationAnswer(args: {
     lead =
       "Do not renew as-is. The evidence supports renegotiating under cure conditions while preparing an RFP fallback if the incumbent cannot close the commercial and operational gaps.";
     body = [
-      path.primaryPath ? `Primary path: ${path.primaryPath}` : "",
-      path.fallbackPath ? `Fallback path: ${path.fallbackPath}` : "",
-      path.doNotDo ? `Do not do: ${path.doNotDo}` : "",
-      topReasons ? `Top 3 reasons:\n${topReasons}` : "",
+      topReasons ? `Top 3 drivers:\n${topReasons}` : "",
       financialExposure,
-      exposureLine ? `Why this is the right path:\n${exposureLine}` : "",
+      path.primaryPath ? `Action required: ${path.primaryPath}` : "",
+      path.fallbackPath ? `Fallback: ${path.fallbackPath}` : "",
       evidenceLine,
     ];
     nextAction =
@@ -1016,31 +1007,32 @@ function buildContractOptimizationAnswer(args: {
     lead =
       "The cure notice should preserve rights and require the incumbent to reconcile invoice variance, SLA remedies, staffing coverage, and change-order treatment before renewal pricing is accepted.";
     body = [
-      topReasons ? `Issues to cure first:\n${topReasons}` : "",
+      topReasons ? `Top 3 cure drivers:\n${topReasons}` : "",
       financialExposure,
+      "Implication: renewal pricing should stay conditional until the vendor cures or credits the named commercial and operational gaps.",
       priceLeakage
-        ? formatCureItem(
+        ? formatExecutiveAsk(
             "Invoice cure",
             "require a month-by-month variance schedule showing approved demand, recoverable leakage, pass-throughs, and catalog additions",
             priceLeakage,
           )
         : "",
       slaLeakage
-        ? formatCureItem(
+        ? formatExecutiveAsk(
             "SLA cure",
             "require stronger credit caps, chronic-miss escalation, earn-back limits, and tower-level remedy language",
             slaLeakage,
           )
         : "",
       staffingGap
-        ? formatCureItem(
+        ? formatExecutiveAsk(
             "Staffing cure",
             "require named coverage reconciliation by tower, shift, role, and location, with credits or scope removal for unsupported FTE",
             staffingGap,
           )
         : "",
       changeOrderLeakage
-        ? formatCureItem(
+        ? formatExecutiveAsk(
             "Change-order cure",
             "require one-time versus recurring separation and approval evidence before any recurring item moves into baseline",
             changeOrderLeakage,
@@ -1054,31 +1046,32 @@ function buildContractOptimizationAnswer(args: {
     lead =
       "Before renewal, the incumbent must prove the current run-rate is clean, the service remedies are enforceable, staffing coverage matches the committed model, and recurring change orders are justified.";
     body = [
-      topReasons ? `Proof required before renewal:\n${topReasons}` : "",
+      topReasons ? `Top 3 proof points:\n${topReasons}` : "",
       financialExposure,
+      "Implication: renewal approval should wait for a reconciliation pack with priced remedies.",
       priceLeakage
-        ? formatProofItem(
+        ? formatExecutiveAsk(
             "Commercial proof",
             "invoice variance must reconcile to approved demand or be credited",
             priceLeakage,
           )
         : "",
       slaLeakage
-        ? formatProofItem(
+        ? formatExecutiveAsk(
             "Service proof",
             "SLA credits need stronger economics and chronic-miss language",
             slaLeakage,
           )
         : "",
       staffingGap
-        ? formatProofItem(
+        ? formatExecutiveAsk(
             "Coverage proof",
             "missing or unverified committed staffing must be cured, credited, or removed from the baseline",
             staffingGap,
           )
         : "",
       changeOrderLeakage
-        ? formatProofItem(
+        ? formatExecutiveAsk(
             "Scope proof",
             "recurring change orders must be cataloged and commercially normalized",
             changeOrderLeakage,
@@ -1092,11 +1085,9 @@ function buildContractOptimizationAnswer(args: {
     lead =
       "The current evidence is strong enough to challenge renewal, but not enough to approve a final commercial reset without a reconciliation pack.";
     body = [
-      "Missing before final renewal: application inventory with criticality, owner, ticket volume, and run cost.",
-      "Missing before final renewal: incident, request, change, and SLA performance baseline tied to the contract towers.",
-      "Missing before final renewal: rate-card, pass-through, change-order, and approval evidence that separates recoverable leakage from approved scope growth.",
-      "Missing before final renewal: retained organization design and governance model for the post-cure operating state.",
+      "Top 3 gaps:\n- Application inventory with criticality, owner, ticket volume, and run cost.\n- Incident, request, change, and SLA performance baseline tied to the contract towers.\n- Rate-card, pass-through, change-order, and approval evidence that separates recoverable leakage from approved scope growth.",
       financialExposure,
+      "Action required: request the reconciliation pack before approving any final commercial reset.",
       evidenceLine,
     ];
     nextAction =
@@ -1107,12 +1098,10 @@ function buildContractOptimizationAnswer(args: {
     body = [
       financialExposure,
       topReasons ? `Top 3 drivers:\n${topReasons}` : "",
-      exposureLine ? `Exposure drivers:\n${exposureLine}` : "",
-      workloadMismatch
-        ? `Operational pressure:\n${formatFindingBullet(workloadMismatch)}`
-        : "",
       path.immediateAction ? `Immediate action: ${path.immediateAction}` : "",
-      evidenceLine,
+      workloadMismatch
+        ? `Evidence note: ${formatFindingBullet(workloadMismatch).replace(/^- /, "")}`
+        : evidenceLine,
     ];
     nextAction =
       "Create a recovery schedule and require the incumbent to classify each exposure as approved demand, recoverable leakage, or future catalog item.";
@@ -1206,15 +1195,6 @@ function formatFindingBullet(finding: ContractOptimizationFinding): string {
   return `- ${finding.title}: ${finding.issue || finding.excerpt}`;
 }
 
-function formatFindingBullets(
-  findings: Array<ContractOptimizationFinding | undefined>,
-): string {
-  return findings
-    .filter((finding): finding is ContractOptimizationFinding => Boolean(finding))
-    .map(formatFindingBullet)
-    .join("\n");
-}
-
 function formatContractTopReasons(
   findings: Array<ContractOptimizationFinding | undefined>,
 ): string {
@@ -1244,20 +1224,12 @@ function formatContractFinancialExposure(
   return `Financial exposure: approximately ${formatContractOptimizationMoney(lowUsd)}-${formatContractOptimizationMoney(highUsd)} annualized, subject to vendor cure review.`;
 }
 
-function formatCureItem(
+function formatExecutiveAsk(
   label: string,
   ask: string,
   finding: ContractOptimizationFinding,
 ): string {
-  return `${label}: ${ask}.\n${summarizeFinding(finding)}`;
-}
-
-function formatProofItem(
-  label: string,
-  ask: string,
-  finding: ContractOptimizationFinding,
-): string {
-  return `${label}: ${ask}.\n${summarizeFinding(finding)}`;
+  return `${label}: ${ask}. Evidence: ${finding.title}.`;
 }
 
 function formatContractEvidenceLine(

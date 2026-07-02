@@ -25,6 +25,30 @@ const impactRange = (
   return `${money(low)} to ${money(high)}`;
 };
 
+const topFindingTitles = (
+  profile: ContractOptimizationMveProfile,
+  count: number,
+): string[] =>
+  profile.findings
+    .filter((finding) => finding.severity === "high" || finding.severity === "medium")
+    .slice(0, count)
+    .map((finding) => finding.title);
+
+const cureNoticeAsks = (profile: ContractOptimizationMveProfile): string[] => {
+  const asks = profile.levers
+    .filter((lever) => lever.priority === "P0" || lever.priority === "P1")
+    .slice(0, 4)
+    .map((lever) => lever.buyerAsk);
+  return asks.length
+    ? asks
+    : [
+        "Reconcile invoice variance before renewal pricing is accepted.",
+        "Strengthen SLA remedies for critical service towers.",
+        "True up staffing coverage against committed roles and locations.",
+        "Separate one-time change orders from recurring run-rate baseline.",
+      ];
+};
+
 export function buildContractOptimizationBriefMarkdown(
   profile: ContractOptimizationMveProfile,
 ): string {
@@ -32,8 +56,26 @@ export function buildContractOptimizationBriefMarkdown(
   const highFindings = profile.findings.filter(
     (finding) => finding.severity === "high",
   ).length;
+  const frontSheetFindings = topFindingTitles(profile, 4);
+  const frontSheetAsks = cureNoticeAsks(profile);
   return [
     `# ${profile.contractName} Optimization Brief`,
+    "",
+    "## One-Page Executive Front Sheet",
+    "",
+    `**Recommendation:** Do not renew ${profile.incumbentVendorName} as-is. Issue the cure/reservation-of-rights notice, renegotiate under defined cure conditions, and keep the competitive fallback ready until the vendor proves the run-rate, staffing, SLA, and change-order baseline.`,
+    "",
+    `**Identified exposure:** ${exposure.label}.`,
+    "",
+    "**Top findings:**",
+    ...frontSheetFindings.map((finding) => `- ${finding}`),
+    "",
+    "**Cure notice asks:**",
+    ...frontSheetAsks.map((ask) => `- ${ask}`),
+    "",
+    `**Decision required:** ${profile.recommendedPath.decisionOwnerRole} should approve the cure notice, lock the renewal baseline pending reconciliation, and preserve competitive fallback authority.`,
+    "",
+    `**Renewal deadline:** non-renewal notice date is ${profile.contractBaseline.renewalNoticeDate}; use this window as leverage rather than accepting the current baseline by default.`,
     "",
     "## Executive Summary",
     "",
@@ -47,11 +89,9 @@ export function buildContractOptimizationBriefMarkdown(
     "",
     "## Decision Snapshot",
     "",
-    "| Decision area | Executive read | Action |",
-    "|---|---|---|",
-    `| Renewal posture | Do not renew as-is | ${profile.recommendedPath.immediateAction} |`,
-    `| Commercial baseline | ${money(profile.contractBaseline.currentAnnualRunRateUsd)} run rate with identified exposure of ${exposure.label} | Reconcile invoice, staffing, SLA, and change-order drivers before renewal pricing |`,
-    `| Fallback | ${profile.recommendedPath.fallbackPath} | Keep the competitive event ready until cure evidence is received |`,
+    `- Renewal posture: do not renew as-is. ${profile.recommendedPath.immediateAction}`,
+    `- Commercial baseline: ${money(profile.contractBaseline.currentAnnualRunRateUsd)} run rate with identified exposure of ${exposure.label}. Reconcile invoice, staffing, SLA, and change-order drivers before renewal pricing.`,
+    `- Fallback: ${profile.recommendedPath.fallbackPath} Keep the competitive event ready until cure evidence is received.`,
     "",
     "## Recommended Path",
     "",

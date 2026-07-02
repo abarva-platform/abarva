@@ -125,11 +125,16 @@ describe("Source contract optimization MVE", () => {
 
     expect(brief).toContain("8,610 tickets");
     expect(brief).toContain("44 per month");
+    expect(brief).toContain("## One-Page Executive Front Sheet");
+    expect(brief).toContain("**Recommendation:** Do not renew");
+    expect(brief).toContain("**Top findings:**");
+    expect(brief).toContain("**Cure notice asks:**");
+    expect(brief).toContain("**Renewal deadline:** non-renewal notice date is 2026-09-30");
     expect(brief).toContain(
       "Identified exposure: approximately $3.6M-$4.8M annualized, subject to vendor cure review",
     );
     expect(brief).toContain("## Decision Snapshot");
-    expect(brief).toContain("| Renewal posture | Do not renew as-is |");
+    expect(brief).toContain("- Renewal posture: do not renew as-is.");
     expect(brief).toContain("### Finding 1:");
     expect(brief).toContain("### Lever 1:");
     expect(brief).toContain("Timing: Immediate");
@@ -140,5 +145,8 @@ describe("Source contract optimization MVE", () => {
     expect(brief).not.toContain("Value to test to Value to test");
     expect(brief).not.toMatch(/Priority: P[0-2]/);
     expect(brief).not.toContain("Current state:");
+    expect(brief).not.toContain("SkyHarbor Air AMS Outsourcing RFP");
+    expect(brief).not.toContain("SKYH-AMS-RFP-2026");
+    expect(brief).not.toContain("Airline Demo");
   });
 });
