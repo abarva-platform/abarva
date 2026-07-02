@@ -359,7 +359,7 @@ function display(value: string | undefined): string {
   const raw = String(value ?? "").trim();
   if (!raw) return "Not loaded";
   if (raw.startsWith("data_thin:")) {
-    return `Missing: ${humanize(raw.replace("data_thin:", "")).toLowerCase()}`;
+    return "Needs evidence";
   }
   if (/^-?\d+(\.\d+)?$/.test(raw) && raw.length > 4) {
     const numeric = Number(raw);

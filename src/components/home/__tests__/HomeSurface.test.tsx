@@ -91,7 +91,7 @@ const v6Browser = {
         { key: "renewal_date", label: "Renewal" },
         { key: "contract_risk", label: "Risk/gap" },
       ],
-      rows: [["Kyriba", "Treasury", "2026-07-06", "Missing: contract risk"]],
+      rows: [["Kyriba", "Treasury", "2026-07-06", "Needs evidence"]],
       knownGaps: [{ label: "Contract Risk", count: 12 }],
     },
   },
@@ -114,6 +114,15 @@ describe("HomeSurface — real React Context Explorer", () => {
     expect(screen.getByLabelText("Expand to overlay")).toBeInTheDocument();
     expect(screen.getByLabelText("Context Explorer tabs")).toBeInTheDocument();
     expect(screen.getByLabelText("Suggested actions")).toBeInTheDocument();
+    expect(
+      screen.getByText("What context is loaded, and what can we trust?"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Which areas are strongest, and which are thin?"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Show the systems, data, vendors, and risks as tables."),
+    ).toBeInTheDocument();
     // real per-tenant signal (not a fake row-dump)
     expect(
       screen.getByText(
@@ -174,8 +183,12 @@ describe("HomeSurface — real React Context Explorer", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/evidence points are loaded/)).toBeInTheDocument();
     expect(screen.getByText("Vendors and contracts")).toBeInTheDocument();
+    expect(screen.getByText("V6 source preview")).toBeInTheDocument();
+    expect(screen.getByText("90")).toBeInTheDocument();
+    expect(screen.getByText("rows")).toBeInTheDocument();
     expect(screen.getByText("Kyriba")).toBeInTheDocument();
     expect(screen.getByText("Treasury")).toBeInTheDocument();
+    expect(screen.getByText("Needs evidence")).toBeInTheDocument();
     expect(screen.getByText("V6_07_vendors_contracts.csv")).toBeInTheDocument();
   });
 });
