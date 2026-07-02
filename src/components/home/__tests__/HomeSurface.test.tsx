@@ -188,14 +188,30 @@ const v6Browser = {
       dataThinCells: 12,
       sourceCount: 1,
       columns: [
+        { key: "__loaded_record", label: "Loaded record" },
+        { key: "__source_family", label: "Source family" },
+        { key: "__source_basis", label: "Basis" },
         { key: "vendor_name", label: "Vendor" },
         { key: "service", label: "Service" },
         { key: "renewal_date", label: "Renewal" },
         { key: "contract_risk", label: "Risk/gap" },
       ],
-      rows: [["Kyriba", "Treasury", "2026-07-06", "Needs evidence"]],
+      rows: [
+        [
+          "VND-001 - Kyriba",
+          "apex/vendors-contracts.csv",
+          "synthetic demo",
+          "Kyriba",
+          "Treasury",
+          "2026-07-06",
+          "Needs evidence",
+        ],
+      ],
       sourceRows: [
         sourceRow("V6_07_vendors_contracts.csv", 2, "VND-001", "Kyriba", {
+          "Loaded record": "VND-001 - Kyriba",
+          "Source family": "apex/vendors-contracts.csv",
+          Basis: "synthetic demo",
           Vendor: "Kyriba",
           Service: "Treasury",
           Renewal: "2026-07-06",
@@ -344,6 +360,9 @@ describe("HomeSurface — real React Context Explorer", () => {
       screen.getByRole("option", { name: /IT systems landscape/ }),
     ).toBeInTheDocument();
     expect(
+      screen.getAllByRole("option", { name: /82% coverage/ }).length,
+    ).toBeGreaterThan(0);
+    expect(
       screen.queryByText("Applications, integrations, systems of record"),
     ).not.toBeInTheDocument();
   });
@@ -362,6 +381,7 @@ describe("HomeSurface — real React Context Explorer", () => {
     expect(
       screen.getByText("Applications, integrations, systems of record"),
     ).toBeInTheDocument();
+    expect(screen.getByText("Coverage")).toBeInTheDocument();
     expect(screen.getByText("82%")).toBeInTheDocument();
   });
 
@@ -394,8 +414,16 @@ describe("HomeSurface — real React Context Explorer", () => {
     expect(screen.getByText(/evidence points are loaded/)).toBeInTheDocument();
     expect(screen.getByText("Vendors and contracts")).toBeInTheDocument();
     expect(screen.getByText("V6 source preview")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Loaded source rows with their V6 lineage and available fields.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText("90")).toBeInTheDocument();
     expect(screen.getByText("rows")).toBeInTheDocument();
+    expect(screen.getByText("VND-001 - Kyriba")).toBeInTheDocument();
+    expect(screen.getByText("apex/vendors-contracts.csv")).toBeInTheDocument();
+    expect(screen.getByText("synthetic demo")).toBeInTheDocument();
     expect(screen.getByText("Kyriba")).toBeInTheDocument();
     expect(screen.getByText("Treasury")).toBeInTheDocument();
     expect(screen.getByText("Needs evidence")).toBeInTheDocument();

@@ -34,8 +34,8 @@ import {
 } from "@/lib/home/v6/home-v6-context-findings";
 
 const CSS = `
-.homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);min-height:100%;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
-.homex .hx-shell{display:block;min-height:100%}
+.homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);height:100%;min-height:0;overflow:hidden;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
+.homex .hx-shell{display:block;height:100%;min-height:0;overflow:hidden}
 .homex .hx-rail{border-bottom:1px solid var(--hl);padding:10px 40px;background:#fff}
 .homex .hx-navWrap{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .homex .hx-railLabel{display:flex;align-items:center;gap:8px;color:var(--hm);font-size:12px}
@@ -43,7 +43,7 @@ const CSS = `
 .homex .hx-select{min-width:min(360px,100%);border:1px solid var(--hl);border-radius:8px;background:#fff;color:var(--hi);font:inherit;font-size:13px;padding:8px 32px 8px 10px}
 .homex .hx-select:focus{outline:2px solid rgba(34,174,234,.22);border-color:#22AEEA}
 .homex .hx-rail-h,.homex .hx-rail-g{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.homex .hx-canvas{padding:0 0 80px;max-width:none;min-width:0;min-height:100%}
+.homex .hx-canvas{padding:0 0 80px;max-width:none;min-width:0;height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable}
 .homex .hx-body{padding:18px 40px 0;max-width:1360px;margin:0 auto}
 .homex .hx-ey{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--hf)}
 .homex .hx-h2{font-family:var(--font-fraunces),Georgia,serif;font-weight:500;font-size:26px;letter-spacing:-.01em;margin:8px 0 6px}
@@ -124,6 +124,9 @@ const TECHNICAL_STRING_FIELDS = new Set([
   "key",
   "client",
   "clientKey",
+  "datasetDir",
+  "sourceFile",
+  "v6File",
   "tenantId",
   "tenantKey",
 ]);
@@ -134,6 +137,9 @@ function sanitizeVisibleStrings<T>(value: T, fieldName?: string): T {
     fieldName &&
     TECHNICAL_STRING_FIELDS.has(fieldName)
   ) {
+    return value;
+  }
+  if (typeof value === "string" && isSourceLineageString(value)) {
     return value;
   }
   if (typeof value === "string") return demoSafeClientText(value) as T;
@@ -149,6 +155,10 @@ function sanitizeVisibleStrings<T>(value: T, fieldName?: string): T {
     ) as T;
   }
   return value;
+}
+
+function isSourceLineageString(value: string): boolean {
+  return /\.(csv|json|jsonl|yaml|yml)(?::\d+)?$/i.test(value.trim());
 }
 
 function contextBrowserQuestions(dimensions: BindingDimension[]): string[] {
@@ -666,7 +676,7 @@ function DimensionView({
           <div className="v">{dim.sources}</div>
         </div>
         <div className="hx-stat" style={{ minWidth: 140 }}>
-          <div className="k">Confidence</div>
+          <div className="k">Coverage</div>
           <div className="v">{dim.trust}%</div>
           <div className="hx-meter">
             <span
@@ -708,9 +718,8 @@ function DimensionView({
         <aside className="hx-explain" aria-label="What the numbers mean">
           <strong>How to read the numbers:</strong> evidence points are loaded,
           source-backed context items aVa can use in answers. Sources are the
-          distinct loaded files or source families behind this area. Confidence
-          is a coverage score for answerability, not a guarantee that every
-          field is complete.
+          distinct loaded files or source families behind this area. Coverage is
+          an answerability score, not a guarantee that every field is complete.
         </aside>
       </div>
       {dim.flag ? (
@@ -725,7 +734,7 @@ function DimensionView({
               <div className="hx-ey">V6 source preview</div>
               <strong>{preview.title}</strong>
               <span>
-                First loaded rows from the source table aVa uses for this area.
+                Loaded source rows with their V6 lineage and available fields.
               </span>
             </div>
             <div className="hx-previewMeta" aria-label="V6 table coverage">
@@ -1206,7 +1215,7 @@ export function HomeSurface({
                 <option value="">Overview</option>
                 {dims.map((d) => (
                   <option key={d.dimension} value={d.dimension}>
-                    {d.dimension} · {d.trust}% confidence
+                    {d.dimension} · {d.trust}% coverage
                   </option>
                 ))}
               </select>

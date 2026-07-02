@@ -56,6 +56,12 @@ interface DimensionPreviewConfig {
   columns: HomeV6BrowserColumn[];
 }
 
+const LINEAGE_COLUMNS: HomeV6BrowserColumn[] = [
+  col("__loaded_record", "Loaded record"),
+  col("__source_family", "Source family"),
+  col("__source_basis", "Basis"),
+];
+
 const V6_DATASET_BY_CLIENT: Record<ClientKey, string> = {
   apexretail: "apex-retail-synthetic-v6",
   arcturus: "first-capital-financial-synthetic-v6",
@@ -310,9 +316,17 @@ export function getHomeV6ContextBrowser(
         );
       },
     );
+    const displayColumns = previewColumns(config);
     const displayRows = sourceRows
       .filter((row) =>
-        config.columns.some((column) => hasDisplayValue(row[column.key])),
+        displayColumns.some((column) =>
+          hasPreviewValue(rawPreviewValue(row, column)),
+        ),
+      )
+      .sort(
+        (left, right) =>
+          previewScore(right, displayColumns) -
+          previewScore(left, displayColumns),
       )
       .slice(0, 12);
     const manifestFiles = config.files
@@ -329,11 +343,13 @@ export function getHomeV6ContextBrowser(
         manifestFiles.reduce((sum, file) => sum + file.dataThinCells, 0) ||
         countDataThinCells(sourceRows),
       sourceCount: config.files.length,
-      columns: config.columns,
+      columns: displayColumns,
       rows: displayRows
         .slice(0, 8)
-        .map((row) => config.columns.map((column) => display(row[column.key]))),
-      sourceRows: displayRows.map((row) => toSourceRow(row, config.columns)),
+        .map((row) =>
+          displayColumns.map((column) => display(rawPreviewValue(row, column))),
+        ),
+      sourceRows: displayRows.map((row) => toSourceRow(row, displayColumns)),
       knownGaps: topKnownGaps(sourceRows),
     };
   }
@@ -361,6 +377,47 @@ function col(key: string, label: string): HomeV6BrowserColumn {
   return { key, label };
 }
 
+function previewColumns(config: DimensionPreviewConfig): HomeV6BrowserColumn[] {
+  const lineageKeys = new Set(LINEAGE_COLUMNS.map((column) => column.key));
+  return [
+    ...LINEAGE_COLUMNS,
+    ...config.columns.filter((column) => !lineageKeys.has(column.key)),
+  ];
+}
+
+function rawPreviewValue(
+  row: Record<string, string>,
+  column: HomeV6BrowserColumn,
+): string | undefined {
+  switch (column.key) {
+    case "__loaded_record":
+      return loadedRecordLabel(row);
+    case "__source_family":
+      return firstDisplayValue(row.source_file, row.__file) ?? "";
+    case "__source_basis":
+      return (
+        firstDisplayValue(
+          row.source_basis,
+          row.source_system,
+          row.source_owner,
+        ) ?? ""
+      );
+    default:
+      return row[column.key];
+  }
+}
+
+function previewScore(
+  row: Record<string, string>,
+  columns: HomeV6BrowserColumn[],
+): number {
+  return columns.reduce(
+    (score, column) =>
+      score + (hasPreviewValue(rawPreviewValue(row, column)) ? 1 : 0),
+    0,
+  );
+}
+
 function toSourceRow(
   row: Record<string, string>,
   columns: HomeV6BrowserColumn[],
@@ -368,6 +425,26 @@ function toSourceRow(
   const rowId =
     firstDisplayValue(row.record_id, row.id, row.source_id, row.entity_id) ||
     `${row.__file ?? "V6 row"}:${row.__rowNumber ?? "unknown"}`;
+  const label = loadedRecordLabel(row) || rowId;
+  return {
+    v6File: row.__file ?? "unknown",
+    rowNumber: Number(row.__rowNumber ?? 0),
+    rowId,
+    label: display(label),
+    values: Object.fromEntries(
+      columns.map((column) => [
+        column.label,
+        display(rawPreviewValue(row, column)),
+      ]),
+    ),
+    knownGaps: collectKnownGaps(row),
+  };
+}
+
+function loadedRecordLabel(row: Record<string, string>): string {
+  const rowId =
+    firstDisplayValue(row.record_id, row.id, row.source_id, row.entity_id) ??
+    "";
   const label =
     firstDisplayValue(
       row.record_name,
@@ -381,17 +458,9 @@ function toSourceRow(
       row.process,
       row.function_name,
       row.org_unit_name,
-    ) || rowId;
-  return {
-    v6File: row.__file ?? "unknown",
-    rowNumber: Number(row.__rowNumber ?? 0),
-    rowId,
-    label: display(label),
-    values: Object.fromEntries(
-      columns.map((column) => [column.label, display(row[column.key])]),
-    ),
-    knownGaps: collectKnownGaps(row),
-  };
+    ) ?? "";
+  if (rowId && label && rowId !== label) return `${rowId} - ${label}`;
+  return rowId || label;
 }
 
 function parseCsv(text: string): Array<Record<string, string>> {
@@ -484,8 +553,9 @@ function firstDisplayValue(
   return null;
 }
 
-function hasDisplayValue(value: string | undefined): boolean {
-  return Boolean(value && value.trim());
+function hasPreviewValue(value: string | undefined): boolean {
+  const raw = String(value ?? "").trim();
+  return Boolean(raw && !raw.startsWith("data_thin:"));
 }
 
 function display(value: string | undefined): string {
