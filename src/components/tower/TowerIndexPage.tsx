@@ -411,7 +411,7 @@ function CanvasViewTabs({
 }
 
 type CioDashboardView =
-  "overview" | "portfolio" | "budget" | "vendors" | "ai_roi";
+  "overview" | "visuals" | "portfolio" | "budget" | "vendors" | "ai_roi";
 
 const CIO_DASHBOARD_VIEWS: Array<{
   key: CioDashboardView;
@@ -422,6 +422,11 @@ const CIO_DASHBOARD_VIEWS: Array<{
     key: "overview",
     label: "Overview",
     description: "What needs attention today.",
+  },
+  {
+    key: "visuals",
+    label: "Visuals",
+    description: "The fastest cuts of spend, value, vendor, and AI exposure.",
   },
   {
     key: "portfolio",
@@ -999,34 +1004,15 @@ function CioDashboardTabs({
   return (
     <section
       style={{
-        padding: "20px 32px 16px",
+        padding: "14px 32px 12px",
         borderBottom: `1px solid ${T.RULE_STRONG}`,
         background: "#fff",
       }}
     >
-      <div>
-        <div>
-          <div
-            style={{
-              fontFamily: T.MONO,
-              fontSize: 10,
-              letterSpacing: "1.8px",
-              textTransform: "uppercase",
-              color: T.GOLD,
-              fontWeight: 800,
-            }}
-          >
-            CIO dashboard
-          </div>
-          <div style={{ marginTop: 5, color: T.INK_2, fontSize: 13.5 }}>
-            {
-              CIO_DASHBOARD_VIEWS.find((view) => view.key === active)
-                ?.description
-            }
-          </div>
-        </div>
+      <div style={{ color: T.INK_2, fontSize: 13, lineHeight: 1.35 }}>
+        {CIO_DASHBOARD_VIEWS.find((view) => view.key === active)?.description}
       </div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
+      <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginTop: 10 }}>
         {CIO_DASHBOARD_VIEWS.map((view) => {
           const current = view.key === active;
           return (
@@ -1040,9 +1026,9 @@ function CioDashboardTabs({
                 borderRadius: 999,
                 background: current ? T.INK : "#fff",
                 color: current ? "#fff" : T.INK_2,
-                padding: "8px 16px",
-                fontSize: 13,
-                fontWeight: 850,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 760,
                 fontFamily: T.SANS,
                 cursor: "pointer",
               }}
@@ -1670,8 +1656,18 @@ function CioDashboardViewLead({
     Exclude<CioDashboardView, "overview">,
     { eyebrow: string; title: string; body: string; stats: string[] }
   > = {
+    visuals: {
+      eyebrow: "Visual view",
+      title: "See where spend, value, vendors, and AI exposure concentrate.",
+      body: "This view turns the same governed Tower records into chart-like slices. It does not invent missing measures; gaps remain visible when source fields are absent.",
+      stats: [
+        `${formatMoney(model.committedTotal)} IT budget`,
+        `${formatMoney(model.vendorContractTotal)} vendor exposure`,
+        `${formatMoney(model.aiSpendTotal)} AI-tagged spend`,
+      ],
+    },
     portfolio: {
-      eyebrow: "Tower · portfolio view",
+      eyebrow: "Portfolio view",
       title: "Rank the loaded IT programs by money, owner, and proof posture.",
       body: "This view is for program accountability: which initiatives carry budget, which owners are attached, and which rows still need measured value before the CIO treats them as fundable.",
       stats: [
@@ -1681,7 +1677,7 @@ function CioDashboardViewLead({
       ],
     },
     budget: {
-      eyebrow: "Tower · budget view",
+      eyebrow: "Budget view",
       title:
         "Separate enterprise budget, run/change, and portfolio-company intensity.",
       body: "This view uses the Tower budget rollups first. It keeps spend, value, vendor exposure, and pressure separate so the dashboard does not add unlike measures into one headline.",
@@ -1692,7 +1688,7 @@ function CioDashboardViewLead({
       ],
     },
     vendors: {
-      eyebrow: "Tower · vendor view",
+      eyebrow: "Vendor view",
       title: "Use vendor concentration and renewals as leverage.",
       body: "This view shows named contract exposure, renewal timing, and vendor health from loaded contract rows. It is not a generic spend tile; it is the negotiation and simplification lens.",
       stats: [
@@ -1702,7 +1698,7 @@ function CioDashboardViewLead({
       ],
     },
     ai_roi: {
-      eyebrow: "Tower · AI ROI view",
+      eyebrow: "AI ROI view",
       title: "Compare Copilot, vendor agents, platforms, and true AI bets.",
       body: "This view separates AI spend families and shows measured value only where it is loaded. Missing value evidence remains a gap, not a zero-ROI claim.",
       stats: [
@@ -2196,8 +2192,8 @@ function CxoGovernedMeasureCard({ card }: { card: CioTowerCxoMeasureCard }) {
         border: `1px solid ${hasValue ? T.RULE_STRONG : T.AMBER}`,
         borderRadius: 13,
         background: "#fff",
-        padding: "15px 16px",
-        minHeight: 126,
+        padding: "13px 14px",
+        minHeight: 112,
       }}
     >
       <div
@@ -2215,16 +2211,16 @@ function CxoGovernedMeasureCard({ card }: { card: CioTowerCxoMeasureCard }) {
       <div
         style={{
           fontFamily: T.SERIF,
-          fontSize: 29,
+          fontSize: 25,
           lineHeight: 1.05,
           color: hasValue ? T.INK : T.AMBER,
           fontWeight: 900,
-          marginTop: 10,
+          marginTop: 8,
         }}
       >
         {card.displayValue}
       </div>
-      <div style={{ marginTop: 7, color: T.INK_2, fontSize: 12.5, lineHeight: 1.35 }}>
+      <div style={{ marginTop: 6, color: T.INK_2, fontSize: 12, lineHeight: 1.35 }}>
         {footer}
       </div>
     </article>
@@ -2273,8 +2269,8 @@ function DerivedCxoMetricCard({
         border: `1px solid ${tone === "warn" ? T.AMBER : T.RULE_STRONG}`,
         borderRadius: 13,
         background: "#fff",
-        padding: "15px 16px",
-        minHeight: 118,
+        padding: "13px 14px",
+        minHeight: 108,
       }}
     >
       <div
@@ -2293,7 +2289,7 @@ function DerivedCxoMetricCard({
         style={{
           marginTop: 10,
           fontFamily: T.SERIF,
-          fontSize: 29,
+          fontSize: 25,
           lineHeight: 1.05,
           color,
           fontWeight: 900,
@@ -2301,7 +2297,7 @@ function DerivedCxoMetricCard({
       >
         {value}
       </div>
-      <div style={{ marginTop: 7, color: T.INK_2, fontSize: 12.5, lineHeight: 1.35 }}>
+      <div style={{ marginTop: 6, color: T.INK_2, fontSize: 12, lineHeight: 1.35 }}>
         {detail}
       </div>
     </article>
@@ -2634,15 +2630,15 @@ function CxoGovernedCommandCenter({
   const parityCard = model.cards.find((card) => card.measureKey === model.parityMeasureKey);
 
   return (
-    <div style={{ padding: "22px 32px 36px" }}>
+    <div style={{ padding: "18px 32px 34px" }}>
       <section
         style={{
           border: `1px solid ${T.RULE_STRONG}`,
-          borderRadius: 16,
+          borderRadius: 14,
           background: "#fff",
-          padding: "24px 26px",
-          marginBottom: 18,
-          boxShadow: "0 18px 38px rgba(15, 23, 42, 0.08)",
+          padding: "18px 22px",
+          marginBottom: 16,
+          boxShadow: "0 14px 30px rgba(15, 23, 42, 0.07)",
         }}
       >
         <div
@@ -2655,29 +2651,29 @@ function CxoGovernedCommandCenter({
             fontWeight: 900,
           }}
         >
-          Tower · CIO command center
+          Executive operating view
         </div>
         <h2
           style={{
-            margin: "9px 0 0",
+            margin: "7px 0 0",
             fontFamily: T.SERIF,
-            fontSize: 30,
+            fontSize: 25,
             lineHeight: 1.08,
-            letterSpacing: "-0.4px",
+            letterSpacing: 0,
             color: T.INK,
             maxWidth: 960,
           }}
         >
           {model.headline}
         </h2>
-        <p style={{ margin: "10px 0 0", color: T.INK_2, maxWidth: 900, fontSize: 14.5, lineHeight: 1.5 }}>
+        <p style={{ margin: "8px 0 0", color: T.INK_2, maxWidth: 900, fontSize: 13.5, lineHeight: 1.45 }}>
           Start here: how much are we spending, how much value have we promised, what has
           been proven, and where should leadership inspect next?
         </p>
       </section>
 
-      <section style={{ marginBottom: 22 }}>
-        <div style={{ fontFamily: T.MONO, fontSize: 10, letterSpacing: "1.8px", textTransform: "uppercase", color: T.GOLD, fontWeight: 900, marginBottom: 10 }}>
+      <section style={{ marginBottom: 20 }}>
+        <div style={{ fontFamily: T.MONO, fontSize: 9.5, letterSpacing: "1.5px", textTransform: "uppercase", color: T.GOLD, fontWeight: 900, marginBottom: 9 }}>
           Value Command Center
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
@@ -2718,13 +2714,13 @@ function CxoGovernedCommandCenter({
           border: `1px solid ${T.PURPLE}`,
           borderRadius: 14,
           background: T.PURPLE_BG,
-          padding: "18px 22px",
+          padding: "16px 20px",
         }}
       >
         <div style={{ fontFamily: T.MONO, fontSize: 10, letterSpacing: "1.8px", textTransform: "uppercase", color: T.PURPLE, fontWeight: 900 }}>
           Ask aVa
         </div>
-        <h3 style={{ margin: "8px 0 0", fontFamily: T.SERIF, fontSize: 24, lineHeight: 1.12 }}>
+        <h3 style={{ margin: "7px 0 0", fontFamily: T.SERIF, fontSize: 21, lineHeight: 1.12 }}>
           Ask “what is my IT spend?” and aVa should explain the same board number in plain language.
         </h3>
         <p style={{ margin: "8px 0 0", color: T.INK_2, fontSize: 13.5 }}>
@@ -2783,6 +2779,64 @@ function CioDashboardPanel({
           }}
         >
           <strong>Loaded-data gaps:</strong> {model.gaps.join(" ")}
+        </div>
+      ) : null}
+
+      {active === "visuals" ? (
+        <div style={{ display: "grid", gap: 18 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gap: 18,
+            }}
+          >
+            <CioPanel title="Run versus change.">
+              <CioSplitBar
+                leftLabel="Run"
+                leftValue={model.runTotal}
+                rightLabel="Change"
+                rightValue={model.changeTotal}
+              />
+            </CioPanel>
+            <CioPanel title="OpEx versus CapEx.">
+              <CioSplitBar
+                leftLabel="OpEx"
+                leftValue={model.opexTotal}
+                rightLabel="CapEx"
+                rightValue={model.capexTotal}
+              />
+            </CioPanel>
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              gap: 18,
+            }}
+          >
+            <CioPanel title="Spend by function.">
+              <CioBarList
+                rows={model.spendByFunction.slice(0, 6)}
+                total={model.committedTotal}
+                empty="No function or portfolio ownership rows are available."
+              />
+            </CioPanel>
+            <CioPanel title="Vendor exposure.">
+              <CioBarList
+                rows={model.spendByVendor.slice(0, 6)}
+                total={model.spendByVendor.reduce((sum, row) => sum + row.amount, 0)}
+                empty="No vendor contract values are loaded."
+              />
+            </CioPanel>
+            <CioPanel title="AI investment families.">
+              <CioBarList
+                rows={model.aiSpendRows.slice(0, 6)}
+                total={model.aiSpendRows.reduce((sum, row) => sum + row.amount, 0)}
+                empty="No AI-tagged spend rows are loaded."
+              />
+            </CioPanel>
+          </div>
         </div>
       ) : null}
 
@@ -5648,30 +5702,6 @@ interface TowerIndexPageProps {
   reportDownloadSlot?: ReactNode;
 }
 
-function formatTowerDateLabel(todayIso: string): {
-  dayName: string;
-  monthDay: string;
-} {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(todayIso);
-  const date = match
-    ? new Date(
-        Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])),
-      )
-    : new Date(Date.UTC(2026, 4, 12));
-
-  return {
-    dayName: date.toLocaleDateString("en-US", {
-      weekday: "long",
-      timeZone: "UTC",
-    }),
-    monthDay: date.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      timeZone: "UTC",
-    }),
-  };
-}
-
 type MetricAskHandler = (request: {
   metricKey: MetricProvenanceKey;
   metricLabel: string;
@@ -5793,11 +5823,6 @@ export function TowerIndexPage({
     towerCanvasRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, [activeCioDashboardView, activeDetailId, activeTab]);
 
-  // Keep this label deterministic across SSR and hydration. Live wall-clock
-  // rendering causes React text mismatches when the server and browser resolve
-  // the minute or time zone differently.
-  const { dayName, monthDay } = formatTowerDateLabel(towerToday);
-  const timestamp = "12:00 AM";
   const cioDashboardModel = buildCioDashboardModel(
     initiatives ?? [],
     vendors ?? [],
@@ -6034,7 +6059,7 @@ export function TowerIndexPage({
         {/* Masthead */}
         <div
           style={{
-            padding: "18px 32px 14px",
+            padding: "14px 32px 12px",
             borderBottom: `1px solid ${T.RULE_STRONG}`,
           }}
         >
@@ -6051,60 +6076,35 @@ export function TowerIndexPage({
                 style={{
                   fontFamily: T.MONO,
                   fontSize: 10,
-                  letterSpacing: "2px",
+                  letterSpacing: "1.6px",
                   fontWeight: 700,
                   color: T.GOLD,
                   textTransform: "uppercase",
                   marginBottom: 5,
                 }}
               >
-                Tower · CIO command center
+                Tower
               </div>
               <h1
                 style={{
                   fontFamily: T.SERIF,
-                  fontSize: 38,
+                  fontSize: 31,
                   fontWeight: 900,
-                  letterSpacing: "-0.9px",
-                  lineHeight: 1,
-                  marginBottom: 6,
+                  letterSpacing: 0,
+                  lineHeight: 1.04,
                   margin: 0,
                   color: T.INK,
                 }}
               >
-                CIO portfolio command center{" "}
-                <span
-                  style={{
-                    fontSize: 19,
-                    fontWeight: 500,
-                    fontStyle: "italic",
-                    color: T.GRAY_DK,
-                    letterSpacing: "-0.5px",
-                  }}
-                >
-                  — {dayName}, {monthDay}
-                </span>
+                CIO portfolio command center
               </h1>
               <div
                 style={{
-                  fontFamily: T.MONO,
-                  fontSize: 10,
-                  letterSpacing: "1.4px",
-                  color: T.GRAY_DK,
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  marginTop: 5,
-                }}
-              >
-                aVa · {tenantName} · {timestamp} PT
-              </div>
-              <div
-                style={{
-                  marginTop: 8,
+                  marginTop: 6,
                   color: "#2f3848",
-                  fontSize: 15.5,
+                  fontSize: 14.5,
                   fontWeight: 760,
-                  lineHeight: 1.35,
+                  lineHeight: 1.3,
                 }}
               >
                 Budget, top programs, value proof, vendor exposure, and risks the CIO
