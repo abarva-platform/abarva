@@ -537,10 +537,19 @@ function fallbackContractForKey(key: string): CioTowerContract {
   };
 }
 
+function persistableTraceContractKey(contractKey: string): string {
+  const aliases: Record<string, string> = {
+    tower_vendor_contract_gap: "tower_inspect_this_week",
+    tower_evidence_trust: "tower_weak_value_evidence",
+  };
+  return aliases[contractKey] ?? contractKey;
+}
+
 export const __cioTowerAnswerTestHooks = {
   buildCioTowerDeterministicMetricAnswer,
   fallbackContractForKey,
   factWhereForContract,
+  persistableTraceContractKey,
   validateParsedVisibleAnswer,
 };
 
@@ -2227,6 +2236,9 @@ async function persistPromptAndTrace(args: {
     gaps: args.context.gaps,
     v6PacketContract: args.context.v6PacketContract,
   };
+  const traceContractKey = persistableTraceContractKey(
+    args.context.contract.contract_key,
+  );
   const renderedResponse = args.parsedOutput
     ? collectVisibleTextFromContract(args.parsedOutput).join("\n\n")
     : null;
@@ -2268,7 +2280,7 @@ async function persistPromptAndTrace(args: {
         promptPackageKey,
         args.context.tenantKey,
         args.context.question,
-        args.context.contract.contract_key,
+        traceContractKey,
         args.context.contract.measure_key,
         JSON.stringify(deterministicPacket),
         args.promptText,
@@ -2286,7 +2298,7 @@ async function persistPromptAndTrace(args: {
         traceKey,
         args.context.tenantKey,
         args.context.question,
-        args.context.contract.contract_key,
+        traceContractKey,
         args.context.contract.measure_key,
         promptPackageKey,
         args.rawResponse,
