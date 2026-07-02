@@ -164,7 +164,7 @@ export const LAKESHORE_AGENT_GROUNDING: readonly LakeshoreAgentGroundingRule[] =
     ],
     mustNotSay: [
       'That dry-run data is committed live tenant data',
-      'That AbarVa has scanned real Morgan Street, HAVI, tms, Continental, or Stanley data',
+      'That AbarVa has scanned real external holding-company analog data',
     ],
     evalPrompts: [
       'What evidence supports the Kyriba rollout risks for Lakeshore, and what is still only a pattern assumption?',
@@ -291,7 +291,7 @@ export function buildLakeshoreCorpusActivationPlan(args?: { generatedAt?: string
       'Dry-run evidence can explain readiness, not live customer state.',
       'Every agent response should label source basis: loaded tenant evidence, reusable pattern guidance, researched benchmark, or missing data.',
       'Cost and effort outputs stay planning-range unless a tenant-specific rate card has been committed.',
-      'If asked about real Morgan Street/HAVI/tms/Continental/Stanley operations, agents must say Lakeshore is synthetic and analogous, not real-client data.',
+      'If asked about real external holding-company analog operations, agents must say Lakeshore is synthetic and analogous, not real-client data.',
     ],
   };
 }

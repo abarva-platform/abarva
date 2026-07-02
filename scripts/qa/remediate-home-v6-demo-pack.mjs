@@ -19,9 +19,9 @@ const TENANT_PROFILES = {
     systems: ["Core Banking", "Payments Hub", "Wealth CRM", "Risk Analytics", "Loan Origination", "Treasury"],
     capabilities: ["Client servicing", "Payments", "Advisor productivity", "Risk management", "Credit workflow", "Liquidity management"],
   },
-  "lakeshore-industries-synthetic-v6": {
-    tenantKey: "lakeshore-industries",
-    demoName: "Industrial Demo",
+  "lakeshore-holdings-synthetic-v6": {
+    tenantKey: "lakeshore-holdings",
+    demoName: "Lakeshore Holdings",
     industry: "Industrial manufacturing",
     ownerPrefix: "Industrial",
     systems: ["SAP Manufacturing", "Plant MES", "Treasury Workstation", "Supplier Portal", "Quality Management", "Field Service"],
@@ -48,7 +48,7 @@ const TENANT_PROFILES = {
 const OLD_NAME_REPLACEMENTS = [
   [/Apex Retail Group|Apex Retail/gi, "Retail Demo"],
   [/First Capital Financial|First Capital|Arcturus Financial Group|Arcturus/gi, "Financial Services Demo"],
-  [/Lakeshore Industries|Lakeshore Holdings|Lakeshore/gi, "Industrial Demo"],
+  [/Lakeshore Holdings|Lakeshore Holdings|Lakeshore/gi, "Lakeshore Holdings"],
   [/Meridian Health System|Meridian Health/gi, "Healthcare Demo"],
   [/SkyHarbor Air Group|SkyHarbor Airlines|SkyHarbor Air|SkyHarbor/gi, "Airline Demo"],
 ];

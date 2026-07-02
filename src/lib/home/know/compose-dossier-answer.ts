@@ -371,8 +371,8 @@ function humanizeTenantKey(tenantKey: string): string {
   const knownTenantNames: Record<string, string> = {
     skyharbor: "SkyHarbor",
     "skyharbor-air": "SkyHarbor Air",
-    lakeshore: "Lakeshore",
-    "lakeshore-industries": "Lakeshore Industries",
+    lakeshore: "Lakeshore Holdings",
+    "lakeshore-holdings": "Lakeshore Holdings",
     apex: "Apex",
     "apex-retail": "Apex Retail",
     meridian: "Meridian",

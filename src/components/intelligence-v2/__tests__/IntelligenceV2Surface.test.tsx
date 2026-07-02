@@ -161,7 +161,7 @@ describe("IntelligenceV2Surface aVa chat shell", () => {
           ...apexPayload,
           tenant: {
             key: "lakeshore-holdings",
-            displayName: "Industrial Demo",
+            displayName: "Lakeshore Holdings",
             industry: "Industrial",
           },
         }}

@@ -96,7 +96,7 @@ describe("HomeKnowAnswerRenderer", () => {
         response={{
           ...baseResponse,
           prose: [
-            "For Industrial Demo, the IT organization is role and domain based.",
+            "For Lakeshore Holdings, the IT organization is role and domain based.",
             "",
             "Requested structure:",
             "",
@@ -282,7 +282,7 @@ describe("HomeKnowAnswerRenderer", () => {
         response={{
           ...baseResponse,
           prose:
-            "For Industrial Demo:\n- **What this means:** treasury modernization is the strongest current story.\n- **Why it matters:** value proof depends on controls and period-specific evidence.",
+            "For Lakeshore Holdings:\n- **What this means:** treasury modernization is the strongest current story.\n- **Why it matters:** value proof depends on controls and period-specific evidence.",
           tables: [],
           gaps: [],
           citations: [],
@@ -295,7 +295,7 @@ describe("HomeKnowAnswerRenderer", () => {
     ).toHaveTextContent(
       "**What this means:** treasury modernization is the strongest current story.",
     );
-    expect(container.textContent).toContain("For Industrial Demo:");
+    expect(container.textContent).toContain("For Lakeshore Holdings:");
   });
 
   it("shapes citation and coverage-table labels before rendering", () => {

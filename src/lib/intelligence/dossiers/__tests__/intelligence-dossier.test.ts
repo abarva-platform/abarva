@@ -107,8 +107,8 @@ describe("Intelligence dossier framework", () => {
 
   it("names missing tenant evidence instead of hiding thin evidence", () => {
     const dossier = buildIntelligenceDossier({
-      tenantKey: "lakeshore-industries",
-      tenantName: "Lakeshore Industries",
+      tenantKey: "lakeshore-holdings",
+      tenantName: "Lakeshore Holdings",
       question: "What is the exact ROI for ITSM automation?",
       classification,
       sources: [

@@ -69,7 +69,7 @@ const V6_DATASET_BY_CLIENT: Record<ClientKey, string> = {
   meridian: "meridian-health-synthetic-v6",
   northstar: "northstar-clinical-tech-synthetic-v1",
   skyharbor: "skyharbor-air-synthetic-v6",
-  lakeshore: "lakeshore-industries-synthetic-v6",
+  lakeshore: "lakeshore-holdings-synthetic-v6",
 };
 
 const DIMENSION_PREVIEWS: DimensionPreviewConfig[] = [

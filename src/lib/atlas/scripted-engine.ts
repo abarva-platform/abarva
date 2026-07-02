@@ -286,7 +286,7 @@ function buildFederatedVisibilityBoundary(
 
   return [
     'My read:',
-    `${portfolio.clientName}'s L0 Tower view should stay consolidated: the sponsor sees cross-HoldCo posture across Morgan Street and sibling HoldCos, but does not see raw HoldCo-private evidence unless the owning HoldCo grants access.`,
+    `${portfolio.clientName}'s L0 Tower view should stay consolidated: the sponsor sees cross-HoldCo posture across Lakeshore Holdings and sibling HoldCos, but does not see raw HoldCo-private evidence unless the owning HoldCo grants access.`,
     '',
     'Why:',
     `- The L0 view is for portfolio steering: consolidated initiative health, value posture, renewal clocks, pressure themes, and decision history. Current loaded Tower coverage includes ${loadedEvidence || 'the active Tower portfolio set'}.`,

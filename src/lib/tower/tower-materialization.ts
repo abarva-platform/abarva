@@ -164,7 +164,6 @@ export function canonicalizeTowerTenantKey(value: string | null | undefined): st
   const normalized = raw.toLowerCase().replace(/[_\s]+/g, '-');
   if (
     normalized === 'lakeshore' ||
-    normalized === 'lakeshore-industries' ||
     normalized === 'lakeshore-holdings'
   ) {
     return 'lakeshore-holdings';
@@ -425,7 +424,7 @@ function buildSpendAuditRows(args: {
 
 function forbiddenIdentifiersForTenant(tenantKey: string): TowerForbiddenIdentifierWriteRow[] {
   if (tenantKey !== 'lakeshore-holdings') return [];
-  return ['Morgan Street', 'Chicago'].map((identifier) => ({
+  return ['Chicago'].map((identifier) => ({
     tenant_key: tenantKey,
     identifier,
     identifier_type: 'client_identity',

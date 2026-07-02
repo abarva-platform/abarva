@@ -31,7 +31,7 @@ describe('Atlas classifier', () => {
   });
 
   it('routes federated L0 visibility-boundary asks to a deterministic Tower path', () => {
-    expect(classifyAtlasIntent('As the Lakeshore L0 sponsor, what can I see across Morgan Street and sibling HoldCos in Tower, and what can I not see without an explicit grant?')).toEqual({
+    expect(classifyAtlasIntent('As the Lakeshore L0 sponsor, what can I see across Lakeshore Holdings and sibling HoldCos in Tower, and what can I not see without an explicit grant?')).toEqual({
       intent: 'federated_visibility_boundary',
       routeType: 'scripted',
     });

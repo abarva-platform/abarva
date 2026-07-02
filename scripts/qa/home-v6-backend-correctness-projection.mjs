@@ -5,7 +5,7 @@ import path from "node:path";
 const DEFAULT_TENANTS = [
   "apex-retail-synthetic-v6",
   "first-capital-financial-synthetic-v6",
-  "lakeshore-industries-synthetic-v6",
+  "lakeshore-holdings-synthetic-v6",
   "meridian-health-synthetic-v6",
   "skyharbor-air-synthetic-v6",
 ];
@@ -23,13 +23,13 @@ const DEMO_SAFE_REPLACEMENTS = [
   [/\bSkyHarbor Airlines\b/gi, "Airline Demo"],
   [/\bSkyHarbor Air\b/gi, "Airline Demo"],
   [/\bSkyHarbor\b/gi, "Airline Demo"],
-  [/\bLakeshore Industries\b/gi, "Industrial Demo"],
-  [/\bLakeshore Holdings\b/gi, "Industrial Demo"],
-  [/\bLakeshore\b/gi, "Industrial Demo"],
+  [/\bLakeshore Holdings\b/gi, "Lakeshore Holdings"],
+  [/\bLakeshore Holdings\b/gi, "Lakeshore Holdings"],
+  [/\bLakeshore\b/gi, "Lakeshore Holdings"],
 ];
 
 const OLD_DEMO_NAME_RE =
-  /\b(Apex Retail Group|Apex Retail|Meridian Health System|Meridian Health|First Capital Financial|First Capital|Arcturus Financial Group|Arcturus|SkyHarbor Air Group|SkyHarbor Airlines|SkyHarbor Air|SkyHarbor|Lakeshore Industries|Lakeshore Holdings|Lakeshore)\b/i;
+  /\b(Apex Retail Group|Apex Retail|Meridian Health System|Meridian Health|First Capital Financial|First Capital|Arcturus Financial Group|Arcturus|SkyHarbor Air Group|SkyHarbor Airlines|SkyHarbor Air|SkyHarbor|Lakeshore Holdings|Lakeshore Holdings|Lakeshore)\b/i;
 const TECHNICAL_OLD_NAME_SCAN_SKIP = new Set([
   "tenant_key",
   "v6_contract_version",

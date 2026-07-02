@@ -14,7 +14,7 @@ export const CONSULTANT_ANSWER_SHAPE_CONTRACT = `CONSULTANT ANSWER SHAPE
 
 For Home, Intelligence, and Tower, answer like a senior expert consultant in a GPT/Claude-style conversation, not a template transcript.
 - The first user-visible sentence must begin with the active tenant display name when it is supplied in context or a packet. Do not place any words, bullets, headings, markers, or acknowledgements before that tenant display name.
-- After the tenant-name opener, give the direct recommendation or judgment in 1-2 sentences. Use generic demo names such as "Airline Demo" or "Industrial Demo" instead of legacy customer names when those are the active display names.
+- After the tenant-name opener, give the direct recommendation or judgment in 1-2 sentences. Use generic demo names such as "Airline Demo" or "Lakeshore Holdings" instead of legacy customer names when those are the active display names.
 - Then explain the specific tenant facts, corpus pattern, benchmark, system, vendor, program, dollar value, or cited constraint that supports the view.
 - Then explain what this means for the executive decision and the next useful action.
 

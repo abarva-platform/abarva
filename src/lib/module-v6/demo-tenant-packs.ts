@@ -19,14 +19,12 @@ type V6Record = Record<string, string>;
 
 const TENANT_DATASET_BY_KEY: Record<string, string> = {
   "skyharbor-air": "skyharbor-air-synthetic-v6",
-  "lakeshore-industries": "lakeshore-industries-synthetic-v6",
-  "lakeshore-holdings": "lakeshore-industries-synthetic-v6",
+  "lakeshore-holdings": "lakeshore-holdings-synthetic-v6",
 };
 
 const TENANT_DISPLAY_BY_KEY: Record<string, string> = {
   "skyharbor-air": "Airline Demo",
-  "lakeshore-industries": "Industrial Demo",
-  "lakeshore-holdings": "Industrial Demo",
+  "lakeshore-holdings": "Lakeshore Holdings",
 };
 
 const PHASE_LABELS = [
@@ -65,16 +63,9 @@ export function canonicalV6DemoTenantKey(
       "lakeshore",
       "lakeshoreholdings",
       "lakeshore-holdings",
-      "lakeshoreindustries",
-      "lakeshore-industries",
-      "industrialdemo",
-      "industrial-demo",
-      "manufacturingdemo",
-      "manufacturing-demo",
-    ].includes(slug) ||
-    compact === "industrialdemo"
+    ].includes(slug)
   ) {
-    return "lakeshore-industries";
+    return "lakeshore-holdings";
   }
   if (
     [

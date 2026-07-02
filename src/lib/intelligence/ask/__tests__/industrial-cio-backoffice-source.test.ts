@@ -7,18 +7,21 @@ import {
 } from "../industrial-cio-backoffice-source";
 import { extractExecutiveCanvasPayloads } from "@/lib/intelligence/executive-canvas-payload";
 
-describe("Industrial CIO back-office ask source", () => {
-  it("recognizes Industrial Demo, Lakeshore, and Morgan Street tenant aliases", () => {
-    expect(isIndustrialTenantKey("lakeshore-industries")).toBe(true);
-    expect(isIndustrialTenantKey("Industrial Demo")).toBe(true);
-    expect(isIndustrialTenantKey("Morgan Street")).toBe(true);
+describe("Lakeshore Holdings CIO back-office ask source", () => {
+  it("recognizes only current Lakeshore Holdings tenant aliases", () => {
+    expect(isIndustrialTenantKey("lakeshore")).toBe(true);
+    expect(isIndustrialTenantKey("lakeshore-holdings")).toBe(true);
+    expect(isIndustrialTenantKey("Lakeshore Holdings")).toBe(true);
+    expect(isIndustrialTenantKey("lakeshore-industries")).toBe(false);
+    expect(isIndustrialTenantKey("Industrial Demo")).toBe(false);
+    expect(isIndustrialTenantKey("Morgan Street")).toBe(false);
     expect(isIndustrialTenantKey("skyharbor-air")).toBe(false);
   });
 
-  it("recognizes Morgan Street CIO back-office questions without matching unrelated prompts", () => {
+  it("recognizes Lakeshore Holdings CIO back-office questions without matching unrelated prompts", () => {
     expect(
       isIndustrialCioBackofficeQuestion(
-        "How should Morgan Street stand up the value office?",
+        "How should Lakeshore Holdings stand up the value office?",
       ),
     ).toBe(true);
     expect(
@@ -41,16 +44,16 @@ describe("Industrial CIO back-office ask source", () => {
   it("builds a high-priority tenant source only for Industrial readiness questions", () => {
     const source = buildIndustrialCioBackofficeSource(
       "Which shared services AI use cases should the CIO fund first?",
-      ["lakeshore-industries"],
+      ["lakeshore-holdings"],
     );
 
     expect(source).toMatchObject({
       type: "TENANT",
       id: "industrial-cio-backoffice-readiness",
-      name: "Industrial Demo CIO Shared Services value-office context",
+      name: "Lakeshore Holdings CIO Shared Services value-office context",
       confidence: 0.91,
     });
-    expect(source?.detail).toContain("Morgan Street goal");
+    expect(source?.detail).toContain("Lakeshore Holdings goal");
     expect(source?.detail).toContain("Kyriba");
     expect(source?.detail).toContain("Finance-attested baseline");
     expect(source?.detail).toContain(
@@ -66,18 +69,18 @@ describe("Industrial CIO back-office ask source", () => {
     ).toBeNull();
     expect(
       buildIndustrialCioBackofficeSource("What is blocking IROPS scale?", [
-        "lakeshore-industries",
+        "lakeshore-holdings",
       ]),
     ).toBeNull();
   });
 
   it("adds a prompt addendum that asks Claude to own assumptions and right-canvas tabs", () => {
     const addendum = buildIndustrialCioBackofficePromptAddendum(
-      "How should the CIO launch the Morgan Street value office?",
-      ["industrial demo"],
+      "How should the CIO launch the Lakeshore Holdings value office?",
+      ["lakeshore"],
     );
 
-    expect(addendum).toContain("INDUSTRIAL CIO / MORGAN STREET DEMO MODE");
+    expect(addendum).toContain("LAKESHORE HOLDINGS CIO MODE");
     expect(addendum).toContain("user-visible advisor identity is aVa");
     expect(addendum).toContain("Treasury and Finance as the Phase 1 proof");
     expect(addendum).toContain("HR and Legal need source evidence");
@@ -96,7 +99,7 @@ describe("Industrial CIO back-office ask source", () => {
   it("builds a valid native sequencing canvas fallback for the CIO demo", () => {
     const block = buildIndustrialCioBackofficeNativeCanvasBlock(
       "How should the CIO prioritize AI and automation across HR, finance, treasury, legal, and shared services?",
-      ["industrial demo"],
+      ["lakeshore"],
     );
 
     const extracted = extractExecutiveCanvasPayloads(block);
@@ -104,7 +107,7 @@ describe("Industrial CIO back-office ask source", () => {
     expect(extracted.visibleContent).toBe("");
     expect(extracted.payloads[0]).toMatchObject({
       canvasType: "executive-canvas-sequencing",
-      title: "CIO AI & Automation Sequencing — Industrial Demo",
+      title: "CIO AI & Automation Sequencing — Lakeshore Holdings",
       lanes: [
         { label: "Scale now" },
         { label: "Certify then scale" },
@@ -120,11 +123,11 @@ describe("Industrial CIO back-office ask source", () => {
   it("builds native matrix and roadmap fallbacks for tradeoff and prerequisite questions", () => {
     const matrixBlock = buildIndustrialCioBackofficeNativeCanvasBlock(
       "Which shared-services AI bets are high value but not ready across HR, finance, treasury, legal, and shared services?",
-      ["industrial demo"],
+      ["lakeshore"],
     );
     const roadmapBlock = buildIndustrialCioBackofficeNativeCanvasBlock(
       "What has to happen first before the CIO scales AI across Finance, Treasury, HR, Legal, and shared services?",
-      ["industrial demo"],
+      ["lakeshore"],
     );
 
     const matrix = extractExecutiveCanvasPayloads(matrixBlock).payloads[0];
@@ -132,7 +135,7 @@ describe("Industrial CIO back-office ask source", () => {
 
     expect(matrix).toMatchObject({
       canvasType: "value-readiness-matrix",
-      title: "Shared Services AI Value / Readiness Map — Industrial Demo",
+      title: "Shared Services AI Value / Readiness Map — Lakeshore Holdings",
       items: expect.arrayContaining([
         expect.objectContaining({
           label: expect.stringContaining("HR"),
@@ -142,7 +145,7 @@ describe("Industrial CIO back-office ask source", () => {
     });
     expect(roadmap).toMatchObject({
       canvasType: "gate-to-value-roadmap",
-      title: "Shared Services AI Gate-to-Value Roadmap — Industrial Demo",
+      title: "Shared Services AI Gate-to-Value Roadmap — Lakeshore Holdings",
       gates: expect.arrayContaining([
         expect.objectContaining({
           label: "Load HR and Legal evidence",

@@ -96,14 +96,14 @@ function makeDb() {
 describe('tower materialization planner', () => {
   it('canonicalizes Lakeshore and SkyHarbor aliases', () => {
     expect(canonicalizeTowerTenantKey('Lakeshore Holdings')).toBe('lakeshore-holdings');
-    expect(canonicalizeTowerTenantKey('lakeshore-industries')).toBe('lakeshore-holdings');
+    expect(canonicalizeTowerTenantKey('lakeshore-industries')).toBe('lakeshore-industries');
     expect(canonicalizeTowerTenantKey('skyharbor')).toBe('skyharbor-air');
   });
 
   it('dedupes vendor expansion rows and records Path A portfolio gaps', () => {
     const plan = buildTowerMaterializationPlan({
       clientId: 'client-lak',
-      tenantKey: 'lakeshore-industries',
+      tenantKey: 'lakeshore-holdings',
       projected: {
         source: 'enterprise_context_records',
         initiatives: [initiative],
@@ -131,10 +131,7 @@ describe('tower materialization planner', () => {
         tenant_key: 'lakeshore-holdings',
       }),
     );
-    expect(plan.forbiddenIdentifiers.map((row) => row.identifier)).toEqual([
-      'Morgan Street',
-      'Chicago',
-    ]);
+    expect(plan.forbiddenIdentifiers.map((row) => row.identifier)).toEqual(['Chicago']);
   });
 
   it('keeps unknown amounts out of executive metric readiness', () => {

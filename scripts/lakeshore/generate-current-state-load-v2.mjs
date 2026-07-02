@@ -56,7 +56,7 @@ const enterpriseProfile = [
     debt_usd: 780000000,
     it_budget_usd: 142000000,
     headquarters: 'Chicago, Illinois',
-    benchmark_profile: 'Small diversified holding-company pilot, intentionally closer to Morgan Street Holdings / HAVI-style scale than Target or Delta.',
+    benchmark_profile: 'Small diversified holding-company pilot, intentionally closer to a private holdco / operating-company portfolio model than Target or Delta.',
     operating_model: 'Lean holdco with shared finance, treasury, architecture, cyber, data governance, and procurement; operating companies retain business-system ownership.',
     cloud_strategy: 'Hybrid: private-cloud core for WMS/ERP legacy workloads, Azure for shared data/identity/finance analytics, AWS for DTC commerce.',
     private_cloud_summary: 'Dell PowerEdge + VMware vSphere at Chicago primary, Nutanix AHV at Northline warehouse edge, NetApp/Pure storage, Cisco Nexus and Palo Alto segmentation.',
@@ -474,7 +474,7 @@ controls, business capabilities, and company scale.
 ## Scale posture
 
 Lakeshore is intentionally a smaller diversified holding-company pilot, closer
-to a Morgan Street Holdings / HAVI-style operating model than Apex/Target or
+to a private holdco / operating-company portfolio model than Apex/Target or
 SkyHarbor/Delta. The synthetic profile uses about $4.2B revenue, about 11k
 employees, 12 countries, and five operating companies.
 

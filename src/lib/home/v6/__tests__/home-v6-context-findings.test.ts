@@ -17,7 +17,7 @@ const REQUIRED_FIELDS = [
 describe("Home V6 context findings", () => {
   it.each([
     ["Airline Demo", "skyharbor"],
-    ["Industrial Demo", "lakeshore"],
+    ["Lakeshore Holdings", "lakeshore"],
   ])("builds four V6-backed context findings for %s", (_label, tenantKey) => {
     const browser = getHomeV6ContextBrowser(tenantKey);
 

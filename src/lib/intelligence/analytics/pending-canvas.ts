@@ -170,7 +170,7 @@ function evidenceTextFor(
   tenant: DemoTenant,
   analytics: FastCanvasAnalyticsPayload,
 ): string {
-  const domain = tenant === "airline" ? "airline" : "Industrial/Morgan Street";
+  const domain = tenant === "airline" ? "airline" : "Lakeshore Holdings";
   const gaps = analytics.keyProofGaps.length
     ? analytics.keyProofGaps.slice(0, 4).join(" ")
     : "No major proof gap surfaced in the deterministic fast canvas.";

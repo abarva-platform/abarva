@@ -5,7 +5,24 @@ describe("Home V6 context browser", () => {
     const browser = getHomeV6ContextBrowser("lakeshore");
     const skyharborBrowser = getHomeV6ContextBrowser("skyharbor");
 
-    expect(browser?.datasetDir).toBe("lakeshore-industries-synthetic-v6");
+    expect(browser?.datasetDir).toBe("lakeshore-holdings-synthetic-v6");
+    expect(browser?.displayName).toBe("Lakeshore Holdings");
+    expect(browser?.dimensions["Enterprise Profile"].sourceRows[0].values).toEqual(
+      expect.objectContaining({
+        Company: "Lakeshore Holdings",
+        "Business model":
+          "Holding company with four named operating companies plus an operating-company revenue allocation bucket. Corporate IT carries its own budget and supports shared services and enterprise platforms; each operating company carries its own local IT and operating budget.",
+        Priorities: expect.stringContaining(
+          "portfolio company revenue rollup usd:7120000000",
+        ),
+      }),
+    );
+    expect(
+      browser?.dimensions["Enterprise Profile"].sourceRows[0].values.Priorities,
+    ).toEqual(expect.stringContaining("direct holdco revenue usd:0"));
+    expect(
+      browser?.dimensions["Enterprise Profile"].sourceRows[0].values.Priorities,
+    ).toEqual(expect.stringContaining("opco revenue to allocate usd:3560000000"));
     expect(browser?.dimensions["Vendors & Contracts"]).toEqual(
       expect.objectContaining({
         title: "Vendors and contracts",

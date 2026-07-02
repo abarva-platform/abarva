@@ -336,7 +336,7 @@ describe("Intelligence pending canvas analytics", () => {
 
     expect(
       buildPendingIntelligenceCanvasTabs({
-        tenantKey: "lakeshore-industries",
+        tenantKey: "lakeshore-holdings",
         question: "What has to happen first before Legal AI scales?",
       })
         .find((tab) => tab.label === "Chart")
@@ -345,7 +345,7 @@ describe("Intelligence pending canvas analytics", () => {
 
     expect(
       buildPendingIntelligenceCanvasTabs({
-        tenantKey: "lakeshore-industries",
+        tenantKey: "lakeshore-holdings",
         question: "What proof is missing before HR and Legal AI can scale?",
       })
         .find((tab) => tab.label === "Chart")

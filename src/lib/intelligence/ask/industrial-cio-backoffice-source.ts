@@ -8,16 +8,11 @@ import type { AskSource } from "./types";
 
 const INDUSTRIAL_KEYS = new Set([
   "lakeshore",
-  "lakeshore-industries",
+  "lakeshore-holdings",
   "lakeshore holdings",
-  "industrial-demo",
-  "industrial demo",
-  "morgan street",
-  "morganstreet",
 ]);
 
 const INDUSTRIAL_BACKOFFICE_TERMS = [
-  /\bmorgan\s+street\b/i,
   /\bvalue\s+office\b/i,
   /\binnovation\s+office\b/i,
   /\bai\s+enablement\b/i,
@@ -55,9 +50,7 @@ export function isIndustrialTenantKey(
 ): boolean {
   const normalized = normalizeTenantKey(value);
   if (INDUSTRIAL_KEYS.has(normalized)) return true;
-  return (
-    normalized.includes("lakeshore") || normalized.includes("industrial demo")
-  );
+  return false;
 }
 
 export function isIndustrialCioBackofficeQuestion(query: string): boolean {
@@ -100,13 +93,13 @@ export function formatIndustrialCioBackofficeSourceDetail(
   packet: IndustrialCioBackofficePacket,
 ): string {
   return [
-    "Industrial Demo CIO / Morgan Street Value Office context for Shared Services AI, automation, and process transformation.",
+    "Lakeshore Holdings CIO shared-services value-office context for AI, automation, and process transformation.",
     "",
     `Recommended decision posture: ${packet.decision.replace(/_/g, " ")}.`,
-    `Morgan Street goal: ${packet.morganStreetGoal}`,
+    `Lakeshore Holdings goal: ${packet.morganStreetGoal}`,
     `Value mechanism: ${packet.valueMechanism}`,
     "",
-    "Known Industrial Demo context:",
+    "Known Lakeshore Holdings context:",
     `- Back-office functions: ${listValues(packet.functions, "function_name", 10)}.`,
     `- Owner roles: ${listValues(packet.ownership, "leader_role", 10)}.`,
     `- Relevant systems: ${listValues(packet.systems, "system_name", 10)}.`,
@@ -140,7 +133,7 @@ export function buildIndustrialCioBackofficeSource(
   return {
     type: "TENANT",
     id: "industrial-cio-backoffice-readiness",
-    name: "Industrial Demo CIO Shared Services value-office context",
+    name: "Lakeshore Holdings CIO Shared Services value-office context",
     detail: formatIndustrialCioBackofficeSourceDetail(packet),
     confidence: 0.91,
   };
@@ -156,14 +149,14 @@ export function buildIndustrialCioBackofficePromptAddendum(
   )
     return "";
   return [
-    "INDUSTRIAL CIO / MORGAN STREET DEMO MODE:",
-    "For Industrial Demo or Morgan Street questions about Shared Services, Finance, Treasury, HR, Legal, process transformation, AI enablement, automation, and the Value Office, act as a senior CIO transformation advisor.",
+    "LAKESHORE HOLDINGS CIO MODE:",
+    "For Lakeshore Holdings questions about Shared Services, Finance, Treasury, HR, Legal, process transformation, AI enablement, automation, and the Value Office, act as a senior CIO transformation advisor.",
     "The user-visible advisor identity is aVa. Do not mention Sentinel or other legacy agent names.",
-    "Lead with a direct point of view. Make the distinction between loaded Industrial Demo evidence, Morgan Street value-office framing, planning assumptions, industry/pattern context, and client-signoff-required claims in natural executive language.",
+    "Lead with a direct point of view. Make the distinction between loaded Lakeshore Holdings evidence, value-office framing, planning assumptions, industry/pattern context, and client-signoff-required claims in natural executive language.",
     "Use Treasury and Finance as the Phase 1 proof unless the user asks to explore HR or Legal. Explain that HR and Legal need source evidence before scale recommendations.",
     "Do not invent exact ROI, current cycle time, headcount reduction, dates, legal obligations, HR volumes, contract counts, or finance-approved value. If precision is missing, ask for values or permission to use planning assumptions.",
     "Author all right-canvas tabs using the current marker grammar: Decision, Industry Insights, Chart, Table, and Evidence. Put the governed native exhibit in the Chart tab using the abarva-canvas fenced JSON contract; do not output raw JSON outside the fenced block and do not write HTML.",
-    "Canvas selection for the Morgan Street demo: funding or prioritization questions should use executive-canvas-sequencing; portfolio tradeoff questions should use value-readiness-matrix; 'what has to happen first' or dependency questions should use gate-to-value-roadmap; trust, governance, signoff, or missing-evidence questions should use proof-boundary-card.",
+    "Canvas selection for Lakeshore Holdings: funding or prioritization questions should use executive-canvas-sequencing; portfolio tradeoff questions should use value-readiness-matrix; 'what has to happen first' or dependency questions should use gate-to-value-roadmap; trust, governance, signoff, or missing-evidence questions should use proof-boundary-card.",
     "For sequencing or matrix exhibits, include initiative owner and gate when known: CFO/Treasurer for Treasury and Kyriba evidence, Controller/Finance Ops for close and reporting evidence, CHRO or General Counsel only as discovery owners until HR/Legal source evidence is loaded.",
     "End with a branch choice only when it helps the user continue: use planning assumptions, enter current values, start Treasury + Finance, add HR/Legal discovery, or create the office blueprint.",
   ].join("\n");
@@ -185,7 +178,7 @@ export function buildIndustrialCioBackofficeNativeCanvasBlock(
   if (canvasIntent === "value-readiness-matrix") {
     return wrapIndustrialCanvasPayload({
       canvasType: "value-readiness-matrix",
-      title: "Shared Services AI Value / Readiness Map — Industrial Demo",
+      title: "Shared Services AI Value / Readiness Map — Lakeshore Holdings",
       items: [
         {
           label: treasury?.name ?? "Kyriba cash and payment-control proof",
@@ -240,7 +233,7 @@ export function buildIndustrialCioBackofficeNativeCanvasBlock(
       ],
       proofBoundary: {
         known: [
-          "Treasury and Finance have the strongest loaded Industrial Demo evidence.",
+          "Treasury and Finance have the strongest loaded Lakeshore Holdings evidence.",
           "HR and Legal do not yet have enough source evidence for scale claims.",
         ],
         missing: packet.missingEvidenceChecklist.slice(0, 3),
@@ -252,7 +245,7 @@ export function buildIndustrialCioBackofficeNativeCanvasBlock(
   if (canvasIntent === "gate-to-value-roadmap") {
     return wrapIndustrialCanvasPayload({
       canvasType: "gate-to-value-roadmap",
-      title: "Shared Services AI Gate-to-Value Roadmap — Industrial Demo",
+      title: "Shared Services AI Gate-to-Value Roadmap — Lakeshore Holdings",
       gates: [
         {
           label: "Close Treasury control evidence",
@@ -292,7 +285,7 @@ export function buildIndustrialCioBackofficeNativeCanvasBlock(
       ],
       proofBoundary: {
         known: [
-          "Treasury and Finance are the Phase 1 proof areas in the loaded Industrial Demo packet.",
+          "Treasury and Finance are the Phase 1 proof areas in the loaded Lakeshore Holdings packet.",
           "The operating model should not scale claims without function-owner signoff.",
         ],
         missing: packet.missingEvidenceChecklist.slice(0, 4),
@@ -304,7 +297,7 @@ export function buildIndustrialCioBackofficeNativeCanvasBlock(
   if (canvasIntent === "proof-boundary-card") {
     return wrapIndustrialCanvasPayload({
       canvasType: "proof-boundary-card",
-      title: "Shared Services AI Proof Boundary — Industrial Demo",
+      title: "Shared Services AI Proof Boundary — Lakeshore Holdings",
       proofBoundary: {
         known: [
           "Treasury and Finance carry the strongest loaded source evidence.",
@@ -319,7 +312,7 @@ export function buildIndustrialCioBackofficeNativeCanvasBlock(
   }
   const payload = {
     canvasType: "executive-canvas-sequencing",
-    title: "CIO AI & Automation Sequencing — Industrial Demo",
+    title: "CIO AI & Automation Sequencing — Lakeshore Holdings",
     lanes: [
       {
         label: "Scale now",
@@ -408,7 +401,7 @@ export function buildIndustrialCioBackofficeNativeCanvasBlock(
     ],
     proofBoundary: {
       known: [
-        "Treasury and Finance have the strongest loaded Industrial Demo evidence.",
+        "Treasury and Finance have the strongest loaded Lakeshore Holdings evidence.",
         "The Value Office pattern should prove Finance-attested outcomes before broad reuse.",
       ],
       missing: packet.missingEvidenceChecklist.slice(0, 3),

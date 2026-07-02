@@ -43,7 +43,7 @@ interface PromptPackageRow {
 const DEFAULT_TENANTS = [
   'apex-retail',
   'first-capital-financial',
-  'lakeshore-industries',
+  'lakeshore-holdings',
   'meridian-health',
   'skyharbor-air',
 ];
@@ -51,7 +51,7 @@ const DEFAULT_TENANTS = [
 const TENANT_NAMES: Record<string, string> = {
   'apex-retail': 'Apex Retail Group',
   'first-capital-financial': 'First Capital Financial',
-  'lakeshore-industries': 'Lakeshore Holdings',
+  'lakeshore-holdings': 'Lakeshore Holdings',
   'meridian-health': 'Meridian Health System',
   'skyharbor-air': 'SkyHarbor Air',
 };

@@ -11,7 +11,7 @@
 const V4_TENANTS = [
   { v4TenantKey: "apex-retail", dbTenantKey: "apex-retail" },
   { v4TenantKey: "first-capital-financial", dbTenantKey: "first-capital" },
-  { v4TenantKey: "lakeshore-industries", dbTenantKey: "lakeshore-holdings" },
+  { v4TenantKey: "lakeshore-holdings", dbTenantKey: "lakeshore-holdings" },
   { v4TenantKey: "meridian-health", dbTenantKey: "meridian-health" },
   { v4TenantKey: "skyharbor-air", dbTenantKey: "skyharbor-air" },
 ];

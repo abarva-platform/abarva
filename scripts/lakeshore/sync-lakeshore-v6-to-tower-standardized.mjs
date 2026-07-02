@@ -4,8 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const TENANT_KEY = "lakeshore-industries";
-const V6_ROOT = path.join(ROOT, "datasets", "lakeshore-industries-synthetic-v6");
+const TENANT_KEY = "lakeshore-holdings";
+const V6_ROOT = path.join(ROOT, "datasets", "lakeshore-holdings-synthetic-v6");
 const TEMPLATE_ROOT = path.join(V6_ROOT, "templates");
 const HOLDCO_ROOT = path.join(V6_ROOT, "holdco_tower");
 const TOWER_ROOT = path.join(ROOT, "tower-standardized-v1", TENANT_KEY);
@@ -101,10 +101,10 @@ function sourceRow(row) {
 
 function portfolioSegment(row) {
   const text = `${row.program_id ?? ""} ${row.record_name ?? ""} ${row.technology_owner ?? ""}`;
-  if (/NORTH/i.test(text)) return "Northline Logistics Group";
-  if (/CREST/i.test(text)) return "Crestpoint Marketing Services";
-  if (/RIV/i.test(text)) return "Riverton Consumer Products";
-  if (/ARB/i.test(text)) return "Arborfield Workplace Services";
+  if (/NORTH/i.test(text)) return "Northline";
+  if (/CREST/i.test(text)) return "Brightmark";
+  if (/RIV/i.test(text)) return "Forge & Field";
+  if (/ARB/i.test(text)) return "Great Lakes Pantry";
   if (/INNOV|DATA|AI/i.test(text)) return "Corporate Innovation IT and Data AI";
   return "Corporate Shared Services";
 }

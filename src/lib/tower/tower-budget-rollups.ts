@@ -353,7 +353,6 @@ export async function listTowerBudgetRollupsForClient(args: {
     args.tenantKey,
     args.tenantKey?.replace(/-/g, ""),
     args.tenantKey === "lakeshore" ? "lakeshore-holdings" : null,
-    args.tenantKey === "lakeshore" ? "lakeshore-industries" : null,
   ].filter((value): value is string => Boolean(value));
 
   const sourceRows = await db.query<ContextBudgetRecordRow>(

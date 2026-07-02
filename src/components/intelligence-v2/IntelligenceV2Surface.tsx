@@ -1598,7 +1598,7 @@ function fastInsightTabsFor(
         "| Shared services AI | Fund readiness | Process ownership and service baseline |",
       ].join("\n"),
       evidence:
-        "Fast canvas uses the loaded Industrial/Morgan Street back-office decision packet and should be treated as the initial exhibit until the advisor response finishes. The final answer may refine sequencing, gates, and owners.",
+        "Fast canvas uses the loaded Lakeshore Holdings back-office decision packet and should be treated as the initial exhibit until the advisor response finishes. The final answer may refine sequencing, gates, and owners.",
       canvas: {
         canvasType: "executive-canvas-sequencing",
         title: "Building industrial back-office decision frame",

@@ -32,7 +32,7 @@ export interface DecisionBranch {
 }
 
 export interface IndustrialCioBackofficePacket {
-  tenantKey: "lakeshore-industries";
+  tenantKey: "lakeshore-holdings";
   packetId: "industrial-cio-backoffice-value-office-v1";
   decision: "prove_shared_services_value_office_with_finance_treasury_first";
   morganStreetGoal: string;
@@ -96,7 +96,7 @@ export function buildIndustrialCioBackofficePacket(
   const datasetRoot = path.join(
     repoRoot,
     "datasets",
-    "lakeshore-industries-synthetic-v6",
+    "lakeshore-holdings-synthetic-v6",
     "templates",
   );
   const files = Object.fromEntries(
@@ -170,7 +170,7 @@ export function buildIndustrialCioBackofficePacket(
   const branch = defaultDecisionBranch();
 
   return {
-    tenantKey: "lakeshore-industries",
+    tenantKey: "lakeshore-holdings",
     packetId: "industrial-cio-backoffice-value-office-v1",
     decision: "prove_shared_services_value_office_with_finance_treasury_first",
     morganStreetGoal:
@@ -228,7 +228,7 @@ export function composeIndustrialCioBackofficeAnswer(
   const treasury = /\b(kyriba|treasury|cash|bank|payment)\b/.test(lower);
 
   let pointOfView =
-    "My point of view: start the Morgan Street-style Value Office with Treasury and Finance, not a broad AI roadshow.";
+    "My point of view: start the Lakeshore Holdings-style Value Office with Treasury and Finance, not a broad AI roadshow.";
   if (valueOffice)
     pointOfView =
       "My point of view: the office is valuable only if it becomes a repeatable value-realization method, not another intake committee.";
@@ -379,7 +379,7 @@ function buildLighthouseUseCases(inputs: {
       name: "HR and Legal AI operating model discovery",
       function: "HR / Legal",
       posture: "hold_until_input",
-      why: "The Morgan Street office should include HR and Legal, but the current V6 tenant evidence is not deep enough to recommend scale.",
+      why: "The Lakeshore Holdings office should include HR and Legal, but the current V6 tenant evidence is not deep enough to recommend scale.",
       tenantEvidence: [
         findName(inputs.systems, /Workday|ServiceNow/i),
         findName(inputs.dataAssets, /policy|contract|service/i),
@@ -396,7 +396,7 @@ function buildLighthouseUseCases(inputs: {
 
 function defaultDecisionBranch(): DecisionBranch {
   const branch: DecisionBranch = {
-    question: "How should aVa make the Morgan Street CIO case more precise?",
+    question: "How should aVa make the Lakeshore Holdings CIO case more precise?",
     choices: [
       {
         id: "use_planning_assumptions",
@@ -452,7 +452,7 @@ function buildClaimMaturity(inputs: {
   return [
     {
       statement:
-        "Industrial Demo has enough loaded evidence to start a Treasury/Finance Shared Services value-office proof.",
+        "Lakeshore Holdings has enough loaded evidence to start a Treasury/Finance Shared Services value-office proof.",
       maturity: "loaded_fact",
       basis: `${inputs.functions.length} functions, ${inputs.systems.length} systems, ${inputs.aiInitiatives.length} AI initiatives, and ${inputs.risksControls.length} operations/control rows are selected from V6.`,
       confidence: "high",

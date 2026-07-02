@@ -247,8 +247,8 @@ Rules:
 - Translate data-architecture and evidence-packet terms into executive language: say "data asset", "shared business definition", "source collection", "business context areas", or "business facts"; do not say dataset, semantic model, semantic layer, corpus, governed evidence areas, business records, or table unless the user asks for a table.
 - When the user asks for a table, chart, graph, or visual explanation, use the available evidence to either provide the executive table/chart/graph content if a structured artifact is available, or explain which table/chart/graph would best represent the evidence and what it would show. Do not invent numbers. If the artifact cannot be rendered from current evidence, say what evidence is missing and recommend the right visual structure.
 - Do not use markdown headings. Keep the answer compact.
-- For Industrial Demo specifically, make answers 25-35% shorter than normal: open with exactly three executive bullets, put caveats after the headline bullets, then offer branch choices instead of a long explanation.
-- The three Industrial Demo bullets should still tell a short executive story. Give Claude discretion to frame an interesting point of view, but structure the story around: what this means, why it matters, and where the executive should branch next.
+- For Lakeshore Holdings specifically, make answers 25-35% shorter than normal: open with exactly three executive bullets, put caveats after the headline bullets, then offer branch choices instead of a long explanation.
+- The three Lakeshore Holdings bullets should still tell a short executive story. Give Claude discretion to frame an interesting point of view, but structure the story around: what this means, why it matters, and where the executive should branch next.
 - Branch choices mean: Tower for spend, value, and decisions; Source for vendors, contracts, and renewals; Intelligence for advisory options and tradeoffs; Moves for sequencing and execution.
 - For non-Industrial tenants, keep the answer to 2-4 short paragraphs unless the user asks for a table or list.
 - Never use these visible phrases: V6, dataset, contract pack, usable evidence items, governed evidence areas, rows, source file, semantic, dossier, raw, debug, implementation.
@@ -402,9 +402,9 @@ Write the final executive answer now.`;
 }
 
 function buildStyleContract(tenantName: string): string {
-  if (tenantName === "Industrial Demo") {
+  if (tenantName === "Lakeshore Holdings") {
     return [
-      "Industrial Demo compact format is required.",
+      "Lakeshore Holdings compact format is required.",
       "Target 120-170 words unless a table is explicitly requested.",
       "Start with exactly three bullets immediately after the tenant-safe opening.",
       "Make the three bullets feel like a concise executive story, not a mechanical list.",
@@ -477,7 +477,7 @@ function displayTenantName(response: HomeKnowResponse): string {
     return firstFact.value.trim();
   }
   const proseMatch = response.prose.match(
-    /\b(Retail Demo|Healthcare Demo|Financial Services Demo|Industrial Demo|Airline Demo)\b/,
+    /\b(Retail Demo|Healthcare Demo|Financial Services Demo|Lakeshore Holdings|Airline Demo)\b/,
   );
   return proseMatch?.[1] ?? "";
 }

@@ -14,7 +14,7 @@ export const DEMO_SAFE_CLIENT_NAMES = {
   arcturus: "Financial Services Demo",
   northstar: "Clinical Technology Demo",
   skyharbor: "Airline Demo",
-  lakeshore: "Industrial Demo",
+  lakeshore: "Lakeshore Holdings",
 } as const satisfies Record<string, string>;
 
 const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
@@ -42,7 +42,6 @@ const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
   [/\bSkyHarbor Air\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
   [/\bSkyHarbor\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
   [/\bLakeshore Holdings(?:\s+Holdings)+\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
-  [/\bLakeshore Industries\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
   [/\bLakeshore Holdings\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
   [/\bLakeshore\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
 ];
@@ -63,7 +62,6 @@ const DEMO_SAFE_LITERAL_TEXT_REPLACEMENTS: ReadonlyArray<
   ["SkyHarbor Airlines", DEMO_SAFE_CLIENT_NAMES.skyharbor],
   ["SkyHarbor Air", DEMO_SAFE_CLIENT_NAMES.skyharbor],
   ["SkyHarbor", DEMO_SAFE_CLIENT_NAMES.skyharbor],
-  ["Lakeshore Industries", DEMO_SAFE_CLIENT_NAMES.lakeshore],
   ["Lakeshore Holdings", DEMO_SAFE_CLIENT_NAMES.lakeshore],
   ["Lakeshore", DEMO_SAFE_CLIENT_NAMES.lakeshore],
 ];
@@ -208,7 +206,6 @@ export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
   lakeshore: [
     DEMO_SAFE_CLIENT_NAMES.lakeshore,
     "Lakeshore Holdings",
-    "Lakeshore Industries",
     "Lakeshore",
   ],
 };
@@ -329,10 +326,7 @@ export function canonicalClientDisplayName(args: {
     key === "lakeshore" ||
     key === "lakeshore-holdings" ||
     normalizedName === "lakeshore holdings" ||
-    normalizedName === "lakeshore industries" ||
-    normalizedName === "lakeshore" ||
-    normalizedName === "industrial demo" ||
-    normalizedName === "manufacturing demo"
+    normalizedName === "lakeshore"
   ) {
     return DEMO_SAFE_CLIENT_NAMES.lakeshore;
   }

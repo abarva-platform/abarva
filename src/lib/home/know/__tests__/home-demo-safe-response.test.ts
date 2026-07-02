@@ -33,7 +33,7 @@ describe("home demo-safe response sanitizer", () => {
       citations: [
         {
           id: "citation-1",
-          label: "Lakeshore Industries comparison should be hidden",
+          label: "Lakeshore Holdings comparison should be hidden",
           excerpt: "Apex Retail Group should also be hidden.",
         },
       ],
@@ -54,7 +54,7 @@ describe("home demo-safe response sanitizer", () => {
     expect(safe.facts[0].label).toContain("Airline Demo");
     expect(safe.facts[0].value).toContain("Airline Demo");
     expect(safe.tables[0].rows[0].name).toContain("Airline Demo");
-    expect(safe.citations[0].label).toContain("Industrial Demo");
+    expect(safe.citations[0].label).toContain("Lakeshore Holdings");
     expect(safe.citations[0].excerpt).toContain("Retail Demo");
     expect(
       JSON.stringify({
@@ -64,10 +64,10 @@ describe("home demo-safe response sanitizer", () => {
         citations: safe.citations,
       }),
     ).not.toMatch(
-      /SkyHarbor Air Group|SkyHarbor Air|SkyHarbor Airlines|Lakeshore Industries|Apex Retail Group/i,
+      /SkyHarbor Air Group|SkyHarbor Air|SkyHarbor Airlines|Lakeshore Holdings|Apex Retail Group/i,
     );
     expect(safe.safety.composerTrace.promptSnapshot.full).toBe(
-      "Airline Demo and Industrial Demo appeared in the prompt.",
+      "Airline Demo and Lakeshore Holdings appeared in the prompt.",
     );
   });
 
@@ -95,11 +95,11 @@ describe("home demo-safe response sanitizer", () => {
   it("reports no visible sanitizer change when duplicate openings are absent", () => {
     const { payload: safe, audit } = sanitizeHomeKnowVisiblePayloadWithAudit({
       prose:
-        "For Industrial Demo, the enterprise profile is strong enough to orient leadership.",
+        "For Lakeshore Holdings, the enterprise profile is strong enough to orient leadership.",
     });
 
     expect(safe.prose).toBe(
-      "For Industrial Demo, the enterprise profile is strong enough to orient leadership.",
+      "For Lakeshore Holdings, the enterprise profile is strong enough to orient leadership.",
     );
     expect(audit).toEqual({
       sanitizerApplied: false,

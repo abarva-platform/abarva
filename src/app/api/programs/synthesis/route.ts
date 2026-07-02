@@ -84,7 +84,7 @@ Visible-output requirements:
 function movesDomainPhrase(tenantKey: string): string {
   const canonical = canonicalTenantKey(tenantKey);
   if (canonical === "skyharbor-air") return "IROPS";
-  if (canonical === "lakeshore-industries") return "treasury";
+  if (canonical === "lakeshore-holdings") return "treasury";
   return "execution";
 }
 
