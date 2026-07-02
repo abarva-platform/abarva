@@ -905,6 +905,40 @@ describe("cio tower answer contract", () => {
     ).toEqual([]);
   });
 
+  it("answers no-measured-value-evidence questions without internal contract language", () => {
+    const ctx = context({
+      question: "Which programs have no measured value evidence?",
+      contract: {
+        contract_key: "tower_weak_value_evidence",
+        intent: "table",
+        question_family: "weak_value_evidence",
+        measure_key: "measured_value_ytd",
+        artifact_type: "table",
+        examples: [],
+      },
+    });
+    const output =
+      __cioTowerAnswerTestHooks.buildCioTowerDeterministicMetricAnswer(ctx);
+
+    expect(output?.reason).toBe(
+      "Value-proof governance question answered from governed Tower initiative and value facts.",
+    );
+    expect(output?.output.answer).toContain(
+      "SkyHarbor Air should hold additional scale decisions where portfolio spend is ahead of measured value evidence.",
+    );
+    expect(output?.output.answer).not.toMatch(/read[- ]model|rows?|loaded evidence|Next move|Read:/i);
+    expect(output?.output.tables?.[0]?.title).toBe(
+      "Initiatives with weakest value evidence",
+    );
+    expect(
+      __cioTowerAnswerTestHooks.validateParsedVisibleAnswer({
+        contractKey: ctx.contract.contract_key,
+        metricPackets: ctx.metricPackets,
+        parsedOutput: output!.output,
+      }),
+    ).toEqual([]);
+  });
+
   it("returns a specific AI value-proof gap when governed AI item detail is absent", () => {
     const ctx = context({
       question:

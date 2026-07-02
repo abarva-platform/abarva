@@ -1419,6 +1419,9 @@ function isPortfolioProofGovernanceQuestion(question: string): boolean {
     /missing\s+value\s+proof/i.test(question) ||
     /value\s+proof\s+missing/i.test(question) ||
     /no\s+value\s+proof/i.test(question) ||
+    /no\s+measured\s+value\s+evidence/i.test(question) ||
+    /missing\s+measured\s+value\s+evidence/i.test(question) ||
+    /measured\s+value\s+evidence\s+missing/i.test(question) ||
     /hold.*evidence/i.test(question) ||
     /evidence\s+improves/i.test(question) ||
     /value\s+evidence.*board/i.test(question) ||
