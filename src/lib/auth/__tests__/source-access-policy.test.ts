@@ -286,6 +286,25 @@ describe("source access policy", () => {
     ).resolves.toBe(true);
   });
 
+  it("treats canonical admin aliases as the same Source home client", async () => {
+    setupRows({});
+    const { canReadSourceEvent } = await import("../source-access-policy");
+    const canonicalAdminTenancy = {
+      clientId: "client-skyharbor",
+      userId: "clerk:user_skyharbor_admin",
+      role: "client_viewer",
+      email: "admin@skyharbor-air.example.com",
+    };
+
+    await expect(
+      canReadSourceEvent(
+        canonicalAdminTenancy,
+        "skyharbor-air",
+        "sky-source-1",
+      ),
+    ).resolves.toBe(true);
+  });
+
   it("restricts source members to assigned source event ids", async () => {
     setupRows({
       person_client_memberships: {
@@ -369,6 +388,47 @@ describe("source access policy", () => {
     await expect(
       canReadSourceEvent(ctx, "skyharbor", "other-source"),
     ).resolves.toBe(false);
+  });
+
+  it("resolves a canonical same-tenant Clerk persona email when the active client key is an alias", async () => {
+    setupRows({
+      persons: { id: "00000000-0000-4000-8000-00000000c701" },
+      person_client_memberships: {
+        access_level: "source_member",
+        financial_visibility: false,
+      },
+      source_event_participants: [
+        {
+          source_event_id: "sky-source-1",
+          source_access_level: "source_member",
+          approval_authority: "contributor",
+          can_view_financial: false,
+          can_upload_source_artifacts: true,
+          can_generate_sourcing_artifacts: true,
+          can_publish_sourcing_artifacts: false,
+          can_approve_source_stages: false,
+          can_approve_award: false,
+        },
+      ],
+    });
+    const { loadUserSourceAccessPolicy, canReadSourceEvent } =
+      await import("../source-access-policy");
+    const ctx = {
+      clientId: "client-skyharbor",
+      userId: "clerk:user_skyharbor_cto",
+      role: "client_viewer",
+      email: "cto@skyharbor-air.example.com",
+    };
+
+    const policy = await loadUserSourceAccessPolicy(ctx, {
+      activeClientKey: "skyharbor-air",
+    });
+
+    expect(policy.accessLevel).toBe("source_member");
+    expect(policy.sourceEventIdsAllowed).toEqual(["sky-source-1"]);
+    await expect(
+      canReadSourceEvent(ctx, "skyharbor-air", "sky-source-1"),
+    ).resolves.toBe(true);
   });
 
   it("lets source members create new events without granting approval authority", async () => {

@@ -65,6 +65,10 @@ becoming a generic document browser.
   and participant grants now resolve through the shared tenant alias set
   (`skyharbor` / `skyharbor-air`, etc.) so canonical app keys and production
   data-plane tenant keys do not split the same client workspace.
+- Defense-in-depth alias guard for Source event detail/API/export reads: the
+  final tenant comparison now checks same-tenant alias families instead of raw
+  string equality, and Source policy maps canonical admin/person emails through
+  the same alias family before granting event access.
 
 ## QA / Validation
 
@@ -89,6 +93,10 @@ becoming a generic document browser.
   outside the critical evidence transaction.
 - PASS: Source tenant-alias hardening keeps lookup and access checks inside the
   same tenant alias family rather than requiring one literal client-key spelling.
+- PASS: focused alias-guard regression:
+  `npx jest src/lib/auth/__tests__/source-access-policy.test.ts src/lib/source/__tests__/queries-tenant-scope.test.ts src/lib/source/__tests__/event-code-as-slug.test.ts --runInBand`
+- PASS: focused ESLint:
+  `npx eslint src/lib/auth/source-access-policy.ts src/lib/source/queries.ts src/lib/auth/__tests__/source-access-policy.test.ts src/lib/source/__tests__/queries-tenant-scope.test.ts`
 - BLOCKED: full-repo TypeScript with large heap reached existing dependency
   declaration gaps outside this slice (`js-yaml`,
   `@azure-rest/ai-document-intelligence`, `@axe-core/playwright`).

@@ -120,6 +120,17 @@ function isClientAdminPolicy(level: SourceAccessLevel): boolean {
   return level === "client_admin";
 }
 
+function sameTenantAliasFamily(
+  inferredClientKey: string | null | undefined,
+  activeClientKey: string | null | undefined,
+): boolean {
+  if (!inferredClientKey || !activeClientKey) return false;
+  const normalizedInferredClientKey = inferredClientKey.trim().toLowerCase();
+  return tenantAliasesFor(activeClientKey)
+    .map((alias) => alias.trim().toLowerCase())
+    .includes(normalizedInferredClientKey);
+}
+
 // A Clerk tenant/client-admin is a Source admin for their OWN active client even
 // with no persons-backed membership row. Mirrors the proven Moves program-access
 // policy (program-access-policy.ts `isClientAdminRole`). The cross-tenant fence
@@ -224,7 +235,7 @@ async function resolveSourcePolicyPersonId(
   const normalizedEmail = ctx.email?.trim().toLowerCase() ?? "";
   if (!normalizedEmail) return null;
   const inferredClientKey = inferClientKeyFromEmail(normalizedEmail);
-  if (!inferredClientKey || inferredClientKey !== activeClientKey) return null;
+  if (!sameTenantAliasFamily(inferredClientKey, activeClientKey)) return null;
 
   const { data } = await getAzureReadFluentClient()
     .from("persons")
@@ -341,7 +352,7 @@ export async function loadUserSourceAccessPolicy(
     const inferredAdminClientKey = inferClientKeyFromEmail(ctx.email);
     if (
       inferredAdminClientKey &&
-      opts.activeClientKey === inferredAdminClientKey
+      sameTenantAliasFamily(inferredAdminClientKey, opts.activeClientKey)
     ) {
       return buildPolicy({
         ctx,

@@ -462,6 +462,17 @@ function formatSourceTimestamp(value: unknown): string {
   return String(value);
 }
 
+function sourceEventBelongsToClientAlias(
+  eventClientKey: string | null | undefined,
+  activeClientKey: string | null | undefined,
+): boolean {
+  if (!eventClientKey || !activeClientKey) return false;
+  const normalizedEventClientKey = eventClientKey.trim().toLowerCase();
+  return tenantAliasesFor(activeClientKey)
+    .map((alias) => alias.trim().toLowerCase())
+    .includes(normalizedEventClientKey);
+}
+
 async function getPersistedSourceEventRow(
   eventId: string,
   clientKey: string,
@@ -668,7 +679,12 @@ export async function getSourcingEvent(
         return null;
       }
       // defense-in-depth: access policy MUST scope this, but we re-verify here so a future policy bug doesn't leak data
-      if (persistedEvent.client_key !== activeClient.key) {
+      if (
+        !sourceEventBelongsToClientAlias(
+          persistedEvent.client_key,
+          activeClient.key,
+        )
+      ) {
         return null;
       }
       return sourceEventRowToDetail(persistedEvent, activeClient.name);
@@ -685,7 +701,12 @@ export async function getSourcingEvent(
       );
       if (persistedEvent) {
         // defense-in-depth: access policy MUST scope this, but we re-verify here so a future policy bug doesn't leak data
-        if (persistedEvent.client_key !== fallbackClient.key) {
+        if (
+          !sourceEventBelongsToClientAlias(
+            persistedEvent.client_key,
+            fallbackClient.key,
+          )
+        ) {
           return null;
         }
         return sourceEventRowToDetail(persistedEvent, fallbackClient.name);
