@@ -381,6 +381,33 @@ describe("Home V6 executive synthesis", () => {
     );
   });
 
+  it("collapses duplicate demo tenant openings from Claude", async () => {
+    mockClaudeText(
+      "For Airline Demo, For Airline Demo, the enterprise profile is strong enough to orient leadership, but source gaps still matter before decisions.\n\nThe next evidence to validate is owner signoff and source freshness.",
+    );
+    const question = "What context is loaded, and what can we trust?";
+    const v6 = answerHomeKnowFromV6({
+      tenantKey: "skyharbor",
+      question,
+      includeTrace: true,
+    });
+    const deterministic = toHomeKnowResponseFromV6(v6, { question });
+
+    const result = await applyHomeV6ExecutiveSynthesis({
+      response: deterministic,
+      v6Result: v6,
+      question,
+      tenantKey: v6.tenant.canonicalKey,
+      includeTrace: true,
+    });
+
+    expect(result.trace.used).toBe(true);
+    expect(result.response.prose).toContain("Airline Demo");
+    expect(result.response.prose).not.toContain(
+      "For Airline Demo, For Airline Demo",
+    );
+  });
+
   it("normalizes loaded evidence language before visible-answer validation", async () => {
     mockClaudeText(
       "For Airline Demo, the loaded evidence makes the Tower boundary clear: Home can explain what is proven, while Tower should own execution readiness, adoption, spend, and value tracking.\n\nThe business context shows several AI initiatives with scale, hold, and stop decisions carrying open readiness conditions. That means leadership should use Home for the current-state read and move the portfolio decision, owner signoff, and value tracking questions into Tower.\n\nThe next evidence to validate is which initiatives still lack owner signoff or lineage support before any scale decision is treated as ready.",
