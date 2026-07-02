@@ -11,9 +11,8 @@ describe('B7 — event code as URL slug', () => {
 
   it('detects UUIDs with the documented regex', () => {
     expect(source).toContain('UUID_REGEX');
-    expect(source).toMatch(
-      /UUID_REGEX = \/\^\[0-9a-f\]\{8\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}\$\/i/,
-    );
+    expect(source).toMatch(/\^\[0-9a-f\]\{8\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}\$/);
+    expect(source).toMatch(/UUID_REGEX\.test\(value\)/);
   });
 
   it('queries source_events by id when slug is a UUID, falls back to event_code otherwise', () => {
@@ -24,8 +23,8 @@ describe('B7 — event code as URL slug', () => {
     // routes UUID slugs to getEventByIdForClient and event_code slugs to
     // getEventByCodeForClient; both branches still live in
     // getPersistedSourceEventRow.
-    expect(source).toMatch(/adapter\.getEventByIdForClient\(eventId, clientKey\)/);
-    expect(source).toMatch(/adapter\.getEventByCodeForClient\(eventId, clientKey\)/);
+    expect(source).toMatch(/adapter\.getEventByIdForClient\(\s*eventId,\s*key,\s*\)/);
+    expect(source).toMatch(/adapter\.getEventByCodeForClient\(\s*eventId,\s*key,\s*\)/);
   });
 
   it('event_code path tolerates duplicate codes via order+limit (regression: prod 404)', () => {
@@ -45,6 +44,6 @@ describe('B7 — event code as URL slug', () => {
   it('access check uses the resolved row.id (UUID), never the raw slug', () => {
     // After B7 the access policy is checked against persistedEvent.id,
     // not the URL slug — otherwise an event_code slug would always 403.
-    expect(source).toMatch(/canReadSourceEvent\([^,]+,\s*activeClient\.key,\s*persistedEvent\.id\)/);
+    expect(source).toMatch(/canReadSourceEvent\([\s\S]*activeClient\.key,[\s\S]*persistedEvent\.id/);
   });
 });

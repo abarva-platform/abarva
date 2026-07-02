@@ -56,6 +56,7 @@ import {
 } from "./canvas-substrate";
 import { specByCode } from "./canonical-specs";
 import { selectSourceEventsReadAdapter } from "@/lib/data-plane/read-adapters/sourceEventsReadAdapter";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import { coerceUsdAmountOrZero } from "./usd-amount";
 
 // ── DB row type for source_events ─────────────────────────────────────────────
@@ -468,14 +469,17 @@ async function getPersistedSourceEventRow(
   // Physical reads go through the data-plane seam (Supabase default,
   // Azure Postgres opt-in). The UUID-vs-event_code routing stays here.
   const adapter = selectSourceEventsReadAdapter();
+  const clientKeys = tenantAliasesFor(clientKey);
   // Try by primary key first when the slug looks like a UUID — fast
   // path for existing links + most internal navigation.
   if (isUuid(eventId)) {
-    const byId = (await adapter.getEventByIdForClient(
-      eventId,
-      clientKey,
-    )) as SourceEventRow | null;
-    if (byId) return byId;
+    for (const key of clientKeys) {
+      const byId = (await adapter.getEventByIdForClient(
+        eventId,
+        key,
+      )) as SourceEventRow | null;
+      if (byId) return byId;
+    }
     // Fall through — UUID didn't match; try event_code in case it's a
     // UUID-shaped code (very rare but cheap to attempt).
   }
@@ -484,11 +488,13 @@ async function getPersistedSourceEventRow(
   // renderer ships a defensive `dedupeByEventCode`). The adapter orders
   // by updated_at + limits to one, so the by-code path is resilient
   // regardless of whether the duplicates ever get cleaned.
-  const directByCode = (await adapter.getEventByCodeForClient(
-    eventId,
-    clientKey,
-  )) as SourceEventRow | null;
-  if (directByCode) return directByCode;
+  for (const key of clientKeys) {
+    const directByCode = (await adapter.getEventByCodeForClient(
+      eventId,
+      key,
+    )) as SourceEventRow | null;
+    if (directByCode) return directByCode;
+  }
 
   // Golden-event shell routes use stable slugs (e.g.
   // `apex-retail-ams-outsourcing-2026`) while the persisted Source row may
@@ -502,10 +508,14 @@ async function getPersistedSourceEventRow(
     return null;
   }
 
-  return (await adapter.getEventByCodeForClient(
-    seedEvent.code,
-    clientKey,
-  )) as SourceEventRow | null;
+  for (const key of clientKeys) {
+    const bySeedCode = (await adapter.getEventByCodeForClient(
+      seedEvent.code,
+      key,
+    )) as SourceEventRow | null;
+    if (bySeedCode) return bySeedCode;
+  }
+  return null;
 }
 
 export async function resolveSourceEventUuidForClient(
